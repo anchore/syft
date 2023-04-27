@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "ed5945af814b9a95",
+   "id": "3fdbdcde4d17d261",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -91,5 +91,9 @@
   "configuration": {
    "config-key": "config-value"
   }
+ },
+ "schema": {
+  "version": "8.0.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-8.0.0.json"
  }
 }

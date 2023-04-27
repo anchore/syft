@@ -48,13 +48,14 @@ func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, s
 
 	err := format.Encode(&buffer, sbom)
 	assert.NoError(t, err)
-	actual := redact(buffer.Bytes(), redactors...)
+	actual := buffer.Bytes()
 
 	// replace the expected snapshot contents with the current encoder contents
 	if updateSnapshot {
 		testutils.UpdateGoldenFileContents(t, actual)
 	}
 
+	actual = redact(actual, redactors...)
 	expected := redact(testutils.GetGoldenFileContents(t), redactors...)
 
 	if json {
@@ -72,13 +73,14 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom s
 
 	err := format.Encode(&buffer, sbom)
 	assert.NoError(t, err)
-	actual := redact(buffer.Bytes(), redactors...)
+	actual := buffer.Bytes()
 
 	// replace the expected snapshot contents with the current encoder contents
 	if updateSnapshot {
 		testutils.UpdateGoldenFileContents(t, actual)
 	}
 
+	actual = redact(actual, redactors...)
 	expected := redact(testutils.GetGoldenFileContents(t), redactors...)
 
 	if json {

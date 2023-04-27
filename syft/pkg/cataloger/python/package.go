@@ -40,6 +40,23 @@ func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPip
 	return p
 }
 
+func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.PythonRequirementsMetadata, locations ...source.Location) pkg.Package {
+	p := pkg.Package{
+		Name:         name,
+		Version:      version,
+		Locations:    source.NewLocationSet(locations...),
+		PURL:         packageURL(name, version, nil),
+		Language:     pkg.Python,
+		Type:         pkg.PythonPkg,
+		MetadataType: pkg.PythonRequirementsMetadataType,
+		Metadata:     metadata,
+	}
+
+	p.SetID()
+
+	return p
+}
+
 func newPackageForPackage(m parsedData, sources ...source.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         m.Name,

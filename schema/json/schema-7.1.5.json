@@ -59,6 +59,9 @@
         "packager": {
           "type": "string"
         },
+        "license": {
+          "type": "string"
+        },
         "url": {
           "type": "string"
         },
@@ -90,6 +93,7 @@
         "architecture",
         "size",
         "packager",
+        "license",
         "url",
         "validation",
         "reason",
@@ -132,6 +136,9 @@
           "type": "string"
         },
         "version": {
+          "type": "string"
+        },
+        "license": {
           "type": "string"
         },
         "architecture": {
@@ -180,6 +187,7 @@
         "originPackage",
         "maintainer",
         "version",
+        "license",
         "architecture",
         "url",
         "description",
@@ -596,6 +604,12 @@
           },
           "type": "array"
         },
+        "licenses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "homepage": {
           "type": "string"
         }
@@ -735,32 +749,6 @@
       "required": [
         "product_id",
         "kb"
-      ]
-    },
-    "License": {
-      "properties": {
-        "value": {
-          "type": "string"
-        },
-        "spdxExpression": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "location": {
-          "$ref": "#/$defs/Location"
-        }
-      },
-      "type": "object",
-      "required": [
-        "value",
-        "spdxExpression",
-        "type",
-        "url"
       ]
     },
     "LinuxKernelMetadata": {
@@ -993,6 +981,12 @@
         "author": {
           "type": "string"
         },
+        "licenses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "homepage": {
           "type": "string"
         },
@@ -1011,6 +1005,7 @@
         "name",
         "version",
         "author",
+        "licenses",
         "homepage",
         "description",
         "url",
@@ -1056,59 +1051,8 @@
           "type": "array"
         },
         "licenses": {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
-          "$defs": {
-            "License": {
-              "properties": {
-                "value": {
-                  "type": "string"
-                },
-                "spdxExpression": {
-                  "type": "string"
-                },
-                "type": {
-                  "type": "string"
-                },
-                "url": {
-                  "type": "string"
-                },
-                "location": {
-                  "$ref": "#/$defs/Location"
-                }
-              },
-              "type": "object",
-              "required": [
-                "value",
-                "spdxExpression",
-                "type",
-                "url"
-              ]
-            },
-            "Location": {
-              "properties": {
-                "path": {
-                  "type": "string"
-                },
-                "layerID": {
-                  "type": "string"
-                },
-                "annotations": {
-                  "patternProperties": {
-                    ".*": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object",
-              "required": [
-                "path"
-              ]
-            }
-          },
           "items": {
-            "$ref": "#/$defs/License"
+            "type": "string"
           },
           "type": "array"
         },
@@ -1209,6 +1153,9 @@
             },
             {
               "$ref": "#/$defs/PythonPipfileLockMetadata"
+            },
+            {
+              "$ref": "#/$defs/PythonRequirementsMetadata"
             },
             {
               "$ref": "#/$defs/RebarLockMetadata"
@@ -1318,12 +1265,6 @@
           },
           "type": "object"
         },
-        "license": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "type": {
           "type": "string"
         },
@@ -1331,6 +1272,12 @@
           "type": "string"
         },
         "bin": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "license": {
           "items": {
             "type": "string"
           },
@@ -1545,6 +1492,9 @@
         "version": {
           "type": "string"
         },
+        "license": {
+          "type": "string"
+        },
         "author": {
           "type": "string"
         },
@@ -1577,6 +1527,7 @@
       "required": [
         "name",
         "version",
+        "license",
         "author",
         "authorEmail",
         "platform",
@@ -1599,6 +1550,41 @@
       "required": [
         "hashes",
         "index"
+      ]
+    },
+    "PythonRequirementsMetadata": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "extras": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "versionConstraint": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "markers": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "extras",
+        "versionConstraint",
+        "url",
+        "markers"
       ]
     },
     "RebarLockMetadata": {
@@ -1674,6 +1660,9 @@
         "size": {
           "type": "integer"
         },
+        "license": {
+          "type": "string"
+        },
         "vendor": {
           "type": "string"
         },
@@ -1696,6 +1685,7 @@
         "release",
         "sourceRpm",
         "size",
+        "license",
         "vendor",
         "modularityLabel",
         "files"
@@ -1815,12 +1805,6 @@
         "type",
         "target"
       ]
-    },
-    "licenses": {
-      "items": {
-        "$ref": "#/$defs/License"
-      },
-      "type": "array"
     }
   }
 }
