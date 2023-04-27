@@ -20,8 +20,8 @@ func Test_PackageURL(t *testing.T) {
 		{
 			name: "bad distro id",
 			metadata: &parsedData{
-				"",
-				pkg.AlpmMetadata{
+				Licenses: "",
+				AlpmMetadata: pkg.AlpmMetadata{
 					Package:      "p",
 					Version:      "v",
 					Architecture: "a",
@@ -36,8 +36,8 @@ func Test_PackageURL(t *testing.T) {
 		{
 			name: "gocase",
 			metadata: &parsedData{
-				"",
-				pkg.AlpmMetadata{
+				Licenses: "",
+				AlpmMetadata: pkg.AlpmMetadata{
 					Package:      "p",
 					Version:      "v",
 					Architecture: "a",
@@ -52,8 +52,8 @@ func Test_PackageURL(t *testing.T) {
 		{
 			name: "missing architecture",
 			metadata: &parsedData{
-				"",
-				pkg.AlpmMetadata{
+				Licenses: "",
+				AlpmMetadata: pkg.AlpmMetadata{
 					Package: "p",
 					Version: "v",
 				},
@@ -65,8 +65,8 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			metadata: &parsedData{
-				"",
-				pkg.AlpmMetadata{
+				Licenses: "",
+				AlpmMetadata: pkg.AlpmMetadata{
 					Package:      "python",
 					Version:      "3.10.0",
 					Architecture: "any",
@@ -80,8 +80,8 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			metadata: &parsedData{
-				"",
-				pkg.AlpmMetadata{
+				Licenses: "",
+				AlpmMetadata: pkg.AlpmMetadata{
 					Package:      "g plus plus",
 					Version:      "v84",
 					Architecture: "x86_64",
@@ -96,8 +96,8 @@ func Test_PackageURL(t *testing.T) {
 		{
 			name: "add source information as qualifier",
 			metadata: &parsedData{
-				"",
-				pkg.AlpmMetadata{
+				Licenses: "",
+				AlpmMetadata: pkg.AlpmMetadata{
 					Package:      "p",
 					Version:      "v",
 					Architecture: "a",
