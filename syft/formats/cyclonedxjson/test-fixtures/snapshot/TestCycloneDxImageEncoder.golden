@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.4.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:32d7fb1f-f37b-4abc-91cc-15d977d750db",
+  "serialNumber": "urn:uuid:b395857b-1710-4503-b97f-ad9101cc66ee",
   "version": 1,
   "metadata": {
-    "timestamp": "2023-04-27T10:03:32-04:00",
+    "timestamp": "2023-04-27T10:45:37-04:00",
     "tools": [
       {
         "vendor": "anchore",
@@ -28,7 +28,10 @@
       "version": "1.0.1",
       "licenses": [
         {
-          "expression": "MIT"
+          "license": {
+            "id": "MIT",
+            "name": "MIT"
+          }
         }
       ],
       "cpe": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",

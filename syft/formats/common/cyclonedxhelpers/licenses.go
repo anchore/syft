@@ -3,16 +3,24 @@ package cyclonedxhelpers
 import (
 	"github.com/CycloneDX/cyclonedx-go"
 
+	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/pkg"
 )
 
 // This should be a function that just surfaces licenses already validated in the package struct
 func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
+	// TODO: if all licenses are SPDX expressions, then we can combine them into a single SPDX expression
+	// and use that rather than individual licenses
 	lc := cyclonedx.Licenses{}
 	for _, l := range p.Licenses {
-		// not found so append the licenseName as is
+		var id string
+		if value, exists := spdxlicense.ID(l.SPDXExpression); exists {
+			id = value
+		}
+
 		lc = append(lc, cyclonedx.LicenseChoice{
 			License: &cyclonedx.License{
+				ID:   id,
 				Name: l.Value,
 				URL:  l.URL,
 			},
