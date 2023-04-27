@@ -187,9 +187,5 @@
   "configuration": {
    "config-key": "config-value"
   }
- },
- "schema": {
-  "version": "7.1.4",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-7.1.4.json"
  }
 }

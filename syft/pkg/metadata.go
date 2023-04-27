@@ -36,6 +36,7 @@ const (
 	PortageMetadataType            MetadataType = "PortageMetadata"
 	PythonPackageMetadataType      MetadataType = "PythonPackageMetadata"
 	PythonPipfileLockMetadataType  MetadataType = "PythonPipfileLockMetadata"
+	PythonRequirementsMetadataType MetadataType = "PythonRequirementsMetadata"
 	RebarLockMetadataType          MetadataType = "RebarLockMetadataType"
 	RpmMetadataType                MetadataType = "RpmMetadata"
 	RustCargoPackageMetadataType   MetadataType = "RustCargoPackageMetadata"
@@ -67,6 +68,7 @@ var AllMetadataTypes = []MetadataType{
 	PortageMetadataType,
 	PythonPackageMetadataType,
 	PythonPipfileLockMetadataType,
+	PythonRequirementsMetadataType,
 	RebarLockMetadataType,
 	RpmMetadataType,
 	RustCargoPackageMetadataType,
@@ -98,6 +100,7 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	PortageMetadataType:            reflect.TypeOf(PortageMetadata{}),
 	PythonPackageMetadataType:      reflect.TypeOf(PythonPackageMetadata{}),
 	PythonPipfileLockMetadataType:  reflect.TypeOf(PythonPipfileLockMetadata{}),
+	PythonRequirementsMetadataType: reflect.TypeOf(PythonRequirementsMetadata{}),
 	RebarLockMetadataType:          reflect.TypeOf(RebarLockMetadata{}),
 	RpmMetadataType:                reflect.TypeOf(RpmMetadata{}),
 	RustCargoPackageMetadataType:   reflect.TypeOf(CargoPackageMetadata{}),
