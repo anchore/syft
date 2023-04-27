@@ -40,24 +40,10 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 	}
 
 	for _, l := range *c.Licenses {
-		var url string
-		// priority: Expression -> ID -> Name
-		licenseValue := l.Expression
-		if l.License != nil {
-			url = l.License.URL
-			switch {
-			case l.License.ID != "":
-				licenseValue = l.License.ID
-			case l.License.Name != "":
-				licenseValue = l.License.Name
-			}
-		}
-
-		if licenseValue == "" {
+		if l.License == nil {
 			continue
 		}
-
-		licenses = append(licenses, pkg.NewLicenseFromURL(licenseValue, url))
+		licenses = append(licenses, pkg.NewLicenseFromURL(l.License.Name, l.License.URL))
 	}
 
 	return licenses
