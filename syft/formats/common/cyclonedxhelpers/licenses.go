@@ -10,18 +10,13 @@ import (
 func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	lc := cyclonedx.Licenses{}
 	for _, l := range p.Licenses {
-		if l.SPDXExpression != "" {
-			lc = append(lc, cyclonedx.LicenseChoice{
-				Expression: l.SPDXExpression,
-			})
-		} else {
-			// not found so append the licenseName as is
-			lc = append(lc, cyclonedx.LicenseChoice{
-				License: &cyclonedx.License{
-					Name: l.Value,
-				},
-			})
-		}
+		// not found so append the licenseName as is
+		lc = append(lc, cyclonedx.LicenseChoice{
+			License: &cyclonedx.License{
+				Name: l.Value,
+				URL:  l.URL,
+			},
+		})
 	}
 
 	if len(lc) > 0 {
