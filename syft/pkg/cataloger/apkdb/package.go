@@ -17,7 +17,7 @@ func newPackage(d parsedData, release *linux.Release, dbLocation source.Location
 		Version:      d.Version,
 		Locations:    source.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Licenses:     pkg.NewLicensesFromLocation(dbLocation, licenseStrings...),
-		PURL:         packageURL(d, release),
+		PURL:         packageURL(d.ApkMetadata, release),
 		Type:         pkg.ApkPkg,
 		MetadataType: pkg.ApkMetadataType,
 		Metadata:     d.ApkMetadata,
@@ -29,7 +29,7 @@ func newPackage(d parsedData, release *linux.Release, dbLocation source.Location
 }
 
 // packageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
-func packageURL(m parsedData, distro *linux.Release) string {
+func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
 	if distro == nil {
 		return ""
 	}

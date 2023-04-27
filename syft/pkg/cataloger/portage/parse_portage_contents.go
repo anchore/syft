@@ -49,7 +49,6 @@ func parsePortageContents(resolver source.FileResolver, _ *generic.Environment, 
 			Files: make([]pkg.PortageFileRecord, 0),
 		},
 	}
-	// TODO: update this to use latest license parsing and validation tooling
 	addLicenses(resolver, reader.Location, &p)
 	addSize(resolver, reader.Location, &p)
 	addFiles(resolver, reader.Location, &p)

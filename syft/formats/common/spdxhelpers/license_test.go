@@ -78,7 +78,7 @@ func Test_License(t *testing.T) {
 				declared  string
 			}{
 				concluded: "NOASSERTION",
-				declared:  "LicenseRef-one-thing-first AND LicenseRef-two-things----second AND LicenseRef-MIT",
+				declared:  "LicenseRef-one-thing-first AND LicenseRef-two-things----second AND MIT",
 			},
 		},
 		{

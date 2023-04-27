@@ -191,10 +191,7 @@ func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 }
 
 func parsePkgFiles(pkgFields map[string]interface{}) (*parsedData, error) {
-	var (
-		entry parsedData
-	)
-
+	var entry parsedData
 	if err := mapstructure.Decode(pkgFields, &entry); err != nil {
 		return nil, fmt.Errorf("unable to parse ALPM metadata: %w", err)
 	}
