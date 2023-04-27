@@ -13,18 +13,21 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	// and use that rather than individual licenses
 	lc := cyclonedx.Licenses{}
 	for _, l := range p.Licenses {
-		var id string
 		if value, exists := spdxlicense.ID(l.SPDXExpression); exists {
-			id = value
+			lc = append(lc, cyclonedx.LicenseChoice{
+				License: &cyclonedx.License{
+					ID:  value,
+					URL: l.URL,
+				},
+			})
+		} else {
+			lc = append(lc, cyclonedx.LicenseChoice{
+				License: &cyclonedx.License{
+					Name: l.Value,
+					URL:  l.URL,
+				},
+			})
 		}
-
-		lc = append(lc, cyclonedx.LicenseChoice{
-			License: &cyclonedx.License{
-				ID:   id,
-				Name: l.Value,
-				URL:  l.URL,
-			},
-		})
 	}
 
 	if len(lc) > 0 {
@@ -43,7 +46,16 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 		if l.License == nil {
 			continue
 		}
-		licenses = append(licenses, pkg.NewLicenseFromURL(l.License.Name, l.License.URL))
+		// these fields are mutually exclusive in the spec
+		switch {
+		case l.License.ID != "":
+			licenses = append(licenses, pkg.NewLicenseFromURL(l.License.ID, l.License.URL))
+		case l.License.Name != "":
+			licenses = append(licenses, pkg.NewLicenseFromURL(l.License.Name, l.License.URL))
+		case l.Expression != "":
+			licenses = append(licenses, pkg.NewLicenseFromURL(l.Expression, l.License.URL))
+		default:
+		}
 	}
 
 	return licenses

@@ -41,8 +41,7 @@ func Test_encodeLicense(t *testing.T) {
 			expected: &cyclonedx.Licenses{
 				{
 					License: &cyclonedx.License{
-						ID:   "MIT",
-						Name: "mit",
+						ID: "MIT",
 					},
 				},
 			},
@@ -64,14 +63,12 @@ func Test_encodeLicense(t *testing.T) {
 			expected: &cyclonedx.Licenses{
 				{
 					License: &cyclonedx.License{
-						ID:   "MIT",
-						Name: "mit",
+						ID: "MIT",
 					},
 				},
 				{
 					License: &cyclonedx.License{
-						ID:   "GPL-3.0-only",
-						Name: "gpl-3.0-only",
+						ID: "GPL-3.0-only",
 					},
 				},
 			},
@@ -122,7 +119,6 @@ func TestDecodeLicenses(t *testing.T) {
 						License: &cyclonedx.License{
 							ID: "MIT",
 						},
-						Expression: "MIT",
 					},
 				},
 			},
