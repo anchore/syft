@@ -4,6 +4,7 @@ package spdxhelpers
 import (
 	"crypto/sha1"
 	"fmt"
+	"path"
 	"sort"
 	"strings"
 	"time"
@@ -131,13 +132,30 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 }
 
 func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
+	maxLen := 40
 	id := ""
-	if p, ok := identifiable.(pkg.Package); ok {
-		id = SanitizeElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.ID()))
-	} else {
+	switch it := identifiable.(type) {
+	case pkg.Package:
+		id = SanitizeElementID(fmt.Sprintf("Package-%s-%s-%s", it.Type, it.Name, it.ID()))
+	case source.Coordinates:
+		p := ""
+		parts := strings.Split(it.RealPath, "/")
+		for i := len(parts); i > 0; i-- {
+			part := parts[i-1]
+			if len(part) == 0 {
+				continue
+			}
+			if i < len(parts) && len(p)+len(part)+3 > maxLen {
+				p = "..." + p
+				break
+			}
+			p = path.Join(part, p)
+		}
+		id = SanitizeElementID(fmt.Sprintf("File-%s-%s", p, it.ID()))
+	default:
 		id = string(identifiable.ID())
 	}
-	// NOTE: the spdx libraries prepend SPDXRef-, so we don't do it here
+	// NOTE: the spdx library prepend SPDXRef-, so we don't do it here
 	return spdx.ElementID(id)
 }
 
