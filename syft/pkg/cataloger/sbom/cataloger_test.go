@@ -278,8 +278,9 @@ func Test_parseSBOM(t *testing.T) {
 					Type:  license.Declared,
 				},
 				{
-					Value: "GPL2+",
-					Type:  license.Declared,
+					Value:          "GPL2+",
+					SPDXExpression: "GPL-2.0-or-later",
+					Type:           license.Declared,
 				},
 			},
 			FoundBy: "sbom-cataloger",

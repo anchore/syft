@@ -24,7 +24,7 @@ func TestAlpmCataloger(t *testing.T) {
 			Licenses: []pkg.License{
 				{
 					Value:          "LGPL3",
-					SPDXExpression: "",
+					SPDXExpression: "LGPL-3.0-only",
 					Type:           license.Declared,
 					Location:       &dbLocation,
 				},

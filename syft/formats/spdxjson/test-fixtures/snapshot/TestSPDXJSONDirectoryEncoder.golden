@@ -3,19 +3,19 @@
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "/some/path",
- "documentNamespace":"",
+ "documentNamespace": "https://anchore.com/syft/dir/some/path-afe11355-9222-421b-bbb1-df3792222872",
  "creationInfo": {
-  "licenseListVersion":"",
+  "licenseListVersion": "3.20",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created":""
+  "created": "2023-04-27T13:57:38Z"
  },
  "packages": [
   {
    "name": "package-1",
-   "SPDXID": "SPDXRef-Package-python-package-1-ed5945af814b9a95",
+   "SPDXID": "SPDXRef-Package-python-package-1-3fdbdcde4d17d261",
    "versionInfo": "1.0.1",
    "downloadLocation": "NOASSERTION",
    "sourceInfo": "acquired package info from installed python package manifest file: /some/path/pkg1",

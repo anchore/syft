@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.4" redacted version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:073f59e9-b1f1-42b9-a0c7-20fe317466de" version="1">
   <metadata>
-    <timestamp>redacted</timestamp>
+    <timestamp>2023-04-27T10:04:54-04:00</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -9,12 +9,12 @@
         <version>v0.42.0-bogus</version>
       </tool>
     </tools>
-    <component type="file">
+    <component bom-ref="163686ac6e30c752" type="file">
       <name>/some/path</name>
     </component>
   </metadata>
   <components>
-    <component type="library">
+    <component bom-ref="3fdbdcde4d17d261" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>

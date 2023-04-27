@@ -19,18 +19,20 @@ func TestDpkgCataloger(t *testing.T) {
 			FoundBy: "dpkgdb-cataloger",
 			Licenses: []pkg.License{
 				{
-					Value:    "GPL-1",
-					Location: &licenseLocation,
-					Type:     license.Declared,
+					Value:          "GPL-1",
+					SPDXExpression: "GPL-1.0-only",
+					Location:       &licenseLocation,
+					Type:           license.Declared,
 				},
 				{
-					Value:    "GPL-2",
-					Location: &licenseLocation,
-					Type:     license.Declared,
+					Value:          "GPL-2",
+					SPDXExpression: "GPL-2.0-only",
+					Location:       &licenseLocation,
+					Type:           license.Declared,
 				},
 				{
 					Value:          "LGPL-2.1",
-					SPDXExpression: "LGPL-2.1",
+					SPDXExpression: "LGPL-2.1-only",
 					Location:       &licenseLocation,
 					Type:           license.Declared,
 				},

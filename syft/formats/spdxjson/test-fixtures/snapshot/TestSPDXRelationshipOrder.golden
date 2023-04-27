@@ -3,19 +3,19 @@
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "user-image-input",
- "documentNamespace":"",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-c20c2bcd-33a1-42cc-b3de-2c8cf5534d01",
  "creationInfo": {
-  "licenseListVersion":"",
+  "licenseListVersion": "3.20",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created":""
+  "created": "2023-04-27T13:57:38Z"
  },
  "packages": [
   {
    "name": "package-1",
-   "SPDXID": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
+   "SPDXID": "SPDXRef-Package-python-package-1-911cef0da9e28043",
    "versionInfo": "1.0.1",
    "downloadLocation": "NOASSERTION",
    "sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
@@ -152,32 +152,32 @@
  ],
  "relationships": [
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-911cef0da9e28043",
    "relatedSpdxElement": "SPDXRef-5265a4dde3edbf7c",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-911cef0da9e28043",
    "relatedSpdxElement": "SPDXRef-839d99ee67d9d174",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-911cef0da9e28043",
    "relatedSpdxElement": "SPDXRef-9c2f7510199b17f6",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-911cef0da9e28043",
    "relatedSpdxElement": "SPDXRef-c641caa71518099f",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-911cef0da9e28043",
    "relatedSpdxElement": "SPDXRef-c6f5b29dca12661f",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-ed77c5cb0567a1a6",
+   "spdxElementId": "SPDXRef-Package-python-package-1-911cef0da9e28043",
    "relatedSpdxElement": "SPDXRef-f9e49132a4b96ccd",
    "relationshipType": "CONTAINS"
   },
