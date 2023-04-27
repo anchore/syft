@@ -134,7 +134,7 @@ func Test_PackageURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := packageURL(test.metadata, &test.distro)
+			actual := packageURL(test.metadata.ApkMetadata, &test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)
