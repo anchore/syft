@@ -2,9 +2,11 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/anchore/syft/internal/log"
-	"github.com/mitchellh/hashstructure/v2"
 	"sort"
+
+	"github.com/mitchellh/hashstructure/v2"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 type LicenseSet struct {

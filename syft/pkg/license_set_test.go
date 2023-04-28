@@ -1,9 +1,11 @@
 package pkg
 
 import (
-	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestLicenseSet_Add(t *testing.T) {

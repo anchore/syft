@@ -1,8 +1,9 @@
 package pkg
 
 import (
-	"github.com/mitchellh/hashstructure/v2"
 	"sort"
+
+	"github.com/mitchellh/hashstructure/v2"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/license"
