@@ -2,11 +2,14 @@ package pkg
 
 import (
 	"github.com/mitchellh/hashstructure/v2"
+	"sort"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/source"
 )
+
+var _ sort.Interface = (*Licenses)(nil)
 
 type License struct {
 	Value          string           `json:"value"`
@@ -14,6 +17,42 @@ type License struct {
 	Type           license.Type     `json:"type"`
 	URL            string           `json:"url"`                // external sources
 	Location       *source.Location `json:"location,omitempty"` // on disk declaration
+}
+
+type Licenses []License
+
+func (l Licenses) Len() int {
+	return len(l)
+}
+
+func (l Licenses) Less(i, j int) bool {
+	if l[i].Value == l[j].Value {
+		if l[i].SPDXExpression == l[j].SPDXExpression {
+			if l[i].Type == l[j].Type {
+				if l[i].URL == l[j].URL {
+					if l[i].Location == nil && l[j].Location == nil {
+						return false
+					}
+					if l[i].Location == nil {
+						return true
+					}
+					if l[j].Location == nil {
+						return false
+					}
+					sl := source.Locations{*l[i].Location, *l[j].Location}
+					return sl.Less(0, 1)
+				}
+				return l[i].URL < l[j].URL
+			}
+			return l[i].Type < l[j].Type
+		}
+		return l[i].SPDXExpression < l[j].SPDXExpression
+	}
+	return l[i].Value < l[j].Value
+}
+
+func (l Licenses) Swap(i, j int) {
+	l[i], l[j] = l[j], l[i]
 }
 
 func NewLicense(value string) License {
