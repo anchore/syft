@@ -12,7 +12,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-// TODO: add new license struct to this test
 func TestUnmarshalPackageGolang(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -32,7 +31,14 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				    "path": "/Users/hal/go/bin/syft"
 				  }
 				],
-				"licenses": [],
+				"licenses": [
+				  {
+				   "value": "MIT",
+				   "spdxExpression": "MIT",
+				   "type": "declared",
+				   "url": ""
+				  }
+				],
 				"language": "go",
 				"cpes": [],
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0",
@@ -63,7 +69,14 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				    "path": "/Users/hal/go/bin/syft"
 				  }
 				],
-				"licenses": [],
+				"licenses": [
+				  {
+				    "value": "MIT",
+					"spdxExpression": "MIT",
+					"type": "declared",
+					"url": ""
+				  }
+				],
 				"language": "go",
 				"cpes": [],
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0"
