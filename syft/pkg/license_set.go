@@ -61,7 +61,6 @@ func (s *LicenseSet) Add(licenses ...License) {
 		if id, _, v, err := s.get(l); v == nil && err == nil {
 			// doesn't exist, add it
 			s.set[id] = append(s.set[id], l)
-			sort.Sort(s.set[id])
 		} else if err != nil {
 			log.Debugf("license set failed to add license %#v: %+v", l, err)
 		}
