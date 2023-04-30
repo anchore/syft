@@ -55,14 +55,8 @@ func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, s
 		testutils.UpdateGoldenFileContents(t, actual)
 	}
 
-	var expected = testutils.GetGoldenFileContents(t)
-
-	// remove dynamic values, which should be tested independently
-	redactors = append(redactors, carriageRedactor)
-	for _, r := range redactors {
-		actual = r(actual)
-		expected = r(expected)
-	}
+	actual = redact(actual, redactors...)
+	expected := redact(testutils.GetGoldenFileContents(t), redactors...)
 
 	if json {
 		require.JSONEq(t, string(expected), string(actual))
@@ -86,14 +80,8 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom s
 		testutils.UpdateGoldenFileContents(t, actual)
 	}
 
-	var expected = testutils.GetGoldenFileContents(t)
-
-	// remove dynamic values, which should be tested independently
-	redactors = append(redactors, carriageRedactor)
-	for _, r := range redactors {
-		actual = r(actual)
-		expected = r(expected)
-	}
+	actual = redact(actual, redactors...)
+	expected := redact(testutils.GetGoldenFileContents(t), redactors...)
 
 	if json {
 		require.JSONEq(t, string(expected), string(actual))
@@ -108,7 +96,7 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom s
 
 func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBOM {
 	t.Helper()
-	catalog := pkg.NewCatalog()
+	catalog := pkg.NewCollection()
 	var cfg imageCfg
 	var img *image.Image
 	for _, opt := range options {
@@ -160,7 +148,7 @@ func carriageRedactor(s []byte) []byte {
 	return []byte(msg)
 }
 
-func populateImageCatalog(catalog *pkg.Catalog, img *image.Image) {
+func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
 	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
 
@@ -236,8 +224,39 @@ func DirectoryInput(t testing.TB) sbom.SBOM {
 	}
 }
 
-func newDirectoryCatalog() *pkg.Catalog {
-	catalog := pkg.NewCatalog()
+func DirectoryInputWithAuthorField(t testing.TB) sbom.SBOM {
+	catalog := newDirectoryCatalogWithAuthorField()
+
+	src, err := source.NewFromDirectory("/some/path")
+	assert.NoError(t, err)
+
+	return sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			PackageCatalog: catalog,
+			LinuxDistribution: &linux.Release{
+				PrettyName: "debian",
+				Name:       "debian",
+				ID:         "debian",
+				IDLike:     []string{"like!"},
+				Version:    "1.2.3",
+				VersionID:  "1.2.3",
+			},
+		},
+		Source: src.Metadata,
+		Descriptor: sbom.Descriptor{
+			Name:    "syft",
+			Version: "v0.42.0-bogus",
+			// the application configuration should be persisted here, however, we do not want to import
+			// the application configuration in this package (it's reserved only for ingestion by the cmd package)
+			Configuration: map[string]string{
+				"config-key": "config-value",
+			},
+		},
+	}
+}
+
+func newDirectoryCatalog() *pkg.Collection {
+	catalog := pkg.NewCollection()
 
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
@@ -287,6 +306,58 @@ func newDirectoryCatalog() *pkg.Catalog {
 	return catalog
 }
 
+func newDirectoryCatalogWithAuthorField() *pkg.Collection {
+	catalog := pkg.NewCollection()
+
+	// populate catalog with test data
+	catalog.Add(pkg.Package{
+		Name:    "package-1",
+		Version: "1.0.1",
+		Type:    pkg.PythonPkg,
+		FoundBy: "the-cataloger-1",
+		Locations: source.NewLocationSet(
+			source.NewLocation("/some/path/pkg1"),
+		),
+		Language:     pkg.Python,
+		MetadataType: pkg.PythonPackageMetadataType,
+		Licenses:     []string{"MIT"},
+		Metadata: pkg.PythonPackageMetadata{
+			Name:    "package-1",
+			Version: "1.0.1",
+			Author:  "test-author",
+			Files: []pkg.PythonFileRecord{
+				{
+					Path: "/some/path/pkg1/dependencies/foo",
+				},
+			},
+		},
+		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		},
+	})
+	catalog.Add(pkg.Package{
+		Name:    "package-2",
+		Version: "2.0.1",
+		Type:    pkg.DebPkg,
+		FoundBy: "the-cataloger-2",
+		Locations: source.NewLocationSet(
+			source.NewLocation("/some/path/pkg1"),
+		),
+		MetadataType: pkg.DpkgMetadataType,
+		Metadata: pkg.DpkgMetadata{
+			Package: "package-2",
+			Version: "2.0.1",
+		},
+		PURL: "pkg:deb/debian/package-2@2.0.1",
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+		},
+	})
+
+	return catalog
+}
+
 //nolint:gosec
 func AddSampleFileRelationships(s *sbom.SBOM) {
 	catalog := s.Artifacts.PackageCatalog.Sorted()
@@ -307,4 +378,13 @@ func AddSampleFileRelationships(s *sbom.SBOM) {
 			Type: artifact.ContainsRelationship,
 		})
 	}
+}
+
+// remove dynamic values, which should be tested independently
+func redact(b []byte, redactors ...redactor) []byte {
+	redactors = append(redactors, carriageRedactor)
+	for _, r := range redactors {
+		b = r(b)
+	}
+	return b
 }

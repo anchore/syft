@@ -140,10 +140,10 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 	return spdx.ElementID(id)
 }
 
-// packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
+// packages populates all Package Information from the package Collection (see https://spdx.github.io/spdx-spec/3-package-information/)
 //
 //nolint:funlen
-func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) {
+func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Package) {
 	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
 		id := toSPDXID(p)
@@ -515,7 +515,7 @@ func toFileTypes(metadata *file.Metadata) (ty []string) {
 	return ty
 }
 
-func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
+func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	licenses := map[string]bool{}
 	for _, p := range catalog.Sorted() {
 		for _, license := range parseLicenses(p.Licenses) {

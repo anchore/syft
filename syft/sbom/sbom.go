@@ -20,7 +20,7 @@ type SBOM struct {
 }
 
 type Artifacts struct {
-	PackageCatalog    *pkg.Catalog
+	PackageCatalog    *pkg.Collection
 	FileMetadata      map[file.Coordinates]file.Metadata
 	FileDigests       map[file.Coordinates][]file.Digest
 	FileContents      map[file.Coordinates]string

@@ -4,7 +4,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 )
 
-func RelationshipsEvidentBy(catalog *Catalog) []artifact.Relationship {
+func RelationshipsEvidentBy(catalog *Collection) []artifact.Relationship {
 	var edges []artifact.Relationship
 	for _, p := range catalog.Sorted() {
 		for _, l := range p.Locations.ToSlice() {

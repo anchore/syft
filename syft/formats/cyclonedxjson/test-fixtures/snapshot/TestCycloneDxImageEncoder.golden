@@ -1,10 +1,11 @@
 {
+  "$schema": "http://cyclonedx.org/schema/bom-1.4.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:542fc1a1-81ac-4b76-b9e2-8e6b9d8c840a",
+  "serialNumber": "urn:uuid:redacted",
   "version": 1,
   "metadata": {
-    "timestamp": "2022-12-22T18:33:51-05:00",
+    "timestamp": "timestamp:redacted",
     "tools": [
       {
         "vendor": "anchore",
@@ -13,15 +14,15 @@
       }
     ],
     "component": {
-      "bom-ref": "ffd645a093c0fe70",
+      "bom-ref": "redacted",
       "type": "container",
       "name": "user-image-input",
-      "version": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
+      "version": "sha256:redacted"
     }
   },
   "components": [
     {
-      "bom-ref": "66ba429119b8bec6",
+      "bom-ref": "redacted",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
@@ -53,7 +54,7 @@
         },
         {
           "name": "syft:location:0:layerID",
-          "value": "sha256:62058900d4ce269c900160b8dd255fe310c3a459dda236d041102fa070f84406"
+          "value": "sha256:redacted"
         },
         {
           "name": "syft:location:0:path",
@@ -62,7 +63,7 @@
       ]
     },
     {
-      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=958443e2d9304af4",
+      "bom-ref": "redacted",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",
@@ -83,7 +84,7 @@
         },
         {
           "name": "syft:location:0:layerID",
-          "value": "sha256:623ad97366f39ae279f1925673cdacb4851ddf2e3266f04e63010ec080a098c1"
+          "value": "sha256:redacted"
         },
         {
           "name": "syft:location:0:path",

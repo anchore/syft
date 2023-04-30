@@ -10,33 +10,8 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 )
 
-type orderedIDSet struct {
-	slice []artifact.ID
-}
-
-func (s *orderedIDSet) add(ids ...artifact.ID) {
-loopNewIDs:
-	for _, newID := range ids {
-		for _, existingID := range s.slice {
-			if existingID == newID {
-				continue loopNewIDs
-			}
-		}
-		s.slice = append(s.slice, newID)
-	}
-}
-
-func (s *orderedIDSet) delete(id artifact.ID) {
-	for i, existingID := range s.slice {
-		if existingID == id {
-			s.slice = append(s.slice[:i], s.slice[i+1:]...)
-			return
-		}
-	}
-}
-
-// Catalog represents a collection of Packages.
-type Catalog struct {
+// Collection represents a collection of Packages.
+type Collection struct {
 	byID      map[artifact.ID]Package
 	idsByName map[string]orderedIDSet
 	idsByType map[Type]orderedIDSet
@@ -44,9 +19,9 @@ type Catalog struct {
 	lock      sync.RWMutex
 }
 
-// NewCatalog returns a new empty Catalog
-func NewCatalog(pkgs ...Package) *Catalog {
-	catalog := Catalog{
+// NewCollection returns a new empty Collection
+func NewCollection(pkgs ...Package) *Collection {
+	catalog := Collection{
 		byID:      make(map[artifact.ID]Package),
 		idsByName: make(map[string]orderedIDSet),
 		idsByType: make(map[Type]orderedIDSet),
@@ -61,12 +36,12 @@ func NewCatalog(pkgs ...Package) *Catalog {
 }
 
 // PackageCount returns the total number of packages that have been added.
-func (c *Catalog) PackageCount() int {
+func (c *Collection) PackageCount() int {
 	return len(c.byID)
 }
 
 // Package returns the package with the given ID.
-func (c *Catalog) Package(id artifact.ID) *Package {
+func (c *Collection) Package(id artifact.ID) *Package {
 	v, exists := c.byID[id]
 	if !exists {
 		return nil
@@ -81,17 +56,17 @@ func (c *Catalog) Package(id artifact.ID) *Package {
 }
 
 // PackagesByPath returns all packages that were discovered from the given path.
-func (c *Catalog) PackagesByPath(path string) []Package {
+func (c *Collection) PackagesByPath(path string) []Package {
 	return c.Packages(c.idsByPath[path].slice)
 }
 
 // PackagesByName returns all packages that were discovered with a matching name.
-func (c *Catalog) PackagesByName(name string) []Package {
+func (c *Collection) PackagesByName(name string) []Package {
 	return c.Packages(c.idsByName[name].slice)
 }
 
 // Packages returns all packages for the given ID.
-func (c *Catalog) Packages(ids []artifact.ID) (result []Package) {
+func (c *Collection) Packages(ids []artifact.ID) (result []Package) {
 	for _, i := range ids {
 		p, exists := c.byID[i]
 		if exists {
@@ -102,7 +77,7 @@ func (c *Catalog) Packages(ids []artifact.ID) (result []Package) {
 }
 
 // Add n packages to the catalog.
-func (c *Catalog) Add(pkgs ...Package) {
+func (c *Collection) Add(pkgs ...Package) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -129,26 +104,26 @@ func (c *Catalog) Add(pkgs ...Package) {
 	}
 }
 
-func (c *Catalog) addToIndex(p Package) {
+func (c *Collection) addToIndex(p Package) {
 	c.byID[p.id] = p
 	c.addNameToIndex(p)
 	c.addTypeToIndex(p)
 	c.addPathsToIndex(p)
 }
 
-func (c *Catalog) addNameToIndex(p Package) {
+func (c *Collection) addNameToIndex(p Package) {
 	nameIndex := c.idsByName[p.Name]
 	nameIndex.add(p.id)
 	c.idsByName[p.Name] = nameIndex
 }
 
-func (c *Catalog) addTypeToIndex(p Package) {
+func (c *Collection) addTypeToIndex(p Package) {
 	typeIndex := c.idsByType[p.Type]
 	typeIndex.add(p.id)
 	c.idsByType[p.Type] = typeIndex
 }
 
-func (c *Catalog) addPathsToIndex(p Package) {
+func (c *Collection) addPathsToIndex(p Package) {
 	observedPaths := internal.NewStringSet()
 	for _, l := range p.Locations.ToSlice() {
 		if l.RealPath != "" && !observedPaths.Contains(l.RealPath) {
@@ -162,13 +137,13 @@ func (c *Catalog) addPathsToIndex(p Package) {
 	}
 }
 
-func (c *Catalog) addPathToIndex(id artifact.ID, path string) {
+func (c *Collection) addPathToIndex(id artifact.ID, path string) {
 	pathIndex := c.idsByPath[path]
 	pathIndex.add(id)
 	c.idsByPath[path] = pathIndex
 }
 
-func (c *Catalog) Delete(ids ...artifact.ID) {
+func (c *Collection) Delete(ids ...artifact.ID) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -185,19 +160,19 @@ func (c *Catalog) Delete(ids ...artifact.ID) {
 	}
 }
 
-func (c *Catalog) deleteNameFromIndex(p Package) {
+func (c *Collection) deleteNameFromIndex(p Package) {
 	nameIndex := c.idsByName[p.Name]
 	nameIndex.delete(p.id)
 	c.idsByName[p.Name] = nameIndex
 }
 
-func (c *Catalog) deleteTypeFromIndex(p Package) {
+func (c *Collection) deleteTypeFromIndex(p Package) {
 	typeIndex := c.idsByType[p.Type]
 	typeIndex.delete(p.id)
 	c.idsByType[p.Type] = typeIndex
 }
 
-func (c *Catalog) deletePathsFromIndex(p Package) {
+func (c *Collection) deletePathsFromIndex(p Package) {
 	observedPaths := internal.NewStringSet()
 	for _, l := range p.Locations.ToSlice() {
 		if l.RealPath != "" && !observedPaths.Contains(l.RealPath) {
@@ -211,7 +186,7 @@ func (c *Catalog) deletePathsFromIndex(p Package) {
 	}
 }
 
-func (c *Catalog) deletePathFromIndex(id artifact.ID, path string) {
+func (c *Collection) deletePathFromIndex(id artifact.ID, path string) {
 	pathIndex := c.idsByPath[path]
 	pathIndex.delete(id)
 	if len(pathIndex.slice) == 0 {
@@ -222,7 +197,7 @@ func (c *Catalog) deletePathFromIndex(id artifact.ID, path string) {
 }
 
 // Enumerate all packages for the given type(s), enumerating all packages if no type is specified.
-func (c *Catalog) Enumerate(types ...Type) <-chan Package {
+func (c *Collection) Enumerate(types ...Type) <-chan Package {
 	channel := make(chan Package)
 	go func() {
 		defer close(channel)
@@ -257,7 +232,7 @@ func (c *Catalog) Enumerate(types ...Type) <-chan Package {
 
 // Sorted enumerates all packages for the given types sorted by package name. Enumerates all packages if no type
 // is specified.
-func (c *Catalog) Sorted(types ...Type) (pkgs []Package) {
+func (c *Collection) Sorted(types ...Type) (pkgs []Package) {
 	for p := range c.Enumerate(types...) {
 		pkgs = append(pkgs, p)
 	}
@@ -265,4 +240,29 @@ func (c *Catalog) Sorted(types ...Type) (pkgs []Package) {
 	Sort(pkgs)
 
 	return pkgs
+}
+
+type orderedIDSet struct {
+	slice []artifact.ID
+}
+
+func (s *orderedIDSet) add(ids ...artifact.ID) {
+loopNewIDs:
+	for _, newID := range ids {
+		for _, existingID := range s.slice {
+			if existingID == newID {
+				continue loopNewIDs
+			}
+		}
+		s.slice = append(s.slice, newID)
+	}
+}
+
+func (s *orderedIDSet) delete(id artifact.ID) {
+	for i, existingID := range s.slice {
+		if existingID == id {
+			s.slice = append(s.slice[:i], s.slice[i+1:]...)
+			return
+		}
+	}
 }

@@ -261,6 +261,8 @@ Which would produce output like:
 
 Syft also includes a vast array of utility templating functions from [sprig](http://masterminds.github.io/sprig/) apart from the default Golang [text/template](https://pkg.go.dev/text/template#hdr-Functions) to allow users to customize the output format.
 
+Lastly, Syft has custom templating functions defined in `./syft/format/template/encoder.go` to help parse the passed-in JSON structs.
+
 ## Multiple outputs
 
 Syft can also output _multiple_ files in differing formats by appending

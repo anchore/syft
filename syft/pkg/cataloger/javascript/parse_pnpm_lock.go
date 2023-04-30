@@ -3,6 +3,7 @@ package javascript
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 
@@ -16,7 +17,8 @@ import (
 var _ generic.Parser = parsePnpmLock
 
 type pnpmLockYaml struct {
-	Dependencies map[string]string `json:"dependencies"`
+	Dependencies map[string]string      `json:"dependencies"`
+	Packages     map[string]interface{} `json:"packages"`
 }
 
 func parsePnpmLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -33,6 +35,19 @@ func parsePnpmLock(resolver file.Resolver, _ *generic.Environment, reader file.L
 	}
 
 	for name, version := range lockFile.Dependencies {
+		pkgs = append(pkgs, newPnpmPackage(resolver, reader.Location, name, version))
+	}
+
+	// parse packages from packages section of pnpm-lock.yaml
+	for nameVersion := range lockFile.Packages {
+		nameVersionSplit := strings.Split(strings.TrimPrefix(nameVersion, "/"), "/")
+
+		// last element in split array is version
+		version := nameVersionSplit[len(nameVersionSplit)-1]
+
+		// construct name from all array items other than last item (version)
+		name := strings.Join(nameVersionSplit[:len(nameVersionSplit)-1], "/")
+
 		pkgs = append(pkgs, newPnpmPackage(resolver, reader.Location, name, version))
 	}
 

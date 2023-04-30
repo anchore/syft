@@ -33,7 +33,7 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 	s := &sbom.SBOM{
 		Source: src,
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkg.NewCatalog(),
+			PackageCatalog:    pkg.NewCollection(),
 			FileMetadata:      map[file.Coordinates]file.Metadata{},
 			FileDigests:       map[file.Coordinates][]file.Digest{},
 			LinuxDistribution: findLinuxReleaseByPURL(doc),
