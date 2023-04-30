@@ -1,4 +1,4 @@
-package source
+package resolver
 
 import (
 	"errors"
@@ -20,30 +20,30 @@ import (
 	"github.com/anchore/syft/syft/event"
 )
 
-type pathIndexVisitor func(string, os.FileInfo, error) error
+type PathIndexVisitor func(string, os.FileInfo, error) error
 
 type directoryIndexer struct {
 	path              string
 	base              string
-	pathIndexVisitors []pathIndexVisitor
+	pathIndexVisitors []PathIndexVisitor
 	errPaths          map[string]error
 	tree              filetree.ReadWriter
 	index             filetree.Index
 }
 
-func newDirectoryIndexer(path, base string, visitors ...pathIndexVisitor) *directoryIndexer {
+func newDirectoryIndexer(path, base string, visitors ...PathIndexVisitor) *directoryIndexer {
 	i := &directoryIndexer{
 		path:              path,
 		base:              base,
 		tree:              filetree.New(),
 		index:             filetree.NewIndex(),
-		pathIndexVisitors: append([]pathIndexVisitor{requireFileInfo, disallowByFileType, disallowUnixSystemRuntimePath}, visitors...),
+		pathIndexVisitors: append([]PathIndexVisitor{requireFileInfo, disallowByFileType, disallowUnixSystemRuntimePath}, visitors...),
 		errPaths:          make(map[string]error),
 	}
 
 	// these additional stateful visitors should be the first thing considered when walking / indexing
 	i.pathIndexVisitors = append(
-		[]pathIndexVisitor{
+		[]PathIndexVisitor{
 			i.disallowRevisitingVisitor,
 			i.disallowFileAccessErr,
 		},
@@ -181,7 +181,7 @@ func (r *directoryIndexer) indexPath(path string, info os.FileInfo, err error) (
 
 func (r *directoryIndexer) disallowFileAccessErr(path string, _ os.FileInfo, err error) error {
 	if r.isFileAccessErr(path, err) {
-		return errSkipPath
+		return ErrSkipPath
 	}
 	return nil
 }
@@ -311,7 +311,7 @@ func (r *directoryIndexer) disallowRevisitingVisitor(path string, _ os.FileInfo,
 			// signal to walk() that we should skip this directory entirely
 			return fs.SkipDir
 		}
-		return errSkipPath
+		return ErrSkipPath
 	}
 	return nil
 }
@@ -330,7 +330,7 @@ func disallowByFileType(_ string, info os.FileInfo, _ error) error {
 	}
 	switch file.TypeFromMode(info.Mode()) {
 	case file.TypeCharacterDevice, file.TypeSocket, file.TypeBlockDevice, file.TypeFIFO, file.TypeIrregular:
-		return errSkipPath
+		return ErrSkipPath
 		// note: symlinks that point to these files may still get by.
 		// We handle this later in processing to help prevent against infinite links traversal.
 	}
@@ -340,7 +340,7 @@ func disallowByFileType(_ string, info os.FileInfo, _ error) error {
 
 func requireFileInfo(_ string, info os.FileInfo, _ error) error {
 	if info == nil {
-		return errSkipPath
+		return ErrSkipPath
 	}
 	return nil
 }

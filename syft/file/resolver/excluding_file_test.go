@@ -1,4 +1,4 @@
-package source
+package resolver
 
 import (
 	"io"
@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/file"
 )
 
 func TestExcludingResolver(t *testing.T) {
@@ -54,7 +56,7 @@ func TestExcludingResolver(t *testing.T) {
 			resolver := &mockResolver{
 				locations: test.locations,
 			}
-			er := NewExcludingResolver(resolver, test.excludeFn)
+			er := NewExcluding(resolver, test.excludeFn)
 
 			locations, _ := er.FilesByPath()
 			assert.ElementsMatch(t, locationPaths(locations), test.expected)
@@ -65,7 +67,7 @@ func TestExcludingResolver(t *testing.T) {
 			locations, _ = er.FilesByMIMEType()
 			assert.ElementsMatch(t, locationPaths(locations), test.expected)
 
-			locations = []Location{}
+			locations = []file.Location{}
 
 			channel := er.AllLocations()
 			for location := range channel {
@@ -77,25 +79,25 @@ func TestExcludingResolver(t *testing.T) {
 
 			for _, path := range diff {
 				assert.False(t, er.HasPath(path))
-				c, err := er.FileContentsByLocation(NewLocation(path))
+				c, err := er.FileContentsByLocation(file.NewLocation(path))
 				assert.Nil(t, c)
 				assert.Error(t, err)
-				m, err := er.FileMetadataByLocation(NewLocation(path))
+				m, err := er.FileMetadataByLocation(file.NewLocation(path))
 				assert.Empty(t, m.LinkDestination)
 				assert.Error(t, err)
-				l := er.RelativeFileByPath(NewLocation(""), path)
+				l := er.RelativeFileByPath(file.NewLocation(""), path)
 				assert.Nil(t, l)
 			}
 
 			for _, path := range test.expected {
 				assert.True(t, er.HasPath(path))
-				c, err := er.FileContentsByLocation(NewLocation(path))
+				c, err := er.FileContentsByLocation(file.NewLocation(path))
 				assert.NotNil(t, c)
 				assert.Nil(t, err)
-				m, err := er.FileMetadataByLocation(NewLocation(path))
+				m, err := er.FileMetadataByLocation(file.NewLocation(path))
 				assert.NotEmpty(t, m.LinkDestination)
 				assert.Nil(t, err)
-				l := er.RelativeFileByPath(NewLocation(""), path)
+				l := er.RelativeFileByPath(file.NewLocation(""), path)
 				assert.NotNil(t, l)
 			}
 		})
@@ -117,7 +119,7 @@ func difference(a, b []string) []string {
 	return diff
 }
 
-func locationPaths(locations []Location) []string {
+func locationPaths(locations []file.Location) []string {
 	paths := []string{}
 	for _, l := range locations {
 		paths = append(paths, l.RealPath)
@@ -129,20 +131,20 @@ type mockResolver struct {
 	locations []string
 }
 
-func (r *mockResolver) getLocations() ([]Location, error) {
-	out := []Location{}
+func (r *mockResolver) getLocations() ([]file.Location, error) {
+	out := []file.Location{}
 	for _, path := range r.locations {
-		out = append(out, NewLocation(path))
+		out = append(out, file.NewLocation(path))
 	}
 	return out, nil
 }
 
-func (r *mockResolver) FileContentsByLocation(_ Location) (io.ReadCloser, error) {
+func (r *mockResolver) FileContentsByLocation(_ file.Location) (io.ReadCloser, error) {
 	return io.NopCloser(strings.NewReader("Hello, world!")), nil
 }
 
-func (r *mockResolver) FileMetadataByLocation(_ Location) (FileMetadata, error) {
-	return FileMetadata{
+func (r *mockResolver) FileMetadataByLocation(_ file.Location) (file.Metadata, error) {
+	return file.Metadata{
 		LinkDestination: "MOCK",
 	}, nil
 }
@@ -151,37 +153,37 @@ func (r *mockResolver) HasPath(_ string) bool {
 	return true
 }
 
-func (r *mockResolver) FilesByPath(_ ...string) ([]Location, error) {
+func (r *mockResolver) FilesByPath(_ ...string) ([]file.Location, error) {
 	return r.getLocations()
 }
 
-func (r *mockResolver) FilesByGlob(_ ...string) ([]Location, error) {
+func (r *mockResolver) FilesByGlob(_ ...string) ([]file.Location, error) {
 	return r.getLocations()
 }
 
-func (r *mockResolver) FilesByMIMEType(_ ...string) ([]Location, error) {
+func (r *mockResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
 	return r.getLocations()
 }
 
-func (r *mockResolver) FilesByExtension(_ ...string) ([]Location, error) {
+func (r *mockResolver) FilesByExtension(_ ...string) ([]file.Location, error) {
 	return r.getLocations()
 }
 
-func (r *mockResolver) FilesByBasename(_ ...string) ([]Location, error) {
+func (r *mockResolver) FilesByBasename(_ ...string) ([]file.Location, error) {
 	return r.getLocations()
 }
 
-func (r *mockResolver) FilesByBasenameGlob(_ ...string) ([]Location, error) {
+func (r *mockResolver) FilesByBasenameGlob(_ ...string) ([]file.Location, error) {
 	return r.getLocations()
 }
 
-func (r *mockResolver) RelativeFileByPath(_ Location, path string) *Location {
-	l := NewLocation(path)
+func (r *mockResolver) RelativeFileByPath(_ file.Location, path string) *file.Location {
+	l := file.NewLocation(path)
 	return &l
 }
 
-func (r *mockResolver) AllLocations() <-chan Location {
-	c := make(chan Location)
+func (r *mockResolver) AllLocations() <-chan file.Location {
+	c := make(chan file.Location)
 	go func() {
 		defer close(c)
 		locations, _ := r.getLocations()

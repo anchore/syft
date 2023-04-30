@@ -1,4 +1,4 @@
-package source
+package resolver
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 func Test_NewDeferredResolver(t *testing.T) {
 	creatorCalled := false
 
-	deferredResolver := NewDeferredResolver(func() (file.Resolver, error) {
+	deferredResolver := NewDeferred(func() (file.Resolver, error) {
 		creatorCalled = true
 		return file.NewMockResolverForPaths(), nil
 	})

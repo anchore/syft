@@ -1,7 +1,7 @@
 //go:build !windows
 // +build !windows
 
-package source
+package resolver
 
 import (
 	"io"
@@ -26,7 +26,7 @@ func Test_UnindexedDirectoryResolver_Basic(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 
-	r := NewUnindexedDirectoryResolver(path.Join(wd, "test-fixtures"))
+	r := NewFromUnindexedDirectory(path.Join(wd, "test-fixtures"))
 	locations, err := r.FilesByGlob("image-symlinks/*")
 	require.NoError(t, err)
 	require.Len(t, locations, 5)
@@ -56,17 +56,18 @@ func Test_UnindexedDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {
 			},
 		},
 		{
-			name:         "should find a file from a relative path (root above cwd)",
+			name: "should find a file from a relative path (root above cwd)",
+			// TODO: refactor me! this test depends on the structure of the source dir not changing, which isn't great
 			relativeRoot: "../",
-			input:        "sbom/sbom.go",
+			input:        "resolver.go",
 			expected: []string{
-				"sbom/sbom.go",
+				"resolver.go",
 			},
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver := NewUnindexedDirectoryResolver(c.relativeRoot)
+			resolver := NewFromUnindexedDirectory(c.relativeRoot)
 
 			refs, err := resolver.FilesByPath(c.input)
 			require.NoError(t, err)
@@ -104,11 +105,12 @@ func Test_UnindexedDirectoryResolver_FilesByPath_absoluteRoot(t *testing.T) {
 			},
 		},
 		{
-			name:         "should find a file from a relative path (root above cwd)",
+			name: "should find a file from a relative path (root above cwd)",
+			// TODO: refactor me! this test depends on the structure of the source dir not changing, which isn't great
 			relativeRoot: "../",
-			input:        "sbom/sbom.go",
+			input:        "resolver.go",
 			expected: []string{
-				"sbom/sbom.go",
+				"resolver.go",
 			},
 		},
 	}
@@ -119,7 +121,7 @@ func Test_UnindexedDirectoryResolver_FilesByPath_absoluteRoot(t *testing.T) {
 			absRoot, err := filepath.Abs(c.relativeRoot)
 			require.NoError(t, err)
 
-			resolver := NewUnindexedDirectoryResolver(absRoot)
+			resolver := NewFromUnindexedDirectory(absRoot)
 			assert.NoError(t, err)
 
 			refs, err := resolver.FilesByPath(c.input)
@@ -180,7 +182,7 @@ func Test_UnindexedDirectoryResolver_FilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver := NewUnindexedDirectoryResolver(c.root)
+			resolver := NewFromUnindexedDirectory(c.root)
 
 			hasPath := resolver.HasPath(c.input)
 			if !c.forcePositiveHasPath {
@@ -227,7 +229,7 @@ func Test_UnindexedDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver := NewUnindexedDirectoryResolver("./test-fixtures")
+			resolver := NewFromUnindexedDirectory("./test-fixtures")
 			refs, err := resolver.FilesByPath(c.input...)
 			assert.NoError(t, err)
 
@@ -239,7 +241,7 @@ func Test_UnindexedDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 }
 
 func Test_UnindexedDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
-	resolver := NewUnindexedDirectoryResolver("./test-fixtures")
+	resolver := NewFromUnindexedDirectory("./test-fixtures")
 	refs, err := resolver.FilesByGlob("**/image-symlinks/file*")
 	assert.NoError(t, err)
 
@@ -247,14 +249,14 @@ func Test_UnindexedDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
 }
 
 func Test_UnindexedDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
-	resolver := NewUnindexedDirectoryResolver("./test-fixtures/image-symlinks")
+	resolver := NewFromUnindexedDirectory("./test-fixtures/image-symlinks")
 	refs, err := resolver.FilesByGlob("**/*.txt")
 	assert.NoError(t, err)
 	assert.Len(t, refs, 6)
 }
 
 func Test_UnindexedDirectoryResolver_FilesByGlobSingle(t *testing.T) {
-	resolver := NewUnindexedDirectoryResolver("./test-fixtures")
+	resolver := NewFromUnindexedDirectory("./test-fixtures")
 	refs, err := resolver.FilesByGlob("**/image-symlinks/*1.txt")
 	assert.NoError(t, err)
 
@@ -280,7 +282,7 @@ func Test_UnindexedDirectoryResolver_FilesByPath_ResolvesSymlinks(t *testing.T) 
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver := NewUnindexedDirectoryResolver("./test-fixtures/symlinks-simple")
+			resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-simple")
 
 			refs, err := resolver.FilesByPath(test.fixture)
 			require.NoError(t, err)
@@ -302,7 +304,7 @@ func Test_UnindexedDirectoryResolver_FilesByPath_ResolvesSymlinks(t *testing.T) 
 
 func Test_UnindexedDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	// let's make certain that "dev/place" is not ignored, since it is not "/dev/place"
-	resolver := NewUnindexedDirectoryResolver("test-fixtures/system_paths/target")
+	resolver := NewFromUnindexedDirectory("test-fixtures/system_paths/target")
 
 	// all paths should be found (non filtering matches a path)
 	locations, err := resolver.FilesByGlob("**/place")
@@ -327,7 +329,7 @@ func Test_UnindexedDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.
 }
 
 func Test_UnindexedDirectoryResover_IndexingNestedSymLinks(t *testing.T) {
-	resolver := NewUnindexedDirectoryResolver("./test-fixtures/symlinks-simple")
+	resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-simple")
 
 	// check that we can get the real path
 	locations, err := resolver.FilesByPath("./readme")
@@ -375,7 +377,7 @@ func Test_UnindexedDirectoryResover_IndexingNestedSymLinks(t *testing.T) {
 }
 
 func Test_UnindexedDirectoryResover_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
-	resolver := NewUnindexedDirectoryResolver("./test-fixtures/symlinks-multiple-roots/root")
+	resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-multiple-roots/root")
 
 	// check that we can get the real path
 	locations, err := resolver.FilesByPath("./readme")
@@ -392,7 +394,7 @@ func Test_UnindexedDirectoryResover_IndexingNestedSymLinksOutsideOfRoot(t *testi
 }
 
 func Test_UnindexedDirectoryResover_RootViaSymlink(t *testing.T) {
-	resolver := NewUnindexedDirectoryResolver("./test-fixtures/symlinked-root/nested/link-root")
+	resolver := NewFromUnindexedDirectory("./test-fixtures/symlinked-root/nested/link-root")
 
 	locations, err := resolver.FilesByPath("./file1.txt")
 	require.NoError(t, err)
@@ -411,12 +413,12 @@ func Test_UnindexedDirectoryResolver_FileContentsByLocation(t *testing.T) {
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
 
-	r := NewUnindexedDirectoryResolver(path.Join(cwd, "test-fixtures/image-simple"))
+	r := NewFromUnindexedDirectory(path.Join(cwd, "test-fixtures/image-simple"))
 	require.NoError(t, err)
 
 	tests := []struct {
 		name     string
-		location Location
+		location file.Location
 		expects  string
 		err      bool
 	}{
@@ -452,7 +454,7 @@ func Test_UnindexedDirectoryResolver_FileContentsByLocation(t *testing.T) {
 
 func Test_UnindexedDirectoryResover_SymlinkLoopWithGlobsShouldResolve(t *testing.T) {
 	test := func(t *testing.T) {
-		resolver := NewUnindexedDirectoryResolver("./test-fixtures/symlinks-loop")
+		resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-loop")
 
 		locations, err := resolver.FilesByGlob("**/file.target")
 		require.NoError(t, err)
@@ -522,7 +524,7 @@ func Test_UnindexedDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver := NewUnindexedDirectoryResolverRooted(c.root, c.root)
+			resolver := NewFromRootedUnindexedDirectory(c.root, c.root)
 
 			refs, err := resolver.FilesByPath(c.input)
 			require.NoError(t, err)
@@ -540,19 +542,19 @@ func Test_UnindexedDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 	tests := []struct {
 		name     string
-		runner   func(file.Resolver) []Location
-		expected []Location
+		runner   func(file.Resolver) []file.Location
+		expected []file.Location
 	}{
 		{
 			name: "by glob to links",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links are searched, but resolve to the real files
 				// for that reason we need to place **/ in front (which is not the same for other resolvers)
 				actualLocations, err := resolver.FilesByGlob("**/*ink-*")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				file.NewVirtualLocation("file-1.txt", "link-1"),
 				file.NewVirtualLocation("file-2.txt", "link-2"),
 				// we already have this real file path via another link, so only one is returned
@@ -562,26 +564,26 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by basename",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("**/file-2.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				// this has two copies in the base image, which overwrites the same location
 				file.NewLocation("file-2.txt"),
 			},
 		},
 		{
 			name: "by basename glob",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("**/file-?.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				file.NewLocation("file-1.txt"),
 				file.NewLocation("file-2.txt"),
 				file.NewLocation("file-3.txt"),
@@ -590,12 +592,12 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by basename glob to links",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				actualLocations, err := resolver.FilesByGlob("**/link-*")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				file.NewVirtualLocationFromDirectory("file-1.txt", "link-1", stereoscopeFile.Reference{RealPath: "file-1.txt"}),
 				file.NewVirtualLocationFromDirectory("file-2.txt", "link-2", stereoscopeFile.Reference{RealPath: "file-2.txt"}),
 				// we already have this real file path via another link, so only one is returned
@@ -605,13 +607,13 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by extension",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("**/*.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				file.NewLocation("file-1.txt"),
 				file.NewLocation("file-2.txt"),
 				file.NewLocation("file-3.txt"),
@@ -620,26 +622,26 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by path to degree 1 link",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links resolve to the final file
 				actualLocations, err := resolver.FilesByPath("/link-2")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				// we have multiple copies across layers
 				file.NewVirtualLocation("file-2.txt", "link-2"),
 			},
 		},
 		{
 			name: "by path to degree 2 link",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// multiple links resolves to the final file
 				actualLocations, err := resolver.FilesByPath("/link-indirect")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				// we have multiple copies across layers
 				file.NewVirtualLocation("file-2.txt", "link-indirect"),
 			},
@@ -648,7 +650,7 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver := NewUnindexedDirectoryResolver("./test-fixtures/symlinks-from-image-symlinks-fixture")
+			resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-from-image-symlinks-fixture")
 
 			actual := test.runner(resolver)
 
@@ -658,7 +660,7 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 }
 
 func Test_UnindexedDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
-	resolver := NewUnindexedDirectoryResolver("./test-fixtures/symlinks-prune-indexing")
+	resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-prune-indexing")
 
 	allLocations := resolver.AllLocations()
 	var allRealPaths []stereoscopeFile.Path
@@ -679,7 +681,7 @@ func Test_UnindexedDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 }
 
 func Test_UnindexedDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
-	resolver := NewUnindexedDirectoryResolver("./test-fixtures/system_paths")
+	resolver := NewFromUnindexedDirectory("./test-fixtures/system_paths")
 
 	dirLoc := file.NewLocation("arg/foo")
 
@@ -689,7 +691,7 @@ func Test_UnindexedDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.
 }
 
 func Test_UnindexedDirectoryResolver_AllLocations(t *testing.T) {
-	resolver := NewUnindexedDirectoryResolver("./test-fixtures/symlinks-from-image-symlinks-fixture")
+	resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-from-image-symlinks-fixture")
 
 	paths := strset.New()
 	for loc := range resolver.AllLocations() {
@@ -725,7 +727,7 @@ func Test_WritableUnindexedDirectoryResolver(t *testing.T) {
 	p := "some/path/file"
 	c := "some contents"
 
-	dr := NewUnindexedDirectoryResolver(tmpdir)
+	dr := NewFromUnindexedDirectory(tmpdir)
 
 	locations, err := dr.FilesByPath(p)
 	require.NoError(t, err)

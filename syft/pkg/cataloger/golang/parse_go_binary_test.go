@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/resolver"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 // make will run the default make target for the given test fixture path
@@ -511,7 +511,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			)
 
 			c := goBinaryCataloger{}
-			pkgs := c.buildGoPkgInfo(source.EmptyResolver{}, location, test.mod, test.arch)
+			pkgs := c.buildGoPkgInfo(resolver.Empty{}, location, test.mod, test.arch)
 			assert.Equal(t, test.expected, pkgs)
 		})
 	}

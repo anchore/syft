@@ -1,4 +1,4 @@
-package source
+package resolver
 
 import (
 	"io/fs"
@@ -172,7 +172,7 @@ func TestDirectoryIndexer_indexPath_skipsNilFileInfo(t *testing.T) {
 }
 
 func TestDirectoryIndexer_index(t *testing.T) {
-	// note: this test is testing the effects from newDirectoryResolver, indexTree, and addPathToIndex
+	// note: this test is testing the effects from NewFromDirectory, indexTree, and addPathToIndex
 	indexer := newDirectoryIndexer("test-fixtures/system_paths/target", "")
 	tree, index, err := indexer.build()
 	require.NoError(t, err)
@@ -237,7 +237,7 @@ func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
 	}
 	resolver := newDirectoryIndexer("./test-fixtures/symlinks-prune-indexing", "")
 	// we want to cut ahead of any possible filters to see what paths are considered for indexing (closest to walking)
-	resolver.pathIndexVisitors = append([]pathIndexVisitor{pathObserver}, resolver.pathIndexVisitors...)
+	resolver.pathIndexVisitors = append([]PathIndexVisitor{pathObserver}, resolver.pathIndexVisitors...)
 
 	// note: this test is NOT about the effects left on the tree or the index, but rather the WHICH paths that are
 	// considered for indexing and HOW traversal prunes paths that have already been visited

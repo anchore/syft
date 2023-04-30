@@ -12,6 +12,12 @@ import (
 type FileMetadata = file.Metadata
 
 type (
+	// Deprecated: use file.Coordinates instead
+	Coordinates = file.Coordinates
+
+	// Deprecated: use file.CoordinateSet instead
+	CoordinateSet = file.CoordinateSet
+
 	// Deprecated: use file.Resolver instead
 	FileResolver = file.Resolver
 
@@ -52,6 +58,11 @@ type (
 	LocationReadCloser = file.LocationReadCloser
 )
 
+// Deprecated: use file.NewCoordinateSet instead
+func NewCoordinateSet(coordinates ...file.Coordinates) file.CoordinateSet {
+	return file.NewCoordinateSet(coordinates...)
+}
+
 // Deprecated: use file.NewLocationSet instead
 func NewLocationSet(locations ...file.Location) file.LocationSet {
 	return file.NewLocationSet(locations...)
@@ -68,12 +79,12 @@ func NewVirtualLocation(realPath, virtualPath string) file.Location {
 }
 
 // Deprecated: use file.NewLocationFromCoordinates instead
-func NewLocationFromCoordinates(coordinates Coordinates) file.Location {
+func NewLocationFromCoordinates(coordinates file.Coordinates) file.Location {
 	return file.NewLocationFromCoordinates(coordinates)
 }
 
 // Deprecated: use file.NewVirtualLocationFromCoordinates instead
-func NewVirtualLocationFromCoordinates(coordinates Coordinates, virtualPath string) file.Location {
+func NewVirtualLocationFromCoordinates(coordinates file.Coordinates, virtualPath string) file.Location {
 	return file.NewVirtualLocationFromCoordinates(coordinates, virtualPath)
 }
 
@@ -103,6 +114,6 @@ func NewMockResolverForPaths(paths ...string) *file.MockResolver {
 }
 
 // Deprecated: use file.NewMockResolverForPathsWithMetadata instead
-func NewMockResolverForPathsWithMetadata(metadata map[Coordinates]file.Metadata) *file.MockResolver {
+func NewMockResolverForPathsWithMetadata(metadata map[file.Coordinates]file.Metadata) *file.MockResolver {
 	return file.NewMockResolverForPathsWithMetadata(metadata)
 }

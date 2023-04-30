@@ -23,7 +23,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/file/resolver"
 )
 
 type goLicenses struct {
@@ -60,15 +60,15 @@ func modCacheResolver(modCacheDir string) file.WritableResolver {
 
 	if modCacheDir == "" {
 		log.Trace("unable to determine mod cache directory, skipping mod cache resolver")
-		r = source.EmptyResolver{}
+		r = resolver.Empty{}
 	} else {
 		stat, err := os.Stat(modCacheDir)
 
 		if os.IsNotExist(err) || stat == nil || !stat.IsDir() {
 			log.Tracef("unable to open mod cache directory: %s, skipping mod cache resolver", modCacheDir)
-			r = source.EmptyResolver{}
+			r = resolver.Empty{}
 		} else {
-			r = source.NewUnindexedDirectoryResolver(modCacheDir)
+			r = resolver.NewFromUnindexedDirectory(modCacheDir)
 		}
 	}
 

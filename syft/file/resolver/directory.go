@@ -1,4 +1,4 @@
-package source
+package resolver
 
 import (
 	"errors"
@@ -24,12 +24,12 @@ var unixSystemRuntimePrefixes = []string{
 	"/sys",
 }
 
-var errSkipPath = errors.New("skip path")
+var ErrSkipPath = errors.New("skip path")
 
-var _ FileResolver = (*directoryResolver)(nil)
+var _ file.Resolver = (*Directory)(nil)
 
-// directoryResolver implements path and content access for the directory data source.
-type directoryResolver struct {
+// Directory implements path and content access for the directory data source.
+type Directory struct {
 	path                    string
 	base                    string
 	currentWdRelativeToRoot string
@@ -40,8 +40,8 @@ type directoryResolver struct {
 	indexer                 *directoryIndexer
 }
 
-func newDirectoryResolver(root string, base string, pathFilters ...pathIndexVisitor) (*directoryResolver, error) {
-	r, err := newDirectoryResolverWithoutIndex(root, base, pathFilters...)
+func NewFromDirectory(root string, base string, pathFilters ...PathIndexVisitor) (*Directory, error) {
+	r, err := newFromDirectoryWithoutIndex(root, base, pathFilters...)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func newDirectoryResolver(root string, base string, pathFilters ...pathIndexVisi
 	return r, r.buildIndex()
 }
 
-func newDirectoryResolverWithoutIndex(root string, base string, pathFilters ...pathIndexVisitor) (*directoryResolver, error) {
+func newFromDirectoryWithoutIndex(root string, base string, pathFilters ...PathIndexVisitor) (*Directory, error) {
 	currentWD, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("could not get CWD: %w", err)
@@ -88,7 +88,7 @@ func newDirectoryResolverWithoutIndex(root string, base string, pathFilters ...p
 		currentWdRelRoot = filepath.Clean(cleanRoot)
 	}
 
-	return &directoryResolver{
+	return &Directory{
 		path:                    cleanRoot,
 		base:                    cleanBase,
 		currentWd:               cleanCWD,
@@ -99,7 +99,7 @@ func newDirectoryResolverWithoutIndex(root string, base string, pathFilters ...p
 	}, nil
 }
 
-func (r *directoryResolver) buildIndex() error {
+func (r *Directory) buildIndex() error {
 	if r.indexer == nil {
 		return fmt.Errorf("no directory indexer configured")
 	}
@@ -115,7 +115,7 @@ func (r *directoryResolver) buildIndex() error {
 	return nil
 }
 
-func (r directoryResolver) requestPath(userPath string) (string, error) {
+func (r Directory) requestPath(userPath string) (string, error) {
 	if filepath.IsAbs(userPath) {
 		// don't allow input to potentially hop above root path
 		userPath = path.Join(r.path, userPath)
@@ -132,7 +132,7 @@ func (r directoryResolver) requestPath(userPath string) (string, error) {
 	return userPath, nil
 }
 
-func (r directoryResolver) responsePath(path string) string {
+func (r Directory) responsePath(path string) string {
 	// check to see if we need to encode back to Windows from posix
 	if runtime.GOOS == WindowsOS {
 		path = posixToWindows(path)
@@ -155,7 +155,7 @@ func (r directoryResolver) responsePath(path string) string {
 }
 
 // HasPath indicates if the given path exists in the underlying source.
-func (r *directoryResolver) HasPath(userPath string) bool {
+func (r *Directory) HasPath(userPath string) bool {
 	requestPath, err := r.requestPath(userPath)
 	if err != nil {
 		return false
@@ -164,13 +164,13 @@ func (r *directoryResolver) HasPath(userPath string) bool {
 }
 
 // Stringer to represent a directory path data source
-func (r directoryResolver) String() string {
+func (r Directory) String() string {
 	return fmt.Sprintf("dir:%s", r.path)
 }
 
 // FilesByPath returns all file.References that match the given paths from the directory.
-func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) {
-	var references = make([]Location, 0)
+func (r Directory) FilesByPath(userPaths ...string) ([]file.Location, error) {
+	var references = make([]file.Location, 0)
 
 	for _, userPath := range userPaths {
 		userStrPath, err := r.requestPath(userPath)
@@ -220,9 +220,9 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
-func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
+func (r Directory) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
-	uniqueLocations := make([]Location, 0)
+	uniqueLocations := make([]file.Location, 0)
 
 	for _, pattern := range patterns {
 		refVias, err := r.searchContext.SearchByGlob(pattern, filetree.FollowBasenameLinks)
@@ -258,8 +258,8 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 // This is helpful when attempting to find a file that is in the same layer or lower as another file. For the
-// directoryResolver, this is a simple path lookup.
-func (r *directoryResolver) RelativeFileByPath(_ Location, path string) *Location {
+// Directory, this is a simple path lookup.
+func (r *Directory) RelativeFileByPath(_ file.Location, path string) *file.Location {
 	paths, err := r.FilesByPath(path)
 	if err != nil {
 		return nil
@@ -273,7 +273,7 @@ func (r *directoryResolver) RelativeFileByPath(_ Location, path string) *Locatio
 
 // FileContentsByLocation fetches file contents for a single file reference relative to a directory.
 // If the path does not exist an error is returned.
-func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
+func (r Directory) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
 	if location.RealPath == "" {
 		return nil, errors.New("empty path given")
 	}
@@ -298,8 +298,8 @@ func (r directoryResolver) FileContentsByLocation(location Location) (io.ReadClo
 	return stereoscopeFile.NewLazyReadCloser(filePath), nil
 }
 
-func (r *directoryResolver) AllLocations() <-chan Location {
-	results := make(chan Location)
+func (r *Directory) AllLocations() <-chan file.Location {
+	results := make(chan file.Location)
 	go func() {
 		defer close(results)
 		for _, ref := range r.tree.AllFiles(stereoscopeFile.AllTypes()...) {
@@ -309,7 +309,7 @@ func (r *directoryResolver) AllLocations() <-chan Location {
 	return results
 }
 
-func (r *directoryResolver) FileMetadataByLocation(location Location) (file.Metadata, error) {
+func (r *Directory) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
 	entry, err := r.index.Get(location.Reference())
 	if err != nil {
 		return file.Metadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
@@ -318,9 +318,9 @@ func (r *directoryResolver) FileMetadataByLocation(location Location) (file.Meta
 	return entry.Metadata, nil
 }
 
-func (r *directoryResolver) FilesByMIMEType(types ...string) ([]Location, error) {
+func (r *Directory) FilesByMIMEType(types ...string) ([]file.Location, error) {
 	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
-	uniqueLocations := make([]Location, 0)
+	uniqueLocations := make([]file.Location, 0)
 
 	refVias, err := r.searchContext.SearchByMIMEType(types...)
 	if err != nil {

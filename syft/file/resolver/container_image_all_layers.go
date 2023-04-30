@@ -1,4 +1,4 @@
-package source
+package resolver
 
 import (
 	"fmt"
@@ -11,16 +11,16 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-var _ file.Resolver = (*imageAllLayersResolver)(nil)
+var _ file.Resolver = (*ContainerImageAllLayers)(nil)
 
-// imageAllLayersResolver implements path and content access for the AllLayers source option for container image data sources.
-type imageAllLayersResolver struct {
+// ContainerImageAllLayers implements path and content access for the AllLayers source option for container image data sources.
+type ContainerImageAllLayers struct {
 	img    *image.Image
 	layers []int
 }
 
-// newAllLayersResolver returns a new resolver from the perspective of all image layers for the given image.
-func newAllLayersResolver(img *image.Image) (*imageAllLayersResolver, error) {
+// NewFromContainerImageAllLayers returns a new resolver from the perspective of all image layers for the given image.
+func NewFromContainerImageAllLayers(img *image.Image) (*ContainerImageAllLayers, error) {
 	if len(img.Layers) == 0 {
 		return nil, fmt.Errorf("the image does not contain any layers")
 	}
@@ -29,14 +29,14 @@ func newAllLayersResolver(img *image.Image) (*imageAllLayersResolver, error) {
 	for idx := range img.Layers {
 		layers = append(layers, idx)
 	}
-	return &imageAllLayersResolver{
+	return &ContainerImageAllLayers{
 		img:    img,
 		layers: layers,
 	}, nil
 }
 
 // HasPath indicates if the given path exists in the underlying source.
-func (r *imageAllLayersResolver) HasPath(path string) bool {
+func (r *ContainerImageAllLayers) HasPath(path string) bool {
 	p := stereoscopeFile.Path(path)
 	for _, layerIdx := range r.layers {
 		tree := r.img.Layers[layerIdx].Tree
@@ -47,7 +47,7 @@ func (r *imageAllLayersResolver) HasPath(path string) bool {
 	return false
 }
 
-func (r *imageAllLayersResolver) fileByRef(ref stereoscopeFile.Reference, uniqueFileIDs stereoscopeFile.ReferenceSet, layerIdx int) ([]stereoscopeFile.Reference, error) {
+func (r *ContainerImageAllLayers) fileByRef(ref stereoscopeFile.Reference, uniqueFileIDs stereoscopeFile.ReferenceSet, layerIdx int) ([]stereoscopeFile.Reference, error) {
 	uniqueFiles := make([]stereoscopeFile.Reference, 0)
 
 	// since there is potentially considerable work for each symlink/hardlink that needs to be resolved, let's check to see if this is a symlink/hardlink first
@@ -78,9 +78,9 @@ func (r *imageAllLayersResolver) fileByRef(ref stereoscopeFile.Reference, unique
 }
 
 // FilesByPath returns all file.References that match the given paths from any layer in the image.
-func (r *imageAllLayersResolver) FilesByPath(paths ...string) ([]Location, error) {
+func (r *ContainerImageAllLayers) FilesByPath(paths ...string) ([]file.Location, error) {
 	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
-	uniqueLocations := make([]Location, 0)
+	uniqueLocations := make([]file.Location, 0)
 
 	for _, path := range paths {
 		for idx, layerIdx := range r.layers {
@@ -120,9 +120,9 @@ func (r *imageAllLayersResolver) FilesByPath(paths ...string) ([]Location, error
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
 // nolint:gocognit
-func (r *imageAllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) {
+func (r *ContainerImageAllLayers) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
-	uniqueLocations := make([]Location, 0)
+	uniqueLocations := make([]file.Location, 0)
 
 	for _, pattern := range patterns {
 		for idx, layerIdx := range r.layers {
@@ -165,7 +165,7 @@ func (r *imageAllLayersResolver) FilesByGlob(patterns ...string) ([]Location, er
 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 // This is helpful when attempting to find a file that is in the same layer or lower as another file.
-func (r *imageAllLayersResolver) RelativeFileByPath(location Location, path string) *Location {
+func (r *ContainerImageAllLayers) RelativeFileByPath(location file.Location, path string) *file.Location {
 	layer := r.img.FileCatalog.Layer(location.Reference())
 
 	exists, relativeRef, err := layer.SquashedTree.File(stereoscopeFile.Path(path), filetree.FollowBasenameLinks)
@@ -184,7 +184,7 @@ func (r *imageAllLayersResolver) RelativeFileByPath(location Location, path stri
 
 // FileContentsByLocation fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
-func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
+func (r *ContainerImageAllLayers) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
 	entry, err := r.img.FileCatalog.Get(location.Reference())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.RealPath, err)
@@ -206,9 +206,9 @@ func (r *imageAllLayersResolver) FileContentsByLocation(location Location) (io.R
 	return r.img.OpenReference(location.Reference())
 }
 
-func (r *imageAllLayersResolver) FilesByMIMEType(types ...string) ([]Location, error) {
+func (r *ContainerImageAllLayers) FilesByMIMEType(types ...string) ([]file.Location, error) {
 	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
-	uniqueLocations := make([]Location, 0)
+	uniqueLocations := make([]file.Location, 0)
 
 	for idx, layerIdx := range r.layers {
 		refs, err := r.img.Layers[layerIdx].SearchContext.SearchByMIMEType(types...)
@@ -234,8 +234,8 @@ func (r *imageAllLayersResolver) FilesByMIMEType(types ...string) ([]Location, e
 	return uniqueLocations, nil
 }
 
-func (r *imageAllLayersResolver) AllLocations() <-chan Location {
-	results := make(chan Location)
+func (r *ContainerImageAllLayers) AllLocations() <-chan file.Location {
+	results := make(chan file.Location)
 	go func() {
 		defer close(results)
 		for _, layerIdx := range r.layers {
@@ -248,6 +248,6 @@ func (r *imageAllLayersResolver) AllLocations() <-chan Location {
 	return results
 }
 
-func (r *imageAllLayersResolver) FileMetadataByLocation(location Location) (FileMetadata, error) {
+func (r *ContainerImageAllLayers) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
 	return fileMetadataByLocation(r.img, location)
 }

@@ -22,6 +22,8 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/resolver"
 )
 
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
@@ -30,7 +32,7 @@ type Source struct {
 	id                artifact.ID  `hash:"ignore"`
 	Image             *image.Image `hash:"ignore"` // the image object to be cataloged (image only)
 	Metadata          Metadata
-	directoryResolver *directoryResolver `hash:"ignore"`
+	directoryResolver *resolver.Directory `hash:"ignore"`
 	path              string
 	base              string
 	mutex             *sync.Mutex
@@ -452,7 +454,7 @@ func chain(chainID string, layers []LayerMetadata) string {
 	return chain(chainID, layers[1:])
 }
 
-func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
+func (s *Source) FileResolver(scope Scope) (file.Resolver, error) {
 	switch s.Metadata.Scheme {
 	case DirectoryScheme, FileScheme:
 		s.mutex.Lock()
@@ -462,21 +464,21 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 			if err != nil {
 				return nil, err
 			}
-			resolver, err := newDirectoryResolver(s.path, s.base, exclusionFunctions...)
+			res, err := resolver.NewFromDirectory(s.path, s.base, exclusionFunctions...)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 			}
-			s.directoryResolver = resolver
+			s.directoryResolver = res
 		}
 		return s.directoryResolver, nil
 	case ImageScheme:
-		var resolver FileResolver
+		var res file.Resolver
 		var err error
 		switch scope {
 		case SquashedScope:
-			resolver, err = newImageSquashResolver(s.Image)
+			res, err = resolver.NewFromContainerImageSquash(s.Image)
 		case AllLayersScope:
-			resolver, err = newAllLayersResolver(s.Image)
+			res, err = resolver.NewFromContainerImageAllLayers(s.Image)
 		default:
 			return nil, fmt.Errorf("bad image scope provided: %+v", scope)
 		}
@@ -485,9 +487,9 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		}
 		// image tree contains all paths, so we filter out the excluded entries afterwards
 		if len(s.Exclusions) > 0 {
-			resolver = NewExcludingResolver(resolver, getImageExclusionFunction(s.Exclusions))
+			res = resolver.NewExcluding(res, getImageExclusionFunction(s.Exclusions))
 		}
-		return resolver, nil
+		return res, nil
 	}
 	return nil, fmt.Errorf("unable to determine FilePathResolver with current scheme=%q", s.Metadata.Scheme)
 }
@@ -529,12 +531,12 @@ func getImageExclusionFunction(exclusions []string) func(string) bool {
 	}
 }
 
-func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathIndexVisitor, error) {
+func getDirectoryExclusionFunctions(root string, exclusions []string) ([]resolver.PathIndexVisitor, error) {
 	if len(exclusions) == 0 {
 		return nil, nil
 	}
 
-	// this is what directoryResolver.indexTree is doing to get the absolute path:
+	// this is what Directory.indexTree is doing to get the absolute path:
 	root, err := filepath.Abs(root)
 	if err != nil {
 		return nil, err
@@ -562,7 +564,7 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathInd
 		return nil, fmt.Errorf("invalid exclusion pattern(s): '%s' (must start with one of: './', '*/', or '**/')", strings.Join(errors, "', '"))
 	}
 
-	return []pathIndexVisitor{
+	return []resolver.PathIndexVisitor{
 		func(path string, info os.FileInfo, _ error) error {
 			for _, exclusion := range exclusions {
 				// this is required to handle Windows filepaths
@@ -575,7 +577,7 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathInd
 					if info != nil && info.IsDir() {
 						return filepath.SkipDir
 					}
-					return errSkipPath
+					return resolver.ErrSkipPath
 				}
 			}
 			return nil

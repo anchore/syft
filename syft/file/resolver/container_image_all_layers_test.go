@@ -1,4 +1,4 @@
-package source
+package resolver
 
 import (
 	"fmt"
@@ -94,7 +94,7 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
-			resolver, err := newAllLayersResolver(img)
+			resolver, err := NewFromContainerImageAllLayers(img)
 			if err != nil {
 				t.Fatalf("could not create resolver: %+v", err)
 			}
@@ -208,7 +208,7 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
-			resolver, err := newAllLayersResolver(img)
+			resolver, err := NewFromContainerImageAllLayers(img)
 			if err != nil {
 				t.Fatalf("could not create resolver: %+v", err)
 			}
@@ -260,7 +260,7 @@ func Test_imageAllLayersResolver_FilesByMIMEType(t *testing.T) {
 		t.Run(test.fixtureName, func(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureName)
 
-			resolver, err := newAllLayersResolver(img)
+			resolver, err := NewFromContainerImageAllLayers(img)
 			assert.NoError(t, err)
 
 			locations, err := resolver.FilesByMIMEType(test.mimeType)
@@ -277,7 +277,7 @@ func Test_imageAllLayersResolver_FilesByMIMEType(t *testing.T) {
 func Test_imageAllLayersResolver_hasFilesystemIDInLocation(t *testing.T) {
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-duplicate-path")
 
-	resolver, err := newAllLayersResolver(img)
+	resolver, err := NewFromContainerImageAllLayers(img)
 	assert.NoError(t, err)
 
 	locations, err := resolver.FilesByMIMEType("text/plain")
@@ -337,7 +337,7 @@ func TestAllLayersImageResolver_FilesContents(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
-			resolver, err := newAllLayersResolver(img)
+			resolver, err := NewFromContainerImageAllLayers(img)
 			assert.NoError(t, err)
 
 			refs, err := resolver.FilesByPath(test.fixture)
@@ -364,10 +364,10 @@ func TestAllLayersImageResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
-	resolver, err := newAllLayersResolver(img)
+	resolver, err := NewFromContainerImageAllLayers(img)
 	assert.NoError(t, err)
 
-	var dirLoc *Location
+	var dirLoc *file.Location
 	for loc := range resolver.AllLocations() {
 		entry, err := resolver.img.FileCatalog.Get(loc.Reference())
 		require.NoError(t, err)
@@ -387,18 +387,18 @@ func TestAllLayersImageResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 	tests := []struct {
 		name     string
-		runner   func(file.Resolver) []Location
-		expected []Location
+		runner   func(file.Resolver) []file.Location
+		expected []file.Location
 	}{
 		{
 			name: "by mimetype",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links should not show up when searching mimetype
 				actualLocations, err := resolver.FilesByMIMEType("text/plain")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				file.NewVirtualLocation("/etc/group", "/etc/group"),
 				file.NewVirtualLocation("/etc/passwd", "/etc/passwd"),
 				file.NewVirtualLocation("/etc/shadow", "/etc/shadow"),
@@ -414,13 +414,13 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by glob to links",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("*ink-*")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				file.NewVirtualLocation("/file-1.txt", "/link-1"),
 				file.NewVirtualLocation("/file-2.txt", "/link-2"), // copy 1
 				file.NewVirtualLocation("/file-2.txt", "/link-2"), // copy 2
@@ -429,26 +429,26 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by basename",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("**/file-2.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"), // copy 1
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"), // copy 2
 			},
 		},
 		{
 			name: "by basename glob",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("**/file-?.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				file.NewVirtualLocation("/file-1.txt", "/file-1.txt"),
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"), // copy 1
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"), // copy 2
@@ -459,13 +459,13 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by extension",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links are searched, but resolve to the real files
 				actualLocations, err := resolver.FilesByGlob("**/*.txt")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				file.NewVirtualLocation("/file-1.txt", "/file-1.txt"),
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"), // copy 1
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"), // copy 2
@@ -476,13 +476,13 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by path to degree 1 link",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// links resolve to the final file
 				actualLocations, err := resolver.FilesByPath("/link-2")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				// we have multiple copies across layers
 				file.NewVirtualLocation("/file-2.txt", "/link-2"),
 				file.NewVirtualLocation("/file-2.txt", "/link-2"),
@@ -490,13 +490,13 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 		},
 		{
 			name: "by path to degree 2 link",
-			runner: func(resolver file.Resolver) []Location {
+			runner: func(resolver file.Resolver) []file.Location {
 				// multiple links resolves to the final file
 				actualLocations, err := resolver.FilesByPath("/link-indirect")
 				assert.NoError(t, err)
 				return actualLocations
 			},
-			expected: []Location{
+			expected: []file.Location{
 				// we have multiple copies across layers
 				file.NewVirtualLocation("/file-2.txt", "/link-indirect"),
 				file.NewVirtualLocation("/file-2.txt", "/link-indirect"),
@@ -509,7 +509,7 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
-			resolver, err := newAllLayersResolver(img)
+			resolver, err := NewFromContainerImageAllLayers(img)
 			assert.NoError(t, err)
 
 			actual := test.runner(resolver)
@@ -528,7 +528,7 @@ func TestAllLayersResolver_AllLocations(t *testing.T) {
 		arch = "aarch64"
 	}
 
-	resolver, err := newAllLayersResolver(img)
+	resolver, err := NewFromContainerImageAllLayers(img)
 	assert.NoError(t, err)
 
 	paths := strset.New()
