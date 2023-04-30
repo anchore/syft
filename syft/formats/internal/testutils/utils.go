@@ -315,8 +315,8 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		Version: "1.0.1",
 		Type:    pkg.PythonPkg,
 		FoundBy: "the-cataloger-1",
-		Locations: source.NewLocationSet(
-			source.NewLocation("/some/path/pkg1"),
+		Locations: file.NewLocationSet(
+			file.NewLocation("/some/path/pkg1"),
 		),
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
@@ -341,8 +341,8 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		Version: "2.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
-		Locations: source.NewLocationSet(
-			source.NewLocation("/some/path/pkg1"),
+		Locations: file.NewLocationSet(
+			file.NewLocation("/some/path/pkg1"),
 		),
 		MetadataType: pkg.DpkgMetadataType,
 		Metadata: pkg.DpkgMetadata{
