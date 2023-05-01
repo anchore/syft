@@ -19,9 +19,9 @@ func TestParseGemspec(t *testing.T) {
 		PURL:      "pkg:gem/bundler@2.1.4",
 		Locations: locations,
 		Type:      pkg.GemPkg,
-		Licenses: []pkg.License{
+		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocation("MIT", source.NewLocation(fixture)),
-		},
+		),
 		Language:     pkg.Ruby,
 		MetadataType: pkg.GemMetadataType,
 		Metadata: pkg.GemMetadata{
