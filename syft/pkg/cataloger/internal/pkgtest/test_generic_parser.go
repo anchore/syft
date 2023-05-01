@@ -22,6 +22,8 @@ import (
 
 type locationComparer func(x, y source.Location) bool
 
+type licenseComparer func(x, y pkg.License) bool
+
 type CatalogTester struct {
 	expectedPkgs                   []pkg.Package
 	expectedRelationships          []artifact.Relationship
@@ -36,12 +38,14 @@ type CatalogTester struct {
 	wantErr                        require.ErrorAssertionFunc
 	compareOptions                 []cmp.Option
 	locationComparer               locationComparer
+	licenseComparer                licenseComparer
 }
 
 func NewCatalogTester() *CatalogTester {
 	return &CatalogTester{
 		wantErr:          require.NoError,
 		locationComparer: DefaultLocationComparer,
+		licenseComparer:  DefaultLicenseComparer,
 		ignoreUnfulfilledPathResponses: map[string][]string{
 			"FilesByPath": {
 				// most catalogers search for a linux release, which will not be fulfilled in testing
@@ -57,6 +61,19 @@ func NewCatalogTester() *CatalogTester {
 
 func DefaultLocationComparer(x, y source.Location) bool {
 	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
+}
+
+func DefaultLicenseComparer(x, y pkg.License) bool {
+	xh, err := x.Hash()
+	if err != nil {
+		return false
+	}
+	yh, err := y.Hash()
+	if err != nil {
+		return false
+	}
+
+	return cmp.Equal(xh, yh)
 }
 
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
@@ -234,7 +251,28 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 			},
 		),
 		cmp.Comparer(
+			func(x, y pkg.LicenseSet) bool {
+				xs := x.ToSlice()
+				ys := y.ToSlice()
+
+				if len(xs) != len(ys) {
+					return false
+				}
+				for i, xe := range xs {
+					ye := ys[i]
+					if !p.licenseComparer(xe, ye) {
+						return false
+					}
+				}
+
+				return true
+			},
+		),
+		cmp.Comparer(
 			p.locationComparer,
+		),
+		cmp.Comparer(
+			p.licenseComparer,
 		),
 	)
 
