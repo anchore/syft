@@ -10,13 +10,18 @@ import (
 )
 
 func newPackage(d parsedData, release *linux.Release, dbLocation source.Location) pkg.Package {
-	licenseStrings := strings.Split(d.License, " ")
+	licenses := pkg.NewLicenseSet(
+		pkg.NewLicensesFromLocation(
+			dbLocation,
+			strings.Split(d.License, " ")...,
+		)...,
+	)
 
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
 		Locations:    source.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:     pkg.NewLicensesFromLocation(dbLocation, licenseStrings...),
+		Licenses:     licenses,
 		PURL:         packageURL(d.ApkMetadata, release),
 		Type:         pkg.ApkPkg,
 		MetadataType: pkg.ApkMetadataType,

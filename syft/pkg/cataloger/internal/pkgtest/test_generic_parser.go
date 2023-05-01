@@ -64,16 +64,7 @@ func DefaultLocationComparer(x, y source.Location) bool {
 }
 
 func DefaultLicenseComparer(x, y pkg.License) bool {
-	xh, err := x.Hash()
-	if err != nil {
-		return false
-	}
-	yh, err := y.Hash()
-	if err != nil {
-		return false
-	}
-
-	return cmp.Equal(xh, yh)
+	return cmp.Equal(x, y, cmpopts.IgnoreFields(pkg.License{}, "Location"))
 }
 
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {

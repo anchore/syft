@@ -87,11 +87,9 @@ func TestSinglePackageDetails(t *testing.T) {
 			expected: pkg.Package{
 				Name:    "musl-utils",
 				Version: "1.1.24-r2",
-				Licenses: []pkg.License{
-					pkg.NewLicense("MIT"),
-					pkg.NewLicense("BSD"),
-					pkg.NewLicense("GPL2+"),
-				},
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicensesFromValues("MIT", "BSD", "GPL2+")...,
+				),
 				Type:         pkg.ApkPkg,
 				MetadataType: pkg.ApkMetadataType,
 				Metadata: pkg.ApkMetadata{
@@ -177,9 +175,9 @@ func TestSinglePackageDetails(t *testing.T) {
 			expected: pkg.Package{
 				Name:    "alpine-baselayout-data",
 				Version: "3.4.0-r0",
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("GPL-2.0-only"),
-				},
+				),
 				Type:         pkg.ApkPkg,
 				MetadataType: pkg.ApkMetadataType,
 				Metadata: pkg.ApkMetadata{
@@ -222,9 +220,9 @@ func TestSinglePackageDetails(t *testing.T) {
 			expected: pkg.Package{
 				Name:    "alpine-baselayout",
 				Version: "3.2.0-r6",
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("GPL-2.0-only"),
-				},
+				),
 				Type:         pkg.ApkPkg,
 				PURL:         "",
 				MetadataType: pkg.ApkMetadataType,
@@ -680,15 +678,14 @@ func TestSinglePackageDetails(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-
 			fixtureLocation := source.NewLocation(test.fixture)
 			test.expected.Locations = source.NewLocationSet(fixtureLocation)
-			for i := range test.expected.Licenses {
-				test.expected.Licenses[i].Location = &fixtureLocation
+			licenses := test.expected.Licenses.ToSlice()
+			for i := range licenses {
+				licenses[i].Location = &fixtureLocation
 			}
-
+			test.expected.Licenses = pkg.NewLicenseSet(licenses...)
 			pkgtest.TestFileParser(t, test.fixture, parseApkDB, []pkg.Package{test.expected}, nil)
-
 		})
 	}
 }
@@ -701,9 +698,9 @@ func TestMultiplePackages(t *testing.T) {
 		{
 			Name:    "libc-utils",
 			Version: "0.7.2-r0",
-			Licenses: []pkg.License{
+			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocation("BSD", location),
-			},
+			),
 			Type:         pkg.ApkPkg,
 			PURL:         "pkg:apk/alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
 			Locations:    fixtureLocationSet,
@@ -731,11 +728,11 @@ func TestMultiplePackages(t *testing.T) {
 			Type:      pkg.ApkPkg,
 			PURL:      "pkg:apk/alpine/musl-utils@1.1.24-r2?arch=x86_64&upstream=musl&distro=alpine-3.12",
 			Locations: fixtureLocationSet,
-			Licenses: []pkg.License{
+			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocation("MIT", location),
 				pkg.NewLicenseFromLocation("BSD", location),
 				pkg.NewLicenseFromLocation("GPL2+", location),
-			},
+			),
 			MetadataType: pkg.ApkMetadataType,
 			Metadata: pkg.ApkMetadata{
 				Package:       "musl-utils",
@@ -1025,7 +1022,7 @@ func Test_discoverPackageDependencies(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgs, wantRelationships := test.genFn()
 			gotRelationships := discoverPackageDependencies(pkgs)
-			d := cmp.Diff(wantRelationships, gotRelationships, cmpopts.IgnoreUnexported(pkg.Package{}, source.LocationSet{}))
+			d := cmp.Diff(wantRelationships, gotRelationships, cmpopts.IgnoreUnexported(pkg.Package{}, source.LocationSet{}, pkg.LicenseSet{}))
 			if d != "" {
 				t.Fail()
 				t.Log(d)
