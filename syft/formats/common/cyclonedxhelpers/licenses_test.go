@@ -84,6 +84,65 @@ func Test_encodeLicense(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "consistent sorting across SPDX and other licenses",
+			input: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("Apache-2.0"),
+					pkg.NewLicense("ISC"),
+					pkg.NewLicense("Apache"),
+					pkg.NewLicense("Permission"),
+					pkg.NewLicense("Python"),
+					pkg.NewLicense("PSF-2.0"),
+					pkg.NewLicense("This"),
+					pkg.NewLicense("GPL-2.0-only"),
+					pkg.NewLicense("See"),
+					pkg.NewLicense("LGPL-2.1-or-later"),
+				),
+			},
+			expected: &cyclonedx.Licenses{
+				{
+					License: &cyclonedx.License{
+						ID: "Apache-2.0",
+					},
+				},
+			},
+		},
+		{
+			name: "deduplication of SPDX licenses with shared SPDX ID",
+			input: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("Apache-2.0"),
+					pkg.NewLicense("Apache-2"),
+					pkg.NewLicenseFromURL("Apache-2.0", "https://spdx.org/licenses/Apache-2.0.html"),
+				),
+			},
+			expected: &cyclonedx.Licenses{
+				{
+					License: &cyclonedx.License{
+						ID:  "Apache-2.0",
+						URL: "https://spdx.org/licenses/Apache-2.0.html",
+					},
+				},
+			},
+		},
+		{
+			name: "deduplication of Other licenses with shared value",
+			input: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("python"),
+					pkg.NewLicenseFromURL("python", "https://www.python.org/psf/license/"),
+				),
+			},
+			expected: &cyclonedx.Licenses{
+				{
+					License: &cyclonedx.License{
+						Name: "python",
+						URL:  "https://spdx.org/licenses/Apache-2.0.html",
+					},
+				},
+			},
+		},
 		// TODO: do we drop the non SPDX ID license and do a single expression
 		// OR do we keep the non SPDX ID license and do multiple licenses where the complex
 		// expressions are set as the NAME field?

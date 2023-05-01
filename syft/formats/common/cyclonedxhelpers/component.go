@@ -78,7 +78,7 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 		Name:      c.Name,
 		Version:   c.Version,
 		Locations: decodeLocations(values),
-		Licenses:  pkg.NewLicenseSet(decodeLicenses(c)...),
+		Licenses:  decodeLicenses(c),
 		CPEs:      decodeCPEs(c),
 		PURL:      c.PackageURL,
 	}

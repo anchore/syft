@@ -5,6 +5,7 @@ import (
 
 	"github.com/mitchellh/hashstructure/v2"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/source"
@@ -13,11 +14,11 @@ import (
 var _ sort.Interface = (*Licenses)(nil)
 
 type License struct {
-	Value          string           `json:"value"`
-	SPDXExpression string           `json:"spdxExpression"`
-	Type           license.Type     `json:"type"`
-	URL            string           `json:"url"`                // external sources
-	Location       *source.Location `json:"location,omitempty"` // on disk declaration
+	Value          string             `json:"value"`
+	SPDXExpression string             `json:"spdxExpression"`
+	Type           license.Type       `json:"type"`
+	URL            internal.StringSet `json:"url"`                // external sources
+	Location       source.LocationSet `json:"location,omitempty"` // on disk declaration
 }
 
 type Licenses []License

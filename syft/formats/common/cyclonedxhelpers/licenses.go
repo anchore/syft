@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -16,7 +17,7 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	if len(otherc) > 0 {
 		// found non spdx related licenses
 		// build individual license choices for each
-		// complex expressions are not combined and set as NAME fields
+		// complex expressions are combined and set as NAME fields
 		for _, e := range ex {
 			otherc = append(otherc, cyclonedx.LicenseChoice{
 				License: &cyclonedx.License{
@@ -25,6 +26,17 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 			})
 		}
 		otherc = append(otherc, spdxc...)
+		sort.Slice(otherc, func(i, j int) bool {
+			ilicese := otherc[i].License.ID
+			jlicese := otherc[j].License.ID
+			if ilicese == "" {
+				ilicese = otherc[i].License.Name
+			}
+			if jlicese == "" {
+				jlicese = otherc[j].License.Name
+			}
+			return strings.Compare(ilicese, jlicese) < 0
+		})
 		return &otherc
 	}
 
@@ -43,10 +55,10 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 	return nil
 }
 
-func decodeLicenses(c *cyclonedx.Component) []pkg.License {
+func decodeLicenses(c *cyclonedx.Component) pkg.LicenseSet {
 	licenses := pkg.NewLicenseSet()
 	if c == nil || c.Licenses == nil {
-		return licenses.ToSlice()
+		return licenses
 	}
 
 	for _, l := range *c.Licenses {
@@ -65,7 +77,7 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 		}
 	}
 
-	return licenses.ToSlice()
+	return licenses
 }
 
 func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expressions []string) {
@@ -85,17 +97,29 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			as a license choice and the invalid expression as a license string.
 
 	*/
+	licenseSet := map[string]*cyclonedx.License{}
 	for _, l := range p.Licenses.ToSlice() {
 		// singular expression case
-		if value, exists := spdxlicense.ID(l.SPDXExpression); exists {
-			spdxc = append(spdxc, cyclonedx.LicenseChoice{
-				License: &cyclonedx.License{
-					ID:  value,
-					URL: l.URL,
-				},
-			})
+		if spdxID, exists := spdxlicense.ID(l.SPDXExpression); exists {
+			if cyclonedxLicense, exists := licenseSet[spdxID]; exists {
+				// if the license already exists in the set, skip it
+				if cyclonedxLicense.URL == "" {
+					cyclonedxLicense.URL = l.URL
+					continue
+				}
+				if l.URL == "" {
+					continue
+				}
+			}
+			license := &cyclonedx.License{
+				ID:  spdxID,
+				URL: l.URL,
+			}
+			licenseSet[spdxID] = license
+			spdxc = append(spdxc, cyclonedx.LicenseChoice{License: license})
 			continue
 		}
+
 		if l.SPDXExpression != "" {
 			// COMPLEX EXPRESSION CASE: do we instead break the spdx expression out
 			// into individual licenses OR combine singular licenses into a single expression?

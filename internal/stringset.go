@@ -1,6 +1,10 @@
 package internal
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/mitchellh/hashstructure/v2"
+)
 
 // StringSet represents a set of string types.
 type StringSet map[string]struct{}
@@ -15,8 +19,10 @@ func NewStringSet(start ...string) StringSet {
 }
 
 // Add a string to the set.
-func (s StringSet) Add(i string) {
-	s[i] = struct{}{}
+func (s StringSet) Add(i ...string) {
+	for _, v := range i {
+		s[v] = struct{}{}
+	}
 }
 
 // Remove a string from the set.
@@ -40,4 +46,11 @@ func (s StringSet) ToSlice() []string {
 	}
 	sort.Strings(ret)
 	return ret
+}
+
+func (s StringSet) Hash() (uint64, error) {
+	return hashstructure.Hash(s.ToSlice(), hashstructure.FormatV2, &hashstructure.HashOptions{
+		ZeroNil:      true,
+		SlicesAsSets: true,
+	})
 }
