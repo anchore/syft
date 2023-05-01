@@ -17,15 +17,16 @@ func License(p pkg.Package) (concluded, declared string) {
 	//   (i) the SPDX file creator has attempted to but cannot reach a reasonable objective determination;
 	//   (ii) the SPDX file creator has made no attempt to determine this field; or
 	//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
+	licenses := p.Licenses.ToSlice()
 
-	if len(p.Licenses) == 0 {
+	if len(licenses) == 0 {
 		return NOASSERTION, NOASSERTION
 	}
 
 	// take all licenses and assume an AND expression;
 	// for information about license expressions see:
 	// https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/
-	pc, pd := parseLicenses(p.Licenses)
+	pc, pd := parseLicenses(licenses)
 
 	for i, v := range pc {
 		if strings.HasPrefix(v, spdxlicense.LicenseRefPrefix) {

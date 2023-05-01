@@ -447,16 +447,16 @@ func Test_OtherLicenses(t *testing.T) {
 		{
 			name: "no licenseRef",
 			pkg: pkg.Package{
-				Licenses: []pkg.License{},
+				Licenses: pkg.NewLicenseSet(),
 			},
 			expected: nil,
 		},
 		{
 			name: "single licenseRef",
 			pkg: pkg.Package{
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("foobar"),
-				},
+				),
 			},
 			expected: []*spdx.OtherLicense{
 				{
@@ -468,10 +468,10 @@ func Test_OtherLicenses(t *testing.T) {
 		{
 			name: "multiple licenseRef",
 			pkg: pkg.Package{
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("internal made up license name"),
 					pkg.NewLicense("new apple license 2.0"),
-				},
+				),
 			},
 			expected: []*spdx.OtherLicense{
 				{

@@ -28,7 +28,7 @@ func Test_License(t *testing.T) {
 		{
 			name: "no SPDX licenses",
 			input: pkg.Package{
-				Licenses: []pkg.License{pkg.NewLicense("made-up")},
+				Licenses: pkg.NewLicenseSet(pkg.NewLicense("made-up")),
 			},
 			expected: struct{ concluded, declared string }{
 				concluded: "NOASSERTION",
@@ -38,7 +38,7 @@ func Test_License(t *testing.T) {
 		{
 			name: "with SPDX license",
 			input: pkg.Package{
-				Licenses: []pkg.License{pkg.NewLicense("MIT")},
+				Licenses: pkg.NewLicenseSet(pkg.NewLicense("MIT")),
 			},
 			expected: struct {
 				concluded string
@@ -51,51 +51,51 @@ func Test_License(t *testing.T) {
 		{
 			name: "with SPDX license expression",
 			input: pkg.Package{
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("MIT"),
 					pkg.NewLicense("GPL-3.0-only"),
-				},
+				),
 			},
 			expected: struct {
 				concluded string
 				declared  string
 			}{
 				concluded: "NOASSERTION",
-				declared:  "MIT AND GPL-3.0-only",
+				declared:  "GPL-3.0-only AND MIT",
 			},
 		},
 		{
 			name: "includes valid LicenseRef-",
 			input: pkg.Package{
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("one thing first"),
 					pkg.NewLicense("two things/#$^second"),
 					pkg.NewLicense("MIT"),
-				},
+				),
 			},
 			expected: struct {
 				concluded string
 				declared  string
 			}{
 				concluded: "NOASSERTION",
-				declared:  "LicenseRef-one-thing-first AND LicenseRef-two-things----second AND MIT",
+				declared:  "MIT AND LicenseRef-one-thing-first AND LicenseRef-two-things----second",
 			},
 		},
 		{
 			name: "join parentheses correctly",
 			input: pkg.Package{
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("one thing first"),
 					pkg.NewLicense("MIT AND GPL-3.0-only"),
 					pkg.NewLicense("MIT OR APACHE-2.0"),
-				},
+				),
 			},
 			expected: struct {
 				concluded string
 				declared  string
 			}{
 				concluded: "NOASSERTION",
-				declared:  "LicenseRef-one-thing-first AND (MIT AND GPL-3.0-only) AND (MIT OR APACHE-2.0)",
+				declared:  "(MIT AND GPL-3.0-only) AND (MIT OR APACHE-2.0) AND LicenseRef-one-thing-first",
 			},
 		},
 	}
