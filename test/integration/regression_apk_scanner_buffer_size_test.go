@@ -14,7 +14,7 @@ func TestRegression212ApkBufferSize(t *testing.T) {
 
 	expectedPkgs := 58
 	actualPkgs := 0
-	for range sbom.Artifacts.PackageCatalog.Enumerate(pkg.ApkPkg) {
+	for range sbom.Artifacts.Packages.Enumerate(pkg.ApkPkg) {
 		actualPkgs += 1
 	}
 

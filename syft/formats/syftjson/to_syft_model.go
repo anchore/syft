@@ -28,7 +28,7 @@ func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
 
 	return &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    catalog,
+			Packages:          catalog,
 			FileMetadata:      fileArtifacts.FileMetadata,
 			FileDigests:       fileArtifacts.FileDigests,
 			LinuxDistribution: toSyftLinuxRelease(doc.Distro),

@@ -12,7 +12,7 @@ func TestMarinerDistroless(t *testing.T) {
 
 	expectedPkgs := 12
 	actualPkgs := 0
-	for range sbom.Artifacts.PackageCatalog.Enumerate(pkg.RpmPkg) {
+	for range sbom.Artifacts.Packages.Enumerate(pkg.RpmPkg) {
 		actualPkgs += 1
 	}
 
