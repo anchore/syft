@@ -17,7 +17,7 @@ func newPackage(dbOrRpmLocation source.Location, pd parsedData, distro *linux.Re
 	p := pkg.Package{
 		Name:         pd.Name,
 		Version:      toELVersion(pd.RpmMetadata),
-		Licenses:     pd.Licenses,
+		Licenses:     pkg.NewLicenseSet(pd.Licenses...),
 		PURL:         packageURL(pd.RpmMetadata, distro),
 		Locations:    source.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:         pkg.RpmPkg,
