@@ -27,10 +27,10 @@ func TestIDUniqueness(t *testing.T) {
 		Locations: source.NewLocationSet(
 			originalLocation,
 		),
-		Licenses: []License{
+		Licenses: NewLicenseSet(
 			NewLicense("MIT"),
 			NewLicense("cc0-1.0"),
-		},
+		),
 		Language: "math",
 		Type:     PythonPkg,
 		CPEs: []cpe.CPE{
@@ -79,13 +79,13 @@ func TestIDUniqueness(t *testing.T) {
 			expectedIDComparison: assert.Equal,
 		},
 		{
-			name: "licenses order is ignored",
+			name: "licenses order is consistent",
 			transform: func(pkg Package) Package {
 				// note: same as the original package, only a different order
-				pkg.Licenses = []License{
+				pkg.Licenses = NewLicenseSet(
 					NewLicense("cc0-1.0"),
 					NewLicense("MIT"),
-				}
+				)
 				return pkg
 			},
 			expectedIDComparison: assert.Equal,
@@ -111,7 +111,7 @@ func TestIDUniqueness(t *testing.T) {
 		{
 			name: "licenses is reflected",
 			transform: func(pkg Package) Package {
-				pkg.Licenses = []License{NewLicense("new!")}
+				pkg.Licenses = NewLicenseSet(NewLicense("new!"))
 				return pkg
 			},
 			expectedIDComparison: assert.NotEqual,
@@ -412,7 +412,26 @@ func TestPackage_Merge(t *testing.T) {
 						return true
 					},
 				),
+				cmp.Comparer(
+					func(x, y LicenseSet) bool {
+						xs := x.ToSlice()
+						ys := y.ToSlice()
+
+						if len(xs) != len(ys) {
+							return false
+						}
+						for i, xe := range xs {
+							ye := ys[i]
+							if !licenseComparer(xe, ye) {
+								return false
+							}
+						}
+
+						return true
+					},
+				),
 				cmp.Comparer(locationComparer),
+				cmp.Comparer(licenseComparer),
 			); diff != "" {
 				t.Errorf("unexpected result from parsing (-expected +actual)\n%s", diff)
 			}
@@ -422,6 +441,10 @@ func TestPackage_Merge(t *testing.T) {
 
 func locationComparer(x, y source.Location) bool {
 	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
+}
+
+func licenseComparer(x, y License) bool {
+	return cmp.Equal(x, y, cmp.Comparer(locationComparer))
 }
 
 func TestIsValid(t *testing.T) {
