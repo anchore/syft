@@ -276,12 +276,14 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		cpes = append(cpes, value)
 	}
 
+	licenseSet := pkg.NewLicenseSet(p.Licenses...)
+
 	out := pkg.Package{
 		Name:         p.Name,
 		Version:      p.Version,
 		FoundBy:      p.FoundBy,
 		Locations:    source.NewLocationSet(p.Locations...),
-		Licenses:     p.Licenses,
+		Licenses:     licenseSet,
 		Language:     p.Language,
 		Type:         p.Type,
 		CPEs:         cpes,

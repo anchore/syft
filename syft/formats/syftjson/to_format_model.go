@@ -194,8 +194,8 @@ func toPackageModel(p pkg.Package) model.Package {
 	// we want to make sure all catalogers are
 	// initializing the array; this is a good choke point for this check
 	var licenses = make([]pkg.License, 0)
-	if p.Licenses != nil {
-		licenses = p.Licenses
+	if len(p.Licenses.ToSlice()) > 0 {
+		licenses = p.Licenses.ToSlice()
 	}
 
 	return model.Package{

@@ -162,9 +162,9 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 		FoundBy:      "the-cataloger-1",
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses: []pkg.License{
+		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicense("MIT"),
-		},
+		),
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
@@ -270,9 +270,9 @@ func newDirectoryCatalog() *pkg.Collection {
 		),
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses: []pkg.License{
+		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicense("MIT"),
-		},
+		),
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
@@ -323,9 +323,9 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		),
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses: []pkg.License{
+		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicense("MIT"),
-		},
+		),
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",

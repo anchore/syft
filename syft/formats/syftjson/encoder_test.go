@@ -61,7 +61,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		FoundBy:      "the-cataloger-1",
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses:     []pkg.License{pkg.NewLicense("MIT")},
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicense("MIT")),
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
