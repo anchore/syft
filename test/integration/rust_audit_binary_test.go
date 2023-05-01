@@ -12,7 +12,7 @@ func TestRustAudit(t *testing.T) {
 
 	expectedPkgs := 2
 	actualPkgs := 0
-	for range sbom.Artifacts.PackageCatalog.Enumerate(pkg.RustPkg) {
+	for range sbom.Artifacts.Packages.Enumerate(pkg.RustPkg) {
 		actualPkgs += 1
 	}
 

@@ -100,7 +100,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 
 	s := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: catalog,
+			Packages: catalog,
 			FileMetadata: map[source.Coordinates]source.FileMetadata{
 				source.NewLocation("/a/place").Coordinates: {
 					Mode:    0775,
