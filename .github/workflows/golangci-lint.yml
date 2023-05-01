@@ -1,0 +1,27 @@
+name: "Linters"
+on:
+  workflow_dispatch:
+  push:
+    branches:
+       - main
+  pull_request:
+
+env:
+  GO_VERSION: "1.17.x"
+  GO_STABLE_VERSION: true
+
+jobs:
+  golangci:
+    name: "GolangCI parkour around go 1.18 🤦"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          stable: ${{ env.GO_STABLE_VERSION }}
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.42.1
+          args: --tests=false --config .golangci.yaml
