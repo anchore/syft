@@ -21,7 +21,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
-			Licenses:     nil,
+			Licenses:     pkg.NewLicenseSet(),
 			Metadata: pkg.CargoPackageMetadata{
 				Name:     "ansi_term",
 				Version:  "0.12.1",
@@ -40,7 +40,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
-			Licenses:     nil,
+			Licenses:     pkg.NewLicenseSet(),
 			Metadata: pkg.CargoPackageMetadata{
 				Name:         "matches",
 				Version:      "0.1.8",
@@ -57,7 +57,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
-			Licenses:     nil,
+			Licenses:     pkg.NewLicenseSet(),
 			Metadata: pkg.CargoPackageMetadata{
 				Name:         "memchr",
 				Version:      "2.3.3",
@@ -74,7 +74,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
-			Licenses:     nil,
+			Licenses:     pkg.NewLicenseSet(),
 			Metadata: pkg.CargoPackageMetadata{
 				Name:         "natord",
 				Version:      "1.0.9",
@@ -91,7 +91,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
-			Licenses:     nil,
+			Licenses:     pkg.NewLicenseSet(),
 			Metadata: pkg.CargoPackageMetadata{
 				Name:     "nom",
 				Version:  "4.2.3",
@@ -111,7 +111,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
-			Licenses:     nil,
+			Licenses:     pkg.NewLicenseSet(),
 			Metadata: pkg.CargoPackageMetadata{
 				Name:     "unicode-bidi",
 				Version:  "0.3.4",
@@ -130,7 +130,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
-			Licenses:     nil,
+			Licenses:     pkg.NewLicenseSet(),
 			Metadata: pkg.CargoPackageMetadata{
 				Name:         "version_check",
 				Version:      "0.1.5",
@@ -147,7 +147,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
-			Licenses:     nil,
+			Licenses:     pkg.NewLicenseSet(),
 			Metadata: pkg.CargoPackageMetadata{
 				Name:     "winapi",
 				Version:  "0.3.9",
@@ -167,7 +167,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
-			Licenses:     nil,
+			Licenses:     pkg.NewLicenseSet(),
 			Metadata: pkg.CargoPackageMetadata{
 				Name:         "winapi-i686-pc-windows-gnu",
 				Version:      "0.4.0",
@@ -184,7 +184,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:     pkg.Rust,
 			Type:         pkg.RustPkg,
 			MetadataType: pkg.RustCargoPackageMetadataType,
-			Licenses:     nil,
+			Licenses:     pkg.NewLicenseSet(),
 			Metadata: pkg.CargoPackageMetadata{
 				Name:         "winapi-x86_64-pc-windows-gnu",
 				Version:      "0.4.0",
