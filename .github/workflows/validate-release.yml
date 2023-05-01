@@ -1,0 +1,43 @@
+name: CI-Validate-Release
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  validate-release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: none
+      checks: none
+      contents: none
+      deployments: none
+      issues: none
+      packages: none
+      pull-requests: none
+      repository-projects: none
+      security-events: none
+      statuses: none
+
+    env:
+      CROSS_BUILDER_IMAGE: ghcr.io/gythialy/golang-cross:v1.19.3-0@sha256:1072190e76d68f455f1bedb7430a633916b6629a722c42246037ac518fdb0ff2
+
+    steps:
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 #v3.1.0
+      - name: goreleaser snapshot
+        run: |
+          docker run --rm --privileged \
+          -e CI=$CI \
+          -e RUNTIME_IMAGE=gcr.io/distroless/static:debug-nonroot \
+          -v ${PWD}:/go/src/anchore/syft \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -w /go/src/anchore/syft \
+          --entrypoint="" \
+          $CROSS_BUILDER_IMAGE \
+          make snapshot
+      - name: check binaries
+        run: |
+          ./dist/syft-linux-amd64 version
