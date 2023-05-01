@@ -123,10 +123,10 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			// Cardinality: optional, one
 			CreatorComment: "",
 		},
-		Packages:      toPackages(s.Artifacts.PackageCatalog, s),
+		Packages:      toPackages(s.Artifacts.Packages, s),
 		Files:         toFiles(s),
 		Relationships: relationships,
-		OtherLicenses: toOtherLicenses(s.Artifacts.PackageCatalog),
+		OtherLicenses: toOtherLicenses(s.Artifacts.Packages),
 	}
 }
 

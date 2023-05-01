@@ -28,7 +28,7 @@ func Test_toGithubModel(t *testing.T) {
 				VersionID: "18.04",
 				IDLike:    []string{"debian"},
 			},
-			PackageCatalog: pkg.NewCollection(),
+			Packages: pkg.NewCollection(),
 		},
 	}
 	for _, p := range []pkg.Package{
@@ -71,7 +71,7 @@ func Test_toGithubModel(t *testing.T) {
 			nil,
 			"",
 		).ToString()
-		s.Artifacts.PackageCatalog.Add(p)
+		s.Artifacts.Packages.Add(p)
 	}
 
 	actual := toGithubModel(&s)

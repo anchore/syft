@@ -210,7 +210,7 @@ func Test_decode(t *testing.T) {
 					assert.Equal(t, e.ver, sbom.Artifacts.LinuxDistribution.VersionID)
 				}
 				if e.pkg != "" {
-					for p := range sbom.Artifacts.PackageCatalog.Enumerate() {
+					for p := range sbom.Artifacts.Packages.Enumerate() {
 						if e.pkg != p.Name {
 							continue
 						}
@@ -238,7 +238,7 @@ func Test_decode(t *testing.T) {
 						if e.relation != "" {
 							foundRelation := false
 							for _, r := range sbom.Relationships {
-								p := sbom.Artifacts.PackageCatalog.Package(r.To.ID())
+								p := sbom.Artifacts.Packages.Package(r.To.ID())
 								if e.relation == p.Name {
 									foundRelation = true
 									break

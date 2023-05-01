@@ -119,7 +119,7 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: catalog,
+			Packages: catalog,
 			LinuxDistribution: &linux.Release{
 				PrettyName: "debian",
 				Name:       "debian",
@@ -200,7 +200,7 @@ func DirectoryInput(t testing.TB) sbom.SBOM {
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: catalog,
+			Packages: catalog,
 			LinuxDistribution: &linux.Release{
 				PrettyName: "debian",
 				Name:       "debian",
@@ -231,7 +231,7 @@ func DirectoryInputWithAuthorField(t testing.TB) sbom.SBOM {
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: catalog,
+			Packages: catalog,
 			LinuxDistribution: &linux.Release{
 				PrettyName: "debian",
 				Name:       "debian",
@@ -359,7 +359,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 
 //nolint:gosec
 func AddSampleFileRelationships(s *sbom.SBOM) {
-	catalog := s.Artifacts.PackageCatalog.Sorted()
+	catalog := s.Artifacts.Packages.Sorted()
 	s.Artifacts.FileMetadata = map[source.Coordinates]source.FileMetadata{}
 
 	files := []string{"/f1", "/f2", "/d1/f3", "/d2/f4", "/z1/f5", "/a1/f6"}
