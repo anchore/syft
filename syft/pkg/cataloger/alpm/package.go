@@ -11,12 +11,12 @@ import (
 
 func newPackage(m *parsedData, release *linux.Release, dbLocation source.Location) pkg.Package {
 	licenseCandidates := strings.Split(m.Licenses, "\n")
-
+	licenseList := pkg.NewLicensesFromLocation(dbLocation.WithoutAnnotations(), licenseCandidates...)
 	p := pkg.Package{
 		Name:         m.Package,
 		Version:      m.Version,
 		Locations:    source.NewLocationSet(dbLocation),
-		Licenses:     pkg.NewLicensesFromLocation(dbLocation.WithoutAnnotations(), licenseCandidates...),
+		Licenses:     pkg.NewLicenseSet(licenseList...),
 		Type:         pkg.AlpmPkg,
 		PURL:         packageURL(m, release),
 		MetadataType: pkg.AlpmMetadataType,

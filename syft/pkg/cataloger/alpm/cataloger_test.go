@@ -14,16 +14,17 @@ import (
 
 func TestAlpmCataloger(t *testing.T) {
 	dbLocation := source.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")
+	licenses := []pkg.License{
+		pkg.NewLicenseFromLocation("LGPL3", dbLocation),
+		pkg.NewLicenseFromLocation("GPL", dbLocation),
+	}
 	expectedPkgs := []pkg.Package{
 		{
-			Name:    "gmp",
-			Version: "6.2.1-2",
-			Type:    pkg.AlpmPkg,
-			FoundBy: "alpmdb-cataloger",
-			Licenses: []pkg.License{
-				pkg.NewLicenseFromLocation("LGPL3", dbLocation),
-				pkg.NewLicenseFromLocation("GPL", dbLocation),
-			},
+			Name:         "gmp",
+			Version:      "6.2.1-2",
+			Type:         pkg.AlpmPkg,
+			FoundBy:      "alpmdb-cataloger",
+			Licenses:     pkg.NewLicenseSet(licenses...),
 			Locations:    source.NewLocationSet(dbLocation),
 			CPEs:         nil,
 			PURL:         "",
