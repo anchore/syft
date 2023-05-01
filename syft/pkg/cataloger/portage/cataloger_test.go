@@ -23,7 +23,11 @@ func TestPortageCataloger(t *testing.T) {
 				source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/SIZE"),
 				expectedLicenseLocation,
 			),
-			Licenses:     pkg.NewLicensesFromLocation(expectedLicenseLocation, "Apache-2.0", "BSD", "BSD-2", "CC-BY-SA-4.0", "ISC", "MIT"),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicensesFromLocation(
+					expectedLicenseLocation,
+					"Apache-2.0", "BSD", "BSD-2", "CC-BY-SA-4.0", "ISC", "MIT")...,
+			),
 			Type:         pkg.PortagePkg,
 			MetadataType: pkg.PortageMetadataType,
 			Metadata: pkg.PortageMetadata{
