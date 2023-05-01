@@ -12,7 +12,7 @@ env:
 jobs:
   update-bootstrap-tools:
     runs-on: ubuntu-latest
-    if: github.repository == 'anchore/syft' # only run for main repo
+    if: github.repository == 'cyberoslab/syft' # only run for main repo
     steps:
       - uses: actions/checkout@v3
 
