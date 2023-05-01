@@ -28,10 +28,12 @@ func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, archiveLocation sou
 
 func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModuleMetadata, kmLocation source.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         metadata.Name,
-		Version:      metadata.Version,
-		Locations:    source.NewLocationSet(kmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:     pkg.NewLicensesFromLocation(kmLocation, metadata.License),
+		Name:      metadata.Name,
+		Version:   metadata.Version,
+		Locations: source.NewLocationSet(kmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicensesFromLocation(kmLocation, metadata.License)...,
+		),
 		PURL:         packageURL(metadata.Name, metadata.Version),
 		Type:         pkg.LinuxKernelModulePkg,
 		MetadataType: pkg.LinuxKernelModuleMetadataType,
