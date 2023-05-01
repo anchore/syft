@@ -334,7 +334,28 @@ func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
 			},
 		),
 		cmp.Comparer(
+			func(x, y pkg.LicenseSet) bool {
+				xs := x.ToSlice()
+				ys := y.ToSlice()
+
+				if len(xs) != len(ys) {
+					return false
+				}
+				for i, xe := range xs {
+					ye := ys[i]
+					if !DefaultLicenseComparer(xe, ye) {
+						return false
+					}
+				}
+
+				return true
+			},
+		),
+		cmp.Comparer(
 			DefaultLocationComparer,
+		),
+		cmp.Comparer(
+			DefaultLicenseComparer,
 		),
 	}
 
