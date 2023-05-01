@@ -280,7 +280,7 @@ func Test_missingDataDecode(t *testing.T) {
 		},
 	})
 
-	assert.Len(t, pkg.Licenses, 0)
+	assert.Len(t, pkg.Licenses.ToSlice(), 0)
 }
 
 func Test_missingComponentsDecode(t *testing.T) {

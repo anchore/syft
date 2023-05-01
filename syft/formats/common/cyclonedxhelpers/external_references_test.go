@@ -50,7 +50,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 				Language:     pkg.Rust,
 				Type:         pkg.RustPkg,
 				MetadataType: pkg.RustCargoPackageMetadataType,
-				Licenses:     nil,
+				Licenses:     pkg.NewLicenseSet(),
 				Metadata: pkg.CargoPackageMetadata{
 					Name:     "ansi_term",
 					Version:  "0.12.1",
