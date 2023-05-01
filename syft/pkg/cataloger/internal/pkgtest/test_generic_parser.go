@@ -147,6 +147,11 @@ func (p *CatalogTester) IgnoreLocationLayer() *CatalogTester {
 	p.locationComparer = func(x, y source.Location) bool {
 		return cmp.Equal(x.Coordinates.RealPath, y.Coordinates.RealPath) && cmp.Equal(x.VirtualPath, y.VirtualPath)
 	}
+
+	// we need to update the license comparer to use the ignored location layer
+	p.licenseComparer = func(x, y pkg.License) bool {
+		return cmp.Equal(x, y, cmp.Comparer(p.locationComparer))
+	}
 	return p
 }
 

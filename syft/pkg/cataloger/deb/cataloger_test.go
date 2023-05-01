@@ -16,11 +16,9 @@ func TestDpkgCataloger(t *testing.T) {
 			Name:    "libpam-runtime",
 			Version: "1.1.8-3.6",
 			FoundBy: "dpkgdb-cataloger",
-			Licenses: []pkg.License{
-				pkg.NewLicenseFromLocation("GPL-1", licenseLocation),
-				pkg.NewLicenseFromLocation("GPL-2", licenseLocation),
-				pkg.NewLicenseFromLocation("LGPL-2.1", licenseLocation),
-			},
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicensesFromLocation(licenseLocation, "GPL-1", "GPL-2", "LGPL-2.1")...,
+			),
 			Locations: source.NewLocationSet(
 				source.NewVirtualLocation("/var/lib/dpkg/status", "/var/lib/dpkg/status"),
 				source.NewVirtualLocation("/var/lib/dpkg/info/libpam-runtime.md5sums", "/var/lib/dpkg/info/libpam-runtime.md5sums"),
@@ -82,7 +80,7 @@ func TestDpkgCataloger(t *testing.T) {
 
 	pkgtest.NewCatalogTester().
 		WithImageResolver(t, "image-dpkg").
-		IgnoreLocationLayer(). // this fixture can be rebuilt, thus the layer ID will change
+		IgnoreLocationLayer().
 		Expects(expected, nil).
 		TestCataloger(t, c)
 }
