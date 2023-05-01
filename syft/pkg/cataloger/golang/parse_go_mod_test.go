@@ -21,6 +21,7 @@ func TestParseGoMod(t *testing.T) {
 					Version:      "v1.3.1",
 					PURL:         "pkg:golang/github.com/bmatcuk/doublestar@v1.3.1",
 					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/one-package")),
+					Licenses:     pkg.NewLicenseSet(),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
 					MetadataType: pkg.GolangModMetadataType,
@@ -37,6 +38,7 @@ func TestParseGoMod(t *testing.T) {
 					Version:      "v0.0.0-20200624184116-66aa578126db",
 					PURL:         "pkg:golang/github.com/anchore/go-testutils@v0.0.0-20200624184116-66aa578126db",
 					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/many-packages")),
+					Licenses:     pkg.NewLicenseSet(),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
 					MetadataType: pkg.GolangModMetadataType,
@@ -88,12 +90,6 @@ func TestParseGoMod(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			for i := range test.expected {
-				p := &test.expected[i]
-				if p.Licenses == nil {
-					p.Licenses = []pkg.License{}
-				}
-			}
 			c := goModCataloger{}
 			pkgtest.NewCatalogTester().
 				FromFile(t, test.fixture).
@@ -116,6 +112,7 @@ func Test_GoSumHashes(t *testing.T) {
 					Version:      "v0.6.0",
 					PURL:         "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.6.0",
 					Locations:    source.NewLocationSet(source.NewLocation("go.mod")),
+					Licenses:     pkg.NewLicenseSet(),
 					FoundBy:      "go-mod-file-cataloger",
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
@@ -127,6 +124,7 @@ func Test_GoSumHashes(t *testing.T) {
 					Version:      "v0.0.0-20180116102854-5a71ef0e047d",
 					PURL:         "pkg:golang/github.com/acarl005/stripansi@v0.0.0-20180116102854-5a71ef0e047d",
 					Locations:    source.NewLocationSet(source.NewLocation("go.mod")),
+					Licenses:     pkg.NewLicenseSet(),
 					FoundBy:      "go-mod-file-cataloger",
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
@@ -154,12 +152,6 @@ func Test_GoSumHashes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			for i := range test.expected {
-				p := &test.expected[i]
-				if p.Licenses == nil {
-					p.Licenses = []pkg.License{}
-				}
-			}
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expected, nil).
