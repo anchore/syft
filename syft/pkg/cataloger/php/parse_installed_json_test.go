@@ -24,9 +24,9 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			Language:     pkg.PHP,
 			Type:         pkg.PhpComposerPkg,
 			MetadataType: pkg.PhpComposerJSONMetadataType,
-			Licenses: []pkg.License{
+			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicense("MIT"),
-			},
+			),
 			Metadata: pkg.PhpComposerJSONMetadata{
 				Name:    "asm89/stack-cors",
 				Version: "1.3.0",
@@ -73,9 +73,9 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			PURL:     "pkg:composer/behat/mink@v1.8.1",
 			Language: pkg.PHP,
 			Type:     pkg.PhpComposerPkg,
-			Licenses: []pkg.License{
+			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicense("MIT"),
-			},
+			),
 			MetadataType: pkg.PhpComposerJSONMetadataType,
 			Metadata: pkg.PhpComposerJSONMetadata{
 				Name:    "behat/mink",
@@ -131,12 +131,14 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
 			locations := source.NewLocationSet(source.NewLocation(fixture))
+			loc := source.NewLocation(fixture)
 			for i := range expectedPkgs {
 				expectedPkgs[i].Locations = locations
-				for k := range expectedPkgs[i].Licenses {
-					loc := source.NewLocation(fixture)
-					expectedPkgs[i].Licenses[k].Location = &loc
+				licenses := expectedPkgs[i].Licenses.ToSlice()
+				for k := range licenses {
+					licenses[k].Location = &loc
 				}
+				expectedPkgs[i].Licenses = pkg.NewLicenseSet(licenses...)
 			}
 			pkgtest.TestFileParser(t, fixture, parseInstalledJSON, expectedPkgs, expectedRelationships)
 		})

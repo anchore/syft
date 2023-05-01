@@ -9,11 +9,14 @@ import (
 )
 
 func newComposerLockPackage(m parsedData, indexLocation source.Location) pkg.Package {
+	licenses := pkg.NewLicenseSet(
+		pkg.NewLicensesFromLocation(indexLocation, m.License...)...,
+	)
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
 		Locations:    source.NewLocationSet(indexLocation),
-		Licenses:     pkg.NewLicensesFromLocation(indexLocation, m.License...),
+		Licenses:     licenses,
 		PURL:         packageURL(m),
 		Language:     pkg.PHP,
 		Type:         pkg.PhpComposerPkg,
