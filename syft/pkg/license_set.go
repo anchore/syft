@@ -95,10 +95,10 @@ func (s LicenseSet) Contains(l License) bool {
 }
 
 func (s LicenseSet) ToSlice() []License {
+	licenses := make([]License, 0)
 	if s.set == nil {
-		return nil
+		return licenses
 	}
-	var licenses []License
 	for _, v := range s.set {
 		licenses = append(licenses, v...)
 	}
