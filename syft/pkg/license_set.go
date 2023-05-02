@@ -40,6 +40,7 @@ func (s *LicenseSet) Add(licenses ...License) {
 		s.set = make(map[setKey]*License)
 	}
 	for _, l := range licenses {
+		l := l
 		if v, ok := s.set[newSetKey(l)]; ok {
 			// already exists, update the location and update the url
 			merge(v, l)

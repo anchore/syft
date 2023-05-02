@@ -30,22 +30,6 @@ func (l Licenses) Len() int {
 func (l Licenses) Less(i, j int) bool {
 	if l[i].Value == l[j].Value {
 		if l[i].SPDXExpression == l[j].SPDXExpression {
-			if l[i].Type == l[j].Type {
-				if l[i].URL == l[j].URL {
-					if l[i].Location == nil && l[j].Location == nil {
-						return false
-					}
-					if l[i].Location == nil {
-						return true
-					}
-					if l[j].Location == nil {
-						return false
-					}
-					sl := source.Locations{*l[i].Location, *l[j].Location}
-					return sl.Less(0, 1)
-				}
-				return l[i].URL < l[j].URL
-			}
 			return l[i].Type < l[j].Type
 		}
 		return l[i].SPDXExpression < l[j].SPDXExpression
@@ -55,6 +39,21 @@ func (l Licenses) Less(i, j int) bool {
 
 func (l Licenses) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
+}
+
+func NewLicenseFromURLAndLocation(value, url string, l source.Location) License {
+	spdxExpression, err := license.ParseExpression(value)
+	if err != nil {
+		log.Trace("unable to parse license expression: %w", err)
+	}
+
+	return License{
+		Value:          value,
+		SPDXExpression: spdxExpression,
+		Type:           license.Declared,
+		URL:            internal.NewStringSet(url),
+		Location:       source.NewLocationSet(l),
+	}
 }
 
 func NewLicense(value string) License {
@@ -69,6 +68,7 @@ func NewLicense(value string) License {
 		Value:          value,
 		SPDXExpression: spdxExpression,
 		Type:           license.Declared,
+		URL:            internal.NewStringSet(),
 	}
 }
 
@@ -92,9 +92,9 @@ func NewLicensesFromLocation(location source.Location, values ...string) (licens
 	return
 }
 
-func NewLicenseFromLocation(value string, location source.Location) License {
+func NewLicenseFromLocation(value string, location ...source.Location) License {
 	l := NewLicense(value)
-	l.Location = &location
+	l.Location.Add(location...)
 	return l
 }
 
@@ -110,7 +110,7 @@ func NewLicensesFromURL(url string, values ...string) (licenses []License) {
 
 func NewLicenseFromURL(value string, url string) License {
 	l := NewLicense(value)
-	l.URL = url
+	l.URL.Add(url)
 	return l
 }
 
@@ -118,13 +118,13 @@ func NewLicenseFromURL(value string, url string) License {
 type noLayerLicense License
 
 func (s License) Hash() (uint64, error) {
-	if s.Location != nil {
-		l := *s.Location
-		// much like the location set hash function, we should not consider the file system ID when hashing
-		// so that licenses found in different layers (at the same path) are not considered different.
+	locations := make([]source.Location, 0)
+	for _, l := range s.Location.ToSlice() {
+		l := l
 		l.FileSystemID = ""
-		s.Location = &l
+		locations = append(locations, l)
 	}
+	s.Location = source.NewLocationSet(locations...)
 
 	return hashstructure.Hash(noLayerLicense(s), hashstructure.FormatV2,
 		&hashstructure.HashOptions{

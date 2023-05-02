@@ -52,9 +52,10 @@ func TestLicenseSet_Add(t *testing.T) {
 				NewLicenseFromLocation("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
 			},
 			want: []License{
-				NewLicense("MIT"),
-				NewLicenseFromLocation("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
-				NewLicenseFromLocation("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"})),
+				NewLicenseFromLocation("MIT",
+					source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"}),
+					source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"}),
+				),
 			},
 		},
 		{
@@ -65,9 +66,7 @@ func TestLicenseSet_Add(t *testing.T) {
 				NewLicenseFromURL("MIT", "https://example.com"),
 			},
 			want: []License{
-				NewLicense("MIT"),
-				NewLicenseFromLocation("MIT", source.NewLocation("/place")),
-				NewLicenseFromURL("MIT", "https://example.com"),
+				NewLicenseFromURLAndLocation("MIT", "https://example.com", source.NewLocation("/place")),
 			},
 		},
 		{
