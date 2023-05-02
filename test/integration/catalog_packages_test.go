@@ -163,12 +163,14 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	for _, l := range pkg.AllLanguages {
 		definedLanguages.Add(l.String())
 	}
+	definedLanguages.Remove(string(pkg.R))
 
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
 	for _, p := range pkg.AllPkgs {
 		definedPkgs.Add(string(p))
 	}
+	definedPkgs.Remove(string(pkg.Rpkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)

@@ -223,6 +223,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from nix store path",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.Rpkg,
+			},
+			expected: []string{
+				"acquired package info from R-package DESCRIPTION file",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

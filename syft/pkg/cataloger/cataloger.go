@@ -28,6 +28,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
 	"github.com/anchore/syft/syft/pkg/cataloger/portage"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
+	"github.com/anchore/syft/syft/pkg/cataloger/r"
 	"github.com/anchore/syft/syft/pkg/cataloger/rpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg/cataloger/rust"
@@ -53,6 +54,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		php.NewComposerInstalledCataloger(),
 		portage.NewPortageCataloger(),
 		python.NewPythonPackageCataloger(),
+		r.NewPackageCataloger(),
 		rpm.NewRpmDBCataloger(),
 		ruby.NewGemSpecCataloger(),
 		sbom.NewSBOMCataloger(),
@@ -121,6 +123,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		portage.NewPortageCataloger(),
 		python.NewPythonIndexCataloger(),
 		python.NewPythonPackageCataloger(),
+		r.NewPackageCataloger(),
 		rpm.NewFileCataloger(),
 		rpm.NewRpmDBCataloger(),
 		ruby.NewGemFileLockCataloger(),

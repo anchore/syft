@@ -66,6 +66,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:hex/hpax/hpax@0.1.1",
 			want: UnknownLanguage,
 		},
+		{
+			purl: "pkg:cran/base@4.3.0",
+			want: R,
+		},
 	}
 
 	var languages []string
@@ -230,6 +234,10 @@ func TestLanguageByName(t *testing.T) {
 		{
 			name:     "haskell",
 			language: Haskell,
+		},
+		{
+			name:     "R",
+			language: R,
 		},
 	}
 

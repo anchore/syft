@@ -23,6 +23,7 @@ const (
 	JavaScript      Language = "javascript"
 	PHP             Language = "php"
 	Python          Language = "python"
+	R               Language = "R"
 	Ruby            Language = "ruby"
 	Rust            Language = "rust"
 	Swift           Language = "swift"
@@ -41,6 +42,7 @@ var AllLanguages = []Language{
 	JavaScript,
 	PHP,
 	Python,
+	R,
 	Ruby,
 	Rust,
 	Swift,
@@ -91,6 +93,8 @@ func LanguageByName(name string) Language {
 		// answer: no. We want this to definitively answer "which language does this package represent?"
 		// which might not be possible in all cases. See for more context: https://github.com/package-url/purl-spec/pull/178
 		return UnknownLanguage
+	case packageurl.TypeCran, "r":
+		return R
 	default:
 		return UnknownLanguage
 	}
