@@ -3,8 +3,7 @@ package config
 import (
 	"os"
 
-	"github.com/spf13/viper"
-
+	"github.com/anchore/fangs/config"
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
@@ -24,14 +23,16 @@ type registry struct {
 	Auth                  []RegistryCredentials `yaml:"auth" json:"auth" mapstructure:"auth"`
 }
 
-func (cfg registry) loadDefaultValues(v *viper.Viper) {
-	v.SetDefault("registry.insecure-skip-tls-verify", false)
-	v.SetDefault("registry.insecure-use-http", false)
-	v.SetDefault("registry.auth", []RegistryCredentials{})
+var _ config.PostLoad = (*registry)(nil)
+
+func newRegistry() registry {
+	return registry{
+		Auth: []RegistryCredentials{},
+	}
 }
 
 //nolint:unparam
-func (cfg *registry) parseConfigValues() error {
+func (cfg *registry) PostLoad() error {
 	// there may be additional credentials provided by env var that should be appended to the set of credentials
 	authority, username, password, token :=
 		os.Getenv("SYFT_REGISTRY_AUTH_AUTHORITY"),

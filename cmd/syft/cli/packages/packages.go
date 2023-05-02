@@ -8,7 +8,7 @@ import (
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
-	"github.com/anchore/syft/cmd/syft/cli/options"
+	"github.com/anchore/syft/cmd/syft/cli/output"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
@@ -29,7 +29,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 		return err
 	}
 
-	writer, err := options.MakeWriter(app.Outputs, app.File, app.OutputTemplatePath)
+	writer, err := output.MakeWriter(app.Outputs, app.File, app.OutputTemplatePath)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
-		ui.Select(options.IsVerbose(app), app.Quiet)...,
+		ui.Select(app.IsVerbose(), app.Quiet)...,
 	)
 }
 

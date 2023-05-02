@@ -1,24 +1,21 @@
 package config
 
 import (
-	"github.com/spf13/viper"
-
 	"github.com/anchore/syft/syft/pkg/cataloger"
+	"github.com/anchore/syft/syft/source"
 )
 
-type pkg struct {
+type pkgOptions struct {
 	Cataloger               catalogerOptions `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
 	SearchUnindexedArchives bool             `yaml:"search-unindexed-archives" json:"search-unindexed-archives" mapstructure:"search-unindexed-archives"`
 	SearchIndexedArchives   bool             `yaml:"search-indexed-archives" json:"search-indexed-archives" mapstructure:"search-indexed-archives"`
 }
 
-func (cfg pkg) loadDefaultValues(v *viper.Viper) {
-	cfg.Cataloger.loadDefaultValues(v)
+func newPkgOptions(enabled bool) pkgOptions {
 	c := cataloger.DefaultSearchConfig()
-	v.SetDefault("package.search-unindexed-archives", c.IncludeUnindexedArchives)
-	v.SetDefault("package.search-indexed-archives", c.IncludeIndexedArchives)
-}
-
-func (cfg *pkg) parseConfigValues() error {
-	return cfg.Cataloger.parseConfigValues()
+	return pkgOptions{
+		Cataloger:               newCatalogerOptions(enabled, source.SquashedScope),
+		SearchIndexedArchives:   c.IncludeIndexedArchives,
+		SearchUnindexedArchives: c.IncludeUnindexedArchives,
+	}
 }

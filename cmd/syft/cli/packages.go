@@ -2,15 +2,16 @@ package cli
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/spf13/pflag"
 
-	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/packages"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/syft/formats"
+	"github.com/anchore/syft/syft/formats/table"
+	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -48,7 +49,7 @@ const (
 )
 
 //nolint:dupl
-func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions) *cobra.Command {
+func Packages(app *config.Application) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "packages [SOURCE]",
 		Short: "Generate a package SBOM",
@@ -58,7 +59,7 @@ func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, 
 			"command": "packages",
 		}),
 		Args: func(cmd *cobra.Command, args []string) error {
-			if err := app.LoadAllValues(v, ro.Config); err != nil {
+			if err := app.LoadAllValues(cmd); err != nil {
 				return fmt.Errorf("invalid application config: %w", err)
 			}
 			// configure logging for command
@@ -76,10 +77,33 @@ func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, 
 		},
 	}
 
-	err := po.AddFlags(cmd, v)
-	if err != nil {
-		log.Fatal(err)
-	}
+	AddPackagesFlags(cmd.Flags(), app)
 
 	return cmd
+}
+
+func AddPackagesFlags(flags *pflag.FlagSet, app *config.Application) {
+	flags.StringVarP(&app.Package.Cataloger.Scope, "scope", "s", app.Package.Cataloger.Scope,
+		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
+
+	flags.StringArrayVarP(&app.Outputs, "output", "o", []string{string(table.ID)},
+		fmt.Sprintf("report output format, options=%v", formats.AllIDs()))
+
+	flags.StringVarP(&app.File, "file", "", "",
+		"file to write the default report output to (default is STDOUT)")
+
+	flags.StringVarP(&app.OutputTemplatePath, "template", "t", "",
+		"specify the path to a Go template file")
+
+	flags.StringVarP(&app.Platform, "platform", "", "",
+		"an optional platform specifier for container image sources (e.g. 'linux/arm64', 'linux/arm64/v8', 'arm64', 'linux')")
+
+	flags.StringArrayVarP(&app.Exclusions, "exclude", "", nil,
+		"exclude paths from being scanned using a glob expression")
+
+	flags.StringArrayVarP(&app.Catalogers, "catalogers", "", nil,
+		"enable one or more package catalogers")
+
+	flags.StringVarP(&app.Name, "name", "", "",
+		"set the name of the target being analyzed")
 }

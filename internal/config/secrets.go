@@ -1,8 +1,6 @@
 package config
 
 import (
-	"github.com/spf13/viper"
-
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/source"
 )
@@ -15,15 +13,12 @@ type secrets struct {
 	SkipFilesAboveSize  int64             `yaml:"skip-files-above-size" json:"skip-files-above-size" mapstructure:"skip-files-above-size"`
 }
 
-func (cfg secrets) loadDefaultValues(v *viper.Viper) {
-	v.SetDefault("secrets.cataloger.enabled", catalogerEnabledDefault)
-	v.SetDefault("secrets.cataloger.scope", source.AllLayersScope)
-	v.SetDefault("secrets.reveal-values", false)
-	v.SetDefault("secrets.skip-files-above-size", 1*file.MB)
-	v.SetDefault("secrets.additional-patterns", map[string]string{})
-	v.SetDefault("secrets.exclude-pattern-names", []string{})
-}
-
-func (cfg *secrets) parseConfigValues() error {
-	return cfg.Cataloger.parseConfigValues()
+func newSecrets(enabled bool) secrets {
+	return secrets{
+		AdditionalPatterns:  map[string]string{},
+		ExcludePatternNames: []string{},
+		RevealValues:        false,
+		SkipFilesAboveSize:  1 * file.MB,
+		Cataloger:           newCatalogerOptions(enabled, source.AllLayersScope),
+	}
 }

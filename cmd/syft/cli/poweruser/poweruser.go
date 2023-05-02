@@ -10,7 +10,6 @@ import (
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
-	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/packages"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
@@ -62,7 +61,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
-		ui.Select(options.IsVerbose(app), app.Quiet)...,
+		ui.Select(app.IsVerbose(), app.Quiet)...,
 	)
 }
 
@@ -74,7 +73,6 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 		app.Secrets.Cataloger.Enabled = true
 		app.FileMetadata.Cataloger.Enabled = true
 		app.FileContents.Cataloger.Enabled = true
-		app.FileClassification.Cataloger.Enabled = true
 		tasks, err := eventloop.Tasks(app)
 		if err != nil {
 			errs <- err

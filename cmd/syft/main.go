@@ -9,12 +9,9 @@ import (
 )
 
 func main() {
-	cli, err := cli.New()
-	if err != nil {
-		log.Fatalf("error during command construction: %v", err)
-	}
+	c := cli.New()
 
-	if err := cli.Execute(); err != nil {
+	if err := c.Execute(); err != nil {
 		log.Fatalf("error during command execution: %v", err)
 	}
 }

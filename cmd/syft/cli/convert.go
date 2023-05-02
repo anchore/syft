@@ -2,13 +2,10 @@ package cli
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/anchore/syft/cmd/syft/cli/convert"
-	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
 )
@@ -21,7 +18,7 @@ const (
 )
 
 //nolint:dupl
-func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions) *cobra.Command {
+func Convert(app *config.Application) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "convert [SOURCE-SBOM] -o [FORMAT]",
 		Short: "Convert between SBOM formats",
@@ -31,7 +28,7 @@ func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions, p
 			"command": "convert",
 		}),
 		Args: func(cmd *cobra.Command, args []string) error {
-			if err := app.LoadAllValues(v, ro.Config); err != nil {
+			if err := app.LoadAllValues(cmd); err != nil {
 				return fmt.Errorf("invalid application config: %w", err)
 			}
 			newLogWrapper(app)
@@ -48,10 +45,7 @@ func Convert(v *viper.Viper, app *config.Application, ro *options.RootOptions, p
 		},
 	}
 
-	err := po.AddFlags(cmd, v)
-	if err != nil {
-		log.Fatal(err)
-	}
+	AddPackagesFlags(cmd.Flags(), app)
 
 	return cmd
 }

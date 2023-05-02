@@ -8,7 +8,7 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/mitchellh/go-homedir"
-	"github.com/spf13/viper"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -111,8 +111,7 @@ func TestApplicationConfig(t *testing.T) {
 			require.NoError(t, err)
 
 			defer os.Chdir(wd) // reset working directory after test
-			application := &Application{}
-			viperInstance := viper.New()
+			application := NewApplication()
 
 			// this will override home in case you are running this test locally and DO have a syft config
 			// in your home directory... now it will be ignored. Same for XDG_CONFIG_DIRS.
@@ -120,8 +119,10 @@ func TestApplicationConfig(t *testing.T) {
 			t.Setenv("XDG_CONFIG_DIRS", "/foo/bar")
 			xdg.Reload()
 
-			configPath := test.setup(t)
-			err = application.LoadAllValues(viperInstance, configPath)
+			cmd := &cobra.Command{}
+
+			application.ConfigPath = test.setup(t)
+			err = application.LoadAllValues(cmd)
 			require.NoError(t, err)
 			test.assertions(t, application)
 		})

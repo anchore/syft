@@ -4,9 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
-	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/poweruser"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
@@ -18,7 +16,7 @@ const powerUserExample = `  {{.appName}} {{.command}} <image>
   All behavior is controlled via application configuration and environment variables (see https://github.com/anchore/syft#configuration)
 `
 
-func PowerUser(v *viper.Viper, app *config.Application, ro *options.RootOptions) *cobra.Command {
+func PowerUser(app *config.Application) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "power-user [IMAGE]",
 		Short: "Run bulk operations on container images",
@@ -27,7 +25,7 @@ func PowerUser(v *viper.Viper, app *config.Application, ro *options.RootOptions)
 			"command": "power-user",
 		}),
 		Args: func(cmd *cobra.Command, args []string) error {
-			if err := app.LoadAllValues(v, ro.Config); err != nil {
+			if err := app.LoadAllValues(cmd); err != nil {
 				return fmt.Errorf("invalid application config: %w", err)
 			}
 			// configure logging for command
@@ -45,6 +43,8 @@ func PowerUser(v *viper.Viper, app *config.Application, ro *options.RootOptions)
 			return poweruser.Run(cmd.Context(), app, args)
 		},
 	}
+
+	AddPackagesFlags(cmd.Flags(), app)
 
 	return cmd
 }

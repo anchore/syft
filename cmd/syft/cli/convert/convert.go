@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/anchore/syft/cmd/syft/cli/options"
+	"github.com/anchore/syft/cmd/syft/cli/output"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/formats"
@@ -14,7 +14,7 @@ import (
 
 func Run(_ context.Context, app *config.Application, args []string) error {
 	log.Warn("convert is an experimental feature, run `syft convert -h` for help")
-	writer, err := options.MakeWriter(app.Outputs, app.File, app.OutputTemplatePath)
+	writer, err := output.MakeWriter(app.Outputs, app.File, app.OutputTemplatePath)
 	if err != nil {
 		return err
 	}

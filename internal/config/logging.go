@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/spf13/viper"
 
+	"github.com/anchore/fangs/config"
 	"github.com/anchore/go-logger"
 )
 
@@ -16,7 +16,15 @@ type logging struct {
 	FileLocation string       `yaml:"file" json:"file-location" mapstructure:"file"`          // the file path to write logs to
 }
 
-func (cfg *logging) parseConfigValues() error {
+var _ config.PostLoad = (*logging)(nil)
+
+func newLogging() logging {
+	return logging{
+		Level: logger.WarnLevel,
+	}
+}
+
+func (cfg *logging) PostLoad() error {
 	if cfg.FileLocation != "" {
 		expandedPath, err := homedir.Expand(cfg.FileLocation)
 		if err != nil {
@@ -25,10 +33,4 @@ func (cfg *logging) parseConfigValues() error {
 		cfg.FileLocation = expandedPath
 	}
 	return nil
-}
-
-func (cfg logging) loadDefaultValues(v *viper.Viper) {
-	v.SetDefault("log.structured", false)
-	v.SetDefault("log.file", "")
-	v.SetDefault("log.level", string(logger.WarnLevel))
 }

@@ -1,8 +1,6 @@
 package config
 
 import (
-	"github.com/spf13/viper"
-
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/source"
 )
@@ -13,13 +11,10 @@ type fileContents struct {
 	Globs              []string         `yaml:"globs" json:"globs" mapstructure:"globs"`
 }
 
-func (cfg fileContents) loadDefaultValues(v *viper.Viper) {
-	v.SetDefault("file-contents.cataloger.enabled", catalogerEnabledDefault)
-	v.SetDefault("file-contents.cataloger.scope", source.SquashedScope)
-	v.SetDefault("file-contents.skip-files-above-size", 1*file.MB)
-	v.SetDefault("file-contents.globs", []string{})
-}
-
-func (cfg *fileContents) parseConfigValues() error {
-	return cfg.Cataloger.parseConfigValues()
+func newFileContents(enabled bool) fileContents {
+	return fileContents{
+		Cataloger:          newCatalogerOptions(enabled, source.SquashedScope),
+		SkipFilesAboveSize: 1 * file.MB,
+		Globs:              []string{},
+	}
 }

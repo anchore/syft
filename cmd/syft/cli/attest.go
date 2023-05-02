@@ -2,13 +2,11 @@ package cli
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/spf13/pflag"
 
 	"github.com/anchore/syft/cmd/syft/cli/attest"
-	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
 )
@@ -20,7 +18,7 @@ const (
 	attestHelp       = attestExample + attestSchemeHelp
 )
 
-func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions, po *options.PackagesOptions, ao *options.AttestOptions) *cobra.Command {
+func Attest(app *config.Application) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "attest --output [FORMAT] <IMAGE>",
 		Short: "Generate an SBOM as an attestation for the given [SOURCE] container image",
@@ -30,7 +28,7 @@ func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions, po
 			"command": "attest",
 		}),
 		Args: func(cmd *cobra.Command, args []string) error {
-			if err := app.LoadAllValues(v, ro.Config); err != nil {
+			if err := app.LoadAllValues(cmd); err != nil {
 				return fmt.Errorf("unable to load configuration: %w", err)
 			}
 
@@ -50,16 +48,14 @@ func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions, po
 	}
 
 	// syft attest is an enhancement of the packages command, so it should have the same flags
-	err := po.AddFlags(cmd, v)
-	if err != nil {
-		log.Fatal(err)
-	}
+	AddPackagesFlags(cmd.Flags(), app)
 
 	// syft attest has its own options not included as part of the packages command
-	err = ao.AddFlags(cmd, v)
-	if err != nil {
-		log.Fatal(err)
-	}
+	AddAttestFlags(cmd.Flags(), app)
 
 	return cmd
+}
+
+func AddAttestFlags(flags *pflag.FlagSet, app *config.Application) {
+	flags.StringVarP(&app.Attest.Key, "key", "k", app.Attest.Key, "the key to use for the attestation")
 }

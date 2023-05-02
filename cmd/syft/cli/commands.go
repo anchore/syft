@@ -2,18 +2,16 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 
 	cranecmd "github.com/google/go-containerregistry/cmd/crane/cmd"
 	"github.com/gookit/color"
 	logrusUpstream "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/spf13/pflag"
 	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/go-logger/adapter/logrus"
 	"github.com/anchore/stereoscope"
-	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
@@ -34,24 +32,11 @@ const indent = "  "
 // at this level. Values from the config should only be used after `app.LoadAllValues` has been called.
 // Cobra does not have knowledge of the user provided flags until the `RunE` block of each command.
 // `RunE` is the earliest that the complete application configuration can be loaded.
-func New() (*cobra.Command, error) {
-	app := &config.Application{}
-
-	// allow for nested options to be specified via environment variables
-	// e.g. pod.context = APPNAME_POD_CONTEXT
-	v := viper.NewWithOptions(viper.EnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")))
+func New() *cobra.Command {
+	app := config.NewApplication()
 
 	// since root is aliased as the packages cmd we need to construct this command first
-	// we also need the command to have information about the `root` options because of this alias
-	ro := &options.RootOptions{}
-	po := &options.PackagesOptions{}
-	ao := &options.AttestOptions{}
-	packagesCmd := Packages(v, app, ro, po)
-
-	// root options are also passed to the attestCmd so that a user provided config location can be discovered
-	poweruserCmd := PowerUser(v, app, ro)
-	convertCmd := Convert(v, app, ro, po)
-	attestCmd := Attest(v, app, ro, po, ao)
+	packagesCmd := Packages(app)
 
 	// rootCmd is currently an alias for the packages command
 	rootCmd := &cobra.Command{
@@ -67,39 +52,32 @@ func New() (*cobra.Command, error) {
 	}
 	rootCmd.SetVersionTemplate(fmt.Sprintf("%s {{.Version}}\n", internal.ApplicationName))
 
-	// start adding flags to all the commands
-	err := ro.AddFlags(rootCmd, v)
-	if err != nil {
-		return nil, err
-	}
-	// package flags need to be decorated onto the rootCmd so that rootCmd can function as a packages alias
-	err = po.AddFlags(rootCmd, v)
-	if err != nil {
-		return nil, err
-	}
+	// add flags common for all commands
+	AddRootFlags(rootCmd.PersistentFlags(), app)
 
-	// poweruser also uses the packagesCmd flags since it is a specialized version of the command
-	err = po.AddFlags(poweruserCmd, v)
-	if err != nil {
-		return nil, err
-	}
+	// package flags need to be decorated onto the rootCmd so that rootCmd can function as a packages alias
+	AddPackagesFlags(rootCmd.Flags(), app)
 
 	// commands to add to root
 	cmds := []*cobra.Command{
 		packagesCmd,
-		poweruserCmd,
-		convertCmd,
-		attestCmd,
-		Version(v, app),
+		PowerUser(app),
+		Convert(app),
+		Attest(app),
+		Version(app),
 		cranecmd.NewCmdAuthLogin("syft"), // syft login uses the same command as crane
 	}
 
 	// Add sub-commands.
-	for _, cmd := range cmds {
-		rootCmd.AddCommand(cmd)
-	}
+	rootCmd.AddCommand(cmds...)
 
-	return rootCmd, err
+	return rootCmd
+}
+
+func AddRootFlags(flags *pflag.FlagSet, app *config.Application) {
+	flags.StringVarP(&app.ConfigPath, "config", "c", app.ConfigPath, "application config file")
+	flags.CountVarP(&app.Verbosity, "verbose", "v", "increase verbosity (-v = info, -vv = debug)")
+	flags.BoolVarP(&app.Quiet, "quiet", "q", app.Quiet, "suppress all logging output")
 }
 
 func validateArgs(cmd *cobra.Command, args []string) error {

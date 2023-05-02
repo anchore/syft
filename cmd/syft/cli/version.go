@@ -3,34 +3,44 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/spf13/pflag"
 
-	"github.com/anchore/syft/cmd/syft/cli/options"
+	fangs "github.com/anchore/fangs/config"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/version"
 )
 
-func Version(v *viper.Viper, _ *config.Application) *cobra.Command {
-	o := &options.VersionOptions{}
+type VersionOptions struct {
+	Output string `mapstructure:"output"`
+}
+
+func Version(app *config.Application) *cobra.Command {
+	o := &VersionOptions{
+		Output: "text",
+	}
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "show the version",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			err := fangs.Load(app.FangsConfig(), cmd, o)
+			if err != nil {
+				return err
+			}
 			return printVersion(o.Output)
 		},
 	}
 
-	err := o.AddFlags(cmd, v)
-	if err != nil {
-		log.Fatal(err)
-	}
+	AddVersionFlags(cmd.Flags(), o)
 
 	return cmd
+}
+
+func AddVersionFlags(flags *pflag.FlagSet, o *VersionOptions) {
+	flags.StringVarP(&o.Output, "output", "o", o.Output, "format to show version information (available=[text, json])")
 }
 
 func printVersion(output string) error {

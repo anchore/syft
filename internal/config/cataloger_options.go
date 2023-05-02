@@ -3,8 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/spf13/viper"
-
+	"github.com/anchore/fangs/config"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -14,11 +13,17 @@ type catalogerOptions struct {
 	ScopeOpt source.Scope `yaml:"-" json:"-"`
 }
 
-func (cfg catalogerOptions) loadDefaultValues(v *viper.Viper) {
-	v.SetDefault("package.cataloger.enabled", true)
+var _ config.PostLoad = (*catalogerOptions)(nil)
+
+func newCatalogerOptions(enabled bool, scope source.Scope) catalogerOptions {
+	return catalogerOptions{
+		Enabled:  enabled,
+		Scope:    string(scope),
+		ScopeOpt: scope,
+	}
 }
 
-func (cfg *catalogerOptions) parseConfigValues() error {
+func (cfg *catalogerOptions) PostLoad() error {
 	scopeOption := source.ParseScope(cfg.Scope)
 	if scopeOption == source.UnknownScope {
 		return fmt.Errorf("bad scope value %q", cfg.Scope)

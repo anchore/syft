@@ -35,7 +35,7 @@ require (
 	github.com/spf13/afero v1.9.5
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.15.0
+	github.com/spf13/viper v1.15.0 // indirect
 	github.com/stretchr/testify v1.8.2
 	github.com/vifraa/gopom v0.2.1
 	github.com/wagoodman/go-partybus v0.0.0-20210627031916-db1f5573bbc5
@@ -51,7 +51,8 @@ require (
 require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
+	github.com/anchore/fangs v0.0.0-20230502174526-91ce841e4006
+	github.com/anchore/go-logger v0.0.0-20230120230012-47be9bb822a2
 	github.com/anchore/stereoscope v0.0.0-20230412183729-8602f1afc574
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
 	github.com/docker/docker v23.0.4+incompatible
