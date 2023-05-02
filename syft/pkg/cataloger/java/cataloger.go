@@ -32,6 +32,14 @@ func NewJavaPomCataloger() *generic.Cataloger {
 		WithParserByGlobs(parserPomXML, "**/pom.xml")
 }
 
+// NewJavaGradleCataloger returns a cataloger capable of parsing
+// dependencies from a pom.xml file.
+// Pom files list dependencies that maybe not be locally installed yet.
+func NewJavaGradleCataloger() *generic.Cataloger {
+	return generic.NewCataloger("java-gradle-cataloger").
+		WithParserByGlobs(parseBuildGradle, buildGradleDirGlob)
+}
+
 // NewJavaGradleLockfileCataloger returns a cataloger capable of parsing
 // dependencies from a gradle.lockfile file.
 // older versions of lockfiles aren't supported yet
