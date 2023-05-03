@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:0709d699-9751-41d6-9692-d4080bb5589b" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:00129e94-2693-4a8d-a0ab-a6bd208d1d66" version="1">
   <metadata>
-    <timestamp>2023-04-27T11:12:15-04:00</timestamp>
+    <timestamp>2023-05-03T12:17:37-04:00</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -14,7 +14,7 @@
     </component>
   </metadata>
   <components>
-    <component bom-ref="3fdbdcde4d17d261" type="library">
+    <component bom-ref="8c7e1242588c971a" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>

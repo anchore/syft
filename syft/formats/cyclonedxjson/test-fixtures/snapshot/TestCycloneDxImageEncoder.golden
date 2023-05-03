@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.4.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",
-  "serialNumber": "urn:uuid:4536288a-9645-4c51-ab08-e5bb638c8b7c",
+  "serialNumber": "urn:uuid:83e8ca16-b2fb-4681-a3a6-98ac4351957f",
   "version": 1,
   "metadata": {
-    "timestamp": "2023-04-27T11:12:15-04:00",
+    "timestamp": "2023-05-03T12:16:16-04:00",
     "tools": [
       {
         "vendor": "anchore",
@@ -22,7 +22,7 @@
   },
   "components": [
     {
-      "bom-ref": "911cef0da9e28043",
+      "bom-ref": "ec2e0c93617507ef",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
