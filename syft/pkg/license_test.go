@@ -68,9 +68,11 @@ func Test_Sort(t *testing.T) {
 		{
 			name: "multiple with location variants",
 			licenses: []License{
-				NewLicenseFromLocation("MIT", source.NewLocation("place!")),
-				NewLicenseFromLocation("MIT", source.NewLocation("park!")),
-				NewLicense("MIT"),
+				NewLicenseFromLocation(
+					"MIT",
+					source.NewLocation("park!"),
+					source.NewLocation("place!"),
+				),
 				NewLicense("AAL"),
 				NewLicense("Adobe-2006"),
 				NewLicenseFromLocation("Apache", source.NewLocation("area!")),
@@ -79,9 +81,11 @@ func Test_Sort(t *testing.T) {
 				NewLicense("AAL"),
 				NewLicense("Adobe-2006"),
 				NewLicenseFromLocation("Apache", source.NewLocation("area!")),
-				NewLicense("MIT"),
-				NewLicenseFromLocation("MIT", source.NewLocation("park!")),
-				NewLicenseFromLocation("MIT", source.NewLocation("place!")),
+				NewLicenseFromLocation(
+					"MIT",
+					source.NewLocation("park!"),
+					source.NewLocation("place!"),
+				),
 			},
 		},
 	}

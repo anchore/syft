@@ -31,8 +31,13 @@ func NewLicenseSet(licenses ...License) (s LicenseSet) {
 }
 
 func merge(update *License, other License) {
-	update.Location.Add(other.Location.ToSlice()...)
-	update.URL.Add(other.URL.ToSlice()...)
+	// TODO: this is where our nil case for location can become empty struct
+	if len(other.Location.ToSlice()) != 0 {
+		update.Location.Add(other.Location.ToSlice()...)
+	}
+	if len(other.URL.ToSlice()) != 0 {
+		update.URL.Add(other.URL.ToSlice()...)
+	}
 }
 
 func (s *LicenseSet) Add(licenses ...License) {
