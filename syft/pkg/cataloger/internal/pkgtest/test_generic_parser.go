@@ -64,7 +64,24 @@ func DefaultLocationComparer(x, y source.Location) bool {
 }
 
 func DefaultLicenseComparer(x, y pkg.License) bool {
-	return cmp.Equal(x, y, cmp.Comparer(DefaultLocationComparer))
+	return cmp.Equal(x, y, cmp.Comparer(DefaultLocationComparer), cmp.Comparer(
+		func(x, y source.LocationSet) bool {
+			xs := x.ToSlice()
+			ys := y.ToSlice()
+
+			if len(xs) != len(ys) {
+				return false
+			}
+			for i, xe := range xs {
+				ye := ys[i]
+				if !DefaultLocationComparer(xe, ye) {
+					return false
+				}
+			}
+
+			return true
+		},
+	))
 }
 
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
@@ -272,7 +289,6 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 			p.licenseComparer,
 		),
 	)
-
 	{
 		var r diffReporter
 		var opts []cmp.Option
@@ -354,9 +370,6 @@ func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
 		),
 		cmp.Comparer(
 			DefaultLocationComparer,
-		),
-		cmp.Comparer(
-			DefaultLicenseComparer,
 		),
 	}
 

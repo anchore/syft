@@ -682,7 +682,7 @@ func TestSinglePackageDetails(t *testing.T) {
 			test.expected.Locations = source.NewLocationSet(fixtureLocation)
 			licenses := test.expected.Licenses.ToSlice()
 			for i := range licenses {
-				licenses[i].Location = &fixtureLocation
+				licenses[i].Location.Add(fixtureLocation)
 			}
 			test.expected.Licenses = pkg.NewLicenseSet(licenses...)
 			pkgtest.TestFileParser(t, test.fixture, parseApkDB, []pkg.Package{test.expected}, nil)
