@@ -44,6 +44,9 @@ func (f *licenses) UnmarshalJSON(b []byte) error {
 		}
 		licenses = pkg.NewLicensesFromValues(simpleLicense...)
 	}
+	if licenses == nil {
+		licenses = make([]pkg.License, 0)
+	}
 	*f = licenses
 	return nil
 }

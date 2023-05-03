@@ -36,7 +36,7 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				   "value": "MIT",
 				   "spdxExpression": "MIT",
 				   "type": "declared",
-				   "url": ""
+				   "url": []
 				  }
 				],
 				"language": "go",
@@ -74,7 +74,7 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				    "value": "MIT",
 					"spdxExpression": "MIT",
 					"type": "declared",
-					"url": ""
+					"url": []
 				  }
 				],
 				"language": "go",

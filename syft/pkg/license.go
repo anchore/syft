@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"encoding/json"
 	"sort"
 
 	"github.com/mitchellh/hashstructure/v2"
@@ -19,6 +20,27 @@ type License struct {
 	Type           license.Type       `json:"type"`
 	URL            internal.StringSet `json:"url"`                // external sources
 	Location       source.LocationSet `json:"location,omitempty"` // on disk declaration
+}
+
+type modelLicense struct {
+	Value          string            `json:"value"`
+	SPDXExpression string            `json:"spdxExpression"`
+	Type           license.Type      `json:"type"`
+	URL            []string          `json:"url"`                // external sources
+	Location       []source.Location `json:"location,omitempty"` // on disk declaration
+}
+
+func (f *License) UnmarshalJSON(b []byte) error {
+	var l modelLicense
+	if err := json.Unmarshal(b, &l); err != nil {
+		return err
+	}
+	f.Value = l.Value
+	f.SPDXExpression = l.SPDXExpression
+	f.Type = l.Type
+	f.Location = source.NewLocationSet(l.Location...)
+	f.URL = internal.NewStringSet(l.URL...)
+	return nil
 }
 
 type Licenses []License
