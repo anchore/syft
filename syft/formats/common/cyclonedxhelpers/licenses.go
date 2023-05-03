@@ -97,26 +97,28 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			as a license choice and the invalid expression as a license string.
 
 	*/
-	licenseSet := map[string]*cyclonedx.License{}
+	cdxLSet := map[cyclonedx.License]struct{}{}
 	for _, l := range p.Licenses.ToSlice() {
-		// singular expression case
+		// check if the license is a singular ID; valid expression case
 		if spdxID, exists := spdxlicense.ID(l.SPDXExpression); exists {
-			if cyclonedxLicense, exists := licenseSet[spdxID]; exists {
-				// if the license already exists in the set, skip it
-				if cyclonedxLicense.URL == "" {
-					cyclonedxLicense.URL = l.URL
-					continue
+			// we've already seen this ID
+			// we have not seen the ID
+			// add a license for each URL
+			// no url found
+			if len(l.URL.ToSlice()) > 0 {
+				for _, u := range l.URL.ToSlice() {
+					license := cyclonedx.License{
+						ID:  spdxID,
+						URL: u,
+					}
+					cdxLSet[license] = struct{}{}
 				}
-				if l.URL == "" {
-					continue
-				}
+				continue
 			}
-			license := &cyclonedx.License{
-				ID:  spdxID,
-				URL: l.URL,
+			license := cyclonedx.License{
+				ID: spdxID,
 			}
-			licenseSet[spdxID] = license
-			spdxc = append(spdxc, cyclonedx.LicenseChoice{License: license})
+			cdxLSet[license] = struct{}{}
 			continue
 		}
 
@@ -127,12 +129,29 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			continue
 		}
 
-		// license string that are not valid spdx expressions or ids
+		urls := l.URL.ToSlice()
+		if len(urls) > 0 {
+			for _, url := range urls {
+				otherc = append(otherc, cyclonedx.LicenseChoice{
+					License: &cyclonedx.License{
+						Name: l.Value,
+						URL:  url,
+					},
+				})
+			}
+			continue
+		}
 		otherc = append(otherc, cyclonedx.LicenseChoice{
 			License: &cyclonedx.License{
 				Name: l.Value,
-				URL:  l.URL,
 			},
+		})
+	}
+
+	for key, _ := range cdxLSet {
+		key := key
+		spdxc = append(spdxc, cyclonedx.LicenseChoice{
+			License: &key,
 		})
 	}
 	return spdxc, otherc, ex

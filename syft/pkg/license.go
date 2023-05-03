@@ -110,7 +110,9 @@ func NewLicensesFromURL(url string, values ...string) (licenses []License) {
 
 func NewLicenseFromURL(value string, url string) License {
 	l := NewLicense(value)
-	l.URL.Add(url)
+	if url != "" {
+		l.URL.Add(url)
+	}
 	return l
 }
 

@@ -6,7 +6,6 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -101,15 +100,20 @@ func Test_encodeLicense(t *testing.T) {
 				),
 			},
 			expected: &cyclonedx.Licenses{
-				{
-					License: &cyclonedx.License{
-						ID: "Apache-2.0",
-					},
-				},
+				{License: &cyclonedx.License{Name: "Apache"}},
+				{License: &cyclonedx.License{ID: "Apache-2.0"}},
+				{License: &cyclonedx.License{ID: "GPL-2.0-only"}},
+				{License: &cyclonedx.License{ID: "ISC"}},
+				{License: &cyclonedx.License{ID: "LGPL-2.1-or-later"}},
+				{License: &cyclonedx.License{ID: "PSF-2.0"}},
+				{License: &cyclonedx.License{Name: "Permission"}},
+				{License: &cyclonedx.License{Name: "Python"}},
+				{License: &cyclonedx.License{Name: "See"}},
+				{License: &cyclonedx.License{Name: "This"}},
 			},
 		},
 		{
-			name: "deduplication of SPDX licenses with shared SPDX ID",
+			name: "deduplication of SPDX licenses with shared SPDX ID; URL not merged",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("Apache-2.0"),
@@ -120,6 +124,11 @@ func Test_encodeLicense(t *testing.T) {
 			expected: &cyclonedx.Licenses{
 				{
 					License: &cyclonedx.License{
+						ID: "Apache-2.0",
+					},
+				},
+				{
+					License: &cyclonedx.License{
 						ID:  "Apache-2.0",
 						URL: "https://spdx.org/licenses/Apache-2.0.html",
 					},
@@ -127,7 +136,7 @@ func Test_encodeLicense(t *testing.T) {
 			},
 		},
 		{
-			name: "deduplication of Other licenses with shared value",
+			name: "two unique licenses listed",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("python"),
@@ -138,7 +147,7 @@ func Test_encodeLicense(t *testing.T) {
 				{
 					License: &cyclonedx.License{
 						Name: "python",
-						URL:  "https://spdx.org/licenses/Apache-2.0.html",
+						URL:  "https://www.python.org/psf/license/",
 					},
 				},
 			},
@@ -179,12 +188,12 @@ func TestDecodeLicenses(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    *cyclonedx.Component
-		expected []pkg.License
+		expected pkg.LicenseSet
 	}{
 		{
 			name:     "no licenses",
 			input:    &cyclonedx.Component{},
-			expected: []pkg.License{},
+			expected: pkg.NewLicenseSet(),
 		},
 		{
 			name: "no SPDX license ID or expression",
@@ -197,13 +206,7 @@ func TestDecodeLicenses(t *testing.T) {
 					},
 				},
 			},
-			expected: []pkg.License{
-				{
-					Value: "RandomLicense",
-					// CycloneDX specification doesn't give a field for determining the license type
-					Type: license.Declared,
-				},
-			},
+			expected: pkg.NewLicenseSet(pkg.NewLicense("RandomLicense")),
 		},
 		{
 			name: "with SPDX license ID",
@@ -216,13 +219,7 @@ func TestDecodeLicenses(t *testing.T) {
 					},
 				},
 			},
-			expected: []pkg.License{
-				{
-					Value:          "MIT",
-					SPDXExpression: "MIT",
-					Type:           license.Declared,
-				},
-			},
+			expected: pkg.NewLicenseSet(pkg.NewLicense("MIT")),
 		},
 		{
 			name: "with complex SPDX license expression",
@@ -234,13 +231,7 @@ func TestDecodeLicenses(t *testing.T) {
 					},
 				},
 			},
-			expected: []pkg.License{
-				{
-					Value:          "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
-					SPDXExpression: "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
-					Type:           license.Declared,
-				},
-			},
+			expected: pkg.NewLicenseSet(pkg.NewLicense("MIT AND GPL-3.0-only WITH Classpath-exception-2.0")),
 		},
 	}
 	for _, test := range tests {
