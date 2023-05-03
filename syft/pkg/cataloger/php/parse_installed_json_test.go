@@ -136,7 +136,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 				expectedPkgs[i].Locations = locations
 				licenses := expectedPkgs[i].Licenses.ToSlice()
 				for k := range licenses {
-					licenses[k].Location = &loc
+					licenses[k].Location.Add(loc)
 				}
 				expectedPkgs[i].Licenses = pkg.NewLicenseSet(licenses...)
 			}
