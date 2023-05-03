@@ -13,6 +13,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -35,6 +36,7 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
 				Location:       source.NewLocationSet(loc1),
+				URL:            internal.NewStringSet(),
 			},
 		},
 		{
@@ -45,6 +47,7 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
 				Location:       source.NewLocationSet(loc2),
+				URL:            internal.NewStringSet(),
 			},
 		},
 	}
@@ -124,6 +127,7 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
 				Location:       source.NewLocationSet(loc1),
+				URL:            internal.NewStringSet(),
 			},
 		},
 		{
@@ -134,6 +138,7 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
 				Location:       source.NewLocationSet(loc2),
+				URL:            internal.NewStringSet(),
 			},
 		},
 	}

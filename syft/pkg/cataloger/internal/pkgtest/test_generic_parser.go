@@ -339,7 +339,6 @@ func TestFileParser(t *testing.T, fixturePath string, parser generic.Parser, exp
 
 func TestFileParserWithEnv(t *testing.T, fixturePath string, parser generic.Parser, env *generic.Environment, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
 	t.Helper()
-
 	NewCatalogTester().FromFile(t, fixturePath).WithEnv(env).Expects(expectedPkgs, expectedRelationships).TestParser(t, parser)
 }
 
