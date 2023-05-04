@@ -1,11 +1,11 @@
 package syftjson
 
 import (
+	"github.com/google/go-cmp/cmp"
 	"os"
+	"path"
 	"strconv"
 	"strings"
-
-	"github.com/google/go-cmp/cmp"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
@@ -57,14 +57,16 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 			fm := os.FileMode(mode)
 
 			ret.FileMetadata[coord] = source.FileMetadata{
+				FileInfo: stereoscopeFile.ManualInfo{
+					NameValue: path.Base(coord.RealPath),
+					SizeValue: f.Metadata.Size,
+					ModeValue: fm,
+				},
 				Path:            coord.RealPath,
 				LinkDestination: f.Metadata.LinkDestination,
-				Size:            f.Metadata.Size,
 				UserID:          f.Metadata.UserID,
 				GroupID:         f.Metadata.GroupID,
 				Type:            toSyftFileType(f.Metadata.Type),
-				IsDir:           fm.IsDir(),
-				Mode:            fm,
 				MIMEType:        f.Metadata.MIMEType,
 			}
 		}

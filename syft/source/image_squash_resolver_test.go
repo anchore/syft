@@ -354,7 +354,7 @@ func TestSquashImageResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	for loc := range resolver.AllLocations() {
 		entry, err := resolver.img.FileCatalog.Get(loc.ref)
 		require.NoError(t, err)
-		if entry.Metadata.IsDir {
+		if entry.Metadata.IsDir() {
 			dirLoc = &loc
 			break
 		}
