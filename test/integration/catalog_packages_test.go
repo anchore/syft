@@ -222,6 +222,8 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	definedLanguages.Remove(pkg.UnknownLanguage.String())
 	observedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
+	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
+	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
 
 	// for directory scans we should not expect to see any of the following package types
