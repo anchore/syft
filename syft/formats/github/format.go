@@ -15,13 +15,11 @@ func Format() sbom.Format {
 		func(writer io.Writer, sbom sbom.SBOM) error {
 			bom := toGithubModel(&sbom)
 
-			bytes, err := json.MarshalIndent(bom, "", "  ")
-			if err != nil {
-				return err
-			}
-			_, err = writer.Write(bytes)
+			encoder := json.NewEncoder(writer)
+			encoder.SetEscapeHTML(false)
+			encoder.SetIndent("", "  ")
 
-			return err
+			return encoder.Encode(bom)
 		},
 		nil,
 		nil,
