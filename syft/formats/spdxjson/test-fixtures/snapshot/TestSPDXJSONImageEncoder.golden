@@ -3,14 +3,14 @@
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
  "name": "user-image-input",
- "documentNamespace": "https://anchore.com/syft/image/user-image-input-03ea2ef0-c9cf-4c82-a3bd-095fa6b34bdb",
+ "documentNamespace": "https://anchore.com/syft/image/user-image-input-1fe53177-9e14-4830-9281-d0670fbd1c12",
  "creationInfo": {
   "licenseListVersion": "3.20",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created": "2023-04-27T13:57:38Z"
+  "created": "2023-05-04T20:37:23Z"
  },
  "packages": [
   {

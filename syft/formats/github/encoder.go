@@ -107,7 +107,7 @@ func toPath(s source.Metadata, p pkg.Package) string {
 func toGithubManifests(s *sbom.SBOM) Manifests {
 	manifests := map[string]*Manifest{}
 
-	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
+	for _, p := range s.Artifacts.Packages.Sorted() {
 		path := toPath(s.Source, p)
 		manifest, ok := manifests[path]
 		if !ok {

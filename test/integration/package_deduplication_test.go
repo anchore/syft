@@ -65,15 +65,15 @@ func TestPackageDeduplication(t *testing.T) {
 		t.Run(string(tt.scope), func(t *testing.T) {
 			sbom, _ := catalogFixtureImage(t, "image-vertical-package-dups", tt.scope, nil)
 
-			for _, p := range sbom.Artifacts.PackageCatalog.Sorted() {
+			for _, p := range sbom.Artifacts.Packages.Sorted() {
 				if p.Type == pkg.BinaryPkg {
 					assert.NotEmpty(t, p.Name)
 				}
 			}
 
-			assert.Equal(t, tt.packageCount, sbom.Artifacts.PackageCatalog.PackageCount())
+			assert.Equal(t, tt.packageCount, sbom.Artifacts.Packages.PackageCount())
 			for name, expectedInstanceCount := range tt.instanceCount {
-				pkgs := sbom.Artifacts.PackageCatalog.PackagesByName(name)
+				pkgs := sbom.Artifacts.Packages.PackagesByName(name)
 
 				// with multiple packages with the same name, something is wrong (or this is the wrong fixture)
 				require.Len(t, pkgs, expectedInstanceCount)

@@ -54,7 +54,7 @@ require (
 	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
 	github.com/anchore/stereoscope v0.0.0-20230412183729-8602f1afc574
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
-	github.com/docker/docker v23.0.4+incompatible
+	github.com/docker/docker v23.0.1+incompatible
 	github.com/github/go-spdx/v2 v2.1.2
 	github.com/go-git/go-billy/v5 v5.4.1
 	github.com/go-git/go-git/v5 v5.6.1
@@ -67,7 +67,7 @@ require (
 	github.com/vbatts/go-mtree v0.5.3
 	golang.org/x/exp v0.0.0-20230202163644-54bba9f4231b
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.22.0
+	modernc.org/sqlite v1.20.3
 )
 
 require (
@@ -154,7 +154,7 @@ require (
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
 	modernc.org/ccgo/v3 v3.16.13 // indirect
-	modernc.org/libc v1.22.4 // indirect
+	modernc.org/libc v1.22.2 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.5.0 // indirect
 	modernc.org/opt v0.1.3 // indirect

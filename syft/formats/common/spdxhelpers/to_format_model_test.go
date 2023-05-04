@@ -2,6 +2,7 @@ package spdxhelpers
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/spdx/tools-golang/spdx"
@@ -492,6 +493,46 @@ func Test_OtherLicenses(t *testing.T) {
 			otherLicenses := toOtherLicenses(catalog)
 			require.Len(t, otherLicenses, len(test.expected))
 			require.Equal(t, test.expected, otherLicenses)
+		})
+	}
+}
+
+func Test_toSPDXID(t *testing.T) {
+	tests := []struct {
+		name     string
+		it       artifact.Identifiable
+		expected string
+	}{
+		{
+			name: "short filename",
+			it: source.Coordinates{
+				RealPath: "/short/path/file.txt",
+			},
+			expected: "File-short-path-file.txt",
+		},
+		{
+			name: "long filename",
+			it: source.Coordinates{
+				RealPath: "/some/long/path/with/a/lot/of-text/that-contains-a/file.txt",
+			},
+			expected: "File-...a-lot-of-text-that-contains-a-file.txt",
+		},
+		{
+			name: "package",
+			it: pkg.Package{
+				Type: pkg.NpmPkg,
+				Name: "some-package",
+			},
+			expected: "Package-npm-some-package",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := string(toSPDXID(test.it))
+			// trim the hash
+			got = regexp.MustCompile(`-[a-z0-9]*$`).ReplaceAllString(got, "")
+			require.Equal(t, test.expected, got)
 		})
 	}
 }

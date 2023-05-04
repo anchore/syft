@@ -42,7 +42,7 @@ func parseSBOM(_ source.FileResolver, _ *generic.Environment, reader source.Loca
 
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
-	for _, p := range s.Artifacts.PackageCatalog.Sorted() {
+	for _, p := range s.Artifacts.Packages.Sorted() {
 		// replace all locations on the package with the location of the SBOM file.
 		// Why not keep the original list of locations? Since the "locations" field is meant to capture
 		// where there is evidence of this file, and the catalogers have not run against any file other than,

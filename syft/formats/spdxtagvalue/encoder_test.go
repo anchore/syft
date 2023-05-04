@@ -49,7 +49,7 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 		Format(),
 		sbom.SBOM{
 			Artifacts: sbom.Artifacts{
-				PackageCatalog: pkg.NewCollection(pkgs...),
+				Packages: pkg.NewCollection(pkgs...),
 			},
 			Relationships: nil,
 			Source: source.Metadata{

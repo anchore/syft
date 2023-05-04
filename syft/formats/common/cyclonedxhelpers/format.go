@@ -25,7 +25,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	cdxBOM.SerialNumber = uuid.New().URN()
 	cdxBOM.Metadata = toBomDescriptor(internal.ApplicationName, s.Descriptor.Version, s.Source)
 
-	packages := s.Artifacts.PackageCatalog.Sorted()
+	packages := s.Artifacts.Packages.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
 	for i, p := range packages {
 		components[i] = encodeComponent(p)

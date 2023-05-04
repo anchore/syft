@@ -26,7 +26,7 @@ func ToFormatModel(s sbom.SBOM) model.Document {
 	}
 
 	return model.Document{
-		Artifacts:             toPackageModels(s.Artifacts.PackageCatalog),
+		Artifacts:             toPackageModels(s.Artifacts.Packages),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s),
 		Secrets:               toSecrets(s.Artifacts.Secrets),
