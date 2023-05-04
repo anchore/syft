@@ -69,6 +69,7 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...fil
 	m := pkg.JavaMetadata{
 		PomProperties: &pkg.PomProperties{
 			GroupID: resolveProperty(pom, dep.GroupID),
+			Scope:   resolveProperty(pom, dep.Scope),
 		},
 	}
 
