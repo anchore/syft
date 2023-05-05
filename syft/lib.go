@@ -36,19 +36,6 @@ import (
 // (e.g. squashed source, all-layers source). Returns the discovered  set of packages, the identified Linux
 // distribution, and the source object used to wrap the data source.
 func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Collection, []artifact.Relationship, *linux.Release, error) {
-	resolver, err := src.FileResolver(cfg.Search.Scope)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("unable to determine resolver while cataloging packages: %w", err)
-	}
-
-	// find the distro
-	release := linux.IdentifyRelease(resolver)
-	if release != nil {
-		log.Infof("identified distro: %s", release.String())
-	} else {
-		log.Info("could not identify distro")
-	}
-
 	// if the catalogers have been configured, use them regardless of input type
 	var catalogers []pkg.Cataloger
 	if len(cfg.Catalogers) > 0 {
@@ -106,6 +93,19 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Collection,
 		names = append(names, c.Name())
 	}
 	log.Debugf("catalogers: %s", strings.Join(names, ","))
+
+	resolver, err := src.FileResolver(cfg.Search.Scope)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("unable to determine resolver while cataloging packages: %w", err)
+	}
+
+	// find the distro
+	release := linux.IdentifyRelease(resolver)
+	if release != nil {
+		log.Infof("identified distro: %s", release.String())
+	} else {
+		log.Info("could not identify distro")
+	}
 
 	catalog, relationships, err := cataloger.Catalog(resolver, release, cfg.Parallelism, catalogers...)
 
