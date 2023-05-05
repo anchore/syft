@@ -2,46 +2,46 @@ SPDXVersion: SPDX-2.3
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: user-image-input
-DocumentNamespace: https://anchore.com/syft/image/user-image-input-73433e8c-364f-42b6-b5b7-9a4da8799868
-LicenseListVersion: 3.19
+DocumentNamespace: https://anchore.com/syft/image/user-image-input-5be37b11-b99a-47ff-8725-3984e323d129
+LicenseListVersion: 3.20
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2022-12-21T03:39:05Z
+Created: 2023-05-02T18:24:33Z
 
 ##### Unpackaged files
 
-FileName: /f1
-SPDXID: SPDXRef-5265a4dde3edbf7c
-FileType: OTHER
-FileChecksum: SHA1: 0000000000000000000000000000000000000000
-LicenseConcluded: NOASSERTION
-
-FileName: /z1/f5
-SPDXID: SPDXRef-839d99ee67d9d174
-FileType: OTHER
-FileChecksum: SHA1: 0000000000000000000000000000000000000000
-LicenseConcluded: NOASSERTION
-
 FileName: /a1/f6
-SPDXID: SPDXRef-9c2f7510199b17f6
-FileType: OTHER
-FileChecksum: SHA1: 0000000000000000000000000000000000000000
-LicenseConcluded: NOASSERTION
-
-FileName: /d2/f4
-SPDXID: SPDXRef-c641caa71518099f
+SPDXID: SPDXRef-File-a1-f6-9c2f7510199b17f6
 FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 
 FileName: /d1/f3
-SPDXID: SPDXRef-c6f5b29dca12661f
+SPDXID: SPDXRef-File-d1-f3-c6f5b29dca12661f
+FileType: OTHER
+FileChecksum: SHA1: 0000000000000000000000000000000000000000
+LicenseConcluded: NOASSERTION
+
+FileName: /d2/f4
+SPDXID: SPDXRef-File-d2-f4-c641caa71518099f
+FileType: OTHER
+FileChecksum: SHA1: 0000000000000000000000000000000000000000
+LicenseConcluded: NOASSERTION
+
+FileName: /f1
+SPDXID: SPDXRef-File-f1-5265a4dde3edbf7c
 FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 
 FileName: /f2
-SPDXID: SPDXRef-f9e49132a4b96ccd
+SPDXID: SPDXRef-File-f2-f9e49132a4b96ccd
+FileType: OTHER
+FileChecksum: SHA1: 0000000000000000000000000000000000000000
+LicenseConcluded: NOASSERTION
+
+FileName: /z1/f5
+SPDXID: SPDXRef-File-z1-f5-839d99ee67d9d174
 FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
@@ -76,11 +76,11 @@ ExternalRef: PACKAGE-MANAGER purl a-purl-1
 
 ##### Relationships
 
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-5265a4dde3edbf7c
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-839d99ee67d9d174
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-9c2f7510199b17f6
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-c641caa71518099f
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-c6f5b29dca12661f
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-f9e49132a4b96ccd
+Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-f1-5265a4dde3edbf7c
+Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-z1-f5-839d99ee67d9d174
+Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-a1-f6-9c2f7510199b17f6
+Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-d2-f4-c641caa71518099f
+Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-d1-f3-c6f5b29dca12661f
+Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-f2-f9e49132a4b96ccd
 Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DOCUMENT
 

@@ -55,7 +55,7 @@ require (
 	github.com/anchore/go-logger v0.0.0-20230120230012-47be9bb822a2
 	github.com/anchore/stereoscope v0.0.0-20230412183729-8602f1afc574
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
-	github.com/docker/docker v23.0.4+incompatible
+	github.com/docker/docker v23.0.5+incompatible
 	github.com/go-git/go-billy/v5 v5.4.1
 	github.com/go-git/go-git/v5 v5.6.1
 	github.com/google/go-containerregistry v0.14.0

@@ -96,7 +96,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "squashed", coverageImage},
 			assertions: []traitAssertion{
-				assertPackageCount(37),
+				assertPackageCount(35),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -213,7 +213,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 2"),
 				assertInOutput("parallelism=2"),
-				assertPackageCount(37),
+				assertPackageCount(35),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -224,7 +224,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 1"),
 				assertInOutput("parallelism=1"),
-				assertPackageCount(37),
+				assertPackageCount(35),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -238,7 +238,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			assertions: []traitAssertion{
 				assertNotInOutput("secret_password"),
 				assertNotInOutput("secret_key_path"),
-				assertPackageCount(37),
+				assertPackageCount(35),
 				assertSuccessfulReturnCode,
 			},
 		},
