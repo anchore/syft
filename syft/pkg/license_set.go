@@ -26,12 +26,13 @@ func (s *LicenseSet) get(license License) (uint64, int, *License, error) {
 	if err != nil {
 		return 0, 0, nil, fmt.Errorf("could not get the hash for a license: %w", err)
 	}
+
 	licenses, ok := s.set[id]
 	if !ok {
 		return id, 0, nil, nil
 	}
 
-	if license.Location == nil {
+	if license.Location.Empty() {
 		switch len(licenses) {
 		case 0:
 			return id, 0, nil, nil
@@ -44,11 +45,32 @@ func (s *LicenseSet) get(license License) (uint64, int, *License, error) {
 		}
 	}
 
-	// I'm only hitting this if the FS id is different, since that's the only reason today that you can have
-	// the same hash ID but different information on the license
-	for idx, l := range licenses {
-		if l.Location.FileSystemID == license.Location.FileSystemID {
-			return id, idx, &licenses[idx], nil
+	// check if license being added has duplicate location
+	for _, l := range licenses {
+		// duplicate hash
+		licenseHash, err := license.Location.Hash()
+		if err != nil {
+			log.Trace("could not get location hash for licenses %v: %w", license, err)
+			continue
+		}
+		compareHash, err := l.Location.Hash()
+		if err != nil {
+			log.Trace("could not get location hash for licenses %v: %w", license, err)
+			continue
+		}
+
+		if licenseHash == compareHash {
+			// we still need to check the file system ID
+			compareSet := l.Location.CoordinateSet().ToSlice()
+			licenseSet := license.Location.CoordinateSet().ToSlice()
+			if len(compareSet) != len(licenseSet) {
+				return 0, 0, nil, fmt.Errorf("duplicate licenses trying to be added")
+			}
+			for i, v := range compareSet {
+				if licenseSet[i] == v {
+					return 0, 0, nil, fmt.Errorf("duplicate licenses trying to be added")
+				}
+			}
 		}
 	}
 

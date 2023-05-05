@@ -5,6 +5,7 @@ import (
 
 	"github.com/mitchellh/hashstructure/v2"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/source"
@@ -13,11 +14,11 @@ import (
 var _ sort.Interface = (*Licenses)(nil)
 
 type License struct {
-	Value          string           `json:"value"`
-	SPDXExpression string           `json:"spdxExpression"`
-	Type           license.Type     `json:"type"`
-	URL            string           `json:"url"`                // external sources
-	Location       *source.Location `json:"location,omitempty"` // on disk declaration
+	Value          string       `json:"value"`
+	SPDXExpression string       `json:"spdxExpression"`
+	Type           license.Type `json:"type"`
+	URL            internal.StringSet
+	Location       source.LocationSet
 }
 
 type Licenses []License
@@ -30,20 +31,19 @@ func (l Licenses) Less(i, j int) bool {
 	if l[i].Value == l[j].Value {
 		if l[i].SPDXExpression == l[j].SPDXExpression {
 			if l[i].Type == l[j].Type {
-				if l[i].URL == l[j].URL {
-					if l[i].Location == nil && l[j].Location == nil {
-						return false
+				if l[i].URL.Equals(l[j].URL) {
+					var locations source.Locations
+					locations = append(l[i].Location.ToSlice(), l[j].Location.ToSlice()...)
+					if len(locations) > 1 {
+						return locations.Less(0, 1)
 					}
-					if l[i].Location == nil {
-						return true
-					}
-					if l[j].Location == nil {
-						return false
-					}
-					sl := source.Locations{*l[i].Location, *l[j].Location}
-					return sl.Less(0, 1)
+					return len(l[i].Location.ToSlice()) < len(l[j].Location.ToSlice())
 				}
-				return l[i].URL < l[j].URL
+				urls := append(l[i].URL.ToSlice(), l[j].URL.ToSlice()...)
+				if len(urls) > 1 {
+					return urls[0] < urls[1]
+				}
+				return len(l[i].URL.ToSlice()) < len(l[j].Location.ToSlice())
 			}
 			return l[i].Type < l[j].Type
 		}
@@ -68,6 +68,8 @@ func NewLicense(value string) License {
 		Value:          value,
 		SPDXExpression: spdxExpression,
 		Type:           license.Declared,
+		URL:            internal.NewStringSet(),
+		Location:       source.NewLocationSet(),
 	}
 }
 
@@ -93,7 +95,7 @@ func NewLicensesFromLocation(location source.Location, values ...string) (licens
 
 func NewLicenseFromLocation(value string, location source.Location) License {
 	l := NewLicense(value)
-	l.Location = &location
+	l.Location.Add(location)
 	return l
 }
 
@@ -109,7 +111,9 @@ func NewLicensesFromURL(url string, values ...string) (licenses []License) {
 
 func NewLicenseFromURL(value string, url string) License {
 	l := NewLicense(value)
-	l.URL = url
+	if url != "" {
+		l.URL.Add(url)
+	}
 	return l
 }
 
@@ -117,13 +121,13 @@ func NewLicenseFromURL(value string, url string) License {
 type noLayerLicense License
 
 func (s License) Hash() (uint64, error) {
-	if s.Location != nil {
-		l := *s.Location
-		// much like the location set hash function, we should not consider the file system ID when hashing
-		// so that licenses found in different layers (at the same path) are not considered different.
+	locations := make([]source.Location, 0)
+	for _, l := range s.Location.ToSlice() {
+		l := l
 		l.FileSystemID = ""
-		s.Location = &l
+		locations = append(locations, l)
 	}
+	s.Location = source.NewLocationSet(locations...)
 
 	return hashstructure.Hash(noLayerLicense(s), hashstructure.FormatV2,
 		&hashstructure.HashOptions{

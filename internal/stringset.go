@@ -41,3 +41,15 @@ func (s StringSet) ToSlice() []string {
 	sort.Strings(ret)
 	return ret
 }
+
+func (s StringSet) Equals(o StringSet) bool {
+	if len(s) != len(o) {
+		return false
+	}
+	for k := range s {
+		if !o.Contains(k) {
+			return false
+		}
+	}
+	return true
+}
