@@ -866,6 +866,14 @@ func TestCandidateVendor(t *testing.T) {
 			expected: []string{"elastic" /* <-- known good names | default guess --> */, "elasticsearch"},
 		},
 		{
+			name: "spring-security",
+			p: pkg.Package{
+				Name: "spring-security-core",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"vmware" /* <-- known good names | default guess --> */, "spring", "spring-security", "spring-security-core", "spring_security_core", "spring_security"},
+		},
+		{
 			name: "log4j",
 			p: pkg.Package{
 				Name: "log4j",
