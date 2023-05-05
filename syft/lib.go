@@ -18,6 +18,7 @@ package syft
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/wagoodman/go-partybus"
 
@@ -51,7 +52,28 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Collection,
 	// if the catalogers have been configured, use them regardless of input type
 	var catalogers []pkg.Cataloger
 	if len(cfg.Catalogers) > 0 {
-		catalogers = cataloger.AllCatalogers(cfg)
+		if len(cfg.Catalogers) == 1 {
+			token := cfg.Catalogers[0]
+			if token == "ALL" || token == "all" {
+				log.Infof("cataloging using all catalogers")
+				cfg.Catalogers = nil
+				catalogers = cataloger.AllCatalogers(cfg)
+			} else if token == "ALL:IMAGE" {
+				log.Infof("cataloging using all image catalogers")
+				cfg.Catalogers = nil
+				catalogers = cataloger.ImageCatalogers(cfg)
+			} else if token == "ALL:DIRECTORY" {
+				log.Infof("cataloging using all directory catalogers")
+				cfg.Catalogers = nil
+				catalogers = cataloger.DirectoryCatalogers(cfg)
+			} else {
+				log.Infof("cataloging using catalogers filtered on [%s]", token)
+				catalogers = cataloger.AllCatalogers(cfg)
+			}
+		} else {
+			log.Infof("cataloging using catalogers filtered on %v", cfg.Catalogers)
+			catalogers = cataloger.AllCatalogers(cfg)
+		}
 	} else {
 		// otherwise conditionally use the correct set of loggers based on the input type (container image or directory)
 		switch src.Metadata.Scheme {
@@ -68,6 +90,22 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Collection,
 			return nil, nil, nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", src.Metadata.Scheme)
 		}
 	}
+
+	// Sanity check
+	if len(catalogers) == 0 {
+		// Fail early if there are no catalogers (i.e., before
+		// executing the file resolver)
+		return nil, nil, nil, fmt.Errorf("No catalogers selected (use \"-v\" or \"-vv\" to see why)")
+	}
+
+	// Emit a message solely to give users a convenient
+	// comma-delimited list of catalogers (i.e., suitable for
+	// copy-n-paste) to use for future invocations
+	var names []string
+	for _, c := range catalogers {
+		names = append(names, c.Name())
+	}
+	log.Debugf("catalogers: %s", strings.Join(names, ","))
 
 	catalog, relationships, err := cataloger.Catalog(resolver, release, cfg.Parallelism, catalogers...)
 

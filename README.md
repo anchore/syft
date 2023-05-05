@@ -148,9 +148,31 @@ If docker is not present, then the Podman daemon is attempted next, followed by 
 
 This default behavior can be overridden with the `default-image-pull-source` configuration option (See [Configuration](https://github.com/anchore/syft#configuration) for more details).
 
-### Default Cataloger Configuration by scan type
+### Cataloger Configuration
 
-##### Image Scanning:
+By default, a set of catalogers are chosen depending on the type of
+source that is being scanned.  However, the `--catalogers LIST` CLI
+option can be specified to override this default selection, where
+`LIST` can be one of the following:
+
+- A comma-delimited list of cataloger names (run `syft` with the `-v`
+  or `-vv` option to see the list of catalogers available).
+
+  **Note:** Syft does not currently warn if a non-existent cataloger
+  name is used in the list.
+- The keyword `ALL`, indicating that Syft should use all available
+  catalogers.
+- The keyword `ALL:IMAGE`, indicating that Syft should use the default
+  set of catalogers when container images are scanned (see below).
+- The keyword `ALL:DIRECTORY`, indicating that Syft should use the
+  default set of catalogers when directory trees are scanned (see
+  below).
+
+#### Image Scanning
+
+The following catalogers are selected by default (i.e., if
+`--catalogers` is not specified) when container images are scanned:
+
 - alpmdb
 - apkdb
 - binary
@@ -169,7 +191,11 @@ This default behavior can be overridden with the `default-image-pull-source` con
 - ruby-gemspec
 - sbom
 
-##### Directory Scanning:
+#### Directory Scanning
+
+The following catalogers are selected by default (i.e., if
+`--catalogers` is not specified) when directory trees are scanned:
+
 - alpmdb
 - apkdb
 - binary
@@ -200,7 +226,12 @@ This default behavior can be overridden with the `default-image-pull-source` con
 - rust-cargo-lock
 - sbom
 
-##### Non Default:
+#### Non Default
+
+This cataloger is not used by default.  It is only used when
+explicitly listed in `--catalogers LIST` or when `--catalogers ALL` is
+specified.
+
 - cargo-auditable-binary
 
 ### Excluding file paths

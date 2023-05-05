@@ -46,7 +46,7 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 		"exclude paths from being scanned using a glob expression")
 
 	cmd.Flags().StringArrayVarP(&o.Catalogers, "catalogers", "", nil,
-		"enable one or more package catalogers")
+		"list of package catalogers to use, or one of: ALL (all catalogers), ALL:IMAGE (all container image catalogers), ALL:DIRECTORY (all directory tree catalogers)")
 
 	cmd.Flags().StringVarP(&o.Name, "name", "", "",
 		"set the name of the target being analyzed")
