@@ -2,10 +2,12 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"testing"
 
@@ -104,8 +106,12 @@ func assertStdoutLengthGreaterThan(length uint) traitAssertion {
 func assertPackageCount(length uint) traitAssertion {
 	return func(tb testing.TB, stdout, _ string, _ int) {
 		tb.Helper()
+		type NameAndVersion struct {
+			Name    string `json:"name"`
+			Version string `json:"version"`
+		}
 		type partial struct {
-			Artifacts []interface{} `json:"artifacts"`
+			Artifacts []NameAndVersion `json:"artifacts"`
 		}
 		var data partial
 
@@ -115,6 +121,14 @@ func assertPackageCount(length uint) traitAssertion {
 
 		if uint(len(data.Artifacts)) != length {
 			tb.Errorf("expected package count of %d, but found %d", length, len(data.Artifacts))
+			debugArtifacts := make([]string, len(data.Artifacts))
+			for i, a := range data.Artifacts {
+				debugArtifacts[i] = fmt.Sprintf("%s:%s", a.Name, a.Version)
+			}
+			sort.Strings(debugArtifacts)
+			for i, a := range debugArtifacts {
+				tb.Errorf("package %d: %s", i+1, a)
+			}
 
 		}
 	}
