@@ -72,7 +72,7 @@ var imageOnlyTestCases = []testCase{
 	{
 		name:        "find R packages",
 		pkgType:     pkg.Rpkg,
-		pkgLanguage: "R",
+		pkgLanguage: pkg.R,
 		pkgInfo: map[string]string{
 			"base": "4.3.0",
 		},

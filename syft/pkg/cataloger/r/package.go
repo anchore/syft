@@ -17,14 +17,13 @@ func newPackage(pd parseData, locations ...source.Location) pkg.Package {
 		FoundBy:      catalogerName,
 		Locations:    locationSet,
 		Licenses:     []string{pd.License},
-		Language:     "R",
+		Language:     pkg.R,
 		Type:         pkg.Rpkg,
 		PURL:         packageURL(pd),
 		MetadataType: pkg.RDescriptionFileMetadataType,
 		Metadata:     pd.RDescriptionFileMetadata,
 	}
 
-	result.Language = "R"
 	result.FoundBy = catalogerName
 
 	result.Licenses = []string{pd.License}
