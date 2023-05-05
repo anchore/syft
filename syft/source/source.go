@@ -46,6 +46,7 @@ type Input struct {
 	Location    string
 	Platform    string
 	Name        string
+	SymLinkBase string
 }
 
 // ParseInput generates a source Input that can be used as an argument to generate a new source
@@ -83,6 +84,14 @@ func ParseInputWithName(userInput string, platform, name, defaultImageSource str
 		}
 	}
 
+	// If this is a directory traversal, set the sym link base to
+	// the directory root.
+	symLinkBase := ""
+	if scheme == DirectoryScheme {
+		symLinkBase = userInput
+		log.Debugf("using sym link base: %s", symLinkBase)
+	}
+
 	if scheme != ImageScheme && platform != "" {
 		return nil, fmt.Errorf("cannot specify a platform for a non-image source")
 	}
@@ -95,6 +104,7 @@ func ParseInputWithName(userInput string, platform, name, defaultImageSource str
 		Location:    location,
 		Platform:    platform,
 		Name:        name,
+		SymLinkBase: symLinkBase,
 	}, nil
 }
 
@@ -235,7 +245,18 @@ func generateDirectorySource(fs afero.Fs, in Input) (*Source, func(), error) {
 		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", in.Location, err)
 	}
 
-	s, err := NewFromDirectoryWithName(in.Location, in.Name)
+	if len(in.SymLinkBase) > 0 {
+		fileMeta, err = fs.Stat(in.SymLinkBase)
+		if err != nil {
+			return nil, func() {}, fmt.Errorf("unable to stat sym link base dir=%q: %w", in.SymLinkBase, err)
+		}
+
+		if !fileMeta.IsDir() {
+			return nil, func() {}, fmt.Errorf("given sym link base path is not a directory (path=%q): %w", in.SymLinkBase, err)
+		}
+	}
+
+	s, err := NewFromDirectoryBaseWithName(in.Location, in.Name, in.SymLinkBase)
 	if err != nil {
 		return nil, func() {}, fmt.Errorf("could not populate source from path=%q: %w", in.Location, err)
 	}
@@ -258,43 +279,18 @@ func generateFileSource(fs afero.Fs, in Input) (*Source, func(), error) {
 	return &s, cleanupFn, nil
 }
 
-// NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
-func NewFromDirectory(path string) (Source, error) {
-	return NewFromDirectoryWithName(path, "")
-}
-
-// NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
-func NewFromDirectoryRoot(path string) (Source, error) {
-	return NewFromDirectoryRootWithName(path, "")
-}
-
-// NewFromDirectoryWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
-func NewFromDirectoryWithName(path string, name string) (Source, error) {
+// NewFromDirectoryBaseWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
+func NewFromDirectoryBaseWithName(path string, name string, base string) (Source, error) {
 	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
 			Name:   name,
 			Scheme: DirectoryScheme,
 			Path:   path,
+			Base:   base,
 		},
 		path: path,
-	}
-	s.SetID()
-	return s, nil
-}
-
-// NewFromDirectoryRootWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
-func NewFromDirectoryRootWithName(path string, name string) (Source, error) {
-	s := Source{
-		mutex: &sync.Mutex{},
-		Metadata: Metadata{
-			Name:   name,
-			Scheme: DirectoryScheme,
-			Path:   path,
-			Base:   path,
-		},
-		path: path,
-		base: path,
+		base: base,
 	}
 	s.SetID()
 	return s, nil
