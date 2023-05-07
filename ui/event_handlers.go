@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/anchore/stereoscope/pkg/image/containerd"
 	"io"
 	"strings"
 	"sync"
@@ -147,6 +148,130 @@ func formatDockerImagePullStatus(pullStatus *docker.PullStatus, spinner *compone
 
 	spin := color.Magenta.Sprint(spinner.Next())
 	_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s%s", spin, title, progStr, auxInfo))
+}
+
+// formatContainerdPullPhase returns a single character that represents the status of a layer pull.
+func formatContainerdPullPhase(phase containerd.StatusInfoStatus, inputStr string) string {
+	switch phase {
+	case containerd.StatusWaiting:
+		// ignore any progress related to waiting
+		return " "
+	case containerd.StatusResolving, containerd.StatusDownloading:
+		return dockerPullDownloadColor.Sprint(inputStr)
+	case containerd.StatusDone:
+		return dockerPullExtractColor.Sprint(inputStr)
+	case containerd.StatusExists:
+		return dockerPullExtractColor.Sprint(dockerPullStageChars[len(dockerPullStageChars)-1])
+	default:
+		return inputStr
+	}
+}
+
+func formatContainerdImagePullStatus(pullStatus *containerd.PullStatus, spinner *components.Spinner, line *frame.Line) {
+	var size, current uint64
+
+	title := titleFormat.Sprint("Pulling image")
+
+	layers := pullStatus.Layers()
+	status := make(map[string]progress.Progressable)
+	completed := make([]string, len(layers))
+
+	// fetch the current state
+	for idx, layer := range layers {
+		completed[idx] = " "
+		status[layer] = pullStatus.Current(layer)
+	}
+
+	numCompleted := 0
+	for idx, layer := range layers {
+		prog := status[layer]
+		current := prog.Current()
+		size := prog.Size()
+
+		if progress.IsCompleted(prog) {
+			input := dockerPullStageChars[len(dockerPullStageChars)-1]
+			completed[idx] = formatContainerdPullPhase(containerd.StatusDone, input)
+		} else if current != 0 {
+			var ratio float64
+			switch {
+			case current == 0 || size < 0:
+				ratio = 0
+			case current >= size:
+				ratio = 1
+			default:
+				ratio = float64(current) / float64(size)
+			}
+
+			i := int(ratio * float64(len(dockerPullStageChars)-1))
+			input := dockerPullStageChars[i]
+			completed[idx] = formatContainerdPullPhase(containerd.StatusDownloading, input)
+		}
+
+		if progress.IsErrCompleted(status[layer].Error()) {
+			numCompleted++
+		}
+	}
+
+	for _, layer := range layers {
+		prog := status[layer]
+		size += uint64(prog.Size())
+		current += uint64(prog.Current())
+	}
+
+	var progStr, auxInfo string
+	if len(layers) > 0 {
+		render := strings.Join(completed, "")
+		prefix := dockerPullCompletedColor.Sprintf("%d Layers", len(layers))
+		auxInfo = auxInfoFormat.Sprintf("[%s / %s]", humanize.Bytes(current), humanize.Bytes(size))
+		if len(layers) == numCompleted {
+			auxInfo = auxInfoFormat.Sprintf("[%s] Extracting...", humanize.Bytes(size))
+		}
+
+		progStr = fmt.Sprintf("%s▕%s▏", prefix, render)
+	}
+
+	spin := color.Magenta.Sprint(spinner.Next())
+	_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s%s", spin, title, progStr, auxInfo))
+}
+
+func PullContainerdImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	_, pullStatus, err := stereoEventParsers.ParsePullContainerdImage(event)
+	if err != nil {
+		return fmt.Errorf("bad %s event: %w", event.Type, err)
+	}
+
+	line, err := fr.Append()
+	if err != nil {
+		return err
+	}
+	wg.Add(1)
+
+	_, spinner := startProcess()
+
+	go func() {
+		defer wg.Done()
+
+	loop:
+		for {
+			select {
+			case <-ctx.Done():
+				break loop
+			case <-time.After(interval):
+				formatContainerdImagePullStatus(pullStatus, spinner, line)
+				if pullStatus.Complete() {
+					break loop
+				}
+			}
+		}
+
+		if pullStatus.Complete() {
+			spin := color.Green.Sprint(completedStatus)
+			title := titleFormat.Sprint("Pulled image")
+			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
+		}
+	}()
+
+	return err
 }
 
 // PullDockerImageHandler periodically writes a formatted line widget representing a docker image pull event.
