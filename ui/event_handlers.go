@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/anchore/stereoscope/pkg/image/containerd"
 	"io"
 	"strings"
 	"sync"
@@ -20,6 +19,7 @@ import (
 	"github.com/wagoodman/jotframe/pkg/frame"
 
 	stereoEventParsers "github.com/anchore/stereoscope/pkg/event/parsers"
+	"github.com/anchore/stereoscope/pkg/image/containerd"
 	"github.com/anchore/stereoscope/pkg/image/docker"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/ui/components"
@@ -234,6 +234,7 @@ func formatContainerdImagePullStatus(pullStatus *containerd.PullStatus, spinner 
 	_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s%s", spin, title, progStr, auxInfo))
 }
 
+//nolint:dupl
 func PullContainerdImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, pullStatus, err := stereoEventParsers.ParsePullContainerdImage(event)
 	if err != nil {
@@ -275,6 +276,8 @@ func PullContainerdImageHandler(ctx context.Context, fr *frame.Frame, event part
 }
 
 // PullDockerImageHandler periodically writes a formatted line widget representing a docker image pull event.
+//
+//nolint:dupl
 func PullDockerImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
 	_, pullStatus, err := stereoEventParsers.ParsePullDockerImage(event)
 	if err != nil {
