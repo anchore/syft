@@ -72,7 +72,7 @@ func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, 
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()
 			}
-			return packages.Run(cmd.Context(), app, args)
+			return packages.Run(cmd.Context(), app, args, ro.ContainerdAddress)
 		},
 	}
 

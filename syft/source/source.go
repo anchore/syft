@@ -50,13 +50,13 @@ type Input struct {
 
 // ParseInput generates a source Input that can be used as an argument to generate a new source
 // from specific providers including a registry.
-func ParseInput(userInput string, platform string) (*Input, error) {
-	return ParseInputWithName(userInput, platform, "", "")
+func ParseInput(userInput string, platform string, containerdAddress string) (*Input, error) {
+	return ParseInputWithName(userInput, platform, "", "", containerdAddress)
 }
 
 // ParseInputWithName generates a source Input that can be used as an argument to generate a new source
 // from specific providers including a registry, with an explicit name.
-func ParseInputWithName(userInput string, platform, name, defaultImageSource string) (*Input, error) {
+func ParseInputWithName(userInput string, platform, name, defaultImageSource string, containerdAddress string) (*Input, error) {
 	fs := afero.NewOsFs()
 	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
@@ -73,7 +73,7 @@ func ParseInputWithName(userInput string, platform, name, defaultImageSource str
 			if defaultImageSource != "" {
 				source = parseDefaultImageSource(defaultImageSource)
 			} else {
-				imagePullSource := image.DetermineDefaultImagePullSource(userInput)
+				imagePullSource := image.DetermineDefaultImagePullSource(userInput, containerdAddress)
 				source = imagePullSource
 			}
 			if location == "" {
@@ -113,8 +113,8 @@ func parseDefaultImageSource(defaultImageSource string) image.Source {
 
 type sourceDetector func(string) (image.Source, string, error)
 
-func NewFromRegistry(in Input, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
-	source, cleanupFn, err := generateImageSource(in, registryOptions)
+func NewFromRegistry(in Input, registryOptions *image.RegistryOptions, exclusions []string, containerdAddress string) (*Source, func(), error) {
+	source, cleanupFn, err := generateImageSource(in, registryOptions, containerdAddress)
 	if source != nil {
 		source.Exclusions = exclusions
 	}
@@ -122,7 +122,7 @@ func NewFromRegistry(in Input, registryOptions *image.RegistryOptions, exclusion
 }
 
 // New produces a Source based on userInput like dir: or image:tag
-func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) (*Source, func(), error) {
+func New(in Input, registryOptions *image.RegistryOptions, exclusions []string, containerdAddress string) (*Source, func(), error) {
 	var err error
 	fs := afero.NewOsFs()
 	var source *Source
@@ -134,7 +134,7 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) 
 	case DirectoryScheme:
 		source, cleanupFn, err = generateDirectorySource(fs, in)
 	case ImageScheme:
-		source, cleanupFn, err = generateImageSource(in, registryOptions)
+		source, cleanupFn, err = generateImageSource(in, registryOptions, containerdAddress)
 	default:
 		err = fmt.Errorf("unable to process input for scanning: %q", in.UserInput)
 	}
@@ -146,8 +146,8 @@ func New(in Input, registryOptions *image.RegistryOptions, exclusions []string) 
 	return source, cleanupFn, err
 }
 
-func generateImageSource(in Input, registryOptions *image.RegistryOptions) (*Source, func(), error) {
-	img, cleanup, err := getImageWithRetryStrategy(in, registryOptions)
+func generateImageSource(in Input, registryOptions *image.RegistryOptions, containerdAddress string) (*Source, func(), error) {
+	img, cleanup, err := getImageWithRetryStrategy(in, registryOptions, containerdAddress)
 	if err != nil || img == nil {
 		return nil, cleanup, fmt.Errorf("could not fetch image %q: %w", in.Location, err)
 	}
@@ -169,7 +169,7 @@ func parseScheme(userInput string) string {
 	return parts[0]
 }
 
-func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions) (*image.Image, func(), error) {
+func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions, containerdAddress string) (*image.Image, func(), error) {
 	ctx := context.TODO()
 
 	var opts []stereoscope.Option
@@ -181,7 +181,7 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 		opts = append(opts, stereoscope.WithPlatform(in.Platform))
 	}
 
-	img, err := stereoscope.GetImageFromSource(ctx, in.Location, in.ImageSource, opts...)
+	img, err := stereoscope.GetImageFromSource(ctx, in.Location, in.ImageSource, containerdAddress, opts...)
 	cleanup := func() {
 		if err := img.Cleanup(); err != nil {
 			log.Warnf("unable to cleanup image=%q: %w", in.UserInput, err)
@@ -215,8 +215,8 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 
 	// We need to determine the image source again, such that this determination
 	// doesn't take scheme parsing into account.
-	in.ImageSource = image.DetermineDefaultImagePullSource(in.UserInput)
-	img, err = stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, opts...)
+	in.ImageSource = image.DetermineDefaultImagePullSource(in.UserInput, containerdAddress)
+	img, err = stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, containerdAddress, opts...)
 	cleanup = func() {
 		if err := img.Cleanup(); err != nil {
 			log.Warnf("unable to cleanup image=%q: %w", in.UserInput, err)

@@ -7,9 +7,10 @@ import (
 )
 
 type RootOptions struct {
-	Config  string
-	Quiet   bool
-	Verbose int
+	Config            string
+	ContainerdAddress string
+	Quiet             bool
+	Verbose           int
 }
 
 var _ Interface = (*RootOptions)(nil)
@@ -18,6 +19,7 @@ func (o *RootOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	cmd.PersistentFlags().StringVarP(&o.Config, "config", "c", "", "application config file")
 	cmd.PersistentFlags().CountVarP(&o.Verbose, "verbose", "v", "increase verbosity (-v = info, -vv = debug)")
 	cmd.PersistentFlags().BoolVarP(&o.Quiet, "quiet", "q", false, "suppress all logging output")
+	cmd.PersistentFlags().StringVarP(&o.ContainerdAddress, "containerd-address", "a", "", "full path to containerd address")
 
 	return bindRootConfigOptions(cmd.PersistentFlags(), v)
 }

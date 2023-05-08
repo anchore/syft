@@ -26,9 +26,9 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	for _, c := range cataloger.ImageCatalogers(cataloger.DefaultConfig()) {
 		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
 		userInput := "docker-archive:" + tarPath
-		sourceInput, err := source.ParseInput(userInput, "")
+		sourceInput, err := source.ParseInput(userInput, "", "")
 		require.NoError(b, err)
-		theSource, cleanupSource, err := source.New(*sourceInput, nil, nil)
+		theSource, cleanupSource, err := source.New(*sourceInput, nil, nil, "")
 		b.Cleanup(cleanupSource)
 		if err != nil {
 			b.Fatalf("unable to get source: %+v", err)

@@ -42,7 +42,7 @@ func PowerUser(v *viper.Viper, app *config.Application, ro *options.RootOptions)
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()
 			}
-			return poweruser.Run(cmd.Context(), app, args)
+			return poweruser.Run(cmd.Context(), app, args, ro.ContainerdAddress)
 		},
 	}
 

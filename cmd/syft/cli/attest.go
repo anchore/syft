@@ -45,7 +45,7 @@ func Attest(v *viper.Viper, app *config.Application, ro *options.RootOptions, po
 				checkForApplicationUpdate()
 			}
 
-			return attest.Run(cmd.Context(), app, args)
+			return attest.Run(cmd.Context(), app, args, ro.ContainerdAddress)
 		},
 	}
 

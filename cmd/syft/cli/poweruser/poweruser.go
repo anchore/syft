@@ -26,7 +26,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func Run(_ context.Context, app *config.Application, args []string) error {
+func Run(_ context.Context, app *config.Application, args []string, containerdAddress string) error {
 	f := syftjson.Format()
 	writer, err := sbom.NewWriter(sbom.WriterOption{
 		Format: f,
@@ -47,7 +47,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	}()
 
 	userInput := args[0]
-	si, err := source.ParseInputWithName(userInput, app.Platform, app.Name, app.DefaultImagePullSource)
+	si, err := source.ParseInputWithName(userInput, app.Platform, app.Name, app.DefaultImagePullSource, containerdAddress)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for packages command: %w", err)
 	}
@@ -58,7 +58,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	subscription := eventBus.Subscribe()
 
 	return eventloop.EventLoop(
-		execWorker(app, *si, writer),
+		execWorker(app, *si, writer, containerdAddress),
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
@@ -66,7 +66,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	)
 }
 
-func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-chan error {
+func execWorker(app *config.Application, si source.Input, writer sbom.Writer, containerdAddress string) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -81,7 +81,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			return
 		}
 
-		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
+		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions, containerdAddress)
 		if err != nil {
 			errs <- err
 			return
