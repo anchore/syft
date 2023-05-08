@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
+	"github.com/anchore/syft/internal"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -34,7 +35,8 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
-				Location:       &loc1,
+				Location:       source.NewLocationSet(loc1),
+				URL:            internal.NewStringSet(),
 			},
 		},
 		{
@@ -44,7 +46,8 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				Value:          "MIT",
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
-				Location:       &loc2,
+				Location:       source.NewLocationSet(loc2),
+				URL:            internal.NewStringSet(),
 			},
 		},
 	}
@@ -123,7 +126,8 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
-				Location:       &loc1,
+				Location:       source.NewLocationSet(loc1),
+				URL:            internal.NewStringSet(),
 			},
 		},
 		{
@@ -133,7 +137,8 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				Value:          "MIT",
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
-				Location:       &loc2,
+				Location:       source.NewLocationSet(loc2),
+				URL:            internal.NewStringSet(),
 			},
 		},
 	}

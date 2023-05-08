@@ -45,9 +45,9 @@ func Test_PackageCataloger(t *testing.T) {
 				PURL:     "pkg:pypi/requests@2.22.0",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocation("Apache 2.0", source.NewLocation("test-fixtures/egg-info/PKG-INFO")),
-				},
+				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
@@ -83,9 +83,9 @@ func Test_PackageCataloger(t *testing.T) {
 				PURL:     "pkg:pypi/Pygments@2.6.1?vcs_url=git+https://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocation("BSD License", source.NewLocation("test-fixtures/dist-info/METADATA")),
-				},
+				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
@@ -121,9 +121,9 @@ func Test_PackageCataloger(t *testing.T) {
 				PURL:     "pkg:pypi/Pygments@2.6.1",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocation("BSD License", source.NewLocation("test-fixtures/malformed-record/dist-info/METADATA")),
-				},
+				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
@@ -153,9 +153,9 @@ func Test_PackageCataloger(t *testing.T) {
 				PURL:     "pkg:pypi/Pygments@2.6.1",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocation("BSD License", source.NewLocation("test-fixtures/partial.dist-info/METADATA")),
-				},
+				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
@@ -177,9 +177,9 @@ func Test_PackageCataloger(t *testing.T) {
 				PURL:     "pkg:pypi/requests@2.22.0",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocation("Apache 2.0", source.NewLocation("test-fixtures/test.egg-info")),
-				},
+				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{

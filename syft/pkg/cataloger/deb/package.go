@@ -27,7 +27,7 @@ func newDpkgPackage(d pkg.DpkgMetadata, dbLocation source.Location, resolver sou
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
-		Licenses:     licenses,
+		Licenses:     pkg.NewLicenseSet(licenses...),
 		Locations:    source.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		PURL:         packageURL(d, release),
 		Type:         pkg.DebPkg,
@@ -98,7 +98,7 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 		// attach the licenses
 		licenseStrs := parseLicensesFromCopyright(copyrightReader)
 		for _, licenseStr := range licenseStrs {
-			p.Licenses = append(p.Licenses, pkg.NewLicenseFromLocation(licenseStr, copyrightLocation.WithoutAnnotations()))
+			p.Licenses.Add(pkg.NewLicenseFromLocation(licenseStr, copyrightLocation.WithoutAnnotations()))
 		}
 		// keep a record of the file where this was discovered
 		p.Locations.Add(*copyrightLocation)

@@ -281,7 +281,7 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		Version:      p.Version,
 		FoundBy:      p.FoundBy,
 		Locations:    source.NewLocationSet(p.Locations...),
-		Licenses:     p.Licenses,
+		Licenses:     pkg.NewLicenseSet(p.Licenses...),
 		Language:     p.Language,
 		Type:         p.Type,
 		CPEs:         cpes,

@@ -18,13 +18,14 @@ func newPackageJSONPackage(u packageJSON, indexLocation source.Location) pkg.Pac
 		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
 	}
 
+	license := pkg.NewLicensesFromLocation(indexLocation, licenseCandidates...)
 	p := pkg.Package{
 		Name:         u.Name,
 		Version:      u.Version,
 		PURL:         packageURL(u.Name, u.Version),
 		Locations:    source.NewLocationSet(indexLocation),
 		Language:     pkg.JavaScript,
-		Licenses:     pkg.NewLicensesFromLocation(indexLocation, licenseCandidates...),
+		Licenses:     pkg.NewLicenseSet(license...),
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageJSONMetadataType,
 		Metadata: pkg.NpmPackageJSONMetadata{
@@ -83,7 +84,7 @@ func newPackageLockV2Package(resolver source.FileResolver, location source.Locat
 			Name:         name,
 			Version:      u.Version,
 			Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			Licenses:     pkg.NewLicensesFromLocation(location, u.License...),
+			Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, u.License...)...),
 			PURL:         packageURL(name, u.Version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
@@ -125,7 +126,7 @@ func newYarnLockPackage(resolver source.FileResolver, location source.Location, 
 
 func finalizeLockPkg(resolver source.FileResolver, location source.Location, p pkg.Package) pkg.Package {
 	licenseCandidate := addLicenses(p.Name, resolver, location)
-	p.Licenses = append(p.Licenses, pkg.NewLicensesFromLocation(location, licenseCandidate...)...)
+	p.Licenses.Add(pkg.NewLicensesFromLocation(location, licenseCandidate...)...)
 	p.SetID()
 	return p
 }

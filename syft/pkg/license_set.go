@@ -135,3 +135,7 @@ func (s LicenseSet) Hash() (uint64, error) {
 		SlicesAsSets: true,
 	})
 }
+
+func (s LicenseSet) Empty() bool {
+	return len(s.set) < 1
+}

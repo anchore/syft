@@ -31,7 +31,7 @@ func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModuleMetadata, kmLocat
 		Name:         metadata.Name,
 		Version:      metadata.Version,
 		Locations:    source.NewLocationSet(kmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:     pkg.NewLicensesFromLocation(kmLocation, metadata.License),
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(kmLocation, metadata.License)...),
 		PURL:         packageURL(metadata.Name, metadata.Version),
 		Type:         pkg.LinuxKernelModulePkg,
 		MetadataType: pkg.LinuxKernelModuleMetadataType,

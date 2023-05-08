@@ -31,18 +31,6 @@ func (l Licenses) Less(i, j int) bool {
 	if l[i].Value == l[j].Value {
 		if l[i].SPDXExpression == l[j].SPDXExpression {
 			if l[i].Type == l[j].Type {
-				if l[i].URL.Equals(l[j].URL) {
-					var locations source.Locations
-					locations = append(l[i].Location.ToSlice(), l[j].Location.ToSlice()...)
-					if len(locations) > 1 {
-						return locations.Less(0, 1)
-					}
-					return len(l[i].Location.ToSlice()) < len(l[j].Location.ToSlice())
-				}
-				urls := append(l[i].URL.ToSlice(), l[j].URL.ToSlice()...)
-				if len(urls) > 1 {
-					return urls[0] < urls[1]
-				}
 				return len(l[i].URL.ToSlice()) < len(l[j].Location.ToSlice())
 			}
 			return l[i].Type < l[j].Type
