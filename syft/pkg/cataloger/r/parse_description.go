@@ -31,7 +31,11 @@ License: Unlimited
 func parseDescriptionFile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	values := extractFieldsFromDescriptionFile(reader)
 	m := parseDataFromDescriptionMap(values)
-	return []pkg.Package{newPackage(m, []source.Location{reader.Location}...)}, nil, nil
+	p := newPackage(m, []source.Location{reader.Location}...)
+	if p.Name == "" || p.Version == "" {
+		return nil, nil, nil
+	}
+	return []pkg.Package{p}, nil, nil
 }
 
 type parseData struct {

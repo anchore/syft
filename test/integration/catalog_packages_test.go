@@ -163,14 +163,12 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	for _, l := range pkg.AllLanguages {
 		definedLanguages.Add(l.String())
 	}
-	definedLanguages.Remove(string(pkg.R))
 
 	observedPkgs := internal.NewStringSet()
 	definedPkgs := internal.NewStringSet()
 	for _, p := range pkg.AllPkgs {
 		definedPkgs.Add(string(p))
 	}
-	definedPkgs.Remove(string(pkg.Rpkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -222,10 +220,12 @@ func TestPkgCoverageDirectory(t *testing.T) {
 
 	observedLanguages.Remove(pkg.UnknownLanguage.String())
 	definedLanguages.Remove(pkg.UnknownLanguage.String())
+	definedLanguages.Remove(pkg.R.String())
 	observedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
+	definedPkgs.Remove(string(pkg.Rpkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
 
 	// for directory scans we should not expect to see any of the following package types

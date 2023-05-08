@@ -24,10 +24,6 @@ func newPackage(pd parseData, locations ...source.Location) pkg.Package {
 		Metadata:     pd.RDescriptionFileMetadata,
 	}
 
-	result.FoundBy = catalogerName
-
-	result.Licenses = []string{pd.License}
-	result.Version = pd.Version
 	result.SetID()
 	return result
 }
