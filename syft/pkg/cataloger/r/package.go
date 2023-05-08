@@ -14,7 +14,6 @@ func newPackage(pd parseData, locations ...source.Location) pkg.Package {
 	result := pkg.Package{
 		Name:         pd.Package,
 		Version:      pd.Version,
-		FoundBy:      catalogerName,
 		Locations:    locationSet,
 		Licenses:     []string{pd.License},
 		Language:     pkg.R,
