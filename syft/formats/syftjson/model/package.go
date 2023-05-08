@@ -34,9 +34,9 @@ type PackageBasicData struct {
 	PURL      string            `json:"purl"`
 }
 
-type licenses []modelLicense
+type licenses []License
 
-type modelLicense struct {
+type License struct {
 	Value          string            `json:"value"`
 	SPDXExpression string            `json:"spdxExpression"`
 	Type           license.Type      `json:"type"`
@@ -44,17 +44,23 @@ type modelLicense struct {
 	Location       []source.Location `json:"locations"`
 }
 
-func newModelLicensesFromValues(licenses []string) (ml []modelLicense) {
+func newModelLicensesFromValues(licenses []string) (ml []License) {
 	for _, v := range licenses {
-		ml = append(ml, modelLicense{
-			Value: v,
+		expression, err := license.ParseExpression(v)
+		if err != nil {
+			log.Trace("could not find valid spdx expression for %s: %w", v, err)
+		}
+		ml = append(ml, License{
+			Value:          v,
+			SPDXExpression: expression,
+			Type:           license.Declared,
 		})
 	}
 	return ml
 }
 
 func (f *licenses) UnmarshalJSON(b []byte) error {
-	var licenses []modelLicense
+	var licenses []License
 	if err := json.Unmarshal(b, &licenses); err != nil {
 		var simpleLicense []string
 		if err := json.Unmarshal(b, &simpleLicense); err != nil {
