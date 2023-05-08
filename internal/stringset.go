@@ -53,3 +53,7 @@ func (s StringSet) Equals(o StringSet) bool {
 	}
 	return true
 }
+
+func (s StringSet) Empty() bool {
+	return len(s) < 1
+}

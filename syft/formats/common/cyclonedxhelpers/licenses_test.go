@@ -1,6 +1,7 @@
 package cyclonedxhelpers
 
 import (
+	"github.com/anchore/syft/internal"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -24,9 +25,9 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "no SPDX licenses",
 			input: pkg.Package{
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("RandomLicense"),
-				},
+				),
 			},
 			expected: &cyclonedx.Licenses{
 				{
@@ -39,10 +40,10 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "single SPDX ID and Non SPDX ID",
 			input: pkg.Package{
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("mit"),
 					pkg.NewLicense("FOOBAR"),
-				},
+				),
 			},
 			expected: &cyclonedx.Licenses{
 				{
@@ -60,9 +61,9 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "with complex SPDX license expression",
 			input: pkg.Package{
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("MIT AND GPL-3.0-only"),
-				},
+				),
 			},
 			expected: &cyclonedx.Licenses{
 				{
@@ -73,10 +74,10 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "with multiple complex SPDX license expression",
 			input: pkg.Package{
-				Licenses: []pkg.License{
+				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("MIT AND GPL-3.0-only"),
 					pkg.NewLicense("MIT AND GPL-3.0-only WITH Classpath-exception-2.0"),
-				},
+				),
 			},
 			expected: &cyclonedx.Licenses{
 				{
@@ -143,6 +144,7 @@ func TestDecodeLicenses(t *testing.T) {
 					Value: "RandomLicense",
 					// CycloneDX specification doesn't give a field for determining the license type
 					Type: license.Declared,
+					URL:  internal.NewStringSet(),
 				},
 			},
 		},
@@ -162,6 +164,7 @@ func TestDecodeLicenses(t *testing.T) {
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
+					URL:            internal.NewStringSet(),
 				},
 			},
 		},
@@ -180,6 +183,7 @@ func TestDecodeLicenses(t *testing.T) {
 					Value:          "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					SPDXExpression: "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					Type:           license.Declared,
+					URL:            internal.NewStringSet(),
 				},
 			},
 		},
