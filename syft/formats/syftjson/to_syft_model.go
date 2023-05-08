@@ -1,11 +1,12 @@
 package syftjson
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"os"
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/google/go-cmp/cmp"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"

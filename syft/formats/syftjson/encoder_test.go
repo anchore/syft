@@ -2,6 +2,9 @@ package syftjson
 
 import (
 	"flag"
+	"regexp"
+	"testing"
+
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -11,8 +14,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"regexp"
-	"testing"
 )
 
 var updateJson = flag.Bool("update-json", false, "update the *.golden files for json encoders")
