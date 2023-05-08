@@ -86,6 +86,8 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			as a license choice and the invalid expression as a license string.
 
 	*/
+	// dedupe spdxlicenseID
+	seen := make(map[string]bool)
 	for _, l := range p.Licenses.ToSlice() {
 		// singular expression case
 		if value, exists := spdxlicense.ID(l.SPDXExpression); exists {
@@ -110,11 +112,15 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 					continue
 				}
 			}
+			if _, exists := seen[value]; exists {
+				continue
+			}
 			spdxc = append(spdxc, cyclonedx.LicenseChoice{
 				License: &cyclonedx.License{
 					ID: value,
 				},
 			})
+			seen[value] = true
 			continue
 		}
 		if l.SPDXExpression != "" {
