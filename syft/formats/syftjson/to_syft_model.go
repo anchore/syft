@@ -194,7 +194,7 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 	case artifact.OwnershipByFileOverlapRelationship, artifact.ContainsRelationship, artifact.DependencyOfRelationship, artifact.EvidentByRelationship:
 	default:
 		if !strings.Contains(string(typ), "dependency-of") {
-			log.Warnf("unknown relationship type: %s", typ)
+			log.Tracef("unknown relationship type: %s", typ)
 			return nil
 		}
 		// lets try to stay as compatible as possible with similar relationship types without dropping the relationship
