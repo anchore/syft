@@ -36,7 +36,7 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				   "value": "MIT",
 				   "spdxExpression": "MIT",
 				   "type": "declared",
-				   "url": ""
+				   "url": []
 				  }
 				],
 				"language": "go",
@@ -74,7 +74,13 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				    "value": "MIT",
 					"spdxExpression": "MIT",
 					"type": "declared",
-					"url": ""
+					"url": ["https://www.github.com"]
+				  },
+				  {
+				    "value": "MIT",
+					"spdxExpression": "MIT",
+					"type": "declared",
+					"locations": [{"path": "/Users/hal/go/bin/syft"}]
 				  }
 				],
 				"language": "go",

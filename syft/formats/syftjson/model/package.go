@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/license"
 	"reflect"
 
 	"github.com/anchore/syft/internal/log"
@@ -33,16 +34,33 @@ type PackageBasicData struct {
 	PURL      string            `json:"purl"`
 }
 
-type licenses []pkg.License
+type licenses []modelLicense
+
+type modelLicense struct {
+	Value          string            `json:"value"`
+	SPDXExpression string            `json:"spdxExpression"`
+	Type           license.Type      `json:"type"`
+	URL            []string          `json:"url"`
+	Location       []source.Location `json:"locations"`
+}
+
+func newModelLicensesFromValues(licenses []string) (ml []modelLicense) {
+	for _, v := range licenses {
+		ml = append(ml, modelLicense{
+			Value: v,
+		})
+	}
+	return ml
+}
 
 func (f *licenses) UnmarshalJSON(b []byte) error {
-	var licenses []pkg.License
+	var licenses []modelLicense
 	if err := json.Unmarshal(b, &licenses); err != nil {
 		var simpleLicense []string
 		if err := json.Unmarshal(b, &simpleLicense); err != nil {
 			return fmt.Errorf("unable to unmarshal license: %w", err)
 		}
-		licenses = pkg.NewLicensesFromValues(simpleLicense...)
+		licenses = newModelLicensesFromValues(simpleLicense)
 	}
 	*f = licenses
 	return nil
