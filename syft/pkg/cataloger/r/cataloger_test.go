@@ -20,7 +20,7 @@ func TestRPackageCataloger(t *testing.T) {
 			Language:     pkg.R,
 			Type:         pkg.Rpkg,
 			PURL:         "pkg:cran/base@4.3.0",
-			MetadataType: pkg.RustCargoPackageMetadataType,
+			MetadataType: pkg.RDescriptionFileMetadataType,
 			Metadata: pkg.RDescriptionFileMetadata{
 				Title:       "The R Base Package",
 				Description: "Base R functions.",
@@ -39,7 +39,7 @@ func TestRPackageCataloger(t *testing.T) {
 			Language:     pkg.R,
 			Type:         pkg.Rpkg,
 			PURL:         "pkg:cran/stringr@1.5.0.9000",
-			MetadataType: pkg.RustCargoPackageMetadataType,
+			MetadataType: pkg.RDescriptionFileMetadataType,
 			Metadata: pkg.RDescriptionFileMetadata{
 				Title:       "Simple, Consistent Wrappers for Common String Operations",
 				Description: "A consistent, simple and easy to use set of wrappers around the fantastic 'stringi' package. All function and argument names (and positions) are consistent, all functions deal with \"NA\"'s and zero length vectors in the same way, and the output from one function is easy to feed into the input of another.",

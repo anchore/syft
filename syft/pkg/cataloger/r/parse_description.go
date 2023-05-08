@@ -67,6 +67,15 @@ func parseDataFromDescriptionMap(values map[string]string) parseData {
 }
 
 func yesNoToBool(s string) bool {
+	/*
+		$ docker run --rm -it rocker/r-ver bash
+		$ install2.r ggplot2 dplyr mlr3 caret # just some packages for a larger sample
+		$ find /usr/local/lib/R -name DESCRIPTION | xargs cat | grep 'NeedsCompilation:' | sort | uniq
+		NeedsCompilation: no
+		NeedsCompilation: yes
+		$ find /usr/local/lib/R -name DESCRIPTION | xargs cat | grep 'NeedsCompilation:' | wc -l
+		105
+	*/
 	return strings.EqualFold(s, "yes")
 }
 
