@@ -20,10 +20,10 @@ func TestAlpmCataloger(t *testing.T) {
 			Version: "6.2.1-2",
 			Type:    pkg.AlpmPkg,
 			FoundBy: "alpmdb-cataloger",
-			Licenses: []pkg.License{
+			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocation("LGPL3", dbLocation),
 				pkg.NewLicenseFromLocation("GPL", dbLocation),
-			},
+			),
 			Locations:    source.NewLocationSet(dbLocation),
 			CPEs:         nil,
 			PURL:         "",
