@@ -31,7 +31,7 @@ func (l Licenses) Less(i, j int) bool {
 	if l[i].Value == l[j].Value {
 		if l[i].SPDXExpression == l[j].SPDXExpression {
 			if l[i].Type == l[j].Type {
-				return len(l[i].URL.ToSlice()) < len(l[j].Location.ToSlice())
+				return true
 			}
 			return l[i].Type < l[j].Type
 		}
