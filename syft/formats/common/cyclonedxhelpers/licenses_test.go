@@ -1,12 +1,12 @@
 package cyclonedxhelpers
 
 import (
-	"github.com/anchore/syft/internal"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )

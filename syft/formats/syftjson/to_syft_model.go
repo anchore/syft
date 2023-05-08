@@ -1,7 +1,6 @@
 package syftjson
 
 import (
-	"github.com/anchore/syft/internal"
 	"os"
 	"strconv"
 	"strings"
@@ -9,6 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"

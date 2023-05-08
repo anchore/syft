@@ -21,27 +21,27 @@ func NewLicenseSet(licenses ...License) (s LicenseSet) {
 	return s
 }
 
-func (s *LicenseSet) get(license License) (uint64, int, *License, error) {
+func (s *LicenseSet) get(license License) (uint64, *License, error) {
 	id, err := license.Hash()
 	if err != nil {
-		return 0, 0, nil, fmt.Errorf("could not get the hash for a license: %w", err)
+		return 0, nil, fmt.Errorf("could not get the hash for a license: %w", err)
 	}
 
 	licenses, ok := s.set[id]
 	if !ok {
-		return id, 0, nil, nil
+		return id, nil, nil
 	}
 
 	if license.Location.Empty() {
 		switch len(licenses) {
 		case 0:
-			return id, 0, nil, nil
+			return id, nil, nil
 		case 1:
-			return id, 0, &licenses[0], nil
+			return id, &licenses[0], nil
 		default:
 			log.Debugf("license set contains multiple licenses with the same hash (when there is no location): %#v returns %#v", license, licenses)
 			// we don't know what the right answer is
-			return id, 0, nil, nil
+			return id, nil, nil
 		}
 	}
 
@@ -64,17 +64,17 @@ func (s *LicenseSet) get(license License) (uint64, int, *License, error) {
 			compareSet := l.Location.CoordinateSet().ToSlice()
 			licenseSet := license.Location.CoordinateSet().ToSlice()
 			if len(compareSet) != len(licenseSet) {
-				return 0, 0, nil, fmt.Errorf("duplicate licenses trying to be added")
+				return 0, nil, fmt.Errorf("duplicate licenses trying to be added")
 			}
 			for i, v := range compareSet {
 				if licenseSet[i] == v {
-					return 0, 0, nil, fmt.Errorf("duplicate licenses trying to be added")
+					return 0, nil, fmt.Errorf("duplicate licenses trying to be added")
 				}
 			}
 		}
 	}
 
-	return id, 0, nil, nil
+	return id, nil, nil
 }
 
 func (s *LicenseSet) Add(licenses ...License) {
@@ -82,7 +82,7 @@ func (s *LicenseSet) Add(licenses ...License) {
 		s.set = make(map[uint64]Licenses)
 	}
 	for _, l := range licenses {
-		if id, _, v, err := s.get(l); v == nil && err == nil {
+		if id, v, err := s.get(l); v == nil && err == nil {
 			// doesn't exist, add it
 			s.set[id] = append(s.set[id], l)
 		} else if err != nil {
@@ -96,7 +96,7 @@ func (s LicenseSet) Remove(licenses ...License) {
 		return
 	}
 	for _, l := range licenses {
-		id, idx, v, err := s.get(l)
+		id, v, err := s.get(l)
 		if err != nil {
 			log.Debugf("license set failed to remove license %#v: %+v", l, err)
 		}
@@ -104,7 +104,7 @@ func (s LicenseSet) Remove(licenses ...License) {
 			continue
 		}
 		// remove the license from the specific index already found
-		s.set[id] = append(s.set[id][:idx], s.set[id][idx+1:]...)
+		s.set[id] = append(s.set[id][:0], s.set[id][0+1:]...)
 	}
 }
 
@@ -112,7 +112,7 @@ func (s LicenseSet) Contains(l License) bool {
 	if s.set == nil {
 		return false
 	}
-	_, _, v, err := s.get(l)
+	_, v, err := s.get(l)
 	return v != nil && err == nil
 }
 

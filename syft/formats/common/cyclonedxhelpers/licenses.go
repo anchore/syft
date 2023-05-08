@@ -68,6 +68,7 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 	return licenses
 }
 
+// nolint:funlen
 func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expressions []string) {
 	spdxc := cyclonedx.Licenses{}
 	otherc := cyclonedx.Licenses{}
