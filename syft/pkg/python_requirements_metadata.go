@@ -1,9 +1,9 @@
 package pkg
 
 type PythonRequirementsMetadata struct {
-	Name              string            `json:"name" mapstruct:"Name"`
-	Extras            []string          `json:"extras" mapstruct:"Extras"`
-	VersionConstraint string            `json:"versionConstraint" mapstruct:"VersionConstraint"`
-	URL               string            `json:"url" mapstruct:"URL"`
-	Markers           map[string]string `json:"markers" mapstruct:"Markers"`
+	Name              string   `json:"name"`
+	Extras            []string `json:"extras"`
+	VersionConstraint string   `json:"versionConstraint"`
+	URL               string   `json:"url"`
+	Markers           string   `json:"markers"`
 }

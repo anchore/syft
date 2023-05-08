@@ -20,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
+	pythonCataloger "github.com/anchore/syft/syft/pkg/cataloger/python"
 )
 
 var (
@@ -52,6 +53,7 @@ type Application struct {
 	Package                pkg                `yaml:"package" json:"package" mapstructure:"package"`
 	Golang                 golang             `yaml:"golang" json:"golang" mapstructure:"golang"`
 	LinuxKernel            linuxKernel        `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
+	Python                 python             `yaml:"python" json:"python" mapstructure:"python"`
 	Attest                 attest             `yaml:"attest" json:"attest" mapstructure:"attest"`
 	FileMetadata           FileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
 	FileClassification     fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
@@ -84,6 +86,9 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 			WithNoProxy(cfg.Golang.NoProxy),
 		LinuxKernel: kernel.LinuxCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
+		},
+		Python: pythonCataloger.CatalogerConfig{
+			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},
 	}
 }

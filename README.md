@@ -577,6 +577,13 @@ linux-kernel:
    # SYFT_LINUX_KERNEL_CATALOG_MODULES env var
    catalog-modules: true
 
+python:
+   # when running across entries in requirements.txt that do not specify a specific version 
+   # (e.g. "sqlalchemy >= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0"), attempt to guess what the version could
+   # be based on the version requirements specified (e.g. "1.0.0"). When enabled the lowest expressible version 
+   # when given an arbitrary constraint will be used (even if that version may not be available/published).
+   guess-unpinned-requirements: false
+
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:
   cataloger:
