@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -229,35 +230,93 @@ func Test_toSyftFiles(t *testing.T) {
 	}
 }
 
-func Test_toSyfRelationship(t *testing.T) {
-	emptyIdMap := make(map[string]interface{})
-	emptyAliasMap := make(map[string]string)
-	type relationships struct {
-		relationship model.Relationship
-		want         *artifact.Relationship
+func Test_toSyfRelationshipsWithWarnings(t *testing.T) {
+	packageWithId := func(id string) *pkg.Package {
+		p := &pkg.Package{}
+		p.OverrideID(artifact.ID(id))
+		return p
 	}
+	childPackage := packageWithId("some-child-id")
+	parentPackage := packageWithId("some-parent-id")
 	tests := []struct {
-		name                string
-		idMap               map[string]interface{}
-		idAliases           map[string]string
-		args                []relationships
-		wantUnknownRelTypes map[string]int
-	}{{
-		name:                "normal relationship",
-		idMap:               emptyIdMap,
-		idAliases:           emptyAliasMap,
-		args:                []relationships{},
-		wantUnknownRelTypes: map[string]int{},
-	}}
+		name          string
+		idMap         map[string]interface{}
+		idAliases     map[string]string
+		relationships []model.Relationship
+		want          []artifact.Relationship
+		wantWarnings  []string
+	}{
+		{
+			name: "one relationship no warnings",
+			idMap: map[string]interface{}{
+				"some-child-id":  childPackage,
+				"some-parent-id": parentPackage,
+			},
+			idAliases: map[string]string{},
+			relationships: []model.Relationship{{
+				Parent: "some-parent-id",
+				Child:  "some-child-id",
+				Type:   string(artifact.ContainsRelationship),
+			}},
+			want: []artifact.Relationship{{
+				To:   childPackage,
+				From: parentPackage,
+				Type: artifact.ContainsRelationship,
+			}},
+		},
+		{
+			name: "relationship unknown type one warning",
+			idMap: map[string]interface{}{
+				"some-child-id":  childPackage,
+				"some-parent-id": parentPackage,
+			},
+			idAliases: map[string]string{},
+			relationships: []model.Relationship{{
+				Parent: "some-parent-id",
+				Child:  "some-child-id",
+				Type:   "some-unknown-relationship-type",
+			}},
+			wantWarnings: []string{
+				"Omitted 1 relationship(s) of these unknown types: some-unknown-relationship-type",
+			},
+		},
+		{
+			name: "relationship missing child ID one warning",
+			idMap: map[string]interface{}{
+				"some-parent-id": parentPackage,
+			},
+			idAliases: map[string]string{},
+			relationships: []model.Relationship{{
+				Parent: "some-parent-id",
+				Child:  "some-child-id",
+				Type:   string(artifact.ContainsRelationship),
+			}},
+			wantWarnings: []string{
+				"relationship mapping to key some-child-id is not a valid artifact.Identifiable type: <nil>",
+			},
+		},
+		{
+			name: "relationship missing parent ID one warning",
+			idMap: map[string]interface{}{
+				"some-child-id": childPackage,
+			},
+			idAliases: map[string]string{},
+			relationships: []model.Relationship{{
+				Parent: "some-parent-id",
+				Child:  "some-child-id",
+				Type:   string(artifact.ContainsRelationship),
+			}},
+			wantWarnings: []string{
+				"relationship mapping from key some-parent-id is not a valid artifact.Identifiable type: <nil>",
+			},
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotRelTypes := make(map[string]int)
-			for _, rel := range tt.args {
-				got, _ := toSyftRelationship(tt.idMap, rel.relationship, tt.idAliases)
-				assert.Equal(t, rel.want, got)
-			}
-			assert.Equal(t, tt.wantUnknownRelTypes, gotRelTypes)
+			got, gotWarnings := toSyftRelationshipsWithWarnings(tt.idMap, tt.relationships, tt.idAliases)
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantWarnings, gotWarnings)
 		})
 	}
 }
