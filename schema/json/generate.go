@@ -56,6 +56,7 @@ type artifactMetadataContainer struct {
 	PythonPackage      pkg.PythonPackageMetadata
 	PythonPipfilelock  pkg.PythonPipfileLockMetadata
 	PythonRequirements pkg.PythonRequirementsMetadata
+	R                  pkg.RDescriptionFileMetadata
 	Rebar              pkg.RebarLockMetadata
 	Rpm                pkg.RpmMetadata
 	RustCargo          pkg.CargoPackageMetadata
