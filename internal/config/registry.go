@@ -3,7 +3,7 @@ package config
 import (
 	"os"
 
-	"github.com/anchore/fangs/config"
+	"github.com/anchore/fangs"
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
@@ -23,7 +23,7 @@ type registry struct {
 	Auth                  []RegistryCredentials `yaml:"auth" json:"auth" mapstructure:"auth"`
 }
 
-var _ config.PostLoad = (*registry)(nil)
+var _ fangs.PostLoad = (*registry)(nil)
 
 func newRegistry() registry {
 	return registry{

@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/anchore/fangs/config"
+	"github.com/anchore/fangs"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -13,7 +13,7 @@ type catalogerOptions struct {
 	ScopeOpt source.Scope `yaml:"-" json:"-"`
 }
 
-var _ config.PostLoad = (*catalogerOptions)(nil)
+var _ fangs.PostLoad = (*catalogerOptions)(nil)
 
 func newCatalogerOptions(enabled bool, scope source.Scope) catalogerOptions {
 	return catalogerOptions{

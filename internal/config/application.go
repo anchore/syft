@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/anchore/fangs/config"
+	"github.com/anchore/fangs"
 	"github.com/anchore/go-logger"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -47,7 +47,7 @@ type Application struct {
 	DefaultImagePullSource string       `yaml:"default-image-pull-source" json:"default-image-pull-source" mapstructure:"default-image-pull-source"` // specify default image pull source
 }
 
-var _ config.PostLoad = (*Application)(nil)
+var _ fangs.PostLoad = (*Application)(nil)
 
 func NewApplication() *Application {
 	return &Application{
@@ -87,26 +87,26 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 	}
 }
 
-func (cfg *Application) FangsConfig() config.Config {
-	c := config.NewConfig(internal.ApplicationName)
+func (cfg *Application) FangsConfig() fangs.Config {
+	c := fangs.NewConfig(internal.ApplicationName)
 	c.File = cfg.ConfigPath
 	c.Logger = log.Log
 
 	// DEPRECATED: this is emulating an undesirable bug and will be removed in 1.0
 	// see: https://github.com/anchore/syft/issues/1634
-	c.Finders = []config.Finder{
+	c.Finders = []fangs.Finder{
 		// 1. look for a directly configured file
-		config.FindDirect,
+		fangs.FindDirect,
 		// 2. look for ./.<appname>.<ext>
-		config.FindInCwd,
-		// 3. look for ./.<appname>/config.<ext>
-		config.FindInAppNameSubdir,
+		fangs.FindInCwd,
+		// 3. look for ./.<appname>/fangs.<ext>
+		fangs.FindInAppNameSubdir,
 		// FIXME: remove this FindConfigYamlInCwd entry (and the entire block customizing the Finders)
-		config.FindConfigYamlInCwd,
+		fangs.FindConfigYamlInCwd,
 		// 4. look for ~/.<appname>.<ext>
-		config.FindInHomeDir,
-		// 5. look for <appname>/config.<ext> in xdg locations
-		config.FindInXDG,
+		fangs.FindInHomeDir,
+		// 5. look for <appname>/fangs.<ext> in xdg locations
+		fangs.FindInXDG,
 	}
 
 	return c
@@ -116,7 +116,7 @@ func (cfg *Application) LoadAllValues(cmd *cobra.Command) error {
 	if err := checkDefaultSourceValues(cfg.DefaultImagePullSource); err != nil {
 		return err
 	}
-	return config.Load(cfg.FangsConfig(), cmd, cfg)
+	return fangs.Load(cfg.FangsConfig(), cmd, cfg)
 }
 
 func (cfg *Application) PostLoad() error {

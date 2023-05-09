@@ -51,7 +51,7 @@ require (
 require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/anchore/fangs v0.0.0-20230502174526-91ce841e4006
+	github.com/anchore/fangs v0.0.0-20230509200458-37a1ede7b92a
 	github.com/anchore/go-logger v0.0.0-20230120230012-47be9bb822a2
 	github.com/anchore/stereoscope v0.0.0-20230412183729-8602f1afc574
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da

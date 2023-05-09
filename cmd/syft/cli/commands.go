@@ -64,7 +64,7 @@ func New() *cobra.Command {
 		PowerUser(app),
 		Convert(app),
 		Attest(app),
-		Version(app),
+		Version(),
 		cranecmd.NewCmdAuthLogin("syft"), // syft login uses the same command as crane
 	}
 

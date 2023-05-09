@@ -8,9 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	fangs "github.com/anchore/fangs/config"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/version"
 )
 
@@ -18,7 +16,7 @@ type VersionOptions struct {
 	Output string `mapstructure:"output"`
 }
 
-func Version(app *config.Application) *cobra.Command {
+func Version() *cobra.Command {
 	o := &VersionOptions{
 		Output: "text",
 	}
@@ -26,10 +24,6 @@ func Version(app *config.Application) *cobra.Command {
 		Use:   "version",
 		Short: "show the version",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := fangs.Load(app.FangsConfig(), cmd, o)
-			if err != nil {
-				return err
-			}
 			return printVersion(o.Output)
 		},
 	}

@@ -5,18 +5,18 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 
-	"github.com/anchore/fangs/config"
+	"github.com/anchore/fangs"
 	"github.com/anchore/go-logger"
 )
 
-// logging contains all logging-related configuration options available to the user via the application config.
+// logging contains all logging-related configuration options available to the user via the application fangs.
 type logging struct {
 	Structured   bool         `yaml:"structured" json:"structured" mapstructure:"structured"` // show all log entries as JSON formatted strings
 	Level        logger.Level `yaml:"level" json:"level" mapstructure:"level"`                // the log level string hint
 	FileLocation string       `yaml:"file" json:"file-location" mapstructure:"file"`          // the file path to write logs to
 }
 
-var _ config.PostLoad = (*logging)(nil)
+var _ fangs.PostLoad = (*logging)(nil)
 
 func newLogging() logging {
 	return logging{
