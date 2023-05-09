@@ -15,8 +15,10 @@ func NewStringSet(start ...string) StringSet {
 }
 
 // Add a string to the set.
-func (s StringSet) Add(i string) {
-	s[i] = struct{}{}
+func (s StringSet) Add(i ...string) {
+	for _, str := range i {
+		s[str] = struct{}{}
+	}
 }
 
 // Remove a string from the set.

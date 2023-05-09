@@ -65,6 +65,7 @@ func (p *Package) merge(other Package) error {
 	}
 
 	p.Locations.Add(other.Locations.ToSlice()...)
+	p.Licenses.Add(other.Licenses.ToSlice()...)
 
 	p.CPEs = cpe.Merge(p.CPEs, other.CPEs)
 

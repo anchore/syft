@@ -7,10 +7,11 @@ import (
 	"github.com/mitchellh/hashstructure/v2"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 )
 
 type LicenseSet struct {
-	set map[uint64]License
+	set map[artifact.ID]License
 }
 
 func NewLicenseSet(licenses ...License) (s LicenseSet) {
@@ -21,10 +22,10 @@ func NewLicenseSet(licenses ...License) (s LicenseSet) {
 	return s
 }
 
-func (s *LicenseSet) get(license License) (id uint64, merged bool, err error) {
-	id, err = license.Hash()
+func (s *LicenseSet) get(license License) (id artifact.ID, merged bool, err error) {
+	id, err = artifact.IDByHash(license)
 	if err != nil {
-		return 0, false, fmt.Errorf("could not get the hash for a license: %w", err)
+		return id, false, fmt.Errorf("could not get the hash for a license: %w", err)
 	}
 
 	v, ok := s.set[id]
@@ -37,7 +38,7 @@ func (s *LicenseSet) get(license License) (id uint64, merged bool, err error) {
 	// URL/Location are not considered when taking the Hash
 	m, err := v.Merge(license)
 	if err != nil {
-		return 0, false, fmt.Errorf("could not merge license into map: %w", err)
+		return id, false, fmt.Errorf("could not merge license into map: %w", err)
 	}
 	s.set[id] = *m
 
@@ -46,7 +47,7 @@ func (s *LicenseSet) get(license License) (id uint64, merged bool, err error) {
 
 func (s *LicenseSet) Add(licenses ...License) {
 	if s.set == nil {
-		s.set = make(map[uint64]License)
+		s.set = make(map[artifact.ID]License)
 	}
 	for _, l := range licenses {
 		if id, merged, err := s.get(l); err == nil && !merged {
