@@ -56,11 +56,11 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 		// these fields are mutually exclusive in the spec
 		switch {
 		case l.License.ID != "":
-			licenses = append(licenses, pkg.NewLicenseFromURL(l.License.ID, l.License.URL))
+			licenses = append(licenses, pkg.LicenseFromURLs(l.License.ID, l.License.URL))
 		case l.License.Name != "":
-			licenses = append(licenses, pkg.NewLicenseFromURL(l.License.Name, l.License.URL))
+			licenses = append(licenses, pkg.LicenseFromURLs(l.License.Name, l.License.URL))
 		case l.Expression != "":
-			licenses = append(licenses, pkg.NewLicenseFromURL(l.Expression, l.License.URL))
+			licenses = append(licenses, pkg.LicenseFromURLs(l.Expression, l.License.URL))
 		default:
 		}
 	}

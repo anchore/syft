@@ -701,7 +701,7 @@ func TestMultiplePackages(t *testing.T) {
 			Name:    "libc-utils",
 			Version: "0.7.2-r0",
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocation("BSD", location),
+				pkg.NewLicenseFromLocations("BSD", location),
 			),
 			Type:         pkg.ApkPkg,
 			PURL:         "pkg:apk/alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
@@ -731,9 +731,9 @@ func TestMultiplePackages(t *testing.T) {
 			PURL:      "pkg:apk/alpine/musl-utils@1.1.24-r2?arch=x86_64&upstream=musl&distro=alpine-3.12",
 			Locations: fixtureLocationSet,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocation("MIT", location),
-				pkg.NewLicenseFromLocation("BSD", location),
-				pkg.NewLicenseFromLocation("GPL2+", location),
+				pkg.NewLicenseFromLocations("MIT", location),
+				pkg.NewLicenseFromLocations("BSD", location),
+				pkg.NewLicenseFromLocations("GPL2+", location),
 			),
 			MetadataType: pkg.ApkMetadataType,
 			Metadata: pkg.ApkMetadata{

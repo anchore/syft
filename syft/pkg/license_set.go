@@ -10,7 +10,7 @@ import (
 )
 
 type LicenseSet struct {
-	set map[uint64]Licenses
+	set map[uint64]License
 }
 
 func NewLicenseSet(licenses ...License) (s LicenseSet) {
@@ -21,99 +21,43 @@ func NewLicenseSet(licenses ...License) (s LicenseSet) {
 	return s
 }
 
-func (s *LicenseSet) get(license License) (uint64, *License, error) {
-	id, err := license.Hash()
+func (s *LicenseSet) get(license License) (id uint64, merged bool, err error) {
+	id, err = license.Hash()
 	if err != nil {
-		return 0, nil, fmt.Errorf("could not get the hash for a license: %w", err)
+		return 0, false, fmt.Errorf("could not get the hash for a license: %w", err)
 	}
 
-	licenses, ok := s.set[id]
+	v, ok := s.set[id]
 	if !ok {
-		return id, nil, nil
+		// doesn't exist safe to add
+		return id, false, nil
 	}
 
-	if license.Location.Empty() {
-		switch len(licenses) {
-		case 0:
-			return id, nil, nil
-		case 1:
-			return id, &licenses[0], nil
-		default:
-			log.Debugf("license set contains multiple licenses with the same hash (when there is no location): %#v returns %#v", license, licenses)
-			// we don't know what the right answer is
-			return id, nil, nil
-		}
+	// we got the same id so we want to merge the URL OR Location data
+	// URL/Location are not considered when taking the Hash
+	m, err := v.Merge(license)
+	if err != nil {
+		return 0, false, fmt.Errorf("could not merge license into map: %w", err)
 	}
+	s.set[id] = *m
 
-	// check if license being added has duplicate location
-	for _, l := range licenses {
-		// duplicate hash
-		licenseHash, err := license.Location.Hash()
-		if err != nil {
-			log.Trace("could not get location hash for licenses %v: %w", license, err)
-			continue
-		}
-		compareHash, err := l.Location.Hash()
-		if err != nil {
-			log.Trace("could not get location hash for licenses %v: %w", license, err)
-			continue
-		}
-
-		if licenseHash == compareHash {
-			// we still need to check the file system ID
-			compareSet := l.Location.CoordinateSet().ToSlice()
-			licenseSet := license.Location.CoordinateSet().ToSlice()
-			if len(compareSet) != len(licenseSet) {
-				return 0, nil, fmt.Errorf("duplicate licenses trying to be added")
-			}
-			for i, v := range compareSet {
-				if licenseSet[i] == v {
-					return 0, nil, fmt.Errorf("duplicate licenses trying to be added")
-				}
-			}
-		}
-	}
-
-	return id, nil, nil
+	return id, true, nil
 }
 
 func (s *LicenseSet) Add(licenses ...License) {
 	if s.set == nil {
-		s.set = make(map[uint64]Licenses)
+		s.set = make(map[uint64]License)
 	}
 	for _, l := range licenses {
-		if id, v, err := s.get(l); v == nil && err == nil {
+		if id, merged, err := s.get(l); err == nil && !merged {
 			// doesn't exist, add it
-			s.set[id] = append(s.set[id], l)
+			s.set[id] = l
 		} else if err != nil {
-			log.Debugf("license set failed to add license %#v: %+v", l, err)
+			log.Trace("license set failed to add license %#v: %+v", l, err)
+		} else {
+			log.Trace("merged licenses")
 		}
 	}
-}
-
-func (s LicenseSet) Remove(licenses ...License) {
-	if s.set == nil {
-		return
-	}
-	for _, l := range licenses {
-		id, v, err := s.get(l)
-		if err != nil {
-			log.Debugf("license set failed to remove license %#v: %+v", l, err)
-		}
-		if v == nil {
-			continue
-		}
-		// remove the license from the specific index already found
-		s.set[id] = append(s.set[id][:0], s.set[id][0+1:]...)
-	}
-}
-
-func (s LicenseSet) Contains(l License) bool {
-	if s.set == nil {
-		return false
-	}
-	_, v, err := s.get(l)
-	return v != nil && err == nil
 }
 
 func (s LicenseSet) ToSlice() []License {
@@ -122,7 +66,7 @@ func (s LicenseSet) ToSlice() []License {
 	}
 	var licenses []License
 	for _, v := range s.set {
-		licenses = append(licenses, v...)
+		licenses = append(licenses, v)
 	}
 	sort.Sort(Licenses(licenses))
 	return licenses

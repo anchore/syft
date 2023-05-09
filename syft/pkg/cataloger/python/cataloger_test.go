@@ -46,7 +46,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocation("Apache 2.0", source.NewLocation("test-fixtures/egg-info/PKG-INFO")),
+					pkg.NewLicenseFromLocations("Apache 2.0", source.NewLocation("test-fixtures/egg-info/PKG-INFO")),
 				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
@@ -84,7 +84,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocation("BSD License", source.NewLocation("test-fixtures/dist-info/METADATA")),
+					pkg.NewLicenseFromLocations("BSD License", source.NewLocation("test-fixtures/dist-info/METADATA")),
 				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
@@ -122,7 +122,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocation("BSD License", source.NewLocation("test-fixtures/malformed-record/dist-info/METADATA")),
+					pkg.NewLicenseFromLocations("BSD License", source.NewLocation("test-fixtures/malformed-record/dist-info/METADATA")),
 				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
@@ -154,7 +154,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocation("BSD License", source.NewLocation("test-fixtures/partial.dist-info/METADATA")),
+					pkg.NewLicenseFromLocations("BSD License", source.NewLocation("test-fixtures/partial.dist-info/METADATA")),
 				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
@@ -178,7 +178,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocation("Apache 2.0", source.NewLocation("test-fixtures/test.egg-info")),
+					pkg.NewLicenseFromLocations("Apache 2.0", source.NewLocation("test-fixtures/test.egg-info")),
 				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,

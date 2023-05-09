@@ -20,7 +20,7 @@ func TestParseGemspec(t *testing.T) {
 		Locations: locations,
 		Type:      pkg.GemPkg,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocation("MIT", source.NewLocation(fixture)),
+			pkg.NewLicenseFromLocations("MIT", source.NewLocation(fixture)),
 		),
 		Language:     pkg.Ruby,
 		MetadataType: pkg.GemMetadataType,

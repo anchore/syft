@@ -17,9 +17,9 @@ func TestDpkgCataloger(t *testing.T) {
 			Version: "1.1.8-3.6",
 			FoundBy: "dpkgdb-cataloger",
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocation("GPL-1", licenseLocation),
-				pkg.NewLicenseFromLocation("GPL-2", licenseLocation),
-				pkg.NewLicenseFromLocation("LGPL-2.1", licenseLocation),
+				pkg.NewLicenseFromLocations("GPL-1", licenseLocation),
+				pkg.NewLicenseFromLocations("GPL-2", licenseLocation),
+				pkg.NewLicenseFromLocations("LGPL-2.1", licenseLocation),
 			),
 			Locations: source.NewLocationSet(
 				source.NewVirtualLocation("/var/lib/dpkg/status", "/var/lib/dpkg/status"),

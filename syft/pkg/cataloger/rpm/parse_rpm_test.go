@@ -28,7 +28,7 @@ func TestParseRpmFiles(t *testing.T) {
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocation("MIT", abcRpmLocation),
+						pkg.NewLicenseFromLocations("MIT", abcRpmLocation),
 					),
 					Metadata: pkg.RpmMetadata{
 						Name:      "abc",
@@ -57,7 +57,7 @@ func TestParseRpmFiles(t *testing.T) {
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocation("Public Domain", zorkRpmLocation),
+						pkg.NewLicenseFromLocations("Public Domain", zorkRpmLocation),
 					),
 					Metadata: pkg.RpmMetadata{
 						Name:      "zork",

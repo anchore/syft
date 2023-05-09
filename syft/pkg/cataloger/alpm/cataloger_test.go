@@ -21,8 +21,8 @@ func TestAlpmCataloger(t *testing.T) {
 			Type:    pkg.AlpmPkg,
 			FoundBy: "alpmdb-cataloger",
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocation("LGPL3", dbLocation),
-				pkg.NewLicenseFromLocation("GPL", dbLocation),
+				pkg.NewLicenseFromLocations("LGPL3", dbLocation),
+				pkg.NewLicenseFromLocations("GPL", dbLocation),
 			),
 			Locations:    source.NewLocationSet(dbLocation),
 			CPEs:         nil,

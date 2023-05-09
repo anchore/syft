@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/mitchellh/hashstructure/v2"
@@ -31,6 +32,12 @@ func (l Licenses) Less(i, j int) bool {
 	if l[i].Value == l[j].Value {
 		if l[i].SPDXExpression == l[j].SPDXExpression {
 			if l[i].Type == l[j].Type {
+				// While URL and location are not exclusive fields
+				// returning true here reduces the number of swaps
+				// while keeping a consistent sort order of
+				// the order that they appear in the list initially
+				// If users in the future have preference to sorting based
+				// on the slice representation of either field we can update this code
 				return true
 			}
 			return l[i].Type < l[j].Type
@@ -63,6 +70,8 @@ func NewLicense(value string) License {
 
 func NewLicensesFromValues(values ...string) (licenses []License) {
 	for _, v := range values {
+		// ignore common SPDX license expression connectors
+		// that could be included in input
 		if v == "" || v == "AND" {
 			continue
 		}
@@ -76,31 +85,25 @@ func NewLicensesFromLocation(location source.Location, values ...string) (licens
 		if v == "" {
 			continue
 		}
-		licenses = append(licenses, NewLicenseFromLocation(v, location))
+		licenses = append(licenses, NewLicenseFromLocations(v, location))
 	}
 	return
 }
 
-func NewLicenseFromLocation(value string, location source.Location) License {
+func NewLicenseFromLocations(value string, locations ...source.Location) License {
 	l := NewLicense(value)
-	l.Location.Add(location)
+	for _, loc := range locations {
+		l.Location.Add(loc)
+	}
 	return l
 }
 
-func NewLicensesFromURL(url string, values ...string) (licenses []License) {
-	for _, v := range values {
-		if v == "" {
-			continue
-		}
-		licenses = append(licenses, NewLicenseFromURL(v, url))
-	}
-	return
-}
-
-func NewLicenseFromURL(value string, url string) License {
+func LicenseFromURLs(value string, urls ...string) License {
 	l := NewLicense(value)
-	if url != "" {
-		l.URL.Add(url)
+	for _, u := range urls {
+		if u != "" {
+			l.URL.Add(u)
+		}
 	}
 	return l
 }
@@ -109,13 +112,9 @@ func NewLicenseFromURL(value string, url string) License {
 type noLayerLicense License
 
 func (s License) Hash() (uint64, error) {
-	locations := make([]source.Location, 0)
-	for _, l := range s.Location.ToSlice() {
-		l := l
-		l.FileSystemID = ""
-		locations = append(locations, l)
-	}
-	s.Location = source.NewLocationSet(locations...)
+	// we want to ignore URL and location sets since we will always merge these fields
+	s.URL = internal.NewStringSet()
+	s.Location = source.NewLocationSet()
 
 	return hashstructure.Hash(noLayerLicense(s), hashstructure.FormatV2,
 		&hashstructure.HashOptions{
@@ -123,4 +122,28 @@ func (s License) Hash() (uint64, error) {
 			SlicesAsSets: true,
 		},
 	)
+}
+
+func (s License) Merge(l License) (*License, error) {
+	sHash, err := s.Hash()
+	if err != nil {
+		return nil, err
+	}
+	lHash, err := l.Hash()
+	if err != nil {
+		return nil, err
+	}
+	if sHash != lHash {
+		return nil, fmt.Errorf("cannot merge licenses with different hash")
+	}
+
+	for _, u := range l.URL.ToSlice() {
+		s.URL.Add(u)
+	}
+
+	for _, l := range l.Location.ToSlice() {
+		s.Location.Add(l)
+	}
+
+	return &s, nil
 }
