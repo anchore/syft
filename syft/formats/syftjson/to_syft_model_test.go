@@ -228,3 +228,36 @@ func Test_toSyftFiles(t *testing.T) {
 		})
 	}
 }
+
+func Test_toSyfRelationship(t *testing.T) {
+	emptyIdMap := make(map[string]interface{})
+	emptyAliasMap := make(map[string]string)
+	type relationships struct {
+		relationship model.Relationship
+		want         *artifact.Relationship
+	}
+	tests := []struct {
+		name                string
+		idMap               map[string]interface{}
+		idAliases           map[string]string
+		args                []relationships
+		wantUnknownRelTypes map[string]int
+	}{{
+		name:                "normal relationship",
+		idMap:               emptyIdMap,
+		idAliases:           emptyAliasMap,
+		args:                []relationships{},
+		wantUnknownRelTypes: map[string]int{},
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRelTypes := make(map[string]int)
+			for _, rel := range tt.args {
+				got, _ := toSyftRelationship(tt.idMap, rel.relationship, tt.idAliases)
+				assert.Equal(t, rel.want, got)
+			}
+			assert.Equal(t, tt.wantUnknownRelTypes, gotRelTypes)
+		})
+	}
+}

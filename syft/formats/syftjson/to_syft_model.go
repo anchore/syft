@@ -1,7 +1,9 @@
 package syftjson
 
 import (
+	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -149,14 +151,42 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relations
 		idMap[f.ID] = f.Location
 	}
 
+	out, warnings := toSyftRelationshipsWithWarnings(idMap, relationships, idAliases)
+	for _, warning := range warnings {
+		log.Warn(warning)
+	}
+
+	return out
+}
+
+func toSyftRelationshipsWithWarnings(idMap map[string]interface{}, relationships []model.Relationship, idAliases map[string]string) ([]artifact.Relationship, []string) {
 	var out []artifact.Relationship
+	var warnings []string
+	omittedRelationshipTypes := make(map[string]int)
+	omittedRelatinshipCount := 0
 	for _, r := range relationships {
-		syftRelationship := toSyftRelationship(idMap, r, idAliases)
+		syftRelationship, err := toSyftRelationship(idMap, r, idAliases)
+		if err != nil {
+			if castErr, ok := err.(*unknownRelationshipTypeError); ok {
+				omittedRelationshipTypes[castErr.UnknownType()] = 1
+				omittedRelatinshipCount++
+			} else {
+				warnings = append(warnings, err.Error())
+			}
+		}
 		if syftRelationship != nil {
 			out = append(out, *syftRelationship)
 		}
 	}
-	return out
+	if len(omittedRelationshipTypes) > 0 {
+		keys := make([]string, 0)
+		for key := range omittedRelationshipTypes {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		warnings = append(warnings, fmt.Sprintf("Omitted %d relationship(s) of these unknown types: %v", omittedRelatinshipCount, strings.Join(keys, ", ")))
+	}
+	return out, warnings
 }
 
 func toSyftSource(s model.Source) *source.Source {
@@ -167,7 +197,7 @@ func toSyftSource(s model.Source) *source.Source {
 	return newSrc
 }
 
-func toSyftRelationship(idMap map[string]interface{}, relationship model.Relationship, idAliases map[string]string) *artifact.Relationship {
+func toSyftRelationship(idMap map[string]interface{}, relationship model.Relationship, idAliases map[string]string) (*artifact.Relationship, error) {
 	id := func(id string) string {
 		aliased, ok := idAliases[id]
 		if ok {
@@ -178,14 +208,12 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 
 	from, ok := idMap[id(relationship.Parent)].(artifact.Identifiable)
 	if !ok {
-		log.Warnf("relationship mapping from key %s is not a valid artifact.Identifiable type: %+v", relationship.Parent, idMap[relationship.Parent])
-		return nil
+		return nil, fmt.Errorf("relationship mapping from key %s is not a valid artifact.Identifiable type: %+v", relationship.Parent, idMap[relationship.Parent])
 	}
 
 	to, ok := idMap[id(relationship.Child)].(artifact.Identifiable)
 	if !ok {
-		log.Warnf("relationship mapping to key %s is not a valid artifact.Identifiable type: %+v", relationship.Child, idMap[relationship.Child])
-		return nil
+		return nil, fmt.Errorf("relationship mapping to key %s is not a valid artifact.Identifiable type: %+v", relationship.Child, idMap[relationship.Child])
 	}
 
 	typ := artifact.RelationshipType(relationship.Type)
@@ -194,8 +222,9 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 	case artifact.OwnershipByFileOverlapRelationship, artifact.ContainsRelationship, artifact.DependencyOfRelationship, artifact.EvidentByRelationship:
 	default:
 		if !strings.Contains(string(typ), "dependency-of") {
-			log.Debugf("unknown relationship type: %s", typ)
-			return nil
+			return nil, &unknownRelationshipTypeError{
+				relationshipType: string(typ),
+			}
 		}
 		// lets try to stay as compatible as possible with similar relationship types without dropping the relationship
 		log.Warnf("assuming %q for relationship type %q", artifact.DependencyOfRelationship, typ)
@@ -206,7 +235,19 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 		To:   to,
 		Type: typ,
 		Data: relationship.Metadata,
-	}
+	}, nil
+}
+
+type unknownRelationshipTypeError struct {
+	relationshipType string
+}
+
+func (u *unknownRelationshipTypeError) Error() string {
+	return fmt.Sprintf("unknown relationship type: %s", u.relationshipType)
+}
+
+func (u *unknownRelationshipTypeError) UnknownType() string {
+	return u.relationshipType
 }
 
 func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {
