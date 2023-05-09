@@ -75,6 +75,21 @@ func NewLicense(value string) License {
 	}
 }
 
+func NewLicenseFromType(value string, t license.Type) License {
+	spdxExpression, err := license.ParseExpression(value)
+	if err != nil {
+		log.Trace("unable to parse license expression: %w", err)
+	}
+
+	return License{
+		Value:          value,
+		SPDXExpression: spdxExpression,
+		Type:           t,
+		URL:            internal.NewStringSet(),
+		Location:       source.NewLocationSet(),
+	}
+}
+
 func NewLicensesFromValues(values ...string) (licenses []License) {
 	for _, v := range values {
 		// ignore common SPDX license expression connectors

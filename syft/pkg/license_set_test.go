@@ -83,6 +83,31 @@ func TestLicenseSet_Add(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "different licenses from different sources with different types constitute two licenses",
+			licenses: []License{
+				NewLicenseFromType("MIT", license.Concluded),
+				NewLicenseFromType("MIT", license.Declared),
+				NewLicenseFromLocations("MIT", source.NewLocation("/place")),
+				LicenseFromURLs("MIT", "https://example.com"),
+			},
+			want: []License{
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Concluded,
+					URL:            internal.NewStringSet(),
+					Location:       source.NewLocationSet(),
+				},
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Declared,
+					URL:            internal.NewStringSet("https://example.com"),
+					Location:       source.NewLocationSet(source.NewLocation("/place")),
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -22,7 +22,7 @@ func NewLicenseSet(licenses ...License) (s LicenseSet) {
 	return s
 }
 
-func (s *LicenseSet) get(license License) (id artifact.ID, merged bool, err error) {
+func (s *LicenseSet) addToExisting(license License) (id artifact.ID, merged bool, err error) {
 	id, err = artifact.IDByHash(license)
 	if err != nil {
 		return id, false, fmt.Errorf("could not get the hash for a license: %w", err)
@@ -50,13 +50,11 @@ func (s *LicenseSet) Add(licenses ...License) {
 		s.set = make(map[artifact.ID]License)
 	}
 	for _, l := range licenses {
-		if id, merged, err := s.get(l); err == nil && !merged {
+		if id, merged, err := s.addToExisting(l); err == nil && !merged {
 			// doesn't exist, add it
 			s.set[id] = l
 		} else if err != nil {
 			log.Trace("license set failed to add license %#v: %+v", l, err)
-		} else {
-			log.Trace("merged licenses")
 		}
 	}
 }
