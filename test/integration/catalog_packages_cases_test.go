@@ -69,6 +69,14 @@ var imageOnlyTestCases = []testCase{
 			"joda-time":              "2.9.2",
 		},
 	},
+	{
+		name:        "find R packages",
+		pkgType:     pkg.Rpkg,
+		pkgLanguage: pkg.R,
+		pkgInfo: map[string]string{
+			"base": "4.3.0",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{
