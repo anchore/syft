@@ -2,6 +2,7 @@ package syftjson
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -47,5 +48,30 @@ func TestEncodeDecodeCycle(t *testing.T) {
 			}
 			t.Errorf("package difference (%s): %+v", p.Name, d)
 		}
+	}
+}
+
+func TestOutOfDateParser(t *testing.T) {
+	tests := []struct {
+		name            string
+		documentVersion string
+		parserVersion   string
+		want            error
+	}{{
+		name:            "no warning when doc version is older",
+		documentVersion: "1.0.9",
+		parserVersion:   "3.1.0",
+	}, {
+		name:            "warning when parser is older",
+		documentVersion: "4.3.2",
+		parserVersion:   "3.1.0",
+		want:            fmt.Errorf("document has schema version %s, but parser has older schema version (%s)", "4.3.2", "3.1.0"),
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := outOfDateParser(tt.documentVersion, tt.parserVersion)
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }
