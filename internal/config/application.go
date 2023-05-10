@@ -87,7 +87,7 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 	}
 }
 
-func (cfg *Application) FangsConfig() fangs.Config {
+func (cfg Application) fangsConfig() fangs.Config {
 	c := fangs.NewConfig(internal.ApplicationName)
 	c.File = cfg.ConfigPath
 	c.Logger = log.Log
@@ -121,7 +121,7 @@ func (cfg *Application) LoadAllValues(cmd *cobra.Command) error {
 	if err := checkDefaultSourceValues(cfg.DefaultImagePullSource); err != nil {
 		return err
 	}
-	return fangs.Load(cfg.FangsConfig(), cmd, cfg)
+	return fangs.Load(cfg.fangsConfig(), cmd, cfg)
 }
 
 func (cfg *Application) PostLoad() error {
@@ -209,7 +209,7 @@ func checkDefaultSourceValues(source string) error {
 	return nil
 }
 
-func (cfg *Application) IsVerbose() (result bool) {
+func (cfg Application) IsVerbose() bool {
 	isPipedInput, err := internal.IsPipedInput()
 	if err != nil {
 		// since we can't tell if there was piped input we assume that there could be to disable the ETUI

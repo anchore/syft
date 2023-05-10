@@ -6,35 +6,28 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/version"
 )
 
-type VersionOptions struct {
-	Output string `mapstructure:"output"`
-}
-
 func Version() *cobra.Command {
-	o := &VersionOptions{
-		Output: "text",
-	}
+	output := "text"
+
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "show the version",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return printVersion(o.Output)
+			return printVersion(output)
 		},
 	}
 
-	AddVersionFlags(cmd.Flags(), o)
+	cmd.Flags().StringVarP(
+		&output, "output", "o", output,
+		"format to show version information (available=[text, json])",
+	)
 
 	return cmd
-}
-
-func AddVersionFlags(flags *pflag.FlagSet, o *VersionOptions) {
-	flags.StringVarP(&o.Output, "output", "o", o.Output, "format to show version information (available=[text, json])")
 }
 
 func printVersion(output string) error {

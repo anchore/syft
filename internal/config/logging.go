@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/go-logger"
 )
 
-// logging contains all logging-related configuration options available to the user via the application fangs.
+// logging contains all logging-related configuration options available to the user via the application config.
 type logging struct {
 	Structured   bool         `yaml:"structured" json:"structured" mapstructure:"structured"` // show all log entries as JSON formatted strings
 	Level        logger.Level `yaml:"level" json:"level" mapstructure:"level"`                // the log level string hint
