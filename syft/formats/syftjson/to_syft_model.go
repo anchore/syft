@@ -1,6 +1,7 @@
 package syftjson
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -35,8 +36,28 @@ func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
 		},
 		Source:        *toSyftSourceData(doc.Source),
 		Descriptor:    toSyftDescriptor(doc.Descriptor),
-		Relationships: toSyftRelationships(&doc, catalog, doc.ArtifactRelationships, idAliases),
+		Relationships: warnConversionErrors(toSyftRelationships(&doc, catalog, doc.ArtifactRelationships, idAliases)),
 	}, nil
+}
+
+func warnConversionErrors[T any](converted []T, errors []error) []T {
+	errorMessages := deduplicateErrors(errors)
+	for _, msg := range errorMessages {
+		log.Warn(msg)
+	}
+	return converted
+}
+
+func deduplicateErrors(errors []error) []string {
+	errorCounts := make(map[string]int)
+	var errorMessages []string
+	for _, e := range errors {
+		errorCounts[e.Error()] = errorCounts[e.Error()] + 1
+	}
+	for msg, count := range errorCounts {
+		errorMessages = append(errorMessages, fmt.Sprintf("%q occurred %d time(s)", msg, count))
+	}
+	return errorMessages
 }
 
 func toSyftFiles(files []model.File) sbom.Artifacts {
@@ -131,7 +152,7 @@ func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
 	}
 }
 
-func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relationships []model.Relationship, idAliases map[string]string) []artifact.Relationship {
+func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relationships []model.Relationship, idAliases map[string]string) ([]artifact.Relationship, []error) {
 	idMap := make(map[string]interface{})
 
 	for _, p := range catalog.Sorted() {
@@ -150,13 +171,18 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relations
 	}
 
 	var out []artifact.Relationship
+	var conversionErrors []error
 	for _, r := range relationships {
-		syftRelationship := toSyftRelationship(idMap, r, idAliases)
+		syftRelationship, err := toSyftRelationship(idMap, r, idAliases)
+		if err != nil {
+			conversionErrors = append(conversionErrors, err)
+		}
 		if syftRelationship != nil {
 			out = append(out, *syftRelationship)
 		}
 	}
-	return out
+
+	return out, conversionErrors
 }
 
 func toSyftSource(s model.Source) *source.Source {
@@ -167,7 +193,7 @@ func toSyftSource(s model.Source) *source.Source {
 	return newSrc
 }
 
-func toSyftRelationship(idMap map[string]interface{}, relationship model.Relationship, idAliases map[string]string) *artifact.Relationship {
+func toSyftRelationship(idMap map[string]interface{}, relationship model.Relationship, idAliases map[string]string) (*artifact.Relationship, error) {
 	id := func(id string) string {
 		aliased, ok := idAliases[id]
 		if ok {
@@ -178,14 +204,12 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 
 	from, ok := idMap[id(relationship.Parent)].(artifact.Identifiable)
 	if !ok {
-		log.Warnf("relationship mapping from key %s is not a valid artifact.Identifiable type: %+v", relationship.Parent, idMap[relationship.Parent])
-		return nil
+		return nil, fmt.Errorf("relationship mapping from key %s is not a valid artifact.Identifiable type: %+v", relationship.Parent, idMap[relationship.Parent])
 	}
 
 	to, ok := idMap[id(relationship.Child)].(artifact.Identifiable)
 	if !ok {
-		log.Warnf("relationship mapping to key %s is not a valid artifact.Identifiable type: %+v", relationship.Child, idMap[relationship.Child])
-		return nil
+		return nil, fmt.Errorf("relationship mapping to key %s is not a valid artifact.Identifiable type: %+v", relationship.Child, idMap[relationship.Child])
 	}
 
 	typ := artifact.RelationshipType(relationship.Type)
@@ -194,8 +218,7 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 	case artifact.OwnershipByFileOverlapRelationship, artifact.ContainsRelationship, artifact.DependencyOfRelationship, artifact.EvidentByRelationship:
 	default:
 		if !strings.Contains(string(typ), "dependency-of") {
-			log.Warnf("unknown relationship type: %s", typ)
-			return nil
+			return nil, fmt.Errorf("unknown relationship type: %s", string(typ))
 		}
 		// lets try to stay as compatible as possible with similar relationship types without dropping the relationship
 		log.Warnf("assuming %q for relationship type %q", artifact.DependencyOfRelationship, typ)
@@ -206,7 +229,7 @@ func toSyftRelationship(idMap map[string]interface{}, relationship model.Relatio
 		To:   to,
 		Type: typ,
 		Data: relationship.Metadata,
-	}
+	}, nil
 }
 
 func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {
