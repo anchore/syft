@@ -92,6 +92,11 @@ func (cfg *Application) FangsConfig() fangs.Config {
 	c.File = cfg.ConfigPath
 	c.Logger = log.Log
 
+	// fangs defaults to TagName == "yaml". this restores the default mapstructure behavior
+	// due to the fact that some structs allow decoding values but should not be output in yaml or json
+	// e.g. they are tagged like `yaml:"-" json:"-" mapstructure:"password"`
+	c.TagName = "mapstructure"
+
 	// DEPRECATED: this is emulating an undesirable bug and will be removed in 1.0
 	// see: https://github.com/anchore/syft/issues/1634
 	c.Finders = []fangs.Finder{
