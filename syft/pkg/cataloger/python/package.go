@@ -63,7 +63,7 @@ func newPackageForPackage(m parsedData, sources ...source.Location) pkg.Package 
 		Version:      m.Version,
 		PURL:         packageURL(m.Name, m.Version, &m.PythonPackageMetadata),
 		Locations:    source.NewLocationSet(sources...),
-		Licenses:     pkg.NewLicensesFromLocation(m.LicenseLocation, m.Licenses),
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(m.LicenseLocation, m.Licenses)...),
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,
 		MetadataType: pkg.PythonPackageMetadataType,

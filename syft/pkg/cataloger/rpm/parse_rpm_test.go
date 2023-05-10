@@ -27,9 +27,9 @@ func TestParseRpmFiles(t *testing.T) {
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses: []pkg.License{
-						pkg.NewLicenseFromLocation("MIT", abcRpmLocation),
-					},
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocations("MIT", abcRpmLocation),
+					),
 					Metadata: pkg.RpmMetadata{
 						Name:      "abc",
 						Epoch:     intRef(0),
@@ -56,9 +56,9 @@ func TestParseRpmFiles(t *testing.T) {
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses: []pkg.License{
-						pkg.NewLicenseFromLocation("Public Domain", zorkRpmLocation),
-					},
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocations("Public Domain", zorkRpmLocation),
+					),
 					Metadata: pkg.RpmMetadata{
 						Name:      "zork",
 						Epoch:     intRef(0),

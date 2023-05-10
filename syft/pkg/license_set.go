@@ -7,10 +7,11 @@ import (
 	"github.com/mitchellh/hashstructure/v2"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 )
 
 type LicenseSet struct {
-	set map[uint64]Licenses
+	set map[artifact.ID]License
 }
 
 func NewLicenseSet(licenses ...License) (s LicenseSet) {
@@ -21,77 +22,41 @@ func NewLicenseSet(licenses ...License) (s LicenseSet) {
 	return s
 }
 
-func (s *LicenseSet) get(license License) (uint64, int, *License, error) {
-	id, err := license.Hash()
+func (s *LicenseSet) addToExisting(license License) (id artifact.ID, merged bool, err error) {
+	id, err = artifact.IDByHash(license)
 	if err != nil {
-		return 0, 0, nil, fmt.Errorf("could not get the hash for a license: %w", err)
+		return id, false, fmt.Errorf("could not get the hash for a license: %w", err)
 	}
-	licenses, ok := s.set[id]
+
+	v, ok := s.set[id]
 	if !ok {
-		return id, 0, nil, nil
+		// doesn't exist safe to add
+		return id, false, nil
 	}
 
-	if license.Location == nil {
-		switch len(licenses) {
-		case 0:
-			return id, 0, nil, nil
-		case 1:
-			return id, 0, &licenses[0], nil
-		default:
-			log.Debugf("license set contains multiple licenses with the same hash (when there is no location): %#v returns %#v", license, licenses)
-			// we don't know what the right answer is
-			return id, 0, nil, nil
-		}
+	// we got the same id so we want to merge the URL OR Location data
+	// URL/Location are not considered when taking the Hash
+	m, err := v.Merge(license)
+	if err != nil {
+		return id, false, fmt.Errorf("could not merge license into map: %w", err)
 	}
+	s.set[id] = *m
 
-	// I'm only hitting this if the FS id is different, since that's the only reason today that you can have
-	// the same hash ID but different information on the license
-	for idx, l := range licenses {
-		if l.Location.FileSystemID == license.Location.FileSystemID {
-			return id, idx, &licenses[idx], nil
-		}
-	}
-
-	return id, 0, nil, nil
+	return id, true, nil
 }
 
 func (s *LicenseSet) Add(licenses ...License) {
 	if s.set == nil {
-		s.set = make(map[uint64]Licenses)
+		s.set = make(map[artifact.ID]License)
 	}
 	for _, l := range licenses {
-		if id, _, v, err := s.get(l); v == nil && err == nil {
+		if id, merged, err := s.addToExisting(l); err == nil && !merged {
 			// doesn't exist, add it
-			s.set[id] = append(s.set[id], l)
+			s.set[id] = l
 		} else if err != nil {
-			log.Debugf("license set failed to add license %#v: %+v", l, err)
+			log.Trace("license set failed to add license %#v: %+v", l, err)
 		}
 	}
-}
-
-func (s LicenseSet) Remove(licenses ...License) {
-	if s.set == nil {
-		return
-	}
-	for _, l := range licenses {
-		id, idx, v, err := s.get(l)
-		if err != nil {
-			log.Debugf("license set failed to remove license %#v: %+v", l, err)
-		}
-		if v == nil {
-			continue
-		}
-		// remove the license from the specific index already found
-		s.set[id] = append(s.set[id][:idx], s.set[id][idx+1:]...)
-	}
-}
-
-func (s LicenseSet) Contains(l License) bool {
-	if s.set == nil {
-		return false
-	}
-	_, _, v, err := s.get(l)
-	return v != nil && err == nil
 }
 
 func (s LicenseSet) ToSlice() []License {
@@ -100,7 +65,7 @@ func (s LicenseSet) ToSlice() []License {
 	}
 	var licenses []License
 	for _, v := range s.set {
-		licenses = append(licenses, v...)
+		licenses = append(licenses, v)
 	}
 	sort.Sort(Licenses(licenses))
 	return licenses
@@ -112,4 +77,8 @@ func (s LicenseSet) Hash() (uint64, error) {
 		ZeroNil:      true,
 		SlicesAsSets: true,
 	})
+}
+
+func (s LicenseSet) Empty() bool {
+	return len(s.set) < 1
 }

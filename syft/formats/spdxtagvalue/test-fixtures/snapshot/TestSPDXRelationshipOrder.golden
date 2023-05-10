@@ -2,11 +2,11 @@ SPDXVersion: SPDX-2.3
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: user-image-input
-DocumentNamespace: https://anchore.com/syft/image/user-image-input-b6c2db3a-7cc1-4507-ac76-36a30169e284
+DocumentNamespace: https://anchore.com/syft/image/user-image-input-96ea886a-3297-4847-b211-6da405ff1f8f
 LicenseListVersion: 3.20
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2023-05-04T20:37:42Z
+Created: 2023-05-09T17:11:49Z
 
 ##### Unpackaged files
 
@@ -63,7 +63,7 @@ ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
 ##### Package: package-1
 
 PackageName: package-1
-SPDXID: SPDXRef-Package-python-package-1-911cef0da9e28043
+SPDXID: SPDXRef-Package-python-package-1-125840abc1c66dd7
 PackageVersion: 1.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
@@ -76,11 +76,11 @@ ExternalRef: PACKAGE-MANAGER purl a-purl-1
 
 ##### Relationships
 
-Relationship: SPDXRef-Package-python-package-1-911cef0da9e28043 CONTAINS SPDXRef-File-f1-5265a4dde3edbf7c
-Relationship: SPDXRef-Package-python-package-1-911cef0da9e28043 CONTAINS SPDXRef-File-z1-f5-839d99ee67d9d174
-Relationship: SPDXRef-Package-python-package-1-911cef0da9e28043 CONTAINS SPDXRef-File-a1-f6-9c2f7510199b17f6
-Relationship: SPDXRef-Package-python-package-1-911cef0da9e28043 CONTAINS SPDXRef-File-d2-f4-c641caa71518099f
-Relationship: SPDXRef-Package-python-package-1-911cef0da9e28043 CONTAINS SPDXRef-File-d1-f3-c6f5b29dca12661f
-Relationship: SPDXRef-Package-python-package-1-911cef0da9e28043 CONTAINS SPDXRef-File-f2-f9e49132a4b96ccd
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-f1-5265a4dde3edbf7c
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-z1-f5-839d99ee67d9d174
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-a1-f6-9c2f7510199b17f6
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-d2-f4-c641caa71518099f
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-d1-f3-c6f5b29dca12661f
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-f2-f9e49132a4b96ccd
 Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DOCUMENT
 

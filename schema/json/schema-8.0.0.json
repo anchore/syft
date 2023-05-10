@@ -749,10 +749,16 @@
           "type": "string"
         },
         "url": {
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
-        "location": {
-          "$ref": "#/$defs/Location"
+        "locations": {
+          "items": {
+            "$ref": "#/$defs/Location"
+          },
+          "type": "array"
         }
       },
       "type": "object",
@@ -760,7 +766,8 @@
         "value",
         "spdxExpression",
         "type",
-        "url"
+        "url",
+        "locations"
       ]
     },
     "LinuxKernelMetadata": {

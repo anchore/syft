@@ -88,12 +88,6 @@ func TestParseGoMod(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			for i := range test.expected {
-				p := &test.expected[i]
-				if p.Licenses == nil {
-					p.Licenses = []pkg.License{}
-				}
-			}
 			c := goModCataloger{}
 			pkgtest.NewCatalogTester().
 				FromFile(t, test.fixture).
@@ -154,12 +148,6 @@ func Test_GoSumHashes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			for i := range test.expected {
-				p := &test.expected[i]
-				if p.Licenses == nil {
-					p.Licenses = []pkg.License{}
-				}
-			}
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expected, nil).

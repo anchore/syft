@@ -50,7 +50,7 @@ func (c *goModCataloger) parseGoModFile(resolver source.FileResolver, _ *generic
 		packages[m.Mod.Path] = pkg.Package{
 			Name:         m.Mod.Path,
 			Version:      m.Mod.Version,
-			Licenses:     licenses,
+			Licenses:     pkg.NewLicenseSet(licenses...),
 			Locations:    source.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(m.Mod.Path, m.Mod.Version),
 			Language:     pkg.Go,
@@ -72,7 +72,7 @@ func (c *goModCataloger) parseGoModFile(resolver source.FileResolver, _ *generic
 		packages[m.New.Path] = pkg.Package{
 			Name:         m.New.Path,
 			Version:      m.New.Version,
-			Licenses:     licenses,
+			Licenses:     pkg.NewLicenseSet(licenses...),
 			Locations:    source.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(m.New.Path, m.New.Version),
 			Language:     pkg.Go,

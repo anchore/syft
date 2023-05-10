@@ -18,14 +18,14 @@ func License(p pkg.Package) (concluded, declared string) {
 	//   (ii) the SPDX file creator has made no attempt to determine this field; or
 	//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
 
-	if len(p.Licenses) == 0 {
+	if p.Licenses.Empty() {
 		return NOASSERTION, NOASSERTION
 	}
 
 	// take all licenses and assume an AND expression;
 	// for information about license expressions see:
 	// https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/
-	pc, pd := parseLicenses(p.Licenses)
+	pc, pd := parseLicenses(p.Licenses.ToSlice())
 
 	for i, v := range pc {
 		if strings.HasPrefix(v, spdxlicense.LicenseRefPrefix) {

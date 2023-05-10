@@ -184,6 +184,19 @@ func toPackageModels(catalog *pkg.Collection) []model.Package {
 	return artifacts
 }
 
+func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
+	for _, l := range pkgLicenses {
+		modelLicenses = append(modelLicenses, model.License{
+			Value:          l.Value,
+			SPDXExpression: l.SPDXExpression,
+			Type:           l.Type,
+			URL:            l.URL.ToSlice(),
+			Location:       l.Location.ToSlice(),
+		})
+	}
+	return
+}
+
 // toPackageModel crates a new Package from the given pkg.Package.
 func toPackageModel(p pkg.Package) model.Package {
 	var cpes = make([]string, len(p.CPEs))
@@ -193,9 +206,9 @@ func toPackageModel(p pkg.Package) model.Package {
 
 	// we want to make sure all catalogers are
 	// initializing the array; this is a good choke point for this check
-	var licenses = make([]pkg.License, 0)
-	if p.Licenses != nil {
-		licenses = p.Licenses
+	var licenses = make([]model.License, 0)
+	if !p.Licenses.Empty() {
+		licenses = toLicenseModel(p.Licenses.ToSlice())
 	}
 
 	return model.Package{

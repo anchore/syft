@@ -56,11 +56,11 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 		// these fields are mutually exclusive in the spec
 		switch {
 		case l.License.ID != "":
-			licenses = append(licenses, pkg.NewLicenseFromURL(l.License.ID, l.License.URL))
+			licenses = append(licenses, pkg.LicenseFromURLs(l.License.ID, l.License.URL))
 		case l.License.Name != "":
-			licenses = append(licenses, pkg.NewLicenseFromURL(l.License.Name, l.License.URL))
+			licenses = append(licenses, pkg.LicenseFromURLs(l.License.Name, l.License.URL))
 		case l.Expression != "":
-			licenses = append(licenses, pkg.NewLicenseFromURL(l.Expression, l.License.URL))
+			licenses = append(licenses, pkg.LicenseFromURLs(l.Expression, l.License.URL))
 		default:
 		}
 	}
@@ -68,6 +68,7 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 	return licenses
 }
 
+// nolint:funlen
 func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expressions []string) {
 	spdxc := cyclonedx.Licenses{}
 	otherc := cyclonedx.Licenses{}
@@ -85,15 +86,41 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			as a license choice and the invalid expression as a license string.
 
 	*/
-	for _, l := range p.Licenses {
+	// dedupe spdxlicenseID
+	seen := make(map[string]bool)
+	for _, l := range p.Licenses.ToSlice() {
 		// singular expression case
 		if value, exists := spdxlicense.ID(l.SPDXExpression); exists {
+			// we do 1 license -> many URL in our internal model
+			// this fans out different URL to single cyclone licenses
+			if !l.URL.Empty() {
+				for _, url := range l.URL.ToSlice() {
+					if url != "" {
+						spdxc = append(spdxc, cyclonedx.LicenseChoice{
+							License: &cyclonedx.License{
+								ID:  value,
+								URL: url,
+							},
+						})
+						continue
+					}
+					spdxc = append(spdxc, cyclonedx.LicenseChoice{
+						License: &cyclonedx.License{
+							ID: value,
+						},
+					})
+					continue
+				}
+			}
+			if _, exists := seen[value]; exists {
+				continue
+			}
 			spdxc = append(spdxc, cyclonedx.LicenseChoice{
 				License: &cyclonedx.License{
-					ID:  value,
-					URL: l.URL,
+					ID: value,
 				},
 			})
+			seen[value] = true
 			continue
 		}
 		if l.SPDXExpression != "" {
@@ -104,10 +131,28 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 		}
 
 		// license string that are not valid spdx expressions or ids
+		if !l.URL.Empty() {
+			for _, url := range l.URL.ToSlice() {
+				if url != "" {
+					otherc = append(otherc, cyclonedx.LicenseChoice{
+						License: &cyclonedx.License{
+							Name: l.Value,
+							URL:  url,
+						},
+					})
+					continue
+				}
+				otherc = append(otherc, cyclonedx.LicenseChoice{
+					License: &cyclonedx.License{
+						Name: l.Value,
+					},
+				})
+			}
+			continue
+		}
 		otherc = append(otherc, cyclonedx.LicenseChoice{
 			License: &cyclonedx.License{
 				Name: l.Value,
-				URL:  l.URL,
 			},
 		})
 	}

@@ -98,9 +98,9 @@ func TestParseRpmDB(t *testing.T) {
 					Locations:    source.NewLocationSet(packagesLocation),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses: []pkg.License{
-						pkg.NewLicenseFromLocation("MIT", packagesLocation),
-					},
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocations("MIT", packagesLocation),
+					),
 					Metadata: pkg.RpmMetadata{
 						Name:      "dive",
 						Epoch:     nil,
@@ -127,9 +127,9 @@ func TestParseRpmDB(t *testing.T) {
 					Locations:    source.NewLocationSet(packagesLocation),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses: []pkg.License{
-						pkg.NewLicenseFromLocation("MIT", packagesLocation),
-					},
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocations("MIT", packagesLocation),
+					),
 					Metadata: pkg.RpmMetadata{
 						Name:      "dive",
 						Epoch:     nil,

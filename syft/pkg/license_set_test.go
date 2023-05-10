@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -35,39 +37,75 @@ func TestLicenseSet_Add(t *testing.T) {
 			},
 		},
 		{
-			name: "duplicate licenses with locations",
+			name: "deduplicate licenses with locations",
 			licenses: []License{
-				NewLicenseFromLocation("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
-				NewLicenseFromLocation("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseFromLocations("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseFromLocations("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseFromLocations("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"})),
 			},
 			want: []License{
-				NewLicenseFromLocation("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseFromLocations(
+					"MIT",
+					source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"}),
+					source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"}),
+				),
 			},
 		},
 		{
 			name: "same licenses with different locations",
 			licenses: []License{
 				NewLicense("MIT"),
-				NewLicenseFromLocation("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"})),
-				NewLicenseFromLocation("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseFromLocations("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"})),
+				NewLicenseFromLocations("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
 			},
 			want: []License{
-				NewLicense("MIT"),
-				NewLicenseFromLocation("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
-				NewLicenseFromLocation("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"})),
+				NewLicenseFromLocations(
+					"MIT",
+					source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"}),
+					source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"}),
+				),
 			},
 		},
 		{
 			name: "same license from different sources",
 			licenses: []License{
 				NewLicense("MIT"),
-				NewLicenseFromLocation("MIT", source.NewLocation("/place")),
-				NewLicenseFromURL("MIT", "https://example.com"),
+				NewLicenseFromLocations("MIT", source.NewLocation("/place")),
+				LicenseFromURLs("MIT", "https://example.com"),
 			},
 			want: []License{
-				NewLicense("MIT"),
-				NewLicenseFromLocation("MIT", source.NewLocation("/place")),
-				NewLicenseFromURL("MIT", "https://example.com"),
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Declared,
+					URL:            internal.NewStringSet("https://example.com"),
+					Location:       source.NewLocationSet(source.NewLocation("/place")),
+				},
+			},
+		},
+		{
+			name: "different licenses from different sources with different types constitute two licenses",
+			licenses: []License{
+				NewLicenseFromType("MIT", license.Concluded),
+				NewLicenseFromType("MIT", license.Declared),
+				NewLicenseFromLocations("MIT", source.NewLocation("/place")),
+				LicenseFromURLs("MIT", "https://example.com"),
+			},
+			want: []License{
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Concluded,
+					URL:            internal.NewStringSet(),
+					Location:       source.NewLocationSet(),
+				},
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Declared,
+					URL:            internal.NewStringSet("https://example.com"),
+					Location:       source.NewLocationSet(source.NewLocation("/place")),
+				},
 			},
 		},
 	}
@@ -75,7 +113,8 @@ func TestLicenseSet_Add(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewLicenseSet()
 			s.Add(tt.licenses...)
-			assert.Equal(t, tt.want, s.ToSlice())
+			testMe := s.ToSlice()
+			assert.Equal(t, tt.want, testMe)
 		})
 	}
 }

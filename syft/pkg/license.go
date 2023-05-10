@@ -1,23 +1,32 @@
 package pkg
 
 import (
+	"fmt"
 	"sort"
 
-	"github.com/mitchellh/hashstructure/v2"
-
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/source"
 )
 
 var _ sort.Interface = (*Licenses)(nil)
 
+// License represents an SPDX Expression or license value extracted from a packages metadata
+// We want to ignore URL and Location since we will always merge these fields
+// a License is a unique combination of value, expression and type
+// its sources are always considered merge and additions to the evidence
+// of where it was found and how it was sourced.
+// This is different from how we treat a package since we consider package paths to distinguish
+// if packages should be kept separate, this is different for licenses since we're only looking for evidence
+// of where a license was declared/concluded for a package
 type License struct {
-	Value          string           `json:"value"`
-	SPDXExpression string           `json:"spdxExpression"`
-	Type           license.Type     `json:"type"`
-	URL            string           `json:"url"`                // external sources
-	Location       *source.Location `json:"location,omitempty"` // on disk declaration
+	Value          string             `json:"value"`
+	SPDXExpression string             `json:"spdxExpression"`
+	Type           license.Type       `json:"type"`
+	URL            internal.StringSet `hash:"ignore"`
+	Location       source.LocationSet `hash:"ignore"`
 }
 
 type Licenses []License
@@ -30,20 +39,13 @@ func (l Licenses) Less(i, j int) bool {
 	if l[i].Value == l[j].Value {
 		if l[i].SPDXExpression == l[j].SPDXExpression {
 			if l[i].Type == l[j].Type {
-				if l[i].URL == l[j].URL {
-					if l[i].Location == nil && l[j].Location == nil {
-						return false
-					}
-					if l[i].Location == nil {
-						return true
-					}
-					if l[j].Location == nil {
-						return false
-					}
-					sl := source.Locations{*l[i].Location, *l[j].Location}
-					return sl.Less(0, 1)
-				}
-				return l[i].URL < l[j].URL
+				// While URL and location are not exclusive fields
+				// returning true here reduces the number of swaps
+				// while keeping a consistent sort order of
+				// the order that they appear in the list initially
+				// If users in the future have preference to sorting based
+				// on the slice representation of either field we can update this code
+				return true
 			}
 			return l[i].Type < l[j].Type
 		}
@@ -68,11 +70,30 @@ func NewLicense(value string) License {
 		Value:          value,
 		SPDXExpression: spdxExpression,
 		Type:           license.Declared,
+		URL:            internal.NewStringSet(),
+		Location:       source.NewLocationSet(),
+	}
+}
+
+func NewLicenseFromType(value string, t license.Type) License {
+	spdxExpression, err := license.ParseExpression(value)
+	if err != nil {
+		log.Trace("unable to parse license expression: %w", err)
+	}
+
+	return License{
+		Value:          value,
+		SPDXExpression: spdxExpression,
+		Type:           t,
+		URL:            internal.NewStringSet(),
+		Location:       source.NewLocationSet(),
 	}
 }
 
 func NewLicensesFromValues(values ...string) (licenses []License) {
 	for _, v := range values {
+		// ignore common SPDX license expression connectors
+		// that could be included in input
 		if v == "" || v == "AND" {
 			continue
 		}
@@ -86,49 +107,48 @@ func NewLicensesFromLocation(location source.Location, values ...string) (licens
 		if v == "" {
 			continue
 		}
-		licenses = append(licenses, NewLicenseFromLocation(v, location))
+		licenses = append(licenses, NewLicenseFromLocations(v, location))
 	}
 	return
 }
 
-func NewLicenseFromLocation(value string, location source.Location) License {
+func NewLicenseFromLocations(value string, locations ...source.Location) License {
 	l := NewLicense(value)
-	l.Location = &location
+	for _, loc := range locations {
+		l.Location.Add(loc)
+	}
 	return l
 }
 
-func NewLicensesFromURL(url string, values ...string) (licenses []License) {
-	for _, v := range values {
-		if v == "" {
-			continue
-		}
-		licenses = append(licenses, NewLicenseFromURL(v, url))
-	}
-	return
-}
-
-func NewLicenseFromURL(value string, url string) License {
+func LicenseFromURLs(value string, urls ...string) License {
 	l := NewLicense(value)
-	l.URL = url
+	for _, u := range urls {
+		if u != "" {
+			l.URL.Add(u)
+		}
+	}
 	return l
 }
 
 // this is a bit of a hack to not infinitely recurse when hashing a license
-type noLayerLicense License
-
-func (s License) Hash() (uint64, error) {
-	if s.Location != nil {
-		l := *s.Location
-		// much like the location set hash function, we should not consider the file system ID when hashing
-		// so that licenses found in different layers (at the same path) are not considered different.
-		l.FileSystemID = ""
-		s.Location = &l
+func (s License) Merge(l License) (*License, error) {
+	sHash, err := artifact.IDByHash(s)
+	if err != nil {
+		return nil, err
+	}
+	lHash, err := artifact.IDByHash(l)
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+	if sHash != lHash {
+		return nil, fmt.Errorf("cannot merge licenses with different hash")
 	}
 
-	return hashstructure.Hash(noLayerLicense(s), hashstructure.FormatV2,
-		&hashstructure.HashOptions{
-			ZeroNil:      true,
-			SlicesAsSets: true,
-		},
-	)
+	s.URL.Add(l.URL.ToSlice()...)
+	s.Location.Add(l.Location.ToSlice()...)
+
+	return &s, nil
 }
