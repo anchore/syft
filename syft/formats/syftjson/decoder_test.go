@@ -2,6 +2,7 @@ package syftjson
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -66,6 +67,16 @@ func TestOutOfDateParser(t *testing.T) {
 		documentVersion: "4.3.2",
 		parserVersion:   "3.1.0",
 		want:            fmt.Errorf("document has schema version %s, but parser has older schema version (%s)", "4.3.2", "3.1.0"),
+	}, {
+		name:            "warning when document version is unparseable",
+		documentVersion: "some-nonsense",
+		parserVersion:   "3.1.0",
+		want:            fmt.Errorf("error comparing document schema version with parser schema version: %w", errors.New("Invalid Semantic Version")),
+	}, {
+		name:            "warning when parser version is unparseable",
+		documentVersion: "7.1.0",
+		parserVersion:   "some-nonsense",
+		want:            fmt.Errorf("error comparing document schema version with parser schema version: %w", errors.New("Invalid Semantic Version")),
 	}}
 
 	for _, tt := range tests {

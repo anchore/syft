@@ -32,11 +32,12 @@ func decoder(reader io.Reader) (*sbom.SBOM, error) {
 func outOfDateParser(documentVerion string, parserVersion string) error {
 	documentV, err := semver.NewVersion(documentVerion)
 	if err != nil {
-		return err
+		return fmt.Errorf("error comparing document schema version with parser schema version: %w", err)
 	}
+
 	parserV, err := semver.NewVersion(parserVersion)
 	if err != nil {
-		return err
+		return fmt.Errorf("error comparing document schema version with parser schema version: %w", err)
 	}
 
 	if documentV.GreaterThan(parserV) {
