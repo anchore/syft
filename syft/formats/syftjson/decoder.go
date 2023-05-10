@@ -22,14 +22,14 @@ func decoder(reader io.Reader) (*sbom.SBOM, error) {
 		return nil, fmt.Errorf("unable to decode syft-json: %w", err)
 	}
 
-	if err := outOfDateParser(doc.Schema.Version, internal.JSONSchemaVersion); err != nil {
+	if err := checkSupportedSchema(doc.Schema.Version, internal.JSONSchemaVersion); err != nil {
 		log.Warn(err)
 	}
 
 	return toSyftModel(doc)
 }
 
-func outOfDateParser(documentVerion string, parserVersion string) error {
+func checkSupportedSchema(documentVerion string, parserVersion string) error {
 	documentV, err := semver.NewVersion(documentVerion)
 	if err != nil {
 		return fmt.Errorf("error comparing document schema version with parser schema version: %w", err)
