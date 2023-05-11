@@ -83,6 +83,9 @@ func (s *LocationSet) CoordinateSet() CoordinateSet {
 }
 
 func (s *LocationSet) Empty() bool {
+	if s.set == nil {
+		return true
+	}
 	return len(s.set) == 0
 }
 

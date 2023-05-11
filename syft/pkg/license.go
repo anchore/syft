@@ -148,7 +148,10 @@ func (s License) Merge(l License) (*License, error) {
 	}
 
 	s.URL.Add(l.URL.ToSlice()...)
-	s.Location.Add(l.Location.ToSlice()...)
+	if s.Location.Empty() && l.Location.Empty() {
+		return &s, nil
+	}
 
+	s.Location.Add(l.Location.ToSlice()...)
 	return &s, nil
 }

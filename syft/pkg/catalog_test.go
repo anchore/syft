@@ -17,6 +17,59 @@ type expectedIndexes struct {
 	byPath map[string]*strset.Set
 }
 
+func TestCatalogMergePackageLicenses(t *testing.T) {
+	tests := []struct {
+		name         string
+		pkgs         []Package
+		expectedPkgs []Package
+	}{
+		{
+			name: "merges licenses of packages with equal ID",
+			pkgs: []Package{
+				{
+					id: "equal",
+					Licenses: NewLicenseSet(
+						NewLicense("foo"),
+						NewLicense("baq"),
+						NewLicense("quz"),
+					),
+				},
+				{
+					id: "equal",
+					Licenses: NewLicenseSet(
+						NewLicense("bar"),
+						NewLicense("baz"),
+						NewLicense("foo"),
+						NewLicense("qux"),
+					),
+				},
+			},
+			expectedPkgs: []Package{
+				{
+					id: "equal",
+					Licenses: NewLicenseSet(
+						NewLicense("foo"),
+						NewLicense("baq"),
+						NewLicense("quz"),
+						NewLicense("qux"),
+						NewLicense("bar"),
+						NewLicense("baz"),
+					),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			collection := NewCollection(test.pkgs...)
+			for i, p := range collection.Sorted() {
+				assert.Equal(t, test.expectedPkgs[i].Licenses, p.Licenses)
+			}
+		})
+	}
+}
+
 func TestCatalogDeleteRemovesPackages(t *testing.T) {
 	tests := []struct {
 		name            string
