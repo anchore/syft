@@ -1167,6 +1167,9 @@
               "$ref": "#/$defs/PythonRequirementsMetadata"
             },
             {
+              "$ref": "#/$defs/RDescriptionFileMetadata"
+            },
+            {
               "$ref": "#/$defs/RebarLockMetadata"
             },
             {
@@ -1591,6 +1594,56 @@
         "url",
         "markers"
       ]
+    },
+    "RDescriptionFileMetadata": {
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": "string"
+        },
+        "url": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "built": {
+          "type": "string"
+        },
+        "needsCompilation": {
+          "type": "boolean"
+        },
+        "imports": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "suggests": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
     },
     "RebarLockMetadata": {
       "properties": {
