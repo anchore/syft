@@ -33,6 +33,7 @@ const (
 	PhpComposerPkg        Type = "php-composer"
 	PortagePkg            Type = "portage"
 	PythonPkg             Type = "python"
+	Rpkg                  Type = "R-package"
 	RpmPkg                Type = "rpm"
 	RustPkg               Type = "rust-crate"
 )
@@ -61,6 +62,7 @@ var AllPkgs = []Type{
 	PhpComposerPkg,
 	PortagePkg,
 	PythonPkg,
+	Rpkg,
 	RpmPkg,
 	RustPkg,
 }
@@ -106,6 +108,8 @@ func (t Type) PackageURLType() string {
 		return "nix"
 	case NpmPkg:
 		return packageurl.TypeNPM
+	case Rpkg:
+		return packageurl.TypeCran
 	case RpmPkg:
 		return packageurl.TypeRPM
 	case RustPkg:
@@ -173,6 +177,8 @@ func TypeByName(name string) Type {
 		return LinuxKernelModulePkg
 	case "nix":
 		return NixPkg
+	case packageurl.TypeCran:
+		return Rpkg
 	default:
 		return UnknownPkg
 	}

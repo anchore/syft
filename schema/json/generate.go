@@ -29,6 +29,9 @@ can be extended to include specific package metadata struct shapes in the future
 // not matter as long as it is exported.
 
 // TODO: this should be generated from reflection of whats in the pkg package
+// Should be created during generation below; use reflection's ability to
+// create types at runtime.
+// should be same name as struct minus metadata
 type artifactMetadataContainer struct {
 	Alpm               pkg.AlpmMetadata
 	Apk                pkg.ApkMetadata
@@ -56,6 +59,7 @@ type artifactMetadataContainer struct {
 	PythonPackage      pkg.PythonPackageMetadata
 	PythonPipfilelock  pkg.PythonPipfileLockMetadata
 	PythonRequirements pkg.PythonRequirementsMetadata
+	RDescriptionFile   pkg.RDescriptionFileMetadata
 	Rebar              pkg.RebarLockMetadata
 	Rpm                pkg.RpmMetadata
 	RustCargo          pkg.CargoPackageMetadata
