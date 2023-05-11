@@ -47,50 +47,83 @@ func packageURL(m parseData) string {
 // https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Licensing
 func parseLicenseData(license string, locations ...source.Location) []pkg.License {
 	licenses := make([]pkg.License, 0)
-	// check case 1 for surrounding parens
-	if strings.Contains(license, "(") && strings.Contains(license, ")") {
-		licenseVersion := strings.Split(license, " ")
-		if len(licenseVersion) == 2 {
-			license = strings.Join([]string{licenseVersion[0], parseVersion(licenseVersion[1])}, "")
-			licenses = append(licenses, pkg.NewLicenseFromLocations(license, locations...))
-			return licenses
+
+	// check if multiple licenses are separated by |
+	splitField := strings.Split(license, "|")
+	for _, l := range splitField {
+		// check case 1 for surrounding parens
+		l = strings.TrimSpace(l)
+		if strings.Contains(l, "(") && strings.Contains(l, ")") {
+			licenseVersion := strings.SplitN(l, " ", 2)
+			if len(licenseVersion) == 2 {
+				l = strings.Join([]string{licenseVersion[0], parseVersion(licenseVersion[1])}, "")
+				licenses = append(licenses, pkg.NewLicenseFromLocations(l, locations...))
+				continue
+			}
 		}
-	}
 
-	// case 3
-	if strings.Contains(license, "+") && strings.Contains(license, "LICENSE") {
-		splitField := strings.Split(license, " ")
-		if len(splitField) > 0 {
-			licenses = append(licenses, pkg.NewLicenseFromLocations(splitField[0], locations...))
-			return licenses
+		// case 3
+		if strings.Contains(l, "+") && strings.Contains(l, "LICENSE") {
+			splitField := strings.Split(l, " ")
+			if len(splitField) > 0 {
+				licenses = append(licenses, pkg.NewLicenseFromLocations(splitField[0], locations...))
+				continue
+			}
 		}
+
+		// TODO: case 4 if we are able to read the location data and find the adjacent file?
+		if l == "file LICENSE" {
+			continue
+		}
+
+		// no specific case found for the above so assume case 2
+		// check if the common name in case 2 is valid SDPX otherwise value will be populated
+		licenses = append(licenses, pkg.NewLicenseFromLocations(l, locations...))
+		continue
 	}
-
-	// TODO: case 4 if we are able to read the location data and find the adjacent file?
-
-	// no specific case found for the above so assume case 2
-	// check if the common name in case 2 is valid SDPX
-	licenses = append(licenses, pkg.NewLicenseFromLocations(license, locations...))
 	return licenses
 }
 
 // attempt to make best guess at SPDX license ID from version operator in case 2
 /*
 ‘<’, ‘<=’, ‘>’, ‘>=’, ‘==’, or ‘!=’
+cant be (>= 2.0) OR (>= 2.0, < 3)
+since there is no way in SPDX licenses to express < some other version
+we attempt to check the constraint to see if this should be + or not
 */
 func parseVersion(version string) string {
 	version = strings.ReplaceAll(version, "(", "")
 	version = strings.ReplaceAll(version, ")", "")
-	operatorVersion := strings.Split(version, " ")
-	if len(operatorVersion) == 2 {
-		version = operatorVersion[1]
-		operator := operatorVersion[0]
-		switch operator {
-		case ">=":
-			return version + "+"
-		case "==":
-			return version
+
+	// multiple constraints
+	if strings.Contains(version, ",") {
+		multipleConstraints := strings.Split(version, ",")
+		// SPDX does not support considering multiple constraints
+		// so we will just take the first one and attempt to form the best SPDX ID we can
+		for _, v := range multipleConstraints {
+			constraintVersion := strings.SplitN(v, " ", 2)
+			if len(constraintVersion) == 2 {
+				// switch on the operator and return the version with + or without
+				switch constraintVersion[0] {
+				case ">", ">=":
+					return constraintVersion[1] + "+"
+				default:
+					return constraintVersion[1]
+				}
+			}
 		}
 	}
-	return version
+	// single constraint
+	singleContraint := strings.Split(version, " ")
+	if len(singleContraint) == 2 {
+		switch singleContraint[0] {
+		case ">", ">=":
+			return singleContraint[1] + "+"
+		default:
+			return singleContraint[1]
+		}
+	}
+
+	// could not parse version constraint so return ""
+	return ""
 }

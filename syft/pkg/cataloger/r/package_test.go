@@ -6,7 +6,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func Test_newPackageLicenses(t *testing.T) {
+func Test_NewPackageLicenses(t *testing.T) {
 	testCases := []struct {
 		name string
 		pd   parseData
@@ -24,14 +24,25 @@ func Test_newPackageLicenses(t *testing.T) {
 			},
 		},
 		{
-			"License field with version separator",
+			"License field with single version separator no +",
+			parseData{
+				Package: "Bar",
+				Version: "2",
+				License: "LGPL (== 2.0)",
+			},
+			[]pkg.License{
+				pkg.NewLicense("LGPL2.0"),
+			},
+		},
+		{
+			"License field with multiple version separator",
 			parseData{
 				Package: "Bar",
 				Version: "2",
 				License: "LGPL (>= 2.0, < 3)",
 			},
 			[]pkg.License{
-				pkg.NewLicense("LGPL-2.0-only"),
+				pkg.NewLicense("LGPL2.0+"),
 			},
 		},
 		{
@@ -42,7 +53,7 @@ func Test_newPackageLicenses(t *testing.T) {
 				License: "GPL-2 + file LICENSE",
 			},
 			[]pkg.License{
-				pkg.NewLicense("GPL-2.0-only"),
+				pkg.NewLicense("GPL-2"),
 			},
 		},
 		{
@@ -57,15 +68,15 @@ func Test_newPackageLicenses(t *testing.T) {
 			},
 		},
 		{
-			"License field with multiple cases separated by |",
+			"License field with multiple cases",
 			parseData{
 				Package: "Baz",
 				Version: "3",
-				License: "GPL-2 | file LICENCE | LGPL (>= 2.0)",
+				License: "GPL-2 | file LICENSE | LGPL (>= 2.0)",
 			},
 			[]pkg.License{
-				pkg.NewLicense("GPL-2.0-only"),
-				pkg.NewLicense("LGPL-2.0-only"),
+				pkg.NewLicense("GPL-2"),
+				pkg.NewLicense("LGPL2.0+"),
 			},
 		},
 	}
@@ -80,12 +91,14 @@ func Test_newPackageLicenses(t *testing.T) {
 			for _, wantLicense := range tt.want {
 				found := false
 				for _, gotLicense := range got {
-					if wantLicense.Type == gotLicense.Type && wantLicense.Value == gotLicense.Value {
+					if wantLicense.Type == gotLicense.Type &&
+						wantLicense.SPDXExpression == gotLicense.SPDXExpression &&
+						wantLicense.Value == gotLicense.Value {
 						found = true
 					}
 				}
 				if !found {
-					t.Errorf("could not find expected license: %+v", wantLicense)
+					t.Errorf("could not find expected license: %+v; got: %+v", wantLicense, got)
 				}
 			}
 		})
