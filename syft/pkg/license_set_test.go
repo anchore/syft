@@ -26,6 +26,25 @@ func TestLicenseSet_Add(t *testing.T) {
 			},
 		},
 		{
+			name: "add multiple simple licenses",
+			licenses: []License{
+				NewLicense("MIT"),
+				NewLicense("MIT"),
+				NewLicense("Apache-2.0"),
+			},
+			want: []License{
+				NewLicense("Apache-2.0"),
+				NewLicense("MIT"),
+			},
+		},
+		{
+			name: "attempt to add a license with no name",
+			licenses: []License{
+				NewLicense(""),
+			},
+			want: nil,
+		},
+		{
 			name: "keep multiple licenses sorted",
 			licenses: []License{
 				NewLicense("MIT"),

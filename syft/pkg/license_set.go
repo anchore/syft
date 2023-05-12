@@ -34,7 +34,7 @@ func (s *LicenseSet) addToExisting(license License) (id artifact.ID, merged bool
 		return id, false, nil
 	}
 
-	// we got the same id so we want to merge the URL OR Location data
+	// we got the same id; we want to merge the URL and Location data
 	// URL/Location are not considered when taking the Hash
 	m, err := v.Merge(license)
 	if err != nil {
@@ -50,11 +50,15 @@ func (s *LicenseSet) Add(licenses ...License) {
 		s.set = make(map[artifact.ID]License)
 	}
 	for _, l := range licenses {
-		if id, merged, err := s.addToExisting(l); err == nil && !merged {
-			// doesn't exist, add it
-			s.set[id] = l
-		} else if err != nil {
-			log.Trace("license set failed to add license %#v: %+v", l, err)
+		// we only want to add licenses that have a value
+		// note, this check should be moved to the license constructor in the future
+		if l.Value != "" {
+			if id, merged, err := s.addToExisting(l); err == nil && !merged {
+				// doesn't exist, add it
+				s.set[id] = l
+			} else if err != nil {
+				log.Trace("license set failed to add license %#v: %+v", l, err)
+			}
 		}
 	}
 }
