@@ -11,7 +11,7 @@ import (
 func Test_License(t *testing.T) {
 	type expected struct {
 		concluded string
-		declared string
+		declared  string
 	}
 	tests := []struct {
 		name     string
@@ -21,7 +21,7 @@ func Test_License(t *testing.T) {
 		{
 			name:  "no licenses",
 			input: pkg.Package{},
-			expected: expected {
+			expected: expected{
 				concluded: "NOASSERTION",
 				declared:  "NOASSERTION",
 			},
@@ -57,7 +57,7 @@ func Test_License(t *testing.T) {
 					pkg.NewLicense("GPL-3.0-only"),
 				),
 			},
-			expected: expected {
+			expected: expected{
 				concluded: "NOASSERTION",
 				// because we sort licenses alphabetically GPL ends up at the start
 				declared: "GPL-3.0-only AND MIT",
@@ -72,7 +72,7 @@ func Test_License(t *testing.T) {
 					pkg.NewLicense("MIT"),
 				),
 			},
-			expected: expected {
+			expected: expected{
 				concluded: "NOASSERTION",
 				// because we separate licenses between valid SPDX and non valid, valid ID always end at the front
 				declared: "MIT AND LicenseRef-one-thing-first AND LicenseRef-two-things----second",
@@ -87,7 +87,7 @@ func Test_License(t *testing.T) {
 					pkg.NewLicense("MIT OR APACHE-2.0"),
 				),
 			},
-			expected: expected {
+			expected: expected{
 				concluded: "NOASSERTION",
 				// because we separate licenses between valid SPDX and non valid, valid ID always end at the front
 				declared: "(MIT AND GPL-3.0-only) AND (MIT OR APACHE-2.0) AND LicenseRef-one-thing-first",

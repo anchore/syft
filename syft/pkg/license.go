@@ -90,11 +90,6 @@ func NewLicenseFromType(value string, t license.Type) License {
 
 func NewLicensesFromValues(values ...string) (licenses []License) {
 	for _, v := range values {
-		// ignore common SPDX license expression connectors
-		// that could be included in input
-		if v == "" || v == "AND" {
-			continue
-		}
 		licenses = append(licenses, NewLicense(v))
 	}
 	return
