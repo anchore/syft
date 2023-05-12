@@ -111,7 +111,7 @@ func Test_License(t *testing.T) {
 	}
 }
 
-func Test_joinLicenses1(t *testing.T) {
+func Test_joinLicenses(t *testing.T) {
 	tests := []struct {
 		name string
 		args []string
