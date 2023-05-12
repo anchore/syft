@@ -14,13 +14,14 @@ import (
 var _ sort.Interface = (*Licenses)(nil)
 
 // License represents an SPDX Expression or license value extracted from a packages metadata
-// We want to ignore URL and Location since we will always merge these fields
-// a License is a unique combination of value, expression and type
-// its sources are always considered merge and additions to the evidence
+// We want to ignore URL and Location since we merge these fields across equal licenses.
+// A License is a unique combination of value, expression and type, where
+// its sources are always considered merged and additions to the evidence
 // of where it was found and how it was sourced.
-// This is different from how we treat a package since we consider package paths to distinguish
-// if packages should be kept separate, this is different for licenses since we're only looking for evidence
-// of where a license was declared/concluded for a package
+// This is different from how we treat a package since we consider package paths
+// in order to distinguish if packages should be kept separate
+// this is different for licenses since we're only looking for evidence
+// of where a license was declared/concluded for a given package
 type License struct {
 	Value          string             `json:"value"`
 	SPDXExpression string             `json:"spdxExpression"`
