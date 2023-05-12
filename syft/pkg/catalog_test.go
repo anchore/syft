@@ -29,18 +29,13 @@ func TestCatalogMergePackageLicenses(t *testing.T) {
 				{
 					id: "equal",
 					Licenses: NewLicenseSet(
-						NewLicense("foo"),
-						NewLicense("baq"),
-						NewLicense("quz"),
+						NewLicensesFromValues("foo", "baq", "quz")...,
 					),
 				},
 				{
 					id: "equal",
 					Licenses: NewLicenseSet(
-						NewLicense("bar"),
-						NewLicense("baz"),
-						NewLicense("foo"),
-						NewLicense("qux"),
+						NewLicensesFromValues("bar", "baz", "foo", "qux")...,
 					),
 				},
 			},
@@ -48,12 +43,7 @@ func TestCatalogMergePackageLicenses(t *testing.T) {
 				{
 					id: "equal",
 					Licenses: NewLicenseSet(
-						NewLicense("foo"),
-						NewLicense("baq"),
-						NewLicense("quz"),
-						NewLicense("qux"),
-						NewLicense("bar"),
-						NewLicense("baz"),
+						NewLicensesFromValues("foo", "baq", "quz", "qux", "bar", "baz")...,
 					),
 				},
 			},
