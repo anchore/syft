@@ -91,6 +91,9 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 	for _, l := range p.Licenses.ToSlice() {
 		// singular expression case
 		if value, exists := spdxlicense.ID(l.SPDXExpression); exists {
+			if _, exists := seen[value]; exists {
+				continue
+			}
 			// we do 1 license -> many URL in our internal model
 			// this fans out different URL to single cyclone licenses
 			if !l.URL.Empty() {
@@ -104,17 +107,9 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 						})
 						continue
 					}
-					spdxc = append(spdxc, cyclonedx.LicenseChoice{
-						License: &cyclonedx.License{
-							ID: value,
-						},
-					})
-					continue
 				}
 			}
-			if _, exists := seen[value]; exists {
-				continue
-			}
+
 			spdxc = append(spdxc, cyclonedx.LicenseChoice{
 				License: &cyclonedx.License{
 					ID: value,
@@ -123,6 +118,7 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			seen[value] = true
 			continue
 		}
+
 		if l.SPDXExpression != "" {
 			// COMPLEX EXPRESSION CASE: do we instead break the spdx expression out
 			// into individual licenses OR combine singular licenses into a single expression?
@@ -140,15 +136,8 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 							URL:  url,
 						},
 					})
-					continue
 				}
-				otherc = append(otherc, cyclonedx.LicenseChoice{
-					License: &cyclonedx.License{
-						Name: l.Value,
-					},
-				})
 			}
-			continue
 		}
 		otherc = append(otherc, cyclonedx.LicenseChoice{
 			License: &cyclonedx.License{
