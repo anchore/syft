@@ -90,7 +90,7 @@ func TestLicenseSet_Add(t *testing.T) {
 			licenses: []License{
 				NewLicense("MIT"),
 				NewLicenseFromLocations("MIT", source.NewLocation("/place")),
-				LicenseFromURLs("MIT", "https://example.com"),
+				NewLicenseFromURLs("MIT", "https://example.com"),
 			},
 			want: []License{
 				{
@@ -108,7 +108,7 @@ func TestLicenseSet_Add(t *testing.T) {
 				NewLicenseFromType("MIT", license.Concluded),
 				NewLicenseFromType("MIT", license.Declared),
 				NewLicenseFromLocations("MIT", source.NewLocation("/place")),
-				LicenseFromURLs("MIT", "https://example.com"),
+				NewLicenseFromURLs("MIT", "https://example.com"),
 			},
 			want: []License{
 				{

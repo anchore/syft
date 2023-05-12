@@ -57,13 +57,13 @@ func Test_Sort(t *testing.T) {
 			name: "multiple",
 			licenses: []License{
 				NewLicenseFromLocations("MIT", source.NewLocation("place!")),
-				LicenseFromURLs("MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
+				NewLicenseFromURLs("MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
 				NewLicenseFromLocations("Apache", source.NewLocation("area!")),
 				NewLicenseFromLocations("gpl2+", source.NewLocation("area!")),
 			},
 			expected: Licenses{
 				NewLicenseFromLocations("Apache", source.NewLocation("area!")),
-				LicenseFromURLs("MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
+				NewLicenseFromURLs("MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
 				NewLicenseFromLocations("MIT", source.NewLocation("place!")),
 				NewLicenseFromLocations("gpl2+", source.NewLocation("area!")),
 			},

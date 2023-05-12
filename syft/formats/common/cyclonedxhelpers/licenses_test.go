@@ -85,6 +85,39 @@ func Test_encodeLicense(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "with multiple URLs and expressions",
+			input: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromURLs("MIT", "https://opensource.org/licenses/MIT", "https://spdx.org/licenses/MIT.html"),
+					pkg.NewLicense("MIT AND GPL-3.0-only"),
+				),
+			},
+			expected: &cyclonedx.Licenses{
+				{
+					License: &cyclonedx.License{
+						ID:  "MIT",
+						URL: "https://opensource.org/licenses/MIT",
+					},
+				},
+				{
+					License: &cyclonedx.License{
+						ID:  "MIT",
+						URL: "https://spdx.org/licenses/MIT.html",
+					},
+				},
+				{
+					License: &cyclonedx.License{
+						ID: "MIT",
+					},
+				},
+				{
+					License: &cyclonedx.License{
+						Name: "MIT AND GPL-3.0-only",
+					},
+				},
+			},
+		},
 		// TODO: do we drop the non SPDX ID license and do a single expression
 		// OR do we keep the non SPDX ID license and do multiple licenses where the complex
 		// expressions are set as the NAME field?

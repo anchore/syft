@@ -114,7 +114,7 @@ func NewLicenseFromLocations(value string, locations ...source.Location) License
 	return l
 }
 
-func LicenseFromURLs(value string, urls ...string) License {
+func NewLicenseFromURLs(value string, urls ...string) License {
 	l := NewLicense(value)
 	for _, u := range urls {
 		if u != "" {

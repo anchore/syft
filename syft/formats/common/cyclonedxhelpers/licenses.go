@@ -28,16 +28,24 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 		return &otherc
 	}
 
-	if len(ex) > 0 {
-		return &cyclonedx.Licenses{
-			cyclonedx.LicenseChoice{
-				Expression: mergeSPDX(ex, spdxc),
-			},
+	if len(spdxc) > 0 {
+		for _, l := range ex {
+			spdxc = append(spdxc, cyclonedx.LicenseChoice{
+				License: &cyclonedx.License{
+					Name: l,
+				},
+			})
 		}
+		return &spdxc
 	}
 
-	if len(spdxc) > 0 {
-		return &spdxc
+	if len(ex) > 0 {
+		// only expressions found
+		var expressions cyclonedx.Licenses
+		expressions = append(expressions, cyclonedx.LicenseChoice{
+			Expression: mergeSPDX(ex),
+		})
+		return &expressions
 	}
 
 	return nil
@@ -56,11 +64,11 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 		// these fields are mutually exclusive in the spec
 		switch {
 		case l.License.ID != "":
-			licenses = append(licenses, pkg.LicenseFromURLs(l.License.ID, l.License.URL))
+			licenses = append(licenses, pkg.NewLicenseFromURLs(l.License.ID, l.License.URL))
 		case l.License.Name != "":
-			licenses = append(licenses, pkg.LicenseFromURLs(l.License.Name, l.License.URL))
+			licenses = append(licenses, pkg.NewLicenseFromURLs(l.License.Name, l.License.URL))
 		case l.Expression != "":
-			licenses = append(licenses, pkg.LicenseFromURLs(l.Expression, l.License.URL))
+			licenses = append(licenses, pkg.NewLicenseFromURLs(l.Expression, l.License.URL))
 		default:
 		}
 	}
@@ -148,7 +156,7 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 	return spdxc, otherc, ex
 }
 
-func mergeSPDX(ex []string, spdxc cyclonedx.Licenses) string {
+func mergeSPDX(ex []string) string {
 	var candidate []string
 	for _, e := range ex {
 		// if the expression does not have balanced parens add them
@@ -156,10 +164,6 @@ func mergeSPDX(ex []string, spdxc cyclonedx.Licenses) string {
 			e = "(" + e + ")"
 			candidate = append(candidate, e)
 		}
-	}
-
-	for _, l := range spdxc {
-		candidate = append(candidate, l.License.ID)
 	}
 
 	if len(candidate) == 1 {
