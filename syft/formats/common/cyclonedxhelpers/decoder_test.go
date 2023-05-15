@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_decode(t *testing.T) {
