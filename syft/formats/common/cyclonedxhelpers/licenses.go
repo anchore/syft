@@ -85,7 +85,7 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			pkg.License can be a couple of things:
 			- Complex SPDX expression
 			- Some other Valid license ID
-			- Some non standard non spdx license
+			- Some non-standard non spdx license
 
 			To determine if an expression is a singular ID we first run it against the SPDX license list.
 
@@ -94,12 +94,14 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			as a license choice and the invalid expression as a license string.
 
 	*/
-	// dedupe spdxlicenseID
+	seenNoURL := make(map[string]bool)
 	for _, l := range p.Licenses.ToSlice() {
 		// singular expression case
+		// only ID field here since we guarantee that the license is valid
 		if value, exists := spdxlicense.ID(l.SPDXExpression); exists {
 			// we do 1 license -> many URL in our internal model
 			// this fans out different URL to single cyclone licenses
+			// we cannot track seen for this since we need to fan out
 			if !l.URL.Empty() {
 				for _, url := range l.URL.ToSlice() {
 					if url != "" {
@@ -109,16 +111,21 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 								URL: url,
 							},
 						})
-						continue
 					}
 				}
+			} else {
+				if seenNoURL[value] {
+					// we have already seen this license ID without a URL
+					// we should not add it again
+					continue
+				}
+				spdxc = append(spdxc, cyclonedx.LicenseChoice{
+					License: &cyclonedx.License{
+						ID: value,
+					},
+				})
+				seenNoURL[value] = true
 			}
-
-			spdxc = append(spdxc, cyclonedx.LicenseChoice{
-				License: &cyclonedx.License{
-					ID: value,
-				},
-			})
 			continue
 		}
 
@@ -130,6 +137,7 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 		}
 
 		// license string that are not valid spdx expressions or ids
+		// only Name here since we cannot guarantee that the license is a valid SPDX expression
 		if !l.URL.Empty() {
 			for _, url := range l.URL.ToSlice() {
 				if url != "" {

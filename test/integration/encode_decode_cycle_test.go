@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -80,6 +81,10 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 
 				by2, err := formats.Encode(*newSBOM, format)
 				require.NoError(t, err)
+
+				// debug write out the bytes for inspection
+				os.WriteFile(fmt.Sprintf("/tmp/%s-%s1.json", image, test.formatOption), by1, 0644)
+				os.WriteFile(fmt.Sprintf("/tmp/%s-%s2.json", image, test.formatOption), by2, 0644)
 
 				if test.redactor != nil {
 					by1 = test.redactor(by1)

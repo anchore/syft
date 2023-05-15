@@ -108,11 +108,6 @@ func Test_encodeLicense(t *testing.T) {
 				},
 				{
 					License: &cyclonedx.License{
-						ID: "MIT",
-					},
-				},
-				{
-					License: &cyclonedx.License{
 						Name: "MIT AND GPL-3.0-only",
 					},
 				},
