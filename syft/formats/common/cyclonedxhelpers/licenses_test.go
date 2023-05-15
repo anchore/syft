@@ -91,9 +91,21 @@ func Test_encodeLicense(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromURLs("MIT", "https://opensource.org/licenses/MIT", "https://spdx.org/licenses/MIT.html"),
 					pkg.NewLicense("MIT AND GPL-3.0-only"),
+					pkg.NewLicenseFromURLs("FakeLicense", "htts://someurl.com"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
+				{
+					License: &cyclonedx.License{
+						Name: "FakeLicense",
+						URL:  "htts://someurl.com",
+					},
+				},
+				{
+					License: &cyclonedx.License{
+						Name: "MIT AND GPL-3.0-only",
+					},
+				},
 				{
 					License: &cyclonedx.License{
 						ID:  "MIT",
@@ -106,9 +118,20 @@ func Test_encodeLicense(t *testing.T) {
 						URL: "https://spdx.org/licenses/MIT.html",
 					},
 				},
+			},
+		},
+		{
+			name: "with multiple values licenses are deduplicated",
+			input: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("Apache-2"),
+					pkg.NewLicense("Apache-2.0"),
+				),
+			},
+			expected: &cyclonedx.Licenses{
 				{
 					License: &cyclonedx.License{
-						Name: "MIT AND GPL-3.0-only",
+						ID: "Apache-2.0",
 					},
 				},
 			},
@@ -117,9 +140,9 @@ func Test_encodeLicense(t *testing.T) {
 			name: "with multiple URLs and single with no URL",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("MIT"),
 					pkg.NewLicenseFromURLs("MIT", "https://opensource.org/licenses/MIT", "https://spdx.org/licenses/MIT.html"),
 					pkg.NewLicense("MIT AND GPL-3.0-only"),
-					pkg.NewLicense("MIT"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
