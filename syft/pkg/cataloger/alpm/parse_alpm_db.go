@@ -31,8 +31,13 @@ var (
 	}
 )
 
+type parsedData struct {
+	Licenses         string `mapstructure:"license"`
+	pkg.AlpmMetadata `mapstructure:",squash"`
+}
+
 func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	metadata, err := parseAlpmDBEntry(reader)
+	data, err := parseAlpmDBEntry(reader)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -48,9 +53,10 @@ func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader 
 		return nil, nil, err
 	}
 
-	// The replace the files found the the pacman database with the files from the mtree These contain more metadata and
+	// replace the files found the pacman database with the files from the mtree These contain more metadata and
 	// thus more useful.
-	metadata.Files = pkgFiles
+	// TODO: probably want to use MTREE and PKGINFO here
+	data.Files = pkgFiles
 
 	// We only really do this to get any backup database entries from the files database
 	files := filepath.Join(base, "files")
@@ -62,23 +68,23 @@ func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader 
 	if err != nil {
 		return nil, nil, err
 	} else if filesMetadata != nil {
-		metadata.Backup = filesMetadata.Backup
+		data.Backup = filesMetadata.Backup
 	}
 
-	if metadata.Package == "" {
+	if data.Package == "" {
 		return nil, nil, nil
 	}
 
 	return []pkg.Package{
 		newPackage(
-			*metadata,
+			data,
 			env.LinuxRelease,
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 	}, nil, nil
 }
 
-func parseAlpmDBEntry(reader io.Reader) (*pkg.AlpmMetadata, error) {
+func parseAlpmDBEntry(reader io.Reader) (*parsedData, error) {
 	scanner := newScanner(reader)
 	metadata, err := parseDatabase(scanner)
 	if err != nil {
@@ -128,8 +134,7 @@ func getFileReader(path string, resolver source.FileResolver) (io.Reader, error)
 	return dbContentReader, nil
 }
 
-func parseDatabase(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
-	var entry pkg.AlpmMetadata
+func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 	var err error
 	pkgFields := make(map[string]interface{})
 	for b.Scan() {
@@ -181,15 +186,22 @@ func parseDatabase(b *bufio.Scanner) (*pkg.AlpmMetadata, error) {
 			pkgFields[key] = value
 		}
 	}
+
+	return parsePkgFiles(pkgFields)
+}
+
+func parsePkgFiles(pkgFields map[string]interface{}) (*parsedData, error) {
+	var entry parsedData
 	if err := mapstructure.Decode(pkgFields, &entry); err != nil {
 		return nil, fmt.Errorf("unable to parse ALPM metadata: %w", err)
-	}
-	if entry.Package == "" && len(entry.Files) == 0 && len(entry.Backup) == 0 {
-		return nil, nil
 	}
 
 	if entry.Backup == nil {
 		entry.Backup = make([]pkg.AlpmFileRecord, 0)
+	}
+
+	if entry.Package == "" && len(entry.Files) == 0 && len(entry.Backup) == 0 {
+		return nil, nil
 	}
 	return &entry, nil
 }

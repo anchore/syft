@@ -47,9 +47,14 @@ func Test_KernelCataloger(t *testing.T) {
 				"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
 			),
 		),
-		Licenses: []string{
-			"GPL v2",
-		},
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromLocations("GPL v2",
+				source.NewVirtualLocation(
+					"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
+					"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
+				),
+			),
+		),
 		Type:         pkg.LinuxKernelModulePkg,
 		PURL:         "pkg:generic/ttynull",
 		MetadataType: pkg.LinuxKernelModuleMetadataType,

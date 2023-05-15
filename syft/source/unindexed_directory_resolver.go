@@ -231,13 +231,7 @@ func (u UnindexedDirectoryResolver) AllLocations() <-chan Location {
 				return nil
 			}
 			p = strings.TrimPrefix(p, "/")
-			out <- Location{
-				LocationData: LocationData{
-					Coordinates: Coordinates{
-						RealPath: p,
-					},
-				},
-			}
+			out <- NewLocation(p)
 			return nil
 		})
 		if err != nil {
@@ -283,14 +277,8 @@ func (u UnindexedDirectoryResolver) newLocation(filePath string, resolveLinks bo
 		}
 	}
 
-	return &Location{
-		LocationData: LocationData{
-			Coordinates: Coordinates{
-				RealPath: realPath,
-			},
-			VirtualPath: virtualPath,
-		},
-	}
+	l := NewVirtualLocation(realPath, virtualPath)
+	return &l
 }
 
 //nolint:gocognit

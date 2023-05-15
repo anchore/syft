@@ -78,7 +78,6 @@ func build() *jsonschema.Schema {
 	}
 	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&syftjsonModel.Document{}))
 	metadataSchema := reflector.ReflectFromType(reflect.TypeOf(&artifactMetadataContainer{}))
-
 	// TODO: inject source definitions
 
 	// inject the definitions of all metadatas into the schema definitions

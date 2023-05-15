@@ -80,6 +80,7 @@ func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]source.Locatio
 }
 
 func TestParseRpmDB(t *testing.T) {
+	packagesLocation := source.NewLocation("test-fixtures/Packages")
 	tests := []struct {
 		fixture     string
 		expected    []pkg.Package
@@ -94,10 +95,12 @@ func TestParseRpmDB(t *testing.T) {
 					Name:         "dive",
 					Version:      "0.9.2-1",
 					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/Packages")),
+					Locations:    source.NewLocationSet(packagesLocation),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses:     []string{"MIT"},
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocations("MIT", packagesLocation),
+					),
 					Metadata: pkg.RpmMetadata{
 						Name:      "dive",
 						Epoch:     nil,
@@ -106,7 +109,6 @@ func TestParseRpmDB(t *testing.T) {
 						Version:   "0.9.2",
 						SourceRpm: "dive-0.9.2-1.src.rpm",
 						Size:      12406784,
-						License:   "MIT",
 						Vendor:    "",
 						Files:     []pkg.RpmdbFileRecord{},
 					},
@@ -122,10 +124,12 @@ func TestParseRpmDB(t *testing.T) {
 					Name:         "dive",
 					Version:      "0.9.2-1",
 					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
-					Locations:    source.NewLocationSet(source.NewLocation("test-fixtures/Packages")),
+					Locations:    source.NewLocationSet(packagesLocation),
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
-					Licenses:     []string{"MIT"},
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocations("MIT", packagesLocation),
+					),
 					Metadata: pkg.RpmMetadata{
 						Name:      "dive",
 						Epoch:     nil,
@@ -134,7 +138,6 @@ func TestParseRpmDB(t *testing.T) {
 						Version:   "0.9.2",
 						SourceRpm: "dive-0.9.2-1.src.rpm",
 						Size:      12406784,
-						License:   "MIT",
 						Vendor:    "",
 						Files: []pkg.RpmdbFileRecord{
 							{
@@ -163,7 +166,6 @@ func TestParseRpmDB(t *testing.T) {
 				TestParser(t, parseRpmDB)
 		})
 	}
-
 }
 
 func TestToElVersion(t *testing.T) {

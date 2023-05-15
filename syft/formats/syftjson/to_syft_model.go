@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -99,6 +100,19 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 	}
 
 	return ret
+}
+
+func toSyftLicenses(m []model.License) (p []pkg.License) {
+	for _, l := range m {
+		p = append(p, pkg.License{
+			Value:          l.Value,
+			SPDXExpression: l.SPDXExpression,
+			Type:           l.Type,
+			URL:            internal.NewStringSet(l.URL...),
+			Location:       source.NewLocationSet(l.Location...),
+		})
+	}
+	return
 }
 
 func toSyftFileType(ty string) stereoscopeFile.Type {
@@ -304,7 +318,7 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		Version:      p.Version,
 		FoundBy:      p.FoundBy,
 		Locations:    source.NewLocationSet(p.Locations...),
-		Licenses:     p.Licenses,
+		Licenses:     pkg.NewLicenseSet(toSyftLicenses(p.Licenses)...),
 		Language:     p.Language,
 		Type:         p.Type,
 		CPEs:         cpes,

@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "66ba429119b8bec6",
+   "id": "125840abc1c66dd7",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -9,11 +9,17 @@
    "locations": [
     {
      "path": "/somefile-1.txt",
-     "layerID": "sha256:7e139310bd6ce0956d65a70d26a6d31b240a4f47094a831638f05d381b6c424a"
+     "layerID": "sha256:ab62016f9bec7286af65604081564cadeeb364a48faca2346c3f5a5a1f5ef777"
     }
    ],
    "licenses": [
-    "MIT"
+    {
+     "value": "MIT",
+     "spdxExpression": "MIT",
+     "type": "declared",
+     "url": [],
+     "locations": []
+    }
    ],
    "language": "python",
    "cpes": [
@@ -24,7 +30,6 @@
    "metadata": {
     "name": "package-1",
     "version": "1.0.1",
-    "license": "",
     "author": "",
     "authorEmail": "",
     "platform": "",
@@ -40,7 +45,7 @@
    "locations": [
     {
      "path": "/somefile-2.txt",
-     "layerID": "sha256:cc833bf31a480c064d65ca67ee37f77f0d0c8ab98eedde7b286ad1ef6f5bdcac"
+     "layerID": "sha256:f1803845b6747d94d6e4ecce2331457e5f1c4fb97de5216f392a76f4582f63b2"
     }
    ],
    "licenses": [],
@@ -64,11 +69,11 @@
  ],
  "artifactRelationships": [],
  "source": {
-  "id": "0af8fa79f5497297e4e32f3e03de14ac20ad695159df0ac8373e6543614b9a50",
+  "id": "c8ac88bbaf3d1c036f6a1d601c3d52bafbf05571c97d68322e7cb3a7ecaa304f",
   "type": "image",
   "target": {
    "userInput": "user-image-input",
-   "imageID": "sha256:0cb4395791986bda17562bd6f76811bb6f163f686e198397197ef8241bed58df",
+   "imageID": "sha256:a3c61dc134d2f31b415c50324e75842d7f91622f39a89468e51938330b3fd3af",
    "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
    "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
    "tags": [
@@ -78,17 +83,17 @@
    "layers": [
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:7e139310bd6ce0956d65a70d26a6d31b240a4f47094a831638f05d381b6c424a",
+     "digest": "sha256:ab62016f9bec7286af65604081564cadeeb364a48faca2346c3f5a5a1f5ef777",
      "size": 22
     },
     {
      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-     "digest": "sha256:cc833bf31a480c064d65ca67ee37f77f0d0c8ab98eedde7b286ad1ef6f5bdcac",
+     "digest": "sha256:f1803845b6747d94d6e4ecce2331457e5f1c4fb97de5216f392a76f4582f63b2",
      "size": 16
     }
    ],
-   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjo2NzEsImRpZ2VzdCI6InNoYTI1NjowY2I0Mzk1NzkxOTg2YmRhMTc1NjJiZDZmNzY4MTFiYjZmMTYzZjY4NmUxOTgzOTcxOTdlZjgyNDFiZWQ1OGRmIn0sImxheWVycyI6W3sibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1Njo3ZTEzOTMxMGJkNmNlMDk1NmQ2NWE3MGQyNmE2ZDMxYjI0MGE0ZjQ3MDk0YTgzMTYzOGYwNWQzODFiNmM0MjRhIn0seyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmltYWdlLnJvb3Rmcy5kaWZmLnRhci5nemlwIiwic2l6ZSI6MjA0OCwiZGlnZXN0Ijoic2hhMjU2OmNjODMzYmYzMWE0ODBjMDY0ZDY1Y2E2N2VlMzdmNzdmMGQwYzhhYjk4ZWVkZGU3YjI4NmFkMWVmNmY1YmRjYWMifV19",
-   "config": "eyJhcmNoaXRlY3R1cmUiOiJhcm02NCIsImNvbmZpZyI6eyJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiV29ya2luZ0RpciI6Ii8iLCJPbkJ1aWxkIjpudWxsfSwiY3JlYXRlZCI6IjIwMjMtMDQtMThUMTQ6MDk6NDIuMzAxMDI2MzhaIiwiaGlzdG9yeSI6W3siY3JlYXRlZCI6IjIwMjMtMDQtMThUMTQ6MDk6NDIuMjg3OTQyNzEzWiIsImNyZWF0ZWRfYnkiOiJBREQgZmlsZS0xLnR4dCAvc29tZWZpbGUtMS50eHQgIyBidWlsZGtpdCIsImNvbW1lbnQiOiJidWlsZGtpdC5kb2NrZXJmaWxlLnYwIn0seyJjcmVhdGVkIjoiMjAyMy0wNC0xOFQxNDowOTo0Mi4zMDEwMjYzOFoiLCJjcmVhdGVkX2J5IjoiQUREIGZpbGUtMi50eHQgL3NvbWVmaWxlLTIudHh0ICMgYnVpbGRraXQiLCJjb21tZW50IjoiYnVpbGRraXQuZG9ja2VyZmlsZS52MCJ9XSwib3MiOiJsaW51eCIsInJvb3RmcyI6eyJ0eXBlIjoibGF5ZXJzIiwiZGlmZl9pZHMiOlsic2hhMjU2OjdlMTM5MzEwYmQ2Y2UwOTU2ZDY1YTcwZDI2YTZkMzFiMjQwYTRmNDcwOTRhODMxNjM4ZjA1ZDM4MWI2YzQyNGEiLCJzaGEyNTY6Y2M4MzNiZjMxYTQ4MGMwNjRkNjVjYTY3ZWUzN2Y3N2YwZDBjOGFiOThlZWRkZTdiMjg2YWQxZWY2ZjViZGNhYyJdfX0=",
+   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjo2NzMsImRpZ2VzdCI6InNoYTI1NjphM2M2MWRjMTM0ZDJmMzFiNDE1YzUwMzI0ZTc1ODQyZDdmOTE2MjJmMzlhODk0NjhlNTE5MzgzMzBiM2ZkM2FmIn0sImxheWVycyI6W3sibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1NjphYjYyMDE2ZjliZWM3Mjg2YWY2NTYwNDA4MTU2NGNhZGVlYjM2NGE0OGZhY2EyMzQ2YzNmNWE1YTFmNWVmNzc3In0seyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmltYWdlLnJvb3Rmcy5kaWZmLnRhci5nemlwIiwic2l6ZSI6MjA0OCwiZGlnZXN0Ijoic2hhMjU2OmYxODAzODQ1YjY3NDdkOTRkNmU0ZWNjZTIzMzE0NTdlNWYxYzRmYjk3ZGU1MjE2ZjM5MmE3NmY0NTgyZjYzYjIifV19",
+   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiV29ya2luZ0RpciI6Ii8iLCJPbkJ1aWxkIjpudWxsfSwiY3JlYXRlZCI6IjIwMjMtMDQtMjFUMTk6MTA6MzcuNjUxODMxMjM0WiIsImhpc3RvcnkiOlt7ImNyZWF0ZWQiOiIyMDIzLTA0LTIxVDE5OjEwOjM3LjYwNzYxMzU1NVoiLCJjcmVhdGVkX2J5IjoiQUREIGZpbGUtMS50eHQgL3NvbWVmaWxlLTEudHh0ICMgYnVpbGRraXQiLCJjb21tZW50IjoiYnVpbGRraXQuZG9ja2VyZmlsZS52MCJ9LHsiY3JlYXRlZCI6IjIwMjMtMDQtMjFUMTk6MTA6MzcuNjUxODMxMjM0WiIsImNyZWF0ZWRfYnkiOiJBREQgZmlsZS0yLnR4dCAvc29tZWZpbGUtMi50eHQgIyBidWlsZGtpdCIsImNvbW1lbnQiOiJidWlsZGtpdC5kb2NrZXJmaWxlLnYwIn1dLCJvcyI6ImxpbnV4Iiwicm9vdGZzIjp7InR5cGUiOiJsYXllcnMiLCJkaWZmX2lkcyI6WyJzaGEyNTY6YWI2MjAxNmY5YmVjNzI4NmFmNjU2MDQwODE1NjRjYWRlZWIzNjRhNDhmYWNhMjM0NmMzZjVhNWExZjVlZjc3NyIsInNoYTI1NjpmMTgwMzg0NWI2NzQ3ZDk0ZDZlNGVjY2UyMzMxNDU3ZTVmMWM0ZmI5N2RlNTIxNmYzOTJhNzZmNDU4MmY2M2IyIl19fQ==",
    "repoDigests": [],
    "architecture": "",
    "os": ""
@@ -110,5 +115,9 @@
   "configuration": {
    "config-key": "config-value"
   }
+ },
+ "schema": {
+  "version": "8.0.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-8.0.0.json"
  }
 }

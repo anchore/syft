@@ -57,25 +57,21 @@ func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.Py
 	return p
 }
 
-func newPackageForPackage(m pkg.PythonPackageMetadata, sources ...source.Location) pkg.Package {
-	var licenses []string
-	if m.License != "" {
-		licenses = []string{m.License}
-	}
-
+func newPackageForPackage(m parsedData, sources ...source.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
-		PURL:         packageURL(m.Name, m.Version, &m),
+		PURL:         packageURL(m.Name, m.Version, &m.PythonPackageMetadata),
 		Locations:    source.NewLocationSet(sources...),
-		Licenses:     licenses,
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(m.LicenseLocation, m.Licenses)...),
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Metadata:     m,
+		Metadata:     m.PythonPackageMetadata,
 	}
 
 	p.SetID()
+
 	return p
 }
 

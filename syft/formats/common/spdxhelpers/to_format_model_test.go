@@ -448,46 +448,40 @@ func Test_OtherLicenses(t *testing.T) {
 		{
 			name: "no licenseRef",
 			pkg: pkg.Package{
-				Licenses: []string{
-					"MIT",
-				},
+				Licenses: pkg.NewLicenseSet(),
 			},
 			expected: nil,
 		},
 		{
 			name: "single licenseRef",
 			pkg: pkg.Package{
-				Licenses: []string{
-					"un known",
-				},
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("foobar"),
+				),
 			},
 			expected: []*spdx.OtherLicense{
 				{
-					LicenseIdentifier: "LicenseRef-un-known",
-					LicenseName:       "un known",
-					ExtractedText:     NONE,
+					LicenseIdentifier: "LicenseRef-foobar",
+					ExtractedText:     "foobar",
 				},
 			},
 		},
 		{
 			name: "multiple licenseRef",
 			pkg: pkg.Package{
-				Licenses: []string{
-					"un known",
-					"not known %s",
-					"MIT",
-				},
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("internal made up license name"),
+					pkg.NewLicense("new apple license 2.0"),
+				),
 			},
 			expected: []*spdx.OtherLicense{
 				{
-					LicenseIdentifier: "LicenseRef-not-known--s",
-					LicenseName:       "not known %s",
-					ExtractedText:     NONE,
+					LicenseIdentifier: "LicenseRef-internal-made-up-license-name",
+					ExtractedText:     "internal made up license name",
 				},
 				{
-					LicenseIdentifier: "LicenseRef-un-known",
-					LicenseName:       "un known",
-					ExtractedText:     NONE,
+					LicenseIdentifier: "LicenseRef-new-apple-license-2.0",
+					ExtractedText:     "new apple license 2.0",
 				},
 			},
 		},

@@ -9,16 +9,18 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...source.Location) pkg.Package {
+func newPackage(d parsedData, release *linux.Release, dbLocation source.Location) pkg.Package {
+	licenseStrings := strings.Split(d.License, " ")
+
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
-		Locations:    source.NewLocationSet(locations...),
-		Licenses:     strings.Split(d.License, " "),
-		PURL:         packageURL(d, release),
+		Locations:    source.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation, licenseStrings...)...),
+		PURL:         packageURL(d.ApkMetadata, release),
 		Type:         pkg.ApkPkg,
 		MetadataType: pkg.ApkMetadataType,
-		Metadata:     d,
+		Metadata:     d.ApkMetadata,
 	}
 
 	p.SetID()

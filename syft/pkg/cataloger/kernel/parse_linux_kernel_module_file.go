@@ -32,7 +32,7 @@ func parseLinuxKernelModuleFile(_ source.FileResolver, _ *generic.Environment, r
 	return []pkg.Package{
 		newLinuxKernelModulePackage(
 			*metadata,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.Location,
 		),
 	}, nil, nil
 }

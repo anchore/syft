@@ -13,42 +13,46 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(location source.Location, metadata pkg.RpmMetadata, distro *linux.Release) pkg.Package {
+func newPackage(dbOrRpmLocation source.Location, pd parsedData, distro *linux.Release) pkg.Package {
 	p := pkg.Package{
-		Name:         metadata.Name,
-		Version:      toELVersion(metadata),
-		PURL:         packageURL(metadata, distro),
-		Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Name:         pd.Name,
+		Version:      toELVersion(pd.RpmMetadata),
+		Licenses:     pkg.NewLicenseSet(pd.Licenses...),
+		PURL:         packageURL(pd.RpmMetadata, distro),
+		Locations:    source.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:         pkg.RpmPkg,
 		MetadataType: pkg.RpmMetadataType,
-		Metadata:     metadata,
-	}
-
-	if metadata.License != "" {
-		p.Licenses = append(p.Licenses, metadata.License)
+		Metadata:     pd.RpmMetadata,
 	}
 
 	p.SetID()
 	return p
 }
 
-func newMetadataFromEntry(entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) pkg.RpmMetadata {
-	return pkg.RpmMetadata{
-		Name:            entry.Name,
-		Version:         entry.Version,
-		Epoch:           entry.Epoch,
-		Arch:            entry.Arch,
-		Release:         entry.Release,
-		SourceRpm:       entry.SourceRpm,
-		Vendor:          entry.Vendor,
-		License:         entry.License,
-		Size:            entry.Size,
-		ModularityLabel: entry.Modularitylabel,
-		Files:           files,
+type parsedData struct {
+	Licenses []pkg.License
+	pkg.RpmMetadata
+}
+
+func newParsedDataFromEntry(licenseLocation source.Location, entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) parsedData {
+	return parsedData{
+		Licenses: pkg.NewLicensesFromLocation(licenseLocation, entry.License),
+		RpmMetadata: pkg.RpmMetadata{
+			Name:            entry.Name,
+			Version:         entry.Version,
+			Epoch:           entry.Epoch,
+			Arch:            entry.Arch,
+			Release:         entry.Release,
+			SourceRpm:       entry.SourceRpm,
+			Vendor:          entry.Vendor,
+			Size:            entry.Size,
+			ModularityLabel: entry.Modularitylabel,
+			Files:           files,
+		},
 	}
 }
 
-func newMetadataFromManifestLine(entry string) (*pkg.RpmMetadata, error) {
+func newMetadataFromManifestLine(entry string) (*parsedData, error) {
 	parts := strings.Split(entry, "\t")
 	if len(parts) < 10 {
 		return nil, fmt.Errorf("unexpected number of fields in line: %s", entry)
@@ -74,16 +78,17 @@ func newMetadataFromManifestLine(entry string) (*pkg.RpmMetadata, error) {
 	if err == nil {
 		size = converted
 	}
-
-	return &pkg.RpmMetadata{
-		Name:      parts[0],
-		Version:   version,
-		Epoch:     epoch,
-		Arch:      parts[7],
-		Release:   release,
-		SourceRpm: parts[9],
-		Vendor:    parts[4],
-		Size:      size,
+	return &parsedData{
+		RpmMetadata: pkg.RpmMetadata{
+			Name:      parts[0],
+			Version:   version,
+			Epoch:     epoch,
+			Arch:      parts[7],
+			Release:   release,
+			SourceRpm: parts[9],
+			Vendor:    parts[4],
+			Size:      size,
+		},
 	}, nil
 }
 

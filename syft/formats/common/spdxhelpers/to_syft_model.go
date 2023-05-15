@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common/util"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -279,7 +280,7 @@ func toSyftPackage(p *spdx.Package) *pkg.Package {
 		Type:         info.typ,
 		Name:         p.PackageName,
 		Version:      p.PackageVersion,
-		Licenses:     parseLicense(p.PackageLicenseDeclared),
+		Licenses:     pkg.NewLicenseSet(parseSPDXLicenses(p)...),
 		CPEs:         extractCPEs(p),
 		PURL:         info.purl.String(),
 		Language:     info.lang,
@@ -290,6 +291,33 @@ func toSyftPackage(p *spdx.Package) *pkg.Package {
 	sP.SetID()
 
 	return &sP
+}
+
+func parseSPDXLicenses(p *spdx.Package) []pkg.License {
+	licenses := make([]pkg.License, 0)
+
+	// concluded
+	if p.PackageLicenseConcluded != NOASSERTION && p.PackageLicenseConcluded != NONE && p.PackageLicenseConcluded != "" {
+		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseConcluded))
+		l.Type = license.Concluded
+		licenses = append(licenses, l)
+	}
+
+	// declared
+	if p.PackageLicenseDeclared != NOASSERTION && p.PackageLicenseDeclared != NONE && p.PackageLicenseDeclared != "" {
+		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseDeclared))
+		l.Type = license.Declared
+		licenses = append(licenses, l)
+	}
+
+	return licenses
+}
+
+func cleanSPDXID(id string) string {
+	if strings.HasPrefix(id, "LicenseRef-") {
+		return strings.TrimPrefix(id, "LicenseRef-")
+	}
+	return id
 }
 
 //nolint:funlen
@@ -317,7 +345,6 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 			OriginPackage: upstreamName,
 			Maintainer:    supplier,
 			Version:       p.PackageVersion,
-			License:       p.PackageLicenseDeclared,
 			Architecture:  arch,
 			URL:           p.PackageHomePage,
 			Description:   p.PackageDescription,
@@ -330,17 +357,12 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 		} else {
 			epoch = &converted
 		}
-		license := p.PackageLicenseDeclared
-		if license == "" {
-			license = p.PackageLicenseConcluded
-		}
 		return pkg.RpmMetadataType, pkg.RpmMetadata{
 			Name:      p.PackageName,
 			Version:   p.PackageVersion,
 			Epoch:     epoch,
 			Arch:      arch,
 			SourceRpm: upstreamValue,
-			License:   license,
 			Vendor:    originator,
 		}
 	case pkg.DebPkg:
@@ -399,11 +421,4 @@ func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 		}
 	}
 	return cpes
-}
-
-func parseLicense(l string) []string {
-	if l == NOASSERTION || l == NONE {
-		return nil
-	}
-	return strings.Split(l, " AND ")
 }

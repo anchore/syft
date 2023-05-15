@@ -22,9 +22,12 @@ const (
 )
 
 func newDpkgPackage(d pkg.DpkgMetadata, dbLocation source.Location, resolver source.FileResolver, release *linux.Release) pkg.Package {
+	// TODO: separate pr to license refactor, but explore extracting dpkg-specific license parsing into a separate function
+	licenses := make([]pkg.License, 0)
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
+		Licenses:     pkg.NewLicenseSet(licenses...),
 		Locations:    source.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		PURL:         packageURL(d, release),
 		Type:         pkg.DebPkg,
@@ -93,8 +96,10 @@ func addLicenses(resolver source.FileResolver, dbLocation source.Location, p *pk
 	if copyrightReader != nil && copyrightLocation != nil {
 		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.VirtualPath)
 		// attach the licenses
-		p.Licenses = parseLicensesFromCopyright(copyrightReader)
-
+		licenseStrs := parseLicensesFromCopyright(copyrightReader)
+		for _, licenseStr := range licenseStrs {
+			p.Licenses.Add(pkg.NewLicenseFromLocations(licenseStr, copyrightLocation.WithoutAnnotations()))
+		}
 		// keep a record of the file where this was discovered
 		p.Locations.Add(*copyrightLocation)
 	}

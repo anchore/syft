@@ -24,7 +24,7 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver source.FileResolver, dep
 	p := pkg.Package{
 		Name:         dep.Path,
 		Version:      dep.Version,
-		Licenses:     licenses,
+		Licenses:     pkg.NewLicenseSet(licenses...),
 		PURL:         packageURL(dep.Path, dep.Version),
 		Language:     pkg.Go,
 		Type:         pkg.GoModulePkg,
