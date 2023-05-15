@@ -281,7 +281,7 @@ func Test_parseSBOM(t *testing.T) {
 		Version:   "1.1.1s-r0",
 		Type:      "apk",
 		Locations: apkgdbLocation,
-		Licenses:  []string{"OpenSSL"},
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("OpenSSL")),
 		FoundBy:   "apkdb-cataloger",
 		PURL:      "pkg:apk/alpine/libssl1.1@1.1.1s-r0?arch=x86_64&upstream=openssl&distro=alpine-3.16.3",
 		CPEs: mustCPEs(
@@ -294,7 +294,7 @@ func Test_parseSBOM(t *testing.T) {
 		Version:   "1.35.0-r17",
 		Type:      "apk",
 		Locations: apkgdbLocation,
-		Licenses:  []string{"GPL-2.0-only"},
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
 		FoundBy:   "apkdb-cataloger",
 		PURL:      "pkg:apk/alpine/ssl_client@1.35.0-r17?arch=x86_64&upstream=busybox&distro=alpine-3.16.3",
 		CPEs: mustCPEs(
@@ -312,7 +312,7 @@ func Test_parseSBOM(t *testing.T) {
 		Version:   "3.2.0-r23",
 		Type:      "apk",
 		Locations: apkgdbLocation,
-		Licenses:  []string{"GPL-2.0-only"},
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
 		FoundBy:   "apkdb-cataloger",
 		PURL:      "pkg:apk/alpine/alpine-baselayout@3.2.0-r23?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.16.3",
 		CPEs: mustCPEs(
@@ -330,7 +330,7 @@ func Test_parseSBOM(t *testing.T) {
 		Version:   "1.35.0-r17",
 		Type:      "apk",
 		Locations: apkgdbLocation,
-		Licenses:  []string{"GPL-2.0-only"},
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
 		FoundBy:   "apkdb-cataloger",
 		PURL:      "pkg:apk/alpine/busybox@1.35.0-r17?arch=x86_64&upstream=busybox&distro=alpine-3.16.3",
 		CPEs: mustCPEs(
@@ -343,7 +343,7 @@ func Test_parseSBOM(t *testing.T) {
 		Version:   "1.2.3-r1",
 		Type:      "apk",
 		Locations: apkgdbLocation,
-		Licenses:  []string{"MIT"},
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("MIT")),
 		FoundBy:   "apkdb-cataloger",
 		PURL:      "pkg:apk/alpine/musl@1.2.3-r1?arch=x86_64&upstream=musl&distro=alpine-3.16.3",
 		CPEs: mustCPEs(

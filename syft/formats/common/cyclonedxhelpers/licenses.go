@@ -95,13 +95,9 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 
 	*/
 	// dedupe spdxlicenseID
-	seen := make(map[string]bool)
 	for _, l := range p.Licenses.ToSlice() {
 		// singular expression case
 		if value, exists := spdxlicense.ID(l.SPDXExpression); exists {
-			if _, exists := seen[value]; exists {
-				continue
-			}
 			// we do 1 license -> many URL in our internal model
 			// this fans out different URL to single cyclone licenses
 			if !l.URL.Empty() {
@@ -123,7 +119,6 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 					ID: value,
 				},
 			})
-			seen[value] = true
 			continue
 		}
 
