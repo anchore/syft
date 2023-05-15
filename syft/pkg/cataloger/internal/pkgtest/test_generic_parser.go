@@ -247,7 +247,6 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 			t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
 		}
 	}
-
 	{
 		var r diffReporter
 		var opts []cmp.Option
