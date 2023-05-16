@@ -701,7 +701,7 @@ func TestMultiplePackages(t *testing.T) {
 			Name:    "libc-utils",
 			Version: "0.7.2-r0",
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("BSD", location),
+				pkg.NewLicenseFromLocations("MPL-2.0 AND MIT", location),
 			),
 			Type:         pkg.ApkPkg,
 			PURL:         "pkg:apk/alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
