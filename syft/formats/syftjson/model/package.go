@@ -40,8 +40,8 @@ type License struct {
 	Value          string            `json:"value"`
 	SPDXExpression string            `json:"spdxExpression"`
 	Type           license.Type      `json:"type"`
-	URL            []string          `json:"url"`
-	Location       []source.Location `json:"locations"`
+	URLs           []string          `json:"urls"`
+	Locations      []source.Location `json:"locations"`
 }
 
 func newModelLicensesFromValues(licenses []string) (ml []License) {

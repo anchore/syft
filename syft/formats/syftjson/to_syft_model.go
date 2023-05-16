@@ -108,8 +108,8 @@ func toSyftLicenses(m []model.License) (p []pkg.License) {
 			Value:          l.Value,
 			SPDXExpression: l.SPDXExpression,
 			Type:           l.Type,
-			URL:            internal.NewStringSet(l.URL...),
-			Location:       source.NewLocationSet(l.Location...),
+			URLs:           internal.NewStringSet(l.URLs...),
+			Locations:      source.NewLocationSet(l.Locations...),
 		})
 	}
 	return

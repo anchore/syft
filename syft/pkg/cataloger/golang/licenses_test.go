@@ -35,8 +35,8 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
-				Location:       source.NewLocationSet(loc1),
-				URL:            internal.NewStringSet(),
+				Locations:      source.NewLocationSet(loc1),
+				URLs:           internal.NewStringSet(),
 			},
 		},
 		{
@@ -46,8 +46,8 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				Value:          "MIT",
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
-				Location:       source.NewLocationSet(loc2),
-				URL:            internal.NewStringSet(),
+				Locations:      source.NewLocationSet(loc2),
+				URLs:           internal.NewStringSet(),
 			},
 		},
 	}
@@ -126,8 +126,8 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
-				Location:       source.NewLocationSet(loc1),
-				URL:            internal.NewStringSet(),
+				Locations:      source.NewLocationSet(loc1),
+				URLs:           internal.NewStringSet(),
 			},
 		},
 		{
@@ -137,8 +137,8 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				Value:          "MIT",
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
-				Location:       source.NewLocationSet(loc2),
-				URL:            internal.NewStringSet(),
+				Locations:      source.NewLocationSet(loc2),
+				URLs:           internal.NewStringSet(),
 			},
 		},
 	}

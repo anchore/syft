@@ -188,15 +188,15 @@ func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
 	for _, l := range pkgLicenses {
 		// guarantee collection
 		locations := make([]source.Location, 0)
-		if v := l.Location.ToSlice(); v != nil {
+		if v := l.Locations.ToSlice(); v != nil {
 			locations = v
 		}
 		modelLicenses = append(modelLicenses, model.License{
 			Value:          l.Value,
 			SPDXExpression: l.SPDXExpression,
 			Type:           l.Type,
-			URL:            l.URL.ToSlice(),
-			Location:       locations,
+			URLs:           l.URLs.ToSlice(),
+			Locations:      locations,
 		})
 	}
 	return

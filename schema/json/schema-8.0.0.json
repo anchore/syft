@@ -748,7 +748,7 @@
         "type": {
           "type": "string"
         },
-        "url": {
+        "urls": {
           "items": {
             "type": "string"
           },
@@ -766,7 +766,7 @@
         "value",
         "spdxExpression",
         "type",
-        "url",
+        "urls",
         "locations"
       ]
     },
