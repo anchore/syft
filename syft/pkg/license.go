@@ -14,7 +14,7 @@ import (
 var _ sort.Interface = (*Licenses)(nil)
 
 // License represents an SPDX Expression or license value extracted from a packages metadata
-// We want to ignore URL and Location since we merge these fields across equal licenses.
+// We want to ignore URLs and Location since we merge these fields across equal licenses.
 // A License is a unique combination of value, expression and type, where
 // its sources are always considered merged and additions to the evidence
 // of where it was found and how it was sourced.
@@ -26,8 +26,8 @@ type License struct {
 	Value          string             `json:"value"`
 	SPDXExpression string             `json:"spdxExpression"`
 	Type           license.Type       `json:"type"`
-	URL            internal.StringSet `hash:"ignore"`
-	Location       source.LocationSet `hash:"ignore"`
+	URLs           internal.StringSet `hash:"ignore"`
+	Locations      source.LocationSet `hash:"ignore"`
 }
 
 type Licenses []License
@@ -40,7 +40,7 @@ func (l Licenses) Less(i, j int) bool {
 	if l[i].Value == l[j].Value {
 		if l[i].SPDXExpression == l[j].SPDXExpression {
 			if l[i].Type == l[j].Type {
-				// While URL and location are not exclusive fields
+				// While URLs and location are not exclusive fields
 				// returning true here reduces the number of swaps
 				// while keeping a consistent sort order of
 				// the order that they appear in the list initially
@@ -69,8 +69,8 @@ func NewLicense(value string) License {
 		Value:          value,
 		SPDXExpression: spdxExpression,
 		Type:           license.Declared,
-		URL:            internal.NewStringSet(),
-		Location:       source.NewLocationSet(),
+		URLs:           internal.NewStringSet(),
+		Locations:      source.NewLocationSet(),
 	}
 }
 
@@ -84,8 +84,8 @@ func NewLicenseFromType(value string, t license.Type) License {
 		Value:          value,
 		SPDXExpression: spdxExpression,
 		Type:           t,
-		URL:            internal.NewStringSet(),
-		Location:       source.NewLocationSet(),
+		URLs:           internal.NewStringSet(),
+		Locations:      source.NewLocationSet(),
 	}
 }
 
@@ -109,7 +109,7 @@ func NewLicensesFromLocation(location source.Location, values ...string) (licens
 func NewLicenseFromLocations(value string, locations ...source.Location) License {
 	l := NewLicense(value)
 	for _, loc := range locations {
-		l.Location.Add(loc)
+		l.Locations.Add(loc)
 	}
 	return l
 }
@@ -118,7 +118,7 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 	l := NewLicense(value)
 	for _, u := range urls {
 		if u != "" {
-			l.URL.Add(u)
+			l.URLs.Add(u)
 		}
 	}
 	return l
@@ -141,11 +141,11 @@ func (s License) Merge(l License) (*License, error) {
 		return nil, fmt.Errorf("cannot merge licenses with different hash")
 	}
 
-	s.URL.Add(l.URL.ToSlice()...)
-	if s.Location.Empty() && l.Location.Empty() {
+	s.URLs.Add(l.URLs.ToSlice()...)
+	if s.Locations.Empty() && l.Locations.Empty() {
 		return &s, nil
 	}
 
-	s.Location.Add(l.Location.ToSlice()...)
+	s.Locations.Add(l.Locations.ToSlice()...)
 	return &s, nil
 }

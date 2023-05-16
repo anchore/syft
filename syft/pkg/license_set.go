@@ -34,8 +34,8 @@ func (s *LicenseSet) addToExisting(license License) (id artifact.ID, merged bool
 		return id, false, nil
 	}
 
-	// we got the same id; we want to merge the URL and Location data
-	// URL/Location are not considered when taking the Hash
+	// we got the same id; we want to merge the URLs and Location data
+	// URLs/Location are not considered when taking the Hash
 	m, err := v.Merge(license)
 	if err != nil {
 		return id, false, fmt.Errorf("could not merge license into map: %w", err)

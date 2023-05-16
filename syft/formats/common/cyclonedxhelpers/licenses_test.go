@@ -137,7 +137,7 @@ func Test_encodeLicense(t *testing.T) {
 			},
 		},
 		{
-			name: "with multiple URLs and single with no URL",
+			name: "with multiple URLs and single with no URLs",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("MIT"),
@@ -224,7 +224,7 @@ func TestDecodeLicenses(t *testing.T) {
 					Value: "RandomLicense",
 					// CycloneDX specification doesn't give a field for determining the license type
 					Type: license.Declared,
-					URL:  internal.NewStringSet(),
+					URLs: internal.NewStringSet(),
 				},
 			},
 		},
@@ -244,7 +244,7 @@ func TestDecodeLicenses(t *testing.T) {
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
-					URL:            internal.NewStringSet(),
+					URLs:           internal.NewStringSet(),
 				},
 			},
 		},
@@ -263,7 +263,7 @@ func TestDecodeLicenses(t *testing.T) {
 					Value:          "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					SPDXExpression: "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					Type:           license.Declared,
-					URL:            internal.NewStringSet(),
+					URLs:           internal.NewStringSet(),
 				},
 			},
 		},

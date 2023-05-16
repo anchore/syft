@@ -21,8 +21,8 @@ func Test_Hash(t *testing.T) {
 	lic1 := NewLicenseFromLocations("MIT", loc1)
 	lic2 := NewLicenseFromLocations("MIT", loc2)
 
-	lic1.URL.Add("foo")
-	lic2.URL.Add("bar") // we also want to check the URL are ignored
+	lic1.URLs.Add("foo")
+	lic2.URLs.Add("bar") // we also want to check the URLs are ignored
 
 	hash1, err := artifact.IDByHash(lic1)
 	require.NoError(t, err)
