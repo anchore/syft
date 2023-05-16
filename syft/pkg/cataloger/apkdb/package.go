@@ -4,13 +4,20 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
 func newPackage(d parsedData, release *linux.Release, dbLocation source.Location) pkg.Package {
-	licenseStrings := strings.Split(d.License, " ")
+	// check if license is a valid spdx expression before splitting
+	licenseStrings := []string{d.License}
+	_, err := license.ParseExpression(d.License)
+	if err != nil {
+		// invalid so update to split on space
+		licenseStrings = strings.Split(d.License, " ")
+	}
 
 	p := pkg.Package{
 		Name:         d.Package,
