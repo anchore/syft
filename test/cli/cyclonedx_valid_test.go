@@ -44,9 +44,7 @@ func TestValidCycloneDX(t *testing.T) {
 			args := []string{
 				test.subcommand, fixtureRef, "-q",
 			}
-			for _, a := range test.args {
-				args = append(args, a)
-			}
+			args = append(args, test.args...)
 
 			cmd, stdout, stderr := runSyft(t, nil, args...)
 			for _, traitFn := range test.assertions {

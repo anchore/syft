@@ -3,7 +3,7 @@ package file
 import (
 	"crypto"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -24,7 +24,7 @@ func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Has
 		if err != nil {
 			t.Fatalf("could not open %q : %+v", f, err)
 		}
-		b, err := ioutil.ReadAll(fh)
+		b, err := io.ReadAll(fh)
 		if err != nil {
 			t.Fatalf("could not read %q : %+v", f, err)
 		}

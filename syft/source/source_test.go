@@ -6,7 +6,6 @@ package source
 import (
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -898,7 +897,7 @@ func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string, l
 func setupArchiveTest(t testing.TB, sourceDirPath string, layer2 bool) string {
 	t.Helper()
 
-	archivePrefix, err := ioutil.TempFile("", "syft-archive-TEST-")
+	archivePrefix, err := os.CreateTemp("", "syft-archive-TEST-")
 	require.NoError(t, err)
 
 	t.Cleanup(

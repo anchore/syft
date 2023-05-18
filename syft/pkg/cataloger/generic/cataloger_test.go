@@ -2,7 +2,7 @@ package generic
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,7 @@ func Test_Cataloger(t *testing.T) {
 	allParsedPaths := make(map[string]bool)
 	parser := func(resolver source.FileResolver, env *Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 		allParsedPaths[reader.AccessPath()] = true
-		contents, err := ioutil.ReadAll(reader)
+		contents, err := io.ReadAll(reader)
 		require.NoError(t, err)
 
 		if len(contents) == 0 {

@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"fmt"
 	"regexp"
 	"testing"
 
@@ -64,7 +63,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%s", test.formatOption), func(t *testing.T) {
+		t.Run(string(test.formatOption), func(t *testing.T) {
 			for _, image := range images {
 				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope, nil)
 

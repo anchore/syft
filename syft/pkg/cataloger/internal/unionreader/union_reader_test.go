@@ -20,9 +20,6 @@ func Test_getUnionReader_notUnionReader(t *testing.T) {
 	actual, err := GetUnionReader(reader)
 	require.NoError(t, err)
 
-	_, ok = actual.(UnionReader)
-	require.True(t, ok)
-
 	b, err := io.ReadAll(actual)
 	require.NoError(t, err)
 

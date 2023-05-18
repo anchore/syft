@@ -6,7 +6,6 @@ package source
 import (
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -598,7 +597,7 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 
 			require.NoError(t, err)
 			if test.expects != "" {
-				b, err := ioutil.ReadAll(actual)
+				b, err := io.ReadAll(actual)
 				require.NoError(t, err)
 				assert.Equal(t, test.expects, string(b))
 			}
