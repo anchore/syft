@@ -8,6 +8,9 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 func Test_decode(t *testing.T) {
@@ -184,16 +187,16 @@ func Test_decode(t *testing.T) {
 					ver: "1.2.3",
 				},
 				{
-					pkg:      "package-1",
-					ver:      "1.0.1",
-					cpe:      "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
-					purl:     "pkg:some/package-1@1.0.1?arch=arm64&upstream=upstream1&distro=alpine-1",
-					relation: "package-2",
+					pkg:  "package-1",
+					ver:  "1.0.1",
+					cpe:  "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
+					purl: "pkg:some/package-1@1.0.1?arch=arm64&upstream=upstream1&distro=alpine-1",
 				},
 				{
-					pkg:  "package-2",
-					ver:  "2.0.2",
-					purl: "pkg:apk/alpine/alpine-baselayout@3.2.0-r16?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.14.2",
+					pkg:      "package-2",
+					ver:      "2.0.2",
+					purl:     "pkg:apk/alpine/alpine-baselayout@3.2.0-r16?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.14.2",
+					relation: "package-1",
 				},
 			},
 		},
@@ -210,7 +213,7 @@ func Test_decode(t *testing.T) {
 					assert.Equal(t, e.ver, sbom.Artifacts.LinuxDistribution.VersionID)
 				}
 				if e.pkg != "" {
-					for p := range sbom.Artifacts.PackageCatalog.Enumerate() {
+					for p := range sbom.Artifacts.Packages.Enumerate() {
 						if e.pkg != p.Name {
 							continue
 						}
@@ -238,7 +241,7 @@ func Test_decode(t *testing.T) {
 						if e.relation != "" {
 							foundRelation := false
 							for _, r := range sbom.Relationships {
-								p := sbom.Artifacts.PackageCatalog.Package(r.To.ID())
+								p := sbom.Artifacts.Packages.Package(r.To.ID())
 								if e.relation == p.Name {
 									foundRelation = true
 									break
@@ -255,6 +258,46 @@ func Test_decode(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_relationshipDirection(t *testing.T) {
+	cyclonedx_bom := cyclonedx.BOM{Metadata: nil,
+		Components: &[]cyclonedx.Component{
+			{
+				BOMRef:     "p1",
+				Type:       cyclonedx.ComponentTypeLibrary,
+				Name:       "package-1",
+				Version:    "1.0.1",
+				PackageURL: "pkg:some/package-1@1.0.1?arch=arm64&upstream=upstream1&distro=alpine-1",
+			},
+			{
+				BOMRef:     "p2",
+				Type:       cyclonedx.ComponentTypeLibrary,
+				Name:       "package-2",
+				Version:    "2.0.2",
+				PackageURL: "pkg:some/package-2@2.0.2?arch=arm64&upstream=upstream1&distro=alpine-1",
+			},
+		},
+		Dependencies: &[]cyclonedx.Dependency{
+			{
+				Ref:          "p1",
+				Dependencies: &[]string{"p2"},
+			},
+		}}
+	sbom, err := ToSyftModel(&cyclonedx_bom)
+	assert.Nil(t, err)
+	assert.Len(t, sbom.Relationships, 1)
+	relationship := sbom.Relationships[0]
+
+	// check that p2 -- dependency of --> p1
+	// same as p1 -- depends on --> p2
+	assert.Equal(t, artifact.DependencyOfRelationship, relationship.Type)
+	assert.Equal(t, "package-2", packageNameFromIdentifier(sbom, relationship.From))
+	assert.Equal(t, "package-1", packageNameFromIdentifier(sbom, relationship.To))
+}
+
+func packageNameFromIdentifier(model *sbom.SBOM, identifier artifact.Identifiable) string {
+	return model.Artifacts.Packages.Package(identifier.ID()).Name
 }
 
 func Test_missingDataDecode(t *testing.T) {
@@ -279,8 +322,7 @@ func Test_missingDataDecode(t *testing.T) {
 			},
 		},
 	})
-
-	assert.Len(t, pkg.Licenses, 0)
+	assert.Equal(t, pkg.Licenses.Empty(), true)
 }
 
 func Test_missingComponentsDecode(t *testing.T) {

@@ -13,24 +13,43 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/file/resolver"
+	"github.com/anchore/syft/syft/license"
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func Test_LocalLicenseSearch(t *testing.T) {
+	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
+	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
+
 	tests := []struct {
 		name     string
 		version  string
-		expected string
+		expected pkg.License
 	}{
 		{
-			name:     "github.com/someorg/somename",
-			version:  "v0.3.2",
-			expected: "Apache-2.0",
+			name:    "github.com/someorg/somename",
+			version: "v0.3.2",
+			expected: pkg.License{
+				Value:          "Apache-2.0",
+				SPDXExpression: "Apache-2.0",
+				Type:           license.Concluded,
+				Locations:      file.NewLocationSet(loc1),
+				URLs:           internal.NewStringSet(),
+			},
 		},
 		{
-			name:     "github.com/CapORG/CapProject",
-			version:  "v4.111.5",
-			expected: "MIT",
+			name:    "github.com/CapORG/CapProject",
+			version: "v4.111.5",
+			expected: pkg.License{
+				Value:          "MIT",
+				SPDXExpression: "MIT",
+				Type:           license.Concluded,
+				Locations:      file.NewLocationSet(loc2),
+				URLs:           internal.NewStringSet(),
+			},
 		},
 	}
 
@@ -39,10 +58,12 @@ func Test_LocalLicenseSearch(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			l := newGoLicenses(GoCatalogerOpts{
-				searchLocalModCacheLicenses: true,
-				localModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
-			})
+			l := newGoLicenses(
+				GoCatalogerOpts{
+					searchLocalModCacheLicenses: true,
+					localModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
+				},
+			)
 			licenses, err := l.getLicenses(resolver.Empty{}, test.name, test.version)
 			require.NoError(t, err)
 
@@ -54,6 +75,9 @@ func Test_LocalLicenseSearch(t *testing.T) {
 }
 
 func Test_RemoteProxyLicenseSearch(t *testing.T) {
+	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
+	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		buf := &bytes.Buffer{}
 		uri := strings.TrimPrefix(strings.TrimSuffix(r.RequestURI, ".zip"), "/")
@@ -94,17 +118,29 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 	tests := []struct {
 		name     string
 		version  string
-		expected string
+		expected pkg.License
 	}{
 		{
-			name:     "github.com/someorg/somename",
-			version:  "v0.3.2",
-			expected: "Apache-2.0",
+			name:    "github.com/someorg/somename",
+			version: "v0.3.2",
+			expected: pkg.License{
+				Value:          "Apache-2.0",
+				SPDXExpression: "Apache-2.0",
+				Type:           license.Concluded,
+				Locations:      file.NewLocationSet(loc1),
+				URLs:           internal.NewStringSet(),
+			},
 		},
 		{
-			name:     "github.com/CapORG/CapProject",
-			version:  "v4.111.5",
-			expected: "MIT",
+			name:    "github.com/CapORG/CapProject",
+			version: "v4.111.5",
+			expected: pkg.License{
+				Value:          "MIT",
+				SPDXExpression: "MIT",
+				Type:           license.Concluded,
+				Locations:      file.NewLocationSet(loc2),
+				URLs:           internal.NewStringSet(),
+			},
 		},
 	}
 

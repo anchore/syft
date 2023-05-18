@@ -20,7 +20,7 @@ func TestRegressionGoArchDiscovery(t *testing.T) {
 
 	var actualELF, actualWIN, actualMACOS int
 
-	for p := range sbom.Artifacts.PackageCatalog.Enumerate(pkg.GoModulePkg) {
+	for p := range sbom.Artifacts.Packages.Enumerate(pkg.GoModulePkg) {
 		for _, l := range p.Locations.ToSlice() {
 			switch {
 			case strings.Contains(l.RealPath, "elf"):

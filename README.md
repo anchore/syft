@@ -152,39 +152,53 @@ This default behavior can be overridden with the `default-image-pull-source` con
 
 ##### Image Scanning:
 - alpmdb
-- rpmdb
-- dpkgdb
 - apkdb
-- portage
-- ruby-gemspec
-- python-package
-- php-composer-installed Cataloger
-- javascript-package
-- java
-- go-module-binary
+- binary
 - dotnet-deps
+- dpkgdb
+- go-module-binary
+- graalvm-native-image
+- java
+- javascript-package
+- linux-kernel
+- nix-store
+- php-composer-installed
+- portage
+- python-package
+- rpm-db
+- ruby-gemspec
+- sbom
 
 ##### Directory Scanning:
 - alpmdb
 - apkdb
-- dpkgdb
-- portage
-- rpmdb
-- ruby-gemfile
-- python-index
-- python-package
-- php-composer-lock
-- javascript-lock
-- java
-- java-pom
-- go-module-binary
-- go-mod-file
-- rust-cargo-lock
-- dartlang-lock
-- dotnet-deps
+- binary
 - cocoapods
 - conan
-- hackage
+- dartlang-lock
+- dotnet-deps
+- dpkgdb
+- elixir-mix-lock
+- erlang-rebar-lock
+- go-mod-file
+- go-module-binary
+- graalvm-native-image
+- haskell
+- java
+- java-gradle-lockfile
+- java-pom
+- javascript-lock
+- linux-kernel
+- nix-store
+- php-composer-lock
+- portage
+- python-index
+- python-package
+- rpm-db
+- rpm-file
+- ruby-gemfile
+- rust-cargo-lock
+- sbom
 
 ##### Non Default:
 - cargo-auditable-binary
@@ -462,26 +476,39 @@ platform: ""
 # set the list of package catalogers to use when generating the SBOM
 # default = empty (cataloger set determined automatically by the source type [image or file/directory])
 # catalogers:
-#   - ruby-gemfile
-#   - ruby-gemspec
-#   - python-index
-#   - python-package
-#   - javascript-lock
-#   - javascript-package
-#   - php-composer-installed
-#   - php-composer-lock
-#   - alpmdb
-#   - dpkgdb
-#   - rpmdb
-#   - java
-#   - apkdb
-#   - go-module-binary
-#   - go-mod-file
-#   - dartlang-lock
-#   - rust
-#   - dotnet-deps
-# rust-audit-binary scans Rust binaries built with https://github.com/Shnatsel/rust-audit
-#   - rust-audit-binary
+#   - alpmdb-cataloger
+#   - apkdb-cataloger
+#   - binary-cataloger
+#   - cargo-auditable-binary-cataloger
+#   - cocoapods-cataloger
+#   - conan-cataloger
+#   - dartlang-lock-cataloger
+#   - dotnet-deps-cataloger
+#   - dpkgdb-cataloger
+#   - elixir-mix-lock-cataloger
+#   - erlang-rebar-lock-cataloger
+#   - go-mod-file-cataloger
+#   - go-module-binary-cataloger
+#   - graalvm-native-image-cataloger
+#   - haskell-cataloger
+#   - java-cataloger
+#   - java-gradle-lockfile-cataloger
+#   - java-pom-cataloger
+#   - javascript-lock-cataloger
+#   - javascript-package-cataloger
+#   - linux-kernel-cataloger
+#   - nix-store-cataloger
+#   - php-composer-installed-cataloger
+#   - php-composer-lock-cataloger
+#   - portage-cataloger
+#   - python-index-cataloger
+#   - python-package-cataloger
+#   - rpm-db-cataloger
+#   - rpm-file-cataloger
+#   - ruby-gemfile-cataloger
+#   - ruby-gemspec-cataloger
+#   - rust-cargo-lock-cataloger
+#   - sbom-cataloger
 catalogers:
 
 # cataloging packages is exposed through the packages and power-user subcommands

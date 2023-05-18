@@ -12,30 +12,30 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackageJSONPackage(u packageJSON, locations ...file.Location) pkg.Package {
-	licenses, err := u.licensesFromJSON()
+func newPackageJSONPackage(u packageJSON, indexLocation file.Location) pkg.Package {
+	licenseCandidates, err := u.licensesFromJSON()
 	if err != nil {
 		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
 	}
 
+	license := pkg.NewLicensesFromLocation(indexLocation, licenseCandidates...)
 	p := pkg.Package{
 		Name:         u.Name,
 		Version:      u.Version,
-		Licenses:     licenses,
 		PURL:         packageURL(u.Name, u.Version),
-		Locations:    file.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(indexLocation),
 		Language:     pkg.JavaScript,
+		Licenses:     pkg.NewLicenseSet(license...),
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageJSONMetadataType,
 		Metadata: pkg.NpmPackageJSONMetadata{
 			Name:        u.Name,
 			Version:     u.Version,
+			Description: u.Description,
 			Author:      u.Author.AuthorString(),
 			Homepage:    u.Homepage,
 			URL:         u.Repository.URL,
-			Licenses:    licenses,
 			Private:     u.Private,
-			Description: u.Description,
 		},
 	}
 
@@ -77,12 +77,6 @@ func newPackageLockV1Package(resolver file.Resolver, location file.Location, nam
 }
 
 func newPackageLockV2Package(resolver file.Resolver, location file.Location, name string, u lockPackage) pkg.Package {
-	var licenses []string
-
-	if u.License != nil {
-		licenses = u.License
-	}
-
 	return finalizeLockPkg(
 		resolver,
 		location,
@@ -90,10 +84,10 @@ func newPackageLockV2Package(resolver file.Resolver, location file.Location, nam
 			Name:         name,
 			Version:      u.Version,
 			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, u.License...)...),
 			PURL:         packageURL(name, u.Version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Licenses:     licenses,
 			MetadataType: pkg.NpmPackageLockJSONMetadataType,
 			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
@@ -131,7 +125,8 @@ func newYarnLockPackage(resolver file.Resolver, location file.Location, name, ve
 }
 
 func finalizeLockPkg(resolver file.Resolver, location file.Location, p pkg.Package) pkg.Package {
-	p.Licenses = append(p.Licenses, addLicenses(p.Name, resolver, location)...)
+	licenseCandidate := addLicenses(p.Name, resolver, location)
+	p.Licenses.Add(pkg.NewLicensesFromLocation(location, licenseCandidate...)...)
 	p.SetID()
 	return p
 }
@@ -140,13 +135,13 @@ func addLicenses(name string, resolver file.Resolver, location file.Location) (a
 	if resolver == nil {
 		return allLicenses
 	}
+
 	dir := path.Dir(location.RealPath)
 	pkgPath := []string{dir, "node_modules"}
 	pkgPath = append(pkgPath, strings.Split(name, "/")...)
 	pkgPath = append(pkgPath, "package.json")
 	pkgFile := path.Join(pkgPath...)
 	locations, err := resolver.FilesByPath(pkgFile)
-
 	if err != nil {
 		log.Debugf("an error occurred attempting to read: %s - %+v", pkgFile, err)
 		return allLicenses

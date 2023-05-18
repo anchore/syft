@@ -306,6 +306,7 @@ Installed-Size: 10kib
 					Name:         "apt",
 					Type:         "deb",
 					PURL:         "pkg:deb/debian/apt?distro=debian-10",
+					Licenses:     pkg.NewLicenseSet(),
 					Locations:    file.NewLocationSet(file.NewLocation("place")),
 					MetadataType: "DpkgMetadata",
 					Metadata: pkg.DpkgMetadata{

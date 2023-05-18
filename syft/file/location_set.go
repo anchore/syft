@@ -82,6 +82,13 @@ func (s *LocationSet) CoordinateSet() CoordinateSet {
 	return set
 }
 
+func (s *LocationSet) Empty() bool {
+	if s.set == nil {
+		return true
+	}
+	return len(s.set) == 0
+}
+
 func (s LocationSet) Hash() (uint64, error) {
 	// access paths and filesystem IDs are not considered when hashing a location set, only the real paths
 	return hashstructure.Hash(s.CoordinateSet().Paths(), hashstructure.FormatV2, &hashstructure.HashOptions{

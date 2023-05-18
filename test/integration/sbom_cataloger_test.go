@@ -17,7 +17,7 @@ func TestSbomCataloger(t *testing.T) {
 	expectedGoModCatalogerPkgs := 2
 	actualSbomPkgs := 0
 	actualGoModPkgs := 0
-	for pkg := range sbom.Artifacts.PackageCatalog.Enumerate(pkg.GoModulePkg) {
+	for pkg := range sbom.Artifacts.Packages.Enumerate(pkg.GoModulePkg) {
 		if pkg.FoundBy == "go-mod-file-cataloger" {
 			actualGoModPkgs += 1
 		} else if pkg.FoundBy == "sbom-cataloger" {

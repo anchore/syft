@@ -91,6 +91,8 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.HackagePkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
 	definedPkgs.Remove(string(pkg.HexPkg))
+	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
+	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -100,7 +102,7 @@ func TestPkgCoverageImage(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			pkgCount := 0
 
-			for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
+			for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
 				if a.Language.String() != "" {
 					observedLanguages.Add(a.Language.String())
 				}
@@ -127,7 +129,7 @@ func TestPkgCoverageImage(t *testing.T) {
 
 			if pkgCount != len(c.pkgInfo)+c.duplicates {
 				t.Logf("Discovered packages of type %+v", c.pkgType)
-				for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
+				for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
 					t.Log("   ", a)
 				}
 				t.Fatalf("unexpected package count: %d!=%d", pkgCount, len(c.pkgInfo))
@@ -176,7 +178,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			actualPkgCount := 0
 
-			for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(test.pkgType) {
+			for actualPkg := range sbom.Artifacts.Packages.Enumerate(test.pkgType) {
 				observedLanguages.Add(actualPkg.Language.String())
 				observedPkgs.Add(string(actualPkg.Type))
 
@@ -207,7 +209,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 			}
 
 			if actualPkgCount != len(test.pkgInfo)+test.duplicates {
-				for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate(test.pkgType) {
+				for actualPkg := range sbom.Artifacts.Packages.Enumerate(test.pkgType) {
 					t.Log("   ", actualPkg)
 				}
 				t.Fatalf("unexpected package count: %d!=%d", actualPkgCount, len(test.pkgInfo))
@@ -218,11 +220,13 @@ func TestPkgCoverageDirectory(t *testing.T) {
 
 	observedLanguages.Remove(pkg.UnknownLanguage.String())
 	definedLanguages.Remove(pkg.UnknownLanguage.String())
+	definedLanguages.Remove(pkg.R.String())
 	observedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
-	definedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
+	definedPkgs.Remove(string(pkg.Rpkg))
+	definedPkgs.Remove(string(pkg.UnknownPkg))
 
 	// for directory scans we should not expect to see any of the following package types
 	definedPkgs.Remove(string(pkg.KbPkg))
@@ -246,7 +250,7 @@ func TestPkgCoverageCatalogerConfiguration(t *testing.T) {
 	definedLanguages := internal.NewStringSet()
 	definedLanguages.Add("rust")
 
-	for actualPkg := range sbom.Artifacts.PackageCatalog.Enumerate() {
+	for actualPkg := range sbom.Artifacts.Packages.Enumerate() {
 		observedLanguages.Add(actualPkg.Language.String())
 	}
 
@@ -270,7 +274,7 @@ func TestPkgCoverageImage_HasEvidence(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
+			for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
 				assert.NotEmpty(t, a.Locations.ToSlice(), "package %q has no locations (type=%q)", a.Name, a.Type)
 				for _, l := range a.Locations.ToSlice() {
 					if _, exists := l.Annotations[pkg.EvidenceAnnotationKey]; !exists {
@@ -300,7 +304,7 @@ func TestPkgCoverageDirectory_HasEvidence(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			for a := range sbom.Artifacts.PackageCatalog.Enumerate(c.pkgType) {
+			for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
 				assert.NotEmpty(t, a.Locations.ToSlice(), "package %q has no locations (type=%q)", a.Name, a.Type)
 				for _, l := range a.Locations.ToSlice() {
 					if _, exists := l.Annotations[pkg.EvidenceAnnotationKey]; !exists {

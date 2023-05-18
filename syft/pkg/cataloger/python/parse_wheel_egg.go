@@ -17,21 +17,21 @@ import (
 
 // parseWheelOrEgg takes the primary metadata file reference and returns the python package it represents.
 func parseWheelOrEgg(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	metadata, sources, err := assembleEggOrWheelMetadata(resolver, reader.Location)
+	pd, sources, err := assembleEggOrWheelMetadata(resolver, reader.Location)
 	if err != nil {
 		return nil, nil, err
 	}
-	if metadata == nil {
+	if pd == nil {
 		return nil, nil, nil
 	}
 
 	// This can happen for Python 2.7 where it is reported from an egg-info, but Python is
 	// the actual runtime, it isn't a "package". The special-casing here allows to skip it
-	if metadata.Name == "Python" {
+	if pd.Name == "Python" {
 		return nil, nil, nil
 	}
 
-	pkgs := []pkg.Package{newPackageForPackage(*metadata, sources...)}
+	pkgs := []pkg.Package{newPackageForPackage(*pd, sources...)}
 
 	return pkgs, nil, nil
 }
@@ -160,7 +160,7 @@ func fetchDirectURLData(resolver file.Resolver, metadataLocation file.Location) 
 }
 
 // assembleEggOrWheelMetadata discovers and accumulates python package metadata from multiple file sources and returns a single metadata object as well as a list of files where the metadata was derived from.
-func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Location) (*pkg.PythonPackageMetadata, []file.Location, error) {
+func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Location) (*parsedData, []file.Location, error) {
 	var sources = []file.Location{
 		metadataLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	}
@@ -171,12 +171,12 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	}
 	defer internal.CloseAndLogError(metadataContents, metadataLocation.VirtualPath)
 
-	metadata, err := parseWheelOrEggMetadata(metadataLocation.RealPath, metadataContents)
+	pd, err := parseWheelOrEggMetadata(metadataLocation.RealPath, metadataContents)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if metadata.Name == "" {
+	if pd.Name == "" {
 		return nil, nil, nil
 	}
 
@@ -186,14 +186,14 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 		return nil, nil, err
 	}
 	if len(r) == 0 {
-		r, s, err = fetchInstalledFiles(resolver, metadataLocation, metadata.SitePackagesRootPath)
+		r, s, err = fetchInstalledFiles(resolver, metadataLocation, pd.SitePackagesRootPath)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	sources = append(sources, s...)
-	metadata.Files = r
+	pd.Files = r
 
 	// attach any top-level package names found for the given wheel/egg installation
 	p, s, err := fetchTopLevelPackages(resolver, metadataLocation)
@@ -201,15 +201,15 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 		return nil, nil, err
 	}
 	sources = append(sources, s...)
-	metadata.TopLevelPackages = p
+	pd.TopLevelPackages = p
 
 	// attach any direct-url package data found for the given wheel/egg installation
 	d, s, err := fetchDirectURLData(resolver, metadataLocation)
 	if err != nil {
 		return nil, nil, err
 	}
-	sources = append(sources, s...)
-	metadata.DirectURLOrigin = d
 
-	return &metadata, sources, nil
+	sources = append(sources, s...)
+	pd.DirectURLOrigin = d
+	return &pd, sources, nil
 }

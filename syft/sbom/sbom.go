@@ -20,10 +20,11 @@ type SBOM struct {
 }
 
 type Artifacts struct {
-	PackageCatalog    *pkg.Collection
+	Packages          *pkg.Collection
 	FileMetadata      map[file.Coordinates]file.Metadata
 	FileDigests       map[file.Coordinates][]file.Digest
 	FileContents      map[file.Coordinates]string
+	FileLicenses      map[file.Coordinates][]file.License
 	Secrets           map[file.Coordinates][]file.SearchResult
 	LinuxDistribution *linux.Release
 }

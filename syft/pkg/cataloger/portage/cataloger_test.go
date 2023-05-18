@@ -10,7 +10,7 @@ import (
 )
 
 func TestPortageCataloger(t *testing.T) {
-
+	expectedLicenseLocation := file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/LICENSE")
 	expectedPkgs := []pkg.Package{
 		{
 			Name:    "app-containers/skopeo",
@@ -19,10 +19,10 @@ func TestPortageCataloger(t *testing.T) {
 			PURL:    "pkg:ebuild/app-containers/skopeo@1.5.1",
 			Locations: file.NewLocationSet(
 				file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/CONTENTS"),
-				file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/LICENSE"),
 				file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/SIZE"),
+				expectedLicenseLocation,
 			),
-			Licenses:     []string{"Apache-2.0", "BSD", "BSD-2", "CC-BY-SA-4.0", "ISC", "MIT"},
+			Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(expectedLicenseLocation, "Apache-2.0", "BSD", "BSD-2", "CC-BY-SA-4.0", "ISC", "MIT")...),
 			Type:         pkg.PortagePkg,
 			MetadataType: pkg.PortageMetadataType,
 			Metadata: pkg.PortageMetadata{

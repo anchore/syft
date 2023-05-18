@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:2896b5ce-2016-49e8-a422-239d662846c7" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:c8894728-c156-4fc5-8f5d-3e397eede5a7" version="1">
   <metadata>
-    <timestamp>2022-11-07T09:11:06-05:00</timestamp>
+    <timestamp>2023-05-08T14:40:52-04:00</timestamp>
     <tools>
       <tool>
         <vendor>anchore</vendor>
@@ -9,13 +9,13 @@
         <version>v0.42.0-bogus</version>
       </tool>
     </tools>
-    <component bom-ref="522dc6b135a55bb4" type="container">
+    <component bom-ref="38160ebc2a6876e8" type="container">
       <name>user-image-input</name>
       <version>sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368</version>
     </component>
   </metadata>
   <components>
-    <component bom-ref="66ba429119b8bec6" type="library">
+    <component bom-ref="ec2e0c93617507ef" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>
@@ -30,7 +30,7 @@
         <property name="syft:package:language">python</property>
         <property name="syft:package:metadataType">PythonPackageMetadata</property>
         <property name="syft:package:type">python</property>
-        <property name="syft:location:0:layerID">sha256:fb6beecb75b39f4bb813dbf177e501edd5ddb3e69bb45cedeb78c676ee1b7a59</property>
+        <property name="syft:location:0:layerID">sha256:ab62016f9bec7286af65604081564cadeeb364a48faca2346c3f5a5a1f5ef777</property>
         <property name="syft:location:0:path">/somefile-1.txt</property>
       </properties>
     </component>
@@ -43,7 +43,7 @@
         <property name="syft:package:foundBy">the-cataloger-2</property>
         <property name="syft:package:metadataType">DpkgMetadata</property>
         <property name="syft:package:type">deb</property>
-        <property name="syft:location:0:layerID">sha256:319b588ce64253a87b533c8ed01cf0025e0eac98e7b516e12532957e1244fdec</property>
+        <property name="syft:location:0:layerID">sha256:f1803845b6747d94d6e4ecce2331457e5f1c4fb97de5216f392a76f4582f63b2</property>
         <property name="syft:location:0:path">/somefile-2.txt</property>
         <property name="syft:metadata:installedSize">0</property>
       </properties>

@@ -14,11 +14,11 @@ GOLANGCILINT_VERSION := v1.52.2
 GOSIMPORTS_VERSION := v0.3.8
 BOUNCER_VERSION := v0.4.0
 CHRONICLE_VERSION := v0.6.0
-GORELEASER_VERSION := v1.17.2
+GORELEASER_VERSION := v1.18.2
 YAJSV_VERSION := v1.4.1
-COSIGN_VERSION := v1.13.1
+COSIGN_VERSION := v2.0.2
 QUILL_VERSION := v0.2.0
-GLOW_VERSION := v1.5.0
+GLOW_VERSION := v1.5.1
 
 # Formatting variables #################################
 BOLD := $(shell tput -T linux bold)
@@ -90,7 +90,7 @@ bootstrap-tools: $(TEMP_DIR)
 	# the only difference between goimports and gosimports is that gosimports removes extra whitespace between import blocks (see https://github.com/golang/go/issues/20818)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/rinchsan/gosimports/cmd/gosimports@$(GOSIMPORTS_VERSION)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/neilpa/yajsv@$(YAJSV_VERSION)
-	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/sigstore/cosign/cmd/cosign@$(COSIGN_VERSION)
+	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/sigstore/cosign/v2/cmd/cosign@$(COSIGN_VERSION)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/charmbracelet/glow@$(GLOW_VERSION)
 
 .PHONY: bootstrap-go

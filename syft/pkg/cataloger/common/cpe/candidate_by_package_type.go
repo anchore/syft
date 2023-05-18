@@ -33,6 +33,12 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateAddition{AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"}, AdditionalVendors: []string{"pivotal_software", "springsource", "vmware"}},
 		},
 		{
+			// example image: docker.io/jenkins/jenkins:latest
+			pkg.JavaPkg,
+			candidateKey{PkgName: "spring-security-core"},
+			candidateAddition{AdditionalProducts: []string{"spring_security"}, AdditionalVendors: []string{"vmware"}},
+		},
+		{
 			// example image: docker.io/nuxeo:latest
 			pkg.JavaPkg,
 			candidateKey{PkgName: "elasticsearch"}, // , Vendor: "elasticsearch"},

@@ -16,7 +16,7 @@ func TestSqliteRpm(t *testing.T) {
 
 	expectedPkgs := 139
 	actualPkgs := 0
-	for range sbom.Artifacts.PackageCatalog.Enumerate(pkg.RpmPkg) {
+	for range sbom.Artifacts.Packages.Enumerate(pkg.RpmPkg) {
 		actualPkgs += 1
 	}
 

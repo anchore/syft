@@ -6,7 +6,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -115,9 +114,9 @@ func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Packag
 			findings.Add(token)
 		}
 	}
-	licenses := findings.ToSlice()
-	sort.Strings(licenses)
-	p.Licenses = licenses
+
+	licenseCandidates := findings.ToSlice()
+	p.Licenses = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(*location, licenseCandidates...)...)
 	p.Locations.Add(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 }
 

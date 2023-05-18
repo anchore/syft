@@ -61,7 +61,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		FoundBy:      "the-cataloger-1",
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses:     []string{"MIT"},
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicense("MIT")),
 		Metadata: pkg.PythonPackageMetadata{
 			Name:    "package-1",
 			Version: "1.0.1",
@@ -100,7 +100,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 
 	s := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog: catalog,
+			Packages: catalog,
 			FileMetadata: map[file.Coordinates]file.Metadata{
 				file.NewLocation("/a/place").Coordinates: {
 					Mode:    0775,

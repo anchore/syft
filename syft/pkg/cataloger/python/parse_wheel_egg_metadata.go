@@ -9,14 +9,21 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/anchore/syft/internal/file"
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 
+type parsedData struct {
+	Licenses                  string `mapstructure:"License"`
+	LicenseLocation           file.Location
+	pkg.PythonPackageMetadata `mapstructure:",squash"`
+}
+
 // parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
-func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMetadata, error) {
+func parseWheelOrEggMetadata(path string, reader io.Reader) (parsedData, error) {
 	fields := make(map[string]string)
 	var key string
 
@@ -43,7 +50,7 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMe
 			// a field-body continuation
 			updatedValue, err := handleFieldBodyContinuation(key, line, fields)
 			if err != nil {
-				return pkg.PythonPackageMetadata{}, err
+				return parsedData{}, err
 			}
 
 			fields[key] = updatedValue
@@ -62,26 +69,29 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMe
 	}
 
 	if err := scanner.Err(); err != nil {
-		return pkg.PythonPackageMetadata{}, fmt.Errorf("failed to parse python wheel/egg: %w", err)
+		return parsedData{}, fmt.Errorf("failed to parse python wheel/egg: %w", err)
 	}
 
-	var metadata pkg.PythonPackageMetadata
-	if err := mapstructure.Decode(fields, &metadata); err != nil {
-		return pkg.PythonPackageMetadata{}, fmt.Errorf("unable to parse APK metadata: %w", err)
+	var pd parsedData
+	if err := mapstructure.Decode(fields, &pd); err != nil {
+		return pd, fmt.Errorf("unable to parse APK metadata: %w", err)
 	}
 
 	// add additional metadata not stored in the egg/wheel metadata file
 
-	metadata.SitePackagesRootPath = determineSitePackagesRootPath(path)
+	pd.SitePackagesRootPath = determineSitePackagesRootPath(path)
+	if pd.Licenses != "" {
+		pd.LicenseLocation = file.NewLocation(path)
+	}
 
-	return metadata, nil
+	return pd, nil
 }
 
 // isEggRegularFile determines if the specified path is the regular file variant
 // of egg metadata (as opposed to a directory that contains more metadata
 // files).
 func isEggRegularFile(path string) bool {
-	return file.GlobMatch(eggInfoGlob, path)
+	return intFile.GlobMatch(eggInfoGlob, path)
 }
 
 // determineSitePackagesRootPath returns the path of the site packages root,

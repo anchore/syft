@@ -25,6 +25,11 @@ var (
 	repoRegex = regexp.MustCompile(`(?m)^https://.*\.alpinelinux\.org/alpine/v([^/]+)/([a-zA-Z0-9_]+)$`)
 )
 
+type parsedData struct {
+	License string `mapstructure:"L" json:"license"`
+	pkg.ApkMetadata
+}
+
 // parseApkDB parses packages from a given APK installed DB file. For more
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
@@ -32,15 +37,15 @@ var (
 func parseApkDB(resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
 
-	var apks []pkg.ApkMetadata
-	var currentEntry pkg.ApkMetadata
+	var apks []parsedData
+	var currentEntry parsedData
 	entryParsingInProgress := false
 	fileParsingCtx := newApkFileParsingContext()
 
 	// creating a dedicated append-like function here instead of using `append(...)`
 	// below since there is nontrivial logic to be performed for each finalized apk
 	// entry.
-	appendApk := func(p pkg.ApkMetadata) {
+	appendApk := func(p parsedData) {
 		if files := fileParsingCtx.files; len(files) >= 1 {
 			// attached accumulated files to current package
 			p.Files = files
@@ -67,7 +72,7 @@ func parseApkDB(resolver file.Resolver, env *generic.Environment, reader file.Lo
 			entryParsingInProgress = false
 
 			// zero-out currentEntry for use by any future entry
-			currentEntry = pkg.ApkMetadata{}
+			currentEntry = parsedData{}
 
 			continue
 		}
@@ -122,7 +127,7 @@ func parseApkDB(resolver file.Resolver, env *generic.Environment, reader file.Lo
 
 	pkgs := make([]pkg.Package, 0, len(apks))
 	for _, apk := range apks {
-		pkgs = append(pkgs, newPackage(apk, r, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)))
+		pkgs = append(pkgs, newPackage(apk, r, reader.Location))
 	}
 
 	return pkgs, discoverPackageDependencies(pkgs), nil
@@ -200,7 +205,7 @@ type apkField struct {
 }
 
 //nolint:funlen
-func (f apkField) apply(p *pkg.ApkMetadata, ctx *apkFileParsingContext) {
+func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 	switch f.name {
 	// APKINDEX field parsing
 
@@ -346,7 +351,7 @@ func parseListValue(value string) []string {
 	return nil
 }
 
-func nilFieldsToEmptySlice(p *pkg.ApkMetadata) {
+func nilFieldsToEmptySlice(p *parsedData) {
 	if p.Dependencies == nil {
 		p.Dependencies = []string{}
 	}

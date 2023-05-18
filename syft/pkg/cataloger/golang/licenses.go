@@ -24,6 +24,7 @@ import (
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/file/resolver"
+	"github.com/anchore/syft/syft/pkg"
 )
 
 type goLicenses struct {
@@ -75,7 +76,7 @@ func modCacheResolver(modCacheDir string) file.WritableResolver {
 	return r
 }
 
-func (c *goLicenses) getLicenses(resolver file.Resolver, moduleName, moduleVersion string) (licenses []string, err error) {
+func (c *goLicenses) getLicenses(resolver file.Resolver, moduleName, moduleVersion string) (licenses []pkg.License, err error) {
 	licenses, err = findLicenses(resolver,
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
@@ -94,7 +95,7 @@ func (c *goLicenses) getLicenses(resolver file.Resolver, moduleName, moduleVersi
 	return requireCollection(licenses), err
 }
 
-func (c *goLicenses) getLicensesFromLocal(moduleName, moduleVersion string) ([]string, error) {
+func (c *goLicenses) getLicensesFromLocal(moduleName, moduleVersion string) ([]pkg.License, error) {
 	if !c.opts.searchLocalModCacheLicenses {
 		return nil, nil
 	}
@@ -104,7 +105,7 @@ func (c *goLicenses) getLicensesFromLocal(moduleName, moduleVersion string) ([]s
 	return findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
 }
 
-func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]string, error) {
+func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]pkg.License, error) {
 	if !c.opts.searchRemoteLicenses {
 		return nil, nil
 	}
@@ -149,14 +150,15 @@ func moduleSearchGlob(moduleName, moduleVersion string) string {
 	return fmt.Sprintf("%s/*", moduleDir(moduleName, moduleVersion))
 }
 
-func requireCollection(licenses []string) []string {
+func requireCollection(licenses []pkg.License) []pkg.License {
 	if licenses == nil {
-		return []string{}
+		return make([]pkg.License, 0)
 	}
 	return licenses
 }
 
-func findLicenses(resolver file.Resolver, globMatch string) (out []string, err error) {
+func findLicenses(resolver file.Resolver, globMatch string) (out []pkg.License, err error) {
+	out = make([]pkg.License, 0)
 	if resolver == nil {
 		return
 	}
@@ -173,7 +175,7 @@ func findLicenses(resolver file.Resolver, globMatch string) (out []string, err e
 			if err != nil {
 				return nil, err
 			}
-			parsed, err := licenses.Parse(contents)
+			parsed, err := licenses.Parse(contents, l)
 			if err != nil {
 				return nil, err
 			}

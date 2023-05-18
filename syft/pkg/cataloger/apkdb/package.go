@@ -5,20 +5,29 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...file.Location) pkg.Package {
+func newPackage(d parsedData, release *linux.Release, dbLocation file.Location) pkg.Package {
+	// check if license is a valid spdx expression before splitting
+	licenseStrings := []string{d.License}
+	_, err := license.ParseExpression(d.License)
+	if err != nil {
+		// invalid so update to split on space
+		licenseStrings = strings.Split(d.License, " ")
+	}
+
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
-		Locations:    file.NewLocationSet(locations...),
-		Licenses:     strings.Split(d.License, " "),
-		PURL:         packageURL(d, release),
+		Locations:    file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation, licenseStrings...)...),
+		PURL:         packageURL(d.ApkMetadata, release),
 		Type:         pkg.ApkPkg,
 		MetadataType: pkg.ApkMetadataType,
-		Metadata:     d,
+		Metadata:     d.ApkMetadata,
 	}
 
 	p.SetID()
