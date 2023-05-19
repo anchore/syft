@@ -202,14 +202,16 @@ func Test_toSyftFiles(t *testing.T) {
 			want: sbom.Artifacts{
 				FileMetadata: map[source.Coordinates]source.FileMetadata{
 					coord: {
+						FileInfo: stereoFile.ManualInfo{
+							NameValue: "place",
+							SizeValue: 92,
+							ModeValue: 511, // 777 octal = 511 decimal
+						},
 						Path:            coord.RealPath,
 						LinkDestination: "",
-						Size:            92,
 						UserID:          42,
 						GroupID:         32,
 						Type:            stereoFile.TypeRegular,
-						IsDir:           false,
-						Mode:            511, // 777 octal = 511 decimal
 						MIMEType:        "text/plain",
 					},
 				},

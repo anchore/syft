@@ -949,7 +949,7 @@ func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	for loc := range resolver.AllLocations() {
 		entry, err := resolver.index.Get(loc.ref)
 		require.NoError(t, err)
-		if entry.Metadata.IsDir {
+		if entry.Metadata.IsDir() {
 			dirLoc = &loc
 			break
 		}

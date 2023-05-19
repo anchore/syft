@@ -56,7 +56,7 @@ func (r *imageSquashResolver) FilesByPath(paths ...string) ([]Location, error) {
 				return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.RealPath, err)
 			}
 			// don't consider directories
-			if metadata.Metadata.IsDir {
+			if metadata.Metadata.IsDir() {
 				continue
 			}
 		}
@@ -103,7 +103,7 @@ func (r *imageSquashResolver) FilesByGlob(patterns ...string) ([]Location, error
 					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.RequestPath, err)
 				}
 				// don't consider directories
-				if metadata.Metadata.IsDir {
+				if metadata.Metadata.IsDir() {
 					continue
 				}
 			}

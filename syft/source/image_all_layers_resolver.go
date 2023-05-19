@@ -100,7 +100,7 @@ func (r *imageAllLayersResolver) FilesByPath(paths ...string) ([]Location, error
 				if err != nil {
 					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.RealPath, err)
 				}
-				if metadata.Metadata.IsDir {
+				if metadata.Metadata.IsDir() {
 					continue
 				}
 			}
@@ -143,7 +143,7 @@ func (r *imageAllLayersResolver) FilesByGlob(patterns ...string) ([]Location, er
 						return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.RequestPath, err)
 					}
 					// don't consider directories
-					if metadata.Metadata.IsDir {
+					if metadata.Metadata.IsDir() {
 						continue
 					}
 				}

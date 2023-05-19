@@ -15,9 +15,9 @@ import (
 )
 
 func TestSpdxValidationTooling(t *testing.T) {
-	img := imagetest.GetFixtureImage(t, "docker-archive", "image-java-spdx-tools")
-	require.NotEmpty(t, img.Metadata.Tags)
-	imgTag := img.Metadata.Tags[0]
+	// note: the external tooling requires that the daemon explicitly has the image loaded, not just that
+	// we can get the image from a cache tar.
+	imgTag := imagetest.LoadFixtureImageIntoDocker(t, "image-java-spdx-tools")
 
 	images := []string{
 		"alpine:3.17.3@sha256:b6ca290b6b4cdcca5b3db3ffa338ee0285c11744b4a6abaa9627746ee3291d8d",

@@ -196,7 +196,7 @@ func (r directoryResolver) FilesByPath(userPaths ...string) ([]Location, error) 
 		}
 
 		// don't consider directories
-		if entry.Metadata.IsDir {
+		if entry.Metadata.IsDir() {
 			continue
 		}
 
@@ -238,7 +238,7 @@ func (r directoryResolver) FilesByGlob(patterns ...string) ([]Location, error) {
 			}
 
 			// don't consider directories
-			if entry.Metadata.IsDir {
+			if entry.Metadata.IsDir() {
 				continue
 			}
 

@@ -307,7 +307,7 @@ func (r *directoryIndexer) disallowRevisitingVisitor(path string, _ os.FileInfo,
 	// - link destinations twice, once for the real file and another through the virtual path
 	// - infinite link cycles
 	if indexed, metadata := r.hasBeenIndexed(path); indexed {
-		if metadata.IsDir {
+		if metadata.IsDir() {
 			// signal to walk() that we should skip this directory entirely
 			return fs.SkipDir
 		}

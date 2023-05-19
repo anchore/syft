@@ -131,10 +131,18 @@ func toFileMetadataEntry(coordinates source.Coordinates, metadata *source.FileMe
 		return nil
 	}
 
-	mode, err := strconv.Atoi(fmt.Sprintf("%o", metadata.Mode))
-	if err != nil {
-		log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coordinates, metadata.Mode, err)
-		mode = 0
+	var mode int
+	var size int64
+	if metadata != nil && metadata.FileInfo != nil {
+		var err error
+
+		mode, err = strconv.Atoi(fmt.Sprintf("%o", metadata.Mode()))
+		if err != nil {
+			log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coordinates, metadata.Mode, err)
+			mode = 0
+		}
+
+		size = metadata.Size()
 	}
 
 	return &model.FileMetadataEntry{
@@ -144,7 +152,7 @@ func toFileMetadataEntry(coordinates source.Coordinates, metadata *source.FileMe
 		UserID:          metadata.UserID,
 		GroupID:         metadata.GroupID,
 		MIMEType:        metadata.MIMEType,
-		Size:            metadata.Size,
+		Size:            size,
 	}
 }
 
