@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -30,7 +31,14 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				    "path": "/Users/hal/go/bin/syft"
 				  }
 				],
-				"licenses": [],
+				"licenses": [
+				  {
+				   "value": "MIT",
+				   "spdxExpression": "MIT",
+				   "type": "declared",
+				   "url": []
+				  }
+				],
 				"language": "go",
 				"cpes": [],
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0",
@@ -61,7 +69,20 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				    "path": "/Users/hal/go/bin/syft"
 				  }
 				],
-				"licenses": [],
+				"licenses": [
+				  {
+				    "value": "MIT",
+					"spdxExpression": "MIT",
+					"type": "declared",
+					"url": ["https://www.github.com"]
+				  },
+				  {
+				    "value": "MIT",
+					"spdxExpression": "MIT",
+					"type": "declared",
+					"locations": [{"path": "/Users/hal/go/bin/syft"}]
+				  }
+				],
 				"language": "go",
 				"cpes": [],
 				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0"
@@ -69,6 +90,83 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 			assert: func(p *Package) {
 				assert.Empty(t, p.MetadataType)
 				assert.Empty(t, p.Metadata)
+			},
+		},
+		{
+			name: "can handle package with []string licenses",
+			packageData: []byte(`{
+				"id": "8b594519bc23da50",
+				"name": "gopkg.in/square/go-jose.v2",
+				"version": "v2.6.0",
+				"type": "go-module",
+				"foundBy": "go-mod-cataloger",
+				"locations": [
+				  {
+				    "path": "/Users/hal/go/bin/syft"
+				  }
+				],
+				"licenses": ["MIT", "Apache-2.0"],
+				"language": "go",
+				"cpes": [],
+				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0"
+			}`),
+			assert: func(p *Package) {
+				assert.Equal(t, licenses{
+					{
+						Value:          "MIT",
+						SPDXExpression: "MIT",
+						Type:           license.Declared,
+					},
+					{
+						Value:          "Apache-2.0",
+						SPDXExpression: "Apache-2.0",
+						Type:           license.Declared,
+					},
+				}, p.Licenses)
+			},
+		},
+		{
+			name: "can handle package with []pkg.License licenses",
+			packageData: []byte(`{
+				"id": "8b594519bc23da50",
+				"name": "gopkg.in/square/go-jose.v2",
+				"version": "v2.6.0",
+				"type": "go-module",
+				"foundBy": "go-mod-cataloger",
+				"locations": [
+				  {
+				    "path": "/Users/hal/go/bin/syft"
+				  }
+				],
+				"licenses": [	
+					{
+						"value": "MIT",
+						"spdxExpression": "MIT",
+						"type": "declared"
+					},
+					{
+						"value": "Apache-2.0",
+						"spdxExpression": "Apache-2.0",
+						"type": "declared"
+					}
+				],
+				"language": "go",
+				"cpes": [],
+				"purl": "pkg:golang/gopkg.in/square/go-jose.v2@v2.6.0"
+			}`),
+			assert: func(p *Package) {
+				assert.Equal(t, licenses{
+					{
+						Value:          "MIT",
+						SPDXExpression: "MIT",
+						Type:           license.Declared,
+					},
+					{
+						Value:          "Apache-2.0",
+						SPDXExpression: "Apache-2.0",
+						Type:           license.Declared,
+					},
+				}, p.Licenses)
 			},
 		},
 	}
@@ -151,9 +249,6 @@ func Test_unpackMetadata(t *testing.T) {
 					 "path": "/var/lib/rpm/Packages",
 					 "layerID": "sha256:74ddd0ec08fa43d09f32636ba91a0a3053b02cb4627c35051aff89f853606b59"
 					}
-				],
-				"licenses": [
-					"GPLv2+"
 				],
 				"language": "",
 				"cpes": [

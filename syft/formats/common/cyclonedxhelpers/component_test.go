@@ -29,14 +29,13 @@ func Test_encodeComponentProperties(t *testing.T) {
 			input: pkg.Package{
 				FoundBy: "cataloger",
 				Locations: source.NewLocationSet(
-					source.Location{Coordinates: source.Coordinates{RealPath: "test"}},
+					source.NewLocationFromCoordinates(source.Coordinates{RealPath: "test"}),
 				),
 				Metadata: pkg.ApkMetadata{
 					Package:       "libc-utils",
 					OriginPackage: "libc-dev",
 					Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
 					Version:       "0.7.2-r0",
-					License:       "BSD",
 					Architecture:  "x86_64",
 					URL:           "http://alpinelinux.org",
 					Description:   "Meta package to pull in correct libc",
@@ -140,7 +139,6 @@ func Test_encodeComponentProperties(t *testing.T) {
 					Version:   "0.9.2",
 					SourceRpm: "dive-0.9.2-1.src.rpm",
 					Size:      12406784,
-					License:   "MIT",
 					Vendor:    "",
 					Files:     []pkg.RpmdbFileRecord{},
 				},

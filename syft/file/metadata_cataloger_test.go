@@ -51,12 +51,15 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/file-1.txt",
 			exists: true,
 			expected: source.FileMetadata{
+				FileInfo: file.ManualInfo{
+					NameValue: "file-1.txt",
+					ModeValue: 0644,
+					SizeValue: 7,
+				},
 				Path:     "/file-1.txt",
-				Mode:     0644,
 				Type:     file.TypeRegular,
 				UserID:   1,
 				GroupID:  2,
-				Size:     7,
 				MIMEType: "text/plain",
 			},
 		},
@@ -64,8 +67,11 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/hardlink-1",
 			exists: true,
 			expected: source.FileMetadata{
+				FileInfo: file.ManualInfo{
+					NameValue: "hardlink-1",
+					ModeValue: 0644,
+				},
 				Path:            "/hardlink-1",
-				Mode:            0644,
 				Type:            file.TypeHardLink,
 				LinkDestination: "file-1.txt",
 				UserID:          1,
@@ -77,8 +83,11 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/symlink-1",
 			exists: true,
 			expected: source.FileMetadata{
-				Path:            "/symlink-1",
-				Mode:            0777 | os.ModeSymlink,
+				Path: "/symlink-1",
+				FileInfo: file.ManualInfo{
+					NameValue: "symlink-1",
+					ModeValue: 0777 | os.ModeSymlink,
+				},
 				Type:            file.TypeSymLink,
 				LinkDestination: "file-1.txt",
 				UserID:          0,
@@ -90,8 +99,11 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/char-device-1",
 			exists: true,
 			expected: source.FileMetadata{
-				Path:     "/char-device-1",
-				Mode:     0644 | os.ModeDevice | os.ModeCharDevice,
+				Path: "/char-device-1",
+				FileInfo: file.ManualInfo{
+					NameValue: "char-device-1",
+					ModeValue: 0644 | os.ModeDevice | os.ModeCharDevice,
+				},
 				Type:     file.TypeCharacterDevice,
 				UserID:   0,
 				GroupID:  0,
@@ -102,8 +114,11 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/block-device-1",
 			exists: true,
 			expected: source.FileMetadata{
-				Path:     "/block-device-1",
-				Mode:     0644 | os.ModeDevice,
+				Path: "/block-device-1",
+				FileInfo: file.ManualInfo{
+					NameValue: "block-device-1",
+					ModeValue: 0644 | os.ModeDevice,
+				},
 				Type:     file.TypeBlockDevice,
 				UserID:   0,
 				GroupID:  0,
@@ -114,8 +129,11 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/fifo-1",
 			exists: true,
 			expected: source.FileMetadata{
-				Path:     "/fifo-1",
-				Mode:     0644 | os.ModeNamedPipe,
+				Path: "/fifo-1",
+				FileInfo: file.ManualInfo{
+					NameValue: "fifo-1",
+					ModeValue: 0644 | os.ModeNamedPipe,
+				},
 				Type:     file.TypeFIFO,
 				UserID:   0,
 				GroupID:  0,
@@ -126,13 +144,15 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/bin",
 			exists: true,
 			expected: source.FileMetadata{
-				Path:     "/bin",
-				Mode:     0755 | os.ModeDir,
+				Path: "/bin",
+				FileInfo: file.ManualInfo{
+					NameValue: "bin",
+					ModeValue: 0755 | os.ModeDir,
+				},
 				Type:     file.TypeDirectory,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
-				IsDir:    true,
 			},
 		},
 	}
@@ -144,8 +164,15 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 			l := source.NewLocationFromImage(test.path, *ref.Reference, img)
 
-			assert.Equal(t, test.expected, actual[l.Coordinates], "mismatched metadata")
+			if _, ok := actual[l.Coordinates]; ok {
+				// we're not interested in keeping the test fixtures up to date with the latest file modification times
+				// thus ModTime is not under test
+				fi := test.expected.FileInfo.(file.ManualInfo)
+				fi.ModTimeValue = actual[l.Coordinates].ModTime()
+				test.expected.FileInfo = fi
+			}
 
+			assert.True(t, test.expected.Equal(actual[l.Coordinates]))
 		})
 	}
 

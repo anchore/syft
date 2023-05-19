@@ -82,11 +82,12 @@ func printError(data []byte, i int) string {
 		if c == '\n' {
 			prev = append(prev, curr.String())
 			curr.Reset()
+
 			if idx >= i {
 				break
-			} else {
-				line++
 			}
+
+			line++
 			char = 1
 			continue
 		}

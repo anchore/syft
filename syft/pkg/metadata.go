@@ -9,6 +9,7 @@ type MetadataType string
 
 const (
 	// this is the full set of data shapes that can be represented within the pkg.Package.Metadata field
+
 	UnknownMetadataType            MetadataType = "UnknownMetadata"
 	AlpmMetadataType               MetadataType = "AlpmMetadata"
 	ApkMetadataType                MetadataType = "ApkMetadata"
@@ -25,14 +26,19 @@ const (
 	HackageMetadataType            MetadataType = "HackageMetadataType"
 	JavaMetadataType               MetadataType = "JavaMetadata"
 	KbPackageMetadataType          MetadataType = "KbPackageMetadata"
+	LinuxKernelMetadataType        MetadataType = "LinuxKernelMetadata"
+	LinuxKernelModuleMetadataType  MetadataType = "LinuxKernelModuleMetadata"
 	MixLockMetadataType            MetadataType = "MixLockMetadataType"
+	NixStoreMetadataType           MetadataType = "NixStoreMetadata"
 	NpmPackageJSONMetadataType     MetadataType = "NpmPackageJsonMetadata"
 	NpmPackageLockJSONMetadataType MetadataType = "NpmPackageLockJsonMetadata"
 	PhpComposerJSONMetadataType    MetadataType = "PhpComposerJsonMetadata"
 	PortageMetadataType            MetadataType = "PortageMetadata"
 	PythonPackageMetadataType      MetadataType = "PythonPackageMetadata"
 	PythonPipfileLockMetadataType  MetadataType = "PythonPipfileLockMetadata"
+	PythonRequirementsMetadataType MetadataType = "PythonRequirementsMetadata"
 	RebarLockMetadataType          MetadataType = "RebarLockMetadataType"
+	RDescriptionFileMetadataType   MetadataType = "RDescriptionFileMetadataType"
 	RpmMetadataType                MetadataType = "RpmMetadata"
 	RustCargoPackageMetadataType   MetadataType = "RustCargoPackageMetadata"
 )
@@ -53,13 +59,18 @@ var AllMetadataTypes = []MetadataType{
 	HackageMetadataType,
 	JavaMetadataType,
 	KbPackageMetadataType,
+	LinuxKernelMetadataType,
+	LinuxKernelModuleMetadataType,
 	MixLockMetadataType,
+	NixStoreMetadataType,
 	NpmPackageJSONMetadataType,
 	NpmPackageLockJSONMetadataType,
 	PhpComposerJSONMetadataType,
 	PortageMetadataType,
 	PythonPackageMetadataType,
 	PythonPipfileLockMetadataType,
+	PythonRequirementsMetadataType,
+	RDescriptionFileMetadataType,
 	RebarLockMetadataType,
 	RpmMetadataType,
 	RustCargoPackageMetadataType,
@@ -81,13 +92,18 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	HackageMetadataType:            reflect.TypeOf(HackageMetadata{}),
 	JavaMetadataType:               reflect.TypeOf(JavaMetadata{}),
 	KbPackageMetadataType:          reflect.TypeOf(KbPackageMetadata{}),
+	LinuxKernelMetadataType:        reflect.TypeOf(LinuxKernelMetadata{}),
+	LinuxKernelModuleMetadataType:  reflect.TypeOf(LinuxKernelModuleMetadata{}),
 	MixLockMetadataType:            reflect.TypeOf(MixLockMetadata{}),
+	NixStoreMetadataType:           reflect.TypeOf(NixStoreMetadata{}),
 	NpmPackageJSONMetadataType:     reflect.TypeOf(NpmPackageJSONMetadata{}),
 	NpmPackageLockJSONMetadataType: reflect.TypeOf(NpmPackageLockJSONMetadata{}),
 	PhpComposerJSONMetadataType:    reflect.TypeOf(PhpComposerJSONMetadata{}),
 	PortageMetadataType:            reflect.TypeOf(PortageMetadata{}),
 	PythonPackageMetadataType:      reflect.TypeOf(PythonPackageMetadata{}),
 	PythonPipfileLockMetadataType:  reflect.TypeOf(PythonPipfileLockMetadata{}),
+	PythonRequirementsMetadataType: reflect.TypeOf(PythonRequirementsMetadata{}),
+	RDescriptionFileMetadataType:   reflect.TypeOf(RDescriptionFileMetadata{}),
 	RebarLockMetadataType:          reflect.TypeOf(RebarLockMetadata{}),
 	RpmMetadataType:                reflect.TypeOf(RpmMetadata{}),
 	RustCargoPackageMetadataType:   reflect.TypeOf(CargoPackageMetadata{}),

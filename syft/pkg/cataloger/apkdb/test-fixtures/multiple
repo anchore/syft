@@ -6,7 +6,7 @@ S:1175
 I:4096
 T:Meta package to pull in correct libc
 U:http://alpinelinux.org
-L:BSD
+L:MPL-2.0 AND MIT
 o:libc-dev
 m:Natanael Copa <ncopa@alpinelinux.org>
 t:1575749004

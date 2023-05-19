@@ -21,6 +21,7 @@ import (
 )
 
 type locationComparer func(x, y source.Location) bool
+type licenseComparer func(x, y pkg.License) bool
 
 type CatalogTester struct {
 	expectedPkgs                   []pkg.Package
@@ -36,12 +37,14 @@ type CatalogTester struct {
 	wantErr                        require.ErrorAssertionFunc
 	compareOptions                 []cmp.Option
 	locationComparer               locationComparer
+	licenseComparer                licenseComparer
 }
 
 func NewCatalogTester() *CatalogTester {
 	return &CatalogTester{
 		wantErr:          require.NoError,
 		locationComparer: DefaultLocationComparer,
+		licenseComparer:  DefaultLicenseComparer,
 		ignoreUnfulfilledPathResponses: map[string][]string{
 			"FilesByPath": {
 				// most catalogers search for a linux release, which will not be fulfilled in testing
@@ -57,6 +60,25 @@ func NewCatalogTester() *CatalogTester {
 
 func DefaultLocationComparer(x, y source.Location) bool {
 	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
+}
+
+func DefaultLicenseComparer(x, y pkg.License) bool {
+	return cmp.Equal(x, y, cmp.Comparer(DefaultLocationComparer), cmp.Comparer(
+		func(x, y source.LocationSet) bool {
+			xs := x.ToSlice()
+			ys := y.ToSlice()
+			if len(xs) != len(ys) {
+				return false
+			}
+			for i, xe := range xs {
+				ye := ys[i]
+				if !DefaultLocationComparer(xe, ye) {
+					return false
+				}
+			}
+			return true
+		},
+	))
 }
 
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
@@ -139,6 +161,26 @@ func (p *CatalogTester) IgnoreLocationLayer() *CatalogTester {
 	p.locationComparer = func(x, y source.Location) bool {
 		return cmp.Equal(x.Coordinates.RealPath, y.Coordinates.RealPath) && cmp.Equal(x.VirtualPath, y.VirtualPath)
 	}
+
+	// we need to update the license comparer to use the ignored location layer
+	p.licenseComparer = func(x, y pkg.License) bool {
+		return cmp.Equal(x, y, cmp.Comparer(p.locationComparer), cmp.Comparer(
+			func(x, y source.LocationSet) bool {
+				xs := x.ToSlice()
+				ys := y.ToSlice()
+				if len(xs) != len(ys) {
+					return false
+				}
+				for i, xe := range xs {
+					ye := ys[i]
+					if !p.locationComparer(xe, ye) {
+						return false
+					}
+				}
+
+				return true
+			}))
+	}
 	return p
 }
 
@@ -209,6 +251,7 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	}
 }
 
+// nolint:funlen
 func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 	t.Helper()
 
@@ -233,6 +276,30 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 				return true
 			},
 		),
+		cmp.Comparer(
+			func(x, y pkg.LicenseSet) bool {
+				xs := x.ToSlice()
+				ys := y.ToSlice()
+
+				if len(xs) != len(ys) {
+					return false
+				}
+				for i, xe := range xs {
+					ye := ys[i]
+					if !p.licenseComparer(xe, ye) {
+						return false
+					}
+				}
+
+				return true
+			},
+		),
+		cmp.Comparer(
+			p.locationComparer,
+		),
+		cmp.Comparer(
+			p.licenseComparer,
+		),
 	)
 
 	{
@@ -247,7 +314,6 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 			t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
 		}
 	}
-
 	{
 		var r diffReporter
 		var opts []cmp.Option
@@ -295,6 +361,30 @@ func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
 
 				return true
 			},
+		),
+		cmp.Comparer(
+			func(x, y pkg.LicenseSet) bool {
+				xs := x.ToSlice()
+				ys := y.ToSlice()
+
+				if len(xs) != len(ys) {
+					return false
+				}
+				for i, xe := range xs {
+					ye := ys[i]
+					if !DefaultLicenseComparer(xe, ye) {
+						return false
+					}
+				}
+
+				return true
+			},
+		),
+		cmp.Comparer(
+			DefaultLocationComparer,
+		),
+		cmp.Comparer(
+			DefaultLicenseComparer,
 		),
 	}
 

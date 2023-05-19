@@ -54,7 +54,7 @@ func ToSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 
 	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkg.NewCatalog(),
+			Packages:          pkg.NewCollection(),
 			LinuxDistribution: linuxReleaseFromComponents(*bom.Components),
 		},
 		Source:     extractComponents(bom.Metadata),
@@ -95,7 +95,7 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 		}
 		// TODO there must be a better way than needing to call this manually:
 		p.SetID()
-		s.Artifacts.PackageCatalog.Add(*p)
+		s.Artifacts.Packages.Add(*p)
 	}
 
 	if component.Components != nil {
@@ -206,7 +206,7 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 		return
 	}
 	for _, d := range *bom.Dependencies {
-		from, fromExists := idMap[d.Ref].(artifact.Identifiable)
+		to, fromExists := idMap[d.Ref].(artifact.Identifiable)
 		if !fromExists {
 			continue
 		}
@@ -216,7 +216,7 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 		}
 
 		for _, t := range *d.Dependencies {
-			to, toExists := idMap[t].(artifact.Identifiable)
+			from, toExists := idMap[t].(artifact.Identifiable)
 			if !toExists {
 				continue
 			}

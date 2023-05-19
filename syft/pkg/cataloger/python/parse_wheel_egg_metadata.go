@@ -12,11 +12,18 @@ import (
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/source"
 )
+
+type parsedData struct {
+	Licenses                  string `mapstructure:"License"`
+	LicenseLocation           source.Location
+	pkg.PythonPackageMetadata `mapstructure:",squash"`
+}
 
 // parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
-func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMetadata, error) {
+func parseWheelOrEggMetadata(path string, reader io.Reader) (parsedData, error) {
 	fields := make(map[string]string)
 	var key string
 
@@ -43,7 +50,7 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMe
 			// a field-body continuation
 			updatedValue, err := handleFieldBodyContinuation(key, line, fields)
 			if err != nil {
-				return pkg.PythonPackageMetadata{}, err
+				return parsedData{}, err
 			}
 
 			fields[key] = updatedValue
@@ -62,19 +69,22 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (pkg.PythonPackageMe
 	}
 
 	if err := scanner.Err(); err != nil {
-		return pkg.PythonPackageMetadata{}, fmt.Errorf("failed to parse python wheel/egg: %w", err)
+		return parsedData{}, fmt.Errorf("failed to parse python wheel/egg: %w", err)
 	}
 
-	var metadata pkg.PythonPackageMetadata
-	if err := mapstructure.Decode(fields, &metadata); err != nil {
-		return pkg.PythonPackageMetadata{}, fmt.Errorf("unable to parse APK metadata: %w", err)
+	var pd parsedData
+	if err := mapstructure.Decode(fields, &pd); err != nil {
+		return pd, fmt.Errorf("unable to parse APK metadata: %w", err)
 	}
 
 	// add additional metadata not stored in the egg/wheel metadata file
 
-	metadata.SitePackagesRootPath = determineSitePackagesRootPath(path)
+	pd.SitePackagesRootPath = determineSitePackagesRootPath(path)
+	if pd.Licenses != "" {
+		pd.LicenseLocation = source.NewLocation(path)
+	}
 
-	return metadata, nil
+	return pd, nil
 }
 
 // isEggRegularFile determines if the specified path is the regular file variant

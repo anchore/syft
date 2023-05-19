@@ -2,6 +2,7 @@ package spdxhelpers
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/spdx/tools-golang/spdx"
@@ -210,6 +211,12 @@ func Test_lookupRelationship(t *testing.T) {
 			comment: "ownership-by-file-overlap: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by",
 		},
 		{
+			input:   artifact.EvidentByRelationship,
+			exists:  true,
+			ty:      OtherRelationship,
+			comment: "evident-by: indicates the package's existence is evident by the given file",
+		},
+		{
 			input:  "made-up",
 			exists: false,
 		},
@@ -415,7 +422,7 @@ func Test_H1Digest(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			catalog := pkg.NewCatalog(test.pkg)
+			catalog := pkg.NewCollection(test.pkg)
 			pkgs := toPackages(catalog, s)
 			require.Len(t, pkgs, 1)
 			for _, p := range pkgs {
@@ -441,46 +448,40 @@ func Test_OtherLicenses(t *testing.T) {
 		{
 			name: "no licenseRef",
 			pkg: pkg.Package{
-				Licenses: []string{
-					"MIT",
-				},
+				Licenses: pkg.NewLicenseSet(),
 			},
 			expected: nil,
 		},
 		{
 			name: "single licenseRef",
 			pkg: pkg.Package{
-				Licenses: []string{
-					"un known",
-				},
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("foobar"),
+				),
 			},
 			expected: []*spdx.OtherLicense{
 				{
-					LicenseIdentifier: "LicenseRef-un-known",
-					LicenseName:       "un known",
-					ExtractedText:     NONE,
+					LicenseIdentifier: "LicenseRef-foobar",
+					ExtractedText:     "foobar",
 				},
 			},
 		},
 		{
 			name: "multiple licenseRef",
 			pkg: pkg.Package{
-				Licenses: []string{
-					"un known",
-					"not known %s",
-					"MIT",
-				},
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("internal made up license name"),
+					pkg.NewLicense("new apple license 2.0"),
+				),
 			},
 			expected: []*spdx.OtherLicense{
 				{
-					LicenseIdentifier: "LicenseRef-un-known",
-					LicenseName:       "un known",
-					ExtractedText:     NONE,
+					LicenseIdentifier: "LicenseRef-internal-made-up-license-name",
+					ExtractedText:     "internal made up license name",
 				},
 				{
-					LicenseIdentifier: "LicenseRef-not-known--s",
-					LicenseName:       "not known %s",
-					ExtractedText:     NONE,
+					LicenseIdentifier: "LicenseRef-new-apple-license-2.0",
+					ExtractedText:     "new apple license 2.0",
 				},
 			},
 		},
@@ -488,10 +489,50 @@ func Test_OtherLicenses(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			catalog := pkg.NewCatalog(test.pkg)
+			catalog := pkg.NewCollection(test.pkg)
 			otherLicenses := toOtherLicenses(catalog)
 			require.Len(t, otherLicenses, len(test.expected))
 			require.Equal(t, test.expected, otherLicenses)
+		})
+	}
+}
+
+func Test_toSPDXID(t *testing.T) {
+	tests := []struct {
+		name     string
+		it       artifact.Identifiable
+		expected string
+	}{
+		{
+			name: "short filename",
+			it: source.Coordinates{
+				RealPath: "/short/path/file.txt",
+			},
+			expected: "File-short-path-file.txt",
+		},
+		{
+			name: "long filename",
+			it: source.Coordinates{
+				RealPath: "/some/long/path/with/a/lot/of-text/that-contains-a/file.txt",
+			},
+			expected: "File-...a-lot-of-text-that-contains-a-file.txt",
+		},
+		{
+			name: "package",
+			it: pkg.Package{
+				Type: pkg.NpmPkg,
+				Name: "some-package",
+			},
+			expected: "Package-npm-some-package",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := string(toSPDXID(test.it))
+			// trim the hash
+			got = regexp.MustCompile(`-[a-z0-9]*$`).ReplaceAllString(got, "")
+			require.Equal(t, test.expected, got)
 		})
 	}
 }

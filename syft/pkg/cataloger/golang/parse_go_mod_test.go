@@ -88,10 +88,11 @@ func TestParseGoMod(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
+			c := goModCataloger{}
 			pkgtest.NewCatalogTester().
 				FromFile(t, test.fixture).
 				Expects(test.expected, nil).
-				TestParser(t, parseGoModFile)
+				TestParser(t, c.parseGoModFile)
 		})
 	}
 }
@@ -150,7 +151,7 @@ func Test_GoSumHashes(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expected, nil).
-				TestCataloger(t, NewGoModFileCataloger())
+				TestCataloger(t, NewGoModFileCataloger(GoCatalogerOpts{}))
 		})
 	}
 }

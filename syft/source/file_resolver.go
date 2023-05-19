@@ -57,3 +57,9 @@ type FileLocationResolver interface {
 	// - returns locations for any file or directory
 	AllLocations() <-chan Location
 }
+
+type WritableFileResolver interface {
+	FileResolver
+
+	Write(location Location, reader io.Reader) error
+}

@@ -10,12 +10,17 @@ import (
 )
 
 func TestDpkgCataloger(t *testing.T) {
+	licenseLocation := source.NewVirtualLocation("/usr/share/doc/libpam-runtime/copyright", "/usr/share/doc/libpam-runtime/copyright")
 	expected := []pkg.Package{
 		{
-			Name:     "libpam-runtime",
-			Version:  "1.1.8-3.6",
-			FoundBy:  "dpkgdb-cataloger",
-			Licenses: []string{"GPL-1", "GPL-2", "LGPL-2.1"},
+			Name:    "libpam-runtime",
+			Version: "1.1.8-3.6",
+			FoundBy: "dpkgdb-cataloger",
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromLocations("GPL-1", licenseLocation),
+				pkg.NewLicenseFromLocations("GPL-2", licenseLocation),
+				pkg.NewLicenseFromLocations("LGPL-2.1", licenseLocation),
+			),
 			Locations: source.NewLocationSet(
 				source.NewVirtualLocation("/var/lib/dpkg/status", "/var/lib/dpkg/status"),
 				source.NewVirtualLocation("/var/lib/dpkg/info/libpam-runtime.md5sums", "/var/lib/dpkg/info/libpam-runtime.md5sums"),

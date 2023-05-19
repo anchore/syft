@@ -54,6 +54,7 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	return bindPackageConfigOptions(cmd.Flags(), v)
 }
 
+//nolint:revive
 func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	// Formatting & Input options //////////////////////////////////////////////
 

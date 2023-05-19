@@ -21,6 +21,7 @@ func Test_ArchiveCataloger_Globs(t *testing.T) {
 				"java-archives/example.ear",
 				"java-archives/example.par",
 				"java-archives/example.sar",
+				"java-archives/example.nar",
 				"java-archives/example.jpi",
 				"java-archives/example.hpi",
 				"java-archives/example.lpkg",

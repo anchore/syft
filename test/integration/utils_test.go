@@ -16,7 +16,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	userInput := "docker-archive:" + tarPath
-	sourceInput, err := source.ParseInput(userInput, "", false)
+	sourceInput, err := source.ParseInput(userInput, "")
 	require.NoError(t, err)
 	theSource, cleanupSource, err := source.New(*sourceInput, nil, nil)
 	t.Cleanup(cleanupSource)
@@ -33,7 +33,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkgCatalog,
+			Packages:          pkgCatalog,
 			LinuxDistribution: actualDistro,
 		},
 		Relationships: relationships,
@@ -52,7 +52,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 
 func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
 	userInput := "dir:" + dir
-	sourceInput, err := source.ParseInput(userInput, "", false)
+	sourceInput, err := source.ParseInput(userInput, "")
 	require.NoError(t, err)
 	theSource, cleanupSource, err := source.New(*sourceInput, nil, nil)
 	t.Cleanup(cleanupSource)
@@ -68,7 +68,7 @@ func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkgCatalog,
+			Packages:          pkgCatalog,
 			LinuxDistribution: actualDistro,
 		},
 		Relationships: relationships,

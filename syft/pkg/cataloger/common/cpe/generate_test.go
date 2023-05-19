@@ -129,7 +129,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:jon:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:bob:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
@@ -770,6 +769,14 @@ func TestCandidateProducts(t *testing.T) {
 			expected: []string{"spring_framework", "springsource_spring_framework" /* <-- known good names | default guess --> */, "springframework"},
 		},
 		{
+			name: "spring-security-core",
+			p: pkg.Package{
+				Name: "spring-security-core",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"spring-security-core", "spring_security", "spring_security_core"},
+		},
+		{
 			name: "java",
 			p: pkg.Package{
 				Name:     "some-java-package-with-group-id",
@@ -857,6 +864,14 @@ func TestCandidateVendor(t *testing.T) {
 				Type: pkg.JavaPkg,
 			},
 			expected: []string{"elastic" /* <-- known good names | default guess --> */, "elasticsearch"},
+		},
+		{
+			name: "spring-security",
+			p: pkg.Package{
+				Name: "spring-security-core",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"vmware" /* <-- known good names | default guess --> */, "spring", "spring-security", "spring-security-core", "spring_security_core", "spring_security"},
 		},
 		{
 			name: "log4j",

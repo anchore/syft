@@ -15,10 +15,13 @@ func TestParseComposerFileLock(t *testing.T) {
 	locations := source.NewLocationSet(source.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
-			Name:         "adoy/fastcgi-client",
-			Version:      "1.0.2",
-			PURL:         "pkg:composer/adoy/fastcgi-client@1.0.2",
-			Locations:    locations,
+			Name:      "adoy/fastcgi-client",
+			Version:   "1.0.2",
+			PURL:      "pkg:composer/adoy/fastcgi-client@1.0.2",
+			Locations: locations,
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromLocations("MIT", source.NewLocation(fixture)),
+			),
 			Language:     pkg.PHP,
 			Type:         pkg.PhpComposerPkg,
 			MetadataType: pkg.PhpComposerJSONMetadataType,
@@ -37,9 +40,6 @@ func TestParseComposerFileLock(t *testing.T) {
 				},
 				Type:            "library",
 				NotificationURL: "https://packagist.org/downloads/",
-				License: []string{
-					"MIT",
-				},
 				Authors: []pkg.PhpComposerAuthors{
 					{
 						Name:  "Pierrick Charron",
@@ -55,11 +55,14 @@ func TestParseComposerFileLock(t *testing.T) {
 			},
 		},
 		{
-			Name:         "alcaeus/mongo-php-adapter",
-			Version:      "1.1.11",
-			Locations:    locations,
-			PURL:         "pkg:composer/alcaeus/mongo-php-adapter@1.1.11",
-			Language:     pkg.PHP,
+			Name:      "alcaeus/mongo-php-adapter",
+			Version:   "1.1.11",
+			Locations: locations,
+			PURL:      "pkg:composer/alcaeus/mongo-php-adapter@1.1.11",
+			Language:  pkg.PHP,
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromLocations("MIT", source.NewLocation(fixture)),
+			),
 			Type:         pkg.PhpComposerPkg,
 			MetadataType: pkg.PhpComposerJSONMetadataType,
 			Metadata: pkg.PhpComposerJSONMetadata{
@@ -91,9 +94,6 @@ func TestParseComposerFileLock(t *testing.T) {
 				},
 				Type:            "library",
 				NotificationURL: "https://packagist.org/downloads/",
-				License: []string{
-					"MIT",
-				},
 				Authors: []pkg.PhpComposerAuthors{
 					{
 						Name:  "alcaeus",

@@ -17,6 +17,49 @@ type expectedIndexes struct {
 	byPath map[string]*strset.Set
 }
 
+func TestCatalogMergePackageLicenses(t *testing.T) {
+	tests := []struct {
+		name         string
+		pkgs         []Package
+		expectedPkgs []Package
+	}{
+		{
+			name: "merges licenses of packages with equal ID",
+			pkgs: []Package{
+				{
+					id: "equal",
+					Licenses: NewLicenseSet(
+						NewLicensesFromValues("foo", "baq", "quz")...,
+					),
+				},
+				{
+					id: "equal",
+					Licenses: NewLicenseSet(
+						NewLicensesFromValues("bar", "baz", "foo", "qux")...,
+					),
+				},
+			},
+			expectedPkgs: []Package{
+				{
+					id: "equal",
+					Licenses: NewLicenseSet(
+						NewLicensesFromValues("foo", "baq", "quz", "qux", "bar", "baz")...,
+					),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			collection := NewCollection(test.pkgs...)
+			for i, p := range collection.Sorted() {
+				assert.Equal(t, test.expectedPkgs[i].Licenses, p.Licenses)
+			}
+		})
+	}
+}
+
 func TestCatalogDeleteRemovesPackages(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -145,7 +188,7 @@ func TestCatalogDeleteRemovesPackages(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := NewCatalog()
+			c := NewCollection()
 			for _, p := range test.pkgs {
 				c.Add(p)
 			}
@@ -212,13 +255,13 @@ func TestCatalogAddPopulatesIndex(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := NewCatalog(pkgs...)
+			c := NewCollection(pkgs...)
 			assertIndexes(t, c, test.expectedIndexes)
 		})
 	}
 }
 
-func assertIndexes(t *testing.T, c *Catalog, expectedIndexes expectedIndexes) {
+func assertIndexes(t *testing.T, c *Collection, expectedIndexes expectedIndexes) {
 	// assert path index
 	assert.Len(t, c.idsByPath, len(expectedIndexes.byPath), "unexpected path index length")
 	for path, expectedIds := range expectedIndexes.byPath {
@@ -306,7 +349,7 @@ func TestCatalog_PathIndexDeduplicatesRealVsVirtualPaths(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			for _, path := range test.paths {
-				actualPackages := NewCatalog(test.pkgs...).PackagesByPath(path)
+				actualPackages := NewCollection(test.pkgs...).PackagesByPath(path)
 				require.Len(t, actualPackages, 1)
 			}
 		})
@@ -327,45 +370,45 @@ func TestCatalog_MergeRecords(t *testing.T) {
 				{
 					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:1:1:*:*:*:*:*:*:*")},
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewVirtualLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/b/path",
 								FileSystemID: "a",
 							},
-							VirtualPath: "/another/path",
-						},
+							"/another/path",
+						),
 					),
 					Type: RpmPkg,
 				},
 				{
 					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:b:package:1:1:*:*:*:*:*:*:*")},
 					Locations: source.NewLocationSet(
-						source.Location{
-							Coordinates: source.Coordinates{
+						source.NewVirtualLocationFromCoordinates(
+							source.Coordinates{
 								RealPath:     "/b/path",
 								FileSystemID: "b",
 							},
-							VirtualPath: "/another/path",
-						},
+							"/another/path",
+						),
 					),
 					Type: RpmPkg,
 				},
 			},
 			expectedLocations: []source.Location{
-				{
-					Coordinates: source.Coordinates{
+				source.NewVirtualLocationFromCoordinates(
+					source.Coordinates{
 						RealPath:     "/b/path",
 						FileSystemID: "a",
 					},
-					VirtualPath: "/another/path",
-				},
-				{
-					Coordinates: source.Coordinates{
+					"/another/path",
+				),
+				source.NewVirtualLocationFromCoordinates(
+					source.Coordinates{
 						RealPath:     "/b/path",
 						FileSystemID: "b",
 					},
-					VirtualPath: "/another/path",
-				},
+					"/another/path",
+				),
 			},
 			expectedCPECount: 2,
 		},
@@ -373,7 +416,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := NewCatalog(tt.pkgs...).PackagesByPath("/b/path")
+			actual := NewCollection(tt.pkgs...).PackagesByPath("/b/path")
 			require.Len(t, actual, 1)
 			assert.Equal(t, tt.expectedLocations, actual[0].Locations.ToSlice())
 			require.Len(t, actual[0].CPEs, tt.expectedCPECount)
@@ -382,7 +425,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 }
 
 func TestCatalog_EnumerateNilCatalog(t *testing.T) {
-	var c *Catalog
+	var c *Collection
 	assert.Empty(t, c.Enumerate())
 }
 

@@ -1,5 +1,5 @@
 /*
-Package dpkg provides a concrete Cataloger implementation for Debian package DB status files.
+Package deb provides a concrete Cataloger implementation for Debian package DB status files.
 */
 package deb
 

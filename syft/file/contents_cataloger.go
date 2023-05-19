@@ -37,7 +37,7 @@ func (i *ContentsCataloger) Catalog(resolver source.FileResolver) (map[source.Co
 			return nil, err
 		}
 
-		if i.skipFilesAboveSizeInBytes > 0 && metadata.Size > i.skipFilesAboveSizeInBytes {
+		if i.skipFilesAboveSizeInBytes > 0 && metadata.Size() > i.skipFilesAboveSizeInBytes {
 			continue
 		}
 

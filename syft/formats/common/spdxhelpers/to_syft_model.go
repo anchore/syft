@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common/util"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -33,7 +34,7 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 	s := &sbom.SBOM{
 		Source: src,
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkg.NewCatalog(),
+			Packages:          pkg.NewCollection(),
 			FileMetadata:      map[source.Coordinates]source.FileMetadata{},
 			FileDigests:       map[source.Coordinates][]file.Digest{},
 			LinuxDistribution: findLinuxReleaseByPURL(doc),
@@ -110,7 +111,7 @@ func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *sp
 	for _, p := range doc.Packages {
 		syftPkg := toSyftPackage(p)
 		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
-		s.Artifacts.PackageCatalog.Add(*syftPkg)
+		s.Artifacts.Packages.Add(*syftPkg)
 	}
 }
 
@@ -176,9 +177,16 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document) [
 		var to artifact.Identifiable
 		var typ artifact.RelationshipType
 		if toLocationOk {
-			if r.Relationship == string(ContainsRelationship) {
+			switch RelationshipType(r.Relationship) {
+			case ContainsRelationship:
 				typ = artifact.ContainsRelationship
 				to = toLocation
+			case OtherRelationship:
+				// Encoding uses a specifically formatted comment...
+				if strings.Index(r.RelationshipComment, string(artifact.EvidentByRelationship)) == 0 {
+					typ = artifact.EvidentByRelationship
+					to = toLocation
+				}
 			}
 		} else {
 			switch RelationshipType(r.Relationship) {
@@ -188,7 +196,7 @@ func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document) [
 			case OtherRelationship:
 				// Encoding uses a specifically formatted comment...
 				if strings.Index(r.RelationshipComment, string(artifact.OwnershipByFileOverlapRelationship)) == 0 {
-					typ = artifact.DependencyOfRelationship
+					typ = artifact.OwnershipByFileOverlapRelationship
 					to = toPackage
 				}
 			}
@@ -220,10 +228,8 @@ func toSyftCoordinates(f *spdx.File) source.Coordinates {
 }
 
 func toSyftLocation(f *spdx.File) *source.Location {
-	return &source.Location{
-		Coordinates: toSyftCoordinates(f),
-		VirtualPath: f.FileName,
-	}
+	l := source.NewVirtualLocationFromCoordinates(toSyftCoordinates(f), f.FileName)
+	return &l
 }
 
 func requireAndTrimPrefix(val interface{}, prefix string) string {
@@ -274,7 +280,7 @@ func toSyftPackage(p *spdx.Package) *pkg.Package {
 		Type:         info.typ,
 		Name:         p.PackageName,
 		Version:      p.PackageVersion,
-		Licenses:     parseLicense(p.PackageLicenseDeclared),
+		Licenses:     pkg.NewLicenseSet(parseSPDXLicenses(p)...),
 		CPEs:         extractCPEs(p),
 		PURL:         info.purl.String(),
 		Language:     info.lang,
@@ -285,6 +291,33 @@ func toSyftPackage(p *spdx.Package) *pkg.Package {
 	sP.SetID()
 
 	return &sP
+}
+
+func parseSPDXLicenses(p *spdx.Package) []pkg.License {
+	licenses := make([]pkg.License, 0)
+
+	// concluded
+	if p.PackageLicenseConcluded != NOASSERTION && p.PackageLicenseConcluded != NONE && p.PackageLicenseConcluded != "" {
+		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseConcluded))
+		l.Type = license.Concluded
+		licenses = append(licenses, l)
+	}
+
+	// declared
+	if p.PackageLicenseDeclared != NOASSERTION && p.PackageLicenseDeclared != NONE && p.PackageLicenseDeclared != "" {
+		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseDeclared))
+		l.Type = license.Declared
+		licenses = append(licenses, l)
+	}
+
+	return licenses
+}
+
+func cleanSPDXID(id string) string {
+	if strings.HasPrefix(id, "LicenseRef-") {
+		return strings.TrimPrefix(id, "LicenseRef-")
+	}
+	return id
 }
 
 //nolint:funlen
@@ -312,7 +345,6 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 			OriginPackage: upstreamName,
 			Maintainer:    supplier,
 			Version:       p.PackageVersion,
-			License:       p.PackageLicenseDeclared,
 			Architecture:  arch,
 			URL:           p.PackageHomePage,
 			Description:   p.PackageDescription,
@@ -325,17 +357,12 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 		} else {
 			epoch = &converted
 		}
-		license := p.PackageLicenseDeclared
-		if license == "" {
-			license = p.PackageLicenseConcluded
-		}
 		return pkg.RpmMetadataType, pkg.RpmMetadata{
 			Name:      p.PackageName,
 			Version:   p.PackageVersion,
 			Epoch:     epoch,
 			Arch:      arch,
 			SourceRpm: upstreamValue,
-			License:   license,
 			Vendor:    originator,
 		}
 	case pkg.DebPkg:
@@ -394,11 +421,4 @@ func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 		}
 	}
 	return cpes
-}
-
-func parseLicense(l string) []string {
-	if l == NOASSERTION || l == NONE {
-		return nil
-	}
-	return strings.Split(l, " AND ")
 }

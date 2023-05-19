@@ -57,7 +57,7 @@ func Test_decodeJSON(t *testing.T) {
 				split = strings.SplitN(pkg, ":", 2)
 				name = split[0]
 				version = split[1]
-				for p := range bom.Artifacts.PackageCatalog.Enumerate() {
+				for p := range bom.Artifacts.Packages.Enumerate() {
 					if p.Name == name {
 						assert.Equal(t, version, p.Version)
 						continue pkgs

@@ -34,7 +34,7 @@ import (
 // CatalogPackages takes an inventory of packages from the given image from a particular perspective
 // (e.g. squashed source, all-layers source). Returns the discovered  set of packages, the identified Linux
 // distribution, and the source object used to wrap the data source.
-func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []artifact.Relationship, *linux.Release, error) {
+func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Collection, []artifact.Relationship, *linux.Release, error) {
 	resolver, err := src.FileResolver(cfg.Search.Scope)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to determine resolver while cataloging packages: %w", err)
@@ -76,7 +76,7 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []
 	return catalog, relationships, release, err
 }
 
-func newSourceRelationshipsFromCatalog(src *source.Source, c *pkg.Catalog) []artifact.Relationship {
+func newSourceRelationshipsFromCatalog(src *source.Source, c *pkg.Collection) []artifact.Relationship {
 	relationships := make([]artifact.Relationship, 0) // Should we pre-allocate this by giving catalog a Len() method?
 	for p := range c.Enumerate() {
 		relationships = append(relationships, artifact.Relationship{

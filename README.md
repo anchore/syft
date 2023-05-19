@@ -42,9 +42,12 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Erlang (rebar3)
 - Go (go.mod, Go binaries)
 - Haskell (cabal, stack)
-- Java (jar, ear, war, par, sar, native-image)
+- Java (jar, ear, war, par, sar, nar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
+- Linux kernel archives (vmlinz)
+- Linux kernel modules (ko)
+- Nix (outputs in /nix/store)
 - PHP (composer)
 - Python (wheel, egg, poetry, requirements.txt)
 - Red Hat (rpm)
@@ -110,9 +113,7 @@ The above output includes only software that is visible in the container (i.e., 
 syft <image> --scope all-layers
 ```
 
-
-
-## Supported sources
+### Supported sources
 
 Syft can generate a SBOM from a variety of sources:
 
@@ -141,45 +142,65 @@ file:path/to/yourproject/file            read directly from a path on disk (any 
 registry:yourrepo/yourimage:tag          pull image directly from a registry (no container runtime required)
 ```
 
-#### Default Cataloger Configuration by scan type
+If an image source is not provided and cannot be detected from the given reference it is assumed the image should be pulled from the Docker daemon.
+If docker is not present, then the Podman daemon is attempted next, followed by reaching out directly to the image registry last.
+
+
+This default behavior can be overridden with the `default-image-pull-source` configuration option (See [Configuration](https://github.com/anchore/syft#configuration) for more details).
+
+### Default Cataloger Configuration by scan type
 
 ##### Image Scanning:
 - alpmdb
-- rpmdb
-- dpkgdb
 - apkdb
-- portage
-- ruby-gemspec
-- python-package
-- php-composer-installed Cataloger
-- javascript-package
-- java
-- go-module-binary
+- binary
 - dotnet-deps
+- dpkgdb
+- go-module-binary
+- graalvm-native-image
+- java
+- javascript-package
+- linux-kernel
+- nix-store
+- php-composer-installed
+- portage
+- python-package
+- rpm-db
+- ruby-gemspec
+- sbom
 
 ##### Directory Scanning:
 - alpmdb
 - apkdb
-- dpkgdb
-- portage
-- rpmdb
-- ruby-gemfile
-- python-index
-- python-package
-- php-composer-lock
-- javascript-lock
-- java
-- java-pom
-- go-module-binary
-- go-mod-file
-- rust-cargo-lock
-- dartlang-lock
-- dotnet-deps
+- binary
 - cocoapods
 - conan
-- hackage
+- dartlang-lock
+- dotnet-deps
+- dpkgdb
+- elixir-mix-lock
+- erlang-rebar-lock
+- go-mod-file
+- go-module-binary
+- graalvm-native-image
+- haskell
+- java
+- java-gradle-lockfile
+- java-pom
+- javascript-lock
+- linux-kernel
+- nix-store
+- php-composer-lock
+- portage
+- python-index
+- python-package
+- rpm-db
+- rpm-file
+- ruby-gemfile
+- rust-cargo-lock
+- sbom
 
-#### Non Default:
+##### Non Default:
 - cargo-auditable-binary
 
 ### Excluding file paths
@@ -213,8 +234,10 @@ Where the `formats` available are:
 - `text`: A row-oriented, human-and-machine-friendly output.
 - `cyclonedx-xml`: A XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
 - `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
-- `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
-- `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
+- `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.3 specification](https://spdx.github.io/spdx-spec/v2.3/).
+- `spdx-tag-value@2.2`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/v2.2.2/).
+- `spdx-json`: A JSON report conforming to the [SPDX 2.3 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.3/schemas/spdx-schema.json).
+- `spdx-json@2.2`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `github`: A JSON report conforming to GitHub's dependency snapshot format.
 - `table`: A columnar summary (default).
 - `template`: Lets the user specify the output format. See ["Using templates"](#using-templates) below.
@@ -251,6 +274,8 @@ Which would produce output like:
 ```
 
 Syft also includes a vast array of utility templating functions from [sprig](http://masterminds.github.io/sprig/) apart from the default Golang [text/template](https://pkg.go.dev/text/template#hdr-Functions) to allow users to customize the output format.
+
+Lastly, Syft has custom templating functions defined in `./syft/format/template/encoder.go` to help parse the passed-in JSON structs.
 
 ## Multiple outputs
 
@@ -391,7 +416,7 @@ Certificate subject:  test.email@testdomain.com
 Certificate issuer URL:  https://accounts.google.com
 ```
 
-#### Local private key support
+### Local private key support
 
 To generate an SBOM attestation for a container image using a local private key:
 ```
@@ -434,6 +459,10 @@ file: ""
 # same as SYFT_CHECK_FOR_APP_UPDATE env var
 check-for-app-update: true
 
+# allows users to specify which image source should be used to generate the sbom
+# valid values are: registry, docker, podman
+default-image-pull-source: ""
+
 # a list of globs to exclude from scanning. same as --exclude ; for example:
 # exclude:
 #   - "/etc/**"
@@ -447,26 +476,39 @@ platform: ""
 # set the list of package catalogers to use when generating the SBOM
 # default = empty (cataloger set determined automatically by the source type [image or file/directory])
 # catalogers:
-#   - ruby-gemfile
-#   - ruby-gemspec
-#   - python-index
-#   - python-package
-#   - javascript-lock
-#   - javascript-package
-#   - php-composer-installed
-#   - php-composer-lock
-#   - alpmdb
-#   - dpkgdb
-#   - rpmdb
-#   - java
-#   - apkdb
-#   - go-module-binary
-#   - go-mod-file
-#   - dartlang-lock
-#   - rust
-#   - dotnet-deps
-# rust-audit-binary scans Rust binaries built with https://github.com/Shnatsel/rust-audit
-#   - rust-audit-binary
+#   - alpmdb-cataloger
+#   - apkdb-cataloger
+#   - binary-cataloger
+#   - cargo-auditable-binary-cataloger
+#   - cocoapods-cataloger
+#   - conan-cataloger
+#   - dartlang-lock-cataloger
+#   - dotnet-deps-cataloger
+#   - dpkgdb-cataloger
+#   - elixir-mix-lock-cataloger
+#   - erlang-rebar-lock-cataloger
+#   - go-mod-file-cataloger
+#   - go-module-binary-cataloger
+#   - graalvm-native-image-cataloger
+#   - haskell-cataloger
+#   - java-cataloger
+#   - java-gradle-lockfile-cataloger
+#   - java-pom-cataloger
+#   - javascript-lock-cataloger
+#   - javascript-package-cataloger
+#   - linux-kernel-cataloger
+#   - nix-store-cataloger
+#   - php-composer-installed-cataloger
+#   - php-composer-lock-cataloger
+#   - portage-cataloger
+#   - python-index-cataloger
+#   - python-package-cataloger
+#   - rpm-db-cataloger
+#   - rpm-file-cataloger
+#   - ruby-gemfile-cataloger
+#   - ruby-gemspec-cataloger
+#   - rust-cargo-lock-cataloger
+#   - sbom-cataloger
 catalogers:
 
 # cataloging packages is exposed through the packages and power-user subcommands
@@ -491,6 +533,35 @@ package:
     # the search space to look for packages (options: all-layers, squashed)
     # same as -s ; SYFT_PACKAGE_CATALOGER_SCOPE env var
     scope: "squashed"
+
+golang:
+   # search for go package licences in the GOPATH of the system running Syft, note that this is outside the
+   # container filesystem and potentially outside the root of a local directory scan
+   # SYFT_GOLANG_SEARCH_LOCAL_MOD_CACHE_LICENSES env var
+   search-local-mod-cache-licenses: false
+   
+   # specify an explicit go mod cache directory, if unset this defaults to $GOPATH/pkg/mod or $HOME/go/pkg/mod
+   # SYFT_GOLANG_LOCAL_MOD_CACHE_DIR env var
+   local-mod-cache-dir: ""
+
+   # search for go package licences by retrieving the package from a network proxy
+   # SYFT_GOLANG_SEARCH_REMOTE_LICENSES env var
+   search-remote-licenses: false
+
+   # remote proxy to use when retrieving go packages from the network,
+   # if unset this defaults to $GOPROXY followed by https://proxy.golang.org
+   # SYFT_GOLANG_PROXY env var
+   proxy: ""
+
+   # specifies packages which should not be fetched by proxy
+   # if unset this defaults to $GONOPROXY
+   # SYFT_GOLANG_NOPROXY env var
+   no-proxy: ""
+
+linux-kernel:
+   # whether to catalog linux kernel modules found within lib/modules/** directories
+   # SYFT_LINUX_KERNEL_CATALOG_MODULES env var
+   catalog-modules: true
 
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:

@@ -3,7 +3,6 @@ package rpm
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
 	"github.com/sassoftware/go-rpmutils"
@@ -34,20 +33,22 @@ func parseRpm(_ source.FileResolver, _ *generic.Environment, reader source.Locat
 	size, _ := rpm.Header.InstalledSize()
 	files, _ := rpm.Header.GetFiles()
 
-	metadata := pkg.RpmMetadata{
-		Name:      nevra.Name,
-		Version:   nevra.Version,
-		Epoch:     parseEpoch(nevra.Epoch),
-		Arch:      nevra.Arch,
-		Release:   nevra.Release,
-		SourceRpm: sourceRpm,
-		Vendor:    vendor,
-		License:   strings.Join(licenses, " AND "), // TODO: AND conjunction is not necessarily correct, but we don't have a way to represent multiple licenses yet
-		Size:      int(size),
-		Files:     mapFiles(files, digestAlgorithm),
+	pd := parsedData{
+		Licenses: pkg.NewLicensesFromLocation(reader.Location, licenses...),
+		RpmMetadata: pkg.RpmMetadata{
+			Name:      nevra.Name,
+			Version:   nevra.Version,
+			Epoch:     parseEpoch(nevra.Epoch),
+			Arch:      nevra.Arch,
+			Release:   nevra.Release,
+			SourceRpm: sourceRpm,
+			Vendor:    vendor,
+			Size:      int(size),
+			Files:     mapFiles(files, digestAlgorithm),
+		},
 	}
 
-	return []pkg.Package{newPackage(reader.Location, metadata, nil)}, nil, nil
+	return []pkg.Package{newPackage(reader.Location, pd, nil)}, nil, nil
 }
 
 func getDigestAlgorithm(header *rpmutils.RpmHeader) string {

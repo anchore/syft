@@ -24,6 +24,19 @@ func TestFormatWithOption(t *testing.T) {
 
 }
 
+func TestFormatWithOptionAndHasField(t *testing.T) {
+	f := OutputFormat{}
+	f.SetTemplatePath("test-fixtures/csv-hasField.template")
+
+	testutils.AssertEncoderAgainstGoldenSnapshot(t,
+		f,
+		testutils.DirectoryInputWithAuthorField(t),
+		*updateTmpl,
+		false,
+	)
+
+}
+
 func TestFormatWithoutOptions(t *testing.T) {
 	f := Format()
 	err := f.Encode(nil, testutils.DirectoryInput(t))

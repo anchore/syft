@@ -15,8 +15,10 @@ func NewStringSet(start ...string) StringSet {
 }
 
 // Add a string to the set.
-func (s StringSet) Add(i string) {
-	s[i] = struct{}{}
+func (s StringSet) Add(i ...string) {
+	for _, str := range i {
+		s[str] = struct{}{}
+	}
 }
 
 // Remove a string from the set.
@@ -40,4 +42,20 @@ func (s StringSet) ToSlice() []string {
 	}
 	sort.Strings(ret)
 	return ret
+}
+
+func (s StringSet) Equals(o StringSet) bool {
+	if len(s) != len(o) {
+		return false
+	}
+	for k := range s {
+		if !o.Contains(k) {
+			return false
+		}
+	}
+	return true
+}
+
+func (s StringSet) Empty() bool {
+	return len(s) < 1
 }

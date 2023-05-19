@@ -29,32 +29,40 @@ can be extended to include specific package metadata struct shapes in the future
 // not matter as long as it is exported.
 
 // TODO: this should be generated from reflection of whats in the pkg package
+// Should be created during generation below; use reflection's ability to
+// create types at runtime.
+// should be same name as struct minus metadata
 type artifactMetadataContainer struct {
-	Alpm              pkg.AlpmMetadata
-	Apk               pkg.ApkMetadata
-	Binary            pkg.BinaryMetadata
-	Cocopods          pkg.CocoapodsMetadata
-	Conan             pkg.ConanMetadata
-	ConanLock         pkg.ConanLockMetadata
-	Dart              pkg.DartPubMetadata
-	Dotnet            pkg.DotnetDepsMetadata
-	Dpkg              pkg.DpkgMetadata
-	Gem               pkg.GemMetadata
-	GoBin             pkg.GolangBinMetadata
-	GoMod             pkg.GolangModMetadata
-	Hackage           pkg.HackageMetadata
-	Java              pkg.JavaMetadata
-	KbPackage         pkg.KbPackageMetadata
-	NpmPackage        pkg.NpmPackageJSONMetadata
-	NpmPackageLock    pkg.NpmPackageLockJSONMetadata
-	MixLock           pkg.MixLockMetadata
-	Php               pkg.PhpComposerJSONMetadata
-	Portage           pkg.PortageMetadata
-	PythonPackage     pkg.PythonPackageMetadata
-	PythonPipfilelock pkg.PythonPipfileLockMetadata
-	Rebar             pkg.RebarLockMetadata
-	Rpm               pkg.RpmMetadata
-	RustCargo         pkg.CargoPackageMetadata
+	Alpm               pkg.AlpmMetadata
+	Apk                pkg.ApkMetadata
+	Binary             pkg.BinaryMetadata
+	Cocopods           pkg.CocoapodsMetadata
+	Conan              pkg.ConanMetadata
+	ConanLock          pkg.ConanLockMetadata
+	Dart               pkg.DartPubMetadata
+	Dotnet             pkg.DotnetDepsMetadata
+	Dpkg               pkg.DpkgMetadata
+	Gem                pkg.GemMetadata
+	GoBin              pkg.GolangBinMetadata
+	GoMod              pkg.GolangModMetadata
+	Hackage            pkg.HackageMetadata
+	Java               pkg.JavaMetadata
+	KbPackage          pkg.KbPackageMetadata
+	LinuxKernel        pkg.LinuxKernelMetadata
+	LinuxKernelModule  pkg.LinuxKernelModuleMetadata
+	Nix                pkg.NixStoreMetadata
+	NpmPackage         pkg.NpmPackageJSONMetadata
+	NpmPackageLock     pkg.NpmPackageLockJSONMetadata
+	MixLock            pkg.MixLockMetadata
+	Php                pkg.PhpComposerJSONMetadata
+	Portage            pkg.PortageMetadata
+	PythonPackage      pkg.PythonPackageMetadata
+	PythonPipfilelock  pkg.PythonPipfileLockMetadata
+	PythonRequirements pkg.PythonRequirementsMetadata
+	RDescriptionFile   pkg.RDescriptionFileMetadata
+	Rebar              pkg.RebarLockMetadata
+	Rpm                pkg.RpmMetadata
+	RustCargo          pkg.CargoPackageMetadata
 }
 
 func main() {
@@ -70,7 +78,6 @@ func build() *jsonschema.Schema {
 	}
 	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&syftjsonModel.Document{}))
 	metadataSchema := reflector.ReflectFromType(reflect.TypeOf(&artifactMetadataContainer{}))
-
 	// TODO: inject source definitions
 
 	// inject the definitions of all metadatas into the schema definitions

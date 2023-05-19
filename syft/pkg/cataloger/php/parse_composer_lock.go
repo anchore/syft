@@ -14,9 +14,14 @@ import (
 
 var _ generic.Parser = parseComposerLock
 
+type parsedData struct {
+	License []string `json:"license"`
+	pkg.PhpComposerJSONMetadata
+}
+
 type composerLock struct {
-	Packages   []pkg.PhpComposerJSONMetadata `json:"packages"`
-	PackageDev []pkg.PhpComposerJSONMetadata `json:"packages-dev"`
+	Packages   []parsedData `json:"packages"`
+	PackageDev []parsedData `json:"packages-dev"`
 }
 
 // parseComposerLock is a parser function for Composer.lock contents, returning "Default" php packages discovered.
@@ -32,8 +37,19 @@ func parseComposerLock(_ source.FileResolver, _ *generic.Environment, reader sou
 			return nil, nil, fmt.Errorf("failed to parse composer.lock file: %w", err)
 		}
 		for _, m := range lock.Packages {
-			pkgs = append(pkgs, newComposerLockPackage(m, reader.Location))
+			pkgs = append(
+				pkgs,
+				newComposerLockPackage(
+					m,
+					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				),
+			)
 		}
+
+		// TODO: did we omit this on purpose?
+		// for _, m := range lock.PackageDev {
+		//	pkgs = append(pkgs, newComposerLockPackage(m, reader.Location))
+		//}
 	}
 
 	return pkgs, nil, nil

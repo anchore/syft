@@ -24,6 +24,7 @@ var archiveFormatGlobs = []string{
 	"**/*.ear",
 	"**/*.par",
 	"**/*.sar",
+	"**/*.nar",
 	"**/*.jpi",
 	"**/*.hpi",
 	"**/*.lpkg", // Zip-compressed package used to deploy applications
@@ -184,12 +185,16 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		log.Warnf("failed to create digest for file=%q: %+v", j.archivePath, err)
 	}
 
+	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
+	licenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
 	return &pkg.Package{
-		Name:         selectName(manifest, j.fileInfo),
-		Version:      selectVersion(manifest, j.fileInfo),
-		Licenses:     selectLicense(manifest),
-		Language:     pkg.Java,
-		Locations:    source.NewLocationSet(j.location),
+		Name:     selectName(manifest, j.fileInfo),
+		Version:  selectVersion(manifest, j.fileInfo),
+		Language: pkg.Java,
+		Licenses: pkg.NewLicenseSet(licenses...),
+		Locations: source.NewLocationSet(
+			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
 		Type:         j.fileInfo.pkgType(),
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
@@ -379,9 +384,11 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 
 	// discovered props = new package
 	p := pkg.Package{
-		Name:         pomProperties.ArtifactID,
-		Version:      pomProperties.Version,
-		Locations:    source.NewLocationSet(location),
+		Name:    pomProperties.ArtifactID,
+		Version: pomProperties.Version,
+		Locations: source.NewLocationSet(
+			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
 		Language:     pkg.Java,
 		Type:         pomProperties.PkgTypeIndicated(),
 		MetadataType: pkg.JavaMetadataType,

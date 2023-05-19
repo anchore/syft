@@ -29,7 +29,8 @@ const maxBarWidth = 50
 const statusSet = components.SpinnerDotSet
 const completedStatus = "✔"
 const failedStatus = "✘"
-const tileFormat = color.Bold
+const titleFormat = color.Bold
+const subTitleFormat = color.Normal
 const interval = 150 * time.Millisecond
 
 // StatusTitleColumn is the column index in a given row where status text will be displayed.
@@ -42,6 +43,7 @@ var (
 	dockerPullExtractColor   = color.White
 	dockerPullStageChars     = strings.Split("▁▃▄▅▆▇█", "")
 	statusTitleTemplate      = fmt.Sprintf(" %%s %%-%ds ", StatusTitleColumn)
+	subStatusTitleTemplate   = fmt.Sprintf("   └── %%-%ds ", StatusTitleColumn-3)
 )
 
 // startProcess is a helper function for providing common elements for long-running UI elements (such as a
@@ -83,7 +85,7 @@ func formatDockerPullPhase(phase docker.PullPhase, inputStr string) string {
 func formatDockerImagePullStatus(pullStatus *docker.PullStatus, spinner *components.Spinner, line *frame.Line) {
 	var size, current uint64
 
-	title := tileFormat.Sprint("Pulling image")
+	title := titleFormat.Sprint("Pulling image")
 
 	layers := pullStatus.Layers()
 	status := make(map[docker.LayerID]docker.LayerState)
@@ -180,7 +182,7 @@ func PullDockerImageHandler(ctx context.Context, fr *frame.Frame, event partybus
 
 		if pullStatus.Complete() {
 			spin := color.Green.Sprint(completedStatus)
-			title := tileFormat.Sprint("Pulled image")
+			title := titleFormat.Sprint("Pulled image")
 			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
 		}
 	}()
@@ -202,7 +204,7 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 
 	formatter, spinner := startProcess()
 	stream := progress.Stream(ctx, prog, interval)
-	title := tileFormat.Sprint("Loading image")
+	title := titleFormat.Sprint("Loading image")
 
 	formatFn := func(p progress.Progress) {
 		progStr, err := formatter.Format(p)
@@ -224,7 +226,7 @@ func FetchImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Even
 		}
 
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Loaded image")
+		title = titleFormat.Sprint("Loaded image")
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
 	}()
 	return err
@@ -246,7 +248,7 @@ func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event
 
 	formatter, spinner := startProcess()
 	stream := progress.Stream(ctx, prog, interval)
-	title := tileFormat.Sprint("Parsing image")
+	title := titleFormat.Sprint("Parsing image")
 
 	formatFn := func(p progress.Progress) {
 		progStr, err := formatter.Format(p)
@@ -267,7 +269,7 @@ func ReadImageHandler(ctx context.Context, fr *frame.Frame, event partybus.Event
 		}
 
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Parsed image")
+		title = titleFormat.Sprint("Parsed image")
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
 	}()
 
@@ -290,7 +292,7 @@ func PackageCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event 
 
 	_, spinner := startProcess()
 	stream := progress.StreamMonitors(ctx, []progress.Monitorable{monitor.FilesProcessed, monitor.PackagesDiscovered}, interval)
-	title := tileFormat.Sprint("Cataloging packages")
+	title := titleFormat.Sprint("Cataloging packages")
 
 	formatFn := func(p int64) {
 		spin := color.Magenta.Sprint(spinner.Next())
@@ -307,7 +309,7 @@ func PackageCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event 
 		}
 
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Cataloged packages")
+		title = titleFormat.Sprint("Cataloged packages")
 		auxInfo := auxInfoFormat.Sprintf("[%d packages]", monitor.PackagesDiscovered.Current())
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
 	}()
@@ -330,7 +332,7 @@ func SecretsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event 
 
 	formatter, spinner := startProcess()
 	stream := progress.Stream(ctx, prog, interval)
-	title := tileFormat.Sprint("Cataloging secrets")
+	title := titleFormat.Sprint("Cataloging secrets")
 
 	formatFn := func(p progress.Progress) {
 		progStr, err := formatter.Format(p)
@@ -352,7 +354,7 @@ func SecretsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, event 
 		}
 
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Cataloged secrets")
+		title = titleFormat.Sprint("Cataloged secrets")
 		auxInfo := auxInfoFormat.Sprintf("[%d secrets]", prog.SecretsDiscovered.Current())
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
 	}()
@@ -376,7 +378,7 @@ func FileMetadataCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, e
 
 	formatter, spinner := startProcess()
 	stream := progress.Stream(ctx, prog, interval)
-	title := tileFormat.Sprint("Cataloging file metadata")
+	title := titleFormat.Sprint("Cataloging file metadata")
 
 	formatFn := func(p progress.Progress) {
 		progStr, err := formatter.Format(p)
@@ -397,7 +399,7 @@ func FileMetadataCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, e
 		}
 
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Cataloged file metadata")
+		title = titleFormat.Sprint("Cataloged file metadata")
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
 	}()
 	return err
@@ -418,7 +420,7 @@ func FileIndexingStartedHandler(ctx context.Context, fr *frame.Frame, event part
 
 	_, spinner := startProcess()
 	stream := progress.Stream(ctx, prog, interval)
-	title := tileFormat.Sprintf("Indexing %s", path)
+	title := titleFormat.Sprintf("Indexing %s", path)
 
 	formatFn := func(_ progress.Progress) {
 		spin := color.Magenta.Sprint(spinner.Next())
@@ -439,7 +441,7 @@ func FileIndexingStartedHandler(ctx context.Context, fr *frame.Frame, event part
 		}
 
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprintf("Indexed %s", path)
+		title = titleFormat.Sprintf("Indexed %s", path)
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
 	}()
 	return err
@@ -462,7 +464,7 @@ func FileDigestsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, ev
 
 	formatter, spinner := startProcess()
 	stream := progress.Stream(ctx, prog, interval)
-	title := tileFormat.Sprint("Cataloging file digests")
+	title := titleFormat.Sprint("Cataloging file digests")
 
 	formatFn := func(p progress.Progress) {
 		progStr, err := formatter.Format(p)
@@ -483,7 +485,7 @@ func FileDigestsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, ev
 		}
 
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Cataloged file digests")
+		title = titleFormat.Sprint("Cataloged file digests")
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
 	}()
 	return err
@@ -504,7 +506,7 @@ func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.E
 
 	formatter, spinner := startProcess()
 	stream := progress.Stream(ctx, prog, interval)
-	title := tileFormat.Sprint("Uploading image")
+	title := titleFormat.Sprint("Uploading image")
 
 	formatFn := func(p progress.Progress) {
 		progStr, err := formatter.Format(p)
@@ -526,7 +528,7 @@ func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.E
 		}
 
 		spin := color.Green.Sprint(completedStatus)
-		title = tileFormat.Sprint("Uploaded image")
+		title = titleFormat.Sprint("Uploaded image")
 		auxInfo := auxInfoFormat.Sprintf("[%s]", host)
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
 	}()
@@ -550,7 +552,7 @@ func AttestationStartedHandler(ctx context.Context, fr *frame.Frame, event party
 
 	_, spinner := startProcess()
 
-	title := tileFormat.Sprintf(taskInfo.Title.WhileRunning)
+	title := titleFormat.Sprintf(taskInfo.Title.WhileRunning)
 
 	s := bufio.NewScanner(reader)
 	l := list.New()
@@ -569,7 +571,7 @@ func AttestationStartedHandler(ctx context.Context, fr *frame.Frame, event party
 			spin = color.Red.Sprint(failedStatus)
 			aux = prog.Error().Error()
 		} else {
-			title = tileFormat.Sprintf(taskInfo.Title.OnSuccess)
+			title = titleFormat.Sprintf(taskInfo.Title.OnSuccess)
 		}
 
 		auxInfo := auxInfoFormat.Sprintf("[%s]", aux)
@@ -647,4 +649,71 @@ func AttestationStartedHandler(ctx context.Context, fr *frame.Frame, event party
 		formatComplete(tlogEntry)
 	}()
 	return nil
+}
+
+// CatalogerTaskStartedHandler shows the intermittent progress for a cataloger subprocess messages
+func CatalogerTaskStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	prog, err := syftEventParsers.ParseCatalogerTaskStarted(event)
+	if err != nil {
+		return fmt.Errorf("bad %s event: %w", event.Type, err)
+	}
+
+	line, err := fr.Append()
+	if err != nil {
+		return err
+	}
+	wg.Add(1)
+
+	stream := progress.Stream(ctx, prog.GetMonitor(), interval)
+
+	_, spinner := startProcess()
+
+	formatLine := func(complete bool, auxInfo string) string {
+		title := prog.Title
+		if complete && prog.TitleOnCompletion != "" {
+			title = prog.TitleOnCompletion
+		}
+		if prog.SubStatus {
+			title = subTitleFormat.Sprintf("%s", title)
+			if auxInfo == "" {
+				return fmt.Sprintf(subStatusTitleTemplate, title)
+			}
+			return fmt.Sprintf(subStatusTitleTemplate+"%s", title, auxInfo)
+		}
+
+		spin := color.Magenta.Sprint(spinner.Next())
+		if complete {
+			spin = color.Green.Sprint(completedStatus)
+		}
+		title = titleFormat.Sprintf("%s", title)
+		if auxInfo == "" {
+			return fmt.Sprintf(statusTitleTemplate, spin, title)
+		}
+		return fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo)
+	}
+
+	formatFn := func() {
+		if err != nil {
+			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
+		} else {
+			auxInfo := auxInfoFormat.Sprintf("[%s]", internal.TruncateMiddleEllipsis(prog.GetValue(), 100))
+			_, _ = io.WriteString(line, formatLine(false, auxInfo))
+		}
+	}
+
+	go func() {
+		defer wg.Done()
+
+		formatFn()
+		for range stream {
+			formatFn()
+		}
+
+		if prog.RemoveOnCompletion {
+			_ = fr.Remove(line)
+		} else {
+			_, _ = io.WriteString(line, formatLine(true, ""))
+		}
+	}()
+	return err
 }
