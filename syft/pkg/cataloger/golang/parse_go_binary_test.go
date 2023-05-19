@@ -512,3 +512,149 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		})
 	}
 }
+
+func Test_extractVersionFromLDFlags(t *testing.T) {
+	tests := []struct {
+		name             string
+		ldflags          string
+		wantMajorVersion string
+		wantFullVersion  string
+	}{
+		{
+			name:    "empty ldflags",
+			ldflags: "",
+		},
+		{
+			name:             "syft ldflags",
+			ldflags:          `	build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0 -X github.com/anchore/syft/internal/version.gitCommit=b2b332e8b2b66af0905e98b54ebd713a922be1a8 -X github.com/anchore/syft/internal/version.buildDate=2023-04-21T16:20:25Z -X github.com/anchore/syft/internal/version.gitDescription=v0.79.0 "`,
+			wantMajorVersion: "0",
+			wantFullVersion:  "v0.79.0",
+		},
+		{
+			name: "kubectl ldflags",
+			ldflags: `	build	-asmflags=all=-trimpath=/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes
+	build	-compiler=gc
+	build	-gcflags="all=-trimpath=/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes "
+	build	-ldflags="all=-X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.buildDate=2023-04-12T12:16:51Z' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.buildDate=2023-04-12T12:16:51Z' -X 'k8s.io/client-go/pkg/version.buildDate=2023-04-12T12:16:51Z' -X 'k8s.io/component-base/version.buildDate=2023-04-12T12:16:51Z' -X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.gitCommit=a1a87a0a2bcd605820920c6b0e618a8ab7d117d4' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.gitCommit=a1a87a0a2bcd605820920c6b0e618a8ab7d117d4' -X 'k8s.io/client-go/pkg/version.gitCommit=a1a87a0a2bcd605820920c6b0e618a8ab7d117d4' -X 'k8s.io/component-base/version.gitCommit=a1a87a0a2bcd605820920c6b0e618a8ab7d117d4' -X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.gitTreeState=clean' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.gitTreeState=clean' -X 'k8s.io/client-go/pkg/version.gitTreeState=clean' -X 'k8s.io/component-base/version.gitTreeState=clean' -X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.gitVersion=v1.25.9' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.gitVersion=v1.25.9' -X 'k8s.io/client-go/pkg/version.gitVersion=v1.25.9' -X 'k8s.io/component-base/version.gitVersion=v1.25.9' -X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.gitMajor=1' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.gitMajor=1' -X 'k8s.io/client-go/pkg/version.gitMajor=1' -X 'k8s.io/component-base/version.gitMajor=1' -X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.gitMinor=25' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.gitMinor=25' -X 'k8s.io/client-go/pkg/version.gitMinor=25' -X 'k8s.io/component-base/version.gitMinor=25'  -s -w"`,
+			wantMajorVersion: "1",
+			wantFullVersion:  "v1.25.9",
+		},
+		{
+			name:             "nerdctl ldflags",
+			ldflags:          `	build	-ldflags="-s -w -X github.com/containerd/nerdctl/pkg/version.Version=v1.3.1 -X github.com/containerd/nerdctl/pkg/version.Revision=b224b280ff3086516763c7335fc0e0997aca617a"`,
+			wantMajorVersion: "1",
+			wantFullVersion:  "v1.3.1",
+		},
+		{
+			name:             "limactl ldflags",
+			ldflags:          `	build	-ldflags="-s -w -X github.com/lima-vm/lima/pkg/version.Version=v0.15.1"`,
+			wantMajorVersion: "0",
+			wantFullVersion:  "v0.15.1",
+		},
+		{
+			name:             "terraform ldflags",
+			ldflags:          `	build	-ldflags="-w -s -X 'github.com/hashicorp/terraform/version.Version=1.4.6' -X 'github.com/hashicorp/terraform/version.Prerelease='"`,
+			wantMajorVersion: "1",
+			wantFullVersion:  "v1.4.6",
+		},
+		{
+			name: "kube-apiserver ldflags",
+			ldflags: `	build	-asmflags=all=-trimpath=/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	-gcflags="all=-trimpath=/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes "
+	build	-ldflags="all=-X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.buildDate=2023-04-14T13:14:42Z' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.buildDate=2023-04-14T13:14:42Z' -X 'k8s.io/client-go/pkg/version.buildDate=2023-04-14T13:14:42Z' -X 'k8s.io/component-base/version.buildDate=2023-04-14T13:14:42Z' -X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.gitCommit=4c9411232e10168d7b050c49a1b59f6df9d7ea4b' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.gitCommit=4c9411232e10168d7b050c49a1b59f6df9d7ea4b' -X 'k8s.io/client-go/pkg/version.gitCommit=4c9411232e10168d7b050c49a1b59f6df9d7ea4b' -X 'k8s.io/component-base/version.gitCommit=4c9411232e10168d7b050c49a1b59f6df9d7ea4b' -X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.gitTreeState=clean' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.gitTreeState=clean' -X 'k8s.io/client-go/pkg/version.gitTreeState=clean' -X 'k8s.io/component-base/version.gitTreeState=clean' -X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.gitVersion=v1.27.1' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.gitVersion=v1.27.1' -X 'k8s.io/client-go/pkg/version.gitVersion=v1.27.1' -X 'k8s.io/component-base/version.gitVersion=v1.27.1' -X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.gitMajor=1' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.gitMajor=1' -X 'k8s.io/client-go/pkg/version.gitMajor=1' -X 'k8s.io/component-base/version.gitMajor=1' -X 'k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.gitMinor=27' -X 'k8s.io/kubernetes/vendor/k8s.io/component-base/version.gitMinor=27' -X 'k8s.io/client-go/pkg/version.gitMinor=27' -X 'k8s.io/component-base/version.gitMinor=27'  -s -w"`,
+			wantMajorVersion: "1",
+			wantFullVersion:  "v1.27.1",
+		},
+		{
+			name: "prometheus ldflags",
+			ldflags: `	build	-ldflags="-X github.com/prometheus/common/version.Version=2.44.0 -X github.com/prometheus/common/version.Revision=1ac5131f698ebc60f13fe2727f89b115a41f6558 -X github.com/prometheus/common/version.Branch=HEAD -X github.com/prometheus/common/version.BuildUser=root@739e8181c5db -X github.com/prometheus/common/version.BuildDate=20230514-06:18:11  -extldflags '-static'"
+	build	-tags=netgo,builtinassets,stringlabels`,
+			wantMajorVersion: "2",
+			wantFullVersion:  "v2.44.0",
+		},
+		{
+			name: "influxdb ldflags",
+			ldflags: `	build	-ldflags="-s -w -X main.version=v2.7.1 -X main.commit=407fa622e9 -X main.date=2023-04-28T13:24:27Z -linkmode=external -extld=/musl/x86_64/bin/musl-gcc -extldflags '-fno-PIC -static-pie -Wl,-z,stack-size=8388608'"
+	build	-tags=assets,sqlite_foreign_keys,sqlite_json,static_build,noasm`,
+			wantMajorVersion: "2",
+			wantFullVersion:  "v2.7.1",
+		},
+		{
+			name:             "gitea ldflags",
+			ldflags:          `	build	-ldflags=" -X \"main.MakeVersion=GNU Make 4.1\" -X \"main.Version=1.19.3\" -X \"main.Tags=bindata sqlite sqlite_unlock_notify\" "`,
+			wantMajorVersion: "1",
+			wantFullVersion:  "v1.19.3",
+		},
+		{
+			name:             "docker sbom cli ldflags",
+			ldflags:          `	build	-ldflags="-w -s -extldflags '-static' -X github.com/docker/sbom-cli-plugin/internal/version.version=0.6.1-SNAPSHOT-02cf1c8 -X github.com/docker/sbom-cli-plugin/internal/version.gitCommit=02cf1c888ad6662109ac6e3be618392514a56316 -X github.com/docker/sbom-cli-plugin/internal/version.gitDescription=v0.6.1-dirty "`,
+			wantMajorVersion: "0",
+			wantFullVersion:  "v0.6.1-SNAPSHOT-02cf1c8",
+		},
+		{
+			name:             "docker scout ldflags",
+			ldflags:          `	build	-ldflags="-w -s -extldflags '-static' -X github.com/docker/scout-cli-plugin/internal.version=0.10.0 "`,
+			wantMajorVersion: "0",
+			wantFullVersion:  "v0.10.0",
+		},
+		{
+			name:             "influx telegraf ldflags",
+			ldflags:          `	build	-ldflags="-w -s -X github.com/influxdata/telegraf/internal.Commit=a3a884a1 -X github.com/influxdata/telegraf/internal.Branch=HEAD -X github.com/influxdata/telegraf/internal.Version=1.26.2"`,
+			wantMajorVersion: "1",
+			wantFullVersion:  "v1.26.2",
+		},
+		//////////////////////////////////////////////////////////////////
+		// negative cases
+		{
+			name:    "hugo ldflags",
+			ldflags: `	build	-ldflags="-s -w -X github.com/gohugoio/hugo/common/hugo.vendorInfo=gohugoio"`,
+		},
+		{
+			name:    "ghostunnel ldflags",
+			ldflags: `	build	-ldflags="-X main.version=77d9aaa"`,
+		},
+		{
+			name:    "opa ldflags",
+			ldflags: `build	-ldflags=" -X github.com/open-policy-agent/opa/version.Hostname=9549178459bc"`,
+		},
+		///////////////////////////////////////////////////////////////////
+		// trickier cases
+		{
+			name:             "macvlan plugin for cri-o ldflags",
+			ldflags:          `	build	-ldflags="-extldflags -static -X github.com/containernetworking/plugins/pkg/utils/buildversion.BuildVersion=v1.2.0"`,
+			wantMajorVersion: "1",
+			wantFullVersion:  "v1.2.0",
+		},
+		{
+			name:             "coder ldflags",
+			ldflags:          `	build	-ldflags="-s -w -X 'github.com/coder/coder/buildinfo.tag=0.23.4'"`,
+			wantMajorVersion: "0",
+			wantFullVersion:  "v0.23.4",
+		},
+		///////////////////////////////////////////////////////////////////
+		// don't know how to handle these... yet
+		//{
+		//	// package name: pkgName: "github.com/krakendio/krakend-ce/v2",
+		//	name:             "krakenD ldflags",
+		//	ldflags:          `	build	-ldflags="-X github.com/luraproject/lura/v2/core.KrakendVersion=2.3.2 -X github.com/luraproject/lura/v2/core.GoVersion=1.20.4 -X github.com/luraproject/lura/v2/core.GlibcVersion=GLIBC-2.31_(debian-11) "`,
+		//	wantMajorVersion: "2.3.2",
+		//	wantFullVersion:  "v2.3.2",
+		//},
+		//{
+		//	// package name: pkgName: "github.com/krakendio/krakend-ce/v2",
+		//	name:             "krakenD ldflags -- answer embedded in the middle",
+		//	ldflags:          `	build	-ldflags=" -X github.com/luraproject/lura/v2/core.GoVersion=1.20.4 -X github.com/luraproject/lura/v2/core.KrakendVersion=2.3.2 -X github.com/luraproject/lura/v2/core.GlibcVersion=GLIBC-2.31_(debian-11) "`,
+		//	wantMajorVersion: "2.3.2",
+		//	wantFullVersion:  "v2.3.2",
+		//},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotMajorVersion, gotFullVersion := extractVersionFromLDFlags(tt.ldflags)
+			assert.Equal(t, tt.wantMajorVersion, gotMajorVersion, "unexpected major version")
+			assert.Equal(t, tt.wantFullVersion, gotFullVersion, "unexpected full version")
+		})
+	}
+}

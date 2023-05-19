@@ -37,12 +37,9 @@ var (
 	// inject the correct version into the main module of the build process
 
 	knownBuildFlagPatterns = []*regexp.Regexp{
-		regexp.MustCompile(`-X main\.[Vv]ersion=v?(?P<version>\d+\.\d+\.\d+[-\w]*?) `),
-		regexp.MustCompile(`-X .*\/version\.[Vv]ersion=v?(?P<version>\d+\.\d+\.\d+[-\w]*?) `),
-		regexp.MustCompile(`-X .*\/internal\.[Vv]ersion=v?(?P<version>\d+\.\d+\.\d+[-\w]*?) `),
+		regexp.MustCompile(`(?m)\.([gG]it)?([bB]uild)?[vV]ersion=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
+		regexp.MustCompile(`(?m)\.([tT]ag)=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
 	}
-
-	//expectedVersionPattern *regexp.Regexp = regexp.MustCompile(`^v?\d+\.\d+\.\d+[-\w]*?$`)
 )
 
 const devel = "(devel)"
@@ -92,8 +89,10 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver source.FileResolver, mod 
 					version = version[:12]
 				}
 
-				majorVersion, fullVersion := attemptVersionExtractFromBuildFlags(main)
-				version = module.PseudoVersion(majorVersion, fullVersion, ts, version)
+				if shouldGuess, ldflags := shouldGuessVersion(main); shouldGuess {
+					majorVersion, fullVersion := extractVersionFromLDFlags(ldflags)
+					version = module.PseudoVersion(majorVersion, fullVersion, ts, version)
+				}
 			}
 			main.Version = version
 			main.PURL = packageURL(main.Name, main.Version)
@@ -102,6 +101,54 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver source.FileResolver, mod 
 	}
 
 	return main
+}
+
+func shouldGuessVersion(p pkg.Package) (bool, string) {
+	if p.Version != devel {
+		return false, ""
+	}
+
+	metadata, ok := p.Metadata.(pkg.GolangBinMetadata)
+	if !ok {
+		return false, ""
+	}
+
+	ldflags, ok := metadata.BuildSettings["-ldflags"]
+
+	if !ok {
+		return false, ""
+	}
+	return true, ldflags
+}
+
+func extractVersionFromLDFlags(ldflags string) (majorVersion string, fullVersion string) {
+	if ldflags == "" {
+		return "", ""
+	}
+
+	for _, pattern := range knownBuildFlagPatterns {
+		groups := internal.MatchNamedCaptureGroups(pattern, ldflags)
+		v, ok := groups["version"]
+
+		if !ok {
+			continue
+		}
+
+		fullVersion = v
+		if !strings.HasPrefix(v, "v") {
+			fullVersion = fmt.Sprintf("v%s", v)
+		}
+		components := strings.Split(v, ".")
+
+		if len(components) == 0 {
+			continue
+		}
+
+		majorVersion = strings.TrimPrefix(components[0], "v")
+		return majorVersion, fullVersion
+	}
+
+	return "", ""
 }
 
 // getArchs finds a binary architecture by two ways:
