@@ -699,6 +699,18 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 			wantMajorVersion: "1",
 			wantFullVersion:  "v1.26.2",
 		},
+		{
+			name:             "argocd ldflags",
+			ldflags:          `	build	-ldflags="-X github.com/argoproj/argo-cd/v2/common.version=2.7.2 -X github.com/argoproj/argo-cd/v2/common.buildDate=2023-05-12T14:06:49Z -X github.com/argoproj/argo-cd/v2/common.gitCommit=cbee7e6011407ed2d1066c482db74e97e0cc6bdb -X github.com/argoproj/argo-cd/v2/common.gitTreeState=clean -X github.com/argoproj/argo-cd/v2/common.kubectlVersion=v0.24.2 -extldflags=\"-static\""`,
+			wantMajorVersion: "2",
+			wantFullVersion:  "v2.7.2",
+		},
+		{
+			name:             "kustomize ldflags",
+			ldflags:          `	build	-ldflags="-s -X sigs.k8s.io/kustomize/api/provenance.version=kustomize/v4.5.7 -X sigs.k8s.io/kustomize/api/provenance.gitCommit=56d82a8378dfc8dc3b3b1085e5a6e67b82966bd7 -X sigs.k8s.io/kustomize/api/provenance.buildDate=2022-08-02T16:35:54Z "`,
+			wantMajorVersion: "4",
+			wantFullVersion:  "v4.5.7",
+		},
 		//////////////////////////////////////////////////////////////////
 		// negative cases
 		{
