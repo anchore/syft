@@ -77,48 +77,50 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver source.FileResolver, mod 
 		gbs,
 		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
-	if main.Version == devel {
-		if version, ok := gbs["vcs.revision"]; ok {
 
-			if timestamp, ok := gbs["vcs.time"]; ok {
-				//NOTE: err is ignored, because if parsing fails
-				// we still use the empty Time{} struct to generate an empty date, like 00010101000000
-				// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
-				ts, _ := time.Parse(time.RFC3339, timestamp)
-				if len(version) >= 12 {
-					version = version[:12]
-				}
+	if main.Version != devel {
+		return main
+	}
 
-				if shouldGuess, ldflags := shouldGuessVersion(main); shouldGuess {
-					majorVersion, fullVersion := extractVersionFromLDFlags(ldflags)
-					version = module.PseudoVersion(majorVersion, fullVersion, ts, version)
-				}
+	version, hasVersion := gbs["vcs.revision"]
+	timestamp, hasTimestamp := gbs["vcs.time"]
+
+	if hasVersion {
+		if hasTimestamp {
+			//NOTE: err is ignored, because if parsing fails
+			// we still use the empty Time{} struct to generate an empty date, like 00010101000000
+			// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
+			ts, _ := time.Parse(time.RFC3339, timestamp)
+			if len(version) >= 12 {
+				version = version[:12]
 			}
-			main.Version = version
-			main.PURL = packageURL(main.Name, main.Version)
-			main.SetID()
+
+			var ldflags string
+			if metadata, ok := main.Metadata.(pkg.GolangBinMetadata); ok {
+				ldflags = metadata.BuildSettings["-ldflags"]
+			}
+
+			majorVersion, fullVersion := extractVersionFromLDFlags(ldflags)
+			if fullVersion != "" {
+				// we've found a specific version from the ldflags! use it as the version.
+				// why not combine that with the pseudo version (e.g. v1.2.3-0.20210101000000-abcdef123456)?
+				// short answer: we're assuming that if a specific semver was provided in the ldflags that
+				// there is a matching vcs tag to match that could be referenced. This assumption could
+				// be incorrect in terms of the go.mod contents, but is not incorrect in terms of the logical
+				// version of the package.
+				version = fullVersion
+			} else {
+				version = module.PseudoVersion(majorVersion, fullVersion, ts, version)
+			}
 		}
+
+		main.Version = version
+		main.PURL = packageURL(main.Name, main.Version)
+
+		main.SetID()
 	}
 
 	return main
-}
-
-func shouldGuessVersion(p pkg.Package) (bool, string) {
-	if p.Version != devel {
-		return false, ""
-	}
-
-	metadata, ok := p.Metadata.(pkg.GolangBinMetadata)
-	if !ok {
-		return false, ""
-	}
-
-	ldflags, ok := metadata.BuildSettings["-ldflags"]
-
-	if !ok {
-		return false, ""
-	}
-	return true, ldflags
 }
 
 func extractVersionFromLDFlags(ldflags string) (majorVersion string, fullVersion string) {

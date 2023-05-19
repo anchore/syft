@@ -299,7 +299,101 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{unmodifiedMain},
 		},
 		{
-			name: "parse main mod and replace devel version",
+			name: "parse main mod and replace devel pseudo version and ldflags exists (but contains no version)",
+			arch: archDetails,
+			mod: &debug.BuildInfo{
+				GoVersion: goCompiledVersion,
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+				Settings: []debug.BuildSetting{
+					{Key: "GOARCH", Value: archDetails},
+					{Key: "GOOS", Value: "darwin"},
+					{Key: "GOAMD64", Value: "v1"},
+					{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
+					{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
+					{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X blah=foobar`},
+				},
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/anchore/syft",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v0.0.0-20221014195457-41bc6bb41035",
+					PURL:     "pkg:golang/github.com/anchore/syft@v0.0.0-20221014195457-41bc6bb41035",
+					Locations: source.NewLocationSet(
+						source.NewLocationFromCoordinates(
+							source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						BuildSettings: map[string]string{
+							"GOARCH":       archDetails,
+							"GOOS":         "darwin",
+							"GOAMD64":      "v1",
+							"vcs.revision": "41bc6bb410352845f22766e27dd48ba93aa825a4",
+							"vcs.time":     "2022-10-14T19:54:57Z",
+							"-ldflags":     `build	-ldflags="-w -s -extldflags '-static' -X blah=foobar`,
+						},
+						MainModule: "github.com/anchore/syft",
+					},
+				},
+			},
+		},
+		{
+			name: "parse main mod and replace devel version with one from ldflags",
+			arch: archDetails,
+			mod: &debug.BuildInfo{
+				GoVersion: goCompiledVersion,
+				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+				Settings: []debug.BuildSetting{
+					{Key: "GOARCH", Value: archDetails},
+					{Key: "GOOS", Value: "darwin"},
+					{Key: "GOAMD64", Value: "v1"},
+					{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
+					{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
+					{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`},
+				},
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/anchore/syft",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v0.79.0",
+					PURL:     "pkg:golang/github.com/anchore/syft@v0.79.0",
+					Locations: source.NewLocationSet(
+						source.NewLocationFromCoordinates(
+							source.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					MetadataType: pkg.GolangBinMetadataType,
+					Metadata: pkg.GolangBinMetadata{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						BuildSettings: map[string]string{
+							"GOARCH":       archDetails,
+							"GOOS":         "darwin",
+							"GOAMD64":      "v1",
+							"vcs.revision": "41bc6bb410352845f22766e27dd48ba93aa825a4",
+							"vcs.time":     "2022-10-14T19:54:57Z",
+							"-ldflags":     `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`,
+						},
+						MainModule: "github.com/anchore/syft",
+					},
+				},
+			},
+		},
+		{
+			name: "parse main mod and replace devel version with a pseudo version",
 			arch: archDetails,
 			mod: &debug.BuildInfo{
 				GoVersion: goCompiledVersion,
