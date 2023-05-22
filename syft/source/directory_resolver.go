@@ -29,6 +29,7 @@ var _ FileResolver = (*directoryResolver)(nil)
 
 // directoryResolver implements path and content access for the directory data source.
 type directoryResolver struct {
+	root                    string
 	path                    string
 	base                    string
 	currentWdRelativeToRoot string
@@ -53,12 +54,6 @@ func newDirectoryResolverWithoutIndex(root string, base string, pathFilters ...p
 	if err != nil {
 		return nil, fmt.Errorf("could not get CWD: %w", err)
 	}
-	// we have to account for the root being accessed through a symlink path and always resolve the real path. Otherwise
-	// we will not be able to normalize given paths that fall under the resolver
-	cleanCWD, err := filepath.EvalSymlinks(currentWD)
-	if err != nil {
-		return nil, fmt.Errorf("could not evaluate CWD symlinks: %w", err)
-	}
 
 	cleanRoot, err := filepath.EvalSymlinks(root)
 	if err != nil {
@@ -79,7 +74,7 @@ func newDirectoryResolverWithoutIndex(root string, base string, pathFilters ...p
 
 	var currentWdRelRoot string
 	if path.IsAbs(cleanRoot) {
-		currentWdRelRoot, err = filepath.Rel(cleanCWD, cleanRoot)
+		currentWdRelRoot, err = filepath.Rel(currentWD, cleanRoot)
 		if err != nil {
 			return nil, fmt.Errorf("could not determine given root path to CWD: %w", err)
 		}
@@ -88,9 +83,10 @@ func newDirectoryResolverWithoutIndex(root string, base string, pathFilters ...p
 	}
 
 	return &directoryResolver{
+		root:                    root,
 		path:                    cleanRoot,
 		base:                    cleanBase,
-		currentWd:               cleanCWD,
+		currentWd:               currentWD,
 		currentWdRelativeToRoot: currentWdRelRoot,
 		tree:                    filetree.New(),
 		index:                   filetree.NewIndex(),
@@ -131,6 +127,31 @@ func (r directoryResolver) requestPath(userPath string) (string, error) {
 	return userPath, nil
 }
 
+// setup:
+//
+// /
+//   somewhere/
+//     outside.txt
+//   other/ -> /path/to
+//   path/
+//     to/
+//       abs-inside.txt -> /path/to/the/file.txt               # absolute link to somewhere inside of the root
+//       rel-inside.txt -> ./the/file.txt                      # relative link to somewhere inside of the root
+//       the/
+//		   file.txt
+//         abs-outside.txt -> /somewhere/outside.txt           # absolute link to outside of the root
+//         rel-outside -> ../../../somewhere/outside.txt       # relative link to outside of the root
+//
+// request/response cases
+//
+//	request path input       | resolver root       | resolver base     | cwd                 | expected response     |
+//	-------------------------|---------------------|-------------------|---------------------|-----------------------|
+//	/to/the/file.txt         | /path/              |                   | /path               | to/the/file.txt       |
+//  ./to/the/file.txt        | /path/              |                   | /path               | to/the/file.txt       |
+//	../the/file.txt          | /path/to/the        |                   | /path/to/the        | the/file.txt          |
+//
+
+// responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the directory resolver.
 func (r directoryResolver) responsePath(path string) string {
 	// check to see if we need to encode back to Windows from posix
 	if runtime.GOOS == WindowsOS {

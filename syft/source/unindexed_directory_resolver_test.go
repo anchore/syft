@@ -79,6 +79,28 @@ func Test_UnindexedDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {
 	}
 }
 
+func Test_UnindexDirectoryResolver_RequestRelativePathWithinSymlink(t *testing.T) {
+	pwd, err := os.Getwd()
+
+	// we need to mimic a shell, otherwise we won't get a path within a symlink
+	targetPath := filepath.Join(pwd, "./test-fixtures/symlinked-root/nested/link-root/nested")
+	t.Setenv("PWD", targetPath)
+
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(targetPath))
+	t.Cleanup(func() {
+		require.NoError(t, os.Chdir(pwd))
+	})
+
+	resolver := NewUnindexedDirectoryResolver("./")
+	require.NoError(t, err)
+
+	locations, err := resolver.FilesByPath("file2.txt")
+	require.NoError(t, err)
+	require.Len(t, locations, 1)
+	require.False(t, filepath.IsAbs(locations[0].RealPath), "should be relative path")
+}
+
 func Test_UnindexedDirectoryResolver_FilesByPath_absoluteRoot(t *testing.T) {
 	cases := []struct {
 		name         string

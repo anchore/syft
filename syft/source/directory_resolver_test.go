@@ -541,6 +541,28 @@ func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
 	t.Failed()
 }
 
+func Test_DirectoryResolver_RequestRelativePathWithinSymlink(t *testing.T) {
+	pwd, err := os.Getwd()
+
+	// we need to mimic a shell, otherwise we won't get a path within a symlink
+	targetPath := filepath.Join(pwd, "./test-fixtures/symlinked-root/nested/link-root/nested")
+	t.Setenv("PWD", targetPath)
+
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(targetPath))
+	t.Cleanup(func() {
+		require.NoError(t, os.Chdir(pwd))
+	})
+
+	resolver, err := newDirectoryResolver("./", "")
+	require.NoError(t, err)
+
+	locations, err := resolver.FilesByPath("file2.txt")
+	require.NoError(t, err)
+	require.Len(t, locations, 1)
+	require.False(t, filepath.IsAbs(locations[0].RealPath), "should be relative path")
+}
+
 func Test_RootViaSymlink(t *testing.T) {
 	resolver, err := newDirectoryResolver("./test-fixtures/symlinked-root/nested/link-root", "")
 	require.NoError(t, err)
