@@ -23,7 +23,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/file/resolver"
+	"github.com/anchore/syft/syft/internal/resolver"
 	"github.com/anchore/syft/syft/pkg"
 )
 

@@ -41,6 +41,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 		expected file.Metadata
 		err      bool
 	}{
+		// note: it is difficult to add a hardlink-based test in a cross-platform way and is already covered well in stereoscope
 		{
 			path:   "/file-1.txt",
 			exists: true,
@@ -57,20 +58,6 @@ func TestFileMetadataCataloger(t *testing.T) {
 				MIMEType: "text/plain",
 			},
 		},
-		// this is difficult to reproduce in a cross-platform way
-		//{
-		//	path:   "/hardlink-1",
-		//	exists: true,
-		//	expected: file.Metadata{
-		//		Path:            "/hardlink-1",
-		//		Mode:            0644,
-		//		Type:            stereoscopeFile.TypeHardLink,
-		//		LinkDestination: "file-1.txt",
-		//		UserID:          1,
-		//		GroupID:         2,
-		//		MIMEType:        "",
-		//	},
-		//},
 		{
 			path:   "/symlink-1",
 			exists: true,

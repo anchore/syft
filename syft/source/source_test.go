@@ -23,7 +23,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/file/resolver"
+	"github.com/anchore/syft/syft/source/internal/resolver"
 )
 
 func TestParseInput(t *testing.T) {
@@ -354,10 +354,10 @@ func TestNewFromDirectoryShared(t *testing.T) {
 			assert.NoError(t, err)
 
 			src.Metadata.Path = test.notExist
-			resolver2, err := src.FileResolver(SquashedScope)
+			resolver, err := src.FileResolver(SquashedScope)
 			assert.NoError(t, err)
 
-			refs, err := resolver2.FilesByPath(test.inputPaths...)
+			refs, err := resolver.FilesByPath(test.inputPaths...)
 			if err != nil {
 				t.Errorf("FilesByPath call produced an error: %+v", err)
 			}

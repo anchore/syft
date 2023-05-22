@@ -23,7 +23,8 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/file/resolver"
+	resolver2 "github.com/anchore/syft/syft/internal/resolver"
+	"github.com/anchore/syft/syft/source/internal/resolver"
 )
 
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
@@ -487,7 +488,7 @@ func (s *Source) FileResolver(scope Scope) (file.Resolver, error) {
 		}
 		// image tree contains all paths, so we filter out the excluded entries afterwards
 		if len(s.Exclusions) > 0 {
-			res = resolver.NewExcluding(res, getImageExclusionFunction(s.Exclusions))
+			res = resolver2.NewExcluding(res, getImageExclusionFunction(s.Exclusions))
 		}
 		return res, nil
 	}

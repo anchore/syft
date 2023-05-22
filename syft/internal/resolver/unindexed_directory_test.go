@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -744,4 +745,38 @@ func Test_WritableUnindexedDirectoryResolver(t *testing.T) {
 	require.NoError(t, err)
 	bytes, err := io.ReadAll(reader)
 	require.Equal(t, c, string(bytes))
+}
+
+func testWithTimeout(t *testing.T, timeout time.Duration, test func(*testing.T)) {
+	done := make(chan bool)
+	go func() {
+		test(t)
+		done <- true
+	}()
+
+	select {
+	case <-time.After(timeout):
+		t.Fatal("test timed out")
+	case <-done:
+	}
+}
+
+func compareLocations(t *testing.T, expected, actual []file.Location) {
+	t.Helper()
+	ignoreUnexported := cmpopts.IgnoreFields(file.LocationData{}, "ref")
+	ignoreMetadata := cmpopts.IgnoreFields(file.LocationMetadata{}, "Annotations")
+	ignoreFS := cmpopts.IgnoreFields(file.Coordinates{}, "FileSystemID")
+
+	sort.Sort(file.Locations(expected))
+	sort.Sort(file.Locations(actual))
+
+	if d := cmp.Diff(expected, actual,
+		ignoreUnexported,
+		ignoreFS,
+		ignoreMetadata,
+	); d != "" {
+
+		t.Errorf("unexpected locations (-want +got):\n%s", d)
+	}
+
 }

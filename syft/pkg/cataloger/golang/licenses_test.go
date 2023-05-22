@@ -15,7 +15,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/file/resolver"
+	"github.com/anchore/syft/syft/internal/resolver"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
