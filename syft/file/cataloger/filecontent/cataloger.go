@@ -39,7 +39,7 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]string
 			return nil, err
 		}
 
-		if i.skipFilesAboveSizeInBytes > 0 && metadata.Size > i.skipFilesAboveSizeInBytes {
+		if i.skipFilesAboveSizeInBytes > 0 && metadata.Size() > i.skipFilesAboveSizeInBytes {
 			continue
 		}
 

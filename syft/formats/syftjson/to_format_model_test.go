@@ -152,3 +152,45 @@ func Test_toFileType(t *testing.T) {
 
 	assert.ElementsMatch(t, allTypesTested, file.AllTypes(), "not all file.Types are under test")
 }
+
+func Test_toFileMetadataEntry(t *testing.T) {
+	coords := source.Coordinates{
+		RealPath:     "/path",
+		FileSystemID: "x",
+	}
+	tests := []struct {
+		name     string
+		metadata *source.FileMetadata
+		want     *model.FileMetadataEntry
+	}{
+		{
+			name: "no metadata",
+		},
+		{
+			name: "no file info",
+			metadata: &source.FileMetadata{
+				FileInfo: nil,
+			},
+			want: &model.FileMetadataEntry{
+				Type: file.TypeRegular.String(),
+			},
+		},
+		{
+			name: "with file info",
+			metadata: &source.FileMetadata{
+				FileInfo: &file.ManualInfo{
+					ModeValue: 1,
+				},
+			},
+			want: &model.FileMetadataEntry{
+				Mode: 1,
+				Type: file.TypeRegular.String(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, toFileMetadataEntry(coords, tt.metadata))
+		})
+	}
+}

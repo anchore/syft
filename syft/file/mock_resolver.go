@@ -168,11 +168,10 @@ func (r MockResolver) FileMetadataByLocation(l Location) (Metadata, error) {
 	}
 
 	return Metadata{
-		Mode:    info.Mode(),
-		Type:    ty,
-		UserID:  0, // not supported
-		GroupID: 0, // not supported
-		Size:    info.Size(),
+		FileInfo: info,
+		Type:     ty,
+		UserID:   0, // not supported
+		GroupID:  0, // not supported
 	}, nil
 }
 

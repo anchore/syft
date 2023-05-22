@@ -3,7 +3,6 @@ package filemetadata
 import (
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,12 +45,15 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/file-1.txt",
 			exists: true,
 			expected: file.Metadata{
+				FileInfo: stereoscopeFile.ManualInfo{
+					NameValue: "file-1.txt",
+					ModeValue: 0644,
+					SizeValue: 7,
+				},
 				Path:     "/file-1.txt",
-				Mode:     0644,
 				Type:     stereoscopeFile.TypeRegular,
 				UserID:   1,
 				GroupID:  2,
-				Size:     7,
 				MIMEType: "text/plain",
 			},
 		},
@@ -73,8 +75,11 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/symlink-1",
 			exists: true,
 			expected: file.Metadata{
-				Path:            "/symlink-1",
-				Mode:            0777 | os.ModeSymlink,
+				Path: "/symlink-1",
+				FileInfo: stereoscopeFile.ManualInfo{
+					NameValue: "symlink-1",
+					ModeValue: 0777 | os.ModeSymlink,
+				},
 				Type:            stereoscopeFile.TypeSymLink,
 				LinkDestination: "file-1.txt",
 				UserID:          0,
@@ -86,8 +91,11 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/char-device-1",
 			exists: true,
 			expected: file.Metadata{
-				Path:     "/char-device-1",
-				Mode:     0644 | os.ModeDevice | os.ModeCharDevice,
+				Path: "/char-device-1",
+				FileInfo: stereoscopeFile.ManualInfo{
+					NameValue: "char-device-1",
+					ModeValue: 0644 | os.ModeDevice | os.ModeCharDevice,
+				},
 				Type:     stereoscopeFile.TypeCharacterDevice,
 				UserID:   0,
 				GroupID:  0,
@@ -98,8 +106,11 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/block-device-1",
 			exists: true,
 			expected: file.Metadata{
-				Path:     "/block-device-1",
-				Mode:     0644 | os.ModeDevice,
+				Path: "/block-device-1",
+				FileInfo: stereoscopeFile.ManualInfo{
+					NameValue: "block-device-1",
+					ModeValue: 0644 | os.ModeDevice,
+				},
 				Type:     stereoscopeFile.TypeBlockDevice,
 				UserID:   0,
 				GroupID:  0,
@@ -110,8 +121,11 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/fifo-1",
 			exists: true,
 			expected: file.Metadata{
-				Path:     "/fifo-1",
-				Mode:     0644 | os.ModeNamedPipe,
+				Path: "/fifo-1",
+				FileInfo: stereoscopeFile.ManualInfo{
+					NameValue: "fifo-1",
+					ModeValue: 0644 | os.ModeNamedPipe,
+				},
 				Type:     stereoscopeFile.TypeFIFO,
 				UserID:   0,
 				GroupID:  0,
@@ -122,13 +136,15 @@ func TestFileMetadataCataloger(t *testing.T) {
 			path:   "/bin",
 			exists: true,
 			expected: file.Metadata{
-				Path:     "/bin",
-				Mode:     0755 | os.ModeDir,
+				Path: "/bin",
+				FileInfo: stereoscopeFile.ManualInfo{
+					NameValue: "bin",
+					ModeValue: 0755 | os.ModeDir,
+				},
 				Type:     stereoscopeFile.TypeDirectory,
 				UserID:   0,
 				GroupID:  0,
 				MIMEType: "",
-				IsDir:    true,
 			},
 		},
 	}
@@ -140,18 +156,15 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 			l := file.NewLocationFromImage(test.path, *ref.Reference, img)
 
-			defaultDate := time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
 			if _, ok := actual[l.Coordinates]; ok {
-				redact := actual[l.Coordinates]
-				assert.NotEqual(t, defaultDate, redact.ModTime, "expected mod time to be set")
-				assert.Equal(t, defaultDate, redact.AccessTime, "expected access time to be unset")
-				assert.Equal(t, defaultDate, redact.ChangeTime, "expected change time to be unset")
-				redact.ModTime = time.Time{}
-				actual[l.Coordinates] = redact
+				// we're not interested in keeping the test fixtures up to date with the latest file modification times
+				// thus ModTime is not under test
+				fi := test.expected.FileInfo.(stereoscopeFile.ManualInfo)
+				fi.ModTimeValue = actual[l.Coordinates].ModTime()
+				test.expected.FileInfo = fi
 			}
 
-			assert.Equal(t, test.expected, actual[l.Coordinates], "mismatched metadata")
-
+			assert.True(t, test.expected.Equal(actual[l.Coordinates]))
 		})
 	}
 

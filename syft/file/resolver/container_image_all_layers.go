@@ -101,7 +101,7 @@ func (r *ContainerImageAllLayers) FilesByPath(paths ...string) ([]file.Location,
 				if err != nil {
 					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.RealPath, err)
 				}
-				if metadata.Metadata.IsDir {
+				if metadata.Metadata.IsDir() {
 					continue
 				}
 			}
@@ -144,7 +144,7 @@ func (r *ContainerImageAllLayers) FilesByGlob(patterns ...string) ([]file.Locati
 						return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.RequestPath, err)
 					}
 					// don't consider directories
-					if metadata.Metadata.IsDir {
+					if metadata.Metadata.IsDir() {
 						continue
 					}
 				}
