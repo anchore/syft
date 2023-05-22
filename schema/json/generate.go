@@ -4,11 +4,19 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/scylladb/go-set/strset"
+	"go/ast"
+	"go/importer"
+	"go/parser"
+	"go/token"
+	"go/types"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/invopop/jsonschema"
 
@@ -65,11 +73,169 @@ type artifactMetadataContainer struct {
 	RustCargo          pkg.CargoPackageMetadata
 }
 
+const schemaVersion = internal.JSONSchemaVersion
+
+var metadataExceptions = strset.New(
+	"FileMetadata",
+)
+
 func main() {
-	write(encode(build()))
+	typeNames := findMetadataDefinitionNames(pkgFiles()...)
+	fmt.Println("Discovered metadata types: ", len(typeNames))
+	for _, n := range typeNames {
+		fmt.Println("  -", n)
+	}
+
+	fmt.Println("Crafting new metadata container type...")
+	metadata := metadataContainer(typeNames...)
+	fmt.Printf("Metadata container: %#v\n", metadata)
+
+	fmt.Printf("Writing json schema for version=%q\n", schemaVersion)
+	write(encode(build(metadata)))
 }
 
-func build() *jsonschema.Schema {
+func pkgFiles() []string {
+	values, err := filepath.Glob("../../syft/pkg/*.go")
+	if err != nil {
+		panic("unable to find package files")
+	}
+	return values
+}
+
+func findMetadataDefinitionNames(paths ...string) []string {
+	names := strset.New()
+	usedNames := strset.New()
+	for _, path := range paths {
+		metadataDefinitions, usedTypeNames := findMetadataDefinitionNamesInFile(path)
+
+		// useful for debugging...
+		//fmt.Println(path)
+		//fmt.Println("Defs:", metadataDefinitions)
+		//fmt.Println("Used Types:", usedTypeNames)
+		//fmt.Println()
+
+		names.Add(metadataDefinitions...)
+		usedNames.Add(usedTypeNames...)
+	}
+
+	// any definition that is used within another struct should not be considered a top-level metadata definition
+	names.Remove(usedNames.List()...)
+
+	strNames := names.List()
+	sort.Strings(strNames)
+
+	// note: 30 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
+	// it is really intended to catch any major issues with the generation process that would generate, say, 0 definitions.
+	if len(strNames) < 30 {
+		panic("not enough metadata definitions found (discovered: " + fmt.Sprintf("%d", len(strNames)) + ")")
+	}
+
+	return strNames
+}
+
+func findMetadataDefinitionNamesInFile(path string) ([]string, []string) {
+	// set up the parser
+	fs := token.NewFileSet()
+	f, err := parser.ParseFile(fs, path, nil, parser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+
+	var metadataDefinitions []string
+	var usedTypeNames []string
+	for _, decl := range f.Decls {
+		// check if the declaration is a type declaration
+		spec, ok := decl.(*ast.GenDecl)
+		if !ok || spec.Tok != token.TYPE {
+			continue
+		}
+
+		// loop over all types declared in the type declaration
+		for _, typ := range spec.Specs {
+			// check if the type is a struct type
+			spec, ok := typ.(*ast.TypeSpec)
+			if !ok || spec.Type == nil {
+				continue
+			}
+
+			structType, ok := spec.Type.(*ast.StructType)
+			if !ok {
+				continue
+			}
+
+			// check if the struct type ends with "Metadata"
+			name := spec.Name.String()
+
+			// only look for exported types that end with "Metadata"
+			if isMetadataTypeCandidate(name) {
+				// print the full declaration of the struct type
+				metadataDefinitions = append(metadataDefinitions, name)
+				usedTypeNames = append(usedTypeNames, typeNamesUsedInStruct(structType)...)
+			}
+		}
+	}
+	return metadataDefinitions, usedTypeNames
+}
+
+func typeNamesUsedInStruct(structType *ast.StructType) []string {
+	// recursively find all type names used in the struct type
+	var names []string
+	for i, _ := range structType.Fields.List {
+		// capture names of all of the types (not field names)
+		ast.Inspect(structType.Fields.List[i].Type, func(n ast.Node) bool {
+			ident, ok := n.(*ast.Ident)
+			if !ok {
+				return true
+			}
+
+			// add the type name to the list
+			names = append(names, ident.Name)
+
+			// continue inspecting
+			return true
+		})
+	}
+
+	return names
+}
+
+func isMetadataTypeCandidate(name string) bool {
+	return len(name) > 0 &&
+		strings.HasSuffix(name, "Metadata") &&
+		unicode.IsUpper(rune(name[0])) && // must be exported
+		!metadataExceptions.Has(name)
+}
+
+func metadataContainer(names ...string) any {
+	pkgPkg := getPackage("github.com/anchore/syft/syft/pkg")
+
+	var structFields []reflect.StructField
+	for _, typeName := range names {
+		fieldName := typeName
+		fieldType := pkgPkg.Scope().Lookup(typeName).Type()
+		newField := reflect.StructField{
+			Name: fieldName,
+			Type: reflect.PtrTo(reflect.TypeOf(fieldType)),
+		}
+		structFields = append(structFields, newField)
+
+	}
+
+	structType := reflect.StructOf(structFields)
+	instance := reflect.New(structType)
+
+	return instance
+}
+
+func getPackage(importPath string) *types.Package {
+	p, err := importer.Default().Import(importPath)
+	if err != nil {
+		panic(err)
+	}
+	return p
+}
+
+func build(metadataContainer any) *jsonschema.Schema {
 	reflector := &jsonschema.Reflector{
 		AllowAdditionalProperties: true,
 		Namer: func(r reflect.Type) string {
@@ -77,7 +243,7 @@ func build() *jsonschema.Schema {
 		},
 	}
 	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&syftjsonModel.Document{}))
-	metadataSchema := reflector.ReflectFromType(reflect.TypeOf(&artifactMetadataContainer{}))
+	metadataSchema := reflector.ReflectFromType(reflect.TypeOf(&metadataContainer))
 	// TODO: inject source definitions
 
 	// inject the definitions of all metadatas into the schema definitions
@@ -130,7 +296,7 @@ func encode(schema *jsonschema.Schema) []byte {
 }
 
 func write(schema []byte) {
-	filename := fmt.Sprintf("schema-%s.json", internal.JSONSchemaVersion)
+	filename := fmt.Sprintf("schema-%s.json", schemaVersion)
 
 	if _, err := os.Stat(filename); !os.IsNotExist(err) {
 		// check if the schema is the same...
@@ -167,5 +333,5 @@ func write(schema []byte) {
 
 	defer fh.Close()
 
-	fmt.Printf("wrote new schema to %q\n", filename)
+	fmt.Printf("Wrote new schema to %q\n", filename)
 }
