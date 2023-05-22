@@ -14,7 +14,6 @@ import (
 
 	"github.com/anchore/syft/internal"
 	syftjsonModel "github.com/anchore/syft/syft/formats/syftjson/model"
-	"github.com/anchore/syft/syft/pkg"
 )
 
 /*
@@ -32,38 +31,38 @@ can be extended to include specific package metadata struct shapes in the future
 // Should be created during generation below; use reflection's ability to
 // create types at runtime.
 // should be same name as struct minus metadata
-type artifactMetadataContainer struct {
-	Alpm               pkg.AlpmMetadata
-	Apk                pkg.ApkMetadata
-	Binary             pkg.BinaryMetadata
-	Cocopods           pkg.CocoapodsMetadata
-	Conan              pkg.ConanMetadata
-	ConanLock          pkg.ConanLockMetadata
-	Dart               pkg.DartPubMetadata
-	Dotnet             pkg.DotnetDepsMetadata
-	Dpkg               pkg.DpkgMetadata
-	Gem                pkg.GemMetadata
-	GoBin              pkg.GolangBinMetadata
-	GoMod              pkg.GolangModMetadata
-	Hackage            pkg.HackageMetadata
-	Java               pkg.JavaMetadata
-	KbPackage          pkg.KbPackageMetadata
-	LinuxKernel        pkg.LinuxKernelMetadata
-	LinuxKernelModule  pkg.LinuxKernelModuleMetadata
-	Nix                pkg.NixStoreMetadata
-	NpmPackage         pkg.NpmPackageJSONMetadata
-	NpmPackageLock     pkg.NpmPackageLockJSONMetadata
-	MixLock            pkg.MixLockMetadata
-	Php                pkg.PhpComposerJSONMetadata
-	Portage            pkg.PortageMetadata
-	PythonPackage      pkg.PythonPackageMetadata
-	PythonPipfilelock  pkg.PythonPipfileLockMetadata
-	PythonRequirements pkg.PythonRequirementsMetadata
-	RDescriptionFile   pkg.RDescriptionFileMetadata
-	Rebar              pkg.RebarLockMetadata
-	Rpm                pkg.RpmMetadata
-	RustCargo          pkg.CargoPackageMetadata
-}
+//type artifactMetadataContainer struct {
+//	Alpm               pkg.AlpmMetadata
+//	Apk                pkg.ApkMetadata
+//	Binary             pkg.BinaryMetadata
+//	Cocopods           pkg.CocoapodsMetadata
+//	Conan              pkg.ConanMetadata
+//	ConanLock          pkg.ConanLockMetadata
+//	Dart               pkg.DartPubMetadata
+//	Dotnet             pkg.DotnetDepsMetadata
+//	Dpkg               pkg.DpkgMetadata
+//	Gem                pkg.GemMetadata
+//	GoBin              pkg.GolangBinMetadata
+//	GoMod              pkg.GolangModMetadata
+//	Hackage            pkg.HackageMetadata
+//	Java               pkg.JavaMetadata
+//	KbPackage          pkg.KbPackageMetadata
+//	LinuxKernel        pkg.LinuxKernelMetadata
+//	LinuxKernelModule  pkg.LinuxKernelModuleMetadata
+//	Nix                pkg.NixStoreMetadata
+//	NpmPackage         pkg.NpmPackageJSONMetadata
+//	NpmPackageLock     pkg.NpmPackageLockJSONMetadata
+//	MixLock            pkg.MixLockMetadata
+//	Php                pkg.PhpComposerJSONMetadata
+//	Portage            pkg.PortageMetadata
+//	PythonPackage      pkg.PythonPackageMetadata
+//	PythonPipfilelock  pkg.PythonPipfileLockMetadata
+//	PythonRequirements pkg.PythonRequirementsMetadata
+//	RDescriptionFile   pkg.RDescriptionFileMetadata
+//	Rebar              pkg.RebarLockMetadata
+//	Rpm                pkg.RpmMetadata
+//	RustCargo          pkg.CargoPackageMetadata
+//}
 
 const schemaVersion = internal.JSONSchemaVersion
 
