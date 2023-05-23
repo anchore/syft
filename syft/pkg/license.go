@@ -62,7 +62,7 @@ func (l Licenses) Swap(i, j int) {
 func NewLicense(value string) License {
 	spdxExpression, err := license.ParseExpression(value)
 	if err != nil {
-		log.Trace("unable to parse license expression: %w", err)
+		log.Trace("unable to parse license expression for %q: %w", value, err)
 	}
 
 	return License{
