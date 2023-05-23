@@ -40,6 +40,9 @@ func Test_UnindexDirectoryResolver_RequestRelativePathWithinSymlink(t *testing.T
 	locations, err := resolver.FilesByPath("file2.txt")
 	require.NoError(t, err)
 	require.Len(t, locations, 1)
+
+	// TODO: this is technically not correct behavior since this is reporting the symlink path (virtual path) and
+	// not the real path.
 	require.False(t, filepath.IsAbs(locations[0].RealPath), "should be relative path")
 }
 
