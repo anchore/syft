@@ -326,3 +326,58 @@ func TestDirectoryIndexer_IndexesAllTypes(t *testing.T) {
 	}
 
 }
+
+func Test_allContainedPaths(t *testing.T) {
+
+	tests := []struct {
+		name string
+		path string
+		want []string
+	}{
+		{
+			name: "empty",
+			path: "",
+			want: nil,
+		},
+		{
+			name: "single relative",
+			path: "a",
+			want: []string{"a"},
+		},
+		{
+			name: "single absolute",
+			path: "/a",
+			want: []string{"/a"},
+		},
+		{
+			name: "multiple relative",
+			path: "a/b/c",
+			want: []string{"a", "a/b", "a/b/c"},
+		},
+		{
+			name: "multiple absolute",
+			path: "/a/b/c",
+			want: []string{"/a", "/a/b", "/a/b/c"},
+		},
+		{
+			name: "multiple absolute with extra slashs",
+			path: "///a/b//c/",
+			want: []string{"/a", "/a/b", "/a/b/c"},
+		},
+		{
+			name: "relative with single dot",
+			path: "a/./b",
+			want: []string{"a", "a/b"},
+		},
+		{
+			name: "relative with double single dot",
+			path: "a/../b",
+			want: []string{"b"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, allContainedPaths(tt.path))
+		})
+	}
+}
