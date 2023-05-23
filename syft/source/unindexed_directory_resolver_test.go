@@ -154,11 +154,10 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			cwd:   relativeViaLink,
 			root:  "./",
 			input: "path/to/the/file.txt",
-			// note: why not expect "path/to/the/file.txt" here?
-			// this is because we don't know that the path used to access this path (which is a link within
-			// the root) resides within the root. Without this information it appears as if this file resides
-			// outside the root.
-			//expectedRealPath:    filepath.Join(absolute, "path/to/the/file.txt"),
+			// note: this isn't what we want. Since the realpath resides outside of the scan root,
+			// we want this reflected in the realpath. However, link resolution doesn't seem to be
+			// working, thus the virtual path is always reported (which isn't good).
+			//expectedRealPath: filepath.Join(absolute, "path/to/the/file.txt"),
 			expectedRealPath: "path/to/the/file.txt",
 			//expectedVirtualPath: "path/to/the/file.txt",
 		},
@@ -174,11 +173,10 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			cwd:   relativeViaLink,
 			root:  "./",
 			input: "/path/to/the/file.txt",
-			// note: why not expect "path/to/the/file.txt" here?
-			// this is because we don't know that the path used to access this path (which is a link within
-			// the root) resides within the root. Without this information it appears as if this file resides
-			// outside the root.
-			//expectedRealPath:    filepath.Join(absolute, "path/to/the/file.txt"),
+			// note: this isn't what we want. Since the realpath resides outside of the scan root,
+			// we want this reflected in the realpath. However, link resolution doesn't seem to be
+			// working, thus the virtual path is always reported (which isn't good).
+			//expectedRealPath: filepath.Join(absolute, "path/to/the/file.txt"),
 			expectedRealPath: "path/to/the/file.txt",
 			//expectedVirtualPath: "path/to/the/file.txt",
 		},
@@ -224,11 +222,10 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			cwd:   relativeViaDoubleLink,
 			root:  "./",
 			input: "path/to/the/file.txt",
-			// note: why not expect "path/to/the/file.txt" here?
-			// this is because we don't know that the path used to access this path (which is a link within
-			// the root) resides within the root. Without this information it appears as if this file resides
-			// outside the root.
-			//expectedRealPath:    filepath.Join(absolute, "path/to/the/file.txt"),
+			// note: this isn't what we want. Since the realpath resides outside of the scan root,
+			// we want this reflected in the realpath. However, link resolution doesn't seem to be
+			// working, thus the virtual path is always reported (which isn't good).
+			//expectedRealPath: filepath.Join(absolute, "path/to/the/file.txt"),
 			expectedRealPath: "path/to/the/file.txt",
 			//expectedVirtualPath: "path/to/the/file.txt",
 		},
@@ -244,11 +241,10 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			cwd:   relativeViaDoubleLink,
 			root:  "./",
 			input: "/path/to/the/file.txt",
-			// note: why not expect "path/to/the/file.txt" here?
-			// this is because we don't know that the path used to access this path (which is a link within
-			// the root) resides within the root. Without this information it appears as if this file resides
-			// outside the root.
-			//expectedRealPath:    filepath.Join(absolute, "path/to/the/file.txt"),
+			// note: this isn't what we want. Since the realpath resides outside of the scan root,
+			// we want this reflected in the realpath. However, link resolution doesn't seem to be
+			// working, thus the virtual path is always reported (which isn't good).
+			//expectedRealPath: filepath.Join(absolute, "path/to/the/file.txt"),
 			expectedRealPath: "path/to/the/file.txt",
 			//expectedVirtualPath: "path/to/the/file.txt",
 		},

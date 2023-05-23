@@ -159,8 +159,8 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			// this is because we don't know that the path used to access this path (which is a link within
 			// the root) resides within the root. Without this information it appears as if this file resides
 			// outside the root.
-			//expectedRealPath:    filepath.Join(absolute, "path/to/the/file.txt"),
-			expectedRealPath:    "path/to/the/file.txt",
+			expectedRealPath: filepath.Join(absolute, "path/to/the/file.txt"),
+			//expectedRealPath:    "path/to/the/file.txt",
 			expectedVirtualPath: "path/to/the/file.txt",
 		},
 		{
@@ -179,8 +179,8 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			// this is because we don't know that the path used to access this path (which is a link within
 			// the root) resides within the root. Without this information it appears as if this file resides
 			// outside the root.
-			//expectedRealPath:    filepath.Join(absolute, "path/to/the/file.txt"),
-			expectedRealPath:    "path/to/the/file.txt",
+			expectedRealPath: filepath.Join(absolute, "path/to/the/file.txt"),
+			//expectedRealPath:    "path/to/the/file.txt",
 			expectedVirtualPath: "path/to/the/file.txt",
 		},
 		{
@@ -229,8 +229,8 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			// this is because we don't know that the path used to access this path (which is a link within
 			// the root) resides within the root. Without this information it appears as if this file resides
 			// outside the root.
-			//expectedRealPath:    filepath.Join(absolute, "path/to/the/file.txt"),
-			expectedRealPath:    "path/to/the/file.txt",
+			expectedRealPath: filepath.Join(absolute, "path/to/the/file.txt"),
+			//expectedRealPath:    "path/to/the/file.txt",
 			expectedVirtualPath: "path/to/the/file.txt",
 		},
 		{
@@ -249,8 +249,8 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			// this is because we don't know that the path used to access this path (which is a link within
 			// the root) resides within the root. Without this information it appears as if this file resides
 			// outside the root.
-			//expectedRealPath:    filepath.Join(absolute, "path/to/the/file.txt"),
-			expectedRealPath:    "path/to/the/file.txt",
+			expectedRealPath: filepath.Join(absolute, "path/to/the/file.txt"),
+			//expectedRealPath:    "path/to/the/file.txt",
 			expectedVirtualPath: "path/to/the/file.txt",
 		},
 		{

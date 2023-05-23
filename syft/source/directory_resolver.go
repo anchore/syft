@@ -10,8 +10,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/spf13/afero"
-
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/syft/internal/log"
@@ -31,7 +29,6 @@ var _ FileResolver = (*directoryResolver)(nil)
 
 // directoryResolver implements path and content access for the directory data source.
 type directoryResolver struct {
-	fs                      afero.Fs
 	path                    string
 	base                    string
 	currentWdRelativeToRoot string
