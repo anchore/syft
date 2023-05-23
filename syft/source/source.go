@@ -216,13 +216,27 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 	// We need to determine the image source again, such that this determination
 	// doesn't take scheme parsing into account.
 	in.ImageSource = image.DetermineDefaultImagePullSource(in.UserInput)
-	img, err = stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, opts...)
+	img, userInputErr := stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, opts...)
 	cleanup = func() {
 		if err := img.Cleanup(); err != nil {
 			log.Warnf("unable to cleanup image=%q: %w", in.UserInput, err)
 		}
 	}
-	return img, cleanup, err
+	if userInputErr != nil {
+		// Image retrieval failed on both tries, we will want to return both errors.
+		return nil, nil, fmt.Errorf(
+			"scheme %q specified; "+
+				"image retrieval using scheme parsing (%s) was unsuccessful: %v; "+
+				"image retrieval without scheme parsing (%s) was unsuccessful: %v",
+			scheme,
+			in.Location,
+			err,
+			in.UserInput,
+			userInputErr,
+		)
+	}
+
+	return img, cleanup, nil
 }
 
 func generateDirectorySource(fs afero.Fs, in Input) (*Source, func(), error) {
