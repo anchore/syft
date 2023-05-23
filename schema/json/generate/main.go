@@ -47,6 +47,4 @@ func main() {
 	if err := fh.Close(); err != nil {
 		panic(fmt.Errorf("unable to close file: %w", err))
 	}
-
-	fmt.Printf("wrote generated metadata container code to %q\n", path)
 }

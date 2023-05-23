@@ -52,10 +52,10 @@ func findMetadataDefinitionNames(paths ...string) ([]string, error) {
 		}
 
 		// useful for debugging...
-		//fmt.Println(path)
-		//fmt.Println("Defs:", metadataDefinitions)
-		//fmt.Println("Used Types:", usedTypeNames)
-		//fmt.Println()
+		// fmt.Println(path)
+		// fmt.Println("Defs:", metadataDefinitions)
+		// fmt.Println("Used Types:", usedTypeNames)
+		// fmt.Println()
 
 		names.Add(metadataDefinitions...)
 		usedNames.Add(usedTypeNames...)
