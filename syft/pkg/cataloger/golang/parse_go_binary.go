@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -34,6 +35,11 @@ var (
 	// devel is used to recognize the current default version when a golang main distribution is built
 	// https://github.com/golang/go/issues/29228 this issue has more details on the progress of being able to
 	// inject the correct version into the main module of the build process
+
+	knownBuildFlagPatterns = []*regexp.Regexp{
+		regexp.MustCompile(`(?m)\.([gG]it)?([bB]uild)?[vV]ersion=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
+		regexp.MustCompile(`(?m)\.([tT]ag)=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
+	}
 )
 
 const devel = "(devel)"
@@ -71,25 +77,80 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver source.FileResolver, mod 
 		gbs,
 		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
-	if main.Version == devel {
-		if version, ok := gbs["vcs.revision"]; ok {
-			if timestamp, ok := gbs["vcs.time"]; ok {
-				//NOTE: err is ignored, because if parsing fails
-				// we still use the empty Time{} struct to generate an empty date, like 00010101000000
-				// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
-				ts, _ := time.Parse(time.RFC3339, timestamp)
-				if len(version) >= 12 {
-					version = version[:12]
-				}
-				version = module.PseudoVersion("", "", ts, version)
+
+	if main.Version != devel {
+		return main
+	}
+
+	version, hasVersion := gbs["vcs.revision"]
+	timestamp, hasTimestamp := gbs["vcs.time"]
+
+	if hasVersion {
+		if hasTimestamp {
+			//NOTE: err is ignored, because if parsing fails
+			// we still use the empty Time{} struct to generate an empty date, like 00010101000000
+			// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
+			ts, _ := time.Parse(time.RFC3339, timestamp)
+			if len(version) >= 12 {
+				version = version[:12]
 			}
-			main.Version = version
-			main.PURL = packageURL(main.Name, main.Version)
-			main.SetID()
+
+			var ldflags string
+			if metadata, ok := main.Metadata.(pkg.GolangBinMetadata); ok {
+				ldflags = metadata.BuildSettings["-ldflags"]
+			}
+
+			majorVersion, fullVersion := extractVersionFromLDFlags(ldflags)
+			if fullVersion != "" {
+				// we've found a specific version from the ldflags! use it as the version.
+				// why not combine that with the pseudo version (e.g. v1.2.3-0.20210101000000-abcdef123456)?
+				// short answer: we're assuming that if a specific semver was provided in the ldflags that
+				// there is a matching vcs tag to match that could be referenced. This assumption could
+				// be incorrect in terms of the go.mod contents, but is not incorrect in terms of the logical
+				// version of the package.
+				version = fullVersion
+			} else {
+				version = module.PseudoVersion(majorVersion, fullVersion, ts, version)
+			}
 		}
+
+		main.Version = version
+		main.PURL = packageURL(main.Name, main.Version)
+
+		main.SetID()
 	}
 
 	return main
+}
+
+func extractVersionFromLDFlags(ldflags string) (majorVersion string, fullVersion string) {
+	if ldflags == "" {
+		return "", ""
+	}
+
+	for _, pattern := range knownBuildFlagPatterns {
+		groups := internal.MatchNamedCaptureGroups(pattern, ldflags)
+		v, ok := groups["version"]
+
+		if !ok {
+			continue
+		}
+
+		fullVersion = v
+		if !strings.HasPrefix(v, "v") {
+			fullVersion = fmt.Sprintf("v%s", v)
+		}
+		components := strings.Split(v, ".")
+
+		if len(components) == 0 {
+			continue
+		}
+
+		majorVersion = strings.TrimPrefix(components[0], "v")
+		return majorVersion, fullVersion
+	}
+
+	return "", ""
 }
 
 // getArchs finds a binary architecture by two ways:
