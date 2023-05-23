@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/spf13/afero"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/syft/internal/log"
@@ -29,7 +31,7 @@ var _ FileResolver = (*directoryResolver)(nil)
 
 // directoryResolver implements path and content access for the directory data source.
 type directoryResolver struct {
-	root                    string
+	fs                      afero.Fs
 	path                    string
 	base                    string
 	currentWdRelativeToRoot string
@@ -83,7 +85,6 @@ func newDirectoryResolverWithoutIndex(root string, base string, pathFilters ...p
 	}
 
 	return &directoryResolver{
-		root:                    root,
 		path:                    cleanRoot,
 		base:                    cleanBase,
 		currentWd:               currentWD,
@@ -126,30 +127,6 @@ func (r directoryResolver) requestPath(userPath string) (string, error) {
 	}
 	return userPath, nil
 }
-
-// setup:
-//
-// /
-//   somewhere/
-//     outside.txt
-//   other/ -> /path/to
-//   path/
-//     to/
-//       abs-inside.txt -> /path/to/the/file.txt               # absolute link to somewhere inside of the root
-//       rel-inside.txt -> ./the/file.txt                      # relative link to somewhere inside of the root
-//       the/
-//		   file.txt
-//         abs-outside.txt -> /somewhere/outside.txt           # absolute link to outside of the root
-//         rel-outside -> ../../../somewhere/outside.txt       # relative link to outside of the root
-//
-// request/response cases
-//
-//	request path input       | resolver root       | resolver base     | cwd                 | expected response     |
-//	-------------------------|---------------------|-------------------|---------------------|-----------------------|
-//	/to/the/file.txt         | /path/              |                   | /path               | to/the/file.txt       |
-//  ./to/the/file.txt        | /path/              |                   | /path               | to/the/file.txt       |
-//	../the/file.txt          | /path/to/the        |                   | /path/to/the        | the/file.txt          |
-//
 
 // responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the directory resolver.
 func (r directoryResolver) responsePath(path string) string {
