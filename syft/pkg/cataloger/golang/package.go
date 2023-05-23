@@ -18,7 +18,7 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver source.FileResolver, dep
 
 	licenses, err := c.licenses.getLicenses(resolver, dep.Path, dep.Version)
 	if err != nil {
-		log.Tracef("error getting licenses for package: %s %v", dep.Path, err)
+		log.Tracef("error getting licenses for golang package: %s %v", dep.Path, err)
 	}
 
 	p := pkg.Package{
