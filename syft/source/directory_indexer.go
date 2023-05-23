@@ -3,14 +3,15 @@ package source
 import (
 	"errors"
 	"fmt"
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
 	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/wagoodman/go-partybus"
+	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
