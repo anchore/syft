@@ -207,10 +207,6 @@ func prepZipSourceFixture(t testing.TB) string {
 	// the zip utility will add ".zip" to the end of the given name
 	archivePath := archivePrefix.Name() + ".zip"
 
-	t.Cleanup(func() {
-		assert.NoError(t, os.Remove(archivePath))
-	})
-
 	t.Logf("archive path: %s", archivePath)
 
 	createZipArchive(t, "zip-source", archivePrefix.Name(), false)

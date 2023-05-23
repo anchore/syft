@@ -902,14 +902,6 @@ func setupArchiveTest(t testing.TB, sourceDirPath string, layer2 bool) string {
 	t.Logf("archive path: %s", destinationArchiveFilePath)
 	createArchive(t, sourceDirPath, destinationArchiveFilePath, layer2)
 
-	t.Cleanup(
-		assertNoError(t,
-			func() error {
-				return os.Remove(destinationArchiveFilePath)
-			},
-		),
-	)
-
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
 
