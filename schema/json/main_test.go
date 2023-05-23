@@ -1,32 +1,28 @@
 package main
 
 import (
-	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
-	"path/filepath"
 	"reflect"
 	"sort"
-	"strings"
 	"testing"
-	"unicode"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-)
 
-var metadataExceptions = strset.New(
-	"FileMetadata",
+	"github.com/anchore/syft/schema/json/internal"
 )
 
 func TestAllMetadataRepresented(t *testing.T) {
-	expected := findMetadataDefinitionNames(t, pkgFiles(t)...)
-	actual := allTypeNamesFromStruct(artifactMetadataContainer{})
+	// this test checks that all the metadata types are represented in the currently generated ArtifactMetadataContainer struct
+	// such that PRs will reflect when there is drift from the implemented set of metadata types and the generated struct
+	// which controls the JSON schema content.
+	expected, err := internal.AllSyftMetadataTypeNames()
+	require.NoError(t, err)
+	actual := allTypeNamesFromStruct(internal.ArtifactMetadataContainer{})
 	if !assert.ElementsMatch(t, expected, actual) {
-		t.Fatalf("metadata types not fully represented: \n%s", cmp.Diff(expected, actual))
+		t.Errorf("metadata types not fully represented: \n%s", cmp.Diff(expected, actual))
+		t.Log("did you add a new pkg.*Metadata type without updating the JSON schema?")
+		t.Log("if so, you need to update the schema version and regenerate the JSON schema (make generate-json-schema)")
 	}
 }
 
@@ -40,112 +36,4 @@ func allTypeNamesFromStruct(instance any) []string {
 	}
 	sort.Strings(typeNames)
 	return typeNames
-}
-
-func pkgFiles(t *testing.T) []string {
-	values, err := filepath.Glob("../../syft/pkg/*.go")
-	require.NoError(t, err)
-	return values
-}
-
-func findMetadataDefinitionNames(t *testing.T, paths ...string) []string {
-	names := strset.New()
-	usedNames := strset.New()
-	for _, path := range paths {
-		metadataDefinitions, usedTypeNames := findMetadataDefinitionNamesInFile(t, path)
-
-		// useful for debugging...
-		//fmt.Println(path)
-		//fmt.Println("Defs:", metadataDefinitions)
-		//fmt.Println("Used Types:", usedTypeNames)
-		//fmt.Println()
-
-		names.Add(metadataDefinitions...)
-		usedNames.Add(usedTypeNames...)
-	}
-
-	// any definition that is used within another struct should not be considered a top-level metadata definition
-	names.Remove(usedNames.List()...)
-
-	strNames := names.List()
-	sort.Strings(strNames)
-
-	// note: 30 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
-	// it is really intended to catch any major issues with the generation process that would generate, say, 0 definitions.
-	if len(strNames) < 30 {
-		t.Fatal("not enough metadata definitions found (discovered: " + fmt.Sprintf("%d", len(strNames)) + ")")
-	}
-
-	return strNames
-}
-
-func findMetadataDefinitionNamesInFile(t *testing.T, path string) ([]string, []string) {
-	// set up the parser
-	fs := token.NewFileSet()
-	f, err := parser.ParseFile(fs, path, nil, parser.ParseComments)
-	require.NoError(t, err)
-
-	var metadataDefinitions []string
-	var usedTypeNames []string
-	for _, decl := range f.Decls {
-		// check if the declaration is a type declaration
-		spec, ok := decl.(*ast.GenDecl)
-		if !ok || spec.Tok != token.TYPE {
-			continue
-		}
-
-		// loop over all types declared in the type declaration
-		for _, typ := range spec.Specs {
-			// check if the type is a struct type
-			spec, ok := typ.(*ast.TypeSpec)
-			if !ok || spec.Type == nil {
-				continue
-			}
-
-			structType, ok := spec.Type.(*ast.StructType)
-			if !ok {
-				continue
-			}
-
-			// check if the struct type ends with "Metadata"
-			name := spec.Name.String()
-
-			// only look for exported types that end with "Metadata"
-			if isMetadataTypeCandidate(name) {
-				// print the full declaration of the struct type
-				metadataDefinitions = append(metadataDefinitions, name)
-				usedTypeNames = append(usedTypeNames, typeNamesUsedInStruct(structType)...)
-			}
-		}
-	}
-	return metadataDefinitions, usedTypeNames
-}
-
-func typeNamesUsedInStruct(structType *ast.StructType) []string {
-	// recursively find all type names used in the struct type
-	var names []string
-	for i := range structType.Fields.List {
-		// capture names of all of the types (not field names)
-		ast.Inspect(structType.Fields.List[i].Type, func(n ast.Node) bool {
-			ident, ok := n.(*ast.Ident)
-			if !ok {
-				return true
-			}
-
-			// add the type name to the list
-			names = append(names, ident.Name)
-
-			// continue inspecting
-			return true
-		})
-	}
-
-	return names
-}
-
-func isMetadataTypeCandidate(name string) bool {
-	return len(name) > 0 &&
-		strings.HasSuffix(name, "Metadata") &&
-		unicode.IsUpper(rune(name[0])) && // must be exported
-		!metadataExceptions.Has(name)
 }
