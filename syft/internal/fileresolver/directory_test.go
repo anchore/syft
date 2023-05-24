@@ -500,7 +500,7 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 				require.NoError(t, os.Chdir(testDir))
 			})
 
-			resolver, err := newDirectoryResolver(c.root, c.base)
+			resolver, err := NewFromDirectory(c.root, c.base)
 			require.NoError(t, err)
 			require.NotNil(t, resolver)
 

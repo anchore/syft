@@ -36,7 +36,7 @@ func Test_UnindexDirectoryResolver_RequestRelativePathWithinSymlink(t *testing.T
 		require.NoError(t, os.Chdir(pwd))
 	})
 
-	resolver := NewUnindexedDirectoryResolver("./")
+	resolver := NewFromUnindexedDirectory("./")
 	require.NoError(t, err)
 
 	locations, err := resolver.FilesByPath("file2.txt")
@@ -510,7 +510,7 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 				require.NoError(t, os.Chdir(testDir))
 			})
 
-			resolver := NewUnindexedDirectoryResolver(c.root)
+			resolver := NewFromUnindexedDirectory(c.root)
 			require.NotNil(t, resolver)
 
 			refs, err := resolver.FilesByPath(c.input)
