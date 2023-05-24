@@ -1,4 +1,4 @@
-package resolver
+package fileresolver
 
 import (
 	"github.com/anchore/stereoscope/pkg/image"

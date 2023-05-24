@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal/resolver"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -508,7 +508,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			)
 
 			c := goBinaryCataloger{}
-			pkgs := c.buildGoPkgInfo(resolver.Empty{}, location, test.mod, test.arch)
+			pkgs := c.buildGoPkgInfo(fileresolver.Empty{}, location, test.mod, test.arch)
 			assert.Equal(t, test.expected, pkgs)
 		})
 	}

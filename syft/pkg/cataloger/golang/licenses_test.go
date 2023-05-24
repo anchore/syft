@@ -15,7 +15,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal/resolver"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -64,7 +64,7 @@ func Test_LocalLicenseSearch(t *testing.T) {
 					localModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
 				},
 			)
-			licenses, err := l.getLicenses(resolver.Empty{}, test.name, test.version)
+			licenses, err := l.getLicenses(fileresolver.Empty{}, test.name, test.version)
 			require.NoError(t, err)
 
 			require.Len(t, licenses, 1)
@@ -154,7 +154,7 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				localModCacheDir:     modDir,
 			})
 
-			licenses, err := l.getLicenses(resolver.Empty{}, test.name, test.version)
+			licenses, err := l.getLicenses(fileresolver.Empty{}, test.name, test.version)
 			require.NoError(t, err)
 
 			require.Len(t, licenses, 1)

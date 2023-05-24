@@ -23,7 +23,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/source/internal/resolver"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 )
 
 func TestParseInput(t *testing.T) {
@@ -774,7 +774,7 @@ func Test_crossPlatformExclusions(t *testing.T) {
 			root:     "/",
 			path:     "/usr/var/lib",
 			exclude:  "**/var/lib",
-			walkHint: resolver.ErrSkipPath,
+			walkHint: fileresolver.ErrSkipPath,
 		},
 		// linux specific tests...
 		{
@@ -783,7 +783,7 @@ func Test_crossPlatformExclusions(t *testing.T) {
 			path:     "/usr/var/lib/etc.txt",
 			exclude:  "**/*.txt",
 			finfo:    dummyInfo{isDir: false},
-			walkHint: resolver.ErrSkipPath,
+			walkHint: fileresolver.ErrSkipPath,
 		},
 		{
 			desc:    "linux relative",
@@ -792,7 +792,7 @@ func Test_crossPlatformExclusions(t *testing.T) {
 			exclude: "./*.txt",
 			finfo:   dummyInfo{isDir: false},
 
-			walkHint: resolver.ErrSkipPath,
+			walkHint: fileresolver.ErrSkipPath,
 		},
 		{
 			desc:     "linux one level",
@@ -814,7 +814,7 @@ func Test_crossPlatformExclusions(t *testing.T) {
 			path:     "/C:/User/stuff/thing.txt",
 			exclude:  "**/*.txt",
 			finfo:    dummyInfo{isDir: false},
-			walkHint: resolver.ErrSkipPath,
+			walkHint: fileresolver.ErrSkipPath,
 		},
 		{
 			desc:     "windows relative",
@@ -822,7 +822,7 @@ func Test_crossPlatformExclusions(t *testing.T) {
 			path:     "/C:/User/stuff/thing.txt",
 			exclude:  "./*.txt",
 			finfo:    dummyInfo{isDir: false},
-			walkHint: resolver.ErrSkipPath,
+			walkHint: fileresolver.ErrSkipPath,
 		},
 		{
 			desc:     "windows one level",

@@ -23,8 +23,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	resolver2 "github.com/anchore/syft/syft/internal/resolver"
-	"github.com/anchore/syft/syft/source/internal/resolver"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 )
 
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
@@ -33,7 +32,7 @@ type Source struct {
 	id                artifact.ID  `hash:"ignore"`
 	Image             *image.Image `hash:"ignore"` // the image object to be cataloged (image only)
 	Metadata          Metadata
-	directoryResolver *resolver.Directory `hash:"ignore"`
+	directoryResolver *fileresolver.Directory `hash:"ignore"`
 	path              string
 	base              string
 	mutex             *sync.Mutex
@@ -465,7 +464,7 @@ func (s *Source) FileResolver(scope Scope) (file.Resolver, error) {
 			if err != nil {
 				return nil, err
 			}
-			res, err := resolver.NewFromDirectory(s.path, s.base, exclusionFunctions...)
+			res, err := fileresolver.NewFromDirectory(s.path, s.base, exclusionFunctions...)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 			}
@@ -477,9 +476,9 @@ func (s *Source) FileResolver(scope Scope) (file.Resolver, error) {
 		var err error
 		switch scope {
 		case SquashedScope:
-			res, err = resolver.NewFromContainerImageSquash(s.Image)
+			res, err = fileresolver.NewFromContainerImageSquash(s.Image)
 		case AllLayersScope:
-			res, err = resolver.NewFromContainerImageAllLayers(s.Image)
+			res, err = fileresolver.NewFromContainerImageAllLayers(s.Image)
 		default:
 			return nil, fmt.Errorf("bad image scope provided: %+v", scope)
 		}
@@ -488,7 +487,7 @@ func (s *Source) FileResolver(scope Scope) (file.Resolver, error) {
 		}
 		// image tree contains all paths, so we filter out the excluded entries afterwards
 		if len(s.Exclusions) > 0 {
-			res = resolver2.NewExcluding(res, getImageExclusionFunction(s.Exclusions))
+			res = fileresolver.NewExcluding(res, getImageExclusionFunction(s.Exclusions))
 		}
 		return res, nil
 	}
@@ -532,7 +531,7 @@ func getImageExclusionFunction(exclusions []string) func(string) bool {
 	}
 }
 
-func getDirectoryExclusionFunctions(root string, exclusions []string) ([]resolver.PathIndexVisitor, error) {
+func getDirectoryExclusionFunctions(root string, exclusions []string) ([]fileresolver.PathIndexVisitor, error) {
 	if len(exclusions) == 0 {
 		return nil, nil
 	}
@@ -565,7 +564,7 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]resolve
 		return nil, fmt.Errorf("invalid exclusion pattern(s): '%s' (must start with one of: './', '*/', or '**/')", strings.Join(errors, "', '"))
 	}
 
-	return []resolver.PathIndexVisitor{
+	return []fileresolver.PathIndexVisitor{
 		func(path string, info os.FileInfo, _ error) error {
 			for _, exclusion := range exclusions {
 				// this is required to handle Windows filepaths
@@ -578,7 +577,7 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]resolve
 					if info != nil && info.IsDir() {
 						return filepath.SkipDir
 					}
-					return resolver.ErrSkipPath
+					return fileresolver.ErrSkipPath
 				}
 			}
 			return nil

@@ -23,7 +23,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal/resolver"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -61,15 +61,15 @@ func modCacheResolver(modCacheDir string) file.WritableResolver {
 
 	if modCacheDir == "" {
 		log.Trace("unable to determine mod cache directory, skipping mod cache resolver")
-		r = resolver.Empty{}
+		r = fileresolver.Empty{}
 	} else {
 		stat, err := os.Stat(modCacheDir)
 
 		if os.IsNotExist(err) || stat == nil || !stat.IsDir() {
 			log.Tracef("unable to open mod cache directory: %s, skipping mod cache resolver", modCacheDir)
-			r = resolver.Empty{}
+			r = fileresolver.Empty{}
 		} else {
-			r = resolver.NewFromUnindexedDirectory(modCacheDir)
+			r = fileresolver.NewFromUnindexedDirectory(modCacheDir)
 		}
 	}
 
