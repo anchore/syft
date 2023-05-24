@@ -4,18 +4,18 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(m *parsedData, release *linux.Release, dbLocation source.Location) pkg.Package {
+func newPackage(m *parsedData, release *linux.Release, dbLocation file.Location) pkg.Package {
 	licenseCandidates := strings.Split(m.Licenses, "\n")
 
 	p := pkg.Package{
 		Name:         m.Package,
 		Version:      m.Version,
-		Locations:    source.NewLocationSet(dbLocation),
+		Locations:    file.NewLocationSet(dbLocation),
 		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation.WithoutAnnotations(), licenseCandidates...)...),
 		Type:         pkg.AlpmPkg,
 		PURL:         packageURL(m, release),

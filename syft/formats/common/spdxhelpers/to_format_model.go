@@ -21,7 +21,6 @@ import (
 	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -137,7 +136,7 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 	switch it := identifiable.(type) {
 	case pkg.Package:
 		id = SanitizeElementID(fmt.Sprintf("Package-%s-%s-%s", it.Type, it.Name, it.ID()))
-	case source.Coordinates:
+	case file.Coordinates:
 		p := ""
 		parts := strings.Split(it.RealPath, "/")
 		for i := len(parts); i > 0; i-- {
@@ -437,7 +436,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 	artifacts := s.Artifacts
 
 	for _, coordinates := range s.AllCoordinates() {
-		var metadata *source.FileMetadata
+		var metadata *file.Metadata
 		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
 			metadata = &metadataForLocation
 		}
@@ -500,7 +499,7 @@ func toChecksumAlgorithm(algorithm string) spdx.ChecksumAlgorithm {
 	return spdx.ChecksumAlgorithm(strings.ToUpper(algorithm))
 }
 
-func toFileTypes(metadata *source.FileMetadata) (ty []string) {
+func toFileTypes(metadata *file.Metadata) (ty []string) {
 	if metadata == nil {
 		return nil
 	}

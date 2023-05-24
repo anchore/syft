@@ -7,8 +7,8 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ sort.Interface = (*Licenses)(nil)
@@ -27,7 +27,7 @@ type License struct {
 	SPDXExpression string             `json:"spdxExpression"`
 	Type           license.Type       `json:"type"`
 	URLs           internal.StringSet `hash:"ignore"`
-	Locations      source.LocationSet `hash:"ignore"`
+	Locations      file.LocationSet   `hash:"ignore"`
 }
 
 type Licenses []License
@@ -70,7 +70,7 @@ func NewLicense(value string) License {
 		SPDXExpression: spdxExpression,
 		Type:           license.Declared,
 		URLs:           internal.NewStringSet(),
-		Locations:      source.NewLocationSet(),
+		Locations:      file.NewLocationSet(),
 	}
 }
 
@@ -85,7 +85,7 @@ func NewLicenseFromType(value string, t license.Type) License {
 		SPDXExpression: spdxExpression,
 		Type:           t,
 		URLs:           internal.NewStringSet(),
-		Locations:      source.NewLocationSet(),
+		Locations:      file.NewLocationSet(),
 	}
 }
 
@@ -96,7 +96,7 @@ func NewLicensesFromValues(values ...string) (licenses []License) {
 	return
 }
 
-func NewLicensesFromLocation(location source.Location, values ...string) (licenses []License) {
+func NewLicensesFromLocation(location file.Location, values ...string) (licenses []License) {
 	for _, v := range values {
 		if v == "" {
 			continue
@@ -106,7 +106,7 @@ func NewLicensesFromLocation(location source.Location, values ...string) (licens
 	return
 }
 
-func NewLicenseFromLocations(value string, locations ...source.Location) License {
+func NewLicenseFromLocations(value string, locations ...file.Location) License {
 	l := NewLicense(value)
 	for _, loc := range locations {
 		l.Locations.Add(loc)

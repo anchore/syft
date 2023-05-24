@@ -4,15 +4,15 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newComposerLockPackage(m parsedData, indexLocation source.Location) pkg.Package {
+func newComposerLockPackage(m parsedData, indexLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
-		Locations:    source.NewLocationSet(indexLocation),
+		Locations:    file.NewLocationSet(indexLocation),
 		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, m.License...)...),
 		PURL:         packageURL(m),
 		Language:     pkg.PHP,

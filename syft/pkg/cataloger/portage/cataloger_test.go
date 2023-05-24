@@ -7,20 +7,19 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestPortageCataloger(t *testing.T) {
-	expectedLicenseLocation := source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/LICENSE")
+	expectedLicenseLocation := file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/LICENSE")
 	expectedPkgs := []pkg.Package{
 		{
 			Name:    "app-containers/skopeo",
 			Version: "1.5.1",
 			FoundBy: "portage-cataloger",
 			PURL:    "pkg:ebuild/app-containers/skopeo@1.5.1",
-			Locations: source.NewLocationSet(
-				source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/CONTENTS"),
-				source.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/SIZE"),
+			Locations: file.NewLocationSet(
+				file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/CONTENTS"),
+				file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/SIZE"),
 				expectedLicenseLocation,
 			),
 			Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(expectedLicenseLocation, "Apache-2.0", "BSD", "BSD-2", "CC-BY-SA-4.0", "ISC", "MIT")...),

@@ -14,8 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 // make will run the default make target for the given test fixture path
@@ -135,9 +136,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		Type:     pkg.GoModulePkg,
 		Version:  "(devel)",
 		PURL:     "pkg:golang/github.com/anchore/syft@(devel)",
-		Locations: source.NewLocationSet(
-			source.NewLocationFromCoordinates(
-				source.Coordinates{
+		Locations: file.NewLocationSet(
+			file.NewLocationFromCoordinates(
+				file.Coordinates{
 					RealPath:     "/a-path",
 					FileSystemID: "layer-id",
 				},
@@ -182,9 +183,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/adrg/xdg",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -225,9 +226,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/adrg/xdg@v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -261,9 +262,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/a/b/c@(devel)",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -320,9 +321,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Version:  "v0.0.0-20221014195457-41bc6bb41035",
 					PURL:     "pkg:golang/github.com/anchore/syft@v0.0.0-20221014195457-41bc6bb41035",
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -367,9 +368,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Version:  "v0.79.0",
 					PURL:     "pkg:golang/github.com/anchore/syft@v0.79.0",
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -413,9 +414,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Type:     pkg.GoModulePkg,
 					Version:  "v0.0.0-20221014195457-41bc6bb41035",
 					PURL:     "pkg:golang/github.com/anchore/syft@v0.0.0-20221014195457-41bc6bb41035",
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -468,9 +469,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/adrg/xdg@v0.2.1",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -490,9 +491,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/github.com/anchore/client-go@v0.0.0-20210222170800-9c70f9b80bcf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -545,9 +546,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/golang.org/x/sys@v0.0.0-20211006194710-c8a6f5223071",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -566,9 +567,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					PURL:     "pkg:golang/golang.org/x/term@v0.0.0-20210916214954-140adaaadfaf",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
-					Locations: source.NewLocationSet(
-						source.NewLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/a-path",
 								FileSystemID: "layer-id",
 							},
@@ -593,15 +594,15 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				p := &test.expected[i]
 				p.SetID()
 			}
-			location := source.NewLocationFromCoordinates(
-				source.Coordinates{
+			location := file.NewLocationFromCoordinates(
+				file.Coordinates{
 					RealPath:     "/a-path",
 					FileSystemID: "layer-id",
 				},
 			)
 
 			c := goBinaryCataloger{}
-			pkgs := c.buildGoPkgInfo(source.EmptyResolver{}, location, test.mod, test.arch)
+			pkgs := c.buildGoPkgInfo(fileresolver.Empty{}, location, test.mod, test.arch)
 			assert.Equal(t, test.expected, pkgs)
 		})
 	}

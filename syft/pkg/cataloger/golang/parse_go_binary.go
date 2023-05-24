@@ -18,11 +18,11 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
-	"github.com/anchore/syft/syft/source"
 )
 
 const GOARCH = "GOARCH"
@@ -49,7 +49,7 @@ type goBinaryCataloger struct {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.
-func (c *goBinaryCataloger) parseGoBinary(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goBinaryCataloger) parseGoBinary(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
@@ -66,7 +66,7 @@ func (c *goBinaryCataloger) parseGoBinary(resolver source.FileResolver, _ *gener
 	return pkgs, nil, nil
 }
 
-func (c *goBinaryCataloger) makeGoMainPackage(resolver source.FileResolver, mod *debug.BuildInfo, arch string, location source.Location) pkg.Package {
+func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *debug.BuildInfo, arch string, location file.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	main := c.newGoBinaryPackage(
 		resolver,
@@ -258,7 +258,7 @@ func createMainModuleFromPath(path string) (mod debug.Module) {
 	return
 }
 
-func (c *goBinaryCataloger) buildGoPkgInfo(resolver source.FileResolver, location source.Location, mod *debug.BuildInfo, arch string) []pkg.Package {
+func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *debug.BuildInfo, arch string) []pkg.Package {
 	var pkgs []pkg.Package
 	if mod == nil {
 		return pkgs

@@ -9,9 +9,9 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
@@ -20,7 +20,7 @@ var _ generic.Parser = parseMixLock
 var mixLockDelimiter = regexp.MustCompile(`[%{}\n" ,:]+`)
 
 // parseMixLock parses a mix.lock and returns the discovered Elixir packages.
-func parseMixLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseMixLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 
 	var packages []pkg.Package

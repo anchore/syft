@@ -14,14 +14,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_LocalLicenseSearch(t *testing.T) {
-	loc1 := source.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
-	loc2 := source.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
+	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
+	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
 
 	tests := []struct {
 		name     string
@@ -35,7 +36,7 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
-				Locations:      source.NewLocationSet(loc1),
+				Locations:      file.NewLocationSet(loc1),
 				URLs:           internal.NewStringSet(),
 			},
 		},
@@ -46,7 +47,7 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				Value:          "MIT",
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
-				Locations:      source.NewLocationSet(loc2),
+				Locations:      file.NewLocationSet(loc2),
 				URLs:           internal.NewStringSet(),
 			},
 		},
@@ -63,7 +64,7 @@ func Test_LocalLicenseSearch(t *testing.T) {
 					localModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
 				},
 			)
-			licenses, err := l.getLicenses(source.EmptyResolver{}, test.name, test.version)
+			licenses, err := l.getLicenses(fileresolver.Empty{}, test.name, test.version)
 			require.NoError(t, err)
 
 			require.Len(t, licenses, 1)
@@ -74,8 +75,8 @@ func Test_LocalLicenseSearch(t *testing.T) {
 }
 
 func Test_RemoteProxyLicenseSearch(t *testing.T) {
-	loc1 := source.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
-	loc2 := source.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
+	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
+	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		buf := &bytes.Buffer{}
@@ -126,7 +127,7 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
-				Locations:      source.NewLocationSet(loc1),
+				Locations:      file.NewLocationSet(loc1),
 				URLs:           internal.NewStringSet(),
 			},
 		},
@@ -137,7 +138,7 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				Value:          "MIT",
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
-				Locations:      source.NewLocationSet(loc2),
+				Locations:      file.NewLocationSet(loc2),
 				URLs:           internal.NewStringSet(),
 			},
 		},
@@ -153,7 +154,7 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				localModCacheDir:     modDir,
 			})
 
-			licenses, err := l.getLicenses(source.EmptyResolver{}, test.name, test.version)
+			licenses, err := l.getLicenses(fileresolver.Empty{}, test.name, test.version)
 			require.NoError(t, err)
 
 			require.Len(t, licenses, 1)

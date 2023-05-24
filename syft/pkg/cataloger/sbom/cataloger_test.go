@@ -7,11 +7,11 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 func mustCPEs(s ...string) (c []cpe.CPE) {
@@ -37,7 +37,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "alpine-baselayout",
 			Version:   "3.2.0-r23",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/alpine-baselayout@3.2.0-r23?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.16.3",
@@ -54,7 +54,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "alpine-baselayout-data",
 			Version:   "3.2.0-r23",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/alpine-baselayout-data@3.2.0-r23?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.16.3",
@@ -75,7 +75,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "alpine-keys",
 			Version:   "2.4-r1",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("MIT")),
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/alpine-keys@2.4-r1?arch=x86_64&upstream=alpine-keys&distro=alpine-3.16.3",
@@ -92,7 +92,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "apk-tools",
 			Version:   "2.12.9-r3",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/apk-tools@2.12.9-r3?arch=x86_64&upstream=apk-tools&distro=alpine-3.16.3",
@@ -109,7 +109,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "busybox",
 			Version:   "1.35.0-r17",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/busybox@1.35.0-r17?arch=x86_64&upstream=busybox&distro=alpine-3.16.3",
@@ -121,7 +121,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "ca-certificates-bundle",
 			Version:   "20220614-r0",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicense("MPL-2.0"),
 				pkg.NewLicense("MIT"),
@@ -145,7 +145,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "libc-utils",
 			Version:   "0.7.2-r3",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicense("BSD-2-Clause"),
 				pkg.NewLicense("BSD-3-Clause"),
@@ -165,7 +165,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "libcrypto1.1",
 			Version:   "1.1.1s-r0",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("OpenSSL")), // SPDX expression is not set
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/libcrypto1.1@1.1.1s-r0?arch=x86_64&upstream=openssl&distro=alpine-3.16.3",
@@ -177,7 +177,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "libssl1.1",
 			Version:   "1.1.1s-r0",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("OpenSSL")), // SPDX expression is not set
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/libssl1.1@1.1.1s-r0?arch=x86_64&upstream=openssl&distro=alpine-3.16.3",
@@ -189,7 +189,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "musl",
 			Version:   "1.2.3-r1",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("MIT")), // SPDX expression is not set
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/musl@1.2.3-r1?arch=x86_64&upstream=musl&distro=alpine-3.16.3",
@@ -201,7 +201,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "musl-utils",
 			Version:   "1.2.3-r1",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicense("MIT"),
 				pkg.NewLicense("BSD"),
@@ -222,7 +222,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "scanelf",
 			Version:   "1.3.4-r0",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicense("GPL-2.0-only"),
 			),
@@ -236,7 +236,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "ssl_client",
 			Version:   "1.35.0-r17",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicense("GPL-2.0-only"),
 			),
@@ -255,7 +255,7 @@ func Test_parseSBOM(t *testing.T) {
 			Name:      "zlib",
 			Version:   "1.2.12-r3",
 			Type:      "apk",
-			Locations: source.NewLocationSet(source.NewLocation("sbom.syft.json")),
+			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicense("Zlib"),
 			),
@@ -267,9 +267,9 @@ func Test_parseSBOM(t *testing.T) {
 		},
 	}
 
-	apkgdbLocation := source.NewLocationSet(source.Location{
-		LocationData: source.LocationData{
-			Coordinates: source.Coordinates{
+	apkgdbLocation := file.NewLocationSet(file.Location{
+		LocationData: file.LocationData{
+			Coordinates: file.Coordinates{
 				RealPath:     "/lib/apk/db/installed",
 				FileSystemID: "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd",
 			},
@@ -359,7 +359,7 @@ func Test_parseSBOM(t *testing.T) {
 		},
 		{
 			From: libSSL,
-			To: source.Coordinates{
+			To: file.Coordinates{
 				RealPath:     "/lib/libssl.so.1.1",
 				FileSystemID: "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd",
 			},
@@ -372,7 +372,7 @@ func Test_parseSBOM(t *testing.T) {
 		},
 		{
 			From: baseLayout,
-			To: source.Coordinates{
+			To: file.Coordinates{
 				RealPath:     "/etc/profile.d/color_prompt.sh.disabled",
 				FileSystemID: "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd",
 			},
@@ -380,7 +380,7 @@ func Test_parseSBOM(t *testing.T) {
 		},
 		{
 			From: baseLayout,
-			To: source.Coordinates{
+			To: file.Coordinates{
 				RealPath:     "/etc/modprobe.d/kms.conf",
 				FileSystemID: "sha256:e5e13b0c77cbb769548077189c3da2f0a764ceca06af49d8d558e759f5c232bd",
 			},
@@ -396,7 +396,7 @@ func Test_parseSBOM(t *testing.T) {
 	for _, p := range expectedPkgs {
 		expectedRelationships = append(expectedRelationships, artifact.Relationship{
 			From: p,
-			To: source.Coordinates{
+			To: file.Coordinates{
 				RealPath: "sbom.syft.json",
 			},
 			Type: artifact.DescribedByRelationship,

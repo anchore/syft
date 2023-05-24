@@ -4,16 +4,16 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParsePnpmLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	fixture := "test-fixtures/pnpm/pnpm-lock.yaml"
 
-	locationSet := source.NewLocationSet(source.NewLocation(fixture))
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
 		{
@@ -57,7 +57,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	fixture := "test-fixtures/pnpm-v6/pnpm-lock.yaml"
 
-	locationSet := source.NewLocationSet(source.NewLocation(fixture))
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
 		{

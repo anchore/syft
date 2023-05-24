@@ -2,12 +2,11 @@ package model
 
 import (
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/source"
 )
 
 type File struct {
 	ID       string             `json:"id"`
-	Location source.Coordinates `json:"location"`
+	Location file.Coordinates   `json:"location"`
 	Metadata *FileMetadataEntry `json:"metadata,omitempty"`
 	Contents string             `json:"contents,omitempty"`
 	Digests  []file.Digest      `json:"digests,omitempty"`

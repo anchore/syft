@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -728,12 +729,12 @@ func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 	assert.Equal(t, 0, len(actualResults))
 }
 
-func locations(locations ...string) source.LocationSet {
-	var locs []source.Location
+func locations(locations ...string) file.LocationSet {
+	var locs []file.Location
 	for _, s := range locations {
-		locs = append(locs, source.NewLocation(s))
+		locs = append(locs, file.NewLocation(s))
 	}
-	return source.NewLocationSet(locs...)
+	return file.NewLocationSet(locs...)
 }
 
 // metadata paths are: realPath, virtualPath
@@ -757,8 +758,8 @@ func match(classifier string, paths ...string) pkg.ClassifierMatch {
 	}
 	return pkg.ClassifierMatch{
 		Classifier: classifier,
-		Location: source.NewVirtualLocationFromCoordinates(
-			source.Coordinates{
+		Location: file.NewVirtualLocationFromCoordinates(
+			file.Coordinates{
 				RealPath: realPath,
 			},
 			virtualPath,
@@ -817,10 +818,10 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 	if len(failMessages) > 0 {
 		assert.Failf(t, strings.Join(failMessages, "; "), "diff: %s",
 			cmp.Diff(expected, p,
-				cmp.Transformer("Locations", func(l source.LocationSet) []source.Location {
+				cmp.Transformer("Locations", func(l file.LocationSet) []file.Location {
 					return l.ToSlice()
 				}),
-				cmpopts.IgnoreUnexported(pkg.Package{}, source.Location{}),
+				cmpopts.IgnoreUnexported(pkg.Package{}, file.Location{}),
 				cmpopts.IgnoreFields(pkg.Package{}, "CPEs", "FoundBy", "MetadataType", "Type"),
 			))
 	}
@@ -830,22 +831,22 @@ type panicyResolver struct {
 	searchCalled bool
 }
 
-func (p *panicyResolver) FilesByExtension(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByExtension(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByBasename(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByBasename(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByBasenameGlob(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByBasenameGlob(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FileContentsByLocation(_ source.Location) (io.ReadCloser, error) {
+func (p *panicyResolver) FileContentsByLocation(_ file.Location) (io.ReadCloser, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
@@ -854,34 +855,34 @@ func (p *panicyResolver) HasPath(_ string) bool {
 	return true
 }
 
-func (p *panicyResolver) FilesByPath(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByPath(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByGlob(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByGlob(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByMIMEType(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) RelativeFileByPath(_ source.Location, _ string) *source.Location {
+func (p *panicyResolver) RelativeFileByPath(_ file.Location, _ string) *file.Location {
 	return nil
 }
 
-func (p *panicyResolver) AllLocations() <-chan source.Location {
+func (p *panicyResolver) AllLocations() <-chan file.Location {
 	return nil
 }
 
-func (p *panicyResolver) FileMetadataByLocation(_ source.Location) (source.FileMetadata, error) {
-	return source.FileMetadata{}, errors.New("not implemented")
+func (p *panicyResolver) FileMetadataByLocation(_ file.Location) (file.Metadata, error) {
+	return file.Metadata{}, errors.New("not implemented")
 }
 
-var _ source.FileResolver = (*panicyResolver)(nil)
+var _ file.Resolver = (*panicyResolver)(nil)
 
 func Test_Cataloger_ResilientToErrors(t *testing.T) {
 	c := NewCataloger()

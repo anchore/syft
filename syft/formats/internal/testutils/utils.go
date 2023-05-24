@@ -17,6 +17,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -155,8 +156,8 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
-		Locations: source.NewLocationSet(
-			source.NewLocationFromImage(string(ref1.RealPath), *ref1.Reference, img),
+		Locations: file.NewLocationSet(
+			file.NewLocationFromImage(string(ref1.RealPath), *ref1.Reference, img),
 		),
 		Type:         pkg.PythonPkg,
 		FoundBy:      "the-cataloger-1",
@@ -177,8 +178,8 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 	catalog.Add(pkg.Package{
 		Name:    "package-2",
 		Version: "2.0.1",
-		Locations: source.NewLocationSet(
-			source.NewLocationFromImage(string(ref2.RealPath), *ref2.Reference, img),
+		Locations: file.NewLocationSet(
+			file.NewLocationFromImage(string(ref2.RealPath), *ref2.Reference, img),
 		),
 		Type:         pkg.DebPkg,
 		FoundBy:      "the-cataloger-2",
@@ -265,8 +266,8 @@ func newDirectoryCatalog() *pkg.Collection {
 		Version: "1.0.1",
 		Type:    pkg.PythonPkg,
 		FoundBy: "the-cataloger-1",
-		Locations: source.NewLocationSet(
-			source.NewLocation("/some/path/pkg1"),
+		Locations: file.NewLocationSet(
+			file.NewLocation("/some/path/pkg1"),
 		),
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
@@ -292,8 +293,8 @@ func newDirectoryCatalog() *pkg.Collection {
 		Version: "2.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
-		Locations: source.NewLocationSet(
-			source.NewLocation("/some/path/pkg1"),
+		Locations: file.NewLocationSet(
+			file.NewLocation("/some/path/pkg1"),
 		),
 		MetadataType: pkg.DpkgMetadataType,
 		Metadata: pkg.DpkgMetadata{
@@ -318,8 +319,8 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		Version: "1.0.1",
 		Type:    pkg.PythonPkg,
 		FoundBy: "the-cataloger-1",
-		Locations: source.NewLocationSet(
-			source.NewLocation("/some/path/pkg1"),
+		Locations: file.NewLocationSet(
+			file.NewLocation("/some/path/pkg1"),
 		),
 		Language:     pkg.Python,
 		MetadataType: pkg.PythonPackageMetadataType,
@@ -346,8 +347,8 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		Version: "2.0.1",
 		Type:    pkg.DebPkg,
 		FoundBy: "the-cataloger-2",
-		Locations: source.NewLocationSet(
-			source.NewLocation("/some/path/pkg1"),
+		Locations: file.NewLocationSet(
+			file.NewLocation("/some/path/pkg1"),
 		),
 		MetadataType: pkg.DpkgMetadataType,
 		Metadata: pkg.DpkgMetadata{
@@ -366,15 +367,15 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 //nolint:gosec
 func AddSampleFileRelationships(s *sbom.SBOM) {
 	catalog := s.Artifacts.Packages.Sorted()
-	s.Artifacts.FileMetadata = map[source.Coordinates]source.FileMetadata{}
+	s.Artifacts.FileMetadata = map[file.Coordinates]file.Metadata{}
 
 	files := []string{"/f1", "/f2", "/d1/f3", "/d2/f4", "/z1/f5", "/a1/f6"}
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	rnd.Shuffle(len(files), func(i, j int) { files[i], files[j] = files[j], files[i] })
 
 	for _, f := range files {
-		meta := source.FileMetadata{}
-		coords := source.Coordinates{RealPath: f}
+		meta := file.Metadata{}
+		coords := file.Coordinates{RealPath: f}
 		s.Artifacts.FileMetadata[coords] = meta
 
 		s.Relationships = append(s.Relationships, artifact.Relationship{

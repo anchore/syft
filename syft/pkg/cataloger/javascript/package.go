@@ -8,11 +8,11 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPackageJSONPackage(u packageJSON, indexLocation source.Location) pkg.Package {
+func newPackageJSONPackage(u packageJSON, indexLocation file.Location) pkg.Package {
 	licenseCandidates, err := u.licensesFromJSON()
 	if err != nil {
 		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
@@ -23,7 +23,7 @@ func newPackageJSONPackage(u packageJSON, indexLocation source.Location) pkg.Pac
 		Name:         u.Name,
 		Version:      u.Version,
 		PURL:         packageURL(u.Name, u.Version),
-		Locations:    source.NewLocationSet(indexLocation),
+		Locations:    file.NewLocationSet(indexLocation),
 		Language:     pkg.JavaScript,
 		Licenses:     pkg.NewLicenseSet(license...),
 		Type:         pkg.NpmPkg,
@@ -44,7 +44,7 @@ func newPackageJSONPackage(u packageJSON, indexLocation source.Location) pkg.Pac
 	return p
 }
 
-func newPackageLockV1Package(resolver source.FileResolver, location source.Location, name string, u lockDependency) pkg.Package {
+func newPackageLockV1Package(resolver file.Resolver, location file.Location, name string, u lockDependency) pkg.Package {
 	version := u.Version
 
 	const aliasPrefixPackageLockV1 = "npm:"
@@ -66,7 +66,7 @@ func newPackageLockV1Package(resolver source.FileResolver, location source.Locat
 		pkg.Package{
 			Name:         name,
 			Version:      version,
-			Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(name, version),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
@@ -76,14 +76,14 @@ func newPackageLockV1Package(resolver source.FileResolver, location source.Locat
 	)
 }
 
-func newPackageLockV2Package(resolver source.FileResolver, location source.Location, name string, u lockPackage) pkg.Package {
+func newPackageLockV2Package(resolver file.Resolver, location file.Location, name string, u lockPackage) pkg.Package {
 	return finalizeLockPkg(
 		resolver,
 		location,
 		pkg.Package{
 			Name:         name,
 			Version:      u.Version,
-			Locations:    source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, u.License...)...),
 			PURL:         packageURL(name, u.Version),
 			Language:     pkg.JavaScript,
@@ -94,14 +94,14 @@ func newPackageLockV2Package(resolver source.FileResolver, location source.Locat
 	)
 }
 
-func newPnpmPackage(resolver source.FileResolver, location source.Location, name, version string) pkg.Package {
+func newPnpmPackage(resolver file.Resolver, location file.Location, name, version string) pkg.Package {
 	return finalizeLockPkg(
 		resolver,
 		location,
 		pkg.Package{
 			Name:      name,
 			Version:   version,
-			Locations: source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
@@ -109,14 +109,14 @@ func newPnpmPackage(resolver source.FileResolver, location source.Location, name
 	)
 }
 
-func newYarnLockPackage(resolver source.FileResolver, location source.Location, name, version string) pkg.Package {
+func newYarnLockPackage(resolver file.Resolver, location file.Location, name, version string) pkg.Package {
 	return finalizeLockPkg(
 		resolver,
 		location,
 		pkg.Package{
 			Name:      name,
 			Version:   version,
-			Locations: source.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
@@ -124,14 +124,14 @@ func newYarnLockPackage(resolver source.FileResolver, location source.Location, 
 	)
 }
 
-func finalizeLockPkg(resolver source.FileResolver, location source.Location, p pkg.Package) pkg.Package {
+func finalizeLockPkg(resolver file.Resolver, location file.Location, p pkg.Package) pkg.Package {
 	licenseCandidate := addLicenses(p.Name, resolver, location)
 	p.Licenses.Add(pkg.NewLicensesFromLocation(location, licenseCandidate...)...)
 	p.SetID()
 	return p
 }
 
-func addLicenses(name string, resolver source.FileResolver, location source.Location) (allLicenses []string) {
+func addLicenses(name string, resolver file.Resolver, location file.Location) (allLicenses []string) {
 	if resolver == nil {
 		return allLicenses
 	}

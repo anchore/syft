@@ -64,8 +64,8 @@ func deduplicateErrors(errors []error) []string {
 
 func toSyftFiles(files []model.File) sbom.Artifacts {
 	ret := sbom.Artifacts{
-		FileMetadata: make(map[source.Coordinates]source.FileMetadata),
-		FileDigests:  make(map[source.Coordinates][]file.Digest),
+		FileMetadata: make(map[file.Coordinates]file.Metadata),
+		FileDigests:  make(map[file.Coordinates][]file.Digest),
 	}
 
 	for _, f := range files {
@@ -79,7 +79,7 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 
 			fm := os.FileMode(mode)
 
-			ret.FileMetadata[coord] = source.FileMetadata{
+			ret.FileMetadata[coord] = file.Metadata{
 				FileInfo: stereoscopeFile.ManualInfo{
 					NameValue: path.Base(coord.RealPath),
 					SizeValue: f.Metadata.Size,
@@ -112,7 +112,7 @@ func toSyftLicenses(m []model.License) (p []pkg.License) {
 			SPDXExpression: l.SPDXExpression,
 			Type:           l.Type,
 			URLs:           internal.NewStringSet(l.URLs...),
-			Locations:      source.NewLocationSet(l.Locations...),
+			Locations:      file.NewLocationSet(l.Locations...),
 		})
 	}
 	return
@@ -320,7 +320,7 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		Name:         p.Name,
 		Version:      p.Version,
 		FoundBy:      p.FoundBy,
-		Locations:    source.NewLocationSet(p.Locations...),
+		Locations:    file.NewLocationSet(p.Locations...),
 		Licenses:     pkg.NewLicenseSet(toSyftLicenses(p.Licenses)...),
 		Language:     p.Language,
 		Type:         p.Type,

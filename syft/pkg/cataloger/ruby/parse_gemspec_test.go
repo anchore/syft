@@ -3,15 +3,15 @@ package ruby
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseGemspec(t *testing.T) {
 	fixture := "test-fixtures/bundler.gemspec"
 
-	locations := source.NewLocationSet(source.NewLocation(fixture))
+	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	var expectedPkg = pkg.Package{
 		Name:      "bundler",
@@ -20,7 +20,7 @@ func TestParseGemspec(t *testing.T) {
 		Locations: locations,
 		Type:      pkg.GemPkg,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("MIT", source.NewLocation(fixture)),
+			pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 		),
 		Language:     pkg.Ruby,
 		MetadataType: pkg.GemMetadataType,

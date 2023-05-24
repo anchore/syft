@@ -1,0 +1,1 @@
+test-fixtures/last/path.txt file contents!

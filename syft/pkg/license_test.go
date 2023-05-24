@@ -8,14 +8,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/file"
 )
 
 func Test_Hash(t *testing.T) {
 
-	loc1 := source.NewLocation("place!")
+	loc1 := file.NewLocation("place!")
 	loc1.FileSystemID = "fs1"
-	loc2 := source.NewLocation("place!")
+	loc2 := file.NewLocation("place!")
 	loc2.FileSystemID = "fs2" // important! there is a different file system ID
 
 	lic1 := NewLicenseFromLocations("MIT", loc1)
@@ -47,44 +47,44 @@ func Test_Sort(t *testing.T) {
 		{
 			name: "single",
 			licenses: []License{
-				NewLicenseFromLocations("MIT", source.NewLocation("place!")),
+				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
 			},
 			expected: []License{
-				NewLicenseFromLocations("MIT", source.NewLocation("place!")),
+				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
 			},
 		},
 		{
 			name: "multiple",
 			licenses: []License{
-				NewLicenseFromLocations("MIT", source.NewLocation("place!")),
+				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
 				NewLicenseFromURLs("MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
-				NewLicenseFromLocations("Apache", source.NewLocation("area!")),
-				NewLicenseFromLocations("gpl2+", source.NewLocation("area!")),
+				NewLicenseFromLocations("Apache", file.NewLocation("area!")),
+				NewLicenseFromLocations("gpl2+", file.NewLocation("area!")),
 			},
 			expected: Licenses{
-				NewLicenseFromLocations("Apache", source.NewLocation("area!")),
+				NewLicenseFromLocations("Apache", file.NewLocation("area!")),
 				NewLicenseFromURLs("MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
-				NewLicenseFromLocations("MIT", source.NewLocation("place!")),
-				NewLicenseFromLocations("gpl2+", source.NewLocation("area!")),
+				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
+				NewLicenseFromLocations("gpl2+", file.NewLocation("area!")),
 			},
 		},
 		{
 			name: "multiple with location variants",
 			licenses: []License{
-				NewLicenseFromLocations("MIT", source.NewLocation("place!")),
-				NewLicenseFromLocations("MIT", source.NewLocation("park!")),
+				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
+				NewLicenseFromLocations("MIT", file.NewLocation("park!")),
 				NewLicense("MIT"),
 				NewLicense("AAL"),
 				NewLicense("Adobe-2006"),
-				NewLicenseFromLocations("Apache", source.NewLocation("area!")),
+				NewLicenseFromLocations("Apache", file.NewLocation("area!")),
 			},
 			expected: Licenses{
 				NewLicense("AAL"),
 				NewLicense("Adobe-2006"),
-				NewLicenseFromLocations("Apache", source.NewLocation("area!")),
+				NewLicenseFromLocations("Apache", file.NewLocation("area!")),
 				NewLicense("MIT"),
-				NewLicenseFromLocations("MIT", source.NewLocation("park!")),
-				NewLicenseFromLocations("MIT", source.NewLocation("place!")),
+				NewLicenseFromLocations("MIT", file.NewLocation("park!")),
+				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
 			},
 		},
 	}

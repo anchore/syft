@@ -4,15 +4,15 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseComposerFileLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	fixture := "test-fixtures/composer.lock"
-	locations := source.NewLocationSet(source.NewLocation(fixture))
+	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
 			Name:      "adoy/fastcgi-client",
@@ -20,7 +20,7 @@ func TestParseComposerFileLock(t *testing.T) {
 			PURL:      "pkg:composer/adoy/fastcgi-client@1.0.2",
 			Locations: locations,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", source.NewLocation(fixture)),
+				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 			),
 			Language:     pkg.PHP,
 			Type:         pkg.PhpComposerPkg,
@@ -61,7 +61,7 @@ func TestParseComposerFileLock(t *testing.T) {
 			PURL:      "pkg:composer/alcaeus/mongo-php-adapter@1.1.11",
 			Language:  pkg.PHP,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", source.NewLocation(fixture)),
+				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 			),
 			Type:         pkg.PhpComposerPkg,
 			MetadataType: pkg.PhpComposerJSONMetadataType,
