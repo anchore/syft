@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_SourceInfo(t *testing.T) {
@@ -19,9 +19,9 @@ func Test_SourceInfo(t *testing.T) {
 			name: "locations are captured",
 			input: pkg.Package{
 				// note: no type given
-				Locations: source.NewLocationSet(
-					source.NewVirtualLocation("/a-place", "/b-place"),
-					source.NewVirtualLocation("/c-place", "/d-place"),
+				Locations: file.NewLocationSet(
+					file.NewVirtualLocation("/a-place", "/b-place"),
+					file.NewVirtualLocation("/c-place", "/d-place"),
 				),
 			},
 			expected: []string{

@@ -9,15 +9,15 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/anchore/syft/internal/file"
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 type parsedData struct {
 	Licenses                  string `mapstructure:"License"`
-	LicenseLocation           source.Location
+	LicenseLocation           file.Location
 	pkg.PythonPackageMetadata `mapstructure:",squash"`
 }
 
@@ -81,7 +81,7 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (parsedData, error) 
 
 	pd.SitePackagesRootPath = determineSitePackagesRootPath(path)
 	if pd.Licenses != "" {
-		pd.LicenseLocation = source.NewLocation(path)
+		pd.LicenseLocation = file.NewLocation(path)
 	}
 
 	return pd, nil
@@ -91,7 +91,7 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (parsedData, error) 
 // of egg metadata (as opposed to a directory that contains more metadata
 // files).
 func isEggRegularFile(path string) bool {
-	return file.GlobMatch(eggInfoGlob, path)
+	return intFile.GlobMatch(eggInfoGlob, path)
 }
 
 // determineSitePackagesRootPath returns the path of the site packages root,

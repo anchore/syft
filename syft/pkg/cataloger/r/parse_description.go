@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 /* some examples of license strings found in DESCRIPTION files:
@@ -28,10 +28,10 @@ License: Part of R 4.3.0
 License: Unlimited
 */
 
-func parseDescriptionFile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDescriptionFile(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	values := extractFieldsFromDescriptionFile(reader)
 	m := parseDataFromDescriptionMap(values)
-	p := newPackage(m, []source.Location{reader.Location}...)
+	p := newPackage(m, []file.Location{reader.Location}...)
 	if p.Name == "" || p.Version == "" {
 		return nil, nil, nil
 	}

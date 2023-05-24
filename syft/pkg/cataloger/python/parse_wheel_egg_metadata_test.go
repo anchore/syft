@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-test/deep"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseWheelEggMetadata(t *testing.T) {
@@ -19,7 +19,7 @@ func TestParseWheelEggMetadata(t *testing.T) {
 			Fixture: "test-fixtures/egg-info/PKG-INFO",
 			ExpectedMetadata: parsedData{
 				"Apache 2.0",
-				source.NewLocation("test-fixtures/egg-info/PKG-INFO"),
+				file.NewLocation("test-fixtures/egg-info/PKG-INFO"),
 				pkg.PythonPackageMetadata{
 					Name:                 "requests",
 					Version:              "2.22.0",
@@ -34,7 +34,7 @@ func TestParseWheelEggMetadata(t *testing.T) {
 			Fixture: "test-fixtures/dist-info/METADATA",
 			ExpectedMetadata: parsedData{
 				"BSD License",
-				source.NewLocation("test-fixtures/dist-info/METADATA"),
+				file.NewLocation("test-fixtures/dist-info/METADATA"),
 				pkg.PythonPackageMetadata{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
@@ -135,7 +135,7 @@ func TestParseWheelEggMetadataInvalid(t *testing.T) {
 			Fixture: "test-fixtures/egg-info/PKG-INFO-INVALID",
 			ExpectedMetadata: parsedData{
 				"",
-				source.Location{},
+				file.Location{},
 				pkg.PythonPackageMetadata{
 					Name:                 "mxnet",
 					Version:              "1.8.0",

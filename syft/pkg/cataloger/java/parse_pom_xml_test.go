@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vifraa/gopom"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_parserPomXML(t *testing.T) {
@@ -49,7 +49,7 @@ func Test_parserPomXML(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			for i := range test.expected {
-				test.expected[i].Locations.Add(source.NewLocation(test.input))
+				test.expected[i].Locations.Add(file.NewLocation(test.input))
 			}
 			pkgtest.TestFileParser(t, test.input, parserPomXML, test.expected, nil)
 		})
@@ -181,7 +181,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			for i := range test.expected {
-				test.expected[i].Locations.Add(source.NewLocation(test.input))
+				test.expected[i].Locations.Add(file.NewLocation(test.input))
 			}
 			pkgtest.TestFileParser(t, test.input, parserPomXML, test.expected, nil)
 		})

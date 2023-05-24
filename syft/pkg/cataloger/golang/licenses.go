@@ -22,13 +22,14 @@ import (
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 type goLicenses struct {
 	opts                  GoCatalogerOpts
-	localModCacheResolver source.WritableFileResolver
+	localModCacheResolver file.WritableResolver
 	progress              *event.CatalogerTask
 }
 
@@ -55,27 +56,27 @@ func remotesForModule(proxies []string, noProxy []string, module string) []strin
 	return proxies
 }
 
-func modCacheResolver(modCacheDir string) source.WritableFileResolver {
-	var r source.WritableFileResolver
+func modCacheResolver(modCacheDir string) file.WritableResolver {
+	var r file.WritableResolver
 
 	if modCacheDir == "" {
 		log.Trace("unable to determine mod cache directory, skipping mod cache resolver")
-		r = source.EmptyResolver{}
+		r = fileresolver.Empty{}
 	} else {
 		stat, err := os.Stat(modCacheDir)
 
 		if os.IsNotExist(err) || stat == nil || !stat.IsDir() {
 			log.Tracef("unable to open mod cache directory: %s, skipping mod cache resolver", modCacheDir)
-			r = source.EmptyResolver{}
+			r = fileresolver.Empty{}
 		} else {
-			r = source.NewUnindexedDirectoryResolver(modCacheDir)
+			r = fileresolver.NewFromUnindexedDirectory(modCacheDir)
 		}
 	}
 
 	return r
 }
 
-func (c *goLicenses) getLicenses(resolver source.FileResolver, moduleName, moduleVersion string) (licenses []pkg.License, err error) {
+func (c *goLicenses) getLicenses(resolver file.Resolver, moduleName, moduleVersion string) (licenses []pkg.License, err error) {
 	licenses, err = findLicenses(resolver,
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
@@ -131,7 +132,7 @@ func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]
 		if err != nil {
 			return err
 		}
-		return c.localModCacheResolver.Write(source.NewLocation(path.Join(dir, filePath)), f)
+		return c.localModCacheResolver.Write(file.NewLocation(path.Join(dir, filePath)), f)
 	})
 
 	if err != nil {
@@ -156,7 +157,7 @@ func requireCollection(licenses []pkg.License) []pkg.License {
 	return licenses
 }
 
-func findLicenses(resolver source.FileResolver, globMatch string) (out []pkg.License, err error) {
+func findLicenses(resolver file.Resolver, globMatch string) (out []pkg.License, err error) {
 	out = make([]pkg.License, 0)
 	if resolver == nil {
 		return

@@ -7,7 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/source"
 )
@@ -94,46 +95,46 @@ func Test_toSourceModel(t *testing.T) {
 
 func Test_toFileType(t *testing.T) {
 
-	badType := file.Type(0x1337)
-	var allTypesTested []file.Type
+	badType := stereoscopeFile.Type(0x1337)
+	var allTypesTested []stereoscopeFile.Type
 	tests := []struct {
-		ty   file.Type
+		ty   stereoscopeFile.Type
 		name string
 	}{
 		{
-			ty:   file.TypeRegular,
+			ty:   stereoscopeFile.TypeRegular,
 			name: "RegularFile",
 		},
 		{
-			ty:   file.TypeDirectory,
+			ty:   stereoscopeFile.TypeDirectory,
 			name: "Directory",
 		},
 		{
-			ty:   file.TypeSymLink,
+			ty:   stereoscopeFile.TypeSymLink,
 			name: "SymbolicLink",
 		},
 		{
-			ty:   file.TypeHardLink,
+			ty:   stereoscopeFile.TypeHardLink,
 			name: "HardLink",
 		},
 		{
-			ty:   file.TypeSocket,
+			ty:   stereoscopeFile.TypeSocket,
 			name: "Socket",
 		},
 		{
-			ty:   file.TypeCharacterDevice,
+			ty:   stereoscopeFile.TypeCharacterDevice,
 			name: "CharacterDevice",
 		},
 		{
-			ty:   file.TypeBlockDevice,
+			ty:   stereoscopeFile.TypeBlockDevice,
 			name: "BlockDevice",
 		},
 		{
-			ty:   file.TypeFIFO,
+			ty:   stereoscopeFile.TypeFIFO,
 			name: "FIFONode",
 		},
 		{
-			ty:   file.TypeIrregular,
+			ty:   stereoscopeFile.TypeIrregular,
 			name: "IrregularFile",
 		},
 		{
@@ -150,17 +151,17 @@ func Test_toFileType(t *testing.T) {
 		})
 	}
 
-	assert.ElementsMatch(t, allTypesTested, file.AllTypes(), "not all file.Types are under test")
+	assert.ElementsMatch(t, allTypesTested, stereoscopeFile.AllTypes(), "not all file.Types are under test")
 }
 
 func Test_toFileMetadataEntry(t *testing.T) {
-	coords := source.Coordinates{
+	coords := file.Coordinates{
 		RealPath:     "/path",
 		FileSystemID: "x",
 	}
 	tests := []struct {
 		name     string
-		metadata *source.FileMetadata
+		metadata *file.Metadata
 		want     *model.FileMetadataEntry
 	}{
 		{
@@ -168,23 +169,23 @@ func Test_toFileMetadataEntry(t *testing.T) {
 		},
 		{
 			name: "no file info",
-			metadata: &source.FileMetadata{
+			metadata: &file.Metadata{
 				FileInfo: nil,
 			},
 			want: &model.FileMetadataEntry{
-				Type: file.TypeRegular.String(),
+				Type: stereoscopeFile.TypeRegular.String(),
 			},
 		},
 		{
 			name: "with file info",
-			metadata: &source.FileMetadata{
-				FileInfo: &file.ManualInfo{
+			metadata: &file.Metadata{
+				FileInfo: &stereoscopeFile.ManualInfo{
 					ModeValue: 1,
 				},
 			},
 			want: &model.FileMetadataEntry{
 				Mode: 1,
-				Type: file.TypeRegular.String(),
+				Type: stereoscopeFile.TypeRegular.String(),
 			},
 		},
 	}

@@ -4,15 +4,15 @@ import (
 	"fmt"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPackageForIndex(name, version string, locations ...source.Location) pkg.Package {
+func newPackageForIndex(name, version string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
-		Locations: source.NewLocationSet(locations...),
+		Locations: file.NewLocationSet(locations...),
 		PURL:      packageURL(name, version, nil),
 		Language:  pkg.Python,
 		Type:      pkg.PythonPkg,
@@ -23,11 +23,11 @@ func newPackageForIndex(name, version string, locations ...source.Location) pkg.
 	return p
 }
 
-func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPipfileLockMetadata, locations ...source.Location) pkg.Package {
+func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPipfileLockMetadata, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         name,
 		Version:      version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		PURL:         packageURL(name, version, nil),
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,
@@ -40,11 +40,11 @@ func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPip
 	return p
 }
 
-func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.PythonRequirementsMetadata, locations ...source.Location) pkg.Package {
+func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.PythonRequirementsMetadata, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         name,
 		Version:      version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		PURL:         packageURL(name, version, nil),
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,
@@ -57,12 +57,12 @@ func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.Py
 	return p
 }
 
-func newPackageForPackage(m parsedData, sources ...source.Location) pkg.Package {
+func newPackageForPackage(m parsedData, sources ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
 		PURL:         packageURL(m.Name, m.Version, &m.PythonPackageMetadata),
-		Locations:    source.NewLocationSet(sources...),
+		Locations:    file.NewLocationSet(sources...),
 		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(m.LicenseLocation, m.Licenses)...),
 		Language:     pkg.Python,
 		Type:         pkg.PythonPkg,

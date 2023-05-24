@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/source"
@@ -14,8 +15,8 @@ func Test_KernelCataloger(t *testing.T) {
 		Name:    "linux-kernel",
 		Version: "6.0.7-301.fc37.x86_64",
 		FoundBy: "linux-kernel-cataloger",
-		Locations: source.NewLocationSet(
-			source.NewVirtualLocation(
+		Locations: file.NewLocationSet(
+			file.NewVirtualLocation(
 				"/lib/modules/6.0.7-301.fc37.x86_64/vmlinuz",
 				"/lib/modules/6.0.7-301.fc37.x86_64/vmlinuz",
 			),
@@ -42,8 +43,8 @@ func Test_KernelCataloger(t *testing.T) {
 		Name:    "ttynull",
 		Version: "",
 		FoundBy: "linux-kernel-cataloger",
-		Locations: source.NewLocationSet(
-			source.NewVirtualLocation("/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
+		Locations: file.NewLocationSet(
+			file.NewVirtualLocation("/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
 				"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
 			),
 		),

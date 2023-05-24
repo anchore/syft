@@ -4,13 +4,13 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(d parsedData, release *linux.Release, dbLocation source.Location) pkg.Package {
+func newPackage(d parsedData, release *linux.Release, dbLocation file.Location) pkg.Package {
 	// check if license is a valid spdx expression before splitting
 	licenseStrings := []string{d.License}
 	_, err := license.ParseExpression(d.License)
@@ -22,7 +22,7 @@ func newPackage(d parsedData, release *linux.Release, dbLocation source.Location
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
-		Locations:    source.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Locations:    file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation, licenseStrings...)...),
 		PURL:         packageURL(d.ApkMetadata, release),
 		Type:         pkg.ApkPkg,

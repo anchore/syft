@@ -7,45 +7,45 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/file"
 )
 
 func TestRelationshipsEvidentBy(t *testing.T) {
 
 	c := NewCollection()
 
-	coordA := source.Coordinates{
+	coordA := file.Coordinates{
 		RealPath:     "/somewhere/real",
 		FileSystemID: "abc",
 	}
-	coordC := source.Coordinates{
+	coordC := file.Coordinates{
 		RealPath:     "/somewhere/real",
 		FileSystemID: "abc",
 	}
-	coordD := source.Coordinates{
+	coordD := file.Coordinates{
 		RealPath:     "/somewhere/real",
 		FileSystemID: "abc",
 	}
 	pkgA := Package{
-		Locations: source.NewLocationSet(
+		Locations: file.NewLocationSet(
 			// added!
-			source.NewLocationFromCoordinates(coordA).WithAnnotation(EvidenceAnnotationKey, PrimaryEvidenceAnnotation),
+			file.NewLocationFromCoordinates(coordA).WithAnnotation(EvidenceAnnotationKey, PrimaryEvidenceAnnotation),
 			// ignored...
-			source.NewLocationFromCoordinates(coordC).WithAnnotation(EvidenceAnnotationKey, SupportingEvidenceAnnotation),
-			source.NewLocationFromCoordinates(coordD),
+			file.NewLocationFromCoordinates(coordC).WithAnnotation(EvidenceAnnotationKey, SupportingEvidenceAnnotation),
+			file.NewLocationFromCoordinates(coordD),
 		),
 	}
 	pkgA.SetID()
 	c.Add(pkgA)
 
-	coordB := source.Coordinates{
+	coordB := file.Coordinates{
 		RealPath:     "/somewhere-else/real",
 		FileSystemID: "def",
 	}
 	pkgB := Package{
-		Locations: source.NewLocationSet(
+		Locations: file.NewLocationSet(
 			// added!
-			source.NewLocationFromCoordinates(coordB).WithAnnotation(EvidenceAnnotationKey, PrimaryEvidenceAnnotation),
+			file.NewLocationFromCoordinates(coordB).WithAnnotation(EvidenceAnnotationKey, PrimaryEvidenceAnnotation),
 		),
 	}
 	pkgB.SetID()

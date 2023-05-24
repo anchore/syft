@@ -4,12 +4,12 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(pd parseData, locations ...source.Location) pkg.Package {
-	locationSet := source.NewLocationSet()
+func newPackage(pd parseData, locations ...file.Location) pkg.Package {
+	locationSet := file.NewLocationSet()
 	for _, loc := range locations {
 		locationSet.Add(loc.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 	}
@@ -45,7 +45,7 @@ func packageURL(m parseData) string {
 // Multiple licences can be specified separated by ‘|’
 // (surrounded by spaces) in which case the user can choose any of the above cases.
 // https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Licensing
-func parseLicenseData(license string, locations ...source.Location) []pkg.License {
+func parseLicenseData(license string, locations ...file.Location) []pkg.License {
 	licenses := make([]pkg.License, 0)
 
 	// check if multiple licenses are separated by |

@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseInstalledJsonComposerV1(t *testing.T) {
@@ -130,7 +130,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
-			locations := source.NewLocationSet(source.NewLocation(fixture))
+			locations := file.NewLocationSet(file.NewLocation(fixture))
 			for i := range expectedPkgs {
 				expectedPkgs[i].Locations = locations
 				locationLicenses := pkg.NewLicenseSet()

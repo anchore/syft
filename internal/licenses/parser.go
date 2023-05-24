@@ -5,9 +5,9 @@ import (
 
 	"github.com/google/licensecheck"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -16,7 +16,7 @@ const (
 )
 
 // Parse scans the contents of a license file to attempt to determine the type of license it is
-func Parse(reader io.Reader, l source.Location) (licenses []pkg.License, err error) {
+func Parse(reader io.Reader, l file.Location) (licenses []pkg.License, err error) {
 	licenses = make([]pkg.License, 0)
 	contents, err := io.ReadAll(reader)
 	if err != nil {

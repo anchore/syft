@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/source"
 )
@@ -58,15 +59,15 @@ func TestLicenseSet_Add(t *testing.T) {
 		{
 			name: "deduplicate licenses with locations",
 			licenses: []License{
-				NewLicenseFromLocations("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
-				NewLicenseFromLocations("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
-				NewLicenseFromLocations("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"})),
+				NewLicenseFromLocations("MIT", file.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseFromLocations("MIT", file.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseFromLocations("MIT", file.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"})),
 			},
 			want: []License{
 				NewLicenseFromLocations(
 					"MIT",
-					source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"}),
-					source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"}),
+					file.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"}),
+					file.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"}),
 				),
 			},
 		},
@@ -74,14 +75,14 @@ func TestLicenseSet_Add(t *testing.T) {
 			name: "same licenses with different locations",
 			licenses: []License{
 				NewLicense("MIT"),
-				NewLicenseFromLocations("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"})),
-				NewLicenseFromLocations("MIT", source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseFromLocations("MIT", file.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"})),
+				NewLicenseFromLocations("MIT", file.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"})),
 			},
 			want: []License{
 				NewLicenseFromLocations(
 					"MIT",
-					source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"}),
-					source.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"}),
+					file.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "1"}),
+					file.NewLocationFromCoordinates(source.Coordinates{RealPath: "/place", FileSystemID: "2"}),
 				),
 			},
 		},
@@ -89,7 +90,7 @@ func TestLicenseSet_Add(t *testing.T) {
 			name: "same license from different sources",
 			licenses: []License{
 				NewLicense("MIT"),
-				NewLicenseFromLocations("MIT", source.NewLocation("/place")),
+				NewLicenseFromLocations("MIT", file.NewLocation("/place")),
 				NewLicenseFromURLs("MIT", "https://example.com"),
 			},
 			want: []License{
@@ -98,7 +99,7 @@ func TestLicenseSet_Add(t *testing.T) {
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
 					URLs:           internal.NewStringSet("https://example.com"),
-					Locations:      source.NewLocationSet(source.NewLocation("/place")),
+					Locations:      file.NewLocationSet(file.NewLocation("/place")),
 				},
 			},
 		},
@@ -107,7 +108,7 @@ func TestLicenseSet_Add(t *testing.T) {
 			licenses: []License{
 				NewLicenseFromType("MIT", license.Concluded),
 				NewLicenseFromType("MIT", license.Declared),
-				NewLicenseFromLocations("MIT", source.NewLocation("/place")),
+				NewLicenseFromLocations("MIT", file.NewLocation("/place")),
 				NewLicenseFromURLs("MIT", "https://example.com"),
 			},
 			want: []License{
@@ -116,14 +117,14 @@ func TestLicenseSet_Add(t *testing.T) {
 					SPDXExpression: "MIT",
 					Type:           license.Concluded,
 					URLs:           internal.NewStringSet(),
-					Locations:      source.NewLocationSet(),
+					Locations:      file.NewLocationSet(),
 				},
 				{
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
 					URLs:           internal.NewStringSet("https://example.com"),
-					Locations:      source.NewLocationSet(source.NewLocation("/place")),
+					Locations:      file.NewLocationSet(file.NewLocation("/place")),
 				},
 			},
 		},

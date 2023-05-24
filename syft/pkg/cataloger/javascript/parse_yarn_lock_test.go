@@ -6,15 +6,15 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseYarnBerry(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	fixture := "test-fixtures/yarn-berry/yarn.lock"
-	locations := source.NewLocationSet(source.NewLocation(fixture))
+	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
 		{
@@ -98,7 +98,7 @@ func TestParseYarnBerry(t *testing.T) {
 func TestParseYarnLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	fixture := "test-fixtures/yarn/yarn.lock"
-	locations := source.NewLocationSet(source.NewLocation(fixture))
+	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
 		{
