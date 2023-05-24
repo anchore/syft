@@ -204,7 +204,7 @@ func (r *directoryIndexer) indexBranch(root string, stager *progress.Stage) ([]s
 
 		lstat, err := os.Lstat(targetPath)
 		newRoot, err := r.indexPath(targetPath, lstat, err)
-		if err != nil && !errors.Is(err, errSkipPath) && !errors.Is(err, fs.SkipDir) {
+		if err != nil && !errors.Is(err, ErrSkipPath) && !errors.Is(err, fs.SkipDir) {
 			return nil, fmt.Errorf("unable to index ancestor path=%q: %w", targetPath, err)
 		}
 		if newRoot != "" {
