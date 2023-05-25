@@ -226,8 +226,8 @@ func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
 	var observedPaths []string
 	pathObserver := func(p string, _ os.FileInfo, _ error) error {
 		fields := strings.Split(p, "test-fixtures/symlinks-prune-indexing")
-		if len(fields) != 2 {
-			t.Fatalf("unable to parse path: %s", p)
+		if len(fields) < 2 {
+			return nil
 		}
 		clean := strings.TrimLeft(fields[1], "/")
 		if clean != "" {
@@ -261,9 +261,11 @@ func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
 		"path/5/6/7/8/dont-index-me-twice-either.txt",
 		"path/file.txt",
 		// everything below is after the original tree is indexed, and we are now indexing additional roots from symlinks
-		"path",                 // considered from symlink before-path, but pruned
-		"before-path/file.txt", // considered from symlink c-file.txt, but pruned
-		"before-path",          // considered from symlink c-path, but pruned
+		"path",          // considered from symlink before-path, but pruned
+		"path/file.txt", // leaf
+		"before-path",   // considered from symlink c-path, but pruned
+		"path/file.txt", // leaf
+		"before-path",   // considered from symlink c-path, but pruned
 	}
 
 	assert.Equal(t, expected, observedPaths, "visited paths differ \n %s", cmp.Diff(expected, observedPaths))
@@ -282,7 +284,7 @@ func TestDirectoryIndexer_IndexesAllTypes(t *testing.T) {
 	for _, ref := range allRefs {
 		fields := strings.Split(string(ref.RealPath), "test-fixtures/symlinks-prune-indexing")
 		if len(fields) != 2 {
-			t.Fatalf("unable to parse path: %s", ref.RealPath)
+			continue
 		}
 		clean := strings.TrimLeft(fields[1], "/")
 		if clean == "" {
@@ -325,4 +327,59 @@ func TestDirectoryIndexer_IndexesAllTypes(t *testing.T) {
 		require.NoError(t, err)
 	}
 
+}
+
+func Test_allContainedPaths(t *testing.T) {
+
+	tests := []struct {
+		name string
+		path string
+		want []string
+	}{
+		{
+			name: "empty",
+			path: "",
+			want: nil,
+		},
+		{
+			name: "single relative",
+			path: "a",
+			want: []string{"a"},
+		},
+		{
+			name: "single absolute",
+			path: "/a",
+			want: []string{"/a"},
+		},
+		{
+			name: "multiple relative",
+			path: "a/b/c",
+			want: []string{"a", "a/b", "a/b/c"},
+		},
+		{
+			name: "multiple absolute",
+			path: "/a/b/c",
+			want: []string{"/a", "/a/b", "/a/b/c"},
+		},
+		{
+			name: "multiple absolute with extra slashs",
+			path: "///a/b//c/",
+			want: []string{"/a", "/a/b", "/a/b/c"},
+		},
+		{
+			name: "relative with single dot",
+			path: "a/./b",
+			want: []string{"a", "a/b"},
+		},
+		{
+			name: "relative with double single dot",
+			path: "a/../b",
+			want: []string{"b"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, allContainedPaths(tt.path))
+		})
+	}
 }

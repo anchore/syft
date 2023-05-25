@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
@@ -119,6 +120,22 @@ func (r *directoryIndexer) indexTree(root string, stager *progress.Stage) ([]str
 		return roots, nil
 	}
 
+	shouldIndexFullTree, err := isRealPath(root)
+	if err != nil {
+		return nil, err
+	}
+
+	if !shouldIndexFullTree {
+		newRoots, err := r.indexBranch(root, stager)
+		if err != nil {
+			return nil, fmt.Errorf("unable to index branch=%q: %w", root, err)
+		}
+
+		roots = append(roots, newRoots...)
+
+		return roots, nil
+	}
+
 	err = filepath.Walk(root,
 		func(path string, info os.FileInfo, err error) error {
 			stager.Current = path
@@ -141,6 +158,85 @@ func (r *directoryIndexer) indexTree(root string, stager *progress.Stage) ([]str
 	}
 
 	return roots, nil
+}
+
+func isRealPath(root string) (bool, error) {
+	rootParent := filepath.Clean(filepath.Dir(root))
+
+	realRootParent, err := filepath.EvalSymlinks(rootParent)
+	if err != nil {
+		return false, err
+	}
+
+	realRootParent = filepath.Clean(realRootParent)
+
+	return rootParent == realRootParent, nil
+}
+
+func (r *directoryIndexer) indexBranch(root string, stager *progress.Stage) ([]string, error) {
+	rootRealPath, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return nil, err
+	}
+
+	// there is a symlink within the path to the root, we need to index the real root parent first
+	// then capture the symlinks to the root path
+	roots, err := r.indexTree(rootRealPath, stager)
+	if err != nil {
+		return nil, fmt.Errorf("unable to index real root=%q: %w", rootRealPath, err)
+	}
+
+	// walk down all ancestor paths and shallow-add non-existing elements to the tree
+	for idx, p := range allContainedPaths(root) {
+		var targetPath string
+		if idx != 0 {
+			parent := path.Dir(p)
+			cleanParent, err := filepath.EvalSymlinks(parent)
+			if err != nil {
+				return nil, fmt.Errorf("unable to evaluate symlink for contained path parent=%q: %w", parent, err)
+			}
+			targetPath = filepath.Join(cleanParent, filepath.Base(p))
+		} else {
+			targetPath = p
+		}
+
+		stager.Current = targetPath
+
+		lstat, err := os.Lstat(targetPath)
+		newRoot, err := r.indexPath(targetPath, lstat, err)
+		if err != nil && !errors.Is(err, ErrSkipPath) && !errors.Is(err, fs.SkipDir) {
+			return nil, fmt.Errorf("unable to index ancestor path=%q: %w", targetPath, err)
+		}
+		if newRoot != "" {
+			roots = append(roots, newRoot)
+		}
+	}
+
+	return roots, nil
+}
+
+func allContainedPaths(p string) []string {
+	var all []string
+	var currentPath string
+
+	cleanPath := strings.TrimSpace(p)
+
+	if cleanPath == "" {
+		return nil
+	}
+
+	// iterate through all parts of the path, replacing path elements with link resolutions where possible.
+	for idx, part := range strings.Split(filepath.Clean(cleanPath), file.DirSeparator) {
+		if idx == 0 && part == "" {
+			currentPath = file.DirSeparator
+			continue
+		}
+
+		// cumulatively gather where we are currently at and provide a rich object
+		currentPath = path.Join(currentPath, part)
+		all = append(all, currentPath)
+	}
+	return all
 }
 
 func (r *directoryIndexer) indexPath(path string, info os.FileInfo, err error) (string, error) {

@@ -23,6 +23,509 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
+func Test_UnindexDirectoryResolver_RequestRelativePathWithinSymlink(t *testing.T) {
+	pwd, err := os.Getwd()
+
+	// we need to mimic a shell, otherwise we won't get a path within a symlink
+	targetPath := filepath.Join(pwd, "./test-fixtures/symlinked-root/nested/link-root/nested")
+	t.Setenv("PWD", targetPath)
+
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(targetPath))
+	t.Cleanup(func() {
+		require.NoError(t, os.Chdir(pwd))
+	})
+
+	resolver := NewFromUnindexedDirectory("./")
+	require.NoError(t, err)
+
+	locations, err := resolver.FilesByPath("file2.txt")
+	require.NoError(t, err)
+	require.Len(t, locations, 1)
+
+	// TODO: this is technically not correct behavior since this is reporting the symlink path (virtual path) and
+	// not the real path.
+	require.False(t, filepath.IsAbs(locations[0].RealPath), "should be relative path")
+}
+
+func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
+	// /
+	//   somewhere/
+	//     outside.txt
+	//   root-link -> ./
+	//   path/
+	//     to/
+	//       abs-inside.txt -> /path/to/the/file.txt               # absolute link to somewhere inside of the root
+	//       rel-inside.txt -> ./the/file.txt                      # relative link to somewhere inside of the root
+	//       the/
+	//		   file.txt
+	//         abs-outside.txt -> /somewhere/outside.txt           # absolute link to outside of the root
+	//         rel-outside -> ../../../somewhere/outside.txt       # relative link to outside of the root
+	//
+
+	testDir, err := os.Getwd()
+	require.NoError(t, err)
+	relative := filepath.Join("test-fixtures", "req-resp")
+	absolute := filepath.Join(testDir, relative)
+
+	absInsidePath := filepath.Join(absolute, "path", "to", "abs-inside.txt")
+	absOutsidePath := filepath.Join(absolute, "path", "to", "the", "abs-outside.txt")
+
+	relativeViaLink := filepath.Join(relative, "root-link")
+	absoluteViaLink := filepath.Join(absolute, "root-link")
+
+	relativeViaDoubleLink := filepath.Join(relative, "root-link", "root-link")
+	absoluteViaDoubleLink := filepath.Join(absolute, "root-link", "root-link")
+
+	cleanup := func() {
+		_ = os.Remove(absInsidePath)
+		_ = os.Remove(absOutsidePath)
+	}
+
+	// ensure the absolute symlinks are cleaned up from any previous runs
+	cleanup()
+
+	require.NoError(t, os.Symlink(filepath.Join(absolute, "path", "to", "the", "file.txt"), absInsidePath))
+	require.NoError(t, os.Symlink(filepath.Join(absolute, "somewhere", "outside.txt"), absOutsidePath))
+
+	t.Cleanup(cleanup)
+
+	cases := []struct {
+		name                string
+		cwd                 string
+		root                string
+		base                string
+		input               string
+		expectedRealPath    string
+		expectedVirtualPath string
+	}{
+		{
+			name:             "relative root, relative request, direct",
+			root:             relative,
+			input:            "path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name:             "abs root, relative request, direct",
+			root:             absolute,
+			input:            "path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name:             "relative root, abs request, direct",
+			root:             relative,
+			input:            "/path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name:             "abs root, abs request, direct",
+			root:             absolute,
+			input:            "/path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		// cwd within root...
+		{
+			name:             "relative root, relative request, direct, cwd within root",
+			cwd:              filepath.Join(relative, "path/to"),
+			root:             "../../",
+			input:            "path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name:             "abs root, relative request, direct, cwd within root",
+			cwd:              filepath.Join(relative, "path/to"),
+			root:             absolute,
+			input:            "path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name:             "relative root, abs request, direct, cwd within root",
+			cwd:              filepath.Join(relative, "path/to"),
+			root:             "../../",
+			input:            "/path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name: "abs root, abs request, direct, cwd within root",
+			cwd:  filepath.Join(relative, "path/to"),
+
+			root:             absolute,
+			input:            "/path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		// cwd within symlink root...
+		{
+			name:  "relative root, relative request, direct, cwd within symlink root",
+			cwd:   relativeViaLink,
+			root:  "./",
+			input: "path/to/the/file.txt",
+			// note: this is inconsistent with the directory resolver. The real path is essentially the virtual path
+			// in this case for the unindexed resolver, which is not correct.
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name:             "abs root, relative request, direct, cwd within symlink root",
+			cwd:              relativeViaLink,
+			root:             absoluteViaLink,
+			input:            "path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name:  "relative root, abs request, direct, cwd within symlink root",
+			cwd:   relativeViaLink,
+			root:  "./",
+			input: "/path/to/the/file.txt",
+			// note: this is inconsistent with the directory resolver. The real path is essentially the virtual path
+			// in this case for the unindexed resolver, which is not correct.
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name:             "abs root, abs request, direct, cwd within symlink root",
+			cwd:              relativeViaLink,
+			root:             absoluteViaLink,
+			input:            "/path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		// cwd within symlink root, request nested within...
+		{
+			name:  "relative root, relative nested request, direct, cwd within symlink root",
+			cwd:   relativeViaLink,
+			root:  "./path",
+			input: "to/the/file.txt",
+			// note: this is inconsistent with the directory resolver. The real path is essentially the virtual path
+			// in this case for the unindexed resolver, which is not correct.
+			expectedRealPath: "to/the/file.txt",
+		},
+		{
+			name:             "abs root, relative nested request, direct, cwd within symlink root",
+			cwd:              relativeViaLink,
+			root:             filepath.Join(absoluteViaLink, "path"),
+			input:            "to/the/file.txt",
+			expectedRealPath: "to/the/file.txt",
+		},
+		{
+			name:  "relative root, abs nested request, direct, cwd within symlink root",
+			cwd:   relativeViaLink,
+			root:  "./path",
+			input: "/to/the/file.txt",
+			// note: this is inconsistent with the directory resolver. The real path is essentially the virtual path
+			// in this case for the unindexed resolver, which is not correct.
+			expectedRealPath: "to/the/file.txt",
+		},
+		{
+			name:             "abs root, abs nested request, direct, cwd within symlink root",
+			cwd:              relativeViaLink,
+			root:             filepath.Join(absoluteViaLink, "path"),
+			input:            "/to/the/file.txt",
+			expectedRealPath: "to/the/file.txt",
+		},
+		// cwd within DOUBLE symlink root...
+		{
+			name:  "relative root, relative request, direct, cwd within (double) symlink root",
+			cwd:   relativeViaDoubleLink,
+			root:  "./",
+			input: "path/to/the/file.txt",
+			// note: this is inconsistent with the directory resolver. The real path is essentially the virtual path
+			// in this case for the unindexed resolver, which is not correct.
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name:             "abs root, relative request, direct, cwd within (double) symlink root",
+			cwd:              relativeViaDoubleLink,
+			root:             absoluteViaDoubleLink,
+			input:            "path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name:  "relative root, abs request, direct, cwd within (double) symlink root",
+			cwd:   relativeViaDoubleLink,
+			root:  "./",
+			input: "/path/to/the/file.txt",
+			// note: this is inconsistent with the directory resolver. The real path is essentially the virtual path
+			// in this case for the unindexed resolver, which is not correct.
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		{
+			name:             "abs root, abs request, direct, cwd within (double) symlink root",
+			cwd:              relativeViaDoubleLink,
+			root:             absoluteViaDoubleLink,
+			input:            "/path/to/the/file.txt",
+			expectedRealPath: "path/to/the/file.txt",
+		},
+		// cwd within DOUBLE symlink root, request nested within...
+		{
+			name:  "relative root, relative nested request, direct, cwd within (double) symlink root",
+			cwd:   relativeViaDoubleLink,
+			root:  "./path",
+			input: "to/the/file.txt",
+			// note: this is inconsistent with the directory resolver. The real path is essentially the virtual path
+			// in this case for the unindexed resolver, which is not correct.
+			expectedRealPath: "to/the/file.txt",
+		},
+		{
+			name:             "abs root, relative nested request, direct, cwd within (double) symlink root",
+			cwd:              relativeViaDoubleLink,
+			root:             filepath.Join(absoluteViaDoubleLink, "path"),
+			input:            "to/the/file.txt",
+			expectedRealPath: "to/the/file.txt",
+		},
+		{
+			name:  "relative root, abs nested request, direct, cwd within (double) symlink root",
+			cwd:   relativeViaDoubleLink,
+			root:  "./path",
+			input: "/to/the/file.txt",
+			// note: this is inconsistent with the directory resolver. The real path is essentially the virtual path
+			// in this case for the unindexed resolver, which is not correct.
+			expectedRealPath: "to/the/file.txt",
+		},
+		{
+			name:             "abs root, abs nested request, direct, cwd within (double) symlink root",
+			cwd:              relativeViaDoubleLink,
+			root:             filepath.Join(absoluteViaDoubleLink, "path"),
+			input:            "/to/the/file.txt",
+			expectedRealPath: "to/the/file.txt",
+		},
+		// cwd within DOUBLE symlink root, request nested DEEP within...
+		{
+			name:  "relative root, relative nested request, direct, cwd deep within (double) symlink root",
+			cwd:   filepath.Join(relativeViaDoubleLink, "path", "to"),
+			root:  "../",
+			input: "to/the/file.txt",
+			// note: this is inconsistent with the directory resolver. The real path is essentially the virtual path
+			// in this case for the unindexed resolver, which is not correct.
+			expectedRealPath: "to/the/file.txt",
+		},
+		{
+			name:             "abs root, relative nested request, direct, cwd deep within (double) symlink root",
+			cwd:              filepath.Join(relativeViaDoubleLink, "path", "to"),
+			root:             filepath.Join(absoluteViaDoubleLink, "path"),
+			input:            "to/the/file.txt",
+			expectedRealPath: "to/the/file.txt",
+		},
+		{
+			name:  "relative root, abs nested request, direct, cwd deep within (double) symlink root",
+			cwd:   filepath.Join(relativeViaDoubleLink, "path", "to"),
+			root:  "../",
+			input: "/to/the/file.txt",
+			// note: this is inconsistent with the directory resolver. The real path is essentially the virtual path
+			// in this case for the unindexed resolver, which is not correct.
+			expectedRealPath: "to/the/file.txt",
+		},
+		{
+			name:             "abs root, abs nested request, direct, cwd deep within (double) symlink root",
+			cwd:              filepath.Join(relativeViaDoubleLink, "path", "to"),
+			root:             filepath.Join(absoluteViaDoubleLink, "path"),
+			input:            "/to/the/file.txt",
+			expectedRealPath: "to/the/file.txt",
+		},
+		// link to outside of root cases...
+		{
+			name:                "relative root, relative request, abs indirect (outside of root)",
+			root:                filepath.Join(relative, "path"),
+			input:               "to/the/abs-outside.txt",
+			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedVirtualPath: "to/the/abs-outside.txt",
+		},
+		{
+			name:                "abs root, relative request, abs indirect (outside of root)",
+			root:                filepath.Join(absolute, "path"),
+			input:               "to/the/abs-outside.txt",
+			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedVirtualPath: "to/the/abs-outside.txt",
+		},
+		{
+			name:                "relative root, abs request, abs indirect (outside of root)",
+			root:                filepath.Join(relative, "path"),
+			input:               "/to/the/abs-outside.txt",
+			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedVirtualPath: "to/the/abs-outside.txt",
+		},
+		{
+			name:                "abs root, abs request, abs indirect (outside of root)",
+			root:                filepath.Join(absolute, "path"),
+			input:               "/to/the/abs-outside.txt",
+			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedVirtualPath: "to/the/abs-outside.txt",
+		},
+		{
+			name:  "relative root, relative request, relative indirect (outside of root)",
+			root:  filepath.Join(relative, "path"),
+			input: "to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+		{
+			name:  "abs root, relative request, relative indirect (outside of root)",
+			root:  filepath.Join(absolute, "path"),
+			input: "to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+		{
+			name:  "relative root, abs request, relative indirect (outside of root)",
+			root:  filepath.Join(relative, "path"),
+			input: "/to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+		{
+			name:  "abs root, abs request, relative indirect (outside of root)",
+			root:  filepath.Join(absolute, "path"),
+			input: "/to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+		// link to outside of root cases... cwd within symlink root
+		{
+			name:                "relative root, relative request, abs indirect (outside of root), cwd within symlink root",
+			cwd:                 relativeViaLink,
+			root:                "path",
+			input:               "to/the/abs-outside.txt",
+			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedVirtualPath: "to/the/abs-outside.txt",
+		},
+		{
+			name:                "abs root, relative request, abs indirect (outside of root), cwd within symlink root",
+			cwd:                 relativeViaLink,
+			root:                filepath.Join(absolute, "path"),
+			input:               "to/the/abs-outside.txt",
+			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedVirtualPath: "to/the/abs-outside.txt",
+		},
+		{
+			name:                "relative root, abs request, abs indirect (outside of root), cwd within symlink root",
+			cwd:                 relativeViaLink,
+			root:                "path",
+			input:               "/to/the/abs-outside.txt",
+			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedVirtualPath: "to/the/abs-outside.txt",
+		},
+		{
+			name:                "abs root, abs request, abs indirect (outside of root), cwd within symlink root",
+			cwd:                 relativeViaLink,
+			root:                filepath.Join(absolute, "path"),
+			input:               "/to/the/abs-outside.txt",
+			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedVirtualPath: "to/the/abs-outside.txt",
+		},
+		{
+			name:  "relative root, relative request, relative indirect (outside of root), cwd within symlink root",
+			cwd:   relativeViaLink,
+			root:  "path",
+			input: "to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+		{
+			name:  "abs root, relative request, relative indirect (outside of root), cwd within symlink root",
+			cwd:   relativeViaLink,
+			root:  filepath.Join(absolute, "path"),
+			input: "to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+		{
+			name:  "relative root, abs request, relative indirect (outside of root), cwd within symlink root",
+			cwd:   relativeViaLink,
+			root:  "path",
+			input: "/to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+		{
+			name:  "abs root, abs request, relative indirect (outside of root), cwd within symlink root",
+			cwd:   relativeViaLink,
+			root:  filepath.Join(absolute, "path"),
+			input: "/to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+		{
+			name:  "relative root, relative request, relative indirect (outside of root), cwd within DOUBLE symlink root",
+			cwd:   relativeViaDoubleLink,
+			root:  "path",
+			input: "to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+		{
+			name:  "abs root, relative request, relative indirect (outside of root), cwd within DOUBLE symlink root",
+			cwd:   relativeViaDoubleLink,
+			root:  filepath.Join(absolute, "path"),
+			input: "to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+		{
+			name:  "relative root, abs request, relative indirect (outside of root), cwd within DOUBLE symlink root",
+			cwd:   relativeViaDoubleLink,
+			root:  "path",
+			input: "/to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+		{
+			name:  "abs root, abs request, relative indirect (outside of root), cwd within DOUBLE symlink root",
+			cwd:   relativeViaDoubleLink,
+			root:  filepath.Join(absolute, "path"),
+			input: "/to/the/rel-outside.txt",
+			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
+			// TODO: the real path is not correct
+			expectedRealPath:    "../somewhere/outside.txt",
+			expectedVirtualPath: "to/the/rel-outside.txt",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+
+			// we need to mimic a shell, otherwise we won't get a path within a symlink
+			targetPath := filepath.Join(testDir, c.cwd)
+			t.Setenv("PWD", filepath.Clean(targetPath))
+
+			require.NoError(t, err)
+			require.NoError(t, os.Chdir(targetPath))
+			t.Cleanup(func() {
+				require.NoError(t, os.Chdir(testDir))
+			})
+
+			resolver := NewFromUnindexedDirectory(c.root)
+			require.NotNil(t, resolver)
+
+			refs, err := resolver.FilesByPath(c.input)
+			require.NoError(t, err)
+			if c.expectedRealPath == "" {
+				require.Empty(t, refs)
+				return
+			}
+			require.Len(t, refs, 1)
+			assert.Equal(t, c.expectedRealPath, refs[0].RealPath, "real path different")
+			assert.Equal(t, c.expectedVirtualPath, refs[0].VirtualPath, "virtual path different")
+		})
+	}
+}
+
 func Test_UnindexedDirectoryResolver_Basic(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)

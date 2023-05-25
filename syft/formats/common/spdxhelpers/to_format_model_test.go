@@ -13,7 +13,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 // TODO: Add ToFormatModel tests
@@ -505,14 +504,14 @@ func Test_toSPDXID(t *testing.T) {
 	}{
 		{
 			name: "short filename",
-			it: source.Coordinates{
+			it: file.Coordinates{
 				RealPath: "/short/path/file.txt",
 			},
 			expected: "File-short-path-file.txt",
 		},
 		{
 			name: "long filename",
-			it: source.Coordinates{
+			it: file.Coordinates{
 				RealPath: "/some/long/path/with/a/lot/of-text/that-contains-a/file.txt",
 			},
 			expected: "File-...a-lot-of-text-that-contains-a-file.txt",

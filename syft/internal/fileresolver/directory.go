@@ -54,12 +54,6 @@ func newFromDirectoryWithoutIndex(root string, base string, pathFilters ...PathI
 	if err != nil {
 		return nil, fmt.Errorf("could not get CWD: %w", err)
 	}
-	// we have to account for the root being accessed through a symlink path and always resolve the real path. Otherwise
-	// we will not be able to normalize given paths that fall under the resolver
-	cleanCWD, err := filepath.EvalSymlinks(currentWD)
-	if err != nil {
-		return nil, fmt.Errorf("could not evaluate CWD symlinks: %w", err)
-	}
 
 	cleanRoot, err := filepath.EvalSymlinks(root)
 	if err != nil {
@@ -80,7 +74,7 @@ func newFromDirectoryWithoutIndex(root string, base string, pathFilters ...PathI
 
 	var currentWdRelRoot string
 	if path.IsAbs(cleanRoot) {
-		currentWdRelRoot, err = filepath.Rel(cleanCWD, cleanRoot)
+		currentWdRelRoot, err = filepath.Rel(currentWD, cleanRoot)
 		if err != nil {
 			return nil, fmt.Errorf("could not determine given root path to CWD: %w", err)
 		}
@@ -91,7 +85,7 @@ func newFromDirectoryWithoutIndex(root string, base string, pathFilters ...PathI
 	return &Directory{
 		path:                    cleanRoot,
 		base:                    cleanBase,
-		currentWd:               cleanCWD,
+		currentWd:               currentWD,
 		currentWdRelativeToRoot: currentWdRelRoot,
 		tree:                    filetree.New(),
 		index:                   filetree.NewIndex(),
@@ -132,6 +126,7 @@ func (r Directory) requestPath(userPath string) (string, error) {
 	return userPath, nil
 }
 
+// responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the directory resolver.
 func (r Directory) responsePath(path string) string {
 	// check to see if we need to encode back to Windows from posix
 	if runtime.GOOS == WindowsOS {
