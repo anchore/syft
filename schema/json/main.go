@@ -13,8 +13,8 @@ import (
 	"github.com/invopop/jsonschema"
 
 	"github.com/anchore/syft/internal"
+	genInt "github.com/anchore/syft/schema/json/internal"
 	syftjsonModel "github.com/anchore/syft/syft/formats/syftjson/model"
-	"github.com/anchore/syft/syft/pkg"
 )
 
 /*
@@ -24,46 +24,9 @@ are not captured (empty interfaces). This means that pkg.Package.Metadata is not
 can be extended to include specific package metadata struct shapes in the future.
 */
 
-// This should represent all possible metadatas represented in the pkg.Package.Metadata field (an interface{}).
-// When a new package metadata definition is created it will need to be manually added here. The variable name does
-// not matter as long as it is exported.
+//go:generate go run ./generate/main.go
 
-// TODO: this should be generated from reflection of whats in the pkg package
-// Should be created during generation below; use reflection's ability to
-// create types at runtime.
-// should be same name as struct minus metadata
-type artifactMetadataContainer struct {
-	Alpm               pkg.AlpmMetadata
-	Apk                pkg.ApkMetadata
-	Binary             pkg.BinaryMetadata
-	Cocopods           pkg.CocoapodsMetadata
-	Conan              pkg.ConanMetadata
-	ConanLock          pkg.ConanLockMetadata
-	Dart               pkg.DartPubMetadata
-	Dotnet             pkg.DotnetDepsMetadata
-	Dpkg               pkg.DpkgMetadata
-	Gem                pkg.GemMetadata
-	GoBin              pkg.GolangBinMetadata
-	GoMod              pkg.GolangModMetadata
-	Hackage            pkg.HackageMetadata
-	Java               pkg.JavaMetadata
-	KbPackage          pkg.KbPackageMetadata
-	LinuxKernel        pkg.LinuxKernelMetadata
-	LinuxKernelModule  pkg.LinuxKernelModuleMetadata
-	Nix                pkg.NixStoreMetadata
-	NpmPackage         pkg.NpmPackageJSONMetadata
-	NpmPackageLock     pkg.NpmPackageLockJSONMetadata
-	MixLock            pkg.MixLockMetadata
-	Php                pkg.PhpComposerJSONMetadata
-	Portage            pkg.PortageMetadata
-	PythonPackage      pkg.PythonPackageMetadata
-	PythonPipfilelock  pkg.PythonPipfileLockMetadata
-	PythonRequirements pkg.PythonRequirementsMetadata
-	RDescriptionFile   pkg.RDescriptionFileMetadata
-	Rebar              pkg.RebarLockMetadata
-	Rpm                pkg.RpmMetadata
-	RustCargo          pkg.CargoPackageMetadata
-}
+const schemaVersion = internal.JSONSchemaVersion
 
 func main() {
 	write(encode(build()))
@@ -77,14 +40,14 @@ func build() *jsonschema.Schema {
 		},
 	}
 	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&syftjsonModel.Document{}))
-	metadataSchema := reflector.ReflectFromType(reflect.TypeOf(&artifactMetadataContainer{}))
+	metadataSchema := reflector.ReflectFromType(reflect.TypeOf(&genInt.ArtifactMetadataContainer{}))
 	// TODO: inject source definitions
 
 	// inject the definitions of all metadatas into the schema definitions
 
 	var metadataNames []string
 	for name, definition := range metadataSchema.Definitions {
-		if name == "artifactMetadataContainer" {
+		if name == reflect.TypeOf(genInt.ArtifactMetadataContainer{}).Name() {
 			// ignore the definition for the fake container
 			continue
 		}
@@ -130,7 +93,7 @@ func encode(schema *jsonschema.Schema) []byte {
 }
 
 func write(schema []byte) {
-	filename := fmt.Sprintf("schema-%s.json", internal.JSONSchemaVersion)
+	filename := fmt.Sprintf("schema-%s.json", schemaVersion)
 
 	if _, err := os.Stat(filename); !os.IsNotExist(err) {
 		// check if the schema is the same...
@@ -167,5 +130,5 @@ func write(schema []byte) {
 
 	defer fh.Close()
 
-	fmt.Printf("wrote new schema to %q\n", filename)
+	fmt.Printf("Wrote new schema to %q\n", filename)
 }

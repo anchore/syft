@@ -302,7 +302,7 @@ compare-test-rpm-package-install: $(TEMP_DIR) $(SNAPSHOT_DIR)
 
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema
-	cd schema/json && go run generate.go
+	cd schema/json && go generate . && go run .
 
 .PHONY: generate-license-list
 generate-license-list:  ## Generate an updated spdx license list
