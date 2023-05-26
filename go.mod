@@ -56,7 +56,7 @@ require (
 	github.com/anchore/stereoscope v0.0.0-20230522170632-e14bc4437b2e
 	github.com/dave/jennifer v1.6.1
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
-	github.com/docker/docker v24.0.1+incompatible
+	github.com/docker/docker v24.0.2+incompatible
 	github.com/github/go-spdx/v2 v2.1.2
 	github.com/go-git/go-billy/v5 v5.4.1
 	github.com/go-git/go-git/v5 v5.7.0
