@@ -1,9 +1,9 @@
-BIN := syft
+BIN := gosbom
 TEMP_DIR := ./.tmp
 
 # Command templates #################################
 LINT_CMD := $(TEMP_DIR)/golangci-lint run --tests=false
-GOIMPORTS_CMD := $(TEMP_DIR)/gosimports -local github.com/anchore
+GOIMPORTS_CMD := $(TEMP_DIR)/gosimports -local github.com/nextlinux
 RELEASE_CMD := $(TEMP_DIR)/goreleaser release --clean
 SNAPSHOT_CMD := $(RELEASE_CMD) --skip-publish --skip-sign --snapshot
 CHRONICLE_CMD = $(TEMP_DIR)/chronicle
@@ -147,7 +147,7 @@ check-json-schema-drift:
 .PHONY: unit
 unit: $(TEMP_DIR) fixtures  ## Run unit tests (with coverage)
 	$(call title,Running unit tests)
-	go test -coverprofile $(TEMP_DIR)/unit-coverage-details.txt $(shell go list ./... | grep -v anchore/syft/test)
+	go test -coverprofile $(TEMP_DIR)/unit-coverage-details.txt $(shell go list ./... | grep -v anchore/gosbom/test)
 	@.github/scripts/coverage.py $(COVERAGE_THRESHOLD) $(TEMP_DIR)/unit-coverage-details.txt
 
 .PHONY: integration
@@ -194,23 +194,23 @@ fingerprints:
 		make cache.fingerprint
 
 	# for BINARY test fixtures
-	cd syft/pkg/cataloger/binary/test-fixtures && \
+	cd gosbom/pkg/cataloger/binary/test-fixtures && \
 		make cache.fingerprint
 
 	# for JAVA BUILD test fixtures
-	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
+	cd gosbom/pkg/cataloger/java/test-fixtures/java-builds && \
 		make cache.fingerprint
 
 	# for GO BINARY test fixtures
-	cd syft/pkg/cataloger/golang/test-fixtures/archs && \
+	cd gosbom/pkg/cataloger/golang/test-fixtures/archs && \
 		make binaries.fingerprint
 
 	# for RPM test fixtures
-	cd syft/pkg/cataloger/rpm/test-fixtures && \
+	cd gosbom/pkg/cataloger/rpm/test-fixtures && \
 		make rpms.fingerprint
 
 	# for Kernel test fixtures
-	cd syft/pkg/cataloger/kernel/test-fixtures && \
+	cd gosbom/pkg/cataloger/kernel/test-fixtures && \
 		make cache.fingerprint
 
 	# for INSTALL integration test fixtures
@@ -224,9 +224,9 @@ fingerprints:
 .PHONY: fixtures
 fixtures:
 	$(call title,Generating test fixtures)
-	cd syft/pkg/cataloger/java/test-fixtures/java-builds && make
-	cd syft/pkg/cataloger/rpm/test-fixtures && make
-	cd syft/pkg/cataloger/binary/test-fixtures && make
+	cd gosbom/pkg/cataloger/java/test-fixtures/java-builds && make
+	cd gosbom/pkg/cataloger/rpm/test-fixtures && make
+	cd gosbom/pkg/cataloger/binary/test-fixtures && make
 
 .PHONY: show-test-image-cache
 show-test-image-cache:  ## Show all docker and image tar cache
@@ -263,7 +263,7 @@ install-test-ci-mac: $(SNAPSHOT_DIR)
 .PHONY: generate-compare-file
 generate-compare-file:
 	$(call title,Generating compare test file)
-	go run ./cmd/syft $(COMPARE_TEST_IMAGE) -o json > $(COMPARE_DIR)/test-fixtures/acceptance-centos-8.2.2004.json
+	go run ./cmd/gosbom $(COMPARE_TEST_IMAGE) -o json > $(COMPARE_DIR)/test-fixtures/acceptance-centos-8.2.2004.json
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac

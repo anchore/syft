@@ -2,8 +2,8 @@
 # note: we require errors to propagate (don't set -e)
 set -u
 
-PROJECT_NAME="syft"
-OWNER=anchore
+PROJECT_NAME="gosbom"
+OWNER=nextlinux
 REPO="${PROJECT_NAME}"
 GITHUB_DOWNLOAD_PREFIX=https://github.com/${OWNER}/${REPO}/releases/download
 INSTALL_SH_BASE_URL=https://raw.githubusercontent.com/${OWNER}/${PROJECT_NAME}
@@ -18,7 +18,7 @@ DOWNLOAD_TAG_INSTALL_SCRIPT=${DOWNLOAD_TAG_INSTALL_SCRIPT:-true}
 usage() (
   this=$1
   cat <<EOF
-$this: download go binaries for anchore/syft
+$this: download go binaries for nextlinux/gosbom
 
 Usage: $this [-b] dir [-d] [tag]
   -b  the installation directory (dDefaults to ./bin)
