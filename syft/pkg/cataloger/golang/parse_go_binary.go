@@ -85,35 +85,32 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *debug
 	version, hasVersion := gbs["vcs.revision"]
 	timestamp, hasTimestamp := gbs["vcs.time"]
 
-	if hasVersion {
-		if hasTimestamp {
-			//NOTE: err is ignored, because if parsing fails
-			// we still use the empty Time{} struct to generate an empty date, like 00010101000000
-			// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
-			ts, _ := time.Parse(time.RFC3339, timestamp)
-			if len(version) >= 12 {
-				version = version[:12]
-			}
+	var ldflags string
+	if metadata, ok := main.Metadata.(pkg.GolangBinMetadata); ok {
+		// we've found a specific version from the ldflags! use it as the version.
+		// why not combine that with the pseudo version (e.g. v1.2.3-0.20210101000000-abcdef123456)?
+		// short answer: we're assuming that if a specific semver was provided in the ldflags that
+		// there is a matching vcs tag to match that could be referenced. This assumption could
+		// be incorrect in terms of the go.mod contents, but is not incorrect in terms of the logical
+		// version of the package.
+		ldflags = metadata.BuildSettings["-ldflags"]
+	}
 
-			var ldflags string
-			if metadata, ok := main.Metadata.(pkg.GolangBinMetadata); ok {
-				ldflags = metadata.BuildSettings["-ldflags"]
-			}
-
-			majorVersion, fullVersion := extractVersionFromLDFlags(ldflags)
-			if fullVersion != "" {
-				// we've found a specific version from the ldflags! use it as the version.
-				// why not combine that with the pseudo version (e.g. v1.2.3-0.20210101000000-abcdef123456)?
-				// short answer: we're assuming that if a specific semver was provided in the ldflags that
-				// there is a matching vcs tag to match that could be referenced. This assumption could
-				// be incorrect in terms of the go.mod contents, but is not incorrect in terms of the logical
-				// version of the package.
-				version = fullVersion
-			} else {
-				version = module.PseudoVersion(majorVersion, fullVersion, ts, version)
-			}
+	majorVersion, fullVersion := extractVersionFromLDFlags(ldflags)
+	if fullVersion != "" {
+		version = fullVersion
+	} else if hasVersion && hasTimestamp {
+		//NOTE: err is ignored, because if parsing fails
+		// we still use the empty Time{} struct to generate an empty date, like 00010101000000
+		// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
+		ts, _ := time.Parse(time.RFC3339, timestamp)
+		if len(version) >= 12 {
+			version = version[:12]
 		}
 
+		version = module.PseudoVersion(majorVersion, fullVersion, ts, version)
+	}
+	if version != "" {
 		main.Version = version
 		main.PURL = packageURL(main.Name, main.Version)
 
