@@ -8,4 +8,5 @@ type Metadata struct {
 	Path          string        // the root path to be cataloged (directory only)
 	Base          string        // the base path to be cataloged (directory only)
 	Name          string
+	Version       string
 }
