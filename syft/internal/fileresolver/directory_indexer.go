@@ -370,6 +370,13 @@ func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string,
 	metadata.LinkDestination = linkTarget
 	r.index.Add(*ref, metadata)
 
+	// if the target path does not exist, then do not report it as a new root, or try to send
+	// syft parsing there.
+	if _, err := os.Stat(targetAbsPath); err != nil && errors.Is(err, os.ErrNotExist) {
+		log.Debugf("link %s points to unresolved path %s, ignoring target as new root", p, targetAbsPath)
+		targetAbsPath = ""
+	}
+
 	return targetAbsPath, nil
 }
 
