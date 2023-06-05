@@ -901,14 +901,6 @@ func setupArchiveTest(t testing.TB, sourceDirPath string, layer2 bool) string {
 	archivePrefix, err := os.CreateTemp(t.TempDir(), "syft-archive-TEST-")
 	require.NoError(t, err)
 
-	t.Cleanup(
-		assertNoError(t,
-			func() error {
-				return os.Remove(archivePrefix.Name())
-			},
-		),
-	)
-
 	destinationArchiveFilePath := archivePrefix.Name() + ".tar"
 	t.Logf("archive path: %s", destinationArchiveFilePath)
 	createArchive(t, sourceDirPath, destinationArchiveFilePath, layer2)
