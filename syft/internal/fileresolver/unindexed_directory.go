@@ -374,7 +374,7 @@ func (f unindexedDirectoryResolverFS) resolve(filePath string) (resolved string,
 		abs := f.u.absPath(resolved)
 		fi, _, err = f.u.ls.LstatIfPossible(abs)
 		if err != nil {
-			return
+			return resolved, fi, err
 		}
 		for f.u.isSymlink(fi) {
 			if slices.Contains(visited, resolved) {
