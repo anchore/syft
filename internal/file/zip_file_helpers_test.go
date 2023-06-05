@@ -77,7 +77,6 @@ func setupZipFileTest(t testing.TB, sourceDirPath string, zip64 bool) string {
 	t.Logf("archive path: %s", destinationArchiveFilePath)
 	createZipArchive(t, sourceDirPath, destinationArchiveFilePath, zip64)
 
-
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("unable to get cwd: %+v", err)
