@@ -1,7 +1,7 @@
 package linux
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 
@@ -539,7 +539,7 @@ func retrieveFixtureContentsAsString(fixturePath string, t *testing.T) string {
 	}
 	defer fixture.Close()
 
-	b, err := ioutil.ReadAll(fixture)
+	b, err := io.ReadAll(fixture)
 	if err != nil {
 		t.Fatalf("unable to read fixture file: %+v", err)
 	}
