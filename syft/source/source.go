@@ -48,6 +48,7 @@ type Input struct {
 	Location    string
 	Platform    string
 	Name        string
+	Version     string
 }
 
 // ParseInput generates a source Input that can be used as an argument to generate a new source
@@ -59,6 +60,12 @@ func ParseInput(userInput string, platform string) (*Input, error) {
 // ParseInputWithName generates a source Input that can be used as an argument to generate a new source
 // from specific providers including a registry, with an explicit name.
 func ParseInputWithName(userInput string, platform, name, defaultImageSource string) (*Input, error) {
+	return ParseInputWithNameVersion(userInput, platform, name, "", defaultImageSource)
+}
+
+// ParseInputWithNameVersion generates a source Input that can be used as an argument to generate a new source
+// from specific providers including a registry, with an explicit name and version.
+func ParseInputWithNameVersion(userInput, platform, name, version, defaultImageSource string) (*Input, error) {
 	fs := afero.NewOsFs()
 	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
@@ -97,6 +104,7 @@ func ParseInputWithName(userInput string, platform, name, defaultImageSource str
 		Location:    location,
 		Platform:    platform,
 		Name:        name,
+		Version:     version,
 	}, nil
 }
 
@@ -154,7 +162,7 @@ func generateImageSource(in Input, registryOptions *image.RegistryOptions) (*Sou
 		return nil, cleanup, fmt.Errorf("could not fetch image %q: %w", in.Location, err)
 	}
 
-	s, err := NewFromImageWithName(img, in.Location, in.Name)
+	s, err := NewFromImageWithNameVersion(img, in.Location, in.Name, in.Version)
 	if err != nil {
 		return nil, cleanup, fmt.Errorf("could not populate source with image: %w", err)
 	}
@@ -251,7 +259,7 @@ func generateDirectorySource(fs afero.Fs, in Input) (*Source, func(), error) {
 		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", in.Location, err)
 	}
 
-	s, err := NewFromDirectoryWithName(in.Location, in.Name)
+	s, err := NewFromDirectoryWithNameVersion(in.Location, in.Name, in.Version)
 	if err != nil {
 		return nil, func() {}, fmt.Errorf("could not populate source from path=%q: %w", in.Location, err)
 	}
@@ -269,7 +277,7 @@ func generateFileSource(fs afero.Fs, in Input) (*Source, func(), error) {
 		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", in.Location, err)
 	}
 
-	s, cleanupFn := NewFromFileWithName(in.Location, in.Name)
+	s, cleanupFn := NewFromFileWithNameVersion(in.Location, in.Name, in.Version)
 
 	return &s, cleanupFn, nil
 }
@@ -279,19 +287,20 @@ func NewFromDirectory(path string) (Source, error) {
 	return NewFromDirectoryWithName(path, "")
 }
 
-// NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
-func NewFromDirectoryRoot(path string) (Source, error) {
-	return NewFromDirectoryRootWithName(path, "")
-}
-
 // NewFromDirectoryWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
 func NewFromDirectoryWithName(path string, name string) (Source, error) {
+	return NewFromDirectoryWithNameVersion(path, name, "")
+}
+
+// NewFromDirectoryWithNameVersion creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
+func NewFromDirectoryWithNameVersion(path string, name string, version string) (Source, error) {
 	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
-			Name:   name,
-			Scheme: DirectoryScheme,
-			Path:   path,
+			Name:    name,
+			Version: version,
+			Scheme:  DirectoryScheme,
+			Path:    path,
 		},
 		path: path,
 	}
@@ -299,15 +308,26 @@ func NewFromDirectoryWithName(path string, name string) (Source, error) {
 	return s, nil
 }
 
+// NewFromDirectoryRoot creates a new source object tailored to catalog a given filesystem directory recursively.
+func NewFromDirectoryRoot(path string) (Source, error) {
+	return NewFromDirectoryRootWithName(path, "")
+}
+
 // NewFromDirectoryRootWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
 func NewFromDirectoryRootWithName(path string, name string) (Source, error) {
+	return NewFromDirectoryRootWithNameVersion(path, name, "")
+}
+
+// NewFromDirectoryRootWithNameVersion creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
+func NewFromDirectoryRootWithNameVersion(path string, name string, version string) (Source, error) {
 	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
-			Name:   name,
-			Scheme: DirectoryScheme,
-			Path:   path,
-			Base:   path,
+			Name:    name,
+			Version: version,
+			Scheme:  DirectoryScheme,
+			Path:    path,
+			Base:    path,
 		},
 		path: path,
 		base: path,
@@ -323,14 +343,20 @@ func NewFromFile(path string) (Source, func()) {
 
 // NewFromFileWithName creates a new source object tailored to catalog a file, with an explicitly provided name.
 func NewFromFileWithName(path string, name string) (Source, func()) {
+	return NewFromFileWithNameVersion(path, name, "")
+}
+
+// NewFromFileWithNameVersion creates a new source object tailored to catalog a file, with an explicitly provided name and version.
+func NewFromFileWithNameVersion(path string, name string, version string) (Source, func()) {
 	analysisPath, cleanupFn := fileAnalysisPath(path)
 
 	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
-			Name:   name,
-			Scheme: FileScheme,
-			Path:   path,
+			Name:    name,
+			Version: version,
+			Scheme:  FileScheme,
+			Path:    path,
 		},
 		path: analysisPath,
 	}
@@ -380,6 +406,12 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 // NewFromImageWithName creates a new source object tailored to catalog a given container image, relative to the
 // option given (e.g. all-layers, squashed, etc), with an explicit name.
 func NewFromImageWithName(img *image.Image, userImageStr string, name string) (Source, error) {
+	return NewFromImageWithNameVersion(img, userImageStr, name, "")
+}
+
+// NewFromImageWithNameVersion creates a new source object tailored to catalog a given container image, relative to the
+// option given (e.g. all-layers, squashed, etc), with an explicit name and version.
+func NewFromImageWithNameVersion(img *image.Image, userImageStr string, name string, version string) (Source, error) {
 	if img == nil {
 		return Source{}, fmt.Errorf("no image given")
 	}
@@ -388,6 +420,7 @@ func NewFromImageWithName(img *image.Image, userImageStr string, name string) (S
 		Image: img,
 		Metadata: Metadata{
 			Name:          name,
+			Version:       version,
 			Scheme:        ImageScheme,
 			ImageMetadata: NewImageMetadata(img, userImageStr),
 		},
