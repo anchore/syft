@@ -163,7 +163,7 @@ func prependZipSourceFixtureWithString(tb testing.TB, value string) func(tb test
 		archivePath := prepZipSourceFixture(t)
 
 		// create a temp file
-		tmpFile, err := os.CreateTemp("", "syft-ziputil-prependZipSourceFixtureWithString-")
+		tmpFile, err := os.CreateTemp(tb.TempDir(), "syft-ziputil-prependZipSourceFixtureWithString-")
 		if err != nil {
 			t.Fatalf("unable to create tempfile: %+v", err)
 		}
@@ -205,11 +205,11 @@ func prepZipSourceFixture(t testing.TB) string {
 	archivePrefix := path.Join(t.TempDir(), "syft-ziputil-prepZipSourceFixture-")
 
 	// the zip utility will add ".zip" to the end of the given name
-	archivePath := archivePrefix.Name() + ".zip"
+	archivePath := archivePrefix + ".zip"
 
 	t.Logf("archive path: %s", archivePath)
 
-	createZipArchive(t, "zip-source", archivePrefix.Name(), false)
+	createZipArchive(t, "zip-source", archivePrefix, false)
 
 	return archivePath
 }
