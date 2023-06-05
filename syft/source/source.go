@@ -22,6 +22,8 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 )
 
 // Source is an object that captures the data source to be cataloged, configuration, and a specific resolver used
@@ -30,7 +32,7 @@ type Source struct {
 	id                artifact.ID  `hash:"ignore"`
 	Image             *image.Image `hash:"ignore"` // the image object to be cataloged (image only)
 	Metadata          Metadata
-	directoryResolver *directoryResolver `hash:"ignore"`
+	directoryResolver *fileresolver.Directory `hash:"ignore"`
 	path              string
 	base              string
 	mutex             *sync.Mutex
@@ -46,6 +48,7 @@ type Input struct {
 	Location    string
 	Platform    string
 	Name        string
+	Version     string
 }
 
 // ParseInput generates a source Input that can be used as an argument to generate a new source
@@ -57,6 +60,12 @@ func ParseInput(userInput string, platform string) (*Input, error) {
 // ParseInputWithName generates a source Input that can be used as an argument to generate a new source
 // from specific providers including a registry, with an explicit name.
 func ParseInputWithName(userInput string, platform, name, defaultImageSource string) (*Input, error) {
+	return ParseInputWithNameVersion(userInput, platform, name, "", defaultImageSource)
+}
+
+// ParseInputWithNameVersion generates a source Input that can be used as an argument to generate a new source
+// from specific providers including a registry, with an explicit name and version.
+func ParseInputWithNameVersion(userInput, platform, name, version, defaultImageSource string) (*Input, error) {
 	fs := afero.NewOsFs()
 	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
@@ -95,6 +104,7 @@ func ParseInputWithName(userInput string, platform, name, defaultImageSource str
 		Location:    location,
 		Platform:    platform,
 		Name:        name,
+		Version:     version,
 	}, nil
 }
 
@@ -152,7 +162,7 @@ func generateImageSource(in Input, registryOptions *image.RegistryOptions) (*Sou
 		return nil, cleanup, fmt.Errorf("could not fetch image %q: %w", in.Location, err)
 	}
 
-	s, err := NewFromImageWithName(img, in.Location, in.Name)
+	s, err := NewFromImageWithNameVersion(img, in.Location, in.Name, in.Version)
 	if err != nil {
 		return nil, cleanup, fmt.Errorf("could not populate source with image: %w", err)
 	}
@@ -216,13 +226,27 @@ func getImageWithRetryStrategy(in Input, registryOptions *image.RegistryOptions)
 	// We need to determine the image source again, such that this determination
 	// doesn't take scheme parsing into account.
 	in.ImageSource = image.DetermineDefaultImagePullSource(in.UserInput)
-	img, err = stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, opts...)
+	img, userInputErr := stereoscope.GetImageFromSource(ctx, in.UserInput, in.ImageSource, opts...)
 	cleanup = func() {
 		if err := img.Cleanup(); err != nil {
 			log.Warnf("unable to cleanup image=%q: %w", in.UserInput, err)
 		}
 	}
-	return img, cleanup, err
+	if userInputErr != nil {
+		// Image retrieval failed on both tries, we will want to return both errors.
+		return nil, nil, fmt.Errorf(
+			"scheme %q specified; "+
+				"image retrieval using scheme parsing (%s) was unsuccessful: %v; "+
+				"image retrieval without scheme parsing (%s) was unsuccessful: %v",
+			scheme,
+			in.Location,
+			err,
+			in.UserInput,
+			userInputErr,
+		)
+	}
+
+	return img, cleanup, nil
 }
 
 func generateDirectorySource(fs afero.Fs, in Input) (*Source, func(), error) {
@@ -235,7 +259,7 @@ func generateDirectorySource(fs afero.Fs, in Input) (*Source, func(), error) {
 		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", in.Location, err)
 	}
 
-	s, err := NewFromDirectoryWithName(in.Location, in.Name)
+	s, err := NewFromDirectoryWithNameVersion(in.Location, in.Name, in.Version)
 	if err != nil {
 		return nil, func() {}, fmt.Errorf("could not populate source from path=%q: %w", in.Location, err)
 	}
@@ -253,7 +277,7 @@ func generateFileSource(fs afero.Fs, in Input) (*Source, func(), error) {
 		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", in.Location, err)
 	}
 
-	s, cleanupFn := NewFromFileWithName(in.Location, in.Name)
+	s, cleanupFn := NewFromFileWithNameVersion(in.Location, in.Name, in.Version)
 
 	return &s, cleanupFn, nil
 }
@@ -263,19 +287,20 @@ func NewFromDirectory(path string) (Source, error) {
 	return NewFromDirectoryWithName(path, "")
 }
 
-// NewFromDirectory creates a new source object tailored to catalog a given filesystem directory recursively.
-func NewFromDirectoryRoot(path string) (Source, error) {
-	return NewFromDirectoryRootWithName(path, "")
-}
-
 // NewFromDirectoryWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
 func NewFromDirectoryWithName(path string, name string) (Source, error) {
+	return NewFromDirectoryWithNameVersion(path, name, "")
+}
+
+// NewFromDirectoryWithNameVersion creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
+func NewFromDirectoryWithNameVersion(path string, name string, version string) (Source, error) {
 	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
-			Name:   name,
-			Scheme: DirectoryScheme,
-			Path:   path,
+			Name:    name,
+			Version: version,
+			Scheme:  DirectoryScheme,
+			Path:    path,
 		},
 		path: path,
 	}
@@ -283,15 +308,26 @@ func NewFromDirectoryWithName(path string, name string) (Source, error) {
 	return s, nil
 }
 
+// NewFromDirectoryRoot creates a new source object tailored to catalog a given filesystem directory recursively.
+func NewFromDirectoryRoot(path string) (Source, error) {
+	return NewFromDirectoryRootWithName(path, "")
+}
+
 // NewFromDirectoryRootWithName creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
 func NewFromDirectoryRootWithName(path string, name string) (Source, error) {
+	return NewFromDirectoryRootWithNameVersion(path, name, "")
+}
+
+// NewFromDirectoryRootWithNameVersion creates a new source object tailored to catalog a given filesystem directory recursively, with an explicitly provided name.
+func NewFromDirectoryRootWithNameVersion(path string, name string, version string) (Source, error) {
 	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
-			Name:   name,
-			Scheme: DirectoryScheme,
-			Path:   path,
-			Base:   path,
+			Name:    name,
+			Version: version,
+			Scheme:  DirectoryScheme,
+			Path:    path,
+			Base:    path,
 		},
 		path: path,
 		base: path,
@@ -307,14 +343,20 @@ func NewFromFile(path string) (Source, func()) {
 
 // NewFromFileWithName creates a new source object tailored to catalog a file, with an explicitly provided name.
 func NewFromFileWithName(path string, name string) (Source, func()) {
+	return NewFromFileWithNameVersion(path, name, "")
+}
+
+// NewFromFileWithNameVersion creates a new source object tailored to catalog a file, with an explicitly provided name and version.
+func NewFromFileWithNameVersion(path string, name string, version string) (Source, func()) {
 	analysisPath, cleanupFn := fileAnalysisPath(path)
 
 	s := Source{
 		mutex: &sync.Mutex{},
 		Metadata: Metadata{
-			Name:   name,
-			Scheme: FileScheme,
-			Path:   path,
+			Name:    name,
+			Version: version,
+			Scheme:  FileScheme,
+			Path:    path,
 		},
 		path: analysisPath,
 	}
@@ -364,6 +406,12 @@ func NewFromImage(img *image.Image, userImageStr string) (Source, error) {
 // NewFromImageWithName creates a new source object tailored to catalog a given container image, relative to the
 // option given (e.g. all-layers, squashed, etc), with an explicit name.
 func NewFromImageWithName(img *image.Image, userImageStr string, name string) (Source, error) {
+	return NewFromImageWithNameVersion(img, userImageStr, name, "")
+}
+
+// NewFromImageWithNameVersion creates a new source object tailored to catalog a given container image, relative to the
+// option given (e.g. all-layers, squashed, etc), with an explicit name and version.
+func NewFromImageWithNameVersion(img *image.Image, userImageStr string, name string, version string) (Source, error) {
 	if img == nil {
 		return Source{}, fmt.Errorf("no image given")
 	}
@@ -372,6 +420,7 @@ func NewFromImageWithName(img *image.Image, userImageStr string, name string) (S
 		Image: img,
 		Metadata: Metadata{
 			Name:          name,
+			Version:       version,
 			Scheme:        ImageScheme,
 			ImageMetadata: NewImageMetadata(img, userImageStr),
 		},
@@ -452,7 +501,7 @@ func chain(chainID string, layers []LayerMetadata) string {
 	return chain(chainID, layers[1:])
 }
 
-func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
+func (s *Source) FileResolver(scope Scope) (file.Resolver, error) {
 	switch s.Metadata.Scheme {
 	case DirectoryScheme, FileScheme:
 		s.mutex.Lock()
@@ -462,21 +511,21 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 			if err != nil {
 				return nil, err
 			}
-			resolver, err := newDirectoryResolver(s.path, s.base, exclusionFunctions...)
+			res, err := fileresolver.NewFromDirectory(s.path, s.base, exclusionFunctions...)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 			}
-			s.directoryResolver = resolver
+			s.directoryResolver = res
 		}
 		return s.directoryResolver, nil
 	case ImageScheme:
-		var resolver FileResolver
+		var res file.Resolver
 		var err error
 		switch scope {
 		case SquashedScope:
-			resolver, err = newImageSquashResolver(s.Image)
+			res, err = fileresolver.NewFromContainerImageSquash(s.Image)
 		case AllLayersScope:
-			resolver, err = newAllLayersResolver(s.Image)
+			res, err = fileresolver.NewFromContainerImageAllLayers(s.Image)
 		default:
 			return nil, fmt.Errorf("bad image scope provided: %+v", scope)
 		}
@@ -485,9 +534,9 @@ func (s *Source) FileResolver(scope Scope) (FileResolver, error) {
 		}
 		// image tree contains all paths, so we filter out the excluded entries afterwards
 		if len(s.Exclusions) > 0 {
-			resolver = NewExcludingResolver(resolver, getImageExclusionFunction(s.Exclusions))
+			res = fileresolver.NewExcluding(res, getImageExclusionFunction(s.Exclusions))
 		}
-		return resolver, nil
+		return res, nil
 	}
 	return nil, fmt.Errorf("unable to determine FilePathResolver with current scheme=%q", s.Metadata.Scheme)
 }
@@ -529,12 +578,12 @@ func getImageExclusionFunction(exclusions []string) func(string) bool {
 	}
 }
 
-func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathIndexVisitor, error) {
+func getDirectoryExclusionFunctions(root string, exclusions []string) ([]fileresolver.PathIndexVisitor, error) {
 	if len(exclusions) == 0 {
 		return nil, nil
 	}
 
-	// this is what directoryResolver.indexTree is doing to get the absolute path:
+	// this is what Directory.indexTree is doing to get the absolute path:
 	root, err := filepath.Abs(root)
 	if err != nil {
 		return nil, err
@@ -562,7 +611,7 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathInd
 		return nil, fmt.Errorf("invalid exclusion pattern(s): '%s' (must start with one of: './', '*/', or '**/')", strings.Join(errors, "', '"))
 	}
 
-	return []pathIndexVisitor{
+	return []fileresolver.PathIndexVisitor{
 		func(path string, info os.FileInfo, _ error) error {
 			for _, exclusion := range exclusions {
 				// this is required to handle Windows filepaths
@@ -575,7 +624,7 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]pathInd
 					if info != nil && info.IsDir() {
 						return filepath.SkipDir
 					}
-					return errSkipPath
+					return fileresolver.ErrSkipPath
 				}
 			}
 			return nil

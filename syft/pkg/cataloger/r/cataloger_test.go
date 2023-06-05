@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestRPackageCataloger(t *testing.T) {
@@ -15,7 +15,7 @@ func TestRPackageCataloger(t *testing.T) {
 			Name:         "base",
 			Version:      "4.3.0",
 			FoundBy:      "r-package-cataloger",
-			Locations:    source.NewLocationSet(source.NewLocation("base/DESCRIPTION")),
+			Locations:    file.NewLocationSet(file.NewLocation("base/DESCRIPTION")),
 			Licenses:     pkg.NewLicenseSet([]pkg.License{pkg.NewLicense("Part of R 4.3.0")}...),
 			Language:     pkg.R,
 			Type:         pkg.Rpkg,
@@ -34,7 +34,7 @@ func TestRPackageCataloger(t *testing.T) {
 			Name:         "stringr",
 			Version:      "1.5.0.9000",
 			FoundBy:      "r-package-cataloger",
-			Locations:    source.NewLocationSet(source.NewLocation("stringr/DESCRIPTION")),
+			Locations:    file.NewLocationSet(file.NewLocation("stringr/DESCRIPTION")),
 			Licenses:     pkg.NewLicenseSet([]pkg.License{pkg.NewLicense("MIT")}...),
 			Language:     pkg.R,
 			Type:         pkg.Rpkg,

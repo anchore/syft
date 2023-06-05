@@ -23,6 +23,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 )
 
 func TestParseInput(t *testing.T) {
@@ -124,7 +125,7 @@ func TestSetID(t *testing.T) {
 					Path:   "test-fixtures/image-simple",
 				},
 			},
-			expected: artifact.ID("1b0dc351e6577b01"),
+			expected: artifact.ID("9ee9e786412d6ae5"),
 		},
 	}
 
@@ -190,7 +191,7 @@ func TestNewFromDirectory(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, test.input, src.Metadata.Path)
 
-			resolver, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(SquashedScope)
 			if test.expectedErr {
 				if err == nil {
 					t.Fatal("expected an error when making the resolver but got none")
@@ -200,7 +201,7 @@ func TestNewFromDirectory(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			refs, err := resolver.FilesByPath(test.inputPaths...)
+			refs, err := res.FilesByPath(test.inputPaths...)
 			if err != nil {
 				t.Errorf("FilesByPath call produced an error: %+v", err)
 			}
@@ -238,10 +239,10 @@ func TestNewFromFile(t *testing.T) {
 			assert.Equal(t, test.input, src.Metadata.Path)
 			assert.Equal(t, src.Metadata.Path, src.path)
 
-			resolver, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(SquashedScope)
 			require.NoError(t, err)
 
-			refs, err := resolver.FilesByPath(test.inputPaths...)
+			refs, err := res.FilesByPath(test.inputPaths...)
 			require.NoError(t, err)
 			assert.Len(t, refs, test.expRefs)
 
@@ -286,15 +287,15 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 			assert.Equal(t, archivePath, src.Metadata.Path)
 			assert.NotEqual(t, src.Metadata.Path, src.path)
 
-			resolver, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(SquashedScope)
 			require.NoError(t, err)
 
-			refs, err := resolver.FilesByPath(test.inputPaths...)
+			refs, err := res.FilesByPath(test.inputPaths...)
 			require.NoError(t, err)
 			assert.Len(t, refs, test.expRefs)
 
 			if test.contents != "" {
-				reader, err := resolver.FileContentsByLocation(refs[0])
+				reader, err := res.FileContentsByLocation(refs[0])
 				require.NoError(t, err)
 
 				data, err := io.ReadAll(reader)
@@ -353,10 +354,10 @@ func TestNewFromDirectoryShared(t *testing.T) {
 			assert.NoError(t, err)
 
 			src.Metadata.Path = test.notExist
-			resolver2, err := src.FileResolver(SquashedScope)
+			resolver, err := src.FileResolver(SquashedScope)
 			assert.NoError(t, err)
 
-			refs, err := resolver2.FilesByPath(test.inputPaths...)
+			refs, err := resolver.FilesByPath(test.inputPaths...)
 			if err != nil {
 				t.Errorf("FilesByPath call produced an error: %+v", err)
 			}
@@ -388,11 +389,11 @@ func TestFilesByPathDoesNotExist(t *testing.T) {
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %+v", err)
 			}
-			resolver, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(SquashedScope)
 			if err != nil {
 				t.Errorf("could not get resolver error: %+v", err)
 			}
-			refs, err := resolver.FilesByPath(test.path)
+			refs, err := res.FilesByPath(test.path)
 			if err != nil {
 				t.Errorf("could not get file references from path: %s, %v", test.path, err)
 			}
@@ -437,11 +438,11 @@ func TestFilesByGlob(t *testing.T) {
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %+v", err)
 			}
-			resolver, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(SquashedScope)
 			if err != nil {
 				t.Errorf("could not get resolver error: %+v", err)
 			}
-			contents, err := resolver.FilesByGlob(test.glob)
+			contents, err := res.FilesByGlob(test.glob)
 			if err != nil {
 				t.Errorf("could not get files by glob: %s+v", err)
 			}
@@ -611,11 +612,11 @@ func TestDirectoryExclusions(t *testing.T) {
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %+v", err)
 			}
-			resolver, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(SquashedScope)
 			if err != nil {
 				t.Errorf("could not get resolver error: %+v", err)
 			}
-			locations, err := resolver.FilesByGlob(test.glob)
+			locations, err := res.FilesByGlob(test.glob)
 			if err != nil {
 				t.Errorf("could not get files by glob: %s+v", err)
 			}
@@ -703,11 +704,11 @@ func TestImageExclusions(t *testing.T) {
 			if err != nil {
 				t.Errorf("could not create NewDirScope: %+v", err)
 			}
-			resolver, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(SquashedScope)
 			if err != nil {
 				t.Errorf("could not get resolver error: %+v", err)
 			}
-			contents, err := resolver.FilesByGlob(test.glob)
+			contents, err := res.FilesByGlob(test.glob)
 			if err != nil {
 				t.Errorf("could not get files by glob: %s+v", err)
 			}
@@ -773,7 +774,7 @@ func Test_crossPlatformExclusions(t *testing.T) {
 			root:     "/",
 			path:     "/usr/var/lib",
 			exclude:  "**/var/lib",
-			walkHint: errSkipPath,
+			walkHint: fileresolver.ErrSkipPath,
 		},
 		// linux specific tests...
 		{
@@ -782,7 +783,7 @@ func Test_crossPlatformExclusions(t *testing.T) {
 			path:     "/usr/var/lib/etc.txt",
 			exclude:  "**/*.txt",
 			finfo:    dummyInfo{isDir: false},
-			walkHint: errSkipPath,
+			walkHint: fileresolver.ErrSkipPath,
 		},
 		{
 			desc:    "linux relative",
@@ -791,7 +792,7 @@ func Test_crossPlatformExclusions(t *testing.T) {
 			exclude: "./*.txt",
 			finfo:   dummyInfo{isDir: false},
 
-			walkHint: errSkipPath,
+			walkHint: fileresolver.ErrSkipPath,
 		},
 		{
 			desc:     "linux one level",
@@ -813,7 +814,7 @@ func Test_crossPlatformExclusions(t *testing.T) {
 			path:     "/C:/User/stuff/thing.txt",
 			exclude:  "**/*.txt",
 			finfo:    dummyInfo{isDir: false},
-			walkHint: errSkipPath,
+			walkHint: fileresolver.ErrSkipPath,
 		},
 		{
 			desc:     "windows relative",
@@ -821,7 +822,7 @@ func Test_crossPlatformExclusions(t *testing.T) {
 			path:     "/C:/User/stuff/thing.txt",
 			exclude:  "./*.txt",
 			finfo:    dummyInfo{isDir: false},
-			walkHint: errSkipPath,
+			walkHint: fileresolver.ErrSkipPath,
 		},
 		{
 			desc:     "windows one level",
@@ -897,8 +898,18 @@ func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string, l
 func setupArchiveTest(t testing.TB, sourceDirPath string, layer2 bool) string {
 	t.Helper()
 
-	archivePrefix := path.Join(t.TempDir(),"syft-archive-TEST-")
-	destinationArchiveFilePath := archivePrefix + ".tar"
+	archivePrefix, err := os.CreateTemp(t.TempDir(), "syft-archive-TEST-")
+	require.NoError(t, err)
+
+	t.Cleanup(
+		assertNoError(t,
+			func() error {
+				return os.Remove(archivePrefix.Name())
+			},
+		),
+	)
+
+	destinationArchiveFilePath := archivePrefix.Name() + ".tar"
 	t.Logf("archive path: %s", destinationArchiveFilePath)
 	createArchive(t, sourceDirPath, destinationArchiveFilePath, layer2)
 

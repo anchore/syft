@@ -17,7 +17,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseAlpmDB
@@ -36,7 +35,7 @@ type parsedData struct {
 	pkg.AlpmMetadata `mapstructure:",squash"`
 }
 
-func parseAlpmDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseAlpmDB(resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	data, err := parseAlpmDBEntry(reader)
 	if err != nil {
 		return nil, nil, err
@@ -117,7 +116,7 @@ func newScanner(reader io.Reader) *bufio.Scanner {
 	return scanner
 }
 
-func getFileReader(path string, resolver source.FileResolver) (io.Reader, error) {
+func getFileReader(path string, resolver file.Resolver) (io.Reader, error) {
 	locs, err := resolver.FilesByPath(path)
 	if err != nil {
 		return nil, err

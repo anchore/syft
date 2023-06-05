@@ -6,12 +6,11 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseRpmFiles(t *testing.T) {
-	abcRpmLocation := source.NewLocation("abc-1.01-9.hg20160905.el7.x86_64.rpm")
-	zorkRpmLocation := source.NewLocation("zork-1.0.3-1.el7.x86_64.rpm")
+	abcRpmLocation := file.NewLocation("abc-1.01-9.hg20160905.el7.x86_64.rpm")
+	zorkRpmLocation := file.NewLocation("zork-1.0.3-1.el7.x86_64.rpm")
 	tests := []struct {
 		fixture  string
 		expected []pkg.Package
@@ -23,7 +22,7 @@ func TestParseRpmFiles(t *testing.T) {
 					Name:         "abc",
 					Version:      "0:1.01-9.hg20160905.el7",
 					PURL:         "pkg:rpm/abc@1.01-9.hg20160905.el7?arch=x86_64&epoch=0&upstream=abc-1.01-9.hg20160905.el7.src.rpm",
-					Locations:    source.NewLocationSet(abcRpmLocation),
+					Locations:    file.NewLocationSet(file.NewLocation("abc-1.01-9.hg20160905.el7.x86_64.rpm")),
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,
@@ -52,7 +51,7 @@ func TestParseRpmFiles(t *testing.T) {
 					Name:         "zork",
 					Version:      "0:1.0.3-1.el7",
 					PURL:         "pkg:rpm/zork@1.0.3-1.el7?arch=x86_64&epoch=0&upstream=zork-1.0.3-1.el7.src.rpm",
-					Locations:    source.NewLocationSet(zorkRpmLocation),
+					Locations:    file.NewLocationSet(zorkRpmLocation),
 					FoundBy:      "rpm-file-cataloger",
 					Type:         pkg.RpmPkg,
 					MetadataType: pkg.RpmMetadataType,

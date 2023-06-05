@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -336,7 +337,7 @@ func Test_toSyftRelationships(t *testing.T) {
 	}
 	pkg3.SetID()
 
-	loc1 := source.NewLocationFromCoordinates(source.Coordinates{
+	loc1 := file.NewLocationFromCoordinates(file.Coordinates{
 		RealPath:     "/somewhere/real",
 		FileSystemID: "abc",
 	})

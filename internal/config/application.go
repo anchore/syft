@@ -61,6 +61,8 @@ type Application struct {
 	Exclusions             []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
 	Platform               string             `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Name                   string             `yaml:"name" json:"name" mapstructure:"name"`
+	SourceName             string             `yaml:"source-name" json:"source-name" mapstructure:"source-name"`
+	SourceVersion          string             `yaml:"source-version" json:"source-version" mapstructure:"source-version"`
 	Parallelism            int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"`                                           // the number of catalog workers to run in parallel
 	DefaultImagePullSource string             `yaml:"default-image-pull-source" json:"default-image-pull-source" mapstructure:"default-image-pull-source"` // specify default image pull source
 }
@@ -141,6 +143,13 @@ func (cfg *Application) parseConfigValues() error {
 
 	if err := checkDefaultSourceValues(cfg.DefaultImagePullSource); err != nil {
 		return err
+	}
+
+	if cfg.Name != "" {
+		log.Warnf("name parameter is deprecated. please use: source-name. name will be removed in a future version")
+		if cfg.SourceName == "" {
+			cfg.SourceName = cfg.Name
+		}
 	}
 
 	// check for valid default source options

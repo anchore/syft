@@ -131,7 +131,7 @@ func Test_idsHaveChanged(t *testing.T) {
 }
 
 func Test_toSyftFiles(t *testing.T) {
-	coord := source.Coordinates{
+	coord := file.Coordinates{
 		RealPath:     "/somerwhere/place",
 		FileSystemID: "abc",
 	}
@@ -145,8 +145,8 @@ func Test_toSyftFiles(t *testing.T) {
 			name:  "empty",
 			files: []model.File{},
 			want: sbom.Artifacts{
-				FileMetadata: map[source.Coordinates]source.FileMetadata{},
-				FileDigests:  map[source.Coordinates][]file.Digest{},
+				FileMetadata: map[file.Coordinates]file.Metadata{},
+				FileDigests:  map[file.Coordinates][]file.Digest{},
 			},
 		},
 		{
@@ -165,8 +165,8 @@ func Test_toSyftFiles(t *testing.T) {
 				},
 			},
 			want: sbom.Artifacts{
-				FileMetadata: map[source.Coordinates]source.FileMetadata{},
-				FileDigests: map[source.Coordinates][]file.Digest{
+				FileMetadata: map[file.Coordinates]file.Metadata{},
+				FileDigests: map[file.Coordinates][]file.Digest{
 					coord: {
 						{
 							Algorithm: "sha256",
@@ -200,20 +200,22 @@ func Test_toSyftFiles(t *testing.T) {
 				},
 			},
 			want: sbom.Artifacts{
-				FileMetadata: map[source.Coordinates]source.FileMetadata{
+				FileMetadata: map[file.Coordinates]file.Metadata{
 					coord: {
+						FileInfo: stereoFile.ManualInfo{
+							NameValue: "place",
+							SizeValue: 92,
+							ModeValue: 511, // 777 octal = 511 decimal
+						},
 						Path:            coord.RealPath,
 						LinkDestination: "",
-						Size:            92,
 						UserID:          42,
 						GroupID:         32,
 						Type:            stereoFile.TypeRegular,
-						IsDir:           false,
-						Mode:            511, // 777 octal = 511 decimal
 						MIMEType:        "text/plain",
 					},
 				},
-				FileDigests: map[source.Coordinates][]file.Digest{
+				FileDigests: map[file.Coordinates][]file.Digest{
 					coord: {
 						{
 							Algorithm: "sha256",

@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseConanfile
@@ -20,7 +20,7 @@ type Conanfile struct {
 }
 
 // parseConanfile is a parser function for conanfile.txt contents, returning all packages discovered.
-func parseConanfile(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseConanfile(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 	inRequirements := false
 	var pkgs []pkg.Package

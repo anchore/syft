@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_parseDescriptionFile(t *testing.T) {
@@ -53,8 +53,8 @@ func Test_parseDescriptionFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f, err := os.Open(tt.fixture)
-			input := source.LocationReadCloser{
-				Location:   source.NewLocation(tt.fixture),
+			input := file.LocationReadCloser{
+				Location:   file.NewLocation(tt.fixture),
 				ReadCloser: f,
 			}
 			got, _, err := parseDescriptionFile(nil, nil, input)

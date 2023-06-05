@@ -13,7 +13,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 // TODO: Add ToFormatModel tests
@@ -115,12 +114,12 @@ func Test_toFileTypes(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		metadata source.FileMetadata
+		metadata file.Metadata
 		expected []string
 	}{
 		{
 			name: "application",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "application/vnd.unknown",
 			},
 			expected: []string{
@@ -129,7 +128,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "archive",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "application/zip",
 			},
 			expected: []string{
@@ -139,7 +138,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "audio",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "audio/ogg",
 			},
 			expected: []string{
@@ -148,7 +147,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "video",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "video/3gpp",
 			},
 			expected: []string{
@@ -157,7 +156,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "text",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "text/html",
 			},
 			expected: []string{
@@ -166,7 +165,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "image",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "image/png",
 			},
 			expected: []string{
@@ -175,7 +174,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "binary",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "application/x-sharedlib",
 			},
 			expected: []string{
@@ -276,7 +275,7 @@ func Test_fileIDsForPackage(t *testing.T) {
 		Name: "bogus",
 	}
 
-	c := source.Coordinates{
+	c := file.Coordinates{
 		RealPath:     "/path",
 		FileSystemID: "nowhere",
 	}
@@ -505,14 +504,14 @@ func Test_toSPDXID(t *testing.T) {
 	}{
 		{
 			name: "short filename",
-			it: source.Coordinates{
+			it: file.Coordinates{
 				RealPath: "/short/path/file.txt",
 			},
 			expected: "File-short-path-file.txt",
 		},
 		{
 			name: "long filename",
-			it: source.Coordinates{
+			it: file.Coordinates{
 				RealPath: "/some/long/path/with/a/lot/of-text/that-contains-a/file.txt",
 			},
 			expected: "File-...a-lot-of-text-that-contains-a-file.txt",

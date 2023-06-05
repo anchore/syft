@@ -8,18 +8,18 @@ import (
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(dbOrRpmLocation source.Location, pd parsedData, distro *linux.Release) pkg.Package {
+func newPackage(dbOrRpmLocation file.Location, pd parsedData, distro *linux.Release) pkg.Package {
 	p := pkg.Package{
 		Name:         pd.Name,
 		Version:      toELVersion(pd.RpmMetadata),
 		Licenses:     pkg.NewLicenseSet(pd.Licenses...),
 		PURL:         packageURL(pd.RpmMetadata, distro),
-		Locations:    source.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Locations:    file.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:         pkg.RpmPkg,
 		MetadataType: pkg.RpmMetadataType,
 		Metadata:     pd.RpmMetadata,
@@ -34,7 +34,7 @@ type parsedData struct {
 	pkg.RpmMetadata
 }
 
-func newParsedDataFromEntry(licenseLocation source.Location, entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) parsedData {
+func newParsedDataFromEntry(licenseLocation file.Location, entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) parsedData {
 	return parsedData{
 		Licenses: pkg.NewLicensesFromLocation(licenseLocation, entry.License),
 		RpmMetadata: pkg.RpmMetadata{

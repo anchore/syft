@@ -32,6 +32,7 @@ type PomProperties struct {
 	GroupID    string            `mapstructure:"groupId" json:"groupId" cyclonedx:"groupID"`
 	ArtifactID string            `mapstructure:"artifactId" json:"artifactId" cyclonedx:"artifactID"`
 	Version    string            `mapstructure:"version" json:"version"`
+	Scope      string            `mapstructure:"scope" json:"scope,omitempty"`
 	Extra      map[string]string `mapstructure:",remain" json:"extraFields,omitempty"`
 }
 

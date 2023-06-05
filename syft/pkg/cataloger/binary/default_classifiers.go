@@ -47,15 +47,6 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:    "argocd",
-		FileGlob: "**/argocd",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)common\.version=(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-		Package: "argocd",
-		PURL:    mustPURL("pkg:golang/github.com/argoproj/argo-cd@version"),
-		CPEs:    singleCPE("cpe:2.3:a:argoproj:argocd:*:*:*:*:*:*:*"),
-	},
-	{
 		Class:    "helm",
 		FileGlob: "**/helm",
 		EvidenceMatcher: fileContentsVersionMatcher(
@@ -63,24 +54,6 @@ var defaultClassifiers = []classifier{
 		Package: "helm",
 		PURL:    mustPURL("pkg:golang/helm.sh/helm@version"),
 		CPEs:    singleCPE("cpe:2.3:a:helm:helm:*:*:*:*:*:*:*"),
-	},
-	{
-		Class:    "kustomize",
-		FileGlob: "**/kustomize",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)version=kustomize/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-		Package: "kustomize",
-		PURL:    mustPURL("pkg:golang/sigs.k8s.io/kustomize@version"),
-		CPEs:    singleCPE("cpe:2.3:a:kustomize:kustomize:*:*:*:*:*:*:*"),
-	},
-	{
-		Class:    "kubectl",
-		FileGlob: "**/kubectl",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
-		Package: "kubectl",
-		PURL:    mustPURL("pkg:golang/k8s.io/kubectl@version"),
-		CPEs:    singleCPE("cpe:2.3:a:kubectl:kubectl:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "redis-binary",

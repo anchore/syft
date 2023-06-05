@@ -9,11 +9,10 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestAlpmCataloger(t *testing.T) {
-	dbLocation := source.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")
+	dbLocation := file.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")
 	expectedPkgs := []pkg.Package{
 		{
 			Name:    "gmp",
@@ -24,7 +23,7 @@ func TestAlpmCataloger(t *testing.T) {
 				pkg.NewLicenseFromLocations("LGPL3", dbLocation),
 				pkg.NewLicenseFromLocations("GPL", dbLocation),
 			),
-			Locations:    source.NewLocationSet(dbLocation),
+			Locations:    file.NewLocationSet(dbLocation),
 			CPEs:         nil,
 			PURL:         "",
 			MetadataType: "AlpmMetadata",

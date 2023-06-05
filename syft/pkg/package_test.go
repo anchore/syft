@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/file"
 )
 
 func TestIDUniqueness(t *testing.T) {
-	originalLocation := source.NewVirtualLocationFromCoordinates(
-		source.Coordinates{
+	originalLocation := file.NewVirtualLocationFromCoordinates(
+		file.Coordinates{
 			RealPath:     "39.0742° N, 21.8243° E",
 			FileSystemID: "Earth",
 		},
@@ -24,7 +24,7 @@ func TestIDUniqueness(t *testing.T) {
 		Name:    "pi",
 		Version: "3.14",
 		FoundBy: "Archimedes",
-		Locations: source.NewLocationSet(
+		Locations: file.NewLocationSet(
 			originalLocation,
 		),
 		Licenses: NewLicenseSet(
@@ -101,8 +101,8 @@ func TestIDUniqueness(t *testing.T) {
 		{
 			name: "location is reflected",
 			transform: func(pkg Package) Package {
-				locations := source.NewLocationSet(pkg.Locations.ToSlice()...)
-				locations.Add(source.NewLocation("/somewhere/new"))
+				locations := file.NewLocationSet(pkg.Locations.ToSlice()...)
+				locations.Add(file.NewLocation("/somewhere/new"))
 				pkg.Locations = locations
 				return pkg
 			},
@@ -122,7 +122,7 @@ func TestIDUniqueness(t *testing.T) {
 				newLocation := originalLocation
 				newLocation.FileSystemID = "Mars"
 
-				pkg.Locations = source.NewLocationSet(newLocation)
+				pkg.Locations = file.NewLocationSet(newLocation)
 				return pkg
 			},
 			expectedIDComparison: assert.Equal,
@@ -133,7 +133,7 @@ func TestIDUniqueness(t *testing.T) {
 				newLocation := originalLocation
 				newLocation.FileSystemID = "Mars"
 
-				locations := source.NewLocationSet(pkg.Locations.ToSlice()...)
+				locations := file.NewLocationSet(pkg.Locations.ToSlice()...)
 				locations.Add(newLocation, originalLocation)
 
 				pkg.Locations = locations
@@ -236,8 +236,8 @@ func TestIDUniqueness(t *testing.T) {
 }
 
 func TestPackage_Merge(t *testing.T) {
-	originalLocation := source.NewVirtualLocationFromCoordinates(
-		source.Coordinates{
+	originalLocation := file.NewVirtualLocationFromCoordinates(
+		file.Coordinates{
 			RealPath:     "39.0742° N, 21.8243° E",
 			FileSystemID: "Earth",
 		},
@@ -259,7 +259,7 @@ func TestPackage_Merge(t *testing.T) {
 				Name:    "pi",
 				Version: "3.14",
 				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
+				Locations: file.NewLocationSet(
 					originalLocation,
 				),
 				Language: "math",
@@ -282,7 +282,7 @@ func TestPackage_Merge(t *testing.T) {
 				Name:    "pi",
 				Version: "3.14",
 				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
+				Locations: file.NewLocationSet(
 					similarLocation, // NOTE: difference; we have a different layer but the same path
 				),
 				Language: "math",
@@ -305,7 +305,7 @@ func TestPackage_Merge(t *testing.T) {
 				Name:    "pi",
 				Version: "3.14",
 				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
+				Locations: file.NewLocationSet(
 					originalLocation,
 					similarLocation, // NOTE: merge!
 				),
@@ -333,7 +333,7 @@ func TestPackage_Merge(t *testing.T) {
 				Name:    "pi",
 				Version: "3.14",
 				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
+				Locations: file.NewLocationSet(
 					originalLocation,
 				),
 				Language: "math",
@@ -356,7 +356,7 @@ func TestPackage_Merge(t *testing.T) {
 				Name:    "pi-DIFFERENT", // difference
 				Version: "3.14",
 				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
+				Locations: file.NewLocationSet(
 					originalLocation,
 				),
 				Language: "math",
@@ -395,7 +395,7 @@ func TestPackage_Merge(t *testing.T) {
 			if diff := cmp.Diff(*tt.expected, tt.subject,
 				cmp.AllowUnexported(Package{}),
 				cmp.Comparer(
-					func(x, y source.LocationSet) bool {
+					func(x, y file.LocationSet) bool {
 						xs := x.ToSlice()
 						ys := y.ToSlice()
 
@@ -442,7 +442,7 @@ func licenseComparer(x, y License) bool {
 	return cmp.Equal(x, y, cmp.Comparer(locationComparer))
 }
 
-func locationComparer(x, y source.Location) bool {
+func locationComparer(x, y file.Location) bool {
 	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
 }
 

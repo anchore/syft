@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParsePackageJSON(t *testing.T) {
@@ -24,7 +24,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Type:     pkg.NpmPkg,
 				Language: pkg.JavaScript,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Artistic-2.0", source.NewLocation("test-fixtures/pkg-json/package.json")),
+					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package.json")),
 				),
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -46,7 +46,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Type:     pkg.NpmPkg,
 				Language: pkg.JavaScript,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("ISC", source.NewLocation("test-fixtures/pkg-json/package-license-object.json")),
+					pkg.NewLicenseFromLocations("ISC", file.NewLocation("test-fixtures/pkg-json/package-license-object.json")),
 				),
 				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
@@ -67,8 +67,8 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("MIT", source.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
-					pkg.NewLicenseFromLocations("Apache-2.0", source.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
+					pkg.NewLicenseFromLocations("MIT", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
+					pkg.NewLicenseFromLocations("Apache-2.0", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
 				),
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
@@ -128,7 +128,7 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Artistic-2.0", source.NewLocation("test-fixtures/pkg-json/package-nested-author.json")),
+					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-nested-author.json")),
 				),
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
@@ -150,7 +150,7 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/function-bind@1.1.1",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("MIT", source.NewLocation("test-fixtures/pkg-json/package-repo-string.json")),
+					pkg.NewLicenseFromLocations("MIT", file.NewLocation("test-fixtures/pkg-json/package-repo-string.json")),
 				),
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
@@ -172,7 +172,7 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Artistic-2.0", source.NewLocation("test-fixtures/pkg-json/package-private.json")),
+					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-private.json")),
 				),
 				Language:     pkg.JavaScript,
 				MetadataType: pkg.NpmPackageJSONMetadataType,
@@ -191,7 +191,7 @@ func TestParsePackageJSON(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Fixture, func(t *testing.T) {
-			test.ExpectedPkg.Locations.Add(source.NewLocation(test.Fixture))
+			test.ExpectedPkg.Locations.Add(file.NewLocation(test.Fixture))
 			pkgtest.TestFileParser(t, test.Fixture, parsePackageJSON, []pkg.Package{test.ExpectedPkg}, nil)
 		})
 	}
