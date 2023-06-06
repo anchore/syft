@@ -49,23 +49,18 @@ type Input struct {
 	Platform    string
 	Name        string
 	Version     string
+	BasePath    string
 }
 
 // ParseInput generates a source Input that can be used as an argument to generate a new source
 // from specific providers including a registry.
-func ParseInput(userInput string, platform string) (*Input, error) {
-	return ParseInputWithName(userInput, platform, "", "")
-}
-
-// ParseInputWithName generates a source Input that can be used as an argument to generate a new source
-// from specific providers including a registry, with an explicit name.
-func ParseInputWithName(userInput string, platform, name, defaultImageSource string) (*Input, error) {
-	return ParseInputWithNameVersion(userInput, platform, name, "", defaultImageSource)
-}
-
-// ParseInputWithNameVersion generates a source Input that can be used as an argument to generate a new source
-// from specific providers including a registry, with an explicit name and version.
-func ParseInputWithNameVersion(userInput, platform, name, version, defaultImageSource string) (*Input, error) {
+func ParseInput(userInput string, opts ...Option) (*Input, error) {
+	opt := &sourceOpt{}
+	for _, o := range opts {
+		if err := o(opt); err != nil {
+			return nil, err
+		}
+	}
 	fs := afero.NewOsFs()
 	scheme, source, location, err := DetectScheme(fs, image.DetectSource, userInput)
 	if err != nil {
@@ -79,8 +74,8 @@ func ParseInputWithNameVersion(userInput, platform, name, version, defaultImageS
 		case ImageScheme, UnknownScheme:
 			scheme = ImageScheme
 			location = userInput
-			if defaultImageSource != "" {
-				source = parseDefaultImageSource(defaultImageSource)
+			if opt.defaultImageSource != "" {
+				source = parseDefaultImageSource(opt.defaultImageSource)
 			} else {
 				imagePullSource := image.DetermineDefaultImagePullSource(userInput)
 				source = imagePullSource
@@ -92,20 +87,22 @@ func ParseInputWithNameVersion(userInput, platform, name, version, defaultImageS
 		}
 	}
 
-	if scheme != ImageScheme && platform != "" {
+	if scheme != ImageScheme && opt.platform != "" {
 		return nil, fmt.Errorf("cannot specify a platform for a non-image source")
 	}
 
 	// collect user input for downstream consumption
-	return &Input{
+	in := &Input{
 		UserInput:   userInput,
 		Scheme:      scheme,
 		ImageSource: source,
 		Location:    location,
-		Platform:    platform,
-		Name:        name,
-		Version:     version,
-	}, nil
+		Platform:    opt.platform,
+		Name:        opt.name,
+		Version:     opt.version,
+		BasePath:    opt.base,
+	}
+	return in, nil
 }
 
 func parseDefaultImageSource(defaultImageSource string) image.Source {
@@ -259,7 +256,12 @@ func generateDirectorySource(fs afero.Fs, in Input) (*Source, func(), error) {
 		return nil, func() {}, fmt.Errorf("given path is not a directory (path=%q): %w", in.Location, err)
 	}
 
-	s, err := NewFromDirectoryWithNameVersion(in.Location, in.Name, in.Version)
+	var s Source
+	if in.BasePath != "" {
+		s, err = NewFromDirectoryRootWithNameVersion(in.Location, in.Name, in.Version)
+	} else {
+		s, err = NewFromDirectoryWithNameVersion(in.Location, in.Name, in.Version)
+	}
 	if err != nil {
 		return nil, func() {}, fmt.Errorf("could not populate source from path=%q: %w", in.Location, err)
 	}

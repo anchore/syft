@@ -47,7 +47,12 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	}()
 
 	userInput := args[0]
-	si, err := source.ParseInputWithNameVersion(userInput, app.Platform, app.SourceName, app.SourceVersion, app.DefaultImagePullSource)
+	si, err := source.ParseInput(userInput,
+		source.WithPlatform(app.Platform),
+		source.WithName(app.SourceName),
+		source.WithVersion(app.SourceVersion),
+		source.WithDefaultImageSource(app.DefaultImagePullSource),
+	)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for packages command: %w", err)
 	}
