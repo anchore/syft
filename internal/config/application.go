@@ -20,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
+	"github.com/anchore/syft/syft/source"
 )
 
 var (
@@ -238,6 +239,15 @@ func (cfg Application) String() string {
 	}
 
 	return string(appaStr)
+}
+
+func (cfg Application) ToSourceOptions() []source.Option {
+	return []source.Option{
+		source.WithName(cfg.SourceName),
+		source.WithVersion(cfg.SourceVersion),
+		source.WithBasePath(cfg.BasePath),
+		source.WithExclusions(cfg.Exclusions),
+	}
 }
 
 // nolint:funlen

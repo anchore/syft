@@ -1,45 +1,44 @@
 package source
 
-type sourceOpt struct {
-	name               string
-	version            string
-	platform           string
-	defaultImageSource string
-	base               string
-}
-type Option func(*sourceOpt) error
+// Option is used when constructing new Source objects
+type Option func(*Source)
 
 func WithName(name string) Option {
-	return func(s *sourceOpt) error {
-		s.name = name
-		return nil
-	}
-}
-
-func WithPlatform(platform string) Option {
-	return func(s *sourceOpt) error {
-		s.platform = platform
-		return nil
+	return func(s *Source) {
+		s.Metadata.Name = name
 	}
 }
 
 func WithVersion(version string) Option {
-	return func(s *sourceOpt) error {
-		s.version = version
-		return nil
+	return func(s *Source) {
+		s.Metadata.Version = version
 	}
 }
 
-func WithDefaultImageSource(defaultImageSource string) Option {
-	return func(s *sourceOpt) error {
-		s.defaultImageSource = defaultImageSource
-		return nil
+func WithExclusions(exclusions []string) Option {
+	return func(s *Source) {
+		s.Exclusions = exclusions
 	}
 }
 
 func WithBasePath(base string) Option {
-	return func(s *sourceOpt) error {
+	return func(s *Source) {
 		s.base = base
-		return nil
+		s.Metadata.Base = base
+	}
+}
+
+// InputOption is used during ParseUserInput
+type InputOption func(*Input)
+
+func WithPlatform(platform string) InputOption {
+	return func(input *Input) {
+		input.Platform = platform
+	}
+}
+
+func WithDefaultImageSource(defaultImageSource string) InputOption {
+	return func(input *Input) {
+		input.ImageSource = parseDefaultImageSource(defaultImageSource)
 	}
 }

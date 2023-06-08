@@ -42,12 +42,9 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
-	si, err := source.ParseInput(userInput,
+	si, err := source.ParseUserInput(userInput,
 		source.WithPlatform(app.Platform),
-		source.WithName(app.SourceName),
-		source.WithVersion(app.SourceVersion),
 		source.WithDefaultImageSource(app.DefaultImagePullSource),
-		source.WithBasePath(app.BasePath),
 	)
 	if err != nil {
 		return fmt.Errorf("could not generate source input for packages command: %w", err)
@@ -72,7 +69,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 	go func() {
 		defer close(errs)
 
-		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
+		src, cleanup, err := source.NewSource(si, app.Registry.ToOptions(), app.ToSourceOptions()...)
 		if cleanup != nil {
 			defer cleanup()
 		}

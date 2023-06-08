@@ -26,38 +26,80 @@ import (
 	"github.com/anchore/syft/syft/internal/fileresolver"
 )
 
-func TestParseInput(t *testing.T) {
+func Test_ParseInput(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
-		platform string
-		expected Scheme
+		opts     []InputOption
+		expected *Input
 		errFn    require.ErrorAssertionFunc
 	}{
 		{
-			name:     "ParseInput parses a file input",
-			input:    "test-fixtures/image-simple/file-1.txt",
-			expected: FileScheme,
+			name:  "file input",
+			input: "test-fixtures/image-simple/file-1.txt",
+			expected: &Input{
+				UserInput: "test-fixtures/image-simple/file-1.txt",
+				Location:  "test-fixtures/image-simple/file-1.txt",
+				Scheme:    FileScheme,
+			},
 		},
 		{
-			name:     "errors out when using platform for non-image scheme",
-			input:    "test-fixtures/image-simple/file-1.txt",
-			platform: "arm64",
-			errFn:    require.Error,
+			name:  "dir input",
+			input: "test-fixtures/image-simple",
+			expected: &Input{
+				UserInput: "test-fixtures/image-simple",
+				Location:  "test-fixtures/image-simple",
+				Scheme:    DirectoryScheme,
+			},
+		},
+		{
+			name:  "explicit dir input",
+			input: "dir:test-fixtures/image-simple",
+			expected: &Input{
+				UserInput: "dir:test-fixtures/image-simple",
+				Location:  "test-fixtures/image-simple",
+				Scheme:    DirectoryScheme,
+			},
+		},
+		{
+			name:  "image input with default source",
+			input: "alpine:latest",
+			opts:  []InputOption{WithDefaultImageSource("podman")},
+			expected: &Input{
+				UserInput:   "alpine:latest",
+				Location:    "alpine:latest",
+				ImageSource: image.PodmanDaemonSource,
+				Scheme:      ImageScheme,
+			},
+		},
+		{
+			name:  "image input with overridden source",
+			input: "docker:alpine:latest",
+			opts:  []InputOption{WithDefaultImageSource("podman")},
+			expected: &Input{
+				UserInput:   "docker:alpine:latest",
+				Location:    "alpine:latest",
+				ImageSource: image.DockerDaemonSource,
+				Scheme:      ImageScheme,
+			},
+		},
+		{
+			name:  "error when using platform for non-image scheme",
+			input: "test-fixtures/image-simple/file-1.txt",
+			opts:  []InputOption{WithPlatform("arm64")},
+			errFn: require.Error,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if test.errFn == nil {
-				test.errFn = require.NoError
+			got, err := ParseUserInput(test.input, test.opts...)
+
+			if test.errFn != nil {
+				test.errFn(t, err)
 			}
-			sourceInput, err := ParseInput(test.input, WithPlatform(test.platform))
-			test.errFn(t, err)
-			if test.expected != "" {
-				require.NotNil(t, sourceInput)
-				assert.Equal(t, sourceInput.Scheme, test.expected)
-			}
+
+			assert.Equal(t, test.expected, got)
 		})
 	}
 }
@@ -596,9 +638,9 @@ func TestDirectoryExclusions(t *testing.T) {
 	registryOpts := &image.RegistryOptions{}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			sourceInput, err := ParseInput("dir:" + test.input)
+			sourceInput, err := ParseUserInput("dir:" + test.input)
 			require.NoError(t, err)
-			src, fn, err := New(*sourceInput, registryOpts, test.exclusions)
+			src, fn, err := NewSource(*sourceInput, registryOpts, WithExclusions(test.exclusions))
 			defer fn()
 
 			if test.err {
@@ -696,9 +738,9 @@ func TestImageExclusions(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			archiveLocation := imagetest.PrepareFixtureImage(t, "docker-archive", test.input)
-			sourceInput, err := ParseInput(archiveLocation)
+			sourceInput, err := ParseUserInput(archiveLocation)
 			require.NoError(t, err)
-			src, fn, err := New(*sourceInput, registryOpts, test.exclusions)
+			src, fn, err := NewSource(*sourceInput, registryOpts, WithExclusions(test.exclusions))
 			defer fn()
 
 			if err != nil {
@@ -724,23 +766,19 @@ type dummyInfo struct {
 }
 
 func (d dummyInfo) Name() string {
-	//TODO implement me
-	panic("implement me")
+	panic("not implemented")
 }
 
 func (d dummyInfo) Size() int64 {
-	//TODO implement me
-	panic("implement me")
+	panic("not implemented")
 }
 
 func (d dummyInfo) Mode() fs.FileMode {
-	//TODO implement me
-	panic("implement me")
+	panic("not implemented")
 }
 
 func (d dummyInfo) ModTime() time.Time {
-	//TODO implement me
-	panic("implement me")
+	panic("not implemented")
 }
 
 func (d dummyInfo) IsDir() bool {
@@ -748,8 +786,7 @@ func (d dummyInfo) IsDir() bool {
 }
 
 func (d dummyInfo) Sys() any {
-	//TODO implement me
-	panic("implement me")
+	panic("not implemented")
 }
 
 func Test_crossPlatformExclusions(t *testing.T) {
@@ -911,10 +948,4 @@ func setupArchiveTest(t testing.TB, sourceDirPath string, layer2 bool) string {
 	t.Logf("running from: %s", cwd)
 
 	return destinationArchiveFilePath
-}
-
-func assertNoError(t testing.TB, fn func() error) func() {
-	return func() {
-		assert.NoError(t, fn())
-	}
 }
