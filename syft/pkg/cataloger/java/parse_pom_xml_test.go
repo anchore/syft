@@ -28,7 +28,10 @@ func Test_parserPomXML(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "com.joda"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "com.joda",
+							ArtifactID: "joda-time",
+						},
 					},
 				},
 				{
@@ -40,8 +43,9 @@ func Test_parserPomXML(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
-							GroupID: "junit",
-							Scope:   "test",
+							GroupID:    "junit",
+							ArtifactID: "junit",
+							Scope:      "test",
 						},
 					},
 				},
@@ -75,7 +79,10 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "org.apache.commons"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "org.apache.commons",
+							ArtifactID: "commons-lang3",
+						},
 					},
 				},
 				{
@@ -87,8 +94,9 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
-							GroupID: "org.junit.jupiter",
-							Scope:   "test",
+							GroupID:    "org.junit.jupiter",
+							ArtifactID: "junit-jupiter",
+							Scope:      "test",
 						},
 					},
 				},
@@ -101,8 +109,9 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
-							GroupID: "org.assertj",
-							Scope:   "test",
+							GroupID:    "org.assertj",
+							ArtifactID: "assertj-core",
+							Scope:      "test",
 						},
 					},
 				},
@@ -115,8 +124,9 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
-							GroupID: "commons-io",
-							Scope:   "test",
+							GroupID:    "commons-io",
+							ArtifactID: "commons-io",
+							Scope:      "test",
 						},
 					},
 				},
@@ -129,8 +139,9 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
-							GroupID: "org.mockito",
-							Scope:   "test",
+							GroupID:    "org.mockito",
+							ArtifactID: "mockito-inline",
+							Scope:      "test",
 						},
 					},
 				},
@@ -143,8 +154,9 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
-							GroupID: "org.graalvm.js",
-							Scope:   "test",
+							GroupID:    "org.graalvm.js",
+							ArtifactID: "js",
+							Scope:      "test",
 						},
 					},
 				},
@@ -157,8 +169,9 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
-							GroupID: "org.graalvm.js",
-							Scope:   "test",
+							GroupID:    "org.graalvm.js",
+							ArtifactID: "js-scriptengine",
+							Scope:      "test",
 						},
 					},
 				},
@@ -171,8 +184,9 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
-							GroupID: "org.apache.commons",
-							Scope:   "test",
+							GroupID:    "org.apache.commons",
+							ArtifactID: "commons-rng-simple",
+							Scope:      "test",
 						},
 					},
 				},
@@ -185,8 +199,9 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
-							GroupID: "org.openjdk.jmh",
-							Scope:   "test",
+							GroupID:    "org.openjdk.jmh",
+							ArtifactID: "jmh-core",
+							Scope:      "test",
 						},
 					},
 				},
@@ -199,8 +214,9 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
-							GroupID: "org.openjdk.jmh",
-							Scope:   "test",
+							GroupID:    "org.openjdk.jmh",
+							ArtifactID: "jmh-generator-annprocess",
+							Scope:      "test",
 						},
 					},
 				},
