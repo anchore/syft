@@ -336,3 +336,41 @@ func Test_missingComponentsDecode(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
+func Test_useSyftIDWhenProvided(t *testing.T) {
+
+	packageWithId := cyclonedx.Component{
+		BOMRef:     "pkg:maven/org.springframework.boot/spring-boot-starter-test?package-id=646a5a71a4abeee0",
+		Type:       cyclonedx.ComponentTypeLibrary,
+		Name:       "spring-boot-starter-test",
+		Version:    "",
+		PackageURL: "pkg:maven/org.springframework.boot/spring-boot-starter-test",
+	}
+
+	packageID := extractSyftPacakgeID(packageWithId.BOMRef)
+
+	packageWithoutId := cyclonedx.Component{
+		BOMRef:     "pkg:maven/org.springframework.boot/spring-boot-starter-webflux",
+		Type:       cyclonedx.ComponentTypeLibrary,
+		Name:       "spring-boot-starter-webflux",
+		Version:    "",
+		PackageURL: "pkg:maven/org.springframework.boot/spring-boot-starter-webflux",
+	}
+
+	bom := cyclonedx.BOM{Metadata: nil,
+		Components: &[]cyclonedx.Component{
+			packageWithId,
+			packageWithoutId,
+		}}
+
+	sbom, err := ToSyftModel(&bom)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, sbom.Artifacts.Packages.Package(artifact.ID(packageID)))
+
+	pkgsWithoutID := sbom.Artifacts.Packages.PackagesByName(packageWithoutId.Name)
+
+	assert.Len(t, pkgsWithoutID, 1)
+	assert.NotEqual(t, "", pkgsWithoutID[0].ID())
+
+}
