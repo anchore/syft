@@ -23,7 +23,7 @@ func GetValidator(format cyclonedx.BOMFileFormat) sbom.Validator {
 			return err
 		}
 		// random JSON does not necessarily cause an error (e.g. SPDX)
-		if (cyclonedx.BOM{} == *bom || bom.Components == nil) {
+		if (cyclonedx.BOM{} == *bom || ((format == cyclonedx.BOMFileFormatXML && bom.XMLNS == "") || bom.Components == nil)) {
 			return fmt.Errorf("not a valid CycloneDX document")
 		}
 		return nil
