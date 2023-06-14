@@ -53,7 +53,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/go-logger v0.0.0-20220728155337-03b66a5207d8
-	github.com/anchore/stereoscope v0.0.0-20230522170632-e14bc4437b2e
+	github.com/anchore/stereoscope v0.0.0-20230609190519-5b5049bf4d3a
 	github.com/dave/jennifer v1.6.1
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
 	github.com/docker/docker v24.0.2+incompatible
