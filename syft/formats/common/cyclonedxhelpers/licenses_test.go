@@ -18,9 +18,8 @@ func Test_encodeLicense(t *testing.T) {
 		expected *cyclonedx.Licenses
 	}{
 		{
-			name:     "no licenses",
-			input:    pkg.Package{},
-			expected: &cyclonedx.Licenses{},
+			name:  "no licenses",
+			input: pkg.Package{},
 		},
 		{
 			name: "no SPDX licenses",

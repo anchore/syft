@@ -40,7 +40,11 @@ func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
 		}
 	}
 
-	return &out
+	if len(out) > 0 {
+		return &out
+	}
+
+	return nil
 }
 
 func decodeLicenses(c *cyclonedx.Component) []pkg.License {
