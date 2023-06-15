@@ -20,7 +20,7 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name:     "no licenses",
 			input:    pkg.Package{},
-			expected: nil,
+			expected: &cyclonedx.Licenses{},
 		},
 		{
 			name: "no SPDX licenses",
@@ -48,12 +48,12 @@ func Test_encodeLicense(t *testing.T) {
 			expected: &cyclonedx.Licenses{
 				{
 					License: &cyclonedx.License{
-						Name: "FOOBAR",
+						ID: "MIT",
 					},
 				},
 				{
 					License: &cyclonedx.License{
-						ID: "MIT",
+						Name: "FOOBAR",
 					},
 				},
 			},
@@ -97,17 +97,6 @@ func Test_encodeLicense(t *testing.T) {
 			expected: &cyclonedx.Licenses{
 				{
 					License: &cyclonedx.License{
-						Name: "FakeLicense",
-						URL:  "htts://someurl.com",
-					},
-				},
-				{
-					License: &cyclonedx.License{
-						Name: "MIT AND GPL-3.0-only",
-					},
-				},
-				{
-					License: &cyclonedx.License{
 						ID:  "MIT",
 						URL: "https://opensource.org/licenses/MIT",
 					},
@@ -116,6 +105,17 @@ func Test_encodeLicense(t *testing.T) {
 					License: &cyclonedx.License{
 						ID:  "MIT",
 						URL: "https://spdx.org/licenses/MIT.html",
+					},
+				},
+				{
+					License: &cyclonedx.License{
+						Name: "FakeLicense",
+						URL:  "htts://someurl.com",
+					},
+				},
+				{
+					License: &cyclonedx.License{
+						Name: "MIT AND GPL-3.0-only",
 					},
 				},
 			},

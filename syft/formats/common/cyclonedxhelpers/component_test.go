@@ -184,6 +184,7 @@ func Test_encodeCompomentType(t *testing.T) {
 						Value: "go-module",
 					},
 				},
+				Licenses: &cyclonedx.Licenses{},
 			},
 		},
 		{
@@ -203,6 +204,7 @@ func Test_encodeCompomentType(t *testing.T) {
 						Value: "binary",
 					},
 				},
+				Licenses: &cyclonedx.Licenses{},
 			},
 		},
 	}
