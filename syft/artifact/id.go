@@ -22,5 +22,5 @@ func IDByHash(obj interface{}) (ID, error) {
 		return "", fmt.Errorf("could not build ID for object=%+v: %w", obj, err)
 	}
 
-	return ID(fmt.Sprintf("%x", f)), nil
+	return ID(fmt.Sprintf("%016x", f)), nil
 }
