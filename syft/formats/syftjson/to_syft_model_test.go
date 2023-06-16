@@ -6,6 +6,7 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/artifact"
@@ -18,7 +19,7 @@ import (
 
 func Test_toSyftSourceData(t *testing.T) {
 	allSchemes := strset.New()
-	for _, s := range source.AllSchemes {
+	for _, s := range model.AllSourceTypes() {
 		allSchemes.Add(string(s))
 	}
 	testedSchemes := strset.New()
@@ -26,44 +27,135 @@ func Test_toSyftSourceData(t *testing.T) {
 	tests := []struct {
 		name     string
 		src      model.Source
-		expected source.Metadata
+		expected *source.Description
 	}{
 		{
 			name: "directory",
-			expected: source.Metadata{
-				Scheme: source.DirectoryScheme,
-				Path:   "some/path",
-			},
 			src: model.Source{
-				Type:   "directory",
-				Target: "some/path",
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    model.DirectorySourceType,
+				Metadata: source.DirectorySourceMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
+			},
+			expected: &source.Description{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.DirectorySourceMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
 			},
 		},
 		{
 			name: "file",
-			expected: source.Metadata{
-				Scheme: source.FileScheme,
-				Path:   "some/path",
-			},
 			src: model.Source{
-				Type:   "file",
-				Target: "some/path",
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    model.FileSourceType,
+				Metadata: source.FileSourceMetadata{
+					Path:     "some/path",
+					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
+					MIMEType: "text/plain",
+				},
+			},
+			expected: &source.Description{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.FileSourceMetadata{
+					Path:     "some/path",
+					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
+					MIMEType: "text/plain",
+				},
 			},
 		},
 		{
 			name: "image",
-			expected: source.Metadata{
-				Scheme: source.ImageScheme,
-				ImageMetadata: source.ImageMetadata{
+			src: model.Source{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    model.ImageSourceType,
+				Metadata: source.StereoscopeImageSourceMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
 					MediaType:      "type...",
 				},
 			},
+			expected: &source.Description{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.StereoscopeImageSourceMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+		},
+		// below are regression tests for when the name/version are not provided
+		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
+		{
+			name: "directory - no name/version",
 			src: model.Source{
-				Type: "image",
-				Target: source.ImageMetadata{
+				ID:   "the-id",
+				Type: model.DirectorySourceType,
+				Metadata: source.DirectorySourceMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
+			},
+			expected: &source.Description{
+				ID: "the-id",
+				Metadata: source.DirectorySourceMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
+			},
+		},
+		{
+			name: "file - no name/version",
+			src: model.Source{
+				ID:   "the-id",
+				Type: model.FileSourceType,
+				Metadata: source.FileSourceMetadata{
+					Path:     "some/path",
+					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
+					MIMEType: "text/plain",
+				},
+			},
+			expected: &source.Description{
+				ID: "the-id",
+				Metadata: source.FileSourceMetadata{
+					Path:     "some/path",
+					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
+					MIMEType: "text/plain",
+				},
+			},
+		},
+		{
+			name: "image - no name/version",
+			src: model.Source{
+				ID:   "the-id",
+				Type: model.ImageSourceType,
+				Metadata: source.StereoscopeImageSourceMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+			expected: &source.Description{
+				ID: "the-id",
+				Metadata: source.StereoscopeImageSourceMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -76,10 +168,10 @@ func Test_toSyftSourceData(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// assert the model transformation is correct
 			actual := toSyftSourceData(test.src)
-			assert.Equal(t, test.expected, *actual)
+			assert.Equal(t, test.expected, actual)
 
 			// track each scheme tested (passed or not)
-			testedSchemes.Add(string(test.expected.Scheme))
+			testedSchemes.Add(string(test.src.Type))
 		})
 	}
 
@@ -90,8 +182,8 @@ func Test_toSyftSourceData(t *testing.T) {
 func Test_idsHaveChanged(t *testing.T) {
 	s, err := toSyftModel(model.Document{
 		Source: model.Source{
-			Type:   "file",
-			Target: "some/path",
+			Type:     model.FileSourceType,
+			Metadata: source.FileSourceMetadata{Path: "some/path"},
 		},
 		Artifacts: []model.Package{
 			{
@@ -116,17 +208,17 @@ func Test_idsHaveChanged(t *testing.T) {
 		},
 	})
 
-	assert.NoError(t, err)
-	assert.Len(t, s.Relationships, 1)
+	require.NoError(t, err)
+	require.Len(t, s.Relationships, 1)
 
 	r := s.Relationships[0]
 
 	from := s.Artifacts.Packages.Package(r.From.ID())
-	assert.NotNil(t, from)
+	require.NotNil(t, from)
 	assert.Equal(t, "pkg-1", from.Name)
 
 	to := s.Artifacts.Packages.Package(r.To.ID())
-	assert.NotNil(t, to)
+	require.NotNil(t, to)
 	assert.Equal(t, "pkg-2", to.Name)
 }
 

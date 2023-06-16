@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/spdx/tools-golang/spdx"
@@ -197,36 +198,46 @@ func Test_extractMetadata(t *testing.T) {
 func TestExtractSourceFromNamespaces(t *testing.T) {
 	tests := []struct {
 		namespace string
-		expected  source.Scheme
+		expected  any
 	}{
 		{
 			namespace: "https://anchore.com/syft/file/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.FileScheme,
+			expected:  source.FileSourceMetadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/image/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.ImageScheme,
+			expected:  source.StereoscopeImageSourceMetadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/dir/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.DirectoryScheme,
+			expected:  source.DirectorySourceMetadata{},
 		},
 		{
 			namespace: "https://another-host/blob/123",
-			expected:  source.UnknownScheme,
+			expected:  nil,
 		},
 		{
 			namespace: "bla bla",
-			expected:  source.UnknownScheme,
+			expected:  nil,
 		},
 		{
 			namespace: "",
-			expected:  source.UnknownScheme,
+			expected:  nil,
 		},
 	}
 
 	for _, tt := range tests {
-		require.Equal(t, tt.expected, extractSchemeFromNamespace(tt.namespace))
+		desc := extractSourceFromNamespace(tt.namespace)
+		if tt.expected == nil && desc.Metadata == nil {
+			return
+		}
+		if tt.expected != nil && desc.Metadata == nil {
+			t.Fatal("expected metadata but got nil")
+		}
+		if tt.expected == nil && desc.Metadata != nil {
+			t.Fatal("expected nil metadata but got something")
+		}
+		require.Equal(t, reflect.TypeOf(tt.expected), reflect.TypeOf(desc.Metadata))
 	}
 }
 

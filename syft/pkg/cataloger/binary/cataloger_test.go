@@ -649,7 +649,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := NewCataloger()
 
-			src, err := source.NewFromDirectory(test.fixtureDir)
+			src, err := source.NewFromDirectoryPath(test.fixtureDir)
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)
@@ -688,7 +688,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			c := NewCataloger()
 
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
-			src, err := source.NewFromImage(img, "test-img")
+			src, err := source.NewFromStereoscopeImageObject(img, test.fixtureImage, nil)
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)
@@ -718,7 +718,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 	c := NewCataloger()
 
-	src, err := source.NewFromDirectory("test-fixtures/classifiers/negative")
+	src, err := source.NewFromDirectoryPath("test-fixtures/classifiers/negative")
 	assert.NoError(t, err)
 
 	resolver, err := src.FileResolver(source.SquashedScope)

@@ -14,13 +14,15 @@ func encoder(output io.Writer, s sbom.SBOM) error {
 	w := new(tabwriter.Writer)
 	w.Init(output, 0, 8, 0, '\t', tabwriter.AlignRight)
 
-	switch s.Source.Scheme {
-	case source.DirectoryScheme, source.FileScheme:
-		fmt.Fprintf(w, "[Path: %s]\n", s.Source.Path)
-	case source.ImageScheme:
+	switch metadata := s.Source.Metadata.(type) {
+	case source.DirectorySourceMetadata:
+		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
+	case source.FileSourceMetadata:
+		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
+	case source.StereoscopeImageSourceMetadata:
 		fmt.Fprintln(w, "[Image]")
 
-		for idx, l := range s.Source.ImageMetadata.Layers {
+		for idx, l := range metadata.Layers {
 			fmt.Fprintln(w, " Layer:\t", idx)
 			fmt.Fprintln(w, " Digest:\t", l.Digest)
 			fmt.Fprintln(w, " Size:\t", l.Size)
@@ -29,7 +31,7 @@ func encoder(output io.Writer, s sbom.SBOM) error {
 			w.Flush()
 		}
 	default:
-		return fmt.Errorf("unsupported source: %T", s.Source.Scheme)
+		return fmt.Errorf("unsupported source: %T", s.Source.Metadata)
 	}
 
 	// populate artifacts...

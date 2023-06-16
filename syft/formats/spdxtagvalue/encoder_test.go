@@ -1,6 +1,7 @@
 package spdxtagvalue
 
 import (
+	"bytes"
 	"flag"
 	"regexp"
 	"testing"
@@ -11,28 +12,42 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var updateSpdxTagValue = flag.Bool("update-spdx-tv", false, "update the *.golden files for spdx-tv encoders")
+var updateSnapshot = flag.Bool("update-spdx-tv", false, "update the *.golden files for spdx-tv encoders")
+var updateImage = flag.Bool("update-image", false, "update the golden image used for image encoder testing")
 
 func TestSPDXTagValueDirectoryEncoder(t *testing.T) {
-
+	dir := t.TempDir()
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
-		Format(),
-		testutils.DirectoryInput(t),
-		*updateSpdxTagValue,
-		false,
-		spdxTagValueRedactor,
+		testutils.EncoderSnapshotTestConfig{
+			Subject:                     testutils.DirectoryInput(t, dir),
+			Format:                      Format(),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      false,
+			Redactors: []testutils.Redactor{
+				redactor{dir: dir}.redact,
+			},
+		},
 	)
 }
 
 func TestSPDXTagValueImageEncoder(t *testing.T) {
 	testImage := "image-simple"
 	testutils.AssertEncoderAgainstGoldenImageSnapshot(t,
-		Format(),
-		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
-		testImage,
-		*updateSpdxTagValue,
-		false,
-		spdxTagValueRedactor,
+		testutils.ImageSnapshotTestConfig{
+			Image:               testImage,
+			UpdateImageSnapshot: *updateImage,
+		},
+		testutils.EncoderSnapshotTestConfig{
+			Subject:                     testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
+			Format:                      Format(),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      false,
+			Redactors: []testutils.Redactor{
+				redactor{}.redact,
+			},
+		},
 	)
 }
 
@@ -45,28 +60,35 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 		p.SetID()
 		pkgs = append(pkgs, p)
 	}
-	testutils.AssertEncoderAgainstGoldenSnapshot(t,
-		Format(),
-		sbom.SBOM{
-			Artifacts: sbom.Artifacts{
-				Packages: pkg.NewCollection(pkgs...),
-			},
-			Relationships: nil,
-			Source: source.Metadata{
-				Scheme: source.DirectoryScheme,
-				Path:   "foobar/baz", // in this case, foobar is used as the spdx docment name
-			},
-			Descriptor: sbom.Descriptor{
-				Name:    "syft",
-				Version: "v0.42.0-bogus",
-				Configuration: map[string]string{
-					"config-key": "config-value",
-				},
+
+	s := sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			Packages: pkg.NewCollection(pkgs...),
+		},
+		Relationships: nil,
+		Source: source.Description{
+			Metadata: source.DirectorySourceMetadata{Path: "foobar/baz"}, // in this case, foobar is used as the spdx docment name
+		},
+		Descriptor: sbom.Descriptor{
+			Name:    "syft",
+			Version: "v0.42.0-bogus",
+			Configuration: map[string]string{
+				"config-key": "config-value",
 			},
 		},
-		*updateSpdxTagValue,
-		false,
-		spdxTagValueRedactor,
+	}
+
+	testutils.AssertEncoderAgainstGoldenSnapshot(t,
+		testutils.EncoderSnapshotTestConfig{
+			Subject:                     s,
+			Format:                      Format(),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      false,
+			Redactors: []testutils.Redactor{
+				redactor{}.redact,
+			},
+		},
 	)
 }
 
@@ -74,23 +96,66 @@ func TestSPDXRelationshipOrder(t *testing.T) {
 	testImage := "image-simple"
 	s := testutils.ImageInput(t, testImage, testutils.FromSnapshot())
 	testutils.AddSampleFileRelationships(&s)
+
 	testutils.AssertEncoderAgainstGoldenImageSnapshot(t,
-		Format(),
-		s,
-		testImage,
-		*updateSpdxTagValue,
-		false,
-		spdxTagValueRedactor,
+		testutils.ImageSnapshotTestConfig{
+			Image:               testImage,
+			UpdateImageSnapshot: *updateImage,
+		},
+		testutils.EncoderSnapshotTestConfig{
+			Subject:                     s,
+			Format:                      Format(),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      false,
+			Redactors: []testutils.Redactor{
+				redactor{}.redact,
+			},
+		},
 	)
 }
 
-func spdxTagValueRedactor(s []byte) []byte {
-	// each SBOM reports the time it was generated, which is not useful during snapshot testing
-	s = regexp.MustCompile(`Created: .*`).ReplaceAll(s, []byte("redacted"))
+type redactor struct {
+	dir string
+}
 
-	// each SBOM reports a unique documentNamespace when generated, this is not useful for snapshot testing
-	s = regexp.MustCompile(`DocumentNamespace: https://anchore.com/syft/.*`).ReplaceAll(s, []byte("redacted"))
+type replacement struct {
+	pattern *regexp.Regexp
+	replace string
+}
 
-	// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
-	return regexp.MustCompile(`LicenseListVersion: .*`).ReplaceAll(s, []byte("redacted"))
+func (r replacement) redact(b []byte) []byte {
+	return r.pattern.ReplaceAll(b, []byte(r.replace))
+}
+
+func (r redactor) redact(s []byte) []byte {
+	replacements := []replacement{
+		// each SBOM reports the time it was generated, which is not useful during snapshot testing
+		{
+			pattern: regexp.MustCompile(`Created: .*`),
+			replace: "Created: redacted",
+		},
+
+		// each SBOM reports a unique documentNamespace when generated, this is not useful for snapshot testing
+		{
+			pattern: regexp.MustCompile(`DocumentNamespace: https://anchore.com/syft/.*`),
+			replace: "DocumentNamespace: redacted",
+		},
+
+		// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
+		{
+			pattern: regexp.MustCompile(`LicenseListVersion: .*`),
+			replace: "LicenseListVersion: redacted",
+		},
+	}
+
+	for _, r := range replacements {
+		s = r.redact(s)
+	}
+
+	if r.dir != "" {
+		s = bytes.ReplaceAll(s, []byte(r.dir), []byte("redacted"))
+	}
+
+	return s
 }

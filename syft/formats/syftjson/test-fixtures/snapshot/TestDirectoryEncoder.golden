@@ -72,9 +72,13 @@
  ],
  "artifactRelationships": [],
  "source": {
-  "id": "eda6cf0b63f1a1d2eaf7792a2a98c832c21a18e6992bcebffe6381781cc85cbc",
+  "id": "d1563248892cd59af469f406eee907c76fa4f9041f5410d45b93aef903bc4216",
+  "name": "some/path",
+  "version": "",
   "type": "directory",
-  "target": "/some/path"
+  "metadata": {
+   "path": "redacted/some/path"
+  }
  },
  "distro": {
   "prettyName": "debian",
@@ -92,9 +96,5 @@
   "configuration": {
    "config-key": "config-value"
   }
- },
- "schema": {
-  "version": "8.0.0",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-8.0.0.json"
  }
 }

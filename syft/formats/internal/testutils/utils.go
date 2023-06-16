@@ -3,6 +3,8 @@ package testutils
 import (
 	"bytes"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -24,7 +26,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type redactor func(s []byte) []byte
+type Redactor func(s []byte) []byte
 
 type imageCfg struct {
 	fromSnapshot bool
@@ -38,52 +40,39 @@ func FromSnapshot() ImageOption {
 	}
 }
 
-func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, testImage string, updateSnapshot bool, json bool, redactors ...redactor) {
-	var buffer bytes.Buffer
-
-	// grab the latest image contents and persist
-	if updateSnapshot {
-		imagetest.UpdateGoldenFixtureImage(t, testImage)
-	}
-
-	err := format.Encode(&buffer, sbom)
-	assert.NoError(t, err)
-	actual := buffer.Bytes()
-
-	// replace the expected snapshot contents with the current encoder contents
-	if updateSnapshot {
-		testutils.UpdateGoldenFileContents(t, actual)
-	}
-
-	actual = redact(actual, redactors...)
-	expected := redact(testutils.GetGoldenFileContents(t), redactors...)
-
-	if json {
-		require.JSONEq(t, string(expected), string(actual))
-	} else if !bytes.Equal(expected, actual) {
-		// assert that the golden file snapshot matches the actual contents
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(string(expected), string(actual), true)
-		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
-	}
+type EncoderSnapshotTestConfig struct {
+	Subject                     sbom.SBOM
+	Format                      sbom.Format
+	UpdateSnapshot              bool
+	PersistRedactionsInSnapshot bool
+	IsJSON                      bool
+	Redactors                   []Redactor
 }
 
-func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom sbom.SBOM, updateSnapshot bool, json bool, redactors ...redactor) {
+func AssertEncoderAgainstGoldenSnapshot(t *testing.T, cfg EncoderSnapshotTestConfig) {
+	t.Helper()
 	var buffer bytes.Buffer
 
-	err := format.Encode(&buffer, sbom)
+	err := cfg.Format.Encode(&buffer, cfg.Subject)
 	assert.NoError(t, err)
 	actual := buffer.Bytes()
 
-	// replace the expected snapshot contents with the current encoder contents
-	if updateSnapshot {
+	if cfg.UpdateSnapshot && !cfg.PersistRedactionsInSnapshot {
+		// replace the expected snapshot contents with the current (unredacted) encoder contents
 		testutils.UpdateGoldenFileContents(t, actual)
+		return
 	}
 
-	actual = redact(actual, redactors...)
-	expected := redact(testutils.GetGoldenFileContents(t), redactors...)
+	actual = redact(actual, cfg.Redactors...)
+	expected := redact(testutils.GetGoldenFileContents(t), cfg.Redactors...)
 
-	if json {
+	if cfg.UpdateSnapshot && cfg.PersistRedactionsInSnapshot {
+		// replace the expected snapshot contents with the current (redacted) encoder contents
+		testutils.UpdateGoldenFileContents(t, actual)
+		return
+	}
+
+	if cfg.IsJSON {
 		require.JSONEq(t, string(expected), string(actual))
 	} else if !bytes.Equal(expected, actual) {
 		dmp := diffmatchpatch.New()
@@ -92,6 +81,20 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, format sbom.Format, sbom s
 		t.Logf("len: %d\nactual: %s", len(actual), actual)
 		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
 	}
+}
+
+type ImageSnapshotTestConfig struct {
+	Image               string
+	UpdateImageSnapshot bool
+}
+
+func AssertEncoderAgainstGoldenImageSnapshot(t *testing.T, imgCfg ImageSnapshotTestConfig, cfg EncoderSnapshotTestConfig) {
+	if imgCfg.UpdateImageSnapshot {
+		// grab the latest image contents and persist
+		imagetest.UpdateGoldenFixtureImage(t, imgCfg.Image)
+	}
+
+	AssertEncoderAgainstGoldenSnapshot(t, cfg)
 }
 
 func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBOM {
@@ -115,7 +118,7 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 	// this is a hard coded value that is not given by the fixture helper and must be provided manually
 	img.Metadata.ManifestDigest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
 
-	src, err := source.NewFromImage(img, "user-image-input")
+	src, err := source.NewFromStereoscopeImageObject(img, "user-image-input", nil)
 	assert.NoError(t, err)
 
 	return sbom.SBOM{
@@ -130,7 +133,7 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 				VersionID:  "1.2.3",
 			},
 		},
-		Source: src.Metadata,
+		Source: src.Describe(),
 		Descriptor: sbom.Descriptor{
 			Name:    "syft",
 			Version: "v0.42.0-bogus",
@@ -195,11 +198,20 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 	})
 }
 
-func DirectoryInput(t testing.TB) sbom.SBOM {
+func DirectoryInput(t testing.TB, dir string) sbom.SBOM {
 	catalog := newDirectoryCatalog()
 
-	src, err := source.NewFromDirectory("/some/path")
-	assert.NoError(t, err)
+	path := filepath.Join(dir, "some", "path")
+
+	require.NoError(t, os.MkdirAll(path, 0755))
+
+	src, err := source.NewFromDirectory(
+		source.DirectoryConfig{
+			Path: path,
+			Base: dir,
+		},
+	)
+	require.NoError(t, err)
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
@@ -213,7 +225,7 @@ func DirectoryInput(t testing.TB) sbom.SBOM {
 				VersionID:  "1.2.3",
 			},
 		},
-		Source: src.Metadata,
+		Source: src.Describe(),
 		Descriptor: sbom.Descriptor{
 			Name:    "syft",
 			Version: "v0.42.0-bogus",
@@ -229,8 +241,18 @@ func DirectoryInput(t testing.TB) sbom.SBOM {
 func DirectoryInputWithAuthorField(t testing.TB) sbom.SBOM {
 	catalog := newDirectoryCatalogWithAuthorField()
 
-	src, err := source.NewFromDirectory("/some/path")
-	assert.NoError(t, err)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "some", "path")
+
+	require.NoError(t, os.MkdirAll(path, 0755))
+
+	src, err := source.NewFromDirectory(
+		source.DirectoryConfig{
+			Path: path,
+			Base: dir,
+		},
+	)
+	require.NoError(t, err)
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
@@ -244,7 +266,7 @@ func DirectoryInputWithAuthorField(t testing.TB) sbom.SBOM {
 				VersionID:  "1.2.3",
 			},
 		},
-		Source: src.Metadata,
+		Source: src.Describe(),
 		Descriptor: sbom.Descriptor{
 			Name:    "syft",
 			Version: "v0.42.0-bogus",
@@ -387,7 +409,7 @@ func AddSampleFileRelationships(s *sbom.SBOM) {
 }
 
 // remove dynamic values, which should be tested independently
-func redact(b []byte, redactors ...redactor) []byte {
+func redact(b []byte, redactors ...Redactor) []byte {
 	redactors = append(redactors, carriageRedactor)
 	for _, r := range redactors {
 		b = r(b)

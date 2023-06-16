@@ -267,10 +267,14 @@ func toRelationshipModel(relationships []artifact.Relationship) []model.Relation
 }
 
 // toSourceModel creates a new source object to be represented into JSON.
-func toSourceModel(src source.Metadata) (model.Source, error) {
-	switch src.Scheme {
-	case source.ImageScheme:
-		metadata := src.ImageMetadata
+func toSourceModel(src source.Description) (model.Source, error) {
+	m := model.Source{
+		ID:      src.ID,
+		Name:    src.Name,
+		Version: src.Version,
+	}
+	switch metadata := src.Metadata.(type) {
+	case source.StereoscopeImageSourceMetadata:
 		// ensure that empty collections are not shown as null
 		if metadata.RepoDigests == nil {
 			metadata.RepoDigests = []string{}
@@ -278,24 +282,19 @@ func toSourceModel(src source.Metadata) (model.Source, error) {
 		if metadata.Tags == nil {
 			metadata.Tags = []string{}
 		}
-		return model.Source{
-			ID:     src.ID,
-			Type:   "image",
-			Target: metadata,
-		}, nil
-	case source.DirectoryScheme:
-		return model.Source{
-			ID:     src.ID,
-			Type:   "directory",
-			Target: src.Path,
-		}, nil
-	case source.FileScheme:
-		return model.Source{
-			ID:     src.ID,
-			Type:   "file",
-			Target: src.Path,
-		}, nil
+
+		m.Type = model.ImageSourceType
+		m.Metadata = metadata
+
+	case source.DirectorySourceMetadata:
+		m.Type = model.DirectorySourceType
+		m.Metadata = metadata
+
+	case source.FileSourceMetadata:
+		m.Type = model.FileSourceType
+		m.Metadata = metadata
 	default:
-		return model.Source{}, fmt.Errorf("unsupported source: %q", src.Scheme)
+		return model.Source{}, fmt.Errorf("unsupported source: %T", metadata)
 	}
+	return m, nil
 }

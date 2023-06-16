@@ -44,17 +44,8 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 		}
 	}()
 
-	// could be an image or a directory, with or without a scheme
-	// TODO: validate that source is image
+	// note: must be a container image
 	userInput := args[0]
-	si, err := source.ParseInputWithNameVersion(userInput, app.Platform, app.SourceName, app.SourceVersion, app.DefaultImagePullSource)
-	if err != nil {
-		return fmt.Errorf("could not generate source input for packages command: %w", err)
-	}
-
-	if si.Scheme != source.ImageScheme {
-		return fmt.Errorf("attestations are only supported for oci images at this time")
-	}
 
 	eventBus := partybus.NewBus()
 	stereoscope.SetBus(eventBus)
@@ -62,7 +53,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	subscription := eventBus.Subscribe()
 
 	return eventloop.EventLoop(
-		execWorker(app, *si, writer),
+		execWorker(app, userInput, writer),
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
@@ -70,13 +61,30 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	)
 }
 
-func buildSBOM(app *config.Application, si source.Input, writer sbom.Writer, errs chan error) ([]byte, error) {
-	src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
-	if cleanup != nil {
-		defer cleanup()
+func buildSBOM(app *config.Application, userInput string, writer sbom.Writer, errs chan error) ([]byte, error) {
+	detection, err := source.Detect(userInput, app.DefaultImagePullSource)
+	if err != nil {
+		return nil, fmt.Errorf("could not deteremine source: %w", err)
+	}
+
+	if detection.Type != source.ContainerImageType {
+		return nil, fmt.Errorf("attestations are only supported for oci images at this time")
+	}
+
+	src, err := detection.NewSource(
+		&source.Alias{
+			Name:    app.SourceName,
+			Version: app.SourceVersion,
+		},
+		app.Registry.ToOptions(),
+		app.Platform,
+		app.Exclusions,
+	)
+	if src != nil {
+		defer src.Close()
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
+		return nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
 	}
 
 	s, err := packages.GenerateSBOM(src, errs, app)
@@ -85,7 +93,7 @@ func buildSBOM(app *config.Application, si source.Input, writer sbom.Writer, err
 	}
 
 	if s == nil {
-		return nil, fmt.Errorf("no SBOM produced for %q", si.UserInput)
+		return nil, fmt.Errorf("no SBOM produced for %q", userInput)
 	}
 
 	// note: only works for single format no multi writer support
@@ -98,11 +106,11 @@ func buildSBOM(app *config.Application, si source.Input, writer sbom.Writer, err
 }
 
 //nolint:funlen
-func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-chan error {
+func execWorker(app *config.Application, userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-		sBytes, err := buildSBOM(app, si, writer, errs)
+		sBytes, err := buildSBOM(app, userInput, writer, errs)
 		if err != nil {
 			errs <- fmt.Errorf("unable to build SBOM: %w", err)
 			return
@@ -145,7 +153,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 				predicateType = "custom"
 			}
 
-			args := []string{"attest", si.UserInput, "--predicate", f.Name(), "--type", predicateType}
+			args := []string{"attest", userInput, "--predicate", f.Name(), "--type", predicateType}
 			if app.Attest.Key != "" {
 				args = append(args, "--key", app.Attest.Key)
 			}

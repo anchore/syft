@@ -27,7 +27,7 @@ func Test_allRegularFiles(t *testing.T) {
 
 				img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
-				s, err := source.NewFromImage(img, "---")
+				s, err := source.NewFromStereoscopeImageObject(img, testImage, nil)
 				require.NoError(t, err)
 
 				r, err := s.FileResolver(source.SquashedScope)
@@ -41,7 +41,7 @@ func Test_allRegularFiles(t *testing.T) {
 		{
 			name: "directory",
 			setup: func() file.Resolver {
-				s, err := source.NewFromDirectory("test-fixtures/symlinked-root/nested/link-root")
+				s, err := source.NewFromDirectoryPath("test-fixtures/symlinked-root/nested/link-root")
 				require.NoError(t, err)
 				r, err := s.FileResolver(source.SquashedScope)
 				require.NoError(t, err)
