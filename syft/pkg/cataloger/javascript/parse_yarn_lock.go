@@ -7,9 +7,9 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
@@ -42,7 +42,7 @@ const (
 	noVersion = ""
 )
 
-func parseYarnLock(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find yarn.lock files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the project
 	if pathContainsNodeModulesDirectory(reader.AccessPath()) {

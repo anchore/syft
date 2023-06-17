@@ -2,15 +2,15 @@ package haskell
 
 import (
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPackage(name, version string, m *pkg.HackageMetadata, locations ...source.Location) pkg.Package {
+func newPackage(name, version string, m *pkg.HackageMetadata, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
-		Locations: source.NewLocationSet(locations...),
+		Locations: file.NewLocationSet(locations...),
 		PURL:      packageURL(name, version),
 		Language:  pkg.Haskell,
 		Type:      pkg.HackagePkg,

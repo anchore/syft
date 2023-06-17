@@ -4,6 +4,7 @@ package spdxhelpers
 import (
 	"crypto/sha1"
 	"fmt"
+	"path"
 	"sort"
 	"strings"
 	"time"
@@ -20,7 +21,6 @@ import (
 	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -131,13 +131,30 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 }
 
 func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
+	maxLen := 40
 	id := ""
-	if p, ok := identifiable.(pkg.Package); ok {
-		id = SanitizeElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.ID()))
-	} else {
+	switch it := identifiable.(type) {
+	case pkg.Package:
+		id = SanitizeElementID(fmt.Sprintf("Package-%s-%s-%s", it.Type, it.Name, it.ID()))
+	case file.Coordinates:
+		p := ""
+		parts := strings.Split(it.RealPath, "/")
+		for i := len(parts); i > 0; i-- {
+			part := parts[i-1]
+			if len(part) == 0 {
+				continue
+			}
+			if i < len(parts) && len(p)+len(part)+3 > maxLen {
+				p = "..." + p
+				break
+			}
+			p = path.Join(part, p)
+		}
+		id = SanitizeElementID(fmt.Sprintf("File-%s-%s", p, it.ID()))
+	default:
 		id = string(identifiable.ID())
 	}
-	// NOTE: the spdx libraries prepend SPDXRef-, so we don't do it here
+	// NOTE: the spdx library prepend SPDXRef-, so we don't do it here
 	return spdx.ElementID(id)
 }
 
@@ -152,7 +169,8 @@ func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Packag
 		// If the Concluded License is not the same as the Declared License, a written explanation should be provided
 		// in the Comments on License field (section 7.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 7.16) is preferred.
-		license := License(p)
+		// extract these correctly to the spdx license format
+		concluded, declared := License(p)
 
 		// two ways to get filesAnalyzed == true:
 		// 1. syft has generated a sha1 digest for the package itself - usually in the java cataloger
@@ -256,7 +274,7 @@ func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Packag
 			// Cardinality: mandatory, one
 			// Purpose: Contain the license the SPDX file creator has concluded as governing the
 			// package or alternative values, if the governing license cannot be determined.
-			PackageLicenseConcluded: license,
+			PackageLicenseConcluded: concluded,
 
 			// 7.14: All Licenses Info from Files: SPDX License Expression, "NONE" or "NOASSERTION"
 			// Cardinality: mandatory, one or many if filesAnalyzed is true / omitted;
@@ -268,7 +286,7 @@ func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Packag
 			// Purpose: List the licenses that have been declared by the authors of the package.
 			// Any license information that does not originate from the package authors, e.g. license
 			// information from a third party repository, should not be included in this field.
-			PackageLicenseDeclared: license,
+			PackageLicenseDeclared: declared,
 
 			// 7.16: Comments on License
 			// Cardinality: optional, one
@@ -418,7 +436,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 	artifacts := s.Artifacts
 
 	for _, coordinates := range s.AllCoordinates() {
-		var metadata *source.FileMetadata
+		var metadata *file.Metadata
 		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
 			metadata = &metadataForLocation
 		}
@@ -481,7 +499,7 @@ func toChecksumAlgorithm(algorithm string) spdx.ChecksumAlgorithm {
 	return spdx.ChecksumAlgorithm(strings.ToUpper(algorithm))
 }
 
-func toFileTypes(metadata *source.FileMetadata) (ty []string) {
+func toFileTypes(metadata *file.Metadata) (ty []string) {
 	if metadata == nil {
 		return nil
 	}
@@ -516,10 +534,18 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	return ty
 }
 
+// other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
+// field. The spdxexpression field is only filled given a validated Value field.
 func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	licenses := map[string]bool{}
 	for _, p := range catalog.Sorted() {
-		for _, license := range parseLicenses(p.Licenses) {
+		declaredLicenses, concludedLicenses := parseLicenses(p.Licenses.ToSlice())
+		for _, license := range declaredLicenses {
+			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
+				licenses[license] = true
+			}
+		}
+		for _, license := range concludedLicenses {
 			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
 				licenses[license] = true
 			}
@@ -531,12 +557,12 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	sorted := maps.Keys(licenses)
 	slices.Sort(sorted)
 	for _, license := range sorted {
-		// separate the actual ID from the prefix
+		// separate the found value from the prefix
+		// this only contains licenses that are not found on the SPDX License List
 		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
 		result = append(result, &spdx.OtherLicense{
 			LicenseIdentifier: SanitizeElementID(license),
-			LicenseName:       name,
-			ExtractedText:     NONE, // we probably should have some extracted text here, but this is good enough for now
+			ExtractedText:     name,
 		})
 	}
 	return result

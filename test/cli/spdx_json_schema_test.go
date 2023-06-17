@@ -50,9 +50,7 @@ func TestSPDXJSONSchema(t *testing.T) {
 			args := []string{
 				test.subcommand, fixtureRef, "-q",
 			}
-			for _, a := range test.args {
-				args = append(args, a)
-			}
+			args = append(args, test.args...)
 
 			_, stdout, _ := runSyft(t, nil, args...)
 

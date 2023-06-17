@@ -6,21 +6,25 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestDpkgCataloger(t *testing.T) {
+	licenseLocation := file.NewVirtualLocation("/usr/share/doc/libpam-runtime/copyright", "/usr/share/doc/libpam-runtime/copyright")
 	expected := []pkg.Package{
 		{
-			Name:     "libpam-runtime",
-			Version:  "1.1.8-3.6",
-			FoundBy:  "dpkgdb-cataloger",
-			Licenses: []string{"GPL-1", "GPL-2", "LGPL-2.1"},
-			Locations: source.NewLocationSet(
-				source.NewVirtualLocation("/var/lib/dpkg/status", "/var/lib/dpkg/status"),
-				source.NewVirtualLocation("/var/lib/dpkg/info/libpam-runtime.md5sums", "/var/lib/dpkg/info/libpam-runtime.md5sums"),
-				source.NewVirtualLocation("/var/lib/dpkg/info/libpam-runtime.conffiles", "/var/lib/dpkg/info/libpam-runtime.conffiles"),
-				source.NewVirtualLocation("/usr/share/doc/libpam-runtime/copyright", "/usr/share/doc/libpam-runtime/copyright"),
+			Name:    "libpam-runtime",
+			Version: "1.1.8-3.6",
+			FoundBy: "dpkgdb-cataloger",
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromLocations("GPL-1", licenseLocation),
+				pkg.NewLicenseFromLocations("GPL-2", licenseLocation),
+				pkg.NewLicenseFromLocations("LGPL-2.1", licenseLocation),
+			),
+			Locations: file.NewLocationSet(
+				file.NewVirtualLocation("/var/lib/dpkg/status", "/var/lib/dpkg/status"),
+				file.NewVirtualLocation("/var/lib/dpkg/info/libpam-runtime.md5sums", "/var/lib/dpkg/info/libpam-runtime.md5sums"),
+				file.NewVirtualLocation("/var/lib/dpkg/info/libpam-runtime.conffiles", "/var/lib/dpkg/info/libpam-runtime.conffiles"),
+				file.NewVirtualLocation("/usr/share/doc/libpam-runtime/copyright", "/usr/share/doc/libpam-runtime/copyright"),
 			),
 			Type:         pkg.DebPkg,
 			MetadataType: pkg.DpkgMetadataType,

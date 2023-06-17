@@ -12,20 +12,6 @@ type testCase struct {
 
 var imageOnlyTestCases = []testCase{
 	{
-		name:    "find kernel packages",
-		pkgType: pkg.LinuxKernelPkg,
-		pkgInfo: map[string]string{
-			"linux-kernel": "6.0.7-301.fc37.x86_64",
-		},
-	},
-	{
-		name:    "find kernel module packages",
-		pkgType: pkg.LinuxKernelModulePkg,
-		pkgInfo: map[string]string{
-			"ttynull": "",
-		},
-	},
-	{
 		name:        "find gemspec packages",
 		pkgType:     pkg.GemPkg,
 		pkgLanguage: pkg.Ruby,
@@ -81,6 +67,14 @@ var imageOnlyTestCases = []testCase{
 		pkgInfo: map[string]string{
 			"example-java-app-maven": "0.1.0",
 			"joda-time":              "2.9.2",
+		},
+	},
+	{
+		name:        "find R packages",
+		pkgType:     pkg.Rpkg,
+		pkgLanguage: pkg.R,
+		pkgInfo: map[string]string{
+			"base": "4.3.0",
 		},
 	},
 }

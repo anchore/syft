@@ -1,7 +1,6 @@
 package file
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -73,30 +72,10 @@ func assertNoError(t testing.TB, fn func() error) func() {
 func setupZipFileTest(t testing.TB, sourceDirPath string, zip64 bool) string {
 	t.Helper()
 
-	archivePrefix, err := ioutil.TempFile("", "syft-ziputil-archive-TEST-")
-	if err != nil {
-		t.Fatalf("unable to create tempfile: %+v", err)
-	}
-
-	t.Cleanup(
-		assertNoError(t,
-			func() error {
-				return os.Remove(archivePrefix.Name())
-			},
-		),
-	)
-
-	destinationArchiveFilePath := archivePrefix.Name() + ".zip"
+	archivePrefix := path.Join(t.TempDir(), "syft-ziputil-archive-TEST-")
+	destinationArchiveFilePath := archivePrefix + ".zip"
 	t.Logf("archive path: %s", destinationArchiveFilePath)
 	createZipArchive(t, sourceDirPath, destinationArchiveFilePath, zip64)
-
-	t.Cleanup(
-		assertNoError(t,
-			func() error {
-				return os.Remove(destinationArchiveFilePath)
-			},
-		),
-	)
 
 	cwd, err := os.Getwd()
 	if err != nil {

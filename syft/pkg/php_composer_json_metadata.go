@@ -10,10 +10,10 @@ type PhpComposerJSONMetadata struct {
 	Provide         map[string]string            `json:"provide,omitempty"`
 	RequireDev      map[string]string            `json:"require-dev,omitempty"`
 	Suggest         map[string]string            `json:"suggest,omitempty"`
+	License         []string                     `json:"license,omitempty"`
 	Type            string                       `json:"type,omitempty"`
 	NotificationURL string                       `json:"notification-url,omitempty"`
 	Bin             []string                     `json:"bin,omitempty"`
-	License         []string                     `json:"license,omitempty"`
 	Authors         []PhpComposerAuthors         `json:"authors,omitempty"`
 	Description     string                       `json:"description,omitempty"`
 	Homepage        string                       `json:"homepage,omitempty"`

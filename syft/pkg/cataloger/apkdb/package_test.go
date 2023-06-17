@@ -15,16 +15,19 @@ import (
 func Test_PackageURL(t *testing.T) {
 	tests := []struct {
 		name     string
-		metadata pkg.ApkMetadata
+		metadata parsedData
 		distro   linux.Release
 		expected string
 	}{
 		{
 			name: "non-alpine distro",
-			metadata: pkg.ApkMetadata{
-				Package:      "p",
-				Version:      "v",
-				Architecture: "a",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:      "p",
+					Version:      "v",
+					Architecture: "a",
+				},
 			},
 			distro: linux.Release{
 				ID:        "something else",
@@ -34,10 +37,13 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "gocase",
-			metadata: pkg.ApkMetadata{
-				Package:      "p",
-				Version:      "v",
-				Architecture: "a",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:      "p",
+					Version:      "v",
+					Architecture: "a",
+				},
 			},
 			distro: linux.Release{
 				ID:        "alpine",
@@ -47,9 +53,12 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "missing architecture",
-			metadata: pkg.ApkMetadata{
-				Package: "p",
-				Version: "v",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package: "p",
+					Version: "v",
+				},
 			},
 			distro: linux.Release{
 				ID:        "alpine",
@@ -59,10 +68,13 @@ func Test_PackageURL(t *testing.T) {
 		},
 		// verify #351
 		{
-			metadata: pkg.ApkMetadata{
-				Package:      "g++",
-				Version:      "v84",
-				Architecture: "am86",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:      "g++",
+					Version:      "v84",
+					Architecture: "am86",
+				},
 			},
 			distro: linux.Release{
 				ID:        "alpine",
@@ -71,10 +83,13 @@ func Test_PackageURL(t *testing.T) {
 			expected: "pkg:apk/alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
 		},
 		{
-			metadata: pkg.ApkMetadata{
-				Package:      "g plus plus",
-				Version:      "v84",
-				Architecture: "am86",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:      "g plus plus",
+					Version:      "v84",
+					Architecture: "am86",
+				},
 			},
 			distro: linux.Release{
 				ID:        "alpine",
@@ -84,11 +99,14 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "add source information as qualifier",
-			metadata: pkg.ApkMetadata{
-				Package:       "p",
-				Version:       "v",
-				Architecture:  "a",
-				OriginPackage: "origin",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:       "p",
+					Version:       "v",
+					Architecture:  "a",
+					OriginPackage: "origin",
+				},
 			},
 			distro: linux.Release{
 				ID:        "alpine",
@@ -98,10 +116,13 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "wolfi distro",
-			metadata: pkg.ApkMetadata{
-				Package:      "p",
-				Version:      "v",
-				Architecture: "a",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:      "p",
+					Version:      "v",
+					Architecture: "a",
+				},
 			},
 			distro: linux.Release{
 				ID:        "wolfi",
@@ -113,7 +134,7 @@ func Test_PackageURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := packageURL(test.metadata, &test.distro)
+			actual := packageURL(test.metadata.ApkMetadata, &test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

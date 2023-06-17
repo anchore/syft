@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -240,30 +241,6 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-argocd-2.5.11",
-			fixtureDir: "test-fixtures/classifiers/dynamic/argocd-2.5.11",
-			expected: pkg.Package{
-				Name:      "argocd",
-				Version:   "2.5.11",
-				Type:      "binary",
-				PURL:      "pkg:golang/github.com/argoproj/argo-cd@2.5.11",
-				Locations: locations("argocd"),
-				Metadata:  metadata("argocd"),
-			},
-		},
-		{
-			name:       "positive-argocd-2.6.4",
-			fixtureDir: "test-fixtures/classifiers/dynamic/argocd-2.6.4",
-			expected: pkg.Package{
-				Name:      "argocd",
-				Version:   "2.6.4",
-				Type:      "binary",
-				PURL:      "pkg:golang/github.com/argoproj/argo-cd@2.6.4",
-				Locations: locations("argocd"),
-				Metadata:  metadata("argocd"),
-			},
-		},
-		{
 			name:       "positive-helm-3.11.1",
 			fixtureDir: "test-fixtures/classifiers/dynamic/helm-3.11.1",
 			expected: pkg.Package{
@@ -285,66 +262,6 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				PURL:      "pkg:golang/helm.sh/helm@3.10.3",
 				Locations: locations("helm"),
 				Metadata:  metadata("helm"),
-			},
-		},
-		{
-			name:       "positive-kubectl-1.24.11",
-			fixtureDir: "test-fixtures/classifiers/dynamic/kubectl-1.24.11",
-			expected: pkg.Package{
-				Name:      "kubectl",
-				Version:   "1.24.11",
-				Type:      "binary",
-				PURL:      "pkg:golang/k8s.io/kubectl@1.24.11",
-				Locations: locations("kubectl"),
-				Metadata:  metadata("kubectl"),
-			},
-		},
-		{
-			name:       "positive-kubectl-1.25.7",
-			fixtureDir: "test-fixtures/classifiers/dynamic/kubectl-1.25.7",
-			expected: pkg.Package{
-				Name:      "kubectl",
-				Version:   "1.25.7",
-				Type:      "binary",
-				PURL:      "pkg:golang/k8s.io/kubectl@1.25.7",
-				Locations: locations("kubectl"),
-				Metadata:  metadata("kubectl"),
-			},
-		},
-		{
-			name:       "positive-kubectl-1.26.2",
-			fixtureDir: "test-fixtures/classifiers/dynamic/kubectl-1.26.2",
-			expected: pkg.Package{
-				Name:      "kubectl",
-				Version:   "1.26.2",
-				Type:      "binary",
-				PURL:      "pkg:golang/k8s.io/kubectl@1.26.2",
-				Locations: locations("kubectl"),
-				Metadata:  metadata("kubectl"),
-			},
-		},
-		{
-			name:       "positive-kustomize-4.5.7",
-			fixtureDir: "test-fixtures/classifiers/dynamic/kustomize-4.5.7",
-			expected: pkg.Package{
-				Name:      "kustomize",
-				Version:   "4.5.7",
-				Type:      "binary",
-				PURL:      "pkg:golang/sigs.k8s.io/kustomize@4.5.7",
-				Locations: locations("kustomize"),
-				Metadata:  metadata("kustomize"),
-			},
-		},
-		{
-			name:       "positive-kustomize-5.0.0",
-			fixtureDir: "test-fixtures/classifiers/dynamic/kustomize-5.0.0",
-			expected: pkg.Package{
-				Name:      "kustomize",
-				Version:   "5.0.0",
-				Type:      "binary",
-				PURL:      "pkg:golang/sigs.k8s.io/kustomize@5.0.0",
-				Locations: locations("kustomize"),
-				Metadata:  metadata("kustomize"),
 			},
 		},
 		{
@@ -812,12 +729,12 @@ func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 	assert.Equal(t, 0, len(actualResults))
 }
 
-func locations(locations ...string) source.LocationSet {
-	var locs []source.Location
+func locations(locations ...string) file.LocationSet {
+	var locs []file.Location
 	for _, s := range locations {
-		locs = append(locs, source.NewLocation(s))
+		locs = append(locs, file.NewLocation(s))
 	}
-	return source.NewLocationSet(locs...)
+	return file.NewLocationSet(locs...)
 }
 
 // metadata paths are: realPath, virtualPath
@@ -841,8 +758,8 @@ func match(classifier string, paths ...string) pkg.ClassifierMatch {
 	}
 	return pkg.ClassifierMatch{
 		Classifier: classifier,
-		Location: source.NewVirtualLocationFromCoordinates(
-			source.Coordinates{
+		Location: file.NewVirtualLocationFromCoordinates(
+			file.Coordinates{
 				RealPath: realPath,
 			},
 			virtualPath,
@@ -901,10 +818,10 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 	if len(failMessages) > 0 {
 		assert.Failf(t, strings.Join(failMessages, "; "), "diff: %s",
 			cmp.Diff(expected, p,
-				cmp.Transformer("Locations", func(l source.LocationSet) []source.Location {
+				cmp.Transformer("Locations", func(l file.LocationSet) []file.Location {
 					return l.ToSlice()
 				}),
-				cmpopts.IgnoreUnexported(pkg.Package{}, source.Location{}),
+				cmpopts.IgnoreUnexported(pkg.Package{}, file.Location{}),
 				cmpopts.IgnoreFields(pkg.Package{}, "CPEs", "FoundBy", "MetadataType", "Type"),
 			))
 	}
@@ -914,22 +831,22 @@ type panicyResolver struct {
 	searchCalled bool
 }
 
-func (p *panicyResolver) FilesByExtension(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByExtension(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByBasename(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByBasename(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByBasenameGlob(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByBasenameGlob(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FileContentsByLocation(_ source.Location) (io.ReadCloser, error) {
+func (p *panicyResolver) FileContentsByLocation(_ file.Location) (io.ReadCloser, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
@@ -938,34 +855,34 @@ func (p *panicyResolver) HasPath(_ string) bool {
 	return true
 }
 
-func (p *panicyResolver) FilesByPath(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByPath(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByGlob(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByGlob(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) FilesByMIMEType(_ ...string) ([]source.Location, error) {
+func (p *panicyResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }
 
-func (p *panicyResolver) RelativeFileByPath(_ source.Location, _ string) *source.Location {
+func (p *panicyResolver) RelativeFileByPath(_ file.Location, _ string) *file.Location {
 	return nil
 }
 
-func (p *panicyResolver) AllLocations() <-chan source.Location {
+func (p *panicyResolver) AllLocations() <-chan file.Location {
 	return nil
 }
 
-func (p *panicyResolver) FileMetadataByLocation(_ source.Location) (source.FileMetadata, error) {
-	return source.FileMetadata{}, errors.New("not implemented")
+func (p *panicyResolver) FileMetadataByLocation(_ file.Location) (file.Metadata, error) {
+	return file.Metadata{}, errors.New("not implemented")
 }
 
-var _ source.FileResolver = (*panicyResolver)(nil)
+var _ file.Resolver = (*panicyResolver)(nil)
 
 func Test_Cataloger_ResilientToErrors(t *testing.T) {
 	c := NewCataloger()

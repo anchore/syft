@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func generateJavaBuildFixture(t *testing.T, fixturePath string) {
@@ -96,10 +96,12 @@ func TestParseJar(t *testing.T) {
 			},
 			expected: map[string]pkg.Package{
 				"example-jenkins-plugin": {
-					Name:         "example-jenkins-plugin",
-					Version:      "1.0-SNAPSHOT",
-					PURL:         "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
-					Licenses:     []string{"MIT License"},
+					Name:    "example-jenkins-plugin",
+					Version: "1.0-SNAPSHOT",
+					PURL:    "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocations("MIT License", file.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
+					),
 					Language:     pkg.Java,
 					Type:         pkg.JenkinsPluginPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -150,7 +152,6 @@ func TestParseJar(t *testing.T) {
 					Name:         "example-java-app-gradle",
 					Version:      "0.1.0",
 					PURL:         "pkg:maven/example-java-app-gradle/example-java-app-gradle@0.1.0",
-					Licenses:     []string{},
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -205,7 +206,6 @@ func TestParseJar(t *testing.T) {
 					Name:         "example-java-app-maven",
 					Version:      "0.1.0",
 					PURL:         "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
-					Licenses:     []string{},
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -272,12 +272,12 @@ func TestParseJar(t *testing.T) {
 
 			for k := range test.expected {
 				p := test.expected[k]
-				p.Locations.Add(source.NewLocation(test.fixture))
+				p.Locations.Add(file.NewLocation(test.fixture))
 				test.expected[k] = p
 			}
 
-			parser, cleanupFn, err := newJavaArchiveParser(source.LocationReadCloser{
-				Location:   source.NewLocation(fixture.Name()),
+			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
+				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			}, false)
 			defer cleanupFn()
@@ -546,8 +546,8 @@ func TestParseNestedJar(t *testing.T) {
 			fixture, err := os.Open(test.fixture)
 			require.NoError(t, err)
 
-			actual, _, err := parseJavaArchive(nil, nil, source.LocationReadCloser{
-				Location:   source.NewLocation(fixture.Name()),
+			actual, _, err := parseJavaArchive(nil, nil, file.LocationReadCloser{
+				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			})
 			require.NoError(t, err)
@@ -975,7 +975,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			locations := source.NewLocationSet(source.NewLocation(virtualPath))
+			locations := file.NewLocationSet(file.NewLocation(virtualPath))
 			if test.expectedPackage != nil {
 				test.expectedPackage.Locations = locations
 				if test.expectedPackage.Metadata.(pkg.JavaMetadata).Parent != nil {
@@ -987,7 +987,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			}
 			test.expectedParent.Locations = locations
 
-			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, source.NewLocation(virtualPath))
+			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, file.NewLocation(virtualPath))
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {

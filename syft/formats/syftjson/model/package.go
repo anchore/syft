@@ -7,8 +7,9 @@ import (
 	"reflect"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 var errUnknownMetadataType = errors.New("unknown metadata type")
@@ -21,16 +22,54 @@ type Package struct {
 
 // PackageBasicData contains non-ambiguous values (type-wise) from pkg.Package.
 type PackageBasicData struct {
-	ID        string            `json:"id"`
-	Name      string            `json:"name"`
-	Version   string            `json:"version"`
-	Type      pkg.Type          `json:"type"`
-	FoundBy   string            `json:"foundBy"`
-	Locations []source.Location `json:"locations"`
-	Licenses  []string          `json:"licenses"`
-	Language  pkg.Language      `json:"language"`
-	CPEs      []string          `json:"cpes"`
-	PURL      string            `json:"purl"`
+	ID        string          `json:"id"`
+	Name      string          `json:"name"`
+	Version   string          `json:"version"`
+	Type      pkg.Type        `json:"type"`
+	FoundBy   string          `json:"foundBy"`
+	Locations []file.Location `json:"locations"`
+	Licenses  licenses        `json:"licenses"`
+	Language  pkg.Language    `json:"language"`
+	CPEs      []string        `json:"cpes"`
+	PURL      string          `json:"purl"`
+}
+
+type licenses []License
+
+type License struct {
+	Value          string          `json:"value"`
+	SPDXExpression string          `json:"spdxExpression"`
+	Type           license.Type    `json:"type"`
+	URLs           []string        `json:"urls"`
+	Locations      []file.Location `json:"locations"`
+}
+
+func newModelLicensesFromValues(licenses []string) (ml []License) {
+	for _, v := range licenses {
+		expression, err := license.ParseExpression(v)
+		if err != nil {
+			log.Trace("could not find valid spdx expression for %s: %w", v, err)
+		}
+		ml = append(ml, License{
+			Value:          v,
+			SPDXExpression: expression,
+			Type:           license.Declared,
+		})
+	}
+	return ml
+}
+
+func (f *licenses) UnmarshalJSON(b []byte) error {
+	var licenses []License
+	if err := json.Unmarshal(b, &licenses); err != nil {
+		var simpleLicense []string
+		if err := json.Unmarshal(b, &simpleLicense); err != nil {
+			return fmt.Errorf("unable to unmarshal license: %w", err)
+		}
+		licenses = newModelLicensesFromValues(simpleLicense)
+	}
+	*f = licenses
+	return nil
 }
 
 // PackageCustomData contains ambiguous values (type-wise) from pkg.Package.

@@ -2,6 +2,7 @@ package spdxhelpers
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/spdx/tools-golang/spdx"
@@ -12,7 +13,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 // TODO: Add ToFormatModel tests
@@ -114,12 +114,12 @@ func Test_toFileTypes(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		metadata source.FileMetadata
+		metadata file.Metadata
 		expected []string
 	}{
 		{
 			name: "application",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "application/vnd.unknown",
 			},
 			expected: []string{
@@ -128,7 +128,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "archive",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "application/zip",
 			},
 			expected: []string{
@@ -138,7 +138,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "audio",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "audio/ogg",
 			},
 			expected: []string{
@@ -147,7 +147,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "video",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "video/3gpp",
 			},
 			expected: []string{
@@ -156,7 +156,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "text",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "text/html",
 			},
 			expected: []string{
@@ -165,7 +165,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "image",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "image/png",
 			},
 			expected: []string{
@@ -174,7 +174,7 @@ func Test_toFileTypes(t *testing.T) {
 		},
 		{
 			name: "binary",
-			metadata: source.FileMetadata{
+			metadata: file.Metadata{
 				MIMEType: "application/x-sharedlib",
 			},
 			expected: []string{
@@ -275,7 +275,7 @@ func Test_fileIDsForPackage(t *testing.T) {
 		Name: "bogus",
 	}
 
-	c := source.Coordinates{
+	c := file.Coordinates{
 		RealPath:     "/path",
 		FileSystemID: "nowhere",
 	}
@@ -447,46 +447,40 @@ func Test_OtherLicenses(t *testing.T) {
 		{
 			name: "no licenseRef",
 			pkg: pkg.Package{
-				Licenses: []string{
-					"MIT",
-				},
+				Licenses: pkg.NewLicenseSet(),
 			},
 			expected: nil,
 		},
 		{
 			name: "single licenseRef",
 			pkg: pkg.Package{
-				Licenses: []string{
-					"un known",
-				},
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("foobar"),
+				),
 			},
 			expected: []*spdx.OtherLicense{
 				{
-					LicenseIdentifier: "LicenseRef-un-known",
-					LicenseName:       "un known",
-					ExtractedText:     NONE,
+					LicenseIdentifier: "LicenseRef-foobar",
+					ExtractedText:     "foobar",
 				},
 			},
 		},
 		{
 			name: "multiple licenseRef",
 			pkg: pkg.Package{
-				Licenses: []string{
-					"un known",
-					"not known %s",
-					"MIT",
-				},
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("internal made up license name"),
+					pkg.NewLicense("new apple license 2.0"),
+				),
 			},
 			expected: []*spdx.OtherLicense{
 				{
-					LicenseIdentifier: "LicenseRef-not-known--s",
-					LicenseName:       "not known %s",
-					ExtractedText:     NONE,
+					LicenseIdentifier: "LicenseRef-internal-made-up-license-name",
+					ExtractedText:     "internal made up license name",
 				},
 				{
-					LicenseIdentifier: "LicenseRef-un-known",
-					LicenseName:       "un known",
-					ExtractedText:     NONE,
+					LicenseIdentifier: "LicenseRef-new-apple-license-2.0",
+					ExtractedText:     "new apple license 2.0",
 				},
 			},
 		},
@@ -498,6 +492,46 @@ func Test_OtherLicenses(t *testing.T) {
 			otherLicenses := toOtherLicenses(catalog)
 			require.Len(t, otherLicenses, len(test.expected))
 			require.Equal(t, test.expected, otherLicenses)
+		})
+	}
+}
+
+func Test_toSPDXID(t *testing.T) {
+	tests := []struct {
+		name     string
+		it       artifact.Identifiable
+		expected string
+	}{
+		{
+			name: "short filename",
+			it: file.Coordinates{
+				RealPath: "/short/path/file.txt",
+			},
+			expected: "File-short-path-file.txt",
+		},
+		{
+			name: "long filename",
+			it: file.Coordinates{
+				RealPath: "/some/long/path/with/a/lot/of-text/that-contains-a/file.txt",
+			},
+			expected: "File-...a-lot-of-text-that-contains-a-file.txt",
+		},
+		{
+			name: "package",
+			it: pkg.Package{
+				Type: pkg.NpmPkg,
+				Name: "some-package",
+			},
+			expected: "Package-npm-some-package",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := string(toSPDXID(test.it))
+			// trim the hash
+			got = regexp.MustCompile(`-[a-z0-9]*$`).ReplaceAllString(got, "")
+			require.Equal(t, test.expected, got)
 		})
 	}
 }

@@ -4,21 +4,24 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseComposerFileLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	fixture := "test-fixtures/composer.lock"
-	locations := source.NewLocationSet(source.NewLocation(fixture))
+	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
-			Name:         "adoy/fastcgi-client",
-			Version:      "1.0.2",
-			PURL:         "pkg:composer/adoy/fastcgi-client@1.0.2",
-			Locations:    locations,
+			Name:      "adoy/fastcgi-client",
+			Version:   "1.0.2",
+			PURL:      "pkg:composer/adoy/fastcgi-client@1.0.2",
+			Locations: locations,
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+			),
 			Language:     pkg.PHP,
 			Type:         pkg.PhpComposerPkg,
 			MetadataType: pkg.PhpComposerJSONMetadataType,
@@ -37,9 +40,6 @@ func TestParseComposerFileLock(t *testing.T) {
 				},
 				Type:            "library",
 				NotificationURL: "https://packagist.org/downloads/",
-				License: []string{
-					"MIT",
-				},
 				Authors: []pkg.PhpComposerAuthors{
 					{
 						Name:  "Pierrick Charron",
@@ -55,11 +55,14 @@ func TestParseComposerFileLock(t *testing.T) {
 			},
 		},
 		{
-			Name:         "alcaeus/mongo-php-adapter",
-			Version:      "1.1.11",
-			Locations:    locations,
-			PURL:         "pkg:composer/alcaeus/mongo-php-adapter@1.1.11",
-			Language:     pkg.PHP,
+			Name:      "alcaeus/mongo-php-adapter",
+			Version:   "1.1.11",
+			Locations: locations,
+			PURL:      "pkg:composer/alcaeus/mongo-php-adapter@1.1.11",
+			Language:  pkg.PHP,
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+			),
 			Type:         pkg.PhpComposerPkg,
 			MetadataType: pkg.PhpComposerJSONMetadataType,
 			Metadata: pkg.PhpComposerJSONMetadata{
@@ -91,9 +94,6 @@ func TestParseComposerFileLock(t *testing.T) {
 				},
 				Type:            "library",
 				NotificationURL: "https://packagist.org/downloads/",
-				License: []string{
-					"MIT",
-				},
 				Authors: []pkg.PhpComposerAuthors{
 					{
 						Name:  "alcaeus",

@@ -91,6 +91,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:nix/glibc@2.34?hash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 			expected: NixPkg,
 		},
+		{
+			purl:     "pkg:cran/base@4.3.0",
+			expected: Rpkg,
+		},
 	}
 
 	var pkgTypes []string

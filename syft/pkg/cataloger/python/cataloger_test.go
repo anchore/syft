@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_PackageCataloger(t *testing.T) {
@@ -40,18 +40,19 @@ func Test_PackageCataloger(t *testing.T) {
 				"test-fixtures/egg-info/top_level.txt",
 			},
 			expectedPackage: pkg.Package{
-				Name:         "requests",
-				Version:      "2.22.0",
-				PURL:         "pkg:pypi/requests@2.22.0",
-				Type:         pkg.PythonPkg,
-				Language:     pkg.Python,
-				Licenses:     []string{"Apache 2.0"},
+				Name:     "requests",
+				Version:  "2.22.0",
+				PURL:     "pkg:pypi/requests@2.22.0",
+				Type:     pkg.PythonPkg,
+				Language: pkg.Python,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/egg-info/PKG-INFO")),
+				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
 					Name:                 "requests",
 					Version:              "2.22.0",
-					License:              "Apache 2.0",
 					Platform:             "UNKNOWN",
 					Author:               "Kenneth Reitz",
 					AuthorEmail:          "me@kennethreitz.org",
@@ -77,18 +78,19 @@ func Test_PackageCataloger(t *testing.T) {
 				"test-fixtures/dist-info/direct_url.json",
 			},
 			expectedPackage: pkg.Package{
-				Name:         "Pygments",
-				Version:      "2.6.1",
-				PURL:         "pkg:pypi/Pygments@2.6.1?vcs_url=git+https://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-				Type:         pkg.PythonPkg,
-				Language:     pkg.Python,
-				Licenses:     []string{"BSD License"},
+				Name:     "Pygments",
+				Version:  "2.6.1",
+				PURL:     "pkg:pypi/Pygments@2.6.1?vcs_url=git+https://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				Type:     pkg.PythonPkg,
+				Language: pkg.Python,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/dist-info/METADATA")),
+				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
-					License:              "BSD License",
 					Platform:             "any",
 					Author:               "Georg Brandl",
 					AuthorEmail:          "georg@python.org",
@@ -114,18 +116,19 @@ func Test_PackageCataloger(t *testing.T) {
 				"test-fixtures/malformed-record/dist-info/RECORD",
 			},
 			expectedPackage: pkg.Package{
-				Name:         "Pygments",
-				Version:      "2.6.1",
-				PURL:         "pkg:pypi/Pygments@2.6.1",
-				Type:         pkg.PythonPkg,
-				Language:     pkg.Python,
-				Licenses:     []string{"BSD License"},
+				Name:     "Pygments",
+				Version:  "2.6.1",
+				PURL:     "pkg:pypi/Pygments@2.6.1",
+				Type:     pkg.PythonPkg,
+				Language: pkg.Python,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/malformed-record/dist-info/METADATA")),
+				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
-					License:              "BSD License",
 					Platform:             "any",
 					Author:               "Georg Brandl",
 					AuthorEmail:          "georg@python.org",
@@ -145,18 +148,19 @@ func Test_PackageCataloger(t *testing.T) {
 			name:     "partial dist-info directory",
 			fixtures: []string{"test-fixtures/partial.dist-info/METADATA"},
 			expectedPackage: pkg.Package{
-				Name:         "Pygments",
-				Version:      "2.6.1",
-				PURL:         "pkg:pypi/Pygments@2.6.1",
-				Type:         pkg.PythonPkg,
-				Language:     pkg.Python,
-				Licenses:     []string{"BSD License"},
+				Name:     "Pygments",
+				Version:  "2.6.1",
+				PURL:     "pkg:pypi/Pygments@2.6.1",
+				Type:     pkg.PythonPkg,
+				Language: pkg.Python,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/partial.dist-info/METADATA")),
+				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
-					License:              "BSD License",
 					Platform:             "any",
 					Author:               "Georg Brandl",
 					AuthorEmail:          "georg@python.org",
@@ -168,18 +172,19 @@ func Test_PackageCataloger(t *testing.T) {
 			name:     "egg-info regular file",
 			fixtures: []string{"test-fixtures/test.egg-info"},
 			expectedPackage: pkg.Package{
-				Name:         "requests",
-				Version:      "2.22.0",
-				PURL:         "pkg:pypi/requests@2.22.0",
-				Type:         pkg.PythonPkg,
-				Language:     pkg.Python,
-				Licenses:     []string{"Apache 2.0"},
+				Name:     "requests",
+				Version:  "2.22.0",
+				PURL:     "pkg:pypi/requests@2.22.0",
+				Type:     pkg.PythonPkg,
+				Language: pkg.Python,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/test.egg-info")),
+				),
 				FoundBy:      "python-package-cataloger",
 				MetadataType: pkg.PythonPackageMetadataType,
 				Metadata: pkg.PythonPackageMetadata{
 					Name:                 "requests",
 					Version:              "2.22.0",
-					License:              "Apache 2.0",
 					Platform:             "UNKNOWN",
 					Author:               "Kenneth Reitz",
 					AuthorEmail:          "me@kennethreitz.org",
@@ -191,12 +196,12 @@ func Test_PackageCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver := source.NewMockResolverForPaths(test.fixtures...)
+			resolver := file.NewMockResolverForPaths(test.fixtures...)
 
 			locations, err := resolver.FilesByPath(test.fixtures...)
 			require.NoError(t, err)
 
-			test.expectedPackage.Locations = source.NewLocationSet(locations...)
+			test.expectedPackage.Locations = file.NewLocationSet(locations...)
 
 			pkgtest.NewCatalogTester().
 				WithResolver(resolver).
@@ -220,7 +225,7 @@ func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.MetadataFixture, func(t *testing.T) {
-			resolver := source.NewMockResolverForPaths(test.MetadataFixture)
+			resolver := file.NewMockResolverForPaths(test.MetadataFixture)
 
 			actual, _, err := NewPythonPackageCataloger().Catalog(resolver)
 			require.NoError(t, err)

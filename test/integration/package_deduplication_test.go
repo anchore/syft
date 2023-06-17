@@ -77,6 +77,7 @@ func TestPackageDeduplication(t *testing.T) {
 
 				// with multiple packages with the same name, something is wrong (or this is the wrong fixture)
 				require.Len(t, pkgs, expectedInstanceCount)
+
 				for _, p := range pkgs {
 					nameVersion := fmt.Sprintf("%s-%s", name, p.Version)
 					expectedLocationCount, ok := tt.locationCount[nameVersion]

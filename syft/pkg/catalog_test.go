@@ -9,12 +9,55 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/file"
 )
 
 type expectedIndexes struct {
 	byType map[Type]*strset.Set
 	byPath map[string]*strset.Set
+}
+
+func TestCatalogMergePackageLicenses(t *testing.T) {
+	tests := []struct {
+		name         string
+		pkgs         []Package
+		expectedPkgs []Package
+	}{
+		{
+			name: "merges licenses of packages with equal ID",
+			pkgs: []Package{
+				{
+					id: "equal",
+					Licenses: NewLicenseSet(
+						NewLicensesFromValues("foo", "baq", "quz")...,
+					),
+				},
+				{
+					id: "equal",
+					Licenses: NewLicenseSet(
+						NewLicensesFromValues("bar", "baz", "foo", "qux")...,
+					),
+				},
+			},
+			expectedPkgs: []Package{
+				{
+					id: "equal",
+					Licenses: NewLicenseSet(
+						NewLicensesFromValues("foo", "baq", "quz", "qux", "bar", "baz")...,
+					),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			collection := NewCollection(test.pkgs...)
+			for i, p := range collection.Sorted() {
+				assert.Equal(t, test.expectedPkgs[i].Licenses, p.Licenses)
+			}
+		})
+	}
 }
 
 func TestCatalogDeleteRemovesPackages(t *testing.T) {
@@ -32,8 +75,8 @@ func TestCatalogDeleteRemovesPackages(t *testing.T) {
 					Name:    "debian",
 					Version: "1",
 					Type:    DebPkg,
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/c/path", "/another/path1"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/c/path", "/another/path1"),
 					),
 				},
 				{
@@ -41,8 +84,8 @@ func TestCatalogDeleteRemovesPackages(t *testing.T) {
 					Name:    "debian",
 					Version: "2",
 					Type:    DebPkg,
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/d/path", "/another/path2"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/d/path", "/another/path2"),
 					),
 				},
 			},
@@ -67,8 +110,8 @@ func TestCatalogDeleteRemovesPackages(t *testing.T) {
 					Name:    "debian",
 					Version: "1",
 					Type:    DebPkg,
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/c/path", "/another/path1"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/c/path", "/another/path1"),
 					),
 				},
 				{
@@ -76,8 +119,8 @@ func TestCatalogDeleteRemovesPackages(t *testing.T) {
 					Name:    "debian",
 					Version: "2",
 					Type:    DebPkg,
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/d/path", "/another/path2"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/d/path", "/another/path2"),
 					),
 				},
 				{
@@ -85,8 +128,8 @@ func TestCatalogDeleteRemovesPackages(t *testing.T) {
 					Name:    "debian",
 					Version: "3",
 					Type:    DebPkg,
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/e/path", "/another/path3"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/e/path", "/another/path3"),
 					),
 				},
 			},
@@ -112,8 +155,8 @@ func TestCatalogDeleteRemovesPackages(t *testing.T) {
 					Name:    "debian",
 					Version: "1",
 					Type:    DebPkg,
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/c/path", "/another/path1"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/c/path", "/another/path1"),
 					),
 				},
 				{
@@ -121,8 +164,8 @@ func TestCatalogDeleteRemovesPackages(t *testing.T) {
 					Name:    "debian",
 					Version: "2",
 					Type:    DebPkg,
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocation("/d/path", "/another/path2"),
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/d/path", "/another/path2"),
 					),
 				},
 			},
@@ -163,16 +206,16 @@ func TestCatalogAddPopulatesIndex(t *testing.T) {
 
 	var pkgs = []Package{
 		{
-			Locations: source.NewLocationSet(
-				source.NewVirtualLocation("/a/path", "/another/path"),
-				source.NewVirtualLocation("/b/path", "/bee/path"),
+			Locations: file.NewLocationSet(
+				file.NewVirtualLocation("/a/path", "/another/path"),
+				file.NewVirtualLocation("/b/path", "/bee/path"),
 			),
 			Type: RpmPkg,
 		},
 		{
-			Locations: source.NewLocationSet(
-				source.NewVirtualLocation("/c/path", "/another/path"),
-				source.NewVirtualLocation("/d/path", "/another/path"),
+			Locations: file.NewLocationSet(
+				file.NewVirtualLocation("/c/path", "/another/path"),
+				file.NewVirtualLocation("/d/path", "/another/path"),
 			),
 			Type: NpmPkg,
 		},
@@ -248,25 +291,25 @@ func assertIndexes(t *testing.T, c *Collection, expectedIndexes expectedIndexes)
 
 func TestCatalog_PathIndexDeduplicatesRealVsVirtualPaths(t *testing.T) {
 	p1 := Package{
-		Locations: source.NewLocationSet(
-			source.NewVirtualLocation("/b/path", "/another/path"),
-			source.NewVirtualLocation("/b/path", "/b/path"),
+		Locations: file.NewLocationSet(
+			file.NewVirtualLocation("/b/path", "/another/path"),
+			file.NewVirtualLocation("/b/path", "/b/path"),
 		),
 		Type: RpmPkg,
 		Name: "Package-1",
 	}
 
 	p2 := Package{
-		Locations: source.NewLocationSet(
-			source.NewVirtualLocation("/b/path", "/b/path"),
+		Locations: file.NewLocationSet(
+			file.NewVirtualLocation("/b/path", "/b/path"),
 		),
 		Type: RpmPkg,
 		Name: "Package-2",
 	}
 	p2Dup := Package{
-		Locations: source.NewLocationSet(
-			source.NewVirtualLocation("/b/path", "/another/path"),
-			source.NewVirtualLocation("/b/path", "/c/path/b/dup"),
+		Locations: file.NewLocationSet(
+			file.NewVirtualLocation("/b/path", "/another/path"),
+			file.NewVirtualLocation("/b/path", "/c/path/b/dup"),
 		),
 		Type: RpmPkg,
 		Name: "Package-2",
@@ -318,7 +361,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 	var tests = []struct {
 		name              string
 		pkgs              []Package
-		expectedLocations []source.Location
+		expectedLocations []file.Location
 		expectedCPECount  int
 	}{
 		{
@@ -326,9 +369,9 @@ func TestCatalog_MergeRecords(t *testing.T) {
 			pkgs: []Package{
 				{
 					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:1:1:*:*:*:*:*:*:*")},
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/b/path",
 								FileSystemID: "a",
 							},
@@ -339,9 +382,9 @@ func TestCatalog_MergeRecords(t *testing.T) {
 				},
 				{
 					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:b:package:1:1:*:*:*:*:*:*:*")},
-					Locations: source.NewLocationSet(
-						source.NewVirtualLocationFromCoordinates(
-							source.Coordinates{
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocationFromCoordinates(
+							file.Coordinates{
 								RealPath:     "/b/path",
 								FileSystemID: "b",
 							},
@@ -351,16 +394,16 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					Type: RpmPkg,
 				},
 			},
-			expectedLocations: []source.Location{
-				source.NewVirtualLocationFromCoordinates(
-					source.Coordinates{
+			expectedLocations: []file.Location{
+				file.NewVirtualLocationFromCoordinates(
+					file.Coordinates{
 						RealPath:     "/b/path",
 						FileSystemID: "a",
 					},
 					"/another/path",
 				),
-				source.NewVirtualLocationFromCoordinates(
-					source.Coordinates{
+				file.NewVirtualLocationFromCoordinates(
+					file.Coordinates{
 						RealPath:     "/b/path",
 						FileSystemID: "b",
 					},
