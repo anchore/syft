@@ -9,14 +9,13 @@ import (
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
+	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/formats/template"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -58,6 +57,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
+		defer bus.Exit()
 
 		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
 		if cleanup != nil {
@@ -76,12 +76,13 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 
 		if s == nil {
 			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
+			return
 		}
 
-		bus.Publish(partybus.Event{
-			Type:  event.Exit,
-			Value: func() error { return writer.Write(*s) },
-		})
+		if err := writer.Write(*s); err != nil {
+			errs <- fmt.Errorf("failed to write SBOM: %w", err)
+			return
+		}
 	}()
 	return errs
 }

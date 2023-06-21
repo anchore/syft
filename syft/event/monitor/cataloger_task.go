@@ -1,11 +1,14 @@
-package event
+package monitor
 
 import (
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/syft/event"
 )
+
+// TODO: this should be refactored to support read-only/write-only access using idioms of the progress lib
 
 type CatalogerTask struct {
 	prog *progress.Manual
@@ -25,7 +28,7 @@ func (e *CatalogerTask) init() {
 	e.prog = progress.NewManual(-1)
 
 	bus.Publish(partybus.Event{
-		Type:   CatalogerTaskStarted,
+		Type:   event.CatalogerTaskStarted,
 		Source: e,
 	})
 }

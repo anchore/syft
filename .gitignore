@@ -1,3 +1,6 @@
+go.work.sum
+go.work
+
 CHANGELOG.md
 VERSION
 /test/results

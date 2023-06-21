@@ -12,14 +12,13 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/packages"
+	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -61,6 +60,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
+		defer bus.Exit()
 
 		app.Secrets.Cataloger.Enabled = true
 		app.FileMetadata.Cataloger.Enabled = true
@@ -100,10 +100,10 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 
 		s.Relationships = append(s.Relationships, packages.MergeRelationships(relationships...)...)
 
-		bus.Publish(partybus.Event{
-			Type:  event.Exit,
-			Value: func() error { return writer.Write(s) },
-		})
+		if err := writer.Write(s); err != nil {
+			errs <- fmt.Errorf("failed to write sbom: %w", err)
+			return
+		}
 	}()
 
 	return errs

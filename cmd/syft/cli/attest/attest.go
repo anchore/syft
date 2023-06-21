@@ -15,10 +15,10 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/packages"
+	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
@@ -86,7 +86,7 @@ func execWorker(app *config.Application, si source.Input) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-		defer bus.Publish(partybus.Event{Type: event.Exit})
+		defer bus.Exit()
 
 		s, err := buildSBOM(app, si, errs)
 		if err != nil {
@@ -174,8 +174,8 @@ func execWorker(app *config.Application, si source.Input) <-chan error {
 					Context: "cosign",
 				},
 				Value: &monitor.ShellProgress{
-					Reader: r,
-					Manual: mon,
+					Reader:       r,
+					Progressable: mon,
 				},
 			},
 		)

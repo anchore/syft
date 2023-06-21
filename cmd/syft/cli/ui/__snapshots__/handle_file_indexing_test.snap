@@ -1,0 +1,8 @@
+
+[TestHandler_handleFileIndexingStarted/cataloging_in_progress - 1]
+ ⠋ Indexing file system            ━━━━━━━━━━━━━━━━━━━━  [current]                      /some/path
+---
+
+[TestHandler_handleFileIndexingStarted/cataloging_complete - 1]
+ ✔ Indexed file system                                                                  /some/path
+---

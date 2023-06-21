@@ -1,3 +1,8 @@
+/*
+Package ui provides all public UI elements intended to be repurposed in other applications. Specifically, a single
+Handler object is provided to allow consuming applications (such as grype) to check if there are UI elements the handler
+can respond to (given a specific event type) and handle the event in context of the given screen frame object.
+*/
 package ui
 
 import (
@@ -18,15 +23,16 @@ import (
 	"github.com/wagoodman/go-progress/format"
 	"github.com/wagoodman/jotframe/pkg/frame"
 
+	stereoscopeEvent "github.com/anchore/stereoscope/pkg/event"
 	stereoEventParsers "github.com/anchore/stereoscope/pkg/event/parsers"
 	"github.com/anchore/stereoscope/pkg/image/docker"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/ui/components"
+	syftEvent "github.com/anchore/syft/syft/event"
 	syftEventParsers "github.com/anchore/syft/syft/event/parsers"
 )
 
 const maxBarWidth = 50
-const statusSet = components.SpinnerDotSet
+const statusSet = SpinnerDotSet
 const completedStatus = "✔"
 const failedStatus = "✘"
 const titleFormat = color.Bold
@@ -46,16 +52,118 @@ var (
 	subStatusTitleTemplate   = fmt.Sprintf("   └── %%-%ds ", StatusTitleColumn-3)
 )
 
+// Handler is an aggregated event handler for the set of supported events (PullDockerImage, ReadImage, FetchImage, PackageCatalogerStarted)
+// Deprecated: use the bubbletea event handler in cmd/syft/ui/handler.go instead.
+type Handler struct {
+}
+
+// NewHandler returns an empty Handler
+// Deprecated: use the bubbletea event handler in cmd/syft/ui/handler.go instead.
+func NewHandler() *Handler {
+	return &Handler{}
+}
+
+// RespondsTo indicates if the handler is capable of handling the given event.
+// Deprecated: use the bubbletea event handler in cmd/syft/ui/handler.go instead.
+func (r *Handler) RespondsTo(event partybus.Event) bool {
+	switch event.Type {
+	case stereoscopeEvent.PullDockerImage,
+		stereoscopeEvent.ReadImage,
+		stereoscopeEvent.FetchImage,
+		syftEvent.PackageCatalogerStarted,
+		syftEvent.SecretsCatalogerStarted,
+		syftEvent.FileDigestsCatalogerStarted,
+		syftEvent.FileMetadataCatalogerStarted,
+		syftEvent.FileIndexingStarted,
+		syftEvent.AttestationStarted,
+		syftEvent.CatalogerTaskStarted:
+		return true
+	default:
+		return false
+	}
+}
+
+// Handle calls the specific event handler for the given event within the context of the screen frame.
+// Deprecated: use the bubbletea event handler in cmd/syft/ui/handler.go instead.
+func (r *Handler) Handle(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
+	switch event.Type {
+	case stereoscopeEvent.PullDockerImage:
+		return PullDockerImageHandler(ctx, fr, event, wg)
+
+	case stereoscopeEvent.ReadImage:
+		return ReadImageHandler(ctx, fr, event, wg)
+
+	case stereoscopeEvent.FetchImage:
+		return FetchImageHandler(ctx, fr, event, wg)
+
+	case syftEvent.PackageCatalogerStarted:
+		return PackageCatalogerStartedHandler(ctx, fr, event, wg)
+
+	case syftEvent.SecretsCatalogerStarted:
+		return SecretsCatalogerStartedHandler(ctx, fr, event, wg)
+
+	case syftEvent.FileDigestsCatalogerStarted:
+		return FileDigestsCatalogerStartedHandler(ctx, fr, event, wg)
+
+	case syftEvent.FileMetadataCatalogerStarted:
+		return FileMetadataCatalogerStartedHandler(ctx, fr, event, wg)
+
+	case syftEvent.FileIndexingStarted:
+		return FileIndexingStartedHandler(ctx, fr, event, wg)
+
+	case syftEvent.AttestationStarted:
+		return AttestationStartedHandler(ctx, fr, event, wg)
+
+	case syftEvent.CatalogerTaskStarted:
+		return CatalogerTaskStartedHandler(ctx, fr, event, wg)
+	}
+	return nil
+}
+
+const (
+	SpinnerDotSet = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+)
+
+type spinner struct {
+	index   int
+	charset []string
+	lock    sync.Mutex
+}
+
+func newSpinner(charset string) spinner {
+	return spinner{
+		charset: strings.Split(charset, ""),
+	}
+}
+
+func (s *spinner) Current() string {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.charset[s.index]
+}
+
+func (s *spinner) Next() string {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	c := s.charset[s.index]
+	s.index++
+	if s.index >= len(s.charset) {
+		s.index = 0
+	}
+	return c
+}
+
 // startProcess is a helper function for providing common elements for long-running UI elements (such as a
 // progress bar formatter and status spinner)
-func startProcess() (format.Simple, *components.Spinner) {
+func startProcess() (format.Simple, *spinner) {
 	width, _ := frame.GetTerminalSize()
 	barWidth := int(0.25 * float64(width))
 	if barWidth > maxBarWidth {
 		barWidth = maxBarWidth
 	}
 	formatter := format.NewSimpleWithTheme(barWidth, format.HeavyNoBarTheme, format.ColorCompleted, format.ColorTodo)
-	spinner := components.NewSpinner(statusSet)
+	spinner := newSpinner(statusSet)
 
 	return formatter, &spinner
 }
@@ -82,7 +190,7 @@ func formatDockerPullPhase(phase docker.PullPhase, inputStr string) string {
 }
 
 // formatDockerImagePullStatus writes the docker image pull status summarized into a single line for the given state.
-func formatDockerImagePullStatus(pullStatus *docker.PullStatus, spinner *components.Spinner, line *frame.Line) {
+func formatDockerImagePullStatus(pullStatus *docker.PullStatus, spinner *spinner, line *frame.Line) {
 	var size, current uint64
 
 	title := titleFormat.Sprint("Pulling image")
@@ -487,50 +595,6 @@ func FileDigestsCatalogerStartedHandler(ctx context.Context, fr *frame.Frame, ev
 		spin := color.Green.Sprint(completedStatus)
 		title = titleFormat.Sprint("Cataloged file digests")
 		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate, spin, title))
-	}()
-	return err
-}
-
-// ImportStartedHandler shows the intermittent upload progress to Anchore Enterprise.
-func ImportStartedHandler(ctx context.Context, fr *frame.Frame, event partybus.Event, wg *sync.WaitGroup) error {
-	host, prog, err := syftEventParsers.ParseImportStarted(event)
-	if err != nil {
-		return fmt.Errorf("bad %s event: %w", event.Type, err)
-	}
-
-	line, err := fr.Append()
-	if err != nil {
-		return err
-	}
-	wg.Add(1)
-
-	formatter, spinner := startProcess()
-	stream := progress.Stream(ctx, prog, interval)
-	title := titleFormat.Sprint("Uploading image")
-
-	formatFn := func(p progress.Progress) {
-		progStr, err := formatter.Format(p)
-		spin := color.Magenta.Sprint(spinner.Next())
-		if err != nil {
-			_, _ = io.WriteString(line, fmt.Sprintf("Error: %+v", err))
-		} else {
-			auxInfo := auxInfoFormat.Sprintf("[%s]", prog.Stage())
-			_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s %s", spin, title, progStr, auxInfo))
-		}
-	}
-
-	go func() {
-		defer wg.Done()
-
-		formatFn(progress.Progress{})
-		for p := range stream {
-			formatFn(p)
-		}
-
-		spin := color.Green.Sprint(completedStatus)
-		title = titleFormat.Sprint("Uploaded image")
-		auxInfo := auxInfoFormat.Sprintf("[%s]", host)
-		_, _ = io.WriteString(line, fmt.Sprintf(statusTitleTemplate+"%s", spin, title, auxInfo))
 	}()
 	return err
 }

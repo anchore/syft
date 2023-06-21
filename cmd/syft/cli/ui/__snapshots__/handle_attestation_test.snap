@@ -1,0 +1,19 @@
+
+[TestHandler_handleAttestationStarted/attesting_in_progress/task_line - 1]
+ ⠋ Creating a thing                                                                running a thing
+---
+
+[TestHandler_handleAttestationStarted/attesting_in_progress/log - 1]
+     ░░ contents
+     ░░ of
+     ░░ stuff!
+
+---
+
+[TestHandler_handleAttestationStarted/attesting_complete/task_line - 1]
+ ✔ Created a thing                                                                 running a thing
+---
+
+[TestHandler_handleAttestationStarted/attesting_complete/log - 1]
+
+---
