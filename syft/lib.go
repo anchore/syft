@@ -56,13 +56,13 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Collection,
 		// otherwise conditionally use the correct set of loggers based on the input type (container image or directory)
 		switch src.Metadata.Scheme {
 		case source.ImageScheme:
-			log.Info("cataloging image")
+			log.Info("cataloging an image")
 			catalogers = cataloger.ImageCatalogers(cfg)
 		case source.FileScheme:
-			log.Info("cataloging file")
+			log.Info("cataloging a file")
 			catalogers = cataloger.AllCatalogers(cfg)
 		case source.DirectoryScheme:
-			log.Info("cataloging directory")
+			log.Info("cataloging a directory")
 			catalogers = cataloger.DirectoryCatalogers(cfg)
 		default:
 			return nil, nil, nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", src.Metadata.Scheme)
