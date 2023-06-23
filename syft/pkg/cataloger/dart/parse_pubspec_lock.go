@@ -1,7 +1,6 @@
 package dart
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"sort"
@@ -32,12 +31,6 @@ type pubspecLockPackage struct {
 }
 
 type pubspecLockDescription struct {
-	isString bool
-	str      string
-	object   pubspecLockDescriptionObject
-}
-
-type pubspecLockDescriptionObject struct {
 	Name        string `yaml:"name" mapstructure:"name"`
 	URL         string `yaml:"url" mapstructure:"url"`
 	Path        string `yaml:"path" mapstructure:"path"`
@@ -45,24 +38,21 @@ type pubspecLockDescriptionObject struct {
 	ResolvedRef string `yaml:"resolved-ref" mapstructure:"resolved-ref"`
 }
 
-func (s *pubspecLockDescription) UnmarshalYAML(value *yaml.Node) error {
-	if value.Kind == yaml.ScalarNode {
-		// this is a string
-		s.isString = true
-		s.str = value.Value // Or Unmarshal again, not sure
+func (p *pubspecLockDescription) UnmarshalYAML(value *yaml.Node) error {
+	type pld pubspecLockDescription
+	var p2 pld
+
+	if value.Decode(&p.Name) == nil {
 		return nil
 	}
-	if value.Kind == yaml.MappingNode {
-		// Unmarshal to s.myStruct
-		var t pubspecLockDescriptionObject
-		if err := value.Decode(&t); err != nil {
-			return err
-		}
-		s.isString = false
-		s.object = t
-		return nil
+
+	if err := value.Decode(&p2); err != nil {
+		return err
 	}
-	return errors.New("Unexpected type: Expected string or Description map")
+
+	*p = pubspecLockDescription(p2)
+
+	return nil
 }
 
 func parsePubspecLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -98,23 +88,23 @@ func parsePubspecLock(_ file.Resolver, _ *generic.Environment, reader file.Locat
 }
 
 func (p *pubspecLockPackage) getVcsURL() string {
-	if p.Source == "git" && !p.Description.isString {
-		if p.Description.object.Path == "." {
-			return fmt.Sprintf("%s@%s", p.Description.object.URL, p.Description.object.ResolvedRef)
+	if p.Source == "git" {
+		if p.Description.Path == "." {
+			return fmt.Sprintf("%s@%s", p.Description.URL, p.Description.ResolvedRef)
 		}
 
-		return fmt.Sprintf("%s@%s#%s", p.Description.object.URL, p.Description.object.ResolvedRef, p.Description.object.Path)
+		return fmt.Sprintf("%s@%s#%s", p.Description.URL, p.Description.ResolvedRef, p.Description.Path)
 	}
 
 	return ""
 }
 
 func (p *pubspecLockPackage) getHostedURL() string {
-	if p.Source == "hosted" && !p.Description.isString && p.Description.object.URL != defaultPubRegistry {
-		u, err := url.Parse(p.Description.object.URL)
+	if p.Source == "hosted" && p.Description.URL != defaultPubRegistry {
+		u, err := url.Parse(p.Description.URL)
 		if err != nil {
 			log.Debugf("Unable to parse registry url %w", err)
-			return p.Description.object.URL
+			return p.Description.URL
 		}
 		return u.Host
 	}
