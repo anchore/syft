@@ -17,10 +17,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-var _ interface {
-	io.Closer
-	sbom.Writer
-} = (*sbomMultiWriter)(nil)
+var _ sbom.Writer = (*sbomMultiWriter)(nil)
 
 var _ interface {
 	io.Closer
@@ -133,15 +130,6 @@ func newSBOMMultiWriter(options ...sbomWriterDescription) (_ *sbomMultiWriter, e
 
 	out := &sbomMultiWriter{}
 
-	defer func() {
-		if err != nil {
-			// close any previously opened files; we can't really recover from any errors
-			if err := out.Close(); err != nil {
-				log.Warnf("unable to close sbom writers: %+v", err)
-			}
-		}
-	}()
-
 	for _, option := range options {
 		switch len(option.Path) {
 		case 0:
@@ -183,22 +171,6 @@ func (m *sbomMultiWriter) Write(s sbom.SBOM) (errs error) {
 		err := w.Write(s)
 		if err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("unable to write SBOM: %w", err))
-		}
-	}
-	if err := m.Close(); err != nil {
-		errs = multierror.Append(errs, fmt.Errorf("unable to close writers: %w", err))
-	}
-	return errs
-}
-
-// Close closes all writers
-func (m *sbomMultiWriter) Close() (errs error) {
-	for _, w := range m.writers {
-		if closer, ok := w.(io.Closer); ok {
-			err := closer.Close()
-			if err != nil {
-				errs = multierror.Append(errs, err)
-			}
 		}
 	}
 	return errs
