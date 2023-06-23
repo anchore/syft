@@ -516,7 +516,7 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 
 func compareLocations(t *testing.T, expected, actual []file.Location) {
 	t.Helper()
-	ignoreUnexported := cmpopts.IgnoreFields(file.LocationData{}, "ref")
+	ignoreUnexported := cmpopts.IgnoreUnexported(file.LocationData{})
 	ignoreMetadata := cmpopts.IgnoreFields(file.LocationMetadata{}, "Annotations")
 	ignoreFS := cmpopts.IgnoreFields(file.Coordinates{}, "FileSystemID")
 

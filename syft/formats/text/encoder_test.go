@@ -1,7 +1,6 @@
 package text
 
 import (
-	"bytes"
 	"flag"
 	"testing"
 
@@ -20,9 +19,7 @@ func TestTextDirectoryEncoder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,
-			Redactors: []testutils.Redactor{
-				redactor{dir: dir}.redact,
-			},
+			Redactor:                    redactor(dir),
 		},
 	)
 }
@@ -40,22 +37,12 @@ func TestTextImageEncoder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,
-			Redactors: []testutils.Redactor{
-				redactor{}.redact,
-			},
+			Redactor:                    redactor(),
 		},
 	)
 }
 
-type redactor struct {
-	dir string
-}
-
-func (r redactor) redact(s []byte) []byte {
-
-	if r.dir != "" {
-		s = bytes.ReplaceAll(s, []byte(r.dir), []byte("redacted"))
-	}
-
-	return s
+func redactor(values ...string) testutils.Redactor {
+	return testutils.NewRedactions().
+		WithValuesRedacted(values...)
 }

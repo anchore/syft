@@ -1,9 +1,7 @@
 package cyclonedxjson
 
 import (
-	"bytes"
 	"flag"
-	"regexp"
 	"testing"
 
 	"github.com/anchore/syft/syft/formats/internal/testutils"
@@ -21,9 +19,7 @@ func TestCycloneDxDirectoryEncoder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
-			Redactors: []testutils.Redactor{
-				redactor{dir: dir}.redact,
-			},
+			Redactor:                    redactor(dir),
 		},
 	)
 }
@@ -41,59 +37,27 @@ func TestCycloneDxImageEncoder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
-			Redactors: []testutils.Redactor{
-				redactor{}.redact,
-			},
+			Redactor:                    redactor(),
 		},
 	)
 }
 
-type redactor struct {
-	dir string
-}
+func redactor(values ...string) testutils.Redactor {
+	return testutils.NewRedactions().
+		WithValuesRedacted(values...).
+		WithPatternRedactors(
+			map[string]string{
+				// UUIDs
+				`urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`: `urn:uuid:redacted`,
 
-type replacement struct {
-	pattern *regexp.Regexp
-	replace string
-}
+				// timestamps
+				`([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?(([Zz])|([+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))`: `timestamp:redacted`,
 
-func (r replacement) redact(b []byte) []byte {
-	return r.pattern.ReplaceAll(b, []byte(r.replace))
-}
+				// image hashes
+				`sha256:[A-Fa-f0-9]{64}`: `sha256:redacted`,
 
-func (r redactor) redact(s []byte) []byte {
-	replacements := []replacement{
-		// UUIDs
-		{
-			pattern: regexp.MustCompile(`urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`),
-			replace: `urn:uuid:redacted`,
-		},
-
-		// timestamps
-		{
-			pattern: regexp.MustCompile(`([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?(([Zz])|([+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))`),
-			replace: `timestamp:redacted`,
-		},
-
-		// image hashes
-		{
-			pattern: regexp.MustCompile(`sha256:[A-Fa-f0-9]{64}`),
-			replace: `sha256:redacted`,
-		},
-
-		// bom-refs
-		{
-			pattern: regexp.MustCompile(`"bom-ref":\s*"[^"]+"`),
-			replace: `"bom-ref":"redacted"`,
-		},
-	}
-
-	for _, r := range replacements {
-		s = r.redact(s)
-	}
-
-	if r.dir != "" {
-		s = bytes.ReplaceAll(s, []byte(r.dir), []byte("redacted"))
-	}
-	return s
+				// BOM refs
+				`"bom-ref":\s*"[^"]+"`: `"bom-ref":"redacted"`,
+			},
+		)
 }

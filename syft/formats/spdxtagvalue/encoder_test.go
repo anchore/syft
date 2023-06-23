@@ -1,9 +1,7 @@
 package spdxtagvalue
 
 import (
-	"bytes"
 	"flag"
-	"regexp"
 	"testing"
 
 	"github.com/anchore/syft/syft/formats/internal/testutils"
@@ -24,9 +22,7 @@ func TestSPDXTagValueDirectoryEncoder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,
-			Redactors: []testutils.Redactor{
-				redactor{dir: dir}.redact,
-			},
+			Redactor:                    redactor(dir),
 		},
 	)
 }
@@ -44,9 +40,7 @@ func TestSPDXTagValueImageEncoder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,
-			Redactors: []testutils.Redactor{
-				redactor{}.redact,
-			},
+			Redactor:                    redactor(),
 		},
 	)
 }
@@ -85,9 +79,7 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,
-			Redactors: []testutils.Redactor{
-				redactor{}.redact,
-			},
+			Redactor:                    redactor(),
 		},
 	)
 }
@@ -108,54 +100,24 @@ func TestSPDXRelationshipOrder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,
-			Redactors: []testutils.Redactor{
-				redactor{}.redact,
-			},
+			Redactor:                    redactor(),
 		},
 	)
 }
 
-type redactor struct {
-	dir string
-}
+func redactor(values ...string) testutils.Redactor {
+	return testutils.NewRedactions().
+		WithValuesRedacted(values...).
+		WithPatternRedactors(
+			map[string]string{
+				// each SBOM reports the time it was generated, which is not useful during snapshot testing
+				`Created: .*`: "Created: redacted",
 
-type replacement struct {
-	pattern *regexp.Regexp
-	replace string
-}
+				// each SBOM reports a unique documentNamespace when generated, this is not useful for snapshot testing
+				`DocumentNamespace: https://anchore.com/syft/.*`: "DocumentNamespace: redacted",
 
-func (r replacement) redact(b []byte) []byte {
-	return r.pattern.ReplaceAll(b, []byte(r.replace))
-}
-
-func (r redactor) redact(s []byte) []byte {
-	replacements := []replacement{
-		// each SBOM reports the time it was generated, which is not useful during snapshot testing
-		{
-			pattern: regexp.MustCompile(`Created: .*`),
-			replace: "Created: redacted",
-		},
-
-		// each SBOM reports a unique documentNamespace when generated, this is not useful for snapshot testing
-		{
-			pattern: regexp.MustCompile(`DocumentNamespace: https://anchore.com/syft/.*`),
-			replace: "DocumentNamespace: redacted",
-		},
-
-		// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
-		{
-			pattern: regexp.MustCompile(`LicenseListVersion: .*`),
-			replace: "LicenseListVersion: redacted",
-		},
-	}
-
-	for _, r := range replacements {
-		s = r.redact(s)
-	}
-
-	if r.dir != "" {
-		s = bytes.ReplaceAll(s, []byte(r.dir), []byte("redacted"))
-	}
-
-	return s
+				// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
+				`LicenseListVersion: .*`: "LicenseListVersion: redacted",
+			},
+		)
 }

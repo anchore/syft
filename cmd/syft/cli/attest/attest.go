@@ -12,6 +12,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/packages"
@@ -62,24 +63,42 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 }
 
 func buildSBOM(app *config.Application, userInput string, writer sbom.Writer, errs chan error) ([]byte, error) {
-	detection, err := source.Detect(userInput, app.DefaultImagePullSource)
+	cfg := source.DetectConfig{
+		DefaultImageSource: app.DefaultImagePullSource,
+	}
+	detection, err := source.Detect(userInput, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("could not deteremine source: %w", err)
 	}
 
-	if detection.Type != source.ContainerImageType {
+	if detection.IsContainerImage() {
 		return nil, fmt.Errorf("attestations are only supported for oci images at this time")
 	}
 
+	var platform *image.Platform
+
+	if app.Platform != "" {
+		platform, err = image.NewPlatform(app.Platform)
+		if err != nil {
+			return nil, fmt.Errorf("invalid platform: %w", err)
+		}
+	}
+
 	src, err := detection.NewSource(
-		&source.Alias{
-			Name:    app.SourceName,
-			Version: app.SourceVersion,
+		source.DetectionSourceConfig{
+			Alias: &source.Alias{
+				Name:    app.SourceName,
+				Version: app.SourceVersion,
+			},
+			RegistryOptions: app.Registry.ToOptions(),
+			Platform:        platform,
+			Exclude: source.ExcludeConfig{
+				Paths: app.Exclusions,
+			},
+			DigestAlgorithms: nil,
 		},
-		app.Registry.ToOptions(),
-		app.Platform,
-		app.Exclusions,
 	)
+
 	if src != nil {
 		defer src.Close()
 	}

@@ -1,9 +1,7 @@
 package spdxjson
 
 import (
-	"bytes"
 	"flag"
-	"regexp"
 	"testing"
 
 	"github.com/anchore/syft/syft/formats/internal/testutils"
@@ -21,9 +19,7 @@ func TestSPDXJSONDirectoryEncoder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
-			Redactors: []testutils.Redactor{
-				redactor{dir: dir}.redact,
-			},
+			Redactor:                    redactor(dir),
 		},
 	)
 }
@@ -41,9 +37,7 @@ func TestSPDXJSONImageEncoder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
-			Redactors: []testutils.Redactor{
-				redactor{}.redact,
-			},
+			Redactor:                    redactor(),
 		},
 	)
 }
@@ -65,30 +59,24 @@ func TestSPDXRelationshipOrder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
-			Redactors: []testutils.Redactor{
-				redactor{}.redact,
-			},
+			Redactor:                    redactor(),
 		},
 	)
 }
 
-type redactor struct {
-	dir string
-}
+func redactor(values ...string) testutils.Redactor {
+	return testutils.NewRedactions().
+		WithValuesRedacted(values...).
+		WithPatternRedactors(
+			map[string]string{
+				// each SBOM reports the time it was generated, which is not useful during snapshot testing
+				`"created":\s+"[^"]*"`: `"created":"redacted"`,
 
-func (r redactor) redact(s []byte) []byte {
-	// each SBOM reports the time it was generated, which is not useful during snapshot testing
-	s = regexp.MustCompile(`"created":\s+"[^"]*"`).ReplaceAll(s, []byte(`"created":"redacted"`))
+				// each SBOM reports a unique documentNamespace when generated, this is not useful for snapshot testing
+				`"documentNamespace":\s+"[^"]*"`: `"documentNamespace":"redacted"`,
 
-	// each SBOM reports a unique documentNamespace when generated, this is not useful for snapshot testing
-	s = regexp.MustCompile(`"documentNamespace":\s+"[^"]*"`).ReplaceAll(s, []byte(`"documentNamespace":"redacted"`))
-
-	// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
-	s = regexp.MustCompile(`"licenseListVersion":\s+"[^"]*"`).ReplaceAll(s, []byte(`"licenseListVersion":"redacted"`))
-
-	if r.dir != "" {
-		s = bytes.ReplaceAll(s, []byte(r.dir), []byte("redacted"))
-	}
-
-	return s
+				// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
+				`"licenseListVersion":\s+"[^"]*"`: `"licenseListVersion":"redacted"`,
+			},
+		)
 }

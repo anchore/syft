@@ -16,9 +16,9 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	userInput := "docker-archive:" + tarPath
-	detection, err := source.Detect(userInput, "")
+	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
 	require.NoError(t, err)
-	theSource, err := detection.NewSource(nil, nil, "", nil)
+	theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		theSource.Close()
@@ -54,9 +54,9 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 
 func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, source.Source) {
 	userInput := "dir:" + dir
-	detection, err := source.Detect(userInput, "")
+	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
 	require.NoError(t, err)
-	theSource, err := detection.NewSource(nil, nil, "", nil)
+	theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		theSource.Close()

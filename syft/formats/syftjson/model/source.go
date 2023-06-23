@@ -11,6 +11,8 @@ import (
 
 type SourceType string
 
+// TODO: let's try to use the reflect type approach for this
+
 const (
 	DirectorySourceType SourceType = "directory"
 	FileSourceType      SourceType = "file"

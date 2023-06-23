@@ -1,9 +1,7 @@
 package syftjson
 
 import (
-	"bytes"
 	"flag"
-	"regexp"
 	"testing"
 
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
@@ -29,9 +27,7 @@ func TestDirectoryEncoder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
-			Redactors: []testutils.Redactor{
-				redactor{dir: dir}.redact,
-			},
+			Redactor:                    redactor(dir),
 		},
 	)
 }
@@ -49,9 +45,7 @@ func TestImageEncoder(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
-			Redactors: []testutils.Redactor{
-				redactor{}.redact,
-			},
+			Redactor:                    redactor(),
 		},
 	)
 }
@@ -232,25 +226,18 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
-			Redactors: []testutils.Redactor{
-				redactor{}.redact,
-			},
+			Redactor:                    redactor(),
 		},
 	)
 }
 
-type redactor struct {
-	dir string
-}
-
-func (r redactor) redact(s []byte) []byte {
-	// remove schema version (don't even show the key or value)
-	pattern := regexp.MustCompile(`,?\s*"schema":\s*\{[^}]*}`)
-	s = pattern.ReplaceAll(s, []byte(""))
-
-	if r.dir != "" {
-		s = bytes.ReplaceAll(s, []byte(r.dir), []byte("redacted"))
-	}
-
-	return s
+func redactor(values ...string) testutils.Redactor {
+	return testutils.NewRedactions().
+		WithValuesRedacted(values...).
+		WithPatternRedactors(
+			map[string]string{
+				// remove schema version (don't even show the key or value)
+				`,?\s*"schema":\s*\{[^}]*}`: "",
+			},
+		)
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
@@ -62,21 +63,42 @@ func execWorker(app *config.Application, userInput string, writer sbom.Writer) <
 	go func() {
 		defer close(errs)
 
-		detection, err := source.Detect(userInput, app.DefaultImagePullSource)
+		detection, err := source.Detect(
+			userInput,
+			source.DetectConfig{
+				DefaultImageSource: app.DefaultImagePullSource,
+			},
+		)
 		if err != nil {
 			errs <- fmt.Errorf("could not deteremine source: %w", err)
 			return
 		}
 
+		var platform *image.Platform
+
+		if app.Platform != "" {
+			platform, err = image.NewPlatform(app.Platform)
+			if err != nil {
+				errs <- fmt.Errorf("invalid platform: %w", err)
+				return
+			}
+		}
+
 		src, err := detection.NewSource(
-			&source.Alias{
-				Name:    app.SourceName,
-				Version: app.SourceVersion,
+			source.DetectionSourceConfig{
+				Alias: &source.Alias{
+					Name:    app.SourceName,
+					Version: app.SourceVersion,
+				},
+				RegistryOptions: app.Registry.ToOptions(),
+				Platform:        platform,
+				Exclude: source.ExcludeConfig{
+					Paths: app.Exclusions,
+				},
+				DigestAlgorithms: nil,
 			},
-			app.Registry.ToOptions(),
-			app.Platform,
-			app.Exclusions,
 		)
+
 		if src != nil {
 			defer src.Close()
 		}
