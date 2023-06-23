@@ -15,7 +15,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
@@ -28,19 +27,11 @@ import (
 
 func Run(_ context.Context, app *config.Application, args []string) error {
 	f := syftjson.Format()
-	writer, err := sbom.NewWriter(sbom.WriterOption{
-		Format: f,
-		Path:   app.File,
-	})
+	writer, err := options.MakeSBOMWriterForFormat(f, app.File)
 	if err != nil {
 		return err
 	}
-
 	defer func() {
-		if err := writer.Close(); err != nil {
-			log.Warnf("unable to write to report destination: %+v", err)
-		}
-
 		// inform user at end of run that command will be removed
 		deprecated := color.Style{color.Red, color.OpBold}.Sprint("DEPRECATED: This command will be removed in v1.0.0")
 		fmt.Fprintln(os.Stderr, deprecated)

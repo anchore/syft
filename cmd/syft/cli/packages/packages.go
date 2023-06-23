@@ -12,7 +12,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
@@ -29,16 +28,10 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 		return err
 	}
 
-	writer, err := options.MakeWriter(app.Outputs, app.File, app.OutputTemplatePath)
+	writer, err := options.MakeSBOMWriter(app.Outputs, app.File, app.OutputTemplatePath)
 	if err != nil {
 		return err
 	}
-
-	defer func() {
-		if err := writer.Close(); err != nil {
-			log.Warnf("unable to write to report destination: %w", err)
-		}
-	}()
 
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
