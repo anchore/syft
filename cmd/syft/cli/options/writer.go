@@ -117,6 +117,14 @@ type sbomMultiWriter struct {
 	writers []sbom.Writer
 }
 
+type nopWriteCloser struct {
+	io.Writer
+}
+
+func (n nopWriteCloser) Close() error {
+	return nil
+}
+
 // newSBOMMultiWriter create all report writers from input options; if a file is not specified the given defaultWriter is used
 func newSBOMMultiWriter(options ...sbomWriterDescription) (_ *sbomMultiWriter, err error) {
 	if len(options) == 0 {
@@ -139,7 +147,7 @@ func newSBOMMultiWriter(options ...sbomWriterDescription) (_ *sbomMultiWriter, e
 		case 0:
 			out.writers = append(out.writers, &sbomStreamWriter{
 				format: option.Format,
-				out:    os.Stdout,
+				out:    nopWriteCloser{Writer: os.Stdout},
 			})
 		default:
 			// create any missing subdirectories
