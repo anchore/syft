@@ -312,10 +312,15 @@ generate-license-list:  ## Generate an updated spdx license list
 
 ## Build-related targets #################################
 
+.PHONY: cpe-index
+cpe-index:  ## Build the CPE index
+	$(call title,Building CPE index)
+	go run ./syft/pkg/cataloger/common/cpe/dictionary/index-generator -o ./syft/pkg/cataloger/common/cpe/cpe-index.json
+
 .PHONY: build
 build: $(SNAPSHOT_DIR)  ## Build release snapshot binaries and packages
 
-$(SNAPSHOT_DIR):  ## Build snapshot release binaries and packages
+$(SNAPSHOT_DIR): cpe-index  ## Build snapshot release binaries and packages
 	$(call title,Building snapshot artifacts)
 
 	# create a config with the dist dir overridden
@@ -338,7 +343,7 @@ release:
 	@.github/scripts/trigger-release.sh
 
 .PHONY: ci-release
-ci-release: ci-check clean-dist $(CHANGELOG)
+ci-release: ci-check clean-dist $(CHANGELOG) cpe-index
 	$(call title,Publishing release artifacts)
 
 	# create a config with the dist dir overridden
@@ -361,8 +366,12 @@ ci-check:
 ## Cleanup targets #################################
 
 .PHONY: clean
-clean: clean-dist clean-snapshot clean-test-image-cache  ## Remove previous builds, result reports, and test cache
+clean: clean-dist clean-snapshot clean-test-image-cache clean-cpe-index  ## Remove previous builds, result reports, and test cache
 	$(call safe_rm_rf_children,$(TEMP_DIR))
+
+.PHONY: clean-cpe-index
+clean-cpe-index:  ## Remove the CPE index
+	$(call safe_rm_rf,./syft/pkg/cataloger/common/cpe/cpe-index.json)
 
 .PHONY: clean-snapshot
 clean-snapshot:
