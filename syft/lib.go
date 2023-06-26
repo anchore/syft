@@ -59,13 +59,13 @@ func CatalogPackages(src source.Source, cfg cataloger.Config) (*pkg.Collection, 
 		// instead this should be a caller concern (pass the catalogers you want to use). The SBOM build PR will do this.
 		switch src.(type) {
 		case *source.StereoscopeImageSource:
-			log.Info("cataloging image")
+			log.Info("cataloging an image")
 			catalogers = cataloger.ImageCatalogers(cfg)
 		case *source.FileSource:
-			log.Info("cataloging file")
+			log.Info("cataloging a file")
 			catalogers = cataloger.AllCatalogers(cfg)
 		case *source.DirectorySource:
-			log.Info("cataloging directory")
+			log.Info("cataloging a directory")
 			catalogers = cataloger.DirectoryCatalogers(cfg)
 		default:
 			return nil, nil, nil, fmt.Errorf("unsupported source type: %T", src)

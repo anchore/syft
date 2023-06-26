@@ -80,6 +80,19 @@ func TestParsePubspecLock(t *testing.T) {
 			},
 		},
 		{
+			Name:         "flutter",
+			Version:      "0.0.0",
+			PURL:         "pkg:pub/flutter@0.0.0",
+			Locations:    fixtureLocationSet,
+			Language:     pkg.Dart,
+			Type:         pkg.DartPubPkg,
+			MetadataType: pkg.DartPubMetadataType,
+			Metadata: pkg.DartPubMetadata{
+				Name:    "flutter",
+				Version: "0.0.0",
+			},
+		},
+		{
 			Name:         "key_binder",
 			Version:      "1.11.20",
 			PURL:         "pkg:pub/key_binder@1.11.20?vcs_url=git%40github.com:Workiva/key_binder.git%403f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
