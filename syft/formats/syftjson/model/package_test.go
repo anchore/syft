@@ -362,7 +362,7 @@ func Test_unpackMetadata(t *testing.T) {
 			var unpacker packageMetadataUnpacker
 			require.NoError(t, json.Unmarshal(test.packageData, &unpacker))
 
-			err := unpackMetadata(p, unpacker)
+			err := unpackPkgMetadata(p, unpacker)
 			assert.Equal(t, test.metadataType, p.MetadataType)
 			test.wantErr(t, err)
 

@@ -2,23 +2,17 @@ package spdxhelpers
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/syft/internal"
+	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source"
 )
 
 func Test_documentNamespace(t *testing.T) {
-	allSources := strset.New()
-	for _, s := range internal.AllSourceMetadataReflectTypes() {
-		allSources.Add(s.Name())
-	}
-	testedSources := strset.New()
+	tracker := sourcemetadata.NewCompletionTester(t)
 
 	tests := []struct {
 		name      string
@@ -66,10 +60,7 @@ func Test_documentNamespace(t *testing.T) {
 			assert.True(t, strings.HasPrefix(actual, test.expected), fmt.Sprintf("actual namespace %q", actual))
 
 			// track each scheme tested (passed or not)
-			testedSources.Add(reflect.TypeOf(test.src.Metadata).Name())
+			tracker.Tested(t, test.src.Metadata)
 		})
 	}
-
-	// assert all possible schemes were under test
-	assert.ElementsMatch(t, allSources.List(), testedSources.List(), "not all source.Schemes are under test")
 }

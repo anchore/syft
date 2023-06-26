@@ -258,40 +258,12 @@ func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {
 }
 
 func toSyftSourceData(s model.Source) *source.Description {
-	d := &source.Description{
-		ID:      s.ID,
-		Name:    s.Name,
-		Version: s.Version,
+	return &source.Description{
+		ID:       s.ID,
+		Name:     s.Name,
+		Version:  s.Version,
+		Metadata: s.Metadata,
 	}
-	switch s.Type {
-	case model.DirectorySourceType:
-		metadata, ok := s.Metadata.(source.DirectorySourceMetadata)
-		if !ok {
-			log.Warnf("unable to parse source target as string: %+v", s.Metadata)
-			return nil
-		}
-		d.Metadata = metadata
-
-	case model.FileSourceType:
-		metadata, ok := s.Metadata.(source.FileSourceMetadata)
-		if !ok {
-			log.Warnf("unable to parse source target as string: %+v", s.Metadata)
-			return nil
-		}
-
-		d.Metadata = metadata
-	case model.ImageSourceType:
-		metadata, ok := s.Metadata.(source.StereoscopeImageSourceMetadata)
-		if !ok {
-			log.Warnf("unable to parse source target as image metadata: %+v", s.Metadata)
-			return nil
-		}
-
-		d.Metadata = metadata
-	default:
-		return nil
-	}
-	return d
 }
 
 func toSyftCatalog(pkgs []model.Package, idAliases map[string]string) *pkg.Collection {

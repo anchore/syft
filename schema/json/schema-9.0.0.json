@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/anchore/syft/syft/formats/syftjson/model/document",
+  "$id": "anchore.io/schema/syft/json/9.0.0/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmFileRecord": {

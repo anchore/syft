@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -20,17 +21,12 @@ import (
 
 // ToFormatModel transforms the sbom import a format-specific model.
 func ToFormatModel(s sbom.SBOM) model.Document {
-	src, err := toSourceModel(s.Source)
-	if err != nil {
-		log.Warnf("unable to create syft-json source object: %+v", err)
-	}
-
 	return model.Document{
 		Artifacts:             toPackageModels(s.Artifacts.Packages),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s),
 		Secrets:               toSecrets(s.Artifacts.Secrets),
-		Source:                src,
+		Source:                toSourceModel(s.Source),
 		Distro:                toLinuxReleaser(s.Artifacts.LinuxDistribution),
 		Descriptor:            toDescriptor(s.Descriptor),
 		Schema: model.Schema{
@@ -267,14 +263,16 @@ func toRelationshipModel(relationships []artifact.Relationship) []model.Relation
 }
 
 // toSourceModel creates a new source object to be represented into JSON.
-func toSourceModel(src source.Description) (model.Source, error) {
+func toSourceModel(src source.Description) model.Source {
 	m := model.Source{
-		ID:      src.ID,
-		Name:    src.Name,
-		Version: src.Version,
+		ID:       src.ID,
+		Name:     src.Name,
+		Version:  src.Version,
+		Type:     sourcemetadata.JSONName(src.Metadata),
+		Metadata: src.Metadata,
 	}
-	switch metadata := src.Metadata.(type) {
-	case source.StereoscopeImageSourceMetadata:
+
+	if metadata, ok := src.Metadata.(source.StereoscopeImageSourceMetadata); ok {
 		// ensure that empty collections are not shown as null
 		if metadata.RepoDigests == nil {
 			metadata.RepoDigests = []string{}
@@ -282,19 +280,8 @@ func toSourceModel(src source.Description) (model.Source, error) {
 		if metadata.Tags == nil {
 			metadata.Tags = []string{}
 		}
-
-		m.Type = model.ImageSourceType
 		m.Metadata = metadata
-
-	case source.DirectorySourceMetadata:
-		m.Type = model.DirectorySourceType
-		m.Metadata = metadata
-
-	case source.FileSourceMetadata:
-		m.Type = model.FileSourceType
-		m.Metadata = metadata
-	default:
-		return model.Source{}, fmt.Errorf("unsupported source: %T", metadata)
 	}
-	return m, nil
+
+	return m
 }

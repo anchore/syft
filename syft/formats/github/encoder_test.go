@@ -1,17 +1,15 @@
 package github
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal"
+	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -82,11 +80,7 @@ func sbomFixture() sbom.SBOM {
 }
 
 func Test_toGithubModel(t *testing.T) {
-	allSources := strset.New()
-	for _, s := range internal.AllSourceMetadataReflectTypes() {
-		allSources.Add(s.Name())
-	}
-	testedSources := strset.New()
+	tracker := sourcemetadata.NewCompletionTester(t)
 
 	tests := []struct {
 		name     string
@@ -196,10 +190,7 @@ func Test_toGithubModel(t *testing.T) {
 			assert.Equal(t, test.testPath, actual.Manifests[test.testPath].Name)
 
 			// track each scheme tested (passed or not)
-			testedSources.Add(reflect.TypeOf(s.Source.Metadata).Name())
+			tracker.Tested(t, s.Source.Metadata)
 		})
 	}
-
-	// assert all possible sources were under test
-	assert.ElementsMatch(t, allSources.List(), testedSources.List(), "not all source.*Metadata are under test")
 }

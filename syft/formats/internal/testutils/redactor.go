@@ -126,9 +126,7 @@ func (r *Redactions) WithFunctions(values ...func([]byte) []byte) *Redactions {
 }
 
 func (r *Redactions) WithRedactors(rs ...Redactor) *Redactions {
-	for _, rx := range rs {
-		r.redactors = append(r.redactors, rx)
-	}
+	r.redactors = append(r.redactors, rs...)
 	return r
 }
 

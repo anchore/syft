@@ -63,6 +63,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	)
 }
 
+//nolint:funlen
 func execWorker(app *config.Application, userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {

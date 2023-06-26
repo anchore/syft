@@ -2,17 +2,15 @@ package syftjson
 
 import (
 	"encoding/json"
-	"reflect"
 	"testing"
 
-	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/formats/syftjson/model"
-	"github.com/anchore/syft/syft/internal"
+	syftjson2 "github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -35,8 +33,7 @@ func Test_toSourceModel_IgnoreBase(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// assert the model transformation is correct
-			actual, err := toSourceModel(test.src)
-			require.NoError(t, err)
+			actual := toSourceModel(test.src)
 
 			by, err := json.Marshal(actual)
 			require.NoError(t, err)
@@ -46,16 +43,12 @@ func Test_toSourceModel_IgnoreBase(t *testing.T) {
 }
 
 func Test_toSourceModel(t *testing.T) {
-	allSources := strset.New()
-	for _, s := range internal.AllSourceMetadataReflectTypes() {
-		allSources.Add(s.Name())
-	}
-	testedSources := strset.New()
+	tracker := sourcemetadata.NewCompletionTester(t)
 
 	tests := []struct {
 		name     string
 		src      source.Description
-		expected model.Source
+		expected syftjson2.Source
 	}{
 		{
 			name: "directory",
@@ -68,7 +61,7 @@ func Test_toSourceModel(t *testing.T) {
 					Base: "some/base",
 				},
 			},
-			expected: model.Source{
+			expected: syftjson2.Source{
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
@@ -91,7 +84,7 @@ func Test_toSourceModel(t *testing.T) {
 					MIMEType: "text/plain",
 				},
 			},
-			expected: model.Source{
+			expected: syftjson2.Source{
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
@@ -116,7 +109,7 @@ func Test_toSourceModel(t *testing.T) {
 					MediaType:      "type...",
 				},
 			},
-			expected: model.Source{
+			expected: syftjson2.Source{
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
@@ -142,7 +135,7 @@ func Test_toSourceModel(t *testing.T) {
 					Base: "some/base",
 				},
 			},
-			expected: model.Source{
+			expected: syftjson2.Source{
 				ID:   "test-id",
 				Type: "directory",
 				Metadata: source.DirectorySourceMetadata{
@@ -161,7 +154,7 @@ func Test_toSourceModel(t *testing.T) {
 					MIMEType: "text/plain",
 				},
 			},
-			expected: model.Source{
+			expected: syftjson2.Source{
 				ID:   "test-id",
 				Type: "file",
 				Metadata: source.FileSourceMetadata{
@@ -182,7 +175,7 @@ func Test_toSourceModel(t *testing.T) {
 					MediaType:      "type...",
 				},
 			},
-			expected: model.Source{
+			expected: syftjson2.Source{
 				ID:   "test-id",
 				Type: "image",
 				Metadata: source.StereoscopeImageSourceMetadata{
@@ -199,17 +192,13 @@ func Test_toSourceModel(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// assert the model transformation is correct
-			actual, err := toSourceModel(test.src)
-			require.NoError(t, err)
+			actual := toSourceModel(test.src)
 			assert.Equal(t, test.expected, actual)
 
 			// track each scheme tested (passed or not)
-			testedSources.Add(reflect.TypeOf(test.expected.Metadata).Name())
+			tracker.Tested(t, test.expected.Metadata)
 		})
 	}
-
-	// assert all possible sources were under test
-	assert.ElementsMatch(t, allSources.List(), testedSources.List(), "not all source.*Metadata are under test")
 }
 
 func Test_toFileType(t *testing.T) {
@@ -281,7 +270,7 @@ func Test_toFileMetadataEntry(t *testing.T) {
 	tests := []struct {
 		name     string
 		metadata *file.Metadata
-		want     *model.FileMetadataEntry
+		want     *syftjson2.FileMetadataEntry
 	}{
 		{
 			name: "no metadata",
@@ -291,7 +280,7 @@ func Test_toFileMetadataEntry(t *testing.T) {
 			metadata: &file.Metadata{
 				FileInfo: nil,
 			},
-			want: &model.FileMetadataEntry{
+			want: &syftjson2.FileMetadataEntry{
 				Type: stereoscopeFile.TypeRegular.String(),
 			},
 		},
@@ -302,7 +291,7 @@ func Test_toFileMetadataEntry(t *testing.T) {
 					ModeValue: 1,
 				},
 			},
-			want: &model.FileMetadataEntry{
+			want: &syftjson2.FileMetadataEntry{
 				Mode: 1,
 				Type: stereoscopeFile.TypeRegular.String(),
 			},

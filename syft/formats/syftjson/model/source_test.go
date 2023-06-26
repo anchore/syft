@@ -2,25 +2,19 @@ package model
 
 import (
 	"encoding/json"
-	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal"
+	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source"
 )
 
 func TestSource_UnmarshalJSON(t *testing.T) {
-	allSources := strset.New()
-	for _, s := range internal.AllSourceMetadataReflectTypes() {
-		allSources.Add(s.Name())
-	}
-	testedSources := strset.New()
+	tracker := sourcemetadata.NewCompletionTester(t)
 
 	cases := []struct {
 		name     string
@@ -37,7 +31,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			}`),
 			expected: &Source{
 				ID:   "foobar",
-				Type: DirectorySourceType,
+				Type: "directory",
 				Metadata: source.DirectorySourceMetadata{
 					Path: "/var/lib/foo",
 					//Base: "/nope", // note: should be ignored entirely
@@ -72,7 +66,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			}`),
 			expected: &Source{
 				ID:   "foobar",
-				Type: ImageSourceType,
+				Type: "image",
 				Metadata: source.StereoscopeImageSourceMetadata{
 					UserInput:      "alpine:3.10",
 					ID:             "sha256:e7b300aee9f9bf3433d32bc9305bfdd22183beb59d933b48d77ab56ba53a197a",
@@ -129,7 +123,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			}`),
 			expected: &Source{
 				ID:   "foobar",
-				Type: FileSourceType,
+				Type: "file",
 				Metadata: source.FileSourceMetadata{
 					Path: "/var/lib/foo/go.mod",
 					Digests: []file.Digest{
@@ -172,15 +166,9 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 				t.Errorf("unexpected result from Source unmarshaling (-want +got)\n%s", diff)
 			}
 
-			// track each scheme tested (passed or not)
-			if tt.expected.Metadata != nil {
-				testedSources.Add(reflect.TypeOf(tt.expected.Metadata).Name())
-			}
+			tracker.Tested(t, tt.expected.Metadata)
 		})
 	}
-
-	// assert all possible sources were under test
-	assert.ElementsMatch(t, allSources.List(), testedSources.List(), "not all source.*Metadata are under test")
 }
 
 func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
@@ -199,7 +187,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			}`),
 			expectedSource: &Source{
 				ID:   "foobar",
-				Type: DirectorySourceType,
+				Type: "directory",
 				Metadata: source.DirectorySourceMetadata{
 					Path: "/var/lib/foo",
 				},
@@ -215,7 +203,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			}`),
 			expectedSource: &Source{
 				ID:   "foobar",
-				Type: DirectorySourceType,
+				Type: "directory",
 				Metadata: source.DirectorySourceMetadata{
 					Path: "/var/lib/foo",
 				},
@@ -250,7 +238,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			}`),
 			expectedSource: &Source{
 				ID:   "foobar",
-				Type: ImageSourceType,
+				Type: "image",
 				Metadata: source.StereoscopeImageSourceMetadata{
 					UserInput:      "alpine:3.10",
 					ID:             "sha256:e7b300aee9f9bf3433d32bc9305bfdd22183beb59d933b48d77ab56ba53a197a",
@@ -299,7 +287,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			}`),
 			expectedSource: &Source{
 				ID:   "foobar",
-				Type: FileSourceType,
+				Type: "file",
 				Metadata: source.FileSourceMetadata{
 					Path: "/var/lib/foo/go.mod",
 				},

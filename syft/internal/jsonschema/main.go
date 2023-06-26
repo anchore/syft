@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -13,8 +14,8 @@ import (
 	"github.com/invopop/jsonschema"
 
 	"github.com/anchore/syft/internal"
-	genInt "github.com/anchore/syft/schema/json/internal"
-	syftjsonModel "github.com/anchore/syft/syft/formats/syftjson/model"
+	syftJsonModel "github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/internal/packagemetadata"
 )
 
 /*
@@ -24,30 +25,59 @@ are not captured (empty interfaces). This means that pkg.Package.Metadata is not
 can be extended to include specific package metadata struct shapes in the future.
 */
 
-//go:generate go run ./generate/main.go
-
-const schemaVersion = internal.JSONSchemaVersion
-
 func main() {
 	write(encode(build()))
 }
 
+func schemaID() jsonschema.ID {
+	// Today we do not host the schemas at this address, but per the JSON schema spec we should be referencing
+	// the schema by a URL in a domain we control. This is a placeholder for now.
+	return jsonschema.ID(fmt.Sprintf("anchore.io/schema/syft/json/%s", internal.JSONSchemaVersion))
+}
+
+func assembleTypeContainer(items []any) any {
+	structFields := make([]reflect.StructField, len(items))
+
+	for i, item := range items {
+		itemType := reflect.TypeOf(item)
+		fieldName := itemType.Name()
+
+		structFields[i] = reflect.StructField{
+			Name: fieldName,
+			Type: itemType,
+		}
+	}
+
+	structType := reflect.StructOf(structFields)
+	return reflect.New(structType).Elem().Interface()
+}
+
 func build() *jsonschema.Schema {
 	reflector := &jsonschema.Reflector{
+		BaseSchemaID:              schemaID(),
 		AllowAdditionalProperties: true,
 		Namer: func(r reflect.Type) string {
 			return strings.TrimPrefix(r.Name(), "JSON")
 		},
 	}
-	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&syftjsonModel.Document{}))
-	metadataSchema := reflector.ReflectFromType(reflect.TypeOf(&genInt.ArtifactMetadataContainer{}))
-	// TODO: inject source definitions
 
-	// inject the definitions of all metadatas into the schema definitions
+	pkgMetadataContainer := assembleTypeContainer(packagemetadata.AllTypes())
+	pkgMetadataContainerType := reflect.TypeOf(pkgMetadataContainer)
+
+	// srcMetadataContainer := assembleTypeContainer(sourcemetadata.AllTypes())
+	// srcMetadataContainerType := reflect.TypeOf(srcMetadataContainer)
+
+	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&syftJsonModel.Document{}))
+	pkgMetadataSchema := reflector.ReflectFromType(reflect.TypeOf(pkgMetadataContainer))
+	// srcMetadataSchema := reflector.ReflectFromType(reflect.TypeOf(srcMetadataContainer))
+
+	// TODO: add source metadata types
+
+	// inject the definitions of all packages metadatas into the schema definitions
 
 	var metadataNames []string
-	for name, definition := range metadataSchema.Definitions {
-		if name == reflect.TypeOf(genInt.ArtifactMetadataContainer{}).Name() {
+	for name, definition := range pkgMetadataSchema.Definitions {
+		if name == pkgMetadataContainerType.Name() {
 			// ignore the definition for the fake container
 			continue
 		}
@@ -93,11 +123,16 @@ func encode(schema *jsonschema.Schema) []byte {
 }
 
 func write(schema []byte) {
-	filename := fmt.Sprintf("schema-%s.json", schemaVersion)
+	repoRoot, err := packagemetadata.RepoRoot()
+	if err != nil {
+		fmt.Println("unable to determine repo root")
+		os.Exit(1)
+	}
+	schemaPath := filepath.Join(repoRoot, "schema", "json", fmt.Sprintf("schema-%s.json", internal.JSONSchemaVersion))
 
-	if _, err := os.Stat(filename); !os.IsNotExist(err) {
+	if _, err := os.Stat(schemaPath); !os.IsNotExist(err) {
 		// check if the schema is the same...
-		existingFh, err := os.Open(filename)
+		existingFh, err := os.Open(schemaPath)
 		if err != nil {
 			panic(err)
 		}
@@ -114,11 +149,11 @@ func write(schema []byte) {
 		}
 
 		// the generated schema is different, bail with error :(
-		fmt.Printf("Cowardly refusing to overwrite existing schema (%s)!\nSee the schema/json/README.md for how to increment\n", filename)
+		fmt.Printf("Cowardly refusing to overwrite existing schema (%s)!\nSee the schema/json/README.md for how to increment\n", schemaPath)
 		os.Exit(1)
 	}
 
-	fh, err := os.Create(filename)
+	fh, err := os.Create(schemaPath)
 	if err != nil {
 		panic(err)
 	}
@@ -130,5 +165,5 @@ func write(schema []byte) {
 
 	defer fh.Close()
 
-	fmt.Printf("Wrote new schema to %q\n", filename)
+	fmt.Printf("Wrote new schema to %q\n", schemaPath)
 }
