@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
@@ -176,16 +177,24 @@ func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.Dp
 		return nil, nil
 	}
 
-	parentPath := filepath.Dir(dbLocation.RealPath)
+	// for typical debian-base distributions, the installed package info is at /var/lib/dpkg/status
+	// and the md5sum information is under /var/lib/dpkg/info/; however, for distroless the installed
+	// package info is across multiple files under /var/lib/dpkg/status.d/ and the md5sums are contained in
+	// the same directory
+	searchPath := filepath.Dir(dbLocation.RealPath)
+
+	if !strings.HasSuffix(searchPath, "status.d") {
+		searchPath = path.Join(searchPath, "info")
+	}
 
 	// look for /var/lib/dpkg/info/NAME:ARCH.md5sums
 	name := md5Key(m)
-	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "info", name+md5sumsExt))
+	location := resolver.RelativeFileByPath(dbLocation, path.Join(searchPath, name+md5sumsExt))
 
 	if location == nil {
 		// the most specific key did not work, fallback to just the name
 		// look for /var/lib/dpkg/info/NAME.md5sums
-		location = resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "info", m.Package+md5sumsExt))
+		location = resolver.RelativeFileByPath(dbLocation, path.Join(searchPath, m.Package+md5sumsExt))
 	}
 
 	if location == nil {

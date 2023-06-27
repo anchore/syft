@@ -1,0 +1,16 @@
+Package: libsqlite3-0
+Source: sqlite3
+Version: 3.34.1-3
+Architecture: arm64
+Maintainer: Laszlo Boszormenyi (GCS) <gcs@debian.org>
+Installed-Size: 1490
+Depends: libc6 (>= 2.29)
+Breaks: python-migrate (<< 0.11.0-4~), python3-migrate (<< 0.11.0-4~)
+Section: libs
+Priority: optional
+Multi-Arch: same
+Homepage: https://www.sqlite.org/
+Description: SQLite 3 shared library
+ SQLite is a C library that implements an SQL database engine.
+ Programs that link with the SQLite library can have SQL database
+ access without running a separate RDBMS process.
