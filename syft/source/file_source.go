@@ -25,7 +25,7 @@ type FileConfig struct {
 	Path             string
 	Exclude          ExcludeConfig
 	DigestAlgorithms []crypto.Hash
-	*Alias
+	Alias            *Alias
 }
 
 type FileSourceMetadata struct {

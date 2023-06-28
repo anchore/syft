@@ -22,7 +22,7 @@ type DirectoryConfig struct {
 	Path    string
 	Base    string
 	Exclude ExcludeConfig
-	*Alias
+	Alias   *Alias
 }
 
 type DirectorySourceMetadata struct {
@@ -33,7 +33,6 @@ type DirectorySourceMetadata struct {
 type DirectorySource struct {
 	id       artifact.ID
 	config   DirectoryConfig
-	cwd      string
 	resolver *fileresolver.Directory
 	mutex    *sync.Mutex
 }
@@ -55,14 +54,8 @@ func NewFromDirectory(cfg DirectoryConfig) (*DirectorySource, error) {
 		return nil, fmt.Errorf("given path is not a directory: %q", cfg.Path)
 	}
 
-	cwd, err := os.Getwd()
-	if err == nil {
-		log.Warn("unable to get current working directory: %w", err)
-	}
-
 	return &DirectorySource{
-		id:     deriveIDFromDirectory(cwd, cfg),
-		cwd:    cwd,
+		id:     deriveIDFromDirectory(cfg),
 		config: cfg,
 		mutex:  &sync.Mutex{},
 	}, nil
@@ -73,7 +66,7 @@ func NewFromDirectory(cfg DirectoryConfig) (*DirectorySource, error) {
 // from the path provided with an attempt to prune a prefix if a base is given. Since the contents of the directory
 // are not considered, there is no semantic meaning to the artifact ID -- this is why the alias is preferred without
 // consideration for the path.
-func deriveIDFromDirectory(cwd string, cfg DirectoryConfig) artifact.ID {
+func deriveIDFromDirectory(cfg DirectoryConfig) artifact.ID {
 	var info string
 	if cfg.Alias != nil {
 		// don't use any of the path information -- instead use the alias name and version as the artifact ID.
@@ -81,26 +74,29 @@ func deriveIDFromDirectory(cwd string, cfg DirectoryConfig) artifact.ID {
 		// scanning root changes (e.g. a user scans a directory, then moves it to a new location and scans again).
 		info = fmt.Sprintf("%s@%s", cfg.Alias.Name, cfg.Alias.Version)
 	} else {
-		info = cleanDirPath(cfg.Path, cfg.Base, cwd)
+		log.Warn("no explicit name and version provided for directory source, deriving artifact ID from the given path (which is not ideal)")
+		info = cleanDirPath(cfg.Path, cfg.Base)
 	}
 
 	return artifactIDFromDigest(digest.SHA256.FromString(filepath.Clean(info)).String())
 }
 
-func cleanDirPath(path, base, cwd string) string {
+func cleanDirPath(path, base string) string {
 	if path == base {
 		return path
 	}
 
 	if base != "" {
-		chroot, err := file.NewChrootContext(path, base, cwd)
-		if err == nil {
+		cleanRoot, rootErr := fileresolver.NormalizeRootDirectory(path)
+		cleanBase, baseErr := fileresolver.NormalizeBaseDirectory(base)
+
+		if rootErr == nil && baseErr == nil {
 			// allows for normalizing inputs:
 			//   cleanRoot: /var/folders/8x/gw98pp6535s4r8drc374tb1r0000gn/T/TestDirectoryEncoder1121632790/001/some/path
 			//   cleanBase: /var/folders/8x/gw98pp6535s4r8drc374tb1r0000gn/T/TestDirectoryEncoder1121632790/001
 			//   normalized: some/path
 
-			relPath, err := filepath.Rel(chroot.Base(), chroot.Root())
+			relPath, err := filepath.Rel(cleanBase, cleanRoot)
 			if err == nil {
 				path = relPath
 			}
@@ -117,7 +113,7 @@ func (s DirectorySource) ID() artifact.ID {
 }
 
 func (s DirectorySource) Describe() Description {
-	name := cleanDirPath(s.config.Path, s.config.Base, s.cwd)
+	name := cleanDirPath(s.config.Path, s.config.Base)
 	version := ""
 	if s.config.Alias != nil {
 		a := s.config.Alias

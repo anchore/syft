@@ -22,7 +22,7 @@ type StereoscopeImageConfig struct {
 	Platform        *image.Platform
 	RegistryOptions *image.RegistryOptions
 	Exclude         ExcludeConfig
-	*Alias
+	Alias           *Alias
 }
 
 type StereoscopeImageSource struct {

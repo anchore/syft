@@ -26,7 +26,7 @@ var _ file.Resolver = (*Directory)(nil)
 // Directory implements path and content access for the directory data source.
 type Directory struct {
 	path          string
-	chroot        file.ChrootContext
+	chroot        ChrootContext
 	tree          filetree.Reader
 	index         filetree.IndexReader
 	searchContext filetree.Searcher
@@ -43,7 +43,7 @@ func NewFromDirectory(root string, base string, pathFilters ...PathIndexVisitor)
 }
 
 func newFromDirectoryWithoutIndex(root string, base string, pathFilters ...PathIndexVisitor) (*Directory, error) {
-	chroot, err := file.NewChrootContextFromCWD(root, base)
+	chroot, err := NewChrootContextFromCWD(root, base)
 	if err != nil {
 		return nil, fmt.Errorf("unable to interpret chroot context: %w", err)
 	}

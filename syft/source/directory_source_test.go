@@ -531,7 +531,6 @@ func Test_cleanDirPath(t *testing.T) {
 		name string
 		path string
 		base string
-		cwd  string
 		want string
 	}{
 		{
@@ -555,7 +554,7 @@ func Test_cleanDirPath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, cleanDirPath(tt.path, tt.base, tt.cwd))
+			assert.Equal(t, tt.want, cleanDirPath(tt.path, tt.base))
 		})
 	}
 }

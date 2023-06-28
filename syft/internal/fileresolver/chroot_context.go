@@ -1,4 +1,4 @@
-package file
+package fileresolver
 
 import (
 	"fmt"
@@ -30,21 +30,14 @@ func NewChrootContextFromCWD(root, base string) (*ChrootContext, error) {
 }
 
 func NewChrootContext(root, base, cwd string) (*ChrootContext, error) {
-	cleanRoot, err := filepath.EvalSymlinks(root)
+	cleanRoot, err := NormalizeRootDirectory(root)
 	if err != nil {
-		return nil, fmt.Errorf("could not evaluate root=%q symlinks: %w", root, err)
+		return nil, err
 	}
 
-	cleanBase := ""
-	if base != "" {
-		cleanBase, err = filepath.EvalSymlinks(base)
-		if err != nil {
-			return nil, fmt.Errorf("could not evaluate base=%q symlinks: %w", base, err)
-		}
-		cleanBase, err = filepath.Abs(cleanBase)
-		if err != nil {
-			return nil, err
-		}
+	cleanBase, err := NormalizeBaseDirectory(base)
+	if err != nil {
+		return nil, err
 	}
 
 	chroot := &ChrootContext{
@@ -54,6 +47,27 @@ func NewChrootContext(root, base, cwd string) (*ChrootContext, error) {
 	}
 
 	return chroot, chroot.ChangeDirectory(cwd)
+}
+
+func NormalizeRootDirectory(root string) (string, error) {
+	cleanRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", fmt.Errorf("could not evaluate root=%q symlinks: %w", root, err)
+	}
+	return cleanRoot, nil
+}
+
+func NormalizeBaseDirectory(base string) (string, error) {
+	if base == "" {
+		return "", nil
+	}
+
+	cleanBase, err := filepath.EvalSymlinks(base)
+	if err != nil {
+		return "", fmt.Errorf("could not evaluate base=%q symlinks: %w", base, err)
+	}
+
+	return filepath.Abs(cleanBase)
 }
 
 // Root returns the root path with all symlinks evaluated.
