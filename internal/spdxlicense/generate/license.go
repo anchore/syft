@@ -77,11 +77,18 @@ func (l License) canReplace(deprecated License) bool {
 
 func buildLicenseIDPermutations(cleanID string) (perms []string) {
 	lv := findLicenseVersion(cleanID)
+	addPlusPermutation := strings.HasSuffix(cleanID, "orlater")
 	vp := versionPermutations(lv)
 
 	permSet := strset.New()
 	version := strings.Join(lv, ".")
 	for _, p := range vp {
+		if addPlusPermutation {
+			base := strings.TrimSuffix(cleanID, "orlater")
+			p = p + "+"
+			permSet.Add(strings.Replace(base, version, p, 1))
+			continue
+		}
 		permSet.Add(strings.Replace(cleanID, version, p, 1))
 	}
 
