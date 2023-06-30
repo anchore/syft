@@ -46,6 +46,13 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 		return fmt.Errorf("attestations are only supported for oci images at this time")
 	}
 
+	_, err = exec.LookPath("cosign")
+	if err != nil {
+		// when cosign is not installed the error will be rendered like so:
+		// 2023/06/30 08:31:52 error during command execution: 'syft attest' requires cosign to be installed: exec: "cosign": executable file not found in $PATH
+		return fmt.Errorf("'syft attest' requires cosign to be installed: %w", err)
+	}
+
 	eventBus := partybus.NewBus()
 	stereoscope.SetBus(eventBus)
 	syft.SetBus(eventBus)
