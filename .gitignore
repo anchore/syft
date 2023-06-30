@@ -1,6 +1,8 @@
 go.work.sum
 go.work
 
+/bin
+/.bin
 CHANGELOG.md
 VERSION
 /test/results

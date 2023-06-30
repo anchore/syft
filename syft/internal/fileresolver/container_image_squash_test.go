@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -509,6 +510,26 @@ func Test_imageSquashResolver_resolvesLinks(t *testing.T) {
 
 			compareLocations(t, test.expected, actual)
 		})
+	}
+
+}
+
+func compareLocations(t *testing.T, expected, actual []file.Location) {
+	t.Helper()
+	ignoreUnexported := cmpopts.IgnoreUnexported(file.LocationData{})
+	ignoreMetadata := cmpopts.IgnoreFields(file.LocationMetadata{}, "Annotations")
+	ignoreFS := cmpopts.IgnoreFields(file.Coordinates{}, "FileSystemID")
+
+	sort.Sort(file.Locations(expected))
+	sort.Sort(file.Locations(actual))
+
+	if d := cmp.Diff(expected, actual,
+		ignoreUnexported,
+		ignoreFS,
+		ignoreMetadata,
+	); d != "" {
+
+		t.Errorf("unexpected locations (-want +got):\n%s", d)
 	}
 
 }

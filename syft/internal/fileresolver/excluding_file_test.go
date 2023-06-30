@@ -56,7 +56,7 @@ func TestExcludingResolver(t *testing.T) {
 			resolver := &mockResolver{
 				locations: test.locations,
 			}
-			er := NewExcluding(resolver, test.excludeFn)
+			er := NewExcludingDecorator(resolver, test.excludeFn)
 
 			locations, _ := er.FilesByPath()
 			assert.ElementsMatch(t, locationPaths(locations), test.expected)

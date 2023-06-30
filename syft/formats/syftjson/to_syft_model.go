@@ -202,12 +202,12 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relations
 	return out, conversionErrors
 }
 
-func toSyftSource(s model.Source) *source.Source {
-	newSrc := &source.Source{
-		Metadata: *toSyftSourceData(s),
+func toSyftSource(s model.Source) source.Source {
+	description := toSyftSourceData(s)
+	if description == nil {
+		return nil
 	}
-	newSrc.SetID()
-	return newSrc
+	return source.FromDescription(*description)
 }
 
 func toSyftRelationship(idMap map[string]interface{}, relationship model.Relationship, idAliases map[string]string) (*artifact.Relationship, error) {
@@ -257,43 +257,13 @@ func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {
 	}
 }
 
-func toSyftSourceData(s model.Source) *source.Metadata {
-	switch s.Type {
-	case "directory":
-		path, ok := s.Target.(string)
-		if !ok {
-			log.Warnf("unable to parse source target as string: %+v", s.Target)
-			return nil
-		}
-		return &source.Metadata{
-			ID:     s.ID,
-			Scheme: source.DirectoryScheme,
-			Path:   path,
-		}
-	case "file":
-		path, ok := s.Target.(string)
-		if !ok {
-			log.Warnf("unable to parse source target as string: %+v", s.Target)
-			return nil
-		}
-		return &source.Metadata{
-			ID:     s.ID,
-			Scheme: source.FileScheme,
-			Path:   path,
-		}
-	case "image":
-		metadata, ok := s.Target.(source.ImageMetadata)
-		if !ok {
-			log.Warnf("unable to parse source target as image metadata: %+v", s.Target)
-			return nil
-		}
-		return &source.Metadata{
-			ID:            s.ID,
-			Scheme:        source.ImageScheme,
-			ImageMetadata: metadata,
-		}
+func toSyftSourceData(s model.Source) *source.Description {
+	return &source.Description{
+		ID:       s.ID,
+		Name:     s.Name,
+		Version:  s.Version,
+		Metadata: s.Metadata,
 	}
-	return nil
 }
 
 func toSyftCatalog(pkgs []model.Package, idAliases map[string]string) *pkg.Collection {

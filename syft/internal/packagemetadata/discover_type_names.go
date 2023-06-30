@@ -1,4 +1,4 @@
-package internal
+package packagemetadata
 
 import (
 	"fmt"
@@ -18,8 +18,8 @@ var metadataExceptions = strset.New(
 	"FileMetadata",
 )
 
-func AllSyftMetadataTypeNames() ([]string, error) {
-	root, err := repoRoot()
+func DiscoverTypeNames() ([]string, error) {
+	root, err := RepoRoot()
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func AllSyftMetadataTypeNames() ([]string, error) {
 	return findMetadataDefinitionNames(files...)
 }
 
-func repoRoot() (string, error) {
+func RepoRoot() (string, error) {
 	root, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
 	if err != nil {
 		return "", fmt.Errorf("unable to find repo root dir: %+v", err)

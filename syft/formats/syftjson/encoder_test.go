@@ -2,7 +2,6 @@ package syftjson
 
 import (
 	"flag"
-	"regexp"
 	"testing"
 
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
@@ -16,34 +15,39 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var updateJson = flag.Bool("update-json", false, "update the *.golden files for json encoders")
+var updateSnapshot = flag.Bool("update-json", false, "update the *.golden files for json encoders")
+var updateImage = flag.Bool("update-image", false, "update the golden image used for image encoder testing")
 
 func TestDirectoryEncoder(t *testing.T) {
+	dir := t.TempDir()
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
-		Format(),
-		testutils.DirectoryInput(t),
-		*updateJson,
-		true,
-		schemaVersionRedactor,
+		testutils.EncoderSnapshotTestConfig{
+			Subject:                     testutils.DirectoryInput(t, dir),
+			Format:                      Format(),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      true,
+			Redactor:                    redactor(dir),
+		},
 	)
 }
 
 func TestImageEncoder(t *testing.T) {
 	testImage := "image-simple"
 	testutils.AssertEncoderAgainstGoldenImageSnapshot(t,
-		Format(),
-		testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
-		testImage,
-		*updateJson,
-		true,
-		schemaVersionRedactor,
+		testutils.ImageSnapshotTestConfig{
+			Image:               testImage,
+			UpdateImageSnapshot: *updateImage,
+		},
+		testutils.EncoderSnapshotTestConfig{
+			Subject:                     testutils.ImageInput(t, testImage, testutils.FromSnapshot()),
+			Format:                      Format(),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      true,
+			Redactor:                    redactor(),
+		},
 	)
-}
-
-func schemaVersionRedactor(s []byte) []byte {
-	pattern := regexp.MustCompile(`,?\s*"schema":\s*\{[^}]*}`)
-	out := pattern.ReplaceAll(s, []byte(""))
-	return out
 }
 
 func TestEncodeFullJSONDocument(t *testing.T) {
@@ -176,10 +180,9 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 				},
 			},
 		},
-		Source: source.Metadata{
-			ID:     "c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
-			Scheme: source.ImageScheme,
-			ImageMetadata: source.ImageMetadata{
+		Source: source.Description{
+			ID: "c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
+			Metadata: source.StereoscopeImageSourceMetadata{
 				UserInput:      "user-image-input",
 				ID:             "sha256:c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
 				ManifestDigest: "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
@@ -188,7 +191,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 					"stereoscope-fixture-image-simple:85066c51088bdd274f7a89e99e00490f666c49e72ffc955707cd6e18f0e22c5b",
 				},
 				Size: 38,
-				Layers: []source.LayerMetadata{
+				Layers: []source.StereoscopeLayerMetadata{
 					{
 						MediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
 						Digest:    "sha256:3de16c5b8659a2e8d888b8ded8427be7a5686a3c8c4e4dd30de20f362827285b",
@@ -217,10 +220,24 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	}
 
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
-		Format(),
-		s,
-		*updateJson,
-		true,
-		schemaVersionRedactor,
+		testutils.EncoderSnapshotTestConfig{
+			Subject:                     s,
+			Format:                      Format(),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      true,
+			Redactor:                    redactor(),
+		},
 	)
+}
+
+func redactor(values ...string) testutils.Redactor {
+	return testutils.NewRedactions().
+		WithValuesRedacted(values...).
+		WithPatternRedactors(
+			map[string]string{
+				// remove schema version (don't even show the key or value)
+				`,?\s*"schema":\s*\{[^}]*}`: "",
+			},
+		)
 }

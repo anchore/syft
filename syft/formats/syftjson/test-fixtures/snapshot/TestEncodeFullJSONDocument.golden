@@ -149,8 +149,10 @@
  ],
  "source": {
   "id": "c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
+  "name": "",
+  "version": "",
   "type": "image",
-  "target": {
+  "metadata": {
    "userInput": "user-image-input",
    "imageID": "sha256:c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
    "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
@@ -192,9 +194,5 @@
   "configuration": {
    "config-key": "config-value"
   }
- },
- "schema": {
-  "version": "8.0.0",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-8.0.0.json"
  }
 }

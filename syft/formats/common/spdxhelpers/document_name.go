@@ -4,16 +4,18 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func DocumentName(srcMetadata source.Metadata) string {
+func DocumentName(srcMetadata source.Description) string {
 	if srcMetadata.Name != "" {
 		return srcMetadata.Name
 	}
 
-	switch srcMetadata.Scheme {
-	case source.ImageScheme:
-		return srcMetadata.ImageMetadata.UserInput
-	case source.DirectoryScheme, source.FileScheme:
-		return srcMetadata.Path
+	switch metadata := srcMetadata.Metadata.(type) {
+	case source.StereoscopeImageSourceMetadata:
+		return metadata.UserInput
+	case source.DirectorySourceMetadata:
+		return metadata.Path
+	case source.FileSourceMetadata:
+		return metadata.Path
 	default:
 		return "unknown"
 	}

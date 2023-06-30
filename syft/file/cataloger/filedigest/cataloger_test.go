@@ -75,7 +75,7 @@ func TestDigestsCataloger(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := NewCataloger(test.digests)
 
-			src, err := source.NewFromDirectory("test-fixtures/last/")
+			src, err := source.NewFromDirectoryPath("test-fixtures/last/")
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)
@@ -94,7 +94,7 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 
 	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
-	src, err := source.NewFromImage(img, "---")
+	src, err := source.NewFromStereoscopeImageObject(img, testImage, nil)
 	if err != nil {
 		t.Fatalf("could not create source: %+v", err)
 	}
