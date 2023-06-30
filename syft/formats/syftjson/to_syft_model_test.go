@@ -10,7 +10,7 @@ import (
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	syftjson2 "github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -22,12 +22,12 @@ func Test_toSyftSourceData(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		src      syftjson2.Source
+		src      model.Source
 		expected *source.Description
 	}{
 		{
 			name: "directory",
-			src: syftjson2.Source{
+			src: model.Source{
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
@@ -49,7 +49,7 @@ func Test_toSyftSourceData(t *testing.T) {
 		},
 		{
 			name: "file",
-			src: syftjson2.Source{
+			src: model.Source{
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
@@ -73,7 +73,7 @@ func Test_toSyftSourceData(t *testing.T) {
 		},
 		{
 			name: "image",
-			src: syftjson2.Source{
+			src: model.Source{
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
@@ -101,7 +101,7 @@ func Test_toSyftSourceData(t *testing.T) {
 		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
 		{
 			name: "directory - no name/version",
-			src: syftjson2.Source{
+			src: model.Source{
 				ID:   "the-id",
 				Type: "directory",
 				Metadata: source.DirectorySourceMetadata{
@@ -119,7 +119,7 @@ func Test_toSyftSourceData(t *testing.T) {
 		},
 		{
 			name: "file - no name/version",
-			src: syftjson2.Source{
+			src: model.Source{
 				ID:   "the-id",
 				Type: "file",
 				Metadata: source.FileSourceMetadata{
@@ -139,7 +139,7 @@ func Test_toSyftSourceData(t *testing.T) {
 		},
 		{
 			name: "image - no name/version",
-			src: syftjson2.Source{
+			src: model.Source{
 				ID:   "the-id",
 				Type: "image",
 				Metadata: source.StereoscopeImageSourceMetadata{
@@ -172,26 +172,26 @@ func Test_toSyftSourceData(t *testing.T) {
 }
 
 func Test_idsHaveChanged(t *testing.T) {
-	s, err := toSyftModel(syftjson2.Document{
-		Source: syftjson2.Source{
+	s, err := toSyftModel(model.Document{
+		Source: model.Source{
 			Type:     "file",
 			Metadata: source.FileSourceMetadata{Path: "some/path"},
 		},
-		Artifacts: []syftjson2.Package{
+		Artifacts: []model.Package{
 			{
-				PackageBasicData: syftjson2.PackageBasicData{
+				PackageBasicData: model.PackageBasicData{
 					ID:   "1",
 					Name: "pkg-1",
 				},
 			},
 			{
-				PackageBasicData: syftjson2.PackageBasicData{
+				PackageBasicData: model.PackageBasicData{
 					ID:   "2",
 					Name: "pkg-2",
 				},
 			},
 		},
-		ArtifactRelationships: []syftjson2.Relationship{
+		ArtifactRelationships: []model.Relationship{
 			{
 				Parent: "1",
 				Child:  "2",
@@ -222,12 +222,12 @@ func Test_toSyftFiles(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		files []syftjson2.File
+		files []model.File
 		want  sbom.Artifacts
 	}{
 		{
 			name:  "empty",
-			files: []syftjson2.File{},
+			files: []model.File{},
 			want: sbom.Artifacts{
 				FileMetadata: map[file.Coordinates]file.Metadata{},
 				FileDigests:  map[file.Coordinates][]file.Digest{},
@@ -235,7 +235,7 @@ func Test_toSyftFiles(t *testing.T) {
 		},
 		{
 			name: "no metadata",
-			files: []syftjson2.File{
+			files: []model.File{
 				{
 					ID:       string(coord.ID()),
 					Location: coord,
@@ -262,11 +262,11 @@ func Test_toSyftFiles(t *testing.T) {
 		},
 		{
 			name: "single file",
-			files: []syftjson2.File{
+			files: []model.File{
 				{
 					ID:       string(coord.ID()),
 					Location: coord,
-					Metadata: &syftjson2.FileMetadataEntry{
+					Metadata: &model.FileMetadataEntry{
 						Mode:            777,
 						Type:            "RegularFile",
 						LinkDestination: "",
@@ -329,7 +329,7 @@ func Test_toSyfRelationship(t *testing.T) {
 		name          string
 		idMap         map[string]interface{}
 		idAliases     map[string]string
-		relationships syftjson2.Relationship
+		relationships model.Relationship
 		want          *artifact.Relationship
 		wantError     error
 	}{
@@ -340,7 +340,7 @@ func Test_toSyfRelationship(t *testing.T) {
 				"some-parent-id": parentPackage,
 			},
 			idAliases: map[string]string{},
-			relationships: syftjson2.Relationship{
+			relationships: model.Relationship{
 				Parent: "some-parent-id",
 				Child:  "some-child-id",
 				Type:   string(artifact.ContainsRelationship),
@@ -358,7 +358,7 @@ func Test_toSyfRelationship(t *testing.T) {
 				"some-parent-id": parentPackage,
 			},
 			idAliases: map[string]string{},
-			relationships: syftjson2.Relationship{
+			relationships: model.Relationship{
 				Parent: "some-parent-id",
 				Child:  "some-child-id",
 				Type:   "some-unknown-relationship-type",
@@ -373,7 +373,7 @@ func Test_toSyfRelationship(t *testing.T) {
 				"some-parent-id": parentPackage,
 			},
 			idAliases: map[string]string{},
-			relationships: syftjson2.Relationship{
+			relationships: model.Relationship{
 				Parent: "some-parent-id",
 				Child:  "some-child-id",
 				Type:   string(artifact.ContainsRelationship),
@@ -388,7 +388,7 @@ func Test_toSyfRelationship(t *testing.T) {
 				"some-child-id": childPackage,
 			},
 			idAliases: map[string]string{},
-			relationships: syftjson2.Relationship{
+			relationships: model.Relationship{
 				Parent: "some-parent-id",
 				Child:  "some-child-id",
 				Type:   string(artifact.ContainsRelationship),

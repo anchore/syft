@@ -9,7 +9,7 @@ import (
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
-	syftjson2 "github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/formats/syftjson/model"
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source"
 )
@@ -48,7 +48,7 @@ func Test_toSourceModel(t *testing.T) {
 	tests := []struct {
 		name     string
 		src      source.Description
-		expected syftjson2.Source
+		expected model.Source
 	}{
 		{
 			name: "directory",
@@ -61,7 +61,7 @@ func Test_toSourceModel(t *testing.T) {
 					Base: "some/base",
 				},
 			},
-			expected: syftjson2.Source{
+			expected: model.Source{
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
@@ -84,7 +84,7 @@ func Test_toSourceModel(t *testing.T) {
 					MIMEType: "text/plain",
 				},
 			},
-			expected: syftjson2.Source{
+			expected: model.Source{
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
@@ -109,7 +109,7 @@ func Test_toSourceModel(t *testing.T) {
 					MediaType:      "type...",
 				},
 			},
-			expected: syftjson2.Source{
+			expected: model.Source{
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
@@ -135,7 +135,7 @@ func Test_toSourceModel(t *testing.T) {
 					Base: "some/base",
 				},
 			},
-			expected: syftjson2.Source{
+			expected: model.Source{
 				ID:   "test-id",
 				Type: "directory",
 				Metadata: source.DirectorySourceMetadata{
@@ -154,7 +154,7 @@ func Test_toSourceModel(t *testing.T) {
 					MIMEType: "text/plain",
 				},
 			},
-			expected: syftjson2.Source{
+			expected: model.Source{
 				ID:   "test-id",
 				Type: "file",
 				Metadata: source.FileSourceMetadata{
@@ -175,7 +175,7 @@ func Test_toSourceModel(t *testing.T) {
 					MediaType:      "type...",
 				},
 			},
-			expected: syftjson2.Source{
+			expected: model.Source{
 				ID:   "test-id",
 				Type: "image",
 				Metadata: source.StereoscopeImageSourceMetadata{
@@ -270,7 +270,7 @@ func Test_toFileMetadataEntry(t *testing.T) {
 	tests := []struct {
 		name     string
 		metadata *file.Metadata
-		want     *syftjson2.FileMetadataEntry
+		want     *model.FileMetadataEntry
 	}{
 		{
 			name: "no metadata",
@@ -280,7 +280,7 @@ func Test_toFileMetadataEntry(t *testing.T) {
 			metadata: &file.Metadata{
 				FileInfo: nil,
 			},
-			want: &syftjson2.FileMetadataEntry{
+			want: &model.FileMetadataEntry{
 				Type: stereoscopeFile.TypeRegular.String(),
 			},
 		},
@@ -291,7 +291,7 @@ func Test_toFileMetadataEntry(t *testing.T) {
 					ModeValue: 1,
 				},
 			},
-			want: &syftjson2.FileMetadataEntry{
+			want: &model.FileMetadataEntry{
 				Mode: 1,
 				Type: stereoscopeFile.TypeRegular.String(),
 			},
