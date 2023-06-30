@@ -12,6 +12,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/packages"
@@ -34,17 +35,8 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 		return err
 	}
 
-	// could be an image or a directory, with or without a scheme
-	// TODO: validate that source is image
+	// note: must be a container image
 	userInput := args[0]
-	si, err := source.ParseInputWithNameVersion(userInput, app.Platform, app.SourceName, app.SourceVersion, app.DefaultImagePullSource)
-	if err != nil {
-		return fmt.Errorf("could not generate source input for packages command: %w", err)
-	}
-
-	if si.Scheme != source.ImageScheme {
-		return fmt.Errorf("attestations are only supported for oci images at this time")
-	}
 
 	eventBus := partybus.NewBus()
 	stereoscope.SetBus(eventBus)
@@ -52,7 +44,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	subscription := eventBus.Subscribe()
 
 	return eventloop.EventLoop(
-		execWorker(app, *si),
+		execWorker(app, userInput),
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
@@ -60,13 +52,48 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	)
 }
 
-func buildSBOM(app *config.Application, si source.Input, errs chan error) (*sbom.SBOM, error) {
-	src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
-	if cleanup != nil {
-		defer cleanup()
+func buildSBOM(app *config.Application, userInput string, errs chan error) (*sbom.SBOM, error) {
+	cfg := source.DetectConfig{
+		DefaultImageSource: app.DefaultImagePullSource,
+	}
+	detection, err := source.Detect(userInput, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("could not deteremine source: %w", err)
+	}
+
+	if detection.IsContainerImage() {
+		return nil, fmt.Errorf("attestations are only supported for oci images at this time")
+	}
+
+	var platform *image.Platform
+
+	if app.Platform != "" {
+		platform, err = image.NewPlatform(app.Platform)
+		if err != nil {
+			return nil, fmt.Errorf("invalid platform: %w", err)
+		}
+	}
+
+	src, err := detection.NewSource(
+		source.DetectionSourceConfig{
+			Alias: source.Alias{
+				Name:    app.SourceName,
+				Version: app.SourceVersion,
+			},
+			RegistryOptions: app.Registry.ToOptions(),
+			Platform:        platform,
+			Exclude: source.ExcludeConfig{
+				Paths: app.Exclusions,
+			},
+			DigestAlgorithms: nil,
+		},
+	)
+
+	if src != nil {
+		defer src.Close()
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
+		return nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
 	}
 
 	s, err := packages.GenerateSBOM(src, errs, app)
@@ -75,20 +102,20 @@ func buildSBOM(app *config.Application, si source.Input, errs chan error) (*sbom
 	}
 
 	if s == nil {
-		return nil, fmt.Errorf("no SBOM produced for %q", si.UserInput)
+		return nil, fmt.Errorf("no SBOM produced for %q", userInput)
 	}
 
 	return s, nil
 }
 
 //nolint:funlen
-func execWorker(app *config.Application, si source.Input) <-chan error {
+func execWorker(app *config.Application, userInput string) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
 		defer bus.Publish(partybus.Event{Type: event.Exit})
 
-		s, err := buildSBOM(app, si, errs)
+		s, err := buildSBOM(app, userInput, errs)
 		if err != nil {
 			errs <- fmt.Errorf("unable to build SBOM: %w", err)
 			return
@@ -136,7 +163,7 @@ func execWorker(app *config.Application, si source.Input) <-chan error {
 			predicateType = "custom"
 		}
 
-		args := []string{"attest", si.UserInput, "--predicate", f.Name(), "--type", predicateType}
+		args := []string{"attest", userInput, "--predicate", f.Name(), "--type", predicateType}
 		if app.Attest.Key != "" {
 			args = append(args, "--key", app.Attest.Key)
 		}

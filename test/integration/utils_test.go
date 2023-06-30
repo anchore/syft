@@ -12,15 +12,17 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Scope, catalogerCfg []string) (sbom.SBOM, *source.Source) {
+func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Scope, catalogerCfg []string) (sbom.SBOM, source.Source) {
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 	userInput := "docker-archive:" + tarPath
-	sourceInput, err := source.ParseInput(userInput, "")
+	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
 	require.NoError(t, err)
-	theSource, cleanupSource, err := source.New(*sourceInput, nil, nil)
-	t.Cleanup(cleanupSource)
+	theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		theSource.Close()
+	})
 
 	c := cataloger.DefaultConfig()
 	c.Catalogers = catalogerCfg
@@ -37,7 +39,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 			LinuxDistribution: actualDistro,
 		},
 		Relationships: relationships,
-		Source:        theSource.Metadata,
+		Source:        theSource.Describe(),
 		Descriptor: sbom.Descriptor{
 			Name:    "syft",
 			Version: "v0.42.0-bogus",
@@ -50,13 +52,15 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 	}, theSource
 }
 
-func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
+func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, source.Source) {
 	userInput := "dir:" + dir
-	sourceInput, err := source.ParseInput(userInput, "")
+	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
 	require.NoError(t, err)
-	theSource, cleanupSource, err := source.New(*sourceInput, nil, nil)
-	t.Cleanup(cleanupSource)
+	theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		theSource.Close()
+	})
 
 	// TODO: this would be better with functional options (after/during API refactor)
 	c := cataloger.DefaultConfig()
@@ -72,6 +76,6 @@ func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, *source.Source) {
 			LinuxDistribution: actualDistro,
 		},
 		Relationships: relationships,
-		Source:        theSource.Metadata,
+		Source:        theSource.Describe(),
 	}, theSource
 }

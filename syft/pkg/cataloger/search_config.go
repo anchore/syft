@@ -1,6 +1,8 @@
 package cataloger
 
-import "github.com/anchore/syft/syft/source"
+import (
+	"github.com/anchore/syft/syft/source"
+)
 
 type SearchConfig struct {
 	IncludeIndexedArchives   bool

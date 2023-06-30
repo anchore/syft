@@ -229,32 +229,34 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 	}
 }
 
-func extractComponents(meta *cyclonedx.Metadata) source.Metadata {
+func extractComponents(meta *cyclonedx.Metadata) source.Description {
 	if meta == nil || meta.Component == nil {
-		return source.Metadata{}
+		return source.Description{}
 	}
 	c := meta.Component
 
-	image := source.ImageMetadata{
-		UserInput:      c.Name,
-		ID:             c.BOMRef,
-		ManifestDigest: c.Version,
-	}
-
 	switch c.Type {
 	case cyclonedx.ComponentTypeContainer:
-		return source.Metadata{
-			Scheme:        source.ImageScheme,
-			ImageMetadata: image,
+		return source.Description{
+			ID: "",
+			// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
+
+			Metadata: source.StereoscopeImageSourceMetadata{
+				UserInput:      c.Name,
+				ID:             c.BOMRef,
+				ManifestDigest: c.Version,
+			},
 		}
 	case cyclonedx.ComponentTypeFile:
-		return source.Metadata{
-			Scheme:        source.FileScheme, // or source.DirectoryScheme
-			Path:          c.Name,
-			ImageMetadata: image,
+		// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
+
+		// TODO: this is lossy... we can't know if this is a file or a directory
+		return source.Description{
+			ID:       "",
+			Metadata: source.FileSourceMetadata{Path: c.Name},
 		}
 	}
-	return source.Metadata{}
+	return source.Description{}
 }
 
 // if there is more than one tool in meta.Tools' list the last item will be used

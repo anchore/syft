@@ -9,6 +9,7 @@ import (
 	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/packages"
@@ -38,10 +39,6 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	}()
 
 	userInput := args[0]
-	si, err := source.ParseInputWithNameVersion(userInput, app.Platform, app.SourceName, app.SourceVersion, app.DefaultImagePullSource)
-	if err != nil {
-		return fmt.Errorf("could not generate source input for packages command: %w", err)
-	}
 
 	eventBus := partybus.NewBus()
 	stereoscope.SetBus(eventBus)
@@ -49,7 +46,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	subscription := eventBus.Subscribe()
 
 	return eventloop.EventLoop(
-		execWorker(app, *si, writer),
+		execWorker(app, userInput, writer),
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
@@ -57,7 +54,8 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	)
 }
 
-func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-chan error {
+//nolint:funlen
+func execWorker(app *config.Application, userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
@@ -72,17 +70,52 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			return
 		}
 
-		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
+		detection, err := source.Detect(
+			userInput,
+			source.DetectConfig{
+				DefaultImageSource: app.DefaultImagePullSource,
+			},
+		)
 		if err != nil {
-			errs <- err
+			errs <- fmt.Errorf("could not deteremine source: %w", err)
 			return
 		}
-		if cleanup != nil {
-			defer cleanup()
+
+		var platform *image.Platform
+
+		if app.Platform != "" {
+			platform, err = image.NewPlatform(app.Platform)
+			if err != nil {
+				errs <- fmt.Errorf("invalid platform: %w", err)
+				return
+			}
+		}
+
+		src, err := detection.NewSource(
+			source.DetectionSourceConfig{
+				Alias: source.Alias{
+					Name:    app.SourceName,
+					Version: app.SourceVersion,
+				},
+				RegistryOptions: app.Registry.ToOptions(),
+				Platform:        platform,
+				Exclude: source.ExcludeConfig{
+					Paths: app.Exclusions,
+				},
+				DigestAlgorithms: nil,
+			},
+		)
+
+		if src != nil {
+			defer src.Close()
+		}
+		if err != nil {
+			errs <- fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
+			return
 		}
 
 		s := sbom.SBOM{
-			Source: src.Metadata,
+			Source: src.Describe(),
 			Descriptor: sbom.Descriptor{
 				Name:          internal.ApplicationName,
 				Version:       version.FromBuild().Version,

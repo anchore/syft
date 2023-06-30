@@ -15,7 +15,7 @@ import (
 type SBOM struct {
 	Artifacts     Artifacts
 	Relationships []artifact.Relationship
-	Source        source.Metadata
+	Source        source.Description
 	Descriptor    Descriptor
 }
 

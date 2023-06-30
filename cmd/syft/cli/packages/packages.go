@@ -7,6 +7,7 @@ import (
 	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
@@ -35,10 +36,6 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 
 	// could be an image or a directory, with or without a scheme
 	userInput := args[0]
-	si, err := source.ParseInputWithNameVersion(userInput, app.Platform, app.SourceName, app.SourceVersion, app.DefaultImagePullSource)
-	if err != nil {
-		return fmt.Errorf("could not generate source input for packages command: %w", err)
-	}
 
 	eventBus := partybus.NewBus()
 	stereoscope.SetBus(eventBus)
@@ -46,7 +43,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	subscription := eventBus.Subscribe()
 
 	return eventloop.EventLoop(
-		execWorker(app, *si, writer),
+		execWorker(app, userInput, writer),
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
@@ -54,17 +51,52 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	)
 }
 
-func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-chan error {
+func execWorker(app *config.Application, userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
 
-		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
-		if cleanup != nil {
-			defer cleanup()
+		detection, err := source.Detect(
+			userInput,
+			source.DetectConfig{
+				DefaultImageSource: app.DefaultImagePullSource,
+			},
+		)
+		if err != nil {
+			errs <- fmt.Errorf("could not deteremine source: %w", err)
+			return
+		}
+
+		var platform *image.Platform
+
+		if app.Platform != "" {
+			platform, err = image.NewPlatform(app.Platform)
+			if err != nil {
+				errs <- fmt.Errorf("invalid platform: %w", err)
+				return
+			}
+		}
+
+		src, err := detection.NewSource(
+			source.DetectionSourceConfig{
+				Alias: source.Alias{
+					Name:    app.SourceName,
+					Version: app.SourceVersion,
+				},
+				RegistryOptions: app.Registry.ToOptions(),
+				Platform:        platform,
+				Exclude: source.ExcludeConfig{
+					Paths: app.Exclusions,
+				},
+				DigestAlgorithms: nil,
+			},
+		)
+
+		if src != nil {
+			defer src.Close()
 		}
 		if err != nil {
-			errs <- fmt.Errorf("failed to construct source from user input %q: %w", si.UserInput, err)
+			errs <- fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
 			return
 		}
 
@@ -75,7 +107,7 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 		}
 
 		if s == nil {
-			errs <- fmt.Errorf("no SBOM produced for %q", si.UserInput)
+			errs <- fmt.Errorf("no SBOM produced for %q", userInput)
 		}
 
 		bus.Publish(partybus.Event{
@@ -86,14 +118,14 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 	return errs
 }
 
-func GenerateSBOM(src *source.Source, errs chan error, app *config.Application) (*sbom.SBOM, error) {
+func GenerateSBOM(src source.Source, errs chan error, app *config.Application) (*sbom.SBOM, error) {
 	tasks, err := eventloop.Tasks(app)
 	if err != nil {
 		return nil, err
 	}
 
 	s := sbom.SBOM{
-		Source: src.Metadata,
+		Source: src.Describe(),
 		Descriptor: sbom.Descriptor{
 			Name:          internal.ApplicationName,
 			Version:       version.FromBuild().Version,
@@ -106,7 +138,7 @@ func GenerateSBOM(src *source.Source, errs chan error, app *config.Application) 
 	return &s, nil
 }
 
-func buildRelationships(s *sbom.SBOM, src *source.Source, tasks []eventloop.Task, errs chan error) {
+func buildRelationships(s *sbom.SBOM, src source.Source, tasks []eventloop.Task, errs chan error) {
 	var relationships []<-chan artifact.Relationship
 	for _, task := range tasks {
 		c := make(chan artifact.Relationship)
