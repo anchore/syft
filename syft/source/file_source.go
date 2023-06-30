@@ -25,7 +25,7 @@ type FileConfig struct {
 	Path             string
 	Exclude          ExcludeConfig
 	DigestAlgorithms []crypto.Hash
-	Alias            *Alias
+	Alias            Alias
 }
 
 type FileSourceMetadata struct {
@@ -101,7 +101,7 @@ func deriveIDFromFile(cfg FileConfig) (artifact.ID, string) {
 	d := digestOfFileContents(cfg.Path)
 	info := d
 
-	if cfg.Alias != nil {
+	if !cfg.Alias.IsEmpty() {
 		// if the user provided an alias, we want to consider that in the artifact ID. This way if the user
 		// scans the same item but is considered to be logically different, then ID will express that.
 		info += fmt.Sprintf(":%s@%s", cfg.Alias.Name, cfg.Alias.Version)
@@ -121,7 +121,7 @@ func (s FileSource) ID() artifact.ID {
 func (s FileSource) Describe() Description {
 	name := path.Base(s.config.Path)
 	version := s.digestForVersion
-	if s.config.Alias != nil {
+	if !s.config.Alias.IsEmpty() {
 		a := s.config.Alias
 		if a.Name != "" {
 			name = a.Name

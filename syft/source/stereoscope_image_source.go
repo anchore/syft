@@ -22,7 +22,7 @@ type StereoscopeImageConfig struct {
 	Platform        *image.Platform
 	RegistryOptions *image.RegistryOptions
 	Exclude         ExcludeConfig
-	Alias           *Alias
+	Alias           Alias
 }
 
 type StereoscopeImageSource struct {
@@ -33,9 +33,13 @@ type StereoscopeImageSource struct {
 }
 
 func NewFromStereoscopeImageObject(img *image.Image, reference string, alias *Alias) (*StereoscopeImageSource, error) {
+	var aliasVal Alias
+	if !alias.IsEmpty() {
+		aliasVal = *alias
+	}
 	cfg := StereoscopeImageConfig{
 		Reference: reference,
-		Alias:     alias,
+		Alias:     aliasVal,
 	}
 	metadata := imageMetadataFromStereoscopeImage(img, cfg.Reference)
 
@@ -81,16 +85,16 @@ func (s StereoscopeImageSource) ID() artifact.ID {
 func (s StereoscopeImageSource) Describe() Description {
 	name := s.metadata.UserInput
 	version := s.metadata.ManifestDigest
-	if s.config.Alias != nil {
-		a := s.config.Alias
-		if a.Name != "" {
-			name = a.Name
-		}
 
-		if a.Version != "" {
-			version = a.Version
-		}
+	a := s.config.Alias
+	if a.Name != "" {
+		name = a.Name
 	}
+
+	if a.Version != "" {
+		version = a.Version
+	}
+
 	return Description{
 		ID:       string(s.id),
 		Name:     name,
@@ -170,7 +174,7 @@ func imageMetadataFromStereoscopeImage(img *image.Image, reference string) Stere
 //
 // in all cases, if an alias is provided, it is additionally considered in the ID calculation. This allows for the
 // same image to be scanned multiple times with different aliases and be considered logically different.
-func deriveIDFromStereoscopeImage(alias *Alias, metadata StereoscopeImageSourceMetadata) artifact.ID {
+func deriveIDFromStereoscopeImage(alias Alias, metadata StereoscopeImageSourceMetadata) artifact.ID {
 	var input string
 
 	if len(metadata.RawManifest) > 0 {
@@ -186,7 +190,7 @@ func deriveIDFromStereoscopeImage(alias *Alias, metadata StereoscopeImageSourceM
 		}
 	}
 
-	if alias != nil {
+	if !alias.IsEmpty() {
 		// if the user provided an alias, we want to consider that in the artifact ID. This way if the user
 		// scans the same item but is considered to be logically different, then ID will express that.
 		aliasStr := fmt.Sprintf(":%s@%s", alias.Name, alias.Version)

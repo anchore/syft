@@ -244,7 +244,7 @@ func Test_FileSource_ID(t *testing.T) {
 			name: "with path and alias",
 			cfg: FileConfig{
 				Path: "./test-fixtures/image-simple/Dockerfile",
-				Alias: &Alias{
+				Alias: Alias{
 					Name:    "name-me-that!",
 					Version: "version-me-this!",
 				},

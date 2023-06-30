@@ -22,7 +22,7 @@ type DirectoryConfig struct {
 	Path    string
 	Base    string
 	Exclude ExcludeConfig
-	Alias   *Alias
+	Alias   Alias
 }
 
 type DirectorySourceMetadata struct {
@@ -68,7 +68,7 @@ func NewFromDirectory(cfg DirectoryConfig) (*DirectorySource, error) {
 // consideration for the path.
 func deriveIDFromDirectory(cfg DirectoryConfig) artifact.ID {
 	var info string
-	if cfg.Alias != nil {
+	if !cfg.Alias.IsEmpty() {
 		// don't use any of the path information -- instead use the alias name and version as the artifact ID.
 		// why? this allows the user to set a dependable stable value for the artifact ID in case the
 		// scanning root changes (e.g. a user scans a directory, then moves it to a new location and scans again).
@@ -115,7 +115,7 @@ func (s DirectorySource) ID() artifact.ID {
 func (s DirectorySource) Describe() Description {
 	name := cleanDirPath(s.config.Path, s.config.Base)
 	version := ""
-	if s.config.Alias != nil {
+	if !s.config.Alias.IsEmpty() {
 		a := s.config.Alias
 		if a.Name != "" {
 			name = a.Name

@@ -466,7 +466,7 @@ func Test_DirectorySource_ID(t *testing.T) {
 			name: "to dir with name and version",
 			cfg: DirectoryConfig{
 				Path: "./test-fixtures",
-				Alias: &Alias{
+				Alias: Alias{
 					Name:    "name-me-that!",
 					Version: "version-me-this!",
 				},
@@ -477,7 +477,7 @@ func Test_DirectorySource_ID(t *testing.T) {
 			name: "to different dir with name and version",
 			cfg: DirectoryConfig{
 				Path: "./test-fixtures/image-simple",
-				Alias: &Alias{
+				Alias: Alias{
 					Name:    "name-me-that!",
 					Version: "version-me-this!",
 				},

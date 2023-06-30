@@ -93,7 +93,7 @@ func execWorker(app *config.Application, userInput string, writer sbom.Writer) <
 
 		src, err := detection.NewSource(
 			source.DetectionSourceConfig{
-				Alias: &source.Alias{
+				Alias: source.Alias{
 					Name:    app.SourceName,
 					Version: app.SourceVersion,
 				},

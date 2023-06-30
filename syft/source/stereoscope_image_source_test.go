@@ -105,7 +105,7 @@ func Test_StereoscopeImage_Exclusions(t *testing.T) {
 func Test_StereoscopeImageSource_ID(t *testing.T) {
 	tests := []struct {
 		name     string
-		alias    *Alias
+		alias    Alias
 		metadata StereoscopeImageSourceMetadata
 		want     artifact.ID
 	}{
@@ -195,7 +195,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "always consider alias (first)",
-			alias: &Alias{
+			alias: Alias{
 				Name:    "alias",
 				Version: "version",
 			},
@@ -225,7 +225,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "always consider alias (last)",
-			alias: &Alias{
+			alias: Alias{
 				Name:    "alias",
 				Version: "version",
 			},

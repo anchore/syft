@@ -82,7 +82,7 @@ func Detect(userInput string, cfg DetectConfig) (*Detection, error) {
 }
 
 type DetectionSourceConfig struct {
-	Alias            *Alias
+	Alias            Alias
 	RegistryOptions  *image.RegistryOptions
 	Platform         *image.Platform
 	Exclude          ExcludeConfig

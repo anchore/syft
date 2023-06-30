@@ -76,7 +76,7 @@ func buildSBOM(app *config.Application, userInput string, errs chan error) (*sbo
 
 	src, err := detection.NewSource(
 		source.DetectionSourceConfig{
-			Alias: &source.Alias{
+			Alias: source.Alias{
 				Name:    app.SourceName,
 				Version: app.SourceVersion,
 			},
