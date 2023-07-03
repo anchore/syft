@@ -78,6 +78,12 @@ The chocolatey distribution of syft is community maintained and not distributed 
 choco install syft -y
 ```
 
+### Scoop
+
+```powershell
+scoop install syft
+```
+
 ### Homebrew
 ```bash
 brew install syft
