@@ -12,40 +12,36 @@ import (
 
 // This should be a function that just surfaces licenses already validated in the package struct
 func encodeLicenses(p pkg.Package) *cyclonedx.Licenses {
-	spdxc, otherc, ex := separateLicenses(p)
-	if len(otherc) > 0 {
+	spdx, other, ex := separateLicenses(p)
+	out := spdx
+	out = append(out, other...)
+
+	if len(other) > 0 || len(spdx) > 0 {
 		// found non spdx related licenses
 		// build individual license choices for each
 		// complex expressions are not combined and set as NAME fields
 		for _, e := range ex {
-			otherc = append(otherc, cyclonedx.LicenseChoice{
+			if e == "" {
+				continue
+			}
+			out = append(out, cyclonedx.LicenseChoice{
 				License: &cyclonedx.License{
 					Name: e,
 				},
 			})
 		}
-		otherc = append(otherc, spdxc...)
-		return &otherc
-	}
-
-	if len(spdxc) > 0 {
-		for _, l := range ex {
-			spdxc = append(spdxc, cyclonedx.LicenseChoice{
-				License: &cyclonedx.License{
-					Name: l,
-				},
+	} else if len(ex) > 0 {
+		// only expressions found
+		e := mergeSPDX(ex)
+		if e != "" {
+			out = append(out, cyclonedx.LicenseChoice{
+				Expression: e,
 			})
 		}
-		return &spdxc
 	}
 
-	if len(ex) > 0 {
-		// only expressions found
-		var expressions cyclonedx.Licenses
-		expressions = append(expressions, cyclonedx.LicenseChoice{
-			Expression: mergeSPDX(ex),
-		})
-		return &expressions
+	if len(out) > 0 {
+		return &out
 	}
 
 	return nil
@@ -185,20 +181,20 @@ func reduceOuter(expression string) string {
 
 	for _, c := range expression {
 		if string(c) == "(" && openCount > 0 {
-			fmt.Fprintf(&sb, "%c", c)
+			_, _ = fmt.Fprintf(&sb, "%c", c)
 		}
 		if string(c) == "(" {
 			openCount++
 			continue
 		}
 		if string(c) == ")" && openCount > 1 {
-			fmt.Fprintf(&sb, "%c", c)
+			_, _ = fmt.Fprintf(&sb, "%c", c)
 		}
 		if string(c) == ")" {
 			openCount--
 			continue
 		}
-		fmt.Fprintf(&sb, "%c", c)
+		_, _ = fmt.Fprintf(&sb, "%c", c)
 	}
 
 	return sb.String()

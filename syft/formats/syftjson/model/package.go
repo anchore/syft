@@ -102,7 +102,7 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	err := unpackMetadata(p, unpacker)
+	err := unpackPkgMetadata(p, unpacker)
 	if errors.Is(err, errUnknownMetadataType) {
 		log.Warnf("unknown package metadata type=%q for packageID=%q", p.MetadataType, p.ID)
 		return nil
@@ -111,7 +111,7 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-func unpackMetadata(p *Package, unpacker packageMetadataUnpacker) error {
+func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 	p.MetadataType = pkg.CleanMetadataType(unpacker.MetadataType)
 
 	typ, ok := pkg.MetadataTypeByName[p.MetadataType]

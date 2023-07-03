@@ -110,7 +110,7 @@ func formatCPE(cpeString string) string {
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
-func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclonedx.Metadata {
+func toBomDescriptor(name, version string, srcMetadata source.Description) *cyclonedx.Metadata {
 	return &cyclonedx.Metadata{
 		Timestamp: time.Now().Format(time.RFC3339),
 		Tools: &[]cyclonedx.Tool{
@@ -170,35 +170,56 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 	return result
 }
 
-func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component {
+func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Component {
 	name := srcMetadata.Name
-	switch srcMetadata.Scheme {
-	case source.ImageScheme:
+	version := srcMetadata.Version
+	switch metadata := srcMetadata.Metadata.(type) {
+	case source.StereoscopeImageSourceMetadata:
 		if name == "" {
-			name = srcMetadata.ImageMetadata.UserInput
+			name = metadata.UserInput
 		}
-		bomRef, err := artifact.IDByHash(srcMetadata.ImageMetadata.ID)
+		if version == "" {
+			version = metadata.ManifestDigest
+		}
+		bomRef, err := artifact.IDByHash(metadata.ID)
 		if err != nil {
-			log.Warnf("unable to get fingerprint of image metadata=%s: %+v", srcMetadata.ImageMetadata.ID, err)
+			log.Warnf("unable to get fingerprint of source image metadata=%s: %+v", metadata.ID, err)
 		}
 		return &cyclonedx.Component{
 			BOMRef:  string(bomRef),
 			Type:    cyclonedx.ComponentTypeContainer,
 			Name:    name,
-			Version: srcMetadata.ImageMetadata.ManifestDigest,
+			Version: version,
 		}
-	case source.DirectoryScheme, source.FileScheme:
+	case source.DirectorySourceMetadata:
 		if name == "" {
-			name = srcMetadata.Path
+			name = metadata.Path
 		}
-		bomRef, err := artifact.IDByHash(srcMetadata.Path)
+		bomRef, err := artifact.IDByHash(metadata.Path)
 		if err != nil {
-			log.Warnf("unable to get fingerprint of source metadata path=%s: %+v", srcMetadata.Path, err)
+			log.Warnf("unable to get fingerprint of source directory metadata path=%s: %+v", metadata.Path, err)
 		}
 		return &cyclonedx.Component{
 			BOMRef: string(bomRef),
-			Type:   cyclonedx.ComponentTypeFile,
-			Name:   name,
+			// TODO: this is lossy... we can't know if this is a file or a directory
+			Type:    cyclonedx.ComponentTypeFile,
+			Name:    name,
+			Version: version,
+		}
+	case source.FileSourceMetadata:
+		if name == "" {
+			name = metadata.Path
+		}
+		bomRef, err := artifact.IDByHash(metadata.Path)
+		if err != nil {
+			log.Warnf("unable to get fingerprint of source file metadata path=%s: %+v", metadata.Path, err)
+		}
+		return &cyclonedx.Component{
+			BOMRef: string(bomRef),
+			// TODO: this is lossy... we can't know if this is a file or a directory
+			Type:    cyclonedx.ComponentTypeFile,
+			Name:    name,
+			Version: version,
 		}
 	}
 

@@ -70,8 +70,10 @@
  "artifactRelationships": [],
  "source": {
   "id": "c8ac88bbaf3d1c036f6a1d601c3d52bafbf05571c97d68322e7cb3a7ecaa304f",
+  "name": "user-image-input",
+  "version": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
   "type": "image",
-  "target": {
+  "metadata": {
    "userInput": "user-image-input",
    "imageID": "sha256:a3c61dc134d2f31b415c50324e75842d7f91622f39a89468e51938330b3fd3af",
    "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
@@ -115,9 +117,5 @@
   "configuration": {
    "config-key": "config-value"
   }
- },
- "schema": {
-  "version": "8.0.0",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-8.0.0.json"
  }
 }

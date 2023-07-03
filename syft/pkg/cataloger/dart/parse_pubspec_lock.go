@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"sort"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -36,6 +36,23 @@ type pubspecLockDescription struct {
 	Path        string `yaml:"path" mapstructure:"path"`
 	Ref         string `yaml:"ref" mapstructure:"ref"`
 	ResolvedRef string `yaml:"resolved-ref" mapstructure:"resolved-ref"`
+}
+
+func (p *pubspecLockDescription) UnmarshalYAML(value *yaml.Node) error {
+	type pld pubspecLockDescription
+	var p2 pld
+
+	if value.Decode(&p.Name) == nil {
+		return nil
+	}
+
+	if err := value.Decode(&p2); err != nil {
+		return err
+	}
+
+	*p = pubspecLockDescription(p2)
+
+	return nil
 }
 
 func parsePubspecLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
