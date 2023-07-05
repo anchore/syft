@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"unsafe"
@@ -9,7 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func runModel(_ testing.TB, m tea.Model, iterations int, message tea.Msg) string {
+func runModel(t testing.TB, m tea.Model, iterations int, message tea.Msg) string {
+	t.Helper()
 	if iterations == 0 {
 		iterations = 1
 	}
@@ -23,7 +23,7 @@ func runModel(_ testing.TB, m tea.Model, iterations int, message tea.Msg) string
 		var nextCmds []tea.Cmd
 		var next tea.Cmd
 		for _, msg := range msgs {
-			fmt.Printf("Message: %+v %+v\n", reflect.TypeOf(msg), msg)
+			t.Logf("Message: %+v %+v\n", reflect.TypeOf(msg), msg)
 			m, next = m.Update(msg)
 			nextCmds = append(nextCmds, next)
 		}

@@ -3,7 +3,7 @@
 ## Getting started
 
 In order to test and develop in this repo you will need the following dependencies installed:
-- Golang >= 1.20
+- Golang
 - docker
 - make
 
