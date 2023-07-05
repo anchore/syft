@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/packages"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
@@ -74,18 +75,23 @@ func buildSBOM(app *config.Application, userInput string, errs chan error) (*sbo
 		}
 	}
 
+	hashers, err := file.Hashers(app.Source.File.Digests...)
+	if err != nil {
+		return nil, fmt.Errorf("invalid hash: %w", err)
+	}
+
 	src, err := detection.NewSource(
 		source.DetectionSourceConfig{
 			Alias: source.Alias{
-				Name:    app.SourceName,
-				Version: app.SourceVersion,
+				Name:    app.Source.Name,
+				Version: app.Source.Version,
 			},
 			RegistryOptions: app.Registry.ToOptions(),
 			Platform:        platform,
 			Exclude: source.ExcludeConfig{
 				Paths: app.Exclusions,
 			},
-			DigestAlgorithms: nil,
+			DigestAlgorithms: hashers,
 		},
 	)
 

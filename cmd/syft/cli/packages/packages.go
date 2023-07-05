@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
@@ -77,18 +78,24 @@ func execWorker(app *config.Application, userInput string, writer sbom.Writer) <
 			}
 		}
 
+		hashers, err := file.Hashers(app.Source.File.Digests...)
+		if err != nil {
+			errs <- fmt.Errorf("invalid hash: %w", err)
+			return
+		}
+
 		src, err := detection.NewSource(
 			source.DetectionSourceConfig{
 				Alias: source.Alias{
-					Name:    app.SourceName,
-					Version: app.SourceVersion,
+					Name:    app.Source.Name,
+					Version: app.Source.Version,
 				},
 				RegistryOptions: app.Registry.ToOptions(),
 				Platform:        platform,
 				Exclude: source.ExcludeConfig{
 					Paths: app.Exclusions,
 				},
-				DigestAlgorithms: nil,
+				DigestAlgorithms: hashers,
 			},
 		)
 
