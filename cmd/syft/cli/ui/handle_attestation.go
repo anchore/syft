@@ -190,10 +190,15 @@ func (l attestLogFrame) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case attestLogFrameTickMsg:
 		l.lines = l.reader.Lines()
+		// TODO: remove me
+		fmt.Printf("lines: %#v\n", l.lines)
 
 		l.completed = progress.IsCompleted(l.prog)
 		err := l.prog.Error()
 		l.failed = err != nil && !progress.IsErrCompleted(err)
+
+		fmt.Printf("completed: %#v\n", l.completed)
+		fmt.Printf("failed: %#v\n", l.failed)
 
 		tickCmd := l.handleTick(msg)
 
