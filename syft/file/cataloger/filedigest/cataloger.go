@@ -10,10 +10,11 @@ import (
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
-	internal2 "github.com/anchore/syft/syft/file/cataloger/internal"
+	intCataloger "github.com/anchore/syft/syft/file/cataloger/internal"
 )
 
 var ErrUndigestableFile = errors.New("undigestable file")
@@ -33,7 +34,7 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 	var locations []file.Location
 
 	if len(coordinates) == 0 {
-		locations = internal2.AllRegularFiles(resolver)
+		locations = intCataloger.AllRegularFiles(resolver)
 	} else {
 		for _, c := range coordinates {
 			locations = append(locations, file.NewLocationFromCoordinates(c))
@@ -82,7 +83,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	}
 	defer internal.CloseAndLogError(contentReader, location.VirtualPath)
 
-	digests, err := file.NewDigestsFromFile(contentReader, i.hashes)
+	digests, err := intFile.NewDigestsFromFile(contentReader, i.hashes)
 	if err != nil {
 		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.RealPath, Err: err}
 	}
