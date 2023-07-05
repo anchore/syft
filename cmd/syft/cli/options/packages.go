@@ -86,11 +86,11 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 		return err
 	}
 
-	if err := v.BindPFlag("source-name", flags.Lookup("source-name")); err != nil {
+	if err := v.BindPFlag("source.name", flags.Lookup("source-name")); err != nil {
 		return err
 	}
 
-	if err := v.BindPFlag("source-version", flags.Lookup("source-version")); err != nil {
+	if err := v.BindPFlag("source.version", flags.Lookup("source-version")); err != nil {
 		return err
 	}
 

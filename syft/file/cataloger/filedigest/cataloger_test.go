@@ -13,6 +13,7 @@ import (
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 )
@@ -40,7 +41,7 @@ func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Has
 			h := hash.New()
 			h.Write(b)
 			digests[file.NewLocation(f).Coordinates] = append(digests[file.NewLocation(f).Coordinates], file.Digest{
-				Algorithm: file.CleanDigestAlgorithmName(hash.String()),
+				Algorithm: intFile.CleanDigestAlgorithmName(hash.String()),
 				Value:     fmt.Sprintf("%x", h.Sum(nil)),
 			})
 		}

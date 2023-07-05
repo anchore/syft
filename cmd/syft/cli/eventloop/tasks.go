@@ -1,13 +1,10 @@
 package eventloop
 
 import (
-	"crypto"
-	"fmt"
-
 	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/file/cataloger/filedigest"
 	"github.com/anchore/syft/syft/file/cataloger/filemetadata"
@@ -89,23 +86,9 @@ func generateCatalogFileDigestsTask(app *config.Application) (Task, error) {
 		return nil, nil
 	}
 
-	supportedHashAlgorithms := make(map[string]crypto.Hash)
-	for _, h := range []crypto.Hash{
-		crypto.MD5,
-		crypto.SHA1,
-		crypto.SHA256,
-	} {
-		supportedHashAlgorithms[file.DigestAlgorithmName(h)] = h
-	}
-
-	var hashes []crypto.Hash
-	for _, hashStr := range app.FileMetadata.Digests {
-		name := file.CleanDigestAlgorithmName(hashStr)
-		hashObj, ok := supportedHashAlgorithms[name]
-		if !ok {
-			return nil, fmt.Errorf("unsupported hash algorithm: %s", hashStr)
-		}
-		hashes = append(hashes, hashObj)
+	hashes, err := file.Hashers(app.FileMetadata.Digests...)
+	if err != nil {
+		return nil, err
 	}
 
 	digestsCataloger := filedigest.NewCataloger(hashes)

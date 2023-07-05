@@ -605,7 +605,7 @@ file-metadata:
     # SYFT_FILE_METADATA_CATALOGER_SCOPE env var
     scope: "squashed"
 
-  # the file digest algorithms to use when cataloging files (options: "sha256", "md5", "sha1")
+  # the file digest algorithms to use when cataloging files (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
   # SYFT_FILE_METADATA_DIGESTS env var
   digests: ["sha256"]
 
@@ -643,11 +643,27 @@ secrets:
   # SYFT_SECRETS_EXCLUDE_PATTERN_NAMES env var
   exclude-pattern-names: []
 
+# options that apply to all scan sources
+source:
+  # alias name for the source
+  # SYFT_SOURCE_NAME env var; --source-name flag
+  name: ""
+   
+  # alias version for the source
+  # SYFT_SOURCE_VERSION env var; --source-version flag
+  version: ""
+   
+  # options affecting the file source type
+  file:
+    # the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
+    digests: ["sha256"]
+
 # options when pulling directly from a registry via the "registry:" scheme
 registry:
   # skip TLS verification when communicating with the registry
   # SYFT_REGISTRY_INSECURE_SKIP_TLS_VERIFY env var
   insecure-skip-tls-verify: false
+
   # use http instead of https when connecting to the registry
   # SYFT_REGISTRY_INSECURE_USE_HTTP env var
   insecure-use-http: false
