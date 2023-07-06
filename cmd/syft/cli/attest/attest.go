@@ -16,11 +16,11 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/packages"
+	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
@@ -38,6 +38,13 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 
 	// note: must be a container image
 	userInput := args[0]
+
+	_, err = exec.LookPath("cosign")
+	if err != nil {
+		// when cosign is not installed the error will be rendered like so:
+		// 2023/06/30 08:31:52 error during command execution: 'syft attest' requires cosign to be installed: exec: "cosign": executable file not found in $PATH
+		return fmt.Errorf("'syft attest' requires cosign to be installed: %w", err)
+	}
 
 	eventBus := partybus.NewBus()
 	stereoscope.SetBus(eventBus)
@@ -119,7 +126,7 @@ func execWorker(app *config.Application, userInput string) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
-		defer bus.Publish(partybus.Event{Type: event.Exit})
+		defer bus.Exit()
 
 		s, err := buildSBOM(app, userInput, errs)
 		if err != nil {
@@ -207,8 +214,8 @@ func execWorker(app *config.Application, userInput string) <-chan error {
 					Context: "cosign",
 				},
 				Value: &monitor.ShellProgress{
-					Reader: r,
-					Manual: mon,
+					Reader:       r,
+					Progressable: mon,
 				},
 			},
 		)

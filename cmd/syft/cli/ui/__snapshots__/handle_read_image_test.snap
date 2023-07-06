@@ -1,0 +1,8 @@
+
+[TestHandler_handleReadImage/read_image_in_progress - 1]
+ ⠋ Parsing image                   ━━━━━━━━━━━━━━━━━━━━                                         id
+---
+
+[TestHandler_handleReadImage/read_image_complete - 1]
+ ✔ Parsed image                                                                                 id
+---

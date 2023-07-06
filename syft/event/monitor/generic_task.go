@@ -8,7 +8,7 @@ import (
 
 type ShellProgress struct {
 	io.Reader
-	*progress.Manual
+	progress.Progressable
 }
 
 type Title struct {
