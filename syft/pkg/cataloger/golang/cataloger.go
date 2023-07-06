@@ -6,7 +6,7 @@ package golang
 import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -37,7 +37,7 @@ func NewGoModuleBinaryCataloger(opts GoCatalogerOpts) pkg.Cataloger {
 }
 
 type progressingCataloger struct {
-	progress  *event.CatalogerTask
+	progress  *monitor.CatalogerTask
 	cataloger *generic.Cataloger
 }
 

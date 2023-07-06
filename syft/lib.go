@@ -94,10 +94,10 @@ func newSourceRelationshipsFromCatalog(src source.Source, c *pkg.Collection) []a
 
 // SetLogger sets the logger object used for all syft logging calls.
 func SetLogger(logger logger.Logger) {
-	log.Log = logger
+	log.Set(logger)
 }
 
 // SetBus sets the event bus for all syft library bus publish events onto (in-library subscriptions are not allowed).
 func SetBus(b *partybus.Bus) {
-	bus.SetPublisher(b)
+	bus.Set(b)
 }

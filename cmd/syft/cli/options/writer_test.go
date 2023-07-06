@@ -191,6 +191,8 @@ func Test_newSBOMMultiWriter(t *testing.T) {
 					if e.file != "" {
 						assert.FileExists(t, tmp+e.file)
 					}
+				case *sbomPublisher:
+					assert.Equal(t, string(w.format.ID()), e.format)
 				default:
 					t.Fatalf("unknown writer type: %T", w)
 				}

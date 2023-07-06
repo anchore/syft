@@ -21,7 +21,7 @@ import (
 
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
@@ -30,14 +30,14 @@ import (
 type goLicenses struct {
 	opts                  GoCatalogerOpts
 	localModCacheResolver file.WritableResolver
-	progress              *event.CatalogerTask
+	progress              *monitor.CatalogerTask
 }
 
 func newGoLicenses(opts GoCatalogerOpts) goLicenses {
 	return goLicenses{
 		opts:                  opts,
 		localModCacheResolver: modCacheResolver(opts.localModCacheDir),
-		progress: &event.CatalogerTask{
+		progress: &monitor.CatalogerTask{
 			SubStatus:          true,
 			RemoveOnCompletion: true,
 			Title:              "Downloading go mod",
@@ -195,7 +195,7 @@ func processCaps(s string) string {
 	})
 }
 
-func getModule(progress *event.CatalogerTask, proxies []string, moduleName, moduleVersion string) (fsys fs.FS, err error) {
+func getModule(progress *monitor.CatalogerTask, proxies []string, moduleName, moduleVersion string) (fsys fs.FS, err error) {
 	for _, proxy := range proxies {
 		u, _ := url.Parse(proxy)
 		if proxy == "direct" {
@@ -217,7 +217,7 @@ func getModule(progress *event.CatalogerTask, proxies []string, moduleName, modu
 	return
 }
 
-func getModuleProxy(progress *event.CatalogerTask, proxy string, moduleName string, moduleVersion string) (out fs.FS, _ error) {
+func getModuleProxy(progress *monitor.CatalogerTask, proxy string, moduleName string, moduleVersion string) (out fs.FS, _ error) {
 	u := fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion)
 	progress.SetValue(u)
 	// get the module zip
@@ -265,7 +265,7 @@ func findVersionPath(f fs.FS, dir string) string {
 	return ""
 }
 
-func getModuleRepository(progress *event.CatalogerTask, moduleName string, moduleVersion string) (fs.FS, error) {
+func getModuleRepository(progress *monitor.CatalogerTask, moduleName string, moduleVersion string) (fs.FS, error) {
 	repoName := moduleName
 	parts := strings.Split(moduleName, "/")
 	if len(parts) > 2 {
