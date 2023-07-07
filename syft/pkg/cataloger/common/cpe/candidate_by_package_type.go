@@ -356,6 +356,11 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 			candidateKey{PkgName: "redis"},
 			candidateRemovals{VendorsToRemove: []string{"redis"}},
 		},
+		{
+			pkg.PythonPkg,
+			candidateKey{PkgName: "kubernetes"},
+			candidateRemovals{ProductsToRemove: []string{"kubernetes"}},
+		},
 		// NPM packages
 		{
 			pkg.NpmPkg,
