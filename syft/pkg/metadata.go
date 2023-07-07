@@ -42,6 +42,7 @@ const (
 	RDescriptionFileMetadataType         MetadataType = "RDescriptionFileMetadataType"
 	RpmMetadataType                      MetadataType = "RpmMetadata"
 	RustCargoPackageMetadataType         MetadataType = "RustCargoPackageMetadata"
+	SwiftPackageManagerMetadataType      MetadataType = "SwiftPackageManagerMetadata"
 )
 
 var AllMetadataTypes = []MetadataType{
@@ -76,6 +77,7 @@ var AllMetadataTypes = []MetadataType{
 	RebarLockMetadataType,
 	RpmMetadataType,
 	RustCargoPackageMetadataType,
+	SwiftPackageManagerMetadataType,
 }
 
 var MetadataTypeByName = map[MetadataType]reflect.Type{
@@ -110,6 +112,7 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	RebarLockMetadataType:                reflect.TypeOf(RebarLockMetadata{}),
 	RpmMetadataType:                      reflect.TypeOf(RpmMetadata{}),
 	RustCargoPackageMetadataType:         reflect.TypeOf(CargoPackageMetadata{}),
+	SwiftPackageManagerMetadataType:      reflect.TypeOf(SwiftPackageManagerMetadata{}),
 }
 
 func CleanMetadataType(typ MetadataType) MetadataType {

@@ -356,6 +356,18 @@ var dirOnlyTestCases = []testCase{
 			"unicode_util_compat": "0.7.0",
 		},
 	},
+	{
+		name:        "find swift package manager packages",
+		pkgType:     pkg.SwiftPkg,
+		pkgLanguage: pkg.Swift,
+		pkgInfo: map[string]string{
+			"swift-algorithms":       "1.0.0",
+			"swift-async-algorithms": "0.1.0",
+			"swift-atomics":          "1.1.0",
+			"swift-collections":      "1.0.4",
+			"swift-numerics":         "1.0.2",
+		},
+	},
 }
 
 var commonTestCases = []testCase{
