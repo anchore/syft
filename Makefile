@@ -320,7 +320,7 @@ cpe-index:  ## Build the CPE index
 .PHONY: build
 build: $(SNAPSHOT_DIR)  ## Build release snapshot binaries and packages
 
-$(SNAPSHOT_DIR): cpe-index  ## Build snapshot release binaries and packages
+$(SNAPSHOT_DIR):  ## Build snapshot release binaries and packages
 	$(call title,Building snapshot artifacts)
 
 	# create a config with the dist dir overridden
