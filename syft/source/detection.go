@@ -87,6 +87,7 @@ type DetectionSourceConfig struct {
 	Platform         *image.Platform
 	Exclude          ExcludeConfig
 	DigestAlgorithms []crypto.Hash
+	BasePath         string
 }
 
 func DefaultDetectionSourceConfig() DetectionSourceConfig {
@@ -117,10 +118,14 @@ func (d Detection) NewSource(cfg DetectionSourceConfig) (Source, error) {
 			},
 		)
 	case directoryType:
+		base := cfg.BasePath
+		if base == "" {
+			base = d.location
+		}
 		src, err = NewFromDirectory(
 			DirectoryConfig{
 				Path:    d.location,
-				Base:    d.location,
+				Base:    base,
 				Exclude: cfg.Exclude,
 				Alias:   cfg.Alias,
 			},

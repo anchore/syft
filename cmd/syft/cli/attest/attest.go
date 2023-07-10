@@ -38,14 +38,6 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 
 	// note: must be a container image
 	userInput := args[0]
-	si, err := source.ParseInputWithNameVersion(userInput, app.Platform, app.SourceName, app.SourceVersion, app.DefaultImagePullSource)
-	if err != nil {
-		return fmt.Errorf("could not generate source input for packages command: %w", err)
-	}
-
-	if si.Scheme != source.ImageScheme {
-		return fmt.Errorf("attestations are only supported for oci images at this time")
-	}
 
 	_, err = exec.LookPath("cosign")
 	if err != nil {
@@ -107,6 +99,7 @@ func buildSBOM(app *config.Application, userInput string, errs chan error) (*sbo
 				Paths: app.Exclusions,
 			},
 			DigestAlgorithms: hashers,
+			BasePath:         app.BasePath,
 		},
 	)
 

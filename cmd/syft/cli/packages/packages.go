@@ -97,6 +97,7 @@ func execWorker(app *config.Application, userInput string, writer sbom.Writer) <
 					Paths: app.Exclusions,
 				},
 				DigestAlgorithms: hashers,
+				BasePath:         app.BasePath,
 			},
 		)
 
