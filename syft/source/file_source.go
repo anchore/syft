@@ -13,6 +13,7 @@ import (
 	"github.com/opencontainers/go-digest"
 
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -67,7 +68,7 @@ func NewFromFile(cfg FileConfig) (*FileSource, error) {
 
 		defer fh.Close()
 
-		digests, err = file.NewDigestsFromFile(fh, cfg.DigestAlgorithms)
+		digests, err = intFile.NewDigestsFromFile(fh, cfg.DigestAlgorithms)
 		if err != nil {
 			return nil, fmt.Errorf("unable to calculate digests for file=%q: %w", cfg.Path, err)
 		}

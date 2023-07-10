@@ -332,7 +332,20 @@ func (r directoryIndexer) addFileToIndex(p string, info os.FileInfo) error {
 func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string, error) {
 	linkTarget, err := os.Readlink(p)
 	if err != nil {
-		return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
+		isOnWindows := windows.HostRunningOnWindows()
+		if isOnWindows {
+			p = windows.FromPosix(p)
+		}
+
+		linkTarget, err = filepath.EvalSymlinks(p)
+
+		if isOnWindows {
+			p = windows.ToPosix(p)
+		}
+
+		if err != nil {
+			return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
+		}
 	}
 
 	if filepath.IsAbs(linkTarget) {

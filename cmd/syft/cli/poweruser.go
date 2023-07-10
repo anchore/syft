@@ -41,6 +41,7 @@ func PowerUser(v *viper.Viper, app *config.Application, ro *options.RootOptions)
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if app.CheckForAppUpdate {
 				checkForApplicationUpdate()
+				// TODO: this is broke, the bus isn't available yet
 			}
 			return poweruser.Run(cmd.Context(), app, args)
 		},
