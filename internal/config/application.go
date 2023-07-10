@@ -64,6 +64,7 @@ type Application struct {
 	Source                 sourceCfg          `yaml:"source" json:"source" mapstructure:"source"`
 	Parallelism            int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"`                                           // the number of catalog workers to run in parallel
 	DefaultImagePullSource string             `yaml:"default-image-pull-source" json:"default-image-pull-source" mapstructure:"default-image-pull-source"` // specify default image pull source
+	BasePath               string             `yaml:"base-path" json:"base-path" mapstructure:"base-path"`                                                 // specify base path for all file paths
 }
 
 func (cfg Application) ToCatalogerConfig() cataloger.Config {

@@ -99,6 +99,7 @@ func buildSBOM(app *config.Application, userInput string, errs chan error) (*sbo
 				Paths: app.Exclusions,
 			},
 			DigestAlgorithms: hashers,
+			BasePath:         app.BasePath,
 		},
 	)
 
