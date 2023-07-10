@@ -461,6 +461,17 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 				VendorsToRemove:  []string{"gradle"},
 			},
 		},
+		// Ruby packages
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "redis"},
+			candidateRemovals{ProductsToRemove: []string{"redis"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "grpc"},
+			candidateRemovals{ProductsToRemove: []string{"grpc"}},
+		},
 	})
 
 // buildCandidateLookup is a convenience function for creating the defaultCandidateAdditions set
