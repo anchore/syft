@@ -28,7 +28,7 @@ func TestHandler_handleAttestationStarted(t *testing.T) {
 			// note: this model depends on a background reader. Multiple iterations ensures that the
 			// reader has time to at least start and process the test fixture before the runModel
 			// test harness completes (which is a fake event loop anyway).
-			iterations: 2,
+			iterations: 10,
 			eventFn: func(t *testing.T) partybus.Event {
 				reader := strings.NewReader("contents\nof\nstuff!")
 
