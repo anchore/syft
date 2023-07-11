@@ -25,15 +25,10 @@ func GetValidator(format cyclonedx.BOMFileFormat) sbom.Validator {
 		if err != nil {
 			return err
 		}
-		// random JSON does not necessarily cause an error (e.g. SPDX)
-		if format == cyclonedx.BOMFileFormatXML {
-			if (!strings.Contains(bom.XMLNS, cycloneDXXmlSchema) || cyclonedx.BOM{} == *bom) {
-				return fmt.Errorf("not a valid CycloneDX document")
-			}
-		} else {
-			if (bom.Components == nil || cyclonedx.BOM{} == *bom) {
-				return fmt.Errorf("not a valid CycloneDX document")
-			}
+
+		xmlWithoutNS := format == cyclonedx.BOMFileFormatXML && !strings.Contains(bom.XMLNS, cycloneDXXmlSchema)
+		if (cyclonedx.BOM{} == *bom || bom.Components == nil || xmlWithoutNS) {
+			return fmt.Errorf("not a valid CycloneDX document")
 		}
 		return nil
 	}
