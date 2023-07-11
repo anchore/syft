@@ -1,6 +1,7 @@
 package options
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/mitchellh/go-homedir"
 
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/formats"
 	"github.com/anchore/syft/syft/formats/table"
@@ -114,14 +116,6 @@ type sbomMultiWriter struct {
 	writers []sbom.Writer
 }
 
-type nopWriteCloser struct {
-	io.Writer
-}
-
-func (n nopWriteCloser) Close() error {
-	return nil
-}
-
 // newSBOMMultiWriter create all report writers from input options; if a file is not specified the given defaultWriter is used
 func newSBOMMultiWriter(options ...sbomWriterDescription) (_ *sbomMultiWriter, err error) {
 	if len(options) == 0 {
@@ -133,9 +127,8 @@ func newSBOMMultiWriter(options ...sbomWriterDescription) (_ *sbomMultiWriter, e
 	for _, option := range options {
 		switch len(option.Path) {
 		case 0:
-			out.writers = append(out.writers, &sbomStreamWriter{
+			out.writers = append(out.writers, &sbomPublisher{
 				format: option.Format,
-				out:    nopWriteCloser{Writer: os.Stdout},
 			})
 		default:
 			// create any missing subdirectories
@@ -193,5 +186,21 @@ func (w *sbomStreamWriter) Close() error {
 	if closer, ok := w.out.(io.Closer); ok {
 		return closer.Close()
 	}
+	return nil
+}
+
+// sbomPublisher implements sbom.Writer that publishes results to the event bus
+type sbomPublisher struct {
+	format sbom.Format
+}
+
+// Write the provided SBOM to the data stream
+func (w *sbomPublisher) Write(s sbom.SBOM) error {
+	buf := &bytes.Buffer{}
+	if err := w.format.Encode(buf, s); err != nil {
+		return fmt.Errorf("unable to encode SBOM: %w", err)
+	}
+
+	bus.Report(buf.String())
 	return nil
 }

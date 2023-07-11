@@ -16,9 +16,9 @@ type excluding struct {
 	excludeFn excludeFn
 }
 
-// NewExcluding create a new resolver which wraps the provided delegate and excludes
+// NewExcludingDecorator create a new resolver which wraps the provided delegate and excludes
 // entries based on a provided path exclusion function
-func NewExcluding(delegate file.Resolver, excludeFn excludeFn) file.Resolver {
+func NewExcludingDecorator(delegate file.Resolver, excludeFn excludeFn) file.Resolver {
 	return &excluding{
 		delegate,
 		excludeFn,

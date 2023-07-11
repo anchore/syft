@@ -20,7 +20,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 	c := NewCataloger()
 
-	src, err := source.NewFromImage(img, "---")
+	src, err := source.NewFromStereoscopeImageObject(img, testImage, nil)
 	if err != nil {
 		t.Fatalf("could not create source: %+v", err)
 	}

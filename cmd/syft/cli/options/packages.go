@@ -23,6 +23,7 @@ type PackagesOptions struct {
 	Catalogers         []string
 	SourceName         string
 	SourceVersion      string
+	BasePath           string
 }
 
 var _ Interface = (*PackagesOptions)(nil)
@@ -59,6 +60,9 @@ func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	cmd.Flags().StringVarP(&o.SourceVersion, "source-version", "", "",
 		"set the name of the target being analyzed")
 
+	cmd.Flags().StringVarP(&o.BasePath, "base-path", "", "",
+		"base directory for scanning, no links will be followed above this directory, and all paths will be reported relative to this directory")
+
 	return bindPackageConfigOptions(cmd.Flags(), v)
 }
 
@@ -86,11 +90,11 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 		return err
 	}
 
-	if err := v.BindPFlag("source-name", flags.Lookup("source-name")); err != nil {
+	if err := v.BindPFlag("source.name", flags.Lookup("source-name")); err != nil {
 		return err
 	}
 
-	if err := v.BindPFlag("source-version", flags.Lookup("source-version")); err != nil {
+	if err := v.BindPFlag("source.version", flags.Lookup("source-version")); err != nil {
 		return err
 	}
 
@@ -103,6 +107,10 @@ func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	}
 
 	if err := v.BindPFlag("platform", flags.Lookup("platform")); err != nil {
+		return err
+	}
+
+	if err := v.BindPFlag("base-path", flags.Lookup("base-path")); err != nil {
 		return err
 	}
 

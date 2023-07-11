@@ -125,7 +125,7 @@ func checkForApplicationUpdate() {
 		log.Infof("new version of %s is available: %s (current version is %s)", internal.ApplicationName, newVersion, version.FromBuild().Version)
 
 		bus.Publish(partybus.Event{
-			Type:  event.AppUpdateAvailable,
+			Type:  event.CLIAppUpdateAvailable,
 			Value: newVersion,
 		})
 	} else {

@@ -356,6 +356,11 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 			candidateKey{PkgName: "redis"},
 			candidateRemovals{VendorsToRemove: []string{"redis"}},
 		},
+		{
+			pkg.PythonPkg,
+			candidateKey{PkgName: "kubernetes"},
+			candidateRemovals{ProductsToRemove: []string{"kubernetes"}},
+		},
 		// NPM packages
 		{
 			pkg.NpmPkg,
@@ -376,6 +381,101 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 			pkg.NpmPkg,
 			candidateKey{PkgName: "docker"},
 			candidateRemovals{VendorsToRemove: []string{"docker"}},
+		},
+		// Java packages
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-builder-support"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-model"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-repository-metadata"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-settings"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-settings-builder"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-api"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-connector-basic"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-impl"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-named-locks"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-spi"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-transport-file"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-transport-http"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-transport-wagon"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-util"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-shared-utils"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "gradle-enterprise"},
+			candidateRemovals{
+				ProductsToRemove: []string{"gradle-enterprise"},
+				VendorsToRemove:  []string{"gradle"},
+			},
+		},
+		// Ruby packages
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "redis"},
+			candidateRemovals{ProductsToRemove: []string{"redis"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "grpc"},
+			candidateRemovals{ProductsToRemove: []string{"grpc"}},
 		},
 	})
 

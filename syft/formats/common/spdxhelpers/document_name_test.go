@@ -5,31 +5,27 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source"
 )
 
 func Test_DocumentName(t *testing.T) {
-	allSchemes := strset.New()
-	for _, s := range source.AllSchemes {
-		allSchemes.Add(string(s))
-	}
-	testedSchemes := strset.New()
+
+	tracker := sourcemetadata.NewCompletionTester(t)
 
 	tests := []struct {
 		name        string
 		inputName   string
-		srcMetadata source.Metadata
+		srcMetadata source.Description
 		expected    string
 	}{
 		{
 			name:      "image",
 			inputName: "my-name",
-			srcMetadata: source.Metadata{
-				Scheme: source.ImageScheme,
-				ImageMetadata: source.ImageMetadata{
+			srcMetadata: source.Description{
+				Metadata: source.StereoscopeImageSourceMetadata{
 					UserInput:      "image-repo/name:tag",
 					ID:             "id",
 					ManifestDigest: "digest",
@@ -40,18 +36,16 @@ func Test_DocumentName(t *testing.T) {
 		{
 			name:      "directory",
 			inputName: "my-name",
-			srcMetadata: source.Metadata{
-				Scheme: source.DirectoryScheme,
-				Path:   "some/path/to/place",
+			srcMetadata: source.Description{
+				Metadata: source.DirectorySourceMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/path/to/place",
 		},
 		{
 			name:      "file",
 			inputName: "my-name",
-			srcMetadata: source.Metadata{
-				Scheme: source.FileScheme,
-				Path:   "some/path/to/place",
+			srcMetadata: source.Description{
+				Metadata: source.FileSourceMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/path/to/place",
 		},
@@ -62,10 +56,7 @@ func Test_DocumentName(t *testing.T) {
 			assert.True(t, strings.HasPrefix(actual, test.expected), fmt.Sprintf("actual name %q", actual))
 
 			// track each scheme tested (passed or not)
-			testedSchemes.Add(string(test.srcMetadata.Scheme))
+			tracker.Tested(t, test.srcMetadata.Metadata)
 		})
 	}
-
-	// assert all possible schemes were under test
-	assert.ElementsMatch(t, allSchemes.List(), testedSchemes.List(), "not all source.Schemes are under test")
 }

@@ -70,6 +70,7 @@ func Packages(v *viper.Viper, app *config.Application, ro *options.RootOptions, 
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if app.CheckForAppUpdate {
+				// TODO: this is broke, the bus isn't available yet
 				checkForApplicationUpdate()
 			}
 			return packages.Run(cmd.Context(), app, args)

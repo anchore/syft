@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/wagoodman/go-partybus"
@@ -19,6 +18,7 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/internal/windows"
 )
 
 type PathIndexVisitor func(string, os.FileInfo, error) error
@@ -263,8 +263,8 @@ func (r *directoryIndexer) indexPath(path string, info os.FileInfo, err error) (
 	}
 
 	// here we check to see if we need to normalize paths to posix on the way in coming from windows
-	if runtime.GOOS == WindowsOS {
-		path = windowsToPosix(path)
+	if windows.HostRunningOnWindows() {
+		path = windows.ToPosix(path)
 	}
 
 	newRoot, err := r.addPathToIndex(path, info)
@@ -332,7 +332,20 @@ func (r directoryIndexer) addFileToIndex(p string, info os.FileInfo) error {
 func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string, error) {
 	linkTarget, err := os.Readlink(p)
 	if err != nil {
-		return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
+		isOnWindows := windows.HostRunningOnWindows()
+		if isOnWindows {
+			p = windows.FromPosix(p)
+		}
+
+		linkTarget, err = filepath.EvalSymlinks(p)
+
+		if isOnWindows {
+			p = windows.ToPosix(p)
+		}
+
+		if err != nil {
+			return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
+		}
 	}
 
 	if filepath.IsAbs(linkTarget) {

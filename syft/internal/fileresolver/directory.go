@@ -5,18 +5,13 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
-	"path/filepath"
-	"runtime"
-	"strings"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/windows"
 )
-
-const WindowsOS = "windows"
 
 var unixSystemRuntimePrefixes = []string{
 	"/proc",
@@ -30,14 +25,12 @@ var _ file.Resolver = (*Directory)(nil)
 
 // Directory implements path and content access for the directory data source.
 type Directory struct {
-	path                    string
-	base                    string
-	currentWdRelativeToRoot string
-	currentWd               string
-	tree                    filetree.Reader
-	index                   filetree.IndexReader
-	searchContext           filetree.Searcher
-	indexer                 *directoryIndexer
+	path          string
+	chroot        ChrootContext
+	tree          filetree.Reader
+	index         filetree.IndexReader
+	searchContext filetree.Searcher
+	indexer       *directoryIndexer
 }
 
 func NewFromDirectory(root string, base string, pathFilters ...PathIndexVisitor) (*Directory, error) {
@@ -50,46 +43,20 @@ func NewFromDirectory(root string, base string, pathFilters ...PathIndexVisitor)
 }
 
 func newFromDirectoryWithoutIndex(root string, base string, pathFilters ...PathIndexVisitor) (*Directory, error) {
-	currentWD, err := os.Getwd()
+	chroot, err := NewChrootContextFromCWD(root, base)
 	if err != nil {
-		return nil, fmt.Errorf("could not get CWD: %w", err)
+		return nil, fmt.Errorf("unable to interpret chroot context: %w", err)
 	}
 
-	cleanRoot, err := filepath.EvalSymlinks(root)
-	if err != nil {
-		return nil, fmt.Errorf("could not evaluate root=%q symlinks: %w", root, err)
-	}
-
-	cleanBase := ""
-	if base != "" {
-		cleanBase, err = filepath.EvalSymlinks(base)
-		if err != nil {
-			return nil, fmt.Errorf("could not evaluate base=%q symlinks: %w", base, err)
-		}
-		cleanBase, err = filepath.Abs(cleanBase)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var currentWdRelRoot string
-	if path.IsAbs(cleanRoot) {
-		currentWdRelRoot, err = filepath.Rel(currentWD, cleanRoot)
-		if err != nil {
-			return nil, fmt.Errorf("could not determine given root path to CWD: %w", err)
-		}
-	} else {
-		currentWdRelRoot = filepath.Clean(cleanRoot)
-	}
+	cleanRoot := chroot.Root()
+	cleanBase := chroot.Base()
 
 	return &Directory{
-		path:                    cleanRoot,
-		base:                    cleanBase,
-		currentWd:               currentWD,
-		currentWdRelativeToRoot: currentWdRelRoot,
-		tree:                    filetree.New(),
-		index:                   filetree.NewIndex(),
-		indexer:                 newDirectoryIndexer(cleanRoot, cleanBase, pathFilters...),
+		path:    cleanRoot,
+		chroot:  *chroot,
+		tree:    filetree.New(),
+		index:   filetree.NewIndex(),
+		indexer: newDirectoryIndexer(cleanRoot, cleanBase, pathFilters...),
 	}, nil
 }
 
@@ -110,43 +77,12 @@ func (r *Directory) buildIndex() error {
 }
 
 func (r Directory) requestPath(userPath string) (string, error) {
-	if filepath.IsAbs(userPath) {
-		// don't allow input to potentially hop above root path
-		userPath = path.Join(r.path, userPath)
-	} else {
-		// ensure we take into account any relative difference between the root path and the CWD for relative requests
-		userPath = path.Join(r.currentWdRelativeToRoot, userPath)
-	}
-
-	var err error
-	userPath, err = filepath.Abs(userPath)
-	if err != nil {
-		return "", err
-	}
-	return userPath, nil
+	return r.chroot.ToNativePath(userPath)
 }
 
 // responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the directory resolver.
 func (r Directory) responsePath(path string) string {
-	// check to see if we need to encode back to Windows from posix
-	if runtime.GOOS == WindowsOS {
-		path = posixToWindows(path)
-	}
-
-	// clean references to the request path (either the root, or the base if set)
-	if filepath.IsAbs(path) {
-		var prefix string
-		if r.base != "" {
-			prefix = r.base
-		} else {
-			// we need to account for the cwd relative to the running process and the given root for the directory resolver
-			prefix = filepath.Clean(filepath.Join(r.currentWd, r.currentWdRelativeToRoot))
-			prefix += string(filepath.Separator)
-		}
-		path = strings.TrimPrefix(path, prefix)
-	}
-
-	return path
+	return r.chroot.ToChrootPath(path)
 }
 
 // HasPath indicates if the given path exists in the underlying source.
@@ -196,8 +132,8 @@ func (r Directory) FilesByPath(userPaths ...string) ([]file.Location, error) {
 			continue
 		}
 
-		if runtime.GOOS == WindowsOS {
-			userStrPath = windowsToPosix(userStrPath)
+		if windows.HostRunningOnWindows() {
+			userStrPath = windows.ToPosix(userStrPath)
 		}
 
 		if ref.HasReference() {
@@ -286,8 +222,8 @@ func (r Directory) FileContentsByLocation(location file.Location) (io.ReadCloser
 	// RealPath is posix so for windows directory resolver we need to translate
 	// to its true on disk path.
 	filePath := string(location.Reference().RealPath)
-	if runtime.GOOS == WindowsOS {
-		filePath = posixToWindows(filePath)
+	if windows.HostRunningOnWindows() {
+		filePath = windows.FromPosix(filePath)
 	}
 
 	return stereoscopeFile.NewLazyReadCloser(filePath), nil
@@ -337,31 +273,4 @@ func (r *Directory) FilesByMIMEType(types ...string) ([]file.Location, error) {
 	}
 
 	return uniqueLocations, nil
-}
-
-func windowsToPosix(windowsPath string) (posixPath string) {
-	// volume should be encoded at the start (e.g /c/<path>) where c is the volume
-	volumeName := filepath.VolumeName(windowsPath)
-	pathWithoutVolume := strings.TrimPrefix(windowsPath, volumeName)
-	volumeLetter := strings.ToLower(strings.TrimSuffix(volumeName, ":"))
-
-	// translate non-escaped backslash to forwardslash
-	translatedPath := strings.ReplaceAll(pathWithoutVolume, "\\", "/")
-
-	// always have `/` as the root... join all components, e.g.:
-	// convert: C:\\some\windows\Place
-	// into: /c/some/windows/Place
-	return path.Clean("/" + strings.Join([]string{volumeLetter, translatedPath}, "/"))
-}
-
-func posixToWindows(posixPath string) (windowsPath string) {
-	// decode the volume (e.g. /c/<path> --> C:\\) - There should always be a volume name.
-	pathFields := strings.Split(posixPath, "/")
-	volumeName := strings.ToUpper(pathFields[1]) + `:\\`
-
-	// translate non-escaped forward slashes into backslashes
-	remainingTranslatedPath := strings.Join(pathFields[2:], "\\")
-
-	// combine volume name and backslash components
-	return filepath.Clean(volumeName + remainingTranslatedPath)
 }

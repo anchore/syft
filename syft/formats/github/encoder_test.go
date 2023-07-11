@@ -1,24 +1,25 @@
 package github
 
 import (
-	"encoding/json"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
-func Test_toGithubModel(t *testing.T) {
+func sbomFixture() sbom.SBOM {
 	s := sbom.SBOM{
-		Source: source.Metadata{
-			Scheme: source.ImageScheme,
-			ImageMetadata: source.ImageMetadata{
+		Source: source.Description{
+			Metadata: source.StereoscopeImageSourceMetadata{
 				UserInput:    "ubuntu:18.04",
 				Architecture: "amd64",
 			},
@@ -75,88 +76,121 @@ func Test_toGithubModel(t *testing.T) {
 		s.Artifacts.Packages.Add(p)
 	}
 
-	actual := toGithubModel(&s)
+	return s
+}
 
-	expected := DependencySnapshot{
-		Version: 0,
-		Detector: DetectorMetadata{
-			Name:    "syft",
-			Version: "0.0.0-dev",
-			URL:     "https://github.com/anchore/syft",
-		},
-		Metadata: Metadata{
-			"syft:distro": "pkg:generic/ubuntu@18.04?like=debian",
-		},
-		Scanned: actual.Scanned,
-		Manifests: Manifests{
-			"ubuntu:18.04:/usr/lib": Manifest{
-				Name: "ubuntu:18.04:/usr/lib",
-				File: FileInfo{
-					SourceLocation: "ubuntu:18.04:/usr/lib",
+func Test_toGithubModel(t *testing.T) {
+	tracker := sourcemetadata.NewCompletionTester(t)
+
+	tests := []struct {
+		name     string
+		metadata any
+		testPath string
+		expected *DependencySnapshot
+	}{
+		{
+			name: "image",
+			expected: &DependencySnapshot{
+				Version: 0,
+				Detector: DetectorMetadata{
+					Name:    "syft",
+					Version: "0.0.0-dev",
+					URL:     "https://github.com/anchore/syft",
 				},
 				Metadata: Metadata{
-					"syft:filesystem": "fsid-1",
+					"syft:distro": "pkg:generic/ubuntu@18.04?like=debian",
 				},
-				Resolved: DependencyGraph{
-					"pkg:generic/pkg-1@1.0.1": DependencyNode{
-						PackageURL:   "pkg:generic/pkg-1@1.0.1",
-						Scope:        DependencyScopeRuntime,
-						Relationship: DependencyRelationshipDirect,
+				//Scanned: actual.Scanned,
+				Manifests: Manifests{
+					"ubuntu:18.04:/usr/lib": Manifest{
+						Name: "ubuntu:18.04:/usr/lib",
+						File: FileInfo{
+							SourceLocation: "ubuntu:18.04:/usr/lib",
+						},
+						Metadata: Metadata{
+							"syft:filesystem": "fsid-1",
+						},
+						Resolved: DependencyGraph{
+							"pkg:generic/pkg-1@1.0.1": DependencyNode{
+								PackageURL:   "pkg:generic/pkg-1@1.0.1",
+								Scope:        DependencyScopeRuntime,
+								Relationship: DependencyRelationshipDirect,
+								Metadata:     Metadata{},
+							},
+							"pkg:generic/pkg-2@2.0.2": DependencyNode{
+								PackageURL:   "pkg:generic/pkg-2@2.0.2",
+								Scope:        DependencyScopeRuntime,
+								Relationship: DependencyRelationshipDirect,
+								Metadata:     Metadata{},
+							},
+						},
 					},
-					"pkg:generic/pkg-2@2.0.2": DependencyNode{
-						PackageURL:   "pkg:generic/pkg-2@2.0.2",
-						Scope:        DependencyScopeRuntime,
-						Relationship: DependencyRelationshipDirect,
+					"ubuntu:18.04:/etc": Manifest{
+						Name: "ubuntu:18.04:/etc",
+						File: FileInfo{
+							SourceLocation: "ubuntu:18.04:/etc",
+						},
+						Metadata: Metadata{
+							"syft:filesystem": "fsid-1",
+						},
+						Resolved: DependencyGraph{
+							"pkg:generic/pkg-3@3.0.3": DependencyNode{
+								PackageURL:   "pkg:generic/pkg-3@3.0.3",
+								Scope:        DependencyScopeRuntime,
+								Relationship: DependencyRelationshipDirect,
+								Metadata:     Metadata{},
+							},
+						},
 					},
 				},
 			},
-			"ubuntu:18.04:/etc": Manifest{
-				Name: "ubuntu:18.04:/etc",
-				File: FileInfo{
-					SourceLocation: "ubuntu:18.04:/etc",
-				},
-				Metadata: Metadata{
-					"syft:filesystem": "fsid-1",
-				},
-				Resolved: DependencyGraph{
-					"pkg:generic/pkg-3@3.0.3": DependencyNode{
-						PackageURL:   "pkg:generic/pkg-3@3.0.3",
-						Scope:        DependencyScopeRuntime,
-						Relationship: DependencyRelationshipDirect,
-					},
-				},
-			},
+		},
+		{
+			name:     "current directory",
+			metadata: source.DirectorySourceMetadata{Path: "."},
+			testPath: "etc",
+		},
+		{
+			name:     "relative directory",
+			metadata: source.DirectorySourceMetadata{Path: "./artifacts"},
+			testPath: "artifacts/etc",
+		},
+		{
+			name:     "absolute directory",
+			metadata: source.DirectorySourceMetadata{Path: "/artifacts"},
+			testPath: "/artifacts/etc",
+		},
+		{
+			name:     "file",
+			metadata: source.FileSourceMetadata{Path: "./executable"},
+			testPath: "executable",
+		},
+		{
+			name:     "archive",
+			metadata: source.FileSourceMetadata{Path: "./archive.tar.gz"},
+			testPath: "archive.tar.gz:/etc",
 		},
 	}
 
-	// just using JSONEq because it gives a comprehensible diff
-	s1, _ := json.Marshal(expected)
-	s2, _ := json.Marshal(actual)
-	assert.JSONEq(t, string(s1), string(s2))
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := sbomFixture()
 
-	// Just test the other schemes:
-	s.Source.Path = "."
-	s.Source.Scheme = source.DirectoryScheme
-	actual = toGithubModel(&s)
-	assert.Equal(t, "etc", actual.Manifests["etc"].Name)
+			if test.metadata != nil {
+				s.Source.Metadata = test.metadata
+			}
+			actual := toGithubModel(&s)
 
-	s.Source.Path = "./artifacts"
-	s.Source.Scheme = source.DirectoryScheme
-	actual = toGithubModel(&s)
-	assert.Equal(t, "artifacts/etc", actual.Manifests["artifacts/etc"].Name)
+			if test.expected != nil {
+				if d := cmp.Diff(*test.expected, actual, cmpopts.IgnoreFields(DependencySnapshot{}, "Scanned")); d != "" {
+					t.Errorf("unexpected result (-want +got):\n%s", d)
+				}
+			}
 
-	s.Source.Path = "/artifacts"
-	s.Source.Scheme = source.DirectoryScheme
-	actual = toGithubModel(&s)
-	assert.Equal(t, "/artifacts/etc", actual.Manifests["/artifacts/etc"].Name)
+			assert.Equal(t, test.testPath, actual.Manifests[test.testPath].Name)
 
-	s.Source.Path = "./executable"
-	s.Source.Scheme = source.FileScheme
-	actual = toGithubModel(&s)
-	assert.Equal(t, "executable", actual.Manifests["executable"].Name)
-
-	s.Source.Path = "./archive.tar.gz"
-	s.Source.Scheme = source.FileScheme
-	actual = toGithubModel(&s)
-	assert.Equal(t, "archive.tar.gz:/etc", actual.Manifests["archive.tar.gz:/etc"].Name)
+			// track each scheme tested (passed or not)
+			tracker.Tested(t, s.Source.Metadata)
+		})
+	}
 }

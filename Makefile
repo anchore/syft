@@ -14,7 +14,7 @@ GOLANGCILINT_VERSION := v1.53.3
 GOSIMPORTS_VERSION := v0.3.8
 BOUNCER_VERSION := v0.4.0
 CHRONICLE_VERSION := v0.6.0
-GORELEASER_VERSION := v1.18.2
+GORELEASER_VERSION := v1.19.2
 YAJSV_VERSION := v1.4.1
 COSIGN_VERSION := v2.1.1
 QUILL_VERSION := v0.2.0
@@ -302,7 +302,7 @@ compare-test-rpm-package-install: $(TEMP_DIR) $(SNAPSHOT_DIR)
 
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema
-	cd schema/json && go generate . && go run .
+	cd syft/internal && go generate . && cd jsonschema && go run .
 
 .PHONY: generate-license-list
 generate-license-list:  ## Generate an updated spdx license list

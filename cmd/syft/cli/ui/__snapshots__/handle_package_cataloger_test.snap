@@ -1,0 +1,16 @@
+
+[TestHandler_handlePackageCatalogerStarted/cataloging_in_progress - 1]
+ ⠋ Cataloging packages             [50 packages]  
+---
+
+[TestHandler_handlePackageCatalogerStarted/cataloging_only_files_complete - 1]
+ ⠋ Cataloging packages             [50 packages]  
+---
+
+[TestHandler_handlePackageCatalogerStarted/cataloging_only_packages_complete - 1]
+ ⠋ Cataloging packages             [100 packages]  
+---
+
+[TestHandler_handlePackageCatalogerStarted/cataloging_complete - 1]
+ ✔ Cataloged packages              [100 packages]  
+---
