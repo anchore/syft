@@ -3,6 +3,7 @@ package cyclonedxhelpers
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+const cycloneDXXmlSchema = "http://cyclonedx.org/schema/bom"
+
 func GetValidator(format cyclonedx.BOMFileFormat) sbom.Validator {
 	return func(reader io.Reader) error {
 		bom := &cyclonedx.BOM{}
@@ -22,8 +25,9 @@ func GetValidator(format cyclonedx.BOMFileFormat) sbom.Validator {
 		if err != nil {
 			return err
 		}
-		// random JSON does not necessarily cause an error (e.g. SPDX)
-		if (cyclonedx.BOM{} == *bom || bom.Components == nil) {
+
+		xmlWithoutNS := format == cyclonedx.BOMFileFormatXML && !strings.Contains(bom.XMLNS, cycloneDXXmlSchema)
+		if (cyclonedx.BOM{} == *bom || bom.Components == nil || xmlWithoutNS) {
 			return fmt.Errorf("not a valid CycloneDX document")
 		}
 		return nil
