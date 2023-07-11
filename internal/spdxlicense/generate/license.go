@@ -79,15 +79,13 @@ func buildLicenseIDPermutations(cleanID string) (perms []string) {
 	lv := findLicenseVersion(cleanID)
 	addPlusPermutation := strings.HasSuffix(cleanID, "orlater")
 	vp := versionPermutations(lv)
-
 	permSet := strset.New()
 	version := strings.Join(lv, ".")
 	for _, p := range vp {
 		if addPlusPermutation {
 			base := strings.TrimSuffix(cleanID, "orlater")
-			p += "+"
-			permSet.Add(strings.Replace(base, version, p, 1))
-			continue
+			plus := p + "+"
+			permSet.Add(strings.Replace(base, version, plus, 1))
 		}
 		permSet.Add(strings.Replace(cleanID, version, p, 1))
 	}
