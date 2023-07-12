@@ -19,6 +19,12 @@ func runModel(t testing.TB, m tea.Model, iterations int, message tea.Msg, h ...*
 		return message
 	}
 
+	for _, each := range h {
+		if each != nil {
+			each.Wait()
+		}
+	}
+
 	for i := 0; cmd != nil && i < iterations; i++ {
 		msgs := flatten(cmd())
 		var nextCmds []tea.Cmd
@@ -31,11 +37,6 @@ func runModel(t testing.TB, m tea.Model, iterations int, message tea.Msg, h ...*
 		cmd = tea.Batch(nextCmds...)
 	}
 
-	for _, each := range h {
-		if each != nil {
-			each.Wait()
-		}
-	}
 	return m.View()
 }
 
