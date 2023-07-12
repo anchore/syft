@@ -36,7 +36,7 @@ func runModel(t testing.TB, m tea.Model, iterations int, message tea.Msg, h ...*
 		}
 		cmd = tea.Batch(nextCmds...)
 	}
-	
+
 	return m.View()
 }
 
