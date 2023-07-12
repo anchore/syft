@@ -118,7 +118,7 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// that is the responsibility of the frame object on this UI object. The handler is a factory of models
 	// which the frame is responsible for the lifecycle of. This update allows for injecting the initial state
 	// of the world when creating those models.
-	m.handler.Update(msg)
+	m.handler.OnMessage(msg)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
