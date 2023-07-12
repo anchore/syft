@@ -21,12 +21,11 @@ import (
 )
 
 var (
-	_ tea.Model          = (*attestLogFrame)(nil)
-	_ cosignOutputReader = (*backgroundLineReader)(nil)
+	_ tea.Model = (*attestLogFrame)(nil)
 )
 
 type attestLogFrame struct {
-	reader     cosignOutputReader
+	reader     *backgroundLineReader
 	prog       progress.Progressable
 	lines      []string
 	completed  bool
@@ -47,14 +46,16 @@ type attestLogFrameTickMsg struct {
 	ID       uint32
 }
 
-type cosignOutputReader interface {
-	Lines() []string
-}
-
 type backgroundLineReader struct {
 	limit int
 	lines *queue.Queue[string]
 	lock  *sync.RWMutex
+
+	// This is added specifically for tests to assert when the background reader is done.
+	// The main UI uses the global ui wait group from the handler to otherwise block
+	// Shared concerns among multiple model made it difficult to test using the global wait group
+	// so this is added to allow tests to assert when the background reader is done.
+	running *sync.WaitGroup
 }
 
 func (m *Handler) handleAttestationStarted(e partybus.Event) []tea.Model {
@@ -97,7 +98,7 @@ func (m *Handler) handleAttestationStarted(e partybus.Event) []tea.Model {
 	}
 }
 
-func newLogFrame(reader cosignOutputReader, prog progress.Progressable, borderStyle lipgloss.Style) attestLogFrame {
+func newLogFrame(reader *backgroundLineReader, prog progress.Progressable, borderStyle lipgloss.Style) attestLogFrame {
 	return attestLogFrame{
 		reader:         reader,
 		prog:           prog,
@@ -108,16 +109,23 @@ func newLogFrame(reader cosignOutputReader, prog progress.Progressable, borderSt
 }
 
 func newBackgroundLineReader(wg *sync.WaitGroup, reader io.Reader, stage *progress.Stage) *backgroundLineReader {
-	wg.Add(1)
 	r := &backgroundLineReader{
-		limit: 7,
-		lock:  &sync.RWMutex{},
-		lines: queue.New[string](),
+		limit:   7,
+		lock:    &sync.RWMutex{},
+		lines:   queue.New[string](),
+		running: &sync.WaitGroup{},
 	}
 
+	// tracks the background reader for the global handler wait group
+	wg.Add(1)
+
+	// tracks the background reader for the local wait group (used in tests to decouple from the global handler wait group)
+	r.running.Add(1)
+
 	go func() {
-		defer wg.Done()
 		r.read(reader, stage)
+		wg.Done()
+		r.running.Done()
 	}()
 
 	return r

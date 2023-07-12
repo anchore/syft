@@ -2,13 +2,14 @@ package ui
 
 import (
 	"reflect"
+	"sync"
 	"testing"
 	"unsafe"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func runModel(t testing.TB, m tea.Model, iterations int, message tea.Msg) string {
+func runModel(t testing.TB, m tea.Model, iterations int, message tea.Msg, h ...*sync.WaitGroup) string {
 	t.Helper()
 	if iterations == 0 {
 		iterations = 1
@@ -28,6 +29,12 @@ func runModel(t testing.TB, m tea.Model, iterations int, message tea.Msg) string
 			nextCmds = append(nextCmds, next)
 		}
 		cmd = tea.Batch(nextCmds...)
+	}
+
+	for _, each := range h {
+		if each != nil {
+			each.Wait()
+		}
 	}
 	return m.View()
 }

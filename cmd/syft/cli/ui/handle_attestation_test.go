@@ -28,7 +28,7 @@ func TestHandler_handleAttestationStarted(t *testing.T) {
 			// note: this model depends on a background reader. Multiple iterations ensures that the
 			// reader has time to at least start and process the test fixture before the runModel
 			// test harness completes (which is a fake event loop anyway).
-			iterations: 100,
+			iterations: 1,
 			eventFn: func(t *testing.T) partybus.Event {
 				reader := strings.NewReader("contents\nof\nstuff!")
 
@@ -61,7 +61,7 @@ func TestHandler_handleAttestationStarted(t *testing.T) {
 			// note: this model depends on a background reader. Multiple iterations ensures that the
 			// reader has time to at least start and process the test fixture before the runModel
 			// test harness completes (which is a fake event loop anyway).
-			iterations: 100,
+			iterations: 1,
 			eventFn: func(t *testing.T) partybus.Event {
 				reader := strings.NewReader("contents\nof\nstuff!")
 
@@ -123,7 +123,7 @@ func TestHandler_handleAttestationStarted(t *testing.T) {
 					Time:     time.Now(),
 					Sequence: log.sequence,
 					ID:       log.id,
-				})
+				}, log.reader.running)
 				t.Log(got)
 				snaps.MatchSnapshot(t, got)
 			})
