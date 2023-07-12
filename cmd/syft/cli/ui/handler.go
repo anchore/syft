@@ -12,7 +12,11 @@ import (
 	syftEvent "github.com/anchore/syft/syft/event"
 )
 
-var _ bubbly.EventHandler = (*Handler)(nil)
+var _ interface {
+	bubbly.EventHandler
+	bubbly.MessageListener
+	bubbly.HandleWaiter
+} = (*Handler)(nil)
 
 type HandlerConfig struct {
 	TitleWidth        int
@@ -61,8 +65,12 @@ func New(cfg HandlerConfig) *Handler {
 	return h
 }
 
-func (m *Handler) Update(msg tea.Msg) {
+func (m *Handler) OnMessage(msg tea.Msg) {
 	if msg, ok := msg.(tea.WindowSizeMsg); ok {
 		m.WindowSize = msg
 	}
+}
+
+func (m *Handler) Wait() {
+	m.Running.Wait()
 }
