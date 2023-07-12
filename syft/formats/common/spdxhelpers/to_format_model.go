@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/distribution/reference"
 	"github.com/spdx/tools-golang/spdx"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -21,10 +22,20 @@ import (
 	"github.com/anchore/syft/syft/formats/common/util"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
 const (
 	noAssertion = "NOASSERTION"
+
+	spdxPrimaryPurposeContainer = "CONTAINER"
+	spdxPrimaryPurposeFile      = "FILE"
+	spdxPrimaryPurposeOther     = "OTHER"
+
+	prefixImage     = "Image"
+	prefixDirectory = "Directory"
+	prefixFile      = "File"
+	prefixUnknown   = "Unknown"
 )
 
 // ToFormatModel creates and populates a new SPDX document struct that follows the SPDX 2.3
@@ -33,23 +44,37 @@ const (
 //nolint:funlen
 func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	name, namespace := DocumentNameAndNamespace(s.Source)
+
+	packages := toPackages(s.Artifacts.Packages, s)
+
 	relationships := toRelationships(s.RelationshipsSorted())
 
 	// for valid SPDX we need a document describes relationship
-	// TODO: remove this placeholder after deciding on correct behavior
-	// for the primary package purpose field:
-	// https://spdx.github.io/spdx-spec/v2.3/package-information/#724-primary-package-purpose-field
+	describesID := spdx.ElementID("DOCUMENT")
+
+	rootPackage := toRootPackage(s)
+	if rootPackage != nil {
+		describesID = rootPackage.PackageSPDXIdentifier
+
+		// add all relationships from the document root to all other packages
+		relationships = append(relationships, toRootRelationships(rootPackage, packages)...)
+
+		// append the root package
+		packages = append(packages, rootPackage)
+	}
+
+	// add a relationship for the package the document describes
 	documentDescribesRelationship := &spdx.Relationship{
 		RefA: spdx.DocElementID{
 			ElementRefID: "DOCUMENT",
 		},
 		Relationship: string(DescribesRelationship),
 		RefB: spdx.DocElementID{
-			ElementRefID: "DOCUMENT",
+			ElementRefID: describesID,
 		},
-		RelationshipComment: "",
 	}
 
+	// add the root document relationship
 	relationships = append(relationships, documentDescribesRelationship)
 
 	return &spdx.Document{
@@ -123,11 +148,111 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			// Cardinality: optional, one
 			CreatorComment: "",
 		},
-		Packages:      toPackages(s.Artifacts.Packages, s),
+		Packages:      packages,
 		Files:         toFiles(s),
 		Relationships: relationships,
 		OtherLicenses: toOtherLicenses(s.Artifacts.Packages),
 	}
+}
+
+func toRootRelationships(rootPackage *spdx.Package, packages []*spdx.Package) (out []*spdx.Relationship) {
+	for _, p := range packages {
+		out = append(out, &spdx.Relationship{
+			RefA: spdx.DocElementID{
+				ElementRefID: rootPackage.PackageSPDXIdentifier,
+			},
+			Relationship: string(ContainsRelationship),
+			RefB: spdx.DocElementID{
+				ElementRefID: p.PackageSPDXIdentifier,
+			},
+		})
+	}
+	return
+}
+
+//nolint:funlen
+func toRootPackage(s sbom.SBOM) *spdx.Package {
+	var prefix string
+
+	name := s.Source.Name
+	setName := func(n string) {
+		if name != "" {
+			return
+		}
+		name = n
+	}
+
+	version := s.Source.Version
+	setVersion := func(v string) {
+		if version != "" && version != "latest" {
+			return
+		}
+		version = v
+	}
+
+	purpose := ""
+	var checksums []spdx.Checksum
+	switch m := s.Source.Metadata.(type) {
+	case source.StereoscopeImageSourceMetadata:
+		prefix = prefixImage
+		ref, err := reference.Parse(m.UserInput)
+		if err != nil {
+			log.Debugf("unable to parse image ref: %s", m.UserInput)
+			break
+		}
+		if ref, ok := ref.(reference.Named); ok {
+			setName(ref.Name())
+		}
+		if ref, ok := ref.(reference.NamedTagged); ok {
+			setVersion(ref.Tag())
+		}
+		if ref, ok := ref.(reference.Digested); ok {
+			setVersion(ref.Digest().String())
+		}
+		setVersion(m.ID)
+		purpose = spdxPrimaryPurposeContainer
+
+		if m.ID != "" {
+			c := toChecksum(m.ID)
+			if c != nil {
+				checksums = append(checksums, *c)
+			}
+		}
+	case source.DirectorySourceMetadata:
+		prefix = prefixDirectory
+		setName(m.Path)
+		purpose = spdxPrimaryPurposeFile
+	case source.FileSourceMetadata:
+		prefix = prefixFile
+		setName(m.Path)
+		if len(m.Digests) > 0 {
+			d := m.Digests[0]
+			setVersion(fmt.Sprintf("%s:%s", toChecksumAlgorithm(d.Algorithm), d.Value))
+		}
+		for _, d := range m.Digests {
+			checksums = append(checksums, spdx.Checksum{
+				Algorithm: toChecksumAlgorithm(d.Algorithm),
+				Value:     d.Value,
+			})
+		}
+		purpose = spdxPrimaryPurposeFile
+	default:
+		prefix = prefixUnknown
+		name = s.Source.ID
+		purpose = spdxPrimaryPurposeOther
+	}
+
+	p := &spdx.Package{
+		PackageName:               name,
+		PackageSPDXIdentifier:     spdx.ElementID(SanitizeElementID(fmt.Sprintf("DocumentRoot-%s-%s", prefix, name))),
+		PackageVersion:            version,
+		PackageChecksums:          checksums,
+		PackageSupplier:           nil,
+		PackageExternalReferences: nil,
+		PrimaryPackagePurpose:     purpose,
+	}
+
+	return p
 }
 
 func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
@@ -492,6 +617,18 @@ func toFileChecksums(digests []file.Digest) (checksums []spdx.Checksum) {
 		})
 	}
 	return checksums
+}
+
+// toChecksum takes a checksum in the format <algorithm>:<hash> and returns an spdx.Checksum or nil if the string is invalid
+func toChecksum(algorithmHash string) *spdx.Checksum {
+	parts := strings.Split(algorithmHash, ":")
+	if len(parts) < 2 {
+		return nil
+	}
+	return &spdx.Checksum{
+		Algorithm: toChecksumAlgorithm(parts[0]),
+		Value:     parts[1],
+	}
 }
 
 func toChecksumAlgorithm(algorithm string) spdx.ChecksumAlgorithm {

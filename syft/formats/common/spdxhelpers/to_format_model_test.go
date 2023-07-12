@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,9 +15,100 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
-// TODO: Add ToFormatModel tests
+func Test_toFormatModel(t *testing.T) {
+	tests := []struct {
+		name     string
+		in       sbom.SBOM
+		expected *spdx.Document
+	}{
+		{
+			name: "includes root element",
+			in: sbom.SBOM{
+				Source: source.Description{
+					Metadata: source.StereoscopeImageSourceMetadata{
+						UserInput: "alpine:latest",
+						ID:        "sha256:d34db33f",
+					},
+				},
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name:    "pkg-1",
+						Version: "version-1",
+					}),
+				},
+			},
+			expected: &spdx.Document{
+				SPDXIdentifier: "DOCUMENT",
+				SPDXVersion:    spdx.Version,
+				DataLicense:    spdx.DataLicense,
+				DocumentName:   "alpine:latest",
+
+				Packages: []*spdx.Package{
+					{
+						PackageSPDXIdentifier: "Package--pkg-1-pkg-1",
+						PackageName:           "pkg-1",
+						PackageVersion:        "version-1",
+					},
+					{
+						PackageSPDXIdentifier: "DocumentRoot-Image-alpine",
+						PackageName:           "alpine",
+						PackageVersion:        "sha256:d34db33f",
+						PrimaryPackagePurpose: "CONTAINER",
+						PackageChecksums:      []spdx.Checksum{{Algorithm: "SHA256", Value: "d34db33f"}},
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-Image-alpine",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "Package--pkg-1-pkg-1",
+						},
+						Relationship: spdx.RelationshipContains,
+					},
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DOCUMENT",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-Image-alpine",
+						},
+						Relationship: spdx.RelationshipDescribes,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// replace IDs with package names
+			var pkgs []pkg.Package
+			for p := range test.in.Artifacts.Packages.Enumerate() {
+				p.OverrideID(artifact.ID(p.Name))
+				pkgs = append(pkgs, p)
+			}
+			test.in.Artifacts.Packages = pkg.NewCollection(pkgs...)
+
+			// convert
+			got := ToFormatModel(test.in)
+
+			// check differences
+			if diff := cmp.Diff(test.expected, got,
+				cmpopts.IgnoreUnexported(spdx.Document{}, spdx.Package{}),
+				cmpopts.IgnoreFields(spdx.Document{}, "CreationInfo", "DocumentNamespace"),
+				cmpopts.IgnoreFields(spdx.Package{}, "PackageDownloadLocation", "IsFilesAnalyzedTagPresent", "PackageSourceInfo", "PackageLicenseConcluded", "PackageLicenseDeclared", "PackageCopyrightText"),
+			); diff != "" {
+				t.Error(diff)
+			}
+		})
+	}
+}
+
 func Test_toPackageChecksums(t *testing.T) {
 	tests := []struct {
 		name          string

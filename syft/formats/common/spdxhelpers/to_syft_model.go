@@ -2,11 +2,15 @@ package spdxhelpers
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
+	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/spdx/tools-golang/spdx"
+	"github.com/spdx/tools-golang/spdx/v2/common"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
@@ -26,12 +30,10 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 		return nil, errors.New("cannot convert SPDX document to Syft model because document is nil")
 	}
 
-	spdxIDMap := make(map[string]interface{})
-
-	src := extractSourceFromNamespace(doc.DocumentNamespace)
+	spdxIDMap := make(map[string]any)
 
 	s := &sbom.SBOM{
-		Source: src,
+		Source: extractSource(spdxIDMap, doc),
 		Artifacts: sbom.Artifacts{
 			Packages:          pkg.NewCollection(),
 			FileMetadata:      map[file.Coordinates]file.Metadata{},
@@ -40,13 +42,132 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 		},
 	}
 
-	collectSyftPackages(s, spdxIDMap, doc)
+	collectSyftPackages(s, spdxIDMap, doc.Packages)
 
 	collectSyftFiles(s, spdxIDMap, doc)
 
 	s.Relationships = toSyftRelationships(spdxIDMap, doc)
 
 	return s, nil
+}
+
+func isDirectory(name string) bool {
+	if name == "." || name == ".." || strings.HasSuffix(name, "/") || !strings.Contains(path.Base(name), ".") {
+		return true
+	}
+	return false
+}
+
+func removePackage(packages []*spdx.Package, remove *spdx.Package) (pkgs []*spdx.Package) {
+	for _, p := range packages {
+		if p == remove {
+			continue
+		}
+		pkgs = append(pkgs, p)
+	}
+	return
+}
+
+func removeRelationships(relationships []*spdx.Relationship, spdxID spdx.ElementID) (relations []*spdx.Relationship) {
+	for _, r := range relationships {
+		if r.RefA.ElementRefID == spdxID || r.RefB.ElementRefID == spdxID {
+			continue
+		}
+		relations = append(relations, r)
+	}
+	return
+}
+
+func findRootPackages(doc *spdx.Document) (out []*spdx.Package) {
+	for _, p := range doc.Packages {
+		for _, r := range doc.Relationships {
+			if r.RefA.ElementRefID != "DOCUMENT" ||
+				r.Relationship != spdx.RelationshipDescribes ||
+				r.RefB.ElementRefID != p.PackageSPDXIdentifier {
+				continue
+			}
+			out = append(out, p)
+		}
+	}
+	return
+}
+
+//nolint:funlen
+func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Description {
+	src := extractSourceFromNamespace(doc.DocumentNamespace)
+
+	rootPackages := findRootPackages(doc)
+
+	if len(rootPackages) != 1 {
+		return src
+	}
+
+	p := rootPackages[0]
+
+	typeRegex := regexp.MustCompile("^DocumentRoot-([^-]+)-.*$")
+	typeName := typeRegex.ReplaceAllString(string(p.PackageSPDXIdentifier), "$1")
+
+	id := string(p.PackageSPDXIdentifier)
+	switch p.PrimaryPackagePurpose {
+	case spdxPrimaryPurposeContainer:
+		container := p.PackageName
+		v := p.PackageVersion
+		if v != "" {
+			container += ":" + v
+		}
+		if len(p.PackageChecksums) > 0 {
+			c := p.PackageChecksums[0]
+			id = fmt.Sprintf("%s:%s", fromChecksumAlgorithm(c.Algorithm), c.Value)
+		}
+		src = source.Description{
+			ID:      id,
+			Name:    p.PackageName,
+			Version: p.PackageVersion,
+			Metadata: source.StereoscopeImageSourceMetadata{
+				UserInput: container,
+				ID:        id,
+				Layers:    nil, // TODO handle formats with nested layer packages like Tern and K8s BOM tool
+			},
+		}
+	case spdxPrimaryPurposeFile:
+		version := p.PackageVersion
+		var metadata any = source.DirectorySourceMetadata{
+			Path: p.PackageName,
+			Base: "",
+		}
+		if typeName != prefixDirectory && (typeName == prefixFile || !isDirectory(p.PackageName)) {
+			m := source.FileSourceMetadata{
+				Path: p.PackageName,
+			}
+			// if this is a Syft SBOM, we might have output a digest as the version
+			checksum := toChecksum(version)
+			for _, d := range p.PackageChecksums {
+				if checksum != nil && checksum.Value == d.Value {
+					version = ""
+				}
+				m.Digests = append(m.Digests, file.Digest{
+					Algorithm: fromChecksumAlgorithm(d.Algorithm),
+					Value:     d.Value,
+				})
+			}
+			metadata = m
+		}
+		src = source.Description{
+			ID:       id,
+			Name:     p.PackageName,
+			Version:  version,
+			Metadata: metadata,
+		}
+	default:
+		return src
+	}
+
+	spdxIDMap[string(p.PackageSPDXIdentifier)] = src
+
+	doc.Packages = removePackage(doc.Packages, p)
+	doc.Relationships = removeRelationships(doc.Relationships, p.PackageSPDXIdentifier)
+
+	return src
 }
 
 // NOTE(jonas): SPDX doesn't inform what an SBOM is about,
@@ -114,15 +235,15 @@ func findLinuxReleaseByPURL(doc *spdx.Document) *linux.Release {
 	return nil
 }
 
-func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.Document) {
-	for _, p := range doc.Packages {
+func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]any, packages []*spdx.Package) {
+	for _, p := range packages {
 		syftPkg := toSyftPackage(p)
 		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
-		s.Artifacts.Packages.Add(*syftPkg)
+		s.Artifacts.Packages.Add(syftPkg)
 	}
 }
 
-func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.Document) {
+func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
 	for _, f := range doc.Files {
 		l := toSyftLocation(f)
 		spdxIDMap[string(f.FileSPDXIdentifier)] = l
@@ -135,11 +256,15 @@ func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]interface{}, doc *spdx.
 func toFileDigests(f *spdx.File) (digests []file.Digest) {
 	for _, digest := range f.Checksums {
 		digests = append(digests, file.Digest{
-			Algorithm: string(digest.Algorithm),
+			Algorithm: fromChecksumAlgorithm(digest.Algorithm),
 			Value:     digest.Value,
 		})
 	}
 	return digests
+}
+
+func fromChecksumAlgorithm(algorithm common.ChecksumAlgorithm) string {
+	return strings.ToLower(string(algorithm))
 }
 
 func toFileMetadata(f *spdx.File) (meta file.Metadata) {
@@ -164,21 +289,21 @@ func toFileMetadata(f *spdx.File) (meta file.Metadata) {
 	return meta
 }
 
-func toSyftRelationships(spdxIDMap map[string]interface{}, doc *spdx.Document) []artifact.Relationship {
+func toSyftRelationships(spdxIDMap map[string]any, doc *spdx.Document) []artifact.Relationship {
 	var out []artifact.Relationship
 	for _, r := range doc.Relationships {
-		// FIXME what to do with r.RefA.DocumentRefID and  r.RefA.SpecialID
+		// FIXME what to do with r.RefA.DocumentRefID and r.RefA.SpecialID
 		if r.RefA.DocumentRefID != "" && requireAndTrimPrefix(r.RefA.DocumentRefID, "DocumentRef-") != string(doc.SPDXIdentifier) {
 			log.Debugf("ignoring relationship to external document: %+v", r)
 			continue
 		}
 		a := spdxIDMap[string(r.RefA.ElementRefID)]
 		b := spdxIDMap[string(r.RefB.ElementRefID)]
-		from, fromOk := a.(*pkg.Package)
-		toPackage, toPackageOk := b.(*pkg.Package)
-		toLocation, toLocationOk := b.(*file.Location)
+		from, fromOk := a.(pkg.Package)
+		toPackage, toPackageOk := b.(pkg.Package)
+		toLocation, toLocationOk := b.(file.Location)
 		if !fromOk || !(toPackageOk || toLocationOk) {
-			log.Debugf("unable to find valid relationship mapping from SPDX 2.2 JSON, ignoring: (from: %+v) (to: %+v)", a, b)
+			log.Debugf("unable to find valid relationship mapping from SPDX, ignoring: (from: %+v) (to: %+v)", a, b)
 			continue
 		}
 		var to artifact.Identifiable
@@ -234,9 +359,9 @@ func toSyftCoordinates(f *spdx.File) file.Coordinates {
 	}
 }
 
-func toSyftLocation(f *spdx.File) *file.Location {
+func toSyftLocation(f *spdx.File) file.Location {
 	l := file.NewVirtualLocationFromCoordinates(toSyftCoordinates(f), f.FileName)
-	return &l
+	return l
 }
 
 func requireAndTrimPrefix(val interface{}, prefix string) string {
@@ -280,16 +405,20 @@ func extractPkgInfo(p *spdx.Package) pkgInfo {
 	}
 }
 
-func toSyftPackage(p *spdx.Package) *pkg.Package {
+func toSyftPackage(p *spdx.Package) pkg.Package {
 	info := extractPkgInfo(p)
+	purl := ""
+	if isValidPURL(info.purl) {
+		purl = info.purl.String()
+	}
 	metadataType, metadata := extractMetadata(p, info)
-	sP := pkg.Package{
+	sP := &pkg.Package{
 		Type:         info.typ,
 		Name:         p.PackageName,
 		Version:      p.PackageVersion,
 		Licenses:     pkg.NewLicenseSet(parseSPDXLicenses(p)...),
 		CPEs:         extractCPEs(p),
-		PURL:         info.purl.String(),
+		PURL:         purl,
 		Language:     info.lang,
 		MetadataType: metadataType,
 		Metadata:     metadata,
@@ -297,7 +426,11 @@ func toSyftPackage(p *spdx.Package) *pkg.Package {
 
 	sP.SetID()
 
-	return &sP
+	return *sP
+}
+
+func isValidPURL(purl packageurl.PackageURL) bool {
+	return purl.String() != "pkg:/"
 }
 
 func parseSPDXLicenses(p *spdx.Package) []pkg.License {
@@ -384,7 +517,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 	case pkg.JavaPkg:
 		var digests []file.Digest
 		for _, value := range p.PackageChecksums {
-			digests = append(digests, file.Digest{Algorithm: string(value.Algorithm), Value: value.Value})
+			digests = append(digests, file.Digest{Algorithm: fromChecksumAlgorithm(value.Algorithm), Value: value.Value})
 		}
 		return pkg.JavaMetadataType, pkg.JavaMetadata{
 			ArchiveDigests: digests,
@@ -392,7 +525,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 	case pkg.GoModulePkg:
 		var h1Digest string
 		for _, value := range p.PackageChecksums {
-			digest, err := util.HDigestFromSHA(string(value.Algorithm), value.Value)
+			digest, err := util.HDigestFromSHA(fromChecksumAlgorithm(value.Algorithm), value.Value)
 			if err != nil {
 				log.Debugf("invalid h1digest: %v %v", value, err)
 				continue

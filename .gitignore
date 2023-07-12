@@ -19,6 +19,7 @@ VERSION
 *.hpi
 *.zip
 .idea/
+*.iml
 *.log
 .images
 .tmp/
