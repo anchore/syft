@@ -58,12 +58,36 @@
      "referenceLocator": "pkg:deb/debian/package-2@2.0.1"
     }
    ]
+  },
+  {
+   "name": "user-image-input",
+   "SPDXID": "SPDXRef-DocumentRoot-Image-user-image-input",
+   "versionInfo": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
+   "downloadLocation": "",
+   "filesAnalyzed": false,
+   "checksums": [
+    {
+     "algorithm": "SHA256",
+     "checksumValue": "bcad0d70ce5264c071e4b2f7b4ea48cfe6da8a040cd364f9875e9fa5eda4cc09"
+    }
+   ],
+   "primaryPackagePurpose": "CONTAINER"
   }
  ],
  "relationships": [
   {
+   "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
+   "relatedSpdxElement": "SPDXRef-Package-python-package-1-125840abc1c66dd7",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
+   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-958443e2d9304af4",
+   "relationshipType": "CONTAINS"
+  },
+  {
    "spdxElementId": "SPDXRef-DOCUMENT",
-   "relatedSpdxElement": "SPDXRef-DOCUMENT",
+   "relatedSpdxElement": "SPDXRef-DocumentRoot-Image-user-image-input",
    "relationshipType": "DESCRIBES"
   }
  ]
