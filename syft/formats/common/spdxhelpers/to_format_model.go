@@ -175,7 +175,7 @@ func toRootPackage(s sbom.SBOM) *spdx.Package {
 	var prefix string
 
 	name := s.Source.Name
-	setName := func(n string) {
+	nameIfUnset := func(n string) {
 		if name != "" {
 			return
 		}
@@ -183,7 +183,7 @@ func toRootPackage(s sbom.SBOM) *spdx.Package {
 	}
 
 	version := s.Source.Version
-	setVersion := func(v string) {
+	versionIfUnset := func(v string) {
 		if version != "" && version != "latest" {
 			return
 		}
@@ -201,33 +201,33 @@ func toRootPackage(s sbom.SBOM) *spdx.Package {
 			break
 		}
 		if ref, ok := ref.(reference.Named); ok {
-			setName(ref.Name())
+			nameIfUnset(ref.Name())
+		} else {
+			nameIfUnset(m.UserInput)
 		}
 		if ref, ok := ref.(reference.NamedTagged); ok {
-			setVersion(ref.Tag())
+			versionIfUnset(ref.Tag())
 		}
 		if ref, ok := ref.(reference.Digested); ok {
-			setVersion(ref.Digest().String())
+			versionIfUnset(ref.Digest().String())
 		}
-		setVersion(m.ID)
+		versionIfUnset(m.ID)
 		purpose = spdxPrimaryPurposeContainer
 
-		if m.ID != "" {
-			c := toChecksum(m.ID)
-			if c != nil {
-				checksums = append(checksums, *c)
-			}
+		c := toChecksum(m.ID)
+		if c != nil {
+			checksums = append(checksums, *c)
 		}
 	case source.DirectorySourceMetadata:
 		prefix = prefixDirectory
-		setName(m.Path)
+		nameIfUnset(m.Path)
 		purpose = spdxPrimaryPurposeFile
 	case source.FileSourceMetadata:
 		prefix = prefixFile
-		setName(m.Path)
+		nameIfUnset(m.Path)
 		if len(m.Digests) > 0 {
 			d := m.Digests[0]
-			setVersion(fmt.Sprintf("%s:%s", toChecksumAlgorithm(d.Algorithm), d.Value))
+			versionIfUnset(fmt.Sprintf("%s:%s", toChecksumAlgorithm(d.Algorithm), d.Value))
 		}
 		for _, d := range m.Digests {
 			checksums = append(checksums, spdx.Checksum{
