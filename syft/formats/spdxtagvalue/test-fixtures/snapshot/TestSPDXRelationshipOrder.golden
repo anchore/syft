@@ -53,7 +53,8 @@ SPDXID: SPDXRef-DocumentRoot-Image-user-image-input
 PackageVersion: sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368
 PrimaryPackagePurpose: CONTAINER
 FilesAnalyzed: false
-PackageChecksum: SHA256: a3c61dc134d2f31b415c50324e75842d7f91622f39a89468e51938330b3fd3af
+PackageChecksum: SHA256: 2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368
+ExternalRef: PACKAGE-MANAGER purl pkg:oci/user-image-input@sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch=
 
 ##### Package: package-2
 

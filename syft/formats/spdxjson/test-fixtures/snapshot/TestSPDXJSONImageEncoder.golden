@@ -68,7 +68,14 @@
    "checksums": [
     {
      "algorithm": "SHA256",
-     "checksumValue": "bcad0d70ce5264c071e4b2f7b4ea48cfe6da8a040cd364f9875e9fa5eda4cc09"
+     "checksumValue": "2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
+    }
+   ],
+   "externalRefs": [
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:oci/user-image-input@sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch="
     }
    ],
    "primaryPackagePurpose": "CONTAINER"
