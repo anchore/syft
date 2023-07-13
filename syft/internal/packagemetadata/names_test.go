@@ -22,4 +22,8 @@ func TestAllNames(t *testing.T) {
 		t.Log("did you add a new pkg.*Metadata type without updating the JSON schema?")
 		t.Log("if so, you need to update the schema version and regenerate the JSON schema (make generate-json-schema)")
 	}
+
+	for _, ty := range AllTypes() {
+		assert.NotEmpty(t, JSONName(ty), "metadata type %q does not have a JSON name", ty)
+	}
 }

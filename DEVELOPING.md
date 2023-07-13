@@ -111,6 +111,27 @@ sequenceDiagram
     Note right of catalog: cataloger configuration is done based on src
 ```
 
+### Package object
+
+The `pkg.Package` object is a core data structure that represents a software package. Fields like `name` and `version` probably don't need
+a detailed explanation, but some of the other fields are worth a quick overview:
+
+- `FoundBy`: the name of the cataloger that discovered this package (e.g. `python-pip-cataloger`).
+- `Locations`: these are the set of paths and layer ids that were parsed to discover this package (e.g. `python-pip-cataloger`).
+- `Language`: the language of the package (e.g. `python`).
+- `Type`: this is a high-level categorization of the ecosystem the package resides in. For instance, even if the package is a egg, wheel, or requirements.txt reference, it is still logically a "python" package. Not all package types align with a language (e.g. `rpm`) but it is common.
+- `Metadata`: specialized data for specific location(s) parsed. We should try and raise up as much raw information that seems useful. As a rule of thumb the object here should be as flat as possible and use the raw names and values from the underlying source material parsed.
+
+When `pkg.Package` is serialized an additional `MetadataType` is shown. This is a label that helps consumers understand the datashape of the `Metadata` field.
+
+By convention the `MetadataType` value should follow these rules of thumb:
+- only use lowercase letters, numbers, hyphens, and periods. Use hyphens to separate words.
+- be as specific as possible to what the data represents. For instance `ruby-gem` is NOT a good `MetadataType` value, but `ruby-gemspec-file` is. Why? Ruby gem information can come from a gemspec file or a Gemfile.lock, which are very different. The latter name provides more context as to what to expect.
+- try to anchor the name in the ecosystem, language, or packaging tooling it belongs to. For instance `podfile.lock-file` is an OK name, but `swift-cocopods-podfile.lock-file` is better.
+
+What if the underlying parsed data represents multiple files? There are two approaches to this:
+- use the primary file to represent all the data. For instance, though the `dpkg-cataloger` looks at multiple files to get all information about a package, it's the `status` file that gets represented.
+- nest each individual file's data under the `Metadata` field. For instance, the `java-archive-cataloger` may find information from on or all of the files: `pom.xml`, `pom.properties`, and `MANIFEST.MF`. However, the metadata is simply `java-metadata' with each possibility as a nested optional field.
 
 ### Syft Catalogers
 
