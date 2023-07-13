@@ -125,9 +125,17 @@ a detailed explanation, but some of the other fields are worth a quick overview:
 When `pkg.Package` is serialized an additional `MetadataType` is shown. This is a label that helps consumers understand the datashape of the `Metadata` field.
 
 By convention the `MetadataType` value should follow these rules of thumb:
-- only use lowercase letters, numbers, hyphens, and periods. Use hyphens to separate words.
-- be as specific as possible to what the data represents. For instance `ruby-gem` is NOT a good `MetadataType` value, but `ruby-gemspec-file` is. Why? Ruby gem information can come from a gemspec file or a Gemfile.lock, which are very different. The latter name provides more context as to what to expect.
-- try to anchor the name in the ecosystem, language, or packaging tooling it belongs to. For instance `podfile.lock-file` is an OK name, but `swift-cocopods-podfile.lock-file` is better.
+- Only use lowercase letters, numbers, and hyphens. Use hyphens to separate words.
+- Try to anchor the name in the ecosystem, language, or packaging tooling it belongs to. For instance `pubspec-lockfile` is an OK name, but `dart-pubspec-lockfile` is better.
+- Be as specific as possible to what the data represents. For instance `ruby-gem` is NOT a good `MetadataType` value, but `ruby-gemspec-guidefile` is. Why? Ruby gem information can come from a gemspec file or a Gemfile.lock, which are very different. The latter name provides more context as to what to expect.
+- Should describe what the data is, not how it's used. For instance `r-description-installed-file` is NOT a good `MetadataType` value since it's trying to convey that we use the DESCRIPTION file in the R ecosystem to detect installed packages. Instead simply describe what the DESCRIPTION file is itself without context of how it's used: `r-description-file`.
+- Use `guidefile` and `lockfile` suffixes to distinct between manifest files that loosely describe package version requirements ("guide" files) and files that strongly specify one and only one version of a package ("lock" files). For instance `swift-cocopods-podfile` is ambiguous (this could be referring to a `podfile` or we only have one method which is parsing the `podfile.lock`). Using `swift-cocopods-pod-guidefile` and `swift-cocopods-pod-lockfile` removes this ambiguity. These should only be used with respect to package managers that have the guide and lock distinction, but would not be appropriate otherwise (e.g. `rpm` does not have a guide vs lock, so `lockfile` should not be used to describe a db entry).
+- Use the `manifest` suffix to indicate a package archive (e.g. rpm file, apk file, etc) that describes the contents of the package.
+- Use the `catalog-entry` suffix to indicate information about a package that was found in a collection of flat files responsible for describing the state of packages on the system (e.g. apk has an "installed" file, alpm has several "desc" files, portage as several "content" files). When the information is stored in a single database file then use `db-entry` instead (e.g. entries in the RPM database). 
+- Should not contain the phrase "package", though exceptions are allowed (say if the canonical name .
+- Try to keep exact filename+extensions out of the name. For instance `pipfile.lock` shouldn't really be in the name, instead try and describe what the file is: `python-pipfile-lockfile`.
+
+There are other cases that are not covered by these rules... and that's ok! The goal is to provide a consistent naming scheme that is easy to understand and use when it's applicable. If the rules don't apply, then just use your best judgement.
 
 What if the underlying parsed data represents multiple files? There are two approaches to this:
 - use the primary file to represent all the data. For instance, though the `dpkg-cataloger` looks at multiple files to get all information about a package, it's the `status` file that gets represented.
