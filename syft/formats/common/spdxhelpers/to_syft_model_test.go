@@ -468,10 +468,11 @@ func Test_convertToAndFromFormat(t *testing.T) {
 		{
 			name: "image source",
 			source: source.Description{
-				ID: "sha256:ab8b83234bc28f28d8e",
+				ID: "DocumentRoot-Image-some-image",
 				Metadata: source.StereoscopeImageSourceMetadata{
-					UserInput: "some-image:some-tag",
-					ID:        "sha256:ab8b83234bc28f28d8e",
+					ID:             "DocumentRoot-Image-some-image",
+					UserInput:      "some-image:some-tag",
+					ManifestDigest: "sha256:ab8b83234bc28f28d8e",
 				},
 				Name:    "some-image",
 				Version: "some-tag",
@@ -526,7 +527,6 @@ func Test_convertToAndFromFormat(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			src := &test.source
-			//src.Metadata.(source.DirectorySourceMetadata)
 			s := sbom.SBOM{
 				Source: *src,
 				Artifacts: sbom.Artifacts{

@@ -81,11 +81,18 @@ func removeRelationships(relationships []*spdx.Relationship, spdxID spdx.Element
 func findRootPackages(doc *spdx.Document) (out []*spdx.Package) {
 	for _, p := range doc.Packages {
 		for _, r := range doc.Relationships {
-			if r.RefA.ElementRefID != "DOCUMENT" ||
-				r.Relationship != spdx.RelationshipDescribes ||
-				r.RefB.ElementRefID != p.PackageSPDXIdentifier {
+			describes := r.RefA.ElementRefID == "DOCUMENT" &&
+				r.Relationship == spdx.RelationshipDescribes &&
+				r.RefB.ElementRefID == p.PackageSPDXIdentifier
+
+			describedBy := r.RefB.ElementRefID == "DOCUMENT" &&
+				r.Relationship == spdx.RelationshipDescribedBy &&
+				r.RefA.ElementRefID == p.PackageSPDXIdentifier
+
+			if !describes && !describedBy {
 				continue
 			}
+
 			out = append(out, p)
 		}
 	}
@@ -115,18 +122,21 @@ func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descript
 		if v != "" {
 			container += ":" + v
 		}
+
+		digest := ""
 		if len(p.PackageChecksums) > 0 {
 			c := p.PackageChecksums[0]
-			id = fmt.Sprintf("%s:%s", fromChecksumAlgorithm(c.Algorithm), c.Value)
+			digest = fmt.Sprintf("%s:%s", fromChecksumAlgorithm(c.Algorithm), c.Value)
 		}
 		src = source.Description{
 			ID:      id,
 			Name:    p.PackageName,
 			Version: p.PackageVersion,
 			Metadata: source.StereoscopeImageSourceMetadata{
-				UserInput: container,
-				ID:        id,
-				Layers:    nil, // TODO handle formats with nested layer packages like Tern and K8s BOM tool
+				UserInput:      container,
+				ID:             id,
+				Layers:         nil, // TODO handle formats with nested layer packages like Tern and K8s BOM tool
+				ManifestDigest: digest,
 			},
 		}
 	case spdxPrimaryPurposeFile:

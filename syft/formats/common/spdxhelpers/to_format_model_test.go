@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/spdx/tools-golang/spdx"
+	"github.com/spdx/tools-golang/spdx/v2/v2_3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -29,8 +30,8 @@ func Test_toFormatModel(t *testing.T) {
 			in: sbom.SBOM{
 				Source: source.Description{
 					Metadata: source.StereoscopeImageSourceMetadata{
-						UserInput: "alpine:latest",
-						ID:        "sha256:d34db33f",
+						UserInput:      "alpine:latest",
+						ManifestDigest: "sha256:d34db33f",
 					},
 				},
 				Artifacts: sbom.Artifacts{
@@ -58,6 +59,13 @@ func Test_toFormatModel(t *testing.T) {
 						PackageVersion:        "sha256:d34db33f",
 						PrimaryPackagePurpose: "CONTAINER",
 						PackageChecksums:      []spdx.Checksum{{Algorithm: "SHA256", Value: "d34db33f"}},
+						PackageExternalReferences: []*v2_3.PackageExternalReference{
+							{
+								Category: "PACKAGE-MANAGER",
+								RefType:  "purl",
+								Locator:  "pkg:oci/alpine@sha256:d34db33f?arch=&tag=latest",
+							},
+						},
 					},
 				},
 				Relationships: []*spdx.Relationship{

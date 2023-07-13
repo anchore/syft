@@ -83,22 +83,11 @@ func (s StereoscopeImageSource) ID() artifact.ID {
 }
 
 func (s StereoscopeImageSource) Describe() Description {
-	name := s.metadata.UserInput
-	version := s.metadata.ManifestDigest
-
 	a := s.config.Alias
-	if a.Name != "" {
-		name = a.Name
-	}
-
-	if a.Version != "" {
-		version = a.Version
-	}
-
 	return Description{
 		ID:       string(s.id),
-		Name:     name,
-		Version:  version,
+		Name:     a.Name,
+		Version:  a.Version,
 		Metadata: s.metadata,
 	}
 }

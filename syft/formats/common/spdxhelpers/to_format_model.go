@@ -14,6 +14,7 @@ import (
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/spdxlicense"
@@ -52,7 +53,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	// for valid SPDX we need a document describes relationship
 	describesID := spdx.ElementID("DOCUMENT")
 
-	rootPackage := toRootPackage(s)
+	rootPackage := toRootPackage(s.Source)
 	if rootPackage != nil {
 		describesID = rootPackage.PackageSPDXIdentifier
 
@@ -171,10 +172,10 @@ func toRootRelationships(rootPackage *spdx.Package, packages []*spdx.Package) (o
 }
 
 //nolint:funlen
-func toRootPackage(s sbom.SBOM) *spdx.Package {
+func toRootPackage(s source.Description) *spdx.Package {
 	var prefix string
 
-	name := s.Source.Name
+	name := s.Name
 	nameIfUnset := func(n string) {
 		if name != "" {
 			return
@@ -182,7 +183,7 @@ func toRootPackage(s sbom.SBOM) *spdx.Package {
 		name = n
 	}
 
-	version := s.Source.Version
+	version := s.Version
 	versionIfUnset := func(v string) {
 		if version != "" && version != "latest" {
 			return
@@ -190,40 +191,67 @@ func toRootPackage(s sbom.SBOM) *spdx.Package {
 		version = v
 	}
 
+	var purl *packageurl.PackageURL
 	purpose := ""
 	var checksums []spdx.Checksum
-	switch m := s.Source.Metadata.(type) {
+	switch m := s.Metadata.(type) {
 	case source.StereoscopeImageSourceMetadata:
 		prefix = prefixImage
+		purpose = spdxPrimaryPurposeContainer
+
+		qualifiers := packageurl.Qualifiers{
+			{
+				Key:   "arch",
+				Value: m.Architecture,
+			},
+		}
+
 		ref, err := reference.Parse(m.UserInput)
 		if err != nil {
 			log.Debugf("unable to parse image ref: %s", m.UserInput)
 			break
 		}
+
 		if ref, ok := ref.(reference.Named); ok {
 			nameIfUnset(ref.Name())
 		} else {
 			nameIfUnset(m.UserInput)
 		}
+
 		if ref, ok := ref.(reference.NamedTagged); ok {
 			versionIfUnset(ref.Tag())
+
+			qualifiers = append(qualifiers, packageurl.Qualifier{
+				Key:   "tag",
+				Value: ref.Tag(),
+			})
 		}
+
 		if ref, ok := ref.(reference.Digested); ok {
 			versionIfUnset(ref.Digest().String())
 		}
-		versionIfUnset(m.ID)
-		purpose = spdxPrimaryPurposeContainer
 
-		c := toChecksum(m.ID)
+		checksum := m.ManifestDigest
+		versionIfUnset(checksum)
+		c := toChecksum(checksum)
 		if c != nil {
 			checksums = append(checksums, *c)
+			purl = &packageurl.PackageURL{
+				Type:       "oci",
+				Name:       name,
+				Version:    checksum,
+				Qualifiers: qualifiers,
+			}
 		}
 	case source.DirectorySourceMetadata:
 		prefix = prefixDirectory
-		nameIfUnset(m.Path)
 		purpose = spdxPrimaryPurposeFile
+
+		nameIfUnset(m.Path)
 	case source.FileSourceMetadata:
 		prefix = prefixFile
+		purpose = spdxPrimaryPurposeFile
+
 		nameIfUnset(m.Path)
 		if len(m.Digests) > 0 {
 			d := m.Digests[0]
@@ -235,11 +263,11 @@ func toRootPackage(s sbom.SBOM) *spdx.Package {
 				Value:     d.Value,
 			})
 		}
-		purpose = spdxPrimaryPurposeFile
 	default:
 		prefix = prefixUnknown
-		name = s.Source.ID
 		purpose = spdxPrimaryPurposeOther
+
+		name = s.ID
 	}
 
 	p := &spdx.Package{
@@ -250,6 +278,16 @@ func toRootPackage(s sbom.SBOM) *spdx.Package {
 		PackageSupplier:           nil,
 		PackageExternalReferences: nil,
 		PrimaryPackagePurpose:     purpose,
+	}
+
+	if purl != nil {
+		p.PackageExternalReferences = []*spdx.PackageExternalReference{
+			{
+				Category: string(PackageManagerReferenceCategory),
+				RefType:  string(PurlExternalRefType),
+				Locator:  purl.String(),
+			},
+		}
 	}
 
 	return p
