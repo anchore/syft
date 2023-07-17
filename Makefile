@@ -313,7 +313,8 @@ generate-license-list:  ## Generate an updated spdx license list
 ## Build-related targets #################################
 
 .PHONY: build
-build: $(SNAPSHOT_DIR)  ## Build release snapshot binaries and packages
+build:
+	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./cmd/syft
 
 $(SNAPSHOT_DIR):  ## Build snapshot release binaries and packages
 	$(call title,Building snapshot artifacts)
