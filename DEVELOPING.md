@@ -8,7 +8,7 @@ In order to test and develop in this repo you will need the following dependenci
 - make
 
 ### Docker settings for getting started
-Make sure you've updated your docker settings so the default docker socket path available.
+Make sure you've updated your docker settings so the default docker socket path is available.
 
 Go to:
 
