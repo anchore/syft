@@ -18,7 +18,6 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			Name:         "System.Buffers",
 			Version:      "7.0.923.36201",
 			Locations:    fixtureLocationSet,
-			Language:     pkg.Dotnet,
 			Type:         pkg.DotnetPkg,
 			PURL:         "pkg:nuget/System.Buffers@7.0.923.36201",
 			MetadataType: pkg.DotnetPortableExecutableMetadataType,

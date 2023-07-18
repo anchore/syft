@@ -72,7 +72,6 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 		Name:         name,
 		Version:      version,
 		Locations:    file.NewLocationSet(f.Location),
-		Language:     pkg.Dotnet,
 		Type:         pkg.DotnetPkg,
 		PURL:         purl,
 		MetadataType: pkg.DotnetPortableExecutableMetadataType,
