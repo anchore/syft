@@ -10,7 +10,7 @@ func NewDotnetDepsCataloger() *generic.Cataloger {
 		WithParserByGlobs(parseDotnetDeps, "**/*.deps.json")
 }
 
-func NewDotnetPortableExecutableCalaloger() *generic.Cataloger {
+func NewDotnetPortableExecutableCataloger() *generic.Cataloger {
 	return generic.NewCataloger("dotnet-portable-executable-cataloger").
 		WithParserByGlobs(parseDotnetPortableExecutable, "**/*.dll", "**/*.exe")
 }
