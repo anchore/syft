@@ -117,28 +117,30 @@ func indexCPEList(list CpeList) *dictionary.Indexed {
 	}
 
 	for _, cpeItem := range list.CpeItems {
+		cpeItemName := cpeItem.Cpe23Item.Name
+
 		for _, reference := range cpeItem.References {
 			ref := reference.Reference.Href
 
 			switch {
 			case strings.HasPrefix(ref, prefixForNPMPackages):
-				addEntryForNPMPackage(indexed, ref, cpeItem)
+				addEntryForNPMPackage(indexed, ref, cpeItemName)
 
 			case strings.HasPrefix(ref, prefixForRubyGems), strings.HasPrefix(ref, prefixForRubyGemsHTTP):
-				addEntryForRubyGem(indexed, ref, cpeItem)
+				addEntryForRubyGem(indexed, ref, cpeItemName)
 
 			case strings.HasPrefix(ref, prefixForNativeRubyGems):
-				addEntryForNativeRubyGem(indexed, ref, cpeItem)
+				addEntryForNativeRubyGem(indexed, ref, cpeItemName)
 
 			case strings.HasPrefix(ref, prefixForPyPIPackages):
-				addEntryForPyPIPackage(indexed, ref, cpeItem)
+				addEntryForPyPIPackage(indexed, ref, cpeItemName)
 
 			case strings.HasPrefix(ref, prefixForJenkinsPlugins):
 				// It _might_ be a jenkins plugin!
-				addEntryForJenkinsPlugin(indexed, ref, cpeItem)
+				addEntryForJenkinsPlugin(indexed, ref, cpeItemName)
 
 			case strings.HasPrefix(ref, prefixForRustCrates):
-				addEntryForRustCrate(indexed, ref, cpeItem)
+				addEntryForRustCrate(indexed, ref, cpeItemName)
 			}
 		}
 	}
@@ -146,7 +148,7 @@ func indexCPEList(list CpeList) *dictionary.Indexed {
 	return indexed
 }
 
-func addEntryForRustCrate(indexed *dictionary.Indexed, ref string, cpeItem CpeItem) {
+func addEntryForRustCrate(indexed *dictionary.Indexed, ref string, cpeItemName string) {
 	// Prune off the non-package-name parts of the URL
 	ref = strings.TrimPrefix(ref, prefixForRustCrates)
 	ref = strings.Split(ref, "/")[0]
@@ -155,10 +157,10 @@ func addEntryForRustCrate(indexed *dictionary.Indexed, ref string, cpeItem CpeIt
 		indexed.EcosystemPackages[dictionary.EcosystemRustCrates] = make(dictionary.Packages)
 	}
 
-	indexed.EcosystemPackages[dictionary.EcosystemRustCrates][ref] = cpeItem.Cpe23Item.Name
+	indexed.EcosystemPackages[dictionary.EcosystemRustCrates][ref] = cpeItemName
 }
 
-func addEntryForJenkinsPlugin(indexed *dictionary.Indexed, ref string, cpeItem CpeItem) {
+func addEntryForJenkinsPlugin(indexed *dictionary.Indexed, ref string, cpeItemName string) {
 	// Prune off the non-package-name parts of the URL
 	ref = strings.TrimPrefix(ref, prefixForJenkinsPlugins)
 	ref = strings.Split(ref, "/")[0]
@@ -174,10 +176,10 @@ func addEntryForJenkinsPlugin(indexed *dictionary.Indexed, ref string, cpeItem C
 		indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins] = make(dictionary.Packages)
 	}
 
-	indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins][ref] = cpeItem.Cpe23Item.Name
+	indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins][ref] = cpeItemName
 }
 
-func addEntryForPyPIPackage(indexed *dictionary.Indexed, ref string, cpeItem CpeItem) {
+func addEntryForPyPIPackage(indexed *dictionary.Indexed, ref string, cpeItemName string) {
 	// Prune off the non-package-name parts of the URL
 	ref = strings.TrimPrefix(ref, prefixForPyPIPackages)
 	ref = strings.Split(ref, "/")[0]
@@ -186,10 +188,10 @@ func addEntryForPyPIPackage(indexed *dictionary.Indexed, ref string, cpeItem Cpe
 		indexed.EcosystemPackages[dictionary.EcosystemPyPI] = make(dictionary.Packages)
 	}
 
-	indexed.EcosystemPackages[dictionary.EcosystemPyPI][ref] = cpeItem.Cpe23Item.Name
+	indexed.EcosystemPackages[dictionary.EcosystemPyPI][ref] = cpeItemName
 }
 
-func addEntryForNativeRubyGem(indexed *dictionary.Indexed, ref string, cpeItem CpeItem) {
+func addEntryForNativeRubyGem(indexed *dictionary.Indexed, ref string, cpeItemName string) {
 	// Prune off the non-package-name parts of the URL
 	ref = strings.TrimPrefix(ref, prefixForNativeRubyGems)
 	ref = strings.Split(ref, "/")[0]
@@ -198,10 +200,10 @@ func addEntryForNativeRubyGem(indexed *dictionary.Indexed, ref string, cpeItem C
 		indexed.EcosystemPackages[dictionary.EcosystemRubyGems] = make(dictionary.Packages)
 	}
 
-	indexed.EcosystemPackages[dictionary.EcosystemRubyGems][ref] = cpeItem.Cpe23Item.Name
+	indexed.EcosystemPackages[dictionary.EcosystemRubyGems][ref] = cpeItemName
 }
 
-func addEntryForRubyGem(indexed *dictionary.Indexed, ref string, cpeItem CpeItem) {
+func addEntryForRubyGem(indexed *dictionary.Indexed, ref string, cpeItemName string) {
 	// Prune off the non-package-name parts of the URL
 	ref = strings.TrimPrefix(ref, prefixForRubyGems)
 	ref = strings.TrimPrefix(ref, prefixForRubyGemsHTTP)
@@ -211,10 +213,10 @@ func addEntryForRubyGem(indexed *dictionary.Indexed, ref string, cpeItem CpeItem
 		indexed.EcosystemPackages[dictionary.EcosystemRubyGems] = make(dictionary.Packages)
 	}
 
-	indexed.EcosystemPackages[dictionary.EcosystemRubyGems][ref] = cpeItem.Cpe23Item.Name
+	indexed.EcosystemPackages[dictionary.EcosystemRubyGems][ref] = cpeItemName
 }
 
-func addEntryForNPMPackage(indexed *dictionary.Indexed, ref string, cpeItem CpeItem) {
+func addEntryForNPMPackage(indexed *dictionary.Indexed, ref string, cpeItemName string) {
 	// Prune off the non-package-name parts of the URL
 	ref = strings.Split(ref, "/v/")[0]
 	ref = strings.Split(ref, "?")[0]
@@ -224,5 +226,5 @@ func addEntryForNPMPackage(indexed *dictionary.Indexed, ref string, cpeItem CpeI
 		indexed.EcosystemPackages[dictionary.EcosystemNPM] = make(dictionary.Packages)
 	}
 
-	indexed.EcosystemPackages[dictionary.EcosystemNPM][ref] = cpeItem.Cpe23Item.Name
+	indexed.EcosystemPackages[dictionary.EcosystemNPM][ref] = cpeItemName
 }
