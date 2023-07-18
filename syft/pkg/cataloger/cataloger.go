@@ -71,6 +71,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		dart.NewPubspecLockCataloger(),
 		deb.NewDpkgdbCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
+		dotnet.NewDotnetPortableExecutableCalaloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
 		golang.NewGoModFileCataloger(cfg.Go()),
