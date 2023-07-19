@@ -38,6 +38,26 @@ The main make tasks for common static analysis and testing are `lint`, `format`,
 
 See `make help` for all the current make tasks.
 
+### Internal Artifactory Settings
+
+**Not always applicable**
+
+Some companies have Artifactory setup internally as a solution for sourcing secure dependencies.
+If you're seeing an issue where the unit tests won't run because of the below error then this section might be relevant for your use case.
+
+```
+[ERROR] [ERROR] Some problems were encountered while processing the POMs
+```
+
+If you're dealing with an issue where the unit tests will not pull/build certain java fixtures check some of these settings:
+
+- a `settings.xml` file should be available to help you communicate with your internal artifactory deployment
+- this can be moved to `syft/pkg/cataloger/java/test-fixtures/java-builds/example-jenkins-plugin/` to help build the unit test-fixtures
+- you'll also want to modify the `build-example-jenkins-plugin.sh` to use `settings.xml`
+
+For more information on this setup and troubleshooting see [issue 1895](https://github.com/anchore/syft/issues/1895#issuecomment-1610085319)
+
+
 ## Architecture
 
 Syft is used to generate a Software Bill of Materials (SBOM) from different kinds of input.
