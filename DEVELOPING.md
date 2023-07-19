@@ -43,13 +43,13 @@ See `make help` for all the current make tasks.
 **Not always applicable**
 
 Some companies have Artifactory setup internally as a solution for sourcing secure dependencies.
-If you're seeing an issue where the unit tests won't run because of the below error, then this section might be relevant for your use case.
+If you're seeing an issue where the unit tests won't run because of the below error then this section might be relevant for your use case.
 
 ```
 [ERROR] [ERROR] Some problems were encountered while processing the POMs
 ```
 
-If you're dealing with an issue where the unit tests will not pull/build check some of these settings:
+If you're dealing with an issue where the unit tests will not pull/build certain java fixtures check some of these settings:
 
 - a `settings.xml` file should be available to help you communicate with your internal artifactory deployment
 - this can be moved to `syft/pkg/cataloger/java/test-fixtures/java-builds/example-jenkins-plugin/` to help build the unit test-fixtures
