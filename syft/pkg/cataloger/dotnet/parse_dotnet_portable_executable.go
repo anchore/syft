@@ -34,18 +34,21 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 
 	versionResources, err := peFile.ParseVersionResources()
 	if err != nil {
-		return nil, nil, err
+		// this is not a fatal error, just log and continue
+		// TODO: consider this case for "known unknowns" (same goes for cases below)
+		log.Tracef("unable to parse version resources in PE file: %s", f.RealPath)
+		return nil, nil, nil
 	}
 
 	name := versionResources["FileDescription"]
 	if name == "" {
-		log.Debugf("unable to find FileDescription in PE file: %s", f.RealPath)
+		log.Tracef("unable to find FileDescription in PE file: %s", f.RealPath)
 		return nil, nil, nil
 	}
 
 	version := versionResources["FileVersion"]
 	if version == "" {
-		log.Debugf("unable to find FileVersion in PE file: %s", f.RealPath)
+		log.Tracef("unable to find FileVersion in PE file: %s", f.RealPath)
 		return nil, nil, nil
 	}
 
