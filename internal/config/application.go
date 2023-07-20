@@ -85,6 +85,7 @@ func (cfg Application) ToCatalogerConfig() cataloger.Config {
 		LinuxKernel: kernel.LinuxCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},
+		PackageExclusions: cataloger.DefaultPackageExclusionsConfig(),
 	}
 }
 

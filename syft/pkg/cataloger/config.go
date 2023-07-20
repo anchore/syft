@@ -17,6 +17,7 @@ type Config struct {
 	Parallelism       int
 }
 
+// TODO: this is a helper function that is only used in test code. It should be migrated to test code.
 func DefaultConfig() Config {
 	return Config{
 		Search:            DefaultSearchConfig(),
