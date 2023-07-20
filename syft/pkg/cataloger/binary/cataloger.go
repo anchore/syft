@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-const catalogerName = "binary-cataloger"
+const CatalogerName = "binary-cataloger"
 
 func NewCataloger() *Cataloger {
 	return &Cataloger{}
@@ -22,7 +22,7 @@ type Cataloger struct{}
 
 // Name returns a string that uniquely describes the Cataloger
 func (c Cataloger) Name() string {
-	return catalogerName
+	return CatalogerName
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages

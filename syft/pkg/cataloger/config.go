@@ -12,16 +12,17 @@ type Config struct {
 	Search            SearchConfig
 	Golang            golang.GoCatalogerOpts
 	LinuxKernel       kernel.LinuxCatalogerConfig
+	PackageExclusions PackageExclusionsConfig
 	Catalogers        []string
 	Parallelism       int
-	PackageExclusions PackageExclusionsConfig
 }
 
 func DefaultConfig() Config {
 	return Config{
-		Search:      DefaultSearchConfig(),
-		Parallelism: 1,
-		LinuxKernel: kernel.DefaultLinuxCatalogerConfig(),
+		Search:            DefaultSearchConfig(),
+		Parallelism:       1,
+		LinuxKernel:       kernel.DefaultLinuxCatalogerConfig(),
+		PackageExclusions: DefaultPackageExclusionsConfig(),
 	}
 }
 
