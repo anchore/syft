@@ -1,12 +1,14 @@
 package spdxhelpers
 
 import (
+	"fmt"
+
 	"github.com/anchore/syft/syft/source"
 )
 
 func DocumentName(srcMetadata source.Description) string {
 	if srcMetadata.Name != "" {
-		return srcMetadata.Name
+		return fmt.Sprintf("%s-%s", srcMetadata.Name, srcMetadata.Version)
 	}
 
 	switch metadata := srcMetadata.Metadata.(type) {

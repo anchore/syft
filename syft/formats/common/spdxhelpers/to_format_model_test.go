@@ -29,6 +29,8 @@ func Test_toFormatModel(t *testing.T) {
 			name: "includes root element",
 			in: sbom.SBOM{
 				Source: source.Description{
+					Name:    "alpine",
+					Version: "sha256:d34db33f",
 					Metadata: source.StereoscopeImageSourceMetadata{
 						UserInput:      "alpine:latest",
 						ManifestDigest: "sha256:d34db33f",
@@ -45,7 +47,7 @@ func Test_toFormatModel(t *testing.T) {
 				SPDXIdentifier: "DOCUMENT",
 				SPDXVersion:    spdx.Version,
 				DataLicense:    spdx.DataLicense,
-				DocumentName:   "alpine:latest",
+				DocumentName:   "alpine-sha256:d34db33f",
 
 				Packages: []*spdx.Package{
 					{

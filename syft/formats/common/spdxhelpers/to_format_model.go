@@ -176,20 +176,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 	var prefix string
 
 	name := s.Name
-	nameIfUnset := func(n string) {
-		if name != "" {
-			return
-		}
-		name = n
-	}
-
 	version := s.Version
-	versionIfUnset := func(v string) {
-		if version != "" && version != "latest" {
-			return
-		}
-		version = v
-	}
 
 	var purl *packageurl.PackageURL
 	purpose := ""
@@ -206,57 +193,33 @@ func toRootPackage(s source.Description) *spdx.Package {
 			},
 		}
 
-		ref, err := reference.Parse(m.UserInput)
-		if err != nil {
-			log.Debugf("unable to parse image ref: %s", m.UserInput)
-			break
-		}
-
-		if ref, ok := ref.(reference.Named); ok {
-			nameIfUnset(ref.Name())
-		} else {
-			nameIfUnset(m.UserInput)
-		}
-
+		ref, _ := reference.Parse(m.UserInput)
 		if ref, ok := ref.(reference.NamedTagged); ok {
-			versionIfUnset(ref.Tag())
-
 			qualifiers = append(qualifiers, packageurl.Qualifier{
 				Key:   "tag",
 				Value: ref.Tag(),
 			})
 		}
 
-		if ref, ok := ref.(reference.Digested); ok {
-			versionIfUnset(ref.Digest().String())
-		}
-
-		checksum := m.ManifestDigest
-		versionIfUnset(checksum)
-		c := toChecksum(checksum)
+		c := toChecksum(m.ManifestDigest)
 		if c != nil {
 			checksums = append(checksums, *c)
 			purl = &packageurl.PackageURL{
 				Type:       "oci",
-				Name:       name,
-				Version:    checksum,
+				Name:       s.Name,
+				Version:    m.ManifestDigest,
 				Qualifiers: qualifiers,
 			}
 		}
+
 	case source.DirectorySourceMetadata:
 		prefix = prefixDirectory
 		purpose = spdxPrimaryPurposeFile
 
-		nameIfUnset(m.Path)
 	case source.FileSourceMetadata:
 		prefix = prefixFile
 		purpose = spdxPrimaryPurposeFile
 
-		nameIfUnset(m.Path)
-		if len(m.Digests) > 0 {
-			d := m.Digests[0]
-			versionIfUnset(fmt.Sprintf("%s:%s", toChecksumAlgorithm(d.Algorithm), d.Value))
-		}
 		for _, d := range m.Digests {
 			checksums = append(checksums, spdx.Checksum{
 				Algorithm: toChecksumAlgorithm(d.Algorithm),
@@ -267,7 +230,9 @@ func toRootPackage(s source.Description) *spdx.Package {
 		prefix = prefixUnknown
 		purpose = spdxPrimaryPurposeOther
 
-		name = s.ID
+		if name == "" {
+			name = s.ID
+		}
 	}
 
 	p := &spdx.Package{
