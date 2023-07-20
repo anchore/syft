@@ -9,11 +9,12 @@ import (
 // TODO: these field naming vs helper function naming schemes are inconsistent.
 
 type Config struct {
-	Search      SearchConfig
-	Golang      golang.GoCatalogerOpts
-	LinuxKernel kernel.LinuxCatalogerConfig
-	Catalogers  []string
-	Parallelism int
+	Search            SearchConfig
+	Golang            golang.GoCatalogerOpts
+	LinuxKernel       kernel.LinuxCatalogerConfig
+	Catalogers        []string
+	Parallelism       int
+	PackageExclusions PackageExclusionsConfig
 }
 
 func DefaultConfig() Config {
