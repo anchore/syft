@@ -48,14 +48,13 @@ func (c *goModCataloger) parseGoModFile(resolver file.Resolver, _ *generic.Envir
 		}
 
 		packages[m.Mod.Path] = pkg.Package{
-			Name:         m.Mod.Path,
-			Version:      m.Mod.Version,
-			Licenses:     pkg.NewLicenseSet(licenses...),
-			Locations:    file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			PURL:         packageURL(m.Mod.Path, m.Mod.Version),
-			Language:     pkg.Go,
-			Type:         pkg.GoModulePkg,
-			MetadataType: pkg.GolangModMetadataType,
+			Name:      m.Mod.Path,
+			Version:   m.Mod.Version,
+			Licenses:  pkg.NewLicenseSet(licenses...),
+			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:      packageURL(m.Mod.Path, m.Mod.Version),
+			Language:  pkg.Go,
+			Type:      pkg.GoModulePkg,
 			Metadata: pkg.GolangModMetadata{
 				H1Digest: digests[fmt.Sprintf("%s %s", m.Mod.Path, m.Mod.Version)],
 			},
@@ -70,14 +69,13 @@ func (c *goModCataloger) parseGoModFile(resolver file.Resolver, _ *generic.Envir
 		}
 
 		packages[m.New.Path] = pkg.Package{
-			Name:         m.New.Path,
-			Version:      m.New.Version,
-			Licenses:     pkg.NewLicenseSet(licenses...),
-			Locations:    file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			PURL:         packageURL(m.New.Path, m.New.Version),
-			Language:     pkg.Go,
-			Type:         pkg.GoModulePkg,
-			MetadataType: pkg.GolangModMetadataType,
+			Name:      m.New.Path,
+			Version:   m.New.Version,
+			Licenses:  pkg.NewLicenseSet(licenses...),
+			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:      packageURL(m.New.Path, m.New.Version),
+			Language:  pkg.Go,
+			Type:      pkg.GoModulePkg,
 			Metadata: pkg.GolangModMetadata{
 				H1Digest: digests[fmt.Sprintf("%s %s", m.New.Path, m.New.Version)],
 			},

@@ -13,13 +13,12 @@ func TestParseConanlock(t *testing.T) {
 	fixture := "test-fixtures/conan.lock"
 	expected := []pkg.Package{
 		{
-			Name:         "zlib",
-			Version:      "1.2.12",
-			PURL:         "pkg:conan/zlib@1.2.12",
-			Locations:    file.NewLocationSet(file.NewLocation(fixture)),
-			Language:     pkg.CPP,
-			Type:         pkg.ConanPkg,
-			MetadataType: pkg.ConanLockMetadataType,
+			Name:      "zlib",
+			Version:   "1.2.12",
+			PURL:      "pkg:conan/zlib@1.2.12",
+			Locations: file.NewLocationSet(file.NewLocation(fixture)),
+			Language:  pkg.CPP,
+			Type:      pkg.ConanPkg,
 			Metadata: pkg.ConanLockMetadata{
 				Ref: "zlib/1.2.12",
 				Options: map[string]string{

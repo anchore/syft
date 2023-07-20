@@ -63,7 +63,6 @@ func Test_encodeComponentProperties(t *testing.T) {
 		{
 			name: "from dpkg",
 			input: pkg.Package{
-				MetadataType: pkg.DpkgMetadataType,
 				Metadata: pkg.DpkgMetadata{
 					Package:       "tzdata",
 					Version:       "2020a-0+deb10u1",
@@ -85,11 +84,10 @@ func Test_encodeComponentProperties(t *testing.T) {
 		{
 			name: "from go bin",
 			input: pkg.Package{
-				Name:         "golang.org/x/net",
-				Version:      "v0.0.0-20211006190231-62292e806868",
-				Language:     pkg.Go,
-				Type:         pkg.GoModulePkg,
-				MetadataType: pkg.GolangBinMetadataType,
+				Name:     "golang.org/x/net",
+				Version:  "v0.0.0-20211006190231-62292e806868",
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
 				Metadata: pkg.GolangBinMetadata{
 					GoCompiledVersion: "1.17",
 					Architecture:      "amd64",
@@ -108,11 +106,10 @@ func Test_encodeComponentProperties(t *testing.T) {
 		{
 			name: "from go mod",
 			input: pkg.Package{
-				Name:         "golang.org/x/net",
-				Version:      "v0.0.0-20211006190231-62292e806868",
-				Language:     pkg.Go,
-				Type:         pkg.GoModulePkg,
-				MetadataType: pkg.GolangModMetadataType,
+				Name:     "golang.org/x/net",
+				Version:  "v0.0.0-20211006190231-62292e806868",
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
 				Metadata: pkg.GolangModMetadata{
 					H1Digest: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
 				},
@@ -127,10 +124,9 @@ func Test_encodeComponentProperties(t *testing.T) {
 		{
 			name: "from rpm",
 			input: pkg.Package{
-				Name:         "dive",
-				Version:      "0.9.2-1",
-				Type:         pkg.RpmPkg,
-				MetadataType: pkg.RpmMetadataType,
+				Name:    "dive",
+				Version: "0.9.2-1",
+				Type:    pkg.RpmPkg,
 				Metadata: pkg.RpmMetadata{
 					Name:      "dive",
 					Epoch:     &epoch,
@@ -268,11 +264,10 @@ func Test_deriveBomRef(t *testing.T) {
 
 func Test_decodeComponent(t *testing.T) {
 	tests := []struct {
-		name             string
-		component        cyclonedx.Component
-		wantLanguage     pkg.Language
-		wantMetadataType pkg.MetadataType
-		wantMetadata     interface{}
+		name         string
+		component    cyclonedx.Component
+		wantLanguage pkg.Language
+		wantMetadata any
 	}{
 		{
 			name: "derive language from pURL if missing",
@@ -300,8 +295,7 @@ func Test_decodeComponent(t *testing.T) {
 					},
 				},
 			},
-			wantMetadataType: pkg.RpmMetadataType,
-			wantMetadata:     pkg.RpmMetadata{},
+			wantMetadata: pkg.RpmMetadata{},
 		},
 		{
 			name: "handle RpmdbMetadata type with properties",
@@ -322,7 +316,6 @@ func Test_decodeComponent(t *testing.T) {
 					},
 				},
 			},
-			wantMetadataType: pkg.RpmMetadataType,
 			wantMetadata: pkg.RpmMetadata{
 				Release: "some-release",
 			},
@@ -335,11 +328,11 @@ func Test_decodeComponent(t *testing.T) {
 			if tt.wantLanguage != "" {
 				assert.Equal(t, tt.wantLanguage, p.Language)
 			}
-			if tt.wantMetadataType != "" {
-				assert.Equal(t, tt.wantMetadataType, p.MetadataType)
-			}
 			if tt.wantMetadata != nil {
 				assert.Truef(t, reflect.DeepEqual(tt.wantMetadata, p.Metadata), "metadata should match: %+v != %+v", tt.wantMetadata, p.Metadata)
+			}
+			if tt.wantMetadata == nil && tt.wantLanguage == "" {
+				t.Fatal("this is a useless test, please remove it")
 			}
 		})
 	}

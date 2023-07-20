@@ -23,10 +23,9 @@ func TestAlpmCataloger(t *testing.T) {
 				pkg.NewLicenseFromLocations("LGPL3", dbLocation),
 				pkg.NewLicenseFromLocations("GPL", dbLocation),
 			),
-			Locations:    file.NewLocationSet(dbLocation),
-			CPEs:         nil,
-			PURL:         "",
-			MetadataType: "AlpmMetadata",
+			Locations: file.NewLocationSet(dbLocation),
+			CPEs:      nil,
+			PURL:      "",
 			Metadata: pkg.AlpmMetadata{
 				BasePackage:  "gmp",
 				Package:      "gmp",

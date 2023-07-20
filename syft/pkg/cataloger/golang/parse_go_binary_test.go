@@ -144,7 +144,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		MetadataType: pkg.GolangBinMetadataType,
 		Metadata: pkg.GolangBinMetadata{
 			GoCompiledVersion: goCompiledVersion,
 			Architecture:      archDetails,
@@ -191,8 +190,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata:     pkg.GolangBinMetadata{},
+					Metadata: pkg.GolangBinMetadata{},
 				},
 			},
 		},
@@ -234,7 +232,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -270,7 +267,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -329,7 +325,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -376,7 +371,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -421,7 +415,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -464,7 +457,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -507,7 +499,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -551,7 +542,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -606,7 +596,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -628,7 +617,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -683,7 +671,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -704,7 +691,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
 					Metadata: pkg.GolangBinMetadata{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,

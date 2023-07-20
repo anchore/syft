@@ -2,6 +2,7 @@ package syftjson
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"sort"
 	"strconv"
 
@@ -234,7 +235,7 @@ func toPackageModel(p pkg.Package) model.Package {
 			PURL:      p.PURL,
 		},
 		PackageCustomData: model.PackageCustomData{
-			MetadataType: p.MetadataType,
+			MetadataType: packagemetadata.JSONName(p.Metadata),
 			Metadata:     p.Metadata,
 		},
 	}

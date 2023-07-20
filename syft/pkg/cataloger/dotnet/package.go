@@ -26,14 +26,13 @@ func newDotnetDepsPackage(nameVersion string, lib dotnetDepsLibrary, locations .
 	}
 
 	p := &pkg.Package{
-		Name:         name,
-		Version:      version,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(m),
-		Language:     pkg.Dotnet,
-		Type:         pkg.DotnetPkg,
-		MetadataType: pkg.DotnetDepsMetadataType,
-		Metadata:     m,
+		Name:      name,
+		Version:   version,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURL(m),
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata:  m,
 	}
 
 	p.SetID()

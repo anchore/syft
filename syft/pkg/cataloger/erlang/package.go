@@ -8,14 +8,13 @@ import (
 
 func newPackage(d pkg.RebarLockMetadata, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         d.Name,
-		Version:      d.Version,
-		Language:     pkg.Erlang,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(d),
-		Type:         pkg.HexPkg,
-		MetadataType: pkg.RebarLockMetadataType,
-		Metadata:     d,
+		Name:      d.Name,
+		Version:   d.Version,
+		Language:  pkg.Erlang,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURL(d),
+		Type:      pkg.HexPkg,
+		Metadata:  d,
 	}
 
 	p.SetID()

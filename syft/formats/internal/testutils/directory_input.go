@@ -108,8 +108,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		Locations: file.NewLocationSet(
 			file.NewLocation("/some/path/pkg1"),
 		),
-		Language:     pkg.Python,
-		MetadataType: pkg.PythonPackageMetadataType,
+		Language: pkg.Python,
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicense("MIT"),
 		),
@@ -135,7 +134,6 @@ func newDirectoryCatalog() *pkg.Collection {
 		Locations: file.NewLocationSet(
 			file.NewLocation("/some/path/pkg1"),
 		),
-		MetadataType: pkg.DpkgMetadataType,
 		Metadata: pkg.DpkgMetadata{
 			Package: "package-2",
 			Version: "2.0.1",
@@ -161,8 +159,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		Locations: file.NewLocationSet(
 			file.NewLocation("/some/path/pkg1"),
 		),
-		Language:     pkg.Python,
-		MetadataType: pkg.PythonPackageMetadataType,
+		Language: pkg.Python,
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicense("MIT"),
 		),
@@ -189,7 +186,6 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		Locations: file.NewLocationSet(
 			file.NewLocation("/some/path/pkg1"),
 		),
-		MetadataType: pkg.DpkgMetadataType,
 		Metadata: pkg.DpkgMetadata{
 			Package: "package-2",
 			Version: "2.0.1",

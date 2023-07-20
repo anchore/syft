@@ -99,14 +99,12 @@ func TestToSyftModel(t *testing.T) {
 
 	p1 := pkgs[0]
 	assert.Equal(t, p1.Name, "pkg-1")
-	assert.Equal(t, p1.MetadataType, pkg.ApkMetadataType)
 	p1meta := p1.Metadata.(pkg.ApkMetadata)
 	assert.Equal(t, p1meta.OriginPackage, "p1-origin")
 	assert.Len(t, p1.CPEs, 2)
 
 	p2 := pkgs[1]
 	assert.Equal(t, p2.Name, "pkg-2")
-	assert.Equal(t, p2.MetadataType, pkg.DpkgMetadataType)
 	p2meta := p2.Metadata.(pkg.DpkgMetadata)
 	assert.Equal(t, p2meta.Source, "p2-origin")
 	assert.Equal(t, p2meta.SourceVersion, "9.1.3")
@@ -116,9 +114,8 @@ func TestToSyftModel(t *testing.T) {
 func Test_extractMetadata(t *testing.T) {
 	oneTwoThreeFour := 1234
 	tests := []struct {
-		pkg      spdx.Package
-		metaType pkg.MetadataType
-		meta     interface{}
+		pkg  spdx.Package
+		meta interface{}
 	}{
 		{
 			pkg: spdx.Package{
@@ -132,7 +129,6 @@ func Test_extractMetadata(t *testing.T) {
 					},
 				},
 			},
-			metaType: pkg.DpkgMetadataType,
 			meta: pkg.DpkgMetadata{
 				Package:       "SomeDebPkg",
 				Source:        "somedebpkg-origin",
@@ -153,7 +149,6 @@ func Test_extractMetadata(t *testing.T) {
 					},
 				},
 			},
-			metaType: pkg.ApkMetadataType,
 			meta: pkg.ApkMetadata{
 				Package:       "SomeApkPkg",
 				OriginPackage: "apk-origin",
@@ -173,7 +168,6 @@ func Test_extractMetadata(t *testing.T) {
 					},
 				},
 			},
-			metaType: pkg.RpmMetadataType,
 			meta: pkg.RpmMetadata{
 				Name:      "SomeRpmPkg",
 				Version:   "13.2.79",
@@ -188,8 +182,7 @@ func Test_extractMetadata(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.pkg.PackageName, func(t *testing.T) {
 			info := extractPkgInfo(&test.pkg)
-			metaType, meta := extractMetadata(&test.pkg, info)
-			assert.Equal(t, test.metaType, metaType)
+			meta := extractMetadata(&test.pkg, info)
 			assert.EqualValues(t, test.meta, meta)
 		})
 	}
@@ -315,7 +308,6 @@ func TestH1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			p := toSyftPackage(&test.pkg)
-			require.Equal(t, pkg.GolangBinMetadataType, p.MetadataType)
 			meta := p.Metadata.(pkg.GolangBinMetadata)
 			require.Equal(t, test.expectedDigest, meta.H1Digest)
 		})

@@ -15,13 +15,12 @@ func TestParsePipFileLock(t *testing.T) {
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
-			Name:         "aio-pika",
-			Version:      "6.8.0",
-			PURL:         "pkg:pypi/aio-pika@6.8.0",
-			Locations:    locations,
-			Language:     pkg.Python,
-			Type:         pkg.PythonPkg,
-			MetadataType: pkg.PythonPipfileLockMetadataType,
+			Name:      "aio-pika",
+			Version:   "6.8.0",
+			PURL:      "pkg:pypi/aio-pika@6.8.0",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPipfileLockMetadata{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{
@@ -30,13 +29,12 @@ func TestParsePipFileLock(t *testing.T) {
 				}},
 		},
 		{
-			Name:         "aiodns",
-			Version:      "2.0.0",
-			PURL:         "pkg:pypi/aiodns@2.0.0",
-			Locations:    locations,
-			Language:     pkg.Python,
-			Type:         pkg.PythonPkg,
-			MetadataType: pkg.PythonPipfileLockMetadataType,
+			Name:      "aiodns",
+			Version:   "2.0.0",
+			PURL:      "pkg:pypi/aiodns@2.0.0",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPipfileLockMetadata{
 				Index: "https://test.pypi.org/simple",
 				Hashes: []string{
@@ -46,13 +44,12 @@ func TestParsePipFileLock(t *testing.T) {
 			},
 		},
 		{
-			Name:         "aiohttp",
-			Version:      "3.7.4.post0",
-			PURL:         "pkg:pypi/aiohttp@3.7.4.post0",
-			Locations:    locations,
-			Language:     pkg.Python,
-			Type:         pkg.PythonPkg,
-			MetadataType: pkg.PythonPipfileLockMetadataType,
+			Name:      "aiohttp",
+			Version:   "3.7.4.post0",
+			PURL:      "pkg:pypi/aiohttp@3.7.4.post0",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPipfileLockMetadata{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{
@@ -62,13 +59,12 @@ func TestParsePipFileLock(t *testing.T) {
 			},
 		},
 		{
-			Name:         "aiohttp-jinja2",
-			Version:      "1.4.2",
-			PURL:         "pkg:pypi/aiohttp-jinja2@1.4.2",
-			Locations:    locations,
-			Language:     pkg.Python,
-			Type:         pkg.PythonPkg,
-			MetadataType: pkg.PythonPipfileLockMetadataType,
+			Name:      "aiohttp-jinja2",
+			Version:   "1.4.2",
+			PURL:      "pkg:pypi/aiohttp-jinja2@1.4.2",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPipfileLockMetadata{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{

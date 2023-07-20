@@ -26,14 +26,13 @@ func newDpkgPackage(d pkg.DpkgMetadata, dbLocation file.Location, resolver file.
 	// TODO: separate pr to license refactor, but explore extracting dpkg-specific license parsing into a separate function
 	licenses := make([]pkg.License, 0)
 	p := pkg.Package{
-		Name:         d.Package,
-		Version:      d.Version,
-		Licenses:     pkg.NewLicenseSet(licenses...),
-		Locations:    file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		PURL:         packageURL(d, release),
-		Type:         pkg.DebPkg,
-		MetadataType: pkg.DpkgMetadataType,
-		Metadata:     d,
+		Name:      d.Package,
+		Version:   d.Version,
+		Licenses:  pkg.NewLicenseSet(licenses...),
+		Locations: file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		PURL:      packageURL(d, release),
+		Type:      pkg.DebPkg,
+		Metadata:  d,
 	}
 
 	// the current entry only has what may have been listed in the status file, however, there are additional

@@ -68,12 +68,11 @@ func TestParseNativeImageSbom(t *testing.T) {
 			fixture: "test-fixtures/graalvm-sbom/micronaut.json",
 			expected: []pkg.Package{
 				{
-					Name:         "netty-codec-http2",
-					Version:      "4.1.73.Final",
-					Language:     pkg.Java,
-					Type:         pkg.GraalVMNativeImagePkg,
-					MetadataType: pkg.JavaMetadataType,
-					FoundBy:      nativeImageCatalogerName,
+					Name:     "netty-codec-http2",
+					Version:  "4.1.73.Final",
+					Language: pkg.Java,
+					Type:     pkg.GraalVMNativeImagePkg,
+					FoundBy:  nativeImageCatalogerName,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID: "io.netty",

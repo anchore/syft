@@ -17,7 +17,6 @@ func newPackage(name, version string, m *pkg.HackageMetadata, locations ...file.
 	}
 
 	if m != nil {
-		p.MetadataType = pkg.HackageMetadataType
 		p.Metadata = *m
 	}
 

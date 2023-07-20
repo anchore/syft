@@ -54,9 +54,8 @@ func parseGradleLockfile(_ file.Resolver, _ *generic.Environment, reader file.Lo
 			Locations: file.NewLocationSet(
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
-			Language:     pkg.Java,
-			Type:         pkg.JavaPkg,
-			MetadataType: pkg.JavaMetadataType,
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
 		}
 		pkgs = append(pkgs, mappedPkg)
 	}

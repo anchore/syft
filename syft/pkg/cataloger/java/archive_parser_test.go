@@ -102,9 +102,8 @@ func TestParseJar(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT License", file.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
 					),
-					Language:     pkg.Java,
-					Type:         pkg.JenkinsPluginPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Language: pkg.Java,
+					Type:     pkg.JenkinsPluginPkg,
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 						Manifest: &pkg.JavaManifest{
@@ -149,12 +148,11 @@ func TestParseJar(t *testing.T) {
 			fixture: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 			expected: map[string]pkg.Package{
 				"example-java-app-gradle": {
-					Name:         "example-java-app-gradle",
-					Version:      "0.1.0",
-					PURL:         "pkg:maven/example-java-app-gradle/example-java-app-gradle@0.1.0",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "example-java-app-gradle",
+					Version:  "0.1.0",
+					PURL:     "pkg:maven/example-java-app-gradle/example-java-app-gradle@0.1.0",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
@@ -166,12 +164,11 @@ func TestParseJar(t *testing.T) {
 					},
 				},
 				"joda-time": {
-					Name:         "joda-time",
-					Version:      "2.2",
-					PURL:         "pkg:maven/joda-time/joda-time@2.2",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "joda-time",
+					Version:  "2.2",
+					PURL:     "pkg:maven/joda-time/joda-time@2.2",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path
@@ -203,12 +200,11 @@ func TestParseJar(t *testing.T) {
 			},
 			expected: map[string]pkg.Package{
 				"example-java-app-maven": {
-					Name:         "example-java-app-maven",
-					Version:      "0.1.0",
-					PURL:         "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "example-java-app-maven",
+					Version:  "0.1.0",
+					PURL:     "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
@@ -231,12 +227,11 @@ func TestParseJar(t *testing.T) {
 					},
 				},
 				"joda-time": {
-					Name:         "joda-time",
-					Version:      "2.9.2",
-					PURL:         "pkg:maven/joda-time/joda-time@2.9.2",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "joda-time",
+					Version:  "2.9.2",
+					PURL:     "pkg:maven/joda-time/joda-time@2.9.2",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path
@@ -653,11 +648,10 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				},
 			},
 			expectedPackage: &pkg.Package{
-				Name:         "some-artifact-id",
-				Version:      "1.0",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
+				Name:     "some-artifact-id",
+				Version:  "1.0",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
 					VirtualPath: virtualPath + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{
@@ -722,11 +716,10 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				},
 			},
 			expectedPackage: &pkg.Package{
-				Name:         "some-artifact-id",
-				Version:      "1.0",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
+				Name:     "some-artifact-id",
+				Version:  "1.0",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
 					VirtualPath: virtualPath + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{
@@ -791,11 +784,10 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				},
 			},
 			expectedPackage: &pkg.Package{
-				Name:         "some-artifact-id",
-				Version:      "1.0",
-				Language:     pkg.Java,
-				Type:         pkg.JenkinsPluginPkg,
-				MetadataType: pkg.JavaMetadataType,
+				Name:     "some-artifact-id",
+				Version:  "1.0",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
 				Metadata: pkg.JavaMetadata{
 					VirtualPath: virtualPath + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{

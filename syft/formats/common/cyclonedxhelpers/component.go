@@ -1,6 +1,7 @@
 package cyclonedxhelpers
 
 import (
+	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"reflect"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -85,9 +86,9 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 
 	common.DecodeInto(p, values, "syft:package", CycloneDXFields)
 
-	p.MetadataType = pkg.CleanMetadataType(p.MetadataType)
+	metadataType := values["syft:package:metadataType"]
 
-	p.Metadata = decodePackageMetadata(values, c, p.MetadataType)
+	p.Metadata = decodePackageMetadata(values, c, metadataType)
 
 	if p.Type == "" {
 		p.Type = pkg.TypeFromPURL(p.PURL)
@@ -109,13 +110,13 @@ func decodeLocations(vals map[string]string) file.LocationSet {
 	return file.NewLocationSet(out...)
 }
 
-func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typ pkg.MetadataType) interface{} {
-	if typ != "" && c.Properties != nil {
-		metaTyp, ok := pkg.MetadataTypeByName[typ]
-		if !ok {
+func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeName string) interface{} {
+	if typeName != "" && c.Properties != nil {
+		metadataType := packagemetadata.ReflectTypeFromJSONName(typeName)
+		if metadataType == nil {
 			return nil
 		}
-		metaPtrTyp := reflect.PtrTo(metaTyp)
+		metaPtrTyp := reflect.PtrTo(metadataType)
 		metaPtr := common.Decode(metaPtrTyp, vals, "syft:metadata", CycloneDXFields)
 
 		// Map all explicit metadata properties

@@ -72,10 +72,9 @@ func Test_toPackageChecksums(t *testing.T) {
 		{
 			name: "Go Binary Package",
 			pkg: pkg.Package{
-				Name:         "test",
-				Version:      "1.0.0",
-				Language:     pkg.Go,
-				MetadataType: pkg.GolangBinMetadataType,
+				Name:     "test",
+				Version:  "1.0.0",
+				Language: pkg.Go,
 				Metadata: pkg.GolangBinMetadata{
 					H1Digest: "h1:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9xHw=",
 				},
@@ -384,9 +383,8 @@ func Test_H1Digest(t *testing.T) {
 		{
 			name: "valid h1digest",
 			pkg: pkg.Package{
-				Name:         "github.com/googleapis/gnostic",
-				Version:      "v0.5.5",
-				MetadataType: pkg.GolangBinMetadataType,
+				Name:    "github.com/googleapis/gnostic",
+				Version: "v0.5.5",
 				Metadata: pkg.GolangBinMetadata{
 					H1Digest: "h1:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9xHw=",
 				},
@@ -396,9 +394,8 @@ func Test_H1Digest(t *testing.T) {
 		{
 			name: "invalid h1digest",
 			pkg: pkg.Package{
-				Name:         "github.com/googleapis/gnostic",
-				Version:      "v0.5.5",
-				MetadataType: pkg.GolangBinMetadataType,
+				Name:    "github.com/googleapis/gnostic",
+				Version: "v0.5.5",
 				Metadata: pkg.GolangBinMetadata{
 					H1Digest: "h1:9fHAtK0uzzz",
 				},
@@ -408,9 +405,8 @@ func Test_H1Digest(t *testing.T) {
 		{
 			name: "unsupported h-digest",
 			pkg: pkg.Package{
-				Name:         "github.com/googleapis/gnostic",
-				Version:      "v0.5.5",
-				MetadataType: pkg.GolangBinMetadataType,
+				Name:    "github.com/googleapis/gnostic",
+				Version: "v0.5.5",
 				Metadata: pkg.GolangBinMetadata{
 					H1Digest: "h12:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9xHw=",
 				},

@@ -194,8 +194,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Locations: file.NewLocationSet(
 			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		Type:         j.fileInfo.pkgType(),
-		MetadataType: pkg.JavaMetadataType,
+		Type: j.fileInfo.pkgType(),
 		Metadata: pkg.JavaMetadata{
 			VirtualPath:    j.location.AccessPath(),
 			Manifest:       manifest,
@@ -388,9 +387,8 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 		Locations: file.NewLocationSet(
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		Language:     pkg.Java,
-		Type:         pomProperties.PkgTypeIndicated(),
-		MetadataType: pkg.JavaMetadataType,
+		Language: pkg.Java,
+		Type:     pomProperties.PkgTypeIndicated(),
 		Metadata: pkg.JavaMetadata{
 			VirtualPath:   virtualPath,
 			PomProperties: &pomProperties,

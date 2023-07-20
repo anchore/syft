@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/iancoleman/strcase"
 	"io"
 	"os"
 	"path/filepath"
@@ -35,12 +36,16 @@ func schemaID() jsonschema.ID {
 	return jsonschema.ID(fmt.Sprintf("anchore.io/schema/syft/json/%s", internal.JSONSchemaVersion))
 }
 
-func assembleTypeContainer(items []any) any {
+func assembleTypeContainer(items []any) (any, map[string]string) {
 	structFields := make([]reflect.StructField, len(items))
-
+	mapping := make(map[string]string, len(items))
 	for i, item := range items {
 		itemType := reflect.TypeOf(item)
-		fieldName := itemType.Name()
+
+		jsonName := packagemetadata.JSONName(item)
+		fieldName := strcase.ToCamel(jsonName)
+
+		mapping[itemType.Name()] = fieldName
 
 		structFields[i] = reflect.StructField{
 			Name: fieldName,
@@ -49,7 +54,7 @@ func assembleTypeContainer(items []any) any {
 	}
 
 	structType := reflect.StructOf(structFields)
-	return reflect.New(structType).Elem().Interface()
+	return reflect.New(structType).Elem().Interface(), mapping
 }
 
 func build() *jsonschema.Schema {
@@ -61,7 +66,7 @@ func build() *jsonschema.Schema {
 		},
 	}
 
-	pkgMetadataContainer := assembleTypeContainer(packagemetadata.AllTypes())
+	pkgMetadataContainer, pkgMetadataMapping := assembleTypeContainer(packagemetadata.AllTypes())
 	pkgMetadataContainerType := reflect.TypeOf(pkgMetadataContainer)
 
 	// srcMetadataContainer := assembleTypeContainer(sourcemetadata.AllTypes())
@@ -73,17 +78,23 @@ func build() *jsonschema.Schema {
 
 	// TODO: add source metadata types
 
-	// inject the definitions of all packages metadatas into the schema definitions
+	// inject the definitions of all packages metadata into the schema definitions
 
 	var metadataNames []string
-	for name, definition := range pkgMetadataSchema.Definitions {
-		if name == pkgMetadataContainerType.Name() {
+	for typeName, definition := range pkgMetadataSchema.Definitions {
+		if typeName == pkgMetadataContainerType.Name() {
 			// ignore the definition for the fake container
 			continue
 		}
-		documentSchema.Definitions[name] = definition
-		if strings.HasSuffix(name, "Metadata") {
-			metadataNames = append(metadataNames, name)
+
+		displayName, ok := pkgMetadataMapping[typeName]
+		if ok {
+			// this is a package metadata type...
+			documentSchema.Definitions[displayName] = definition
+			metadataNames = append(metadataNames, displayName)
+		} else {
+			// this is a type that the metadata type uses (e.g. DpkgFileRecord)
+			documentSchema.Definitions[typeName] = definition
 		}
 	}
 

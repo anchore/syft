@@ -8,13 +8,12 @@ import (
 
 func newPackage(name, version, hash string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		PURL:         packageURL(name, version),
-		Locations:    file.NewLocationSet(locations...),
-		Type:         pkg.CocoapodsPkg,
-		Language:     pkg.Swift,
-		MetadataType: pkg.CocoapodsMetadataType,
+		Name:      name,
+		Version:   version,
+		PURL:      packageURL(name, version),
+		Locations: file.NewLocationSet(locations...),
+		Type:      pkg.CocoapodsPkg,
+		Language:  pkg.Swift,
 		Metadata: pkg.CocoapodsMetadata{
 			Checksum: hash,
 		},

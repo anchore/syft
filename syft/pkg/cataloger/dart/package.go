@@ -15,14 +15,13 @@ func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...fil
 	}
 
 	p := pkg.Package{
-		Name:         name,
-		Version:      raw.Version,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(metadata),
-		Language:     pkg.Dart,
-		Type:         pkg.DartPubPkg,
-		MetadataType: pkg.DartPubMetadataType,
-		Metadata:     metadata,
+		Name:      name,
+		Version:   raw.Version,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURL(metadata),
+		Language:  pkg.Dart,
+		Type:      pkg.DartPubPkg,
+		Metadata:  metadata,
 	}
 
 	p.SetID()

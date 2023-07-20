@@ -20,14 +20,13 @@ func newPackageJSONPackage(u packageJSON, indexLocation file.Location) pkg.Packa
 
 	license := pkg.NewLicensesFromLocation(indexLocation, licenseCandidates...)
 	p := pkg.Package{
-		Name:         u.Name,
-		Version:      u.Version,
-		PURL:         packageURL(u.Name, u.Version),
-		Locations:    file.NewLocationSet(indexLocation),
-		Language:     pkg.JavaScript,
-		Licenses:     pkg.NewLicenseSet(license...),
-		Type:         pkg.NpmPkg,
-		MetadataType: pkg.NpmPackageJSONMetadataType,
+		Name:      u.Name,
+		Version:   u.Version,
+		PURL:      packageURL(u.Name, u.Version),
+		Locations: file.NewLocationSet(indexLocation),
+		Language:  pkg.JavaScript,
+		Licenses:  pkg.NewLicenseSet(license...),
+		Type:      pkg.NpmPkg,
 		Metadata: pkg.NpmPackageJSONMetadata{
 			Name:        u.Name,
 			Version:     u.Version,
@@ -64,14 +63,13 @@ func newPackageLockV1Package(resolver file.Resolver, location file.Location, nam
 		resolver,
 		location,
 		pkg.Package{
-			Name:         name,
-			Version:      version,
-			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			PURL:         packageURL(name, version),
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
+			Name:      name,
+			Version:   version,
+			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:      packageURL(name, version),
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
 	)
 }
@@ -81,15 +79,14 @@ func newPackageLockV2Package(resolver file.Resolver, location file.Location, nam
 		resolver,
 		location,
 		pkg.Package{
-			Name:         name,
-			Version:      u.Version,
-			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, u.License...)...),
-			PURL:         packageURL(name, u.Version),
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
+			Name:      name,
+			Version:   u.Version,
+			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, u.License...)...),
+			PURL:      packageURL(name, u.Version),
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
 	)
 }

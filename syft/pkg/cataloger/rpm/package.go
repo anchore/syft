@@ -15,14 +15,13 @@ import (
 
 func newPackage(dbOrRpmLocation file.Location, pd parsedData, distro *linux.Release) pkg.Package {
 	p := pkg.Package{
-		Name:         pd.Name,
-		Version:      toELVersion(pd.RpmMetadata),
-		Licenses:     pkg.NewLicenseSet(pd.Licenses...),
-		PURL:         packageURL(pd.RpmMetadata, distro),
-		Locations:    file.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Type:         pkg.RpmPkg,
-		MetadataType: pkg.RpmMetadataType,
-		Metadata:     pd.RpmMetadata,
+		Name:      pd.Name,
+		Version:   toELVersion(pd.RpmMetadata),
+		Licenses:  pkg.NewLicenseSet(pd.Licenses...),
+		PURL:      packageURL(pd.RpmMetadata, distro),
+		Locations: file.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Type:      pkg.RpmPkg,
+		Metadata:  pd.RpmMetadata,
 	}
 
 	p.SetID()

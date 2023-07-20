@@ -185,13 +185,12 @@ func Test_unpackMetadata(t *testing.T) {
 	tests := []struct {
 		name         string
 		packageData  []byte
-		metadataType pkg.MetadataType
-		wantMetadata interface{}
+		wantMetadata any
 		wantErr      require.ErrorAssertionFunc
 	}{
 		{
 			name:         "unmarshal package metadata",
-			metadataType: pkg.GolangBinMetadataType,
+			wantMetadata: pkg.GolangBinMetadata{},
 			packageData: []byte(`{
 				"id": "8b594519bc23da50",
 				"name": "gopkg.in/square/go-jose.v2",
@@ -217,7 +216,7 @@ func Test_unpackMetadata(t *testing.T) {
 		},
 		{
 			name:         "can handle package without metadata",
-			metadataType: "",
+			wantMetadata: nil,
 			packageData: []byte(`{
 				"id": "8b594519bc23da50",
 				"name": "gopkg.in/square/go-jose.v2",
@@ -237,7 +236,7 @@ func Test_unpackMetadata(t *testing.T) {
 		},
 		{
 			name:         "can handle RpmdbMetadata",
-			metadataType: pkg.RpmMetadataType,
+			wantMetadata: pkg.RpmMetadata{},
 			packageData: []byte(`{
 				"id": "4ac699c3b8fe1835",
 				"name": "acl",
@@ -272,9 +271,8 @@ func Test_unpackMetadata(t *testing.T) {
 			}`),
 		},
 		{
-			name:         "bad metadata type is an error",
-			metadataType: "BOGOSITY",
-			wantErr:      require.Error,
+			name:    "bad metadata type is an error",
+			wantErr: require.Error,
 			packageData: []byte(`{
 				"id": "8b594519bc23da50",
 				"name": "gopkg.in/square/go-jose.v2",
@@ -301,8 +299,7 @@ func Test_unpackMetadata(t *testing.T) {
 					"thing": "thing-1"
 				}
 			}`),
-			wantErr:      require.Error,
-			metadataType: "NewMetadataType",
+			wantErr: require.Error,
 			wantMetadata: map[string]interface{}{
 				"thing": "thing-1",
 			},
@@ -312,7 +309,6 @@ func Test_unpackMetadata(t *testing.T) {
 			packageData: []byte(`{
 				"metadataType": "GolangBinMetadata"
 			}`),
-			metadataType: pkg.GolangBinMetadataType,
 			wantMetadata: pkg.GolangBinMetadata{},
 		},
 		{
@@ -320,7 +316,6 @@ func Test_unpackMetadata(t *testing.T) {
 			packageData: []byte(`{
 				"metadataType": "GolangBinMetadata"
 			}`),
-			metadataType: pkg.GolangBinMetadataType,
 			wantMetadata: pkg.GolangBinMetadata{},
 		},
 		{
@@ -328,9 +323,7 @@ func Test_unpackMetadata(t *testing.T) {
 			packageData: []byte(`{
 				"metadataType": "BadMetadata"
 			}`),
-			wantErr:      require.Error,
-			metadataType: "BadMetadata",
-			wantMetadata: nil,
+			wantErr: require.Error,
 		},
 		{
 			name: "can handle package with unknonwn metadata type and metadata",
@@ -340,11 +333,7 @@ func Test_unpackMetadata(t *testing.T) {
 					"random": "thing"
 				}
 			}`),
-			wantErr:      require.Error,
-			metadataType: "BadMetadata",
-			wantMetadata: map[string]interface{}{
-				"random": "thing",
-			},
+			wantErr: require.Error,
 		},
 	}
 
@@ -363,7 +352,6 @@ func Test_unpackMetadata(t *testing.T) {
 			require.NoError(t, json.Unmarshal(test.packageData, &unpacker))
 
 			err := unpackPkgMetadata(p, unpacker)
-			assert.Equal(t, test.metadataType, p.MetadataType)
 			test.wantErr(t, err)
 
 			if test.wantMetadata != nil {

@@ -21,14 +21,13 @@ func newConanfilePackage(m pkg.ConanMetadata, locations ...file.Location) *pkg.P
 	}
 
 	p := pkg.Package{
-		Name:         pkgName,
-		Version:      pkgVersion,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(pkgName, pkgVersion),
-		Language:     pkg.CPP,
-		Type:         pkg.ConanPkg,
-		MetadataType: pkg.ConanMetadataType,
-		Metadata:     m,
+		Name:      pkgName,
+		Version:   pkgVersion,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURL(pkgName, pkgVersion),
+		Language:  pkg.CPP,
+		Type:      pkg.ConanPkg,
+		Metadata:  m,
 	}
 
 	p.SetID()
@@ -49,14 +48,13 @@ func newConanlockPackage(m pkg.ConanLockMetadata, locations ...file.Location) *p
 	}
 
 	p := pkg.Package{
-		Name:         pkgName,
-		Version:      pkgVersion,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(pkgName, pkgVersion),
-		Language:     pkg.CPP,
-		Type:         pkg.ConanPkg,
-		MetadataType: pkg.ConanLockMetadataType,
-		Metadata:     m,
+		Name:      pkgName,
+		Version:   pkgVersion,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURL(pkgName, pkgVersion),
+		Language:  pkg.CPP,
+		Type:      pkg.ConanPkg,
+		Metadata:  m,
 	}
 
 	p.SetID()

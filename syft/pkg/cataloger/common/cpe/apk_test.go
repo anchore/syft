@@ -74,9 +74,8 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 		{
 			name: "ruby-rake with matching origin",
 			pkg: pkg.Package{
-				Name:         "ruby-rake",
-				Type:         pkg.ApkPkg,
-				MetadataType: pkg.ApkMetadataType,
+				Name: "ruby-rake",
+				Type: pkg.ApkPkg,
 				Metadata: pkg.ApkMetadata{
 					Package:       "ruby-rake",
 					URL:           "https://github.com/ruby/rake",
@@ -88,9 +87,8 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 		{
 			name: "ruby-rake with non-matching origin",
 			pkg: pkg.Package{
-				Name:         "ruby-rake",
-				Type:         pkg.ApkPkg,
-				MetadataType: pkg.ApkMetadataType,
+				Name: "ruby-rake",
+				Type: pkg.ApkPkg,
 				Metadata: pkg.ApkMetadata{
 					Package:       "ruby-rake",
 					URL:           "https://www.ruby-lang.org/",
@@ -184,9 +182,8 @@ func Test_candidateProductsForAPK(t *testing.T) {
 		{
 			name: "ruby-rake with non-matching origin",
 			pkg: pkg.Package{
-				Name:         "ruby-rake",
-				Type:         pkg.ApkPkg,
-				MetadataType: pkg.ApkMetadataType,
+				Name: "ruby-rake",
+				Type: pkg.ApkPkg,
 				Metadata: pkg.ApkMetadata{
 					Package:       "ruby-rake",
 					URL:           "https://www.ruby-lang.org/",

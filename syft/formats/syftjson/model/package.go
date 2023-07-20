@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"reflect"
 
 	"github.com/anchore/syft/internal/log"
@@ -74,14 +75,14 @@ func (f *licenses) UnmarshalJSON(b []byte) error {
 
 // PackageCustomData contains ambiguous values (type-wise) from pkg.Package.
 type PackageCustomData struct {
-	MetadataType pkg.MetadataType `json:"metadataType,omitempty"`
-	Metadata     interface{}      `json:"metadata,omitempty"`
+	MetadataType string      `json:"metadataType,omitempty"`
+	Metadata     interface{} `json:"metadata,omitempty"`
 }
 
 // packageMetadataUnpacker is all values needed from Package to disambiguate ambiguous fields during json unmarshaling.
 type packageMetadataUnpacker struct {
-	MetadataType pkg.MetadataType `json:"metadataType"`
-	Metadata     json.RawMessage  `json:"metadata"`
+	MetadataType string          `json:"metadataType"`
+	Metadata     json.RawMessage `json:"metadata"`
 }
 
 func (p *packageMetadataUnpacker) String() string {
@@ -112,10 +113,8 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 }
 
 func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
-	p.MetadataType = pkg.CleanMetadataType(unpacker.MetadataType)
-
-	typ, ok := pkg.MetadataTypeByName[p.MetadataType]
-	if ok {
+	typ := packagemetadata.ReflectTypeFromJSONName(p.MetadataType)
+	if typ != nil {
 		val := reflect.New(typ).Interface()
 		if len(unpacker.Metadata) > 0 {
 			if err := json.Unmarshal(unpacker.Metadata, val); err != nil {

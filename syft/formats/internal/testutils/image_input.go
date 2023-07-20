@@ -76,10 +76,9 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 		Locations: file.NewLocationSet(
 			file.NewLocationFromImage(string(ref1.RealPath), *ref1.Reference, img),
 		),
-		Type:         pkg.PythonPkg,
-		FoundBy:      "the-cataloger-1",
-		Language:     pkg.Python,
-		MetadataType: pkg.PythonPackageMetadataType,
+		Type:     pkg.PythonPkg,
+		FoundBy:  "the-cataloger-1",
+		Language: pkg.Python,
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicense("MIT"),
 		),
@@ -98,9 +97,8 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 		Locations: file.NewLocationSet(
 			file.NewLocationFromImage(string(ref2.RealPath), *ref2.Reference, img),
 		),
-		Type:         pkg.DebPkg,
-		FoundBy:      "the-cataloger-2",
-		MetadataType: pkg.DpkgMetadataType,
+		Type:    pkg.DebPkg,
+		FoundBy: "the-cataloger-2",
 		Metadata: pkg.DpkgMetadata{
 			Package: "package-2",
 			Version: "2.0.1",

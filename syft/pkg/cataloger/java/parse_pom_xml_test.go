@@ -21,12 +21,11 @@ func Test_parserPomXML(t *testing.T) {
 			input: "test-fixtures/pom/pom.xml",
 			expected: []pkg.Package{
 				{
-					Name:         "joda-time",
-					Version:      "2.9.2",
-					PURL:         "pkg:maven/com.joda/joda-time@2.9.2",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "joda-time",
+					Version:  "2.9.2",
+					PURL:     "pkg:maven/com.joda/joda-time@2.9.2",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "com.joda",
@@ -35,12 +34,11 @@ func Test_parserPomXML(t *testing.T) {
 					},
 				},
 				{
-					Name:         "junit",
-					Version:      "4.12",
-					PURL:         "pkg:maven/junit/junit@4.12",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "junit",
+					Version:  "4.12",
+					PURL:     "pkg:maven/junit/junit@4.12",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "junit",
@@ -72,12 +70,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 			input: "test-fixtures/pom/commons-text.pom.xml",
 			expected: []pkg.Package{
 				{
-					Name:         "commons-lang3",
-					Version:      "3.12.0",
-					PURL:         "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "commons-lang3",
+					Version:  "3.12.0",
+					PURL:     "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "org.apache.commons",
@@ -86,12 +83,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					},
 				},
 				{
-					Name:         "junit-jupiter",
-					Version:      "",
-					PURL:         "pkg:maven/org.junit.jupiter/junit-jupiter",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "junit-jupiter",
+					Version:  "",
+					PURL:     "pkg:maven/org.junit.jupiter/junit-jupiter",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "org.junit.jupiter",
@@ -101,12 +97,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					},
 				},
 				{
-					Name:         "assertj-core",
-					Version:      "3.23.1",
-					PURL:         "pkg:maven/org.assertj/assertj-core@3.23.1",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "assertj-core",
+					Version:  "3.23.1",
+					PURL:     "pkg:maven/org.assertj/assertj-core@3.23.1",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "org.assertj",
@@ -116,12 +111,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					},
 				},
 				{
-					Name:         "commons-io",
-					Version:      "2.11.0",
-					PURL:         "pkg:maven/commons-io/commons-io@2.11.0",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "commons-io",
+					Version:  "2.11.0",
+					PURL:     "pkg:maven/commons-io/commons-io@2.11.0",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "commons-io",
@@ -131,12 +125,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					},
 				},
 				{
-					Name:         "mockito-inline",
-					Version:      "4.8.0",
-					PURL:         "pkg:maven/org.mockito/mockito-inline@4.8.0",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "mockito-inline",
+					Version:  "4.8.0",
+					PURL:     "pkg:maven/org.mockito/mockito-inline@4.8.0",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "org.mockito",
@@ -146,12 +139,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					},
 				},
 				{
-					Name:         "js",
-					Version:      "22.0.0.2",
-					PURL:         "pkg:maven/org.graalvm.js/js@22.0.0.2",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "js",
+					Version:  "22.0.0.2",
+					PURL:     "pkg:maven/org.graalvm.js/js@22.0.0.2",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "org.graalvm.js",
@@ -161,12 +153,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					},
 				},
 				{
-					Name:         "js-scriptengine",
-					Version:      "22.0.0.2",
-					PURL:         "pkg:maven/org.graalvm.js/js-scriptengine@22.0.0.2",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "js-scriptengine",
+					Version:  "22.0.0.2",
+					PURL:     "pkg:maven/org.graalvm.js/js-scriptengine@22.0.0.2",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "org.graalvm.js",
@@ -176,12 +167,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					},
 				},
 				{
-					Name:         "commons-rng-simple",
-					Version:      "1.4",
-					PURL:         "pkg:maven/org.apache.commons/commons-rng-simple@1.4",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "commons-rng-simple",
+					Version:  "1.4",
+					PURL:     "pkg:maven/org.apache.commons/commons-rng-simple@1.4",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "org.apache.commons",
@@ -191,12 +181,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					},
 				},
 				{
-					Name:         "jmh-core",
-					Version:      "1.35",
-					PURL:         "pkg:maven/org.openjdk.jmh/jmh-core@1.35",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "jmh-core",
+					Version:  "1.35",
+					PURL:     "pkg:maven/org.openjdk.jmh/jmh-core@1.35",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "org.openjdk.jmh",
@@ -206,12 +195,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					},
 				},
 				{
-					Name:         "jmh-generator-annprocess",
-					Version:      "1.35",
-					PURL:         "pkg:maven/org.openjdk.jmh/jmh-generator-annprocess@1.35",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "jmh-generator-annprocess",
+					Version:  "1.35",
+					PURL:     "pkg:maven/org.openjdk.jmh/jmh-generator-annprocess@1.35",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						PomProperties: &pkg.PomProperties{
 							GroupID:    "org.openjdk.jmh",

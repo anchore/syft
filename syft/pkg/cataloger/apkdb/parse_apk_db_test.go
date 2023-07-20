@@ -91,8 +91,7 @@ func TestSinglePackageDetails(t *testing.T) {
 					pkg.NewLicense("BSD"),
 					pkg.NewLicense("GPL2+"),
 				),
-				Type:         pkg.ApkPkg,
-				MetadataType: pkg.ApkMetadataType,
+				Type: pkg.ApkPkg,
 				Metadata: pkg.ApkMetadata{
 					Package:       "musl-utils",
 					OriginPackage: "musl",
@@ -179,8 +178,7 @@ func TestSinglePackageDetails(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("GPL-2.0-only"),
 				),
-				Type:         pkg.ApkPkg,
-				MetadataType: pkg.ApkMetadataType,
+				Type: pkg.ApkPkg,
 				Metadata: pkg.ApkMetadata{
 					Package:       "alpine-baselayout-data",
 					OriginPackage: "alpine-baselayout",
@@ -224,9 +222,8 @@ func TestSinglePackageDetails(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("GPL-2.0-only"),
 				),
-				Type:         pkg.ApkPkg,
-				PURL:         "",
-				MetadataType: pkg.ApkMetadataType,
+				Type: pkg.ApkPkg,
+				PURL: "",
 				Metadata: pkg.ApkMetadata{
 					Package:       "alpine-baselayout",
 					OriginPackage: "alpine-baselayout",
@@ -702,10 +699,9 @@ func TestMultiplePackages(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocations("MPL-2.0 AND MIT", location),
 			),
-			Type:         pkg.ApkPkg,
-			PURL:         "pkg:apk/alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
-			Locations:    fixtureLocationSet,
-			MetadataType: pkg.ApkMetadataType,
+			Type:      pkg.ApkPkg,
+			PURL:      "pkg:apk/alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
+			Locations: fixtureLocationSet,
 			Metadata: pkg.ApkMetadata{
 				Package:       "libc-utils",
 				OriginPackage: "libc-dev",
@@ -734,7 +730,6 @@ func TestMultiplePackages(t *testing.T) {
 				pkg.NewLicenseFromLocations("BSD", location),
 				pkg.NewLicenseFromLocations("GPL2+", location),
 			),
-			MetadataType: pkg.ApkMetadataType,
 			Metadata: pkg.ApkMetadata{
 				Package:       "musl-utils",
 				OriginPackage: "musl",

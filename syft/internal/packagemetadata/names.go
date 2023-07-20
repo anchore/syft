@@ -10,7 +10,7 @@ var jsonNameFromType = map[reflect.Type][]string{
 	reflect.TypeOf(pkg.AlpmMetadata{}):               nameList("arch-alpm-catalog-entry", "AlpmMetadata"),
 	reflect.TypeOf(pkg.ApkMetadata{}):                nameList("alpine-apk-catalog-entry", "ApkMetadata"),
 	reflect.TypeOf(pkg.BinaryMetadata{}):             nameList("binary-signature", "BinaryMetadata"),
-	reflect.TypeOf(pkg.CocoapodsMetadata{}):          nameList("cocapod-lockfile", "CocoapodsMetadataType"),
+	reflect.TypeOf(pkg.CocoapodsMetadata{}):          nameList("cocoapod-lockfile", "CocoapodsMetadataType"),
 	reflect.TypeOf(pkg.ConanLockMetadata{}):          nameList("c-conan-lockfile", "ConanLockMetadataType"),
 	reflect.TypeOf(pkg.ConanMetadata{}):              nameList("c-conan-guidefile", "ConanMetadataType"),
 	reflect.TypeOf(pkg.DartPubMetadata{}):            nameList("dart-pubspec-lockfile", "DartPubMetadata"),

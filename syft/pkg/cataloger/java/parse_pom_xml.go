@@ -78,14 +78,13 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...fil
 	version := resolveProperty(pom, dep.Version)
 
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(name, version, m),
-		Language:     pkg.Java,
-		Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
-		MetadataType: pkg.JavaMetadataType,
-		Metadata:     m,
+		Name:      name,
+		Version:   version,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURL(name, version, m),
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
+		Metadata:  m,
 	}
 
 	p.SetID()

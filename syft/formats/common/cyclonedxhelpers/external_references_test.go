@@ -45,12 +45,11 @@ func Test_encodeExternalReferences(t *testing.T) {
 		{
 			name: "from cargo lock",
 			input: pkg.Package{
-				Name:         "ansi_term",
-				Version:      "0.12.1",
-				Language:     pkg.Rust,
-				Type:         pkg.RustPkg,
-				MetadataType: pkg.RustCargoPackageMetadataType,
-				Licenses:     pkg.NewLicenseSet(),
+				Name:     "ansi_term",
+				Version:  "0.12.1",
+				Language: pkg.Rust,
+				Type:     pkg.RustPkg,
+				Licenses: pkg.NewLicenseSet(),
 				Metadata: pkg.CargoPackageMetadata{
 					Name:     "ansi_term",
 					Version:  "0.12.1",

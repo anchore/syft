@@ -91,12 +91,11 @@ func TestParseRpmDB(t *testing.T) {
 			ignorePaths: true,
 			expected: []pkg.Package{
 				{
-					Name:         "dive",
-					Version:      "0.9.2-1",
-					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
-					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/Packages")),
-					Type:         pkg.RpmPkg,
-					MetadataType: pkg.RpmMetadataType,
+					Name:      "dive",
+					Version:   "0.9.2-1",
+					PURL:      "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/Packages")),
+					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT", packagesLocation),
 					),
@@ -120,12 +119,11 @@ func TestParseRpmDB(t *testing.T) {
 			ignorePaths: false,
 			expected: []pkg.Package{
 				{
-					Name:         "dive",
-					Version:      "0.9.2-1",
-					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
-					Locations:    file.NewLocationSet(packagesLocation),
-					Type:         pkg.RpmPkg,
-					MetadataType: pkg.RpmMetadataType,
+					Name:      "dive",
+					Version:   "0.9.2-1",
+					PURL:      "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
+					Locations: file.NewLocationSet(packagesLocation),
+					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT", packagesLocation),
 					),

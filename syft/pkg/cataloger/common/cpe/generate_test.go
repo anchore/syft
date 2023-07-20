@@ -67,12 +67,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "python language",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Python,
-				Type:         pkg.DebPkg,
-				MetadataType: pkg.PythonPackageMetadataType,
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Python,
+				Type:     pkg.DebPkg,
 				Metadata: pkg.PythonPackageMetadata{
 					Author:      "alex goodman",
 					AuthorEmail: "william.goodman@anchore.com",
@@ -117,11 +116,10 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "javascript language",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackageJSONMetadata{
 					Author: "jon",
 					URL:    "https://github.com/bob/npm-name",
@@ -135,12 +133,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "ruby language",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Ruby,
-				Type:         pkg.DebPkg,
-				MetadataType: pkg.GemMetadataType,
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Ruby,
+				Type:     pkg.DebPkg,
 				Metadata: pkg.GemMetadata{
 					Authors: []string{
 						"someones name",
@@ -177,12 +174,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "java language with groupID",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
 					PomProperties: &pkg.PomProperties{
 						GroupID: "org.sonatype.nexus",
@@ -201,10 +197,9 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "java with URL in metadata", // regression: https://github.com/anchore/grype/issues/417
 			p: pkg.Package{
-				Name:         "wstx-asl",
-				Version:      "3.2.7",
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
+				Name:    "wstx-asl",
+				Version: "3.2.7",
+				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
@@ -251,12 +246,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "java language - multi tier manifest fields",
 			p: pkg.Package{
-				Name:         "cxf-rt-bindings-xml",
-				Version:      "3.3.10",
-				FoundBy:      "java-cataloger",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
+				Name:     "cxf-rt-bindings-xml",
+				Version:  "3.3.10",
+				FoundBy:  "java-cataloger",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
 					VirtualPath: "/opt/jboss/keycloak/modules/system/layers/base/org/apache/cxf/impl/main/cxf-rt-bindings-xml-3.3.10.jar",
 					Manifest: &pkg.JavaManifest{
@@ -304,11 +298,10 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "rpm vendor selection",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Type:         pkg.RpmPkg,
-				MetadataType: pkg.RpmMetadataType,
+				Name:    "name",
+				Version: "3.2",
+				FoundBy: "some-analyzer",
+				Type:    pkg.RpmPkg,
 				Metadata: pkg.RpmMetadata{
 					Vendor: "some-vendor",
 				},
@@ -322,11 +315,10 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "rpm with epoch",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "1:3.2",
-				FoundBy:      "some-analyzer",
-				Type:         pkg.RpmPkg,
-				MetadataType: pkg.RpmMetadataType,
+				Name:    "name",
+				Version: "1:3.2",
+				FoundBy: "some-analyzer",
+				Type:    pkg.RpmPkg,
 				Metadata: pkg.RpmMetadata{
 					Vendor: "some-vendor",
 				},
@@ -340,12 +332,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "deb with epoch",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "1:3.2",
-				FoundBy:      "some-analyzer",
-				Type:         pkg.DebPkg,
-				MetadataType: pkg.DpkgMetadataType,
-				Metadata:     pkg.DpkgMetadata{},
+				Name:     "name",
+				Version:  "1:3.2",
+				FoundBy:  "some-analyzer",
+				Type:     pkg.DebPkg,
+				Metadata: pkg.DpkgMetadata{},
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:1\\:3.2:*:*:*:*:*:*:*",
@@ -448,12 +439,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "jira-atlassian filtering",
 			p: pkg.Package{
-				Name:         "jira_client_core",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
+				Name:     "jira_client_core",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
 					PomProperties: &pkg.PomProperties{
 						GroupID:    "org.atlassian.jira",
@@ -483,12 +473,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "jenkins filtering",
 			p: pkg.Package{
-				Name:         "cloudbees-installation-manager",
-				Version:      "2.89.0.33",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
+				Name:     "cloudbees-installation-manager",
+				Version:  "2.89.0.33",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
 					PomProperties: &pkg.PomProperties{
 						GroupID:    "com.cloudbees.jenkins.modules",
@@ -553,12 +542,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "regression: handlebars within java archive",
 			p: pkg.Package{
-				Name:         "handlebars",
-				Version:      "3.0.8",
-				Type:         pkg.JavaPkg,
-				Language:     pkg.Java,
-				FoundBy:      "java-cataloger",
-				MetadataType: pkg.JavaMetadataType,
+				Name:     "handlebars",
+				Version:  "3.0.8",
+				Type:     pkg.JavaPkg,
+				Language: pkg.Java,
+				FoundBy:  "java-cataloger",
 				Metadata: pkg.JavaMetadata{
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
@@ -590,12 +578,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "regression: jenkins plugin active-directory",
 			p: pkg.Package{
-				Name:         "active-directory",
-				Version:      "2.25.1",
-				Type:         pkg.JenkinsPluginPkg,
-				FoundBy:      "java-cataloger",
-				Language:     pkg.Java,
-				MetadataType: pkg.JavaMetadataType,
+				Name:     "active-directory",
+				Version:  "2.25.1",
+				Type:     pkg.JenkinsPluginPkg,
+				FoundBy:  "java-cataloger",
+				Language: pkg.Java,
 				Metadata: pkg.JavaMetadata{
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
@@ -628,12 +615,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "regression: special characters in CPE should result in no generation",
 			p: pkg.Package{
-				Name:         "bundler",
-				Version:      "2.1.4",
-				Type:         pkg.GemPkg,
-				FoundBy:      "gem-cataloger",
-				Language:     pkg.Ruby,
-				MetadataType: pkg.GemMetadataType,
+				Name:     "bundler",
+				Version:  "2.1.4",
+				Type:     pkg.GemPkg,
+				FoundBy:  "gem-cataloger",
+				Language: pkg.Ruby,
 				Metadata: pkg.GemMetadata{
 					Name:    "bundler",
 					Version: "2.1.4",
@@ -680,12 +666,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "regression: ruby-rake apk missing expected ruby-lang:rake CPE",
 			p: pkg.Package{
-				Name:         "ruby-rake",
-				Version:      "2.7.6-r0",
-				Type:         pkg.ApkPkg,
-				FoundBy:      "apk-db-analyzer",
-				Language:     pkg.UnknownLanguage,
-				MetadataType: pkg.ApkMetadataType,
+				Name:     "ruby-rake",
+				Version:  "2.7.6-r0",
+				Type:     pkg.ApkPkg,
+				FoundBy:  "apk-db-analyzer",
+				Language: pkg.UnknownLanguage,
 				Metadata: pkg.ApkMetadata{
 					Package:       "ruby-rake",
 					URL:           "https://www.ruby-lang.org/",

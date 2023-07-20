@@ -36,8 +36,7 @@ func TestIDUniqueness(t *testing.T) {
 		CPEs: []cpe.CPE{
 			cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 		},
-		PURL:         "pkg:pypi/pi@3.14",
-		MetadataType: PythonPackageMetadataType,
+		PURL: "pkg:pypi/pi@3.14",
 		Metadata: PythonPackageMetadata{
 			Name:                 "pi",
 			Version:              "3.14",
@@ -158,14 +157,6 @@ func TestIDUniqueness(t *testing.T) {
 			expectedIDComparison: assert.NotEqual,
 		},
 		{
-			name: "metadata type is reflected",
-			transform: func(pkg Package) Package {
-				pkg.MetadataType = RustCargoPackageMetadataType
-				return pkg
-			},
-			expectedIDComparison: assert.NotEqual,
-		},
-		{
 			name: "CPEs is ignored",
 			transform: func(pkg Package) Package {
 				pkg.CPEs = []cpe.CPE{}
@@ -267,8 +258,7 @@ func TestPackage_Merge(t *testing.T) {
 				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 				},
-				PURL:         "pkg:pypi/pi@3.14",
-				MetadataType: PythonPackageMetadataType,
+				PURL: "pkg:pypi/pi@3.14",
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
@@ -290,8 +280,7 @@ func TestPackage_Merge(t *testing.T) {
 				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`), // NOTE: difference
 				},
-				PURL:         "pkg:pypi/pi@3.14",
-				MetadataType: PythonPackageMetadataType,
+				PURL: "pkg:pypi/pi@3.14",
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
@@ -315,8 +304,7 @@ func TestPackage_Merge(t *testing.T) {
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`), // NOTE: merge!
 				},
-				PURL:         "pkg:pypi/pi@3.14",
-				MetadataType: PythonPackageMetadataType,
+				PURL: "pkg:pypi/pi@3.14",
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
@@ -341,8 +329,7 @@ func TestPackage_Merge(t *testing.T) {
 				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 				},
-				PURL:         "pkg:pypi/pi@3.14",
-				MetadataType: PythonPackageMetadataType,
+				PURL: "pkg:pypi/pi@3.14",
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
@@ -364,8 +351,7 @@ func TestPackage_Merge(t *testing.T) {
 				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 				},
-				PURL:         "pkg:pypi/pi@3.14",
-				MetadataType: PythonPackageMetadataType,
+				PURL: "pkg:pypi/pi@3.14",
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",

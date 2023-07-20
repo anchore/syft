@@ -26,7 +26,6 @@ func TestParsePackageJSON(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package.json")),
 				),
-				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
 					Name:        "npm",
 					Version:     "6.14.6",
@@ -48,7 +47,6 @@ func TestParsePackageJSON(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("ISC", file.NewLocation("test-fixtures/pkg-json/package-license-object.json")),
 				),
-				MetadataType: pkg.NpmPackageJSONMetadataType,
 				Metadata: pkg.NpmPackageJSONMetadata{
 					Name:        "npm",
 					Version:     "6.14.6",
@@ -70,8 +68,7 @@ func TestParsePackageJSON(t *testing.T) {
 					pkg.NewLicenseFromLocations("MIT", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
 					pkg.NewLicenseFromLocations("Apache-2.0", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
 				),
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackageJSONMetadata{
 					Name:        "npm",
 					Version:     "6.14.6",
@@ -85,12 +82,11 @@ func TestParsePackageJSON(t *testing.T) {
 		{
 			Fixture: "test-fixtures/pkg-json/package-malformed-license.json",
 			ExpectedPkg: pkg.Package{
-				Name:         "npm",
-				Version:      "6.14.6",
-				PURL:         "pkg:npm/npm@6.14.6",
-				Type:         pkg.NpmPkg,
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Name:     "npm",
+				Version:  "6.14.6",
+				PURL:     "pkg:npm/npm@6.14.6",
+				Type:     pkg.NpmPkg,
+				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackageJSONMetadata{
 					Name:        "npm",
 					Version:     "6.14.6",
@@ -104,12 +100,11 @@ func TestParsePackageJSON(t *testing.T) {
 		{
 			Fixture: "test-fixtures/pkg-json/package-no-license.json",
 			ExpectedPkg: pkg.Package{
-				Name:         "npm",
-				Version:      "6.14.6",
-				PURL:         "pkg:npm/npm@6.14.6",
-				Type:         pkg.NpmPkg,
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Name:     "npm",
+				Version:  "6.14.6",
+				PURL:     "pkg:npm/npm@6.14.6",
+				Type:     pkg.NpmPkg,
+				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackageJSONMetadata{
 					Name:        "npm",
 					Version:     "6.14.6",
@@ -130,8 +125,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-nested-author.json")),
 				),
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackageJSONMetadata{
 					Name:        "npm",
 					Version:     "6.14.6",
@@ -152,8 +146,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("MIT", file.NewLocation("test-fixtures/pkg-json/package-repo-string.json")),
 				),
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackageJSONMetadata{
 					Name:        "function-bind",
 					Version:     "1.1.1",
@@ -174,8 +167,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-private.json")),
 				),
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackageJSONMetadata{
 					Name:        "npm",
 					Version:     "6.14.6",

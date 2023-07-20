@@ -123,12 +123,11 @@ func getPackage(component nativeImageComponent) pkg.Package {
 		cpes = append(cpes, c)
 	}
 	return pkg.Package{
-		Name:         component.Name,
-		Version:      component.Version,
-		Language:     pkg.Java,
-		Type:         pkg.GraalVMNativeImagePkg,
-		MetadataType: pkg.JavaMetadataType,
-		FoundBy:      nativeImageCatalogerName,
+		Name:     component.Name,
+		Version:  component.Version,
+		Language: pkg.Java,
+		Type:     pkg.GraalVMNativeImagePkg,
+		FoundBy:  nativeImageCatalogerName,
 		Metadata: pkg.JavaMetadata{
 			PomProperties: &pkg.PomProperties{
 				GroupID: component.Group,

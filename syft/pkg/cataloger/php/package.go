@@ -10,15 +10,14 @@ import (
 
 func newComposerLockPackage(m parsedData, indexLocation file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         m.Name,
-		Version:      m.Version,
-		Locations:    file.NewLocationSet(indexLocation),
-		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, m.License...)...),
-		PURL:         packageURL(m),
-		Language:     pkg.PHP,
-		Type:         pkg.PhpComposerPkg,
-		MetadataType: pkg.PhpComposerJSONMetadataType,
-		Metadata:     m.PhpComposerJSONMetadata,
+		Name:      m.Name,
+		Version:   m.Version,
+		Locations: file.NewLocationSet(indexLocation),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, m.License...)...),
+		PURL:      packageURL(m),
+		Language:  pkg.PHP,
+		Type:      pkg.PhpComposerPkg,
+		Metadata:  m.PhpComposerJSONMetadata,
 	}
 
 	p.SetID()

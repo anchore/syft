@@ -22,8 +22,7 @@ func TestParseGemspec(t *testing.T) {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 		),
-		Language:     pkg.Ruby,
-		MetadataType: pkg.GemMetadataType,
+		Language: pkg.Ruby,
 		Metadata: pkg.GemMetadata{
 			Name:     "bundler",
 			Version:  "2.1.4",
