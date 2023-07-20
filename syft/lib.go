@@ -76,6 +76,14 @@ func CatalogPackages(src source.Source, cfg cataloger.Config) (*pkg.Collection, 
 
 	relationships = append(relationships, newSourceRelationshipsFromCatalog(src, catalog)...)
 
+	for _, r := range relationships {
+		for _, e := range cfg.PackageExclusions.Exclusions {
+			if e.Match(r, catalog) {
+				catalog.Delete(r.To.ID())
+			}
+		}
+	}
+
 	return catalog, relationships, release, err
 }
 

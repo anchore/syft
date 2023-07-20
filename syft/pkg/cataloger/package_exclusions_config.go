@@ -1,25 +1,28 @@
 package cataloger
 
 import (
+	"golang.org/x/exp/slices"
+
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 )
 
-type CatalogerType string
+type CategoryType string
 
 const (
-	OsCatalogerType     CatalogerType = "os"
-	BinaryCatalogerType CatalogerType = "binary"
+	OsCatalogerType     CategoryType = "os"
+	BinaryCatalogerType CategoryType = "binary"
 )
 
-var CatalogerTypeIndex = map[CatalogerType][]string{
-	"os": []string{
+var CatalogerTypeIndex = map[CategoryType][]string{
+	"os": {
 		apkdb.CatalogerName,
 		alpm.CatalogerName,
 	},
-	"binary": []string{
+	"binary": {
 		binary.CatalogerName,
 	},
 }
@@ -30,8 +33,24 @@ type PackageExclusionsConfig struct {
 
 type PackageExclusion struct {
 	RelationshipType artifact.RelationshipType
-	ParentType       CatalogerType
-	ExclusionType    CatalogerType
+	ParentType       CategoryType
+	ExclusionType    CategoryType
+}
+
+func (e PackageExclusion) Match(r artifact.Relationship, c *pkg.Collection) bool {
+	parent := c.Package(r.From.ID())
+	if parent == nil {
+		return false
+	}
+	child := c.Package(r.To.ID())
+	if child == nil {
+		return false
+	}
+
+	parentInExclusion := slices.Contains(CatalogerTypeIndex[e.ParentType], parent.FoundBy)
+	childInExclusion := slices.Contains(CatalogerTypeIndex[e.ExclusionType], child.FoundBy)
+
+	return e.RelationshipType == r.Type && parentInExclusion && childInExclusion
 }
 
 func DefaultPackageExclusionsConfig() PackageExclusionsConfig {
