@@ -1,6 +1,7 @@
 package cataloger
 
 import (
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
@@ -28,16 +29,18 @@ type PackageExclusionsConfig struct {
 }
 
 type PackageExclusion struct {
-	ParentType    CatalogerType
-	ExclusionType CatalogerType
+	RelationshipType artifact.RelationshipType
+	ParentType       CatalogerType
+	ExclusionType    CatalogerType
 }
 
 func DefaultPackageExclusionsConfig() PackageExclusionsConfig {
 	return PackageExclusionsConfig{
 		Exclusions: []PackageExclusion{
 			{
-				ParentType:    OsCatalogerType,
-				ExclusionType: BinaryCatalogerType,
+				RelationshipType: artifact.OwnershipByFileOverlapRelationship,
+				ParentType:       OsCatalogerType,
+				ExclusionType:    BinaryCatalogerType,
 			},
 		},
 	}
