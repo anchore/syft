@@ -20,12 +20,14 @@ func mainE() error {
 	}
 
 	// Download and decompress file
+	fmt.Println("Fetching CPE dictionary...")
 	resp, err := http.Get(cpeDictionaryURL)
 	if err != nil {
 		return fmt.Errorf("unable to get CPE dictionary: %w", err)
 	}
 	defer resp.Body.Close()
 
+	fmt.Println("Generating index...")
 	dictionaryJSON, err := generateIndexedDictionaryJSON(resp.Body)
 	if err != nil {
 		return err

@@ -298,7 +298,7 @@ compare-test-rpm-package-install: $(TEMP_DIR) $(SNAPSHOT_DIR)
 			$(TEMP_DIR)
 
 
-## Code generation targets #################################
+## Code and data generation targets #################################
 
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema
@@ -309,13 +309,13 @@ generate-license-list:  ## Generate an updated spdx license list
 	go generate ./internal/spdxlicense/...
 	gofmt -s -w ./internal/spdxlicense
 
+.PHONY: generate-cpe-dictionary-index
+generate-cpe-dictionary-index:  ## Build the CPE index based off of the latest available CPE dictionary
+	$(call title,Building CPE index)
+	go generate ./syft/pkg/cataloger/common/cpe/dictionary
+
 
 ## Build-related targets #################################
-
-.PHONY: cpe-index
-cpe-index:  ## Build the CPE index
-	$(call title,Building CPE index)
-	go run ./syft/pkg/cataloger/common/cpe/dictionary/index-generator -o ./syft/pkg/cataloger/common/cpe/cpe-index.json
 
 .PHONY: build
 build: $(SNAPSHOT_DIR)  ## Build release snapshot binaries and packages
@@ -343,7 +343,7 @@ release:
 	@.github/scripts/trigger-release.sh
 
 .PHONY: ci-release
-ci-release: ci-check clean-dist $(CHANGELOG) cpe-index
+ci-release: ci-check clean-dist $(CHANGELOG)
 	$(call title,Publishing release artifacts)
 
 	# create a config with the dist dir overridden
@@ -366,12 +366,8 @@ ci-check:
 ## Cleanup targets #################################
 
 .PHONY: clean
-clean: clean-dist clean-snapshot clean-test-image-cache clean-cpe-index  ## Remove previous builds, result reports, and test cache
+clean: clean-dist clean-snapshot clean-test-image-cache  ## Remove previous builds, result reports, and test cache
 	$(call safe_rm_rf_children,$(TEMP_DIR))
-
-.PHONY: clean-cpe-index
-clean-cpe-index:  ## Remove the CPE index
-	$(call safe_rm_rf,./syft/pkg/cataloger/common/cpe/cpe-index.json)
 
 .PHONY: clean-snapshot
 clean-snapshot:
