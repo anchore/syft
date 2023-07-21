@@ -3,16 +3,21 @@ package cpe
 import (
 	"bufio"
 	"bytes"
+	_ "embed"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/facebookincubator/nvdtools/wfn"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe/dictionary"
 )
 
 // knownVendors contains vendor strings that are known to exist in
@@ -30,6 +35,77 @@ func newCPE(product, vendor, version, targetSW string) *wfn.Attributes {
 		return nil
 	}
 	return &c
+}
+
+//go:embed dictionary/data/cpe-index.json
+var indexedCPEDictionaryData []byte
+
+var indexedCPEDictionary *dictionary.Indexed
+var indexedCPEDictionaryOnce sync.Once
+
+func GetIndexedDictionary() (_ *dictionary.Indexed, err error) {
+	indexedCPEDictionaryOnce.Do(func() {
+		err = json.Unmarshal(indexedCPEDictionaryData, &indexedCPEDictionary)
+	})
+
+	if err != nil {
+		return
+	}
+
+	if indexedCPEDictionary == nil {
+		err = fmt.Errorf("failed to unmarshal indexed CPE dictionary")
+		return
+	}
+
+	return indexedCPEDictionary, err
+}
+
+func DictionaryFind(p pkg.Package) (cpe.CPE, bool) {
+	dict, err := GetIndexedDictionary()
+	if err != nil {
+		log.Debugf("dictionary CPE lookup not available: %+v", err)
+		return cpe.CPE{}, false
+	}
+
+	var (
+		cpeString string
+		ok        bool
+	)
+
+	switch p.Type {
+	case pkg.NpmPkg:
+		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemNPM][p.Name]
+
+	case pkg.GemPkg:
+		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemRubyGems][p.Name]
+
+	case pkg.PythonPkg:
+		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemPyPI][p.Name]
+
+	case pkg.JenkinsPluginPkg:
+		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemJenkinsPlugins][p.Name]
+
+	case pkg.RustPkg:
+		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemRustCrates][p.Name]
+
+	default:
+		// The dictionary doesn't support this package type yet.
+		return cpe.CPE{}, false
+	}
+
+	if !ok {
+		// The dictionary doesn't have a CPE for this package.
+		return cpe.CPE{}, false
+	}
+
+	parsedCPE, err := cpe.New(cpeString)
+	if err != nil {
+		return cpe.CPE{}, false
+	}
+
+	parsedCPE.Version = p.Version
+
+	return parsedCPE, true
 }
 
 // Generate Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
