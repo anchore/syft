@@ -63,7 +63,7 @@ require (
 	github.com/github/go-spdx/v2 v2.1.2
 	github.com/gkampitakis/go-snaps v0.4.7
 	github.com/go-git/go-billy/v5 v5.4.1
-	github.com/go-git/go-git/v5 v5.7.0
+	github.com/go-git/go-git/v5 v5.8.0
 	github.com/google/go-containerregistry v0.15.2
 	github.com/google/licensecheck v0.3.1
 	github.com/invopop/jsonschema v0.7.0
