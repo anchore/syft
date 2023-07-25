@@ -54,7 +54,7 @@ require (
 	github.com/anchore/bubbly v0.0.0-20230712165553-812110ab0a10
 	github.com/anchore/clio v0.0.0-20230602170917-e747e60c4aa0
 	github.com/anchore/go-logger v0.0.0-20230531193951-db5ae83e7dbe
-	github.com/anchore/stereoscope v0.0.0-20230627195312-cd49355d934e
+	github.com/anchore/stereoscope v0.0.0-20230724160817-d515761c6ca2
 	github.com/charmbracelet/bubbletea v0.24.2
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/dave/jennifer v1.6.1
