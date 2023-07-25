@@ -82,7 +82,7 @@ func LanguageByName(name string) Language {
 		return Dart
 	case packageurl.TypeDotnet:
 		return Dotnet
-	case packageurl.TypeCocoapods, packageurl.TypeSwift, string(CocoapodsPkg):
+	case packageurl.TypeCocoapods, packageurl.TypeSwift, string(CocoapodsPkg), string(SwiftPkg):
 		return Swift
 	case packageurl.TypeConan, string(CPP):
 		return CPP

@@ -53,7 +53,7 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Red Hat (rpm)
 - Ruby (gem)
 - Rust (cargo.lock)
-- Swift (cocoapods)
+- Swift (cocoapods, swift-package-manager)
 
 ## Installation
 
@@ -211,6 +211,7 @@ You can override the list of enabled/disabled catalogers by using the "cataloger
 - ruby-gemfile
 - rust-cargo-lock
 - sbom
+- swift-package-manager
 
 ##### Non Default:
 - cargo-auditable-binary
@@ -521,6 +522,7 @@ platform: ""
 #   - ruby-gemspec-cataloger
 #   - rust-cargo-lock-cataloger
 #   - sbom-cataloger
+#   - spm-cataloger
 catalogers:
 
 # cataloging packages is exposed through the packages and power-user subcommands
