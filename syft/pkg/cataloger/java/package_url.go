@@ -1,6 +1,8 @@
 package java
 
 import (
+	"sort"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
@@ -11,6 +13,7 @@ func packageURL(name, version string, metadata pkg.JavaMetadata) string {
 	var groupID = name
 	groupIDs := cpe.GroupIDsFromJavaMetadata(metadata)
 	if len(groupIDs) > 0 {
+		sort.Strings(groupIDs)
 		groupID = groupIDs[0]
 	}
 
