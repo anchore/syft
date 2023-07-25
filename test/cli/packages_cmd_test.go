@@ -10,7 +10,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 	hiddenPackagesImage := "docker-archive:" + getFixtureImage(t, "image-hidden-packages")
 	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
 	nodeBinaryImage := "docker-archive:" + getFixtureImage(t, "image-node-binary")
-	//badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
+	// badBinariesImage := "docker-archive:" + getFixtureImage(t, "image-bad-binaries")
 	tmp := t.TempDir() + "/"
 
 	tests := []struct {
@@ -51,7 +51,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		//   fail: https://github.com/anchore/syft/runs/4611343586?check_suite_focus=true
 		// For the meantime this test will be commented out, but should be added back in as soon as possible.
 		//
-		//{
+		// {
 		//	name: "regression-survive-bad-binaries",
 		//	// this image has all sorts of rich binaries from the clang-13 test suite that should do pretty bad things
 		//	// to the go cataloger binary path. We should NEVER let a panic stop the cataloging process for these
@@ -64,7 +64,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		//		assertInOutput("could not parse possible go binary"),
 		//		assertSuccessfulReturnCode,
 		//	},
-		//},
+		// },
 		{
 			name: "output-env-binding",
 			env: map[string]string{
@@ -96,7 +96,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "squashed", coverageImage},
 			assertions: []traitAssertion{
-				assertPackageCount(36),
+				assertPackageCount(24),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -213,7 +213,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 2"),
 				assertInOutput("parallelism=2"),
-				assertPackageCount(36),
+				assertPackageCount(24),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -224,7 +224,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 1"),
 				assertInOutput("parallelism=1"),
-				assertPackageCount(36),
+				assertPackageCount(24),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -238,7 +238,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			assertions: []traitAssertion{
 				assertNotInOutput("secret_password"),
 				assertNotInOutput("secret_key_path"),
-				assertPackageCount(36),
+				assertPackageCount(24),
 				assertSuccessfulReturnCode,
 			},
 		},

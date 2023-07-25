@@ -298,7 +298,7 @@ compare-test-rpm-package-install: $(TEMP_DIR) $(SNAPSHOT_DIR)
 			$(TEMP_DIR)
 
 
-## Code generation targets #################################
+## Code and data generation targets #################################
 
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema
@@ -309,11 +309,17 @@ generate-license-list:  ## Generate an updated spdx license list
 	go generate ./internal/spdxlicense/...
 	gofmt -s -w ./internal/spdxlicense
 
+.PHONY: generate-cpe-dictionary-index
+generate-cpe-dictionary-index:  ## Build the CPE index based off of the latest available CPE dictionary
+	$(call title,Building CPE index)
+	go generate ./syft/pkg/cataloger/common/cpe/dictionary
+
 
 ## Build-related targets #################################
 
 .PHONY: build
-build: $(SNAPSHOT_DIR)  ## Build release snapshot binaries and packages
+build:
+	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./cmd/syft
 
 $(SNAPSHOT_DIR):  ## Build snapshot release binaries and packages
 	$(call title,Building snapshot artifacts)

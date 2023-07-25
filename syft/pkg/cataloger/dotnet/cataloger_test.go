@@ -3,20 +3,32 @@ package dotnet
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 func TestCataloger_Globs(t *testing.T) {
 	tests := []struct {
-		name     string
-		fixture  string
-		expected []string
+		name      string
+		fixture   string
+		cataloger *generic.Cataloger
+		expected  []string
 	}{
 		{
-			name:    "obtain deps.json files",
-			fixture: "test-fixtures/glob-paths",
+			name:      "obtain deps.json files",
+			fixture:   "test-fixtures/glob-paths",
+			cataloger: NewDotnetDepsCataloger(),
 			expected: []string{
 				"src/something.deps.json",
+			},
+		},
+		{
+			name:      "obtain portable executable files",
+			fixture:   "test-fixtures/glob-paths",
+			cataloger: NewDotnetPortableExecutableCataloger(),
+			expected: []string{
+				"src/something.dll",
+				"src/something.exe",
 			},
 		},
 	}
@@ -26,7 +38,7 @@ func TestCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewDotnetDepsCataloger())
+				TestCataloger(t, test.cataloger)
 		})
 	}
 }

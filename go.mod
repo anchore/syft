@@ -16,7 +16,7 @@ require (
 	github.com/go-test/deep v1.1.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
-	github.com/gookit/color v1.5.3
+	github.com/gookit/color v1.5.4
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jinzhu/copier v0.3.5
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
@@ -54,22 +54,23 @@ require (
 	github.com/anchore/bubbly v0.0.0-20230712165553-812110ab0a10
 	github.com/anchore/clio v0.0.0-20230602170917-e747e60c4aa0
 	github.com/anchore/go-logger v0.0.0-20230531193951-db5ae83e7dbe
-	github.com/anchore/stereoscope v0.0.0-20230627195312-cd49355d934e
+	github.com/anchore/stereoscope v0.0.0-20230724160817-d515761c6ca2
 	github.com/charmbracelet/bubbletea v0.24.2
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/dave/jennifer v1.6.1
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
 	github.com/docker/distribution v2.8.2+incompatible
-	github.com/docker/docker v24.0.2+incompatible
+	github.com/docker/docker v24.0.5+incompatible
 	github.com/github/go-spdx/v2 v2.1.2
 	github.com/gkampitakis/go-snaps v0.4.7
 	github.com/go-git/go-billy/v5 v5.4.1
-	github.com/go-git/go-git/v5 v5.7.0
+	github.com/go-git/go-git/v5 v5.8.0
 	github.com/google/go-containerregistry v0.15.2
 	github.com/google/licensecheck v0.3.1
 	github.com/invopop/jsonschema v0.7.0
 	github.com/knqyf263/go-rpmdb v0.0.0-20230301153543-ba94b245509b
 	github.com/opencontainers/go-digest v1.0.0
+	github.com/saferwall/pe v1.4.4
 	github.com/sassoftware/go-rpmutils v0.2.0
 	github.com/vbatts/go-mtree v0.5.3
 	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1
@@ -102,6 +103,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
+	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/felixge/fgprof v0.9.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -172,6 +174,7 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
+	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
