@@ -59,7 +59,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/dave/jennifer v1.6.1
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
-	github.com/docker/docker v24.0.2+incompatible
+	github.com/docker/docker v24.0.5+incompatible
 	github.com/github/go-spdx/v2 v2.1.2
 	github.com/gkampitakis/go-snaps v0.4.7
 	github.com/go-git/go-billy/v5 v5.4.1
