@@ -51,7 +51,7 @@ func Test_toFormatModel(t *testing.T) {
 
 				Packages: []*spdx.Package{
 					{
-						PackageSPDXIdentifier: "Package--pkg-1-pkg-1",
+						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
 						PackageName:           "pkg-1",
 						PackageVersion:        "version-1",
 					},
@@ -76,7 +76,7 @@ func Test_toFormatModel(t *testing.T) {
 							ElementRefID: "DocumentRoot-Image-alpine",
 						},
 						RefB: spdx.DocElementID{
-							ElementRefID: "Package--pkg-1-pkg-1",
+							ElementRefID: "Package-pkg-1-pkg-1",
 						},
 						Relationship: spdx.RelationshipContains,
 					},

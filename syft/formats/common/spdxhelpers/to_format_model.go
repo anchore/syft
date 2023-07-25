@@ -263,7 +263,16 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 	id := ""
 	switch it := identifiable.(type) {
 	case pkg.Package:
-		id = SanitizeElementID(fmt.Sprintf("Package-%s-%s-%s", it.Type, it.Name, it.ID()))
+		switch {
+		case it.Type != "" && it.Name != "":
+			id = fmt.Sprintf("Package-%s-%s-%s", it.Type, it.Name, it.ID())
+		case it.Name != "":
+			id = fmt.Sprintf("Package-%s-%s", it.Name, it.ID())
+		case it.Type != "":
+			id = fmt.Sprintf("Package-%s-%s", it.Type, it.ID())
+		default:
+			id = fmt.Sprintf("Package-%s", it.ID())
+		}
 	case file.Coordinates:
 		p := ""
 		parts := strings.Split(it.RealPath, "/")
@@ -278,12 +287,12 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 			}
 			p = path.Join(part, p)
 		}
-		id = SanitizeElementID(fmt.Sprintf("File-%s-%s", p, it.ID()))
+		id = fmt.Sprintf("File-%s-%s", p, it.ID())
 	default:
 		id = string(identifiable.ID())
 	}
 	// NOTE: the spdx library prepend SPDXRef-, so we don't do it here
-	return spdx.ElementID(id)
+	return spdx.ElementID(SanitizeElementID(id))
 }
 
 // packages populates all Package Information from the package Collection (see https://spdx.github.io/spdx-spec/3-package-information/)
