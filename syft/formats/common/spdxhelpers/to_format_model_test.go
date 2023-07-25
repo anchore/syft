@@ -47,7 +47,7 @@ func Test_toFormatModel(t *testing.T) {
 				SPDXIdentifier: "DOCUMENT",
 				SPDXVersion:    spdx.Version,
 				DataLicense:    spdx.DataLicense,
-				DocumentName:   "alpine-sha256:d34db33f",
+				DocumentName:   "alpine",
 
 				Packages: []*spdx.Package{
 					{

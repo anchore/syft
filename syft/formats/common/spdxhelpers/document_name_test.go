@@ -17,13 +17,11 @@ func Test_DocumentName(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		inputName   string
 		srcMetadata source.Description
 		expected    string
 	}{
 		{
-			name:      "image",
-			inputName: "my-name",
+			name: "image",
 			srcMetadata: source.Description{
 				Metadata: source.StereoscopeImageSourceMetadata{
 					UserInput:      "image-repo/name:tag",
@@ -34,20 +32,26 @@ func Test_DocumentName(t *testing.T) {
 			expected: "image-repo/name:tag",
 		},
 		{
-			name:      "directory",
-			inputName: "my-name",
+			name: "directory",
 			srcMetadata: source.Description{
 				Metadata: source.DirectorySourceMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/path/to/place",
 		},
 		{
-			name:      "file",
-			inputName: "my-name",
+			name: "file",
 			srcMetadata: source.Description{
 				Metadata: source.FileSourceMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/path/to/place",
+		},
+		{
+			name: "named",
+			srcMetadata: source.Description{
+				Name:     "some/name",
+				Metadata: source.FileSourceMetadata{Path: "some/path/to/place"},
+			},
+			expected: "some/name",
 		},
 	}
 	for _, test := range tests {
