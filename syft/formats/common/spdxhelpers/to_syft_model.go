@@ -99,7 +99,6 @@ func findRootPackages(doc *spdx.Document) (out []*spdx.Package) {
 	return
 }
 
-//nolint:funlen
 func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Description {
 	src := extractSourceFromNamespace(doc.DocumentNamespace)
 
@@ -111,63 +110,11 @@ func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descript
 
 	p := rootPackages[0]
 
-	typeRegex := regexp.MustCompile("^DocumentRoot-([^-]+)-.*$")
-	typeName := typeRegex.ReplaceAllString(string(p.PackageSPDXIdentifier), "$1")
-
-	id := string(p.PackageSPDXIdentifier)
 	switch p.PrimaryPackagePurpose {
 	case spdxPrimaryPurposeContainer:
-		container := p.PackageName
-		v := p.PackageVersion
-		if v != "" {
-			container += ":" + v
-		}
-
-		digest := ""
-		if len(p.PackageChecksums) > 0 {
-			c := p.PackageChecksums[0]
-			digest = fmt.Sprintf("%s:%s", fromChecksumAlgorithm(c.Algorithm), c.Value)
-		}
-		src = source.Description{
-			ID:      id,
-			Name:    p.PackageName,
-			Version: p.PackageVersion,
-			Metadata: source.StereoscopeImageSourceMetadata{
-				UserInput:      container,
-				ID:             id,
-				Layers:         nil, // TODO handle formats with nested layer packages like Tern and K8s BOM tool
-				ManifestDigest: digest,
-			},
-		}
+		src = containerSource(p)
 	case spdxPrimaryPurposeFile:
-		version := p.PackageVersion
-		var metadata any = source.DirectorySourceMetadata{
-			Path: p.PackageName,
-			Base: "",
-		}
-		if typeName != prefixDirectory && (typeName == prefixFile || !isDirectory(p.PackageName)) {
-			m := source.FileSourceMetadata{
-				Path: p.PackageName,
-			}
-			// if this is a Syft SBOM, we might have output a digest as the version
-			checksum := toChecksum(version)
-			for _, d := range p.PackageChecksums {
-				if checksum != nil && checksum.Value == d.Value {
-					version = ""
-				}
-				m.Digests = append(m.Digests, file.Digest{
-					Algorithm: fromChecksumAlgorithm(d.Algorithm),
-					Value:     d.Value,
-				})
-			}
-			metadata = m
-		}
-		src = source.Description{
-			ID:       id,
-			Name:     p.PackageName,
-			Version:  version,
-			Metadata: metadata,
-		}
+		src = fileSource(p)
 	default:
 		return src
 	}
@@ -178,6 +125,90 @@ func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descript
 	doc.Relationships = removeRelationships(doc.Relationships, p.PackageSPDXIdentifier)
 
 	return src
+}
+
+func containerSource(p *spdx.Package) source.Description {
+	id := string(p.PackageSPDXIdentifier)
+
+	container := p.PackageName
+	v := p.PackageVersion
+	if v != "" {
+		container += ":" + v
+	}
+
+	digest := ""
+	if len(p.PackageChecksums) > 0 {
+		c := p.PackageChecksums[0]
+		digest = fmt.Sprintf("%s:%s", fromChecksumAlgorithm(c.Algorithm), c.Value)
+	}
+	return source.Description{
+		ID:      id,
+		Name:    p.PackageName,
+		Version: p.PackageVersion,
+		Metadata: source.StereoscopeImageSourceMetadata{
+			UserInput:      container,
+			ID:             id,
+			Layers:         nil, // TODO handle formats with nested layer packages like Tern and K8s BOM tool
+			ManifestDigest: digest,
+		},
+	}
+}
+
+func fileSource(p *spdx.Package) source.Description {
+	typeRegex := regexp.MustCompile("^DocumentRoot-([^-]+)-.*$")
+	typeName := typeRegex.ReplaceAllString(string(p.PackageSPDXIdentifier), "$1")
+
+	var version string
+	var metadata any
+	switch {
+	case typeName == prefixDirectory:
+		// is a Syft SBOM, explicitly a directory source
+		metadata, version = directorySourceMetadata(p)
+	case typeName == prefixFile:
+		// is a Syft SBOM, explicitly a file source
+		metadata, version = fileSourceMetadata(p)
+	case isDirectory(p.PackageName):
+		// is a non-Syft SBOM, which looks like a directory
+		metadata, version = directorySourceMetadata(p)
+	default:
+		// is a non-Syft SBOM, which is probably a file
+		metadata, version = fileSourceMetadata(p)
+	}
+
+	return source.Description{
+		ID:       string(p.PackageSPDXIdentifier),
+		Name:     p.PackageName,
+		Version:  version,
+		Metadata: metadata,
+	}
+}
+
+func fileSourceMetadata(p *spdx.Package) (any, string) {
+	version := p.PackageVersion
+
+	m := source.FileSourceMetadata{
+		Path: p.PackageName,
+	}
+	// if this is a Syft SBOM, we might have output a digest as the version
+	checksum := toChecksum(p.PackageVersion)
+	for _, d := range p.PackageChecksums {
+		if checksum != nil && checksum.Value == d.Value {
+			version = ""
+		}
+		m.Digests = append(m.Digests, file.Digest{
+			Algorithm: fromChecksumAlgorithm(d.Algorithm),
+			Value:     d.Value,
+		})
+	}
+
+	return m, version
+}
+
+func directorySourceMetadata(p *spdx.Package) (any, string) {
+	return source.DirectorySourceMetadata{
+		Path: p.PackageName,
+		Base: "",
+	}, p.PackageVersion
 }
 
 // NOTE(jonas): SPDX doesn't inform what an SBOM is about,
@@ -417,10 +448,6 @@ func extractPkgInfo(p *spdx.Package) pkgInfo {
 
 func toSyftPackage(p *spdx.Package) pkg.Package {
 	info := extractPkgInfo(p)
-	purl := ""
-	if isValidPURL(info.purl) {
-		purl = info.purl.String()
-	}
 	metadataType, metadata := extractMetadata(p, info)
 	sP := &pkg.Package{
 		Type:         info.typ,
@@ -428,7 +455,7 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 		Version:      p.PackageVersion,
 		Licenses:     pkg.NewLicenseSet(parseSPDXLicenses(p)...),
 		CPEs:         extractCPEs(p),
-		PURL:         purl,
+		PURL:         purlValue(info.purl),
 		Language:     info.lang,
 		MetadataType: metadataType,
 		Metadata:     metadata,
@@ -439,8 +466,12 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 	return *sP
 }
 
-func isValidPURL(purl packageurl.PackageURL) bool {
-	return purl.String() != "pkg:/"
+func purlValue(purl packageurl.PackageURL) string {
+	p := purl.String()
+	if p == "pkg:/" {
+		return ""
+	}
+	return p
 }
 
 func parseSPDXLicenses(p *spdx.Package) []pkg.License {
