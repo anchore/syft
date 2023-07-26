@@ -8,6 +8,16 @@ Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
 Created: redacted
 
+##### Package: user-image-input
+
+PackageName: user-image-input
+SPDXID: SPDXRef-DocumentRoot-Image-user-image-input
+PackageVersion: sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368
+PrimaryPackagePurpose: CONTAINER
+FilesAnalyzed: false
+PackageChecksum: SHA256: 2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368
+ExternalRef: PACKAGE-MANAGER purl pkg:oci/user-image-input@sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch=
+
 ##### Package: package-2
 
 PackageName: package-2
@@ -38,5 +48,7 @@ ExternalRef: PACKAGE-MANAGER purl a-purl-1
 
 ##### Relationships
 
-Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DOCUMENT
+Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-python-package-1-125840abc1c66dd7
+Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-deb-package-2-958443e2d9304af4
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Image-user-image-input
 

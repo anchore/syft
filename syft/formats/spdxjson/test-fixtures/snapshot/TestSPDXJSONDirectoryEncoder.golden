@@ -58,12 +58,29 @@
      "referenceLocator": "pkg:deb/debian/package-2@2.0.1"
     }
    ]
+  },
+  {
+   "name": "some/path",
+   "SPDXID": "SPDXRef-DocumentRoot-Directory-some-path",
+   "downloadLocation": "",
+   "filesAnalyzed": false,
+   "primaryPackagePurpose": "FILE"
   }
  ],
  "relationships": [
   {
+   "spdxElementId": "SPDXRef-DocumentRoot-Directory-some-path",
+   "relatedSpdxElement": "SPDXRef-Package-python-package-1-9265397e5e15168a",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DocumentRoot-Directory-some-path",
+   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-db4abfe497c180d3",
+   "relationshipType": "CONTAINS"
+  },
+  {
    "spdxElementId": "SPDXRef-DOCUMENT",
-   "relatedSpdxElement": "SPDXRef-DOCUMENT",
+   "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-some-path",
    "relationshipType": "DESCRIBES"
   }
  ]

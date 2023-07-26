@@ -8,10 +8,17 @@ Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
 Created: redacted
 
+##### Package: foobar/baz
+
+PackageName: foobar/baz
+SPDXID: SPDXRef-DocumentRoot-Directory-foobar-baz
+PrimaryPackagePurpose: FILE
+FilesAnalyzed: false
+
 ##### Package: @at-sign
 
 PackageName: @at-sign
-SPDXID: SPDXRef-Package---at-sign-3732f7a5679bdec4
+SPDXID: SPDXRef-Package--at-sign-3732f7a5679bdec4
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 
@@ -22,7 +29,7 @@ PackageCopyrightText: NOASSERTION
 ##### Package: some/slashes
 
 PackageName: some/slashes
-SPDXID: SPDXRef-Package--some-slashes-1345166d4801153b
+SPDXID: SPDXRef-Package-some-slashes-1345166d4801153b
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 
@@ -33,7 +40,7 @@ PackageCopyrightText: NOASSERTION
 ##### Package: under_scores
 
 PackageName: under_scores
-SPDXID: SPDXRef-Package--under-scores-290d5c77210978c1
+SPDXID: SPDXRef-Package-under-scores-290d5c77210978c1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 
@@ -43,5 +50,8 @@ PackageCopyrightText: NOASSERTION
 
 ##### Relationships
 
-Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DOCUMENT
+Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package--at-sign-3732f7a5679bdec4
+Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package-some-slashes-1345166d4801153b
+Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package-under-scores-290d5c77210978c1
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Directory-foobar-baz
 

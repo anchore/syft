@@ -59,6 +59,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/dave/jennifer v1.6.1
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
+	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker v24.0.5+incompatible
 	github.com/github/go-spdx/v2 v2.1.2
 	github.com/gkampitakis/go-snaps v0.4.7
@@ -99,7 +100,6 @@ require (
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/cli v23.0.5+incompatible // indirect
-	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect

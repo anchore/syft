@@ -8,6 +8,13 @@ Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
 Created: redacted
 
+##### Package: some/path
+
+PackageName: some/path
+SPDXID: SPDXRef-DocumentRoot-Directory-some-path
+PrimaryPackagePurpose: FILE
+FilesAnalyzed: false
+
 ##### Package: package-2
 
 PackageName: package-2
@@ -38,5 +45,7 @@ ExternalRef: PACKAGE-MANAGER purl a-purl-2
 
 ##### Relationships
 
-Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DOCUMENT
+Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-python-package-1-9265397e5e15168a
+Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-deb-package-2-db4abfe497c180d3
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Directory-some-path
 

@@ -5,17 +5,247 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/spdx/tools-golang/spdx"
+	"github.com/spdx/tools-golang/spdx/v2/v2_3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
-// TODO: Add ToFormatModel tests
+func Test_toFormatModel(t *testing.T) {
+	tracker := sourcemetadata.NewCompletionTester(t)
+
+	tests := []struct {
+		name     string
+		in       sbom.SBOM
+		expected *spdx.Document
+	}{
+		{
+			name: "container",
+			in: sbom.SBOM{
+				Source: source.Description{
+					Name:    "alpine",
+					Version: "sha256:d34db33f",
+					Metadata: source.StereoscopeImageSourceMetadata{
+						UserInput:      "alpine:latest",
+						ManifestDigest: "sha256:d34db33f",
+					},
+				},
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name:    "pkg-1",
+						Version: "version-1",
+					}),
+				},
+			},
+			expected: &spdx.Document{
+				SPDXIdentifier: "DOCUMENT",
+				SPDXVersion:    spdx.Version,
+				DataLicense:    spdx.DataLicense,
+				DocumentName:   "alpine",
+
+				Packages: []*spdx.Package{
+					{
+						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
+						PackageName:           "pkg-1",
+						PackageVersion:        "version-1",
+					},
+					{
+						PackageSPDXIdentifier: "DocumentRoot-Image-alpine",
+						PackageName:           "alpine",
+						PackageVersion:        "sha256:d34db33f",
+						PrimaryPackagePurpose: "CONTAINER",
+						PackageChecksums:      []spdx.Checksum{{Algorithm: "SHA256", Value: "d34db33f"}},
+						PackageExternalReferences: []*v2_3.PackageExternalReference{
+							{
+								Category: "PACKAGE-MANAGER",
+								RefType:  "purl",
+								Locator:  "pkg:oci/alpine@sha256:d34db33f?arch=&tag=latest",
+							},
+						},
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-Image-alpine",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "Package-pkg-1-pkg-1",
+						},
+						Relationship: spdx.RelationshipContains,
+					},
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DOCUMENT",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-Image-alpine",
+						},
+						Relationship: spdx.RelationshipDescribes,
+					},
+				},
+			},
+		},
+		{
+			name: "directory",
+			in: sbom.SBOM{
+				Source: source.Description{
+					Name: "some/directory",
+					Metadata: source.DirectorySourceMetadata{
+						Path: "some/directory",
+					},
+				},
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name:    "pkg-1",
+						Version: "version-1",
+					}),
+				},
+			},
+			expected: &spdx.Document{
+				SPDXIdentifier: "DOCUMENT",
+				SPDXVersion:    spdx.Version,
+				DataLicense:    spdx.DataLicense,
+				DocumentName:   "some/directory",
+
+				Packages: []*spdx.Package{
+					{
+						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
+						PackageName:           "pkg-1",
+						PackageVersion:        "version-1",
+					},
+					{
+						PackageSPDXIdentifier: "DocumentRoot-Directory-some-directory",
+						PackageName:           "some/directory",
+						PackageVersion:        "",
+						PrimaryPackagePurpose: "FILE",
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-Directory-some-directory",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "Package-pkg-1-pkg-1",
+						},
+						Relationship: spdx.RelationshipContains,
+					},
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DOCUMENT",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-Directory-some-directory",
+						},
+						Relationship: spdx.RelationshipDescribes,
+					},
+				},
+			},
+		},
+		{
+			name: "file",
+			in: sbom.SBOM{
+				Source: source.Description{
+					Name:    "path/to/some.file",
+					Version: "sha256:d34db33f",
+					Metadata: source.FileSourceMetadata{
+						Path: "path/to/some.file",
+						Digests: []file.Digest{
+							{
+								Algorithm: "sha256",
+								Value:     "d34db33f",
+							},
+						},
+					},
+				},
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name:    "pkg-1",
+						Version: "version-1",
+					}),
+				},
+			},
+			expected: &spdx.Document{
+				SPDXIdentifier: "DOCUMENT",
+				SPDXVersion:    spdx.Version,
+				DataLicense:    spdx.DataLicense,
+				DocumentName:   "path/to/some.file",
+
+				Packages: []*spdx.Package{
+					{
+						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
+						PackageName:           "pkg-1",
+						PackageVersion:        "version-1",
+					},
+					{
+						PackageSPDXIdentifier: "DocumentRoot-File-path-to-some.file",
+						PackageName:           "path/to/some.file",
+						PackageVersion:        "sha256:d34db33f",
+						PrimaryPackagePurpose: "FILE",
+						PackageChecksums:      []spdx.Checksum{{Algorithm: "SHA256", Value: "d34db33f"}},
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-File-path-to-some.file",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "Package-pkg-1-pkg-1",
+						},
+						Relationship: spdx.RelationshipContains,
+					},
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DOCUMENT",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-File-path-to-some.file",
+						},
+						Relationship: spdx.RelationshipDescribes,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tracker.Tested(t, test.in.Source.Metadata)
+
+			// replace IDs with package names
+			var pkgs []pkg.Package
+			for p := range test.in.Artifacts.Packages.Enumerate() {
+				p.OverrideID(artifact.ID(p.Name))
+				pkgs = append(pkgs, p)
+			}
+			test.in.Artifacts.Packages = pkg.NewCollection(pkgs...)
+
+			// convert
+			got := ToFormatModel(test.in)
+
+			// check differences
+			if diff := cmp.Diff(test.expected, got,
+				cmpopts.IgnoreUnexported(spdx.Document{}, spdx.Package{}),
+				cmpopts.IgnoreFields(spdx.Document{}, "CreationInfo", "DocumentNamespace"),
+				cmpopts.IgnoreFields(spdx.Package{}, "PackageDownloadLocation", "IsFilesAnalyzedTagPresent", "PackageSourceInfo", "PackageLicenseConcluded", "PackageLicenseDeclared", "PackageCopyrightText"),
+			); diff != "" {
+				t.Error(diff)
+			}
+		})
+	}
+}
+
 func Test_toPackageChecksums(t *testing.T) {
 	tests := []struct {
 		name          string

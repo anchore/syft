@@ -92,7 +92,7 @@ func TestSPDXJSONDecoder(t *testing.T) {
 			relationships:
 				for _, pkgName := range test.relationships {
 					for _, rel := range sbom.Relationships {
-						p, ok := rel.From.(*pkg.Package)
+						p, ok := rel.From.(pkg.Package)
 						if ok && p.Name == pkgName {
 							continue relationships
 						}
