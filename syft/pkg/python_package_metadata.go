@@ -27,7 +27,10 @@ type PythonDirectURLOriginInfo struct {
 	VCS      string `json:"vcs,omitempty"`
 }
 
-// PythonPackageMetadata represents all captured data for a python egg or wheel package.
+// PythonPackageMetadata represents all captured data for a python egg or wheel package (specifically as outlined in
+// the PyPA core metadata specification https://packaging.python.org/en/latest/specifications/core-metadata/).
+// Historically these were defined in PEPs 345, 314, and 241, but have been superseded by PEP 566. This means that this
+// struct can (partially) express at least versions 1.0, 1.1, 1.2, 2.1, 2.2, and 2.3 of the metadata format.
 type PythonPackageMetadata struct {
 	Name                 string                     `json:"name" mapstruct:"Name"`
 	Version              string                     `json:"version" mapstruct:"Version"`
