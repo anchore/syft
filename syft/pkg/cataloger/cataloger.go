@@ -93,6 +93,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		rust.NewCargoLockCataloger(),
 		sbom.NewSBOMCataloger(),
 		swift.NewCocoapodsCataloger(),
+		swift.NewSwiftPackageManagerCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -134,6 +135,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		rust.NewCargoLockCataloger(),
 		sbom.NewSBOMCataloger(),
 		swift.NewCocoapodsCataloger(),
+		swift.NewSwiftPackageManagerCataloger(),
 	}, cfg.Catalogers)
 }
 

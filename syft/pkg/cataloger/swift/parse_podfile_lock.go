@@ -61,7 +61,7 @@ func parsePodfileLock(_ file.Resolver, _ *generic.Environment, reader file.Locat
 
 		pkgs = append(
 			pkgs,
-			newPackage(
+			newCocoaPodsPackage(
 				podName,
 				podVersion,
 				pkgHash,
