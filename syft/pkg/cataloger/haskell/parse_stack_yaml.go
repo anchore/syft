@@ -39,10 +39,10 @@ func parseStackYaml(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 			newPackage(
 				pkgName,
 				pkgVersion,
-				&pkg.HackageMetadata{
+				pkg.HackageStackYamlMetadata{
 					PkgHash: pkgHash,
 				},
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location,
 			),
 		)
 	}

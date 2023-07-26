@@ -1,7 +1,10 @@
 package pkg
 
-// PhpComposerJSONMetadata represents information found from composer v1/v2 "installed.json" files as well as composer.lock files
-type PhpComposerJSONMetadata struct {
+// PhpComposerInstalledMetadata represents information found in composer v1/v2 "installed.json" files (very similar to composer.lock files).
+type PhpComposerInstalledMetadata PhpComposerLockMetadata
+
+// PhpComposerLockMetadata represents information found in the composer.lock file.
+type PhpComposerLockMetadata struct {
 	Name            string                       `json:"name"`
 	Version         string                       `json:"version"`
 	Source          PhpComposerExternalReference `json:"source"`
