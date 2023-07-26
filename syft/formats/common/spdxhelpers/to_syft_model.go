@@ -362,7 +362,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) any {
 		} else {
 			epoch = &converted
 		}
-		return pkg.RpmMetadata{
+		return pkg.RpmDBMetadata{
 			Name:      p.PackageName,
 			Version:   p.PackageVersion,
 			Epoch:     epoch,

@@ -13,8 +13,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// parseRpm parses a single RPM
-func parseRpm(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+// parseRpmArchive parses a single RPM
+func parseRpmArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	rpm, err := rpmutils.ReadRpm(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("RPM file found but unable to read: %s (%w)", reader.Location.RealPath, err)
@@ -32,22 +32,19 @@ func parseRpm(_ file.Resolver, _ *generic.Environment, reader file.LocationReadC
 	size, _ := rpm.Header.InstalledSize()
 	files, _ := rpm.Header.GetFiles()
 
-	pd := parsedData{
-		Licenses: pkg.NewLicensesFromLocation(reader.Location, licenses...),
-		RpmMetadata: pkg.RpmMetadata{
-			Name:      nevra.Name,
-			Version:   nevra.Version,
-			Epoch:     parseEpoch(nevra.Epoch),
-			Arch:      nevra.Arch,
-			Release:   nevra.Release,
-			SourceRpm: sourceRpm,
-			Vendor:    vendor,
-			Size:      int(size),
-			Files:     mapFiles(files, digestAlgorithm),
-		},
+	metadata := pkg.RpmArchiveMetadata{
+		Name:      nevra.Name,
+		Version:   nevra.Version,
+		Epoch:     parseEpoch(nevra.Epoch),
+		Arch:      nevra.Arch,
+		Release:   nevra.Release,
+		SourceRpm: sourceRpm,
+		Vendor:    vendor,
+		Size:      int(size),
+		Files:     mapFiles(files, digestAlgorithm),
 	}
 
-	return []pkg.Package{newPackage(reader.Location, pd, nil)}, nil, nil
+	return []pkg.Package{newArchivePackage(reader.Location, metadata, licenses)}, nil, nil
 }
 
 func getDigestAlgorithm(header *rpmutils.RpmHeader) string {
@@ -63,8 +60,8 @@ func getDigestAlgorithm(header *rpmutils.RpmHeader) string {
 	return ""
 }
 
-func mapFiles(files []rpmutils.FileInfo, digestAlgorithm string) []pkg.RpmdbFileRecord {
-	var out []pkg.RpmdbFileRecord
+func mapFiles(files []rpmutils.FileInfo, digestAlgorithm string) []pkg.RpmFileRecord {
+	var out []pkg.RpmFileRecord
 	for _, f := range files {
 		digest := file.Digest{}
 		if f.Digest() != "" {
@@ -73,9 +70,9 @@ func mapFiles(files []rpmutils.FileInfo, digestAlgorithm string) []pkg.RpmdbFile
 				Value:     f.Digest(),
 			}
 		}
-		out = append(out, pkg.RpmdbFileRecord{
+		out = append(out, pkg.RpmFileRecord{
 			Path:      f.Name(),
-			Mode:      pkg.RpmdbFileMode(f.Mode()),
+			Mode:      pkg.RpmFileMode(f.Mode()),
 			Size:      int(f.Size()),
 			Digest:    digest,
 			UserName:  f.UserName(),

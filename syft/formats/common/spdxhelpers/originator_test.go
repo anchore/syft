@@ -81,7 +81,7 @@ func Test_Originator(t *testing.T) {
 		{
 			name: "from rpm",
 			input: pkg.Package{
-				Metadata: pkg.RpmMetadata{
+				Metadata: pkg.RpmDBMetadata{
 					Vendor: "auth",
 				},
 			},

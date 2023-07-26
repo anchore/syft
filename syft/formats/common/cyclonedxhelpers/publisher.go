@@ -9,7 +9,7 @@ func encodePublisher(p pkg.Package) string {
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkMetadata:
 			return metadata.Maintainer
-		case pkg.RpmMetadata:
+		case pkg.RpmDBMetadata:
 			return metadata.Vendor
 		case pkg.DpkgMetadata:
 			return metadata.Maintainer
@@ -22,7 +22,7 @@ func decodePublisher(publisher string, metadata interface{}) {
 	switch meta := metadata.(type) {
 	case *pkg.ApkMetadata:
 		meta.Maintainer = publisher
-	case *pkg.RpmMetadata:
+	case *pkg.RpmDBMetadata:
 		meta.Vendor = publisher
 	case *pkg.DpkgMetadata:
 		meta.Maintainer = publisher

@@ -3,7 +3,7 @@ package cpe
 import "github.com/anchore/syft/syft/pkg"
 
 func candidateVendorsForRPM(p pkg.Package) fieldCandidateSet {
-	metadata, ok := p.Metadata.(pkg.RpmMetadata)
+	metadata, ok := p.Metadata.(pkg.RpmDBMetadata)
 	if !ok {
 		return nil
 	}

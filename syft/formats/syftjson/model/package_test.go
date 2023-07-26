@@ -236,7 +236,7 @@ func Test_unpackMetadata(t *testing.T) {
 		},
 		{
 			name:         "can handle RpmdbMetadata",
-			wantMetadata: pkg.RpmMetadata{},
+			wantMetadata: pkg.RpmDBMetadata{},
 			packageData: []byte(`{
 				"id": "4ac699c3b8fe1835",
 				"name": "acl",

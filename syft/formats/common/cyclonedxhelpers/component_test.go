@@ -127,7 +127,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 				Name:    "dive",
 				Version: "0.9.2-1",
 				Type:    pkg.RpmPkg,
-				Metadata: pkg.RpmMetadata{
+				Metadata: pkg.RpmDBMetadata{
 					Name:      "dive",
 					Epoch:     &epoch,
 					Arch:      "x86_64",
@@ -136,11 +136,11 @@ func Test_encodeComponentProperties(t *testing.T) {
 					SourceRpm: "dive-0.9.2-1.src.rpm",
 					Size:      12406784,
 					Vendor:    "",
-					Files:     []pkg.RpmdbFileRecord{},
+					Files:     []pkg.RpmFileRecord{},
 				},
 			},
 			expected: &[]cyclonedx.Property{
-				{Name: "syft:package:metadataType", Value: "RpmMetadata"},
+				{Name: "syft:package:metadataType", Value: "RpmDBMetadata"},
 				{Name: "syft:package:type", Value: "rpm"},
 				{Name: "syft:metadata:epoch", Value: "2"},
 				{Name: "syft:metadata:release", Value: "1"},
@@ -295,7 +295,7 @@ func Test_decodeComponent(t *testing.T) {
 					},
 				},
 			},
-			wantMetadata: pkg.RpmMetadata{},
+			wantMetadata: pkg.RpmDBMetadata{},
 		},
 		{
 			name: "handle RpmdbMetadata type with properties",
@@ -308,7 +308,7 @@ func Test_decodeComponent(t *testing.T) {
 				Properties: &[]cyclonedx.Property{
 					{
 						Name:  "syft:package:metadataType",
-						Value: "RpmMetadata",
+						Value: "RpmDBMetadata",
 					},
 					{
 						Name:  "syft:metadata:release",
@@ -316,7 +316,7 @@ func Test_decodeComponent(t *testing.T) {
 					},
 				},
 			},
-			wantMetadata: pkg.RpmMetadata{
+			wantMetadata: pkg.RpmDBMetadata{
 				Release: "some-release",
 			},
 		},

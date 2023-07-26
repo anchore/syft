@@ -35,9 +35,9 @@ var jsonNameFromType = map[reflect.Type][]string{
 	reflect.TypeOf(pkg.PythonRequirementsMetadata{}): nameList("python-pip-requirements", "PythonRequirementsMetadata"),
 	reflect.TypeOf(pkg.RebarLockMetadata{}):          nameList("erlang-rebar-lock", "RebarLockMetadataType"),
 	reflect.TypeOf(pkg.RDescriptionFileMetadata{}):   nameList("r-description", "RDescriptionFileMetadataType"),
-	reflect.TypeOf(pkg.RpmMetadata{}):                nameList("redhat-rpm-db-record", "RpmdbMetadata"), // TODO: !!!!!!!!!!! this should get split into DB and file metadata types
-	//reflect.TypeOf(pkg.RpmMetadata{}):                nameList("redhat-rpm-archive", "RpmMetadata"),   // TODO: !!!!!!!!!!! this should get split into DB and file metadata types
-	reflect.TypeOf(pkg.CargoPackageMetadata{}): nameList("rust-cargo-lock", "RustCargoPackageMetadata"),
+	reflect.TypeOf(pkg.RpmDBMetadata{}):              nameList("redhat-rpm-db-record", "RpmdbMetadata"),
+	reflect.TypeOf(pkg.RpmArchiveMetadata{}):         nameList("redhat-rpm-archive", "RpmMetadata"),
+	reflect.TypeOf(pkg.CargoPackageMetadata{}):       nameList("rust-cargo-lock", "RustCargoPackageMetadata"),
 }
 
 func nameList(id string, others ...string) []string {

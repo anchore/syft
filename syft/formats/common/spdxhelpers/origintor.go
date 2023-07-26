@@ -30,7 +30,7 @@ func Originator(p pkg.Package) (string, string) {
 			if len(metadata.Authors) > 0 {
 				author = metadata.Authors[0]
 			}
-		case pkg.RpmMetadata:
+		case pkg.RpmDBMetadata:
 			typ = "Organization"
 			author = metadata.Vendor
 		case pkg.DpkgMetadata:

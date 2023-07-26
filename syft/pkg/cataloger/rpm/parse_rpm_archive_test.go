@@ -28,7 +28,7 @@ func TestParseRpmFiles(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT", abcRpmLocation),
 					),
-					Metadata: pkg.RpmMetadata{
+					Metadata: pkg.RpmArchiveMetadata{
 						Name:      "abc",
 						Epoch:     intRef(0),
 						Arch:      "x86_64",
@@ -37,7 +37,7 @@ func TestParseRpmFiles(t *testing.T) {
 						SourceRpm: "abc-1.01-9.hg20160905.el7.src.rpm",
 						Size:      17396,
 						Vendor:    "Fedora Project",
-						Files: []pkg.RpmdbFileRecord{
+						Files: []pkg.RpmFileRecord{
 							{"/usr/bin/abc", 33261, 7120, file.Digest{"sha256", "8f8495a65c66762b60afa0c3949d81b275ca6fa0601696caba5af762f455d0b9"}, "root", "root", ""},
 							{"/usr/share/doc/abc-1.01", 16877, 4096, file.Digest{}, "root", "root", ""},
 							{"/usr/share/doc/abc-1.01/readme.md", 33188, 4984, file.Digest{"sha256", "808af8a28391e96ca0d91086789488dda3724fe7c8b2859efd464fb04b94b2d4"}, "root", "root", "d"},
@@ -56,7 +56,7 @@ func TestParseRpmFiles(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("Public Domain", zorkRpmLocation),
 					),
-					Metadata: pkg.RpmMetadata{
+					Metadata: pkg.RpmArchiveMetadata{
 						Name:      "zork",
 						Epoch:     intRef(0),
 						Arch:      "x86_64",
@@ -65,7 +65,7 @@ func TestParseRpmFiles(t *testing.T) {
 						SourceRpm: "zork-1.0.3-1.el7.src.rpm",
 						Size:      262367,
 						Vendor:    "Fedora Project",
-						Files: []pkg.RpmdbFileRecord{
+						Files: []pkg.RpmFileRecord{
 							{"/usr/bin/zork", 33261, 115440, file.Digest{"sha256", "31b2ffc20b676a8fff795a45308f584273b9c47e8f7e196b4f36220b2734b472"}, "root", "root", ""},
 							{"/usr/share/doc/zork-1.0.3", 16877, 38, file.Digest{}, "root", "root", ""},
 							{"/usr/share/doc/zork-1.0.3/README.md", 33188, 5123, file.Digest{"sha256", "0013d67610a80c9f62d151a952f18d520b15b4c505b3ec2af34b96ab824654a4"}, "root", "root", "d"},

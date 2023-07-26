@@ -9,12 +9,12 @@ import (
 
 func TestRpmMetadata_FileOwner(t *testing.T) {
 	tests := []struct {
-		metadata RpmMetadata
+		metadata RpmDBMetadata
 		expected []string
 	}{
 		{
-			metadata: RpmMetadata{
-				Files: []RpmdbFileRecord{
+			metadata: RpmDBMetadata{
+				Files: []RpmFileRecord{
 					{Path: "/somewhere"},
 					{Path: "/else"},
 				},
@@ -25,8 +25,8 @@ func TestRpmMetadata_FileOwner(t *testing.T) {
 			},
 		},
 		{
-			metadata: RpmMetadata{
-				Files: []RpmdbFileRecord{
+			metadata: RpmDBMetadata{
+				Files: []RpmFileRecord{
 					{Path: "/somewhere"},
 					{Path: ""},
 				},
