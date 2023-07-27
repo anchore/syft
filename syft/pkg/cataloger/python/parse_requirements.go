@@ -156,25 +156,12 @@ func parseExtras(packageName string) []string {
 	return []string{}
 }
 
-func parseMarkers(line string) map[string]string {
-	markers := map[string]string{}
+func parseMarkers(line string) string {
+	var markers string
 	parts := strings.SplitN(line, ";", 2)
 
 	if len(parts) == 2 {
-		splittableMarkers := parts[1]
-
-		for _, combineString := range []string{" or ", " and "} {
-			splittableMarkers = strings.TrimSpace(
-				strings.ReplaceAll(splittableMarkers, combineString, ","),
-			)
-		}
-
-		splittableMarkers = strings.TrimSpace(splittableMarkers)
-
-		for _, mark := range strings.Split(splittableMarkers, ",") {
-			markparts := strings.Split(mark, " ")
-			markers[markparts[0]] = strings.Join(markparts[1:], " ")
-		}
+		markers = strings.TrimSpace(parts[1])
 	}
 
 	return markers

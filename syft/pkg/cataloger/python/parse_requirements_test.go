@@ -26,7 +26,6 @@ func TestParseRequirementsTxt(t *testing.T) {
 				Extras:            []string{},
 				VersionConstraint: "== 4.0.0",
 				URL:               "",
-				Markers:           map[string]string{},
 			},
 		},
 		{
@@ -42,7 +41,6 @@ func TestParseRequirementsTxt(t *testing.T) {
 				Extras:            []string{},
 				VersionConstraint: "== 1.0.0",
 				URL:               "",
-				Markers:           map[string]string{},
 			},
 		},
 		{
@@ -58,7 +56,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 				Extras:            []string{},
 				VersionConstraint: "== 5.4",
 				URL:               "",
-				Markers:           map[string]string{"python_version": "< '3.8'"},
+				Markers:           "python_version < '3.8'",
 			},
 		},
 		{
@@ -74,7 +72,6 @@ func TestParseRequirementsTxt(t *testing.T) {
 				Extras:            []string{},
 				VersionConstraint: "== 0.26.2",
 				URL:               "",
-				Markers:           map[string]string{},
 			},
 		},
 		{
@@ -90,7 +87,6 @@ func TestParseRequirementsTxt(t *testing.T) {
 				Extras:            []string{},
 				VersionConstraint: "== 0.26.3",
 				URL:               "",
-				Markers:           map[string]string{},
 			},
 		},
 		{
@@ -106,7 +102,6 @@ func TestParseRequirementsTxt(t *testing.T) {
 				Extras:            []string{"redis", "pytest"},
 				VersionConstraint: "== 4.4.7",
 				URL:               "",
-				Markers:           map[string]string{},
 			},
 		},
 		{
@@ -122,10 +117,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 				Extras:            []string{"security"},
 				VersionConstraint: "== 2.8",
 				URL:               "",
-				Markers: map[string]string{
-					"python_version": `< "2.7"`,
-					"sys_platform":   `== "linux"`,
-				},
+				Markers:           `python_version < "2.7" and sys_platform == "linux"`,
 			},
 		},
 		{
@@ -141,7 +133,6 @@ func TestParseRequirementsTxt(t *testing.T) {
 				Extras:            []string{},
 				VersionConstraint: "== 3.7.1",
 				URL:               "git+https://github.com/owner/repo@releases/tag/v3.7.1",
-				Markers:           map[string]string{},
 			},
 		},
 	}
