@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/iancoleman/strcase"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/invopop/jsonschema"
 
 	"github.com/anchore/syft/internal"

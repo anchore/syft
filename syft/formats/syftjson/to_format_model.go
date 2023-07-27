@@ -2,7 +2,6 @@ package syftjson
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"sort"
 	"strconv"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"

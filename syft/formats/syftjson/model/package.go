@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"reflect"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )

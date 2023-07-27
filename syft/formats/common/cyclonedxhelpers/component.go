@@ -1,7 +1,6 @@
 package cyclonedxhelpers
 
 import (
-	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"reflect"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -9,6 +8,7 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/common"
+	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/pkg"
 )
 

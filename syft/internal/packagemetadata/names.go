@@ -1,11 +1,15 @@
 package packagemetadata
 
 import (
-	"github.com/anchore/syft/syft/pkg"
 	"reflect"
 	"strings"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
+// jsonNameFromType is a map of all known package metadata types to their current JSON name and all previously known aliases.
+// It is important that if a name needs to change that the old name is kept in this map (as an alias) for backwards
+// compatibility to support decoding older JSON documents.
 var jsonNameFromType = map[reflect.Type][]string{
 	reflect.TypeOf(pkg.AlpmMetadata{}):                 nameList("arch-alpm-db-record", "AlpmMetadata"),
 	reflect.TypeOf(pkg.ApkMetadata{}):                  nameList("alpine-apk-db-record", "ApkMetadata"),
