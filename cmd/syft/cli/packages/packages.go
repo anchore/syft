@@ -3,7 +3,6 @@ package packages
 import (
 	"context"
 	"fmt"
-	"github.com/anchore/syft/internal/log"
 
 	"github.com/wagoodman/go-partybus"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
 	"github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
