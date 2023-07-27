@@ -2,17 +2,18 @@ package ui
 
 import (
 	"fmt"
+	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/dustin/go-humanize"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
-	"strings"
 
 	"github.com/anchore/bubbly/bubbles/taskprogress"
 	stereoscopeParsers "github.com/anchore/stereoscope/pkg/event/parsers"
 	"github.com/anchore/stereoscope/pkg/image/docker"
 	"github.com/anchore/syft/internal/log"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 var _ interface {
@@ -21,7 +22,6 @@ var _ interface {
 } = (*dockerPullProgressAdapter)(nil)
 
 type dockerPullStatus interface {
-	Error() error
 	Complete() bool
 	Layers() []docker.LayerID
 	Current(docker.LayerID) docker.LayerState
@@ -92,25 +92,10 @@ func (d dockerPullProgressAdapter) Current() int64 {
 }
 
 func (d dockerPullProgressAdapter) Error() error {
-	err := d.status.Error()
-	if err != nil {
-		return err
-	}
-
 	if d.status.Complete() {
 		return progress.ErrCompleted
 	}
-	for _, l := range d.status.Layers() {
-		cur := d.status.Current(l)
-		phaseErr := cur.PhaseProgress.Error()
-		dlErr := cur.DownloadProgress.Error()
-		if phaseErr != nil && !progress.IsErrCompleted(phaseErr) {
-			return phaseErr
-		}
-		if dlErr != nil && !progress.IsErrCompleted(dlErr) {
-			return dlErr
-		}
-	}
+	// TODO: return intermediate error indications
 	return nil
 }
 
@@ -121,11 +106,6 @@ func (d dockerPullProgressAdapter) Stage() string {
 // Render crafts the given docker image pull status summarized into a single line.
 func (f dockerPullStatusFormatter) Render(pullStatus dockerPullStatus) string {
 	var size, current uint64
-
-	err := pullStatus.Error()
-	if err != nil && !progress.IsErrCompleted(err) {
-		return "NOPE"
-	}
 
 	layers := pullStatus.Layers()
 	status := make(map[docker.LayerID]docker.LayerState)
