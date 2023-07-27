@@ -1626,10 +1626,7 @@
       "type": "object",
       "required": [
         "name",
-        "extras",
-        "versionConstraint",
-        "url",
-        "markers"
+        "versionConstraint"
       ]
     },
     "RDescriptionFileMetadata": {
