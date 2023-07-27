@@ -9,18 +9,17 @@ import (
 	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/cli/packages"
+	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/config"
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/ui"
 	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -28,29 +27,17 @@ import (
 
 func Run(_ context.Context, app *config.Application, args []string) error {
 	f := syftjson.Format()
-	writer, err := sbom.NewWriter(sbom.WriterOption{
-		Format: f,
-		Path:   app.File,
-	})
+	writer, err := options.MakeSBOMWriterForFormat(f, app.File)
 	if err != nil {
 		return err
 	}
-
 	defer func() {
-		if err := writer.Close(); err != nil {
-			log.Warnf("unable to write to report destination: %+v", err)
-		}
-
 		// inform user at end of run that command will be removed
 		deprecated := color.Style{color.Red, color.OpBold}.Sprint("DEPRECATED: This command will be removed in v1.0.0")
 		fmt.Fprintln(os.Stderr, deprecated)
 	}()
 
 	userInput := args[0]
-	si, err := source.ParseInputWithName(userInput, app.Platform, true, app.Name)
-	if err != nil {
-		return fmt.Errorf("could not generate source input for packages command: %w", err)
-	}
 
 	eventBus := partybus.NewBus()
 	stereoscope.SetBus(eventBus)
@@ -58,7 +45,7 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	subscription := eventBus.Subscribe()
 
 	return eventloop.EventLoop(
-		execWorker(app, *si, writer),
+		execWorker(app, userInput, writer),
 		eventloop.SetupSignals(),
 		subscription,
 		stereoscope.Cleanup,
@@ -66,10 +53,12 @@ func Run(_ context.Context, app *config.Application, args []string) error {
 	)
 }
 
-func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-chan error {
+//nolint:funlen
+func execWorker(app *config.Application, userInput string, writer sbom.Writer) <-chan error {
 	errs := make(chan error)
 	go func() {
 		defer close(errs)
+		defer bus.Exit()
 
 		app.Secrets.Cataloger.Enabled = true
 		app.FileMetadata.Cataloger.Enabled = true
@@ -81,17 +70,53 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 			return
 		}
 
-		src, cleanup, err := source.New(si, app.Registry.ToOptions(), app.Exclusions)
+		detection, err := source.Detect(
+			userInput,
+			source.DetectConfig{
+				DefaultImageSource: app.DefaultImagePullSource,
+			},
+		)
 		if err != nil {
-			errs <- err
+			errs <- fmt.Errorf("could not deteremine source: %w", err)
 			return
 		}
-		if cleanup != nil {
-			defer cleanup()
+
+		var platform *image.Platform
+
+		if app.Platform != "" {
+			platform, err = image.NewPlatform(app.Platform)
+			if err != nil {
+				errs <- fmt.Errorf("invalid platform: %w", err)
+				return
+			}
+		}
+
+		src, err := detection.NewSource(
+			source.DetectionSourceConfig{
+				Alias: source.Alias{
+					Name:    app.Source.Name,
+					Version: app.Source.Version,
+				},
+				RegistryOptions: app.Registry.ToOptions(),
+				Platform:        platform,
+				Exclude: source.ExcludeConfig{
+					Paths: app.Exclusions,
+				},
+				DigestAlgorithms: nil,
+				BasePath:         app.BasePath,
+			},
+		)
+
+		if src != nil {
+			defer src.Close()
+		}
+		if err != nil {
+			errs <- fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
+			return
 		}
 
 		s := sbom.SBOM{
-			Source: src.Metadata,
+			Source: src.Describe(),
 			Descriptor: sbom.Descriptor{
 				Name:          internal.ApplicationName,
 				Version:       version.FromBuild().Version,
@@ -109,10 +134,10 @@ func execWorker(app *config.Application, si source.Input, writer sbom.Writer) <-
 
 		s.Relationships = append(s.Relationships, packages.MergeRelationships(relationships...)...)
 
-		bus.Publish(partybus.Event{
-			Type:  event.Exit,
-			Value: func() error { return writer.Write(s) },
-		})
+		if err := writer.Write(s); err != nil {
+			errs <- fmt.Errorf("failed to write sbom: %w", err)
+			return
+		}
 	}()
 
 	return errs

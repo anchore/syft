@@ -11,13 +11,19 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
+type goModCataloger struct {
+	licenses goLicenses
+}
+
 // parseGoModFile takes a go.mod and lists all packages discovered.
-func parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+//
+//nolint:funlen
+func (c *goModCataloger) parseGoModFile(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make(map[string]pkg.Package)
 
 	contents, err := io.ReadAll(reader)
@@ -25,7 +31,7 @@ func parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader
 		return nil, nil, fmt.Errorf("failed to read go module: %w", err)
 	}
 
-	file, err := modfile.Parse(reader.RealPath, contents, nil)
+	f, err := modfile.Parse(reader.RealPath, contents, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse go module: %w", err)
 	}
@@ -35,11 +41,17 @@ func parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader
 		log.Debugf("unable to get go.sum: %v", err)
 	}
 
-	for _, m := range file.Require {
+	for _, m := range f.Require {
+		licenses, err := c.licenses.getLicenses(resolver, m.Mod.Path, m.Mod.Version)
+		if err != nil {
+			log.Tracef("error getting licenses for package: %s %v", m.Mod.Path, err)
+		}
+
 		packages[m.Mod.Path] = pkg.Package{
 			Name:         m.Mod.Path,
 			Version:      m.Mod.Version,
-			Locations:    source.NewLocationSet(reader.Location),
+			Licenses:     pkg.NewLicenseSet(licenses...),
+			Locations:    file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(m.Mod.Path, m.Mod.Version),
 			Language:     pkg.Go,
 			Type:         pkg.GoModulePkg,
@@ -51,11 +63,17 @@ func parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader
 	}
 
 	// remove any old packages and replace with new ones...
-	for _, m := range file.Replace {
+	for _, m := range f.Replace {
+		licenses, err := c.licenses.getLicenses(resolver, m.New.Path, m.New.Version)
+		if err != nil {
+			log.Tracef("error getting licenses for package: %s %v", m.New.Path, err)
+		}
+
 		packages[m.New.Path] = pkg.Package{
 			Name:         m.New.Path,
 			Version:      m.New.Version,
-			Locations:    source.NewLocationSet(reader.Location),
+			Licenses:     pkg.NewLicenseSet(licenses...),
+			Locations:    file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:         packageURL(m.New.Path, m.New.Version),
 			Language:     pkg.Go,
 			Type:         pkg.GoModulePkg,
@@ -67,7 +85,7 @@ func parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader
 	}
 
 	// remove any packages from the exclude fields
-	for _, m := range file.Exclude {
+	for _, m := range f.Exclude {
 		delete(packages, m.Mod.Path)
 	}
 
@@ -86,7 +104,7 @@ func parseGoModFile(resolver source.FileResolver, _ *generic.Environment, reader
 	return pkgsSlice, nil, nil
 }
 
-func parseGoSumFile(resolver source.FileResolver, reader source.LocationReadCloser) (map[string]string, error) {
+func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map[string]string, error) {
 	out := map[string]string{}
 
 	if resolver == nil {

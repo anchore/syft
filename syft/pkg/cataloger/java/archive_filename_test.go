@@ -80,6 +80,13 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			ty:        pkg.JavaPkg,
 		},
 		{
+			filename:  "pkg-extra-field-maven-4.3.2-rc1.nar",
+			version:   "4.3.2-rc1",
+			extension: "nar",
+			name:      "pkg-extra-field-maven",
+			ty:        pkg.JavaPkg,
+		},
+		{
 			filename:  "/some/path/pkg-extra-field-maven-4.3.2-rc1.jpi",
 			version:   "4.3.2-rc1",
 			extension: "jpi",
@@ -164,6 +171,13 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			version:   "1.0.2.Final",
 			extension: "jar",
 			name:      "jboss-saaj-api_1.4_spec",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			filename:  "/usr/share/java/gradle/lib/gradle-build-cache-8.1.1.jar",
+			version:   "8.1.1",
+			extension: "jar",
+			name:      "gradle-build-cache",
 			ty:        pkg.JavaPkg,
 		},
 	}

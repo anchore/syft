@@ -1,7 +1,7 @@
 package linux
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 
@@ -89,19 +89,20 @@ func TestIdentifyRelease(t *testing.T) {
 		{
 			fixture: "test-fixtures/os/fedora",
 			release: &Release{
-				PrettyName:       "Fedora 31 (Container Image)",
-				Name:             "Fedora",
+				PrettyName:       "Fedora Linux 36 (Container Image)",
+				Name:             "Fedora Linux",
 				ID:               "fedora",
 				IDLike:           nil,
-				Version:          "31 (Container Image)",
-				VersionID:        "31",
+				Version:          "36 (Container Image)",
+				VersionID:        "36",
 				Variant:          "Container Image",
 				VariantID:        "container",
 				HomeURL:          "https://fedoraproject.org/",
-				SupportURL:       "https://fedoraproject.org/wiki/Communicating_and_getting_help",
+				SupportURL:       "https://ask.fedoraproject.org/",
 				BugReportURL:     "https://bugzilla.redhat.com/",
 				PrivacyPolicyURL: "https://fedoraproject.org/wiki/Legal:PrivacyPolicy",
-				CPEName:          "cpe:/o:fedoraproject:fedora:31",
+				CPEName:          "cpe:/o:fedoraproject:fedora:36",
+				SupportEnd:       "2023-05-16",
 			},
 		},
 		{
@@ -335,7 +336,7 @@ func TestIdentifyRelease(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			s, err := source.NewFromDirectory(test.fixture)
+			s, err := source.NewFromDirectoryPath(test.fixture)
 			require.NoError(t, err)
 
 			resolver, err := s.FileResolver(source.SquashedScope)
@@ -538,7 +539,7 @@ func retrieveFixtureContentsAsString(fixturePath string, t *testing.T) string {
 	}
 	defer fixture.Close()
 
-	b, err := ioutil.ReadAll(fixture)
+	b, err := io.ReadAll(fixture)
 	if err != nil {
 		t.Fatalf("unable to read fixture file: %+v", err)
 	}

@@ -18,20 +18,20 @@ const (
 	inputFile      = "file"
 )
 
-func DocumentNameAndNamespace(srcMetadata source.Metadata) (string, string) {
-	name := DocumentName(srcMetadata)
-	return name, DocumentNamespace(name, srcMetadata)
+func DocumentNameAndNamespace(src source.Description) (string, string) {
+	name := DocumentName(src)
+	return name, DocumentNamespace(name, src)
 }
 
-func DocumentNamespace(name string, srcMetadata source.Metadata) string {
+func DocumentNamespace(name string, src source.Description) string {
 	name = cleanName(name)
 	input := "unknown-source-type"
-	switch srcMetadata.Scheme {
-	case source.ImageScheme:
+	switch src.Metadata.(type) {
+	case source.StereoscopeImageSourceMetadata:
 		input = inputImage
-	case source.DirectoryScheme:
+	case source.DirectorySourceMetadata:
 		input = inputDirectory
-	case source.FileScheme:
+	case source.FileSourceMetadata:
 		input = inputFile
 	}
 

@@ -117,15 +117,19 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "javascript language",
 			p: pkg.Package{
-				Name:     "name",
-				Version:  "3.2",
-				FoundBy:  "some-analyzer",
-				Language: pkg.JavaScript,
-				Type:     pkg.DebPkg,
+				Name:         "name",
+				Version:      "3.2",
+				FoundBy:      "some-analyzer",
+				Language:     pkg.JavaScript,
+				MetadataType: pkg.NpmPackageJSONMetadataType,
+				Metadata: pkg.NpmPackageJSONMetadata{
+					Author: "jon",
+					URL:    "https://github.com/bob/npm-name",
+				},
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:bob:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -142,10 +146,10 @@ func TestGeneratePackageCPEs(t *testing.T) {
 						"someones name",
 						"someones.elses.name@gmail.com",
 					},
+					Homepage: "https://github.com/tom/ruby-name",
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:*:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby-lang:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby:name:3.2:*:*:*:*:*:*:*",
@@ -154,6 +158,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:someones-name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:someones_elses_name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:someones_name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:tom:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -641,7 +646,6 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"cpe:2.3:a:*:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:bundler:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby-lang:bundler:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby:bundler:2.1.4:*:*:*:*:*:*:*",
@@ -671,6 +675,42 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:python_redis:python-redis:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python_redis:python_redis:2.1.4:*:*:*:*:*:*:*",
 				"cpe:2.3:a:python_redis:redis:2.1.4:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "regression: ruby-rake apk missing expected ruby-lang:rake CPE",
+			p: pkg.Package{
+				Name:         "ruby-rake",
+				Version:      "2.7.6-r0",
+				Type:         pkg.ApkPkg,
+				FoundBy:      "apk-db-analyzer",
+				Language:     pkg.UnknownLanguage,
+				MetadataType: pkg.ApkMetadataType,
+				Metadata: pkg.ApkMetadata{
+					Package:       "ruby-rake",
+					URL:           "https://www.ruby-lang.org/",
+					OriginPackage: "ruby",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:ruby-lang:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:rake:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:rake:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:rake:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-lang:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-lang:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-rake:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-rake:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby-rake:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_lang:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_lang:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_lang:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_rake:rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_rake:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:ruby_rake:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
 			},
 		},
 	}
@@ -727,6 +767,14 @@ func TestCandidateProducts(t *testing.T) {
 				Type: pkg.JavaPkg,
 			},
 			expected: []string{"spring_framework", "springsource_spring_framework" /* <-- known good names | default guess --> */, "springframework"},
+		},
+		{
+			name: "spring-security-core",
+			p: pkg.Package{
+				Name: "spring-security-core",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"spring-security-core", "spring_security", "spring_security_core"},
 		},
 		{
 			name: "java",
@@ -816,6 +864,14 @@ func TestCandidateVendor(t *testing.T) {
 				Type: pkg.JavaPkg,
 			},
 			expected: []string{"elastic" /* <-- known good names | default guess --> */, "elasticsearch"},
+		},
+		{
+			name: "spring-security",
+			p: pkg.Package{
+				Name: "spring-security-core",
+				Type: pkg.JavaPkg,
+			},
+			expected: []string{"vmware" /* <-- known good names | default guess --> */, "spring", "spring-security", "spring-security-core", "spring_security_core", "spring_security"},
 		},
 		{
 			name: "log4j",
@@ -910,6 +966,36 @@ func Test_addSeparatorVariations(t *testing.T) {
 			val := newFieldCandidateSet(test.input...)
 			addDelimiterVariations(val)
 			assert.ElementsMatch(t, test.expected, val.values())
+		})
+	}
+}
+
+func TestDictionaryFindIsWired(t *testing.T) {
+
+	tests := []struct {
+		name       string
+		pkg        pkg.Package
+		want       string
+		wantExists bool
+	}{
+		{
+			name: "sanity check that cpe data is wired up",
+			pkg: pkg.Package{
+				Name:    "openssl",
+				Version: "1.0.2k",
+				Type:    pkg.GemPkg,
+			},
+			want: "cpe:2.3:a:ruby-lang:openssl:1.0.2k:*:*:*:*:*:*:*",
+			// without the cpe data wired up, this would be empty (generation also creates cpe:2.3:a:openssl:openssl:1.0.2k:*:*:*:*:*:*:*)
+			wantExists: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotExists := DictionaryFind(tt.pkg)
+
+			assert.Equal(t, tt.want, got.BindToFmtString())
+			assert.Equal(t, tt.wantExists, gotExists)
 		})
 	}
 }

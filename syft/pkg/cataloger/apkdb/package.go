@@ -4,25 +4,30 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-var (
-	prefixes = []string{"py-", "py2-", "py3-", "ruby-"}
-)
+func newPackage(d parsedData, release *linux.Release, dbLocation file.Location) pkg.Package {
+	// check if license is a valid spdx expression before splitting
+	licenseStrings := []string{d.License}
+	_, err := license.ParseExpression(d.License)
+	if err != nil {
+		// invalid so update to split on space
+		licenseStrings = strings.Split(d.License, " ")
+	}
 
-func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...source.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         d.Package,
 		Version:      d.Version,
-		Locations:    source.NewLocationSet(locations...),
-		Licenses:     strings.Split(d.License, " "),
-		PURL:         packageURL(d, release),
+		Locations:    file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation, licenseStrings...)...),
+		PURL:         packageURL(d.ApkMetadata, release),
 		Type:         pkg.ApkPkg,
 		MetadataType: pkg.ApkMetadataType,
-		Metadata:     d,
+		Metadata:     d.ApkMetadata,
 	}
 
 	p.SetID()
@@ -30,24 +35,9 @@ func newPackage(d pkg.ApkMetadata, release *linux.Release, locations ...source.L
 	return p
 }
 
-func generateUpstream(m pkg.ApkMetadata) string {
-	if m.OriginPackage != "" && m.OriginPackage != m.Package {
-		return m.OriginPackage
-	}
-
-	for _, p := range prefixes {
-		if strings.HasPrefix(m.Package, p) {
-			return strings.TrimPrefix(m.Package, p)
-		}
-	}
-
-	return m.Package
-}
-
 // packageURL returns the PURL for the specific Alpine package (see https://github.com/package-url/purl-spec)
 func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
-	if distro == nil || distro.ID != "alpine" {
-		// note: there is no namespace variation (like with debian ID_LIKE for ubuntu ID, for example)
+	if distro == nil {
 		return ""
 	}
 
@@ -55,13 +45,13 @@ func packageURL(m pkg.ApkMetadata, distro *linux.Release) string {
 		pkg.PURLQualifierArch: m.Architecture,
 	}
 
-	if m.OriginPackage != "" {
-		qualifiers[pkg.PURLQualifierUpstream] = generateUpstream(m)
+	if m.OriginPackage != m.Package {
+		qualifiers[pkg.PURLQualifierUpstream] = m.OriginPackage
 	}
 
 	return packageurl.NewPackageURL(
 		packageurl.TypeAlpine,
-		"alpine",
+		strings.ToLower(distro.ID),
 		m.Package,
 		m.Version,
 		pkg.PURLQualifiers(

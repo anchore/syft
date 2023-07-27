@@ -69,6 +69,14 @@ var imageOnlyTestCases = []testCase{
 			"joda-time":              "2.9.2",
 		},
 	},
+	{
+		name:        "find R packages",
+		pkgType:     pkg.Rpkg,
+		pkgLanguage: pkg.R,
+		pkgInfo: map[string]string{
+			"base": "4.3.0",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{
@@ -91,6 +99,7 @@ var dirOnlyTestCases = []testCase{
 			"coffee-script-source": "1.7.0",
 			"erubis":               "2.7.0",
 			"execjs":               "2.0.2",
+			"google-cloud-errors":  "1.3.0",
 			"hike":                 "1.2.3",
 			"i18n":                 "0.6.9",
 			"jbuilder":             "2.0.7",
@@ -124,7 +133,7 @@ var dirOnlyTestCases = []testCase{
 			"thread_safe":          "0.3.3",
 			"tilt":                 "1.4.1",
 			"treetop":              "1.4.15",
-			"turbolinks":           "2.2.2",
+			"turbolinks":           "3.0.0",
 			"tzinfo":               "1.2.0",
 			"uglifier":             "2.5.0",
 			"unicorn":              "4.8.3",
@@ -347,6 +356,18 @@ var dirOnlyTestCases = []testCase{
 			"unicode_util_compat": "0.7.0",
 		},
 	},
+	{
+		name:        "find swift package manager packages",
+		pkgType:     pkg.SwiftPkg,
+		pkgLanguage: pkg.Swift,
+		pkgInfo: map[string]string{
+			"swift-algorithms":       "1.0.0",
+			"swift-async-algorithms": "0.1.0",
+			"swift-atomics":          "1.1.0",
+			"swift-collections":      "1.0.4",
+			"swift-numerics":         "1.0.2",
+		},
+	},
 }
 
 var commonTestCases = []testCase{
@@ -388,6 +409,13 @@ var commonTestCases = []testCase{
 		duplicates:  1, // there is a "example-jenkins-plugin" HPI, and nested within that a JAR of the same name
 		pkgInfo: map[string]string{
 			"example-jenkins-plugin": "1.0-SNAPSHOT",
+		},
+	},
+	{
+		name:    "find nix store packages",
+		pkgType: pkg.NixPkg,
+		pkgInfo: map[string]string{
+			"glibc": "2.34-210",
 		},
 	},
 }

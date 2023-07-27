@@ -27,7 +27,6 @@ type ApkMetadata struct {
 	OriginPackage string          `mapstructure:"o" json:"originPackage" cyclonedx:"originPackage"`
 	Maintainer    string          `mapstructure:"m" json:"maintainer"`
 	Version       string          `mapstructure:"V" json:"version"`
-	License       string          `mapstructure:"L" json:"license"`
 	Architecture  string          `mapstructure:"A" json:"architecture"`
 	URL           string          `mapstructure:"U" json:"url"`
 	Description   string          `mapstructure:"T" json:"description"`
@@ -86,6 +85,8 @@ func (a *spaceDelimitedStringSlice) UnmarshalJSON(data []byte) error {
 			s = append(s, value)
 		}
 		*a = s
+		return nil
+	case nil:
 		return nil
 	default:
 		return fmt.Errorf("invalid type for string array: %T", obj)

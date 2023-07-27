@@ -55,6 +55,7 @@ func New() (*cobra.Command, error) {
 
 	// rootCmd is currently an alias for the packages command
 	rootCmd := &cobra.Command{
+		Use:           fmt.Sprintf("%s [SOURCE]", internal.ApplicationName),
 		Short:         packagesCmd.Short,
 		Long:          packagesCmd.Long,
 		Args:          packagesCmd.Args,
@@ -124,7 +125,7 @@ func checkForApplicationUpdate() {
 		log.Infof("new version of %s is available: %s (current version is %s)", internal.ApplicationName, newVersion, version.FromBuild().Version)
 
 		bus.Publish(partybus.Event{
-			Type:  event.AppUpdateAvailable,
+			Type:  event.CLIAppUpdateAvailable,
 			Value: newVersion,
 		})
 	} else {

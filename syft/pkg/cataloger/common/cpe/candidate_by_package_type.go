@@ -33,6 +33,12 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateAddition{AdditionalProducts: []string{"spring_framework", "springsource_spring_framework"}, AdditionalVendors: []string{"pivotal_software", "springsource", "vmware"}},
 		},
 		{
+			// example image: docker.io/jenkins/jenkins:latest
+			pkg.JavaPkg,
+			candidateKey{PkgName: "spring-security-core"},
+			candidateAddition{AdditionalProducts: []string{"spring_security"}, AdditionalVendors: []string{"vmware"}},
+		},
+		{
 			// example image: docker.io/nuxeo:latest
 			pkg.JavaPkg,
 			candidateKey{PkgName: "elasticsearch"}, // , Vendor: "elasticsearch"},
@@ -180,6 +186,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		// Alpine packages
 		{
 			pkg.ApkPkg,
+			candidateKey{PkgName: "curl"},
+			candidateAddition{AdditionalVendors: []string{"haxx"}},
+		},
+		{
+			pkg.ApkPkg,
 			candidateKey{PkgName: "python3"},
 			candidateAddition{AdditionalProducts: []string{"python"}, AdditionalVendors: []string{"python", "python_software_foundation"}},
 		},
@@ -198,6 +209,137 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "nodejs-current"},
 			candidateAddition{AdditionalProducts: []string{"node.js"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "go"},
+			candidateAddition{AdditionalVendors: []string{"golang"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "ruby"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bazel"},
+			candidateAddition{AdditionalVendors: []string{"google"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "clang"},
+			candidateAddition{AdditionalVendors: []string{"llvm"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "openjdk"},
+			candidateAddition{AdditionalVendors: []string{"oracle"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "glibc"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "glib"},
+			candidateAddition{AdditionalVendors: []string{"gnome"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bash"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "alsa-lib"},
+			candidateAddition{AdditionalVendors: []string{"alsa-project"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "alsa"},
+			candidateAddition{AdditionalVendors: []string{"alsa-project"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "make"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "git"},
+			candidateAddition{AdditionalVendors: []string{"git-scm"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "bind"},
+			candidateAddition{AdditionalVendors: []string{"isc"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "libxpm"},
+			candidateAddition{AdditionalVendors: []string{"libxpm_project"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "musl"},
+			candidateAddition{AdditionalVendors: []string{"musl-libc"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "firefox"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "firefox-esr"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "thunderbird"},
+			candidateAddition{AdditionalVendors: []string{"mozilla"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "chromium"},
+			candidateAddition{AdditionalVendors: []string{"google"}, AdditionalProducts: []string{"chrome"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "apache"},
+			candidateAddition{AdditionalProducts: []string{"http_server"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "tiff"},
+			candidateAddition{AdditionalProducts: []string{"libtiff"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "ghostscript"},
+			candidateAddition{AdditionalVendors: []string{"artifex"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "openjpeg"},
+			candidateAddition{AdditionalVendors: []string{"uclouvain"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "xorg-server"},
+			candidateAddition{AdditionalVendors: []string{"x.org"}, AdditionalProducts: []string{"x_server"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "podofo"},
+			candidateAddition{AdditionalVendors: []string{"podofo_project"}},
+		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "wpa_supplicant"},
+			candidateAddition{AdditionalVendors: []string{"w1.fi"}},
+		},
+		//
 		// Binary packages
 		{
 			pkg.BinaryPkg,
@@ -213,6 +355,127 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 			pkg.PythonPkg,
 			candidateKey{PkgName: "redis"},
 			candidateRemovals{VendorsToRemove: []string{"redis"}},
+		},
+		{
+			pkg.PythonPkg,
+			candidateKey{PkgName: "kubernetes"},
+			candidateRemovals{ProductsToRemove: []string{"kubernetes"}},
+		},
+		// NPM packages
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "redis"},
+			candidateRemovals{VendorsToRemove: []string{"redis"}},
+		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "php"},
+			candidateRemovals{VendorsToRemove: []string{"php"}},
+		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "delegate"},
+			candidateRemovals{VendorsToRemove: []string{"delegate"}},
+		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "docker"},
+			candidateRemovals{VendorsToRemove: []string{"docker"}},
+		},
+		// Java packages
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-builder-support"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-model"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-repository-metadata"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-settings"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-settings-builder"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-api"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-connector-basic"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-impl"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-named-locks"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-spi"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-transport-file"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-transport-http"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-transport-wagon"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-resolver-util"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "maven-shared-utils"},
+			candidateRemovals{ProductsToRemove: []string{"maven"}},
+		},
+		{
+			pkg.JavaPkg,
+			candidateKey{PkgName: "gradle-enterprise"},
+			candidateRemovals{
+				ProductsToRemove: []string{"gradle-enterprise"},
+				VendorsToRemove:  []string{"gradle"},
+			},
+		},
+		// Ruby packages
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "redis"},
+			candidateRemovals{ProductsToRemove: []string{"redis"}},
+		},
+		{
+			pkg.GemPkg,
+			candidateKey{PkgName: "grpc"},
+			candidateRemovals{ProductsToRemove: []string{"grpc"}},
 		},
 	})
 

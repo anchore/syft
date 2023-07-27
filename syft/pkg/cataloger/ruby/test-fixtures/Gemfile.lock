@@ -1,3 +1,15 @@
+PATH
+  remote: ../google-cloud-errors
+  specs:
+    google-cloud-errors (1.3.0)
+
+GIT
+  remote: https://github.com/rails/turbolinks.git
+  revision: 80216ce9d89920bf073709405e3fce6d0a3ccd9a
+  specs:
+    turbolinks (3.0.0)
+      coffee-rails
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -111,8 +123,6 @@ GEM
     treetop (1.4.15)
       polyglot
       polyglot (>= 0.3.1)
-    turbolinks (2.2.2)
-      coffee-rails
     tzinfo (1.2.0)
       thread_safe (~> 0.1)
     uglifier (2.5.0)
@@ -135,6 +145,7 @@ PLATFORMS
 DEPENDENCIES
   bootstrap-sass
   coffee-rails (~> 4.0.0)
+  google-cloud-errors!
   jbuilder (~> 2.0)
   jquery-rails
   mysql2 (~> 0.3.16)
@@ -144,6 +155,6 @@ DEPENDENCIES
   spring
   sqlite3
   therubyracer
-  turbolinks
+  turbolinks!
   uglifier (>= 1.3.0)
   unicorn

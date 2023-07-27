@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_SourceInfo(t *testing.T) {
@@ -19,9 +19,9 @@ func Test_SourceInfo(t *testing.T) {
 			name: "locations are captured",
 			input: pkg.Package{
 				// note: no type given
-				Locations: source.NewLocationSet(
-					source.NewVirtualLocation("/a-place", "/b-place"),
-					source.NewVirtualLocation("/c-place", "/d-place"),
+				Locations: file.NewLocationSet(
+					file.NewVirtualLocation("/a-place", "/b-place"),
+					file.NewVirtualLocation("/c-place", "/d-place"),
 				),
 			},
 			expected: []string{
@@ -197,6 +197,46 @@ func Test_SourceInfo(t *testing.T) {
 			},
 			expected: []string{
 				"from rebar3 or mix manifest file",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.LinuxKernelPkg,
+			},
+			expected: []string{
+				"from linux kernel archive",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.LinuxKernelModulePkg,
+			},
+			expected: []string{
+				"from linux kernel module files",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.NixPkg,
+			},
+			expected: []string{
+				"from nix store path",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.Rpkg,
+			},
+			expected: []string{
+				"acquired package info from R-package DESCRIPTION file",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.SwiftPkg,
+			},
+			expected: []string{
+				"from resolved Swift package manifest",
 			},
 		},
 	}

@@ -4,21 +4,21 @@ TEMP_DIR := ./.tmp
 # Command templates #################################
 LINT_CMD := $(TEMP_DIR)/golangci-lint run --tests=false
 GOIMPORTS_CMD := $(TEMP_DIR)/gosimports -local github.com/anchore
-RELEASE_CMD := $(TEMP_DIR)/goreleaser release --rm-dist
+RELEASE_CMD := $(TEMP_DIR)/goreleaser release --clean
 SNAPSHOT_CMD := $(RELEASE_CMD) --skip-publish --skip-sign --snapshot
 CHRONICLE_CMD = $(TEMP_DIR)/chronicle
 GLOW_CMD = $(TEMP_DIR)/glow
 
 # Tool versions #################################
-GOLANGCILINT_VERSION := v1.51.1
-GOSIMPORTS_VERSION := v0.3.5
+GOLANGCILINT_VERSION := v1.53.3
+GOSIMPORTS_VERSION := v0.3.8
 BOUNCER_VERSION := v0.4.0
 CHRONICLE_VERSION := v0.6.0
-GORELEASER_VERSION := v1.15.2
+GORELEASER_VERSION := v1.19.2
 YAJSV_VERSION := v1.4.1
-COSIGN_VERSION := v1.13.1
+COSIGN_VERSION := v2.1.1
 QUILL_VERSION := v0.2.0
-GLOW_VERSION := v1.5.0
+GLOW_VERSION := v1.5.1
 
 # Formatting variables #################################
 BOLD := $(shell tput -T linux bold)
@@ -90,7 +90,7 @@ bootstrap-tools: $(TEMP_DIR)
 	# the only difference between goimports and gosimports is that gosimports removes extra whitespace between import blocks (see https://github.com/golang/go/issues/20818)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/rinchsan/gosimports/cmd/gosimports@$(GOSIMPORTS_VERSION)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/neilpa/yajsv@$(YAJSV_VERSION)
-	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/sigstore/cosign/cmd/cosign@$(COSIGN_VERSION)
+	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/sigstore/cosign/v2/cmd/cosign@$(COSIGN_VERSION)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/charmbracelet/glow@$(GLOW_VERSION)
 
 .PHONY: bootstrap-go
@@ -118,13 +118,17 @@ lint:  ## Run gofmt + golangci lint checks
 	$(eval MALFORMED_FILENAMES := $(shell find . | grep -e ':'))
 	@bash -c "[[ '$(MALFORMED_FILENAMES)' == '' ]] || (printf '\nfound unsupported filename characters:\n$(MALFORMED_FILENAMES)\n\n' && false)"
 
-.PHONY: lint-fix
-lint-fix:  ## Auto-format all source code + run golangci lint fixers
-	$(call title,Running lint fixers)
+.PHONY: format
+format:  ## Auto-format all source code
+	$(call title,Running formatters)
 	gofmt -w -s .
 	$(GOIMPORTS_CMD) -w .
-	$(LINT_CMD) --fix
 	go mod tidy
+
+.PHONY: lint-fix
+lint-fix: format  ## Auto-format all source code + run golangci lint fixers
+	$(call title,Running lint fixers)
+	$(LINT_CMD) --fix
 
 .PHONY: check-licenses
 check-licenses:  ## Ensure transitive dependencies are compliant with the current license policy
@@ -189,9 +193,13 @@ fingerprints:
 	cd test/integration/test-fixtures && \
 		make cache.fingerprint
 
+	# for BINARY test fixtures
+	cd syft/pkg/cataloger/binary/test-fixtures && \
+		make cache.fingerprint
+
 	# for JAVA BUILD test fixtures
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
-		make packages.fingerprint
+		make cache.fingerprint
 
 	# for GO BINARY test fixtures
 	cd syft/pkg/cataloger/golang/test-fixtures/archs && \
@@ -200,6 +208,10 @@ fingerprints:
 	# for RPM test fixtures
 	cd syft/pkg/cataloger/rpm/test-fixtures && \
 		make rpms.fingerprint
+
+	# for Kernel test fixtures
+	cd syft/pkg/cataloger/kernel/test-fixtures && \
+		make cache.fingerprint
 
 	# for INSTALL integration test fixtures
 	cd test/install && \
@@ -214,6 +226,7 @@ fixtures:
 	$(call title,Generating test fixtures)
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && make
 	cd syft/pkg/cataloger/rpm/test-fixtures && make
+	cd syft/pkg/cataloger/binary/test-fixtures && make
 
 .PHONY: show-test-image-cache
 show-test-image-cache:  ## Show all docker and image tar cache
@@ -246,6 +259,11 @@ install-test-cache-load: $(SNAPSHOT_DIR)
 install-test-ci-mac: $(SNAPSHOT_DIR)
 	cd test/install && \
 		make ci-test-mac
+
+.PHONY: generate-compare-file
+generate-compare-file:
+	$(call title,Generating compare test file)
+	go run ./cmd/syft $(COMPARE_TEST_IMAGE) -o json > $(COMPARE_DIR)/test-fixtures/acceptance-centos-8.2.2004.json
 
 # note: we cannot clean the snapshot directory since the pipeline builds the snapshot separately
 .PHONY: compare-mac
@@ -280,22 +298,28 @@ compare-test-rpm-package-install: $(TEMP_DIR) $(SNAPSHOT_DIR)
 			$(TEMP_DIR)
 
 
-## Code generation targets #################################
+## Code and data generation targets #################################
 
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema
-	cd schema/json && go run generate.go
+	cd syft/internal && go generate . && cd jsonschema && go run .
 
 .PHONY: generate-license-list
 generate-license-list:  ## Generate an updated spdx license list
 	go generate ./internal/spdxlicense/...
 	gofmt -s -w ./internal/spdxlicense
 
+.PHONY: generate-cpe-dictionary-index
+generate-cpe-dictionary-index:  ## Build the CPE index based off of the latest available CPE dictionary
+	$(call title,Building CPE index)
+	go generate ./syft/pkg/cataloger/common/cpe/dictionary
+
 
 ## Build-related targets #################################
 
 .PHONY: build
-build: $(SNAPSHOT_DIR)  ## Build release snapshot binaries and packages
+build:
+	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./cmd/syft
 
 $(SNAPSHOT_DIR):  ## Build snapshot release binaries and packages
 	$(call title,Building snapshot artifacts)

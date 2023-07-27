@@ -1,0 +1,23 @@
+{
+  "ecosystems": {
+    "jenkins_plugins": {
+      "sonarqube": "cpe:2.3:a:sonarsource:sonarqube_scanner:*:*:*:*:*:jenkins:*:*"
+    },
+    "npm": {
+      "merge-recursive": "cpe:2.3:a:umbraengineering:merge-recursive:*:*:*:*:*:node.js:*:*",
+      "static-dev-server": "cpe:2.3:a:static-dev-server_project:static-dev-server:*:*:*:*:*:node.js:*:*",
+      "umount": "cpe:2.3:a:umount_project:umount:*:*:*:*:*:node.js:*:*",
+      "undefsafe": "cpe:2.3:a:undefsafe_project:undefsafe:*:*:*:*:*:node.js:*:*",
+      "underscore": "cpe:2.3:a:underscorejs:underscore:*:*:*:*:*:node.js:*:*",
+      "underscore-99xp": "cpe:2.3:a:underscore-99xp_project:underscore-99xp:*:*:*:*:*:node.js:*:*",
+      "unicode": "cpe:2.3:a:unicode_project:unicode:*:*:*:*:*:node.js:*:*",
+      "unicorn-list": "cpe:2.3:a:unicorn-list_project:unicorn-list:*:*:*:*:*:node.js:*:*"
+    },
+    "rubygems": {
+      "openssl": "cpe:2.3:a:ruby-lang:openssl:*:*:*:*:*:*:*:*"
+    },
+    "rust_crates": {
+      "unicycle": "cpe:2.3:a:unicycle_project:unicycle:*:*:*:*:*:rust:*:*"
+    }
+  }
+}

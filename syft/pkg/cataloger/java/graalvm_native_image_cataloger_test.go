@@ -6,7 +6,6 @@ import (
 	"compress/gzip"
 	"encoding/binary"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -36,7 +35,7 @@ func TestParseNativeImage(t *testing.T) {
 		t.Run(test.fixture, func(t *testing.T) {
 			f, err := os.Open("test-fixtures/java-builds/packages/" + test.fixture)
 			assert.NoError(t, err)
-			readerCloser := io.ReadCloser(ioutil.NopCloser(f))
+			readerCloser := io.NopCloser(f)
 			reader, err := unionreader.GetUnionReader(readerCloser)
 			assert.NoError(t, err)
 			parsed := false
@@ -107,7 +106,7 @@ func TestParseNativeImageSbom(t *testing.T) {
 	for _, test := range tests {
 		t.Run(path.Base(test.fixture), func(t *testing.T) {
 			// Create a buffer to resemble a compressed SBOM in a native image.
-			sbom, err := ioutil.ReadFile(test.fixture)
+			sbom, err := os.ReadFile(test.fixture)
 			assert.NoError(t, err)
 			var b bytes.Buffer
 			writebytes := bufio.NewWriter(&b)

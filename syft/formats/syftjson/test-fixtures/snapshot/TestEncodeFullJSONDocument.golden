@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "304a5a8e5958a49d",
+   "id": "271e49ba46e0b601",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -12,7 +12,13 @@
     }
    ],
    "licenses": [
-    "MIT"
+    {
+     "value": "MIT",
+     "spdxExpression": "MIT",
+     "type": "declared",
+     "urls": [],
+     "locations": []
+    }
    ],
    "language": "python",
    "cpes": [
@@ -23,7 +29,6 @@
    "metadata": {
     "name": "package-1",
     "version": "1.0.1",
-    "license": "",
     "author": "",
     "authorEmail": "",
     "platform": "",
@@ -81,11 +86,12 @@
     "type": "Directory",
     "userID": 0,
     "groupID": 0,
-    "mimeType": ""
+    "mimeType": "",
+    "size": 0
    }
   },
   {
-   "id": "e7c88bd18e11b0b",
+   "id": "0e7c88bd18e11b0b",
    "location": {
     "path": "/a/place/a"
    },
@@ -94,7 +100,8 @@
     "type": "RegularFile",
     "userID": 0,
     "groupID": 0,
-    "mimeType": ""
+    "mimeType": "",
+    "size": 0
    },
    "contents": "the-contents",
    "digests": [
@@ -115,7 +122,8 @@
     "linkDestination": "/c",
     "userID": 0,
     "groupID": 0,
-    "mimeType": ""
+    "mimeType": "",
+    "size": 0
    }
   },
   {
@@ -128,7 +136,8 @@
     "type": "RegularFile",
     "userID": 1,
     "groupID": 2,
-    "mimeType": ""
+    "mimeType": "",
+    "size": 0
    },
    "digests": [
     {
@@ -140,8 +149,10 @@
  ],
  "source": {
   "id": "c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
+  "name": "",
+  "version": "",
   "type": "image",
-  "target": {
+  "metadata": {
    "userInput": "user-image-input",
    "imageID": "sha256:c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
    "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
@@ -183,9 +194,5 @@
   "configuration": {
    "config-key": "config-value"
   }
- },
- "schema": {
-  "version": "6.2.0",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-6.2.0.json"
  }
 }

@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vifraa/gopom"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func Test_parserPomXML(t *testing.T) {
@@ -28,7 +28,10 @@ func Test_parserPomXML(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "com.joda"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "com.joda",
+							ArtifactID: "joda-time",
+						},
 					},
 				},
 				{
@@ -39,7 +42,11 @@ func Test_parserPomXML(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "junit"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "junit",
+							ArtifactID: "junit",
+							Scope:      "test",
+						},
 					},
 				},
 			},
@@ -49,7 +56,7 @@ func Test_parserPomXML(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			for i := range test.expected {
-				test.expected[i].Locations.Add(source.NewLocation(test.input))
+				test.expected[i].Locations.Add(file.NewLocation(test.input))
 			}
 			pkgtest.TestFileParser(t, test.input, parserPomXML, test.expected, nil)
 		})
@@ -72,7 +79,10 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "org.apache.commons"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "org.apache.commons",
+							ArtifactID: "commons-lang3",
+						},
 					},
 				},
 				{
@@ -83,7 +93,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "org.junit.jupiter"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "org.junit.jupiter",
+							ArtifactID: "junit-jupiter",
+							Scope:      "test",
+						},
 					},
 				},
 				{
@@ -94,7 +108,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "org.assertj"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "org.assertj",
+							ArtifactID: "assertj-core",
+							Scope:      "test",
+						},
 					},
 				},
 				{
@@ -105,7 +123,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "commons-io"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "commons-io",
+							ArtifactID: "commons-io",
+							Scope:      "test",
+						},
 					},
 				},
 				{
@@ -116,7 +138,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "org.mockito"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "org.mockito",
+							ArtifactID: "mockito-inline",
+							Scope:      "test",
+						},
 					},
 				},
 				{
@@ -127,7 +153,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "org.graalvm.js"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "org.graalvm.js",
+							ArtifactID: "js",
+							Scope:      "test",
+						},
 					},
 				},
 				{
@@ -138,7 +168,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "org.graalvm.js"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "org.graalvm.js",
+							ArtifactID: "js-scriptengine",
+							Scope:      "test",
+						},
 					},
 				},
 				{
@@ -149,7 +183,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "org.apache.commons"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "org.apache.commons",
+							ArtifactID: "commons-rng-simple",
+							Scope:      "test",
+						},
 					},
 				},
 				{
@@ -160,7 +198,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "org.openjdk.jmh"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "org.openjdk.jmh",
+							ArtifactID: "jmh-core",
+							Scope:      "test",
+						},
 					},
 				},
 				{
@@ -171,7 +213,11 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{GroupID: "org.openjdk.jmh"},
+						PomProperties: &pkg.PomProperties{
+							GroupID:    "org.openjdk.jmh",
+							ArtifactID: "jmh-generator-annprocess",
+							Scope:      "test",
+						},
 					},
 				},
 			},
@@ -181,7 +227,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			for i := range test.expected {
-				test.expected[i].Locations.Add(source.NewLocation(test.input))
+				test.expected[i].Locations.Add(file.NewLocation(test.input))
 			}
 			pkgtest.TestFileParser(t, test.input, parserPomXML, test.expected, nil)
 		})

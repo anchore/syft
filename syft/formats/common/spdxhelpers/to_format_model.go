@@ -4,12 +4,17 @@ package spdxhelpers
 import (
 	"crypto/sha1"
 	"fmt"
+	"path"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/docker/distribution/reference"
 	"github.com/spdx/tools-golang/spdx"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/spdxlicense"
@@ -23,6 +28,15 @@ import (
 
 const (
 	noAssertion = "NOASSERTION"
+
+	spdxPrimaryPurposeContainer = "CONTAINER"
+	spdxPrimaryPurposeFile      = "FILE"
+	spdxPrimaryPurposeOther     = "OTHER"
+
+	prefixImage     = "Image"
+	prefixDirectory = "Directory"
+	prefixFile      = "File"
+	prefixUnknown   = "Unknown"
 )
 
 // ToFormatModel creates and populates a new SPDX document struct that follows the SPDX 2.3
@@ -31,23 +45,37 @@ const (
 //nolint:funlen
 func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	name, namespace := DocumentNameAndNamespace(s.Source)
+
+	packages := toPackages(s.Artifacts.Packages, s)
+
 	relationships := toRelationships(s.RelationshipsSorted())
 
 	// for valid SPDX we need a document describes relationship
-	// TODO: remove this placeholder after deciding on correct behavior
-	// for the primary package purpose field:
-	// https://spdx.github.io/spdx-spec/v2.3/package-information/#724-primary-package-purpose-field
+	describesID := spdx.ElementID("DOCUMENT")
+
+	rootPackage := toRootPackage(s.Source)
+	if rootPackage != nil {
+		describesID = rootPackage.PackageSPDXIdentifier
+
+		// add all relationships from the document root to all other packages
+		relationships = append(relationships, toRootRelationships(rootPackage, packages)...)
+
+		// append the root package
+		packages = append(packages, rootPackage)
+	}
+
+	// add a relationship for the package the document describes
 	documentDescribesRelationship := &spdx.Relationship{
 		RefA: spdx.DocElementID{
 			ElementRefID: "DOCUMENT",
 		},
 		Relationship: string(DescribesRelationship),
 		RefB: spdx.DocElementID{
-			ElementRefID: "DOCUMENT",
+			ElementRefID: describesID,
 		},
-		RelationshipComment: "",
 	}
 
+	// add the root document relationship
 	relationships = append(relationships, documentDescribesRelationship)
 
 	return &spdx.Document{
@@ -121,28 +149,156 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			// Cardinality: optional, one
 			CreatorComment: "",
 		},
-		Packages:      toPackages(s.Artifacts.PackageCatalog, s),
+		Packages:      packages,
 		Files:         toFiles(s),
 		Relationships: relationships,
-		OtherLicenses: toOtherLicenses(s.Artifacts.PackageCatalog),
+		OtherLicenses: toOtherLicenses(s.Artifacts.Packages),
 	}
+}
+
+func toRootRelationships(rootPackage *spdx.Package, packages []*spdx.Package) (out []*spdx.Relationship) {
+	for _, p := range packages {
+		out = append(out, &spdx.Relationship{
+			RefA: spdx.DocElementID{
+				ElementRefID: rootPackage.PackageSPDXIdentifier,
+			},
+			Relationship: string(ContainsRelationship),
+			RefB: spdx.DocElementID{
+				ElementRefID: p.PackageSPDXIdentifier,
+			},
+		})
+	}
+	return
+}
+
+//nolint:funlen
+func toRootPackage(s source.Description) *spdx.Package {
+	var prefix string
+
+	name := s.Name
+	version := s.Version
+
+	var purl *packageurl.PackageURL
+	purpose := ""
+	var checksums []spdx.Checksum
+	switch m := s.Metadata.(type) {
+	case source.StereoscopeImageSourceMetadata:
+		prefix = prefixImage
+		purpose = spdxPrimaryPurposeContainer
+
+		qualifiers := packageurl.Qualifiers{
+			{
+				Key:   "arch",
+				Value: m.Architecture,
+			},
+		}
+
+		ref, _ := reference.Parse(m.UserInput)
+		if ref, ok := ref.(reference.NamedTagged); ok {
+			qualifiers = append(qualifiers, packageurl.Qualifier{
+				Key:   "tag",
+				Value: ref.Tag(),
+			})
+		}
+
+		c := toChecksum(m.ManifestDigest)
+		if c != nil {
+			checksums = append(checksums, *c)
+			purl = &packageurl.PackageURL{
+				Type:       "oci",
+				Name:       s.Name,
+				Version:    m.ManifestDigest,
+				Qualifiers: qualifiers,
+			}
+		}
+
+	case source.DirectorySourceMetadata:
+		prefix = prefixDirectory
+		purpose = spdxPrimaryPurposeFile
+
+	case source.FileSourceMetadata:
+		prefix = prefixFile
+		purpose = spdxPrimaryPurposeFile
+
+		for _, d := range m.Digests {
+			checksums = append(checksums, spdx.Checksum{
+				Algorithm: toChecksumAlgorithm(d.Algorithm),
+				Value:     d.Value,
+			})
+		}
+	default:
+		prefix = prefixUnknown
+		purpose = spdxPrimaryPurposeOther
+
+		if name == "" {
+			name = s.ID
+		}
+	}
+
+	p := &spdx.Package{
+		PackageName:               name,
+		PackageSPDXIdentifier:     spdx.ElementID(SanitizeElementID(fmt.Sprintf("DocumentRoot-%s-%s", prefix, name))),
+		PackageVersion:            version,
+		PackageChecksums:          checksums,
+		PackageSupplier:           nil,
+		PackageExternalReferences: nil,
+		PrimaryPackagePurpose:     purpose,
+	}
+
+	if purl != nil {
+		p.PackageExternalReferences = []*spdx.PackageExternalReference{
+			{
+				Category: string(PackageManagerReferenceCategory),
+				RefType:  string(PurlExternalRefType),
+				Locator:  purl.String(),
+			},
+		}
+	}
+
+	return p
 }
 
 func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
+	maxLen := 40
 	id := ""
-	if p, ok := identifiable.(pkg.Package); ok {
-		id = SanitizeElementID(fmt.Sprintf("Package-%+v-%s-%s", p.Type, p.Name, p.ID()))
-	} else {
+	switch it := identifiable.(type) {
+	case pkg.Package:
+		switch {
+		case it.Type != "" && it.Name != "":
+			id = fmt.Sprintf("Package-%s-%s-%s", it.Type, it.Name, it.ID())
+		case it.Name != "":
+			id = fmt.Sprintf("Package-%s-%s", it.Name, it.ID())
+		case it.Type != "":
+			id = fmt.Sprintf("Package-%s-%s", it.Type, it.ID())
+		default:
+			id = fmt.Sprintf("Package-%s", it.ID())
+		}
+	case file.Coordinates:
+		p := ""
+		parts := strings.Split(it.RealPath, "/")
+		for i := len(parts); i > 0; i-- {
+			part := parts[i-1]
+			if len(part) == 0 {
+				continue
+			}
+			if i < len(parts) && len(p)+len(part)+3 > maxLen {
+				p = "..." + p
+				break
+			}
+			p = path.Join(part, p)
+		}
+		id = fmt.Sprintf("File-%s-%s", p, it.ID())
+	default:
 		id = string(identifiable.ID())
 	}
-	// NOTE: the spdx libraries prepend SPDXRef-, so we don't do it here
-	return spdx.ElementID(id)
+	// NOTE: the spdx library prepend SPDXRef-, so we don't do it here
+	return spdx.ElementID(SanitizeElementID(id))
 }
 
-// packages populates all Package Information from the package Catalog (see https://spdx.github.io/spdx-spec/3-package-information/)
+// packages populates all Package Information from the package Collection (see https://spdx.github.io/spdx-spec/3-package-information/)
 //
 //nolint:funlen
-func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) {
+func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Package) {
 	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
 		id := toSPDXID(p)
@@ -150,7 +306,8 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 		// If the Concluded License is not the same as the Declared License, a written explanation should be provided
 		// in the Comments on License field (section 7.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 7.16) is preferred.
-		license := License(p)
+		// extract these correctly to the spdx license format
+		concluded, declared := License(p)
 
 		// two ways to get filesAnalyzed == true:
 		// 1. syft has generated a sha1 digest for the package itself - usually in the java cataloger
@@ -254,7 +411,7 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 			// Cardinality: mandatory, one
 			// Purpose: Contain the license the SPDX file creator has concluded as governing the
 			// package or alternative values, if the governing license cannot be determined.
-			PackageLicenseConcluded: license,
+			PackageLicenseConcluded: concluded,
 
 			// 7.14: All Licenses Info from Files: SPDX License Expression, "NONE" or "NOASSERTION"
 			// Cardinality: mandatory, one or many if filesAnalyzed is true / omitted;
@@ -266,7 +423,7 @@ func toPackages(catalog *pkg.Catalog, sbom sbom.SBOM) (results []*spdx.Package) 
 			// Purpose: List the licenses that have been declared by the authors of the package.
 			// Any license information that does not originate from the package authors, e.g. license
 			// information from a third party repository, should not be included in this field.
-			PackageLicenseDeclared: license,
+			PackageLicenseDeclared: declared,
 
 			// 7.16: Comments on License
 			// Cardinality: optional, one
@@ -406,6 +563,8 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, RelationshipType, s
 		return true, DependencyOfRelationship, ""
 	case artifact.OwnershipByFileOverlapRelationship:
 		return true, OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
+	case artifact.EvidentByRelationship:
+		return true, OtherRelationship, fmt.Sprintf("%s: indicates the package's existence is evident by the given file", ty)
 	}
 	return false, "", ""
 }
@@ -414,7 +573,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 	artifacts := s.Artifacts
 
 	for _, coordinates := range s.AllCoordinates() {
-		var metadata *source.FileMetadata
+		var metadata *file.Metadata
 		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
 			metadata = &metadataForLocation
 		}
@@ -472,12 +631,24 @@ func toFileChecksums(digests []file.Digest) (checksums []spdx.Checksum) {
 	return checksums
 }
 
+// toChecksum takes a checksum in the format <algorithm>:<hash> and returns an spdx.Checksum or nil if the string is invalid
+func toChecksum(algorithmHash string) *spdx.Checksum {
+	parts := strings.Split(algorithmHash, ":")
+	if len(parts) < 2 {
+		return nil
+	}
+	return &spdx.Checksum{
+		Algorithm: toChecksumAlgorithm(parts[0]),
+		Value:     parts[1],
+	}
+}
+
 func toChecksumAlgorithm(algorithm string) spdx.ChecksumAlgorithm {
 	// this needs to be an uppercase version of our algorithm
 	return spdx.ChecksumAlgorithm(strings.ToUpper(algorithm))
 }
 
-func toFileTypes(metadata *source.FileMetadata) (ty []string) {
+func toFileTypes(metadata *file.Metadata) (ty []string) {
 	if metadata == nil {
 		return nil
 	}
@@ -512,23 +683,35 @@ func toFileTypes(metadata *source.FileMetadata) (ty []string) {
 	return ty
 }
 
-func toOtherLicenses(catalog *pkg.Catalog) []*spdx.OtherLicense {
+// other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
+// field. The spdxexpression field is only filled given a validated Value field.
+func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	licenses := map[string]bool{}
-	for _, pkg := range catalog.Sorted() {
-		for _, license := range parseLicenses(pkg.Licenses) {
+	for _, p := range catalog.Sorted() {
+		declaredLicenses, concludedLicenses := parseLicenses(p.Licenses.ToSlice())
+		for _, license := range declaredLicenses {
+			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
+				licenses[license] = true
+			}
+		}
+		for _, license := range concludedLicenses {
 			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
 				licenses[license] = true
 			}
 		}
 	}
+
 	var result []*spdx.OtherLicense
-	for license := range licenses {
-		// separate the actual ID from the prefix
+
+	sorted := maps.Keys(licenses)
+	slices.Sort(sorted)
+	for _, license := range sorted {
+		// separate the found value from the prefix
+		// this only contains licenses that are not found on the SPDX License List
 		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
 		result = append(result, &spdx.OtherLicense{
-			LicenseIdentifier: license,
-			LicenseName:       name,
-			ExtractedText:     NONE, // we probably should have some extracted text here, but this is good enough for now
+			LicenseIdentifier: SanitizeElementID(license),
+			ExtractedText:     name,
 		})
 	}
 	return result

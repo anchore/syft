@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"fmt"
 	"regexp"
 	"testing"
 
@@ -64,7 +63,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%s", test.formatOption), func(t *testing.T) {
+		t.Run(string(test.formatOption), func(t *testing.T) {
 			for _, image := range images {
 				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope, nil)
 
@@ -72,14 +71,14 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				require.NotNil(t, format)
 
 				by1, err := formats.Encode(originalSBOM, format)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				newSBOM, newFormat, err := formats.Decode(bytes.NewReader(by1))
-				assert.NoError(t, err)
-				assert.Equal(t, format.ID(), newFormat.ID())
+				require.NoError(t, err)
+				require.Equal(t, format.ID(), newFormat.ID())
 
 				by2, err := formats.Encode(*newSBOM, format)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				if test.redactor != nil {
 					by1 = test.redactor(by1)

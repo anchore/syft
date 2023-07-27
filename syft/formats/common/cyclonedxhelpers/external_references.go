@@ -6,6 +6,7 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 
+	"github.com/anchore/syft/internal/file"
 	syftFile "github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -116,7 +117,7 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 			if ref.Hashes != nil {
 				for _, hash := range *ref.Hashes {
 					digests = append(digests, syftFile.Digest{
-						Algorithm: syftFile.CleanDigestAlgorithmName(string(hash.Algorithm)),
+						Algorithm: file.CleanDigestAlgorithmName(string(hash.Algorithm)),
 						Value:     hash.Value,
 					})
 				}

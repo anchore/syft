@@ -1,7 +1,12 @@
 package pkg
 
+import "github.com/anchore/syft/syft/file"
+
 type BinaryMetadata struct {
-	Classifier  string `mapstructure:"Classifier" json:"classifier"`
-	RealPath    string `mapstructure:"RealPath" json:"realPath"`
-	VirtualPath string `mapstructure:"VirtualPath" json:"virtualPath"`
+	Matches []ClassifierMatch `mapstructure:"Matches" json:"matches"`
+}
+
+type ClassifierMatch struct {
+	Classifier string        `mapstructure:"Classifier" json:"classifier"`
+	Location   file.Location `mapstructure:"Location" json:"location"`
 }

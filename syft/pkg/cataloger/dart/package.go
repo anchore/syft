@@ -2,11 +2,11 @@ package dart
 
 import (
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...source.Location) pkg.Package {
+func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...file.Location) pkg.Package {
 	metadata := pkg.DartPubMetadata{
 		Name:      name,
 		Version:   raw.Version,
@@ -17,7 +17,7 @@ func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...sou
 	p := pkg.Package{
 		Name:         name,
 		Version:      raw.Version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(locations...),
 		PURL:         packageURL(metadata),
 		Language:     pkg.Dart,
 		Type:         pkg.DartPubPkg,

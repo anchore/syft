@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_decodeXML(t *testing.T) {
@@ -34,7 +35,7 @@ func Test_decodeXML(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.file, func(t *testing.T) {
 			reader, err := os.Open("test-fixtures/" + test.file)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			if test.err {
 				err = Format().Validate(reader)
@@ -44,7 +45,7 @@ func Test_decodeXML(t *testing.T) {
 
 			bom, err := Format().Decode(reader)
 
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			split := strings.SplitN(test.distro, ":", 2)
 			name := split[0]
@@ -57,7 +58,7 @@ func Test_decodeXML(t *testing.T) {
 				split = strings.SplitN(pkg, ":", 2)
 				name = split[0]
 				version = split[1]
-				for p := range bom.Artifacts.PackageCatalog.Enumerate() {
+				for p := range bom.Artifacts.Packages.Enumerate() {
 					if p.Name == name {
 						assert.Equal(t, version, p.Version)
 						continue pkgs

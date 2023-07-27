@@ -26,12 +26,17 @@ const (
 	JavaPkg               Type = "java-archive"
 	JenkinsPluginPkg      Type = "jenkins-plugin"
 	KbPkg                 Type = "msrc-kb"
+	LinuxKernelPkg        Type = "linux-kernel"
+	LinuxKernelModulePkg  Type = "linux-kernel-module"
+	NixPkg                Type = "nix"
 	NpmPkg                Type = "npm"
 	PhpComposerPkg        Type = "php-composer"
 	PortagePkg            Type = "portage"
 	PythonPkg             Type = "python"
+	Rpkg                  Type = "R-package"
 	RpmPkg                Type = "rpm"
 	RustPkg               Type = "rust-crate"
+	SwiftPkg              Type = "swift"
 )
 
 // AllPkgs represents all supported package types
@@ -51,12 +56,17 @@ var AllPkgs = []Type{
 	JavaPkg,
 	JenkinsPluginPkg,
 	KbPkg,
+	LinuxKernelPkg,
+	LinuxKernelModulePkg,
+	NixPkg,
 	NpmPkg,
 	PhpComposerPkg,
 	PortagePkg,
 	PythonPkg,
+	Rpkg,
 	RpmPkg,
 	RustPkg,
+	SwiftPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -86,18 +96,28 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeHackage
 	case JavaPkg, JenkinsPluginPkg:
 		return packageurl.TypeMaven
+	case LinuxKernelPkg:
+		return "generic/linux-kernel"
+	case LinuxKernelModulePkg:
+		return packageurl.TypeGeneric
 	case PhpComposerPkg:
 		return packageurl.TypeComposer
 	case PythonPkg:
 		return packageurl.TypePyPi
 	case PortagePkg:
 		return "portage"
+	case NixPkg:
+		return "nix"
 	case NpmPkg:
 		return packageurl.TypeNPM
+	case Rpkg:
+		return packageurl.TypeCran
 	case RpmPkg:
 		return packageurl.TypeRPM
 	case RustPkg:
 		return "cargo"
+	case SwiftPkg:
+		return packageurl.TypeSwift
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -110,7 +130,11 @@ func TypeFromPURL(p string) Type {
 		return UnknownPkg
 	}
 
-	return TypeByName(purl.Type)
+	ptype := purl.Type
+	if ptype == "generic" {
+		ptype = purl.Name
+	}
+	return TypeByName(ptype)
 }
 
 func TypeByName(name string) Type {
@@ -151,6 +175,16 @@ func TypeByName(name string) Type {
 		return PortagePkg
 	case packageurl.TypeHex:
 		return HexPkg
+	case "linux-kernel":
+		return LinuxKernelPkg
+	case "linux-kernel-module":
+		return LinuxKernelModulePkg
+	case "nix":
+		return NixPkg
+	case packageurl.TypeCran:
+		return Rpkg
+	case packageurl.TypeSwift:
+		return SwiftPkg
 	default:
 		return UnknownPkg
 	}

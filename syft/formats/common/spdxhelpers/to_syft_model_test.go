@@ -1,13 +1,20 @@
 package spdxhelpers
 
 import (
+	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/spdx/tools-golang/spdx"
+	"github.com/spdx/tools-golang/spdx/v2/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -89,7 +96,7 @@ func TestToSyftModel(t *testing.T) {
 
 	assert.NotNil(t, sbom)
 
-	pkgs := sbom.Artifacts.PackageCatalog.Sorted()
+	pkgs := sbom.Artifacts.Packages.Sorted()
 
 	assert.Len(t, pkgs, 2)
 
@@ -194,36 +201,46 @@ func Test_extractMetadata(t *testing.T) {
 func TestExtractSourceFromNamespaces(t *testing.T) {
 	tests := []struct {
 		namespace string
-		expected  source.Scheme
+		expected  any
 	}{
 		{
 			namespace: "https://anchore.com/syft/file/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.FileScheme,
+			expected:  source.FileSourceMetadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/image/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.ImageScheme,
+			expected:  source.StereoscopeImageSourceMetadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/dir/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.DirectoryScheme,
+			expected:  source.DirectorySourceMetadata{},
 		},
 		{
 			namespace: "https://another-host/blob/123",
-			expected:  source.UnknownScheme,
+			expected:  nil,
 		},
 		{
 			namespace: "bla bla",
-			expected:  source.UnknownScheme,
+			expected:  nil,
 		},
 		{
 			namespace: "",
-			expected:  source.UnknownScheme,
+			expected:  nil,
 		},
 	}
 
 	for _, tt := range tests {
-		require.Equal(t, tt.expected, extractSchemeFromNamespace(tt.namespace))
+		desc := extractSourceFromNamespace(tt.namespace)
+		if tt.expected == nil && desc.Metadata == nil {
+			return
+		}
+		if tt.expected != nil && desc.Metadata == nil {
+			t.Fatal("expected metadata but got nil")
+		}
+		if tt.expected == nil && desc.Metadata != nil {
+			t.Fatal("expected nil metadata but got something")
+		}
+		require.Equal(t, reflect.TypeOf(tt.expected), reflect.TypeOf(desc.Metadata))
 	}
 }
 
@@ -304,6 +321,234 @@ func TestH1Digest(t *testing.T) {
 			require.Equal(t, pkg.GolangBinMetadataType, p.MetadataType)
 			meta := p.Metadata.(pkg.GolangBinMetadata)
 			require.Equal(t, test.expectedDigest, meta.H1Digest)
+		})
+	}
+}
+
+func Test_toSyftRelationships(t *testing.T) {
+	type args struct {
+		spdxIDMap map[string]any
+		doc       *spdx.Document
+	}
+
+	pkg1 := pkg.Package{
+		Name:    "github.com/googleapis/gnostic",
+		Version: "v0.5.5",
+	}
+	pkg1.SetID()
+
+	pkg2 := pkg.Package{
+		Name:    "rfc3339",
+		Version: "1.2",
+		Type:    pkg.RpmPkg,
+	}
+	pkg2.SetID()
+
+	pkg3 := pkg.Package{
+		Name:    "rfc3339",
+		Version: "1.2",
+		Type:    pkg.PythonPkg,
+	}
+	pkg3.SetID()
+
+	loc1 := file.NewLocationFromCoordinates(file.Coordinates{
+		RealPath:     "/somewhere/real",
+		FileSystemID: "abc",
+	})
+
+	tests := []struct {
+		name string
+		args args
+		want []artifact.Relationship
+	}{
+		{
+			name: "evident-by relationship",
+			args: args{
+				spdxIDMap: map[string]any{
+					string(toSPDXID(pkg1)): pkg1,
+					string(toSPDXID(loc1)): loc1,
+				},
+				doc: &spdx.Document{
+					Relationships: []*spdx.Relationship{
+						{
+							RefA: common.DocElementID{
+								ElementRefID: toSPDXID(pkg1),
+							},
+							RefB: common.DocElementID{
+								ElementRefID: toSPDXID(loc1),
+							},
+							Relationship:        spdx.RelationshipOther,
+							RelationshipComment: "evident-by: indicates the package's existence is evident by the given file",
+						},
+					},
+				},
+			},
+			want: []artifact.Relationship{
+				{
+					From: pkg1,
+					To:   loc1,
+					Type: artifact.EvidentByRelationship,
+				},
+			},
+		},
+		{
+			name: "ownership-by-file-overlap relationship",
+			args: args{
+				spdxIDMap: map[string]any{
+					string(toSPDXID(pkg2)): pkg2,
+					string(toSPDXID(pkg3)): pkg3,
+				},
+				doc: &spdx.Document{
+					Relationships: []*spdx.Relationship{
+						{
+							RefA: common.DocElementID{
+								ElementRefID: toSPDXID(pkg2),
+							},
+							RefB: common.DocElementID{
+								ElementRefID: toSPDXID(pkg3),
+							},
+							Relationship:        spdx.RelationshipOther,
+							RelationshipComment: "ownership-by-file-overlap: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by",
+						},
+					},
+				},
+			},
+			want: []artifact.Relationship{
+				{
+					From: pkg2,
+					To:   pkg3,
+					Type: artifact.OwnershipByFileOverlapRelationship,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := toSyftRelationships(tt.args.spdxIDMap, tt.args.doc)
+			require.Len(t, actual, len(tt.want))
+			for i := range actual {
+				require.Equal(t, tt.want[i].From.ID(), actual[i].From.ID())
+				require.Equal(t, tt.want[i].To.ID(), actual[i].To.ID())
+				require.Equal(t, tt.want[i].Type, actual[i].Type)
+			}
+		})
+	}
+}
+
+func Test_convertToAndFromFormat(t *testing.T) {
+	packages := []pkg.Package{
+		{
+			Name:         "pkg1",
+			MetadataType: pkg.UnknownMetadataType,
+		},
+		{
+			Name:         "pkg2",
+			MetadataType: pkg.UnknownMetadataType,
+		},
+	}
+
+	for i := range packages {
+		(&packages[i]).SetID()
+	}
+
+	relationships := []artifact.Relationship{
+		{
+			From: packages[0],
+			To:   packages[1],
+			Type: artifact.ContainsRelationship,
+		},
+	}
+
+	tests := []struct {
+		name          string
+		source        source.Description
+		packages      []pkg.Package
+		relationships []artifact.Relationship
+	}{
+		{
+			name: "image source",
+			source: source.Description{
+				ID: "DocumentRoot-Image-some-image",
+				Metadata: source.StereoscopeImageSourceMetadata{
+					ID:             "DocumentRoot-Image-some-image",
+					UserInput:      "some-image:some-tag",
+					ManifestDigest: "sha256:ab8b83234bc28f28d8e",
+				},
+				Name:    "some-image",
+				Version: "some-tag",
+			},
+			packages:      packages,
+			relationships: relationships,
+		},
+		{
+			name: ". directory source",
+			source: source.Description{
+				ID:   "DocumentRoot-Directory-.",
+				Name: ".",
+				Metadata: source.DirectorySourceMetadata{
+					Path: ".",
+				},
+			},
+			packages:      packages,
+			relationships: relationships,
+		},
+		{
+			name: "directory source",
+			source: source.Description{
+				ID:   "DocumentRoot-Directory-my-app",
+				Name: "my-app",
+				Metadata: source.DirectorySourceMetadata{
+					Path: "my-app",
+				},
+			},
+			packages:      packages,
+			relationships: relationships,
+		},
+		{
+			name: "file source",
+			source: source.Description{
+				ID: "DocumentRoot-File-my-app.exe",
+				Metadata: source.FileSourceMetadata{
+					Path: "my-app.exe",
+					Digests: []file.Digest{
+						{
+							Algorithm: "sha256",
+							Value:     "3723cae0b8b83234bc28f28d8e",
+						},
+					},
+				},
+				Name: "my-app.exe",
+			},
+			packages:      packages,
+			relationships: relationships,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			src := &test.source
+			s := sbom.SBOM{
+				Source: *src,
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(test.packages...),
+				},
+				Relationships: test.relationships,
+			}
+			doc := ToFormatModel(s)
+			got, err := ToSyftModel(doc)
+			require.NoError(t, err)
+
+			if diff := cmp.Diff(&s, got,
+				cmpopts.IgnoreUnexported(artifact.Relationship{}),
+				cmpopts.IgnoreUnexported(file.LocationSet{}),
+				cmpopts.IgnoreUnexported(pkg.Collection{}),
+				cmpopts.IgnoreUnexported(pkg.Package{}),
+				cmpopts.IgnoreUnexported(pkg.LicenseSet{}),
+				cmpopts.IgnoreFields(pkg.Package{}, "MetadataType"),
+				cmpopts.IgnoreFields(sbom.Artifacts{}, "FileMetadata", "FileDigests"),
+			); diff != "" {
+				t.Fatalf("packages do not match:\n%s", diff)
+			}
 		})
 	}
 }

@@ -31,6 +31,7 @@ func (o *FulcioOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
 	return bindFulcioConfigOptions(cmd.Flags(), v)
 }
 
+//nolint:revive
 func bindFulcioConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
 	if err := v.BindPFlag("attest.fulcio-url", flags.Lookup("fulcio-url")); err != nil {
 		return err

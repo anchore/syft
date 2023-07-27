@@ -2,18 +2,22 @@ package binary
 
 import (
 	"bytes"
+	"debug/elf"
+	"debug/macho"
+	"debug/pe"
 	"fmt"
 	"io"
-	"reflect"
 	"regexp"
+	"strings"
 	"text/template"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
-	"github.com/anchore/syft/syft/source"
 )
 
 var emptyPURL = packageurl.PackageURL{}
@@ -49,16 +53,36 @@ type classifier struct {
 }
 
 // evidenceMatcher is a function called to catalog Packages that match some sort of evidence
-type evidenceMatcher func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error)
+type evidenceMatcher func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error)
+
+func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
+	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
+		for _, matcher := range matchers {
+			match, err := matcher(resolver, classifier, location)
+			if err != nil {
+				return nil, err
+			}
+			if match != nil {
+				return match, nil
+			}
+		}
+		return nil, nil
+	}
+}
 
 func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) evidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
-	return func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
-		if !pat.MatchString(reader.RealPath) {
+	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
+		if !pat.MatchString(location.RealPath) {
 			return nil, nil
 		}
 
-		filepathNamedGroupValues := internal.MatchNamedCaptureGroups(pat, reader.RealPath)
+		filepathNamedGroupValues := internal.MatchNamedCaptureGroups(pat, location.RealPath)
+
+		// versions like 3.5 should not match any character, but explicit dot
+		for k, v := range filepathNamedGroupValues {
+			filepathNamedGroupValues[k] = strings.ReplaceAll(v, ".", "\\.")
+		}
 
 		tmpl, err := template.New("").Parse(contentTemplate)
 		if err != nil {
@@ -76,26 +100,82 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 			return nil, fmt.Errorf("unable to compile rendered regex=%q: %w", patternBuf.String(), err)
 		}
 
-		contents, err := getContents(reader)
+		contents, err := getContents(resolver, location)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(tmplPattern, string(contents))
-		return singlePackage(classifier, reader, matchMetadata), nil
+
+		p := newPackage(classifier, location, matchMetadata)
+		if p == nil {
+			return nil, nil
+		}
+
+		return []pkg.Package{*p}, nil
 	}
 }
 
 func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 	pat := regexp.MustCompile(pattern)
-	return func(classifier classifier, reader source.LocationReadCloser) ([]pkg.Package, error) {
-		contents, err := getContents(reader)
+	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
+		contents, err := getContents(resolver, location)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pat, string(contents))
-		return singlePackage(classifier, reader, matchMetadata), nil
+
+		p := newPackage(classifier, location, matchMetadata)
+		if p == nil {
+			return nil, nil
+		}
+
+		return []pkg.Package{*p}, nil
+	}
+}
+
+//nolint:gocognit
+func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evidenceMatcher) evidenceMatcher {
+	pat := regexp.MustCompile(sharedLibraryPattern)
+	return func(resolver file.Resolver, classifier classifier, location file.Location) (packages []pkg.Package, _ error) {
+		libs, err := sharedLibraries(resolver, location)
+		if err != nil {
+			return nil, err
+		}
+		for _, lib := range libs {
+			if !pat.MatchString(lib) {
+				continue
+			}
+
+			locations, err := resolver.FilesByGlob("**/" + lib)
+			if err != nil {
+				return nil, err
+			}
+			for _, libraryLocation := range locations {
+				pkgs, err := sharedLibraryMatcher(resolver, classifier, libraryLocation)
+				if err != nil {
+					return nil, err
+				}
+				for _, p := range pkgs {
+					// set the source binary as the first location
+					locationSet := file.NewLocationSet(location)
+					locationSet.Add(p.Locations.ToSlice()...)
+					p.Locations = locationSet
+					meta, _ := p.Metadata.(pkg.BinaryMetadata)
+					p.Metadata = pkg.BinaryMetadata{
+						Matches: append([]pkg.ClassifierMatch{
+							{
+								Classifier: classifier.Class,
+								Location:   location,
+							},
+						}, meta.Matches...),
+					}
+					packages = append(packages, p)
+				}
+			}
+		}
+		return packages, nil
 	}
 }
 
@@ -107,57 +187,13 @@ func mustPURL(purl string) packageurl.PackageURL {
 	return p
 }
 
-func singlePackage(classifier classifier, reader source.LocationReadCloser, matchMetadata map[string]string) []pkg.Package {
-	version, ok := matchMetadata["version"]
-	if !ok {
-		return nil
+func getContents(resolver file.Resolver, location file.Location) ([]byte, error) {
+	reader, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		return nil, err
 	}
 
-	update := matchMetadata["update"]
-
-	var cpes []cpe.CPE
-	for _, c := range classifier.CPEs {
-		c.Version = version
-		c.Update = update
-		cpes = append(cpes, c)
-	}
-
-	p := pkg.Package{
-		Name:         classifier.Package,
-		Version:      version,
-		Locations:    source.NewLocationSet(reader.Location),
-		Type:         pkg.BinaryPkg,
-		CPEs:         cpes,
-		FoundBy:      catalogerName,
-		MetadataType: pkg.BinaryMetadataType,
-		Metadata: pkg.BinaryMetadata{
-			Classifier:  classifier.Class,
-			RealPath:    reader.RealPath,
-			VirtualPath: reader.VirtualPath,
-		},
-	}
-
-	if classifier.Type != "" {
-		p.Type = classifier.Type
-	}
-
-	if !reflect.DeepEqual(classifier.PURL, emptyPURL) {
-		purl := classifier.PURL
-		purl.Version = version
-		p.PURL = purl.ToString()
-	}
-
-	if classifier.Language != "" {
-		p.Language = classifier.Language
-	}
-
-	p.SetID()
-
-	return []pkg.Package{p}
-}
-
-func getContents(reader source.LocationReadCloser) ([]byte, error) {
-	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
+	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
@@ -176,4 +212,44 @@ func singleCPE(cpeString string) []cpe.CPE {
 	return []cpe.CPE{
 		cpe.Must(cpeString),
 	}
+}
+
+// sharedLibraries returns a list of all shared libraries found within a binary, currently
+// supporting: elf, macho, and windows pe
+func sharedLibraries(resolver file.Resolver, location file.Location) ([]string, error) {
+	contents, err := getContents(resolver, location)
+	if err != nil {
+		return nil, err
+	}
+
+	r := bytes.NewReader(contents)
+
+	e, _ := elf.NewFile(r)
+	if e != nil {
+		symbols, err := e.ImportedLibraries()
+		if err != nil {
+			log.Debugf("unable to read elf binary at: %s -- %s", location.RealPath, err)
+		}
+		return symbols, nil
+	}
+
+	m, _ := macho.NewFile(r)
+	if m != nil {
+		symbols, err := m.ImportedLibraries()
+		if err != nil {
+			log.Debugf("unable to read macho binary at: %s -- %s", location.RealPath, err)
+		}
+		return symbols, nil
+	}
+
+	p, _ := pe.NewFile(r)
+	if p != nil {
+		symbols, err := p.ImportedLibraries()
+		if err != nil {
+			log.Debugf("unable to read pe binary at: %s -- %s", location.RealPath, err)
+		}
+		return symbols, nil
+	}
+
+	return nil, nil
 }

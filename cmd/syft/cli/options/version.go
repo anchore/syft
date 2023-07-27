@@ -11,7 +11,7 @@ type VersionOptions struct {
 
 var _ Interface = (*VersionOptions)(nil)
 
-func (o *VersionOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
+func (o *VersionOptions) AddFlags(cmd *cobra.Command, _ *viper.Viper) error {
 	cmd.Flags().StringVarP(&o.Output, "output", "o", "text", "format to show version information (available=[text, json])")
 	return nil
 }

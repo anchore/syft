@@ -15,29 +15,35 @@ import (
 func Test_PackageURL(t *testing.T) {
 	tests := []struct {
 		name     string
-		metadata pkg.ApkMetadata
+		metadata parsedData
 		distro   linux.Release
 		expected string
 	}{
 		{
-			name: "bad distro",
-			metadata: pkg.ApkMetadata{
-				Package:      "p",
-				Version:      "v",
-				Architecture: "a",
+			name: "non-alpine distro",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:      "p",
+					Version:      "v",
+					Architecture: "a",
+				},
 			},
 			distro: linux.Release{
 				ID:        "something else",
 				VersionID: "3.4.6",
 			},
-			expected: "",
+			expected: "pkg:apk/something%20else/p@v?arch=a&distro=something%20else-3.4.6",
 		},
 		{
 			name: "gocase",
-			metadata: pkg.ApkMetadata{
-				Package:      "p",
-				Version:      "v",
-				Architecture: "a",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:      "p",
+					Version:      "v",
+					Architecture: "a",
+				},
 			},
 			distro: linux.Release{
 				ID:        "alpine",
@@ -47,9 +53,12 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "missing architecture",
-			metadata: pkg.ApkMetadata{
-				Package: "p",
-				Version: "v",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package: "p",
+					Version: "v",
+				},
 			},
 			distro: linux.Release{
 				ID:        "alpine",
@@ -59,10 +68,13 @@ func Test_PackageURL(t *testing.T) {
 		},
 		// verify #351
 		{
-			metadata: pkg.ApkMetadata{
-				Package:      "g++",
-				Version:      "v84",
-				Architecture: "am86",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:      "g++",
+					Version:      "v84",
+					Architecture: "am86",
+				},
 			},
 			distro: linux.Release{
 				ID:        "alpine",
@@ -71,10 +83,13 @@ func Test_PackageURL(t *testing.T) {
 			expected: "pkg:apk/alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
 		},
 		{
-			metadata: pkg.ApkMetadata{
-				Package:      "g plus plus",
-				Version:      "v84",
-				Architecture: "am86",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:      "g plus plus",
+					Version:      "v84",
+					Architecture: "am86",
+				},
 			},
 			distro: linux.Release{
 				ID:        "alpine",
@@ -84,11 +99,14 @@ func Test_PackageURL(t *testing.T) {
 		},
 		{
 			name: "add source information as qualifier",
-			metadata: pkg.ApkMetadata{
-				Package:       "p",
-				Version:       "v",
-				Architecture:  "a",
-				OriginPackage: "origin",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:       "p",
+					Version:       "v",
+					Architecture:  "a",
+					OriginPackage: "origin",
+				},
 			},
 			distro: linux.Release{
 				ID:        "alpine",
@@ -97,38 +115,26 @@ func Test_PackageURL(t *testing.T) {
 			expected: "pkg:apk/alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
 		},
 		{
-			name: "upstream python package information as qualifier",
-			metadata: pkg.ApkMetadata{
-				Package:       "py3-potatoes",
-				Version:       "v",
-				Architecture:  "a",
-				OriginPackage: "py3-potatoes",
+			name: "wolfi distro",
+			metadata: parsedData{
+				License: "",
+				ApkMetadata: pkg.ApkMetadata{
+					Package:      "p",
+					Version:      "v",
+					Architecture: "a",
+				},
 			},
 			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
+				ID:        "wolfi",
+				VersionID: "20221230",
 			},
-			expected: "pkg:apk/alpine/py3-potatoes@v?arch=a&upstream=potatoes&distro=alpine-3.4.6",
-		},
-		{
-			name: "python package with origin package as upstream",
-			metadata: pkg.ApkMetadata{
-				Package:       "py3-non-existant",
-				Version:       "v",
-				Architecture:  "a",
-				OriginPackage: "abcdefg",
-			},
-			distro: linux.Release{
-				ID:        "alpine",
-				VersionID: "3.4.6",
-			},
-			expected: "pkg:apk/alpine/py3-non-existant@v?arch=a&upstream=abcdefg&distro=alpine-3.4.6",
+			expected: "pkg:apk/wolfi/p@v?arch=a&distro=wolfi-20221230",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := packageURL(test.metadata, &test.distro)
+			actual := packageURL(test.metadata.ApkMetadata, &test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

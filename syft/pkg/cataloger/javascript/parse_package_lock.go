@@ -9,9 +9,9 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
@@ -23,39 +23,6 @@ type packageLock struct {
 	LockfileVersion int  `json:"lockfileVersion"`
 	Dependencies    map[string]lockDependency
 	Packages        map[string]lockPackage
-}
-
-// packageLockLicense
-type packageLockLicense []string
-
-func (licenses *packageLockLicense) UnmarshalJSON(data []byte) (err error) {
-	// The license field could be either a string or an array.
-
-	// 1. An array
-	var arr []string
-	if err := json.Unmarshal(data, &arr); err == nil {
-		*licenses = arr
-		return nil
-	}
-
-	// 2. A string
-	var str string
-	if err = json.Unmarshal(data, &str); err == nil {
-		*licenses = make([]string, 1)
-		(*licenses)[0] = str
-		return nil
-	}
-
-	// debug the content we did not expect
-	if len(data) > 0 {
-		log.WithFields("license", string(data)).Debug("Unable to parse the following `license` value in package-lock.json")
-	}
-
-	// 3. Unexpected
-	// In case we are unable to parse the license field,
-	// i.e if we have not covered the full specification,
-	// we do not want to throw an error, instead assign nil.
-	return nil
 }
 
 // lockDependency represents a single package dependency listed in the package.lock json file
@@ -73,8 +40,11 @@ type lockPackage struct {
 	License   packageLockLicense `json:"license"`
 }
 
+// packageLockLicense
+type packageLockLicense []string
+
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
-func parsePackageLock(resolver source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePackageLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find package-lock.json files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the root project
 	if pathContainsNodeModulesDirectory(reader.AccessPath()) {
@@ -104,9 +74,8 @@ func parsePackageLock(resolver source.FileResolver, _ *generic.Environment, read
 			if name == "" {
 				if pkgMeta.Name == "" {
 					continue
-				} else {
-					name = pkgMeta.Name
 				}
+				name = pkgMeta.Name
 			}
 
 			// handles alias names
@@ -114,13 +83,46 @@ func parsePackageLock(resolver source.FileResolver, _ *generic.Environment, read
 				name = pkgMeta.Name
 			}
 
-			pkgs = append(pkgs, newPackageLockV2Package(resolver, reader.Location, getNameFromPath(name), pkgMeta))
+			pkgs = append(
+				pkgs,
+				newPackageLockV2Package(resolver, reader.Location, getNameFromPath(name), pkgMeta),
+			)
 		}
 	}
 
 	pkg.Sort(pkgs)
 
 	return pkgs, nil, nil
+}
+
+func (licenses *packageLockLicense) UnmarshalJSON(data []byte) (err error) {
+	// The license field could be either a string or an array.
+
+	// 1. An array
+	var arr []string
+	if err := json.Unmarshal(data, &arr); err == nil {
+		*licenses = arr
+		return nil
+	}
+
+	// 2. A string
+	var str string
+	if err = json.Unmarshal(data, &str); err == nil {
+		*licenses = make([]string, 1)
+		(*licenses)[0] = str
+		return nil
+	}
+
+	// debug the content we did not expect
+	if len(data) > 0 {
+		log.WithFields("license", string(data)).Debug("Unable to parse the following `license` value in package-lock.json")
+	}
+
+	// 3. Unexpected
+	// In case we are unable to parse the license field,
+	// i.e if we have not covered the full specification,
+	// we do not want to throw an error, instead assign nil.
+	return nil
 }
 
 func getNameFromPath(path string) string {

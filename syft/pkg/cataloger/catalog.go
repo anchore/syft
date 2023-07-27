@@ -3,6 +3,7 @@ package cataloger
 import (
 	"fmt"
 	"math"
+	"runtime/debug"
 	"sync"
 
 	"github.com/hashicorp/go-multierror"
@@ -13,10 +14,10 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
-	"github.com/anchore/syft/syft/source"
 )
 
 // Monitor provides progress-related data for observing the progress of a Catalog() call (published on the event bus).
@@ -49,8 +50,15 @@ func newMonitor() (*progress.Manual, *progress.Manual) {
 	return &filesProcessed, &packagesDiscovered
 }
 
-func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (*catalogResult, error) {
-	catalogerResult := new(catalogResult)
+func runCataloger(cataloger pkg.Cataloger, resolver file.Resolver) (catalogerResult *catalogResult, err error) {
+	// handle individual cataloger panics
+	defer func() {
+		if e := recover(); e != nil {
+			err = fmt.Errorf("%v at:\n%s", e, string(debug.Stack()))
+		}
+	}()
+
+	catalogerResult = new(catalogResult)
 
 	// find packages from the underlying raw data
 	log.WithFields("cataloger", cataloger.Name()).Trace("cataloging started")
@@ -68,7 +76,14 @@ func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (*catal
 	for _, p := range packages {
 		// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
 		// we might have binary classified CPE already with the package so we want to append here
-		p.CPEs = append(p.CPEs, cpe.Generate(p)...)
+
+		dictionaryCPE, ok := cpe.DictionaryFind(p)
+		if ok {
+			log.Debugf("used CPE dictionary to find CPE for %s package %q: %s", p.Type, p.Name, dictionaryCPE.BindToFmtString())
+			p.CPEs = append(p.CPEs, dictionaryCPE)
+		} else {
+			p.CPEs = append(p.CPEs, cpe.Generate(p)...)
+		}
 
 		// if we were not able to identify the language we have an opportunity
 		// to try and get this value from the PURL. Worst case we assert that
@@ -88,7 +103,7 @@ func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (*catal
 	}
 	catalogerResult.Relationships = append(catalogerResult.Relationships, relationships...)
 	log.WithFields("cataloger", cataloger.Name()).Trace("cataloging complete")
-	return catalogerResult, nil
+	return catalogerResult, err
 }
 
 // Catalog a given source (container image or filesystem) with the given catalogers, returning all discovered packages.
@@ -97,10 +112,14 @@ func runCataloger(cataloger pkg.Cataloger, resolver source.FileResolver) (*catal
 // request.
 //
 //nolint:funlen
-func Catalog(resolver source.FileResolver, release *linux.Release, parallelism int, catalogers ...pkg.Cataloger) (*pkg.Catalog, []artifact.Relationship, error) {
-	catalog := pkg.NewCatalog()
+func Catalog(resolver file.Resolver, _ *linux.Release, parallelism int, catalogers ...pkg.Cataloger) (*pkg.Collection, []artifact.Relationship, error) {
+	catalog := pkg.NewCollection()
 	var allRelationships []artifact.Relationship
+
 	filesProcessed, packagesDiscovered := newMonitor()
+	defer filesProcessed.SetCompleted()
+	defer packagesDiscovered.SetCompleted()
+
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
 
@@ -139,7 +158,7 @@ func Catalog(resolver source.FileResolver, release *linux.Release, parallelism i
 	// dynamically show updated discovered package status
 	go func() {
 		for discovered := range discoveredPackages {
-			packagesDiscovered.N += discovered
+			packagesDiscovered.Add(discovered)
 		}
 	}()
 
@@ -158,7 +177,6 @@ func Catalog(resolver source.FileResolver, release *linux.Release, parallelism i
 	for result := range results {
 		if result.Error != nil {
 			errs = multierror.Append(errs, result.Error)
-			continue
 		}
 		for _, p := range result.Packages {
 			catalog.Add(p)
@@ -168,23 +186,16 @@ func Catalog(resolver source.FileResolver, release *linux.Release, parallelism i
 
 	allRelationships = append(allRelationships, pkg.NewRelationships(catalog)...)
 
-	if errs != nil {
-		return nil, nil, errs
-	}
-
-	filesProcessed.SetCompleted()
-	packagesDiscovered.SetCompleted()
-
-	return catalog, allRelationships, nil
+	return catalog, allRelationships, errs
 }
 
-func packageFileOwnershipRelationships(p pkg.Package, resolver source.FilePathResolver) ([]artifact.Relationship, error) {
+func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver) ([]artifact.Relationship, error) {
 	fileOwner, ok := p.Metadata.(pkg.FileOwner)
 	if !ok {
 		return nil, nil
 	}
 
-	locations := map[artifact.ID]source.Location{}
+	locations := map[artifact.ID]file.Location{}
 
 	for _, path := range fileOwner.OwnedFiles() {
 		pathRefs, err := resolver.FilesByPath(path)

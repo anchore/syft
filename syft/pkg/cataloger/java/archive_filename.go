@@ -47,8 +47,8 @@ import (
 //	my-http2-server-5		-->	name="my-http2-server", version="5"
 //	jetpack-build235-rc5	-->	name="jetpack", version="build2.0-rc5"
 //	ironman-r4-2009			--> name="ironman", version="r4-2009"
-var nameAndVersionPattern = regexp.MustCompile(`(?Ui)^(?P<name>(?:[[:alpha:]][[:word:].]*(?:\.[[:alpha:]][[:word:].]*)*-?)+)(?:-(?P<version>(\d.*|(build\d*.*)|(rc?\d+(?:^[[:alpha:]].*)?))))?$`)
-var secondaryVersionPattern = regexp.MustCompile(`(?:[._-](?P<version>(\d.*|(build\d*.*)|(rc?\d+(?:^[[:alpha:]].*)?))))?$`)
+var nameAndVersionPattern = regexp.MustCompile(`(?Ui)^(?P<name>(?:[[:alpha:]][[:word:].]*(?:\.[[:alpha:]][[:word:].]*)*-?)+)(?:-(?P<version>(\d.*|(build\d+.*)|(rc?\d+(?:^[[:alpha:]].*)?))))?$`)
+var secondaryVersionPattern = regexp.MustCompile(`(?:[._-](?P<version>(\d.*|(build\d+.*)|(rc?\d+(?:^[[:alpha:]].*)?))))?$`)
 
 type archiveFilename struct {
 	raw     string
@@ -108,7 +108,7 @@ func (a archiveFilename) extension() string {
 
 func (a archiveFilename) pkgType() pkg.Type {
 	switch strings.ToLower(a.extension()) {
-	case "jar", "war", "ear", "lpkg", "par", "sar":
+	case "jar", "war", "ear", "lpkg", "par", "sar", "nar":
 		return pkg.JavaPkg
 	case "jpi", "hpi":
 		return pkg.JenkinsPluginPkg

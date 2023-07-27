@@ -3,6 +3,7 @@ package cyclonedxhelpers
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+const cycloneDXXmlSchema = "http://cyclonedx.org/schema/bom"
+
 func GetValidator(format cyclonedx.BOMFileFormat) sbom.Validator {
 	return func(reader io.Reader) error {
 		bom := &cyclonedx.BOM{}
@@ -22,8 +25,9 @@ func GetValidator(format cyclonedx.BOMFileFormat) sbom.Validator {
 		if err != nil {
 			return err
 		}
-		// random JSON does not necessarily cause an error (e.g. SPDX)
-		if (cyclonedx.BOM{} == *bom || bom.Components == nil) {
+
+		xmlWithoutNS := format == cyclonedx.BOMFileFormatXML && !strings.Contains(bom.XMLNS, cycloneDXXmlSchema)
+		if (cyclonedx.BOM{} == *bom || bom.Components == nil || xmlWithoutNS) {
 			return fmt.Errorf("not a valid CycloneDX document")
 		}
 		return nil
@@ -54,7 +58,7 @@ func ToSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 
 	s := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			PackageCatalog:    pkg.NewCatalog(),
+			Packages:          pkg.NewCollection(),
 			LinuxDistribution: linuxReleaseFromComponents(*bom.Components),
 		},
 		Source:     extractComponents(bom.Metadata),
@@ -95,7 +99,7 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 		}
 		// TODO there must be a better way than needing to call this manually:
 		p.SetID()
-		s.Artifacts.PackageCatalog.Add(*p)
+		s.Artifacts.Packages.Add(*p)
 	}
 
 	if component.Components != nil {
@@ -206,7 +210,7 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 		return
 	}
 	for _, d := range *bom.Dependencies {
-		from, fromExists := idMap[d.Ref].(artifact.Identifiable)
+		to, fromExists := idMap[d.Ref].(artifact.Identifiable)
 		if !fromExists {
 			continue
 		}
@@ -216,7 +220,7 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 		}
 
 		for _, t := range *d.Dependencies {
-			to, toExists := idMap[t].(artifact.Identifiable)
+			from, toExists := idMap[t].(artifact.Identifiable)
 			if !toExists {
 				continue
 			}
@@ -229,32 +233,34 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 	}
 }
 
-func extractComponents(meta *cyclonedx.Metadata) source.Metadata {
+func extractComponents(meta *cyclonedx.Metadata) source.Description {
 	if meta == nil || meta.Component == nil {
-		return source.Metadata{}
+		return source.Description{}
 	}
 	c := meta.Component
 
-	image := source.ImageMetadata{
-		UserInput:      c.Name,
-		ID:             c.BOMRef,
-		ManifestDigest: c.Version,
-	}
-
 	switch c.Type {
 	case cyclonedx.ComponentTypeContainer:
-		return source.Metadata{
-			Scheme:        source.ImageScheme,
-			ImageMetadata: image,
+		return source.Description{
+			ID: "",
+			// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
+
+			Metadata: source.StereoscopeImageSourceMetadata{
+				UserInput:      c.Name,
+				ID:             c.BOMRef,
+				ManifestDigest: c.Version,
+			},
 		}
 	case cyclonedx.ComponentTypeFile:
-		return source.Metadata{
-			Scheme:        source.FileScheme, // or source.DirectoryScheme
-			Path:          c.Name,
-			ImageMetadata: image,
+		// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
+
+		// TODO: this is lossy... we can't know if this is a file or a directory
+		return source.Description{
+			ID:       "",
+			Metadata: source.FileSourceMetadata{Path: c.Name},
 		}
 	}
-	return source.Metadata{}
+	return source.Description{}
 }
 
 // if there is more than one tool in meta.Tools' list the last item will be used

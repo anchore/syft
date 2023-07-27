@@ -11,7 +11,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/file"
 )
 
 // returns a distro or nil
@@ -54,7 +54,7 @@ var identityFiles = []parseEntry{
 }
 
 // IdentifyRelease parses distro-specific files to discover and raise linux distribution release details.
-func IdentifyRelease(resolver source.FileResolver) *Release {
+func IdentifyRelease(resolver file.Resolver) *Release {
 	logger := log.Nested("operation", "identify-release")
 	for _, entry := range identityFiles {
 		locations, err := resolver.FilesByPath(entry.path)
@@ -125,6 +125,7 @@ func parseOsRelease(contents string) (*Release, error) {
 		BugReportURL:     values["BUG_REPORT_URL"],
 		PrivacyPolicyURL: values["PRIVACY_POLICY_URL"],
 		CPEName:          values["CPE_NAME"],
+		SupportEnd:       values["SUPPORT_END"],
 	}
 
 	// don't allow for empty contents to result in a Release object being created

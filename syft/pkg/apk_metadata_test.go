@@ -47,7 +47,6 @@ func TestApkMetadata_UnmarshalJSON(t *testing.T) {
 				OriginPackage: "pax-utils",
 				Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
 				Version:       "1.3.4-r0",
-				License:       "GPL-2.0-only",
 				Architecture:  "x86_64",
 				URL:           "https://wiki.gentoo.org/wiki/Hardened/PaX_Utilities",
 				Description:   "Scan ELF binaries for stuff",
@@ -86,7 +85,6 @@ func TestApkMetadata_UnmarshalJSON(t *testing.T) {
 				OriginPackage: "pax-utils",
 				Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
 				Version:       "1.3.4-r0",
-				License:       "GPL-2.0-only",
 				Architecture:  "x86_64",
 				URL:           "https://wiki.gentoo.org/wiki/Hardened/PaX_Utilities",
 				Description:   "Scan ELF binaries for stuff",
@@ -96,6 +94,15 @@ func TestApkMetadata_UnmarshalJSON(t *testing.T) {
 				Checksum:      "Q1Gcqe+ND8DFOlhM3R0o5KyZjR2oE=",
 				GitCommit:     "d7ae612a3cc5f827289d915783b4cbf8c7207947",
 				Files:         []ApkFileRecord{{Path: "/usr"}},
+			},
+		},
+		{
+			name: "null pullDependencies",
+			input: `{
+"pullDependencies": null
+}`,
+			want: ApkMetadata{
+				Dependencies: nil,
 			},
 		},
 	}

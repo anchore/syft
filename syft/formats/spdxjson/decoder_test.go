@@ -73,11 +73,11 @@ func TestSPDXJSONDecoder(t *testing.T) {
 			}
 
 			if test.packages != nil {
-				assert.Equal(t, sbom.Artifacts.PackageCatalog.PackageCount(), len(test.packages))
+				assert.Equal(t, sbom.Artifacts.Packages.PackageCount(), len(test.packages))
 
 			packages:
 				for _, pkgName := range test.packages {
-					for _, p := range sbom.Artifacts.PackageCatalog.Sorted() {
+					for _, p := range sbom.Artifacts.Packages.Sorted() {
 						if p.Name == pkgName {
 							continue packages
 						}
@@ -92,7 +92,7 @@ func TestSPDXJSONDecoder(t *testing.T) {
 			relationships:
 				for _, pkgName := range test.relationships {
 					for _, rel := range sbom.Relationships {
-						p, ok := rel.From.(*pkg.Package)
+						p, ok := rel.From.(pkg.Package)
 						if ok && p.Name == pkgName {
 							continue relationships
 						}

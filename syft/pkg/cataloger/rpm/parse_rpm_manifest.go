@@ -8,13 +8,13 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 // Parses an RPM manifest file, as used in Mariner distroless containers, and returns the Packages listed
-func parseRpmManifest(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRpmManifest(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 	allPkgs := make([]pkg.Package, 0)
 
@@ -52,7 +52,7 @@ func parseRpmManifest(_ source.FileResolver, _ *generic.Environment, reader sour
 // Each line is the output of :
 // rpm --query --all --query-format "%{NAME}\t%{VERSION}-%{RELEASE}\t%{INSTALLTIME}\t%{BUILDTIME}\t%{VENDOR}\t%{EPOCH}\t%{SIZE}\t%{ARCH}\t%{EPOCHNUM}\t%{SOURCERPM}\n"
 // https://github.com/microsoft/CBL-Mariner/blob/3df18fac373aba13a54bd02466e64969574f13af/toolkit/docs/how_it_works/5_misc.md?plain=1#L150
-func parseRpmManifestEntry(entry string, location source.Location) (*pkg.Package, error) {
+func parseRpmManifestEntry(entry string, location file.Location) (*pkg.Package, error) {
 	metadata, err := newMetadataFromManifestLine(entry)
 	if err != nil {
 		return nil, err

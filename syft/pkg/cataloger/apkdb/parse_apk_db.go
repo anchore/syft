@@ -3,7 +3,9 @@ package apkdb
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -14,28 +16,36 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
 var _ generic.Parser = parseApkDB
 
+var (
+	repoRegex = regexp.MustCompile(`(?m)^https://.*\.alpinelinux\.org/alpine/v([^/]+)/([a-zA-Z0-9_]+)$`)
+)
+
+type parsedData struct {
+	License string `mapstructure:"L" json:"license"`
+	pkg.ApkMetadata
+}
+
 // parseApkDB parses packages from a given APK installed DB file. For more
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
-//nolint:funlen
-func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+//nolint:funlen,gocognit
+func parseApkDB(resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
 
-	var apks []pkg.ApkMetadata
-	var currentEntry pkg.ApkMetadata
+	var apks []parsedData
+	var currentEntry parsedData
 	entryParsingInProgress := false
 	fileParsingCtx := newApkFileParsingContext()
 
 	// creating a dedicated append-like function here instead of using `append(...)`
 	// below since there is nontrivial logic to be performed for each finalized apk
 	// entry.
-	appendApk := func(p pkg.ApkMetadata) {
+	appendApk := func(p parsedData) {
 		if files := fileParsingCtx.files; len(files) >= 1 {
 			// attached accumulated files to current package
 			p.Files = files
@@ -62,7 +72,7 @@ func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.L
 			entryParsingInProgress = false
 
 			// zero-out currentEntry for use by any future entry
-			currentEntry = pkg.ApkMetadata{}
+			currentEntry = parsedData{}
 
 			continue
 		}
@@ -101,6 +111,19 @@ func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.L
 	if env != nil {
 		r = env.LinuxRelease
 	}
+	// this is somewhat ugly, but better than completely failing when we can't find the release,
+	// e.g. embedded deeper in the tree, like containers or chroots.
+	// but we now have no way of handling different repository sources. On the other hand,
+	// we never could before this. At least now, we can handle some.
+	// This should get fixed with https://gitlab.alpinelinux.org/alpine/apk-tools/-/issues/10875
+	if r == nil {
+		// find the repositories file from the relative directory of the DB file
+		releases := findReleases(resolver, reader.Location.RealPath)
+
+		if len(releases) > 0 {
+			r = &releases[0]
+		}
+	}
 
 	pkgs := make([]pkg.Package, 0, len(apks))
 	for _, apk := range apks {
@@ -108,6 +131,58 @@ func parseApkDB(_ source.FileResolver, env *generic.Environment, reader source.L
 	}
 
 	return pkgs, discoverPackageDependencies(pkgs), nil
+}
+
+func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
+	if resolver == nil {
+		return nil
+	}
+
+	reposLocation := path.Clean(path.Join(path.Dir(dbPath), "../../../etc/apk/repositories"))
+	locations, err := resolver.FilesByPath(reposLocation)
+	if err != nil {
+		log.Tracef("unable to find APK repositories file %q: %+v", reposLocation, err)
+		return nil
+	}
+
+	if len(locations) == 0 {
+		return nil
+	}
+	location := locations[0]
+
+	reposReader, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		log.Tracef("unable to fetch contents for APK repositories file %q: %+v", reposLocation, err)
+		return nil
+	}
+
+	return parseReleasesFromAPKRepository(file.LocationReadCloser{
+		Location:   location,
+		ReadCloser: reposReader,
+	})
+}
+
+func parseReleasesFromAPKRepository(reader file.LocationReadCloser) []linux.Release {
+	var releases []linux.Release
+
+	reposB, err := io.ReadAll(reader)
+	if err != nil {
+		log.Tracef("unable to read APK repositories file %q: %+v", reader.Location.RealPath, err)
+		return nil
+	}
+
+	parts := repoRegex.FindAllStringSubmatch(string(reposB), -1)
+	for _, part := range parts {
+		if len(part) >= 3 {
+			releases = append(releases, linux.Release{
+				Name:      "Alpine Linux",
+				ID:        "alpine",
+				VersionID: part[1],
+			})
+		}
+	}
+
+	return releases
 }
 
 func parseApkField(line string) *apkField {
@@ -130,7 +205,7 @@ type apkField struct {
 }
 
 //nolint:funlen
-func (f apkField) apply(p *pkg.ApkMetadata, ctx *apkFileParsingContext) {
+func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 	switch f.name {
 	// APKINDEX field parsing
 
@@ -276,7 +351,7 @@ func parseListValue(value string) []string {
 	return nil
 }
 
-func nilFieldsToEmptySlice(p *pkg.ApkMetadata) {
+func nilFieldsToEmptySlice(p *parsedData) {
 	if p.Dependencies == nil {
 		p.Dependencies = []string{}
 	}
