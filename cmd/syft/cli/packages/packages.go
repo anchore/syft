@@ -3,6 +3,7 @@ package packages
 import (
 	"context"
 	"fmt"
+	"github.com/anchore/syft/internal/log"
 
 	"github.com/wagoodman/go-partybus"
 
@@ -101,13 +102,18 @@ func execWorker(app *config.Application, userInput string, writer sbom.Writer) <
 			},
 		)
 
-		if src != nil {
-			defer src.Close()
-		}
 		if err != nil {
 			errs <- fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
 			return
 		}
+
+		defer func() {
+			if src != nil {
+				if err := src.Close(); err != nil {
+					log.Tracef("unable to close source: %+v", err)
+				}
+			}
+		}()
 
 		s, err := GenerateSBOM(src, errs, app)
 		if err != nil {

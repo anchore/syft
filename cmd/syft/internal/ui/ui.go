@@ -82,11 +82,12 @@ func (m *UI) Teardown(force bool) error {
 	if !force {
 		m.handler.Running.Wait()
 		m.program.Quit()
+		//m.running.Wait() // TODO?
 	} else {
 		m.program.Kill()
 	}
 
-	m.running.Wait()
+	m.running.Wait() // TODO?
 
 	// TODO: allow for writing out the full log output to the screen (only a partial log is shown currently)
 	// this needs coordination to know what the last frame event is to change the state accordingly (which isn't possible now)
