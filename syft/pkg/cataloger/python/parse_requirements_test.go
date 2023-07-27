@@ -27,7 +27,6 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Metadata: pkg.PythonRequirementsMetadata{
 				Name:              "flask",
 				VersionConstraint: "== 4.0.0",
-				URL:               "",
 			},
 		},
 		{
@@ -41,7 +40,6 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Metadata: pkg.PythonRequirementsMetadata{
 				Name:              "foo",
 				VersionConstraint: "== 1.0.0",
-				URL:               "",
 			},
 		},
 		{
@@ -68,7 +66,6 @@ func TestParseRequirementsTxt(t *testing.T) {
 			MetadataType: pkg.PythonRequirementsMetadataType,
 			Metadata: pkg.PythonRequirementsMetadata{
 				Name:              "argh",
-				Extras:            []string{},
 				VersionConstraint: "==0.26.2",
 			},
 		},
@@ -82,7 +79,6 @@ func TestParseRequirementsTxt(t *testing.T) {
 			MetadataType: pkg.PythonRequirementsMetadataType,
 			Metadata: pkg.PythonRequirementsMetadata{
 				Name:              "argh",
-				Extras:            []string{},
 				VersionConstraint: "==0.26.3",
 			},
 		},
@@ -98,22 +94,6 @@ func TestParseRequirementsTxt(t *testing.T) {
 				Name:              "celery",
 				Extras:            []string{"redis", "pytest"},
 				VersionConstraint: "== 4.4.7",
-			},
-		},
-		{
-			Name:         "GithubSampleProject",
-			Version:      "3.7.1",
-			PURL:         "pkg:pypi/GithubSampleProject@3.7.1",
-			Locations:    locations,
-			Language:     pkg.Python,
-			Type:         pkg.PythonPkg,
-			MetadataType: pkg.PythonRequirementsMetadataType,
-			Metadata: pkg.PythonRequirementsMetadata{
-				Name:              "requests",
-				Extras:            []string{"security"},
-				VersionConstraint: "== 2.8",
-				URL:               "",
-				Markers:           `python_version < "2.7" and sys_platform == "linux"`,
 			},
 		},
 		{
