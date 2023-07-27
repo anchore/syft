@@ -184,6 +184,8 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		log.Warnf("failed to create digest for file=%q: %+v", j.archivePath, err)
 	}
 
+	name := selectName(manifest, j.fileInfo)
+	fmt.Println("name: ", name)
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	licenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
 	return &pkg.Package{

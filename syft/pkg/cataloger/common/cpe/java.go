@@ -1,6 +1,7 @@
 package cpe
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
@@ -189,6 +190,7 @@ func GroupIDsFromJavaMetadata(metadata pkg.JavaMetadata) (groupIDs []string) {
 	groupIDs = append(groupIDs, groupIDsFromPomProject(metadata.PomProject)...)
 	groupIDs = append(groupIDs, groupIDsFromJavaManifest(metadata.Manifest)...)
 
+	sort.Strings(groupIDs)
 	return groupIDs
 }
 
