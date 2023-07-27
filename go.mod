@@ -48,7 +48,7 @@ require (
 )
 
 require (
-	github.com/CycloneDX/cyclonedx-go v0.7.1-0.20221222100750-41a1ac565cce
+	github.com/CycloneDX/cyclonedx-go v0.7.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/bubbly v0.0.0-20230712165553-812110ab0a10
