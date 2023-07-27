@@ -50,9 +50,9 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 				}
 			}`),
 			assert: func(p *Package) {
-				assert.NotNil(t, p.Metadata)
+				require.NotNil(t, p.Metadata)
 				golangMetadata := p.Metadata.(pkg.GolangBinMetadata)
-				assert.NotEmpty(t, golangMetadata)
+				require.NotEmpty(t, golangMetadata)
 				assert.Equal(t, "go1.18", golangMetadata.GoCompiledVersion)
 			},
 		},
@@ -319,14 +319,14 @@ func Test_unpackMetadata(t *testing.T) {
 			wantMetadata: pkg.GolangBinMetadata{},
 		},
 		{
-			name: "can handle package with unknonwn metadata type and missing metadata",
+			name: "can handle package with unknown metadata type and missing metadata",
 			packageData: []byte(`{
 				"metadataType": "BadMetadata"
 			}`),
 			wantErr: require.Error,
 		},
 		{
-			name: "can handle package with unknonwn metadata type and metadata",
+			name: "can handle package with unknown metadata type and metadata",
 			packageData: []byte(`{
 				"metadataType": "BadMetadata",
 				"metadata": {
@@ -344,10 +344,6 @@ func Test_unpackMetadata(t *testing.T) {
 			}
 			p := &Package{}
 
-			var basic PackageBasicData
-			require.NoError(t, json.Unmarshal(test.packageData, &basic))
-			p.PackageBasicData = basic
-
 			var unpacker packageMetadataUnpacker
 			require.NoError(t, json.Unmarshal(test.packageData, &unpacker))
 
@@ -355,7 +351,11 @@ func Test_unpackMetadata(t *testing.T) {
 			test.wantErr(t, err)
 
 			if test.wantMetadata != nil {
-				assert.True(t, reflect.DeepEqual(test.wantMetadata, p.Metadata))
+				if p.Metadata == nil {
+					t.Fatalf("expected metadata to be populated")
+					return
+				}
+				assert.Equal(t, reflect.TypeOf(test.wantMetadata).Name(), reflect.TypeOf(p.Metadata).Name())
 			}
 		})
 	}

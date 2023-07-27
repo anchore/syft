@@ -2,7 +2,6 @@ package cyclonedxhelpers
 
 import (
 	"github.com/CycloneDX/cyclonedx-go"
-
 	"github.com/anchore/syft/syft/formats/common"
 )
 

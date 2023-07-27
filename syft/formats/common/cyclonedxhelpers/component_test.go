@@ -17,7 +17,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    pkg.Package
-		expected *[]cyclonedx.Property
+		expected []cyclonedx.Property
 	}{
 		{
 			name:     "no metadata",
@@ -48,8 +48,9 @@ func Test_encodeComponentProperties(t *testing.T) {
 					Files:         []pkg.ApkFileRecord{},
 				},
 			},
-			expected: &[]cyclonedx.Property{
+			expected: []cyclonedx.Property{
 				{Name: "syft:package:foundBy", Value: "cataloger"},
+				{Name: "syft:package:metadataType", Value: "alpine-apk-db-record"},
 				{Name: "syft:location:0:path", Value: "test"},
 				{Name: "syft:metadata:gitCommitOfApkPort", Value: "97b1c2842faa3bfa30f5811ffbf16d5ff9f1a479"},
 				{Name: "syft:metadata:installedSize", Value: "4096"},
@@ -74,8 +75,8 @@ func Test_encodeComponentProperties(t *testing.T) {
 					Files:         []pkg.DpkgFileRecord{},
 				},
 			},
-			expected: &[]cyclonedx.Property{
-				{Name: "syft:package:metadataType", Value: "DpkgMetadata"},
+			expected: []cyclonedx.Property{
+				{Name: "syft:package:metadataType", Value: "debian-dpkg-db-record"},
 				{Name: "syft:metadata:installedSize", Value: "3036"},
 				{Name: "syft:metadata:source", Value: "tzdata-dev"},
 				{Name: "syft:metadata:sourceVersion", Value: "1.0"},
@@ -94,9 +95,9 @@ func Test_encodeComponentProperties(t *testing.T) {
 					H1Digest:          "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
 				},
 			},
-			expected: &[]cyclonedx.Property{
+			expected: []cyclonedx.Property{
 				{Name: "syft:package:language", Value: pkg.Go.String()},
-				{Name: "syft:package:metadataType", Value: "GolangBinMetadata"},
+				{Name: "syft:package:metadataType", Value: "go-module-binary-buildinfo"},
 				{Name: "syft:package:type", Value: "go-module"},
 				{Name: "syft:metadata:architecture", Value: "amd64"},
 				{Name: "syft:metadata:goCompiledVersion", Value: "1.17"},
@@ -114,9 +115,9 @@ func Test_encodeComponentProperties(t *testing.T) {
 					H1Digest: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
 				},
 			},
-			expected: &[]cyclonedx.Property{
+			expected: []cyclonedx.Property{
 				{Name: "syft:package:language", Value: pkg.Go.String()},
-				{Name: "syft:package:metadataType", Value: "GolangModMetadata"},
+				{Name: "syft:package:metadataType", Value: "go-module"},
 				{Name: "syft:package:type", Value: "go-module"},
 				{Name: "syft:metadata:h1Digest", Value: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k="},
 			},
@@ -139,8 +140,8 @@ func Test_encodeComponentProperties(t *testing.T) {
 					Files:     []pkg.RpmFileRecord{},
 				},
 			},
-			expected: &[]cyclonedx.Property{
-				{Name: "syft:package:metadataType", Value: "RpmDBMetadata"},
+			expected: []cyclonedx.Property{
+				{Name: "syft:package:metadataType", Value: "redhat-rpm-db-record"},
 				{Name: "syft:package:type", Value: "rpm"},
 				{Name: "syft:metadata:epoch", Value: "2"},
 				{Name: "syft:metadata:release", Value: "1"},
@@ -152,7 +153,13 @@ func Test_encodeComponentProperties(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			c := encodeComponent(test.input)
-			assert.Equal(t, test.expected, c.Properties)
+			if test.expected == nil {
+				if c.Properties != nil {
+					t.Fatalf("expected no properties, got: %+v", *c.Properties)
+				}
+				return
+			}
+			assert.ElementsMatch(t, test.expected, *c.Properties)
 		})
 	}
 }

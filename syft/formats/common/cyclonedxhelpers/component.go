@@ -14,6 +14,15 @@ import (
 
 func encodeComponent(p pkg.Package) cyclonedx.Component {
 	props := encodeProperties(p, "syft:package")
+
+	if p.Metadata != nil {
+		// encode the metadataType as a property, something that doesn't exist on the core model
+		props = append(props, cyclonedx.Property{
+			Name:  "syft:package:metadataType",
+			Value: packagemetadata.JSONName(p.Metadata),
+		})
+	}
+
 	props = append(props, encodeCPEs(p)...)
 	locations := p.Locations.ToSlice()
 	if len(locations) > 0 {

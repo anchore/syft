@@ -2,6 +2,7 @@ package packagemetadata
 
 import (
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -81,12 +82,27 @@ func JSONName(metadata any) string {
 
 func ReflectTypeFromJSONName(name string) reflect.Type {
 	name = strings.ToLower(name)
-	for t, vs := range jsonNameFromType {
+	for _, t := range sortedTypes(jsonNameFromType) {
+		vs := jsonNameFromType[t]
 		for _, v := range vs {
-			if v == name {
+			if strings.ToLower(v) == name {
 				return t
 			}
 		}
 	}
 	return nil
+}
+
+func sortedTypes(typeNameMapping map[reflect.Type][]string) []reflect.Type {
+	types := make([]reflect.Type, 0)
+	for t := range typeNameMapping {
+		types = append(types, t)
+	}
+
+	// sort the types by their first JSON name
+	sort.Slice(types, func(i, j int) bool {
+		return typeNameMapping[types[i]][0] < typeNameMapping[types[j]][0]
+	})
+
+	return types
 }

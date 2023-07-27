@@ -1,6 +1,8 @@
 package packagemetadata
 
 import (
+	"github.com/anchore/syft/syft/pkg"
+	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -25,5 +27,47 @@ func TestAllNames(t *testing.T) {
 
 	for _, ty := range AllTypes() {
 		assert.NotEmpty(t, JSONName(ty), "metadata type %q does not have a JSON name", ty)
+	}
+}
+
+func TestReflectTypeFromJSONName(t *testing.T) {
+
+	tests := []struct {
+		name       string
+		lookup     string
+		wantRecord reflect.Type
+	}{
+		{
+			name:       "exact match on ID",
+			lookup:     "rust-cargo-lock",
+			wantRecord: reflect.TypeOf(pkg.CargoPackageMetadata{}),
+		},
+		{
+			name:       "exact match on former name",
+			lookup:     "RustCargoPackageMetadata",
+			wantRecord: reflect.TypeOf(pkg.CargoPackageMetadata{}),
+		},
+		{
+			name:       "case insensitive on ID",
+			lookup:     "RUST-CARGO-lock",
+			wantRecord: reflect.TypeOf(pkg.CargoPackageMetadata{}),
+		},
+		{
+			name:       "case insensitive on alias",
+			lookup:     "rusTcArgopacKagEmEtadATa",
+			wantRecord: reflect.TypeOf(pkg.CargoPackageMetadata{}),
+		},
+		{
+			name: "consistent override",
+			// there are two correct answers for this -- we should always get the same answer.
+			lookup:     "HackageMetadataType",
+			wantRecord: reflect.TypeOf(pkg.HackageStackYamlMetadata{}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ReflectTypeFromJSONName(tt.lookup)
+			assert.Equal(t, tt.wantRecord, got)
+		})
 	}
 }

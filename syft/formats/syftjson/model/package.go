@@ -61,22 +61,22 @@ func newModelLicensesFromValues(licenses []string) (ml []License) {
 }
 
 func (f *licenses) UnmarshalJSON(b []byte) error {
-	var licenses []License
-	if err := json.Unmarshal(b, &licenses); err != nil {
+	var lics []License
+	if err := json.Unmarshal(b, &lics); err != nil {
 		var simpleLicense []string
 		if err := json.Unmarshal(b, &simpleLicense); err != nil {
 			return fmt.Errorf("unable to unmarshal license: %w", err)
 		}
-		licenses = newModelLicensesFromValues(simpleLicense)
+		lics = newModelLicensesFromValues(simpleLicense)
 	}
-	*f = licenses
+	*f = lics
 	return nil
 }
 
 // PackageCustomData contains ambiguous values (type-wise) from pkg.Package.
 type PackageCustomData struct {
-	MetadataType string      `json:"metadataType,omitempty"`
-	Metadata     interface{} `json:"metadata,omitempty"`
+	MetadataType string `json:"metadataType,omitempty"`
+	Metadata     any    `json:"metadata,omitempty"`
 }
 
 // packageMetadataUnpacker is all values needed from Package to disambiguate ambiguous fields during json unmarshaling.
@@ -113,30 +113,30 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 }
 
 func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
-	typ := packagemetadata.ReflectTypeFromJSONName(p.MetadataType)
-	if typ != nil {
-		val := reflect.New(typ).Interface()
-		if len(unpacker.Metadata) > 0 {
-			if err := json.Unmarshal(unpacker.Metadata, val); err != nil {
-				return err
-			}
-		}
-		p.Metadata = reflect.ValueOf(val).Elem().Interface()
+	if unpacker.MetadataType == "" {
 		return nil
 	}
 
-	// capture unknown metadata as a generic struct
-	if len(unpacker.Metadata) > 0 {
-		var val interface{}
-		if err := json.Unmarshal(unpacker.Metadata, &val); err != nil {
-			return err
+	typ := packagemetadata.ReflectTypeFromJSONName(unpacker.MetadataType)
+	if typ == nil {
+		// capture unknown metadata as a generic struct
+		if len(unpacker.Metadata) > 0 {
+			var val interface{}
+			if err := json.Unmarshal(unpacker.Metadata, &val); err != nil {
+				return err
+			}
+			p.Metadata = val
 		}
-		p.Metadata = val
-	}
 
-	if p.MetadataType != "" {
 		return errUnknownMetadataType
 	}
 
+	val := reflect.New(typ).Interface()
+	if len(unpacker.Metadata) > 0 {
+		if err := json.Unmarshal(unpacker.Metadata, val); err != nil {
+			return err
+		}
+	}
+	p.Metadata = reflect.ValueOf(val).Elem().Interface()
 	return nil
 }

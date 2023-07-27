@@ -32,7 +32,7 @@ func ReflectTypeFromJSONName(name string) reflect.Type {
 	name = strings.ToLower(name)
 	for t, vs := range jsonNameFromType {
 		for _, v := range vs {
-			if v == name {
+			if strings.ToLower(v) == name {
 				return t
 			}
 		}
