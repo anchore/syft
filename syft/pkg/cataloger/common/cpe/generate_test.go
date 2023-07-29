@@ -714,18 +714,18 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			sort.Strings(extra)
 			if len(extra) > 0 {
 				t.Errorf("found extra CPEs:")
-			}
-			for _, d := range extra {
-				fmt.Printf("   %q,\n", d)
+				for _, d := range extra {
+					t.Logf("   %q,\n", d)
+				}
 			}
 
 			missing := strset.Difference(expectedCpeSet, actualCpeSet).List()
 			sort.Strings(missing)
 			if len(missing) > 0 {
 				t.Errorf("missing CPEs:")
-			}
-			for _, d := range missing {
-				fmt.Printf("   %q,\n", d)
+				for _, d := range missing {
+					t.Logf("   %q,\n", d)
+				}
 			}
 		})
 	}
