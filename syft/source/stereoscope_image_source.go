@@ -109,8 +109,6 @@ func (s StereoscopeImageSource) Describe() Description {
 	} else {
 		if ref, ok := ref.(reference.Named); ok {
 			nameIfUnset(ref.Name())
-		} else {
-			nameIfUnset(s.metadata.UserInput)
 		}
 
 		if ref, ok := ref.(reference.NamedTagged); ok {
@@ -122,6 +120,7 @@ func (s StereoscopeImageSource) Describe() Description {
 		}
 	}
 
+	nameIfUnset(s.metadata.UserInput)
 	versionIfUnset(s.metadata.ManifestDigest)
 
 	return Description{
