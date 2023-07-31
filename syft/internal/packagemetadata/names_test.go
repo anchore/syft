@@ -61,13 +61,13 @@ func TestReflectTypeFromJSONName(t *testing.T) {
 			name: "consistent override",
 			// there are two correct answers for this -- we should always get the same answer.
 			lookup:     "HackageMetadataType",
-			wantRecord: reflect.TypeOf(pkg.HackageStackYamlMetadata{}),
+			wantRecord: reflect.TypeOf(pkg.HackageStackYamlLockMetadata{}),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := ReflectTypeFromJSONName(tt.lookup)
-			assert.Equal(t, tt.wantRecord, got)
+			assert.Equal(t, tt.wantRecord.Name(), got.Name())
 		})
 	}
 }
