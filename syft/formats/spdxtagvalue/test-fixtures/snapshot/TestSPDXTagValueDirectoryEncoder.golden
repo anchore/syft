@@ -20,6 +20,7 @@ FilesAnalyzed: false
 PackageName: package-2
 SPDXID: SPDXRef-Package-deb-package-2-db4abfe497c180d3
 PackageVersion: 2.0.1
+PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from DPKG DB: /some/path/pkg1
@@ -34,6 +35,7 @@ ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
 PackageName: package-1
 SPDXID: SPDXRef-Package-python-package-1-9265397e5e15168a
 PackageVersion: 1.0.1
+PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from installed python package manifest file: /some/path/pkg1

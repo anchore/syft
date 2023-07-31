@@ -51,12 +51,14 @@ func Test_toFormatModel(t *testing.T) {
 				SPDXVersion:    spdx.Version,
 				DataLicense:    spdx.DataLicense,
 				DocumentName:   "alpine",
-
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
 						PackageName:           "pkg-1",
 						PackageVersion:        "version-1",
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
 					},
 					{
 						PackageSPDXIdentifier: "DocumentRoot-Image-alpine",
@@ -122,6 +124,9 @@ func Test_toFormatModel(t *testing.T) {
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
 						PackageName:           "pkg-1",
 						PackageVersion:        "version-1",
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
 					},
 					{
 						PackageSPDXIdentifier: "DocumentRoot-Directory-some-directory",
@@ -180,12 +185,14 @@ func Test_toFormatModel(t *testing.T) {
 				SPDXVersion:    spdx.Version,
 				DataLicense:    spdx.DataLicense,
 				DocumentName:   "path/to/some.file",
-
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
 						PackageName:           "pkg-1",
 						PackageVersion:        "version-1",
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
 					},
 					{
 						PackageSPDXIdentifier: "DocumentRoot-File-path-to-some.file",
