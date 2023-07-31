@@ -10,12 +10,12 @@ import (
 
 func newSwiftPackageManagerPackage(name, version, sourceURL, revision string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		PURL:         swiftPackageManagerPackageURL(name, version, sourceURL),
-		Locations:    file.NewLocationSet(locations...),
-		Type:         pkg.SwiftPkg,
-		Language:     pkg.Swift,
+		Name:      name,
+		Version:   version,
+		PURL:      swiftPackageManagerPackageURL(name, version, sourceURL),
+		Locations: file.NewLocationSet(locations...),
+		Type:      pkg.SwiftPkg,
+		Language:  pkg.Swift,
 		Metadata: pkg.SwiftPackageManagerMetadata{
 			Revision: revision,
 		},
@@ -28,12 +28,12 @@ func newSwiftPackageManagerPackage(name, version, sourceURL, revision string, lo
 
 func newCocoaPodsPackage(name, version, hash string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		PURL:         cocoaPodsPackageURL(name, version),
-		Locations:    file.NewLocationSet(locations...),
-		Type:         pkg.CocoapodsPkg,
-		Language:     pkg.Swift,
+		Name:      name,
+		Version:   version,
+		PURL:      cocoaPodsPackageURL(name, version),
+		Locations: file.NewLocationSet(locations...),
+		Type:      pkg.CocoapodsPkg,
+		Language:  pkg.Swift,
 		Metadata: pkg.CocoapodsMetadata{
 			Checksum: hash,
 		},
