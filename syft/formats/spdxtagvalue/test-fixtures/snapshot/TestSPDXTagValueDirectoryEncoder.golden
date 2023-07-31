@@ -11,7 +11,7 @@ Created: redacted
 ##### Package: package-2
 
 PackageName: package-2
-SPDXID: SPDXRef-Package-deb-package-2-db4abfe497c180d3
+SPDXID: SPDXRef-Package-deb-package-2-87f97f26c090fba2
 PackageVersion: 2.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
@@ -25,7 +25,7 @@ ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
 ##### Package: package-1
 
 PackageName: package-1
-SPDXID: SPDXRef-Package-python-package-1-9265397e5e15168a
+SPDXID: SPDXRef-Package-python-package-1-053bf8b15eb12b98
 PackageVersion: 1.0.1
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false

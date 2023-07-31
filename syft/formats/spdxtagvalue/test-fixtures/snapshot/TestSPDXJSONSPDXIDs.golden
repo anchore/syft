@@ -11,7 +11,7 @@ Created: redacted
 ##### Package: @at-sign
 
 PackageName: @at-sign
-SPDXID: SPDXRef-Package---at-sign-3732f7a5679bdec4
+SPDXID: SPDXRef-Package---at-sign-1c8c811ea5b1cd46
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 
@@ -22,7 +22,7 @@ PackageCopyrightText: NOASSERTION
 ##### Package: some/slashes
 
 PackageName: some/slashes
-SPDXID: SPDXRef-Package--some-slashes-1345166d4801153b
+SPDXID: SPDXRef-Package--some-slashes-8a8e95924316c66b
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 
@@ -33,7 +33,7 @@ PackageCopyrightText: NOASSERTION
 ##### Package: under_scores
 
 PackageName: under_scores
-SPDXID: SPDXRef-Package--under-scores-290d5c77210978c1
+SPDXID: SPDXRef-Package--under-scores-883703d950ec00f3
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 
