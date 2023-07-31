@@ -241,3 +241,31 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		})
 	}
 }
+
+func Test_Describe(t *testing.T) {
+	tests := []struct {
+		name     string
+		source   StereoscopeImageSource
+		expected Description
+	}{
+		{
+			name: "name from user input",
+			source: StereoscopeImageSource{
+				id: "some-id",
+				metadata: StereoscopeImageSourceMetadata{
+					UserInput: "user input",
+				},
+			},
+			expected: Description{
+				ID:   "some-id",
+				Name: "user input",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		got := test.source.Describe()
+		got.Metadata = nil // might want to test this, but do not to determine if the user input is userd
+		require.Equal(t, test.expected, got)
+	}
+}
