@@ -9,12 +9,12 @@
         <version>v0.42.0-bogus</version>
       </tool>
     </tools>
-    <component bom-ref:redacted type="file">
+    <component bom-ref="redacted" type="file">
       <name>some/path</name>
     </component>
   </metadata>
   <components>
-    <component bom-ref:redacted type="library">
+    <component bom-ref="redacted" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>

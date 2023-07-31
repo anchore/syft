@@ -9,13 +9,13 @@
         <version>v0.42.0-bogus</version>
       </tool>
     </tools>
-    <component bom-ref:redacted type="container">
+    <component bom-ref="redacted" type="container">
       <name>user-image-input</name>
       <version>sha256:redacted</version>
     </component>
   </metadata>
   <components>
-    <component bom-ref:redacted type="library">
+    <component bom-ref="redacted" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>
