@@ -15,7 +15,7 @@
  "packages": [
   {
    "name": "package-1",
-   "SPDXID": "SPDXRef-Package-python-package-1-9265397e5e15168a",
+   "SPDXID": "SPDXRef-Package-python-package-1-053bf8b15eb12b98",
    "versionInfo": "1.0.1",
    "downloadLocation": "NOASSERTION",
    "filesAnalyzed": false,
@@ -38,7 +38,7 @@
   },
   {
    "name": "package-2",
-   "SPDXID": "SPDXRef-Package-deb-package-2-db4abfe497c180d3",
+   "SPDXID": "SPDXRef-Package-deb-package-2-87f97f26c090fba2",
    "versionInfo": "2.0.1",
    "downloadLocation": "NOASSERTION",
    "filesAnalyzed": false,
