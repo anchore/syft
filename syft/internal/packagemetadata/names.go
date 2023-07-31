@@ -25,7 +25,7 @@ var jsonNameFromType = map[reflect.Type][]string{
 	reflect.TypeOf(pkg.GolangBinMetadata{}):            nameList("go-module-binary-buildinfo", "GolangBinMetadata", "GolangMetadata"),
 	reflect.TypeOf(pkg.GolangModMetadata{}):            nameList("go-module", "GolangModMetadata"),
 	reflect.TypeOf(pkg.HackageStackYamlLockMetadata{}): nameList("haskell-hackage-stack-lock", "HackageMetadataType"),
-	reflect.TypeOf(pkg.HackageStackYamlMetadata{}):     nameList("haskell-hackage-stack", "HackageMetadataType"),
+	reflect.TypeOf(pkg.HackageStackYamlMetadata{}):     nameList("haskell-hackage-stack"), // though  HackageMetadataType could be used, the HackageStackYamlLockMetadata maps most closely to the original data shape
 	reflect.TypeOf(pkg.JavaMetadata{}):                 nameList("java-archive", "JavaMetadata"),
 	reflect.TypeOf(pkg.KbPatchMetadata{}):              nameList("microsoft-kb-patch", "KbPatchMetadata"),
 	reflect.TypeOf(pkg.LinuxKernelMetadata{}):          nameList("linux-kernel-archive", "LinuxKernelMetadata"),
@@ -42,8 +42,8 @@ var jsonNameFromType = map[reflect.Type][]string{
 	reflect.TypeOf(pkg.PythonRequirementsMetadata{}):   nameList("python-pip-requirements", "PythonRequirementsMetadata"),
 	reflect.TypeOf(pkg.RebarLockMetadata{}):            nameList("erlang-rebar-lock", "RebarLockMetadataType"),
 	reflect.TypeOf(pkg.RDescriptionFileMetadata{}):     nameList("r-description", "RDescriptionFileMetadataType"),
-	reflect.TypeOf(pkg.RpmDBMetadata{}):                nameList("redhat-rpm-db-record", "RpmdbMetadata"),
-	reflect.TypeOf(pkg.RpmArchiveMetadata{}):           nameList("redhat-rpm-archive", "RpmMetadata"),
+	reflect.TypeOf(pkg.RpmDBMetadata{}):                nameList("redhat-rpm-db-record", "RpmdbMetadata", "RpmMetadata"),
+	reflect.TypeOf(pkg.RpmArchiveMetadata{}):           nameList("redhat-rpm-archive"), // though RpmMetadata could be used it historically shared a name with RpmDBMetadata, but the DB use case has been more widely used (archive parsing was added much later)
 	reflect.TypeOf(pkg.CargoPackageMetadata{}):         nameList("rust-cargo-lock", "RustCargoPackageMetadata"),
 }
 
@@ -65,7 +65,7 @@ func expandLegacyNameVariants(name string) []string {
 	return candidates
 }
 
-func AllNames() []string {
+func AllTypeNames() []string {
 	names := make([]string, 0)
 	for _, t := range AllTypes() {
 		names = append(names, reflect.TypeOf(t).Name())

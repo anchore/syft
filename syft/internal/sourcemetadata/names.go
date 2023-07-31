@@ -13,7 +13,7 @@ var jsonNameFromType = map[reflect.Type][]string{
 	reflect.TypeOf(source.StereoscopeImageSourceMetadata{}): {"image"},
 }
 
-func AllNames() []string {
+func AllTypeNames() []string {
 	names := make([]string, 0)
 	for _, t := range AllTypes() {
 		names = append(names, reflect.TypeOf(t).Name())

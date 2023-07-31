@@ -14,7 +14,7 @@ func TestAllNames(t *testing.T) {
 	expected, err := DiscoverTypeNames()
 	require.NoError(t, err)
 
-	actual := AllNames()
+	actual := AllTypeNames()
 
 	// ensure that the codebase (from ast analysis) reflects the latest code generated state
 	if !assert.ElementsMatch(t, expected, actual) {
