@@ -467,6 +467,39 @@
         "hashPath"
       ]
     },
+    "DotnetPortableExecutable": {
+      "properties": {
+        "assemblyVersion": {
+          "type": "string"
+        },
+        "legalCopyright": {
+          "type": "string"
+        },
+        "comments": {
+          "type": "string"
+        },
+        "internalName": {
+          "type": "string"
+        },
+        "companyName": {
+          "type": "string"
+        },
+        "productName": {
+          "type": "string"
+        },
+        "productVersion": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "assemblyVersion",
+        "legalCopyright",
+        "companyName",
+        "productName",
+        "productVersion"
+      ]
+    },
     "DpkgFileRecord": {
       "properties": {
         "path": {
@@ -1092,6 +1125,9 @@
               "$ref": "#/$defs/DotnetDeps"
             },
             {
+              "$ref": "#/$defs/DotnetPortableExecutable"
+            },
+            {
               "$ref": "#/$defs/ElixirMixLock"
             },
             {
@@ -1156,6 +1192,9 @@
             },
             {
               "$ref": "#/$defs/RustCargoLock"
+            },
+            {
+              "$ref": "#/$defs/SwiftPackageManagerLock"
             }
           ]
         }
@@ -1527,21 +1566,13 @@
           "type": "string"
         },
         "markers": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "type": "string"
         }
       },
       "type": "object",
       "required": [
         "name",
-        "extras",
-        "versionConstraint",
-        "url",
-        "markers"
+        "versionConstraint"
       ]
     },
     "PythonPipfileLock": {
@@ -1870,6 +1901,17 @@
         "version",
         "type",
         "metadata"
+      ]
+    },
+    "SwiftPackageManagerLock": {
+      "properties": {
+        "revision": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "revision"
       ]
     },
     "licenses": {
