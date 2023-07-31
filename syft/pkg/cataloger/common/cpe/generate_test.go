@@ -354,11 +354,12 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "cloudbees jenkins package identified via groupId",
 			p: pkg.Package{
-				Name:     "name",
-				Version:  "3.2",
-				FoundBy:  "some-analyzer",
-				Language: pkg.Java,
-				Type:     pkg.JenkinsPluginPkg,
+				Name:         "name",
+				Version:      "3.2",
+				FoundBy:      "some-analyzer",
+				Language:     pkg.Java,
+				Type:         pkg.JenkinsPluginPkg,
+				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
 					PomProperties: &pkg.PomProperties{
 						GroupID: "com.cloudbees.jenkins.plugins",
@@ -368,16 +369,18 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:cloudbees:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
 			name: "jenkins.io package identified via groupId prefix",
 			p: pkg.Package{
-				Name:     "name",
-				Version:  "3.2",
-				FoundBy:  "some-analyzer",
-				Language: pkg.Java,
-				Type:     pkg.JenkinsPluginPkg,
+				Name:         "name",
+				Version:      "3.2",
+				FoundBy:      "some-analyzer",
+				Language:     pkg.Java,
+				Type:         pkg.JenkinsPluginPkg,
+				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
 					PomProperties: &pkg.PomProperties{
 						GroupID: "io.jenkins.plugins.name.something",
@@ -389,16 +392,19 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:name:something:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:something:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:something:something:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:something:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
 			name: "jenkins.io package identified via groupId",
 			p: pkg.Package{
-				Name:     "name",
-				Version:  "3.2",
-				FoundBy:  "some-analyzer",
-				Language: pkg.Java,
-				Type:     pkg.JenkinsPluginPkg,
+				Name:         "name",
+				Version:      "3.2",
+				FoundBy:      "some-analyzer",
+				Language:     pkg.Java,
+				Type:         pkg.JenkinsPluginPkg,
+				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
 					PomProperties: &pkg.PomProperties{
 						GroupID: "io.jenkins.plugins",
@@ -407,16 +413,18 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
 			name: "jenkins-ci.io package identified via groupId",
 			p: pkg.Package{
-				Name:     "name",
-				Version:  "3.2",
-				FoundBy:  "some-analyzer",
-				Language: pkg.Java,
-				Type:     pkg.JenkinsPluginPkg,
+				Name:         "name",
+				Version:      "3.2",
+				FoundBy:      "some-analyzer",
+				Language:     pkg.Java,
+				Type:         pkg.JenkinsPluginPkg,
+				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
 					PomProperties: &pkg.PomProperties{
 						GroupID: "io.jenkins-ci.plugins",
@@ -425,16 +433,20 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins-ci:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins_ci:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
 			name: "jenkins-ci.org package identified via groupId",
 			p: pkg.Package{
-				Name:     "name",
-				Version:  "3.2",
-				FoundBy:  "some-analyzer",
-				Language: pkg.Java,
-				Type:     pkg.JenkinsPluginPkg,
+				Name:         "name",
+				Version:      "3.2",
+				FoundBy:      "some-analyzer",
+				Language:     pkg.Java,
+				Type:         pkg.JenkinsPluginPkg,
+				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
 					PomProperties: &pkg.PomProperties{
 						GroupID: "org.jenkins-ci.plugins",
@@ -443,6 +455,9 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins-ci:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins_ci:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
