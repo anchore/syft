@@ -357,7 +357,7 @@ func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Packag
 			// 7.6: Package Originator: may have single result for either Person or Organization,
 			//                          or NOASSERTION
 			// Cardinality: optional, one
-			PackageSupplier: nil,
+			PackageSupplier: toPackageOriginator(p),
 
 			PackageOriginator: toPackageOriginator(p),
 
@@ -511,6 +511,21 @@ func toPackageOriginator(p pkg.Package) *spdx.Originator {
 	return &spdx.Originator{
 		Originator:     originator,
 		OriginatorType: kind,
+	}
+}
+
+func toPackageSupplier(p pkg.Package) *spdx.Supplier {
+	// this uses the Originator function for now until
+	// a better distinction can be made for supplier
+	kind, supplier := Originator(p)
+	if kind == "" || supplier == "" {
+		return &spdx.Supplier{
+			Supplier: NOASSERTION,
+		}
+	}
+	return &spdx.Supplier{
+		Supplier:     supplier,
+		SupplierType: kind,
 	}
 }
 
