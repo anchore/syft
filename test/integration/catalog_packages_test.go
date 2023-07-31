@@ -95,6 +95,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.HexPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
+	definedPkgs.Remove(string(pkg.SwiftPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)

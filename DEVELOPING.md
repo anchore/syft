@@ -7,6 +7,25 @@ In order to test and develop in this repo you will need the following dependenci
 - docker
 - make
 
+### Docker settings for getting started
+Make sure you've updated your docker settings so the default docker socket path is available.
+
+Go to:
+
+docker -> settings -> advanced
+
+Make sure:
+
+```
+Allow the default Docker socket to be used
+```
+
+is checked.
+
+Also double check that the docker context being used is the default context. If it is not, run:
+
+`docker context use default`
+
 After cloning the following step can help you get setup:
 1. run `make bootstrap` to download go mod dependencies, create the `/.tmp` dir, and download helper utilities.
 2. run `make` to view the selection of developer commands in the Makefile
@@ -18,6 +37,26 @@ After cloning the following step can help you get setup:
 The main make tasks for common static analysis and testing are `lint`, `format`, `lint-fix`, `unit`, `integration`, and `cli`.
 
 See `make help` for all the current make tasks.
+
+### Internal Artifactory Settings
+
+**Not always applicable**
+
+Some companies have Artifactory setup internally as a solution for sourcing secure dependencies.
+If you're seeing an issue where the unit tests won't run because of the below error then this section might be relevant for your use case.
+
+```
+[ERROR] [ERROR] Some problems were encountered while processing the POMs
+```
+
+If you're dealing with an issue where the unit tests will not pull/build certain java fixtures check some of these settings:
+
+- a `settings.xml` file should be available to help you communicate with your internal artifactory deployment
+- this can be moved to `syft/pkg/cataloger/java/test-fixtures/java-builds/example-jenkins-plugin/` to help build the unit test-fixtures
+- you'll also want to modify the `build-example-jenkins-plugin.sh` to use `settings.xml`
+
+For more information on this setup and troubleshooting see [issue 1895](https://github.com/anchore/syft/issues/1895#issuecomment-1610085319)
+
 
 ## Architecture
 

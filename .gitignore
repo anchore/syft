@@ -2,6 +2,7 @@ go.work
 go.work.sum
 /bin
 /.bin
+/build
 CHANGELOG.md
 VERSION
 /test/results
@@ -19,6 +20,7 @@ VERSION
 *.hpi
 *.zip
 .idea/
+*.iml
 *.log
 .images
 .tmp/

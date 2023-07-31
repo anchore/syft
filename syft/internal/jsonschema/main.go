@@ -39,11 +39,17 @@ func schemaID() jsonschema.ID {
 func assembleTypeContainer(items []any) (any, map[string]string) {
 	structFields := make([]reflect.StructField, len(items))
 	mapping := make(map[string]string, len(items))
+	typesMissingNames := make([]reflect.Type, 0)
 	for i, item := range items {
 		itemType := reflect.TypeOf(item)
 
 		jsonName := packagemetadata.JSONName(item)
 		fieldName := strcase.ToCamel(jsonName)
+
+		if jsonName == "" {
+			typesMissingNames = append(typesMissingNames, itemType)
+			continue
+		}
 
 		mapping[itemType.Name()] = fieldName
 
@@ -51,6 +57,14 @@ func assembleTypeContainer(items []any) (any, map[string]string) {
 			Name: fieldName,
 			Type: itemType,
 		}
+	}
+
+	if len(typesMissingNames) > 0 {
+		fmt.Println("the following types are missing JSON names (manually curated in ./syft/internal/packagemetadata/names.go):")
+		for _, t := range typesMissingNames {
+			fmt.Println("  - ", t.Name())
+		}
+		os.Exit(1)
 	}
 
 	structType := reflect.StructOf(structFields)

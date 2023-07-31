@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_packageURL(t *testing.T) {
+func Test_cocoaPodsPackageURL(t *testing.T) {
 	type args struct {
 		name    string
 		version string
@@ -27,7 +27,7 @@ func Test_packageURL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, packageURL(tt.args.name, tt.args.version))
+			assert.Equal(t, tt.want, cocoaPodsPackageURL(tt.args.name, tt.args.version))
 		})
 	}
 }

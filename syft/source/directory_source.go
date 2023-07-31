@@ -120,6 +120,9 @@ func (s DirectorySource) Describe() Description {
 		if a.Name != "" {
 			name = a.Name
 		}
+		if a.Version != "" {
+			version = a.Version
+		}
 	}
 	return Description{
 		ID:      string(s.id),

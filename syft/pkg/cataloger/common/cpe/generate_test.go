@@ -359,6 +359,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:cloudbees:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -380,6 +381,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:name:something:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:something:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:something:something:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:something:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -398,6 +401,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -416,6 +420,9 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins-ci:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins_ci:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -434,6 +441,9 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins-ci:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:jenkins_ci:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -951,6 +961,36 @@ func Test_addSeparatorVariations(t *testing.T) {
 			val := newFieldCandidateSet(test.input...)
 			addDelimiterVariations(val)
 			assert.ElementsMatch(t, test.expected, val.values())
+		})
+	}
+}
+
+func TestDictionaryFindIsWired(t *testing.T) {
+
+	tests := []struct {
+		name       string
+		pkg        pkg.Package
+		want       string
+		wantExists bool
+	}{
+		{
+			name: "sanity check that cpe data is wired up",
+			pkg: pkg.Package{
+				Name:    "openssl",
+				Version: "1.0.2k",
+				Type:    pkg.GemPkg,
+			},
+			want: "cpe:2.3:a:ruby-lang:openssl:1.0.2k:*:*:*:*:*:*:*",
+			// without the cpe data wired up, this would be empty (generation also creates cpe:2.3:a:openssl:openssl:1.0.2k:*:*:*:*:*:*:*)
+			wantExists: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotExists := DictionaryFind(tt.pkg)
+
+			assert.Equal(t, tt.want, got.BindToFmtString())
+			assert.Equal(t, tt.wantExists, gotExists)
 		})
 	}
 }

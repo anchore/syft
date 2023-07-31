@@ -5,6 +5,7 @@ import (
 
 	"golang.org/x/exp/slices"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -77,11 +78,18 @@ func (s SBOM) RelationshipsForPackage(p pkg.Package, rt ...artifact.Relationship
 
 	var relationships []artifact.Relationship
 	for _, relationship := range s.Relationships {
-		// check if the relationship is one we're searching for; rt is inclusive
-		idx := slices.IndexFunc(rt, func(r artifact.RelationshipType) bool { return relationship.Type == r })
-		if relationship.From.ID() == p.ID() && idx != -1 {
-			relationships = append(relationships, relationship)
+		if relationship.From == nil || relationship.To == nil {
+			log.Debugf("relationship has nil edge, skipping: %#v", relationship)
+			continue
 		}
+		if relationship.From.ID() != p.ID() {
+			continue
+		}
+		// check if the relationship is one we're searching for; rt is inclusive
+		if !slices.ContainsFunc(rt, func(r artifact.RelationshipType) bool { return relationship.Type == r }) {
+			continue
+		}
+		relationships = append(relationships, relationship)
 	}
 
 	return relationships

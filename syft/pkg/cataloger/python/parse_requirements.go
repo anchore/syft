@@ -7,6 +7,10 @@ import (
 	"strings"
 	"unicode"
 
+	pep440 "github.com/aquasecurity/go-pep440-version"
+	"github.com/mitchellh/mapstructure"
+
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -14,23 +18,99 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var _ generic.Parser = parseRequirementsTxt
+const (
+	// given the example requirement:
+	//    requests[security] == 2.8.* ; python_version < "2.7" and sys_platform == "linux"  \
+	//      --hash=sha256:a9b3aaa1904eeb78e32394cd46c6f37ac0fb4af6dc488daa58971bdc7d7fcaf3 \
+	//      --hash=sha256:e9535b8c84dc9571a48999094fda7f33e63c3f1b74f3e5f3ac0105a58405bb65  # some comment
 
-var (
-	extrasRegex = regexp.MustCompile(`\[.*\]`)
-	urlRegex    = regexp.MustCompile("@.*git.*")
+	// namePattern matches: requests[security]
+	namePattern = `(?P<name>\w[\w\[\],\s-_]+)`
+
+	// versionConstraintPattern matches: == 2.8.*
+	versionConstraintPattern = `(?P<versionConstraint>([^\S\r\n]*[~=>!<]+\s*[0-9a-zA-Z.*]+[^\S\r\n]*,?)+)?(@[^\S\r\n]*(?P<url>[^;]*))?`
+
+	// markersPattern matches: python_version < "2.7" and sys_platform == "linux"
+	markersPattern = `(;(?P<markers>.*))?`
+
+	// hashesPattern matches: --hash=sha256:a9b3aaa1904eeb78e32394cd46c6f37ac0fb4af6dc488daa58971bdc7d7fcaf3 --hash=sha256:e9535b8c84dc9571a48999094fda7f33e63c3f1b74f3e5f3ac0105a58405bb65
+	hashesPattern = `(?P<hashes>([^\S\r\n]*--hash=[a-zA-Z0-9:]+)+)?`
+
+	// whiteSpaceNoNewlinePattern matches: (any whitespace character except for \r and \n)
+	whiteSpaceNoNewlinePattern = `[^\S\r\n]*`
 )
+
+var requirementPattern = regexp.MustCompile(
+	`^` +
+		whiteSpaceNoNewlinePattern +
+		namePattern +
+		whiteSpaceNoNewlinePattern +
+		versionConstraintPattern +
+		markersPattern +
+		hashesPattern,
+)
+
+type unprocessedRequirement struct {
+	Name              string `mapstructure:"name"`
+	VersionConstraint string `mapstructure:"versionConstraint"`
+	Markers           string `mapstructure:"markers"`
+	URL               string `mapstructure:"url"`
+	Hashes            string `mapstructure:"hashes"`
+}
+
+func newRequirement(raw string) *unprocessedRequirement {
+	var r unprocessedRequirement
+
+	values := internal.MatchNamedCaptureGroups(requirementPattern, raw)
+
+	if err := mapstructure.Decode(values, &r); err != nil {
+		return nil
+	}
+
+	r.Name = strings.TrimSpace(r.Name)
+	r.VersionConstraint = strings.TrimSpace(r.VersionConstraint)
+	r.Markers = strings.TrimSpace(r.Markers)
+	r.URL = strings.TrimSpace(r.URL)
+	r.Hashes = strings.TrimSpace(r.Hashes)
+
+	if r.Name == "" {
+		return nil
+	}
+
+	return &r
+}
+
+type requirementsParser struct {
+	guessUnpinnedRequirements bool
+}
+
+func newRequirementsParser(cfg CatalogerConfig) requirementsParser {
+	return requirementsParser{
+		guessUnpinnedRequirements: cfg.GuessUnpinnedRequirements,
+	}
+}
 
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
 // specific version.
-func parseRequirementsTxt(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (rp requirementsParser) parseRequirementsTxt(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 
 	scanner := bufio.NewScanner(reader)
+	var lastLine string
 	for scanner.Scan() {
-		line := scanner.Text()
-		rawLineNoComments := removeTrailingComment(line)
-		line = trimRequirementsTxtLine(line)
+		line := trimRequirementsTxtLine(scanner.Text())
+
+		if lastLine != "" {
+			line = lastLine + line
+			lastLine = ""
+		}
+
+		// remove line continuations... smashes the file into a single line
+		if strings.HasSuffix(line, "\\") {
+			// this line is a continuation of the previous line
+			lastLine += strings.TrimSuffix(line, "\\")
+			continue
+		}
 
 		if line == "" {
 			// nothing to parse on this line
@@ -42,35 +122,20 @@ func parseRequirementsTxt(_ file.Resolver, _ *generic.Environment, reader file.L
 			continue
 		}
 
-		if !strings.Contains(line, "==") {
-			// a package without a version, or a range (unpinned) which does not tell us
-			// exactly what will be installed.
-			continue
-		}
-
-		// parse a new requirement
-		parts := strings.Split(line, "==")
-		if len(parts) < 2 {
-			// this should never happen, but just in case
+		req := newRequirement(line)
+		if req == nil {
 			log.WithFields("path", reader.RealPath).Warnf("unable to parse requirements.txt line: %q", line)
 			continue
 		}
 
-		// check if the version contains hash declarations on the same line
-		version, _ := parseVersionAndHashes(parts[1])
+		name := removeExtras(req.Name)
+		version := parseVersion(req.VersionConstraint, rp.guessUnpinnedRequirements)
 
-		name := strings.TrimSpace(parts[0])
-		version = strings.TrimFunc(version, func(r rune) bool {
-			return !unicode.IsLetter(r) && !unicode.IsNumber(r)
-		})
-
-		// TODO: Update to support more than only ==
-		versionConstraint := fmt.Sprintf("== %s", version)
-
-		if name == "" || version == "" {
-			log.WithFields("path", reader.RealPath).Debugf("found empty package in requirements.txt line: %q", line)
+		if version == "" {
+			log.WithFields("path", reader.RealPath).Tracef("unable to determine package version in requirements.txt line: %q", line)
 			continue
 		}
+
 		packages = append(
 			packages,
 			newPackageForRequirementsWithMetadata(
@@ -78,10 +143,10 @@ func parseRequirementsTxt(_ file.Resolver, _ *generic.Environment, reader file.L
 				version,
 				pkg.PythonRequirementsMetadata{
 					Name:              name,
-					Extras:            parseExtras(rawLineNoComments),
-					VersionConstraint: versionConstraint,
-					URL:               parseURL(rawLineNoComments),
-					Markers:           parseMarkers(rawLineNoComments),
+					Extras:            parseExtras(req.Name),
+					VersionConstraint: req.VersionConstraint,
+					URL:               parseURL(req.URL),
+					Markers:           req.Markers,
 				},
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
@@ -95,13 +160,68 @@ func parseRequirementsTxt(_ file.Resolver, _ *generic.Environment, reader file.L
 	return packages, nil, nil
 }
 
-func parseVersionAndHashes(version string) (string, []string) {
-	parts := strings.Split(version, "--hash=")
-	if len(parts) < 2 {
-		return version, nil
+func parseVersion(version string, guessFromConstraint bool) string {
+	if isPinnedConstraint(version) {
+		return strings.TrimSpace(strings.ReplaceAll(version, "==", ""))
 	}
 
-	return parts[0], parts[1:]
+	if guessFromConstraint {
+		return guessVersion(version)
+	}
+
+	return ""
+}
+
+func isPinnedConstraint(version string) bool {
+	return strings.Contains(version, "==") && !strings.ContainsAny(version, "*,<>!")
+}
+
+func guessVersion(constraint string) string {
+	// handle "2.8.*" -> "2.8.0"
+	constraint = strings.ReplaceAll(constraint, "*", "0")
+	if isPinnedConstraint(constraint) {
+		return strings.TrimSpace(strings.ReplaceAll(constraint, "==", ""))
+	}
+
+	constraints := strings.Split(constraint, ",")
+	filteredVersions := map[string]struct{}{}
+	for _, part := range constraints {
+		if strings.Contains(part, "!=") {
+			parts := strings.Split(part, "!=")
+			filteredVersions[strings.TrimSpace(parts[1])] = struct{}{}
+		}
+	}
+
+	var closestVersion *pep440.Version
+	for _, part := range constraints {
+		// ignore any parts that do not have '=' in them, >,<,~ are not valid semver
+		parts := strings.SplitAfter(part, "=")
+		if len(parts) < 2 {
+			continue
+		}
+		version, err := pep440.Parse(strings.TrimSpace(parts[1]))
+		if err != nil {
+			// ignore any parts that are not valid semver
+			continue
+		}
+		if _, ok := filteredVersions[version.String()]; ok {
+			continue
+		}
+
+		if strings.Contains(part, "==") {
+			parts := strings.Split(part, "==")
+			return strings.TrimSpace(parts[1])
+		}
+
+		if closestVersion == nil || version.GreaterThan(*closestVersion) {
+			closestVersion = &version
+		}
+	}
+	if closestVersion == nil {
+		return ""
+	}
+
+	return closestVersion.String()
 }
 
 // trimRequirementsTxtLine removes content from the given requirements.txt line
@@ -109,8 +229,6 @@ func parseVersionAndHashes(version string) (string, []string) {
 func trimRequirementsTxtLine(line string) string {
 	line = strings.TrimSpace(line)
 	line = removeTrailingComment(line)
-	line = removeEnvironmentMarkers(line)
-	line = checkForRegex(line) // remove extras and url from line if found
 
 	return line
 }
@@ -127,57 +245,29 @@ func removeTrailingComment(line string) string {
 	return parts[0]
 }
 
-// removeEnvironmentMarkers removes any instances of environment markers (delimited by ';') from the line.
-// For more information, see https://www.python.org/dev/peps/pep-0508/#environment-markers.
-func removeEnvironmentMarkers(line string) string {
-	parts := strings.SplitN(line, ";", 2)
-	if len(parts) < 2 {
-		// there aren't any environment markers
-
-		return line
+func removeExtras(packageName string) string {
+	start := strings.Index(packageName, "[")
+	if start == -1 {
+		return packageName
 	}
 
-	return parts[0]
+	return strings.TrimSpace(packageName[:start])
 }
 
 func parseExtras(packageName string) []string {
-	if extrasRegex.MatchString(packageName) {
-		// Remove square brackets
-		extras := strings.TrimFunc(extrasRegex.FindString(packageName), func(r rune) bool {
-			return !unicode.IsLetter(r) && !unicode.IsNumber(r)
-		})
+	var extras []string
 
-		// Remove any additional whitespace
-		extras = strings.ReplaceAll(extras, " ", "")
-
-		return strings.Split(extras, ",")
+	start := strings.Index(packageName, "[")
+	stop := strings.Index(packageName, "]")
+	if start == -1 || stop == -1 {
+		return extras
 	}
 
-	return []string{}
-}
-
-func parseMarkers(line string) map[string]string {
-	markers := map[string]string{}
-	parts := strings.SplitN(line, ";", 2)
-
-	if len(parts) == 2 {
-		splittableMarkers := parts[1]
-
-		for _, combineString := range []string{" or ", " and "} {
-			splittableMarkers = strings.TrimSpace(
-				strings.ReplaceAll(splittableMarkers, combineString, ","),
-			)
-		}
-
-		splittableMarkers = strings.TrimSpace(splittableMarkers)
-
-		for _, mark := range strings.Split(splittableMarkers, ",") {
-			markparts := strings.Split(mark, " ")
-			markers[markparts[0]] = strings.Join(markparts[1:], " ")
-		}
+	extraString := packageName[start+1 : stop]
+	for _, extra := range strings.Split(extraString, ",") {
+		extras = append(extras, strings.TrimSpace(extra))
 	}
-
-	return markers
+	return extras
 }
 
 func parseURL(line string) string {
@@ -203,20 +293,4 @@ func parseURL(line string) string {
 	}
 
 	return ""
-}
-
-// function to check a string for all possilbe regex expressions, replacing it if found
-func checkForRegex(stringToCheck string) string {
-	stringToReturn := stringToCheck
-
-	for _, r := range []*regexp.Regexp{
-		urlRegex,
-		extrasRegex,
-	} {
-		if r.MatchString(stringToCheck) {
-			stringToReturn = r.ReplaceAllString(stringToCheck, "")
-		}
-	}
-
-	return stringToReturn
 }
