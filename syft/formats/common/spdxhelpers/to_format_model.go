@@ -240,9 +240,11 @@ func toRootPackage(s source.Description) *spdx.Package {
 		PackageSPDXIdentifier:     spdx.ElementID(SanitizeElementID(fmt.Sprintf("DocumentRoot-%s-%s", prefix, name))),
 		PackageVersion:            version,
 		PackageChecksums:          checksums,
-		PackageSupplier:           nil,
 		PackageExternalReferences: nil,
 		PrimaryPackagePurpose:     purpose,
+		PackageSupplier: &spdx.Supplier{
+			Supplier: NOASSERTION,
+		},
 	}
 
 	if purl != nil {
