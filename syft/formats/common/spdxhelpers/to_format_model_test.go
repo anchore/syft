@@ -51,12 +51,14 @@ func Test_toFormatModel(t *testing.T) {
 				SPDXVersion:    spdx.Version,
 				DataLicense:    spdx.DataLicense,
 				DocumentName:   "alpine",
-
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
 						PackageName:           "pkg-1",
 						PackageVersion:        "version-1",
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
 					},
 					{
 						PackageSPDXIdentifier: "DocumentRoot-Image-alpine",
@@ -70,6 +72,9 @@ func Test_toFormatModel(t *testing.T) {
 								RefType:  "purl",
 								Locator:  "pkg:oci/alpine@sha256:d34db33f?arch=&tag=latest",
 							},
+						},
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
 						},
 					},
 				},
@@ -122,12 +127,18 @@ func Test_toFormatModel(t *testing.T) {
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
 						PackageName:           "pkg-1",
 						PackageVersion:        "version-1",
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
 					},
 					{
 						PackageSPDXIdentifier: "DocumentRoot-Directory-some-directory",
 						PackageName:           "some/directory",
 						PackageVersion:        "",
 						PrimaryPackagePurpose: "FILE",
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
 					},
 				},
 				Relationships: []*spdx.Relationship{
@@ -180,12 +191,14 @@ func Test_toFormatModel(t *testing.T) {
 				SPDXVersion:    spdx.Version,
 				DataLicense:    spdx.DataLicense,
 				DocumentName:   "path/to/some.file",
-
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
 						PackageName:           "pkg-1",
 						PackageVersion:        "version-1",
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
 					},
 					{
 						PackageSPDXIdentifier: "DocumentRoot-File-path-to-some.file",
@@ -193,6 +206,9 @@ func Test_toFormatModel(t *testing.T) {
 						PackageVersion:        "sha256:d34db33f",
 						PrimaryPackagePurpose: "FILE",
 						PackageChecksums:      []spdx.Checksum{{Algorithm: "SHA256", Value: "d34db33f"}},
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
 					},
 				},
 				Relationships: []*spdx.Relationship{

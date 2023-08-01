@@ -12,6 +12,7 @@ Created: redacted
 
 PackageName: foobar/baz
 SPDXID: SPDXRef-DocumentRoot-Directory-foobar-baz
+PackageSupplier: NOASSERTION
 PrimaryPackagePurpose: FILE
 FilesAnalyzed: false
 
@@ -19,6 +20,7 @@ FilesAnalyzed: false
 
 PackageName: @at-sign
 SPDXID: SPDXRef-Package--at-sign-3732f7a5679bdec4
+PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 
@@ -30,6 +32,7 @@ PackageCopyrightText: NOASSERTION
 
 PackageName: some/slashes
 SPDXID: SPDXRef-Package-some-slashes-1345166d4801153b
+PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 
@@ -41,6 +44,7 @@ PackageCopyrightText: NOASSERTION
 
 PackageName: under_scores
 SPDXID: SPDXRef-Package-under-scores-290d5c77210978c1
+PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from the following paths: 

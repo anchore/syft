@@ -13,6 +13,7 @@ Created: redacted
 PackageName: user-image-input
 SPDXID: SPDXRef-DocumentRoot-Image-user-image-input
 PackageVersion: sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368
+PackageSupplier: NOASSERTION
 PrimaryPackagePurpose: CONTAINER
 FilesAnalyzed: false
 PackageChecksum: SHA256: 2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368
@@ -23,6 +24,7 @@ ExternalRef: PACKAGE-MANAGER purl pkg:oci/user-image-input@sha256:2731251dc34951
 PackageName: package-2
 SPDXID: SPDXRef-Package-deb-package-2-958443e2d9304af4
 PackageVersion: 2.0.1
+PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from DPKG DB: /somefile-2.txt
@@ -37,6 +39,7 @@ ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
 PackageName: package-1
 SPDXID: SPDXRef-Package-python-package-1-125840abc1c66dd7
 PackageVersion: 1.0.1
+PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from installed python package manifest file: /somefile-1.txt
