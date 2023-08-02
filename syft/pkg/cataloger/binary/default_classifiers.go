@@ -258,9 +258,9 @@ var defaultClassifiers = []classifier{
 		Class:    "nginx-binary",
 		FileGlob: "**/nginx",
 		EvidenceMatcher: evidenceMatchers(
-			// [NUL]nginx version: nginx/1.25.1
+			// [NUL]nginx version: nginx/1.25.1 - fetches '1.25.1'
 			fileContentsVersionMatcher(`(?m)(\x00|\?)nginx version: nginx\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:\+\d+)?(?:-\d+)?)`),
-			// [NUL]nginx version: openresty/1.21.4.1
+			// [NUL]nginx version: openresty/1.21.4.1 - fetches 'openresty/1.21.4.1'
 			fileContentsVersionMatcher(`(?m)(\x00|\?)nginx version: (?P<version>[a-z]*\/[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?(?:\+\d+)?(?:-\d+)?)`),
 		),
 		Package: "nginx",
