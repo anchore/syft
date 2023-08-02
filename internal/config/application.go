@@ -110,11 +110,6 @@ func (cfg *Application) LoadAllValues(v *viper.Viper, configPath string) error {
 	// load default config values into viper
 	loadDefaultValues(v)
 
-	// load environment variables
-	v.SetEnvPrefix(internal.ApplicationName)
-	v.AllowEmptyEnv(true)
-	v.AutomaticEnv()
-
 	// unmarshal fully populated viper object onto config
 	err := v.Unmarshal(cfg)
 	if err != nil {
