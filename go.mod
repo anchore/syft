@@ -51,7 +51,7 @@ require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/anchore/bubbly v0.0.0-20230712165553-812110ab0a10
+	github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461
 	github.com/anchore/clio v0.0.0-20230602170917-e747e60c4aa0
 	github.com/anchore/go-logger v0.0.0-20230531193951-db5ae83e7dbe
 	github.com/anchore/stereoscope v0.0.0-20230727211946-d1f3d766295e
