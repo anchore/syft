@@ -42,7 +42,7 @@ require (
 	github.com/wagoodman/go-progress v0.0.0-20230301185719-21920a456ad5
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/mod v0.12.0
-	golang.org/x/net v0.12.0
+	golang.org/x/net v0.13.0
 	golang.org/x/term v0.10.0
 	gopkg.in/yaml.v2 v2.4.0
 )
