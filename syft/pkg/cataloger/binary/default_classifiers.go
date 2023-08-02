@@ -254,6 +254,22 @@ var defaultClassifiers = []classifier{
 		PURL:    mustPURL("pkg:golang/github.com/hashicorp/consul@version"),
 		CPEs:    singleCPE("cpe:2.3:a:hashicorp:consul:*:*:*:*:*:*:*:*"),
 	},
+	{
+		Class:    "nginx-binary",
+		FileGlob: "**/nginx",
+		EvidenceMatcher: evidenceMatchers(
+			// [NUL]nginx version: nginx/1.25.1
+			fileContentsVersionMatcher(`(?m)(\x00|\?)nginx version: nginx\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:\+\d+)?(?:-\d+)?)`),
+			// [NUL]nginx version: openresty/1.21.4.1
+			fileContentsVersionMatcher(`(?m)(\x00|\?)nginx version: (?P<version>[a-z]*\/[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?(?:\+\d+)?(?:-\d+)?)`),
+		),
+		Package: "nginx",
+		PURL:    mustPURL("pkg:generic/nginx@version"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*"),
+		},
+	},
 }
 
 // in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]
