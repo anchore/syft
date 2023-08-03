@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -549,6 +550,61 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			); diff != "" {
 				t.Fatalf("packages do not match:\n%s", diff)
 			}
+		})
+	}
+}
+
+func Test_purlValue(t *testing.T) {
+	tests := []struct {
+		purl     packageurl.PackageURL
+		expected string
+	}{
+		{
+			purl:     packageurl.PackageURL{},
+			expected: "",
+		},
+		{
+			purl: packageurl.PackageURL{
+				Name:    "name",
+				Version: "version",
+			},
+			expected: "",
+		},
+		{
+			purl: packageurl.PackageURL{
+				Type:    "typ",
+				Version: "version",
+			},
+			expected: "",
+		},
+		{
+			purl: packageurl.PackageURL{
+				Type:    "typ",
+				Name:    "name",
+				Version: "version",
+			},
+			expected: "pkg:typ/name@version",
+		},
+		{
+			purl: packageurl.PackageURL{
+				Type:    "typ",
+				Name:    "name",
+				Version: "version",
+				Qualifiers: packageurl.Qualifiers{
+					{
+						Key:   "q",
+						Value: "v",
+					},
+				},
+			},
+			expected: "pkg:typ/name@version?q=v",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.purl.String(), func(t *testing.T) {
+			got := purlValue(test.purl)
+			require.Equal(t, test.expected, got)
 		})
 	}
 }
