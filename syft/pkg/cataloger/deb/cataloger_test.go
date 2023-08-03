@@ -168,6 +168,8 @@ func TestCataloger_Globs(t *testing.T) {
 			expected: []string{
 				"var/lib/dpkg/status",
 				"var/lib/dpkg/status.d/pkg-1.0",
+				"usr/lib/opkg/status",
+				"usr/lib/opkg/info/pkg-1.0",
 			},
 		},
 	}
