@@ -57,7 +57,16 @@ func parseGradleLockfile(_ file.Resolver, _ *generic.Environment, reader file.Lo
 			Language:     pkg.Java,
 			Type:         pkg.JavaPkg,
 			MetadataType: pkg.JavaMetadataType,
+			Metadata: pkg.JavaMetadata{
+				PomProject: &pkg.PomProject{
+					GroupID:    dep.Group,
+					ArtifactID: dep.Name,
+					Version:    dep.Version,
+					Name:       dep.Name,
+				},
+			},
 		}
+		mappedPkg.SetID()
 		pkgs = append(pkgs, mappedPkg)
 	}
 
