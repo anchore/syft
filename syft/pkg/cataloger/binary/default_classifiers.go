@@ -257,11 +257,10 @@ var defaultClassifiers = []classifier{
 	{
 		Class:    "nginx-binary",
 		FileGlob: "**/nginx",
-		EvidenceMatcher: evidenceMatchers(
+		EvidenceMatcher: fileContentsVersionMatcher(
 			// [NUL]nginx version: nginx/1.25.1 - fetches '1.25.1'
-			fileContentsVersionMatcher(`(?m)(\x00|\?)nginx version: nginx\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:\+\d+)?(?:-\d+)?)`),
-			// [NUL]nginx version: openresty/1.21.4.1 - fetches 'openresty/1.21.4.1'
-			fileContentsVersionMatcher(`(?m)(\x00|\?)nginx version: (?P<version>[a-z]*\/[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?(?:\+\d+)?(?:-\d+)?)`),
+			// [NUL]nginx version: openresty/1.21.4.1 - fetches '1.21.4' as this is the nginx version part
+			`(?m)(\x00|\?)nginx version: [^\/]+\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:\+\d+)?(?:-\d+)?)`,
 		),
 		Package: "nginx",
 		PURL:    mustPURL("pkg:generic/nginx@version"),
