@@ -467,11 +467,11 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 }
 
 func purlValue(purl packageurl.PackageURL) string {
-	p := purl.String()
-	if p == "pkg:/" {
+	val := purl.String()
+	if _, err := packageurl.FromString(val); err != nil {
 		return ""
 	}
-	return p
+	return val
 }
 
 func parseSPDXLicenses(p *spdx.Package) []pkg.License {
