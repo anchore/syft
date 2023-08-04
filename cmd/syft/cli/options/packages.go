@@ -2,117 +2,166 @@ package options
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
+	"github.com/iancoleman/strcase"
+	"github.com/mitchellh/go-homedir"
 
-	"github.com/anchore/syft/syft/formats"
-	"github.com/anchore/syft/syft/formats/table"
+	"github.com/anchore/fangs"
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger"
+	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
+	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
+	pythonCataloger "github.com/anchore/syft/syft/pkg/cataloger/python"
 	"github.com/anchore/syft/syft/source"
 )
 
-type PackagesOptions struct {
-	Scope              string
-	Output             []string
-	OutputTemplatePath string
-	File               string
-	Platform           string
-	Exclude            []string
-	Catalogers         []string
-	SourceName         string
-	SourceVersion      string
-	BasePath           string
+type Packages struct {
+	Catalogers             []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
+	Package                pkg                `yaml:"package" json:"package" mapstructure:"package"`
+	Golang                 golang             `yaml:"golang" json:"golang" mapstructure:"golang"`
+	LinuxKernel            linuxKernel        `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
+	Python                 python             `yaml:"python" json:"python" mapstructure:"python"`
+	FileMetadata           fileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
+	FileClassification     fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
+	FileContents           fileContents       `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
+	Secrets                secrets            `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
+	Registry               registry           `yaml:"registry" json:"registry" mapstructure:"registry"`
+	Exclusions             []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
+	Platform               string             `yaml:"platform" json:"platform" mapstructure:"platform"`
+	Name                   string             `yaml:"name" json:"name" mapstructure:"name"`
+	Source                 sourceCfg          `yaml:"source" json:"source" mapstructure:"source"`
+	Parallelism            int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"`                                           // the number of catalog workers to run in parallel
+	DefaultImagePullSource string             `yaml:"default-image-pull-source" json:"default-image-pull-source" mapstructure:"default-image-pull-source"` // specify default image pull source
+	BasePath               string             `yaml:"base-path" json:"base-path" mapstructure:"base-path"`                                                 // specify base path for all file paths
 }
 
-var _ Interface = (*PackagesOptions)(nil)
+var _ interface {
+	fangs.FlagAdder
+	fangs.PostLoader
+} = (*Packages)(nil)
 
-func (o *PackagesOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
-	cmd.Flags().StringVarP(&o.Scope, "scope", "s", cataloger.DefaultSearchConfig().Scope.String(),
-		fmt.Sprintf("selection of layers to catalog, options=%v", source.AllScopes))
+func PackagesDefault() Packages {
+	return Packages{
+		Package:            pkgDefault(),
+		Golang:             golangDefault(),
+		LinuxKernel:        linuxKernelDefault(),
+		Python:             pythonDefault(),
+		FileMetadata:       fileMetadataDefault(),
+		FileClassification: fileClassificationDefault(),
+		FileContents:       fileContentsDefault(),
+		Secrets:            secretsDefault(),
+		Registry:           registryDefault(),
+		Source:             sourceCfgDefault(),
+		Parallelism:        1,
+	}
+}
 
-	cmd.Flags().StringArrayVarP(&o.Output, "output", "o", []string{string(table.ID)},
-		fmt.Sprintf("report output format, options=%v", formats.AllIDs()))
+func (cfg *Packages) AddFlags(flags fangs.FlagSet) {
+	var validScopeValues []string
+	for _, scope := range source.AllScopes {
+		validScopeValues = append(validScopeValues, strcase.ToDelimited(string(scope), '-'))
+	}
+	flags.StringVarP(&cfg.Package.Cataloger.Scope, "scope", "s",
+		fmt.Sprintf("selection of layers to catalog, options=%v", validScopeValues))
 
-	cmd.Flags().StringVarP(&o.File, "file", "", "",
-		"file to write the default report output to (default is STDOUT)")
-
-	cmd.Flags().StringVarP(&o.OutputTemplatePath, "template", "t", "",
-		"specify the path to a Go template file")
-
-	cmd.Flags().StringVarP(&o.Platform, "platform", "", "",
+	flags.StringVarP(&cfg.Platform, "platform", "",
 		"an optional platform specifier for container image sources (e.g. 'linux/arm64', 'linux/arm64/v8', 'arm64', 'linux')")
 
-	cmd.Flags().StringArrayVarP(&o.Exclude, "exclude", "", nil,
+	flags.StringArrayVarP(&cfg.Exclusions, "exclude", "",
 		"exclude paths from being scanned using a glob expression")
 
-	cmd.Flags().StringArrayVarP(&o.Catalogers, "catalogers", "", nil,
+	flags.StringArrayVarP(&cfg.Catalogers, "catalogers", "",
 		"enable one or more package catalogers")
 
-	cmd.Flags().StringVarP(&o.SourceName, "name", "", "",
-		"set the name of the target being analyzed")
-	cmd.Flags().Lookup("name").Deprecated = "use: source-name"
-
-	cmd.Flags().StringVarP(&o.SourceName, "source-name", "", "",
+	flags.StringVarP(&cfg.Source.Name, "name", "",
 		"set the name of the target being analyzed")
 
-	cmd.Flags().StringVarP(&o.SourceVersion, "source-version", "", "",
+	if pfp, ok := flags.(fangs.PFlagSetProvider); ok {
+		flagSet := pfp.PFlagSet()
+		flagSet.Lookup("name").Deprecated = "use: source-name"
+	}
+
+	flags.StringVarP(&cfg.Source.Name, "source-name", "",
 		"set the name of the target being analyzed")
 
-	cmd.Flags().StringVarP(&o.BasePath, "base-path", "", "",
+	flags.StringVarP(&cfg.Source.Version, "source-version", "",
+		"set the name of the target being analyzed")
+
+	flags.StringVarP(&cfg.BasePath, "base-path", "",
 		"base directory for scanning, no links will be followed above this directory, and all paths will be reported relative to this directory")
-
-	return bindPackageConfigOptions(cmd.Flags(), v)
 }
 
-//nolint:revive
-func bindPackageConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
-	// Formatting & Input options //////////////////////////////////////////////
+func (cfg *Packages) PostLoad() error {
+	// parse options on this struct
+	var catalogers []string
+	for _, c := range cfg.Catalogers {
+		for _, f := range strings.Split(c, ",") {
+			catalogers = append(catalogers, strings.TrimSpace(f))
+		}
+	}
+	sort.Strings(catalogers)
+	cfg.Catalogers = catalogers
 
-	if err := v.BindPFlag("package.cataloger.scope", flags.Lookup("scope")); err != nil {
+	if err := checkDefaultSourceValues(cfg.DefaultImagePullSource); err != nil {
 		return err
 	}
 
-	if err := v.BindPFlag("file", flags.Lookup("file")); err != nil {
-		return err
-	}
-
-	if err := v.BindPFlag("exclude", flags.Lookup("exclude")); err != nil {
-		return err
-	}
-
-	if err := v.BindPFlag("catalogers", flags.Lookup("catalogers")); err != nil {
-		return err
-	}
-
-	if err := v.BindPFlag("name", flags.Lookup("name")); err != nil {
-		return err
-	}
-
-	if err := v.BindPFlag("source.name", flags.Lookup("source-name")); err != nil {
-		return err
-	}
-
-	if err := v.BindPFlag("source.version", flags.Lookup("source-version")); err != nil {
-		return err
-	}
-
-	if err := v.BindPFlag("output", flags.Lookup("output")); err != nil {
-		return err
-	}
-
-	if err := v.BindPFlag("output-template-path", flags.Lookup("template")); err != nil {
-		return err
-	}
-
-	if err := v.BindPFlag("platform", flags.Lookup("platform")); err != nil {
-		return err
-	}
-
-	if err := v.BindPFlag("base-path", flags.Lookup("base-path")); err != nil {
-		return err
+	if cfg.Name != "" {
+		log.Warnf("name parameter is deprecated. please use: source-name. name will be removed in a future version")
+		if cfg.Source.Name == "" {
+			cfg.Source.Name = cfg.Name
+		}
 	}
 
 	return nil
+}
+
+func (cfg Packages) ToCatalogerConfig() cataloger.Config {
+	return cataloger.Config{
+		Search: cataloger.SearchConfig{
+			IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
+			IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
+			Scope:                    cfg.Package.Cataloger.SourceScope(),
+		},
+		Catalogers:  cfg.Catalogers,
+		Parallelism: cfg.Parallelism,
+		Golang: golangCataloger.NewGoCatalogerOpts().
+			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
+			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
+			WithSearchRemoteLicenses(cfg.Golang.SearchRemoteLicenses).
+			WithProxy(cfg.Golang.Proxy).
+			WithNoProxy(cfg.Golang.NoProxy),
+		LinuxKernel: kernel.LinuxCatalogerConfig{
+			CatalogModules: cfg.LinuxKernel.CatalogModules,
+		},
+		Python: pythonCataloger.CatalogerConfig{
+			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
+		},
+	}
+}
+
+var validDefaultSourceValues = []string{"registry", "docker", "podman", ""}
+
+func checkDefaultSourceValues(source string) error {
+	validValues := internal.NewStringSet(validDefaultSourceValues...)
+	if !validValues.Contains(source) {
+		validValuesString := strings.Join(validDefaultSourceValues, ", ")
+		return fmt.Errorf("%s is not a valid default source; please use one of the following: %s''", source, validValuesString)
+	}
+
+	return nil
+}
+
+func expandFilePath(file string) (string, error) {
+	if file != "" {
+		expandedPath, err := homedir.Expand(file)
+		if err != nil {
+			return "", fmt.Errorf("unable to expand file path=%q: %w", file, err)
+		}
+		file = expandedPath
+	}
+	return file, nil
 }

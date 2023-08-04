@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -44,7 +43,7 @@ func DocumentNamespace(name string, src source.Description) string {
 	u := url.URL{
 		Scheme: "https",
 		Host:   "anchore.com",
-		Path:   path.Join(internal.ApplicationName, identifier),
+		Path:   path.Join(src.Name, identifier),
 	}
 
 	return u.String()

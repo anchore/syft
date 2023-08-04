@@ -6,12 +6,12 @@ package event
 
 import (
 	"github.com/wagoodman/go-partybus"
-
-	"github.com/anchore/syft/internal"
 )
 
 const (
-	typePrefix    = internal.ApplicationName
+	// FIXME
+	// typePrefix    = internal.ApplicationName
+	typePrefix    = "syft"
 	cliTypePrefix = typePrefix + "-cli"
 
 	// Events from the syft library

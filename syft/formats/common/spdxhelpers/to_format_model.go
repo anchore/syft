@@ -136,7 +136,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 					CreatorType: "Organization",
 				},
 				{
-					Creator:     internal.ApplicationName + "-" + s.Descriptor.Version,
+					Creator:     s.Descriptor.Name + "-" + s.Descriptor.Version,
 					CreatorType: "Tool",
 				},
 			},

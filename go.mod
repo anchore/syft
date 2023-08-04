@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/acobaugh/osrelease v0.1.0
-	github.com/adrg/xdg v0.4.0
+	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
@@ -30,12 +30,12 @@ require (
 	// pinned to pull in 386 arch fix: https://github.com/scylladb/go-set/commit/cc7b2070d91ebf40d233207b633e28f5bd8f03a5
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sergi/go-diff v1.3.1
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spdx/tools-golang v0.5.3
 	github.com/spf13/afero v1.9.5
 	github.com/spf13/cobra v1.7.0
-	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.16.0
+	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/viper v1.16.0 // indirect
 	github.com/stretchr/testify v1.8.4
 	github.com/vifraa/gopom v0.2.2
 	github.com/wagoodman/go-partybus v0.0.0-20230516145632-8ccac152c651
@@ -44,7 +44,6 @@ require (
 	golang.org/x/mod v0.12.0
 	golang.org/x/net v0.13.0
 	golang.org/x/term v0.10.0
-	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -52,8 +51,9 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/bubbly v0.0.0-20230712165553-812110ab0a10
-	github.com/anchore/clio v0.0.0-20230602170917-e747e60c4aa0
-	github.com/anchore/go-logger v0.0.0-20230531193951-db5ae83e7dbe
+	github.com/anchore/clio v0.0.0-20230802135737-4778c80552e5
+	github.com/anchore/fangs v0.0.0-20230628163043-a51c5a39b097
+	github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a
 	github.com/anchore/stereoscope v0.0.0-20230727211946-d1f3d766295e
 	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
 	github.com/charmbracelet/bubbletea v0.24.2
@@ -68,6 +68,7 @@ require (
 	github.com/go-git/go-git/v5 v5.8.1
 	github.com/google/go-containerregistry v0.15.2
 	github.com/google/licensecheck v0.3.1
+	github.com/iancoleman/strcase v0.2.0
 	github.com/invopop/jsonschema v0.7.0
 	github.com/knqyf263/go-rpmdb v0.0.0-20230301153543-ba94b245509b
 	github.com/opencontainers/go-digest v1.0.0
@@ -89,7 +90,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
-	github.com/anchore/fangs v0.0.0-20230531202914-48a718c6b4ba // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092 // indirect
 	github.com/aquasecurity/go-version v0.0.0-20210121072130-637058cfe492 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
@@ -211,3 +211,7 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
+
+replace github.com/anchore/clio => github.com/anchore/clio v0.0.0-20230804230040-620301a0ef87
+
+replace github.com/anchore/fangs => github.com/kzantow-anchore/fangs v0.0.0-20230804182829-0df8a4861494
