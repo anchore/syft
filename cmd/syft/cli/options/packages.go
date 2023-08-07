@@ -2,6 +2,7 @@ package options
 
 import (
 	"fmt"
+	"github.com/anchore/clio"
 	"sort"
 	"strings"
 
@@ -39,8 +40,8 @@ type Packages struct {
 }
 
 var _ interface {
-	fangs.FlagAdder
-	fangs.PostLoader
+	clio.FlagAdder
+	clio.PostLoader
 } = (*Packages)(nil)
 
 func PackagesDefault() Packages {
@@ -59,7 +60,7 @@ func PackagesDefault() Packages {
 	}
 }
 
-func (cfg *Packages) AddFlags(flags fangs.FlagSet) {
+func (cfg *Packages) AddFlags(flags clio.FlagSet) {
 	var validScopeValues []string
 	for _, scope := range source.AllScopes {
 		validScopeValues = append(validScopeValues, strcase.ToDelimited(string(scope), '-'))

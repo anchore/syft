@@ -2,8 +2,8 @@ package options
 
 import (
 	"fmt"
+	"github.com/anchore/clio"
 
-	"github.com/anchore/fangs"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -12,7 +12,7 @@ type catalogerOptions struct {
 	Scope   string `yaml:"scope" json:"scope" mapstructure:"scope"`
 }
 
-var _ fangs.PostLoader = (*catalogerOptions)(nil)
+var _ clio.PostLoader = (*catalogerOptions)(nil)
 
 func (opt *catalogerOptions) PostLoad() error {
 	s := opt.SourceScope()

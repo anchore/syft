@@ -1,9 +1,9 @@
 package options
 
 import (
+	"github.com/anchore/clio"
 	"os"
 
-	"github.com/anchore/fangs"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/redact"
 )
@@ -15,7 +15,7 @@ type RegistryCredentials struct {
 	Token     string `yaml:"token" json:"token" mapstructure:"token"`
 }
 
-var _ fangs.PostLoader = (*RegistryCredentials)(nil)
+var _ clio.PostLoader = (*RegistryCredentials)(nil)
 
 func (r *RegistryCredentials) PostLoad() error {
 	// TODO ensure that the list of RegistryCredentials has PostLoad called
@@ -37,7 +37,7 @@ func registryDefault() registry {
 	return registry{}
 }
 
-var _ fangs.PostLoader = (*registry)(nil)
+var _ clio.PostLoader = (*registry)(nil)
 
 //nolint:unparam
 func (cfg *registry) PostLoad() error {

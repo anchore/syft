@@ -1,7 +1,7 @@
 package options
 
 import (
-	"github.com/anchore/fangs"
+	"github.com/anchore/clio"
 )
 
 type Attest struct {
@@ -10,8 +10,8 @@ type Attest struct {
 	Password string `yaml:"-" json:"-" mapstructure:"password"`
 }
 
-var _ fangs.FlagAdder = (*Attest)(nil)
+var _ clio.FlagAdder = (*Attest)(nil)
 
-func (o Attest) AddFlags(flags fangs.FlagSet) {
+func (o Attest) AddFlags(flags clio.FlagSet) {
 	flags.StringVarP(&o.Key, "key", "k", "the key to use for the attestation")
 }

@@ -43,7 +43,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/mod v0.12.0
 	golang.org/x/net v0.13.0
-	golang.org/x/term v0.10.0
+	golang.org/x/term v0.11.0
 )
 
 require (
@@ -51,8 +51,8 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/bubbly v0.0.0-20230712165553-812110ab0a10
-	github.com/anchore/clio v0.0.0-20230802135737-4778c80552e5
-	github.com/anchore/fangs v0.0.0-20230628163043-a51c5a39b097
+	github.com/anchore/clio v0.0.0-20230807174420-8b6f1b04adc8
+	github.com/anchore/fangs v0.0.0-20230807173929-13c94c86f47e
 	github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a
 	github.com/anchore/stereoscope v0.0.0-20230727211946-d1f3d766295e
 	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
@@ -179,7 +179,7 @@ require (
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/tools v0.8.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
@@ -211,7 +211,3 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
-
-replace github.com/anchore/clio => github.com/anchore/clio v0.0.0-20230804230040-620301a0ef87
-
-replace github.com/anchore/fangs => github.com/kzantow-anchore/fangs v0.0.0-20230804182829-0df8a4861494
