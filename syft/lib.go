@@ -89,7 +89,8 @@ func CatalogPackages(src source.Source, cfg cataloger.Config) (*pkg.Collection, 
 }
 
 func removeRelationshipsByID(relationships []artifact.Relationship, id artifact.ID) []artifact.Relationship {
-	filtered := make([]artifact.Relationship, 0)
+	// https://github.com/golang/go/wiki/SliceTricks#filtering-without-allocating
+	filtered := relationships[:0]
 	for _, r := range relationships {
 		if r.To.ID() != id && r.From.ID() != id {
 			filtered = append(filtered, r)
