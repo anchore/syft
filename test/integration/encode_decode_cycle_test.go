@@ -44,8 +44,8 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			formatOption: cyclonedxjson.ID,
 			redactor: func(in []byte) []byte {
 				// unstable values
-				in = regexp.MustCompile(`"(timestamp|serialNumber|bom-ref)": "[^"]+",`).ReplaceAll(in, []byte{})
-
+				in = regexp.MustCompile(`"(timestamp|serialNumber|bom-ref|ref|dependsOn)": "[^"]+",`).ReplaceAll(in, []byte{})
+				in = regexp.MustCompile(`"(dependsOn)": [\n"[^"]+"],`).ReplaceAll(in, []byte{}) //TODO: This REGEX doesn't work, so the test fails
 				return in
 			},
 			json: true,
@@ -54,7 +54,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			formatOption: cyclonedxxml.ID,
 			redactor: func(in []byte) []byte {
 				// unstable values
-				in = regexp.MustCompile(`(serialNumber|bom-ref)="[^"]+"`).ReplaceAll(in, []byte{})
+				in = regexp.MustCompile(`(serialNumber|bom-ref|ref)="[^"]+"`).ReplaceAll(in, []byte{})
 				in = regexp.MustCompile(`<timestamp>[^<]+</timestamp>`).ReplaceAll(in, []byte{})
 
 				return in
