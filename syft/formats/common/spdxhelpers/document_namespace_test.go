@@ -24,6 +24,7 @@ func Test_documentNamespace(t *testing.T) {
 			name:      "image",
 			inputName: "my-name",
 			src: source.Description{
+				Name: "syft",
 				Metadata: source.StereoscopeImageSourceMetadata{
 					UserInput:      "image-repo/name:tag",
 					ID:             "id",
@@ -36,6 +37,7 @@ func Test_documentNamespace(t *testing.T) {
 			name:      "directory",
 			inputName: "my-name",
 			src: source.Description{
+				Name: "syft",
 				Metadata: source.DirectorySourceMetadata{
 					Path: "some/path/to/place",
 				},
@@ -46,6 +48,7 @@ func Test_documentNamespace(t *testing.T) {
 			name:      "file",
 			inputName: "my-name",
 			src: source.Description{
+				Name: "syft",
 				Metadata: source.FileSourceMetadata{
 					Path: "some/path/to/place",
 				},
@@ -57,7 +60,7 @@ func Test_documentNamespace(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			actual := DocumentNamespace(test.inputName, test.src)
 			// note: since the namespace ends with a UUID we check the prefix
-			assert.True(t, strings.HasPrefix(actual, test.expected), fmt.Sprintf("actual namespace %q", actual))
+			assert.True(t, strings.HasPrefix(actual, test.expected), fmt.Sprintf("expected prefix: '%s' got: '%s'", test.expected, actual))
 
 			// track each scheme tested (passed or not)
 			tracker.Tested(t, test.src.Metadata)

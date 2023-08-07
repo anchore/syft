@@ -18,6 +18,9 @@ import (
 
 func sbomFixture() sbom.SBOM {
 	s := sbom.SBOM{
+		Descriptor: sbom.Descriptor{
+			Name: "syft",
+		},
 		Source: source.Description{
 			Metadata: source.StereoscopeImageSourceMetadata{
 				UserInput:    "ubuntu:18.04",
