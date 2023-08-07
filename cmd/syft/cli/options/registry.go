@@ -1,9 +1,9 @@
 package options
 
 import (
-	"github.com/anchore/clio"
 	"os"
 
+	"github.com/anchore/clio"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/redact"
 )

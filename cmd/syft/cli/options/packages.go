@@ -2,13 +2,13 @@ package options
 
 import (
 	"fmt"
-	"github.com/anchore/clio"
 	"sort"
 	"strings"
 
 	"github.com/iancoleman/strcase"
 	"github.com/mitchellh/go-homedir"
 
+	"github.com/anchore/clio"
 	"github.com/anchore/fangs"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"

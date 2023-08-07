@@ -2,8 +2,8 @@ package options
 
 import (
 	"fmt"
-	"github.com/anchore/clio"
 
+	"github.com/anchore/clio"
 	"github.com/anchore/syft/syft/source"
 )
 
