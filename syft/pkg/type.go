@@ -36,6 +36,7 @@ const (
 	Rpkg                  Type = "R-package"
 	RpmPkg                Type = "rpm"
 	RustPkg               Type = "rust-crate"
+	SwiftPkg              Type = "swift"
 )
 
 // AllPkgs represents all supported package types
@@ -65,6 +66,7 @@ var AllPkgs = []Type{
 	Rpkg,
 	RpmPkg,
 	RustPkg,
+	SwiftPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -114,6 +116,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeRPM
 	case RustPkg:
 		return "cargo"
+	case SwiftPkg:
+		return packageurl.TypeSwift
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -179,6 +183,8 @@ func TypeByName(name string) Type {
 		return NixPkg
 	case packageurl.TypeCran:
 		return Rpkg
+	case packageurl.TypeSwift:
+		return SwiftPkg
 	default:
 		return UnknownPkg
 	}

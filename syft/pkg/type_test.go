@@ -95,6 +95,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:cran/base@4.3.0",
 			expected: Rpkg,
 		},
+		{
+			purl:     "pkg:swift/github.com/apple/swift-numerics/swift-numerics@1.0.2",
+			expected: SwiftPkg,
+		},
 	}
 
 	var pkgTypes []string

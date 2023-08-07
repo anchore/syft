@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	"github.com/bmatcuk/doublestar/v4"
+	"github.com/docker/distribution/reference"
 	"github.com/opencontainers/go-digest"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
@@ -83,17 +85,43 @@ func (s StereoscopeImageSource) ID() artifact.ID {
 }
 
 func (s StereoscopeImageSource) Describe() Description {
-	name := s.metadata.UserInput
-	version := s.metadata.ManifestDigest
-
 	a := s.config.Alias
-	if a.Name != "" {
-		name = a.Name
+
+	name := a.Name
+	nameIfUnset := func(n string) {
+		if name != "" {
+			return
+		}
+		name = n
 	}
 
-	if a.Version != "" {
-		version = a.Version
+	version := a.Version
+	versionIfUnset := func(v string) {
+		if version != "" && version != "latest" {
+			return
+		}
+		version = v
 	}
+
+	ref, err := reference.Parse(s.metadata.UserInput)
+	if err != nil {
+		log.Debugf("unable to parse image ref: %s", s.config.Reference)
+	} else {
+		if ref, ok := ref.(reference.Named); ok {
+			nameIfUnset(ref.Name())
+		}
+
+		if ref, ok := ref.(reference.NamedTagged); ok {
+			versionIfUnset(ref.Tag())
+		}
+
+		if ref, ok := ref.(reference.Digested); ok {
+			versionIfUnset(ref.Digest().String())
+		}
+	}
+
+	nameIfUnset(s.metadata.UserInput)
+	versionIfUnset(s.metadata.ManifestDigest)
 
 	return Description{
 		ID:       string(s.id),

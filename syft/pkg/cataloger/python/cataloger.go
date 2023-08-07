@@ -6,10 +6,21 @@ import (
 
 const eggInfoGlob = "**/*.egg-info"
 
+type CatalogerConfig struct {
+	GuessUnpinnedRequirements bool
+}
+
+func DefaultCatalogerConfig() CatalogerConfig {
+	return CatalogerConfig{
+		GuessUnpinnedRequirements: false,
+	}
+}
+
 // NewPythonIndexCataloger returns a new cataloger for python packages referenced from poetry lock files, requirements.txt files, and setup.py files.
-func NewPythonIndexCataloger() *generic.Cataloger {
+func NewPythonIndexCataloger(cfg CatalogerConfig) *generic.Cataloger {
+	rqp := newRequirementsParser(cfg)
 	return generic.NewCataloger("python-index-cataloger").
-		WithParserByGlobs(parseRequirementsTxt, "**/*requirements*.txt").
+		WithParserByGlobs(rqp.parseRequirementsTxt, "**/*requirements*.txt").
 		WithParserByGlobs(parsePoetryLock, "**/poetry.lock").
 		WithParserByGlobs(parsePipfileLock, "**/Pipfile.lock").
 		WithParserByGlobs(parseSetup, "**/setup.py")

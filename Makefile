@@ -13,7 +13,7 @@ GLOW_CMD = $(TEMP_DIR)/glow
 GOLANGCILINT_VERSION := v1.53.3
 GOSIMPORTS_VERSION := v0.3.8
 BOUNCER_VERSION := v0.4.0
-CHRONICLE_VERSION := v0.6.0
+CHRONICLE_VERSION := v0.7.0
 GORELEASER_VERSION := v1.19.2
 YAJSV_VERSION := v1.4.1
 COSIGN_VERSION := v2.1.1
@@ -298,7 +298,7 @@ compare-test-rpm-package-install: $(TEMP_DIR) $(SNAPSHOT_DIR)
 			$(TEMP_DIR)
 
 
-## Code generation targets #################################
+## Code and data generation targets #################################
 
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema
@@ -308,6 +308,11 @@ generate-json-schema:  ## Generate a new json schema
 generate-license-list:  ## Generate an updated spdx license list
 	go generate ./internal/spdxlicense/...
 	gofmt -s -w ./internal/spdxlicense
+
+.PHONY: generate-cpe-dictionary-index
+generate-cpe-dictionary-index:  ## Build the CPE index based off of the latest available CPE dictionary
+	$(call title,Building CPE index)
+	go generate ./syft/pkg/cataloger/common/cpe/dictionary
 
 
 ## Build-related targets #################################

@@ -53,7 +53,7 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Red Hat (rpm)
 - Ruby (gem)
 - Rust (cargo.lock)
-- Swift (cocoapods)
+- Swift (cocoapods, swift-package-manager)
 
 ## Installation
 
@@ -211,6 +211,7 @@ You can override the list of enabled/disabled catalogers by using the "cataloger
 - ruby-gemfile
 - rust-cargo-lock
 - sbom
+- swift-package-manager
 
 ##### Non Default:
 - cargo-auditable-binary
@@ -521,6 +522,7 @@ platform: ""
 #   - ruby-gemspec-cataloger
 #   - rust-cargo-lock-cataloger
 #   - sbom-cataloger
+#   - spm-cataloger
 catalogers:
 
 # cataloging packages is exposed through the packages and power-user subcommands
@@ -574,6 +576,13 @@ linux-kernel:
    # whether to catalog linux kernel modules found within lib/modules/** directories
    # SYFT_LINUX_KERNEL_CATALOG_MODULES env var
    catalog-modules: true
+
+python:
+   # when running across entries in requirements.txt that do not specify a specific version 
+   # (e.g. "sqlalchemy >= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0"), attempt to guess what the version could
+   # be based on the version requirements specified (e.g. "1.0.0"). When enabled the lowest expressible version 
+   # when given an arbitrary constraint will be used (even if that version may not be available/published).
+   guess-unpinned-requirements: false
 
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:

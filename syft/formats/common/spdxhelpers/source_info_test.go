@@ -231,6 +231,14 @@ func Test_SourceInfo(t *testing.T) {
 				"acquired package info from R-package DESCRIPTION file",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.SwiftPkg,
+			},
+			expected: []string{
+				"from resolved Swift package manifest",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {
