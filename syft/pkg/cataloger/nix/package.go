@@ -10,7 +10,7 @@ func newNixStorePackage(storePath nixStorePath, locations ...file.Location) pkg.
 	p := pkg.Package{
 		Name:         storePath.name,
 		Version:      storePath.version,
-		FoundBy:      catalogerName,
+		FoundBy:      CatalogerName,
 		Locations:    file.NewLocationSet(locations...),
 		Type:         pkg.NixPkg,
 		PURL:         packageURL(storePath),
