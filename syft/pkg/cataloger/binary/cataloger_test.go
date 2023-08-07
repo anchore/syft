@@ -643,6 +643,30 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("consul-binary"),
 			},
 		},
+		{
+			name:       "positive-nginx-1.25.1",
+			fixtureDir: "test-fixtures/classifiers/positive/nginx-1.25.1",
+			expected: pkg.Package{
+				Name:      "nginx",
+				Version:   "1.25.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx@1.25.1",
+				Locations: locations("nginx"),
+				Metadata:  metadata("nginx-binary"),
+			},
+		},
+		{
+			name:       "positive-nginx-openresty-1.21.4.2",
+			fixtureDir: "test-fixtures/classifiers/positive/nginx-openresty-1.21.4.2",
+			expected: pkg.Package{
+				Name:      "nginx",
+				Version:   "1.21.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx@1.21.4",
+				Locations: locations("nginx"),
+				Metadata:  metadata("nginx-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
