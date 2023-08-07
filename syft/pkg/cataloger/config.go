@@ -18,16 +18,6 @@ type Config struct {
 	Parallelism int
 }
 
-// TODO: this is a helper function that is only used in test code. It should be migrated to test code.
-func DefaultConfig() Config {
-	return Config{
-		Search:      DefaultSearchConfig(),
-		Parallelism: 1,
-		LinuxKernel: kernel.DefaultLinuxCatalogerConfig(),
-		Python:      python.DefaultCatalogerConfig(),
-	}
-}
-
 func (c Config) Java() java.Config {
 	return java.Config{
 		SearchUnindexedArchives: c.Search.IncludeUnindexedArchives,

@@ -66,15 +66,3 @@ func Exclude(r artifact.Relationship, c *pkg.Collection) bool {
 		parentInExclusion &&
 		childInExclusion
 }
-
-func DefaultPackageExclusionsConfig() PackageExclusionsConfig {
-	return PackageExclusionsConfig{
-		Exclusions: []PackageExclusion{
-			{
-				RelationshipType: artifact.OwnershipByFileOverlapRelationship,
-				ParentType:       OsCatalogerType,
-				ExclusionType:    BinaryCatalogerType,
-			},
-		},
-	}
-}
