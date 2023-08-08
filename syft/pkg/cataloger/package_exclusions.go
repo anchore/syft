@@ -59,10 +59,5 @@ func Exclude(r artifact.Relationship, c *pkg.Collection) bool {
 		return false
 	}
 
-	childInExclusion := slices.Contains(CatalogerTypeIndex[BinaryCatalogerType], child.FoundBy)
-	if !childInExclusion {
-		return false
-	}
-
-	return true
+	return slices.Contains(CatalogerTypeIndex[BinaryCatalogerType], child.FoundBy)
 }
