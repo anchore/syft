@@ -377,11 +377,9 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
 func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.PomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
-	vPathSuffix := ""
-	if !strings.HasPrefix(pomProperties.ArtifactID, parentPkg.Name) {
-		vPathSuffix += ":" + pomProperties.ArtifactID
-	}
-	virtualPath := location.AccessPath() + vPathSuffix
+	vPathSuffix := pomProperties.Path
+	accessPath := location.AccessPath()
+	virtualPath := accessPath + ":" + vPathSuffix
 
 	// discovered props = new package
 	p := pkg.Package{
@@ -410,25 +408,46 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 }
 
 func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
-	// the name/version pair matches...
-	if uniquePkgKey(&p) == uniquePkgKey(parentPkg) {
+	childMetadata, childOk := p.Metadata.(pkg.JavaMetadata)
+	parentMetadata, parentOk := parentPkg.Metadata.(pkg.JavaMetadata)
+	if !childOk || !parentOk {
+		switch {
+		case !childOk:
+			log.WithFields("package", p.String()).Warn("unable to extract java metadata to check for matching package identity")
+		case !parentOk:
+			log.WithFields("package", parentPkg.String()).Warn("unable to extract java metadata from parent for verifying virtual path")
+		}
+		// if we can't extract metadata, we can check for matching identities via the package name
+		// this is not ideal, but it's better than nothing - should not be used if we have metadata
+		if uniquePkgKey(&p) == uniquePkgKey(parentPkg) {
+			return true
+		}
+		return false
+	}
+
+	// try to determine identity with the metadata
+	parentSymbolicName := ""
+	if parentMetadata.Manifest != nil {
+		if ps, ok := parentMetadata.Manifest.Main[""]; ok {
+			// trim the parent symbolic name from the right to the first period
+			// e.g. "com.sun.xml.bind" from "com.sun.xml.bind.jaxb-core"
+			parentSymbolicName = ps
+		}
+	}
+
+	childSymbolicName := ""
+	if childMetadata.PomProperties != nil {
+		childName := p.Name
+		childGroupId := childMetadata.PomProperties.GroupID
+		childSymbolicName = childGroupId + "." + childName
+	}
+
+	if parentSymbolicName == childSymbolicName {
 		return true
 	}
 
-	metadata, ok := p.Metadata.(pkg.JavaMetadata)
-	if !ok {
-		log.WithFields("package", p.String()).Warn("unable to extract java metadata to check for matching package identity")
-		return false
-	}
-
-	parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata)
-	if !ok {
-		log.WithFields("package", p.String()).Warn("unable to extract java metadata from parent for verifying virtual path")
-		return false
-	}
-
 	// the virtual path matches...
-	if parentMetadata.VirtualPath == metadata.VirtualPath {
+	if parentMetadata.VirtualPath == childMetadata.VirtualPath {
 		return true
 	}
 
@@ -436,9 +455,11 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	// note: you CANNOT use name-is-subset-of-artifact-id or vice versa --this is too generic. Shaded jars are a good
 	// example of this: where the package name is "cloudbees-analytics-segment-driver" and a child is "analytics", but
 	// they do not indicate the same package.
-	if metadata.PomProperties.ArtifactID != "" && parentPkg.Name == metadata.PomProperties.ArtifactID {
-		return true
-	}
+	// NOTE: artifactId might not be a good indicator of uniqueness since archives can contain forks with the same name
+	// from different groups (e.g. "org.glassfish.jaxb.jaxb-core" and "com.sun.xml.bind.jaxb-core")
+	//if childMetadata.PomProperties.ArtifactID != "" && parentPkg.Name == childMetadata.PomProperties.ArtifactID {
+	//	return true
+	//}
 
 	return false
 }

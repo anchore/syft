@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -85,6 +84,7 @@ func TestParseJar(t *testing.T) {
 	tests := []struct {
 		fixture      string
 		expected     map[string]pkg.Package
+		detectNested bool
 		ignoreExtras []string
 	}{
 		{
@@ -144,6 +144,11 @@ func TestParseJar(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			fixture:      "test-fixtures/java-builds/packages/1944-regression.war",
+			expected:     map[string]pkg.Package{},
+			detectNested: true,
 		},
 		{
 			fixture: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
@@ -263,7 +268,7 @@ func TestParseJar(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(path.Base(test.fixture), func(t *testing.T) {
+		t.Run(test.fixture, func(t *testing.T) {
 
 			generateJavaBuildFixture(t, test.fixture)
 
@@ -279,7 +284,7 @@ func TestParseJar(t *testing.T) {
 			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
-			}, false)
+			}, test.detectNested)
 			defer cleanupFn()
 			require.NoError(t, err)
 
