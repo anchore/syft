@@ -13,26 +13,17 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/rpm"
 )
 
-type CategoryType string
-
-const (
-	OsCatalogerType     CategoryType = "os"
-	BinaryCatalogerType CategoryType = "binary"
-)
-
-var CatalogerTypeIndex = map[CategoryType][]string{
-	OsCatalogerType: {
+var (
+	osCatalogerTypes = []string{
 		apkdb.CatalogerName,
 		alpm.CatalogerName,
 		deb.CatalogerName,
 		nix.CatalogerName,
 		rpm.DBCatalogerName,
 		rpm.FileCatalogerName,
-	},
-	BinaryCatalogerType: {
-		binary.CatalogerName,
-	},
-}
+	}
+	binaryCatalogerTypes = []string{binary.CatalogerName}
+)
 
 // Exclude will remove packages from a collection given the following properties are true
 // 1) the relationship between packages is OwnershipByFileOverlap
@@ -41,23 +32,24 @@ var CatalogerTypeIndex = map[CategoryType][]string{
 // 4) the package names are identical
 // This exclude was implemented as a way to help resolve: https://github.com/anchore/syft/issues/931
 func Exclude(r artifact.Relationship, c *pkg.Collection) bool {
+	if artifact.OwnershipByFileOverlapRelationship != r.Type {
+		return false
+	}
+
 	parent := c.Package(r.From.ID())
 	if parent == nil {
 		return false
 	}
+
+	parentInExclusion := slices.Contains(osCatalogerTypes, parent.FoundBy)
+	if !parentInExclusion {
+		return false
+	}
+
 	child := c.Package(r.To.ID())
 	if child == nil {
 		return false
 	}
 
-	if artifact.OwnershipByFileOverlapRelationship != r.Type {
-		return false
-	}
-
-	parentInExclusion := slices.Contains(CatalogerTypeIndex[OsCatalogerType], parent.FoundBy)
-	if !parentInExclusion {
-		return false
-	}
-
-	return slices.Contains(CatalogerTypeIndex[BinaryCatalogerType], child.FoundBy)
+	return slices.Contains(binaryCatalogerTypes, child.FoundBy)
 }

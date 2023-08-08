@@ -27,7 +27,7 @@ import (
 func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	// use second image for relationships
 	images := []string{
-		//"image-pkg-coverage",
+		"image-pkg-coverage",
 		"image-owning-package",
 	}
 	tests := []struct {

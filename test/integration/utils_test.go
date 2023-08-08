@@ -56,10 +56,11 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 
 func defaultConfig() cataloger.Config {
 	return cataloger.Config{
-		Search:      cataloger.DefaultSearchConfig(),
-		Parallelism: 1,
-		LinuxKernel: kernel.DefaultLinuxCatalogerConfig(),
-		Python:      python.DefaultCatalogerConfig(),
+		Search:                          cataloger.DefaultSearchConfig(),
+		Parallelism:                     1,
+		LinuxKernel:                     kernel.DefaultLinuxCatalogerConfig(),
+		Python:                          python.DefaultCatalogerConfig(),
+		ExcludeBinaryOverlapByOwnership: true,
 	}
 }
 
