@@ -419,16 +419,13 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 		}
 		// if we can't extract metadata, we can check for matching identities via the package name
 		// this is not ideal, but it's better than nothing - should not be used if we have metadata
-		if uniquePkgKey(&p) == uniquePkgKey(parentPkg) {
-			return true
-		}
-		return false
+		return uniquePkgKey(&p) == uniquePkgKey(parentPkg)
 	}
 
 	// try to determine identity with the metadata
 	parentSymbolicName := ""
 	if parentMetadata.Manifest != nil {
-		if ps, ok := parentMetadata.Manifest.Main[""]; ok {
+		if ps, ok := parentMetadata.Manifest.Main["Bundle-SymbolicName"]; ok {
 			// trim the parent symbolic name from the right to the first period
 			// e.g. "com.sun.xml.bind" from "com.sun.xml.bind.jaxb-core"
 			parentSymbolicName = ps
@@ -438,8 +435,8 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	childSymbolicName := ""
 	if childMetadata.PomProperties != nil {
 		childName := p.Name
-		childGroupId := childMetadata.PomProperties.GroupID
-		childSymbolicName = childGroupId + "." + childName
+		childGroupID := childMetadata.PomProperties.GroupID
+		childSymbolicName = childGroupID + "." + childName
 	}
 
 	if parentSymbolicName == childSymbolicName {
@@ -451,15 +448,21 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 		return true
 	}
 
+	// we had enough data to check the symbolic name, but it didn't match
+	if parentSymbolicName != "" && childSymbolicName != "" {
+		return false
+	}
+
 	// the pom artifactId is the parent name
 	// note: you CANNOT use name-is-subset-of-artifact-id or vice versa --this is too generic. Shaded jars are a good
 	// example of this: where the package name is "cloudbees-analytics-segment-driver" and a child is "analytics", but
 	// they do not indicate the same package.
 	// NOTE: artifactId might not be a good indicator of uniqueness since archives can contain forks with the same name
 	// from different groups (e.g. "org.glassfish.jaxb.jaxb-core" and "com.sun.xml.bind.jaxb-core")
-	//if childMetadata.PomProperties.ArtifactID != "" && parentPkg.Name == childMetadata.PomProperties.ArtifactID {
-	//	return true
-	//}
+	// we will use this check as a last resort
+	if childMetadata.PomProperties.ArtifactID != "" && parentPkg.Name == childMetadata.PomProperties.ArtifactID {
+		return true
+	}
 
 	return false
 }
