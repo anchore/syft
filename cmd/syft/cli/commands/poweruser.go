@@ -1,11 +1,23 @@
 package commands
 
 import (
+	"fmt"
+	"os"
+
+	"github.com/gookit/color"
+	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/formats/syftjson"
+	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
 const powerUserExample = `  {{.appName}} {{.command}} <image>
@@ -46,4 +58,100 @@ func PowerUser(app clio.Application) *cobra.Command {
 			return runPowerUser(app, opts, args[0])
 		},
 	}, opts)
+}
+
+//nolint:funlen
+func runPowerUser(app clio.Application, opts *powerUserOptions, userInput string) error {
+	f := syftjson.Format()
+	writer, err := options.MakeSBOMWriterForFormat(f, opts.File)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		// inform user at end of run that command will be removed
+		deprecated := color.Style{color.Red, color.OpBold}.Sprint("DEPRECATED: This command will be removed in v1.0.0")
+		fmt.Fprintln(os.Stderr, deprecated)
+	}()
+
+	defer bus.Exit()
+
+	tasks, err := eventloop.Tasks(&opts.Packages)
+	if err != nil {
+		return err
+	}
+
+	detection, err := source.Detect(
+		userInput,
+		source.DetectConfig{
+			DefaultImageSource: opts.DefaultImagePullSource,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("could not deteremine source: %w", err)
+	}
+
+	var platform *image.Platform
+
+	if opts.Platform != "" {
+		platform, err = image.NewPlatform(opts.Platform)
+		if err != nil {
+			return fmt.Errorf("invalid platform: %w", err)
+		}
+	}
+
+	src, err := detection.NewSource(
+		source.DetectionSourceConfig{
+			Alias: source.Alias{
+				Name:    opts.Source.Name,
+				Version: opts.Source.Version,
+			},
+			RegistryOptions: opts.Registry.ToOptions(),
+			Platform:        platform,
+			Exclude: source.ExcludeConfig{
+				Paths: opts.Exclusions,
+			},
+			DigestAlgorithms: nil,
+			BasePath:         opts.BasePath,
+		},
+	)
+
+	if src != nil {
+		defer src.Close()
+	}
+	if err != nil {
+		return fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
+	}
+
+	s := sbom.SBOM{
+		Source: src.Describe(),
+		Descriptor: sbom.Descriptor{
+			Name:          app.ID().Name,
+			Version:       app.ID().Version,
+			Configuration: opts,
+		},
+	}
+
+	var errs error
+	var relationships []<-chan artifact.Relationship
+	for _, task := range tasks {
+		c := make(chan artifact.Relationship)
+		relationships = append(relationships, c)
+
+		go func(task eventloop.Task) {
+			err := eventloop.RunTask(task, &s.Artifacts, src, c)
+			errs = multierror.Append(errs, err)
+		}(task)
+	}
+
+	if errs != nil {
+		return errs
+	}
+
+	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
+
+	if err := writer.Write(s); err != nil {
+		return fmt.Errorf("failed to write sbom: %w", err)
+	}
+
+	return nil
 }
