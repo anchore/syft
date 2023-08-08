@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	"github.com/anchore/syft/syft/pkg/cataloger/deb"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
+	"github.com/anchore/syft/syft/pkg/cataloger/rpm"
 )
 
 type CategoryType string
@@ -20,27 +21,17 @@ const (
 )
 
 var CatalogerTypeIndex = map[CategoryType][]string{
-	"os": {
+	OsCatalogerType: {
 		apkdb.CatalogerName,
 		alpm.CatalogerName,
 		deb.CatalogerName,
 		nix.CatalogerName,
-		"rpm-db-cataloger",
-		"rpm-file-cataloger",
+		rpm.DBCatalogerName,
+		rpm.FileCatalogerName,
 	},
-	"binary": {
+	BinaryCatalogerType: {
 		binary.CatalogerName,
 	},
-}
-
-type PackageExclusionsConfig struct {
-	Exclusions []PackageExclusion
-}
-
-type PackageExclusion struct {
-	RelationshipType artifact.RelationshipType
-	ParentType       CategoryType
-	ExclusionType    CategoryType
 }
 
 // Exclude will remove packages from a collection given the following properties are true
@@ -59,10 +50,19 @@ func Exclude(r artifact.Relationship, c *pkg.Collection) bool {
 		return false
 	}
 
-	parentInExclusion := slices.Contains(CatalogerTypeIndex["os"], parent.FoundBy)
-	childInExclusion := slices.Contains(CatalogerTypeIndex["binary"], child.FoundBy)
+	if artifact.OwnershipByFileOverlapRelationship != r.Type {
+		return false
+	}
 
-	return artifact.OwnershipByFileOverlapRelationship == r.Type &&
-		parentInExclusion &&
-		childInExclusion
+	parentInExclusion := slices.Contains(CatalogerTypeIndex[OsCatalogerType], parent.FoundBy)
+	if !parentInExclusion {
+		return false
+	}
+
+	childInExclusion := slices.Contains(CatalogerTypeIndex[BinaryCatalogerType], child.FoundBy)
+	if !childInExclusion {
+		return false
+	}
+
+	return true
 }

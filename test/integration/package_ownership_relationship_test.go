@@ -73,7 +73,11 @@ func TestPackageOwnershipExclusions(t *testing.T) {
 			}
 
 			if len(binaryPackages) != 0 {
-				t.Errorf("expected to find no binary packages but found %d", len(binaryPackages))
+				packageNames := make([]string, 0)
+				for _, p := range binaryPackages {
+					packageNames = append(packageNames, p.Name)
+				}
+				t.Errorf("expected to find no binary packages but found %d packages: %v", len(binaryPackages), packageNames)
 			}
 			if len(apkPackages) == 0 {
 				t.Errorf("expected to find apk packages but found none")

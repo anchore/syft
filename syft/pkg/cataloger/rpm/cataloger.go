@@ -11,6 +11,11 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+const (
+	DBCatalogerName   = "rpm-db-cataloger"
+	FileCatalogerName = "rpm-file-cataloger"
+)
+
 // NewRpmDBCataloger returns a new RPM DB cataloger object.
 func NewRpmDBCataloger() *generic.Cataloger {
 	// check if a sqlite driver is available
