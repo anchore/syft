@@ -41,9 +41,6 @@ func New(id clio.Identification) clio.Application {
 				}, nil
 			},
 		).
-		// WithLoggerConstructor(func(config clio.Config, store loggerRedact.Store) (logger.Logger, error) {
-		//	config.Log.
-		// }).
 		WithInitializers(
 			func(state *clio.State) error {
 				// clio is setting up and providing the bus, redact store, and logger to the application. Once loaded,
