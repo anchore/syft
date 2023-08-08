@@ -1,6 +1,8 @@
 package spdxhelpers
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"strings"
 
 	"github.com/anchore/syft/internal/spdxlicense"
@@ -27,29 +29,18 @@ func License(p pkg.Package) (concluded, declared string) {
 	// https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/
 	pc, pd := parseLicenses(p.Licenses.ToSlice())
 
-	for i, v := range pc {
-		if strings.HasPrefix(v, spdxlicense.LicenseRefPrefix) {
-			pc[i] = SanitizeElementID(v)
-		}
-	}
-
-	for i, v := range pd {
-		if strings.HasPrefix(v, spdxlicense.LicenseRefPrefix) {
-			pd[i] = SanitizeElementID(v)
-		}
-	}
-
 	return joinLicenses(pc), joinLicenses(pd)
 }
 
-func joinLicenses(licenses []string) string {
+func joinLicenses(licenses []spdxLicense) string {
 	if len(licenses) == 0 {
 		return NOASSERTION
 	}
 
 	var newLicenses []string
 
-	for _, v := range licenses {
+	for _, l := range licenses {
+		v := l.id
 		// check if license does not start or end with parens
 		if !strings.HasPrefix(v, "(") && !strings.HasSuffix(v, ")") {
 			// if license contains AND, OR, or WITH, then wrap in parens
@@ -66,14 +57,31 @@ func joinLicenses(licenses []string) string {
 	return strings.Join(newLicenses, " AND ")
 }
 
-func parseLicenses(raw []pkg.License) (concluded, declared []string) {
+type spdxLicense struct {
+	id    string
+	value string
+}
+
+func parseLicenses(raw []pkg.License) (concluded, declared []spdxLicense) {
 	for _, l := range raw {
-		var candidate string
+		if l.Value == "" {
+			continue
+		}
+
+		candidate := spdxLicense{}
 		if l.SPDXExpression != "" {
-			candidate = l.SPDXExpression
+			candidate.id = l.SPDXExpression
 		} else {
 			// we did not find a valid SPDX license ID so treat as separate license
-			candidate = spdxlicense.LicenseRefPrefix + l.Value
+			if len(l.Value) <= 64 {
+				// if the license text is less than the size of the hash,
+				// just use it directly so the id is more readable
+				candidate.id = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
+			} else {
+				hash := sha256.Sum256([]byte(l.Value))
+				candidate.id = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
+			}
+			candidate.value = l.Value
 		}
 
 		switch l.Type {
@@ -83,5 +91,6 @@ func parseLicenses(raw []pkg.License) (concluded, declared []string) {
 			declared = append(declared, candidate)
 		}
 	}
+
 	return concluded, declared
 }

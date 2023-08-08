@@ -245,6 +245,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 		PackageSupplier: &spdx.Supplier{
 			Supplier: NOASSERTION,
 		},
+		PackageDownloadLocation: NOASSERTION,
 	}
 
 	if purl != nil {
@@ -703,32 +704,31 @@ func toFileTypes(metadata *file.Metadata) (ty []string) {
 // other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
 // field. The spdxexpression field is only filled given a validated Value field.
 func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
-	licenses := map[string]bool{}
-	for _, p := range catalog.Sorted() {
+	licenses := map[string]spdxLicense{}
+
+	for p := range catalog.Enumerate() {
 		declaredLicenses, concludedLicenses := parseLicenses(p.Licenses.ToSlice())
-		for _, license := range declaredLicenses {
-			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
-				licenses[license] = true
+		for _, l := range declaredLicenses {
+			if l.value != "" {
+				licenses[l.id] = l
 			}
 		}
-		for _, license := range concludedLicenses {
-			if strings.HasPrefix(license, spdxlicense.LicenseRefPrefix) {
-				licenses[license] = true
+		for _, l := range concludedLicenses {
+			if l.value != "" {
+				licenses[l.id] = l
 			}
 		}
 	}
 
 	var result []*spdx.OtherLicense
 
-	sorted := maps.Keys(licenses)
-	slices.Sort(sorted)
-	for _, license := range sorted {
-		// separate the found value from the prefix
-		// this only contains licenses that are not found on the SPDX License List
-		name := strings.TrimPrefix(license, spdxlicense.LicenseRefPrefix)
+	ids := maps.Keys(licenses)
+	slices.Sort(ids)
+	for _, id := range ids {
+		license := licenses[id]
 		result = append(result, &spdx.OtherLicense{
-			LicenseIdentifier: SanitizeElementID(license),
-			ExtractedText:     name,
+			LicenseIdentifier: license.id,
+			ExtractedText:     license.value,
 		})
 	}
 	return result

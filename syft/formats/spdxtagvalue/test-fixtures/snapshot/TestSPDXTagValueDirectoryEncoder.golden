@@ -13,6 +13,7 @@ Created: redacted
 PackageName: some/path
 SPDXID: SPDXRef-DocumentRoot-Directory-some-path
 PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
 PrimaryPackagePurpose: FILE
 FilesAnalyzed: false
 
