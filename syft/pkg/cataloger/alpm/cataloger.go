@@ -5,9 +5,9 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-const catalogerName = "alpmdb-cataloger"
+const CatalogerName = "alpmdb-cataloger"
 
 func NewAlpmdbCataloger() *generic.Cataloger {
-	return generic.NewCataloger(catalogerName).
+	return generic.NewCataloger(CatalogerName).
 		WithParserByGlobs(parseAlpmDB, pkg.AlpmDBGlob)
 }
