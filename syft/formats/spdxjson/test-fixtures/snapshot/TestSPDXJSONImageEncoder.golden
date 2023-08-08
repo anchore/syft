@@ -66,7 +66,7 @@
    "SPDXID": "SPDXRef-DocumentRoot-Image-user-image-input",
    "versionInfo": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
    "supplier": "NOASSERTION",
-   "downloadLocation": "",
+   "downloadLocation": "NOASSERTION",
    "filesAnalyzed": false,
    "checksums": [
     {

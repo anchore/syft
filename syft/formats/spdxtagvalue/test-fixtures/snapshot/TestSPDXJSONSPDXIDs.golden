@@ -13,6 +13,7 @@ Created: redacted
 PackageName: foobar/baz
 SPDXID: SPDXRef-DocumentRoot-Directory-foobar-baz
 PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
 PrimaryPackagePurpose: FILE
 FilesAnalyzed: false
 

@@ -70,7 +70,7 @@ func parseLicenses(raw []pkg.License) (concluded, declared []spdxLicense) {
 
 		candidate := spdxLicense{}
 		if l.SPDXExpression != "" {
-			candidate.id = SanitizeElementID(l.SPDXExpression)
+			candidate.id = l.SPDXExpression
 		} else {
 			// we did not find a valid SPDX license ID so treat as separate license
 			if len(l.Value) <= 64 {
@@ -78,10 +78,8 @@ func parseLicenses(raw []pkg.License) (concluded, declared []spdxLicense) {
 				// just use it directly so the id is more readable
 				candidate.id = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
 			} else {
-				h := sha256.New()
-				h.Write([]byte(l.Value))
-				bs := h.Sum(nil)
-				candidate.id = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, bs)
+				hash := sha256.Sum256([]byte(l.Value))
+				candidate.id = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
 			}
 			candidate.value = l.Value
 		}

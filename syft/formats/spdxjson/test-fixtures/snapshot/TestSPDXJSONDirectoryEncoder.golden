@@ -65,7 +65,7 @@
    "name": "some/path",
    "SPDXID": "SPDXRef-DocumentRoot-Directory-some-path",
    "supplier": "NOASSERTION",
-   "downloadLocation": "",
+   "downloadLocation": "NOASSERTION",
    "filesAnalyzed": false,
    "primaryPackagePurpose": "FILE"
   }
