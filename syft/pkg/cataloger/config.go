@@ -8,14 +8,14 @@ import (
 )
 
 // TODO: these field naming vs helper function naming schemes are inconsistent.
-
 type Config struct {
-	Search      SearchConfig
-	Golang      golang.GoCatalogerOpts
-	LinuxKernel kernel.LinuxCatalogerConfig
-	Python      python.CatalogerConfig
-	Catalogers  []string
-	Parallelism int
+	Search                          SearchConfig
+	Golang                          golang.GoCatalogerOpts
+	LinuxKernel                     kernel.LinuxCatalogerConfig
+	Python                          python.CatalogerConfig
+	Catalogers                      []string
+	Parallelism                     int
+	ExcludeBinaryOverlapByOwnership bool
 }
 
 func (c Config) Java() java.Config {

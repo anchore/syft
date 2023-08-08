@@ -75,11 +75,14 @@ func CatalogPackages(src source.Source, cfg cataloger.Config) (*pkg.Collection, 
 	catalog, relationships, err := cataloger.Catalog(resolver, release, cfg.Parallelism, catalogers...)
 
 	// apply exclusions to the package catalog
+	// default config value for this is true
 	// https://github.com/anchore/syft/issues/931
-	for _, r := range relationships {
-		if cataloger.Exclude(r, catalog) {
-			catalog.Delete(r.To.ID())
-			relationships = removeRelationshipsByID(relationships, r.To.ID())
+	if cfg.ExcludeBinaryOverlapByOwnership {
+		for _, r := range relationships {
+			if cataloger.Exclude(r, catalog) {
+				catalog.Delete(r.To.ID())
+				relationships = removeRelationshipsByID(relationships, r.To.ID())
+			}
 		}
 	}
 
