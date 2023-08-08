@@ -17,7 +17,7 @@ import (
 const (
 	attestExample = `  {{.appName}} {{.command}} --output [FORMAT] alpine:latest defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry
 `
-	attestSchemeHelp = "\n" + indent + schemeHelpHeader + "\n" + imageSchemeHelp
+	attestSchemeHelp = "\n  " + schemeHelpHeader + "\n" + imageSchemeHelp
 	attestHelp       = attestExample + attestSchemeHelp
 )
 
@@ -29,8 +29,6 @@ type attestOptions struct {
 }
 
 func Attest(app clio.Application) *cobra.Command {
-	userInput := ""
-
 	var allowableOutputs []string
 	for _, f := range formats.AllIDs() {
 		switch f {
@@ -57,24 +55,13 @@ func Attest(app clio.Application) *cobra.Command {
 			"appName": app.ID().Name,
 			"command": "attest",
 		}),
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-				return err
-			}
-
-			// note: must be a container image
-			userInput = args[0]
-
-			// newLogWrapper(app)
-			// logApplicationConfig(app)
-			return validateArgs(cmd, args)
-		},
+		Args: validatePackagesArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.CheckForAppUpdate {
 				checkForApplicationUpdate(app)
 			}
 
-			return runAttest(app, opts, userInput)
+			return runAttest(app, opts, args[0])
 		},
 	}, opts)
 }

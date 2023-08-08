@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -88,8 +86,10 @@ func assertNotInOutput(data string) traitAssertion {
 func assertInOutput(data string) traitAssertion {
 	return func(tb testing.TB, stdout, stderr string, _ int) {
 		tb.Helper()
-		if !strings.Contains(stripansi.Strip(stderr), data) && !strings.Contains(stripansi.Strip(stdout), data) {
-			tb.Errorf("data=%q was NOT found in any output, but should have been there", data)
+		stdout = stripansi.Strip(stdout)
+		stderr = stripansi.Strip(stderr)
+		if !strings.Contains(stdout, data) && !strings.Contains(stderr, data) {
+			tb.Errorf("data=%q was NOT found in any output, but should have been there\nSTDOUT:%s\nSTDERR:%s", data, stdout, stderr)
 		}
 	}
 }
@@ -145,46 +145,6 @@ func assertSuccessfulReturnCode(tb testing.TB, _, _ string, rc int) {
 	tb.Helper()
 	if rc != 0 {
 		tb.Errorf("expected no failure but got rc=%d", rc)
-	}
-}
-
-func assertVerifyAttestation(coverageImage string) traitAssertion {
-	return func(tb testing.TB, stdout, _ string, _ int) {
-		tb.Helper()
-		cosignPath := filepath.Join(repoRoot(tb), ".tmp/cosign")
-		err := os.WriteFile("attestation.json", []byte(stdout), 0664)
-		if err != nil {
-			tb.Errorf("could not write attestation to disk")
-		}
-		defer os.Remove("attestation.json")
-		attachCmd := exec.Command(
-			cosignPath,
-			"attach",
-			"attestation",
-			"--attestation",
-			"attestation.json",
-			coverageImage, // TODO which remote image to use?
-		)
-
-		stdout, stderr, _ := runCommand(attachCmd, nil)
-		if attachCmd.ProcessState.ExitCode() != 0 {
-			tb.Log("STDOUT", stdout)
-			tb.Log("STDERR", stderr)
-			tb.Fatalf("could not attach image")
-		}
-
-		verifyCmd := exec.Command(
-			cosignPath,
-			"verify-attestation",
-			coverageImage, // TODO which remote image to use?
-		)
-
-		stdout, stderr, _ = runCommand(verifyCmd, nil)
-		if attachCmd.ProcessState.ExitCode() != 0 {
-			tb.Log("STDOUT", stdout)
-			tb.Log("STDERR", stderr)
-			tb.Fatalf("could not verify attestation")
-		}
 	}
 }
 

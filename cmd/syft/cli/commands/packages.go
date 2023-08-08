@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
@@ -37,7 +39,7 @@ const (
 	nonImageSchemeHelp = `    {{.appName}} {{.command}} dir:path/to/yourproject                  read directly from a path on disk (any directory)
     {{.appName}} {{.command}} file:path/to/yourproject/file            read directly from a path on disk (any single file)
 `
-	packagesSchemeHelp = "\n" + indent + schemeHelpHeader + "\n" + imageSchemeHelp + nonImageSchemeHelp
+	packagesSchemeHelp = "\n  " + schemeHelpHeader + "\n" + imageSchemeHelp + nonImageSchemeHelp
 
 	packagesHelp = packagesExample + packagesSchemeHelp
 )
@@ -68,12 +70,7 @@ func Packages(app clio.Application) *cobra.Command {
 			"appName": app.ID().Name,
 			"command": "packages",
 		}),
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-				return err
-			}
-			return validateArgs(cmd, args)
-		},
+		Args: validatePackagesArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.CheckForAppUpdate {
 				checkForApplicationUpdate(app)
@@ -81,4 +78,20 @@ func Packages(app clio.Application) *cobra.Command {
 			return runPackages(app, opts, args[0])
 		},
 	}, opts)
+}
+
+func validatePackagesArgs(cmd *cobra.Command, args []string) error {
+	return validateArgs(cmd, args, "an image/directory argument is required")
+}
+
+func validateArgs(cmd *cobra.Command, args []string, error string) error {
+	if len(args) == 0 {
+		// in the case that no arguments are given we want to show the help text and return with a non-0 return code.
+		if err := cmd.Help(); err != nil {
+			return fmt.Errorf("unable to display help: %w", err)
+		}
+		return fmt.Errorf(error)
+	}
+
+	return cobra.MaximumNArgs(1)(cmd, args)
 }

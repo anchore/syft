@@ -34,13 +34,7 @@ func Convert(app clio.Application) *cobra.Command {
 			"appName": app.ID().Name,
 			"command": "convert",
 		}),
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-				return err
-			}
-
-			return validateArgs(cmd, args)
-		},
+		Args: validateConvertArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.CheckForAppUpdate {
 				checkForApplicationUpdate(app)
@@ -48,4 +42,8 @@ func Convert(app clio.Application) *cobra.Command {
 			return RunConvert(opts, args[0])
 		},
 	}, opts)
+}
+
+func validateConvertArgs(cmd *cobra.Command, args []string) error {
+	return validateArgs(cmd, args, "an SBOM argument is required")
 }

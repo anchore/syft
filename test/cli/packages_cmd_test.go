@@ -153,7 +153,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "responds-to-package-cataloger-search-options",
-			args: []string{"packages", "-vv"},
+			args: []string{"--help"},
 			env: map[string]string{
 				"SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES": "true",
 				"SYFT_PACKAGE_SEARCH_INDEXED_ARCHIVES":   "false",
@@ -294,7 +294,7 @@ func TestRegistryAuth(t *testing.T) {
 			args: args,
 			env: map[string]string{
 				"SYFT_REGISTRY_AUTH_AUTHORITY": host,
-				"SYFT_REGISTRY_AUTH_TOKEN":     "token",
+				"SYFT_REGISTRY_AUTH_TOKEN":     "my-token",
 			},
 			assertions: []traitAssertion{
 				assertInOutput("source=OciRegistry"),
@@ -303,7 +303,7 @@ func TestRegistryAuth(t *testing.T) {
 			},
 		},
 		{
-			name: "not enough info fallsback to keychain",
+			name: "not enough info fallback to keychain",
 			args: args,
 			env: map[string]string{
 				"SYFT_REGISTRY_AUTH_AUTHORITY": host,
