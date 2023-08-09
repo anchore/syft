@@ -55,16 +55,9 @@ func parsePomXMLProject(path string, reader io.Reader) (*pkg.PomProject, error) 
 }
 
 func newPomProject(path string, p gopom.Project) *pkg.PomProject {
-	var artifactID, name, projectURL string
-	if p.ArtifactID != nil {
-		artifactID = *p.ArtifactID
-	}
-	if p.Name != nil {
-		name = *p.Name
-	}
-	if p.URL != nil {
-		projectURL = *p.URL
-	}
+	artifactID := safeString(p.ArtifactID)
+	name := safeString(p.Name)
+	projectURL := safeString(p.URL)
 	return &pkg.PomProject{
 		Path:        path,
 		Parent:      pomParent(p, p.Parent),
@@ -86,10 +79,7 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...fil
 		},
 	}
 
-	var name string
-	if dep.ArtifactID != nil {
-		name = *dep.ArtifactID
-	}
+	name := safeString(dep.ArtifactID)
 	version := resolveProperty(pom, dep.Version)
 
 	p := pkg.Package{
@@ -124,11 +114,7 @@ func pomParent(pom gopom.Project, parent *gopom.Parent) (result *pkg.PomParent) 
 		return nil
 	}
 
-	var artifactID string
-	if parent.ArtifactID != nil {
-		artifactID = *parent.ArtifactID
-	}
-
+	artifactID := safeString(parent.ArtifactID)
 	result = &pkg.PomParent{
 		GroupID:    resolveProperty(pom, parent.GroupID),
 		ArtifactID: artifactID,
