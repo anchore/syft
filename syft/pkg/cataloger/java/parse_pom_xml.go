@@ -159,6 +159,8 @@ func cleanDescription(original *string) (cleaned string) {
 // resolveProperty emulates some maven property resolution logic by looking in the project's variables
 // as well as supporting the project expressions like ${project.parent.groupId}.
 // If no match is found, the entire expression including ${} is returned
+//
+//nolint:gocognit
 func resolveProperty(pom gopom.Project, property *string) string {
 	propertyCase := safeString(property)
 	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
