@@ -14,6 +14,7 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
@@ -465,11 +466,11 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 }
 
 func purlValue(purl packageurl.PackageURL) string {
-	p := purl.String()
-	if p == "pkg:/" {
+	val := purl.String()
+	if _, err := packageurl.FromString(val); err != nil {
 		return ""
 	}
-	return p
+	return val
 }
 
 func parseSPDXLicenses(p *spdx.Package) []pkg.License {
@@ -493,10 +494,7 @@ func parseSPDXLicenses(p *spdx.Package) []pkg.License {
 }
 
 func cleanSPDXID(id string) string {
-	if strings.HasPrefix(id, "LicenseRef-") {
-		return strings.TrimPrefix(id, "LicenseRef-")
-	}
-	return id
+	return strings.TrimPrefix(id, spdxlicense.LicenseRefPrefix)
 }
 
 //nolint:funlen

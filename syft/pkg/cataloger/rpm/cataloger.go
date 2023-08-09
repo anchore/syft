@@ -4,19 +4,36 @@ Package rpm provides a concrete DBCataloger implementation for RPM "Package" DB 
 package rpm
 
 import (
+	"database/sql"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+const (
+	dbCatalogerName   = "rpm-db-cataloger"
+	fileCatalogerName = "rpm-file-cataloger"
+)
+
 // NewRpmDBCataloger returns a new RPM DB cataloger object.
 func NewRpmDBCataloger() *generic.Cataloger {
-	return generic.NewCataloger("rpm-db-cataloger").
+	// check if a sqlite driver is available
+	if !isSqliteDriverAvailable() {
+		log.Warnf("sqlite driver is not available, newer RPM databases might not be cataloged")
+	}
+
+	return generic.NewCataloger(dbCatalogerName).
 		WithParserByGlobs(parseRpmDB, pkg.RpmDBGlob).
 		WithParserByGlobs(parseRpmManifest, pkg.RpmManifestGlob)
 }
 
 // NewFileCataloger returns a new RPM file cataloger object.
 func NewFileCataloger() *generic.Cataloger {
-	return generic.NewCataloger("rpm-file-cataloger").
+	return generic.NewCataloger(fileCatalogerName).
 		WithParserByGlobs(parseRpmArchive, "**/*.rpm")
+}
+
+func isSqliteDriverAvailable() bool {
+	_, err := sql.Open("sqlite", ":memory:")
+	return err == nil
 }

@@ -1,11 +1,16 @@
 package spdxhelpers
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/spdx/tools-golang/spdx"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 func Test_License(t *testing.T) {
@@ -103,6 +108,77 @@ func Test_License(t *testing.T) {
 	}
 }
 
+func Test_otherLicenses(t *testing.T) {
+	pkg1 := pkg.Package{
+		Name:    "first-pkg",
+		Version: "1.1",
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicense("MIT"),
+		),
+	}
+	pkg2 := pkg.Package{
+		Name:    "second-pkg",
+		Version: "2.2",
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicense("non spdx license"),
+		),
+	}
+	bigText := `
+                                 Apache License
+                           Version 2.0, January 2004`
+	pkg3 := pkg.Package{
+		Name:    "third-pkg",
+		Version: "3.3",
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicense(bigText),
+		),
+	}
+
+	tests := []struct {
+		name     string
+		packages []pkg.Package
+		expected []*spdx.OtherLicense
+	}{
+		{
+			name:     "no other licenses when all valid spdx expressions",
+			packages: []pkg.Package{pkg1},
+			expected: nil,
+		},
+		{
+			name:     "other licenses includes original text",
+			packages: []pkg.Package{pkg2},
+			expected: []*spdx.OtherLicense{
+				{
+					LicenseIdentifier: "LicenseRef-non-spdx-license",
+					ExtractedText:     "non spdx license",
+				},
+			},
+		},
+		{
+			name:     "big licenses get hashed",
+			packages: []pkg.Package{pkg3},
+			expected: []*spdx.OtherLicense{
+				{
+					LicenseIdentifier: "LicenseRef-e9a1e42833d3e456f147052f4d312101bd171a0798893169fe596ca6b55c049e",
+					ExtractedText:     bigText,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(test.packages...),
+				},
+			}
+			got := ToFormatModel(s)
+			require.Equal(t, test.expected, got.OtherLicenses)
+		})
+	}
+}
+
 func Test_joinLicenses(t *testing.T) {
 	tests := []struct {
 		name string
@@ -122,7 +198,18 @@ func Test_joinLicenses(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, joinLicenses(tt.args), "joinLicenses(%v)", tt.args)
+			assert.Equalf(t, tt.want, joinLicenses(toSpdxLicenses(tt.args)), "joinLicenses(%v)", tt.args)
 		})
 	}
+}
+
+func toSpdxLicenses(ids []string) (licenses []spdxLicense) {
+	for _, l := range ids {
+		license := spdxLicense{id: l}
+		if strings.HasPrefix(l, spdxlicense.LicenseRefPrefix) {
+			license.value = l
+		}
+		licenses = append(licenses, license)
+	}
+	return licenses
 }

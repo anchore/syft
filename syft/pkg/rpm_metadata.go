@@ -11,10 +11,10 @@ import (
 // RpmDBGlob is the glob pattern used to find RPM DB files. Where:
 // - /var/lib/rpm/... is the typical path for most distributions
 // - /usr/share/rpm/... is common for rpm-ostree distributions (coreos-like)
-// - Packages is the legacy Berkely db based format
+// - Packages is the legacy Berkeley db based format
 // - Packages.db is the "ndb" format used in SUSE
 // - rpmdb.sqlite is the sqlite format used in fedora + derivates
-const RpmDBGlob = "**/{var/lib,usr/share}/rpm/{Packages,Packages.db,rpmdb.sqlite}"
+const RpmDBGlob = "**/{var/lib,usr/share,usr/lib/sysimage}/rpm/{Packages,Packages.db,rpmdb.sqlite}"
 
 // RpmManifestGlob is used in CBL-Mariner distroless images
 const RpmManifestGlob = "**/var/lib/rpmmanifest/container-manifest-2"

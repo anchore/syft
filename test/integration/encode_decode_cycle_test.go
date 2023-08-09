@@ -26,7 +26,10 @@ import (
 // encode-decode-encode loop which will detect lossy behavior in both directions.
 func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	// use second image for relationships
-	images := []string{"image-pkg-coverage", "image-owning-package"}
+	images := []string{
+		"image-pkg-coverage",
+		"image-owning-package",
+	}
 	tests := []struct {
 		formatOption sbom.FormatID
 		redactor     func(in []byte) []byte
