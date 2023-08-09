@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	osCatalogerTypes     = []pkg.Type{
+	osCatalogerTypes = []pkg.Type{
 		pkg.AlpmPkg,
 		pkg.ApkPkg,
 		pkg.DebPkg,

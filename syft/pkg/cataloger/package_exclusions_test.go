@@ -5,15 +5,13 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 )
 
 func TestExclude(t *testing.T) {
-	packageA := pkg.Package{Name: "package-a", Type: pkg.ApkPkg, FoundBy: apkdb.CatalogerName}
-	packageB := pkg.Package{Name: "package-a", Type: pkg.PythonPkg, FoundBy: "language-cataloger"}
-	packageC := pkg.Package{Name: "package-a", Type: pkg.BinaryPkg, FoundBy: binary.CatalogerName}
-	packageD := pkg.Package{Name: "package-d", Type: pkg.BinaryPkg, FoundBy: binary.CatalogerName}
+	packageA := pkg.Package{Name: "package-a", Type: pkg.ApkPkg}
+	packageB := pkg.Package{Name: "package-a", Type: pkg.PythonPkg}
+	packageC := pkg.Package{Name: "package-a", Type: pkg.BinaryPkg}
+	packageD := pkg.Package{Name: "package-d", Type: pkg.BinaryPkg}
 	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD} {
 		p := p
 		p.SetID()
