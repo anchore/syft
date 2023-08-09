@@ -69,7 +69,7 @@ func TestExclude(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if !Exclude(test.relationship, test.packages) && test.shouldExclude {
+			if !ExcludeBinaryByFileOwnershipOverlap(test.relationship, test.packages) && test.shouldExclude {
 				t.Errorf("expected to exclude relationship %+v", test.relationship)
 			}
 		})
