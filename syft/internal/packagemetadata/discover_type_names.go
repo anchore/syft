@@ -67,9 +67,9 @@ func findMetadataDefinitionNames(paths ...string) ([]string, error) {
 	strNames := names.List()
 	sort.Strings(strNames)
 
-	// note: 30 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
+	// note: 35 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
 	// it is really intended to catch any major issues with the generation process that would generate, say, 0 definitions.
-	if len(strNames) < 30 {
+	if len(strNames) < 35 {
 		return nil, fmt.Errorf("not enough metadata definitions found (discovered: " + fmt.Sprintf("%d", len(strNames)) + ")")
 	}
 
@@ -101,23 +101,48 @@ func findMetadataDefinitionNamesInFile(path string) ([]string, []string, error) 
 				continue
 			}
 
-			structType, ok := spec.Type.(*ast.StructType)
-			if !ok {
-				continue
-			}
-
 			// check if the struct type ends with "Metadata"
 			name := spec.Name.String()
 
 			// only look for exported types that end with "Metadata"
-			if isMetadataTypeCandidate(name) {
-				// print the full declaration of the struct type
-				metadataDefinitions = append(metadataDefinitions, name)
-				usedTypeNames = append(usedTypeNames, typeNamesUsedInStruct(structType)...)
+			if !isMetadataTypeCandidate(name) {
+				continue
 			}
+
+			structType := extractStructType(spec.Type)
+			if structType == nil {
+				continue
+			}
+
+			metadataDefinitions = append(metadataDefinitions, name)
+			usedTypeNames = append(usedTypeNames, typeNamesUsedInStruct(structType)...)
 		}
 	}
 	return metadataDefinitions, usedTypeNames, nil
+}
+
+func extractStructType(exp ast.Expr) *ast.StructType {
+	var structType *ast.StructType
+	switch ty := exp.(type) {
+	case *ast.StructType:
+		// this is a standard definition:
+		// type FooMetadata struct { ... }
+		structType = ty
+	case *ast.Ident:
+		// this might be a type created from another type:
+		// type FooMetadata BarMetadata
+		// ... but we need to check that the other type definition is a struct type
+		typeSpec, ok := ty.Obj.Decl.(*ast.TypeSpec)
+		if !ok {
+			return nil
+		}
+		nestedStructType, ok := typeSpec.Type.(*ast.StructType)
+		if !ok {
+			return nil
+		}
+		structType = nestedStructType
+	}
+	return structType
 }
 
 func typeNamesUsedInStruct(structType *ast.StructType) []string {

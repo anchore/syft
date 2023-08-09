@@ -1170,6 +1170,9 @@
               "$ref": "#/$defs/NixStore"
             },
             {
+              "$ref": "#/$defs/PhpComposerInstalled"
+            },
+            {
               "$ref": "#/$defs/PhpComposerLock"
             },
             {
@@ -1183,6 +1186,9 @@
             },
             {
               "$ref": "#/$defs/RDescription"
+            },
+            {
+              "$ref": "#/$defs/RedhatRpmArchive"
             },
             {
               "$ref": "#/$defs/RedhatRpmDbRecord"
@@ -1250,6 +1256,100 @@
         "type",
         "url",
         "reference"
+      ]
+    },
+    "PhpComposerInstalled": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/PhpComposerExternalReference"
+        },
+        "dist": {
+          "$ref": "#/$defs/PhpComposerExternalReference"
+        },
+        "require": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "provide": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "require-dev": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "suggest": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "type": "string"
+        },
+        "notification-url": {
+          "type": "string"
+        },
+        "bin": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "authors": {
+          "items": {
+            "$ref": "#/$defs/PhpComposerAuthors"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "time": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source",
+        "dist"
       ]
     },
     "PhpComposerLock": {
@@ -1642,6 +1742,63 @@
         }
       },
       "type": "object"
+    },
+    "RedhatRpmArchive": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "epoch": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "release": {
+          "type": "string"
+        },
+        "sourceRpm": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "modularityLabel": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/RpmFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "epoch",
+        "architecture",
+        "release",
+        "sourceRpm",
+        "size",
+        "vendor",
+        "modularityLabel",
+        "files"
+      ]
     },
     "RedhatRpmDbRecord": {
       "properties": {
