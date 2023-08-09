@@ -24,7 +24,7 @@ func TestCataloger_Catalog(t *testing.T) {
 					Version:      "2.34-210",
 					PURL:         "pkg:nix/glibc@2.34-210?output=bin&outputhash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 					Locations:    file.NewLocationSet(file.NewLocation("nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin")),
-					FoundBy:      CatalogerName,
+					FoundBy:      catalogerName,
 					Type:         pkg.NixPkg,
 					MetadataType: pkg.NixStoreMetadataType,
 					Metadata: pkg.NixStoreMetadata{
