@@ -5,6 +5,7 @@ package rpm
 
 import (
 	"database/sql"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
