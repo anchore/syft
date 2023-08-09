@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	DBCatalogerName   = "rpm-db-cataloger"
-	FileCatalogerName = "rpm-file-cataloger"
+	dbCatalogerName   = "rpm-db-cataloger"
+	fileCatalogerName = "rpm-file-cataloger"
 )
 
 // NewRpmDBCataloger returns a new RPM DB cataloger object.
@@ -23,14 +23,14 @@ func NewRpmDBCataloger() *generic.Cataloger {
 		log.Warnf("sqlite driver is not available, newer RPM databases might not be cataloged")
 	}
 
-	return generic.NewCataloger(DBCatalogerName).
+	return generic.NewCataloger(dbCatalogerName).
 		WithParserByGlobs(parseRpmDB, pkg.RpmDBGlob).
 		WithParserByGlobs(parseRpmManifest, pkg.RpmManifestGlob)
 }
 
 // NewFileCataloger returns a new RPM file cataloger object.
 func NewFileCataloger() *generic.Cataloger {
-	return generic.NewCataloger(FileCatalogerName).
+	return generic.NewCataloger(fileCatalogerName).
 		WithParserByGlobs(parseRpm, "**/*.rpm")
 }
 

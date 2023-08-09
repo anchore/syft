@@ -5,24 +5,20 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/alpm"
-	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary"
-	"github.com/anchore/syft/syft/pkg/cataloger/deb"
-	"github.com/anchore/syft/syft/pkg/cataloger/nix"
-	"github.com/anchore/syft/syft/pkg/cataloger/rpm"
 )
 
 var (
-	osCatalogerTypes = []string{
-		apkdb.CatalogerName,
-		alpm.CatalogerName,
-		deb.CatalogerName,
-		nix.CatalogerName,
-		rpm.DBCatalogerName,
-		rpm.FileCatalogerName,
+	osCatalogerTypes     = []pkg.Type{
+		pkg.AlpmPkg,
+		pkg.ApkPkg,
+		pkg.DebPkg,
+		pkg.NixPkg,
+		pkg.PortagePkg,
+		pkg.RpmPkg,
 	}
-	binaryCatalogerTypes = []string{binary.CatalogerName}
+	binaryCatalogerTypes = []pkg.Type{
+		pkg.BinaryPkg,
+	}
 )
 
 // ExcludeBinaryByFileOwnershipOverlap will remove packages from a collection given the following properties are true
@@ -41,7 +37,7 @@ func ExcludeBinaryByFileOwnershipOverlap(r artifact.Relationship, c *pkg.Collect
 		return false
 	}
 
-	parentInExclusion := slices.Contains(osCatalogerTypes, parent.FoundBy)
+	parentInExclusion := slices.Contains(osCatalogerTypes, parent.Type)
 	if !parentInExclusion {
 		return false
 	}
@@ -51,5 +47,5 @@ func ExcludeBinaryByFileOwnershipOverlap(r artifact.Relationship, c *pkg.Collect
 		return false
 	}
 
-	return slices.Contains(binaryCatalogerTypes, child.FoundBy)
+	return slices.Contains(binaryCatalogerTypes, child.Type)
 }
