@@ -13,7 +13,10 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"text/template"
 	"time"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
@@ -271,7 +274,137 @@ func getSyftBinaryLocation(t testing.TB) string {
 		// SYFT_BINARY_LOCATION is the absolute path to the snapshot binary
 		return os.Getenv("SYFT_BINARY_LOCATION")
 	}
-	return getSyftBinaryLocationByOS(t, runtime.GOOS)
+	bin := getSyftBinaryLocationByOS(t, runtime.GOOS)
+
+	// only run on valid bin target, when not running in CI
+	if bin != "" && os.Getenv("CI") == "" {
+		buildSyft(t, bin)
+		// regardless if we have a successful build, don't attempt to keep building
+		_ = os.Setenv("SYFT_BINARY_LOCATION", bin)
+	}
+
+	return bin
+}
+
+func buildSyft(t testing.TB, outfile string) {
+	dir := repoRoot(t)
+
+	start := time.Now()
+
+	var stdout, stderr string
+	var err error
+	switch "go" {
+	case "go":
+		stdout, stderr, err = buildSyftWithGo(dir, outfile)
+	case "goreleaser":
+		stdout, stderr, err = buildSyftWithGoreleaser(dir)
+	case "make":
+		stdout, stderr, err = buildSyftWithMake(dir)
+	}
+
+	took := time.Now().Sub(start).Round(time.Millisecond)
+	if err == nil {
+		if len(stderr) == 0 {
+			t.Logf("binary is up to date: %s in %v", outfile, took)
+		} else {
+			t.Logf("built binary: %s in %v\naffected paths:\n%s", outfile, took, stderr)
+		}
+	} else {
+		t.Logf("unable to build binary: %s %v\nSTDOUT:\n%s\nSTDERR:\n%s", outfile, err, stdout, stderr)
+	}
+}
+
+func goreleaserYamlContents(dir string) string {
+	b, _ := os.ReadFile(path.Join(dir, ".goreleaser.yaml"))
+	return string(b)
+}
+
+func buildSyftWithGo(dir string, outfile string) (string, string, error) {
+	d := yaml.NewDecoder(strings.NewReader(goreleaserYamlContents(dir)))
+	type releaser struct {
+		Builds []struct {
+			ID      string `yaml:"id"`
+			LDFlags string `yaml:"ldflags"`
+		} `yaml:"builds"`
+	}
+	r := releaser{}
+	_ = d.Decode(&r)
+	ldflags := ""
+	for _, b := range r.Builds {
+		if b.ID == "linux-build" {
+			ldflags = executeTemplate(b.LDFlags, struct {
+				Version string
+				Commit  string
+				Date    string
+				Summary string
+			}{
+				Version: "VERSION",
+				Commit:  "COMMIT",
+				Date:    "DATE",
+				Summary: "SUMMARY",
+			})
+			break
+		}
+	}
+
+	cmd := exec.Command("go",
+		"build",
+		"-v",
+		"-o", outfile,
+		"-trimpath",
+		"-ldflags", ldflags,
+		"./cmd/syft",
+	)
+
+	cmd.Dir = dir
+	stdout, stderr, err := runCommand(cmd, map[string]string{
+		"CGO_ENABLED": "0",
+	})
+	return stdout, stderr, err
+}
+
+func buildSyftWithMake(dir string) (string, string, error) {
+	cmd := exec.Command("make", "snapshot")
+	cmd.Dir = dir
+	stdout, stderr, err := runCommand(cmd, map[string]string{})
+	if strings.Contains(stderr, "error=docker build failed") {
+		err = nil
+	}
+	return stdout, stderr, err
+}
+
+func buildSyftWithGoreleaser(dir string) (string, string, error) {
+	tmpDir := path.Join(dir, ".tmp")
+
+	goreleaserYaml := goreleaserYamlContents(dir)
+
+	// # create a config with the dist dir overridden
+	tmpGoreleaserYamlFile := path.Join(tmpDir, "goreleaser.yaml")
+	_ = os.WriteFile(tmpGoreleaserYamlFile, []byte("dist: snapshot\n"+goreleaserYaml), os.ModePerm)
+
+	cmd := exec.Command(path.Join(tmpDir, "goreleaser"),
+		"build",
+		"--snapshot",
+		"--single-target",
+		"--clean",
+		"--config", tmpGoreleaserYamlFile,
+	)
+	cmd.Dir = dir
+	stdout, stderr, err := runCommand(cmd, map[string]string{})
+	return stdout, stderr, err
+}
+
+func executeTemplate(tpl string, data any) string {
+	t, err := template.New("tpl").Parse(tpl)
+	if err != nil {
+		return fmt.Sprintf("ERROR: %v", err)
+	}
+	out := &bytes.Buffer{}
+	err = t.Execute(out, data)
+	if err != nil {
+		return fmt.Sprintf("ERROR: %v", err)
+	}
+	return out.String()
 }
 
 func getSyftBinaryLocationByOS(t testing.TB, goOS string) string {
