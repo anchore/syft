@@ -92,7 +92,6 @@ github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461 h1:xGu4/uMWucwWV0YV
 github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461/go.mod h1:Ger02eh5NpPm2IqkPAy396HU1KlK3BhOeCljDYXySSk=
 github.com/anchore/clio v0.0.0-20230807174420-8b6f1b04adc8 h1:DPA2ldr+cuSnFZ+XLcbfixvtg5Kjc71EvXK5H+GYLwA=
 github.com/anchore/clio v0.0.0-20230807174420-8b6f1b04adc8/go.mod h1:1YX0GEFAbguq8nctgm2JKcHZuXw+ILfZeM8rPNnnaKE=
-github.com/anchore/fangs v0.0.0-20230807173929-13c94c86f47e/go.mod h1:82EGoxZTfBXSW0/zollEP+Qs3wkiKmip5yBT5j+eZpY=
 github.com/anchore/fangs v0.0.0-20230810180116-21c6393efab9 h1:u+UxbT8CoZle7v2YdAlrCxZ2J8thMoMmlbcnGi8CJQI=
 github.com/anchore/fangs v0.0.0-20230810180116-21c6393efab9/go.mod h1:82EGoxZTfBXSW0/zollEP+Qs3wkiKmip5yBT5j+eZpY=
 github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a h1:nJ2G8zWKASyVClGVgG7sfM5mwoZlZ2zYpIzN2OhjWkw=
@@ -458,8 +457,6 @@ github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
-github.com/kzantow-anchore/fangs v0.0.0-20230810140247-5c87c748a997 h1:96H0gK4D9zxZ7rWQvkQFcUVHVE5n8Rfhm4LODYAy6SY=
-github.com/kzantow-anchore/fangs v0.0.0-20230810140247-5c87c748a997/go.mod h1:82EGoxZTfBXSW0/zollEP+Qs3wkiKmip5yBT5j+eZpY=
 github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381 h1:bqDmpDG49ZRnB5PcgP0RXtQvnMSgIF14M7CBd2shtXs=
 github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381/go.mod h1:7rIyQOR62GCctdiQpZ/zOJlFyk6y+94wXzv6RNZgaR4=
 github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
