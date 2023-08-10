@@ -52,7 +52,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461
 	github.com/anchore/clio v0.0.0-20230807174420-8b6f1b04adc8
-	github.com/anchore/fangs v0.0.0-20230807173929-13c94c86f47e
+	github.com/anchore/fangs v0.0.0-20230810180116-21c6393efab9
 	github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a
 	github.com/anchore/stereoscope v0.0.0-20230727211946-d1f3d766295e
 	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
@@ -211,5 +211,3 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
-
-replace github.com/anchore/fangs => github.com/kzantow-anchore/fangs v0.0.0-20230810140247-5c87c748a997

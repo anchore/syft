@@ -92,6 +92,9 @@ github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461 h1:xGu4/uMWucwWV0YV
 github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461/go.mod h1:Ger02eh5NpPm2IqkPAy396HU1KlK3BhOeCljDYXySSk=
 github.com/anchore/clio v0.0.0-20230807174420-8b6f1b04adc8 h1:DPA2ldr+cuSnFZ+XLcbfixvtg5Kjc71EvXK5H+GYLwA=
 github.com/anchore/clio v0.0.0-20230807174420-8b6f1b04adc8/go.mod h1:1YX0GEFAbguq8nctgm2JKcHZuXw+ILfZeM8rPNnnaKE=
+github.com/anchore/fangs v0.0.0-20230807173929-13c94c86f47e/go.mod h1:82EGoxZTfBXSW0/zollEP+Qs3wkiKmip5yBT5j+eZpY=
+github.com/anchore/fangs v0.0.0-20230810180116-21c6393efab9 h1:u+UxbT8CoZle7v2YdAlrCxZ2J8thMoMmlbcnGi8CJQI=
+github.com/anchore/fangs v0.0.0-20230810180116-21c6393efab9/go.mod h1:82EGoxZTfBXSW0/zollEP+Qs3wkiKmip5yBT5j+eZpY=
 github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a h1:nJ2G8zWKASyVClGVgG7sfM5mwoZlZ2zYpIzN2OhjWkw=
 github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a/go.mod h1:ubLFmlsv8/DFUQrZwY5syT5/8Er3ugSr4rDFwHsE3hg=
 github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb h1:iDMnx6LIjtjZ46C0akqveX83WFzhpTD3eqOthawb5vU=
