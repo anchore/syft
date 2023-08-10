@@ -342,7 +342,14 @@ func toFileMetadata(f *spdx.File) (meta file.Metadata) {
 }
 
 func toSyftRelationships(spdxIDMap map[string]any, doc *spdx.Document) []artifact.Relationship {
-	var out []artifact.Relationship
+	out := collectDocRelationships(spdxIDMap, doc)
+
+	out = append(out, collectPackageFileRelationships(spdxIDMap, doc)...)
+
+	return out
+}
+
+func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out []artifact.Relationship) {
 	for _, r := range doc.Relationships {
 		// FIXME what to do with r.RefA.DocumentRefID and r.RefA.SpecialID
 		if r.RefA.DocumentRefID != "" && requireAndTrimPrefix(r.RefA.DocumentRefID, "DocumentRef-") != string(doc.SPDXIdentifier) {
@@ -393,8 +400,11 @@ func toSyftRelationships(spdxIDMap map[string]any, doc *spdx.Document) []artifac
 			})
 		}
 	}
+	return out
+}
 
-	// add relationships for direct files
+// collectPackageFileRelationships add relationships for direct files
+func collectPackageFileRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out []artifact.Relationship) {
 	for _, p := range doc.Packages {
 		a := spdxIDMap[string(p.PackageSPDXIdentifier)]
 		from, fromOk := a.(pkg.Package)
@@ -414,7 +424,6 @@ func toSyftRelationships(spdxIDMap map[string]any, doc *spdx.Document) []artifac
 			})
 		}
 	}
-
 	return out
 }
 

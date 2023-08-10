@@ -1,13 +1,14 @@
 package spdxtagvalue
 
 import (
-	"github.com/anchore/syft/syft/file"
-	"github.com/stretchr/testify/require"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/file"
 )
 
 // TODO: this is a temporary coverage see below
