@@ -78,6 +78,7 @@ require (
 	golang.org/x/exp v0.0.0-20230202163644-54bba9f4231b
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.25.0
+	rsc.io/goversion v1.2.1-0.20230309153236-3a30cee7003e
 )
 
 require (
@@ -211,3 +212,5 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
+
+replace rsc.io/goversion => github.com/kastenhq/goversion v0.0.0-20230808225904-569d7bd0b82f

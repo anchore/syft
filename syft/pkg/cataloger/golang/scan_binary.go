@@ -8,10 +8,16 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
+	"rsc.io/goversion/version"
 )
 
+type ExtendedBuildInfo struct {
+	*debug.BuildInfo
+	cryptoSettings string
+}
+
 // scanFile scans file to try to report the Go and module versions.
-func scanFile(reader unionreader.UnionReader, filename string) ([]*debug.BuildInfo, []string) {
+func scanFile(reader unionreader.UnionReader, filename string) ([]*ExtendedBuildInfo, []string) {
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
 	readers, err := unionreader.GetReaders(reader)
@@ -20,7 +26,7 @@ func scanFile(reader unionreader.UnionReader, filename string) ([]*debug.BuildIn
 		return nil, nil
 	}
 
-	var builds []*debug.BuildInfo
+	var builds []*ExtendedBuildInfo
 	for _, r := range readers {
 		bi, err := getBuildInfo(r)
 		if err != nil {
@@ -30,12 +36,40 @@ func scanFile(reader unionreader.UnionReader, filename string) ([]*debug.BuildIn
 		if bi == nil {
 			continue
 		}
-		builds = append(builds, bi)
+
+		v, err := getCryptoInformation(r)
+		if err != nil {
+			log.WithFields("file", filename, "error", err).Trace("unable to read golang version info")
+			continue
+		}
+
+		builds = append(builds, &ExtendedBuildInfo{bi, v})
 	}
 
 	archs := getArchs(readers, builds)
 
 	return builds, archs
+}
+
+func getCryptoInformation(reader io.ReaderAt) (string, error) {
+	v, err := version.ReadExeFromReader(reader)
+	if err != nil {
+		return "", err
+	}
+
+	cryptoInfo := ""
+	switch {
+	case v.BoringCrypto && v.StandardCrypto:
+		cryptoInfo += "boring AND standard crypto!!!"
+	case v.BoringCrypto:
+		cryptoInfo += "boring crypto"
+	case v.StandardCrypto:
+		cryptoInfo += "standard crypto"
+	}
+	if v.FIPSOnly {
+		cryptoInfo += " +crypto/tls/fipsonly"
+	}
+	return cryptoInfo, nil
 }
 
 func getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, err error) {
