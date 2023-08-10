@@ -5,26 +5,14 @@ import (
 
 	"github.com/anchore/clio"
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/internal/redact"
 )
 
 type RegistryCredentials struct {
 	Authority string `yaml:"authority" json:"authority" mapstructure:"authority"`
-	Username  string `yaml:"username" json:"username" mapstructure:"username"`
-	Password  string `yaml:"password" json:"password" mapstructure:"password"`
-	Token     string `yaml:"token" json:"token" mapstructure:"token"`
-}
-
-var _ clio.PostLoader = (*RegistryCredentials)(nil)
-
-func (r *RegistryCredentials) PostLoad() error {
-	// TODO ensure that the list of RegistryCredentials has PostLoad called
-	// FIXME
-	// IMPORTANT: do not show any credential information
-	redact.Add(r.Username)
-	redact.Add(r.Password)
-	redact.Add(r.Token)
-	return nil
+	// IMPORTANT: do not show any credential information, use secret type to automatically redact the values
+	Username secret `yaml:"username" json:"username" mapstructure:"username"`
+	Password secret `yaml:"password" json:"password" mapstructure:"password"`
+	Token    secret `yaml:"token" json:"token" mapstructure:"token"`
 }
 
 type registry struct {
@@ -33,13 +21,8 @@ type registry struct {
 	Auth                  []RegistryCredentials `yaml:"auth" json:"auth" mapstructure:"auth"`
 }
 
-func registryDefault() registry {
-	return registry{}
-}
-
 var _ clio.PostLoader = (*registry)(nil)
 
-//nolint:unparam
 func (cfg *registry) PostLoad() error {
 	// there may be additional credentials provided by env var that should be appended to the set of credentials
 	authority, username, password, token :=
@@ -51,14 +34,13 @@ func (cfg *registry) PostLoad() error {
 	if hasNonEmptyCredentials(username, password, token) {
 		envCredentials := RegistryCredentials{
 			Authority: authority,
-			Username:  username,
-			Password:  password,
-			Token:     token,
-		}
-		if err := envCredentials.PostLoad(); err != nil {
-			return err
+			Username:  secret(username),
+			Password:  secret(password),
+			Token:     secret(token),
 		}
 		// note: we prepend the credentials such that the environment variables take precedence over on-disk configuration.
+		// since this PostLoad is called before the PostLoad on the Auth credentials list,
+		// all appropriate redactions will be added
 		cfg.Auth = append([]RegistryCredentials{envCredentials}, cfg.Auth...)
 	}
 	return nil
@@ -73,9 +55,9 @@ func (cfg *registry) ToOptions() *image.RegistryOptions {
 	for i, a := range cfg.Auth {
 		auth[i] = image.RegistryCredentials{
 			Authority: a.Authority,
-			Username:  a.Username,
-			Password:  a.Password,
-			Token:     a.Token,
+			Username:  a.Username.String(),
+			Password:  a.Password.String(),
+			Token:     a.Token.String(),
 		}
 	}
 	return &image.RegistryOptions{

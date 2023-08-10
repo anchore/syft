@@ -211,3 +211,5 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
+
+replace github.com/anchore/fangs => github.com/kzantow-anchore/fangs v0.0.0-20230810140247-5c87c748a997

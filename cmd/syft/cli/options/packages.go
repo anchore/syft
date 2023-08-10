@@ -55,7 +55,6 @@ func PackagesDefault() Packages {
 		FileClassification:              fileClassificationDefault(),
 		FileContents:                    fileContentsDefault(),
 		Secrets:                         secretsDefault(),
-		Registry:                        registryDefault(),
 		Source:                          sourceCfgDefault(),
 		Parallelism:                     1,
 		ExcludeBinaryOverlapByOwnership: true,
