@@ -69,6 +69,7 @@ require (
 	github.com/google/go-containerregistry v0.16.1
 	github.com/google/licensecheck v0.3.1
 	github.com/invopop/jsonschema v0.7.0
+	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
 	github.com/knqyf263/go-rpmdb v0.0.0-20230301153543-ba94b245509b
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/saferwall/pe v1.4.4
@@ -78,7 +79,6 @@ require (
 	golang.org/x/exp v0.0.0-20230202163644-54bba9f4231b
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.25.0
-	rsc.io/goversion v1.2.1-0.20230309153236-3a30cee7003e
 )
 
 require (
@@ -198,6 +198,7 @@ require (
 	modernc.org/opt v0.1.3 // indirect
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.0.1 // indirect
+	rsc.io/goversion v1.2.1-0.20230309153236-3a30cee7003e // indirect
 )
 
 require (
@@ -212,5 +213,3 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
-
-replace rsc.io/goversion => github.com/kastenhq/goversion v0.0.0-20230808225904-569d7bd0b82f

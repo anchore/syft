@@ -8,7 +8,7 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
-	"rsc.io/goversion/version"
+	version "github.com/kastenhq/goversion/version"
 )
 
 type ExtendedBuildInfo struct {
