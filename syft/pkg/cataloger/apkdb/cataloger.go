@@ -8,10 +8,10 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-const CatalogerName = "apkdb-cataloger"
+const catalogerName = "apkdb-cataloger"
 
 // NewApkdbCataloger returns a new Alpine DB cataloger object.
 func NewApkdbCataloger() *generic.Cataloger {
-	return generic.NewCataloger(CatalogerName).
+	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseApkDB, pkg.ApkDBGlob)
 }

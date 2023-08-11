@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	CatalogerName = "nix-store-cataloger"
+	catalogerName = "nix-store-cataloger"
 	nixStoreGlob  = "**/nix/store/*"
 )
 
@@ -24,7 +24,7 @@ func NewStoreCataloger() *StoreCataloger {
 }
 
 func (c *StoreCataloger) Name() string {
-	return CatalogerName
+	return catalogerName
 }
 
 func (c *StoreCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {

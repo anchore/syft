@@ -484,7 +484,7 @@ exclude: []
 
 # allows users to exclude synthetic binary packages from the sbom
 # these packages are removed if an overlap with a non-synthetic package is found
-exclude-overlap-by-ownership: true
+exclude-binary-overlap-by-ownership: true
 
 # os and/or architecture to use when referencing container images (e.g. "windows/armv6" or "arm64")
 # same as --platform; SYFT_PLATFORM env var

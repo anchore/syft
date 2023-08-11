@@ -79,7 +79,7 @@ func CatalogPackages(src source.Source, cfg cataloger.Config) (*pkg.Collection, 
 	// https://github.com/anchore/syft/issues/931
 	if cfg.ExcludeBinaryOverlapByOwnership {
 		for _, r := range relationships {
-			if cataloger.Exclude(r, catalog) {
+			if cataloger.ExcludeBinaryByFileOwnershipOverlap(r, catalog) {
 				catalog.Delete(r.To.ID())
 				relationships = removeRelationshipsByID(relationships, r.To.ID())
 			}
