@@ -17,9 +17,6 @@ func Root(app clio.Application, packagesCmd *cobra.Command) *cobra.Command {
 		Long:    packagesCmd.Long,
 		Args:    packagesCmd.Args,
 		Example: packagesCmd.Example,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.CheckForAppUpdate {
 				checkForApplicationUpdate(app)
