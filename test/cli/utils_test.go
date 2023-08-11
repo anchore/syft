@@ -338,7 +338,7 @@ func buildSyftWithGo(dir string, outfile string) (string, string, error) {
 				Date    string
 				Summary string
 			}{
-				Version: "VERSION",
+				Version: "SNAPSHOT", // should contain "SNAPSHOT" so update checks are skipped
 				Commit:  "COMMIT",
 				Date:    "DATE",
 				Summary: "SUMMARY",
