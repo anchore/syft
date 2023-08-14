@@ -198,7 +198,6 @@ require (
 	modernc.org/opt v0.1.3 // indirect
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.0.1 // indirect
-	rsc.io/goversion v1.2.1-0.20230309153236-3a30cee7003e // indirect
 )
 
 require (
