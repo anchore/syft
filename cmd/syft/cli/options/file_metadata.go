@@ -12,7 +12,7 @@ type fileMetadata struct {
 func fileMetadataDefault() fileMetadata {
 	return fileMetadata{
 		Cataloger: catalogerOptions{
-			Scope: source.SquashedScope.String(),
+			Scope: source.SquashedScope,
 		},
 		Digests: []string{"sha256"},
 	}

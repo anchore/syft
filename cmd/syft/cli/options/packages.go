@@ -48,9 +48,7 @@ var _ interface {
 func PackagesDefault() Packages {
 	return Packages{
 		Package:                         pkgDefault(),
-		Golang:                          golangDefault(),
 		LinuxKernel:                     linuxKernelDefault(),
-		Python:                          pythonDefault(),
 		FileMetadata:                    fileMetadataDefault(),
 		FileClassification:              fileClassificationDefault(),
 		FileContents:                    fileContentsDefault(),
@@ -66,7 +64,7 @@ func (cfg *Packages) AddFlags(flags clio.FlagSet) {
 	for _, scope := range source.AllScopes {
 		validScopeValues = append(validScopeValues, strcase.ToDelimited(string(scope), '-'))
 	}
-	flags.StringVarP(&cfg.Package.Cataloger.Scope, "scope", "s",
+	flags.StringVarP((*string)(&cfg.Package.Cataloger.Scope), "scope", "s",
 		fmt.Sprintf("selection of layers to catalog, options=%v", validScopeValues))
 
 	flags.StringVarP(&cfg.Platform, "platform", "",
@@ -126,7 +124,7 @@ func (cfg Packages) ToCatalogerConfig() cataloger.Config {
 		Search: cataloger.SearchConfig{
 			IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
 			IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
-			Scope:                    cfg.Package.Cataloger.SourceScope(),
+			Scope:                    cfg.Package.Cataloger.Scope,
 		},
 		Catalogers:  cfg.Catalogers,
 		Parallelism: cfg.Parallelism,

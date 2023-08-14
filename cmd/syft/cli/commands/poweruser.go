@@ -52,9 +52,8 @@ func PowerUser(app clio.Application) *cobra.Command {
 		Args:   validatePackagesArgs,
 		Hidden: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if opts.CheckForAppUpdate {
-				checkForApplicationUpdate(app)
-			}
+			applicationUpdateCheck(app, opts.CheckForAppUpdate)
+
 			return runPowerUser(app, opts, args[0])
 		},
 	}, opts)

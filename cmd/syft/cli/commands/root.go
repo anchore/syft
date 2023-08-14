@@ -18,9 +18,8 @@ func Root(app clio.Application, packagesCmd *cobra.Command) *cobra.Command {
 		Args:    packagesCmd.Args,
 		Example: packagesCmd.Example,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if opts.CheckForAppUpdate {
-				checkForApplicationUpdate(app)
-			}
+			applicationUpdateCheck(app, opts.CheckForAppUpdate)
+
 			return runPackages(app, opts, args[0])
 		},
 	}, opts)

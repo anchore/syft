@@ -11,7 +11,7 @@ type fileClassification struct {
 func fileClassificationDefault() fileClassification {
 	return fileClassification{
 		Cataloger: catalogerOptions{
-			Scope: source.SquashedScope.String(),
+			Scope: source.SquashedScope,
 		},
 	}
 }

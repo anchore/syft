@@ -14,7 +14,7 @@ type fileContents struct {
 func fileContentsDefault() fileContents {
 	return fileContents{
 		Cataloger: catalogerOptions{
-			Scope: source.SquashedScope.String(),
+			Scope: source.SquashedScope,
 		},
 		SkipFilesAboveSize: 1 * file.MB,
 	}

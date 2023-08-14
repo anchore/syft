@@ -43,9 +43,8 @@ func Convert(app clio.Application) *cobra.Command {
 		}),
 		Args: validateConvertArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if opts.CheckForAppUpdate {
-				checkForApplicationUpdate(app)
-			}
+			applicationUpdateCheck(app, opts.CheckForAppUpdate)
+
 			return RunConvert(opts, args[0])
 		},
 	}, opts)

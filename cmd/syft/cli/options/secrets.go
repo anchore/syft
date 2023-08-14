@@ -16,7 +16,7 @@ type secrets struct {
 func secretsDefault() secrets {
 	return secrets{
 		Cataloger: catalogerOptions{
-			Scope: source.AllLayersScope.String(),
+			Scope: source.AllLayersScope,
 		},
 		SkipFilesAboveSize: 1 * file.MB,
 	}

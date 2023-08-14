@@ -8,20 +8,16 @@ import (
 )
 
 type catalogerOptions struct {
-	Enabled bool   `yaml:"enabled" json:"enabled" mapstructure:"enabled"`
-	Scope   string `yaml:"scope" json:"scope" mapstructure:"scope"`
+	Enabled bool         `yaml:"enabled" json:"enabled" mapstructure:"enabled"`
+	Scope   source.Scope `yaml:"scope" json:"scope" mapstructure:"scope"`
 }
 
 var _ clio.PostLoader = (*catalogerOptions)(nil)
 
 func (opt *catalogerOptions) PostLoad() error {
-	s := opt.SourceScope()
+	s := source.ParseScope(opt.Scope.String())
 	if s == source.UnknownScope {
-		return fmt.Errorf("bad scope value %v", s)
+		return fmt.Errorf("bad scope value %v", opt.Scope)
 	}
 	return nil
-}
-
-func (opt *catalogerOptions) SourceScope() source.Scope {
-	return source.ParseScope(opt.Scope)
 }

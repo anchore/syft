@@ -72,9 +72,7 @@ func Attest(app clio.Application) *cobra.Command {
 		}),
 		Args: validatePackagesArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if opts.CheckForAppUpdate {
-				checkForApplicationUpdate(app)
-			}
+			applicationUpdateCheck(app, opts.CheckForAppUpdate)
 
 			return runAttest(app, opts, args[0])
 		},

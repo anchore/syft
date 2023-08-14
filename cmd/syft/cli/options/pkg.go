@@ -17,7 +17,7 @@ func pkgDefault() pkg {
 		SearchUnindexedArchives: c.IncludeUnindexedArchives,
 		Cataloger: catalogerOptions{
 			Enabled: true,
-			Scope:   c.Scope.String(),
+			Scope:   c.Scope,
 		},
 	}
 }

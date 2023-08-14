@@ -7,7 +7,3 @@ type golang struct {
 	Proxy                       string `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
 	NoProxy                     string `json:"no-proxy" yaml:"no-proxy" mapstructure:"no-proxy"`
 }
-
-func golangDefault() golang {
-	return golang{}
-}

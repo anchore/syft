@@ -1,16 +1,13 @@
 package commands
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/anchore/clio"
 	hashiVersion "github.com/anchore/go-version"
+	"github.com/anchore/syft/cmd/syft/internal"
 )
-
-const appName = "syft"
 
 func TestIsUpdateAvailable(t *testing.T) {
 	tests := []struct {
@@ -78,7 +75,7 @@ func TestIsUpdateAvailable(t *testing.T) {
 		},
 		{
 			name:          "NoBuildVersion",
-			buildVersion:  valueNotProvided,
+			buildVersion:  internal.NotProvided,
 			latestVersion: "1.0.0",
 			code:          200,
 			isAvailable:   false,
@@ -112,20 +109,15 @@ func TestIsUpdateAvailable(t *testing.T) {
 			version := test.buildVersion
 			// remote...
 			handler := http.NewServeMux()
-			// FIXME
-			path := fmt.Sprintf(pathTpl, appName)
-			handler.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+			handler.HandleFunc(latestAppVersionURL.path, func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(test.code)
 				_, _ = w.Write([]byte(test.latestVersion))
 			})
 			mockSrv := httptest.NewServer(handler)
-			host = mockSrv.URL
+			latestAppVersionURL.host = mockSrv.URL
 			defer mockSrv.Close()
 
-			isAvailable, newVersion, err := isUpdateAvailable(clio.Identification{
-				Name:    appName,
-				Version: version,
-			})
+			isAvailable, newVersion, err := isUpdateAvailable(version)
 			if err != nil && !test.err {
 				t.Fatalf("got error but expected none: %+v", err)
 			} else if err == nil && test.err {
@@ -199,19 +191,15 @@ func TestFetchLatestApplicationVersion(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// setup mock
 			handler := http.NewServeMux()
-			// FIXME
-			path := fmt.Sprintf(pathTpl, appName)
-			handler.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+			handler.HandleFunc(latestAppVersionURL.path, func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(test.code)
 				_, _ = w.Write([]byte(test.response))
 			})
 			mockSrv := httptest.NewServer(handler)
-			host = mockSrv.URL
+			latestAppVersionURL.host = mockSrv.URL
 			defer mockSrv.Close()
 
-			actual, err := fetchLatestApplicationVersion(clio.Identification{
-				Name: appName,
-			})
+			actual, err := fetchLatestApplicationVersion()
 			if err != nil && !test.err {
 				t.Fatalf("got error but expected none: %+v", err)
 			} else if err == nil && test.err {
