@@ -134,7 +134,7 @@ func runAttest(app clio.Application, opts *attestOptions, userInput string) erro
 
 	args := []string{"attest", userInput, "--predicate", f.Name(), "--type", predicateType}
 	if opts.Attest.Key != "" {
-		args = append(args, "--key", opts.Attest.Key)
+		args = append(args, "--key", opts.Attest.Key.String())
 	}
 
 	execCmd := exec.Command(cmd, args...)
