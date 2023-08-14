@@ -65,7 +65,7 @@ func generateCatalogFileMetadataTask(opts *options.Packages) (Task, error) {
 	metadataCataloger := filemetadata.NewCataloger()
 
 	task := func(results *sbom.Artifacts, src source.Source) ([]artifact.Relationship, error) {
-		resolver, err := src.FileResolver(opts.FileMetadata.Cataloger.Scope)
+		resolver, err := src.FileResolver(opts.FileMetadata.Cataloger.GetScope())
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +94,7 @@ func generateCatalogFileDigestsTask(opts *options.Packages) (Task, error) {
 	digestsCataloger := filedigest.NewCataloger(hashes)
 
 	task := func(results *sbom.Artifacts, src source.Source) ([]artifact.Relationship, error) {
-		resolver, err := src.FileResolver(opts.FileMetadata.Cataloger.Scope)
+		resolver, err := src.FileResolver(opts.FileMetadata.Cataloger.GetScope())
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +126,7 @@ func generateCatalogSecretsTask(opts *options.Packages) (Task, error) {
 	}
 
 	task := func(results *sbom.Artifacts, src source.Source) ([]artifact.Relationship, error) {
-		resolver, err := src.FileResolver(opts.Secrets.Cataloger.Scope)
+		resolver, err := src.FileResolver(opts.Secrets.Cataloger.GetScope())
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +153,7 @@ func generateCatalogContentsTask(opts *options.Packages) (Task, error) {
 	}
 
 	task := func(results *sbom.Artifacts, src source.Source) ([]artifact.Relationship, error) {
-		resolver, err := src.FileResolver(opts.FileContents.Cataloger.Scope)
+		resolver, err := src.FileResolver(opts.FileContents.Cataloger.GetScope())
 		if err != nil {
 			return nil, err
 		}
