@@ -9,8 +9,6 @@ import (
 )
 
 const (
-	// FIXME
-	// typePrefix    = internal.ApplicationName
 	typePrefix    = "syft"
 	cliTypePrefix = typePrefix + "-cli"
 
