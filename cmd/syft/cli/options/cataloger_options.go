@@ -19,5 +19,6 @@ func (opt *catalogerOptions) PostLoad() error {
 	if s == source.UnknownScope {
 		return fmt.Errorf("bad scope value %v", opt.Scope)
 	}
+	opt.Scope = s
 	return nil
 }
