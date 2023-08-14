@@ -18,6 +18,16 @@ type Config struct {
 	ExcludeBinaryOverlapByOwnership bool
 }
 
+func DefaultConfig() Config {
+	return Config{
+		Search:                          DefaultSearchConfig(),
+		Parallelism:                     1,
+		LinuxKernel:                     kernel.DefaultLinuxCatalogerConfig(),
+		Python:                          python.DefaultCatalogerConfig(),
+		ExcludeBinaryOverlapByOwnership: true,
+	}
+}
+
 func (c Config) Java() java.Config {
 	return java.Config{
 		SearchUnindexedArchives: c.Search.IncludeUnindexedArchives,

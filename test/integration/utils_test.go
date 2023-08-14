@@ -8,8 +8,6 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/pkg/cataloger"
-	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
-	"github.com/anchore/syft/syft/pkg/cataloger/python"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -26,7 +24,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 		theSource.Close()
 	})
 
-	c := defaultConfig()
+	c := cataloger.DefaultConfig()
 	c.Catalogers = catalogerCfg
 
 	c.Search.Scope = scope
@@ -54,16 +52,6 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 	}, theSource
 }
 
-func defaultConfig() cataloger.Config {
-	return cataloger.Config{
-		Search:                          cataloger.DefaultSearchConfig(),
-		Parallelism:                     1,
-		LinuxKernel:                     kernel.DefaultLinuxCatalogerConfig(),
-		Python:                          python.DefaultCatalogerConfig(),
-		ExcludeBinaryOverlapByOwnership: true,
-	}
-}
-
 func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, source.Source) {
 	userInput := "dir:" + dir
 	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
@@ -75,7 +63,7 @@ func catalogDirectory(t *testing.T, dir string) (sbom.SBOM, source.Source) {
 	})
 
 	// TODO: this would be better with functional options (after/during API refactor)
-	c := defaultConfig()
+	c := cataloger.DefaultConfig()
 	c.Search.Scope = source.AllLayersScope
 	pkgCatalog, relationships, actualDistro, err := syft.CatalogPackages(theSource, c)
 	if err != nil {
