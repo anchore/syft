@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	intFile "github.com/anchore/syft/internal/file"
@@ -375,7 +376,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
 func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.PomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
-	vPathSuffix := pomProperties.Path
+	vPathSuffix := filepath.Clean(strings.TrimSuffix(pomProperties.Path, filepath.Base(pomProperties.Path)))
 	accessPath := location.AccessPath()
 	virtualPath := accessPath + ":" + vPathSuffix
 

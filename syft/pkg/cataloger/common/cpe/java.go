@@ -31,13 +31,6 @@ var (
 		"Bundle-Activator",
 	}
 
-	/*
-		Long answer
-		stability is better than instability
-		correctness is better than incorrectness
-		Source of manifest truth
-		https://docs.oracle.com/javase/8/docs/technotes/guides/jar/jar.html
-	*/
 	secondaryJavaManifestGroupIDFields = []string{
 		"Automatic-Module-Name",
 		"Main-Class",
