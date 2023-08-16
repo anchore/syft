@@ -190,11 +190,11 @@ func GroupIDFromJavaPackage(p pkg.Package) (groupID string) {
 
 // Java convention is that there is a single groupID
 func GroupIDFromJavaMetadata(metadata pkg.JavaMetadata) (groupID string) {
-	if groupID = groupIDFromPomProperties(metadata.PomProperties); groupID != "" {
+	if groupID = groupIDFromPomProject(metadata.PomProject); groupID != "" {
 		return groupID
 	}
 
-	if groupID = groupIDFromPomProject(metadata.PomProject); groupID != "" {
+	if groupID = groupIDFromPomProperties(metadata.PomProperties); groupID != "" {
 		return groupID
 	}
 
@@ -237,7 +237,7 @@ func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
 		return project.GroupID
 	}
 
-	// We didn't find a group ID so we should fall back and check the parent project
+	// We didn't find a group ID; We should fall back and check the parent project
 	if project.Parent != nil {
 		if project.Parent.GroupID != "" {
 			if startsWithTopLevelDomain(project.Parent.GroupID) {
