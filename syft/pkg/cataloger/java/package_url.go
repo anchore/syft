@@ -1,8 +1,6 @@
 package java
 
 import (
-	"sort"
-
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
@@ -10,13 +8,7 @@ import (
 
 // PackageURL returns the PURL for the specific java package (see https://github.com/package-url/purl-spec)
 func packageURL(name, version string, metadata pkg.JavaMetadata) string {
-	var groupID = name
-	groupIDs := cpe.GroupIDsFromJavaMetadata(metadata)
-	if len(groupIDs) > 0 {
-		sort.Strings(groupIDs)
-		groupID = groupIDs[0]
-	}
-
+	groupID := cpe.GroupIDFromJavaMetadata(metadata)
 	pURL := packageurl.NewPackageURL(
 		packageurl.TypeMaven, // TODO: should we filter down by package types here?
 		groupID,

@@ -397,6 +397,8 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 		},
 	}
 
+	// TODO: is this a merge of the two packages data?
+	// It's a bug if we try to merge logistically separate packages
 	if packageIdentitiesMatch(p, parentPkg) {
 		updateParentPackage(p, parentPkg)
 		return nil
@@ -405,6 +407,7 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 	return &p
 }
 
+// TODO: Crux of our current change for identifying valid child packages
 func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	childMetadata, childOk := p.Metadata.(pkg.JavaMetadata)
 	parentMetadata, parentOk := parentPkg.Metadata.(pkg.JavaMetadata)
@@ -416,20 +419,12 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 			log.WithFields("package", parentPkg.String()).Warn("unable to extract java metadata from parent for verifying virtual path")
 		}
 		// if we can't extract metadata, we can check for matching identities via the package name
-		// this is not ideal, but it's better than nothing - should not be used if we have metadata
+		// this is not ideal, but it's better than nothing - this should not be used if we have metadata
 		return uniquePkgKey(&p) == uniquePkgKey(parentPkg)
 	}
 
 	// try to determine identity with the metadata
 	parentSymbolicName := ""
-	if parentMetadata.Manifest != nil {
-		if ps, ok := parentMetadata.Manifest.Main["Bundle-SymbolicName"]; ok {
-			// trim the parent symbolic name from the right to the first period
-			// e.g. "com.sun.xml.bind" from "com.sun.xml.bind.jaxb-core"
-			parentSymbolicName = ps
-		}
-	}
-
 	childSymbolicName := ""
 	if childMetadata.PomProperties != nil {
 		childName := p.Name

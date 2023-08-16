@@ -62,7 +62,7 @@ func Test_productsFromArtifactAndGroupIDs(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(strings.Join(test.groupIDs, ",")+":"+test.artifactID, func(t *testing.T) {
-			actual := productsFromArtifactAndGroupIDs(test.artifactID, test.groupIDs)
+			actual := productsFromArtifactAndGroupID(test.artifactID, test.groupIDs)
 			assert.ElementsMatch(t, test.expected, actual, "different products")
 		})
 	}
@@ -334,7 +334,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.ElementsMatch(t, test.expects, GroupIDsFromJavaPackage(test.pkg))
+			assert.ElementsMatch(t, test.expects, GroupIDFromJavaPackage(test.pkg))
 		})
 	}
 }
