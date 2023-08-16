@@ -272,13 +272,13 @@ func Test_parsePomXMLProject(t *testing.T) {
 func Test_pomParent(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    gopom.Parent
+		input    *gopom.Parent
 		expected *pkg.PomParent
 	}{
 		{
 			name: "only group ID",
-			input: gopom.Parent{
-				GroupID: "org.something",
+			input: &gopom.Parent{
+				GroupID: stringPointer("org.something"),
 			},
 			expected: &pkg.PomParent{
 				GroupID: "org.something",
@@ -286,8 +286,8 @@ func Test_pomParent(t *testing.T) {
 		},
 		{
 			name: "only artifact ID",
-			input: gopom.Parent{
-				ArtifactID: "something",
+			input: &gopom.Parent{
+				ArtifactID: stringPointer("something"),
 			},
 			expected: &pkg.PomParent{
 				ArtifactID: "something",
@@ -295,22 +295,27 @@ func Test_pomParent(t *testing.T) {
 		},
 		{
 			name: "only Version",
-			input: gopom.Parent{
-				Version: "something",
+			input: &gopom.Parent{
+				Version: stringPointer("something"),
 			},
 			expected: &pkg.PomParent{
 				Version: "something",
 			},
 		},
 		{
+			name:     "nil",
+			input:    nil,
+			expected: nil,
+		},
+		{
 			name:     "empty",
-			input:    gopom.Parent{},
+			input:    &gopom.Parent{},
 			expected: nil,
 		},
 		{
 			name: "unused field",
-			input: gopom.Parent{
-				RelativePath: "something",
+			input: &gopom.Parent{
+				RelativePath: stringPointer("something"),
 			},
 			expected: nil,
 		},
@@ -341,7 +346,7 @@ func Test_cleanDescription(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, cleanDescription(test.input))
+			assert.Equal(t, test.expected, cleanDescription(stringPointer(test.input)))
 		})
 	}
 }
@@ -357,7 +362,7 @@ func Test_resolveProperty(t *testing.T) {
 			name:     "property",
 			property: "${version.number}",
 			pom: gopom.Project{
-				Properties: gopom.Properties{
+				Properties: &gopom.Properties{
 					Entries: map[string]string{
 						"version.number": "12.5.0",
 					},
@@ -369,7 +374,7 @@ func Test_resolveProperty(t *testing.T) {
 			name:     "groupId",
 			property: "${project.groupId}",
 			pom: gopom.Project{
-				GroupID: "org.some.group",
+				GroupID: stringPointer("org.some.group"),
 			},
 			expected: "org.some.group",
 		},
@@ -377,8 +382,8 @@ func Test_resolveProperty(t *testing.T) {
 			name:     "parent groupId",
 			property: "${project.parent.groupId}",
 			pom: gopom.Project{
-				Parent: gopom.Parent{
-					GroupID: "org.some.parent",
+				Parent: &gopom.Parent{
+					GroupID: stringPointer("org.some.parent"),
 				},
 			},
 			expected: "org.some.parent",
@@ -387,8 +392,12 @@ func Test_resolveProperty(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolved := resolveProperty(test.pom, test.property)
+			resolved := resolveProperty(test.pom, stringPointer(test.property))
 			assert.Equal(t, test.expected, resolved)
 		})
 	}
+}
+
+func stringPointer(s string) *string {
+	return &s
 }

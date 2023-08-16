@@ -11,6 +11,11 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+const (
+	dbCatalogerName   = "rpm-db-cataloger"
+	fileCatalogerName = "rpm-file-cataloger"
+)
+
 // NewRpmDBCataloger returns a new RPM DB cataloger object.
 func NewRpmDBCataloger() *generic.Cataloger {
 	// check if a sqlite driver is available
@@ -18,14 +23,14 @@ func NewRpmDBCataloger() *generic.Cataloger {
 		log.Warnf("sqlite driver is not available, newer RPM databases might not be cataloged")
 	}
 
-	return generic.NewCataloger("rpm-db-cataloger").
+	return generic.NewCataloger(dbCatalogerName).
 		WithParserByGlobs(parseRpmDB, pkg.RpmDBGlob).
 		WithParserByGlobs(parseRpmManifest, pkg.RpmManifestGlob)
 }
 
 // NewFileCataloger returns a new RPM file cataloger object.
 func NewFileCataloger() *generic.Cataloger {
-	return generic.NewCataloger("rpm-file-cataloger").
+	return generic.NewCataloger(fileCatalogerName).
 		WithParserByGlobs(parseRpm, "**/*.rpm")
 }
 

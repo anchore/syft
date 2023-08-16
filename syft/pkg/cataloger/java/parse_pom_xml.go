@@ -28,17 +28,19 @@ func parserPomXML(_ file.Resolver, _ *generic.Environment, reader file.LocationR
 	}
 
 	var pkgs []pkg.Package
-	for _, dep := range pom.Dependencies {
-		p := newPackageFromPom(
-			pom,
-			dep,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-		)
-		if p.Name == "" {
-			continue
-		}
+	if pom.Dependencies != nil {
+		for _, dep := range *pom.Dependencies {
+			p := newPackageFromPom(
+				pom,
+				dep,
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			)
+			if p.Name == "" {
+				continue
+			}
 
-		pkgs = append(pkgs, p)
+			pkgs = append(pkgs, p)
+		}
 	}
 
 	return pkgs, nil, nil
@@ -53,15 +55,18 @@ func parsePomXMLProject(path string, reader io.Reader) (*pkg.PomProject, error) 
 }
 
 func newPomProject(path string, p gopom.Project) *pkg.PomProject {
+	artifactID := safeString(p.ArtifactID)
+	name := safeString(p.Name)
+	projectURL := safeString(p.URL)
 	return &pkg.PomProject{
 		Path:        path,
 		Parent:      pomParent(p, p.Parent),
 		GroupID:     resolveProperty(p, p.GroupID),
-		ArtifactID:  p.ArtifactID,
+		ArtifactID:  artifactID,
 		Version:     resolveProperty(p, p.Version),
-		Name:        p.Name,
+		Name:        name,
 		Description: cleanDescription(p.Description),
-		URL:         p.URL,
+		URL:         projectURL,
 	}
 }
 
@@ -74,7 +79,7 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...fil
 		},
 	}
 
-	name := dep.ArtifactID
+	name := safeString(dep.ArtifactID)
 	version := resolveProperty(pom, dep.Version)
 
 	p := pkg.Package{
@@ -104,19 +109,29 @@ func decodePomXML(content io.Reader) (project gopom.Project, err error) {
 	return project, nil
 }
 
-func pomParent(pom gopom.Project, parent gopom.Parent) (result *pkg.PomParent) {
-	if parent.ArtifactID != "" || parent.GroupID != "" || parent.Version != "" {
-		result = &pkg.PomParent{
-			GroupID:    resolveProperty(pom, parent.GroupID),
-			ArtifactID: parent.ArtifactID,
-			Version:    resolveProperty(pom, parent.Version),
-		}
+func pomParent(pom gopom.Project, parent *gopom.Parent) (result *pkg.PomParent) {
+	if parent == nil {
+		return nil
+	}
+
+	artifactID := safeString(parent.ArtifactID)
+	result = &pkg.PomParent{
+		GroupID:    resolveProperty(pom, parent.GroupID),
+		ArtifactID: artifactID,
+		Version:    resolveProperty(pom, parent.Version),
+	}
+
+	if result.GroupID == "" && result.ArtifactID == "" && result.Version == "" {
+		return nil
 	}
 	return result
 }
 
-func cleanDescription(original string) (cleaned string) {
-	descriptionLines := strings.Split(original, "\n")
+func cleanDescription(original *string) (cleaned string) {
+	if original == nil {
+		return ""
+	}
+	descriptionLines := strings.Split(*original, "\n")
 	for _, line := range descriptionLines {
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {
@@ -130,12 +145,17 @@ func cleanDescription(original string) (cleaned string) {
 // resolveProperty emulates some maven property resolution logic by looking in the project's variables
 // as well as supporting the project expressions like ${project.parent.groupId}.
 // If no match is found, the entire expression including ${} is returned
-func resolveProperty(pom gopom.Project, property string) string {
-	return propertyMatcher.ReplaceAllStringFunc(property, func(match string) string {
+//
+//nolint:gocognit
+func resolveProperty(pom gopom.Project, property *string) string {
+	propertyCase := safeString(property)
+	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
 		propertyName := strings.TrimSpace(match[2 : len(match)-1])
-		if value, ok := pom.Properties.Entries[propertyName]; ok {
+		entries := pomProperties(pom)
+		if value, ok := entries[propertyName]; ok {
 			return value
 		}
+
 		// if we don't find anything directly in the pom properties,
 		// see if we have a project.x expression and process this based
 		// on the xml tags in gopom
@@ -151,9 +171,15 @@ func resolveProperty(pom gopom.Project, property string) string {
 				part := parts[partNum]
 				for fieldNum := 0; fieldNum < pomValueType.NumField(); fieldNum++ {
 					f := pomValueType.Field(fieldNum)
-					if part == f.Tag.Get("xml") {
+					tag := f.Tag.Get("xml")
+					tag = strings.TrimSuffix(tag, ",omitempty")
+					if part == tag {
 						pomValue = pomValue.Field(fieldNum)
 						pomValueType = pomValue.Type()
+						if pomValueType.Kind() == reflect.Ptr {
+							pomValue = pomValue.Elem()
+							pomValueType = pomValue.Type()
+						}
 						if partNum == numParts-1 {
 							return fmt.Sprintf("%v", pomValue.Interface())
 						}
@@ -164,4 +190,18 @@ func resolveProperty(pom gopom.Project, property string) string {
 		}
 		return match
 	})
+}
+
+func pomProperties(p gopom.Project) map[string]string {
+	if p.Properties != nil {
+		return p.Properties.Entries
+	}
+	return map[string]string{}
+}
+
+func safeString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
