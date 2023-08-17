@@ -210,24 +210,33 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 		return
 	}
 	for _, d := range *bom.Dependencies {
-		to, fromExists := idMap[d.Ref].(artifact.Identifiable)
-		if !fromExists {
-			continue
-		}
-
 		if d.Dependencies == nil {
 			continue
 		}
 
+		toPtr, toExists := idMap[d.Ref]
+		if !toExists {
+			continue
+		}
+		to, ok := common.PtrToStruct(toPtr).(artifact.Identifiable)
+		if !ok {
+			continue
+		}
+
 		for _, t := range *d.Dependencies {
-			from, toExists := idMap[t].(artifact.Identifiable)
-			if !toExists {
+			fromPtr, fromExists := idMap[t]
+			if !fromExists {
+				continue
+			}
+			from, ok := common.PtrToStruct(fromPtr).(artifact.Identifiable)
+			if !ok {
 				continue
 			}
 			s.Relationships = append(s.Relationships, artifact.Relationship{
 				From: from,
 				To:   to,
-				Type: artifact.DependencyOfRelationship, // FIXME this information is lost
+				// match assumptions in encoding, that this is the only type of relationship captured:
+				Type: artifact.DependencyOfRelationship,
 			})
 		}
 	}

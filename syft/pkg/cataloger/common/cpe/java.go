@@ -181,13 +181,13 @@ func GroupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 		return nil
 	}
 
-	return GroupIDsFromJavaMetadata(metadata)
+	return GroupIDsFromJavaMetadata(p.Name, metadata)
 }
 
-func GroupIDsFromJavaMetadata(metadata pkg.JavaMetadata) (groupIDs []string) {
+func GroupIDsFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupIDs []string) {
 	groupIDs = append(groupIDs, groupIDsFromPomProperties(metadata.PomProperties)...)
 	groupIDs = append(groupIDs, groupIDsFromPomProject(metadata.PomProject)...)
-	groupIDs = append(groupIDs, groupIDsFromJavaManifest(metadata.Manifest)...)
+	groupIDs = append(groupIDs, groupIDsFromJavaManifest(pkgName, metadata.Manifest)...)
 
 	return groupIDs
 }
@@ -241,7 +241,11 @@ func addGroupIDsFromGroupIDsAndArtifactID(groupID, artifactID string) (groupIDs 
 	return groupIDs
 }
 
-func groupIDsFromJavaManifest(manifest *pkg.JavaManifest) []string {
+func groupIDsFromJavaManifest(pkgName string, manifest *pkg.JavaManifest) []string {
+	if groupID, ok := defaultArtifactIDToGroupID[pkgName]; ok {
+		return []string{groupID}
+	}
+
 	if manifest == nil {
 		return nil
 	}

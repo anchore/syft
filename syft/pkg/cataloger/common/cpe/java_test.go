@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -424,6 +425,41 @@ func Test_vendorsFromJavaManifestNames(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert.ElementsMatch(t, test.expects, vendorsFromJavaManifestNames(test.pkg).values())
+		})
+	}
+}
+
+func Test_groupIDsFromJavaManifest(t *testing.T) {
+	tests := []struct {
+		name     string
+		manifest pkg.JavaManifest
+		expected []string
+	}{
+		{
+			name:     "spring-security-core",
+			manifest: pkg.JavaManifest{},
+			expected: []string{"org.springframework.security"},
+		},
+		{
+			name:     "spring-web",
+			manifest: pkg.JavaManifest{},
+			expected: []string{"org.springframework"},
+		},
+		{
+			name: "spring-foo",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Implementation-Vendor": "org.foo",
+				},
+			},
+			expected: []string{"org.foo"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := groupIDsFromJavaManifest(test.name, &test.manifest)
+			require.Equal(t, test.expected, got)
 		})
 	}
 }
