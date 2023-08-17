@@ -275,12 +275,12 @@ func addGroupIDsFromGroupIDsAndArtifactID(groupID, artifactID string) (groupIDs 
 }
 
 func groupIDsFromJavaManifest(pkgName string, manifest *pkg.JavaManifest) []string {
-	if manifest == nil {
-		return nil
-	}
-
 	if groupID, ok := defaultArtifactIDToGroupID[pkgName]; ok {
 		return []string{groupID}
+	}
+
+	if manifest == nil {
+		return nil
 	}
 
 	// try the common manifest fields first for a set of candidates
