@@ -22,10 +22,10 @@ var (
 	}
 
 	primaryJavaManifestGroupIDFields = []string{
+		"Bundle-SymbolicName",
 		"Extension-Name",
 		"Specification-Vendor",
 		"Implementation-Vendor",
-		"Bundle-SymbolicName",
 		"Implementation-Vendor-Id",
 		"Implementation-Title",
 		"Bundle-Activator",
@@ -223,15 +223,6 @@ func GroupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 // 2. The group ID from the POM project
 // 3. The group ID from a select map of known group IDs
 // 3. The group ID from the Java manifest
-func GroupIDFromJavaPackage(p pkg.Package) string {
-	metadata, ok := p.Metadata.(pkg.JavaMetadata)
-	if !ok {
-		return ""
-	}
-
-	return GroupIDFromJavaMetadata(p.Name, metadata)
-}
-
 func GroupIDFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupID string) {
 	if groupID = groupIDFromPomProperties(metadata.PomProperties); groupID != "" {
 		return groupID
@@ -245,9 +236,9 @@ func GroupIDFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupID
 		return groupID
 	}
 
-	// if groupID = groupIDFromJavaManifest(pkgName, metadata.Manifest); groupID != "" {
-	//	return groupID
-	// }
+	if groupID = groupIDFromJavaManifest(metadata.Manifest); groupID != "" {
+		return groupID
+	}
 
 	return groupID
 }
@@ -259,9 +250,25 @@ func groupIDFromKnownPackageList(pkgName string) (groupID string) {
 	return groupID
 }
 
-// func groupIDFromJavaManifest(pkgName string, manifest *pkg.JavaManifest) (groupID string) {
-//	return groupID
-// }
+func groupIDFromJavaManifest(manifest *pkg.JavaManifest) (groupID string) {
+	if manifest == nil {
+		return groupID
+	}
+
+	groupIDS := getManifestFieldGroupIDs(manifest, primaryJavaManifestGroupIDFields)
+	// assumes that primaryJavaManifestNameFields are ordered by priority
+	if len(groupIDS) != 0 {
+		return groupIDS[0]
+	}
+
+	groupIDS = getManifestFieldGroupIDs(manifest, secondaryJavaManifestGroupIDFields)
+
+	if len(groupIDS) != 0 {
+		return groupIDS[0]
+	}
+
+	return groupID
+}
 
 func groupIDFromPomProperties(properties *pkg.PomProperties) (groupID string) {
 	if properties == nil {

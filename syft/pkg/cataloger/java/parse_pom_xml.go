@@ -178,7 +178,9 @@ func resolveProperty(pom gopom.Project, property *string) string {
 						pomValueType = pomValue.Type()
 						if pomValueType.Kind() == reflect.Ptr {
 							pomValue = pomValue.Elem()
-							pomValueType = pomValue.Type()
+							if !pomValue.IsZero() {
+								pomValueType = pomValue.Type()
+							}
 						}
 						if partNum == numParts-1 {
 							return fmt.Sprintf("%v", pomValue.Interface())
