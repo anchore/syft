@@ -9,9 +9,8 @@ import (
 // PackageURL returns the PURL for the specific java package (see https://github.com/package-url/purl-spec)
 func packageURL(name, version string, metadata pkg.JavaMetadata) string {
 	var groupID = name
-	groupIDs := cpe.GroupIDsFromJavaMetadata(name, metadata)
-	if len(groupIDs) > 0 {
-		groupID = groupIDs[0]
+	if gID := cpe.GroupIDFromJavaMetadata(name, metadata); gID != "" {
+		groupID = gID
 	}
 
 	pURL := packageurl.NewPackageURL(

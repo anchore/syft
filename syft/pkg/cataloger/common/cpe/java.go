@@ -217,6 +217,106 @@ func GroupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 	return GroupIDsFromJavaMetadata(p.Name, metadata)
 }
 
+// GroupIDFromJavaPackage returns the authoritative group ID for a Java package.
+// The order of precedence is:
+// 1. The group ID from the POM properties
+// 2. The group ID from the POM project
+// 3. The group ID from a select map of known group IDs
+// 3. The group ID from the Java manifest
+func GroupIDFromJavaPackage(p pkg.Package) string {
+	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	if !ok {
+		return ""
+	}
+
+	return GroupIDFromJavaMetadata(p.Name, metadata)
+}
+
+func GroupIDFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupID string) {
+	if groupID = groupIDFromPomProperties(metadata.PomProperties); groupID != "" {
+		return groupID
+	}
+
+	if groupID = groupIDFromPomProject(metadata.PomProject); groupID != "" {
+		return groupID
+	}
+
+	if groupID = groupIDFromKnownPackageList(pkgName); groupID != "" {
+		return groupID
+	}
+
+	// if groupID = groupIDFromJavaManifest(pkgName, metadata.Manifest); groupID != "" {
+	//	return groupID
+	// }
+
+	return groupID
+}
+
+func groupIDFromKnownPackageList(pkgName string) (groupID string) {
+	if groupID, ok := defaultArtifactIDToGroupID[pkgName]; ok {
+		return groupID
+	}
+	return groupID
+}
+
+// func groupIDFromJavaManifest(pkgName string, manifest *pkg.JavaManifest) (groupID string) {
+//	return groupID
+// }
+
+func groupIDFromPomProperties(properties *pkg.PomProperties) (groupID string) {
+	if properties == nil {
+		return groupID
+	}
+
+	if startsWithTopLevelDomain(properties.GroupID) {
+		return cleanGroupID(properties.GroupID)
+	}
+
+	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
+	if startsWithTopLevelDomain(properties.ArtifactID) && len(strings.Split(properties.ArtifactID, ".")) > 1 {
+		// there is a strong indication that the artifact ID is really a group ID
+		return cleanGroupID(properties.ArtifactID)
+	}
+
+	return groupID
+}
+
+func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
+	if project == nil {
+		return groupID
+	}
+
+	// check the project details
+	if startsWithTopLevelDomain(project.GroupID) {
+		return cleanGroupID(project.GroupID)
+	}
+
+	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
+	if startsWithTopLevelDomain(project.ArtifactID) && len(strings.Split(project.ArtifactID, ".")) > 1 {
+		// there is a strong indication that the artifact ID is really a group ID
+		return cleanGroupID(project.ArtifactID)
+	}
+
+	// let's check the parent details
+	// if the current project does not have a group ID, but the parent does, we'll use the parent's group ID
+	if project.Parent != nil {
+		if startsWithTopLevelDomain(project.Parent.GroupID) {
+			return cleanGroupID(project.Parent.GroupID)
+		}
+
+		// sometimes the publisher puts the group ID in the artifact ID field unintentionally
+		if startsWithTopLevelDomain(project.Parent.ArtifactID) && len(strings.Split(project.Parent.ArtifactID, ".")) > 1 {
+			// there is a strong indication that the artifact ID is really a group ID
+			return cleanGroupID(project.Parent.ArtifactID)
+		}
+	}
+
+	return groupID
+}
+
+// GroupIDsFromJavaMetadata returns the possible group IDs for a Java package
+// This function is similar to GroupIDFromJavaPackage, but returns all possible group IDs and is less strict
+// It is used as a way to generate possible candidates for CPE matching.
 func GroupIDsFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupIDs []string) {
 	groupIDs = append(groupIDs, groupIDsFromPomProperties(metadata.PomProperties)...)
 	groupIDs = append(groupIDs, groupIDsFromPomProject(metadata.PomProject)...)
@@ -275,12 +375,12 @@ func addGroupIDsFromGroupIDsAndArtifactID(groupID, artifactID string) (groupIDs 
 }
 
 func groupIDsFromJavaManifest(pkgName string, manifest *pkg.JavaManifest) []string {
-	if manifest == nil {
-		return nil
-	}
-
 	if groupID, ok := defaultArtifactIDToGroupID[pkgName]; ok {
 		return []string{groupID}
+	}
+
+	if manifest == nil {
+		return nil
 	}
 
 	// try the common manifest fields first for a set of candidates
