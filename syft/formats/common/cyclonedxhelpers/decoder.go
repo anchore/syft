@@ -210,24 +210,33 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 		return
 	}
 	for _, d := range *bom.Dependencies {
-		to, fromExists := idMap[d.Ref].(*pkg.Package) // This is matching the assumptions in encoding, that only package-to-package relationships exist in this section
-		if !fromExists {
-			continue
-		}
-
 		if d.Dependencies == nil {
 			continue
 		}
 
+		toPtr, toExists := idMap[d.Ref]
+		if !toExists {
+			continue
+		}
+		to, ok := common.PtrToStruct(toPtr).(artifact.Identifiable)
+		if !ok {
+			continue
+		}
+
 		for _, t := range *d.Dependencies {
-			from, toExists := idMap[t].(*pkg.Package)
-			if !toExists {
+			fromPtr, fromExists := idMap[t]
+			if !fromExists {
+				continue
+			}
+			from, ok := common.PtrToStruct(fromPtr).(artifact.Identifiable)
+			if !ok {
 				continue
 			}
 			s.Relationships = append(s.Relationships, artifact.Relationship{
-				From: *from,
-				To:   *to,
-				Type: artifact.DependencyOfRelationship, // Matching assumptions in encoding, that this is the only type of relationship measured
+				From: from,
+				To:   to,
+				// match assumptions in encoding, that this is the only type of relationship captured:
+				Type: artifact.DependencyOfRelationship,
 			})
 		}
 	}

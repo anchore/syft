@@ -8,8 +8,10 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -335,4 +337,102 @@ func Test_missingComponentsDecode(t *testing.T) {
 	_, err := decode(bytes.NewReader(bomBytes))
 
 	assert.NoError(t, err)
+}
+
+func Test_decodeDependencies(t *testing.T) {
+	c1 := cyclonedx.Component{
+		Name: "c1",
+	}
+
+	c2 := cyclonedx.Component{
+		Name: "c2",
+	}
+
+	c3 := cyclonedx.Component{
+		Name: "c3",
+	}
+
+	for _, c := range []*cyclonedx.Component{&c1, &c2, &c3} {
+		c.BOMRef = c.Name
+	}
+
+	setTypes := func(typ cyclonedx.ComponentType, components ...cyclonedx.Component) *[]cyclonedx.Component {
+		var out []cyclonedx.Component
+		for _, c := range components {
+			c.Type = typ
+			out = append(out, c)
+		}
+		return &out
+	}
+
+	tests := []struct {
+		name     string
+		sbom     cyclonedx.BOM
+		expected []string
+	}{
+		{
+			name: "dependencies decoded as dependencyOf relationships",
+			sbom: cyclonedx.BOM{
+				Components: setTypes(cyclonedx.ComponentTypeLibrary,
+					c1,
+					c2,
+					c3,
+				),
+				Dependencies: &[]cyclonedx.Dependency{
+					{
+						Ref: c1.BOMRef,
+						Dependencies: &[]string{
+							c2.BOMRef,
+							c3.BOMRef,
+						},
+					},
+				},
+			},
+			expected: []string{c2.Name, c3.Name},
+		},
+		{
+			name: "dependencies skipped with unhandled components",
+			sbom: cyclonedx.BOM{
+				Components: setTypes("",
+					c1,
+					c2,
+					c3,
+				),
+				Dependencies: &[]cyclonedx.Dependency{
+					{
+						Ref: c1.BOMRef,
+						Dependencies: &[]string{
+							c2.BOMRef,
+							c3.BOMRef,
+						},
+					},
+				},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s, err := ToSyftModel(&test.sbom)
+			require.NoError(t, err)
+			require.NotNil(t, s)
+
+			var deps []string
+			if s != nil {
+				for _, r := range s.Relationships {
+					if r.Type != artifact.DependencyOfRelationship {
+						continue
+					}
+					if p, ok := r.To.(pkg.Package); !ok || p.Name != c1.Name {
+						continue
+					}
+					if p, ok := r.From.(pkg.Package); ok {
+						deps = append(deps, p.Name)
+					}
+				}
+			}
+			require.Equal(t, test.expected, deps)
+		})
+	}
 }
