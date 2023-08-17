@@ -5,21 +5,12 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 )
 
 var (
 	forbiddenProductGroupIDFields = strset.New("plugin", "plugins", "client")
 	forbiddenVendorGroupIDFields  = strset.New("plugin", "plugins")
-
-	domains = []string{
-		"com",
-		"org",
-		"net",
-		"io",
-		"be",
-	}
 
 	primaryJavaManifestGroupIDFields = []string{
 		"Extension-Name",
@@ -66,7 +57,7 @@ func vendorsFromJavaManifestNames(p pkg.Package) fieldCandidateSet {
 	for _, name := range javaManifestNameFields {
 		if metadata.Manifest.Main != nil {
 			if value, exists := metadata.Manifest.Main[name]; exists {
-				if !startsWithTopLevelDomain(value) {
+				if !looksLikeGroupID(value) {
 					vendors.add(fieldCandidate{
 						value:                 normalizePersonName(value),
 						disallowSubSelections: true,
@@ -80,7 +71,7 @@ func vendorsFromJavaManifestNames(p pkg.Package) fieldCandidateSet {
 					continue
 				}
 				if value, exists := section[name]; exists {
-					if !startsWithTopLevelDomain(value) {
+					if !looksLikeGroupID(value) {
 						vendors.add(fieldCandidate{
 							value:                 normalizePersonName(value),
 							disallowSubSelections: true,
@@ -144,7 +135,7 @@ func productsFromArtifactAndGroupIDs(artifactID string, groupIDs []string) []str
 				continue
 			}
 
-			// umbrella projects tend to have sub components that either start or end with the project name. We expect
+			// umbrella projects tend to have subcomponents that either start or end with the project name. We expect
 			// to identify fields that may represent the umbrella project, and not fields that indicate auxiliary
 			// information about the package.
 			couldBeProjectName := strings.HasPrefix(artifactID, field) || strings.HasSuffix(artifactID, field)
@@ -168,7 +159,7 @@ func artifactIDFromJavaPackage(p pkg.Package) string {
 	}
 
 	artifactID := strings.TrimSpace(metadata.PomProperties.ArtifactID)
-	if startsWithTopLevelDomain(artifactID) && len(strings.Split(artifactID, ".")) > 1 {
+	if looksLikeGroupID(artifactID) {
 		// there is a strong indication that the artifact ID is really a group ID, don't use it
 		return ""
 	}
@@ -197,14 +188,8 @@ func groupIDsFromPomProperties(properties *pkg.PomProperties) (groupIDs []string
 		return nil
 	}
 
-	if startsWithTopLevelDomain(properties.GroupID) {
+	if properties.GroupID != "" {
 		groupIDs = append(groupIDs, cleanGroupID(properties.GroupID))
-	}
-
-	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if startsWithTopLevelDomain(properties.ArtifactID) && len(strings.Split(properties.ArtifactID, ".")) > 1 {
-		// there is a strong indication that the artifact ID is really a group ID
-		groupIDs = append(groupIDs, cleanGroupID(properties.ArtifactID))
 	}
 
 	return groupIDs
@@ -215,29 +200,14 @@ func groupIDsFromPomProject(project *pkg.PomProject) (groupIDs []string) {
 		return nil
 	}
 
-	// extract the project info...
-	groupIDs = addGroupIDsFromGroupIDsAndArtifactID(project.GroupID, project.ArtifactID)
-
-	if project.Parent == nil {
-		return groupIDs
+	if project.GroupID != "" {
+		groupIDs = append(groupIDs, project.GroupID)
 	}
 
-	// extract the parent project info...
-	groupIDs = append(groupIDs, addGroupIDsFromGroupIDsAndArtifactID(project.Parent.GroupID, project.Parent.ArtifactID)...)
-
-	return groupIDs
-}
-
-func addGroupIDsFromGroupIDsAndArtifactID(groupID, artifactID string) (groupIDs []string) {
-	if startsWithTopLevelDomain(groupID) {
-		groupIDs = append(groupIDs, cleanGroupID(groupID))
+	if project.Parent != nil && project.Parent.GroupID != "" {
+		groupIDs = append(groupIDs, project.Parent.GroupID)
 	}
 
-	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if startsWithTopLevelDomain(artifactID) && len(strings.Split(artifactID, ".")) > 1 {
-		// there is a strong indication that the artifact ID is really a group ID
-		groupIDs = append(groupIDs, cleanGroupID(artifactID))
-	}
 	return groupIDs
 }
 
@@ -272,13 +242,13 @@ func getManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (grou
 
 	for _, name := range fields {
 		if value, exists := manifest.Main[name]; exists {
-			if startsWithTopLevelDomain(value) {
+			if looksLikeGroupID(value) {
 				groupIDs = append(groupIDs, cleanGroupID(value))
 			}
 		}
 		for _, section := range manifest.NamedSections {
 			if value, exists := section[name]; exists {
-				if startsWithTopLevelDomain(value) {
+				if looksLikeGroupID(value) {
 					groupIDs = append(groupIDs, cleanGroupID(value))
 				}
 			}
@@ -299,6 +269,6 @@ func removeOSCIDirectives(groupID string) string {
 	return strings.Split(groupID, ";")[0]
 }
 
-func startsWithTopLevelDomain(value string) bool {
-	return internal.HasAnyOfPrefixes(value, domains...)
+func looksLikeGroupID(value string) bool {
+	return strings.Contains(value, ".")
 }
