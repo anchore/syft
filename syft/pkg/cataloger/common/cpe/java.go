@@ -41,39 +41,6 @@ var (
 	}
 )
 
-var defaultArtifactIDToGroupID = map[string]string{
-	"spring":                         "org.springframework",
-	"spring-amqp":                    "org.springframework.amqp",
-	"spring-batch-core":              "org.springframework.batch",
-	"spring-beans":                   "org.springframework",
-	"spring-boot":                    "org.springframework.boot",
-	"spring-boot-starter-web":        "org.springframework.boot",
-	"spring-boot-starter-webflux":    "org.springframework.boot",
-	"spring-cloud-function-context":  "org.springframework.cloud",
-	"spring-cloud-function-parent":   "org.springframework.cloud",
-	"spring-cloud-gateway":           "org.springframework.cloud",
-	"spring-cloud-openfeign-core":    "org.springframework.cloud",
-	"spring-cloud-task-dependencies": "org.springframework.cloud",
-	"spring-core":                    "org.springframework",
-	"spring-data-jpa":                "org.springframework.data",
-	"spring-data-mongodb":            "org.springframework.data",
-	"spring-data-rest-core":          "org.springframework.data",
-	"spring-expression":              "org.springframework",
-	"spring-integration-zip":         "org.springframework.integration",
-	"spring-oxm":                     "org.springframework",
-	"spring-security-core":           "org.springframework.security",
-	"spring-security-config":         "org.springframework.security",
-	"spring-security-oauth":          "org.springframework.security.oauth",
-	"spring-security-oauth-parent":   "org.springframework.security.oauth",
-	"spring-security-oauth2-client":  "org.springframework.security",
-	"spring-session-core":            "org.springframework.session",
-	"spring-vault-core":              "org.springframework.vault",
-	"spring-web":                     "org.springframework",
-	"spring-webflow":                 "org.springframework.webflow",
-	"spring-webflux":                 "org.springframework",
-	"spring-webmvc":                  "org.springframework",
-}
-
 func candidateProductsForJava(p pkg.Package) []string {
 	return productsFromArtifactAndGroupIDs(artifactIDFromJavaPackage(p), GroupIDsFromJavaPackage(p))
 }

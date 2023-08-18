@@ -12,7 +12,7 @@ func packageURL(name, version string, metadata pkg.JavaMetadata) string {
 
 	if gID := cpe.GroupIDFromJavaMetadata(name, metadata); gID != "" {
 		groupID = gID
-  }
+	}
 
 	pURL := packageurl.NewPackageURL(
 		packageurl.TypeMaven, // TODO: should we filter down by package types here?
