@@ -384,7 +384,7 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 	parentKey := fmt.Sprintf("%s:%s:%s", groupID, parentPkg.Name, parentPkg.Version)
 	pomProjectKey := fmt.Sprintf("%s:%s:%s", pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version)
 	if parentKey != pomProjectKey {
-		vPathSuffix += ":" + pomProjectKey
+		vPathSuffix += ":" + pomProperties.ArtifactID
 	}
 	virtualPath := location.AccessPath() + vPathSuffix
 
