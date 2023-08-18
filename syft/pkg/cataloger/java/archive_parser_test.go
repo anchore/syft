@@ -895,44 +895,6 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			expectedPackage: nil,
 		},
 		{
-			name: "child matches parent by virtual path -- override name and version",
-			props: pkg.PomProperties{
-				Name:       "some-name",
-				GroupID:    "some-group-id",
-				ArtifactID: "some-parent-name", // note: DOES NOT match parent package
-				Version:    "3.0",              // note: DOES NOT match parent package
-			},
-			parent: &pkg.Package{
-				Name:    "", // note: empty, so should not be matched on
-				Version: "", // note: empty, so should not be matched on
-				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
-					VirtualPath:   virtualPath, // note: matching virtual path
-					Manifest:      nil,
-					PomProperties: nil,
-					Parent:        nil,
-				},
-			},
-			expectedParent: pkg.Package{
-				Name:    "some-parent-name",
-				Version: "3.0",
-				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath,
-					Manifest:    nil,
-					// note: we attach the discovered pom properties data
-					PomProperties: &pkg.PomProperties{
-						Name:       "some-name",
-						GroupID:    "some-group-id",
-						ArtifactID: "some-parent-name",
-						Version:    "3.0",
-					},
-					Parent: nil,
-				},
-			},
-			expectedPackage: nil,
-		},
-		{
 			name: "child matches parent by artifact id",
 			props: pkg.PomProperties{
 				Name:       "some-name",
