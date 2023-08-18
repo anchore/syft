@@ -10,6 +10,7 @@ import (
 	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/version"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/parsers"
 )
@@ -118,11 +119,13 @@ func writeAppUpdate(writer io.Writer, events ...partybus.Event) error {
 	style := lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Italic(true)
 
 	for _, e := range events {
-		notice, err := parsers.ParseCLIAppUpdateAvailable(e)
+		newVersion, err := parsers.ParseCLIAppUpdateAvailable(e)
 		if err != nil {
 			log.WithFields("error", err).Warn("failed to parse app update notification")
 			continue
 		}
+
+		notice := fmt.Sprintf("A newer version of syft is available for download: %s (installed version is %s)", newVersion, version.FromBuild().Version)
 
 		if _, err := fmt.Fprintln(writer, style.Render(notice)); err != nil {
 			// don't let this be fatal
