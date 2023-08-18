@@ -51,8 +51,8 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461
-	github.com/anchore/clio v0.0.0-20230807174420-8b6f1b04adc8
-	github.com/anchore/fangs v0.0.0-20230810180116-21c6393efab9
+	github.com/anchore/clio v0.0.0-20230815213839-de8921cba269
+	github.com/anchore/fangs v0.0.0-20230818131516-2186b10924fe
 	github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a
 	github.com/anchore/stereoscope v0.0.0-20230727211946-d1f3d766295e
 	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
@@ -68,7 +68,7 @@ require (
 	github.com/go-git/go-git/v5 v5.8.1
 	github.com/google/go-containerregistry v0.16.1
 	github.com/google/licensecheck v0.3.1
-	github.com/iancoleman/strcase v0.2.0
+	github.com/iancoleman/strcase v0.3.0
 	github.com/invopop/jsonschema v0.7.0
 	github.com/knqyf263/go-rpmdb v0.0.0-20230301153543-ba94b245509b
 	github.com/opencontainers/go-digest v1.0.0
