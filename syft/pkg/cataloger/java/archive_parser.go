@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
@@ -62,11 +63,11 @@ func parseJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.Locat
 }
 
 // uniquePkgKey creates a unique string to identify the given package.
-func uniquePkgKey(p *pkg.Package) string {
+func uniquePkgKey(groupID string, p *pkg.Package) string {
 	if p == nil {
 		return ""
 	}
-	return fmt.Sprintf("%s|%s", p.Name, p.Version)
+	return fmt.Sprintf("%s|%s|%s", groupID, p.Name, p.Version)
 }
 
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
@@ -376,8 +377,14 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.PomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
-	if !strings.HasPrefix(pomProperties.ArtifactID, parentPkg.Name) {
-		vPathSuffix += ":" + pomProperties.ArtifactID
+	groupID := ""
+	if parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata); ok {
+		groupID = cpe.GroupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
+	}
+	parentKey := fmt.Sprintf("%s:%s:%s", groupID, parentPkg.Name, parentPkg.Version)
+	pomProjectKey := fmt.Sprintf("%s:%s:%s", pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version)
+	if parentKey != pomProjectKey {
+		vPathSuffix += ":" + pomProjectKey
 	}
 	virtualPath := location.AccessPath() + vPathSuffix
 
@@ -408,25 +415,29 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 }
 
 func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
-	// the name/version pair matches...
-	if uniquePkgKey(&p) == uniquePkgKey(parentPkg) {
+	childMetadata, childOk := p.Metadata.(pkg.JavaMetadata)
+	parentMetadata, parentOk := parentPkg.Metadata.(pkg.JavaMetadata)
+	if !childOk || !parentOk {
+		switch {
+		case !childOk:
+			log.WithFields("package", p.String()).Debug("unable to extract java metadata to check for matching package identity for package: %s", p.Name)
+		case !parentOk:
+			log.WithFields("package", parentPkg.String()).Debug("unable to extract java metadata to check for matching package identity for package: %s", parentPkg.Name)
+		}
+		// if we can't extract metadata, we can check for matching identities via the package name
+		// this is not ideal, but it's better than nothing - this should not be used if we have metadata
+		return uniquePkgKey("", &p) == uniquePkgKey("", parentPkg)
+	}
+
+	// try to determine identity with the metadata
+	childGroupID := cpe.GroupIDFromJavaMetadata(p.Name, childMetadata)
+	parentGroupID := cpe.GroupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
+	if uniquePkgKey(childGroupID, &p) == uniquePkgKey(parentGroupID, parentPkg) {
 		return true
 	}
 
-	metadata, ok := p.Metadata.(pkg.JavaMetadata)
-	if !ok {
-		log.WithFields("package", p.String()).Warn("unable to extract java metadata to check for matching package identity")
-		return false
-	}
-
-	parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata)
-	if !ok {
-		log.WithFields("package", p.String()).Warn("unable to extract java metadata from parent for verifying virtual path")
-		return false
-	}
-
 	// the virtual path matches...
-	if parentMetadata.VirtualPath == metadata.VirtualPath {
+	if parentMetadata.VirtualPath == childMetadata.VirtualPath {
 		return true
 	}
 
@@ -434,10 +445,14 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	// note: you CANNOT use name-is-subset-of-artifact-id or vice versa --this is too generic. Shaded jars are a good
 	// example of this: where the package name is "cloudbees-analytics-segment-driver" and a child is "analytics", but
 	// they do not indicate the same package.
-	if metadata.PomProperties.ArtifactID != "" && parentPkg.Name == metadata.PomProperties.ArtifactID {
-		return true
+	// NOTE: artifactId might not be a good indicator of uniqueness since archives can contain forks with the same name
+	// from different groups (e.g. "org.glassfish.jaxb.jaxb-core" and "com.sun.xml.bind.jaxb-core")
+	// we will use this check as a last resort
+	if childMetadata.PomProperties != nil {
+		if childMetadata.PomProperties.ArtifactID != "" && parentPkg.Name == childMetadata.PomProperties.ArtifactID {
+			return true
+		}
 	}
-
 	return false
 }
 
