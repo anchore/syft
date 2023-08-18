@@ -201,7 +201,7 @@ func artifactIDFromJavaPackage(p pkg.Package) string {
 	}
 
 	artifactID := strings.TrimSpace(metadata.PomProperties.ArtifactID)
-	if startsWithTopLevelDomain(artifactID) && len(strings.Split(artifactID, ".")) > 1 {
+	if looksLikeGroupID(artifactID) && len(strings.Split(artifactID, ".")) > 1 {
 		// there is a strong indication that the artifact ID is really a group ID, don't use it
 		return ""
 	}
@@ -275,12 +275,12 @@ func groupIDFromPomProperties(properties *pkg.PomProperties) (groupID string) {
 		return groupID
 	}
 
-	if startsWithTopLevelDomain(properties.GroupID) {
+	if looksLikeGroupID(properties.GroupID) {
 		return cleanGroupID(properties.GroupID)
 	}
 
 	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if startsWithTopLevelDomain(properties.ArtifactID) && len(strings.Split(properties.ArtifactID, ".")) > 1 {
+	if looksLikeGroupID(properties.ArtifactID) && len(strings.Split(properties.ArtifactID, ".")) > 1 {
 		// there is a strong indication that the artifact ID is really a group ID
 		return cleanGroupID(properties.ArtifactID)
 	}
@@ -294,12 +294,12 @@ func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
 	}
 
 	// check the project details
-	if startsWithTopLevelDomain(project.GroupID) {
+	if looksLikeGroupID(project.GroupID) {
 		return cleanGroupID(project.GroupID)
 	}
 
 	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if startsWithTopLevelDomain(project.ArtifactID) && len(strings.Split(project.ArtifactID, ".")) > 1 {
+	if looksLikeGroupID(project.GroupID) && len(strings.Split(project.ArtifactID, ".")) > 1 {
 		// there is a strong indication that the artifact ID is really a group ID
 		return cleanGroupID(project.ArtifactID)
 	}
@@ -307,12 +307,12 @@ func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
 	// let's check the parent details
 	// if the current project does not have a group ID, but the parent does, we'll use the parent's group ID
 	if project.Parent != nil {
-		if startsWithTopLevelDomain(project.Parent.GroupID) {
+		if looksLikeGroupID(project.Parent.GroupID) {
 			return cleanGroupID(project.Parent.GroupID)
 		}
 
 		// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-		if startsWithTopLevelDomain(project.Parent.ArtifactID) && len(strings.Split(project.Parent.ArtifactID, ".")) > 1 {
+		if looksLikeGroupID(project.Parent.ArtifactID) && len(strings.Split(project.Parent.ArtifactID, ".")) > 1 {
 			// there is a strong indication that the artifact ID is really a group ID
 			return cleanGroupID(project.Parent.ArtifactID)
 		}
@@ -441,4 +441,8 @@ func removeOSCIDirectives(groupID string) string {
 
 func startsWithTopLevelDomain(value string) bool {
 	return internal.HasAnyOfPrefixes(value, domains...)
+}
+
+func looksLikeGroupID(value string) bool {
+	return strings.Contains(value, ".")
 }
