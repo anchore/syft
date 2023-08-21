@@ -31,7 +31,7 @@ func packageURL(name, version string, metadata pkg.JavaMetadata) string {
 // 1. The group ID from the POM properties
 // 2. The group ID from the POM project
 // 3. The group ID from a select map of known group IDs
-// 3. The group ID from the Java manifest
+// 4. The group ID from the Java manifest
 func groupIDFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupID string) {
 	if groupID = groupIDFromPomProperties(metadata.PomProperties); groupID != "" {
 		return groupID
