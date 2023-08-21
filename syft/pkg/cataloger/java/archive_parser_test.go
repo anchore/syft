@@ -174,8 +174,8 @@ func TestParseJar(t *testing.T) {
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						// ensure that nested packages with different names than that of the parent are appended as
-						// a suffix on the virtual path
-						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar:joda-time",
+						// a suffix on the virtual path with a colon separator between group name and artifact name
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar:joda-time:joda-time",
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",
@@ -240,7 +240,7 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaMetadata{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path
-						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:joda-time",
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:joda-time:joda-time",
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",
@@ -659,7 +659,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Type:         pkg.JavaPkg,
 				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: virtualPath + ":" + "some-group-id" + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
@@ -728,7 +728,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Type:         pkg.JavaPkg,
 				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: virtualPath + ":" + "some-group-id" + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
@@ -797,7 +797,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Type:         pkg.JenkinsPluginPkg,
 				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: virtualPath + ":" + "com.cloudbees.jenkins.plugins" + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "com.cloudbees.jenkins.plugins",

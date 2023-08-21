@@ -371,7 +371,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 	return projectByParentPath, nil
 }
 
-// packagesFromPomProperties processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
+// newPackageFromMavenData processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
 func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.PomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
@@ -380,10 +380,15 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 	if parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata); ok {
 		groupID = groupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
 	}
+
 	parentKey := fmt.Sprintf("%s:%s:%s", groupID, parentPkg.Name, parentPkg.Version)
 	pomProjectKey := fmt.Sprintf("%s:%s:%s", pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version)
 	if parentKey != pomProjectKey {
-		vPathSuffix += ":" + pomProperties.ArtifactID
+		// build a new virtual path suffix for the package that is different from the parent package
+		// we want to use the GroupID and ArtifactID here to preserve uniqueness
+		// Some packages have the same name but different group IDs (e.g. "org.glassfish.jaxb/jaxb-core", "com.sun.xml.bind/jaxb-core")
+		// https://github.com/anchore/syft/issues/1944
+		vPathSuffix += ":" + pomProperties.GroupID + ":" + pomProperties.ArtifactID
 	}
 	virtualPath := location.AccessPath() + vPathSuffix
 
