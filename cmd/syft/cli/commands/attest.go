@@ -103,7 +103,7 @@ func runAttest(app clio.Application, opts *attestOptions, userInput string) erro
 	}
 	defer os.Remove(f.Name())
 
-	writer, err := options.MakeSBOMWriter([]string{opts.Output}, f.Name(), opts.OutputTemplatePath)
+	writer, err := opts.SBOMWriter(f.Name())
 	if err != nil {
 		return fmt.Errorf("unable to create SBOM writer: %w", err)
 	}

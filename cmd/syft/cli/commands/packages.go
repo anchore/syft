@@ -114,7 +114,7 @@ func runPackages(app clio.Application, opts *packagesOptions, userInput string) 
 		return err
 	}
 
-	writer, err := options.MakeSBOMWriter(opts.Outputs, opts.File, opts.OutputTemplatePath)
+	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err
 	}

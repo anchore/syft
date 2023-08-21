@@ -34,7 +34,7 @@ func Test_MakeSBOMWriter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		_, err := MakeSBOMWriter(tt.outputs, "", "")
+		_, err := makeSBOMWriter(tt.outputs, "", "")
 		tt.wantErr(t, err)
 	}
 }

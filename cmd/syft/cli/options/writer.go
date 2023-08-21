@@ -26,9 +26,9 @@ var _ interface {
 	sbom.Writer
 } = (*sbomStreamWriter)(nil)
 
-// MakeSBOMWriter creates a sbom.Writer for output or returns an error. this will either return a valid writer
+// makeSBOMWriter creates a sbom.Writer for output or returns an error. this will either return a valid writer
 // or an error but neither both and if there is no error, sbom.Writer.Close() should be called
-func MakeSBOMWriter(outputs []string, defaultFile, templateFilePath string) (sbom.Writer, error) {
+func makeSBOMWriter(outputs []string, defaultFile, templateFilePath string) (sbom.Writer, error) {
 	outputOptions, err := parseSBOMOutputFlags(outputs, defaultFile, templateFilePath)
 	if err != nil {
 		return nil, err
@@ -42,8 +42,8 @@ func MakeSBOMWriter(outputs []string, defaultFile, templateFilePath string) (sbo
 	return writer, nil
 }
 
-// MakeSBOMWriterForFormat creates a sbom.Writer for for the given format or returns an error.
-func MakeSBOMWriterForFormat(format sbom.Format, path string) (sbom.Writer, error) {
+// makeSBOMWriterForFormat creates a sbom.Writer for for the given format or returns an error.
+func makeSBOMWriterForFormat(format sbom.Format, path string) (sbom.Writer, error) {
 	writer, err := newSBOMMultiWriter(newSBOMWriterDescription(format, path))
 	if err != nil {
 		return nil, err

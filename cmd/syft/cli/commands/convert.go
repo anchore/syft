@@ -59,7 +59,7 @@ func validateConvertArgs(cmd *cobra.Command, args []string) error {
 func RunConvert(opts *ConvertOptions, userInput string) error {
 	log.Warn("convert is an experimental feature, run `syft convert -h` for help")
 
-	writer, err := options.MakeSBOMWriter(opts.Outputs, opts.File, opts.OutputTemplatePath)
+	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err
 	}
