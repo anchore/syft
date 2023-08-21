@@ -72,6 +72,7 @@ require (
 	github.com/knqyf263/go-rpmdb v0.0.0-20230301153543-ba94b245509b
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/saferwall/pe v1.4.4
+	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
 	github.com/sassoftware/go-rpmutils v0.2.0
 	github.com/vbatts/go-mtree v0.5.3
 	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1

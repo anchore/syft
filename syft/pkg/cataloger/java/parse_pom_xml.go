@@ -1,6 +1,7 @@
 package java
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/saintfish/chardet"
 	"github.com/vifraa/gopom"
 	"golang.org/x/net/html/charset"
 
@@ -99,9 +101,28 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...fil
 }
 
 func decodePomXML(content io.Reader) (project gopom.Project, err error) {
-	decoder := xml.NewDecoder(content)
-	// prevent against warnings for "xml: encoding "iso-8859-1" declared but Decoder.CharsetReader is nil"
+	pomContents, err := io.ReadAll(content)
+	if err != nil {
+		return project, fmt.Errorf("unable to read pom.xml: %w", err)
+	}
+
+	detector := chardet.NewTextDetector()
+	detection, err := detector.DetectBest(pomContents)
+
+	var inputReader io.Reader
+	if err == nil && detection != nil && detection.Charset != "UTF-8" {
+		inputReader, err = charset.NewReaderLabel(detection.Charset, bytes.NewReader(pomContents))
+		if err != nil {
+			return project, fmt.Errorf("unable to get encoding: %w", err)
+		}
+	} else {
+		inputReader = bytes.NewReader(pomContents)
+	}
+
+	decoder := xml.NewDecoder(inputReader)
+	// when an xml file has a character set declaration (e.g. '<?xml version="1.0" encoding="ISO-8859-1"?>') read that and use the correct decoder
 	decoder.CharsetReader = charset.NewReaderLabel
+
 	if err := decoder.Decode(&project); err != nil {
 		return project, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
 	}
