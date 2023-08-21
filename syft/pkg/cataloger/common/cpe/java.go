@@ -21,7 +21,7 @@ var (
 		"be",
 	}
 
-	primaryJavaManifestGroupIDFields = []string{
+	PrimaryJavaManifestGroupIDFields = []string{
 		"Bundle-SymbolicName",
 		"Extension-Name",
 		"Specification-Vendor",
@@ -30,7 +30,7 @@ var (
 		"Implementation-Title",
 		"Bundle-Activator",
 	}
-	secondaryJavaManifestGroupIDFields = []string{
+	SecondaryJavaManifestGroupIDFields = []string{
 		"Automatic-Module-Name",
 		"Main-Class",
 		"Package",
@@ -184,110 +184,6 @@ func GroupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 	return GroupIDsFromJavaMetadata(p.Name, metadata)
 }
 
-// GroupIDFromJavaPackage returns the authoritative group ID for a Java package.
-// The order of precedence is:
-// 1. The group ID from the POM properties
-// 2. The group ID from the POM project
-// 3. The group ID from a select map of known group IDs
-// 3. The group ID from the Java manifest
-func GroupIDFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupID string) {
-	if groupID = groupIDFromPomProperties(metadata.PomProperties); groupID != "" {
-		return groupID
-	}
-
-	if groupID = groupIDFromPomProject(metadata.PomProject); groupID != "" {
-		return groupID
-	}
-
-	if groupID = groupIDFromKnownPackageList(pkgName); groupID != "" {
-		return groupID
-	}
-
-	if groupID = groupIDFromJavaManifest(metadata.Manifest); groupID != "" {
-		return groupID
-	}
-
-	return groupID
-}
-
-func groupIDFromKnownPackageList(pkgName string) (groupID string) {
-	if groupID, ok := defaultArtifactIDToGroupID[pkgName]; ok {
-		return groupID
-	}
-	return groupID
-}
-
-func groupIDFromJavaManifest(manifest *pkg.JavaManifest) (groupID string) {
-	if manifest == nil {
-		return groupID
-	}
-
-	groupIDS := getManifestFieldGroupIDs(manifest, primaryJavaManifestGroupIDFields)
-	// assumes that primaryJavaManifestNameFields are ordered by priority
-	if len(groupIDS) != 0 {
-		return groupIDS[0]
-	}
-
-	groupIDS = getManifestFieldGroupIDs(manifest, secondaryJavaManifestGroupIDFields)
-
-	if len(groupIDS) != 0 {
-		return groupIDS[0]
-	}
-
-	return groupID
-}
-
-func groupIDFromPomProperties(properties *pkg.PomProperties) (groupID string) {
-	if properties == nil {
-		return groupID
-	}
-
-	if looksLikeGroupID(properties.GroupID) {
-		return cleanGroupID(properties.GroupID)
-	}
-
-	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if looksLikeGroupID(properties.ArtifactID) && len(strings.Split(properties.ArtifactID, ".")) > 1 {
-		// there is a strong indication that the artifact ID is really a group ID
-		return cleanGroupID(properties.ArtifactID)
-	}
-
-	return groupID
-}
-
-func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
-	if project == nil {
-		return groupID
-	}
-
-	// check the project details
-	if looksLikeGroupID(project.GroupID) {
-		return cleanGroupID(project.GroupID)
-	}
-
-	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if looksLikeGroupID(project.GroupID) && len(strings.Split(project.ArtifactID, ".")) > 1 {
-		// there is a strong indication that the artifact ID is really a group ID
-		return cleanGroupID(project.ArtifactID)
-	}
-
-	// let's check the parent details
-	// if the current project does not have a group ID, but the parent does, we'll use the parent's group ID
-	if project.Parent != nil {
-		if looksLikeGroupID(project.Parent.GroupID) {
-			return cleanGroupID(project.Parent.GroupID)
-		}
-
-		// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-		if looksLikeGroupID(project.Parent.ArtifactID) && len(strings.Split(project.Parent.ArtifactID, ".")) > 1 {
-			// there is a strong indication that the artifact ID is really a group ID
-			return cleanGroupID(project.Parent.ArtifactID)
-		}
-	}
-
-	return groupID
-}
-
 // GroupIDsFromJavaMetadata returns the possible group IDs for a Java package
 // This function is similar to GroupIDFromJavaPackage, but returns all possible group IDs and is less strict
 // It is used as a way to generate possible candidates for CPE matching.
@@ -349,7 +245,7 @@ func addGroupIDsFromGroupIDsAndArtifactID(groupID, artifactID string) (groupIDs 
 }
 
 func groupIDsFromJavaManifest(pkgName string, manifest *pkg.JavaManifest) []string {
-	if groupID, ok := defaultArtifactIDToGroupID[pkgName]; ok {
+	if groupID, ok := DefaultArtifactIDToGroupID[pkgName]; ok {
 		return []string{groupID}
 	}
 
@@ -358,7 +254,7 @@ func groupIDsFromJavaManifest(pkgName string, manifest *pkg.JavaManifest) []stri
 	}
 
 	// try the common manifest fields first for a set of candidates
-	groupIDs := getManifestFieldGroupIDs(manifest, primaryJavaManifestGroupIDFields)
+	groupIDs := GetManifestFieldGroupIDs(manifest, PrimaryJavaManifestGroupIDFields)
 
 	if len(groupIDs) != 0 {
 		return groupIDs
@@ -369,10 +265,10 @@ func groupIDsFromJavaManifest(pkgName string, manifest *pkg.JavaManifest) []stri
 	// for more info see pkg:maven/commons-io/commons-io@2.8.0 within cloudbees/cloudbees-core-mm:2.263.4.2
 	// at /usr/share/jenkins/jenkins.war:WEB-INF/plugins/analysis-model-api.hpi:WEB-INF/lib/commons-io-2.8.0.jar
 	// as well as the ant package from cloudbees/cloudbees-core-mm:2.277.2.4-ra.
-	return getManifestFieldGroupIDs(manifest, secondaryJavaManifestGroupIDFields)
+	return GetManifestFieldGroupIDs(manifest, SecondaryJavaManifestGroupIDFields)
 }
 
-func getManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (groupIDs []string) {
+func GetManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (groupIDs []string) {
 	if manifest == nil {
 		return nil
 	}

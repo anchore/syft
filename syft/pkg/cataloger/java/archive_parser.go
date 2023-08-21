@@ -12,7 +12,6 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
@@ -379,7 +378,7 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 	vPathSuffix := ""
 	groupID := ""
 	if parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata); ok {
-		groupID = cpe.GroupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
+		groupID = groupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
 	}
 	parentKey := fmt.Sprintf("%s:%s:%s", groupID, parentPkg.Name, parentPkg.Version)
 	pomProjectKey := fmt.Sprintf("%s:%s:%s", pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version)
@@ -431,8 +430,8 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	}
 
 	// try to determine identity with the metadata
-	childGroupID := cpe.GroupIDFromJavaMetadata(p.Name, childMetadata)
-	parentGroupID := cpe.GroupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
+	childGroupID := groupIDFromJavaMetadata(p.Name, childMetadata)
+	parentGroupID := groupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
 	if uniquePkgKey(childGroupID, &p) == uniquePkgKey(parentGroupID, parentPkg) {
 		return true
 	}
