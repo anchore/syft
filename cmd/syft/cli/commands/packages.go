@@ -82,6 +82,8 @@ func Packages(app clio.Application) *cobra.Command {
 		}),
 		Args: validatePackagesArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer bus.Exit()
+
 			applicationUpdateCheck(app, opts.CheckForAppUpdate)
 
 			return runPackages(app, opts, args[0])
@@ -116,8 +118,6 @@ func runPackages(app clio.Application, opts *packagesOptions, userInput string) 
 	if err != nil {
 		return err
 	}
-
-	defer bus.Exit()
 
 	detection, err := source.Detect(
 		userInput,

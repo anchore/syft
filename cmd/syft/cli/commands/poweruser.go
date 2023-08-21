@@ -52,6 +52,8 @@ func PowerUser(app clio.Application) *cobra.Command {
 		Args:   validatePackagesArgs,
 		Hidden: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer bus.Exit()
+
 			applicationUpdateCheck(app, opts.CheckForAppUpdate)
 
 			return runPowerUser(app, opts, args[0])
@@ -71,8 +73,6 @@ func runPowerUser(app clio.Application, opts *powerUserOptions, userInput string
 		deprecated := color.Style{color.Red, color.OpBold}.Sprint("DEPRECATED: This command will be removed in v1.0.0")
 		fmt.Fprintln(os.Stderr, deprecated)
 	}()
-
-	defer bus.Exit()
 
 	tasks, err := eventloop.Tasks(&opts.Packages)
 	if err != nil {

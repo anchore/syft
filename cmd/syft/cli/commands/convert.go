@@ -43,6 +43,8 @@ func Convert(app clio.Application) *cobra.Command {
 		}),
 		Args: validateConvertArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer bus.Exit()
+
 			applicationUpdateCheck(app, opts.CheckForAppUpdate)
 
 			return RunConvert(opts, args[0])
@@ -61,8 +63,6 @@ func RunConvert(opts *ConvertOptions, userInput string) error {
 	if err != nil {
 		return err
 	}
-
-	defer bus.Exit()
 
 	var reader io.ReadCloser
 

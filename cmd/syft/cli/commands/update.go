@@ -21,7 +21,7 @@ var latestAppVersionURL = struct {
 	path string
 }{
 	host: "https://toolbox-data.anchore.io",
-	path: fmt.Sprintf("/%s/releases/latest/VERSION", internal.Syft),
+	path: "/syft/releases/latest/VERSION",
 }
 
 func applicationUpdateCheck(app clio.Application, enabled bool) {

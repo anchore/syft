@@ -72,6 +72,8 @@ func Attest(app clio.Application) *cobra.Command {
 		}),
 		Args: validatePackagesArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			defer bus.Exit()
+
 			applicationUpdateCheck(app, opts.CheckForAppUpdate)
 
 			return runAttest(app, opts, args[0])
@@ -87,8 +89,6 @@ func runAttest(app clio.Application, opts *attestOptions, userInput string) erro
 		// 2023/06/30 08:31:52 error during command execution: 'syft attest' requires cosign to be installed: exec: "cosign": executable file not found in $PATH
 		return fmt.Errorf("'syft attest' requires cosign to be installed: %w", err)
 	}
-
-	defer bus.Exit()
 
 	s, err := buildSBOM(app, &opts.Packages, userInput)
 	if err != nil {
