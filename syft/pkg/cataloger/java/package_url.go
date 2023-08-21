@@ -89,7 +89,7 @@ func groupIDFromPomProperties(properties *pkg.PomProperties) (groupID string) {
 	}
 
 	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if looksLikeGroupID(properties.ArtifactID) && len(strings.Split(properties.ArtifactID, ".")) > 1 {
+	if looksLikeGroupID(properties.ArtifactID) {
 		// there is a strong indication that the artifact ID is really a group ID
 		return cleanGroupID(properties.ArtifactID)
 	}
@@ -108,7 +108,7 @@ func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
 	}
 
 	// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-	if looksLikeGroupID(project.GroupID) && len(strings.Split(project.ArtifactID, ".")) > 1 {
+	if looksLikeGroupID(project.GroupID) {
 		// there is a strong indication that the artifact ID is really a group ID
 		return cleanGroupID(project.ArtifactID)
 	}
@@ -121,7 +121,7 @@ func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
 		}
 
 		// sometimes the publisher puts the group ID in the artifact ID field unintentionally
-		if looksLikeGroupID(project.Parent.ArtifactID) && len(strings.Split(project.Parent.ArtifactID, ".")) > 1 {
+		if looksLikeGroupID(project.Parent.ArtifactID) {
 			// there is a strong indication that the artifact ID is really a group ID
 			return cleanGroupID(project.Parent.ArtifactID)
 		}
