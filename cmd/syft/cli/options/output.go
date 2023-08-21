@@ -61,7 +61,7 @@ func (o *SingleOutput) AddFlags(flags clio.FlagSet) {
 }
 
 func (o *SingleOutput) SBOMWriter(file string) (sbom.Writer, error) {
-	return makeSBOMWriter([]string{o.Output}, file, "")
+	return makeSBOMWriter([]string{o.Output}, file, o.OutputTemplatePath)
 }
 
 // OutputFile is only the --file argument
