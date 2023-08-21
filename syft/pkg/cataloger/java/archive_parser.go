@@ -414,11 +414,11 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 }
 
 func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
-	childMetadata, childOk := p.Metadata.(pkg.JavaMetadata)
+	metadata, ok := p.Metadata.(pkg.JavaMetadata)
 	parentMetadata, parentOk := parentPkg.Metadata.(pkg.JavaMetadata)
-	if !childOk || !parentOk {
+	if !ok || !parentOk {
 		switch {
-		case !childOk:
+		case !ok:
 			log.WithFields("package", p.String()).Trace("unable to extract java metadata to check for matching package identity for package: %s", p.Name)
 		case !parentOk:
 			log.WithFields("package", parentPkg.String()).Trace("unable to extract java metadata to check for matching package identity for package: %s", parentPkg.Name)
@@ -430,14 +430,14 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	}
 
 	// try to determine identity with the metadata
-	childGroupID := groupIDFromJavaMetadata(p.Name, childMetadata)
+	groupID := groupIDFromJavaMetadata(p.Name, metadata)
 	parentGroupID := groupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
-	if uniquePkgKey(childGroupID, &p) == uniquePkgKey(parentGroupID, parentPkg) {
+	if uniquePkgKey(groupID, &p) == uniquePkgKey(parentGroupID, parentPkg) {
 		return true
 	}
 
 	// the virtual path matches...
-	if parentMetadata.VirtualPath == childMetadata.VirtualPath {
+	if parentMetadata.VirtualPath == metadata.VirtualPath {
 		return true
 	}
 
@@ -448,8 +448,8 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	// NOTE: artifactId might not be a good indicator of uniqueness since archives can contain forks with the same name
 	// from different groups (e.g. "org.glassfish.jaxb.jaxb-core" and "com.sun.xml.bind.jaxb-core")
 	// we will use this check as a last resort
-	if childMetadata.PomProperties != nil {
-		if childMetadata.PomProperties.ArtifactID != "" && parentPkg.Name == childMetadata.PomProperties.ArtifactID {
+	if metadata.PomProperties != nil {
+		if metadata.PomProperties.ArtifactID != "" && parentPkg.Name == metadata.PomProperties.ArtifactID {
 			return true
 		}
 	}
