@@ -419,9 +419,9 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	if !childOk || !parentOk {
 		switch {
 		case !childOk:
-			log.WithFields("package", p.String()).Debug("unable to extract java metadata to check for matching package identity for package: %s", p.Name)
+			log.WithFields("package", p.String()).Trace("unable to extract java metadata to check for matching package identity for package: %s", p.Name)
 		case !parentOk:
-			log.WithFields("package", parentPkg.String()).Debug("unable to extract java metadata to check for matching package identity for package: %s", parentPkg.Name)
+			log.WithFields("package", parentPkg.String()).Trace("unable to extract java metadata to check for matching package identity for package: %s", parentPkg.Name)
 		}
 		// if we can't extract metadata, we can check for matching identities via the package name
 		// this is not ideal, but it's better than nothing - this should not be used if we have Metadata
