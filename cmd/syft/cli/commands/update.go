@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/event/parsers"
 )
 
 var latestAppVersionURL = struct {
@@ -43,8 +44,11 @@ func checkForApplicationUpdate(id clio.Identification) {
 		log.Infof("new version of %s is available: %s (current version is %s)", id.Name, newVersion, id.Version)
 
 		bus.Publish(partybus.Event{
-			Type:  event.CLIAppUpdateAvailable,
-			Value: newVersion,
+			Type: event.CLIAppUpdateAvailable,
+			Value: parsers.UpdateCheck{
+				New:     newVersion,
+				Current: id.Version,
+			},
 		})
 	} else {
 		log.Debugf("no new %s update available", id.Name)
