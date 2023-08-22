@@ -1,6 +1,6 @@
 package cpe
 
-var defaultArtifactIDToGroupID = map[string]string{
+var DefaultArtifactIDToGroupID = map[string]string{
 	"ant":                            "org.apache.ant",
 	"ant-antlr":                      "org.apache.ant",
 	"ant-antunit":                    "org.apache.ant",
