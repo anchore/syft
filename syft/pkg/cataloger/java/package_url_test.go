@@ -45,3 +45,59 @@ func Test_packageURL(t *testing.T) {
 		})
 	}
 }
+
+func Test_groupIDFromJavaMetadata(t *testing.T) {
+	tests := []struct {
+		name     string
+		pkgName  string
+		metadata pkg.JavaMetadata
+		expect   string
+	}{
+		{
+			name: "pom properties",
+			metadata: pkg.JavaMetadata{
+				PomProperties: &pkg.PomProperties{
+					GroupID: "org.anchore",
+				},
+			},
+			expect: "org.anchore",
+		},
+		{
+			name: "pom project",
+			metadata: pkg.JavaMetadata{
+				PomProject: &pkg.PomProject{
+					GroupID: "org.anchore",
+				},
+			},
+			expect: "org.anchore",
+		},
+		{
+			name:     "known package list",
+			pkgName:  "ant-antlr",
+			metadata: pkg.JavaMetadata{},
+			expect:   "org.apache.ant",
+		},
+		{
+			name: "java manifest",
+			metadata: pkg.JavaMetadata{
+				Manifest: &pkg.JavaManifest{
+					Main: map[string]string{
+						"Implementation-Vendor": "org.anchore",
+					},
+				},
+			},
+			expect: "org.anchore",
+		},
+		{
+			name:     "no group id",
+			metadata: pkg.JavaMetadata{},
+			expect:   "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expect, groupIDFromJavaMetadata(tt.pkgName, tt.metadata))
+		})
+	}
+}
