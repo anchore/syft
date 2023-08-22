@@ -382,6 +382,9 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 	}
 
 	parentKey := fmt.Sprintf("%s:%s:%s", groupID, parentPkg.Name, parentPkg.Version)
+	// Since we don't have a package yet, it's important to use the same `field: value` association that we used when creating the parent package
+	// See below where Name => pomProperties.ArtifactID and Version => pomProperties.Version. We want to check for potentially nested identical
+	// packages and create equal virtual paths so they are de duped in the future
 	pomProjectKey := fmt.Sprintf("%s:%s:%s", pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version)
 	if parentKey != pomProjectKey {
 		// build a new virtual path suffix for the package that is different from the parent package
