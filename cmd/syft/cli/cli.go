@@ -53,7 +53,10 @@ func New(id clio.Identification) clio.Application {
 
 				return nil
 			},
-		)
+		).
+		WithPostRuns(func(state *clio.State, err error) {
+			stereoscope.Cleanup()
+		})
 
 	app := clio.New(*clioCfg)
 

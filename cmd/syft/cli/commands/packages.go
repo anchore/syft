@@ -79,10 +79,9 @@ func Packages(app clio.Application) *cobra.Command {
 			"appName": app.ID().Name,
 			"command": "packages",
 		}),
-		Args: validatePackagesArgs,
+		Args:    validatePackagesArgs,
+		PreRunE: applicationUpdateCheck(app, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			applicationUpdateCheck(app, opts.CheckForAppUpdate)
-
 			return runPackages(app, opts, args[0])
 		},
 	}, opts)

@@ -48,11 +48,10 @@ func PowerUser(app clio.Application) *cobra.Command {
 			"appName": app.ID().Name,
 			"command": "power-user",
 		}),
-		Args:   validatePackagesArgs,
-		Hidden: true,
+		Args:    validatePackagesArgs,
+		Hidden:  true,
+		PreRunE: applicationUpdateCheck(app, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			applicationUpdateCheck(app, opts.CheckForAppUpdate)
-
 			return runPowerUser(app, opts, args[0])
 		},
 	}, opts)

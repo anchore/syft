@@ -70,10 +70,9 @@ func Attest(app clio.Application) *cobra.Command {
 			"appName": app.ID().Name,
 			"command": "attest",
 		}),
-		Args: validatePackagesArgs,
+		Args:    validatePackagesArgs,
+		PreRunE: applicationUpdateCheck(app, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			applicationUpdateCheck(app, opts.CheckForAppUpdate)
-
 			return runAttest(app, opts, args[0])
 		},
 	}, opts)
