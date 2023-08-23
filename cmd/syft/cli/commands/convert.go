@@ -10,7 +10,6 @@ import (
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/formats"
 )
@@ -43,8 +42,6 @@ func Convert(app clio.Application) *cobra.Command {
 		}),
 		Args: validateConvertArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer bus.Exit()
-
 			applicationUpdateCheck(app, opts.CheckForAppUpdate)
 
 			return RunConvert(opts, args[0])

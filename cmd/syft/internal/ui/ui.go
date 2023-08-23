@@ -49,31 +49,23 @@ func (m *UI) Setup(subscription partybus.Unsubscribable) error {
 	}
 
 	m.subscription = subscription
-	m.program = tea.NewProgram(m, tea.WithOutput(os.Stderr), tea.WithInput(os.Stdin))
+	m.program = tea.NewProgram(m, tea.WithOutput(os.Stderr), tea.WithInput(os.Stdin), tea.WithoutSignalHandler())
 	m.running.Add(1)
 
 	go func() {
 		defer m.running.Done()
 		if _, err := m.program.Run(); err != nil {
 			log.Errorf("unable to start UI: %+v", err)
-			m.exit()
+			bus.ExitWithInterrupt()
 		}
 	}()
 
 	return nil
 }
 
-func (m *UI) exit() {
-	// stop the event loop
-	bus.Exit()
-}
-
 func (m *UI) Handle(e partybus.Event) error {
 	if m.program != nil {
 		m.program.Send(e)
-		if e.Type == event.CLIExit {
-			return m.subscription.Unsubscribe()
-		}
 	}
 	return nil
 }
@@ -88,7 +80,9 @@ func (m *UI) Teardown(force bool) error {
 		// string from the worker (outside of the UI after teardown).
 		m.running.Wait()
 	} else {
-		m.program.Kill()
+		// it may be tempting to use Kill() however it has been found that this can cause the terminal to be left in
+		// a bad state (where Ctrl+C and other control characters no longer works for future processes in that terminal).
+		m.program.Quit()
 	}
 
 	// TODO: allow for writing out the full log output to the screen (only a partial log is shown currently)
@@ -107,7 +101,6 @@ func (m UI) RespondsTo() []partybus.EventType {
 	return append([]partybus.EventType{
 		event.CLIReport,
 		event.CLINotification,
-		event.CLIExit,
 		event.CLIAppUpdateAvailable,
 	}, m.handler.RespondsTo()...)
 }
@@ -126,8 +119,10 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		// today we treat esc and ctrl+c the same, but in the future when the syft worker has a graceful way to
+		// cancel in-flight work via a context, we can wire up esc to this path with bus.Exit()
 		case "esc", "ctrl+c":
-			m.exit()
+			bus.ExitWithInterrupt()
 			return m, tea.Quit
 		}
 
@@ -135,7 +130,7 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		log.WithFields("component", "ui").Tracef("event: %q", msg.Type)
 
 		switch msg.Type {
-		case event.CLIReport, event.CLINotification, event.CLIExit, event.CLIAppUpdateAvailable:
+		case event.CLIReport, event.CLINotification, event.CLIAppUpdateAvailable:
 			// keep these for when the UI is terminated to show to the screen (or perform other events)
 			m.finalizeEvents = append(m.finalizeEvents, msg)
 

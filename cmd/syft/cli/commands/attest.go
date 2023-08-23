@@ -72,8 +72,6 @@ func Attest(app clio.Application) *cobra.Command {
 		}),
 		Args: validatePackagesArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer bus.Exit()
-
 			applicationUpdateCheck(app, opts.CheckForAppUpdate)
 
 			return runAttest(app, opts, args[0])
