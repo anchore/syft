@@ -13,7 +13,6 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/sbom"
@@ -52,8 +51,6 @@ func PowerUser(app clio.Application) *cobra.Command {
 		Args:   validatePackagesArgs,
 		Hidden: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer bus.Exit()
-
 			applicationUpdateCheck(app, opts.CheckForAppUpdate)
 
 			return runPowerUser(app, opts, args[0])

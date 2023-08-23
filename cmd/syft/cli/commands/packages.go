@@ -11,7 +11,6 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -82,8 +81,6 @@ func Packages(app clio.Application) *cobra.Command {
 		}),
 		Args: validatePackagesArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			defer bus.Exit()
-
 			applicationUpdateCheck(app, opts.CheckForAppUpdate)
 
 			return runPackages(app, opts, args[0])
