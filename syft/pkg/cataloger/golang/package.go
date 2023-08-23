@@ -36,7 +36,7 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debu
 			Architecture:      architecture,
 			BuildSettings:     buildSettings,
 			MainModule:        mainModule,
-			CryptoSettings:    cryptoSettings,
+			GoCryptoSettings:  cryptoSettings,
 		},
 	}
 

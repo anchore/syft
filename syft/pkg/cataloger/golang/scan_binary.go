@@ -6,9 +6,10 @@ import (
 	"io"
 	"runtime/debug"
 
+	version "github.com/kastenhq/goversion/version"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
-	version "github.com/kastenhq/goversion/version"
 )
 
 type ExtendedBuildInfo struct {
