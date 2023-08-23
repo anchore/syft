@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-type ConanRef struct {
+type conanRef struct {
 	Name      string
 	Version   string
 	User      string
@@ -17,13 +17,13 @@ type ConanRef struct {
 	Timestamp string
 }
 
-func splitConanRef(ref string) *ConanRef {
+func splitConanRef(ref string) *conanRef {
 	// Conan ref format is:
 	// pkg/0.1@user/channel#rrev%timestamp
 	// This method is based on conan's ref.loads method:
 	// https://github.com/conan-io/conan/blob/release/2.0/conans/model/recipe_ref.py#L93C21-L93C21
 
-	var cref ConanRef
+	var cref conanRef
 
 	// timestamp
 	tokens := strings.Split(ref, "%")
@@ -102,7 +102,7 @@ func newConanlockPackage(m pkg.ConanLockMetadata, locations ...file.Location) *p
 	return &p
 }
 
-func packageURL(ref *ConanRef) string {
+func packageURL(ref *conanRef) string {
 	qualifiers := packageurl.Qualifiers{}
 	if ref.Channel != "" {
 		qualifiers = append(qualifiers, packageurl.Qualifier{
