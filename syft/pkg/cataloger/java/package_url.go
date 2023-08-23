@@ -84,7 +84,7 @@ func groupIDFromPomProperties(properties *pkg.PomProperties) (groupID string) {
 		return groupID
 	}
 
-	if looksLikeGroupID(properties.GroupID) {
+	if properties.GroupID != "" {
 		return cleanGroupID(properties.GroupID)
 	}
 
