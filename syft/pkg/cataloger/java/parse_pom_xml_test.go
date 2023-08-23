@@ -2,7 +2,9 @@ package java
 
 import (
 	"encoding/base64"
+	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -456,4 +458,29 @@ func Test_resolveProperty(t *testing.T) {
 
 func stringPointer(s string) *string {
 	return &s
+}
+
+func Test_getUtf8Reader(t *testing.T) {
+	tests := []struct {
+		name     string
+		contents string
+	}{
+		{
+			name: "unknown encoding",
+			// random binary contents
+			contents: "BkiJz02JyEWE0nXR6TH///9NicpJweEETIucJIgAAABJicxPjQwhTY1JCE05WQh0BU2J0eunTYshTIusJIAAAAAPHwBNOeV1BUUx2+tWTIlUJDhMiUwkSEyJRCQgSIl8JFBMiQ==",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			decoder := base64.NewDecoder(base64.StdEncoding, strings.NewReader(tt.contents))
+
+			got, err := getUtf8Reader(decoder)
+			require.NoError(t, err)
+			gotBytes, err := io.ReadAll(got)
+			require.NoError(t, err)
+			// if we couldn't decode the section as UTF-8, we should get a replacement character
+			assert.Contains(t, string(gotBytes), "�")
+		})
+	}
 }

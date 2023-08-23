@@ -101,9 +101,26 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...fil
 }
 
 func decodePomXML(content io.Reader) (project gopom.Project, err error) {
-	pomContents, err := io.ReadAll(content)
+	inputReader, err := getUtf8Reader(content)
 	if err != nil {
 		return project, fmt.Errorf("unable to read pom.xml: %w", err)
+	}
+
+	decoder := xml.NewDecoder(inputReader)
+	// when an xml file has a character set declaration (e.g. '<?xml version="1.0" encoding="ISO-8859-1"?>') read that and use the correct decoder
+	decoder.CharsetReader = charset.NewReaderLabel
+
+	if err := decoder.Decode(&project); err != nil {
+		return project, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
+	}
+
+	return project, nil
+}
+
+func getUtf8Reader(content io.Reader) (io.Reader, error) {
+	pomContents, err := io.ReadAll(content)
+	if err != nil {
+		return nil, err
 	}
 
 	detector := chardet.NewTextDetector()
@@ -116,7 +133,7 @@ func decodePomXML(content io.Reader) (project gopom.Project, err error) {
 		} else {
 			inputReader, err = charset.NewReaderLabel(detection.Charset, bytes.NewReader(pomContents))
 			if err != nil {
-				return project, fmt.Errorf("unable to get encoding: %w", err)
+				return nil, fmt.Errorf("unable to get encoding: %w", err)
 			}
 		}
 	} else {
@@ -124,16 +141,7 @@ func decodePomXML(content io.Reader) (project gopom.Project, err error) {
 		// characters with the UTF-8 replacement character.
 		inputReader = strings.NewReader(strings.ToValidUTF8(string(pomContents), "�"))
 	}
-
-	decoder := xml.NewDecoder(inputReader)
-	// when an xml file has a character set declaration (e.g. '<?xml version="1.0" encoding="ISO-8859-1"?>') read that and use the correct decoder
-	decoder.CharsetReader = charset.NewReaderLabel
-
-	if err := decoder.Decode(&project); err != nil {
-		return project, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
-	}
-
-	return project, nil
+	return inputReader, nil
 }
 
 func pomParent(pom gopom.Project, parent *gopom.Parent) (result *pkg.PomParent) {
