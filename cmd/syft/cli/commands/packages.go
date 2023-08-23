@@ -54,14 +54,14 @@ const (
 )
 
 type packagesOptions struct {
-	options.Output      `yaml:",inline" mapstructure:",squash"`
+	options.MultiOutput `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 	options.Packages    `yaml:",inline" mapstructure:",squash"`
 }
 
 func packagesOptionsDefault() *packagesOptions {
 	return &packagesOptions{
-		Output:      options.OutputDefault(),
+		MultiOutput: options.OutputDefault(),
 		UpdateCheck: options.UpdateCheckDefault(),
 		Packages:    options.PackagesDefault(),
 	}
@@ -105,7 +105,7 @@ func validateArgs(cmd *cobra.Command, args []string, error string) error {
 
 // nolint:funlen
 func runPackages(app clio.Application, opts *packagesOptions, userInput string) error {
-	err := validatePackageOutputOptions(&opts.Output)
+	err := validatePackageOutputOptions(&opts.MultiOutput)
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func mergeRelationships(cs ...<-chan artifact.Relationship) (relationships []art
 	return relationships
 }
 
-func validatePackageOutputOptions(cfg *options.Output) error {
+func validatePackageOutputOptions(cfg *options.MultiOutput) error {
 	var usesTemplateOutput bool
 	for _, o := range cfg.Outputs {
 		if o == template.ID.String() {

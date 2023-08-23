@@ -72,7 +72,7 @@ func TestConvertCmd(t *testing.T) {
 			}()
 
 			opts := &commands.ConvertOptions{
-				Output: options.Output{
+				MultiOutput: options.MultiOutput{
 					Outputs: []string{fmt.Sprintf("%s=%s", test.format.ID().String(), formatFile.Name())},
 				},
 			}

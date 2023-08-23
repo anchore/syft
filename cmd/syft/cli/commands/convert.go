@@ -22,7 +22,7 @@ const (
 )
 
 type ConvertOptions struct {
-	options.Output      `yaml:",inline" mapstructure:",squash"`
+	options.MultiOutput `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 }
 

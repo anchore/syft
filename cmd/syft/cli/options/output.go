@@ -12,8 +12,8 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-// Output has the standard output options syft accepts: multiple -o, --file, --template
-type Output struct {
+// MultiOutput has the standard output options syft accepts: multiple -o, --file, --template
+type MultiOutput struct {
 	Outputs            []string `yaml:"output" json:"output" mapstructure:"output"` // -o, the format to use for output
 	OutputFile         `yaml:",inline" json:"" mapstructure:",squash"`
 	OutputTemplatePath string `yaml:"output-template-path" json:"output-template-path" mapstructure:"output-template-path"` // -t template file to use for output
@@ -21,15 +21,15 @@ type Output struct {
 
 var _ interface {
 	clio.FlagAdder
-} = (*Output)(nil)
+} = (*MultiOutput)(nil)
 
-func OutputDefault() Output {
-	return Output{
+func OutputDefault() MultiOutput {
+	return MultiOutput{
 		Outputs: []string{string(table.ID)},
 	}
 }
 
-func (o *Output) AddFlags(flags clio.FlagSet) {
+func (o *MultiOutput) AddFlags(flags clio.FlagSet) {
 	flags.StringArrayVarP(&o.Outputs, "output", "o",
 		fmt.Sprintf("report output format, options=%v", formats.AllIDs()))
 
@@ -37,7 +37,7 @@ func (o *Output) AddFlags(flags clio.FlagSet) {
 		"specify the path to a Go template file")
 }
 
-func (o *Output) SBOMWriter() (sbom.Writer, error) {
+func (o *MultiOutput) SBOMWriter() (sbom.Writer, error) {
 	return makeSBOMWriter(o.Outputs, o.File, o.OutputTemplatePath)
 }
 
