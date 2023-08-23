@@ -6,19 +6,19 @@ import (
 	"io"
 	"runtime/debug"
 
-	version "github.com/kastenhq/goversion/version"
+	"github.com/kastenhq/goversion/version"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
-type ExtendedBuildInfo struct {
+type extendedBuildInfo struct {
 	*debug.BuildInfo
-	cryptoSettings string
+	cryptoSettings []string
 }
 
 // scanFile scans file to try to report the Go and module versions.
-func scanFile(reader unionreader.UnionReader, filename string) ([]*ExtendedBuildInfo, []string) {
+func scanFile(reader unionreader.UnionReader, filename string) ([]*extendedBuildInfo, []string) {
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
 	readers, err := unionreader.GetReaders(reader)
@@ -27,7 +27,7 @@ func scanFile(reader unionreader.UnionReader, filename string) ([]*ExtendedBuild
 		return nil, nil
 	}
 
-	var builds []*ExtendedBuildInfo
+	var builds []*extendedBuildInfo
 	for _, r := range readers {
 		bi, err := getBuildInfo(r)
 		if err != nil {
@@ -44,7 +44,7 @@ func scanFile(reader unionreader.UnionReader, filename string) ([]*ExtendedBuild
 			continue
 		}
 
-		builds = append(builds, &ExtendedBuildInfo{bi, v})
+		builds = append(builds, &extendedBuildInfo{bi, v})
 	}
 
 	archs := getArchs(readers, builds)
@@ -52,25 +52,27 @@ func scanFile(reader unionreader.UnionReader, filename string) ([]*ExtendedBuild
 	return builds, archs
 }
 
-func getCryptoInformation(reader io.ReaderAt) (string, error) {
+func getCryptoInformation(reader io.ReaderAt) ([]string, error) {
 	v, err := version.ReadExeFromReader(reader)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	cryptoInfo := ""
-	switch {
-	case v.BoringCrypto && v.StandardCrypto:
-		cryptoInfo += "boring AND standard crypto!!!"
-	case v.BoringCrypto:
-		cryptoInfo += "boring crypto"
-	case v.StandardCrypto:
-		cryptoInfo += "standard crypto"
+	return getCryptoSettingsFromVersion(v), nil
+}
+
+func getCryptoSettingsFromVersion(v version.Version) []string {
+	cryptoSettings := []string{}
+	if v.StandardCrypto {
+		cryptoSettings = append(cryptoSettings, "standard-crypto")
+	}
+	if v.BoringCrypto {
+		cryptoSettings = append(cryptoSettings, "boring-crypto")
 	}
 	if v.FIPSOnly {
-		cryptoInfo += " +crypto/tls/fipsonly"
+		cryptoSettings = append(cryptoSettings, "crypto/tls/fipsonly")
 	}
-	return cryptoInfo, nil
+	return cryptoSettings
 }
 
 func getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, err error) {

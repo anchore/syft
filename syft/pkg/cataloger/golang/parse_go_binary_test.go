@@ -155,7 +155,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		mod      *ExtendedBuildInfo
+		mod      *extendedBuildInfo
 		arch     string
 		expected []pkg.Package
 	}{
@@ -166,7 +166,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name: "package without name",
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					Deps: []*debug.Module{
 						{
@@ -177,7 +177,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							Version: "v0.2.1",
 						},
 					},
-				}, "",
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -200,13 +200,13 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name:     "buildGoPkgInfo parses a blank mod and returns no packages",
-			mod:      &ExtendedBuildInfo{&debug.BuildInfo{}, ""},
+			mod:      &extendedBuildInfo{&debug.BuildInfo{}, nil},
 			expected: []pkg.Package(nil),
 		},
 		{
 			name: "parse a mod without main module",
 			arch: archDetails,
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					GoVersion: goCompiledVersion,
 					Settings: []debug.BuildSetting{
@@ -221,7 +221,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							Sum:     "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
 						},
 					},
-				}, "",
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -250,7 +250,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse a mod with path but no main module",
 			arch: archDetails,
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					GoVersion: goCompiledVersion,
 					Settings: []debug.BuildSetting{
@@ -259,7 +259,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						{Key: "GOAMD64", Value: "v1"},
 					},
 					Path: "github.com/a/b/c",
-				}, "boringcrypto + fips",
+				}, []string{"boringcrypto + fips"},
 			},
 			expected: []pkg.Package{
 				{
@@ -287,7 +287,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							"GOOS":    "darwin",
 						},
 						MainModule:       "github.com/a/b/c",
-						GoCryptoSettings: "boringcrypto + fips",
+						GoCryptoSettings: []string{"boringcrypto + fips"},
 					},
 				},
 			},
@@ -295,7 +295,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse a mod without packages",
 			arch: archDetails,
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					GoVersion: goCompiledVersion,
 					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
@@ -304,14 +304,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						{Key: "GOOS", Value: "darwin"},
 						{Key: "GOAMD64", Value: "v1"},
 					},
-				}, "",
+				}, nil,
 			},
 			expected: []pkg.Package{unmodifiedMain},
 		},
 		{
 			name: "parse main mod and replace devel pseudo version and ldflags exists (but contains no version)",
 			arch: archDetails,
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					GoVersion: goCompiledVersion,
 					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
@@ -323,7 +323,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
 						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X blah=foobar`},
 					},
-				}, "",
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -360,7 +360,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse main mod and replace devel version with one from ldflags with vcs. build settings",
 			arch: archDetails,
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					GoVersion: goCompiledVersion,
 					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
@@ -372,7 +372,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
 						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`},
 					},
-				}, "",
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -409,7 +409,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse main mod and replace devel version with one from ldflags without any vcs. build settings",
 			arch: archDetails,
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					GoVersion: goCompiledVersion,
 					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
@@ -419,7 +419,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						{Key: "GOAMD64", Value: "v1"},
 						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`},
 					},
-				}, "",
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -454,7 +454,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse main mod and replace devel version with one from ldflags main.version without any vcs. build settings",
 			arch: archDetails,
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					GoVersion: goCompiledVersion,
 					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
@@ -464,7 +464,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						{Key: "GOAMD64", Value: "v1"},
 						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X main.version=0.79.0`},
 					},
-				}, "",
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -499,7 +499,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse main mod and replace devel version with one from ldflags main.Version without any vcs. build settings",
 			arch: archDetails,
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					GoVersion: goCompiledVersion,
 					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
@@ -509,7 +509,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						{Key: "GOAMD64", Value: "v1"},
 						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X main.Version=0.79.0`},
 					},
-				}, "",
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -544,7 +544,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse main mod and replace devel version with a pseudo version",
 			arch: archDetails,
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					GoVersion: goCompiledVersion,
 					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
@@ -555,7 +555,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
 						{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
 					},
-				}, "",
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -591,7 +591,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse a populated mod string and returns packages but no source info",
 			arch: archDetails,
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					GoVersion: goCompiledVersion,
 					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
@@ -612,7 +612,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							Sum:     "h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=",
 						},
 					},
-				}, "",
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -665,7 +665,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse a populated mod string and returns packages when a replace directive exists",
 			arch: archDetails,
-			mod: &ExtendedBuildInfo{
+			mod: &extendedBuildInfo{
 				&debug.BuildInfo{
 					GoVersion: goCompiledVersion,
 					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
@@ -691,7 +691,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						},
 					},
-				}, "",
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
