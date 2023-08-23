@@ -103,7 +103,7 @@ func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
 	}
 
 	// check the project details
-	if looksLikeGroupID(project.GroupID) {
+	if project.GroupID != "" {
 		return cleanGroupID(project.GroupID)
 	}
 
