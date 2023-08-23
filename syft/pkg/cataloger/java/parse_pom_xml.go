@@ -110,13 +110,19 @@ func decodePomXML(content io.Reader) (project gopom.Project, err error) {
 	detection, err := detector.DetectBest(pomContents)
 
 	var inputReader io.Reader
-	if err == nil && detection != nil && detection.Charset != "UTF-8" {
-		inputReader, err = charset.NewReaderLabel(detection.Charset, bytes.NewReader(pomContents))
-		if err != nil {
-			return project, fmt.Errorf("unable to get encoding: %w", err)
+	if err == nil && detection != nil {
+		if detection.Charset == "UTF-8" {
+			inputReader = bytes.NewReader(pomContents)
+		} else {
+			inputReader, err = charset.NewReaderLabel(detection.Charset, bytes.NewReader(pomContents))
+			if err != nil {
+				return project, fmt.Errorf("unable to get encoding: %w", err)
+			}
 		}
 	} else {
-		inputReader = bytes.NewReader(pomContents)
+		// we could not detect the encoding, but we want a valid file to read. Replace unreadable
+		// characters with the UTF-8 replacement character.
+		inputReader = strings.NewReader(strings.ToValidUTF8(string(pomContents), "�"))
 	}
 
 	decoder := xml.NewDecoder(inputReader)
