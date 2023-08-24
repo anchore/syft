@@ -667,6 +667,18 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("nginx-binary"),
 			},
 		},
+		{
+			name:       "positive-bash-5.2.15",
+			fixtureDir: "test-fixtures/classifiers/positive/bash-5.2.15",
+			expected: pkg.Package{
+				Name:      "bash",
+				Version:   "5.2.15",
+				Type:      "binary",
+				PURL:      "pkg:generic/bash@5.2.15",
+				Locations: locations("bash"),
+				Metadata:  metadata("bash-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
