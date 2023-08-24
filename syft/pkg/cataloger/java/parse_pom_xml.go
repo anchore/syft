@@ -13,6 +13,7 @@ import (
 	"github.com/vifraa/gopom"
 	"golang.org/x/net/html/charset"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -60,12 +61,13 @@ func newPomProject(path string, p gopom.Project) *pkg.PomProject {
 	artifactID := safeString(p.ArtifactID)
 	name := safeString(p.Name)
 	projectURL := safeString(p.URL)
+	log.WithFields("path", path, "artifactID", artifactID, "name", name, "projectURL", projectURL).Trace("parsing pom.xml")
 	return &pkg.PomProject{
 		Path:        path,
 		Parent:      pomParent(p, p.Parent),
-		GroupID:     resolveProperty(p, p.GroupID),
+		GroupID:     resolveProperty(p, p.GroupID, "groupId"),
 		ArtifactID:  artifactID,
-		Version:     resolveProperty(p, p.Version),
+		Version:     resolveProperty(p, p.Version, "version"),
 		Name:        name,
 		Description: cleanDescription(p.Description),
 		URL:         projectURL,
@@ -75,14 +77,14 @@ func newPomProject(path string, p gopom.Project) *pkg.PomProject {
 func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...file.Location) pkg.Package {
 	m := pkg.JavaMetadata{
 		PomProperties: &pkg.PomProperties{
-			GroupID:    resolveProperty(pom, dep.GroupID),
-			ArtifactID: resolveProperty(pom, dep.ArtifactID),
-			Scope:      resolveProperty(pom, dep.Scope),
+			GroupID:    resolveProperty(pom, dep.GroupID, "groupId"),
+			ArtifactID: resolveProperty(pom, dep.ArtifactID, "artifactId"),
+			Scope:      resolveProperty(pom, dep.Scope, "scope"),
 		},
 	}
 
 	name := safeString(dep.ArtifactID)
-	version := resolveProperty(pom, dep.Version)
+	version := resolveProperty(pom, dep.Version, "version")
 
 	p := pkg.Package{
 		Name:         name,
@@ -151,9 +153,9 @@ func pomParent(pom gopom.Project, parent *gopom.Parent) (result *pkg.PomParent) 
 
 	artifactID := safeString(parent.ArtifactID)
 	result = &pkg.PomParent{
-		GroupID:    resolveProperty(pom, parent.GroupID),
+		GroupID:    resolveProperty(pom, parent.GroupID, "groupId"),
 		ArtifactID: artifactID,
-		Version:    resolveProperty(pom, parent.Version),
+		Version:    resolveProperty(pom, parent.Version, "version"),
 	}
 
 	if result.GroupID == "" && result.ArtifactID == "" && result.Version == "" {
@@ -182,8 +184,9 @@ func cleanDescription(original *string) (cleaned string) {
 // If no match is found, the entire expression including ${} is returned
 //
 //nolint:gocognit
-func resolveProperty(pom gopom.Project, property *string) string {
+func resolveProperty(pom gopom.Project, property *string, propertyName string) string {
 	propertyCase := safeString(property)
+	log.WithFields("existingPropertyValue", propertyCase, "propertyName", propertyName).Trace("resolving property")
 	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
 		propertyName := strings.TrimSpace(match[2 : len(match)-1])
 		entries := pomProperties(pom)
