@@ -69,6 +69,7 @@ require (
 	github.com/google/go-containerregistry v0.16.1
 	github.com/google/licensecheck v0.3.1
 	github.com/invopop/jsonschema v0.7.0
+	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
 	github.com/knqyf263/go-rpmdb v0.0.0-20230301153543-ba94b245509b
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/saferwall/pe v1.4.4
