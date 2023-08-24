@@ -450,7 +450,7 @@ func Test_resolveProperty(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolved := resolveProperty(test.pom, stringPointer(test.property))
+			resolved := resolveProperty(test.pom, stringPointer(test.property), test.name)
 			assert.Equal(t, test.expected, resolved)
 		})
 	}
