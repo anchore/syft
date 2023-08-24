@@ -215,6 +215,9 @@ func resolveProperty(pom gopom.Project, property *string, propertyName string) s
 						pomValue = pomValue.Field(fieldNum)
 						pomValueType = pomValue.Type()
 						if pomValueType.Kind() == reflect.Ptr {
+							if pomValue.IsNil() {
+								break
+							}
 							pomValue = pomValue.Elem()
 							if !pomValue.IsZero() {
 								pomValueType = pomValue.Type()
