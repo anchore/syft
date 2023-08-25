@@ -7,7 +7,6 @@ import (
 	"debug/pe"
 	"fmt"
 	"io"
-	"reflect"
 	"regexp"
 	"strings"
 	"text/template"
@@ -16,9 +15,9 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
-	"github.com/anchore/syft/syft/source"
 )
 
 var emptyPURL = packageurl.PackageURL{}
@@ -54,10 +53,10 @@ type classifier struct {
 }
 
 // evidenceMatcher is a function called to catalog Packages that match some sort of evidence
-type evidenceMatcher func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error)
+type evidenceMatcher func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error)
 
 func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
-	return func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error) {
+	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
 		for _, matcher := range matchers {
 			match, err := matcher(resolver, classifier, location)
 			if err != nil {
@@ -73,7 +72,7 @@ func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
 
 func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) evidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
-	return func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error) {
+	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
 		if !pat.MatchString(location.RealPath) {
 			return nil, nil
 		}
@@ -107,27 +106,39 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(tmplPattern, string(contents))
-		return singlePackage(classifier, location, matchMetadata), nil
+
+		p := newPackage(classifier, location, matchMetadata)
+		if p == nil {
+			return nil, nil
+		}
+
+		return []pkg.Package{*p}, nil
 	}
 }
 
 func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 	pat := regexp.MustCompile(pattern)
-	return func(resolver source.FileResolver, classifier classifier, location source.Location) ([]pkg.Package, error) {
+	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
 		contents, err := getContents(resolver, location)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pat, string(contents))
-		return singlePackage(classifier, location, matchMetadata), nil
+
+		p := newPackage(classifier, location, matchMetadata)
+		if p == nil {
+			return nil, nil
+		}
+
+		return []pkg.Package{*p}, nil
 	}
 }
 
 //nolint:gocognit
 func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evidenceMatcher) evidenceMatcher {
 	pat := regexp.MustCompile(sharedLibraryPattern)
-	return func(resolver source.FileResolver, classifier classifier, location source.Location) (packages []pkg.Package, _ error) {
+	return func(resolver file.Resolver, classifier classifier, location file.Location) (packages []pkg.Package, _ error) {
 		libs, err := sharedLibraries(resolver, location)
 		if err != nil {
 			return nil, err
@@ -141,14 +152,14 @@ func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evide
 			if err != nil {
 				return nil, err
 			}
-			for _, libraryLication := range locations {
-				pkgs, err := sharedLibraryMatcher(resolver, classifier, libraryLication)
+			for _, libraryLocation := range locations {
+				pkgs, err := sharedLibraryMatcher(resolver, classifier, libraryLocation)
 				if err != nil {
 					return nil, err
 				}
 				for _, p := range pkgs {
 					// set the source binary as the first location
-					locationSet := source.NewLocationSet(location)
+					locationSet := file.NewLocationSet(location)
 					locationSet.Add(p.Locations.ToSlice()...)
 					p.Locations = locationSet
 					meta, _ := p.Metadata.(pkg.BinaryMetadata)
@@ -176,59 +187,7 @@ func mustPURL(purl string) packageurl.PackageURL {
 	return p
 }
 
-func singlePackage(classifier classifier, location source.Location, matchMetadata map[string]string) []pkg.Package {
-	version, ok := matchMetadata["version"]
-	if !ok {
-		return nil
-	}
-
-	update := matchMetadata["update"]
-
-	var cpes []cpe.CPE
-	for _, c := range classifier.CPEs {
-		c.Version = version
-		c.Update = update
-		cpes = append(cpes, c)
-	}
-
-	p := pkg.Package{
-		Name:         classifier.Package,
-		Version:      version,
-		Locations:    source.NewLocationSet(location),
-		Type:         pkg.BinaryPkg,
-		CPEs:         cpes,
-		FoundBy:      catalogerName,
-		MetadataType: pkg.BinaryMetadataType,
-		Metadata: pkg.BinaryMetadata{
-			Matches: []pkg.ClassifierMatch{
-				{
-					Classifier: classifier.Class,
-					Location:   location,
-				},
-			},
-		},
-	}
-
-	if classifier.Type != "" {
-		p.Type = classifier.Type
-	}
-
-	if !reflect.DeepEqual(classifier.PURL, emptyPURL) {
-		purl := classifier.PURL
-		purl.Version = version
-		p.PURL = purl.ToString()
-	}
-
-	if classifier.Language != "" {
-		p.Language = classifier.Language
-	}
-
-	p.SetID()
-
-	return []pkg.Package{p}
-}
-
-func getContents(resolver source.FileResolver, location source.Location) ([]byte, error) {
+func getContents(resolver file.Resolver, location file.Location) ([]byte, error) {
 	reader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		return nil, err
@@ -257,7 +216,7 @@ func singleCPE(cpeString string) []cpe.CPE {
 
 // sharedLibraries returns a list of all shared libraries found within a binary, currently
 // supporting: elf, macho, and windows pe
-func sharedLibraries(resolver source.FileResolver, location source.Location) ([]string, error) {
+func sharedLibraries(resolver file.Resolver, location file.Location) ([]string, error) {
 	contents, err := getContents(resolver, location)
 	if err != nil {
 		return nil, err

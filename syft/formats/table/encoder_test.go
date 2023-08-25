@@ -9,14 +9,17 @@ import (
 	"github.com/anchore/syft/syft/formats/internal/testutils"
 )
 
-var updateTableGoldenFiles = flag.Bool("update-table", false, "update the *.golden files for table format")
+var updateSnapshot = flag.Bool("update-table", false, "update the *.golden files for table format")
 
 func TestTableEncoder(t *testing.T) {
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
-		Format(),
-		testutils.DirectoryInput(t),
-		*updateTableGoldenFiles,
-		false,
+		testutils.EncoderSnapshotTestConfig{
+			Subject:                     testutils.DirectoryInput(t, t.TempDir()),
+			Format:                      Format(),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      false,
+		},
 	)
 }
 

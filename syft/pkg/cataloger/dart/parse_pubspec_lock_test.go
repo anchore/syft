@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParsePubspecLock(t *testing.T) {
 	fixture := "test-fixtures/pubspec.lock"
-	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
+	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
 	expected := []pkg.Package{
 		{
 			Name:         "ale",
@@ -77,6 +77,19 @@ func TestParsePubspecLock(t *testing.T) {
 			Metadata: pkg.DartPubMetadata{
 				Name:    "args",
 				Version: "1.6.0",
+			},
+		},
+		{
+			Name:         "flutter",
+			Version:      "0.0.0",
+			PURL:         "pkg:pub/flutter@0.0.0",
+			Locations:    fixtureLocationSet,
+			Language:     pkg.Dart,
+			Type:         pkg.DartPubPkg,
+			MetadataType: pkg.DartPubMetadataType,
+			Metadata: pkg.DartPubMetadata{
+				Name:    "flutter",
+				Version: "0.0.0",
 			},
 		},
 		{

@@ -34,7 +34,7 @@ import (
 // CatalogPackages takes an inventory of packages from the given image from a particular perspective
 // (e.g. squashed source, all-layers source). Returns the discovered  set of packages, the identified Linux
 // distribution, and the source object used to wrap the data source.
-func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []artifact.Relationship, *linux.Release, error) {
+func CatalogPackages(src source.Source, cfg cataloger.Config) (*pkg.Collection, []artifact.Relationship, *linux.Release, error) {
 	resolver, err := src.FileResolver(cfg.Search.Scope)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to determine resolver while cataloging packages: %w", err)
@@ -54,29 +54,54 @@ func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Catalog, []
 		catalogers = cataloger.AllCatalogers(cfg)
 	} else {
 		// otherwise conditionally use the correct set of loggers based on the input type (container image or directory)
-		switch src.Metadata.Scheme {
-		case source.ImageScheme:
-			log.Info("cataloging image")
+
+		// TODO: this is bad, we should not be using the concrete type to determine the cataloger set
+		// instead this should be a caller concern (pass the catalogers you want to use). The SBOM build PR will do this.
+		switch src.(type) {
+		case *source.StereoscopeImageSource:
+			log.Info("cataloging an image")
 			catalogers = cataloger.ImageCatalogers(cfg)
-		case source.FileScheme:
-			log.Info("cataloging file")
+		case *source.FileSource:
+			log.Info("cataloging a file")
 			catalogers = cataloger.AllCatalogers(cfg)
-		case source.DirectoryScheme:
-			log.Info("cataloging directory")
+		case *source.DirectorySource:
+			log.Info("cataloging a directory")
 			catalogers = cataloger.DirectoryCatalogers(cfg)
 		default:
-			return nil, nil, nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", src.Metadata.Scheme)
+			return nil, nil, nil, fmt.Errorf("unsupported source type: %T", src)
 		}
 	}
 
 	catalog, relationships, err := cataloger.Catalog(resolver, release, cfg.Parallelism, catalogers...)
 
-	relationships = append(relationships, newSourceRelationshipsFromCatalog(src, catalog)...)
+	// apply exclusions to the package catalog
+	// default config value for this is true
+	// https://github.com/anchore/syft/issues/931
+	if cfg.ExcludeBinaryOverlapByOwnership {
+		for _, r := range relationships {
+			if cataloger.ExcludeBinaryByFileOwnershipOverlap(r, catalog) {
+				catalog.Delete(r.To.ID())
+				relationships = removeRelationshipsByID(relationships, r.To.ID())
+			}
+		}
+	}
 
+	// no need to consider source relationships for os -> binary exclusions
+	relationships = append(relationships, newSourceRelationshipsFromCatalog(src, catalog)...)
 	return catalog, relationships, release, err
 }
 
-func newSourceRelationshipsFromCatalog(src *source.Source, c *pkg.Catalog) []artifact.Relationship {
+func removeRelationshipsByID(relationships []artifact.Relationship, id artifact.ID) []artifact.Relationship {
+	var filtered []artifact.Relationship
+	for _, r := range relationships {
+		if r.To.ID() != id && r.From.ID() != id {
+			filtered = append(filtered, r)
+		}
+	}
+	return filtered
+}
+
+func newSourceRelationshipsFromCatalog(src source.Source, c *pkg.Collection) []artifact.Relationship {
 	relationships := make([]artifact.Relationship, 0) // Should we pre-allocate this by giving catalog a Len() method?
 	for p := range c.Enumerate() {
 		relationships = append(relationships, artifact.Relationship{
@@ -91,10 +116,10 @@ func newSourceRelationshipsFromCatalog(src *source.Source, c *pkg.Catalog) []art
 
 // SetLogger sets the logger object used for all syft logging calls.
 func SetLogger(logger logger.Logger) {
-	log.Log = logger
+	log.Set(logger)
 }
 
 // SetBus sets the event bus for all syft library bus publish events onto (in-library subscriptions are not allowed).
 func SetBus(b *partybus.Bus) {
-	bus.SetPublisher(b)
+	bus.Set(b)
 }

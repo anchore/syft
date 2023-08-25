@@ -3,6 +3,8 @@ package integration
 import (
 	"testing"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -14,7 +16,7 @@ func TestSqliteRpm(t *testing.T) {
 
 	expectedPkgs := 139
 	actualPkgs := 0
-	for range sbom.Artifacts.PackageCatalog.Enumerate(pkg.RpmPkg) {
+	for range sbom.Artifacts.Packages.Enumerate(pkg.RpmPkg) {
 		actualPkgs += 1
 	}
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/google/uuid"
+	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -25,7 +26,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	cdxBOM.SerialNumber = uuid.New().URN()
 	cdxBOM.Metadata = toBomDescriptor(internal.ApplicationName, s.Descriptor.Version, s.Source)
 
-	packages := s.Artifacts.PackageCatalog.Sorted()
+	packages := s.Artifacts.Packages.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
 	for i, p := range packages {
 		components[i] = encodeComponent(p)
@@ -110,7 +111,7 @@ func formatCPE(cpeString string) string {
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
-func toBomDescriptor(name, version string, srcMetadata source.Metadata) *cyclonedx.Metadata {
+func toBomDescriptor(name, version string, srcMetadata source.Description) *cyclonedx.Metadata {
 	return &cyclonedx.Metadata{
 		Timestamp: time.Now().Format(time.RFC3339),
 		Tools: &[]cyclonedx.Tool{
@@ -139,66 +140,106 @@ func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 }
 
 func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {
-	result := make([]cyclonedx.Dependency, 0)
+	dependencies := map[string]*cyclonedx.Dependency{}
 	for _, r := range relationships {
 		exists := isExpressiblePackageRelationship(r.Type)
 		if !exists {
-			log.Debugf("unable to convert relationship from CycloneDX 1.4 JSON, dropping: %+v", r)
+			log.Debugf("unable to convert relationship type to CycloneDX JSON, dropping: %#v", r)
 			continue
 		}
 
 		// we only capture package-to-package relationships for now
-		fromPkg, ok := r.From.(*pkg.Package)
+		fromPkg, ok := r.From.(pkg.Package)
 		if !ok {
+			log.Tracef("unable to convert relationship fromPkg to CycloneDX JSON, dropping: %#v", r)
 			continue
 		}
 
-		toPkg, ok := r.To.(*pkg.Package)
+		toPkg, ok := r.To.(pkg.Package)
 		if !ok {
+			log.Tracef("unable to convert relationship toPkg to CycloneDX JSON, dropping: %#v", r)
 			continue
 		}
 
-		// ind dep
+		toRef := deriveBomRef(toPkg)
+		dep := dependencies[toRef]
+		if dep == nil {
+			dep = &cyclonedx.Dependency{
+				Ref:          toRef,
+				Dependencies: &[]string{},
+			}
+			dependencies[toRef] = dep
+		}
 
-		innerDeps := []string{}
-		innerDeps = append(innerDeps, deriveBomRef(*fromPkg))
-		result = append(result, cyclonedx.Dependency{
-			Ref:          deriveBomRef(*toPkg),
-			Dependencies: &innerDeps,
-		})
+		fromRef := deriveBomRef(fromPkg)
+		if !slices.Contains(*dep.Dependencies, fromRef) {
+			*dep.Dependencies = append(*dep.Dependencies, fromRef)
+		}
 	}
+
+	result := make([]cyclonedx.Dependency, 0, len(dependencies))
+	for _, dep := range dependencies {
+		slices.Sort(*dep.Dependencies)
+		result = append(result, *dep)
+	}
+
+	slices.SortFunc(result, func(a, b cyclonedx.Dependency) bool {
+		return a.Ref < b.Ref
+	})
+
 	return result
 }
 
-func toBomDescriptorComponent(srcMetadata source.Metadata) *cyclonedx.Component {
+func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Component {
 	name := srcMetadata.Name
-	switch srcMetadata.Scheme {
-	case source.ImageScheme:
+	version := srcMetadata.Version
+	switch metadata := srcMetadata.Metadata.(type) {
+	case source.StereoscopeImageSourceMetadata:
 		if name == "" {
-			name = srcMetadata.ImageMetadata.UserInput
+			name = metadata.UserInput
 		}
-		bomRef, err := artifact.IDByHash(srcMetadata.ImageMetadata.ID)
+		if version == "" {
+			version = metadata.ManifestDigest
+		}
+		bomRef, err := artifact.IDByHash(metadata.ID)
 		if err != nil {
-			log.Warnf("unable to get fingerprint of image metadata=%s: %+v", srcMetadata.ImageMetadata.ID, err)
+			log.Warnf("unable to get fingerprint of source image metadata=%s: %+v", metadata.ID, err)
 		}
 		return &cyclonedx.Component{
 			BOMRef:  string(bomRef),
 			Type:    cyclonedx.ComponentTypeContainer,
 			Name:    name,
-			Version: srcMetadata.ImageMetadata.ManifestDigest,
+			Version: version,
 		}
-	case source.DirectoryScheme, source.FileScheme:
+	case source.DirectorySourceMetadata:
 		if name == "" {
-			name = srcMetadata.Path
+			name = metadata.Path
 		}
-		bomRef, err := artifact.IDByHash(srcMetadata.Path)
+		bomRef, err := artifact.IDByHash(metadata.Path)
 		if err != nil {
-			log.Warnf("unable to get fingerprint of source metadata path=%s: %+v", srcMetadata.Path, err)
+			log.Warnf("unable to get fingerprint of source directory metadata path=%s: %+v", metadata.Path, err)
 		}
 		return &cyclonedx.Component{
 			BOMRef: string(bomRef),
-			Type:   cyclonedx.ComponentTypeFile,
-			Name:   name,
+			// TODO: this is lossy... we can't know if this is a file or a directory
+			Type:    cyclonedx.ComponentTypeFile,
+			Name:    name,
+			Version: version,
+		}
+	case source.FileSourceMetadata:
+		if name == "" {
+			name = metadata.Path
+		}
+		bomRef, err := artifact.IDByHash(metadata.Path)
+		if err != nil {
+			log.Warnf("unable to get fingerprint of source file metadata path=%s: %+v", metadata.Path, err)
+		}
+		return &cyclonedx.Component{
+			BOMRef: string(bomRef),
+			// TODO: this is lossy... we can't know if this is a file or a directory
+			Type:    cyclonedx.ComponentTypeFile,
+			Name:    name,
+			Version: version,
 		}
 	}
 

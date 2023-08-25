@@ -16,7 +16,6 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 // integrity check
@@ -26,22 +25,27 @@ var (
 	repoRegex = regexp.MustCompile(`(?m)^https://.*\.alpinelinux\.org/alpine/v([^/]+)/([a-zA-Z0-9_]+)$`)
 )
 
+type parsedData struct {
+	License string `mapstructure:"L" json:"license"`
+	pkg.ApkMetadata
+}
+
 // parseApkDB parses packages from a given APK installed DB file. For more
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
 //nolint:funlen,gocognit
-func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseApkDB(resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
 
-	var apks []pkg.ApkMetadata
-	var currentEntry pkg.ApkMetadata
+	var apks []parsedData
+	var currentEntry parsedData
 	entryParsingInProgress := false
 	fileParsingCtx := newApkFileParsingContext()
 
 	// creating a dedicated append-like function here instead of using `append(...)`
 	// below since there is nontrivial logic to be performed for each finalized apk
 	// entry.
-	appendApk := func(p pkg.ApkMetadata) {
+	appendApk := func(p parsedData) {
 		if files := fileParsingCtx.files; len(files) >= 1 {
 			// attached accumulated files to current package
 			p.Files = files
@@ -68,7 +72,7 @@ func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader s
 			entryParsingInProgress = false
 
 			// zero-out currentEntry for use by any future entry
-			currentEntry = pkg.ApkMetadata{}
+			currentEntry = parsedData{}
 
 			continue
 		}
@@ -129,7 +133,7 @@ func parseApkDB(resolver source.FileResolver, env *generic.Environment, reader s
 	return pkgs, discoverPackageDependencies(pkgs), nil
 }
 
-func findReleases(resolver source.FileResolver, dbPath string) []linux.Release {
+func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
 	if resolver == nil {
 		return nil
 	}
@@ -152,13 +156,13 @@ func findReleases(resolver source.FileResolver, dbPath string) []linux.Release {
 		return nil
 	}
 
-	return parseReleasesFromAPKRepository(source.LocationReadCloser{
+	return parseReleasesFromAPKRepository(file.LocationReadCloser{
 		Location:   location,
 		ReadCloser: reposReader,
 	})
 }
 
-func parseReleasesFromAPKRepository(reader source.LocationReadCloser) []linux.Release {
+func parseReleasesFromAPKRepository(reader file.LocationReadCloser) []linux.Release {
 	var releases []linux.Release
 
 	reposB, err := io.ReadAll(reader)
@@ -201,7 +205,7 @@ type apkField struct {
 }
 
 //nolint:funlen
-func (f apkField) apply(p *pkg.ApkMetadata, ctx *apkFileParsingContext) {
+func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 	switch f.name {
 	// APKINDEX field parsing
 
@@ -347,7 +351,7 @@ func parseListValue(value string) []string {
 	return nil
 }
 
-func nilFieldsToEmptySlice(p *pkg.ApkMetadata) {
+func nilFieldsToEmptySlice(p *parsedData) {
 	if p.Dependencies == nil {
 		p.Dependencies = []string{}
 	}

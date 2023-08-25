@@ -47,15 +47,6 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
 	},
 	{
-		Class:    "argocd",
-		FileGlob: "**/argocd",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)common\.version=(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-		Package: "argocd",
-		PURL:    mustPURL("pkg:golang/github.com/argoproj/argo-cd@version"),
-		CPEs:    singleCPE("cpe:2.3:a:argoproj:argocd:*:*:*:*:*:*:*"),
-	},
-	{
 		Class:    "helm",
 		FileGlob: "**/helm",
 		EvidenceMatcher: fileContentsVersionMatcher(
@@ -63,24 +54,6 @@ var defaultClassifiers = []classifier{
 		Package: "helm",
 		PURL:    mustPURL("pkg:golang/helm.sh/helm@version"),
 		CPEs:    singleCPE("cpe:2.3:a:helm:helm:*:*:*:*:*:*:*"),
-	},
-	{
-		Class:    "kustomize",
-		FileGlob: "**/kustomize",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)version=kustomize/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-		Package: "kustomize",
-		PURL:    mustPURL("pkg:golang/sigs.k8s.io/kustomize@version"),
-		CPEs:    singleCPE("cpe:2.3:a:kustomize:kustomize:*:*:*:*:*:*:*"),
-	},
-	{
-		Class:    "kubectl",
-		FileGlob: "**/kubectl",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?m)\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
-		Package: "kubectl",
-		PURL:    mustPURL("pkg:golang/k8s.io/kubectl@version"),
-		CPEs:    singleCPE("cpe:2.3:a:kubectl:kubectl:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "redis-binary",
@@ -269,6 +242,46 @@ var defaultClassifiers = []classifier{
 		Package: "ruby",
 		PURL:    mustPURL("pkg:generic/ruby@version"),
 		CPEs:    singleCPE("cpe:2.3:a:ruby-lang:ruby:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "consul-binary",
+		FileGlob: "**/consul",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// NOTE: This is brittle and may not work for past or future versions
+			`CONSUL_VERSION: (?P<version>\d+\.\d+\.\d+)`,
+		),
+		Package: "consul",
+		PURL:    mustPURL("pkg:golang/github.com/hashicorp/consul@version"),
+		CPEs:    singleCPE("cpe:2.3:a:hashicorp:consul:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "nginx-binary",
+		FileGlob: "**/nginx",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// [NUL]nginx version: nginx/1.25.1 - fetches '1.25.1'
+			// [NUL]nginx version: openresty/1.21.4.1 - fetches '1.21.4' as this is the nginx version part
+			`(?m)(\x00|\?)nginx version: [^\/]+\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:\+\d+)?(?:-\d+)?)`,
+		),
+		Package: "nginx",
+		PURL:    mustPURL("pkg:generic/nginx@version"),
+		CPEs: []cpe.CPE{
+			cpe.Must("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*"),
+		},
+	},
+	{
+		Class:    "bash-binary",
+		FileGlob: "**/bash",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// @(#)Bash version 5.2.15(1) release GNU
+			// @(#)Bash version 5.2.0(1) alpha GNU
+			// @(#)Bash version 5.2.0(1) beta GNU
+			// @(#)Bash version 5.2.0(1) rc4 GNU
+			`(?m)@\(#\)Bash version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\([0-9]\) [a-z0-9]+ GNU`,
+		),
+		Package: "bash",
+		PURL:    mustPURL("pkg:generic/bash@version"),
+		CPEs:    singleCPE("cpe:2.3:a:gnu:bash:*:*:*:*:*:*:*:*"),
 	},
 }
 

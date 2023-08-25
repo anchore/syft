@@ -10,15 +10,15 @@ CHRONICLE_CMD = $(TEMP_DIR)/chronicle
 GLOW_CMD = $(TEMP_DIR)/glow
 
 # Tool versions #################################
-GOLANGCILINT_VERSION := v1.52.2
+GOLANGCILINT_VERSION := v1.54.2
 GOSIMPORTS_VERSION := v0.3.8
 BOUNCER_VERSION := v0.4.0
-CHRONICLE_VERSION := v0.6.0
-GORELEASER_VERSION := v1.17.0
+CHRONICLE_VERSION := v0.7.0
+GORELEASER_VERSION := v1.20.0
 YAJSV_VERSION := v1.4.1
-COSIGN_VERSION := v1.13.1
+COSIGN_VERSION := v2.1.1
 QUILL_VERSION := v0.2.0
-GLOW_VERSION := v1.5.0
+GLOW_VERSION := v1.5.1
 
 # Formatting variables #################################
 BOLD := $(shell tput -T linux bold)
@@ -90,7 +90,7 @@ bootstrap-tools: $(TEMP_DIR)
 	# the only difference between goimports and gosimports is that gosimports removes extra whitespace between import blocks (see https://github.com/golang/go/issues/20818)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/rinchsan/gosimports/cmd/gosimports@$(GOSIMPORTS_VERSION)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/neilpa/yajsv@$(YAJSV_VERSION)
-	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/sigstore/cosign/cmd/cosign@$(COSIGN_VERSION)
+	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/sigstore/cosign/v2/cmd/cosign@$(COSIGN_VERSION)
 	GOBIN="$(realpath $(TEMP_DIR))" go install github.com/charmbracelet/glow@$(GLOW_VERSION)
 
 .PHONY: bootstrap-go
@@ -199,7 +199,7 @@ fingerprints:
 
 	# for JAVA BUILD test fixtures
 	cd syft/pkg/cataloger/java/test-fixtures/java-builds && \
-		make packages.fingerprint
+		make cache.fingerprint
 
 	# for GO BINARY test fixtures
 	cd syft/pkg/cataloger/golang/test-fixtures/archs && \
@@ -208,6 +208,10 @@ fingerprints:
 	# for RPM test fixtures
 	cd syft/pkg/cataloger/rpm/test-fixtures && \
 		make rpms.fingerprint
+
+	# for Kernel test fixtures
+	cd syft/pkg/cataloger/kernel/test-fixtures && \
+		make cache.fingerprint
 
 	# for INSTALL integration test fixtures
 	cd test/install && \
@@ -294,22 +298,28 @@ compare-test-rpm-package-install: $(TEMP_DIR) $(SNAPSHOT_DIR)
 			$(TEMP_DIR)
 
 
-## Code generation targets #################################
+## Code and data generation targets #################################
 
 .PHONY: generate-json-schema
 generate-json-schema:  ## Generate a new json schema
-	cd schema/json && go run generate.go
+	cd syft/internal && go generate . && cd jsonschema && go run .
 
 .PHONY: generate-license-list
 generate-license-list:  ## Generate an updated spdx license list
 	go generate ./internal/spdxlicense/...
 	gofmt -s -w ./internal/spdxlicense
 
+.PHONY: generate-cpe-dictionary-index
+generate-cpe-dictionary-index:  ## Build the CPE index based off of the latest available CPE dictionary
+	$(call title,Building CPE index)
+	go generate ./syft/pkg/cataloger/common/cpe/dictionary
+
 
 ## Build-related targets #################################
 
 .PHONY: build
-build: $(SNAPSHOT_DIR)  ## Build release snapshot binaries and packages
+build:
+	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./cmd/syft
 
 $(SNAPSHOT_DIR):  ## Build snapshot release binaries and packages
 	$(call title,Building snapshot artifacts)

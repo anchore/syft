@@ -2,15 +2,24 @@
  "graph_lock": {
   "nodes": {
    "0": {
-    "ref": "zlib/1.2.12",
-    "options": "fPIC=True\nshared=False",
-    "requires": [],
-    "path": "all/conanfile.py",
+    "ref": "spdlog/1.11.0",
+    "options": "fPIC=True\nheader_only=False\nno_exceptions=False\nshared=False\nwchar_filenames=False\nwchar_support=False\nfmt:fPIC=True\nfmt:header_only=False\nfmt:shared=False\nfmt:with_fmt_alias=False\nfmt:with_os_api=True",
+    "requires": [
+     "1"
+    ],
+    "path": "conanfile.py",
+    "context": "host"
+   },
+   "1": {
+    "ref": "fmt/9.1.0@my_user/my_channel#6708c9d84f98d56a6d9f2e6c2d5639ba",
+    "options": "fPIC=True\nheader_only=False\nshared=False\nwith_fmt_alias=False\nwith_os_api=True",
+    "package_id": "2c09c8f84c016041549fcee94e4caae5d89424b6",
+    "prev": "9f5ab13fc7c73e4a9f87e4e213f2cfa4",
     "context": "host"
    }
   },
-  "revisions_enabled": false
+  "revisions_enabled": true
  },
  "version": "0.4",
- "profile_host": "[settings]\narch=x86_64\narch_build=x86_64\nbuild_type=Release\ncompiler=gcc\ncompiler.libcxx=libstdc++\ncompiler.version=9\nos=Linux\nos_build=Linux\n[options]\n[build_requires]\n[env]\n"
+ "profile_host": "[settings]\narch=x86_64\narch.march=None\narch_build=x86_64\nbuild_type=Release\ncompiler=gcc\ncompiler.libcxx=libstdc++11\ncompiler.version=11\nos=Linux\nos_build=Linux\n[options]\n[build_requires]\n[env]\n"
 }

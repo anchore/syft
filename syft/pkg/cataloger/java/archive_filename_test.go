@@ -173,6 +173,13 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			name:      "jboss-saaj-api_1.4_spec",
 			ty:        pkg.JavaPkg,
 		},
+		{
+			filename:  "/usr/share/java/gradle/lib/gradle-build-cache-8.1.1.jar",
+			version:   "8.1.1",
+			extension: "jar",
+			name:      "gradle-build-cache",
+			ty:        pkg.JavaPkg,
+		},
 	}
 
 	for _, test := range tests {

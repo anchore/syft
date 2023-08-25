@@ -45,13 +45,15 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Java (jar, ear, war, par, sar, nar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
+- Linux kernel archives (vmlinz)
+- Linux kernel modules (ko)
 - Nix (outputs in /nix/store)
 - PHP (composer)
 - Python (wheel, egg, poetry, requirements.txt)
 - Red Hat (rpm)
 - Ruby (gem)
 - Rust (cargo.lock)
-- Swift (cocoapods)
+- Swift (cocoapods, swift-package-manager)
 
 ## Installation
 
@@ -74,6 +76,12 @@ The chocolatey distribution of syft is community maintained and not distributed 
 
 ```powershell
 choco install syft -y
+```
+
+### Scoop
+
+```powershell
+scoop install syft
 ```
 
 ### Homebrew
@@ -148,41 +156,62 @@ This default behavior can be overridden with the `default-image-pull-source` con
 
 ### Default Cataloger Configuration by scan type
 
+Syft uses different default sets of catalogers depending on what it is scanning: a container image or a directory on disk. The default catalogers for an image scan assumes that package installation steps have already been completed. For example, Syft will identify Python packages that have egg or wheel metadata files under a site-packages directory, since this indicates software actually installed on an image.
+
+However, if you are scanning a directory, Syft doesn't assume that all relevant software is installed, and will use catalogers that can identify declared dependencies that may not yet be installed on the final system: for example, dependencies listed in a Python requirements.txt.
+
+You can override the list of enabled/disabled catalogers by using the "catalogers" keyword in the [Syft configuration file](https://github.com/anchore/syft#configuration).
+
 ##### Image Scanning:
 - alpmdb
-- rpmdb
-- dpkgdb
 - apkdb
-- portage
-- ruby-gemspec
-- python-package
-- php-composer-installed Cataloger
-- javascript-package
-- java
-- go-module-binary
+- binary
 - dotnet-deps
+- dpkgdb
+- go-module-binary
+- graalvm-native-image
+- java
+- javascript-package
+- linux-kernel
+- nix-store
+- php-composer-installed
+- portage
+- python-package
+- rpm-db
+- ruby-gemspec
+- sbom
 
 ##### Directory Scanning:
 - alpmdb
 - apkdb
-- dpkgdb
-- portage
-- rpmdb
-- ruby-gemfile
-- python-index
-- python-package
-- php-composer-lock
-- javascript-lock
-- java
-- java-pom
-- go-module-binary
-- go-mod-file
-- rust-cargo-lock
-- dartlang-lock
-- dotnet-deps
+- binary
 - cocoapods
 - conan
-- hackage
+- dartlang-lock
+- dotnet-deps
+- dpkgdb
+- elixir-mix-lock
+- erlang-rebar-lock
+- go-mod-file
+- go-module-binary
+- graalvm-native-image
+- haskell
+- java
+- java-gradle-lockfile
+- java-pom
+- javascript-lock
+- linux-kernel
+- nix-store
+- php-composer-lock
+- portage
+- python-index
+- python-package
+- rpm-db
+- rpm-file
+- ruby-gemfile
+- rust-cargo-lock
+- sbom
+- swift-package-manager
 
 ##### Non Default:
 - cargo-auditable-binary
@@ -258,6 +287,8 @@ Which would produce output like:
 ```
 
 Syft also includes a vast array of utility templating functions from [sprig](http://masterminds.github.io/sprig/) apart from the default Golang [text/template](https://pkg.go.dev/text/template#hdr-Functions) to allow users to customize the output format.
+
+Lastly, Syft has custom templating functions defined in `./syft/format/template/encoder.go` to help parse the passed-in JSON structs.
 
 ## Multiple outputs
 
@@ -451,6 +482,10 @@ default-image-pull-source: ""
 #   - "./out/**/*.json"
 exclude: []
 
+# allows users to exclude synthetic binary packages from the sbom
+# these packages are removed if an overlap with a non-synthetic package is found
+exclude-binary-overlap-by-ownership: true
+
 # os and/or architecture to use when referencing container images (e.g. "windows/armv6" or "arm64")
 # same as --platform; SYFT_PLATFORM env var
 platform: ""
@@ -458,26 +493,40 @@ platform: ""
 # set the list of package catalogers to use when generating the SBOM
 # default = empty (cataloger set determined automatically by the source type [image or file/directory])
 # catalogers:
-#   - ruby-gemfile
-#   - ruby-gemspec
-#   - python-index
-#   - python-package
-#   - javascript-lock
-#   - javascript-package
-#   - php-composer-installed
-#   - php-composer-lock
-#   - alpmdb
-#   - dpkgdb
-#   - rpmdb
-#   - java
-#   - apkdb
-#   - go-module-binary
-#   - go-mod-file
-#   - dartlang-lock
-#   - rust
-#   - dotnet-deps
-# rust-audit-binary scans Rust binaries built with https://github.com/Shnatsel/rust-audit
-#   - rust-audit-binary
+#   - alpmdb-cataloger
+#   - apkdb-cataloger
+#   - binary-cataloger
+#   - cargo-auditable-binary-cataloger
+#   - cocoapods-cataloger
+#   - conan-cataloger
+#   - dartlang-lock-cataloger
+#   - dotnet-deps-cataloger
+#   - dpkgdb-cataloger
+#   - elixir-mix-lock-cataloger
+#   - erlang-rebar-lock-cataloger
+#   - go-mod-file-cataloger
+#   - go-module-binary-cataloger
+#   - graalvm-native-image-cataloger
+#   - haskell-cataloger
+#   - java-cataloger
+#   - java-gradle-lockfile-cataloger
+#   - java-pom-cataloger
+#   - javascript-lock-cataloger
+#   - javascript-package-cataloger
+#   - linux-kernel-cataloger
+#   - nix-store-cataloger
+#   - php-composer-installed-cataloger
+#   - php-composer-lock-cataloger
+#   - portage-cataloger
+#   - python-index-cataloger
+#   - python-package-cataloger
+#   - rpm-db-cataloger
+#   - rpm-file-cataloger
+#   - ruby-gemfile-cataloger
+#   - ruby-gemspec-cataloger
+#   - rust-cargo-lock-cataloger
+#   - sbom-cataloger
+#   - spm-cataloger
 catalogers:
 
 # cataloging packages is exposed through the packages and power-user subcommands
@@ -513,6 +562,32 @@ golang:
    # SYFT_GOLANG_LOCAL_MOD_CACHE_DIR env var
    local-mod-cache-dir: ""
 
+   # search for go package licences by retrieving the package from a network proxy
+   # SYFT_GOLANG_SEARCH_REMOTE_LICENSES env var
+   search-remote-licenses: false
+
+   # remote proxy to use when retrieving go packages from the network,
+   # if unset this defaults to $GOPROXY followed by https://proxy.golang.org
+   # SYFT_GOLANG_PROXY env var
+   proxy: ""
+
+   # specifies packages which should not be fetched by proxy
+   # if unset this defaults to $GONOPROXY
+   # SYFT_GOLANG_NOPROXY env var
+   no-proxy: ""
+
+linux-kernel:
+   # whether to catalog linux kernel modules found within lib/modules/** directories
+   # SYFT_LINUX_KERNEL_CATALOG_MODULES env var
+   catalog-modules: true
+
+python:
+   # when running across entries in requirements.txt that do not specify a specific version 
+   # (e.g. "sqlalchemy >= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0"), attempt to guess what the version could
+   # be based on the version requirements specified (e.g. "1.0.0"). When enabled the lowest expressible version 
+   # when given an arbitrary constraint will be used (even if that version may not be available/published).
+   guess-unpinned-requirements: false
+
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:
   cataloger:
@@ -543,7 +618,7 @@ file-metadata:
     # SYFT_FILE_METADATA_CATALOGER_SCOPE env var
     scope: "squashed"
 
-  # the file digest algorithms to use when cataloging files (options: "sha256", "md5", "sha1")
+  # the file digest algorithms to use when cataloging files (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
   # SYFT_FILE_METADATA_DIGESTS env var
   digests: ["sha256"]
 
@@ -581,11 +656,27 @@ secrets:
   # SYFT_SECRETS_EXCLUDE_PATTERN_NAMES env var
   exclude-pattern-names: []
 
+# options that apply to all scan sources
+source:
+  # alias name for the source
+  # SYFT_SOURCE_NAME env var; --source-name flag
+  name: ""
+   
+  # alias version for the source
+  # SYFT_SOURCE_VERSION env var; --source-version flag
+  version: ""
+   
+  # options affecting the file source type
+  file:
+    # the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
+    digests: ["sha256"]
+
 # options when pulling directly from a registry via the "registry:" scheme
 registry:
   # skip TLS verification when communicating with the registry
   # SYFT_REGISTRY_INSECURE_SKIP_TLS_VERIFY env var
   insecure-skip-tls-verify: false
+
   # use http instead of https when connecting to the registry
   # SYFT_REGISTRY_INSECURE_USE_HTTP env var
   insecure-use-http: false

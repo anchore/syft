@@ -16,10 +16,16 @@ func Test_DBCataloger_Globs(t *testing.T) {
 			name:    "obtain DB files",
 			fixture: "test-fixtures/glob-paths",
 			expected: []string{
+				"usr/share/rpm/Packages",
+				"usr/share/rpm/Packages.db",
+				"usr/share/rpm/rpmdb.sqlite",
 				"var/lib/rpm/Packages",
 				"var/lib/rpm/Packages.db",
 				"var/lib/rpm/rpmdb.sqlite",
 				"var/lib/rpmmanifest/container-manifest-2",
+				"usr/lib/sysimage/rpm/Packages",
+				"usr/lib/sysimage/rpm/Packages.db",
+				"usr/lib/sysimage/rpm/rpmdb.sqlite",
 			},
 		},
 	}

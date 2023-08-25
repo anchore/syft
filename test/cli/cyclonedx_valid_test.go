@@ -44,19 +44,13 @@ func TestValidCycloneDX(t *testing.T) {
 			args := []string{
 				test.subcommand, fixtureRef, "-q",
 			}
-			for _, a := range test.args {
-				args = append(args, a)
-			}
+			args = append(args, test.args...)
 
 			cmd, stdout, stderr := runSyft(t, nil, args...)
 			for _, traitFn := range test.assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}
-			if t.Failed() {
-				t.Log("STDOUT:\n", stdout)
-				t.Log("STDERR:\n", stderr)
-				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
-			}
+			logOutputOnFailure(t, cmd, stdout, stderr)
 
 			validateCycloneDXJSON(t, stdout)
 		})
@@ -95,11 +89,7 @@ func assertValidCycloneDX(tb testing.TB, stdout, stderr string, rc int) {
 		tb.Errorf("expected no validation failures for cyclonedx-cli but got rc=%d", rc)
 	}
 
-	if tb.Failed() {
-		tb.Log("STDOUT:\n", stdout)
-		tb.Log("STDERR:\n", stderr)
-		tb.Log("COMMAND:", strings.Join(cmd.Args, " "))
-	}
+	logOutputOnFailure(tb, cmd, stdout, stderr)
 }
 
 // validate --input-format json --input-version v1_4 --input-file bom.json
@@ -134,9 +124,5 @@ func validateCycloneDXJSON(t *testing.T, stdout string) {
 		t.Errorf("expected no validation failures for cyclonedx-cli but found invalid BOM")
 	}
 
-	if t.Failed() {
-		t.Log("STDOUT:\n", stdout)
-		t.Log("STDERR:\n", stderr)
-		t.Log("COMMAND:", strings.Join(cmd.Args, " "))
-	}
+	logOutputOnFailure(t, cmd, stdout, stderr)
 }

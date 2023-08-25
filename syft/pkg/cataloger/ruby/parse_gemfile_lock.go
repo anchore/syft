@@ -6,17 +6,17 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseGemFileLockEntries
 
-var sectionsOfInterest = internal.NewStringSet("GEM")
+var sectionsOfInterest = internal.NewStringSet("GEM", "GIT", "PATH", "PLUGIN SOURCE")
 
 // parseGemFileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
-func parseGemFileLockEntries(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGemFileLockEntries(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	scanner := bufio.NewScanner(reader)
 
@@ -44,7 +44,7 @@ func parseGemFileLockEntries(_ source.FileResolver, _ *generic.Environment, read
 				newGemfileLockPackage(
 					candidate[0],
 					strings.Trim(candidate[1], "()"),
-					reader.Location,
+					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
 			)
 		}

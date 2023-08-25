@@ -7,6 +7,25 @@ In order to test and develop in this repo you will need the following dependenci
 - docker
 - make
 
+### Docker settings for getting started
+Make sure you've updated your docker settings so the default docker socket path is available.
+
+Go to:
+
+docker -> settings -> advanced
+
+Make sure:
+
+```
+Allow the default Docker socket to be used
+```
+
+is checked.
+
+Also double check that the docker context being used is the default context. If it is not, run:
+
+`docker context use default`
+
 After cloning the following step can help you get setup:
 1. run `make bootstrap` to download go mod dependencies, create the `/.tmp` dir, and download helper utilities.
 2. run `make` to view the selection of developer commands in the Makefile
@@ -18,6 +37,26 @@ After cloning the following step can help you get setup:
 The main make tasks for common static analysis and testing are `lint`, `format`, `lint-fix`, `unit`, `integration`, and `cli`.
 
 See `make help` for all the current make tasks.
+
+### Internal Artifactory Settings
+
+**Not always applicable**
+
+Some companies have Artifactory setup internally as a solution for sourcing secure dependencies.
+If you're seeing an issue where the unit tests won't run because of the below error then this section might be relevant for your use case.
+
+```
+[ERROR] [ERROR] Some problems were encountered while processing the POMs
+```
+
+If you're dealing with an issue where the unit tests will not pull/build certain java fixtures check some of these settings:
+
+- a `settings.xml` file should be available to help you communicate with your internal artifactory deployment
+- this can be moved to `syft/pkg/cataloger/java/test-fixtures/java-builds/example-jenkins-plugin/` to help build the unit test-fixtures
+- you'll also want to modify the `build-example-jenkins-plugin.sh` to use `settings.xml`
+
+For more information on this setup and troubleshooting see [issue 1895](https://github.com/anchore/syft/issues/1895#issuecomment-1610085319)
+
 
 ## Architecture
 
@@ -167,12 +206,12 @@ always feel free to file an issue or reach out to us [on slack](https://anchore.
 
 #### Searching for files
 
-All catalogers are provided an instance of the [`source.FileResolver`](https://github.com/anchore/syft/blob/v0.70.0/syft/source/file_resolver.go#L8) to interface with the image and search for files. The implementations for these 
+All catalogers are provided an instance of the [`file.Resolver`](https://github.com/anchore/syft/blob/v0.70.0/syft/source/file_resolver.go#L8) to interface with the image and search for files. The implementations for these 
 abstractions leverage [`stereoscope`](https://github.com/anchore/stereoscope) in order to perform searching. Here is a 
 rough outline how that works:
 
-1. a stereoscope `file.Index` is searched based on the input given (a path, glob, or MIME type). The index is relatively fast to search, but requires results to be filtered down to the files that exist in the specific layer(s) of interest. This is done automatically by the `filetree.Searcher` abstraction. This abstraction will fallback to searching directly against the raw `filetree.FileTree` if the index does not contain the file(s) of interest. Note: the `filetree.Searcher` is used by the `source.FileResolver` abstraction.
-2. Once the set of files are returned from the `filetree.Searcher` the results are filtered down further to return the most unique file results. For example, you may have requested for files by a glob that returns multiple results. These results are filtered down to deduplicate by real files, so if a result contains two references to the same file, say one accessed via symlink and one accessed via the real path, then the real path reference is returned and the symlink reference is filtered out. If both were accessed by symlink then the first (by lexical order) is returned. This is done automatically by the `source.FileResolver` abstraction.
+1. a stereoscope `file.Index` is searched based on the input given (a path, glob, or MIME type). The index is relatively fast to search, but requires results to be filtered down to the files that exist in the specific layer(s) of interest. This is done automatically by the `filetree.Searcher` abstraction. This abstraction will fallback to searching directly against the raw `filetree.FileTree` if the index does not contain the file(s) of interest. Note: the `filetree.Searcher` is used by the `file.Resolver` abstraction.
+2. Once the set of files are returned from the `filetree.Searcher` the results are filtered down further to return the most unique file results. For example, you may have requested for files by a glob that returns multiple results. These results are filtered down to deduplicate by real files, so if a result contains two references to the same file, say one accessed via symlink and one accessed via the real path, then the real path reference is returned and the symlink reference is filtered out. If both were accessed by symlink then the first (by lexical order) is returned. This is done automatically by the `file.Resolver` abstraction.
 3. By the time results reach the `pkg.Cataloger` you are guaranteed to have a set of unique files that exist in the layer(s) of interest (relative to what the resolver supports).
 
 ## Testing
