@@ -188,7 +188,7 @@ func resolveProperty(pom gopom.Project, property *string, propertyName string) s
 	propertyCase := safeString(property)
 	log.WithFields("existingPropertyValue", propertyCase, "propertyName", propertyName).Trace("resolving property")
 	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
-		propertyName := strings.TrimSpace(match[2 : len(match)-1])
+		propertyName := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
 		entries := pomProperties(pom)
 		if value, ok := entries[propertyName]; ok {
 			return value
@@ -210,16 +210,26 @@ func resolveProperty(pom gopom.Project, property *string, propertyName string) s
 				for fieldNum := 0; fieldNum < pomValueType.NumField(); fieldNum++ {
 					f := pomValueType.Field(fieldNum)
 					tag := f.Tag.Get("xml")
-					tag = strings.TrimSuffix(tag, ",omitempty")
+					tag = strings.Split(tag, ",")[0]
+					// a segment of the property name matches the xml tag for the field,
+					// so we need to recurse down the nested structs or return a match
+					// if we're done.
 					if part == tag {
 						pomValue = pomValue.Field(fieldNum)
 						pomValueType = pomValue.Type()
 						if pomValueType.Kind() == reflect.Ptr {
+							// we were recursing down the nested structs, but one of the steps
+							// we need to take is a nil pointer, so give up and return the original match
+							if pomValue.IsNil() {
+								return match
+							}
 							pomValue = pomValue.Elem()
 							if !pomValue.IsZero() {
+								// we found a non-zero value whose tag matches this part of the property name
 								pomValueType = pomValue.Type()
 							}
 						}
+						// If this was the last part of the property name, return the value
 						if partNum == numParts-1 {
 							return fmt.Sprintf("%v", pomValue.Interface())
 						}
