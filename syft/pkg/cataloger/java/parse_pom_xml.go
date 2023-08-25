@@ -210,7 +210,7 @@ func resolveProperty(pom gopom.Project, property *string, propertyName string) s
 				for fieldNum := 0; fieldNum < pomValueType.NumField(); fieldNum++ {
 					f := pomValueType.Field(fieldNum)
 					tag := f.Tag.Get("xml")
-					tag = strings.TrimSuffix(tag, ",omitempty")
+					tag = strings.Split(tag, ",")[0]
 					// a segment of the property name matches the xml tag for the field,
 					// so we need to recurse down the nested structs or return a match
 					// if we're done.
