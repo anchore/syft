@@ -1,6 +1,7 @@
 package cyclonedxhelpers
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -43,28 +44,34 @@ func Test_relationships(t *testing.T) {
 	p1 := pkg.Package{
 		Name: "p1",
 	}
-	p1.SetID()
 
 	p2 := pkg.Package{
 		Name: "p2",
 	}
-	p2.SetID()
 
 	p3 := pkg.Package{
 		Name: "p3",
 	}
-	p3.SetID()
+
+	p4 := pkg.Package{
+		Name: "p4",
+	}
+
+	for _, p := range []*pkg.Package{&p1, &p2, &p3, &p4} {
+		p.PURL = fmt.Sprintf("pkg:generic/%s@%s", p.Name, p.Name)
+		p.SetID()
+	}
 
 	tests := []struct {
 		name     string
 		sbom     sbom.SBOM
-		expected []string
+		expected *[]cyclonedx.Dependency
 	}{
 		{
 			name: "package dependencyOf relationships output as dependencies",
 			sbom: sbom.SBOM{
 				Artifacts: sbom.Artifacts{
-					Packages: pkg.NewCollection(p1, p2, p3),
+					Packages: pkg.NewCollection(p1, p2, p3, p4),
 				},
 				Relationships: []artifact.Relationship{
 					{
@@ -77,9 +84,28 @@ func Test_relationships(t *testing.T) {
 						To:   p1,
 						Type: artifact.DependencyOfRelationship,
 					},
+					{
+						From: p4,
+						To:   p2,
+						Type: artifact.DependencyOfRelationship,
+					},
 				},
 			},
-			expected: []string{p2.Name, p3.Name},
+			expected: &[]cyclonedx.Dependency{
+				{
+					Ref: deriveBomRef(p1),
+					Dependencies: &[]string{
+						deriveBomRef(p2),
+						deriveBomRef(p3),
+					},
+				},
+				{
+					Ref: deriveBomRef(p2),
+					Dependencies: &[]string{
+						deriveBomRef(p4),
+					},
+				},
+			},
 		},
 		{
 			name: "package contains relationships not output",
@@ -108,28 +134,7 @@ func Test_relationships(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			cdx := ToFormatModel(test.sbom)
 			got := cdx.Dependencies
-
-			var deps []string
-			if got != nil {
-				for _, r := range *got {
-					for _, d := range *r.Dependencies {
-						c := findComponent(cdx, d)
-						require.NotNil(t, c)
-						deps = append(deps, c.Name)
-					}
-
-				}
-			}
-			require.Equal(t, test.expected, deps)
+			require.Equal(t, test.expected, got)
 		})
 	}
-}
-
-func findComponent(cdx *cyclonedx.BOM, bomRef string) *cyclonedx.Component {
-	for _, c := range *cdx.Components {
-		if c.BOMRef == bomRef {
-			return &c
-		}
-	}
-	return nil
 }

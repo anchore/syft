@@ -5,6 +5,7 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/google/uuid"
+	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -139,7 +140,7 @@ func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 }
 
 func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {
-	result := make([]cyclonedx.Dependency, 0)
+	dependencies := map[string]*cyclonedx.Dependency{}
 	for _, r := range relationships {
 		exists := isExpressiblePackageRelationship(r.Type)
 		if !exists {
@@ -160,15 +161,32 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 			continue
 		}
 
-		// ind dep
+		toRef := deriveBomRef(toPkg)
+		dep := dependencies[toRef]
+		if dep == nil {
+			dep = &cyclonedx.Dependency{
+				Ref:          toRef,
+				Dependencies: &[]string{},
+			}
+			dependencies[toRef] = dep
+		}
 
-		innerDeps := []string{}
-		innerDeps = append(innerDeps, deriveBomRef(fromPkg))
-		result = append(result, cyclonedx.Dependency{
-			Ref:          deriveBomRef(toPkg),
-			Dependencies: &innerDeps,
-		})
+		fromRef := deriveBomRef(fromPkg)
+		if !slices.Contains(*dep.Dependencies, fromRef) {
+			*dep.Dependencies = append(*dep.Dependencies, fromRef)
+		}
 	}
+
+	result := make([]cyclonedx.Dependency, 0, len(dependencies))
+	for _, dep := range dependencies {
+		slices.Sort(*dep.Dependencies)
+		result = append(result, *dep)
+	}
+
+	slices.SortFunc(result, func(a, b cyclonedx.Dependency) bool {
+		return a.Ref < b.Ref
+	})
+
 	return result
 }
 
