@@ -681,6 +681,18 @@ registry:
   # SYFT_REGISTRY_INSECURE_USE_HTTP env var
   insecure-use-http: false
 
+  # filepath to a CA certificate used to generate the client certificate
+  # SYFT_REGISTRY_CA_CERT env var
+  ca-cert: ""
+
+  # filepath to the client certificate used for TLS authentication to the registry
+  # SYFT_REGISTRY_TLS_CERT env var
+  tls-cert: ""
+
+  # filepath to the client key used for TLS authentication to the registry
+  # SYFT_REGISTRY_TLS_KEY env var
+  tls-key: ""
+
   # credentials for specific registries
   auth:
       # the URL to the registry (e.g. "docker.io", "localhost:5000", etc.)
