@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  GO_VERSION: "1.20.x"
+  GO_VERSION: "1.21.x"
   GO_STABLE_VERSION: true
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
           COSIGN_LATEST_VERSION=$(go list -m -json github.com/sigstore/cosign/v2@latest 2>/dev/null | jq -r '.Version')
           QUILL_LATEST_VERSION=$(go list -m -json github.com/anchore/quill@latest 2>/dev/null | jq -r '.Version')
           GLOW_LATEST_VERSION=$(go list -m -json github.com/charmbracelet/glow@latest 2>/dev/null | jq -r '.Version')
-          
+
           # update version variables in the Makefile
           sed -r -i -e 's/^(GOLANGCILINT_VERSION := ).*/\1'${GOLANGCILINT_LATEST_VERSION}'/' Makefile
           sed -r -i -e 's/^(BOUNCER_VERSION := ).*/\1'${BOUNCER_LATEST_VERSION}'/' Makefile
@@ -42,7 +42,7 @@ jobs:
           sed -r -i -e 's/^(COSIGN_VERSION := ).*/\1'${COSIGN_LATEST_VERSION}'/' Makefile
           sed -r -i -e 's/^(QUILL_VERSION := ).*/\1'${QUILL_LATEST_VERSION}'/' Makefile
           sed -r -i -e 's/^(GLOW_VERSION := ).*/\1'${GLOW_LATEST_VERSION}'/' Makefile
-          
+
           # export the versions for use with create-pull-request
           echo "GOLANGCILINT=$GOLANGCILINT_LATEST_VERSION" >> $GITHUB_OUTPUT
           echo "BOUNCER=$BOUNCER_LATEST_VERSION" >> $GITHUB_OUTPUT
@@ -76,8 +76,8 @@ jobs:
             - [goreleaser ${{ steps.latest-versions.outputs.GORELEASER }}](https://github.com/goreleaser/goreleaser/releases/tag/${{ steps.latest-versions.outputs.GORELEASER }})
             - [gosimports ${{ steps.latest-versions.outputs.GOSIMPORTS }}](https://github.com/rinchsan/gosimports/releases/tag/${{ steps.latest-versions.outputs.GOSIMPORTS }})
             - [yajsv ${{ steps.latest-versions.outputs.YAJSV }}](https://github.com/neilpa/yajsv/releases/tag/${{ steps.latest-versions.outputs.YAJSV }})
-            - [cosign ${{ steps.latest-versions.outputs.COSIGN }}](https://github.com/sigstore/cosign/releases/tag/${{ steps.latest-versions.outputs.COSIGN }})  
-            - [quill ${{ steps.latest-versions.outputs.QUILL }}](https://github.com/anchore/quill/releases/tag/${{ steps.latest-versions.outputs.QUILL }})  
-            - [glow ${{ steps.latest-versions.outputs.GLOW }}](https://github.com/charmbracelet/glow/releases/tag/${{ steps.latest-versions.outputs.GLOW }})  
+            - [cosign ${{ steps.latest-versions.outputs.COSIGN }}](https://github.com/sigstore/cosign/releases/tag/${{ steps.latest-versions.outputs.COSIGN }})
+            - [quill ${{ steps.latest-versions.outputs.QUILL }}](https://github.com/anchore/quill/releases/tag/${{ steps.latest-versions.outputs.QUILL }})
+            - [glow ${{ steps.latest-versions.outputs.GLOW }}](https://github.com/charmbracelet/glow/releases/tag/${{ steps.latest-versions.outputs.GLOW }})
             This is an auto-generated pull request to update all of the bootstrap tools to the latest versions.
           token: ${{ steps.generate-token.outputs.token }}
