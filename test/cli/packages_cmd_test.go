@@ -258,7 +258,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 func TestRegistryAuth(t *testing.T) {
 	host := "localhost:17"
 	image := fmt.Sprintf("%s/something:latest", host)
-	args := []string{"packages", "-vv", fmt.Sprintf("registry:%s", image)}
+	args := []string{"packages", "-vvv", fmt.Sprintf("registry:%s", image)}
 
 	tests := []struct {
 		name       string
@@ -272,7 +272,7 @@ func TestRegistryAuth(t *testing.T) {
 			assertions: []traitAssertion{
 				assertInOutput("source=OciRegistry"),
 				assertInOutput(image),
-				assertInOutput("no registry credentials configured, using the default keychain"),
+				assertInOutput(fmt.Sprintf("no registry credentials configured for %q, using the default keychain", host)),
 			},
 		},
 		{
@@ -311,7 +311,7 @@ func TestRegistryAuth(t *testing.T) {
 			assertions: []traitAssertion{
 				assertInOutput("source=OciRegistry"),
 				assertInOutput(image),
-				assertInOutput(`no registry credentials configured, using the default keychain`),
+				assertInOutput(fmt.Sprintf(`no registry credentials configured for %q, using the default keychain`, host)),
 			},
 		},
 		{
@@ -322,6 +322,17 @@ func TestRegistryAuth(t *testing.T) {
 			},
 			assertions: []traitAssertion{
 				assertInOutput("insecure-use-http: true"),
+			},
+		},
+		{
+			name: "use tls configuration",
+			args: args,
+			env: map[string]string{
+				"SYFT_REGISTRY_AUTH_TLS_CERT": "place.crt",
+				"SYFT_REGISTRY_AUTH_TLS_KEY":  "place.key",
+			},
+			assertions: []traitAssertion{
+				assertInOutput("using custom TLS credentials from"),
 			},
 		},
 	}
