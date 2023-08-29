@@ -5,12 +5,12 @@ import (
 )
 
 type fileClassification struct {
-	Cataloger Cataloger `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
+	Cataloger scope `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
 }
 
 func defaultFileClassification() fileClassification {
 	return fileClassification{
-		Cataloger: Cataloger{
+		Cataloger: scope{
 			Scope: source.SquashedScope.String(),
 		},
 	}

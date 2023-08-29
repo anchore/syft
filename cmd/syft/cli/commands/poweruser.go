@@ -26,21 +26,22 @@ const powerUserExample = `  {{.appName}} {{.command}} <image>
 `
 
 type powerUserOptions struct {
+	options.Config      `yaml:",inline" mapstructure:",squash"`
 	options.OutputFile  `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
-	options.Cataloging  `yaml:",inline" mapstructure:",squash"`
+	options.Catalog     `yaml:",inline" mapstructure:",squash"`
 }
 
 func PowerUser(app clio.Application) *cobra.Command {
 	id := app.ID()
 
-	pkgs := options.DefaultCataloging()
+	pkgs := options.DefaultCatalog()
 	pkgs.Secrets.Cataloger.Enabled = true
 	pkgs.FileMetadata.Cataloger.Enabled = true
 	pkgs.FileContents.Cataloger.Enabled = true
 	pkgs.FileClassification.Cataloger.Enabled = true
 	opts := &powerUserOptions{
-		Cataloging: pkgs,
+		Catalog: pkgs,
 	}
 
 	return app.SetupCommand(&cobra.Command{
@@ -71,7 +72,7 @@ func runPowerUser(id clio.Identification, opts *powerUserOptions, userInput stri
 		fmt.Fprintln(os.Stderr, deprecated)
 	}()
 
-	tasks, err := eventloop.Tasks(&opts.Cataloging)
+	tasks, err := eventloop.Tasks(&opts.Catalog)
 	if err != nil {
 		return err
 	}

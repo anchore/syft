@@ -19,7 +19,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type Cataloging struct {
+type Catalog struct {
 	Catalogers                      []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
 	Package                         pkg                `yaml:"package" json:"package" mapstructure:"package"`
 	Golang                          golang             `yaml:"golang" json:"golang" mapstructure:"golang"`
@@ -43,10 +43,10 @@ type Cataloging struct {
 var _ interface {
 	clio.FlagAdder
 	clio.PostLoader
-} = (*Cataloging)(nil)
+} = (*Catalog)(nil)
 
-func DefaultCataloging() Cataloging {
-	return Cataloging{
+func DefaultCatalog() Catalog {
+	return Catalog{
 		Package:                         defaultPkg(),
 		LinuxKernel:                     defaultLinuxKernel(),
 		FileMetadata:                    defaultFileMetadata(),
@@ -59,7 +59,7 @@ func DefaultCataloging() Cataloging {
 	}
 }
 
-func (cfg *Cataloging) AddFlags(flags clio.FlagSet) {
+func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 	var validScopeValues []string
 	for _, scope := range source.AllScopes {
 		validScopeValues = append(validScopeValues, strcase.ToDelimited(string(scope), '-'))
@@ -94,7 +94,7 @@ func (cfg *Cataloging) AddFlags(flags clio.FlagSet) {
 		"base directory for scanning, no links will be followed above this directory, and all paths will be reported relative to this directory")
 }
 
-func (cfg *Cataloging) PostLoad() error {
+func (cfg *Catalog) PostLoad() error {
 	// parse options on this struct
 	var catalogers []string
 	for _, c := range cfg.Catalogers {
@@ -119,7 +119,7 @@ func (cfg *Cataloging) PostLoad() error {
 	return nil
 }
 
-func (cfg Cataloging) ToCatalogerConfig() cataloger.Config {
+func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 	return cataloger.Config{
 		Search: cataloger.SearchConfig{
 			IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,

@@ -37,9 +37,10 @@ const (
 )
 
 type attestOptions struct {
+	options.Config       `yaml:",inline" mapstructure:",squash"`
 	options.SingleOutput `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck  `yaml:",inline" mapstructure:",squash"`
-	options.Cataloging   `yaml:",inline" mapstructure:",squash"`
+	options.Catalog      `yaml:",inline" mapstructure:",squash"`
 	options.Attest       `yaml:",inline" mapstructure:",squash"`
 }
 
@@ -61,7 +62,7 @@ func Attest(app clio.Application) *cobra.Command {
 			AllowableOptions: allowableOutputs,
 			Output:           syftjson.ID.String(),
 		},
-		Cataloging: options.DefaultCataloging(),
+		Catalog: options.DefaultCatalog(),
 	}
 
 	return app.SetupCommand(&cobra.Command{
@@ -89,7 +90,7 @@ func runAttest(id clio.Identification, opts *attestOptions, userInput string) er
 		return fmt.Errorf("'syft attest' requires cosign to be installed: %w", err)
 	}
 
-	s, err := buildSBOM(id, &opts.Cataloging, userInput)
+	s, err := buildSBOM(id, &opts.Catalog, userInput)
 	if err != nil {
 		return fmt.Errorf("unable to build SBOM: %w", err)
 	}
@@ -189,7 +190,7 @@ func runAttest(id clio.Identification, opts *attestOptions, userInput string) er
 	return nil
 }
 
-func buildSBOM(id clio.Identification, opts *options.Cataloging, userInput string) (*sbom.SBOM, error) {
+func buildSBOM(id clio.Identification, opts *options.Catalog, userInput string) (*sbom.SBOM, error) {
 	cfg := source.DetectConfig{
 		DefaultImageSource: opts.DefaultImagePullSource,
 	}

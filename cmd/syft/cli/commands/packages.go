@@ -54,16 +54,17 @@ const (
 )
 
 type packagesOptions struct {
+	options.Config      `yaml:",inline" mapstructure:",squash"`
 	options.MultiOutput `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
-	options.Cataloging  `yaml:",inline" mapstructure:",squash"`
+	options.Catalog     `yaml:",inline" mapstructure:",squash"`
 }
 
 func defaultPackagesOptions() *packagesOptions {
 	return &packagesOptions{
 		MultiOutput: options.DefaultOutput(),
 		UpdateCheck: options.DefaultUpdateCheck(),
-		Cataloging:  options.DefaultCataloging(),
+		Catalog:     options.DefaultCatalog(),
 	}
 }
 
@@ -169,7 +170,7 @@ func runPackages(id clio.Identification, opts *packagesOptions, userInput string
 		}
 	}()
 
-	s, err := generateSBOM(id, src, &opts.Cataloging)
+	s, err := generateSBOM(id, src, &opts.Catalog)
 	if err != nil {
 		return err
 	}
@@ -185,7 +186,7 @@ func runPackages(id clio.Identification, opts *packagesOptions, userInput string
 	return nil
 }
 
-func generateSBOM(id clio.Identification, src source.Source, opts *options.Cataloging) (*sbom.SBOM, error) {
+func generateSBOM(id clio.Identification, src source.Source, opts *options.Catalog) (*sbom.SBOM, error) {
 	tasks, err := eventloop.Tasks(opts)
 	if err != nil {
 		return nil, err

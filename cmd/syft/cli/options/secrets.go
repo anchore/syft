@@ -6,7 +6,7 @@ import (
 )
 
 type secrets struct {
-	Cataloger           Cataloger         `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
+	Cataloger           scope             `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
 	AdditionalPatterns  map[string]string `yaml:"additional-patterns" json:"additional-patterns" mapstructure:"additional-patterns"`
 	ExcludePatternNames []string          `yaml:"exclude-pattern-names" json:"exclude-pattern-names" mapstructure:"exclude-pattern-names"`
 	RevealValues        bool              `yaml:"reveal-values" json:"reveal-values" mapstructure:"reveal-values"`
@@ -15,7 +15,7 @@ type secrets struct {
 
 func defaultSecrets() secrets {
 	return secrets{
-		Cataloger: Cataloger{
+		Cataloger: scope{
 			Scope: source.AllLayersScope.String(),
 		},
 		SkipFilesAboveSize: 1 * file.MB,
