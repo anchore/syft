@@ -15,10 +15,10 @@ import (
 
 type Task func(*sbom.Artifacts, source.Source) ([]artifact.Relationship, error)
 
-func Tasks(opts *options.Packages) ([]Task, error) {
+func Tasks(opts *options.Cataloging) ([]Task, error) {
 	var tasks []Task
 
-	generators := []func(opts *options.Packages) (Task, error){
+	generators := []func(opts *options.Cataloging) (Task, error){
 		generateCatalogPackagesTask,
 		generateCatalogFileMetadataTask,
 		generateCatalogFileDigestsTask,
@@ -40,7 +40,7 @@ func Tasks(opts *options.Packages) ([]Task, error) {
 	return tasks, nil
 }
 
-func generateCatalogPackagesTask(opts *options.Packages) (Task, error) {
+func generateCatalogPackagesTask(opts *options.Cataloging) (Task, error) {
 	if !opts.Package.Cataloger.Enabled {
 		return nil, nil
 	}
@@ -57,7 +57,7 @@ func generateCatalogPackagesTask(opts *options.Packages) (Task, error) {
 	return task, nil
 }
 
-func generateCatalogFileMetadataTask(opts *options.Packages) (Task, error) {
+func generateCatalogFileMetadataTask(opts *options.Cataloging) (Task, error) {
 	if !opts.FileMetadata.Cataloger.Enabled {
 		return nil, nil
 	}
@@ -81,7 +81,7 @@ func generateCatalogFileMetadataTask(opts *options.Packages) (Task, error) {
 	return task, nil
 }
 
-func generateCatalogFileDigestsTask(opts *options.Packages) (Task, error) {
+func generateCatalogFileDigestsTask(opts *options.Cataloging) (Task, error) {
 	if !opts.FileMetadata.Cataloger.Enabled {
 		return nil, nil
 	}
@@ -110,7 +110,7 @@ func generateCatalogFileDigestsTask(opts *options.Packages) (Task, error) {
 	return task, nil
 }
 
-func generateCatalogSecretsTask(opts *options.Packages) (Task, error) {
+func generateCatalogSecretsTask(opts *options.Cataloging) (Task, error) {
 	if !opts.Secrets.Cataloger.Enabled {
 		return nil, nil
 	}
@@ -142,7 +142,7 @@ func generateCatalogSecretsTask(opts *options.Packages) (Task, error) {
 	return task, nil
 }
 
-func generateCatalogContentsTask(opts *options.Packages) (Task, error) {
+func generateCatalogContentsTask(opts *options.Cataloging) (Task, error) {
 	if !opts.FileContents.Cataloger.Enabled {
 		return nil, nil
 	}

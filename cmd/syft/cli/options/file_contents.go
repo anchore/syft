@@ -6,14 +6,14 @@ import (
 )
 
 type fileContents struct {
-	Cataloger          catalogerOptions `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
-	SkipFilesAboveSize int64            `yaml:"skip-files-above-size" json:"skip-files-above-size" mapstructure:"skip-files-above-size"`
-	Globs              []string         `yaml:"globs" json:"globs" mapstructure:"globs"`
+	Cataloger          Cataloger `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
+	SkipFilesAboveSize int64     `yaml:"skip-files-above-size" json:"skip-files-above-size" mapstructure:"skip-files-above-size"`
+	Globs              []string  `yaml:"globs" json:"globs" mapstructure:"globs"`
 }
 
-func fileContentsDefault() fileContents {
+func defaultFileContents() fileContents {
 	return fileContents{
-		Cataloger: catalogerOptions{
+		Cataloger: Cataloger{
 			Scope: source.SquashedScope.String(),
 		},
 		SkipFilesAboveSize: 1 * file.MB,

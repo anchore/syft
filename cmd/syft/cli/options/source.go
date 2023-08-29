@@ -10,7 +10,7 @@ type fileSource struct {
 	Digests []string `json:"digests" yaml:"digests" mapstructure:"digests"`
 }
 
-func sourceCfgDefault() sourceCfg {
+func defaultSourceCfg() sourceCfg {
 	return sourceCfg{
 		File: fileSource{
 			Digests: []string{"sha256"},

@@ -5,13 +5,13 @@ import (
 )
 
 type fileMetadata struct {
-	Cataloger catalogerOptions `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
-	Digests   []string         `yaml:"digests" json:"digests" mapstructure:"digests"`
+	Cataloger Cataloger `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
+	Digests   []string  `yaml:"digests" json:"digests" mapstructure:"digests"`
 }
 
-func fileMetadataDefault() fileMetadata {
+func defaultFileMetadata() fileMetadata {
 	return fileMetadata{
-		Cataloger: catalogerOptions{
+		Cataloger: Cataloger{
 			Scope: source.SquashedScope.String(),
 		},
 		Digests: []string{"sha256"},

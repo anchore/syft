@@ -9,7 +9,9 @@ import (
 )
 
 func Root(app clio.Application, packagesCmd *cobra.Command) *cobra.Command {
-	opts := packagesOptionsDefault()
+	id := app.ID()
+
+	opts := defaultPackagesOptions()
 
 	return app.SetupRootCommand(&cobra.Command{
 		Use:     fmt.Sprintf("%s [SOURCE]", app.ID().Name),
@@ -17,9 +19,9 @@ func Root(app clio.Application, packagesCmd *cobra.Command) *cobra.Command {
 		Long:    packagesCmd.Long,
 		Args:    packagesCmd.Args,
 		Example: packagesCmd.Example,
-		PreRunE: applicationUpdateCheck(app, &opts.UpdateCheck),
+		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runPackages(app, opts, args[0])
+			return runPackages(id, opts, args[0])
 		},
 	}, opts)
 }

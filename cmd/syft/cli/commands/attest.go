@@ -39,11 +39,13 @@ const (
 type attestOptions struct {
 	options.SingleOutput `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck  `yaml:",inline" mapstructure:",squash"`
-	options.Packages     `yaml:",inline" mapstructure:",squash"`
+	options.Cataloging   `yaml:",inline" mapstructure:",squash"`
 	options.Attest       `yaml:",inline" mapstructure:",squash"`
 }
 
 func Attest(app clio.Application) *cobra.Command {
+	id := app.ID()
+
 	var allowableOutputs []string
 	for _, f := range formats.AllIDs() {
 		switch f {
@@ -54,12 +56,12 @@ func Attest(app clio.Application) *cobra.Command {
 	}
 
 	opts := &attestOptions{
-		UpdateCheck: options.UpdateCheckDefault(),
+		UpdateCheck: options.DefaultUpdateCheck(),
 		SingleOutput: options.SingleOutput{
 			AllowableOptions: allowableOutputs,
 			Output:           syftjson.ID.String(),
 		},
-		Packages: options.PackagesDefault(),
+		Cataloging: options.DefaultCataloging(),
 	}
 
 	return app.SetupCommand(&cobra.Command{
@@ -67,19 +69,19 @@ func Attest(app clio.Application) *cobra.Command {
 		Short: "Generate an SBOM as an attestation for the given [SOURCE] container image",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from a container image as the predicate of an in-toto attestation that will be uploaded to the image registry",
 		Example: internal.Tprintf(attestHelp, map[string]interface{}{
-			"appName": app.ID().Name,
+			"appName": id.Name,
 			"command": "attest",
 		}),
 		Args:    validatePackagesArgs,
-		PreRunE: applicationUpdateCheck(app, &opts.UpdateCheck),
+		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runAttest(app, opts, args[0])
+			return runAttest(id, opts, args[0])
 		},
 	}, opts)
 }
 
 //nolint:funlen
-func runAttest(app clio.Application, opts *attestOptions, userInput string) error {
+func runAttest(id clio.Identification, opts *attestOptions, userInput string) error {
 	_, err := exec.LookPath("cosign")
 	if err != nil {
 		// when cosign is not installed the error will be rendered like so:
@@ -87,7 +89,7 @@ func runAttest(app clio.Application, opts *attestOptions, userInput string) erro
 		return fmt.Errorf("'syft attest' requires cosign to be installed: %w", err)
 	}
 
-	s, err := buildSBOM(app, &opts.Packages, userInput)
+	s, err := buildSBOM(id, &opts.Cataloging, userInput)
 	if err != nil {
 		return fmt.Errorf("unable to build SBOM: %w", err)
 	}
@@ -187,7 +189,7 @@ func runAttest(app clio.Application, opts *attestOptions, userInput string) erro
 	return nil
 }
 
-func buildSBOM(app clio.Application, opts *options.Packages, userInput string) (*sbom.SBOM, error) {
+func buildSBOM(id clio.Identification, opts *options.Cataloging, userInput string) (*sbom.SBOM, error) {
 	cfg := source.DetectConfig{
 		DefaultImageSource: opts.DefaultImagePullSource,
 	}
@@ -237,7 +239,7 @@ func buildSBOM(app clio.Application, opts *options.Packages, userInput string) (
 		return nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
 	}
 
-	s, err := generateSBOM(app, src, opts)
+	s, err := generateSBOM(id, src, opts)
 	if err != nil {
 		return nil, err
 	}

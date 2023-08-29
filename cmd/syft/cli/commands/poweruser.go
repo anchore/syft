@@ -28,37 +28,39 @@ const powerUserExample = `  {{.appName}} {{.command}} <image>
 type powerUserOptions struct {
 	options.OutputFile  `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
-	options.Packages    `yaml:",inline" mapstructure:",squash"`
+	options.Cataloging  `yaml:",inline" mapstructure:",squash"`
 }
 
 func PowerUser(app clio.Application) *cobra.Command {
-	pkgs := options.PackagesDefault()
+	id := app.ID()
+
+	pkgs := options.DefaultCataloging()
 	pkgs.Secrets.Cataloger.Enabled = true
 	pkgs.FileMetadata.Cataloger.Enabled = true
 	pkgs.FileContents.Cataloger.Enabled = true
 	pkgs.FileClassification.Cataloger.Enabled = true
 	opts := &powerUserOptions{
-		Packages: pkgs,
+		Cataloging: pkgs,
 	}
 
 	return app.SetupCommand(&cobra.Command{
 		Use:   "power-user [IMAGE]",
 		Short: "Run bulk operations on container images",
 		Example: internal.Tprintf(powerUserExample, map[string]interface{}{
-			"appName": app.ID().Name,
+			"appName": id.Name,
 			"command": "power-user",
 		}),
 		Args:    validatePackagesArgs,
 		Hidden:  true,
-		PreRunE: applicationUpdateCheck(app, &opts.UpdateCheck),
+		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runPowerUser(app, opts, args[0])
+			return runPowerUser(id, opts, args[0])
 		},
 	}, opts)
 }
 
 //nolint:funlen
-func runPowerUser(app clio.Application, opts *powerUserOptions, userInput string) error {
+func runPowerUser(id clio.Identification, opts *powerUserOptions, userInput string) error {
 	writer, err := opts.SBOMWriter(syftjson.Format())
 	if err != nil {
 		return err
@@ -69,7 +71,7 @@ func runPowerUser(app clio.Application, opts *powerUserOptions, userInput string
 		fmt.Fprintln(os.Stderr, deprecated)
 	}()
 
-	tasks, err := eventloop.Tasks(&opts.Packages)
+	tasks, err := eventloop.Tasks(&opts.Cataloging)
 	if err != nil {
 		return err
 	}
@@ -119,8 +121,8 @@ func runPowerUser(app clio.Application, opts *powerUserOptions, userInput string
 	s := sbom.SBOM{
 		Source: src.Describe(),
 		Descriptor: sbom.Descriptor{
-			Name:          app.ID().Name,
-			Version:       app.ID().Version,
+			Name:          id.Name,
+			Version:       id.Version,
 			Configuration: opts,
 		},
 	}

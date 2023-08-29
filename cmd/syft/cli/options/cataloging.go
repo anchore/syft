@@ -19,7 +19,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type Packages struct {
+type Cataloging struct {
 	Catalogers                      []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
 	Package                         pkg                `yaml:"package" json:"package" mapstructure:"package"`
 	Golang                          golang             `yaml:"golang" json:"golang" mapstructure:"golang"`
@@ -43,23 +43,23 @@ type Packages struct {
 var _ interface {
 	clio.FlagAdder
 	clio.PostLoader
-} = (*Packages)(nil)
+} = (*Cataloging)(nil)
 
-func PackagesDefault() Packages {
-	return Packages{
-		Package:                         pkgDefault(),
-		LinuxKernel:                     linuxKernelDefault(),
-		FileMetadata:                    fileMetadataDefault(),
-		FileClassification:              fileClassificationDefault(),
-		FileContents:                    fileContentsDefault(),
-		Secrets:                         secretsDefault(),
-		Source:                          sourceCfgDefault(),
+func DefaultCataloging() Cataloging {
+	return Cataloging{
+		Package:                         defaultPkg(),
+		LinuxKernel:                     defaultLinuxKernel(),
+		FileMetadata:                    defaultFileMetadata(),
+		FileClassification:              defaultFileClassification(),
+		FileContents:                    defaultFileContents(),
+		Secrets:                         defaultSecrets(),
+		Source:                          defaultSourceCfg(),
 		Parallelism:                     1,
 		ExcludeBinaryOverlapByOwnership: true,
 	}
 }
 
-func (cfg *Packages) AddFlags(flags clio.FlagSet) {
+func (cfg *Cataloging) AddFlags(flags clio.FlagSet) {
 	var validScopeValues []string
 	for _, scope := range source.AllScopes {
 		validScopeValues = append(validScopeValues, strcase.ToDelimited(string(scope), '-'))
@@ -94,7 +94,7 @@ func (cfg *Packages) AddFlags(flags clio.FlagSet) {
 		"base directory for scanning, no links will be followed above this directory, and all paths will be reported relative to this directory")
 }
 
-func (cfg *Packages) PostLoad() error {
+func (cfg *Cataloging) PostLoad() error {
 	// parse options on this struct
 	var catalogers []string
 	for _, c := range cfg.Catalogers {
@@ -119,7 +119,7 @@ func (cfg *Packages) PostLoad() error {
 	return nil
 }
 
-func (cfg Packages) ToCatalogerConfig() cataloger.Config {
+func (cfg Cataloging) ToCatalogerConfig() cataloger.Config {
 	return cataloger.Config{
 		Search: cataloger.SearchConfig{
 			IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,

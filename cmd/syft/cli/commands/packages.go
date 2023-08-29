@@ -56,33 +56,35 @@ const (
 type packagesOptions struct {
 	options.MultiOutput `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
-	options.Packages    `yaml:",inline" mapstructure:",squash"`
+	options.Cataloging  `yaml:",inline" mapstructure:",squash"`
 }
 
-func packagesOptionsDefault() *packagesOptions {
+func defaultPackagesOptions() *packagesOptions {
 	return &packagesOptions{
-		MultiOutput: options.OutputDefault(),
-		UpdateCheck: options.UpdateCheckDefault(),
-		Packages:    options.PackagesDefault(),
+		MultiOutput: options.DefaultOutput(),
+		UpdateCheck: options.DefaultUpdateCheck(),
+		Cataloging:  options.DefaultCataloging(),
 	}
 }
 
 //nolint:dupl
 func Packages(app clio.Application) *cobra.Command {
-	opts := packagesOptionsDefault()
+	id := app.ID()
+
+	opts := defaultPackagesOptions()
 
 	return app.SetupCommand(&cobra.Command{
 		Use:   "packages [SOURCE]",
 		Short: "Generate a package SBOM",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container images and filesystems",
 		Example: internal.Tprintf(packagesHelp, map[string]interface{}{
-			"appName": app.ID().Name,
+			"appName": id.Name,
 			"command": "packages",
 		}),
 		Args:    validatePackagesArgs,
-		PreRunE: applicationUpdateCheck(app, &opts.UpdateCheck),
+		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runPackages(app, opts, args[0])
+			return runPackages(id, opts, args[0])
 		},
 	}, opts)
 }
@@ -104,7 +106,7 @@ func validateArgs(cmd *cobra.Command, args []string, error string) error {
 }
 
 // nolint:funlen
-func runPackages(app clio.Application, opts *packagesOptions, userInput string) error {
+func runPackages(id clio.Identification, opts *packagesOptions, userInput string) error {
 	err := validatePackageOutputOptions(&opts.MultiOutput)
 	if err != nil {
 		return err
@@ -167,7 +169,7 @@ func runPackages(app clio.Application, opts *packagesOptions, userInput string) 
 		}
 	}()
 
-	s, err := generateSBOM(app, src, &opts.Packages)
+	s, err := generateSBOM(id, src, &opts.Cataloging)
 	if err != nil {
 		return err
 	}
@@ -183,7 +185,7 @@ func runPackages(app clio.Application, opts *packagesOptions, userInput string) 
 	return nil
 }
 
-func generateSBOM(app clio.Application, src source.Source, opts *options.Packages) (*sbom.SBOM, error) {
+func generateSBOM(id clio.Identification, src source.Source, opts *options.Cataloging) (*sbom.SBOM, error) {
 	tasks, err := eventloop.Tasks(opts)
 	if err != nil {
 		return nil, err
@@ -192,8 +194,8 @@ func generateSBOM(app clio.Application, src source.Source, opts *options.Package
 	s := sbom.SBOM{
 		Source: src.Describe(),
 		Descriptor: sbom.Descriptor{
-			Name:          app.ID().Name,
-			Version:       app.ID().Version,
+			Name:          id.Name,
+			Version:       id.Version,
 			Configuration: opts,
 		},
 	}

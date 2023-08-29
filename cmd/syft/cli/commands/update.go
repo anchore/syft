@@ -27,12 +27,10 @@ var latestAppVersionURL = struct {
 	path: "/syft/releases/latest/VERSION",
 }
 
-func applicationUpdateCheck(app clio.Application, check *options.UpdateCheck) func(cmd *cobra.Command, args []string) error {
+func applicationUpdateCheck(id clio.Identification, check *options.UpdateCheck) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if check.CheckForAppUpdate {
-			go func() {
-				checkForApplicationUpdate(app.ID())
-			}()
+			checkForApplicationUpdate(id)
 		}
 		return nil
 	}

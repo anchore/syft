@@ -5,17 +5,17 @@ import (
 )
 
 type pkg struct {
-	Cataloger               catalogerOptions `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
-	SearchUnindexedArchives bool             `yaml:"search-unindexed-archives" json:"search-unindexed-archives" mapstructure:"search-unindexed-archives"`
-	SearchIndexedArchives   bool             `yaml:"search-indexed-archives" json:"search-indexed-archives" mapstructure:"search-indexed-archives"`
+	Cataloger               Cataloger `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
+	SearchUnindexedArchives bool      `yaml:"search-unindexed-archives" json:"search-unindexed-archives" mapstructure:"search-unindexed-archives"`
+	SearchIndexedArchives   bool      `yaml:"search-indexed-archives" json:"search-indexed-archives" mapstructure:"search-indexed-archives"`
 }
 
-func pkgDefault() pkg {
+func defaultPkg() pkg {
 	c := cataloger.DefaultSearchConfig()
 	return pkg{
 		SearchIndexedArchives:   c.IncludeIndexedArchives,
 		SearchUnindexedArchives: c.IncludeUnindexedArchives,
-		Cataloger: catalogerOptions{
+		Cataloger: Cataloger{
 			Enabled: true,
 			Scope:   c.Scope.String(),
 		},

@@ -23,7 +23,7 @@ var _ interface {
 	clio.FlagAdder
 } = (*MultiOutput)(nil)
 
-func OutputDefault() MultiOutput {
+func DefaultOutput() MultiOutput {
 	return MultiOutput{
 		Outputs: []string{string(table.ID)},
 	}

@@ -7,14 +7,14 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-type catalogerOptions struct {
+type Cataloger struct {
 	Enabled bool   `yaml:"enabled" json:"enabled" mapstructure:"enabled"`
 	Scope   string `yaml:"scope" json:"scope" mapstructure:"scope"`
 }
 
-var _ clio.PostLoader = (*catalogerOptions)(nil)
+var _ clio.PostLoader = (*Cataloger)(nil)
 
-func (opt *catalogerOptions) PostLoad() error {
+func (opt *Cataloger) PostLoad() error {
 	s := opt.GetScope()
 	if s == source.UnknownScope {
 		return fmt.Errorf("bad scope value %v", opt.Scope)
@@ -22,6 +22,6 @@ func (opt *catalogerOptions) PostLoad() error {
 	return nil
 }
 
-func (opt catalogerOptions) GetScope() source.Scope {
+func (opt Cataloger) GetScope() source.Scope {
 	return source.ParseScope(opt.Scope)
 }

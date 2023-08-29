@@ -28,8 +28,10 @@ type ConvertOptions struct {
 
 //nolint:dupl
 func Convert(app clio.Application) *cobra.Command {
+	id := app.ID()
+
 	opts := &ConvertOptions{
-		UpdateCheck: options.UpdateCheckDefault(),
+		UpdateCheck: options.DefaultUpdateCheck(),
 	}
 
 	return app.SetupCommand(&cobra.Command{
@@ -37,11 +39,11 @@ func Convert(app clio.Application) *cobra.Command {
 		Short: "Convert between SBOM formats",
 		Long:  "[Experimental] Convert SBOM files to, and from, SPDX, CycloneDX and Syft's format. For more info about data loss between formats see https://github.com/anchore/syft#format-conversion-experimental",
 		Example: internal.Tprintf(convertExample, map[string]interface{}{
-			"appName": app.ID().Name,
+			"appName": id.Name,
 			"command": "convert",
 		}),
 		Args:    validateConvertArgs,
-		PreRunE: applicationUpdateCheck(app, &opts.UpdateCheck),
+		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RunConvert(opts, args[0])
 		},
