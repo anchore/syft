@@ -14,8 +14,8 @@ type RegistryCredentials struct {
 	Password secret `yaml:"password" json:"password" mapstructure:"password"`
 	Token    secret `yaml:"token" json:"token" mapstructure:"token"`
 
-	TLSCert secret `yaml:"tls-cert,omitempty" json:"tls-cert,omitempty" mapstructure:"tls-cert"`
-	TLSKey  secret `yaml:"tls-key,omitempty" json:"tls-key,omitempty" mapstructure:"tls-key"`
+	TLSCert string `yaml:"tls-cert,omitempty" json:"tls-cert,omitempty" mapstructure:"tls-cert"`
+	TLSKey  string `yaml:"tls-key,omitempty" json:"tls-key,omitempty" mapstructure:"tls-key"`
 }
 
 type registry struct {
@@ -47,8 +47,8 @@ func (cfg *registry) PostLoad() error {
 				Username:  secret(username),
 				Password:  secret(password),
 				Token:     secret(token),
-				TLSCert:   secret(tlsCert),
-				TLSKey:    secret(tlsKey),
+				TLSCert:   tlsCert,
+				TLSKey:    tlsKey,
 			},
 		}, cfg.Auth...)
 	}
@@ -70,8 +70,8 @@ func (cfg *registry) ToOptions() *image.RegistryOptions {
 			Username:   a.Username.String(),
 			Password:   a.Password.String(),
 			Token:      a.Token.String(),
-			ClientCert: a.TLSCert.String(),
-			ClientKey:  a.TLSKey.String(),
+			ClientCert: a.TLSCert,
+			ClientKey:  a.TLSKey,
 		}
 	}
 
