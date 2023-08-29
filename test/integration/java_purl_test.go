@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestJavaPURLs(t *testing.T) {
@@ -36,6 +37,7 @@ func TestJavaPURLs(t *testing.T) {
 {{ range .Artifacts}}"{{.Name}}@{{.Version}}":"{{.PURL}}",
 {{ end }}
 */
+// The map was then hand-edited for correctness by comparing to Maven Central.
 var expectedPURLs = map[string]string{
 	"TwilioNotifier@0.2.1":                            "pkg:maven/com.twilio.jenkins/TwilioNotifier@0.2.1",
 	"access-modifier-annotation@1.0":                  "pkg:maven/org.kohsuke/access-modifier-annotation@1.0",
