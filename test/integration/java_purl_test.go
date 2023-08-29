@@ -4,19 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger"
-	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestJavaPURLs(t *testing.T) {
-	testImage := "anchore/test_images:java-56d52bc"
-	sbom := getCatalog(t, testImage)
+	sbom, _ := catalogFixtureImage(t, "image-test-java-purls", source.SquashedScope, nil)
 	found := make(map[string]string)
 	for _, p := range sbom.Artifacts.Packages.Sorted() {
 		if p.Type != pkg.JavaPkg && p.Type != pkg.JenkinsPluginPkg {
@@ -33,23 +27,6 @@ func TestJavaPURLs(t *testing.T) {
 		expectedPURL := expectedPURLs[key]
 		assert.Equal(t, expectedPURL, foundPURL, fmt.Sprintf("found extra purl for %s want %s, got %s", key, expectedPURL, foundPURL))
 	}
-}
-
-func getCatalog(t *testing.T, image string) sbom.SBOM {
-	detection, err := source.Detect(image, source.DefaultDetectConfig())
-	require.NoError(t, err)
-	theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
-	packages, relationships, distro, error := syft.CatalogPackages(theSource, cataloger.DefaultConfig())
-	require.NoError(t, error)
-	sbom := sbom.SBOM{
-		Artifacts: sbom.Artifacts{
-			Packages:          packages,
-			LinuxDistribution: distro,
-		},
-		Relationships: relationships,
-		Source:        theSource.Describe(),
-	}
-	return sbom
 }
 
 // Constructed by:
