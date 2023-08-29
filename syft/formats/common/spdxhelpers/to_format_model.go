@@ -44,7 +44,7 @@ const (
 //
 //nolint:funlen
 func ToFormatModel(s sbom.SBOM) *spdx.Document {
-	name, namespace := DocumentNameAndNamespace(s.Source)
+	name, namespace := DocumentNameAndNamespace(s.Source, s.Descriptor)
 
 	packages := toPackages(s.Artifacts.Packages, s)
 
