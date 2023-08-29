@@ -3,22 +3,48 @@ module github.com/anchore/syft
 go 1.19
 
 require (
+	github.com/CycloneDX/cyclonedx-go v0.7.1
+	github.com/Masterminds/semver v1.5.0
+	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/adrg/xdg v0.4.0
+	github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461
+	github.com/anchore/clio v0.0.0-20230602170917-e747e60c4aa0
+	github.com/anchore/go-logger v0.0.0-20230531193951-db5ae83e7dbe
 	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.1.1-0.20230104203445-02e0a6721501
+	github.com/anchore/stereoscope v0.0.0-20230829142608-334c2222e137
+	// we are hinting brotli to latest due to warning when installing archiver v3:
+	// go: warning: github.com/andybalholm/brotli@v1.0.1: retracted by module author: occasional panics and data corruption
+	github.com/andybalholm/brotli v1.0.4 // indirect
+	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
 	github.com/bmatcuk/doublestar/v4 v4.6.0
+	github.com/charmbracelet/bubbletea v0.24.2
+	github.com/charmbracelet/lipgloss v0.8.0
+	github.com/dave/jennifer v1.7.0
+	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
+	github.com/docker/distribution v2.8.2+incompatible
+	github.com/docker/docker v24.0.5+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/facebookincubator/nvdtools v0.1.5
+	github.com/github/go-spdx/v2 v2.1.2
+	github.com/gkampitakis/go-snaps v0.4.7
+	github.com/go-git/go-billy/v5 v5.4.1
+	github.com/go-git/go-git/v5 v5.8.1
 	github.com/go-test/deep v1.1.0
 	github.com/google/go-cmp v0.5.9
+	github.com/google/go-containerregistry v0.16.1
+	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.3.1
 	github.com/gookit/color v1.5.4
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/invopop/jsonschema v0.7.0
 	github.com/jinzhu/copier v0.4.0
+	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
+	github.com/knqyf263/go-rpmdb v0.0.0-20230301153543-ba94b245509b
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/microsoft/go-rustaudit v0.0.0-20220730194248-4b17361d90a5
@@ -26,7 +52,12 @@ require (
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/opencontainers/go-digest v1.0.0
 	github.com/pelletier/go-toml v1.9.5
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/saferwall/pe v1.4.4
+	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
+	github.com/sassoftware/go-rpmutils v0.2.0
 	// pinned to pull in 386 arch fix: https://github.com/scylladb/go-set/commit/cc7b2070d91ebf40d233207b633e28f5bd8f03a5
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sergi/go-diff v1.3.1
@@ -37,47 +68,18 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
+	github.com/vbatts/go-mtree v0.5.3
 	github.com/vifraa/gopom v1.0.0
 	github.com/wagoodman/go-partybus v0.0.0-20230516145632-8ccac152c651
 	github.com/wagoodman/go-progress v0.0.0-20230301185719-21920a456ad5
 	github.com/xeipuuv/gojsonschema v1.2.0
+	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1
+	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/exp v0.0.0-20230202163644-54bba9f4231b
 	golang.org/x/mod v0.12.0
 	golang.org/x/net v0.14.0
 	golang.org/x/term v0.11.0
 	gopkg.in/yaml.v2 v2.4.0
-)
-
-require (
-	github.com/CycloneDX/cyclonedx-go v0.7.1
-	github.com/Masterminds/semver v1.5.0
-	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461
-	github.com/anchore/clio v0.0.0-20230602170917-e747e60c4aa0
-	github.com/anchore/go-logger v0.0.0-20230531193951-db5ae83e7dbe
-	github.com/anchore/stereoscope v0.0.0-20230727211946-d1f3d766295e
-	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
-	github.com/charmbracelet/bubbletea v0.24.2
-	github.com/charmbracelet/lipgloss v0.8.0
-	github.com/dave/jennifer v1.7.0
-	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
-	github.com/docker/distribution v2.8.2+incompatible
-	github.com/docker/docker v24.0.5+incompatible
-	github.com/github/go-spdx/v2 v2.1.2
-	github.com/gkampitakis/go-snaps v0.4.7
-	github.com/go-git/go-billy/v5 v5.4.1
-	github.com/go-git/go-git/v5 v5.8.1
-	github.com/google/go-containerregistry v0.16.1
-	github.com/google/licensecheck v0.3.1
-	github.com/invopop/jsonschema v0.7.0
-	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
-	github.com/knqyf263/go-rpmdb v0.0.0-20230301153543-ba94b245509b
-	github.com/opencontainers/go-digest v1.0.0
-	github.com/saferwall/pe v1.4.4
-	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
-	github.com/sassoftware/go-rpmutils v0.2.0
-	github.com/vbatts/go-mtree v0.5.3
-	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1
-	golang.org/x/exp v0.0.0-20230202163644-54bba9f4231b
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.25.0
 )
@@ -199,14 +201,6 @@ require (
 	modernc.org/opt v0.1.3 // indirect
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.0.1 // indirect
-)
-
-require (
-	// we are hinting brotli to latest due to warning when installing archiver v3:
-	// go: warning: github.com/andybalholm/brotli@v1.0.1: retracted by module author: occasional panics and data corruption
-	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
 )
 
 retract (
