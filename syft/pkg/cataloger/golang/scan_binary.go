@@ -41,7 +41,8 @@ func scanFile(reader unionreader.UnionReader, filename string) ([]*extendedBuild
 		v, err := getCryptoInformation(r)
 		if err != nil {
 			log.WithFields("file", filename, "error", err).Trace("unable to read golang version info")
-			continue
+			// don't skip this build info.
+			// we can still catalog packages, even if we can't get the crypto information
 		}
 
 		builds = append(builds, &extendedBuildInfo{bi, v})
