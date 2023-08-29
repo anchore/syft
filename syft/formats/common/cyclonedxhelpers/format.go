@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -24,7 +23,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	// https://github.com/CycloneDX/specification/blob/master/schema/bom-1.3-strict.schema.json#L36
 	// "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 	cdxBOM.SerialNumber = uuid.New().URN()
-	cdxBOM.Metadata = toBomDescriptor(internal.ApplicationName, s.Descriptor.Version, s.Source)
+	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source)
 
 	packages := s.Artifacts.Packages.Sorted()
 	components := make([]cyclonedx.Component, len(packages))

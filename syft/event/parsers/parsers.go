@@ -144,30 +144,22 @@ func ParseAttestationStartedEvent(e partybus.Event) (io.Reader, progress.Progres
 
 // CLI event types
 
-func ParseCLIExit(e partybus.Event) (func() error, error) {
-	if err := checkEventType(e.Type, event.CLIExit); err != nil {
+type UpdateCheck struct {
+	New     string
+	Current string
+}
+
+func ParseCLIAppUpdateAvailable(e partybus.Event) (*UpdateCheck, error) {
+	if err := checkEventType(e.Type, event.CLIAppUpdateAvailable); err != nil {
 		return nil, err
 	}
 
-	fn, ok := e.Value.(func() error)
+	updateCheck, ok := e.Value.(UpdateCheck)
 	if !ok {
 		return nil, newPayloadErr(e.Type, "Value", e.Value)
 	}
 
-	return fn, nil
-}
-
-func ParseCLIAppUpdateAvailable(e partybus.Event) (string, error) {
-	if err := checkEventType(e.Type, event.CLIAppUpdateAvailable); err != nil {
-		return "", err
-	}
-
-	newVersion, ok := e.Value.(string)
-	if !ok {
-		return "", newPayloadErr(e.Type, "Value", e.Value)
-	}
-
-	return newVersion, nil
+	return &updateCheck, nil
 }
 
 func ParseCLIReport(e partybus.Event) (string, string, error) {

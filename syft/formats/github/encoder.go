@@ -8,7 +8,6 @@ import (
 	"github.com/mholt/archiver/v3"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -26,7 +25,7 @@ func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 		Version: 0,
 		// TODO allow property input to specify the Job, Sha, and Ref
 		Detector: DetectorMetadata{
-			Name:    internal.ApplicationName,
+			Name:    s.Descriptor.Name,
 			URL:     "https://github.com/anchore/syft",
 			Version: v,
 		},

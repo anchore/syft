@@ -44,7 +44,7 @@ const (
 //
 //nolint:funlen
 func ToFormatModel(s sbom.SBOM) *spdx.Document {
-	name, namespace := DocumentNameAndNamespace(s.Source)
+	name, namespace := DocumentNameAndNamespace(s.Source, s.Descriptor)
 
 	packages := toPackages(s.Artifacts.Packages, s)
 
@@ -136,7 +136,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 					CreatorType: "Organization",
 				},
 				{
-					Creator:     internal.ApplicationName + "-" + s.Descriptor.Version,
+					Creator:     s.Descriptor.Name + "-" + s.Descriptor.Version,
 					CreatorType: "Tool",
 				},
 			},
