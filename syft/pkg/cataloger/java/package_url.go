@@ -84,7 +84,7 @@ func groupIDFromPomProperties(properties *pkg.PomProperties) (groupID string) {
 		return groupID
 	}
 
-	if looksLikeGroupID(properties.GroupID) {
+	if properties.GroupID != "" {
 		return cleanGroupID(properties.GroupID)
 	}
 
@@ -103,7 +103,7 @@ func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
 	}
 
 	// check the project details
-	if looksLikeGroupID(project.GroupID) {
+	if project.GroupID != "" {
 		return cleanGroupID(project.GroupID)
 	}
 
@@ -116,7 +116,7 @@ func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
 	// let's check the parent details
 	// if the current project does not have a group ID, but the parent does, we'll use the parent's group ID
 	if project.Parent != nil {
-		if looksLikeGroupID(project.Parent.GroupID) {
+		if project.Parent.GroupID != "" {
 			return cleanGroupID(project.Parent.GroupID)
 		}
 

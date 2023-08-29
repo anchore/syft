@@ -896,6 +896,14 @@ func TestCandidateVendor(t *testing.T) {
 			},
 			expected: []string{"apache"},
 		},
+		{
+			name: "Django",
+			p: pkg.Package{
+				Name: "Django",
+				Type: pkg.PythonPkg,
+			},
+			expected: []string{"djangoproject" /* <-- known good names | default guess --> */, "Django"},
+		},
 	}
 
 	for _, test := range tests {

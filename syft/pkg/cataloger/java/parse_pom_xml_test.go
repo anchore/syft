@@ -446,11 +446,29 @@ func Test_resolveProperty(t *testing.T) {
 			},
 			expected: "org.some.parent",
 		},
+		{
+			name:     "nil pointer halts search",
+			property: "${project.parent.groupId}",
+			pom: gopom.Project{
+				Parent: nil,
+			},
+			expected: "${project.parent.groupId}",
+		},
+		{
+			name:     "nil string pointer halts search",
+			property: "${project.parent.groupId}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					GroupID: nil,
+				},
+			},
+			expected: "${project.parent.groupId}",
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolved := resolveProperty(test.pom, stringPointer(test.property))
+			resolved := resolveProperty(test.pom, stringPointer(test.property), test.name)
 			assert.Equal(t, test.expected, resolved)
 		})
 	}

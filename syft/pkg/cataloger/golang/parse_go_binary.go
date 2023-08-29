@@ -66,7 +66,7 @@ func (c *goBinaryCataloger) parseGoBinary(resolver file.Resolver, _ *generic.Env
 	return pkgs, nil, nil
 }
 
-func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *debug.BuildInfo, arch string, location file.Location) pkg.Package {
+func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	main := c.newGoBinaryPackage(
 		resolver,
@@ -75,6 +75,7 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *debug
 		mod.GoVersion,
 		arch,
 		gbs,
+		mod.cryptoSettings,
 		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
@@ -153,7 +154,7 @@ func extractVersionFromLDFlags(ldflags string) (majorVersion string, fullVersion
 // getArchs finds a binary architecture by two ways:
 // 1) reading build info from binaries compiled by go1.18+
 // 2) reading file headers from binaries compiled by < go1.18
-func getArchs(readers []io.ReaderAt, builds []*debug.BuildInfo) []string {
+func getArchs(readers []io.ReaderAt, builds []*extendedBuildInfo) []string {
 	if len(readers) != len(builds) {
 		log.Trace("golang cataloger: bin parsing: number of builds and readers doesn't match")
 		return nil
@@ -255,7 +256,7 @@ func createMainModuleFromPath(path string) (mod debug.Module) {
 	return
 }
 
-func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *debug.BuildInfo, arch string) []pkg.Package {
+func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string) []pkg.Package {
 	var pkgs []pkg.Package
 	if mod == nil {
 		return pkgs
@@ -277,6 +278,7 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 			mod.GoVersion,
 			arch,
 			nil,
+			mod.cryptoSettings,
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if pkg.IsValid(&p) {

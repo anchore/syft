@@ -349,9 +349,13 @@ func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string,
 	}
 
 	if filepath.IsAbs(linkTarget) {
+		linkTarget = filepath.Clean(linkTarget)
 		// if the link is absolute (e.g, /bin/ls -> /bin/busybox) we need to
-		// resolve relative to the root of the base directory
-		linkTarget = filepath.Join(r.base, filepath.Clean(linkTarget))
+		// resolve relative to the root of the base directory, if it is not already
+		// prefixed with a volume name
+		if filepath.VolumeName(linkTarget) == "" {
+			linkTarget = filepath.Join(r.base, filepath.Clean(linkTarget))
+		}
 	} else {
 		// if the link is not absolute (e.g, /dev/stderr -> fd/2 ) we need to
 		// resolve it relative to the directory in question (e.g. resolve to

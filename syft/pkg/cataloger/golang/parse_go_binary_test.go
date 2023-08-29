@@ -155,7 +155,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		mod      *debug.BuildInfo
+		mod      *extendedBuildInfo
 		arch     string
 		expected []pkg.Package
 	}{
@@ -166,16 +166,18 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name: "package without name",
-			mod: &debug.BuildInfo{
-				Deps: []*debug.Module{
-					{
-						Path: "github.com/adrg/xdg",
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					Deps: []*debug.Module{
+						{
+							Path: "github.com/adrg/xdg",
+						},
+						{
+							Path:    "",
+							Version: "v0.2.1",
+						},
 					},
-					{
-						Path:    "",
-						Version: "v0.2.1",
-					},
-				},
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -198,26 +200,28 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name:     "buildGoPkgInfo parses a blank mod and returns no packages",
-			mod:      &debug.BuildInfo{},
+			mod:      &extendedBuildInfo{&debug.BuildInfo{}, nil},
 			expected: []pkg.Package(nil),
 		},
 		{
 			name: "parse a mod without main module",
 			arch: archDetails,
-			mod: &debug.BuildInfo{
-				GoVersion: goCompiledVersion,
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-				},
-				Deps: []*debug.Module{
-					{
-						Path:    "github.com/adrg/xdg",
-						Version: "v0.2.1",
-						Sum:     "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
 					},
-				},
+					Deps: []*debug.Module{
+						{
+							Path:    "github.com/adrg/xdg",
+							Version: "v0.2.1",
+							Sum:     "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
+						},
+					},
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -246,14 +250,16 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse a mod with path but no main module",
 			arch: archDetails,
-			mod: &debug.BuildInfo{
-				GoVersion: goCompiledVersion,
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-				},
-				Path: "github.com/a/b/c",
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+					Path: "github.com/a/b/c",
+				}, []string{"boringcrypto + fips"},
 			},
 			expected: []pkg.Package{
 				{
@@ -280,7 +286,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							"GOARCH":  "amd64",
 							"GOOS":    "darwin",
 						},
-						MainModule: "github.com/a/b/c",
+						MainModule:       "github.com/a/b/c",
+						GoCryptoSettings: []string{"boringcrypto + fips"},
 					},
 				},
 			},
@@ -288,31 +295,35 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse a mod without packages",
 			arch: archDetails,
-			mod: &debug.BuildInfo{
-				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-				},
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+				}, nil,
 			},
 			expected: []pkg.Package{unmodifiedMain},
 		},
 		{
 			name: "parse main mod and replace devel pseudo version and ldflags exists (but contains no version)",
 			arch: archDetails,
-			mod: &debug.BuildInfo{
-				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-					{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
-					{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
-					{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X blah=foobar`},
-				},
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+						{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
+						{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
+						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X blah=foobar`},
+					},
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -349,17 +360,19 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse main mod and replace devel version with one from ldflags with vcs. build settings",
 			arch: archDetails,
-			mod: &debug.BuildInfo{
-				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-					{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
-					{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
-					{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`},
-				},
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+						{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
+						{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
+						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`},
+					},
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -396,15 +409,17 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse main mod and replace devel version with one from ldflags without any vcs. build settings",
 			arch: archDetails,
-			mod: &debug.BuildInfo{
-				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-					{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`},
-				},
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`},
+					},
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -439,15 +454,17 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse main mod and replace devel version with one from ldflags main.version without any vcs. build settings",
 			arch: archDetails,
-			mod: &debug.BuildInfo{
-				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-					{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X main.version=0.79.0`},
-				},
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X main.version=0.79.0`},
+					},
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -482,15 +499,17 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse main mod and replace devel version with one from ldflags main.Version without any vcs. build settings",
 			arch: archDetails,
-			mod: &debug.BuildInfo{
-				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-					{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X main.Version=0.79.0`},
-				},
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X main.Version=0.79.0`},
+					},
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -525,16 +544,18 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse main mod and replace devel version with a pseudo version",
 			arch: archDetails,
-			mod: &debug.BuildInfo{
-				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-					{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
-					{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
-				},
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+						{Key: "vcs.revision", Value: "41bc6bb410352845f22766e27dd48ba93aa825a4"},
+						{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"},
+					},
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -570,26 +591,28 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse a populated mod string and returns packages but no source info",
 			arch: archDetails,
-			mod: &debug.BuildInfo{
-				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-				},
-				Deps: []*debug.Module{
-					{
-						Path:    "github.com/adrg/xdg",
-						Version: "v0.2.1",
-						Sum:     "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
 					},
-					{
-						Path:    "github.com/anchore/client-go",
-						Version: "v0.0.0-20210222170800-9c70f9b80bcf",
-						Sum:     "h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=",
+					Deps: []*debug.Module{
+						{
+							Path:    "github.com/adrg/xdg",
+							Version: "v0.2.1",
+							Sum:     "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
+						},
+						{
+							Path:    "github.com/anchore/client-go",
+							Version: "v0.0.0-20210222170800-9c70f9b80bcf",
+							Sum:     "h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=",
+						},
 					},
-				},
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
@@ -642,31 +665,33 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		{
 			name: "parse a populated mod string and returns packages when a replace directive exists",
 			arch: archDetails,
-			mod: &debug.BuildInfo{
-				GoVersion: goCompiledVersion,
-				Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
-				Settings: []debug.BuildSetting{
-					{Key: "GOARCH", Value: archDetails},
-					{Key: "GOOS", Value: "darwin"},
-					{Key: "GOAMD64", Value: "v1"},
-				},
-				Deps: []*debug.Module{
-					{
-						Path:    "golang.org/x/sys",
-						Version: "v0.0.0-20211006194710-c8a6f5223071",
-						Sum:     "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
+			mod: &extendedBuildInfo{
+				&debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
 					},
-					{
-						Path:    "golang.org/x/term",
-						Version: "v0.0.0-20210927222741-03fcf44c2211",
-						Sum:     "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
-						Replace: &debug.Module{
+					Deps: []*debug.Module{
+						{
+							Path:    "golang.org/x/sys",
+							Version: "v0.0.0-20211006194710-c8a6f5223071",
+							Sum:     "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
+						},
+						{
 							Path:    "golang.org/x/term",
-							Version: "v0.0.0-20210916214954-140adaaadfaf",
-							Sum:     "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=",
+							Version: "v0.0.0-20210927222741-03fcf44c2211",
+							Sum:     "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
+							Replace: &debug.Module{
+								Path:    "golang.org/x/term",
+								Version: "v0.0.0-20210916214954-140adaaadfaf",
+								Sum:     "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=",
+							},
 						},
 					},
-				},
+				}, nil,
 			},
 			expected: []pkg.Package{
 				{
