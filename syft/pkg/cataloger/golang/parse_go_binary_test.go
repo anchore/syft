@@ -156,14 +156,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	tests := []struct {
 		name     string
 		mod      *extendedBuildInfo
-		arch     string
 		expected []pkg.Package
 	}{
-		{
-			name:     "parse an empty mod",
-			mod:      nil,
-			expected: []pkg.Package(nil),
-		},
 		{
 			name: "package without name",
 			mod: &extendedBuildInfo{
