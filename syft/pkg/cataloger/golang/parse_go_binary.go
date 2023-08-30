@@ -16,7 +16,6 @@ import (
 	"golang.org/x/mod/module"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -57,11 +56,11 @@ func (c *goBinaryCataloger) parseGoBinary(resolver file.Resolver, _ *generic.Env
 		return nil, nil, err
 	}
 
-	mods, archs := scanFile(unionReader, reader.RealPath)
+	mods := scanFile(unionReader, reader.RealPath)
 	internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	for i, mod := range mods {
-		pkgs = append(pkgs, c.buildGoPkgInfo(resolver, reader.Location, mod, archs[i])...)
+	for _, mod := range mods {
+		pkgs = append(pkgs, c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch)...)
 	}
 	return pkgs, nil, nil
 }
@@ -149,42 +148,6 @@ func extractVersionFromLDFlags(ldflags string) (majorVersion string, fullVersion
 	}
 
 	return "", ""
-}
-
-// getArchs finds a binary architecture by two ways:
-// 1) reading build info from binaries compiled by go1.18+
-// 2) reading file headers from binaries compiled by < go1.18
-func getArchs(readers []io.ReaderAt, builds []*extendedBuildInfo) []string {
-	if len(readers) != len(builds) {
-		log.Trace("golang cataloger: bin parsing: number of builds and readers doesn't match")
-		return nil
-	}
-
-	if len(readers) == 0 || len(builds) == 0 {
-		log.Tracef("golang cataloger: bin parsing: %d readers and %d build info items", len(readers), len(builds))
-		return nil
-	}
-
-	archs := make([]string, len(builds))
-	for i, build := range builds {
-		archs[i] = getGOARCH(build.Settings)
-	}
-
-	// if architecture was found via build settings return
-	if archs[0] != "" {
-		return archs
-	}
-
-	for i, r := range readers {
-		a, err := getGOARCHFromBin(r)
-		if err != nil {
-			log.Tracef("golang cataloger: bin parsing: getting arch from binary: %v", err)
-			continue
-		}
-
-		archs[i] = a
-	}
-	return archs
 }
 
 func getGOARCH(settings []debug.BuildSetting) string {
