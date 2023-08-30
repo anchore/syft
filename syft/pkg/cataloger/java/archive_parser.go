@@ -148,6 +148,24 @@ func (j *archiveParser) parse() ([]pkg.Package, []artifact.Relationship, error) 
 
 // discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.
 func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
+	pomPropertyMatches := j.fileManifest.GlobMatch(pomPropertiesGlob)
+	pomMatches := j.fileManifest.GlobMatch(pomXMLGlob)
+	var pomPropertiesObject pkg.PomProperties
+	var pomProjectObject pkg.PomProject
+	if len(pomPropertyMatches) == 1 && len(pomMatches) == 1 {
+		// we have exactly 1 pom.properties in the archive; assume it represents the
+		// package we're scanning
+		properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, pomPropertyMatches)
+		projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
+
+		for parentPath, propertiesObj := range properties {
+			pomPropertiesObject = propertiesObj
+			if proj, exists := projects[parentPath]; exists {
+				pomProjectObject = proj
+			}
+		}
+	}
+
 	// search and parse java manifest files
 	// TODO: do we want to prefer or check for pom files over manifest here?
 	manifestMatches := j.fileManifest.GlobMatch(manifestGlob)
@@ -186,9 +204,31 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	licenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
+	/*
+		We should name and version from, in this order:
+		1. pom.properties if we find exactly 1
+		2. pom.xml if we find exactly 1
+		3. manifest
+		4. filename
+	*/
+	name := pomPropertiesObject.ArtifactID
+	if name == "" {
+		name = pomProjectObject.ArtifactID
+	}
+	if name == "" {
+		name = selectName(manifest, j.fileInfo)
+	}
+	version := pomPropertiesObject.Version
+	if version == "" {
+		version = pomProjectObject.Version
+	}
+	if version == "" {
+		version = selectVersion(manifest, j.fileInfo)
+	}
 	return &pkg.Package{
-		Name:     selectName(manifest, j.fileInfo),
-		Version:  selectVersion(manifest, j.fileInfo),
+		// TODO: maybe select name should just have a pom properties in it?
+		Name:     name,
+		Version:  version,
 		Language: pkg.Java,
 		Licenses: pkg.NewLicenseSet(licenses...),
 		Locations: file.NewLocationSet(
