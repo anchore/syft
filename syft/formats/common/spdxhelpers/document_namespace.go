@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -18,20 +18,20 @@ const (
 	inputFile      = "file"
 )
 
-func DocumentNameAndNamespace(srcMetadata source.Metadata) (string, string) {
-	name := DocumentName(srcMetadata)
-	return name, DocumentNamespace(name, srcMetadata)
+func DocumentNameAndNamespace(src source.Description, desc sbom.Descriptor) (string, string) {
+	name := DocumentName(src)
+	return name, DocumentNamespace(name, src, desc)
 }
 
-func DocumentNamespace(name string, srcMetadata source.Metadata) string {
+func DocumentNamespace(name string, src source.Description, desc sbom.Descriptor) string {
 	name = cleanName(name)
 	input := "unknown-source-type"
-	switch srcMetadata.Scheme {
-	case source.ImageScheme:
+	switch src.Metadata.(type) {
+	case source.StereoscopeImageSourceMetadata:
 		input = inputImage
-	case source.DirectoryScheme:
+	case source.DirectorySourceMetadata:
 		input = inputDirectory
-	case source.FileScheme:
+	case source.FileSourceMetadata:
 		input = inputFile
 	}
 
@@ -44,7 +44,7 @@ func DocumentNamespace(name string, srcMetadata source.Metadata) string {
 	u := url.URL{
 		Scheme: "https",
 		Host:   "anchore.com",
-		Path:   path.Join(internal.ApplicationName, identifier),
+		Path:   path.Join(desc.Name, identifier),
 	}
 
 	return u.String()

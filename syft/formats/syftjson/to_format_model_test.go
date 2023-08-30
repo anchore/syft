@@ -1,61 +1,174 @@
 package syftjson
 
 import (
+	"encoding/json"
 	"testing"
 
-	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/stereoscope/pkg/file"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source"
 )
 
-func Test_toSourceModel(t *testing.T) {
-	allSchemes := strset.New()
-	for _, s := range source.AllSchemes {
-		allSchemes.Add(string(s))
+func Test_toSourceModel_IgnoreBase(t *testing.T) {
+	tests := []struct {
+		name string
+		src  source.Description
+	}{
+		{
+			name: "directory",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.DirectorySourceMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
+			},
+		},
 	}
-	testedSchemes := strset.New()
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// assert the model transformation is correct
+			actual := toSourceModel(test.src)
+
+			by, err := json.Marshal(actual)
+			require.NoError(t, err)
+			assert.NotContains(t, string(by), "some/base")
+		})
+	}
+}
+
+func Test_toSourceModel(t *testing.T) {
+	tracker := sourcemetadata.NewCompletionTester(t)
 
 	tests := []struct {
 		name     string
-		src      source.Metadata
+		src      source.Description
 		expected model.Source
 	}{
 		{
 			name: "directory",
-			src: source.Metadata{
-				ID:     "test-id",
-				Scheme: source.DirectoryScheme,
-				Path:   "some/path",
+			src: source.Description{
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.DirectorySourceMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
 			},
 			expected: model.Source{
-				ID:     "test-id",
-				Type:   "directory",
-				Target: "some/path",
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "directory",
+				Metadata: source.DirectorySourceMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
 			},
 		},
 		{
 			name: "file",
-			src: source.Metadata{
-				ID:     "test-id",
-				Scheme: source.FileScheme,
-				Path:   "some/path",
+			src: source.Description{
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.FileSourceMetadata{
+					Path:     "some/path",
+					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
+					MIMEType: "text/plain",
+				},
 			},
 			expected: model.Source{
-				ID:     "test-id",
-				Type:   "file",
-				Target: "some/path",
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "file",
+				Metadata: source.FileSourceMetadata{
+					Path:     "some/path",
+					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
+					MIMEType: "text/plain",
+				},
 			},
 		},
 		{
 			name: "image",
-			src: source.Metadata{
-				ID:     "test-id",
-				Scheme: source.ImageScheme,
-				ImageMetadata: source.ImageMetadata{
+			src: source.Description{
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.StereoscopeImageSourceMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+			expected: model.Source{
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "image",
+				Metadata: source.StereoscopeImageSourceMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+					RepoDigests:    []string{},
+					Tags:           []string{},
+				},
+			},
+		},
+		// below are regression tests for when the name/version are not provided
+		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
+		{
+			name: "directory - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.DirectorySourceMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "directory",
+				Metadata: source.DirectorySourceMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
+			},
+		},
+		{
+			name: "file - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.FileSourceMetadata{
+					Path:     "some/path",
+					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
+					MIMEType: "text/plain",
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "file",
+				Metadata: source.FileSourceMetadata{
+					Path:     "some/path",
+					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
+					MIMEType: "text/plain",
+				},
+			},
+		},
+		{
+			name: "image - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.StereoscopeImageSourceMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -65,7 +178,7 @@ func Test_toSourceModel(t *testing.T) {
 			expected: model.Source{
 				ID:   "test-id",
 				Type: "image",
-				Target: source.ImageMetadata{
+				Metadata: source.StereoscopeImageSourceMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -78,62 +191,58 @@ func Test_toSourceModel(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			// track each scheme tested (passed or not)
-			testedSchemes.Add(string(test.src.Scheme))
-
 			// assert the model transformation is correct
-			actual, err := toSourceModel(test.src)
-			require.NoError(t, err)
+			actual := toSourceModel(test.src)
 			assert.Equal(t, test.expected, actual)
+
+			// track each scheme tested (passed or not)
+			tracker.Tested(t, test.expected.Metadata)
 		})
 	}
-
-	// assert all possible schemes were under test
-	assert.ElementsMatch(t, allSchemes.List(), testedSchemes.List(), "not all source.Schemes are under test")
 }
 
 func Test_toFileType(t *testing.T) {
 
-	badType := file.Type(0x1337)
-	var allTypesTested []file.Type
+	badType := stereoscopeFile.Type(0x1337)
+	var allTypesTested []stereoscopeFile.Type
 	tests := []struct {
-		ty   file.Type
+		ty   stereoscopeFile.Type
 		name string
 	}{
 		{
-			ty:   file.TypeRegular,
+			ty:   stereoscopeFile.TypeRegular,
 			name: "RegularFile",
 		},
 		{
-			ty:   file.TypeDirectory,
+			ty:   stereoscopeFile.TypeDirectory,
 			name: "Directory",
 		},
 		{
-			ty:   file.TypeSymLink,
+			ty:   stereoscopeFile.TypeSymLink,
 			name: "SymbolicLink",
 		},
 		{
-			ty:   file.TypeHardLink,
+			ty:   stereoscopeFile.TypeHardLink,
 			name: "HardLink",
 		},
 		{
-			ty:   file.TypeSocket,
+			ty:   stereoscopeFile.TypeSocket,
 			name: "Socket",
 		},
 		{
-			ty:   file.TypeCharacterDevice,
+			ty:   stereoscopeFile.TypeCharacterDevice,
 			name: "CharacterDevice",
 		},
 		{
-			ty:   file.TypeBlockDevice,
+			ty:   stereoscopeFile.TypeBlockDevice,
 			name: "BlockDevice",
 		},
 		{
-			ty:   file.TypeFIFO,
+			ty:   stereoscopeFile.TypeFIFO,
 			name: "FIFONode",
 		},
 		{
-			ty:   file.TypeIrregular,
+			ty:   stereoscopeFile.TypeIrregular,
 			name: "IrregularFile",
 		},
 		{
@@ -150,5 +259,47 @@ func Test_toFileType(t *testing.T) {
 		})
 	}
 
-	assert.ElementsMatch(t, allTypesTested, file.AllTypes(), "not all file.Types are under test")
+	assert.ElementsMatch(t, allTypesTested, stereoscopeFile.AllTypes(), "not all file.Types are under test")
+}
+
+func Test_toFileMetadataEntry(t *testing.T) {
+	coords := file.Coordinates{
+		RealPath:     "/path",
+		FileSystemID: "x",
+	}
+	tests := []struct {
+		name     string
+		metadata *file.Metadata
+		want     *model.FileMetadataEntry
+	}{
+		{
+			name: "no metadata",
+		},
+		{
+			name: "no file info",
+			metadata: &file.Metadata{
+				FileInfo: nil,
+			},
+			want: &model.FileMetadataEntry{
+				Type: stereoscopeFile.TypeRegular.String(),
+			},
+		},
+		{
+			name: "with file info",
+			metadata: &file.Metadata{
+				FileInfo: &stereoscopeFile.ManualInfo{
+					ModeValue: 1,
+				},
+			},
+			want: &model.FileMetadataEntry{
+				Mode: 1,
+				Type: stereoscopeFile.TypeRegular.String(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, toFileMetadataEntry(coords, tt.metadata))
+		})
+	}
 }

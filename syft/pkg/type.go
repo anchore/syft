@@ -33,8 +33,10 @@ const (
 	PhpComposerPkg        Type = "php-composer"
 	PortagePkg            Type = "portage"
 	PythonPkg             Type = "python"
+	Rpkg                  Type = "R-package"
 	RpmPkg                Type = "rpm"
 	RustPkg               Type = "rust-crate"
+	SwiftPkg              Type = "swift"
 )
 
 // AllPkgs represents all supported package types
@@ -61,8 +63,10 @@ var AllPkgs = []Type{
 	PhpComposerPkg,
 	PortagePkg,
 	PythonPkg,
+	Rpkg,
 	RpmPkg,
 	RustPkg,
+	SwiftPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -106,10 +110,14 @@ func (t Type) PackageURLType() string {
 		return "nix"
 	case NpmPkg:
 		return packageurl.TypeNPM
+	case Rpkg:
+		return packageurl.TypeCran
 	case RpmPkg:
 		return packageurl.TypeRPM
 	case RustPkg:
 		return "cargo"
+	case SwiftPkg:
+		return packageurl.TypeSwift
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -173,6 +181,10 @@ func TypeByName(name string) Type {
 		return LinuxKernelModulePkg
 	case "nix":
 		return NixPkg
+	case packageurl.TypeCran:
+		return Rpkg
+	case packageurl.TypeSwift:
+		return SwiftPkg
 	default:
 		return UnknownPkg
 	}

@@ -14,14 +14,14 @@
       }
     ],
     "component": {
-      "bom-ref": "redacted",
+      "bom-ref":"redacted",
       "type": "file",
-      "name": "/some/path"
+      "name": "some/path"
     }
   },
   "components": [
     {
-      "bom-ref": "redacted",
+      "bom-ref":"redacted",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
@@ -58,7 +58,7 @@
       ]
     },
     {
-      "bom-ref": "redacted",
+      "bom-ref":"redacted",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",

@@ -3,7 +3,7 @@ package cpe
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -80,12 +80,12 @@ func Test_normalizeCpeField(t *testing.T) {
 }
 
 func Test_CPEParser(t *testing.T) {
-	testCases := []struct {
+	var testCases []struct {
 		CPEString string `json:"cpe-string"`
 		CPEUrl    string `json:"cpe-url"`
 		WFN       CPE    `json:"wfn"`
-	}{}
-	out, err := ioutil.ReadFile("test-fixtures/cpe-data.json")
+	}
+	out, err := os.ReadFile("test-fixtures/cpe-data.json")
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(out, &testCases))
 

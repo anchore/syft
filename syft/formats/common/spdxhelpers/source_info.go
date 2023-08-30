@@ -52,6 +52,10 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from linux kernel module files"
 	case pkg.NixPkg:
 		answer = "acquired package info from nix store path"
+	case pkg.Rpkg:
+		answer = "acquired package info from R-package DESCRIPTION file"
+	case pkg.SwiftPkg:
+		answer = "acquired package info from resolved Swift package manifest"
 	default:
 		answer = "acquired package info from the following paths"
 	}

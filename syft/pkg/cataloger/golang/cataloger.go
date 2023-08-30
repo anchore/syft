@@ -6,10 +6,10 @@ package golang
 import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/event/monitor"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 // NewGoModFileCataloger returns a new Go module cataloger object.
@@ -37,7 +37,7 @@ func NewGoModuleBinaryCataloger(opts GoCatalogerOpts) pkg.Cataloger {
 }
 
 type progressingCataloger struct {
-	progress  *event.CatalogerTask
+	progress  *monitor.CatalogerTask
 	cataloger *generic.Cataloger
 }
 
@@ -45,7 +45,7 @@ func (p *progressingCataloger) Name() string {
 	return p.cataloger.Name()
 }
 
-func (p *progressingCataloger) Catalog(resolver source.FileResolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (p *progressingCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	defer p.progress.SetCompleted()
 	return p.cataloger.Catalog(resolver)
 }

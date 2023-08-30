@@ -23,6 +23,9 @@ func Test_DBCataloger_Globs(t *testing.T) {
 				"var/lib/rpm/Packages.db",
 				"var/lib/rpm/rpmdb.sqlite",
 				"var/lib/rpmmanifest/container-manifest-2",
+				"usr/lib/sysimage/rpm/Packages",
+				"usr/lib/sysimage/rpm/Packages.db",
+				"usr/lib/sysimage/rpm/rpmdb.sqlite",
 			},
 		},
 	}

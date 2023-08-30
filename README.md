@@ -53,7 +53,7 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Red Hat (rpm)
 - Ruby (gem)
 - Rust (cargo.lock)
-- Swift (cocoapods)
+- Swift (cocoapods, swift-package-manager)
 
 ## Installation
 
@@ -76,6 +76,12 @@ The chocolatey distribution of syft is community maintained and not distributed 
 
 ```powershell
 choco install syft -y
+```
+
+### Scoop
+
+```powershell
+scoop install syft
 ```
 
 ### Homebrew
@@ -150,6 +156,12 @@ This default behavior can be overridden with the `default-image-pull-source` con
 
 ### Default Cataloger Configuration by scan type
 
+Syft uses different default sets of catalogers depending on what it is scanning: a container image or a directory on disk. The default catalogers for an image scan assumes that package installation steps have already been completed. For example, Syft will identify Python packages that have egg or wheel metadata files under a site-packages directory, since this indicates software actually installed on an image.
+
+However, if you are scanning a directory, Syft doesn't assume that all relevant software is installed, and will use catalogers that can identify declared dependencies that may not yet be installed on the final system: for example, dependencies listed in a Python requirements.txt.
+
+You can override the list of enabled/disabled catalogers by using the "catalogers" keyword in the [Syft configuration file](https://github.com/anchore/syft#configuration).
+
 ##### Image Scanning:
 - alpmdb
 - apkdb
@@ -199,6 +211,7 @@ This default behavior can be overridden with the `default-image-pull-source` con
 - ruby-gemfile
 - rust-cargo-lock
 - sbom
+- swift-package-manager
 
 ##### Non Default:
 - cargo-auditable-binary
@@ -469,6 +482,10 @@ default-image-pull-source: ""
 #   - "./out/**/*.json"
 exclude: []
 
+# allows users to exclude synthetic binary packages from the sbom
+# these packages are removed if an overlap with a non-synthetic package is found
+exclude-binary-overlap-by-ownership: true
+
 # os and/or architecture to use when referencing container images (e.g. "windows/armv6" or "arm64")
 # same as --platform; SYFT_PLATFORM env var
 platform: ""
@@ -509,6 +526,7 @@ platform: ""
 #   - ruby-gemspec-cataloger
 #   - rust-cargo-lock-cataloger
 #   - sbom-cataloger
+#   - spm-cataloger
 catalogers:
 
 # cataloging packages is exposed through the packages and power-user subcommands
@@ -563,6 +581,13 @@ linux-kernel:
    # SYFT_LINUX_KERNEL_CATALOG_MODULES env var
    catalog-modules: true
 
+python:
+   # when running across entries in requirements.txt that do not specify a specific version 
+   # (e.g. "sqlalchemy >= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0"), attempt to guess what the version could
+   # be based on the version requirements specified (e.g. "1.0.0"). When enabled the lowest expressible version 
+   # when given an arbitrary constraint will be used (even if that version may not be available/published).
+   guess-unpinned-requirements: false
+
 # cataloging file contents is exposed through the power-user subcommand
 file-contents:
   cataloger:
@@ -593,7 +618,7 @@ file-metadata:
     # SYFT_FILE_METADATA_CATALOGER_SCOPE env var
     scope: "squashed"
 
-  # the file digest algorithms to use when cataloging files (options: "sha256", "md5", "sha1")
+  # the file digest algorithms to use when cataloging files (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
   # SYFT_FILE_METADATA_DIGESTS env var
   digests: ["sha256"]
 
@@ -631,28 +656,60 @@ secrets:
   # SYFT_SECRETS_EXCLUDE_PATTERN_NAMES env var
   exclude-pattern-names: []
 
+# options that apply to all scan sources
+source:
+  # alias name for the source
+  # SYFT_SOURCE_NAME env var; --source-name flag
+  name: ""
+   
+  # alias version for the source
+  # SYFT_SOURCE_VERSION env var; --source-version flag
+  version: ""
+   
+  # options affecting the file source type
+  file:
+    # the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
+    digests: ["sha256"]
+
 # options when pulling directly from a registry via the "registry:" scheme
 registry:
   # skip TLS verification when communicating with the registry
   # SYFT_REGISTRY_INSECURE_SKIP_TLS_VERIFY env var
   insecure-skip-tls-verify: false
+
   # use http instead of https when connecting to the registry
   # SYFT_REGISTRY_INSECURE_USE_HTTP env var
   insecure-use-http: false
+
+  # filepath to a CA certificate (or directory containing *.crt, *.cert, *.pem) used to generate the client certificate
+  # SYFT_REGISTRY_CA_CERT env var
+  ca-cert: ""
 
   # credentials for specific registries
   auth:
       # the URL to the registry (e.g. "docker.io", "localhost:5000", etc.)
       # SYFT_REGISTRY_AUTH_AUTHORITY env var
     - authority: ""
+
       # SYFT_REGISTRY_AUTH_USERNAME env var
       username: ""
+
       # SYFT_REGISTRY_AUTH_PASSWORD env var
       password: ""
+
       # note: token and username/password are mutually exclusive
       # SYFT_REGISTRY_AUTH_TOKEN env var
       token: ""
-      # - ... # note, more credentials can be provided via config file only
+
+      # filepath to the client certificate used for TLS authentication to the registry
+      # SYFT_REGISTRY_AUTH_TLS_CERT env var
+      tls-cert: ""
+
+      # filepath to the client key used for TLS authentication to the registry
+      # SYFT_REGISTRY_AUTH_TLS_KEY env var
+      tls-key: ""
+    
+    # - ... # note, more credentials can be provided via config file only (not env vars)
 
 # generate an attested SBOM
 attest:

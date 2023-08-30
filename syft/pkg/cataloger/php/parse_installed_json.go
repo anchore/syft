@@ -7,28 +7,28 @@ import (
 	"io"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseComposerLock
 
 // Note: composer version 2 introduced a new structure for the installed.json file, so we support both
 type installedJSONComposerV2 struct {
-	Packages []pkg.PhpComposerJSONMetadata `json:"packages"`
+	Packages []parsedData `json:"packages"`
 }
 
 func (w *installedJSONComposerV2) UnmarshalJSON(data []byte) error {
 	type compv2 struct {
-		Packages []pkg.PhpComposerJSONMetadata `json:"packages"`
+		Packages []parsedData `json:"packages"`
 	}
 	compv2er := new(compv2)
 	err := json.Unmarshal(data, &compv2er)
 	if err != nil {
 		// If we had an err	or, we may be dealing with a composer v.1 installed.json
 		// which should be all arrays
-		var packages []pkg.PhpComposerJSONMetadata
+		var packages []parsedData
 		err := json.Unmarshal(data, &packages)
 		if err != nil {
 			return err
@@ -41,7 +41,7 @@ func (w *installedJSONComposerV2) UnmarshalJSON(data []byte) error {
 }
 
 // parseInstalledJSON is a parser function for Composer.lock contents, returning "Default" php packages discovered.
-func parseInstalledJSON(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseInstalledJSON(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	dec := json.NewDecoder(reader)
 

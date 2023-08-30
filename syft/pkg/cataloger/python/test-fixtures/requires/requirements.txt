@@ -1,7 +1,9 @@
  flask == 4.0.0
 # a line that is ignored
-sqlalchemy >= 1.0.0
+sqlalchemy >= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0
  foo == 1.0.0 # a comment that needs to be ignored
+bar >= 1.0.0, <= 2.0.0, \
+  != 3.0.0, <= 3.0.0
 -e https://github.com/pecan/pecan.git
 -r other-requirements.txt
 --requirements super-secretrequirements.txt

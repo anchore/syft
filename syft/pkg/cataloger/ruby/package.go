@@ -2,16 +2,16 @@ package ruby
 
 import (
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/source"
 )
 
-func newGemfileLockPackage(name, version string, locations ...source.Location) pkg.Package {
+func newGemfileLockPackage(name, version string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
 		PURL:      packageURL(name, version),
-		Locations: source.NewLocationSet(locations...),
+		Locations: file.NewLocationSet(locations...),
 		Language:  pkg.Ruby,
 		Type:      pkg.GemPkg,
 	}
@@ -21,17 +21,17 @@ func newGemfileLockPackage(name, version string, locations ...source.Location) p
 	return p
 }
 
-func newGemspecPackage(m pkg.GemMetadata, locations ...source.Location) pkg.Package {
+func newGemspecPackage(m gemData, gemSpecLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:         m.Name,
 		Version:      m.Version,
-		Locations:    source.NewLocationSet(locations...),
+		Locations:    file.NewLocationSet(gemSpecLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(gemSpecLocation, m.Licenses...)...),
 		PURL:         packageURL(m.Name, m.Version),
-		Licenses:     m.Licenses,
 		Language:     pkg.Ruby,
 		Type:         pkg.GemPkg,
 		MetadataType: pkg.GemMetadataType,
-		Metadata:     m,
+		Metadata:     m.GemMetadata,
 	}
 
 	p.SetID()

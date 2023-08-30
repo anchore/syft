@@ -1,0 +1,16 @@
+
+[TestHandler_handleCatalogerTaskStarted/cataloging_task_in_progress - 1]
+   some task title                 [some value]  
+---
+
+[TestHandler_handleCatalogerTaskStarted/cataloging_sub_task_in_progress - 1]
+   └── some task title             [some value]  
+---
+
+[TestHandler_handleCatalogerTaskStarted/cataloging_sub_task_complete - 1]
+ ✔ └── some task done              [some value]  
+---
+
+[TestHandler_handleCatalogerTaskStarted/cataloging_sub_task_complete_with_removal - 1]
+
+---

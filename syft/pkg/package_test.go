@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/file"
 )
 
 func TestIDUniqueness(t *testing.T) {
-	originalLocation := source.NewVirtualLocationFromCoordinates(
-		source.Coordinates{
+	originalLocation := file.NewVirtualLocationFromCoordinates(
+		file.Coordinates{
 			RealPath:     "39.0742° N, 21.8243° E",
 			FileSystemID: "Earth",
 		},
@@ -24,13 +24,13 @@ func TestIDUniqueness(t *testing.T) {
 		Name:    "pi",
 		Version: "3.14",
 		FoundBy: "Archimedes",
-		Locations: source.NewLocationSet(
+		Locations: file.NewLocationSet(
 			originalLocation,
 		),
-		Licenses: []string{
-			"cc0-1.0",
-			"MIT",
-		},
+		Licenses: NewLicenseSet(
+			NewLicense("MIT"),
+			NewLicense("cc0-1.0"),
+		),
 		Language: "math",
 		Type:     PythonPkg,
 		CPEs: []cpe.CPE{
@@ -41,7 +41,6 @@ func TestIDUniqueness(t *testing.T) {
 		Metadata: PythonPackageMetadata{
 			Name:                 "pi",
 			Version:              "3.14",
-			License:              "cc0-1.0",
 			Author:               "Archimedes",
 			AuthorEmail:          "Archimedes@circles.io",
 			Platform:             "universe",
@@ -70,7 +69,6 @@ func TestIDUniqueness(t *testing.T) {
 				pkg.Metadata = PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
@@ -84,10 +82,10 @@ func TestIDUniqueness(t *testing.T) {
 			name: "licenses order is ignored",
 			transform: func(pkg Package) Package {
 				// note: same as the original package, only a different order
-				pkg.Licenses = []string{
-					"MIT",
-					"cc0-1.0",
-				}
+				pkg.Licenses = NewLicenseSet(
+					NewLicense("cc0-1.0"),
+					NewLicense("MIT"),
+				)
 				return pkg
 			},
 			expectedIDComparison: assert.Equal,
@@ -103,9 +101,17 @@ func TestIDUniqueness(t *testing.T) {
 		{
 			name: "location is reflected",
 			transform: func(pkg Package) Package {
-				locations := source.NewLocationSet(pkg.Locations.ToSlice()...)
-				locations.Add(source.NewLocation("/somewhere/new"))
+				locations := file.NewLocationSet(pkg.Locations.ToSlice()...)
+				locations.Add(file.NewLocation("/somewhere/new"))
 				pkg.Locations = locations
+				return pkg
+			},
+			expectedIDComparison: assert.NotEqual,
+		},
+		{
+			name: "licenses is reflected",
+			transform: func(pkg Package) Package {
+				pkg.Licenses = NewLicenseSet(NewLicense("new!"))
 				return pkg
 			},
 			expectedIDComparison: assert.NotEqual,
@@ -116,7 +122,7 @@ func TestIDUniqueness(t *testing.T) {
 				newLocation := originalLocation
 				newLocation.FileSystemID = "Mars"
 
-				pkg.Locations = source.NewLocationSet(newLocation)
+				pkg.Locations = file.NewLocationSet(newLocation)
 				return pkg
 			},
 			expectedIDComparison: assert.Equal,
@@ -127,7 +133,7 @@ func TestIDUniqueness(t *testing.T) {
 				newLocation := originalLocation
 				newLocation.FileSystemID = "Mars"
 
-				locations := source.NewLocationSet(pkg.Locations.ToSlice()...)
+				locations := file.NewLocationSet(pkg.Locations.ToSlice()...)
 				locations.Add(newLocation, originalLocation)
 
 				pkg.Locations = locations
@@ -139,14 +145,6 @@ func TestIDUniqueness(t *testing.T) {
 			name: "version is reflected",
 			transform: func(pkg Package) Package {
 				pkg.Version = "new!"
-				return pkg
-			},
-			expectedIDComparison: assert.NotEqual,
-		},
-		{
-			name: "licenses is reflected",
-			transform: func(pkg Package) Package {
-				pkg.Licenses = []string{"new!"}
 				return pkg
 			},
 			expectedIDComparison: assert.NotEqual,
@@ -238,8 +236,8 @@ func TestIDUniqueness(t *testing.T) {
 }
 
 func TestPackage_Merge(t *testing.T) {
-	originalLocation := source.NewVirtualLocationFromCoordinates(
-		source.Coordinates{
+	originalLocation := file.NewVirtualLocationFromCoordinates(
+		file.Coordinates{
 			RealPath:     "39.0742° N, 21.8243° E",
 			FileSystemID: "Earth",
 		},
@@ -261,13 +259,9 @@ func TestPackage_Merge(t *testing.T) {
 				Name:    "pi",
 				Version: "3.14",
 				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
+				Locations: file.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -278,7 +272,6 @@ func TestPackage_Merge(t *testing.T) {
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
@@ -289,13 +282,9 @@ func TestPackage_Merge(t *testing.T) {
 				Name:    "pi",
 				Version: "3.14",
 				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
+				Locations: file.NewLocationSet(
 					similarLocation, // NOTE: difference; we have a different layer but the same path
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -306,7 +295,6 @@ func TestPackage_Merge(t *testing.T) {
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
@@ -317,14 +305,10 @@ func TestPackage_Merge(t *testing.T) {
 				Name:    "pi",
 				Version: "3.14",
 				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
+				Locations: file.NewLocationSet(
 					originalLocation,
 					similarLocation, // NOTE: merge!
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -336,7 +320,6 @@ func TestPackage_Merge(t *testing.T) {
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
@@ -350,13 +333,9 @@ func TestPackage_Merge(t *testing.T) {
 				Name:    "pi",
 				Version: "3.14",
 				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
+				Locations: file.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -367,7 +346,6 @@ func TestPackage_Merge(t *testing.T) {
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
@@ -378,13 +356,9 @@ func TestPackage_Merge(t *testing.T) {
 				Name:    "pi-DIFFERENT", // difference
 				Version: "3.14",
 				FoundBy: "Archimedes",
-				Locations: source.NewLocationSet(
+				Locations: file.NewLocationSet(
 					originalLocation,
 				),
-				Licenses: []string{
-					"cc0-1.0",
-					"MIT",
-				},
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
@@ -395,7 +369,6 @@ func TestPackage_Merge(t *testing.T) {
 				Metadata: PythonPackageMetadata{
 					Name:                 "pi",
 					Version:              "3.14",
-					License:              "cc0-1.0",
 					Author:               "Archimedes",
 					AuthorEmail:          "Archimedes@circles.io",
 					Platform:             "universe",
@@ -422,7 +395,7 @@ func TestPackage_Merge(t *testing.T) {
 			if diff := cmp.Diff(*tt.expected, tt.subject,
 				cmp.AllowUnexported(Package{}),
 				cmp.Comparer(
-					func(x, y source.LocationSet) bool {
+					func(x, y file.LocationSet) bool {
 						xs := x.ToSlice()
 						ys := y.ToSlice()
 
@@ -439,6 +412,24 @@ func TestPackage_Merge(t *testing.T) {
 						return true
 					},
 				),
+				cmp.Comparer(
+					func(x, y LicenseSet) bool {
+						xs := x.ToSlice()
+						ys := y.ToSlice()
+
+						if len(xs) != len(ys) {
+							return false
+						}
+						for i, xe := range xs {
+							ye := ys[i]
+							if !licenseComparer(xe, ye) {
+								return false
+							}
+						}
+
+						return true
+					},
+				),
 				cmp.Comparer(locationComparer),
 			); diff != "" {
 				t.Errorf("unexpected result from parsing (-expected +actual)\n%s", diff)
@@ -447,7 +438,11 @@ func TestPackage_Merge(t *testing.T) {
 	}
 }
 
-func locationComparer(x, y source.Location) bool {
+func licenseComparer(x, y License) bool {
+	return cmp.Equal(x, y, cmp.Comparer(locationComparer))
+}
+
+func locationComparer(x, y file.Location) bool {
 	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
 }
 

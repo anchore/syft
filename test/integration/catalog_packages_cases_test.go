@@ -69,6 +69,14 @@ var imageOnlyTestCases = []testCase{
 			"joda-time":              "2.9.2",
 		},
 	},
+	{
+		name:        "find R packages",
+		pkgType:     pkg.Rpkg,
+		pkgLanguage: pkg.R,
+		pkgInfo: map[string]string{
+			"base": "4.3.0",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{
@@ -346,6 +354,18 @@ var dirOnlyTestCases = []testCase{
 			"parse_trans":         "3.3.1",
 			"ssl_verify_fun":      "1.1.6",
 			"unicode_util_compat": "0.7.0",
+		},
+	},
+	{
+		name:        "find swift package manager packages",
+		pkgType:     pkg.SwiftPkg,
+		pkgLanguage: pkg.Swift,
+		pkgInfo: map[string]string{
+			"swift-algorithms":       "1.0.0",
+			"swift-async-algorithms": "0.1.0",
+			"swift-atomics":          "1.1.0",
+			"swift-collections":      "1.0.4",
+			"swift-numerics":         "1.0.2",
 		},
 	},
 }

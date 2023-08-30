@@ -8,6 +8,11 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 func Test_decode(t *testing.T) {
@@ -184,16 +189,16 @@ func Test_decode(t *testing.T) {
 					ver: "1.2.3",
 				},
 				{
-					pkg:      "package-1",
-					ver:      "1.0.1",
-					cpe:      "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
-					purl:     "pkg:some/package-1@1.0.1?arch=arm64&upstream=upstream1&distro=alpine-1",
-					relation: "package-2",
+					pkg:  "package-1",
+					ver:  "1.0.1",
+					cpe:  "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
+					purl: "pkg:some/package-1@1.0.1?arch=arm64&upstream=upstream1&distro=alpine-1",
 				},
 				{
-					pkg:  "package-2",
-					ver:  "2.0.2",
-					purl: "pkg:apk/alpine/alpine-baselayout@3.2.0-r16?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.14.2",
+					pkg:      "package-2",
+					ver:      "2.0.2",
+					purl:     "pkg:apk/alpine/alpine-baselayout@3.2.0-r16?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.14.2",
+					relation: "package-1",
 				},
 			},
 		},
@@ -257,6 +262,46 @@ func Test_decode(t *testing.T) {
 	}
 }
 
+func Test_relationshipDirection(t *testing.T) {
+	cyclonedx_bom := cyclonedx.BOM{Metadata: nil,
+		Components: &[]cyclonedx.Component{
+			{
+				BOMRef:     "p1",
+				Type:       cyclonedx.ComponentTypeLibrary,
+				Name:       "package-1",
+				Version:    "1.0.1",
+				PackageURL: "pkg:some/package-1@1.0.1?arch=arm64&upstream=upstream1&distro=alpine-1",
+			},
+			{
+				BOMRef:     "p2",
+				Type:       cyclonedx.ComponentTypeLibrary,
+				Name:       "package-2",
+				Version:    "2.0.2",
+				PackageURL: "pkg:some/package-2@2.0.2?arch=arm64&upstream=upstream1&distro=alpine-1",
+			},
+		},
+		Dependencies: &[]cyclonedx.Dependency{
+			{
+				Ref:          "p1",
+				Dependencies: &[]string{"p2"},
+			},
+		}}
+	sbom, err := ToSyftModel(&cyclonedx_bom)
+	assert.Nil(t, err)
+	assert.Len(t, sbom.Relationships, 1)
+	relationship := sbom.Relationships[0]
+
+	// check that p2 -- dependency of --> p1
+	// same as p1 -- depends on --> p2
+	assert.Equal(t, artifact.DependencyOfRelationship, relationship.Type)
+	assert.Equal(t, "package-2", packageNameFromIdentifier(sbom, relationship.From))
+	assert.Equal(t, "package-1", packageNameFromIdentifier(sbom, relationship.To))
+}
+
+func packageNameFromIdentifier(model *sbom.SBOM, identifier artifact.Identifiable) string {
+	return model.Artifacts.Packages.Package(identifier.ID()).Name
+}
+
 func Test_missingDataDecode(t *testing.T) {
 	bom := &cyclonedx.BOM{
 		Metadata:    nil,
@@ -279,8 +324,7 @@ func Test_missingDataDecode(t *testing.T) {
 			},
 		},
 	})
-
-	assert.Len(t, pkg.Licenses, 0)
+	assert.Equal(t, pkg.Licenses.Empty(), true)
 }
 
 func Test_missingComponentsDecode(t *testing.T) {
@@ -293,4 +337,102 @@ func Test_missingComponentsDecode(t *testing.T) {
 	_, err := decode(bytes.NewReader(bomBytes))
 
 	assert.NoError(t, err)
+}
+
+func Test_decodeDependencies(t *testing.T) {
+	c1 := cyclonedx.Component{
+		Name: "c1",
+	}
+
+	c2 := cyclonedx.Component{
+		Name: "c2",
+	}
+
+	c3 := cyclonedx.Component{
+		Name: "c3",
+	}
+
+	for _, c := range []*cyclonedx.Component{&c1, &c2, &c3} {
+		c.BOMRef = c.Name
+	}
+
+	setTypes := func(typ cyclonedx.ComponentType, components ...cyclonedx.Component) *[]cyclonedx.Component {
+		var out []cyclonedx.Component
+		for _, c := range components {
+			c.Type = typ
+			out = append(out, c)
+		}
+		return &out
+	}
+
+	tests := []struct {
+		name     string
+		sbom     cyclonedx.BOM
+		expected []string
+	}{
+		{
+			name: "dependencies decoded as dependencyOf relationships",
+			sbom: cyclonedx.BOM{
+				Components: setTypes(cyclonedx.ComponentTypeLibrary,
+					c1,
+					c2,
+					c3,
+				),
+				Dependencies: &[]cyclonedx.Dependency{
+					{
+						Ref: c1.BOMRef,
+						Dependencies: &[]string{
+							c2.BOMRef,
+							c3.BOMRef,
+						},
+					},
+				},
+			},
+			expected: []string{c2.Name, c3.Name},
+		},
+		{
+			name: "dependencies skipped with unhandled components",
+			sbom: cyclonedx.BOM{
+				Components: setTypes("",
+					c1,
+					c2,
+					c3,
+				),
+				Dependencies: &[]cyclonedx.Dependency{
+					{
+						Ref: c1.BOMRef,
+						Dependencies: &[]string{
+							c2.BOMRef,
+							c3.BOMRef,
+						},
+					},
+				},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s, err := ToSyftModel(&test.sbom)
+			require.NoError(t, err)
+			require.NotNil(t, s)
+
+			var deps []string
+			if s != nil {
+				for _, r := range s.Relationships {
+					if r.Type != artifact.DependencyOfRelationship {
+						continue
+					}
+					if p, ok := r.To.(pkg.Package); !ok || p.Name != c1.Name {
+						continue
+					}
+					if p, ok := r.From.(pkg.Package); ok {
+						deps = append(deps, p.Name)
+					}
+				}
+			}
+			require.Equal(t, test.expected, deps)
+		})
+	}
 }

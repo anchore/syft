@@ -52,6 +52,13 @@ func TestAllFormatsConvertable(t *testing.T) {
 				convertArgs = append(convertArgs, "--template", test.template)
 			}
 			cmd, stdout, stderr = runSyft(t, test.env, convertArgs...)
+			if cmd.ProcessState.ExitCode() != 0 {
+				t.Log("STDOUT:\n", stdout)
+				t.Log("STDERR:\n", stderr)
+				t.Log("COMMAND:", strings.Join(cmd.Args, " "))
+				t.Fatalf("failure executing syft creating an sbom")
+				return
+			}
 			for _, traitFn := range assertions {
 				traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			}

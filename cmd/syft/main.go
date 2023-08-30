@@ -1,20 +1,34 @@
 package main
 
 import (
-	"log"
-
 	_ "modernc.org/sqlite"
 
+	"github.com/anchore/clio"
 	"github.com/anchore/syft/cmd/syft/cli"
+	"github.com/anchore/syft/cmd/syft/internal"
+)
+
+// applicationName is the non-capitalized name of the application (do not change this)
+const applicationName = "syft"
+
+// all variables here are provided as build-time arguments, with clear default values
+var (
+	version        = internal.NotProvided
+	buildDate      = internal.NotProvided
+	gitCommit      = internal.NotProvided
+	gitDescription = internal.NotProvided
 )
 
 func main() {
-	cli, err := cli.New()
-	if err != nil {
-		log.Fatalf("error during command construction: %v", err)
-	}
+	app := cli.New(
+		clio.Identification{
+			Name:           applicationName,
+			Version:        version,
+			BuildDate:      buildDate,
+			GitCommit:      gitCommit,
+			GitDescription: gitDescription,
+		},
+	)
 
-	if err := cli.Execute(); err != nil {
-		log.Fatalf("error during command execution: %v", err)
-	}
+	app.Run()
 }

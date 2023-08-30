@@ -8,7 +8,6 @@ import (
 	"github.com/mholt/archiver/v3"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -26,7 +25,7 @@ func toGithubModel(s *sbom.SBOM) DependencySnapshot {
 		Version: 0,
 		// TODO allow property input to specify the Job, Sha, and Ref
 		Detector: DetectorMetadata{
-			Name:    internal.ApplicationName,
+			Name:    s.Descriptor.Name,
 			URL:     "https://github.com/anchore/syft",
 			Version: v,
 		},
@@ -62,45 +61,6 @@ func filesystem(p pkg.Package) string {
 		return locations[0].FileSystemID
 	}
 	return ""
-}
-
-// isArchive returns true if the path appears to be an archive
-func isArchive(path string) bool {
-	_, err := archiver.ByExtension(path)
-	return err == nil
-}
-
-// toPath Generates a string representation of the package location, optionally including the layer hash
-func toPath(s source.Metadata, p pkg.Package) string {
-	inputPath := strings.TrimPrefix(s.Path, "./")
-	if inputPath == "." {
-		inputPath = ""
-	}
-	locations := p.Locations.ToSlice()
-	if len(locations) > 0 {
-		location := locations[0]
-		packagePath := location.RealPath
-		if location.VirtualPath != "" {
-			packagePath = location.VirtualPath
-		}
-		packagePath = strings.TrimPrefix(packagePath, "/")
-		switch s.Scheme {
-		case source.ImageScheme:
-			image := strings.ReplaceAll(s.ImageMetadata.UserInput, ":/", "//")
-			return fmt.Sprintf("%s:/%s", image, packagePath)
-		case source.FileScheme:
-			if isArchive(inputPath) {
-				return fmt.Sprintf("%s:/%s", inputPath, packagePath)
-			}
-			return inputPath
-		case source.DirectoryScheme:
-			if inputPath != "" {
-				return fmt.Sprintf("%s/%s", inputPath, packagePath)
-			}
-			return packagePath
-		}
-	}
-	return fmt.Sprintf("%s%s", inputPath, s.ImageMetadata.UserInput)
 }
 
 // toGithubManifests manifests, each of which represents a specific location that has dependencies
@@ -144,6 +104,63 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 	return out
 }
 
+// toPath Generates a string representation of the package location, optionally including the layer hash
+func toPath(s source.Description, p pkg.Package) string {
+	inputPath := trimRelative(s.Name)
+	locations := p.Locations.ToSlice()
+	if len(locations) > 0 {
+		location := locations[0]
+		packagePath := location.RealPath
+		if location.VirtualPath != "" {
+			packagePath = location.VirtualPath
+		}
+		packagePath = strings.TrimPrefix(packagePath, "/")
+		switch metadata := s.Metadata.(type) {
+		case source.StereoscopeImageSourceMetadata:
+			image := strings.ReplaceAll(metadata.UserInput, ":/", "//")
+			return fmt.Sprintf("%s:/%s", image, packagePath)
+		case source.FileSourceMetadata:
+			path := trimRelative(metadata.Path)
+			if isArchive(metadata.Path) {
+				return fmt.Sprintf("%s:/%s", path, packagePath)
+			}
+			return path
+		case source.DirectorySourceMetadata:
+			path := trimRelative(metadata.Path)
+			if path != "" {
+				return fmt.Sprintf("%s/%s", path, packagePath)
+			}
+			return packagePath
+		}
+	}
+	return inputPath
+}
+
+func trimRelative(s string) string {
+	s = strings.TrimPrefix(s, "./")
+	if s == "." {
+		s = ""
+	}
+	return s
+}
+
+// isArchive returns true if the path appears to be an archive
+func isArchive(path string) bool {
+	_, err := archiver.ByExtension(path)
+	return err == nil
+}
+
+func toDependencies(s *sbom.SBOM, p pkg.Package) (out []string) {
+	for _, r := range s.Relationships {
+		if r.From.ID() == p.ID() {
+			if p, ok := r.To.(pkg.Package); ok {
+				out = append(out, dependencyName(p))
+			}
+		}
+	}
+	return
+}
+
 // dependencyName to make things a little nicer to read; this might end up being lossy
 func dependencyName(p pkg.Package) string {
 	purl, err := packageurl.FromString(p.PURL)
@@ -170,15 +187,4 @@ func toDependencyMetadata(_ pkg.Package) Metadata {
 	// of the other information Grype might need; and the distro information at the top level
 	// so we don't need anything here yet
 	return Metadata{}
-}
-
-func toDependencies(s *sbom.SBOM, p pkg.Package) (out []string) {
-	for _, r := range s.Relationships {
-		if r.From.ID() == p.ID() {
-			if p, ok := r.To.(pkg.Package); ok {
-				out = append(out, dependencyName(p))
-			}
-		}
-	}
-	return
 }

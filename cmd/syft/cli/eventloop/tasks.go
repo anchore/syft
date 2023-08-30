@@ -1,23 +1,24 @@
 package eventloop
 
 import (
-	"crypto"
-	"fmt"
-
-	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/cmd/syft/cli/options"
+	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/filecontent"
+	"github.com/anchore/syft/syft/file/cataloger/filedigest"
+	"github.com/anchore/syft/syft/file/cataloger/filemetadata"
+	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
-type Task func(*sbom.Artifacts, *source.Source) ([]artifact.Relationship, error)
+type Task func(*sbom.Artifacts, source.Source) ([]artifact.Relationship, error)
 
-func Tasks(app *config.Application) ([]Task, error) {
+func Tasks(opts *options.Catalog) ([]Task, error) {
 	var tasks []Task
 
-	generators := []func(app *config.Application) (Task, error){
+	generators := []func(opts *options.Catalog) (Task, error){
 		generateCatalogPackagesTask,
 		generateCatalogFileMetadataTask,
 		generateCatalogFileDigestsTask,
@@ -26,7 +27,7 @@ func Tasks(app *config.Application) ([]Task, error) {
 	}
 
 	for _, generator := range generators {
-		task, err := generator(app)
+		task, err := generator(opts)
 		if err != nil {
 			return nil, err
 		}
@@ -39,13 +40,13 @@ func Tasks(app *config.Application) ([]Task, error) {
 	return tasks, nil
 }
 
-func generateCatalogPackagesTask(app *config.Application) (Task, error) {
-	if !app.Package.Cataloger.Enabled {
+func generateCatalogPackagesTask(opts *options.Catalog) (Task, error) {
+	if !opts.Package.Cataloger.Enabled {
 		return nil, nil
 	}
 
-	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
-		packageCatalog, relationships, theDistro, err := syft.CatalogPackages(src, app.ToCatalogerConfig())
+	task := func(results *sbom.Artifacts, src source.Source) ([]artifact.Relationship, error) {
+		packageCatalog, relationships, theDistro, err := syft.CatalogPackages(src, opts.ToCatalogerConfig())
 
 		results.Packages = packageCatalog
 		results.LinuxDistribution = theDistro
@@ -56,15 +57,15 @@ func generateCatalogPackagesTask(app *config.Application) (Task, error) {
 	return task, nil
 }
 
-func generateCatalogFileMetadataTask(app *config.Application) (Task, error) {
-	if !app.FileMetadata.Cataloger.Enabled {
+func generateCatalogFileMetadataTask(opts *options.Catalog) (Task, error) {
+	if !opts.FileMetadata.Cataloger.Enabled {
 		return nil, nil
 	}
 
-	metadataCataloger := file.NewMetadataCataloger()
+	metadataCataloger := filemetadata.NewCataloger()
 
-	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
-		resolver, err := src.FileResolver(app.FileMetadata.Cataloger.ScopeOpt)
+	task := func(results *sbom.Artifacts, src source.Source) ([]artifact.Relationship, error) {
+		resolver, err := src.FileResolver(opts.FileMetadata.Cataloger.GetScope())
 		if err != nil {
 			return nil, err
 		}
@@ -80,37 +81,20 @@ func generateCatalogFileMetadataTask(app *config.Application) (Task, error) {
 	return task, nil
 }
 
-func generateCatalogFileDigestsTask(app *config.Application) (Task, error) {
-	if !app.FileMetadata.Cataloger.Enabled {
+func generateCatalogFileDigestsTask(opts *options.Catalog) (Task, error) {
+	if !opts.FileMetadata.Cataloger.Enabled {
 		return nil, nil
 	}
 
-	supportedHashAlgorithms := make(map[string]crypto.Hash)
-	for _, h := range []crypto.Hash{
-		crypto.MD5,
-		crypto.SHA1,
-		crypto.SHA256,
-	} {
-		supportedHashAlgorithms[file.DigestAlgorithmName(h)] = h
-	}
-
-	var hashes []crypto.Hash
-	for _, hashStr := range app.FileMetadata.Digests {
-		name := file.CleanDigestAlgorithmName(hashStr)
-		hashObj, ok := supportedHashAlgorithms[name]
-		if !ok {
-			return nil, fmt.Errorf("unsupported hash algorithm: %s", hashStr)
-		}
-		hashes = append(hashes, hashObj)
-	}
-
-	digestsCataloger, err := file.NewDigestsCataloger(hashes)
+	hashes, err := file.Hashers(opts.FileMetadata.Digests...)
 	if err != nil {
 		return nil, err
 	}
 
-	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
-		resolver, err := src.FileResolver(app.FileMetadata.Cataloger.ScopeOpt)
+	digestsCataloger := filedigest.NewCataloger(hashes)
+
+	task := func(results *sbom.Artifacts, src source.Source) ([]artifact.Relationship, error) {
+		resolver, err := src.FileResolver(opts.FileMetadata.Cataloger.GetScope())
 		if err != nil {
 			return nil, err
 		}
@@ -126,23 +110,23 @@ func generateCatalogFileDigestsTask(app *config.Application) (Task, error) {
 	return task, nil
 }
 
-func generateCatalogSecretsTask(app *config.Application) (Task, error) {
-	if !app.Secrets.Cataloger.Enabled {
+func generateCatalogSecretsTask(opts *options.Catalog) (Task, error) {
+	if !opts.Secrets.Cataloger.Enabled {
 		return nil, nil
 	}
 
-	patterns, err := file.GenerateSearchPatterns(file.DefaultSecretsPatterns, app.Secrets.AdditionalPatterns, app.Secrets.ExcludePatternNames)
+	patterns, err := secrets.GenerateSearchPatterns(secrets.DefaultSecretsPatterns, opts.Secrets.AdditionalPatterns, opts.Secrets.ExcludePatternNames)
 	if err != nil {
 		return nil, err
 	}
 
-	secretsCataloger, err := file.NewSecretsCataloger(patterns, app.Secrets.RevealValues, app.Secrets.SkipFilesAboveSize)
+	secretsCataloger, err := secrets.NewCataloger(patterns, opts.Secrets.RevealValues, opts.Secrets.SkipFilesAboveSize) //nolint:staticcheck
 	if err != nil {
 		return nil, err
 	}
 
-	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
-		resolver, err := src.FileResolver(app.Secrets.Cataloger.ScopeOpt)
+	task := func(results *sbom.Artifacts, src source.Source) ([]artifact.Relationship, error) {
+		resolver, err := src.FileResolver(opts.Secrets.Cataloger.GetScope())
 		if err != nil {
 			return nil, err
 		}
@@ -158,18 +142,18 @@ func generateCatalogSecretsTask(app *config.Application) (Task, error) {
 	return task, nil
 }
 
-func generateCatalogContentsTask(app *config.Application) (Task, error) {
-	if !app.FileContents.Cataloger.Enabled {
+func generateCatalogContentsTask(opts *options.Catalog) (Task, error) {
+	if !opts.FileContents.Cataloger.Enabled {
 		return nil, nil
 	}
 
-	contentsCataloger, err := file.NewContentsCataloger(app.FileContents.Globs, app.FileContents.SkipFilesAboveSize)
+	contentsCataloger, err := filecontent.NewCataloger(opts.FileContents.Globs, opts.FileContents.SkipFilesAboveSize) //nolint:staticcheck
 	if err != nil {
 		return nil, err
 	}
 
-	task := func(results *sbom.Artifacts, src *source.Source) ([]artifact.Relationship, error) {
-		resolver, err := src.FileResolver(app.FileContents.Cataloger.ScopeOpt)
+	task := func(results *sbom.Artifacts, src source.Source) ([]artifact.Relationship, error) {
+		resolver, err := src.FileResolver(opts.FileContents.Cataloger.GetScope())
 		if err != nil {
 			return nil, err
 		}
@@ -185,16 +169,17 @@ func generateCatalogContentsTask(app *config.Application) (Task, error) {
 	return task, nil
 }
 
-func RunTask(t Task, a *sbom.Artifacts, src *source.Source, c chan<- artifact.Relationship, errs chan<- error) {
+func RunTask(t Task, a *sbom.Artifacts, src source.Source, c chan<- artifact.Relationship) error {
 	defer close(c)
 
 	relationships, err := t(a, src)
 	if err != nil {
-		errs <- err
-		return
+		return err
 	}
 
 	for _, relationship := range relationships {
 		c <- relationship
 	}
+
+	return nil
 }

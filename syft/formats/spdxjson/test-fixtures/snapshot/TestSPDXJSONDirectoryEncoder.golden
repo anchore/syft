@@ -2,24 +2,26 @@
  "spdxVersion": "SPDX-2.3",
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
- "name": "/some/path",
- "documentNamespace": "https://anchore.com/syft/dir/some/path-4029b5ec-6d70-4c0c-aedf-b61c8f5ea93c",
+ "name": "some/path",
+ "documentNamespace":"redacted",
  "creationInfo": {
-  "licenseListVersion": "3.20",
+  "licenseListVersion":"redacted",
   "creators": [
    "Organization: Anchore, Inc",
    "Tool: syft-v0.42.0-bogus"
   ],
-  "created": "2023-05-02T18:24:17Z"
+  "created":"redacted"
  },
  "packages": [
   {
    "name": "package-1",
-   "SPDXID": "SPDXRef-Package-python-package-1-1b1d0be59ac59d2c",
+   "SPDXID": "SPDXRef-Package-python-package-1-9265397e5e15168a",
    "versionInfo": "1.0.1",
+   "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
    "sourceInfo": "acquired package info from installed python package manifest file: /some/path/pkg1",
-   "licenseConcluded": "MIT",
+   "licenseConcluded": "NOASSERTION",
    "licenseDeclared": "MIT",
    "copyrightText": "NOASSERTION",
    "externalRefs": [
@@ -39,10 +41,12 @@
    "name": "package-2",
    "SPDXID": "SPDXRef-Package-deb-package-2-db4abfe497c180d3",
    "versionInfo": "2.0.1",
+   "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
    "sourceInfo": "acquired package info from DPKG DB: /some/path/pkg1",
-   "licenseConcluded": "NONE",
-   "licenseDeclared": "NONE",
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
    "copyrightText": "NOASSERTION",
    "externalRefs": [
     {
@@ -56,12 +60,30 @@
      "referenceLocator": "pkg:deb/debian/package-2@2.0.1"
     }
    ]
+  },
+  {
+   "name": "some/path",
+   "SPDXID": "SPDXRef-DocumentRoot-Directory-some-path",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "primaryPackagePurpose": "FILE"
   }
  ],
  "relationships": [
   {
+   "spdxElementId": "SPDXRef-DocumentRoot-Directory-some-path",
+   "relatedSpdxElement": "SPDXRef-Package-python-package-1-9265397e5e15168a",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DocumentRoot-Directory-some-path",
+   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-db4abfe497c180d3",
+   "relationshipType": "CONTAINS"
+  },
+  {
    "spdxElementId": "SPDXRef-DOCUMENT",
-   "relatedSpdxElement": "SPDXRef-DOCUMENT",
+   "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-some-path",
    "relationshipType": "DESCRIBES"
   }
  ]

@@ -2,11 +2,11 @@ SPDXVersion: SPDX-2.3
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
 DocumentName: user-image-input
-DocumentNamespace: https://anchore.com/syft/image/user-image-input-5be37b11-b99a-47ff-8725-3984e323d129
-LicenseListVersion: 3.20
+DocumentNamespace: redacted
+LicenseListVersion: redacted
 Creator: Organization: Anchore, Inc
 Creator: Tool: syft-v0.42.0-bogus
-Created: 2023-05-02T18:24:33Z
+Created: redacted
 
 ##### Unpackaged files
 
@@ -46,16 +46,29 @@ FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 
+##### Package: user-image-input
+
+PackageName: user-image-input
+SPDXID: SPDXRef-DocumentRoot-Image-user-image-input
+PackageVersion: sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+PrimaryPackagePurpose: CONTAINER
+FilesAnalyzed: false
+PackageChecksum: SHA256: 2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368
+ExternalRef: PACKAGE-MANAGER purl pkg:oci/user-image-input@sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch=
+
 ##### Package: package-2
 
 PackageName: package-2
 SPDXID: SPDXRef-Package-deb-package-2-958443e2d9304af4
 PackageVersion: 2.0.1
+PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from DPKG DB: /somefile-2.txt
-PackageLicenseConcluded: NONE
-PackageLicenseDeclared: NONE
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
 PackageCopyrightText: NOASSERTION
 ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:2:*:*:*:*:*:*:*
 ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
@@ -63,12 +76,13 @@ ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
 ##### Package: package-1
 
 PackageName: package-1
-SPDXID: SPDXRef-Package-python-package-1-66ba429119b8bec6
+SPDXID: SPDXRef-Package-python-package-1-125840abc1c66dd7
 PackageVersion: 1.0.1
+PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 PackageSourceInfo: acquired package info from installed python package manifest file: /somefile-1.txt
-PackageLicenseConcluded: MIT
+PackageLicenseConcluded: NOASSERTION
 PackageLicenseDeclared: MIT
 PackageCopyrightText: NOASSERTION
 ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:1:*:*:*:*:*:*:*
@@ -76,11 +90,13 @@ ExternalRef: PACKAGE-MANAGER purl a-purl-1
 
 ##### Relationships
 
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-f1-5265a4dde3edbf7c
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-z1-f5-839d99ee67d9d174
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-a1-f6-9c2f7510199b17f6
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-d2-f4-c641caa71518099f
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-d1-f3-c6f5b29dca12661f
-Relationship: SPDXRef-Package-python-package-1-66ba429119b8bec6 CONTAINS SPDXRef-File-f2-f9e49132a4b96ccd
-Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DOCUMENT
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-f1-5265a4dde3edbf7c
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-z1-f5-839d99ee67d9d174
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-a1-f6-9c2f7510199b17f6
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-d2-f4-c641caa71518099f
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-d1-f3-c6f5b29dca12661f
+Relationship: SPDXRef-Package-python-package-1-125840abc1c66dd7 CONTAINS SPDXRef-File-f2-f9e49132a4b96ccd
+Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-python-package-1-125840abc1c66dd7
+Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-deb-package-2-958443e2d9304af4
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Image-user-image-input
 

@@ -21,6 +21,5 @@ type GemMetadata struct {
 	// ... we can't reliably determine the full path to the file on disk, thus cannot implement FileOwner (...yet...).
 	Files    []string `mapstructure:"files" json:"files,omitempty"`
 	Authors  []string `mapstructure:"authors" json:"authors,omitempty"`
-	Licenses []string `mapstructure:"licenses" json:"licenses,omitempty"`
 	Homepage string   `mapstructure:"homepage" json:"homepage,omitempty"`
 }

@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/source"
 )
 
 func TestParseConanfile(t *testing.T) {
 	fixture := "test-fixtures/conanfile.txt"
-	fixtureLocationSet := source.NewLocationSet(source.NewLocation(fixture))
+	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
 	expected := []pkg.Package{
 		{
 			Name:         "catch2",
@@ -52,13 +52,13 @@ func TestParseConanfile(t *testing.T) {
 		{
 			Name:         "spdlog",
 			Version:      "1.9.2",
-			PURL:         "pkg:conan/spdlog@1.9.2",
+			PURL:         "pkg:conan/my_user/spdlog@1.9.2?channel=my_channel",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
 			MetadataType: pkg.ConanMetadataType,
 			Metadata: pkg.ConanMetadata{
-				Ref: "spdlog/1.9.2",
+				Ref: "spdlog/1.9.2@my_user/my_channel#1234567%%987654",
 			},
 		},
 		{
@@ -70,19 +70,19 @@ func TestParseConanfile(t *testing.T) {
 			Type:         pkg.ConanPkg,
 			MetadataType: pkg.ConanMetadataType,
 			Metadata: pkg.ConanMetadata{
-				Ref: "sdl/2.0.20",
+				Ref: "sdl/2.0.20#1234567%%987654",
 			},
 		},
 		{
 			Name:         "fltk",
 			Version:      "1.3.8",
-			PURL:         "pkg:conan/fltk@1.3.8",
+			PURL:         "pkg:conan/my_user/fltk@1.3.8?channel=my_channel",
 			Locations:    fixtureLocationSet,
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
 			MetadataType: pkg.ConanMetadataType,
 			Metadata: pkg.ConanMetadata{
-				Ref: "fltk/1.3.8",
+				Ref: "fltk/1.3.8@my_user/my_channel",
 			},
 		},
 	}

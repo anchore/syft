@@ -26,13 +26,15 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	for _, c := range cataloger.ImageCatalogers(cataloger.DefaultConfig()) {
 		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
 		userInput := "docker-archive:" + tarPath
-		sourceInput, err := source.ParseInput(userInput, "", "")
+		detection, err := source.Detect(userInput, source.DefaultDetectConfig())
 		require.NoError(b, err)
-		theSource, cleanupSource, err := source.New(*sourceInput, nil, nil, "")
-		b.Cleanup(cleanupSource)
+		theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
 		if err != nil {
 			b.Fatalf("unable to get source: %+v", err)
 		}
+		b.Cleanup(func() {
+			theSource.Close()
+		})
 
 		resolver, err := theSource.FileResolver(source.SquashedScope)
 		if err != nil {
@@ -93,6 +95,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.HexPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
+	definedPkgs.Remove(string(pkg.SwiftPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -220,10 +223,12 @@ func TestPkgCoverageDirectory(t *testing.T) {
 
 	observedLanguages.Remove(pkg.UnknownLanguage.String())
 	definedLanguages.Remove(pkg.UnknownLanguage.String())
+	definedLanguages.Remove(pkg.R.String())
 	observedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
+	definedPkgs.Remove(string(pkg.Rpkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
 
 	// for directory scans we should not expect to see any of the following package types

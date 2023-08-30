@@ -66,9 +66,17 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:hex/hpax/hpax@0.1.1",
 			want: UnknownLanguage,
 		},
+		{
+			purl: "pkg:cran/base@4.3.0",
+			want: R,
+		},
+		{
+			purl: "pkg:swift/github.com/apple/swift-numerics/swift-numerics@1.0.2",
+			want: Swift,
+		},
 	}
 
-	var languages []string
+	var languages = strset.New()
 	var expectedLanguages = strset.New()
 	for _, ty := range AllLanguages {
 		expectedLanguages.Add(string(ty))
@@ -83,14 +91,14 @@ func TestLanguageFromPURL(t *testing.T) {
 			actual := LanguageFromPURL(tt.purl)
 
 			if actual != "" {
-				languages = append(languages, string(actual))
+				languages.Add(string(actual))
 			}
 
 			assert.Equalf(t, tt.want, actual, "LanguageFromPURL(%v)", tt.purl)
 		})
 	}
 
-	assert.ElementsMatch(t, expectedLanguages.List(), languages, "missing one or more languages to test against (maybe a package type was added?)")
+	assert.ElementsMatch(t, expectedLanguages.List(), languages.List(), "missing one or more languages to test against (maybe a package type was added?)")
 
 }
 
@@ -230,6 +238,10 @@ func TestLanguageByName(t *testing.T) {
 		{
 			name:     "haskell",
 			language: Haskell,
+		},
+		{
+			name:     "R",
+			language: R,
 		},
 	}
 

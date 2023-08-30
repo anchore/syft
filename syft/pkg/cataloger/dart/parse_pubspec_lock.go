@@ -5,13 +5,13 @@ import (
 	"net/url"
 	"sort"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parsePubspecLock
@@ -38,7 +38,24 @@ type pubspecLockDescription struct {
 	ResolvedRef string `yaml:"resolved-ref" mapstructure:"resolved-ref"`
 }
 
-func parsePubspecLock(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (p *pubspecLockDescription) UnmarshalYAML(value *yaml.Node) error {
+	type pld pubspecLockDescription
+	var p2 pld
+
+	if value.Decode(&p.Name) == nil {
+		return nil
+	}
+
+	if err := value.Decode(&p2); err != nil {
+		return err
+	}
+
+	*p = pubspecLockDescription(p2)
+
+	return nil
+}
+
+func parsePubspecLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	dec := yaml.NewDecoder(reader)

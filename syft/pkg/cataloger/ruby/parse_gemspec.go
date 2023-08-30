@@ -11,14 +11,19 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ generic.Parser = parseGemFileLockEntries
 
 type postProcessor func(string) []string
+
+type gemData struct {
+	Licenses        []string `mapstructure:"licenses" json:"licenses,omitempty"`
+	pkg.GemMetadata `mapstructure:",squash" json:",inline"`
+}
 
 // match example:      Al\u003Ex   --->   003E
 var unicodePattern = regexp.MustCompile(`\\u(?P<unicode>[0-9A-F]{4})`)
@@ -59,7 +64,7 @@ func processList(s string) []string {
 	return results
 }
 
-func parseGemSpecEntries(_ source.FileResolver, _ *generic.Environment, reader source.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGemSpecEntries(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
 	scanner := bufio.NewScanner(reader)
@@ -90,14 +95,17 @@ func parseGemSpecEntries(_ source.FileResolver, _ *generic.Environment, reader s
 	}
 
 	if fields["name"] != "" && fields["version"] != "" {
-		var metadata pkg.GemMetadata
+		var metadata gemData
 		if err := mapstructure.Decode(fields, &metadata); err != nil {
 			return nil, nil, fmt.Errorf("unable to decode gem metadata: %w", err)
 		}
 
 		pkgs = append(
 			pkgs,
-			newGemspecPackage(metadata, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			newGemspecPackage(
+				metadata,
+				reader.Location,
+			),
 		)
 	}
 

@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "304a5a8e5958a49d",
+   "id": "271e49ba46e0b601",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -12,7 +12,13 @@
     }
    ],
    "licenses": [
-    "MIT"
+    {
+     "value": "MIT",
+     "spdxExpression": "MIT",
+     "type": "declared",
+     "urls": [],
+     "locations": []
+    }
    ],
    "language": "python",
    "cpes": [
@@ -23,7 +29,6 @@
    "metadata": {
     "name": "package-1",
     "version": "1.0.1",
-    "license": "",
     "author": "",
     "authorEmail": "",
     "platform": "",
@@ -86,7 +91,7 @@
    }
   },
   {
-   "id": "e7c88bd18e11b0b",
+   "id": "0e7c88bd18e11b0b",
    "location": {
     "path": "/a/place/a"
    },
@@ -144,8 +149,10 @@
  ],
  "source": {
   "id": "c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
+  "name": "",
+  "version": "",
   "type": "image",
-  "target": {
+  "metadata": {
    "userInput": "user-image-input",
    "imageID": "sha256:c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
    "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",

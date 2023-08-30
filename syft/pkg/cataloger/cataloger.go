@@ -28,6 +28,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
 	"github.com/anchore/syft/syft/pkg/cataloger/portage"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
+	"github.com/anchore/syft/syft/pkg/cataloger/r"
 	"github.com/anchore/syft/syft/pkg/cataloger/rpm"
 	"github.com/anchore/syft/syft/pkg/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg/cataloger/rust"
@@ -44,8 +45,8 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		apkdb.NewApkdbCataloger(),
 		binary.NewCataloger(),
 		deb.NewDpkgdbCataloger(),
-		dotnet.NewDotnetDepsCataloger(),
-		golang.NewGoModuleBinaryCataloger(cfg.Go()),
+		dotnet.NewDotnetPortableExecutableCataloger(),
+		golang.NewGoModuleBinaryCataloger(cfg.Golang),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewNativeImageCataloger(),
 		javascript.NewPackageCataloger(),
@@ -53,6 +54,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		php.NewComposerInstalledCataloger(),
 		portage.NewPortageCataloger(),
 		python.NewPythonPackageCataloger(),
+		r.NewPackageCataloger(),
 		rpm.NewRpmDBCataloger(),
 		ruby.NewGemSpecCataloger(),
 		sbom.NewSBOMCataloger(),
@@ -69,10 +71,11 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		dart.NewPubspecLockCataloger(),
 		deb.NewDpkgdbCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
+		dotnet.NewDotnetPortableExecutableCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
-		golang.NewGoModFileCataloger(cfg.Go()),
-		golang.NewGoModuleBinaryCataloger(cfg.Go()),
+		golang.NewGoModFileCataloger(cfg.Golang),
+		golang.NewGoModuleBinaryCataloger(cfg.Golang),
 		haskell.NewHackageCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewJavaGradleLockfileCataloger(),
@@ -82,7 +85,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		nix.NewStoreCataloger(),
 		php.NewComposerLockCataloger(),
 		portage.NewPortageCataloger(),
-		python.NewPythonIndexCataloger(),
+		python.NewPythonIndexCataloger(cfg.Python),
 		python.NewPythonPackageCataloger(),
 		rpm.NewFileCataloger(),
 		rpm.NewRpmDBCataloger(),
@@ -90,6 +93,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		rust.NewCargoLockCataloger(),
 		sbom.NewSBOMCataloger(),
 		swift.NewCocoapodsCataloger(),
+		swift.NewSwiftPackageManagerCataloger(),
 	}, cfg.Catalogers)
 }
 
@@ -103,10 +107,11 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		dart.NewPubspecLockCataloger(),
 		deb.NewDpkgdbCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
+		dotnet.NewDotnetPortableExecutableCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
-		golang.NewGoModFileCataloger(cfg.Go()),
-		golang.NewGoModuleBinaryCataloger(cfg.Go()),
+		golang.NewGoModFileCataloger(cfg.Golang),
+		golang.NewGoModuleBinaryCataloger(cfg.Golang),
 		haskell.NewHackageCataloger(),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewJavaGradleLockfileCataloger(),
@@ -114,13 +119,14 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		java.NewNativeImageCataloger(),
 		javascript.NewLockCataloger(),
 		javascript.NewPackageCataloger(),
-		kernel.NewLinuxKernelCataloger(cfg.Kernel()),
+		kernel.NewLinuxKernelCataloger(cfg.LinuxKernel),
 		nix.NewStoreCataloger(),
 		php.NewComposerInstalledCataloger(),
 		php.NewComposerLockCataloger(),
 		portage.NewPortageCataloger(),
-		python.NewPythonIndexCataloger(),
+		python.NewPythonIndexCataloger(cfg.Python),
 		python.NewPythonPackageCataloger(),
+		r.NewPackageCataloger(),
 		rpm.NewFileCataloger(),
 		rpm.NewRpmDBCataloger(),
 		ruby.NewGemFileLockCataloger(),
@@ -129,6 +135,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		rust.NewCargoLockCataloger(),
 		sbom.NewSBOMCataloger(),
 		swift.NewCocoapodsCataloger(),
+		swift.NewSwiftPackageManagerCataloger(),
 	}, cfg.Catalogers)
 }
 
