@@ -37,6 +37,24 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 		},
 		{
+			name: "quiet-flag-with-logger",
+			args: []string{"packages", "-qvv", "-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				assertJsonReport,
+				assertNoStderr,
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "quiet-flag-with-tui",
+			args: []string{"packages", "-q", "-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				assertJsonReport,
+				assertNoStderr,
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
 			name: "multiple-output-flags",
 			args: []string{"packages", "-o", "table", "-o", "json=" + tmp + ".tmp/multiple-output-flag-test.json", coverageImage},
 			assertions: []traitAssertion{

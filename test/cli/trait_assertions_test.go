@@ -83,6 +83,13 @@ func assertNotInOutput(data string) traitAssertion {
 	}
 }
 
+func assertNoStderr(tb testing.TB, _, stderr string, _ int) {
+	tb.Helper()
+	if len(stderr) > 0 {
+		tb.Errorf("expected stderr to be empty, but got %q", stderr)
+	}
+}
+
 func assertInOutput(data string) traitAssertion {
 	return func(tb testing.TB, stdout, stderr string, _ int) {
 		tb.Helper()
