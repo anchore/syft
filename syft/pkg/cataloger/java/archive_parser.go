@@ -223,9 +223,9 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (string, str
 	pomMatches := j.fileManifest.GlobMatch(pomXMLGlob)
 	var pomPropertiesObject pkg.PomProperties
 	var pomProjectObject pkg.PomProject
-	if len(pomPropertyMatches) == 1 && len(pomMatches) == 1 {
-		// we have exactly 1 pom.properties in the archive; assume it represents the
-		// package we're scanning
+	if len(pomPropertyMatches) == 1 || len(pomMatches) == 1 {
+		// we have exactly 1 pom.properties or pom.xml in the archive; assume it represents the
+		// package we're scanning if the names seem like a plausible match
 		properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, pomPropertyMatches)
 		projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
 
