@@ -569,7 +569,10 @@
           "type": "array"
         },
         "licenses": {
-          "$ref": "#/$defs/fileLicenses"
+          "items": {
+            "$ref": "#/$defs/FileLicense"
+          },
+          "type": "array"
         }
       },
       "type": "object",
@@ -1962,12 +1965,6 @@
       "required": [
         "revision"
       ]
-    },
-    "fileLicenses": {
-      "items": {
-        "$ref": "#/$defs/FileLicense"
-      },
-      "type": "array"
     },
     "licenses": {
       "items": {

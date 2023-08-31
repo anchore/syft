@@ -11,7 +11,7 @@ type File struct {
 	Metadata *FileMetadataEntry `json:"metadata,omitempty"`
 	Contents string             `json:"contents,omitempty"`
 	Digests  []file.Digest      `json:"digests,omitempty"`
-	Licenses fileLicenses       `json:"licenses,omitempty"`
+	Licenses []FileLicense      `json:"licenses,omitempty"`
 }
 
 type FileMetadataEntry struct {
@@ -23,8 +23,6 @@ type FileMetadataEntry struct {
 	MIMEType        string `json:"mimeType"`
 	Size            int64  `json:"size"`
 }
-
-type fileLicenses []FileLicense
 
 type FileLicense struct {
 	Value          string               `json:"value"`
