@@ -97,7 +97,6 @@ var expectedPURLs = map[string]string{
 	"hudson-cli@":                                     "pkg:maven/hudson-cli/hudson-cli",
 	"hudson-core@1.390":                               "pkg:maven/org.jvnet.hudson.main/hudson-core@1.390",
 	"hudson-war@1.390":                                "pkg:maven/org.jvnet.hudson.main/hudson-war@1.390",
-	"hudson@1.390":                                    "pkg:maven/hudson/hudson@1.390",
 	"j-interop@2.0.5":                                 "pkg:maven/j-interop/j-interop@2.0.5",
 	"j-interopdeps@2.0.5":                             "pkg:maven/j-interopdeps/j-interopdeps@2.0.5",
 	"jaxen@1.1-beta-11":                               "pkg:maven/org.jaxen/jaxen@1.1-beta-11",
