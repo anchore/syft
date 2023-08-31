@@ -148,28 +148,8 @@ func (j *archiveParser) parse() ([]pkg.Package, []artifact.Relationship, error) 
 
 // discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.
 func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
-	pomPropertyMatches := j.fileManifest.GlobMatch(pomPropertiesGlob)
-	pomMatches := j.fileManifest.GlobMatch(pomXMLGlob)
-	var pomPropertiesObject pkg.PomProperties
-	var pomProjectObject pkg.PomProject
-	if len(pomPropertyMatches) == 1 && len(pomMatches) == 1 {
-		// we have exactly 1 pom.properties in the archive; assume it represents the
-		// package we're scanning
-		properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, pomPropertyMatches)
-		projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
-
-		for parentPath, propertiesObj := range properties {
-			if propertiesObj.ArtifactID != "" && j.fileInfo.name != "" && strings.HasPrefix(propertiesObj.ArtifactID, j.fileInfo.name) {
-				pomPropertiesObject = propertiesObj
-				if proj, exists := projects[parentPath]; exists {
-					pomProjectObject = proj
-				}
-			}
-		}
-	}
 
 	// search and parse java manifest files
-	// TODO: do we want to prefer or check for pom files over manifest here?
 	manifestMatches := j.fileManifest.GlobMatch(manifestGlob)
 	if len(manifestMatches) > 1 {
 		return nil, fmt.Errorf("found multiple manifests in the jar: %+v", manifestMatches)
@@ -213,16 +193,9 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		3. manifest
 		4. filename
 	*/
-	name := pomPropertiesObject.ArtifactID
-	if name == "" {
-		name = pomProjectObject.ArtifactID
-	}
+	name, version := j.guessMainPackageNameAndVersionFromPomInfo()
 	if name == "" {
 		name = selectName(manifest, j.fileInfo)
-	}
-	version := pomPropertiesObject.Version
-	if version == "" {
-		version = pomProjectObject.Version
 	}
 	if version == "" {
 		version = selectVersion(manifest, j.fileInfo)
@@ -244,6 +217,36 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 			ArchiveDigests: digests,
 		},
 	}, nil
+}
+func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (string, string) {
+	pomPropertyMatches := j.fileManifest.GlobMatch(pomPropertiesGlob)
+	pomMatches := j.fileManifest.GlobMatch(pomXMLGlob)
+	var pomPropertiesObject pkg.PomProperties
+	var pomProjectObject pkg.PomProject
+	if len(pomPropertyMatches) == 1 && len(pomMatches) == 1 {
+		// we have exactly 1 pom.properties in the archive; assume it represents the
+		// package we're scanning
+		properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, pomPropertyMatches)
+		projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
+
+		for parentPath, propertiesObj := range properties {
+			if propertiesObj.ArtifactID != "" && j.fileInfo.name != "" && strings.HasPrefix(propertiesObj.ArtifactID, j.fileInfo.name) {
+				pomPropertiesObject = propertiesObj
+				if proj, exists := projects[parentPath]; exists {
+					pomProjectObject = proj
+				}
+			}
+		}
+	}
+	name := pomPropertiesObject.ArtifactID
+	if name == "" {
+		name = pomProjectObject.ArtifactID
+	}
+	version := pomPropertiesObject.Version
+	if version == "" {
+		version = pomProjectObject.Version
+	}
+	return name, version
 }
 
 // discoverPkgsFromAllMavenFiles parses Maven POM properties/xml for a given
