@@ -1,18 +1,38 @@
+# local development tailoring
 go.work
 go.work.sum
+.tool-versions
+
+# app configuration
 /.syft.yaml
+
+# tool and bin directories
+.tmp/
+bin/
 /bin
 /.bin
 /build
-CHANGELOG.md
-VERSION
-/test/results
 /dist
 /snapshot
-.server/
+
+# changelog generation
+CHANGELOG.md
+VERSION
+
+# IDE configuration
 .vscode/
+.idea/
+.server/
 .history/
+
+# test related
 *.fingerprint
+/test/results
+coverage.txt
+*.log
+
+# probable archives
+.images
 *.tar
 *.jar
 *.war
@@ -20,13 +40,7 @@ VERSION
 *.jpi
 *.hpi
 *.zip
-.idea/
 *.iml
-*.log
-.images
-.tmp/
-coverage.txt
-bin/
 
 # Binaries for programs and plugins
 *.exe
