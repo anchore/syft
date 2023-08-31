@@ -312,6 +312,8 @@ func Test_toSyftFiles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.want.FileContents = make(map[file.Coordinates]string)
+			tt.want.FileLicenses = make(map[file.Coordinates][]file.License)
 			assert.Equal(t, tt.want, toSyftFiles(tt.files))
 		})
 	}
