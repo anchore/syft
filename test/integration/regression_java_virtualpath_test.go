@@ -12,7 +12,6 @@ import (
 
 func TestWarCatalogedCorrectlyIfRenamed(t *testing.T) {
 	// install hudson-war@2.2.1 and renames the file to `/hudson.war`
-	// TODO: is this better expressed in syft/pkg/cataloger/java/archive_parser_test.go?
 	sbom, _ := catalogFixtureImage(t, "image-java-virtualpath-regression", source.SquashedScope, nil)
 
 	badPURL := "pkg:maven/hudson/hudson@2.2.1"
