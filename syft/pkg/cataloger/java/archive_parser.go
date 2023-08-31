@@ -159,9 +159,11 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
 
 		for parentPath, propertiesObj := range properties {
-			pomPropertiesObject = propertiesObj
-			if proj, exists := projects[parentPath]; exists {
-				pomProjectObject = proj
+			if propertiesObj.ArtifactID != "" && j.fileInfo.name != "" && strings.HasPrefix(propertiesObj.ArtifactID, j.fileInfo.name) {
+				pomPropertiesObject = propertiesObj
+				if proj, exists := projects[parentPath]; exists {
+					pomProjectObject = proj
+				}
 			}
 		}
 	}
