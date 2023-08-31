@@ -11,6 +11,7 @@ require (
 	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461
 	github.com/anchore/clio v0.0.0-20230823172630-c42d666061af
+	github.com/anchore/fangs v0.0.0-20230818131516-2186b10924fe
 	github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a
 	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
@@ -41,6 +42,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/gookit/color v1.5.4
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/iancoleman/strcase v0.3.0
 	github.com/invopop/jsonschema v0.7.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
@@ -79,11 +81,6 @@ require (
 	golang.org/x/mod v0.12.0
 	golang.org/x/net v0.14.0
 	golang.org/x/term v0.11.0
-)
-
-require (
-	github.com/anchore/fangs v0.0.0-20230818131516-2186b10924fe
-	github.com/iancoleman/strcase v0.3.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.25.0
 )
