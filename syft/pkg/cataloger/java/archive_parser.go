@@ -148,7 +148,6 @@ func (j *archiveParser) parse() ([]pkg.Package, []artifact.Relationship, error) 
 
 // discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.
 func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
-
 	// search and parse java manifest files
 	manifestMatches := j.fileManifest.GlobMatch(manifestGlob)
 	if len(manifestMatches) > 1 {
@@ -218,6 +217,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		},
 	}, nil
 }
+
 func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (string, string) {
 	pomPropertyMatches := j.fileManifest.GlobMatch(pomPropertiesGlob)
 	pomMatches := j.fileManifest.GlobMatch(pomXMLGlob)
