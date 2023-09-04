@@ -14,7 +14,7 @@ jobs:
     name: "Static analysis"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -28,7 +28,7 @@ jobs:
     name: "Unit tests"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -72,7 +72,7 @@ jobs:
     name: "Integration tests"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -94,7 +94,7 @@ jobs:
     name: "Build snapshot artifacts"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -125,7 +125,7 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download snapshot build
         uses: actions/cache/restore@v3
@@ -161,7 +161,7 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download snapshot build
         uses: actions/cache/restore@v3
@@ -189,7 +189,7 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
