@@ -4,6 +4,7 @@ import (
 	"os"
 
 	cranecmd "github.com/google/go-containerregistry/cmd/crane/cmd"
+	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/stereoscope"
@@ -15,12 +16,24 @@ import (
 	"github.com/anchore/syft/internal/redact"
 )
 
-// New constructs the `syft packages` command, aliases the root command to `syft packages`,
+// Application constructs the `syft packages` command, aliases the root command to `syft packages`,
 // and constructs the `syft power-user` command. It is also responsible for
 // organizing flag usage and injecting the application config for each command.
 // It also constructs the syft attest command and the syft version command.
 // `RunE` is the earliest that the complete application configuration can be loaded.
-func New(id clio.Identification) clio.Application {
+func Application(id clio.Identification) clio.Application {
+	app, _ := create(id)
+	return app
+}
+
+// Command returns the root command for the syft CLI application. This is useful for embedding the entire syft CLI
+// into an existing application.
+func Command(id clio.Identification) *cobra.Command {
+	_, cmd := create(id)
+	return cmd
+}
+
+func create(id clio.Identification) (clio.Application, *cobra.Command) {
 	clioCfg := clio.NewSetupConfig(id).
 		WithGlobalConfigFlag().   // add persistent -c <path> for reading an application config from
 		WithGlobalLoggingFlags(). // add persistent -v and -q flags tied to the logging config
@@ -77,5 +90,5 @@ func New(id clio.Identification) clio.Application {
 		cranecmd.NewCmdAuthLogin(id.Name), // syft login uses the same command as crane
 	)
 
-	return app
+	return app, rootCmd
 }
