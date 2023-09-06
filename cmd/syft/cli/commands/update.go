@@ -70,7 +70,7 @@ func isUpdateAvailable(version string) (bool, string, error) {
 		return false, "", fmt.Errorf("failed to parse current application version: %w", err)
 	}
 
-	latestVersion, err := fetchLatestApplicationVersion()
+	latestVersion, err := fetchLatestApplicationVersion(currentVersion.String())
 	if err != nil {
 		return false, "", err
 	}
@@ -89,11 +89,12 @@ func isProductionBuild(version string) bool {
 	return true
 }
 
-func fetchLatestApplicationVersion() (*hashiVersion.Version, error) {
+func fetchLatestApplicationVersion(currentVersion string) (*hashiVersion.Version, error) {
 	req, err := http.NewRequest(http.MethodGet, latestAppVersionURL.host+latestAppVersionURL.path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request for latest version: %w", err)
 	}
+	req.Header.Add("User-Agent", fmt.Sprintf("%v %v", "Syft", currentVersion))
 
 	client := http.Client{}
 	resp, err := client.Do(req)
