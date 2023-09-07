@@ -20,6 +20,8 @@ func DownloadLocation(p pkg.Package) string {
 			return NoneIfEmpty(metadata.URL)
 		case pkg.NpmPackageJSONMetadata:
 			return NoneIfEmpty(metadata.URL)
+		case pkg.NpmPackageLockJSONMetadata:
+			return NoneIfEmpty(metadata.Resolved)
 		}
 	}
 	return NOASSERTION
