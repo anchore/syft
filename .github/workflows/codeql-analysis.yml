@@ -35,7 +35,7 @@ jobs:
     - name: Install Go
       uses: actions/setup-go@v4
       with:
-        go-version-file: go.mod # adjust this path if needed
+        go-version-file: go.mod
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
