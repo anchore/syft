@@ -1059,6 +1059,7 @@
       "pipreqs": "cpe:2.3:a:pipreqs_project:pipreqs:*:*:*:*:*:python:*:*",
       "proxy.py": "cpe:2.3:a:proxy.py_project:proxy.py:*:*:*:*:*:*:*:*",
       "py-bcrypt": "cpe:2.3:a:python:py-bcrypt:*:*:*:*:*:*:*:*",
+      "py-xml": "cpe:2.3:a:py-xml_project:py-xml:*:*:*:*:*:python:*:*",
       "py7zr": "cpe:2.3:a:py7zr_project:py7zr:*:*:*:*:*:python:*:*",
       "pybluemonday": "cpe:2.3:a:python:pybluemonday:*:*:*:*:*:*:*:*",
       "pycryptodome": "cpe:2.3:a:python:pycryptodome:*:*:*:*:*:*:*:*",
