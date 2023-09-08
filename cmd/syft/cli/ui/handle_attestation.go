@@ -65,7 +65,7 @@ func (m *Handler) handleAttestationStarted(e partybus.Event) []tea.Model {
 		return nil
 	}
 
-	stage := progress.NewStage("")
+	stage := progress.NewAtomicStage("")
 
 	tsk := m.newTaskProgress(
 		taskprogress.Title{
@@ -108,7 +108,7 @@ func newLogFrame(reader *backgroundLineReader, prog progress.Progressable, borde
 	}
 }
 
-func newBackgroundLineReader(wg *sync.WaitGroup, reader io.Reader, stage *progress.Stage) *backgroundLineReader {
+func newBackgroundLineReader(wg *sync.WaitGroup, reader io.Reader, stage *progress.AtomicStage) *backgroundLineReader {
 	r := &backgroundLineReader{
 		limit:   7,
 		lock:    &sync.RWMutex{},
@@ -131,7 +131,7 @@ func newBackgroundLineReader(wg *sync.WaitGroup, reader io.Reader, stage *progre
 	return r
 }
 
-func (l *backgroundLineReader) read(reader io.Reader, stage *progress.Stage) {
+func (l *backgroundLineReader) read(reader io.Reader, stage *progress.AtomicStage) {
 	s := bufio.NewScanner(reader)
 
 	for s.Scan() {

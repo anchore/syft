@@ -25,7 +25,7 @@ func TestHandler_handleSecretsCatalogerStarted(t *testing.T) {
 		{
 			name: "cataloging in progress",
 			eventFn: func(t *testing.T) partybus.Event {
-				stage := progress.NewStage("current")
+				stage := progress.NewAtomicStage("current")
 				secretsDiscovered := progress.NewManual(-1)
 				secretsDiscovered.Set(64)
 				prog := progress.NewManual(72)
@@ -45,7 +45,7 @@ func TestHandler_handleSecretsCatalogerStarted(t *testing.T) {
 		{
 			name: "cataloging complete",
 			eventFn: func(t *testing.T) partybus.Event {
-				stage := progress.NewStage("current")
+				stage := progress.NewAtomicStage("current")
 				secretsDiscovered := progress.NewManual(-1)
 				secretsDiscovered.Set(64)
 				prog := progress.NewManual(72)

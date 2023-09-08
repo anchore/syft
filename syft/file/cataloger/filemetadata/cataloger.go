@@ -52,8 +52,8 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 	return results, nil
 }
 
-func metadataCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {
-	stage := &progress.Stage{}
+func metadataCatalogingProgress(locations int64) (*progress.AtomicStage, *progress.Manual) {
+	stage := progress.NewAtomicStage("")
 	prog := progress.NewManual(locations)
 
 	bus.Publish(partybus.Event{

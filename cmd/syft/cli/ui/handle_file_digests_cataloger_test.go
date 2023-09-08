@@ -33,7 +33,7 @@ func TestHandler_handleFileDigestsCatalogerStarted(t *testing.T) {
 					progress.Stager
 				}{
 					Progressable: prog,
-					Stager:       progress.NewStage("current"),
+					Stager:       progress.NewAtomicStage("current"),
 				}
 
 				return partybus.Event{
@@ -55,7 +55,7 @@ func TestHandler_handleFileDigestsCatalogerStarted(t *testing.T) {
 					progress.Stager
 				}{
 					Progressable: prog,
-					Stager:       progress.NewStage("current"),
+					Stager:       progress.NewAtomicStage("current"),
 				}
 
 				return partybus.Event{

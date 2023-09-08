@@ -91,8 +91,8 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	return digests, nil
 }
 
-func digestsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {
-	stage := progress.NewStage("")
+func digestsCatalogingProgress(locations int64) (*progress.AtomicStage, *progress.Manual) {
+	stage := progress.NewAtomicStage("")
 	prog := progress.NewManual(locations)
 
 	bus.Publish(partybus.Event{

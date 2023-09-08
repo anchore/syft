@@ -139,8 +139,8 @@ type Monitor struct {
 	progress.Progressable
 }
 
-func secretsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual, *progress.Manual) {
-	stage := progress.NewStage("")
+func secretsCatalogingProgress(locations int64) (*progress.AtomicStage, *progress.Manual, *progress.Manual) {
+	stage := progress.NewAtomicStage("")
 	secretsDiscovered := &progress.Manual{}
 	prog := progress.NewManual(locations)
 

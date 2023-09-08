@@ -58,7 +58,7 @@ func (r *directoryIndexer) build() (filetree.Reader, filetree.IndexReader, error
 	return r.tree, r.index, indexAllRoots(r.path, r.indexTree)
 }
 
-func indexAllRoots(root string, indexer func(string, *progress.Stage) ([]string, error)) error {
+func indexAllRoots(root string, indexer func(string, *progress.AtomicStage) ([]string, error)) error {
 	// why account for multiple roots? To cover cases when there is a symlink that references above the root path,
 	// in which case we need to additionally index where the link resolves to. it's for this reason why the filetree
 	// must be relative to the root of the filesystem (and not just relative to the given path).
@@ -95,7 +95,7 @@ loop:
 	return nil
 }
 
-func (r *directoryIndexer) indexTree(root string, stager *progress.Stage) ([]string, error) {
+func (r *directoryIndexer) indexTree(root string, stager *progress.AtomicStage) ([]string, error) {
 	log.WithFields("path", root).Trace("indexing filetree")
 
 	var roots []string
@@ -172,7 +172,7 @@ func isRealPath(root string) (bool, error) {
 	return rootParent == realRootParent, nil
 }
 
-func (r *directoryIndexer) indexBranch(root string, stager *progress.Stage) ([]string, error) {
+func (r *directoryIndexer) indexBranch(root string, stager *progress.AtomicStage) ([]string, error) {
 	rootRealPath, err := filepath.EvalSymlinks(root)
 	if err != nil {
 		return nil, err
@@ -464,8 +464,8 @@ func requireFileInfo(_ string, info os.FileInfo, _ error) error {
 	return nil
 }
 
-func indexingProgress(path string) (*progress.Stage, *progress.Manual) {
-	stage := &progress.Stage{}
+func indexingProgress(path string) (*progress.AtomicStage, *progress.Manual) {
+	stage := progress.NewAtomicStage("")
 	prog := progress.NewManual(-1)
 
 	bus.Publish(partybus.Event{
