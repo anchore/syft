@@ -70,7 +70,7 @@ all: static-analysis test ## Run all linux-based checks (linting, license check,
 static-analysis: check-go-mod-tidy lint check-licenses check-json-schema-drift  ## Run all static analysis checks
 
 .PHONY: test
-test: unit integration validate-cyclonedx-schema benchmark cli ## Run all tests (currently unit, integration, linux compare, and cli tests)
+test: unit race integration validate-cyclonedx-schema benchmark cli ## Run all tests (currently unit, integration, linux compare, and cli tests)
 
 
 ## Bootstrapping targets #################################
@@ -147,8 +147,13 @@ check-json-schema-drift:
 .PHONY: unit
 unit: $(TEMP_DIR) fixtures  ## Run unit tests (with coverage)
 	$(call title,Running unit tests)
-	go test -coverprofile $(TEMP_DIR)/unit-coverage-details.txt $(shell go list ./... | grep -v anchore/syft/test)
+	go test -race -coverprofile $(TEMP_DIR)/unit-coverage-details.txt $(shell go list ./... | grep -v anchore/syft/test)
 	@.github/scripts/coverage.py $(COVERAGE_THRESHOLD) $(TEMP_DIR)/unit-coverage-details.txt
+
+.PHONY: race
+race:
+	$(call title,Running main with race detector enabled)
+	go run -race cmd/syft/main.go alpine:latest
 
 .PHONY: integration
 integration:  ## Run integration tests
