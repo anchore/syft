@@ -44,6 +44,33 @@ func TestIdentify(t *testing.T) {
 	}
 }
 
+func TestIdentify_ParsesCorrectVersion(t *testing.T) {
+	tests := []struct {
+		fixture  string
+		expected string
+	}{
+		{
+			fixture:  "spdxjson/test-fixtures/snapshot/TestSPDXJSONDirectoryEncoder.golden",
+			expected: "2.3",
+		},
+		{
+			fixture:  "spdxjson/test-fixtures/spdx/alpine-3.10.syft.spdx.json",
+			expected: "2.2",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.fixture, func(t *testing.T) {
+			f, err := os.Open(test.fixture)
+			assert.NoError(t, err)
+			by, err := io.ReadAll(f)
+			assert.NoError(t, err)
+			frmt := Identify(by)
+			assert.NotNil(t, frmt)
+			assert.Equal(t, test.expected, frmt.Version())
+		})
+	}
+}
+
 func TestFormats_EmptyInput(t *testing.T) {
 	for _, format := range Formats() {
 		t.Run(format.ID().String(), func(t *testing.T) {
