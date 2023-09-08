@@ -65,7 +65,7 @@ func (m *Handler) handleAttestationStarted(e partybus.Event) []tea.Model {
 		return nil
 	}
 
-	stage := progress.Stage{}
+	stage := progress.NewStage("")
 
 	tsk := m.newTaskProgress(
 		taskprogress.Title{
@@ -79,7 +79,7 @@ func (m *Handler) handleAttestationStarted(e partybus.Event) []tea.Model {
 				progress.Stager
 			}{
 				Progressable: prog,
-				Stager:       &stage,
+				Stager:       stage,
 			},
 		),
 	)
@@ -94,7 +94,7 @@ func (m *Handler) handleAttestationStarted(e partybus.Event) []tea.Model {
 
 	return []tea.Model{
 		tsk,
-		newLogFrame(newBackgroundLineReader(m.Running, reader, &stage), prog, borderStyle),
+		newLogFrame(newBackgroundLineReader(m.Running, reader, stage), prog, borderStyle),
 	}
 }
 
@@ -146,9 +146,9 @@ func (l *backgroundLineReader) read(reader io.Reader, stage *progress.Stage) {
 			if len(fields) == 2 {
 				present = fmt.Sprintf("transparency log index: %s", fields[1])
 			}
-			stage.Current = present
+			stage.Set(present)
 		} else if strings.Contains(text, "WARNING: skipping transparency log upload") {
-			stage.Current = "transparency log upload skipped"
+			stage.Set("transparency log upload skipped")
 		}
 
 		// only show the last X lines of the shell output

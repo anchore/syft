@@ -43,7 +43,7 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 
 	stage, prog := digestsCatalogingProgress(int64(len(locations)))
 	for _, location := range locations {
-		stage.Current = location.RealPath
+		stage.Set(location.RealPath)
 		result, err := i.catalogLocation(resolver, location)
 
 		if errors.Is(err, ErrUndigestableFile) {
@@ -92,7 +92,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 }
 
 func digestsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {
-	stage := &progress.Stage{}
+	stage := progress.NewStage("")
 	prog := progress.NewManual(locations)
 
 	bus.Publish(partybus.Event{

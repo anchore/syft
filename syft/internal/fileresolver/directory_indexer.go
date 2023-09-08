@@ -138,10 +138,9 @@ func (r *directoryIndexer) indexTree(root string, stager *progress.Stage) ([]str
 
 	err = filepath.Walk(root,
 		func(path string, info os.FileInfo, err error) error {
-			stager.Current = path
+			stager.Set(path)
 
 			newRoot, err := r.indexPath(path, info, err)
-
 			if err != nil {
 				return err
 			}
@@ -200,7 +199,7 @@ func (r *directoryIndexer) indexBranch(root string, stager *progress.Stage) ([]s
 			targetPath = p
 		}
 
-		stager.Current = targetPath
+		stager.Set(targetPath)
 
 		lstat, err := os.Lstat(targetPath)
 		newRoot, err := r.indexPath(targetPath, lstat, err)

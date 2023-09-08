@@ -38,7 +38,7 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 
 	stage, prog := metadataCatalogingProgress(int64(len(locations)))
 	for location := range locations {
-		stage.Current = location.RealPath
+		stage.Set(location.RealPath)
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
 			return nil, err

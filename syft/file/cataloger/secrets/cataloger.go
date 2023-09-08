@@ -47,7 +47,7 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates][]file
 	locations := internal2.AllRegularFiles(resolver)
 	stage, prog, secretsDiscovered := secretsCatalogingProgress(int64(len(locations)))
 	for _, location := range locations {
-		stage.Current = location.RealPath
+		stage.Set(location.RealPath)
 		result, err := i.catalogLocation(resolver, location)
 		if internal.IsErrPathPermission(err) {
 			log.Debugf("secrets cataloger skipping - %+v", err)
@@ -140,7 +140,7 @@ type Monitor struct {
 }
 
 func secretsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual, *progress.Manual) {
-	stage := &progress.Stage{}
+	stage := progress.NewStage("")
 	secretsDiscovered := &progress.Manual{}
 	prog := progress.NewManual(locations)
 

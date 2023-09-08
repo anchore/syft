@@ -33,9 +33,7 @@ func TestHandler_handleFetchImage(t *testing.T) {
 					progress.Stager
 				}{
 					Progressable: prog,
-					Stager: &progress.Stage{
-						Current: "current",
-					},
+					Stager:       progress.NewStage("current"),
 				}
 
 				return partybus.Event{
@@ -58,9 +56,7 @@ func TestHandler_handleFetchImage(t *testing.T) {
 					progress.Stager
 				}{
 					Progressable: prog,
-					Stager: &progress.Stage{
-						Current: "current",
-					},
+					Stager:       progress.NewStage("current"),
 				}
 
 				return partybus.Event{
