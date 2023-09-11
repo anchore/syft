@@ -46,6 +46,7 @@ type PomProject struct {
 	Name        string     `json:"name"`
 	Description string     `json:"description,omitempty"`
 	URL         string     `json:"url,omitempty"`
+	Licenses    []string   `json:"licenses"`
 }
 
 // PomParent contains the fields within the <parent> tag in a pom.xml file

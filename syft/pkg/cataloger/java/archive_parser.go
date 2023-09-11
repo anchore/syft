@@ -171,16 +171,10 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		return nil, nil
 	}
 
-	archiveCloser, err := os.Open(j.archivePath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to open archive path (%s): %w", j.archivePath, err)
-	}
-	defer archiveCloser.Close()
-
 	// grab and assign digest for the entire archive
-	digests, err := intFile.NewDigestsFromFile(archiveCloser, javaArchiveHashes)
+	digests, err := getDigestsFromArchive(j.archivePath)
 	if err != nil {
-		log.Warnf("failed to create digest for file=%q: %+v", j.archivePath, err)
+		return nil, err
 	}
 
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
@@ -192,13 +186,17 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		3. manifest
 		4. filename
 	*/
-	name, version := j.guessMainPackageNameAndVersionFromPomInfo()
+	name, version, pomLicenses := j.guessMainPackageNameAndVersionFromPomInfo()
 	if name == "" {
 		name = selectName(manifest, j.fileInfo)
 	}
 	if version == "" {
 		version = selectVersion(manifest, j.fileInfo)
 	}
+	if len(pomLicenses) > 0 && licenses == nil {
+		licenses = pkg.NewLicensesFromLocation(j.location, pomLicenses...)
+	}
+
 	return &pkg.Package{
 		// TODO: maybe select name should just have a pom properties in it?
 		Name:     name,
@@ -218,7 +216,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	}, nil
 }
 
-func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (string, string) {
+func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (string, string, []string) {
 	pomPropertyMatches := j.fileManifest.GlobMatch(pomPropertiesGlob)
 	pomMatches := j.fileManifest.GlobMatch(pomXMLGlob)
 	var pomPropertiesObject pkg.PomProperties
@@ -246,7 +244,7 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (string, str
 	if version == "" {
 		version = pomProjectObject.Version
 	}
-	return name, version
+	return name, version, pomProjectObject.Licenses
 }
 
 // discoverPkgsFromAllMavenFiles parses Maven POM properties/xml for a given
@@ -285,6 +283,22 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 	}
 
 	return pkgs, nil
+}
+
+func getDigestsFromArchive(archivePath string) ([]file.Digest, error) {
+	archiveCloser, err := os.Open(archivePath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open archive path (%s): %w", archivePath, err)
+	}
+	defer archiveCloser.Close()
+
+	// grab and assign digest for the entire archive
+	digests, err := intFile.NewDigestsFromFile(archiveCloser, javaArchiveHashes)
+	if err != nil {
+		log.Warnf("failed to create digest for file=%q: %+v", archivePath, err)
+	}
+
+	return digests, nil
 }
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {

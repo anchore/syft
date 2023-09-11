@@ -61,6 +61,18 @@ func newPomProject(path string, p gopom.Project) *pkg.PomProject {
 	artifactID := safeString(p.ArtifactID)
 	name := safeString(p.Name)
 	projectURL := safeString(p.URL)
+
+	licenses := []string{}
+	if p.Licenses != nil {
+		for _, license := range *p.Licenses {
+			if license.Name != nil {
+				licenses = append(licenses, *license.Name)
+			} else if license.URL != nil {
+				licenses = append(licenses, *license.URL)
+			}
+		}
+	}
+
 	log.WithFields("path", path, "artifactID", artifactID, "name", name, "projectURL", projectURL).Trace("parsing pom.xml")
 	return &pkg.PomProject{
 		Path:        path,
@@ -71,6 +83,7 @@ func newPomProject(path string, p gopom.Project) *pkg.PomProject {
 		Name:        name,
 		Description: cleanDescription(p.Description),
 		URL:         projectURL,
+		Licenses:    licenses,
 	}
 }
 
