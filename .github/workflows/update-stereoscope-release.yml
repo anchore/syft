@@ -32,7 +32,7 @@ jobs:
           echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_OUTPUT
         id: latest-version
 
-      - uses: tibdex/github-app-token@v1
+      - uses: tibdex/github-app-token@v2
         id: generate-token
         with:
           app_id: ${{ secrets.TOKEN_APP_ID }}
