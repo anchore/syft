@@ -14,7 +14,7 @@ var Format = Format1_4
 func Format1_0() sbom.Format {
 	return sbom.NewFormat(
 		cyclonedx.SpecVersion1_0.String(),
-		encoder_v1_0,
+		encoderV1_0,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatJSON),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatJSON),
 		ID,
@@ -24,7 +24,7 @@ func Format1_0() sbom.Format {
 func Format1_1() sbom.Format {
 	return sbom.NewFormat(
 		cyclonedx.SpecVersion1_1.String(),
-		encoder_v1_1,
+		encoderV1_1,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatJSON),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatJSON),
 		ID,
@@ -34,7 +34,7 @@ func Format1_1() sbom.Format {
 func Format1_2() sbom.Format {
 	return sbom.NewFormat(
 		cyclonedx.SpecVersion1_2.String(),
-		encoder_v1_2,
+		encoderV1_2,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatJSON),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatJSON),
 		ID,
@@ -44,7 +44,7 @@ func Format1_2() sbom.Format {
 func Format1_3() sbom.Format {
 	return sbom.NewFormat(
 		cyclonedx.SpecVersion1_3.String(),
-		encoder_v1_3,
+		encoderV1_3,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatJSON),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatJSON),
 		ID,
@@ -54,7 +54,7 @@ func Format1_3() sbom.Format {
 func Format1_4() sbom.Format {
 	return sbom.NewFormat(
 		cyclonedx.SpecVersion1_4.String(),
-		encoder_v1_4,
+		encoderV1_4,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatJSON),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatJSON),
 		ID,
@@ -64,7 +64,7 @@ func Format1_4() sbom.Format {
 func Format1_5() sbom.Format {
 	return sbom.NewFormat(
 		cyclonedx.SpecVersion1_5.String(),
-		encoder_v1_5,
+		encoderV1_5,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatJSON),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatJSON),
 		ID,
