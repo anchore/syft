@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const ID sbom.FormatID = "cyclonedx-xml"
+const ID sbom.FormatID = "cyclonedx"
 
 var Format = Format1_4
 
