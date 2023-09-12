@@ -9,13 +9,14 @@ import (
 
 var updateSnapshot = flag.Bool("update-cyclonedx-json", false, "update the *.golden files for cyclone-dx JSON encoders")
 var updateImage = flag.Bool("update-image", false, "update the golden image used for image encoder testing")
+var latestVersion = ""
 
 func TestCycloneDxDirectoryEncoder(t *testing.T) {
 	dir := t.TempDir()
 	testutils.AssertEncoderAgainstGoldenSnapshot(t,
 		testutils.EncoderSnapshotTestConfig{
 			Subject:                     testutils.DirectoryInput(t, dir),
-			Format:                      Format(),
+			Format:                      Format(latestVersion),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -33,7 +34,7 @@ func TestCycloneDxImageEncoder(t *testing.T) {
 		},
 		testutils.EncoderSnapshotTestConfig{
 			Subject:                     testutils.ImageInput(t, testImage),
-			Format:                      Format(),
+			Format:                      Format(latestVersion),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,

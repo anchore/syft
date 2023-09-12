@@ -9,12 +9,64 @@ import (
 
 const ID sbom.FormatID = "cyclonedx-xml"
 
-func Format() sbom.Format {
+var Format = Format1_4
+
+func Format1_0() sbom.Format {
 	return sbom.NewFormat(
-		sbom.AnyVersion,
-		encoder,
+		cyclonedx.SpecVersion1_0.String(),
+		encoder_v1_0,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
-		ID, "cyclonedx", "cyclone",
+		ID, "cyclonedx-xml", "cyclone-xml",
+	)
+}
+
+func Format1_1() sbom.Format {
+	return sbom.NewFormat(
+		cyclonedx.SpecVersion1_1.String(),
+		encoder_v1_1,
+		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
+		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
+		ID, "cyclonedx-xml", "cyclone-xml",
+	)
+}
+
+func Format1_2() sbom.Format {
+	return sbom.NewFormat(
+		cyclonedx.SpecVersion1_2.String(),
+		encoder_v1_2,
+		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
+		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
+		ID, "cyclonedx-xml", "cyclone-xml",
+	)
+}
+
+func Format1_3() sbom.Format {
+	return sbom.NewFormat(
+		cyclonedx.SpecVersion1_3.String(),
+		encoder_v1_3,
+		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
+		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
+		ID, "cyclonedx-xml", "cyclone-xml",
+	)
+}
+
+func Format1_4() sbom.Format {
+	return sbom.NewFormat(
+		cyclonedx.SpecVersion1_4.String(),
+		encoder_v1_4,
+		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
+		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
+		ID, "cyclonedx-xml", "cyclone-xml",
+	)
+}
+
+func Format1_5() sbom.Format {
+	return sbom.NewFormat(
+		cyclonedx.SpecVersion1_5.String(),
+		encoder_v1_5,
+		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
+		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
+		ID, "cyclonedx-xml", "cyclone-xml",
 	)
 }

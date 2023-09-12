@@ -26,17 +26,27 @@ import (
 func Formats() []sbom.Format {
 	return []sbom.Format{
 		syftjson.Format(),
-		cyclonedxxml.Format(),
-		cyclonedxjson.Format(),
 		github.Format(),
+		table.Format(),
+		text.Format(),
+		template.Format(),
+		cyclonedxxml.Format1_0(),
+		cyclonedxxml.Format1_1(),
+		cyclonedxxml.Format1_2(),
+		cyclonedxxml.Format1_3(),
+		cyclonedxxml.Format1_4(),
+		cyclonedxxml.Format1_5(),
+		cyclonedxjson.Format1_0(),
+		cyclonedxjson.Format1_1(),
+		cyclonedxjson.Format1_2(),
+		cyclonedxjson.Format1_3(),
+		cyclonedxjson.Format1_4(),
+		cyclonedxjson.Format1_5(),
 		spdxtagvalue.Format2_1(),
 		spdxtagvalue.Format2_2(),
 		spdxtagvalue.Format2_3(),
 		spdxjson.Format2_2(),
 		spdxjson.Format2_3(),
-		table.Format(),
-		text.Format(),
-		template.Format(),
 	}
 }
 
@@ -55,7 +65,7 @@ func Identify(by []byte) sbom.Format {
 
 // ByName accepts a name@version string, such as:
 //
-//	spdx-json@2.1 or cyclonedx@2
+//	spdx-json@2.1 or cyclonedx@1.5
 func ByName(name string) sbom.Format {
 	parts := strings.SplitN(name, "@", 2)
 	version := sbom.AnyVersion

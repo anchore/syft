@@ -10,6 +10,7 @@ import (
 )
 
 func Test_decodeJSON(t *testing.T) {
+	defaultVersion := ""
 	tests := []struct {
 		file     string
 		err      bool
@@ -37,12 +38,12 @@ func Test_decodeJSON(t *testing.T) {
 			assert.NoError(t, err)
 
 			if test.err {
-				err = Format().Validate(reader)
+				err = Format(defaultVersion).Validate(reader)
 				assert.Error(t, err)
 				return
 			}
 
-			bom, err := Format().Decode(reader)
+			bom, err := Format(defaultVersion).Decode(reader)
 
 			assert.NoError(t, err)
 
