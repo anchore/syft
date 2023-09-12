@@ -33,7 +33,7 @@ require (
 	github.com/facebookincubator/nvdtools v0.1.5
 	github.com/github/go-spdx/v2 v2.1.2
 	github.com/gkampitakis/go-snaps v0.4.10
-	github.com/go-git/go-billy/v5 v5.4.1
+	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.8.1
 	github.com/go-test/deep v1.1.0
 	github.com/google/go-cmp v0.5.9
@@ -104,6 +104,7 @@ require (
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/containerd/containerd v1.7.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
+	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/cli v24.0.0+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
