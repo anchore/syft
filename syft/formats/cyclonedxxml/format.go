@@ -7,7 +7,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const ID sbom.FormatID = "cyclonedx"
+const ID sbom.FormatID = "cyclonedx-xml"
 
 var Format = Format1_4
 
@@ -17,7 +17,7 @@ func Format1_0() sbom.Format {
 		encoderV1_0,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
-		ID, "cyclonedx-xml", "cyclone-xml",
+		ID, "cyclonedx", "cyclone-xml",
 	)
 }
 
@@ -27,7 +27,7 @@ func Format1_1() sbom.Format {
 		encoderV1_1,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
-		ID, "cyclonedx-xml", "cyclone-xml",
+		ID, "cyclonedx", "cyclone-xml",
 	)
 }
 
@@ -37,7 +37,7 @@ func Format1_2() sbom.Format {
 		encoderV1_2,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
-		ID, "cyclonedx-xml", "cyclone-xml",
+		ID, "cyclonedx", "cyclone-xml",
 	)
 }
 
@@ -47,7 +47,7 @@ func Format1_3() sbom.Format {
 		encoderV1_3,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
-		ID, "cyclonedx-xml", "cyclone-xml",
+		ID, "cyclonedx", "cyclone-xml",
 	)
 }
 
@@ -57,7 +57,7 @@ func Format1_4() sbom.Format {
 		encoderV1_4,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
-		ID, "cyclonedx-xml", "cyclone-xml",
+		ID, "cyclonedx", "cyclone-xml",
 	)
 }
 
@@ -67,6 +67,6 @@ func Format1_5() sbom.Format {
 		encoderV1_5,
 		cyclonedxhelpers.GetDecoder(cyclonedx.BOMFileFormatXML),
 		cyclonedxhelpers.GetValidator(cyclonedx.BOMFileFormatXML),
-		ID, "cyclonedx-xml", "cyclone-xml",
+		ID, "cyclonedx", "cyclone-xml",
 	)
 }
