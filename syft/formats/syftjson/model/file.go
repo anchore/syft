@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 )
 
 type File struct {
@@ -10,6 +11,7 @@ type File struct {
 	Metadata *FileMetadataEntry `json:"metadata,omitempty"`
 	Contents string             `json:"contents,omitempty"`
 	Digests  []file.Digest      `json:"digests,omitempty"`
+	Licenses []FileLicense      `json:"licenses,omitempty"`
 }
 
 type FileMetadataEntry struct {
@@ -20,4 +22,17 @@ type FileMetadataEntry struct {
 	GroupID         int    `json:"groupID"`
 	MIMEType        string `json:"mimeType"`
 	Size            int64  `json:"size"`
+}
+
+type FileLicense struct {
+	Value          string               `json:"value"`
+	SPDXExpression string               `json:"spdxExpression"`
+	Type           license.Type         `json:"type"`
+	Evidence       *FileLicenseEvidence `json:"evidence,omitempty"`
+}
+
+type FileLicenseEvidence struct {
+	Confidence int `json:"confidence"`
+	Offset     int `json:"offset"`
+	Extent     int `json:"extent"`
 }
