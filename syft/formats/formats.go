@@ -86,7 +86,7 @@ func ByNameAndVersion(name string, version string) sbom.Format {
 				// formats to inform this function what their default version is
 				// TODO: remove this check when 1.5 is stable or default formats are designed. PR below should be merged.
 				// https://github.com/CycloneDX/cyclonedx-go/pull/90
-				if version == sbom.AnyVersion && strings.Contains(string(n), "cyclonedx") {
+				if version == sbom.AnyVersion && strings.Contains(string(n), "cyclone") {
 					if f.Version() == "1.5" {
 						continue
 					}
