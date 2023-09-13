@@ -82,7 +82,9 @@ func ByNameAndVersion(name string, version string) sbom.Format {
 		for _, n := range f.IDs() {
 			if cleanFormatName(string(n)) == name && versionMatches(f.Version(), version) {
 				// if the version is not specified and the format is cyclonedx, then we want to return the most recent version up to 1.4
-				// TODO: remove this check when 1.5 is stable. PR below should be merged.
+				// If more aliases like cdx are added this will not catch those - we want to eventually provide a way for
+				// formats to inform this function what their default version is
+				// TODO: remove this check when 1.5 is stable or default formats are designed. PR below should be merged.
 				// https://github.com/CycloneDX/cyclonedx-go/pull/90
 				if version == sbom.AnyVersion && strings.Contains(string(n), "cyclonedx") {
 					if f.Version() == "1.5" {
