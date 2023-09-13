@@ -88,7 +88,7 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 		"set the name of the target being analyzed")
 
 	flags.StringVarP(&cfg.Source.Version, "source-version", "",
-		"set the name of the target being analyzed")
+		"set the version of the target being analyzed")
 
 	flags.StringVarP(&cfg.BasePath, "base-path", "",
 		"base directory for scanning, no links will be followed above this directory, and all paths will be reported relative to this directory")
