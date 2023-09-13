@@ -47,7 +47,7 @@ func Test_DownloadLocation(t *testing.T) {
 			expected: NONE,
 		},
 		{
-			name: "from npm package-lock",
+			name: "from npm package-lock should include resolved",
 			input: pkg.Package{
 				Metadata: pkg.NpmPackageLockJSONMetadata{
 					Resolved: "http://package-lock.test",
@@ -56,7 +56,7 @@ func Test_DownloadLocation(t *testing.T) {
 			expected: "http://package-lock.test",
 		},
 		{
-			name: "from npm package-lock empty",
+			name: "from npm package-lock empty should be NONE",
 			input: pkg.Package{
 				Metadata: pkg.NpmPackageLockJSONMetadata{
 					Resolved: "",
