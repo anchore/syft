@@ -13,6 +13,41 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+func Test_WithParserByGlobColocation(t *testing.T) {
+	matchedFilesPaths := make(map[string]bool)
+	parser := func(resolver file.Resolver, env *Environment, readers []file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+		var packages []pkg.Package
+		var relationships []artifact.Relationship
+
+		for _, reader := range readers {
+			matchedFilesPaths[reader.AccessPath()] = true
+		}
+		return packages, relationships, nil
+	}
+
+	upstream := "colocation-cataloger"
+	expectedCollocatedPaths := []string{
+		"test-fixtures/pkg-json/package.json",
+		"test-fixtures/pkg-json/package-lock.json",
+	}
+
+	resolver := file.NewMockResolverForPaths(expectedCollocatedPaths...)
+
+	cataloger := NewGroupedCataloger(upstream).
+		WithParserByGlobColocation(parser, "**/package-lock.json", []string{"**/package.json", "**/package-lock.json"})
+
+	_, _, err := cataloger.Catalog(resolver)
+	assert.NoError(t, err)
+
+	for path := range matchedFilesPaths {
+		t.Logf("Matched file path: %s", path) // Log each matched file
+	}
+
+	// Assert that the expected files were matched
+	require.True(t, matchedFilesPaths["test-fixtures/pkg-json/package.json"])
+	require.True(t, matchedFilesPaths["test-fixtures/pkg-json/package-lock.json"])
+}
+
 func Test_Cataloger(t *testing.T) {
 	allParsedPaths := make(map[string]bool)
 	parser := func(resolver file.Resolver, env *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
