@@ -11,9 +11,9 @@ type ConanLockMetadata struct {
 	Ref            string            `json:"ref"`
 	PackageID      string            `json:"package_id,omitempty"`
 	Prev           string            `json:"prev,omitempty"`
-	Requires       string            `json:"requires,omitempty"`
-	BuildRequires  string            `json:"build_requires,omitempty"`
-	PythonRequires string            `json:"py_requires,omitempty"`
+	Requires       []string          `json:"requires,omitempty"`
+	BuildRequires  []string          `json:"build_requires,omitempty"`
+	PythonRequires []string          `json:"py_requires,omitempty"`
 	Options        map[string]string `json:"options,omitempty"`
 	Path           string            `json:"path,omitempty"`
 	Context        string            `json:"context,omitempty"`
