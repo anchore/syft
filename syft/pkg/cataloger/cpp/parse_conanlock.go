@@ -62,10 +62,10 @@ func parseConanlock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 		)
 
 		if p != nil {
-			pkgs = append(pkgs, *p)
-			pkgRef := pkgs[len(pkgs)-1]
-			parsedPkgRequires[pkgRef.ID()] = node.Requires
-			indexToPkgMap[idx] = pkgRef
+			pk := *p
+			pkgs = append(pkgs, pk)
+			parsedPkgRequires[pk.ID()] = node.Requires
+			indexToPkgMap[idx] = pk
 		}
 	}
 
