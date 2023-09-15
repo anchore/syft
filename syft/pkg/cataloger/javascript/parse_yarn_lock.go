@@ -2,45 +2,27 @@ package javascript
 
 import (
 	"bufio"
-	"fmt"
-	"regexp"
+	"strings"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/javascript/key"
+	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
+	yarnparse "github.com/anchore/syft/syft/pkg/cataloger/javascript/parser/yarn"
 )
 
 // integrity check
 var _ generic.Parser = parseYarnLock
 
-var (
-	// packageNameExp matches the name of the dependency in yarn.lock
-	// including scope/namespace prefix if found.
-	// For example: "aws-sdk@2.706.0" returns "aws-sdk"
-	//              "@babel/code-frame@^7.0.0" returns "@babel/code-frame"
-	packageNameExp = regexp.MustCompile(`^"?((?:@\w[\w-_.]*\/)?\w[\w-_.]*)@`)
-
-	// versionExp matches the "version" line of a yarn.lock entry and captures the version value.
-	// For example: version "4.10.1" (...and the value "4.10.1" is captured)
-	versionExp = regexp.MustCompile(`^\W+version(?:\W+"|:\W+)([\w-_.]+)"?`)
-
-	// packageURLExp matches the name and version of the dependency in yarn.lock
-	// from the resolved URL, including scope/namespace prefix if any.
-	// For example:
-	//		`resolved "https://registry.yarnpkg.com/async/-/async-3.2.3.tgz#ac53dafd3f4720ee9e8a160628f18ea91df196c9"`
-	//			would return "async" and "3.2.3"
-	//
-	//		`resolved "https://registry.yarnpkg.com/@4lolo/resize-observer-polyfill/-/resize-observer-polyfill-1.5.2.tgz#58868fc7224506236b5550d0c68357f0a874b84b"`
-	//			would return "@4lolo/resize-observer-polyfill" and "1.5.2"
-	packageURLExp = regexp.MustCompile(`^\s+resolved\s+"https://registry\.(?:yarnpkg\.com|npmjs\.org)/(.+?)/-/(?:.+?)-(\d+\..+?)\.tgz`)
-)
-
-const (
-	noPackage = ""
-	noVersion = ""
-)
+type yarnLockPackage struct {
+	Name         string
+	Version      string
+	Integrity    string
+	Resolved     string
+	Dependencies map[string]string
+}
 
 func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find yarn.lock files in the node_modules directories, skip those
@@ -49,70 +31,150 @@ func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.L
 		return nil, nil, nil
 	}
 
+	seenPkgs := map[string]bool{}
 	var pkgs []pkg.Package
-	scanner := bufio.NewScanner(reader)
-	parsedPackages := internal.NewStringSet()
-	currentPackage := noPackage
-	currentVersion := noVersion
 
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if packageName := findPackageName(line); packageName != noPackage {
-			// When we find a new package, check if we have unsaved identifiers
-			if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Contains(currentPackage+"@"+currentVersion) {
-				pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, currentPackage, currentVersion))
-				parsedPackages.Add(currentPackage + "@" + currentVersion)
-			}
-
-			currentPackage = packageName
-		} else if version := findPackageVersion(line); version != noVersion {
-			currentVersion = version
-		} else if packageName, version := findPackageAndVersion(line); packageName != noPackage && version != noVersion && !parsedPackages.Contains(packageName+"@"+version) {
-			pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, packageName, version))
-			parsedPackages.Add(packageName + "@" + version)
-
-			// Cleanup to indicate no unsaved identifiers
-			currentPackage = noPackage
-			currentVersion = noVersion
+	lock := parseYarnLockFile(reader)
+	for _, pkg := range lock {
+		key := key.NpmPackageKey(pkg.Name, pkg.Version)
+		if !seenPkgs[key] {
+			pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, pkg.Name, pkg.Version))
+			seenPkgs[key] = true
 		}
 	}
 
-	// check if we have valid unsaved data after end-of-file has reached
-	if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Contains(currentPackage+"@"+currentVersion) {
-		pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, currentPackage, currentVersion))
-		parsedPackages.Add(currentPackage + "@" + currentVersion)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse yarn.lock file: %w", err)
-	}
-
 	pkg.Sort(pkgs)
-
 	return pkgs, nil, nil
 }
 
-func findPackageName(line string) string {
-	if matches := packageNameExp.FindStringSubmatch(line); len(matches) >= 2 {
-		return matches[1]
+// parseYarnLockFile takes a yarn.lock file and returns a map of packages
+func parseYarnLockFile(file file.LocationReadCloser) map[string]*yarnLockPackage {
+	/*
+		name@version[, name@version]:
+			version "xxx"
+			resolved "xxx"
+			integrity "xxx"
+			dependencies:
+				name "xxx"
+				name "xxx"
+	*/
+	lineNumber := 1
+	lock := map[string]*yarnLockPackage{}
+
+	scanner := bufio.NewScanner(file.ReadCloser)
+	scanner.Split(yarnparse.ScanBlocks)
+	for scanner.Scan() {
+		block := scanner.Bytes()
+		pkg, refVersions, newLine, err := parseBlock(block, lineNumber)
+		lineNumber = newLine + 2
+		if err != nil {
+			return nil
+		} else if pkg.Name == "" {
+			continue
+		}
+
+		for _, refVersion := range refVersions {
+			lock[refVersion] = &pkg
+		}
 	}
 
-	return noPackage
+	if err := scanner.Err(); err != nil {
+		return nil
+	}
+
+	return lock
 }
 
-func findPackageVersion(line string) string {
-	if matches := versionExp.FindStringSubmatch(line); len(matches) >= 2 {
-		return matches[1]
+// ParsePackageJsonWithYarnLock takes a package.json and yarn.lock package representation
+// and returns a DepGraphNode tree of packages and their dependencies
+func parsePackageJsonWithYarnLock(pkgjson *packageJSON, yarnlock map[string]*yarnLockPackage) *model.DepGraphNode {
+	root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
+	_dep := _depSet().LoadOrStore
+
+	for _, lock := range yarnlock {
+		dep := _dep(
+			lock.Name,
+			lock.Version,
+			lock.Integrity,
+			lock.Resolved,
+		)
+		for name, version := range lock.Dependencies {
+			sub := yarnlock[key.NpmPackageKey(name, version)]
+			if sub != nil {
+				dep.AppendChild(_dep(
+					sub.Name,
+					sub.Version,
+					sub.Integrity,
+					sub.Resolved,
+				))
+			}
+		}
 	}
 
-	return noVersion
+	for name, version := range pkgjson.Dependencies {
+		lock := yarnlock[key.NpmPackageKey(name, version)]
+		if lock != nil {
+			root.AppendChild(_dep(
+				lock.Name,
+				lock.Version,
+				lock.Integrity,
+				lock.Resolved,
+			))
+		} else {
+			root.AppendChild(&model.DepGraphNode{
+				Name:      name,
+				Version:   version,
+				Integrity: "",
+				Resolved:  "",
+			})
+		}
+	}
+
+	for name, version := range pkgjson.DevDependencies {
+		lock := yarnlock[key.NpmPackageKey(name, version)]
+		if lock != nil {
+			dep := _dep(
+				lock.Name,
+				lock.Version,
+				lock.Integrity,
+				lock.Resolved,
+			)
+			dep.Develop = true
+			root.AppendChild(dep)
+		} else {
+			root.AppendChild(&model.DepGraphNode{
+				Name:      name,
+				Version:   version,
+				Develop:   true,
+				Integrity: "",
+				Resolved:  "",
+			})
+		}
+	}
+
+	return root
 }
 
-func findPackageAndVersion(line string) (string, string) {
-	if matches := packageURLExp.FindStringSubmatch(line); len(matches) >= 2 {
-		return matches[1], matches[2]
+func parseBlock(block []byte, lineNum int) (pkg yarnLockPackage, refVersions []string, newLine int, err error) {
+	pkgRef, lineNumber, err := yarnparse.ParseBlock(block, lineNum)
+	for _, pattern := range pkgRef.Patterns {
+		n, v := splitLastAt(pattern)
+		refVersions = append(refVersions, key.NpmPackageKey(n, v))
 	}
 
-	return noPackage, noVersion
+	return yarnLockPackage{
+		Name:         pkgRef.Name,
+		Version:      pkgRef.Version,
+		Integrity:    pkgRef.Integrity,
+		Resolved:     pkgRef.Resolved,
+		Dependencies: pkgRef.Dependencies,
+	}, refVersions, lineNumber, err
+}
+
+func splitLastAt(s string) (string, string) {
+	i := strings.LastIndex(s, "@")
+	if i == -1 {
+		return s, ""
+	}
+	return s[:i], s[i+1:]
 }

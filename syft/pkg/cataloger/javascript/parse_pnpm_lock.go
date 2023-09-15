@@ -1,7 +1,6 @@
 package javascript
 
 import (
-	"fmt"
 	"io"
 	"regexp"
 	"strconv"
@@ -14,35 +13,117 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/javascript/key"
+	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
 )
 
 // integrity check
 var _ generic.Parser = parsePnpmLock
 
+type pnpmLockPackage struct {
+	Name         string
+	Version      string
+	Integrity    string
+	Resolved     string
+	Dependencies map[string]string
+}
+
 type pnpmLockYaml struct {
-	Version      string                 `json:"lockfileVersion" yaml:"lockfileVersion"`
-	Dependencies map[string]interface{} `json:"dependencies" yaml:"dependencies"`
-	Packages     map[string]interface{} `json:"packages" yaml:"packages"`
+	Version         string                      `yaml:"lockfileVersion"`
+	Specifiers      map[string]interface{}      `yaml:"specifiers"`
+	Dependencies    map[string]interface{}      `yaml:"dependencies"`
+	DevDependencies map[string]interface{}      `yaml:"devDependencies"`
+	Packages        map[string]*pnpmLockPackage `yaml:"packages"`
 }
 
 func parsePnpmLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	bytes, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load pnpm-lock.yaml file: %w", err)
+	var pkgs []pkg.Package
+	pnpmLock := parsePnpmLockFile(reader)
+
+	for _, lock := range pnpmLock {
+		pkgs = append(pkgs, newPnpmPackage(resolver, reader.Location, lock.Name, lock.Version))
 	}
 
-	var pkgs []pkg.Package
-	var lockFile pnpmLockYaml
+	pkg.Sort(pkgs)
+	return pkgs, nil, nil
+}
 
+// ParsePackageJsonWithPnpmLock takes a package.json and pnpm-lock.yaml package representation and returns a DepGraphNode tree
+func ParsePackageJsonWithPnpmLock(pkgjson *packageJSON, pnpmLock map[string]*pnpmLockPackage) *model.DepGraphNode {
+	root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
+	_dep := _depSet().LoadOrStore
+
+	for _, lock := range pnpmLock {
+		dep := _dep(
+			lock.Name,
+			lock.Version,
+			"", // integrity
+			"", // resolved
+		)
+
+		for name, version := range lock.Dependencies {
+			sub := pnpmLock[key.NpmPackageKey(name, version)]
+			if sub != nil {
+				dep.AppendChild(_dep(
+					sub.Name,
+					sub.Version,
+					"", // integrity
+					"", // resolved
+				))
+			}
+		}
+
+		root.AppendChild(dep)
+	}
+
+	return root
+}
+
+// parsePnpmLock parses a pnpm-lock.yaml file to get a list of packages
+func parsePnpmLockFile(file file.LocationReadCloser) map[string]*pnpmLockPackage {
+	pnpmLock := map[string]*pnpmLockPackage{}
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		return pnpmLock
+	}
+
+	var lockFile pnpmLockYaml
 	if err := yaml.Unmarshal(bytes, &lockFile); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse pnpm-lock.yaml file: %w", err)
+		return pnpmLock
 	}
 
 	lockVersion, _ := strconv.ParseFloat(lockFile.Version, 64)
+	packageNameRegex := regexp.MustCompile(`^/?([^(]*)(?:\(.*\))*$`)
+	splitChar := "/"
+	if lockVersion >= 6.0 {
+		splitChar = "@"
+	}
+
+	// parse packages from packages section of pnpm-lock.yaml
+	for nameVersion, packageDetails := range lockFile.Packages {
+		nameVersion = packageNameRegex.ReplaceAllString(nameVersion, "$1")
+		nameVersionSplit := strings.Split(strings.TrimPrefix(nameVersion, "/"), splitChar)
+
+		// last element in split array is version
+		version := nameVersionSplit[len(nameVersionSplit)-1]
+
+		// construct name from all array items other than last item (version)
+		name := strings.Join(nameVersionSplit[:len(nameVersionSplit)-1], splitChar)
+
+		if pnpmLock[key.NpmPackageKey(name, version)] != nil {
+			if pnpmLock[key.NpmPackageKey(name, version)].Version == version {
+				continue
+			}
+		}
+
+		packageDetails.Name = name
+		packageDetails.Version = version
+
+		pnpmLock[key.NpmPackageKey(name, version)] = packageDetails
+	}
 
 	for name, info := range lockFile.Dependencies {
 		version := ""
-
 		switch info := info.(type) {
 		case string:
 			version = info
@@ -60,49 +141,19 @@ func parsePnpmLock(resolver file.Resolver, _ *generic.Environment, reader file.L
 			continue
 		}
 
-		if hasPkg(pkgs, name, version) {
-			continue
+		if pnpmLock[key.NpmPackageKey(name, version)] != nil {
+			if pnpmLock[key.NpmPackageKey(name, version)].Version == version {
+				continue
+			}
 		}
 
-		pkgs = append(pkgs, newPnpmPackage(resolver, reader.Location, name, version))
-	}
-
-	packageNameRegex := regexp.MustCompile(`^/?([^(]*)(?:\(.*\))*$`)
-	splitChar := "/"
-	if lockVersion >= 6.0 {
-		splitChar = "@"
-	}
-
-	// parse packages from packages section of pnpm-lock.yaml
-	for nameVersion := range lockFile.Packages {
-		nameVersion = packageNameRegex.ReplaceAllString(nameVersion, "$1")
-		nameVersionSplit := strings.Split(strings.TrimPrefix(nameVersion, "/"), splitChar)
-
-		// last element in split array is version
-		version := nameVersionSplit[len(nameVersionSplit)-1]
-
-		// construct name from all array items other than last item (version)
-		name := strings.Join(nameVersionSplit[:len(nameVersionSplit)-1], splitChar)
-
-		if hasPkg(pkgs, name, version) {
-			continue
-		}
-
-		pkgs = append(pkgs, newPnpmPackage(resolver, reader.Location, name, version))
-	}
-
-	pkg.Sort(pkgs)
-
-	return pkgs, nil, nil
-}
-
-func hasPkg(pkgs []pkg.Package, name, version string) bool {
-	for _, p := range pkgs {
-		if p.Name == name && p.Version == version {
-			return true
+		pnpmLock[key.NpmPackageKey(name, version)] = &pnpmLockPackage{
+			Name:    name,
+			Version: version,
 		}
 	}
-	return false
+
+	return pnpmLock
 }
 
 func parseVersion(version string) string {

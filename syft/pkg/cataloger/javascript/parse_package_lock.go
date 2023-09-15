@@ -19,25 +19,32 @@ var _ generic.Parser = parsePackageLock
 
 // packageLock represents a JavaScript package.lock json file
 type packageLock struct {
-	Requires        bool `json:"requires"`
-	LockfileVersion int  `json:"lockfileVersion"`
-	Dependencies    map[string]lockDependency
-	Packages        map[string]lockPackage
+	Name            string                           `json:"name"`
+	LockfileVersion int                              `json:"lockfileVersion"`
+	Dependencies    map[string]packageLockDependency `json:"dependencies"`
+	Packages        map[string]packageLockPackage    `json:"packages"`
+	Requires        bool                             `json:"requires"`
 }
 
-// lockDependency represents a single package dependency listed in the package.lock json file
-type lockDependency struct {
-	Version   string `json:"version"`
-	Resolved  string `json:"resolved"`
-	Integrity string `json:"integrity"`
+type packageLockPackage struct {
+	Name            string             `json:"name"`
+	Version         string             `json:"version"`
+	Integrity       string             `json:"integrity"`
+	Resolved        string             `json:"resolved"`
+	Dependencies    map[string]string  `json:"dependencies"`
+	DevDependencies map[string]string  `json:"devDependencies"`
+	License         packageLockLicense `json:"license"`
+	Dev             bool               `json:"dev"`
+	Requires        map[string]string  `json:"requires"`
 }
 
-type lockPackage struct {
-	Name      string             `json:"name"` // only present in the root package entry (named "")
-	Version   string             `json:"version"`
-	Resolved  string             `json:"resolved"`
-	Integrity string             `json:"integrity"`
-	License   packageLockLicense `json:"license"`
+type packageLockDependency struct {
+	name         string
+	Version      string                            `json:"version"`
+	Requires     map[string]string                 `json:"requires"`
+	Integrity    string                            `json:"integrity"`
+	Resolved     string                            `json:"resolved"`
+	Dependencies map[string]*packageLockDependency `json:"dependencies"`
 }
 
 // packageLockLicense

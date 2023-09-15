@@ -3,161 +3,659 @@ package javascript
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func Test_JavascriptCataloger(t *testing.T) {
-	locationSet := file.NewLocationSet(file.NewLocation("package-lock.json"))
+func expectedPackagesAndRelationshipsLockV1(locationSet file.LocationSet, metadata bool) ([]pkg.Package, []artifact.Relationship) {
+	metadataMap := map[string]pkg.NpmPackageLockJSONMetadata{
+		"rxjs": {
+			Resolved:  "https://registry.npmjs.org/rxjs/-/rxjs-7.5.7.tgz",
+			Integrity: "sha512-z9MzKh/UcOqB3i20H6rtrlaE/CgjLOvheWK/9ILrbhROGTweAi1BaFsTT9FbwZi5Trr1qNRs+MXkhmR06awzQA==",
+		},
+		"test-app": {
+			Resolved:  "",
+			Integrity: "",
+		},
+		"tslib": {
+			Resolved:  "https://registry.npmjs.org/tslib/-/tslib-2.6.2.tgz",
+			Integrity: "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
+		},
+		"typescript": {
+			Resolved:  "https://registry.npmjs.org/typescript/-/typescript-4.7.4.tgz",
+			Integrity: "sha512-C0WQT0gezHuw6AdY1M2jxUO83Rjf0HP7Sk1DtXj6j1EwkQNZrHAg2XPWlq62oqEhYvONq5pkC2Y9oPljWToLmQ==",
+		},
+		"zone.js": {
+			Resolved:  "https://registry.npmjs.org/zone.js/-/zone.js-0.11.8.tgz",
+			Integrity: "sha512-82bctBg2hKcEJ21humWIkXRlLBBmrc3nN7DFh5LGGhcyycO2S7FN8NmdvlcKaGFDNVL4/9kFLmwmInTavdJERA==",
+		},
+	}
+	rxjs := pkg.Package{
+		Name:         "rxjs",
+		Version:      "7.5.7",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/rxjs@7.5.7",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	rxjs.OverrideID("771ec36a7b3f7216")
+	testApp := pkg.Package{
+		Name:         "test-app",
+		Version:      "0.0.0",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/test-app@0.0.0",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	testApp.OverrideID("8242bb06eb820fe6")
+	tslib := pkg.Package{
+		Name:         "tslib",
+		Version:      "2.6.2",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/tslib@2.6.2",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	tslib.OverrideID("6e66a3c2012b1393")
+	typescript := pkg.Package{
+		Name:         "typescript",
+		Version:      "4.7.4",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/typescript@4.7.4",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	typescript.OverrideID("116c95f7038696e2")
+	zonejs := pkg.Package{
+		Name:         "zone.js",
+		Version:      "0.11.8",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/zone.js@0.11.8",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	zonejs.OverrideID("5fa2ca5d4bae3620")
+
+	pkgList := []*pkg.Package{
+		&rxjs,
+		&testApp,
+		&tslib,
+		&typescript,
+		&zonejs,
+	}
+
+	if metadata {
+		for i, pkg := range pkgList {
+			pkgList[i].Metadata = metadataMap[pkg.Name]
+		}
+	}
+
 	expectedPkgs := []pkg.Package{
+		testApp,
+		rxjs,
+		tslib,
+		typescript,
+		zonejs,
+	}
+
+	expectedRelationships := []artifact.Relationship{
 		{
-			Name:      "@actions/core",
-			Version:   "1.6.0",
-			FoundBy:   "javascript-lock-cataloger",
-			PURL:      "pkg:npm/%40actions/core@1.6.0",
-			Locations: locationSet,
-			Language:  pkg.JavaScript,
-			Type:      pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation("package-lock.json")),
-			),
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@actions/core/-/core-1.6.0.tgz", Integrity: "sha512-NB1UAZomZlCV/LmJqkLhNTqtKfFXJZAUPcfl/zqG7EfsQdeUJtaWO98SGbuQ3pydJ3fHl2CvI/51OKYlCYYcaw=="},
+			From: &testApp,
+			To:   &rxjs,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
 		},
 		{
-			Name:         "ansi-regex",
-			Version:      "3.0.0",
-			FoundBy:      "javascript-lock-cataloger",
-			PURL:         "pkg:npm/ansi-regex@3.0.0",
-			Locations:    locationSet,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/ansi-regex/-/ansi-regex-3.0.0.tgz", Integrity: "sha1-7QMXwyIGT3lGbAKWa922Bas32Zg="},
+			From: &testApp,
+			To:   &tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
 		},
 		{
-			Name:      "cowsay",
-			Version:   "1.4.0",
-			FoundBy:   "javascript-lock-cataloger",
-			PURL:      "pkg:npm/cowsay@1.4.0",
-			Locations: locationSet,
-			Language:  pkg.JavaScript,
-			Type:      pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation("package-lock.json")),
-			),
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/cowsay/-/cowsay-1.4.0.tgz", Integrity: "sha512-rdg5k5PsHFVJheO/pmE3aDg2rUDDTfPJau6yYkZYlHFktUz+UxbE+IgnUAEyyCyv4noL5ltxXD0gZzmHPCy/9g=="},
+			From: &testApp,
+			To:   &typescript,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
 		},
 		{
-			Name:         "get-stdin",
-			Version:      "5.0.1",
-			FoundBy:      "javascript-lock-cataloger",
-			PURL:         "pkg:npm/get-stdin@5.0.1",
-			Locations:    locationSet,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/get-stdin/-/get-stdin-5.0.1.tgz", Integrity: "sha1-Ei4WFZHiH/TFJTAwVpPyDmOTo5g="},
-		},
-		{
-			Name:         "is-fullwidth-code-point",
-			Version:      "2.0.0",
-			FoundBy:      "javascript-lock-cataloger",
-			PURL:         "pkg:npm/is-fullwidth-code-point@2.0.0",
-			Locations:    locationSet,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-2.0.0.tgz", Integrity: "sha1-o7MKXE8ZkYMWeqq5O+764937ZU8="},
-		},
-		{
-			Name:         "minimist",
-			Version:      "0.0.10",
-			FoundBy:      "javascript-lock-cataloger",
-			PURL:         "pkg:npm/minimist@0.0.10",
-			Locations:    locationSet,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/minimist/-/minimist-0.0.10.tgz", Integrity: "sha1-3j+YVD2/lggr5IrRoMfNqDYwHc8="},
-		},
-		{
-			Name:         "optimist",
-			Version:      "0.6.1",
-			FoundBy:      "javascript-lock-cataloger",
-			PURL:         "pkg:npm/optimist@0.6.1",
-			Locations:    locationSet,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/optimist/-/optimist-0.6.1.tgz", Integrity: "sha1-2j6nRob6IaGaERwybpDrFaAZZoY="},
-		},
-		{
-			Name:         "string-width",
-			Version:      "2.1.1",
-			FoundBy:      "javascript-lock-cataloger",
-			PURL:         "pkg:npm/string-width@2.1.1",
-			Locations:    locationSet,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/string-width/-/string-width-2.1.1.tgz", Integrity: "sha512-nOqH59deCq9SRHlxq1Aw85Jnt4w6KvLKqWVik6oA9ZklXLNIOlqg4F2yrT1MVaTjAqvVwdfeZ7w7aCvJD7ugkw=="},
-		},
-		{
-			Name:         "strip-ansi",
-			Version:      "4.0.0",
-			FoundBy:      "javascript-lock-cataloger",
-			PURL:         "pkg:npm/strip-ansi@4.0.0",
-			Locations:    locationSet,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/strip-ansi/-/strip-ansi-4.0.0.tgz", Integrity: "sha1-qEeQIusaw2iocTibY1JixQXuNo8="},
-		},
-		{
-			Name:         "strip-eof",
-			Version:      "1.0.0",
-			FoundBy:      "javascript-lock-cataloger",
-			PURL:         "pkg:npm/strip-eof@1.0.0",
-			Locations:    locationSet,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/strip-eof/-/strip-eof-1.0.0.tgz", Integrity: "sha1-u0P/VZim6wXYm1n80SnJgzE2Br8="},
-		},
-		{
-			Name:         "wordwrap",
-			Version:      "0.0.3",
-			FoundBy:      "javascript-lock-cataloger",
-			PURL:         "pkg:npm/wordwrap@0.0.3",
-			Locations:    locationSet,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/wordwrap/-/wordwrap-0.0.3.tgz", Integrity: "sha1-o9XabNXAvAAI03I0u68b7WMFkQc="},
+			From: &testApp,
+			To:   &zonejs,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
 		},
 	}
 
+	return expectedPkgs, expectedRelationships
+}
+
+func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metadata bool) ([]pkg.Package, []artifact.Relationship) {
+	metadataMap := map[string]pkg.NpmPackageLockJSONMetadata{
+		"rxjs": {
+			Resolved:  "https://registry.npmjs.org/rxjs/-/rxjs-7.5.7.tgz",
+			Integrity: "sha512-z9MzKh/UcOqB3i20H6rtrlaE/CgjLOvheWK/9ILrbhROGTweAi1BaFsTT9FbwZi5Trr1qNRs+MXkhmR06awzQA==",
+		},
+		"test-app": {
+			Resolved:  "",
+			Integrity: "",
+		},
+		"tslib": {
+			Resolved:  "https://registry.npmjs.org/tslib/-/tslib-2.4.1.tgz",
+			Integrity: "sha512-tGyy4dAjRIEwI7BzsB0lynWgOpfqjUdq91XXAlIWD2OwKBH7oCl/GZG/HT4BOHrTlPMOASlMQ7veyTqpmRcrNA==",
+		},
+		"typescript": {
+			Resolved:  "https://registry.npmjs.org/typescript/-/typescript-4.7.4.tgz",
+			Integrity: "sha512-C0WQT0gezHuw6AdY1M2jxUO83Rjf0HP7Sk1DtXj6j1EwkQNZrHAg2XPWlq62oqEhYvONq5pkC2Y9oPljWToLmQ==",
+		},
+		"zone.js": {
+			Resolved:  "https://registry.npmjs.org/zone.js/-/zone.js-0.11.8.tgz",
+			Integrity: "sha512-82bctBg2hKcEJ21humWIkXRlLBBmrc3nN7DFh5LGGhcyycO2S7FN8NmdvlcKaGFDNVL4/9kFLmwmInTavdJERA==",
+		},
+	}
+	rxjs := pkg.Package{
+		Name:         "rxjs",
+		Version:      "7.5.7",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/rxjs@7.5.7",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	rxjs.OverrideID("771ec36a7b3f7216")
+	testApp := pkg.Package{
+		Name:         "test-app",
+		Version:      "0.0.0",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/test-app@0.0.0",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	testApp.OverrideID("8242bb06eb820fe6")
+	tslib := pkg.Package{
+		Name:         "tslib",
+		Version:      "2.4.1",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/tslib@2.4.1",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	tslib.OverrideID("6e66a3c2012b1393")
+	typescript := pkg.Package{
+		Name:         "typescript",
+		Version:      "4.7.4",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/typescript@4.7.4",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	typescript.OverrideID("116c95f7038696e2")
+	zonejs := pkg.Package{
+		Name:         "zone.js",
+		Version:      "0.11.8",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/zone.js@0.11.8",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	zonejs.OverrideID("5fa2ca5d4bae3620")
+
+	pkgList := []*pkg.Package{
+		&rxjs,
+		&testApp,
+		&tslib,
+		&typescript,
+		&zonejs,
+	}
+
+	if metadata {
+		for i, pkg := range pkgList {
+			pkgList[i].Metadata = metadataMap[pkg.Name]
+		}
+	}
+
+	expectedPkgs := []pkg.Package{
+		testApp,
+		rxjs,
+		tslib,
+		typescript,
+		zonejs,
+	}
+
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: &rxjs,
+			To:   &tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &rxjs,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &typescript,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &zonejs,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &zonejs,
+			To:   &tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+	}
+
+	return expectedPkgs, expectedRelationships
+}
+
+func expectedPackagesAndRelationshipsLockV3(locationSet file.LocationSet, metadata bool) ([]pkg.Package, []artifact.Relationship) {
+	metadataMap := map[string]pkg.NpmPackageLockJSONMetadata{
+		"rxjs": {
+			Resolved:  "https://registry.npmjs.org/rxjs/-/rxjs-7.5.0.tgz",
+			Integrity: "sha512-fuCKAfFawVYX0pyFlETtYnXI+5iiY9Dftgk+VdgeOq+Qyi9ZDWckHZRDaXRt5WCNbbLkmAheoSGDiceyCIKNZA==",
+		},
+		"test-app": {
+			Resolved:  "",
+			Integrity: "",
+		},
+		"tslib": {
+			Resolved:  "https://registry.npmjs.org/tslib/-/tslib-2.6.2.tgz",
+			Integrity: "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
+		},
+		"typescript": {
+			Resolved:  "https://registry.npmjs.org/typescript/-/typescript-4.7.4.tgz",
+			Integrity: "sha512-C0WQT0gezHuw6AdY1M2jxUO83Rjf0HP7Sk1DtXj6j1EwkQNZrHAg2XPWlq62oqEhYvONq5pkC2Y9oPljWToLmQ==",
+		},
+		"zone.js": {
+			Resolved:  "https://registry.npmjs.org/zone.js/-/zone.js-0.11.8.tgz",
+			Integrity: "sha512-82bctBg2hKcEJ21humWIkXRlLBBmrc3nN7DFh5LGGhcyycO2S7FN8NmdvlcKaGFDNVL4/9kFLmwmInTavdJERA==",
+		},
+	}
+	rxjs := pkg.Package{
+		Name:         "rxjs",
+		Version:      "7.5.0",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/rxjs@7.5.0",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+	}
+	rxjs.OverrideID("771ec36a7b3f7216")
+	testApp := pkg.Package{
+		Name:         "test-app",
+		Version:      "0.0.0",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/test-app@0.0.0",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+	}
+	testApp.OverrideID("8242bb06eb820fe6")
+	tslib := pkg.Package{
+		Name:         "tslib",
+		Version:      "2.6.2",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/tslib@2.6.2",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+	}
+	tslib.OverrideID("6e66a3c2012b1393")
+	typescript := pkg.Package{
+		Name:         "typescript",
+		Version:      "4.7.4",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/typescript@4.7.4",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+	}
+	typescript.OverrideID("116c95f7038696e2")
+	zonejs := pkg.Package{
+		Name:         "zone.js",
+		Version:      "0.11.8",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/zone.js@0.11.8",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+	}
+	zonejs.OverrideID("5fa2ca5d4bae3620")
+
+	pkgList := []*pkg.Package{
+		&rxjs,
+		&testApp,
+		&tslib,
+		&typescript,
+		&zonejs,
+	}
+
+	if metadata {
+		for i, pkg := range pkgList {
+			pkgList[i].Metadata = metadataMap[pkg.Name]
+		}
+	}
+
+	expectedPkgs := []pkg.Package{
+		testApp,
+		rxjs,
+		tslib,
+		typescript,
+		zonejs,
+	}
+
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: &rxjs,
+			To:   &tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &rxjs,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &typescript,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &zonejs,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &zonejs,
+			To:   &tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+	}
+
+	return expectedPkgs, expectedRelationships
+}
+func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, metadata bool) ([]pkg.Package, []artifact.Relationship) {
+	metadataMap := map[string]pkg.NpmPackageLockJSONMetadata{
+		"rxjs": {
+			Resolved:  "https://registry.npmjs.org/rxjs/-/rxjs-7.5.7.tgz",
+			Integrity: "sha512-z9MzKh/UcOqB3i20H6rtrlaE/CgjLOvheWK/9ILrbhROGTweAi1BaFsTT9FbwZi5Trr1qNRs+MXkhmR06awzQA==",
+		},
+		"test-app": {
+			Resolved:  "",
+			Integrity: "",
+		},
+		"tslib": {
+			Resolved:  "https://registry.npmjs.org/tslib/-/tslib-2.6.2.tgz",
+			Integrity: "sha512-tGyy4dAjRIEwI7BzsB0lynWgOpfqjUdq91XXAlIWD2OwKBH7oCl/GZG/HT4BOHrTlPMOASlMQ7veyTqpmRcrNA==",
+		},
+		"typescript": {
+			Resolved:  "https://registry.npmjs.org/typescript/-/typescript-4.7.4.tgz",
+			Integrity: "sha512-C0WQT0gezHuw6AdY1M2jxUO83Rjf0HP7Sk1DtXj6j1EwkQNZrHAg2XPWlq62oqEhYvONq5pkC2Y9oPljWToLmQ==",
+		},
+		"zone.js": {
+			Resolved:  "https://registry.npmjs.org/zone.js/-/zone.js-0.11.8.tgz",
+			Integrity: "sha512-82bctBg2hKcEJ21humWIkXRlLBBmrc3nN7DFh5LGGhcyycO2S7FN8NmdvlcKaGFDNVL4/9kFLmwmInTavdJERA==",
+		},
+	}
+	rxjs := pkg.Package{
+		Name:         "rxjs",
+		Version:      "7.5.7",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/rxjs@7.5.7",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	rxjs.OverrideID("771ec36a7b3f7216")
+	testApp := pkg.Package{
+		Name:         "test-app",
+		Version:      "0.0.0",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/test-app@0.0.0",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	testApp.OverrideID("8242bb06eb820fe6")
+	tslib := pkg.Package{
+		Name:         "tslib",
+		Version:      "2.6.2",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/tslib@2.6.2",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	tslib.OverrideID("6e66a3c2012b1393")
+	typescript := pkg.Package{
+		Name:         "typescript",
+		Version:      "4.7.4",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/typescript@4.7.4",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	typescript.OverrideID("116c95f7038696e2")
+	zonejs := pkg.Package{
+		Name:         "zone.js",
+		Version:      "0.11.8",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/zone.js@0.11.8",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	zonejs.OverrideID("5fa2ca5d4bae3620")
+
+	pkgList := []*pkg.Package{
+		&rxjs,
+		&testApp,
+		&tslib,
+		&typescript,
+		&zonejs,
+	}
+
+	if metadata {
+		for i, pkg := range pkgList {
+			pkgList[i].Metadata = metadataMap[pkg.Name]
+		}
+	}
+
+	expectedPkgs := []pkg.Package{
+		testApp,
+		rxjs,
+		tslib,
+		typescript,
+		zonejs,
+	}
+
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: &rxjs,
+			To:   &tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &rxjs,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &typescript,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &testApp,
+			To:   &zonejs,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: &zonejs,
+			To:   &tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+	}
+
+	return expectedPkgs, expectedRelationships
+}
+
+func Test_JavascriptCataloger_PkgLock_v1(t *testing.T) {
+	locationSet := file.NewLocationSet(file.NewLocation("package-lock.json"))
+	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsLockV1(locationSet, true)
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/pkg-lock").
-		Expects(expectedPkgs, nil).
-		TestCataloger(t, NewLockCataloger())
-
+		FromDirectory(t, "test-fixtures/pkg-json-and-lock/v1").
+		Expects(expectedPkgs, expectedRelationships).
+		TestGroupedCataloger(t, NewJavascriptCataloger())
 }
 
-func Test_PackageCataloger_Globs(t *testing.T) {
+func Test_JavascriptCataloger_PkgLock_v2(t *testing.T) {
+	locationSet := file.NewLocationSet(file.NewLocation("package-lock.json"))
+	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsLockV2(locationSet, true)
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/pkg-json-and-lock/v2").
+		Expects(expectedPkgs, expectedRelationships).
+		TestGroupedCataloger(t, NewJavascriptCataloger())
+}
+
+func Test_JavascriptCataloger_PkgLock_v3(t *testing.T) {
+	locationSet := file.NewLocationSet(file.NewLocation("package-lock.json"))
+	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsLockV3(locationSet, true)
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/pkg-json-and-lock/v3").
+		Expects(expectedPkgs, expectedRelationships).
+		TestGroupedCataloger(t, NewJavascriptCataloger())
+}
+
+func Test_JavascriptCataloger_YarnLock(t *testing.T) {
+	locationSet := file.NewLocationSet(file.NewLocation("yarn.lock"))
+	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsLockV2(locationSet, true)
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/pkg-json-and-yarn-lock").
+		Expects(expectedPkgs, expectedRelationships).
+		TestGroupedCataloger(t, NewJavascriptCataloger())
+}
+
+func Test_JavascriptCataloger_PnpmLock(t *testing.T) {
+	locationSet := file.NewLocationSet(file.NewLocation("pnpm-lock.yaml"))
+	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsPnpmLock(locationSet, false)
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/pkg-json-and-pnpm-lock").
+		Expects(expectedPkgs, expectedRelationships).
+		TestGroupedCataloger(t, NewJavascriptCataloger())
+}
+
+func Test_JavascriptCataloger_Globs(t *testing.T) {
 	tests := []struct {
 		name     string
 		fixture  string
 		expected []string
 	}{
 		{
-			name:    "obtain package files",
-			fixture: "test-fixtures/glob-paths",
+			name:    "obtain package lock files",
+			fixture: "test-fixtures/pkg-json-and-lock/v1",
 			expected: []string{
-				"src/package.json",
+				"package-lock.json",
+				"package.json",
+			},
+		},
+		{
+			name:    "obtain yarn lock files",
+			fixture: "test-fixtures/pkg-json-and-yarn-lock",
+			expected: []string{
+				"yarn.lock",
+				"package.json",
+			},
+		},
+		{
+			name:    "obtain yarn lock files",
+			fixture: "test-fixtures/pkg-json-and-pnpm-lock",
+			expected: []string{
+				"pnpm-lock.yaml",
+				"package.json",
 			},
 		},
 	}
@@ -167,34 +665,7 @@ func Test_PackageCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewPackageCataloger())
-		})
-	}
-}
-
-func Test_LockCataloger_Globs(t *testing.T) {
-	tests := []struct {
-		name     string
-		fixture  string
-		expected []string
-	}{
-		{
-			name:    "obtain package files",
-			fixture: "test-fixtures/glob-paths",
-			expected: []string{
-				"src/package-lock.json",
-				"src/pnpm-lock.yaml",
-				"src/yarn.lock",
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			pkgtest.NewCatalogTester().
-				FromDirectory(t, test.fixture).
-				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewLockCataloger())
+				TestGroupedCataloger(t, NewJavascriptCataloger())
 		})
 	}
 }

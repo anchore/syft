@@ -7,32 +7,37 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
+	"github.com/mitchellh/mapstructure"
 )
 
 // integrity check
 var _ generic.Parser = parsePackageJSON
 
-// packageJSON represents a JavaScript package.json file
 type packageJSON struct {
-	Version      string            `json:"version"`
-	Latest       []string          `json:"latest"`
-	Author       author            `json:"author"`
-	License      json.RawMessage   `json:"license"`
-	Licenses     json.RawMessage   `json:"licenses"`
-	Name         string            `json:"name"`
-	Homepage     string            `json:"homepage"`
-	Description  string            `json:"description"`
-	Dependencies map[string]string `json:"dependencies"`
-	Repository   repository        `json:"repository"`
-	Private      bool              `json:"private"`
+	Name                 string            `json:"name"`
+	Version              string            `json:"version"`
+	Author               author            `json:"author"`
+	License              json.RawMessage   `json:"license"`
+	Licenses             json.RawMessage   `json:"licenses"`
+	Homepage             string            `json:"homepage"`
+	Private              bool              `json:"private"`
+	Description          string            `json:"description"`
+	Develop              bool              `json:"dev"` // lock v3
+	Repository           repository        `json:"repository"`
+	Dependencies         map[string]string `json:"dependencies"`
+	DevDependencies      map[string]string `json:"devDependencies"`
+	PeerDependencies     map[string]string `json:"peerDependencies"`
+	PeerDependenciesMeta map[string]struct {
+		Optional bool `json:"optional"`
+	} `json:"peerDependenciesMeta"`
+	File string `json:"-"`
 }
 
 type author struct {
@@ -77,6 +82,128 @@ func parsePackageJSON(_ file.Resolver, _ *generic.Environment, reader file.Locat
 	pkg.Sort(pkgs)
 
 	return pkgs, nil, nil
+}
+
+func parsePackageJsonWithLock(pkgjson *packageJSON, pkglock *packageLock) *model.DepGraphNode {
+	if pkglock.LockfileVersion == 3 {
+		return parsePackageJsonWithLockV3(pkgjson, pkglock)
+	}
+
+	root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
+	// root.AppendLicense(pkgjson.License)
+
+	depNameMap := map[string]*model.DepGraphNode{}
+	_dep := _depSet().LoadOrStore
+
+	// record dependencies
+	for name, lockDep := range pkglock.Dependencies {
+		dep := _dep(
+			name,
+			lockDep.Version,
+			lockDep.Integrity,
+			lockDep.Resolved,
+		)
+		depNameMap[name] = dep
+	}
+
+	// build dependency tree
+	for name, lockDep := range pkglock.Dependencies {
+		lockDep.name = name
+		q := []*packageLockDependency{&lockDep}
+		for len(q) > 0 {
+			n := q[0]
+			q = q[1:]
+
+			dep := _dep(
+				n.name,
+				n.Version,
+				n.Integrity,
+				n.Resolved,
+			)
+
+			for name, sub := range n.Dependencies {
+				sub.name = name
+				q = append(q, sub)
+				dep.AppendChild(_dep(
+					name,
+					sub.Version,
+					sub.Integrity,
+					sub.Resolved,
+				))
+			}
+
+			for name := range n.Requires {
+				dep.AppendChild(depNameMap[name])
+			}
+		}
+	}
+
+	for name := range pkgjson.Dependencies {
+		root.AppendChild(depNameMap[name])
+	}
+
+	for name := range pkgjson.DevDependencies {
+		dep := depNameMap[name]
+		if dep != nil {
+			dep.Develop = true
+			root.AppendChild(dep)
+		}
+	}
+
+	return root
+}
+
+func parsePackageJsonWithLockV3(pkgjson *packageJSON, pkglock *packageLock) *model.DepGraphNode {
+	if pkglock.LockfileVersion != 3 {
+		return nil
+	}
+	root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
+	depNameMap := map[string]*model.DepGraphNode{}
+	_dep := _depSet().LoadOrStore
+
+	for name, lockDep := range pkglock.Packages {
+		// root pkg
+		if name == "" {
+			continue
+		}
+		n := getNameFromPath(name)
+		dep := _dep(
+			n,
+			lockDep.Version,
+			lockDep.Integrity,
+			lockDep.Resolved,
+		)
+		depNameMap[n] = dep
+	}
+
+	for name, lockDep := range pkglock.Packages {
+		// root pkg
+		if name == "" {
+			continue
+		}
+		n := getNameFromPath(name)
+		dep := depNameMap[n]
+		for childName := range lockDep.Dependencies {
+			if childDep, ok := depNameMap[childName]; ok {
+				dep.AppendChild(childDep)
+			}
+		}
+		for childName := range lockDep.DevDependencies {
+			if childDep, ok := depNameMap[childName]; ok {
+				dep.AppendChild(childDep)
+			}
+		}
+	}
+
+	// setup root deps
+	for name := range pkgjson.Dependencies {
+		root.AppendChild(depNameMap[name])
+	}
+	for name := range pkgjson.DevDependencies {
+		root.AppendChild(depNameMap[name])
+	}
+
+	return root
 }
 
 func (a *author) UnmarshalJSON(b []byte) error {

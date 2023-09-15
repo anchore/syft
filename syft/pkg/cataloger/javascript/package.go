@@ -44,7 +44,7 @@ func newPackageJSONPackage(u packageJSON, indexLocation file.Location) pkg.Packa
 	return p
 }
 
-func newPackageLockV1Package(resolver file.Resolver, location file.Location, name string, u lockDependency) pkg.Package {
+func newPackageLockV1Package(resolver file.Resolver, location file.Location, name string, u packageLockDependency) pkg.Package {
 	version := u.Version
 
 	const aliasPrefixPackageLockV1 = "npm:"
@@ -76,7 +76,7 @@ func newPackageLockV1Package(resolver file.Resolver, location file.Location, nam
 	)
 }
 
-func newPackageLockV2Package(resolver file.Resolver, location file.Location, name string, u lockPackage) pkg.Package {
+func newPackageLockV2Package(resolver file.Resolver, location file.Location, name string, u packageLockPackage) pkg.Package {
 	return finalizeLockPkg(
 		resolver,
 		location,

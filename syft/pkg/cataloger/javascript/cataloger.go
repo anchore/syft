@@ -20,3 +20,13 @@ func NewLockCataloger() *generic.Cataloger {
 		WithParserByGlobs(parseYarnLock, "**/yarn.lock").
 		WithParserByGlobs(parsePnpmLock, "**/pnpm-lock.yaml")
 }
+
+// NewJavascriptCataloger returns a new JavaScript cataloger object based on detection
+// of npm based packages and lock files to provide a complete dependency graph of the
+// packages.
+func NewJavascriptCataloger() *generic.GroupedCataloger {
+	return generic.NewGroupedCataloger("javascript-cataloger").
+		WithParserByGlobColocation(parseJavascript, "**/yarn.lock", []string{"**/package.json", "**/yarn.lock"}).
+		WithParserByGlobColocation(parseJavascript, "**/package-lock.json", []string{"**/package.json", "**/package-lock.json"}).
+		WithParserByGlobColocation(parseJavascript, "**/pnpm-lock.yaml", []string{"**/package.json", "**/pnpm-lock.yaml"})
+}
