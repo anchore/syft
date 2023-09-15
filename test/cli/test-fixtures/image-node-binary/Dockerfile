@@ -1,1 +1,1 @@
-FROM node:19-alpine3.15
+FROM node:19-alpine3.15@sha256:07050181369f52460e788738272bcb22b71c7cfc6fafee0b5cd27d2022513a86
