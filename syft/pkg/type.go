@@ -9,34 +9,36 @@ type Type string
 
 const (
 	// the full set of supported packages
-	UnknownPkg            Type = "UnknownPackage"
-	AlpmPkg               Type = "alpm"
-	ApkPkg                Type = "apk"
-	BinaryPkg             Type = "binary"
-	CocoapodsPkg          Type = "pod"
-	ConanPkg              Type = "conan"
-	DartPubPkg            Type = "dart-pub"
-	DebPkg                Type = "deb"
-	DotnetPkg             Type = "dotnet"
-	GemPkg                Type = "gem"
-	GoModulePkg           Type = "go-module"
-	GraalVMNativeImagePkg Type = "graalvm-native-image"
-	HackagePkg            Type = "hackage"
-	HexPkg                Type = "hex"
-	JavaPkg               Type = "java-archive"
-	JenkinsPluginPkg      Type = "jenkins-plugin"
-	KbPkg                 Type = "msrc-kb"
-	LinuxKernelPkg        Type = "linux-kernel"
-	LinuxKernelModulePkg  Type = "linux-kernel-module"
-	NixPkg                Type = "nix"
-	NpmPkg                Type = "npm"
-	PhpComposerPkg        Type = "php-composer"
-	PortagePkg            Type = "portage"
-	PythonPkg             Type = "python"
-	Rpkg                  Type = "R-package"
-	RpmPkg                Type = "rpm"
-	RustPkg               Type = "rust-crate"
-	SwiftPkg              Type = "swift"
+	UnknownPkg              Type = "UnknownPackage"
+	AlpmPkg                 Type = "alpm"
+	ApkPkg                  Type = "apk"
+	BinaryPkg               Type = "binary"
+	CocoapodsPkg            Type = "pod"
+	ConanPkg                Type = "conan"
+	DartPubPkg              Type = "dart-pub"
+	DebPkg                  Type = "deb"
+	DotnetPkg               Type = "dotnet"
+	GemPkg                  Type = "gem"
+	GithubActionPkg         Type = "github-action"
+	GithubActionWorkflowPkg Type = "github-action-workflow"
+	GoModulePkg             Type = "go-module"
+	GraalVMNativeImagePkg   Type = "graalvm-native-image"
+	HackagePkg              Type = "hackage"
+	HexPkg                  Type = "hex"
+	JavaPkg                 Type = "java-archive"
+	JenkinsPluginPkg        Type = "jenkins-plugin"
+	KbPkg                   Type = "msrc-kb"
+	LinuxKernelPkg          Type = "linux-kernel"
+	LinuxKernelModulePkg    Type = "linux-kernel-module"
+	NixPkg                  Type = "nix"
+	NpmPkg                  Type = "npm"
+	PhpComposerPkg          Type = "php-composer"
+	PortagePkg              Type = "portage"
+	PythonPkg               Type = "python"
+	Rpkg                    Type = "R-package"
+	RpmPkg                  Type = "rpm"
+	RustPkg                 Type = "rust-crate"
+	SwiftPkg                Type = "swift"
 )
 
 // AllPkgs represents all supported package types
@@ -50,6 +52,8 @@ var AllPkgs = []Type{
 	DebPkg,
 	DotnetPkg,
 	GemPkg,
+	GithubActionPkg,
+	GithubActionWorkflowPkg,
 	GoModulePkg,
 	HackagePkg,
 	HexPkg,
@@ -70,6 +74,8 @@ var AllPkgs = []Type{
 }
 
 // PackageURLType returns the PURL package type for the current package.
+//
+//nolint:funlen
 func (t Type) PackageURLType() string {
 	switch t {
 	case AlpmPkg:
@@ -90,6 +96,9 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeGem
 	case HexPkg:
 		return packageurl.TypeHex
+	case GithubActionPkg, GithubActionWorkflowPkg:
+		// note: this is not a real purl type, but it is the closest thing we have for now
+		return packageurl.TypeGithub
 	case GoModulePkg:
 		return packageurl.TypeGolang
 	case HackagePkg:

@@ -368,6 +368,20 @@ var dirOnlyTestCases = []testCase{
 			"swift-numerics":         "1.0.2",
 		},
 	},
+	{
+		name:    "find github action packages (from usage in workflow files and composite actions)",
+		pkgType: pkg.GithubActionPkg,
+		pkgInfo: map[string]string{
+			"actions/checkout": "v4",
+		},
+	},
+	{
+		name:    "find github shared workflow calls (from usage in workflow files)",
+		pkgType: pkg.GithubActionWorkflowPkg,
+		pkgInfo: map[string]string{
+			"octo-org/this-repo/.github/workflows/workflow-1.yml": "172239021f7ba04fe7327647b213799853a9eb89",
+		},
+	},
 }
 
 var commonTestCases = []testCase{
