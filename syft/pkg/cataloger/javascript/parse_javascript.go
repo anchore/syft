@@ -86,7 +86,7 @@ func convertToPkgAndRelationships(resolver file.Resolver, location file.Location
 	return packages, relationships
 }
 
-func parseJavascript(resolver file.Resolver, e *generic.Environment, readers []file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseJavascript(resolver file.Resolver, _ *generic.Environment, readers []file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var root []*model.DepGraphNode
 
 	jsonMap := map[string]*packageJSON{}

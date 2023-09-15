@@ -230,11 +230,10 @@ func ParseBlock(block []byte, lineNum int) (pkg PkgRef, lineNumber int, err erro
 					continue
 				}
 				continue
-			} else {
-				pkg.Name = name
-				pkg.Patterns = patterns
-				continue
 			}
+			pkg.Name = name
+			pkg.Patterns = patterns
+			continue
 		}
 	}
 
