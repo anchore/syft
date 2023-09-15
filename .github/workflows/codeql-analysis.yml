@@ -23,7 +23,6 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      # required for all workflow
       security-events: write
 
     strategy:
