@@ -1,5 +1,8 @@
 name: Add to OSS board
 
+permissions:
+  contents: read
+
 on:
   issues:
     types:
@@ -9,7 +12,6 @@ on:
       - labeled
 
 jobs:
-
   run:
     uses: "anchore/workflows/.github/workflows/oss-project-board-add.yaml@main"
     secrets:
