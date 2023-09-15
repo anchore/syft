@@ -418,4 +418,11 @@ var commonTestCases = []testCase{
 			"glibc": "2.34-210",
 		},
 	},
+	{
+		name:    "find github action packages (from usage in workflow files and composite actions)",
+		pkgType: pkg.GithubActionPkg,
+		pkgInfo: map[string]string{
+			"actions/checkout": "v4",
+		},
+	},
 }
