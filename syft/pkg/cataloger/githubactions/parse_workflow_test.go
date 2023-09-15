@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func Test_parseActionsUsedInWorkflows(t *testing.T) {
+func Test_parseWorkflowForActionUsage(t *testing.T) {
 	fixture := "test-fixtures/workflow-multi-job.yaml"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
@@ -52,10 +52,10 @@ func Test_parseActionsUsedInWorkflows(t *testing.T) {
 	}
 
 	var expectedRelationships []artifact.Relationship
-	pkgtest.TestFileParser(t, fixture, parseWorkflow, expected, expectedRelationships)
+	pkgtest.TestFileParser(t, fixture, parseWorkflowForActionUsage, expected, expectedRelationships)
 }
 
-func Test_parseActionsUsedInWorkflows_sharedWorkflows(t *testing.T) {
+func Test_parseWorkflowForWorkflowUsage(t *testing.T) {
 	fixture := "test-fixtures/call-shared-workflow.yaml"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
@@ -81,15 +81,8 @@ func Test_parseActionsUsedInWorkflows_sharedWorkflows(t *testing.T) {
 			Locations: fixtureLocationSet,
 			PURL:      "pkg:github/octo-org/another-repo@v1#.github/workflows/workflow.yml",
 		},
-		{
-			Name:      "actions/checkout",
-			Version:   "v4",
-			Type:      pkg.GithubActionPkg,
-			Locations: fixtureLocationSet,
-			PURL:      "pkg:github/actions/checkout@v4",
-		},
 	}
 
 	var expectedRelationships []artifact.Relationship
-	pkgtest.TestFileParser(t, fixture, parseWorkflow, expected, expectedRelationships)
+	pkgtest.TestFileParser(t, fixture, parseWorkflowForWorkflowUsage, expected, expectedRelationships)
 }

@@ -2,9 +2,15 @@ package githubactions
 
 import "github.com/anchore/syft/syft/pkg/cataloger/generic"
 
-// NewUsageCataloger returns GitHub Actions and shared workflows used within workflows and composite actions.
-func NewUsageCataloger() *generic.Cataloger {
+// NewActionUsageCataloger returns GitHub Actions used within workflows and composite actions.
+func NewActionUsageCataloger() *generic.Cataloger {
 	return generic.NewCataloger("github-actions-usage-cataloger").
-		WithParserByGlobs(parseWorkflow, "**/.github/workflows/*.yaml", "**/.github/workflows/*.yml").
-		WithParserByGlobs(parseCompositeActions, "**/.github/actions/*/action.yml", "**/.github/actions/*/action.yaml")
+		WithParserByGlobs(parseWorkflowForActionUsage, "**/.github/workflows/*.yaml", "**/.github/workflows/*.yml").
+		WithParserByGlobs(parseCompositeActionForActionUsage, "**/.github/actions/*/action.yml", "**/.github/actions/*/action.yaml")
+}
+
+// NewWorkflowUsageCataloger returns shared workflows used within workflows.
+func NewWorkflowUsageCataloger() *generic.Cataloger {
+	return generic.NewCataloger("github-action-workflow-usage-cataloger").
+		WithParserByGlobs(parseWorkflowForWorkflowUsage, "**/.github/workflows/*.yaml", "**/.github/workflows/*.yml")
 }

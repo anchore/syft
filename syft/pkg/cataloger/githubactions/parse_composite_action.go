@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var _ generic.Parser = parseWorkflow
+var _ generic.Parser = parseCompositeActionForActionUsage
 
 type compositeActionDef struct {
 	Runs compositeActionRunsDef `yaml:"runs"`
@@ -22,7 +22,7 @@ type compositeActionRunsDef struct {
 	Steps []stepDef `yaml:"steps"`
 }
 
-func parseCompositeActions(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseCompositeActionForActionUsage(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read yaml composite action file: %w", err)

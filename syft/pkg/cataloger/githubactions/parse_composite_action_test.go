@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func Test_parseActionsUsedInCompositeActions(t *testing.T) {
+func Test_parseCompositeActionForActionUsage(t *testing.T) {
 	fixture := "test-fixtures/composite-action.yaml"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
@@ -31,5 +31,5 @@ func Test_parseActionsUsedInCompositeActions(t *testing.T) {
 	}
 
 	var expectedRelationships []artifact.Relationship
-	pkgtest.TestFileParser(t, fixture, parseCompositeActions, expected, expectedRelationships)
+	pkgtest.TestFileParser(t, fixture, parseCompositeActionForActionUsage, expected, expectedRelationships)
 }

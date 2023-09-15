@@ -12,7 +12,10 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var _ generic.Parser = parseWorkflow
+var (
+	_ generic.Parser = parseWorkflowForActionUsage
+	_ generic.Parser = parseWorkflowForWorkflowUsage
+)
 
 type workflowDef struct {
 	Jobs map[string]workflowJobDef `yaml:"jobs"`
@@ -32,7 +35,7 @@ type stepDef struct {
 	} `yaml:"with"`
 }
 
-func parseWorkflow(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseWorkflowForWorkflowUsage(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read yaml workflow file: %w", err)
@@ -53,6 +56,26 @@ func parseWorkflow(_ file.Resolver, _ *generic.Environment, reader file.Location
 				pkgs.Add(*p)
 			}
 		}
+	}
+
+	return pkgs.Sorted(), nil, nil
+}
+
+func parseWorkflowForActionUsage(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to read yaml workflow file: %w", err)
+	}
+
+	var wf workflowDef
+	if err = yaml.Unmarshal(contents, &wf); err != nil {
+		return nil, nil, fmt.Errorf("unable to parse yaml workflow file: %w", err)
+	}
+
+	// we use a collection to help with deduplication before raising to higher level processing
+	pkgs := pkg.NewCollection()
+
+	for _, job := range wf.Jobs {
 		for _, step := range job.Steps {
 			if step.Uses == "" {
 				continue
