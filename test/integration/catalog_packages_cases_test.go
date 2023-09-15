@@ -425,4 +425,11 @@ var commonTestCases = []testCase{
 			"actions/checkout": "v4",
 		},
 	},
+	{
+		name:    "find github shared workflow calls (from usage in workflow files)",
+		pkgType: pkg.GithubActionWorkflowPkg,
+		pkgInfo: map[string]string{
+			"octo-org/this-repo/.github/workflows/workflow-1.yml": "172239021f7ba04fe7327647b213799853a9eb89",
+		},
+	},
 }

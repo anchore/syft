@@ -31,5 +31,5 @@ func Test_parseActionsUsedInCompositeActions(t *testing.T) {
 	}
 
 	var expectedRelationships []artifact.Relationship
-	pkgtest.TestFileParser(t, fixture, parseActionsUsedInCompositeActions, expected, expectedRelationships)
+	pkgtest.TestFileParser(t, fixture, parseCompositeActions, expected, expectedRelationships)
 }

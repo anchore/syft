@@ -17,7 +17,7 @@ func TestCataloger_Globs(t *testing.T) {
 		{
 			name:      "obtain all workflow and composite action files",
 			fixture:   "test-fixtures/glob",
-			cataloger: NewActionUsageCataloger(),
+			cataloger: NewUsageCataloger(),
 			expected: []string{
 				// composite actions
 				".github/actions/bootstrap/action.yaml",
