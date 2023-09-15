@@ -19,6 +19,7 @@ const (
 	DebPkg                Type = "deb"
 	DotnetPkg             Type = "dotnet"
 	GemPkg                Type = "gem"
+	GithubActionPkg       Type = "github-action"
 	GoModulePkg           Type = "go-module"
 	GraalVMNativeImagePkg Type = "graalvm-native-image"
 	HackagePkg            Type = "hackage"
@@ -50,6 +51,7 @@ var AllPkgs = []Type{
 	DebPkg,
 	DotnetPkg,
 	GemPkg,
+	GithubActionPkg,
 	GoModulePkg,
 	HackagePkg,
 	HexPkg,

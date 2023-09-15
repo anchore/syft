@@ -19,6 +19,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/elixir"
 	"github.com/anchore/syft/syft/pkg/cataloger/erlang"
+	"github.com/anchore/syft/syft/pkg/cataloger/githubactions"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -46,6 +47,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		binary.NewCataloger(),
 		deb.NewDpkgdbCataloger(),
 		dotnet.NewDotnetPortableExecutableCataloger(),
+		githubactions.NewActionUsageCataloger(),
 		golang.NewGoModuleBinaryCataloger(cfg.Golang),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewNativeImageCataloger(),
@@ -74,6 +76,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		dotnet.NewDotnetPortableExecutableCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
+		githubactions.NewActionUsageCataloger(),
 		golang.NewGoModFileCataloger(cfg.Golang),
 		golang.NewGoModuleBinaryCataloger(cfg.Golang),
 		haskell.NewHackageCataloger(),
@@ -110,6 +113,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		dotnet.NewDotnetPortableExecutableCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
+		githubactions.NewActionUsageCataloger(),
 		golang.NewGoModFileCataloger(cfg.Golang),
 		golang.NewGoModuleBinaryCataloger(cfg.Golang),
 		haskell.NewHackageCataloger(),
