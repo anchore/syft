@@ -47,8 +47,6 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		binary.NewCataloger(),
 		deb.NewDpkgdbCataloger(),
 		dotnet.NewDotnetPortableExecutableCataloger(),
-		githubactions.NewActionUsageCataloger(),
-		githubactions.NewWorkflowUsageCataloger(),
 		golang.NewGoModuleBinaryCataloger(cfg.Golang),
 		java.NewJavaCataloger(cfg.Java()),
 		java.NewNativeImageCataloger(),
