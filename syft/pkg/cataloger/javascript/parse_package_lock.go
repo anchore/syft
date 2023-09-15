@@ -19,11 +19,11 @@ var _ generic.Parser = parsePackageLock
 
 // packageLock represents a JavaScript package.lock json file
 type packageLock struct {
-	Name            string                           `json:"name"`
-	LockfileVersion int                              `json:"lockfileVersion"`
-	Dependencies    map[string]packageLockDependency `json:"dependencies"`
-	Packages        map[string]packageLockPackage    `json:"packages"`
-	Requires        bool                             `json:"requires"`
+	Name            string                            `json:"name"`
+	LockfileVersion int                               `json:"lockfileVersion"`
+	Dependencies    map[string]*packageLockDependency `json:"dependencies"`
+	Packages        map[string]*packageLockPackage    `json:"packages"`
+	Requires        bool                              `json:"requires"`
 }
 
 type packageLockPackage struct {
@@ -72,7 +72,7 @@ func parsePackageLock(resolver file.Resolver, _ *generic.Environment, reader fil
 
 	if lock.LockfileVersion == 1 {
 		for name, pkgMeta := range lock.Dependencies {
-			pkgs = append(pkgs, newPackageLockV1Package(resolver, reader.Location, name, pkgMeta))
+			pkgs = append(pkgs, newPackageLockV1Package(resolver, reader.Location, name, *pkgMeta))
 		}
 	}
 
@@ -92,7 +92,7 @@ func parsePackageLock(resolver file.Resolver, _ *generic.Environment, reader fil
 
 			pkgs = append(
 				pkgs,
-				newPackageLockV2Package(resolver, reader.Location, getNameFromPath(name), pkgMeta),
+				newPackageLockV2Package(resolver, reader.Location, getNameFromPath(name), *pkgMeta),
 			)
 		}
 	}

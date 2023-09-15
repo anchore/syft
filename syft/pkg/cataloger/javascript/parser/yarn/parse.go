@@ -57,12 +57,12 @@ func parseDependencies(scanner *LineScanner) map[string]string {
 	deps := map[string]string{}
 	for scanner.Scan() {
 		line := scanner.Text()
-		if name, version, err := parseDependency(line); err != nil {
+		name, version, err := parseDependency(line)
+		if err != nil {
 			// finished dependencies block
 			return deps
-		} else {
-			deps[name] = version
 		}
+		deps[name] = version
 	}
 
 	return deps
@@ -93,11 +93,11 @@ func getResolved(target string) (resolved string, err error) {
 }
 
 func parseDependency(line string) (string, string, error) {
-	if name, version, err := getDependency(line); err != nil {
+	name, version, err := getDependency(line)
+	if err != nil {
 		return "", "", err
-	} else {
-		return name, version, nil
 	}
+	return name, version, nil
 }
 
 func getVersion(target string) (version string, err error) {
@@ -160,6 +160,45 @@ func ignoreProtocol(protocol string) bool {
 	return false
 }
 
+func handleEmptyLinesAndComments(line string, skipBlock bool) (int, bool) {
+	if len(line) == 0 {
+		return 1, skipBlock
+	}
+
+	if line[0] == '#' || skipBlock {
+		return 0, skipBlock
+	}
+
+	if strings.HasPrefix(line, "__metadata") {
+		return 0, true
+	}
+
+	return 0, skipBlock
+}
+
+func handleLinePrefixes(line string, pkg *PkgRef, scanner *LineScanner) error {
+	switch {
+	case strings.HasPrefix(line, "version"):
+		var err error
+		pkg.Version, err = getVersion(line)
+		return err
+	case strings.HasPrefix(line, "integrity"):
+		var err error
+		pkg.Integrity, err = getIntegrity(line)
+		return err
+	case strings.HasPrefix(line, "resolved"):
+		var err error
+		pkg.Resolved, err = getResolved(line)
+		return err
+	case strings.HasPrefix(line, "dependencies:"):
+		deps := parseDependencies(scanner)
+		pkg.Dependencies = deps
+		return nil
+	default:
+		return nil
+	}
+}
+
 func ParseBlock(block []byte, lineNum int) (pkg PkgRef, lineNumber int, err error) {
 	var (
 		emptyLines int // lib can start with empty lines first
@@ -170,44 +209,14 @@ func ParseBlock(block []byte, lineNum int) (pkg PkgRef, lineNumber int, err erro
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if len(line) == 0 {
-			emptyLines++
-			continue
-		}
-
-		if line[0] == '#' || skipBlock {
-			continue
-		}
-
-		// Skip this block
-		if strings.HasPrefix(line, "__metadata") {
-			skipBlock = true
-			continue
-		}
+		var increment int
+		increment, skipBlock = handleEmptyLinesAndComments(line, skipBlock)
+		emptyLines += increment
 
 		line = strings.TrimPrefix(strings.TrimSpace(line), "\"")
 
-		switch {
-		case strings.HasPrefix(line, "version"):
-			if pkg.Version, err = getVersion(line); err != nil {
-				skipBlock = true
-			}
-			continue
-		case strings.HasPrefix(line, "integrity"):
-			if pkg.Integrity, err = getIntegrity(line); err != nil {
-				continue
-			}
-			continue
-		case strings.HasPrefix(line, "resolved"):
-			if pkg.Resolved, err = getResolved(line); err != nil {
-				continue
-			}
-			continue
-		case strings.HasPrefix(line, "dependencies:"):
-			// start dependencies block
-			deps := parseDependencies(scanner)
-			pkg.Dependencies = deps
-			continue
+		if err := handleLinePrefixes(line, &pkg, scanner); err != nil {
+			skipBlock = true
 		}
 
 		// try parse package patterns

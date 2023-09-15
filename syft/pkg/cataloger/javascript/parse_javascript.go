@@ -109,7 +109,7 @@ func parseJavascript(resolver file.Resolver, e *generic.Environment, readers []f
 			yarnMap[path2dir(path)] = parseYarnLockFile(reader)
 			fileLocation = reader.Location
 		}
-		if filter.JavaScriptPackageJson(path) {
+		if filter.JavaScriptPackageJSON(path) {
 			var js *packageJSON
 			decoder := json.NewDecoder(reader)
 			err := decoder.Decode(&js)
@@ -137,15 +137,15 @@ func parseJavascript(resolver file.Resolver, e *generic.Environment, readers []f
 
 	for name, js := range jsonMap {
 		if lock, ok := lockMap[name]; ok {
-			root = append(root, parsePackageJsonWithLock(js, lock))
+			root = append(root, parsePackageJSONWithLock(js, lock))
 		}
 
 		if js.File != "" {
 			if yarn, ok := yarnMap[path2dir(js.File)]; ok {
-				root = append(root, parsePackageJsonWithYarnLock(js, yarn))
+				root = append(root, parsePackageJSONWithYarnLock(js, yarn))
 			}
 			if pnpm, ok := pnpmMap[path2dir(js.File)]; ok {
-				root = append(root, ParsePackageJsonWithPnpmLock(js, pnpm))
+				root = append(root, parsePackageJSONWithPnpmLock(js, pnpm))
 			}
 		}
 	}

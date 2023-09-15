@@ -48,8 +48,8 @@ func parsePnpmLock(resolver file.Resolver, _ *generic.Environment, reader file.L
 	return pkgs, nil, nil
 }
 
-// ParsePackageJsonWithPnpmLock takes a package.json and pnpm-lock.yaml package representation and returns a DepGraphNode tree
-func ParsePackageJsonWithPnpmLock(pkgjson *packageJSON, pnpmLock map[string]*pnpmLockPackage) *model.DepGraphNode {
+// parsePackageJSONWithPnpmLock takes a package.json and pnpm-lock.yaml package representation and returns a DepGraphNode tree
+func parsePackageJSONWithPnpmLock(pkgjson *packageJSON, pnpmLock map[string]*pnpmLockPackage) *model.DepGraphNode {
 	root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
 	_dep := _depSet().LoadOrStore
 
@@ -79,27 +79,13 @@ func ParsePackageJsonWithPnpmLock(pkgjson *packageJSON, pnpmLock map[string]*pnp
 	return root
 }
 
-// parsePnpmLock parses a pnpm-lock.yaml file to get a list of packages
-func parsePnpmLockFile(file file.LocationReadCloser) map[string]*pnpmLockPackage {
-	pnpmLock := map[string]*pnpmLockPackage{}
-	bytes, err := io.ReadAll(file)
-	if err != nil {
-		return pnpmLock
-	}
-
-	var lockFile pnpmLockYaml
-	if err := yaml.Unmarshal(bytes, &lockFile); err != nil {
-		return pnpmLock
-	}
-
-	lockVersion, _ := strconv.ParseFloat(lockFile.Version, 64)
+func parsePnpmPackages(lockFile pnpmLockYaml, lockVersion float64, pnpmLock map[string]*pnpmLockPackage) {
 	packageNameRegex := regexp.MustCompile(`^/?([^(]*)(?:\(.*\))*$`)
 	splitChar := "/"
 	if lockVersion >= 6.0 {
 		splitChar = "@"
 	}
 
-	// parse packages from packages section of pnpm-lock.yaml
 	for nameVersion, packageDetails := range lockFile.Packages {
 		nameVersion = packageNameRegex.ReplaceAllString(nameVersion, "$1")
 		nameVersionSplit := strings.Split(strings.TrimPrefix(nameVersion, "/"), splitChar)
@@ -121,7 +107,9 @@ func parsePnpmLockFile(file file.LocationReadCloser) map[string]*pnpmLockPackage
 
 		pnpmLock[key.NpmPackageKey(name, version)] = packageDetails
 	}
+}
 
+func parsePnpmDependencies(lockFile pnpmLockYaml, pnpmLock map[string]*pnpmLockPackage) {
 	for name, info := range lockFile.Dependencies {
 		version := ""
 		switch info := info.(type) {
@@ -152,6 +140,26 @@ func parsePnpmLockFile(file file.LocationReadCloser) map[string]*pnpmLockPackage
 			Version: version,
 		}
 	}
+}
+
+// parsePnpmLock parses a pnpm-lock.yaml file to get a list of packages
+func parsePnpmLockFile(file file.LocationReadCloser) map[string]*pnpmLockPackage {
+	pnpmLock := map[string]*pnpmLockPackage{}
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		return pnpmLock
+	}
+
+	var lockFile pnpmLockYaml
+	if err := yaml.Unmarshal(bytes, &lockFile); err != nil {
+		return pnpmLock
+	}
+
+	lockVersion, _ := strconv.ParseFloat(lockFile.Version, 64)
+
+	// parse packages from packages section of pnpm-lock.yaml
+	parsePnpmPackages(lockFile, lockVersion, pnpmLock)
+	parsePnpmDependencies(lockFile, pnpmLock)
 
 	return pnpmLock
 }

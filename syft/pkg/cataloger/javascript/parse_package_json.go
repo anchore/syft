@@ -7,6 +7,8 @@ import (
 	"io"
 	"regexp"
 
+	"github.com/mitchellh/mapstructure"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -14,7 +16,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
-	"github.com/mitchellh/mapstructure"
 )
 
 // integrity check
@@ -84,9 +85,9 @@ func parsePackageJSON(_ file.Resolver, _ *generic.Environment, reader file.Locat
 	return pkgs, nil, nil
 }
 
-func parsePackageJsonWithLock(pkgjson *packageJSON, pkglock *packageLock) *model.DepGraphNode {
+func parsePackageJSONWithLock(pkgjson *packageJSON, pkglock *packageLock) *model.DepGraphNode {
 	if pkglock.LockfileVersion == 3 {
-		return parsePackageJsonWithLockV3(pkgjson, pkglock)
+		return parsePackageJSONWithLockV3(pkgjson, pkglock)
 	}
 
 	root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
@@ -109,7 +110,7 @@ func parsePackageJsonWithLock(pkgjson *packageJSON, pkglock *packageLock) *model
 	// build dependency tree
 	for name, lockDep := range pkglock.Dependencies {
 		lockDep.name = name
-		q := []*packageLockDependency{&lockDep}
+		q := []*packageLockDependency{lockDep}
 		for len(q) > 0 {
 			n := q[0]
 			q = q[1:]
@@ -153,7 +154,7 @@ func parsePackageJsonWithLock(pkgjson *packageJSON, pkglock *packageLock) *model
 	return root
 }
 
-func parsePackageJsonWithLockV3(pkgjson *packageJSON, pkglock *packageLock) *model.DepGraphNode {
+func parsePackageJSONWithLockV3(pkgjson *packageJSON, pkglock *packageLock) *model.DepGraphNode {
 	if pkglock.LockfileVersion != 3 {
 		return nil
 	}

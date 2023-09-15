@@ -3,13 +3,14 @@ package generic
 import (
 	"path/filepath"
 
+	"github.com/bmatcuk/doublestar/v4"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/bmatcuk/doublestar/v4"
 )
 
 type processor func(resolver file.Resolver, env Environment) []request
@@ -44,68 +45,78 @@ func (c *GroupedCataloger) Name() string {
 	return c.upstreamCataloger
 }
 
+func isPrimaryFileGlobPresent(primaryFileGlob string, globs []string) bool {
+	for _, g := range globs {
+		if g == primaryFileGlob {
+			return true
+		}
+	}
+	return false
+}
+
+func generateGroupedProcessor(parser GroupedParser, primaryFileGlob string, globs []string) func(resolver file.Resolver, env Environment) []groupedRequest {
+	return func(resolver file.Resolver, env Environment) []groupedRequest {
+		var requests []groupedRequest
+		colocatedFiles := collectColocatedFiles(resolver, globs)
+
+		// Filter to only directories that contain all specified files
+		for _, files := range colocatedFiles {
+			allMatched, primaryFileLocation := isAllGlobsMatched(files, globs, primaryFileGlob)
+			if allMatched {
+				requests = append(requests, makeGroupedRequests(parser, files, primaryFileLocation))
+			}
+		}
+
+		return requests
+	}
+}
+
+func collectColocatedFiles(resolver file.Resolver, globs []string) map[string][]file.Location {
+	colocatedFiles := make(map[string][]file.Location)
+	for _, g := range globs {
+		log.WithFields("glob", g).Trace("searching for paths matching glob")
+		matches, err := resolver.FilesByGlob(g)
+		if err != nil {
+			log.Warnf("unable to process glob=%q: %+v", g, err)
+			continue
+		}
+		for _, match := range matches {
+			dir := filepath.Dir(match.RealPath)
+			colocatedFiles[dir] = append(colocatedFiles[dir], match)
+		}
+	}
+	return colocatedFiles
+}
+
+func isAllGlobsMatched(files []file.Location, globs []string, primaryFileGlob string) (bool, file.Location) {
+	globMatches := make(map[string]bool)
+	var primaryFileLocation file.Location
+
+	for _, g := range globs {
+		for _, file := range files {
+			if matched, _ := doublestar.PathMatch(g, file.RealPath); matched {
+				if g == primaryFileGlob {
+					primaryFileLocation = file
+				}
+				globMatches[g] = true
+				break
+			}
+		}
+	}
+
+	return len(globMatches) == len(globs), primaryFileLocation
+}
+
 // WithParserByGlobColocation is a special case of WithParserByGlob that will only match files that are colocated
 // with all of the provided globs. This is useful for cases where a package is defined by multiple files (e.g. package.json + package-lock.json).
 // This function will only match files that are colocated with all of the provided globs.
 func (c *GroupedCataloger) WithParserByGlobColocation(parser GroupedParser, primaryFileGlob string, globs []string) *GroupedCataloger {
-	primaryFileGlobPresent := false
-	for _, g := range globs {
-		if g == primaryFileGlob {
-			primaryFileGlobPresent = true
-		}
-	}
-
-	if !primaryFileGlobPresent {
+	if !isPrimaryFileGlobPresent(primaryFileGlob, globs) {
 		log.Warnf("primary file glob=%q not present in globs=%+v", primaryFileGlob, globs)
 		return c
 	}
 
-	c.groupedProcessor = append(c.groupedProcessor,
-		func(resolver file.Resolver, env Environment) []groupedRequest {
-			var requests []groupedRequest
-			colocatedFiles := make(map[string][]file.Location)
-			// Collect all files that match any of the provided globs
-			for _, g := range globs {
-				log.WithFields("glob", g).Trace("searching for paths matching glob")
-
-				matches, err := resolver.FilesByGlob(g)
-				if err != nil {
-					log.Warnf("unable to process glob=%q: %+v", g, err)
-					continue
-				}
-
-				for _, match := range matches {
-					dir := filepath.Dir(match.RealPath)
-					colocatedFiles[dir] = append(colocatedFiles[dir], match)
-				}
-			}
-
-			// Filter to only directories that contain all specified files
-			for _, files := range colocatedFiles {
-				globMatches := make(map[string]bool)
-				var primaryFileLocation file.Location
-
-				for _, g := range globs {
-					for _, file := range files {
-						if matched, _ := doublestar.PathMatch(g, file.RealPath); matched {
-							if g == primaryFileGlob {
-								primaryFileLocation = file
-							}
-
-							globMatches[g] = true
-							break
-						}
-					}
-				}
-
-				if len(globMatches) == len(globs) {
-					requests = append(requests, makeGroupedRequests(parser, files, primaryFileLocation))
-				}
-			}
-
-			return requests
-		},
-	)
+	c.groupedProcessor = append(c.groupedProcessor, generateGroupedProcessor(parser, primaryFileGlob, globs))
 	return c
 }
 

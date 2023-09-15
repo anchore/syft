@@ -27,6 +27,11 @@ type DepGraphNode struct {
 	Expand any
 }
 
+type pn struct {
+	p *DepGraphNode
+	n *DepGraphNode
+}
+
 func (dep *DepGraphNode) AppendChild(child *DepGraphNode) {
 	if dep == nil || child == nil {
 		return
@@ -72,43 +77,14 @@ func (dep *DepGraphNode) RemoveChild(child *DepGraphNode) {
 // do.p: Parent node of the path
 // do.n: Child node of the path
 func (dep *DepGraphNode) ForEach(deep, path, name bool, do func(p, n *DepGraphNode) bool) {
-
 	if dep == nil {
 		return
 	}
 
-	var set func(p, n *DepGraphNode) bool
-	if path {
-		pathSet := map[*DepGraphNode]map[*DepGraphNode]bool{}
-		set = func(p, n *DepGraphNode) bool {
-			if _, ok := pathSet[p]; !ok {
-				pathSet[p] = map[*DepGraphNode]bool{}
-			}
-			if pathSet[p][n] {
-				return true
-			}
-			pathSet[p][n] = true
-			return false
-		}
-	} else {
-		nodeSet := map[*DepGraphNode]bool{}
-		set = func(p, n *DepGraphNode) bool {
-			if nodeSet[n] {
-				return true
-			}
-			nodeSet[n] = true
-			return false
-		}
-	}
-
-	type pn struct {
-		p *DepGraphNode
-		n *DepGraphNode
-	}
+	set := getSetFunction(path)
 
 	q := []*pn{{nil, dep}}
 	for len(q) > 0 {
-
 		var n *pn
 		if deep {
 			n = q[len(q)-1]
@@ -121,27 +97,56 @@ func (dep *DepGraphNode) ForEach(deep, path, name bool, do func(p, n *DepGraphNo
 		if !do(n.p, n.n) {
 			continue
 		}
+		q = processNode(n, deep, name, set, q)
+	}
+}
 
-		next := make([]*DepGraphNode, len(n.n.Children))
-		copy(next, n.n.Children)
+func processNode(n *pn, deep, name bool, set func(p, n *DepGraphNode) bool, q []*pn) []*pn {
+	next := make([]*DepGraphNode, len(n.n.Children))
+	copy(next, n.n.Children)
 
-		if name {
-			sort.Slice(next, func(i, j int) bool { return next[i].Name < next[j].Name })
+	if name {
+		sort.Slice(next, func(i, j int) bool { return next[i].Name < next[j].Name })
+	}
+
+	if deep {
+		for i, j := 0, len(next)-1; i < j; i, j = i+1, j-1 {
+			next[i], next[j] = next[j], next[i]
 		}
+	}
 
-		if deep {
-			for i, j := 0, len(next)-1; i < j; i, j = i+1, j-1 {
-				next[i], next[j] = next[j], next[i]
+	for _, c := range next {
+		if set(n.n, c) {
+			continue
+		}
+		q = append(q, &pn{n.n, c})
+	}
+
+	return q
+}
+
+func getSetFunction(path bool) func(p, n *DepGraphNode) bool {
+	if path {
+		pathSet := map[*DepGraphNode]map[*DepGraphNode]bool{}
+		return func(p, n *DepGraphNode) bool {
+			if _, ok := pathSet[p]; !ok {
+				pathSet[p] = map[*DepGraphNode]bool{}
 			}
-		}
-
-		for _, c := range next {
-			if set(n.n, c) {
-				continue
+			if pathSet[p][n] {
+				return true
 			}
-			q = append(q, &pn{n.n, c})
+			pathSet[p][n] = true
+			return false
 		}
+	}
 
+	nodeSet := map[*DepGraphNode]bool{}
+	return func(p, n *DepGraphNode) bool {
+		if nodeSet[n] {
+			return true
+		}
+		nodeSet[n] = true
+		return false
 	}
 }
 

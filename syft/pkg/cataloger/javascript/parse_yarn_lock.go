@@ -85,9 +85,9 @@ func parseYarnLockFile(file file.LocationReadCloser) map[string]*yarnLockPackage
 	return lock
 }
 
-// ParsePackageJsonWithYarnLock takes a package.json and yarn.lock package representation
+// parsePackageJSONWithYarnLock takes a package.json and yarn.lock package representation
 // and returns a DepGraphNode tree of packages and their dependencies
-func parsePackageJsonWithYarnLock(pkgjson *packageJSON, yarnlock map[string]*yarnLockPackage) *model.DepGraphNode {
+func parsePackageJSONWithYarnLock(pkgjson *packageJSON, yarnlock map[string]*yarnLockPackage) *model.DepGraphNode {
 	root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
 	_dep := _depSet().LoadOrStore
 

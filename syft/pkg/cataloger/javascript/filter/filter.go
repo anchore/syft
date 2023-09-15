@@ -15,7 +15,7 @@ func filterFunc(strFunc func(string, string) bool, args ...string) func(string) 
 
 var (
 	JavaScriptYarnLock    = filterFunc(strings.HasSuffix, "yarn.lock")
-	JavaScriptPackageJson = func(filename string) bool {
+	JavaScriptPackageJSON = func(filename string) bool {
 		return strings.HasSuffix(filename, "package.json")
 	}
 	JavaScriptPackageLock = filterFunc(strings.HasSuffix, "package-lock.json")
