@@ -13,29 +13,28 @@ func NewRelationships(catalog *Collection) []artifact.Relationship {
 }
 
 func RelationshipLess(i, j artifact.Relationship) bool {
-	iFromPkg, ok1 := i.From.(*Package)
-	iToPkg, ok2 := i.To.(*Package)
-	jFromPkg, ok3 := j.From.(*Package)
-	jToPkg, ok4 := j.To.(*Package)
+	iFrom, ok1 := i.From.(Package)
+	iTo, ok2 := i.To.(Package)
+	jFrom, ok3 := j.From.(Package)
+	jTo, ok4 := j.To.(Package)
 
-	// Check type assertions, and if any fails, return false
 	if !(ok1 && ok2 && ok3 && ok4) {
 		return false
 	}
 
-	// Deterministically compare fields
-	switch {
-	case iFromPkg.Name != jFromPkg.Name:
-		return iFromPkg.Name < jFromPkg.Name
-	case iFromPkg.Version != jFromPkg.Version:
-		return iFromPkg.Version < jFromPkg.Version
-	case iToPkg.Name != jToPkg.Name:
-		return iToPkg.Name < jToPkg.Name
-	case iToPkg.Version != jToPkg.Version:
-		return iToPkg.Version < jToPkg.Version
-	default:
-		return i.Type < j.Type
+	if iFrom.Name != jFrom.Name {
+		return iFrom.Name < jFrom.Name
 	}
+	if iFrom.Version != jFrom.Version {
+		return iFrom.Version < jFrom.Version
+	}
+	if iTo.Name != jTo.Name {
+		return iTo.Name < jTo.Name
+	}
+	if iTo.Version != jTo.Version {
+		return iTo.Version < jTo.Version
+	}
+	return i.Type < j.Type
 }
 
 func SortRelationships(rels []artifact.Relationship) {

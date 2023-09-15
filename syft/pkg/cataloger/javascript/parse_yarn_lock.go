@@ -109,25 +109,7 @@ func parsePackageJSONWithYarnLock(pkgjson *packageJSON, yarnlock map[string]*yar
 				))
 			}
 		}
-	}
-
-	for name, version := range pkgjson.Dependencies {
-		lock := yarnlock[key.NpmPackageKey(name, version)]
-		if lock != nil {
-			root.AppendChild(_dep(
-				lock.Name,
-				lock.Version,
-				lock.Integrity,
-				lock.Resolved,
-			))
-		} else {
-			root.AppendChild(&model.DepGraphNode{
-				Name:      name,
-				Version:   version,
-				Integrity: "",
-				Resolved:  "",
-			})
-		}
+		root.AppendChild(dep)
 	}
 
 	for name, version := range pkgjson.DevDependencies {
@@ -158,8 +140,11 @@ func parsePackageJSONWithYarnLock(pkgjson *packageJSON, yarnlock map[string]*yar
 func parseBlock(block []byte, lineNum int) (pkg yarnLockPackage, refVersions []string, newLine int, err error) {
 	pkgRef, lineNumber, err := yarnparse.ParseBlock(block, lineNum)
 	for _, pattern := range pkgRef.Patterns {
-		n, v := splitLastAt(pattern)
-		refVersions = append(refVersions, key.NpmPackageKey(n, v))
+		nv := strings.Split(pattern, ":")
+		if len(nv) != 2 {
+			continue
+		}
+		refVersions = append(refVersions, key.NpmPackageKey(nv[0], nv[1]))
 	}
 
 	return yarnLockPackage{
@@ -169,12 +154,4 @@ func parseBlock(block []byte, lineNum int) (pkg yarnLockPackage, refVersions []s
 		Resolved:     pkgRef.Resolved,
 		Dependencies: pkgRef.Dependencies,
 	}, refVersions, lineNumber, err
-}
-
-func splitLastAt(s string) (string, string) {
-	i := strings.LastIndex(s, "@")
-	if i == -1 {
-		return s, ""
-	}
-	return s[:i], s[i+1:]
 }

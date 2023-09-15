@@ -19,6 +19,15 @@ var (
 	yarnDependencyRegexp = regexp.MustCompile(`\s{4,}"?(?P<package>.+?)"?:?\s"?(?P<version>[^"]+)"?`)
 	yarnIntegrityRegexp  = regexp.MustCompile(`^"?integrity:?"?\s+"?(?P<integrity>[^"]+)"?`)
 	yarnResolvedRegexp   = regexp.MustCompile(`^"?resolved:?"?\s+"?(?P<resolved>[^"]+)"?`)
+	// yarnPackageURLExp matches the name and version of the dependency in yarn.lock
+	// from the resolved URL, including scope/namespace prefix if any.
+	// For example:
+	//		`"https://registry.yarnpkg.com/async/-/async-3.2.3.tgz#ac53dafd3f4720ee9e8a160628f18ea91df196c9"`
+	//			would return "async" and "3.2.3"
+	//
+	//		`"https://registry.yarnpkg.com/@4lolo/resize-observer-polyfill/-/resize-observer-polyfill-1.5.2.tgz#58868fc7224506236b5550d0c68357f0a874b84b"`
+	//			would return "@4lolo/resize-observer-polyfill" and "1.5.2"
+	yarnPackageURLExp = regexp.MustCompile(`^https://registry\.(?:yarnpkg\.com|npmjs\.org)/(.+?)/-/(?:.+?)-(\d+\..+?)\.tgz`)
 )
 
 type PkgRef struct {
@@ -108,6 +117,13 @@ func getVersion(target string) (version string, err error) {
 	return capture[len(capture)-1], nil
 }
 
+func getPackageNameFromResolved(resolution string) (pkgName string) {
+	if matches := yarnPackageURLExp.FindStringSubmatch(resolution); len(matches) >= 2 {
+		return matches[1]
+	}
+	return ""
+}
+
 func parsePattern(target string) (packagename, protocol, version string, err error) {
 	capture := yarnPatternRegexp.FindStringSubmatch(target)
 	if len(capture) < 3 {
@@ -144,9 +160,16 @@ func parsePackagePatterns(target string) (packagename, protocol string, patterns
 
 func validProtocol(protocol string) bool {
 	switch protocol {
+	// example: "jhipster-core@npm:7.3.4":
 	case "npm", "":
 		return true
+	// example: "my-pkg@workspace:."
 	case "workspace":
+		return true
+	// example: "should-type@https://github.com/shouldjs/type.git#1.3.0"
+	case "https":
+		return true
+	case "git+ssh", "git+http", "git+https", "git+file":
 		return true
 	}
 	return false
@@ -154,7 +177,7 @@ func validProtocol(protocol string) bool {
 
 func ignoreProtocol(protocol string) bool {
 	switch protocol {
-	case "patch", "file", "link", "portal", "github", "git", "git+ssh", "git+http", "git+https", "git+file":
+	case "patch", "file", "link", "portal", "github", "git":
 		return true
 	}
 	return false
@@ -235,6 +258,14 @@ func ParseBlock(block []byte, lineNum int) (pkg PkgRef, lineNumber int, err erro
 			pkg.Patterns = patterns
 			continue
 		}
+	}
+
+	// handles the case of namespaces packages like @4lolo/resize-observer-polyfill
+	// where the name might not be present in the name field, but only in the
+	// resolved field
+	resolvedPkgName := getPackageNameFromResolved(pkg.Resolved)
+	if resolvedPkgName != "" {
+		pkg.Name = resolvedPkgName
 	}
 
 	// in case an unsupported protocol is detected

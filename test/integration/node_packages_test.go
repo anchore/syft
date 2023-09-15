@@ -34,7 +34,7 @@ func TestYarnPackageLockDirectory(t *testing.T) {
 	sbom, _ := catalogDirectory(t, "test-fixtures/yarn-lock")
 
 	foundPackages := internal.NewStringSet()
-	expectedPackages := internal.NewStringSet("async@0.9.2", "async@3.2.3", "merge-objects@1.0.5", "should-type@1.3.0", "@4lolo/resize-observer-polyfill@1.5.2")
+	expectedPackages := internal.NewStringSet("async@0.9.2", "async@3.2.3", "merge-objects@1.0.5", "should-type@1.3.0", "@4lolo/resize-observer-polyfill@1.5.2", "yarn-lock@1.0.0")
 
 	for actualPkg := range sbom.Artifacts.Packages.Enumerate(pkg.NpmPkg) {
 		for _, actualLocation := range actualPkg.Locations.ToSlice() {

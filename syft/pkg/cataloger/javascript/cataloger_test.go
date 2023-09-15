@@ -93,7 +93,7 @@ func expectedPackagesAndRelationshipsLockV1(locationSet file.LocationSet, metada
 	}
 	zonejs.OverrideID("5fa2ca5d4bae3620")
 
-	pkgList := []*pkg.Package{
+	l := []*pkg.Package{
 		&rxjs,
 		&testApp,
 		&tslib,
@@ -101,42 +101,38 @@ func expectedPackagesAndRelationshipsLockV1(locationSet file.LocationSet, metada
 		&zonejs,
 	}
 
-	if metadata {
-		for i, pkg := range pkgList {
-			pkgList[i].Metadata = metadataMap[pkg.Name]
+	var expectedPkgs []pkg.Package
+	for i := range l {
+		if metadata {
+			l[i].Metadata = metadataMap[l[i].Name]
+			expectedPkgs = append(expectedPkgs, *l[i])
+		} else {
+			expectedPkgs = append(expectedPkgs, *l[i])
 		}
-	}
-
-	expectedPkgs := []pkg.Package{
-		testApp,
-		rxjs,
-		tslib,
-		typescript,
-		zonejs,
 	}
 
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: &testApp,
-			To:   &rxjs,
+			From: testApp,
+			To:   rxjs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &tslib,
+			From: testApp,
+			To:   tslib,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &typescript,
+			From: testApp,
+			To:   typescript,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &zonejs,
+			From: testApp,
+			To:   zonejs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -174,6 +170,7 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 		FoundBy:      "javascript-cataloger",
 		PURL:         "pkg:npm/rxjs@7.5.7",
 		Locations:    locationSet,
+		Licenses:     pkg.NewLicenseSet(),
 		Language:     pkg.JavaScript,
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
@@ -186,6 +183,7 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 		FoundBy:      "javascript-cataloger",
 		PURL:         "pkg:npm/test-app@0.0.0",
 		Locations:    locationSet,
+		Licenses:     pkg.NewLicenseSet(),
 		Language:     pkg.JavaScript,
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
@@ -198,6 +196,7 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 		FoundBy:      "javascript-cataloger",
 		PURL:         "pkg:npm/tslib@2.4.1",
 		Locations:    locationSet,
+		Licenses:     pkg.NewLicenseSet(),
 		Language:     pkg.JavaScript,
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
@@ -222,6 +221,7 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 		FoundBy:      "javascript-cataloger",
 		PURL:         "pkg:npm/zone.js@0.11.8",
 		Locations:    locationSet,
+		Licenses:     pkg.NewLicenseSet(),
 		Language:     pkg.JavaScript,
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
@@ -229,7 +229,7 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 	}
 	zonejs.OverrideID("5fa2ca5d4bae3620")
 
-	pkgList := []*pkg.Package{
+	l := []*pkg.Package{
 		&rxjs,
 		&testApp,
 		&tslib,
@@ -237,54 +237,50 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 		&zonejs,
 	}
 
-	if metadata {
-		for i, pkg := range pkgList {
-			pkgList[i].Metadata = metadataMap[pkg.Name]
+	var expectedPkgs []pkg.Package
+	for i := range l {
+		if metadata {
+			l[i].Metadata = metadataMap[l[i].Name]
+			expectedPkgs = append(expectedPkgs, *l[i])
+		} else {
+			expectedPkgs = append(expectedPkgs, *l[i])
 		}
-	}
-
-	expectedPkgs := []pkg.Package{
-		testApp,
-		rxjs,
-		tslib,
-		typescript,
-		zonejs,
 	}
 
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: &rxjs,
-			To:   &tslib,
+			From: rxjs,
+			To:   tslib,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &rxjs,
+			From: testApp,
+			To:   rxjs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &tslib,
+			From: testApp,
+			To:   tslib,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &typescript,
+			From: testApp,
+			To:   typescript,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &zonejs,
+			From: testApp,
+			To:   zonejs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &zonejs,
-			To:   &tslib,
+			From: zonejs,
+			To:   tslib,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -372,7 +368,7 @@ func expectedPackagesAndRelationshipsLockV3(locationSet file.LocationSet, metada
 	}
 	zonejs.OverrideID("5fa2ca5d4bae3620")
 
-	pkgList := []*pkg.Package{
+	l := []*pkg.Package{
 		&rxjs,
 		&testApp,
 		&tslib,
@@ -380,54 +376,50 @@ func expectedPackagesAndRelationshipsLockV3(locationSet file.LocationSet, metada
 		&zonejs,
 	}
 
-	if metadata {
-		for i, pkg := range pkgList {
-			pkgList[i].Metadata = metadataMap[pkg.Name]
+	var expectedPkgs []pkg.Package
+	for i := range l {
+		if metadata {
+			l[i].Metadata = metadataMap[l[i].Name]
+			expectedPkgs = append(expectedPkgs, *l[i])
+		} else {
+			expectedPkgs = append(expectedPkgs, *l[i])
 		}
-	}
-
-	expectedPkgs := []pkg.Package{
-		testApp,
-		rxjs,
-		tslib,
-		typescript,
-		zonejs,
 	}
 
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: &rxjs,
-			To:   &tslib,
+			From: rxjs,
+			To:   tslib,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &rxjs,
+			From: testApp,
+			To:   rxjs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &tslib,
+			From: testApp,
+			To:   tslib,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &typescript,
+			From: testApp,
+			To:   typescript,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &zonejs,
+			From: testApp,
+			To:   zonejs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &zonejs,
-			To:   &tslib,
+			From: zonejs,
+			To:   tslib,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -435,6 +427,7 @@ func expectedPackagesAndRelationshipsLockV3(locationSet file.LocationSet, metada
 
 	return expectedPkgs, expectedRelationships
 }
+
 func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, metadata bool) ([]pkg.Package, []artifact.Relationship) {
 	metadataMap := map[string]pkg.NpmPackageLockJSONMetadata{
 		"rxjs": {
@@ -519,7 +512,7 @@ func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, meta
 	}
 	zonejs.OverrideID("5fa2ca5d4bae3620")
 
-	pkgList := []*pkg.Package{
+	l := []*pkg.Package{
 		&rxjs,
 		&testApp,
 		&tslib,
@@ -527,54 +520,50 @@ func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, meta
 		&zonejs,
 	}
 
-	if metadata {
-		for i, pkg := range pkgList {
-			pkgList[i].Metadata = metadataMap[pkg.Name]
+	var expectedPkgs []pkg.Package
+	for i := range l {
+		if metadata {
+			l[i].Metadata = metadataMap[l[i].Name]
+			expectedPkgs = append(expectedPkgs, *l[i])
+		} else {
+			expectedPkgs = append(expectedPkgs, *l[i])
 		}
-	}
-
-	expectedPkgs := []pkg.Package{
-		testApp,
-		rxjs,
-		tslib,
-		typescript,
-		zonejs,
 	}
 
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: &rxjs,
-			To:   &tslib,
+			From: rxjs,
+			To:   tslib,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &rxjs,
+			From: testApp,
+			To:   rxjs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &tslib,
+			From: testApp,
+			To:   tslib,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &typescript,
+			From: testApp,
+			To:   typescript,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &testApp,
-			To:   &zonejs,
+			From: testApp,
+			To:   zonejs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: &zonejs,
-			To:   &tslib,
+			From: zonejs,
+			To:   tslib,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},

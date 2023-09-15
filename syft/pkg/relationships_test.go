@@ -7,6 +7,57 @@ import (
 )
 
 func TestSortRelationships(t *testing.T) {
+	rxjs := Package{
+		Name:         "rxjs",
+		Version:      "7.5.0",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/rxjs@7.5.0",
+		Language:     JavaScript,
+		Type:         NpmPkg,
+		MetadataType: NpmPackageLockJSONMetadataType,
+	}
+	rxjs.OverrideID("771ec36a7b3f7216")
+	testApp := Package{
+		Name:         "test-app",
+		Version:      "0.0.0",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/test-app@0.0.0",
+		Language:     JavaScript,
+		Type:         NpmPkg,
+		MetadataType: NpmPackageLockJSONMetadataType,
+	}
+	testApp.OverrideID("8242bb06eb820fe6")
+	tslib := Package{
+		Name:         "tslib",
+		Version:      "2.6.2",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/tslib@2.6.2",
+		Language:     JavaScript,
+		Type:         NpmPkg,
+		MetadataType: NpmPackageLockJSONMetadataType,
+	}
+	tslib.OverrideID("6e66a3c2012b1393")
+	typescript := Package{
+		Name:         "typescript",
+		Version:      "4.7.4",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/typescript@4.7.4",
+		Language:     JavaScript,
+		Type:         NpmPkg,
+		MetadataType: NpmPackageLockJSONMetadataType,
+	}
+	typescript.OverrideID("116c95f7038696e2")
+	zonejs := Package{
+		Name:         "zone.js",
+		Version:      "0.11.8",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/zone.js@0.11.8",
+		Language:     JavaScript,
+		Type:         NpmPkg,
+		MetadataType: NpmPackageLockJSONMetadataType,
+	}
+	zonejs.OverrideID("5fa2ca5d4bae3620")
+
 	tests := []struct {
 		name     string
 		input    []artifact.Relationship
@@ -16,51 +67,78 @@ func TestSortRelationships(t *testing.T) {
 			name: "basic sort",
 			input: []artifact.Relationship{
 				{
-					From: &Package{Name: "test-app", Version: "0.0.0"},
-					To:   &Package{Name: "tslib", Version: "2.4.1"},
+					From: testApp,
+					To:   zonejs,
 					Type: artifact.DependencyOfRelationship,
+					Data: nil,
 				},
 				{
-					From: &Package{Name: "test-app", Version: "0.0.0"},
-					To:   &Package{Name: "zone.js", Version: "0.11.8"},
+					From: testApp,
+					To:   rxjs,
 					Type: artifact.DependencyOfRelationship,
+					Data: nil,
 				},
 				{
-					From: &Package{Name: "test-app", Version: "0.0.0"},
-					To:   &Package{Name: "rxjs", Version: "7.5.7"},
+					From: testApp,
+					To:   tslib,
 					Type: artifact.DependencyOfRelationship,
+					Data: nil,
 				},
 				{
-					From: &Package{Name: "test-app", Version: "0.0.0"},
-					To:   &Package{Name: "typescript", Version: "4.7.4"},
+					From: testApp,
+					To:   typescript,
 					Type: artifact.DependencyOfRelationship,
+					Data: nil,
+				},
+				{
+					From: zonejs,
+					To:   tslib,
+					Type: artifact.DependencyOfRelationship,
+					Data: nil,
+				},
+				{
+					From: rxjs,
+					To:   tslib,
+					Type: artifact.DependencyOfRelationship,
+					Data: nil,
 				},
 			},
 			expected: []artifact.Relationship{
 				{
-					From: &Package{Name: "test-app", Version: "0.0.0"},
-					To:   &Package{Name: "rxjs", Version: "7.5.7"},
+					From: rxjs,
+					To:   tslib,
 					Type: artifact.DependencyOfRelationship,
+					Data: nil,
 				},
 				{
-					From: &Package{Name: "test-app", Version: "0.0.0"},
-					To:   &Package{Name: "tslib", Version: "2.4.1"},
+					From: testApp,
+					To:   rxjs,
 					Type: artifact.DependencyOfRelationship,
+					Data: nil,
 				},
 				{
-					From: &Package{Name: "test-app", Version: "0.0.0"},
-					To:   &Package{Name: "typescript", Version: "4.7.4"},
+					From: testApp,
+					To:   tslib,
 					Type: artifact.DependencyOfRelationship,
+					Data: nil,
 				},
 				{
-					From: &Package{Name: "test-app", Version: "0.0.0"},
-					To:   &Package{Name: "zone.js", Version: "0.11.8"},
+					From: testApp,
+					To:   typescript,
 					Type: artifact.DependencyOfRelationship,
+					Data: nil,
 				},
 				{
-					From: &Package{Name: "zone.js", Version: "0.11.8"},
-					To:   &Package{Name: "rxjs", Version: "7.5.7"},
+					From: testApp,
+					To:   zonejs,
 					Type: artifact.DependencyOfRelationship,
+					Data: nil,
+				},
+				{
+					From: zonejs,
+					To:   tslib,
+					Type: artifact.DependencyOfRelationship,
+					Data: nil,
 				},
 			},
 		},
@@ -79,10 +157,10 @@ func TestSortRelationships(t *testing.T) {
 }
 
 func compareRelationships(a, b artifact.Relationship) bool {
-	aFrom, ok1 := a.From.(*Package)
-	bFrom, ok2 := b.From.(*Package)
-	aTo, ok3 := a.To.(*Package)
-	bTo, ok4 := b.To.(*Package)
+	aFrom, ok1 := a.From.(Package)
+	bFrom, ok2 := b.From.(Package)
+	aTo, ok3 := a.To.(Package)
+	bTo, ok4 := b.To.(Package)
 
 	if !(ok1 && ok2 && ok3 && ok4) {
 		return false
