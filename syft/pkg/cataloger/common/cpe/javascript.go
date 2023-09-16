@@ -2,7 +2,7 @@ package cpe
 
 import "github.com/anchore/syft/syft/pkg"
 
-func candidateVendorsForJavascript(p pkg.Package) fieldCandidateSet {
+func candidateVendorsForJavaScript(p pkg.Package) fieldCandidateSet {
 	if p.MetadataType != pkg.NpmPackageJSONMetadataType {
 		return nil
 	}

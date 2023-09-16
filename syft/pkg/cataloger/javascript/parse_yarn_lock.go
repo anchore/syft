@@ -26,7 +26,7 @@ type yarnLockPackage struct {
 
 func parseYarnLock(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	readers := []file.LocationReadCloser{reader}
-	pkgs, _, err := parseJavascript(resolver, e, readers)
+	pkgs, _, err := parseJavaScript(resolver, e, readers)
 	if err != nil {
 		return nil, nil, err
 	}

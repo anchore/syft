@@ -13,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
 )
 
-// var _ generic.Parser = parseJavascript
+var _ generic.GroupedParser = parseJavaScript
 
 func _depSet() *model.DepGraphNodeMap {
 	return model.NewDepGraphNodeMap(func(s ...string) string {
@@ -29,7 +29,7 @@ func _depSet() *model.DepGraphNodeMap {
 	})
 }
 
-func processJavascriptFiles(
+func processJavaScriptFiles(
 	readers []file.LocationReadCloser,
 	resolver file.Resolver,
 	jsonMap map[string]*packageJSON,
@@ -87,7 +87,7 @@ func processJavascriptFiles(
 
 var path2dir = func(relpath string) string { return path.Dir(strings.ReplaceAll(relpath, `\`, `/`)) }
 
-func parseJavascript(resolver file.Resolver, e *generic.Environment, readers []file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseJavaScript(resolver file.Resolver, e *generic.Environment, readers []file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	jsonMap := map[string]*packageJSON{}
 	lockMap := map[string]*packageLock{}
 	yarnMap := map[string]map[string]*yarnLockPackage{}
@@ -126,13 +126,13 @@ func parseJavascript(resolver file.Resolver, e *generic.Environment, readers []f
 			lockMap[lock.Name] = &lock
 			lockLocation = reader.Location
 		}
-		if filter.JavascriptPmpmLock(path) {
+		if filter.JavaScriptPmpmLock(path) {
 			pnpmMap[path2dir(path)] = parsePnpmLockFile(reader)
 			pnpmLocation = reader.Location
 		}
 	}
 
-	pkgs, relationships := processJavascriptFiles(
+	pkgs, relationships := processJavaScriptFiles(
 		readers,
 		resolver,
 		jsonMap,

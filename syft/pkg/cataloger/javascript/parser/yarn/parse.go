@@ -210,27 +210,18 @@ func handleEmptyLinesAndComments(line string, skipBlock bool) (int, bool) {
 	return 0, skipBlock
 }
 
-func handleLinePrefixes(line string, pkg *PkgRef, scanner *LineScanner) error {
+func handleLinePrefixes(line string, pkg *PkgRef, scanner *LineScanner) (err error) {
 	switch {
 	case strings.HasPrefix(line, "version"):
-		var err error
 		pkg.Version, err = getVersion(line)
-		return err
 	case strings.HasPrefix(line, "integrity"):
-		var err error
 		pkg.Integrity, err = getIntegrity(line)
-		return err
 	case strings.HasPrefix(line, "resolved"):
-		var err error
 		pkg.Resolved, err = getResolved(line)
-		return err
 	case strings.HasPrefix(line, "dependencies:"):
-		deps := parseDependencies(scanner)
-		pkg.Dependencies = deps
-		return nil
-	default:
-		return nil
+		pkg.Dependencies = parseDependencies(scanner)
 	}
+	return
 }
 
 func ParseBlock(block []byte, lineNum int) (pkg PkgRef, lineNumber int, err error) {

@@ -531,53 +531,53 @@ func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, meta
 	return expectedPkgs, expectedRelationships
 }
 
-func Test_JavascriptCataloger_PkgLock_v1(t *testing.T) {
+func Test_JavaScriptCataloger_PkgLock_v1(t *testing.T) {
 	locationSet := file.NewLocationSet(file.NewLocation("package-lock.json"))
 	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsLockV1(locationSet, true)
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "test-fixtures/pkg-json-and-lock/v1").
 		Expects(expectedPkgs, expectedRelationships).
-		TestGroupedCataloger(t, NewJavascriptCataloger())
+		TestGroupedCataloger(t, NewJavaScriptCataloger())
 }
 
-func Test_JavascriptCataloger_PkgLock_v2(t *testing.T) {
+func Test_JavaScriptCataloger_PkgLock_v2(t *testing.T) {
 	locationSet := file.NewLocationSet(file.NewLocation("package-lock.json"))
 	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsLockV2(locationSet, true)
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "test-fixtures/pkg-json-and-lock/v2").
 		Expects(expectedPkgs, expectedRelationships).
-		TestGroupedCataloger(t, NewJavascriptCataloger())
+		TestGroupedCataloger(t, NewJavaScriptCataloger())
 }
 
-func Test_JavascriptCataloger_PkgLock_v3(t *testing.T) {
+func Test_JavaScriptCataloger_PkgLock_v3(t *testing.T) {
 	locationSet := file.NewLocationSet(file.NewLocation("package-lock.json"))
 	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsLockV3(locationSet, true)
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "test-fixtures/pkg-json-and-lock/v3").
 		Expects(expectedPkgs, expectedRelationships).
-		TestGroupedCataloger(t, NewJavascriptCataloger())
+		TestGroupedCataloger(t, NewJavaScriptCataloger())
 }
 
-func Test_JavascriptCataloger_YarnLock(t *testing.T) {
+func Test_JavaScriptCataloger_YarnLock(t *testing.T) {
 	locationSet := file.NewLocationSet(file.NewLocation("yarn.lock"))
 	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsLockV2(locationSet, true)
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "test-fixtures/pkg-json-and-yarn-lock").
 		Expects(expectedPkgs, expectedRelationships).
-		TestGroupedCataloger(t, NewJavascriptCataloger())
+		TestGroupedCataloger(t, NewJavaScriptCataloger())
 }
 
-func Test_JavascriptCataloger_PnpmLock(t *testing.T) {
+func Test_JavaScriptCataloger_PnpmLock(t *testing.T) {
 	locationSet := file.NewLocationSet(file.NewLocation("pnpm-lock.yaml"))
 	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsPnpmLock(locationSet, false)
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "test-fixtures/pkg-json-and-pnpm-lock").
 		Expects(expectedPkgs, expectedRelationships).
-		TestGroupedCataloger(t, NewJavascriptCataloger())
+		TestGroupedCataloger(t, NewJavaScriptCataloger())
 }
 
 // TODO(noqcks): make this test work
-// func Test_JavascriptCataloger_Globs(t *testing.T) {
+// func Test_JavaScriptCataloger_Globs(t *testing.T) {
 // 	tests := []struct {
 // 		name     string
 // 		fixture  string
@@ -614,7 +614,7 @@ func Test_JavascriptCataloger_PnpmLock(t *testing.T) {
 // 			pkgtest.NewCatalogTester().
 // 				FromDirectory(t, test.fixture).
 // 				ExpectsResolverContentQueries(test.expected).
-// 				TestGroupedCataloger(t, NewJavascriptCataloger())
+// 				TestGroupedCataloger(t, NewJavaScriptCataloger())
 // 		})
 // 	}
 // }

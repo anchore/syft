@@ -73,7 +73,7 @@ func parsePackageLockFile(reader file.LocationReadCloser) (packageLock, error) {
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
 func parsePackageLock(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	readers := []file.LocationReadCloser{reader}
-	pkgs, _, err := parseJavascript(resolver, e, readers)
+	pkgs, _, err := parseJavaScript(resolver, e, readers)
 	if err != nil {
 		return nil, nil, err
 	}

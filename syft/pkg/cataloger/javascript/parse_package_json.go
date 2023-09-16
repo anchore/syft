@@ -15,7 +15,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/pkg/cataloger/javascript/key"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
 )
 
@@ -59,7 +58,7 @@ var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)
 
 func parsePackageJSON(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	readers := []file.LocationReadCloser{reader}
-	pkgs, _, err := parseJavascript(resolver, e, readers)
+	pkgs, _, err := parseJavaScript(resolver, e, readers)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -164,61 +163,6 @@ func pkgWithLockDepTree(pkgjson *packageJSON, pkglock *packageLock, root *model.
 	}
 
 	return root
-}
-
-func convertToPkgAndRelationships(resolver file.Resolver, location file.Location, root *model.DepGraphNode) ([]pkg.Package, []artifact.Relationship) {
-	var packages []pkg.Package
-	var relationships []artifact.Relationship
-	pkgSet := map[string]bool{}
-
-	processNode := func(parent, node *model.DepGraphNode) bool {
-		p := finalizeLockPkg(
-			resolver,
-			location,
-			pkg.Package{
-				Name:         node.Name,
-				Version:      node.Version,
-				Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-				PURL:         packageURL(node.Name, node.Version),
-				Language:     pkg.JavaScript,
-				Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, node.Licenses...)...),
-				Type:         pkg.NpmPkg,
-				MetadataType: pkg.NpmPackageLockJSONMetadataType,
-				Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: node.Resolved, Integrity: node.Integrity},
-			},
-		)
-
-		if !pkgSet[key.NpmPackageKey(p.Name, p.Version)] {
-			packages = append(packages, p)
-			pkgSet[key.NpmPackageKey(p.Name, p.Version)] = true
-		}
-
-		if parent != nil {
-			parentPkg := finalizeLockPkg(
-				resolver,
-				location,
-				pkg.Package{
-					Name:         parent.Name,
-					Version:      parent.Version,
-					Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-					PURL:         packageURL(parent.Name, parent.Version),
-					Language:     pkg.JavaScript,
-					Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, node.Licenses...)...),
-					Type:         pkg.NpmPkg,
-					MetadataType: pkg.NpmPackageLockJSONMetadataType,
-					Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: parent.Resolved, Integrity: parent.Integrity},
-				})
-			rel := artifact.Relationship{
-				From: parentPkg,
-				To:   p,
-				Type: artifact.DependencyOfRelationship,
-			}
-			relationships = append(relationships, rel)
-		}
-		return true
-	}
-	root.ForEachPath(processNode)
-	return packages, relationships
 }
 
 func parsePackageJSONWithLock(resolver file.Resolver, pkgjson *packageJSON, pkglock *packageLock, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {

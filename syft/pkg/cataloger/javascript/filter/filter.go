@@ -19,5 +19,5 @@ var (
 		return strings.HasSuffix(filename, "package.json")
 	}
 	JavaScriptPackageLock = filterFunc(strings.HasSuffix, "package-lock.json")
-	JavascriptPmpmLock    = filterFunc(strings.HasSuffix, "pnpm-lock.yaml")
+	JavaScriptPmpmLock    = filterFunc(strings.HasSuffix, "pnpm-lock.yaml")
 )

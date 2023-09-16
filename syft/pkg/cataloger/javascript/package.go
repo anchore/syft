@@ -8,8 +8,11 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/javascript/key"
+	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
 )
 
 func newPackageJSONRootPackage(u packageJSON, indexLocation file.Location) pkg.Package {
@@ -121,4 +124,59 @@ func packageURL(name, version string) string {
 		nil,
 		"",
 	).ToString()
+}
+
+func convertToPkgAndRelationships(resolver file.Resolver, location file.Location, root *model.DepGraphNode) ([]pkg.Package, []artifact.Relationship) {
+	var packages []pkg.Package
+	var relationships []artifact.Relationship
+	pkgSet := map[string]bool{}
+
+	processNode := func(parent, node *model.DepGraphNode) bool {
+		p := finalizeLockPkg(
+			resolver,
+			location,
+			pkg.Package{
+				Name:         node.Name,
+				Version:      node.Version,
+				Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+				PURL:         packageURL(node.Name, node.Version),
+				Language:     pkg.JavaScript,
+				Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, node.Licenses...)...),
+				Type:         pkg.NpmPkg,
+				MetadataType: pkg.NpmPackageLockJSONMetadataType,
+				Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: node.Resolved, Integrity: node.Integrity},
+			},
+		)
+
+		if !pkgSet[key.NpmPackageKey(p.Name, p.Version)] {
+			packages = append(packages, p)
+			pkgSet[key.NpmPackageKey(p.Name, p.Version)] = true
+		}
+
+		if parent != nil {
+			parentPkg := finalizeLockPkg(
+				resolver,
+				location,
+				pkg.Package{
+					Name:         parent.Name,
+					Version:      parent.Version,
+					Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+					PURL:         packageURL(parent.Name, parent.Version),
+					Language:     pkg.JavaScript,
+					Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, node.Licenses...)...),
+					Type:         pkg.NpmPkg,
+					MetadataType: pkg.NpmPackageLockJSONMetadataType,
+					Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: parent.Resolved, Integrity: parent.Integrity},
+				})
+			rel := artifact.Relationship{
+				From: parentPkg,
+				To:   p,
+				Type: artifact.DependencyOfRelationship,
+			}
+			relationships = append(relationships, rel)
+		}
+		return true
+	}
+	root.ForEachPath(processNode)
+	return packages, relationships
 }
