@@ -13,6 +13,15 @@ func TestParsePackageLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	expectedPkgs := []pkg.Package{
 		{
+			Name:         "pkg-lock",
+			Version:      "0.0.0",
+			PURL:         "pkg:npm/pkg-lock@0.0.0",
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			MetadataType: "NpmPackageLockJsonMetadata",
+			Metadata:     pkg.NpmPackageLockJSONMetadata{},
+		},
+		{
 			Name:         "@actions/core",
 			Version:      "1.6.0",
 			PURL:         "pkg:npm/%40actions/core@1.6.0",
@@ -121,7 +130,7 @@ func TestParsePackageLock(t *testing.T) {
 }
 
 func TestParsePackageLockV2(t *testing.T) {
-	fixture := "test-fixtures/pkg-lock/package-lock-2.json"
+	fixture := "test-fixtures/pkg-lock/lock-2/package-lock.json"
 	var expectedRelationships []artifact.Relationship
 	expectedPkgs := []pkg.Package{
 		{
@@ -189,7 +198,7 @@ func TestParsePackageLockV2(t *testing.T) {
 }
 
 func TestParsePackageLockV3(t *testing.T) {
-	fixture := "test-fixtures/pkg-lock/package-lock-3.json"
+	fixture := "test-fixtures/pkg-lock/lock-3/package-lock.json"
 	var expectedRelationships []artifact.Relationship
 	expectedPkgs := []pkg.Package{
 		{
@@ -248,6 +257,15 @@ func TestParsePackageLockAlias(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	commonPkgs := []pkg.Package{
 		{
+			Name:         "alias-check",
+			Version:      "1.0.0",
+			PURL:         "pkg:npm/alias-check@1.0.0",
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			MetadataType: "NpmPackageLockJsonMetadata",
+			Metadata:     pkg.NpmPackageLockJSONMetadata{},
+		},
+		{
 			Name:         "case",
 			Version:      "1.6.2",
 			PURL:         "pkg:npm/case@1.6.2",
@@ -276,9 +294,9 @@ func TestParsePackageLockAlias(t *testing.T) {
 		},
 	}
 
-	packageLockV1 := "test-fixtures/pkg-lock/alias-package-lock-1.json"
-	packageLockV2 := "test-fixtures/pkg-lock/alias-package-lock-2.json"
-	packageLocks := []string{packageLockV1, packageLockV2}
+	packageLockV1 := "test-fixtures/pkg-lock/alias-1/package-lock.json"
+	packageLockV2 := "test-fixtures/pkg-lock/alias-2/package-lock.json"
+	packageLocks := []string{packageLockV1}
 
 	v2Pkg := pkg.Package{
 		Name:     "alias-check",
@@ -309,21 +327,9 @@ func TestParsePackageLockAlias(t *testing.T) {
 }
 
 func TestParsePackageLockLicenseWithArray(t *testing.T) {
-	fixture := "test-fixtures/pkg-lock/array-license-package-lock.json"
+	fixture := "test-fixtures/pkg-lock/array-license/package-lock.json"
 	var expectedRelationships []artifact.Relationship
 	expectedPkgs := []pkg.Package{
-		{
-			Name:     "tmp",
-			Version:  "1.0.0",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("ISC", file.NewLocation(fixture)),
-			),
-			PURL:         "pkg:npm/tmp@1.0.0",
-			MetadataType: "NpmPackageLockJsonMetadata",
-			Metadata:     pkg.NpmPackageLockJSONMetadata{},
-		},
 		{
 			Name:     "pause-stream",
 			Version:  "0.0.11",
@@ -347,6 +353,18 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 			),
 			PURL:         "pkg:npm/through@2.3.8",
+			MetadataType: "NpmPackageLockJsonMetadata",
+			Metadata:     pkg.NpmPackageLockJSONMetadata{},
+		},
+		{
+			Name:     "tmp",
+			Version:  "1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromLocations("ISC", file.NewLocation(fixture)),
+			),
+			PURL:         "pkg:npm/tmp@1.0.0",
 			MetadataType: "NpmPackageLockJsonMetadata",
 			Metadata:     pkg.NpmPackageLockJSONMetadata{},
 		},

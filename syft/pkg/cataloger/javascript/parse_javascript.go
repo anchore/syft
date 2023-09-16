@@ -1,7 +1,6 @@
 package javascript
 
 import (
-	"encoding/json"
 	"fmt"
 	"path"
 	"strings"
@@ -11,9 +10,10 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript/filter"
-	"github.com/anchore/syft/syft/pkg/cataloger/javascript/key"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
 )
+
+// var _ generic.Parser = parseJavascript
 
 func _depSet() *model.DepGraphNodeMap {
 	return model.NewDepGraphNodeMap(func(s ...string) string {
@@ -24,78 +24,78 @@ func _depSet() *model.DepGraphNodeMap {
 			Version:   s[1],
 			Integrity: s[2],
 			Resolved:  s[3],
+			Licenses:  strings.Split(s[4], ","),
 		}
 	})
 }
 
-func convertToPkgAndRelationships(resolver file.Resolver, location file.Location, root []*model.DepGraphNode) ([]pkg.Package, []artifact.Relationship) {
-	var packages []pkg.Package
+func processJavascriptFiles(
+	readers []file.LocationReadCloser,
+	resolver file.Resolver,
+	jsonMap map[string]*packageJSON,
+	jsonLocation file.Location,
+	lockMap map[string]*packageLock,
+	lockLocation file.Location,
+	pnpmMap map[string]map[string]*pnpmLockPackage,
+	pnpmLocation file.Location,
+	yarnMap map[string]map[string]*yarnLockPackage,
+	yarnLocation file.Location,
+) ([]pkg.Package, []artifact.Relationship) {
+	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
-	pkgSet := map[string]bool{}
-
-	processNode := func(parent, node *model.DepGraphNode) bool {
-		locations := file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
-		p := finalizeLockPkg(
-			resolver,
-			location,
-			pkg.Package{
-				Name:         node.Name,
-				Version:      node.Version,
-				Locations:    locations,
-				PURL:         packageURL(node.Name, node.Version),
-				Language:     pkg.JavaScript,
-				Type:         pkg.NpmPkg,
-				MetadataType: pkg.NpmPackageLockJSONMetadataType,
-				Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: node.Resolved, Integrity: node.Integrity},
-			},
-		)
-
-		if !pkgSet[key.NpmPackageKey(p.Name, p.Version)] {
-			packages = append(packages, p)
-			pkgSet[key.NpmPackageKey(p.Name, p.Version)] = true
+	if len(readers) == 1 {
+		for _, js := range jsonMap {
+			p, _ := parsePackageJSONWithLock(resolver, js, nil, jsonLocation)
+			pkgs = append(pkgs, p...)
 		}
-
-		if parent != nil {
-			parentPkg := finalizeLockPkg(
-				resolver,
-				location,
-				pkg.Package{
-					Name:         parent.Name,
-					Version:      parent.Version,
-					Locations:    locations,
-					PURL:         packageURL(parent.Name, parent.Version),
-					Language:     pkg.JavaScript,
-					Type:         pkg.NpmPkg,
-					MetadataType: pkg.NpmPackageLockJSONMetadataType,
-					Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: parent.Resolved, Integrity: parent.Integrity},
-				})
-			rel := artifact.Relationship{
-				From: parentPkg,
-				To:   p,
-				Type: artifact.DependencyOfRelationship,
+		for _, l := range lockMap {
+			p, _ := parsePackageJSONWithLock(resolver, nil, l, lockLocation)
+			pkgs = append(pkgs, p...)
+		}
+		for _, yl := range yarnMap {
+			p, _ := parsePackageJSONWithYarnLock(resolver, nil, yl, yarnLocation)
+			pkgs = append(pkgs, p...)
+		}
+		for _, pl := range pnpmMap {
+			p, _ := parsePackageJSONWithPnpmLock(resolver, nil, pl, pnpmLocation)
+			pkgs = append(pkgs, p...)
+		}
+	} else {
+		for name, js := range jsonMap {
+			if lock, ok := lockMap[name]; ok {
+				p, rels := parsePackageJSONWithLock(resolver, js, lock, lockLocation)
+				pkgs = append(pkgs, p...)
+				relationships = append(relationships, rels...)
 			}
-			relationships = append(relationships, rel)
+
+			if js.File != "" {
+				if yarn, ok := yarnMap[path2dir(js.File)]; ok {
+					p, rels := parsePackageJSONWithYarnLock(resolver, js, yarn, yarnLocation)
+					pkgs = append(pkgs, p...)
+					relationships = append(relationships, rels...)
+				}
+				if pnpm, ok := pnpmMap[path2dir(js.File)]; ok {
+					p, rels := parsePackageJSONWithPnpmLock(resolver, js, pnpm, pnpmLocation)
+					pkgs = append(pkgs, p...)
+					relationships = append(relationships, rels...)
+				}
+			}
 		}
-		return true
 	}
-
-	for _, rootNode := range root {
-		rootNode.ForEachPath(processNode)
-	}
-
-	return packages, relationships
+	return pkgs, relationships
 }
 
-func parseJavascript(resolver file.Resolver, _ *generic.Environment, readers []file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	var root []*model.DepGraphNode
+var path2dir = func(relpath string) string { return path.Dir(strings.ReplaceAll(relpath, `\`, `/`)) }
 
+func parseJavascript(resolver file.Resolver, e *generic.Environment, readers []file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	jsonMap := map[string]*packageJSON{}
 	lockMap := map[string]*packageLock{}
 	yarnMap := map[string]map[string]*yarnLockPackage{}
 	pnpmMap := map[string]map[string]*pnpmLockPackage{}
-
-	path2dir := func(relpath string) string { return path.Dir(strings.ReplaceAll(relpath, `\`, `/`)) }
-	var fileLocation file.Location
+	pnpmLocation := file.Location{}
+	yarnLocation := file.Location{}
+	jsonLocation := file.Location{}
+	lockLocation := file.Location{}
 
 	for _, reader := range readers {
 		// in the case we find matching files in the node_modules directories, skip those
@@ -107,50 +107,44 @@ func parseJavascript(resolver file.Resolver, _ *generic.Environment, readers []f
 		path := reader.Location.RealPath
 		if filter.JavaScriptYarnLock(path) {
 			yarnMap[path2dir(path)] = parseYarnLockFile(reader)
-			fileLocation = reader.Location
+			yarnLocation = reader.Location
 		}
 		if filter.JavaScriptPackageJSON(path) {
-			var js *packageJSON
-			decoder := json.NewDecoder(reader)
-			err := decoder.Decode(&js)
+			js, err := parsePackageJSONFile(resolver, e, reader)
 			if err != nil {
 				return nil, nil, err
 			}
 			js.File = path
 			jsonMap[js.Name] = js
+			jsonLocation = reader.Location
 		}
 		if filter.JavaScriptPackageLock(path) {
-			var lock *packageLock
-			decoder := json.NewDecoder(reader)
-			err := decoder.Decode(&lock)
+			lock, err := parsePackageLockFile(reader)
 			if err != nil {
 				return nil, nil, err
 			}
-			lockMap[lock.Name] = lock
-			fileLocation = reader.Location
+			lockMap[lock.Name] = &lock
+			lockLocation = reader.Location
 		}
 		if filter.JavascriptPmpmLock(path) {
 			pnpmMap[path2dir(path)] = parsePnpmLockFile(reader)
-			fileLocation = reader.Location
+			pnpmLocation = reader.Location
 		}
 	}
 
-	for name, js := range jsonMap {
-		if lock, ok := lockMap[name]; ok {
-			root = append(root, parsePackageJSONWithLock(js, lock))
-		}
+	pkgs, relationships := processJavascriptFiles(
+		readers,
+		resolver,
+		jsonMap,
+		jsonLocation,
+		lockMap,
+		lockLocation,
+		pnpmMap,
+		pnpmLocation,
+		yarnMap,
+		yarnLocation,
+	)
 
-		if js.File != "" {
-			if yarn, ok := yarnMap[path2dir(js.File)]; ok {
-				root = append(root, parsePackageJSONWithYarnLock(js, yarn))
-			}
-			if pnpm, ok := pnpmMap[path2dir(js.File)]; ok {
-				root = append(root, parsePackageJSONWithPnpmLock(js, pnpm))
-			}
-		}
-	}
-
-	pkgs, relationships := convertToPkgAndRelationships(resolver, fileLocation, root)
 	pkg.Sort(pkgs)
 	pkg.SortRelationships(relationships)
 	return pkgs, relationships, nil

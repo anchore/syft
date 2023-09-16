@@ -291,7 +291,6 @@ func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.R
 			logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
 			continue
 		}
-
 		discoveredPackages, discoveredRelationships, err := parser(resolver, &env, file.NewLocationReadCloser(location, contentReader))
 		internal.CloseAndLogError(contentReader, location.VirtualPath)
 		if err != nil {

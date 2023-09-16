@@ -14,7 +14,9 @@ import (
 )
 
 var (
-	yarnPatternRegexp    = regexp.MustCompile(`^\s?\\?"?(?P<package>\S+?)@(?:(?P<protocol>\S+?):)?(?P<version>.+?)\\?"?:?$`)
+	yarnPatternRegexp     = regexp.MustCompile(`^\s?\\?"?(?P<package>\S+?)@(?:(?P<protocol>\S+?):)?(?P<version>.+?)\\?"?:?$`)
+	yarnPatternHTTPRegexp = regexp.MustCompile(`^\s?\\?"?(?P<package>\S+?)@https:\/\/[^#]+#(?P<version>.+?)\\?"?:?$`)
+
 	yarnVersionRegexp    = regexp.MustCompile(`^"?version:?"?\s+"?(?P<version>[^"]+)"?`)
 	yarnDependencyRegexp = regexp.MustCompile(`\s{4,}"?(?P<package>.+?)"?:?\s"?(?P<version>[^"]+)"?`)
 	yarnIntegrityRegexp  = regexp.MustCompile(`^"?integrity:?"?\s+"?(?P<integrity>[^"]+)"?`)
@@ -125,11 +127,22 @@ func getPackageNameFromResolved(resolution string) (pkgName string) {
 }
 
 func parsePattern(target string) (packagename, protocol, version string, err error) {
-	capture := yarnPatternRegexp.FindStringSubmatch(target)
+	var capture []string
+	var names []string
+
+	if strings.Contains(target, "https://") {
+		capture = yarnPatternHTTPRegexp.FindStringSubmatch(target)
+		protocol = "https"
+		names = yarnPatternHTTPRegexp.SubexpNames()
+	} else {
+		capture = yarnPatternRegexp.FindStringSubmatch(target)
+		names = yarnPatternRegexp.SubexpNames()
+	}
+
 	if len(capture) < 3 {
 		return "", "", "", errors.New("not package format")
 	}
-	for i, group := range yarnPatternRegexp.SubexpNames() {
+	for i, group := range names {
 		switch group {
 		case "package":
 			packagename = capture[i]
@@ -169,15 +182,13 @@ func validProtocol(protocol string) bool {
 	// example: "should-type@https://github.com/shouldjs/type.git#1.3.0"
 	case "https":
 		return true
-	case "git+ssh", "git+http", "git+https", "git+file":
-		return true
 	}
 	return false
 }
 
 func ignoreProtocol(protocol string) bool {
 	switch protocol {
-	case "patch", "file", "link", "portal", "github", "git":
+	case "patch", "file", "link", "portal", "github", "git", "git+ssh", "git+http", "git+https", "git+file":
 		return true
 	}
 	return false

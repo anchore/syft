@@ -144,6 +144,8 @@ var dirOnlyTestCases = []testCase{
 		pkgType:     pkg.NpmPkg,
 		pkgLanguage: pkg.JavaScript,
 		pkgInfo: map[string]string{
+			"yarn":              "0.0.0",
+			"package-lock":      "0.0.0",
 			"@babel/code-frame": "7.10.4",
 			"get-stdin":         "8.0.0",
 		},

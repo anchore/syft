@@ -20,6 +20,7 @@ var _ generic.Parser = parsePackageLock
 // packageLock represents a JavaScript package.lock json file
 type packageLock struct {
 	Name            string                            `json:"name"`
+	Version         string                            `json:"version"`
 	LockfileVersion int                               `json:"lockfileVersion"`
 	Dependencies    map[string]*packageLockDependency `json:"dependencies"`
 	Packages        map[string]*packageLockPackage    `json:"packages"`
@@ -50,15 +51,12 @@ type packageLockDependency struct {
 // packageLockLicense
 type packageLockLicense []string
 
-// parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
-func parsePackageLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePackageLockFile(reader file.LocationReadCloser) (packageLock, error) {
 	// in the case we find package-lock.json files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the root project
 	if pathContainsNodeModulesDirectory(reader.AccessPath()) {
-		return nil, nil, nil
+		return packageLock{}, nil
 	}
-
-	var pkgs []pkg.Package
 	dec := json.NewDecoder(reader)
 
 	var lock packageLock
@@ -66,39 +64,19 @@ func parsePackageLock(resolver file.Resolver, _ *generic.Environment, reader fil
 		if err := dec.Decode(&lock); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse package-lock.json file: %w", err)
+			return packageLock{}, fmt.Errorf("failed to parse package-lock.json file: %w", err)
 		}
 	}
+	return lock, nil
+}
 
-	if lock.LockfileVersion == 1 {
-		for name, pkgMeta := range lock.Dependencies {
-			pkgs = append(pkgs, newPackageLockV1Package(resolver, reader.Location, name, *pkgMeta))
-		}
+// parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
+func parsePackageLock(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	readers := []file.LocationReadCloser{reader}
+	pkgs, _, err := parseJavascript(resolver, e, readers)
+	if err != nil {
+		return nil, nil, err
 	}
-
-	if lock.LockfileVersion == 2 || lock.LockfileVersion == 3 {
-		for name, pkgMeta := range lock.Packages {
-			if name == "" {
-				if pkgMeta.Name == "" {
-					continue
-				}
-				name = pkgMeta.Name
-			}
-
-			// handles alias names
-			if pkgMeta.Name != "" {
-				name = pkgMeta.Name
-			}
-
-			pkgs = append(
-				pkgs,
-				newPackageLockV2Package(resolver, reader.Location, getNameFromPath(name), *pkgMeta),
-			)
-		}
-	}
-
-	pkg.Sort(pkgs)
-
 	return pkgs, nil, nil
 }
 

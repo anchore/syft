@@ -24,26 +24,12 @@ type yarnLockPackage struct {
 	Dependencies map[string]string
 }
 
-func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	// in the case we find yarn.lock files in the node_modules directories, skip those
-	// as the whole purpose of the lock file is for the specific dependencies of the project
-	if pathContainsNodeModulesDirectory(reader.AccessPath()) {
-		return nil, nil, nil
+func parseYarnLock(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	readers := []file.LocationReadCloser{reader}
+	pkgs, _, err := parseJavascript(resolver, e, readers)
+	if err != nil {
+		return nil, nil, err
 	}
-
-	seenPkgs := map[string]bool{}
-	var pkgs []pkg.Package
-
-	lock := parseYarnLockFile(reader)
-	for _, pkg := range lock {
-		key := key.NpmPackageKey(pkg.Name, pkg.Version)
-		if !seenPkgs[key] {
-			pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, pkg.Name, pkg.Version))
-			seenPkgs[key] = true
-		}
-	}
-
-	pkg.Sort(pkgs)
 	return pkgs, nil, nil
 }
 
@@ -85,20 +71,51 @@ func parseYarnLockFile(file file.LocationReadCloser) map[string]*yarnLockPackage
 	return lock
 }
 
+func rootNameFromPath(location file.Location) string {
+	splits := strings.Split(location.RealPath, "/")
+	if len(splits) < 2 {
+		return ""
+	}
+	return splits[len(splits)-2]
+}
+
 // parsePackageJSONWithYarnLock takes a package.json and yarn.lock package representation
 // and returns a DepGraphNode tree of packages and their dependencies
-func parsePackageJSONWithYarnLock(pkgjson *packageJSON, yarnlock map[string]*yarnLockPackage) *model.DepGraphNode {
-	root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
+func parsePackageJSONWithYarnLock(resolver file.Resolver, pkgjson *packageJSON, yarnlock map[string]*yarnLockPackage, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
+	var root *model.DepGraphNode
+	if pkgjson != nil {
+		root = &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
+	} else {
+		name := rootNameFromPath(indexLocation)
+		if name == "" {
+			return nil, nil
+		}
+		root = &model.DepGraphNode{Name: name, Version: "0.0.0", Path: indexLocation.RealPath}
+	}
 	_dep := _depSet().LoadOrStore
 
 	for _, lock := range yarnlock {
+		// skip dev dependencies
+		if pkgjson != nil {
+			if _, ok := pkgjson.DevDependencies[lock.Name]; ok {
+				continue
+			}
+		}
+
 		dep := _dep(
 			lock.Name,
 			lock.Version,
 			lock.Integrity,
 			lock.Resolved,
+			"", // licenses
 		)
 		for name, version := range lock.Dependencies {
+			// skip dev dependencies
+			if pkgjson != nil {
+				if _, ok := pkgjson.DevDependencies[name]; ok {
+					continue
+				}
+			}
 			sub := yarnlock[key.NpmPackageKey(name, version)]
 			if sub != nil {
 				dep.AppendChild(_dep(
@@ -106,35 +123,19 @@ func parsePackageJSONWithYarnLock(pkgjson *packageJSON, yarnlock map[string]*yar
 					sub.Version,
 					sub.Integrity,
 					sub.Resolved,
+					"", // licenses
 				))
 			}
 		}
 		root.AppendChild(dep)
 	}
 
-	for name, version := range pkgjson.DevDependencies {
-		lock := yarnlock[key.NpmPackageKey(name, version)]
-		if lock != nil {
-			dep := _dep(
-				lock.Name,
-				lock.Version,
-				lock.Integrity,
-				lock.Resolved,
-			)
-			dep.Develop = true
-			root.AppendChild(dep)
-		} else {
-			root.AppendChild(&model.DepGraphNode{
-				Name:      name,
-				Version:   version,
-				Develop:   true,
-				Integrity: "",
-				Resolved:  "",
-			})
-		}
-	}
-
-	return root
+	pkgs, rels := convertToPkgAndRelationships(
+		resolver,
+		indexLocation,
+		root,
+	)
+	return pkgs, rels
 }
 
 func parseBlock(block []byte, lineNum int) (pkg yarnLockPackage, refVersions []string, newLine int, err error) {

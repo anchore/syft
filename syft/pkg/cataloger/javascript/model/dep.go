@@ -15,6 +15,7 @@ type DepGraphNode struct {
 	// direct dependency (no parents)
 	Direct    bool
 	Resolved  string
+	Licenses  []string
 	Integrity string
 	// parents
 	Parents []*DepGraphNode

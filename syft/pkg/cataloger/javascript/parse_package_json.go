@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"regexp"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/javascript/key"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
 )
 
@@ -56,53 +57,64 @@ type repository struct {
 // ---> name: "Isaac Z. Schlueter" email: "i@izs.me" url: "http://blog.izs.me"
 var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
-// parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
-func parsePackageJSON(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	var pkgs []pkg.Package
-	dec := json.NewDecoder(reader)
-
-	for {
-		var p packageJSON
-		if err := dec.Decode(&p); errors.Is(err, io.EOF) {
-			break
-		} else if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
-		}
-
-		if !p.hasNameAndVersionValues() {
-			log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", reader.AccessPath())
-			return nil, nil, nil
-		}
-
-		pkgs = append(
-			pkgs,
-			newPackageJSONPackage(p, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		)
+func parsePackageJSON(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	readers := []file.LocationReadCloser{reader}
+	pkgs, _, err := parseJavascript(resolver, e, readers)
+	if err != nil {
+		return nil, nil, err
 	}
-
-	pkg.Sort(pkgs)
-
 	return pkgs, nil, nil
 }
 
-func parsePackageJSONWithLock(pkgjson *packageJSON, pkglock *packageLock) *model.DepGraphNode {
-	if pkglock.LockfileVersion == 3 {
-		return parsePackageJSONWithLockV3(pkgjson, pkglock)
+// parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
+func parsePackageJSONFile(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (*packageJSON, error) {
+	var js *packageJSON
+	decoder := json.NewDecoder(reader)
+	err := decoder.Decode(&js)
+	if err != nil {
+		return nil, err
 	}
 
-	root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
-	// root.AppendLicense(pkgjson.License)
+	return js, nil
+}
 
+func handleNpmV1NameVersionAlias(lockDepVersion string) (n, v string) {
+	const aliasPrefixPackageLockV1 = "npm:"
+
+	// Handles type aliases https://github.com/npm/rfcs/blob/main/implemented/0001-package-aliases.md
+	if strings.HasPrefix(lockDepVersion, aliasPrefixPackageLockV1) {
+		// this is an alias.
+		// `"version": "npm:canonical-name@X.Y.Z"`
+		canonicalPackageAndVersion := lockDepVersion[len(aliasPrefixPackageLockV1):]
+		versionSeparator := strings.LastIndex(canonicalPackageAndVersion, "@")
+
+		n = canonicalPackageAndVersion[:versionSeparator]
+		v = canonicalPackageAndVersion[versionSeparator+1:]
+	}
+	return n, v
+}
+
+func pkgWithLockDepTree(pkgjson *packageJSON, pkglock *packageLock, root *model.DepGraphNode) *model.DepGraphNode {
+	if pkglock.LockfileVersion == 3 || pkglock.LockfileVersion == 2 {
+		return parsePackageJSONWithLockV2(pkgjson, pkglock, root)
+	}
 	depNameMap := map[string]*model.DepGraphNode{}
 	_dep := _depSet().LoadOrStore
 
 	// record dependencies
 	for name, lockDep := range pkglock.Dependencies {
+		lockDep.name = name
+		pName, pVersion := handleNpmV1NameVersionAlias(lockDep.Version)
+		if pName == "" && pVersion == "" {
+			pName = name
+			pVersion = lockDep.Version
+		}
 		dep := _dep(
-			name,
-			lockDep.Version,
+			pName,
+			pVersion,
 			lockDep.Integrity,
 			lockDep.Resolved,
+			"",
 		)
 		depNameMap[name] = dep
 	}
@@ -115,13 +127,18 @@ func parsePackageJSONWithLock(pkgjson *packageJSON, pkglock *packageLock) *model
 			n := q[0]
 			q = q[1:]
 
+			pName, pVersion := handleNpmV1NameVersionAlias(lockDep.Version)
+			if pName == "" && pVersion == "" {
+				pName = name
+				pVersion = lockDep.Version
+			}
 			dep := _dep(
-				n.name,
-				n.Version,
+				pName,
+				pVersion,
 				n.Integrity,
 				n.Resolved,
+				"",
 			)
-
 			for name, sub := range n.Dependencies {
 				sub.name = name
 				q = append(q, sub)
@@ -130,50 +147,151 @@ func parsePackageJSONWithLock(pkgjson *packageJSON, pkglock *packageLock) *model
 					sub.Version,
 					sub.Integrity,
 					sub.Resolved,
+					"",
 				))
 			}
-
 			for name := range n.Requires {
 				dep.AppendChild(depNameMap[name])
 			}
+			root.AppendChild(dep)
 		}
 	}
 
-	for name := range pkgjson.Dependencies {
-		root.AppendChild(depNameMap[name])
-	}
-
-	for name := range pkgjson.DevDependencies {
-		dep := depNameMap[name]
-		if dep != nil {
-			dep.Develop = true
-			root.AppendChild(dep)
+	if pkgjson != nil {
+		for name := range pkgjson.Dependencies {
+			root.AppendChild(depNameMap[name])
 		}
 	}
 
 	return root
 }
 
-func parsePackageJSONWithLockV3(pkgjson *packageJSON, pkglock *packageLock) *model.DepGraphNode {
-	if pkglock.LockfileVersion != 3 {
+func convertToPkgAndRelationships(resolver file.Resolver, location file.Location, root *model.DepGraphNode) ([]pkg.Package, []artifact.Relationship) {
+	var packages []pkg.Package
+	var relationships []artifact.Relationship
+	pkgSet := map[string]bool{}
+
+	processNode := func(parent, node *model.DepGraphNode) bool {
+		p := finalizeLockPkg(
+			resolver,
+			location,
+			pkg.Package{
+				Name:         node.Name,
+				Version:      node.Version,
+				Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+				PURL:         packageURL(node.Name, node.Version),
+				Language:     pkg.JavaScript,
+				Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, node.Licenses...)...),
+				Type:         pkg.NpmPkg,
+				MetadataType: pkg.NpmPackageLockJSONMetadataType,
+				Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: node.Resolved, Integrity: node.Integrity},
+			},
+		)
+
+		if !pkgSet[key.NpmPackageKey(p.Name, p.Version)] {
+			packages = append(packages, p)
+			pkgSet[key.NpmPackageKey(p.Name, p.Version)] = true
+		}
+
+		if parent != nil {
+			parentPkg := finalizeLockPkg(
+				resolver,
+				location,
+				pkg.Package{
+					Name:         parent.Name,
+					Version:      parent.Version,
+					Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+					PURL:         packageURL(parent.Name, parent.Version),
+					Language:     pkg.JavaScript,
+					Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, node.Licenses...)...),
+					Type:         pkg.NpmPkg,
+					MetadataType: pkg.NpmPackageLockJSONMetadataType,
+					Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: parent.Resolved, Integrity: parent.Integrity},
+				})
+			rel := artifact.Relationship{
+				From: parentPkg,
+				To:   p,
+				Type: artifact.DependencyOfRelationship,
+			}
+			relationships = append(relationships, rel)
+		}
+		return true
+	}
+	root.ForEachPath(processNode)
+	return packages, relationships
+}
+
+func parsePackageJSONWithLock(resolver file.Resolver, pkgjson *packageJSON, pkglock *packageLock, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
+	if pkgjson != nil {
+		if !pkgjson.hasNameAndVersionValues() {
+			log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", indexLocation.AccessPath())
+			return nil, nil
+		}
+	}
+
+	if pkglock == nil {
+		rootPkg := newPackageJSONRootPackage(*pkgjson, indexLocation)
+		return []pkg.Package{rootPkg}, nil
+	}
+
+	var root *model.DepGraphNode
+	if pkgjson != nil {
+		root = &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
+	} else {
+		if pkglock.Name == "" {
+			name := rootNameFromPath(indexLocation)
+			root = &model.DepGraphNode{
+				Name:    name,
+				Version: "0.0.0",
+				Path:    indexLocation.RealPath,
+			}
+		} else {
+			root = &model.DepGraphNode{
+				Name:    pkglock.Name,
+				Version: pkglock.Version,
+				Path:    indexLocation.RealPath,
+			}
+		}
+	}
+
+	pkgRoot := pkgWithLockDepTree(pkgjson, pkglock, root)
+	pkgs, rels := convertToPkgAndRelationships(
+		resolver,
+		indexLocation,
+		pkgRoot,
+	)
+	return pkgs, rels
+}
+
+func parsePackageJSONWithLockV2(pkgjson *packageJSON, pkglock *packageLock, root *model.DepGraphNode) *model.DepGraphNode {
+	if pkglock.LockfileVersion != 3 && pkglock.LockfileVersion != 2 {
 		return nil
 	}
-	root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
+
 	depNameMap := map[string]*model.DepGraphNode{}
 	_dep := _depSet().LoadOrStore
 
 	for name, lockDep := range pkglock.Packages {
 		// root pkg
 		if name == "" {
+			root.Licenses = lockDep.License
 			continue
 		}
+
+		if lockDep.Dev {
+			continue
+		}
+
 		n := getNameFromPath(name)
 		dep := _dep(
 			n,
 			lockDep.Version,
 			lockDep.Integrity,
 			lockDep.Resolved,
+			strings.Join(lockDep.License, ","),
 		)
+		// need to store both names
+		depNameMap[name] = dep
 		depNameMap[n] = dep
 	}
 
@@ -182,26 +300,20 @@ func parsePackageJSONWithLockV3(pkgjson *packageJSON, pkglock *packageLock) *mod
 		if name == "" {
 			continue
 		}
-		n := getNameFromPath(name)
-		dep := depNameMap[n]
+		dep := depNameMap[name]
 		for childName := range lockDep.Dependencies {
 			if childDep, ok := depNameMap[childName]; ok {
 				dep.AppendChild(childDep)
 			}
 		}
-		for childName := range lockDep.DevDependencies {
-			if childDep, ok := depNameMap[childName]; ok {
-				dep.AppendChild(childDep)
-			}
-		}
+		root.AppendChild(dep)
 	}
 
 	// setup root deps
-	for name := range pkgjson.Dependencies {
-		root.AppendChild(depNameMap[name])
-	}
-	for name := range pkgjson.DevDependencies {
-		root.AppendChild(depNameMap[name])
+	if pkgjson != nil {
+		for name := range pkgjson.Dependencies {
+			root.AppendChild(depNameMap[name])
+		}
 	}
 
 	return root

@@ -36,21 +36,28 @@ type pnpmLockYaml struct {
 	Packages        map[string]*pnpmLockPackage `yaml:"packages"`
 }
 
-func parsePnpmLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	var pkgs []pkg.Package
-	pnpmLock := parsePnpmLockFile(reader)
-
-	for _, lock := range pnpmLock {
-		pkgs = append(pkgs, newPnpmPackage(resolver, reader.Location, lock.Name, lock.Version))
+func parsePnpmLock(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	readers := []file.LocationReadCloser{reader}
+	pkgs, _, err := parseJavascript(resolver, e, readers)
+	if err != nil {
+		return nil, nil, err
 	}
-
-	pkg.Sort(pkgs)
 	return pkgs, nil, nil
 }
 
 // parsePackageJSONWithPnpmLock takes a package.json and pnpm-lock.yaml package representation and returns a DepGraphNode tree
-func parsePackageJSONWithPnpmLock(pkgjson *packageJSON, pnpmLock map[string]*pnpmLockPackage) *model.DepGraphNode {
-	root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
+func parsePackageJSONWithPnpmLock(resolver file.Resolver, pkgjson *packageJSON, pnpmLock map[string]*pnpmLockPackage, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
+	var root *model.DepGraphNode
+	if pkgjson != nil {
+		root = &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
+	} else {
+		name := rootNameFromPath(indexLocation)
+		if name == "" {
+			return nil, nil
+		}
+		root = &model.DepGraphNode{Name: name, Version: "0.0.0", Path: indexLocation.RealPath}
+	}
+	// root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
 	_dep := _depSet().LoadOrStore
 
 	for _, lock := range pnpmLock {
@@ -59,6 +66,7 @@ func parsePackageJSONWithPnpmLock(pkgjson *packageJSON, pnpmLock map[string]*pnp
 			lock.Version,
 			"", // integrity
 			"", // resolved
+			"", // licenses
 		)
 
 		for name, version := range lock.Dependencies {
@@ -69,6 +77,7 @@ func parsePackageJSONWithPnpmLock(pkgjson *packageJSON, pnpmLock map[string]*pnp
 					sub.Version,
 					"", // integrity
 					"", // resolved
+					"", // licenses
 				))
 			}
 		}
@@ -76,7 +85,12 @@ func parsePackageJSONWithPnpmLock(pkgjson *packageJSON, pnpmLock map[string]*pnp
 		root.AppendChild(dep)
 	}
 
-	return root
+	pkgs, rels := convertToPkgAndRelationships(
+		resolver,
+		indexLocation,
+		root,
+	)
+	return pkgs, rels
 }
 
 func parsePnpmPackages(lockFile pnpmLockYaml, lockVersion float64, pnpmLock map[string]*pnpmLockPackage) {
