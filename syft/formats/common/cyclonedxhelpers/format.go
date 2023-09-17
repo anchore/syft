@@ -4,9 +4,10 @@ import (
 	"strings"
 	"time"
 
+	"slices"
+
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/google/uuid"
-	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"

@@ -3,7 +3,7 @@ package sbom
 import (
 	"sort"
 
-	"golang.org/x/exp/slices"
+	"slices"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"

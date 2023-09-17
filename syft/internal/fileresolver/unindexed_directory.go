@@ -10,10 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"slices"
+
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
-	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"

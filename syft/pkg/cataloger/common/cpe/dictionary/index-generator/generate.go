@@ -9,8 +9,9 @@ import (
 	"log"
 	"strings"
 
+	"slices"
+
 	"github.com/facebookincubator/nvdtools/wfn"
-	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe/dictionary"
 )
