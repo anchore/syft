@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript/key"
-	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
 	yarnparse "github.com/anchore/syft/syft/pkg/cataloger/javascript/parser/yarn"
 )
 
@@ -25,16 +24,37 @@ type yarnLockPackage struct {
 }
 
 func parseYarnLock(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	readers := []file.LocationReadCloser{reader}
-	pkgs, _, err := parseJavaScript(resolver, e, readers)
-	if err != nil {
-		return nil, nil, err
-	}
+	yarnMap := parseYarnLockFile(resolver, reader)
+	pkgs, _ := finalizeYarnLockWithoutPackageJSON(resolver, yarnMap, reader.Location)
 	return pkgs, nil, nil
 }
 
+func newYarnLockPackage(resolver file.Resolver, location file.Location, p *yarnLockPackage) pkg.Package {
+	if p == nil {
+		return pkg.Package{}
+	}
+
+	return finalizeLockPkg(
+		resolver,
+		location,
+		pkg.Package{
+			Name:         p.Name,
+			Version:      p.Version,
+			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:         packageURL(p.Name, p.Version),
+			MetadataType: pkg.NpmPackageLockJSONMetadataType,
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockJSONMetadata{
+				Resolved:  p.Resolved,
+				Integrity: p.Integrity,
+			},
+		},
+	)
+}
+
 // parseYarnLockFile takes a yarn.lock file and returns a map of packages
-func parseYarnLockFile(file file.LocationReadCloser) map[string]*yarnLockPackage {
+func parseYarnLockFile(_ file.Resolver, file file.LocationReadCloser) map[string]*yarnLockPackage {
 	/*
 		name@version[, name@version]:
 			version "xxx"
@@ -45,13 +65,13 @@ func parseYarnLockFile(file file.LocationReadCloser) map[string]*yarnLockPackage
 				name "xxx"
 	*/
 	lineNumber := 1
-	lock := map[string]*yarnLockPackage{}
+	lockMap := map[string]*yarnLockPackage{}
 
 	scanner := bufio.NewScanner(file.ReadCloser)
 	scanner.Split(yarnparse.ScanBlocks)
 	for scanner.Scan() {
 		block := scanner.Bytes()
-		pkg, refVersions, newLine, err := parseBlock(block, lineNumber)
+		pkg, refVersions, newLine, err := parseYarnPkgBlock(block, lineNumber)
 		lineNumber = newLine + 2
 		if err != nil {
 			return nil
@@ -60,7 +80,7 @@ func parseYarnLockFile(file file.LocationReadCloser) map[string]*yarnLockPackage
 		}
 
 		for _, refVersion := range refVersions {
-			lock[refVersion] = &pkg
+			lockMap[refVersion] = &pkg
 		}
 	}
 
@@ -68,9 +88,12 @@ func parseYarnLockFile(file file.LocationReadCloser) map[string]*yarnLockPackage
 		return nil
 	}
 
-	return lock
+	return lockMap
 }
 
+// rootNameFromPath returns a "fake" root name of a package based on it
+// directory name. This is used when there is no package.json file
+// to create a root package.
 func rootNameFromPath(location file.Location) string {
 	splits := strings.Split(location.RealPath, "/")
 	if len(splits) < 2 {
@@ -79,66 +102,147 @@ func rootNameFromPath(location file.Location) string {
 	return splits[len(splits)-2]
 }
 
-// parsePackageJSONWithYarnLock takes a package.json and yarn.lock package representation
-// and returns a DepGraphNode tree of packages and their dependencies
-func parsePackageJSONWithYarnLock(resolver file.Resolver, pkgjson *packageJSON, yarnlock map[string]*yarnLockPackage, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
-	var root *model.DepGraphNode
-	if pkgjson != nil {
-		root = &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
-	} else {
-		name := rootNameFromPath(indexLocation)
-		if name == "" {
-			return nil, nil
-		}
-		root = &model.DepGraphNode{Name: name, Version: "0.0.0", Path: indexLocation.RealPath}
-	}
-	_dep := _depSet().LoadOrStore
-
-	for _, lock := range yarnlock {
-		// skip dev dependencies
-		if pkgjson != nil {
-			if _, ok := pkgjson.DevDependencies[lock.Name]; ok {
-				continue
-			}
-		}
-
-		dep := _dep(
-			lock.Name,
-			lock.Version,
-			lock.Integrity,
-			lock.Resolved,
-			"", // licenses
-		)
-		for name, version := range lock.Dependencies {
-			// skip dev dependencies
-			if pkgjson != nil {
-				if _, ok := pkgjson.DevDependencies[name]; ok {
-					continue
-				}
-			}
-			sub := yarnlock[key.NpmPackageKey(name, version)]
-			if sub != nil {
-				dep.AppendChild(_dep(
-					sub.Name,
-					sub.Version,
-					sub.Integrity,
-					sub.Resolved,
-					"", // licenses
-				))
-			}
-		}
-		root.AppendChild(dep)
+// finalizeYarnLockWithPackageJSON takes a yarn.lock file and a package.json file and returns a map of packages
+// nolint:funlen
+func finalizeYarnLockWithPackageJSON(resolver file.Resolver, pkgjson *packageJSON, yarnlock map[string]*yarnLockPackage, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
+	if pkgjson == nil {
+		return nil, nil
 	}
 
-	pkgs, rels := convertToPkgAndRelationships(
-		resolver,
-		indexLocation,
-		root,
-	)
-	return pkgs, rels
+	var pkgs []pkg.Package
+	var relationships []artifact.Relationship
+	var root pkg.Package
+	seenPkgMap := make(map[string]bool)
+
+	p := yarnLockPackage{
+		Name:    pkgjson.Name,
+		Version: pkgjson.Version,
+	}
+	root = newYarnLockPackage(resolver, indexLocation, &p)
+
+	for name, version := range pkgjson.Dependencies {
+		depPkg := yarnlock[key.NpmPackageKey(name, version)]
+		dep := newYarnLockPackage(resolver, indexLocation, depPkg)
+		rel := artifact.Relationship{
+			From: root,
+			To:   dep,
+			Type: artifact.DependencyOfRelationship,
+		}
+		relationships = append(relationships, rel)
+	}
+	for name, version := range pkgjson.DevDependencies {
+		depPkg := yarnlock[key.NpmPackageKey(name, version)]
+		dep := newYarnLockPackage(resolver, indexLocation, depPkg)
+		rel := artifact.Relationship{
+			From: root,
+			To:   dep,
+			Type: artifact.DependencyOfRelationship,
+		}
+		relationships = append(relationships, rel)
+	}
+	pkgs = append(pkgs, root)
+
+	// create packages
+	for _, lockPkg := range yarnlock {
+		if seenPkgMap[key.NpmPackageKey(lockPkg.Name, lockPkg.Version)] {
+			continue
+		}
+
+		pkg := newYarnLockPackage(resolver, indexLocation, lockPkg)
+		pkgs = append(pkgs, pkg)
+		seenPkgMap[key.NpmPackageKey(lockPkg.Name, lockPkg.Version)] = true
+	}
+
+	// create relationships
+	for _, lockPkg := range yarnlock {
+		pkg := newYarnLockPackage(resolver, indexLocation, lockPkg)
+
+		for name, version := range lockPkg.Dependencies {
+			dep := yarnlock[key.NpmPackageKey(name, version)]
+			depPkg := newYarnLockPackage(
+				resolver,
+				indexLocation,
+				dep,
+			)
+
+			rel := artifact.Relationship{
+				From: pkg,
+				To:   depPkg,
+				Type: artifact.DependencyOfRelationship,
+			}
+			relationships = append(relationships, rel)
+		}
+	}
+
+	pkg.Sort(pkgs)
+	pkg.SortRelationships(relationships)
+	return pkgs, relationships
 }
 
-func parseBlock(block []byte, lineNum int) (pkg yarnLockPackage, refVersions []string, newLine int, err error) {
+// finalizeYarnLockWithoutPackageJSON takes a yarn.lock file and returns a map of packages
+func finalizeYarnLockWithoutPackageJSON(resolver file.Resolver, yarnlock map[string]*yarnLockPackage, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
+	var pkgs []pkg.Package
+	var relationships []artifact.Relationship
+	seenPkgMap := make(map[string]bool)
+
+	name := rootNameFromPath(indexLocation)
+	if name != "" {
+		p := yarnLockPackage{
+			Name:    name,
+			Version: "0.0.0",
+		}
+		root := newYarnLockPackage(resolver, indexLocation, &p)
+		pkgs = append(pkgs, root)
+	}
+
+	// create packages
+	for _, lockPkg := range yarnlock {
+		if seenPkgMap[key.NpmPackageKey(lockPkg.Name, lockPkg.Version)] {
+			continue
+		}
+
+		pkg := newYarnLockPackage(resolver, indexLocation, lockPkg)
+		pkgs = append(pkgs, pkg)
+		seenPkgMap[key.NpmPackageKey(lockPkg.Name, lockPkg.Version)] = true
+	}
+
+	// create relationships
+	for _, lockPkg := range yarnlock {
+		pkg := newYarnLockPackage(resolver, indexLocation, lockPkg)
+
+		for name, version := range lockPkg.Dependencies {
+			dep := yarnlock[key.NpmPackageKey(name, version)]
+			depPkg := newYarnLockPackage(
+				resolver,
+				indexLocation,
+				dep,
+			)
+
+			rel := artifact.Relationship{
+				From: pkg,
+				To:   depPkg,
+				Type: artifact.DependencyOfRelationship,
+			}
+			relationships = append(relationships, rel)
+		}
+	}
+
+	pkg.Sort(pkgs)
+	pkg.SortRelationships(relationships)
+	return pkgs, relationships
+}
+
+/*
+	parseYarnPkgBlock parses a yarn package block like this and return a yarnLockPackage struct
+	and refVersions which are "tslib@^2.1.0" and "tslib@^2.3.0" in this example
+
+"tslib@^2.1.0", "tslib@^2.3.0":
+
+	"integrity" "sha512-tGyy4dAjRIEwI7BzsB0lynWgOpfqjUdq91XXAlIWD2OwKBH7oCl/GZG/HT4BOHrTlPMOASlMQ7veyTqpmRcrNA=="
+	"resolved" "https://registry.npmjs.org/tslib/-/tslib-2.4.1.tgz"
+	"version" "2.4.1"
+*/
+func parseYarnPkgBlock(block []byte, lineNum int) (pkg yarnLockPackage, refVersions []string, newLine int, err error) {
 	pkgRef, lineNumber, err := yarnparse.ParseBlock(block, lineNum)
 	for _, pattern := range pkgRef.Patterns {
 		nv := strings.Split(pattern, ":")

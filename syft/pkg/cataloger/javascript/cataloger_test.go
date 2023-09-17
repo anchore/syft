@@ -19,13 +19,13 @@ func expectedPackagesAndRelationshipsLockV1(locationSet file.LocationSet, metada
 			Resolved:  "",
 			Integrity: "",
 		},
-		"tslib": {
-			Resolved:  "https://registry.npmjs.org/tslib/-/tslib-2.6.2.tgz",
-			Integrity: "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
-		},
 		"typescript": {
 			Resolved:  "https://registry.npmjs.org/typescript/-/typescript-4.7.4.tgz",
 			Integrity: "sha512-C0WQT0gezHuw6AdY1M2jxUO83Rjf0HP7Sk1DtXj6j1EwkQNZrHAg2XPWlq62oqEhYvONq5pkC2Y9oPljWToLmQ==",
+		},
+		"tslib": {
+			Resolved:  "https://registry.npmjs.org/tslib/-/tslib-2.6.2.tgz",
+			Integrity: "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
 		},
 		"zone.js": {
 			Resolved:  "https://registry.npmjs.org/zone.js/-/zone.js-0.11.8.tgz",
@@ -43,7 +43,6 @@ func expectedPackagesAndRelationshipsLockV1(locationSet file.LocationSet, metada
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	rxjs.OverrideID("771ec36a7b3f7216")
 	testApp := pkg.Package{
 		Name:         "test-app",
 		Version:      "0.0.0",
@@ -55,7 +54,6 @@ func expectedPackagesAndRelationshipsLockV1(locationSet file.LocationSet, metada
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	testApp.OverrideID("8242bb06eb820fe6")
 	tslib := pkg.Package{
 		Name:         "tslib",
 		Version:      "2.6.2",
@@ -67,7 +65,6 @@ func expectedPackagesAndRelationshipsLockV1(locationSet file.LocationSet, metada
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	tslib.OverrideID("6e66a3c2012b1393")
 	typescript := pkg.Package{
 		Name:         "typescript",
 		Version:      "4.7.4",
@@ -79,7 +76,6 @@ func expectedPackagesAndRelationshipsLockV1(locationSet file.LocationSet, metada
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	typescript.OverrideID("116c95f7038696e2")
 	zonejs := pkg.Package{
 		Name:         "zone.js",
 		Version:      "0.11.8",
@@ -91,7 +87,6 @@ func expectedPackagesAndRelationshipsLockV1(locationSet file.LocationSet, metada
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	zonejs.OverrideID("5fa2ca5d4bae3620")
 
 	l := []*pkg.Package{
 		&rxjs,
@@ -155,6 +150,10 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 			Resolved:  "https://registry.npmjs.org/tslib/-/tslib-2.4.1.tgz",
 			Integrity: "sha512-tGyy4dAjRIEwI7BzsB0lynWgOpfqjUdq91XXAlIWD2OwKBH7oCl/GZG/HT4BOHrTlPMOASlMQ7veyTqpmRcrNA==",
 		},
+		"typescript": {
+			Resolved:  "https://registry.npmjs.org/typescript/-/typescript-4.7.4.tgz",
+			Integrity: "sha512-C0WQT0gezHuw6AdY1M2jxUO83Rjf0HP7Sk1DtXj6j1EwkQNZrHAg2XPWlq62oqEhYvONq5pkC2Y9oPljWToLmQ==",
+		},
 		"zone.js": {
 			Resolved:  "https://registry.npmjs.org/zone.js/-/zone.js-0.11.8.tgz",
 			Integrity: "sha512-82bctBg2hKcEJ21humWIkXRlLBBmrc3nN7DFh5LGGhcyycO2S7FN8NmdvlcKaGFDNVL4/9kFLmwmInTavdJERA==",
@@ -163,7 +162,6 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 	rxjs := pkg.Package{
 		Name:         "rxjs",
 		Version:      "7.5.7",
-		FoundBy:      "javascript-cataloger",
 		PURL:         "pkg:npm/rxjs@7.5.7",
 		Locations:    locationSet,
 		Licenses:     pkg.NewLicenseSet(),
@@ -172,11 +170,9 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	rxjs.OverrideID("771ec36a7b3f7216")
 	testApp := pkg.Package{
 		Name:         "test-app",
 		Version:      "0.0.0",
-		FoundBy:      "javascript-cataloger",
 		PURL:         "pkg:npm/test-app@0.0.0",
 		Locations:    locationSet,
 		Licenses:     pkg.NewLicenseSet(),
@@ -185,11 +181,9 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	testApp.OverrideID("8242bb06eb820fe6")
 	tslib := pkg.Package{
 		Name:         "tslib",
 		Version:      "2.4.1",
-		FoundBy:      "javascript-cataloger",
 		PURL:         "pkg:npm/tslib@2.4.1",
 		Locations:    locationSet,
 		Licenses:     pkg.NewLicenseSet(),
@@ -198,11 +192,20 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	tslib.OverrideID("6e66a3c2012b1393")
+	typescript := pkg.Package{
+		Name:         "typescript",
+		Version:      "4.7.4",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/typescript@4.7.4",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
 	zonejs := pkg.Package{
 		Name:         "zone.js",
 		Version:      "0.11.8",
-		FoundBy:      "javascript-cataloger",
 		PURL:         "pkg:npm/zone.js@0.11.8",
 		Locations:    locationSet,
 		Licenses:     pkg.NewLicenseSet(),
@@ -211,12 +214,12 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	zonejs.OverrideID("5fa2ca5d4bae3620")
 
 	l := []*pkg.Package{
 		&rxjs,
 		&testApp,
 		&tslib,
+		&typescript,
 		&zonejs,
 	}
 
@@ -246,6 +249,155 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 		{
 			From: testApp,
 			To:   tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: testApp,
+			To:   typescript,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: testApp,
+			To:   zonejs,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: zonejs,
+			To:   tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+	}
+
+	return expectedPkgs, expectedRelationships
+}
+
+func expectedPackagesAndRelationshipsYarnLock(locationSet file.LocationSet, metadata bool) ([]pkg.Package, []artifact.Relationship) {
+	metadataMap := map[string]pkg.NpmPackageLockJSONMetadata{
+		"rxjs": {
+			Resolved:  "https://registry.npmjs.org/rxjs/-/rxjs-7.5.7.tgz",
+			Integrity: "sha512-z9MzKh/UcOqB3i20H6rtrlaE/CgjLOvheWK/9ILrbhROGTweAi1BaFsTT9FbwZi5Trr1qNRs+MXkhmR06awzQA==",
+		},
+		"test-app": {
+			Resolved:  "",
+			Integrity: "",
+		},
+		"tslib": {
+			Resolved:  "https://registry.npmjs.org/tslib/-/tslib-2.4.1.tgz",
+			Integrity: "sha512-tGyy4dAjRIEwI7BzsB0lynWgOpfqjUdq91XXAlIWD2OwKBH7oCl/GZG/HT4BOHrTlPMOASlMQ7veyTqpmRcrNA==",
+		},
+		"typescript": {
+			Resolved:  "https://registry.npmjs.org/typescript/-/typescript-4.7.4.tgz",
+			Integrity: "sha512-C0WQT0gezHuw6AdY1M2jxUO83Rjf0HP7Sk1DtXj6j1EwkQNZrHAg2XPWlq62oqEhYvONq5pkC2Y9oPljWToLmQ==",
+		},
+		"zone.js": {
+			Resolved:  "https://registry.npmjs.org/zone.js/-/zone.js-0.11.8.tgz",
+			Integrity: "sha512-82bctBg2hKcEJ21humWIkXRlLBBmrc3nN7DFh5LGGhcyycO2S7FN8NmdvlcKaGFDNVL4/9kFLmwmInTavdJERA==",
+		},
+	}
+	rxjs := pkg.Package{
+		Name:         "rxjs",
+		Version:      "7.5.7",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/rxjs@7.5.7",
+		Locations:    locationSet,
+		Licenses:     pkg.NewLicenseSet(),
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	testApp := pkg.Package{
+		Name:         "test-app",
+		Version:      "0.0.0",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/test-app@0.0.0",
+		Locations:    locationSet,
+		Licenses:     pkg.NewLicenseSet(),
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	tslib := pkg.Package{
+		Name:         "tslib",
+		Version:      "2.4.1",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/tslib@2.4.1",
+		Locations:    locationSet,
+		Licenses:     pkg.NewLicenseSet(),
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+	typescript := pkg.Package{
+		Name:         "typescript",
+		Version:      "4.7.4",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/typescript@4.7.4",
+		Locations:    locationSet,
+		Licenses:     pkg.NewLicenseSet(),
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+	}
+	zonejs := pkg.Package{
+		Name:         "zone.js",
+		Version:      "0.11.8",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/zone.js@0.11.8",
+		Locations:    locationSet,
+		Licenses:     pkg.NewLicenseSet(),
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+		Metadata:     pkg.NpmPackageLockJSONMetadata{},
+	}
+
+	l := []*pkg.Package{
+		&rxjs,
+		&testApp,
+		&tslib,
+		&typescript,
+		&zonejs,
+	}
+
+	var expectedPkgs []pkg.Package
+	for i := range l {
+		if metadata {
+			l[i].Metadata = metadataMap[l[i].Name]
+			expectedPkgs = append(expectedPkgs, *l[i])
+		} else {
+			expectedPkgs = append(expectedPkgs, *l[i])
+		}
+	}
+
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: rxjs,
+			To:   tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: testApp,
+			To:   rxjs,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: testApp,
+			To:   tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: testApp,
+			To:   typescript,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -299,7 +451,6 @@ func expectedPackagesAndRelationshipsLockV3(locationSet file.LocationSet, metada
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 	}
-	rxjs.OverrideID("771ec36a7b3f7216")
 	testApp := pkg.Package{
 		Name:         "test-app",
 		Version:      "0.0.0",
@@ -310,7 +461,6 @@ func expectedPackagesAndRelationshipsLockV3(locationSet file.LocationSet, metada
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 	}
-	testApp.OverrideID("8242bb06eb820fe6")
 	tslib := pkg.Package{
 		Name:         "tslib",
 		Version:      "2.6.2",
@@ -321,7 +471,16 @@ func expectedPackagesAndRelationshipsLockV3(locationSet file.LocationSet, metada
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 	}
-	tslib.OverrideID("6e66a3c2012b1393")
+	typescript := pkg.Package{
+		Name:         "typescript",
+		Version:      "4.7.4",
+		FoundBy:      "javascript-cataloger",
+		PURL:         "pkg:npm/typescript@4.7.4",
+		Locations:    locationSet,
+		Language:     pkg.JavaScript,
+		Type:         pkg.NpmPkg,
+		MetadataType: pkg.NpmPackageLockJSONMetadataType,
+	}
 	zonejs := pkg.Package{
 		Name:         "zone.js",
 		Version:      "0.11.8",
@@ -332,12 +491,12 @@ func expectedPackagesAndRelationshipsLockV3(locationSet file.LocationSet, metada
 		Type:         pkg.NpmPkg,
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 	}
-	zonejs.OverrideID("5fa2ca5d4bae3620")
 
 	l := []*pkg.Package{
 		&rxjs,
 		&testApp,
 		&tslib,
+		&typescript,
 		&zonejs,
 	}
 
@@ -367,6 +526,12 @@ func expectedPackagesAndRelationshipsLockV3(locationSet file.LocationSet, metada
 		{
 			From: testApp,
 			To:   tslib,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: testApp,
+			To:   typescript,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -510,12 +675,6 @@ func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, meta
 		},
 		{
 			From: testApp,
-			To:   typescript,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: testApp,
 			To:   zonejs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
@@ -560,7 +719,7 @@ func Test_JavaScriptCataloger_PkgLock_v3(t *testing.T) {
 
 func Test_JavaScriptCataloger_YarnLock(t *testing.T) {
 	locationSet := file.NewLocationSet(file.NewLocation("yarn.lock"))
-	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsLockV2(locationSet, true)
+	expectedPkgs, expectedRelationships := expectedPackagesAndRelationshipsYarnLock(locationSet, true)
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "test-fixtures/pkg-json-and-yarn-lock").
 		Expects(expectedPkgs, expectedRelationships).

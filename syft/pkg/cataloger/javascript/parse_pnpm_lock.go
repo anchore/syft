@@ -14,7 +14,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript/key"
-	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
 )
 
 // integrity check
@@ -36,61 +35,128 @@ type pnpmLockYaml struct {
 	Packages        map[string]*pnpmLockPackage `yaml:"packages"`
 }
 
-func parsePnpmLock(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	readers := []file.LocationReadCloser{reader}
-	pkgs, _, err := parseJavaScript(resolver, e, readers)
-	if err != nil {
-		return nil, nil, err
+func newPnpmLockPackage(resolver file.Resolver, location file.Location, p *pnpmLockPackage) pkg.Package {
+	if p == nil {
+		return pkg.Package{}
 	}
+
+	return finalizeLockPkg(
+		resolver,
+		location,
+		pkg.Package{
+			Name:         p.Name,
+			Version:      p.Version,
+			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:         packageURL(p.Name, p.Version),
+			MetadataType: pkg.NpmPackageLockJSONMetadataType,
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockJSONMetadata{
+				Resolved:  p.Resolved,
+				Integrity: p.Integrity,
+			},
+		},
+	)
+}
+
+func parsePnpmLock(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	// readers := []file.LocationReadCloser{reader}
+	pnpmMap, pnpmLock := parsePnpmLockFile(reader)
+	pkgs, _ := finalizePnpmLockWithoutPackageJSON(resolver, &pnpmLock, pnpmMap, reader.Location)
 	return pkgs, nil, nil
 }
 
-// parsePackageJSONWithPnpmLock takes a package.json and pnpm-lock.yaml package representation and returns a DepGraphNode tree
-func parsePackageJSONWithPnpmLock(resolver file.Resolver, pkgjson *packageJSON, pnpmLock map[string]*pnpmLockPackage, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
-	var root *model.DepGraphNode
-	if pkgjson != nil {
-		root = &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
-	} else {
-		name := rootNameFromPath(indexLocation)
-		if name == "" {
-			return nil, nil
-		}
-		root = &model.DepGraphNode{Name: name, Version: "0.0.0", Path: indexLocation.RealPath}
-	}
-	// root := &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
-	_dep := _depSet().LoadOrStore
+func finalizePnpmLockWithoutPackageJSON(resolver file.Resolver, _ *pnpmLockYaml, pnpmMap map[string]*pnpmLockPackage, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
+	seenPkgMap := make(map[string]bool)
+	var pkgs []pkg.Package
+	var relationships []artifact.Relationship
 
-	for _, lock := range pnpmLock {
-		dep := _dep(
-			lock.Name,
-			lock.Version,
-			"", // integrity
-			"", // resolved
-			"", // licenses
+	name := rootNameFromPath(indexLocation)
+	if name == "" {
+		return nil, nil
+	}
+	root := newPnpmLockPackage(resolver, indexLocation, &pnpmLockPackage{Name: name, Version: "0.0.0"})
+	pkgs = append(pkgs, root)
+
+	for _, lockPkg := range pnpmMap {
+		if seenPkgMap[key.NpmPackageKey(lockPkg.Name, lockPkg.Version)] {
+			continue
+		}
+
+		pkg := newPnpmLockPackage(resolver, indexLocation, lockPkg)
+		pkgs = append(pkgs, pkg)
+		seenPkgMap[key.NpmPackageKey(pkg.Name, pkg.Version)] = true
+	}
+
+	pkg.Sort(pkgs)
+	pkg.SortRelationships(relationships)
+	return pkgs, relationships
+}
+
+func finalizePnpmLockWithPackageJSON(resolver file.Resolver, pkgjson *packageJSON, pnpmLock *pnpmLockYaml, pnpmMap map[string]*pnpmLockPackage, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
+	seenPkgMap := make(map[string]bool)
+	var pkgs []pkg.Package
+	var relationships []artifact.Relationship
+
+	root := newPnpmLockPackage(resolver, indexLocation, &pnpmLockPackage{Name: pkgjson.Name, Version: pkgjson.Version})
+	pkgs = append(pkgs, root)
+
+	// create root relationships
+	for name, info := range pnpmLock.Dependencies {
+		version := parsePnpmDependencyInfo(info)
+		if version == "" {
+			continue
+		}
+
+		p := pnpmMap[key.NpmPackageKey(name, version)]
+		pkg := newPnpmLockPackage(resolver, indexLocation, p)
+		rel := artifact.Relationship{
+			From: root,
+			To:   pkg,
+			Type: artifact.DependencyOfRelationship,
+		}
+		relationships = append(relationships, rel)
+	}
+
+	// create packages
+	for _, lockPkg := range pnpmMap {
+		if seenPkgMap[key.NpmPackageKey(lockPkg.Name, lockPkg.Version)] {
+			continue
+		}
+
+		pkg := newPnpmLockPackage(resolver, indexLocation, lockPkg)
+		pkgs = append(pkgs, pkg)
+		seenPkgMap[key.NpmPackageKey(pkg.Name, pkg.Version)] = true
+	}
+
+	// create pkg relationships
+	for _, lockPkg := range pnpmMap {
+		p := pnpmMap[key.NpmPackageKey(lockPkg.Name, lockPkg.Version)]
+		pkg := newPnpmLockPackage(
+			resolver,
+			indexLocation,
+			p,
 		)
 
-		for name, version := range lock.Dependencies {
-			sub := pnpmLock[key.NpmPackageKey(name, version)]
-			if sub != nil {
-				dep.AppendChild(_dep(
-					sub.Name,
-					sub.Version,
-					"", // integrity
-					"", // resolved
-					"", // licenses
-				))
+		for name, version := range lockPkg.Dependencies {
+			dep := pnpmMap[key.NpmPackageKey(name, version)]
+			depPkg := newPnpmLockPackage(
+				resolver,
+				indexLocation,
+				dep,
+			)
+			rel := artifact.Relationship{
+				From: pkg,
+				To:   depPkg,
+				Type: artifact.DependencyOfRelationship,
 			}
+			relationships = append(relationships, rel)
 		}
-
-		root.AppendChild(dep)
 	}
 
-	pkgs, rels := convertToPkgAndRelationships(
-		resolver,
-		indexLocation,
-		root,
-	)
-	return pkgs, rels
+	pkg.Sort(pkgs)
+	pkg.SortRelationships(relationships)
+	return pkgs, relationships
 }
 
 func parsePnpmPackages(lockFile pnpmLockYaml, lockVersion float64, pnpmLock map[string]*pnpmLockPackage) {
@@ -123,23 +189,28 @@ func parsePnpmPackages(lockFile pnpmLockYaml, lockVersion float64, pnpmLock map[
 	}
 }
 
+func parsePnpmDependencyInfo(info interface{}) (version string) {
+	switch info := info.(type) {
+	case string:
+		version = info
+	case map[string]interface{}:
+		v, ok := info["version"]
+		if !ok {
+			break
+		}
+		ver, ok := v.(string)
+		if ok {
+			version = parseVersion(ver)
+		}
+	}
+	log.Tracef("unsupported pnpm dependency type: %+v", info)
+	return
+}
+
 func parsePnpmDependencies(lockFile pnpmLockYaml, pnpmLock map[string]*pnpmLockPackage) {
 	for name, info := range lockFile.Dependencies {
-		version := ""
-		switch info := info.(type) {
-		case string:
-			version = info
-		case map[string]interface{}:
-			v, ok := info["version"]
-			if !ok {
-				break
-			}
-			ver, ok := v.(string)
-			if ok {
-				version = parseVersion(ver)
-			}
-		default:
-			log.Tracef("unsupported pnpm dependency type: %+v", info)
+		version := parsePnpmDependencyInfo(info)
+		if version == "" {
 			continue
 		}
 
@@ -157,16 +228,16 @@ func parsePnpmDependencies(lockFile pnpmLockYaml, pnpmLock map[string]*pnpmLockP
 }
 
 // parsePnpmLock parses a pnpm-lock.yaml file to get a list of packages
-func parsePnpmLockFile(file file.LocationReadCloser) map[string]*pnpmLockPackage {
+func parsePnpmLockFile(file file.LocationReadCloser) (map[string]*pnpmLockPackage, pnpmLockYaml) {
 	pnpmLock := map[string]*pnpmLockPackage{}
 	bytes, err := io.ReadAll(file)
 	if err != nil {
-		return pnpmLock
+		return pnpmLock, pnpmLockYaml{}
 	}
 
 	var lockFile pnpmLockYaml
 	if err := yaml.Unmarshal(bytes, &lockFile); err != nil {
-		return pnpmLock
+		return pnpmLock, pnpmLockYaml{}
 	}
 
 	lockVersion, _ := strconv.ParseFloat(lockFile.Version, 64)
@@ -175,7 +246,7 @@ func parsePnpmLockFile(file file.LocationReadCloser) map[string]*pnpmLockPackage
 	parsePnpmPackages(lockFile, lockVersion, pnpmLock)
 	parsePnpmDependencies(lockFile, pnpmLock)
 
-	return pnpmLock
+	return pnpmLock, lockFile
 }
 
 func parseVersion(version string) string {

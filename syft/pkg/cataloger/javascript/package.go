@@ -8,11 +8,8 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/javascript/key"
-	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
 )
 
 func newPackageJSONRootPackage(u packageJSON, indexLocation file.Location) pkg.Package {
@@ -126,57 +123,52 @@ func packageURL(name, version string) string {
 	).ToString()
 }
 
-func convertToPkgAndRelationships(resolver file.Resolver, location file.Location, root *model.DepGraphNode) ([]pkg.Package, []artifact.Relationship) {
-	var packages []pkg.Package
-	var relationships []artifact.Relationship
-	pkgSet := map[string]bool{}
+func newPackageLockV1Package(resolver file.Resolver, location file.Location, name string, u packageLockDependency) pkg.Package {
+	version := u.Version
 
-	processNode := func(parent, node *model.DepGraphNode) bool {
-		p := finalizeLockPkg(
-			resolver,
-			location,
-			pkg.Package{
-				Name:         node.Name,
-				Version:      node.Version,
-				Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-				PURL:         packageURL(node.Name, node.Version),
-				Language:     pkg.JavaScript,
-				Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, node.Licenses...)...),
-				Type:         pkg.NpmPkg,
-				MetadataType: pkg.NpmPackageLockJSONMetadataType,
-				Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: node.Resolved, Integrity: node.Integrity},
-			},
-		)
+	const aliasPrefixPackageLockV1 = "npm:"
 
-		if !pkgSet[key.NpmPackageKey(p.Name, p.Version)] {
-			packages = append(packages, p)
-			pkgSet[key.NpmPackageKey(p.Name, p.Version)] = true
-		}
+	// Handles type aliases https://github.com/npm/rfcs/blob/main/implemented/0001-package-aliases.md
+	if strings.HasPrefix(version, aliasPrefixPackageLockV1) {
+		// this is an alias.
+		// `"version": "npm:canonical-name@X.Y.Z"`
+		canonicalPackageAndVersion := version[len(aliasPrefixPackageLockV1):]
+		versionSeparator := strings.LastIndex(canonicalPackageAndVersion, "@")
 
-		if parent != nil {
-			parentPkg := finalizeLockPkg(
-				resolver,
-				location,
-				pkg.Package{
-					Name:         parent.Name,
-					Version:      parent.Version,
-					Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-					PURL:         packageURL(parent.Name, parent.Version),
-					Language:     pkg.JavaScript,
-					Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, node.Licenses...)...),
-					Type:         pkg.NpmPkg,
-					MetadataType: pkg.NpmPackageLockJSONMetadataType,
-					Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: parent.Resolved, Integrity: parent.Integrity},
-				})
-			rel := artifact.Relationship{
-				From: parentPkg,
-				To:   p,
-				Type: artifact.DependencyOfRelationship,
-			}
-			relationships = append(relationships, rel)
-		}
-		return true
+		name = canonicalPackageAndVersion[:versionSeparator]
+		version = canonicalPackageAndVersion[versionSeparator+1:]
 	}
-	root.ForEachPath(processNode)
-	return packages, relationships
+
+	return finalizeLockPkg(
+		resolver,
+		location,
+		pkg.Package{
+			Name:         name,
+			Version:      version,
+			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:         packageURL(name, version),
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			MetadataType: pkg.NpmPackageLockJSONMetadataType,
+			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
+		},
+	)
+}
+
+func newPackageLockV2Package(resolver file.Resolver, location file.Location, name string, u packageLockPackage) pkg.Package {
+	return finalizeLockPkg(
+		resolver,
+		location,
+		pkg.Package{
+			Name:         name,
+			Version:      u.Version,
+			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, u.License...)...),
+			PURL:         packageURL(name, u.Version),
+			Language:     pkg.JavaScript,
+			Type:         pkg.NpmPkg,
+			MetadataType: pkg.NpmPackageLockJSONMetadataType,
+			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
+		},
+	)
 }

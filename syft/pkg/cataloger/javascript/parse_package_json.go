@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/pkg/cataloger/javascript/model"
 )
 
 // integrity check
@@ -57,12 +55,18 @@ type repository struct {
 var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
 func parsePackageJSON(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	readers := []file.LocationReadCloser{reader}
-	pkgs, _, err := parseJavaScript(resolver, e, readers)
+	pkgjson, err := parsePackageJSONFile(resolver, e, reader)
 	if err != nil {
 		return nil, nil, err
 	}
-	return pkgs, nil, nil
+
+	if !pkgjson.hasNameAndVersionValues() {
+		log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", reader.Location.AccessPath())
+		return nil, nil, nil
+	}
+
+	rootPkg := newPackageJSONRootPackage(*pkgjson, reader.Location)
+	return []pkg.Package{rootPkg}, nil, nil
 }
 
 // parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
@@ -77,190 +81,196 @@ func parsePackageJSONFile(_ file.Resolver, _ *generic.Environment, reader file.L
 	return js, nil
 }
 
-func handleNpmV1NameVersionAlias(lockDepVersion string) (n, v string) {
-	const aliasPrefixPackageLockV1 = "npm:"
-
-	// Handles type aliases https://github.com/npm/rfcs/blob/main/implemented/0001-package-aliases.md
-	if strings.HasPrefix(lockDepVersion, aliasPrefixPackageLockV1) {
-		// this is an alias.
-		// `"version": "npm:canonical-name@X.Y.Z"`
-		canonicalPackageAndVersion := lockDepVersion[len(aliasPrefixPackageLockV1):]
-		versionSeparator := strings.LastIndex(canonicalPackageAndVersion, "@")
-
-		n = canonicalPackageAndVersion[:versionSeparator]
-		v = canonicalPackageAndVersion[versionSeparator+1:]
-	}
-	return n, v
-}
-
-func pkgWithLockDepTree(pkgjson *packageJSON, pkglock *packageLock, root *model.DepGraphNode) *model.DepGraphNode {
-	if pkglock.LockfileVersion == 3 || pkglock.LockfileVersion == 2 {
-		return parsePackageJSONWithLockV2(pkgjson, pkglock, root)
-	}
-	depNameMap := map[string]*model.DepGraphNode{}
-	_dep := _depSet().LoadOrStore
-
-	// record dependencies
-	for name, lockDep := range pkglock.Dependencies {
-		lockDep.name = name
-		pName, pVersion := handleNpmV1NameVersionAlias(lockDep.Version)
-		if pName == "" && pVersion == "" {
-			pName = name
-			pVersion = lockDep.Version
-		}
-		dep := _dep(
-			pName,
-			pVersion,
-			lockDep.Integrity,
-			lockDep.Resolved,
-			"",
-		)
-		depNameMap[name] = dep
-	}
-
-	// build dependency tree
-	for name, lockDep := range pkglock.Dependencies {
-		lockDep.name = name
-		q := []*packageLockDependency{lockDep}
-		for len(q) > 0 {
-			n := q[0]
-			q = q[1:]
-
-			pName, pVersion := handleNpmV1NameVersionAlias(lockDep.Version)
-			if pName == "" && pVersion == "" {
-				pName = name
-				pVersion = lockDep.Version
-			}
-			dep := _dep(
-				pName,
-				pVersion,
-				n.Integrity,
-				n.Resolved,
-				"",
-			)
-			for name, sub := range n.Dependencies {
-				sub.name = name
-				q = append(q, sub)
-				dep.AppendChild(_dep(
-					name,
-					sub.Version,
-					sub.Integrity,
-					sub.Resolved,
-					"",
-				))
-			}
-			for name := range n.Requires {
-				dep.AppendChild(depNameMap[name])
-			}
-			root.AppendChild(dep)
-		}
-	}
-
-	if pkgjson != nil {
-		for name := range pkgjson.Dependencies {
-			root.AppendChild(depNameMap[name])
-		}
-	}
-
-	return root
-}
-
-func parsePackageJSONWithLock(resolver file.Resolver, pkgjson *packageJSON, pkglock *packageLock, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
-	if pkgjson != nil {
-		if !pkgjson.hasNameAndVersionValues() {
-			log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", indexLocation.AccessPath())
-			return nil, nil
-		}
-	}
-
-	if pkglock == nil {
-		rootPkg := newPackageJSONRootPackage(*pkgjson, indexLocation)
-		return []pkg.Package{rootPkg}, nil
-	}
-
-	var root *model.DepGraphNode
-	if pkgjson != nil {
-		root = &model.DepGraphNode{Name: pkgjson.Name, Version: pkgjson.Version, Path: pkgjson.File}
+func finalizePackageLockWithoutPackageJSON(resolver file.Resolver, pkglock *packageLock, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
+	var root pkg.Package
+	if pkglock.Name == "" {
+		name := rootNameFromPath(indexLocation)
+		p := packageLockPackage{Name: name, Version: "0.0.0"}
+		root = newPackageLockV2Package(resolver, indexLocation, name, p)
 	} else {
-		if pkglock.Name == "" {
-			name := rootNameFromPath(indexLocation)
-			root = &model.DepGraphNode{
-				Name:    name,
-				Version: "0.0.0",
-				Path:    indexLocation.RealPath,
-			}
-		} else {
-			root = &model.DepGraphNode{
-				Name:    pkglock.Name,
-				Version: pkglock.Version,
-				Path:    indexLocation.RealPath,
-			}
-		}
+		p := packageLockPackage{Name: pkglock.Name, Version: pkglock.Version}
+		root = newPackageLockV2Package(resolver, indexLocation, pkglock.Name, p)
 	}
 
-	pkgRoot := pkgWithLockDepTree(pkgjson, pkglock, root)
-	pkgs, rels := convertToPkgAndRelationships(
-		resolver,
-		indexLocation,
-		pkgRoot,
-	)
-	return pkgs, rels
+	if pkglock.LockfileVersion == 1 {
+		return finalizePackageLockWithoutPackageJSONV1(resolver, pkglock, indexLocation, root)
+	}
+
+	if pkglock.LockfileVersion == 3 || pkglock.LockfileVersion == 2 {
+		return finalizePackageLockV2(resolver, pkglock, indexLocation, root)
+	}
+
+	return nil, nil
 }
 
-func parsePackageJSONWithLockV2(pkgjson *packageJSON, pkglock *packageLock, root *model.DepGraphNode) *model.DepGraphNode {
-	if pkglock.LockfileVersion != 3 && pkglock.LockfileVersion != 2 {
-		return nil
+func finalizePackageLockWithPackageJSON(resolver file.Resolver, pkgjson *packageJSON, pkglock *packageLock, indexLocation file.Location) ([]pkg.Package, []artifact.Relationship) {
+	if pkgjson == nil {
+		return finalizePackageLockWithoutPackageJSON(resolver, pkglock, indexLocation)
 	}
 
-	depNameMap := map[string]*model.DepGraphNode{}
-	_dep := _depSet().LoadOrStore
+	if !pkgjson.hasNameAndVersionValues() {
+		log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", indexLocation.AccessPath())
+		return nil, nil
+	}
 
-	for name, lockDep := range pkglock.Packages {
-		// root pkg
-		if name == "" {
-			root.Licenses = lockDep.License
-			continue
+	p := packageLockPackage{Name: pkgjson.Name, Version: pkgjson.Version}
+	root := newPackageLockV2Package(resolver, indexLocation, pkglock.Name, p)
+
+	if pkglock.LockfileVersion == 1 {
+		return finalizePackageLockWithPackageJSONV1(resolver, pkgjson, pkglock, indexLocation, root)
+	}
+
+	if pkglock.LockfileVersion == 3 || pkglock.LockfileVersion == 2 {
+		return finalizePackageLockV2(resolver, pkglock, indexLocation, root)
+	}
+
+	return nil, nil
+}
+
+func finalizePackageLockWithoutPackageJSONV1(resolver file.Resolver, pkglock *packageLock, indexLocation file.Location, root pkg.Package) ([]pkg.Package, []artifact.Relationship) {
+	if pkglock.LockfileVersion != 1 {
+		return nil, nil
+	}
+	pkgs := []pkg.Package{}
+
+	pkgs = append(pkgs, root)
+	depnameMap := map[string]pkg.Package{}
+
+	// create packages
+	for name, lockDep := range pkglock.Dependencies {
+		lockDep.name = name
+		pkg := newPackageLockV1Package(resolver, indexLocation, name, *lockDep)
+		pkgs = append(pkgs, pkg)
+		depnameMap[name] = pkg
+	}
+	pkg.Sort(pkgs)
+	return pkgs, nil
+}
+
+func finalizePackageLockWithPackageJSONV1(resolver file.Resolver, pkgjson *packageJSON, pkglock *packageLock, indexLocation file.Location, root pkg.Package) ([]pkg.Package, []artifact.Relationship) {
+	if pkglock.LockfileVersion != 1 {
+		return nil, nil
+	}
+	pkgs := []pkg.Package{}
+	relationships := []artifact.Relationship{}
+
+	pkgs = append(pkgs, root)
+	depnameMap := map[string]pkg.Package{}
+
+	// create packages
+	for name, lockDep := range pkglock.Dependencies {
+		lockDep.name = name
+		pkg := newPackageLockV1Package(resolver, indexLocation, name, *lockDep)
+		pkgs = append(pkgs, pkg)
+		depnameMap[name] = pkg
+	}
+
+	// create relationships
+	for name, lockDep := range pkglock.Dependencies {
+		lockDep.name = name
+		for name, sub := range lockDep.Dependencies {
+			sub.name = name
+			if subPkg, ok := depnameMap[name]; ok {
+				rel := artifact.Relationship{
+					From: depnameMap[name],
+					To:   subPkg,
+					Type: artifact.DependencyOfRelationship,
+				}
+				relationships = append(relationships, rel)
+			}
 		}
+		for name := range lockDep.Requires {
+			if subPkg, ok := depnameMap[name]; ok {
+				rel := artifact.Relationship{
+					From: depnameMap[name],
+					To:   subPkg,
+					Type: artifact.DependencyOfRelationship,
+				}
+				relationships = append(relationships, rel)
+			}
+		}
+	}
 
-		if lockDep.Dev {
+	for name := range pkgjson.Dependencies {
+		rel := artifact.Relationship{
+			From: root,
+			To:   depnameMap[name],
+			Type: artifact.DependencyOfRelationship,
+		}
+		relationships = append(relationships, rel)
+	}
+
+	for name := range pkgjson.DevDependencies {
+		rel := artifact.Relationship{
+			From: root,
+			To:   depnameMap[name],
+			Type: artifact.DependencyOfRelationship,
+		}
+		relationships = append(relationships, rel)
+	}
+
+	pkg.Sort(pkgs)
+	pkg.SortRelationships(relationships)
+	return pkgs, relationships
+}
+
+func finalizePackageLockV2(resolver file.Resolver, pkglock *packageLock, indexLocation file.Location, root pkg.Package) ([]pkg.Package, []artifact.Relationship) {
+	if pkglock.LockfileVersion != 3 && pkglock.LockfileVersion != 2 {
+		return nil, nil
+	}
+
+	pkgs := []pkg.Package{}
+	relationships := []artifact.Relationship{}
+	depnameMap := map[string]pkg.Package{}
+	root.Licenses = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, pkglock.Packages[""].License...)...)
+
+	// create packages
+	for name, lockDep := range pkglock.Packages {
+		// root pkg always equals "" in lock v2/v3
+		if name == "" {
 			continue
 		}
 
 		n := getNameFromPath(name)
-		dep := _dep(
-			n,
-			lockDep.Version,
-			lockDep.Integrity,
-			lockDep.Resolved,
-			strings.Join(lockDep.License, ","),
-		)
+		pkg := newPackageLockV2Package(resolver, indexLocation, n, *lockDep)
+
+		pkgs = append(pkgs, pkg)
 		// need to store both names
-		depNameMap[name] = dep
-		depNameMap[n] = dep
+		depnameMap[name] = pkg
+		depnameMap[n] = pkg
 	}
 
+	// create relationships
 	for name, lockDep := range pkglock.Packages {
-		// root pkg
+		// root pkg always equals "" in lock v2/v3
 		if name == "" {
 			continue
 		}
-		dep := depNameMap[name]
-		for childName := range lockDep.Dependencies {
-			if childDep, ok := depNameMap[childName]; ok {
-				dep.AppendChild(childDep)
+
+		if dep, ok := depnameMap[name]; ok {
+			for childName := range lockDep.Dependencies {
+				if childDep, ok := depnameMap[childName]; ok {
+					rel := artifact.Relationship{
+						From: dep,
+						To:   childDep,
+						Type: artifact.DependencyOfRelationship,
+					}
+					relationships = append(relationships, rel)
+				}
 			}
-		}
-		root.AppendChild(dep)
-	}
-
-	// setup root deps
-	if pkgjson != nil {
-		for name := range pkgjson.Dependencies {
-			root.AppendChild(depNameMap[name])
+			rootRel := artifact.Relationship{
+				From: root,
+				To:   dep,
+				Type: artifact.DependencyOfRelationship,
+			}
+			relationships = append(relationships, rootRel)
 		}
 	}
 
-	return root
+	pkgs = append(pkgs, root)
+	pkg.Sort(pkgs)
+	pkg.SortRelationships(relationships)
+	return pkgs, relationships
 }
 
 func (a *author) UnmarshalJSON(b []byte) error {

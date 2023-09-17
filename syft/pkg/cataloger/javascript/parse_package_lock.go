@@ -45,6 +45,7 @@ type packageLockDependency struct {
 	Requires     map[string]string                 `json:"requires"`
 	Integrity    string                            `json:"integrity"`
 	Resolved     string                            `json:"resolved"`
+	Dev          bool                              `json:"dev"`
 	Dependencies map[string]*packageLockDependency `json:"dependencies"`
 }
 
@@ -72,12 +73,12 @@ func parsePackageLockFile(reader file.LocationReadCloser) (packageLock, error) {
 
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
 func parsePackageLock(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	readers := []file.LocationReadCloser{reader}
-	pkgs, _, err := parseJavaScript(resolver, e, readers)
+	lock, err := parsePackageLockFile(reader)
 	if err != nil {
 		return nil, nil, err
 	}
-	return pkgs, nil, nil
+	pkgs, rels := finalizePackageLockWithoutPackageJSON(resolver, &lock, reader.Location)
+	return pkgs, rels, nil
 }
 
 func (licenses *packageLockLicense) UnmarshalJSON(data []byte) (err error) {
