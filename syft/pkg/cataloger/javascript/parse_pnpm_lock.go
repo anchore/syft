@@ -110,8 +110,8 @@ func finalizePnpmLockWithPackageJSON(resolver file.Resolver, pkgjson *packageJSO
 		p := pnpmMap[key.NpmPackageKey(name, version)]
 		pkg := newPnpmLockPackage(resolver, indexLocation, p)
 		rel := artifact.Relationship{
-			From: root,
-			To:   pkg,
+			From: pkg,
+			To:   root,
 			Type: artifact.DependencyOfRelationship,
 		}
 		relationships = append(relationships, rel)
@@ -145,8 +145,8 @@ func finalizePnpmLockWithPackageJSON(resolver file.Resolver, pkgjson *packageJSO
 				dep,
 			)
 			rel := artifact.Relationship{
-				From: pkg,
-				To:   depPkg,
+				From: depPkg,
+				To:   pkg,
 				Type: artifact.DependencyOfRelationship,
 			}
 			relationships = append(relationships, rel)

@@ -16,7 +16,6 @@ func TestSortRelationships(t *testing.T) {
 		Type:         NpmPkg,
 		MetadataType: NpmPackageLockJSONMetadataType,
 	}
-	rxjs.OverrideID("771ec36a7b3f7216")
 	testApp := Package{
 		Name:         "test-app",
 		Version:      "0.0.0",
@@ -26,7 +25,6 @@ func TestSortRelationships(t *testing.T) {
 		Type:         NpmPkg,
 		MetadataType: NpmPackageLockJSONMetadataType,
 	}
-	testApp.OverrideID("8242bb06eb820fe6")
 	tslib := Package{
 		Name:         "tslib",
 		Version:      "2.6.2",
@@ -36,7 +34,6 @@ func TestSortRelationships(t *testing.T) {
 		Type:         NpmPkg,
 		MetadataType: NpmPackageLockJSONMetadataType,
 	}
-	tslib.OverrideID("6e66a3c2012b1393")
 	typescript := Package{
 		Name:         "typescript",
 		Version:      "4.7.4",
@@ -46,7 +43,6 @@ func TestSortRelationships(t *testing.T) {
 		Type:         NpmPkg,
 		MetadataType: NpmPackageLockJSONMetadataType,
 	}
-	typescript.OverrideID("116c95f7038696e2")
 	zonejs := Package{
 		Name:         "zone.js",
 		Version:      "0.11.8",
@@ -56,7 +52,6 @@ func TestSortRelationships(t *testing.T) {
 		Type:         NpmPkg,
 		MetadataType: NpmPackageLockJSONMetadataType,
 	}
-	zonejs.OverrideID("5fa2ca5d4bae3620")
 
 	tests := []struct {
 		name     string

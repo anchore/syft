@@ -124,8 +124,8 @@ func finalizeYarnLockWithPackageJSON(resolver file.Resolver, pkgjson *packageJSO
 		depPkg := yarnlock[key.NpmPackageKey(name, version)]
 		dep := newYarnLockPackage(resolver, indexLocation, depPkg)
 		rel := artifact.Relationship{
-			From: root,
-			To:   dep,
+			From: dep,
+			To:   root,
 			Type: artifact.DependencyOfRelationship,
 		}
 		relationships = append(relationships, rel)
@@ -134,8 +134,8 @@ func finalizeYarnLockWithPackageJSON(resolver file.Resolver, pkgjson *packageJSO
 		depPkg := yarnlock[key.NpmPackageKey(name, version)]
 		dep := newYarnLockPackage(resolver, indexLocation, depPkg)
 		rel := artifact.Relationship{
-			From: root,
-			To:   dep,
+			From: dep,
+			To:   root,
 			Type: artifact.DependencyOfRelationship,
 		}
 		relationships = append(relationships, rel)
@@ -166,8 +166,8 @@ func finalizeYarnLockWithPackageJSON(resolver file.Resolver, pkgjson *packageJSO
 			)
 
 			rel := artifact.Relationship{
-				From: pkg,
-				To:   depPkg,
+				From: depPkg,
+				To:   pkg,
 				Type: artifact.DependencyOfRelationship,
 			}
 			relationships = append(relationships, rel)
@@ -219,8 +219,8 @@ func finalizeYarnLockWithoutPackageJSON(resolver file.Resolver, yarnlock map[str
 			)
 
 			rel := artifact.Relationship{
-				From: pkg,
-				To:   depPkg,
+				From: depPkg,
+				To:   pkg,
 				Type: artifact.DependencyOfRelationship,
 			}
 			relationships = append(relationships, rel)

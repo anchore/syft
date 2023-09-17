@@ -108,26 +108,26 @@ func expectedPackagesAndRelationshipsLockV1(locationSet file.LocationSet, metada
 
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: testApp,
-			To:   rxjs,
+			From: rxjs,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
-			To:   tslib,
+			From: tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
-			To:   typescript,
+			From: typescript,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
-			To:   zonejs,
+			From: zonejs,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -236,37 +236,37 @@ func expectedPackagesAndRelationshipsLockV2(locationSet file.LocationSet, metada
 	expectedRelationships := []artifact.Relationship{
 		{
 			From: rxjs,
-			To:   tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
+			From: tslib,
 			To:   rxjs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
-			To:   tslib,
+			From: tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
-			To:   typescript,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: testApp,
+			From: tslib,
 			To:   zonejs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
+			From: typescript,
+			To:   testApp,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
 			From: zonejs,
-			To:   tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -379,37 +379,37 @@ func expectedPackagesAndRelationshipsYarnLock(locationSet file.LocationSet, meta
 	expectedRelationships := []artifact.Relationship{
 		{
 			From: rxjs,
-			To:   tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
+			From: tslib,
 			To:   rxjs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
-			To:   tslib,
+			From: tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
-			To:   typescript,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: testApp,
+			From: tslib,
 			To:   zonejs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
+			From: typescript,
+			To:   testApp,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
 			From: zonejs,
-			To:   tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -513,37 +513,37 @@ func expectedPackagesAndRelationshipsLockV3(locationSet file.LocationSet, metada
 	expectedRelationships := []artifact.Relationship{
 		{
 			From: rxjs,
-			To:   tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
+			From: tslib,
 			To:   rxjs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
-			To:   tslib,
+			From: tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
-			To:   typescript,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: testApp,
+			From: tslib,
 			To:   zonejs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
+			From: typescript,
+			To:   testApp,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
 			From: zonejs,
-			To:   tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -586,7 +586,6 @@ func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, meta
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	rxjs.OverrideID("771ec36a7b3f7216")
 	testApp := pkg.Package{
 		Name:         "test-app",
 		Version:      "0.0.0",
@@ -598,7 +597,6 @@ func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, meta
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	testApp.OverrideID("8242bb06eb820fe6")
 	tslib := pkg.Package{
 		Name:         "tslib",
 		Version:      "2.6.2",
@@ -610,7 +608,6 @@ func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, meta
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	tslib.OverrideID("6e66a3c2012b1393")
 	typescript := pkg.Package{
 		Name:         "typescript",
 		Version:      "4.7.4",
@@ -622,7 +619,6 @@ func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, meta
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	typescript.OverrideID("116c95f7038696e2")
 	zonejs := pkg.Package{
 		Name:         "zone.js",
 		Version:      "0.11.8",
@@ -634,7 +630,6 @@ func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, meta
 		MetadataType: pkg.NpmPackageLockJSONMetadataType,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{},
 	}
-	zonejs.OverrideID("5fa2ca5d4bae3620")
 
 	l := []*pkg.Package{
 		&rxjs,
@@ -657,31 +652,31 @@ func expectedPackagesAndRelationshipsPnpmLock(locationSet file.LocationSet, meta
 	expectedRelationships := []artifact.Relationship{
 		{
 			From: rxjs,
-			To:   tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
+			From: tslib,
 			To:   rxjs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
-			To:   tslib,
+			From: tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: testApp,
+			From: tslib,
 			To:   zonejs,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
 			From: zonejs,
-			To:   tslib,
+			To:   testApp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},

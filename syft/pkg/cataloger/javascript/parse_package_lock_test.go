@@ -204,44 +204,44 @@ func TestParsePackageLockV2(t *testing.T) {
 	}
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: react,
-			To:   propTypes,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: react,
-			To:   scheduler,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: react,
-			To:   csstype,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: npm,
-			To:   propTypes,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: npm,
+			From: propTypes,
 			To:   react,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: npm,
-			To:   scheduler,
+			From: propTypes,
+			To:   npm,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: npm,
-			To:   csstype,
+			From: react,
+			To:   npm,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: scheduler,
+			To:   react,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: scheduler,
+			To:   npm,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: csstype,
+			To:   react,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: csstype,
+			To:   npm,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -317,48 +317,49 @@ func TestParsePackageLockV3(t *testing.T) {
 
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: react,
-			To:   propTypes,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: react,
-			To:   scheduler,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: react,
-			To:   csstype,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: lockV3Fixture,
-			To:   propTypes,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: lockV3Fixture,
+			From: propTypes,
 			To:   react,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: lockV3Fixture,
-			To:   scheduler,
+			From: propTypes,
+			To:   lockV3Fixture,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: lockV3Fixture,
-			To:   csstype,
+			From: react,
+			To:   lockV3Fixture,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: scheduler,
+			To:   react,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: scheduler,
+			To:   lockV3Fixture,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: csstype,
+			To:   react,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: csstype,
+			To:   lockV3Fixture,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 	}
+
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
@@ -490,19 +491,19 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 	expectedRelationships := []artifact.Relationship{
 		{
 			From: pauseStream,
-			To:   through,
+			To:   tmp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: tmp,
+			From: through,
 			To:   pauseStream,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: tmp,
-			To:   through,
+			From: through,
+			To:   tmp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},

@@ -172,8 +172,8 @@ func finalizePackageLockWithPackageJSONV1(resolver file.Resolver, pkgjson *packa
 			sub.name = name
 			if subPkg, ok := depnameMap[name]; ok {
 				rel := artifact.Relationship{
-					From: depnameMap[name],
-					To:   subPkg,
+					From: subPkg,
+					To:   depnameMap[name],
 					Type: artifact.DependencyOfRelationship,
 				}
 				relationships = append(relationships, rel)
@@ -182,8 +182,8 @@ func finalizePackageLockWithPackageJSONV1(resolver file.Resolver, pkgjson *packa
 		for name := range lockDep.Requires {
 			if subPkg, ok := depnameMap[name]; ok {
 				rel := artifact.Relationship{
-					From: depnameMap[name],
-					To:   subPkg,
+					From: subPkg,
+					To:   depnameMap[name],
 					Type: artifact.DependencyOfRelationship,
 				}
 				relationships = append(relationships, rel)
@@ -193,8 +193,8 @@ func finalizePackageLockWithPackageJSONV1(resolver file.Resolver, pkgjson *packa
 
 	for name := range pkgjson.Dependencies {
 		rel := artifact.Relationship{
-			From: root,
-			To:   depnameMap[name],
+			From: depnameMap[name],
+			To:   root,
 			Type: artifact.DependencyOfRelationship,
 		}
 		relationships = append(relationships, rel)
@@ -202,8 +202,8 @@ func finalizePackageLockWithPackageJSONV1(resolver file.Resolver, pkgjson *packa
 
 	for name := range pkgjson.DevDependencies {
 		rel := artifact.Relationship{
-			From: root,
-			To:   depnameMap[name],
+			From: depnameMap[name],
+			To:   root,
 			Type: artifact.DependencyOfRelationship,
 		}
 		relationships = append(relationships, rel)
@@ -251,16 +251,16 @@ func finalizePackageLockV2(resolver file.Resolver, pkglock *packageLock, indexLo
 			for childName := range lockDep.Dependencies {
 				if childDep, ok := depnameMap[childName]; ok {
 					rel := artifact.Relationship{
-						From: dep,
-						To:   childDep,
+						From: childDep,
+						To:   dep,
 						Type: artifact.DependencyOfRelationship,
 					}
 					relationships = append(relationships, rel)
 				}
 			}
 			rootRel := artifact.Relationship{
-				From: root,
-				To:   dep,
+				From: dep,
+				To:   root,
 				Type: artifact.DependencyOfRelationship,
 			}
 			relationships = append(relationships, rootRel)
