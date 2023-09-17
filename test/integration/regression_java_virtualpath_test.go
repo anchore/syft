@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"slices"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -11,14 +13,20 @@ import (
 )
 
 func TestWarCatalogedCorrectlyIfRenamed(t *testing.T) {
-	// install hudson-war@2.2.1 and renames the file to `/hudson.war`
+	// install hudson-war@2.2.1 and renames the file to `/hudson-bogus.war`
 	sbom, _ := catalogFixtureImage(t, "image-java-virtualpath-regression", source.SquashedScope, nil)
 
 	badPURL := "pkg:maven/hudson/hudson@2.2.1"
 	goodPURL := "pkg:maven/org.jvnet.hudson.main/hudson-war@2.2.1"
 	foundCorrectPackage := false
 	badVirtualPath := "/hudson.war:org.jvnet.hudson.main:hudson-war"
-	goodVirtualPath := "/hudson.war"
+	goodVirtualPath := "/hudson-bogus.war"
+
+	// Expect no "hudson-bogus.war" Java archive getting catalogued
+	assert.False(t, slices.ContainsFunc(sbom.Artifacts.Packages.Sorted(), func(p pkg.Package) bool {
+		return p.Type == pkg.JavaPkg && p.Name == "hudson-bogus"
+	}))
+
 	for _, p := range sbom.Artifacts.Packages.Sorted() {
 		if p.Type == pkg.JavaPkg && strings.Contains(p.Name, "hudson") {
 			assert.NotEqual(t, badPURL, p.PURL, "must not find bad purl %q", badPURL)

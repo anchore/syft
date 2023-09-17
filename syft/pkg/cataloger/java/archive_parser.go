@@ -230,7 +230,7 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (string, str
 		projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
 
 		for parentPath, propertiesObj := range properties {
-			if propertiesObj.ArtifactID != "" && j.fileInfo.name != "" && strings.HasPrefix(propertiesObj.ArtifactID, j.fileInfo.name) {
+			if propertiesObj.ArtifactID != "" {
 				pomPropertiesObject = propertiesObj
 				if proj, exists := projects[parentPath]; exists {
 					pomProjectObject = proj
