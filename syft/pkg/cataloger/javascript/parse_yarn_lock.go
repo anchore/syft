@@ -23,7 +23,7 @@ type yarnLockPackage struct {
 	Dependencies map[string]string
 }
 
-func parseYarnLock(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	yarnMap := parseYarnLockFile(resolver, reader)
 	pkgs, _ := finalizeYarnLockWithoutPackageJSON(resolver, yarnMap, reader.Location)
 	return pkgs, nil, nil

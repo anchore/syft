@@ -59,8 +59,7 @@ func newPnpmLockPackage(resolver file.Resolver, location file.Location, p *pnpmL
 	)
 }
 
-func parsePnpmLock(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	// readers := []file.LocationReadCloser{reader}
+func parsePnpmLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pnpmMap, pnpmLock := parsePnpmLockFile(reader)
 	pkgs, _ := finalizePnpmLockWithoutPackageJSON(resolver, &pnpmLock, pnpmMap, reader.Location)
 	return pkgs, nil, nil
