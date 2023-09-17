@@ -34,7 +34,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 	cdxBOM.Components = &components
 
-	dependencies := toDependencies(s.Relationships)
+	dependencies := toDependencies(packages, s.Relationships, cdxBOM.Metadata)
 	if len(dependencies) > 0 {
 		cdxBOM.Dependencies = &dependencies
 	}
@@ -138,9 +138,34 @@ func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 		return false
 	}
 }
+func toRootDependency(packages []pkg.Package, metadata *cyclonedx.Metadata) (dep cyclonedx.Dependency) {
+	if metadata.Component == nil {
+		return dep
+	}
+	topLevelDeps := []string{}
+	topLevelBomRef := metadata.Component.BOMRef
 
-func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {
+	for _, p := range packages {
+		if p.ComponentType == pkg.ComponentTypeApplication {
+			topLevelDeps = append(topLevelDeps, deriveBomRef(p))
+		}
+	}
+
+	dep = cyclonedx.Dependency{
+		Ref:          topLevelBomRef,
+		Dependencies: &topLevelDeps,
+	}
+	return dep
+}
+
+func toDependencies(packages []pkg.Package, relationships []artifact.Relationship, metadata *cyclonedx.Metadata) []cyclonedx.Dependency {
 	dependencies := map[string]*cyclonedx.Dependency{}
+
+	rootDependency := toRootDependency(packages, metadata)
+	if rootDependency.Ref != "" {
+		dependencies[rootDependency.Ref] = &rootDependency
+	}
+
 	for _, r := range relationships {
 		exists := isExpressiblePackageRelationship(r.Type)
 		if !exists {
