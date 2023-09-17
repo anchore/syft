@@ -103,8 +103,8 @@ func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader file.Locati
 				continue
 			}
 			rel := artifact.Relationship{
-				From: pkg,
-				To:   depPkg,
+				From: depPkg,
+				To:   pkg,
 				Type: artifact.DependencyOfRelationship,
 			}
 			relationships = append(relationships, rel)

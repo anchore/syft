@@ -250,101 +250,101 @@ func TestParseDotnetDeps(t *testing.T) {
 
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: msftDependencyInjection,
-			To:   msftDependencyInjectionAbstractions,
+			From: awssdkcore,
+			To:   testCommon,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
 			From: msftDependencyInjection,
-			To:   systemRuntimeCompilerServicesUnsafe,
+			To:   msftExtensionsLogging,
 			Type: artifact.DependencyOfRelationship,
 		},
-
 		{
-			From: msftExtensionsLogging,
+			From: msftDependencyInjection,
+			To:   rootPkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: msftDependencyInjectionAbstractions,
 			To:   msftDependencyInjection,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: msftExtensionsLogging,
-			To:   msftDependencyInjectionAbstractions,
+			From: msftDependencyInjectionAbstractions,
+			To:   msftExtensionsLogging,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: msftExtensionsLogging,
-			To:   msftLoggingAbstractions,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: msftExtensionsLogging,
+			From: msftDependencyInjectionAbstractions,
 			To:   msftExtensionsOptions,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
 			From: msftExtensionsLogging,
-			To:   systemDiagnosticsDiagnosticsource,
+			To:   rootPkg,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: msftExtensionsOptions,
-			To:   msftDependencyInjectionAbstractions,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: msftExtensionsOptions,
-			To:   msftExtensionsPrimitives,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: msftExtensionsPrimitives,
-			To:   systemRuntimeCompilerServicesUnsafe,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: serilogSinksConsole,
-			To:   serilog,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: systemDiagnosticsDiagnosticsource,
-			To:   systemRuntimeCompilerServicesUnsafe,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: testCommon,
-			To:   awssdkcore,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: rootPkg,
-			To:   msftDependencyInjection,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: rootPkg,
+			From: msftLoggingAbstractions,
 			To:   msftExtensionsLogging,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: rootPkg,
-			To:   newtonsoftJson,
+			From: msftExtensionsOptions,
+			To:   msftExtensionsLogging,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: rootPkg,
-			To:   serilog,
+			From: msftExtensionsPrimitives,
+			To:   msftExtensionsOptions,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: rootPkg,
+			From: newtonsoftJson,
+			To:   rootPkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: serilog,
 			To:   serilogSinksConsole,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: rootPkg,
-			To:   testCommon,
+			From: serilog,
+			To:   rootPkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: serilogSinksConsole,
+			To:   rootPkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: systemDiagnosticsDiagnosticsource,
+			To:   msftExtensionsLogging,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: systemRuntimeCompilerServicesUnsafe,
+			To:   msftDependencyInjection,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: systemRuntimeCompilerServicesUnsafe,
+			To:   msftExtensionsPrimitives,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: systemRuntimeCompilerServicesUnsafe,
+			To:   systemDiagnosticsDiagnosticsource,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: testCommon,
+			To:   rootPkg,
 			Type: artifact.DependencyOfRelationship,
 		},
 	}
+
 	pkgtest.TestFileParser(t, fixture, parseDotnetDeps, expectedPkgs, expectedRelationships)
 }
