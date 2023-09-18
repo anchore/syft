@@ -1,6 +1,7 @@
 package cyclonedxhelpers
 
 import (
+	"strings"
 	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -182,8 +183,8 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 		result = append(result, *dep)
 	}
 
-	slices.SortFunc(result, func(a, b cyclonedx.Dependency) bool {
-		return a.Ref < b.Ref
+	slices.SortFunc(result, func(a, b cyclonedx.Dependency) int {
+		return strings.Compare(a.Ref, b.Ref)
 	})
 
 	return result

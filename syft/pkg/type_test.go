@@ -114,6 +114,7 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(PortagePkg))
 	expectedTypes.Remove(string(BinaryPkg))
 	expectedTypes.Remove(string(LinuxKernelModulePkg))
+	expectedTypes.Remove(string(GithubActionPkg), string(GithubActionWorkflowPkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {

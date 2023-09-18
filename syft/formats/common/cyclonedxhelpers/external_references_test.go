@@ -32,7 +32,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 			},
 		},
 		{
-			name: "from npm",
+			name: "from npm with valid URL",
 			input: pkg.Package{
 				Metadata: pkg.NpmPackageJSONMetadata{
 					URL: "http://a-place.gov",
@@ -40,6 +40,18 @@ func Test_encodeExternalReferences(t *testing.T) {
 			},
 			expected: &[]cyclonedx.ExternalReference{
 				{URL: "http://a-place.gov", Type: cyclonedx.ERTypeDistribution},
+			},
+		},
+		{
+			name: "from npm with invalid URL but valid Homepage",
+			input: pkg.Package{
+				Metadata: pkg.NpmPackageJSONMetadata{
+					URL:      "b-place",
+					Homepage: "http://b-place.gov",
+				},
+			},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "http://b-place.gov", Type: cyclonedx.ERTypeWebsite},
 			},
 		},
 		{
@@ -129,6 +141,35 @@ func Test_encodeExternalReferences(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert.Equal(t, test.expected, encodeExternalReferences(test.input))
+		})
+	}
+}
+
+func Test_isValidExternalRef(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{
+			name:     "valid URL for external_reference, git protocol",
+			input:    "git+https://github.com/abc/def.git",
+			expected: true,
+		},
+		{
+			name:     "valid URL for external_reference, git protocol",
+			input:    "git+https://github.com/abc/def.git",
+			expected: true,
+		},
+		{
+			name:     "invalid URL for external_reference",
+			input:    "abc/def",
+			expected: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, isValidExternalRef(test.input))
 		})
 	}
 }

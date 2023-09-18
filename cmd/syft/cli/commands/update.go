@@ -38,7 +38,7 @@ func applicationUpdateCheck(id clio.Identification, check *options.UpdateCheck) 
 
 func checkForApplicationUpdate(id clio.Identification) {
 	log.Debugf("checking if a new version of %s is available", id.Name)
-	isAvailable, newVersion, err := isUpdateAvailable(id.Version)
+	isAvailable, newVersion, err := isUpdateAvailable(id)
 	if err != nil {
 		// this should never stop the application
 		log.Errorf(err.Error())
@@ -59,18 +59,18 @@ func checkForApplicationUpdate(id clio.Identification) {
 }
 
 // isUpdateAvailable indicates if there is a newer application version available, and if so, what the new version is.
-func isUpdateAvailable(version string) (bool, string, error) {
-	if !isProductionBuild(version) {
+func isUpdateAvailable(id clio.Identification) (bool, string, error) {
+	if !isProductionBuild(id.Version) {
 		// don't allow for non-production builds to check for a version.
 		return false, "", nil
 	}
 
-	currentVersion, err := hashiVersion.NewVersion(version)
+	currentVersion, err := hashiVersion.NewVersion(id.Version)
 	if err != nil {
 		return false, "", fmt.Errorf("failed to parse current application version: %w", err)
 	}
 
-	latestVersion, err := fetchLatestApplicationVersion()
+	latestVersion, err := fetchLatestApplicationVersion(id)
 	if err != nil {
 		return false, "", err
 	}
@@ -89,11 +89,12 @@ func isProductionBuild(version string) bool {
 	return true
 }
 
-func fetchLatestApplicationVersion() (*hashiVersion.Version, error) {
+func fetchLatestApplicationVersion(id clio.Identification) (*hashiVersion.Version, error) {
 	req, err := http.NewRequest(http.MethodGet, latestAppVersionURL.host+latestAppVersionURL.path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request for latest version: %w", err)
 	}
+	req.Header.Add("User-Agent", fmt.Sprintf("%v %v", id.Name, id.Version))
 
 	client := http.Client{}
 	resp, err := client.Do(req)

@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/anchore/clio"
 	hashiVersion "github.com/anchore/go-version"
 	"github.com/anchore/syft/cmd/syft/internal"
 )
@@ -106,7 +107,7 @@ func TestIsUpdateAvailable(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// setup mocks
 			// local...
-			version := test.buildVersion
+			id := clio.Identification{Name: "Syft", Version: test.buildVersion}
 			// remote...
 			handler := http.NewServeMux()
 			handler.HandleFunc(latestAppVersionURL.path, func(w http.ResponseWriter, r *http.Request) {
@@ -117,7 +118,7 @@ func TestIsUpdateAvailable(t *testing.T) {
 			latestAppVersionURL.host = mockSrv.URL
 			defer mockSrv.Close()
 
-			isAvailable, newVersion, err := isUpdateAvailable(version)
+			isAvailable, newVersion, err := isUpdateAvailable(id)
 			if err != nil && !test.err {
 				t.Fatalf("got error but expected none: %+v", err)
 			} else if err == nil && test.err {
@@ -138,52 +139,67 @@ func TestIsUpdateAvailable(t *testing.T) {
 
 func TestFetchLatestApplicationVersion(t *testing.T) {
 	tests := []struct {
-		name     string
-		response string
-		code     int
-		err      bool
-		expected *hashiVersion.Version
+		name            string
+		response        string
+		code            int
+		err             bool
+		id              clio.Identification
+		expected        *hashiVersion.Version
+		expectedHeaders map[string]string
 	}{
 		{
-			name:     "gocase",
-			response: "1.0.0",
-			code:     200,
-			expected: hashiVersion.Must(hashiVersion.NewVersion("1.0.0")),
+			name:            "gocase",
+			response:        "1.0.0",
+			code:            200,
+			id:              clio.Identification{Name: "Syft", Version: "0.0.0"},
+			expected:        hashiVersion.Must(hashiVersion.NewVersion("1.0.0")),
+			expectedHeaders: map[string]string{"User-Agent": "Syft 0.0.0"},
+			err:             false,
 		},
 		{
-			name:     "garbage",
-			response: "garbage",
-			code:     200,
-			expected: nil,
-			err:      true,
+			name:            "garbage",
+			response:        "garbage",
+			code:            200,
+			id:              clio.Identification{Name: "Syft", Version: "0.0.0"},
+			expected:        nil,
+			expectedHeaders: nil,
+			err:             true,
 		},
 		{
-			name:     "http 500",
-			response: "1.0.0",
-			code:     500,
-			expected: nil,
-			err:      true,
+			name:            "http 500",
+			response:        "1.0.0",
+			code:            500,
+			id:              clio.Identification{Name: "Syft", Version: "0.0.0"},
+			expected:        nil,
+			expectedHeaders: nil,
+			err:             true,
 		},
 		{
-			name:     "http 404",
-			response: "1.0.0",
-			code:     404,
-			expected: nil,
-			err:      true,
+			name:            "http 404",
+			response:        "1.0.0",
+			code:            404,
+			id:              clio.Identification{Name: "Syft", Version: "0.0.0"},
+			expected:        nil,
+			expectedHeaders: nil,
+			err:             true,
 		},
 		{
-			name:     "empty",
-			response: "",
-			code:     200,
-			expected: nil,
-			err:      true,
+			name:            "empty",
+			response:        "",
+			code:            200,
+			id:              clio.Identification{Name: "Syft", Version: "0.0.0"},
+			expected:        nil,
+			expectedHeaders: nil,
+			err:             true,
 		},
 		{
-			name:     "too long",
-			response: "this is really long this is really long this is really long this is really long this is really long this is really long this is really long this is really long ",
-			code:     200,
-			expected: nil,
-			err:      true,
+			name:            "too long",
+			response:        "this is really long this is really long this is really long this is really long this is really long this is really long this is really long this is really long ",
+			code:            200,
+			id:              clio.Identification{Name: "Syft", Version: "0.0.0"},
+			expected:        nil,
+			expectedHeaders: nil,
+			err:             true,
 		},
 	}
 
@@ -192,6 +208,15 @@ func TestFetchLatestApplicationVersion(t *testing.T) {
 			// setup mock
 			handler := http.NewServeMux()
 			handler.HandleFunc(latestAppVersionURL.path, func(w http.ResponseWriter, r *http.Request) {
+				if test.expectedHeaders != nil {
+					for headerName, headerValue := range test.expectedHeaders {
+						actualHeader := r.Header.Get(headerName)
+						if actualHeader != headerValue {
+							t.Fatalf("expected header %v=%v but got %v", headerName, headerValue, actualHeader)
+						}
+					}
+				}
+
 				w.WriteHeader(test.code)
 				_, _ = w.Write([]byte(test.response))
 			})
@@ -199,7 +224,7 @@ func TestFetchLatestApplicationVersion(t *testing.T) {
 			latestAppVersionURL.host = mockSrv.URL
 			defer mockSrv.Close()
 
-			actual, err := fetchLatestApplicationVersion()
+			actual, err := fetchLatestApplicationVersion(test.id)
 			if err != nil && !test.err {
 				t.Fatalf("got error but expected none: %+v", err)
 			} else if err == nil && test.err {
