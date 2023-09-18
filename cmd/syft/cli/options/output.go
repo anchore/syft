@@ -3,7 +3,7 @@ package options
 import (
 	"fmt"
 
-	"golang.org/x/exp/slices"
+	"slices"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/syft/formats"
