@@ -183,7 +183,7 @@ func finalizePackageLockWithPackageJSONV1(resolver file.Resolver, pkgjson *packa
 			if subPkg, ok := depnameMap[name]; ok {
 				rel := artifact.Relationship{
 					From: subPkg,
-					To:   depnameMap[name],
+					To:   depnameMap[lockDep.name],
 					Type: artifact.DependencyOfRelationship,
 				}
 				relationships = append(relationships, rel)
@@ -224,6 +224,9 @@ func finalizePackageLockV2(resolver file.Resolver, pkglock *packageLock, indexLo
 	depnameMap := map[string]pkg.Package{}
 	root.Licenses = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, pkglock.Packages[""].License...)...)
 
+	pkgs = append(pkgs, root)
+	depnameMap[""] = root
+
 	// create packages
 	for name, lockDep := range pkglock.Packages {
 		// root pkg always equals "" in lock v2/v3
@@ -242,11 +245,6 @@ func finalizePackageLockV2(resolver file.Resolver, pkglock *packageLock, indexLo
 
 	// create relationships
 	for name, lockDep := range pkglock.Packages {
-		// root pkg always equals "" in lock v2/v3
-		if name == "" {
-			continue
-		}
-
 		if dep, ok := depnameMap[name]; ok {
 			for childName := range lockDep.Dependencies {
 				if childDep, ok := depnameMap[childName]; ok {
@@ -258,16 +256,9 @@ func finalizePackageLockV2(resolver file.Resolver, pkglock *packageLock, indexLo
 					relationships = append(relationships, rel)
 				}
 			}
-			rootRel := artifact.Relationship{
-				From: dep,
-				To:   root,
-				Type: artifact.DependencyOfRelationship,
-			}
-			relationships = append(relationships, rootRel)
 		}
 	}
 
-	pkgs = append(pkgs, root)
 	pkg.Sort(pkgs)
 	pkg.SortRelationships(relationships)
 	return pkgs, relationships

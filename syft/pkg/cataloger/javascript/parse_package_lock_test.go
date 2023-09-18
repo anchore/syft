@@ -210,12 +210,6 @@ func TestParsePackageLockV2(t *testing.T) {
 			Data: nil,
 		},
 		{
-			From: propTypes,
-			To:   npm,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
 			From: react,
 			To:   npm,
 			Type: artifact.DependencyOfRelationship,
@@ -228,20 +222,8 @@ func TestParsePackageLockV2(t *testing.T) {
 			Data: nil,
 		},
 		{
-			From: scheduler,
-			To:   npm,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
 			From: csstype,
 			To:   react,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: csstype,
-			To:   npm,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -323,12 +305,6 @@ func TestParsePackageLockV3(t *testing.T) {
 			Data: nil,
 		},
 		{
-			From: propTypes,
-			To:   lockV3Fixture,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
 			From: react,
 			To:   lockV3Fixture,
 			Type: artifact.DependencyOfRelationship,
@@ -341,20 +317,8 @@ func TestParsePackageLockV3(t *testing.T) {
 			Data: nil,
 		},
 		{
-			From: scheduler,
-			To:   lockV3Fixture,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
 			From: csstype,
 			To:   react,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: csstype,
-			To:   lockV3Fixture,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
@@ -498,12 +462,6 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 		{
 			From: through,
 			To:   pauseStream,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: through,
-			To:   tmp,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},

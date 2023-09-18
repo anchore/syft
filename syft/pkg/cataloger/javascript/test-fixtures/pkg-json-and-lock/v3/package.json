@@ -1,20 +1,14 @@
 {
-  "name": "test-app",
-  "version": "0.0.0",
+  "name": "example-npm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "private": true,
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "rxjs": "~7.5.0",
-    "tslib": "^2.3.0",
-    "zone.js": "~0.11.4"
-  },
-  "devDependencies": {
-    "typescript": "~4.7.2"
+    "pause-stream": "0.0.11"
   }
 }
