@@ -48,27 +48,6 @@ func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader file.Locati
 		return nil, nil, fmt.Errorf("failed to parse deps.json file: %w", err)
 	}
 
-	var names []string
-	for nameVersion := range p.Libraries {
-		names = append(names, nameVersion)
-	}
-	// sort the names so that the order of the packages is deterministic
-	sort.Strings(names)
-
-	for _, nameVersion := range names {
-		lib := p.Libraries[nameVersion]
-		dotnetPkg := newDotnetDepsPackage(
-			nameVersion,
-			lib,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-		)
-
-		if dotnetPkg != nil {
-			pkgs = append(pkgs, *dotnetPkg)
-			pkgMap[nameVersion] = *dotnetPkg
-		}
-	}
-
 	rootName := getDepsJSONFilePrefix(reader.AccessPath())
 	if rootName == "" {
 		return nil, nil, fmt.Errorf("unable to determine root package name from deps.json file: %s", reader.AccessPath())
@@ -84,9 +63,37 @@ func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader file.Locati
 			)
 		}
 	}
-
 	if rootpkg == nil {
 		return nil, nil, fmt.Errorf("unable to determine root package from deps.json file: %s", reader.AccessPath())
+	}
+	pkgs = append(pkgs, *rootpkg)
+	pkgMap[createNameAndVersion(rootpkg.Name, rootpkg.Version)] = *rootpkg
+
+	var names []string
+	for nameVersion := range p.Libraries {
+		names = append(names, nameVersion)
+	}
+	// sort the names so that the order of the packages is deterministic
+	sort.Strings(names)
+
+	for _, nameVersion := range names {
+		// skip the root package
+		name, version := extractNameAndVersion(nameVersion)
+		if name == rootpkg.Name && version == rootpkg.Version {
+			continue
+		}
+
+		lib := p.Libraries[nameVersion]
+		dotnetPkg := newDotnetDepsPackage(
+			nameVersion,
+			lib,
+			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
+
+		if dotnetPkg != nil {
+			pkgs = append(pkgs, *dotnetPkg)
+			pkgMap[nameVersion] = *dotnetPkg
+		}
 	}
 
 	for pkgNameVersion, target := range p.Targets[p.RuntimeTarget.Name] {
