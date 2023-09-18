@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"github.com/anchore/stereoscope/pkg/image/containerd"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/anchore/bubbly/bubbles/taskprogress"
 	stereoscopeParsers "github.com/anchore/stereoscope/pkg/event/parsers"
+	"github.com/anchore/stereoscope/pkg/image/containerd"
 	"github.com/anchore/syft/internal/log"
 )
 
@@ -176,7 +176,6 @@ func (f containerdPullStatusFormatter) formatPullPhase(completed bool, inputStr 
 		return f.pullCompletedStyle.Render(f.pullStageChars[len(f.pullStageChars)-1])
 	}
 	return f.pullDownloadStyle.Render(inputStr)
-
 }
 
 func (f containerdPullStatusFormatter) layerCap(end bool) string {

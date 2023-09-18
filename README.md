@@ -139,6 +139,7 @@ Sources can be explicitly provided with a scheme:
 ```
 docker:yourrepo/yourimage:tag            use images from the Docker daemon
 podman:yourrepo/yourimage:tag            use images from the Podman daemon
+containerd:yourrepo/yourimage:tag        use images from the Containerd daemon
 docker-archive:path/to/yourimage.tar     use a tarball from disk for archives created from "docker save"
 oci-archive:path/to/yourimage.tar        use a tarball from disk for OCI archives (from Skopeo or otherwise)
 oci-dir:path/to/yourimage                read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
@@ -671,7 +672,7 @@ source:
     # the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
     digests: ["sha256"]
 
-# options when pulling directly from a registry via the "registry:" scheme
+# options when pulling directly from a registry via the "registry:" or "containerd:" scheme
 registry:
   # skip TLS verification when communicating with the registry
   # SYFT_REGISTRY_INSECURE_SKIP_TLS_VERIFY env var
