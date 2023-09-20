@@ -77,6 +77,8 @@ require (
 	modernc.org/sqlite v1.25.0
 )
 
+require github.com/sanity-io/litter v1.5.5
+
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect

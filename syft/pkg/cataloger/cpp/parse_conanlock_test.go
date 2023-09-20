@@ -271,6 +271,11 @@ func TestParseConanlock(t *testing.T) {
 		},
 	}
 
+	// relationships require IDs to be set to be sorted similarly
+	for i := range expected {
+		expected[i].SetID()
+	}
+
 	var expectedRelationships = []artifact.Relationship{
 		{
 			From: expected[1], // boost
