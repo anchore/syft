@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/sanity-io/litter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -252,43 +253,21 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	}
 }
 
-//func relationshipLess(x, y artifact.Relationship) bool {
-//	xFromPkg, ok := x.From.(pkg.Package)
-//	if !ok {
-//		return relationshipLessByID(x, y)
-//	}
-//	yFromPkg, ok := y.From.(pkg.Package)
-//	if !ok {
-//		return relationshipLessByID(x, y)
-//	}
-//
-//
-//
-//	//xFrom := x.From.ID()
-//	//yFrom := y.From.ID()
-//	//if xFrom == yFrom {
-//	//	xTo := x.To.ID()
-//	//	yTo := y.To.ID()
-//	//	if xTo == yTo {
-//	//		return x.Type < y.Type
-//	//	}
-//	//	return xTo < yTo
-//	//}
-//	//return xFrom < yFrom
-//}
+var relationshipStringer = litter.Options{
+	Compact:           true,
+	StripPackageNames: false,
+	HidePrivateFields: true, // we want to ignore package IDs
+	HideZeroValues:    true,
+	StrictGo:          true,
+	//FieldExclusions: ...  // these can be added for future values that need to be ignored
+	//FieldFilter: ...
+}
 
 func relationshipLess(x, y artifact.Relationship) bool {
-	xFrom := x.From.ID()
-	yFrom := y.From.ID()
-	if xFrom == yFrom {
-		xTo := x.To.ID()
-		yTo := y.To.ID()
-		if xTo == yTo {
-			return x.Type < y.Type
-		}
-		return xTo < yTo
-	}
-	return xFrom < yFrom
+	// we just need a stable sort, the ordering does not need to be sensible
+	xStr := relationshipStringer.Sdump(x)
+	yStr := relationshipStringer.Sdump(y)
+	return xStr < yStr
 }
 
 // nolint:funlen
@@ -342,30 +321,6 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 			p.licenseComparer,
 		),
 	)
-
-	//for _, pp := range pkgs {
-	//	switch pp.Name {
-	//	case "alpine-baselayout", "alpine-baselayout-data", "alpine-tools", "alpine-keys", "apk-tools", "busybox", "ca-certificates-bundle":
-	//		continue
-	//	}
-	//	fmt.Println()
-	//	fmt.Println(pp.Name, pp.Version, pp.FoundBy)
-	//	fmt.Println()
-	//
-	//	fmt.Println("MetadataType: pkg.ApkMetadataType,")
-	//	fmt.Printf("Metadata: ")
-	//	sq := litter.Options{
-	//		HidePrivateFields:         true,
-	//		HideZeroValues:            true,
-	//		StrictGo:                  true,
-	//		DisablePointerReplacement: true,
-	//	}
-	//	sq.Dump(pp.Metadata)
-	//	fmt.Println()
-	//	fmt.Println("############################################################################")
-	//	fmt.Println("############################################################################")
-	//	fmt.Println("############################################################################")
-	//}
 
 	{
 		var r diffReporter
