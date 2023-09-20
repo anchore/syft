@@ -252,6 +252,20 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	}
 }
 
+func relationshipLess(x, y artifact.Relationship) bool {
+	xFrom := x.From.ID()
+	yFrom := y.From.ID()
+	if xFrom == yFrom {
+		xTo := x.To.ID()
+		yTo := y.To.ID()
+		if xTo == yTo {
+			return x.Type < y.Type
+		}
+		return xTo < yTo
+	}
+	return xFrom < yFrom
+}
+
 // nolint:funlen
 func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 	t.Helper()
@@ -259,6 +273,7 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 	p.compareOptions = append(p.compareOptions,
 		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
 		cmpopts.SortSlices(pkg.Less),
+		cmpopts.SortSlices(relationshipLess),
 		cmp.Comparer(
 			func(x, y file.LocationSet) bool {
 				xs := x.ToSlice()
