@@ -252,6 +252,31 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	}
 }
 
+//func relationshipLess(x, y artifact.Relationship) bool {
+//	xFromPkg, ok := x.From.(pkg.Package)
+//	if !ok {
+//		return relationshipLessByID(x, y)
+//	}
+//	yFromPkg, ok := y.From.(pkg.Package)
+//	if !ok {
+//		return relationshipLessByID(x, y)
+//	}
+//
+//
+//
+//	//xFrom := x.From.ID()
+//	//yFrom := y.From.ID()
+//	//if xFrom == yFrom {
+//	//	xTo := x.To.ID()
+//	//	yTo := y.To.ID()
+//	//	if xTo == yTo {
+//	//		return x.Type < y.Type
+//	//	}
+//	//	return xTo < yTo
+//	//}
+//	//return xFrom < yFrom
+//}
+
 func relationshipLess(x, y artifact.Relationship) bool {
 	xFrom := x.From.ID()
 	yFrom := y.From.ID()
@@ -317,6 +342,30 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 			p.licenseComparer,
 		),
 	)
+
+	//for _, pp := range pkgs {
+	//	switch pp.Name {
+	//	case "alpine-baselayout", "alpine-baselayout-data", "alpine-tools", "alpine-keys", "apk-tools", "busybox", "ca-certificates-bundle":
+	//		continue
+	//	}
+	//	fmt.Println()
+	//	fmt.Println(pp.Name, pp.Version, pp.FoundBy)
+	//	fmt.Println()
+	//
+	//	fmt.Println("MetadataType: pkg.ApkMetadataType,")
+	//	fmt.Printf("Metadata: ")
+	//	sq := litter.Options{
+	//		HidePrivateFields:         true,
+	//		HideZeroValues:            true,
+	//		StrictGo:                  true,
+	//		DisablePointerReplacement: true,
+	//	}
+	//	sq.Dump(pp.Metadata)
+	//	fmt.Println()
+	//	fmt.Println("############################################################################")
+	//	fmt.Println("############################################################################")
+	//	fmt.Println("############################################################################")
+	//}
 
 	{
 		var r diffReporter
