@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"io"
 	"regexp"
-	"strings"
-
 	"slices"
+	"strings"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"

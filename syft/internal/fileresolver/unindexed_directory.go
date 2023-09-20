@@ -6,11 +6,10 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 	"time"
-
-	"slices"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/mitchellh/go-homedir"

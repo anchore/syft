@@ -5,11 +5,10 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 	"time"
-
-	"slices"
 
 	"github.com/docker/distribution/reference"
 	"github.com/spdx/tools-golang/spdx"

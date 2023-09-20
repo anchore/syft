@@ -1,10 +1,9 @@
 package cyclonedxhelpers
 
 import (
+	"slices"
 	"strings"
 	"time"
-
-	"slices"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/google/uuid"

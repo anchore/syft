@@ -2,7 +2,6 @@ package options
 
 import (
 	"fmt"
-
 	"slices"
 
 	"github.com/anchore/clio"

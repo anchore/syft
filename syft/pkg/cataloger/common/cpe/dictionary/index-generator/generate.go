@@ -7,9 +7,8 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"strings"
-
 	"slices"
+	"strings"
 
 	"github.com/facebookincubator/nvdtools/wfn"
 
