@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"

@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"slices"
 	"strings"
 
 	"github.com/facebookincubator/nvdtools/wfn"
-	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe/dictionary"
 )

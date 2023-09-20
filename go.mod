@@ -69,7 +69,6 @@ require (
 	github.com/wagoodman/go-progress v0.0.0-20230911172108-cf810b7e365c
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1
-	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
 	golang.org/x/mod v0.12.0
 	golang.org/x/net v0.15.0
 	golang.org/x/term v0.12.0 // indirect
