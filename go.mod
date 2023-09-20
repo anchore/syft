@@ -72,7 +72,7 @@ require (
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
 	golang.org/x/mod v0.12.0
 	golang.org/x/net v0.15.0
-	golang.org/x/term v0.12.0
+	golang.org/x/term v0.12.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.25.0
 )
