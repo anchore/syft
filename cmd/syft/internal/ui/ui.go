@@ -1,16 +1,18 @@
 package ui
 
 import (
+	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/wagoodman/go-partybus"
 
+	"github.com/anchore/bubbly"
 	"github.com/anchore/bubbly/bubbles/frame"
 	"github.com/anchore/clio"
 	"github.com/anchore/go-logger"
-	handler "github.com/anchore/syft/cmd/syft/cli/ui"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
@@ -29,13 +31,13 @@ type UI struct {
 	subscription   partybus.Unsubscribable
 	finalizeEvents []partybus.Event
 
-	handler *handler.Handler
+	handler *bubbly.HandlerCollection
 	frame   tea.Model
 }
 
-func New(h *handler.Handler, _, quiet bool) *UI {
+func New(quiet bool, handlers ...bubbly.EventHandler) *UI {
 	return &UI{
-		handler: h,
+		handler: bubbly.NewHandlerCollection(handlers...),
 		frame:   frame.New(),
 		running: &sync.WaitGroup{},
 		quiet:   quiet,
@@ -72,7 +74,7 @@ func (m *UI) Handle(e partybus.Event) error {
 
 func (m *UI) Teardown(force bool) error {
 	if !force {
-		m.handler.Running.Wait()
+		m.handler.Wait()
 		m.program.Quit()
 		// typically in all cases we would want to wait for the UI to finish. However there are still error cases
 		// that are not accounted for, resulting in hangs. For now, we'll just wait for the UI to finish in the
@@ -80,9 +82,19 @@ func (m *UI) Teardown(force bool) error {
 		// string from the worker (outside of the UI after teardown).
 		m.running.Wait()
 	} else {
+		_ = runWithTimeout(250*time.Millisecond, func() error {
+			m.handler.Wait()
+			return nil
+		})
+
 		// it may be tempting to use Kill() however it has been found that this can cause the terminal to be left in
 		// a bad state (where Ctrl+C and other control characters no longer works for future processes in that terminal).
 		m.program.Quit()
+
+		_ = runWithTimeout(250*time.Millisecond, func() error {
+			m.running.Wait()
+			return nil
+		})
 	}
 
 	// TODO: allow for writing out the full log output to the screen (only a partial log is shown currently)
@@ -119,7 +131,7 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		// today we treat esc and ctrl+c the same, but in the future when the syft worker has a graceful way to
+		// today we treat esc and ctrl+c the same, but in the future when the worker has a graceful way to
 		// cancel in-flight work via a context, we can wire up esc to this path with bus.Exit()
 		case "esc", "ctrl+c":
 			bus.ExitWithInterrupt()
@@ -135,7 +147,7 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.finalizeEvents = append(m.finalizeEvents, msg)
 
 			// why not return tea.Quit here for exit events? because there may be UI components that still need the update-render loop.
-			// for this reason we'll let the syft event loop call Teardown() which will explicitly wait for these components
+			// for this reason we'll let the event loop call Teardown() which will explicitly wait for these components
 			return m, nil
 		}
 
@@ -158,4 +170,18 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m UI) View() string {
 	return m.frame.View()
+}
+
+func runWithTimeout(timeout time.Duration, fn func() error) (err error) {
+	c := make(chan struct{}, 1)
+	go func() {
+		err = fn()
+		c <- struct{}{}
+	}()
+	select {
+	case <-c:
+	case <-time.After(timeout):
+		return fmt.Errorf("timed out after %v", timeout)
+	}
+	return err
 }
