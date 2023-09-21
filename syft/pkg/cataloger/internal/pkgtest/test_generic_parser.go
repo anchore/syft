@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/sanity-io/litter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -252,6 +253,23 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	}
 }
 
+var relationshipStringer = litter.Options{
+	Compact:           true,
+	StripPackageNames: false,
+	HidePrivateFields: true, // we want to ignore package IDs
+	HideZeroValues:    true,
+	StrictGo:          true,
+	//FieldExclusions: ...  // these can be added for future values that need to be ignored
+	//FieldFilter: ...
+}
+
+func relationshipLess(x, y artifact.Relationship) bool {
+	// we just need a stable sort, the ordering does not need to be sensible
+	xStr := relationshipStringer.Sdump(x)
+	yStr := relationshipStringer.Sdump(y)
+	return xStr < yStr
+}
+
 // nolint:funlen
 func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 	t.Helper()
@@ -259,6 +277,7 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 	p.compareOptions = append(p.compareOptions,
 		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
 		cmpopts.SortSlices(pkg.Less),
+		cmpopts.SortSlices(relationshipLess),
 		cmp.Comparer(
 			func(x, y file.LocationSet) bool {
 				xs := x.ToSlice()

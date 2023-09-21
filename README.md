@@ -139,6 +139,7 @@ Sources can be explicitly provided with a scheme:
 ```
 docker:yourrepo/yourimage:tag            use images from the Docker daemon
 podman:yourrepo/yourimage:tag            use images from the Podman daemon
+containerd:yourrepo/yourimage:tag        use images from the Containerd daemon
 docker-archive:path/to/yourimage.tar     use a tarball from disk for archives created from "docker save"
 oci-archive:path/to/yourimage.tar        use a tarball from disk for OCI archives (from Skopeo or otherwise)
 oci-dir:path/to/yourimage                read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
@@ -671,7 +672,7 @@ source:
     # the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
     digests: ["sha256"]
 
-# options when pulling directly from a registry via the "registry:" scheme
+# options when pulling directly from a registry via the "registry:" or "containerd:" scheme
 registry:
   # skip TLS verification when communicating with the registry
   # SYFT_REGISTRY_INSECURE_SKIP_TLS_VERIFY env var
@@ -681,19 +682,35 @@ registry:
   # SYFT_REGISTRY_INSECURE_USE_HTTP env var
   insecure-use-http: false
 
+  # filepath to a CA certificate (or directory containing *.crt, *.cert, *.pem) used to generate the client certificate
+  # SYFT_REGISTRY_CA_CERT env var
+  ca-cert: ""
+
   # credentials for specific registries
   auth:
       # the URL to the registry (e.g. "docker.io", "localhost:5000", etc.)
       # SYFT_REGISTRY_AUTH_AUTHORITY env var
     - authority: ""
+
       # SYFT_REGISTRY_AUTH_USERNAME env var
       username: ""
+
       # SYFT_REGISTRY_AUTH_PASSWORD env var
       password: ""
+
       # note: token and username/password are mutually exclusive
       # SYFT_REGISTRY_AUTH_TOKEN env var
       token: ""
-      # - ... # note, more credentials can be provided via config file only
+
+      # filepath to the client certificate used for TLS authentication to the registry
+      # SYFT_REGISTRY_AUTH_TLS_CERT env var
+      tls-cert: ""
+
+      # filepath to the client key used for TLS authentication to the registry
+      # SYFT_REGISTRY_AUTH_TLS_KEY env var
+      tls-key: ""
+    
+    # - ... # note, more credentials can be provided via config file only (not env vars)
 
 # generate an attested SBOM
 attest:

@@ -115,7 +115,7 @@ func redactor(values ...string) testutils.Redactor {
 				`Created: .*`: "Created: redacted",
 
 				// each SBOM reports a unique documentNamespace when generated, this is not useful for snapshot testing
-				`DocumentNamespace: https://anchore.com/syft/.*`: "DocumentNamespace: redacted",
+				`DocumentNamespace: https://anchore.com/.*`: "DocumentNamespace: redacted",
 
 				// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
 				`LicenseListVersion: .*`: "LicenseListVersion: redacted",

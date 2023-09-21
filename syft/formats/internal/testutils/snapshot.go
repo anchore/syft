@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -64,12 +64,16 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, cfg EncoderSnapshotTestCon
 
 	if cfg.IsJSON {
 		require.JSONEq(t, string(expected), string(actual))
-	} else if !bytes.Equal(expected, actual) {
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(string(expected), string(actual), true)
-		t.Logf("len: %d\nexpected: %s", len(expected), expected)
-		t.Logf("len: %d\nactual: %s", len(actual), actual)
-		t.Errorf("mismatched output:\n%s", dmp.DiffPrettyText(diffs))
+	} else {
+		requireEqual(t, expected, actual)
+	}
+}
+
+func requireEqual(t *testing.T, expected any, actual any) {
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Logf("expected: %s", expected)
+		t.Logf("actual: %s", actual)
+		t.Fatalf("mismatched output: %s", diff)
 	}
 }
 

@@ -171,8 +171,8 @@ func TestParseJar(t *testing.T) {
 					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaMetadata{
 						// ensure that nested packages with different names than that of the parent are appended as
-						// a suffix on the virtual path
-						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar:joda-time",
+						// a suffix on the virtual path with a colon separator between group name and artifact name
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar:joda-time:joda-time",
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",
@@ -235,7 +235,7 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaMetadata{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path
-						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:joda-time",
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:joda-time:joda-time",
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",
@@ -653,7 +653,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: virtualPath + ":" + "some-group-id" + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
@@ -721,7 +721,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: virtualPath + ":" + "some-group-id" + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
@@ -789,7 +789,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JenkinsPluginPkg,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: virtualPath + ":" + "com.cloudbees.jenkins.plugins" + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "com.cloudbees.jenkins.plugins",
@@ -880,44 +880,6 @@ func Test_newPackageFromMavenData(t *testing.T) {
 						GroupID:    "com.cloudbees.jenkins.plugins",
 						ArtifactID: "some-parent-name", // note: matches parent package
 						Version:    "2.0",              // note: matches parent package
-					},
-					Parent: nil,
-				},
-			},
-			expectedPackage: nil,
-		},
-		{
-			name: "child matches parent by virtual path -- override name and version",
-			props: pkg.PomProperties{
-				Name:       "some-name",
-				GroupID:    "some-group-id",
-				ArtifactID: "some-parent-name", // note: DOES NOT match parent package
-				Version:    "3.0",              // note: DOES NOT match parent package
-			},
-			parent: &pkg.Package{
-				Name:    "", // note: empty, so should not be matched on
-				Version: "", // note: empty, so should not be matched on
-				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
-					VirtualPath:   virtualPath, // note: matching virtual path
-					Manifest:      nil,
-					PomProperties: nil,
-					Parent:        nil,
-				},
-			},
-			expectedParent: pkg.Package{
-				Name:    "some-parent-name",
-				Version: "3.0",
-				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath,
-					Manifest:    nil,
-					// note: we attach the discovered pom properties data
-					PomProperties: &pkg.PomProperties{
-						Name:       "some-name",
-						GroupID:    "some-group-id",
-						ArtifactID: "some-parent-name",
-						Version:    "3.0",
 					},
 					Parent: nil,
 				},

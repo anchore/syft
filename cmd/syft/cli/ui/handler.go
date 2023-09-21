@@ -49,6 +49,7 @@ func New(cfg HandlerConfig) *Handler {
 	// register all supported event types with the respective handler functions
 	d.AddHandlers(map[partybus.EventType]bubbly.EventHandlerFn{
 		stereoscopeEvent.PullDockerImage:       h.handlePullDockerImage,
+		stereoscopeEvent.PullContainerdImage:   h.handlePullContainerdImage,
 		stereoscopeEvent.ReadImage:             h.handleReadImage,
 		stereoscopeEvent.FetchImage:            h.handleFetchImage,
 		syftEvent.PackageCatalogerStarted:      h.handlePackageCatalogerStarted,

@@ -183,6 +183,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "pip"},
 			candidateAddition{AdditionalVendors: []string{"pypa"}},
 		},
+		{
+			pkg.PythonPkg,
+			candidateKey{PkgName: "Django"},
+			candidateAddition{AdditionalVendors: []string{"djangoproject"}},
+		},
 		// Alpine packages
 		{
 			pkg.ApkPkg,

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -55,9 +56,12 @@ func Test_documentNamespace(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := DocumentNamespace(test.inputName, test.src)
+			actual := DocumentNamespace(test.inputName, test.src, sbom.Descriptor{
+				Name: "syft",
+			})
+
 			// note: since the namespace ends with a UUID we check the prefix
-			assert.True(t, strings.HasPrefix(actual, test.expected), fmt.Sprintf("actual namespace %q", actual))
+			assert.True(t, strings.HasPrefix(actual, test.expected), fmt.Sprintf("expected prefix: '%s' got: '%s'", test.expected, actual))
 
 			// track each scheme tested (passed or not)
 			tracker.Tested(t, test.src.Metadata)

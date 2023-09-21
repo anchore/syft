@@ -1,15 +1,14 @@
 package integration
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/cmd/syft/cli/convert"
-	"github.com/anchore/syft/internal/config"
+	"github.com/anchore/syft/cmd/syft/cli/commands"
+	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/syft/formats"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
 	"github.com/anchore/syft/syft/formats/cyclonedxxml"
@@ -72,9 +71,10 @@ func TestConvertCmd(t *testing.T) {
 				_ = os.Remove(syftFile.Name())
 			}()
 
-			ctx := context.Background()
-			app := &config.Application{
-				Outputs: []string{fmt.Sprintf("%s=%s", test.format.ID().String(), formatFile.Name())},
+			opts := &commands.ConvertOptions{
+				MultiOutput: options.MultiOutput{
+					Outputs: []string{fmt.Sprintf("%s=%s", test.format.ID().String(), formatFile.Name())},
+				},
 			}
 
 			// stdout reduction of test noise
@@ -84,7 +84,7 @@ func TestConvertCmd(t *testing.T) {
 				os.Stdout = rescue
 			}()
 
-			err = convert.Run(ctx, app, []string{syftFile.Name()})
+			err = commands.RunConvert(opts, syftFile.Name())
 			require.NoError(t, err)
 			contents, err := os.ReadFile(formatFile.Name())
 			require.NoError(t, err)

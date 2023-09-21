@@ -34,6 +34,8 @@ func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
 			Packages:          catalog,
 			FileMetadata:      fileArtifacts.FileMetadata,
 			FileDigests:       fileArtifacts.FileDigests,
+			FileContents:      fileArtifacts.FileContents,
+			FileLicenses:      fileArtifacts.FileLicenses,
 			LinuxDistribution: toSyftLinuxRelease(doc.Distro),
 		},
 		Source:        *toSyftSourceData(doc.Source),
@@ -66,6 +68,8 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 	ret := sbom.Artifacts{
 		FileMetadata: make(map[file.Coordinates]file.Metadata),
 		FileDigests:  make(map[file.Coordinates][]file.Digest),
+		FileContents: make(map[file.Coordinates]string),
+		FileLicenses: make(map[file.Coordinates][]file.License),
 	}
 
 	for _, f := range files {
@@ -98,6 +102,27 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 			ret.FileDigests[coord] = append(ret.FileDigests[coord], file.Digest{
 				Algorithm: d.Algorithm,
 				Value:     d.Value,
+			})
+		}
+
+		if f.Contents != "" {
+			ret.FileContents[coord] = f.Contents
+		}
+
+		for _, l := range f.Licenses {
+			var evidence *file.LicenseEvidence
+			if e := l.Evidence; e != nil {
+				evidence = &file.LicenseEvidence{
+					Confidence: e.Confidence,
+					Offset:     e.Offset,
+					Extent:     e.Extent,
+				}
+			}
+			ret.FileLicenses[coord] = append(ret.FileLicenses[coord], file.License{
+				Value:           l.Value,
+				SPDXExpression:  l.SPDXExpression,
+				Type:            l.Type,
+				LicenseEvidence: evidence,
 			})
 		}
 	}

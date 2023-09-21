@@ -239,6 +239,22 @@ func Test_SourceInfo(t *testing.T) {
 				"from resolved Swift package manifest",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.GithubActionPkg,
+			},
+			expected: []string{
+				"from GitHub Actions workflow file or composite action file",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.GithubActionWorkflowPkg,
+			},
+			expected: []string{
+				"from GitHub Actions workflow file or composite action file",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {

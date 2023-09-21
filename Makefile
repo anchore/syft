@@ -10,14 +10,14 @@ CHRONICLE_CMD = $(TEMP_DIR)/chronicle
 GLOW_CMD = $(TEMP_DIR)/glow
 
 # Tool versions #################################
-GOLANGCILINT_VERSION := v1.53.3
+GOLANGCILINT_VERSION := v1.54.2
 GOSIMPORTS_VERSION := v0.3.8
 BOUNCER_VERSION := v0.4.0
-CHRONICLE_VERSION := v0.7.0
-GORELEASER_VERSION := v1.19.2
+CHRONICLE_VERSION := v0.8.0
+GORELEASER_VERSION := v1.20.0
 YAJSV_VERSION := v1.4.1
-COSIGN_VERSION := v2.1.1
-QUILL_VERSION := v0.2.0
+COSIGN_VERSION := v2.2.0
+QUILL_VERSION := v0.4.1
 GLOW_VERSION := v1.5.1
 
 # Formatting variables #################################
@@ -147,13 +147,14 @@ check-json-schema-drift:
 .PHONY: unit
 unit: $(TEMP_DIR) fixtures  ## Run unit tests (with coverage)
 	$(call title,Running unit tests)
-	go test -coverprofile $(TEMP_DIR)/unit-coverage-details.txt $(shell go list ./... | grep -v anchore/syft/test)
+	go test -race -coverprofile $(TEMP_DIR)/unit-coverage-details.txt $(shell go list ./... | grep -v anchore/syft/test)
 	@.github/scripts/coverage.py $(COVERAGE_THRESHOLD) $(TEMP_DIR)/unit-coverage-details.txt
 
 .PHONY: integration
 integration:  ## Run integration tests
 	$(call title,Running integration tests)
 	go test -v ./test/integration
+	go run -race cmd/syft/main.go alpine:latest
 
 .PHONY: validate-cyclonedx-schema
 validate-cyclonedx-schema:

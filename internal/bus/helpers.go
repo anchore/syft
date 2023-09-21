@@ -3,21 +3,24 @@ package bus
 import (
 	"github.com/wagoodman/go-partybus"
 
-	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/clio"
+	"github.com/anchore/syft/internal/redact"
 	"github.com/anchore/syft/syft/event"
 )
 
 func Exit() {
-	Publish(partybus.Event{
-		Type: event.CLIExit,
-	})
+	Publish(clio.ExitEvent(false))
+}
+
+func ExitWithInterrupt() {
+	Publish(clio.ExitEvent(true))
 }
 
 func Report(report string) {
 	if len(report) == 0 {
 		return
 	}
-	report = log.Redactor.RedactString(report)
+	report = redact.Apply(report)
 	Publish(partybus.Event{
 		Type:  event.CLIReport,
 		Value: report,

@@ -23,7 +23,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	tarPath := imagetest.GetFixtureImageTarPath(b, fixtureImageName)
 
 	var pc *pkg.Collection
-	for _, c := range cataloger.ImageCatalogers(defaultConfig()) {
+	for _, c := range cataloger.ImageCatalogers(cataloger.DefaultConfig()) {
 		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
 		userInput := "docker-archive:" + tarPath
 		detection, err := source.Detect(userInput, source.DefaultDetectConfig())
@@ -96,6 +96,8 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
 	definedPkgs.Remove(string(pkg.SwiftPkg))
+	definedPkgs.Remove(string(pkg.GithubActionPkg))
+	definedPkgs.Remove(string(pkg.GithubActionWorkflowPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -260,7 +262,7 @@ func TestPkgCoverageCatalogerConfiguration(t *testing.T) {
 	assert.Equal(t, definedLanguages, observedLanguages)
 
 	// Verify that rust isn't actually an image cataloger
-	c := defaultConfig()
+	c := cataloger.DefaultConfig()
 	c.Catalogers = []string{"rust"}
 	assert.Len(t, cataloger.ImageCatalogers(c), 0)
 }
