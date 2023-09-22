@@ -37,6 +37,7 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"ant-weblogic":                   "org.apache.ant",
 	"ant-xz":                         "org.apache.ant",
 	"commons-codec":                  "commons-codec",
+	"commons-logging":                "commons-logging", // see e.g. https://mvnrepository.com/artifact/commons-logging/commons-logging/1.1.1
 	"okhttp":                         "com.squareup.okhttp3",
 	"okio":                           "com.squareup.okio",
 	"spring":                         "org.springframework",
