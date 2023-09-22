@@ -74,6 +74,8 @@
      "checksumValue": "2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
     }
    ],
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
    "externalRefs": [
     {
      "referenceCategory": "PACKAGE-MANAGER",
@@ -98,6 +100,9 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
    "copyrightText": ""
   },
   {
@@ -113,6 +118,9 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
    "copyrightText": ""
   },
   {
@@ -128,6 +136,9 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
    "copyrightText": ""
   },
   {
@@ -143,6 +154,9 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
    "copyrightText": ""
   },
   {
@@ -158,6 +172,9 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
    "copyrightText": ""
   },
   {
@@ -173,6 +190,9 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
    "copyrightText": ""
   }
  ],

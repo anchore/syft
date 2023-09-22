@@ -245,6 +245,8 @@ func toRootPackage(s source.Description) *spdx.Package {
 			Supplier: NOASSERTION,
 		},
 		PackageDownloadLocation: NOASSERTION,
+		PackageLicenseConcluded: NOASSERTION,
+		PackageLicenseDeclared:  NOASSERTION,
 	}
 
 	if purl != nil {
@@ -624,6 +626,9 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 			Checksums:        toFileChecksums(digests),
 			FileName:         coordinates.RealPath,
 			FileTypes:        toFileTypes(metadata),
+			LicenseInfoInFiles: []string{ // required in SPDX 2.2
+				NOASSERTION,
+			},
 		})
 	}
 
