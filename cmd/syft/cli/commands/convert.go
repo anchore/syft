@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/formats"
+	"github.com/anchore/syft/syft/format"
 )
 
 const (
@@ -78,7 +78,7 @@ func RunConvert(opts *ConvertOptions, userInput string) error {
 		reader = f
 	}
 
-	s, _, err := formats.Decode(reader)
+	s, _, err := format.Decode(reader)
 	if err != nil {
 		return fmt.Errorf("failed to decode SBOM: %w", err)
 	}

@@ -19,12 +19,12 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
-	"github.com/anchore/syft/syft/formats"
-	"github.com/anchore/syft/syft/formats/github"
-	"github.com/anchore/syft/syft/formats/syftjson"
-	"github.com/anchore/syft/syft/formats/table"
-	"github.com/anchore/syft/syft/formats/template"
-	"github.com/anchore/syft/syft/formats/text"
+	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/format/github"
+	"github.com/anchore/syft/syft/format/syftjson"
+	"github.com/anchore/syft/syft/format/table"
+	"github.com/anchore/syft/syft/format/template"
+	"github.com/anchore/syft/syft/format/text"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -48,7 +48,7 @@ func Attest(app clio.Application) *cobra.Command {
 	id := app.ID()
 
 	var allowableOutputs []string
-	for _, f := range formats.AllIDs() {
+	for _, f := range format.AllIDs() {
 		switch f {
 		case table.ID, text.ID, github.ID, template.ID:
 			continue

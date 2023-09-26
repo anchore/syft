@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/anchore/syft/syft/formats/syftjson"
-	syftjsonModel "github.com/anchore/syft/syft/formats/syftjson/model"
+	"github.com/anchore/syft/syft/format/syftjson"
+	syftjsonModel "github.com/anchore/syft/syft/format/syftjson/model"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -26,7 +26,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 			sbom, _ := catalogFixtureImage(t, test.fixture, source.SquashedScope, nil)
 
 			output := bytes.NewBufferString("")
-			err := syftjson.Format().Encode(output, sbom)
+			err := syftjson.DefaultFormat().Encode(output, sbom)
 			if err != nil {
 				t.Fatalf("unable to present: %+v", err)
 			}

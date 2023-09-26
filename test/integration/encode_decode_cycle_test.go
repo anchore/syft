@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/formats"
-	"github.com/anchore/syft/syft/formats/cyclonedxjson"
-	"github.com/anchore/syft/syft/formats/cyclonedxxml"
-	"github.com/anchore/syft/syft/formats/syftjson"
+	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/format/cyclonedxjson"
+	"github.com/anchore/syft/syft/format/cyclonedxxml"
+	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -70,17 +70,17 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			for _, image := range images {
 				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope, nil)
 
-				format := formats.ByName(string(test.formatOption))
+				format := format.ByName(string(test.formatOption))
 				require.NotNil(t, format)
 
-				by1, err := formats.Encode(originalSBOM, format)
+				by1, err := format.Encode(originalSBOM, format)
 				require.NoError(t, err)
 
-				newSBOM, newFormat, err := formats.Decode(bytes.NewReader(by1))
+				newSBOM, newFormat, err := format.Decode(bytes.NewReader(by1))
 				require.NoError(t, err)
 				require.Equal(t, format.ID(), newFormat.ID())
 
-				by2, err := formats.Encode(*newSBOM, format)
+				by2, err := format.Encode(*newSBOM, format)
 				require.NoError(t, err)
 
 				if test.redactor != nil {

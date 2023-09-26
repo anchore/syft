@@ -14,7 +14,7 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/formats/syftjson"
+	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -62,7 +62,7 @@ func PowerUser(app clio.Application) *cobra.Command {
 
 //nolint:funlen
 func runPowerUser(id clio.Identification, opts *powerUserOptions, userInput string) error {
-	writer, err := opts.SBOMWriter(syftjson.Format())
+	writer, err := opts.SBOMWriter(syftjson.DefaultFormat())
 	if err != nil {
 		return err
 	}

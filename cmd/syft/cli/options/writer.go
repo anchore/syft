@@ -13,9 +13,9 @@ import (
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/formats"
-	"github.com/anchore/syft/syft/formats/table"
-	"github.com/anchore/syft/syft/formats/template"
+	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/format/table"
+	"github.com/anchore/syft/syft/format/template"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -76,9 +76,9 @@ func parseSBOMOutputFlags(outputs []string, defaultFile, templateFilePath string
 			file = parts[1]
 		}
 
-		format := formats.ByName(name)
+		format := format.ByName(name)
 		if format == nil {
-			errs = multierror.Append(errs, fmt.Errorf(`unsupported output format "%s", supported formats are: %+v`, name, formats.AllIDs()))
+			errs = multierror.Append(errs, fmt.Errorf(`unsupported output format "%s", supported formats are: %+v`, name, format.AllIDs()))
 			continue
 		}
 

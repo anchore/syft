@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/formats/syftjson"
+	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/sbom"
@@ -413,7 +413,7 @@ func Test_parseSBOM(t *testing.T) {
 	}{
 		{
 			name:              "parse syft JSON",
-			format:            syftjson.Format(),
+			format:            syftjson.DefaultFormat(),
 			fixture:           "test-fixtures/alpine/syft-json",
 			wantPkgs:          expectedPkgs,
 			wantRelationships: expectedRelationships,

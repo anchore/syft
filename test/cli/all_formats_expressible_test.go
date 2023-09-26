@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/formats"
-	"github.com/anchore/syft/syft/formats/template"
+	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/format/template"
 )
 
 func TestAllFormatsExpressible(t *testing.T) {
@@ -20,7 +20,7 @@ func TestAllFormatsExpressible(t *testing.T) {
 		},
 		assertSuccessfulReturnCode,
 	}
-	formatNames := formats.AllIDs()
+	formatNames := format.AllIDs()
 	require.NotEmpty(t, formatNames)
 	for _, o := range formatNames {
 		t.Run(fmt.Sprintf("format:%s", o), func(t *testing.T) {

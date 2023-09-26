@@ -9,13 +9,13 @@ import (
 
 	"github.com/anchore/syft/cmd/syft/cli/commands"
 	"github.com/anchore/syft/cmd/syft/cli/options"
-	"github.com/anchore/syft/syft/formats"
-	"github.com/anchore/syft/syft/formats/cyclonedxjson"
-	"github.com/anchore/syft/syft/formats/cyclonedxxml"
-	"github.com/anchore/syft/syft/formats/spdxjson"
-	"github.com/anchore/syft/syft/formats/spdxtagvalue"
-	"github.com/anchore/syft/syft/formats/syftjson"
-	"github.com/anchore/syft/syft/formats/table"
+	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/format/cyclonedxjson"
+	"github.com/anchore/syft/syft/format/cyclonedxxml"
+	"github.com/anchore/syft/syft/format/spdxjson"
+	"github.com/anchore/syft/syft/format/spdxtagvalue"
+	"github.com/anchore/syft/syft/format/syftjson"
+	"github.com/anchore/syft/syft/format/table"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -32,7 +32,7 @@ func TestConvertCmd(t *testing.T) {
 	}{
 		{
 			name:   "syft-json",
-			format: syftjson.Format(),
+			format: syftjson.DefaultFormat(),
 		},
 		{
 			name:   "spdx-json",
@@ -54,7 +54,7 @@ func TestConvertCmd(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			syftSbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
-			syftFormat := syftjson.Format()
+			syftFormat := syftjson.DefaultFormat()
 
 			syftFile, err := os.CreateTemp("", "test-convert-sbom-")
 			require.NoError(t, err)
@@ -89,7 +89,7 @@ func TestConvertCmd(t *testing.T) {
 			contents, err := os.ReadFile(formatFile.Name())
 			require.NoError(t, err)
 
-			formatFound := formats.Identify(contents)
+			formatFound := format.Identify(contents)
 			if test.format.ID() == table.ID {
 				require.Nil(t, formatFound)
 				return
