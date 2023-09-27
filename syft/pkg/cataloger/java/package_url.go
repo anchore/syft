@@ -45,7 +45,7 @@ func groupIDFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupID
 		return groupID
 	}
 
-	if groupID = groupIDFromJavaManifest(metadata.Manifest); groupID != "" {
+	if groupID = groupIDFromJavaManifest(metadata.Manifest, pkgName); groupID != "" {
 		return groupID
 	}
 
@@ -59,18 +59,18 @@ func groupIDFromKnownPackageList(pkgName string) (groupID string) {
 	return groupID
 }
 
-func groupIDFromJavaManifest(manifest *pkg.JavaManifest) (groupID string) {
+func groupIDFromJavaManifest(manifest *pkg.JavaManifest, pkgName string) (groupID string) {
 	if manifest == nil {
 		return groupID
 	}
 
-	groupIDS := cpe.GetManifestFieldGroupIDs(manifest, cpe.PrimaryJavaManifestGroupIDFields)
+	groupIDS := cpe.GetManifestFieldGroupIDs(manifest, cpe.PrimaryJavaManifestGroupIDFields, pkgName)
 	// assumes that primaryJavaManifestNameFields are ordered by priority
 	if len(groupIDS) != 0 {
 		return groupIDS[0]
 	}
 
-	groupIDS = cpe.GetManifestFieldGroupIDs(manifest, cpe.SecondaryJavaManifestGroupIDFields)
+	groupIDS = cpe.GetManifestFieldGroupIDs(manifest, cpe.SecondaryJavaManifestGroupIDFields, pkgName)
 
 	if len(groupIDS) != 0 {
 		return groupIDS[0]

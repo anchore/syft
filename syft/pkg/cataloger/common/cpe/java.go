@@ -255,7 +255,7 @@ func groupIDsFromJavaManifest(pkgName string, manifest *pkg.JavaManifest) []stri
 	}
 
 	// try the common manifest fields first for a set of candidates
-	groupIDs := GetManifestFieldGroupIDs(manifest, PrimaryJavaManifestGroupIDFields)
+	groupIDs := GetManifestFieldGroupIDs(manifest, PrimaryJavaManifestGroupIDFields, pkgName)
 
 	if len(groupIDs) != 0 {
 		return groupIDs
@@ -266,21 +266,53 @@ func groupIDsFromJavaManifest(pkgName string, manifest *pkg.JavaManifest) []stri
 	// for more info see pkg:maven/commons-io/commons-io@2.8.0 within cloudbees/cloudbees-core-mm:2.263.4.2
 	// at /usr/share/jenkins/jenkins.war:WEB-INF/plugins/analysis-model-api.hpi:WEB-INF/lib/commons-io-2.8.0.jar
 	// as well as the ant package from cloudbees/cloudbees-core-mm:2.277.2.4-ra.
-	return GetManifestFieldGroupIDs(manifest, SecondaryJavaManifestGroupIDFields)
+	return GetManifestFieldGroupIDs(manifest, SecondaryJavaManifestGroupIDFields, pkgName)
 }
 
-func GetManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (groupIDs []string) {
+func GetManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string, packageName string) (groupIDs []string) {
 	if manifest == nil {
 		return nil
 	}
+	var sectionNames []string
+	for section := range manifest.NamedSections {
+		sectionNames = append(sectionNames, section)
+	}
+	// create prioritized list of section names
+	// prefer named sections that have the fields we want
+	sort.Slice(sectionNames, func(i, j int) bool {
+		iName := sectionNames[i]
+		jName := sectionNames[j]
+		if strings.Contains(iName, packageName) && !strings.Contains(jName, packageName) {
+			return true
+		}
+		if strings.Contains(jName, packageName) && !strings.Contains(iName, packageName) {
+			return false
+		}
+		iSec := manifest.NamedSections[sectionNames[i]]
+		jSec := manifest.NamedSections[sectionNames[j]]
+		for _, name := range fields {
+			_, iSectionHasField := iSec[name]
+			_, jSectionHasField := jSec[name]
+			if iSectionHasField && !jSectionHasField {
+				return true
+			}
+			if jSectionHasField && !iSectionHasField {
+				return false
+			}
+		}
+		return sectionNames[i] < sectionNames[j]
+	})
 
 	for _, name := range fields {
 		if value, exists := manifest.Main[name]; exists {
 			if startsWithTopLevelDomain(value) {
 				groupIDs = append(groupIDs, cleanGroupID(value))
+				//return []string{value}
 			}
 		}
-		for _, section := range manifest.NamedSections {
+		// iterating map is non-deterministic
+		for _, sName := range sectionNames {
+			section := manifest.NamedSections[sName]
 			if value, exists := section[name]; exists {
 				if startsWithTopLevelDomain(value) {
 					groupIDs = append(groupIDs, cleanGroupID(value))
@@ -288,7 +320,8 @@ func GetManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (grou
 			}
 		}
 	}
-	sort.Strings(groupIDs)
+	// Workaround to get rid of
+	//sort.Strings(groupIDs)
 
 	return groupIDs
 }
