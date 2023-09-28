@@ -49,6 +49,9 @@ func redactor(values ...string) testutil.Redactor {
 			map[string]string{
 				// dates
 				`"scanned":\s*"[^"]+"`: `"scanned":"redacted"`,
+
+				// image metadata
+				`"syft:filesystem":\s*"[^"]+"`: `"syft:filesystem":"redacted"`,
 			},
 		)
 }
