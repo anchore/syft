@@ -20,7 +20,7 @@ import (
 )
 
 // ToFormatModel transforms the sbom import a format-specific model.
-func ToFormatModel(s sbom.SBOM, config EncoderConfig) model.Document {
+func ToFormatModel(s sbom.SBOM) model.Document {
 	return model.Document{
 		Artifacts:             toPackageModels(s.Artifacts.Packages),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),

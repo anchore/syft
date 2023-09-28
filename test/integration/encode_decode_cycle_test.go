@@ -65,24 +65,32 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		},
 	}
 
+	encoders := format.NewEncoderCollection(format.DefaultEncoders()...)
+	decoders := format.NewDecoderCollection(format.DefaultDecoders()...)
+
 	for _, test := range tests {
 		t.Run(string(test.formatOption), func(t *testing.T) {
 			for _, image := range images {
 				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope, nil)
 
-				format := format.ByName(string(test.formatOption))
-				require.NotNil(t, format)
+				f := encoders.GetByString(string(test.formatOption))
+				require.NotNil(t, f)
 
-				by1, err := format.Encode(originalSBOM, format)
+				var buff1 bytes.Buffer
+				err := f.Encode(&buff1, originalSBOM)
 				require.NoError(t, err)
 
-				newSBOM, newFormat, err := format.Decode(bytes.NewReader(by1))
+				newSBOM, formatID, formatVersion, err := decoders.Decode(buff1.Bytes())
 				require.NoError(t, err)
-				require.Equal(t, format.ID(), newFormat.ID())
+				require.Equal(t, f.ID(), formatID)
+				require.Equal(t, f.Version(), formatVersion)
 
-				by2, err := format.Encode(*newSBOM, format)
+				var buff2 bytes.Buffer
+				err = f.Encode(&buff2, *newSBOM)
 				require.NoError(t, err)
 
+				by1 := buff1.Bytes()
+				by2 := buff2.Bytes()
 				if test.redactor != nil {
 					by1 = test.redactor(by1)
 					by2 = test.redactor(by2)

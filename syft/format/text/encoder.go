@@ -2,10 +2,11 @@ package text
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 	"io"
 	"text/tabwriter"
+
+	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
 const ID sbom.FormatID = "syft-text"

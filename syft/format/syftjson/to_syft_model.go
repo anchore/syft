@@ -22,7 +22,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
+func toSyftModel(doc model.Document) *sbom.SBOM {
 	idAliases := make(map[string]string)
 
 	catalog := toSyftCatalog(doc.Artifacts, idAliases)
@@ -41,7 +41,7 @@ func toSyftModel(doc model.Document) (*sbom.SBOM, error) {
 		Source:        *toSyftSourceData(doc.Source),
 		Descriptor:    toSyftDescriptor(doc.Descriptor),
 		Relationships: warnConversionErrors(toSyftRelationships(&doc, catalog, doc.ArtifactRelationships, idAliases)),
-	}, nil
+	}
 }
 
 func warnConversionErrors[T any](converted []T, errors []error) []T {

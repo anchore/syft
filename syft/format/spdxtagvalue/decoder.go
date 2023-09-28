@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"strings"
+
+	"github.com/spdx/tools-golang/tagvalue"
+
 	"github.com/anchore/syft/syft/format/common/spdxhelpers"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/spdx/tools-golang/tagvalue"
-	"strings"
 )
 
 var _ sbom.FormatDecoder = (*decoder)(nil)

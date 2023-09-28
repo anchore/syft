@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
+
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/packageurl-go"

@@ -2,6 +2,7 @@ package cyclonedxutil
 
 import (
 	"bytes"
+
 	"github.com/CycloneDX/cyclonedx-go"
 )
 

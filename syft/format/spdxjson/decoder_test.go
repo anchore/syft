@@ -2,7 +2,6 @@ package spdxjson
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/sbom"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 func TestSPDXJSONDecoder(t *testing.T) {

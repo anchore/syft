@@ -3,11 +3,13 @@ package cyclonedxjson
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/CycloneDX/cyclonedx-go"
+
 	"github.com/anchore/syft/syft/format/common/cyclonedxhelpers"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil"
 	"github.com/anchore/syft/syft/sbom"
-	"strings"
 )
 
 var _ sbom.FormatDecoder = (*decoder)(nil)

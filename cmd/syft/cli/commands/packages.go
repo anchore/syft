@@ -14,7 +14,6 @@ import (
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/format/template"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -55,14 +54,14 @@ const (
 
 type packagesOptions struct {
 	options.Config      `yaml:",inline" mapstructure:",squash"`
-	options.MultiOutput `yaml:",inline" mapstructure:",squash"`
+	options.Output      `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 	options.Catalog     `yaml:",inline" mapstructure:",squash"`
 }
 
 func defaultPackagesOptions() *packagesOptions {
 	return &packagesOptions{
-		MultiOutput: options.DefaultOutput(),
+		Output:      options.DefaultOutput(),
 		UpdateCheck: options.DefaultUpdateCheck(),
 		Catalog:     options.DefaultCatalog(),
 	}
@@ -108,11 +107,6 @@ func validateArgs(cmd *cobra.Command, args []string, error string) error {
 
 // nolint:funlen
 func runPackages(id clio.Identification, opts *packagesOptions, userInput string) error {
-	err := validatePackageOutputOptions(&opts.MultiOutput)
-	if err != nil {
-		return err
-	}
-
 	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err
@@ -234,20 +228,4 @@ func mergeRelationships(cs ...<-chan artifact.Relationship) (relationships []art
 	}
 
 	return relationships
-}
-
-func validatePackageOutputOptions(cfg *options.MultiOutput) error {
-	var usesTemplateOutput bool
-	for _, o := range cfg.Outputs {
-		if o == template.ID.String() {
-			usesTemplateOutput = true
-			break
-		}
-	}
-
-	if usesTemplateOutput && cfg.OutputTemplatePath == "" {
-		return fmt.Errorf(`must specify path to template file when using "template" output format`)
-	}
-
-	return nil
 }

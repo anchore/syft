@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
+
+	spdxJson "github.com/spdx/tools-golang/json"
+
 	"github.com/anchore/syft/syft/format/common/spdxhelpers"
 	"github.com/anchore/syft/syft/sbom"
-	spdxJson "github.com/spdx/tools-golang/json"
-	"strings"
 )
 
 var _ sbom.FormatDecoder = (*decoder)(nil)

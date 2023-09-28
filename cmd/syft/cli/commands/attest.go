@@ -19,12 +19,10 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
-	"github.com/anchore/syft/syft/format"
-	"github.com/anchore/syft/syft/format/github"
+	"github.com/anchore/syft/syft/format/cyclonedxjson"
+	"github.com/anchore/syft/syft/format/spdxjson"
+	"github.com/anchore/syft/syft/format/spdxtagvalue"
 	"github.com/anchore/syft/syft/format/syftjson"
-	"github.com/anchore/syft/syft/format/table"
-	"github.com/anchore/syft/syft/format/template"
-	"github.com/anchore/syft/syft/format/text"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -37,30 +35,27 @@ const (
 )
 
 type attestOptions struct {
-	options.Config       `yaml:",inline" mapstructure:",squash"`
-	options.SingleOutput `yaml:",inline" mapstructure:",squash"`
-	options.UpdateCheck  `yaml:",inline" mapstructure:",squash"`
-	options.Catalog      `yaml:",inline" mapstructure:",squash"`
-	options.Attest       `yaml:",inline" mapstructure:",squash"`
+	options.Config      `yaml:",inline" mapstructure:",squash"`
+	options.Output      `yaml:",inline" mapstructure:",squash"`
+	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
+	options.Catalog     `yaml:",inline" mapstructure:",squash"`
+	options.Attest      `yaml:",inline" mapstructure:",squash"`
 }
 
 func Attest(app clio.Application) *cobra.Command {
 	id := app.ID()
 
-	var allowableOutputs []string
-	for _, f := range format.AllIDs() {
-		switch f {
-		case table.ID, text.ID, github.ID, template.ID:
-			continue
-		}
-		allowableOutputs = append(allowableOutputs, f.String())
-	}
-
 	opts := &attestOptions{
 		UpdateCheck: options.DefaultUpdateCheck(),
-		SingleOutput: options.SingleOutput{
-			AllowableOptions: allowableOutputs,
-			Output:           syftjson.ID.String(),
+		Output: options.Output{
+			AllowMultipleOutputs: false,
+			AllowableOptions: []string{
+				string(syftjson.ID),
+				string(cyclonedxjson.ID),
+				string(spdxjson.ID),
+				string(spdxtagvalue.ID),
+			},
+			Outputs: []string{syftjson.ID.String()},
 		},
 		Catalog: options.DefaultCatalog(),
 	}
@@ -95,15 +90,13 @@ func runAttest(id clio.Identification, opts *attestOptions, userInput string) er
 		return fmt.Errorf("unable to build SBOM: %w", err)
 	}
 
-	o := opts.Output
-
-	f, err := os.CreateTemp("", o)
+	f, err := os.CreateTemp("", "syft-attest-")
 	if err != nil {
 		return fmt.Errorf("unable to create temp file: %w", err)
 	}
 	defer os.Remove(f.Name())
 
-	writer, err := opts.SBOMWriter(f.Name())
+	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return fmt.Errorf("unable to create SBOM writer: %w", err)
 	}
@@ -118,10 +111,21 @@ func runAttest(id clio.Identification, opts *attestOptions, userInput string) er
 		return fmt.Errorf("unable to find cosign in PATH; make sure you have it installed")
 	}
 
+	outputNames := opts.OutputNameSet()
+	var outputName string
+	switch outputNames.Size() {
+	case 0:
+		return fmt.Errorf("no output format specified")
+	case 1:
+		outputName = outputNames.List()[0]
+	default:
+		return fmt.Errorf("multiple output formats specified: %s", strings.Join(outputNames.List(), ", "))
+	}
+
 	// Select Cosign predicate type based on defined output type
 	// As orientation, check: https://github.com/sigstore/cosign/blob/main/pkg/cosign/attestation/attestation.go
 	var predicateType string
-	switch strings.ToLower(o) {
+	switch strings.ToLower(outputName) {
 	case "cyclonedx-json":
 		predicateType = "cyclonedx"
 	case "spdx-tag-value", "spdx-tv":

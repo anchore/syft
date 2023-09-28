@@ -2,10 +2,12 @@ package cyclonedxutil
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/CycloneDX/cyclonedx-go"
+
 	"github.com/anchore/syft/syft/format/common/cyclonedxhelpers"
 	"github.com/anchore/syft/syft/sbom"
-	"io"
 )
 
 const DefaultVersion = "1.5"

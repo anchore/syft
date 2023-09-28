@@ -2,6 +2,7 @@ package format
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
 	"github.com/anchore/syft/syft/format/spdxjson"

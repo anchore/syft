@@ -15,7 +15,6 @@ import (
 	"github.com/anchore/syft/syft/format/spdxjson"
 	"github.com/anchore/syft/syft/format/spdxtagvalue"
 	"github.com/anchore/syft/syft/format/syftjson"
-	"github.com/anchore/syft/syft/format/table"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -28,33 +27,33 @@ import (
 func TestConvertCmd(t *testing.T) {
 	tests := []struct {
 		name   string
-		format sbom.Format
+		format sbom.FormatEncoder
 	}{
 		{
 			name:   "syft-json",
-			format: syftjson.DefaultFormat(),
+			format: syftjson.DefaultFormatEncoder(),
 		},
 		{
 			name:   "spdx-json",
-			format: spdxjson.Format(),
+			format: spdxjson.DefaultFormatEncoder(),
 		},
 		{
 			name:   "spdx-tag-value",
-			format: spdxtagvalue.Format(),
+			format: spdxtagvalue.DefaultFormatEncoder(),
 		},
 		{
 			name:   "cyclonedx-json",
-			format: cyclonedxjson.Format(),
+			format: cyclonedxjson.DefaultFormatEncoder(),
 		},
 		{
 			name:   "cyclonedx-xml",
-			format: cyclonedxxml.Format(),
+			format: cyclonedxxml.DefaultFormatEncoder(),
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			syftSbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
-			syftFormat := syftjson.DefaultFormat()
+			syftFormat := syftjson.DefaultFormatEncoder()
 
 			syftFile, err := os.CreateTemp("", "test-convert-sbom-")
 			require.NoError(t, err)
@@ -72,10 +71,11 @@ func TestConvertCmd(t *testing.T) {
 			}()
 
 			opts := &commands.ConvertOptions{
-				MultiOutput: options.MultiOutput{
+				Output: options.Output{
 					Outputs: []string{fmt.Sprintf("%s=%s", test.format.ID().String(), formatFile.Name())},
 				},
 			}
+			require.NoError(t, opts.PostLoad())
 
 			// stdout reduction of test noise
 			rescue := os.Stdout // keep backup of the real stdout
@@ -89,12 +89,8 @@ func TestConvertCmd(t *testing.T) {
 			contents, err := os.ReadFile(formatFile.Name())
 			require.NoError(t, err)
 
-			formatFound := format.Identify(contents)
-			if test.format.ID() == table.ID {
-				require.Nil(t, formatFound)
-				return
-			}
-			require.Equal(t, test.format.ID(), formatFound.ID())
+			foundID, _ := format.Identify(contents)
+			require.Equal(t, test.format.ID(), foundID)
 		})
 	}
 }

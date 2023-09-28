@@ -1,11 +1,11 @@
 package spdxtagvalue
 
 import (
-	"github.com/spdx/tools-golang/tagvalue"
 	"io"
 
-	"github.com/anchore/syft/syft/format/internal/spdxutil"
+	"github.com/spdx/tools-golang/tagvalue"
 
+	"github.com/anchore/syft/syft/format/internal/spdxutil"
 	"github.com/anchore/syft/syft/sbom"
 )
 

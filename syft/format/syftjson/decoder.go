@@ -3,8 +3,9 @@ package syftjson
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Masterminds/semver"
 	"strings"
+
+	"github.com/Masterminds/semver"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -36,12 +37,7 @@ func (d decoder) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
 		log.Warn(err)
 	}
 
-	s, err := toSyftModel(doc)
-	if err != nil {
-		return nil, ID, doc.Schema.Version, fmt.Errorf("unable to transform to syft document model: %w", err)
-	}
-
-	return s, ID, doc.Schema.Version, nil
+	return toSyftModel(doc), ID, doc.Schema.Version, nil
 }
 
 func (d decoder) Identify(by []byte) (sbom.FormatID, string) {
@@ -52,7 +48,7 @@ func (d decoder) Identify(by []byte) (sbom.FormatID, string) {
 	var doc Document
 	err := json.Unmarshal(by, &doc)
 	if err != nil {
-		// maybe not json? maybe not valid? doesn't matter, we won't proccess it.
+		// maybe not json? maybe not valid? doesn't matter, we won't process it.
 		return "", ""
 	}
 

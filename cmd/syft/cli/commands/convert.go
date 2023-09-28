@@ -23,7 +23,7 @@ const (
 
 type ConvertOptions struct {
 	options.Config      `yaml:",inline" mapstructure:",squash"`
-	options.MultiOutput `yaml:",inline" mapstructure:",squash"`
+	options.Output      `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 }
 
@@ -78,7 +78,12 @@ func RunConvert(opts *ConvertOptions, userInput string) error {
 		reader = f
 	}
 
-	s, _, err := format.Decode(reader)
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		return fmt.Errorf("failed to read SBOM: %w", err)
+	}
+
+	s, _, _, err := format.Decode(contents)
 	if err != nil {
 		return fmt.Errorf("failed to decode SBOM: %w", err)
 	}

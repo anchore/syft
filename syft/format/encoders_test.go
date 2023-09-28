@@ -1,6 +1,11 @@
 package format
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
 	"github.com/anchore/syft/syft/format/github"
@@ -11,9 +16,6 @@ import (
 	"github.com/anchore/syft/syft/format/template"
 	"github.com/anchore/syft/syft/format/text"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func Test_EncoderCollection_ByString_IDOnly(t *testing.T) {

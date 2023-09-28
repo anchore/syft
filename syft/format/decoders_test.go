@@ -2,13 +2,15 @@ package format
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/format/syftjson"
-	"github.com/anchore/syft/syft/sbom"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/format/syftjson"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 func TestIdentify(t *testing.T) {

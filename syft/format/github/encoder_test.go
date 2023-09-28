@@ -2,8 +2,9 @@ package github
 
 import (
 	"flag"
-	"github.com/anchore/syft/syft/format/internal/testutil"
 	"testing"
+
+	"github.com/anchore/syft/syft/format/internal/testutil"
 )
 
 var updateSnapshot = flag.Bool("update-github", false, "update the *.golden files for github encoders")

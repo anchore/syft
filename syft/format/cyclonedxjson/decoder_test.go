@@ -2,8 +2,6 @@ package cyclonedxjson
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/sbom"
-	"github.com/stretchr/testify/require"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,6 +9,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/sbom"
 )
 
 func Test_decoder(t *testing.T) {

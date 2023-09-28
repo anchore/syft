@@ -3,8 +3,6 @@ package template
 import (
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/format/syftjson"
-	"github.com/anchore/syft/syft/sbom"
 	"io"
 	"os"
 	"reflect"
@@ -12,13 +10,15 @@ import (
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/mitchellh/go-homedir"
+
+	"github.com/anchore/syft/syft/format/syftjson"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 const ID sbom.FormatID = "template"
 
 type EncoderConfig struct {
-	TemplatePath      string
-	JSONEncoderConfig syftjson.EncoderConfig
+	TemplatePath string
 }
 
 type encoder struct {
@@ -52,9 +52,7 @@ func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 }
 
 func DefaultEncoderConfig() EncoderConfig {
-	return EncoderConfig{
-		JSONEncoderConfig: syftjson.DefaultEncoderConfig(),
-	}
+	return EncoderConfig{}
 }
 
 func DefaultFormatEncoder() sbom.FormatEncoder {
@@ -98,6 +96,6 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		return fmt.Errorf("unable to parse template: %w", err)
 	}
 
-	doc := syftjson.ToFormatModel(s, e.cfg.JSONEncoderConfig)
+	doc := syftjson.ToFormatModel(s)
 	return tmpl.Execute(writer, doc)
 }

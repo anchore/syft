@@ -8,24 +8,29 @@ import (
 
 	"github.com/docker/docker/pkg/homedir"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/sbom"
 )
 
 func Test_MakeSBOMWriter(t *testing.T) {
 	tests := []struct {
+		name    string
 		outputs []string
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
+			name:    "go case",
 			outputs: []string{"json"},
 			wantErr: assert.NoError,
 		},
 		{
+			name:    "multiple",
 			outputs: []string{"table", "json"},
 			wantErr: assert.NoError,
 		},
 		{
+			name:    "unknown format",
 			outputs: []string{"unknown"},
 			wantErr: func(t assert.TestingT, err error, bla ...interface{}) bool {
 				return assert.ErrorContains(t, err, `unsupported output format "unknown", supported formats are: [`)
@@ -34,17 +39,40 @@ func Test_MakeSBOMWriter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		_, err := makeSBOMWriter(tt.outputs, "", "")
-		tt.wantErr(t, err)
+		t.Run(tt.name, func(t *testing.T) {
+			opt := DefaultOutput()
+			err := opt.PostLoad()
+			require.NoError(t, err)
+			_, err = makeSBOMWriter(tt.outputs, "", opt.encoders)
+			tt.wantErr(t, err)
+		})
 	}
 }
 
-func dummyEncoder(io.Writer, sbom.SBOM) error {
+func dummyFormat(name string) sbom.FormatEncoder {
+	return dummyEncoder{name: name}
+}
+
+var _ sbom.FormatEncoder = (*dummyEncoder)(nil)
+
+type dummyEncoder struct {
+	name string
+}
+
+func (d dummyEncoder) ID() sbom.FormatID {
+	return sbom.FormatID(d.name)
+}
+
+func (d dummyEncoder) Aliases() []string {
 	return nil
 }
 
-func dummyFormat(name string) sbom.Format {
-	return sbom.NewFormat(sbom.AnyVersion, dummyEncoder, nil, nil, sbom.FormatID(name))
+func (d dummyEncoder) Version() string {
+	return sbom.AnyVersion
+}
+
+func (d dummyEncoder) Encode(writer io.Writer, s sbom.SBOM) error {
+	return nil
 }
 
 func Test_newSBOMMultiWriter(t *testing.T) {

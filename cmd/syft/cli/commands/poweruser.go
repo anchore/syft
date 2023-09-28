@@ -62,7 +62,7 @@ func PowerUser(app clio.Application) *cobra.Command {
 
 //nolint:funlen
 func runPowerUser(id clio.Identification, opts *powerUserOptions, userInput string) error {
-	writer, err := opts.SBOMWriter(syftjson.DefaultFormat())
+	writer, err := opts.SBOMWriter(syftjson.DefaultFormatEncoder())
 	if err != nil {
 		return err
 	}

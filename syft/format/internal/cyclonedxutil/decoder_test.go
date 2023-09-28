@@ -2,9 +2,10 @@ package cyclonedxutil
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_missingComponentsDecode(t *testing.T) {

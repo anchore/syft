@@ -2,9 +2,9 @@ package github
 
 import (
 	"encoding/json"
-	"github.com/anchore/syft/syft/format/github/internal/model"
 	"io"
 
+	"github.com/anchore/syft/syft/format/github/internal/model"
 	"github.com/anchore/syft/syft/sbom"
 )
 

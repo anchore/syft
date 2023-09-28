@@ -2,12 +2,14 @@ package spdxutil
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/format/common/spdxhelpers"
-	"github.com/anchore/syft/syft/sbom"
+
 	"github.com/spdx/tools-golang/convert"
 	"github.com/spdx/tools-golang/spdx/v2/v2_1"
 	"github.com/spdx/tools-golang/spdx/v2/v2_2"
 	"github.com/spdx/tools-golang/spdx/v2/v2_3"
+
+	"github.com/anchore/syft/syft/format/common/spdxhelpers"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 const DefaultVersion = "2.3"

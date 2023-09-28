@@ -2,11 +2,10 @@ package template
 
 import (
 	"flag"
-	"github.com/anchore/syft/syft/format/syftjson"
-	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/format/internal/testutil"
 )
@@ -15,8 +14,7 @@ var updateSnapshot = flag.Bool("update-template", false, "update the *.golden fi
 
 func TestFormatWithOption(t *testing.T) {
 	f, err := NewFormatEncoder(EncoderConfig{
-		TemplatePath:      "test-fixtures/csv.template",
-		JSONEncoderConfig: syftjson.DefaultEncoderConfig(),
+		TemplatePath: "test-fixtures/csv.template",
 	})
 	require.NoError(t, err)
 
@@ -33,8 +31,7 @@ func TestFormatWithOption(t *testing.T) {
 
 func TestFormatWithOptionAndHasField(t *testing.T) {
 	f, err := NewFormatEncoder(EncoderConfig{
-		TemplatePath:      "test-fixtures/csv-hasField.template",
-		JSONEncoderConfig: syftjson.DefaultEncoderConfig(),
+		TemplatePath: "test-fixtures/csv-hasField.template",
 	})
 	require.NoError(t, err)
 

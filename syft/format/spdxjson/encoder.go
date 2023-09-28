@@ -2,9 +2,9 @@ package spdxjson
 
 import (
 	"encoding/json"
-	"github.com/anchore/syft/syft/format/internal/spdxutil"
 	"io"
 
+	"github.com/anchore/syft/syft/format/internal/spdxutil"
 	"github.com/anchore/syft/syft/sbom"
 )
 

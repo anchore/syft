@@ -8,10 +8,8 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/sbom"
 )
 
 func mustCPEs(s ...string) (c []cpe.CPE) {
@@ -405,7 +403,6 @@ func Test_parseSBOM(t *testing.T) {
 
 	tests := []struct {
 		name              string
-		format            sbom.Format
 		fixture           string
 		wantPkgs          []pkg.Package
 		wantRelationships []artifact.Relationship
@@ -413,7 +410,6 @@ func Test_parseSBOM(t *testing.T) {
 	}{
 		{
 			name:              "parse syft JSON",
-			format:            syftjson.DefaultFormat(),
 			fixture:           "test-fixtures/alpine/syft-json",
 			wantPkgs:          expectedPkgs,
 			wantRelationships: expectedRelationships,

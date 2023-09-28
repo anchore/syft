@@ -172,7 +172,7 @@ func Test_toSyftSourceData(t *testing.T) {
 }
 
 func Test_idsHaveChanged(t *testing.T) {
-	s, err := toSyftModel(model.Document{
+	s := toSyftModel(model.Document{
 		Source: model.Source{
 			Type:     "file",
 			Metadata: source.FileSourceMetadata{Path: "some/path"},
@@ -200,7 +200,6 @@ func Test_idsHaveChanged(t *testing.T) {
 		},
 	})
 
-	require.NoError(t, err)
 	require.Len(t, s.Relationships, 1)
 
 	r := s.Relationships[0]

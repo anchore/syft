@@ -2,10 +2,10 @@ package syftjson
 
 import (
 	"flag"
-	"github.com/anchore/syft/internal"
 	"testing"
 
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"

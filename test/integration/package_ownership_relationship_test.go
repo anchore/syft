@@ -26,7 +26,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 			sbom, _ := catalogFixtureImage(t, test.fixture, source.SquashedScope, nil)
 
 			output := bytes.NewBufferString("")
-			err := syftjson.DefaultFormat().Encode(output, sbom)
+			err := syftjson.DefaultFormatEncoder().Encode(output, sbom)
 			if err != nil {
 				t.Fatalf("unable to present: %+v", err)
 			}

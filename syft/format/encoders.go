@@ -3,6 +3,12 @@ package format
 import (
 	"bytes"
 	"fmt"
+	"regexp"
+	"sort"
+	"strings"
+
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
 	"github.com/anchore/syft/syft/format/github"
@@ -13,10 +19,6 @@ import (
 	"github.com/anchore/syft/syft/format/template"
 	"github.com/anchore/syft/syft/format/text"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/scylladb/go-set/strset"
-	"regexp"
-	"sort"
-	"strings"
 )
 
 // DefaultEncoders returns the latest encoders for each format with all default options.
@@ -63,7 +65,6 @@ func (e EncoderCollection) Aliases() []string {
 }
 
 func (e EncoderCollection) Get(name string, version string) sbom.FormatEncoder {
-
 	name = cleanFormatName(name)
 	var mostRecentFormat sbom.FormatEncoder
 
