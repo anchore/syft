@@ -10,7 +10,6 @@ var _ interface {
 	clio.PostLoader
 } = (*OutputFile)(nil)
 
-// OutputFile is only the --file argument
 type OutputFile struct {
 	File string `yaml:"file" json:"file" mapstructure:"file"` // --file, the file to write report output to
 }
