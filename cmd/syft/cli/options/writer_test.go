@@ -33,7 +33,7 @@ func Test_MakeSBOMWriter(t *testing.T) {
 			name:    "unknown format",
 			outputs: []string{"unknown"},
 			wantErr: func(t assert.TestingT, err error, bla ...interface{}) bool {
-				return assert.ErrorContains(t, err, `unsupported output format "unknown", supported formats are: [`)
+				return assert.ErrorContains(t, err, `unsupported output format "unknown", supported formats are:`)
 			},
 		},
 	}
@@ -256,6 +256,38 @@ func Test_newSBOMWriterDescription(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			o := newSBOMWriterDescription(dummyFormat("table"), tt.path)
 			assert.Equal(t, tt.expected, o.Path)
+		})
+	}
+}
+
+func Test_formatVersionOptions(t *testing.T) {
+
+	tests := []struct {
+		name             string
+		nameVersionPairs []string
+		want             string
+	}{
+		{
+			name: "gocase",
+			nameVersionPairs: []string{
+				"cyclonedx-json@1.2", "cyclonedx-json@1.3", "cyclonedx-json@1.4", "cyclonedx-json@1.5",
+				"cyclonedx-xml@1.0", "cyclonedx-xml@1.1", "cyclonedx-xml@1.2", "cyclonedx-xml@1.3",
+				"cyclonedx-xml@1.4", "cyclonedx-xml@1.5", "github-json", "spdx-json@2.2", "spdx-json@2.3",
+				"spdx-tag-value@2.1", "spdx-tag-value@2.2", "spdx-tag-value@2.3", "syft-json@11.0.0",
+				"syft-table", "syft-text", "template",
+			},
+			want: `
+Available formats:
+   - github-json, syft-json, syft-table, syft-text, template
+   - cyclonedx-json: 1, 1.2, 1.3, 1.4, 1.5
+   - cyclonedx-xml: 1, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5
+   - spdx-json: 2, 2.2, 2.3
+   - spdx-tag-value: 2, 2.1, 2.2, 2.3`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, formatVersionOptions(tt.nameVersionPairs))
 		})
 	}
 }
