@@ -14,7 +14,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func Test_decoder(t *testing.T) {
+func TestDecoder_Decode(t *testing.T) {
 	tests := []struct {
 		name     string
 		file     string
@@ -83,6 +83,41 @@ func Test_decoder(t *testing.T) {
 			}
 
 			assert.ElementsMatch(t, test.packages, pkgs)
+		})
+	}
+}
+
+func TestDecoder_Identify(t *testing.T) {
+	type testCase struct {
+		name    string
+		file    string
+		id      sbom.FormatID
+		version string
+	}
+
+	var cases []testCase
+
+	for _, version := range SupportedVersions() {
+		cases = append(cases, testCase{
+			name:    fmt.Sprintf("v%s schema", version),
+			file:    fmt.Sprintf("test-fixtures/identify/%s.xml", version),
+			id:      ID,
+			version: version,
+		})
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			reader, err := os.Open(test.file)
+			require.NoError(t, err)
+			contents, err := io.ReadAll(reader)
+			require.NoError(t, err)
+
+			dec := NewFormatDecoder()
+
+			formatID, formatVersion := dec.Identify(contents)
+			assert.Equal(t, test.id, formatID)
+			assert.Equal(t, test.version, formatVersion)
 		})
 	}
 }

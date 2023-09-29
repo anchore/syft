@@ -1,10 +1,15 @@
 package cyclonedxjson
 
 import (
+	"bytes"
 	"flag"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/format/internal/testutil"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 var updateSnapshot = flag.Bool("update-cyclonedx-json", false, "update the *.golden files for cyclone-dx JSON encoders")
@@ -60,4 +65,48 @@ func redactor(values ...string) testutil.Redactor {
 				`"bom-ref":\s*"[^"]+"`: `"bom-ref":"redacted"`,
 			},
 		)
+}
+
+func TestSupportedVersions(t *testing.T) {
+	encs := DefaultFormatEncoders()
+	require.NotEmpty(t, encs)
+
+	versions := SupportedVersions()
+	require.Equal(t, len(versions), len(encs))
+
+	subject := testutil.DirectoryInput(t, t.TempDir())
+	dec := NewFormatDecoder()
+
+	for _, enc := range encs {
+		t.Run(enc.Version(), func(t *testing.T) {
+			require.Contains(t, versions, enc.Version())
+
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, subject))
+
+			id, version := dec.Identify(buf.Bytes())
+			require.Equal(t, enc.ID(), id)
+			require.Equal(t, enc.Version(), version)
+
+			var s *sbom.SBOM
+			var err error
+			s, id, version, err = dec.Decode(buf.Bytes())
+			require.NoError(t, err)
+			require.Equal(t, enc.ID(), id)
+			require.Equal(t, enc.Version(), version)
+
+			assert.Equal(t, len(subject.Relationships), len(s.Relationships), "mismatched relationship count")
+
+			if !assert.Equal(t, subject.Artifacts.Packages.PackageCount(), s.Artifacts.Packages.PackageCount(), "mismatched package count") {
+				t.Logf("expected: %d", subject.Artifacts.Packages.PackageCount())
+				for _, p := range subject.Artifacts.Packages.Sorted() {
+					t.Logf("  - %s", p.String())
+				}
+				t.Logf("actual: %d", s.Artifacts.Packages.PackageCount())
+				for _, p := range s.Artifacts.Packages.Sorted() {
+					t.Logf("  - %s", p.String())
+				}
+			}
+		})
+	}
 }

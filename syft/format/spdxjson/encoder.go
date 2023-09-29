@@ -2,13 +2,24 @@ package spdxjson
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
+	"github.com/spdx/tools-golang/convert"
+	"github.com/spdx/tools-golang/spdx/v2/v2_1"
+	"github.com/spdx/tools-golang/spdx/v2/v2_2"
+	"github.com/spdx/tools-golang/spdx/v2/v2_3"
+
+	"github.com/anchore/syft/syft/format/common/spdxhelpers"
 	"github.com/anchore/syft/syft/format/internal/spdxutil"
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const ID sbom.FormatID = "spdx-json"
+const ID = spdxutil.JSONFormatID
+
+func SupportedVersions() []string {
+	return spdxutil.SupportedVersions(ID)
+}
 
 type EncoderConfig struct {
 	Version string
@@ -16,18 +27,24 @@ type EncoderConfig struct {
 
 type encoder struct {
 	cfg EncoderConfig
-	doc any
 }
 
 func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
-	doc, err := spdxutil.DocumentPrototypeFromVersion(cfg.Version)
-	if err != nil {
-		return nil, err
-	}
 	return encoder{
 		cfg: cfg,
-		doc: doc,
 	}, nil
+}
+
+func DefaultFormatEncoders() []sbom.FormatEncoder {
+	var encs []sbom.FormatEncoder
+	for _, version := range SupportedVersions() {
+		enc, err := NewFormatEncoder(EncoderConfig{Version: version})
+		if err != nil {
+			panic(err)
+		}
+		encs = append(encs, enc)
+	}
+	return encs
 }
 
 func DefaultFormatEncoder() sbom.FormatEncoder {
@@ -57,9 +74,33 @@ func (e encoder) Version() string {
 }
 
 func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
-	err := spdxutil.ToDocument(s, &e.doc)
+	latestDoc := spdxhelpers.ToFormatModel(s)
+	if latestDoc == nil {
+		return fmt.Errorf("unable to convert SBOM to SPDX document")
+	}
+
+	var err error
+	var encodeDoc any
+	switch e.cfg.Version {
+	case "2.1":
+		doc := v2_1.Document{}
+		err = convert.Document(latestDoc, &doc)
+		encodeDoc = doc
+	case "2.2":
+		doc := v2_2.Document{}
+		err = convert.Document(latestDoc, &doc)
+		encodeDoc = doc
+
+	case "2.3", "", "2", "2.x":
+		doc := v2_3.Document{}
+		err = convert.Document(latestDoc, &doc)
+		encodeDoc = doc
+	default:
+		return fmt.Errorf("unsupported SPDX version %q", e.cfg.Version)
+	}
+
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to convert SBOM to SPDX document: %w", err)
 	}
 
 	enc := json.NewEncoder(writer)
@@ -67,5 +108,5 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", " ")
 
-	return enc.Encode(e.doc)
+	return enc.Encode(encodeDoc)
 }

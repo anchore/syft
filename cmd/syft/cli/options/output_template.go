@@ -17,8 +17,9 @@ func (o *OutputTemplate) AddFlags(flags clio.FlagSet) {
 		"specify the path to a Go template file")
 }
 
-func (o OutputTemplate) formatEncoder() (sbom.FormatEncoder, error) {
-	return template.NewFormatEncoder(template.EncoderConfig{
+func (o OutputTemplate) formatEncoders() ([]sbom.FormatEncoder, error) {
+	enc, err := template.NewFormatEncoder(template.EncoderConfig{
 		TemplatePath: o.Path,
 	})
+	return []sbom.FormatEncoder{enc}, err
 }

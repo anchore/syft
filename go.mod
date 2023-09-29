@@ -55,6 +55,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/saferwall/pe v1.4.6
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
+	github.com/sanity-io/litter v1.5.5
 	github.com/sassoftware/go-rpmutils v0.2.0
 	// pinned to pull in 386 arch fix: https://github.com/scylladb/go-set/commit/cc7b2070d91ebf40d233207b633e28f5bd8f03a5
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
@@ -71,12 +72,9 @@ require (
 	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1
 	golang.org/x/mod v0.12.0
 	golang.org/x/net v0.15.0
-	golang.org/x/term v0.12.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.25.0
 )
-
-require github.com/sanity-io/litter v1.5.5
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
@@ -206,6 +204,7 @@ require (
 	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/term v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect

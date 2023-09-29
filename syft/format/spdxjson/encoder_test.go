@@ -1,10 +1,15 @@
 package spdxjson
 
 import (
+	"bytes"
 	"flag"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/format/internal/testutil"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 var updateSnapshot = flag.Bool("update-spdx-json", false, "update the *.golden files for spdx-json encoders")
@@ -79,4 +84,68 @@ func redactor(values ...string) testutil.Redactor {
 				`"licenseListVersion":\s+"[^"]*"`: `"licenseListVersion":"redacted"`,
 			},
 		)
+}
+
+func TestSupportedVersions(t *testing.T) {
+	encs := DefaultFormatEncoders()
+	require.NotEmpty(t, encs)
+
+	versions := SupportedVersions()
+	require.Equal(t, len(versions), len(encs))
+
+	subject := testutil.DirectoryInput(t, t.TempDir())
+	dec := NewFormatDecoder()
+
+	relationshipOffsetPerVersion := map[string]int{
+		// the package representing the source gets a relationship from the source package to all other packages found
+		// these relationships cannot be removed until the primaryPackagePurpose info is available in 2.3
+		"2.1": 2,
+		"2.2": 2,
+		// the source-to-package relationships can be removed since the primaryPackagePurpose info is available in 2.3
+		"2.3": 0,
+	}
+
+	pkgCountOffsetPerVersion := map[string]int{
+		"2.1": 1, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
+		"2.2": 1, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
+		"2.3": 0, // the source package can be removed since the primaryPackagePurpose info is available
+	}
+
+	for _, enc := range encs {
+		t.Run(enc.Version(), func(t *testing.T) {
+			require.Contains(t, versions, enc.Version())
+
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, subject))
+
+			id, version := dec.Identify(buf.Bytes())
+			assert.Equal(t, enc.ID(), id)
+			assert.Equal(t, enc.Version(), version)
+
+			var s *sbom.SBOM
+			var err error
+			s, id, version, err = dec.Decode(buf.Bytes())
+			require.NoError(t, err)
+
+			assert.Equal(t, enc.ID(), id)
+			assert.Equal(t, enc.Version(), version)
+
+			offset := relationshipOffsetPerVersion[enc.Version()]
+
+			assert.Equal(t, len(subject.Relationships)+offset, len(s.Relationships), "mismatched relationship count")
+
+			offset = pkgCountOffsetPerVersion[enc.Version()]
+
+			if !assert.Equal(t, subject.Artifacts.Packages.PackageCount()+offset, s.Artifacts.Packages.PackageCount(), "mismatched package count") {
+				t.Logf("expected: %d", subject.Artifacts.Packages.PackageCount())
+				for _, p := range subject.Artifacts.Packages.Sorted() {
+					t.Logf("  - %s", p.String())
+				}
+				t.Logf("actual: %d", s.Artifacts.Packages.PackageCount())
+				for _, p := range s.Artifacts.Packages.Sorted() {
+					t.Logf("  - %s", p.String())
+				}
+			}
+		})
+	}
 }

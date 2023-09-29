@@ -9,7 +9,11 @@ import (
 
 var _ sbom.FormatEncoder = (*encoder)(nil)
 
-const ID sbom.FormatID = "cyclonedx-xml"
+const ID = cyclonedxutil.XMLFormatID
+
+func SupportedVersions() []string {
+	return cyclonedxutil.SupportedVersions(ID)
+}
 
 type EncoderConfig struct {
 	Version string
@@ -37,6 +41,18 @@ func DefaultFormatEncoder() sbom.FormatEncoder {
 		panic(err)
 	}
 	return enc
+}
+
+func DefaultFormatEncoders() []sbom.FormatEncoder {
+	var encs []sbom.FormatEncoder
+	for _, version := range SupportedVersions() {
+		enc, err := NewFormatEncoder(EncoderConfig{Version: version})
+		if err != nil {
+			panic(err)
+		}
+		encs = append(encs, enc)
+	}
+	return encs
 }
 
 func DefaultEncoderConfig() EncoderConfig {

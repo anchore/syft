@@ -63,19 +63,91 @@ func (o *Output) PostLoad() error {
 	var list encoderList
 
 	// in the future there will be application configuration options that can be used to set the default output format
-	list.attempt(template.ID)(o.OutputTemplate.formatEncoder())
+	list.attempt(template.ID)(o.OutputTemplate.formatEncoders())
 	list.add(syftjson.ID)(syftjson.DefaultFormatEncoder())
 	list.add(table.ID)(table.DefaultFormatEncoder())
 	list.add(text.ID)(text.DefaultFormatEncoder())
 	list.add(github.ID)(github.DefaultFormatEncoder())
-	list.add(cyclonedxxml.ID)(cyclonedxxml.DefaultFormatEncoder())
-	list.add(cyclonedxjson.ID)(cyclonedxjson.DefaultFormatEncoder())
-	list.add(spdxjson.ID)(spdxjson.DefaultFormatEncoder())
-	list.add(spdxtagvalue.ID)(spdxtagvalue.DefaultFormatEncoder())
+	list.attempt(cyclonedxxml.ID)(cycloneDxXMLEncoders())
+	list.attempt(cyclonedxjson.ID)(cycloneDxJSONEncoders())
+	list.attempt(spdxjson.ID)(spdxJSONEncoders())
+	list.attempt(spdxtagvalue.ID)(spdxTagValueEncoders())
 
 	o.encoders = list.encoders
 
 	return list.err
+}
+
+// TODO: when application configuration is made for this format then this should be ported to the options object
+// that is created for that configuration (as done with the template output option)
+func cycloneDxXMLEncoders() ([]sbom.FormatEncoder, error) {
+	var (
+		encs []sbom.FormatEncoder
+		errs error
+	)
+	for _, v := range cyclonedxxml.SupportedVersions() {
+		enc, err := cyclonedxxml.NewFormatEncoder(cyclonedxxml.EncoderConfig{Version: v})
+		if err != nil {
+			errs = multierror.Append(errs, err)
+		} else {
+			encs = append(encs, enc)
+		}
+	}
+	return encs, errs
+}
+
+// TODO: when application configuration is made for this format then this should be ported to the options object
+// that is created for that configuration (as done with the template output option)
+func cycloneDxJSONEncoders() ([]sbom.FormatEncoder, error) {
+	var (
+		encs []sbom.FormatEncoder
+		errs error
+	)
+	for _, v := range cyclonedxjson.SupportedVersions() {
+		enc, err := cyclonedxjson.NewFormatEncoder(cyclonedxjson.EncoderConfig{Version: v})
+		if err != nil {
+			errs = multierror.Append(errs, err)
+		} else {
+			encs = append(encs, enc)
+		}
+	}
+	return encs, errs
+}
+
+// TODO: when application configuration is made for this format then this should be ported to the options object
+// that is created for that configuration (as done with the template output option)
+func spdxJSONEncoders() ([]sbom.FormatEncoder, error) {
+	var (
+		encs []sbom.FormatEncoder
+		errs error
+	)
+	for _, v := range spdxjson.SupportedVersions() {
+		enc, err := spdxjson.NewFormatEncoder(spdxjson.EncoderConfig{Version: v})
+		if err != nil {
+			errs = multierror.Append(errs, err)
+		} else {
+			encs = append(encs, enc)
+		}
+	}
+	return encs, errs
+}
+
+// TODO: when application configuration is made for this format then this should be ported to the options object
+// that is created for that configuration (as done with the template output option)
+func spdxTagValueEncoders() ([]sbom.FormatEncoder, error) {
+	var (
+		encs []sbom.FormatEncoder
+		errs error
+	)
+	for _, v := range spdxtagvalue.SupportedVersions() {
+		enc, err := spdxtagvalue.NewFormatEncoder(spdxtagvalue.EncoderConfig{Version: v})
+		if err != nil {
+			errs = multierror.Append(errs, err)
+		} else {
+			encs = append(encs, enc)
+		}
+	}
+	return encs, errs
 }
 
 func (o Output) SBOMWriter() (sbom.Writer, error) {
@@ -109,26 +181,30 @@ type encoderList struct {
 	err      error
 }
 
-func (l *encoderList) attempt(name sbom.FormatID) func(sbom.FormatEncoder, error) {
-	return func(enc sbom.FormatEncoder, err error) {
-		if err != nil {
-			l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: %w", name, err))
-			return
+func (l *encoderList) attempt(name sbom.FormatID) func([]sbom.FormatEncoder, error) {
+	return func(encs []sbom.FormatEncoder, err error) {
+		for _, enc := range encs {
+			if err != nil {
+				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: %w", name, err))
+				return
+			}
+			if enc == nil {
+				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
+				return
+			}
+			l.encoders = append(l.encoders, enc)
 		}
-		if enc == nil {
-			l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
-			return
-		}
-		l.encoders = append(l.encoders, enc)
 	}
 }
 
-func (l *encoderList) add(name sbom.FormatID) func(sbom.FormatEncoder) {
-	return func(enc sbom.FormatEncoder) {
-		if enc == nil {
-			l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
-			return
+func (l *encoderList) add(name sbom.FormatID) func(...sbom.FormatEncoder) {
+	return func(encs ...sbom.FormatEncoder) {
+		for _, enc := range encs {
+			if enc == nil {
+				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
+				return
+			}
+			l.encoders = append(l.encoders, enc)
 		}
-		l.encoders = append(l.encoders, enc)
 	}
 }

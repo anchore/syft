@@ -7,7 +7,11 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const ID sbom.FormatID = "cyclonedx-json"
+const ID = cyclonedxutil.JSONFormatID
+
+func SupportedVersions() []string {
+	return cyclonedxutil.SupportedVersions(ID)
+}
 
 type EncoderConfig struct {
 	Version string
@@ -35,6 +39,18 @@ func DefaultFormatEncoder() sbom.FormatEncoder {
 		panic(err)
 	}
 	return enc
+}
+
+func DefaultFormatEncoders() []sbom.FormatEncoder {
+	var encs []sbom.FormatEncoder
+	for _, version := range SupportedVersions() {
+		enc, err := NewFormatEncoder(EncoderConfig{Version: version})
+		if err != nil {
+			panic(err)
+		}
+		encs = append(encs, enc)
+	}
+	return encs
 }
 
 func DefaultEncoderConfig() EncoderConfig {
