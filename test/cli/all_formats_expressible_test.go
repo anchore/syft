@@ -20,9 +20,10 @@ func TestAllFormatsExpressible(t *testing.T) {
 		},
 		assertSuccessfulReturnCode,
 	}
-	formatNames := format.AllIDs()
-	require.NotEmpty(t, formatNames)
-	for _, o := range formatNames {
+	encs := format.NewEncoderCollection(format.DefaultEncoders()...)
+	formatIDs := encs.IDs()
+	require.NotEmpty(t, formatIDs)
+	for _, o := range formatIDs {
 		t.Run(fmt.Sprintf("format:%s", o), func(t *testing.T) {
 			args := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", string(o)}
 			if o == template.ID {
