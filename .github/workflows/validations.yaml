@@ -11,6 +11,7 @@ permissions:
     contents: read
 
 jobs:
+
   Static-Analysis:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Static analysis"
@@ -20,6 +21,8 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run static analysis
         run: make static-analysis
@@ -34,6 +37,8 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Restore Java test-fixture cache
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
@@ -78,6 +83,8 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Validate syft output against the CycloneDX schema
         run: make validate-cyclonedx-schema
@@ -101,13 +108,9 @@ jobs:
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
         with:
-          # why have another build cache key? We don't want unit/integration/etc test build caches to replace
-          # the snapshot build cache, which includes builds for all OSs and architectures. As long as this key is
-          # unique from the build-cache-key-prefix in other CI jobs, we should be fine.
-          #
-          # note: ideally this value should match what is used in release (just to help with build times).
-          build-cache-key-prefix: "snapshot"
           bootstrap-apt-packages: ""
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build snapshot artifacts
         run: make snapshot
@@ -129,10 +132,16 @@ jobs:
     steps:
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 #v4.1.0
 
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Download snapshot build
         uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
         with:
           path: snapshot
+          fail-on-cache-miss: true
           key: snapshot-build-${{ github.run_id }}
 
       - name: Run comparison tests (Linux)
@@ -165,10 +174,21 @@ jobs:
     steps:
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 #v4.1.0
 
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          bootstrap-apt-packages: ""
+          compute-fingerprints: "false"
+          go-dependencies: false
+          go-version: ""
+
       - name: Download snapshot build
         uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
         with:
           path: snapshot
+          fail-on-cache-miss: true
           key: snapshot-build-${{ github.run_id }}
 
       - name: Restore docker image cache for compare testing
@@ -195,6 +215,8 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Restore CLI test-fixture cache
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
@@ -206,6 +228,7 @@ jobs:
         uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
         with:
           path: snapshot
+          fail-on-cache-miss: true
           key: snapshot-build-${{ github.run_id }}
 
       - name: Run CLI Tests (Linux)
