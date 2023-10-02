@@ -30,7 +30,7 @@ func DefaultOutput() MultiOutput {
 
 func (o *MultiOutput) AddFlags(flags clio.FlagSet) {
 	flags.StringArrayVarP(&o.Outputs, "output", "o",
-		fmt.Sprintf("report output format, options=%v", formats.AllIDs()))
+		fmt.Sprintf("report output to target (<format>=<file>), formats=%v", formats.AllIDs()))
 
 	flags.StringVarP(&o.OutputTemplatePath, "template", "t",
 		"specify the path to a Go template file")
