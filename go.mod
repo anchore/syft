@@ -73,7 +73,7 @@ require (
 	golang.org/x/net v0.15.0
 	golang.org/x/term v0.12.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.25.0
+	modernc.org/sqlite v1.26.0
 )
 
 require github.com/sanity-io/litter v1.5.5
