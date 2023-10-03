@@ -31,7 +31,7 @@ func DefaultOutput() MultiOutput {
 
 func (o *MultiOutput) AddFlags(flags clio.FlagSet) {
 	flags.StringArrayVarP(&o.Outputs, "output", "o",
-		fmt.Sprintf("report output to target (<format>=<file>), formats=%v", formats.AllIDs()))
+		fmt.Sprintf("report output format (<format>=<file> to output to a file), formats=%v", formats.AllIDs()))
 
 	flags.StringVarP(&o.OutputTemplatePath, "template", "t",
 		"specify the path to a Go template file")
@@ -77,7 +77,7 @@ var _ interface {
 func (o *OutputFile) AddFlags(flags clio.FlagSet) {
 	flags.StringVarP(&o.File, "file", "",
 		"file to write the default report output to (default is STDOUT)")
-	
+
 	if pfp, ok := flags.(fangs.PFlagSetProvider); ok {
 		flagSet := pfp.PFlagSet()
 		flagSet.Lookup("file").Deprecated = "use: output"
