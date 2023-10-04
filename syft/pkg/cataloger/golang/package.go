@@ -1,14 +1,12 @@
 package golang
 
 import (
-	"fmt"
 	"regexp"
 	"runtime/debug"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -45,14 +43,6 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debu
 	p.SetID()
 
 	return p
-}
-
-func buildCompilerCPE(goVersion string) (cpe.CPE, error) {
-	cpe, err := cpe.New(fmt.Sprintf("pkg:golang/stdlib@%s", goVersion))
-	if err != nil {
-
-	}
-	return cpe, nil
 }
 
 func packageURL(moduleName, moduleVersion string) string {

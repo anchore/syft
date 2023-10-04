@@ -16,6 +16,7 @@ import (
 	"golang.org/x/mod/module"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
@@ -81,11 +82,11 @@ func newGoStdLib(version string) pkg.Package {
 	cpes := make([]cpe.CPE, 0)
 	compilerCPE, err := cpe.New(fmt.Sprintf("cpe:2.3:a:golang:go:%s:-:*:*:*:*:*:*", version))
 	if err != nil {
-		///
+		log.Warn("could not build cpe for given compiler version: %s", version)
 	} else {
 		cpes = append(cpes, compilerCPE)
 	}
-	pkg := pkg.Package{
+	goCompilerPkg := pkg.Package{
 		Name:         "Golang Standard Library",
 		Version:      version,
 		PURL:         packageURL("stdlib", version),
@@ -96,7 +97,7 @@ func newGoStdLib(version string) pkg.Package {
 		Metadata:     pkg.GolangBinMetadata{},
 	}
 
-	return pkg
+	return goCompilerPkg
 }
 
 func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location) pkg.Package {
