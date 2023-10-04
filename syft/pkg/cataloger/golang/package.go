@@ -23,20 +23,11 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debu
 		log.Tracef("error getting licenses for golang package: %s %v", dep.Path, err)
 	}
 
-	cpes := make([]cpe.CPE, 0)
-	compilerCpe, err := buildCompilerCPE(goVersion)
-	if err != nil {
-		log.Warnf("unable to build CPE for golang compiler for package %s", dep.Path)
-	} else {
-		cpes = append(cpes, compilerCpe)
-	}
-
 	p := pkg.Package{
 		Name:         dep.Path,
 		Version:      dep.Version,
 		Licenses:     pkg.NewLicenseSet(licenses...),
 		PURL:         packageURL(dep.Path, dep.Version),
-		CPEs:         cpes,
 		Language:     pkg.Go,
 		Type:         pkg.GoModulePkg,
 		Locations:    file.NewLocationSet(locations...),
