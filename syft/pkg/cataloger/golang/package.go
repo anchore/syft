@@ -1,12 +1,14 @@
 package golang
 
 import (
+	"fmt"
 	"regexp"
 	"runtime/debug"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -21,11 +23,20 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debu
 		log.Tracef("error getting licenses for golang package: %s %v", dep.Path, err)
 	}
 
+	cpes := make([]cpe.CPE, 0)
+	compilerCpe, err := buildCompilerCPE(goVersion)
+	if err != nil {
+		log.Warnf("unable to build CPE for golang compiler for package %s", dep.Path)
+	} else {
+		cpes = append(cpes, compilerCpe)
+	}
+
 	p := pkg.Package{
 		Name:         dep.Path,
 		Version:      dep.Version,
 		Licenses:     pkg.NewLicenseSet(licenses...),
 		PURL:         packageURL(dep.Path, dep.Version),
+		CPEs:         cpes,
 		Language:     pkg.Go,
 		Type:         pkg.GoModulePkg,
 		Locations:    file.NewLocationSet(locations...),
@@ -43,6 +54,14 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debu
 	p.SetID()
 
 	return p
+}
+
+func buildCompilerCPE(goVersion string) (cpe.CPE, error) {
+	cpe, err := cpe.New(fmt.Sprintf("pkg:golang/stdlib@%s", goVersion))
+	if err != nil {
+
+	}
+	return cpe, nil
 }
 
 func packageURL(moduleName, moduleVersion string) string {

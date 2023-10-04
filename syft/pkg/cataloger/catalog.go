@@ -92,7 +92,6 @@ func runCataloger(cataloger pkg.Cataloger, resolver file.Resolver) (catalogerRes
 			p.Language = pkg.LanguageFromPURL(p.PURL)
 		}
 
-		// create file-to-package relationships for files owned by the package
 		owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
 		if err != nil {
 			log.WithFields("cataloger", cataloger.Name(), "package", p.Name, "error", err).Warnf("unable to create any package-file relationships")
