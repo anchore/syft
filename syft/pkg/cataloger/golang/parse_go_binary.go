@@ -68,7 +68,7 @@ func (c *goBinaryCataloger) parseGoBinary(resolver file.Resolver, _ *generic.Env
 		pkgs = append(pkgs, goPkgs...)
 	}
 
-	for key, _ := range compilerVersions {
+	for key := range compilerVersions {
 		pkg := newGoStdLib(key)
 		pkg.SetID()
 		pkgs = append(pkgs, pkg)
