@@ -18,7 +18,7 @@ func TestGolangCompilerDetection(t *testing.T) {
 		{
 			name:              "syft can detect a single golang compiler given the golang base image",
 			image:             "image-golang-compiler",
-			expectedCompilers: []string{"1.18.10"},
+			expectedCompilers: []string{"go1.18.10"},
 			expectedCPE:       []cpe.CPE{cpe.Must("cpe:2.3:a:golang:go:1.18.10:-:*:*:*:*:*:*")},
 			expectedPURL:      []string{"pkg:golang/stdlib@1.18.10"},
 		},

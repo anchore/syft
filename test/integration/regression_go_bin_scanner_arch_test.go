@@ -10,9 +10,9 @@ import (
 
 func TestRegressionGoArchDiscovery(t *testing.T) {
 	const (
-		expectedELFPkg   = 4
-		expectedWINPkg   = 4
-		expectedMACOSPkg = 4
+		expectedELFPkg   = 5
+		expectedWINPkg   = 5
+		expectedMACOSPkg = 5
 	)
 	// This is a regression test to make sure the way we detect go binary packages
 	// stays consistent and reproducible as the tool chain evolves
