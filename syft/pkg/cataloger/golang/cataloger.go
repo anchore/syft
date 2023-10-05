@@ -54,24 +54,20 @@ func (p *progressingCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, [
 	defer p.progress.SetCompleted()
 	pkgs, relationships, err := p.cataloger.Catalog(resolver)
 	goCompilerPkgs := []pkg.Package{}
-	locationMap := map[uint64]interface{}{}
+	totalLocations := file.NewLocationSet()
 	for _, goPkg := range pkgs {
-		locationHash, err := goPkg.Locations.Hash()
-		if err != nil {
-			continue
-		}
-
-		// we only need one synthetic compiler package per unique location set
-		if _, ok := locationMap[locationHash]; !ok {
-			if mValue, ok := goPkg.Metadata.(pkg.GolangBinMetadata); ok {
-				locationMap[locationHash] = true
-				stdLibPkg := newGoStdLib(mValue.GoCompiledVersion, goPkg.Locations)
-				if stdLibPkg != nil {
-					goCompilerPkgs = append(goCompilerPkgs, *stdLibPkg)
+		// go binary packages should only contain a single location
+		for _, location := range goPkg.Locations.ToSlice() {
+			if !totalLocations.Contains(location) {
+				if mValue, ok := goPkg.Metadata.(pkg.GolangBinMetadata); ok {
+					stdLibPkg := newGoStdLib(mValue.GoCompiledVersion, goPkg.Locations)
+					if stdLibPkg != nil {
+						goCompilerPkgs = append(goCompilerPkgs, *stdLibPkg)
+					}
+					totalLocations.Add(location)
 				}
 			}
 		}
-
 	}
 	pkgs = append(pkgs, goCompilerPkgs...)
 	return pkgs, relationships, err
