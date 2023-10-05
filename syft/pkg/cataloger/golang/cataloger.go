@@ -4,8 +4,13 @@ Package golang provides a concrete Cataloger implementation for go.mod files.
 package golang
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -47,5 +52,45 @@ func (p *progressingCataloger) Name() string {
 
 func (p *progressingCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	defer p.progress.SetCompleted()
-	return p.cataloger.Catalog(resolver)
+	pkgs, relationships, err := p.cataloger.Catalog(resolver)
+	goCompilerPkgs := []pkg.Package{}
+	for _, p := range pkgs {
+		if mValue, ok := p.Metadata.(pkg.GolangBinMetadata); ok {
+			stdLibPkg := newGoStdLib(mValue.GoCompiledVersion, p.Locations)
+			if stdLibPkg != nil {
+				goCompilerPkgs = append(goCompilerPkgs, *stdLibPkg)
+			}
+		}
+	}
+	pkgs = append(pkgs, goCompilerPkgs...)
+	return pkgs, relationships, err
+}
+func newGoStdLib(version string, location file.LocationSet) *pkg.Package {
+	// for matching we need to strip the go prefix
+	// this can be preserved for metadata purposes
+	matchVersion := strings.TrimPrefix(version, "go")
+	cpes := make([]cpe.CPE, 0)
+	compilerCPE, err := cpe.New(fmt.Sprintf("cpe:2.3:a:golang:go:%s:-:*:*:*:*:*:*", matchVersion))
+	if err != nil {
+		log.Warn("could not build cpe for given compiler version: %s", version)
+		return nil
+	}
+
+	cpes = append(cpes, compilerCPE)
+	goCompilerPkg := &pkg.Package{
+		Name:         "Golang Standard Library",
+		Version:      version,
+		PURL:         packageURL("stdlib", matchVersion),
+		CPEs:         cpes,
+		Locations:    location,
+		Language:     pkg.Go,
+		Type:         pkg.GoModulePkg,
+		MetadataType: pkg.GolangBinMetadataType,
+		Metadata: pkg.GolangBinMetadata{
+			GoCompiledVersion: version,
+		},
+	}
+	goCompilerPkg.SetID()
+
+	return goCompilerPkg
 }

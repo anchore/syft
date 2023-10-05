@@ -16,9 +16,7 @@ import (
 	"golang.org/x/mod/module"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -61,43 +59,11 @@ func (c *goBinaryCataloger) parseGoBinary(resolver file.Resolver, _ *generic.Env
 	mods := scanFile(unionReader, reader.RealPath)
 	internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	compilerVersions := make(map[string]interface{})
-
 	for _, mod := range mods {
-		goPkgs, goCompilerVersion := c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch)
-		compilerVersions[goCompilerVersion] = struct{}{}
-		pkgs = append(pkgs, goPkgs...)
+		pkgs = append(pkgs, c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch)...)
 	}
 
-	for key := range compilerVersions {
-		pkg := newGoStdLib(key)
-		pkg.SetID()
-		pkgs = append(pkgs, pkg)
-	}
 	return pkgs, nil, nil
-}
-
-func newGoStdLib(version string) pkg.Package {
-	version = strings.TrimPrefix(version, "go")
-	cpes := make([]cpe.CPE, 0)
-	compilerCPE, err := cpe.New(fmt.Sprintf("cpe:2.3:a:golang:go:%s:-:*:*:*:*:*:*", version))
-	if err != nil {
-		log.Warn("could not build cpe for given compiler version: %s", version)
-	} else {
-		cpes = append(cpes, compilerCPE)
-	}
-	goCompilerPkg := pkg.Package{
-		Name:         "Golang Standard Library",
-		Version:      version,
-		PURL:         packageURL("stdlib", version),
-		CPEs:         cpes,
-		Language:     pkg.Go,
-		Type:         pkg.GoModulePkg,
-		MetadataType: pkg.GolangBinMetadataType,
-		Metadata:     pkg.GolangBinMetadata{},
-	}
-
-	return goCompilerPkg
 }
 
 func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location) pkg.Package {
@@ -254,10 +220,10 @@ func createMainModuleFromPath(path string) (mod debug.Module) {
 	return
 }
 
-func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string) (pkgs []pkg.Package, goCompilerVersion string) {
-	pkgs = make([]pkg.Package, 0)
+func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string) []pkg.Package {
+	var pkgs []pkg.Package
 	if mod == nil {
-		return pkgs, ""
+		return pkgs
 	}
 
 	var empty debug.Module
@@ -285,11 +251,11 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 	}
 
 	if mod.Main == empty {
-		return pkgs, ""
+		return pkgs
 	}
 
 	main := c.makeGoMainPackage(resolver, mod, arch, location)
 	pkgs = append(pkgs, main)
 
-	return pkgs, mod.GoVersion
+	return pkgs
 }
