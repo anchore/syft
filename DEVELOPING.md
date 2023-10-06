@@ -171,8 +171,9 @@ From a high level catalogers have the following properties:
 #### Building a new Cataloger
 
 Catalogers must fulfill the [`pkg.Cataloger` interface](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger.go) in order to add packages to the SBOM.
-All catalogers that are implemented in syft should be added to the [global list of catalogers](https://github.com/anchore/syft/blob/9995950c70e849f9921919faffbfcf46401f71f3/syft/pkg/cataloger/cataloger.go#L39-L89), 
-one list for each kind of scan syft supports --when an author has finished writing a new cataloger this is the spot to plug in the new catalog constructor.
+All catalogers should be added to:
+- the [global list of catalogers](https://github.com/anchore/syft/blob/9995950c70e849f9921919faffbfcf46401f71f3/syft/pkg/cataloger/cataloger.go#L92-L125)
+- at least one source-specific list, today the two lists are [directory catalogers and image catalogers](https://github.com/anchore/syft/blob/9995950c70e849f9921919faffbfcf46401f71f3/syft/pkg/cataloger/cataloger.go#L39-L89)
 
 For reference, catalogers are [invoked within syft](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/catalog.go#L41-L100) one after the other, and can be invoked in parallel.
 
@@ -190,7 +191,7 @@ Finally, here is an example of where the package construction is done within the
 - [Calling the APK package constructor from the parser function](https://github.com/anchore/syft/blob/v0.70.0/syft/pkg/cataloger/apkdb/parse_apk_db.go#L106)
 - [The APK package constructor itself](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/package.go#L12-L27)
 
-Interested in building a new cataloger? Checkout the [list of issues with the `new-cataloger` label](https://github.com/anchore/syft/issues?q=is%3Aopen+is%3Aissue+label%3Anew-cataloger)!
+Interested in building a new cataloger? Checkout the [list of issues with the `new-cataloger` label](https://github.com/anchore/syft/issues?q=is%3Aopen+is%3Aissue+label%3Anew-cataloger+no%3Aassignee)!
 If you have questions about implementing a cataloger feel free to file an issue or reach out to us [on slack](https://anchore.com/slack)!
 
 
