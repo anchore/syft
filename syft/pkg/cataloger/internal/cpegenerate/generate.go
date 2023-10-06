@@ -184,6 +184,9 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.union(candidateVendorsForAPK(p))
 	case pkg.NpmPackage:
 		vendors.union(candidateVendorsForJavascript(p))
+	case pkg.WordpressPluginMetadataType:
+		vendors.clear()
+		vendors.union(candidateVendorsForWordpressPlugin(p))
 	}
 
 	// We should no longer be generating vendor candidates with these values ["" and "*"]
@@ -241,6 +244,11 @@ func candidateProducts(p pkg.Package) []string {
 
 	if _, hasAPKMetadata := p.Metadata.(pkg.ApkDBEntry); hasAPKMetadata {
 		products.union(candidateProductsForAPK(p))
+	}
+
+	if p.MetadataType == pkg.WordpressPluginMetadataType {
+		products.clear()
+		products.union(candidateProductsForWordpressPlugin(p))
 	}
 
 	// it is never OK to have candidates with these values ["" and "*"] (since CPEs will match any other value)
