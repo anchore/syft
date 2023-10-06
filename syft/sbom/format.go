@@ -21,6 +21,9 @@ type FormatEncoder interface {
 }
 
 type FormatDecoder interface {
+	// TODO comment: should this be Decode(by []byte) (*SBOM, error)
+	// TODO comment: missing explanation of expectations for usage and return values
 	Decode(by []byte) (*SBOM, FormatID, string, error)
+	// TODO comment: can we get rid of this?
 	Identify(by []byte) (FormatID, string)
 }
