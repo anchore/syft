@@ -25,7 +25,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.8.0
 	github.com/dave/jennifer v1.7.0
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
-	github.com/docker/distribution v2.8.2+incompatible
+	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker v24.0.6+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/facebookincubator/nvdtools v0.1.5
@@ -76,7 +76,10 @@ require (
 	modernc.org/sqlite v1.26.0
 )
 
-require github.com/sanity-io/litter v1.5.5
+require (
+	github.com/distribution/reference v0.5.0
+	github.com/sanity-io/litter v1.5.5
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
