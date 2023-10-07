@@ -50,21 +50,21 @@ tools:
 
   - name: gosimports
     version:
-      want: v0.3.2
+      want: v0.3.8
     method: github-release
     with:
       repo: rinchsan/gosimports
 
   - name: chronicle
     version:
-      want: v0.7.0
+      want: v0.8.0
     method: github-release
     with:
       repo: anchore/chronicle
 
   - name: bouncer
     version:
-      want: v0.3.0
+      want: v0.4.0
     method: github-release
     with:
       repo: wagoodman/go-bouncer
@@ -90,7 +90,7 @@ tools:
 
   - name: gh
     version:
-      want: v2.35.0
+      want: v2.36.0
     method: github-release
     with:
       repo: cli/cli
