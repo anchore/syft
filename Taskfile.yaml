@@ -103,6 +103,12 @@ tasks:
     cmd: "{{ .TOOL_DIR }}/binny list"
     silent: true
 
+  list-tool-updates:
+    desc: List all tools that are not up to date relative to the binny config
+    deps: [binny]
+    cmd: "{{ .TOOL_DIR }}/binny list --updates"
+    silent: true
+
   tmpdir:
     silent: true
     generates:

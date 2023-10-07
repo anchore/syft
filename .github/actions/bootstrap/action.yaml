@@ -37,7 +37,7 @@ runs:
       uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
       with:
         path: ${{ github.workspace }}/.tool
-        key: ${{ inputs.cache-key-prefix }}-${{ runner.os }}-tool-${{ hashFiles('Makefile') }}
+        key: ${{ inputs.cache-key-prefix }}-${{ runner.os }}-tool-${{ hashFiles('.binny.yaml') }}
 
     - name: Install project tools
       shell: bash
