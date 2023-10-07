@@ -34,9 +34,6 @@ type Output struct {
 	Outputs              []string `yaml:"output" json:"output" mapstructure:"output"` // -o, the format to use for output
 	OutputFile           `yaml:",inline" json:"" mapstructure:",squash"`
 	OutputTemplate       `yaml:"template" json:"template" mapstructure:"template"`
-
-	// populated after configuration is loaded
-	encoders []sbom.FormatEncoder
 }
 
 func DefaultOutput() Output {
@@ -58,7 +55,28 @@ func (o *Output) AddFlags(flags clio.FlagSet) {
 		fmt.Sprintf("report output format, options=%v", names))
 }
 
-func (o *Output) PostLoad() error {
+func (o Output) SBOMWriter() (sbom.Writer, error) {
+	names := o.OutputNameSet()
+
+	if len(o.Outputs) > 1 && !o.AllowMultipleOutputs {
+		return nil, fmt.Errorf("only one output format is allowed (given %d: %s)", len(o.Outputs), names)
+	}
+
+	usesTemplateOutput := names.Has(string(template.ID))
+
+	if usesTemplateOutput && o.OutputTemplate.Path == "" {
+		return nil, fmt.Errorf(`must specify path to template file when using "template" output format`)
+	}
+
+	encoders, err := o.createEncoders()
+	if err != nil {
+		return nil, err
+	}
+
+	return makeSBOMWriter(o.Outputs, o.File, encoders)
+}
+
+func (o *Output) createEncoders() ([]sbom.FormatEncoder, error) {
 	// setup all encoders based on the configuration
 	var list encoderList
 
@@ -73,9 +91,50 @@ func (o *Output) PostLoad() error {
 	list.attempt(spdxjson.ID)(spdxJSONEncoders())
 	list.attempt(spdxtagvalue.ID)(spdxTagValueEncoders())
 
-	o.encoders = list.encoders
+	return list.encoders, list.err
+}
 
-	return list.err
+func (o Output) OutputNameSet() *strset.Set {
+	names := strset.New()
+	for _, output := range o.Outputs {
+		fields := strings.Split(output, "=")
+		names.Add(fields[0])
+	}
+
+	return names
+}
+
+type encoderList struct {
+	encoders []sbom.FormatEncoder
+	err      error
+}
+
+func (l *encoderList) attempt(name sbom.FormatID) func([]sbom.FormatEncoder, error) {
+	return func(encs []sbom.FormatEncoder, err error) {
+		for _, enc := range encs {
+			if err != nil {
+				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: %w", name, err))
+				return
+			}
+			if enc == nil {
+				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
+				return
+			}
+			l.encoders = append(l.encoders, enc)
+		}
+	}
+}
+
+func (l *encoderList) add(name sbom.FormatID) func(...sbom.FormatEncoder) {
+	return func(encs ...sbom.FormatEncoder) {
+		for _, enc := range encs {
+			if enc == nil {
+				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
+				return
+			}
+			l.encoders = append(l.encoders, enc)
+		}
+	}
 }
 
 // TODO: when application configuration is made for this format then this should be ported to the options object
@@ -148,63 +207,4 @@ func spdxTagValueEncoders() ([]sbom.FormatEncoder, error) {
 		}
 	}
 	return encs, errs
-}
-
-func (o Output) SBOMWriter() (sbom.Writer, error) {
-	names := o.OutputNameSet()
-
-	if len(o.Outputs) > 1 && !o.AllowMultipleOutputs {
-		return nil, fmt.Errorf("only one output format is allowed (given %d: %s)", len(o.Outputs), names)
-	}
-
-	usesTemplateOutput := names.Has(string(template.ID))
-
-	if usesTemplateOutput && o.OutputTemplate.Path == "" {
-		return nil, fmt.Errorf(`must specify path to template file when using "template" output format`)
-	}
-
-	return makeSBOMWriter(o.Outputs, o.File, o.encoders)
-}
-
-func (o Output) OutputNameSet() *strset.Set {
-	names := strset.New()
-	for _, output := range o.Outputs {
-		fields := strings.Split(output, "=")
-		names.Add(fields[0])
-	}
-
-	return names
-}
-
-type encoderList struct {
-	encoders []sbom.FormatEncoder
-	err      error
-}
-
-func (l *encoderList) attempt(name sbom.FormatID) func([]sbom.FormatEncoder, error) {
-	return func(encs []sbom.FormatEncoder, err error) {
-		for _, enc := range encs {
-			if err != nil {
-				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: %w", name, err))
-				return
-			}
-			if enc == nil {
-				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
-				return
-			}
-			l.encoders = append(l.encoders, enc)
-		}
-	}
-}
-
-func (l *encoderList) add(name sbom.FormatID) func(...sbom.FormatEncoder) {
-	return func(encs ...sbom.FormatEncoder) {
-		for _, enc := range encs {
-			if enc == nil {
-				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
-				return
-			}
-			l.encoders = append(l.encoders, enc)
-		}
-	}
 }
