@@ -97,7 +97,7 @@ func toCycloneDXAlgorithm(algorithm string) cyclonedx.HashAlgorithm {
 		"sha256": cyclonedx.HashAlgorithm("SHA-256"),
 	}
 
-	return validMap[algorithm]
+	return validMap[strings.ToLower(algorithm)]
 }
 
 func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
