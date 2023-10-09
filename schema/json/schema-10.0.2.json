@@ -1461,12 +1461,6 @@
         },
         "url": {
           "type": "string"
-        },
-        "licenses": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         }
       },
       "type": "object",
@@ -1475,8 +1469,6 @@
         "groupId",
         "artifactId",
         "version",
-        "name",
-        "licenses"
         "name"
       ]
     },
