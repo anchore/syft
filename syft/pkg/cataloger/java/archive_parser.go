@@ -441,7 +441,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 
 // newPackageFromMavenData processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
-func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
+func newPackageFromMavenData(pomProperties pkg.PomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
 	groupID := ""
@@ -462,14 +462,17 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *parsed
 		vPathSuffix += ":" + pomProperties.GroupID + ":" + pomProperties.ArtifactID
 	}
 	virtualPath := location.AccessPath() + vPathSuffix
-	var pkgPomProject pkg.PomProject
-	if pomProject != nil {
-		pkgPomProject = pomProject.PomProject
+	var pkgPomProject *pkg.PomProject
+	if parsedPomProject != nil {
+		// check for empty since we assign value earlier
+		if (pkg.PomProject{}) != parsedPomProject.PomProject {
+			pkgPomProject = &parsedPomProject.PomProject
+		}
 	}
 
 	licenses := make([]pkg.License, 0)
-	if pomProject != nil {
-		for _, license := range pomProject.Licenses {
+	if parsedPomProject != nil {
+		for _, license := range parsedPomProject.Licenses {
 			licenses = append(licenses, pkg.NewLicense(license))
 		}
 	}
@@ -487,7 +490,7 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *parsed
 		Metadata: pkg.JavaMetadata{
 			VirtualPath:   virtualPath,
 			PomProperties: &pomProperties,
-			PomProject:    &pkgPomProject,
+			PomProject:    pkgPomProject,
 			Parent:        parentPkg,
 		},
 	}

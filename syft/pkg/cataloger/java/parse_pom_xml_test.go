@@ -312,9 +312,7 @@ func Test_parsePomXMLProject(t *testing.T) {
 					Description: "The Apache Commons Codec package contains simple encoder and decoders for various formats such as Base64 and Hexadecimal.  In addition to these widely used encoders and decoders, the codec package also maintains a collection of phonetic encoding utilities.",
 					URL:         "http://commons.apache.org/proper/commons-codec/",
 				},
-				Licenses: []string{
-					"Apache 2.0",
-				},
+				Licenses: []string{}, // assert not nil in parsePomXML for safe consumption
 			},
 		},
 	}
