@@ -177,8 +177,12 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		return nil, err
 	}
 
+	licenses := make([]pkg.License, 0)
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
-	licenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
+	locationLicenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
+	if locationLicenses != nil {
+		licenses = append(licenses, locationLicenses...)
+	}
 	/*
 		We should name and version from, in this order:
 		1. pom.properties if we find exactly 1
@@ -193,8 +197,8 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	if version == "" {
 		version = selectVersion(manifest, j.fileInfo)
 	}
-	if len(pomLicenses) > 0 && licenses == nil {
-		licenses = pkg.NewLicensesFromLocation(j.location, pomLicenses...)
+	if len(pomLicenses) > 0 {
+		licenses = append(licenses, pkg.NewLicensesFromLocation(j.location, pomLicenses...)...)
 	}
 
 	return &pkg.Package{
@@ -216,11 +220,16 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	}, nil
 }
 
-func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (string, string, []string) {
+type parsedPomProject struct {
+	pkg.PomProject `mapstructure:",squash"`
+	Licenses       []string `json:"licenses"`
+}
+
+func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, version string, licenses []string) {
 	pomPropertyMatches := j.fileManifest.GlobMatch(pomPropertiesGlob)
 	pomMatches := j.fileManifest.GlobMatch(pomXMLGlob)
 	var pomPropertiesObject pkg.PomProperties
-	var pomProjectObject pkg.PomProject
+	var pomProjectObject parsedPomProject
 	if len(pomPropertyMatches) == 1 || len(pomMatches) == 1 {
 		// we have exactly 1 pom.properties or pom.xml in the archive; assume it represents the
 		// package we're scanning if the names seem like a plausible match
@@ -236,11 +245,11 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (string, str
 			}
 		}
 	}
-	name := pomPropertiesObject.ArtifactID
+	name = pomPropertiesObject.ArtifactID
 	if name == "" {
 		name = pomProjectObject.ArtifactID
 	}
-	version := pomPropertiesObject.Version
+	version = pomPropertiesObject.Version
 	if version == "" {
 		version = pomProjectObject.Version
 	}
@@ -271,7 +280,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 	}
 
 	for parentPath, propertiesObj := range properties {
-		var pomProject *pkg.PomProject
+		var pomProject *parsedPomProject
 		if proj, exists := projects[parentPath]; exists {
 			pomProject = &proj
 		}
@@ -402,13 +411,13 @@ func pomPropertiesByParentPath(archivePath string, location file.Location, extra
 	return propertiesByParentPath, nil
 }
 
-func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]pkg.PomProject, error) {
+func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]parsedPomProject, error) {
 	contentsOfMavenProjectFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
 
-	projectByParentPath := make(map[string]pkg.PomProject)
+	projectByParentPath := make(map[string]parsedPomProject)
 	for filePath, fileContents := range contentsOfMavenProjectFiles {
 		pomProject, err := parsePomXMLProject(filePath, strings.NewReader(fileContents))
 		if err != nil {
@@ -432,7 +441,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 
 // newPackageFromMavenData processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
-func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.PomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
+func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
 	groupID := ""
@@ -453,21 +462,32 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 		vPathSuffix += ":" + pomProperties.GroupID + ":" + pomProperties.ArtifactID
 	}
 	virtualPath := location.AccessPath() + vPathSuffix
+	var pkgPomProject pkg.PomProject
+	if pomProject != nil {
+		pkgPomProject = pomProject.PomProject
+	}
 
-	// discovered props = new package
+	licenses := make([]pkg.License, 0)
+	if pomProject != nil {
+		for _, license := range pomProject.Licenses {
+			licenses = append(licenses, pkg.NewLicense(license))
+		}
+	}
+
 	p := pkg.Package{
 		Name:    pomProperties.ArtifactID,
 		Version: pomProperties.Version,
 		Locations: file.NewLocationSet(
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
+		Licenses:     pkg.NewLicenseSet(licenses...),
 		Language:     pkg.Java,
 		Type:         pomProperties.PkgTypeIndicated(),
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
 			VirtualPath:   virtualPath,
 			PomProperties: &pomProperties,
-			PomProject:    pomProject,
+			PomProject:    &pkgPomProject,
 			Parent:        parentPkg,
 		},
 	}

@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -83,11 +82,13 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 
 func TestParseJar(t *testing.T) {
 	tests := []struct {
+		name         string
 		fixture      string
 		expected     map[string]pkg.Package
 		ignoreExtras []string
 	}{
 		{
+			name:    "example-jenkins-plugin",
 			fixture: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 			ignoreExtras: []string{
 				"Plugin-Version", // has dynamic date
@@ -146,6 +147,7 @@ func TestParseJar(t *testing.T) {
 			},
 		},
 		{
+			name:    "example-java-app-gradle",
 			fixture: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 			expected: map[string]pkg.Package{
 				"example-java-app-gradle": {
@@ -172,6 +174,7 @@ func TestParseJar(t *testing.T) {
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
+					Licenses:     pkg.NewLicenseSet(pkg.NewLicense("Apache 2")),
 					Metadata: pkg.JavaMetadata{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path with a colon separator between group name and artifact name
@@ -190,13 +193,13 @@ func TestParseJar(t *testing.T) {
 							Name:        "Joda time",
 							Description: "Date and time library to replace JDK date handling",
 							URL:         "http://joda-time.sourceforge.net",
-							Licenses:    []string{"Apache 2"},
 						},
 					},
 				},
 			},
 		},
 		{
+			name:    "example-java-app-maven",
 			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 			ignoreExtras: []string{
 				"Build-Jdk", // can't guarantee the JDK used at build time
@@ -235,6 +238,7 @@ func TestParseJar(t *testing.T) {
 					Name:         "joda-time",
 					Version:      "2.9.2",
 					PURL:         "pkg:maven/joda-time/joda-time@2.9.2",
+					Licenses:     pkg.NewLicenseSet(pkg.NewLicense("Apache 2")),
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -256,7 +260,6 @@ func TestParseJar(t *testing.T) {
 							Name:        "Joda-Time",
 							Description: "Date and time library to replace JDK date handling",
 							URL:         "http://www.joda.org/joda-time/",
-							Licenses:    []string{"Apache 2"},
 						},
 					},
 				},
@@ -265,7 +268,7 @@ func TestParseJar(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(path.Base(test.fixture), func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 
 			generateJavaBuildFixture(t, test.fixture)
 
@@ -620,7 +623,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 	tests := []struct {
 		name            string
 		props           pkg.PomProperties
-		project         *pkg.PomProject
+		project         *parsedPomProject
 		parent          *pkg.Package
 		expectedParent  pkg.Package
 		expectedPackage *pkg.Package
@@ -689,18 +692,20 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				ArtifactID: "some-artifact-id",
 				Version:    "1.0",
 			},
-			project: &pkg.PomProject{
-				Parent: &pkg.PomParent{
-					GroupID:    "some-parent-group-id",
-					ArtifactID: "some-parent-artifact-id",
-					Version:    "1.0-parent",
+			project: &parsedPomProject{
+				PomProject: pkg.PomProject{
+					Parent: &pkg.PomParent{
+						GroupID:    "some-parent-group-id",
+						ArtifactID: "some-parent-artifact-id",
+						Version:    "1.0-parent",
+					},
+					Name:        "some-name",
+					GroupID:     "some-group-id",
+					ArtifactID:  "some-artifact-id",
+					Version:     "1.0",
+					Description: "desc",
+					URL:         "aweso.me",
 				},
-				Name:        "some-name",
-				GroupID:     "some-group-id",
-				ArtifactID:  "some-artifact-id",
-				Version:     "1.0",
-				Description: "desc",
-				URL:         "aweso.me",
 			},
 			parent: &pkg.Package{
 				Name:    "some-parent-name",

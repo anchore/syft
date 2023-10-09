@@ -49,7 +49,7 @@ func parserPomXML(_ file.Resolver, _ *generic.Environment, reader file.LocationR
 	return pkgs, nil, nil
 }
 
-func parsePomXMLProject(path string, reader io.Reader) (*pkg.PomProject, error) {
+func parsePomXMLProject(path string, reader io.Reader) (*parsedPomProject, error) {
 	project, err := decodePomXML(reader)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func parsePomXMLProject(path string, reader io.Reader) (*pkg.PomProject, error) 
 	return newPomProject(path, project), nil
 }
 
-func newPomProject(path string, p gopom.Project) *pkg.PomProject {
+func newPomProject(path string, p gopom.Project) *parsedPomProject {
 	artifactID := safeString(p.ArtifactID)
 	name := safeString(p.Name)
 	projectURL := safeString(p.URL)
@@ -74,16 +74,18 @@ func newPomProject(path string, p gopom.Project) *pkg.PomProject {
 	}
 
 	log.WithFields("path", path, "artifactID", artifactID, "name", name, "projectURL", projectURL).Trace("parsing pom.xml")
-	return &pkg.PomProject{
-		Path:        path,
-		Parent:      pomParent(p, p.Parent),
-		GroupID:     resolveProperty(p, p.GroupID, "groupId"),
-		ArtifactID:  artifactID,
-		Version:     resolveProperty(p, p.Version, "version"),
-		Name:        name,
-		Description: cleanDescription(p.Description),
-		URL:         projectURL,
-		Licenses:    licenses,
+	return &parsedPomProject{
+		PomProject: pkg.PomProject{
+			Path:        path,
+			Parent:      pomParent(p, p.Parent),
+			GroupID:     resolveProperty(p, p.GroupID, "groupId"),
+			ArtifactID:  artifactID,
+			Version:     resolveProperty(p, p.Version, "version"),
+			Name:        name,
+			Description: cleanDescription(p.Description),
+			URL:         projectURL,
+		},
+		Licenses: licenses,
 	}
 }
 
