@@ -21,9 +21,11 @@ type FormatEncoder interface {
 }
 
 type FormatDecoder interface {
-	// TODO comment: should this be Decode(by []byte) (*SBOM, error)
-	// TODO comment: missing explanation of expectations for usage and return values
+	// Decode will return an SBOM from the given set of bytes. If the bytes are not a valid SBOM for the given format
+	// then an error will be returned.
 	Decode(by []byte) (*SBOM, FormatID, string, error)
-	// TODO comment: can we get rid of this?
+
+	// Identify will return the format ID and version for the given set of bytes. Note: this does not validate the
+	// full SBOM, only pulls the minimal information necessary to identify the format.
 	Identify(by []byte) (FormatID, string)
 }

@@ -71,10 +71,12 @@ func (c *DecoderCollection) Identify(by []byte) (sbom.FormatID, string) {
 	return "", ""
 }
 
+// Identify takes a set of bytes and attempts to identify the format of the SBOM.
 func Identify(by []byte) (sbom.FormatID, string) {
 	return staticDecoders.Identify(by)
 }
 
+// Decode takes a set of bytes and attempts to decode it into an SBOM.
 func Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
 	return staticDecoders.Decode(by)
 }

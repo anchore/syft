@@ -22,12 +22,12 @@ func Test_getEncoders(t *testing.T) {
 		},
 	}
 
-	err := opts.PostLoad()
+	encoders, err := opts.createEncoders()
 	require.NoError(t, err)
-	require.NotEmpty(t, opts.encoders)
+	require.NotEmpty(t, encoders)
 
 	encoderNames := strset.New()
-	for _, e := range opts.encoders {
+	for _, e := range encoders {
 		encoderNames.Add(e.ID().String())
 	}
 
