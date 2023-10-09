@@ -27,7 +27,8 @@ func GetValidator(format cyclonedx.BOMFileFormat) sbom.Validator {
 		}
 
 		xmlWithoutNS := format == cyclonedx.BOMFileFormatXML && !strings.Contains(bom.XMLNS, cycloneDXXmlSchema)
-		if (cyclonedx.BOM{} == *bom || bom.Components == nil || xmlWithoutNS) {
+		xmlWithoutComponents := format == cyclonedx.BOMFileFormatXML && bom.Components == nil
+		if (cyclonedx.BOM{} == *bom || xmlWithoutComponents || xmlWithoutNS) {
 			return fmt.Errorf("not a valid CycloneDX document")
 		}
 		return nil

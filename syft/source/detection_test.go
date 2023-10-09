@@ -247,6 +247,26 @@ func Test_Detect(t *testing.T) {
 			expectedScheme:   unknownType,
 			expectedLocation: "",
 		},
+		{
+			name:      "podman-image",
+			userInput: "containerd:anchore/syft",
+			detection: detectorResult{
+				src: image.PodmanDaemonSource,
+				ref: "anchore/syft",
+			},
+			expectedScheme:   containerImageType,
+			expectedLocation: "anchore/syft",
+		},
+		{
+			name:      "containerd-image",
+			userInput: "containerd:anchore/syft",
+			detection: detectorResult{
+				src: image.ContainerdDaemonSource,
+				ref: "anchore/syft",
+			},
+			expectedScheme:   containerImageType,
+			expectedLocation: "anchore/syft",
+		},
 	}
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {

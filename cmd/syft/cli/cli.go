@@ -46,10 +46,10 @@ func create(id clio.Identification) (clio.Application, *cobra.Command) {
 					return []clio.UI{noUI}, nil
 				}
 
-				h := handler.New(handler.DefaultHandlerConfig())
-
 				return []clio.UI{
-					ui.New(h, false, cfg.Log.Quiet),
+					ui.New(cfg.Log.Quiet,
+						handler.New(handler.DefaultHandlerConfig()),
+					),
 					noUI,
 				}, nil
 			},
@@ -60,7 +60,9 @@ func create(id clio.Identification) (clio.Application, *cobra.Command) {
 				// we can hoist them into the internal packages for global use.
 				stereoscope.SetBus(state.Bus)
 				bus.Set(state.Bus)
+
 				redact.Set(state.RedactStore)
+
 				log.Set(state.Logger)
 				stereoscope.SetLogger(state.Logger)
 

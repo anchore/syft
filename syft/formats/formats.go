@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/formats/cyclonedxjson"
@@ -26,17 +25,27 @@ import (
 func Formats() []sbom.Format {
 	return []sbom.Format{
 		syftjson.Format(),
-		cyclonedxxml.Format(),
-		cyclonedxjson.Format(),
 		github.Format(),
+		table.Format(),
+		text.Format(),
+		template.Format(),
+		cyclonedxxml.Format1_0(),
+		cyclonedxxml.Format1_1(),
+		cyclonedxxml.Format1_2(),
+		cyclonedxxml.Format1_3(),
+		cyclonedxxml.Format1_4(),
+		cyclonedxxml.Format1_5(),
+		cyclonedxjson.Format1_0(),
+		cyclonedxjson.Format1_1(),
+		cyclonedxjson.Format1_2(),
+		cyclonedxjson.Format1_3(),
+		cyclonedxjson.Format1_4(),
+		cyclonedxjson.Format1_5(),
 		spdxtagvalue.Format2_1(),
 		spdxtagvalue.Format2_2(),
 		spdxtagvalue.Format2_3(),
 		spdxjson.Format2_2(),
 		spdxjson.Format2_3(),
-		table.Format(),
-		text.Format(),
-		template.Format(),
 	}
 }
 
@@ -55,7 +64,7 @@ func Identify(by []byte) sbom.Format {
 
 // ByName accepts a name@version string, such as:
 //
-//	spdx-json@2.1 or cyclonedx@2
+//	spdx-json@2.1 or cyclonedx@1.5
 func ByName(name string) sbom.Format {
 	parts := strings.SplitN(name, "@", 2)
 	version := sbom.AnyVersion
@@ -71,6 +80,16 @@ func ByNameAndVersion(name string, version string) sbom.Format {
 	for _, f := range Formats() {
 		for _, n := range f.IDs() {
 			if cleanFormatName(string(n)) == name && versionMatches(f.Version(), version) {
+				// if the version is not specified and the format is cyclonedx, then we want to return the most recent version up to 1.4
+				// If more aliases like cdx are added this will not catch those - we want to eventually provide a way for
+				// formats to inform this function what their default version is
+				// TODO: remove this check when 1.5 is stable or default formats are designed. PR below should be merged.
+				// https://github.com/CycloneDX/cyclonedx-go/pull/90
+				if version == sbom.AnyVersion && strings.Contains(string(n), "cyclone") {
+					if f.Version() == "1.5" {
+						continue
+					}
+				}
 				if mostRecentFormat == nil || f.Version() > mostRecentFormat.Version() {
 					mostRecentFormat = f
 				}

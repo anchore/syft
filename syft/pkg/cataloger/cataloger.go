@@ -19,6 +19,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/elixir"
 	"github.com/anchore/syft/syft/pkg/cataloger/erlang"
+	"github.com/anchore/syft/syft/pkg/cataloger/githubactions"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -74,6 +75,8 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		dotnet.NewDotnetPortableExecutableCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
+		githubactions.NewActionUsageCataloger(),
+		githubactions.NewWorkflowUsageCataloger(),
 		golang.NewGoModFileCataloger(cfg.Golang),
 		golang.NewGoModuleBinaryCataloger(cfg.Golang),
 		haskell.NewHackageCataloger(),
@@ -110,6 +113,8 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		dotnet.NewDotnetPortableExecutableCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
+		githubactions.NewActionUsageCataloger(),
+		githubactions.NewWorkflowUsageCataloger(),
 		golang.NewGoModFileCataloger(cfg.Golang),
 		golang.NewGoModuleBinaryCataloger(cfg.Golang),
 		haskell.NewHackageCataloger(),

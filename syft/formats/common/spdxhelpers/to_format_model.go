@@ -5,14 +5,13 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/spdx/tools-golang/spdx"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
@@ -722,7 +721,11 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 
 	var result []*spdx.OtherLicense
 
-	ids := maps.Keys(licenses)
+	var ids []string
+	for licenseID := range licenses {
+		ids = append(ids, licenseID)
+	}
+
 	slices.Sort(ids)
 	for _, id := range ids {
 		license := licenses[id]

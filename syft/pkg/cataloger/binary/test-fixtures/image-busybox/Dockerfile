@@ -1,1 +1,1 @@
-FROM busybox:1.35
+FROM busybox:1.35@sha256:7ae8447f3a7f5bccaa765926f25fc038e425cf1b2be6748727bbea9a13102094

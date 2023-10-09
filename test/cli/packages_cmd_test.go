@@ -6,6 +6,12 @@ import (
 	"testing"
 )
 
+const (
+	// this is the number of packages that should be found in the image-pkg-coverage fixture image
+	// when analyzed with the squashed scope.
+	coverageImageSquashedPackageCount = 24
+)
+
 func TestPackagesCmdFlags(t *testing.T) {
 	hiddenPackagesImage := "docker-archive:" + getFixtureImage(t, "image-hidden-packages")
 	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
@@ -114,7 +120,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "squashed", coverageImage},
 			assertions: []traitAssertion{
-				assertPackageCount(24),
+				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -231,7 +237,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 2"),
 				assertInOutput("parallelism=2"),
-				assertPackageCount(24),
+				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -242,7 +248,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 1"),
 				assertInOutput("parallelism=1"),
-				assertPackageCount(24),
+				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -256,7 +262,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			assertions: []traitAssertion{
 				assertNotInOutput("secret_password"),
 				assertNotInOutput("secret_key_path"),
-				assertPackageCount(24),
+				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},
 		},

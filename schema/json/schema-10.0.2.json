@@ -567,12 +567,59 @@
             "$ref": "#/$defs/Digest"
           },
           "type": "array"
+        },
+        "licenses": {
+          "items": {
+            "$ref": "#/$defs/FileLicense"
+          },
+          "type": "array"
         }
       },
       "type": "object",
       "required": [
         "id",
         "location"
+      ]
+    },
+    "FileLicense": {
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "spdxExpression": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/FileLicenseEvidence"
+        }
+      },
+      "type": "object",
+      "required": [
+        "value",
+        "spdxExpression",
+        "type"
+      ]
+    },
+    "FileLicenseEvidence": {
+      "properties": {
+        "confidence": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        },
+        "extent": {
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "required": [
+        "confidence",
+        "offset",
+        "extent"
       ]
     },
     "FileMetadataEntry": {
@@ -1430,6 +1477,7 @@
         "version",
         "name",
         "licenses"
+        "name"
       ]
     },
     "PomProperties": {

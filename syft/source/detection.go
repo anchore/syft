@@ -199,6 +199,8 @@ func parseDefaultImageSource(defaultImageSource string) image.Source {
 		return image.DockerDaemonSource
 	case "podman":
 		return image.PodmanDaemonSource
+	case "containerd":
+		return image.ContainerdDaemonSource
 	default:
 		return image.UnknownSource
 	}
