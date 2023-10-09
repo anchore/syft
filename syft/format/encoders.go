@@ -52,6 +52,7 @@ func NewEncoderCollection(encoders ...sbom.FormatEncoder) *EncoderCollection {
 	}
 }
 
+// IDs returns all format IDs represented in the collection.
 func (e EncoderCollection) IDs() []sbom.FormatID {
 	idSet := strset.New()
 	for _, f := range e.encoders {
@@ -69,6 +70,7 @@ func (e EncoderCollection) IDs() []sbom.FormatID {
 	return ids
 }
 
+// NameVersions returns all formats that are supported by the collection as a list of "name@version" strings.
 func (e EncoderCollection) NameVersions() []string {
 	set := strset.New()
 	for _, f := range e.encoders {
@@ -85,6 +87,7 @@ func (e EncoderCollection) NameVersions() []string {
 	return list
 }
 
+// Aliases returns all format aliases represented in the collection (where an ID would be "spdx-tag-value" the alias would be "spdx").
 func (e EncoderCollection) Aliases() []string {
 	aliases := strset.New()
 	for _, f := range e.encoders {
@@ -95,6 +98,7 @@ func (e EncoderCollection) Aliases() []string {
 	return lst
 }
 
+// Get returns the contained encoder for a given format name and version.
 func (e EncoderCollection) Get(name string, version string) sbom.FormatEncoder {
 	log.WithFields("name", name, "version", version).Trace("looking for matching encoder")
 

@@ -40,6 +40,7 @@ func NewDecoderCollection(decoders ...sbom.FormatDecoder) sbom.FormatDecoder {
 	}
 }
 
+// Decode takes a set of bytes and attempts to decode it into an SBOM relative to the decoders in the collection.
 func (c *DecoderCollection) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
 	var bestID sbom.FormatID
 	for _, d := range c.decoders {
@@ -61,6 +62,7 @@ func (c *DecoderCollection) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string
 	return nil, "", "", fmt.Errorf("sbom format not recognized")
 }
 
+// Identify takes a set of bytes and attempts to identify the format of the SBOM relative to the decoders in the collection.
 func (c *DecoderCollection) Identify(by []byte) (sbom.FormatID, string) {
 	for _, d := range c.decoders {
 		id, version := d.Identify(by)
