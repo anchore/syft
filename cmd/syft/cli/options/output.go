@@ -52,7 +52,7 @@ func (o *Output) AddFlags(flags clio.FlagSet) {
 	sort.Strings(names)
 
 	flags.StringArrayVarP(&o.Outputs, "output", "o",
-		fmt.Sprintf("report output format, options=%v", names))
+		fmt.Sprintf("report output format (<format>=<file> to output to a file), formats=%v", names))
 }
 
 func (o Output) SBOMWriter() (sbom.Writer, error) {

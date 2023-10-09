@@ -2,6 +2,7 @@ package options
 
 import (
 	"github.com/anchore/clio"
+	"github.com/anchore/fangs"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -10,13 +11,19 @@ var _ interface {
 	clio.PostLoader
 } = (*OutputFile)(nil)
 
+// Deprecated: OutputFile supports the --file to write the SBOM output to
 type OutputFile struct {
-	File string `yaml:"file" json:"file" mapstructure:"file"` // --file, the file to write report output to
+	File string `yaml:"file" json:"file" mapstructure:"file"`
 }
 
 func (o *OutputFile) AddFlags(flags clio.FlagSet) {
 	flags.StringVarP(&o.File, "file", "",
 		"file to write the default report output to (default is STDOUT)")
+
+	if pfp, ok := flags.(fangs.PFlagSetProvider); ok {
+		flagSet := pfp.PFlagSet()
+		flagSet.Lookup("file").Deprecated = "use: output"
+	}
 }
 
 func (o *OutputFile) PostLoad() error {
