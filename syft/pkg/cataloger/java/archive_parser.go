@@ -221,8 +221,8 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 }
 
 type parsedPomProject struct {
-	*pkg.PomProject `mapstructure:",squash"`
-	Licenses        []string `json:"licenses"`
+	*pkg.PomProject
+	Licenses []string
 }
 
 func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, version string, licenses []string) {
