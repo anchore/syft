@@ -177,12 +177,9 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		return nil, err
 	}
 
-	licenses := make([]pkg.License, 0)
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
-	locationLicenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
-	if locationLicenses != nil {
-		licenses = append(licenses, locationLicenses...)
-	}
+	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
+	licenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
 	/*
 		We should name and version from, in this order:
 		1. pom.properties if we find exactly 1
@@ -197,8 +194,11 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	if version == "" {
 		version = selectVersion(manifest, j.fileInfo)
 	}
-	if len(pomLicenses) > 0 {
-		licenses = append(licenses, pkg.NewLicensesFromLocation(j.location, pomLicenses...)...)
+	if len(licenses) == 0 {
+		// Today we don't have a way to distinguish between licenses from the manifest and licenses from the pom.xml
+		// until the file.Location object can support sub-paths (i.e. paths within archives, recursively; issue https://github.com/anchore/syft/issues/2211).
+		// Until then it's less confusing to use the licenses from the pom.xml only if the manifest did not list any.
+		licenses = append(licenses, pomLicenses...)
 	}
 
 	return &pkg.Package{
@@ -222,10 +222,10 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 
 type parsedPomProject struct {
 	*pkg.PomProject
-	Licenses []string
+	Licenses []pkg.License
 }
 
-func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, version string, licenses []string) {
+func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, version string, licenses []pkg.License) {
 	pomPropertyMatches := j.fileManifest.GlobMatch(pomPropertiesGlob)
 	pomMatches := j.fileManifest.GlobMatch(pomXMLGlob)
 	var pomPropertiesObject pkg.PomProperties
@@ -419,7 +419,8 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 
 	projectByParentPath := make(map[string]parsedPomProject)
 	for filePath, fileContents := range contentsOfMavenProjectFiles {
-		pomProject, err := parsePomXMLProject(filePath, strings.NewReader(fileContents))
+		// TODO: when we support locations of paths within archives we should start passing the specific pom.xml location object instead of the top jar
+		pomProject, err := parsePomXMLProject(filePath, strings.NewReader(fileContents), location)
 		if err != nil {
 			log.WithFields("contents-path", filePath, "location", location.AccessPath()).Warnf("failed to parse pom.xml: %+v", err)
 			continue
@@ -462,16 +463,12 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, parsedPomProject *
 		vPathSuffix += ":" + pomProperties.GroupID + ":" + pomProperties.ArtifactID
 	}
 	virtualPath := location.AccessPath() + vPathSuffix
-	var pkgPomProject *pkg.PomProject
-	if parsedPomProject != nil {
-		pkgPomProject = parsedPomProject.PomProject
-	}
 
+	var pkgPomProject *pkg.PomProject
 	licenses := make([]pkg.License, 0)
 	if parsedPomProject != nil {
-		for _, license := range parsedPomProject.Licenses {
-			licenses = append(licenses, pkg.NewLicense(license))
-		}
+		pkgPomProject = parsedPomProject.PomProject
+		licenses = append(licenses, parsedPomProject.Licenses...)
 	}
 
 	p := pkg.Package{

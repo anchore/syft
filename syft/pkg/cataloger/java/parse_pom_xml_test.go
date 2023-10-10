@@ -11,7 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vifraa/gopom"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
@@ -293,10 +295,14 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 }
 
 func Test_parsePomXMLProject(t *testing.T) {
+	// TODO: ideally we would have the path to the contained pom.xml, not the jar
+	jarLocation := file.NewLocation("path/to/archive.jar")
 	tests := []struct {
+		name     string
 		expected parsedPomProject
 	}{
 		{
+			name: "go case",
 			expected: parsedPomProject{
 				PomProject: &pkg.PomProject{
 					Path: "test-fixtures/pom/commons-codec.pom.xml",
@@ -312,17 +318,56 @@ func Test_parsePomXMLProject(t *testing.T) {
 					Description: "The Apache Commons Codec package contains simple encoder and decoders for various formats such as Base64 and Hexadecimal.  In addition to these widely used encoders and decoders, the codec package also maintains a collection of phonetic encoding utilities.",
 					URL:         "http://commons.apache.org/proper/commons-codec/",
 				},
-				Licenses: []string{}, // assert not nil in parsePomXML for safe consumption
+			},
+		},
+		{
+			name: "with license data",
+			expected: parsedPomProject{
+				PomProject: &pkg.PomProject{
+					Path: "test-fixtures/pom/neo4j-license-maven-plugin.pom.xml",
+					Parent: &pkg.PomParent{
+						GroupID:    "org.sonatype.oss",
+						ArtifactID: "oss-parent",
+						Version:    "7",
+					},
+					GroupID:     "org.neo4j.build.plugins",
+					ArtifactID:  "license-maven-plugin",
+					Version:     "4-SNAPSHOT",
+					Name:        "${project.artifactId}", // TODO: this is not an ideal answer
+					Description: "Maven 2 plugin to check and update license headers in source files",
+					URL:         "http://components.neo4j.org/${project.artifactId}/${project.version}", // TODO: this is not an ideal answer
+				},
+				Licenses: []pkg.License{
+					{
+						Value:          "The Apache Software License, Version 2.0",
+						SPDXExpression: "", // TODO: ideally we would parse this title to get Apache-2.0 (created issue #2210 https://github.com/anchore/syft/issues/2210)
+						Type:           license.Declared,
+						URLs:           internal.NewStringSet("http://www.apache.org/licenses/LICENSE-2.0.txt"),
+						Locations:      file.NewLocationSet(jarLocation),
+					},
+					{
+						Value:          "MIT",
+						SPDXExpression: "MIT",
+						Type:           license.Declared,
+						URLs:           internal.NewStringSet(),
+						Locations:      file.NewLocationSet(jarLocation),
+					},
+					{
+						Type:      license.Declared,
+						URLs:      internal.NewStringSet("https://opensource.org/license/unlicense/"),
+						Locations: file.NewLocationSet(jarLocation),
+					},
+				},
 			},
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.expected.Path, func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			fixture, err := os.Open(test.expected.Path)
 			assert.NoError(t, err)
 
-			actual, err := parsePomXMLProject(fixture.Name(), fixture)
+			actual, err := parsePomXMLProject(fixture.Name(), fixture, jarLocation)
 			assert.NoError(t, err)
 
 			assert.Equal(t, &test.expected, actual)

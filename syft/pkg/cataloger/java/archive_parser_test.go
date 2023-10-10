@@ -16,6 +16,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
@@ -174,7 +175,16 @@ func TestParseJar(t *testing.T) {
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
-					Licenses:     pkg.NewLicenseSet(pkg.NewLicense("Apache 2")),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromFields(
+							"Apache 2",
+							"http://www.apache.org/licenses/LICENSE-2.0.txt",
+							func() *file.Location {
+								l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")
+								return &l
+							}(),
+						),
+					),
 					Metadata: pkg.JavaMetadata{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path with a colon separator between group name and artifact name
@@ -235,10 +245,19 @@ func TestParseJar(t *testing.T) {
 					},
 				},
 				"joda-time": {
-					Name:         "joda-time",
-					Version:      "2.9.2",
-					PURL:         "pkg:maven/joda-time/joda-time@2.9.2",
-					Licenses:     pkg.NewLicenseSet(pkg.NewLicense("Apache 2")),
+					Name:    "joda-time",
+					Version: "2.9.2",
+					PURL:    "pkg:maven/joda-time/joda-time@2.9.2",
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromFields(
+							"Apache 2",
+							"http://www.apache.org/licenses/LICENSE-2.0.txt",
+							func() *file.Location {
+								l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")
+								return &l
+							}(),
+						),
+					),
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
@@ -706,6 +725,15 @@ func Test_newPackageFromMavenData(t *testing.T) {
 					Description: "desc",
 					URL:         "aweso.me",
 				},
+				Licenses: []pkg.License{
+					{
+						Value:          "MIT",
+						SPDXExpression: "MIT",
+						Type:           license.Declared,
+						URLs:           internal.NewStringSet("https://opensource.org/licenses/MIT"),
+						Locations:      file.NewLocationSet(file.NewLocation("some-license-path")),
+					},
+				},
 			},
 			parent: &pkg.Package{
 				Name:    "some-parent-name",
@@ -734,6 +762,15 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Language:     pkg.Java,
 				Type:         pkg.JavaPkg,
 				MetadataType: pkg.JavaMetadataType,
+				Licenses: pkg.NewLicenseSet(
+					pkg.License{
+						Value:          "MIT",
+						SPDXExpression: "MIT",
+						Type:           license.Declared,
+						URLs:           internal.NewStringSet("https://opensource.org/licenses/MIT"),
+						Locations:      file.NewLocationSet(file.NewLocation("some-license-path")),
+					},
+				),
 				Metadata: pkg.JavaMetadata{
 					VirtualPath: virtualPath + ":" + "some-group-id" + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{

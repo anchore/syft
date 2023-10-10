@@ -49,27 +49,35 @@ func parserPomXML(_ file.Resolver, _ *generic.Environment, reader file.LocationR
 	return pkgs, nil, nil
 }
 
-func parsePomXMLProject(path string, reader io.Reader) (*parsedPomProject, error) {
+func parsePomXMLProject(path string, reader io.Reader, location file.Location) (*parsedPomProject, error) {
 	project, err := decodePomXML(reader)
 	if err != nil {
 		return nil, err
 	}
-	return newPomProject(path, project), nil
+	return newPomProject(path, project, location), nil
 }
 
-func newPomProject(path string, p gopom.Project) *parsedPomProject {
+func newPomProject(path string, p gopom.Project, location file.Location) *parsedPomProject {
 	artifactID := safeString(p.ArtifactID)
 	name := safeString(p.Name)
 	projectURL := safeString(p.URL)
 
-	licenses := []string{}
+	var licenses []pkg.License
 	if p.Licenses != nil {
 		for _, license := range *p.Licenses {
+			var licenseName, licenseURL string
 			if license.Name != nil {
-				licenses = append(licenses, *license.Name)
-			} else if license.URL != nil {
-				licenses = append(licenses, *license.URL)
+				licenseName = *license.Name
 			}
+			if license.URL != nil {
+				licenseURL = *license.URL
+			}
+
+			if licenseName == "" && licenseURL == "" {
+				continue
+			}
+
+			licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, licenseURL, &location))
 		}
 	}
 

@@ -60,24 +60,17 @@ func (l Licenses) Swap(i, j int) {
 }
 
 func NewLicense(value string) License {
-	spdxExpression, err := license.ParseExpression(value)
-	if err != nil {
-		log.Trace("unable to parse license expression for %q: %w", value, err)
-	}
-
-	return License{
-		Value:          value,
-		SPDXExpression: spdxExpression,
-		Type:           license.Declared,
-		URLs:           internal.NewStringSet(),
-		Locations:      file.NewLocationSet(),
-	}
+	return NewLicenseFromType(value, license.Declared)
 }
 
 func NewLicenseFromType(value string, t license.Type) License {
-	spdxExpression, err := license.ParseExpression(value)
-	if err != nil {
-		log.Trace("unable to parse license expression: %w", err)
+	var spdxExpression string
+	if value != "" {
+		var err error
+		spdxExpression, err = license.ParseExpression(value)
+		if err != nil {
+			log.Trace("unable to parse license expression: %w", err)
+		}
 	}
 
 	return License{
@@ -120,6 +113,17 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 		if u != "" {
 			l.URLs.Add(u)
 		}
+	}
+	return l
+}
+
+func NewLicenseFromFields(value, url string, location *file.Location) License {
+	l := NewLicense(value)
+	if location != nil {
+		l.Locations.Add(*location)
+	}
+	if url != "" {
+		l.URLs.Add(url)
 	}
 	return l
 }
