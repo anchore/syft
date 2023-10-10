@@ -221,8 +221,8 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 }
 
 type parsedPomProject struct {
-	pkg.PomProject `mapstructure:",squash"`
-	Licenses       []string `json:"licenses"`
+	*pkg.PomProject `mapstructure:",squash"`
+	Licenses        []string `json:"licenses"`
 }
 
 func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, version string, licenses []string) {
@@ -246,11 +246,11 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 		}
 	}
 	name = pomPropertiesObject.ArtifactID
-	if name == "" {
+	if name == "" && pomProjectObject.PomProject != nil {
 		name = pomProjectObject.ArtifactID
 	}
 	version = pomPropertiesObject.Version
-	if version == "" {
+	if version == "" && pomProjectObject.PomProject != nil {
 		version = pomProjectObject.Version
 	}
 	return name, version, pomProjectObject.Licenses
@@ -464,10 +464,7 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, parsedPomProject *
 	virtualPath := location.AccessPath() + vPathSuffix
 	var pkgPomProject *pkg.PomProject
 	if parsedPomProject != nil {
-		// check for empty since we assign value earlier
-		if (pkg.PomProject{}) != parsedPomProject.PomProject {
-			pkgPomProject = &parsedPomProject.PomProject
-		}
+		pkgPomProject = parsedPomProject.PomProject
 	}
 
 	licenses := make([]pkg.License, 0)

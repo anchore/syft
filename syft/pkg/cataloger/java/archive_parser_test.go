@@ -693,7 +693,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version:    "1.0",
 			},
 			project: &parsedPomProject{
-				PomProject: pkg.PomProject{
+				PomProject: &pkg.PomProject{
 					Parent: &pkg.PomParent{
 						GroupID:    "some-parent-group-id",
 						ArtifactID: "some-parent-artifact-id",

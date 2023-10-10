@@ -75,7 +75,7 @@ func newPomProject(path string, p gopom.Project) *parsedPomProject {
 
 	log.WithFields("path", path, "artifactID", artifactID, "name", name, "projectURL", projectURL).Trace("parsing pom.xml")
 	return &parsedPomProject{
-		PomProject: pkg.PomProject{
+		PomProject: &pkg.PomProject{
 			Path:        path,
 			Parent:      pomParent(p, p.Parent),
 			GroupID:     resolveProperty(p, p.GroupID, "groupId"),

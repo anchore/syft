@@ -298,7 +298,7 @@ func Test_parsePomXMLProject(t *testing.T) {
 	}{
 		{
 			expected: parsedPomProject{
-				PomProject: pkg.PomProject{
+				PomProject: &pkg.PomProject{
 					Path: "test-fixtures/pom/commons-codec.pom.xml",
 					Parent: &pkg.PomParent{
 						GroupID:    "org.apache.commons",
