@@ -266,20 +266,11 @@ func associateRelationships(pkgs []pkg.Package) (relationships []artifact.Relati
 			continue
 		}
 
-		for _, depSpecifier := range meta.PreDepends {
-			deps := splitPackageChoice(depSpecifier)
-			for _, dep := range deps {
-				for _, depPkg := range lookup[dep] {
-					relationships = append(relationships, artifact.Relationship{
-						From: depPkg,
-						To:   p,
-						Type: artifact.DependencyOfRelationship,
-					})
-				}
-			}
-		}
+		var allDeps []string
+		allDeps = append(allDeps, meta.Depends...)
+		allDeps = append(allDeps, meta.PreDepends...)
 
-		for _, depSpecifier := range meta.Depends {
+		for _, depSpecifier := range allDeps {
 			deps := splitPackageChoice(depSpecifier)
 			for _, dep := range deps {
 				for _, depPkg := range lookup[dep] {
