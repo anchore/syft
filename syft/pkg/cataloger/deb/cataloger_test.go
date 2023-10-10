@@ -44,6 +44,11 @@ func TestDpkgCataloger(t *testing.T) {
  Contains configuration files and  directories required for
  authentication  to work on Debian systems.  This package is required
  on almost all installations.`,
+						Depends: []string{
+							"debconf (>= 0.5) | debconf-2.0",
+							"debconf (>= 1.5.19) | cdebconf",
+							"libpam-modules (>= 1.0.1-6)",
+						},
 						Files: []pkg.DpkgFileRecord{
 							{
 								Path: "/etc/pam.conf",
@@ -112,6 +117,7 @@ func TestDpkgCataloger(t *testing.T) {
  SQLite is a C library that implements an SQL database engine.
  Programs that link with the SQLite library can have SQL database
  access without running a separate RDBMS process.`,
+						Depends: []string{"libc6 (>= 2.29)"},
 						Files: []pkg.DpkgFileRecord{
 							{Path: "/usr/lib/aarch64-linux-gnu/libsqlite3.so.0.8.6", Digest: &file.Digest{
 								Algorithm: "md5",

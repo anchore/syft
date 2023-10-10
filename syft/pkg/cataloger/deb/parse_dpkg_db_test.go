@@ -11,9 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
@@ -48,6 +50,18 @@ func Test_parseDpkgStatus(t *testing.T) {
  * apt-cdrom to use removable media as a source for packages
  * apt-config as an interface to the configuration settings
  * apt-key as an interface to manage authentication keys`,
+					Provides: []string{"apt-transport-https (= 1.8.2)"},
+					Depends: []string{
+						"adduser",
+						"gpgv | gpgv2 | gpgv1",
+						"debian-archive-keyring",
+						"libapt-pkg5.0 (>= 1.7.0~alpha3~)",
+						"libc6 (>= 2.15)",
+						"libgcc1 (>= 1:3.0)",
+						"libgnutls30 (>= 3.6.6)",
+						"libseccomp2 (>= 1.0.1)",
+						"libstdc++6 (>= 5.2)",
+					},
 					Files: []pkg.DpkgFileRecord{
 						{
 							Path: "/etc/apt/apt.conf.d/01autoremove",
@@ -110,6 +124,18 @@ func Test_parseDpkgStatus(t *testing.T) {
  * apt-cdrom to use removable media as a source for packages
  * apt-config as an interface to the configuration settings
  * apt-key as an interface to manage authentication keys`,
+					Provides: []string{"apt-transport-https (= 1.8.2)"},
+					Depends: []string{
+						"adduser",
+						"gpgv | gpgv2 | gpgv1",
+						"debian-archive-keyring",
+						"libapt-pkg5.0 (>= 1.7.0~alpha3~)",
+						"libc6 (>= 2.15)",
+						"libgcc1 (>= 1:3.0)",
+						"libgnutls30 (>= 3.6.6)",
+						"libseccomp2 (>= 1.0.1)",
+						"libstdc++6 (>= 5.2)",
+					},
 					Files: []pkg.DpkgFileRecord{},
 				},
 			},
@@ -135,7 +161,9 @@ func Test_parseDpkgStatus(t *testing.T) {
  globe. It is updated periodically to reflect changes made by
  political bodies to time zone boundaries, UTC offsets, and
  daylight-saving rules.`,
-					Files: []pkg.DpkgFileRecord{},
+					Provides: []string{"tzdata-buster"},
+					Depends:  []string{"debconf (>= 0.5) | debconf-2.0"},
+					Files:    []pkg.DpkgFileRecord{},
 				},
 				{
 					Package:       "util-linux",
@@ -149,6 +177,14 @@ func Test_parseDpkgStatus(t *testing.T) {
  important utilities included in this package allow you to view kernel
  messages, create new filesystems, view block device information,
  interface with real time clock, etc.`,
+					Depends: []string{"fdisk", "login (>= 1:4.5-1.1~)"},
+					PreDepends: []string{
+						"libaudit1 (>= 1:2.2.1)", "libblkid1 (>= 2.31.1)", "libc6 (>= 2.25)",
+						"libcap-ng0 (>= 0.7.9)", "libmount1 (>= 2.25)", "libpam0g (>= 0.99.7.1)",
+						"libselinux1 (>= 2.6-3~)", "libsmartcols1 (>= 2.33)", "libsystemd0",
+						"libtinfo6 (>= 6)", "libudev1 (>= 183)", "libuuid1 (>= 2.16)",
+						"zlib1g (>= 1:1.1.4)",
+					},
 					Files: []pkg.DpkgFileRecord{
 						{
 							Path: "/etc/default/hwclock",
@@ -396,4 +432,123 @@ func Test_handleNewKeyValue(t *testing.T) {
 			assert.Equalf(t, tt.wantVal, gotVal, "handleNewKeyValue(%v)", tt.line)
 		})
 	}
+}
+
+func Test_stripVersionSpecifier(t *testing.T) {
+
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "package name only",
+			input: "test",
+			want:  "test",
+		},
+		{
+			name:  "with version",
+			input: "test (1.2.3)",
+			want:  "test",
+		},
+		{
+			name:  "multiple packages",
+			input: "test | other",
+			want:  "test | other",
+		},
+		{
+			name:  "with architecture specifiers",
+			input: "test [amd64 i386]",
+			want:  "test",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, stripVersionSpecifier(tt.input))
+		})
+	}
+}
+
+func Test_associateRelationships(t *testing.T) {
+	tests := []struct {
+		name              string
+		fixture           string
+		wantRelationships map[string][]string
+	}{
+		{
+			name:    "relationships for coreutils",
+			fixture: "test-fixtures/status/coreutils-relationships",
+			wantRelationships: map[string][]string{
+				"coreutils":    {"libacl1", "libattr1", "libc6", "libgmp10", "libselinux1"},
+				"libacl1":      {"libc6"},
+				"libattr1":     {"libc6"},
+				"libc6":        {"libgcc-s1"},
+				"libgcc-s1":    {"gcc-12-base", "libc6"},
+				"libgmp10":     {"libc6"},
+				"libpcre2-8-0": {"libc6"},
+				"libselinux1":  {"libc6", "libpcre2-8-0"},
+			},
+		},
+		{
+			name:    "relationships from dpkg example docs",
+			fixture: "test-fixtures/status/doc-examples",
+			wantRelationships: map[string][]string{
+				"made-up-package-1": {"kernel-headers-2.2.10", "hurd-dev", "gnumach-dev"},
+				"made-up-package-2": {"libluajit5.1-dev", "liblua5.1-dev"},
+				"made-up-package-3": {"foo", "bar"},
+				// note that the "made-up-package-4" depends on "made-up-package-5" but not via the direct
+				// package name, but through the "provides" virtual package name "virtual-package-5".
+				"made-up-package-4": {"made-up-package-5"},
+				// note that though there is a "default-mta | mail-transport-agent | not-installed"
+				// dependency choice we raise up the packages that are installed for every choice.
+				// In this case that means that "default-mta" and "mail-transport-agent".
+				"mutt": {"libc6", "default-mta", "mail-transport-agent"},
+			},
+		},
+		{
+			name:    "relationships for libpam-runtime",
+			fixture: "test-fixtures/status/libpam-runtime",
+			wantRelationships: map[string][]string{
+				"libpam-runtime": {"debconf1", "debconf-2.0", "debconf2", "cdebconf", "libpam-modules"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f, err := os.Open(tt.fixture)
+			require.NoError(t, err)
+
+			reader := file.NewLocationReadCloser(file.NewLocation(tt.fixture), f)
+
+			pkgs, relationships, err := parseDpkgDB(nil, &generic.Environment{}, reader)
+			require.NotEmpty(t, pkgs)
+			require.NotEmpty(t, relationships)
+			require.NoError(t, err)
+
+			if d := cmp.Diff(tt.wantRelationships, abstractRelationships(t, relationships)); d != "" {
+				t.Errorf("unexpected relationships (-want +got):\n%s", d)
+			}
+		})
+	}
+}
+
+func abstractRelationships(t testing.TB, relationships []artifact.Relationship) map[string][]string {
+	t.Helper()
+
+	abstracted := make(map[string][]string)
+	for _, relationship := range relationships {
+		fromPkg, ok := relationship.From.(pkg.Package)
+		if !ok {
+			continue
+		}
+		toPkg, ok := relationship.To.(pkg.Package)
+		if !ok {
+			continue
+		}
+
+		// we build this backwards since we use DependencyOfRelationship instead of DependsOn
+		abstracted[toPkg.Name] = append(abstracted[toPkg.Name], fromPkg.Name)
+	}
+
+	return abstracted
 }
