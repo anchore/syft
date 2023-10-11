@@ -155,7 +155,7 @@ func TestParsePackageLockV2(t *testing.T) {
 		MetadataType: "NpmPackageLockJsonMetadata",
 		Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha1-XxnSuFqY6VWANvajysyIGUIPBc8="},
 	}
-	react := pkg.Package{
+	typesReact := pkg.Package{
 		Name:     "@types/react",
 		Version:  "18.0.17",
 		PURL:     "pkg:npm/%40types/react@18.0.17",
@@ -198,34 +198,30 @@ func TestParsePackageLockV2(t *testing.T) {
 	expectedPkgs := []pkg.Package{
 		npm,
 		propTypes,
-		react,
+		typesReact,
 		scheduler,
 		csstype,
 	}
 	expectedRelationships := []artifact.Relationship{
 		{
 			From: propTypes,
-			To:   react,
+			To:   typesReact,
 			Type: artifact.DependencyOfRelationship,
-			Data: nil,
 		},
 		{
-			From: react,
+			From: typesReact,
 			To:   npm,
 			Type: artifact.DependencyOfRelationship,
-			Data: nil,
 		},
 		{
 			From: scheduler,
-			To:   react,
+			To:   typesReact,
 			Type: artifact.DependencyOfRelationship,
-			Data: nil,
 		},
 		{
 			From: csstype,
-			To:   react,
+			To:   typesReact,
 			Type: artifact.DependencyOfRelationship,
-			Data: nil,
 		},
 	}
 
@@ -258,7 +254,7 @@ func TestParsePackageLockV3(t *testing.T) {
 		Locations:    locationSet,
 		Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w=="},
 	}
-	react := pkg.Package{
+	typesReact := pkg.Package{
 		Name:         "@types/react",
 		Version:      "18.0.20",
 		Language:     pkg.JavaScript,
@@ -292,7 +288,7 @@ func TestParsePackageLockV3(t *testing.T) {
 	expectedPkgs := []pkg.Package{
 		lockV3Fixture,
 		propTypes,
-		react,
+		typesReact,
 		scheduler,
 		csstype,
 	}
@@ -300,27 +296,23 @@ func TestParsePackageLockV3(t *testing.T) {
 	expectedRelationships := []artifact.Relationship{
 		{
 			From: propTypes,
-			To:   react,
+			To:   typesReact,
 			Type: artifact.DependencyOfRelationship,
-			Data: nil,
 		},
 		{
-			From: react,
+			From: typesReact,
 			To:   lockV3Fixture,
 			Type: artifact.DependencyOfRelationship,
-			Data: nil,
 		},
 		{
 			From: scheduler,
-			To:   react,
+			To:   typesReact,
 			Type: artifact.DependencyOfRelationship,
-			Data: nil,
 		},
 		{
 			From: csstype,
-			To:   react,
+			To:   typesReact,
 			Type: artifact.DependencyOfRelationship,
-			Data: nil,
 		},
 	}
 
