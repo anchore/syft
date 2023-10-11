@@ -1,6 +1,8 @@
 package dotnet
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -9,13 +11,7 @@ import (
 )
 
 func newDotnetDepsPackage(nameVersion string, lib dotnetDepsLibrary, locations ...file.Location) *pkg.Package {
-	if lib.Type != "package" {
-		return nil
-	}
-
-	fields := strings.Split(nameVersion, "/")
-	name := fields[0]
-	version := fields[1]
+	name, version := extractNameAndVersion(nameVersion)
 
 	m := pkg.DotnetDepsMetadata{
 		Name:     name,
@@ -39,6 +35,27 @@ func newDotnetDepsPackage(nameVersion string, lib dotnetDepsLibrary, locations .
 	p.SetID()
 
 	return p
+}
+
+func getDepsJSONFilePrefix(p string) string {
+	r := regexp.MustCompile(`([^\/]+)\.deps\.json$`)
+	match := r.FindStringSubmatch(p)
+	if len(match) > 1 {
+		return match[1]
+	}
+	return ""
+}
+
+func extractNameAndVersion(nameVersion string) (name, version string) {
+	fields := strings.Split(nameVersion, "/")
+	name = fields[0]
+	version = fields[1]
+	return
+}
+
+func createNameAndVersion(name, version string) (nameVersion string) {
+	nameVersion = fmt.Sprintf("%s/%s", name, version)
+	return
 }
 
 func packageURL(m pkg.DotnetDepsMetadata) string {
