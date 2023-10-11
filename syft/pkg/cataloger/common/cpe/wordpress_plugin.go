@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	vendorFromUrlRegexp = regexp.MustCompile(`^https?://(www.)?(?P<vendor>.+)\.\w/?`)
+	vendorFromURLRegexp = regexp.MustCompile(`^https?://(www.)?(?P<vendor>.+)\.\w/?`)
 )
 
 func candidateVendorsForWordpressPlugin(p pkg.Package) fieldCandidateSet {
@@ -21,7 +21,7 @@ func candidateVendorsForWordpressPlugin(p pkg.Package) fieldCandidateSet {
 	vendors := newFieldCandidateSet()
 
 	if metadata.AuthorURI != "" {
-		matchMap := internal.MatchNamedCaptureGroups(vendorFromUrlRegexp, metadata.AuthorURI)
+		matchMap := internal.MatchNamedCaptureGroups(vendorFromURLRegexp, metadata.AuthorURI)
 		if vendor, ok := matchMap["vendor"]; ok && vendor != "" {
 			vendors.addValue(vendor)
 		}

@@ -66,8 +66,8 @@ func parseWordpressPluginFiles(_ file.Resolver, _ *generic.Environment, reader f
 			metadata.Author = author.(string)
 		}
 
-		authorURI, authorUriOk := fields["author_uri"]
-		if authorUriOk && authorURI != "" {
+		authorURI, authorURIOk := fields["author_uri"]
+		if authorURIOk && authorURI != "" {
 			metadata.AuthorURI = authorURI.(string)
 		}
 
