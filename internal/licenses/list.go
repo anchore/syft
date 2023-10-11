@@ -1,12 +1,10 @@
 package licenses
 
-import "github.com/anchore/syft/internal"
-
 // all of these taken from https://github.com/golang/pkgsite/blob/8996ff632abee854aef1b764ca0501f262f8f523/internal/licenses/licenses.go#L338
 // which unfortunately is not exported. But fortunately is under BSD-style license.
 
-var (
-	FileNames = []string{
+func FileNames() []string {
+	return []string{
 		"COPYING",
 		"COPYING.md",
 		"COPYING.markdown",
@@ -48,6 +46,4 @@ var (
 		"UNLICENSE",
 		"UNLICENCE",
 	}
-
-	FileNameSet = internal.NewStringSet(FileNames...)
-)
+}

@@ -18,6 +18,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/storage/memory"
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
@@ -31,6 +32,7 @@ type goLicenses struct {
 	opts                  GoCatalogerOpts
 	localModCacheResolver file.WritableResolver
 	progress              *monitor.CatalogerTask
+	licenseFileNames      *strset.Set
 }
 
 func newGoLicenses(opts GoCatalogerOpts) goLicenses {
@@ -42,6 +44,7 @@ func newGoLicenses(opts GoCatalogerOpts) goLicenses {
 			RemoveOnCompletion: true,
 			Title:              "Downloading go mod",
 		},
+		licenseFileNames: strset.New(licenses.FileNames()...),
 	}
 }
 
@@ -77,7 +80,7 @@ func modCacheResolver(modCacheDir string) file.WritableResolver {
 }
 
 func (c *goLicenses) getLicenses(resolver file.Resolver, moduleName, moduleVersion string) (licenses []pkg.License, err error) {
-	licenses, err = findLicenses(resolver,
+	licenses, err = c.findLicenses(resolver,
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
 	if err != nil || len(licenses) > 0 {
@@ -102,7 +105,7 @@ func (c *goLicenses) getLicensesFromLocal(moduleName, moduleVersion string) ([]p
 
 	// if we're running against a directory on the filesystem, it may not include the
 	// user's homedir / GOPATH, so we defer to using the localModCacheResolver
-	return findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
+	return c.findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
 }
 
 func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]pkg.License, error) {
@@ -139,7 +142,37 @@ func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]
 		log.Tracef("remote proxy walk failed for: %s", moduleName)
 	}
 
-	return findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
+	return c.findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
+}
+
+func (c *goLicenses) findLicenses(resolver file.Resolver, globMatch string) (out []pkg.License, err error) {
+	out = make([]pkg.License, 0)
+	if resolver == nil {
+		return
+	}
+
+	locations, err := resolver.FilesByGlob(globMatch)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, l := range locations {
+		fileName := path.Base(l.RealPath)
+		if c.licenseFileNames.Has(fileName) {
+			contents, err := resolver.FileContentsByLocation(l)
+			if err != nil {
+				return nil, err
+			}
+			parsed, err := licenses.Parse(contents, l)
+			if err != nil {
+				return nil, err
+			}
+
+			out = append(out, parsed...)
+		}
+	}
+
+	return
 }
 
 func moduleDir(moduleName, moduleVersion string) string {
@@ -155,36 +188,6 @@ func requireCollection(licenses []pkg.License) []pkg.License {
 		return make([]pkg.License, 0)
 	}
 	return licenses
-}
-
-func findLicenses(resolver file.Resolver, globMatch string) (out []pkg.License, err error) {
-	out = make([]pkg.License, 0)
-	if resolver == nil {
-		return
-	}
-
-	locations, err := resolver.FilesByGlob(globMatch)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, l := range locations {
-		fileName := path.Base(l.RealPath)
-		if licenses.FileNameSet.Contains(fileName) {
-			contents, err := resolver.FileContentsByLocation(l)
-			if err != nil {
-				return nil, err
-			}
-			parsed, err := licenses.Parse(contents, l)
-			if err != nil {
-				return nil, err
-			}
-
-			out = append(out, parsed...)
-		}
-	}
-
-	return
 }
 
 var capReplacer = regexp.MustCompile("[A-Z]")

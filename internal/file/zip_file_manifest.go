@@ -6,7 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/anchore/syft/internal"
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/internal/log"
 )
 
@@ -40,7 +41,7 @@ func (z ZipFileManifest) Add(entry string, info os.FileInfo) {
 
 // GlobMatch returns the path keys that match the given value(s).
 func (z ZipFileManifest) GlobMatch(patterns ...string) []string {
-	uniqueMatches := internal.NewStringSet()
+	uniqueMatches := strset.New()
 
 	for _, pattern := range patterns {
 		for entry := range z {
@@ -54,7 +55,7 @@ func (z ZipFileManifest) GlobMatch(patterns ...string) []string {
 		}
 	}
 
-	results := uniqueMatches.ToSlice()
+	results := uniqueMatches.List()
 	sort.Strings(results)
 
 	return results
