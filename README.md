@@ -54,6 +54,7 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 - Ruby (gem)
 - Rust (cargo.lock)
 - Swift (cocoapods, swift-package-manager)
+- Wordpress plugins
 
 ## Installation
 
