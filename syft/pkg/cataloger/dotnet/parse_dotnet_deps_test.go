@@ -248,6 +248,30 @@ func TestParseDotnetDeps(t *testing.T) {
 		rootPkg,
 	}
 
+	// ┌── (✓ = is represented in the test)
+	// ↓
+	//
+	// ✓ TestLibrary/1.0.0 (project)
+	// ✓  ├── [a] Microsoft.Extensions.DependencyInjection/6.0.0                     [file version: 6.0.21.52210]
+	// ✓  │    ├── [b] Microsoft.Extensions.DependencyInjection.Abstractions/6.0.0   [file version: 6.0.21.52210]
+	// ✓  │    └── [c!] System.Runtime.CompilerServices.Unsafe/6.0.0                 [NO TARGET INFO]
+	// ✓  ├── Microsoft.Extensions.Logging/6.0.0                                     [file version: 6.0.21.52210]
+	// ✓  │    ├── Microsoft.Extensions.DependencyInjection/6.0.0                    ...to [a]
+	// ✓  │    ├── Microsoft.Extensions.DependencyInjection.Abstractions/6.0.0       ...to [b]
+	// ✓  │    ├── Microsoft.Extensions.Logging.Abstractions/6.0.0                   [file version: 6.0.21.52210]
+	// ✓  │    ├── Microsoft.Extensions.Options/6.0.0                                [file version: 6.0.21.52210]
+	// ✓  │    │    ├── Microsoft.Extensions.DependencyInjection.Abstractions/6.0.0  ...to [b]
+	// ✓  │    │    └── Microsoft.Extensions.Primitives/6.0.0                        [file version: 6.0.21.52210]
+	// ✓  │    │         └── System.Runtime.CompilerServices.Unsafe/6.0.0            ...to [c!]
+	// ✓  │    └── System.Diagnostics.DiagnosticSource/6.0.0                         [NO RUNTIME INFO]
+	// ✓  │         └── System.Runtime.CompilerServices.Unsafe/6.0.0                 ...to [c!]
+	// ✓  ├── Newtonsoft.Json/13.0.1                                                 [file version: 13.0.1.25517]
+	// ✓  ├── [d] Serilog/2.10.0                                                     [file version: 2.10.0.0]
+	// ✓  ├── Serilog.Sinks.Console/4.0.1                                            [file version: 4.0.1.0]
+	// ✓  │    └── Serilog/2.10.0                                                    ...to [d]
+	// ✓  └── [e!] TestCommon/1.0.0                                                  [NOT SERVICEABLE / NO SHA]
+	// ✓       └── AWSSDK.Core/3.7.10.6                                              [file version: 3.7.10.6]
+
 	expectedRelationships := []artifact.Relationship{
 		{
 			From: awssdkcore,
