@@ -109,27 +109,71 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 }
 
 func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
-	var name string
-	switch {
-	case filenameObj.name != "":
-		name = filenameObj.name
-	case manifest.Main["Name"] != "":
-		// Manifest original spec...
-		name = manifest.Main["Name"]
-	case manifest.Main["Bundle-Name"] != "":
-		// BND tooling...
-		name = manifest.Main["Bundle-Name"]
-	case manifest.Main["Short-Name"] != "":
-		// Jenkins...
-		name = manifest.Main["Short-Name"]
-	case manifest.Main["Extension-Name"] != "":
-		// Jenkins...
-		name = manifest.Main["Extension-Name"]
-	case manifest.Main["Implementation-Title"] != "":
-		// last ditch effort...
-		name = manifest.Main["Implementation-Title"]
+	// special case: from https://svn.apache.org/repos/asf/felix/releases/maven-bundle-plugin-1.2.0/doc/maven-bundle-plugin-bnd.html
+	// "<Bundle-SymbolicName> is assumed to be "${groupId}.${artifactId}"."
+	//
+	// documentation from https://felix.apache.org/documentation/subprojects/apache-felix-maven-bundle-plugin-bnd.html
+	// agrees this is the default behavior:
+	//
+	// - [1] if artifact.getFile is not null and the jar contains a OSGi Manifest with Bundle-SymbolicName property then that value is returned
+	//
+	// - [2] if groupId has only one section (no dots) and artifact.getFile is not null then the first package name with classes
+	//   is returned. eg. commons-logging:commons-logging -> org.apache.commons.logging
+	//
+	// - [3] if artifactId is equal to last section of groupId then groupId is returned. eg. org.apache.maven:maven -> org.apache.maven
+	//
+	// - [4] if artifactId starts with last section of groupId that portion is removed. eg. org.apache.maven:maven-core -> org.apache.maven.core
+	//   The computed symbolic name is also stored in the $(maven-symbolicname) property in case you want to add attributes or directives to it.
+	//
+	if manifest != nil {
+		if strings.Contains(manifest.Main["Created-By"], "Apache Maven Bundle Plugin") {
+			if v := manifest.Main["Bundle-SymbolicName"]; v != "" {
+				// the problem with this approach is that we don't have a strong indication of the artifactId
+				// not having a "." in it. However, by convention it is unlikely that an artifactId would have a ".".
+				fields := strings.Split(v, ".")
+
+				// grab the last field, this is the artifactId. Note: because of [3] we do not know if this value is
+				// correct. That is, a group id of "commons-logging" may have caused BND to swap out the reference to
+				// "org.apache.commons.logging", which means we'd interpret this as an artifact id of "logging",
+				// which is not correct.
+				// [correct]         https://mvnrepository.com/artifact/commons-logging/commons-logging
+				// [still incorrect] https://mvnrepository.com/artifact/org.apache.commons.logging/org.apache.commons.logging
+				return fields[len(fields)-1]
+			}
+		}
 	}
-	return name
+
+	// the filename tends to be the next-best reference for the package name
+	if filenameObj.name != "" {
+		if strings.Contains(filenameObj.name, ".") {
+			// special case: this *might* be a group id + artifact id. By convention artifact ids do not have "." in them.
+			fields := strings.Split(filenameObj.name, ".")
+			return fields[len(fields)-1]
+		}
+		return filenameObj.name
+	}
+
+	// remaining fields in the manifest is a bit of a free-for-all depending on the build tooling used and package maintainer preferences
+	if manifest != nil {
+		switch {
+		case manifest.Main["Name"] != "":
+			// Manifest original spec...
+			return manifest.Main["Name"]
+		case manifest.Main["Bundle-Name"] != "":
+			// BND tooling... TODO: this does not seem accurate (I don't see a reference in the BND tooling docs for this)
+			return manifest.Main["Bundle-Name"]
+		case manifest.Main["Short-Name"] != "":
+			// Jenkins...
+			return manifest.Main["Short-Name"]
+		case manifest.Main["Extension-Name"] != "":
+			// Jenkins...
+			return manifest.Main["Extension-Name"]
+		case manifest.Main["Implementation-Title"] != "":
+			// last ditch effort...
+			return manifest.Main["Implementation-Title"]
+		}
+	}
+	return ""
 }
 
 func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {

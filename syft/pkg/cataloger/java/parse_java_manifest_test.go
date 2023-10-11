@@ -160,6 +160,44 @@ func TestSelectName(t *testing.T) {
 			archive:  newJavaArchiveFilename("/something/omg.jar"),
 			expected: "omg",
 		},
+		{
+			desc: "Use the artifact ID baked by the Apache Maven Bundle Plugin",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Created-By":           "Apache Maven Bundle Plugin",
+					"Bundle-SymbolicName":  "com.atlassian.gadgets.atlassian-gadgets-api",
+					"Name":                 "foo",
+					"Implementation-Title": "maven-wrapper",
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/omg.jar"),
+			expected: "atlassian-gadgets-api",
+		},
+		{
+			// example: pkg:maven/org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-beans@5.3.26_1
+			desc: "Apache Maven Bundle Plugin might bake a version in the created-by field",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Created-By":           "Apache Maven Bundle Plugin 5.1.6",
+					"Bundle-SymbolicName":  "com.atlassian.gadgets.atlassian-gadgets-api",
+					"Name":                 "foo",
+					"Implementation-Title": "maven-wrapper",
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/omg.jar"),
+			expected: "atlassian-gadgets-api",
+		},
+		{
+			desc: "Filename looks like a groupid + artifact id",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Name":                 "foo",
+					"Implementation-Title": "maven-wrapper",
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/com.atlassian.gadgets.atlassian-gadgets-api.jar"),
+			expected: "atlassian-gadgets-api",
+		},
 	}
 
 	for _, test := range tests {

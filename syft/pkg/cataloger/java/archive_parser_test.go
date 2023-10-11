@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gookit/color"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal"
@@ -1001,6 +1002,33 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			}
 
 			pkgtest.AssertPackagesEqual(t, test.expectedParent, *test.parent)
+		})
+	}
+}
+
+func Test_artifactIDMatchesFilename(t *testing.T) {
+	tests := []struct {
+		name       string
+		artifactID string
+		fileName   string // without version or extension
+		want       bool
+	}{
+		{
+			name:       "artifact id within file name",
+			artifactID: "atlassian-extras-api",
+			fileName:   "com.atlassian.extras_atlassian-extras-api",
+			want:       true,
+		},
+		{
+			name:       "file name within artifact id",
+			artifactID: "atlassian-extras-api-something",
+			fileName:   "atlassian-extras-api",
+			want:       true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, artifactIDMatchesFilename(tt.artifactID, tt.fileName))
 		})
 	}
 }
