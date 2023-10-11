@@ -20,7 +20,7 @@ FilesAnalyzed: false
 ##### Package: package-2
 
 PackageName: package-2
-SPDXID: SPDXRef-Package-deb-package-2-db4abfe497c180d3
+SPDXID: SPDXRef-Package-deb-package-2-ad5013466727018f
 PackageVersion: 2.0.1
 PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
@@ -50,6 +50,6 @@ ExternalRef: PACKAGE-MANAGER purl a-purl-2
 ##### Relationships
 
 Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-python-package-1-9265397e5e15168a
-Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-deb-package-2-db4abfe497c180d3
+Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-deb-package-2-ad5013466727018f
 Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Directory-some-path
 

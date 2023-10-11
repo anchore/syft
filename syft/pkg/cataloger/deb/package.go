@@ -36,13 +36,15 @@ func newDpkgPackage(d pkg.DpkgMetadata, dbLocation file.Location, resolver file.
 		Metadata:     d,
 	}
 
-	// the current entry only has what may have been listed in the status file, however, there are additional
-	// files that are listed in multiple other locations. We should retrieve them all and merge the file lists
-	// together.
-	mergeFileListing(resolver, dbLocation, &p)
+	if resolver != nil {
+		// the current entry only has what may have been listed in the status file, however, there are additional
+		// files that are listed in multiple other locations. We should retrieve them all and merge the file lists
+		// together.
+		mergeFileListing(resolver, dbLocation, &p)
 
-	// fetch additional data from the copyright file to derive the license information
-	addLicenses(resolver, dbLocation, &p)
+		// fetch additional data from the copyright file to derive the license information
+		addLicenses(resolver, dbLocation, &p)
+	}
 
 	p.SetID()
 
