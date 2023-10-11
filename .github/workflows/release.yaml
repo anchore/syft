@@ -158,14 +158,3 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
         if: ${{ success() }}
-  
-  homebrew:
-    needs: [release]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Update Homebrew forumula
-        uses: dawidd6/action-homebrew-bump-formula@d3667e5ae14df19579e4414897498e3e88f2f458 # v3.10.0
-        with:
-          token: ${{ secrets.HOMEBREW_TOKEN }}
-          org: anchore
-          formula: syft
