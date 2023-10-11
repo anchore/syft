@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -177,6 +178,31 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		return nil, err
 	}
 
+	licenses, name, version, err := j.parseLicenses(manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pkg.Package{
+		// TODO: maybe select name should just have a pom properties in it?
+		Name:     name,
+		Version:  version,
+		Language: pkg.Java,
+		Licenses: pkg.NewLicenseSet(licenses...),
+		Locations: file.NewLocationSet(
+			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
+		Type:         j.fileInfo.pkgType(),
+		MetadataType: pkg.JavaMetadataType,
+		Metadata: pkg.JavaMetadata{
+			VirtualPath:    j.location.AccessPath(),
+			Manifest:       manifest,
+			ArchiveDigests: digests,
+		},
+	}, nil
+}
+
+func (j *archiveParser) parseLicenses(manifest *pkg.JavaManifest) ([]pkg.License, string, string, error) {
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
 	licenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
@@ -201,23 +227,17 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		licenses = append(licenses, pomLicenses...)
 	}
 
-	return &pkg.Package{
-		// TODO: maybe select name should just have a pom properties in it?
-		Name:     name,
-		Version:  version,
-		Language: pkg.Java,
-		Licenses: pkg.NewLicenseSet(licenses...),
-		Locations: file.NewLocationSet(
-			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-		),
-		Type:         j.fileInfo.pkgType(),
-		MetadataType: pkg.JavaMetadataType,
-		Metadata: pkg.JavaMetadata{
-			VirtualPath:    j.location.AccessPath(),
-			Manifest:       manifest,
-			ArchiveDigests: digests,
-		},
-	}, nil
+	if len(licenses) == 0 {
+		fileLicenses, err := j.getLicenseFromFileInArchive()
+		if err != nil {
+			return nil, "", "", err
+		}
+		if fileLicenses != nil {
+			licenses = append(licenses, fileLicenses...)
+		}
+	}
+
+	return licenses, name, version, nil
 }
 
 type parsedPomProject struct {
@@ -308,6 +328,38 @@ func getDigestsFromArchive(archivePath string) ([]file.Digest, error) {
 	}
 
 	return digests, nil
+}
+
+func (j *archiveParser) getLicenseFromFileInArchive() ([]pkg.License, error) {
+	var fileLicenses []pkg.License
+	for _, filename := range licenses.FileNames {
+		licenseMatches := j.fileManifest.GlobMatch("/META-INF/" + filename)
+		if len(licenseMatches) == 0 {
+			// Try the root directory if it's not in META-INF
+			licenseMatches = j.fileManifest.GlobMatch("/" + filename)
+		}
+
+		if len(licenseMatches) > 0 {
+			contents, err := intFile.ContentsFromZip(j.archivePath, licenseMatches...)
+			if err != nil {
+				return nil, fmt.Errorf("unable to extract java license (%s): %w", j.location, err)
+			}
+
+			for _, licenseMatch := range licenseMatches {
+				licenseContents := contents[licenseMatch]
+				parsed, err := licenses.Parse(strings.NewReader(licenseContents), j.location)
+				if err != nil {
+					return nil, err
+				}
+
+				if len(parsed) > 0 {
+					fileLicenses = append(fileLicenses, parsed...)
+				}
+			}
+		}
+	}
+
+	return fileLicenses, nil
 }
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
