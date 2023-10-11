@@ -76,9 +76,9 @@ var expectedPURLs = map[string]string{
 	"commons-jexl@1.1-hudson-20090508":                "pkg:maven/org.jvnet.hudson/commons-jexl@1.1-hudson-20090508",
 	"commons-lang@2.4":                                "pkg:maven/commons-lang/commons-lang@2.4",
 	"commons-lang@2.5":                                "pkg:maven/commons-lang/commons-lang@2.5",
-	"commons-logging@1.0.4":                           "pkg:maven/org.apache.commons.logging/commons-logging@1.0.4",
-	"commons-logging@1.1":                             "pkg:maven/org.apache.commons.logging/commons-logging@1.1",
-	"commons-logging@1.1.1":                           "pkg:maven/commons-logging/commons-logging@1.1.1",
+	"commons-logging@1.0.4":                           "pkg:maven/commons-logging/commons-logging@1.0.4", // see https://mvnrepository.com/artifact/commons-logging/commons-logging/1.0.4
+	"commons-logging@1.1":                             "pkg:maven/commons-logging/commons-logging@1.1",   // see https://mvnrepository.com/artifact/commons-logging/commons-logging/1.1
+	"commons-logging@1.1.1":                           "pkg:maven/commons-logging/commons-logging@1.1.1", // see https://mvnrepository.com/artifact/commons-logging/commons-logging/1.1.1
 	"commons-pool@1.3":                                "pkg:maven/commons-pool/commons-pool@1.3",
 	"crypto-util@1.0":                                 "pkg:maven/org.jvnet.hudson/crypto-util@1.0",
 	"cvs@1.2":                                         "pkg:maven/org.jvnet.hudson.plugins/cvs@1.2",

@@ -96,6 +96,8 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
 	definedPkgs.Remove(string(pkg.SwiftPkg))
+	definedPkgs.Remove(string(pkg.GithubActionPkg))
+	definedPkgs.Remove(string(pkg.GithubActionWorkflowPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)

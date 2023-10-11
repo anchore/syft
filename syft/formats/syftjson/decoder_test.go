@@ -9,8 +9,17 @@ import (
 
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/internal/testutils"
+	"github.com/anchore/syft/syft/linux"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestEncodeDecodeCycle(t *testing.T) {
@@ -85,4 +94,146 @@ func TestOutOfDateParser(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func Test_encodeDecodeFileMetadata(t *testing.T) {
+	p := pkg.Package{
+		Name:    "pkg",
+		Version: "version",
+		FoundBy: "something",
+		Locations: file.NewLocationSet(file.Location{
+			LocationData: file.LocationData{
+				Coordinates: file.Coordinates{
+					RealPath:     "/somewhere",
+					FileSystemID: "id",
+				},
+			},
+			LocationMetadata: file.LocationMetadata{
+				Annotations: map[string]string{
+					"key": "value",
+				},
+			},
+		}),
+		Licenses: pkg.NewLicenseSet(pkg.License{
+			Value:          "MIT",
+			SPDXExpression: "MIT",
+			Type:           "MIT",
+			URLs:           internal.NewStringSet("https://example.org/license"),
+			Locations:      file.LocationSet{},
+		}),
+		Language: "language",
+		Type:     "type",
+		CPEs: []cpe.CPE{
+			{
+				Part:    "a",
+				Vendor:  "vendor",
+				Product: "product",
+				Version: "version",
+				Update:  "update",
+			},
+		},
+		PURL:         "pkg:generic/pkg@version",
+		MetadataType: "",
+		Metadata:     nil,
+	}
+	p.SetID()
+
+	c := file.Coordinates{
+		RealPath:     "some-file",
+		FileSystemID: "some-fs-id",
+	}
+
+	s := sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			Packages: pkg.NewCollection(p),
+			FileMetadata: map[file.Coordinates]file.Metadata{
+				c: {
+					FileInfo: stereoscopeFile.ManualInfo{
+						NameValue: c.RealPath,
+						ModeValue: 0644,
+						SizeValue: 7,
+					},
+					Path:     c.RealPath,
+					Type:     stereoscopeFile.TypeRegular,
+					UserID:   1,
+					GroupID:  2,
+					MIMEType: "text/plain",
+				},
+			},
+			FileDigests: map[file.Coordinates][]file.Digest{
+				c: {
+					{
+						Algorithm: "sha1",
+						Value:     "d34db33f",
+					},
+				},
+			},
+			FileContents: map[file.Coordinates]string{
+				c: "some contents",
+			},
+			FileLicenses: map[file.Coordinates][]file.License{
+				c: {
+					{
+						Value:          "MIT",
+						SPDXExpression: "MIT",
+						Type:           "MIT",
+						LicenseEvidence: &file.LicenseEvidence{
+							Confidence: 1,
+							Offset:     2,
+							Extent:     3,
+						},
+					},
+				},
+			},
+			LinuxDistribution: &linux.Release{
+				PrettyName:       "some os",
+				Name:             "os",
+				ID:               "os-id",
+				IDLike:           []string{"os"},
+				Version:          "version",
+				VersionID:        "version",
+				VersionCodename:  "codename",
+				BuildID:          "build-id",
+				ImageID:          "image-id",
+				ImageVersion:     "image-version",
+				Variant:          "variant",
+				VariantID:        "variant-id",
+				HomeURL:          "https://example.org/os",
+				SupportURL:       "https://example.org/os/support",
+				BugReportURL:     "https://example.org/os/bugs",
+				PrivacyPolicyURL: "https://example.org/os/privacy",
+				CPEName:          "os-cpe",
+				SupportEnd:       "now",
+			},
+		},
+		Relationships: nil,
+		Source: source.Description{
+			ID:      "some-id",
+			Name:    "some-name",
+			Version: "some-version",
+			Metadata: source.FileSourceMetadata{
+				Path: "/some-file-source-path",
+				Digests: []file.Digest{
+					{
+						Algorithm: "sha1",
+						Value:     "d34db33f",
+					},
+				},
+				MIMEType: "file/zip",
+			},
+		},
+		Descriptor: sbom.Descriptor{
+			Name:    "syft",
+			Version: "this-version",
+		},
+	}
+
+	buf := &bytes.Buffer{}
+	err := encoder(buf, s)
+	require.NoError(t, err)
+
+	got, err := decoder(buf)
+	require.NoError(t, err)
+
+	require.Equal(t, s, *got)
 }

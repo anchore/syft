@@ -249,6 +249,8 @@ var dirOnlyTestCases = []testCase{
 			"Serilog.Sinks.Console":                                 "4.0.1",
 			"System.Diagnostics.DiagnosticSource":                   "6.0.0",
 			"System.Runtime.CompilerServices.Unsafe":                "6.0.0",
+			"TestCommon":                                            "1.0.0",
+			"TestLibrary":                                           "1.0.0",
 		},
 	},
 	{
@@ -368,6 +370,20 @@ var dirOnlyTestCases = []testCase{
 			"swift-atomics":          "1.1.0",
 			"swift-collections":      "1.0.4",
 			"swift-numerics":         "1.0.2",
+		},
+	},
+	{
+		name:    "find github action packages (from usage in workflow files and composite actions)",
+		pkgType: pkg.GithubActionPkg,
+		pkgInfo: map[string]string{
+			"actions/checkout": "v4",
+		},
+	},
+	{
+		name:    "find github shared workflow calls (from usage in workflow files)",
+		pkgType: pkg.GithubActionWorkflowPkg,
+		pkgInfo: map[string]string{
+			"octo-org/this-repo/.github/workflows/workflow-1.yml": "172239021f7ba04fe7327647b213799853a9eb89",
 		},
 	},
 }

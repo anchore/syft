@@ -57,7 +57,7 @@ func redactor(values ...string) testutils.Redactor {
 				`sha256:[A-Za-z0-9]{64}`: `sha256:redacted`,
 
 				// BOM refs
-				`bom-ref="[a-zA-Z0-9\-:]+"`: `bom-ref:redacted`,
+				`bom-ref="[a-zA-Z0-9\-:]+"`: `bom-ref="redacted"`,
 			},
 		)
 }

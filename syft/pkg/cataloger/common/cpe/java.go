@@ -1,6 +1,7 @@
 package cpe
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
@@ -287,6 +288,7 @@ func GetManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (grou
 			}
 		}
 	}
+	sort.Strings(groupIDs)
 
 	return groupIDs
 }

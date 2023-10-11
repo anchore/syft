@@ -12,7 +12,16 @@ func NewRelationships(catalog *Collection) []artifact.Relationship {
 	return rels
 }
 
-func RelationshipLess(i, j artifact.Relationship) bool {
+// SortRelationships takes a set of package-to-package relationships and sorts them in a stable order by name and version.
+// Note: this does not consider package-to-other, other-to-package, or other-to-other relationships.
+// TODO: ideally this should be replaced with a more type-agnostic sort function that resides in the artifact package.
+func SortRelationships(rels []artifact.Relationship) {
+	sort.SliceStable(rels, func(i, j int) bool {
+		return relationshipLess(rels[i], rels[j])
+	})
+}
+
+func relationshipLess(i, j artifact.Relationship) bool {
 	iFrom, ok1 := i.From.(Package)
 	iTo, ok2 := i.To.(Package)
 	jFrom, ok3 := j.From.(Package)
@@ -35,10 +44,4 @@ func RelationshipLess(i, j artifact.Relationship) bool {
 		return iTo.Version < jTo.Version
 	}
 	return i.Type < j.Type
-}
-
-func SortRelationships(rels []artifact.Relationship) {
-	sort.SliceStable(rels, func(i, j int) bool {
-		return RelationshipLess(rels[i], rels[j])
-	})
 }

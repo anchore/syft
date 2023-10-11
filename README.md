@@ -139,6 +139,7 @@ Sources can be explicitly provided with a scheme:
 ```
 docker:yourrepo/yourimage:tag            use images from the Docker daemon
 podman:yourrepo/yourimage:tag            use images from the Podman daemon
+containerd:yourrepo/yourimage:tag        use images from the Containerd daemon
 docker-archive:path/to/yourimage.tar     use a tarball from disk for archives created from "docker save"
 oci-archive:path/to/yourimage.tar        use a tarball from disk for OCI archives (from Skopeo or otherwise)
 oci-dir:path/to/yourimage                read directly from a path on disk for OCI layout directories (from Skopeo or otherwise)
@@ -389,11 +390,11 @@ syft convert <ORIGINAL-SBOM-FILE> -o <NEW-SBOM-FORMAT>[=<NEW-SBOM-FILE>]
 This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, whereas files and relationships, as well as other information Syft doesn't support, are more likely to be lost.
 
 We support formats with wide community usage AND good encode/decode support by Syft. The supported formats are:
-- Syft JSON
-- SPDX 2.2 JSON
-- SPDX 2.2 tag-value
-- CycloneDX 1.4 JSON
-- CycloneDX 1.4 XML
+- Syft JSON (```-o syft-json```)
+- SPDX 2.2 JSON (```-o spdx-json```)
+- SPDX 2.2 tag-value (```-o spdx-tag-value```)
+- CycloneDX 1.4 JSON (```-o cyclonedx-json```)
+- CycloneDX 1.4 XML (```-o cyclonedx-xml```)
 
 Conversion example:
 ```sh
@@ -671,7 +672,7 @@ source:
     # the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
     digests: ["sha256"]
 
-# options when pulling directly from a registry via the "registry:" scheme
+# options when pulling directly from a registry via the "registry:" or "containerd:" scheme
 registry:
   # skip TLS verification when communicating with the registry
   # SYFT_REGISTRY_INSECURE_SKIP_TLS_VERIFY env var

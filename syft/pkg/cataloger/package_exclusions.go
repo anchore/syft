@@ -1,7 +1,7 @@
 package cataloger
 
 import (
-	"golang.org/x/exp/slices"
+	"slices"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"

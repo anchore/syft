@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/sanity-io/litter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -280,6 +281,23 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	}
 }
 
+var relationshipStringer = litter.Options{
+	Compact:           true,
+	StripPackageNames: false,
+	HidePrivateFields: true, // we want to ignore package IDs
+	HideZeroValues:    true,
+	StrictGo:          true,
+	//FieldExclusions: ...  // these can be added for future values that need to be ignored
+	//FieldFilter: ...
+}
+
+func relationshipLess(x, y artifact.Relationship) bool {
+	// we just need a stable sort, the ordering does not need to be sensible
+	xStr := relationshipStringer.Sdump(x)
+	yStr := relationshipStringer.Sdump(y)
+	return xStr < yStr
+}
+
 // nolint:funlen
 func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 	t.Helper()
@@ -288,6 +306,7 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
 		cmpopts.IgnoreFields(pkg.Package{}, "FoundBy"),
 		cmpopts.SortSlices(pkg.Less),
+		cmpopts.SortSlices(relationshipLess),
 		cmp.Comparer(
 			func(x, y file.LocationSet) bool {
 				xs := x.ToSlice()
@@ -339,12 +358,9 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 		opts = append(opts, p.compareOptions...)
 		opts = append(opts, cmp.Reporter(&r))
 
-		for _, pkg := range pkgs {
-			t.Logf("pkg: %+v", pkg)
-		}
-		for _, expectedPkg := range p.expectedPkgs {
-			t.Logf("expectedPkg: %+v", expectedPkg)
-		}
+		// order should not matter
+		pkg.Sort(p.expectedPkgs)
+		pkg.Sort(pkgs)
 
 		if diff := cmp.Diff(p.expectedPkgs, pkgs, opts...); diff != "" {
 			t.Log("Specific Differences:\n" + r.String())
@@ -357,6 +373,10 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 
 		opts = append(opts, p.compareOptions...)
 		opts = append(opts, cmp.Reporter(&r))
+
+		// order should not matter
+		pkg.SortRelationships(p.expectedRelationships)
+		pkg.SortRelationships(relationships)
 
 		if diff := cmp.Diff(p.expectedRelationships, relationships, opts...); diff != "" {
 			t.Log("Specific Differences:\n" + r.String())

@@ -39,7 +39,7 @@
   },
   {
    "name": "package-2",
-   "SPDXID": "SPDXRef-Package-deb-package-2-db4abfe497c180d3",
+   "SPDXID": "SPDXRef-Package-deb-package-2-ad5013466727018f",
    "versionInfo": "2.0.1",
    "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
@@ -78,7 +78,7 @@
   },
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Directory-some-path",
-   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-db4abfe497c180d3",
+   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-ad5013466727018f",
    "relationshipType": "CONTAINS"
   },
   {
