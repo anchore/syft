@@ -38,6 +38,8 @@ const (
 	Rpkg                    Type = "R-package"
 	RpmPkg                  Type = "rpm"
 	RustPkg                 Type = "rust-crate"
+	StaticBinaryPkg         Type = "static-binary"
+	StaticLibraryPkg        Type = "static-library"
 	SwiftPkg                Type = "swift"
 )
 
@@ -70,6 +72,8 @@ var AllPkgs = []Type{
 	Rpkg,
 	RpmPkg,
 	RustPkg,
+	StaticBinaryPkg,
+	StaticLibraryPkg,
 	SwiftPkg,
 }
 
@@ -107,7 +111,7 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeMaven
 	case LinuxKernelPkg:
 		return "generic/linux-kernel"
-	case LinuxKernelModulePkg:
+	case LinuxKernelModulePkg, StaticBinaryPkg, StaticLibraryPkg:
 		return packageurl.TypeGeneric
 	case PhpComposerPkg:
 		return packageurl.TypeComposer

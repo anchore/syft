@@ -26,6 +26,7 @@ const (
 	R               Language = "R"
 	Ruby            Language = "ruby"
 	Rust            Language = "rust"
+	StaticBinary    Language = "staticbinary"
 	Swift           Language = "swift"
 )
 
@@ -45,6 +46,7 @@ var AllLanguages = []Language{
 	R,
 	Ruby,
 	Rust,
+	StaticBinary,
 	Swift,
 }
 
@@ -82,6 +84,8 @@ func LanguageByName(name string) Language {
 		return Dart
 	case packageurl.TypeDotnet:
 		return Dotnet
+	case packageurl.TypeGeneric:
+		return StaticBinary
 	case packageurl.TypeCocoapods, packageurl.TypeSwift, string(CocoapodsPkg), string(SwiftPkg):
 		return Swift
 	case packageurl.TypeConan, string(CPP):

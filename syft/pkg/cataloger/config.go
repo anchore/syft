@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
+	"github.com/anchore/syft/syft/pkg/cataloger/static_binary"
 )
 
 // TODO: these field naming vs helper function naming schemes are inconsistent.
@@ -16,7 +17,8 @@ type Config struct {
 	LinuxKernel                     kernel.LinuxKernelCatalogerConfig
 	Python                          python.CatalogerConfig
 	Java                            java.ArchiveCatalogerConfig
-	Javascript                      javascript.CatalogerConfig
+	Javascript                      javascript.CatalogerConfig	
+	StaticBinary                    static_binary.StaticBinaryCatalogerOpts
 	Catalogers                      []string
 	Parallelism                     int
 	ExcludeBinaryOverlapByOwnership bool
@@ -30,6 +32,7 @@ func DefaultConfig() Config {
 		Python:                          python.DefaultCatalogerConfig(),
 		Java:                            java.DefaultArchiveCatalogerConfig(),
 		Javascript:                      javascript.DefaultCatalogerConfig(),
+		StaticBinary:                    static_binary.DefaultCatalogerConfig(),
 		ExcludeBinaryOverlapByOwnership: true,
 	}
 }
