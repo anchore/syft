@@ -80,3 +80,17 @@ func TestParsePackageResolved(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parsePackageResolved, expectedPkgs, expectedRelationships)
 }
+
+func TestParsePackageResolved_empty(t *testing.T) {
+	// regression for https://github.com/anchore/syft/issues/2225
+	fixture := "test-fixtures/empty-packages.resolved"
+
+	pkgtest.TestFileParser(t, fixture, parsePackageResolved, nil, nil)
+}
+
+func TestParsePackageResolved_versionNotANumber(t *testing.T) {
+	// regression for https://github.com/anchore/syft/issues/2225
+	fixture := "test-fixtures/bad-version-packages.resolved"
+
+	pkgtest.NewCatalogTester().FromFile(t, fixture).WithError().TestParser(t, parsePackageResolved)
+}
