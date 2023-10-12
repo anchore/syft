@@ -42,6 +42,8 @@ const (
 	RDescriptionFileMetadataType         MetadataType = "RDescriptionFileMetadataType"
 	RpmMetadataType                      MetadataType = "RpmMetadata"
 	RustCargoPackageMetadataType         MetadataType = "RustCargoPackageMetadata"
+	StaticBinaryPackageMetadataType      MetadataType = "StaticBinaryPackageMetadata"
+	StaticBinaryLibraryMetadataType      MetadataType = "StaticBinaryLibraryMetadata"
 	SwiftPackageManagerMetadataType      MetadataType = "SwiftPackageManagerMetadata"
 )
 
@@ -77,6 +79,8 @@ var AllMetadataTypes = []MetadataType{
 	RebarLockMetadataType,
 	RpmMetadataType,
 	RustCargoPackageMetadataType,
+	StaticBinaryPackageMetadataType,
+	StaticBinaryLibraryMetadataType,
 	SwiftPackageManagerMetadataType,
 }
 
@@ -112,6 +116,8 @@ var MetadataTypeByName = map[MetadataType]reflect.Type{
 	RebarLockMetadataType:                reflect.TypeOf(RebarLockMetadata{}),
 	RpmMetadataType:                      reflect.TypeOf(RpmMetadata{}),
 	RustCargoPackageMetadataType:         reflect.TypeOf(CargoPackageMetadata{}),
+	StaticBinaryPackageMetadataType:      reflect.TypeOf(StaticBinaryPackageMetadata{}),
+	StaticBinaryLibraryMetadataType:      reflect.TypeOf(StaticBinaryLibraryMetadata{}),
 	SwiftPackageManagerMetadataType:      reflect.TypeOf(SwiftPackageManagerMetadata{}),
 }
 
