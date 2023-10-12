@@ -1,8 +1,9 @@
 package wordpress
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"testing"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 func Test_WordpressPlugin_Globs(t *testing.T) {

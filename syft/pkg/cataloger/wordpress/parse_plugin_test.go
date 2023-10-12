@@ -1,10 +1,11 @@
 package wordpress
 
 import (
+	"testing"
+
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"testing"
 )
 
 func TestParseWordpressPluginFiles(t *testing.T) {

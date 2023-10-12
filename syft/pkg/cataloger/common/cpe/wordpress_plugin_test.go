@@ -1,9 +1,11 @@
 package cpe
 
 import (
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
