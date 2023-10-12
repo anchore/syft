@@ -2,14 +2,15 @@ package wordpress
 
 import (
 	"fmt"
+	"io"
+	"path/filepath"
+	"regexp"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"io"
-	"path/filepath"
-	"regexp"
 )
 
 var patterns = map[string]*regexp.Regexp{

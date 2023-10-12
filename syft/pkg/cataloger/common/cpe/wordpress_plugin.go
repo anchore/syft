@@ -2,10 +2,11 @@ package cpe
 
 import (
 	"fmt"
-	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/syft/pkg"
 	"regexp"
 	"strings"
+
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/pkg"
 )
 
 var (

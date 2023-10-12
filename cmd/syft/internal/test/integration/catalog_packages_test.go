@@ -82,7 +82,6 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.SwiftPkg))
 	definedPkgs.Remove(string(pkg.GithubActionPkg))
 	definedPkgs.Remove(string(pkg.GithubActionWorkflowPkg))
-	definedPkgs.Remove(string(pkg.WordpressPluginPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -124,7 +123,6 @@ func TestPkgCoverageImage(t *testing.T) {
 				}
 				t.Fatalf("unexpected package count: %d!=%d", pkgCount, len(c.pkgInfo))
 			}
-
 		})
 	}
 
@@ -212,7 +210,6 @@ func TestPkgCoverageDirectory(t *testing.T) {
 				}
 				t.Fatalf("unexpected package count: %d!=%d", actualPkgCount, len(test.pkgInfo))
 			}
-
 		})
 	}
 
@@ -250,7 +247,6 @@ func TestPkgCoverageImage_HasEvidence(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-
 			for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
 				assert.NotEmpty(t, a.Locations.ToSlice(), "package %q has no locations (type=%q)", a.Name, a.Type)
 				for _, l := range a.Locations.ToSlice() {
@@ -260,7 +256,6 @@ func TestPkgCoverageImage_HasEvidence(t *testing.T) {
 					}
 				}
 			}
-
 		})
 	}
 
@@ -280,7 +275,6 @@ func TestPkgCoverageDirectory_HasEvidence(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-
 			for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
 				assert.NotEmpty(t, a.Locations.ToSlice(), "package %q has no locations (type=%q)", a.Name, a.Type)
 				for _, l := range a.Locations.ToSlice() {
@@ -290,7 +284,6 @@ func TestPkgCoverageDirectory_HasEvidence(t *testing.T) {
 					}
 				}
 			}
-
 		})
 	}
 
