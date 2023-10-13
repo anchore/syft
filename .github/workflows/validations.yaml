@@ -112,22 +112,49 @@ jobs:
         run: make cli
 
 
-  Acceptance-Linux:
-    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
-    name: "Acceptance tests (Linux)"
-#    needs: [Build-Snapshot-Artifacts]
+
+  Build-Snapshot-Artifacts:
+    name: "Build snapshot artifacts"
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 #v4.1.0
 
-#      - name: Download snapshot build
-#        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
-#        with:
-#          path: snapshot
-#          key: snapshot-build-${{ github.run_id }}
-
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
+        with:
+          # why have another build cache key? We don't want unit/integration/etc test build caches to replace
+          # the snapshot build cache, which includes builds for all OSs and architectures. As long as this key is
+          # unique from the build-cache-key-prefix in other CI jobs, we should be fine.
+          #
+          # note: ideally this value should match what is used in release (just to help with build times).
+          build-cache-key-prefix: "snapshot"
+          bootstrap-apt-packages: ""
+
+      - name: Build snapshot artifacts
+        run: make snapshot
+
+      # why not use actions/upload-artifact? It is very slow (3 minutes to upload ~600MB of data, vs 10 seconds with this approach).
+      # see https://github.com/actions/upload-artifact/issues/199 for more info
+      - name: Upload snapshot artifacts
+        uses: actions/cache/save@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        with:
+          path: snapshot
+          key: snapshot-build-${{ github.run_id }}
+
+
+  Acceptance-Linux:
+    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
+    name: "Acceptance tests (Linux)"
+    needs: [Build-Snapshot-Artifacts]
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 #v4.1.0
+
+      - name: Download snapshot build
+        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        with:
+          path: snapshot
+          key: snapshot-build-${{ github.run_id }}
 
       - name: Run comparison tests (Linux)
         run: make compare-linux
@@ -154,16 +181,16 @@ jobs:
   Acceptance-Mac:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Acceptance tests (Mac)"
-#    needs: [Build-Snapshot-Artifacts]
+    needs: [Build-Snapshot-Artifacts]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 #v4.1.0
 
-#      - name: Download snapshot build
-#        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
-#        with:
-#          path: snapshot
-#          key: snapshot-build-${{ github.run_id }}
+      - name: Download snapshot build
+        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        with:
+          path: snapshot
+          key: snapshot-build-${{ github.run_id }}
 
       - name: Restore docker image cache for compare testing
         id: mac-compare-testing-cache
@@ -171,9 +198,6 @@ jobs:
         with:
           path: image.tar
           key: ${{ runner.os }}-${{ hashFiles('test/compare/mac.sh') }}
-
-      - name: Bootstrap environment
-        uses: ./.github/actions/bootstrap
 
       - name: Run comparison tests (Mac)
         run: make compare-mac
