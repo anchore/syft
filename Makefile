@@ -5,7 +5,7 @@ TEMP_DIR := ./.tmp
 LINT_CMD := $(TEMP_DIR)/golangci-lint run --tests=false
 GOIMPORTS_CMD := $(TEMP_DIR)/gosimports -local github.com/anchore
 RELEASE_CMD := $(TEMP_DIR)/goreleaser release --clean
-SNAPSHOT_CMD := $(RELEASE_CMD) --skip-publish --skip-sign --snapshot
+SNAPSHOT_CMD := $(TEMP_DIR)/goreleaser build --clean --snapshot --single-target
 CHRONICLE_CMD = $(TEMP_DIR)/chronicle
 GLOW_CMD = $(TEMP_DIR)/glow
 
@@ -327,7 +327,7 @@ $(SNAPSHOT_DIR): ## Build snapshot release for the current platform
 	cat .goreleaser.yaml >> $(TEMP_DIR)/goreleaser.yaml
 
 	# build release snapshot
-	$(SNAPSHOT_CMD) --single-target --config $(TEMP_DIR)/goreleaser.yaml
+	$(SNAPSHOT_CMD) --config $(TEMP_DIR)/goreleaser.yaml
 
 
 .PHONY: changelog
