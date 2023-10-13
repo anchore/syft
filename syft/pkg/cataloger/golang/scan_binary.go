@@ -6,36 +6,82 @@ import (
 	"io"
 	"runtime/debug"
 
+	"github.com/kastenhq/goversion/version"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
+type extendedBuildInfo struct {
+	*debug.BuildInfo
+	cryptoSettings []string
+	arch           string
+}
+
 // scanFile scans file to try to report the Go and module versions.
-func scanFile(reader unionreader.UnionReader, filename string) ([]*debug.BuildInfo, []string) {
+func scanFile(reader unionreader.UnionReader, filename string) []*extendedBuildInfo {
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
 	readers, err := unionreader.GetReaders(reader)
 	if err != nil {
 		log.WithFields("error", err).Warnf("failed to open a golang binary")
-		return nil, nil
+		return nil
 	}
 
-	var builds []*debug.BuildInfo
+	var builds []*extendedBuildInfo
 	for _, r := range readers {
 		bi, err := getBuildInfo(r)
 		if err != nil {
 			log.WithFields("file", filename, "error", err).Trace("unable to read golang buildinfo")
 			continue
 		}
+		// it's possible the reader just isn't a go binary, in which case just skip it
 		if bi == nil {
 			continue
 		}
-		builds = append(builds, bi)
+
+		v, err := getCryptoInformation(r)
+		if err != nil {
+			log.WithFields("file", filename, "error", err).Trace("unable to read golang version info")
+			// don't skip this build info.
+			// we can still catalog packages, even if we can't get the crypto information
+		}
+		arch := getGOARCH(bi.Settings)
+		if arch == "" {
+			arch, err = getGOARCHFromBin(r)
+			if err != nil {
+				log.WithFields("file", filename, "error", err).Trace("unable to read golang arch info")
+				// don't skip this build info.
+				// we can still catalog packages, even if we can't get the arch information
+			}
+		}
+
+		builds = append(builds, &extendedBuildInfo{bi, v, arch})
+	}
+	return builds
+}
+
+func getCryptoInformation(reader io.ReaderAt) ([]string, error) {
+	v, err := version.ReadExeFromReader(reader)
+	if err != nil {
+		return nil, err
 	}
 
-	archs := getArchs(readers, builds)
+	return getCryptoSettingsFromVersion(v), nil
+}
 
-	return builds, archs
+func getCryptoSettingsFromVersion(v version.Version) []string {
+	cryptoSettings := []string{}
+	if v.StandardCrypto {
+		cryptoSettings = append(cryptoSettings, "standard-crypto")
+	}
+	if v.BoringCrypto {
+		cryptoSettings = append(cryptoSettings, "boring-crypto")
+	}
+	if v.FIPSOnly {
+		cryptoSettings = append(cryptoSettings, "crypto/tls/fipsonly")
+	}
+	return cryptoSettings
 }
 
 func getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, err error) {

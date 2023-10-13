@@ -286,6 +286,16 @@ func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]any, packages []*spd
 }
 
 func collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
+	for _, p := range doc.Packages {
+		for _, f := range p.Files {
+			l := toSyftLocation(f)
+			spdxIDMap[string(f.FileSPDXIdentifier)] = l
+
+			s.Artifacts.FileMetadata[l.Coordinates] = toFileMetadata(f)
+			s.Artifacts.FileDigests[l.Coordinates] = toFileDigests(f)
+		}
+	}
+
 	for _, f := range doc.Files {
 		l := toSyftLocation(f)
 		spdxIDMap[string(f.FileSPDXIdentifier)] = l
@@ -332,7 +342,14 @@ func toFileMetadata(f *spdx.File) (meta file.Metadata) {
 }
 
 func toSyftRelationships(spdxIDMap map[string]any, doc *spdx.Document) []artifact.Relationship {
-	var out []artifact.Relationship
+	out := collectDocRelationships(spdxIDMap, doc)
+
+	out = append(out, collectPackageFileRelationships(spdxIDMap, doc)...)
+
+	return out
+}
+
+func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out []artifact.Relationship) {
 	for _, r := range doc.Relationships {
 		// FIXME what to do with r.RefA.DocumentRefID and r.RefA.SpecialID
 		if r.RefA.DocumentRefID != "" && requireAndTrimPrefix(r.RefA.DocumentRefID, "DocumentRef-") != string(doc.SPDXIdentifier) {
@@ -380,6 +397,30 @@ func toSyftRelationships(spdxIDMap map[string]any, doc *spdx.Document) []artifac
 				From: from,
 				To:   to,
 				Type: typ,
+			})
+		}
+	}
+	return out
+}
+
+// collectPackageFileRelationships add relationships for direct files
+func collectPackageFileRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out []artifact.Relationship) {
+	for _, p := range doc.Packages {
+		a := spdxIDMap[string(p.PackageSPDXIdentifier)]
+		from, fromOk := a.(pkg.Package)
+		if !fromOk {
+			continue
+		}
+		for _, f := range p.Files {
+			b := spdxIDMap[string(f.FileSPDXIdentifier)]
+			to, toLocationOk := b.(file.Location)
+			if !toLocationOk {
+				continue
+			}
+			out = append(out, artifact.Relationship{
+				From: from,
+				To:   to,
+				Type: artifact.ContainsRelationship,
 			})
 		}
 	}

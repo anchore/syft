@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -62,11 +63,11 @@ func parseJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.Locat
 }
 
 // uniquePkgKey creates a unique string to identify the given package.
-func uniquePkgKey(p *pkg.Package) string {
+func uniquePkgKey(groupID string, p *pkg.Package) string {
 	if p == nil {
 		return ""
 	}
-	return fmt.Sprintf("%s|%s", p.Name, p.Version)
+	return fmt.Sprintf("%s|%s|%s", groupID, p.Name, p.Version)
 }
 
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
@@ -149,7 +150,6 @@ func (j *archiveParser) parse() ([]pkg.Package, []artifact.Relationship, error) 
 // discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.
 func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	// search and parse java manifest files
-	// TODO: do we want to prefer or check for pom files over manifest here?
 	manifestMatches := j.fileManifest.GlobMatch(manifestGlob)
 	if len(manifestMatches) > 1 {
 		return nil, fmt.Errorf("found multiple manifests in the jar: %+v", manifestMatches)
@@ -172,23 +172,21 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		return nil, nil
 	}
 
-	archiveCloser, err := os.Open(j.archivePath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to open archive path (%s): %w", j.archivePath, err)
-	}
-	defer archiveCloser.Close()
-
 	// grab and assign digest for the entire archive
-	digests, err := intFile.NewDigestsFromFile(archiveCloser, javaArchiveHashes)
+	digests, err := getDigestsFromArchive(j.archivePath)
 	if err != nil {
-		log.Warnf("failed to create digest for file=%q: %+v", j.archivePath, err)
+		return nil, err
 	}
 
-	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
-	licenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
+	licenses, name, version, err := j.parseLicenses(manifest)
+	if err != nil {
+		return nil, err
+	}
+
 	return &pkg.Package{
-		Name:     selectName(manifest, j.fileInfo),
-		Version:  selectVersion(manifest, j.fileInfo),
+		// TODO: maybe select name should just have a pom properties in it?
+		Name:     name,
+		Version:  version,
 		Language: pkg.Java,
 		Licenses: pkg.NewLicenseSet(licenses...),
 		Locations: file.NewLocationSet(
@@ -202,6 +200,80 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 			ArchiveDigests: digests,
 		},
 	}, nil
+}
+
+func (j *archiveParser) parseLicenses(manifest *pkg.JavaManifest) ([]pkg.License, string, string, error) {
+	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
+	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
+	licenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
+	/*
+		We should name and version from, in this order:
+		1. pom.properties if we find exactly 1
+		2. pom.xml if we find exactly 1
+		3. manifest
+		4. filename
+	*/
+	name, version, pomLicenses := j.guessMainPackageNameAndVersionFromPomInfo()
+	if name == "" {
+		name = selectName(manifest, j.fileInfo)
+	}
+	if version == "" {
+		version = selectVersion(manifest, j.fileInfo)
+	}
+	if len(licenses) == 0 {
+		// Today we don't have a way to distinguish between licenses from the manifest and licenses from the pom.xml
+		// until the file.Location object can support sub-paths (i.e. paths within archives, recursively; issue https://github.com/anchore/syft/issues/2211).
+		// Until then it's less confusing to use the licenses from the pom.xml only if the manifest did not list any.
+		licenses = append(licenses, pomLicenses...)
+	}
+
+	if len(licenses) == 0 {
+		fileLicenses, err := j.getLicenseFromFileInArchive()
+		if err != nil {
+			return nil, "", "", err
+		}
+		if fileLicenses != nil {
+			licenses = append(licenses, fileLicenses...)
+		}
+	}
+
+	return licenses, name, version, nil
+}
+
+type parsedPomProject struct {
+	*pkg.PomProject
+	Licenses []pkg.License
+}
+
+func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, version string, licenses []pkg.License) {
+	pomPropertyMatches := j.fileManifest.GlobMatch(pomPropertiesGlob)
+	pomMatches := j.fileManifest.GlobMatch(pomXMLGlob)
+	var pomPropertiesObject pkg.PomProperties
+	var pomProjectObject parsedPomProject
+	if len(pomPropertyMatches) == 1 || len(pomMatches) == 1 {
+		// we have exactly 1 pom.properties or pom.xml in the archive; assume it represents the
+		// package we're scanning if the names seem like a plausible match
+		properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, pomPropertyMatches)
+		projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
+
+		for parentPath, propertiesObj := range properties {
+			if propertiesObj.ArtifactID != "" && j.fileInfo.name != "" && strings.HasPrefix(propertiesObj.ArtifactID, j.fileInfo.name) {
+				pomPropertiesObject = propertiesObj
+				if proj, exists := projects[parentPath]; exists {
+					pomProjectObject = proj
+				}
+			}
+		}
+	}
+	name = pomPropertiesObject.ArtifactID
+	if name == "" && pomProjectObject.PomProject != nil {
+		name = pomProjectObject.ArtifactID
+	}
+	version = pomPropertiesObject.Version
+	if version == "" && pomProjectObject.PomProject != nil {
+		version = pomProjectObject.Version
+	}
+	return name, version, pomProjectObject.Licenses
 }
 
 // discoverPkgsFromAllMavenFiles parses Maven POM properties/xml for a given
@@ -228,7 +300,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 	}
 
 	for parentPath, propertiesObj := range properties {
-		var pomProject *pkg.PomProject
+		var pomProject *parsedPomProject
 		if proj, exists := projects[parentPath]; exists {
 			pomProject = &proj
 		}
@@ -240,6 +312,54 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 	}
 
 	return pkgs, nil
+}
+
+func getDigestsFromArchive(archivePath string) ([]file.Digest, error) {
+	archiveCloser, err := os.Open(archivePath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open archive path (%s): %w", archivePath, err)
+	}
+	defer archiveCloser.Close()
+
+	// grab and assign digest for the entire archive
+	digests, err := intFile.NewDigestsFromFile(archiveCloser, javaArchiveHashes)
+	if err != nil {
+		log.Warnf("failed to create digest for file=%q: %+v", archivePath, err)
+	}
+
+	return digests, nil
+}
+
+func (j *archiveParser) getLicenseFromFileInArchive() ([]pkg.License, error) {
+	var fileLicenses []pkg.License
+	for _, filename := range licenses.FileNames {
+		licenseMatches := j.fileManifest.GlobMatch("/META-INF/" + filename)
+		if len(licenseMatches) == 0 {
+			// Try the root directory if it's not in META-INF
+			licenseMatches = j.fileManifest.GlobMatch("/" + filename)
+		}
+
+		if len(licenseMatches) > 0 {
+			contents, err := intFile.ContentsFromZip(j.archivePath, licenseMatches...)
+			if err != nil {
+				return nil, fmt.Errorf("unable to extract java license (%s): %w", j.location, err)
+			}
+
+			for _, licenseMatch := range licenseMatches {
+				licenseContents := contents[licenseMatch]
+				parsed, err := licenses.Parse(strings.NewReader(licenseContents), j.location)
+				if err != nil {
+					return nil, err
+				}
+
+				if len(parsed) > 0 {
+					fileLicenses = append(fileLicenses, parsed...)
+				}
+			}
+		}
+	}
+
+	return fileLicenses, nil
 }
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
@@ -343,15 +463,16 @@ func pomPropertiesByParentPath(archivePath string, location file.Location, extra
 	return propertiesByParentPath, nil
 }
 
-func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]pkg.PomProject, error) {
+func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]parsedPomProject, error) {
 	contentsOfMavenProjectFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
 
-	projectByParentPath := make(map[string]pkg.PomProject)
+	projectByParentPath := make(map[string]parsedPomProject)
 	for filePath, fileContents := range contentsOfMavenProjectFiles {
-		pomProject, err := parsePomXMLProject(filePath, strings.NewReader(fileContents))
+		// TODO: when we support locations of paths within archives we should start passing the specific pom.xml location object instead of the top jar
+		pomProject, err := parsePomXMLProject(filePath, strings.NewReader(fileContents), location)
 		if err != nil {
 			log.WithFields("contents-path", filePath, "location", location.AccessPath()).Warnf("failed to parse pom.xml: %+v", err)
 			continue
@@ -371,30 +492,51 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 	return projectByParentPath, nil
 }
 
-// packagesFromPomProperties processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
+// newPackageFromMavenData processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
-func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.PomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
+func newPackageFromMavenData(pomProperties pkg.PomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
-	if !strings.HasPrefix(pomProperties.ArtifactID, parentPkg.Name) {
-		vPathSuffix += ":" + pomProperties.ArtifactID
+	groupID := ""
+	if parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata); ok {
+		groupID = groupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
+	}
+
+	parentKey := fmt.Sprintf("%s:%s:%s", groupID, parentPkg.Name, parentPkg.Version)
+	// Since we don't have a package yet, it's important to use the same `field: value` association that we used when creating the parent package
+	// See below where Name => pomProperties.ArtifactID and Version => pomProperties.Version. We want to check for potentially nested identical
+	// packages and create equal virtual paths so they are de duped in the future
+	pomProjectKey := fmt.Sprintf("%s:%s:%s", pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version)
+	if parentKey != pomProjectKey {
+		// build a new virtual path suffix for the package that is different from the parent package
+		// we want to use the GroupID and ArtifactID here to preserve uniqueness
+		// Some packages have the same name but different group IDs (e.g. "org.glassfish.jaxb/jaxb-core", "com.sun.xml.bind/jaxb-core")
+		// https://github.com/anchore/syft/issues/1944
+		vPathSuffix += ":" + pomProperties.GroupID + ":" + pomProperties.ArtifactID
 	}
 	virtualPath := location.AccessPath() + vPathSuffix
 
-	// discovered props = new package
+	var pkgPomProject *pkg.PomProject
+	licenses := make([]pkg.License, 0)
+	if parsedPomProject != nil {
+		pkgPomProject = parsedPomProject.PomProject
+		licenses = append(licenses, parsedPomProject.Licenses...)
+	}
+
 	p := pkg.Package{
 		Name:    pomProperties.ArtifactID,
 		Version: pomProperties.Version,
 		Locations: file.NewLocationSet(
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
+		Licenses:     pkg.NewLicenseSet(licenses...),
 		Language:     pkg.Java,
 		Type:         pomProperties.PkgTypeIndicated(),
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
 			VirtualPath:   virtualPath,
 			PomProperties: &pomProperties,
-			PomProject:    pomProject,
+			PomProject:    pkgPomProject,
 			Parent:        parentPkg,
 		},
 	}
@@ -408,21 +550,26 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, pomProject *pkg.Po
 }
 
 func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
-	// the name/version pair matches...
-	if uniquePkgKey(&p) == uniquePkgKey(parentPkg) {
-		return true
-	}
-
 	metadata, ok := p.Metadata.(pkg.JavaMetadata)
-	if !ok {
-		log.WithFields("package", p.String()).Warn("unable to extract java metadata to check for matching package identity")
-		return false
+	parentMetadata, parentOk := parentPkg.Metadata.(pkg.JavaMetadata)
+	if !ok || !parentOk {
+		switch {
+		case !ok:
+			log.WithFields("package", p.String()).Trace("unable to extract java metadata to check for matching package identity for package: %s", p.Name)
+		case !parentOk:
+			log.WithFields("package", parentPkg.String()).Trace("unable to extract java metadata to check for matching package identity for package: %s", parentPkg.Name)
+		}
+		// if we can't extract metadata, we can check for matching identities via the package name
+		// this is not ideal, but it's better than nothing - this should not be used if we have Metadata
+
+		return uniquePkgKey("", &p) == uniquePkgKey("", parentPkg)
 	}
 
-	parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata)
-	if !ok {
-		log.WithFields("package", p.String()).Warn("unable to extract java metadata from parent for verifying virtual path")
-		return false
+	// try to determine identity with the metadata
+	groupID := groupIDFromJavaMetadata(p.Name, metadata)
+	parentGroupID := groupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
+	if uniquePkgKey(groupID, &p) == uniquePkgKey(parentGroupID, parentPkg) {
+		return true
 	}
 
 	// the virtual path matches...
@@ -434,10 +581,14 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 	// note: you CANNOT use name-is-subset-of-artifact-id or vice versa --this is too generic. Shaded jars are a good
 	// example of this: where the package name is "cloudbees-analytics-segment-driver" and a child is "analytics", but
 	// they do not indicate the same package.
-	if metadata.PomProperties.ArtifactID != "" && parentPkg.Name == metadata.PomProperties.ArtifactID {
-		return true
+	// NOTE: artifactId might not be a good indicator of uniqueness since archives can contain forks with the same name
+	// from different groups (e.g. "org.glassfish.jaxb.jaxb-core" and "com.sun.xml.bind.jaxb-core")
+	// we will use this check as a last resort
+	if metadata.PomProperties != nil {
+		if metadata.PomProperties.ArtifactID != "" && parentPkg.Name == metadata.PomProperties.ArtifactID {
+			return true
+		}
 	}
-
 	return false
 }
 

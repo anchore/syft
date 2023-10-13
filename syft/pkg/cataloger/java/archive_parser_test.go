@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
@@ -83,11 +83,13 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 
 func TestParseJar(t *testing.T) {
 	tests := []struct {
+		name         string
 		fixture      string
 		expected     map[string]pkg.Package
 		ignoreExtras []string
 	}{
 		{
+			name:    "example-jenkins-plugin",
 			fixture: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 			ignoreExtras: []string{
 				"Plugin-Version", // has dynamic date
@@ -146,6 +148,7 @@ func TestParseJar(t *testing.T) {
 			},
 		},
 		{
+			name:    "example-java-app-gradle",
 			fixture: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 			expected: map[string]pkg.Package{
 				"example-java-app-gradle": {
@@ -155,6 +158,15 @@ func TestParseJar(t *testing.T) {
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{
+							Value:          "Apache-2.0",
+							SPDXExpression: "Apache-2.0",
+							Type:           license.Concluded,
+							URLs:           internal.NewStringSet(),
+							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")),
+						},
+					),
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
@@ -172,10 +184,20 @@ func TestParseJar(t *testing.T) {
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromFields(
+							"Apache 2",
+							"http://www.apache.org/licenses/LICENSE-2.0.txt",
+							func() *file.Location {
+								l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")
+								return &l
+							}(),
+						),
+					),
 					Metadata: pkg.JavaMetadata{
 						// ensure that nested packages with different names than that of the parent are appended as
-						// a suffix on the virtual path
-						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar:joda-time",
+						// a suffix on the virtual path with a colon separator between group name and artifact name
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar:joda-time:joda-time",
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",
@@ -196,6 +218,7 @@ func TestParseJar(t *testing.T) {
 			},
 		},
 		{
+			name:    "example-java-app-maven",
 			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 			ignoreExtras: []string{
 				"Build-Jdk", // can't guarantee the JDK used at build time
@@ -209,6 +232,15 @@ func TestParseJar(t *testing.T) {
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{
+							Value:          "Apache-2.0",
+							SPDXExpression: "Apache-2.0",
+							Type:           license.Concluded,
+							URLs:           internal.NewStringSet(),
+							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")),
+						},
+					),
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
@@ -231,16 +263,26 @@ func TestParseJar(t *testing.T) {
 					},
 				},
 				"joda-time": {
-					Name:         "joda-time",
-					Version:      "2.9.2",
-					PURL:         "pkg:maven/joda-time/joda-time@2.9.2",
+					Name:    "joda-time",
+					Version: "2.9.2",
+					PURL:    "pkg:maven/joda-time/joda-time@2.9.2",
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromFields(
+							"Apache 2",
+							"http://www.apache.org/licenses/LICENSE-2.0.txt",
+							func() *file.Location {
+								l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")
+								return &l
+							}(),
+						),
+					),
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
 					Metadata: pkg.JavaMetadata{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path
-						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:joda-time",
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:joda-time:joda-time",
 						PomProperties: &pkg.PomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",
@@ -263,7 +305,7 @@ func TestParseJar(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(path.Base(test.fixture), func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 
 			generateJavaBuildFixture(t, test.fixture)
 
@@ -618,7 +660,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 	tests := []struct {
 		name            string
 		props           pkg.PomProperties
-		project         *pkg.PomProject
+		project         *parsedPomProject
 		parent          *pkg.Package
 		expectedParent  pkg.Package
 		expectedPackage *pkg.Package
@@ -659,7 +701,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Type:         pkg.JavaPkg,
 				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: virtualPath + ":" + "some-group-id" + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
@@ -687,18 +729,29 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				ArtifactID: "some-artifact-id",
 				Version:    "1.0",
 			},
-			project: &pkg.PomProject{
-				Parent: &pkg.PomParent{
-					GroupID:    "some-parent-group-id",
-					ArtifactID: "some-parent-artifact-id",
-					Version:    "1.0-parent",
+			project: &parsedPomProject{
+				PomProject: &pkg.PomProject{
+					Parent: &pkg.PomParent{
+						GroupID:    "some-parent-group-id",
+						ArtifactID: "some-parent-artifact-id",
+						Version:    "1.0-parent",
+					},
+					Name:        "some-name",
+					GroupID:     "some-group-id",
+					ArtifactID:  "some-artifact-id",
+					Version:     "1.0",
+					Description: "desc",
+					URL:         "aweso.me",
 				},
-				Name:        "some-name",
-				GroupID:     "some-group-id",
-				ArtifactID:  "some-artifact-id",
-				Version:     "1.0",
-				Description: "desc",
-				URL:         "aweso.me",
+				Licenses: []pkg.License{
+					{
+						Value:          "MIT",
+						SPDXExpression: "MIT",
+						Type:           license.Declared,
+						URLs:           internal.NewStringSet("https://opensource.org/licenses/MIT"),
+						Locations:      file.NewLocationSet(file.NewLocation("some-license-path")),
+					},
+				},
 			},
 			parent: &pkg.Package{
 				Name:    "some-parent-name",
@@ -727,8 +780,17 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Language:     pkg.Java,
 				Type:         pkg.JavaPkg,
 				MetadataType: pkg.JavaMetadataType,
+				Licenses: pkg.NewLicenseSet(
+					pkg.License{
+						Value:          "MIT",
+						SPDXExpression: "MIT",
+						Type:           license.Declared,
+						URLs:           internal.NewStringSet("https://opensource.org/licenses/MIT"),
+						Locations:      file.NewLocationSet(file.NewLocation("some-license-path")),
+					},
+				),
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: virtualPath + ":" + "some-group-id" + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
@@ -797,7 +859,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Type:         pkg.JenkinsPluginPkg,
 				MetadataType: pkg.JavaMetadataType,
 				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath + ":" + "some-artifact-id",
+					VirtualPath: virtualPath + ":" + "com.cloudbees.jenkins.plugins" + ":" + "some-artifact-id",
 					PomProperties: &pkg.PomProperties{
 						Name:       "some-name",
 						GroupID:    "com.cloudbees.jenkins.plugins",
@@ -888,44 +950,6 @@ func Test_newPackageFromMavenData(t *testing.T) {
 						GroupID:    "com.cloudbees.jenkins.plugins",
 						ArtifactID: "some-parent-name", // note: matches parent package
 						Version:    "2.0",              // note: matches parent package
-					},
-					Parent: nil,
-				},
-			},
-			expectedPackage: nil,
-		},
-		{
-			name: "child matches parent by virtual path -- override name and version",
-			props: pkg.PomProperties{
-				Name:       "some-name",
-				GroupID:    "some-group-id",
-				ArtifactID: "some-parent-name", // note: DOES NOT match parent package
-				Version:    "3.0",              // note: DOES NOT match parent package
-			},
-			parent: &pkg.Package{
-				Name:    "", // note: empty, so should not be matched on
-				Version: "", // note: empty, so should not be matched on
-				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
-					VirtualPath:   virtualPath, // note: matching virtual path
-					Manifest:      nil,
-					PomProperties: nil,
-					Parent:        nil,
-				},
-			},
-			expectedParent: pkg.Package{
-				Name:    "some-parent-name",
-				Version: "3.0",
-				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
-					VirtualPath: virtualPath,
-					Manifest:    nil,
-					// note: we attach the discovered pom properties data
-					PomProperties: &pkg.PomProperties{
-						Name:       "some-name",
-						GroupID:    "some-group-id",
-						ArtifactID: "some-parent-name",
-						Version:    "3.0",
 					},
 					Parent: nil,
 				},

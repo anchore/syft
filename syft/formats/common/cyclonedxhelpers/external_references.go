@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -15,9 +16,11 @@ import (
 func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 	var refs []cyclonedx.ExternalReference
 	if hasMetadata(p) {
+		// Skip adding extracted URL and Homepage metadata
+		// as "external_reference" if the metadata isn't IRI-compliant
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkMetadata:
-			if metadata.URL != "" {
+			if metadata.URL != "" && isValidExternalRef(metadata.URL) {
 				refs = append(refs, cyclonedx.ExternalReference{
 					URL:  metadata.URL,
 					Type: cyclonedx.ERTypeDistribution,
@@ -31,20 +34,20 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 				})
 			}
 		case pkg.NpmPackageJSONMetadata:
-			if metadata.URL != "" {
+			if metadata.URL != "" && isValidExternalRef(metadata.URL) {
 				refs = append(refs, cyclonedx.ExternalReference{
 					URL:  metadata.URL,
 					Type: cyclonedx.ERTypeDistribution,
 				})
 			}
-			if metadata.Homepage != "" {
+			if metadata.Homepage != "" && isValidExternalRef(metadata.Homepage) {
 				refs = append(refs, cyclonedx.ExternalReference{
 					URL:  metadata.Homepage,
 					Type: cyclonedx.ERTypeWebsite,
 				})
 			}
 		case pkg.GemMetadata:
-			if metadata.Homepage != "" {
+			if metadata.Homepage != "" && isValidExternalRef(metadata.Homepage) {
 				refs = append(refs, cyclonedx.ExternalReference{
 					URL:  metadata.Homepage,
 					Type: cyclonedx.ERTypeWebsite,
@@ -94,7 +97,7 @@ func toCycloneDXAlgorithm(algorithm string) cyclonedx.HashAlgorithm {
 		"sha256": cyclonedx.HashAlgorithm("SHA-256"),
 	}
 
-	return validMap[algorithm]
+	return validMap[strings.ToLower(algorithm)]
 }
 
 func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
@@ -157,4 +160,10 @@ func refComment(c *cyclonedx.Component, typ cyclonedx.ExternalReferenceType) str
 		return r.Comment
 	}
 	return ""
+}
+
+// isValidExternalRef checks for IRI-comppliance for input string to be added into "external_reference"
+func isValidExternalRef(s string) bool {
+	parsed, err := url.Parse(s)
+	return err == nil && parsed != nil && parsed.Host != ""
 }

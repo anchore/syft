@@ -6,6 +6,12 @@ import (
 	"testing"
 )
 
+const (
+	// this is the number of packages that should be found in the image-pkg-coverage fixture image
+	// when analyzed with the squashed scope.
+	coverageImageSquashedPackageCount = 24
+)
+
 func TestPackagesCmdFlags(t *testing.T) {
 	hiddenPackagesImage := "docker-archive:" + getFixtureImage(t, "image-hidden-packages")
 	coverageImage := "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")
@@ -33,6 +39,24 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "quiet-flag-with-logger",
+			args: []string{"packages", "-qvv", "-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				assertJsonReport,
+				assertNoStderr,
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "quiet-flag-with-tui",
+			args: []string{"packages", "-q", "-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				assertJsonReport,
+				assertNoStderr,
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -96,7 +120,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag",
 			args: []string{"packages", "-o", "json", "-s", "squashed", coverageImage},
 			assertions: []traitAssertion{
-				assertPackageCount(24),
+				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -153,7 +177,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "responds-to-package-cataloger-search-options",
-			args: []string{"packages", "-vv"},
+			args: []string{"--help"},
 			env: map[string]string{
 				"SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES": "true",
 				"SYFT_PACKAGE_SEARCH_INDEXED_ARCHIVES":   "false",
@@ -213,7 +237,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 2"),
 				assertInOutput("parallelism=2"),
-				assertPackageCount(24),
+				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -224,7 +248,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 1"),
 				assertInOutput("parallelism=1"),
-				assertPackageCount(24),
+				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -238,7 +262,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			assertions: []traitAssertion{
 				assertNotInOutput("secret_password"),
 				assertNotInOutput("secret_key_path"),
-				assertPackageCount(24),
+				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -258,7 +282,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 func TestRegistryAuth(t *testing.T) {
 	host := "localhost:17"
 	image := fmt.Sprintf("%s/something:latest", host)
-	args := []string{"packages", "-vv", fmt.Sprintf("registry:%s", image)}
+	args := []string{"packages", "-vvv", fmt.Sprintf("registry:%s", image)}
 
 	tests := []struct {
 		name       string
@@ -272,7 +296,7 @@ func TestRegistryAuth(t *testing.T) {
 			assertions: []traitAssertion{
 				assertInOutput("source=OciRegistry"),
 				assertInOutput(image),
-				assertInOutput("no registry credentials configured, using the default keychain"),
+				assertInOutput(fmt.Sprintf("no registry credentials configured for %q, using the default keychain", host)),
 			},
 		},
 		{
@@ -294,7 +318,7 @@ func TestRegistryAuth(t *testing.T) {
 			args: args,
 			env: map[string]string{
 				"SYFT_REGISTRY_AUTH_AUTHORITY": host,
-				"SYFT_REGISTRY_AUTH_TOKEN":     "token",
+				"SYFT_REGISTRY_AUTH_TOKEN":     "my-token",
 			},
 			assertions: []traitAssertion{
 				assertInOutput("source=OciRegistry"),
@@ -303,7 +327,7 @@ func TestRegistryAuth(t *testing.T) {
 			},
 		},
 		{
-			name: "not enough info fallsback to keychain",
+			name: "not enough info fallback to keychain",
 			args: args,
 			env: map[string]string{
 				"SYFT_REGISTRY_AUTH_AUTHORITY": host,
@@ -311,7 +335,7 @@ func TestRegistryAuth(t *testing.T) {
 			assertions: []traitAssertion{
 				assertInOutput("source=OciRegistry"),
 				assertInOutput(image),
-				assertInOutput(`no registry credentials configured, using the default keychain`),
+				assertInOutput(fmt.Sprintf(`no registry credentials configured for %q, using the default keychain`, host)),
 			},
 		},
 		{
@@ -322,6 +346,17 @@ func TestRegistryAuth(t *testing.T) {
 			},
 			assertions: []traitAssertion{
 				assertInOutput("insecure-use-http: true"),
+			},
+		},
+		{
+			name: "use tls configuration",
+			args: args,
+			env: map[string]string{
+				"SYFT_REGISTRY_AUTH_TLS_CERT": "place.crt",
+				"SYFT_REGISTRY_AUTH_TLS_KEY":  "place.key",
+			},
+			assertions: []traitAssertion{
+				assertInOutput("using custom TLS credentials from"),
 			},
 		},
 	}

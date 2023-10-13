@@ -6,12 +6,10 @@ package event
 
 import (
 	"github.com/wagoodman/go-partybus"
-
-	"github.com/anchore/syft/internal"
 )
 
 const (
-	typePrefix    = internal.ApplicationName
+	typePrefix    = "syft"
 	cliTypePrefix = typePrefix + "-cli"
 
 	// Events from the syft library
@@ -48,7 +46,4 @@ const (
 
 	// CLINotification is a partybus event that occurs when auxiliary information is ready for presentation to stderr
 	CLINotification partybus.EventType = cliTypePrefix + "-notification"
-
-	// CLIExit is a partybus event that occurs when an analysis result is ready for final presentation
-	CLIExit partybus.EventType = cliTypePrefix + "-exit-event"
 )

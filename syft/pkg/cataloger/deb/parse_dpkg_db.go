@@ -35,7 +35,7 @@ func parseDpkgDB(resolver file.Resolver, env *generic.Environment, reader file.L
 		pkgs = append(pkgs, newDpkgPackage(m, reader.Location, resolver, env.LinuxRelease))
 	}
 
-	return pkgs, nil, nil
+	return pkgs, associateRelationships(pkgs), nil
 }
 
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
@@ -63,6 +63,22 @@ func parseDpkgStatus(reader io.Reader) ([]pkg.DpkgMetadata, error) {
 	return metadata, nil
 }
 
+// dpkgExtractedMetadata is an adapter struct to capture the fields from the dpkg status file, however, the final
+// pkg.DpkgMetadata struct has different types for some fields (e.g. Provides, Depends, and PreDepends is []string, not a string).
+type dpkgExtractedMetadata struct {
+	Package       string `mapstructure:"Package"`
+	Source        string `mapstructure:"Source"`
+	Version       string `mapstructure:"Version"`
+	SourceVersion string `mapstructure:"SourceVersion"`
+	Architecture  string `mapstructure:"Architecture"`
+	Maintainer    string `mapstructure:"Maintainer"`
+	InstalledSize int    `mapstructure:"InstalledSize"`
+	Description   string `mapstructure:"Description"`
+	Provides      string `mapstructure:"Provides"`
+	Depends       string `mapstructure:"Depends"`
+	PreDepends    string `mapstructure:"PreDepends"` // note: original doc is Pre-Depends
+}
+
 // parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
 func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgMetadata, error) {
 	var retErr error
@@ -77,20 +93,34 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgMetadata, error) {
 		retErr = err
 	}
 
-	entry := pkg.DpkgMetadata{}
-	err = mapstructure.Decode(dpkgFields, &entry)
+	raw := dpkgExtractedMetadata{}
+	err = mapstructure.Decode(dpkgFields, &raw)
 	if err != nil {
 		return nil, err
 	}
 
-	sourceName, sourceVersion := extractSourceVersion(entry.Source)
+	sourceName, sourceVersion := extractSourceVersion(raw.Source)
 	if sourceVersion != "" {
-		entry.SourceVersion = sourceVersion
-		entry.Source = sourceName
+		raw.SourceVersion = sourceVersion
+		raw.Source = sourceName
 	}
 
-	if entry.Package == "" {
+	if raw.Package == "" {
 		return nil, retErr
+	}
+
+	entry := pkg.DpkgMetadata{
+		Package:       raw.Package,
+		Source:        raw.Source,
+		Version:       raw.Version,
+		SourceVersion: raw.SourceVersion,
+		Architecture:  raw.Architecture,
+		Maintainer:    raw.Maintainer,
+		InstalledSize: raw.InstalledSize,
+		Description:   raw.Description,
+		Provides:      splitPkgList(raw.Provides),
+		Depends:       splitPkgList(raw.Depends),
+		PreDepends:    splitPkgList(raw.PreDepends),
 	}
 
 	// there may be an optional conffiles section that we should persist as files
@@ -106,6 +136,17 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgMetadata, error) {
 	}
 
 	return &entry, retErr
+}
+
+func splitPkgList(pkgList string) (ret []string) {
+	fields := strings.Split(pkgList, ",")
+	for _, field := range fields {
+		field = strings.TrimSpace(field)
+		if field != "" {
+			ret = append(ret, field)
+		}
+	}
+	return ret
 }
 
 func extractAllFields(reader *bufio.Reader) (map[string]interface{}, error) {
@@ -194,4 +235,80 @@ func handleNewKeyValue(line string) (key string, val interface{}, err error) {
 	}
 
 	return "", nil, fmt.Errorf("cannot parse field from line: '%s'", line)
+}
+
+// associateRelationships will create relationships between packages based on the "Depends", "Pre-Depends", and "Provides"
+// fields for installed packages. if there is an installed package that has a dependency that is (somehow) not installed,
+// then that relationship (between the installed and uninstalled package) will NOT be created.
+func associateRelationships(pkgs []pkg.Package) (relationships []artifact.Relationship) {
+	// map["provides" + "package"] -> packages that provide that package
+	lookup := make(map[string][]pkg.Package)
+
+	// read provided and add as keys for lookup keys as well as package names
+	for _, p := range pkgs {
+		meta, ok := p.Metadata.(pkg.DpkgMetadata)
+		if !ok {
+			log.Warnf("cataloger failed to extract dpkg 'provides' metadata for package %+v", p.Name)
+			continue
+		}
+		lookup[p.Name] = append(lookup[p.Name], p)
+		for _, provides := range meta.Provides {
+			k := stripVersionSpecifier(provides)
+			lookup[k] = append(lookup[k], p)
+		}
+	}
+
+	// read "Depends" and "Pre-Depends" and match with keys
+	for _, p := range pkgs {
+		meta, ok := p.Metadata.(pkg.DpkgMetadata)
+		if !ok {
+			log.Warnf("cataloger failed to extract dpkg 'dependency' metadata for package %+v", p.Name)
+			continue
+		}
+
+		var allDeps []string
+		allDeps = append(allDeps, meta.Depends...)
+		allDeps = append(allDeps, meta.PreDepends...)
+
+		for _, depSpecifier := range allDeps {
+			deps := splitPackageChoice(depSpecifier)
+			for _, dep := range deps {
+				for _, depPkg := range lookup[dep] {
+					relationships = append(relationships, artifact.Relationship{
+						From: depPkg,
+						To:   p,
+						Type: artifact.DependencyOfRelationship,
+					})
+				}
+			}
+		}
+	}
+	return relationships
+}
+
+func stripVersionSpecifier(s string) string {
+	// examples:
+	// libgmp10 (>= 2:6.2.1+dfsg1)         -->  libgmp10
+	// libgmp10                            -->  libgmp10
+	// foo [i386]                          -->  foo
+	// default-mta | mail-transport-agent  -->  default-mta | mail-transport-agent
+	// kernel-headers-2.2.10 [!hurd-i386]  -->  kernel-headers-2.2.10
+
+	items := internal.SplitAny(s, "[(<>=")
+	if len(items) == 0 {
+		return s
+	}
+
+	return strings.TrimSpace(items[0])
+}
+
+func splitPackageChoice(s string) (ret []string) {
+	fields := strings.Split(s, "|")
+	for _, field := range fields {
+		field = strings.TrimSpace(field)
+		if field != "" {
+			ret = append(ret, stripVersionSpecifier(field))
+		}
+	}
+	return ret
 }

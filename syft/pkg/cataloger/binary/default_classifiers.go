@@ -269,6 +269,20 @@ var defaultClassifiers = []classifier{
 			cpe.Must("cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*"),
 		},
 	},
+	{
+		Class:    "bash-binary",
+		FileGlob: "**/bash",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// @(#)Bash version 5.2.15(1) release GNU
+			// @(#)Bash version 5.2.0(1) alpha GNU
+			// @(#)Bash version 5.2.0(1) beta GNU
+			// @(#)Bash version 5.2.0(1) rc4 GNU
+			`(?m)@\(#\)Bash version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\([0-9]\) [a-z0-9]+ GNU`,
+		),
+		Package: "bash",
+		PURL:    mustPURL("pkg:generic/bash@version"),
+		CPEs:    singleCPE("cpe:2.3:a:gnu:bash:*:*:*:*:*:*:*:*"),
+	},
 }
 
 // in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]

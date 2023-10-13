@@ -36,7 +36,7 @@ func parseConanfile(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 		switch {
 		case strings.Contains(line, "[requires]"):
 			inRequirements = true
-		case strings.ContainsAny(line, "[]#"):
+		case strings.ContainsAny(line, "[]") || strings.HasPrefix(strings.TrimSpace(line), "#"):
 			inRequirements = false
 		}
 

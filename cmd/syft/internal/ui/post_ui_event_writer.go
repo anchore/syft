@@ -118,11 +118,18 @@ func writeAppUpdate(writer io.Writer, events ...partybus.Event) error {
 	style := lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Italic(true)
 
 	for _, e := range events {
-		notice, err := parsers.ParseCLIAppUpdateAvailable(e)
+		updateCheck, err := parsers.ParseCLIAppUpdateAvailable(e)
 		if err != nil {
 			log.WithFields("error", err).Warn("failed to parse app update notification")
 			continue
 		}
+
+		if updateCheck.Current == updateCheck.New {
+			log.Tracef("update check event with identical versions: %s", updateCheck.Current)
+			continue
+		}
+
+		notice := fmt.Sprintf("A newer version of syft is available for download: %s (installed version is %s)", updateCheck.New, updateCheck.Current)
 
 		if _, err := fmt.Fprintln(writer, style.Render(notice)); err != nil {
 			// don't let this be fatal

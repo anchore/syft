@@ -1,12 +1,13 @@
 package cyclonedxhelpers
 
 import (
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/google/uuid"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -23,7 +24,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	// https://github.com/CycloneDX/specification/blob/master/schema/bom-1.3-strict.schema.json#L36
 	// "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 	cdxBOM.SerialNumber = uuid.New().URN()
-	cdxBOM.Metadata = toBomDescriptor(internal.ApplicationName, s.Descriptor.Version, s.Source)
+	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source)
 
 	packages := s.Artifacts.Packages.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
@@ -139,34 +140,53 @@ func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 }
 
 func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependency {
-	result := make([]cyclonedx.Dependency, 0)
+	dependencies := map[string]*cyclonedx.Dependency{}
 	for _, r := range relationships {
 		exists := isExpressiblePackageRelationship(r.Type)
 		if !exists {
-			log.Debugf("unable to convert relationship from CycloneDX 1.4 JSON, dropping: %+v", r)
+			log.Debugf("unable to convert relationship type to CycloneDX JSON, dropping: %#v", r)
 			continue
 		}
 
 		// we only capture package-to-package relationships for now
-		fromPkg, ok := r.From.(*pkg.Package)
+		fromPkg, ok := r.From.(pkg.Package)
 		if !ok {
+			log.Tracef("unable to convert relationship fromPkg to CycloneDX JSON, dropping: %#v", r)
 			continue
 		}
 
-		toPkg, ok := r.To.(*pkg.Package)
+		toPkg, ok := r.To.(pkg.Package)
 		if !ok {
+			log.Tracef("unable to convert relationship toPkg to CycloneDX JSON, dropping: %#v", r)
 			continue
 		}
 
-		// ind dep
+		toRef := deriveBomRef(toPkg)
+		dep := dependencies[toRef]
+		if dep == nil {
+			dep = &cyclonedx.Dependency{
+				Ref:          toRef,
+				Dependencies: &[]string{},
+			}
+			dependencies[toRef] = dep
+		}
 
-		innerDeps := []string{}
-		innerDeps = append(innerDeps, deriveBomRef(*fromPkg))
-		result = append(result, cyclonedx.Dependency{
-			Ref:          deriveBomRef(*toPkg),
-			Dependencies: &innerDeps,
-		})
+		fromRef := deriveBomRef(fromPkg)
+		if !slices.Contains(*dep.Dependencies, fromRef) {
+			*dep.Dependencies = append(*dep.Dependencies, fromRef)
+		}
 	}
+
+	result := make([]cyclonedx.Dependency, 0, len(dependencies))
+	for _, dep := range dependencies {
+		slices.Sort(*dep.Dependencies)
+		result = append(result, *dep)
+	}
+
+	slices.SortFunc(result, func(a, b cyclonedx.Dependency) int {
+		return strings.Compare(a.Ref, b.Ref)
+	})
+
 	return result
 }
 

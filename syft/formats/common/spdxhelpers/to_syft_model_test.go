@@ -608,3 +608,77 @@ func Test_purlValue(t *testing.T) {
 		})
 	}
 }
+
+func Test_directPackageFiles(t *testing.T) {
+	doc := &spdx.Document{
+		SPDXVersion: "SPDX-2.3",
+		Packages: []*spdx.Package{
+			{
+				PackageName:           "some-package",
+				PackageSPDXIdentifier: "1",
+				PackageVersion:        "1.0.5",
+				Files: []*spdx.File{
+					{
+						FileName:           "some-file",
+						FileSPDXIdentifier: "2",
+						Checksums: []spdx.Checksum{
+							{
+								Algorithm: "SHA1",
+								Value:     "a8d733c64f9123",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	got, err := ToSyftModel(doc)
+	require.NoError(t, err)
+
+	p := pkg.Package{
+		Name:         "some-package",
+		Version:      "1.0.5",
+		MetadataType: pkg.UnknownMetadataType,
+	}
+	p.SetID()
+	f := file.Location{
+		LocationData: file.LocationData{
+			Coordinates: file.Coordinates{
+				RealPath:     "some-file",
+				FileSystemID: "",
+			},
+			VirtualPath: "some-file",
+		},
+		LocationMetadata: file.LocationMetadata{
+			Annotations: map[string]string{},
+		},
+	}
+	s := &sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			Packages: pkg.NewCollection(p),
+			FileMetadata: map[file.Coordinates]file.Metadata{
+				f.Coordinates: {},
+			},
+			FileDigests: map[file.Coordinates][]file.Digest{
+				f.Coordinates: {
+					{
+						Algorithm: "sha1",
+						Value:     "a8d733c64f9123",
+					},
+				},
+			},
+		},
+		Relationships: []artifact.Relationship{
+			{
+				From: p,
+				To:   f,
+				Type: artifact.ContainsRelationship,
+			},
+		},
+		Source:     source.Description{},
+		Descriptor: sbom.Descriptor{},
+	}
+
+	require.Equal(t, s, got)
+}

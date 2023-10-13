@@ -1,26 +1,17 @@
 package options
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
+	"github.com/anchore/clio"
 )
 
-type AttestOptions struct {
-	Key string
+type Attest struct {
+	// IMPORTANT: do not show the attestation key/password in any YAML/JSON output (sensitive information)
+	Key      secret `yaml:"key" json:"key" mapstructure:"key"`
+	Password secret `yaml:"password" json:"password" mapstructure:"password"`
 }
 
-var _ Interface = (*AttestOptions)(nil)
+var _ clio.FlagAdder = (*Attest)(nil)
 
-func (o AttestOptions) AddFlags(cmd *cobra.Command, v *viper.Viper) error {
-	cmd.Flags().StringVarP(&o.Key, "key", "k", "", "the key to use for the attestation")
-	return bindAttestConfigOptions(cmd.Flags(), v)
-}
-
-//nolint:revive
-func bindAttestConfigOptions(flags *pflag.FlagSet, v *viper.Viper) error {
-	if err := v.BindPFlag("attest.key", flags.Lookup("key")); err != nil {
-		return err
-	}
-	return nil
+func (o Attest) AddFlags(flags clio.FlagSet) {
+	flags.StringVarP((*string)(&o.Key), "key", "k", "the key to use for the attestation")
 }

@@ -1,4 +1,4 @@
-FROM jenkins/jenkins:2.346.3-slim-jdk17
+FROM jenkins/jenkins:2.346.3-slim-jdk17@sha256:028fbbd9112c60ed086f5197fcba71992317864d27644e5949cf9c52ff4b65f0
 
 USER root
 
