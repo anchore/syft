@@ -2,7 +2,6 @@ package spdxjson
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -89,20 +88,17 @@ func TestDecoder_Decode(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			f, err := os.Open(filepath.Join("test-fixtures", "spdx", test.name))
+			reader, err := os.Open(filepath.Join("test-fixtures", "spdx", test.name))
 			require.NoError(t, err)
 
 			dec := NewFormatDecoder()
 
-			content, err := io.ReadAll(f)
-			require.NoError(t, err)
-
-			formatID, formatVersion := dec.Identify(content)
+			formatID, formatVersion := dec.Identify(reader)
 			if test.fail {
 				assert.Equal(t, test.id, formatID)
 				assert.Equal(t, test.version, formatVersion)
 
-				_, decodeID, decodeVersion, err := dec.Decode(content)
+				_, decodeID, decodeVersion, err := dec.Decode(reader)
 				require.Error(t, err)
 				assert.Equal(t, test.id, decodeID)
 				assert.Equal(t, test.version, decodeVersion)
@@ -112,7 +108,7 @@ func TestDecoder_Decode(t *testing.T) {
 			assert.Equal(t, test.id, formatID)
 			assert.Equal(t, test.version, formatVersion)
 
-			s, decodeID, decodeVersion, err := dec.Decode(content)
+			s, decodeID, decodeVersion, err := dec.Decode(reader)
 
 			require.NoError(t, err)
 			assert.Equal(t, test.id, decodeID)
@@ -173,12 +169,10 @@ func TestDecoder_Identify(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			reader, err := os.Open(test.file)
 			require.NoError(t, err)
-			contents, err := io.ReadAll(reader)
-			require.NoError(t, err)
 
 			dec := NewFormatDecoder()
 
-			formatID, formatVersion := dec.Identify(contents)
+			formatID, formatVersion := dec.Identify(reader)
 			assert.Equal(t, test.id, formatID)
 			assert.Equal(t, test.version, formatVersion)
 		})

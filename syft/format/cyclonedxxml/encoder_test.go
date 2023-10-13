@@ -58,17 +58,14 @@ func redactor(values ...string) testutil.Redactor {
 		WithValuesRedacted(values...).
 		WithPatternRedactors(
 			map[string]string{
-				// serial numbers
-				`serialNumber="[a-zA-Z0-9\-:]+`: `serialNumber="redacted`,
-
 				// dates
 				`([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?(([Zz])|([+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))`: `redacted`,
 
-				// image hashes
+				// image hashes and BOM refs
 				`sha256:[A-Za-z0-9]{64}`: `sha256:redacted`,
 
-				// BOM refs
-				`bom-ref="[a-zA-Z0-9\-:]+"`: `bom-ref:redacted`,
+				// serial numbers and BOM refs
+				`(serialNumber|bom-ref)="[^"]+"`: `$1="redacted"`,
 			},
 		)
 }
@@ -90,16 +87,18 @@ func TestSupportedVersions(t *testing.T) {
 			var buf bytes.Buffer
 			require.NoError(t, enc.Encode(&buf, subject))
 
-			id, version := dec.Identify(buf.Bytes())
+			id, version := dec.Identify(bytes.NewReader(buf.Bytes()))
 			require.Equal(t, enc.ID(), id)
 			require.Equal(t, enc.Version(), version)
 
 			var s *sbom.SBOM
 			var err error
-			s, id, version, err = dec.Decode(buf.Bytes())
+			s, id, version, err = dec.Decode(bytes.NewReader(buf.Bytes()))
 			require.NoError(t, err)
 			require.Equal(t, enc.ID(), id)
 			require.Equal(t, enc.Version(), version)
+
+			require.NotEmpty(t, s.Artifacts.Packages.PackageCount())
 
 			assert.Equal(t, len(subject.Relationships), len(s.Relationships), "mismatched relationship count")
 

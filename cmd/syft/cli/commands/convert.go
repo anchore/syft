@@ -63,7 +63,7 @@ func RunConvert(opts *ConvertOptions, userInput string) error {
 		return err
 	}
 
-	var reader io.ReadCloser
+	var reader io.ReadSeekCloser
 
 	if userInput == "-" {
 		reader = os.Stdin
@@ -78,12 +78,7 @@ func RunConvert(opts *ConvertOptions, userInput string) error {
 		reader = f
 	}
 
-	contents, err := io.ReadAll(reader)
-	if err != nil {
-		return fmt.Errorf("failed to read SBOM: %w", err)
-	}
-
-	s, _, _, err := format.Decode(contents)
+	s, _, _, err := format.Decode(reader)
 	if err != nil {
 		return fmt.Errorf("failed to decode SBOM: %w", err)
 	}

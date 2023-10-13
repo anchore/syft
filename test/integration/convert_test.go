@@ -93,10 +93,8 @@ func TestConvertCmd(t *testing.T) {
 
 			err = commands.RunConvert(opts, syftFile.Name())
 			require.NoError(t, err)
-			contents, err := os.ReadFile(formatFile.Name())
-			require.NoError(t, err)
 
-			foundID, _ := format.Identify(contents)
+			foundID, _ := format.Identify(formatFile)
 			require.Equal(t, test.format.ID(), foundID)
 		})
 	}

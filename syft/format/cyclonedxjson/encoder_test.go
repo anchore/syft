@@ -90,16 +90,18 @@ func TestSupportedVersions(t *testing.T) {
 			var buf bytes.Buffer
 			require.NoError(t, enc.Encode(&buf, subject))
 
-			id, version := dec.Identify(buf.Bytes())
+			id, version := dec.Identify(bytes.NewReader(buf.Bytes()))
 			require.Equal(t, enc.ID(), id)
 			require.Equal(t, enc.Version(), version)
 
 			var s *sbom.SBOM
 			var err error
-			s, id, version, err = dec.Decode(buf.Bytes())
+			s, id, version, err = dec.Decode(bytes.NewReader(buf.Bytes()))
 			require.NoError(t, err)
 			require.Equal(t, enc.ID(), id)
 			require.Equal(t, enc.Version(), version)
+
+			require.NotEmpty(t, s.Artifacts.Packages.PackageCount())
 
 			assert.Equal(t, len(subject.Relationships), len(s.Relationships), "mismatched relationship count")
 

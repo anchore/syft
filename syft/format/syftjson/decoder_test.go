@@ -32,7 +32,7 @@ func Test_EncodeDecodeCycle(t *testing.T) {
 	var buf bytes.Buffer
 	assert.NoError(t, enc.Encode(&buf, originalSBOM))
 
-	actualSBOM, decodedID, decodedVersion, err := dec.Decode(buf.Bytes())
+	actualSBOM, decodedID, decodedVersion, err := dec.Decode(bytes.NewReader(buf.Bytes()))
 	assert.NoError(t, err)
 	assert.Equal(t, ID, decodedID)
 	assert.Equal(t, internal.JSONSchemaVersion, decodedVersion)
@@ -240,7 +240,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 
 	dec := NewFormatDecoder()
 
-	got, decodedID, decodedVersion, err := dec.Decode(buf.Bytes())
+	got, decodedID, decodedVersion, err := dec.Decode(bytes.NewReader(buf.Bytes()))
 	require.NoError(t, err)
 	assert.Equal(t, ID, decodedID)
 	assert.Equal(t, internal.JSONSchemaVersion, decodedVersion)

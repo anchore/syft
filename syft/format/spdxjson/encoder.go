@@ -71,7 +71,7 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		err = convert.Document(latestDoc, &doc)
 		encodeDoc = doc
 
-	case "2.3", "", "2", "2.x":
+	case "2.3":
 		doc := v2_3.Document{}
 		err = convert.Document(latestDoc, &doc)
 		encodeDoc = doc

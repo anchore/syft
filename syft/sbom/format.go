@@ -21,11 +21,11 @@ type FormatEncoder interface {
 }
 
 type FormatDecoder interface {
-	// Decode will return an SBOM from the given set of bytes. If the bytes are not a valid SBOM for the given format
+	// Decode will return an SBOM from the given reader. If the bytes are not a valid SBOM for the given format
 	// then an error will be returned.
-	Decode(by []byte) (*SBOM, FormatID, string, error)
+	Decode(io.ReadSeeker) (*SBOM, FormatID, string, error)
 
-	// Identify will return the format ID and version for the given set of bytes. Note: this does not validate the
+	// Identify will return the format ID and version for the given reader. Note: this does not validate the
 	// full SBOM, only pulls the minimal information necessary to identify the format.
-	Identify(by []byte) (FormatID, string)
+	Identify(io.ReadSeeker) (FormatID, string)
 }

@@ -2,6 +2,7 @@ package format
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
@@ -41,10 +42,13 @@ func NewDecoderCollection(decoders ...sbom.FormatDecoder) sbom.FormatDecoder {
 }
 
 // Decode takes a set of bytes and attempts to decode it into an SBOM relative to the decoders in the collection.
-func (c *DecoderCollection) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
+func (c *DecoderCollection) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string, error) {
+	if reader == nil {
+		return nil, "", "", fmt.Errorf("no SBOM bytes provided")
+	}
 	var bestID sbom.FormatID
 	for _, d := range c.decoders {
-		id, version := d.Identify(by)
+		id, version := d.Identify(reader)
 		if id == "" || version == "" {
 			if id != "" {
 				bestID = id
@@ -52,7 +56,7 @@ func (c *DecoderCollection) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string
 			continue
 		}
 
-		return d.Decode(by)
+		return d.Decode(reader)
 	}
 
 	if bestID != "" {
@@ -63,9 +67,12 @@ func (c *DecoderCollection) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string
 }
 
 // Identify takes a set of bytes and attempts to identify the format of the SBOM relative to the decoders in the collection.
-func (c *DecoderCollection) Identify(by []byte) (sbom.FormatID, string) {
+func (c *DecoderCollection) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
+	if reader == nil {
+		return "", ""
+	}
 	for _, d := range c.decoders {
-		id, version := d.Identify(by)
+		id, version := d.Identify(reader)
 		if id != "" && version != "" {
 			return id, version
 		}
@@ -74,11 +81,11 @@ func (c *DecoderCollection) Identify(by []byte) (sbom.FormatID, string) {
 }
 
 // Identify takes a set of bytes and attempts to identify the format of the SBOM.
-func Identify(by []byte) (sbom.FormatID, string) {
-	return staticDecoders.Identify(by)
+func Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
+	return staticDecoders.Identify(reader)
 }
 
 // Decode takes a set of bytes and attempts to decode it into an SBOM.
-func Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
-	return staticDecoders.Decode(by)
+func Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string, error) {
+	return staticDecoders.Decode(reader)
 }

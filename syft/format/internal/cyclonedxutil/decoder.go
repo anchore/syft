@@ -1,7 +1,8 @@
 package cyclonedxutil
 
 import (
-	"bytes"
+	"fmt"
+	"io"
 
 	"github.com/CycloneDX/cyclonedx-go"
 )
@@ -16,11 +17,14 @@ func NewDecoder(format cyclonedx.BOMFileFormat) Decoder {
 	}
 }
 
-func (d Decoder) Decode(by []byte) (*cyclonedx.BOM, error) {
+func (d Decoder) Decode(reader io.ReadSeeker) (*cyclonedx.BOM, error) {
 	doc := &cyclonedx.BOM{
 		Components: &[]cyclonedx.Component{},
 	}
-	err := cyclonedx.NewBOMDecoder(bytes.NewReader(by), d.format).Decode(doc)
+	if _, err := reader.Seek(0, io.SeekStart); err != nil {
+		return nil, fmt.Errorf("unable to seek to start of CycloneDX SBOM: %w", err)
+	}
+	err := cyclonedx.NewBOMDecoder(reader, d.format).Decode(doc)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package cyclonedxjson
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,17 +43,15 @@ func TestDecoder_Decode(t *testing.T) {
 		t.Run(test.file, func(t *testing.T) {
 			reader, err := os.Open(filepath.Join("test-fixtures", test.file))
 			require.NoError(t, err)
-			contents, err := io.ReadAll(reader)
-			require.NoError(t, err)
 
 			dec := NewFormatDecoder()
 
-			formatID, formatVersion := dec.Identify(contents)
+			formatID, formatVersion := dec.Identify(reader)
 			if test.err {
 				assert.Equal(t, sbom.FormatID(""), formatID)
 				assert.Equal(t, "", formatVersion)
 
-				_, decodeID, decodeVersion, err := dec.Decode(contents)
+				_, decodeID, decodeVersion, err := dec.Decode(reader)
 				require.Error(t, err)
 				assert.Equal(t, sbom.FormatID(""), decodeID)
 				assert.Equal(t, "", decodeVersion)
@@ -64,7 +61,7 @@ func TestDecoder_Decode(t *testing.T) {
 			assert.Equal(t, ID, formatID)
 			assert.NotEmpty(t, formatVersion)
 
-			bom, decodeID, decodeVersion, err := dec.Decode(contents)
+			bom, decodeID, decodeVersion, err := dec.Decode(reader)
 			require.NotNil(t, bom)
 			require.NoError(t, err)
 
@@ -110,12 +107,10 @@ func TestDecoder_Identify(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			reader, err := os.Open(test.file)
 			require.NoError(t, err)
-			contents, err := io.ReadAll(reader)
-			require.NoError(t, err)
 
 			dec := NewFormatDecoder()
 
-			formatID, formatVersion := dec.Identify(contents)
+			formatID, formatVersion := dec.Identify(reader)
 			assert.Equal(t, test.id, formatID)
 			assert.Equal(t, test.version, formatVersion)
 		})

@@ -2,7 +2,6 @@ package format
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"testing"
@@ -27,11 +26,10 @@ func TestIdentify(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			f, err := os.Open(test.fixture)
+			reader, err := os.Open(test.fixture)
 			assert.NoError(t, err)
-			by, err := io.ReadAll(f)
-			assert.NoError(t, err)
-			id, version := Identify(by)
+
+			id, version := Identify(reader)
 			assert.Equal(t, test.id, id)
 			assert.Equal(t, test.version, version)
 

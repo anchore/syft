@@ -1,6 +1,7 @@
 package cyclonedxutil
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 
@@ -15,6 +16,6 @@ func Test_missingComponentsDecode(t *testing.T) {
 	bomBytes, _ := json.Marshal(&bom)
 	dec := NewDecoder(cyclonedx.BOMFileFormatJSON)
 
-	_, err := dec.Decode(bomBytes)
+	_, err := dec.Decode(bytes.NewReader(bomBytes))
 	assert.NoError(t, err)
 }

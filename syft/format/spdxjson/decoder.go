@@ -1,13 +1,14 @@
 package spdxjson
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 
 	spdxJson "github.com/spdx/tools-golang/json"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/format/common/spdxhelpers"
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -21,11 +22,15 @@ func NewFormatDecoder() sbom.FormatDecoder {
 	return decoder{}
 }
 
-func (d decoder) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
+func (d decoder) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string, error) {
+	if reader == nil {
+		return nil, "", "", fmt.Errorf("no SBOM bytes provided")
+	}
+
 	// since spdx lib will always return the latest version of the document, we need to identify the version
 	// first and then decode into the appropriate document object. Otherwise if we get the version info from the
 	// decoded object we will always get the latest version (instead of the version we decoded from).
-	id, version := d.Identify(by)
+	id, version := d.Identify(reader)
 	if id != ID {
 		return nil, "", "", fmt.Errorf("not a spdx json document")
 	}
@@ -33,7 +38,11 @@ func (d decoder) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
 		return nil, "", "", fmt.Errorf("unsupported spdx json document version")
 	}
 
-	doc, err := spdxJson.Read(bytes.NewReader(by))
+	if _, err := reader.Seek(0, io.SeekStart); err != nil {
+		return nil, "", "", fmt.Errorf("unable to seek to start of SPDX JSON SBOM: %+v", err)
+	}
+
+	doc, err := spdxJson.Read(reader)
 	if err != nil {
 		return nil, id, version, fmt.Errorf("unable to decode spdx json: %w", err)
 	}
@@ -45,7 +54,16 @@ func (d decoder) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
 	return s, id, version, nil
 }
 
-func (d decoder) Identify(by []byte) (sbom.FormatID, string) {
+func (d decoder) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
+	if reader == nil {
+		return "", ""
+	}
+
+	if _, err := reader.Seek(0, io.SeekStart); err != nil {
+		log.Debugf("unable to seek to start of SPDX JSON SBOM: %+v", err)
+		return "", ""
+	}
+
 	// Example JSON document
 	// {
 	// "spdxVersion": "SPDX-2.3",
@@ -54,8 +72,10 @@ func (d decoder) Identify(by []byte) (sbom.FormatID, string) {
 		SPDXVersion string `json:"spdxVersion"`
 	}
 
+	dec := json.NewDecoder(reader)
+
 	var doc Document
-	err := json.Unmarshal(by, &doc)
+	err := dec.Decode(&doc)
 	if err != nil {
 		// maybe not json? maybe not valid? doesn't matter, we won't process it.
 		return "", ""

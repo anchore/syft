@@ -3,10 +3,12 @@ package cyclonedxjson
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/format/common/cyclonedxhelpers"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil"
 	"github.com/anchore/syft/syft/sbom"
@@ -24,8 +26,11 @@ func NewFormatDecoder() sbom.FormatDecoder {
 	}
 }
 
-func (d decoder) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
-	id, version := d.Identify(by)
+func (d decoder) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string, error) {
+	if reader == nil {
+		return nil, "", "", fmt.Errorf("no SBOM bytes provided")
+	}
+	id, version := d.Identify(reader)
 	if id != ID {
 		return nil, "", "", fmt.Errorf("not a cyclonedx json document")
 	}
@@ -33,7 +38,7 @@ func (d decoder) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
 		return nil, "", "", fmt.Errorf("unsupported cyclonedx json document version")
 	}
 
-	doc, err := d.decoder.Decode(by)
+	doc, err := d.decoder.Decode(reader)
 	if err != nil {
 		return nil, id, version, fmt.Errorf("unable to decode cyclonedx json document: %w", err)
 	}
@@ -46,15 +51,25 @@ func (d decoder) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
 	return s, id, version, nil
 }
 
-func (d decoder) Identify(by []byte) (sbom.FormatID, string) {
+func (d decoder) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
+	if reader == nil {
+		return "", ""
+	}
+	if _, err := reader.Seek(0, io.SeekStart); err != nil {
+		log.Debugf("unable to seek to start of CycloneDX JSON SBOM: %+v", err)
+		return "", ""
+	}
+
 	type Document struct {
 		JSONSchema  string `json:"$schema"`
 		BOMFormat   string `json:"bomFormat"`
 		SpecVersion string `json:"specVersion"`
 	}
 
+	dec := json.NewDecoder(reader)
+
 	var doc Document
-	err := json.Unmarshal(by, &doc)
+	err := dec.Decode(&doc)
 	if err != nil {
 		// maybe not json? maybe not valid? doesn't matter, we won't process it.
 		return "", ""

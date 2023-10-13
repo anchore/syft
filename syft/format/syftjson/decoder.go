@@ -3,6 +3,7 @@ package syftjson
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -21,14 +22,24 @@ func NewFormatDecoder() sbom.FormatDecoder {
 	return decoder{}
 }
 
-func (d decoder) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
-	id, version := d.Identify(by)
+func (d decoder) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string, error) {
+	if reader == nil {
+		return nil, "", "", fmt.Errorf("no SBOM bytes provided")
+	}
+
+	id, version := d.Identify(reader)
 	if version == "" || id != ID {
 		return nil, "", "", fmt.Errorf("not a syft-json document")
 	}
 	var doc model.Document
 
-	err := json.Unmarshal(by, &doc)
+	if _, err := reader.Seek(0, io.SeekStart); err != nil {
+		return nil, "", "", fmt.Errorf("unable to seek to start of Syft JSON SBOM: %+v", err)
+	}
+
+	dec := json.NewDecoder(reader)
+
+	err := dec.Decode(&doc)
 	if err != nil {
 		return nil, "", "", fmt.Errorf("unable to decode syft-json document: %w", err)
 	}
@@ -40,13 +51,24 @@ func (d decoder) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
 	return toSyftModel(doc), ID, doc.Schema.Version, nil
 }
 
-func (d decoder) Identify(by []byte) (sbom.FormatID, string) {
+func (d decoder) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
+	if reader == nil {
+		return "", ""
+	}
+
+	if _, err := reader.Seek(0, io.SeekStart); err != nil {
+		log.Debugf("unable to seek to start of Syft JSON SBOM: %+v", err)
+		return "", ""
+	}
+
 	type Document struct {
 		Schema model.Schema `json:"schema"`
 	}
 
+	dec := json.NewDecoder(reader)
+
 	var doc Document
-	err := json.Unmarshal(by, &doc)
+	err := dec.Decode(&doc)
 	if err != nil {
 		// maybe not json? maybe not valid? doesn't matter, we won't process it.
 		return "", ""
