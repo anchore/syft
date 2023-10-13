@@ -3,8 +3,11 @@ package java
 import (
 	"crypto"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 
 	intFile "github.com/anchore/syft/internal/file"
@@ -14,6 +17,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/vifraa/gopom"
 )
 
 var _ generic.Parser = parseJavaArchive
@@ -273,6 +277,10 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 	if version == "" && pomProjectObject.PomProject != nil {
 		version = pomProjectObject.Version
 	}
+	if !reflect.ValueOf(pomProjectObject).IsZero() {
+		findPomLicenses(&pomProjectObject)
+	}
+
 	return name, version, pomProjectObject.Licenses
 }
 
@@ -281,6 +289,68 @@ func artifactIDMatchesFilename(artifactID, fileName string) bool {
 		return false
 	}
 	return strings.HasPrefix(artifactID, fileName) || strings.HasSuffix(fileName, artifactID)
+}
+
+func findPomLicenses(pomProjectObject *parsedPomProject) {
+	// If we don't have any licenses until now, and if we have a parent Pom, then we'll check the parent pom in maven central for licenses.
+	if pomProjectObject != nil && pomProjectObject.Parent != nil && len(pomProjectObject.Licenses) == 0 {
+		parentPom, err := getPomFromMavenCentral(pomProjectObject.Parent.GroupID, pomProjectObject.Parent.ArtifactID, pomProjectObject.Parent.Version)
+		if err != nil {
+			// We don't want to abort here as the parent pom might not exist in Maven Central, we'll just log the error
+			log.Debugf("unable to get parent pom from Maven central: %v", err)
+			return
+		}
+		parentLicenses := parseLicensesFromPom(parentPom)
+		if len(parentLicenses) > 0 || parentPom == nil || parentPom.Parent == nil {
+			for _, licenseName := range parentLicenses {
+				pomProjectObject.Licenses = append(pomProjectObject.Licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
+			}
+		}
+	}
+}
+
+func getPomFromMavenCentral(groupID, artifactID, version string) (*gopom.Project, error) {
+	mavenCentralURL := "https://repo1.maven.org/maven2/" + strings.Join(strings.Split(groupID, "."), "/") + "/" + artifactID + "/" +
+		version + "/" + artifactID + "-" + version + ".pom"
+	log.Debugf("Trying to fetch parent pom from Maven central %s", mavenCentralURL)
+
+	resp, err := http.Get(mavenCentralURL)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get pom from Maven central: %w", err)
+	}
+
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse pom from Maven central: %w", err)
+	}
+
+	pom, err := decodePomXML(strings.NewReader(string(bytes)))
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse pom from Maven central: %w", err)
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Errorf("unable to close body: %+v", err)
+		}
+	}()
+
+	return &pom, nil
+}
+
+func parseLicensesFromPom(pom *gopom.Project) []string {
+	var licenses []string
+	if pom != nil && pom.Licenses != nil {
+		for _, license := range *pom.Licenses {
+			if license.Name != nil {
+				licenses = append(licenses, *license.Name)
+			} else if license.URL != nil {
+				licenses = append(licenses, *license.URL)
+			}
+		}
+	}
+
+	return licenses
 }
 
 // discoverPkgsFromAllMavenFiles parses Maven POM properties/xml for a given
@@ -489,7 +559,8 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 			continue
 		}
 
-		if pomProject.Version == "" || pomProject.ArtifactID == "" {
+		// If we don't have a version, then maybe the parent pom has it...
+		if (pomProject.Parent == nil && pomProject.Version == "") || pomProject.ArtifactID == "" {
 			// TODO: if there is no parentPkg (no java manifest) one of these poms could be the parent. We should discover the right parent and attach the correct info accordingly to each discovered package
 			continue
 		}
