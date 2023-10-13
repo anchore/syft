@@ -41,7 +41,6 @@ DIST_DIR := ./dist
 SNAPSHOT_DIR := ./snapshot
 CHANGELOG := CHANGELOG.md
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
-SNAPSHOT_BIN := $(realpath $(shell pwd)/$(SNAPSHOT_DIR)/$(OS)-build_$(OS)_amd64_v1/$(BIN))
 
 ifndef VERSION
 	$(error VERSION is not set)
@@ -160,11 +159,8 @@ validate-cyclonedx-schema:
 	cd schema/cyclonedx && make
 
 .PHONY: cli
-cli: $(SNAPSHOT_DIR)  ## Run CLI tests
-	chmod 755 "$(SNAPSHOT_BIN)"
-	$(SNAPSHOT_BIN) version
-	SYFT_BINARY_LOCATION='$(SNAPSHOT_BIN)' \
-		go test -count=1 -timeout=15m -v ./test/cli
+cli:  ## Run CLI tests
+	go test -count=1 -timeout=15m -v ./test/cli
 
 
 ## Benchmark test targets #################################
@@ -321,15 +317,17 @@ generate-cpe-dictionary-index:  ## Build the CPE index based off of the latest a
 build:
 	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./cmd/syft
 
-$(SNAPSHOT_DIR):  ## Build snapshot release binaries and packages
-	$(call title,Building snapshot artifacts)
+.PHONY: $(SNAPSHOT_DIR)
+$(SNAPSHOT_DIR): ## Build snapshot release for the current platform
+	$(call title,Building current platform snapshot artifact)
 
 	# create a config with the dist dir overridden
 	echo "dist: $(SNAPSHOT_DIR)" > $(TEMP_DIR)/goreleaser.yaml
 	cat .goreleaser.yaml >> $(TEMP_DIR)/goreleaser.yaml
 
-	# build release snapshots
-	$(SNAPSHOT_CMD) --config $(TEMP_DIR)/goreleaser.yaml
+	# build release snapshot
+	$(SNAPSHOT_CMD) --single-target --config $(TEMP_DIR)/goreleaser.yaml
+
 
 .PHONY: changelog
 changelog: clean-changelog  ## Generate and show the changelog for the current unreleased version

@@ -105,7 +105,7 @@ func runSyftInDocker(t testing.TB, env map[string]string, image string, args ...
 			"-e",
 			"SYFT_CHECK_FOR_APP_UPDATE=false",
 			"-v",
-			fmt.Sprintf("%s:/syft", getSyftBinaryLocationByOS(t, "linux")),
+			fmt.Sprintf("%s:/syft", getSyftBinaryLocationByOS(t, "linux", runtime.GOARCH)),
 			image,
 			"/syft",
 		},
@@ -270,37 +270,43 @@ func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
 }
 
 func getSyftBinaryLocation(t testing.TB) string {
-	if os.Getenv("SYFT_BINARY_LOCATION") != "" {
-		// SYFT_BINARY_LOCATION is the absolute path to the snapshot binary
-		return os.Getenv("SYFT_BINARY_LOCATION")
-	}
-	bin := getSyftBinaryLocationByOS(t, runtime.GOOS)
+	return getSyftBinaryLocationByOS(t, runtime.GOOS, runtime.GOARCH)
+}
 
-	// only run on valid bin target, when not running in CI
-	if bin != "" && os.Getenv("CI") == "" {
-		buildSyft(t, bin)
+func getSyftBinaryLocationByOS(t testing.TB, goOS, goArch string) string {
+	// note: for amd64 we need to update the snapshot location with the v1 suffix
+	// see : https://goreleaser.com/customization/build/#why-is-there-a-_v1-suffix-on-amd64-builds
+	archPath := goArch
+	if goArch == "amd64" {
+		archPath = fmt.Sprintf("%s_v1", archPath)
+	}
+
+	bin := ""
+	// note: there is a subtle - vs _ difference between these versions
+	switch goOS {
+	case "windows", "darwin", "linux":
+		bin = path.Join(repoRoot(t), fmt.Sprintf("snapshot/%s-build_%s_%s/syft", goOS, goOS, archPath))
+	default:
+		t.Fatalf("unsupported OS: %s", goOS)
+		return ""
+	}
+
+	envName := strings.ToUpper(fmt.Sprintf("SYFT_BINARY_LOCATION_%s_%s", goOS, goArch))
+	if os.Getenv(envName) != bin {
+		buildSyft(t, bin, goOS, goArch)
 		// regardless if we have a successful build, don't attempt to keep building
-		_ = os.Setenv("SYFT_BINARY_LOCATION", bin)
+		_ = os.Setenv(envName, bin)
 	}
 
 	return bin
 }
 
-func buildSyft(t testing.TB, outfile string) {
+func buildSyft(t testing.TB, outfile, goOS, goArch string) {
 	dir := repoRoot(t)
 
 	start := time.Now()
 
-	var stdout, stderr string
-	var err error
-	switch "go" {
-	case "go":
-		stdout, stderr, err = buildSyftWithGo(dir, outfile)
-	case "goreleaser":
-		stdout, stderr, err = buildSyftWithGoreleaser(dir)
-	case "make":
-		stdout, stderr, err = buildSyftWithMake(dir)
-	}
+	stdout, stderr, err := buildSyftWithGo(dir, outfile, goOS, goArch)
 
 	took := time.Now().Sub(start).Round(time.Millisecond)
 	if err == nil {
@@ -310,16 +316,11 @@ func buildSyft(t testing.TB, outfile string) {
 			t.Logf("built binary: %s in %v\naffected paths:\n%s", outfile, took, stderr)
 		}
 	} else {
-		t.Logf("unable to build binary: %s %v\nSTDOUT:\n%s\nSTDERR:\n%s", outfile, err, stdout, stderr)
+		t.Fatalf("unable to build binary: %s -- %v\nSTDOUT:\n%s\nSTDERR:\n%s", outfile, err, stdout, stderr)
 	}
 }
 
-func goreleaserYamlContents(dir string) string {
-	b, _ := os.ReadFile(path.Join(dir, ".goreleaser.yaml"))
-	return string(b)
-}
-
-func buildSyftWithGo(dir string, outfile string) (string, string, error) {
+func buildSyftWithGo(dir, outfile, goOS, goArch string) (string, string, error) {
 	d := yaml.NewDecoder(strings.NewReader(goreleaserYamlContents(dir)))
 	type releaser struct {
 		Builds []struct {
@@ -359,39 +360,15 @@ func buildSyftWithGo(dir string, outfile string) (string, string, error) {
 	cmd.Dir = dir
 	stdout, stderr, err := runCommand(cmd, map[string]string{
 		"CGO_ENABLED": "0",
+		"GOOS":        goOS,
+		"GOARCH":      goArch,
 	})
 	return stdout, stderr, err
 }
 
-func buildSyftWithMake(dir string) (string, string, error) {
-	cmd := exec.Command("make", "snapshot")
-	cmd.Dir = dir
-	stdout, stderr, err := runCommand(cmd, map[string]string{})
-	if strings.Contains(stderr, "error=docker build failed") {
-		err = nil
-	}
-	return stdout, stderr, err
-}
-
-func buildSyftWithGoreleaser(dir string) (string, string, error) {
-	tmpDir := path.Join(dir, ".tmp")
-
-	goreleaserYaml := goreleaserYamlContents(dir)
-
-	// # create a config with the dist dir overridden
-	tmpGoreleaserYamlFile := path.Join(tmpDir, "goreleaser.yaml")
-	_ = os.WriteFile(tmpGoreleaserYamlFile, []byte("dist: snapshot\n"+goreleaserYaml), os.ModePerm)
-
-	cmd := exec.Command(path.Join(tmpDir, "goreleaser"),
-		"build",
-		"--snapshot",
-		"--single-target",
-		"--clean",
-		"--config", tmpGoreleaserYamlFile,
-	)
-	cmd.Dir = dir
-	stdout, stderr, err := runCommand(cmd, map[string]string{})
-	return stdout, stderr, err
+func goreleaserYamlContents(dir string) string {
+	b, _ := os.ReadFile(path.Join(dir, ".goreleaser.yaml"))
+	return string(b)
 }
 
 func executeTemplate(tpl string, data any) string {
@@ -405,23 +382,6 @@ func executeTemplate(tpl string, data any) string {
 		return fmt.Sprintf("ERROR: %v", err)
 	}
 	return out.String()
-}
-
-func getSyftBinaryLocationByOS(t testing.TB, goOS string) string {
-	// note: for amd64 we need to update the snapshot location with the v1 suffix
-	// see : https://goreleaser.com/customization/build/#why-is-there-a-_v1-suffix-on-amd64-builds
-	archPath := runtime.GOARCH
-	if runtime.GOARCH == "amd64" {
-		archPath = fmt.Sprintf("%s_v1", archPath)
-	}
-	// note: there is a subtle - vs _ difference between these versions
-	switch goOS {
-	case "darwin", "linux":
-		return path.Join(repoRoot(t), fmt.Sprintf("snapshot/%s-build_%s_%s/syft", goOS, goOS, archPath))
-	default:
-		t.Fatalf("unsupported OS: %s", runtime.GOOS)
-	}
-	return ""
 }
 
 func repoRoot(t testing.TB) string {
