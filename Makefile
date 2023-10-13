@@ -5,7 +5,7 @@ TEMP_DIR := ./.tmp
 LINT_CMD := $(TEMP_DIR)/golangci-lint run --tests=false
 GOIMPORTS_CMD := $(TEMP_DIR)/gosimports -local github.com/anchore
 RELEASE_CMD := $(TEMP_DIR)/goreleaser release --clean
-SNAPSHOT_CMD := $(TEMP_DIR)/goreleaser build --clean --snapshot --single-target
+SNAPSHOT_CMD := $(RELEASE_CMD) --skip-publish --skip-sign --snapshot
 CHRONICLE_CMD = $(TEMP_DIR)/chronicle
 GLOW_CMD = $(TEMP_DIR)/glow
 
@@ -318,17 +318,15 @@ generate-cpe-dictionary-index:  ## Build the CPE index based off of the latest a
 build:
 	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./cmd/syft
 
-.PHONY: $(SNAPSHOT_DIR)
-$(SNAPSHOT_DIR): ## Build snapshot release for the current platform
-	$(call title,Building current platform snapshot artifact)
+$(SNAPSHOT_DIR):  ## Build snapshot release binaries and packages
+	$(call title,Building snapshot artifacts)
 
 	# create a config with the dist dir overridden
 	echo "dist: $(SNAPSHOT_DIR)" > $(TEMP_DIR)/goreleaser.yaml
-	perl -0777pe 's/hooks:.*?quill.*?[.]log//s' .goreleaser.yaml >> $(TEMP_DIR)/goreleaser.yaml
+	cat .goreleaser.yaml >> $(TEMP_DIR)/goreleaser.yaml
 
-	# build release snapshot
+	# build release snapshots
 	$(SNAPSHOT_CMD) --config $(TEMP_DIR)/goreleaser.yaml
-
 
 .PHONY: changelog
 changelog: clean-changelog  ## Generate and show the changelog for the current unreleased version
