@@ -27,15 +27,15 @@ func NewFormatDecoder() sbom.FormatDecoder {
 func (d decoder) Decode(by []byte) (*sbom.SBOM, sbom.FormatID, string, error) {
 	id, version := d.Identify(by)
 	if id != ID {
-		return nil, "", "", fmt.Errorf("not a cyclonedx json document")
+		return nil, "", "", fmt.Errorf("not a cyclonedx xml document")
 	}
 	if version == "" {
-		return nil, "", "", fmt.Errorf("unsupported cyclonedx json document version")
+		return nil, "", "", fmt.Errorf("unsupported cyclonedx xml document version")
 	}
 
 	doc, err := d.decoder.Decode(by)
 	if err != nil {
-		return nil, id, version, fmt.Errorf("unable to decode cyclonedx json document: %w", err)
+		return nil, id, version, fmt.Errorf("unable to decode cyclonedx xml document: %w", err)
 	}
 
 	s, err := cyclonedxhelpers.ToSyftModel(doc)
@@ -54,7 +54,7 @@ func (d decoder) Identify(by []byte) (sbom.FormatID, string) {
 	var doc Document
 	err := xml.Unmarshal(by, &doc)
 	if err != nil {
-		// maybe not json? maybe not valid? doesn't matter, we won't process it.
+		// maybe not xml? maybe not valid? doesn't matter, we won't process it.
 		return "", ""
 	}
 

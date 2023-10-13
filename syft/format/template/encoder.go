@@ -72,18 +72,17 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		return errors.New("no template file provided")
 	}
 
-	expandedPathToTemplateFile, err := homedir.Expand(e.cfg.TemplatePath)
+	templatePath, err := homedir.Expand(e.cfg.TemplatePath)
 	if err != nil {
 		return fmt.Errorf("unable to expand path %s", e.cfg.TemplatePath)
 	}
 
-	templateContents, err := os.ReadFile(expandedPathToTemplateFile)
+	templateContents, err := os.ReadFile(templatePath)
 	if err != nil {
 		return fmt.Errorf("unable to get template content: %w", err)
 	}
 
-	templateName := expandedPathToTemplateFile
-	tmpl, err := template.New(templateName).Funcs(e.funcMap).Parse(string(templateContents))
+	tmpl, err := template.New(templatePath).Funcs(e.funcMap).Parse(string(templateContents))
 	if err != nil {
 		return fmt.Errorf("unable to parse template: %w", err)
 	}

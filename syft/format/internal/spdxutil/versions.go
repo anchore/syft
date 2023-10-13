@@ -18,7 +18,7 @@ func SupportedVersions(id sbom.FormatID) []string {
 	}
 
 	if id != JSONFormatID {
-		// JSON format does not support 2.1
+		// JSON format is not supported in v2.1
 		return append([]string{"2.1"}, versions...)
 	}
 

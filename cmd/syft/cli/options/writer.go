@@ -83,12 +83,16 @@ func parseSBOMOutputFlags(outputs []string, defaultFile string, encoders []sbom.
 // formatVersionOptions takes a list like ["github-json", "syft-json@11.0.0", "cyclonedx-xml@1.0", "cyclondx-xml@1.1"...]
 // and formats it into a human-readable string like:
 //
-//	Available formats:
-//	  - github-json, syft-json, syft-table, syft-text, template
-//	  - cyclonedx-json: 1, 1.2, 1.3, 1.4, 1.5
-//	  - cyclonedx-xml: 1, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5
-//	  - spdx-json: 2, 2.2, 2.3
-//	  - spdx-tag-value: 2, 2.1, 2.2, 2.3
+// Available formats:
+//   - cyclonedx-json @ 1.2, 1.3, 1.4, 1.5
+//   - cyclonedx-xml @ 1.0, 1.1, 1.2, 1.3, 1.4, 1.5
+//   - github-json
+//   - spdx-json @ 2.2, 2.3
+//   - spdx-tag-value @ 2.1, 2.2, 2.3
+//   - syft-json
+//   - syft-table
+//   - syft-text
+//   - template
 func formatVersionOptions(nameVersionPairs []string) string {
 	availableVersions := make(map[string][]string)
 	availableFormats := strset.New()
@@ -107,45 +111,23 @@ func formatVersionOptions(nameVersionPairs []string) string {
 		}
 	}
 
-	// find all major versions for each format and prepend the major version to the list of versions
-	for name, versions := range availableVersions {
-		majorVersions := strset.New()
-		allVersions := strset.New()
-		for _, version := range versions {
-			allVersions.Add(version)
-			majorVersion := strings.SplitN(version, ".", 2)[0]
-			majorVersions.Add(majorVersion)
-		}
-
-		majorVersionsList := majorVersions.List()
-		sort.Strings(majorVersionsList)
-
-		availableVersions[name] = append(majorVersionsList, versions...)
-	}
-
-	// get formats that have no version input
-	var formatsWithoutVersion []string
-	for _, name := range availableFormats.List() {
-		if _, ok := availableVersions[name]; !ok {
-			formatsWithoutVersion = append(formatsWithoutVersion, name)
-			availableFormats.Remove(name)
-		}
-	}
-	sort.Strings(formatsWithoutVersion)
+	sortedAvailableFormats := availableFormats.List()
+	sort.Strings(sortedAvailableFormats)
 
 	var s strings.Builder
 
 	s.WriteString("\n")
-	s.WriteString("Available formats:\n")
-	s.WriteString("   - " + strings.Join(formatsWithoutVersion, ", "))
-
-	sortedAvailableFormats := availableFormats.List()
-	sort.Strings(sortedAvailableFormats)
+	s.WriteString("Available formats:")
 
 	for _, name := range sortedAvailableFormats {
 		s.WriteString("\n")
-		s.WriteString(fmt.Sprintf("   - %s: ", name))
-		s.WriteString(strings.Join(availableVersions[name], ", "))
+
+		s.WriteString(fmt.Sprintf("   - %s", name))
+
+		if len(availableVersions[name]) > 0 {
+			s.WriteString(" @ ")
+			s.WriteString(strings.Join(availableVersions[name], ", "))
+		}
 	}
 
 	return s.String()

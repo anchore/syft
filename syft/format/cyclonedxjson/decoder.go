@@ -70,7 +70,6 @@ func (d decoder) Identify(by []byte) (sbom.FormatID, string) {
 }
 
 func getFormatInfo(schemaURI, bomFormat string, specVersion any) (sbom.FormatID, string) {
-	// xmlns should be something like http://cyclonedx.org/schema/bom-1.4.schema.json
 	if !strings.Contains(schemaURI, "cyclonedx.org/schema/bom") {
 		// not a cyclonedx json document
 		return "", ""

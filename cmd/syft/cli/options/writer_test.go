@@ -274,11 +274,15 @@ func Test_formatVersionOptions(t *testing.T) {
 			},
 			want: `
 Available formats:
-   - github-json, syft-json, syft-table, syft-text, template
-   - cyclonedx-json: 1, 1.2, 1.3, 1.4, 1.5
-   - cyclonedx-xml: 1, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5
-   - spdx-json: 2, 2.2, 2.3
-   - spdx-tag-value: 2, 2.1, 2.2, 2.3`,
+   - cyclonedx-json @ 1.2, 1.3, 1.4, 1.5
+   - cyclonedx-xml @ 1.0, 1.1, 1.2, 1.3, 1.4, 1.5
+   - github-json
+   - spdx-json @ 2.2, 2.3
+   - spdx-tag-value @ 2.1, 2.2, 2.3
+   - syft-json
+   - syft-table
+   - syft-text
+   - template`,
 		},
 	}
 	for _, tt := range tests {

@@ -79,15 +79,15 @@ func (o *Output) createEncoders() ([]sbom.FormatEncoder, error) {
 	var list encoderList
 
 	// in the future there will be application configuration options that can be used to set the default output format
-	list.attempt(template.ID)(o.OutputTemplate.formatEncoders())
+	list.addWithErr(template.ID)(o.OutputTemplate.formatEncoders())
 	list.add(syftjson.ID)(syftjson.NewFormatEncoder())
 	list.add(table.ID)(table.NewFormatEncoder())
 	list.add(text.ID)(text.NewFormatEncoder())
 	list.add(github.ID)(github.NewFormatEncoder())
-	list.attempt(cyclonedxxml.ID)(cycloneDxXMLEncoders())
-	list.attempt(cyclonedxjson.ID)(cycloneDxJSONEncoders())
-	list.attempt(spdxjson.ID)(spdxJSONEncoders())
-	list.attempt(spdxtagvalue.ID)(spdxTagValueEncoders())
+	list.addWithErr(cyclonedxxml.ID)(cycloneDxXMLEncoders())
+	list.addWithErr(cyclonedxjson.ID)(cycloneDxJSONEncoders())
+	list.addWithErr(spdxjson.ID)(spdxJSONEncoders())
+	list.addWithErr(spdxtagvalue.ID)(spdxTagValueEncoders())
 
 	return list.encoders, list.err
 }
@@ -107,16 +107,16 @@ type encoderList struct {
 	err      error
 }
 
-func (l *encoderList) attempt(name sbom.FormatID) func([]sbom.FormatEncoder, error) {
+func (l *encoderList) addWithErr(name sbom.FormatID) func([]sbom.FormatEncoder, error) {
 	return func(encs []sbom.FormatEncoder, err error) {
+		if err != nil {
+			l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: %w", name, err))
+			return
+		}
 		for _, enc := range encs {
-			if err != nil {
-				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: %w", name, err))
-				return
-			}
 			if enc == nil {
 				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
-				return
+				continue
 			}
 			l.encoders = append(l.encoders, enc)
 		}
@@ -128,7 +128,7 @@ func (l *encoderList) add(name sbom.FormatID) func(...sbom.FormatEncoder) {
 		for _, enc := range encs {
 			if enc == nil {
 				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
-				return
+				continue
 			}
 			l.encoders = append(l.encoders, enc)
 		}

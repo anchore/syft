@@ -41,7 +41,7 @@ func SpecVersionFromString(v string) (cyclonedx.SpecVersion, error) {
 		return cyclonedx.SpecVersion1_3, nil
 	case "1.4":
 		return cyclonedx.SpecVersion1_4, nil
-	case "1.5", "", "1", "1.x":
+	case "1.5":
 		return cyclonedx.SpecVersion1_5, nil
 	}
 	return -1, fmt.Errorf("unsupported CycloneDX version %q", v)
