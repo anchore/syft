@@ -324,7 +324,7 @@ $(SNAPSHOT_DIR): ## Build snapshot release for the current platform
 
 	# create a config with the dist dir overridden
 	echo "dist: $(SNAPSHOT_DIR)" > $(TEMP_DIR)/goreleaser.yaml
-	cat .goreleaser.yaml >> $(TEMP_DIR)/goreleaser.yaml
+	perl -0777pe 's/hooks:.*?quill.*?[.]log//s' .goreleaser.yaml >> $(TEMP_DIR)/goreleaser.yaml
 
 	# build release snapshot
 	$(SNAPSHOT_CMD) --config $(TEMP_DIR)/goreleaser.yaml
