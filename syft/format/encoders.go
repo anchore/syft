@@ -10,37 +10,8 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/format/cyclonedxjson"
-	"github.com/anchore/syft/syft/format/cyclonedxxml"
-	"github.com/anchore/syft/syft/format/github"
-	"github.com/anchore/syft/syft/format/spdxjson"
-	"github.com/anchore/syft/syft/format/spdxtagvalue"
-	"github.com/anchore/syft/syft/format/syftjson"
-	"github.com/anchore/syft/syft/format/table"
-	"github.com/anchore/syft/syft/format/template"
-	"github.com/anchore/syft/syft/format/text"
 	"github.com/anchore/syft/syft/sbom"
 )
-
-// DefaultEncoders returns the latest encoders for each format with all default options.
-func DefaultEncoders() []sbom.FormatEncoder {
-	// encoders that support a single version
-	encs := []sbom.FormatEncoder{
-		syftjson.DefaultFormatEncoder(),
-		github.DefaultFormatEncoder(),
-		table.DefaultFormatEncoder(),
-		text.DefaultFormatEncoder(),
-		template.DefaultFormatEncoder(),
-	}
-
-	// encoders that support multiple versions
-	encs = append(encs, cyclonedxxml.DefaultFormatEncoders()...)
-	encs = append(encs, cyclonedxjson.DefaultFormatEncoders()...)
-	encs = append(encs, spdxtagvalue.DefaultFormatEncoders()...)
-	encs = append(encs, spdxjson.DefaultFormatEncoders()...)
-
-	return encs
-}
 
 type EncoderCollection struct {
 	encoders []sbom.FormatEncoder

@@ -21,7 +21,7 @@ var updateImage = flag.Bool("update-image", false, "update the golden image used
 
 func TestDefaultNameAndVersion(t *testing.T) {
 	expectedID, expectedVersion := ID, internal.JSONSchemaVersion
-	enc := DefaultFormatEncoder()
+	enc := NewFormatEncoder()
 	if enc.ID() != expectedID {
 		t.Errorf("expected ID %q, got %q", expectedID, enc.ID())
 	}
@@ -36,7 +36,7 @@ func TestDirectoryEncoder(t *testing.T) {
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.DirectoryInput(t, dir),
-			Format:                      DefaultFormatEncoder(),
+			Format:                      NewFormatEncoder(),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -54,7 +54,7 @@ func TestImageEncoder(t *testing.T) {
 		},
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.ImageInput(t, testImage, testutil.FromSnapshot()),
-			Format:                      DefaultFormatEncoder(),
+			Format:                      NewFormatEncoder(),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -235,7 +235,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     s,
-			Format:                      DefaultFormatEncoder(),
+			Format:                      NewFormatEncoder(),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,

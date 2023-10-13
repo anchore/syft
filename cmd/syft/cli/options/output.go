@@ -9,7 +9,6 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/clio"
-	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
 	"github.com/anchore/syft/syft/format/github"
@@ -44,10 +43,9 @@ func DefaultOutput() Output {
 }
 
 func (o *Output) AddFlags(flags clio.FlagSet) {
-	encs := format.DefaultEncoders()
 	var names []string
-	for _, e := range encs {
-		names = append(names, e.ID().String())
+	for _, id := range supportedIDs() {
+		names = append(names, id.String())
 	}
 	sort.Strings(names)
 
@@ -82,10 +80,10 @@ func (o *Output) createEncoders() ([]sbom.FormatEncoder, error) {
 
 	// in the future there will be application configuration options that can be used to set the default output format
 	list.attempt(template.ID)(o.OutputTemplate.formatEncoders())
-	list.add(syftjson.ID)(syftjson.DefaultFormatEncoder())
-	list.add(table.ID)(table.DefaultFormatEncoder())
-	list.add(text.ID)(text.DefaultFormatEncoder())
-	list.add(github.ID)(github.DefaultFormatEncoder())
+	list.add(syftjson.ID)(syftjson.NewFormatEncoder())
+	list.add(table.ID)(table.NewFormatEncoder())
+	list.add(text.ID)(text.NewFormatEncoder())
+	list.add(github.ID)(github.NewFormatEncoder())
 	list.attempt(cyclonedxxml.ID)(cycloneDxXMLEncoders())
 	list.attempt(cyclonedxjson.ID)(cycloneDxJSONEncoders())
 	list.attempt(spdxjson.ID)(spdxJSONEncoders())
@@ -207,4 +205,23 @@ func spdxTagValueEncoders() ([]sbom.FormatEncoder, error) {
 		}
 	}
 	return encs, errs
+}
+
+func supportedIDs() []sbom.FormatID {
+	encs := []sbom.FormatID{
+		// encoders that support a single version
+		syftjson.ID,
+		github.ID,
+		table.ID,
+		text.ID,
+		template.ID,
+
+		// encoders that support multiple versions
+		cyclonedxxml.ID,
+		cyclonedxjson.ID,
+		spdxtagvalue.ID,
+		spdxjson.ID,
+	}
+
+	return encs
 }

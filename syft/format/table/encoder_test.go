@@ -15,7 +15,7 @@ func TestTableEncoder(t *testing.T) {
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.DirectoryInput(t, t.TempDir()),
-			Format:                      DefaultFormatEncoder(),
+			Format:                      NewFormatEncoder(),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,

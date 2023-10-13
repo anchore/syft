@@ -15,12 +15,18 @@ import (
 var updateSnapshot = flag.Bool("update-cyclonedx-json", false, "update the *.golden files for cyclone-dx JSON encoders")
 var updateImage = flag.Bool("update-image", false, "update the golden image used for image encoder testing")
 
+func getEncoder(t testing.TB) sbom.FormatEncoder {
+	enc, err := NewFormatEncoder(DefaultEncoderConfig())
+	require.NoError(t, err)
+	return enc
+}
+
 func TestCycloneDxDirectoryEncoder(t *testing.T) {
 	dir := t.TempDir()
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.DirectoryInput(t, dir),
-			Format:                      DefaultFormatEncoder(),
+			Format:                      getEncoder(t),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -38,7 +44,7 @@ func TestCycloneDxImageEncoder(t *testing.T) {
 		},
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.ImageInput(t, testImage),
-			Format:                      DefaultFormatEncoder(),
+			Format:                      getEncoder(t),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -68,7 +74,7 @@ func redactor(values ...string) testutil.Redactor {
 }
 
 func TestSupportedVersions(t *testing.T) {
-	encs := DefaultFormatEncoders()
+	encs := defaultFormatEncoders()
 	require.NotEmpty(t, encs)
 
 	versions := SupportedVersions()
@@ -109,4 +115,16 @@ func TestSupportedVersions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func defaultFormatEncoders() []sbom.FormatEncoder {
+	var encs []sbom.FormatEncoder
+	for _, version := range SupportedVersions() {
+		enc, err := NewFormatEncoder(EncoderConfig{Version: version})
+		if err != nil {
+			panic(err)
+		}
+		encs = append(encs, enc)
+	}
+	return encs
 }

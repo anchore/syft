@@ -26,7 +26,7 @@ func Test_EncodeDecodeCycle(t *testing.T) {
 	testImage := "image-simple"
 	originalSBOM := testutil.ImageInput(t, testImage)
 
-	enc := DefaultFormatEncoder()
+	enc := NewFormatEncoder()
 	dec := NewFormatDecoder()
 
 	var buf bytes.Buffer
@@ -234,7 +234,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 	}
 
 	buf := &bytes.Buffer{}
-	enc := DefaultFormatEncoder()
+	enc := NewFormatEncoder()
 	err := enc.Encode(buf, s)
 	require.NoError(t, err)
 

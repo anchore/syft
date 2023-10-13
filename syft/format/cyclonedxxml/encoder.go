@@ -35,26 +35,6 @@ func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 	}, nil
 }
 
-func DefaultFormatEncoder() sbom.FormatEncoder {
-	enc, err := NewFormatEncoder(DefaultEncoderConfig())
-	if err != nil {
-		panic(err)
-	}
-	return enc
-}
-
-func DefaultFormatEncoders() []sbom.FormatEncoder {
-	var encs []sbom.FormatEncoder
-	for _, version := range SupportedVersions() {
-		enc, err := NewFormatEncoder(EncoderConfig{Version: version})
-		if err != nil {
-			panic(err)
-		}
-		encs = append(encs, enc)
-	}
-	return encs
-}
-
 func DefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{
 		Version: cyclonedxutil.DefaultVersion,

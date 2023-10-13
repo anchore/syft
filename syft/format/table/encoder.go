@@ -16,12 +16,8 @@ const ID sbom.FormatID = "syft-table"
 type encoder struct {
 }
 
-func newFormatEncoder() sbom.FormatEncoder {
+func NewFormatEncoder() sbom.FormatEncoder {
 	return encoder{}
-}
-
-func DefaultFormatEncoder() sbom.FormatEncoder {
-	return newFormatEncoder()
 }
 
 func (e encoder) ID() sbom.FormatID {

@@ -55,14 +55,6 @@ func DefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{}
 }
 
-func DefaultFormatEncoder() sbom.FormatEncoder {
-	enc, err := NewFormatEncoder(DefaultEncoderConfig())
-	if err != nil {
-		panic(err)
-	}
-	return enc
-}
-
 func (e encoder) ID() sbom.FormatID {
 	return ID
 }

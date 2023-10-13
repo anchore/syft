@@ -17,12 +17,18 @@ import (
 var updateSnapshot = flag.Bool("update-spdx-tv", false, "update the *.golden files for spdx-tv encoders")
 var updateImage = flag.Bool("update-image", false, "update the golden image used for image encoder testing")
 
+func getEncoder(t testing.TB) sbom.FormatEncoder {
+	enc, err := NewFormatEncoder(DefaultEncoderConfig())
+	require.NoError(t, err)
+	return enc
+}
+
 func TestSPDXTagValueDirectoryEncoder(t *testing.T) {
 	dir := t.TempDir()
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.DirectoryInput(t, dir),
-			Format:                      DefaultFormatEncoder(),
+			Format:                      getEncoder(t),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,
@@ -40,7 +46,7 @@ func TestSPDXTagValueImageEncoder(t *testing.T) {
 		},
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.ImageInput(t, testImage, testutil.FromSnapshot()),
-			Format:                      DefaultFormatEncoder(),
+			Format:                      getEncoder(t),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,
@@ -80,7 +86,7 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     s,
-			Format:                      DefaultFormatEncoder(),
+			Format:                      getEncoder(t),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,
@@ -101,7 +107,7 @@ func TestSPDXRelationshipOrder(t *testing.T) {
 		},
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     s,
-			Format:                      DefaultFormatEncoder(),
+			Format:                      getEncoder(t),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,
@@ -128,7 +134,7 @@ func redactor(values ...string) testutil.Redactor {
 }
 
 func TestSupportedVersions(t *testing.T) {
-	encs := DefaultFormatEncoders()
+	encs := defaultFormatEncoders()
 	require.NotEmpty(t, encs)
 
 	versions := SupportedVersions()
@@ -188,4 +194,16 @@ func TestSupportedVersions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func defaultFormatEncoders() []sbom.FormatEncoder {
+	var encs []sbom.FormatEncoder
+	for _, version := range SupportedVersions() {
+		enc, err := NewFormatEncoder(EncoderConfig{Version: version})
+		if err != nil {
+			panic(err)
+		}
+		encs = append(encs, enc)
+	}
+	return encs
 }

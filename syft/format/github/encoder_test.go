@@ -15,7 +15,7 @@ func TestGithubDirectoryEncoder(t *testing.T) {
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.DirectoryInput(t, dir),
-			Format:                      DefaultFormatEncoder(),
+			Format:                      NewFormatEncoder(),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,
@@ -33,7 +33,7 @@ func TestGithubImageEncoder(t *testing.T) {
 		},
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.ImageInput(t, testImage),
-			Format:                      DefaultFormatEncoder(),
+			Format:                      NewFormatEncoder(),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      false,

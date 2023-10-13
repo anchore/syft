@@ -15,7 +15,7 @@ const ID sbom.FormatID = "syft-json"
 type encoder struct {
 }
 
-func DefaultFormatEncoder() sbom.FormatEncoder {
+func NewFormatEncoder() sbom.FormatEncoder {
 	return encoder{}
 }
 

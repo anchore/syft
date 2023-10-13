@@ -19,6 +19,13 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+func mustEncoder(enc sbom.FormatEncoder, err error) sbom.FormatEncoder {
+	if err != nil {
+		panic(err)
+	}
+	return enc
+}
+
 // TestConvertCmd tests if the converted SBOM is a valid document according
 // to spec.
 // TODO: This test can, but currently does not, check the converted SBOM content. It
@@ -31,29 +38,29 @@ func TestConvertCmd(t *testing.T) {
 	}{
 		{
 			name:   "syft-json",
-			format: syftjson.DefaultFormatEncoder(),
+			format: syftjson.NewFormatEncoder(),
 		},
 		{
 			name:   "spdx-json",
-			format: spdxjson.DefaultFormatEncoder(),
+			format: mustEncoder(spdxjson.NewFormatEncoder(spdxjson.DefaultEncoderConfig())),
 		},
 		{
 			name:   "spdx-tag-value",
-			format: spdxtagvalue.DefaultFormatEncoder(),
+			format: mustEncoder(spdxtagvalue.NewFormatEncoder(spdxtagvalue.DefaultEncoderConfig())),
 		},
 		{
 			name:   "cyclonedx-json",
-			format: cyclonedxjson.DefaultFormatEncoder(),
+			format: mustEncoder(cyclonedxjson.NewFormatEncoder(cyclonedxjson.DefaultEncoderConfig())),
 		},
 		{
 			name:   "cyclonedx-xml",
-			format: cyclonedxxml.DefaultFormatEncoder(),
+			format: mustEncoder(cyclonedxxml.NewFormatEncoder(cyclonedxxml.DefaultEncoderConfig())),
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			syftSbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
-			syftFormat := syftjson.DefaultFormatEncoder()
+			syftFormat := syftjson.NewFormatEncoder()
 
 			syftFile, err := os.CreateTemp("", "test-convert-sbom-")
 			require.NoError(t, err)

@@ -48,7 +48,8 @@ func TestFormatWithOptionAndHasField(t *testing.T) {
 }
 
 func TestFormatWithoutOptions(t *testing.T) {
-	f := DefaultFormatEncoder()
-	err := f.Encode(nil, testutil.DirectoryInput(t, t.TempDir()))
+	f, err := NewFormatEncoder(DefaultEncoderConfig())
+	require.NoError(t, err)
+	err = f.Encode(nil, testutil.DirectoryInput(t, t.TempDir()))
 	assert.ErrorContains(t, err, "no template file provided")
 }
