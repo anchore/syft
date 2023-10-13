@@ -92,6 +92,27 @@ jobs:
         run: make integration
 
 
+  Cli-Linux:
+    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
+    name: "CLI tests (Linux)"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 #v4.1.0
+
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+
+      - name: Restore CLI test-fixture cache
+        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        with:
+          path: ${{ github.workspace }}/test/cli/test-fixtures/cache
+          key: ${{ runner.os }}-cli-test-cache-${{ hashFiles('test/cli/test-fixtures/cache.fingerprint') }}
+
+      - name: Run CLI Tests (Linux)
+        run: make cli
+
+
+
   Build-Snapshot-Artifacts:
     name: "Build snapshot artifacts"
     runs-on: ubuntu-20.04
@@ -183,30 +204,3 @@ jobs:
 
       - name: Run install.sh tests (Mac)
         run: make install-test-ci-mac
-
-
-  Cli-Linux:
-    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
-    name: "CLI tests (Linux)"
-    needs: [Build-Snapshot-Artifacts]
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 #v4.1.0
-
-      - name: Bootstrap environment
-        uses: ./.github/actions/bootstrap
-
-      - name: Restore CLI test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
-        with:
-          path: ${{ github.workspace }}/test/cli/test-fixtures/cache
-          key: ${{ runner.os }}-cli-test-cache-${{ hashFiles('test/cli/test-fixtures/cache.fingerprint') }}
-
-      - name: Download snapshot build
-        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
-        with:
-          path: snapshot
-          key: snapshot-build-${{ github.run_id }}
-
-      - name: Run CLI Tests (Linux)
-        run: make cli

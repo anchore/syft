@@ -41,7 +41,6 @@ DIST_DIR := ./dist
 SNAPSHOT_DIR := ./snapshot
 CHANGELOG := CHANGELOG.md
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
-SNAPSHOT_BIN := $(realpath $(shell pwd)/$(SNAPSHOT_DIR)/$(OS)-build_$(OS)_amd64_v1/$(BIN))
 
 ifndef VERSION
 	$(error VERSION is not set)
@@ -161,11 +160,8 @@ validate-cyclonedx-schema:
 	cd schema/cyclonedx && make
 
 .PHONY: cli
-cli: $(SNAPSHOT_DIR)  ## Run CLI tests
-	chmod 755 "$(SNAPSHOT_BIN)"
-	$(SNAPSHOT_BIN) version
-	SYFT_BINARY_LOCATION='$(SNAPSHOT_BIN)' \
-		go test -count=1 -timeout=15m -v ./test/cli
+cli:  ## Run CLI tests
+	go test -count=1 -timeout=15m -v ./test/cli
 
 
 ## Benchmark test targets #################################

@@ -12,6 +12,9 @@ func TestDirectoryScanCompletesWithinTimeout(t *testing.T) {
 	// we want to pull the image ahead of the test as to not affect the timeout value
 	pullDockerImage(t, image)
 
+	// run once in case we need to rebuild syft binary, so it doesn't affect the timeout value
+	runSyftInDocker(t, nil, image, "--help")
+
 	var cmd *exec.Cmd
 	var stdout, stderr string
 	done := make(chan struct{})

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"math"
 	"os"
 	"os/exec"
 	"path"
@@ -13,7 +12,10 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"text/template"
 	"time"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
@@ -25,39 +27,6 @@ func logOutputOnFailure(t testing.TB, cmd *exec.Cmd, stdout, stderr string) {
 		t.Log("STDOUT:\n", stdout)
 		t.Log("STDERR:\n", stderr)
 		t.Log("COMMAND:", strings.Join(cmd.Args, " "))
-	}
-}
-
-func setupPKI(t *testing.T, pw string) func() {
-	err := os.Setenv("COSIGN_PASSWORD", pw)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cosignPath := filepath.Join(repoRoot(t), ".tmp/cosign")
-	cmd := exec.Command(cosignPath, "generate-key-pair")
-	stdout, stderr, _ := runCommand(cmd, nil)
-	if cmd.ProcessState.ExitCode() != 0 {
-		t.Log("STDOUT", stdout)
-		t.Log("STDERR", stderr)
-		t.Fatalf("could not generate keypair")
-	}
-
-	return func() {
-		err := os.Unsetenv("COSIGN_PASSWORD")
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		err = os.Remove("cosign.key")
-		if err != nil {
-			t.Fatalf("could not cleanup cosign.key")
-		}
-
-		err = os.Remove("cosign.pub")
-		if err != nil {
-			t.Fatalf("could not cleanup cosign.key")
-		}
 	}
 }
 
@@ -78,7 +47,7 @@ func pullDockerImage(t testing.TB, image string) {
 }
 
 // docker run -v $(pwd)/sbom:/sbom cyclonedx/cyclonedx-cli:latest validate --input-format json --input-version v1_4 --input-file /sbom
-func runCycloneDXInDocker(t testing.TB, env map[string]string, image string, f *os.File, args ...string) (*exec.Cmd, string, string) {
+func runCycloneDXInDocker(_ testing.TB, env map[string]string, image string, f *os.File, args ...string) (*exec.Cmd, string, string) {
 	allArgs := append(
 		[]string{
 			"run",
@@ -102,7 +71,7 @@ func runSyftInDocker(t testing.TB, env map[string]string, image string, args ...
 			"-e",
 			"SYFT_CHECK_FOR_APP_UPDATE=false",
 			"-v",
-			fmt.Sprintf("%s:/syft", getSyftBinaryLocationByOS(t, "linux")),
+			fmt.Sprintf("%s:/syft", getSyftBinaryLocationByOS(t, "linux", runtime.GOARCH)),
 			image,
 			"/syft",
 		},
@@ -219,25 +188,6 @@ func runCommandObj(t testing.TB, cmd *exec.Cmd, env map[string]string, expectErr
 	return stdout, stderr
 }
 
-func runCosign(t testing.TB, env map[string]string, args ...string) (*exec.Cmd, string, string) {
-	cmd := getCommand(t, ".tmp/cosign", args...)
-	if env == nil {
-		env = make(map[string]string)
-	}
-
-	stdout, stderr, err := runCommand(cmd, env)
-
-	if err != nil {
-		t.Errorf("error running cosign: %+v", err)
-	}
-
-	return cmd, stdout, stderr
-}
-
-func getCommand(t testing.TB, location string, args ...string) *exec.Cmd {
-	return exec.Command(filepath.Join(repoRoot(t), location), args...)
-}
-
 func runCommand(cmd *exec.Cmd, env map[string]string) (string, string, error) {
 	if env != nil {
 		cmd.Env = append(os.Environ(), envMapToSlice(env)...)
@@ -267,28 +217,118 @@ func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
 }
 
 func getSyftBinaryLocation(t testing.TB) string {
-	if os.Getenv("SYFT_BINARY_LOCATION") != "" {
-		// SYFT_BINARY_LOCATION is the absolute path to the snapshot binary
-		return os.Getenv("SYFT_BINARY_LOCATION")
-	}
-	return getSyftBinaryLocationByOS(t, runtime.GOOS)
+	return getSyftBinaryLocationByOS(t, runtime.GOOS, runtime.GOARCH)
 }
 
-func getSyftBinaryLocationByOS(t testing.TB, goOS string) string {
+func getSyftBinaryLocationByOS(t testing.TB, goOS, goArch string) string {
 	// note: for amd64 we need to update the snapshot location with the v1 suffix
 	// see : https://goreleaser.com/customization/build/#why-is-there-a-_v1-suffix-on-amd64-builds
-	archPath := runtime.GOARCH
-	if runtime.GOARCH == "amd64" {
+	archPath := goArch
+	if goArch == "amd64" {
 		archPath = fmt.Sprintf("%s_v1", archPath)
 	}
+
+	bin := ""
 	// note: there is a subtle - vs _ difference between these versions
 	switch goOS {
-	case "darwin", "linux":
-		return path.Join(repoRoot(t), fmt.Sprintf("snapshot/%s-build_%s_%s/syft", goOS, goOS, archPath))
+	case "windows", "darwin", "linux":
+		bin = path.Join(repoRoot(t), fmt.Sprintf("snapshot/%s-build_%s_%s/syft", goOS, goOS, archPath))
 	default:
-		t.Fatalf("unsupported OS: %s", runtime.GOOS)
+		t.Fatalf("unsupported OS: %s", goOS)
+		return ""
 	}
-	return ""
+
+	envName := strings.ToUpper(fmt.Sprintf("SYFT_BINARY_LOCATION_%s_%s", goOS, goArch))
+	if os.Getenv(envName) != bin {
+		buildSyft(t, bin, goOS, goArch)
+		// regardless if we have a successful build, don't attempt to keep building
+		_ = os.Setenv(envName, bin)
+	}
+
+	return bin
+}
+
+func buildSyft(t testing.TB, outfile, goOS, goArch string) {
+	dir := repoRoot(t)
+
+	start := time.Now()
+
+	stdout, stderr, err := buildSyftWithGo(dir, outfile, goOS, goArch)
+
+	took := time.Now().Sub(start).Round(time.Millisecond)
+	if err == nil {
+		if len(stderr) == 0 {
+			t.Logf("binary is up to date: %s in %v", outfile, took)
+		} else {
+			t.Logf("built binary: %s in %v\naffected paths:\n%s", outfile, took, stderr)
+		}
+	} else {
+		t.Fatalf("unable to build binary: %s -- %v\nSTDOUT:\n%s\nSTDERR:\n%s", outfile, err, stdout, stderr)
+	}
+}
+
+func buildSyftWithGo(dir, outfile, goOS, goArch string) (string, string, error) {
+	d := yaml.NewDecoder(strings.NewReader(goreleaserYamlContents(dir)))
+	type releaser struct {
+		Builds []struct {
+			ID      string `yaml:"id"`
+			LDFlags string `yaml:"ldflags"`
+		} `yaml:"builds"`
+	}
+	r := releaser{}
+	_ = d.Decode(&r)
+	ldflags := ""
+	for _, b := range r.Builds {
+		if b.ID == "linux-build" {
+			ldflags = executeTemplate(b.LDFlags, struct {
+				Version string
+				Commit  string
+				Date    string
+				Summary string
+			}{
+				Version: "SNAPSHOT", // should contain "SNAPSHOT" so update checks are skipped
+				Commit:  "COMMIT",
+				Date:    "DATE",
+				Summary: "SUMMARY",
+			})
+			break
+		}
+	}
+
+	cmd := exec.Command("go",
+		"build",
+		"-v",
+		"-o", outfile,
+		"-trimpath",
+		"-ldflags", ldflags,
+		"./cmd/syft",
+	)
+
+	cmd.Dir = dir
+	stdout, stderr, err := runCommand(cmd, map[string]string{
+		"CGO_ENABLED": "0",
+		"GOOS":        goOS,
+		"GOARCH":      goArch,
+	})
+	return stdout, stderr, err
+}
+
+func goreleaserYamlContents(dir string) string {
+	b, _ := os.ReadFile(path.Join(dir, ".goreleaser.yaml"))
+	return string(b)
+}
+
+func executeTemplate(tpl string, data any) string {
+	t, err := template.New("tpl").Parse(tpl)
+	if err != nil {
+		return fmt.Sprintf("ERROR: %v", err)
+	}
+	out := &bytes.Buffer{}
+	err = t.Execute(out, data)
+	if err != nil {
+		return fmt.Sprintf("ERROR: %v", err)
+	}
+	return out.String()
 }
 
 func repoRoot(t testing.TB) string {
@@ -302,41 +342,4 @@ func repoRoot(t testing.TB) string {
 		t.Fatal("unable to get abs path to repo root:", err)
 	}
 	return absRepoRoot
-}
-
-func testRetryIntervals(done <-chan struct{}) <-chan time.Duration {
-	return exponentialBackoffDurations(250*time.Millisecond, 4*time.Second, 2, done)
-}
-
-func exponentialBackoffDurations(minDuration, maxDuration time.Duration, step float64, done <-chan struct{}) <-chan time.Duration {
-	sleepDurations := make(chan time.Duration)
-	go func() {
-		defer close(sleepDurations)
-	retryLoop:
-		for attempt := 0; ; attempt++ {
-			duration := exponentialBackoffDuration(minDuration, maxDuration, step, attempt)
-
-			select {
-			case sleepDurations <- duration:
-				break
-			case <-done:
-				break retryLoop
-			}
-
-			if duration == maxDuration {
-				break
-			}
-		}
-	}()
-	return sleepDurations
-}
-
-func exponentialBackoffDuration(minDuration, maxDuration time.Duration, step float64, attempt int) time.Duration {
-	duration := time.Duration(float64(minDuration) * math.Pow(step, float64(attempt)))
-	if duration < minDuration {
-		return minDuration
-	} else if duration > maxDuration {
-		return maxDuration
-	}
-	return duration
 }
