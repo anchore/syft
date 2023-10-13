@@ -126,6 +126,9 @@ jobs:
 #          path: snapshot
 #          key: snapshot-build-${{ github.run_id }}
 
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+
       - name: Run comparison tests (Linux)
         run: make compare-linux
 
@@ -168,6 +171,9 @@ jobs:
         with:
           path: image.tar
           key: ${{ runner.os }}-${{ hashFiles('test/compare/mac.sh') }}
+
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
 
       - name: Run comparison tests (Mac)
         run: make compare-mac
