@@ -158,6 +158,14 @@ func TestParseJar(t *testing.T) {
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{
+							Value:          "Apache-2.0",
+							SPDXExpression: "Apache-2.0",
+							Type:           license.Concluded,
+							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")),
+						},
+					),
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
@@ -223,6 +231,14 @@ func TestParseJar(t *testing.T) {
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					MetadataType: pkg.JavaMetadataType,
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{
+							Value:          "Apache-2.0",
+							SPDXExpression: "Apache-2.0",
+							Type:           license.Concluded,
+							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")),
+						},
+					),
 					Metadata: pkg.JavaMetadata{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
