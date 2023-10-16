@@ -134,7 +134,8 @@ func NewLicenseFromFields(value, url string, location *file.Location) License {
 	return l
 }
 
-// Merge two licenses into a new license object.
+// Merge two licenses into a new license object. If the merge is not possible due to unmergeable fields
+// (e.g. different values for Value, SPDXExpression, Type, or any non-collection type) an error is returned.
 // TODO: this is a bit of a hack to not infinitely recurse when hashing a license
 func (s License) Merge(l License) (*License, error) {
 	sHash, err := artifact.IDByHash(s)
