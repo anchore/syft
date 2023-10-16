@@ -1,17 +1,21 @@
 package licenses
 
 // all of these taken from https://github.com/golang/pkgsite/blob/8996ff632abee854aef1b764ca0501f262f8f523/internal/licenses/licenses.go#L338
-// which unfortunately is not exported. But fortunately is under BSD-style license.
+// which unfortunately is not exported. But fortunately is under BSD-style license. Take note that this list has
+// been manually updated to include more license filenames (see https://github.com/anchore/syft/pull/2227).
 
 func FileNames() []string {
 	return []string{
+		"AL2.0",
 		"COPYING",
 		"COPYING.md",
 		"COPYING.markdown",
 		"COPYING.txt",
+		"LGPL2.1",
 		"LICENCE",
 		"LICENCE.md",
 		"LICENCE.markdown",
+		"license.txt",
 		"LICENCE.txt",
 		"LICENSE",
 		"LICENSE.md",
