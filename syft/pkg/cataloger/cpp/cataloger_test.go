@@ -18,6 +18,7 @@ func TestCataloger_Globs(t *testing.T) {
 			expected: []string{
 				"somewhere/src/conanfile.txt",
 				"somewhere/src/conan.lock",
+				"somewhere/src/conaninfo.txt",
 			},
 		},
 	}

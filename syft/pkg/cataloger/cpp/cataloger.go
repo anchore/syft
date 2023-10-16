@@ -10,5 +10,6 @@ const catalogerName = "conan-cataloger"
 func NewConanCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseConanfile, "**/conanfile.txt").
-		WithParserByGlobs(parseConanlock, "**/conan.lock")
+		WithParserByGlobs(parseConanlock, "**/conan.lock").
+		WithParserByGlobs(parseConaninfo, "**/conaninfo.txt")
 }
