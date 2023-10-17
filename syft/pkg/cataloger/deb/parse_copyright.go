@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/internal"
 )
 
@@ -18,7 +20,7 @@ var (
 )
 
 func parseLicensesFromCopyright(reader io.Reader) []string {
-	findings := internal.NewStringSet()
+	findings := strset.New()
 	scanner := bufio.NewScanner(reader)
 
 	for scanner.Scan() {
@@ -31,7 +33,7 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 		}
 	}
 
-	results := findings.ToSlice()
+	results := findings.List()
 
 	sort.Strings(results)
 

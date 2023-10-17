@@ -4,13 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger"
@@ -59,8 +57,8 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 func TestPkgCoverageImage(t *testing.T) {
 	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
 
-	observedLanguages := internal.NewStringSet()
-	definedLanguages := internal.NewStringSet()
+	observedLanguages := strset.New()
+	definedLanguages := strset.New()
 	for _, l := range pkg.AllLanguages {
 		definedLanguages.Add(l.String())
 	}
@@ -76,8 +74,8 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedLanguages.Remove(pkg.Erlang.String())
 	definedLanguages.Remove(pkg.Elixir.String())
 
-	observedPkgs := internal.NewStringSet()
-	definedPkgs := internal.NewStringSet()
+	observedPkgs := strset.New()
+	definedPkgs := strset.New()
 	for _, p := range pkg.AllPkgs {
 		definedPkgs.Add(string(p))
 	}
@@ -148,29 +146,37 @@ func TestPkgCoverageImage(t *testing.T) {
 	observedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
 
+	missingLang := strset.Difference(definedLanguages, observedLanguages)
+	extraLang := strset.Difference(observedLanguages, definedLanguages)
+
 	// ensure that integration test cases stay in sync with the available catalogers
-	if diff := cmp.Diff(definedLanguages, observedLanguages); diff != "" {
-		t.Errorf("language coverage incomplete (languages=%d, coverage=%d)", len(definedLanguages), len(observedLanguages))
-		t.Errorf("definedLanguages mismatch observedLanguages (-want +got):\n%s", diff)
+	if missingLang.Size() > 0 || extraLang.Size() > 0 {
+		t.Errorf("language coverage incomplete (languages=%d, coverage=%d)", definedLanguages.Size(), observedLanguages.Size())
+		t.Errorf("unexpected languages: %s", extraLang.List())
+		t.Errorf("missing languages: %s", missingLang.List())
 	}
 
-	if diff := cmp.Diff(definedPkgs, observedPkgs); diff != "" {
-		t.Errorf("package coverage incomplete (packages=%d, coverage=%d)", len(definedPkgs), len(observedPkgs))
-		t.Errorf("definedPkgs mismatch observedPkgs (-want +got):\n%s", diff)
+	missingPkgs := strset.Difference(definedPkgs, observedPkgs)
+	extraPkgs := strset.Difference(observedPkgs, definedPkgs)
+
+	if missingPkgs.Size() > 0 || extraPkgs.Size() > 0 {
+		t.Errorf("package coverage incomplete (packages=%d, coverage=%d)", definedPkgs.Size(), observedPkgs.Size())
+		t.Errorf("unexpected packages: %s", extraPkgs.List())
+		t.Errorf("missing packages: %s", missingPkgs.List())
 	}
 }
 
 func TestPkgCoverageDirectory(t *testing.T) {
 	sbom, _ := catalogDirectory(t, "test-fixtures/image-pkg-coverage")
 
-	observedLanguages := internal.NewStringSet()
-	definedLanguages := internal.NewStringSet()
+	observedLanguages := strset.New()
+	definedLanguages := strset.New()
 	for _, l := range pkg.AllLanguages {
 		definedLanguages.Add(l.String())
 	}
 
-	observedPkgs := internal.NewStringSet()
-	definedPkgs := internal.NewStringSet()
+	observedPkgs := strset.New()
+	definedPkgs := strset.New()
 	for _, p := range pkg.AllPkgs {
 		definedPkgs.Add(string(p))
 	}
@@ -237,12 +243,12 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	definedPkgs.Remove(string(pkg.KbPkg))
 
 	// ensure that integration test commonTestCases stay in sync with the available catalogers
-	if len(observedLanguages) < len(definedLanguages) {
-		t.Errorf("language coverage incomplete (languages=%d, coverage=%d)", len(definedLanguages), len(observedLanguages))
+	if observedLanguages.Size() < definedLanguages.Size() {
+		t.Errorf("language coverage incomplete (languages=%d, coverage=%d)", definedLanguages.Size(), observedLanguages.Size())
 	}
 
-	if len(observedPkgs) < len(definedPkgs) {
-		t.Errorf("package coverage incomplete (packages=%d, coverage=%d)", len(definedPkgs), len(observedPkgs))
+	if observedPkgs.Size() < definedPkgs.Size() {
+		t.Errorf("package coverage incomplete (packages=%d, coverage=%d)", definedPkgs.Size(), observedPkgs.Size())
 	}
 }
 
@@ -251,8 +257,8 @@ func TestPkgCoverageCatalogerConfiguration(t *testing.T) {
 	// for which that cataloger isn't enabled by defauly
 	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, []string{"rust"})
 
-	observedLanguages := internal.NewStringSet()
-	definedLanguages := internal.NewStringSet()
+	observedLanguages := strset.New()
+	definedLanguages := strset.New()
 	definedLanguages.Add("rust")
 
 	for actualPkg := range sbom.Artifacts.Packages.Enumerate() {

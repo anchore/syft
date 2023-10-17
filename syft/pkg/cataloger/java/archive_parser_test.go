@@ -12,9 +12,9 @@ import (
 	"testing"
 
 	"github.com/gookit/color"
+	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
@@ -163,7 +163,6 @@ func TestParseJar(t *testing.T) {
 							Value:          "Apache-2.0",
 							SPDXExpression: "Apache-2.0",
 							Type:           license.Concluded,
-							URLs:           internal.NewStringSet(),
 							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")),
 						},
 					),
@@ -237,7 +236,6 @@ func TestParseJar(t *testing.T) {
 							Value:          "Apache-2.0",
 							SPDXExpression: "Apache-2.0",
 							Type:           license.Concluded,
-							URLs:           internal.NewStringSet(),
 							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")),
 						},
 					),
@@ -594,7 +592,7 @@ func TestParseNestedJar(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			expectedNameVersionPairSet := internal.NewStringSet()
+			expectedNameVersionPairSet := strset.New()
 
 			makeKey := func(p *pkg.Package) string {
 				if p == nil {
@@ -607,24 +605,24 @@ func TestParseNestedJar(t *testing.T) {
 				expectedNameVersionPairSet.Add(makeKey(&e))
 			}
 
-			actualNameVersionPairSet := internal.NewStringSet()
+			actualNameVersionPairSet := strset.New()
 			for _, a := range actual {
 				a := a
 				key := makeKey(&a)
 				actualNameVersionPairSet.Add(key)
-				if !expectedNameVersionPairSet.Contains(key) {
+				if !expectedNameVersionPairSet.Has(key) {
 					t.Errorf("extra package: %s", a)
 				}
 			}
 
-			for _, key := range expectedNameVersionPairSet.ToSlice() {
-				if !actualNameVersionPairSet.Contains(key) {
+			for _, key := range expectedNameVersionPairSet.List() {
+				if !actualNameVersionPairSet.Has(key) {
 					t.Errorf("missing package: %s", key)
 				}
 			}
 
-			if len(actual) != len(expectedNameVersionPairSet) {
-				t.Fatalf("unexpected package count: %d!=%d", len(actual), len(expectedNameVersionPairSet))
+			if len(actual) != expectedNameVersionPairSet.Size() {
+				t.Fatalf("unexpected package count: %d!=%d", len(actual), expectedNameVersionPairSet.Size())
 			}
 
 			for _, a := range actual {
@@ -748,7 +746,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 						Value:          "MIT",
 						SPDXExpression: "MIT",
 						Type:           license.Declared,
-						URLs:           internal.NewStringSet("https://opensource.org/licenses/MIT"),
+						URLs:           []string{"https://opensource.org/licenses/MIT"},
 						Locations:      file.NewLocationSet(file.NewLocation("some-license-path")),
 					},
 				},
@@ -785,7 +783,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 						Value:          "MIT",
 						SPDXExpression: "MIT",
 						Type:           license.Declared,
-						URLs:           internal.NewStringSet("https://opensource.org/licenses/MIT"),
+						URLs:           []string{"https://opensource.org/licenses/MIT"},
 						Locations:      file.NewLocationSet(file.NewLocation("some-license-path")),
 					},
 				),

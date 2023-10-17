@@ -7,10 +7,10 @@ import (
 
 	"github.com/iancoleman/strcase"
 	"github.com/mitchellh/go-homedir"
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/fangs"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
@@ -147,8 +147,8 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 var validDefaultSourceValues = []string{"registry", "docker", "podman", ""}
 
 func checkDefaultSourceValues(source string) error {
-	validValues := internal.NewStringSet(validDefaultSourceValues...)
-	if !validValues.Contains(source) {
+	validValues := strset.New(validDefaultSourceValues...)
+	if !validValues.Has(source) {
 		validValuesString := strings.Join(validDefaultSourceValues, ", ")
 		return fmt.Errorf("%s is not a valid default source; please use one of the following: %s''", source, validValuesString)
 	}

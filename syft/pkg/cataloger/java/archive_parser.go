@@ -332,7 +332,7 @@ func getDigestsFromArchive(archivePath string) ([]file.Digest, error) {
 
 func (j *archiveParser) getLicenseFromFileInArchive() ([]pkg.License, error) {
 	var fileLicenses []pkg.License
-	for _, filename := range licenses.FileNames {
+	for _, filename := range licenses.FileNames() {
 		licenseMatches := j.fileManifest.GlobMatch("/META-INF/" + filename)
 		if len(licenseMatches) == 0 {
 			// Try the root directory if it's not in META-INF
