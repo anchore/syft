@@ -17,8 +17,6 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           bootstrap-apt-packages: ""
           compute-fingerprints: "false"
@@ -45,8 +43,6 @@ jobs:
             make list-tool-updates
             echo "\`\`\`"
           } >> $GITHUB_STEP_SUMMARY
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a #v2.1.0
         id: generate-token

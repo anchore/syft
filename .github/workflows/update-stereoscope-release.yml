@@ -26,8 +26,6 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: |
           LATEST_VERSION=$(git ls-remote https://github.com/anchore/stereoscope main | head -n1 | awk '{print $1;}')

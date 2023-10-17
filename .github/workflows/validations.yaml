@@ -21,8 +21,6 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run static analysis
         run: make static-analysis
@@ -37,8 +35,6 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Restore Java test-fixture cache
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
@@ -83,8 +79,6 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Validate syft output against the CycloneDX schema
         run: make validate-cyclonedx-schema
@@ -109,8 +103,6 @@ jobs:
         uses: ./.github/actions/bootstrap
         with:
           bootstrap-apt-packages: ""
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build snapshot artifacts
         run: make snapshot
@@ -134,8 +126,6 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download snapshot build
         uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
@@ -176,8 +166,6 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           bootstrap-apt-packages: ""
           compute-fingerprints: "false"
@@ -215,8 +203,6 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Restore CLI test-fixture cache
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
