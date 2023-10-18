@@ -393,7 +393,10 @@ tasks:
       - build
     deps: [tools, tmpdir]
     sources:
-      - ./**/*.go
+      - cmd/**/*.go
+      - syft/**/*.go
+      - internal/**/*.go
+    method: checksum
     generates:
       - "{{ .SNAPSHOT_BIN }}"
     cmds:
