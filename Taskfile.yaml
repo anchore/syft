@@ -80,6 +80,8 @@ tasks:
   tools:
     desc: Install all tools needed for CI and local development
     deps: [binny]
+    aliases:
+      - bootstrap
     generates:
       - ".binny.yaml"
       - "{{ .TOOL_DIR }}/*"
@@ -201,7 +203,7 @@ tasks:
     # note: we don't want to regenerate the snapshot unless we have to. In CI it's probable
     # that the cache being restored with the correct binary will be rebuilt since the timestamps
     # and local checksums will not line up.
-    deps: [tools]
+    deps: [tools, snapshot]
     sources:
       - "{{ .SNAPSHOT_BIN }}"
       - ./test/cli/**
