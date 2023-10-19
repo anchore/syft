@@ -355,6 +355,8 @@ func Test_PackageCataloger_Globs(t *testing.T) {
 			name:    "obtain index files",
 			fixture: "test-fixtures/glob-paths",
 			expected: []string{
+				"site-packages/v.DIST-INFO/METADATA",
+				"site-packages/w.EGG-INFO/PKG-INFO",
 				"site-packages/x.dist-info/METADATA",
 				"site-packages/y.egg-info/PKG-INFO",
 				"site-packages/z.egg-info",
