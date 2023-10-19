@@ -39,6 +39,12 @@ func DefaultOutput() Output {
 	return Output{
 		AllowMultipleOutputs: true,
 		Outputs:              []string{string(table.ID)},
+		OutputFile: OutputFile{
+			Enabled: true,
+		},
+		OutputTemplate: OutputTemplate{
+			Enabled: true,
+		},
 	}
 }
 
@@ -143,7 +149,7 @@ func cycloneDxXMLEncoders() ([]sbom.FormatEncoder, error) {
 		errs error
 	)
 	for _, v := range cyclonedxxml.SupportedVersions() {
-		enc, err := cyclonedxxml.NewFormatEncoder(cyclonedxxml.EncoderConfig{Version: v})
+		enc, err := cyclonedxxml.NewFormatEncoderWithConfig(cyclonedxxml.EncoderConfig{Version: v})
 		if err != nil {
 			errs = multierror.Append(errs, err)
 		} else {
@@ -161,7 +167,7 @@ func cycloneDxJSONEncoders() ([]sbom.FormatEncoder, error) {
 		errs error
 	)
 	for _, v := range cyclonedxjson.SupportedVersions() {
-		enc, err := cyclonedxjson.NewFormatEncoder(cyclonedxjson.EncoderConfig{Version: v})
+		enc, err := cyclonedxjson.NewFormatEncoderWithConfig(cyclonedxjson.EncoderConfig{Version: v})
 		if err != nil {
 			errs = multierror.Append(errs, err)
 		} else {
@@ -179,7 +185,7 @@ func spdxJSONEncoders() ([]sbom.FormatEncoder, error) {
 		errs error
 	)
 	for _, v := range spdxjson.SupportedVersions() {
-		enc, err := spdxjson.NewFormatEncoder(spdxjson.EncoderConfig{Version: v})
+		enc, err := spdxjson.NewFormatEncoderWithConfig(spdxjson.EncoderConfig{Version: v})
 		if err != nil {
 			errs = multierror.Append(errs, err)
 		} else {
@@ -197,7 +203,7 @@ func spdxTagValueEncoders() ([]sbom.FormatEncoder, error) {
 		errs error
 	)
 	for _, v := range spdxtagvalue.SupportedVersions() {
-		enc, err := spdxtagvalue.NewFormatEncoder(spdxtagvalue.EncoderConfig{Version: v})
+		enc, err := spdxtagvalue.NewFormatEncoderWithConfig(spdxtagvalue.EncoderConfig{Version: v})
 		if err != nil {
 			errs = multierror.Append(errs, err)
 		} else {

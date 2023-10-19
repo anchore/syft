@@ -24,7 +24,7 @@ type encoder struct {
 	cyclonedxutil.Encoder
 }
 
-func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
+func NewFormatEncoderWithConfig(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 	enc, err := cyclonedxutil.NewEncoder(cfg.Version, cyclonedx.BOMFileFormatXML)
 	if err != nil {
 		return nil, err

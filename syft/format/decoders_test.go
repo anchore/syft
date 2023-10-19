@@ -38,7 +38,7 @@ func TestIdentify(t *testing.T) {
 }
 
 func TestFormats_EmptyInput(t *testing.T) {
-	for _, format := range DefaultDecoders() {
+	for _, format := range Decoders() {
 		name := strings.Split(fmt.Sprintf("%#v", format), "{")[0]
 
 		t.Run(name, func(t *testing.T) {

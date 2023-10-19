@@ -42,19 +42,19 @@ func TestConvertCmd(t *testing.T) {
 		},
 		{
 			name:   "spdx-json",
-			format: mustEncoder(spdxjson.NewFormatEncoder(spdxjson.DefaultEncoderConfig())),
+			format: mustEncoder(spdxjson.NewFormatEncoderWithConfig(spdxjson.DefaultEncoderConfig())),
 		},
 		{
 			name:   "spdx-tag-value",
-			format: mustEncoder(spdxtagvalue.NewFormatEncoder(spdxtagvalue.DefaultEncoderConfig())),
+			format: mustEncoder(spdxtagvalue.NewFormatEncoderWithConfig(spdxtagvalue.DefaultEncoderConfig())),
 		},
 		{
 			name:   "cyclonedx-json",
-			format: mustEncoder(cyclonedxjson.NewFormatEncoder(cyclonedxjson.DefaultEncoderConfig())),
+			format: mustEncoder(cyclonedxjson.NewFormatEncoderWithConfig(cyclonedxjson.DefaultEncoderConfig())),
 		},
 		{
 			name:   "cyclonedx-xml",
-			format: mustEncoder(cyclonedxxml.NewFormatEncoder(cyclonedxxml.DefaultEncoderConfig())),
+			format: mustEncoder(cyclonedxxml.NewFormatEncoderWithConfig(cyclonedxxml.DefaultEncoderConfig())),
 		},
 	}
 	for _, test := range tests {

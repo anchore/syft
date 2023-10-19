@@ -56,6 +56,12 @@ func Attest(app clio.Application) *cobra.Command {
 				string(spdxtagvalue.ID),
 			},
 			Outputs: []string{syftjson.ID.String()},
+			OutputFile: options.OutputFile{ // nolint:staticcheck
+				Enabled: false, // explicitly not allowed
+			},
+			OutputTemplate: options.OutputTemplate{
+				Enabled: false, // explicitly not allowed
+			},
 		},
 		Catalog: options.DefaultCatalog(),
 	}

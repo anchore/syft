@@ -18,10 +18,10 @@ var (
 )
 
 func init() {
-	staticDecoders = NewDecoderCollection(DefaultDecoders()...)
+	staticDecoders = NewDecoderCollection(Decoders()...)
 }
 
-func DefaultDecoders() []sbom.FormatDecoder {
+func Decoders() []sbom.FormatDecoder {
 	return []sbom.FormatDecoder{
 		syftjson.NewFormatDecoder(),
 		cyclonedxxml.NewFormatDecoder(),

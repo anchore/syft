@@ -29,7 +29,7 @@ type encoder struct {
 	cfg EncoderConfig
 }
 
-func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
+func NewFormatEncoderWithConfig(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 	return encoder{
 		cfg: cfg,
 	}, nil

@@ -26,11 +26,8 @@ func Test_getEncoders(t *testing.T) {
 		allDefaultEncoderNames.Add(id.String())
 	}
 
-	opts := Output{
-		OutputTemplate: OutputTemplate{
-			Path: "somewhere",
-		},
-	}
+	opts := DefaultOutput()
+	opts.OutputTemplate.Path = "somewhere"
 
 	encoders, err := opts.createEncoders()
 	require.NoError(t, err)
@@ -160,11 +157,9 @@ func Test_EncoderCollection_ByString_IDOnly_Defaults(t *testing.T) {
 		},
 	}
 
-	opts := Output{
-		OutputTemplate: OutputTemplate{
-			Path: "somewhere",
-		},
-	}
+	opts := DefaultOutput()
+	opts.OutputTemplate.Path = "somewhere"
+
 	defaultEncoders, err := opts.createEncoders()
 	require.NoError(t, err)
 

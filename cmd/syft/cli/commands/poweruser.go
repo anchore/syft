@@ -42,6 +42,9 @@ func PowerUser(app clio.Application) *cobra.Command {
 	pkgs.FileClassification.Cataloger.Enabled = true
 	opts := &powerUserOptions{
 		Catalog: pkgs,
+		OutputFile: options.OutputFile{ // nolint:staticcheck
+			Enabled: true,
+		},
 	}
 
 	return app.SetupCommand(&cobra.Command{

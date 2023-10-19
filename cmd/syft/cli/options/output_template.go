@@ -9,15 +9,21 @@ import (
 var _ clio.FlagAdder = (*OutputTemplate)(nil)
 
 type OutputTemplate struct {
-	Path string `yaml:"path" json:"path" mapstructure:"path"` // -t template file to use for output
+	Enabled bool   `yaml:"-" json:"-" mapstructure:"-"`
+	Path    string `yaml:"path" json:"path" mapstructure:"path"` // -t template file to use for output
 }
 
 func (o *OutputTemplate) AddFlags(flags clio.FlagSet) {
-	flags.StringVarP(&o.Path, "template", "t",
-		"specify the path to a Go template file")
+	if o.Enabled {
+		flags.StringVarP(&o.Path, "template", "t",
+			"specify the path to a Go template file")
+	}
 }
 
 func (o OutputTemplate) formatEncoders() ([]sbom.FormatEncoder, error) {
+	if !o.Enabled {
+		return nil, nil
+	}
 	enc, err := template.NewFormatEncoder(template.EncoderConfig{
 		TemplatePath: o.Path,
 	})

@@ -16,7 +16,7 @@ var updateSnapshot = flag.Bool("update-spdx-json", false, "update the *.golden f
 var updateImage = flag.Bool("update-image", false, "update the golden image used for image encoder testing")
 
 func getEncoder(t testing.TB) sbom.FormatEncoder {
-	enc, err := NewFormatEncoder(DefaultEncoderConfig())
+	enc, err := NewFormatEncoderWithConfig(DefaultEncoderConfig())
 	require.NoError(t, err)
 	return enc
 }
@@ -161,7 +161,7 @@ func TestSupportedVersions(t *testing.T) {
 func defaultFormatEncoders() []sbom.FormatEncoder {
 	var encs []sbom.FormatEncoder
 	for _, version := range SupportedVersions() {
-		enc, err := NewFormatEncoder(EncoderConfig{Version: version})
+		enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: version})
 		if err != nil {
 			panic(err)
 		}

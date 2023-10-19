@@ -33,6 +33,7 @@ func Convert(app clio.Application) *cobra.Command {
 
 	opts := &ConvertOptions{
 		UpdateCheck: options.DefaultUpdateCheck(),
+		Output:      options.DefaultOutput(),
 	}
 
 	return app.SetupCommand(&cobra.Command{

@@ -66,7 +66,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	}
 
 	encoders := format.NewEncoderCollection(format.DefaultEncoders()...)
-	decoders := format.NewDecoderCollection(format.DefaultDecoders()...)
+	decoders := format.NewDecoderCollection(format.Decoders()...)
 
 	for _, test := range tests {
 		t.Run(string(test.formatOption), func(t *testing.T) {
