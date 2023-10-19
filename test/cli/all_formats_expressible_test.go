@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"github.com/anchore/syft/cmd/syft/cli/options"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,7 +21,12 @@ func TestAllFormatsExpressible(t *testing.T) {
 		},
 		assertSuccessfulReturnCode,
 	}
-	encs := format.NewEncoderCollection(format.DefaultEncoders()...)
+
+	opts := options.DefaultOutput()
+	encoders, err := opts.Encoders()
+	require.NoError(t, err)
+
+	encs := format.NewEncoderCollection(encoders...)
 	formatIDs := encs.IDs()
 	require.NotEmpty(t, formatIDs)
 	for _, o := range formatIDs {
