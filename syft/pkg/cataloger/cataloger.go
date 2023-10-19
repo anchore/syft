@@ -45,7 +45,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		alpm.NewAlpmdbCataloger(),
 		apkdb.NewApkdbCataloger(),
 		binary.NewCataloger(),
-		cpp.NewConanCataloger(),
+		cpp.NewConanInfoCataloger(),
 		deb.NewDpkgdbCataloger(),
 		dotnet.NewDotnetPortableExecutableCataloger(),
 		golang.NewGoModuleBinaryCataloger(cfg.Golang),
