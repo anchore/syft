@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -191,7 +191,9 @@ func Test_encodeLicense(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, encodeLicenses(test.input))
+			if d := cmp.Diff(test.expected, encodeLicenses(test.input)); d != "" {
+				t.Errorf("unexpected license (-want +got):\n%s", d)
+			}
 		})
 	}
 }
@@ -223,7 +225,7 @@ func TestDecodeLicenses(t *testing.T) {
 					Value: "RandomLicense",
 					// CycloneDX specification doesn't give a field for determining the license type
 					Type: license.Declared,
-					URLs: internal.NewStringSet(),
+					URLs: []string{},
 				},
 			},
 		},
@@ -243,7 +245,7 @@ func TestDecodeLicenses(t *testing.T) {
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
-					URLs:           internal.NewStringSet(),
+					URLs:           []string{},
 				},
 			},
 		},
@@ -262,7 +264,7 @@ func TestDecodeLicenses(t *testing.T) {
 					Value:          "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					SPDXExpression: "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					Type:           license.Declared,
-					URLs:           internal.NewStringSet(),
+					URLs:           []string{},
 				},
 			},
 		},

@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -136,7 +135,7 @@ func toSyftLicenses(m []model.License) (p []pkg.License) {
 			Value:          l.Value,
 			SPDXExpression: l.SPDXExpression,
 			Type:           l.Type,
-			URLs:           internal.NewStringSet(l.URLs...),
+			URLs:           l.URLs,
 			Locations:      file.NewLocationSet(l.Locations...),
 		})
 	}

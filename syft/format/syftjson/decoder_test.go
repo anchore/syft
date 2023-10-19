@@ -123,7 +123,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 			Value:          "MIT",
 			SPDXExpression: "MIT",
 			Type:           "MIT",
-			URLs:           internal.NewStringSet("https://example.org/license"),
+			URLs:           []string{"https://example.org/license"},
 			Locations:      file.LocationSet{},
 		}),
 		Language: "language",

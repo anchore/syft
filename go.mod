@@ -9,7 +9,7 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461
-	github.com/anchore/clio v0.0.0-20230823172630-c42d666061af
+	github.com/anchore/clio v0.0.0-20231016125544-c98a83e1c7fc
 	github.com/anchore/fangs v0.0.0-20230818131516-2186b10924fe
 	github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a
 	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb
@@ -22,7 +22,7 @@ require (
 	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
 	github.com/bmatcuk/doublestar/v4 v4.6.0
 	github.com/charmbracelet/bubbletea v0.24.2
-	github.com/charmbracelet/lipgloss v0.8.0
+	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/dave/jennifer v1.7.0
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
 	github.com/distribution/reference v0.5.0
@@ -34,7 +34,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.9.0
 	github.com/go-test/deep v1.1.0
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.16.1
 	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.3.1
@@ -71,7 +71,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1
 	golang.org/x/mod v0.13.0
-	golang.org/x/net v0.16.0
+	golang.org/x/net v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.26.0
 )
@@ -149,7 +149,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/mattn/go-localereader v0.0.2-0.20220822084749-2491eb6c1c75 // indirect
-	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect

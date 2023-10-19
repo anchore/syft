@@ -95,7 +95,7 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 		// singular expression case
 		// only ID field here since we guarantee that the license is valid
 		if value, exists := spdxlicense.ID(l.SPDXExpression); exists {
-			if !l.URLs.Empty() {
+			if len(l.URLs) > 0 {
 				processLicenseURLs(l, value, &spdxc)
 				continue
 			}
@@ -123,7 +123,7 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 
 		// license string that are not valid spdx expressions or ids
 		// we only use license Name here since we cannot guarantee that the license is a valid SPDX expression
-		if !l.URLs.Empty() {
+		if len(l.URLs) > 0 {
 			processLicenseURLs(l, "", &otherc)
 			continue
 		}
@@ -137,7 +137,7 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 }
 
 func processLicenseURLs(l pkg.License, spdxID string, populate *cyclonedx.Licenses) {
-	for _, url := range l.URLs.ToSlice() {
+	for _, url := range l.URLs {
 		if spdxID == "" {
 			*populate = append(*populate, cyclonedx.LicenseChoice{
 				License: &cyclonedx.License{

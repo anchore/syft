@@ -1,0 +1,114 @@
+Package: coreutils
+Essential: yes
+Status: install ok installed
+Priority: required
+Section: utils
+Installed-Size: 20272
+Maintainer: Michael Stone <mstone@debian.org>
+Architecture: arm64
+Multi-Arch: foreign
+Version: 9.1-1
+Pre-Depends: libacl1 (>= 2.2.23), libattr1 (>= 1:2.4.44), libc6 (>= 2.34), libgmp10 (>= 2:6.2.1+dfsg1), libselinux1 (>= 3.1~)
+
+Package: libacl1
+Status: install ok installed
+Priority: optional
+Section: libs
+Installed-Size: 101
+Maintainer: Guillem Jover <guillem@debian.org>
+Architecture: arm64
+Multi-Arch: same
+Source: acl
+Version: 2.3.1-3
+Depends: libc6 (>= 2.33)
+
+Package: libc6
+Status: install ok installed
+Priority: optional
+Section: libs
+Installed-Size: 23127
+Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
+Architecture: arm64
+Multi-Arch: same
+Source: glibc
+Version: 2.36-9+deb12u1
+Depends: libgcc-s1
+Recommends: libidn2-0 (>= 2.0.5~)
+Suggests: glibc-doc, debconf | debconf-2.0, libc-l10n, locales, libnss-nis, libnss-nisplus
+Breaks: aide (<< 0.17.3-4+b3), busybox (<< 1.30.1-6), chrony (<< 4.2-3~), fakechroot (<< 2.19-3.5), firefox (<< 91~), firefox-esr (<< 91~), gnumach-image-1.8-486 (<< 2:1.8+git20210923~), gnumach-image-1.8-486-dbg (<< 2:1.8+git20210923~), gnumach-image-1.8-xen-486 (<< 2:1.8+git20210923~), gnumach-image-1.8-xen-486-dbg (<< 2:1.8+git20210923~), hurd (<< 1:0.9.git20220301-2), ioquake3 (<< 1.36+u20200211.f2c61c1~dfsg-2~), iraf-fitsutil (<< 2018.07.06-4), libgegl-0.4-0 (<< 0.4.18), libtirpc1 (<< 0.2.3), locales (<< 2.36), locales-all (<< 2.36), macs (<< 2.2.7.1-3~), nocache (<< 1.1-1~), nscd (<< 2.36), openarena (<< 0.8.8+dfsg-4~), openssh-server (<< 1:8.1p1-5), python3-iptables (<< 1.0.0-2), r-cran-later (<< 0.7.5+dfsg-2), tinydns (<< 1:1.05-14), valgrind (<< 1:3.19.0-1~), wcc (<< 0.0.2+dfsg-3)
+
+Package: libgcc-s1
+Protected: yes
+Status: install ok installed
+Priority: optional
+Section: libs
+Installed-Size: 147
+Maintainer: Debian GCC Maintainers <debian-gcc@lists.debian.org>
+Architecture: arm64
+Multi-Arch: same
+Source: gcc-12
+Version: 12.2.0-14
+Replaces: libgcc1 (<< 1:10)
+Provides: libgcc1 (= 1:12.2.0-14)
+Depends: gcc-12-base (= 12.2.0-14), libc6 (>= 2.35)
+
+Package: gcc-12-base
+Status: install ok installed
+Priority: optional
+Section: libs
+Installed-Size: 100
+Maintainer: Debian GCC Maintainers <debian-gcc@lists.debian.org>
+Architecture: arm64
+Multi-Arch: same
+Source: gcc-12
+Version: 12.2.0-14
+Breaks: gnat (<< 7)
+
+Package: libattr1
+Status: install ok installed
+Priority: optional
+Section: libs
+Installed-Size: 99
+Maintainer: Guillem Jover <guillem@debian.org>
+Architecture: arm64
+Multi-Arch: same
+Source: attr
+Version: 1:2.5.1-4
+Depends: libc6 (>= 2.17)
+
+Package: libgmp10
+Status: install ok installed
+Priority: optional
+Section: libs
+Installed-Size: 855
+Maintainer: Debian Science Team <debian-science-maintainers@lists.alioth.debian.org>
+Architecture: arm64
+Multi-Arch: same
+Source: gmp
+Version: 2:6.2.1+dfsg1-1.1
+Depends: libc6 (>= 2.17)
+Breaks: libmath-gmp-perl (<< 2.20-1), libmath-prime-util-gmp-perl (<< 0.51-2), postgresql-pgmp (<< 1.0.3-1)
+
+Package: libselinux1
+Status: install ok installed
+Priority: optional
+Section: libs
+Installed-Size: 223
+Maintainer: Debian SELinux maintainers <selinux-devel@lists.alioth.debian.org>
+Architecture: arm64
+Multi-Arch: same
+Source: libselinux (3.4-1)
+Version: 3.4-1+b6
+Depends: libc6 (>= 2.34), libpcre2-8-0 (>= 10.22)
+
+Package: libpcre2-8-0
+Status: install ok installed
+Priority: optional
+Section: libs
+Installed-Size: 649
+Maintainer: Matthew Vernon <matthew@debian.org>
+Architecture: arm64
+Multi-Arch: same
+Source: pcre2
+Version: 10.42-1
+Depends: libc6 (>= 2.34)

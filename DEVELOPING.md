@@ -153,56 +153,47 @@ sequenceDiagram
 
 ### Syft Catalogers
 
-##### Summary
-
-Catalogers are the way in which syft is able to identify and construct packages given some amount of source metadata.
-For example, Syft can locate and process `package-lock.json` files when performing filesystem scans. 
-See: [how to specify file globs](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/javascript/cataloger.go#L16-L21)
-and an implementation of the [package-lock.json parser](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/javascript/cataloger.go#L16-L21) for a quick review.
+Catalogers are the way in which syft is able to identify and construct packages given a set a targeted list of files.
+For example, a cataloger can ask syft for all `package-lock.json` files in order to parse and raise up javascript packages 
+(see [how file globs](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/javascript/cataloger.go#L16-L21) and
+[file parser functions](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/javascript/cataloger.go#L16-L21) are used 
+for a quick example).
 
 From a high level catalogers have the following properties:
 
-- They are independent from one another. The java cataloger has no idea of the processes, assumptions, or results of the python cataloger, for example.
+- _They are independent from one another_. The java cataloger has no idea of the processes, assumptions, or results of the python cataloger, for example.
 
-- They do not know what source is being analyzed. Are we analyzing a local directory? an image? if so, the squashed representation or all layers? The catalogers do not know the answers to these questions. Only that there is an interface to query for file paths and contents from an underlying "source" being scanned.
+- _They do not know what source is being analyzed_. Are we analyzing a local directory? an image? if so, the squashed representation or all layers? The catalogers do not know the answers to these questions. Only that there is an interface to query for file paths and contents from an underlying "source" being scanned.
 
-- Packages created by the cataloger should not be mutated after they are created. There is one exception made for adding CPEs to a package after the cataloging phase, but that will most likely be moved back into the cataloger in the future.
+- _Packages created by the cataloger should not be mutated after they are created_. There is one exception made for adding CPEs to a package after the cataloging phase, but that will most likely be moved back into the cataloger in the future.
+
 
 #### Building a new Cataloger
 
-Catalogers must fulfill the interface [found here](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger.go). 
-This means that when building a new cataloger, the new struct must implement both method signatures of `Catalog` and `Name`.
+Catalogers must fulfill the [`pkg.Cataloger` interface](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger.go) in order to add packages to the SBOM.
+All catalogers should be added to:
+- the [global list of catalogers](https://github.com/anchore/syft/blob/9995950c70e849f9921919faffbfcf46401f71f3/syft/pkg/cataloger/cataloger.go#L92-L125)
+- at least one source-specific list, today the two lists are [directory catalogers and image catalogers](https://github.com/anchore/syft/blob/9995950c70e849f9921919faffbfcf46401f71f3/syft/pkg/cataloger/cataloger.go#L39-L89)
 
-A top level view of the functions that construct all the catalogers can be found [here](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/cataloger.go).
-When an author has finished writing a new cataloger this is the spot to plug in the new catalog constructor.
+For reference, catalogers are [invoked within syft](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/catalog.go#L41-L100) one after the other, and can be invoked in parallel.
 
-For a top level view of how the catalogers are used see [this function](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/catalog.go#L41-L100) as a reference. It ranges over all catalogers passed as an argument and invokes the `Catalog` method:
+`generic.NewCataloger` is an abstraction syft used to make writing common components easier (see the [apkdb cataloger](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/cataloger.go) for example usage). 
+It takes the following information as input:
+- A `catalogerName` to identify the cataloger uniquely among all other catalogers.
+- Pairs of file globs as well as parser functions to parse those files. These parser functions return a slice of [`pkg.Package`](https://github.com/anchore/syft/blob/9995950c70e849f9921919faffbfcf46401f71f3/syft/pkg/package.go#L19) as well as a slice of [`artifact.Relationship`](https://github.com/anchore/syft/blob/9995950c70e849f9921919faffbfcf46401f71f3/syft/artifact/relationship.go#L31) to describe how the returned packages are related. See this [the apkdb cataloger parser function](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/parse_apk_db.go#L22-L102) as an example.
 
-Each cataloger has its own `Catalog` method, but this does not mean that they are all vastly different.
-Take a look at the `apkdb` cataloger for alpine to see how it [constructs a generic.NewCataloger](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/cataloger.go).
-
-`generic.NewCataloger` is an abstraction syft uses to make writing common components easier. First, it takes the `catalogerName` to identify the cataloger.
-On the other side of the call it uses two key pieces which inform the cataloger how to identify and return packages, the `globPatterns` and the `parseFunction`:
-- The first piece is a `parseByGlob` matching pattern used to identify the files that contain the package metadata.
-See [here for the APK example](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/apk_metadata.go#L16-L41).
-- The other is a `parseFunction` which informs the cataloger what to do when it has found one of the above matches files.
-See this [link for an example](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/parse_apk_db.go#L22-L102).
-
-If you're unsure about using the `Generic Cataloger` and think the use case being filled requires something more custom
-just file an issue or ask in our slack, and we'd be more than happy to help on the design.
-
-Identified packages share a common struct so be sure that when the new cataloger is constructing a new package it is using the [`Package` struct](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/package.go#L16-L31).
-
-Metadata Note: Identified packages are also assigned specific metadata that can be unique to their environment. 
-See [this folder](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg) for examples of the different metadata types.
+Identified packages share a common `pkg.Package` struct so be sure that when the new cataloger is constructing a new package it is using the [`Package` struct](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/package.go#L16-L31).
+If you want to return more information than what is available on the `pkg.Package` struct then you can do so in the `pkg.Package.Metadata` section of the struct, which is unique for each [`pkg.Type`](https://github.com/anchore/syft/blob/v0.70.0/syft/pkg/type.go).
+See [the `pkg` package](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg) for examples of the different metadata types that are supported today. 
 These are plugged into the `MetadataType` and `Metadata` fields in the above struct. `MetadataType` informs which type is being used. `Metadata` is an interface converted to that type.
 
-Finally, here is an example of where the package construction is done in the apk cataloger. The first link is where `newPackage` is called in the `parseFunction`. The second link shows the package construction:
-- [Call for new package](https://github.com/anchore/syft/blob/v0.70.0/syft/pkg/cataloger/apkdb/parse_apk_db.go#L106)
-- [APK Package Constructor](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/package.go#L12-L27)
+Finally, here is an example of where the package construction is done within the apk cataloger:
+- [Calling the APK package constructor from the parser function](https://github.com/anchore/syft/blob/v0.70.0/syft/pkg/cataloger/apkdb/parse_apk_db.go#L106)
+- [The APK package constructor itself](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/package.go#L12-L27)
 
-If you have more questions about implementing a cataloger or questions about one you might be currently working
-always feel free to file an issue or reach out to us [on slack](https://anchore.com/slack).
+Interested in building a new cataloger? Checkout the [list of issues with the `new-cataloger` label](https://github.com/anchore/syft/issues?q=is%3Aopen+is%3Aissue+label%3Anew-cataloger+no%3Aassignee)!
+If you have questions about implementing a cataloger feel free to file an issue or reach out to us [on slack](https://anchore.com/slack)!
+
 
 #### Searching for files
 

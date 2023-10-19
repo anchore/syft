@@ -4,8 +4,8 @@ import (
 	"sync"
 
 	"github.com/jinzhu/copier"
+	"github.com/scylladb/go-set/strset"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 )
@@ -124,13 +124,13 @@ func (c *Collection) addTypeToIndex(p Package) {
 }
 
 func (c *Collection) addPathsToIndex(p Package) {
-	observedPaths := internal.NewStringSet()
+	observedPaths := strset.New()
 	for _, l := range p.Locations.ToSlice() {
-		if l.RealPath != "" && !observedPaths.Contains(l.RealPath) {
+		if l.RealPath != "" && !observedPaths.Has(l.RealPath) {
 			c.addPathToIndex(p.id, l.RealPath)
 			observedPaths.Add(l.RealPath)
 		}
-		if l.VirtualPath != "" && l.RealPath != l.VirtualPath && !observedPaths.Contains(l.VirtualPath) {
+		if l.VirtualPath != "" && l.RealPath != l.VirtualPath && !observedPaths.Has(l.VirtualPath) {
 			c.addPathToIndex(p.id, l.VirtualPath)
 			observedPaths.Add(l.VirtualPath)
 		}
@@ -173,13 +173,13 @@ func (c *Collection) deleteTypeFromIndex(p Package) {
 }
 
 func (c *Collection) deletePathsFromIndex(p Package) {
-	observedPaths := internal.NewStringSet()
+	observedPaths := strset.New()
 	for _, l := range p.Locations.ToSlice() {
-		if l.RealPath != "" && !observedPaths.Contains(l.RealPath) {
+		if l.RealPath != "" && !observedPaths.Has(l.RealPath) {
 			c.deletePathFromIndex(p.id, l.RealPath)
 			observedPaths.Add(l.RealPath)
 		}
-		if l.VirtualPath != "" && l.RealPath != l.VirtualPath && !observedPaths.Contains(l.VirtualPath) {
+		if l.VirtualPath != "" && l.RealPath != l.VirtualPath && !observedPaths.Has(l.VirtualPath) {
 			c.deletePathFromIndex(p.id, l.VirtualPath)
 			observedPaths.Add(l.VirtualPath)
 		}
