@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/format/syftjson"
 	syftjsonModel "github.com/anchore/syft/syft/format/syftjson/model"
 	"github.com/anchore/syft/syft/pkg"
@@ -26,10 +28,8 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 			sbom, _ := catalogFixtureImage(t, test.fixture, source.SquashedScope, nil)
 
 			output := bytes.NewBufferString("")
-			err := syftjson.DefaultFormatEncoder().Encode(output, sbom)
-			if err != nil {
-				t.Fatalf("unable to present: %+v", err)
-			}
+			err := syftjson.NewFormatEncoder().Encode(output, sbom)
+			require.NoError(t, err)
 
 			var doc syftjsonModel.Document
 			decoder := json.NewDecoder(output)

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
@@ -65,7 +66,11 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		},
 	}
 
-	encoders := format.NewEncoderCollection(format.DefaultEncoders()...)
+	opts := options.DefaultOutput()
+	encoderList, err := opts.Encoders()
+	require.NoError(t, err)
+
+	encoders := format.NewEncoderCollection(encoderList...)
 	decoders := format.NewDecoderCollection(format.Decoders()...)
 
 	for _, test := range tests {
@@ -80,7 +85,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 				err := f.Encode(&buff1, originalSBOM)
 				require.NoError(t, err)
 
-				newSBOM, formatID, formatVersion, err := decoders.Decode(buff1.Bytes())
+				newSBOM, formatID, formatVersion, err := decoders.Decode(bytes.NewReader(buff1.Bytes()))
 				require.NoError(t, err)
 				require.Equal(t, f.ID(), formatID)
 				require.Equal(t, f.Version(), formatVersion)

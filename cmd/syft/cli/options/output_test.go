@@ -29,7 +29,7 @@ func Test_getEncoders(t *testing.T) {
 	opts := DefaultOutput()
 	opts.OutputTemplate.Path = "somewhere"
 
-	encoders, err := opts.createEncoders()
+	encoders, err := opts.Encoders()
 	require.NoError(t, err)
 	require.NotEmpty(t, encoders)
 
@@ -160,7 +160,7 @@ func Test_EncoderCollection_ByString_IDOnly_Defaults(t *testing.T) {
 	opts := DefaultOutput()
 	opts.OutputTemplate.Path = "somewhere"
 
-	defaultEncoders, err := opts.createEncoders()
+	defaultEncoders, err := opts.Encoders()
 	require.NoError(t, err)
 
 	encoders := format.NewEncoderCollection(defaultEncoders...)

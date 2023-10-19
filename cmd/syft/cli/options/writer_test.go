@@ -41,7 +41,7 @@ func Test_MakeSBOMWriter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			opt := DefaultOutput()
-			encoders, err := opt.createEncoders()
+			encoders, err := opt.Encoders()
 			require.NoError(t, err)
 			_, err = makeSBOMWriter(tt.outputs, "", encoders)
 			tt.wantErr(t, err)

@@ -72,7 +72,7 @@ func (o Output) SBOMWriter() (sbom.Writer, error) {
 		return nil, fmt.Errorf(`must specify path to template file when using "template" output format`)
 	}
 
-	encoders, err := o.createEncoders()
+	encoders, err := o.Encoders()
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (o Output) SBOMWriter() (sbom.Writer, error) {
 	return makeSBOMWriter(o.Outputs, o.File, encoders)
 }
 
-func (o *Output) createEncoders() ([]sbom.FormatEncoder, error) {
+func (o *Output) Encoders() ([]sbom.FormatEncoder, error) {
 	// setup all encoders based on the configuration
 	var list encoderList
 
