@@ -214,11 +214,18 @@ func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
 		if v := l.Locations.ToSlice(); v != nil {
 			locations = v
 		}
+
+		// format model must have allocated collections
+		urls := l.URLs
+		if urls == nil {
+			urls = []string{}
+		}
+
 		modelLicenses = append(modelLicenses, model.License{
 			Value:          l.Value,
 			SPDXExpression: l.SPDXExpression,
 			Type:           l.Type,
-			URLs:           l.URLs.ToSlice(),
+			URLs:           urls,
 			Locations:      locations,
 		})
 	}

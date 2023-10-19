@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -67,7 +68,17 @@ func parsePackageResolved(_ file.Resolver, _ *generic.Environment, reader file.L
 		}
 	}
 
-	var pins, err = pinsForVersion(packageResolvedData, packageResolvedData["version"].(float64))
+	if packageResolvedData["version"] == nil {
+		log.Trace("no version found in Package.resolved file, skipping")
+		return nil, nil, nil
+	}
+
+	version, ok := packageResolvedData["version"].(float64)
+	if !ok {
+		return nil, nil, fmt.Errorf("failed to parse Package.resolved file: version is not a number")
+	}
+
+	var pins, err = pinsForVersion(packageResolvedData, version)
 	if err != nil {
 		return nil, nil, err
 	}

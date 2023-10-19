@@ -96,8 +96,8 @@ github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRF
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461 h1:xGu4/uMWucwWV0YV3fpFIQZ6KVfS/Wfhmma8t0s0vRo=
 github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461/go.mod h1:Ger02eh5NpPm2IqkPAy396HU1KlK3BhOeCljDYXySSk=
-github.com/anchore/clio v0.0.0-20230823172630-c42d666061af h1:dBVKZyMZeA0oZK0+aCCRoqxhxUvx/7xy/VEaLMMMnb0=
-github.com/anchore/clio v0.0.0-20230823172630-c42d666061af/go.mod h1:XryJ3CIF1T7SbacQV+OPykfKKIbfXnBssYfpjy2peUg=
+github.com/anchore/clio v0.0.0-20231016125544-c98a83e1c7fc h1:A1KFO+zZZmbNlz1+WKsCF0RKVx6XRoxsAG3lrqH9hUQ=
+github.com/anchore/clio v0.0.0-20231016125544-c98a83e1c7fc/go.mod h1:QeWvNzxsrUNxcs6haQo3OtISfXUXW0qAuiG4EQiz0GU=
 github.com/anchore/fangs v0.0.0-20230818131516-2186b10924fe h1:pVpLCGWdNeskAw7vGNdCAcGMezrNljHIqOc9HaOja5M=
 github.com/anchore/fangs v0.0.0-20230818131516-2186b10924fe/go.mod h1:82EGoxZTfBXSW0/zollEP+Qs3wkiKmip5yBT5j+eZpY=
 github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a h1:nJ2G8zWKASyVClGVgG7sfM5mwoZlZ2zYpIzN2OhjWkw=
@@ -156,8 +156,8 @@ github.com/charmbracelet/bubbletea v0.24.2 h1:uaQIKx9Ai6Gdh5zpTbGiWpytMU+CfsPp06
 github.com/charmbracelet/bubbletea v0.24.2/go.mod h1:XdrNrV4J8GiyshTtx3DNuYkR1FDaJmO3l2nejekbsgg=
 github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
 github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
-github.com/charmbracelet/lipgloss v0.9.0 h1:BHIM7U4vX77xGEld8GrTKspBMtSv7j0wxPCH73nrdxE=
-github.com/charmbracelet/lipgloss v0.9.0/go.mod h1:h8KDyaivONasw1Bhb4nWiKlk4P1wHPly+3+3v6EFMmA=
+github.com/charmbracelet/lipgloss v0.9.1 h1:PNyd3jvaJbg4jRHKWXnCj1akQm4rh8dbEzN1p/u1KWg=
+github.com/charmbracelet/lipgloss v0.9.1/go.mod h1:1mPmG4cxScwUQALAAnacHaigiiHB9Pmr+v1VEawJl6I=
 github.com/checkpoint-restore/go-criu/v5 v5.3.0/go.mod h1:E/eQpaFtUKGOOSEBZgmKAcn+zUUwWxqcaKZlF54wK8E=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=

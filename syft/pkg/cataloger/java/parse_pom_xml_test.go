@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vifraa/gopom"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
@@ -342,19 +341,18 @@ func Test_parsePomXMLProject(t *testing.T) {
 						Value:          "The Apache Software License, Version 2.0",
 						SPDXExpression: "", // TODO: ideally we would parse this title to get Apache-2.0 (created issue #2210 https://github.com/anchore/syft/issues/2210)
 						Type:           license.Declared,
-						URLs:           internal.NewStringSet("http://www.apache.org/licenses/LICENSE-2.0.txt"),
+						URLs:           []string{"http://www.apache.org/licenses/LICENSE-2.0.txt"},
 						Locations:      file.NewLocationSet(jarLocation),
 					},
 					{
 						Value:          "MIT",
 						SPDXExpression: "MIT",
 						Type:           license.Declared,
-						URLs:           internal.NewStringSet(),
 						Locations:      file.NewLocationSet(jarLocation),
 					},
 					{
 						Type:      license.Declared,
-						URLs:      internal.NewStringSet("https://opensource.org/license/unlicense/"),
+						URLs:      []string{"https://opensource.org/license/unlicense/"},
 						Locations: file.NewLocationSet(jarLocation),
 					},
 				},
