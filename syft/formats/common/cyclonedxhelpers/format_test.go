@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_formatCPE(t *testing.T) {
@@ -42,7 +43,8 @@ func Test_formatCPE(t *testing.T) {
 
 func Test_relationships(t *testing.T) {
 	p1 := pkg.Package{
-		Name: "p1",
+		Name:          "p1",
+		ComponentType: pkg.ComponentTypeApplication,
 	}
 
 	p2 := pkg.Package{
@@ -70,6 +72,15 @@ func Test_relationships(t *testing.T) {
 		{
 			name: "package dependencyOf relationships output as dependencies",
 			sbom: sbom.SBOM{
+				Descriptor: sbom.Descriptor{
+					Name:    "syft",
+					Version: "1.2.3",
+				},
+				Source: source.Description{
+					Name:     "test",
+					Version:  "1.2.3",
+					Metadata: source.DirectorySourceMetadata{Path: "some/path/to/place"},
+				},
 				Artifacts: sbom.Artifacts{
 					Packages: pkg.NewCollection(p1, p2, p3, p4),
 				},
@@ -92,6 +103,12 @@ func Test_relationships(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.Dependency{
+				{
+					Ref: "7ce954b3d0af7363", // hardcoded root component bom-ref
+					Dependencies: &[]string{
+						deriveBomRef(p1),
+					},
+				},
 				{
 					Ref: deriveBomRef(p1),
 					Dependencies: &[]string{
