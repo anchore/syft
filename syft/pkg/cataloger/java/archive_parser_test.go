@@ -13,13 +13,11 @@ import (
 
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/gookit/color"
-  "github.com/scylladb/go-set/strset"
+	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
-
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
