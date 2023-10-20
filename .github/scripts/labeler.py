@@ -16,7 +16,7 @@ def main(changed_files: str | None = None, merge_base_schema_files: str | None =
     comment_file_path = os.environ.get("CI_COMMENT_FILE")
 
     if not comment_file_path:
-        print("CI_COMMENT_FILE not set, skipping")
+        print("CI_COMMENT_FILE not set")
         sys.exit(1)
 
     if not pr_number:
@@ -34,11 +34,11 @@ def main(changed_files: str | None = None, merge_base_schema_files: str | None =
 
     else:
         if not is_ci():
-            print("Not in CI, skipping")
+            print("Not in CI")
             sys.exit(1)
 
         if not pr_number:
-            print("Not a PR, skipping")
+            print("Not a PR")
             sys.exit(1)
 
         pr_changed_files = get_pr_changed_files(pr_number)
