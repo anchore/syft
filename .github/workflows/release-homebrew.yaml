@@ -1,8 +1,10 @@
 name: "Release Homebrew"
 
 on:
+  workflow_dispatch:
   release:
-    types: [published]
+    types:
+      - released
 
 jobs:
   homebrew:
