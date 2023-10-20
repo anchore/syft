@@ -70,7 +70,7 @@ all: static-analysis test ## Run all linux-based checks (linting, license check,
 static-analysis: check-go-mod-tidy lint check-licenses check-json-schema-drift  ## Run all static analysis checks
 
 .PHONY: test
-test: unit integration validate-cyclonedx-schema benchmark cli ## Run all tests (currently unit, integration, linux compare, and cli tests)
+test: unit integration validate-cyclonedx-schema benchmark test-utils cli ## Run all tests (currently unit, integration, linux compare, and cli tests)
 
 
 ## Bootstrapping targets #################################
@@ -166,6 +166,10 @@ cli: $(SNAPSHOT_DIR)  ## Run CLI tests
 	$(SNAPSHOT_BIN) version
 	SYFT_BINARY_LOCATION='$(SNAPSHOT_BIN)' \
 		go test -count=1 -timeout=15m -v ./test/cli
+
+.PHONY: test-utils
+test-utils:
+	python .github/scripts/labeler_test.py
 
 
 ## Benchmark test targets #################################
