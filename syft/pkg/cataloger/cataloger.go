@@ -94,7 +94,6 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		rpm.NewRpmDBCataloger(),
 		ruby.NewGemFileLockCataloger(),
 		ruby.NewGemSpecCataloger(),
-		ruby.NewInstalledGemSpecCataloger(),
 		rust.NewCargoLockCataloger(),
 		sbom.NewSBOMCataloger(),
 		swift.NewCocoapodsCataloger(),
