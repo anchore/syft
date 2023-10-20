@@ -4,7 +4,7 @@ import sys
 import glob
 import subprocess
 import os
-
+import re
 
 DRY_RUN = False
 
@@ -162,7 +162,7 @@ def filter_to_schema_files(list_of_files: list[str]) -> list[str]:
     # get files matching "schema/json/schema-*.json"
     files = []
     for file in list_of_files:
-        if file.startswith("schema/json/schema-") and file.endswith(".json"):
+        if re.match(r"^schema/json/schema-\d+\.\d+\.\d+\.json$", file):
             files.append(file)
     return sort_json_schema_files(files)
 

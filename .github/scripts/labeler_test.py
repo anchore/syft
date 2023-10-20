@@ -45,6 +45,11 @@ class Labeler(unittest.TestCase):
         expected_files = ["schema/json/schema-1.0.0.json", "schema/json/schema-2.0.0.json"]
         self.assertEqual(labeler.filter_to_schema_files(input_files), expected_files)
 
+        # we should be strict about what files are allowed to be processed
+        input_files = ["schema/json/schema-1.0.0extracontent.json", "schema/json/schema-1.0.0.md", "schema/json/schema-1.0.0.json.extracontent"]
+        expected_files = []
+        self.assertEqual(labeler.filter_to_schema_files(input_files), expected_files)
+
     def test_get_semver(self):
         input_file = "schema/json/schema-1.0.0.json"
         expected_semver = "1.0.0"
@@ -54,6 +59,7 @@ class Labeler(unittest.TestCase):
         files = ["schema/json/schema-1.12.1.json", "schema/json/schema-1.2.1.json"]
         expected_sorted_files = ["schema/json/schema-1.2.1.json", "schema/json/schema-1.12.1.json"]
         self.assertEqual(labeler.sort_json_schema_files(files), expected_sorted_files)
+
 
 if __name__ == "__main__":
     unittest.main()
