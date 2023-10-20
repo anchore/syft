@@ -2,11 +2,11 @@ package cli
 
 import (
 	"fmt"
-	"github.com/anchore/syft/cmd/syft/cli/options"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/format/template"
 )
