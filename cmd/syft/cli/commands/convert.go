@@ -67,7 +67,10 @@ func RunConvert(opts *ConvertOptions, userInput string) error {
 	var reader io.ReadSeekCloser
 
 	if userInput == "-" {
-		reader = os.Stdin
+		// though os.Stdin is an os.File, it does not support seeking
+		// you will get errors such as "seek /dev/stdin: illegal seek".
+		// We need to buffer what we read.
+		reader = internal.NewBufferedSeeker(os.Stdin)
 	} else {
 		f, err := os.Open(userInput)
 		if err != nil {
