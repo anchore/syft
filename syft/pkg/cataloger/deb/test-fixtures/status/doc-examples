@@ -1,0 +1,46 @@
+Package: mutt
+Version: 1.3.17-1
+Depends: libc6 (>= 2.2.1), default-mta | mail-transport-agent | not-installed
+
+Package: made-up-package-1
+Version: 1.0.0
+Source: glibc
+Depends: kernel-headers-2.2.10 [!hurd-i386],
+ hurd-dev [hurd-i386], gnumach-dev [hurd-i386]
+
+Package: made-up-package-2
+Version: 2.0.0
+Depends:
+ libluajit5.1-dev [i386 amd64 kfreebsd-i386 armel armhf powerpc mips],
+ liblua5.1-dev [hurd-i386 ia64 kfreebsd-amd64 s390x sparc],
+
+Package: made-up-package-3
+Version: 3.0.0
+Depends: foo [i386], bar [amd64]
+
+Package: made-up-package-4
+Version: 3.0.0
+Depends: virtual-package-5
+
+Package: made-up-package-5
+Provides: virtual-package-5 (=1.0)
+
+Package: foo
+
+Package: bar
+
+Package: kernel-headers-2.2.10
+
+Package: hurd-dev
+
+Package: gnumach-dev
+
+Package: default-mta
+
+Package: mail-transport-agent
+
+Package: libc6
+
+Package: libluajit5.1-dev
+
+Package: liblua5.1-dev

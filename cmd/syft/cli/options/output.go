@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/fangs"
 	"github.com/anchore/syft/syft/formats"
 	"github.com/anchore/syft/syft/formats/table"
 	"github.com/anchore/syft/syft/formats/template"
@@ -30,7 +31,7 @@ func DefaultOutput() MultiOutput {
 
 func (o *MultiOutput) AddFlags(flags clio.FlagSet) {
 	flags.StringArrayVarP(&o.Outputs, "output", "o",
-		fmt.Sprintf("report output format, options=%v", formats.AllIDs()))
+		fmt.Sprintf("report output format (<format>=<file> to output to a file), formats=%v", formats.AllIDs()))
 
 	flags.StringVarP(&o.OutputTemplatePath, "template", "t",
 		"specify the path to a Go template file")
@@ -63,7 +64,7 @@ func (o *SingleOutput) SBOMWriter(file string) (sbom.Writer, error) {
 	return makeSBOMWriter([]string{o.Output}, file, o.OutputTemplatePath)
 }
 
-// OutputFile is only the --file argument
+// Deprecated: OutputFile is only the --file argument
 type OutputFile struct {
 	File string `yaml:"file" json:"file" mapstructure:"file"` // --file, the file to write report output to
 }
@@ -76,6 +77,11 @@ var _ interface {
 func (o *OutputFile) AddFlags(flags clio.FlagSet) {
 	flags.StringVarP(&o.File, "file", "",
 		"file to write the default report output to (default is STDOUT)")
+
+	if pfp, ok := flags.(fangs.PFlagSetProvider); ok {
+		flagSet := pfp.PFlagSet()
+		flagSet.Lookup("file").Deprecated = "use: output"
+	}
 }
 
 func (o *OutputFile) PostLoad() error {

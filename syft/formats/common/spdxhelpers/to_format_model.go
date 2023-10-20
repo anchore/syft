@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"

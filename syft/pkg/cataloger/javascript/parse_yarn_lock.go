@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/anchore/syft/internal"
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -51,7 +52,7 @@ func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.L
 
 	var pkgs []pkg.Package
 	scanner := bufio.NewScanner(reader)
-	parsedPackages := internal.NewStringSet()
+	parsedPackages := strset.New()
 	currentPackage := noPackage
 	currentVersion := noVersion
 
@@ -60,7 +61,7 @@ func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.L
 
 		if packageName := findPackageName(line); packageName != noPackage {
 			// When we find a new package, check if we have unsaved identifiers
-			if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Contains(currentPackage+"@"+currentVersion) {
+			if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
 				pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, currentPackage, currentVersion))
 				parsedPackages.Add(currentPackage + "@" + currentVersion)
 			}
@@ -68,7 +69,7 @@ func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.L
 			currentPackage = packageName
 		} else if version := findPackageVersion(line); version != noVersion {
 			currentVersion = version
-		} else if packageName, version := findPackageAndVersion(line); packageName != noPackage && version != noVersion && !parsedPackages.Contains(packageName+"@"+version) {
+		} else if packageName, version := findPackageAndVersion(line); packageName != noPackage && version != noVersion && !parsedPackages.Has(packageName+"@"+version) {
 			pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, packageName, version))
 			parsedPackages.Add(packageName + "@" + version)
 
@@ -79,7 +80,7 @@ func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.L
 	}
 
 	// check if we have valid unsaved data after end-of-file has reached
-	if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Contains(currentPackage+"@"+currentVersion) {
+	if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
 		pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, currentPackage, currentVersion))
 		parsedPackages.Add(currentPackage + "@" + currentVersion)
 	}

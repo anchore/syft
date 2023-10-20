@@ -173,3 +173,27 @@ func Test_isValidExternalRef(t *testing.T) {
 		})
 	}
 }
+
+func Test_toCycloneDXAlgorithm(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected cyclonedx.HashAlgorithm
+	}{
+		{
+			name:     "valid algorithm name in upper case",
+			input:    "SHA1",
+			expected: cyclonedx.HashAlgorithm("SHA-1"),
+		},
+		{
+			name:     "valid algorithm name in lower case",
+			input:    "sha1",
+			expected: cyclonedx.HashAlgorithm("SHA-1"),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, toCycloneDXAlgorithm(test.input))
+		})
+	}
+}

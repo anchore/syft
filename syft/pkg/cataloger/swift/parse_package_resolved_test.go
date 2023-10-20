@@ -1,7 +1,11 @@
 package swift
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -79,4 +83,25 @@ func TestParsePackageResolved(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 
 	pkgtest.TestFileParser(t, fixture, parsePackageResolved, expectedPkgs, expectedRelationships)
+}
+
+func TestParsePackageResolved_empty(t *testing.T) {
+	// regression for https://github.com/anchore/syft/issues/2225
+	fixture := "test-fixtures/empty-packages.resolved"
+
+	pkgtest.TestFileParser(t, fixture, parsePackageResolved, nil, nil)
+
+	dir := t.TempDir()
+	fixture = filepath.Join(dir, "Package.resolved")
+	_, err := os.Create(fixture)
+	require.NoError(t, err)
+
+	pkgtest.TestFileParser(t, fixture, parsePackageResolved, nil, nil)
+}
+
+func TestParsePackageResolved_versionNotANumber(t *testing.T) {
+	// regression for https://github.com/anchore/syft/issues/2225
+	fixture := "test-fixtures/bad-version-packages.resolved"
+
+	pkgtest.NewCatalogTester().FromFile(t, fixture).WithError().TestParser(t, parsePackageResolved)
 }

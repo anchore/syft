@@ -66,3 +66,8 @@ test/integration/test-fixtures/**/go.sum
 # attestation
 cosign.key
 cosign.pub
+
+# Byte-compiled object files for python
+__pycache__/
+*.py[cod]
+*$py.class

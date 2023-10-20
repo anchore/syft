@@ -329,6 +329,10 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 		opts = append(opts, p.compareOptions...)
 		opts = append(opts, cmp.Reporter(&r))
 
+		// order should not matter
+		pkg.Sort(p.expectedPkgs)
+		pkg.Sort(pkgs)
+
 		if diff := cmp.Diff(p.expectedPkgs, pkgs, opts...); diff != "" {
 			t.Log("Specific Differences:\n" + r.String())
 			t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
@@ -340,6 +344,10 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 
 		opts = append(opts, p.compareOptions...)
 		opts = append(opts, cmp.Reporter(&r))
+
+		// order should not matter
+		pkg.SortRelationships(p.expectedRelationships)
+		pkg.SortRelationships(relationships)
 
 		if diff := cmp.Diff(p.expectedRelationships, relationships, opts...); diff != "" {
 			t.Log("Specific Differences:\n" + r.String())

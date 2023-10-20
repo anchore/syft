@@ -247,6 +247,8 @@ var dirOnlyTestCases = []testCase{
 			"Serilog.Sinks.Console":                                 "4.0.1",
 			"System.Diagnostics.DiagnosticSource":                   "6.0.0",
 			"System.Runtime.CompilerServices.Unsafe":                "6.0.0",
+			"TestCommon":                                            "1.0.0",
+			"TestLibrary":                                           "1.0.0",
 		},
 	},
 	{

@@ -62,6 +62,7 @@ func (c *goBinaryCataloger) parseGoBinary(resolver file.Resolver, _ *generic.Env
 	for _, mod := range mods {
 		pkgs = append(pkgs, c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch)...)
 	}
+
 	return pkgs, nil, nil
 }
 

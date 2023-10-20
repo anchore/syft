@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -13,8 +14,18 @@ import (
 
 var _ generic.Parser = parseDotnetDeps
 
+type dotnetRuntimeTarget struct {
+	Name string `json:"name"`
+}
+
+type dotnetDepsTarget struct {
+	Dependencies map[string]string   `json:"dependencies"`
+	Runtime      map[string]struct{} `json:"runtime"`
+}
 type dotnetDeps struct {
-	Libraries map[string]dotnetDepsLibrary `json:"libraries"`
+	RuntimeTarget dotnetRuntimeTarget                    `json:"runtimeTarget"`
+	Targets       map[string]map[string]dotnetDepsTarget `json:"targets"`
+	Libraries     map[string]dotnetDepsLibrary           `json:"libraries"`
 }
 
 type dotnetDepsLibrary struct {
@@ -24,27 +35,55 @@ type dotnetDepsLibrary struct {
 	HashPath string `json:"hashPath"`
 }
 
+//nolint:funlen
 func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
+	var pkgMap = make(map[string]pkg.Package)
+	var relationships []artifact.Relationship
 
 	dec := json.NewDecoder(reader)
 
-	var p dotnetDeps
-	if err := dec.Decode(&p); err != nil {
+	var depsDoc dotnetDeps
+	if err := dec.Decode(&depsDoc); err != nil {
 		return nil, nil, fmt.Errorf("failed to parse deps.json file: %w", err)
 	}
 
-	var names []string
+	rootName := getDepsJSONFilePrefix(reader.AccessPath())
+	if rootName == "" {
+		return nil, nil, fmt.Errorf("unable to determine root package name from deps.json file: %s", reader.AccessPath())
+	}
+	var rootPkg *pkg.Package
+	for nameVersion, lib := range depsDoc.Libraries {
+		name, _ := extractNameAndVersion(nameVersion)
+		if lib.Type == "project" && name == rootName {
+			rootPkg = newDotnetDepsPackage(
+				nameVersion,
+				lib,
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			)
+		}
+	}
+	if rootPkg == nil {
+		return nil, nil, fmt.Errorf("unable to determine root package from deps.json file: %s", reader.AccessPath())
+	}
+	pkgs = append(pkgs, *rootPkg)
+	pkgMap[createNameAndVersion(rootPkg.Name, rootPkg.Version)] = *rootPkg
 
-	for nameVersion := range p.Libraries {
+	var names []string
+	for nameVersion := range depsDoc.Libraries {
 		names = append(names, nameVersion)
 	}
-
 	// sort the names so that the order of the packages is deterministic
 	sort.Strings(names)
 
 	for _, nameVersion := range names {
-		lib := p.Libraries[nameVersion]
+		// skip the root package
+		name, version := extractNameAndVersion(nameVersion)
+		if name == rootPkg.Name && version == rootPkg.Version {
+			continue
+		}
+
+		lib := depsDoc.Libraries[nameVersion]
 		dotnetPkg := newDotnetDepsPackage(
 			nameVersion,
 			lib,
@@ -53,8 +92,36 @@ func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader file.Locati
 
 		if dotnetPkg != nil {
 			pkgs = append(pkgs, *dotnetPkg)
+			pkgMap[nameVersion] = *dotnetPkg
 		}
 	}
 
-	return pkgs, nil, nil
+	for pkgNameVersion, target := range depsDoc.Targets[depsDoc.RuntimeTarget.Name] {
+		for depName, depVersion := range target.Dependencies {
+			depNameVersion := createNameAndVersion(depName, depVersion)
+			depPkg, ok := pkgMap[depNameVersion]
+			if !ok {
+				log.Debug("unable to find package in map", depNameVersion)
+				continue
+			}
+			p, ok := pkgMap[pkgNameVersion]
+			if !ok {
+				log.Debug("unable to find package in map", pkgNameVersion)
+				continue
+			}
+			rel := artifact.Relationship{
+				From: depPkg,
+				To:   p,
+				Type: artifact.DependencyOfRelationship,
+			}
+			relationships = append(relationships, rel)
+		}
+	}
+
+	// sort the relationships for deterministic output
+	// TODO: ideally this would be replaced with artifact.SortRelationships when one exists and is type agnostic.
+	// this will only consider package-to-package relationships.
+	pkg.SortRelationships(relationships)
+
+	return pkgs, relationships, nil
 }

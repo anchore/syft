@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/formats/internal/testutils"
@@ -118,7 +117,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 			Value:          "MIT",
 			SPDXExpression: "MIT",
 			Type:           "MIT",
-			URLs:           internal.NewStringSet("https://example.org/license"),
+			URLs:           []string{"https://example.org/license"},
 			Locations:      file.LocationSet{},
 		}),
 		Language: "language",

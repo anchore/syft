@@ -62,7 +62,7 @@ tasks:
       - task: integration
       - task: validate-cyclonedx-schema
       - task: benchmark
-      - task: snapshot
+      - task: test-utils
       - task: cli
 
   ## Bootstrap tasks #################################
@@ -218,6 +218,13 @@ tasks:
       - "go test -count=1 -timeout=15m -v ./test/cli"
     env:
       SYFT_BINARY_LOCATION: "{{ .SNAPSHOT_BIN }}"
+
+  test-utils:
+    desc: Run tests for pipeline utils
+    sources:
+      - .github/scripts/labeler*.py
+    cmds:
+      - cmd: python .github/scripts/labeler_test.py
 
 
   ## Benchmark test targets #################################

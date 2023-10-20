@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/opencontainers/go-digest"
 
 	"github.com/anchore/stereoscope"
