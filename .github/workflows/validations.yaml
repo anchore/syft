@@ -136,7 +136,9 @@ jobs:
         id: snapshot-cache
         uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
         with:
-          path: snapshot
+          path: |
+            snapshot
+            .task
           fail-on-cache-miss: true
           key: snapshot-build-${{ github.run_id }}
 
@@ -187,7 +189,9 @@ jobs:
         id: snapshot-cache
         uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
         with:
-          path: snapshot
+          path: |
+            snapshot
+            .task
           fail-on-cache-miss: true
           key: snapshot-build-${{ github.run_id }}
 
@@ -231,7 +235,9 @@ jobs:
         id: snapshot-cache
         uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
         with:
-          path: snapshot
+          path: |
+            snapshot
+            .task
           fail-on-cache-miss: true
           key: snapshot-build-${{ github.run_id }}
 
