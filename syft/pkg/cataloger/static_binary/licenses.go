@@ -173,7 +173,9 @@ func findLicenses(resolver file.Resolver, globMatch string, location string) (ou
 
 	for _, l := range locations {
 		fileName := path.Base(l.RealPath)
-		if licenses.FileNameSet.Contains(fileName) {
+		fileNames := licenses.FileNames()
+
+		if contains(fileNames, fileName) {
 			contents, err := resolver.FileContentsByLocation(l)
 			if err != nil {
 				return nil, err
@@ -268,25 +270,35 @@ func processCaps(s string) string {
 	return ""
 }*/
 
-/*func getModuleRepository(progress *monitor.CatalogerTask, moduleName string, moduleVersion string) (fs.FS, error) {
-	repoName := moduleName
-	parts := strings.Split(moduleName, "/")
-	if len(parts) > 2 {
-		repoName = fmt.Sprintf("%s/%s/%s", parts[0], parts[1], parts[2])
-	}
-	progress.SetValue(fmt.Sprintf("git: %s", repoName))
-	f := memfs.New()
-	buf := &bytes.Buffer{}
-	_, err := git.Clone(memory.NewStorage(), f, &git.CloneOptions{
-		URL:           fmt.Sprintf("https://%s", repoName),
-		ReferenceName: plumbing.NewTagReferenceName(moduleVersion), // FIXME version might be a SHA
-		SingleBranch:  true,
-		Depth:         1,
-		Progress:      buf,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("%w -- %s", err, buf.String())
-	}
+/*
+	func getModuleRepository(progress *monitor.CatalogerTask, moduleName string, moduleVersion string) (fs.FS, error) {
+		repoName := moduleName
+		parts := strings.Split(moduleName, "/")
+		if len(parts) > 2 {
+			repoName = fmt.Sprintf("%s/%s/%s", parts[0], parts[1], parts[2])
+		}
+		progress.SetValue(fmt.Sprintf("git: %s", repoName))
+		f := memfs.New()
+		buf := &bytes.Buffer{}
+		_, err := git.Clone(memory.NewStorage(), f, &git.CloneOptions{
+			URL:           fmt.Sprintf("https://%s", repoName),
+			ReferenceName: plumbing.NewTagReferenceName(moduleVersion), // FIXME version might be a SHA
+			SingleBranch:  true,
+			Depth:         1,
+			Progress:      buf,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("%w -- %s", err, buf.String())
+		}
 
-	return billyFSAdapter{fs: f}, nil
-}*/
+		return billyFSAdapter{fs: f}, nil
+	}
+*/
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
