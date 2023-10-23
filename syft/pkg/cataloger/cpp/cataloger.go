@@ -12,3 +12,11 @@ func NewConanCataloger() *generic.Cataloger {
 		WithParserByGlobs(parseConanfile, "**/conanfile.txt").
 		WithParserByGlobs(parseConanlock, "**/conan.lock")
 }
+
+const catalogerNameInfo = "conan-info-cataloger"
+
+// NewConanInfoCataloger returns a new C++ conaninfo.txt cataloger object.
+func NewConanInfoCataloger() *generic.Cataloger {
+	return generic.NewCataloger(catalogerNameInfo).
+		WithParserByGlobs(parseConaninfo, "**/conaninfo.txt")
+}
