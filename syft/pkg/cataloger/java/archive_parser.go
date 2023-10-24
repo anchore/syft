@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"reflect"
 	"strings"
+
+	"github.com/vifraa/gopom"
 
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/licenses"
@@ -17,8 +20,9 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/vifraa/gopom"
 )
+
+const MavenBaseURL = "https://repo1.maven.org/maven2"
 
 var _ generic.Parser = parseJavaArchive
 
@@ -309,12 +313,33 @@ func findPomLicenses(pomProjectObject *parsedPomProject) {
 	}
 }
 
-func getPomFromMavenCentral(groupID, artifactID, version string) (*gopom.Project, error) {
-	mavenCentralURL := "https://repo1.maven.org/maven2/" + strings.Join(strings.Split(groupID, "."), "/") + "/" + artifactID + "/" +
-		version + "/" + artifactID + "-" + version + ".pom"
-	log.Debugf("Trying to fetch parent pom from Maven central %s", mavenCentralURL)
+func formatMavenPomURL(groupID, artifactID, version string) (requestURL string, err error) {
+	// groupID needs to go from maven.org -> maven/org
+	urlPath := strings.Split(groupID, ".")
+	artifactPom := fmt.Sprintf("%s-%s.pom", artifactID, version)
+	urlPath = append(urlPath, artifactID, version, artifactPom)
 
-	resp, err := http.Get(mavenCentralURL)
+	// ex:"https://repo1.maven.org/maven2/groupID/artifactID/artifactPom
+	requestURL, err = url.JoinPath(MavenBaseURL, urlPath...)
+	if err != nil {
+		return requestURL, fmt.Errorf("could not construct maven url: %w", err)
+	}
+	return requestURL, err
+}
+
+func getPomFromMavenCentral(groupID, artifactID, version string) (*gopom.Project, error) {
+	requestURL, err := formatMavenPomURL(groupID, artifactID, version)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("Trying to fetch parent pom from Maven central %s", requestURL)
+
+	mavenRequest, err := http.NewRequest(http.MethodGet, requestURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("unable to format request for Maven central: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(mavenRequest)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get pom from Maven central: %w", err)
 	}
