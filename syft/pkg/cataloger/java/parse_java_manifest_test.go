@@ -101,6 +101,17 @@ func TestParseJavaManifest(t *testing.T) {
 				},
 			},
 		},
+		{
+			// regression test, we should not trim space and choke of empty space
+			// https://github.com/anchore/syft/issues/2179
+			fixture: "test-fixtures/manifest/leading-space",
+			expected: pkg.JavaManifest{
+				Main: map[string]string{
+					"Key-keykeykey": "initialconfig:com$    # aka not empty line",
+					"should":        "parse",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
