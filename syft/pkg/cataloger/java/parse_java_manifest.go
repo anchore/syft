@@ -32,7 +32,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 		line := scanner.Text()
 
 		// empty lines denote section separators
-		if strings.TrimSpace(line) == "" {
+		if line == "" {
 			// we don't want to allocate a new section map that won't necessarily be used, do that once there is
 			// a non-empty line to process
 
