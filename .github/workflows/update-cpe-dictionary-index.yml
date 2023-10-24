@@ -9,8 +9,7 @@ permissions:
   contents: read
 
 env:
-  GO_VERSION: "1.21.x"
-  GO_STABLE_VERSION: true
+  SLACK_NOTIFICATIONS: true
 
 jobs:
   upgrade-cpe-dictionary-index:
@@ -19,10 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
 
-      - uses: actions/setup-go@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          stable: ${{ env.GO_STABLE_VERSION }}
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
 
       - run: |
           make generate-cpe-dictionary-index
@@ -44,3 +41,12 @@ jobs:
           body: |
             Update CPE dictionary index based on the latest available CPE dictionary
           token: ${{ steps.generate-token.outputs.token }}
+
+      - uses: 8398a7/action-slack@fbd6aa58ba854a740e11a35d0df80cb5d12101d8 #v3.15.1
+        with:
+          status: ${{ job.status }}
+          fields: workflow,eventName,job
+          text: Syft CPE dictionary index update failed
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
+        if: ${{ failure() && env.SLACK_NOTIFICATIONS == 'true' }}
