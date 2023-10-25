@@ -21,6 +21,9 @@ jobs:
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
 
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+
       - run: |
           make generate-cpe-dictionary-index
 
