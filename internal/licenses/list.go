@@ -20,7 +20,6 @@ func FileNames() []string {
 		"LICENSE",
 		"LICENSE.md",
 		"LICENSE.markdown",
-		"license.txt",
 		"LICENSE.txt",
 		"LICENSE-2.0.txt",
 		"LICENCE-2.0.txt",
