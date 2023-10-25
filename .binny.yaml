@@ -1,0 +1,96 @@
+tools:
+  - name: binny
+    version:
+      want: v0.6.2
+    method: github-release
+    with:
+      repo: anchore/binny
+
+  - name: quill
+    version:
+      want: v0.4.1
+    method: github-release
+    with:
+      repo: anchore/quill
+
+  - name: golangci-lint
+    version:
+      want: v1.55.0
+    method: github-release
+    with:
+      repo: golangci/golangci-lint
+
+  - name: glow
+    version:
+      want: v1.5.1
+    method: github-release
+    with:
+      repo: charmbracelet/glow
+
+  - name: cosign
+    version:
+      want: v2.2.0
+    method: github-release
+    with:
+      repo: sigstore/cosign
+
+  - name: yajsv
+    version:
+      want: v1.4.1
+    method: github-release
+    with:
+      repo: neilpa/yajsv
+
+  - name: goreleaser
+    version:
+      want: v1.21.2
+    method: github-release
+    with:
+      repo: goreleaser/goreleaser
+
+  - name: gosimports
+    version:
+      want: v0.3.8
+    method: github-release
+    with:
+      repo: rinchsan/gosimports
+
+  - name: chronicle
+    version:
+      want: v0.8.0
+    method: github-release
+    with:
+      repo: anchore/chronicle
+
+  - name: bouncer
+    version:
+      want: v0.4.0
+    method: github-release
+    with:
+      repo: wagoodman/go-bouncer
+
+  - name: benchstat
+    version:
+      want: latest
+      method: go-proxy
+      with:
+        module: golang.org/x/perf
+        allow-unresolved-version: true
+    method: go-install
+    with:
+      entrypoint: cmd/benchstat
+      module: golang.org/x/perf
+
+  - name: task
+    version:
+      want: v3.30.1
+    method: github-release
+    with:
+      repo: go-task/task
+
+  - name: gh
+    version:
+      want: v2.35.0
+    method: github-release
+    with:
+      repo: cli/cli

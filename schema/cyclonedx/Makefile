@@ -8,4 +8,4 @@ validate-schema:
 	xmllint --noout --schema ./cyclonedx.xsd bom.xml
 
 	@echo "\nValidating CycloneDX JSON..."
-	../../.tmp/yajsv -s cyclonedx.json bom.json
+	../../.tool/yajsv -s cyclonedx.json bom.json
