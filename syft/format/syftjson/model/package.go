@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
@@ -117,7 +118,29 @@ func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 		return nil
 	}
 
-	typ := packagemetadata.ReflectTypeFromJSONName(unpacker.MetadataType)
+	// check for legacy correction cases from schema v11 -> v12
+	ty := unpacker.MetadataType
+	switch unpacker.MetadataType {
+	case "HackageMetadataType":
+		for _, l := range p.Locations {
+			if strings.HasSuffix(l.RealPath, ".yaml.lock") {
+				ty = "haskell-hackage-stack-lock"
+				break
+			} else if strings.HasSuffix(l.RealPath, ".yaml") {
+				ty = "haskell-hackage-stack"
+				break
+			}
+		}
+	case "RpmMetadata":
+		for _, l := range p.Locations {
+			if strings.HasSuffix(l.RealPath, ".rpm") {
+				ty = "redhat-rpm-archive"
+				break
+			}
+		}
+	}
+
+	typ := packagemetadata.ReflectTypeFromJSONName(ty)
 	if typ == nil {
 		// capture unknown metadata as a generic struct
 		if len(unpacker.Metadata) > 0 {

@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func TestUnmarshalPackageGolang(t *testing.T) {
+func Test_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
 		name        string
 		packageData []byte
@@ -167,6 +167,167 @@ func TestUnmarshalPackageGolang(t *testing.T) {
 						Type:           license.Declared,
 					},
 				}, p.Licenses)
+			},
+		},
+		{
+			name: "breaking v11-v12 schema change: rpm db vs archive (select db)",
+			packageData: []byte(`{
+  "id": "739158935bfffc4d",
+  "name": "dbus",
+  "version": "1:1.12.8-12.el8",
+  "type": "rpm",
+  "foundBy": "rpm-db-cataloger",
+  "locations": [
+    {
+      "path": "/var/lib/rpm/Packages",
+      "layerID": "sha256:d871dadfb37b53ef1ca45be04fc527562b91989991a8f545345ae3be0b93f92a",
+      "annotations": {
+        "evidence": "primary"
+      }
+    }
+  ],
+  "licenses": [],
+  "language": "",
+  "cpes": [],
+  "purl": "pkg:rpm/centos/dbus@1.12.8-12.el8?arch=aarch64&epoch=1&upstream=dbus-1.12.8-12.el8.src.rpm&distro=centos-8",
+  "metadataType": "RpmMetadata",
+  "metadata": {
+    "name": "dbus",
+    "version": "1.12.8",
+    "epoch": 1,
+    "architecture": "aarch64",
+    "release": "12.el8",
+    "sourceRpm": "dbus-1.12.8-12.el8.src.rpm",
+    "size": 0,
+    "vendor": "CentOS",
+    "modularityLabel": "",
+    "files": []
+  }
+}
+`),
+			assert: func(p *Package) {
+				assert.Equal(t, pkg.RpmPkg, p.Type)
+				assert.Equal(t, reflect.TypeOf(pkg.RpmDBMetadata{}).Name(), reflect.TypeOf(p.Metadata).Name())
+			},
+		},
+		{
+			name: "breaking v11-v12 schema change: rpm db vs archive (select archive)",
+			packageData: []byte(`{
+  "id": "739158935bfffc4d",
+  "name": "dbus",
+  "version": "1:1.12.8-12.el8",
+  "type": "rpm",
+  "foundBy": "rpm-db-cataloger",
+  "locations": [
+    {
+      "path": "/var/cache/dbus-1.12.8-12.el8.rpm",
+      "layerID": "sha256:d871dadfb37b53ef1ca45be04fc527562b91989991a8f545345ae3be0b93f92a",
+      "annotations": {
+        "evidence": "primary"
+      }
+    }
+  ],
+  "licenses": [],
+  "language": "",
+  "cpes": [],
+  "purl": "pkg:rpm/centos/dbus@1.12.8-12.el8?arch=aarch64&epoch=1&upstream=dbus-1.12.8-12.el8.src.rpm&distro=centos-8",
+  "metadataType": "RpmMetadata",
+  "metadata": {
+    "name": "dbus",
+    "version": "1.12.8",
+    "epoch": 1,
+    "architecture": "aarch64",
+    "release": "12.el8",
+    "sourceRpm": "dbus-1.12.8-12.el8.src.rpm",
+    "size": 0,
+    "vendor": "CentOS",
+    "modularityLabel": "",
+    "files": []
+  }
+}
+`),
+			assert: func(p *Package) {
+				assert.Equal(t, pkg.RpmPkg, p.Type)
+				assert.Equal(t, reflect.TypeOf(pkg.RpmArchiveMetadata{}).Name(), reflect.TypeOf(p.Metadata).Name())
+			},
+		},
+		{
+			name: "breaking v11-v12 schema change: stack.yaml vs stack.yaml.lock (select stack.yaml)",
+			packageData: []byte(`{
+  "id": "46ff1a71f7715f38",
+  "name": "hspec-discover",
+  "version": "2.9.4",
+  "type": "hackage",
+  "foundBy": "haskell-cataloger",
+  "locations": [
+    {
+      "path": "/stack.yaml",
+      "annotations": {
+        "evidence": "primary"
+      }
+    }
+  ],
+  "licenses": [],
+  "language": "haskell",
+  "cpes": [
+    "cpe:2.3:a:hspec-discover:hspec-discover:2.9.4:*:*:*:*:*:*:*",
+    "cpe:2.3:a:hspec-discover:hspec_discover:2.9.4:*:*:*:*:*:*:*",
+    "cpe:2.3:a:hspec_discover:hspec-discover:2.9.4:*:*:*:*:*:*:*",
+    "cpe:2.3:a:hspec_discover:hspec_discover:2.9.4:*:*:*:*:*:*:*",
+    "cpe:2.3:a:hspec:hspec-discover:2.9.4:*:*:*:*:*:*:*",
+    "cpe:2.3:a:hspec:hspec_discover:2.9.4:*:*:*:*:*:*:*"
+  ],
+  "purl": "pkg:hackage/hspec-discover@2.9.4",
+  "metadataType": "HackageMetadataType",
+  "metadata": {
+    "name": "",
+    "version": "",
+    "pkgHash": "fbcf49ecfc3d4da53e797fd0275264cba776ffa324ee223e2a3f4ec2d2c9c4a6"
+  }
+}`),
+			assert: func(p *Package) {
+				assert.Equal(t, pkg.HackagePkg, p.Type)
+				assert.Equal(t, reflect.TypeOf(pkg.HackageStackYamlMetadata{}).Name(), reflect.TypeOf(p.Metadata).Name())
+			},
+		},
+		{
+			name: "breaking v11-v12 schema change: stack.yaml vs stack.yaml.lock (select stack.yaml.lock)",
+			packageData: []byte(`{
+  "id": "87939e95124ceb92",
+  "name": "optparse-applicative",
+  "version": "0.16.1.0",
+  "type": "hackage",
+  "foundBy": "haskell-cataloger",
+  "locations": [
+    {
+      "path": "/stack.yaml.lock",
+      "annotations": {
+        "evidence": "primary"
+      }
+    }
+  ],
+  "licenses": [],
+  "language": "haskell",
+  "cpes": [
+    "cpe:2.3:a:optparse-applicative:optparse-applicative:0.16.1.0:*:*:*:*:*:*:*",
+    "cpe:2.3:a:optparse-applicative:optparse_applicative:0.16.1.0:*:*:*:*:*:*:*",
+    "cpe:2.3:a:optparse_applicative:optparse-applicative:0.16.1.0:*:*:*:*:*:*:*",
+    "cpe:2.3:a:optparse_applicative:optparse_applicative:0.16.1.0:*:*:*:*:*:*:*",
+    "cpe:2.3:a:optparse:optparse-applicative:0.16.1.0:*:*:*:*:*:*:*",
+    "cpe:2.3:a:optparse:optparse_applicative:0.16.1.0:*:*:*:*:*:*:*"
+  ],
+  "purl": "pkg:hackage/optparse-applicative@0.16.1.0",
+  "metadataType": "HackageMetadataType",
+  "metadata": {
+    "name": "",
+    "version": "",
+    "pkgHash": "418c22ed6a19124d457d96bc66bd22c93ac22fad0c7100fe4972bbb4ac989731",
+    "snapshotURL": "https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/14.yaml"
+  }
+}`),
+			assert: func(p *Package) {
+				assert.Equal(t, pkg.HackagePkg, p.Type)
+				assert.Equal(t, reflect.TypeOf(pkg.HackageStackYamlLockMetadata{}).Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 	}
