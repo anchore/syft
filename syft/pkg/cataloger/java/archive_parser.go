@@ -257,7 +257,7 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 		projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
 
 		for parentPath, propertiesObj := range properties {
-			if propertiesObj.ArtifactID != "" && j.fileInfo.name != "" && strings.HasPrefix(propertiesObj.ArtifactID, j.fileInfo.name) {
+			if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name) {
 				pomPropertiesObject = propertiesObj
 				if proj, exists := projects[parentPath]; exists {
 					pomProjectObject = proj
@@ -274,6 +274,13 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 		version = pomProjectObject.Version
 	}
 	return name, version, pomProjectObject.Licenses
+}
+
+func artifactIDMatchesFilename(artifactID, fileName string) bool {
+	if artifactID == "" || fileName == "" {
+		return false
+	}
+	return strings.HasPrefix(artifactID, fileName) || strings.HasSuffix(fileName, artifactID)
 }
 
 // discoverPkgsFromAllMavenFiles parses Maven POM properties/xml for a given

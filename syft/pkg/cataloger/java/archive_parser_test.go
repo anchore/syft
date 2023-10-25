@@ -11,10 +11,13 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/gookit/color"
 	"github.com/scylladb/go-set/strset"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
@@ -38,47 +41,7 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 	cmd := exec.Command("make", makeTask)
 	cmd.Dir = filepath.Join(cwd, "test-fixtures/java-builds/")
 
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		t.Fatalf("could not get stderr: %+v", err)
-	}
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		t.Fatalf("could not get stdout: %+v", err)
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		t.Fatalf("failed to start cmd: %+v", err)
-	}
-
-	show := func(label string, reader io.ReadCloser) {
-		scanner := bufio.NewScanner(reader)
-		scanner.Split(bufio.ScanLines)
-		for scanner.Scan() {
-			t.Logf("%s: %s", label, scanner.Text())
-		}
-	}
-	go show("out", stdout)
-	go show("err", stderr)
-
-	if err := cmd.Wait(); err != nil {
-		if exiterr, ok := err.(*exec.ExitError); ok {
-			// The program has exited with an exit code != 0
-
-			// This works on both Unix and Windows. Although package
-			// syscall is generally platform dependent, WaitStatus is
-			// defined for both Unix and Windows and in both cases has
-			// an ExitStatus() method with the same signature.
-			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				if status.ExitStatus() != 0 {
-					t.Fatalf("failed to generate fixture: rc=%d", status.ExitStatus())
-				}
-			}
-		} else {
-			t.Fatalf("unable to get generate fixture result: %+v", err)
-		}
-	}
+	run(t, cmd)
 }
 
 func TestParseJar(t *testing.T) {
@@ -1018,5 +981,230 @@ func Test_newPackageFromMavenData(t *testing.T) {
 
 			pkgtest.AssertPackagesEqual(t, test.expectedParent, *test.parent)
 		})
+	}
+}
+
+func Test_artifactIDMatchesFilename(t *testing.T) {
+	tests := []struct {
+		name       string
+		artifactID string
+		fileName   string // without version or extension
+		want       bool
+	}{
+		{
+			name:       "artifact id within file name",
+			artifactID: "atlassian-extras-api",
+			fileName:   "com.atlassian.extras_atlassian-extras-api",
+			want:       true,
+		},
+		{
+			name:       "file name within artifact id",
+			artifactID: "atlassian-extras-api-something",
+			fileName:   "atlassian-extras-api",
+			want:       true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, artifactIDMatchesFilename(tt.artifactID, tt.fileName))
+		})
+	}
+}
+
+func Test_parseJavaArchive_regressions(t *testing.T) {
+	tests := []struct {
+		name                  string
+		fixtureName           string
+		expectedPkgs          []pkg.Package
+		expectedRelationships []artifact.Relationship
+		want                  bool
+	}{
+		{
+			name:        "duplicate jar regression - go case (issue #2130)",
+			fixtureName: "jackson-core-2.15.2",
+			expectedPkgs: []pkg.Package{
+				{
+					Name:         "jackson-core",
+					Version:      "2.15.2",
+					Type:         pkg.JavaPkg,
+					Language:     pkg.Java,
+					MetadataType: pkg.JavaMetadataType,
+					PURL:         "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.15.2",
+					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar")),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicensesFromLocation(
+							file.NewLocation("test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar"),
+							"https://www.apache.org/licenses/LICENSE-2.0.txt",
+						)...,
+					),
+					Metadata: pkg.JavaMetadata{
+						VirtualPath: "test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar",
+						Manifest: &pkg.JavaManifest{
+							Main: map[string]string{
+								"Build-Jdk-Spec":           "1.8",
+								"Bundle-Description":       "Core Jackson processing abstractions",
+								"Bundle-DocURL":            "https://github.com/FasterXML/jackson-core",
+								"Bundle-License":           "https://www.apache.org/licenses/LICENSE-2.0.txt",
+								"Bundle-ManifestVersion":   "2",
+								"Bundle-Name":              "Jackson-core",
+								"Bundle-SymbolicName":      "com.fasterxml.jackson.core.jackson-core",
+								"Bundle-Vendor":            "FasterXML",
+								"Bundle-Version":           "2.15.2",
+								"Created-By":               "Apache Maven Bundle Plugin 5.1.8",
+								"Export-Package":           "com.fasterxml.jackson.core;version...snip",
+								"Implementation-Title":     "Jackson-core",
+								"Implementation-Vendor":    "FasterXML",
+								"Implementation-Vendor-Id": "com.fasterxml.jackson.core",
+								"Implementation-Version":   "2.15.2",
+								"Import-Package":           "com.fasterxml.jackson.core;version=...snip",
+								"Manifest-Version":         "1.0",
+								"Multi-Release":            "true",
+								"Require-Capability":       `osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"`,
+								"Specification-Title":      "Jackson-core",
+								"Specification-Vendor":     "FasterXML",
+								"Specification-Version":    "2.15.2",
+								"Tool":                     "Bnd-6.3.1.202206071316",
+								"X-Compile-Source-JDK":     "1.8",
+								"X-Compile-Target-JDK":     "1.8",
+							},
+						},
+						// not under test
+						//ArchiveDigests: []file.Digest{{Algorithm: "sha1", Value: "d8bc1d9c428c96fe447e2c429fc4304d141024df"}},
+					},
+				},
+			},
+		},
+		{
+			name:        "duplicate jar regression - bad case (issue #2130)",
+			fixtureName: "com.fasterxml.jackson.core.jackson-core-2.15.2",
+			expectedPkgs: []pkg.Package{
+				{
+					Name:         "jackson-core",
+					Version:      "2.15.2",
+					Type:         pkg.JavaPkg,
+					Language:     pkg.Java,
+					MetadataType: pkg.JavaMetadataType,
+					PURL:         "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.15.2",
+					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar")),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicensesFromLocation(
+							file.NewLocation("test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar"),
+							"https://www.apache.org/licenses/LICENSE-2.0.txt",
+						)...,
+					),
+					Metadata: pkg.JavaMetadata{
+						VirtualPath: "test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar",
+						Manifest: &pkg.JavaManifest{
+							Main: map[string]string{
+								"Build-Jdk-Spec":           "1.8",
+								"Bundle-Description":       "Core Jackson processing abstractions",
+								"Bundle-DocURL":            "https://github.com/FasterXML/jackson-core",
+								"Bundle-License":           "https://www.apache.org/licenses/LICENSE-2.0.txt",
+								"Bundle-ManifestVersion":   "2",
+								"Bundle-Name":              "Jackson-core",
+								"Bundle-SymbolicName":      "com.fasterxml.jackson.core.jackson-core",
+								"Bundle-Vendor":            "FasterXML",
+								"Bundle-Version":           "2.15.2",
+								"Created-By":               "Apache Maven Bundle Plugin 5.1.8",
+								"Export-Package":           "com.fasterxml.jackson.core;version...snip",
+								"Implementation-Title":     "Jackson-core",
+								"Implementation-Vendor":    "FasterXML",
+								"Implementation-Vendor-Id": "com.fasterxml.jackson.core",
+								"Implementation-Version":   "2.15.2",
+								"Import-Package":           "com.fasterxml.jackson.core;version=...snip",
+								"Manifest-Version":         "1.0",
+								"Multi-Release":            "true",
+								"Require-Capability":       `osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"`,
+								"Specification-Title":      "Jackson-core",
+								"Specification-Vendor":     "FasterXML",
+								"Specification-Version":    "2.15.2",
+								"Tool":                     "Bnd-6.3.1.202206071316",
+								"X-Compile-Source-JDK":     "1.8",
+								"X-Compile-Target-JDK":     "1.8",
+							},
+						},
+						// not under test
+						//ArchiveDigests: []file.Digest{{Algorithm: "sha1", Value: "abd3e329270fc54a2acaceb45420fd5710ecefd5"}},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName)).
+				Expects(tt.expectedPkgs, tt.expectedRelationships).
+				WithCompareOptions(cmpopts.IgnoreFields(pkg.JavaMetadata{}, "ArchiveDigests")).
+				TestParser(t, parseJavaArchive)
+		})
+	}
+}
+
+func generateJavaMetadataJarFixture(t *testing.T, fixtureName string) string {
+	fixturePath := filepath.Join("test-fixtures/jar-metadata/cache/", fixtureName+".jar")
+	if _, err := os.Stat(fixturePath); !os.IsNotExist(err) {
+		// fixture already exists...
+		return fixturePath
+	}
+
+	makeTask := filepath.Join("cache", fixtureName+".jar")
+	t.Logf(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Errorf("unable to get cwd: %+v", err)
+	}
+
+	cmd := exec.Command("make", makeTask)
+	cmd.Dir = filepath.Join(cwd, "test-fixtures/jar-metadata")
+
+	run(t, cmd)
+
+	return fixturePath
+}
+
+func run(t testing.TB, cmd *exec.Cmd) {
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		t.Fatalf("could not get stderr: %+v", err)
+	}
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatalf("could not get stdout: %+v", err)
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		t.Fatalf("failed to start cmd: %+v", err)
+	}
+
+	show := func(label string, reader io.ReadCloser) {
+		scanner := bufio.NewScanner(reader)
+		scanner.Split(bufio.ScanLines)
+		for scanner.Scan() {
+			t.Logf("%s: %s", label, scanner.Text())
+		}
+	}
+	go show("out", stdout)
+	go show("err", stderr)
+
+	if err := cmd.Wait(); err != nil {
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			// The program has exited with an exit code != 0
+
+			// This works on both Unix and Windows. Although package
+			// syscall is generally platform dependent, WaitStatus is
+			// defined for both Unix and Windows and in both cases has
+			// an ExitStatus() method with the same signature.
+			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+				if status.ExitStatus() != 0 {
+					t.Fatalf("failed to generate fixture: rc=%d", status.ExitStatus())
+				}
+			}
+		} else {
+			t.Fatalf("unable to get generate fixture result: %+v", err)
+		}
 	}
 }
