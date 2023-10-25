@@ -350,6 +350,24 @@
         "installedSize": {
           "type": "integer"
         },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "preDepends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "files": {
           "items": {
             "$ref": "#/$defs/DpkgFileRecord"

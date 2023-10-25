@@ -365,7 +365,7 @@ tasks:
   generate-json-schema:
     desc: Generate a new JSON schema
     cmds:
-      - "cd syft/internal && go generate . && cd jsonschema && go run ."
+      - "cd syft/internal && go generate . && cd jsonschema && go run . && go fmt ../..."
 
   generate-license-list:
     desc: Generate an updated license processing code off of the latest available SPDX license list
