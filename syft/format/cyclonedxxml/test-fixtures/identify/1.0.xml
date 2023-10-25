@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.0" version="1">
+  <components>
+    <component type="library">
+      <name>github.com/wagoodman/go-partybus</name>
+      <version>v0.0.0-20230516145632-8ccac152c651</version>
+      <cpe>cpe:2.3:a:wagoodman:go-partybus:v0.0.0-20230516145632-8ccac152c651:*:*:*:*:*:*:*</cpe>
+      <purl>pkg:golang/github.com/wagoodman/go-partybus@v0.0.0-20230516145632-8ccac152c651</purl>
+      <modified>false</modified>
+    </component>
+  </components>
+</bom>

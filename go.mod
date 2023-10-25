@@ -25,7 +25,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/dave/jennifer v1.7.0
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
-	github.com/docker/distribution v2.8.3+incompatible // indirect
+	github.com/distribution/reference v0.5.0
 	github.com/docker/docker v24.0.6+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/facebookincubator/nvdtools v0.1.5
@@ -55,6 +55,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/saferwall/pe v1.4.7
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
+	github.com/sanity-io/litter v1.5.5
 	github.com/sassoftware/go-rpmutils v0.2.0
 	// pinned to pull in 386 arch fix: https://github.com/scylladb/go-set/commit/cc7b2070d91ebf40d233207b633e28f5bd8f03a5
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
@@ -71,14 +72,8 @@ require (
 	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1
 	golang.org/x/mod v0.13.0
 	golang.org/x/net v0.17.0
-	golang.org/x/term v0.13.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.26.0
-)
-
-require (
-	github.com/distribution/reference v0.5.0
-	github.com/sanity-io/litter v1.5.5
 )
 
 require (
@@ -113,6 +108,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/cli v24.0.0+incompatible // indirect
+	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
@@ -209,6 +205,7 @@ require (
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect

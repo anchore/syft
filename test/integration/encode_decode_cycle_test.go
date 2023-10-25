@@ -10,10 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/formats"
-	"github.com/anchore/syft/syft/formats/cyclonedxjson"
-	"github.com/anchore/syft/syft/formats/cyclonedxxml"
-	"github.com/anchore/syft/syft/formats/syftjson"
+	"github.com/anchore/syft/cmd/syft/cli/options"
+	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/format/cyclonedxjson"
+	"github.com/anchore/syft/syft/format/cyclonedxxml"
+	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -65,24 +66,36 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		},
 	}
 
+	opts := options.DefaultOutput()
+	encoderList, err := opts.Encoders()
+	require.NoError(t, err)
+
+	encoders := format.NewEncoderCollection(encoderList...)
+	decoders := format.NewDecoderCollection(format.Decoders()...)
+
 	for _, test := range tests {
 		t.Run(string(test.formatOption), func(t *testing.T) {
 			for _, image := range images {
 				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope, nil)
 
-				format := formats.ByName(string(test.formatOption))
-				require.NotNil(t, format)
+				f := encoders.GetByString(string(test.formatOption))
+				require.NotNil(t, f)
 
-				by1, err := formats.Encode(originalSBOM, format)
+				var buff1 bytes.Buffer
+				err := f.Encode(&buff1, originalSBOM)
 				require.NoError(t, err)
 
-				newSBOM, newFormat, err := formats.Decode(bytes.NewReader(by1))
+				newSBOM, formatID, formatVersion, err := decoders.Decode(bytes.NewReader(buff1.Bytes()))
 				require.NoError(t, err)
-				require.Equal(t, format.ID(), newFormat.ID())
+				require.Equal(t, f.ID(), formatID)
+				require.Equal(t, f.Version(), formatVersion)
 
-				by2, err := formats.Encode(*newSBOM, format)
+				var buff2 bytes.Buffer
+				err = f.Encode(&buff2, *newSBOM)
 				require.NoError(t, err)
 
+				by1 := buff1.Bytes()
+				by2 := buff2.Bytes()
 				if test.redactor != nil {
 					by1 = test.redactor(by1)
 					by2 = test.redactor(by2)

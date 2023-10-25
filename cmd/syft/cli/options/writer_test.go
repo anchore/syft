@@ -8,43 +8,71 @@ import (
 
 	"github.com/docker/docker/pkg/homedir"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/sbom"
 )
 
 func Test_MakeSBOMWriter(t *testing.T) {
 	tests := []struct {
+		name    string
 		outputs []string
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
+			name:    "go case",
 			outputs: []string{"json"},
 			wantErr: assert.NoError,
 		},
 		{
+			name:    "multiple",
 			outputs: []string{"table", "json"},
 			wantErr: assert.NoError,
 		},
 		{
+			name:    "unknown format",
 			outputs: []string{"unknown"},
 			wantErr: func(t assert.TestingT, err error, bla ...interface{}) bool {
-				return assert.ErrorContains(t, err, `unsupported output format "unknown", supported formats are: [`)
+				return assert.ErrorContains(t, err, `unsupported output format "unknown", supported formats are:`)
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		_, err := makeSBOMWriter(tt.outputs, "", "")
-		tt.wantErr(t, err)
+		t.Run(tt.name, func(t *testing.T) {
+			opt := DefaultOutput()
+			encoders, err := opt.Encoders()
+			require.NoError(t, err)
+			_, err = makeSBOMWriter(tt.outputs, "", encoders)
+			tt.wantErr(t, err)
+		})
 	}
 }
 
-func dummyEncoder(io.Writer, sbom.SBOM) error {
+func dummyFormat(name string) sbom.FormatEncoder {
+	return dummyEncoder{name: name}
+}
+
+var _ sbom.FormatEncoder = (*dummyEncoder)(nil)
+
+type dummyEncoder struct {
+	name string
+}
+
+func (d dummyEncoder) ID() sbom.FormatID {
+	return sbom.FormatID(d.name)
+}
+
+func (d dummyEncoder) Aliases() []string {
 	return nil
 }
 
-func dummyFormat(name string) sbom.Format {
-	return sbom.NewFormat(sbom.AnyVersion, dummyEncoder, nil, nil, sbom.FormatID(name))
+func (d dummyEncoder) Version() string {
+	return sbom.AnyVersion
+}
+
+func (d dummyEncoder) Encode(writer io.Writer, s sbom.SBOM) error {
+	return nil
 }
 
 func Test_newSBOMMultiWriter(t *testing.T) {
@@ -224,6 +252,42 @@ func Test_newSBOMWriterDescription(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			o := newSBOMWriterDescription(dummyFormat("table"), tt.path)
 			assert.Equal(t, tt.expected, o.Path)
+		})
+	}
+}
+
+func Test_formatVersionOptions(t *testing.T) {
+
+	tests := []struct {
+		name             string
+		nameVersionPairs []string
+		want             string
+	}{
+		{
+			name: "gocase",
+			nameVersionPairs: []string{
+				"cyclonedx-json@1.2", "cyclonedx-json@1.3", "cyclonedx-json@1.4", "cyclonedx-json@1.5",
+				"cyclonedx-xml@1.0", "cyclonedx-xml@1.1", "cyclonedx-xml@1.2", "cyclonedx-xml@1.3",
+				"cyclonedx-xml@1.4", "cyclonedx-xml@1.5", "github-json", "spdx-json@2.2", "spdx-json@2.3",
+				"spdx-tag-value@2.1", "spdx-tag-value@2.2", "spdx-tag-value@2.3", "syft-json@11.0.0",
+				"syft-table", "syft-text", "template",
+			},
+			want: `
+Available formats:
+   - cyclonedx-json @ 1.2, 1.3, 1.4, 1.5
+   - cyclonedx-xml @ 1.0, 1.1, 1.2, 1.3, 1.4, 1.5
+   - github-json
+   - spdx-json @ 2.2, 2.3
+   - spdx-tag-value @ 2.1, 2.2, 2.3
+   - syft-json
+   - syft-table
+   - syft-text
+   - template`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, formatVersionOptions(tt.nameVersionPairs))
 		})
 	}
 }
