@@ -1,0 +1,25 @@
+Manifest-Version: 1.0
+Bundle-License: https://www.apache.org/licenses/LICENSE-2.0.txt
+Bundle-SymbolicName: com.fasterxml.jackson.core.jackson-core
+Implementation-Vendor-Id: com.fasterxml.jackson.core
+Specification-Title: Jackson-core
+Bundle-DocURL: https://github.com/FasterXML/jackson-core
+Import-Package: com.fasterxml.jackson.core;version=...snip
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+Export-Package: com.fasterxml.jackson.core;version...snip
+Bundle-Name: Jackson-core
+Multi-Release: true
+Build-Jdk-Spec: 1.8
+Bundle-Description: Core Jackson processing abstractions
+Implementation-Title: Jackson-core
+Implementation-Version: 2.15.2
+Bundle-ManifestVersion: 2
+Specification-Vendor: FasterXML
+Bundle-Vendor: FasterXML
+Tool: Bnd-6.3.1.202206071316
+Implementation-Vendor: FasterXML
+Bundle-Version: 2.15.2
+X-Compile-Target-JDK: 1.8
+X-Compile-Source-JDK: 1.8
+Created-By: Apache Maven Bundle Plugin 5.1.8
+Specification-Version: 2.15.2

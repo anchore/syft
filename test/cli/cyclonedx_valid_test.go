@@ -5,7 +5,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/format/cyclonedxjson"
 )
 
 // We have schema validation mechanims in schema/cyclonedx/
@@ -95,13 +99,13 @@ func assertValidCycloneDX(tb testing.TB, stdout, stderr string, rc int) {
 // validate --input-format json --input-version v1_4 --input-file bom.json
 func validateCycloneDXJSON(t *testing.T, stdout string) {
 	f, err := os.CreateTemp("", "tmpfile-")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	// close and remove the temporary file at the end of the program
-	defer f.Close()
-	defer os.Remove(f.Name())
+	t.Cleanup(func() {
+		assert.NoError(t, f.Close())
+		assert.NoError(t, os.Remove(f.Name()))
+	})
 
 	data := []byte(stdout)
 
@@ -109,18 +113,25 @@ func validateCycloneDXJSON(t *testing.T, stdout string) {
 		t.Fatal(err)
 	}
 
+	// get the latest supported version of CycloneDX by syft and convert the expression to the format used by cyclonedx-cli
+	// e.g. "1.5" -> "v1_5"
+	versions := cyclonedxjson.SupportedVersions()
+	version := versions[len(versions)-1]
+	versionInput := "v" + strings.Replace(version, ".", "_", -1)
+
 	args := []string{
 		"validate",
 		"--input-format",
 		"json",
 		"--input-version",
-		"v1_4",
+		versionInput,
 		"--input-file",
 		"/sbom",
 	}
 
 	cmd, stdout, stderr := runCycloneDXInDocker(t, nil, "cyclonedx/cyclonedx-cli", f, args...)
 	if strings.Contains(stdout, "BOM is not valid") {
+		t.Log("STDOUT:\n", stdout)
 		t.Errorf("expected no validation failures for cyclonedx-cli but found invalid BOM")
 	}
 

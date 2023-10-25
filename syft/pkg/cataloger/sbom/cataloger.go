@@ -1,10 +1,14 @@
 package sbom
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/formats"
+	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
@@ -30,7 +34,11 @@ func NewSBOMCataloger() *generic.Cataloger {
 }
 
 func parseSBOM(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	s, _, err := formats.Decode(reader)
+	readSeeker, err := adaptToReadSeeker(reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to read SBOM file %q: %w", reader.Location.RealPath, err)
+	}
+	s, _, _, err := format.Decode(readSeeker)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -61,4 +69,18 @@ func parseSBOM(_ file.Resolver, _ *generic.Environment, reader file.LocationRead
 	}
 
 	return pkgs, relationships, nil
+}
+
+func adaptToReadSeeker(reader io.Reader) (io.ReadSeeker, error) {
+	// with the stereoscope API and default file.Resolver implementation here in syft, odds are very high that
+	// the underlying reader is already a ReadSeeker, so we can just return it as-is. We still want to
+	if rs, ok := reader.(io.ReadSeeker); ok {
+		return rs, nil
+	}
+
+	log.Debug("SBOM cataloger reader is not a ReadSeeker, reading entire SBOM into memory")
+
+	var buff bytes.Buffer
+	_, err := io.Copy(&buff, reader)
+	return bytes.NewReader(buff.Bytes()), err
 }

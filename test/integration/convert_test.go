@@ -9,16 +9,22 @@ import (
 
 	"github.com/anchore/syft/cmd/syft/cli/commands"
 	"github.com/anchore/syft/cmd/syft/cli/options"
-	"github.com/anchore/syft/syft/formats"
-	"github.com/anchore/syft/syft/formats/cyclonedxjson"
-	"github.com/anchore/syft/syft/formats/cyclonedxxml"
-	"github.com/anchore/syft/syft/formats/spdxjson"
-	"github.com/anchore/syft/syft/formats/spdxtagvalue"
-	"github.com/anchore/syft/syft/formats/syftjson"
-	"github.com/anchore/syft/syft/formats/table"
+	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/format/cyclonedxjson"
+	"github.com/anchore/syft/syft/format/cyclonedxxml"
+	"github.com/anchore/syft/syft/format/spdxjson"
+	"github.com/anchore/syft/syft/format/spdxtagvalue"
+	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
+
+func mustEncoder(enc sbom.FormatEncoder, err error) sbom.FormatEncoder {
+	if err != nil {
+		panic(err)
+	}
+	return enc
+}
 
 // TestConvertCmd tests if the converted SBOM is a valid document according
 // to spec.
@@ -28,33 +34,33 @@ import (
 func TestConvertCmd(t *testing.T) {
 	tests := []struct {
 		name   string
-		format sbom.Format
+		format sbom.FormatEncoder
 	}{
 		{
 			name:   "syft-json",
-			format: syftjson.Format(),
+			format: syftjson.NewFormatEncoder(),
 		},
 		{
 			name:   "spdx-json",
-			format: spdxjson.Format(),
+			format: mustEncoder(spdxjson.NewFormatEncoderWithConfig(spdxjson.DefaultEncoderConfig())),
 		},
 		{
 			name:   "spdx-tag-value",
-			format: spdxtagvalue.Format(),
+			format: mustEncoder(spdxtagvalue.NewFormatEncoderWithConfig(spdxtagvalue.DefaultEncoderConfig())),
 		},
 		{
 			name:   "cyclonedx-json",
-			format: cyclonedxjson.Format(),
+			format: mustEncoder(cyclonedxjson.NewFormatEncoderWithConfig(cyclonedxjson.DefaultEncoderConfig())),
 		},
 		{
 			name:   "cyclonedx-xml",
-			format: cyclonedxxml.Format(),
+			format: mustEncoder(cyclonedxxml.NewFormatEncoderWithConfig(cyclonedxxml.DefaultEncoderConfig())),
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			syftSbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
-			syftFormat := syftjson.Format()
+			syftFormat := syftjson.NewFormatEncoder()
 
 			syftFile, err := os.CreateTemp("", "test-convert-sbom-")
 			require.NoError(t, err)
@@ -72,10 +78,11 @@ func TestConvertCmd(t *testing.T) {
 			}()
 
 			opts := &commands.ConvertOptions{
-				MultiOutput: options.MultiOutput{
+				Output: options.Output{
 					Outputs: []string{fmt.Sprintf("%s=%s", test.format.ID().String(), formatFile.Name())},
 				},
 			}
+			require.NoError(t, opts.PostLoad())
 
 			// stdout reduction of test noise
 			rescue := os.Stdout // keep backup of the real stdout
@@ -86,15 +93,9 @@ func TestConvertCmd(t *testing.T) {
 
 			err = commands.RunConvert(opts, syftFile.Name())
 			require.NoError(t, err)
-			contents, err := os.ReadFile(formatFile.Name())
-			require.NoError(t, err)
 
-			formatFound := formats.Identify(contents)
-			if test.format.ID() == table.ID {
-				require.Nil(t, formatFound)
-				return
-			}
-			require.Equal(t, test.format.ID(), formatFound.ID())
+			foundID, _ := format.Identify(formatFile)
+			require.Equal(t, test.format.ID(), foundID)
 		})
 	}
 }

@@ -14,6 +14,7 @@ type conanRef struct {
 	User      string
 	Channel   string
 	Revision  string
+	PackageID string
 	Timestamp string
 }
 
@@ -30,6 +31,13 @@ func splitConanRef(ref string) *conanRef {
 	text := tokens[0]
 	if len(tokens) == 2 {
 		cref.Timestamp = tokens[1]
+	}
+
+	// package_id
+	tokens = strings.Split(text, ":")
+	text = tokens[0]
+	if len(tokens) == 2 {
+		cref.PackageID = tokens[1]
 	}
 
 	// revision

@@ -6,16 +6,17 @@ import (
 	"io"
 	"os"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/mitchellh/go-homedir"
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/formats"
-	"github.com/anchore/syft/syft/formats/table"
-	"github.com/anchore/syft/syft/formats/template"
+	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/format/table"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -28,8 +29,8 @@ var _ interface {
 
 // makeSBOMWriter creates a sbom.Writer for output or returns an error. this will either return a valid writer
 // or an error but neither both and if there is no error, sbom.Writer.Close() should be called
-func makeSBOMWriter(outputs []string, defaultFile, templateFilePath string) (sbom.Writer, error) {
-	outputOptions, err := parseSBOMOutputFlags(outputs, defaultFile, templateFilePath)
+func makeSBOMWriter(outputs []string, defaultFile string, encoders []sbom.FormatEncoder) (sbom.Writer, error) {
+	outputOptions, err := parseSBOMOutputFlags(outputs, defaultFile, encoders)
 	if err != nil {
 		return nil, err
 	}
@@ -42,18 +43,10 @@ func makeSBOMWriter(outputs []string, defaultFile, templateFilePath string) (sbo
 	return writer, nil
 }
 
-// makeSBOMWriterForFormat creates a sbom.Writer for for the given format or returns an error.
-func makeSBOMWriterForFormat(format sbom.Format, path string) (sbom.Writer, error) {
-	writer, err := newSBOMMultiWriter(newSBOMWriterDescription(format, path))
-	if err != nil {
-		return nil, err
-	}
-
-	return writer, nil
-}
-
 // parseSBOMOutputFlags utility to parse command-line option strings and retain the existing behavior of default format and file
-func parseSBOMOutputFlags(outputs []string, defaultFile, templateFilePath string) (out []sbomWriterDescription, errs error) {
+func parseSBOMOutputFlags(outputs []string, defaultFile string, encoders []sbom.FormatEncoder) (out []sbomWriterDescription, errs error) {
+	encoderCollection := format.NewEncoderCollection(encoders...)
+
 	// always should have one option -- we generally get the default of "table", but just make sure
 	if len(outputs) == 0 {
 		outputs = append(outputs, table.ID.String())
@@ -76,29 +69,77 @@ func parseSBOMOutputFlags(outputs []string, defaultFile, templateFilePath string
 			file = parts[1]
 		}
 
-		format := formats.ByName(name)
-		if format == nil {
-			errs = multierror.Append(errs, fmt.Errorf(`unsupported output format "%s", supported formats are: %+v`, name, formats.AllIDs()))
+		enc := encoderCollection.GetByString(name)
+		if enc == nil {
+			errs = multierror.Append(errs, fmt.Errorf(`unsupported output format "%s", supported formats are: %+v`, name, formatVersionOptions(encoderCollection.NameVersions())))
 			continue
 		}
 
-		if tmpl, ok := format.(template.OutputFormat); ok {
-			tmpl.SetTemplatePath(templateFilePath)
-			format = tmpl
-		}
-
-		out = append(out, newSBOMWriterDescription(format, file))
+		out = append(out, newSBOMWriterDescription(enc, file))
 	}
 	return out, errs
 }
 
+// formatVersionOptions takes a list like ["github-json", "syft-json@11.0.0", "cyclonedx-xml@1.0", "cyclondx-xml@1.1"...]
+// and formats it into a human-readable string like:
+//
+// Available formats:
+//   - cyclonedx-json @ 1.2, 1.3, 1.4, 1.5
+//   - cyclonedx-xml @ 1.0, 1.1, 1.2, 1.3, 1.4, 1.5
+//   - github-json
+//   - spdx-json @ 2.2, 2.3
+//   - spdx-tag-value @ 2.1, 2.2, 2.3
+//   - syft-json
+//   - syft-table
+//   - syft-text
+//   - template
+func formatVersionOptions(nameVersionPairs []string) string {
+	availableVersions := make(map[string][]string)
+	availableFormats := strset.New()
+	for _, nameVersion := range nameVersionPairs {
+		fields := strings.SplitN(nameVersion, "@", 2)
+		if len(fields) == 2 {
+			availableVersions[fields[0]] = append(availableVersions[fields[0]], fields[1])
+		}
+		availableFormats.Add(fields[0])
+	}
+
+	// find any formats with exactly one version -- remove them from the version map
+	for name, versions := range availableVersions {
+		if len(versions) == 1 {
+			delete(availableVersions, name)
+		}
+	}
+
+	sortedAvailableFormats := availableFormats.List()
+	sort.Strings(sortedAvailableFormats)
+
+	var s strings.Builder
+
+	s.WriteString("\n")
+	s.WriteString("Available formats:")
+
+	for _, name := range sortedAvailableFormats {
+		s.WriteString("\n")
+
+		s.WriteString(fmt.Sprintf("   - %s", name))
+
+		if len(availableVersions[name]) > 0 {
+			s.WriteString(" @ ")
+			s.WriteString(strings.Join(availableVersions[name], ", "))
+		}
+	}
+
+	return s.String()
+}
+
 // sbomWriterDescription Format and path strings used to create sbom.Writer
 type sbomWriterDescription struct {
-	Format sbom.Format
+	Format sbom.FormatEncoder
 	Path   string
 }
 
-func newSBOMWriterDescription(f sbom.Format, p string) sbomWriterDescription {
+func newSBOMWriterDescription(f sbom.FormatEncoder, p string) sbomWriterDescription {
 	expandedPath, err := homedir.Expand(p)
 	if err != nil {
 		log.Warnf("could not expand given writer output path=%q: %w", p, err)
@@ -171,7 +212,7 @@ func (m *sbomMultiWriter) Write(s sbom.SBOM) (errs error) {
 
 // sbomStreamWriter implements sbom.Writer for a given format and io.Writer, also providing a close function for cleanup
 type sbomStreamWriter struct {
-	format sbom.Format
+	format sbom.FormatEncoder
 	out    io.Writer
 }
 
@@ -191,7 +232,7 @@ func (w *sbomStreamWriter) Close() error {
 
 // sbomPublisher implements sbom.Writer that publishes results to the event bus
 type sbomPublisher struct {
-	format sbom.Format
+	format sbom.FormatEncoder
 }
 
 // Write the provided SBOM to the data stream
