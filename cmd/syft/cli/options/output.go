@@ -33,6 +33,7 @@ type Output struct {
 	Outputs              []string `yaml:"output" json:"output" mapstructure:"output"` // -o, the format to use for output
 	OutputFile           `yaml:",inline" json:"" mapstructure:",squash"`
 	OutputTemplate       `yaml:"template" json:"template" mapstructure:"template"`
+	JSON                 OutputJSON `yaml:"json" json:"json" mapstructure:"json"`
 }
 
 func DefaultOutput() Output {
@@ -86,7 +87,7 @@ func (o *Output) Encoders() ([]sbom.FormatEncoder, error) {
 
 	// in the future there will be application configuration options that can be used to set the default output format
 	list.addWithErr(template.ID)(o.OutputTemplate.formatEncoders())
-	list.add(syftjson.ID)(syftjson.NewFormatEncoder())
+	list.addWithErr(syftjson.ID)(o.JSON.formatEncoders())
 	list.add(table.ID)(table.NewFormatEncoder())
 	list.add(text.ID)(text.NewFormatEncoder())
 	list.add(github.ID)(github.NewFormatEncoder())

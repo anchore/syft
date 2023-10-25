@@ -19,6 +19,7 @@ const ID sbom.FormatID = "template"
 
 type EncoderConfig struct {
 	TemplatePath string
+	syftjson.EncoderConfig
 }
 
 type encoder struct {
@@ -52,7 +53,9 @@ func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 }
 
 func DefaultEncoderConfig() EncoderConfig {
-	return EncoderConfig{}
+	return EncoderConfig{
+		EncoderConfig: syftjson.DefaultEncoderConfig(),
+	}
 }
 
 func (e encoder) ID() sbom.FormatID {
@@ -87,6 +90,6 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		return fmt.Errorf("unable to parse template: %w", err)
 	}
 
-	doc := syftjson.ToFormatModel(s)
+	doc := syftjson.ToFormatModel(s, e.cfg.EncoderConfig)
 	return tmpl.Execute(writer, doc)
 }

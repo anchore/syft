@@ -32,7 +32,6 @@ func TestAllNames(t *testing.T) {
 }
 
 func TestReflectTypeFromJSONName(t *testing.T) {
-
 	tests := []struct {
 		name       string
 		lookup     string
@@ -256,6 +255,236 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			result := ReflectTypeFromJSONName(testCase.input)
 			assert.Equal(t, testCase.expected.Name(), result.Name())
+		})
+	}
+}
+
+func Test_JSONName_JSONLegacyName(t *testing.T) {
+	// note: these are all the types and names covered by the v11.x and v12.x JSON schemas
+	tests := []struct {
+		name               string
+		metadata           any
+		expectedJSONName   string
+		expectedLegacyName string
+	}{
+		{
+			name:               "AlpmMetadata",
+			metadata:           pkg.AlpmMetadata{},
+			expectedJSONName:   "arch-alpm-db-record",
+			expectedLegacyName: "AlpmMetadata",
+		},
+		{
+			name:               "ApkMetadata",
+			metadata:           pkg.ApkMetadata{},
+			expectedJSONName:   "alpine-apk-db-record",
+			expectedLegacyName: "ApkMetadata",
+		},
+		{
+			name:               "BinaryMetadata",
+			metadata:           pkg.BinaryMetadata{},
+			expectedJSONName:   "binary-signature",
+			expectedLegacyName: "BinaryMetadata",
+		},
+		{
+			name:               "CocoapodsMetadata",
+			metadata:           pkg.CocoapodsMetadata{},
+			expectedJSONName:   "cocoa-podfile-lock",
+			expectedLegacyName: "CocoapodsMetadataType",
+		},
+		{
+			name:               "ConanLockMetadata",
+			metadata:           pkg.ConanLockMetadata{},
+			expectedJSONName:   "c-conan-lock",
+			expectedLegacyName: "ConanLockMetadataType",
+		},
+		{
+			name:               "ConanMetadata",
+			metadata:           pkg.ConanMetadata{},
+			expectedJSONName:   "c-conan",
+			expectedLegacyName: "ConanMetadataType",
+		},
+		{
+			name:               "DartPubMetadata",
+			metadata:           pkg.DartPubMetadata{},
+			expectedJSONName:   "dart-pubspec-lock",
+			expectedLegacyName: "DartPubMetadata",
+		},
+		{
+			name:               "DotnetDepsMetadata",
+			metadata:           pkg.DotnetDepsMetadata{},
+			expectedJSONName:   "dotnet-deps",
+			expectedLegacyName: "DotnetDepsMetadata",
+		},
+		{
+			name:               "DotnetPortableExecutableMetadata",
+			metadata:           pkg.DotnetPortableExecutableMetadata{},
+			expectedJSONName:   "dotnet-portable-executable",
+			expectedLegacyName: "dotnet-portable-executable", // note: the legacy name should never be blank if it didn't exist pre v11.x
+		},
+		{
+			name:               "DpkgMetadata",
+			metadata:           pkg.DpkgMetadata{},
+			expectedJSONName:   "debian-dpkg-db-record",
+			expectedLegacyName: "DpkgMetadata",
+		},
+		{
+			name:               "GemMetadata",
+			metadata:           pkg.GemMetadata{},
+			expectedJSONName:   "ruby-gemspec",
+			expectedLegacyName: "GemMetadata",
+		},
+		{
+			name:               "GolangBinMetadata",
+			metadata:           pkg.GolangBinMetadata{},
+			expectedJSONName:   "go-module-binary-buildinfo",
+			expectedLegacyName: "GolangBinMetadata",
+		},
+		{
+			name:               "GolangModMetadata",
+			metadata:           pkg.GolangModMetadata{},
+			expectedJSONName:   "go-module",
+			expectedLegacyName: "GolangModMetadata",
+		},
+		{
+			name:               "HackageStackYamlLockMetadata",
+			metadata:           pkg.HackageStackYamlLockMetadata{},
+			expectedJSONName:   "haskell-hackage-stack-lock",
+			expectedLegacyName: "HackageMetadataType", // this is closest to the original data shape in <=v11.x schema
+		},
+		{
+			name:               "HackageStackYamlMetadata",
+			metadata:           pkg.HackageStackYamlMetadata{},
+			expectedJSONName:   "haskell-hackage-stack",
+			expectedLegacyName: "HackageMetadataType", // note: this conflicts with <=v11.x schema for "haskell-hackage-stack-lock" metadata type
+		},
+		{
+			name:               "JavaMetadata",
+			metadata:           pkg.JavaMetadata{},
+			expectedJSONName:   "java-archive",
+			expectedLegacyName: "JavaMetadata",
+		},
+		{
+			name:               "KbPatchMetadata",
+			metadata:           pkg.KbPatchMetadata{},
+			expectedJSONName:   "microsoft-kb-patch",
+			expectedLegacyName: "KbPatchMetadata",
+		},
+		{
+			name:               "LinuxKernelMetadata",
+			metadata:           pkg.LinuxKernelMetadata{},
+			expectedJSONName:   "linux-kernel-archive",
+			expectedLegacyName: "LinuxKernelMetadata",
+		},
+		{
+			name:               "LinuxKernelModuleMetadata",
+			metadata:           pkg.LinuxKernelModuleMetadata{},
+			expectedJSONName:   "linux-kernel-module",
+			expectedLegacyName: "LinuxKernelModuleMetadata",
+		},
+		{
+			name:               "MixLockMetadata",
+			metadata:           pkg.MixLockMetadata{},
+			expectedJSONName:   "elixir-mix-lock",
+			expectedLegacyName: "MixLockMetadataType",
+		},
+		{
+			name:               "NixStoreMetadata",
+			metadata:           pkg.NixStoreMetadata{},
+			expectedJSONName:   "nix-store",
+			expectedLegacyName: "NixStoreMetadata",
+		},
+		{
+			name:               "NpmPackageJSONMetadata",
+			metadata:           pkg.NpmPackageJSONMetadata{},
+			expectedJSONName:   "javascript-npm-package",
+			expectedLegacyName: "NpmPackageJsonMetadata",
+		},
+		{
+			name:               "NpmPackageLockJSONMetadata",
+			metadata:           pkg.NpmPackageLockJSONMetadata{},
+			expectedJSONName:   "javascript-npm-package-lock",
+			expectedLegacyName: "NpmPackageLockJsonMetadata",
+		},
+		{
+			name:               "PhpComposerLockMetadata",
+			metadata:           pkg.PhpComposerLockMetadata{},
+			expectedJSONName:   "php-composer-lock",
+			expectedLegacyName: "PhpComposerJsonMetadata",
+		},
+		{
+			name:               "PhpComposerInstalledMetadata",
+			metadata:           pkg.PhpComposerInstalledMetadata{},
+			expectedJSONName:   "php-composer-installed",
+			expectedLegacyName: "PhpComposerJsonMetadata",
+		},
+		{
+			name:               "PortageMetadata",
+			metadata:           pkg.PortageMetadata{},
+			expectedJSONName:   "gentoo-portage-db-record",
+			expectedLegacyName: "PortageMetadata",
+		},
+		{
+			name:               "PythonPackageMetadata",
+			metadata:           pkg.PythonPackageMetadata{},
+			expectedJSONName:   "python-package",
+			expectedLegacyName: "PythonPackageMetadata",
+		},
+		{
+			name:               "PythonPipfileLockMetadata",
+			metadata:           pkg.PythonPipfileLockMetadata{},
+			expectedJSONName:   "python-pipfile-lock",
+			expectedLegacyName: "PythonPipfileLockMetadata",
+		},
+		{
+			name:               "PythonRequirementsMetadata",
+			metadata:           pkg.PythonRequirementsMetadata{},
+			expectedJSONName:   "python-pip-requirements",
+			expectedLegacyName: "PythonRequirementsMetadata",
+		},
+		{
+			name:               "RebarLockMetadata",
+			metadata:           pkg.RebarLockMetadata{},
+			expectedJSONName:   "erlang-rebar-lock",
+			expectedLegacyName: "RebarLockMetadataType",
+		},
+		{
+			name:               "RDescriptionFileMetadata",
+			metadata:           pkg.RDescriptionFileMetadata{},
+			expectedJSONName:   "r-description",
+			expectedLegacyName: "RDescriptionFileMetadataType",
+		},
+		{
+			name:               "RpmDBMetadata",
+			metadata:           pkg.RpmDBMetadata{},
+			expectedJSONName:   "redhat-rpm-db-record",
+			expectedLegacyName: "RpmMetadata", // not accurate, but how it was pre v12 of the schema
+		},
+		{
+			name:               "RpmArchiveMetadata",
+			metadata:           pkg.RpmArchiveMetadata{},
+			expectedJSONName:   "redhat-rpm-archive",
+			expectedLegacyName: "RpmMetadata", // note: conflicts with <=v11.x schema for "redhat-rpm-db-record" metadata type
+		},
+		{
+			name:               "SwiftPackageManagerMetadata",
+			metadata:           pkg.SwiftPackageManagerMetadata{},
+			expectedJSONName:   "swift-package-manager-lock",
+			expectedLegacyName: "SwiftPackageManagerMetadata",
+		},
+		{
+			name:               "CargoPackageMetadata",
+			metadata:           pkg.CargoPackageMetadata{},
+			expectedJSONName:   "rust-cargo-lock",
+			expectedLegacyName: "RustCargoPackageMetadata",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actualJSONName := JSONName(test.metadata)
+			actualLegacyName := JSONLegacyName(test.metadata)
+			assert.Equal(t, test.expectedJSONName, actualJSONName, "unexpected name")
+			assert.Equal(t, test.expectedLegacyName, actualLegacyName, "unexpected legacy name")
 		})
 	}
 }
