@@ -264,8 +264,9 @@ func (r *Directory) FilesByMIMEType(types ...string) ([]file.Location, error) {
 		if uniqueFileIDs.Contains(*refVia.Reference) {
 			continue
 		}
-		location := file.NewLocationFromDirectory(
+		location := file.NewVirtualLocationFromDirectory(
 			r.responsePath(string(refVia.Reference.RealPath)),
+			r.responsePath(string(refVia.RequestPath)),
 			*refVia.Reference,
 		)
 		uniqueFileIDs.Add(*refVia.Reference)

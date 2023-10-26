@@ -74,9 +74,7 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
-			if err != nil {
-				t.Fatalf("could not create resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			hasPath := resolver.HasPath(c.linkPath)
 			if !c.forcePositiveHasPath {
@@ -90,9 +88,7 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 			}
 
 			refs, err := resolver.FilesByPath(c.linkPath)
-			if err != nil {
-				t.Fatalf("could not use resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			expectedRefs := 1
 			if c.resolvePath == "" {
@@ -187,14 +183,10 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
-			if err != nil {
-				t.Fatalf("could not create resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			refs, err := resolver.FilesByGlob(c.glob)
-			if err != nil {
-				t.Fatalf("could not use resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			expectedRefs := 1
 			if c.resolvePath == "" {

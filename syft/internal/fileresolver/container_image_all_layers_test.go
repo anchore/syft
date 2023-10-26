@@ -93,9 +93,7 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageAllLayers(img)
-			if err != nil {
-				t.Fatalf("could not create resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			hasPath := resolver.HasPath(c.linkPath)
 			if !c.forcePositiveHasPath {
@@ -109,9 +107,7 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			}
 
 			refs, err := resolver.FilesByPath(c.linkPath)
-			if err != nil {
-				t.Fatalf("could not use resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			if len(refs) != len(c.resolutions) {
 				t.Fatalf("unexpected number of resolutions: %d", len(refs))
@@ -207,14 +203,10 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageAllLayers(img)
-			if err != nil {
-				t.Fatalf("could not create resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			refs, err := resolver.FilesByGlob(c.glob)
-			if err != nil {
-				t.Fatalf("could not use resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			if len(refs) != len(c.resolutions) {
 				t.Fatalf("unexpected number of resolutions: %d", len(refs))
