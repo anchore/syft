@@ -29,7 +29,7 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debu
 		Language:  pkg.Go,
 		Type:      pkg.GoModulePkg,
 		Locations: file.NewLocationSet(locations...),
-		Metadata: pkg.GolangBinMetadata{
+		Metadata: pkg.GolangBinaryBuildinfoEntry{
 			GoCompiledVersion: goVersion,
 			H1Digest:          dep.Sum,
 			Architecture:      architecture,

@@ -47,7 +47,7 @@ type goBinaryCataloger struct {
 	licenses goLicenses
 }
 
-// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing rpm db installation.
+// parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
 func (c *goBinaryCataloger) parseGoBinary(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
@@ -87,7 +87,7 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 	timestamp, hasTimestamp := gbs["vcs.time"]
 
 	var ldflags string
-	if metadata, ok := main.Metadata.(pkg.GolangBinMetadata); ok {
+	if metadata, ok := main.Metadata.(pkg.GolangBinaryBuildinfoEntry); ok {
 		// we've found a specific version from the ldflags! use it as the version.
 		// why not combine that with the pseudo version (e.g. v1.2.3-0.20210101000000-abcdef123456)?
 		// short answer: we're assuming that if a specific semver was provided in the ldflags that

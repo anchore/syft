@@ -30,7 +30,7 @@ func newGemspecPackage(m gemData, gemSpecLocation file.Location) pkg.Package {
 		PURL:      packageURL(m.Name, m.Version),
 		Language:  pkg.Ruby,
 		Type:      pkg.GemPkg,
-		Metadata:  m.GemMetadata,
+		Metadata:  m.RubyGemspec,
 	}
 
 	p.SetID()

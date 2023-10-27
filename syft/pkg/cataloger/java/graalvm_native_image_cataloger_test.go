@@ -73,8 +73,8 @@ func TestParseNativeImageSbom(t *testing.T) {
 					Language: pkg.Java,
 					Type:     pkg.GraalVMNativeImagePkg,
 					FoundBy:  nativeImageCatalogerName,
-					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{
+					Metadata: pkg.JavaArchive{
+						PomProperties: &pkg.JavaPomProperties{
 							GroupID: "io.netty",
 						},
 					},

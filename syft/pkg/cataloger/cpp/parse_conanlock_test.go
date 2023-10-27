@@ -19,7 +19,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockMetadata{
+			Metadata: pkg.ConanLockEntry{
 				Ref: "mfast/1.2.2@my_user/my_channel#c6f6387c9b99780f0ee05e25f99d0f39",
 				Options: map[string]string{
 					"fPIC":                            "True",
@@ -110,7 +110,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockMetadata{
+			Metadata: pkg.ConanLockEntry{
 				Ref: "boost/1.75.0#a9c318f067216f900900e044e7af4ab1",
 				Options: map[string]string{
 					"addr2line_location":        "/usr/bin/addr2line",
@@ -196,7 +196,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockMetadata{
+			Metadata: pkg.ConanLockEntry{
 				Ref: "zlib/1.2.12#c67ce17f2e96b972d42393ce50a76a1a",
 				Options: map[string]string{
 					"fPIC":   "True",
@@ -214,7 +214,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockMetadata{
+			Metadata: pkg.ConanLockEntry{
 				Ref: "bzip2/1.0.8#62a8031289639043797cf53fa876d0ef",
 				Options: map[string]string{
 					"build_executable": "True",
@@ -233,7 +233,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockMetadata{
+			Metadata: pkg.ConanLockEntry{
 				Ref: "libbacktrace/cci.20210118#76e40b760e0bcd602d46db56b22820ab",
 				Options: map[string]string{
 					"fPIC":   "True",
@@ -251,7 +251,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockMetadata{
+			Metadata: pkg.ConanLockEntry{
 				Ref: "tinyxml2/9.0.0#9f13a36ebfc222cd55fe531a0a8d94d1",
 				Options: map[string]string{
 					"fPIC":   "True",

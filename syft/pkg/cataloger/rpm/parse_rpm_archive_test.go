@@ -28,7 +28,7 @@ func TestParseRpmFiles(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT", abcRpmLocation),
 					),
-					Metadata: pkg.RpmArchiveMetadata{
+					Metadata: pkg.RpmArchive{
 						Name:      "abc",
 						Epoch:     intRef(0),
 						Arch:      "x86_64",
@@ -56,7 +56,7 @@ func TestParseRpmFiles(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("Public Domain", zorkRpmLocation),
 					),
-					Metadata: pkg.RpmArchiveMetadata{
+					Metadata: pkg.RpmArchive{
 						Name:      "zork",
 						Epoch:     intRef(0),
 						Arch:      "x86_64",

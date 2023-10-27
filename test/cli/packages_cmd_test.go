@@ -39,7 +39,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
-				assertInOutput(`"metadataType": "alpine-apk-db-record"`),
+				assertInOutput(`"metadataType": "apk-db-entry"`),
 				assertNotInOutput(`"metadataType": "ApkMetadata"`),
 				assertSuccessfulReturnCode,
 			},
@@ -126,7 +126,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 			assertions: []traitAssertion{
 				assertJsonReport,
-				assertNotInOutput(`"metadataType": "alpine-apk-db-record"`),
+				assertNotInOutput(`"metadataType": "apk-db-entry"`),
 				assertInOutput(`"metadataType": "ApkMetadata"`),
 				assertSuccessfulReturnCode,
 			},

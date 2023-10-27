@@ -14,8 +14,12 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-var metadataExceptions = strset.New(
-	"FileMetadata",
+// these are names of struct types in the pkg package that are not metadata types (thus should not be in the JSON schema)
+var knownNonMetadataTypeNames = strset.New(
+	"Package",
+	"Collection",
+	"License",
+	"LicenseSet",
 )
 
 func DiscoverTypeNames() ([]string, error) {
@@ -101,10 +105,9 @@ func findMetadataDefinitionNamesInFile(path string) ([]string, []string, error) 
 				continue
 			}
 
-			// check if the struct type ends with "Metadata"
 			name := spec.Name.String()
 
-			// only look for exported types that end with "Metadata"
+			// only look for exported types
 			if !isMetadataTypeCandidate(name) {
 				continue
 			}
@@ -129,6 +132,10 @@ func extractStructType(exp ast.Expr) *ast.StructType {
 		// type FooMetadata struct { ... }
 		structType = ty
 	case *ast.Ident:
+		if ty.Obj == nil {
+			return nil
+		}
+
 		// this might be a type created from another type:
 		// type FooMetadata BarMetadata
 		// ... but we need to check that the other type definition is a struct type
@@ -169,7 +176,6 @@ func typeNamesUsedInStruct(structType *ast.StructType) []string {
 
 func isMetadataTypeCandidate(name string) bool {
 	return len(name) > 0 &&
-		strings.HasSuffix(name, "Metadata") &&
 		unicode.IsUpper(rune(name[0])) && // must be exported
-		!metadataExceptions.Has(name)
+		!knownNonMetadataTypeNames.Has(name)
 }

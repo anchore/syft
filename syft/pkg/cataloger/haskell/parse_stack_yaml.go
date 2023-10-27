@@ -41,7 +41,7 @@ func parseStackYaml(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 			newPackage(
 				pkgName,
 				pkgVersion,
-				pkg.HackageStackYamlMetadata{
+				pkg.HackageStackYamlEntry{
 					PkgHash: pkgHash,
 				},
 				reader.Location,

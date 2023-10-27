@@ -23,7 +23,7 @@ func Test_Description(t *testing.T) {
 		{
 			name: "from apk",
 			input: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Description: "a description!",
 				},
 			},
@@ -32,7 +32,7 @@ func Test_Description(t *testing.T) {
 		{
 			name: "from npm",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					Description: "a description!",
 				},
 			},
@@ -42,7 +42,7 @@ func Test_Description(t *testing.T) {
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION
 			name: "empty",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					Homepage: "",
 				},
 			},

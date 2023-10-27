@@ -558,7 +558,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) any {
 	}
 	switch info.typ {
 	case pkg.ApkPkg:
-		return pkg.ApkMetadata{
+		return pkg.ApkDBEntry{
 			Package:       p.PackageName,
 			OriginPackage: upstreamName,
 			Maintainer:    supplier,
@@ -575,7 +575,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) any {
 		} else {
 			epoch = &converted
 		}
-		return pkg.RpmDBMetadata{
+		return pkg.RpmDBEntry{
 			Name:      p.PackageName,
 			Version:   p.PackageVersion,
 			Epoch:     epoch,
@@ -584,7 +584,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) any {
 			Vendor:    originator,
 		}
 	case pkg.DebPkg:
-		return pkg.DpkgMetadata{
+		return pkg.DpkgDBEntry{
 			Package:       p.PackageName,
 			Source:        upstreamName,
 			Version:       p.PackageVersion,
@@ -597,7 +597,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) any {
 		for _, value := range p.PackageChecksums {
 			digests = append(digests, file.Digest{Algorithm: fromChecksumAlgorithm(value.Algorithm), Value: value.Value})
 		}
-		return pkg.JavaMetadata{
+		return pkg.JavaArchive{
 			ArchiveDigests: digests,
 		}
 	case pkg.GoModulePkg:
@@ -611,7 +611,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) any {
 			h1Digest = digest
 			break
 		}
-		return pkg.GolangBinMetadata{
+		return pkg.GolangBinaryBuildinfoEntry{
 			H1Digest: h1Digest,
 		}
 	}

@@ -17,7 +17,7 @@ func newComposerLockPackage(pd parsedLockData, indexLocation file.Location) pkg.
 		PURL:      packageURL(pd.Name, pd.Version),
 		Language:  pkg.PHP,
 		Type:      pkg.PhpComposerPkg,
-		Metadata:  pd.PhpComposerLockMetadata,
+		Metadata:  pd.PhpComposerLockEntry,
 	}
 
 	p.SetID()
@@ -33,7 +33,7 @@ func newComposerInstalledPackage(pd parsedInstalledData, indexLocation file.Loca
 		PURL:      packageURL(pd.Name, pd.Version),
 		Language:  pkg.PHP,
 		Type:      pkg.PhpComposerPkg,
-		Metadata:  pd.PhpComposerInstalledMetadata,
+		Metadata:  pd.PhpComposerInstalledEntry,
 	}
 
 	p.SetID()

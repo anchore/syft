@@ -56,8 +56,8 @@ func parseGradleLockfile(_ file.Resolver, _ *generic.Environment, reader file.Lo
 			),
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
-			Metadata: pkg.JavaMetadata{
-				PomProject: &pkg.PomProject{
+			Metadata: pkg.JavaArchive{
+				PomProject: &pkg.JavaPomProject{
 					GroupID:    dep.Group,
 					ArtifactID: dep.Name,
 					Version:    dep.Version,

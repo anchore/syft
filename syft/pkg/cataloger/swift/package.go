@@ -16,7 +16,7 @@ func newSwiftPackageManagerPackage(name, version, sourceURL, revision string, lo
 		Locations: file.NewLocationSet(locations...),
 		Type:      pkg.SwiftPkg,
 		Language:  pkg.Swift,
-		Metadata: pkg.SwiftPackageManagerMetadata{
+		Metadata: pkg.SwiftPackageManagerResolvedEntry{
 			Revision: revision,
 		},
 	}
@@ -34,7 +34,7 @@ func newCocoaPodsPackage(name, version, hash string, locations ...file.Location)
 		Locations: file.NewLocationSet(locations...),
 		Type:      pkg.CocoapodsPkg,
 		Language:  pkg.Swift,
-		Metadata: pkg.CocoapodsMetadata{
+		Metadata: pkg.CocoaPodfileLockEntry{
 			Checksum: hash,
 		},
 	}

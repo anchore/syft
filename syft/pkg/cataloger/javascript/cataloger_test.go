@@ -22,7 +22,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocations("MIT", file.NewLocation("package-lock.json")),
 			),
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@actions/core/-/core-1.6.0.tgz", Integrity: "sha512-NB1UAZomZlCV/LmJqkLhNTqtKfFXJZAUPcfl/zqG7EfsQdeUJtaWO98SGbuQ3pydJ3fHl2CvI/51OKYlCYYcaw=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@actions/core/-/core-1.6.0.tgz", Integrity: "sha512-NB1UAZomZlCV/LmJqkLhNTqtKfFXJZAUPcfl/zqG7EfsQdeUJtaWO98SGbuQ3pydJ3fHl2CvI/51OKYlCYYcaw=="},
 		},
 		{
 			Name:      "ansi-regex",
@@ -32,7 +32,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/ansi-regex/-/ansi-regex-3.0.0.tgz", Integrity: "sha1-7QMXwyIGT3lGbAKWa922Bas32Zg="},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/ansi-regex/-/ansi-regex-3.0.0.tgz", Integrity: "sha1-7QMXwyIGT3lGbAKWa922Bas32Zg="},
 		},
 		{
 			Name:      "cowsay",
@@ -45,7 +45,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocations("MIT", file.NewLocation("package-lock.json")),
 			),
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/cowsay/-/cowsay-1.4.0.tgz", Integrity: "sha512-rdg5k5PsHFVJheO/pmE3aDg2rUDDTfPJau6yYkZYlHFktUz+UxbE+IgnUAEyyCyv4noL5ltxXD0gZzmHPCy/9g=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/cowsay/-/cowsay-1.4.0.tgz", Integrity: "sha512-rdg5k5PsHFVJheO/pmE3aDg2rUDDTfPJau6yYkZYlHFktUz+UxbE+IgnUAEyyCyv4noL5ltxXD0gZzmHPCy/9g=="},
 		},
 		{
 			Name:      "get-stdin",
@@ -55,7 +55,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/get-stdin/-/get-stdin-5.0.1.tgz", Integrity: "sha1-Ei4WFZHiH/TFJTAwVpPyDmOTo5g="},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/get-stdin/-/get-stdin-5.0.1.tgz", Integrity: "sha1-Ei4WFZHiH/TFJTAwVpPyDmOTo5g="},
 		},
 		{
 			Name:      "is-fullwidth-code-point",
@@ -65,7 +65,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-2.0.0.tgz", Integrity: "sha1-o7MKXE8ZkYMWeqq5O+764937ZU8="},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-2.0.0.tgz", Integrity: "sha1-o7MKXE8ZkYMWeqq5O+764937ZU8="},
 		},
 		{
 			Name:      "minimist",
@@ -75,7 +75,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/minimist/-/minimist-0.0.10.tgz", Integrity: "sha1-3j+YVD2/lggr5IrRoMfNqDYwHc8="},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/minimist/-/minimist-0.0.10.tgz", Integrity: "sha1-3j+YVD2/lggr5IrRoMfNqDYwHc8="},
 		},
 		{
 			Name:      "optimist",
@@ -85,7 +85,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/optimist/-/optimist-0.6.1.tgz", Integrity: "sha1-2j6nRob6IaGaERwybpDrFaAZZoY="},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/optimist/-/optimist-0.6.1.tgz", Integrity: "sha1-2j6nRob6IaGaERwybpDrFaAZZoY="},
 		},
 		{
 			Name:      "string-width",
@@ -95,7 +95,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/string-width/-/string-width-2.1.1.tgz", Integrity: "sha512-nOqH59deCq9SRHlxq1Aw85Jnt4w6KvLKqWVik6oA9ZklXLNIOlqg4F2yrT1MVaTjAqvVwdfeZ7w7aCvJD7ugkw=="},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/string-width/-/string-width-2.1.1.tgz", Integrity: "sha512-nOqH59deCq9SRHlxq1Aw85Jnt4w6KvLKqWVik6oA9ZklXLNIOlqg4F2yrT1MVaTjAqvVwdfeZ7w7aCvJD7ugkw=="},
 		},
 		{
 			Name:      "strip-ansi",
@@ -105,7 +105,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/strip-ansi/-/strip-ansi-4.0.0.tgz", Integrity: "sha1-qEeQIusaw2iocTibY1JixQXuNo8="},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/strip-ansi/-/strip-ansi-4.0.0.tgz", Integrity: "sha1-qEeQIusaw2iocTibY1JixQXuNo8="},
 		},
 		{
 			Name:      "strip-eof",
@@ -115,7 +115,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/strip-eof/-/strip-eof-1.0.0.tgz", Integrity: "sha1-u0P/VZim6wXYm1n80SnJgzE2Br8="},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/strip-eof/-/strip-eof-1.0.0.tgz", Integrity: "sha1-u0P/VZim6wXYm1n80SnJgzE2Br8="},
 		},
 		{
 			Name:      "wordwrap",
@@ -125,7 +125,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/wordwrap/-/wordwrap-0.0.3.tgz", Integrity: "sha1-o9XabNXAvAAI03I0u68b7WMFkQc="},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/wordwrap/-/wordwrap-0.0.3.tgz", Integrity: "sha1-o9XabNXAvAAI03I0u68b7WMFkQc="},
 		},
 	}
 

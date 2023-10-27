@@ -69,7 +69,7 @@ func parseStackLock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 			newPackage(
 				pkgName,
 				pkgVersion,
-				pkg.HackageStackYamlLockMetadata{
+				pkg.HackageStackYamlLockEntry{
 					PkgHash:     pkgHash,
 					SnapshotURL: snapshotURL,
 				},

@@ -124,19 +124,31 @@ func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 	case "HackageMetadataType":
 		for _, l := range p.Locations {
 			if strings.HasSuffix(l.RealPath, ".yaml.lock") {
-				ty = "haskell-hackage-stack-lock"
+				ty = "haskell-hackage-stack-lock-entry"
 				break
 			} else if strings.HasSuffix(l.RealPath, ".yaml") {
-				ty = "haskell-hackage-stack"
+				ty = "haskell-hackage-stack-entry"
 				break
 			}
 		}
 	case "RpmMetadata":
 		for _, l := range p.Locations {
 			if strings.HasSuffix(l.RealPath, ".rpm") {
-				ty = "redhat-rpm-archive"
+				ty = "rpm-archive"
 				break
 			}
+		}
+	case "RustCargoPackageMetadata":
+		var found bool
+		for _, l := range p.Locations {
+			if strings.HasSuffix(strings.ToLower(l.RealPath), "cargo.lock") {
+				ty = "rust-cargo-lock-entry"
+				found = true
+				break
+			}
+		}
+		if !found {
+			ty = "rust-cargo-audit-entry"
 		}
 	}
 

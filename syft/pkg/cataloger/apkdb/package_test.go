@@ -23,7 +23,7 @@ func Test_PackageURL(t *testing.T) {
 			name: "non-alpine distro",
 			metadata: parsedData{
 				License: "",
-				ApkMetadata: pkg.ApkMetadata{
+				ApkDBEntry: pkg.ApkDBEntry{
 					Package:      "p",
 					Version:      "v",
 					Architecture: "a",
@@ -39,7 +39,7 @@ func Test_PackageURL(t *testing.T) {
 			name: "gocase",
 			metadata: parsedData{
 				License: "",
-				ApkMetadata: pkg.ApkMetadata{
+				ApkDBEntry: pkg.ApkDBEntry{
 					Package:      "p",
 					Version:      "v",
 					Architecture: "a",
@@ -55,7 +55,7 @@ func Test_PackageURL(t *testing.T) {
 			name: "missing architecture",
 			metadata: parsedData{
 				License: "",
-				ApkMetadata: pkg.ApkMetadata{
+				ApkDBEntry: pkg.ApkDBEntry{
 					Package: "p",
 					Version: "v",
 				},
@@ -70,7 +70,7 @@ func Test_PackageURL(t *testing.T) {
 		{
 			metadata: parsedData{
 				License: "",
-				ApkMetadata: pkg.ApkMetadata{
+				ApkDBEntry: pkg.ApkDBEntry{
 					Package:      "g++",
 					Version:      "v84",
 					Architecture: "am86",
@@ -85,7 +85,7 @@ func Test_PackageURL(t *testing.T) {
 		{
 			metadata: parsedData{
 				License: "",
-				ApkMetadata: pkg.ApkMetadata{
+				ApkDBEntry: pkg.ApkDBEntry{
 					Package:      "g plus plus",
 					Version:      "v84",
 					Architecture: "am86",
@@ -101,7 +101,7 @@ func Test_PackageURL(t *testing.T) {
 			name: "add source information as qualifier",
 			metadata: parsedData{
 				License: "",
-				ApkMetadata: pkg.ApkMetadata{
+				ApkDBEntry: pkg.ApkDBEntry{
 					Package:       "p",
 					Version:       "v",
 					Architecture:  "a",
@@ -118,7 +118,7 @@ func Test_PackageURL(t *testing.T) {
 			name: "wolfi distro",
 			metadata: parsedData{
 				License: "",
-				ApkMetadata: pkg.ApkMetadata{
+				ApkDBEntry: pkg.ApkDBEntry{
 					Package:      "p",
 					Version:      "v",
 					Architecture: "a",
@@ -134,7 +134,7 @@ func Test_PackageURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := packageURL(test.metadata.ApkMetadata, &test.distro)
+			actual := packageURL(test.metadata.ApkDBEntry, &test.distro)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)
@@ -171,11 +171,11 @@ func Test_PackageURL(t *testing.T) {
 
 func TestApkMetadata_FileOwner(t *testing.T) {
 	tests := []struct {
-		metadata pkg.ApkMetadata
+		metadata pkg.ApkDBEntry
 		expected []string
 	}{
 		{
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Files: []pkg.ApkFileRecord{
 					{Path: "/somewhere"},
 					{Path: "/else"},
@@ -187,7 +187,7 @@ func TestApkMetadata_FileOwner(t *testing.T) {
 			},
 		},
 		{
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Files: []pkg.ApkFileRecord{
 					{Path: "/somewhere"},
 					{Path: ""},

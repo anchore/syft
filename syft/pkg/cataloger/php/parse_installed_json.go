@@ -21,7 +21,7 @@ type installedJSONComposerV2 struct {
 
 type parsedInstalledData struct {
 	License []string `json:"license"`
-	pkg.PhpComposerInstalledMetadata
+	pkg.PhpComposerInstalledEntry
 }
 
 func (w *installedJSONComposerV2) UnmarshalJSON(data []byte) error {

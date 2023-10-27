@@ -128,8 +128,8 @@ func getPackage(component nativeImageComponent) pkg.Package {
 		Language: pkg.Java,
 		Type:     pkg.GraalVMNativeImagePkg,
 		FoundBy:  nativeImageCatalogerName,
-		Metadata: pkg.JavaMetadata{
-			PomProperties: &pkg.PomProperties{
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
 				GroupID: component.Group,
 			},
 		},

@@ -20,7 +20,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			Locations: fixtureLocationSet,
 			Type:      pkg.DotnetPkg,
 			PURL:      "pkg:nuget/System.Buffers@7.0.923.36201",
-			Metadata: pkg.DotnetPortableExecutableMetadata{
+			Metadata: pkg.DotnetPortableExecutableEntry{
 				AssemblyVersion: "7.0.0.0",
 				LegalCopyright:  "© Microsoft Corporation. All rights reserved.",
 				Comments:        "System.Buffers",

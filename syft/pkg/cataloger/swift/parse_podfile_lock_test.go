@@ -20,7 +20,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "4ea1197a744f2fb5fb875fe31caf17ded4762e8f",
 			},
 		},
@@ -31,7 +31,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "7a8fc1a691173d21dbddbf86cd515de6efa55086",
 			},
 		},
@@ -42,7 +42,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "7a8fc1a691173d21dbddbf86cd515de6efa55086",
 			},
 		},
@@ -53,7 +53,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "7a8fc1a691173d21dbddbf86cd515de6efa55086",
 			},
 		},
@@ -64,7 +64,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "00c935935f1e8cf0d1e2d6b542e75b88fc3e5e20",
 			},
 		},
@@ -75,7 +75,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "f1295b29f8c5e640e25335a1b2bd9d805171bd01",
 			},
 		},
@@ -86,7 +86,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "f1295b29f8c5e640e25335a1b2bd9d805171bd01",
 			},
 		},
@@ -97,7 +97,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "f1295b29f8c5e640e25335a1b2bd9d805171bd01",
 			},
 		},
@@ -108,7 +108,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "effba1c940b8337195563c425a6b5862ec875caa",
 			},
 		},
@@ -119,7 +119,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "a6d22010845f08fe18fbdf3a07a8e380fd22e0ea",
 			},
 		},
@@ -130,7 +130,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "2e8ab2519452515f7f5a520f5a8f7e0a413abfa3",
 			},
 		},
@@ -141,7 +141,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "2e8ab2519452515f7f5a520f5a8f7e0a413abfa3",
 			},
 		},
@@ -152,7 +152,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "2e8ab2519452515f7f5a520f5a8f7e0a413abfa3",
 			},
 		},
@@ -163,7 +163,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "2e8ab2519452515f7f5a520f5a8f7e0a413abfa3",
 			},
 		},
@@ -174,7 +174,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "2e8ab2519452515f7f5a520f5a8f7e0a413abfa3",
 			},
 		},
@@ -185,7 +185,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "2e8ab2519452515f7f5a520f5a8f7e0a413abfa3",
 			},
 		},
@@ -196,7 +196,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "2e8ab2519452515f7f5a520f5a8f7e0a413abfa3",
 			},
 		},
@@ -207,7 +207,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "c515c7927fab92d0d9485f49b885b8c5de34fbfb",
 			},
 		},
@@ -218,7 +218,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "c515c7927fab92d0d9485f49b885b8c5de34fbfb",
 			},
 		},
@@ -229,7 +229,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "c515c7927fab92d0d9485f49b885b8c5de34fbfb",
 			},
 		},
@@ -240,7 +240,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "c515c7927fab92d0d9485f49b885b8c5de34fbfb",
 			},
 		},
@@ -251,7 +251,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "c515c7927fab92d0d9485f49b885b8c5de34fbfb",
 			},
 		},
@@ -262,7 +262,7 @@ func TestParsePodfileLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
-			Metadata: pkg.CocoapodsMetadata{
+			Metadata: pkg.CocoaPodfileLockEntry{
 				Checksum: "7b7ccc0c485bb3bb47082138ff28bc33cd49897f",
 			},
 		},

@@ -18,7 +18,7 @@ func TestParseRpmManifest(t *testing.T) {
 			PURL:      "pkg:rpm/mariner-release@2.0-12.cm2?arch=noarch&upstream=mariner-release-2.0-12.cm2.src.rpm",
 			Locations: file.NewLocationSet(location),
 			Type:      pkg.RpmPkg,
-			Metadata: pkg.RpmDBMetadata{
+			Metadata: pkg.RpmDBEntry{
 				Name:      "mariner-release",
 				Epoch:     nil,
 				Arch:      "noarch",
@@ -35,7 +35,7 @@ func TestParseRpmManifest(t *testing.T) {
 			PURL:      "pkg:rpm/filesystem@1.1-9.cm2?arch=x86_64&upstream=filesystem-1.1-9.cm2.src.rpm",
 			Locations: file.NewLocationSet(location),
 			Type:      pkg.RpmPkg,
-			Metadata: pkg.RpmDBMetadata{
+			Metadata: pkg.RpmDBEntry{
 				Name:      "filesystem",
 				Epoch:     nil,
 				Arch:      "x86_64",
@@ -52,7 +52,7 @@ func TestParseRpmManifest(t *testing.T) {
 			PURL:      "pkg:rpm/glibc@2.35-2.cm2?arch=x86_64&upstream=glibc-2.35-2.cm2.src.rpm",
 			Locations: file.NewLocationSet(location),
 			Type:      pkg.RpmPkg,
-			Metadata: pkg.RpmDBMetadata{
+			Metadata: pkg.RpmDBEntry{
 				Name:      "glibc",
 				Epoch:     nil,
 				Arch:      "x86_64",
@@ -69,7 +69,7 @@ func TestParseRpmManifest(t *testing.T) {
 			PURL:      "pkg:rpm/openssl-libs@1.1.1k-15.cm2?arch=x86_64&upstream=openssl-1.1.1k-15.cm2.src.rpm",
 			Locations: file.NewLocationSet(location),
 			Type:      pkg.RpmPkg,
-			Metadata: pkg.RpmDBMetadata{
+			Metadata: pkg.RpmDBEntry{
 				Name:      "openssl-libs",
 				Epoch:     nil,
 				Arch:      "x86_64",

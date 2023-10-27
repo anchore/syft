@@ -32,7 +32,7 @@ func newPackage(classifier classifier, location file.Location, matchMetadata map
 		Type:    pkg.BinaryPkg,
 		CPEs:    cpes,
 		FoundBy: catalogerName,
-		Metadata: pkg.BinaryMetadata{
+		Metadata: pkg.BinarySignature{
 			Matches: []pkg.ClassifierMatch{
 				{
 					Classifier: classifier.Class,

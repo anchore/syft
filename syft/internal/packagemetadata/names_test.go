@@ -27,7 +27,7 @@ func TestAllNames(t *testing.T) {
 	}
 
 	for _, ty := range AllTypes() {
-		assert.NotEmpty(t, JSONName(ty), "metadata type %q does not have a JSON name", ty)
+		assert.NotEmpty(t, JSONName(ty), "metadata type %q does not have a JSON name", reflect.TypeOf(ty).Name())
 	}
 }
 
@@ -39,34 +39,35 @@ func TestReflectTypeFromJSONName(t *testing.T) {
 	}{
 		{
 			name:       "exact match on ID",
-			lookup:     "rust-cargo-lock",
-			wantRecord: reflect.TypeOf(pkg.CargoPackageMetadata{}),
+			lookup:     "rust-cargo-lock-entry",
+			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
 		},
 		{
 			name:       "exact match on former name",
 			lookup:     "RustCargoPackageMetadata",
-			wantRecord: reflect.TypeOf(pkg.CargoPackageMetadata{}),
+			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
 		},
 		{
 			name:       "case insensitive on ID",
-			lookup:     "RUST-CARGO-lock",
-			wantRecord: reflect.TypeOf(pkg.CargoPackageMetadata{}),
+			lookup:     "RUST-CARGO-lock-entrY",
+			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
 		},
 		{
 			name:       "case insensitive on alias",
 			lookup:     "rusTcArgopacKagEmEtadATa",
-			wantRecord: reflect.TypeOf(pkg.CargoPackageMetadata{}),
+			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
 		},
 		{
 			name: "consistent override",
 			// there are two correct answers for this -- we should always get the same answer.
 			lookup:     "HackageMetadataType",
-			wantRecord: reflect.TypeOf(pkg.HackageStackYamlLockMetadata{}),
+			wantRecord: reflect.TypeOf(pkg.HackageStackYamlLockEntry{}),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := ReflectTypeFromJSONName(tt.lookup)
+			require.NotNil(t, got)
 			assert.Equal(t, tt.wantRecord.Name(), got.Name())
 		})
 	}
@@ -80,175 +81,171 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 	}{
 		// these cases are always 1:1
 		{
-			name:     "map pkg.AlpmMetadata struct type",
+			name:     "map pkg.AlpmDBEntry struct type",
 			input:    "AlpmMetadata",
-			expected: reflect.TypeOf(pkg.AlpmMetadata{}),
+			expected: reflect.TypeOf(pkg.AlpmDBEntry{}),
 		},
 		{
-			name:     "map pkg.ApkMetadata struct type",
+			name:     "map pkg.ApkDBEntry struct type",
 			input:    "ApkMetadata",
-			expected: reflect.TypeOf(pkg.ApkMetadata{}),
+			expected: reflect.TypeOf(pkg.ApkDBEntry{}),
 		},
 		{
-			name:     "map pkg.BinaryMetadata struct type",
+			name:     "map pkg.BinarySignature struct type",
 			input:    "BinaryMetadata",
-			expected: reflect.TypeOf(pkg.BinaryMetadata{}),
+			expected: reflect.TypeOf(pkg.BinarySignature{}),
 		},
 		{
-			name:     "map pkg.CocoapodsMetadata struct type",
+			name:     "map pkg.CocoaPodfileLockEntry struct type",
 			input:    "CocoapodsMetadataType",
-			expected: reflect.TypeOf(pkg.CocoapodsMetadata{}),
+			expected: reflect.TypeOf(pkg.CocoaPodfileLockEntry{}),
 		},
 		{
-			name:     "map pkg.ConanLockMetadata struct type",
+			name:     "map pkg.ConanLockEntry struct type",
 			input:    "ConanLockMetadataType",
-			expected: reflect.TypeOf(pkg.ConanLockMetadata{}),
+			expected: reflect.TypeOf(pkg.ConanLockEntry{}),
 		},
 		{
-			name:     "map pkg.ConanMetadata struct type",
+			name:     "map pkg.ConanfileEntry struct type",
 			input:    "ConanMetadataType",
-			expected: reflect.TypeOf(pkg.ConanMetadata{}),
+			expected: reflect.TypeOf(pkg.ConanfileEntry{}),
 		},
 		{
-			name:     "map pkg.DartPubMetadata struct type",
+			name:     "map pkg.DartPubspecLockEntry struct type",
 			input:    "DartPubMetadata",
-			expected: reflect.TypeOf(pkg.DartPubMetadata{}),
+			expected: reflect.TypeOf(pkg.DartPubspecLockEntry{}),
 		},
 		{
-			name:     "map pkg.DotnetDepsMetadata struct type",
+			name:     "map pkg.DotnetDepsEntry struct type",
 			input:    "DotnetDepsMetadata",
-			expected: reflect.TypeOf(pkg.DotnetDepsMetadata{}),
+			expected: reflect.TypeOf(pkg.DotnetDepsEntry{}),
 		},
 		{
-			name:     "map pkg.DpkgMetadata struct type",
+			name:     "map pkg.DpkgDBEntry struct type",
 			input:    "DpkgMetadata",
-			expected: reflect.TypeOf(pkg.DpkgMetadata{}),
+			expected: reflect.TypeOf(pkg.DpkgDBEntry{}),
 		},
 		{
-			name:     "map pkg.GemMetadata struct type",
+			name:     "map pkg.RubyGemspec struct type",
 			input:    "GemMetadata",
-			expected: reflect.TypeOf(pkg.GemMetadata{}),
+			expected: reflect.TypeOf(pkg.RubyGemspec{}),
 		},
 		{
-			name:     "map pkg.GolangBinMetadata struct type",
+			name:     "map pkg.GolangBinaryBuildinfoEntry struct type",
 			input:    "GolangBinMetadata",
-			expected: reflect.TypeOf(pkg.GolangBinMetadata{}),
+			expected: reflect.TypeOf(pkg.GolangBinaryBuildinfoEntry{}),
 		},
 		{
-			name:     "map pkg.GolangModMetadata struct type",
+			name:     "map pkg.GolangModuleEntry struct type",
 			input:    "GolangModMetadata",
-			expected: reflect.TypeOf(pkg.GolangModMetadata{}),
+			expected: reflect.TypeOf(pkg.GolangModuleEntry{}),
 		},
 		{
-			name:     "map pkg.JavaMetadata struct type",
+			name:     "map pkg.JavaArchive struct type",
 			input:    "JavaMetadata",
-			expected: reflect.TypeOf(pkg.JavaMetadata{}),
+			expected: reflect.TypeOf(pkg.JavaArchive{}),
 		},
 		{
-			name:     "map pkg.KbPatchMetadata struct type",
+			name:     "map pkg.MicrosoftKbPatch struct type",
 			input:    "KbPatchMetadata",
-			expected: reflect.TypeOf(pkg.KbPatchMetadata{}),
+			expected: reflect.TypeOf(pkg.MicrosoftKbPatch{}),
 		},
 		{
-			name:     "map pkg.LinuxKernelMetadata struct type",
-			input:    "LinuxKernelMetadata",
-			expected: reflect.TypeOf(pkg.LinuxKernelMetadata{}),
+			name:     "map pkg.LinuxKernel struct type",
+			input:    "LinuxKernel",
+			expected: reflect.TypeOf(pkg.LinuxKernel{}),
 		},
 		{
-			name:     "map pkg.LinuxKernelModuleMetadata struct type",
-			input:    "LinuxKernelModuleMetadata",
-			expected: reflect.TypeOf(pkg.LinuxKernelModuleMetadata{}),
+			name:     "map pkg.LinuxKernelModule struct type",
+			input:    "LinuxKernelModule",
+			expected: reflect.TypeOf(pkg.LinuxKernelModule{}),
 		},
 		{
-			name:     "map pkg.MixLockMetadata struct type",
+			name:     "map pkg.ElixirMixLockEntry struct type",
 			input:    "MixLockMetadataType",
-			expected: reflect.TypeOf(pkg.MixLockMetadata{}),
+			expected: reflect.TypeOf(pkg.ElixirMixLockEntry{}),
 		},
 		{
-			name:     "map pkg.NixStoreMetadata struct type",
+			name:     "map pkg.NixStoreEntry struct type",
 			input:    "NixStoreMetadata",
-			expected: reflect.TypeOf(pkg.NixStoreMetadata{}),
+			expected: reflect.TypeOf(pkg.NixStoreEntry{}),
 		},
 		{
-			name:     "map pkg.NpmPackageJSONMetadata struct type",
+			name:     "map pkg.NpmPackage struct type",
 			input:    "NpmPackageJsonMetadata",
-			expected: reflect.TypeOf(pkg.NpmPackageJSONMetadata{}),
+			expected: reflect.TypeOf(pkg.NpmPackage{}),
 		},
 		{
-			name:     "map pkg.NpmPackageLockJSONMetadata struct type",
+			name:     "map pkg.NpmPackageLockEntry struct type",
 			input:    "NpmPackageLockJsonMetadata",
-			expected: reflect.TypeOf(pkg.NpmPackageLockJSONMetadata{}),
+			expected: reflect.TypeOf(pkg.NpmPackageLockEntry{}),
 		},
 		{
-			name:     "map pkg.PhpComposerInstalledMetadata struct type",
-			input:    "PhpComposerJsonMetadata",
-			expected: reflect.TypeOf(pkg.PhpComposerInstalledMetadata{}),
-		},
-		{
-			name:     "map pkg.PortageMetadata struct type",
+			name:     "map pkg.PortageEntry struct type",
 			input:    "PortageMetadata",
-			expected: reflect.TypeOf(pkg.PortageMetadata{}),
+			expected: reflect.TypeOf(pkg.PortageEntry{}),
 		},
 		{
-			name:     "map pkg.PythonPackageMetadata struct type",
+			name:     "map pkg.PythonPackage struct type",
 			input:    "PythonPackageMetadata",
-			expected: reflect.TypeOf(pkg.PythonPackageMetadata{}),
+			expected: reflect.TypeOf(pkg.PythonPackage{}),
 		},
 		{
-			name:     "map pkg.PythonPipfileLockMetadata struct type",
+			name:     "map pkg.PythonPipfileLockEntry struct type",
 			input:    "PythonPipfileLockMetadata",
-			expected: reflect.TypeOf(pkg.PythonPipfileLockMetadata{}),
+			expected: reflect.TypeOf(pkg.PythonPipfileLockEntry{}),
 		},
 		{
-			name:     "map pkg.PythonRequirementsMetadata struct type",
+			name:     "map pkg.PythonRequirementsEntry struct type",
 			input:    "PythonRequirementsMetadata",
-			expected: reflect.TypeOf(pkg.PythonRequirementsMetadata{}),
+			expected: reflect.TypeOf(pkg.PythonRequirementsEntry{}),
 		},
 		{
-			name:     "map pkg.RebarLockMetadata struct type",
+			name:     "map pkg.ErlangRebarLockEntry struct type",
 			input:    "RebarLockMetadataType",
-			expected: reflect.TypeOf(pkg.RebarLockMetadata{}),
+			expected: reflect.TypeOf(pkg.ErlangRebarLockEntry{}),
 		},
 		{
-			name:     "map pkg.RDescriptionFileMetadata struct type",
+			name:     "map pkg.RDescription struct type",
 			input:    "RDescriptionFileMetadataType",
-			expected: reflect.TypeOf(pkg.RDescriptionFileMetadata{}),
+			expected: reflect.TypeOf(pkg.RDescription{}),
 		},
 		{
-			name:     "map pkg.RpmDBMetadata struct type",
+			name:     "map pkg.RpmDBEntry struct type",
 			input:    "RpmdbMetadata",
-			expected: reflect.TypeOf(pkg.RpmDBMetadata{}),
-		},
-		{
-			name:     "map pkg.CargoPackageMetadata struct type",
-			input:    "RustCargoPackageMetadata",
-			expected: reflect.TypeOf(pkg.CargoPackageMetadata{}),
+			expected: reflect.TypeOf(pkg.RpmDBEntry{}),
 		},
 		// these cases are 1:many
 		{
-			name:  "map pkg.RpmDBMetadata struct type - overlap with RpmArchiveMetadata",
+			name:  "map pkg.RpmDBEntry struct type - overlap with RpmArchiveMetadata",
 			input: "RpmMetadata",
-			// this used to be shared as a use case for both RpmArchiveMetadata and RpmDBMetadata
+			// this used to be shared as a use case for both RpmArchive and RpmDBEntry
 			// from a data-shape perspective either would be equally correct
 			// however, the RPMDBMetadata has been around longer and may have been more widely used
 			// so we'll map to that type for backwards compatibility.
-			expected: reflect.TypeOf(pkg.RpmDBMetadata{}),
+			expected: reflect.TypeOf(pkg.RpmDBEntry{}),
 		},
 		{
-			name:  "map pkg.HackageStackYamlLockMetadata struct type - overlap with HackageStack*Metadata",
+			name:  "map pkg.HackageStackYamlLockEntry struct type - overlap with HackageStack*Metadata",
 			input: "HackageMetadataType",
-			// this used to be shared as a use case for both HackageStackYamlLockMetadata and HackageStackYamlMetadata
-			// but the HackageStackYamlLockMetadata maps most closely to the original data shape.
-			expected: reflect.TypeOf(pkg.HackageStackYamlLockMetadata{}),
+			// this used to be shared as a use case for both HackageStackYamlLockEntry and HackageStackYamlEntry
+			// but the HackageStackYamlLockEntry maps most closely to the original data shape.
+			expected: reflect.TypeOf(pkg.HackageStackYamlLockEntry{}),
 		},
-		// There is no way currently to infer the correct type for this case without additional information (say from the package).
-		//{
-		//	name:  "map pkg.PhpComposerLockMetadata struct type - overlap with PhpComposer*Metadata",
-		//	input: "PhpComposerJsonMetadata",
-		//	// this used to be shared as a use case for both PhpComposerLockMetadata and PhpComposerInstalledMetadata
-		//	// neither of these is more correct over the other. These parsers were also introduced at the same time.
-		//	expected: reflect.TypeOf(pkg.PhpComposerLockMetadata{}),
-		//},
+		{
+			name:  "map pkg.PhpComposerLockEntry struct type",
+			input: "PhpComposerJsonMetadata",
+			// this used to be shared as a use case for both PhpComposerLockEntry and PhpComposerInstalledEntry
+			// neither of these is more correct over the other. These parsers were also introduced at the same time.
+			expected: reflect.TypeOf(pkg.PhpComposerLockEntry{}),
+		},
+		{
+			name:  "map pkg.RustCargoLockEntry struct type",
+			input: "RustCargoPackageMetadata",
+			// this used to be shared as a use case for both RustCargoLockEntry and RustBinaryAuditEntry
+			// neither of these is more correct over the other.
+			expected: reflect.TypeOf(pkg.RustCargoLockEntry{}),
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -269,213 +266,219 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 	}{
 		{
 			name:               "AlpmMetadata",
-			metadata:           pkg.AlpmMetadata{},
-			expectedJSONName:   "arch-alpm-db-record",
+			metadata:           pkg.AlpmDBEntry{},
+			expectedJSONName:   "alpm-db-entry",
 			expectedLegacyName: "AlpmMetadata",
 		},
 		{
 			name:               "ApkMetadata",
-			metadata:           pkg.ApkMetadata{},
-			expectedJSONName:   "alpine-apk-db-record",
+			metadata:           pkg.ApkDBEntry{},
+			expectedJSONName:   "apk-db-entry",
 			expectedLegacyName: "ApkMetadata",
 		},
 		{
 			name:               "BinaryMetadata",
-			metadata:           pkg.BinaryMetadata{},
+			metadata:           pkg.BinarySignature{},
 			expectedJSONName:   "binary-signature",
 			expectedLegacyName: "BinaryMetadata",
 		},
 		{
 			name:               "CocoapodsMetadata",
-			metadata:           pkg.CocoapodsMetadata{},
-			expectedJSONName:   "cocoa-podfile-lock",
+			metadata:           pkg.CocoaPodfileLockEntry{},
+			expectedJSONName:   "cocoa-podfile-lock-entry",
 			expectedLegacyName: "CocoapodsMetadataType",
 		},
 		{
 			name:               "ConanLockMetadata",
-			metadata:           pkg.ConanLockMetadata{},
-			expectedJSONName:   "c-conan-lock",
+			metadata:           pkg.ConanLockEntry{},
+			expectedJSONName:   "c-conan-lock-entry",
 			expectedLegacyName: "ConanLockMetadataType",
 		},
 		{
 			name:               "ConanMetadata",
-			metadata:           pkg.ConanMetadata{},
-			expectedJSONName:   "c-conan",
+			metadata:           pkg.ConanfileEntry{},
+			expectedJSONName:   "c-conan-file-entry",
 			expectedLegacyName: "ConanMetadataType",
 		},
 		{
 			name:               "DartPubMetadata",
-			metadata:           pkg.DartPubMetadata{},
-			expectedJSONName:   "dart-pubspec-lock",
+			metadata:           pkg.DartPubspecLockEntry{},
+			expectedJSONName:   "dart-pubspec-lock-entry",
 			expectedLegacyName: "DartPubMetadata",
 		},
 		{
 			name:               "DotnetDepsMetadata",
-			metadata:           pkg.DotnetDepsMetadata{},
-			expectedJSONName:   "dotnet-deps",
+			metadata:           pkg.DotnetDepsEntry{},
+			expectedJSONName:   "dotnet-deps-entry",
 			expectedLegacyName: "DotnetDepsMetadata",
 		},
 		{
 			name:               "DotnetPortableExecutableMetadata",
-			metadata:           pkg.DotnetPortableExecutableMetadata{},
-			expectedJSONName:   "dotnet-portable-executable",
-			expectedLegacyName: "dotnet-portable-executable", // note: the legacy name should never be blank if it didn't exist pre v11.x
+			metadata:           pkg.DotnetPortableExecutableEntry{},
+			expectedJSONName:   "dotnet-portable-executable-entry",
+			expectedLegacyName: "dotnet-portable-executable-entry", // note: the legacy name should never be blank if it didn't exist pre v11.x
 		},
 		{
 			name:               "DpkgMetadata",
-			metadata:           pkg.DpkgMetadata{},
-			expectedJSONName:   "debian-dpkg-db-record",
+			metadata:           pkg.DpkgDBEntry{},
+			expectedJSONName:   "dpkg-db-entry",
 			expectedLegacyName: "DpkgMetadata",
 		},
 		{
 			name:               "GemMetadata",
-			metadata:           pkg.GemMetadata{},
+			metadata:           pkg.RubyGemspec{},
 			expectedJSONName:   "ruby-gemspec",
 			expectedLegacyName: "GemMetadata",
 		},
 		{
 			name:               "GolangBinMetadata",
-			metadata:           pkg.GolangBinMetadata{},
-			expectedJSONName:   "go-module-binary-buildinfo",
+			metadata:           pkg.GolangBinaryBuildinfoEntry{},
+			expectedJSONName:   "go-module-buildinfo-entry",
 			expectedLegacyName: "GolangBinMetadata",
 		},
 		{
 			name:               "GolangModMetadata",
-			metadata:           pkg.GolangModMetadata{},
-			expectedJSONName:   "go-module",
+			metadata:           pkg.GolangModuleEntry{},
+			expectedJSONName:   "go-module-entry",
 			expectedLegacyName: "GolangModMetadata",
 		},
 		{
 			name:               "HackageStackYamlLockMetadata",
-			metadata:           pkg.HackageStackYamlLockMetadata{},
-			expectedJSONName:   "haskell-hackage-stack-lock",
+			metadata:           pkg.HackageStackYamlLockEntry{},
+			expectedJSONName:   "haskell-hackage-stack-lock-entry",
 			expectedLegacyName: "HackageMetadataType", // this is closest to the original data shape in <=v11.x schema
 		},
 		{
 			name:               "HackageStackYamlMetadata",
-			metadata:           pkg.HackageStackYamlMetadata{},
-			expectedJSONName:   "haskell-hackage-stack",
+			metadata:           pkg.HackageStackYamlEntry{},
+			expectedJSONName:   "haskell-hackage-stack-entry",
 			expectedLegacyName: "HackageMetadataType", // note: this conflicts with <=v11.x schema for "haskell-hackage-stack-lock" metadata type
 		},
 		{
 			name:               "JavaMetadata",
-			metadata:           pkg.JavaMetadata{},
+			metadata:           pkg.JavaArchive{},
 			expectedJSONName:   "java-archive",
 			expectedLegacyName: "JavaMetadata",
 		},
 		{
 			name:               "KbPatchMetadata",
-			metadata:           pkg.KbPatchMetadata{},
+			metadata:           pkg.MicrosoftKbPatch{},
 			expectedJSONName:   "microsoft-kb-patch",
 			expectedLegacyName: "KbPatchMetadata",
 		},
 		{
-			name:               "LinuxKernelMetadata",
-			metadata:           pkg.LinuxKernelMetadata{},
+			name:               "LinuxKernel",
+			metadata:           pkg.LinuxKernel{},
 			expectedJSONName:   "linux-kernel-archive",
-			expectedLegacyName: "LinuxKernelMetadata",
+			expectedLegacyName: "LinuxKernel",
 		},
 		{
-			name:               "LinuxKernelModuleMetadata",
-			metadata:           pkg.LinuxKernelModuleMetadata{},
+			name:               "LinuxKernelModule",
+			metadata:           pkg.LinuxKernelModule{},
 			expectedJSONName:   "linux-kernel-module",
-			expectedLegacyName: "LinuxKernelModuleMetadata",
+			expectedLegacyName: "LinuxKernelModule",
 		},
 		{
 			name:               "MixLockMetadata",
-			metadata:           pkg.MixLockMetadata{},
-			expectedJSONName:   "elixir-mix-lock",
+			metadata:           pkg.ElixirMixLockEntry{},
+			expectedJSONName:   "elixir-mix-lock-entry",
 			expectedLegacyName: "MixLockMetadataType",
 		},
 		{
 			name:               "NixStoreMetadata",
-			metadata:           pkg.NixStoreMetadata{},
-			expectedJSONName:   "nix-store",
+			metadata:           pkg.NixStoreEntry{},
+			expectedJSONName:   "nix-store-entry",
 			expectedLegacyName: "NixStoreMetadata",
 		},
 		{
 			name:               "NpmPackageJSONMetadata",
-			metadata:           pkg.NpmPackageJSONMetadata{},
+			metadata:           pkg.NpmPackage{},
 			expectedJSONName:   "javascript-npm-package",
 			expectedLegacyName: "NpmPackageJsonMetadata",
 		},
 		{
 			name:               "NpmPackageLockJSONMetadata",
-			metadata:           pkg.NpmPackageLockJSONMetadata{},
-			expectedJSONName:   "javascript-npm-package-lock",
+			metadata:           pkg.NpmPackageLockEntry{},
+			expectedJSONName:   "javascript-npm-package-lock-entry",
 			expectedLegacyName: "NpmPackageLockJsonMetadata",
 		},
 		{
 			name:               "PhpComposerLockMetadata",
-			metadata:           pkg.PhpComposerLockMetadata{},
-			expectedJSONName:   "php-composer-lock",
-			expectedLegacyName: "PhpComposerJsonMetadata",
+			metadata:           pkg.PhpComposerLockEntry{},
+			expectedJSONName:   "php-composer-lock-entry",
+			expectedLegacyName: "PhpComposerJsonMetadata", // note: maps to multiple entries (v11-12 breaking change)
 		},
 		{
 			name:               "PhpComposerInstalledMetadata",
-			metadata:           pkg.PhpComposerInstalledMetadata{},
-			expectedJSONName:   "php-composer-installed",
-			expectedLegacyName: "PhpComposerJsonMetadata",
+			metadata:           pkg.PhpComposerInstalledEntry{},
+			expectedJSONName:   "php-composer-installed-entry",
+			expectedLegacyName: "PhpComposerJsonMetadata", // note: maps to multiple entries (v11-12 breaking change)
 		},
 		{
 			name:               "PortageMetadata",
-			metadata:           pkg.PortageMetadata{},
-			expectedJSONName:   "gentoo-portage-db-record",
+			metadata:           pkg.PortageEntry{},
+			expectedJSONName:   "portage-db-entry",
 			expectedLegacyName: "PortageMetadata",
 		},
 		{
 			name:               "PythonPackageMetadata",
-			metadata:           pkg.PythonPackageMetadata{},
+			metadata:           pkg.PythonPackage{},
 			expectedJSONName:   "python-package",
 			expectedLegacyName: "PythonPackageMetadata",
 		},
 		{
 			name:               "PythonPipfileLockMetadata",
-			metadata:           pkg.PythonPipfileLockMetadata{},
-			expectedJSONName:   "python-pipfile-lock",
+			metadata:           pkg.PythonPipfileLockEntry{},
+			expectedJSONName:   "python-pipfile-lock-entry",
 			expectedLegacyName: "PythonPipfileLockMetadata",
 		},
 		{
 			name:               "PythonRequirementsMetadata",
-			metadata:           pkg.PythonRequirementsMetadata{},
-			expectedJSONName:   "python-pip-requirements",
+			metadata:           pkg.PythonRequirementsEntry{},
+			expectedJSONName:   "python-pip-requirements-entry",
 			expectedLegacyName: "PythonRequirementsMetadata",
 		},
 		{
 			name:               "RebarLockMetadata",
-			metadata:           pkg.RebarLockMetadata{},
-			expectedJSONName:   "erlang-rebar-lock",
+			metadata:           pkg.ErlangRebarLockEntry{},
+			expectedJSONName:   "erlang-rebar-lock-entry",
 			expectedLegacyName: "RebarLockMetadataType",
 		},
 		{
 			name:               "RDescriptionFileMetadata",
-			metadata:           pkg.RDescriptionFileMetadata{},
+			metadata:           pkg.RDescription{},
 			expectedJSONName:   "r-description",
 			expectedLegacyName: "RDescriptionFileMetadataType",
 		},
 		{
 			name:               "RpmDBMetadata",
-			metadata:           pkg.RpmDBMetadata{},
-			expectedJSONName:   "redhat-rpm-db-record",
+			metadata:           pkg.RpmDBEntry{},
+			expectedJSONName:   "rpm-db-entry",
 			expectedLegacyName: "RpmMetadata", // not accurate, but how it was pre v12 of the schema
 		},
 		{
 			name:               "RpmArchiveMetadata",
-			metadata:           pkg.RpmArchiveMetadata{},
-			expectedJSONName:   "redhat-rpm-archive",
-			expectedLegacyName: "RpmMetadata", // note: conflicts with <=v11.x schema for "redhat-rpm-db-record" metadata type
+			metadata:           pkg.RpmArchive{},
+			expectedJSONName:   "rpm-archive",
+			expectedLegacyName: "RpmMetadata", // note: conflicts with <=v11.x schema for "rpm-db-entry" metadata type
 		},
 		{
 			name:               "SwiftPackageManagerMetadata",
-			metadata:           pkg.SwiftPackageManagerMetadata{},
-			expectedJSONName:   "swift-package-manager-lock",
+			metadata:           pkg.SwiftPackageManagerResolvedEntry{},
+			expectedJSONName:   "swift-package-manager-lock-entry",
 			expectedLegacyName: "SwiftPackageManagerMetadata",
 		},
 		{
 			name:               "CargoPackageMetadata",
-			metadata:           pkg.CargoPackageMetadata{},
-			expectedJSONName:   "rust-cargo-lock",
-			expectedLegacyName: "RustCargoPackageMetadata",
+			metadata:           pkg.RustCargoLockEntry{},
+			expectedJSONName:   "rust-cargo-lock-entry",
+			expectedLegacyName: "RustCargoPackageMetadata", // note: maps to multiple entries (v11-12 breaking change)
+		},
+		{
+			name:               "CargoPackageMetadata (audit binary)",
+			metadata:           pkg.RustBinaryAuditEntry{},
+			expectedJSONName:   "rust-cargo-audit-entry",
+			expectedLegacyName: "RustCargoPackageMetadata", // note: maps to multiple entries (v11-12 breaking change)
 		},
 	}
 

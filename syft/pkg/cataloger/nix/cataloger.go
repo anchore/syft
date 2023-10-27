@@ -81,7 +81,7 @@ func (c *StoreCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artif
 }
 
 func appendFiles(p *pkg.Package, location ...file.Location) {
-	metadata, ok := p.Metadata.(pkg.NixStoreMetadata)
+	metadata, ok := p.Metadata.(pkg.NixStoreEntry)
 	if !ok {
 		log.WithFields("package", p.Name).Warn("nix package metadata missing")
 		return

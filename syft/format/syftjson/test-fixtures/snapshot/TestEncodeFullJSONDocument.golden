@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "3bcffae8b300382f",
+   "id": "d748d4614750058d",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -36,7 +36,7 @@
    }
   },
   {
-   "id": "dadc9e0ae93b62b1",
+   "id": "fa4ec37eccd65756",
    "name": "package-2",
    "version": "2.0.1",
    "type": "deb",
@@ -52,7 +52,7 @@
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
    ],
    "purl": "a-purl-2",
-   "metadataType": "debian-dpkg-db-record",
+   "metadataType": "dpkg-db-entry",
    "metadata": {
     "package": "package-2",
     "source": "",

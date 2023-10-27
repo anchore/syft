@@ -47,7 +47,7 @@ func parseConanlock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 	var parsedPkgRequires = map[artifact.ID][]string{}
 
 	for idx, node := range cl.GraphLock.Nodes {
-		metadata := pkg.ConanLockMetadata{
+		metadata := pkg.ConanLockEntry{
 			Ref:       node.Ref,
 			Options:   parseOptions(node.Options),
 			Path:      node.Path,

@@ -3,7 +3,101 @@
   "$id": "anchore.io/schema/syft/json/12.0.0/document",
   "$ref": "#/$defs/Document",
   "$defs": {
-    "AlpineApkDbRecord": {
+    "AlpmDbEntry": {
+      "properties": {
+        "basepackage": {
+          "type": "string"
+        },
+        "package": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "packager": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "validation": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "integer"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/AlpmFileRecord"
+          },
+          "type": "array"
+        },
+        "backup": {
+          "items": {
+            "$ref": "#/$defs/AlpmFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "basepackage",
+        "package",
+        "version",
+        "description",
+        "architecture",
+        "size",
+        "packager",
+        "url",
+        "validation",
+        "reason",
+        "files",
+        "backup"
+      ]
+    },
+    "AlpmFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "gid": {
+          "type": "string"
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "size": {
+          "type": "string"
+        },
+        "link": {
+          "type": "string"
+        },
+        "digest": {
+          "items": {
+            "$ref": "#/$defs/Digest"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ApkDbEntry": {
       "properties": {
         "package": {
           "type": "string"
@@ -75,39 +169,6 @@
         "files"
       ]
     },
-    "AlpmFileRecord": {
-      "properties": {
-        "path": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "gid": {
-          "type": "string"
-        },
-        "time": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "size": {
-          "type": "string"
-        },
-        "link": {
-          "type": "string"
-        },
-        "digest": {
-          "items": {
-            "$ref": "#/$defs/Digest"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
     "ApkFileRecord": {
       "properties": {
         "path": {
@@ -131,67 +192,6 @@
         "path"
       ]
     },
-    "ArchAlpmDbRecord": {
-      "properties": {
-        "basepackage": {
-          "type": "string"
-        },
-        "package": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "architecture": {
-          "type": "string"
-        },
-        "size": {
-          "type": "integer"
-        },
-        "packager": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "validation": {
-          "type": "string"
-        },
-        "reason": {
-          "type": "integer"
-        },
-        "files": {
-          "items": {
-            "$ref": "#/$defs/AlpmFileRecord"
-          },
-          "type": "array"
-        },
-        "backup": {
-          "items": {
-            "$ref": "#/$defs/AlpmFileRecord"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object",
-      "required": [
-        "basepackage",
-        "package",
-        "version",
-        "description",
-        "architecture",
-        "size",
-        "packager",
-        "url",
-        "validation",
-        "reason",
-        "files",
-        "backup"
-      ]
-    },
     "BinarySignature": {
       "properties": {
         "matches": {
@@ -206,7 +206,7 @@
         "matches"
       ]
     },
-    "CConan": {
+    "CConanFileEntry": {
       "properties": {
         "ref": {
           "type": "string"
@@ -217,7 +217,21 @@
         "ref"
       ]
     },
-    "CConanLock": {
+    "CConanInfoEntry": {
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "package_id": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "ref"
+      ]
+    },
+    "CConanLockEntry": {
       "properties": {
         "ref": {
           "type": "string"
@@ -281,7 +295,7 @@
         "location"
       ]
     },
-    "CocoaPodfileLock": {
+    "CocoaPodfileLockEntry": {
       "properties": {
         "checksum": {
           "type": "string"
@@ -306,7 +320,7 @@
         "path"
       ]
     },
-    "DartPubspecLock": {
+    "DartPubspecLockEntry": {
       "properties": {
         "name": {
           "type": "string"
@@ -325,66 +339,6 @@
       "required": [
         "name",
         "version"
-      ]
-    },
-    "DebianDpkgDbRecord": {
-      "properties": {
-        "package": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "sourceVersion": {
-          "type": "string"
-        },
-        "architecture": {
-          "type": "string"
-        },
-        "maintainer": {
-          "type": "string"
-        },
-        "installedSize": {
-          "type": "integer"
-        },
-        "provides": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "depends": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "preDepends": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "files": {
-          "items": {
-            "$ref": "#/$defs/DpkgFileRecord"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object",
-      "required": [
-        "package",
-        "source",
-        "version",
-        "sourceVersion",
-        "architecture",
-        "maintainer",
-        "installedSize",
-        "files"
       ]
     },
     "Descriptor": {
@@ -467,7 +421,7 @@
         "schema"
       ]
     },
-    "DotnetDeps": {
+    "DotnetDepsEntry": {
       "properties": {
         "name": {
           "type": "string"
@@ -494,7 +448,7 @@
         "hashPath"
       ]
     },
-    "DotnetPortableExecutable": {
+    "DotnetPortableExecutableEntry": {
       "properties": {
         "assemblyVersion": {
           "type": "string"
@@ -527,6 +481,66 @@
         "productVersion"
       ]
     },
+    "DpkgDbEntry": {
+      "properties": {
+        "package": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "sourceVersion": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": "string"
+        },
+        "installedSize": {
+          "type": "integer"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "preDepends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/DpkgFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "package",
+        "source",
+        "version",
+        "sourceVersion",
+        "architecture",
+        "maintainer",
+        "installedSize",
+        "files"
+      ]
+    },
     "DpkgFileRecord": {
       "properties": {
         "path": {
@@ -545,7 +559,7 @@
         "isConfigFile"
       ]
     },
-    "ElixirMixLock": {
+    "ElixirMixLockEntry": {
       "properties": {
         "name": {
           "type": "string"
@@ -568,7 +582,7 @@
         "pkgHashExt"
       ]
     },
-    "ErlangRebarLock": {
+    "ErlangRebarLockEntry": {
       "properties": {
         "name": {
           "type": "string"
@@ -699,33 +713,7 @@
         "size"
       ]
     },
-    "GentooPortageDbRecord": {
-      "properties": {
-        "installedSize": {
-          "type": "integer"
-        },
-        "files": {
-          "items": {
-            "$ref": "#/$defs/PortageFileRecord"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object",
-      "required": [
-        "installedSize",
-        "files"
-      ]
-    },
-    "GoModule": {
-      "properties": {
-        "h1Digest": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "GoModuleBinaryBuildinfo": {
+    "GoModuleBuildinfoEntry": {
       "properties": {
         "goBuildSettings": {
           "patternProperties": {
@@ -760,7 +748,15 @@
         "architecture"
       ]
     },
-    "HaskellHackageStack": {
+    "GoModuleEntry": {
+      "properties": {
+        "h1Digest": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "HaskellHackageStackEntry": {
       "properties": {
         "pkgHash": {
           "type": "string"
@@ -768,7 +764,7 @@
       },
       "type": "object"
     },
-    "HaskellHackageStackLock": {
+    "HaskellHackageStackLockEntry": {
       "properties": {
         "pkgHash": {
           "type": "string"
@@ -794,10 +790,10 @@
           "$ref": "#/$defs/JavaManifest"
         },
         "pomProperties": {
-          "$ref": "#/$defs/PomProperties"
+          "$ref": "#/$defs/JavaPomProperties"
         },
         "pomProject": {
-          "$ref": "#/$defs/PomProject"
+          "$ref": "#/$defs/JavaPomProject"
         },
         "digest": {
           "items": {
@@ -837,6 +833,99 @@
       },
       "type": "object"
     },
+    "JavaPomParent": {
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "groupId",
+        "artifactId",
+        "version"
+      ]
+    },
+    "JavaPomProject": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "parent": {
+          "$ref": "#/$defs/JavaPomParent"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "groupId",
+        "artifactId",
+        "version",
+        "name"
+      ]
+    },
+    "JavaPomProperties": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "extraFields": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "name",
+        "groupId",
+        "artifactId",
+        "version"
+      ]
+    },
     "JavascriptNpmPackage": {
       "properties": {
         "name": {
@@ -872,7 +961,7 @@
         "private"
       ]
     },
-    "JavascriptNpmPackageLock": {
+    "JavascriptNpmPackageLockEntry": {
       "properties": {
         "resolved": {
           "type": "string"
@@ -1110,7 +1199,7 @@
         "kb"
       ]
     },
-    "NixStore": {
+    "NixStoreEntry": {
       "properties": {
         "outputHash": {
           "type": "string"
@@ -1178,55 +1267,55 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/AlpineApkDbRecord"
+              "$ref": "#/$defs/AlpmDbEntry"
             },
             {
-              "$ref": "#/$defs/ArchAlpmDbRecord"
+              "$ref": "#/$defs/ApkDbEntry"
             },
             {
               "$ref": "#/$defs/BinarySignature"
             },
             {
-              "$ref": "#/$defs/CConan"
+              "$ref": "#/$defs/CConanFileEntry"
             },
             {
-              "$ref": "#/$defs/CConanLock"
+              "$ref": "#/$defs/CConanInfoEntry"
             },
             {
-              "$ref": "#/$defs/CocoaPodfileLock"
+              "$ref": "#/$defs/CConanLockEntry"
             },
             {
-              "$ref": "#/$defs/DartPubspecLock"
+              "$ref": "#/$defs/CocoaPodfileLockEntry"
             },
             {
-              "$ref": "#/$defs/DebianDpkgDbRecord"
+              "$ref": "#/$defs/DartPubspecLockEntry"
             },
             {
-              "$ref": "#/$defs/DotnetDeps"
+              "$ref": "#/$defs/DotnetDepsEntry"
             },
             {
-              "$ref": "#/$defs/DotnetPortableExecutable"
+              "$ref": "#/$defs/DotnetPortableExecutableEntry"
             },
             {
-              "$ref": "#/$defs/ElixirMixLock"
+              "$ref": "#/$defs/DpkgDbEntry"
             },
             {
-              "$ref": "#/$defs/ErlangRebarLock"
+              "$ref": "#/$defs/ElixirMixLockEntry"
             },
             {
-              "$ref": "#/$defs/GentooPortageDbRecord"
+              "$ref": "#/$defs/ErlangRebarLockEntry"
             },
             {
-              "$ref": "#/$defs/GoModule"
+              "$ref": "#/$defs/GoModuleBuildinfoEntry"
             },
             {
-              "$ref": "#/$defs/GoModuleBinaryBuildinfo"
+              "$ref": "#/$defs/GoModuleEntry"
             },
             {
-              "$ref": "#/$defs/HaskellHackageStack"
+              "$ref": "#/$defs/HaskellHackageStackEntry"
             },
             {
-              "$ref": "#/$defs/HaskellHackageStackLock"
+              "$ref": "#/$defs/HaskellHackageStackLockEntry"
             },
             {
               "$ref": "#/$defs/JavaArchive"
@@ -1235,7 +1324,7 @@
               "$ref": "#/$defs/JavascriptNpmPackage"
             },
             {
-              "$ref": "#/$defs/JavascriptNpmPackageLock"
+              "$ref": "#/$defs/JavascriptNpmPackageLockEntry"
             },
             {
               "$ref": "#/$defs/LinuxKernelArchive"
@@ -1247,40 +1336,46 @@
               "$ref": "#/$defs/MicrosoftKbPatch"
             },
             {
-              "$ref": "#/$defs/NixStore"
+              "$ref": "#/$defs/NixStoreEntry"
             },
             {
-              "$ref": "#/$defs/PhpComposerInstalled"
+              "$ref": "#/$defs/PhpComposerInstalledEntry"
             },
             {
-              "$ref": "#/$defs/PhpComposerLock"
+              "$ref": "#/$defs/PhpComposerLockEntry"
+            },
+            {
+              "$ref": "#/$defs/PortageDbEntry"
             },
             {
               "$ref": "#/$defs/PythonPackage"
             },
             {
-              "$ref": "#/$defs/PythonPipRequirements"
+              "$ref": "#/$defs/PythonPipRequirementsEntry"
             },
             {
-              "$ref": "#/$defs/PythonPipfileLock"
+              "$ref": "#/$defs/PythonPipfileLockEntry"
             },
             {
               "$ref": "#/$defs/RDescription"
             },
             {
-              "$ref": "#/$defs/RedhatRpmArchive"
+              "$ref": "#/$defs/RpmArchive"
             },
             {
-              "$ref": "#/$defs/RedhatRpmDbRecord"
+              "$ref": "#/$defs/RpmDbEntry"
             },
             {
               "$ref": "#/$defs/RubyGemspec"
             },
             {
-              "$ref": "#/$defs/RustCargoLock"
+              "$ref": "#/$defs/RustCargoAuditEntry"
             },
             {
-              "$ref": "#/$defs/SwiftPackageManagerLock"
+              "$ref": "#/$defs/RustCargoLockEntry"
+            },
+            {
+              "$ref": "#/$defs/SwiftPackageManagerLockEntry"
             }
           ]
         }
@@ -1338,7 +1433,7 @@
         "reference"
       ]
     },
-    "PhpComposerInstalled": {
+    "PhpComposerInstalledEntry": {
       "properties": {
         "name": {
           "type": "string"
@@ -1432,7 +1527,7 @@
         "dist"
       ]
     },
-    "PhpComposerLock": {
+    "PhpComposerLockEntry": {
       "properties": {
         "name": {
           "type": "string"
@@ -1526,97 +1621,22 @@
         "dist"
       ]
     },
-    "PomParent": {
+    "PortageDbEntry": {
       "properties": {
-        "groupId": {
-          "type": "string"
+        "installedSize": {
+          "type": "integer"
         },
-        "artifactId": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        }
-      },
-      "type": "object",
-      "required": [
-        "groupId",
-        "artifactId",
-        "version"
-      ]
-    },
-    "PomProject": {
-      "properties": {
-        "path": {
-          "type": "string"
-        },
-        "parent": {
-          "$ref": "#/$defs/PomParent"
-        },
-        "groupId": {
-          "type": "string"
-        },
-        "artifactId": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        }
-      },
-      "type": "object",
-      "required": [
-        "path",
-        "groupId",
-        "artifactId",
-        "version",
-        "name"
-      ]
-    },
-    "PomProperties": {
-      "properties": {
-        "path": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "groupId": {
-          "type": "string"
-        },
-        "artifactId": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "extraFields": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+        "files": {
+          "items": {
+            "$ref": "#/$defs/PortageFileRecord"
           },
-          "type": "object"
+          "type": "array"
         }
       },
       "type": "object",
       "required": [
-        "path",
-        "name",
-        "groupId",
-        "artifactId",
-        "version"
+        "installedSize",
+        "files"
       ]
     },
     "PortageFileRecord": {
@@ -1728,7 +1748,7 @@
         "sitePackagesRootPath"
       ]
     },
-    "PythonPipRequirements": {
+    "PythonPipRequirementsEntry": {
       "properties": {
         "name": {
           "type": "string"
@@ -1755,7 +1775,7 @@
         "versionConstraint"
       ]
     },
-    "PythonPipfileLock": {
+    "PythonPipfileLockEntry": {
       "properties": {
         "hashes": {
           "items": {
@@ -1823,120 +1843,6 @@
       },
       "type": "object"
     },
-    "RedhatRpmArchive": {
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "epoch": {
-          "oneOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "architecture": {
-          "type": "string"
-        },
-        "release": {
-          "type": "string"
-        },
-        "sourceRpm": {
-          "type": "string"
-        },
-        "size": {
-          "type": "integer"
-        },
-        "vendor": {
-          "type": "string"
-        },
-        "modularityLabel": {
-          "type": "string"
-        },
-        "files": {
-          "items": {
-            "$ref": "#/$defs/RpmFileRecord"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object",
-      "required": [
-        "name",
-        "version",
-        "epoch",
-        "architecture",
-        "release",
-        "sourceRpm",
-        "size",
-        "vendor",
-        "modularityLabel",
-        "files"
-      ]
-    },
-    "RedhatRpmDbRecord": {
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "epoch": {
-          "oneOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "architecture": {
-          "type": "string"
-        },
-        "release": {
-          "type": "string"
-        },
-        "sourceRpm": {
-          "type": "string"
-        },
-        "size": {
-          "type": "integer"
-        },
-        "vendor": {
-          "type": "string"
-        },
-        "modularityLabel": {
-          "type": "string"
-        },
-        "files": {
-          "items": {
-            "$ref": "#/$defs/RpmFileRecord"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object",
-      "required": [
-        "name",
-        "version",
-        "epoch",
-        "architecture",
-        "release",
-        "sourceRpm",
-        "size",
-        "vendor",
-        "modularityLabel",
-        "files"
-      ]
-    },
     "Relationship": {
       "properties": {
         "parent": {
@@ -1955,6 +1861,120 @@
         "parent",
         "child",
         "type"
+      ]
+    },
+    "RpmArchive": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "epoch": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "release": {
+          "type": "string"
+        },
+        "sourceRpm": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "modularityLabel": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/RpmFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "epoch",
+        "architecture",
+        "release",
+        "sourceRpm",
+        "size",
+        "vendor",
+        "modularityLabel",
+        "files"
+      ]
+    },
+    "RpmDbEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "epoch": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "release": {
+          "type": "string"
+        },
+        "sourceRpm": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "modularityLabel": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/RpmFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "epoch",
+        "architecture",
+        "release",
+        "sourceRpm",
+        "size",
+        "vendor",
+        "modularityLabel",
+        "files"
       ]
     },
     "RpmFileRecord": {
@@ -2022,7 +2042,26 @@
         "version"
       ]
     },
-    "RustCargoLock": {
+    "RustCargoAuditEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source"
+      ]
+    },
+    "RustCargoLockEntry": {
       "properties": {
         "name": {
           "type": "string"
@@ -2140,7 +2179,7 @@
         "metadata"
       ]
     },
-    "SwiftPackageManagerLock": {
+    "SwiftPackageManagerLockEntry": {
       "properties": {
         "revision": {
           "type": "string"

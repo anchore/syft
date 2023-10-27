@@ -23,7 +23,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/one-package")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
-					Metadata:  pkg.GolangModMetadata{},
+					Metadata:  pkg.GolangModuleEntry{},
 				},
 			},
 		},
@@ -38,7 +38,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
-					Metadata:  pkg.GolangModMetadata{},
+					Metadata:  pkg.GolangModuleEntry{},
 				},
 				{
 					Name:      "github.com/anchore/go-version",
@@ -47,7 +47,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
-					Metadata:  pkg.GolangModMetadata{},
+					Metadata:  pkg.GolangModuleEntry{},
 				},
 				{
 					Name:      "github.com/anchore/stereoscope",
@@ -56,7 +56,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
-					Metadata:  pkg.GolangModMetadata{},
+					Metadata:  pkg.GolangModuleEntry{},
 				},
 				{
 					Name:      "github.com/bmatcuk/doublestar",
@@ -65,7 +65,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
-					Metadata:  pkg.GolangModMetadata{},
+					Metadata:  pkg.GolangModuleEntry{},
 				},
 				{
 					Name:      "github.com/go-test/deep",
@@ -74,7 +74,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
-					Metadata:  pkg.GolangModMetadata{},
+					Metadata:  pkg.GolangModuleEntry{},
 				},
 			},
 		},
@@ -107,7 +107,7 @@ func Test_GoSumHashes(t *testing.T) {
 					FoundBy:   "go-mod-file-cataloger",
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
-					Metadata:  pkg.GolangModMetadata{},
+					Metadata:  pkg.GolangModuleEntry{},
 				},
 				{
 					Name:      "github.com/acarl005/stripansi",
@@ -117,7 +117,7 @@ func Test_GoSumHashes(t *testing.T) {
 					FoundBy:   "go-mod-file-cataloger",
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
-					Metadata: pkg.GolangModMetadata{
+					Metadata: pkg.GolangModuleEntry{
 						H1Digest: "h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=",
 					},
 				},
@@ -129,7 +129,7 @@ func Test_GoSumHashes(t *testing.T) {
 					FoundBy:   "go-mod-file-cataloger",
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
-					Metadata: pkg.GolangModMetadata{
+					Metadata: pkg.GolangModuleEntry{
 						H1Digest: "h1:5PJl274Y63IEHC+7izoQE9x6ikvDFZS2mDVS3drnohI=",
 					},
 				},

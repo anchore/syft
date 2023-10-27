@@ -22,7 +22,7 @@ func TestParseStackLock(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.Haskell,
 			Type:      pkg.HackagePkg,
-			Metadata: pkg.HackageStackYamlLockMetadata{
+			Metadata: pkg.HackageStackYamlLockEntry{
 				PkgHash:     "6042643c15a0b43e522a6693f1e322f05000d519543a84149cb80aeffee34f71",
 				SnapshotURL: url,
 			},
@@ -34,7 +34,7 @@ func TestParseStackLock(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.Haskell,
 			Type:      pkg.HackagePkg,
-			Metadata: pkg.HackageStackYamlLockMetadata{
+			Metadata: pkg.HackageStackYamlLockEntry{
 				PkgHash:     "cd9b06a458428e493a4d6def725af7ab1ab0fef678fbd871f9586fc7f9aa70be",
 				SnapshotURL: url,
 			},
@@ -46,7 +46,7 @@ func TestParseStackLock(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.Haskell,
 			Type:      pkg.HackagePkg,
-			Metadata: pkg.HackageStackYamlLockMetadata{
+			Metadata: pkg.HackageStackYamlLockEntry{
 				PkgHash:     "2cfe6e75990e690f595a87cbe553f2e90fcd738610f6c66749c81cc4396b2cc4",
 				SnapshotURL: url,
 			},
@@ -58,7 +58,7 @@ func TestParseStackLock(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.Haskell,
 			Type:      pkg.HackagePkg,
-			Metadata: pkg.HackageStackYamlLockMetadata{
+			Metadata: pkg.HackageStackYamlLockEntry{
 				PkgHash:     "0848d3cbc9d94e1e539948fa0be4d0326b26335034161bf8076785293444ca6f",
 				SnapshotURL: url,
 			},
@@ -70,7 +70,7 @@ func TestParseStackLock(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.Haskell,
 			Type:      pkg.HackagePkg,
-			Metadata: pkg.HackageStackYamlLockMetadata{
+			Metadata: pkg.HackageStackYamlLockEntry{
 				PkgHash:     "b56d4dea112d97a2ef4b2749508c0ca646828cb2d77b827e8dc433d249bb2062",
 				SnapshotURL: url,
 			},
@@ -82,7 +82,7 @@ func TestParseStackLock(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.Haskell,
 			Type:      pkg.HackagePkg,
-			Metadata: pkg.HackageStackYamlLockMetadata{
+			Metadata: pkg.HackageStackYamlLockEntry{
 				PkgHash:     "52c8eaecd2d1c2a969c0762277c4a8ee72c339a686727d5785932e72ef9c3050",
 				SnapshotURL: url,
 			},
@@ -94,7 +94,7 @@ func TestParseStackLock(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.Haskell,
 			Type:      pkg.HackagePkg,
-			Metadata: pkg.HackageStackYamlLockMetadata{
+			Metadata: pkg.HackageStackYamlLockEntry{
 				PkgHash:     "418c22ed6a19124d457d96bc66bd22c93ac22fad0c7100fe4972bbb4ac989731",
 				SnapshotURL: url,
 			},
@@ -106,7 +106,7 @@ func TestParseStackLock(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.Haskell,
 			Type:      pkg.HackagePkg,
-			Metadata: pkg.HackageStackYamlLockMetadata{
+			Metadata: pkg.HackageStackYamlLockEntry{
 				PkgHash:     "2a38b3dad40d238ab644e234b692c8911423f9d3ed0e36b62287c4a698d92cd1",
 				SnapshotURL: url,
 			},
@@ -118,7 +118,7 @@ func TestParseStackLock(t *testing.T) {
 			Locations: locationSet,
 			Language:  pkg.Haskell,
 			Type:      pkg.HackagePkg,
-			Metadata: pkg.HackageStackYamlLockMetadata{
+			Metadata: pkg.HackageStackYamlLockEntry{
 				PkgHash:     "708ebb95117f2872d2c5a554eb6804cf1126e86abe793b2673f913f14e5eb1ac",
 				SnapshotURL: url,
 			},

@@ -32,7 +32,7 @@ func TestDpkgCataloger(t *testing.T) {
 						file.NewVirtualLocation("/usr/share/doc/libpam-runtime/copyright", "/usr/share/doc/libpam-runtime/copyright"),
 					),
 					Type: pkg.DebPkg,
-					Metadata: pkg.DpkgMetadata{
+					Metadata: pkg.DpkgDBEntry{
 						Package:       "libpam-runtime",
 						Source:        "pam",
 						Version:       "1.1.8-3.6",
@@ -104,7 +104,7 @@ func TestDpkgCataloger(t *testing.T) {
 						file.NewVirtualLocation("/usr/share/doc/libsqlite3-0/copyright", "/usr/share/doc/libsqlite3-0/copyright"),
 					),
 					Type: pkg.DebPkg,
-					Metadata: pkg.DpkgMetadata{
+					Metadata: pkg.DpkgDBEntry{
 						Package:       "libsqlite3-0",
 						Source:        "sqlite3",
 						Version:       "3.34.1-3",

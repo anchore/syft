@@ -51,7 +51,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 			}`),
 			assert: func(p *Package) {
 				require.NotNil(t, p.Metadata)
-				golangMetadata := p.Metadata.(pkg.GolangBinMetadata)
+				golangMetadata := p.Metadata.(pkg.GolangBinaryBuildinfoEntry)
 				require.NotEmpty(t, golangMetadata)
 				assert.Equal(t, "go1.18", golangMetadata.GoCompiledVersion)
 			},
@@ -207,7 +207,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 `),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.RpmPkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.RpmDBMetadata{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeOf(pkg.RpmDBEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 		{
@@ -248,7 +248,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 `),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.RpmPkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.RpmArchiveMetadata{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeOf(pkg.RpmArchive{}).Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 		{
@@ -287,7 +287,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 }`),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.HackagePkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.HackageStackYamlMetadata{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeOf(pkg.HackageStackYamlEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 		{
@@ -327,7 +327,63 @@ func Test_UnmarshalJSON(t *testing.T) {
 }`),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.HackagePkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.HackageStackYamlLockMetadata{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeOf(pkg.HackageStackYamlLockEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
+			},
+		},
+		{
+			name: "breaking v11-v12 schema change: rust cargo.lock vs audit (select cargo.lock)",
+			packageData: []byte(`{
+  "id": "95124ceb9287939e",
+  "name": "optpkg",
+  "version": "1.16.1",
+  "type": "hackage",
+  "foundBy": "rust-cataloger",
+  "locations": [
+    {
+      "path": "/cargo.lock",
+      "annotations": {
+        "evidence": "primary"
+      }
+    }
+  ],
+  "licenses": [],
+  "language": "rust",
+  "cpes": [],
+  "purl": "pkg:cargo/optpkg@1.16.1",
+  "metadataType": "RustCargoPackageMetadata",
+  "metadata": {}
+}`),
+			assert: func(p *Package) {
+				assert.Equal(t, pkg.HackagePkg, p.Type)
+				assert.Equal(t, reflect.TypeOf(pkg.RustCargoLockEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
+			},
+		},
+		{
+			name: "breaking v11-v12 schema change: rust cargo.lock vs audit (select audit binary)",
+			packageData: []byte(`{
+  "id": "95124ceb9287939e",
+  "name": "optpkg",
+  "version": "1.16.1",
+  "type": "hackage",
+  "foundBy": "rust-cataloger",
+  "locations": [
+    {
+      "path": "/my-binary",
+      "annotations": {
+        "evidence": "primary"
+      }
+    }
+  ],
+  "licenses": [],
+  "language": "rust",
+  "cpes": [],
+  "purl": "pkg:cargo/optpkg@1.16.1",
+  "metadataType": "RustCargoPackageMetadata",
+  "metadata": {}
+}`),
+			assert: func(p *Package) {
+				assert.Equal(t, pkg.HackagePkg, p.Type)
+				assert.Equal(t, reflect.TypeOf(pkg.RustBinaryAuditEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 	}
@@ -351,7 +407,7 @@ func Test_unpackMetadata(t *testing.T) {
 	}{
 		{
 			name:         "unmarshal package metadata",
-			wantMetadata: pkg.GolangBinMetadata{},
+			wantMetadata: pkg.GolangBinaryBuildinfoEntry{},
 			packageData: []byte(`{
 				"id": "8b594519bc23da50",
 				"name": "gopkg.in/square/go-jose.v2",
@@ -397,7 +453,7 @@ func Test_unpackMetadata(t *testing.T) {
 		},
 		{
 			name:         "can handle RpmdbMetadata",
-			wantMetadata: pkg.RpmDBMetadata{},
+			wantMetadata: pkg.RpmDBEntry{},
 			packageData: []byte(`{
 				"id": "4ac699c3b8fe1835",
 				"name": "acl",
@@ -470,14 +526,14 @@ func Test_unpackMetadata(t *testing.T) {
 			packageData: []byte(`{
 				"metadataType": "GolangBinMetadata"
 			}`),
-			wantMetadata: pkg.GolangBinMetadata{},
+			wantMetadata: pkg.GolangBinaryBuildinfoEntry{},
 		},
 		{
 			name: "can handle package with golang bin metadata type",
 			packageData: []byte(`{
 				"metadataType": "GolangBinMetadata"
 			}`),
-			wantMetadata: pkg.GolangBinMetadata{},
+			wantMetadata: pkg.GolangBinaryBuildinfoEntry{},
 		},
 		{
 			name: "can handle package with unknown metadata type and missing metadata",

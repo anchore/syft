@@ -275,7 +275,7 @@ func Test_toPackageChecksums(t *testing.T) {
 				Name:     "test",
 				Version:  "1.0.0",
 				Language: pkg.Java,
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					ArchiveDigests: []file.Digest{
 						{
 							Algorithm: "sha1", // SPDX expects these to be uppercase
@@ -298,7 +298,7 @@ func Test_toPackageChecksums(t *testing.T) {
 				Name:     "test",
 				Version:  "1.0.0",
 				Language: pkg.Java,
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					ArchiveDigests: []file.Digest{},
 				},
 			},
@@ -321,7 +321,7 @@ func Test_toPackageChecksums(t *testing.T) {
 				Name:     "test",
 				Version:  "1.0.0",
 				Language: pkg.Go,
-				Metadata: pkg.GolangBinMetadata{
+				Metadata: pkg.GolangBinaryBuildinfoEntry{
 					H1Digest: "h1:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9xHw=",
 				},
 			},
@@ -631,7 +631,7 @@ func Test_H1Digest(t *testing.T) {
 			pkg: pkg.Package{
 				Name:    "github.com/googleapis/gnostic",
 				Version: "v0.5.5",
-				Metadata: pkg.GolangBinMetadata{
+				Metadata: pkg.GolangBinaryBuildinfoEntry{
 					H1Digest: "h1:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9xHw=",
 				},
 			},
@@ -642,7 +642,7 @@ func Test_H1Digest(t *testing.T) {
 			pkg: pkg.Package{
 				Name:    "github.com/googleapis/gnostic",
 				Version: "v0.5.5",
-				Metadata: pkg.GolangBinMetadata{
+				Metadata: pkg.GolangBinaryBuildinfoEntry{
 					H1Digest: "h1:9fHAtK0uzzz",
 				},
 			},
@@ -653,7 +653,7 @@ func Test_H1Digest(t *testing.T) {
 			pkg: pkg.Package{
 				Name:    "github.com/googleapis/gnostic",
 				Version: "v0.5.5",
-				Metadata: pkg.GolangBinMetadata{
+				Metadata: pkg.GolangBinaryBuildinfoEntry{
 					H1Digest: "h12:9fHAtK0uDfpveeqqo1hkEZJcFvYXAiCN3UutL8F9xHw=",
 				},
 			},

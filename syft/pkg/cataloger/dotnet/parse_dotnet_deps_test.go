@@ -19,7 +19,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:    "TestLibrary",
 			Version: "1.0.0",
 		},
@@ -31,7 +31,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:    "TestCommon",
 			Version: "1.0.0",
 		},
@@ -43,7 +43,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "AWSSDK.Core",
 			Version:  "3.7.10.6",
 			Sha512:   "sha512-kHBB+QmosVaG6DpngXQ8OlLVVNMzltNITfsRr68Z90qO7dSqJ2EHNd8dtBU1u3AQQLqqFHOY0lfmbpexeH6Pew==",
@@ -58,7 +58,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.DependencyInjection.Abstractions",
 			Version:  "6.0.0",
 			Sha512:   "sha512-xlzi2IYREJH3/m6+lUrQlujzX8wDitm4QGnUu6kUXTQAWPuZY8i+ticFJbzfqaetLA6KR/rO6Ew/HuYD+bxifg==",
@@ -73,7 +73,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.DependencyInjection",
 			Version:  "6.0.0",
 			Sha512:   "sha512-k6PWQMuoBDGGHOQTtyois2u4AwyVcIwL2LaSLlTZQm2CYcJ1pxbt6jfAnpWmzENA/wfrYRI/X9DTLoUkE4AsLw==",
@@ -88,7 +88,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.Logging.Abstractions",
 			Version:  "6.0.0",
 			Sha512:   "sha512-/HggWBbTwy8TgebGSX5DBZ24ndhzi93sHUBDvP1IxbZD7FDokYzdAr6+vbWGjw2XAfR2EJ1sfKUotpjHnFWPxA==",
@@ -103,7 +103,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.Logging",
 			Version:  "6.0.0",
 			Sha512:   "sha512-eIbyj40QDg1NDz0HBW0S5f3wrLVnKWnDJ/JtZ+yJDFnDj90VoPuoPmFkeaXrtu+0cKm5GRAwoDf+dBWXK0TUdg==",
@@ -118,7 +118,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.Options",
 			Version:  "6.0.0",
 			Sha512:   "sha512-dzXN0+V1AyjOe2xcJ86Qbo233KHuLEY0njf/P2Kw8SfJU+d45HNS2ctJdnEnrWbM9Ye2eFgaC5Mj9otRMU6IsQ==",
@@ -133,7 +133,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.Primitives",
 			Version:  "6.0.0",
 			Sha512:   "sha512-9+PnzmQFfEFNR9J2aDTfJGGupShHjOuGw4VUv+JB044biSHrnmCIMD+mJHmb2H7YryrfBEXDurxQ47gJZdCKNQ==",
@@ -148,7 +148,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Newtonsoft.Json",
 			Version:  "13.0.1",
 			Sha512:   "sha512-ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A==",
@@ -163,7 +163,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Serilog.Sinks.Console",
 			Version:  "4.0.1",
 			Sha512:   "sha512-apLOvSJQLlIbKlbx+Y2UDHSP05kJsV7mou+fvJoRGs/iR+jC22r8cuFVMjjfVxz/AD4B2UCltFhE1naRLXwKNw==",
@@ -178,7 +178,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Serilog",
 			Version:  "2.10.0",
 			Sha512:   "sha512-+QX0hmf37a0/OZLxM3wL7V6/ADvC1XihXN4Kq/p6d8lCPfgkRdiuhbWlMaFjR9Av0dy5F0+MBeDmDdRZN/YwQA==",
@@ -193,7 +193,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "System.Diagnostics.DiagnosticSource",
 			Version:  "6.0.0",
 			Sha512:   "sha512-frQDfv0rl209cKm1lnwTgFPzNigy2EKk1BS3uAvHvlBVKe5cymGyHO+Sj+NLv5VF/AhHsqPIUUwya5oV4CHMUw==",
@@ -208,7 +208,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
-		Metadata: pkg.DotnetDepsMetadata{
+		Metadata: pkg.DotnetDepsEntry{
 			Name:     "System.Runtime.CompilerServices.Unsafe",
 			Version:  "6.0.0",
 			Sha512:   "sha512-/iUeP3tq1S0XdNNoMz5C9twLSrM/TH+qElHkXWaPvuNOt+99G75NrV0OS2EqHx5wMN7popYjpc8oTjC1y16DLg==",

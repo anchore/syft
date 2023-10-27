@@ -113,7 +113,7 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicense("MIT"),
 			),
-			Metadata: pkg.PythonPackageMetadata{
+			Metadata: pkg.PythonPackage{
 				Name:    "package-1",
 				Version: "1.0.1",
 			},
@@ -133,7 +133,7 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 			),
 			Type:    pkg.DebPkg,
 			FoundBy: "the-cataloger-2",
-			Metadata: pkg.DpkgMetadata{
+			Metadata: pkg.DpkgDBEntry{
 				Package: "package-2",
 				Version: "2.0.1",
 			},

@@ -13,7 +13,7 @@ func Test_packageURL(t *testing.T) {
 		testName string
 		name     string
 		version  string
-		metadata *pkg.PythonPackageMetadata
+		metadata *pkg.PythonPackage
 		want     string
 	}{
 		{
@@ -26,7 +26,7 @@ func Test_packageURL(t *testing.T) {
 			testName: "with vcs info",
 			name:     "name",
 			version:  "v0.1.0",
-			metadata: &pkg.PythonPackageMetadata{
+			metadata: &pkg.PythonPackage{
 				Name:    "bogus",  // note: ignored
 				Version: "v0.2.0", // note: ignored
 				DirectURLOrigin: &pkg.PythonDirectURLOriginInfo{

@@ -18,7 +18,7 @@ func TestParsePackageLock(t *testing.T) {
 			PURL:     "pkg:npm/%40actions/core@1.6.0",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@actions/core/-/core-1.6.0.tgz", Integrity: "sha512-NB1UAZomZlCV/LmJqkLhNTqtKfFXJZAUPcfl/zqG7EfsQdeUJtaWO98SGbuQ3pydJ3fHl2CvI/51OKYlCYYcaw=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@actions/core/-/core-1.6.0.tgz", Integrity: "sha512-NB1UAZomZlCV/LmJqkLhNTqtKfFXJZAUPcfl/zqG7EfsQdeUJtaWO98SGbuQ3pydJ3fHl2CvI/51OKYlCYYcaw=="},
 		},
 		{
 			Name:     "ansi-regex",
@@ -26,7 +26,7 @@ func TestParsePackageLock(t *testing.T) {
 			PURL:     "pkg:npm/ansi-regex@3.0.0",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/ansi-regex/-/ansi-regex-3.0.0.tgz", Integrity: "sha1-7QMXwyIGT3lGbAKWa922Bas32Zg="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/ansi-regex/-/ansi-regex-3.0.0.tgz", Integrity: "sha1-7QMXwyIGT3lGbAKWa922Bas32Zg="},
 		},
 		{
 			Name:     "cowsay",
@@ -34,7 +34,7 @@ func TestParsePackageLock(t *testing.T) {
 			PURL:     "pkg:npm/cowsay@1.4.0",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/cowsay/-/cowsay-1.4.0.tgz", Integrity: "sha512-rdg5k5PsHFVJheO/pmE3aDg2rUDDTfPJau6yYkZYlHFktUz+UxbE+IgnUAEyyCyv4noL5ltxXD0gZzmHPCy/9g=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/cowsay/-/cowsay-1.4.0.tgz", Integrity: "sha512-rdg5k5PsHFVJheO/pmE3aDg2rUDDTfPJau6yYkZYlHFktUz+UxbE+IgnUAEyyCyv4noL5ltxXD0gZzmHPCy/9g=="},
 		},
 		{
 			Name:     "get-stdin",
@@ -42,7 +42,7 @@ func TestParsePackageLock(t *testing.T) {
 			PURL:     "pkg:npm/get-stdin@5.0.1",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/get-stdin/-/get-stdin-5.0.1.tgz", Integrity: "sha1-Ei4WFZHiH/TFJTAwVpPyDmOTo5g="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/get-stdin/-/get-stdin-5.0.1.tgz", Integrity: "sha1-Ei4WFZHiH/TFJTAwVpPyDmOTo5g="},
 		},
 		{
 			Name:     "is-fullwidth-code-point",
@@ -50,7 +50,7 @@ func TestParsePackageLock(t *testing.T) {
 			PURL:     "pkg:npm/is-fullwidth-code-point@2.0.0",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-2.0.0.tgz", Integrity: "sha1-o7MKXE8ZkYMWeqq5O+764937ZU8="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-2.0.0.tgz", Integrity: "sha1-o7MKXE8ZkYMWeqq5O+764937ZU8="},
 		},
 		{
 			Name:     "minimist",
@@ -58,7 +58,7 @@ func TestParsePackageLock(t *testing.T) {
 			PURL:     "pkg:npm/minimist@0.0.10",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/minimist/-/minimist-0.0.10.tgz", Integrity: "sha1-3j+YVD2/lggr5IrRoMfNqDYwHc8="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/minimist/-/minimist-0.0.10.tgz", Integrity: "sha1-3j+YVD2/lggr5IrRoMfNqDYwHc8="},
 		},
 		{
 			Name:     "optimist",
@@ -66,7 +66,7 @@ func TestParsePackageLock(t *testing.T) {
 			PURL:     "pkg:npm/optimist@0.6.1",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/optimist/-/optimist-0.6.1.tgz", Integrity: "sha1-2j6nRob6IaGaERwybpDrFaAZZoY="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/optimist/-/optimist-0.6.1.tgz", Integrity: "sha1-2j6nRob6IaGaERwybpDrFaAZZoY="},
 		},
 		{
 			Name:     "string-width",
@@ -74,7 +74,7 @@ func TestParsePackageLock(t *testing.T) {
 			PURL:     "pkg:npm/string-width@2.1.1",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/string-width/-/string-width-2.1.1.tgz", Integrity: "sha512-nOqH59deCq9SRHlxq1Aw85Jnt4w6KvLKqWVik6oA9ZklXLNIOlqg4F2yrT1MVaTjAqvVwdfeZ7w7aCvJD7ugkw=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/string-width/-/string-width-2.1.1.tgz", Integrity: "sha512-nOqH59deCq9SRHlxq1Aw85Jnt4w6KvLKqWVik6oA9ZklXLNIOlqg4F2yrT1MVaTjAqvVwdfeZ7w7aCvJD7ugkw=="},
 		},
 		{
 			Name:     "strip-ansi",
@@ -82,7 +82,7 @@ func TestParsePackageLock(t *testing.T) {
 			PURL:     "pkg:npm/strip-ansi@4.0.0",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/strip-ansi/-/strip-ansi-4.0.0.tgz", Integrity: "sha1-qEeQIusaw2iocTibY1JixQXuNo8="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/strip-ansi/-/strip-ansi-4.0.0.tgz", Integrity: "sha1-qEeQIusaw2iocTibY1JixQXuNo8="},
 		},
 		{
 			Name:     "strip-eof",
@@ -90,7 +90,7 @@ func TestParsePackageLock(t *testing.T) {
 			PURL:     "pkg:npm/strip-eof@1.0.0",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/strip-eof/-/strip-eof-1.0.0.tgz", Integrity: "sha1-u0P/VZim6wXYm1n80SnJgzE2Br8="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/strip-eof/-/strip-eof-1.0.0.tgz", Integrity: "sha1-u0P/VZim6wXYm1n80SnJgzE2Br8="},
 		},
 		{
 			Name:     "wordwrap",
@@ -98,7 +98,7 @@ func TestParsePackageLock(t *testing.T) {
 			PURL:     "pkg:npm/wordwrap@0.0.3",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/wordwrap/-/wordwrap-0.0.3.tgz", Integrity: "sha1-o9XabNXAvAAI03I0u68b7WMFkQc="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/wordwrap/-/wordwrap-0.0.3.tgz", Integrity: "sha1-o9XabNXAvAAI03I0u68b7WMFkQc="},
 		},
 	}
 	fixture := "test-fixtures/pkg-lock/package-lock.json"
@@ -119,7 +119,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			PURL:     "pkg:npm/npm@6.14.6",
-			Metadata: pkg.NpmPackageLockJSONMetadata{},
+			Metadata: pkg.NpmPackageLockEntry{},
 		},
 		{
 			Name:     "@types/prop-types",
@@ -130,7 +130,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 			),
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha1-XxnSuFqY6VWANvajysyIGUIPBc8="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha1-XxnSuFqY6VWANvajysyIGUIPBc8="},
 		},
 		{
 			Name:     "@types/react",
@@ -141,7 +141,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 			),
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.17.tgz", Integrity: "sha1-RYPZwyLWfv5LOak10iPtzHBQzPQ="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.17.tgz", Integrity: "sha1-RYPZwyLWfv5LOak10iPtzHBQzPQ="},
 		},
 		{
 			Name:     "@types/scheduler",
@@ -152,7 +152,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 			),
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha1-GmL4lSVyPd4kuhsBsJK/XfitTTk="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha1-GmL4lSVyPd4kuhsBsJK/XfitTTk="},
 		},
 		{
 			Name:     "csstype",
@@ -163,7 +163,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 			),
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.0.tgz", Integrity: "sha1-TdysNxjXh8+d8NG30VAzklyPKfI="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.0.tgz", Integrity: "sha1-TdysNxjXh8+d8NG30VAzklyPKfI="},
 		},
 	}
 	for i := range expectedPkgs {
@@ -182,7 +182,7 @@ func TestParsePackageLockV3(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			PURL:     "pkg:npm/lock-v3-fixture@1.0.0",
-			Metadata: pkg.NpmPackageLockJSONMetadata{},
+			Metadata: pkg.NpmPackageLockEntry{},
 		},
 		{
 			Name:     "@types/prop-types",
@@ -190,7 +190,7 @@ func TestParsePackageLockV3(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			PURL:     "pkg:npm/%40types/prop-types@15.7.5",
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w=="},
 		},
 		{
 			Name:     "@types/react",
@@ -198,7 +198,7 @@ func TestParsePackageLockV3(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			PURL:     "pkg:npm/%40types/react@18.0.20",
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.20.tgz", Integrity: "sha512-MWul1teSPxujEHVwZl4a5HxQ9vVNsjTchVA+xRqv/VYGCuKGAU6UhfrTdF5aBefwD1BHUD8i/zq+O/vyCm/FrA=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.20.tgz", Integrity: "sha512-MWul1teSPxujEHVwZl4a5HxQ9vVNsjTchVA+xRqv/VYGCuKGAU6UhfrTdF5aBefwD1BHUD8i/zq+O/vyCm/FrA=="},
 		},
 		{
 			Name:     "@types/scheduler",
@@ -206,7 +206,7 @@ func TestParsePackageLockV3(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			PURL:     "pkg:npm/%40types/scheduler@0.16.2",
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew=="},
 		},
 		{
 			Name:     "csstype",
@@ -214,7 +214,7 @@ func TestParsePackageLockV3(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			PURL:     "pkg:npm/csstype@3.1.1",
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.1.tgz", Integrity: "sha512-DJR/VvkAvSZW9bTouZue2sSxDwdTN92uHjqeKVm+0dAqdfNykRzQ95tay8aXMBAAPpUiq4Qcug2L7neoRh2Egw=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.1.tgz", Integrity: "sha512-DJR/VvkAvSZW9bTouZue2sSxDwdTN92uHjqeKVm+0dAqdfNykRzQ95tay8aXMBAAPpUiq4Qcug2L7neoRh2Egw=="},
 		},
 	}
 	for i := range expectedPkgs {
@@ -232,7 +232,7 @@ func TestParsePackageLockAlias(t *testing.T) {
 			PURL:     "pkg:npm/case@1.6.2",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/case/-/case-1.6.2.tgz", Integrity: "sha512-ll380ZRoraT7mUK2G92UbH+FJVD5AwdVIAYk9xhV1tauh0carDgYByUD1HhjCWsWgxrfQvCeHvtfj7IYR6TKeg=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/case/-/case-1.6.2.tgz", Integrity: "sha512-ll380ZRoraT7mUK2G92UbH+FJVD5AwdVIAYk9xhV1tauh0carDgYByUD1HhjCWsWgxrfQvCeHvtfj7IYR6TKeg=="},
 		},
 		{
 			Name:     "case",
@@ -240,7 +240,7 @@ func TestParsePackageLockAlias(t *testing.T) {
 			PURL:     "pkg:npm/case@1.6.3",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/case/-/case-1.6.3.tgz", Integrity: "sha512-mzDSXIPaFwVDvZAHqZ9VlbyF4yyXRuX6IvB06WvPYkqJVO24kX1PPhv9bfpKNFZyxYFmmgo03HUiD8iklmJYRQ=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/case/-/case-1.6.3.tgz", Integrity: "sha512-mzDSXIPaFwVDvZAHqZ9VlbyF4yyXRuX6IvB06WvPYkqJVO24kX1PPhv9bfpKNFZyxYFmmgo03HUiD8iklmJYRQ=="},
 		},
 		{
 			Name:     "@bundled-es-modules/chai",
@@ -248,7 +248,7 @@ func TestParsePackageLockAlias(t *testing.T) {
 			PURL:     "pkg:npm/%40bundled-es-modules/chai@4.2.2",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{Resolved: "https://registry.npmjs.org/@bundled-es-modules/chai/-/chai-4.2.2.tgz", Integrity: "sha512-iGmVYw2/zJCoqyKTtWEYCtFmMyi8WmACQKtky0lpNyEKWX0YIOpKWGD7saMXL+tPpllss0otilxV0SLwyi3Ytg=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@bundled-es-modules/chai/-/chai-4.2.2.tgz", Integrity: "sha512-iGmVYw2/zJCoqyKTtWEYCtFmMyi8WmACQKtky0lpNyEKWX0YIOpKWGD7saMXL+tPpllss0otilxV0SLwyi3Ytg=="},
 		},
 	}
 
@@ -265,7 +265,7 @@ func TestParsePackageLockAlias(t *testing.T) {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocations("ISC", file.NewLocation(packageLockV2)),
 		),
-		Metadata: pkg.NpmPackageLockJSONMetadata{},
+		Metadata: pkg.NpmPackageLockEntry{},
 	}
 
 	for _, pl := range packageLocks {
@@ -296,7 +296,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 				pkg.NewLicenseFromLocations("ISC", file.NewLocation(fixture)),
 			),
 			PURL:     "pkg:npm/tmp@1.0.0",
-			Metadata: pkg.NpmPackageLockJSONMetadata{},
+			Metadata: pkg.NpmPackageLockEntry{},
 		},
 		{
 			Name:     "pause-stream",
@@ -309,7 +309,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 				pkg.NewLicenseFromLocations("Apache2", file.NewLocation(fixture)),
 			),
 			PURL:     "pkg:npm/pause-stream@0.0.11",
-			Metadata: pkg.NpmPackageLockJSONMetadata{},
+			Metadata: pkg.NpmPackageLockEntry{},
 		},
 		{
 			Name:     "through",
@@ -320,7 +320,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 			),
 			PURL:     "pkg:npm/through@2.3.8",
-			Metadata: pkg.NpmPackageLockJSONMetadata{},
+			Metadata: pkg.NpmPackageLockEntry{},
 		},
 	}
 	for i := range expectedPkgs {

@@ -169,17 +169,17 @@ func candidateVendors(p pkg.Package) []string {
 	}
 
 	switch p.Metadata.(type) {
-	case pkg.RpmDBMetadata:
+	case pkg.RpmDBEntry:
 		vendors.union(candidateVendorsForRPM(p))
-	case pkg.GemMetadata:
+	case pkg.RubyGemspec:
 		vendors.union(candidateVendorsForRuby(p))
-	case pkg.PythonPackageMetadata:
+	case pkg.PythonPackage:
 		vendors.union(candidateVendorsForPython(p))
-	case pkg.JavaMetadata:
+	case pkg.JavaArchive:
 		vendors.union(candidateVendorsForJava(p))
-	case pkg.ApkMetadata:
+	case pkg.ApkDBEntry:
 		vendors.union(candidateVendorsForAPK(p))
-	case pkg.NpmPackageJSONMetadata:
+	case pkg.NpmPackage:
 		vendors.union(candidateVendorsForJavascript(p))
 	}
 
@@ -217,7 +217,7 @@ func candidateVendors(p pkg.Package) []string {
 func candidateProducts(p pkg.Package) []string {
 	products := newFieldCandidateSet(p.Name)
 
-	_, hasJavaMetadata := p.Metadata.(pkg.JavaMetadata)
+	_, hasJavaMetadata := p.Metadata.(pkg.JavaArchive)
 
 	switch {
 	case p.Language == pkg.Python:
@@ -236,7 +236,7 @@ func candidateProducts(p pkg.Package) []string {
 		}
 	}
 
-	if _, hasAPKMetadata := p.Metadata.(pkg.ApkMetadata); hasAPKMetadata {
+	if _, hasAPKMetadata := p.Metadata.(pkg.ApkDBEntry); hasAPKMetadata {
 		products.union(candidateProductsForAPK(p))
 	}
 

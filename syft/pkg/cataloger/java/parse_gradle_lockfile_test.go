@@ -21,8 +21,8 @@ func Test_parserGradleLockfile(t *testing.T) {
 					Version:  "1.8",
 					Language: pkg.Java,
 					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaMetadata{
-						PomProject: &pkg.PomProject{GroupID: "org.apache.commons", ArtifactID: "commons-text", Version: "1.8", Name: "commons-text"},
+					Metadata: pkg.JavaArchive{
+						PomProject: &pkg.JavaPomProject{GroupID: "org.apache.commons", ArtifactID: "commons-text", Version: "1.8", Name: "commons-text"},
 					},
 				},
 				{
@@ -30,8 +30,8 @@ func Test_parserGradleLockfile(t *testing.T) {
 					Version:  "1.3",
 					Language: pkg.Java,
 					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaMetadata{
-						PomProject: &pkg.PomProject{GroupID: "org.hamcrest", ArtifactID: "hamcrest-core", Version: "1.3", Name: "hamcrest-core"},
+					Metadata: pkg.JavaArchive{
+						PomProject: &pkg.JavaPomProject{GroupID: "org.hamcrest", ArtifactID: "hamcrest-core", Version: "1.3", Name: "hamcrest-core"},
 					},
 				},
 				{
@@ -39,8 +39,8 @@ func Test_parserGradleLockfile(t *testing.T) {
 					Version:  "2.2",
 					Language: pkg.Java,
 					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaMetadata{
-						PomProject: &pkg.PomProject{GroupID: "joda-time", ArtifactID: "joda-time", Version: "2.2", Name: "joda-time"},
+					Metadata: pkg.JavaArchive{
+						PomProject: &pkg.JavaPomProject{GroupID: "joda-time", ArtifactID: "joda-time", Version: "2.2", Name: "joda-time"},
 					},
 				},
 				{
@@ -48,8 +48,8 @@ func Test_parserGradleLockfile(t *testing.T) {
 					Version:  "4.12",
 					Language: pkg.Java,
 					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaMetadata{
-						PomProject: &pkg.PomProject{GroupID: "junit", ArtifactID: "junit", Version: "4.12", Name: "junit"},
+					Metadata: pkg.JavaArchive{
+						PomProject: &pkg.JavaPomProject{GroupID: "junit", ArtifactID: "junit", Version: "4.12", Name: "junit"},
 					},
 				},
 			},

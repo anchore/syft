@@ -23,7 +23,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
-			Metadata: pkg.PythonRequirementsMetadata{
+			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "flask",
 				VersionConstraint: "== 4.0.0",
 			},
@@ -35,7 +35,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
-			Metadata: pkg.PythonRequirementsMetadata{
+			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "foo",
 				VersionConstraint: "== 1.0.0",
 			},
@@ -47,7 +47,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
-			Metadata: pkg.PythonRequirementsMetadata{
+			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "SomeProject",
 				VersionConstraint: "==5.4",
 				Markers:           "python_version < '3.8'",
@@ -60,7 +60,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
-			Metadata: pkg.PythonRequirementsMetadata{
+			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "argh",
 				VersionConstraint: "==0.26.2",
 			},
@@ -72,7 +72,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
-			Metadata: pkg.PythonRequirementsMetadata{
+			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "argh",
 				VersionConstraint: "==0.26.3",
 			},
@@ -84,7 +84,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
-			Metadata: pkg.PythonRequirementsMetadata{
+			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "celery",
 				Extras:            []string{"redis", "pytest"},
 				VersionConstraint: "== 4.4.7",
@@ -97,7 +97,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
-			Metadata: pkg.PythonRequirementsMetadata{
+			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "GithubSampleProject",
 				VersionConstraint: "== 3.7.1",
 				URL:               "git+https://github.com/owner/repo@releases/tag/v3.7.1",
@@ -134,7 +134,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 					Locations: locations,
 					Language:  pkg.Python,
 					Type:      pkg.PythonPkg,
-					Metadata: pkg.PythonRequirementsMetadata{
+					Metadata: pkg.PythonRequirementsEntry{
 						Name:              "Mopidy-Dirble",
 						VersionConstraint: "~= 1.1",
 					},
@@ -146,7 +146,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 					Locations: locations,
 					Language:  pkg.Python,
 					Type:      pkg.PythonPkg,
-					Metadata: pkg.PythonRequirementsMetadata{
+					Metadata: pkg.PythonRequirementsEntry{
 						Name:              "sqlalchemy",
 						VersionConstraint: ">= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0",
 					},
@@ -158,7 +158,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 					Locations: locations,
 					Language:  pkg.Python,
 					Type:      pkg.PythonPkg,
-					Metadata: pkg.PythonRequirementsMetadata{
+					Metadata: pkg.PythonRequirementsEntry{
 						Name:              "bar",
 						VersionConstraint: ">= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0",
 					},
@@ -170,7 +170,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 					Locations: locations,
 					Language:  pkg.Python,
 					Type:      pkg.PythonPkg,
-					Metadata: pkg.PythonRequirementsMetadata{
+					Metadata: pkg.PythonRequirementsEntry{
 						Name:              "numpy",
 						VersionConstraint: ">= 3.4.1",
 						Markers:           `sys_platform == 'win32'`,
@@ -183,7 +183,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 					Locations: locations,
 					Language:  pkg.Python,
 					Type:      pkg.PythonPkg,
-					Metadata: pkg.PythonRequirementsMetadata{
+					Metadata: pkg.PythonRequirementsEntry{
 						Name:              "requests",
 						Extras:            []string{"security"},
 						VersionConstraint: "== 2.8.*",

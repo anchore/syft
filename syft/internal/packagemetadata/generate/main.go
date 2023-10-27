@@ -23,6 +23,10 @@ func main() {
 		panic(fmt.Errorf("unable to get all metadata type names: %w", err))
 	}
 
+	// for _, typeName := range typeNames {
+	//	fmt.Printf(" - %s\n", typeName)
+	//}
+
 	fmt.Printf("updating package metadata type list with %+v types\n", len(typeNames))
 
 	f := jen.NewFile("packagemetadata")

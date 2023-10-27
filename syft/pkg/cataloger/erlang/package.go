@@ -6,7 +6,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackage(d pkg.RebarLockMetadata, locations ...file.Location) pkg.Package {
+func newPackage(d pkg.ErlangRebarLockEntry, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      d.Name,
 		Version:   d.Version,
@@ -22,7 +22,7 @@ func newPackage(d pkg.RebarLockMetadata, locations ...file.Location) pkg.Package
 	return p
 }
 
-func packageURL(m pkg.RebarLockMetadata) string {
+func packageURL(m pkg.ErlangRebarLockEntry) string {
 	var qualifiers packageurl.Qualifiers
 
 	return packageurl.NewPackageURL(

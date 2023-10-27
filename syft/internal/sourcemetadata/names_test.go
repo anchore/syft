@@ -1,6 +1,7 @@
 package sourcemetadata
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -24,6 +25,6 @@ func TestAllNames(t *testing.T) {
 	}
 
 	for _, ty := range AllTypes() {
-		assert.NotEmpty(t, JSONName(ty), "metadata type %q does not have a JSON name", ty)
+		assert.NotEmpty(t, JSONName(ty), "metadata type %q does not have a JSON name", reflect.TypeOf(ty).Name())
 	}
 }

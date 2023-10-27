@@ -26,7 +26,7 @@ func TestAlpmCataloger(t *testing.T) {
 			Locations: file.NewLocationSet(dbLocation),
 			CPEs:      nil,
 			PURL:      "",
-			Metadata: pkg.AlpmMetadata{
+			Metadata: pkg.AlpmDBEntry{
 				BasePackage:  "gmp",
 				Package:      "gmp",
 				Version:      "6.2.1-2",

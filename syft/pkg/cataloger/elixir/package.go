@@ -6,7 +6,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackage(d pkg.MixLockMetadata, locations ...file.Location) pkg.Package {
+func newPackage(d pkg.ElixirMixLockEntry, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      d.Name,
 		Version:   d.Version,
@@ -22,7 +22,7 @@ func newPackage(d pkg.MixLockMetadata, locations ...file.Location) pkg.Package {
 	return p
 }
 
-func packageURL(m pkg.MixLockMetadata) string {
+func packageURL(m pkg.ElixirMixLockEntry) string {
 	var qualifiers packageurl.Qualifiers
 
 	return packageurl.NewPackageURL(

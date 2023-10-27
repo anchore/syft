@@ -99,7 +99,7 @@ func TestParseRpmDB(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT", packagesLocation),
 					),
-					Metadata: pkg.RpmDBMetadata{
+					Metadata: pkg.RpmDBEntry{
 						Name:      "dive",
 						Epoch:     nil,
 						Arch:      "x86_64",
@@ -127,7 +127,7 @@ func TestParseRpmDB(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT", packagesLocation),
 					),
-					Metadata: pkg.RpmDBMetadata{
+					Metadata: pkg.RpmDBEntry{
 						Name:      "dive",
 						Epoch:     nil,
 						Arch:      "x86_64",
@@ -168,12 +168,12 @@ func TestParseRpmDB(t *testing.T) {
 func TestToElVersion(t *testing.T) {
 	tests := []struct {
 		name     string
-		entry    pkg.RpmDBMetadata
+		entry    pkg.RpmDBEntry
 		expected string
 	}{
 		{
 			name: "no epoch",
-			entry: pkg.RpmDBMetadata{
+			entry: pkg.RpmDBEntry{
 				Version: "1.2.3-4",
 				Release: "el7",
 				Arch:    "x86-64",
@@ -182,7 +182,7 @@ func TestToElVersion(t *testing.T) {
 		},
 		{
 			name: "with 0 epoch",
-			entry: pkg.RpmDBMetadata{
+			entry: pkg.RpmDBEntry{
 				Version: "1.2.3-4",
 				Release: "el7",
 				Arch:    "x86-64",
@@ -192,7 +192,7 @@ func TestToElVersion(t *testing.T) {
 		},
 		{
 			name: "with non-zero epoch",
-			entry: pkg.RpmDBMetadata{
+			entry: pkg.RpmDBEntry{
 				Version: "1.2.3-4",
 				Release: "el7",
 				Arch:    "x86-64",

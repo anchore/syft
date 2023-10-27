@@ -19,7 +19,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewVirtualLocation("/hello-auditable", "/hello-auditable")),
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
-			Metadata: pkg.CargoPackageMetadata{
+			Metadata: pkg.RustBinaryAuditEntry{
 				Name:    "auditable",
 				Version: "0.1.0",
 				Source:  "local",
@@ -33,7 +33,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewVirtualLocation("/hello-auditable", "/hello-auditable")),
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
-			Metadata: pkg.CargoPackageMetadata{
+			Metadata: pkg.RustBinaryAuditEntry{
 				Name:    "hello-auditable",
 				Version: "0.1.0",
 				Source:  "local",

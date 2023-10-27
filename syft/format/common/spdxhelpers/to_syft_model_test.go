@@ -103,13 +103,13 @@ func TestToSyftModel(t *testing.T) {
 
 	p1 := pkgs[0]
 	assert.Equal(t, p1.Name, "pkg-1")
-	p1meta := p1.Metadata.(pkg.ApkMetadata)
+	p1meta := p1.Metadata.(pkg.ApkDBEntry)
 	assert.Equal(t, p1meta.OriginPackage, "p1-origin")
 	assert.Len(t, p1.CPEs, 2)
 
 	p2 := pkgs[1]
 	assert.Equal(t, p2.Name, "pkg-2")
-	p2meta := p2.Metadata.(pkg.DpkgMetadata)
+	p2meta := p2.Metadata.(pkg.DpkgDBEntry)
 	assert.Equal(t, p2meta.Source, "p2-origin")
 	assert.Equal(t, p2meta.SourceVersion, "9.1.3")
 	assert.Len(t, p2.CPEs, 3)
@@ -133,7 +133,7 @@ func Test_extractMetadata(t *testing.T) {
 					},
 				},
 			},
-			meta: pkg.DpkgMetadata{
+			meta: pkg.DpkgDBEntry{
 				Package:       "SomeDebPkg",
 				Source:        "somedebpkg-origin",
 				Version:       "43.1.235",
@@ -153,7 +153,7 @@ func Test_extractMetadata(t *testing.T) {
 					},
 				},
 			},
-			meta: pkg.ApkMetadata{
+			meta: pkg.ApkDBEntry{
 				Package:       "SomeApkPkg",
 				OriginPackage: "apk-origin",
 				Version:       "3.2.9",
@@ -172,7 +172,7 @@ func Test_extractMetadata(t *testing.T) {
 					},
 				},
 			},
-			meta: pkg.RpmDBMetadata{
+			meta: pkg.RpmDBEntry{
 				Name:      "SomeRpmPkg",
 				Version:   "13.2.79",
 				Epoch:     &oneTwoThreeFour,
@@ -312,7 +312,7 @@ func TestH1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			p := toSyftPackage(&test.pkg)
-			meta := p.Metadata.(pkg.GolangBinMetadata)
+			meta := p.Metadata.(pkg.GolangBinaryBuildinfoEntry)
 			require.Equal(t, test.expectedDigest, meta.H1Digest)
 		})
 	}

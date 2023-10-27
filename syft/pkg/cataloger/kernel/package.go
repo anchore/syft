@@ -10,7 +10,7 @@ import (
 
 const linuxKernelPackageName = "linux-kernel"
 
-func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, archiveLocation file.Location) pkg.Package {
+func newLinuxKernelPackage(metadata pkg.LinuxKernel, archiveLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      linuxKernelPackageName,
 		Version:   metadata.Version,
@@ -25,7 +25,7 @@ func newLinuxKernelPackage(metadata pkg.LinuxKernelMetadata, archiveLocation fil
 	return p
 }
 
-func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModuleMetadata, kmLocation file.Location) pkg.Package {
+func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModule, kmLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      metadata.Name,
 		Version:   metadata.Version,

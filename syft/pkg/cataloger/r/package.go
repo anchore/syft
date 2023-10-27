@@ -24,7 +24,7 @@ func newPackage(pd parseData, locations ...file.Location) pkg.Package {
 		Language:  pkg.R,
 		Type:      pkg.Rpkg,
 		PURL:      packageURL(pd),
-		Metadata:  pd.RDescriptionFileMetadata,
+		Metadata:  pd.RDescription,
 	}
 
 	result.SetID()

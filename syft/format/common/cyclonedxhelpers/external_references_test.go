@@ -23,7 +23,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 		{
 			name: "from apk",
 			input: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					URL: "http://a-place.gov",
 				},
 			},
@@ -34,7 +34,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 		{
 			name: "from npm with valid URL",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					URL: "http://a-place.gov",
 				},
 			},
@@ -45,7 +45,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 		{
 			name: "from npm with invalid URL but valid Homepage",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					URL:      "b-place",
 					Homepage: "http://b-place.gov",
 				},
@@ -62,7 +62,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 				Language: pkg.Rust,
 				Type:     pkg.RustPkg,
 				Licenses: pkg.NewLicenseSet(),
-				Metadata: pkg.CargoPackageMetadata{
+				Metadata: pkg.RustCargoLockEntry{
 					Name:     "ansi_term",
 					Version:  "0.12.1",
 					Source:   "registry+https://github.com/rust-lang/crates.io-index",
@@ -79,7 +79,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 		{
 			name: "from npm with homepage",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					URL:      "http://a-place.gov",
 					Homepage: "http://homepage",
 				},
@@ -92,7 +92,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 		{
 			name: "from gem",
 			input: pkg.Package{
-				Metadata: pkg.GemMetadata{
+				Metadata: pkg.RubyGemspec{
 					Homepage: "http://a-place.gov",
 				},
 			},
@@ -103,7 +103,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 		{
 			name: "from python direct url",
 			input: pkg.Package{
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					DirectURLOrigin: &pkg.PythonDirectURLOriginInfo{
 						URL: "http://a-place.gov",
 					},
@@ -116,7 +116,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 		{
 			name: "from python direct url with commit",
 			input: pkg.Package{
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					DirectURLOrigin: &pkg.PythonDirectURLOriginInfo{
 						URL:      "http://a-place.gov",
 						CommitID: "test",
@@ -130,7 +130,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 		{
 			name: "empty",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					URL: "",
 				},
 			},

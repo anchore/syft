@@ -22,7 +22,7 @@ func Test_DownloadLocation(t *testing.T) {
 		{
 			name: "from apk",
 			input: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					URL: "http://a-place.gov",
 				},
 			},
@@ -31,7 +31,7 @@ func Test_DownloadLocation(t *testing.T) {
 		{
 			name: "from npm",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					URL: "http://a-place.gov",
 				},
 			},
@@ -40,7 +40,7 @@ func Test_DownloadLocation(t *testing.T) {
 		{
 			name: "empty",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					URL: "",
 				},
 			},
@@ -49,7 +49,7 @@ func Test_DownloadLocation(t *testing.T) {
 		{
 			name: "from npm package-lock should include resolved",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageLockJSONMetadata{
+				Metadata: pkg.NpmPackageLockEntry{
 					Resolved: "http://package-lock.test",
 				},
 			},
@@ -58,7 +58,7 @@ func Test_DownloadLocation(t *testing.T) {
 		{
 			name: "from npm package-lock empty should be NONE",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageLockJSONMetadata{
+				Metadata: pkg.NpmPackageLockEntry{
 					Resolved: "",
 				},
 			},

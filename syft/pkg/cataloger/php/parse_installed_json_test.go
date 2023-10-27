@@ -26,7 +26,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicense("MIT"),
 			),
-			Metadata: pkg.PhpComposerInstalledMetadata{
+			Metadata: pkg.PhpComposerInstalledEntry{
 				Name:    "asm89/stack-cors",
 				Version: "1.3.0",
 				Source: pkg.PhpComposerExternalReference{
@@ -75,7 +75,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicense("MIT"),
 			),
-			Metadata: pkg.PhpComposerInstalledMetadata{
+			Metadata: pkg.PhpComposerInstalledEntry{
 				Name:    "behat/mink",
 				Version: "v1.8.1",
 				Source: pkg.PhpComposerExternalReference{

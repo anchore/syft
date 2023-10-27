@@ -4,19 +4,15 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-const catalogerName = "conan-cataloger"
-
-// NewConanCataloger returns a new C++ conanfile.txt and conan.lock cataloger object.
+// NewConanCataloger returns a new C/C++ conanfile.txt and conan.lock cataloger object.
 func NewConanCataloger() *generic.Cataloger {
-	return generic.NewCataloger(catalogerName).
+	return generic.NewCataloger("conan-cataloger").
 		WithParserByGlobs(parseConanfile, "**/conanfile.txt").
 		WithParserByGlobs(parseConanlock, "**/conan.lock")
 }
 
-const catalogerNameInfo = "conan-info-cataloger"
-
-// NewConanInfoCataloger returns a new C++ conaninfo.txt cataloger object.
+// NewConanInfoCataloger returns a new C/C++ conaninfo.txt cataloger object.
 func NewConanInfoCataloger() *generic.Cataloger {
-	return generic.NewCataloger(catalogerNameInfo).
+	return generic.NewCataloger("conan-info-cataloger").
 		WithParserByGlobs(parseConaninfo, "**/conaninfo.txt")
 }

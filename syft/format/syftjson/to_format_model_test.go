@@ -317,20 +317,20 @@ func Test_toPackageModel_metadataType(t *testing.T) {
 		{
 			name: "empty config",
 			p: pkg.Package{
-				Metadata: pkg.RpmDBMetadata{},
+				Metadata: pkg.RpmDBEntry{},
 			},
 			cfg: EncoderConfig{},
 			want: model.Package{
 				PackageCustomData: model.PackageCustomData{
-					MetadataType: "redhat-rpm-db-record",
-					Metadata:     pkg.RpmDBMetadata{},
+					MetadataType: "rpm-db-entry",
+					Metadata:     pkg.RpmDBEntry{},
 				},
 			},
 		},
 		{
 			name: "legacy config",
 			p: pkg.Package{
-				Metadata: pkg.RpmDBMetadata{},
+				Metadata: pkg.RpmDBEntry{},
 			},
 			cfg: EncoderConfig{
 				Legacy: true,
@@ -338,7 +338,7 @@ func Test_toPackageModel_metadataType(t *testing.T) {
 			want: model.Package{
 				PackageCustomData: model.PackageCustomData{
 					MetadataType: "RpmMetadata",
-					Metadata:     pkg.RpmDBMetadata{},
+					Metadata:     pkg.RpmDBEntry{},
 				},
 			},
 		},

@@ -16,7 +16,7 @@ var _ generic.Parser = parseComposerLock
 
 type parsedLockData struct {
 	License []string `json:"license"`
-	pkg.PhpComposerLockMetadata
+	pkg.PhpComposerLockEntry
 }
 
 type composerLock struct {

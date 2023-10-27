@@ -25,7 +25,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				FoundBy:  "python-package-cataloger",
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					Name:                 "no-version",
 					SitePackagesRootPath: "test-fixtures",
 				},
@@ -48,7 +48,7 @@ func Test_PackageCataloger(t *testing.T) {
 					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/egg-info/PKG-INFO")),
 				),
 				FoundBy: "python-package-cataloger",
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
 					Platform:             "UNKNOWN",
@@ -84,7 +84,7 @@ func Test_PackageCataloger(t *testing.T) {
 					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/casesensitive/EGG-INFO/PKG-INFO")),
 				),
 				FoundBy: "python-package-cataloger",
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
 					Platform:             "UNKNOWN",
@@ -121,7 +121,7 @@ func Test_PackageCataloger(t *testing.T) {
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/dist-info/METADATA")),
 				),
 				FoundBy: "python-package-cataloger",
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
 					Platform:             "any",
@@ -160,7 +160,7 @@ func Test_PackageCataloger(t *testing.T) {
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/casesensitive/DIST-INFO/METADATA")),
 				),
 				FoundBy: "python-package-cataloger",
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
 					Platform:             "any",
@@ -197,7 +197,7 @@ func Test_PackageCataloger(t *testing.T) {
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/malformed-record/dist-info/METADATA")),
 				),
 				FoundBy: "python-package-cataloger",
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
 					Platform:             "any",
@@ -228,7 +228,7 @@ func Test_PackageCataloger(t *testing.T) {
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/partial.dist-info/METADATA")),
 				),
 				FoundBy: "python-package-cataloger",
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
 					Platform:             "any",
@@ -251,7 +251,7 @@ func Test_PackageCataloger(t *testing.T) {
 					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/test.egg-info")),
 				),
 				FoundBy: "python-package-cataloger",
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
 					Platform:             "UNKNOWN",

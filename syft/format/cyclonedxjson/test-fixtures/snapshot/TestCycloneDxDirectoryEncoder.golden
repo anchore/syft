@@ -75,7 +75,7 @@
         },
         {
           "name": "syft:package:metadataType",
-          "value": "debian-dpkg-db-record"
+          "value": "dpkg-db-entry"
         },
         {
           "name": "syft:location:0:path",

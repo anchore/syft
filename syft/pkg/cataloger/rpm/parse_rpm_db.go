@@ -56,7 +56,7 @@ func parseRpmDB(resolver file.Resolver, env *generic.Environment, reader file.Lo
 			continue
 		}
 
-		metadata := pkg.RpmDBMetadata{
+		metadata := pkg.RpmDBEntry{
 			Name:            entry.Name,
 			Version:         entry.Version,
 			Epoch:           entry.Epoch,

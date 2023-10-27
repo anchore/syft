@@ -15,15 +15,15 @@ func TestDiscoverTypeNames_byExample(t *testing.T) {
 	}{
 		{
 			name: "go case",
-			want: "ApkMetadata",
+			want: "ApkDBEntry",
 		},
 		{
 			name: "type shadowed with another type",
-			want: "RpmDBMetadata",
+			want: "RpmDBEntry",
 		},
 		{
 			name: "type shadows another type",
-			want: "RpmArchiveMetadata",
+			want: "RpmArchive",
 		},
 	}
 

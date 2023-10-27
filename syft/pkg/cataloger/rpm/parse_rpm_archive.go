@@ -32,7 +32,7 @@ func parseRpmArchive(_ file.Resolver, _ *generic.Environment, reader file.Locati
 	size, _ := rpm.Header.InstalledSize()
 	files, _ := rpm.Header.GetFiles()
 
-	metadata := pkg.RpmArchiveMetadata{
+	metadata := pkg.RpmArchive{
 		Name:      nevra.Name,
 		Version:   nevra.Version,
 		Epoch:     parseEpoch(nevra.Epoch),

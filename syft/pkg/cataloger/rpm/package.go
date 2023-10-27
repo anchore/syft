@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newDBPackage(dbOrRpmLocation file.Location, m pkg.RpmDBMetadata, distro *linux.Release, licenses []string) pkg.Package {
+func newDBPackage(dbOrRpmLocation file.Location, m pkg.RpmDBEntry, distro *linux.Release, licenses []string) pkg.Package {
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   toELVersion(m.Epoch, m.Version, m.Release),
@@ -26,7 +26,7 @@ func newDBPackage(dbOrRpmLocation file.Location, m pkg.RpmDBMetadata, distro *li
 	return p
 }
 
-func newArchivePackage(archiveLocation file.Location, m pkg.RpmArchiveMetadata, licenses []string) pkg.Package {
+func newArchivePackage(archiveLocation file.Location, m pkg.RpmArchive, licenses []string) pkg.Package {
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   toELVersion(m.Epoch, m.Version, m.Release),
@@ -45,7 +45,7 @@ func newArchivePackage(archiveLocation file.Location, m pkg.RpmArchiveMetadata, 
 // Each line is the output from:
 // - rpm --query --all --query-format "%{NAME}\t%{VERSION}-%{RELEASE}\t%{INSTALLTIME}\t%{BUILDTIME}\t%{VENDOR}\t%{EPOCH}\t%{SIZE}\t%{ARCH}\t%{EPOCHNUM}\t%{SOURCERPM}\n"
 // - https://github.com/microsoft/CBL-Mariner/blob/3df18fac373aba13a54bd02466e64969574f13af/toolkit/docs/how_it_works/5_misc.md?plain=1#L150
-func newMetadataFromManifestLine(entry string) (*pkg.RpmDBMetadata, error) {
+func newMetadataFromManifestLine(entry string) (*pkg.RpmDBEntry, error) {
 	parts := strings.Split(entry, "\t")
 	if len(parts) < 10 {
 		return nil, fmt.Errorf("unexpected number of fields in line: %s", entry)
@@ -71,7 +71,7 @@ func newMetadataFromManifestLine(entry string) (*pkg.RpmDBMetadata, error) {
 	if err == nil {
 		size = converted
 	}
-	return &pkg.RpmDBMetadata{
+	return &pkg.RpmDBEntry{
 		Name:      parts[0],
 		Version:   version,
 		Epoch:     epoch,

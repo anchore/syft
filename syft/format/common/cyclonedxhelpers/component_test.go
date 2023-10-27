@@ -31,7 +31,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 				Locations: file.NewLocationSet(
 					file.NewLocationFromCoordinates(file.Coordinates{RealPath: "test"}),
 				),
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package:       "libc-utils",
 					OriginPackage: "libc-dev",
 					Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
@@ -50,7 +50,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 			},
 			expected: []cyclonedx.Property{
 				{Name: "syft:package:foundBy", Value: "cataloger"},
-				{Name: "syft:package:metadataType", Value: "alpine-apk-db-record"},
+				{Name: "syft:package:metadataType", Value: "apk-db-entry"},
 				{Name: "syft:location:0:path", Value: "test"},
 				{Name: "syft:metadata:gitCommitOfApkPort", Value: "97b1c2842faa3bfa30f5811ffbf16d5ff9f1a479"},
 				{Name: "syft:metadata:installedSize", Value: "4096"},
@@ -64,7 +64,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 		{
 			name: "from dpkg",
 			input: pkg.Package{
-				Metadata: pkg.DpkgMetadata{
+				Metadata: pkg.DpkgDBEntry{
 					Package:       "tzdata",
 					Version:       "2020a-0+deb10u1",
 					Source:        "tzdata-dev",
@@ -76,7 +76,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 				},
 			},
 			expected: []cyclonedx.Property{
-				{Name: "syft:package:metadataType", Value: "debian-dpkg-db-record"},
+				{Name: "syft:package:metadataType", Value: "dpkg-db-entry"},
 				{Name: "syft:metadata:installedSize", Value: "3036"},
 				{Name: "syft:metadata:source", Value: "tzdata-dev"},
 				{Name: "syft:metadata:sourceVersion", Value: "1.0"},
@@ -89,7 +89,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 				Version:  "v0.0.0-20211006190231-62292e806868",
 				Language: pkg.Go,
 				Type:     pkg.GoModulePkg,
-				Metadata: pkg.GolangBinMetadata{
+				Metadata: pkg.GolangBinaryBuildinfoEntry{
 					GoCompiledVersion: "1.17",
 					Architecture:      "amd64",
 					H1Digest:          "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
@@ -97,7 +97,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 			},
 			expected: []cyclonedx.Property{
 				{Name: "syft:package:language", Value: pkg.Go.String()},
-				{Name: "syft:package:metadataType", Value: "go-module-binary-buildinfo"},
+				{Name: "syft:package:metadataType", Value: "go-module-buildinfo-entry"},
 				{Name: "syft:package:type", Value: "go-module"},
 				{Name: "syft:metadata:architecture", Value: "amd64"},
 				{Name: "syft:metadata:goCompiledVersion", Value: "1.17"},
@@ -111,13 +111,13 @@ func Test_encodeComponentProperties(t *testing.T) {
 				Version:  "v0.0.0-20211006190231-62292e806868",
 				Language: pkg.Go,
 				Type:     pkg.GoModulePkg,
-				Metadata: pkg.GolangModMetadata{
+				Metadata: pkg.GolangModuleEntry{
 					H1Digest: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k=",
 				},
 			},
 			expected: []cyclonedx.Property{
 				{Name: "syft:package:language", Value: pkg.Go.String()},
-				{Name: "syft:package:metadataType", Value: "go-module"},
+				{Name: "syft:package:metadataType", Value: "go-module-entry"},
 				{Name: "syft:package:type", Value: "go-module"},
 				{Name: "syft:metadata:h1Digest", Value: "h1:KlOXYy8wQWTUJYFgkUI40Lzr06ofg5IRXUK5C7qZt1k="},
 			},
@@ -128,7 +128,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 				Name:    "dive",
 				Version: "0.9.2-1",
 				Type:    pkg.RpmPkg,
-				Metadata: pkg.RpmDBMetadata{
+				Metadata: pkg.RpmDBEntry{
 					Name:      "dive",
 					Epoch:     &epoch,
 					Arch:      "x86_64",
@@ -141,7 +141,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 				},
 			},
 			expected: []cyclonedx.Property{
-				{Name: "syft:package:metadataType", Value: "redhat-rpm-db-record"},
+				{Name: "syft:package:metadataType", Value: "rpm-db-entry"},
 				{Name: "syft:package:type", Value: "rpm"},
 				{Name: "syft:metadata:epoch", Value: "2"},
 				{Name: "syft:metadata:release", Value: "1"},
@@ -302,7 +302,7 @@ func Test_decodeComponent(t *testing.T) {
 					},
 				},
 			},
-			wantMetadata: pkg.RpmDBMetadata{},
+			wantMetadata: pkg.RpmDBEntry{},
 		},
 		{
 			name: "handle RpmdbMetadata type with properties",
@@ -323,7 +323,7 @@ func Test_decodeComponent(t *testing.T) {
 					},
 				},
 			},
-			wantMetadata: pkg.RpmDBMetadata{
+			wantMetadata: pkg.RpmDBEntry{
 				Release: "some-release",
 			},
 		},

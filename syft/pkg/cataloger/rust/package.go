@@ -9,7 +9,7 @@ import (
 )
 
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the Cargo.lock metadata.
-func newPackageFromCargoMetadata(m pkg.CargoPackageMetadata, locations ...file.Location) pkg.Package {
+func newPackageFromCargoMetadata(m pkg.RustCargoLockEntry, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   m.Version,
@@ -47,7 +47,7 @@ func newPackageFromAudit(dep *rustaudit.Package, locations ...file.Location) pkg
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
 		Locations: file.NewLocationSet(locations...),
-		Metadata: pkg.CargoPackageMetadata{
+		Metadata: pkg.RustBinaryAuditEntry{
 			Name:    dep.Name,
 			Version: dep.Version,
 			Source:  dep.Source,

@@ -19,7 +19,7 @@ import (
 
 var versionCandidateGroups = regexp.MustCompile(`(?P<version>\d+(\.\d+)?(\.\d+)?)(?P<candidate>\w*)`)
 
-// NewGoModFileCataloger returns a new Go module cataloger object.
+// NewGoModFileCataloger returns a new cataloger object that searches within go.mod files.
 func NewGoModFileCataloger(opts GoCatalogerOpts) pkg.Cataloger {
 	c := goModCataloger{
 		licenses: newGoLicenses(opts),
@@ -31,7 +31,7 @@ func NewGoModFileCataloger(opts GoCatalogerOpts) pkg.Cataloger {
 	}
 }
 
-// NewGoModuleBinaryCataloger returns a new Golang cataloger object.
+// NewGoModuleBinaryCataloger returns a new cataloger object that searches within binaries built by the go compiler.
 func NewGoModuleBinaryCataloger(opts GoCatalogerOpts) pkg.Cataloger {
 	c := goBinaryCataloger{
 		licenses: newGoLicenses(opts),
@@ -58,7 +58,7 @@ func (p *progressingCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, [
 	goCompilerPkgs := []pkg.Package{}
 	totalLocations := file.NewLocationSet()
 	for _, goPkg := range pkgs {
-		mValue, ok := goPkg.Metadata.(pkg.GolangBinMetadata)
+		mValue, ok := goPkg.Metadata.(pkg.GolangBinaryBuildinfoEntry)
 		if !ok {
 			continue
 		}
@@ -89,7 +89,7 @@ func newGoStdLib(version string, location file.LocationSet) *pkg.Package {
 		Locations: location,
 		Language:  pkg.Go,
 		Type:      pkg.GoModulePkg,
-		Metadata: pkg.GolangBinMetadata{
+		Metadata: pkg.GolangBinaryBuildinfoEntry{
 			GoCompiledVersion: version,
 		},
 	}

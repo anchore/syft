@@ -42,7 +42,7 @@ func parseLinuxKernelFile(_ file.Resolver, _ *generic.Environment, reader file.L
 	}, nil, nil
 }
 
-func parseLinuxKernelMetadata(magicType []string) (p pkg.LinuxKernelMetadata) {
+func parseLinuxKernelMetadata(magicType []string) (p pkg.LinuxKernel) {
 	// Linux kernel x86 boot executable bzImage,
 	// version 5.10.121-linuxkit (root@buildkitsandbox) #1 SMP Fri Dec 2 10:35:42 UTC 2022,
 	// RO-rootFS,

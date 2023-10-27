@@ -7,7 +7,7 @@ import (
 )
 
 func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...file.Location) pkg.Package {
-	metadata := pkg.DartPubMetadata{
+	metadata := pkg.DartPubspecLockEntry{
 		Name:      name,
 		Version:   raw.Version,
 		HostedURL: raw.getHostedURL(),
@@ -29,7 +29,7 @@ func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...fil
 	return p
 }
 
-func packageURL(m pkg.DartPubMetadata) string {
+func packageURL(m pkg.DartPubspecLockEntry) string {
 	var qualifiers packageurl.Qualifiers
 
 	if m.HostedURL != "" {

@@ -55,7 +55,7 @@ func (c *goModCataloger) parseGoModFile(resolver file.Resolver, _ *generic.Envir
 			PURL:      packageURL(m.Mod.Path, m.Mod.Version),
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg,
-			Metadata: pkg.GolangModMetadata{
+			Metadata: pkg.GolangModuleEntry{
 				H1Digest: digests[fmt.Sprintf("%s %s", m.Mod.Path, m.Mod.Version)],
 			},
 		}
@@ -76,7 +76,7 @@ func (c *goModCataloger) parseGoModFile(resolver file.Resolver, _ *generic.Envir
 			PURL:      packageURL(m.New.Path, m.New.Version),
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg,
-			Metadata: pkg.GolangModMetadata{
+			Metadata: pkg.GolangModuleEntry{
 				H1Digest: digests[fmt.Sprintf("%s %s", m.New.Path, m.New.Version)],
 			},
 		}

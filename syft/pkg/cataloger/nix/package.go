@@ -14,7 +14,7 @@ func newNixStorePackage(storePath nixStorePath, locations ...file.Location) pkg.
 		Locations: file.NewLocationSet(locations...),
 		Type:      pkg.NixPkg,
 		PURL:      packageURL(storePath),
-		Metadata: pkg.NixStoreMetadata{
+		Metadata: pkg.NixStoreEntry{
 			OutputHash: storePath.outputHash,
 			Output:     storePath.output,
 		},

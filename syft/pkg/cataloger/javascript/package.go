@@ -27,7 +27,7 @@ func newPackageJSONPackage(u packageJSON, indexLocation file.Location) pkg.Packa
 		Language:  pkg.JavaScript,
 		Licenses:  pkg.NewLicenseSet(license...),
 		Type:      pkg.NpmPkg,
-		Metadata: pkg.NpmPackageJSONMetadata{
+		Metadata: pkg.NpmPackage{
 			Name:        u.Name,
 			Version:     u.Version,
 			Description: u.Description,
@@ -69,7 +69,7 @@ func newPackageLockV1Package(resolver file.Resolver, location file.Location, nam
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
 	)
 }
@@ -86,7 +86,7 @@ func newPackageLockV2Package(resolver file.Resolver, location file.Location, nam
 			PURL:      packageURL(name, u.Version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
 	)
 }

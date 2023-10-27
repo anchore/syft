@@ -16,7 +16,7 @@ func additionalVendorsForPython(v string) (vendors []string) {
 }
 
 func candidateVendorsForPython(p pkg.Package) fieldCandidateSet {
-	metadata, ok := p.Metadata.(pkg.PythonPackageMetadata)
+	metadata, ok := p.Metadata.(pkg.PythonPackage)
 	if !ok {
 		return nil
 	}
