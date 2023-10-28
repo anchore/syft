@@ -28,7 +28,7 @@ func TestNpmPackageLockDirectory(t *testing.T) {
 
 	// ensure that integration test commonTestCases stay in sync with the available catalogers
 	const expectedPackageCount = 7
-	if len(foundPackages) != expectedPackageCount {
+	if foundPackages.Size() != expectedPackageCount {
 		t.Errorf("found the wrong set of npm package-lock.json packages (expected: %d, actual: %d)", expectedPackageCount, foundPackages.Size())
 	}
 }
