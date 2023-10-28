@@ -3,9 +3,8 @@ package pkg
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/google/go-cmp/cmp"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 )
@@ -97,7 +96,7 @@ func TestLicenseSet_Add(t *testing.T) {
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
-					URLs:           internal.NewStringSet("https://example.com"),
+					URLs:           []string{"https://example.com"},
 					Locations:      file.NewLocationSet(file.NewLocation("/place")),
 				},
 			},
@@ -115,14 +114,13 @@ func TestLicenseSet_Add(t *testing.T) {
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Concluded,
-					URLs:           internal.NewStringSet(),
 					Locations:      file.NewLocationSet(),
 				},
 				{
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
-					URLs:           internal.NewStringSet("https://example.com"),
+					URLs:           []string{"https://example.com"},
 					Locations:      file.NewLocationSet(file.NewLocation("/place")),
 				},
 			},
@@ -133,7 +131,32 @@ func TestLicenseSet_Add(t *testing.T) {
 			s := NewLicenseSet()
 			s.Add(tt.licenses...)
 			testMe := s.ToSlice()
-			assert.Equal(t, tt.want, testMe)
+			if d := cmp.Diff(tt.want, testMe, cmp.Comparer(defaultLicenseComparer)); d != "" {
+				t.Errorf("unexpected license set (-want +got):\n%s", d)
+			}
 		})
 	}
+}
+
+func defaultLocationComparer(x, y file.Location) bool {
+	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
+}
+
+func defaultLicenseComparer(x, y License) bool {
+	return cmp.Equal(x, y, cmp.Comparer(defaultLocationComparer), cmp.Comparer(
+		func(x, y file.LocationSet) bool {
+			xs := x.ToSlice()
+			ys := y.ToSlice()
+			if len(xs) != len(ys) {
+				return false
+			}
+			for i, xe := range xs {
+				ye := ys[i]
+				if !defaultLocationComparer(xe, ye) {
+					return false
+				}
+			}
+			return true
+		},
+	))
 }

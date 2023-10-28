@@ -29,5 +29,12 @@ func NewPythonIndexCataloger(cfg CatalogerConfig) *generic.Cataloger {
 // NewPythonPackageCataloger returns a new cataloger for python packages within egg or wheel installation directories.
 func NewPythonPackageCataloger() *generic.Cataloger {
 	return generic.NewCataloger("python-package-cataloger").
-		WithParserByGlobs(parseWheelOrEgg, eggInfoGlob, "**/*dist-info/METADATA", "**/*egg-info/PKG-INFO")
+		WithParserByGlobs(
+			parseWheelOrEgg,
+			eggInfoGlob,
+			"**/*dist-info/METADATA",
+			"**/*egg-info/PKG-INFO",
+			"**/*DIST-INFO/METADATA",
+			"**/*EGG-INFO/PKG-INFO",
+		)
 }

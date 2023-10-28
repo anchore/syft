@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -149,7 +150,7 @@ func (j *archiveParser) parse() ([]pkg.Package, []artifact.Relationship, error) 
 // discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.
 func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 	// search and parse java manifest files
-	manifestMatches := j.fileManifest.GlobMatch(manifestGlob)
+	manifestMatches := j.fileManifest.GlobMatch(false, manifestGlob)
 	if len(manifestMatches) > 1 {
 		return nil, fmt.Errorf("found multiple manifests in the jar: %+v", manifestMatches)
 	} else if len(manifestMatches) == 0 {
@@ -177,6 +178,31 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		return nil, err
 	}
 
+	licenses, name, version, err := j.parseLicenses(manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pkg.Package{
+		// TODO: maybe select name should just have a pom properties in it?
+		Name:     name,
+		Version:  version,
+		Language: pkg.Java,
+		Licenses: pkg.NewLicenseSet(licenses...),
+		Locations: file.NewLocationSet(
+			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
+		Type:         j.fileInfo.pkgType(),
+		MetadataType: pkg.JavaMetadataType,
+		Metadata: pkg.JavaMetadata{
+			VirtualPath:    j.location.AccessPath(),
+			Manifest:       manifest,
+			ArchiveDigests: digests,
+		},
+	}, nil
+}
+
+func (j *archiveParser) parseLicenses(manifest *pkg.JavaManifest) ([]pkg.License, string, string, error) {
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
 	licenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
@@ -201,23 +227,17 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		licenses = append(licenses, pomLicenses...)
 	}
 
-	return &pkg.Package{
-		// TODO: maybe select name should just have a pom properties in it?
-		Name:     name,
-		Version:  version,
-		Language: pkg.Java,
-		Licenses: pkg.NewLicenseSet(licenses...),
-		Locations: file.NewLocationSet(
-			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-		),
-		Type:         j.fileInfo.pkgType(),
-		MetadataType: pkg.JavaMetadataType,
-		Metadata: pkg.JavaMetadata{
-			VirtualPath:    j.location.AccessPath(),
-			Manifest:       manifest,
-			ArchiveDigests: digests,
-		},
-	}, nil
+	if len(licenses) == 0 {
+		fileLicenses, err := j.getLicenseFromFileInArchive()
+		if err != nil {
+			return nil, "", "", err
+		}
+		if fileLicenses != nil {
+			licenses = append(licenses, fileLicenses...)
+		}
+	}
+
+	return licenses, name, version, nil
 }
 
 type parsedPomProject struct {
@@ -226,8 +246,8 @@ type parsedPomProject struct {
 }
 
 func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, version string, licenses []pkg.License) {
-	pomPropertyMatches := j.fileManifest.GlobMatch(pomPropertiesGlob)
-	pomMatches := j.fileManifest.GlobMatch(pomXMLGlob)
+	pomPropertyMatches := j.fileManifest.GlobMatch(false, pomPropertiesGlob)
+	pomMatches := j.fileManifest.GlobMatch(false, pomXMLGlob)
 	var pomPropertiesObject pkg.PomProperties
 	var pomProjectObject parsedPomProject
 	if len(pomPropertyMatches) == 1 || len(pomMatches) == 1 {
@@ -237,7 +257,7 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 		projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
 
 		for parentPath, propertiesObj := range properties {
-			if propertiesObj.ArtifactID != "" && j.fileInfo.name != "" && strings.HasPrefix(propertiesObj.ArtifactID, j.fileInfo.name) {
+			if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name) {
 				pomPropertiesObject = propertiesObj
 				if proj, exists := projects[parentPath]; exists {
 					pomProjectObject = proj
@@ -256,6 +276,13 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 	return name, version, pomProjectObject.Licenses
 }
 
+func artifactIDMatchesFilename(artifactID, fileName string) bool {
+	if artifactID == "" || fileName == "" {
+		return false
+	}
+	return strings.HasPrefix(artifactID, fileName) || strings.HasSuffix(fileName, artifactID)
+}
+
 // discoverPkgsFromAllMavenFiles parses Maven POM properties/xml for a given
 // parent package, returning all listed Java packages found for each pom
 // properties discovered and potentially updating the given parentPkg with new
@@ -268,13 +295,13 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 	var pkgs []pkg.Package
 
 	// pom.properties
-	properties, err := pomPropertiesByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(pomPropertiesGlob))
+	properties, err := pomPropertiesByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
 	if err != nil {
 		return nil, err
 	}
 
 	// pom.xml
-	projects, err := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(pomXMLGlob))
+	projects, err := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
 	if err != nil {
 		return nil, err
 	}
@@ -310,6 +337,38 @@ func getDigestsFromArchive(archivePath string) ([]file.Digest, error) {
 	return digests, nil
 }
 
+func (j *archiveParser) getLicenseFromFileInArchive() ([]pkg.License, error) {
+	var fileLicenses []pkg.License
+	for _, filename := range licenses.FileNames() {
+		licenseMatches := j.fileManifest.GlobMatch(true, "/META-INF/"+filename)
+		if len(licenseMatches) == 0 {
+			// Try the root directory if it's not in META-INF
+			licenseMatches = j.fileManifest.GlobMatch(true, "/"+filename)
+		}
+
+		if len(licenseMatches) > 0 {
+			contents, err := intFile.ContentsFromZip(j.archivePath, licenseMatches...)
+			if err != nil {
+				return nil, fmt.Errorf("unable to extract java license (%s): %w", j.location, err)
+			}
+
+			for _, licenseMatch := range licenseMatches {
+				licenseContents := contents[licenseMatch]
+				parsed, err := licenses.Parse(strings.NewReader(licenseContents), j.location)
+				if err != nil {
+					return nil, err
+				}
+
+				if len(parsed) > 0 {
+					fileLicenses = append(fileLicenses, parsed...)
+				}
+			}
+		}
+	}
+
+	return fileLicenses, nil
+}
+
 func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	// we know that all java archives are zip formatted files, so we can use the shared zip helper
 	return discoverPkgsFromZip(j.location, j.archivePath, j.contentPath, j.fileManifest, parentPkg)
@@ -319,7 +378,7 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) (
 // associating each discovered package to the given parent package.
 func discoverPkgsFromZip(location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
-	openers, err := intFile.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(archiveFormatGlobs...)...)
+	openers, err := intFile.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(false, archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}

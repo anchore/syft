@@ -6,6 +6,7 @@ In order to test and develop in this repo you will need the following dependenci
 - Golang
 - docker
 - make
+- Python (>= 3.9)
 
 ### Docker settings for getting started
 Make sure you've updated your docker settings so the default docker socket path is available.

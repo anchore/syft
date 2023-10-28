@@ -13,7 +13,6 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 	"github.com/scylladb/go-set/strset"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
@@ -118,13 +117,13 @@ func Generate(p pkg.Package) []cpe.CPE {
 		return nil
 	}
 
-	keys := internal.NewStringSet()
+	keys := strset.New()
 	cpes := make([]cpe.CPE, 0)
 	for _, product := range products {
 		for _, vendor := range vendors {
 			// prevent duplicate entries...
 			key := fmt.Sprintf("%s|%s|%s", product, vendor, p.Version)
-			if keys.Contains(key) {
+			if keys.Has(key) {
 				continue
 			}
 			keys.Add(key)

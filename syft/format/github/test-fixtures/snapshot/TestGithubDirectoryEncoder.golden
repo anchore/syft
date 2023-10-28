@@ -1,0 +1,33 @@
+{
+  "version": 0,
+  "job": {},
+  "detector": {
+    "name": "syft",
+    "url": "https://github.com/anchore/syft",
+    "version": "v0.42.0-bogus"
+  },
+  "metadata": {
+    "syft:distro": "pkg:generic/debian@1.2.3?like=like!"
+  },
+  "manifests": {
+    "redacted/some/path/some/path/pkg1": {
+      "name": "redacted/some/path/some/path/pkg1",
+      "file": {
+        "source_location": "redacted/some/path/some/path/pkg1"
+      },
+      "resolved": {
+        "": {
+          "package_url": "a-purl-2",
+          "relationship": "direct",
+          "scope": "runtime"
+        },
+        "pkg:deb/debian/package-2@2.0.1": {
+          "package_url": "pkg:deb/debian/package-2@2.0.1",
+          "relationship": "direct",
+          "scope": "runtime"
+        }
+      }
+    }
+  },
+  "scanned":"redacted"
+}
