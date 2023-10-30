@@ -308,7 +308,7 @@ func TestParseJar(t *testing.T) {
 			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
-			}, false, false)
+			}, false, Config{SearchMavevForLicenses: false})
 			defer cleanupFn()
 			require.NoError(t, err)
 
@@ -574,8 +574,9 @@ func TestParseNestedJar(t *testing.T) {
 
 			fixture, err := os.Open(test.fixture)
 			require.NoError(t, err)
+			gap := newGenericArchiveParserAdapter(Config{})
 
-			actual, _, err := parseJavaArchive(nil, nil, file.LocationReadCloser{
+			actual, _, err := gap.parseJavaArchive(nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			})
@@ -1158,11 +1159,12 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			gap := newGenericArchiveParserAdapter(Config{})
 			pkgtest.NewCatalogTester().
 				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName)).
 				Expects(tt.expectedPkgs, tt.expectedRelationships).
 				WithCompareOptions(cmpopts.IgnoreFields(pkg.JavaMetadata{}, "ArchiveDigests")).
-				TestParser(t, parseJavaArchive)
+				TestParser(t, gap.parseJavaArchive)
 		})
 	}
 }
