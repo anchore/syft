@@ -601,6 +601,12 @@ golang:
    # if unset this defaults to $GONOPROXY
    # SYFT_GOLANG_NOPROXY env var
    no-proxy: ""
+  
+java:
+   # when running across pom.xml files that could have more information
+   # explicitly search maven for license information by querying the online pom eg:
+   # https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-starter-test/3.1.5/spring-boot-starter-test-3.1.5.pom
+   search-maven-for-licenses: false
 
 linux-kernel:
    # whether to catalog linux kernel modules found within lib/modules/** directories
