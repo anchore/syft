@@ -1066,6 +1066,7 @@
       "ovirt-engine-sdk-python": "cpe:2.3:a:ovirt-engine-sdk-python_project:ovirt-engine-sdk-python:*:*:*:*:*:*:*:*",
       "passeo": "cpe:2.3:a:passeo_project:passeo:*:*:*:*:*:python:*:*",
       "pipreqs": "cpe:2.3:a:pipreqs_project:pipreqs:*:*:*:*:*:python:*:*",
+      "plone.namedfile": "cpe:2.3:a:plone:namedfile:*:*:*:*:*:*:*:*",
       "proxy.py": "cpe:2.3:a:proxy.py_project:proxy.py:*:*:*:*:*:*:*:*",
       "py-bcrypt": "cpe:2.3:a:python:py-bcrypt:*:*:*:*:*:*:*:*",
       "py-xml": "cpe:2.3:a:py-xml_project:py-xml:*:*:*:*:*:python:*:*",
