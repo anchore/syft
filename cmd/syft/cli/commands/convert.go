@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/formats"
+	"github.com/anchore/syft/syft/format"
 )
 
 const (
@@ -23,7 +23,7 @@ const (
 
 type ConvertOptions struct {
 	options.Config      `yaml:",inline" mapstructure:",squash"`
-	options.MultiOutput `yaml:",inline" mapstructure:",squash"`
+	options.Output      `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 }
 
@@ -33,6 +33,7 @@ func Convert(app clio.Application) *cobra.Command {
 
 	opts := &ConvertOptions{
 		UpdateCheck: options.DefaultUpdateCheck(),
+		Output:      options.DefaultOutput(),
 	}
 
 	return app.SetupCommand(&cobra.Command{
@@ -63,10 +64,13 @@ func RunConvert(opts *ConvertOptions, userInput string) error {
 		return err
 	}
 
-	var reader io.ReadCloser
+	var reader io.ReadSeekCloser
 
 	if userInput == "-" {
-		reader = os.Stdin
+		// though os.Stdin is an os.File, it does not support seeking
+		// you will get errors such as "seek /dev/stdin: illegal seek".
+		// We need to buffer what we read.
+		reader = internal.NewBufferedSeeker(os.Stdin)
 	} else {
 		f, err := os.Open(userInput)
 		if err != nil {
@@ -78,7 +82,7 @@ func RunConvert(opts *ConvertOptions, userInput string) error {
 		reader = f
 	}
 
-	s, _, err := formats.Decode(reader)
+	s, _, _, err := format.Decode(reader)
 	if err != nil {
 		return fmt.Errorf("failed to decode SBOM: %w", err)
 	}

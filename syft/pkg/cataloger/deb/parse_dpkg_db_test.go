@@ -22,13 +22,13 @@ import (
 func Test_parseDpkgStatus(t *testing.T) {
 	tests := []struct {
 		name        string
-		expected    []pkg.DpkgMetadata
+		expected    []pkg.DpkgDBEntry
 		fixturePath string
 	}{
 		{
 			name:        "single package",
 			fixturePath: "test-fixtures/status/single",
-			expected: []pkg.DpkgMetadata{
+			expected: []pkg.DpkgDBEntry{
 				{
 					Package:       "apt",
 					Source:        "apt-dev",
@@ -102,7 +102,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 		{
 			name:        "single package with installed size",
 			fixturePath: "test-fixtures/status/installed-size-4KB",
-			expected: []pkg.DpkgMetadata{
+			expected: []pkg.DpkgDBEntry{
 				{
 					Package:       "apt",
 					Source:        "apt-dev",
@@ -143,7 +143,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 		{
 			name:        "multiple entries",
 			fixturePath: "test-fixtures/status/multiple",
-			expected: []pkg.DpkgMetadata{
+			expected: []pkg.DpkgDBEntry{
 				{
 					Package: "no-version",
 					Files:   []pkg.DpkgFileRecord{},
@@ -339,13 +339,12 @@ Installed-Size: 10kib
 `,
 			want: []pkg.Package{
 				{
-					Name:         "apt",
-					Type:         "deb",
-					PURL:         "pkg:deb/debian/apt?distro=debian-10",
-					Licenses:     pkg.NewLicenseSet(),
-					Locations:    file.NewLocationSet(file.NewLocation("place")),
-					MetadataType: "DpkgMetadata",
-					Metadata: pkg.DpkgMetadata{
+					Name:      "apt",
+					Type:      "deb",
+					PURL:      "pkg:deb/debian/apt?distro=debian-10",
+					Licenses:  pkg.NewLicenseSet(),
+					Locations: file.NewLocationSet(file.NewLocation("place")),
+					Metadata: pkg.DpkgDBEntry{
 						Package:       "apt",
 						InstalledSize: 10240,
 						Files:         []pkg.DpkgFileRecord{},

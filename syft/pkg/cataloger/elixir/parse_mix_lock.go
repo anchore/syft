@@ -45,7 +45,7 @@ func parseMixLock(_ file.Resolver, _ *generic.Environment, reader file.LocationR
 
 		packages = append(packages,
 			newPackage(
-				pkg.MixLockMetadata{
+				pkg.ElixirMixLockEntry{
 					Name:       name,
 					Version:    version,
 					PkgHash:    hash,

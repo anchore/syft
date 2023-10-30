@@ -23,6 +23,7 @@ var (
 	_     generic.Parser = parsePortageContents
 )
 
+// parses individual CONTENTS files from the portage flat-file store (e.g. /var/db/pkg/*/*/CONTENTS).
 func parsePortageContents(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	cpvMatch := cpvRe.FindStringSubmatch(reader.Location.RealPath)
 	if cpvMatch == nil {
@@ -42,9 +43,8 @@ func parsePortageContents(resolver file.Resolver, _ *generic.Environment, reader
 		Locations: file.NewLocationSet(
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		Type:         pkg.PortagePkg,
-		MetadataType: pkg.PortageMetadataType,
-		Metadata: pkg.PortageMetadata{
+		Type: pkg.PortagePkg,
+		Metadata: pkg.PortageEntry{
 			// ensure the default value for a collection is never nil since this may be shown as JSON
 			Files: make([]pkg.PortageFileRecord, 0),
 		},
@@ -65,7 +65,7 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) 
 		return
 	}
 
-	entry, ok := p.Metadata.(pkg.PortageMetadata)
+	entry, ok := p.Metadata.(pkg.PortageEntry)
 	if !ok {
 		return
 	}
@@ -130,7 +130,7 @@ func addSize(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 		return
 	}
 
-	entry, ok := p.Metadata.(pkg.PortageMetadata)
+	entry, ok := p.Metadata.(pkg.PortageEntry)
 	if !ok {
 		return
 	}

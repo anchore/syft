@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/dave/jennifer/jen"
 
@@ -21,6 +22,10 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("unable to get all metadata type names: %w", err))
 	}
+
+	// for _, typeName := range typeNames {
+	//	fmt.Printf(" - %s\n", typeName)
+	//}
 
 	fmt.Printf("updating package metadata type list with %+v types\n", len(typeNames))
 
@@ -45,6 +50,12 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("unable to open file: %w", err))
 	}
+
+	// fix a little whitespacing
+	rendered = strings.ReplaceAll(rendered, ",", ",\n")
+	rendered = strings.ReplaceAll(rendered, "[]any{", "[]any{\n")
+	rendered = strings.ReplaceAll(rendered, "}}\n}", "},\n}\n}")
+
 	_, err = fh.WriteString(rendered)
 	if err != nil {
 		panic(fmt.Errorf("unable to write file: %w", err))

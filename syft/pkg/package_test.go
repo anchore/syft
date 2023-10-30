@@ -36,9 +36,8 @@ func TestIDUniqueness(t *testing.T) {
 		CPEs: []cpe.CPE{
 			cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 		},
-		PURL:         "pkg:pypi/pi@3.14",
-		MetadataType: PythonPackageMetadataType,
-		Metadata: PythonPackageMetadata{
+		PURL: "pkg:pypi/pi@3.14",
+		Metadata: PythonPackage{
 			Name:                 "pi",
 			Version:              "3.14",
 			Author:               "Archimedes",
@@ -66,7 +65,7 @@ func TestIDUniqueness(t *testing.T) {
 			name: "same metadata is ignored",
 			transform: func(pkg Package) Package {
 				// note: this is the same as the original values, just a new allocation
-				pkg.Metadata = PythonPackageMetadata{
+				pkg.Metadata = PythonPackage{
 					Name:                 "pi",
 					Version:              "3.14",
 					Author:               "Archimedes",
@@ -158,14 +157,6 @@ func TestIDUniqueness(t *testing.T) {
 			expectedIDComparison: assert.NotEqual,
 		},
 		{
-			name: "metadata type is reflected",
-			transform: func(pkg Package) Package {
-				pkg.MetadataType = RustCargoPackageMetadataType
-				return pkg
-			},
-			expectedIDComparison: assert.NotEqual,
-		},
-		{
 			name: "CPEs is ignored",
 			transform: func(pkg Package) Package {
 				pkg.CPEs = []cpe.CPE{}
@@ -192,7 +183,7 @@ func TestIDUniqueness(t *testing.T) {
 		{
 			name: "metadata mutation is reflected",
 			transform: func(pkg Package) Package {
-				metadata := pkg.Metadata.(PythonPackageMetadata)
+				metadata := pkg.Metadata.(PythonPackage)
 				metadata.Name = "new!"
 				pkg.Metadata = metadata
 				return pkg
@@ -202,7 +193,7 @@ func TestIDUniqueness(t *testing.T) {
 		{
 			name: "new metadata is reflected",
 			transform: func(pkg Package) Package {
-				pkg.Metadata = PythonPackageMetadata{
+				pkg.Metadata = PythonPackage{
 					Name: "new!",
 				}
 				return pkg
@@ -267,9 +258,8 @@ func TestPackage_Merge(t *testing.T) {
 				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 				},
-				PURL:         "pkg:pypi/pi@3.14",
-				MetadataType: PythonPackageMetadataType,
-				Metadata: PythonPackageMetadata{
+				PURL: "pkg:pypi/pi@3.14",
+				Metadata: PythonPackage{
 					Name:                 "pi",
 					Version:              "3.14",
 					Author:               "Archimedes",
@@ -290,9 +280,8 @@ func TestPackage_Merge(t *testing.T) {
 				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`), // NOTE: difference
 				},
-				PURL:         "pkg:pypi/pi@3.14",
-				MetadataType: PythonPackageMetadataType,
-				Metadata: PythonPackageMetadata{
+				PURL: "pkg:pypi/pi@3.14",
+				Metadata: PythonPackage{
 					Name:                 "pi",
 					Version:              "3.14",
 					Author:               "Archimedes",
@@ -315,9 +304,8 @@ func TestPackage_Merge(t *testing.T) {
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`), // NOTE: merge!
 				},
-				PURL:         "pkg:pypi/pi@3.14",
-				MetadataType: PythonPackageMetadataType,
-				Metadata: PythonPackageMetadata{
+				PURL: "pkg:pypi/pi@3.14",
+				Metadata: PythonPackage{
 					Name:                 "pi",
 					Version:              "3.14",
 					Author:               "Archimedes",
@@ -341,9 +329,8 @@ func TestPackage_Merge(t *testing.T) {
 				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 				},
-				PURL:         "pkg:pypi/pi@3.14",
-				MetadataType: PythonPackageMetadataType,
-				Metadata: PythonPackageMetadata{
+				PURL: "pkg:pypi/pi@3.14",
+				Metadata: PythonPackage{
 					Name:                 "pi",
 					Version:              "3.14",
 					Author:               "Archimedes",
@@ -364,9 +351,8 @@ func TestPackage_Merge(t *testing.T) {
 				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
 				},
-				PURL:         "pkg:pypi/pi@3.14",
-				MetadataType: PythonPackageMetadataType,
-				Metadata: PythonPackageMetadata{
+				PURL: "pkg:pypi/pi@3.14",
+				Metadata: PythonPackage{
 					Name:                 "pi",
 					Version:              "3.14",
 					Author:               "Archimedes",

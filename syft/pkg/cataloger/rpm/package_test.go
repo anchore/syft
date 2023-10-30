@@ -13,7 +13,7 @@ func Test_packageURL(t *testing.T) {
 	tests := []struct {
 		name     string
 		distro   *linux.Release
-		metadata pkg.RpmMetadata
+		metadata pkg.RpmDBEntry
 		expected string
 	}{
 		{
@@ -22,7 +22,7 @@ func Test_packageURL(t *testing.T) {
 				ID:        "rhel",
 				VersionID: "8.4",
 			},
-			metadata: pkg.RpmMetadata{
+			metadata: pkg.RpmDBEntry{
 				Name:    "p",
 				Version: "v",
 				Release: "r",
@@ -36,7 +36,7 @@ func Test_packageURL(t *testing.T) {
 				ID:        "centos",
 				VersionID: "7",
 			},
-			metadata: pkg.RpmMetadata{
+			metadata: pkg.RpmDBEntry{
 				Name:    "p",
 				Version: "v",
 				Arch:    "a",
@@ -47,7 +47,7 @@ func Test_packageURL(t *testing.T) {
 		},
 		{
 			name: "missing distro",
-			metadata: pkg.RpmMetadata{
+			metadata: pkg.RpmDBEntry{
 				Name:    "p",
 				Version: "v",
 				Release: "r",
@@ -61,7 +61,7 @@ func Test_packageURL(t *testing.T) {
 				ID:        "rhel",
 				VersionID: "8.4",
 			},
-			metadata: pkg.RpmMetadata{
+			metadata: pkg.RpmDBEntry{
 				Name:      "p",
 				Version:   "v",
 				Release:   "r",
@@ -73,7 +73,15 @@ func Test_packageURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := packageURL(test.metadata, test.distro)
+			actual := packageURL(
+				test.metadata.Name,
+				test.metadata.Arch,
+				test.metadata.Epoch,
+				test.metadata.SourceRpm,
+				test.metadata.Version,
+				test.metadata.Release,
+				test.distro,
+			)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

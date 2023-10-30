@@ -13,7 +13,7 @@ func Test_packageURL(t *testing.T) {
 	tests := []struct {
 		name     string
 		distro   *linux.Release
-		metadata pkg.DpkgMetadata
+		metadata pkg.DpkgDBEntry
 		expected string
 	}{
 		{
@@ -25,7 +25,7 @@ func Test_packageURL(t *testing.T) {
 					"debian",
 				},
 			},
-			metadata: pkg.DpkgMetadata{
+			metadata: pkg.DpkgDBEntry{
 				Package: "p",
 				Version: "v",
 			},
@@ -37,7 +37,7 @@ func Test_packageURL(t *testing.T) {
 				ID:        "debian",
 				VersionID: "11",
 			},
-			metadata: pkg.DpkgMetadata{
+			metadata: pkg.DpkgDBEntry{
 				Package: "p",
 				Version: "v",
 			},
@@ -52,7 +52,7 @@ func Test_packageURL(t *testing.T) {
 				},
 				VersionID: "16.04",
 			},
-			metadata: pkg.DpkgMetadata{
+			metadata: pkg.DpkgDBEntry{
 				Package:      "p",
 				Version:      "v",
 				Architecture: "a",
@@ -61,7 +61,7 @@ func Test_packageURL(t *testing.T) {
 		},
 		{
 			name: "missing distro",
-			metadata: pkg.DpkgMetadata{
+			metadata: pkg.DpkgDBEntry{
 				Package: "p",
 				Version: "v",
 			},
@@ -76,7 +76,7 @@ func Test_packageURL(t *testing.T) {
 					"debian",
 				},
 			},
-			metadata: pkg.DpkgMetadata{
+			metadata: pkg.DpkgDBEntry{
 				Package: "p",
 				Source:  "s",
 				Version: "v",
@@ -92,7 +92,7 @@ func Test_packageURL(t *testing.T) {
 					"debian",
 				},
 			},
-			metadata: pkg.DpkgMetadata{
+			metadata: pkg.DpkgDBEntry{
 				Package:       "p",
 				Source:        "s",
 				Version:       "v",

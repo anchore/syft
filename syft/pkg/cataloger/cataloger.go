@@ -45,6 +45,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		alpm.NewAlpmdbCataloger(),
 		apkdb.NewApkdbCataloger(),
 		binary.NewCataloger(),
+		cpp.NewConanInfoCataloger(),
 		deb.NewDpkgdbCataloger(),
 		dotnet.NewDotnetPortableExecutableCataloger(),
 		golang.NewGoModuleBinaryCataloger(cfg.Golang),
@@ -57,7 +58,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 		python.NewPythonPackageCataloger(),
 		r.NewPackageCataloger(),
 		rpm.NewRpmDBCataloger(),
-		ruby.NewGemSpecCataloger(),
+		ruby.NewInstalledGemSpecCataloger(),
 		sbom.NewSBOMCataloger(),
 	}, cfg.Catalogers)
 }
@@ -93,6 +94,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 		rpm.NewFileCataloger(),
 		rpm.NewRpmDBCataloger(),
 		ruby.NewGemFileLockCataloger(),
+		ruby.NewGemSpecCataloger(),
 		rust.NewCargoLockCataloger(),
 		sbom.NewSBOMCataloger(),
 		swift.NewCocoapodsCataloger(),
@@ -136,6 +138,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		rpm.NewRpmDBCataloger(),
 		ruby.NewGemFileLockCataloger(),
 		ruby.NewGemSpecCataloger(),
+		ruby.NewInstalledGemSpecCataloger(),
 		rust.NewAuditBinaryCataloger(),
 		rust.NewCargoLockCataloger(),
 		sbom.NewSBOMCataloger(),

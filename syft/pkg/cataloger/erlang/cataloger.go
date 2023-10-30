@@ -9,7 +9,7 @@ import (
 
 const catalogerName = "erlang-rebar-lock-cataloger"
 
-// NewRebarLockCataloger returns parses rebar.lock files and returns packages.
+// NewRebarLockCataloger returns a new cataloger instance for Erlang rebar.lock files.
 func NewRebarLockCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseRebarLock, "**/rebar.lock")

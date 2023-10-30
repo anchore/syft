@@ -67,13 +67,12 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "python language",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Python,
-				Type:         pkg.DebPkg,
-				MetadataType: pkg.PythonPackageMetadataType,
-				Metadata: pkg.PythonPackageMetadata{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Python,
+				Type:     pkg.DebPkg,
+				Metadata: pkg.PythonPackage{
 					Author:      "alex goodman",
 					AuthorEmail: "william.goodman@anchore.com",
 				},
@@ -117,12 +116,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "javascript language",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
 					Author: "jon",
 					URL:    "https://github.com/bob/npm-name",
 				},
@@ -135,13 +133,12 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "ruby language",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Ruby,
-				Type:         pkg.DebPkg,
-				MetadataType: pkg.GemMetadataType,
-				Metadata: pkg.GemMetadata{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Ruby,
+				Type:     pkg.DebPkg,
+				Metadata: pkg.RubyGemspec{
 					Authors: []string{
 						"someones name",
 						"someones.elses.name@gmail.com",
@@ -177,14 +174,13 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "java language with groupID",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID: "org.sonatype.nexus",
 					},
 				},
@@ -201,11 +197,10 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "java with URL in metadata", // regression: https://github.com/anchore/grype/issues/417
 			p: pkg.Package{
-				Name:         "wstx-asl",
-				Version:      "3.2.7",
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
+				Name:    "wstx-asl",
+				Version: "3.2.7",
+				Type:    pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							"Ant-Version":            "Apache Ant 1.6.5",
@@ -251,13 +246,12 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "java language - multi tier manifest fields",
 			p: pkg.Package{
-				Name:         "cxf-rt-bindings-xml",
-				Version:      "3.3.10",
-				FoundBy:      "java-cataloger",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
+				Name:     "cxf-rt-bindings-xml",
+				Version:  "3.3.10",
+				FoundBy:  "java-cataloger",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
 					VirtualPath: "/opt/jboss/keycloak/modules/system/layers/base/org/apache/cxf/impl/main/cxf-rt-bindings-xml-3.3.10.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
@@ -287,7 +281,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 							"Tool":                     "Bnd-4.2.0.201903051501",
 						},
 					},
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						Path:       "META-INF/maven/org.apache.cxf/cxf-rt-bindings-xml/pom.properties",
 						GroupID:    "org.apache.cxf",
 						ArtifactID: "cxf-rt-bindings-xml",
@@ -304,12 +298,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "rpm vendor selection",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Type:         pkg.RpmPkg,
-				MetadataType: pkg.RpmMetadataType,
-				Metadata: pkg.RpmMetadata{
+				Name:    "name",
+				Version: "3.2",
+				FoundBy: "some-analyzer",
+				Type:    pkg.RpmPkg,
+				Metadata: pkg.RpmDBEntry{
 					Vendor: "some-vendor",
 				},
 			},
@@ -322,12 +315,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "rpm with epoch",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "1:3.2",
-				FoundBy:      "some-analyzer",
-				Type:         pkg.RpmPkg,
-				MetadataType: pkg.RpmMetadataType,
-				Metadata: pkg.RpmMetadata{
+				Name:    "name",
+				Version: "1:3.2",
+				FoundBy: "some-analyzer",
+				Type:    pkg.RpmPkg,
+				Metadata: pkg.RpmDBEntry{
 					Vendor: "some-vendor",
 				},
 			},
@@ -340,12 +332,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "deb with epoch",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "1:3.2",
-				FoundBy:      "some-analyzer",
-				Type:         pkg.DebPkg,
-				MetadataType: pkg.DpkgMetadataType,
-				Metadata:     pkg.DpkgMetadata{},
+				Name:     "name",
+				Version:  "1:3.2",
+				FoundBy:  "some-analyzer",
+				Type:     pkg.DebPkg,
+				Metadata: pkg.DpkgDBEntry{},
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:1\\:3.2:*:*:*:*:*:*:*",
@@ -354,14 +345,13 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "cloudbees jenkins package identified via groupId",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Java,
-				Type:         pkg.JenkinsPluginPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID: "com.cloudbees.jenkins.plugins",
 					},
 				},
@@ -375,14 +365,13 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "jenkins.io package identified via groupId prefix",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Java,
-				Type:         pkg.JenkinsPluginPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID: "io.jenkins.plugins.name.something",
 					},
 				},
@@ -399,14 +388,13 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "jenkins.io package identified via groupId",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Java,
-				Type:         pkg.JenkinsPluginPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID: "io.jenkins.plugins",
 					},
 				},
@@ -419,14 +407,13 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "jenkins-ci.io package identified via groupId",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Java,
-				Type:         pkg.JenkinsPluginPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID: "io.jenkins-ci.plugins",
 					},
 				},
@@ -441,14 +428,13 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "jenkins-ci.org package identified via groupId",
 			p: pkg.Package{
-				Name:         "name",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Java,
-				Type:         pkg.JenkinsPluginPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Name:     "name",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID: "org.jenkins-ci.plugins",
 					},
 				},
@@ -463,14 +449,13 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "jira-atlassian filtering",
 			p: pkg.Package{
-				Name:         "jira_client_core",
-				Version:      "3.2",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Name:     "jira_client_core",
+				Version:  "3.2",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID:    "org.atlassian.jira",
 						ArtifactID: "jira_client_core",
 					},
@@ -498,14 +483,13 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "jenkins filtering",
 			p: pkg.Package{
-				Name:         "cloudbees-installation-manager",
-				Version:      "2.89.0.33",
-				FoundBy:      "some-analyzer",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Name:     "cloudbees-installation-manager",
+				Version:  "2.89.0.33",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID:    "com.cloudbees.jenkins.modules",
 						ArtifactID: "cloudbees-installation-manager",
 					},
@@ -568,13 +552,12 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "regression: handlebars within java archive",
 			p: pkg.Package{
-				Name:         "handlebars",
-				Version:      "3.0.8",
-				Type:         pkg.JavaPkg,
-				Language:     pkg.Java,
-				FoundBy:      "java-cataloger",
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
+				Name:     "handlebars",
+				Version:  "3.0.8",
+				Type:     pkg.JavaPkg,
+				Language: pkg.Java,
+				FoundBy:  "java-cataloger",
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							"Extension-Name":         "handlebars",
@@ -586,7 +569,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 							"Short-Name":             "handlebars",
 						},
 					},
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID:    "org.jenkins-ci.ui",
 						ArtifactID: "handlebars",
 						Version:    "3.0.8",
@@ -605,20 +588,19 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "regression: jenkins plugin active-directory",
 			p: pkg.Package{
-				Name:         "active-directory",
-				Version:      "2.25.1",
-				Type:         pkg.JenkinsPluginPkg,
-				FoundBy:      "java-cataloger",
-				Language:     pkg.Java,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
+				Name:     "active-directory",
+				Version:  "2.25.1",
+				Type:     pkg.JenkinsPluginPkg,
+				FoundBy:  "java-cataloger",
+				Language: pkg.Java,
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							"Extension-Name": "active-directory",
 							"Group-Id":       "org.jenkins-ci.plugins",
 						},
 					},
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID:    "org.jenkins-ci.plugins",
 						ArtifactID: "org.jenkins-ci.plugins",
 						Version:    "2.25.1",
@@ -643,13 +625,12 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "regression: special characters in CPE should result in no generation",
 			p: pkg.Package{
-				Name:         "bundler",
-				Version:      "2.1.4",
-				Type:         pkg.GemPkg,
-				FoundBy:      "gem-cataloger",
-				Language:     pkg.Ruby,
-				MetadataType: pkg.GemMetadataType,
-				Metadata: pkg.GemMetadata{
+				Name:     "bundler",
+				Version:  "2.1.4",
+				Type:     pkg.GemPkg,
+				FoundBy:  "gem-cataloger",
+				Language: pkg.Ruby,
+				Metadata: pkg.RubyGemspec{
 					Name:    "bundler",
 					Version: "2.1.4",
 					Authors: []string{
@@ -695,13 +676,12 @@ func TestGeneratePackageCPEs(t *testing.T) {
 		{
 			name: "regression: ruby-rake apk missing expected ruby-lang:rake CPE",
 			p: pkg.Package{
-				Name:         "ruby-rake",
-				Version:      "2.7.6-r0",
-				Type:         pkg.ApkPkg,
-				FoundBy:      "apk-db-analyzer",
-				Language:     pkg.UnknownLanguage,
-				MetadataType: pkg.ApkMetadataType,
-				Metadata: pkg.ApkMetadata{
+				Name:     "ruby-rake",
+				Version:  "2.7.6-r0",
+				Type:     pkg.ApkPkg,
+				FoundBy:  "apk-db-analyzer",
+				Language: pkg.UnknownLanguage,
+				Metadata: pkg.ApkDBEntry{
 					Package:       "ruby-rake",
 					URL:           "https://www.ruby-lang.org/",
 					OriginPackage: "ruby",
@@ -744,18 +724,18 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			sort.Strings(extra)
 			if len(extra) > 0 {
 				t.Errorf("found extra CPEs:")
-			}
-			for _, d := range extra {
-				fmt.Printf("   %q,\n", d)
+				for _, d := range extra {
+					t.Logf("   %q,\n", d)
+				}
 			}
 
 			missing := strset.Difference(expectedCpeSet, actualCpeSet).List()
 			sort.Strings(missing)
 			if len(missing) > 0 {
 				t.Errorf("missing CPEs:")
-			}
-			for _, d := range missing {
-				fmt.Printf("   %q,\n", d)
+				for _, d := range missing {
+					t.Logf("   %q,\n", d)
+				}
 			}
 		})
 	}
@@ -797,8 +777,8 @@ func TestCandidateProducts(t *testing.T) {
 				Name:     "some-java-package-with-group-id",
 				Type:     pkg.JavaPkg,
 				Language: pkg.Java,
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID: "com.apple.itunes",
 					},
 				},
@@ -811,8 +791,8 @@ func TestCandidateProducts(t *testing.T) {
 				Name:     "some-java-package-with-group-id",
 				Type:     pkg.JavaPkg,
 				Language: pkg.Java,
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID: "com.apple.itunes.*",
 					},
 				},
@@ -825,8 +805,8 @@ func TestCandidateProducts(t *testing.T) {
 				Name:     "some-jenkins-plugin",
 				Type:     pkg.JenkinsPluginPkg,
 				Language: pkg.Java,
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID: "com.cloudbees.jenkins.plugins",
 					},
 				},

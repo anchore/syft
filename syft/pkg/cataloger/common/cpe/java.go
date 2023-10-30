@@ -55,7 +55,7 @@ func candidateVendorsForJava(p pkg.Package) fieldCandidateSet {
 func vendorsFromJavaManifestNames(p pkg.Package) fieldCandidateSet {
 	vendors := newFieldCandidateSet()
 
-	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	metadata, ok := p.Metadata.(pkg.JavaArchive)
 	if !ok {
 		return vendors
 	}
@@ -159,7 +159,7 @@ func productsFromArtifactAndGroupIDs(artifactID string, groupIDs []string) []str
 }
 
 func artifactIDFromJavaPackage(p pkg.Package) string {
-	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	metadata, ok := p.Metadata.(pkg.JavaArchive)
 	if !ok {
 		return ""
 	}
@@ -177,7 +177,7 @@ func artifactIDFromJavaPackage(p pkg.Package) string {
 }
 
 func GroupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
-	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	metadata, ok := p.Metadata.(pkg.JavaArchive)
 	if !ok {
 		return nil
 	}
@@ -188,7 +188,7 @@ func GroupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 // GroupIDsFromJavaMetadata returns the possible group IDs for a Java package
 // This function is similar to GroupIDFromJavaPackage, but returns all possible group IDs and is less strict
 // It is used as a way to generate possible candidates for CPE matching.
-func GroupIDsFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupIDs []string) {
+func GroupIDsFromJavaMetadata(pkgName string, metadata pkg.JavaArchive) (groupIDs []string) {
 	groupIDs = append(groupIDs, groupIDsFromPomProperties(metadata.PomProperties)...)
 	groupIDs = append(groupIDs, groupIDsFromPomProject(metadata.PomProject)...)
 	groupIDs = append(groupIDs, groupIDsFromJavaManifest(pkgName, metadata.Manifest)...)
@@ -196,7 +196,7 @@ func GroupIDsFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupI
 	return groupIDs
 }
 
-func groupIDsFromPomProperties(properties *pkg.PomProperties) (groupIDs []string) {
+func groupIDsFromPomProperties(properties *pkg.JavaPomProperties) (groupIDs []string) {
 	if properties == nil {
 		return nil
 	}
@@ -214,7 +214,7 @@ func groupIDsFromPomProperties(properties *pkg.PomProperties) (groupIDs []string
 	return groupIDs
 }
 
-func groupIDsFromPomProject(project *pkg.PomProject) (groupIDs []string) {
+func groupIDsFromPomProject(project *pkg.JavaPomProject) (groupIDs []string) {
 	if project == nil {
 		return nil
 	}

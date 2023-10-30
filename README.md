@@ -530,6 +530,31 @@ platform: ""
 #   - spm-cataloger
 catalogers:
 
+
+# all format configuration
+format:
+
+  # all syft-json format options
+  json:
+      
+    # transform any syft-json output to conform to an approximation of the v11.0.1 schema. This includes:
+    # - using the package metadata type names from before v12 of the JSON schema (changed in https://github.com/anchore/syft/pull/1983)
+    #
+    # Note: this will still include package types and fields that were added at or after json schema v12. This means
+    # that output might not strictly be json schema v11 compliant, however, for consumers that require time to port
+    # over to the final syft 1.0 json output this option can be used to ease the transition.
+    #
+    # Note: long term support for this option is not guaranteed.
+    legacy: false
+
+  # all template format options
+  template:
+    # path to the template file to use when rendering the output with the `template` output format. 
+    # Note that all template paths are based on the current syft-json schema.
+    # same as -t ; SYFT_TEMPLATE_PATH env var
+    path: ""
+
+
 # cataloging packages is exposed through the packages and power-user subcommands
 package:
 

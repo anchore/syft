@@ -6,19 +6,15 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackage(name, version string, m *pkg.HackageMetadata, locations ...file.Location) pkg.Package {
+func newPackage(name, version string, m any, location file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
-		Locations: file.NewLocationSet(locations...),
+		Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		PURL:      packageURL(name, version),
 		Language:  pkg.Haskell,
 		Type:      pkg.HackagePkg,
-	}
-
-	if m != nil {
-		p.MetadataType = pkg.HackageMetadataType
-		p.Metadata = *m
+		Metadata:  m,
 	}
 
 	p.SetID()

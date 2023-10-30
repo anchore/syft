@@ -27,10 +27,10 @@ var (
 
 type parsedData struct {
 	License string `mapstructure:"L" json:"license"`
-	pkg.ApkMetadata
+	pkg.ApkDBEntry
 }
 
-// parseApkDB parses packages from a given APK installed DB file. For more
+// parseApkDB parses packages from a given APK "installed" flat-file DB. For more
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
 //nolint:funlen,gocognit
@@ -390,7 +390,7 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 	lookup := make(map[string][]pkg.Package)
 	// read "Provides" (p) and add as keys for lookup keys as well as package names
 	for _, p := range pkgs {
-		apkg, ok := p.Metadata.(pkg.ApkMetadata)
+		apkg, ok := p.Metadata.(pkg.ApkDBEntry)
 		if !ok {
 			log.Warnf("cataloger failed to extract apk 'provides' metadata for package %+v", p.Name)
 			continue
@@ -404,7 +404,7 @@ func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.R
 
 	// read "Pull Dependencies" (D) and match with keys
 	for _, p := range pkgs {
-		apkg, ok := p.Metadata.(pkg.ApkMetadata)
+		apkg, ok := p.Metadata.(pkg.ApkDBEntry)
 		if !ok {
 			log.Warnf("cataloger failed to extract apk dependency metadata for package %+v", p.Name)
 			continue

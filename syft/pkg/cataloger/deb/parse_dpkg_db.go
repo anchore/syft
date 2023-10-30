@@ -24,6 +24,7 @@ var (
 	sourceRegexp     = regexp.MustCompile(`(?P<name>\S+)( \((?P<version>.*)\))?`)
 )
 
+// parseDpkgDB reads a dpkg database "status" file (and surrounding data files) and returns the packages and relationships found.
 func parseDpkgDB(resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	metadata, err := parseDpkgStatus(reader)
 	if err != nil {
@@ -39,9 +40,9 @@ func parseDpkgDB(resolver file.Resolver, env *generic.Environment, reader file.L
 }
 
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
-func parseDpkgStatus(reader io.Reader) ([]pkg.DpkgMetadata, error) {
+func parseDpkgStatus(reader io.Reader) ([]pkg.DpkgDBEntry, error) {
 	buffedReader := bufio.NewReader(reader)
-	var metadata []pkg.DpkgMetadata
+	var metadata []pkg.DpkgDBEntry
 
 	continueProcessing := true
 	for continueProcessing {
@@ -80,7 +81,7 @@ type dpkgExtractedMetadata struct {
 }
 
 // parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
-func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgMetadata, error) {
+func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgDBEntry, error) {
 	var retErr error
 	dpkgFields, err := extractAllFields(reader)
 	if err != nil {
@@ -109,7 +110,7 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgMetadata, error) {
 		return nil, retErr
 	}
 
-	entry := pkg.DpkgMetadata{
+	entry := pkg.DpkgDBEntry{
 		Package:       raw.Package,
 		Source:        raw.Source,
 		Version:       raw.Version,
@@ -246,7 +247,7 @@ func associateRelationships(pkgs []pkg.Package) (relationships []artifact.Relati
 
 	// read provided and add as keys for lookup keys as well as package names
 	for _, p := range pkgs {
-		meta, ok := p.Metadata.(pkg.DpkgMetadata)
+		meta, ok := p.Metadata.(pkg.DpkgDBEntry)
 		if !ok {
 			log.Warnf("cataloger failed to extract dpkg 'provides' metadata for package %+v", p.Name)
 			continue
@@ -260,7 +261,7 @@ func associateRelationships(pkgs []pkg.Package) (relationships []artifact.Relati
 
 	// read "Depends" and "Pre-Depends" and match with keys
 	for _, p := range pkgs {
-		meta, ok := p.Metadata.(pkg.DpkgMetadata)
+		meta, ok := p.Metadata.(pkg.DpkgDBEntry)
 		if !ok {
 			log.Warnf("cataloger failed to extract dpkg 'dependency' metadata for package %+v", p.Name)
 			continue

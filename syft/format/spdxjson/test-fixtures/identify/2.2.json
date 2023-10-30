@@ -1,0 +1,104 @@
+{
+ "spdxVersion": "SPDX-2.2",
+ "dataLicense": "CC0-1.0",
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "go.mod",
+ "documentNamespace": "https://anchore.com/syft/file/go.mod-3f39882d-5e0e-43a8-901e-a09668b09aea",
+ "creationInfo": {
+  "licenseListVersion": "3.21",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: syft-0.91.0"
+  ],
+  "created": "2023-09-29T15:18:10Z"
+ },
+ "packages": [
+  {
+   "name": "github.com/wagoodman/go-partybus",
+   "SPDXID": "SPDXRef-Package-go-module-github.com-wagoodman-go-partybus-2ff71a67fb024c86",
+   "versionInfo": "v0.0.0-20230516145632-8ccac152c651",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "packageVerificationCode": {
+    "packageVerificationCodeValue": ""
+   },
+   "sourceInfo": "acquired package info from go module information: /go.mod",
+   "licenseConcluded": "NOASSERTION",
+   "licenseInfoFromFiles": null,
+   "licenseDeclared": "NOASSERTION",
+   "copyrightText": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:a:wagoodman:go-partybus:v0.0.0-20230516145632-8ccac152c651:*:*:*:*:*:*:*"
+    },
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:a:wagoodman:go_partybus:v0.0.0-20230516145632-8ccac152c651:*:*:*:*:*:*:*"
+    },
+    {
+     "referenceCategory": "PACKAGE_MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:golang/github.com/wagoodman/go-partybus@v0.0.0-20230516145632-8ccac152c651"
+    }
+   ]
+  },
+  {
+   "name": "go.mod",
+   "SPDXID": "SPDXRef-DocumentRoot-File-go.mod",
+   "versionInfo": "sha256:sha256:dc333f342905248a52e424d8dfd061251d01867d01a4f9d7397144a775ff9ebd",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "packageVerificationCode": {
+    "packageVerificationCodeValue": ""
+   },
+   "checksums": [
+    {
+     "algorithm": "SHA256",
+     "checksumValue": "dc333f342905248a52e424d8dfd061251d01867d01a4f9d7397144a775ff9ebd"
+    }
+   ],
+   "licenseConcluded": "",
+   "licenseInfoFromFiles": null,
+   "licenseDeclared": "",
+   "copyrightText": ""
+  }
+ ],
+ "files": [
+  {
+   "fileName": "/go.mod",
+   "SPDXID": "SPDXRef-File-go.mod-3fc5a8d3d86e9790",
+   "checksums": [
+    {
+     "algorithm": "SHA1",
+     "checksumValue": "0000000000000000000000000000000000000000"
+    }
+   ],
+   "licenseConcluded": "NOASSERTION",
+   "licenseInfoInFiles": null,
+   "copyrightText": ""
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-Package-go-module-github.com-wagoodman-go-partybus-2ff71a67fb024c86",
+   "relatedSpdxElement": "SPDXRef-File-go.mod-3fc5a8d3d86e9790",
+   "relationshipType": "OTHER",
+   "comment": "evident-by: indicates the package's existence is evident by the given file"
+  },
+  {
+   "spdxElementId": "SPDXRef-DocumentRoot-File-go.mod",
+   "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-wagoodman-go-partybus-2ff71a67fb024c86",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DOCUMENT",
+   "relatedSpdxElement": "SPDXRef-DocumentRoot-File-go.mod",
+   "relationshipType": "DESCRIBES"
+  }
+ ]
+}

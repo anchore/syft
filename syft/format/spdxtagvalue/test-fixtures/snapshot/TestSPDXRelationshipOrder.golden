@@ -1,0 +1,102 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: user-image-input
+DocumentNamespace: redacted
+LicenseListVersion: redacted
+Creator: Organization: Anchore, Inc
+Creator: Tool: syft-v0.42.0-bogus
+Created: redacted
+
+##### Unpackaged files
+
+FileName: /a1/f6
+SPDXID: SPDXRef-File-a1-f6-9c2f7510199b17f6
+FileType: OTHER
+FileChecksum: SHA1: 0000000000000000000000000000000000000000
+LicenseConcluded: NOASSERTION
+
+FileName: /d1/f3
+SPDXID: SPDXRef-File-d1-f3-c6f5b29dca12661f
+FileType: OTHER
+FileChecksum: SHA1: 0000000000000000000000000000000000000000
+LicenseConcluded: NOASSERTION
+
+FileName: /d2/f4
+SPDXID: SPDXRef-File-d2-f4-c641caa71518099f
+FileType: OTHER
+FileChecksum: SHA1: 0000000000000000000000000000000000000000
+LicenseConcluded: NOASSERTION
+
+FileName: /f1
+SPDXID: SPDXRef-File-f1-5265a4dde3edbf7c
+FileType: OTHER
+FileChecksum: SHA1: 0000000000000000000000000000000000000000
+LicenseConcluded: NOASSERTION
+
+FileName: /f2
+SPDXID: SPDXRef-File-f2-f9e49132a4b96ccd
+FileType: OTHER
+FileChecksum: SHA1: 0000000000000000000000000000000000000000
+LicenseConcluded: NOASSERTION
+
+FileName: /z1/f5
+SPDXID: SPDXRef-File-z1-f5-839d99ee67d9d174
+FileType: OTHER
+FileChecksum: SHA1: 0000000000000000000000000000000000000000
+LicenseConcluded: NOASSERTION
+
+##### Package: user-image-input
+
+PackageName: user-image-input
+SPDXID: SPDXRef-DocumentRoot-Image-user-image-input
+PackageVersion: sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+PrimaryPackagePurpose: CONTAINER
+FilesAnalyzed: false
+PackageChecksum: SHA256: 2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368
+ExternalRef: PACKAGE-MANAGER purl pkg:oci/user-image-input@sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch=
+
+##### Package: package-2
+
+PackageName: package-2
+SPDXID: SPDXRef-Package-deb-package-2-4b756c6f6fb127a3
+PackageVersion: 2.0.1
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from DPKG DB: /somefile-2.txt
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:2:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
+
+##### Package: package-1
+
+PackageName: package-1
+SPDXID: SPDXRef-Package-python-package-1-80210ebcba92e632
+PackageVersion: 1.0.1
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from installed python package manifest file: /somefile-1.txt
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: MIT
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:1:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl a-purl-1
+
+##### Relationships
+
+Relationship: SPDXRef-Package-python-package-1-80210ebcba92e632 CONTAINS SPDXRef-File-f1-5265a4dde3edbf7c
+Relationship: SPDXRef-Package-python-package-1-80210ebcba92e632 CONTAINS SPDXRef-File-z1-f5-839d99ee67d9d174
+Relationship: SPDXRef-Package-python-package-1-80210ebcba92e632 CONTAINS SPDXRef-File-a1-f6-9c2f7510199b17f6
+Relationship: SPDXRef-Package-python-package-1-80210ebcba92e632 CONTAINS SPDXRef-File-d2-f4-c641caa71518099f
+Relationship: SPDXRef-Package-python-package-1-80210ebcba92e632 CONTAINS SPDXRef-File-d1-f3-c6f5b29dca12661f
+Relationship: SPDXRef-Package-python-package-1-80210ebcba92e632 CONTAINS SPDXRef-File-f2-f9e49132a4b96ccd
+Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-python-package-1-80210ebcba92e632
+Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-deb-package-2-4b756c6f6fb127a3
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Image-user-image-input
+

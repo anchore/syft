@@ -91,16 +91,15 @@ func TestParseRpmDB(t *testing.T) {
 			ignorePaths: true,
 			expected: []pkg.Package{
 				{
-					Name:         "dive",
-					Version:      "0.9.2-1",
-					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
-					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/Packages")),
-					Type:         pkg.RpmPkg,
-					MetadataType: pkg.RpmMetadataType,
+					Name:      "dive",
+					Version:   "0.9.2-1",
+					PURL:      "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/Packages")),
+					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT", packagesLocation),
 					),
-					Metadata: pkg.RpmMetadata{
+					Metadata: pkg.RpmDBEntry{
 						Name:      "dive",
 						Epoch:     nil,
 						Arch:      "x86_64",
@@ -109,7 +108,7 @@ func TestParseRpmDB(t *testing.T) {
 						SourceRpm: "dive-0.9.2-1.src.rpm",
 						Size:      12406784,
 						Vendor:    "",
-						Files:     []pkg.RpmdbFileRecord{},
+						Files:     []pkg.RpmFileRecord{},
 					},
 				},
 			},
@@ -120,16 +119,15 @@ func TestParseRpmDB(t *testing.T) {
 			ignorePaths: false,
 			expected: []pkg.Package{
 				{
-					Name:         "dive",
-					Version:      "0.9.2-1",
-					PURL:         "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
-					Locations:    file.NewLocationSet(packagesLocation),
-					Type:         pkg.RpmPkg,
-					MetadataType: pkg.RpmMetadataType,
+					Name:      "dive",
+					Version:   "0.9.2-1",
+					PURL:      "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
+					Locations: file.NewLocationSet(packagesLocation),
+					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT", packagesLocation),
 					),
-					Metadata: pkg.RpmMetadata{
+					Metadata: pkg.RpmDBEntry{
 						Name:      "dive",
 						Epoch:     nil,
 						Arch:      "x86_64",
@@ -138,7 +136,7 @@ func TestParseRpmDB(t *testing.T) {
 						SourceRpm: "dive-0.9.2-1.src.rpm",
 						Size:      12406784,
 						Vendor:    "",
-						Files: []pkg.RpmdbFileRecord{
+						Files: []pkg.RpmFileRecord{
 							{
 								Path: "/usr/local/bin/dive",
 								Mode: 33261,
@@ -170,12 +168,12 @@ func TestParseRpmDB(t *testing.T) {
 func TestToElVersion(t *testing.T) {
 	tests := []struct {
 		name     string
-		entry    pkg.RpmMetadata
+		entry    pkg.RpmDBEntry
 		expected string
 	}{
 		{
 			name: "no epoch",
-			entry: pkg.RpmMetadata{
+			entry: pkg.RpmDBEntry{
 				Version: "1.2.3-4",
 				Release: "el7",
 				Arch:    "x86-64",
@@ -184,7 +182,7 @@ func TestToElVersion(t *testing.T) {
 		},
 		{
 			name: "with 0 epoch",
-			entry: pkg.RpmMetadata{
+			entry: pkg.RpmDBEntry{
 				Version: "1.2.3-4",
 				Release: "el7",
 				Arch:    "x86-64",
@@ -194,7 +192,7 @@ func TestToElVersion(t *testing.T) {
 		},
 		{
 			name: "with non-zero epoch",
-			entry: pkg.RpmMetadata{
+			entry: pkg.RpmDBEntry{
 				Version: "1.2.3-4",
 				Release: "el7",
 				Arch:    "x86-64",
@@ -206,7 +204,7 @@ func TestToElVersion(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, toELVersion(test.entry))
+			assert.Equal(t, test.expected, toELVersion(test.entry.Epoch, test.entry.Version, test.entry.Release))
 		})
 	}
 }

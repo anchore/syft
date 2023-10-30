@@ -32,7 +32,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 		line := scanner.Text()
 
 		// empty lines denote section separators
-		if strings.TrimSpace(line) == "" {
+		if line == "" {
 			// we don't want to allocate a new section map that won't necessarily be used, do that once there is
 			// a non-empty line to process
 
@@ -46,7 +46,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 			// this is a continuation
 
 			if lastKey == "" {
-				log.Warnf("java manifest %q: found continuation with no previous key: %q", path, line)
+				log.Debugf("java manifest %q: found continuation with no previous key: %q", path, line)
 				continue
 			}
 
@@ -58,7 +58,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 		// this is a new key-value pair
 		idx := strings.Index(line, ":")
 		if idx == -1 {
-			log.Warnf("java manifest %q: unable to split java manifest key-value pairs: %q", path, line)
+			log.Debugf("java manifest %q: unable to split java manifest key-value pairs: %q", path, line)
 			continue
 		}
 
@@ -95,7 +95,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 					// per the manifest spec (https://docs.oracle.com/en/java/javase/11/docs/specs/jar/jar.html#jar-manifest)
 					// this should never happen. If it does, we want to know about it, but not necessarily stop
 					// cataloging entirely... for this reason we only log.
-					log.Warnf("java manifest section found without a name: %s", path)
+					log.Debugf("java manifest section found without a name: %s", path)
 					name = strconv.Itoa(i)
 				} else {
 					delete(s, "Name")

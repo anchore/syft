@@ -17,12 +17,12 @@ func TestDatabaseParser(t *testing.T) {
 	tests := []struct {
 		name     string
 		fixture  string
-		expected pkg.AlpmMetadata
+		expected pkg.AlpmDBEntry
 	}{
 		{
 			name:    "test alpm database parsing",
 			fixture: "test-fixtures/files",
-			expected: pkg.AlpmMetadata{
+			expected: pkg.AlpmDBEntry{
 				Backup: []pkg.AlpmFileRecord{
 					{
 						Path: "/etc/pacman.conf",
