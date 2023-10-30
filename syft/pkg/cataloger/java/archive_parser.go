@@ -51,17 +51,18 @@ var javaArchiveHashes = []crypto.Hash{
 }
 
 type archiveParser struct {
-	fileManifest intFile.ZipFileManifest
-	location     file.Location
-	archivePath  string
-	contentPath  string
-	fileInfo     archiveFilename
-	detectNested bool
+	fileManifest           intFile.ZipFileManifest
+	location               file.Location
+	archivePath            string
+	contentPath            string
+	fileInfo               archiveFilename
+	detectNested           bool
+	searchMavenForLicenses bool
 }
 
 // parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
 func parseJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	parser, cleanupFn, err := newJavaArchiveParser(reader, true)
+	parser, cleanupFn, err := newJavaArchiveParser(reader, true, false)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {
@@ -80,7 +81,7 @@ func uniquePkgKey(groupID string, p *pkg.Package) string {
 
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
 // and parse nested archives or ignore them.
-func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool) (*archiveParser, func(), error) {
+func newJavaArchiveParser(reader file.LocationReadCloser, detectNested, searchMavenForLicense bool) (*archiveParser, func(), error) {
 	// fetch the last element of the virtual path
 	virtualElements := strings.Split(reader.AccessPath(), ":")
 	currentFilepath := virtualElements[len(virtualElements)-1]
@@ -96,12 +97,13 @@ func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool) (*a
 	}
 
 	return &archiveParser{
-		fileManifest: fileManifest,
-		location:     reader.Location,
-		archivePath:  archivePath,
-		contentPath:  contentPath,
-		fileInfo:     newJavaArchiveFilename(currentFilepath),
-		detectNested: detectNested,
+		fileManifest:           fileManifest,
+		location:               reader.Location,
+		archivePath:            archivePath,
+		contentPath:            contentPath,
+		fileInfo:               newJavaArchiveFilename(currentFilepath),
+		detectNested:           detectNested,
+		searchMavenForLicenses: searchMavenForLicense,
 	}, cleanupFn, nil
 }
 
@@ -281,7 +283,7 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 	if version == "" && pomProjectObject.PomProject != nil {
 		version = pomProjectObject.Version
 	}
-	if !reflect.ValueOf(pomProjectObject).IsZero() {
+	if !reflect.ValueOf(pomProjectObject).IsZero() && j.searchMavenForLicenses {
 		findPomLicenses(&pomProjectObject)
 	}
 

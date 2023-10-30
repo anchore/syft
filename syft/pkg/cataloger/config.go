@@ -13,7 +13,7 @@ type Config struct {
 	Golang                          golang.GoCatalogerOpts
 	LinuxKernel                     kernel.LinuxCatalogerConfig
 	Python                          python.CatalogerConfig
-	Java                            java.JavaCatalogerOpts
+	Java                            java.CatalogerOpts
 	Catalogers                      []string
 	Parallelism                     int
 	ExcludeBinaryOverlapByOwnership bool
@@ -30,6 +30,9 @@ func DefaultConfig() Config {
 	}
 }
 
+// JavaConfig merges relevant config values from Config to return a java.Config struct.
+// Values like IncludeUnindexedArchives and IncludeIndexedArchives are used across catalogers
+// and are not specific to Java requiring this merge.
 func (c Config) JavaConfig() java.Config {
 	return java.Config{
 		SearchUnindexedArchives: c.Search.IncludeUnindexedArchives,

@@ -1,16 +1,16 @@
 package java
 
-type JavaCatalogerOpts struct {
+type CatalogerOpts struct {
 	SearchMavenForLicenses bool
 }
 
-func (j JavaCatalogerOpts) WithSearchMavenForLicenses(input bool) JavaCatalogerOpts {
+func (j CatalogerOpts) WithSearchMavenForLicenses(input bool) CatalogerOpts {
 	j.SearchMavenForLicenses = input
 	return j
 }
 
-func NewJavaCatalogerOpts() JavaCatalogerOpts {
-	return JavaCatalogerOpts{
+func NewJavaCatalogerOpts() CatalogerOpts {
+	return CatalogerOpts{
 		SearchMavenForLicenses: false,
 	}
 }
