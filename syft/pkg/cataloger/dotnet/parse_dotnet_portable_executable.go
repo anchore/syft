@@ -92,7 +92,7 @@ func findName(versionResources map[string]string) string {
 			if strings.TrimSpace(name) == "" {
 				continue
 			}
-			return name
+			return strings.TrimSpace(name)
 		}
 	}
 	return ""
