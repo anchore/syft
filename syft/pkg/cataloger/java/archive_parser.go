@@ -136,7 +136,7 @@ func (j *archiveParser) parse() ([]pkg.Package, []artifact.Relationship, error) 
 	// jar, we wait until the conclusion of the parsing process before synthesizing pURLs.
 	for i := range pkgs {
 		p := &pkgs[i]
-		if m, ok := p.Metadata.(pkg.JavaMetadata); ok {
+		if m, ok := p.Metadata.(pkg.JavaArchive); ok {
 			p.PURL = packageURL(p.Name, p.Version, m)
 		} else {
 			log.WithFields("package", p.String()).Warn("unable to extract java metadata to generate purl")
@@ -192,9 +192,8 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		Locations: file.NewLocationSet(
 			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		Type:         j.fileInfo.pkgType(),
-		MetadataType: pkg.JavaMetadataType,
-		Metadata: pkg.JavaMetadata{
+		Type: j.fileInfo.pkgType(),
+		Metadata: pkg.JavaArchive{
 			VirtualPath:    j.location.AccessPath(),
 			Manifest:       manifest,
 			ArchiveDigests: digests,
@@ -241,14 +240,14 @@ func (j *archiveParser) parseLicenses(manifest *pkg.JavaManifest) ([]pkg.License
 }
 
 type parsedPomProject struct {
-	*pkg.PomProject
+	*pkg.JavaPomProject
 	Licenses []pkg.License
 }
 
 func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, version string, licenses []pkg.License) {
 	pomPropertyMatches := j.fileManifest.GlobMatch(false, pomPropertiesGlob)
 	pomMatches := j.fileManifest.GlobMatch(false, pomXMLGlob)
-	var pomPropertiesObject pkg.PomProperties
+	var pomPropertiesObject pkg.JavaPomProperties
 	var pomProjectObject parsedPomProject
 	if len(pomPropertyMatches) == 1 || len(pomMatches) == 1 {
 		// we have exactly 1 pom.properties or pom.xml in the archive; assume it represents the
@@ -266,11 +265,11 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 		}
 	}
 	name = pomPropertiesObject.ArtifactID
-	if name == "" && pomProjectObject.PomProject != nil {
+	if name == "" && pomProjectObject.JavaPomProject != nil {
 		name = pomProjectObject.ArtifactID
 	}
 	version = pomPropertiesObject.Version
-	if version == "" && pomProjectObject.PomProject != nil {
+	if version == "" && pomProjectObject.JavaPomProject != nil {
 		version = pomProjectObject.Version
 	}
 	return name, version, pomProjectObject.Licenses
@@ -400,7 +399,7 @@ func discoverPkgsFromOpeners(location file.Location, openers map[string]intFile.
 
 		// attach the parent package to all discovered packages that are not already associated with a java archive
 		for _, p := range nestedPkgs {
-			if metadata, ok := p.Metadata.(pkg.JavaMetadata); ok {
+			if metadata, ok := p.Metadata.(pkg.JavaArchive); ok {
 				if metadata.Parent == nil {
 					metadata.Parent = parentPkg
 				}
@@ -441,13 +440,13 @@ func discoverPkgsFromOpener(location file.Location, pathWithinArchive string, ar
 	return nestedPkgs, nestedRelationships, nil
 }
 
-func pomPropertiesByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]pkg.PomProperties, error) {
+func pomPropertiesByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]pkg.JavaPomProperties, error) {
 	contentsOfMavenPropertiesFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
 
-	propertiesByParentPath := make(map[string]pkg.PomProperties)
+	propertiesByParentPath := make(map[string]pkg.JavaPomProperties)
 	for filePath, fileContents := range contentsOfMavenPropertiesFiles {
 		pomProperties, err := parsePomProperties(filePath, strings.NewReader(fileContents))
 		if err != nil {
@@ -501,11 +500,11 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 
 // newPackageFromMavenData processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
-func newPackageFromMavenData(pomProperties pkg.PomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
+func newPackageFromMavenData(pomProperties pkg.JavaPomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
 	groupID := ""
-	if parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata); ok {
+	if parentMetadata, ok := parentPkg.Metadata.(pkg.JavaArchive); ok {
 		groupID = groupIDFromJavaMetadata(parentPkg.Name, parentMetadata)
 	}
 
@@ -523,10 +522,10 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, parsedPomProject *
 	}
 	virtualPath := location.AccessPath() + vPathSuffix
 
-	var pkgPomProject *pkg.PomProject
+	var pkgPomProject *pkg.JavaPomProject
 	licenses := make([]pkg.License, 0)
 	if parsedPomProject != nil {
-		pkgPomProject = parsedPomProject.PomProject
+		pkgPomProject = parsedPomProject.JavaPomProject
 		licenses = append(licenses, parsedPomProject.Licenses...)
 	}
 
@@ -536,11 +535,10 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, parsedPomProject *
 		Locations: file.NewLocationSet(
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		Licenses:     pkg.NewLicenseSet(licenses...),
-		Language:     pkg.Java,
-		Type:         pomProperties.PkgTypeIndicated(),
-		MetadataType: pkg.JavaMetadataType,
-		Metadata: pkg.JavaMetadata{
+		Licenses: pkg.NewLicenseSet(licenses...),
+		Language: pkg.Java,
+		Type:     pomProperties.PkgTypeIndicated(),
+		Metadata: pkg.JavaArchive{
 			VirtualPath:   virtualPath,
 			PomProperties: &pomProperties,
 			PomProject:    pkgPomProject,
@@ -557,8 +555,8 @@ func newPackageFromMavenData(pomProperties pkg.PomProperties, parsedPomProject *
 }
 
 func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
-	metadata, ok := p.Metadata.(pkg.JavaMetadata)
-	parentMetadata, parentOk := parentPkg.Metadata.(pkg.JavaMetadata)
+	metadata, ok := p.Metadata.(pkg.JavaArchive)
+	parentMetadata, parentOk := parentPkg.Metadata.(pkg.JavaArchive)
 	if !ok || !parentOk {
 		switch {
 		case !ok:
@@ -608,14 +606,14 @@ func updateParentPackage(p pkg.Package, parentPkg *pkg.Package) {
 	// we may have learned more about the type via data in the pom properties
 	parentPkg.Type = p.Type
 
-	metadata, ok := p.Metadata.(pkg.JavaMetadata)
+	metadata, ok := p.Metadata.(pkg.JavaArchive)
 	if !ok {
 		return
 	}
 	pomPropertiesCopy := *metadata.PomProperties
 
 	// keep the pom properties, but don't overwrite existing pom properties
-	parentMetadata, ok := parentPkg.Metadata.(pkg.JavaMetadata)
+	parentMetadata, ok := parentPkg.Metadata.(pkg.JavaArchive)
 	if ok && parentMetadata.PomProperties == nil {
 		parentMetadata.PomProperties = &pomPropertiesCopy
 		parentPkg.Metadata = parentMetadata

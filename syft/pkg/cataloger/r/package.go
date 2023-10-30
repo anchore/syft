@@ -17,15 +17,14 @@ func newPackage(pd parseData, locations ...file.Location) pkg.Package {
 	licenses := parseLicenseData(pd.License)
 
 	result := pkg.Package{
-		Name:         pd.Package,
-		Version:      pd.Version,
-		Locations:    locationSet,
-		Licenses:     pkg.NewLicenseSet(licenses...),
-		Language:     pkg.R,
-		Type:         pkg.Rpkg,
-		PURL:         packageURL(pd),
-		MetadataType: pkg.RDescriptionFileMetadataType,
-		Metadata:     pd.RDescriptionFileMetadata,
+		Name:      pd.Package,
+		Version:   pd.Version,
+		Locations: locationSet,
+		Licenses:  pkg.NewLicenseSet(licenses...),
+		Language:  pkg.R,
+		Type:      pkg.Rpkg,
+		PURL:      packageURL(pd),
+		Metadata:  pd.RDescription,
 	}
 
 	result.SetID()

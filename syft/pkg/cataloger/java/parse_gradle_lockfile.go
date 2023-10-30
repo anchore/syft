@@ -54,11 +54,10 @@ func parseGradleLockfile(_ file.Resolver, _ *generic.Environment, reader file.Lo
 			Locations: file.NewLocationSet(
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
-			Language:     pkg.Java,
-			Type:         pkg.JavaPkg,
-			MetadataType: pkg.JavaMetadataType,
-			Metadata: pkg.JavaMetadata{
-				PomProject: &pkg.PomProject{
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProject: &pkg.JavaPomProject{
 					GroupID:    dep.Group,
 					ArtifactID: dep.Name,
 					Version:    dep.Version,

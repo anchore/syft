@@ -42,7 +42,7 @@ type parseData struct {
 	Package string
 	Version string
 	License string
-	pkg.RDescriptionFileMetadata
+	pkg.RDescription
 }
 
 func parseDataFromDescriptionMap(values map[string]string) parseData {
@@ -50,7 +50,7 @@ func parseDataFromDescriptionMap(values map[string]string) parseData {
 		License: values["License"],
 		Package: values["Package"],
 		Version: values["Version"],
-		RDescriptionFileMetadata: pkg.RDescriptionFileMetadata{
+		RDescription: pkg.RDescription{
 			Title:            values["Title"],
 			Description:      cleanMultiLineValue(values["Description"]),
 			Maintainer:       values["Maintainer"],

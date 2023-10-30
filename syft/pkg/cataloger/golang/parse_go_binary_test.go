@@ -144,8 +144,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		MetadataType: pkg.GolangBinMetadataType,
-		Metadata: pkg.GolangBinMetadata{
+		Metadata: pkg.GolangBinaryBuildinfoEntry{
 			GoCompiledVersion: goCompiledVersion,
 			Architecture:      archDetails,
 			BuildSettings:     defaultBuildSettings,
@@ -189,8 +188,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata:     pkg.GolangBinMetadata{},
+					Metadata: pkg.GolangBinaryBuildinfoEntry{},
 				},
 			},
 		},
@@ -235,8 +233,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
@@ -274,8 +271,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "",
@@ -340,8 +336,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						BuildSettings: map[string]string{
@@ -390,8 +385,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						BuildSettings: map[string]string{
@@ -438,8 +432,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						BuildSettings: map[string]string{
@@ -484,8 +477,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						BuildSettings: map[string]string{
@@ -530,8 +522,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						BuildSettings: map[string]string{
@@ -577,8 +568,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						BuildSettings: map[string]string{
@@ -635,8 +625,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
@@ -657,8 +646,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=",
@@ -715,8 +703,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
@@ -736,8 +723,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=",

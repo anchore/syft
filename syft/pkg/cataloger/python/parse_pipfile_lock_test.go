@@ -15,14 +15,13 @@ func TestParsePipFileLock(t *testing.T) {
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
-			Name:         "aio-pika",
-			Version:      "6.8.0",
-			PURL:         "pkg:pypi/aio-pika@6.8.0",
-			Locations:    locations,
-			Language:     pkg.Python,
-			Type:         pkg.PythonPkg,
-			MetadataType: pkg.PythonPipfileLockMetadataType,
-			Metadata: pkg.PythonPipfileLockMetadata{
+			Name:      "aio-pika",
+			Version:   "6.8.0",
+			PURL:      "pkg:pypi/aio-pika@6.8.0",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonPipfileLockEntry{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{
 					"sha256:1d4305a5f78af3857310b4fe48348cdcf6c097e0e275ea88c2cd08570531a369",
@@ -30,14 +29,13 @@ func TestParsePipFileLock(t *testing.T) {
 				}},
 		},
 		{
-			Name:         "aiodns",
-			Version:      "2.0.0",
-			PURL:         "pkg:pypi/aiodns@2.0.0",
-			Locations:    locations,
-			Language:     pkg.Python,
-			Type:         pkg.PythonPkg,
-			MetadataType: pkg.PythonPipfileLockMetadataType,
-			Metadata: pkg.PythonPipfileLockMetadata{
+			Name:      "aiodns",
+			Version:   "2.0.0",
+			PURL:      "pkg:pypi/aiodns@2.0.0",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonPipfileLockEntry{
 				Index: "https://test.pypi.org/simple",
 				Hashes: []string{
 					"sha256:815fdef4607474295d68da46978a54481dd1e7be153c7d60f9e72773cd38d77d",
@@ -46,14 +44,13 @@ func TestParsePipFileLock(t *testing.T) {
 			},
 		},
 		{
-			Name:         "aiohttp",
-			Version:      "3.7.4.post0",
-			PURL:         "pkg:pypi/aiohttp@3.7.4.post0",
-			Locations:    locations,
-			Language:     pkg.Python,
-			Type:         pkg.PythonPkg,
-			MetadataType: pkg.PythonPipfileLockMetadataType,
-			Metadata: pkg.PythonPipfileLockMetadata{
+			Name:      "aiohttp",
+			Version:   "3.7.4.post0",
+			PURL:      "pkg:pypi/aiohttp@3.7.4.post0",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonPipfileLockEntry{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{
 					"sha256:02f46fc0e3c5ac58b80d4d56eb0a7c7d97fcef69ace9326289fb9f1955e65cfe",
@@ -62,14 +59,13 @@ func TestParsePipFileLock(t *testing.T) {
 			},
 		},
 		{
-			Name:         "aiohttp-jinja2",
-			Version:      "1.4.2",
-			PURL:         "pkg:pypi/aiohttp-jinja2@1.4.2",
-			Locations:    locations,
-			Language:     pkg.Python,
-			Type:         pkg.PythonPkg,
-			MetadataType: pkg.PythonPipfileLockMetadataType,
-			Metadata: pkg.PythonPipfileLockMetadata{
+			Name:      "aiohttp-jinja2",
+			Version:   "1.4.2",
+			PURL:      "pkg:pypi/aiohttp-jinja2@1.4.2",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonPipfileLockEntry{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{
 					"sha256:860da7582efa866744bad5883947557d0f82e457d69903ea65d666b66f8a69ca",

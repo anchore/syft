@@ -31,10 +31,11 @@ var (
 )
 
 type parsedData struct {
-	Licenses         string `mapstructure:"license"`
-	pkg.AlpmMetadata `mapstructure:",squash"`
+	Licenses        string `mapstructure:"license"`
+	pkg.AlpmDBEntry `mapstructure:",squash"`
 }
 
+// parseAlpmDB parses the arch linux pacman database flat-files and returns the packages and relationships found within.
 func parseAlpmDB(resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	data, err := parseAlpmDBEntry(reader)
 	if err != nil {

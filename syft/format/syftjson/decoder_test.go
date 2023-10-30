@@ -23,46 +23,75 @@ import (
 )
 
 func Test_EncodeDecodeCycle(t *testing.T) {
-	testImage := "image-simple"
-	originalSBOM := testutil.ImageInput(t, testImage)
 
-	enc := NewFormatEncoder()
-	dec := NewFormatDecoder()
-
-	var buf bytes.Buffer
-	assert.NoError(t, enc.Encode(&buf, originalSBOM))
-
-	actualSBOM, decodedID, decodedVersion, err := dec.Decode(bytes.NewReader(buf.Bytes()))
-	assert.NoError(t, err)
-	assert.Equal(t, ID, decodedID)
-	assert.Equal(t, internal.JSONSchemaVersion, decodedVersion)
-
-	for _, d := range deep.Equal(originalSBOM.Source, actualSBOM.Source) {
-		if strings.HasSuffix(d, "<nil slice> != []") {
-			// semantically the same
-			continue
-		}
-		t.Errorf("metadata difference: %+v", d)
+	table := []struct {
+		name         string
+		fixtureImage string
+		cfg          EncoderConfig
+	}{
+		{
+			name:         "go case",
+			fixtureImage: "image-simple",
+			cfg:          DefaultEncoderConfig(),
+		},
+		{
+			name:         "default alpine",
+			fixtureImage: "image-alpine",
+			cfg:          DefaultEncoderConfig(),
+		},
+		{
+			name:         "legacy alpine",
+			fixtureImage: "image-alpine",
+			cfg: EncoderConfig{
+				Legacy: true,
+			},
+		},
 	}
 
-	actualPackages := actualSBOM.Artifacts.Packages.Sorted()
-	for idx, p := range originalSBOM.Artifacts.Packages.Sorted() {
-		if !assert.Equal(t, p.Name, actualPackages[idx].Name) {
-			t.Errorf("different package at idx=%d: %s vs %s", idx, p.Name, actualPackages[idx].Name)
-			continue
-		}
+	for _, tt := range table {
+		t.Run(tt.name, func(t *testing.T) {
+			originalSBOM := testutil.ImageInput(t, tt.fixtureImage)
 
-		for _, d := range deep.Equal(p, actualPackages[idx]) {
-			if strings.Contains(d, ".VirtualPath: ") {
-				// location.Virtual path is not exposed in the json output
-				continue
+			enc, err := NewFormatEncoderWithConfig(tt.cfg)
+			require.NoError(t, err)
+			dec := NewFormatDecoder()
+
+			var buf bytes.Buffer
+			assert.NoError(t, enc.Encode(&buf, originalSBOM))
+
+			actualSBOM, decodedID, decodedVersion, err := dec.Decode(bytes.NewReader(buf.Bytes()))
+			assert.NoError(t, err)
+			assert.Equal(t, ID, decodedID)
+			assert.Equal(t, internal.JSONSchemaVersion, decodedVersion)
+
+			for _, d := range deep.Equal(originalSBOM.Source, actualSBOM.Source) {
+				if strings.HasSuffix(d, "<nil slice> != []") {
+					// semantically the same
+					continue
+				}
+				t.Errorf("metadata difference: %+v", d)
 			}
-			if strings.HasSuffix(d, "<nil slice> != []") {
-				// semantically the same
-				continue
+
+			actualPackages := actualSBOM.Artifacts.Packages.Sorted()
+			for idx, p := range originalSBOM.Artifacts.Packages.Sorted() {
+				if !assert.Equal(t, p.Name, actualPackages[idx].Name) {
+					t.Errorf("different package at idx=%d: %s vs %s", idx, p.Name, actualPackages[idx].Name)
+					continue
+				}
+
+				for _, d := range deep.Equal(p, actualPackages[idx]) {
+					if strings.Contains(d, ".VirtualPath: ") {
+						// location.Virtual path is not exposed in the json output
+						continue
+					}
+					if strings.HasSuffix(d, "<nil slice> != []") {
+						// semantically the same
+						continue
+					}
+					t.Errorf("%q package difference (%s): %+v", tt.fixtureImage, p.Name, d)
+				}
 			}
-			t.Errorf("package difference (%s): %+v", p.Name, d)
-		}
+		})
 	}
 }
 
@@ -137,9 +166,8 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 				Update:  "update",
 			},
 		},
-		PURL:         "pkg:generic/pkg@version",
-		MetadataType: "",
-		Metadata:     nil,
+		PURL:     "pkg:generic/pkg@version",
+		Metadata: nil,
 	}
 	p.SetID()
 

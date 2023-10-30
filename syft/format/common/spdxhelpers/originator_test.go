@@ -23,7 +23,7 @@ func Test_Originator(t *testing.T) {
 		{
 			name: "from gem",
 			input: pkg.Package{
-				Metadata: pkg.GemMetadata{
+				Metadata: pkg.RubyGemspec{
 					Authors: []string{
 						"auth1",
 						"auth2",
@@ -35,7 +35,7 @@ func Test_Originator(t *testing.T) {
 		{
 			name: "from npm",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					Author: "auth",
 				},
 			},
@@ -44,7 +44,7 @@ func Test_Originator(t *testing.T) {
 		{
 			name: "from apk",
 			input: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Maintainer: "auth",
 				},
 			},
@@ -53,7 +53,7 @@ func Test_Originator(t *testing.T) {
 		{
 			name: "from python - just name",
 			input: pkg.Package{
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					Author: "auth",
 				},
 			},
@@ -62,7 +62,7 @@ func Test_Originator(t *testing.T) {
 		{
 			name: "from python - just email",
 			input: pkg.Package{
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					AuthorEmail: "auth@auth.gov",
 				},
 			},
@@ -71,7 +71,7 @@ func Test_Originator(t *testing.T) {
 		{
 			name: "from python - both name and email",
 			input: pkg.Package{
-				Metadata: pkg.PythonPackageMetadata{
+				Metadata: pkg.PythonPackage{
 					Author:      "auth",
 					AuthorEmail: "auth@auth.gov",
 				},
@@ -81,7 +81,7 @@ func Test_Originator(t *testing.T) {
 		{
 			name: "from rpm",
 			input: pkg.Package{
-				Metadata: pkg.RpmMetadata{
+				Metadata: pkg.RpmDBEntry{
 					Vendor: "auth",
 				},
 			},
@@ -90,7 +90,7 @@ func Test_Originator(t *testing.T) {
 		{
 			name: "from dpkg",
 			input: pkg.Package{
-				Metadata: pkg.DpkgMetadata{
+				Metadata: pkg.DpkgDBEntry{
 					Maintainer: "auth",
 				},
 			},
@@ -100,7 +100,7 @@ func Test_Originator(t *testing.T) {
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION
 			name: "empty",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					Author: "",
 				},
 			},

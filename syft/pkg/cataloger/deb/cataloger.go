@@ -9,7 +9,7 @@ import (
 
 const catalogerName = "dpkgdb-cataloger"
 
-// NewDpkgdbCataloger returns a new Deb package cataloger capable of parsing DPKG status DB files.
+// NewDpkgdbCataloger returns a new Deb package cataloger capable of parsing DPKG status DB flat-file stores.
 func NewDpkgdbCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		// note: these globs have been intentionally split up in order to improve search performance,

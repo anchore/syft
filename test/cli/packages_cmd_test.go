@@ -39,6 +39,8 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
+				assertInOutput(`"metadataType": "apk-db-entry"`),
+				assertNotInOutput(`"metadataType": "ApkMetadata"`),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -113,6 +115,19 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", coverageImage},
 			assertions: []traitAssertion{
 				assertTableReport,
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "legacy-json-output-flag",
+			args: []string{"packages", "-o", "json", coverageImage},
+			env: map[string]string{
+				"SYFT_FORMAT_JSON_LEGACY": "true",
+			},
+			assertions: []traitAssertion{
+				assertJsonReport,
+				assertNotInOutput(`"metadataType": "apk-db-entry"`),
+				assertInOutput(`"metadataType": "ApkMetadata"`),
 				assertSuccessfulReturnCode,
 			},
 		},

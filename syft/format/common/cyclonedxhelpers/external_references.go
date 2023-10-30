@@ -19,21 +19,21 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 		// Skip adding extracted URL and Homepage metadata
 		// as "external_reference" if the metadata isn't IRI-compliant
 		switch metadata := p.Metadata.(type) {
-		case pkg.ApkMetadata:
+		case pkg.ApkDBEntry:
 			if metadata.URL != "" && isValidExternalRef(metadata.URL) {
 				refs = append(refs, cyclonedx.ExternalReference{
 					URL:  metadata.URL,
 					Type: cyclonedx.ERTypeDistribution,
 				})
 			}
-		case pkg.CargoPackageMetadata:
+		case pkg.RustCargoLockEntry:
 			if metadata.Source != "" {
 				refs = append(refs, cyclonedx.ExternalReference{
 					URL:  metadata.Source,
 					Type: cyclonedx.ERTypeDistribution,
 				})
 			}
-		case pkg.NpmPackageJSONMetadata:
+		case pkg.NpmPackage:
 			if metadata.URL != "" && isValidExternalRef(metadata.URL) {
 				refs = append(refs, cyclonedx.ExternalReference{
 					URL:  metadata.URL,
@@ -46,14 +46,14 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 					Type: cyclonedx.ERTypeWebsite,
 				})
 			}
-		case pkg.GemMetadata:
+		case pkg.RubyGemspec:
 			if metadata.Homepage != "" && isValidExternalRef(metadata.Homepage) {
 				refs = append(refs, cyclonedx.ExternalReference{
 					URL:  metadata.Homepage,
 					Type: cyclonedx.ERTypeWebsite,
 				})
 			}
-		case pkg.JavaMetadata:
+		case pkg.JavaArchive:
 			if len(metadata.ArchiveDigests) > 0 {
 				for _, digest := range metadata.ArchiveDigests {
 					refs = append(refs, cyclonedx.ExternalReference{
@@ -66,7 +66,7 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 					})
 				}
 			}
-		case pkg.PythonPackageMetadata:
+		case pkg.PythonPackage:
 			if metadata.DirectURLOrigin != nil && metadata.DirectURLOrigin.URL != "" {
 				ref := cyclonedx.ExternalReference{
 					URL:  metadata.DirectURLOrigin.URL,
@@ -105,16 +105,16 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 		return
 	}
 	switch meta := metadata.(type) {
-	case *pkg.ApkMetadata:
+	case *pkg.ApkDBEntry:
 		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)
-	case *pkg.CargoPackageMetadata:
+	case *pkg.RustCargoLockEntry:
 		meta.Source = refURL(c, cyclonedx.ERTypeDistribution)
-	case *pkg.NpmPackageJSONMetadata:
+	case *pkg.NpmPackage:
 		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)
 		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
-	case *pkg.GemMetadata:
+	case *pkg.RubyGemspec:
 		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
-	case *pkg.JavaMetadata:
+	case *pkg.JavaArchive:
 		var digests []syftFile.Digest
 		if ref := findExternalRef(c, cyclonedx.ERTypeBuildMeta); ref != nil {
 			if ref.Hashes != nil {
@@ -128,7 +128,7 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 		}
 
 		meta.ArchiveDigests = digests
-	case *pkg.PythonPackageMetadata:
+	case *pkg.PythonPackage:
 		if meta.DirectURLOrigin == nil {
 			meta.DirectURLOrigin = &pkg.PythonDirectURLOriginInfo{}
 		}

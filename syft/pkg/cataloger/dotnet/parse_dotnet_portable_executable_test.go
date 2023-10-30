@@ -15,13 +15,12 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 
 	expected := []pkg.Package{
 		{
-			Name:         "System.Buffers",
-			Version:      "7.0.923.36201",
-			Locations:    fixtureLocationSet,
-			Type:         pkg.DotnetPkg,
-			PURL:         "pkg:nuget/System.Buffers@7.0.923.36201",
-			MetadataType: pkg.DotnetPortableExecutableMetadataType,
-			Metadata: pkg.DotnetPortableExecutableMetadata{
+			Name:      "System.Buffers",
+			Version:   "7.0.923.36201",
+			Locations: fixtureLocationSet,
+			Type:      pkg.DotnetPkg,
+			PURL:      "pkg:nuget/System.Buffers@7.0.923.36201",
+			Metadata: pkg.DotnetPortableExecutableEntry{
 				AssemblyVersion: "7.0.0.0",
 				LegalCopyright:  "© Microsoft Corporation. All rights reserved.",
 				Comments:        "System.Buffers",

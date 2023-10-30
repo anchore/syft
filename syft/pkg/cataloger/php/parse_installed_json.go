@@ -16,19 +16,24 @@ var _ generic.Parser = parseComposerLock
 
 // Note: composer version 2 introduced a new structure for the installed.json file, so we support both
 type installedJSONComposerV2 struct {
-	Packages []parsedData `json:"packages"`
+	Packages []parsedInstalledData `json:"packages"`
+}
+
+type parsedInstalledData struct {
+	License []string `json:"license"`
+	pkg.PhpComposerInstalledEntry
 }
 
 func (w *installedJSONComposerV2) UnmarshalJSON(data []byte) error {
 	type compv2 struct {
-		Packages []parsedData `json:"packages"`
+		Packages []parsedInstalledData `json:"packages"`
 	}
 	compv2er := new(compv2)
 	err := json.Unmarshal(data, &compv2er)
 	if err != nil {
 		// If we had an err	or, we may be dealing with a composer v.1 installed.json
 		// which should be all arrays
-		var packages []parsedData
+		var packages []parsedInstalledData
 		err := json.Unmarshal(data, &packages)
 		if err != nil {
 			return err
@@ -52,11 +57,12 @@ func parseInstalledJSON(_ file.Resolver, _ *generic.Environment, reader file.Loc
 		} else if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse installed.json file: %w", err)
 		}
-		for _, pkgMeta := range lock.Packages {
+		for _, pd := range lock.Packages {
 			pkgs = append(
 				pkgs,
-				newComposerLockPackage(pkgMeta,
-					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				newComposerInstalledPackage(
+					pd,
+					reader.Location,
 				),
 			)
 		}

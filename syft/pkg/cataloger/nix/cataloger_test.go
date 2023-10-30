@@ -20,14 +20,13 @@ func TestCataloger_Catalog(t *testing.T) {
 			fixture: "test-fixtures/fixture-1",
 			wantPkgs: []pkg.Package{
 				{
-					Name:         "glibc",
-					Version:      "2.34-210",
-					PURL:         "pkg:nix/glibc@2.34-210?output=bin&outputhash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
-					Locations:    file.NewLocationSet(file.NewLocation("nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin")),
-					FoundBy:      catalogerName,
-					Type:         pkg.NixPkg,
-					MetadataType: pkg.NixStoreMetadataType,
-					Metadata: pkg.NixStoreMetadata{
+					Name:      "glibc",
+					Version:   "2.34-210",
+					PURL:      "pkg:nix/glibc@2.34-210?output=bin&outputhash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
+					Locations: file.NewLocationSet(file.NewLocation("nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin")),
+					FoundBy:   catalogerName,
+					Type:      pkg.NixPkg,
+					Metadata: pkg.NixStoreEntry{
 						OutputHash: "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 						Output:     "bin",
 						Files: []string{

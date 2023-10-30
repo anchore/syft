@@ -151,6 +151,39 @@ sequenceDiagram
     Note right of catalog: cataloger configuration is done based on src
 ```
 
+### Package object
+
+The `pkg.Package` object is a core data structure that represents a software package. Fields like `name` and `version` probably don't need
+a detailed explanation, but some of the other fields are worth a quick overview:
+
+- `FoundBy`: the name of the cataloger that discovered this package (e.g. `python-pip-cataloger`).
+- `Locations`: these are the set of paths and layer ids that were parsed to discover this package (e.g. `python-pip-cataloger`).
+- `Language`: the language of the package (e.g. `python`).
+- `Type`: this is a high-level categorization of the ecosystem the package resides in. For instance, even if the package is a egg, wheel, or requirements.txt reference, it is still logically a "python" package. Not all package types align with a language (e.g. `rpm`) but it is common.
+- `Metadata`: specialized data for specific location(s) parsed. We should try and raise up as much raw information that seems useful. As a rule of thumb the object here should be as flat as possible and use the raw names and values from the underlying source material parsed.
+
+When `pkg.Package` is serialized an additional `MetadataType` is shown. This is a label that helps consumers understand the datashape of the `Metadata` field.
+
+By convention the `MetadataType` value should follow these rules of thumb:
+
+- Only use lowercase letters, numbers, and hyphens. Use hyphens to separate words.
+- **Try to anchor the name in the ecosystem, language, or packaging tooling it belongs to**. For a package manager for a language ecosystem the language, framework or runtime should be used as a prefix. For instance `pubspec-lock` is an OK name, but `dart-pubspec-lock` is better. For an OS package manager this is not necessary (e.g. `apk-db-entry` is a good name, but `alpine-apk-db-entry` is not since `alpine` and the `a` in `apk` is redundant).
+- **Be as specific as possible to what the data represents**. For instance `ruby-gem` is NOT a good `MetadataType` value, but `ruby-gemspec` is. Why? Ruby gem information can come from a gemspec file or a Gemfile.lock, which are very different. The latter name provides more context as to what to expect.
+- **Should describe WHAT the data is, NOT HOW it's used**. For instance `r-description-installed-file` is NOT a good `MetadataType` value since it's trying to convey that we use the DESCRIPTION file in the R ecosystem to detect installed packages. Instead simply describe what the DESCRIPTION file is itself without context of how it's used: `r-description`.
+- **Use the `lock` suffix** to distinct between manifest files that loosely describe package version requirements vs files that strongly specify one and only one version of a package ("lock" files). These should only be used with respect to package managers that have the guide and lock distinction, but would not be appropriate otherwise (e.g. `rpm` does not have a guide vs lock, so `lock` should NOT be used to describe a db entry).
+- **Use the `archive` suffix to indicate a package archive** (e.g. rpm file, apk file, etc) that describes the contents of the package. For example an RPM file that was cataloged would have a `rpm-archive` metadata type (not to be confused with an RPM DB record entry which would be `rpm-db-entry`).
+- **Use the `entry` suffix** to indicate information about a package that was found as a single entry within file that has multiple package entries. If the entry was found within a DB or a flat-file store for an OS package manager, you should use `db-entry`.
+- **Should NOT contain the phrase `package`**, though exceptions are allowed (say if the canonical name literally has the phrase package in it).
+- **Should NOT contain have a `file` suffix** unless the canonical name has the term "file", such as a `pipfile` or `gemfile`. An example of a bad name for this rule is`ruby-gemspec-file`; a better name would be `ruby-gemspec`.
+- **Should NOT contain the exact filename+extensions**. For instance `pipfile.lock` shouldn't really be in the name, instead try and describe what the file is: `python-pipfile-lock` (but shouldn't this be `python-pip-lock` you might ask? No, since the `pip` package manger is not related to the `pipfile` project).
+- **Should NOT contain the phrase `metadata`**, unless the canonical name has this term.
+- **Should represent a single use case**. For example, trying to describe Hackage metadata with a single `HackageMetadata` struct (and thus `MetadataType`) is not allowed since it represents 3 mutually exclusive use cases: representing a `stack.yaml`, `stack.lock`, or `cabal.project` file. Instead, each of these should have their own struct types and `MetadataType` values.
+
+There are other cases that are not covered by these rules... and that's ok! The goal is to provide a consistent naming scheme that is easy to understand and use when it's applicable. If the rules do not exactly apply in your situation then just use your best judgement (or amend these rules as needed whe new common cases come up).
+
+What if the underlying parsed data represents multiple files? There are two approaches to this:
+- use the primary file to represent all the data. For instance, though the `dpkg-cataloger` looks at multiple files to get all information about a package, it's the `status` file that gets represented.
+- nest each individual file's data under the `Metadata` field. For instance, the `java-archive-cataloger` may find information from on or all of the files: `pom.xml`, `pom.properties`, and `MANIFEST.MF`. However, the metadata is simply `java-metadata' with each possibility as a nested optional field.
 
 ### Syft Catalogers
 

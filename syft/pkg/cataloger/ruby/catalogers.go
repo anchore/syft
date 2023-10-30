@@ -19,7 +19,7 @@ func NewInstalledGemSpecCataloger() *generic.Cataloger {
 		WithParserByGlobs(parseGemSpecEntries, "**/specifications/**/*.gemspec")
 }
 
-// NewGemSpecCataloger looks for gems with a broader scope.
+// NewGemSpecCataloger looks for gems without the additional requirement of the gem being installed.
 func NewGemSpecCataloger() *generic.Cataloger {
 	return generic.NewCataloger("ruby-gemspec-cataloger").
 		WithParserByGlobs(parseGemSpecEntries, "**/*.gemspec")

@@ -84,14 +84,14 @@ func parsePackageResolved(_ file.Resolver, _ *generic.Environment, reader file.L
 	}
 
 	var pkgs []pkg.Package
-	for _, packagePin := range pins {
+	for _, pkgPin := range pins {
 		pkgs = append(
 			pkgs,
 			newSwiftPackageManagerPackage(
-				packagePin.Identity,
-				packagePin.Version,
-				packagePin.Location,
-				packagePin.Revision,
+				pkgPin.Identity,
+				pkgPin.Version,
+				pkgPin.Location,
+				pkgPin.Revision,
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)

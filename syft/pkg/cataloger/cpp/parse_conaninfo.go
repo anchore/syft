@@ -16,17 +16,17 @@ import (
 
 var _ generic.Parser = parseConaninfo
 
-func parseConanMetadataFromFilePath(path string) (pkg.ConanLockMetadata, error) {
+func parseConanMetadataFromFilePath(path string) (pkg.ConaninfoEntry, error) {
 	//	fullFilePath = str(reader.Location.VirtualPath)
 	// Split the full patch into the folders we expect. I.e.:
 	// $HOME/.conan/data/<pkg-name>/<pkg-version>/<user>/<channel>/package/<package_id>/conaninfo.txt
 	re := regexp.MustCompile(`.*[/\\](?P<name>[^/\\]+)[/\\](?P<version>[^/\\]+)[/\\](?P<user>[^/\\]+)[/\\](?P<channel>[^/\\]+)[/\\]package[/\\](?P<id>[^/\\]+)[/\\]conaninfo\.txt`)
 	matches := re.FindStringSubmatch(path)
 	if len(matches) != 6 {
-		return pkg.ConanLockMetadata{}, fmt.Errorf("failed to get parent package info from conaninfo file path")
+		return pkg.ConaninfoEntry{}, fmt.Errorf("failed to get parent package info from conaninfo file path")
 	}
 	mainPackageRef := fmt.Sprintf("%s/%s@%s/%s", matches[1], matches[2], matches[3], matches[4])
-	return pkg.ConanLockMetadata{
+	return pkg.ConaninfoEntry{
 		Ref:       mainPackageRef,
 		PackageID: matches[5],
 	}, nil
@@ -52,12 +52,12 @@ func parseFullRequiresLine(line string, reader file.LocationReadCloser, pkgs *[]
 
 	cref := splitConanRef(line)
 
-	meta := pkg.ConanLockMetadata{
+	meta := pkg.ConaninfoEntry{
 		Ref:       line,
 		PackageID: cref.PackageID,
 	}
 
-	p := newConanlockPackage(
+	p := newConaninfoPackage(
 		meta,
 		reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
@@ -99,7 +99,7 @@ func parseConaninfo(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 		line, err := r.ReadString('\n')
 		switch {
 		case errors.Is(io.EOF, err):
-			mainPackage := newConanlockPackage(
+			mainPackage := newConaninfoPackage(
 				mainMetadata,
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			)

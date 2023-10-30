@@ -15,7 +15,7 @@
  "packages": [
   {
    "name": "package-1",
-   "SPDXID": "SPDXRef-Package-python-package-1-125840abc1c66dd7",
+   "SPDXID": "SPDXRef-Package-python-package-1-80210ebcba92e632",
    "versionInfo": "1.0.1",
    "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
@@ -39,7 +39,7 @@
   },
   {
    "name": "package-2",
-   "SPDXID": "SPDXRef-Package-deb-package-2-f27313b22a5ba330",
+   "SPDXID": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
    "versionInfo": "2.0.1",
    "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
@@ -87,12 +87,12 @@
  "relationships": [
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
-   "relatedSpdxElement": "SPDXRef-Package-python-package-1-125840abc1c66dd7",
+   "relatedSpdxElement": "SPDXRef-Package-python-package-1-80210ebcba92e632",
    "relationshipType": "CONTAINS"
   },
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
-   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-f27313b22a5ba330",
+   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
    "relationshipType": "CONTAINS"
   },
   {

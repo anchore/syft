@@ -22,18 +22,17 @@ const (
 	docsPath     = "/usr/share/doc"
 )
 
-func newDpkgPackage(d pkg.DpkgMetadata, dbLocation file.Location, resolver file.Resolver, release *linux.Release) pkg.Package {
+func newDpkgPackage(d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.Resolver, release *linux.Release) pkg.Package {
 	// TODO: separate pr to license refactor, but explore extracting dpkg-specific license parsing into a separate function
 	licenses := make([]pkg.License, 0)
 	p := pkg.Package{
-		Name:         d.Package,
-		Version:      d.Version,
-		Licenses:     pkg.NewLicenseSet(licenses...),
-		Locations:    file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		PURL:         packageURL(d, release),
-		Type:         pkg.DebPkg,
-		MetadataType: pkg.DpkgMetadataType,
-		Metadata:     d,
+		Name:      d.Package,
+		Version:   d.Version,
+		Licenses:  pkg.NewLicenseSet(licenses...),
+		Locations: file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		PURL:      packageURL(d, release),
+		Type:      pkg.DebPkg,
+		Metadata:  d,
 	}
 
 	if resolver != nil {
@@ -52,7 +51,7 @@ func newDpkgPackage(d pkg.DpkgMetadata, dbLocation file.Location, resolver file.
 }
 
 // PackageURL returns the PURL for the specific Debian package (see https://github.com/package-url/purl-spec)
-func packageURL(m pkg.DpkgMetadata, distro *linux.Release) string {
+func packageURL(m pkg.DpkgDBEntry, distro *linux.Release) string {
 	if distro == nil {
 		return ""
 	}
@@ -87,7 +86,7 @@ func packageURL(m pkg.DpkgMetadata, distro *linux.Release) string {
 }
 
 func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
-	metadata, ok := p.Metadata.(pkg.DpkgMetadata)
+	metadata, ok := p.Metadata.(pkg.DpkgDBEntry)
 	if !ok {
 		log.WithFields("package", p).Warn("unable to extract DPKG metadata to add licenses")
 		return
@@ -109,7 +108,7 @@ func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Packag
 }
 
 func mergeFileListing(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
-	metadata, ok := p.Metadata.(pkg.DpkgMetadata)
+	metadata, ok := p.Metadata.(pkg.DpkgDBEntry)
 	if !ok {
 		log.WithFields("package", p).Warn("unable to extract DPKG metadata to file listing")
 		return
@@ -140,7 +139,7 @@ loopNewFiles:
 	p.Locations.Add(infoLocations...)
 }
 
-func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgMetadata) ([]pkg.DpkgFileRecord, []file.Location) {
+func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgDBEntry) ([]pkg.DpkgFileRecord, []file.Location) {
 	// ensure the default value for a collection is never nil since this may be shown as JSON
 	var files = make([]pkg.DpkgFileRecord, 0)
 	var locations []file.Location
@@ -171,7 +170,7 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 }
 
 //nolint:dupl
-func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgMetadata) (io.ReadCloser, *file.Location) {
+func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgDBEntry) (io.ReadCloser, *file.Location) {
 	var md5Reader io.ReadCloser
 	var err error
 
@@ -215,7 +214,7 @@ func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.Dp
 }
 
 //nolint:dupl
-func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgMetadata) (io.ReadCloser, *file.Location) {
+func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgDBEntry) (io.ReadCloser, *file.Location) {
 	var reader io.ReadCloser
 	var err error
 
@@ -250,7 +249,7 @@ func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m p
 	return reader, &l
 }
 
-func fetchCopyrightContents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgMetadata) (io.ReadCloser, *file.Location) {
+func fetchCopyrightContents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgDBEntry) (io.ReadCloser, *file.Location) {
 	if resolver == nil {
 		return nil, nil
 	}
@@ -274,7 +273,7 @@ func fetchCopyrightContents(resolver file.Resolver, dbLocation file.Location, m 
 	return reader, &l
 }
 
-func md5Key(metadata pkg.DpkgMetadata) string {
+func md5Key(metadata pkg.DpkgDBEntry) string {
 	contentKey := metadata.Package
 	if metadata.Architecture != "" && metadata.Architecture != "all" {
 		contentKey = contentKey + ":" + metadata.Architecture

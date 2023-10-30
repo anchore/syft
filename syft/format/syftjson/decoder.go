@@ -18,18 +18,7 @@ var _ sbom.FormatDecoder = (*decoder)(nil)
 
 type decoder struct{}
 
-type DecoderConfig struct {
-}
-
-func DefaultDecoderConfig() DecoderConfig {
-	return DecoderConfig{}
-}
-
 func NewFormatDecoder() sbom.FormatDecoder {
-	return NewFormatDecoderWithConfig(DefaultDecoderConfig())
-}
-
-func NewFormatDecoderWithConfig(DecoderConfig) sbom.FormatDecoder {
 	return decoder{}
 }
 

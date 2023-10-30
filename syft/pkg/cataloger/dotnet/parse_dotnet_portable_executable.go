@@ -61,7 +61,7 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 		"",
 	).ToString()
 
-	metadata := pkg.DotnetPortableExecutableMetadata{
+	metadata := pkg.DotnetPortableExecutableEntry{
 		AssemblyVersion: versionResources["Assembly Version"],
 		LegalCopyright:  versionResources["LegalCopyright"],
 		Comments:        versionResources["Comments"],
@@ -72,13 +72,12 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 	}
 
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		Locations:    file.NewLocationSet(f.Location),
-		Type:         pkg.DotnetPkg,
-		PURL:         purl,
-		MetadataType: pkg.DotnetPortableExecutableMetadataType,
-		Metadata:     metadata,
+		Name:      name,
+		Version:   version,
+		Locations: file.NewLocationSet(f.Location),
+		Type:      pkg.DotnetPkg,
+		PURL:      purl,
+		Metadata:  metadata,
 	}
 
 	p.SetID()

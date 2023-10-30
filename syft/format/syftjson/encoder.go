@@ -12,11 +12,32 @@ var _ sbom.FormatEncoder = (*encoder)(nil)
 
 const ID sbom.FormatID = "syft-json"
 
+type EncoderConfig struct {
+	Legacy bool // transform the output to the legacy syft-json format (pre v1.0 changes, enumerated in the README.md)
+}
+
 type encoder struct {
+	cfg EncoderConfig
 }
 
 func NewFormatEncoder() sbom.FormatEncoder {
-	return encoder{}
+	enc, err := NewFormatEncoderWithConfig(DefaultEncoderConfig())
+	if err != nil {
+		panic(err)
+	}
+	return enc
+}
+
+func NewFormatEncoderWithConfig(cfg EncoderConfig) (sbom.FormatEncoder, error) {
+	return encoder{
+		cfg: cfg,
+	}, nil
+}
+
+func DefaultEncoderConfig() EncoderConfig {
+	return EncoderConfig{
+		Legacy: false,
+	}
 }
 
 func (e encoder) ID() sbom.FormatID {
@@ -35,7 +56,7 @@ func (e encoder) Version() string {
 }
 
 func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
-	doc := ToFormatModel(s)
+	doc := ToFormatModel(s, e.cfg)
 
 	enc := json.NewEncoder(writer)
 	// prevent > and < from being escaped in the payload

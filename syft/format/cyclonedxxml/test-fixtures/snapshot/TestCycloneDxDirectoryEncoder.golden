@@ -27,20 +27,20 @@
       <properties>
         <property name="syft:package:foundBy">the-cataloger-1</property>
         <property name="syft:package:language">python</property>
-        <property name="syft:package:metadataType">PythonPackageMetadata</property>
         <property name="syft:package:type">python</property>
+        <property name="syft:package:metadataType">python-package</property>
         <property name="syft:location:0:path">/some/path/pkg1</property>
       </properties>
     </component>
-    <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=ad5013466727018f" type="library">
+    <component bom-ref="redacted" type="library">
       <name>package-2</name>
       <version>2.0.1</version>
       <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
       <purl>pkg:deb/debian/package-2@2.0.1</purl>
       <properties>
         <property name="syft:package:foundBy">the-cataloger-2</property>
-        <property name="syft:package:metadataType">DpkgMetadata</property>
         <property name="syft:package:type">deb</property>
+        <property name="syft:package:metadataType">dpkg-db-entry</property>
         <property name="syft:location:0:path">/some/path/pkg1</property>
         <property name="syft:metadata:installedSize">0</property>
       </properties>

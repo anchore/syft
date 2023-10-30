@@ -83,7 +83,7 @@ func newPomProject(path string, p gopom.Project, location file.Location) *parsed
 
 	log.WithFields("path", path, "artifactID", artifactID, "name", name, "projectURL", projectURL).Trace("parsing pom.xml")
 	return &parsedPomProject{
-		PomProject: &pkg.PomProject{
+		JavaPomProject: &pkg.JavaPomProject{
 			Path:        path,
 			Parent:      pomParent(p, p.Parent),
 			GroupID:     resolveProperty(p, p.GroupID, "groupId"),
@@ -98,8 +98,8 @@ func newPomProject(path string, p gopom.Project, location file.Location) *parsed
 }
 
 func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...file.Location) pkg.Package {
-	m := pkg.JavaMetadata{
-		PomProperties: &pkg.PomProperties{
+	m := pkg.JavaArchive{
+		PomProperties: &pkg.JavaPomProperties{
 			GroupID:    resolveProperty(pom, dep.GroupID, "groupId"),
 			ArtifactID: resolveProperty(pom, dep.ArtifactID, "artifactId"),
 			Scope:      resolveProperty(pom, dep.Scope, "scope"),
@@ -110,14 +110,13 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...fil
 	version := resolveProperty(pom, dep.Version, "version")
 
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(name, version, m),
-		Language:     pkg.Java,
-		Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
-		MetadataType: pkg.JavaMetadataType,
-		Metadata:     m,
+		Name:      name,
+		Version:   version,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURL(name, version, m),
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
+		Metadata:  m,
 	}
 
 	p.SetID()
@@ -169,13 +168,13 @@ func getUtf8Reader(content io.Reader) (io.Reader, error) {
 	return inputReader, nil
 }
 
-func pomParent(pom gopom.Project, parent *gopom.Parent) (result *pkg.PomParent) {
+func pomParent(pom gopom.Project, parent *gopom.Parent) (result *pkg.JavaPomParent) {
 	if parent == nil {
 		return nil
 	}
 
 	artifactID := safeString(parent.ArtifactID)
-	result = &pkg.PomParent{
+	result = &pkg.JavaPomParent{
 		GroupID:    resolveProperty(pom, parent.GroupID, "groupId"),
 		ArtifactID: artifactID,
 		Version:    resolveProperty(pom, parent.Version, "version"),
