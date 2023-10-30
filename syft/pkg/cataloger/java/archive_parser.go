@@ -341,7 +341,7 @@ func getPomFromMavenCentral(groupID, artifactID, version string) (*gopom.Project
 	if err != nil {
 		return nil, err
 	}
-	log.Tracef("Trying to fetch parent pom from Maven central %s", requestURL)
+	log.Tracef("trying to fetch parent pom from Maven central %s", requestURL)
 
 	mavenRequest, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
@@ -349,7 +349,7 @@ func getPomFromMavenCentral(groupID, artifactID, version string) (*gopom.Project
 	}
 
 	httpClient := &http.Client{
-		Timeout: time.Second * 2,
+		Timeout: time.Second * 10,
 	}
 
 	resp, err := httpClient.Do(mavenRequest)
