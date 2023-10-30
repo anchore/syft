@@ -13,6 +13,7 @@ type Config struct {
 	Golang                          golang.GoCatalogerOpts
 	LinuxKernel                     kernel.LinuxCatalogerConfig
 	Python                          python.CatalogerConfig
+	Java                            java.JavaCatalogerOpts
 	Catalogers                      []string
 	Parallelism                     int
 	ExcludeBinaryOverlapByOwnership bool
@@ -24,13 +25,15 @@ func DefaultConfig() Config {
 		Parallelism:                     1,
 		LinuxKernel:                     kernel.DefaultLinuxCatalogerConfig(),
 		Python:                          python.DefaultCatalogerConfig(),
+		Java:                            java.NewJavaCatalogerOpts(),
 		ExcludeBinaryOverlapByOwnership: true,
 	}
 }
 
-func (c Config) Java() java.Config {
+func (c Config) JavaConfig() java.Config {
 	return java.Config{
 		SearchUnindexedArchives: c.Search.IncludeUnindexedArchives,
 		SearchIndexedArchives:   c.Search.IncludeIndexedArchives,
+		SearchMavevForLicenses:  c.Java.SearchMavenForLicenses,
 	}
 }
