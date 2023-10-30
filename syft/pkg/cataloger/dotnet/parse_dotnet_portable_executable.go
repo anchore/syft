@@ -3,6 +3,7 @@ package dotnet
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/saferwall/pe"
 
@@ -40,14 +41,14 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 		return nil, nil, nil
 	}
 
-	name := versionResources["FileDescription"]
+	name := findName(versionResources)
 	if name == "" {
-		log.Tracef("unable to find FileDescription in PE file: %s", f.RealPath)
+		log.Tracef("unable to find FileDescription, or ProductName in PE file: %s", f.RealPath)
 		return nil, nil, nil
 	}
 
 	version := versionResources["FileVersion"]
-	if version == "" {
+	if strings.TrimSpace(version) == "" {
 		log.Tracef("unable to find FileVersion in PE file: %s", f.RealPath)
 		return nil, nil, nil
 	}
@@ -83,4 +84,16 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 	p.SetID()
 
 	return []pkg.Package{p}, nil, nil
+}
+
+func findName(versionResources map[string]string) string {
+	for _, key := range []string{"FileDescription", "ProductName"} {
+		if name, ok := versionResources[key]; ok {
+			if strings.TrimSpace(name) == "" {
+				continue
+			}
+			return name
+		}
+	}
+	return ""
 }
