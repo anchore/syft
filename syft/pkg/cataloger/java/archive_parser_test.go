@@ -258,8 +258,9 @@ func TestParseJar(t *testing.T) {
 								return &l
 							}(),
 						),
-					), Language: pkg.Java,
-					Type: pkg.JavaPkg,
+					),
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaArchive{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path
@@ -1152,7 +1153,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName)).
 				Expects(tt.expectedPkgs, tt.expectedRelationships).
-				WithCompareOptions(cmpopts.IgnoreFields(pkg.JavaMetadata{}, "ArchiveDigests")).
+				WithCompareOptions(cmpopts.IgnoreFields(pkg.JavaArchive{}, "ArchiveDigests")).
 				TestParser(t, gap.parseJavaArchive)
 		})
 	}
