@@ -15,7 +15,7 @@ tools:
 
   - name: golangci-lint
     version:
-      want: v1.55.0
+      want: v1.55.1
     method: github-release
     with:
       repo: golangci/golangci-lint
@@ -83,14 +83,14 @@ tools:
 
   - name: task
     version:
-      want: v3.30.1
+      want: v3.31.0
     method: github-release
     with:
       repo: go-task/task
 
   - name: gh
     version:
-      want: v2.35.0
+      want: v2.37.0
     method: github-release
     with:
       repo: cli/cli

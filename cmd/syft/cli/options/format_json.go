@@ -5,11 +5,17 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-type OutputJSON struct {
+type FormatJSON struct {
 	Legacy bool `yaml:"legacy" json:"legacy" mapstructure:"legacy"`
 }
 
-func (o OutputJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
+func DefaultFormatJSON() FormatJSON {
+	return FormatJSON{
+		Legacy: false,
+	}
+}
+
+func (o FormatJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
 	enc, err := syftjson.NewFormatEncoderWithConfig(
 		syftjson.EncoderConfig{
 			Legacy: o.Legacy,

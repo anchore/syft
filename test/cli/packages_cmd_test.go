@@ -122,7 +122,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "legacy-json-output-flag",
 			args: []string{"packages", "-o", "json", coverageImage},
 			env: map[string]string{
-				"SYFT_JSON_LEGACY": "true",
+				"SYFT_FORMAT_JSON_LEGACY": "true",
 			},
 			assertions: []traitAssertion{
 				assertJsonReport,
