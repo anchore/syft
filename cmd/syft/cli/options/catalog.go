@@ -139,8 +139,9 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 		LinuxKernel: kernel.LinuxCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},
-		Java: javaCataloger.NewJavaCatalogerOpts().
-			WithSearchMavenForLicenses(cfg.Java.SearchMavenForLicenses),
+		Java: javaCataloger.DefaultCatalogerOpts().
+			WithSearchMavenForLicenses(cfg.Java.SearchMavenForLicenses).
+			WithMavenCentralURL(cfg.Java.MavenCentralURL),
 		Python: pythonCataloger.CatalogerConfig{
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},

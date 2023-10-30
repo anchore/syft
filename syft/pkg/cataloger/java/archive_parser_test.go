@@ -303,7 +303,7 @@ func TestParseJar(t *testing.T) {
 			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
-			}, false, Config{SearchMavevForLicenses: false})
+			}, false, Config{SearchMavenForLicenses: false})
 			defer cleanupFn()
 			require.NoError(t, err)
 

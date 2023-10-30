@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"reflect"
 	"strings"
+	"time"
 
 	"github.com/vifraa/gopom"
 
@@ -21,8 +21,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
-
-const MavenBaseURL = "https://repo1.maven.org/maven2"
 
 var archiveFormatGlobs = []string{
 	"**/*.jar",
@@ -264,7 +262,7 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 	pomPropertyMatches := j.fileManifest.GlobMatch(false, pomPropertiesGlob)
 	pomMatches := j.fileManifest.GlobMatch(false, pomXMLGlob)
 	var pomPropertiesObject pkg.JavaPomProperties
-	var pomProjectObject parsedPomProject
+	var pomProjectObject *parsedPomProject
 	if len(pomPropertyMatches) == 1 || len(pomMatches) == 1 {
 		// we have exactly 1 pom.properties or pom.xml in the archive; assume it represents the
 		// package we're scanning if the names seem like a plausible match
@@ -281,18 +279,22 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 		}
 	}
 	name = pomPropertiesObject.ArtifactID
-	if name == "" && pomProjectObject.JavaPomProject != nil {
+	if name == "" && pomProjectObject != nil {
 		name = pomProjectObject.ArtifactID
 	}
 	version = pomPropertiesObject.Version
-	if version == "" && pomProjectObject.JavaPomProject != nil {
+	if version == "" && pomProjectObject != nil {
 		version = pomProjectObject.Version
 	}
-	if !reflect.ValueOf(pomProjectObject).IsZero() && j.cfg.SearchMavevForLicenses {
-		findPomLicenses(&pomProjectObject)
+	if pomProjectObject != nil && j.cfg.SearchMavenForLicenses {
+		findPomLicenses(pomProjectObject)
 	}
 
-	return name, version, pomProjectObject.Licenses
+	if pomProjectObject != nil {
+		licenses = pomProjectObject.Licenses
+	}
+
+	return name, version, licenses
 }
 
 func artifactIDMatchesFilename(artifactID, fileName string) bool {
@@ -308,7 +310,7 @@ func findPomLicenses(pomProjectObject *parsedPomProject) {
 		parentPom, err := getPomFromMavenCentral(pomProjectObject.Parent.GroupID, pomProjectObject.Parent.ArtifactID, pomProjectObject.Parent.Version)
 		if err != nil {
 			// We don't want to abort here as the parent pom might not exist in Maven Central, we'll just log the error
-			log.Debugf("unable to get parent pom from Maven central: %v", err)
+			log.Tracef("unable to get parent pom from Maven central: %v", err)
 			return
 		}
 		parentLicenses := parseLicensesFromPom(parentPom)
@@ -339,17 +341,26 @@ func getPomFromMavenCentral(groupID, artifactID, version string) (*gopom.Project
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Trying to fetch parent pom from Maven central %s", requestURL)
+	log.Tracef("Trying to fetch parent pom from Maven central %s", requestURL)
 
 	mavenRequest, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to format request for Maven central: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(mavenRequest)
+	httpClient := &http.Client{
+		Timeout: time.Second * 2,
+	}
+
+	resp, err := httpClient.Do(mavenRequest)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get pom from Maven central: %w", err)
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Errorf("unable to close body: %+v", err)
+		}
+	}()
 
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -360,12 +371,6 @@ func getPomFromMavenCentral(groupID, artifactID, version string) (*gopom.Project
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse pom from Maven central: %w", err)
 	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			log.Errorf("unable to close body: %+v", err)
-		}
-	}()
 
 	return &pom, nil
 }
@@ -411,7 +416,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 	for parentPath, propertiesObj := range properties {
 		var pomProject *parsedPomProject
 		if proj, exists := projects[parentPath]; exists {
-			pomProject = &proj
+			pomProject = proj
 		}
 
 		pkgFromPom := newPackageFromMavenData(propertiesObj, pomProject, parentPkg, j.location)
@@ -573,13 +578,13 @@ func pomPropertiesByParentPath(archivePath string, location file.Location, extra
 	return propertiesByParentPath, nil
 }
 
-func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]parsedPomProject, error) {
+func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]*parsedPomProject, error) {
 	contentsOfMavenProjectFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
 
-	projectByParentPath := make(map[string]parsedPomProject)
+	projectByParentPath := make(map[string]*parsedPomProject)
 	for filePath, fileContents := range contentsOfMavenProjectFiles {
 		// TODO: when we support locations of paths within archives we should start passing the specific pom.xml location object instead of the top jar
 		pomProject, err := parsePomXMLProject(filePath, strings.NewReader(fileContents), location)
@@ -598,7 +603,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 			continue
 		}
 
-		projectByParentPath[path.Dir(filePath)] = *pomProject
+		projectByParentPath[path.Dir(filePath)] = pomProject
 	}
 	return projectByParentPath, nil
 }

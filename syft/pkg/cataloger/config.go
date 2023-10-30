@@ -25,7 +25,7 @@ func DefaultConfig() Config {
 		Parallelism:                     1,
 		LinuxKernel:                     kernel.DefaultLinuxCatalogerConfig(),
 		Python:                          python.DefaultCatalogerConfig(),
-		Java:                            java.NewJavaCatalogerOpts(),
+		Java:                            java.DefaultCatalogerOpts(),
 		ExcludeBinaryOverlapByOwnership: true,
 	}
 }
@@ -37,6 +37,6 @@ func (c Config) JavaConfig() java.Config {
 	return java.Config{
 		SearchUnindexedArchives: c.Search.IncludeUnindexedArchives,
 		SearchIndexedArchives:   c.Search.IncludeIndexedArchives,
-		SearchMavevForLicenses:  c.Java.SearchMavenForLicenses,
+		SearchMavenForLicenses:  c.Java.SearchMavenForLicenses,
 	}
 }
