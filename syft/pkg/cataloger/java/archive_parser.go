@@ -3,9 +3,15 @@ package java
 import (
 	"crypto"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strings"
+	"time"
+
+	"github.com/vifraa/gopom"
 
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/licenses"
@@ -15,8 +21,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
-
-var _ generic.Parser = parseJavaArchive
 
 var archiveFormatGlobs = []string{
 	"**/*.jar",
@@ -49,11 +53,20 @@ type archiveParser struct {
 	contentPath  string
 	fileInfo     archiveFilename
 	detectNested bool
+	cfg          Config
+}
+
+type genericArchiveParserAdapter struct {
+	cfg Config
+}
+
+func newGenericArchiveParserAdapter(cfg Config) genericArchiveParserAdapter {
+	return genericArchiveParserAdapter{cfg: cfg}
 }
 
 // parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
-func parseJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	parser, cleanupFn, err := newJavaArchiveParser(reader, true)
+func (gap genericArchiveParserAdapter) parseJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	parser, cleanupFn, err := newJavaArchiveParser(reader, true, gap.cfg)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {
@@ -72,7 +85,7 @@ func uniquePkgKey(groupID string, p *pkg.Package) string {
 
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
 // and parse nested archives or ignore them.
-func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool) (*archiveParser, func(), error) {
+func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg Config) (*archiveParser, func(), error) {
 	// fetch the last element of the virtual path
 	virtualElements := strings.Split(reader.AccessPath(), ":")
 	currentFilepath := virtualElements[len(virtualElements)-1]
@@ -94,6 +107,7 @@ func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool) (*a
 		contentPath:  contentPath,
 		fileInfo:     newJavaArchiveFilename(currentFilepath),
 		detectNested: detectNested,
+		cfg:          cfg,
 	}, cleanupFn, nil
 }
 
@@ -248,7 +262,7 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 	pomPropertyMatches := j.fileManifest.GlobMatch(false, pomPropertiesGlob)
 	pomMatches := j.fileManifest.GlobMatch(false, pomXMLGlob)
 	var pomPropertiesObject pkg.JavaPomProperties
-	var pomProjectObject parsedPomProject
+	var pomProjectObject *parsedPomProject
 	if len(pomPropertyMatches) == 1 || len(pomMatches) == 1 {
 		// we have exactly 1 pom.properties or pom.xml in the archive; assume it represents the
 		// package we're scanning if the names seem like a plausible match
@@ -265,14 +279,22 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 		}
 	}
 	name = pomPropertiesObject.ArtifactID
-	if name == "" && pomProjectObject.JavaPomProject != nil {
+	if name == "" && pomProjectObject != nil {
 		name = pomProjectObject.ArtifactID
 	}
 	version = pomPropertiesObject.Version
-	if version == "" && pomProjectObject.JavaPomProject != nil {
+	if version == "" && pomProjectObject != nil {
 		version = pomProjectObject.Version
 	}
-	return name, version, pomProjectObject.Licenses
+	if pomProjectObject != nil && j.cfg.SearchMavenForLicenses {
+		findPomLicenses(pomProjectObject)
+	}
+
+	if pomProjectObject != nil {
+		licenses = pomProjectObject.Licenses
+	}
+
+	return name, version, licenses
 }
 
 func artifactIDMatchesFilename(artifactID, fileName string) bool {
@@ -280,6 +302,92 @@ func artifactIDMatchesFilename(artifactID, fileName string) bool {
 		return false
 	}
 	return strings.HasPrefix(artifactID, fileName) || strings.HasSuffix(fileName, artifactID)
+}
+
+func findPomLicenses(pomProjectObject *parsedPomProject) {
+	// If we don't have any licenses until now, and if we have a parent Pom, then we'll check the parent pom in maven central for licenses.
+	if pomProjectObject != nil && pomProjectObject.Parent != nil && len(pomProjectObject.Licenses) == 0 {
+		parentPom, err := getPomFromMavenCentral(pomProjectObject.Parent.GroupID, pomProjectObject.Parent.ArtifactID, pomProjectObject.Parent.Version)
+		if err != nil {
+			// We don't want to abort here as the parent pom might not exist in Maven Central, we'll just log the error
+			log.Tracef("unable to get parent pom from Maven central: %v", err)
+			return
+		}
+		parentLicenses := parseLicensesFromPom(parentPom)
+		if len(parentLicenses) > 0 || parentPom == nil || parentPom.Parent == nil {
+			for _, licenseName := range parentLicenses {
+				pomProjectObject.Licenses = append(pomProjectObject.Licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
+			}
+		}
+	}
+}
+
+func formatMavenPomURL(groupID, artifactID, version string) (requestURL string, err error) {
+	// groupID needs to go from maven.org -> maven/org
+	urlPath := strings.Split(groupID, ".")
+	artifactPom := fmt.Sprintf("%s-%s.pom", artifactID, version)
+	urlPath = append(urlPath, artifactID, version, artifactPom)
+
+	// ex:"https://repo1.maven.org/maven2/groupID/artifactID/artifactPom
+	requestURL, err = url.JoinPath(MavenBaseURL, urlPath...)
+	if err != nil {
+		return requestURL, fmt.Errorf("could not construct maven url: %w", err)
+	}
+	return requestURL, err
+}
+
+func getPomFromMavenCentral(groupID, artifactID, version string) (*gopom.Project, error) {
+	requestURL, err := formatMavenPomURL(groupID, artifactID, version)
+	if err != nil {
+		return nil, err
+	}
+	log.Tracef("trying to fetch parent pom from Maven central %s", requestURL)
+
+	mavenRequest, err := http.NewRequest(http.MethodGet, requestURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("unable to format request for Maven central: %w", err)
+	}
+
+	httpClient := &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	resp, err := httpClient.Do(mavenRequest)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get pom from Maven central: %w", err)
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Errorf("unable to close body: %+v", err)
+		}
+	}()
+
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse pom from Maven central: %w", err)
+	}
+
+	pom, err := decodePomXML(strings.NewReader(string(bytes)))
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse pom from Maven central: %w", err)
+	}
+
+	return &pom, nil
+}
+
+func parseLicensesFromPom(pom *gopom.Project) []string {
+	var licenses []string
+	if pom != nil && pom.Licenses != nil {
+		for _, license := range *pom.Licenses {
+			if license.Name != nil {
+				licenses = append(licenses, *license.Name)
+			} else if license.URL != nil {
+				licenses = append(licenses, *license.URL)
+			}
+		}
+	}
+
+	return licenses
 }
 
 // discoverPkgsFromAllMavenFiles parses Maven POM properties/xml for a given
@@ -308,7 +416,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 	for parentPath, propertiesObj := range properties {
 		var pomProject *parsedPomProject
 		if proj, exists := projects[parentPath]; exists {
-			pomProject = &proj
+			pomProject = proj
 		}
 
 		pkgFromPom := newPackageFromMavenData(propertiesObj, pomProject, parentPkg, j.location)
@@ -370,28 +478,28 @@ func (j *archiveParser) getLicenseFromFileInArchive() ([]pkg.License, error) {
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	// we know that all java archives are zip formatted files, so we can use the shared zip helper
-	return discoverPkgsFromZip(j.location, j.archivePath, j.contentPath, j.fileManifest, parentPkg)
+	return discoverPkgsFromZip(j.location, j.archivePath, j.contentPath, j.fileManifest, parentPkg, j.cfg)
 }
 
 // discoverPkgsFromZip finds Java archives within Java archives, returning all listed Java packages found and
 // associating each discovered package to the given parent package.
-func discoverPkgsFromZip(location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromZip(location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package, cfg Config) ([]pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
 	openers, err := intFile.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(false, archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}
 
-	return discoverPkgsFromOpeners(location, openers, parentPkg)
+	return discoverPkgsFromOpeners(location, openers, parentPkg, cfg)
 }
 
 // discoverPkgsFromOpeners finds Java archives within the given files and associates them with the given parent package.
-func discoverPkgsFromOpeners(location file.Location, openers map[string]intFile.Opener, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromOpeners(location file.Location, openers map[string]intFile.Opener, parentPkg *pkg.Package, cfg Config) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
 	for pathWithinArchive, archiveOpener := range openers {
-		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(location, pathWithinArchive, archiveOpener)
+		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(location, pathWithinArchive, archiveOpener, cfg)
 		if err != nil {
 			log.WithFields("location", location.AccessPath()).Warnf("unable to discover java packages from opener: %+v", err)
 			continue
@@ -415,7 +523,7 @@ func discoverPkgsFromOpeners(location file.Location, openers map[string]intFile.
 }
 
 // discoverPkgsFromOpener finds Java archives within the given file.
-func discoverPkgsFromOpener(location file.Location, pathWithinArchive string, archiveOpener intFile.Opener) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromOpener(location file.Location, pathWithinArchive string, archiveOpener intFile.Opener, cfg Config) ([]pkg.Package, []artifact.Relationship, error) {
 	archiveReadCloser, err := archiveOpener.Open()
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to open archived file from tempdir: %w", err)
@@ -429,7 +537,8 @@ func discoverPkgsFromOpener(location file.Location, pathWithinArchive string, ar
 	nestedPath := fmt.Sprintf("%s:%s", location.AccessPath(), pathWithinArchive)
 	nestedLocation := file.NewLocationFromCoordinates(location.Coordinates)
 	nestedLocation.VirtualPath = nestedPath
-	nestedPkgs, nestedRelationships, err := parseJavaArchive(nil, nil, file.LocationReadCloser{
+	gap := newGenericArchiveParserAdapter(cfg)
+	nestedPkgs, nestedRelationships, err := gap.parseJavaArchive(nil, nil, file.LocationReadCloser{
 		Location:   nestedLocation,
 		ReadCloser: archiveReadCloser,
 	})
@@ -469,13 +578,13 @@ func pomPropertiesByParentPath(archivePath string, location file.Location, extra
 	return propertiesByParentPath, nil
 }
 
-func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]parsedPomProject, error) {
+func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]*parsedPomProject, error) {
 	contentsOfMavenProjectFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
 
-	projectByParentPath := make(map[string]parsedPomProject)
+	projectByParentPath := make(map[string]*parsedPomProject)
 	for filePath, fileContents := range contentsOfMavenProjectFiles {
 		// TODO: when we support locations of paths within archives we should start passing the specific pom.xml location object instead of the top jar
 		pomProject, err := parsePomXMLProject(filePath, strings.NewReader(fileContents), location)
@@ -488,12 +597,13 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 			continue
 		}
 
-		if pomProject.Version == "" || pomProject.ArtifactID == "" {
+		// If we don't have a version, then maybe the parent pom has it...
+		if (pomProject.Parent == nil && pomProject.Version == "") || pomProject.ArtifactID == "" {
 			// TODO: if there is no parentPkg (no java manifest) one of these poms could be the parent. We should discover the right parent and attach the correct info accordingly to each discovered package
 			continue
 		}
 
-		projectByParentPath[path.Dir(filePath)] = *pomProject
+		projectByParentPath[path.Dir(filePath)] = pomProject
 	}
 	return projectByParentPath, nil
 }

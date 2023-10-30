@@ -44,6 +44,32 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 	run(t, cmd)
 }
 
+func TestFormatMavenURL(t *testing.T) {
+	tests := []struct {
+		name       string
+		groupID    string
+		artifactID string
+		version    string
+		expected   string
+	}{
+		{
+			name:       "formatMavenURL correctly assembles the pom URL",
+			groupID:    "org.springframework.boot",
+			artifactID: "spring-boot-starter-test",
+			version:    "3.1.5",
+			expected:   "https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-starter-test/3.1.5/spring-boot-starter-test-3.1.5.pom",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			requestURL, err := formatMavenPomURL(tc.groupID, tc.artifactID, tc.version)
+			assert.NoError(t, err, "expected no err; got %w", err)
+			assert.Equal(t, tc.expected, requestURL)
+		})
+	}
+}
+
 func TestParseJar(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -232,8 +258,9 @@ func TestParseJar(t *testing.T) {
 								return &l
 							}(),
 						),
-					), Language: pkg.Java,
-					Type: pkg.JavaPkg,
+					),
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Metadata: pkg.JavaArchive{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path
@@ -276,7 +303,7 @@ func TestParseJar(t *testing.T) {
 			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
-			}, false)
+			}, false, Config{SearchMavenForLicenses: false})
 			defer cleanupFn()
 			require.NoError(t, err)
 
@@ -542,8 +569,9 @@ func TestParseNestedJar(t *testing.T) {
 
 			fixture, err := os.Open(test.fixture)
 			require.NoError(t, err)
+			gap := newGenericArchiveParserAdapter(Config{})
 
-			actual, _, err := parseJavaArchive(nil, nil, file.LocationReadCloser{
+			actual, _, err := gap.parseJavaArchive(nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			})
@@ -1121,11 +1149,12 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			gap := newGenericArchiveParserAdapter(Config{})
 			pkgtest.NewCatalogTester().
 				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName)).
 				Expects(tt.expectedPkgs, tt.expectedRelationships).
 				WithCompareOptions(cmpopts.IgnoreFields(pkg.JavaArchive{}, "ArchiveDigests")).
-				TestParser(t, parseJavaArchive)
+				TestParser(t, gap.parseJavaArchive)
 		})
 	}
 }
