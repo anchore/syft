@@ -34,7 +34,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:      "ActiveDirectoryAuthenticationLibrary",
 				Version:   "3.14.40721.0918",
-				Locations: file.NewLocationSet(file.NewLocation("")),
+				Locations: file.NewLocationSet(file.NewLocation("").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 				Type:      pkg.DotnetPkg,
 				Language:  pkg.Dotnet,
 				PURL:      "pkg:nuget/ActiveDirectoryAuthenticationLibrary@3.14.40721.0918",
@@ -61,12 +61,13 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 				"ProductVersion":   "4.6.25512.01 built by: dlab-DDVSOWINAGE016. Commit Hash: d0d5c7b49271cadb6d97de26d8e623e98abdc8db",
 			},
 			expectedPackage: pkg.Package{
-				Name:      "bFileVersion",
-				Version:   "4.6.25512.01",
-				Locations: file.NewLocationSet(file.NewLocation("")),
-				Type:      pkg.DotnetPkg,
-				Language:  pkg.Dotnet,
-				PURL:      "pkg:nuget/bFileVersion@4.6.25512.01",
+				Name:    "bFileVersion",
+				Version: "4.6.25512.01",
+				Locations: file.NewLocationSet(
+					file.NewLocation("").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+				Type:     pkg.DotnetPkg,
+				Language: pkg.Dotnet,
+				PURL:     "pkg:nuget/bFileVersion@4.6.25512.01",
 				Metadata: pkg.DotnetPortableExecutableEntry{
 					LegalCopyright: "© Microsoft Corporation.  All rights reserved.",
 					InternalName:   "äb\x01FileVersion",
