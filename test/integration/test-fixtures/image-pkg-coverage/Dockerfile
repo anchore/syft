@@ -19,6 +19,7 @@ RUN unxz /lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko.xz
 RUN curl -LO https://www.nuget.org/api/v2/package/DocuSign.eSign.dll/6.8.0
 RUN unzip 6.8.0
 RUN chmod 600 lib/net462/DocuSign.eSign.dll .
+RUN rm 6.8.0
 
 FROM scratch
 

@@ -77,6 +77,14 @@ var imageOnlyTestCases = []testCase{
 			"base": "4.3.0",
 		},
 	},
+	{
+		name:        "find dot net executable",
+		pkgType:     pkg.DotnetPkg,
+		pkgLanguage: pkg.Dotnet,
+		pkgInfo: map[string]string{
+			"DocuSign.eSign": "6.8.0.0",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{
@@ -434,14 +442,6 @@ var commonTestCases = []testCase{
 		pkgType: pkg.NixPkg,
 		pkgInfo: map[string]string{
 			"glibc": "2.34-210",
-		},
-	},
-	{
-		name:        "find dotnet portable executable",
-		pkgType:     pkg.DotnetPkg,
-		pkgLanguage: pkg.Dotnet,
-		pkgInfo: map[string]string{
-			"DocuSign.eSign": "6.8.0.0",
 		},
 	},
 }
