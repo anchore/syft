@@ -9,7 +9,7 @@ import (
 const (
 	// this is the number of packages that should be found in the image-pkg-coverage fixture image
 	// when analyzed with the squashed scope.
-	coverageImageSquashedPackageCount = 24
+	coverageImageSquashedPackageCount = 25
 )
 
 func TestPackagesCmdFlags(t *testing.T) {
