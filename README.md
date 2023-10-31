@@ -610,6 +610,7 @@ java:
    # but it is not accessible from within the final built artifact
    search-maven-for-licenses: false
    maven-url: "https://repo1.maven.org/maven2"
+   max-parent-recursive-depth: 5
 
 linux-kernel:
    # whether to catalog linux kernel modules found within lib/modules/** directories

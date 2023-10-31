@@ -5,4 +5,5 @@ type Config struct {
 	SearchIndexedArchives   bool
 	SearchMavenForLicenses  bool
 	MavenBaseURL            string
+	MaxParentRecursiveDepth int
 }

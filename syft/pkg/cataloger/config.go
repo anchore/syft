@@ -38,5 +38,6 @@ func (c Config) JavaConfig() java.Config {
 		SearchUnindexedArchives: c.Search.IncludeUnindexedArchives,
 		SearchIndexedArchives:   c.Search.IncludeIndexedArchives,
 		SearchMavenForLicenses:  c.Java.SearchMavenForLicenses,
+		MaxParentRecursiveDepth: c.Java.MaxParentRecursiveDepth,
 	}
 }
