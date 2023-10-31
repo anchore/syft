@@ -3,6 +3,7 @@ package dotnet
 import (
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"github.com/saferwall/pe"
@@ -47,7 +48,7 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 		return nil, nil, nil
 	}
 
-	version := versionResources["FileVersion"]
+	version := findVersion(versionResources)
 	if strings.TrimSpace(version) == "" {
 		log.Tracef("unable to find FileVersion in PE file: %s", f.RealPath)
 		return nil, nil, nil
@@ -86,13 +87,29 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 	return []pkg.Package{p}, nil, nil
 }
 
+func findVersion(versionResources map[string]string) string {
+	for _, key := range []string{"FileVersion"} {
+		if version, ok := versionResources[key]; ok {
+			if strings.TrimSpace(version) == "" {
+				continue
+			}
+			fields := strings.Fields(version)
+			if len(fields) > 0 {
+				return fields[0]
+			}
+		}
+	}
+	return ""
+}
+
 func findName(versionResources map[string]string) string {
 	for _, key := range []string{"FileDescription", "ProductName"} {
 		if name, ok := versionResources[key]; ok {
 			if strings.TrimSpace(name) == "" {
 				continue
 			}
-			return strings.TrimSpace(name)
+			trimmed := strings.TrimSpace(name)
+			return regexp.MustCompile(`[^a-zA-Z0-9.]+`).ReplaceAllString(trimmed, "")
 		}
 	}
 	return ""
