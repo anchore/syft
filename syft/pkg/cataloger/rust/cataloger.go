@@ -1,5 +1,5 @@
 /*
-Package rust provides a concrete Cataloger implementation for Cargo.lock files.
+Package rust provides a concrete Cataloger implementation relating to packages within the Rust language ecosystem.
 */
 package rust
 

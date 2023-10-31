@@ -24,7 +24,7 @@ func Test_PackageCataloger(t *testing.T) {
 				PURL:     "pkg:pypi/no-version",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
-				FoundBy:  "python-package-cataloger",
+				FoundBy:  "python-installed-package-cataloger",
 				Metadata: pkg.PythonPackage{
 					Name:                 "no-version",
 					SitePackagesRootPath: "test-fixtures",
@@ -47,7 +47,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/egg-info/PKG-INFO")),
 				),
-				FoundBy: "python-package-cataloger",
+				FoundBy: "python-installed-package-cataloger",
 				Metadata: pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
@@ -83,7 +83,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/casesensitive/EGG-INFO/PKG-INFO")),
 				),
-				FoundBy: "python-package-cataloger",
+				FoundBy: "python-installed-package-cataloger",
 				Metadata: pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
@@ -120,7 +120,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/dist-info/METADATA")),
 				),
-				FoundBy: "python-package-cataloger",
+				FoundBy: "python-installed-package-cataloger",
 				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
@@ -159,7 +159,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/casesensitive/DIST-INFO/METADATA")),
 				),
-				FoundBy: "python-package-cataloger",
+				FoundBy: "python-installed-package-cataloger",
 				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
@@ -196,7 +196,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/malformed-record/dist-info/METADATA")),
 				),
-				FoundBy: "python-package-cataloger",
+				FoundBy: "python-installed-package-cataloger",
 				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
@@ -227,7 +227,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/partial.dist-info/METADATA")),
 				),
-				FoundBy: "python-package-cataloger",
+				FoundBy: "python-installed-package-cataloger",
 				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
@@ -250,7 +250,7 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/test.egg-info")),
 				),
-				FoundBy: "python-package-cataloger",
+				FoundBy: "python-installed-package-cataloger",
 				Metadata: pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
@@ -275,7 +275,7 @@ func Test_PackageCataloger(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				WithResolver(resolver).
 				Expects([]pkg.Package{test.expectedPackage}, nil).
-				TestCataloger(t, NewPythonPackageCataloger())
+				TestCataloger(t, NewInstalledPackageCataloger())
 		})
 	}
 }
@@ -296,7 +296,7 @@ func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 		t.Run(test.MetadataFixture, func(t *testing.T) {
 			resolver := file.NewMockResolverForPaths(test.MetadataFixture)
 
-			actual, _, err := NewPythonPackageCataloger().Catalog(resolver)
+			actual, _, err := NewInstalledPackageCataloger().Catalog(resolver)
 			require.NoError(t, err)
 
 			if len(actual) != 0 {
@@ -332,7 +332,7 @@ func Test_IndexCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewPythonIndexCataloger(DefaultCatalogerConfig()))
+				TestCataloger(t, NewPackageCataloger(DefaultCatalogerConfig()))
 		})
 	}
 }
@@ -361,7 +361,7 @@ func Test_PackageCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewPythonPackageCataloger())
+				TestCataloger(t, NewInstalledPackageCataloger())
 		})
 	}
 }
