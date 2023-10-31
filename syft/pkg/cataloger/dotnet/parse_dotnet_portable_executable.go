@@ -42,16 +42,26 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 		return nil, nil, nil
 	}
 
+	dotNetPkg, err := buildDotNetPackage(versionResources, f)
+	if err != nil {
+		// this is not a fatal error, just log and continue
+		// TODO: consider this case for "known unknowns" (same goes for cases below)
+		log.Tracef("unable to build dotnet package: %w", err)
+		return nil, nil, nil
+	}
+
+	return []pkg.Package{dotNetPkg}, nil, nil
+}
+
+func buildDotNetPackage(versionResources map[string]string, f file.LocationReadCloser) (dnpkg pkg.Package, err error) {
 	name := findName(versionResources)
 	if name == "" {
-		log.Tracef("unable to find FileDescription, or ProductName in PE file: %s", f.RealPath)
-		return nil, nil, nil
+		return dnpkg, fmt.Errorf("unable to find FileDescription, or ProductName in PE file: %s", f.RealPath)
 	}
 
 	version := findVersion(versionResources)
 	if strings.TrimSpace(version) == "" {
-		log.Tracef("unable to find FileVersion in PE file: %s", f.RealPath)
-		return nil, nil, nil
+		return dnpkg, fmt.Errorf("unable to find FileVersion in PE file: %s", f.RealPath)
 	}
 
 	purl := packageurl.NewPackageURL(
@@ -73,18 +83,19 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 		ProductVersion:  versionResources["ProductVersion"],
 	}
 
-	p := pkg.Package{
+	dnpkg = pkg.Package{
 		Name:      name,
 		Version:   version,
-		Locations: file.NewLocationSet(f.Location),
+		Locations: file.NewLocationSet(f.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:      pkg.DotnetPkg,
+		Language:  pkg.Dotnet,
 		PURL:      purl,
 		Metadata:  metadata,
 	}
 
-	p.SetID()
+	dnpkg.SetID()
 
-	return []pkg.Package{p}, nil, nil
+	return dnpkg, nil
 }
 
 func findVersion(versionResources map[string]string) string {
