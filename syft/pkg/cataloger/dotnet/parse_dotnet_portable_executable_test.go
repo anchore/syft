@@ -36,6 +36,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 				Version:   "3.14.40721.0918",
 				Locations: file.NewLocationSet(file.NewLocation("")),
 				Type:      pkg.DotnetPkg,
+				Language:  pkg.Dotnet,
 				PURL:      "pkg:nuget/ActiveDirectoryAuthenticationLibrary@3.14.40721.0918",
 				Metadata: pkg.DotnetPortableExecutableEntry{
 					AssemblyVersion: "3.14.2.11",
@@ -64,6 +65,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 				Version:   "4.6.25512.01",
 				Locations: file.NewLocationSet(file.NewLocation("")),
 				Type:      pkg.DotnetPkg,
+				Language:  pkg.Dotnet,
 				PURL:      "pkg:nuget/bFileVersion@4.6.25512.01",
 				Metadata: pkg.DotnetPortableExecutableEntry{
 					LegalCopyright: "© Microsoft Corporation.  All rights reserved.",

@@ -88,6 +88,7 @@ func buildDotNetPackage(versionResources map[string]string, f file.LocationReadC
 		Version:   version,
 		Locations: file.NewLocationSet(f.Location),
 		Type:      pkg.DotnetPkg,
+		Language:  pkg.Dotnet,
 		PURL:      purl,
 		Metadata:  metadata,
 	}
