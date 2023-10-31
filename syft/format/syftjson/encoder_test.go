@@ -1,8 +1,13 @@
 package syftjson
 
 import (
+	"bytes"
 	"flag"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
@@ -29,6 +34,65 @@ func TestDefaultNameAndVersion(t *testing.T) {
 	if enc.Version() != expectedVersion {
 		t.Errorf("expected version %q, got %q", expectedVersion, enc.Version())
 	}
+}
+
+func TestCondensedOutput(t *testing.T) {
+	enc, err := NewFormatEncoderWithConfig(EncoderConfig{
+		Compact: true,
+	})
+	require.NoError(t, err)
+
+	dir := t.TempDir()
+	s := testutil.DirectoryInput(t, dir)
+
+	var buffer bytes.Buffer
+	err = enc.Encode(&buffer, s)
+	require.NoError(t, err)
+
+	actual := buffer.String()
+	assert.NotContains(t, strings.TrimSpace(actual), "\n")
+}
+
+func TestEscapeHTML(t *testing.T) {
+	dir := t.TempDir()
+	s := testutil.DirectoryInput(t, dir)
+	s.Artifacts.Packages.Add(pkg.Package{
+		Name: "<html-package>",
+	})
+
+	// by default we do not escape HTML
+	t.Run("default", func(t *testing.T) {
+		cfg := DefaultEncoderConfig()
+
+		enc, err := NewFormatEncoderWithConfig(cfg)
+		require.NoError(t, err)
+
+		var buffer bytes.Buffer
+		err = enc.Encode(&buffer, s)
+		require.NoError(t, err)
+
+		actual := buffer.String()
+		assert.Contains(t, actual, "<html-package>")
+		assert.NotContains(t, actual, "\\u003chtml-package\\u003e")
+	})
+
+	// force escaping html
+	t.Run("escape-html", func(t *testing.T) {
+		cfg := DefaultEncoderConfig()
+		cfg.EscapeHTML = true
+
+		enc, err := NewFormatEncoderWithConfig(cfg)
+		require.NoError(t, err)
+
+		var buffer bytes.Buffer
+		err = enc.Encode(&buffer, s)
+		require.NoError(t, err)
+
+		actual := buffer.String()
+		assert.Contains(t, actual, "\\u003chtml-package\\u003e")
+		assert.NotContains(t, actual, "<html-package>")
+	})
+
 }
 
 func TestDirectoryEncoder(t *testing.T) {

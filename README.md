@@ -536,7 +536,13 @@ format:
 
   # all syft-json format options
   json:
-      
+    
+    # don't include space indention and newlines (same as jq -c)
+    compact: false
+    
+    # escape causes '<', '>', and '&' to be escaped in output
+    escape-html: false
+    
     # transform any syft-json output to conform to an approximation of the v11.0.1 schema. This includes:
     # - using the package metadata type names from before v12 of the JSON schema (changed in https://github.com/anchore/syft/pull/1983)
     #
@@ -553,6 +559,30 @@ format:
     # Note that all template paths are based on the current syft-json schema.
     # same as -t ; SYFT_TEMPLATE_PATH env var
     path: ""
+
+  # all spdx-json format options
+  spdx-json:
+
+    # don't include space indention and newlines (same as jq -c)
+    compact: false
+
+    # escape causes '<', '>', and '&' to be escaped in output
+    escape-html: false
+
+  # all cyclonedx-json format options
+  cyclonedx-json:
+
+    # don't include space indention and newlines (same as jq -c)
+    compact: false
+
+    # escape causes '<', '>', and '&' to be escaped in output
+    escape-html: false
+
+  # all cyclonedx-xml format options
+  cyclonedx-xml:
+
+    # don't include space indention
+    compact: false
 
 
 # cataloging packages is exposed through the packages and power-user subcommands

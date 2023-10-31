@@ -14,7 +14,9 @@ func SupportedVersions() []string {
 }
 
 type EncoderConfig struct {
-	Version string
+	Version    string
+	Compact    bool // don't include spaces and newlines; same as jq -c
+	EscapeHTML bool // escape >, <, and & in the output
 }
 
 type encoder struct {
@@ -23,7 +25,7 @@ type encoder struct {
 }
 
 func NewFormatEncoderWithConfig(cfg EncoderConfig) (sbom.FormatEncoder, error) {
-	enc, err := cyclonedxutil.NewEncoder(cfg.Version, cyclonedx.BOMFileFormatJSON)
+	enc, err := cyclonedxutil.NewEncoder(cfg.Version, cyclonedx.BOMFileFormatJSON, !cfg.Compact, cfg.EscapeHTML)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +37,9 @@ func NewFormatEncoderWithConfig(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 
 func DefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{
-		Version: cyclonedxutil.DefaultVersion,
+		Version:    cyclonedxutil.DefaultVersion,
+		Compact:    false,
+		EscapeHTML: false,
 	}
 }
 

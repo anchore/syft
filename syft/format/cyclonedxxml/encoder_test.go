@@ -3,11 +3,14 @@ package cyclonedxxml
 import (
 	"bytes"
 	"flag"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/format/internal/cyclonedxutil"
 	"github.com/anchore/syft/syft/format/internal/testutil"
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -19,6 +22,34 @@ func getEncoder(t testing.TB) sbom.FormatEncoder {
 	enc, err := NewFormatEncoderWithConfig(DefaultEncoderConfig())
 	require.NoError(t, err)
 	return enc
+}
+
+func TestCondensedOutput(t *testing.T) {
+	enc, err := NewFormatEncoderWithConfig(EncoderConfig{
+		Version: cyclonedxutil.DefaultVersion,
+		Compact: true,
+	})
+	require.NoError(t, err)
+
+	dir := t.TempDir()
+	s := testutil.DirectoryInput(t, dir)
+
+	var buffer bytes.Buffer
+	err = enc.Encode(&buffer, s)
+	require.NoError(t, err)
+
+	actual := buffer.String()
+	lines := strings.Split(actual, "\n")
+	require.NotEmpty(t, lines)
+	whitespace := regexp.MustCompile(`^\s+`)
+	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
+
+		// require a non-whitespace character (tab, space, etc) as the first character of the line
+		require.False(t, whitespace.Match([]byte(line)), "line should not start with whitespace: %q", line)
+	}
 }
 
 func TestCycloneDxDirectoryEncoder(t *testing.T) {

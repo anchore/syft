@@ -3,22 +3,89 @@ package spdxjson
 import (
 	"bytes"
 	"flag"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/format/internal/spdxutil"
 	"github.com/anchore/syft/syft/format/internal/testutil"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 )
 
 var updateSnapshot = flag.Bool("update-spdx-json", false, "update the *.golden files for spdx-json encoders")
 var updateImage = flag.Bool("update-image", false, "update the golden image used for image encoder testing")
 
-func getEncoder(t testing.TB) sbom.FormatEncoder {
-	enc, err := NewFormatEncoderWithConfig(DefaultEncoderConfig())
+func getEncoder(t testing.TB, condensed bool) sbom.FormatEncoder {
+	cfg := DefaultEncoderConfig()
+	if condensed {
+		cfg.Compact = condensed
+	}
+	enc, err := NewFormatEncoderWithConfig(cfg)
 	require.NoError(t, err)
 	return enc
+}
+
+func TestCondensedOutput(t *testing.T) {
+	enc, err := NewFormatEncoderWithConfig(EncoderConfig{
+		Version: spdxutil.DefaultVersion,
+		Compact: true,
+	})
+	require.NoError(t, err)
+
+	dir := t.TempDir()
+	s := testutil.DirectoryInput(t, dir)
+
+	var buffer bytes.Buffer
+	err = enc.Encode(&buffer, s)
+	require.NoError(t, err)
+
+	actual := buffer.String()
+	assert.NotContains(t, strings.TrimSpace(actual), "\n")
+}
+
+func TestEscapeHTML(t *testing.T) {
+	dir := t.TempDir()
+	s := testutil.DirectoryInput(t, dir)
+	s.Artifacts.Packages.Add(pkg.Package{
+		Name: "<html-package>",
+	})
+
+	// by default we do not escape HTML
+	t.Run("default", func(t *testing.T) {
+		cfg := DefaultEncoderConfig()
+
+		enc, err := NewFormatEncoderWithConfig(cfg)
+		require.NoError(t, err)
+
+		var buffer bytes.Buffer
+		err = enc.Encode(&buffer, s)
+		require.NoError(t, err)
+
+		actual := buffer.String()
+		assert.Contains(t, actual, "<html-package>")
+		assert.NotContains(t, actual, "\\u003chtml-package\\u003e")
+	})
+
+	// force escaping html
+	t.Run("escape-html", func(t *testing.T) {
+		cfg := DefaultEncoderConfig()
+		cfg.EscapeHTML = true
+
+		enc, err := NewFormatEncoderWithConfig(cfg)
+		require.NoError(t, err)
+
+		var buffer bytes.Buffer
+		err = enc.Encode(&buffer, s)
+		require.NoError(t, err)
+
+		actual := buffer.String()
+		assert.Contains(t, actual, "\\u003chtml-package\\u003e")
+		assert.NotContains(t, actual, "<html-package>")
+	})
+
 }
 
 func TestSPDXJSONDirectoryEncoder(t *testing.T) {
@@ -26,7 +93,7 @@ func TestSPDXJSONDirectoryEncoder(t *testing.T) {
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.DirectoryInput(t, dir),
-			Format:                      getEncoder(t),
+			Format:                      getEncoder(t, false),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -44,7 +111,7 @@ func TestSPDXJSONImageEncoder(t *testing.T) {
 		},
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.ImageInput(t, testImage, testutil.FromSnapshot()),
-			Format:                      getEncoder(t),
+			Format:                      getEncoder(t, false),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -66,7 +133,7 @@ func TestSPDXRelationshipOrder(t *testing.T) {
 		},
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     s,
-			Format:                      getEncoder(t),
+			Format:                      getEncoder(t, false),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
