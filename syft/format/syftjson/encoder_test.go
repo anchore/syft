@@ -74,12 +74,11 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 				RealPath: "/a/place/a",
 			}),
 		),
-		Type:         pkg.PythonPkg,
-		FoundBy:      "the-cataloger-1",
-		Language:     pkg.Python,
-		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses:     pkg.NewLicenseSet(pkg.NewLicense("MIT")),
-		Metadata: pkg.PythonPackageMetadata{
+		Type:     pkg.PythonPkg,
+		FoundBy:  "the-cataloger-1",
+		Language: pkg.Python,
+		Licenses: pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
 			Version: "1.0.1",
 			Files:   []pkg.PythonFileRecord{},
@@ -98,10 +97,9 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 				RealPath: "/b/place/b",
 			}),
 		),
-		Type:         pkg.DebPkg,
-		FoundBy:      "the-cataloger-2",
-		MetadataType: pkg.DpkgMetadataType,
-		Metadata: pkg.DpkgMetadata{
+		Type:    pkg.DebPkg,
+		FoundBy: "the-cataloger-2",
+		Metadata: pkg.DpkgDBEntry{
 			Package: "package-2",
 			Version: "2.0.1",
 			Files:   []pkg.DpkgFileRecord{},

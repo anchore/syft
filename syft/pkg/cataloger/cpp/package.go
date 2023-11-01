@@ -19,7 +19,7 @@ type conanRef struct {
 }
 
 func splitConanRef(ref string) *conanRef {
-	// Conan ref format is:
+	// ConanfileEntry ref format is:
 	// pkg/0.1@user/channel#rrev%timestamp
 	// This method is based on conan's ref.loads method:
 	// https://github.com/conan-io/conan/blob/release/2.0/conans/model/recipe_ref.py#L93C21-L93C21
@@ -66,43 +66,32 @@ func splitConanRef(ref string) *conanRef {
 	return &cref
 }
 
-func newConanfilePackage(m pkg.ConanMetadata, locations ...file.Location) *pkg.Package {
-	ref := splitConanRef(m.Ref)
-	if ref == nil {
-		return nil
-	}
-
-	p := pkg.Package{
-		Name:         ref.Name,
-		Version:      ref.Version,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(ref),
-		Language:     pkg.CPP,
-		Type:         pkg.ConanPkg,
-		MetadataType: pkg.ConanMetadataType,
-		Metadata:     m,
-	}
-
-	p.SetID()
-
-	return &p
+func newConanfilePackage(m pkg.ConanfileEntry, locations ...file.Location) *pkg.Package {
+	return newConanPackage(m.Ref, m, locations...)
 }
 
-func newConanlockPackage(m pkg.ConanLockMetadata, locations ...file.Location) *pkg.Package {
-	ref := splitConanRef(m.Ref)
+func newConanlockPackage(m pkg.ConanLockEntry, locations ...file.Location) *pkg.Package {
+	return newConanPackage(m.Ref, m, locations...)
+}
+
+func newConaninfoPackage(m pkg.ConaninfoEntry, locations ...file.Location) *pkg.Package {
+	return newConanPackage(m.Ref, m, locations...)
+}
+
+func newConanPackage(refStr string, metadata any, locations ...file.Location) *pkg.Package {
+	ref := splitConanRef(refStr)
 	if ref == nil {
 		return nil
 	}
 
 	p := pkg.Package{
-		Name:         ref.Name,
-		Version:      ref.Version,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(ref),
-		Language:     pkg.CPP,
-		Type:         pkg.ConanPkg,
-		MetadataType: pkg.ConanLockMetadataType,
-		Metadata:     m,
+		Name:      ref.Name,
+		Version:   ref.Version,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURL(ref),
+		Language:  pkg.CPP,
+		Type:      pkg.ConanPkg,
+		Metadata:  metadata,
 	}
 
 	p.SetID()

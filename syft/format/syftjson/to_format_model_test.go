@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/syftjson/model"
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -300,6 +303,51 @@ func Test_toFileMetadataEntry(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, toFileMetadataEntry(coords, tt.metadata))
+		})
+	}
+}
+
+func Test_toPackageModel_metadataType(t *testing.T) {
+	tests := []struct {
+		name string
+		p    pkg.Package
+		cfg  EncoderConfig
+		want model.Package
+	}{
+		{
+			name: "empty config",
+			p: pkg.Package{
+				Metadata: pkg.RpmDBEntry{},
+			},
+			cfg: EncoderConfig{},
+			want: model.Package{
+				PackageCustomData: model.PackageCustomData{
+					MetadataType: "rpm-db-entry",
+					Metadata:     pkg.RpmDBEntry{},
+				},
+			},
+		},
+		{
+			name: "legacy config",
+			p: pkg.Package{
+				Metadata: pkg.RpmDBEntry{},
+			},
+			cfg: EncoderConfig{
+				Legacy: true,
+			},
+			want: model.Package{
+				PackageCustomData: model.PackageCustomData{
+					MetadataType: "RpmMetadata",
+					Metadata:     pkg.RpmDBEntry{},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if d := cmp.Diff(tt.want, toPackageModel(tt.p, tt.cfg), cmpopts.EquateEmpty()); d != "" {
+				t.Errorf("unexpected package (-want +got):\n%s", d)
+			}
 		})
 	}
 }

@@ -22,15 +22,14 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debu
 	}
 
 	p := pkg.Package{
-		Name:         dep.Path,
-		Version:      dep.Version,
-		Licenses:     pkg.NewLicenseSet(licenses...),
-		PURL:         packageURL(dep.Path, dep.Version),
-		Language:     pkg.Go,
-		Type:         pkg.GoModulePkg,
-		Locations:    file.NewLocationSet(locations...),
-		MetadataType: pkg.GolangBinMetadataType,
-		Metadata: pkg.GolangBinMetadata{
+		Name:      dep.Path,
+		Version:   dep.Version,
+		Licenses:  pkg.NewLicenseSet(licenses...),
+		PURL:      packageURL(dep.Path, dep.Version),
+		Language:  pkg.Go,
+		Type:      pkg.GoModulePkg,
+		Locations: file.NewLocationSet(locations...),
+		Metadata: pkg.GolangBinaryBuildinfoEntry{
 			GoCompiledVersion: goVersion,
 			H1Digest:          dep.Sum,
 			Architecture:      architecture,

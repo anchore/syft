@@ -23,11 +23,11 @@ import (
 func TestExtraFileAttributes(t *testing.T) {
 	tests := []struct {
 		name     string
-		expected pkg.ApkMetadata
+		expected pkg.ApkDBEntry
 	}{
 		{
 			name: "test extra file attributes (checksum) are ignored",
-			expected: pkg.ApkMetadata{
+			expected: pkg.ApkDBEntry{
 				Files: []pkg.ApkFileRecord{
 					{
 						Path: "/usr",
@@ -67,7 +67,7 @@ func TestExtraFileAttributes(t *testing.T) {
 			pkgs, _, err := parseApkDB(nil, new(generic.Environment), lrc)
 			assert.NoError(t, err)
 			require.Len(t, pkgs, 1)
-			metadata := pkgs[0].Metadata.(pkg.ApkMetadata)
+			metadata := pkgs[0].Metadata.(pkg.ApkDBEntry)
 
 			if diff := cmp.Diff(test.expected.Files, metadata.Files); diff != "" {
 				t.Errorf("Files mismatch (-want +got):\n%s", diff)
@@ -91,9 +91,8 @@ func TestSinglePackageDetails(t *testing.T) {
 					pkg.NewLicense("BSD"),
 					pkg.NewLicense("GPL2+"),
 				),
-				Type:         pkg.ApkPkg,
-				MetadataType: pkg.ApkMetadataType,
-				Metadata: pkg.ApkMetadata{
+				Type: pkg.ApkPkg,
+				Metadata: pkg.ApkDBEntry{
 					Package:       "musl-utils",
 					OriginPackage: "musl",
 					Version:       "1.1.24-r2",
@@ -179,9 +178,8 @@ func TestSinglePackageDetails(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("GPL-2.0-only"),
 				),
-				Type:         pkg.ApkPkg,
-				MetadataType: pkg.ApkMetadataType,
-				Metadata: pkg.ApkMetadata{
+				Type: pkg.ApkPkg,
+				Metadata: pkg.ApkDBEntry{
 					Package:       "alpine-baselayout-data",
 					OriginPackage: "alpine-baselayout",
 					Version:       "3.4.0-r0",
@@ -224,10 +222,9 @@ func TestSinglePackageDetails(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("GPL-2.0-only"),
 				),
-				Type:         pkg.ApkPkg,
-				PURL:         "",
-				MetadataType: pkg.ApkMetadataType,
-				Metadata: pkg.ApkMetadata{
+				Type: pkg.ApkPkg,
+				PURL: "",
+				Metadata: pkg.ApkDBEntry{
 					Package:       "alpine-baselayout",
 					OriginPackage: "alpine-baselayout",
 					Version:       "3.2.0-r6",
@@ -702,11 +699,10 @@ func TestMultiplePackages(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocations("MPL-2.0 AND MIT", location),
 			),
-			Type:         pkg.ApkPkg,
-			PURL:         "pkg:apk/alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
-			Locations:    fixtureLocationSet,
-			MetadataType: pkg.ApkMetadataType,
-			Metadata: pkg.ApkMetadata{
+			Type:      pkg.ApkPkg,
+			PURL:      "pkg:apk/alpine/libc-utils@0.7.2-r0?arch=x86_64&upstream=libc-dev&distro=alpine-3.12",
+			Locations: fixtureLocationSet,
+			Metadata: pkg.ApkDBEntry{
 				Package:       "libc-utils",
 				OriginPackage: "libc-dev",
 				Maintainer:    "Natanael Copa <ncopa@alpinelinux.org>",
@@ -734,8 +730,7 @@ func TestMultiplePackages(t *testing.T) {
 				pkg.NewLicenseFromLocations("BSD", location),
 				pkg.NewLicenseFromLocations("GPL2+", location),
 			),
-			MetadataType: pkg.ApkMetadataType,
-			Metadata: pkg.ApkMetadata{
+			Metadata: pkg.ApkDBEntry{
 				Package:       "musl-utils",
 				OriginPackage: "musl",
 				Version:       "1.1.24-r2",
@@ -872,14 +867,14 @@ func Test_discoverPackageDependencies(t *testing.T) {
 			genFn: func() ([]pkg.Package, []artifact.Relationship) {
 				a := pkg.Package{
 					Name: "package-a",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Provides: []string{"a-thing"},
 					},
 				}
 				a.SetID()
 				b := pkg.Package{
 					Name: "package-b",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Provides: []string{"b-thing"},
 					},
 				}
@@ -893,14 +888,14 @@ func Test_discoverPackageDependencies(t *testing.T) {
 			genFn: func() ([]pkg.Package, []artifact.Relationship) {
 				a := pkg.Package{
 					Name: "package-a",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Dependencies: []string{"b-thing"},
 					},
 				}
 				a.SetID()
 				b := pkg.Package{
 					Name: "package-b",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Provides: []string{"b-thing"},
 					},
 				}
@@ -920,14 +915,14 @@ func Test_discoverPackageDependencies(t *testing.T) {
 			genFn: func() ([]pkg.Package, []artifact.Relationship) {
 				a := pkg.Package{
 					Name: "package-a",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Dependencies: []string{"so:libc.musl-x86_64.so.1"},
 					},
 				}
 				a.SetID()
 				b := pkg.Package{
 					Name: "package-b",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Provides: []string{"so:libc.musl-x86_64.so.1=1"},
 					},
 				}
@@ -947,14 +942,14 @@ func Test_discoverPackageDependencies(t *testing.T) {
 			genFn: func() ([]pkg.Package, []artifact.Relationship) {
 				a := pkg.Package{
 					Name: "package-a",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Dependencies: []string{"so:libc.musl-x86_64.so.1"},
 					},
 				}
 				a.SetID()
 				b := pkg.Package{
 					Name: "package-b",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Provides: []string{""},
 					},
 				}
@@ -968,14 +963,14 @@ func Test_discoverPackageDependencies(t *testing.T) {
 			genFn: func() ([]pkg.Package, []artifact.Relationship) {
 				a := pkg.Package{
 					Name: "package-a",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Dependencies: []string{"musl>=1.2"},
 					},
 				}
 				a.SetID()
 				b := pkg.Package{
 					Name: "musl",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Provides: []string{"so:libc.musl-x86_64.so.1=1"},
 					},
 				}
@@ -995,14 +990,14 @@ func Test_discoverPackageDependencies(t *testing.T) {
 			genFn: func() ([]pkg.Package, []artifact.Relationship) {
 				a := pkg.Package{
 					Name: "alpine-baselayout",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Dependencies: []string{"/bin/sh"},
 					},
 				}
 				a.SetID()
 				b := pkg.Package{
 					Name: "busybox",
-					Metadata: pkg.ApkMetadata{
+					Metadata: pkg.ApkDBEntry{
 						Provides: []string{"/bin/sh"},
 					},
 				}

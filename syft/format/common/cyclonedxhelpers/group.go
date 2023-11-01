@@ -4,7 +4,7 @@ import "github.com/anchore/syft/syft/pkg"
 
 func encodeGroup(p pkg.Package) string {
 	if hasMetadata(p) {
-		if metadata, ok := p.Metadata.(pkg.JavaMetadata); ok && metadata.PomProperties != nil {
+		if metadata, ok := p.Metadata.(pkg.JavaArchive); ok && metadata.PomProperties != nil {
 			return metadata.PomProperties.GroupID
 		}
 	}
@@ -12,9 +12,9 @@ func encodeGroup(p pkg.Package) string {
 }
 
 func decodeGroup(group string, metadata interface{}) {
-	if meta, ok := metadata.(*pkg.JavaMetadata); ok {
+	if meta, ok := metadata.(*pkg.JavaArchive); ok {
 		if meta.PomProperties == nil {
-			meta.PomProperties = &pkg.PomProperties{}
+			meta.PomProperties = &pkg.JavaPomProperties{}
 		}
 		meta.PomProperties.GroupID = group
 	}

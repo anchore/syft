@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/syftjson/model"
+	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -20,9 +21,9 @@ import (
 )
 
 // ToFormatModel transforms the sbom import a format-specific model.
-func ToFormatModel(s sbom.SBOM) model.Document {
+func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
 	return model.Document{
-		Artifacts:             toPackageModels(s.Artifacts.Packages),
+		Artifacts:             toPackageModels(s.Artifacts.Packages, cfg),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s),
 		Secrets:               toSecrets(s.Artifacts.Secrets),
@@ -196,13 +197,13 @@ func toFileType(ty stereoscopeFile.Type) string {
 	}
 }
 
-func toPackageModels(catalog *pkg.Collection) []model.Package {
+func toPackageModels(catalog *pkg.Collection, cfg EncoderConfig) []model.Package {
 	artifacts := make([]model.Package, 0)
 	if catalog == nil {
 		return artifacts
 	}
 	for _, p := range catalog.Sorted() {
-		artifacts = append(artifacts, toPackageModel(p))
+		artifacts = append(artifacts, toPackageModel(p, cfg))
 	}
 	return artifacts
 }
@@ -233,7 +234,7 @@ func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
 }
 
 // toPackageModel crates a new Package from the given pkg.Package.
-func toPackageModel(p pkg.Package) model.Package {
+func toPackageModel(p pkg.Package, cfg EncoderConfig) model.Package {
 	var cpes = make([]string, len(p.CPEs))
 	for i, c := range p.CPEs {
 		cpes[i] = cpe.String(c)
@@ -244,6 +245,13 @@ func toPackageModel(p pkg.Package) model.Package {
 	var licenses = make([]model.License, 0)
 	if !p.Licenses.Empty() {
 		licenses = toLicenseModel(p.Licenses.ToSlice())
+	}
+
+	var ty string
+	if cfg.Legacy {
+		ty = packagemetadata.JSONLegacyName(p.Metadata)
+	} else {
+		ty = packagemetadata.JSONName(p.Metadata)
 	}
 
 	return model.Package{
@@ -260,7 +268,7 @@ func toPackageModel(p pkg.Package) model.Package {
 			PURL:      p.PURL,
 		},
 		PackageCustomData: model.PackageCustomData{
-			MetadataType: p.MetadataType,
+			MetadataType: ty,
 			Metadata:     p.Metadata,
 		},
 	}

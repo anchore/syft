@@ -56,10 +56,24 @@ func parseRpmDB(resolver file.Resolver, env *generic.Environment, reader file.Lo
 			continue
 		}
 
-		p := newPackage(
+		metadata := pkg.RpmDBEntry{
+			Name:            entry.Name,
+			Version:         entry.Version,
+			Epoch:           entry.Epoch,
+			Arch:            entry.Arch,
+			Release:         entry.Release,
+			SourceRpm:       entry.SourceRpm,
+			Vendor:          entry.Vendor,
+			Size:            entry.Size,
+			ModularityLabel: entry.Modularitylabel,
+			Files:           extractRpmFileRecords(resolver, *entry),
+		}
+
+		p := newDBPackage(
 			reader.Location,
-			newParsedDataFromEntry(reader.Location, *entry, extractRpmdbFileRecords(resolver, *entry)),
+			metadata,
 			distro,
+			[]string{entry.License},
 		)
 
 		if !pkg.IsValid(&p) {
@@ -81,15 +95,15 @@ func parseRpmDB(resolver file.Resolver, env *generic.Environment, reader file.Lo
 // version string, containing epoch (optional), version, and release information. Epoch is an optional field and can be
 // assumed to be 0 when not provided for comparison purposes, however, if the underlying RPM DB entry does not have
 // an epoch specified it would be slightly disingenuous to display a value of 0.
-func toELVersion(metadata pkg.RpmMetadata) string {
-	if metadata.Epoch != nil {
-		return fmt.Sprintf("%d:%s-%s", *metadata.Epoch, metadata.Version, metadata.Release)
+func toELVersion(epoch *int, version, release string) string {
+	if epoch != nil {
+		return fmt.Sprintf("%d:%s-%s", *epoch, version, release)
 	}
-	return fmt.Sprintf("%s-%s", metadata.Version, metadata.Release)
+	return fmt.Sprintf("%s-%s", version, release)
 }
 
-func extractRpmdbFileRecords(resolver file.PathResolver, entry rpmdb.PackageInfo) []pkg.RpmdbFileRecord {
-	var records = make([]pkg.RpmdbFileRecord, 0)
+func extractRpmFileRecords(resolver file.PathResolver, entry rpmdb.PackageInfo) []pkg.RpmFileRecord {
+	var records = make([]pkg.RpmFileRecord, 0)
 
 	files, err := entry.InstalledFiles()
 	if err != nil {
@@ -100,9 +114,9 @@ func extractRpmdbFileRecords(resolver file.PathResolver, entry rpmdb.PackageInfo
 	for _, record := range files {
 		// only persist RPMDB file records which exist in the image/directory, otherwise ignore them
 		if resolver.HasPath(record.Path) {
-			records = append(records, pkg.RpmdbFileRecord{
+			records = append(records, pkg.RpmFileRecord{
 				Path: record.Path,
-				Mode: pkg.RpmdbFileMode(record.Mode),
+				Mode: pkg.RpmFileMode(record.Mode),
 				Size: int(record.Size),
 				Digest: file.Digest{
 					Value:     record.Digest,

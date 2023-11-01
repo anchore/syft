@@ -13,14 +13,13 @@ func newPackage(m *parsedData, release *linux.Release, dbLocation file.Location)
 	licenseCandidates := strings.Split(m.Licenses, "\n")
 
 	p := pkg.Package{
-		Name:         m.Package,
-		Version:      m.Version,
-		Locations:    file.NewLocationSet(dbLocation),
-		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation.WithoutAnnotations(), licenseCandidates...)...),
-		Type:         pkg.AlpmPkg,
-		PURL:         packageURL(m, release),
-		MetadataType: pkg.AlpmMetadataType,
-		Metadata:     m.AlpmMetadata,
+		Name:      m.Package,
+		Version:   m.Version,
+		Locations: file.NewLocationSet(dbLocation),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation.WithoutAnnotations(), licenseCandidates...)...),
+		Type:      pkg.AlpmPkg,
+		PURL:      packageURL(m, release),
+		Metadata:  m.AlpmDBEntry,
 	}
 	p.SetID()
 

@@ -9,7 +9,7 @@ import (
 )
 
 // PackageURL returns the PURL for the specific java package (see https://github.com/package-url/purl-spec)
-func packageURL(name, version string, metadata pkg.JavaMetadata) string {
+func packageURL(name, version string, metadata pkg.JavaArchive) string {
 	var groupID = name
 
 	if gID := groupIDFromJavaMetadata(name, metadata); gID != "" {
@@ -32,7 +32,7 @@ func packageURL(name, version string, metadata pkg.JavaMetadata) string {
 // 2. The group ID from the POM project
 // 3. The group ID from a select map of known group IDs
 // 4. The group ID from the Java manifest
-func groupIDFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupID string) {
+func groupIDFromJavaMetadata(pkgName string, metadata pkg.JavaArchive) (groupID string) {
 	if groupID = groupIDFromPomProperties(metadata.PomProperties); groupID != "" {
 		return groupID
 	}
@@ -79,7 +79,7 @@ func groupIDFromJavaManifest(manifest *pkg.JavaManifest) (groupID string) {
 	return groupID
 }
 
-func groupIDFromPomProperties(properties *pkg.PomProperties) (groupID string) {
+func groupIDFromPomProperties(properties *pkg.JavaPomProperties) (groupID string) {
 	if properties == nil {
 		return groupID
 	}
@@ -97,7 +97,7 @@ func groupIDFromPomProperties(properties *pkg.PomProperties) (groupID string) {
 	return groupID
 }
 
-func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
+func groupIDFromPomProject(project *pkg.JavaPomProject) (groupID string) {
 	if project == nil {
 		return groupID
 	}

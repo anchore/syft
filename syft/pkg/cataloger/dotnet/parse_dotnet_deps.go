@@ -14,6 +14,12 @@ import (
 
 var _ generic.Parser = parseDotnetDeps
 
+type dotnetDeps struct {
+	RuntimeTarget dotnetRuntimeTarget                    `json:"runtimeTarget"`
+	Targets       map[string]map[string]dotnetDepsTarget `json:"targets"`
+	Libraries     map[string]dotnetDepsLibrary           `json:"libraries"`
+}
+
 type dotnetRuntimeTarget struct {
 	Name string `json:"name"`
 }
@@ -21,11 +27,6 @@ type dotnetRuntimeTarget struct {
 type dotnetDepsTarget struct {
 	Dependencies map[string]string   `json:"dependencies"`
 	Runtime      map[string]struct{} `json:"runtime"`
-}
-type dotnetDeps struct {
-	RuntimeTarget dotnetRuntimeTarget                    `json:"runtimeTarget"`
-	Targets       map[string]map[string]dotnetDepsTarget `json:"targets"`
-	Libraries     map[string]dotnetDepsLibrary           `json:"libraries"`
 }
 
 type dotnetDepsLibrary struct {

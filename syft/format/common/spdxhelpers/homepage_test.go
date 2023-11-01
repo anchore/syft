@@ -23,7 +23,7 @@ func Test_Homepage(t *testing.T) {
 		{
 			name: "from gem",
 			input: pkg.Package{
-				Metadata: pkg.GemMetadata{
+				Metadata: pkg.RubyGemspec{
 					Homepage: "http://a-place.gov",
 				},
 			},
@@ -32,7 +32,7 @@ func Test_Homepage(t *testing.T) {
 		{
 			name: "from npm",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					Homepage: "http://a-place.gov",
 				},
 			},
@@ -42,7 +42,7 @@ func Test_Homepage(t *testing.T) {
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION
 			name: "empty",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					Homepage: "",
 				},
 			},

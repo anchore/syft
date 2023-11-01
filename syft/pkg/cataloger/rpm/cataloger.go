@@ -31,7 +31,7 @@ func NewRpmDBCataloger() *generic.Cataloger {
 // NewFileCataloger returns a new RPM file cataloger object.
 func NewFileCataloger() *generic.Cataloger {
 	return generic.NewCataloger(fileCatalogerName).
-		WithParserByGlobs(parseRpm, "**/*.rpm")
+		WithParserByGlobs(parseRpmArchive, "**/*.rpm")
 }
 
 func isSqliteDriverAvailable() bool {

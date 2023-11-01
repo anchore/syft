@@ -5,54 +5,47 @@ import (
 	"strconv"
 	"strings"
 
-	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
-
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackage(dbOrRpmLocation file.Location, pd parsedData, distro *linux.Release) pkg.Package {
+func newDBPackage(dbOrRpmLocation file.Location, m pkg.RpmDBEntry, distro *linux.Release, licenses []string) pkg.Package {
 	p := pkg.Package{
-		Name:         pd.Name,
-		Version:      toELVersion(pd.RpmMetadata),
-		Licenses:     pkg.NewLicenseSet(pd.Licenses...),
-		PURL:         packageURL(pd.RpmMetadata, distro),
-		Locations:    file.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Type:         pkg.RpmPkg,
-		MetadataType: pkg.RpmMetadataType,
-		Metadata:     pd.RpmMetadata,
+		Name:      m.Name,
+		Version:   toELVersion(m.Epoch, m.Version, m.Release),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbOrRpmLocation, licenses...)...),
+		PURL:      packageURL(m.Name, m.Arch, m.Epoch, m.SourceRpm, m.Version, m.Release, distro),
+		Locations: file.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Type:      pkg.RpmPkg,
+		Metadata:  m,
 	}
 
 	p.SetID()
 	return p
 }
 
-type parsedData struct {
-	Licenses []pkg.License
-	pkg.RpmMetadata
-}
-
-func newParsedDataFromEntry(licenseLocation file.Location, entry rpmdb.PackageInfo, files []pkg.RpmdbFileRecord) parsedData {
-	return parsedData{
-		Licenses: pkg.NewLicensesFromLocation(licenseLocation, entry.License),
-		RpmMetadata: pkg.RpmMetadata{
-			Name:            entry.Name,
-			Version:         entry.Version,
-			Epoch:           entry.Epoch,
-			Arch:            entry.Arch,
-			Release:         entry.Release,
-			SourceRpm:       entry.SourceRpm,
-			Vendor:          entry.Vendor,
-			Size:            entry.Size,
-			ModularityLabel: entry.Modularitylabel,
-			Files:           files,
-		},
+func newArchivePackage(archiveLocation file.Location, m pkg.RpmArchive, licenses []string) pkg.Package {
+	p := pkg.Package{
+		Name:      m.Name,
+		Version:   toELVersion(m.Epoch, m.Version, m.Release),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(archiveLocation, licenses...)...),
+		PURL:      packageURL(m.Name, m.Arch, m.Epoch, m.SourceRpm, m.Version, m.Release, nil),
+		Locations: file.NewLocationSet(archiveLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Type:      pkg.RpmPkg,
+		Metadata:  m,
 	}
+
+	p.SetID()
+	return p
 }
 
-func newMetadataFromManifestLine(entry string) (*parsedData, error) {
+// newMetadataFromManifestLine parses an entry in an RPM manifest file as used in Mariner distroless containers.
+// Each line is the output from:
+// - rpm --query --all --query-format "%{NAME}\t%{VERSION}-%{RELEASE}\t%{INSTALLTIME}\t%{BUILDTIME}\t%{VENDOR}\t%{EPOCH}\t%{SIZE}\t%{ARCH}\t%{EPOCHNUM}\t%{SOURCERPM}\n"
+// - https://github.com/microsoft/CBL-Mariner/blob/3df18fac373aba13a54bd02466e64969574f13af/toolkit/docs/how_it_works/5_misc.md?plain=1#L150
+func newMetadataFromManifestLine(entry string) (*pkg.RpmDBEntry, error) {
 	parts := strings.Split(entry, "\t")
 	if len(parts) < 10 {
 		return nil, fmt.Errorf("unexpected number of fields in line: %s", entry)
@@ -78,46 +71,46 @@ func newMetadataFromManifestLine(entry string) (*parsedData, error) {
 	if err == nil {
 		size = converted
 	}
-	return &parsedData{
-		RpmMetadata: pkg.RpmMetadata{
-			Name:      parts[0],
-			Version:   version,
-			Epoch:     epoch,
-			Arch:      parts[7],
-			Release:   release,
-			SourceRpm: parts[9],
-			Vendor:    parts[4],
-			Size:      size,
-		},
+	return &pkg.RpmDBEntry{
+		Name:      parts[0],
+		Version:   version,
+		Epoch:     epoch,
+		Arch:      parts[7],
+		Release:   release,
+		SourceRpm: parts[9],
+		Vendor:    parts[4],
+		Size:      size,
 	}, nil
 }
 
 // packageURL returns the PURL for the specific RHEL package (see https://github.com/package-url/purl-spec)
-func packageURL(m pkg.RpmMetadata, distro *linux.Release) string {
+func packageURL(name, arch string, epoch *int, srpm string, version, release string, distro *linux.Release) string {
 	var namespace string
 	if distro != nil {
 		namespace = distro.ID
 	}
 
-	qualifiers := map[string]string{
-		pkg.PURLQualifierArch: m.Arch,
+	qualifiers := map[string]string{}
+
+	if arch != "" {
+		qualifiers[pkg.PURLQualifierArch] = arch
 	}
 
-	if m.Epoch != nil {
-		qualifiers[pkg.PURLQualifierEpoch] = strconv.Itoa(*m.Epoch)
+	if epoch != nil {
+		qualifiers[pkg.PURLQualifierEpoch] = strconv.Itoa(*epoch)
 	}
 
-	if m.SourceRpm != "" {
-		qualifiers[pkg.PURLQualifierUpstream] = m.SourceRpm
+	if srpm != "" {
+		qualifiers[pkg.PURLQualifierUpstream] = srpm
 	}
 
 	return packageurl.NewPackageURL(
 		packageurl.TypeRPM,
 		namespace,
-		m.Name,
+		name,
 		// for purl the epoch is a qualifier, not part of the version
 		// see https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst under the RPM section
-		fmt.Sprintf("%s-%s", m.Version, m.Release),
+		fmt.Sprintf("%s-%s", version, release),
 		pkg.PURLQualifiers(
 			qualifiers,
 			distro,

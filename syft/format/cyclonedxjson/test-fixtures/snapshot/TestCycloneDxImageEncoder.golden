@@ -45,12 +45,12 @@
           "value": "python"
         },
         {
-          "name": "syft:package:metadataType",
-          "value": "PythonPackageMetadata"
-        },
-        {
           "name": "syft:package:type",
           "value": "python"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "python-package"
         },
         {
           "name": "syft:location:0:layerID",
@@ -75,12 +75,12 @@
           "value": "the-cataloger-2"
         },
         {
-          "name": "syft:package:metadataType",
-          "value": "DpkgMetadata"
-        },
-        {
           "name": "syft:package:type",
           "value": "deb"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "dpkg-db-entry"
         },
         {
           "name": "syft:location:0:layerID",

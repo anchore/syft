@@ -22,7 +22,7 @@ type upstreamCandidate struct {
 	Type pkg.Type
 }
 
-func upstreamCandidates(m pkg.ApkMetadata) (candidates []upstreamCandidate) {
+func upstreamCandidates(m pkg.ApkDBEntry) (candidates []upstreamCandidate) {
 	// Do not consider OriginPackage variations when generating CPE candidates for the child package
 	// because doing so will result in false positives when matching to vulnerabilities in Grype since
 	// it won't know to lookup apk fix entries using the OriginPackage name.
@@ -60,7 +60,7 @@ func upstreamCandidates(m pkg.ApkMetadata) (candidates []upstreamCandidate) {
 }
 
 func candidateVendorsForAPK(p pkg.Package) fieldCandidateSet {
-	metadata, ok := p.Metadata.(pkg.ApkMetadata)
+	metadata, ok := p.Metadata.(pkg.ApkDBEntry)
 	if !ok {
 		return nil
 	}
@@ -101,7 +101,7 @@ func candidateVendorsForAPK(p pkg.Package) fieldCandidateSet {
 }
 
 func candidateProductsForAPK(p pkg.Package) fieldCandidateSet {
-	metadata, ok := p.Metadata.(pkg.ApkMetadata)
+	metadata, ok := p.Metadata.(pkg.ApkDBEntry)
 	if !ok {
 		return nil
 	}

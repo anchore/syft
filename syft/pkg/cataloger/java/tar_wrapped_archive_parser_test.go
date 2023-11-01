@@ -40,7 +40,8 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actualPkgs, _, err := parseTarWrappedJavaArchive(nil, nil, file.LocationReadCloser{
+			gtp := newGenericTarWrappedJavaArchiveParser(Config{})
+			actualPkgs, _, err := gtp.parseTarWrappedJavaArchive(nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(test.fixture),
 				ReadCloser: fixture,
 			})

@@ -15,25 +15,25 @@ func Originator(p pkg.Package) (string, string) {
 	author := ""
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
-		case pkg.ApkMetadata:
+		case pkg.ApkDBEntry:
 			author = metadata.Maintainer
-		case pkg.NpmPackageJSONMetadata:
+		case pkg.NpmPackage:
 			author = metadata.Author
-		case pkg.PythonPackageMetadata:
+		case pkg.PythonPackage:
 			author = metadata.Author
 			if author == "" {
 				author = metadata.AuthorEmail
 			} else if metadata.AuthorEmail != "" {
 				author = fmt.Sprintf("%s (%s)", author, metadata.AuthorEmail)
 			}
-		case pkg.GemMetadata:
+		case pkg.RubyGemspec:
 			if len(metadata.Authors) > 0 {
 				author = metadata.Authors[0]
 			}
-		case pkg.RpmMetadata:
+		case pkg.RpmDBEntry:
 			typ = "Organization"
 			author = metadata.Vendor
-		case pkg.DpkgMetadata:
+		case pkg.DpkgDBEntry:
 			author = metadata.Maintainer
 		}
 		if typ == "" && author != "" {

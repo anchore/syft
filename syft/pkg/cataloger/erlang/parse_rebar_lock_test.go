@@ -18,13 +18,12 @@ func TestParseRebarLock(t *testing.T) {
 			fixture: "test-fixtures/rebar.lock",
 			expected: []pkg.Package{
 				{
-					Name:         "certifi",
-					Version:      "2.9.0",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/certifi@2.9.0",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "certifi",
+					Version:  "2.9.0",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/certifi@2.9.0",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "certifi",
 						Version:    "2.9.0",
 						PkgHash:    "6F2A475689DD47F19FB74334859D460A2DC4E3252A3324BD2111B8F0429E7E21",
@@ -32,13 +31,12 @@ func TestParseRebarLock(t *testing.T) {
 					},
 				},
 				{
-					Name:         "idna",
-					Version:      "6.1.1",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/idna@6.1.1",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "idna",
+					Version:  "6.1.1",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/idna@6.1.1",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "idna",
 						Version:    "6.1.1",
 						PkgHash:    "8A63070E9F7D0C62EB9D9FCB360A7DE382448200FBBD1B106CC96D3D8099DF8D",
@@ -46,13 +44,12 @@ func TestParseRebarLock(t *testing.T) {
 					},
 				},
 				{
-					Name:         "metrics",
-					Version:      "1.0.1",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/metrics@1.0.1",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "metrics",
+					Version:  "1.0.1",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/metrics@1.0.1",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "metrics",
 						Version:    "1.0.1",
 						PkgHash:    "25F094DEA2CDA98213CECC3AEFF09E940299D950904393B2A29D191C346A8486",
@@ -60,13 +57,12 @@ func TestParseRebarLock(t *testing.T) {
 					},
 				},
 				{
-					Name:         "mimerl",
-					Version:      "1.2.0",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/mimerl@1.2.0",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "mimerl",
+					Version:  "1.2.0",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/mimerl@1.2.0",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "mimerl",
 						Version:    "1.2.0",
 						PkgHash:    "67E2D3F571088D5CFD3E550C383094B47159F3EEE8FFA08E64106CDF5E981BE3",
@@ -74,13 +70,12 @@ func TestParseRebarLock(t *testing.T) {
 					},
 				},
 				{
-					Name:         "parse_trans",
-					Version:      "3.3.1",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/parse_trans@3.3.1",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "parse_trans",
+					Version:  "3.3.1",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/parse_trans@3.3.1",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "parse_trans",
 						Version:    "3.3.1",
 						PkgHash:    "16328AB840CC09919BD10DAB29E431DA3AF9E9E7E7E6F0089DD5A2D2820011D8",
@@ -88,13 +83,12 @@ func TestParseRebarLock(t *testing.T) {
 					},
 				},
 				{
-					Name:         "ssl_verify_fun",
-					Version:      "1.1.6",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/ssl_verify_fun@1.1.6",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "ssl_verify_fun",
+					Version:  "1.1.6",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/ssl_verify_fun@1.1.6",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "ssl_verify_fun",
 						Version:    "1.1.6",
 						PkgHash:    "CF344F5692C82D2CD7554F5EC8FD961548D4FD09E7D22F5B62482E5AEAEBD4B0",
@@ -102,13 +96,12 @@ func TestParseRebarLock(t *testing.T) {
 					},
 				},
 				{
-					Name:         "unicode_util_compat",
-					Version:      "0.7.0",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/unicode_util_compat@0.7.0",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "unicode_util_compat",
+					Version:  "0.7.0",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/unicode_util_compat@0.7.0",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "unicode_util_compat",
 						Version:    "0.7.0",
 						PkgHash:    "BC84380C9AB48177092F43AC89E4DFA2C6D62B40B8BD132B1059ECC7232F9A78",
@@ -124,13 +117,12 @@ func TestParseRebarLock(t *testing.T) {
 				// {<<"bcrypt">>, <<"A6763BD4E1AF46D34776F85B7995E63A02978DE110C077E9570ED17006E03386">>},
 				// {<<"bcrypt">>, <<"3418821BC17CE6E96A4A77D1A88D7485BF783E212069FACFC79510AFBFF95352">>},
 				{
-					Name:         "bcrypt",
-					Version:      "1.1.5",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/bcrypt@1.1.5",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "bcrypt",
+					Version:  "1.1.5",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/bcrypt@1.1.5",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "bcrypt",
 						Version:    "1.1.5",
 						PkgHash:    "A6763BD4E1AF46D34776F85B7995E63A02978DE110C077E9570ED17006E03386",
@@ -142,13 +134,12 @@ func TestParseRebarLock(t *testing.T) {
 				//       {ref,"14308ab927cfa69324742c3de720578094e0bb19"}},
 				//  1},
 				{
-					Name:         "bson",
-					Version:      "14308ab927cfa69324742c3de720578094e0bb19",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/bson@14308ab927cfa69324742c3de720578094e0bb19",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "bson",
+					Version:  "14308ab927cfa69324742c3de720578094e0bb19",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/bson@14308ab927cfa69324742c3de720578094e0bb19",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:    "bson",
 						Version: "14308ab927cfa69324742c3de720578094e0bb19",
 					},
@@ -157,13 +148,12 @@ func TestParseRebarLock(t *testing.T) {
 				// {<<"certifi">>, <<"6F2A475689DD47F19FB74334859D460A2DC4E3252A3324BD2111B8F0429E7E21">>}, {<<"stdout_formatter">>, <<"EC24868D8619757A68F0798357C7190807A1CFC42CE90C18C23760E59249A21A">>},
 				// {<<"certifi">>, <<"266DA46BDB06D6C6D35FDE799BCB28D36D985D424AD7C08B5BB48F5B5CDD4641">>},
 				{
-					Name:         "certifi",
-					Version:      "2.9.0",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/certifi@2.9.0",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "certifi",
+					Version:  "2.9.0",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/certifi@2.9.0",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "certifi",
 						Version:    "2.9.0",
 						PkgHash:    "6F2A475689DD47F19FB74334859D460A2DC4E3252A3324BD2111B8F0429E7E21",
@@ -174,13 +164,12 @@ func TestParseRebarLock(t *testing.T) {
 				// {<<"stdout_formatter">>, <<"EC24868D8619757A68F0798357C7190807A1CFC42CE90C18C23760E59249A21A">>},
 				// {<<"stdout_formatter">>, <<"6B9CAAD8930006F9BB35680C5D3311917AC67690C3AF1BA018623324C015ABE5">>},
 				{
-					Name:         "stdout_formatter",
-					Version:      "0.2.3",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/stdout_formatter@0.2.3",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "stdout_formatter",
+					Version:  "0.2.3",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/stdout_formatter@0.2.3",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "stdout_formatter",
 						Version:    "0.2.3",
 						PkgHash:    "EC24868D8619757A68F0798357C7190807A1CFC42CE90C18C23760E59249A21A",
@@ -192,13 +181,12 @@ func TestParseRebarLock(t *testing.T) {
 				//       {ref,"4835239dca5a5f4ac7202dd94d7effcaa617d575"}},
 				//  0},
 				{
-					Name:         "swc",
-					Version:      "4835239dca5a5f4ac7202dd94d7effcaa617d575",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/swc@4835239dca5a5f4ac7202dd94d7effcaa617d575",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "swc",
+					Version:  "4835239dca5a5f4ac7202dd94d7effcaa617d575",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/swc@4835239dca5a5f4ac7202dd94d7effcaa617d575",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:    "swc",
 						Version: "4835239dca5a5f4ac7202dd94d7effcaa617d575",
 					},
@@ -207,13 +195,12 @@ func TestParseRebarLock(t *testing.T) {
 				// {<<"syslog">>, <<"6419A232BEA84F07B56DC575225007FFE34D9FDC91ABE6F1B2F254FD71D8EFC2">>},
 				// {<<"syslog">>, <<"4C6A41373C7E20587BE33EF841D3DE6F3BEBA08519809329ECC4D27B15B659E1">>},
 				{
-					Name:         "syslog",
-					Version:      "1.1.0",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/syslog@1.1.0",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "syslog",
+					Version:  "1.1.0",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/syslog@1.1.0",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "syslog",
 						Version:    "1.1.0",
 						PkgHash:    "6419A232BEA84F07B56DC575225007FFE34D9FDC91ABE6F1B2F254FD71D8EFC2",
@@ -224,13 +211,12 @@ func TestParseRebarLock(t *testing.T) {
 				// {<<"unicode_util_compat">>, <<"BC84380C9AB48177092F43AC89E4DFA2C6D62B40B8BD132B1059ECC7232F9A78">>}]},
 				// {<<"unicode_util_compat">>, <<"25EEE6D67DF61960CF6A794239566599B09E17E668D3700247BC498638152521">>}]}
 				{
-					Name:         "unicode_util_compat",
-					Version:      "0.7.0",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/unicode_util_compat@0.7.0",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "unicode_util_compat",
+					Version:  "0.7.0",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/unicode_util_compat@0.7.0",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "unicode_util_compat",
 						Version:    "0.7.0",
 						PkgHash:    "BC84380C9AB48177092F43AC89E4DFA2C6D62B40B8BD132B1059ECC7232F9A78",
@@ -242,13 +228,12 @@ func TestParseRebarLock(t *testing.T) {
 				//       {ref,"6d622aa8c901ae7777433aef2bd049e380c474a6"}},
 				//  0}]}.
 				{
-					Name:         "vernemq_dev",
-					Version:      "6d622aa8c901ae7777433aef2bd049e380c474a6",
-					Language:     pkg.Erlang,
-					Type:         pkg.HexPkg,
-					PURL:         "pkg:hex/vernemq_dev@6d622aa8c901ae7777433aef2bd049e380c474a6",
-					MetadataType: pkg.RebarLockMetadataType,
-					Metadata: pkg.RebarLockMetadata{
+					Name:     "vernemq_dev",
+					Version:  "6d622aa8c901ae7777433aef2bd049e380c474a6",
+					Language: pkg.Erlang,
+					Type:     pkg.HexPkg,
+					PURL:     "pkg:hex/vernemq_dev@6d622aa8c901ae7777433aef2bd049e380c474a6",
+					Metadata: pkg.ErlangRebarLockEntry{
 						Name:    "vernemq_dev",
 						Version: "6d622aa8c901ae7777433aef2bd049e380c474a6",
 					},

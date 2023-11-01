@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
+	javaCataloger "github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	pythonCataloger "github.com/anchore/syft/syft/pkg/cataloger/python"
 	"github.com/anchore/syft/syft/source"
@@ -23,6 +24,7 @@ type Catalog struct {
 	Catalogers                      []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
 	Package                         pkg                `yaml:"package" json:"package" mapstructure:"package"`
 	Golang                          golang             `yaml:"golang" json:"golang" mapstructure:"golang"`
+	Java                            java               `yaml:"java" json:"java" mapstructure:"java"`
 	LinuxKernel                     linuxKernel        `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Python                          python             `yaml:"python" json:"python" mapstructure:"python"`
 	FileMetadata                    fileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
@@ -137,6 +139,9 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 		LinuxKernel: kernel.LinuxCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},
+		Java: javaCataloger.DefaultCatalogerOpts().
+			WithSearchMavenForLicenses(cfg.Java.SearchMavenForLicenses).
+			WithMavenCentralURL(cfg.Java.MavenURL),
 		Python: pythonCataloger.CatalogerConfig{
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},

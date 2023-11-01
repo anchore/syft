@@ -32,7 +32,7 @@ type Output struct {
 	AllowMultipleOutputs bool     `yaml:"-" json:"-" mapstructure:"-"`
 	Outputs              []string `yaml:"output" json:"output" mapstructure:"output"` // -o, the format to use for output
 	OutputFile           `yaml:",inline" json:"" mapstructure:",squash"`
-	OutputTemplate       `yaml:"template" json:"template" mapstructure:"template"`
+	Format               `yaml:"format" json:"format" mapstructure:"format"`
 }
 
 func DefaultOutput() Output {
@@ -42,9 +42,7 @@ func DefaultOutput() Output {
 		OutputFile: OutputFile{
 			Enabled: true,
 		},
-		OutputTemplate: OutputTemplate{
-			Enabled: true,
-		},
+		Format: DefaultFormat(),
 	}
 }
 
@@ -68,7 +66,7 @@ func (o Output) SBOMWriter() (sbom.Writer, error) {
 
 	usesTemplateOutput := names.Has(string(template.ID))
 
-	if usesTemplateOutput && o.OutputTemplate.Path == "" {
+	if usesTemplateOutput && o.Format.Template.Path == "" {
 		return nil, fmt.Errorf(`must specify path to template file when using "template" output format`)
 	}
 
@@ -78,24 +76,6 @@ func (o Output) SBOMWriter() (sbom.Writer, error) {
 	}
 
 	return makeSBOMWriter(o.Outputs, o.File, encoders)
-}
-
-func (o *Output) Encoders() ([]sbom.FormatEncoder, error) {
-	// setup all encoders based on the configuration
-	var list encoderList
-
-	// in the future there will be application configuration options that can be used to set the default output format
-	list.addWithErr(template.ID)(o.OutputTemplate.formatEncoders())
-	list.add(syftjson.ID)(syftjson.NewFormatEncoder())
-	list.add(table.ID)(table.NewFormatEncoder())
-	list.add(text.ID)(text.NewFormatEncoder())
-	list.add(github.ID)(github.NewFormatEncoder())
-	list.addWithErr(cyclonedxxml.ID)(cycloneDxXMLEncoders())
-	list.addWithErr(cyclonedxjson.ID)(cycloneDxJSONEncoders())
-	list.addWithErr(spdxjson.ID)(spdxJSONEncoders())
-	list.addWithErr(spdxtagvalue.ID)(spdxTagValueEncoders())
-
-	return list.encoders, list.err
 }
 
 func (o Output) OutputNameSet() *strset.Set {

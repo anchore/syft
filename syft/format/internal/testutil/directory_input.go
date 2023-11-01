@@ -108,12 +108,11 @@ func newDirectoryCatalog() *pkg.Collection {
 		Locations: file.NewLocationSet(
 			file.NewLocation("/some/path/pkg1"),
 		),
-		Language:     pkg.Python,
-		MetadataType: pkg.PythonPackageMetadataType,
+		Language: pkg.Python,
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicense("MIT"),
 		),
-		Metadata: pkg.PythonPackageMetadata{
+		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
 			Version: "1.0.1",
 			Files: []pkg.PythonFileRecord{
@@ -135,8 +134,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		Locations: file.NewLocationSet(
 			file.NewLocation("/some/path/pkg1"),
 		),
-		MetadataType: pkg.DpkgMetadataType,
-		Metadata: pkg.DpkgMetadata{
+		Metadata: pkg.DpkgDBEntry{
 			Package: "package-2",
 			Version: "2.0.1",
 		},
@@ -161,12 +159,11 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		Locations: file.NewLocationSet(
 			file.NewLocation("/some/path/pkg1"),
 		),
-		Language:     pkg.Python,
-		MetadataType: pkg.PythonPackageMetadataType,
+		Language: pkg.Python,
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicense("MIT"),
 		),
-		Metadata: pkg.PythonPackageMetadata{
+		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
 			Version: "1.0.1",
 			Author:  "test-author",
@@ -189,8 +186,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		Locations: file.NewLocationSet(
 			file.NewLocation("/some/path/pkg1"),
 		),
-		MetadataType: pkg.DpkgMetadataType,
-		Metadata: pkg.DpkgMetadata{
+		Metadata: pkg.DpkgDBEntry{
 			Package: "package-2",
 			Version: "2.0.1",
 		},

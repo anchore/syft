@@ -103,15 +103,13 @@ func TestToSyftModel(t *testing.T) {
 
 	p1 := pkgs[0]
 	assert.Equal(t, p1.Name, "pkg-1")
-	assert.Equal(t, p1.MetadataType, pkg.ApkMetadataType)
-	p1meta := p1.Metadata.(pkg.ApkMetadata)
+	p1meta := p1.Metadata.(pkg.ApkDBEntry)
 	assert.Equal(t, p1meta.OriginPackage, "p1-origin")
 	assert.Len(t, p1.CPEs, 2)
 
 	p2 := pkgs[1]
 	assert.Equal(t, p2.Name, "pkg-2")
-	assert.Equal(t, p2.MetadataType, pkg.DpkgMetadataType)
-	p2meta := p2.Metadata.(pkg.DpkgMetadata)
+	p2meta := p2.Metadata.(pkg.DpkgDBEntry)
 	assert.Equal(t, p2meta.Source, "p2-origin")
 	assert.Equal(t, p2meta.SourceVersion, "9.1.3")
 	assert.Len(t, p2.CPEs, 3)
@@ -120,9 +118,8 @@ func TestToSyftModel(t *testing.T) {
 func Test_extractMetadata(t *testing.T) {
 	oneTwoThreeFour := 1234
 	tests := []struct {
-		pkg      spdx.Package
-		metaType pkg.MetadataType
-		meta     interface{}
+		pkg  spdx.Package
+		meta interface{}
 	}{
 		{
 			pkg: spdx.Package{
@@ -136,8 +133,7 @@ func Test_extractMetadata(t *testing.T) {
 					},
 				},
 			},
-			metaType: pkg.DpkgMetadataType,
-			meta: pkg.DpkgMetadata{
+			meta: pkg.DpkgDBEntry{
 				Package:       "SomeDebPkg",
 				Source:        "somedebpkg-origin",
 				Version:       "43.1.235",
@@ -157,8 +153,7 @@ func Test_extractMetadata(t *testing.T) {
 					},
 				},
 			},
-			metaType: pkg.ApkMetadataType,
-			meta: pkg.ApkMetadata{
+			meta: pkg.ApkDBEntry{
 				Package:       "SomeApkPkg",
 				OriginPackage: "apk-origin",
 				Version:       "3.2.9",
@@ -177,8 +172,7 @@ func Test_extractMetadata(t *testing.T) {
 					},
 				},
 			},
-			metaType: pkg.RpmMetadataType,
-			meta: pkg.RpmMetadata{
+			meta: pkg.RpmDBEntry{
 				Name:      "SomeRpmPkg",
 				Version:   "13.2.79",
 				Epoch:     &oneTwoThreeFour,
@@ -192,8 +186,7 @@ func Test_extractMetadata(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.pkg.PackageName, func(t *testing.T) {
 			info := extractPkgInfo(&test.pkg)
-			metaType, meta := extractMetadata(&test.pkg, info)
-			assert.Equal(t, test.metaType, metaType)
+			meta := extractMetadata(&test.pkg, info)
 			assert.EqualValues(t, test.meta, meta)
 		})
 	}
@@ -319,8 +312,7 @@ func TestH1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			p := toSyftPackage(&test.pkg)
-			require.Equal(t, pkg.GolangBinMetadataType, p.MetadataType)
-			meta := p.Metadata.(pkg.GolangBinMetadata)
+			meta := p.Metadata.(pkg.GolangBinaryBuildinfoEntry)
 			require.Equal(t, test.expectedDigest, meta.H1Digest)
 		})
 	}
@@ -439,12 +431,10 @@ func Test_toSyftRelationships(t *testing.T) {
 func Test_convertToAndFromFormat(t *testing.T) {
 	packages := []pkg.Package{
 		{
-			Name:         "pkg1",
-			MetadataType: pkg.UnknownMetadataType,
+			Name: "pkg1",
 		},
 		{
-			Name:         "pkg2",
-			MetadataType: pkg.UnknownMetadataType,
+			Name: "pkg2",
 		},
 	}
 
@@ -545,7 +535,6 @@ func Test_convertToAndFromFormat(t *testing.T) {
 				cmpopts.IgnoreUnexported(pkg.Collection{}),
 				cmpopts.IgnoreUnexported(pkg.Package{}),
 				cmpopts.IgnoreUnexported(pkg.LicenseSet{}),
-				cmpopts.IgnoreFields(pkg.Package{}, "MetadataType"),
 				cmpopts.IgnoreFields(sbom.Artifacts{}, "FileMetadata", "FileDigests"),
 			); diff != "" {
 				t.Fatalf("packages do not match:\n%s", diff)
@@ -637,9 +626,8 @@ func Test_directPackageFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	p := pkg.Package{
-		Name:         "some-package",
-		Version:      "1.0.5",
-		MetadataType: pkg.UnknownMetadataType,
+		Name:    "some-package",
+		Version: "1.0.5",
 	}
 	p.SetID()
 	f := file.Location{

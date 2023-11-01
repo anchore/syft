@@ -168,18 +168,18 @@ func candidateVendors(p pkg.Package) []string {
 		}
 	}
 
-	switch p.MetadataType {
-	case pkg.RpmMetadataType:
+	switch p.Metadata.(type) {
+	case pkg.RpmDBEntry:
 		vendors.union(candidateVendorsForRPM(p))
-	case pkg.GemMetadataType:
+	case pkg.RubyGemspec:
 		vendors.union(candidateVendorsForRuby(p))
-	case pkg.PythonPackageMetadataType:
+	case pkg.PythonPackage:
 		vendors.union(candidateVendorsForPython(p))
-	case pkg.JavaMetadataType:
+	case pkg.JavaArchive:
 		vendors.union(candidateVendorsForJava(p))
-	case pkg.ApkMetadataType:
+	case pkg.ApkDBEntry:
 		vendors.union(candidateVendorsForAPK(p))
-	case pkg.NpmPackageJSONMetadataType:
+	case pkg.NpmPackage:
 		vendors.union(candidateVendorsForJavascript(p))
 	}
 
@@ -217,12 +217,14 @@ func candidateVendors(p pkg.Package) []string {
 func candidateProducts(p pkg.Package) []string {
 	products := newFieldCandidateSet(p.Name)
 
+	_, hasJavaMetadata := p.Metadata.(pkg.JavaArchive)
+
 	switch {
 	case p.Language == pkg.Python:
 		if !strings.HasPrefix(p.Name, "python") {
 			products.addValue("python-" + p.Name)
 		}
-	case p.Language == pkg.Java || p.MetadataType == pkg.JavaMetadataType:
+	case p.Language == pkg.Java || hasJavaMetadata:
 		products.addValue(candidateProductsForJava(p)...)
 	case p.Language == pkg.Go:
 		// replace all candidates with only the golang-specific helper
@@ -234,7 +236,7 @@ func candidateProducts(p pkg.Package) []string {
 		}
 	}
 
-	if p.MetadataType == pkg.ApkMetadataType {
+	if _, hasAPKMetadata := p.Metadata.(pkg.ApkDBEntry); hasAPKMetadata {
 		products.union(candidateProductsForAPK(p))
 	}
 

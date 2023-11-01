@@ -22,22 +22,22 @@ func Test_encodeGroup(t *testing.T) {
 		{
 			name: "metadata is not Java",
 			input: pkg.Package{
-				Metadata: pkg.NpmPackageJSONMetadata{},
+				Metadata: pkg.NpmPackage{},
 			},
 			expected: "",
 		},
 		{
 			name: "metadata is Java but pom properties is empty",
 			input: pkg.Package{
-				Metadata: pkg.JavaMetadata{},
+				Metadata: pkg.JavaArchive{},
 			},
 			expected: "",
 		},
 		{
 			name: "metadata is Java and contains pomProperties",
 			input: pkg.Package{
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID: "test",
 					},
 				},

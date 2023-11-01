@@ -9,7 +9,7 @@ import (
 
 const catalogerName = "elixir-mix-lock-cataloger"
 
-// NewMixLockCataloger returns parses mix.lock files and returns packages
+// NewMixLockCataloger returns a cataloger object for Elixir mix.lock files.
 func NewMixLockCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseMixLock, "**/mix.lock")

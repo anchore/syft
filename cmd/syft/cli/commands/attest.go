@@ -59,12 +59,13 @@ func Attest(app clio.Application) *cobra.Command {
 			OutputFile: options.OutputFile{ // nolint:staticcheck
 				Enabled: false, // explicitly not allowed
 			},
-			OutputTemplate: options.OutputTemplate{
-				Enabled: false, // explicitly not allowed
-			},
+			Format: options.DefaultFormat(),
 		},
 		Catalog: options.DefaultCatalog(),
 	}
+
+	// template format explicitly not allowed
+	opts.Format.Template.Enabled = false
 
 	return app.SetupCommand(&cobra.Command{
 		Use:   "attest --output [FORMAT] <IMAGE>",

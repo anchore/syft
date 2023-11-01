@@ -5,9 +5,9 @@ import "github.com/anchore/syft/syft/pkg"
 func Homepage(p pkg.Package) string {
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
-		case pkg.GemMetadata:
+		case pkg.RubyGemspec:
 			return metadata.Homepage
-		case pkg.NpmPackageJSONMetadata:
+		case pkg.NpmPackage:
 			return metadata.Homepage
 		}
 	}

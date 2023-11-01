@@ -3,12 +3,12 @@ package cpe
 import "github.com/anchore/syft/syft/pkg"
 
 func candidateVendorsForJavascript(p pkg.Package) fieldCandidateSet {
-	if p.MetadataType != pkg.NpmPackageJSONMetadataType {
+	if _, ok := p.Metadata.(pkg.NpmPackage); !ok {
 		return nil
 	}
 
 	vendors := newFieldCandidateSet()
-	metadata, ok := p.Metadata.(pkg.NpmPackageJSONMetadata)
+	metadata, ok := p.Metadata.(pkg.NpmPackage)
 	if !ok {
 		return nil
 	}

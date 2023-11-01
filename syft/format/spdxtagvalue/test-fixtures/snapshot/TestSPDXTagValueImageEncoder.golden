@@ -23,7 +23,7 @@ ExternalRef: PACKAGE-MANAGER purl pkg:oci/user-image-input@sha256:2731251dc34951
 ##### Package: package-2
 
 PackageName: package-2
-SPDXID: SPDXRef-Package-deb-package-2-f27313b22a5ba330
+SPDXID: SPDXRef-Package-deb-package-2-4b756c6f6fb127a3
 PackageVersion: 2.0.1
 PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
@@ -38,7 +38,7 @@ ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
 ##### Package: package-1
 
 PackageName: package-1
-SPDXID: SPDXRef-Package-python-package-1-125840abc1c66dd7
+SPDXID: SPDXRef-Package-python-package-1-80210ebcba92e632
 PackageVersion: 1.0.1
 PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
@@ -52,7 +52,7 @@ ExternalRef: PACKAGE-MANAGER purl a-purl-1
 
 ##### Relationships
 
-Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-python-package-1-125840abc1c66dd7
-Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-deb-package-2-f27313b22a5ba330
+Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-python-package-1-80210ebcba92e632
+Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-deb-package-2-4b756c6f6fb127a3
 Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Image-user-image-input
 

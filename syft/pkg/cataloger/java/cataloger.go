@@ -9,17 +9,21 @@ import (
 
 // NewJavaCataloger returns a new Java archive cataloger object.
 func NewJavaCataloger(cfg Config) *generic.Cataloger {
+	gap := newGenericArchiveParserAdapter(cfg)
+
 	c := generic.NewCataloger("java-cataloger").
-		WithParserByGlobs(parseJavaArchive, archiveFormatGlobs...)
+		WithParserByGlobs(gap.parseJavaArchive, archiveFormatGlobs...)
 
 	if cfg.SearchIndexedArchives {
 		// java archives wrapped within zip files
-		c.WithParserByGlobs(parseZipWrappedJavaArchive, genericZipGlobs...)
+		gzp := newGenericZipWrappedJavaArchiveParser(cfg)
+		c.WithParserByGlobs(gzp.parseZipWrappedJavaArchive, genericZipGlobs...)
 	}
 
 	if cfg.SearchUnindexedArchives {
 		// java archives wrapped within tar files
-		c.WithParserByGlobs(parseTarWrappedJavaArchive, genericTarGlobs...)
+		gtp := newGenericTarWrappedJavaArchiveParser(cfg)
+		c.WithParserByGlobs(gtp.parseTarWrappedJavaArchive, genericTarGlobs...)
 	}
 	return c
 }

@@ -10,7 +10,7 @@ import (
 
 const catalogerName = "apkdb-cataloger"
 
-// NewApkdbCataloger returns a new Alpine DB cataloger object.
+// NewApkdbCataloger returns a new cataloger object initialized for Alpine package DB flat-file stores.
 func NewApkdbCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseApkDB, pkg.ApkDBGlob)

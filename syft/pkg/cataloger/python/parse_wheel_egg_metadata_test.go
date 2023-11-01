@@ -20,7 +20,7 @@ func TestParseWheelEggMetadata(t *testing.T) {
 			ExpectedMetadata: parsedData{
 				"Apache 2.0",
 				file.NewLocation("test-fixtures/egg-info/PKG-INFO"),
-				pkg.PythonPackageMetadata{
+				pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
 					Platform:             "UNKNOWN",
@@ -35,7 +35,7 @@ func TestParseWheelEggMetadata(t *testing.T) {
 			ExpectedMetadata: parsedData{
 				"BSD License",
 				file.NewLocation("test-fixtures/dist-info/METADATA"),
-				pkg.PythonPackageMetadata{
+				pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
 					Platform:             "any",
@@ -136,7 +136,7 @@ func TestParseWheelEggMetadataInvalid(t *testing.T) {
 			ExpectedMetadata: parsedData{
 				"",
 				file.Location{},
-				pkg.PythonPackageMetadata{
+				pkg.PythonPackage{
 					Name:                 "mxnet",
 					Version:              "1.8.0",
 					SitePackagesRootPath: "test-fixtures",

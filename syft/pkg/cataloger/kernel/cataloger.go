@@ -91,7 +91,7 @@ func createKernelToModuleRelationships(kernelPackages, modulePackages []pkg.Pack
 
 	modulesByKernelVersion := make(map[string][]*pkg.Package)
 	for idx, p := range modulePackages {
-		m, ok := p.Metadata.(pkg.LinuxKernelModuleMetadata)
+		m, ok := p.Metadata.(pkg.LinuxKernelModule)
 		if !ok {
 			log.Debug("linux-kernel-module package found without metadata: %s@%s", p.Name, p.Version)
 			continue
