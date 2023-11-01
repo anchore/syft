@@ -5,7 +5,7 @@ This prevents us from having to create real jars by hand or keep binaries in the
 entire jar, only the necessary metadata for testing.
 
 ### api-all-2.0.0-sources
-This fixture is built to simulate the case where we have a jar with multiple pom files.
+This fixture is built to simulate the case where we have a jar with multiple pom files discovered when trying to determine the parent.
 This is a valid case, but not one that we covered before [PR 2231](https://github.com/anchore/syft/pull/2231)
 
 ### jackson-core-2.15.2
