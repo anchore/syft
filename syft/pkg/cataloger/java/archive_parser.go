@@ -263,21 +263,21 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 	pomMatches := j.fileManifest.GlobMatch(false, pomXMLGlob)
 	var pomPropertiesObject pkg.JavaPomProperties
 	var pomProjectObject *parsedPomProject
-	if len(pomPropertyMatches) == 1 || len(pomMatches) == 1 {
-		// we have exactly 1 pom.properties or pom.xml in the archive; assume it represents the
-		// package we're scanning if the names seem like a plausible match
-		properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, pomPropertyMatches)
-		projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
 
-		for parentPath, propertiesObj := range properties {
-			if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name) {
-				pomPropertiesObject = propertiesObj
-				if proj, exists := projects[parentPath]; exists {
-					pomProjectObject = proj
-				}
+	// Find the pom.properties/pom.xml if the names seem like a plausible match
+	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, pomPropertyMatches)
+	projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
+
+	for parentPath, propertiesObj := range properties {
+		if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name) {
+			pomPropertiesObject = propertiesObj
+			if proj, exists := projects[parentPath]; exists {
+				pomProjectObject = proj
+				break
 			}
 		}
 	}
+
 	name = pomPropertiesObject.ArtifactID
 	if name == "" && pomProjectObject != nil {
 		name = pomProjectObject.ArtifactID
