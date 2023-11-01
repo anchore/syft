@@ -1213,7 +1213,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gap := newGenericArchiveParserAdapter(Config{})
 			if tt.assignParent {
-				assignParent(tt.expectedPkgs)
+				assignParent(&tt.expectedPkgs[0], tt.expectedPkgs[1:]...)
 			}
 			pkgtest.NewCatalogTester().
 				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName)).
@@ -1224,16 +1224,14 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 	}
 }
 
-func assignParent(expectedPackages []pkg.Package) {
-	for i, jp := range expectedPackages {
-		if i > 0 {
-			if v, ok := jp.Metadata.(pkg.JavaArchive); ok {
-				parent := expectedPackages[0]
-				// PURL are not calculated after the fact for parent
-				parent.PURL = ""
-				v.Parent = &parent
-				expectedPackages[i].Metadata = v
-			}
+func assignParent(parent *pkg.Package, childPackages ...pkg.Package) {
+	for i, jp := range childPackages {
+		if v, ok := jp.Metadata.(pkg.JavaArchive); ok {
+			parent := *parent
+			// PURL are not calculated after the fact for parent
+			parent.PURL = ""
+			v.Parent = &parent
+			childPackages[i].Metadata = v
 		}
 	}
 }
