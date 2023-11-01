@@ -1036,6 +1036,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 		fixtureName           string
 		expectedPkgs          []pkg.Package
 		expectedRelationships []artifact.Relationship
+		assignParent          bool
 		want                  bool
 	}{
 		{
@@ -1146,16 +1147,92 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:         "multiple pom for parent selection regression (pr 2231)",
+			fixtureName:  "api-all-2.0.0-sources",
+			assignParent: true,
+			expectedPkgs: []pkg.Package{
+				{
+					Name:      "api-all",
+					Version:   "2.0.0",
+					Type:      pkg.JavaPkg,
+					Language:  pkg.Java,
+					PURL:      "pkg:maven/org.apache.directory.api/api-all@2.0.0",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar")),
+					Metadata: pkg.JavaArchive{
+						VirtualPath: "test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar",
+						Manifest: &pkg.JavaManifest{
+							Main: map[string]string{
+								"Build-Jdk":        "1.8.0_191",
+								"Built-By":         "elecharny",
+								"Created-By":       "Apache Maven 3.6.0",
+								"Manifest-Version": "1.0",
+							},
+						},
+						PomProperties: &pkg.JavaPomProperties{
+							Path:       "META-INF/maven/org.apache.directory.api/api-all/pom.properties",
+							GroupID:    "org.apache.directory.api",
+							ArtifactID: "api-all",
+							Version:    "2.0.0",
+						},
+					},
+				},
+				{
+					Name:      "api-asn1-api",
+					Version:   "2.0.0",
+					PURL:      "pkg:maven/org.apache.directory.api/api-asn1-api@2.0.0",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar")),
+					Type:      pkg.JavaPkg,
+					Language:  pkg.Java,
+					Metadata: pkg.JavaArchive{
+						VirtualPath: "test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar:org.apache.directory.api:api-asn1-api",
+						PomProperties: &pkg.JavaPomProperties{
+							Path:       "META-INF/maven/org.apache.directory.api/api-asn1-api/pom.properties",
+							GroupID:    "org.apache.directory.api",
+							ArtifactID: "api-asn1-api",
+							Version:    "2.0.0",
+						},
+						PomProject: &pkg.JavaPomProject{
+							Path:        "META-INF/maven/org.apache.directory.api/api-asn1-api/pom.xml",
+							ArtifactID:  "api-asn1-api",
+							Name:        "Apache Directory API ASN.1 API",
+							Description: "ASN.1 API",
+							Parent: &pkg.JavaPomParent{
+								GroupID:    "org.apache.directory.api",
+								ArtifactID: "api-asn1-parent",
+								Version:    "2.0.0",
+							},
+						},
+						Parent: nil,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gap := newGenericArchiveParserAdapter(Config{})
+			if tt.assignParent {
+				assignParent(&tt.expectedPkgs[0], tt.expectedPkgs[1:]...)
+			}
 			pkgtest.NewCatalogTester().
 				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName)).
 				Expects(tt.expectedPkgs, tt.expectedRelationships).
 				WithCompareOptions(cmpopts.IgnoreFields(pkg.JavaArchive{}, "ArchiveDigests")).
 				TestParser(t, gap.parseJavaArchive)
 		})
+	}
+}
+
+func assignParent(parent *pkg.Package, childPackages ...pkg.Package) {
+	for i, jp := range childPackages {
+		if v, ok := jp.Metadata.(pkg.JavaArchive); ok {
+			parent := *parent
+			// PURL are not calculated after the fact for parent
+			parent.PURL = ""
+			v.Parent = &parent
+			childPackages[i].Metadata = v
+		}
 	}
 }
 
