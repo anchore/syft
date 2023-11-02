@@ -204,11 +204,11 @@ From a high level catalogers have the following properties:
 
 Cataloger names should be unique and named with the following rules of thumb in mind:
 
-- End with `-cataloger`
+- Must end with `-cataloger`
 - Use lowercase letters, numbers, and hyphens only
 - Use hyphens to separate words
 - Catalogers for language ecosystems should start with the language name (e.g. `python-` for a cataloger that raises up python packages)
-- Distinct between when the cataloger is searching for evidence of installed packages vs declared packages. For example, there are currently two different gemspec-based catalogers, the `ruby-installed-gemspec-cataloger` and `ruby-installed-gemspec-cataloger`, where the latter requires that the gemspec is found within a `specifications` directory (which means it was installed, not just at the root of a source repo).
+- Distinct between when the cataloger is searching for evidence of installed packages vs declared packages. For example, there are currently two different gemspec-based catalogers, the `ruby-gemspec-cataloger` and `ruby-installed-gemspec-cataloger`, where the latter requires that the gemspec is found within a `specifications` directory (which means it was installed, not just at the root of a source repo).
 
 #### Building a new Cataloger
 
