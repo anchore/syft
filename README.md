@@ -468,6 +468,7 @@ quiet: false
 
 # enables Syft to use the network to fill in more detailed information about artifacts
 # currently this enables the go module and maven license search functionality
+# note: this must be enabled for the go module cataloger option of search-remote-licenses to work
 use-network: false
 
 # same as --file; write output report to a file (default is to write to stdout)

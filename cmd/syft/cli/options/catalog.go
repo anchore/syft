@@ -126,6 +126,8 @@ func (cfg *Catalog) PostLoad() error {
 func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 	if cfg.UseNetwork {
 		cfg.Golang.SearchRemoteLicenses = true
+	} else {
+		cfg.Golang.SearchRemoteLicenses = false
 	}
 	return cataloger.Config{
 		Search: cataloger.SearchConfig{
