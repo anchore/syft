@@ -1,5 +1,5 @@
 /*
-Package golang provides a concrete Cataloger implementation for go.mod files.
+Package golang provides a concrete Cataloger implementation relating to packages within the Go language ecosystem.
 */
 package golang
 
@@ -19,14 +19,14 @@ import (
 
 var versionCandidateGroups = regexp.MustCompile(`(?P<version>\d+(\.\d+)?(\.\d+)?)(?P<candidate>\w*)`)
 
-// NewGoModFileCataloger returns a new cataloger object that searches within go.mod files.
-func NewGoModFileCataloger(opts GoCatalogerOpts) pkg.Cataloger {
+// NewGoModuleFileCataloger returns a new cataloger object that searches within go.mod files.
+func NewGoModuleFileCataloger(opts GoCatalogerOpts) pkg.Cataloger {
 	c := goModCataloger{
 		licenses: newGoLicenses(opts),
 	}
 	return &progressingCataloger{
 		progress: c.licenses.progress,
-		cataloger: generic.NewCataloger("go-mod-file-cataloger").
+		cataloger: generic.NewCataloger("go-module-file-cataloger").
 			WithParserByGlobs(c.parseGoModFile, "**/go.mod"),
 	}
 }

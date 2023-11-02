@@ -21,7 +21,7 @@
       <cpe>cpe:2.3:a:wagoodman:go-partybus:v0.0.0-20230516145632-8ccac152c651:*:*:*:*:*:*:*</cpe>
       <purl>pkg:golang/github.com/wagoodman/go-partybus@v0.0.0-20230516145632-8ccac152c651</purl>
       <properties>
-        <property name="syft:package:foundBy">go-mod-file-cataloger</property>
+        <property name="syft:package:foundBy">go-module-file-cataloger</property>
         <property name="syft:package:language">go</property>
         <property name="syft:package:metadataType">GolangModMetadata</property>
         <property name="syft:package:type">go-module</property>

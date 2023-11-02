@@ -1,3 +1,6 @@
+/*
+Package cpp provides a concrete Cataloger implementations for the C/C++ language ecosystem.
+*/
 package cpp
 
 import (

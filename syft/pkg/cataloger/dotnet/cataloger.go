@@ -1,3 +1,6 @@
+/*
+Package dotnet provides a concrete Cataloger implementation relating to packages within the C#/.NET language/runtime ecosystem.
+*/
 package dotnet
 
 import (

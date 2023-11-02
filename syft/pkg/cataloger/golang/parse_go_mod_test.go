@@ -104,7 +104,7 @@ func Test_GoSumHashes(t *testing.T) {
 					Version:   "v0.6.0",
 					PURL:      "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.6.0",
 					Locations: file.NewLocationSet(file.NewLocation("go.mod")),
-					FoundBy:   "go-mod-file-cataloger",
+					FoundBy:   "go-module-file-cataloger",
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Metadata:  pkg.GolangModuleEntry{},
@@ -114,7 +114,7 @@ func Test_GoSumHashes(t *testing.T) {
 					Version:   "v0.0.0-20180116102854-5a71ef0e047d",
 					PURL:      "pkg:golang/github.com/acarl005/stripansi@v0.0.0-20180116102854-5a71ef0e047d",
 					Locations: file.NewLocationSet(file.NewLocation("go.mod")),
-					FoundBy:   "go-mod-file-cataloger",
+					FoundBy:   "go-module-file-cataloger",
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Metadata: pkg.GolangModuleEntry{
@@ -126,7 +126,7 @@ func Test_GoSumHashes(t *testing.T) {
 					Version:   "v0.0.0-20200706080929-d51e80ef957d",
 					PURL:      "pkg:golang/github.com/mgutz/ansi@v0.0.0-20200706080929-d51e80ef957d",
 					Locations: file.NewLocationSet(file.NewLocation("go.mod")),
-					FoundBy:   "go-mod-file-cataloger",
+					FoundBy:   "go-module-file-cataloger",
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Metadata: pkg.GolangModuleEntry{
@@ -142,7 +142,7 @@ func Test_GoSumHashes(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expected, nil).
-				TestCataloger(t, NewGoModFileCataloger(GoCatalogerOpts{}))
+				TestCataloger(t, NewGoModuleFileCataloger(GoCatalogerOpts{}))
 		})
 	}
 }

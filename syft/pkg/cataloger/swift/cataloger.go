@@ -1,5 +1,5 @@
 /*
-Package swift provides a concrete Cataloger implementation for Podfile.lock and Package.resolved files.
+Package swift provides a concrete Cataloger implementation relating to packages within the swift language ecosystem.
 */
 package swift
 
@@ -8,7 +8,7 @@ import (
 )
 
 func NewSwiftPackageManagerCataloger() *generic.Cataloger {
-	return generic.NewCataloger("spm-cataloger").
+	return generic.NewCataloger("swift-package-manager-cataloger").
 		WithParserByGlobs(parsePackageResolved, "**/Package.resolved", "**/.package.resolved")
 }
 

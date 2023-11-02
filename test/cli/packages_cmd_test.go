@@ -235,7 +235,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "catalogers-option",
-			// This will detect enable python-index-cataloger, python-package-cataloger and ruby-gemspec cataloger
+			// This will detect enable python-package-cataloger, python-installed-package-cataloger and ruby-gemspec cataloger
 			args: []string{"packages", "-o", "json", "--catalogers", "python,ruby-gemspec", coverageImage},
 			assertions: []traitAssertion{
 				assertPackageCount(13),

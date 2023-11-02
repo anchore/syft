@@ -1,5 +1,5 @@
 /*
-Package javascript provides a concrete Cataloger implementation for JavaScript ecosystem files (yarn and npm).
+Package javascript provides a concrete Cataloger implementation for packages relating to the JavaScript language ecosystem.
 */
 package javascript
 
@@ -13,7 +13,7 @@ func NewPackageCataloger() *generic.Cataloger {
 		WithParserByGlobs(parsePackageJSON, "**/package.json")
 }
 
-// NewLockCataloger returns a new cataloger object for NPM (and NPM-adjacent) lock files.
+// NewLockCataloger returns a new cataloger object for NPM (and NPM-adjacent, such as yarn) lock files.
 func NewLockCataloger() *generic.Cataloger {
 	return generic.NewCataloger("javascript-lock-cataloger").
 		WithParserByGlobs(parsePackageLock, "**/package-lock.json").

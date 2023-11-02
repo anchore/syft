@@ -494,7 +494,7 @@ platform: ""
 # set the list of package catalogers to use when generating the SBOM
 # default = empty (cataloger set determined automatically by the source type [image or file/directory])
 # catalogers:
-#   - alpmdb-cataloger
+#   - alpm-db-cataloger
 #   - apkdb-cataloger
 #   - binary-cataloger
 #   - cargo-auditable-binary-cataloger
@@ -502,10 +502,10 @@ platform: ""
 #   - conan-cataloger
 #   - dartlang-lock-cataloger
 #   - dotnet-deps-cataloger
-#   - dpkgdb-cataloger
+#   - dpkg-db-cataloger
 #   - elixir-mix-lock-cataloger
 #   - erlang-rebar-lock-cataloger
-#   - go-mod-file-cataloger
+#   - go-module-file-cataloger
 #   - go-module-binary-cataloger
 #   - graalvm-native-image-cataloger
 #   - haskell-cataloger
@@ -519,12 +519,12 @@ platform: ""
 #   - php-composer-installed-cataloger
 #   - php-composer-lock-cataloger
 #   - portage-cataloger
-#   - python-index-cataloger
 #   - python-package-cataloger
+#   - python-installed-package-cataloger
 #   - rpm-db-cataloger
-#   - rpm-file-cataloger
+#   - rpm-archive-cataloger
 #   - ruby-gemfile-cataloger
-#   - ruby-gemspec-cataloger
+#   - ruby-installed-gemspec-cataloger
 #   - rust-cargo-lock-cataloger
 #   - sbom-cataloger
 #   - spm-cataloger
