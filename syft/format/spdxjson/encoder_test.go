@@ -18,17 +18,17 @@ import (
 var updateSnapshot = flag.Bool("update-spdx-json", false, "update the *.golden files for spdx-json encoders")
 var updateImage = flag.Bool("update-image", false, "update the golden image used for image encoder testing")
 
-func getEncoder(t testing.TB, condensed bool) sbom.FormatEncoder {
+func getEncoder(t testing.TB, compact bool) sbom.FormatEncoder {
 	cfg := DefaultEncoderConfig()
-	if condensed {
-		cfg.Compact = condensed
+	if compact {
+		cfg.Compact = compact
 	}
 	enc, err := NewFormatEncoderWithConfig(cfg)
 	require.NoError(t, err)
 	return enc
 }
 
-func TestCondensedOutput(t *testing.T) {
+func TestCompactOutput(t *testing.T) {
 	enc, err := NewFormatEncoderWithConfig(EncoderConfig{
 		Version: spdxutil.DefaultVersion,
 		Compact: true,
@@ -67,23 +67,6 @@ func TestEscapeHTML(t *testing.T) {
 		actual := buffer.String()
 		assert.Contains(t, actual, "<html-package>")
 		assert.NotContains(t, actual, "\\u003chtml-package\\u003e")
-	})
-
-	// force escaping html
-	t.Run("escape-html", func(t *testing.T) {
-		cfg := DefaultEncoderConfig()
-		cfg.EscapeHTML = true
-
-		enc, err := NewFormatEncoderWithConfig(cfg)
-		require.NoError(t, err)
-
-		var buffer bytes.Buffer
-		err = enc.Encode(&buffer, s)
-		require.NoError(t, err)
-
-		actual := buffer.String()
-		assert.Contains(t, actual, "\\u003chtml-package\\u003e")
-		assert.NotContains(t, actual, "<html-package>")
 	})
 
 }

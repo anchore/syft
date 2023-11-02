@@ -8,14 +8,12 @@ import (
 )
 
 type FormatSPDXJSON struct {
-	Compact    bool `yaml:"compact" json:"compact" mapstructure:"compact"`
-	EscapeHTML bool `yaml:"escape-html" json:"escape-html" mapstructure:"escape-html"`
+	Compact bool `yaml:"compact" json:"compact" mapstructure:"compact"`
 }
 
 func DefaultFormatSPDXJSON() FormatSPDXJSON {
 	return FormatSPDXJSON{
-		Compact:    false,
-		EscapeHTML: false,
+		Compact: false,
 	}
 }
 
@@ -37,8 +35,7 @@ func (o FormatSPDXJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
 
 func (o FormatSPDXJSON) buildConfig(v string) spdxjson.EncoderConfig {
 	return spdxjson.EncoderConfig{
-		Version:    v,
-		Compact:    o.Compact,
-		EscapeHTML: o.EscapeHTML,
+		Version: v,
+		Compact: o.Compact,
 	}
 }

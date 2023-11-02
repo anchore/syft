@@ -540,9 +540,6 @@ format:
     # don't include space indention and newlines (same as jq -c)
     compact: false
     
-    # escape causes '<', '>', and '&' to be escaped in output
-    escape-html: false
-    
     # transform any syft-json output to conform to an approximation of the v11.0.1 schema. This includes:
     # - using the package metadata type names from before v12 of the JSON schema (changed in https://github.com/anchore/syft/pull/1983)
     #
@@ -566,17 +563,11 @@ format:
     # don't include space indention and newlines (same as jq -c)
     compact: false
 
-    # escape causes '<', '>', and '&' to be escaped in output
-    escape-html: false
-
   # all cyclonedx-json format options
   cyclonedx-json:
 
     # don't include space indention and newlines (same as jq -c)
     compact: false
-
-    # escape causes '<', '>', and '&' to be escaped in output
-    escape-html: false
 
   # all cyclonedx-xml format options
   cyclonedx-xml:

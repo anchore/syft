@@ -8,14 +8,12 @@ import (
 )
 
 type FormatCyclonedxJSON struct {
-	Compact    bool `yaml:"compact" json:"compact" mapstructure:"compact"`
-	EscapeHTML bool `yaml:"escape-html" json:"escape-html" mapstructure:"escape-html"`
+	Compact bool `yaml:"compact" json:"compact" mapstructure:"compact"`
 }
 
 func DefaultFormatCyclonedxJSON() FormatCyclonedxJSON {
 	return FormatCyclonedxJSON{
-		Compact:    false,
-		EscapeHTML: false,
+		Compact: false,
 	}
 }
 
@@ -37,8 +35,7 @@ func (o FormatCyclonedxJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
 
 func (o FormatCyclonedxJSON) buildConfig(version string) cyclonedxjson.EncoderConfig {
 	return cyclonedxjson.EncoderConfig{
-		Version:    version,
-		Compact:    o.Compact,
-		EscapeHTML: o.EscapeHTML,
+		Version: version,
+		Compact: o.Compact,
 	}
 }

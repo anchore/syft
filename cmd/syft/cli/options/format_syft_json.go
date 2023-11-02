@@ -6,16 +6,14 @@ import (
 )
 
 type FormatSyftJSON struct {
-	Legacy     bool `yaml:"legacy" json:"legacy" mapstructure:"legacy"`
-	Compact    bool `yaml:"compact" json:"compact" mapstructure:"compact"`
-	EscapeHTML bool `yaml:"escape-html" json:"escape-html" mapstructure:"escape-html"`
+	Legacy  bool `yaml:"legacy" json:"legacy" mapstructure:"legacy"`
+	Compact bool `yaml:"compact" json:"compact" mapstructure:"compact"`
 }
 
 func DefaultFormatJSON() FormatSyftJSON {
 	return FormatSyftJSON{
-		Legacy:     false,
-		Compact:    false,
-		EscapeHTML: false,
+		Legacy:  false,
+		Compact: false,
 	}
 }
 
@@ -26,8 +24,7 @@ func (o FormatSyftJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
 
 func (o FormatSyftJSON) buildConfig() syftjson.EncoderConfig {
 	return syftjson.EncoderConfig{
-		Legacy:     o.Legacy,
-		Compact:    o.Compact,
-		EscapeHTML: o.EscapeHTML,
+		Legacy:  o.Legacy,
+		Compact: o.Compact,
 	}
 }

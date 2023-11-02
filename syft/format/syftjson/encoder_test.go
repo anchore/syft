@@ -36,7 +36,7 @@ func TestDefaultNameAndVersion(t *testing.T) {
 	}
 }
 
-func TestCondensedOutput(t *testing.T) {
+func TestCompactOutput(t *testing.T) {
 	enc, err := NewFormatEncoderWithConfig(EncoderConfig{
 		Compact: true,
 	})
@@ -75,24 +75,6 @@ func TestEscapeHTML(t *testing.T) {
 		assert.Contains(t, actual, "<html-package>")
 		assert.NotContains(t, actual, "\\u003chtml-package\\u003e")
 	})
-
-	// force escaping html
-	t.Run("escape-html", func(t *testing.T) {
-		cfg := DefaultEncoderConfig()
-		cfg.EscapeHTML = true
-
-		enc, err := NewFormatEncoderWithConfig(cfg)
-		require.NoError(t, err)
-
-		var buffer bytes.Buffer
-		err = enc.Encode(&buffer, s)
-		require.NoError(t, err)
-
-		actual := buffer.String()
-		assert.Contains(t, actual, "\\u003chtml-package\\u003e")
-		assert.NotContains(t, actual, "<html-package>")
-	})
-
 }
 
 func TestDirectoryEncoder(t *testing.T) {

@@ -22,9 +22,8 @@ func SupportedVersions() []string {
 }
 
 type EncoderConfig struct {
-	Version    string
-	Compact    bool // don't include spaces and newlines; same as jq -c
-	EscapeHTML bool // escape >, <, and & in the output
+	Version string
+	Compact bool // don't include spaces and newlines; same as jq -c
 }
 
 type encoder struct {
@@ -39,9 +38,8 @@ func NewFormatEncoderWithConfig(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 
 func DefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{
-		Version:    spdxutil.DefaultVersion,
-		Compact:    false,
-		EscapeHTML: false,
+		Version: spdxutil.DefaultVersion,
+		Compact: false,
 	}
 }
 
@@ -89,7 +87,7 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 
 	enc := json.NewEncoder(writer)
 
-	enc.SetEscapeHTML(e.cfg.EscapeHTML)
+	enc.SetEscapeHTML(false)
 
 	if !e.cfg.Compact {
 		enc.SetIndent("", " ")

@@ -24,7 +24,7 @@ func getEncoder(t testing.TB) sbom.FormatEncoder {
 	return enc
 }
 
-func TestCondensedOutput(t *testing.T) {
+func TestCompactOutput(t *testing.T) {
 	enc, err := NewFormatEncoderWithConfig(EncoderConfig{
 		Version: cyclonedxutil.DefaultVersion,
 		Compact: true,
