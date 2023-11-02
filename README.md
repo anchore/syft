@@ -466,6 +466,9 @@ output: "syft-table"
 # same as -q ; SYFT_QUIET env var
 quiet: false
 
+# enables the go module and maven license search functionality
+use-network: false
+
 # same as --file; write output report to a file (default is to write to stdout)
 file: ""
 
@@ -608,7 +611,6 @@ java:
    # https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-starter-test/3.1.5/spring-boot-starter-test-3.1.5.pom
    # this option is helpful for when the parent pom has this information,
    # but it is not accessible from within the final built artifact
-   search-maven-for-licenses: false
    maven-url: "https://repo1.maven.org/maven2"
    max-parent-recursive-depth: 5
 
