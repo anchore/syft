@@ -96,7 +96,7 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 		base                string
 		input               string
 		expectedRealPath    string
-		expectedVirtualPath string
+		expectedVirtualPath string // if empty, the virtual path should be the same as the real path
 	}{
 		{
 			name:             "relative root, relative request, direct",
@@ -498,6 +498,9 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			if c.expectedVirtualPath == "" {
+				c.expectedVirtualPath = c.expectedRealPath
+			}
 
 			// we need to mimic a shell, otherwise we won't get a path within a symlink
 			targetPath := filepath.Join(testDir, c.cwd)
@@ -1090,7 +1093,7 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 				file.NewLocation("file-1.txt"),
 				file.NewLocation("file-2.txt"),
 				file.NewLocation("file-3.txt"),
-				file.NewLocation("parent/file-4.txt"),
+				file.NewVirtualLocation("parent/file-4.txt", "parent-link/file-4.txt"),
 			},
 		},
 		{
@@ -1120,7 +1123,7 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 				file.NewLocation("file-1.txt"),
 				file.NewLocation("file-2.txt"),
 				file.NewLocation("file-3.txt"),
-				file.NewLocation("parent/file-4.txt"),
+				file.NewVirtualLocation("parent/file-4.txt", "parent-link/file-4.txt"),
 			},
 		},
 		{

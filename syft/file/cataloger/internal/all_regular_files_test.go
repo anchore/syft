@@ -48,7 +48,7 @@ func Test_allRegularFiles(t *testing.T) {
 				return r
 			},
 			wantRealPaths:    strset.New("file1.txt", "nested/file2.txt"),
-			wantVirtualPaths: strset.New("nested/linked-file1.txt"),
+			wantVirtualPaths: strset.New("file1.txt", "nested/file2.txt", "nested/linked-file1.txt"),
 		},
 	}
 	for _, tt := range tests {
