@@ -466,7 +466,8 @@ output: "syft-table"
 # same as -q ; SYFT_QUIET env var
 quiet: false
 
-# enables the go module and maven license search functionality
+# enables Syft to use the network to fill in more detailed information about artifacts
+# currently this enables the go module and maven license search functionality
 use-network: false
 
 # same as --file; write output report to a file (default is to write to stdout)
