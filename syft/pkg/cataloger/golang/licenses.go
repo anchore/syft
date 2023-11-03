@@ -32,7 +32,7 @@ type goLicenses struct {
 	opts                  GoCatalogerOpts
 	localModCacheResolver file.WritableResolver
 	progress              *monitor.CatalogerTask
-	licenseFileNames      *strset.Set
+	lowerLicenseFileNames *strset.Set
 }
 
 func newGoLicenses(opts GoCatalogerOpts) goLicenses {
@@ -44,8 +44,16 @@ func newGoLicenses(opts GoCatalogerOpts) goLicenses {
 			RemoveOnCompletion: true,
 			Title:              "Downloading go mod",
 		},
-		licenseFileNames: strset.New(licenses.FileNames()...),
+		lowerLicenseFileNames: strset.New(lowercaseLicenseFiles()...),
 	}
+}
+
+func lowercaseLicenseFiles() []string {
+	fileNames := licenses.FileNames()
+	for i := range fileNames {
+		fileNames[i] = strings.ToLower(fileNames[i])
+	}
+	return fileNames
 }
 
 func remotesForModule(proxies []string, noProxy []string, module string) []string {
@@ -158,7 +166,7 @@ func (c *goLicenses) findLicenses(resolver file.Resolver, globMatch string) (out
 
 	for _, l := range locations {
 		fileName := path.Base(l.RealPath)
-		if c.licenseFileNames.Has(fileName) {
+		if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
 			contents, err := resolver.FileContentsByLocation(l)
 			if err != nil {
 				return nil, err
