@@ -67,6 +67,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	}
 
 	opts := options.DefaultOutput()
+	require.NoError(t, opts.PostLoad())
 	encoderList, err := opts.Encoders()
 	require.NoError(t, err)
 

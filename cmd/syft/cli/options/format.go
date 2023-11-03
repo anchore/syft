@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/anchore/clio"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
 	"github.com/anchore/syft/syft/format/github"
@@ -17,13 +18,25 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
+var _ clio.PostLoader = (*Format)(nil)
+
 // Format contains all user configuration for output formatting.
 type Format struct {
+	Pretty        *bool               `yaml:"pretty" json:"pretty" mapstructure:"pretty"`
 	Template      FormatTemplate      `yaml:"template" json:"template" mapstructure:"template"`
 	SyftJSON      FormatSyftJSON      `yaml:"json" json:"json" mapstructure:"json"`
 	SPDXJSON      FormatSPDXJSON      `yaml:"spdx-json" json:"spdx-json" mapstructure:"spdx-json"`
 	CyclonedxJSON FormatCyclonedxJSON `yaml:"cyclonedx-json" json:"cyclonedx-json" mapstructure:"cyclonedx-json"`
 	CyclonedxXML  FormatCyclonedxXML  `yaml:"cyclonedx-xml" json:"cyclonedx-xml" mapstructure:"cyclonedx-xml"`
+}
+
+func (o *Format) PostLoad() error {
+	o.SyftJSON.Pretty = multiLevelOption[bool](false, o.Pretty, o.SyftJSON.Pretty)
+	o.SPDXJSON.Pretty = multiLevelOption[bool](false, o.Pretty, o.SPDXJSON.Pretty)
+	o.CyclonedxJSON.Pretty = multiLevelOption[bool](false, o.Pretty, o.CyclonedxJSON.Pretty)
+	o.CyclonedxXML.Pretty = multiLevelOption[bool](false, o.Pretty, o.CyclonedxXML.Pretty)
+
+	return nil
 }
 
 func DefaultFormat() Format {
@@ -103,4 +116,14 @@ func (l *encoderList) add(name sbom.FormatID) func(...sbom.FormatEncoder) {
 			l.encoders = append(l.encoders, enc)
 		}
 	}
+}
+
+func multiLevelOption[T any](defaultValue T, option ...*T) *T {
+	result := defaultValue
+	for _, opt := range option {
+		if opt != nil {
+			result = *opt
+		}
+	}
+	return &result
 }

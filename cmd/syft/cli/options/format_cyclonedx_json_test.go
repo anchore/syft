@@ -36,6 +36,9 @@ func getNonZeroExampleValue(t testing.TB, v any, name string) any {
 	switch v.(type) {
 	case bool:
 		return true
+	case *bool:
+		val := true
+		return &val
 	case string:
 		return name
 	}

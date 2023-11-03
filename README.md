@@ -533,12 +533,16 @@ catalogers:
 
 # all format configuration
 format:
+ 
+  # default value for all formats that support the "pretty" option (default is unset)
+  pretty: 
 
   # all syft-json format options
   json:
-    
-    # don't include space indention and newlines (same as jq -c)
-    compact: false
+
+    # include space indention and newlines (inherits default value from 'format.pretty' or 'false' if parent is unset)
+    # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+    pretty: false
     
     # transform any syft-json output to conform to an approximation of the v11.0.1 schema. This includes:
     # - using the package metadata type names from before v12 of the JSON schema (changed in https://github.com/anchore/syft/pull/1983)
@@ -560,20 +564,23 @@ format:
   # all spdx-json format options
   spdx-json:
 
-    # don't include space indention and newlines (same as jq -c)
-    compact: false
+    # include space indention and newlines
+    # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+    pretty: false
 
   # all cyclonedx-json format options
   cyclonedx-json:
 
-    # don't include space indention and newlines (same as jq -c)
-    compact: false
+     # include space indention and newlines
+     # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+     pretty: false
 
   # all cyclonedx-xml format options
   cyclonedx-xml:
 
-    # don't include space indention
-    compact: false
+     # include space indention
+     # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+     pretty: false
 
 
 # cataloging packages is exposed through the packages and power-user subcommands

@@ -18,32 +18,42 @@ import (
 var updateSnapshot = flag.Bool("update-spdx-json", false, "update the *.golden files for spdx-json encoders")
 var updateImage = flag.Bool("update-image", false, "update the golden image used for image encoder testing")
 
-func getEncoder(t testing.TB, compact bool) sbom.FormatEncoder {
+func getEncoder(t testing.TB) sbom.FormatEncoder {
 	cfg := DefaultEncoderConfig()
-	if compact {
-		cfg.Compact = compact
-	}
+	cfg.Pretty = true
+
 	enc, err := NewFormatEncoderWithConfig(cfg)
 	require.NoError(t, err)
 	return enc
 }
 
-func TestCompactOutput(t *testing.T) {
-	enc, err := NewFormatEncoderWithConfig(EncoderConfig{
-		Version: spdxutil.DefaultVersion,
-		Compact: true,
+func TestPrettyOutput(t *testing.T) {
+	run := func(opt bool) string {
+		enc, err := NewFormatEncoderWithConfig(EncoderConfig{
+			Version: spdxutil.DefaultVersion,
+			Pretty:  opt,
+		})
+		require.NoError(t, err)
+
+		dir := t.TempDir()
+		s := testutil.DirectoryInput(t, dir)
+
+		var buffer bytes.Buffer
+		err = enc.Encode(&buffer, s)
+		require.NoError(t, err)
+
+		return strings.TrimSpace(buffer.String())
+	}
+
+	t.Run("pretty", func(t *testing.T) {
+		actual := run(true)
+		assert.Contains(t, actual, "\n")
 	})
-	require.NoError(t, err)
 
-	dir := t.TempDir()
-	s := testutil.DirectoryInput(t, dir)
-
-	var buffer bytes.Buffer
-	err = enc.Encode(&buffer, s)
-	require.NoError(t, err)
-
-	actual := buffer.String()
-	assert.NotContains(t, strings.TrimSpace(actual), "\n")
+	t.Run("compact", func(t *testing.T) {
+		actual := run(false)
+		assert.NotContains(t, actual, "\n")
+	})
 }
 
 func TestEscapeHTML(t *testing.T) {
@@ -76,7 +86,7 @@ func TestSPDXJSONDirectoryEncoder(t *testing.T) {
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.DirectoryInput(t, dir),
-			Format:                      getEncoder(t, false),
+			Format:                      getEncoder(t),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -94,7 +104,7 @@ func TestSPDXJSONImageEncoder(t *testing.T) {
 		},
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.ImageInput(t, testImage, testutil.FromSnapshot()),
-			Format:                      getEncoder(t, false),
+			Format:                      getEncoder(t),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -116,7 +126,7 @@ func TestSPDXRelationshipOrder(t *testing.T) {
 		},
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     s,
-			Format:                      getEncoder(t, false),
+			Format:                      getEncoder(t),
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,

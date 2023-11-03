@@ -8,13 +8,11 @@ import (
 )
 
 type FormatCyclonedxJSON struct {
-	Compact bool `yaml:"compact" json:"compact" mapstructure:"compact"`
+	Pretty *bool `yaml:"pretty" json:"pretty" mapstructure:"pretty"`
 }
 
 func DefaultFormatCyclonedxJSON() FormatCyclonedxJSON {
-	return FormatCyclonedxJSON{
-		Compact: false,
-	}
+	return FormatCyclonedxJSON{}
 }
 
 func (o FormatCyclonedxJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
@@ -36,6 +34,6 @@ func (o FormatCyclonedxJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
 func (o FormatCyclonedxJSON) buildConfig(version string) cyclonedxjson.EncoderConfig {
 	return cyclonedxjson.EncoderConfig{
 		Version: version,
-		Compact: o.Compact,
+		Pretty:  *o.Pretty,
 	}
 }

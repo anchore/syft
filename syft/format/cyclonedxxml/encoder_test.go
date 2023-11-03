@@ -19,15 +19,18 @@ var updateSnapshot = flag.Bool("update-cyclonedx-xml", false, "update the *.gold
 var updateImage = flag.Bool("update-image", false, "update the golden image used for image encoder testing")
 
 func getEncoder(t testing.TB) sbom.FormatEncoder {
-	enc, err := NewFormatEncoderWithConfig(DefaultEncoderConfig())
+	cfg := DefaultEncoderConfig()
+	cfg.Pretty = true
+
+	enc, err := NewFormatEncoderWithConfig(cfg)
 	require.NoError(t, err)
 	return enc
 }
 
-func TestCompactOutput(t *testing.T) {
+func TestPrettyOutput(t *testing.T) {
 	enc, err := NewFormatEncoderWithConfig(EncoderConfig{
 		Version: cyclonedxutil.DefaultVersion,
-		Compact: true,
+		Pretty:  false,
 	})
 	require.NoError(t, err)
 

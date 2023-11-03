@@ -6,14 +6,13 @@ import (
 )
 
 type FormatSyftJSON struct {
-	Legacy  bool `yaml:"legacy" json:"legacy" mapstructure:"legacy"`
-	Compact bool `yaml:"compact" json:"compact" mapstructure:"compact"`
+	Legacy bool  `yaml:"legacy" json:"legacy" mapstructure:"legacy"`
+	Pretty *bool `yaml:"pretty" json:"pretty" mapstructure:"pretty"`
 }
 
 func DefaultFormatJSON() FormatSyftJSON {
 	return FormatSyftJSON{
-		Legacy:  false,
-		Compact: false,
+		Legacy: false,
 	}
 }
 
@@ -24,7 +23,7 @@ func (o FormatSyftJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
 
 func (o FormatSyftJSON) buildConfig() syftjson.EncoderConfig {
 	return syftjson.EncoderConfig{
-		Legacy:  o.Legacy,
-		Compact: o.Compact,
+		Legacy: o.Legacy,
+		Pretty: *o.Pretty,
 	}
 }

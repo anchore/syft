@@ -36,21 +36,32 @@ func TestDefaultNameAndVersion(t *testing.T) {
 	}
 }
 
-func TestCompactOutput(t *testing.T) {
-	enc, err := NewFormatEncoderWithConfig(EncoderConfig{
-		Compact: true,
+func TestPrettyOutput(t *testing.T) {
+	run := func(opt bool) string {
+		enc, err := NewFormatEncoderWithConfig(EncoderConfig{
+			Pretty: opt,
+		})
+		require.NoError(t, err)
+
+		dir := t.TempDir()
+		s := testutil.DirectoryInput(t, dir)
+
+		var buffer bytes.Buffer
+		err = enc.Encode(&buffer, s)
+		require.NoError(t, err)
+
+		return strings.TrimSpace(buffer.String())
+	}
+
+	t.Run("pretty", func(t *testing.T) {
+		actual := run(true)
+		assert.Contains(t, actual, "\n")
 	})
-	require.NoError(t, err)
 
-	dir := t.TempDir()
-	s := testutil.DirectoryInput(t, dir)
-
-	var buffer bytes.Buffer
-	err = enc.Encode(&buffer, s)
-	require.NoError(t, err)
-
-	actual := buffer.String()
-	assert.NotContains(t, strings.TrimSpace(actual), "\n")
+	t.Run("compact", func(t *testing.T) {
+		actual := run(false)
+		assert.NotContains(t, actual, "\n")
+	})
 }
 
 func TestEscapeHTML(t *testing.T) {
@@ -78,11 +89,16 @@ func TestEscapeHTML(t *testing.T) {
 }
 
 func TestDirectoryEncoder(t *testing.T) {
+	cfg := DefaultEncoderConfig()
+	cfg.Pretty = true
+	enc, err := NewFormatEncoderWithConfig(cfg)
+	require.NoError(t, err)
+
 	dir := t.TempDir()
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.DirectoryInput(t, dir),
-			Format:                      NewFormatEncoder(),
+			Format:                      enc,
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -92,6 +108,11 @@ func TestDirectoryEncoder(t *testing.T) {
 }
 
 func TestImageEncoder(t *testing.T) {
+	cfg := DefaultEncoderConfig()
+	cfg.Pretty = true
+	enc, err := NewFormatEncoderWithConfig(cfg)
+	require.NoError(t, err)
+
 	testImage := "image-simple"
 	testutil.AssertEncoderAgainstGoldenImageSnapshot(t,
 		testutil.ImageSnapshotTestConfig{
@@ -100,7 +121,7 @@ func TestImageEncoder(t *testing.T) {
 		},
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.ImageInput(t, testImage, testutil.FromSnapshot()),
-			Format:                      NewFormatEncoder(),
+			Format:                      enc,
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
