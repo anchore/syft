@@ -1,0 +1,27 @@
+JarIndex-Version: 1.0
+
+opensaml-core-3.4.6.jar
+META-INF
+META-INF/maven
+META-INF/maven/org.opensaml
+META-INF/maven/org.opensaml/opensaml-core
+META-INF/services
+org
+org/opensaml
+org/opensaml/core
+org/opensaml/core/config
+org/opensaml/core/config/provider
+org/opensaml/core/criterion
+org/opensaml/core/metrics
+org/opensaml/core/metrics/impl
+org/opensaml/core/xml
+org/opensaml/core/xml/config
+org/opensaml/core/xml/io
+org/opensaml/core/xml/persist
+org/opensaml/core/xml/schema
+org/opensaml/core/xml/schema/impl
+org/opensaml/core/xml/util
+schema
+default-config.xml
+schema-config.xml
+

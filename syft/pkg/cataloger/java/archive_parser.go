@@ -286,8 +286,8 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 	if version == "" && pomProjectObject != nil {
 		version = pomProjectObject.Version
 	}
-	if pomProjectObject != nil && j.cfg.SearchMavenForLicenses {
-		findPomLicenses(pomProjectObject)
+	if pomProjectObject != nil && j.cfg.UseNetwork {
+		findPomLicenses(pomProjectObject, j.cfg)
 	}
 
 	if pomProjectObject != nil {
@@ -304,17 +304,20 @@ func artifactIDMatchesFilename(artifactID, fileName string) bool {
 	return strings.HasPrefix(artifactID, fileName) || strings.HasSuffix(fileName, artifactID)
 }
 
-func findPomLicenses(pomProjectObject *parsedPomProject) {
+func findPomLicenses(pomProjectObject *parsedPomProject, cfg Config) {
 	// If we don't have any licenses until now, and if we have a parent Pom, then we'll check the parent pom in maven central for licenses.
 	if pomProjectObject != nil && pomProjectObject.Parent != nil && len(pomProjectObject.Licenses) == 0 {
-		parentPom, err := getPomFromMavenCentral(pomProjectObject.Parent.GroupID, pomProjectObject.Parent.ArtifactID, pomProjectObject.Parent.Version)
+		parentLicenses, err := recursivelyFindLicensesFromParentPom(
+			pomProjectObject.Parent.GroupID,
+			pomProjectObject.Parent.ArtifactID,
+			pomProjectObject.Parent.Version,
+			cfg)
 		if err != nil {
 			// We don't want to abort here as the parent pom might not exist in Maven Central, we'll just log the error
 			log.Tracef("unable to get parent pom from Maven central: %v", err)
 			return
 		}
-		parentLicenses := parseLicensesFromPom(parentPom)
-		if len(parentLicenses) > 0 || parentPom == nil || parentPom.Parent == nil {
+		if len(parentLicenses) > 0 {
 			for _, licenseName := range parentLicenses {
 				pomProjectObject.Licenses = append(pomProjectObject.Licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
 			}
@@ -322,22 +325,44 @@ func findPomLicenses(pomProjectObject *parsedPomProject) {
 	}
 }
 
-func formatMavenPomURL(groupID, artifactID, version string) (requestURL string, err error) {
+func formatMavenPomURL(groupID, artifactID, version, mavenBaseURL string) (requestURL string, err error) {
 	// groupID needs to go from maven.org -> maven/org
 	urlPath := strings.Split(groupID, ".")
 	artifactPom := fmt.Sprintf("%s-%s.pom", artifactID, version)
 	urlPath = append(urlPath, artifactID, version, artifactPom)
 
 	// ex:"https://repo1.maven.org/maven2/groupID/artifactID/artifactPom
-	requestURL, err = url.JoinPath(MavenBaseURL, urlPath...)
+	requestURL, err = url.JoinPath(mavenBaseURL, urlPath...)
 	if err != nil {
 		return requestURL, fmt.Errorf("could not construct maven url: %w", err)
 	}
 	return requestURL, err
 }
 
-func getPomFromMavenCentral(groupID, artifactID, version string) (*gopom.Project, error) {
-	requestURL, err := formatMavenPomURL(groupID, artifactID, version)
+func recursivelyFindLicensesFromParentPom(groupID, artifactID, version string, cfg Config) ([]string, error) {
+	var licenses []string
+	// As there can be nested parent poms, we'll recursively check for licenses until we reach the max depth
+	for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
+		parentPom, err := getPomFromMavenCentral(groupID, artifactID, version, cfg.MavenBaseURL)
+		if err != nil {
+			return nil, err
+		}
+		parentLicenses := parseLicensesFromPom(parentPom)
+		if len(parentLicenses) > 0 || parentPom == nil || parentPom.Parent == nil {
+			licenses = parentLicenses
+			break
+		}
+
+		groupID = *parentPom.Parent.GroupID
+		artifactID = *parentPom.Parent.ArtifactID
+		version = *parentPom.Parent.Version
+	}
+
+	return licenses, nil
+}
+
+func getPomFromMavenCentral(groupID, artifactID, version, mavenBaseURL string) (*gopom.Project, error) {
+	requestURL, err := formatMavenPomURL(groupID, artifactID, version, mavenBaseURL)
 	if err != nil {
 		return nil, err
 	}
