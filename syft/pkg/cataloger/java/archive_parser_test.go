@@ -88,7 +88,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			fixture:      "opensaml-core-3.4.6",
 			detectNested: false,
 			config: Config{
-				SearchMavenForLicenses:  true,
+				UseNetwork:              true,
 				MavenBaseURL:            url,
 				MaxParentRecursiveDepth: 2,
 			},
@@ -401,7 +401,7 @@ func TestParseJar(t *testing.T) {
 			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
-			}, false, Config{SearchMavenForLicenses: false})
+			}, false, Config{UseNetwork: false})
 			defer cleanupFn()
 			require.NoError(t, err)
 

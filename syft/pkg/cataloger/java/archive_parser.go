@@ -286,7 +286,7 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo() (name, versi
 	if version == "" && pomProjectObject != nil {
 		version = pomProjectObject.Version
 	}
-	if pomProjectObject != nil && j.cfg.SearchMavenForLicenses {
+	if pomProjectObject != nil && j.cfg.UseNetwork {
 		findPomLicenses(pomProjectObject, j.cfg)
 	}
 
