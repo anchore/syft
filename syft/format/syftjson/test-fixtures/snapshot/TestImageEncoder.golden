@@ -9,7 +9,8 @@
    "locations": [
     {
      "path": "/somefile-1.txt",
-     "layerID": "sha256:100d5a55f9032faead28b7427fa3e650e4f0158f86ea89d06e1489df00cb8c6f"
+     "layerID": "sha256:100d5a55f9032faead28b7427fa3e650e4f0158f86ea89d06e1489df00cb8c6f",
+     "accessPath": "/somefile-1.txt"
     }
    ],
    "licenses": [
@@ -45,7 +46,8 @@
    "locations": [
     {
      "path": "/somefile-2.txt",
-     "layerID": "sha256:000fb9200890d3a19138478b20023023c0dce1c54352007c2863716780f049eb"
+     "layerID": "sha256:000fb9200890d3a19138478b20023023c0dce1c54352007c2863716780f049eb",
+     "accessPath": "/somefile-2.txt"
     }
    ],
    "licenses": [],

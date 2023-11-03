@@ -117,7 +117,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Artifacts: sbom.Artifacts{
 			Packages: catalog,
 			FileMetadata: map[file.Coordinates]file.Metadata{
-				file.NewLocation("/a/place").Coordinates: {
+				file.NewVirtualLocation("/a/place", "/a/symlink/to/place").Coordinates: {
 					FileInfo: stereoFile.ManualInfo{
 						NameValue: "/a/place",
 						ModeValue: 0775,
