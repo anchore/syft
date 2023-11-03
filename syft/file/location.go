@@ -68,6 +68,7 @@ func NewLocation(realPath string) Location {
 			Coordinates: Coordinates{
 				RealPath: realPath,
 			},
+			VirtualPath: realPath,
 		},
 		LocationMetadata: LocationMetadata{
 			Annotations: map[string]string{},
@@ -94,6 +95,7 @@ func NewLocationFromCoordinates(coordinates Coordinates) Location {
 	return Location{
 		LocationData: LocationData{
 			Coordinates: coordinates,
+			VirtualPath: coordinates.RealPath,
 		},
 		LocationMetadata: LocationMetadata{
 			Annotations: map[string]string{},
@@ -137,7 +139,8 @@ func NewLocationFromDirectory(responsePath string, ref file.Reference) Location 
 			Coordinates: Coordinates{
 				RealPath: responsePath,
 			},
-			ref: ref,
+			VirtualPath: responsePath,
+			ref:         ref,
 		},
 		LocationMetadata: LocationMetadata{
 			Annotations: map[string]string{},
@@ -147,9 +150,6 @@ func NewLocationFromDirectory(responsePath string, ref file.Reference) Location 
 
 // NewVirtualLocationFromDirectory creates a new Location representing the given path (extracted from the Reference) relative to the given directory with a separate virtual access path.
 func NewVirtualLocationFromDirectory(responsePath, virtualResponsePath string, ref file.Reference) Location {
-	if responsePath == virtualResponsePath {
-		return NewLocationFromDirectory(responsePath, ref)
-	}
 	return Location{
 		LocationData: LocationData{
 			Coordinates: Coordinates{

@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -44,6 +46,102 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 	run(t, cmd)
 }
 
+func generateMockMavenHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		// Set the Content-Type header to indicate that the response is XML
+		w.Header().Set("Content-Type", "application/xml")
+		// Copy the file's content to the response writer
+		file, err := os.Open(responseFixture)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+		_, err = io.Copy(w, file)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+type handlerPath struct {
+	path    string
+	handler func(w http.ResponseWriter, r *http.Request)
+}
+
+func TestSearchMavenForLicenses(t *testing.T) {
+	mux, url, teardown := setup()
+	defer teardown()
+	tests := []struct {
+		name             string
+		fixture          string
+		detectNested     bool
+		config           Config
+		requestPath      string
+		requestHandlers  []handlerPath
+		expectedLicenses []pkg.License
+	}{
+		{
+			name:         "searchMavenForLicenses returns the expected licenses when search is set to true",
+			fixture:      "opensaml-core-3.4.6",
+			detectNested: false,
+			config: Config{
+				UseNetwork:              true,
+				MavenBaseURL:            url,
+				MaxParentRecursiveDepth: 2,
+			},
+			requestHandlers: []handlerPath{
+				{
+					path:    "/org/opensaml/opensaml-parent/3.4.6/opensaml-parent-3.4.6.pom",
+					handler: generateMockMavenHandler("test-fixtures/maven-xml-responses/opensaml-parent-3.4.6.pom"),
+				},
+				{
+					path:    "/net/shibboleth/parent/7.11.2/parent-7.11.2.pom",
+					handler: generateMockMavenHandler("test-fixtures/maven-xml-responses/parent-7.11.2.pom"),
+				},
+			},
+			expectedLicenses: []pkg.License{
+				{
+					Type:           license.Declared,
+					Value:          `The Apache Software License, Version 2.0`,
+					SPDXExpression: ``,
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// configure maven central requests
+			for _, hdlr := range tc.requestHandlers {
+				mux.HandleFunc(hdlr.path, hdlr.handler)
+			}
+
+			// setup metadata fixture; note:
+			// this fixture has a pomProjectObject and has a parent object
+			// it has no licenses on either which is the condition for testing
+			// the searchMavenForLicenses functionality
+			jarName := generateJavaMetadataJarFixture(t, tc.fixture)
+			fixture, err := os.Open(jarName)
+			require.NoError(t, err)
+
+			// setup parser
+			ap, cleanupFn, err := newJavaArchiveParser(
+				file.LocationReadCloser{
+					Location:   file.NewLocation(fixture.Name()),
+					ReadCloser: fixture,
+				}, tc.detectNested, tc.config)
+			defer cleanupFn()
+
+			// assert licenses are discovered from upstream
+			_, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo()
+			assert.Equal(t, tc.expectedLicenses, licenses)
+		})
+	}
+}
+
 func TestFormatMavenURL(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -63,7 +161,7 @@ func TestFormatMavenURL(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			requestURL, err := formatMavenPomURL(tc.groupID, tc.artifactID, tc.version)
+			requestURL, err := formatMavenPomURL(tc.groupID, tc.artifactID, tc.version, MavenBaseURL)
 			assert.NoError(t, err, "expected no err; got %w", err)
 			assert.Equal(t, tc.expected, requestURL)
 		})
@@ -303,7 +401,7 @@ func TestParseJar(t *testing.T) {
 			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
-			}, false, Config{SearchMavenForLicenses: false})
+			}, false, Config{UseNetwork: false})
 			defer cleanupFn()
 			require.NoError(t, err)
 
@@ -1036,6 +1134,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 		fixtureName           string
 		expectedPkgs          []pkg.Package
 		expectedRelationships []artifact.Relationship
+		assignParent          bool
 		want                  bool
 	}{
 		{
@@ -1146,16 +1245,92 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:         "multiple pom for parent selection regression (pr 2231)",
+			fixtureName:  "api-all-2.0.0-sources",
+			assignParent: true,
+			expectedPkgs: []pkg.Package{
+				{
+					Name:      "api-all",
+					Version:   "2.0.0",
+					Type:      pkg.JavaPkg,
+					Language:  pkg.Java,
+					PURL:      "pkg:maven/org.apache.directory.api/api-all@2.0.0",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar")),
+					Metadata: pkg.JavaArchive{
+						VirtualPath: "test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar",
+						Manifest: &pkg.JavaManifest{
+							Main: map[string]string{
+								"Build-Jdk":        "1.8.0_191",
+								"Built-By":         "elecharny",
+								"Created-By":       "Apache Maven 3.6.0",
+								"Manifest-Version": "1.0",
+							},
+						},
+						PomProperties: &pkg.JavaPomProperties{
+							Path:       "META-INF/maven/org.apache.directory.api/api-all/pom.properties",
+							GroupID:    "org.apache.directory.api",
+							ArtifactID: "api-all",
+							Version:    "2.0.0",
+						},
+					},
+				},
+				{
+					Name:      "api-asn1-api",
+					Version:   "2.0.0",
+					PURL:      "pkg:maven/org.apache.directory.api/api-asn1-api@2.0.0",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar")),
+					Type:      pkg.JavaPkg,
+					Language:  pkg.Java,
+					Metadata: pkg.JavaArchive{
+						VirtualPath: "test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar:org.apache.directory.api:api-asn1-api",
+						PomProperties: &pkg.JavaPomProperties{
+							Path:       "META-INF/maven/org.apache.directory.api/api-asn1-api/pom.properties",
+							GroupID:    "org.apache.directory.api",
+							ArtifactID: "api-asn1-api",
+							Version:    "2.0.0",
+						},
+						PomProject: &pkg.JavaPomProject{
+							Path:        "META-INF/maven/org.apache.directory.api/api-asn1-api/pom.xml",
+							ArtifactID:  "api-asn1-api",
+							Name:        "Apache Directory API ASN.1 API",
+							Description: "ASN.1 API",
+							Parent: &pkg.JavaPomParent{
+								GroupID:    "org.apache.directory.api",
+								ArtifactID: "api-asn1-parent",
+								Version:    "2.0.0",
+							},
+						},
+						Parent: nil,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gap := newGenericArchiveParserAdapter(Config{})
+			if tt.assignParent {
+				assignParent(&tt.expectedPkgs[0], tt.expectedPkgs[1:]...)
+			}
 			pkgtest.NewCatalogTester().
 				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName)).
 				Expects(tt.expectedPkgs, tt.expectedRelationships).
 				WithCompareOptions(cmpopts.IgnoreFields(pkg.JavaArchive{}, "ArchiveDigests")).
 				TestParser(t, gap.parseJavaArchive)
 		})
+	}
+}
+
+func assignParent(parent *pkg.Package, childPackages ...pkg.Package) {
+	for i, jp := range childPackages {
+		if v, ok := jp.Metadata.(pkg.JavaArchive); ok {
+			parent := *parent
+			// PURL are not calculated after the fact for parent
+			parent.PURL = ""
+			v.Parent = &parent
+			childPackages[i].Metadata = v
+		}
 	}
 }
 
@@ -1225,4 +1400,22 @@ func run(t testing.TB, cmd *exec.Cmd) {
 			t.Fatalf("unable to get generate fixture result: %+v", err)
 		}
 	}
+}
+
+// setup sets up a test HTTP server for mocking requests to maven central.
+// The returned url is injected into the Config so the client uses the test server.
+// Tests should register handlers on mux to simulate the expected request/response structure
+func setup() (mux *http.ServeMux, serverURL string, teardown func()) {
+	// mux is the HTTP request multiplexer used with the test server.
+	mux = http.NewServeMux()
+
+	// We want to ensure that tests catch mistakes where the endpoint URL is
+	// specified as absolute rather than relative. It only makes a difference
+	// when there's a non-empty base URL path. So, use that. See issue #752.
+	apiHandler := http.NewServeMux()
+	apiHandler.Handle("/", mux)
+	// server is a test HTTP server used to provide mock API responses.
+	server := httptest.NewServer(apiHandler)
+
+	return mux, server.URL, server.Close
 }

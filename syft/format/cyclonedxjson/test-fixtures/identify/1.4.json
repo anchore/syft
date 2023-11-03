@@ -31,7 +31,7 @@
       "properties": [
         {
           "name": "syft:package:foundBy",
-          "value": "go-mod-file-cataloger"
+          "value": "go-module-file-cataloger"
         },
         {
           "name": "syft:package:language",

@@ -174,7 +174,9 @@ tasks:
 
   unit:
     desc: Run unit tests
-    deps: [tmpdir]
+    deps:
+      - tmpdir
+      - fixtures
     vars:
       TEST_PKGS:
         sh: "go list ./... | grep -v {{ .OWNER }}/{{ .PROJECT }}/test | tr '\n' ' '"
@@ -261,7 +263,7 @@ tasks:
       - syft/pkg/cataloger/binary/test-fixtures/cache.fingerprint
       - syft/pkg/cataloger/java/test-fixtures/java-builds/cache.fingerprint
       - syft/pkg/cataloger/golang/test-fixtures/archs/binaries.fingerprint
-      - syft/pkg/cataloger/rpm/test-fixtures/rpms.fingerprint
+      - syft/pkg/cataloger/redhat/test-fixtures/rpms.fingerprint
       - syft/pkg/cataloger/kernel/test-fixtures/cache.fingerprint
       - test/install/cache.fingerprint
       - test/cli/test-fixtures/cache.fingerprint
@@ -275,7 +277,7 @@ tasks:
       # for GO BINARY test fixtures
       - "cd syft/pkg/cataloger/golang/test-fixtures/archs && make binaries.fingerprint"
       # for RPM test fixtures
-      - "cd syft/pkg/cataloger/rpm/test-fixtures && make rpms.fingerprint"
+      - "cd syft/pkg/cataloger/redhat/test-fixtures && make rpms.fingerprint"
       # for Kernel test fixtures
       - "cd syft/pkg/cataloger/kernel/test-fixtures && make cache.fingerprint"
       # for INSTALL integration test fixtures
@@ -287,7 +289,7 @@ tasks:
     desc: Generate test fixtures
     cmds:
       - "cd syft/pkg/cataloger/java/test-fixtures/java-builds && make"
-      - "cd syft/pkg/cataloger/rpm/test-fixtures && make"
+      - "cd syft/pkg/cataloger/redhat/test-fixtures && make"
       - "cd syft/pkg/cataloger/binary/test-fixtures && make"
 
   show-test-image-cache:

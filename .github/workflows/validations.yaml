@@ -45,8 +45,8 @@ jobs:
       - name: Restore RPM test-fixture cache
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
         with:
-          path: syft/pkg/cataloger/rpm/test-fixtures/rpms
-          key: ${{ runner.os }}-unit-rpm-cache-${{ hashFiles( 'syft/pkg/cataloger/rpm/test-fixtures/rpms.fingerprint' ) }}
+          path: syft/pkg/cataloger/redhat/test-fixtures/rpms
+          key: ${{ runner.os }}-unit-rpm-cache-${{ hashFiles( 'syft/pkg/cataloger/redhat/test-fixtures/rpms.fingerprint' ) }}
 
       - name: Restore go binary test-fixture cache
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2

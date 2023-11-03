@@ -1,3 +1,6 @@
+/*
+Package python provides a concrete Cataloger implementation relating to packages within the Python language ecosystem.
+*/
 package python
 
 import (
@@ -16,19 +19,19 @@ func DefaultCatalogerConfig() CatalogerConfig {
 	}
 }
 
-// NewPythonIndexCataloger returns a new cataloger for python packages referenced from poetry lock files, requirements.txt files, and setup.py files.
-func NewPythonIndexCataloger(cfg CatalogerConfig) *generic.Cataloger {
+// NewPackageCataloger returns a new cataloger for python packages referenced from poetry lock files, requirements.txt files, and setup.py files.
+func NewPackageCataloger(cfg CatalogerConfig) *generic.Cataloger {
 	rqp := newRequirementsParser(cfg)
-	return generic.NewCataloger("python-index-cataloger").
+	return generic.NewCataloger("python-package-cataloger").
 		WithParserByGlobs(rqp.parseRequirementsTxt, "**/*requirements*.txt").
 		WithParserByGlobs(parsePoetryLock, "**/poetry.lock").
 		WithParserByGlobs(parsePipfileLock, "**/Pipfile.lock").
 		WithParserByGlobs(parseSetup, "**/setup.py")
 }
 
-// NewPythonPackageCataloger returns a new cataloger for python packages within egg or wheel installation directories.
-func NewPythonPackageCataloger() *generic.Cataloger {
-	return generic.NewCataloger("python-package-cataloger").
+// NewInstalledPackageCataloger returns a new cataloger for python packages within egg or wheel installation directories.
+func NewInstalledPackageCataloger() *generic.Cataloger {
+	return generic.NewCataloger("python-installed-package-cataloger").
 		WithParserByGlobs(
 			parseWheelOrEgg,
 			eggInfoGlob,

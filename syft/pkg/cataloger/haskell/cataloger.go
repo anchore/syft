@@ -1,3 +1,6 @@
+/*
+Package haskell provides a concrete Cataloger implementation relating to packages within the Haskell language ecosystem.
+*/
 package haskell
 
 import (

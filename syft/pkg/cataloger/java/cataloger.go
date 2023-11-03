@@ -1,5 +1,5 @@
 /*
-Package java provides a concrete Cataloger implementation for Java archives (jar, war, ear, par, sar, jpi, hpi, and native-image formats).
+Package java provides a concrete Cataloger implementation for packages relating to the Java language ecosystem.
 */
 package java
 
@@ -7,11 +7,11 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// NewJavaCataloger returns a new Java archive cataloger object.
-func NewJavaCataloger(cfg Config) *generic.Cataloger {
+// NewArchiveCataloger returns a new Java archive cataloger object for detecting packages with archives (jar, war, ear, par, sar, jpi, hpi, and native-image formats)
+func NewArchiveCataloger(cfg Config) *generic.Cataloger {
 	gap := newGenericArchiveParserAdapter(cfg)
 
-	c := generic.NewCataloger("java-cataloger").
+	c := generic.NewCataloger("java-archive-cataloger").
 		WithParserByGlobs(gap.parseJavaArchive, archiveFormatGlobs...)
 
 	if cfg.SearchIndexedArchives {
@@ -28,18 +28,16 @@ func NewJavaCataloger(cfg Config) *generic.Cataloger {
 	return c
 }
 
-// NewJavaPomCataloger returns a cataloger capable of parsing
-// dependencies from a pom.xml file.
+// NewPomCataloger returns a cataloger capable of parsing dependencies from a pom.xml file.
 // Pom files list dependencies that maybe not be locally installed yet.
-func NewJavaPomCataloger() *generic.Cataloger {
+func NewPomCataloger() *generic.Cataloger {
 	return generic.NewCataloger("java-pom-cataloger").
 		WithParserByGlobs(parserPomXML, "**/pom.xml")
 }
 
-// NewJavaGradleLockfileCataloger returns a cataloger capable of parsing
-// dependencies from a gradle.lockfile file.
-// older versions of lockfiles aren't supported yet
-func NewJavaGradleLockfileCataloger() *generic.Cataloger {
+// NewGradleLockfileCataloger returns a cataloger capable of parsing dependencies from a gradle.lockfile file.
+// Note: Older versions of lockfiles aren't supported yet
+func NewGradleLockfileCataloger() *generic.Cataloger {
 	return generic.NewCataloger("java-gradle-lockfile-cataloger").
 		WithParserByGlobs(parseGradleLockfile, gradleLockfileGlob)
 }

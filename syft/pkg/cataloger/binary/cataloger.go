@@ -1,3 +1,6 @@
+/*
+Package binary provides a concrete Cataloger implementations for surfacing possible packages based on signatures found within binary files.
+*/
 package binary
 
 import (

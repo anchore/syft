@@ -202,6 +202,14 @@ From a high level catalogers have the following properties:
 - _Packages created by the cataloger should not be mutated after they are created_. There is one exception made for adding CPEs to a package after the cataloging phase, but that will most likely be moved back into the cataloger in the future.
 
 
+Cataloger names should be unique and named with the following rules of thumb in mind:
+
+- Must end with `-cataloger`
+- Use lowercase letters, numbers, and hyphens only
+- Use hyphens to separate words
+- Catalogers for language ecosystems should start with the language name (e.g. `python-` for a cataloger that raises up python packages)
+- Distinct between when the cataloger is searching for evidence of installed packages vs declared packages. For example, there are currently two different gemspec-based catalogers, the `ruby-gemspec-cataloger` and `ruby-installed-gemspec-cataloger`, where the latter requires that the gemspec is found within a `specifications` directory (which means it was installed, not just at the root of a source repo).
+
 #### Building a new Cataloger
 
 Catalogers must fulfill the [`pkg.Cataloger` interface](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger.go) in order to add packages to the SBOM.

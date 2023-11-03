@@ -494,7 +494,7 @@ platform: ""
 # set the list of package catalogers to use when generating the SBOM
 # default = empty (cataloger set determined automatically by the source type [image or file/directory])
 # catalogers:
-#   - alpmdb-cataloger
+#   - alpm-db-cataloger
 #   - apkdb-cataloger
 #   - binary-cataloger
 #   - cargo-auditable-binary-cataloger
@@ -502,10 +502,10 @@ platform: ""
 #   - conan-cataloger
 #   - dartlang-lock-cataloger
 #   - dotnet-deps-cataloger
-#   - dpkgdb-cataloger
+#   - dpkg-db-cataloger
 #   - elixir-mix-lock-cataloger
 #   - erlang-rebar-lock-cataloger
-#   - go-mod-file-cataloger
+#   - go-module-file-cataloger
 #   - go-module-binary-cataloger
 #   - graalvm-native-image-cataloger
 #   - haskell-cataloger
@@ -519,12 +519,12 @@ platform: ""
 #   - php-composer-installed-cataloger
 #   - php-composer-lock-cataloger
 #   - portage-cataloger
-#   - python-index-cataloger
 #   - python-package-cataloger
+#   - python-installed-package-cataloger
 #   - rpm-db-cataloger
-#   - rpm-file-cataloger
+#   - rpm-archive-cataloger
 #   - ruby-gemfile-cataloger
-#   - ruby-gemspec-cataloger
+#   - ruby-installed-gemspec-cataloger
 #   - rust-cargo-lock-cataloger
 #   - sbom-cataloger
 #   - spm-cataloger
@@ -631,13 +631,15 @@ golang:
    no-proxy: ""
   
 java:
-   # when running across pom.xml files that could have more information, syft will
-   # explicitly search maven for license information by querying the online pom when this is true eg:
-   # https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-starter-test/3.1.5/spring-boot-starter-test-3.1.5.pom
-   # this option is helpful for when the parent pom has this information,
-   # but it is not accessible from within the final built artifact
-   search-maven-for-licenses: false
    maven-url: "https://repo1.maven.org/maven2"
+   max-parent-recursive-depth: 5
+   # enables Syft to use the network to fill in more detailed information about artifacts
+   # currently this enables searching maven-url for license data
+   # when running across pom.xml files that could have more information, syft will
+   # explicitly search maven for license information by querying the online pom when this is true
+   # this option is helpful for when the parent pom has more data,
+   # that is not accessible from within the final built artifact
+   use-network: false
 
 linux-kernel:
    # whether to catalog linux kernel modules found within lib/modules/** directories

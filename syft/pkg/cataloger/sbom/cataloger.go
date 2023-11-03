@@ -1,3 +1,6 @@
+/*
+Package sbom provides a concrete Cataloger implementation for capturing packages embedded within SBOM files.
+*/
 package sbom
 
 import (
@@ -15,8 +18,8 @@ import (
 
 const catalogerName = "sbom-cataloger"
 
-// NewSBOMCataloger returns a new SBOM cataloger object loaded from saved SBOM JSON.
-func NewSBOMCataloger() *generic.Cataloger {
+// NewCataloger returns a new SBOM cataloger object loaded from saved SBOM JSON.
+func NewCataloger() *generic.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseSBOM,
 			"**/*.syft.json",

@@ -71,7 +71,7 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 		base                string
 		input               string
 		expectedRealPath    string
-		expectedVirtualPath string
+		expectedVirtualPath string // note: if empty it will be assumed to match the expectedRealPath
 	}{
 		{
 			name:             "relative root, relative request, direct",
@@ -489,6 +489,9 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			if c.expectedVirtualPath == "" {
+				c.expectedVirtualPath = c.expectedRealPath
+			}
 
 			// we need to mimic a shell, otherwise we won't get a path within a symlink
 			targetPath := filepath.Join(testDir, c.cwd)

@@ -1,5 +1,5 @@
 /*
-Package php provides a concrete Cataloger implementation for PHP ecosystem files.
+Package php provides a concrete Cataloger implementation relating to packages within the PHP language ecosystem.
 */
 package php
 
