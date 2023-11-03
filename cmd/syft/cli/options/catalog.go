@@ -40,7 +40,6 @@ type Catalog struct {
 	DefaultImagePullSource          string             `yaml:"default-image-pull-source" json:"default-image-pull-source" mapstructure:"default-image-pull-source"`                               // specify default image pull source
 	BasePath                        string             `yaml:"base-path" json:"base-path" mapstructure:"base-path"`                                                                               // specify base path for all file paths
 	ExcludeBinaryOverlapByOwnership bool               `yaml:"exclude-binary-overlap-by-ownership" json:"exclude-binary-overlap-by-ownership" mapstructure:"exclude-binary-overlap-by-ownership"` // exclude synthetic binary packages owned by os package files
-	UseNetwork                      bool               `yaml:"use-network" json:"use-network" mapstructure:"use-network"`                                                                         // allow syft to make network connections
 }
 
 var _ interface {
@@ -59,7 +58,6 @@ func DefaultCatalog() Catalog {
 		Source:                          defaultSourceCfg(),
 		Parallelism:                     1,
 		ExcludeBinaryOverlapByOwnership: true,
-		UseNetwork:                      false,
 	}
 }
 
@@ -124,11 +122,6 @@ func (cfg *Catalog) PostLoad() error {
 }
 
 func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
-	if cfg.UseNetwork {
-		cfg.Golang.SearchRemoteLicenses = true
-	} else {
-		cfg.Golang.SearchRemoteLicenses = false
-	}
 	return cataloger.Config{
 		Search: cataloger.SearchConfig{
 			IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
@@ -147,7 +140,7 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},
 		Java: javaCataloger.DefaultCatalogerOpts().
-			WithSearchMavenForLicenses(cfg.UseNetwork).
+			WithUseNetwork(cfg.Java.UseNetwork).
 			WithMavenCentralURL(cfg.Java.MavenURL).
 			WithMaxParentRecursiveDepth(cfg.Java.MaxParentRecursiveDepth),
 		Python: pythonCataloger.CatalogerConfig{

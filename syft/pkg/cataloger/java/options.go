@@ -3,13 +3,13 @@ package java
 const MavenBaseURL = "https://repo1.maven.org/maven2"
 
 type CatalogerOpts struct {
-	SearchMavenForLicenses  bool
+	UseNetwork              bool
 	MavenURL                string
 	MaxParentRecursiveDepth int
 }
 
-func (j CatalogerOpts) WithSearchMavenForLicenses(input bool) CatalogerOpts {
-	j.SearchMavenForLicenses = input
+func (j CatalogerOpts) WithUseNetwork(input bool) CatalogerOpts {
+	j.UseNetwork = input
 	return j
 }
 
@@ -29,7 +29,7 @@ func (j CatalogerOpts) WithMaxParentRecursiveDepth(input int) CatalogerOpts {
 
 func DefaultCatalogerOpts() CatalogerOpts {
 	return CatalogerOpts{
-		SearchMavenForLicenses:  false,
+		UseNetwork:              false,
 		MavenURL:                MavenBaseURL,
 		MaxParentRecursiveDepth: 5,
 	}

@@ -466,10 +466,7 @@ output: "syft-table"
 # same as -q ; SYFT_QUIET env var
 quiet: false
 
-# enables Syft to use the network to fill in more detailed information about artifacts
-# currently this enables the go module and maven license search functionality
-# note: this must be enabled for the go module cataloger option of search-remote-licenses to work
-use-network: false
+
 
 # same as --file; write output report to a file (default is to write to stdout)
 file: ""
@@ -615,6 +612,9 @@ java:
    # but it is not accessible from within the final built artifact
    maven-url: "https://repo1.maven.org/maven2"
    max-parent-recursive-depth: 5
+   # enables Syft to use the network to fill in more detailed information about artifacts
+   # currently this enables searching maven-url for license data
+   use-network: false
 
 linux-kernel:
    # whether to catalog linux kernel modules found within lib/modules/** directories
