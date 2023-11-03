@@ -61,7 +61,7 @@ func NewCatalogTester() *CatalogTester {
 }
 
 func DefaultLocationComparer(x, y file.Location) bool {
-	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
+	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.AccessPath, y.AccessPath)
 }
 
 func DefaultLicenseComparer(x, y pkg.License) bool {
@@ -161,7 +161,7 @@ func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *Cat
 
 func (p *CatalogTester) IgnoreLocationLayer() *CatalogTester {
 	p.locationComparer = func(x, y file.Location) bool {
-		return cmp.Equal(x.Coordinates.RealPath, y.Coordinates.RealPath) && cmp.Equal(x.VirtualPath, y.VirtualPath)
+		return cmp.Equal(x.Coordinates.RealPath, y.Coordinates.RealPath) && cmp.Equal(x.AccessPath, y.AccessPath)
 	}
 
 	// we need to update the license comparer to use the ignored location layer

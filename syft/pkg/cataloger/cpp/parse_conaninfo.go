@@ -17,7 +17,7 @@ import (
 var _ generic.Parser = parseConaninfo
 
 func parseConanMetadataFromFilePath(path string) (pkg.ConaninfoEntry, error) {
-	//	fullFilePath = str(reader.Location.VirtualPath)
+	//	fullFilePath = str(reader.Location.AccessPath)
 	// Split the full patch into the folders we expect. I.e.:
 	// $HOME/.conan/data/<pkg-name>/<pkg-version>/<user>/<channel>/package/<package_id>/conaninfo.txt
 	re := regexp.MustCompile(`.*[/\\](?P<name>[^/\\]+)[/\\](?P<version>[^/\\]+)[/\\](?P<user>[^/\\]+)[/\\](?P<channel>[^/\\]+)[/\\]package[/\\](?P<id>[^/\\]+)[/\\]conaninfo\.txt`)

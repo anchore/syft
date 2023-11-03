@@ -165,8 +165,8 @@ nextPath:
 			for i := range out {
 				existing := &out[i]
 				if existing.RealPath == l.RealPath {
-					if l.VirtualPath == "" {
-						existing.VirtualPath = ""
+					if l.AccessPath == "" {
+						existing.AccessPath = ""
 					}
 					continue nextPath
 				}

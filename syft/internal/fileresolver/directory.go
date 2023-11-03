@@ -110,7 +110,7 @@ func (r Directory) FilesByPath(userPaths ...string) ([]file.Location, error) {
 			continue
 		}
 
-		// we should be resolving symlinks and preserving this information as a VirtualPath to the real file
+		// we should be resolving symlinks and preserving this information as a AccessPath to the real file
 		ref, err := r.searchContext.SearchByPath(userStrPath, filetree.FollowBasenameLinks)
 		if err != nil {
 			log.Tracef("unable to evaluate symlink for path=%q : %+v", userPath, err)

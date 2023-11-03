@@ -130,9 +130,9 @@ func (c *Collection) addPathsToIndex(p Package) {
 			c.addPathToIndex(p.id, l.RealPath)
 			observedPaths.Add(l.RealPath)
 		}
-		if l.VirtualPath != "" && l.RealPath != l.VirtualPath && !observedPaths.Has(l.VirtualPath) {
-			c.addPathToIndex(p.id, l.VirtualPath)
-			observedPaths.Add(l.VirtualPath)
+		if l.AccessPath != "" && l.RealPath != l.AccessPath && !observedPaths.Has(l.AccessPath) {
+			c.addPathToIndex(p.id, l.AccessPath)
+			observedPaths.Add(l.AccessPath)
 		}
 	}
 }
@@ -179,9 +179,9 @@ func (c *Collection) deletePathsFromIndex(p Package) {
 			c.deletePathFromIndex(p.id, l.RealPath)
 			observedPaths.Add(l.RealPath)
 		}
-		if l.VirtualPath != "" && l.RealPath != l.VirtualPath && !observedPaths.Has(l.VirtualPath) {
-			c.deletePathFromIndex(p.id, l.VirtualPath)
-			observedPaths.Add(l.VirtualPath)
+		if l.AccessPath != "" && l.RealPath != l.AccessPath && !observedPaths.Has(l.AccessPath) {
+			c.deletePathFromIndex(p.id, l.AccessPath)
+			observedPaths.Add(l.AccessPath)
 		}
 	}
 }
