@@ -15,7 +15,7 @@ tools:
 
   - name: golangci-lint
     version:
-      want: v1.55.1
+      want: v1.55.2
     method: github-release
     with:
       repo: golangci/golangci-lint
