@@ -143,6 +143,7 @@
       "kanboard": "cpe:2.3:a:jenkins:kanboard:*:*:*:*:*:jenkins:*:*",
       "klocwork": "cpe:2.3:a:jenkins:klocwork_analysis:*:*:*:*:*:jenkins:*:*",
       "kubernetes": "cpe:2.3:a:jenkins:kubernetes:*:*:*:*:*:jenkins:*:*",
+      "kubernetes-cd": "cpe:2.3:a:jenkins:kubernetes_continuous_deploy:*:*:*:*:*:jenkins:*:*",
       "kubernetes-ci": "cpe:2.3:a:jenkins:kubernetes_ci:*:*:*:*:*:jenkins:*:*",
       "kubernetes-pipeline": "cpe:2.3:a:jenkins:kubernetes_pipeline:*:*:*:*:*:jenkins:*:*",
       "libvirt-slave": "cpe:2.3:a:jenkins:libvirt_slaves:*:*:*:*:*:jenkins:*:*",
