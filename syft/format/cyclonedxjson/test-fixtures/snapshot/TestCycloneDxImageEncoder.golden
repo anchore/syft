@@ -18,7 +18,17 @@
       "type": "container",
       "name": "user-image-input",
       "version": "sha256:redacted"
-    }
+    },
+    "properties": [
+      {
+        "name": "syft:image:labels:org.opencontainers.image.ref.name",
+        "value": "scratch"
+      },
+      {
+        "name": "syft:image:labels:org.opencontainers.image.version",
+        "value": "latest"
+      }
+    ]
   },
   "components": [
     {

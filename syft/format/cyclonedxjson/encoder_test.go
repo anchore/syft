@@ -36,7 +36,7 @@ func TestCycloneDxDirectoryEncoder(t *testing.T) {
 }
 
 func TestCycloneDxImageEncoder(t *testing.T) {
-	testImage := "image-simple"
+	testImage := "image-simple-with-labels"
 	testutil.AssertEncoderAgainstGoldenImageSnapshot(t,
 		testutil.ImageSnapshotTestConfig{
 			Image:               testImage,
