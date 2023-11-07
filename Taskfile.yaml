@@ -455,6 +455,8 @@ tasks:
       - "{{ .TOOL_DIR }}/chronicle -vvv > CHANGELOG.md"
       - cmd: "cat CHANGELOG.md"
         silent: true
+      - cmd: "cat .goreleaser.yaml >> {{ .TMP_DIR }}/goreleaser.yaml"
+        silent: true
       - "{{ .RELEASE_CMD }}"
 
 
