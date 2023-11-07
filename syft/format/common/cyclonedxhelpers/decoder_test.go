@@ -97,7 +97,6 @@ func Test_decode(t *testing.T) {
 						CPE:        "cpe:2.3:*:another:package:2:*:*:*:*:*:*:*",
 						PackageURL: "pkg:apk/alpine/alpine-baselayout@3.2.0-r16?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.14.2",
 						Properties: &[]cyclonedx.Property{
-
 							{
 								Name:  "foundBy",
 								Value: "apkdb-cataloger",
