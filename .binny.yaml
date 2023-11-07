@@ -43,7 +43,7 @@ tools:
 
   - name: goreleaser
     version:
-      want: v1.21.2
+      want: v1.22.0
     method: github-release
     with:
       repo: goreleaser/goreleaser
