@@ -192,8 +192,8 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 }
 
 func toBomProperties(srcMetadata source.Description) *[]cyclonedx.Property {
-	switch metadata := srcMetadata.Metadata.(type) {
-	case source.StereoscopeImageSourceMetadata:
+	metadata, ok := srcMetadata.Metadata.(source.StereoscopeImageSourceMetadata)
+	if ok {
 		props := encodeProperties(metadata.Labels, "syft:image:labels")
 		return &props
 	}
