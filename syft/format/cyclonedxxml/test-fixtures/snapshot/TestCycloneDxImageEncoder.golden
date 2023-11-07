@@ -13,6 +13,10 @@
       <name>user-image-input</name>
       <version>sha256:redacted</version>
     </component>
+    <properties>
+      <property name="syft:image:labels:org.opencontainers.image.ref.name">ubuntu</property>
+      <property name="syft:image:labels:org.opencontainers.image.version">20.04</property>
+    </properties>
   </metadata>
   <components>
     <component bom-ref="redacted" type="library">
