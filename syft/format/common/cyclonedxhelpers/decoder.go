@@ -216,7 +216,7 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 		var labels map[string]string
 
 		if meta.Properties != nil {
-			labels = decodeProperties(*meta.Properties, "syft:image:labels")
+			labels = decodeProperties(*meta.Properties, "syft:image:labels:")
 		}
 
 		return source.Description{
