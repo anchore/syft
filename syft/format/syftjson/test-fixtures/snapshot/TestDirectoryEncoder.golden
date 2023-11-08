@@ -8,7 +8,8 @@
    "foundBy": "the-cataloger-1",
    "locations": [
     {
-     "path": "/some/path/pkg1"
+     "path": "/some/path/pkg1",
+     "accessPath": "/some/path/pkg1"
     }
    ],
    "licenses": [
@@ -48,7 +49,8 @@
    "foundBy": "the-cataloger-2",
    "locations": [
     {
-     "path": "/some/path/pkg1"
+     "path": "/some/path/pkg1",
+     "accessPath": "/some/path/pkg1"
     }
    ],
    "licenses": [],

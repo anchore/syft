@@ -8,7 +8,8 @@
    "foundBy": "the-cataloger-1",
    "locations": [
     {
-     "path": "/a/place/a"
+     "path": "/a/place/a",
+     "accessPath": "/a/place/a"
     }
    ],
    "licenses": [
@@ -43,7 +44,8 @@
    "foundBy": "the-cataloger-2",
    "locations": [
     {
-     "path": "/b/place/b"
+     "path": "/b/place/b",
+     "accessPath": "/b/place/b"
     }
    ],
    "licenses": [],
