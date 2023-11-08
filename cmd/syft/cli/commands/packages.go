@@ -2,7 +2,7 @@ package commands
 
 import (
 	"fmt"
-	"github.com/anchore/syft/internal/bus"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 
@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
