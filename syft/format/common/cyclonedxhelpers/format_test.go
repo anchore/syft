@@ -5,12 +5,14 @@ import (
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_formatCPE(t *testing.T) {
@@ -135,6 +137,98 @@ func Test_relationships(t *testing.T) {
 			cdx := ToFormatModel(test.sbom)
 			got := cdx.Dependencies
 			require.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func Test_toBomDescriptor(t *testing.T) {
+	type args struct {
+		name        string
+		version     string
+		srcMetadata source.Description
+	}
+	tests := []struct {
+		name string
+		args args
+		want *cyclonedx.Metadata
+	}{
+		{
+			name: "with image labels source metadata",
+			args: args{
+				name:    "test-image",
+				version: "1.0.0",
+				srcMetadata: source.Description{
+					Metadata: source.StereoscopeImageSourceMetadata{
+						Labels: map[string]string{
+							"key1": "value1",
+						},
+					},
+				},
+			},
+			want: &cyclonedx.Metadata{
+				Timestamp:  "",
+				Lifecycles: nil,
+				Tools: &[]cyclonedx.Tool{
+					{
+						Vendor:             "anchore",
+						Name:               "test-image",
+						Version:            "1.0.0",
+						Hashes:             nil,
+						ExternalReferences: nil,
+					},
+				},
+				Authors: nil,
+				Component: &cyclonedx.Component{
+					BOMRef:             "",
+					MIMEType:           "",
+					Type:               "container",
+					Supplier:           nil,
+					Author:             "",
+					Publisher:          "",
+					Group:              "",
+					Name:               "",
+					Version:            "",
+					Description:        "",
+					Scope:              "",
+					Hashes:             nil,
+					Licenses:           nil,
+					Copyright:          "",
+					CPE:                "",
+					PackageURL:         "",
+					SWID:               nil,
+					Modified:           nil,
+					Pedigree:           nil,
+					ExternalReferences: nil,
+					Properties:         nil,
+					Components:         nil,
+					Evidence:           nil,
+					ReleaseNotes:       nil,
+				},
+				Manufacture: nil,
+				Supplier:    nil,
+				Licenses:    nil,
+				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:image:labels:key1",
+						Value: "value1",
+					},
+				}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			subject := toBomDescriptor(tt.args.name, tt.args.version, tt.args.srcMetadata)
+
+			require.NotEmpty(t, subject.Component.BOMRef)
+			subject.Timestamp = "" // not under test
+
+			require.NotNil(t, subject.Component)
+			require.NotEmpty(t, subject.Component.BOMRef)
+			subject.Component.BOMRef = "" // not under test
+
+			if d := cmp.Diff(tt.want, subject); d != "" {
+				t.Errorf("toBomDescriptor() mismatch (-want +got):\n%s", d)
+			}
 		})
 	}
 }
