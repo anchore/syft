@@ -211,10 +211,11 @@ func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string, l
 
 func Test_FileSource_ID(t *testing.T) {
 	tests := []struct {
-		name    string
-		cfg     FileConfig
-		want    artifact.ID
-		wantErr require.ErrorAssertionFunc
+		name       string
+		cfg        FileConfig
+		want       artifact.ID
+		wantDigest string
+		wantErr    require.ErrorAssertionFunc
 	}{
 		{
 			name:    "empty",
@@ -236,9 +237,10 @@ func Test_FileSource_ID(t *testing.T) {
 			wantErr: require.Error,
 		},
 		{
-			name: "with path",
-			cfg:  FileConfig{Path: "./test-fixtures/image-simple/Dockerfile"},
-			want: artifact.ID("db7146472cf6d49b3ac01b42812fb60020b0b4898b97491b21bb690c808d5159"),
+			name:       "with path",
+			cfg:        FileConfig{Path: "./test-fixtures/image-simple/Dockerfile"},
+			want:       artifact.ID("db7146472cf6d49b3ac01b42812fb60020b0b4898b97491b21bb690c808d5159"),
+			wantDigest: "sha256:38601c0bb4269a10ce1d00590ea7689c1117dd9274c758653934ab4f2016f80f",
 		},
 		{
 			name: "with path and alias",
@@ -249,7 +251,8 @@ func Test_FileSource_ID(t *testing.T) {
 					Version: "version-me-this!",
 				},
 			},
-			want: artifact.ID("3c713003305ac6605255cec8bf4ea649aa44b2b9a9f3a07bd683869d1363438a"),
+			want:       artifact.ID("3c713003305ac6605255cec8bf4ea649aa44b2b9a9f3a07bd683869d1363438a"),
+			wantDigest: "sha256:38601c0bb4269a10ce1d00590ea7689c1117dd9274c758653934ab4f2016f80f",
 		},
 		{
 			name: "other fields do not affect ID",
@@ -259,7 +262,8 @@ func Test_FileSource_ID(t *testing.T) {
 					Paths: []string{"a", "b"},
 				},
 			},
-			want: artifact.ID("db7146472cf6d49b3ac01b42812fb60020b0b4898b97491b21bb690c808d5159"),
+			want:       artifact.ID("db7146472cf6d49b3ac01b42812fb60020b0b4898b97491b21bb690c808d5159"),
+			wantDigest: "sha256:38601c0bb4269a10ce1d00590ea7689c1117dd9274c758653934ab4f2016f80f",
 		},
 	}
 	for _, tt := range tests {
@@ -272,7 +276,8 @@ func Test_FileSource_ID(t *testing.T) {
 			if err != nil {
 				return
 			}
-			assert.Equalf(t, tt.want, s.ID(), "ID()")
+			assert.Equalf(t, tt.want, s.ID(), "ID() mismatch")
+			assert.Equalf(t, tt.wantDigest, s.digestForVersion, "digestForVersion mismatch")
 		})
 	}
 }
