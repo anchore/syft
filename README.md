@@ -554,8 +554,6 @@ format:
     # same as -t ; SYFT_TEMPLATE_PATH env var
     path: ""
 
-
-# cataloging packages is exposed through the packages and power-user subcommands
 package:
 
   # search within archives that do contain a file index to search against (zip)
@@ -625,7 +623,6 @@ python:
    # when given an arbitrary constraint will be used (even if that version may not be available/published).
    guess-unpinned-requirements: false
 
-# cataloging file contents is exposed through the power-user subcommand
 file-contents:
   cataloger:
     # enable/disable cataloging of secrets
@@ -644,7 +641,6 @@ file-contents:
   # SYFT_FILE_CONTENTS_GLOBS env var
   globs: []
 
-# cataloging file metadata is exposed through the power-user subcommand
 file-metadata:
   cataloger:
     # enable/disable cataloging of file metadata
@@ -662,7 +658,6 @@ file-metadata:
 # maximum number of workers used to process the list of package catalogers in parallel
 parallelism: 1
 
-# cataloging secrets is exposed through the power-user subcommand
 secrets:
   cataloger:
     # enable/disable cataloging of secrets

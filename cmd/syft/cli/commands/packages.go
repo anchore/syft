@@ -2,7 +2,7 @@ package commands
 
 import (
 	"fmt"
-
+	"github.com/anchore/syft/internal/bus"
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 
@@ -153,6 +153,9 @@ func runPackages(id clio.Identification, opts *packagesOptions, userInput string
 	)
 
 	if err != nil {
+		if userInput == "power-user" {
+			bus.Notify("Note: the 'power-user' command has been removed.")
+		}
 		return fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
 	}
 
