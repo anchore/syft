@@ -444,7 +444,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 			pomProject = proj
 		}
 
-		pkgFromPom := newPackageFromMavenData(propertiesObj, pomProject, parentPkg, j.location)
+		pkgFromPom := newPackageFromMavenData(propertiesObj, pomProject, parentPkg, j.location, j.cfg)
 		if pkgFromPom != nil {
 			pkgs = append(pkgs, *pkgFromPom)
 		}
@@ -635,7 +635,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 
 // newPackageFromMavenData processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
-func newPackageFromMavenData(pomProperties pkg.JavaPomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
+func newPackageFromMavenData(pomProperties pkg.JavaPomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location, cfg Config) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
 	groupID := ""
@@ -660,6 +660,9 @@ func newPackageFromMavenData(pomProperties pkg.JavaPomProperties, parsedPomProje
 	var pkgPomProject *pkg.JavaPomProject
 	licenses := make([]pkg.License, 0)
 	if parsedPomProject != nil {
+		if cfg.UseNetwork {
+			findPomLicenses(parsedPomProject, cfg)
+		}
 		pkgPomProject = parsedPomProject.JavaPomProject
 		licenses = append(licenses, parsedPomProject.Licenses...)
 	}
