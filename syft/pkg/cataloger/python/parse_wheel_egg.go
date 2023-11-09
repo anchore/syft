@@ -112,7 +112,7 @@ func fetchTopLevelPackages(resolver file.Resolver, metadataLocation file.Locatio
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(topLevelContents, topLevelLocation.VirtualPath)
+	defer internal.CloseAndLogError(topLevelContents, topLevelLocation.AccessPath)
 
 	scanner := bufio.NewScanner(topLevelContents)
 	for scanner.Scan() {
@@ -162,7 +162,7 @@ func fetchDirectURLData(resolver file.Resolver, metadataLocation file.Location) 
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(directURLContents, directURLLocation.VirtualPath)
+	defer internal.CloseAndLogError(directURLContents, directURLLocation.AccessPath)
 
 	buffer, err := io.ReadAll(directURLContents)
 	if err != nil {
@@ -191,7 +191,7 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(metadataContents, metadataLocation.VirtualPath)
+	defer internal.CloseAndLogError(metadataContents, metadataLocation.AccessPath)
 
 	pd, err := parseWheelOrEggMetadata(metadataLocation.RealPath, metadataContents)
 	if err != nil {

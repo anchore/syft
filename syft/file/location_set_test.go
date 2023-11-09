@@ -17,7 +17,7 @@ func TestLocationSet(t *testing.T) {
 				RealPath:     "/etc/hosts",
 				FileSystemID: "a",
 			},
-			VirtualPath: "/var/etc/hosts",
+			AccessPath: "/var/etc/hosts",
 		},
 	}
 
@@ -27,7 +27,7 @@ func TestLocationSet(t *testing.T) {
 				RealPath:     "/etc/hosts",
 				FileSystemID: "a",
 			},
-			VirtualPath: "/home/wagoodman/hosts",
+			AccessPath: "/home/wagoodman/hosts",
 		},
 	}
 
@@ -37,7 +37,7 @@ func TestLocationSet(t *testing.T) {
 				RealPath:     "/bin",
 				FileSystemID: "a",
 			},
-			VirtualPath: "/usr/bin",
+			AccessPath: "/usr/bin",
 		},
 	}
 
@@ -47,7 +47,7 @@ func TestLocationSet(t *testing.T) {
 				RealPath:     "/bin",
 				FileSystemID: "b",
 			},
-			VirtualPath: "/usr/bin",
+			AccessPath: "/usr/bin",
 		},
 	}
 
@@ -100,7 +100,7 @@ func TestLocationSet_Hash(t *testing.T) {
 				RealPath:     "/etc/hosts",
 				FileSystemID: "a",
 			},
-			VirtualPath: "/var/etc/hosts",
+			AccessPath: "/var/etc/hosts",
 		},
 	}
 
@@ -128,7 +128,7 @@ func TestLocationSet_Hash(t *testing.T) {
 				RealPath:     "/bin",
 				FileSystemID: "a",
 			},
-			VirtualPath: "/usr/bin",
+			AccessPath: "/usr/bin",
 		},
 	}
 
@@ -138,7 +138,7 @@ func TestLocationSet_Hash(t *testing.T) {
 				RealPath:     "/bin",
 				FileSystemID: "b",
 			},
-			VirtualPath: "/usr/bin",
+			AccessPath: "/usr/bin",
 		},
 	}
 

@@ -111,7 +111,7 @@ func extractValue(resolver file.Resolver, location file.Location, start, length 
 	if err != nil {
 		return "", fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
 	}
-	defer internal.CloseAndLogError(readCloser, location.VirtualPath)
+	defer internal.CloseAndLogError(readCloser, location.AccessPath)
 
 	n, err := io.CopyN(io.Discard, readCloser, start)
 	if err != nil {

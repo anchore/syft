@@ -71,7 +71,7 @@ func IdentifyRelease(resolver file.Resolver) *Release {
 			}
 
 			content, err := io.ReadAll(contentReader)
-			internal.CloseAndLogError(contentReader, location.VirtualPath)
+			internal.CloseAndLogError(contentReader, location.AccessPath)
 			if err != nil {
 				logger.WithFields("error", err, "path", location.RealPath).Trace("unable to read contents")
 				continue

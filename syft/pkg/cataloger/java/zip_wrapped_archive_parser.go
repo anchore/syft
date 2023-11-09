@@ -29,7 +29,7 @@ func newGenericZipWrappedJavaArchiveParser(cfg Config) genericZipWrappedJavaArch
 }
 
 func (gzp genericZipWrappedJavaArchiveParser) parseZipWrappedJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader.AccessPath(), reader)
+	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader.Path(), reader)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {

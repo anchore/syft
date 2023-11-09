@@ -16,7 +16,7 @@ func catalogLocationByLine(resolver file.Resolver, location file.Location, patte
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch reader for location=%q : %w", location, err)
 	}
-	defer internal.CloseAndLogError(readCloser, location.VirtualPath)
+	defer internal.CloseAndLogError(readCloser, location.AccessPath)
 
 	var scanner = bufio.NewReader(readCloser)
 	var position int64
@@ -65,7 +65,7 @@ func searchForSecretsWithinLine(resolver file.Resolver, location file.Location, 
 			if secret != nil {
 				secrets = append(secrets, *secret)
 			}
-			internal.CloseAndLogError(reader, location.VirtualPath)
+			internal.CloseAndLogError(reader, location.AccessPath)
 		}
 	}
 

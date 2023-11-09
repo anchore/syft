@@ -87,7 +87,7 @@ func uniquePkgKey(groupID string, p *pkg.Package) string {
 // and parse nested archives or ignore them.
 func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg Config) (*archiveParser, func(), error) {
 	// fetch the last element of the virtual path
-	virtualElements := strings.Split(reader.AccessPath(), ":")
+	virtualElements := strings.Split(reader.Path(), ":")
 	currentFilepath := virtualElements[len(virtualElements)-1]
 
 	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(currentFilepath, reader)
@@ -208,7 +208,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		),
 		Type: j.fileInfo.pkgType(),
 		Metadata: pkg.JavaArchive{
-			VirtualPath:    j.location.AccessPath(),
+			VirtualPath:    j.location.Path(),
 			Manifest:       manifest,
 			ArchiveDigests: digests,
 		},
@@ -526,7 +526,7 @@ func discoverPkgsFromOpeners(location file.Location, openers map[string]intFile.
 	for pathWithinArchive, archiveOpener := range openers {
 		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(location, pathWithinArchive, archiveOpener, cfg)
 		if err != nil {
-			log.WithFields("location", location.AccessPath()).Warnf("unable to discover java packages from opener: %+v", err)
+			log.WithFields("location", location.Path()).Warnf("unable to discover java packages from opener: %+v", err)
 			continue
 		}
 
@@ -559,9 +559,9 @@ func discoverPkgsFromOpener(location file.Location, pathWithinArchive string, ar
 		}
 	}()
 
-	nestedPath := fmt.Sprintf("%s:%s", location.AccessPath(), pathWithinArchive)
+	nestedPath := fmt.Sprintf("%s:%s", location.Path(), pathWithinArchive)
 	nestedLocation := file.NewLocationFromCoordinates(location.Coordinates)
-	nestedLocation.VirtualPath = nestedPath
+	nestedLocation.AccessPath = nestedPath
 	gap := newGenericArchiveParserAdapter(cfg)
 	nestedPkgs, nestedRelationships, err := gap.parseJavaArchive(nil, nil, file.LocationReadCloser{
 		Location:   nestedLocation,
@@ -584,7 +584,7 @@ func pomPropertiesByParentPath(archivePath string, location file.Location, extra
 	for filePath, fileContents := range contentsOfMavenPropertiesFiles {
 		pomProperties, err := parsePomProperties(filePath, strings.NewReader(fileContents))
 		if err != nil {
-			log.WithFields("contents-path", filePath, "location", location.AccessPath()).Warnf("failed to parse pom.properties: %+v", err)
+			log.WithFields("contents-path", filePath, "location", location.Path()).Warnf("failed to parse pom.properties: %+v", err)
 			continue
 		}
 
@@ -614,7 +614,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 		// TODO: when we support locations of paths within archives we should start passing the specific pom.xml location object instead of the top jar
 		pomProject, err := parsePomXMLProject(filePath, strings.NewReader(fileContents), location)
 		if err != nil {
-			log.WithFields("contents-path", filePath, "location", location.AccessPath()).Warnf("failed to parse pom.xml: %+v", err)
+			log.WithFields("contents-path", filePath, "location", location.Path()).Warnf("failed to parse pom.xml: %+v", err)
 			continue
 		}
 
@@ -655,7 +655,7 @@ func newPackageFromMavenData(pomProperties pkg.JavaPomProperties, parsedPomProje
 		// https://github.com/anchore/syft/issues/1944
 		vPathSuffix += ":" + pomProperties.GroupID + ":" + pomProperties.ArtifactID
 	}
-	virtualPath := location.AccessPath() + vPathSuffix
+	virtualPath := location.Path() + vPathSuffix
 
 	var pkgPomProject *pkg.JavaPomProject
 	licenses := make([]pkg.License, 0)

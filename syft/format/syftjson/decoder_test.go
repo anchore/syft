@@ -80,7 +80,7 @@ func Test_EncodeDecodeCycle(t *testing.T) {
 				}
 
 				for _, d := range deep.Equal(p, actualPackages[idx]) {
-					if strings.Contains(d, ".VirtualPath: ") {
+					if strings.Contains(d, ".AccessPath: ") {
 						// location.Virtual path is not exposed in the json output
 						continue
 					}
