@@ -250,7 +250,31 @@ func (j *archiveParser) parseLicenses(manifest *pkg.JavaManifest) ([]pkg.License
 		}
 	}
 
+	// If we didn't find any licenses in the archive so far, we'll try again in Maven Central using groupIDFromJavaMetadata
+	if len(licenses) == 0 && j.cfg.UseNetwork {
+		licenses = findLicenseFromJavaMetadata(name, manifest, version, j, licenses)
+	}
+
 	return licenses, name, version, nil
+}
+
+func findLicenseFromJavaMetadata(name string, manifest *pkg.JavaManifest, version string, j *archiveParser, licenses []pkg.License) []pkg.License {
+	var groupID = name
+	if gID := groupIDFromJavaMetadata(name, pkg.JavaArchive{Manifest: manifest}); gID != "" {
+		groupID = gID
+	}
+	pomLicenses, err := recursivelyFindLicensesFromParentPom(groupID, name, version, j.cfg)
+	if err != nil {
+		log.Tracef("unable to get parent pom from Maven central: %v", err)
+	}
+
+	if len(pomLicenses) > 0 {
+		pkgLicenses := pkg.NewLicensesFromLocation(j.location, pomLicenses...)
+		if pkgLicenses != nil {
+			licenses = append(licenses, pkgLicenses...)
+		}
+	}
+	return licenses
 }
 
 type parsedPomProject struct {
