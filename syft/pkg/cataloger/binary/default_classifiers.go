@@ -58,8 +58,10 @@ var defaultClassifiers = []classifier{
 	{
 		Class:    "redis-binary",
 		FileGlob: "**/redis-server",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?s)payload %5.*(?P<version>\d.\d\.\d\d*?)[a-z0-9]{12}-[0-9]{19}`),
+		EvidenceMatcher: evidenceMatchers(
+			fileContentsVersionMatcher(`(?s)payload %5.*?(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}`),
+			fileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12}-[0-9]{19}\x00.*?payload %5`),
+		),
 		Package: "redis",
 		PURL:    mustPURL("pkg:generic/redis@version"),
 		CPEs:    singleCPE("cpe:2.3:a:redislabs:redis:*:*:*:*:*:*:*:*"),
