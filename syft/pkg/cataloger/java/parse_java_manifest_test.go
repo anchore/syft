@@ -209,6 +209,30 @@ func TestSelectName(t *testing.T) {
 			archive:  newJavaArchiveFilename("/something/com.atlassian.gadgets.atlassian-gadgets-api.jar"),
 			expected: "atlassian-gadgets-api",
 		},
+		{
+			// example: pkg:maven/com.google.oauth-client/google-oauth-client@1.25.0
+			desc: "skip Apache Maven Bundle Plugin logic if symbolic name is same as vendor id",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Bundle-DocURL":                       "http://www.google.com/",
+					"Bundle-License":                      "http://www.apache.org/licenses/LICENSE-2.0.txt",
+					"Bundle-ManifestVersion":              "2",
+					"Bundle-Name":                         "Google OAuth Client Library for Java",
+					"Bundle-RequiredExecutionEnvironment": "JavaSE-1.6",
+					"Bundle-SymbolicName":                 "com.google.oauth-client",
+					"Bundle-Vendor":                       "Google",
+					"Bundle-Version":                      "1.25.0",
+					"Created-By":                          "Apache Maven Bundle Plugin",
+					"Export-Package":                      "com.google.api.client.auth.openidconnect;uses:=\"com.google.api.client.auth.oauth2,com.google.api.client.json,com.google.api.client.json.webtoken,com.google.api.client.util\";version=\"1.25.0\",com.google.api.client.auth.oauth;uses:=\"com.google.api.client.http,com.google.api.client.util\";version=\"1.25.0\",com.google.api.client.auth.oauth2;uses:=\"com.google.api.client.http,com.google.api.client.json,com.google.api.client.util,com.google.api.client.util.store\";version=\"1.25.0\"",
+					"Implementation-Title":                "Google OAuth Client Library for Java",
+					"Implementation-Vendor":               "Google",
+					"Implementation-Vendor-Id":            "com.google.oauth-client",
+					"Implementation-Version":              "1.25.0",
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/google-oauth-client-1.25.0.jar"),
+			expected: "google-oauth-client",
+		},
 	}
 
 	for _, test := range tests {
