@@ -268,6 +268,16 @@ func findLicenseFromJavaMetadata(name string, manifest *pkg.JavaManifest, versio
 		log.Tracef("unable to get parent pom from Maven central: %v", err)
 	}
 
+	if len(pomLicenses) == 0 {
+		// Try removing the last part of the groupId, as sometimes it duplicates the artifactId
+		packages := strings.Split(groupID, ".")
+		groupID = strings.Join(packages[:len(packages)-1], ".")
+		pomLicenses, err = recursivelyFindLicensesFromParentPom(groupID, name, version, j.cfg)
+		if err != nil {
+			log.Tracef("unable to get parent pom from Maven central: %v", err)
+		}
+	}
+
 	if len(pomLicenses) > 0 {
 		pkgLicenses := pkg.NewLicensesFromLocation(j.location, pomLicenses...)
 		if pkgLicenses != nil {
