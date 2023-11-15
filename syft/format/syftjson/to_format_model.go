@@ -20,6 +20,18 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+// MetadataType infers the metadata type value based on the pkg.Metadata payload.
+func MetadataType(metadata interface{}) string {
+	return metadataType(metadata, false)
+}
+
+func metadataType(metadata interface{}, legacy bool) string {
+	if legacy {
+		return packagemetadata.JSONLegacyName(metadata)
+	}
+	return packagemetadata.JSONName(metadata)
+}
+
 // ToFormatModel transforms the sbom import a format-specific model.
 func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
 	return model.Document{
@@ -247,13 +259,6 @@ func toPackageModel(p pkg.Package, cfg EncoderConfig) model.Package {
 		licenses = toLicenseModel(p.Licenses.ToSlice())
 	}
 
-	var ty string
-	if cfg.Legacy {
-		ty = packagemetadata.JSONLegacyName(p.Metadata)
-	} else {
-		ty = packagemetadata.JSONName(p.Metadata)
-	}
-
 	return model.Package{
 		PackageBasicData: model.PackageBasicData{
 			ID:        string(p.ID()),
@@ -268,7 +273,7 @@ func toPackageModel(p pkg.Package, cfg EncoderConfig) model.Package {
 			PURL:      p.PURL,
 		},
 		PackageCustomData: model.PackageCustomData{
-			MetadataType: ty,
+			MetadataType: metadataType(p.Metadata, cfg.Legacy),
 			Metadata:     p.Metadata,
 		},
 	}
