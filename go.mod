@@ -76,6 +76,8 @@ require (
 	modernc.org/sqlite v1.27.0
 )
 
+require github.com/spf13/pflag v1.0.5
+
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
@@ -183,7 +185,6 @@ require (
 	github.com/skeema/knownhosts v1.2.0 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.16.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/sylabs/sif/v2 v2.11.5 // indirect

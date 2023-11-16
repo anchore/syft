@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"io"
 	"os"
 
 	cranecmd "github.com/google/go-containerregistry/cmd/crane/cmd"
@@ -22,18 +23,18 @@ import (
 // It also constructs the syft attest command and the syft version command.
 // `RunE` is the earliest that the complete application configuration can be loaded.
 func Application(id clio.Identification) clio.Application {
-	app, _ := create(id)
-	return app
+	app, rootCmd := create(id, os.Stdout)
+	return ui.StdoutLoggingApplication(app, rootCmd)
 }
 
 // Command returns the root command for the syft CLI application. This is useful for embedding the entire syft CLI
 // into an existing application.
 func Command(id clio.Identification) *cobra.Command {
-	_, cmd := create(id)
+	_, cmd := create(id, os.Stdout)
 	return cmd
 }
 
-func create(id clio.Identification) (clio.Application, *cobra.Command) {
+func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Command) {
 	clioCfg := clio.NewSetupConfig(id).
 		WithGlobalConfigFlag().   // add persistent -c <path> for reading an application config from
 		WithGlobalLoggingFlags(). // add persistent -v and -q flags tied to the logging config
@@ -41,13 +42,13 @@ func create(id clio.Identification) (clio.Application, *cobra.Command) {
 		WithUIConstructor(
 			// select a UI based on the logging configuration and state of stdin (if stdin is a tty)
 			func(cfg clio.Config) ([]clio.UI, error) {
-				noUI := ui.None(cfg.Log.Quiet)
+				noUI := ui.None(out, cfg.Log.Quiet)
 				if !cfg.Log.AllowUI(os.Stdin) || cfg.Log.Quiet {
 					return []clio.UI{noUI}, nil
 				}
 
 				return []clio.UI{
-					ui.New(cfg.Log.Quiet,
+					ui.New(out, cfg.Log.Quiet,
 						handler.New(handler.DefaultHandlerConfig()),
 					),
 					noUI,
