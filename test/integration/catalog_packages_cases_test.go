@@ -77,6 +77,14 @@ var imageOnlyTestCases = []testCase{
 			"base": "4.3.0",
 		},
 	},
+	{
+		name:        "find dot net executable",
+		pkgType:     pkg.DotnetPkg,
+		pkgLanguage: pkg.Dotnet,
+		pkgInfo: map[string]string{
+			"DocuSign.eSign": "6.8.0.0",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{
@@ -94,6 +102,7 @@ var dirOnlyTestCases = []testCase{
 			"arel":                 "5.0.1.20140414130214",
 			"bootstrap-sass":       "3.1.1.1",
 			"builder":              "3.2.2",
+			"bundler":              "2.1.4",
 			"coffee-rails":         "4.0.1",
 			"coffee-script":        "2.2.0",
 			"coffee-script-source": "1.7.0",
@@ -136,6 +145,7 @@ var dirOnlyTestCases = []testCase{
 			"turbolinks":           "3.0.0",
 			"tzinfo":               "1.2.0",
 			"uglifier":             "2.5.0",
+			"unbundler":            "3.1.4",
 			"unicorn":              "4.8.3",
 		},
 	},

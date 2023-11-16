@@ -23,16 +23,15 @@ func newPackageForIndex(name, version string, locations ...file.Location) pkg.Pa
 	return p
 }
 
-func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPipfileLockMetadata, locations ...file.Location) pkg.Package {
+func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPipfileLockEntry, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(name, version, nil),
-		Language:     pkg.Python,
-		Type:         pkg.PythonPkg,
-		MetadataType: pkg.PythonPipfileLockMetadataType,
-		Metadata:     metadata,
+		Name:      name,
+		Version:   version,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURL(name, version, nil),
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata:  metadata,
 	}
 
 	p.SetID()
@@ -40,16 +39,15 @@ func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPip
 	return p
 }
 
-func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.PythonRequirementsMetadata, locations ...file.Location) pkg.Package {
+func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.PythonRequirementsEntry, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(name, version, nil),
-		Language:     pkg.Python,
-		Type:         pkg.PythonPkg,
-		MetadataType: pkg.PythonRequirementsMetadataType,
-		Metadata:     metadata,
+		Name:      name,
+		Version:   version,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURL(name, version, nil),
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata:  metadata,
 	}
 
 	p.SetID()
@@ -59,15 +57,14 @@ func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.Py
 
 func newPackageForPackage(m parsedData, sources ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         m.Name,
-		Version:      m.Version,
-		PURL:         packageURL(m.Name, m.Version, &m.PythonPackageMetadata),
-		Locations:    file.NewLocationSet(sources...),
-		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(m.LicenseLocation, m.Licenses)...),
-		Language:     pkg.Python,
-		Type:         pkg.PythonPkg,
-		MetadataType: pkg.PythonPackageMetadataType,
-		Metadata:     m.PythonPackageMetadata,
+		Name:      m.Name,
+		Version:   m.Version,
+		PURL:      packageURL(m.Name, m.Version, &m.PythonPackage),
+		Locations: file.NewLocationSet(sources...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(m.LicenseLocation, m.Licenses)...),
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata:  m.PythonPackage,
 	}
 
 	p.SetID()
@@ -75,7 +72,7 @@ func newPackageForPackage(m parsedData, sources ...file.Location) pkg.Package {
 	return p
 }
 
-func packageURL(name, version string, m *pkg.PythonPackageMetadata) string {
+func packageURL(name, version string, m *pkg.PythonPackage) string {
 	// generate a purl from the package data
 	pURL := packageurl.NewPackageURL(
 		packageurl.TypePyPi,
@@ -88,7 +85,7 @@ func packageURL(name, version string, m *pkg.PythonPackageMetadata) string {
 	return pURL.ToString()
 }
 
-func purlQualifiersForPackage(m *pkg.PythonPackageMetadata) packageurl.Qualifiers {
+func purlQualifiersForPackage(m *pkg.PythonPackage) packageurl.Qualifiers {
 	q := packageurl.Qualifiers{}
 	if m == nil {
 		return q

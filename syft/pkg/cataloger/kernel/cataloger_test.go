@@ -20,10 +20,9 @@ func Test_KernelCataloger(t *testing.T) {
 				"/lib/modules/6.0.7-301.fc37.x86_64/vmlinuz",
 			),
 		),
-		Type:         pkg.LinuxKernelPkg,
-		PURL:         "pkg:generic/linux-kernel@6.0.7-301.fc37.x86_64",
-		MetadataType: pkg.LinuxKernelMetadataType,
-		Metadata: pkg.LinuxKernelMetadata{
+		Type: pkg.LinuxKernelPkg,
+		PURL: "pkg:generic/linux-kernel@6.0.7-301.fc37.x86_64",
+		Metadata: pkg.LinuxKernel{
 			Name:            "",
 			Architecture:    "x86",
 			Version:         "6.0.7-301.fc37.x86_64",
@@ -55,10 +54,9 @@ func Test_KernelCataloger(t *testing.T) {
 				),
 			),
 		),
-		Type:         pkg.LinuxKernelModulePkg,
-		PURL:         "pkg:generic/ttynull",
-		MetadataType: pkg.LinuxKernelModuleMetadataType,
-		Metadata: pkg.LinuxKernelModuleMetadata{
+		Type: pkg.LinuxKernelModulePkg,
+		PURL: "pkg:generic/ttynull",
+		Metadata: pkg.LinuxKernelModule{
 			Name:          "ttynull",
 			Version:       "",
 			SourceVersion: "",

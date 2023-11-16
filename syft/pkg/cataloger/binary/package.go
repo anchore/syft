@@ -29,11 +29,10 @@ func newPackage(classifier classifier, location file.Location, matchMetadata map
 		Locations: file.NewLocationSet(
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		Type:         pkg.BinaryPkg,
-		CPEs:         cpes,
-		FoundBy:      catalogerName,
-		MetadataType: pkg.BinaryMetadataType,
-		Metadata: pkg.BinaryMetadata{
+		Type:    pkg.BinaryPkg,
+		CPEs:    cpes,
+		FoundBy: catalogerName,
+		Metadata: pkg.BinarySignature{
 			Matches: []pkg.ClassifierMatch{
 				{
 					Classifier: classifier.Class,

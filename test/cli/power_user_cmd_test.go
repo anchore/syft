@@ -25,10 +25,10 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			name: "default-results-w-pkg-coverage",
 			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")},
 			assertions: []traitAssertion{
-				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
-				assertInOutput(`"type": "RegularFile"`),         // proof of file-metadata data
-				assertInOutput(`"algorithm": "sha256"`),         // proof of file-metadata default digest algorithm of sha256
-				assertInOutput(`"metadataType": "ApkMetadata"`), // proof of package artifacts data
+				assertNotInOutput(" command is deprecated"),      // only the root command should be deprecated
+				assertInOutput(`"type": "RegularFile"`),          // proof of file-metadata data
+				assertInOutput(`"algorithm": "sha256"`),          // proof of file-metadata default digest algorithm of sha256
+				assertInOutput(`"metadataType": "apk-db-entry"`), // proof of package artifacts data
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -47,10 +47,10 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			name: "default-dir-results-w-pkg-coverage",
 			args: []string{"power-user", "dir:test-fixtures/image-pkg-coverage"},
 			assertions: []traitAssertion{
-				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
-				assertInOutput(`"type": "RegularFile"`),         // proof of file-metadata data
-				assertInOutput(`"algorithm": "sha256"`),         // proof of file-metadata default digest algorithm of sha256
-				assertInOutput(`"metadataType": "ApkMetadata"`), // proof of package artifacts data
+				assertNotInOutput(" command is deprecated"),      // only the root command should be deprecated
+				assertInOutput(`"type": "RegularFile"`),          // proof of file-metadata data
+				assertInOutput(`"algorithm": "sha256"`),          // proof of file-metadata default digest algorithm of sha256
+				assertInOutput(`"metadataType": "apk-db-entry"`), // proof of package artifacts data
 				assertSuccessfulReturnCode,
 			},
 		},

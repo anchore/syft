@@ -9,7 +9,7 @@ import (
 const (
 	// this is the number of packages that should be found in the image-pkg-coverage fixture image
 	// when analyzed with the squashed scope.
-	coverageImageSquashedPackageCount = 24
+	coverageImageSquashedPackageCount = 25
 )
 
 func TestPackagesCmdFlags(t *testing.T) {
@@ -39,6 +39,8 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
+				assertInOutput(`"metadataType": "apk-db-entry"`),
+				assertNotInOutput(`"metadataType": "ApkMetadata"`),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -113,6 +115,19 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", coverageImage},
 			assertions: []traitAssertion{
 				assertTableReport,
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "legacy-json-output-flag",
+			args: []string{"packages", "-o", "json", coverageImage},
+			env: map[string]string{
+				"SYFT_FORMAT_JSON_LEGACY": "true",
+			},
+			assertions: []traitAssertion{
+				assertJsonReport,
+				assertNotInOutput(`"metadataType": "apk-db-entry"`),
+				assertInOutput(`"metadataType": "ApkMetadata"`),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -220,7 +235,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "catalogers-option",
-			// This will detect enable python-index-cataloger, python-package-cataloger and ruby-gemspec cataloger
+			// This will detect enable python-package-cataloger, python-installed-package-cataloger and ruby-gemspec cataloger
 			args: []string{"packages", "-o", "json", "--catalogers", "python,ruby-gemspec", coverageImage},
 			assertions: []traitAssertion{
 				assertPackageCount(13),

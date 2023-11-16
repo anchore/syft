@@ -8,14 +8,13 @@ import (
 
 func newNixStorePackage(storePath nixStorePath, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         storePath.name,
-		Version:      storePath.version,
-		FoundBy:      catalogerName,
-		Locations:    file.NewLocationSet(locations...),
-		Type:         pkg.NixPkg,
-		PURL:         packageURL(storePath),
-		MetadataType: pkg.NixStoreMetadataType,
-		Metadata: pkg.NixStoreMetadata{
+		Name:      storePath.name,
+		Version:   storePath.version,
+		FoundBy:   catalogerName,
+		Locations: file.NewLocationSet(locations...),
+		Type:      pkg.NixPkg,
+		PURL:      packageURL(storePath),
+		Metadata: pkg.NixStoreEntry{
 			OutputHash: storePath.outputHash,
 			Output:     storePath.output,
 		},

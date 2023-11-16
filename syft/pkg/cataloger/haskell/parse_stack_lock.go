@@ -7,6 +7,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -47,7 +48,8 @@ func parseStackLock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 	var lockFile stackLock
 
 	if err := yaml.Unmarshal(bytes, &lockFile); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse stack.yaml.lock file: %w", err)
+		log.WithFields("error", err).Tracef("failed to parse stack.yaml.lock file %q", reader.RealPath)
+		return nil, nil, nil
 	}
 
 	var (
@@ -67,11 +69,11 @@ func parseStackLock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 			newPackage(
 				pkgName,
 				pkgVersion,
-				&pkg.HackageMetadata{
+				pkg.HackageStackYamlLockEntry{
 					PkgHash:     pkgHash,
 					SnapshotURL: snapshotURL,
 				},
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location,
 			),
 		)
 	}

@@ -1,0 +1,55 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: some/path
+DocumentNamespace: redacted
+LicenseListVersion: redacted
+Creator: Organization: Anchore, Inc
+Creator: Tool: syft-v0.42.0-bogus
+Created: redacted
+
+##### Package: some/path
+
+PackageName: some/path
+SPDXID: SPDXRef-DocumentRoot-Directory-some-path
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+PrimaryPackagePurpose: FILE
+FilesAnalyzed: false
+
+##### Package: package-2
+
+PackageName: package-2
+SPDXID: SPDXRef-Package-deb-package-2-39392bb5e270f669
+PackageVersion: 2.0.1
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from DPKG DB: /some/path/pkg1
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:2:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
+
+##### Package: package-1
+
+PackageName: package-1
+SPDXID: SPDXRef-Package-python-package-1-fb6bef15e281ea43
+PackageVersion: 1.0.1
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from installed python package manifest file: /some/path/pkg1
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: MIT
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:*:some:package:2:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl a-purl-2
+
+##### Relationships
+
+Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-python-package-1-fb6bef15e281ea43
+Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-deb-package-2-39392bb5e270f669
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Directory-some-path
+

@@ -23,7 +23,7 @@ func TestWarCatalogedCorrectlyIfRenamed(t *testing.T) {
 		if p.Type == pkg.JavaPkg && strings.Contains(p.Name, "hudson") {
 			assert.NotEqual(t, badPURL, p.PURL, "must not find bad purl %q", badPURL)
 			virtPath := ""
-			if meta, ok := p.Metadata.(pkg.JavaMetadata); ok {
+			if meta, ok := p.Metadata.(pkg.JavaArchive); ok {
 				virtPath = meta.VirtualPath
 				if p.PURL == goodPURL && virtPath == goodVirtualPath {
 					foundCorrectPackage = true

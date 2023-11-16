@@ -15,7 +15,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// parseWheelOrEgg takes the primary metadata file reference and returns the python package it represents.
+// parseWheelOrEgg takes the primary metadata file reference and returns the python package it represents. Contained
+// fields are governed by the PyPA core metadata specification (https://packaging.python.org/en/latest/specifications/core-metadata/).
 func parseWheelOrEgg(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pd, sources, err := assembleEggOrWheelMetadata(resolver, reader.Location)
 	if err != nil {
@@ -111,7 +112,7 @@ func fetchTopLevelPackages(resolver file.Resolver, metadataLocation file.Locatio
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(topLevelContents, topLevelLocation.VirtualPath)
+	defer internal.CloseAndLogError(topLevelContents, topLevelLocation.AccessPath)
 
 	scanner := bufio.NewScanner(topLevelContents)
 	for scanner.Scan() {
@@ -123,6 +124,27 @@ func fetchTopLevelPackages(resolver file.Resolver, metadataLocation file.Locatio
 	}
 
 	return pkgs, sources, nil
+}
+
+type directURLOrigin struct {
+	URL         string      `json:"url"`
+	VCSInfo     vcsInfo     `json:"vcs_info"`
+	ArchiveInfo archiveInfo `json:"archive_info"`
+	DirInfo     dirInfo     `json:"dir_info"`
+}
+
+type dirInfo struct {
+	Editable bool `json:"editable"`
+}
+
+type archiveInfo struct {
+	Hash string `json:"hash"`
+}
+
+type vcsInfo struct {
+	CommitID          string `json:"commit_id"`
+	VCS               string `json:"vcs"`
+	RequestedRevision string `json:"requested_revision"`
 }
 
 func fetchDirectURLData(resolver file.Resolver, metadataLocation file.Location) (d *pkg.PythonDirectURLOriginInfo, sources []file.Location, err error) {
@@ -140,14 +162,14 @@ func fetchDirectURLData(resolver file.Resolver, metadataLocation file.Location) 
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(directURLContents, directURLLocation.VirtualPath)
+	defer internal.CloseAndLogError(directURLContents, directURLLocation.AccessPath)
 
 	buffer, err := io.ReadAll(directURLContents)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var directURLJson pkg.DirectURLOrigin
+	var directURLJson directURLOrigin
 	if err := json.Unmarshal(buffer, &directURLJson); err != nil {
 		return nil, nil, err
 	}
@@ -169,7 +191,7 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	if err != nil {
 		return nil, nil, err
 	}
-	defer internal.CloseAndLogError(metadataContents, metadataLocation.VirtualPath)
+	defer internal.CloseAndLogError(metadataContents, metadataLocation.AccessPath)
 
 	pd, err := parseWheelOrEggMetadata(metadataLocation.RealPath, metadataContents)
 	if err != nil {

@@ -17,19 +17,18 @@ func Test_packageURL(t *testing.T) {
 		{
 			name: "maven",
 			pkg: pkg.Package{
-				Name:         "example-java-app-maven",
-				Version:      "0.1.0",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
+				Name:     "example-java-app-maven",
+				Version:  "0.1.0",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
 					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							"Manifest-Version": "1.0",
 						},
 					},
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						Path:       "META-INF/maven/org.anchore/example-java-app-maven/pom.properties",
 						GroupID:    "org.anchore",
 						ArtifactID: "example-java-app-maven",
@@ -43,19 +42,18 @@ func Test_packageURL(t *testing.T) {
 		{
 			name: "POM properties have explicit group ID without . in it",
 			pkg: pkg.Package{
-				Name:         "example-java-app-maven",
-				Version:      "0.1.0",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
+				Name:     "example-java-app-maven",
+				Version:  "0.1.0",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
 					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							"Manifest-Version": "1.0",
 						},
 					},
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						Path:       "META-INF/maven/org.anchore/example-java-app-maven/pom.properties",
 						GroupID:    "commons",
 						ArtifactID: "example-java-app-maven",
@@ -69,25 +67,24 @@ func Test_packageURL(t *testing.T) {
 		{
 			name: "POM project has explicit group ID without . in it",
 			pkg: pkg.Package{
-				Name:         "example-java-app-maven",
-				Version:      "0.1.0",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
+				Name:     "example-java-app-maven",
+				Version:  "0.1.0",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
 					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							"Manifest-Version": "1.0",
 						},
 					},
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						Path:       "META-INF/maven/org.anchore/example-java-app-maven/pom.properties",
 						ArtifactID: "example-java-app-maven",
 						Version:    "0.1.0",
 						Extra:      make(map[string]string),
 					},
-					PomProject: &pkg.PomProject{
+					PomProject: &pkg.JavaPomProject{
 						GroupID: "commons",
 					},
 				},
@@ -97,26 +94,25 @@ func Test_packageURL(t *testing.T) {
 		{
 			name: "POM project has explicit group ID without . in it",
 			pkg: pkg.Package{
-				Name:         "example-java-app-maven",
-				Version:      "0.1.0",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
+				Name:     "example-java-app-maven",
+				Version:  "0.1.0",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
 					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							"Manifest-Version": "1.0",
 						},
 					},
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						Path:       "META-INF/maven/org.anchore/example-java-app-maven/pom.properties",
 						ArtifactID: "example-java-app-maven",
 						Version:    "0.1.0",
 						Extra:      make(map[string]string),
 					},
-					PomProject: &pkg.PomProject{
-						Parent: &pkg.PomParent{
+					PomProject: &pkg.JavaPomProject{
+						Parent: &pkg.JavaPomParent{
 							GroupID: "parent",
 						},
 					},
@@ -127,7 +123,7 @@ func Test_packageURL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.expect, func(t *testing.T) {
-			assert.Equal(t, tt.expect, packageURL(tt.pkg.Name, tt.pkg.Version, tt.pkg.Metadata.(pkg.JavaMetadata)))
+			assert.Equal(t, tt.expect, packageURL(tt.pkg.Name, tt.pkg.Version, tt.pkg.Metadata.(pkg.JavaArchive)))
 		})
 	}
 }
@@ -136,13 +132,13 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 	tests := []struct {
 		name     string
 		pkgName  string
-		metadata pkg.JavaMetadata
+		metadata pkg.JavaArchive
 		expect   string
 	}{
 		{
 			name: "pom properties",
-			metadata: pkg.JavaMetadata{
-				PomProperties: &pkg.PomProperties{
+			metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
 					GroupID: "org.anchore",
 				},
 			},
@@ -150,8 +146,8 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 		},
 		{
 			name: "pom project",
-			metadata: pkg.JavaMetadata{
-				PomProject: &pkg.PomProject{
+			metadata: pkg.JavaArchive{
+				PomProject: &pkg.JavaPomProject{
 					GroupID: "org.anchore",
 				},
 			},
@@ -160,12 +156,12 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 		{
 			name:     "known package list",
 			pkgName:  "ant-antlr",
-			metadata: pkg.JavaMetadata{},
+			metadata: pkg.JavaArchive{},
 			expect:   "org.apache.ant",
 		},
 		{
 			name: "java manifest",
-			metadata: pkg.JavaMetadata{
+			metadata: pkg.JavaArchive{
 				Manifest: &pkg.JavaManifest{
 					Main: map[string]string{
 						"Implementation-Vendor": "org.anchore",
@@ -176,7 +172,7 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 		},
 		{
 			name:     "no group id",
-			metadata: pkg.JavaMetadata{},
+			metadata: pkg.JavaArchive{},
 			expect:   "",
 		},
 	}

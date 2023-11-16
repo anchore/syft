@@ -1,3 +1,6 @@
+/*
+Package githubactions provides a concrete Cataloger implementation for GitHub Actions packages (both actions and workflows).
+*/
 package githubactions
 
 import "github.com/anchore/syft/syft/pkg/cataloger/generic"

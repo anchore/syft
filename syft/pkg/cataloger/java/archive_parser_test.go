@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -44,6 +46,128 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 	run(t, cmd)
 }
 
+func generateMockMavenHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		// Set the Content-Type header to indicate that the response is XML
+		w.Header().Set("Content-Type", "application/xml")
+		// Copy the file's content to the response writer
+		file, err := os.Open(responseFixture)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+		_, err = io.Copy(w, file)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+type handlerPath struct {
+	path    string
+	handler func(w http.ResponseWriter, r *http.Request)
+}
+
+func TestSearchMavenForLicenses(t *testing.T) {
+	mux, url, teardown := setup()
+	defer teardown()
+	tests := []struct {
+		name             string
+		fixture          string
+		detectNested     bool
+		config           Config
+		requestPath      string
+		requestHandlers  []handlerPath
+		expectedLicenses []pkg.License
+	}{
+		{
+			name:         "searchMavenForLicenses returns the expected licenses when search is set to true",
+			fixture:      "opensaml-core-3.4.6",
+			detectNested: false,
+			config: Config{
+				UseNetwork:              true,
+				MavenBaseURL:            url,
+				MaxParentRecursiveDepth: 2,
+			},
+			requestHandlers: []handlerPath{
+				{
+					path:    "/org/opensaml/opensaml-parent/3.4.6/opensaml-parent-3.4.6.pom",
+					handler: generateMockMavenHandler("test-fixtures/maven-xml-responses/opensaml-parent-3.4.6.pom"),
+				},
+				{
+					path:    "/net/shibboleth/parent/7.11.2/parent-7.11.2.pom",
+					handler: generateMockMavenHandler("test-fixtures/maven-xml-responses/parent-7.11.2.pom"),
+				},
+			},
+			expectedLicenses: []pkg.License{
+				{
+					Type:           license.Declared,
+					Value:          `The Apache Software License, Version 2.0`,
+					SPDXExpression: ``,
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// configure maven central requests
+			for _, hdlr := range tc.requestHandlers {
+				mux.HandleFunc(hdlr.path, hdlr.handler)
+			}
+
+			// setup metadata fixture; note:
+			// this fixture has a pomProjectObject and has a parent object
+			// it has no licenses on either which is the condition for testing
+			// the searchMavenForLicenses functionality
+			jarName := generateJavaMetadataJarFixture(t, tc.fixture)
+			fixture, err := os.Open(jarName)
+			require.NoError(t, err)
+
+			// setup parser
+			ap, cleanupFn, err := newJavaArchiveParser(
+				file.LocationReadCloser{
+					Location:   file.NewLocation(fixture.Name()),
+					ReadCloser: fixture,
+				}, tc.detectNested, tc.config)
+			defer cleanupFn()
+
+			// assert licenses are discovered from upstream
+			_, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo()
+			assert.Equal(t, tc.expectedLicenses, licenses)
+		})
+	}
+}
+
+func TestFormatMavenURL(t *testing.T) {
+	tests := []struct {
+		name       string
+		groupID    string
+		artifactID string
+		version    string
+		expected   string
+	}{
+		{
+			name:       "formatMavenURL correctly assembles the pom URL",
+			groupID:    "org.springframework.boot",
+			artifactID: "spring-boot-starter-test",
+			version:    "3.1.5",
+			expected:   "https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-starter-test/3.1.5/spring-boot-starter-test-3.1.5.pom",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			requestURL, err := formatMavenPomURL(tc.groupID, tc.artifactID, tc.version, MavenBaseURL)
+			assert.NoError(t, err, "expected no err; got %w", err)
+			assert.Equal(t, tc.expected, requestURL)
+		})
+	}
+}
+
 func TestParseJar(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -67,10 +191,9 @@ func TestParseJar(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT License", file.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
 					),
-					Language:     pkg.Java,
-					Type:         pkg.JenkinsPluginPkg,
-					MetadataType: pkg.JavaMetadataType,
-					Metadata: pkg.JavaMetadata{
+					Language: pkg.Java,
+					Type:     pkg.JenkinsPluginPkg,
+					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
@@ -100,7 +223,7 @@ func TestParseJar(t *testing.T) {
 								"Long-Name":      "Example Jenkins Plugin",
 							},
 						},
-						PomProperties: &pkg.PomProperties{
+						PomProperties: &pkg.JavaPomProperties{
 							Path:       "META-INF/maven/io.jenkins.plugins/example-jenkins-plugin/pom.properties",
 							GroupID:    "io.jenkins.plugins",
 							ArtifactID: "example-jenkins-plugin",
@@ -115,12 +238,11 @@ func TestParseJar(t *testing.T) {
 			fixture: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 			expected: map[string]pkg.Package{
 				"example-java-app-gradle": {
-					Name:         "example-java-app-gradle",
-					Version:      "0.1.0",
-					PURL:         "pkg:maven/example-java-app-gradle/example-java-app-gradle@0.1.0",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "example-java-app-gradle",
+					Version:  "0.1.0",
+					PURL:     "pkg:maven/example-java-app-gradle/example-java-app-gradle@0.1.0",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Licenses: pkg.NewLicenseSet(
 						pkg.License{
 							Value:          "Apache-2.0",
@@ -129,7 +251,7 @@ func TestParseJar(t *testing.T) {
 							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")),
 						},
 					),
-					Metadata: pkg.JavaMetadata{
+					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
@@ -140,12 +262,11 @@ func TestParseJar(t *testing.T) {
 					},
 				},
 				"joda-time": {
-					Name:         "joda-time",
-					Version:      "2.2",
-					PURL:         "pkg:maven/joda-time/joda-time@2.2",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "joda-time",
+					Version:  "2.2",
+					PURL:     "pkg:maven/joda-time/joda-time@2.2",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromFields(
 							"Apache 2",
@@ -156,17 +277,17 @@ func TestParseJar(t *testing.T) {
 							}(),
 						),
 					),
-					Metadata: pkg.JavaMetadata{
+					Metadata: pkg.JavaArchive{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path with a colon separator between group name and artifact name
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar:joda-time:joda-time",
-						PomProperties: &pkg.PomProperties{
+						PomProperties: &pkg.JavaPomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",
 							ArtifactID: "joda-time",
 							Version:    "2.2",
 						},
-						PomProject: &pkg.PomProject{
+						PomProject: &pkg.JavaPomProject{
 							Path:        "META-INF/maven/joda-time/joda-time/pom.xml",
 							GroupID:     "joda-time",
 							ArtifactID:  "joda-time",
@@ -188,12 +309,11 @@ func TestParseJar(t *testing.T) {
 			},
 			expected: map[string]pkg.Package{
 				"example-java-app-maven": {
-					Name:         "example-java-app-maven",
-					Version:      "0.1.0",
-					PURL:         "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
+					Name:     "example-java-app-maven",
+					Version:  "0.1.0",
+					PURL:     "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
 					Licenses: pkg.NewLicenseSet(
 						pkg.License{
 							Value:          "Apache-2.0",
@@ -202,7 +322,7 @@ func TestParseJar(t *testing.T) {
 							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")),
 						},
 					),
-					Metadata: pkg.JavaMetadata{
+					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
@@ -215,7 +335,7 @@ func TestParseJar(t *testing.T) {
 								"Main-Class": "hello.HelloWorld",
 							},
 						},
-						PomProperties: &pkg.PomProperties{
+						PomProperties: &pkg.JavaPomProperties{
 							Path:       "META-INF/maven/org.anchore/example-java-app-maven/pom.properties",
 							GroupID:    "org.anchore",
 							ArtifactID: "example-java-app-maven",
@@ -237,20 +357,19 @@ func TestParseJar(t *testing.T) {
 							}(),
 						),
 					),
-					Language:     pkg.Java,
-					Type:         pkg.JavaPkg,
-					MetadataType: pkg.JavaMetadataType,
-					Metadata: pkg.JavaMetadata{
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
+					Metadata: pkg.JavaArchive{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:joda-time:joda-time",
-						PomProperties: &pkg.PomProperties{
+						PomProperties: &pkg.JavaPomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",
 							ArtifactID: "joda-time",
 							Version:    "2.9.2",
 						},
-						PomProject: &pkg.PomProject{
+						PomProject: &pkg.JavaPomProject{
 							Path:        "META-INF/maven/joda-time/joda-time/pom.xml",
 							GroupID:     "joda-time",
 							ArtifactID:  "joda-time",
@@ -282,7 +401,7 @@ func TestParseJar(t *testing.T) {
 			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
-			}, false)
+			}, false, Config{UseNetwork: false})
 			defer cleanupFn()
 			require.NoError(t, err)
 
@@ -319,12 +438,12 @@ func TestParseJar(t *testing.T) {
 					continue
 				}
 
-				if a.Name != parent.Name && a.Metadata.(pkg.JavaMetadata).Parent != nil && a.Metadata.(pkg.JavaMetadata).Parent.Name != parent.Name {
-					t.Errorf("mismatched parent: %+v", a.Metadata.(pkg.JavaMetadata).Parent)
+				if a.Name != parent.Name && a.Metadata.(pkg.JavaArchive).Parent != nil && a.Metadata.(pkg.JavaArchive).Parent.Name != parent.Name {
+					t.Errorf("mismatched parent: %+v", a.Metadata.(pkg.JavaArchive).Parent)
 				}
 
 				// we need to compare the other fields without parent attached
-				metadata := a.Metadata.(pkg.JavaMetadata)
+				metadata := a.Metadata.(pkg.JavaArchive)
 				metadata.Parent = nil
 
 				// redact Digest which is computed differently between CI and local
@@ -548,8 +667,9 @@ func TestParseNestedJar(t *testing.T) {
 
 			fixture, err := os.Open(test.fixture)
 			require.NoError(t, err)
+			gap := newGenericArchiveParserAdapter(Config{})
 
-			actual, _, err := parseJavaArchive(nil, nil, file.LocationReadCloser{
+			actual, _, err := gap.parseJavaArchive(nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			})
@@ -592,7 +712,7 @@ func TestParseNestedJar(t *testing.T) {
 				a := a
 				actualKey := makeKey(&a)
 
-				metadata := a.Metadata.(pkg.JavaMetadata)
+				metadata := a.Metadata.(pkg.JavaArchive)
 				if actualKey == "spring-boot|0.0.1-SNAPSHOT" {
 					if metadata.Parent != nil {
 						t.Errorf("expected no parent for root pkg, got %q", makeKey(metadata.Parent))
@@ -620,7 +740,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 	virtualPath := "given/virtual/path"
 	tests := []struct {
 		name            string
-		props           pkg.PomProperties
+		props           pkg.JavaPomProperties
 		project         *parsedPomProject
 		parent          *pkg.Package
 		expectedParent  pkg.Package
@@ -628,7 +748,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 	}{
 		{
 			name: "go case: get a single package from pom properties",
-			props: pkg.PomProperties{
+			props: pkg.JavaPomProperties{
 				Name:       "some-name",
 				GroupID:    "some-group-id",
 				ArtifactID: "some-artifact-id",
@@ -637,7 +757,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			parent: &pkg.Package{
 				Name:    "some-parent-name",
 				Version: "2.0",
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath:   "some-parent-virtual-path",
 					Manifest:      nil,
 					PomProperties: nil,
@@ -648,7 +768,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			expectedParent: pkg.Package{
 				Name:    "some-parent-name",
 				Version: "2.0",
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath:   "some-parent-virtual-path",
 					Manifest:      nil,
 					PomProperties: nil,
@@ -656,14 +776,13 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				},
 			},
 			expectedPackage: &pkg.Package{
-				Name:         "some-artifact-id",
-				Version:      "1.0",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
+				Name:     "some-artifact-id",
+				Version:  "1.0",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{
 					VirtualPath: virtualPath + ":" + "some-group-id" + ":" + "some-artifact-id",
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
 						ArtifactID: "some-artifact-id",
@@ -672,7 +791,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 					Parent: &pkg.Package{
 						Name:    "some-parent-name",
 						Version: "2.0",
-						Metadata: pkg.JavaMetadata{
+						Metadata: pkg.JavaArchive{
 							VirtualPath:   "some-parent-virtual-path",
 							Manifest:      nil,
 							PomProperties: nil,
@@ -684,15 +803,15 @@ func Test_newPackageFromMavenData(t *testing.T) {
 		},
 		{
 			name: "get a single package from pom properties + project",
-			props: pkg.PomProperties{
+			props: pkg.JavaPomProperties{
 				Name:       "some-name",
 				GroupID:    "some-group-id",
 				ArtifactID: "some-artifact-id",
 				Version:    "1.0",
 			},
 			project: &parsedPomProject{
-				PomProject: &pkg.PomProject{
-					Parent: &pkg.PomParent{
+				JavaPomProject: &pkg.JavaPomProject{
+					Parent: &pkg.JavaPomParent{
 						GroupID:    "some-parent-group-id",
 						ArtifactID: "some-parent-artifact-id",
 						Version:    "1.0-parent",
@@ -717,7 +836,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			parent: &pkg.Package{
 				Name:    "some-parent-name",
 				Version: "2.0",
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath:   "some-parent-virtual-path",
 					Manifest:      nil,
 					PomProperties: nil,
@@ -728,7 +847,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			expectedParent: pkg.Package{
 				Name:    "some-parent-name",
 				Version: "2.0",
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath:   "some-parent-virtual-path",
 					Manifest:      nil,
 					PomProperties: nil,
@@ -736,11 +855,10 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				},
 			},
 			expectedPackage: &pkg.Package{
-				Name:         "some-artifact-id",
-				Version:      "1.0",
-				Language:     pkg.Java,
-				Type:         pkg.JavaPkg,
-				MetadataType: pkg.JavaMetadataType,
+				Name:     "some-artifact-id",
+				Version:  "1.0",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
 				Licenses: pkg.NewLicenseSet(
 					pkg.License{
 						Value:          "MIT",
@@ -750,16 +868,16 @@ func Test_newPackageFromMavenData(t *testing.T) {
 						Locations:      file.NewLocationSet(file.NewLocation("some-license-path")),
 					},
 				),
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath: virtualPath + ":" + "some-group-id" + ":" + "some-artifact-id",
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
 						ArtifactID: "some-artifact-id",
 						Version:    "1.0",
 					},
-					PomProject: &pkg.PomProject{
-						Parent: &pkg.PomParent{
+					PomProject: &pkg.JavaPomProject{
+						Parent: &pkg.JavaPomParent{
 							GroupID:    "some-parent-group-id",
 							ArtifactID: "some-parent-artifact-id",
 							Version:    "1.0-parent",
@@ -774,7 +892,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 					Parent: &pkg.Package{
 						Name:    "some-parent-name",
 						Version: "2.0",
-						Metadata: pkg.JavaMetadata{
+						Metadata: pkg.JavaArchive{
 							VirtualPath:   "some-parent-virtual-path",
 							Manifest:      nil,
 							PomProperties: nil,
@@ -786,7 +904,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 		},
 		{
 			name: "single package from pom properties that's a Jenkins plugin",
-			props: pkg.PomProperties{
+			props: pkg.JavaPomProperties{
 				Name:       "some-name",
 				GroupID:    "com.cloudbees.jenkins.plugins",
 				ArtifactID: "some-artifact-id",
@@ -795,7 +913,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			parent: &pkg.Package{
 				Name:    "some-parent-name",
 				Version: "2.0",
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath:   "some-parent-virtual-path",
 					Manifest:      nil,
 					PomProperties: nil,
@@ -806,7 +924,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			expectedParent: pkg.Package{
 				Name:    "some-parent-name",
 				Version: "2.0",
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath:   "some-parent-virtual-path",
 					Manifest:      nil,
 					PomProperties: nil,
@@ -814,14 +932,13 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				},
 			},
 			expectedPackage: &pkg.Package{
-				Name:         "some-artifact-id",
-				Version:      "1.0",
-				Language:     pkg.Java,
-				Type:         pkg.JenkinsPluginPkg,
-				MetadataType: pkg.JavaMetadataType,
-				Metadata: pkg.JavaMetadata{
+				Name:     "some-artifact-id",
+				Version:  "1.0",
+				Language: pkg.Java,
+				Type:     pkg.JenkinsPluginPkg,
+				Metadata: pkg.JavaArchive{
 					VirtualPath: virtualPath + ":" + "com.cloudbees.jenkins.plugins" + ":" + "some-artifact-id",
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						Name:       "some-name",
 						GroupID:    "com.cloudbees.jenkins.plugins",
 						ArtifactID: "some-artifact-id",
@@ -830,7 +947,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 					Parent: &pkg.Package{
 						Name:    "some-parent-name",
 						Version: "2.0",
-						Metadata: pkg.JavaMetadata{
+						Metadata: pkg.JavaArchive{
 							VirtualPath:   "some-parent-virtual-path",
 							Manifest:      nil,
 							PomProperties: nil,
@@ -842,7 +959,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 		},
 		{
 			name: "child matches parent by key",
-			props: pkg.PomProperties{
+			props: pkg.JavaPomProperties{
 				Name:       "some-name",
 				GroupID:    "some-group-id",
 				ArtifactID: "some-parent-name", // note: matches parent package
@@ -852,7 +969,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "2.0",
 				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath:   "some-parent-virtual-path",
 					Manifest:      nil,
 					PomProperties: nil,
@@ -864,11 +981,11 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "2.0",
 				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath: "some-parent-virtual-path",
 					Manifest:    nil,
 					// note: we attach the discovered pom properties data
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
 						ArtifactID: "some-parent-name", // note: matches parent package
@@ -881,7 +998,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 		},
 		{
 			name: "child matches parent by key and is Jenkins plugin",
-			props: pkg.PomProperties{
+			props: pkg.JavaPomProperties{
 				Name:       "some-name",
 				GroupID:    "com.cloudbees.jenkins.plugins",
 				ArtifactID: "some-parent-name", // note: matches parent package
@@ -891,7 +1008,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "2.0",
 				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath:   "some-parent-virtual-path",
 					Manifest:      nil,
 					PomProperties: nil,
@@ -902,11 +1019,11 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "2.0",
 				Type:    pkg.JenkinsPluginPkg,
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath: "some-parent-virtual-path",
 					Manifest:    nil,
 					// note: we attach the discovered pom properties data
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						Name:       "some-name",
 						GroupID:    "com.cloudbees.jenkins.plugins",
 						ArtifactID: "some-parent-name", // note: matches parent package
@@ -919,7 +1036,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 		},
 		{
 			name: "child matches parent by artifact id",
-			props: pkg.PomProperties{
+			props: pkg.JavaPomProperties{
 				Name:       "some-name",
 				GroupID:    "some-group-id",
 				ArtifactID: "some-parent-name",       // note: matches parent package
@@ -929,7 +1046,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "2.0",
 				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath:   virtualPath + ":NEW_VIRTUAL_PATH", // note: DOES NOT match the existing virtual path
 					Manifest:      nil,
 					PomProperties: nil,
@@ -941,11 +1058,11 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Name:    "some-parent-name",
 				Version: "NOT_THE_PARENT_VERSION", // note: the version is updated from pom properties
 				Type:    pkg.JavaPkg,
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					VirtualPath: virtualPath + ":NEW_VIRTUAL_PATH",
 					Manifest:    nil,
 					// note: we attach the discovered pom properties data
-					PomProperties: &pkg.PomProperties{
+					PomProperties: &pkg.JavaPomProperties{
 						Name:       "some-name",
 						GroupID:    "some-group-id",
 						ArtifactID: "some-parent-name",
@@ -963,8 +1080,8 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			locations := file.NewLocationSet(file.NewLocation(virtualPath))
 			if test.expectedPackage != nil {
 				test.expectedPackage.Locations = locations
-				if test.expectedPackage.Metadata.(pkg.JavaMetadata).Parent != nil {
-					test.expectedPackage.Metadata.(pkg.JavaMetadata).Parent.Locations = locations
+				if test.expectedPackage.Metadata.(pkg.JavaArchive).Parent != nil {
+					test.expectedPackage.Metadata.(pkg.JavaArchive).Parent.Locations = locations
 				}
 			}
 			if test.parent != nil {
@@ -972,7 +1089,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			}
 			test.expectedParent.Locations = locations
 
-			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, file.NewLocation(virtualPath))
+			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, file.NewLocation(virtualPath), Config{})
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {
@@ -1017,6 +1134,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 		fixtureName           string
 		expectedPkgs          []pkg.Package
 		expectedRelationships []artifact.Relationship
+		assignParent          bool
 		want                  bool
 	}{
 		{
@@ -1024,20 +1142,19 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 			fixtureName: "jackson-core-2.15.2",
 			expectedPkgs: []pkg.Package{
 				{
-					Name:         "jackson-core",
-					Version:      "2.15.2",
-					Type:         pkg.JavaPkg,
-					Language:     pkg.Java,
-					MetadataType: pkg.JavaMetadataType,
-					PURL:         "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.15.2",
-					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar")),
+					Name:      "jackson-core",
+					Version:   "2.15.2",
+					Type:      pkg.JavaPkg,
+					Language:  pkg.Java,
+					PURL:      "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.15.2",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar")),
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicensesFromLocation(
 							file.NewLocation("test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar"),
 							"https://www.apache.org/licenses/LICENSE-2.0.txt",
 						)...,
 					),
-					Metadata: pkg.JavaMetadata{
+					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar",
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
@@ -1079,20 +1196,19 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 			fixtureName: "com.fasterxml.jackson.core.jackson-core-2.15.2",
 			expectedPkgs: []pkg.Package{
 				{
-					Name:         "jackson-core",
-					Version:      "2.15.2",
-					Type:         pkg.JavaPkg,
-					Language:     pkg.Java,
-					MetadataType: pkg.JavaMetadataType,
-					PURL:         "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.15.2",
-					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar")),
+					Name:      "jackson-core",
+					Version:   "2.15.2",
+					Type:      pkg.JavaPkg,
+					Language:  pkg.Java,
+					PURL:      "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.15.2",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar")),
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicensesFromLocation(
 							file.NewLocation("test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar"),
 							"https://www.apache.org/licenses/LICENSE-2.0.txt",
 						)...,
 					),
-					Metadata: pkg.JavaMetadata{
+					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar",
 						Manifest: &pkg.JavaManifest{
 							Main: map[string]string{
@@ -1129,15 +1245,92 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:         "multiple pom for parent selection regression (pr 2231)",
+			fixtureName:  "api-all-2.0.0-sources",
+			assignParent: true,
+			expectedPkgs: []pkg.Package{
+				{
+					Name:      "api-all",
+					Version:   "2.0.0",
+					Type:      pkg.JavaPkg,
+					Language:  pkg.Java,
+					PURL:      "pkg:maven/org.apache.directory.api/api-all@2.0.0",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar")),
+					Metadata: pkg.JavaArchive{
+						VirtualPath: "test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar",
+						Manifest: &pkg.JavaManifest{
+							Main: map[string]string{
+								"Build-Jdk":        "1.8.0_191",
+								"Built-By":         "elecharny",
+								"Created-By":       "Apache Maven 3.6.0",
+								"Manifest-Version": "1.0",
+							},
+						},
+						PomProperties: &pkg.JavaPomProperties{
+							Path:       "META-INF/maven/org.apache.directory.api/api-all/pom.properties",
+							GroupID:    "org.apache.directory.api",
+							ArtifactID: "api-all",
+							Version:    "2.0.0",
+						},
+					},
+				},
+				{
+					Name:      "api-asn1-api",
+					Version:   "2.0.0",
+					PURL:      "pkg:maven/org.apache.directory.api/api-asn1-api@2.0.0",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar")),
+					Type:      pkg.JavaPkg,
+					Language:  pkg.Java,
+					Metadata: pkg.JavaArchive{
+						VirtualPath: "test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar:org.apache.directory.api:api-asn1-api",
+						PomProperties: &pkg.JavaPomProperties{
+							Path:       "META-INF/maven/org.apache.directory.api/api-asn1-api/pom.properties",
+							GroupID:    "org.apache.directory.api",
+							ArtifactID: "api-asn1-api",
+							Version:    "2.0.0",
+						},
+						PomProject: &pkg.JavaPomProject{
+							Path:        "META-INF/maven/org.apache.directory.api/api-asn1-api/pom.xml",
+							ArtifactID:  "api-asn1-api",
+							Name:        "Apache Directory API ASN.1 API",
+							Description: "ASN.1 API",
+							Parent: &pkg.JavaPomParent{
+								GroupID:    "org.apache.directory.api",
+								ArtifactID: "api-asn1-parent",
+								Version:    "2.0.0",
+							},
+						},
+						Parent: nil,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			gap := newGenericArchiveParserAdapter(Config{})
+			if tt.assignParent {
+				assignParent(&tt.expectedPkgs[0], tt.expectedPkgs[1:]...)
+			}
 			pkgtest.NewCatalogTester().
 				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName)).
 				Expects(tt.expectedPkgs, tt.expectedRelationships).
-				WithCompareOptions(cmpopts.IgnoreFields(pkg.JavaMetadata{}, "ArchiveDigests")).
-				TestParser(t, parseJavaArchive)
+				WithCompareOptions(cmpopts.IgnoreFields(pkg.JavaArchive{}, "ArchiveDigests")).
+				TestParser(t, gap.parseJavaArchive)
 		})
+	}
+}
+
+func assignParent(parent *pkg.Package, childPackages ...pkg.Package) {
+	for i, jp := range childPackages {
+		if v, ok := jp.Metadata.(pkg.JavaArchive); ok {
+			parent := *parent
+			// PURL are not calculated after the fact for parent
+			parent.PURL = ""
+			v.Parent = &parent
+			childPackages[i].Metadata = v
+		}
 	}
 }
 
@@ -1207,4 +1400,22 @@ func run(t testing.TB, cmd *exec.Cmd) {
 			t.Fatalf("unable to get generate fixture result: %+v", err)
 		}
 	}
+}
+
+// setup sets up a test HTTP server for mocking requests to maven central.
+// The returned url is injected into the Config so the client uses the test server.
+// Tests should register handlers on mux to simulate the expected request/response structure
+func setup() (mux *http.ServeMux, serverURL string, teardown func()) {
+	// mux is the HTTP request multiplexer used with the test server.
+	mux = http.NewServeMux()
+
+	// We want to ensure that tests catch mistakes where the endpoint URL is
+	// specified as absolute rather than relative. It only makes a difference
+	// when there's a non-empty base URL path. So, use that. See issue #752.
+	apiHandler := http.NewServeMux()
+	apiHandler.Handle("/", mux)
+	// server is a test HTTP server used to provide mock API responses.
+	server := httptest.NewServer(apiHandler)
+
+	return mux, server.URL, server.Close
 }

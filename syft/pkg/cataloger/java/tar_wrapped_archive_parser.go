@@ -45,8 +45,19 @@ var genericTarGlobs = []string{
 // note: for compressed tars this is an extremely expensive operation and can lead to performance degradation. This is
 // due to the fact that there is no central directory header (say as in zip), which means that in order to get
 // a file listing within the archive you must decompress the entire archive and seek through all of the entries.
-func parseTarWrappedJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader.AccessPath(), reader)
+
+type genericTarWrappedJavaArchiveParser struct {
+	cfg Config
+}
+
+func newGenericTarWrappedJavaArchiveParser(cfg Config) genericTarWrappedJavaArchiveParser {
+	return genericTarWrappedJavaArchiveParser{
+		cfg: cfg,
+	}
+}
+
+func (gtp genericTarWrappedJavaArchiveParser) parseTarWrappedJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader.Path(), reader)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {
@@ -54,14 +65,14 @@ func parseTarWrappedJavaArchive(_ file.Resolver, _ *generic.Environment, reader 
 	}
 
 	// look for java archives within the tar archive
-	return discoverPkgsFromTar(reader.Location, archivePath, contentPath)
+	return discoverPkgsFromTar(reader.Location, archivePath, contentPath, gtp.cfg)
 }
 
-func discoverPkgsFromTar(location file.Location, archivePath, contentPath string) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromTar(location file.Location, archivePath, contentPath string, cfg Config) ([]pkg.Package, []artifact.Relationship, error) {
 	openers, err := intFile.ExtractGlobsFromTarToUniqueTempFile(archivePath, contentPath, archiveFormatGlobs...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from tar: %w", err)
 	}
 
-	return discoverPkgsFromOpeners(location, openers, nil)
+	return discoverPkgsFromOpeners(location, openers, nil, cfg)
 }

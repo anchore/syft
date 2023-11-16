@@ -10,14 +10,13 @@ import (
 
 func newSwiftPackageManagerPackage(name, version, sourceURL, revision string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		PURL:         swiftPackageManagerPackageURL(name, version, sourceURL),
-		Locations:    file.NewLocationSet(locations...),
-		Type:         pkg.SwiftPkg,
-		Language:     pkg.Swift,
-		MetadataType: pkg.SwiftPackageManagerMetadataType,
-		Metadata: pkg.SwiftPackageManagerMetadata{
+		Name:      name,
+		Version:   version,
+		PURL:      swiftPackageManagerPackageURL(name, version, sourceURL),
+		Locations: file.NewLocationSet(locations...),
+		Type:      pkg.SwiftPkg,
+		Language:  pkg.Swift,
+		Metadata: pkg.SwiftPackageManagerResolvedEntry{
 			Revision: revision,
 		},
 	}
@@ -29,14 +28,13 @@ func newSwiftPackageManagerPackage(name, version, sourceURL, revision string, lo
 
 func newCocoaPodsPackage(name, version, hash string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		PURL:         cocoaPodsPackageURL(name, version),
-		Locations:    file.NewLocationSet(locations...),
-		Type:         pkg.CocoapodsPkg,
-		Language:     pkg.Swift,
-		MetadataType: pkg.CocoapodsMetadataType,
-		Metadata: pkg.CocoapodsMetadata{
+		Name:      name,
+		Version:   version,
+		PURL:      cocoaPodsPackageURL(name, version),
+		Locations: file.NewLocationSet(locations...),
+		Type:      pkg.CocoapodsPkg,
+		Language:  pkg.Swift,
+		Metadata: pkg.CocoaPodfileLockEntry{
 			Checksum: hash,
 		},
 	}

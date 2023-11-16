@@ -1,0 +1,59 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:22c456c5-c2a0-4285-a8ef-01b4382822c3",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2023-09-29T12:02:02-04:00",
+    "tools": [
+      {
+        "vendor": "anchore",
+        "name": "syft",
+        "version": "[not provided]"
+      }
+    ],
+    "component": {
+      "bom-ref": "a0ff99a6af10f11f",
+      "type": "file",
+      "name": "go.mod",
+      "version": "sha256:sha256:dc333f342905248a52e424d8dfd061251d01867d01a4f9d7397144a775ff9ebd"
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:golang/github.com/wagoodman/go-partybus@v0.0.0-20230516145632-8ccac152c651?package-id=2ff71a67fb024c86",
+      "type": "library",
+      "name": "github.com/wagoodman/go-partybus",
+      "version": "v0.0.0-20230516145632-8ccac152c651",
+      "cpe": "cpe:2.3:a:wagoodman:go-partybus:v0.0.0-20230516145632-8ccac152c651:*:*:*:*:*:*:*",
+      "purl": "pkg:golang/github.com/wagoodman/go-partybus@v0.0.0-20230516145632-8ccac152c651",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "go-module-file-cataloger"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "go"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "GolangModMetadata"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "go-module"
+        },
+        {
+          "name": "syft:cpe23",
+          "value": "cpe:2.3:a:wagoodman:go_partybus:v0.0.0-20230516145632-8ccac152c651:*:*:*:*:*:*:*"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/go.mod"
+        }
+      ]
+    }
+  ]
+}

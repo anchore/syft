@@ -168,6 +168,7 @@ You can override the list of enabled/disabled catalogers by using the "cataloger
 - apkdb
 - binary
 - dotnet-deps
+- dotnet-portable-executable
 - dpkgdb
 - go-module-binary
 - graalvm-native-image
@@ -190,6 +191,7 @@ You can override the list of enabled/disabled catalogers by using the "cataloger
 - conan
 - dartlang-lock
 - dotnet-deps
+- dotnet-portable-executable
 - dpkgdb
 - elixir-mix-lock
 - erlang-rebar-lock
@@ -244,16 +246,16 @@ syft <image> -o <format>
 ```
 
 Where the `formats` available are:
-- `json`: Use this to get as much information out of Syft as possible!
-- `text`: A row-oriented, human-and-machine-friendly output.
+- `syft-json`: Use this to get as much information out of Syft as possible!
+- `syft-text`: A row-oriented, human-and-machine-friendly output.
 - `cyclonedx-xml`: A XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
 - `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
 - `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.3 specification](https://spdx.github.io/spdx-spec/v2.3/).
 - `spdx-tag-value@2.2`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/v2.2.2/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.3 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.3/schemas/spdx-schema.json).
 - `spdx-json@2.2`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
-- `github`: A JSON report conforming to GitHub's dependency snapshot format.
-- `table`: A columnar summary (default).
+- `github-json`: A JSON report conforming to GitHub's dependency snapshot format.
+- `syft-table`: A columnar summary (default).
 - `template`: Lets the user specify the output format. See ["Using templates"](#using-templates) below.
 
 ## Using templates
@@ -266,7 +268,7 @@ Syft lets you define custom output formats, using [Go templates](https://pkg.go.
 
 - Specify the path to the template file (`-t ./path/to/custom.template`).
 
-- Syft's template processing uses the same data models as the `json` output format — so if you're wondering what data is available as you author a template, you can use the output from `syft <image> -o json` as a reference.
+- Syft's template processing uses the same data models as the `syft-json` output format — so if you're wondering what data is available as you author a template, you can use the output from `syft <image> -o syft-json` as a reference.
 
 **Example:** You could make Syft output data in CSV format by writing a Go template that renders CSV data and then running `syft <image> -o template -t ~/path/to/csv.tmpl`.
 
@@ -297,7 +299,7 @@ Syft can also output _multiple_ files in differing formats by appending
 `=<file>` to the option, for example to output Syft JSON and SPDX JSON:
 
 ```shell
-syft <image> -o json=sbom.syft.json -o spdx-json=sbom.spdx.json
+syft <image> -o syft-json=sbom.syft.json -o spdx-json=sbom.spdx.json
 ```
 
 ## Private Registry Authentication
@@ -454,13 +456,13 @@ Configuration search paths:
 Configuration options (example values are the default):
 
 ```yaml
-# the output format(s) of the SBOM report (options: table, text, json, spdx, ...)
+# the output format(s) of the SBOM report (options: syft-table, syft-text, syft-json, spdx-json, ...)
 # same as -o, --output, and SYFT_OUTPUT env var
 # to specify multiple output files in differing formats, use a list:
 # output:
-#   - "json=<syft-json-output-file>"
+#   - "syft-json=<syft-json-output-file>"
 #   - "spdx-json=<spdx-json-output-file>"
-output: "table"
+output: "syft-table"
 
 # suppress all output (except for the SBOM report)
 # same as -q ; SYFT_QUIET env var
@@ -494,7 +496,7 @@ platform: ""
 # set the list of package catalogers to use when generating the SBOM
 # default = empty (cataloger set determined automatically by the source type [image or file/directory])
 # catalogers:
-#   - alpmdb-cataloger
+#   - alpm-db-cataloger
 #   - apkdb-cataloger
 #   - binary-cataloger
 #   - cargo-auditable-binary-cataloger
@@ -502,10 +504,11 @@ platform: ""
 #   - conan-cataloger
 #   - dartlang-lock-cataloger
 #   - dotnet-deps-cataloger
-#   - dpkgdb-cataloger
+#   - dotnet-portable-executable-cataloger
+#   - dpkg-db-cataloger
 #   - elixir-mix-lock-cataloger
 #   - erlang-rebar-lock-cataloger
-#   - go-mod-file-cataloger
+#   - go-module-file-cataloger
 #   - go-module-binary-cataloger
 #   - graalvm-native-image-cataloger
 #   - haskell-cataloger
@@ -519,16 +522,41 @@ platform: ""
 #   - php-composer-installed-cataloger
 #   - php-composer-lock-cataloger
 #   - portage-cataloger
-#   - python-index-cataloger
 #   - python-package-cataloger
+#   - python-installed-package-cataloger
 #   - rpm-db-cataloger
-#   - rpm-file-cataloger
+#   - rpm-archive-cataloger
 #   - ruby-gemfile-cataloger
-#   - ruby-gemspec-cataloger
+#   - ruby-installed-gemspec-cataloger
 #   - rust-cargo-lock-cataloger
 #   - sbom-cataloger
 #   - spm-cataloger
 catalogers:
+
+
+# all format configuration
+format:
+
+  # all syft-json format options
+  json:
+      
+    # transform any syft-json output to conform to an approximation of the v11.0.1 schema. This includes:
+    # - using the package metadata type names from before v12 of the JSON schema (changed in https://github.com/anchore/syft/pull/1983)
+    #
+    # Note: this will still include package types and fields that were added at or after json schema v12. This means
+    # that output might not strictly be json schema v11 compliant, however, for consumers that require time to port
+    # over to the final syft 1.0 json output this option can be used to ease the transition.
+    #
+    # Note: long term support for this option is not guaranteed.
+    legacy: false
+
+  # all template format options
+  template:
+    # path to the template file to use when rendering the output with the `template` output format. 
+    # Note that all template paths are based on the current syft-json schema.
+    # same as -t ; SYFT_TEMPLATE_PATH env var
+    path: ""
+
 
 # cataloging packages is exposed through the packages and power-user subcommands
 package:
@@ -576,6 +604,17 @@ golang:
    # if unset this defaults to $GONOPROXY
    # SYFT_GOLANG_NOPROXY env var
    no-proxy: ""
+  
+java:
+   maven-url: "https://repo1.maven.org/maven2"
+   max-parent-recursive-depth: 5
+   # enables Syft to use the network to fill in more detailed information about artifacts
+   # currently this enables searching maven-url for license data
+   # when running across pom.xml files that could have more information, syft will
+   # explicitly search maven for license information by querying the online pom when this is true
+   # this option is helpful for when the parent pom has more data,
+   # that is not accessible from within the final built artifact
+   use-network: false
 
 linux-kernel:
    # whether to catalog linux kernel modules found within lib/modules/** directories

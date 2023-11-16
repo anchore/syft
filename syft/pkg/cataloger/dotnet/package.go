@@ -13,7 +13,7 @@ import (
 func newDotnetDepsPackage(nameVersion string, lib dotnetDepsLibrary, locations ...file.Location) *pkg.Package {
 	name, version := extractNameAndVersion(nameVersion)
 
-	m := pkg.DotnetDepsMetadata{
+	m := pkg.DotnetDepsEntry{
 		Name:     name,
 		Version:  version,
 		Path:     lib.Path,
@@ -22,14 +22,13 @@ func newDotnetDepsPackage(nameVersion string, lib dotnetDepsLibrary, locations .
 	}
 
 	p := &pkg.Package{
-		Name:         name,
-		Version:      version,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(m),
-		Language:     pkg.Dotnet,
-		Type:         pkg.DotnetPkg,
-		MetadataType: pkg.DotnetDepsMetadataType,
-		Metadata:     m,
+		Name:      name,
+		Version:   version,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURL(m),
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata:  m,
 	}
 
 	p.SetID()
@@ -58,7 +57,7 @@ func createNameAndVersion(name, version string) (nameVersion string) {
 	return
 }
 
-func packageURL(m pkg.DotnetDepsMetadata) string {
+func packageURL(m pkg.DotnetDepsEntry) string {
 	var qualifiers packageurl.Qualifiers
 
 	return packageurl.NewPackageURL(

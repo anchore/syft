@@ -162,8 +162,8 @@ func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evide
 					locationSet := file.NewLocationSet(location)
 					locationSet.Add(p.Locations.ToSlice()...)
 					p.Locations = locationSet
-					meta, _ := p.Metadata.(pkg.BinaryMetadata)
-					p.Metadata = pkg.BinaryMetadata{
+					meta, _ := p.Metadata.(pkg.BinarySignature)
+					p.Metadata = pkg.BinarySignature{
 						Matches: append([]pkg.ClassifierMatch{
 							{
 								Classifier: classifier.Class,

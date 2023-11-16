@@ -8,10 +8,8 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/formats/syftjson"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/anchore/syft/syft/sbom"
 )
 
 func mustCPEs(s ...string) (c []cpe.CPE) {
@@ -405,7 +403,6 @@ func Test_parseSBOM(t *testing.T) {
 
 	tests := []struct {
 		name              string
-		format            sbom.Format
 		fixture           string
 		wantPkgs          []pkg.Package
 		wantRelationships []artifact.Relationship
@@ -413,7 +410,6 @@ func Test_parseSBOM(t *testing.T) {
 	}{
 		{
 			name:              "parse syft JSON",
-			format:            syftjson.Format(),
 			fixture:           "test-fixtures/alpine/syft-json",
 			wantPkgs:          expectedPkgs,
 			wantRelationships: expectedRelationships,
@@ -423,9 +419,9 @@ func Test_parseSBOM(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, tt.fixture).
-				IgnorePackageFields("Metadata", "MetadataType").
+				IgnorePackageFields("Metadata").
 				Expects(tt.wantPkgs, tt.wantRelationships).
-				TestCataloger(t, NewSBOMCataloger())
+				TestCataloger(t, NewCataloger())
 		})
 	}
 }
@@ -460,7 +456,7 @@ func Test_Cataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewSBOMCataloger())
+				TestCataloger(t, NewCataloger())
 		})
 	}
 }

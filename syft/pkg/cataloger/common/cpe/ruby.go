@@ -3,7 +3,7 @@ package cpe
 import "github.com/anchore/syft/syft/pkg"
 
 func candidateVendorsForRuby(p pkg.Package) fieldCandidateSet {
-	metadata, ok := p.Metadata.(pkg.GemMetadata)
+	metadata, ok := p.Metadata.(pkg.RubyGemspec)
 	if !ok {
 		return nil
 	}

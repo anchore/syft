@@ -32,7 +32,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 		line := scanner.Text()
 
 		// empty lines denote section separators
-		if strings.TrimSpace(line) == "" {
+		if line == "" {
 			// we don't want to allocate a new section map that won't necessarily be used, do that once there is
 			// a non-empty line to process
 
@@ -46,7 +46,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 			// this is a continuation
 
 			if lastKey == "" {
-				log.Warnf("java manifest %q: found continuation with no previous key: %q", path, line)
+				log.Debugf("java manifest %q: found continuation with no previous key: %q", path, line)
 				continue
 			}
 
@@ -58,7 +58,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 		// this is a new key-value pair
 		idx := strings.Index(line, ":")
 		if idx == -1 {
-			log.Warnf("java manifest %q: unable to split java manifest key-value pairs: %q", path, line)
+			log.Debugf("java manifest %q: unable to split java manifest key-value pairs: %q", path, line)
 			continue
 		}
 
@@ -95,7 +95,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 					// per the manifest spec (https://docs.oracle.com/en/java/javase/11/docs/specs/jar/jar.html#jar-manifest)
 					// this should never happen. If it does, we want to know about it, but not necessarily stop
 					// cataloging entirely... for this reason we only log.
-					log.Warnf("java manifest section found without a name: %s", path)
+					log.Debugf("java manifest section found without a name: %s", path)
 					name = strconv.Itoa(i)
 				} else {
 					delete(s, "Name")
@@ -108,7 +108,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 	return &manifest, nil
 }
 
-func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
+func extractNameFromApacheMavenBundlePlugin(manifest *pkg.JavaManifest) string {
 	// special case: from https://svn.apache.org/repos/asf/felix/releases/maven-bundle-plugin-1.2.0/doc/maven-bundle-plugin-bnd.html
 	// "<Bundle-SymbolicName> is assumed to be "${groupId}.${artifactId}"."
 	//
@@ -127,10 +127,17 @@ func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string 
 	//
 	if manifest != nil {
 		if strings.Contains(manifest.Main["Created-By"], "Apache Maven Bundle Plugin") {
-			if v := manifest.Main["Bundle-SymbolicName"]; v != "" {
+			if symbolicName := manifest.Main["Bundle-SymbolicName"]; symbolicName != "" {
+				// It is possible that `Bundle-SymbolicName` is just the groupID (like in the case of
+				// https://repo1.maven.org/maven2/com/google/oauth-client/google-oauth-client/1.25.0/google-oauth-client-1.25.0.jar),
+				// so if `Implementation-Vendor-Id` is equal to `Bundle-SymbolicName`, bail on this logic
+				if vendorID := manifest.Main["Implementation-Vendor-Id"]; vendorID != "" && vendorID == symbolicName {
+					return ""
+				}
+
 				// the problem with this approach is that we don't have a strong indication of the artifactId
 				// not having a "." in it. However, by convention it is unlikely that an artifactId would have a ".".
-				fields := strings.Split(v, ".")
+				fields := strings.Split(symbolicName, ".")
 
 				// grab the last field, this is the artifactId. Note: because of [3] we do not know if this value is
 				// correct. That is, a group id of "commons-logging" may have caused BND to swap out the reference to
@@ -141,6 +148,15 @@ func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string 
 				return fields[len(fields)-1]
 			}
 		}
+	}
+
+	return ""
+}
+
+func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
+	name := extractNameFromApacheMavenBundlePlugin(manifest)
+	if name != "" {
+		return name
 	}
 
 	// the filename tends to be the next-best reference for the package name

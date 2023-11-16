@@ -10,15 +10,16 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/alpm"
-	"github.com/anchore/syft/syft/pkg/cataloger/apkdb"
+	"github.com/anchore/syft/syft/pkg/cataloger/alpine"
+	"github.com/anchore/syft/syft/pkg/cataloger/arch"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
-	"github.com/anchore/syft/syft/pkg/cataloger/deb"
+	"github.com/anchore/syft/syft/pkg/cataloger/debian"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/elixir"
 	"github.com/anchore/syft/syft/pkg/cataloger/erlang"
+	"github.com/anchore/syft/syft/pkg/cataloger/gentoo"
 	"github.com/anchore/syft/syft/pkg/cataloger/githubactions"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
@@ -27,10 +28,9 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
-	"github.com/anchore/syft/syft/pkg/cataloger/portage"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
 	"github.com/anchore/syft/syft/pkg/cataloger/r"
-	"github.com/anchore/syft/syft/pkg/cataloger/rpm"
+	"github.com/anchore/syft/syft/pkg/cataloger/redhat"
 	"github.com/anchore/syft/syft/pkg/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg/cataloger/rust"
 	"github.com/anchore/syft/syft/pkg/cataloger/sbom"
@@ -42,59 +42,61 @@ const AllCatalogersPattern = "all"
 // ImageCatalogers returns a slice of locally implemented catalogers that are fit for detecting installations of packages.
 func ImageCatalogers(cfg Config) []pkg.Cataloger {
 	return filterCatalogers([]pkg.Cataloger{
-		alpm.NewAlpmdbCataloger(),
-		apkdb.NewApkdbCataloger(),
+		arch.NewDBCataloger(),
+		alpine.NewDBCataloger(),
 		binary.NewCataloger(),
-		deb.NewDpkgdbCataloger(),
+		cpp.NewConanInfoCataloger(),
+		debian.NewDBCataloger(),
 		dotnet.NewDotnetPortableExecutableCataloger(),
 		golang.NewGoModuleBinaryCataloger(cfg.Golang),
-		java.NewJavaCataloger(cfg.Java()),
+		java.NewArchiveCataloger(cfg.JavaConfig()),
 		java.NewNativeImageCataloger(),
 		javascript.NewPackageCataloger(),
 		nix.NewStoreCataloger(),
 		php.NewComposerInstalledCataloger(),
-		portage.NewPortageCataloger(),
-		python.NewPythonPackageCataloger(),
+		gentoo.NewPortageCataloger(),
+		python.NewInstalledPackageCataloger(),
 		r.NewPackageCataloger(),
-		rpm.NewRpmDBCataloger(),
-		ruby.NewGemSpecCataloger(),
-		sbom.NewSBOMCataloger(),
+		redhat.NewDBCataloger(),
+		ruby.NewInstalledGemSpecCataloger(),
+		sbom.NewCataloger(),
 	}, cfg.Catalogers)
 }
 
 // DirectoryCatalogers returns a slice of locally implemented catalogers that are fit for detecting packages from index files (and select installations)
 func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 	return filterCatalogers([]pkg.Cataloger{
-		alpm.NewAlpmdbCataloger(),
-		apkdb.NewApkdbCataloger(),
+		arch.NewDBCataloger(),
+		alpine.NewDBCataloger(),
 		binary.NewCataloger(),
 		cpp.NewConanCataloger(),
 		dart.NewPubspecLockCataloger(),
-		deb.NewDpkgdbCataloger(),
+		debian.NewDBCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
 		dotnet.NewDotnetPortableExecutableCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
 		githubactions.NewActionUsageCataloger(),
 		githubactions.NewWorkflowUsageCataloger(),
-		golang.NewGoModFileCataloger(cfg.Golang),
+		golang.NewGoModuleFileCataloger(cfg.Golang),
 		golang.NewGoModuleBinaryCataloger(cfg.Golang),
 		haskell.NewHackageCataloger(),
-		java.NewJavaCataloger(cfg.Java()),
-		java.NewJavaGradleLockfileCataloger(),
-		java.NewJavaPomCataloger(),
+		java.NewArchiveCataloger(cfg.JavaConfig()),
+		java.NewGradleLockfileCataloger(),
+		java.NewPomCataloger(),
 		java.NewNativeImageCataloger(),
 		javascript.NewLockCataloger(),
 		nix.NewStoreCataloger(),
 		php.NewComposerLockCataloger(),
-		portage.NewPortageCataloger(),
-		python.NewPythonIndexCataloger(cfg.Python),
-		python.NewPythonPackageCataloger(),
-		rpm.NewFileCataloger(),
-		rpm.NewRpmDBCataloger(),
+		gentoo.NewPortageCataloger(),
+		python.NewPackageCataloger(cfg.Python),
+		python.NewInstalledPackageCataloger(),
+		redhat.NewArchiveCataloger(),
+		redhat.NewDBCataloger(),
 		ruby.NewGemFileLockCataloger(),
+		ruby.NewGemSpecCataloger(),
 		rust.NewCargoLockCataloger(),
-		sbom.NewSBOMCataloger(),
+		sbom.NewCataloger(),
 		swift.NewCocoapodsCataloger(),
 		swift.NewSwiftPackageManagerCataloger(),
 	}, cfg.Catalogers)
@@ -103,24 +105,24 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 // AllCatalogers returns all implemented catalogers
 func AllCatalogers(cfg Config) []pkg.Cataloger {
 	return filterCatalogers([]pkg.Cataloger{
-		alpm.NewAlpmdbCataloger(),
-		apkdb.NewApkdbCataloger(),
+		arch.NewDBCataloger(),
+		alpine.NewDBCataloger(),
 		binary.NewCataloger(),
 		cpp.NewConanCataloger(),
 		dart.NewPubspecLockCataloger(),
-		deb.NewDpkgdbCataloger(),
+		debian.NewDBCataloger(),
 		dotnet.NewDotnetDepsCataloger(),
 		dotnet.NewDotnetPortableExecutableCataloger(),
 		elixir.NewMixLockCataloger(),
 		erlang.NewRebarLockCataloger(),
 		githubactions.NewActionUsageCataloger(),
 		githubactions.NewWorkflowUsageCataloger(),
-		golang.NewGoModFileCataloger(cfg.Golang),
+		golang.NewGoModuleFileCataloger(cfg.Golang),
 		golang.NewGoModuleBinaryCataloger(cfg.Golang),
 		haskell.NewHackageCataloger(),
-		java.NewJavaCataloger(cfg.Java()),
-		java.NewJavaGradleLockfileCataloger(),
-		java.NewJavaPomCataloger(),
+		java.NewArchiveCataloger(cfg.JavaConfig()),
+		java.NewGradleLockfileCataloger(),
+		java.NewPomCataloger(),
 		java.NewNativeImageCataloger(),
 		javascript.NewLockCataloger(),
 		javascript.NewPackageCataloger(),
@@ -128,17 +130,18 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 		nix.NewStoreCataloger(),
 		php.NewComposerInstalledCataloger(),
 		php.NewComposerLockCataloger(),
-		portage.NewPortageCataloger(),
-		python.NewPythonIndexCataloger(cfg.Python),
-		python.NewPythonPackageCataloger(),
+		gentoo.NewPortageCataloger(),
+		python.NewPackageCataloger(cfg.Python),
+		python.NewInstalledPackageCataloger(),
 		r.NewPackageCataloger(),
-		rpm.NewFileCataloger(),
-		rpm.NewRpmDBCataloger(),
+		redhat.NewArchiveCataloger(),
+		redhat.NewDBCataloger(),
 		ruby.NewGemFileLockCataloger(),
 		ruby.NewGemSpecCataloger(),
+		ruby.NewInstalledGemSpecCataloger(),
 		rust.NewAuditBinaryCataloger(),
 		rust.NewCargoLockCataloger(),
-		sbom.NewSBOMCataloger(),
+		sbom.NewCataloger(),
 		swift.NewCocoapodsCataloger(),
 		swift.NewSwiftPackageManagerCataloger(),
 	}, cfg.Catalogers)
