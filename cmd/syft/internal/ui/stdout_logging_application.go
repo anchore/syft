@@ -52,6 +52,20 @@ func (s *stdoutLoggingApplication) Run() {
 	// need to restore stdout for cobra to properly output help text to the user on stdout
 	baseHelpFunc := s.rootCmd.HelpFunc()
 	defer s.rootCmd.SetHelpFunc(baseHelpFunc)
+
+	var versionCmd *cobra.Command
+	for _, cmd := range s.rootCmd.Commands() {
+		// grab version command
+		if cmd.Name() == "version" {
+			versionCmd = cmd
+			break
+		}
+	}
+
+	versionCmd.PreRun = func(cmd *cobra.Command, args []string) {
+		restoreStdout()
+	}
+
 	s.rootCmd.SetHelpFunc(func(command *cobra.Command, strings []string) {
 		restoreStdout()
 		baseHelpFunc(command, strings)
