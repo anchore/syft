@@ -21,12 +21,12 @@ func Test_capture(t *testing.T) {
 		_, _ = w.WriteString("write1")
 
 		// capture the output to the provided buffer
-		restoreInitial := capture(&w, buf, 1024)
+		restoreInitial := Capture(&w, buf, 1024)
 		t.Logf("pipe2: %+v", w)
 		_, _ = w.WriteString("write2")
 
 		// capture output nested
-		restoreFirstCapture := capture(&w, buf2, 1024)
+		restoreFirstCapture := Capture(&w, buf2, 1024)
 		t.Logf("pipe3: %+v", w)
 		_, _ = w.WriteString("write3")
 
@@ -64,7 +64,7 @@ func Test_captureBufSizes(t *testing.T) {
 	_, w, _ := os.Pipe()
 
 	buf := &bytes.Buffer{}
-	restore := capture(&w, buf, 200)
+	restore := Capture(&w, buf, 200)
 
 	line := "line1\nline2\nline3"
 
@@ -75,7 +75,7 @@ func Test_captureBufSizes(t *testing.T) {
 	require.Equal(t, line, buf.String())
 
 	buf.Reset()
-	restore = capture(&w, buf, 2)
+	restore = Capture(&w, buf, 2)
 
 	_, err = w.WriteString(line)
 	require.NoError(t, err)

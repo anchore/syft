@@ -25,7 +25,7 @@ func (l *logWriter) Write(data []byte) (n int, err error) {
 	s, err := l.r.ReadString('\n')
 	s = strings.TrimRight(s, "\n")
 	for s != "" {
-		log.Trace(s)
+		log.Trace("[unexpected stdout] " + s)
 		n += len(s)
 		if err != nil {
 			break
