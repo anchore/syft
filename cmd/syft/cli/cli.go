@@ -23,8 +23,8 @@ import (
 // It also constructs the syft attest command and the syft version command.
 // `RunE` is the earliest that the complete application configuration can be loaded.
 func Application(id clio.Identification) clio.Application {
-	app, rootCmd := create(id, os.Stdout)
-	return ui.StdoutLoggingApplication(app, rootCmd)
+	app, _ := create(id, os.Stdout)
+	return app
 }
 
 // Command returns the root command for the syft CLI application. This is useful for embedding the entire syft CLI
