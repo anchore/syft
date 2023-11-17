@@ -14,9 +14,9 @@ const defaultStdoutLogBufferSize = 1024
 // function, which is used to stop the current capturing of output and restore the original file.
 // Example:
 //
-//	restore := capture(&os.Stderr, writer)
-//	// here, stderr will be captured and redirected to the provided writer
-//	restore() // block until the output has all been sent to the writer and restore the original stderr
+//	restore := CaptureStdoutToTraceLog()
+//	// here, stdout will be captured and redirected to the provided writer
+//	restore() // block until the output has all been sent to the writer and restore the original stdout
 func CaptureStdoutToTraceLog() (close func()) {
 	return capture(&os.Stdout, newLogWriter(), defaultStdoutLogBufferSize)
 }

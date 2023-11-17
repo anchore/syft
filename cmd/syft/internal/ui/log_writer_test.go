@@ -23,14 +23,14 @@ func Test_logWriter(t *testing.T) {
 
 	_, _ = w.Write([]byte("a\nvalue"))
 
-	expected := []any{"a", "value"}
+	expected := []any{"[unexpected stdout] a", "[unexpected stdout] value"}
 	require.Equal(t, expected, bl.values)
 
 	bl.values = nil
 	_, _ = w.Write([]byte("some"))
 	_, _ = w.Write([]byte("thing"))
 
-	expected = []any{"some", "thing"}
+	expected = []any{"[unexpected stdout] some", "[unexpected stdout] thing"}
 	require.Equal(t, expected, bl.values)
 }
 
