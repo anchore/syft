@@ -120,7 +120,13 @@ func runAttest(id clio.Identification, opts *attestOptions, userInput string) er
 		return fmt.Errorf("unable to write SBOM to file: %w", err)
 	}
 
-	return createAttestation(f.Name(), opts, userInput)
+	if err = createAttestation(f.Name(), opts, userInput); err != nil {
+		return err
+	}
+
+	bus.Notify("Attestation has been created, please check your registry for the output or use the cosign command:")
+	bus.Notify(fmt.Sprintf("cosign download attestation %s", userInput))
+	return nil
 }
 
 func writeSBOMToFormattedFile(s *sbom.SBOM, sbomFile io.Writer, opts *attestOptions) error {
