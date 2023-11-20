@@ -86,7 +86,10 @@ func assertNotInOutput(data string) traitAssertion {
 func assertNoStderr(tb testing.TB, _, stderr string, _ int) {
 	tb.Helper()
 	if len(stderr) > 0 {
-		tb.Errorf("expected stderr to be empty, but got %q", stderr)
+		tb.Errorf("expected stderr to be empty, but wasn't")
+		if showOutput != nil && *showOutput {
+			tb.Errorf("STDERR:%s", stderr)
+		}
 	}
 }
 
@@ -96,7 +99,10 @@ func assertInOutput(data string) traitAssertion {
 		stdout = stripansi.Strip(stdout)
 		stderr = stripansi.Strip(stderr)
 		if !strings.Contains(stdout, data) && !strings.Contains(stderr, data) {
-			tb.Errorf("data=%q was NOT found in any output, but should have been there\nSTDOUT:%s\nSTDERR:%s", data, stdout, stderr)
+			tb.Errorf("data=%q was NOT found in any output, but should have been there", data)
+			if showOutput != nil && *showOutput {
+				tb.Errorf("STDOUT:%s\nSTDERR:%s", stdout, stderr)
+			}
 		}
 	}
 }

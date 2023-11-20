@@ -141,7 +141,7 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 		},
 		Java: javaCataloger.DefaultCatalogerOpts().
 			WithUseNetwork(cfg.Java.UseNetwork).
-			WithMavenCentralURL(cfg.Java.MavenURL).
+			WithMavenURL(cfg.Java.MavenURL).
 			WithMaxParentRecursiveDepth(cfg.Java.MaxParentRecursiveDepth),
 		Python: pythonCataloger.CatalogerConfig{
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,

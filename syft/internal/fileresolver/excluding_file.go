@@ -83,7 +83,7 @@ func (r *excluding) AllLocations() <-chan file.Location {
 }
 
 func locationMatches(location *file.Location, exclusionFn excludeFn) bool {
-	return exclusionFn(location.RealPath) || exclusionFn(location.VirtualPath)
+	return exclusionFn(location.RealPath) || exclusionFn(location.AccessPath)
 }
 
 func filterLocations(locations []file.Location, err error, exclusionFn excludeFn) ([]file.Location, error) {

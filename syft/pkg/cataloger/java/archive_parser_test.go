@@ -1089,7 +1089,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			}
 			test.expectedParent.Locations = locations
 
-			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, file.NewLocation(virtualPath))
+			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, file.NewLocation(virtualPath), Config{})
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {

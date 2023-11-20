@@ -429,7 +429,7 @@ func licenseComparer(x, y License) bool {
 }
 
 func locationComparer(x, y file.Location) bool {
-	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
+	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.AccessPath, y.AccessPath)
 }
 
 func TestIsValid(t *testing.T) {

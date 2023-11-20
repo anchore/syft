@@ -192,6 +192,7 @@ func imageMetadataFromStereoscopeImage(img *image.Image, reference string) Stere
 		Architecture:   img.Metadata.Architecture,
 		Variant:        img.Metadata.Variant,
 		OS:             img.Metadata.OS,
+		Labels:         img.Metadata.Config.Config.Labels,
 	}
 }
 

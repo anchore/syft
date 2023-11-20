@@ -13,7 +13,7 @@ func (j CatalogerOpts) WithUseNetwork(input bool) CatalogerOpts {
 	return j
 }
 
-func (j CatalogerOpts) WithMavenCentralURL(input string) CatalogerOpts {
+func (j CatalogerOpts) WithMavenURL(input string) CatalogerOpts {
 	if input != "" {
 		j.MavenURL = input
 	}

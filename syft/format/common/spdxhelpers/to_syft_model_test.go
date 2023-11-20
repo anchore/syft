@@ -636,7 +636,7 @@ func Test_directPackageFiles(t *testing.T) {
 				RealPath:     "some-file",
 				FileSystemID: "",
 			},
-			VirtualPath: "some-file",
+			AccessPath: "some-file",
 		},
 		LocationMetadata: file.LocationMetadata{
 			Annotations: map[string]string{},

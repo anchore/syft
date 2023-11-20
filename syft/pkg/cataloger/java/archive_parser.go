@@ -87,7 +87,7 @@ func uniquePkgKey(groupID string, p *pkg.Package) string {
 // and parse nested archives or ignore them.
 func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg Config) (*archiveParser, func(), error) {
 	// fetch the last element of the virtual path
-	virtualElements := strings.Split(reader.AccessPath(), ":")
+	virtualElements := strings.Split(reader.Path(), ":")
 	currentFilepath := virtualElements[len(virtualElements)-1]
 
 	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(currentFilepath, reader)
@@ -208,7 +208,7 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		),
 		Type: j.fileInfo.pkgType(),
 		Metadata: pkg.JavaArchive{
-			VirtualPath:    j.location.AccessPath(),
+			VirtualPath:    j.location.Path(),
 			Manifest:       manifest,
 			ArchiveDigests: digests,
 		},
@@ -250,7 +250,41 @@ func (j *archiveParser) parseLicenses(manifest *pkg.JavaManifest) ([]pkg.License
 		}
 	}
 
+	// If we didn't find any licenses in the archive so far, we'll try again in Maven Central using groupIDFromJavaMetadata
+	if len(licenses) == 0 && j.cfg.UseNetwork {
+		licenses = findLicenseFromJavaMetadata(name, manifest, version, j, licenses)
+	}
+
 	return licenses, name, version, nil
+}
+
+func findLicenseFromJavaMetadata(name string, manifest *pkg.JavaManifest, version string, j *archiveParser, licenses []pkg.License) []pkg.License {
+	var groupID = name
+	if gID := groupIDFromJavaMetadata(name, pkg.JavaArchive{Manifest: manifest}); gID != "" {
+		groupID = gID
+	}
+	pomLicenses, err := recursivelyFindLicensesFromParentPom(groupID, name, version, j.cfg)
+	if err != nil {
+		log.Tracef("unable to get parent pom from Maven central: %v", err)
+	}
+
+	if len(pomLicenses) == 0 {
+		// Try removing the last part of the groupId, as sometimes it duplicates the artifactId
+		packages := strings.Split(groupID, ".")
+		groupID = strings.Join(packages[:len(packages)-1], ".")
+		pomLicenses, err = recursivelyFindLicensesFromParentPom(groupID, name, version, j.cfg)
+		if err != nil {
+			log.Tracef("unable to get parent pom from Maven central: %v", err)
+		}
+	}
+
+	if len(pomLicenses) > 0 {
+		pkgLicenses := pkg.NewLicensesFromLocation(j.location, pomLicenses...)
+		if pkgLicenses != nil {
+			licenses = append(licenses, pkgLicenses...)
+		}
+	}
+	return licenses
 }
 
 type parsedPomProject struct {
@@ -444,7 +478,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(parentPkg *pkg.Package) ([
 			pomProject = proj
 		}
 
-		pkgFromPom := newPackageFromMavenData(propertiesObj, pomProject, parentPkg, j.location)
+		pkgFromPom := newPackageFromMavenData(propertiesObj, pomProject, parentPkg, j.location, j.cfg)
 		if pkgFromPom != nil {
 			pkgs = append(pkgs, *pkgFromPom)
 		}
@@ -526,7 +560,7 @@ func discoverPkgsFromOpeners(location file.Location, openers map[string]intFile.
 	for pathWithinArchive, archiveOpener := range openers {
 		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(location, pathWithinArchive, archiveOpener, cfg)
 		if err != nil {
-			log.WithFields("location", location.AccessPath()).Warnf("unable to discover java packages from opener: %+v", err)
+			log.WithFields("location", location.Path()).Warnf("unable to discover java packages from opener: %+v", err)
 			continue
 		}
 
@@ -559,9 +593,9 @@ func discoverPkgsFromOpener(location file.Location, pathWithinArchive string, ar
 		}
 	}()
 
-	nestedPath := fmt.Sprintf("%s:%s", location.AccessPath(), pathWithinArchive)
+	nestedPath := fmt.Sprintf("%s:%s", location.Path(), pathWithinArchive)
 	nestedLocation := file.NewLocationFromCoordinates(location.Coordinates)
-	nestedLocation.VirtualPath = nestedPath
+	nestedLocation.AccessPath = nestedPath
 	gap := newGenericArchiveParserAdapter(cfg)
 	nestedPkgs, nestedRelationships, err := gap.parseJavaArchive(nil, nil, file.LocationReadCloser{
 		Location:   nestedLocation,
@@ -584,7 +618,7 @@ func pomPropertiesByParentPath(archivePath string, location file.Location, extra
 	for filePath, fileContents := range contentsOfMavenPropertiesFiles {
 		pomProperties, err := parsePomProperties(filePath, strings.NewReader(fileContents))
 		if err != nil {
-			log.WithFields("contents-path", filePath, "location", location.AccessPath()).Warnf("failed to parse pom.properties: %+v", err)
+			log.WithFields("contents-path", filePath, "location", location.Path()).Warnf("failed to parse pom.properties: %+v", err)
 			continue
 		}
 
@@ -614,7 +648,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 		// TODO: when we support locations of paths within archives we should start passing the specific pom.xml location object instead of the top jar
 		pomProject, err := parsePomXMLProject(filePath, strings.NewReader(fileContents), location)
 		if err != nil {
-			log.WithFields("contents-path", filePath, "location", location.AccessPath()).Warnf("failed to parse pom.xml: %+v", err)
+			log.WithFields("contents-path", filePath, "location", location.Path()).Warnf("failed to parse pom.xml: %+v", err)
 			continue
 		}
 
@@ -635,7 +669,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 
 // newPackageFromMavenData processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
-func newPackageFromMavenData(pomProperties pkg.JavaPomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location) *pkg.Package {
+func newPackageFromMavenData(pomProperties pkg.JavaPomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location, cfg Config) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
 	groupID := ""
@@ -655,11 +689,14 @@ func newPackageFromMavenData(pomProperties pkg.JavaPomProperties, parsedPomProje
 		// https://github.com/anchore/syft/issues/1944
 		vPathSuffix += ":" + pomProperties.GroupID + ":" + pomProperties.ArtifactID
 	}
-	virtualPath := location.AccessPath() + vPathSuffix
+	virtualPath := location.Path() + vPathSuffix
 
 	var pkgPomProject *pkg.JavaPomProject
 	licenses := make([]pkg.License, 0)
 	if parsedPomProject != nil {
+		if cfg.UseNetwork {
+			findPomLicenses(parsedPomProject, cfg)
+		}
 		pkgPomProject = parsedPomProject.JavaPomProject
 		licenses = append(licenses, parsedPomProject.Licenses...)
 	}

@@ -70,4 +70,10 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"spring-webflow":                 "org.springframework.webflow",
 	"spring-webflux":                 "org.springframework",
 	"spring-webmvc":                  "org.springframework",
+	"spring-velocity-support":        "org.apache.velocity",
+	"velocity":                       "org.apache.velocity",
+	"velocity-engine-core":           "org.apache.velocity",
+	"velocity-engine-parent":         "org.apache.velocity",
+	"velocity-engine-scripting":      "org.apache.velocity",
+	"velocity-tools":                 "org.apache.velocity",
 }

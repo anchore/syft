@@ -12,8 +12,7 @@ import (
 	"github.com/anchore/syft/syft/event/parsers"
 )
 
-func Test_postUIEventWriter_write(t *testing.T) {
-
+func Test_writeEvents(t *testing.T) {
 	tests := []struct {
 		name    string
 		quiet   bool
@@ -86,9 +85,9 @@ func Test_postUIEventWriter_write(t *testing.T) {
 
 			stdout := &bytes.Buffer{}
 			stderr := &bytes.Buffer{}
-			w := newPostUIEventWriter(stdout, stderr)
 
-			tt.wantErr(t, w.write(tt.quiet, tt.events...))
+			err := writeEvents(stdout, stderr, tt.quiet, tt.events...)
+			tt.wantErr(t, err)
 
 			t.Run("stdout", func(t *testing.T) {
 				snaps.MatchSnapshot(t, stdout.String())

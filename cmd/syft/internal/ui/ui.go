@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"sync"
 	"time"
@@ -25,6 +26,8 @@ var _ interface {
 } = (*UI)(nil)
 
 type UI struct {
+	out            io.Writer
+	err            io.Writer
 	program        *tea.Program
 	running        *sync.WaitGroup
 	quiet          bool
@@ -35,8 +38,10 @@ type UI struct {
 	frame   tea.Model
 }
 
-func New(quiet bool, handlers ...bubbly.EventHandler) *UI {
+func New(out io.Writer, quiet bool, handlers ...bubbly.EventHandler) *UI {
 	return &UI{
+		out:     out,
+		err:     os.Stderr,
 		handler: bubbly.NewHandlerCollection(handlers...),
 		frame:   frame.New(),
 		running: &sync.WaitGroup{},
@@ -99,8 +104,7 @@ func (m *UI) Teardown(force bool) error {
 
 	// TODO: allow for writing out the full log output to the screen (only a partial log is shown currently)
 	// this needs coordination to know what the last frame event is to change the state accordingly (which isn't possible now)
-
-	return newPostUIEventWriter(os.Stdout, os.Stderr).write(m.quiet, m.finalizeEvents...)
+	return writeEvents(m.out, m.err, m.quiet, m.finalizeEvents...)
 }
 
 // bubbletea.Model functions

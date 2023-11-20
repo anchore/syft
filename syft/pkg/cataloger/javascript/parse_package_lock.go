@@ -47,7 +47,7 @@ type packageLockLicense []string
 func parsePackageLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find package-lock.json files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the root project
-	if pathContainsNodeModulesDirectory(reader.AccessPath()) {
+	if pathContainsNodeModulesDirectory(reader.Path()) {
 		return nil, nil, nil
 	}
 
