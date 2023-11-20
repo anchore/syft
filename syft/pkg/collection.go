@@ -37,11 +37,17 @@ func NewCollection(pkgs ...Package) *Collection {
 
 // PackageCount returns the total number of packages that have been added.
 func (c *Collection) PackageCount() int {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
 	return len(c.byID)
 }
 
 // Package returns the package with the given ID.
 func (c *Collection) Package(id artifact.ID) *Package {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
 	v, exists := c.byID[id]
 	if !exists {
 		return nil
@@ -57,16 +63,31 @@ func (c *Collection) Package(id artifact.ID) *Package {
 
 // PackagesByPath returns all packages that were discovered from the given path.
 func (c *Collection) PackagesByPath(path string) []Package {
-	return c.Packages(c.idsByPath[path].slice)
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	return c.packages(c.idsByPath[path].slice)
 }
 
 // PackagesByName returns all packages that were discovered with a matching name.
 func (c *Collection) PackagesByName(name string) []Package {
-	return c.Packages(c.idsByName[name].slice)
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	return c.packages(c.idsByName[name].slice)
 }
 
 // Packages returns all packages for the given ID.
 func (c *Collection) Packages(ids []artifact.ID) (result []Package) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	return c.packages(ids)
+}
+
+func (c *Collection) packages(ids []artifact.ID) (result []Package) {
+	// note: read lock must be held by caller
+
 	for _, i := range ids {
 		p, exists := c.byID[i]
 		if exists {
@@ -105,6 +126,8 @@ func (c *Collection) Add(pkgs ...Package) {
 }
 
 func (c *Collection) addToIndex(p Package) {
+	// note: write lock must be held by caller
+
 	c.byID[p.id] = p
 	c.addNameToIndex(p)
 	c.addTypeToIndex(p)
@@ -112,18 +135,24 @@ func (c *Collection) addToIndex(p Package) {
 }
 
 func (c *Collection) addNameToIndex(p Package) {
+	// note: write lock must be held by caller
+
 	nameIndex := c.idsByName[p.Name]
 	nameIndex.add(p.id)
 	c.idsByName[p.Name] = nameIndex
 }
 
 func (c *Collection) addTypeToIndex(p Package) {
+	// note: write lock must be held by caller
+
 	typeIndex := c.idsByType[p.Type]
 	typeIndex.add(p.id)
 	c.idsByType[p.Type] = typeIndex
 }
 
 func (c *Collection) addPathsToIndex(p Package) {
+	// note: write lock must be held by caller
+
 	observedPaths := strset.New()
 	for _, l := range p.Locations.ToSlice() {
 		if l.RealPath != "" && !observedPaths.Has(l.RealPath) {
@@ -138,6 +167,8 @@ func (c *Collection) addPathsToIndex(p Package) {
 }
 
 func (c *Collection) addPathToIndex(id artifact.ID, path string) {
+	// note: write lock must be held by caller
+
 	pathIndex := c.idsByPath[path]
 	pathIndex.add(id)
 	c.idsByPath[path] = pathIndex
@@ -161,18 +192,24 @@ func (c *Collection) Delete(ids ...artifact.ID) {
 }
 
 func (c *Collection) deleteNameFromIndex(p Package) {
+	// note: write lock must be held by caller
+
 	nameIndex := c.idsByName[p.Name]
 	nameIndex.delete(p.id)
 	c.idsByName[p.Name] = nameIndex
 }
 
 func (c *Collection) deleteTypeFromIndex(p Package) {
+	// note: write lock must be held by caller
+
 	typeIndex := c.idsByType[p.Type]
 	typeIndex.delete(p.id)
 	c.idsByType[p.Type] = typeIndex
 }
 
 func (c *Collection) deletePathsFromIndex(p Package) {
+	// note: write lock must be held by caller
+
 	observedPaths := strset.New()
 	for _, l := range p.Locations.ToSlice() {
 		if l.RealPath != "" && !observedPaths.Has(l.RealPath) {
@@ -187,6 +224,8 @@ func (c *Collection) deletePathsFromIndex(p Package) {
 }
 
 func (c *Collection) deletePathFromIndex(id artifact.ID, path string) {
+	// note: write lock must be held by caller
+
 	pathIndex := c.idsByPath[path]
 	pathIndex.delete(id)
 	if len(pathIndex.slice) == 0 {
@@ -201,10 +240,15 @@ func (c *Collection) Enumerate(types ...Type) <-chan Package {
 	channel := make(chan Package)
 	go func() {
 		defer close(channel)
+
 		if c == nil {
 			// we should allow enumerating from a catalog that was never created (which will result in no packages enumerated)
 			return
 		}
+
+		c.lock.RLock()
+		defer c.lock.RUnlock()
+
 		for ty, ids := range c.idsByType {
 			if len(types) != 0 {
 				found := false
