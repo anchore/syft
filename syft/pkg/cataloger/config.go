@@ -3,6 +3,7 @@ package cataloger
 import (
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
+	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
 )
@@ -14,6 +15,7 @@ type Config struct {
 	LinuxKernel                     kernel.LinuxCatalogerConfig
 	Python                          python.CatalogerConfig
 	Java                            java.CatalogerOpts
+	Javascript                      javascript.CatalogerOpts
 	Catalogers                      []string
 	Parallelism                     int
 	ExcludeBinaryOverlapByOwnership bool

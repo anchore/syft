@@ -13,8 +13,9 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// integrity check
-var _ generic.Parser = parseYarnLock
+type yarnCataloger struct {
+	opts CatalogerOpts
+}
 
 var (
 	// packageNameExp matches the name of the dependency in yarn.lock
@@ -43,7 +44,7 @@ const (
 	noVersion = ""
 )
 
-func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *yarnCataloger) parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find yarn.lock files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the project
 	if pathContainsNodeModulesDirectory(reader.Path()) {
@@ -62,7 +63,7 @@ func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.L
 		if packageName := findPackageName(line); packageName != noPackage {
 			// When we find a new package, check if we have unsaved identifiers
 			if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-				pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, currentPackage, currentVersion))
+				pkgs = append(pkgs, newYarnLockPackage(c.opts.searchRemoteLicenses, resolver, reader.Location, currentPackage, currentVersion))
 				parsedPackages.Add(currentPackage + "@" + currentVersion)
 			}
 
@@ -70,7 +71,7 @@ func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.L
 		} else if version := findPackageVersion(line); version != noVersion {
 			currentVersion = version
 		} else if packageName, version := findPackageAndVersion(line); packageName != noPackage && version != noVersion && !parsedPackages.Has(packageName+"@"+version) {
-			pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, packageName, version))
+			pkgs = append(pkgs, newYarnLockPackage(c.opts.searchRemoteLicenses, resolver, reader.Location, packageName, version))
 			parsedPackages.Add(packageName + "@" + version)
 
 			// Cleanup to indicate no unsaved identifiers
@@ -81,7 +82,7 @@ func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.L
 
 	// check if we have valid unsaved data after end-of-file has reached
 	if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-		pkgs = append(pkgs, newYarnLockPackage(resolver, reader.Location, currentPackage, currentVersion))
+		pkgs = append(pkgs, newYarnLockPackage(c.opts.searchRemoteLicenses, resolver, reader.Location, currentPackage, currentVersion))
 		parsedPackages.Add(currentPackage + "@" + currentVersion)
 	}
 

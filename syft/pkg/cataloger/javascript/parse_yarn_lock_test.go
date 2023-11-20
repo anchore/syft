@@ -91,7 +91,10 @@ func TestParseYarnBerry(t *testing.T) {
 		},
 	}
 
-	pkgtest.TestFileParser(t, fixture, parseYarnLock, expectedPkgs, expectedRelationships)
+	c := yarnCataloger{
+		opts: CatalogerOpts{},
+	}
+	pkgtest.TestFileParser(t, fixture, c.parseYarnLock, expectedPkgs, expectedRelationships)
 
 }
 
@@ -177,7 +180,10 @@ func TestParseYarnLock(t *testing.T) {
 		},
 	}
 
-	pkgtest.TestFileParser(t, fixture, parseYarnLock, expectedPkgs, expectedRelationships)
+	c := yarnCataloger{
+		opts: CatalogerOpts{},
+	}
+	pkgtest.TestFileParser(t, fixture, c.parseYarnLock, expectedPkgs, expectedRelationships)
 
 }
 
