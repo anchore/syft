@@ -84,8 +84,6 @@ They are registered in `syft/cli/commands/go`.
     │   ├── options/
     │   ├── packages/
     │   ├── packages.go
-    │   ├── poweruser/
-    │   ├── poweruser.go
     │   └── version.go
     └── main.go
 ```
