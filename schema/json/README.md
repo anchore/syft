@@ -1,6 +1,6 @@
 # JSON Schema
 
-This is the JSON schema for output from the JSON presenters (`syft packages <img> -o json` and `syft power-user <img>`). The required inputs for defining the JSON schema are as follows:
+This is the JSON schema for output from the JSON presenters (`syft packages <img> -o json`). The required inputs for defining the JSON schema are as follows:
 
 - the value of `internal.JSONSchemaVersion` that governs the schema filename
 - the `Document` struct definition within `github.com/anchore/syft/syft/formats/syftjson/model/document.go` that governs the overall document shape

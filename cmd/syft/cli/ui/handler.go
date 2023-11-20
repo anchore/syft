@@ -58,9 +58,6 @@ func New(cfg HandlerConfig) *Handler {
 		syftEvent.FileIndexingStarted:          h.handleFileIndexingStarted,
 		syftEvent.AttestationStarted:           h.handleAttestationStarted,
 		syftEvent.CatalogerTaskStarted:         h.handleCatalogerTaskStarted,
-
-		// deprecated
-		syftEvent.SecretsCatalogerStarted: h.handleSecretsCatalogerStarted,
 	})
 
 	return h

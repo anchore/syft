@@ -17,9 +17,8 @@ import (
 	"github.com/anchore/syft/internal/redact"
 )
 
-// Application constructs the `syft packages` command, aliases the root command to `syft packages`,
-// and constructs the `syft power-user` command. It is also responsible for
-// organizing flag usage and injecting the application config for each command.
+// Application constructs the `syft packages` command and aliases the root command to `syft packages`.
+// It is also responsible for organizing flag usage and injecting the application config for each command.
 // It also constructs the syft attest command and the syft version command.
 // `RunE` is the earliest that the complete application configuration can be loaded.
 func Application(id clio.Identification) clio.Application {
@@ -86,7 +85,6 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 	// add sub-commands
 	rootCmd.AddCommand(
 		packagesCmd,
-		commands.PowerUser(app),
 		commands.Attest(app),
 		commands.Convert(app),
 		clio.VersionCommand(id),

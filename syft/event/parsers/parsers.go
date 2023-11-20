@@ -12,7 +12,6 @@ import (
 
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
-	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 )
 
@@ -47,19 +46,6 @@ func ParsePackageCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) 
 	}
 
 	monitor, ok := e.Value.(cataloger.Monitor)
-	if !ok {
-		return nil, newPayloadErr(e.Type, "Value", e.Value)
-	}
-
-	return &monitor, nil
-}
-
-func ParseSecretsCatalogingStarted(e partybus.Event) (*secrets.Monitor, error) {
-	if err := checkEventType(e.Type, event.SecretsCatalogerStarted); err != nil {
-		return nil, err
-	}
-
-	monitor, ok := e.Value.(secrets.Monitor)
 	if !ok {
 		return nil, newPayloadErr(e.Type, "Value", e.Value)
 	}

@@ -38,7 +38,6 @@ func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
 		Artifacts:             toPackageModels(s.Artifacts.Packages, cfg),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s),
-		Secrets:               toSecrets(s.Artifacts.Secrets),
 		Source:                toSourceModel(s.Source),
 		Distro:                toLinuxReleaser(s.Artifacts.LinuxDistribution),
 		Descriptor:            toDescriptor(s.Descriptor),
@@ -81,22 +80,6 @@ func toDescriptor(d sbom.Descriptor) model.Descriptor {
 		Version:       d.Version,
 		Configuration: d.Configuration,
 	}
-}
-
-func toSecrets(data map[file.Coordinates][]file.SearchResult) []model.Secrets {
-	results := make([]model.Secrets, 0)
-	for coordinates, secrets := range data {
-		results = append(results, model.Secrets{
-			Location: coordinates,
-			Secrets:  secrets,
-		})
-	}
-
-	// sort by real path then virtual path to ensure the result is stable across multiple runs
-	sort.SliceStable(results, func(i, j int) bool {
-		return results[i].Location.RealPath < results[j].Location.RealPath
-	})
-	return results
 }
 
 func toFile(s sbom.SBOM) []model.File {
