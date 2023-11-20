@@ -14,47 +14,35 @@ import (
 	"github.com/anchore/syft/syft/event/parsers"
 )
 
-type postUIEventWriter struct {
-	handles []postUIHandle
-}
-
-type postUIHandle struct {
-	respectQuiet bool
-	event        partybus.EventType
-	writer       io.Writer
-	dispatch     eventWriter
-}
-
-type eventWriter func(io.Writer, ...partybus.Event) error
-
-func newPostUIEventWriter(stdout, stderr io.Writer) *postUIEventWriter {
-	return &postUIEventWriter{
-		handles: []postUIHandle{
-			{
-				event:        event.CLIReport,
-				respectQuiet: false,
-				writer:       stdout,
-				dispatch:     writeReports,
-			},
-			{
-				event:        event.CLINotification,
-				respectQuiet: true,
-				writer:       stderr,
-				dispatch:     writeNotifications,
-			},
-			{
-				event:        event.CLIAppUpdateAvailable,
-				respectQuiet: true,
-				writer:       stderr,
-				dispatch:     writeAppUpdate,
-			},
+func writeEvents(out, err io.Writer, quiet bool, events ...partybus.Event) error {
+	handles := []struct {
+		event        partybus.EventType
+		respectQuiet bool
+		writer       io.Writer
+		dispatch     func(writer io.Writer, events ...partybus.Event) error
+	}{
+		{
+			event:        event.CLIReport,
+			respectQuiet: false,
+			writer:       out,
+			dispatch:     writeReports,
+		},
+		{
+			event:        event.CLINotification,
+			respectQuiet: true,
+			writer:       err,
+			dispatch:     writeNotifications,
+		},
+		{
+			event:        event.CLIAppUpdateAvailable,
+			respectQuiet: true,
+			writer:       err,
+			dispatch:     writeAppUpdate,
 		},
 	}
-}
 
-func (w postUIEventWriter) write(quiet bool, events ...partybus.Event) error {
 	var errs error
-	for _, h := range w.handles {
+	for _, h := range handles {
 		if quiet && h.respectQuiet {
 			continue
 		}

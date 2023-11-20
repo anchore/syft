@@ -16,7 +16,7 @@ import (
 func Test_Cataloger(t *testing.T) {
 	allParsedPaths := make(map[string]bool)
 	parser := func(resolver file.Resolver, env *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-		allParsedPaths[reader.AccessPath()] = true
+		allParsedPaths[reader.Path()] = true
 		contents, err := io.ReadAll(reader)
 		require.NoError(t, err)
 

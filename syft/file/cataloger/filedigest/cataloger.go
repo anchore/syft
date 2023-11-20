@@ -81,7 +81,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(contentReader, location.VirtualPath)
+	defer internal.CloseAndLogError(contentReader, location.AccessPath)
 
 	digests, err := intFile.NewDigestsFromFile(contentReader, i.hashes)
 	if err != nil {

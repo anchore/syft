@@ -833,7 +833,7 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 				matches = false
 				break
 			}
-			if m1.Location.VirtualPath != "" && m1.Location.VirtualPath != m2.Location.VirtualPath {
+			if m1.Location.AccessPath != "" && m1.Location.AccessPath != m2.Location.AccessPath {
 				matches = false
 				break
 			}

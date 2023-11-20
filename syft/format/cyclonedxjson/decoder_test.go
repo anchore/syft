@@ -103,6 +103,21 @@ func TestDecoder_Identify(t *testing.T) {
 		})
 	}
 
+	cases = append(cases, []testCase{
+		{
+			name:    "no-schema-1.4",
+			file:    "test-fixtures/identify/micronaut-1.4.json",
+			id:      ID,
+			version: "1.4",
+		},
+		{
+			name:    "no-schema-1.5",
+			file:    "test-fixtures/identify/micronaut-1.5.json",
+			id:      ID,
+			version: "1.5",
+		},
+	}...)
+
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			reader, err := os.Open(test.file)

@@ -57,7 +57,7 @@ func newGenericTarWrappedJavaArchiveParser(cfg Config) genericTarWrappedJavaArch
 }
 
 func (gtp genericTarWrappedJavaArchiveParser) parseTarWrappedJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader.AccessPath(), reader)
+	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader.Path(), reader)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {

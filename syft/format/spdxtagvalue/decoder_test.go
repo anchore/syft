@@ -123,7 +123,7 @@ FileCopyrightText: NOASSERTION
 		f = file.Location{
 			LocationData: file.LocationData{
 				Coordinates: c,
-				VirtualPath: "",
+				AccessPath:  "",
 			},
 			LocationMetadata: file.LocationMetadata{},
 		}

@@ -11,13 +11,11 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-// Deprecated: will be removed in syft v1.0.0
 type Cataloger struct {
 	globs                     []string
 	skipFilesAboveSizeInBytes int64
 }
 
-// Deprecated: will be removed in syft v1.0.0
 func NewCataloger(globs []string, skipFilesAboveSize int64) (*Cataloger, error) {
 	return &Cataloger{
 		globs:                     globs,
@@ -63,7 +61,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	if err != nil {
 		return "", err
 	}
-	defer internal.CloseAndLogError(contentReader, location.VirtualPath)
+	defer internal.CloseAndLogError(contentReader, location.AccessPath)
 
 	buf := &bytes.Buffer{}
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)

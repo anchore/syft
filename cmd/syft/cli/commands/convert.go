@@ -9,6 +9,7 @@ import (
 
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/cmd/syft/cli/options"
+	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/format"
@@ -47,6 +48,9 @@ func Convert(app clio.Application) *cobra.Command {
 		Args:    validateConvertArgs,
 		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			restoreStdout := ui.CaptureStdoutToTraceLog()
+			defer restoreStdout()
+
 			return RunConvert(opts, args[0])
 		},
 	}, opts)

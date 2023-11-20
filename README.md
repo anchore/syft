@@ -168,6 +168,7 @@ You can override the list of enabled/disabled catalogers by using the "cataloger
 - apkdb
 - binary
 - dotnet-deps
+- dotnet-portable-executable
 - dpkgdb
 - go-module-binary
 - graalvm-native-image
@@ -190,6 +191,7 @@ You can override the list of enabled/disabled catalogers by using the "cataloger
 - conan
 - dartlang-lock
 - dotnet-deps
+- dotnet-portable-executable
 - dpkgdb
 - elixir-mix-lock
 - erlang-rebar-lock
@@ -502,6 +504,7 @@ platform: ""
 #   - conan-cataloger
 #   - dartlang-lock-cataloger
 #   - dotnet-deps-cataloger
+#   - dotnet-portable-executable-cataloger
 #   - dpkg-db-cataloger
 #   - elixir-mix-lock-cataloger
 #   - erlang-rebar-lock-cataloger

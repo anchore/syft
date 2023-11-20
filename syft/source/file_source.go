@@ -108,10 +108,6 @@ func deriveIDFromFile(cfg FileConfig) (artifact.ID, string) {
 		info += fmt.Sprintf(":%s@%s", cfg.Alias.Name, cfg.Alias.Version)
 	}
 
-	if d != "" {
-		d = fmt.Sprintf("sha256:%s", d)
-	}
-
 	return artifactIDFromDigest(digest.SHA256.FromString(info).String()), d
 }
 
