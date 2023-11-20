@@ -48,18 +48,21 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, cfg EncoderSnapshotTestCon
 		return
 	}
 
-	var expected []byte
 	if cfg.Redactor != nil {
 		actual = cfg.Redactor.Redact(actual)
-		expected = cfg.Redactor.Redact(testutils.GetGoldenFileContents(t))
-	} else {
-		expected = testutils.GetGoldenFileContents(t)
 	}
 
 	if cfg.UpdateSnapshot && cfg.PersistRedactionsInSnapshot {
 		// replace the expected snapshot contents with the current (redacted) encoder contents
 		testutils.UpdateGoldenFileContents(t, actual)
 		return
+	}
+
+	var expected []byte
+	if cfg.Redactor != nil {
+		expected = cfg.Redactor.Redact(testutils.GetGoldenFileContents(t))
+	} else {
+		expected = testutils.GetGoldenFileContents(t)
 	}
 
 	if cfg.IsJSON {
