@@ -61,35 +61,29 @@ For more information on this setup and troubleshooting see [issue 1895](https://
 
 ## Architecture
 
-Syft is used to generate a Software Bill of Materials (SBOM) from different kinds of input.
-
-### Code organization for the cmd package
-
-Syft's entrypoint can be found in the `cmd` package at `cmd/syft/main.go`. `main.go` builds a new syft `cli` via `cli.New()` 
-and then executes the `cli` via `cli.Execute()`. The `cli` package is responsible for parsing command line arguments, 
-setting up the application context and configuration, and executing the application. Each of syft's commands 
-(e.g. `packages`, `attest`, `version`) are implemented as a `cobra.Command` in their respective `<command>.go` files. 
-They are registered in `syft/cli/commands/go`.
+At a high level, this is the package structure of syft:
 ```
-.
-└── syft/
-    ├── cli/
-    │   ├── attest/
-    │   ├── attest.go
-    │   ├── commands.go
-    │   ├── completion.go
-    │   ├── convert/
-    │   ├── convert.go
-    │   ├── eventloop/
-    │   ├── options/
-    │   ├── packages/
-    │   ├── packages.go
-    │   └── version.go
-    └── main.go
+./cmd/syft/
+│   ├── cli/
+│   │   ├── cli.go          // where all commands are wired up
+│   │   ├── commands/       // all command implementations
+│   │   ├── options/        // all command flags and configuration options
+│   │   └── ui/             // all handlers for events that are shown on the UI
+│   └── main.go             // entrypoint for the application
+└── syft/                   // the "core" syft library
+    ├── format/             // contains code to encode or decode to and from SBOM formats
+    ├── pkg/                // contains code to catalog packages from a source
+    ├── sbom/               // contains the definition of an SBOM
+    └── source/             // contains code to create a source object for some input type (e.g. container image, directory, etc)
 ```
 
-#### Execution flow
+Syft's core library is implemented in the `syft` package and subpackages, where the major packages are:
 
+- the `syft/source` package produces a `source.Source` object that can be used to catalog a directory, container, and other source types.
+- the `syft` package contains a single function that can take a `source.Source` object and catalog it, producing an `sbom.SBOM` object
+- the `syft/format` package contains the ability to encode and decode SBOMs to and from different SBOM formats (such as SPDX and CycloneDX)
+
+The `cmd` pacakge at the highest level execution flow wires up [`spf13/cobra`](https://github.com/spf13/cobra) commands for execution in the main application:
 ```mermaid
 sequenceDiagram
     participant main as cmd/syft/main
@@ -113,24 +107,7 @@ sequenceDiagram
     Note right of cmd: Execute SINGLE command from USER
 ```
 
-### Code organization for syft library
-
-Syft's core library (see, exported) functionality is implemented in the `syft` package. The `syft` package is responsible for organizing the core
-SBOM data model, it's translated output formats, and the core SBOM generation logic.
-
-- analysis creates a static SBOM which can be encoded and decoded
-- format objects, should strive to not add or enrich data in encoding that could otherwise be done during analysis
-- package catalogers and their organization can be viewed/added to the `syft/pkg/cataloger` package 
-- file catalogers and their organization can be viewed/added to the `syft/file` package
-- The source package provides an abstraction to allow a user to loosely define a data source that can be cataloged
-
-#### Code example of syft as a library
-
-Here is a gist of using syft as a library to generate a SBOM for a docker image: [link](https://gist.github.com/wagoodman/57ed59a6d57600c23913071b8470175b).
-The execution flow for the example is detailed below.
-
-#### Execution flow examples for the syft library
-
+The `packages` command uses the core library to generate an SBOM for the given user input:
 ```mermaid
 sequenceDiagram
     participant source as source.New(ubuntu:latest)
@@ -149,7 +126,10 @@ sequenceDiagram
     Note right of catalog: cataloger configuration is done based on src
 ```
 
-### Package object
+Additionally, here is a [gist of using syft as a library](https://gist.github.com/spiffcs/3027638b7ba904d07e482a712bc00d3d) to generate a SBOM for a docker image.
+
+
+### `pkg.Package` object
 
 The `pkg.Package` object is a core data structure that represents a software package. Fields like `name` and `version` probably don't need
 a detailed explanation, but some of the other fields are worth a quick overview:
