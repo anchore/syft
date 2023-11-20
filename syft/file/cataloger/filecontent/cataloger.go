@@ -11,13 +11,11 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-// Deprecated: will be removed in syft v1.0.0
 type Cataloger struct {
 	globs                     []string
 	skipFilesAboveSizeInBytes int64
 }
 
-// Deprecated: will be removed in syft v1.0.0
 func NewCataloger(globs []string, skipFilesAboveSize int64) (*Cataloger, error) {
 	return &Cataloger{
 		globs:                     globs,

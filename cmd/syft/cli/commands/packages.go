@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -157,6 +158,9 @@ func runPackages(id clio.Identification, opts *packagesOptions, userInput string
 	)
 
 	if err != nil {
+		if userInput == "power-user" {
+			bus.Notify("Note: the 'power-user' command has been removed.")
+		}
 		return fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
 	}
 
