@@ -73,10 +73,9 @@ At a high level, this is the package structure of syft:
 └── syft/                   // the "core" syft library
     ├── format/             // contains code to encode or decode to and from SBOM formats
     ├── pkg/                // contains code to catalog packages from a source
-    ├── sbom/               // contains the definition of an SB OM
+    ├── sbom/               // contains the definition of an SBOM
     └── source/             // contains code to create a source object for some input type (e.g. container image, directory, etc)
 ```
-
 
 Syft's core library is implemented in the `syft` package and subpackages, where the major packages are:
 
@@ -127,7 +126,7 @@ sequenceDiagram
     Note right of catalog: cataloger configuration is done based on src
 ```
 
-Additionally, here is a [gist of using syft as a library](https://gist.github.com/wagoodman/57ed59a6d57600c23913071b8470175b) to generate a SBOM for a docker image.
+Additionally, here is a [gist of using syft as a library](https://gist.github.com/spiffcs/3027638b7ba904d07e482a712bc00d3d) to generate a SBOM for a docker image.
 
 
 ### `pkg.Package` object
