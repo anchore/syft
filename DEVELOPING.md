@@ -61,36 +61,19 @@ For more information on this setup and troubleshooting see [issue 1895](https://
 
 ## Architecture
 
-Syft is used to generate a Software Bill of Materials (SBOM) from different kinds of input.
-
-### Code organization for the cmd package
-
-Syft's entrypoint can be found in the `cmd` package at `cmd/syft/main.go`. `main.go` builds a new syft `cli` via `cli.New()` 
-and then executes the `cli` via `cli.Execute()`. The `cli` package is responsible for parsing command line arguments, 
-setting up the application context and configuration, and executing the application. Each of syft's commands 
-(e.g. `packages`, `attest`, `version`) are implemented as a `cobra.Command` in their respective `<command>.go` files. 
-They are registered in `syft/cli/commands/go`.
+The `cmd` package contains the entrypoint for the syft application:
 ```
-.
-└── syft/
-    ├── cli/
-    │   ├── attest/
-    │   ├── attest.go
-    │   ├── commands.go
-    │   ├── completion.go
-    │   ├── convert/
-    │   ├── convert.go
-    │   ├── eventloop/
-    │   ├── options/
-    │   ├── packages/
-    │   ├── packages.go
-    │   ├── poweruser/
-    │   ├── poweruser.go
-    │   └── version.go
-    └── main.go
+./cmd/syft/
+├── cli/
+│   ├── cli.go          // where all commands are wired up
+│   ├── commands/       // all command implementations
+│   ├── options/        // all command flags and configuration options
+│   └── ui/             // all handlers for events that are shown on the UI
+└── main.go             // entrypoint for the application
+
 ```
 
-#### Execution flow
+The highest level execution flow wires up [`spf13/cobra`](https://github.com/spf13/cobra) commands for execution:
 
 ```mermaid
 sequenceDiagram
@@ -115,10 +98,7 @@ sequenceDiagram
     Note right of cmd: Execute SINGLE command from USER
 ```
 
-### Code organization for syft library
-
-Syft's core library (see, exported) functionality is implemented in the `syft` package. The `syft` package is responsible for organizing the core
-SBOM data model, it's translated output formats, and the core SBOM generation logic.
+Syft's core library is implemented in the `syft` package:
 
 - analysis creates a static SBOM which can be encoded and decoded
 - format objects, should strive to not add or enrich data in encoding that could otherwise be done during analysis
