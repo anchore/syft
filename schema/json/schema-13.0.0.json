@@ -1164,6 +1164,9 @@
         "layerID": {
           "type": "string"
         },
+        "accessPath": {
+          "type": "string"
+        },
         "annotations": {
           "patternProperties": {
             ".*": {
@@ -1175,7 +1178,8 @@
       },
       "type": "object",
       "required": [
-        "path"
+        "path",
+        "accessPath"
       ]
     },
     "MicrosoftKbPatch": {
