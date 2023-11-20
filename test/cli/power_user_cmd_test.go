@@ -25,10 +25,10 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			name: "default-results-w-pkg-coverage",
 			args: []string{"power-user", "docker-archive:" + getFixtureImage(t, "image-pkg-coverage")},
 			assertions: []traitAssertion{
-				assertNotInOutput(" command is deprecated"),      // only the root command should be deprecated
-				assertInOutput(`"type": "RegularFile"`),          // proof of file-metadata data
-				assertInOutput(`"algorithm": "sha256"`),          // proof of file-metadata default digest algorithm of sha256
-				assertInOutput(`"metadataType": "apk-db-entry"`), // proof of package artifacts data
+				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
+				assertInOutput(`"type":"RegularFile"`),          // proof of file-metadata data
+				assertInOutput(`"algorithm":"sha256"`),          // proof of file-metadata default digest algorithm of sha256
+				assertInOutput(`"metadataType":"apk-db-entry"`), // proof of package artifacts data
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -39,7 +39,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 				"SYFT_FILE_CONTENTS_GLOBS": "/api-key.txt",
 			},
 			assertions: []traitAssertion{
-				assertInOutput(`"contents": "c29tZV9BcEkta0V5ID0gIjEyMzQ1QTdhOTAxYjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MCIK"`), // proof of the content cataloger
+				assertInOutput(`"contents":"c29tZV9BcEkta0V5ID0gIjEyMzQ1QTdhOTAxYjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MCIK"`), // proof of the content cataloger
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -47,10 +47,10 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			name: "default-dir-results-w-pkg-coverage",
 			args: []string{"power-user", "dir:test-fixtures/image-pkg-coverage"},
 			assertions: []traitAssertion{
-				assertNotInOutput(" command is deprecated"),      // only the root command should be deprecated
-				assertInOutput(`"type": "RegularFile"`),          // proof of file-metadata data
-				assertInOutput(`"algorithm": "sha256"`),          // proof of file-metadata default digest algorithm of sha256
-				assertInOutput(`"metadataType": "apk-db-entry"`), // proof of package artifacts data
+				assertNotInOutput(" command is deprecated"),     // only the root command should be deprecated
+				assertInOutput(`"type":"RegularFile"`),          // proof of file-metadata data
+				assertInOutput(`"algorithm":"sha256"`),          // proof of file-metadata default digest algorithm of sha256
+				assertInOutput(`"metadataType":"apk-db-entry"`), // proof of package artifacts data
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -61,7 +61,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			},
 			args: []string{"power-user", "docker-archive:" + secretsFixture},
 			assertions: []traitAssertion{
-				assertInOutput(`"classification": "generic-api-key"`),                            // proof of the secrets cataloger finding something
+				assertInOutput(`"classification":"generic-api-key"`),                             // proof of the secrets cataloger finding something
 				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
 				assertSuccessfulReturnCode,
 			},
@@ -70,7 +70,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			name: "default-secret-results-dont-reveal-values",
 			args: []string{"power-user", "docker-archive:" + secretsFixture},
 			assertions: []traitAssertion{
-				assertInOutput(`"classification": "generic-api-key"`),                               // proof of the secrets cataloger finding something
+				assertInOutput(`"classification":"generic-api-key"`),                                // proof of the secrets cataloger finding something
 				assertNotInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
 				assertSuccessfulReturnCode,
 			},
@@ -82,7 +82,7 @@ func TestPowerUserCmdFlags(t *testing.T) {
 			},
 			args: []string{"power-user", "dir:test-fixtures/image-secrets-dir"},
 			assertions: []traitAssertion{
-				assertInOutput(`"classification": "generic-api-key"`),                            // proof of the secrets cataloger finding something
+				assertInOutput(`"classification":"generic-api-key"`),                             // proof of the secrets cataloger finding something
 				assertInOutput(`"12345A7a901b345678901234567890123456789012345678901234567890"`), // proof of the secrets cataloger finding the api key
 				assertSuccessfulReturnCode,
 			},

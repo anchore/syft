@@ -3,12 +3,15 @@ package spdxjson
 import (
 	"bytes"
 	"flag"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/format/internal/spdxutil"
 	"github.com/anchore/syft/syft/format/internal/testutil"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -16,9 +19,66 @@ var updateSnapshot = flag.Bool("update-spdx-json", false, "update the *.golden f
 var updateImage = flag.Bool("update-image", false, "update the golden image used for image encoder testing")
 
 func getEncoder(t testing.TB) sbom.FormatEncoder {
-	enc, err := NewFormatEncoderWithConfig(DefaultEncoderConfig())
+	cfg := DefaultEncoderConfig()
+	cfg.Pretty = true
+
+	enc, err := NewFormatEncoderWithConfig(cfg)
 	require.NoError(t, err)
 	return enc
+}
+
+func TestPrettyOutput(t *testing.T) {
+	run := func(opt bool) string {
+		enc, err := NewFormatEncoderWithConfig(EncoderConfig{
+			Version: spdxutil.DefaultVersion,
+			Pretty:  opt,
+		})
+		require.NoError(t, err)
+
+		dir := t.TempDir()
+		s := testutil.DirectoryInput(t, dir)
+
+		var buffer bytes.Buffer
+		err = enc.Encode(&buffer, s)
+		require.NoError(t, err)
+
+		return strings.TrimSpace(buffer.String())
+	}
+
+	t.Run("pretty", func(t *testing.T) {
+		actual := run(true)
+		assert.Contains(t, actual, "\n")
+	})
+
+	t.Run("compact", func(t *testing.T) {
+		actual := run(false)
+		assert.NotContains(t, actual, "\n")
+	})
+}
+
+func TestEscapeHTML(t *testing.T) {
+	dir := t.TempDir()
+	s := testutil.DirectoryInput(t, dir)
+	s.Artifacts.Packages.Add(pkg.Package{
+		Name: "<html-package>",
+	})
+
+	// by default we do not escape HTML
+	t.Run("default", func(t *testing.T) {
+		cfg := DefaultEncoderConfig()
+
+		enc, err := NewFormatEncoderWithConfig(cfg)
+		require.NoError(t, err)
+
+		var buffer bytes.Buffer
+		err = enc.Encode(&buffer, s)
+		require.NoError(t, err)
+
+		actual := buffer.String()
+		assert.Contains(t, actual, "<html-package>")
+		assert.NotContains(t, actual, "\\u003chtml-package\\u003e")
+	})
+
 }
 
 func TestSPDXJSONDirectoryEncoder(t *testing.T) {

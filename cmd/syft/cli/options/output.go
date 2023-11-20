@@ -46,6 +46,17 @@ func DefaultOutput() Output {
 	}
 }
 
+func (o *Output) PostLoad() error {
+	var errs error
+	for _, loader := range []clio.PostLoader{&o.OutputFile, &o.Format} {
+		if err := loader.PostLoad(); err != nil {
+			errs = multierror.Append(errs, err)
+		}
+	}
+
+	return errs
+}
+
 func (o *Output) AddFlags(flags clio.FlagSet) {
 	var names []string
 	for _, id := range supportedIDs() {
@@ -86,111 +97,6 @@ func (o Output) OutputNameSet() *strset.Set {
 	}
 
 	return names
-}
-
-type encoderList struct {
-	encoders []sbom.FormatEncoder
-	err      error
-}
-
-func (l *encoderList) addWithErr(name sbom.FormatID) func([]sbom.FormatEncoder, error) {
-	return func(encs []sbom.FormatEncoder, err error) {
-		if err != nil {
-			l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: %w", name, err))
-			return
-		}
-		for _, enc := range encs {
-			if enc == nil {
-				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
-				continue
-			}
-			l.encoders = append(l.encoders, enc)
-		}
-	}
-}
-
-func (l *encoderList) add(name sbom.FormatID) func(...sbom.FormatEncoder) {
-	return func(encs ...sbom.FormatEncoder) {
-		for _, enc := range encs {
-			if enc == nil {
-				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
-				continue
-			}
-			l.encoders = append(l.encoders, enc)
-		}
-	}
-}
-
-// TODO: when application configuration is made for this format then this should be ported to the options object
-// that is created for that configuration (as done with the template output option)
-func cycloneDxXMLEncoders() ([]sbom.FormatEncoder, error) {
-	var (
-		encs []sbom.FormatEncoder
-		errs error
-	)
-	for _, v := range cyclonedxxml.SupportedVersions() {
-		enc, err := cyclonedxxml.NewFormatEncoderWithConfig(cyclonedxxml.EncoderConfig{Version: v})
-		if err != nil {
-			errs = multierror.Append(errs, err)
-		} else {
-			encs = append(encs, enc)
-		}
-	}
-	return encs, errs
-}
-
-// TODO: when application configuration is made for this format then this should be ported to the options object
-// that is created for that configuration (as done with the template output option)
-func cycloneDxJSONEncoders() ([]sbom.FormatEncoder, error) {
-	var (
-		encs []sbom.FormatEncoder
-		errs error
-	)
-	for _, v := range cyclonedxjson.SupportedVersions() {
-		enc, err := cyclonedxjson.NewFormatEncoderWithConfig(cyclonedxjson.EncoderConfig{Version: v})
-		if err != nil {
-			errs = multierror.Append(errs, err)
-		} else {
-			encs = append(encs, enc)
-		}
-	}
-	return encs, errs
-}
-
-// TODO: when application configuration is made for this format then this should be ported to the options object
-// that is created for that configuration (as done with the template output option)
-func spdxJSONEncoders() ([]sbom.FormatEncoder, error) {
-	var (
-		encs []sbom.FormatEncoder
-		errs error
-	)
-	for _, v := range spdxjson.SupportedVersions() {
-		enc, err := spdxjson.NewFormatEncoderWithConfig(spdxjson.EncoderConfig{Version: v})
-		if err != nil {
-			errs = multierror.Append(errs, err)
-		} else {
-			encs = append(encs, enc)
-		}
-	}
-	return encs, errs
-}
-
-// TODO: when application configuration is made for this format then this should be ported to the options object
-// that is created for that configuration (as done with the template output option)
-func spdxTagValueEncoders() ([]sbom.FormatEncoder, error) {
-	var (
-		encs []sbom.FormatEncoder
-		errs error
-	)
-	for _, v := range spdxtagvalue.SupportedVersions() {
-		enc, err := spdxtagvalue.NewFormatEncoderWithConfig(spdxtagvalue.EncoderConfig{Version: v})
-		if err != nil {
-			errs = multierror.Append(errs, err)
-		} else {
-			encs = append(encs, enc)
-		}
-	}
-	return encs, errs
 }
 
 func supportedIDs() []sbom.FormatID {
