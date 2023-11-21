@@ -22,8 +22,12 @@ func (o FormatSyftJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
 }
 
 func (o FormatSyftJSON) buildConfig() syftjson.EncoderConfig {
+	var pretty bool
+	if o.Pretty != nil {
+		pretty = *o.Pretty
+	}
 	return syftjson.EncoderConfig{
 		Legacy: o.Legacy,
-		Pretty: *o.Pretty,
+		Pretty: pretty,
 	}
 }

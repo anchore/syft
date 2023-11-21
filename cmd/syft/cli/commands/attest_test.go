@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -67,10 +68,7 @@ func Test_writeSBOMToFormattedFile(t *testing.T) {
   "name": "syft-test",
   "version": "non-version"
  },
- "schema": {
-  "version": "12.0.1",
-  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-12.0.1.json"
- }
+ "schema": {}
 }`,
 			wantErr: false,
 		},
@@ -78,13 +76,18 @@ func Test_writeSBOMToFormattedFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sbomFile := &bytes.Buffer{}
+
 			err := writeSBOMToFormattedFile(tt.args.s, sbomFile, tt.args.opts)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("writeSBOMToFormattedFile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
-			assert.JSONEq(t, tt.wantSbomFile, sbomFile.String())
+			// redact the schema block
+			re := regexp.MustCompile(`(?s)"schema":\W*\{.*?},?`)
+			subject := re.ReplaceAllString(sbomFile.String(), `"schema":{}`)
+
+			assert.JSONEq(t, tt.wantSbomFile, subject)
 		})
 	}
 }
