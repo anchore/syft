@@ -313,6 +313,42 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-redis-7.0.14",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.0.14",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.0.14",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.0.14",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			name:       "positive-redis-7.2.3-amd64",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.2.3-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.2.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.2.3",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			name:       "positive-redis-7.2.3-arm64",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.2.3-arm64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.2.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.2.3",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
 			name:       "positive-libpython3.7.so",
 			fixtureDir: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
 			expected: pkg.Package{
