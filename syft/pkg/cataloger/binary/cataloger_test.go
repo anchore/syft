@@ -73,6 +73,42 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-mysql-8.0.34",
+			fixtureDir: "test-fixtures/classifiers/positive/mysql-8.0.34",
+			expected: pkg.Package{
+				Name:      "mysql",
+				Version:   "8.0.34",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql@8.0.34",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			name:       "positive-mysql-5.6.51",
+			fixtureDir: "test-fixtures/classifiers/positive/mysql-5.6.51",
+			expected: pkg.Package{
+				Name:      "mysql",
+				Version:   "5.6.51",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql@5.6.51",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			name:       "positive-mariadb-10.6.15",
+			fixtureDir: "test-fixtures/classifiers/positive/mariadb-10.6.15",
+			expected: pkg.Package{
+				Name:      "mariadb",
+				Version:   "10.6.15",
+				Type:      "binary",
+				PURL:      "pkg:generic/mariadb@10.6.15",
+				Locations: locations("mariadb"),
+				Metadata:  metadata("mariadb-binary"),
+			},
+		},
+		{
 			name:       "positive-traefik-2.9.6",
 			fixtureDir: "test-fixtures/classifiers/positive/traefik-2.9.6",
 			expected: pkg.Package{
