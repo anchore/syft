@@ -177,7 +177,7 @@ func Test_idsHaveChanged(t *testing.T) {
 			Type:     "file",
 			Metadata: source.FileSourceMetadata{Path: "some/path"},
 		},
-		Artifacts: []model.Package{
+		Packages: []model.Package{
 			{
 				PackageBasicData: model.PackageBasicData{
 					ID:   "1",
@@ -191,7 +191,7 @@ func Test_idsHaveChanged(t *testing.T) {
 				},
 			},
 		},
-		ArtifactRelationships: []model.Relationship{
+		Relationships: []model.Relationship{
 			{
 				Parent: "1",
 				Child:  "2",

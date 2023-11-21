@@ -34,7 +34,7 @@ func TestJavaPURLs(t *testing.T) {
 // syft anchore/test_images:java-56d52bc -o template -t /tmp/test.templ | grep 'pkg:maven' | sort | uniq >> test/integration/java_purl_test.go
 // where the template is:
 /*
-{{ range .Artifacts}}"{{.Name}}@{{.Version}}":"{{.PURL}}",
+{{ range .Packages}}"{{.Name}}@{{.Version}}":"{{.PURL}}",
 {{ end }}
 */
 // The map was then hand-edited for correctness by comparing to Maven Central.

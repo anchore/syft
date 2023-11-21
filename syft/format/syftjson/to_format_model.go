@@ -35,12 +35,12 @@ func metadataType(metadata interface{}, legacy bool) string {
 // ToFormatModel transforms the sbom import a format-specific model.
 func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
 	return model.Document{
-		Artifacts:             toPackageModels(s.Artifacts.Packages, cfg),
-		ArtifactRelationships: toRelationshipModel(s.Relationships),
-		Files:                 toFile(s),
-		Source:                toSourceModel(s.Source),
-		Distro:                toLinuxReleaser(s.Artifacts.LinuxDistribution),
-		Descriptor:            toDescriptor(s.Descriptor),
+		Packages:      toPackageModels(s.Artifacts.Packages, cfg),
+		Relationships: toRelationshipModel(s.Relationships),
+		Files:         toFile(s),
+		Source:        toSourceModel(s.Source),
+		Distro:        toLinuxReleaser(s.Artifacts.LinuxDistribution),
+		Descriptor:    toDescriptor(s.Descriptor),
 		Schema: model.Schema{
 			Version: internal.JSONSchemaVersion,
 			URL:     fmt.Sprintf("https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-%s.json", internal.JSONSchemaVersion),

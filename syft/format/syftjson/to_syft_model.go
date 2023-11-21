@@ -24,7 +24,7 @@ import (
 func toSyftModel(doc model.Document) *sbom.SBOM {
 	idAliases := make(map[string]string)
 
-	catalog := toSyftCatalog(doc.Artifacts, idAliases)
+	catalog := toSyftCatalog(doc.Packages, idAliases)
 
 	fileArtifacts := toSyftFiles(doc.Files)
 
@@ -39,7 +39,7 @@ func toSyftModel(doc model.Document) *sbom.SBOM {
 		},
 		Source:        *toSyftSourceData(doc.Source),
 		Descriptor:    toSyftDescriptor(doc.Descriptor),
-		Relationships: warnConversionErrors(toSyftRelationships(&doc, catalog, doc.ArtifactRelationships, idAliases)),
+		Relationships: warnConversionErrors(toSyftRelationships(&doc, catalog, doc.Relationships, idAliases)),
 	}
 }
 

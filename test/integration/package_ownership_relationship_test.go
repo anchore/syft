@@ -37,7 +37,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 				t.Fatalf("unable to decode json doc: %+v", err)
 			}
 
-			if len(doc.ArtifactRelationships) == 0 {
+			if len(doc.Relationships) == 0 {
 				t.Errorf("expected to find relationships between packages but found none")
 			}
 
