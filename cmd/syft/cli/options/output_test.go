@@ -179,3 +179,25 @@ func Test_EncoderCollection_ByString_IDOnly_Defaults(t *testing.T) {
 		})
 	}
 }
+
+func Test_OutputHonorsAllowFile(t *testing.T) {
+	o := DefaultOutput()
+
+	t.Run("file is not allowed", func(t *testing.T) {
+		o.AllowToFile = false
+		o.Outputs = []string{"table=/tmp/somefile"}
+
+		w, err := o.SBOMWriter()
+		assert.Nil(t, w)
+		assert.ErrorContains(t, err, "file output is not allowed")
+	})
+
+	t.Run("file is allowed", func(t *testing.T) {
+		o.AllowToFile = true
+		o.Outputs = []string{"table=/tmp/somefile"}
+
+		w, err := o.SBOMWriter()
+		assert.NotNil(t, w)
+		assert.NoError(t, err)
+	})
+}

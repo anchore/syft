@@ -32,8 +32,12 @@ func (o FormatSPDXJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
 }
 
 func (o FormatSPDXJSON) buildConfig(v string) spdxjson.EncoderConfig {
+	var pretty bool
+	if o.Pretty != nil {
+		pretty = *o.Pretty
+	}
 	return spdxjson.EncoderConfig{
 		Version: v,
-		Pretty:  *o.Pretty,
+		Pretty:  pretty,
 	}
 }

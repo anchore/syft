@@ -32,8 +32,12 @@ func (o FormatCyclonedxJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
 }
 
 func (o FormatCyclonedxJSON) buildConfig(version string) cyclonedxjson.EncoderConfig {
+	var pretty bool
+	if o.Pretty != nil {
+		pretty = *o.Pretty
+	}
 	return cyclonedxjson.EncoderConfig{
 		Version: version,
-		Pretty:  *o.Pretty,
+		Pretty:  pretty,
 	}
 }

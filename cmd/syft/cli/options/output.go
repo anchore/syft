@@ -30,6 +30,7 @@ var _ interface {
 type Output struct {
 	AllowableOptions     []string `yaml:"-" json:"-" mapstructure:"-"`
 	AllowMultipleOutputs bool     `yaml:"-" json:"-" mapstructure:"-"`
+	AllowToFile          bool     `yaml:"-" json:"-" mapstructure:"-"`
 	Outputs              []string `yaml:"output" json:"output" mapstructure:"output"` // -o, the format to use for output
 	OutputFile           `yaml:",inline" json:"" mapstructure:",squash"`
 	Format               `yaml:"format" json:"format" mapstructure:"format"`
@@ -38,6 +39,7 @@ type Output struct {
 func DefaultOutput() Output {
 	return Output{
 		AllowMultipleOutputs: true,
+		AllowToFile:          true,
 		Outputs:              []string{string(table.ID)},
 		OutputFile: OutputFile{
 			Enabled: true,
@@ -84,6 +86,14 @@ func (o Output) SBOMWriter() (sbom.Writer, error) {
 	encoders, err := o.Encoders()
 	if err != nil {
 		return nil, err
+	}
+
+	if !o.AllowToFile {
+		for _, opt := range o.Outputs {
+			if strings.Contains(opt, "=") {
+				return nil, fmt.Errorf("file output is not allowed ('-o format=path' should be '-o format')")
+			}
+		}
 	}
 
 	return makeSBOMWriter(o.Outputs, o.File, encoders)

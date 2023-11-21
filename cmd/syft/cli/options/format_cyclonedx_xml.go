@@ -32,8 +32,12 @@ func (o FormatCyclonedxXML) formatEncoders() ([]sbom.FormatEncoder, error) {
 }
 
 func (o FormatCyclonedxXML) buildConfig(version string) cyclonedxxml.EncoderConfig {
+	var pretty bool
+	if o.Pretty != nil {
+		pretty = *o.Pretty
+	}
 	return cyclonedxxml.EncoderConfig{
 		Version: version,
-		Pretty:  *o.Pretty,
+		Pretty:  pretty,
 	}
 }

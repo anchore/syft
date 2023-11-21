@@ -117,51 +117,10 @@ func runPackages(id clio.Identification, opts *packagesOptions, userInput string
 		return err
 	}
 
-	detection, err := source.Detect(
-		userInput,
-		source.DetectConfig{
-			DefaultImageSource: opts.DefaultImagePullSource,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("could not deteremine source: %w", err)
-	}
-
-	var platform *image.Platform
-
-	if opts.Platform != "" {
-		platform, err = image.NewPlatform(opts.Platform)
-		if err != nil {
-			return fmt.Errorf("invalid platform: %w", err)
-		}
-	}
-
-	hashers, err := file.Hashers(opts.Source.File.Digests...)
-	if err != nil {
-		return fmt.Errorf("invalid hash: %w", err)
-	}
-
-	src, err := detection.NewSource(
-		source.DetectionSourceConfig{
-			Alias: source.Alias{
-				Name:    opts.Source.Name,
-				Version: opts.Source.Version,
-			},
-			RegistryOptions: opts.Registry.ToOptions(),
-			Platform:        platform,
-			Exclude: source.ExcludeConfig{
-				Paths: opts.Exclusions,
-			},
-			DigestAlgorithms: hashers,
-			BasePath:         opts.BasePath,
-		},
-	)
+	src, err := getSource(&opts.Catalog, userInput)
 
 	if err != nil {
-		if userInput == "power-user" {
-			bus.Notify("Note: the 'power-user' command has been removed.")
-		}
-		return fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
+		return err
 	}
 
 	defer func() {
@@ -186,6 +145,63 @@ func runPackages(id clio.Identification, opts *packagesOptions, userInput string
 	}
 
 	return nil
+}
+
+func getSource(opts *options.Catalog, userInput string, filters ...func(*source.Detection) error) (source.Source, error) {
+	detection, err := source.Detect(
+		userInput,
+		source.DetectConfig{
+			DefaultImageSource: opts.DefaultImagePullSource,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not deteremine source: %w", err)
+	}
+
+	for _, filter := range filters {
+		if err := filter(detection); err != nil {
+			return nil, err
+		}
+	}
+
+	var platform *image.Platform
+
+	if opts.Platform != "" {
+		platform, err = image.NewPlatform(opts.Platform)
+		if err != nil {
+			return nil, fmt.Errorf("invalid platform: %w", err)
+		}
+	}
+
+	hashers, err := file.Hashers(opts.Source.File.Digests...)
+	if err != nil {
+		return nil, fmt.Errorf("invalid hash: %w", err)
+	}
+
+	src, err := detection.NewSource(
+		source.DetectionSourceConfig{
+			Alias: source.Alias{
+				Name:    opts.Source.Name,
+				Version: opts.Source.Version,
+			},
+			RegistryOptions: opts.Registry.ToOptions(),
+			Platform:        platform,
+			Exclude: source.ExcludeConfig{
+				Paths: opts.Exclusions,
+			},
+			DigestAlgorithms: hashers,
+			BasePath:         opts.BasePath,
+		},
+	)
+
+	if err != nil {
+		if userInput == "power-user" {
+			bus.Notify("Note: the 'power-user' command has been removed.")
+		}
+		return nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
+	}
+
+	return src, nil
 }
 
 func generateSBOM(id clio.Identification, src source.Source, opts *options.Catalog) (*sbom.SBOM, error) {
