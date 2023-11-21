@@ -16,11 +16,11 @@ func DownloadLocation(p pkg.Package) string {
 
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
-		case pkg.ApkMetadata:
+		case pkg.ApkDBEntry:
 			return NoneIfEmpty(metadata.URL)
-		case pkg.NpmPackageJSONMetadata:
+		case pkg.NpmPackage:
 			return NoneIfEmpty(metadata.URL)
-		case pkg.NpmPackageLockJSONMetadata:
+		case pkg.NpmPackageLockEntry:
 			return NoneIfEmpty(metadata.Resolved)
 		}
 	}

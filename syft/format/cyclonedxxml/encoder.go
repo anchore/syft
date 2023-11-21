@@ -17,6 +17,7 @@ func SupportedVersions() []string {
 
 type EncoderConfig struct {
 	Version string
+	Pretty  bool // set indent to 0
 }
 
 type encoder struct {
@@ -25,7 +26,7 @@ type encoder struct {
 }
 
 func NewFormatEncoderWithConfig(cfg EncoderConfig) (sbom.FormatEncoder, error) {
-	enc, err := cyclonedxutil.NewEncoder(cfg.Version, cyclonedx.BOMFileFormatXML)
+	enc, err := cyclonedxutil.NewEncoder(cfg.Version, cyclonedx.BOMFileFormatXML, cfg.Pretty)
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +39,7 @@ func NewFormatEncoderWithConfig(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 func DefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{
 		Version: cyclonedxutil.DefaultVersion,
+		Pretty:  false,
 	}
 }
 

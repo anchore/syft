@@ -73,6 +73,42 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-mysql-8.0.34",
+			fixtureDir: "test-fixtures/classifiers/positive/mysql-8.0.34",
+			expected: pkg.Package{
+				Name:      "mysql",
+				Version:   "8.0.34",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql@8.0.34",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			name:       "positive-mysql-5.6.51",
+			fixtureDir: "test-fixtures/classifiers/positive/mysql-5.6.51",
+			expected: pkg.Package{
+				Name:      "mysql",
+				Version:   "5.6.51",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql@5.6.51",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			name:       "positive-mariadb-10.6.15",
+			fixtureDir: "test-fixtures/classifiers/positive/mariadb-10.6.15",
+			expected: pkg.Package{
+				Name:      "mariadb",
+				Version:   "10.6.15",
+				Type:      "binary",
+				PURL:      "pkg:generic/mariadb@10.6.15",
+				Locations: locations("mariadb"),
+				Metadata:  metadata("mariadb-binary"),
+			},
+		},
+		{
 			name:       "positive-traefik-2.9.6",
 			fixtureDir: "test-fixtures/classifiers/positive/traefik-2.9.6",
 			expected: pkg.Package{
@@ -313,6 +349,42 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-redis-7.0.14",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.0.14",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.0.14",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.0.14",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			name:       "positive-redis-7.2.3-amd64",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.2.3-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.2.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.2.3",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			name:       "positive-redis-7.2.3-arm64",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.2.3-arm64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.2.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.2.3",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
 			name:       "positive-libpython3.7.so",
 			fixtureDir: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
 			expected: pkg.Package{
@@ -331,7 +403,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "3.11.2",
 				PURL:      "pkg:generic/python@3.11.2",
 				Locations: locations("python3", "libpython3.11.so.1.0"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3"),
 						match("python-binary", "libpython3.11.so.1.0"),
@@ -348,7 +420,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "3.9.13",
 				PURL:      "pkg:generic/python@3.9.13",
 				Locations: locations("python3.9", "libpython3.9.so.1.0"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.9"),
 						match("python-binary", "libpython3.9.so.1.0"),
@@ -365,7 +437,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "3.9.2",
 				PURL:      "pkg:generic/python@3.9.2",
 				Locations: locations("python3.9"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.9"),
 					},
@@ -380,7 +452,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "3.4.10",
 				PURL:      "pkg:generic/python@3.4.10",
 				Locations: locations("python3.4", "libpython3.4m.so.1.0"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.4"),
 						match("python-binary", "libpython3.4m.so.1.0"),
@@ -420,7 +492,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Type:      "binary",
 				PURL:      "pkg:generic/python@3.8.16",
 				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "dir/python3.8"),
 						match("python-binary", "python3.8"),
@@ -577,7 +649,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Type:      "binary",
 				PURL:      "pkg:generic/ruby@3.2.1",
 				Locations: locations("ruby", "libruby.so.3.2.1"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("ruby-binary", "ruby"),
 						match("ruby-binary", "libruby.so.3.2.1"),
@@ -594,7 +666,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Type:      "binary",
 				PURL:      "pkg:generic/ruby@2.7.7p221",
 				Locations: locations("ruby", "libruby.so.2.7.7"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("ruby-binary", "ruby"),
 						match("ruby-binary", "libruby.so.2.7.7"),
@@ -611,7 +683,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Type:      "binary",
 				PURL:      "pkg:generic/ruby@2.6.10p210",
 				Locations: locations("ruby", "libruby.so.2.6.10"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("ruby-binary", "ruby"),
 						match("ruby-binary", "libruby.so.2.6.10"),
@@ -774,8 +846,8 @@ func locations(locations ...string) file.LocationSet {
 }
 
 // metadata paths are: realPath, virtualPath
-func metadata(classifier string, paths ...string) pkg.BinaryMetadata {
-	return pkg.BinaryMetadata{
+func metadata(classifier string, paths ...string) pkg.BinarySignature {
+	return pkg.BinarySignature{
 		Matches: []pkg.ClassifierMatch{
 			match(classifier, paths...),
 		},
@@ -819,8 +891,8 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 		}
 	}
 
-	m1 := expected.Metadata.(pkg.BinaryMetadata).Matches
-	m2 := p.Metadata.(pkg.BinaryMetadata).Matches
+	m1 := expected.Metadata.(pkg.BinarySignature).Matches
+	m2 := p.Metadata.(pkg.BinarySignature).Matches
 	matches := true
 	if len(m1) == len(m2) {
 		for i, m1 := range m1 {
@@ -833,7 +905,7 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 				matches = false
 				break
 			}
-			if m1.Location.VirtualPath != "" && m1.Location.VirtualPath != m2.Location.VirtualPath {
+			if m1.Location.AccessPath != "" && m1.Location.AccessPath != m2.Location.AccessPath {
 				matches = false
 				break
 			}

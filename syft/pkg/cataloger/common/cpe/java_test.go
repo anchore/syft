@@ -78,8 +78,8 @@ func Test_candidateProductsForJava(t *testing.T) {
 		{
 			name: "duplicate groupID in artifactID field",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID:    "org.sonatype.nexus",
 						ArtifactID: "org.sonatype.nexus",
 					},
@@ -90,8 +90,8 @@ func Test_candidateProductsForJava(t *testing.T) {
 		{
 			name: "detect groupID-like value in artifactID field",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						ArtifactID: "org.sonatype.nexus",
 					},
 				},
@@ -153,8 +153,8 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 		{
 			name: "go case",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						GroupID: "io.jenkins-ci.plugin.thing;version='[2,3)'",
 					},
 				},
@@ -164,8 +164,8 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 		{
 			name: "from artifactID",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						ArtifactID: "io.jenkins-ci.plugin.thing; version='[2,3)' ; org.something.else",
 					},
 				},
@@ -175,7 +175,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 		{
 			name: "from main Extension-Name field",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							"Extension-Name": "io.jenkins-ci.plugin.thing",
@@ -188,7 +188,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 		{
 			name: "from named section Extension-Name field",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						NamedSections: map[string]map[string]string{
 							"section": {
@@ -203,7 +203,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 		{
 			name: "from main field - tier 1",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							// positive cases
@@ -236,7 +236,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 		{
 			name: "from main field - tier 2",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							// positive cases
@@ -256,7 +256,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 		{
 			name: "from main field - negative cases",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						Main: map[string]string{
 							// negative cases
@@ -271,7 +271,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 		{
 			name: "from named section field - tier 1",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						NamedSections: map[string]map[string]string{
 							"section": {
@@ -306,7 +306,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 		{
 			name: "from named section field - negative cases",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						NamedSections: map[string]map[string]string{
 							"section": {
@@ -323,7 +323,7 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 		{
 			name: "no manifest or pom info",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{},
+				Metadata: pkg.JavaArchive{},
 			},
 			expects: nil,
 		},
@@ -349,8 +349,8 @@ func Test_artifactIDFromJavaPackage(t *testing.T) {
 		{
 			name: "go case",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						ArtifactID: "cloudbees-installation-manager",
 					},
 				},
@@ -360,8 +360,8 @@ func Test_artifactIDFromJavaPackage(t *testing.T) {
 		{
 			name: "ignore groupID-like things",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
-					PomProperties: &pkg.PomProperties{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
 						ArtifactID: "io.jenkins-ci.plugin.thing",
 					},
 				},
@@ -390,7 +390,7 @@ func Test_vendorsFromJavaManifestNames(t *testing.T) {
 		{
 			name: "from manifest named section fields",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						NamedSections: map[string]map[string]string{
 							"section": {
@@ -407,7 +407,7 @@ func Test_vendorsFromJavaManifestNames(t *testing.T) {
 		{
 			name: "from manifest named section fields - negative cases",
 			pkg: pkg.Package{
-				Metadata: pkg.JavaMetadata{
+				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
 						NamedSections: map[string]map[string]string{
 							"section": {

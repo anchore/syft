@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"io"
 	"os"
 
 	cranecmd "github.com/google/go-containerregistry/cmd/crane/cmd"
@@ -16,24 +17,23 @@ import (
 	"github.com/anchore/syft/internal/redact"
 )
 
-// Application constructs the `syft packages` command, aliases the root command to `syft packages`,
-// and constructs the `syft power-user` command. It is also responsible for
-// organizing flag usage and injecting the application config for each command.
+// Application constructs the `syft packages` command and aliases the root command to `syft packages`.
+// It is also responsible for organizing flag usage and injecting the application config for each command.
 // It also constructs the syft attest command and the syft version command.
 // `RunE` is the earliest that the complete application configuration can be loaded.
 func Application(id clio.Identification) clio.Application {
-	app, _ := create(id)
+	app, _ := create(id, os.Stdout)
 	return app
 }
 
 // Command returns the root command for the syft CLI application. This is useful for embedding the entire syft CLI
 // into an existing application.
 func Command(id clio.Identification) *cobra.Command {
-	_, cmd := create(id)
+	_, cmd := create(id, os.Stdout)
 	return cmd
 }
 
-func create(id clio.Identification) (clio.Application, *cobra.Command) {
+func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Command) {
 	clioCfg := clio.NewSetupConfig(id).
 		WithGlobalConfigFlag().   // add persistent -c <path> for reading an application config from
 		WithGlobalLoggingFlags(). // add persistent -v and -q flags tied to the logging config
@@ -41,13 +41,13 @@ func create(id clio.Identification) (clio.Application, *cobra.Command) {
 		WithUIConstructor(
 			// select a UI based on the logging configuration and state of stdin (if stdin is a tty)
 			func(cfg clio.Config) ([]clio.UI, error) {
-				noUI := ui.None(cfg.Log.Quiet)
+				noUI := ui.None(out, cfg.Log.Quiet)
 				if !cfg.Log.AllowUI(os.Stdin) || cfg.Log.Quiet {
 					return []clio.UI{noUI}, nil
 				}
 
 				return []clio.UI{
-					ui.New(cfg.Log.Quiet,
+					ui.New(out, cfg.Log.Quiet,
 						handler.New(handler.DefaultHandlerConfig()),
 					),
 					noUI,
@@ -85,7 +85,6 @@ func create(id clio.Identification) (clio.Application, *cobra.Command) {
 	// add sub-commands
 	rootCmd.AddCommand(
 		packagesCmd,
-		commands.PowerUser(app),
 		commands.Attest(app),
 		commands.Convert(app),
 		clio.VersionCommand(id),

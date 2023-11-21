@@ -1,8 +1,13 @@
 package syftjson
 
 import (
+	"bytes"
 	"flag"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
@@ -31,12 +36,69 @@ func TestDefaultNameAndVersion(t *testing.T) {
 	}
 }
 
+func TestPrettyOutput(t *testing.T) {
+	run := func(opt bool) string {
+		enc, err := NewFormatEncoderWithConfig(EncoderConfig{
+			Pretty: opt,
+		})
+		require.NoError(t, err)
+
+		dir := t.TempDir()
+		s := testutil.DirectoryInput(t, dir)
+
+		var buffer bytes.Buffer
+		err = enc.Encode(&buffer, s)
+		require.NoError(t, err)
+
+		return strings.TrimSpace(buffer.String())
+	}
+
+	t.Run("pretty", func(t *testing.T) {
+		actual := run(true)
+		assert.Contains(t, actual, "\n")
+	})
+
+	t.Run("compact", func(t *testing.T) {
+		actual := run(false)
+		assert.NotContains(t, actual, "\n")
+	})
+}
+
+func TestEscapeHTML(t *testing.T) {
+	dir := t.TempDir()
+	s := testutil.DirectoryInput(t, dir)
+	s.Artifacts.Packages.Add(pkg.Package{
+		Name: "<html-package>",
+	})
+
+	// by default we do not escape HTML
+	t.Run("default", func(t *testing.T) {
+		cfg := DefaultEncoderConfig()
+
+		enc, err := NewFormatEncoderWithConfig(cfg)
+		require.NoError(t, err)
+
+		var buffer bytes.Buffer
+		err = enc.Encode(&buffer, s)
+		require.NoError(t, err)
+
+		actual := buffer.String()
+		assert.Contains(t, actual, "<html-package>")
+		assert.NotContains(t, actual, "\\u003chtml-package\\u003e")
+	})
+}
+
 func TestDirectoryEncoder(t *testing.T) {
+	cfg := DefaultEncoderConfig()
+	cfg.Pretty = true
+	enc, err := NewFormatEncoderWithConfig(cfg)
+	require.NoError(t, err)
+
 	dir := t.TempDir()
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.DirectoryInput(t, dir),
-			Format:                      NewFormatEncoder(),
+			Format:                      enc,
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -46,6 +108,11 @@ func TestDirectoryEncoder(t *testing.T) {
 }
 
 func TestImageEncoder(t *testing.T) {
+	cfg := DefaultEncoderConfig()
+	cfg.Pretty = true
+	enc, err := NewFormatEncoderWithConfig(cfg)
+	require.NoError(t, err)
+
 	testImage := "image-simple"
 	testutil.AssertEncoderAgainstGoldenImageSnapshot(t,
 		testutil.ImageSnapshotTestConfig{
@@ -54,7 +121,7 @@ func TestImageEncoder(t *testing.T) {
 		},
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.ImageInput(t, testImage, testutil.FromSnapshot()),
-			Format:                      NewFormatEncoder(),
+			Format:                      enc,
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
@@ -74,12 +141,11 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 				RealPath: "/a/place/a",
 			}),
 		),
-		Type:         pkg.PythonPkg,
-		FoundBy:      "the-cataloger-1",
-		Language:     pkg.Python,
-		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses:     pkg.NewLicenseSet(pkg.NewLicense("MIT")),
-		Metadata: pkg.PythonPackageMetadata{
+		Type:     pkg.PythonPkg,
+		FoundBy:  "the-cataloger-1",
+		Language: pkg.Python,
+		Licenses: pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
 			Version: "1.0.1",
 			Files:   []pkg.PythonFileRecord{},
@@ -98,10 +164,9 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 				RealPath: "/b/place/b",
 			}),
 		),
-		Type:         pkg.DebPkg,
-		FoundBy:      "the-cataloger-2",
-		MetadataType: pkg.DpkgMetadataType,
-		Metadata: pkg.DpkgMetadata{
+		Type:    pkg.DebPkg,
+		FoundBy: "the-cataloger-2",
+		Metadata: pkg.DpkgDBEntry{
 			Package: "package-2",
 			Version: "2.0.1",
 			Files:   []pkg.DpkgFileRecord{},
@@ -119,7 +184,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Artifacts: sbom.Artifacts{
 			Packages: catalog,
 			FileMetadata: map[file.Coordinates]file.Metadata{
-				file.NewLocation("/a/place").Coordinates: {
+				file.NewVirtualLocation("/a/place", "/a/symlink/to/place").Coordinates: {
 					FileInfo: stereoFile.ManualInfo{
 						NameValue: "/a/place",
 						ModeValue: 0775,

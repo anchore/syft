@@ -1,14 +1,15 @@
 {
  "artifacts": [
   {
-   "id": "9265397e5e15168a",
+   "id": "fb6bef15e281ea43",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
    "foundBy": "the-cataloger-1",
    "locations": [
     {
-     "path": "/some/path/pkg1"
+     "path": "/some/path/pkg1",
+     "accessPath": "/some/path/pkg1"
     }
    ],
    "licenses": [
@@ -25,7 +26,7 @@
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
    ],
    "purl": "a-purl-2",
-   "metadataType": "PythonPackageMetadata",
+   "metadataType": "python-package",
    "metadata": {
     "name": "package-1",
     "version": "1.0.1",
@@ -41,14 +42,15 @@
    }
   },
   {
-   "id": "ad5013466727018f",
+   "id": "39392bb5e270f669",
    "name": "package-2",
    "version": "2.0.1",
    "type": "deb",
    "foundBy": "the-cataloger-2",
    "locations": [
     {
-     "path": "/some/path/pkg1"
+     "path": "/some/path/pkg1",
+     "accessPath": "/some/path/pkg1"
     }
    ],
    "licenses": [],
@@ -57,7 +59,7 @@
     "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
    ],
    "purl": "pkg:deb/debian/package-2@2.0.1",
-   "metadataType": "DpkgMetadata",
+   "metadataType": "dpkg-db-entry",
    "metadata": {
     "package": "package-2",
     "source": "",

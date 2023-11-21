@@ -5,7 +5,7 @@
    "name": "github.com/wagoodman/go-partybus",
    "version": "v0.0.0-20230516145632-8ccac152c651",
    "type": "go-module",
-   "foundBy": "go-mod-file-cataloger",
+   "foundBy": "go-module-file-cataloger",
    "locations": [
     {
      "path": "/go.mod",

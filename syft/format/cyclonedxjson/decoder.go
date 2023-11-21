@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
@@ -75,7 +74,7 @@ func (d decoder) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
 		return "", ""
 	}
 
-	id, version := getFormatInfo(doc.JSONSchema, doc.BOMFormat, doc.SpecVersion)
+	id, version := getFormatInfo(doc.BOMFormat, doc.SpecVersion)
 	if version == "" || id != ID {
 		// not a cyclonedx json document that we support
 		return "", ""
@@ -84,18 +83,13 @@ func (d decoder) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
 	return id, version
 }
 
-func getFormatInfo(schemaURI, bomFormat string, specVersion any) (sbom.FormatID, string) {
-	if !strings.Contains(schemaURI, "cyclonedx.org/schema/bom") {
-		// not a cyclonedx json document
-		return "", ""
-	}
-
+func getFormatInfo(bomFormat string, specVersion any) (sbom.FormatID, string) {
 	if bomFormat != "CycloneDX" {
 		// not a cyclonedx json document
 		return "", ""
 	}
 
-	// by this point this looks to be valid cyclonedx json, but we need to know the version
+	// by this point, it looks to be cyclonedx json, but we need to know the version
 
 	var (
 		version string

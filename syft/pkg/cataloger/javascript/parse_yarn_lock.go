@@ -24,6 +24,12 @@ type yarnLockPackage struct {
 }
 
 func parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	// in the case we find yarn.lock files in the node_modules directories, skip those
+	// as the whole purpose of the lock file is for the specific dependencies of the project
+	if pathContainsNodeModulesDirectory(reader.Path()) {
+		return nil, nil, nil
+	}
+
 	yarnMap := parseYarnLockFile(resolver, reader)
 	pkgs, _ := finalizeYarnLockWithoutPackageJSON(resolver, yarnMap, reader.Location)
 	return pkgs, nil, nil
@@ -38,14 +44,13 @@ func newYarnLockPackage(resolver file.Resolver, location file.Location, p *yarnL
 		resolver,
 		location,
 		pkg.Package{
-			Name:         p.Name,
-			Version:      p.Version,
-			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			PURL:         packageURL(p.Name, p.Version),
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{
+			Name:      p.Name,
+			Version:   p.Version,
+			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:      packageURL(p.Name, p.Version),
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{
 				Resolved:  p.Resolved,
 				Integrity: p.Integrity,
 			},

@@ -165,8 +165,8 @@ nextPath:
 			for i := range out {
 				existing := &out[i]
 				if existing.RealPath == l.RealPath {
-					if l.VirtualPath == "" {
-						existing.VirtualPath = ""
+					if l.AccessPath == "" {
+						existing.AccessPath = ""
 					}
 					continue nextPath
 				}
@@ -261,13 +261,14 @@ func (u UnindexedDirectory) Write(location file.Location, reader io.Reader) erro
 func (u UnindexedDirectory) newLocation(filePath string, resolveLinks bool) *file.Location {
 	filePath = path.Clean(filePath)
 
-	virtualPath := ""
+	virtualPath := filePath
 	realPath := filePath
 
 	if resolveLinks {
 		paths := u.resolveLinks(filePath)
 		if len(paths) > 1 {
 			realPath = paths[len(paths)-1]
+			// TODO: this is not quite correct, as the equivalent of os.EvalSymlinks needs to be done (in the context of afero)
 			if realPath != path.Clean(filePath) {
 				virtualPath = paths[0]
 			}

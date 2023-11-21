@@ -77,6 +77,14 @@ var imageOnlyTestCases = []testCase{
 			"base": "4.3.0",
 		},
 	},
+	{
+		name:        "find dot net executable",
+		pkgType:     pkg.DotnetPkg,
+		pkgLanguage: pkg.Dotnet,
+		pkgInfo: map[string]string{
+			"DocuSign.eSign": "6.8.0.0",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{

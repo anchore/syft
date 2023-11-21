@@ -16,9 +16,9 @@ import (
 )
 
 type parsedData struct {
-	Licenses                  string `mapstructure:"License"`
-	LicenseLocation           file.Location
-	pkg.PythonPackageMetadata `mapstructure:",squash"`
+	Licenses          string `mapstructure:"License"`
+	LicenseLocation   file.Location
+	pkg.PythonPackage `mapstructure:",squash"`
 }
 
 // parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),

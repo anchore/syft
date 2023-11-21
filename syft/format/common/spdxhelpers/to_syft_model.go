@@ -490,17 +490,15 @@ func extractPkgInfo(p *spdx.Package) pkgInfo {
 
 func toSyftPackage(p *spdx.Package) pkg.Package {
 	info := extractPkgInfo(p)
-	metadataType, metadata := extractMetadata(p, info)
 	sP := &pkg.Package{
-		Type:         info.typ,
-		Name:         p.PackageName,
-		Version:      p.PackageVersion,
-		Licenses:     pkg.NewLicenseSet(parseSPDXLicenses(p)...),
-		CPEs:         extractCPEs(p),
-		PURL:         purlValue(info.purl),
-		Language:     info.lang,
-		MetadataType: metadataType,
-		Metadata:     metadata,
+		Type:     info.typ,
+		Name:     p.PackageName,
+		Version:  p.PackageVersion,
+		Licenses: pkg.NewLicenseSet(parseSPDXLicenses(p)...),
+		CPEs:     extractCPEs(p),
+		PURL:     purlValue(info.purl),
+		Language: info.lang,
+		Metadata: extractMetadata(p, info),
 	}
 
 	sP.SetID()
@@ -541,7 +539,7 @@ func cleanSPDXID(id string) string {
 }
 
 //nolint:funlen
-func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface{}) {
+func extractMetadata(p *spdx.Package, info pkgInfo) any {
 	arch := info.qualifierValue(pkg.PURLQualifierArch)
 	upstreamValue := info.qualifierValue(pkg.PURLQualifierUpstream)
 	upstream := strings.SplitN(upstreamValue, "@", 2)
@@ -560,7 +558,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 	}
 	switch info.typ {
 	case pkg.ApkPkg:
-		return pkg.ApkMetadataType, pkg.ApkMetadata{
+		return pkg.ApkDBEntry{
 			Package:       p.PackageName,
 			OriginPackage: upstreamName,
 			Maintainer:    supplier,
@@ -577,7 +575,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 		} else {
 			epoch = &converted
 		}
-		return pkg.RpmMetadataType, pkg.RpmMetadata{
+		return pkg.RpmDBEntry{
 			Name:      p.PackageName,
 			Version:   p.PackageVersion,
 			Epoch:     epoch,
@@ -586,7 +584,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 			Vendor:    originator,
 		}
 	case pkg.DebPkg:
-		return pkg.DpkgMetadataType, pkg.DpkgMetadata{
+		return pkg.DpkgDBEntry{
 			Package:       p.PackageName,
 			Source:        upstreamName,
 			Version:       p.PackageVersion,
@@ -599,7 +597,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 		for _, value := range p.PackageChecksums {
 			digests = append(digests, file.Digest{Algorithm: fromChecksumAlgorithm(value.Algorithm), Value: value.Value})
 		}
-		return pkg.JavaMetadataType, pkg.JavaMetadata{
+		return pkg.JavaArchive{
 			ArchiveDigests: digests,
 		}
 	case pkg.GoModulePkg:
@@ -613,11 +611,11 @@ func extractMetadata(p *spdx.Package, info pkgInfo) (pkg.MetadataType, interface
 			h1Digest = digest
 			break
 		}
-		return pkg.GolangBinMetadataType, pkg.GolangBinMetadata{
+		return pkg.GolangBinaryBuildinfoEntry{
 			H1Digest: h1Digest,
 		}
 	}
-	return pkg.UnknownMetadataType, nil
+	return nil
 }
 
 func findPURLValue(p *spdx.Package) string {

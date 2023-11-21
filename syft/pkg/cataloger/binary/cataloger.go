@@ -1,3 +1,6 @@
+/*
+Package binary provides a concrete Cataloger implementations for surfacing possible packages based on signatures found within binary files.
+*/
 package binary
 
 import (
@@ -61,8 +64,8 @@ func mergePackages(target *pkg.Package, extra *pkg.Package) {
 	// add the locations
 	target.Locations.Add(extra.Locations.ToSlice()...)
 	// update the metadata to indicate which classifiers were used
-	meta, _ := target.Metadata.(pkg.BinaryMetadata)
-	if m, ok := extra.Metadata.(pkg.BinaryMetadata); ok {
+	meta, _ := target.Metadata.(pkg.BinarySignature)
+	if m, ok := extra.Metadata.(pkg.BinarySignature); ok {
 		meta.Matches = append(meta.Matches, m.Matches...)
 	}
 	target.Metadata = meta

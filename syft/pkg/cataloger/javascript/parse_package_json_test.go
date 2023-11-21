@@ -26,8 +26,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/pkg-json/package.json")),
 				),
-				MetadataType: pkg.NpmPackageJSONMetadataType,
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					Name:        "npm",
 					Version:     "6.14.6",
 					Author:      "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
@@ -48,8 +47,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("ISC", file.NewLocation("test-fixtures/pkg-json/license-object/package.json")),
 				),
-				MetadataType: pkg.NpmPackageJSONMetadataType,
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Metadata: pkg.NpmPackage{
 					Name:        "npm",
 					Version:     "6.14.6",
 					Author:      "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
@@ -70,9 +68,8 @@ func TestParsePackageJSON(t *testing.T) {
 					pkg.NewLicenseFromLocations("MIT", file.NewLocation("test-fixtures/pkg-json/license-objects/package.json")),
 					pkg.NewLicenseFromLocations("Apache-2.0", file.NewLocation("test-fixtures/pkg-json/license-objects/package.json")),
 				),
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
 					Name:        "npm",
 					Version:     "6.14.6",
 					Author:      "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
@@ -85,13 +82,12 @@ func TestParsePackageJSON(t *testing.T) {
 		{
 			Fixture: "test-fixtures/pkg-json/malformed-license/package.json",
 			ExpectedPkg: pkg.Package{
-				Name:         "npm",
-				Version:      "6.14.6",
-				PURL:         "pkg:npm/npm@6.14.6",
-				Type:         pkg.NpmPkg,
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Name:     "npm",
+				Version:  "6.14.6",
+				PURL:     "pkg:npm/npm@6.14.6",
+				Type:     pkg.NpmPkg,
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
 					Name:        "npm",
 					Version:     "6.14.6",
 					Author:      "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
@@ -104,13 +100,12 @@ func TestParsePackageJSON(t *testing.T) {
 		{
 			Fixture: "test-fixtures/pkg-json/no-license/package.json",
 			ExpectedPkg: pkg.Package{
-				Name:         "npm",
-				Version:      "6.14.6",
-				PURL:         "pkg:npm/npm@6.14.6",
-				Type:         pkg.NpmPkg,
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Name:     "npm",
+				Version:  "6.14.6",
+				PURL:     "pkg:npm/npm@6.14.6",
+				Type:     pkg.NpmPkg,
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
 					Name:        "npm",
 					Version:     "6.14.6",
 					Author:      "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
@@ -130,9 +125,8 @@ func TestParsePackageJSON(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/nested-author/package.json")),
 				),
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
 					Name:        "npm",
 					Version:     "6.14.6",
 					Author:      "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
@@ -152,9 +146,8 @@ func TestParsePackageJSON(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("MIT", file.NewLocation("test-fixtures/pkg-json/repo-string/package.json")),
 				),
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
 					Name:        "function-bind",
 					Version:     "1.1.1",
 					Author:      "Raynos <raynos2@gmail.com>",
@@ -174,9 +167,8 @@ func TestParsePackageJSON(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/private/package.json")),
 				),
-				Language:     pkg.JavaScript,
-				MetadataType: pkg.NpmPackageJSONMetadataType,
-				Metadata: pkg.NpmPackageJSONMetadata{
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
 					Name:        "npm",
 					Version:     "6.14.6",
 					Author:      "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",

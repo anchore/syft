@@ -141,7 +141,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ file.Resolver, _ *generic.En
 			newPackageForRequirementsWithMetadata(
 				name,
 				version,
-				pkg.PythonRequirementsMetadata{
+				pkg.PythonRequirementsEntry{
 					Name:              name,
 					Extras:            parseExtras(req.Name),
 					VersionConstraint: req.VersionConstraint,

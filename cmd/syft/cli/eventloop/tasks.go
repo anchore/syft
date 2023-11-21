@@ -8,7 +8,6 @@ import (
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/file/cataloger/filedigest"
 	"github.com/anchore/syft/syft/file/cataloger/filemetadata"
-	"github.com/anchore/syft/syft/file/cataloger/secrets"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -22,7 +21,6 @@ func Tasks(opts *options.Catalog) ([]Task, error) {
 		generateCatalogPackagesTask,
 		generateCatalogFileMetadataTask,
 		generateCatalogFileDigestsTask,
-		generateCatalogSecretsTask,
 		generateCatalogContentsTask,
 	}
 
@@ -104,38 +102,6 @@ func generateCatalogFileDigestsTask(opts *options.Catalog) (Task, error) {
 			return nil, err
 		}
 		results.FileDigests = result
-		return nil, nil
-	}
-
-	return task, nil
-}
-
-func generateCatalogSecretsTask(opts *options.Catalog) (Task, error) {
-	if !opts.Secrets.Cataloger.Enabled {
-		return nil, nil
-	}
-
-	patterns, err := secrets.GenerateSearchPatterns(secrets.DefaultSecretsPatterns, opts.Secrets.AdditionalPatterns, opts.Secrets.ExcludePatternNames)
-	if err != nil {
-		return nil, err
-	}
-
-	secretsCataloger, err := secrets.NewCataloger(patterns, opts.Secrets.RevealValues, opts.Secrets.SkipFilesAboveSize) //nolint:staticcheck
-	if err != nil {
-		return nil, err
-	}
-
-	task := func(results *sbom.Artifacts, src source.Source) ([]artifact.Relationship, error) {
-		resolver, err := src.FileResolver(opts.Secrets.Cataloger.GetScope())
-		if err != nil {
-			return nil, err
-		}
-
-		result, err := secretsCataloger.Catalog(resolver)
-		if err != nil {
-			return nil, err
-		}
-		results.Secrets = result
 		return nil, nil
 	}
 

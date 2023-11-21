@@ -63,7 +63,7 @@ type packageLockLicense []string
 func parsePackageLockFile(reader file.LocationReadCloser) (packageLock, error) {
 	// in the case we find package-lock.json files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the root project
-	if pathContainsNodeModulesDirectory(reader.AccessPath()) {
+	if pathContainsNodeModulesDirectory(reader.Path()) {
 		return packageLock{}, nil
 	}
 	dec := json.NewDecoder(reader)
@@ -133,7 +133,7 @@ func finalizePackageLockWithPackageJSON(resolver file.Resolver, pkgjson *package
 	}
 
 	if !pkgjson.hasNameAndVersionValues() {
-		log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", indexLocation.AccessPath())
+		log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", indexLocation.Path())
 		return nil, nil
 	}
 
@@ -256,7 +256,7 @@ func finalizePackageLockV2(resolver file.Resolver, pkglock *packageLock, indexLo
 		return nil, nil
 	}
 	if _, ok := pkglock.Packages[""]; !ok {
-		log.Debugf("encountered a package-lock.json file without a root pakcage, ignoring (path=%q)", indexLocation.AccessPath())
+		log.Debugf("encountered a package-lock.json file without a root pakcage, ignoring (path=%q)", indexLocation.Path())
 		return nil, nil
 	}
 

@@ -14,6 +14,12 @@ import (
 
 var _ generic.Parser = parseDotnetDeps
 
+type dotnetDeps struct {
+	RuntimeTarget dotnetRuntimeTarget                    `json:"runtimeTarget"`
+	Targets       map[string]map[string]dotnetDepsTarget `json:"targets"`
+	Libraries     map[string]dotnetDepsLibrary           `json:"libraries"`
+}
+
 type dotnetRuntimeTarget struct {
 	Name string `json:"name"`
 }
@@ -21,11 +27,6 @@ type dotnetRuntimeTarget struct {
 type dotnetDepsTarget struct {
 	Dependencies map[string]string   `json:"dependencies"`
 	Runtime      map[string]struct{} `json:"runtime"`
-}
-type dotnetDeps struct {
-	RuntimeTarget dotnetRuntimeTarget                    `json:"runtimeTarget"`
-	Targets       map[string]map[string]dotnetDepsTarget `json:"targets"`
-	Libraries     map[string]dotnetDepsLibrary           `json:"libraries"`
 }
 
 type dotnetDepsLibrary struct {
@@ -48,9 +49,9 @@ func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader file.Locati
 		return nil, nil, fmt.Errorf("failed to parse deps.json file: %w", err)
 	}
 
-	rootName := getDepsJSONFilePrefix(reader.AccessPath())
+	rootName := getDepsJSONFilePrefix(reader.Path())
 	if rootName == "" {
-		return nil, nil, fmt.Errorf("unable to determine root package name from deps.json file: %s", reader.AccessPath())
+		return nil, nil, fmt.Errorf("unable to determine root package name from deps.json file: %s", reader.Path())
 	}
 	var rootPkg *pkg.Package
 	for nameVersion, lib := range depsDoc.Libraries {
@@ -64,7 +65,7 @@ func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader file.Locati
 		}
 	}
 	if rootPkg == nil {
-		return nil, nil, fmt.Errorf("unable to determine root package from deps.json file: %s", reader.AccessPath())
+		return nil, nil, fmt.Errorf("unable to determine root package from deps.json file: %s", reader.Path())
 	}
 	pkgs = append(pkgs, *rootPkg)
 	pkgMap[createNameAndVersion(rootPkg.Name, rootPkg.Version)] = *rootPkg

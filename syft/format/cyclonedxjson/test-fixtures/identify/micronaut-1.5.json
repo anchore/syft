@@ -1,0 +1,28 @@
+{
+    "bomFormat": "CycloneDX",
+    "specVersion": "1.5",
+    "version": 1,
+    "components": [
+        {
+            "type": "library",
+            "group": "io.netty",
+            "name": "netty-codec-http2",
+            "version": "4.1.73.Final",
+            "properties": [
+                {
+                    "name": "syft:cpe23",
+                    "value": "cpe:2.3:a:codec:codec:4.1.73.Final:*:*:*:*:*:*:*"
+                },
+                {
+                    "name": "syft:cpe23",
+                    "value": "cpe:2.3:a:codec:netty-codec-http2:4.1.73.Final:*:*:*:*:*:*:*"
+                },
+                {
+                    "name": "syft:cpe23",
+                    "value": "cpe:2.3:a:codec:netty_codec_http2:4.1.73.Final:*:*:*:*:*:*:*"
+                }
+            ]
+        }
+    ],
+    "serialNumber": "urn:uuid:f4-f715-3d85-9629-336fdd3790ad"
+}

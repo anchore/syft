@@ -477,7 +477,7 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 	switch meta := p.Metadata.(type) {
 	// we generate digest for some Java packages
 	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
-	case pkg.JavaMetadata:
+	case pkg.JavaArchive:
 		// if syft has generated the digest here then filesAnalyzed is true
 		if len(meta.ArchiveDigests) > 0 {
 			filesAnalyzed = true
@@ -489,7 +489,7 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 				})
 			}
 		}
-	case pkg.GolangBinMetadata:
+	case pkg.GolangBinaryBuildinfoEntry:
 		// because the H1 digest is found in the Golang metadata we cannot claim that the files were analyzed
 		algo, hexStr, err := util.HDigestToSHA(meta.H1Digest)
 		if err != nil {

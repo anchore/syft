@@ -22,7 +22,7 @@ type postProcessor func(string) []string
 
 type gemData struct {
 	Licenses        []string `mapstructure:"licenses" json:"licenses,omitempty"`
-	pkg.GemMetadata `mapstructure:",squash" json:",inline"`
+	pkg.RubyGemspec `mapstructure:",squash" json:",inline"`
 }
 
 // match example:      Al\u003Ex   --->   003E
@@ -64,6 +64,7 @@ func processList(s string) []string {
 	return results
 }
 
+// parseGemFileLockEntries parses the gemfile.lock file and returns the packages and relationships found.
 func parseGemSpecEntries(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})

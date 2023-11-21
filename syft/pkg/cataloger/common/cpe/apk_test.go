@@ -17,7 +17,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 		{
 			name: "py3-cryptography Package",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package: "py3-cryptography",
 				},
 			},
@@ -26,7 +26,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 		{
 			name: "py2-pypdf with explicit different origin",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package:       "py2-pypdf",
 					OriginPackage: "abcdefg",
 				},
@@ -36,7 +36,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 		{
 			name: "ruby-armadillo Package",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package: "ruby-armadillo",
 				},
 			},
@@ -45,7 +45,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 		{
 			name: "python-3.6",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package: "python-3.6",
 				},
 			},
@@ -54,7 +54,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 		{
 			name: "ruby-3.6",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package: "ruby-3.6",
 					URL:     "https://www.ruby-lang.org/",
 				},
@@ -64,7 +64,7 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 		{
 			name: "make",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package: "make",
 					URL:     "https://www.gnu.org/software/make",
 				},
@@ -74,10 +74,9 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 		{
 			name: "ruby-rake with matching origin",
 			pkg: pkg.Package{
-				Name:         "ruby-rake",
-				Type:         pkg.ApkPkg,
-				MetadataType: pkg.ApkMetadataType,
-				Metadata: pkg.ApkMetadata{
+				Name: "ruby-rake",
+				Type: pkg.ApkPkg,
+				Metadata: pkg.ApkDBEntry{
 					Package:       "ruby-rake",
 					URL:           "https://github.com/ruby/rake",
 					OriginPackage: "ruby-rake",
@@ -88,10 +87,9 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 		{
 			name: "ruby-rake with non-matching origin",
 			pkg: pkg.Package{
-				Name:         "ruby-rake",
-				Type:         pkg.ApkPkg,
-				MetadataType: pkg.ApkMetadataType,
-				Metadata: pkg.ApkMetadata{
+				Name: "ruby-rake",
+				Type: pkg.ApkPkg,
+				Metadata: pkg.ApkDBEntry{
 					Package:       "ruby-rake",
 					URL:           "https://www.ruby-lang.org/",
 					OriginPackage: "ruby",
@@ -116,7 +114,7 @@ func Test_candidateProductsForAPK(t *testing.T) {
 		{
 			name: "py3-cryptography Package",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package: "py3-cryptography",
 				},
 			},
@@ -125,7 +123,7 @@ func Test_candidateProductsForAPK(t *testing.T) {
 		{
 			name: "py2-pypdf with explicit different origin",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package:       "py2-pypdf",
 					OriginPackage: "abcdefg",
 				},
@@ -135,7 +133,7 @@ func Test_candidateProductsForAPK(t *testing.T) {
 		{
 			name: "ruby-armadillo Package",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package: "ruby-armadillo",
 				},
 			},
@@ -144,7 +142,7 @@ func Test_candidateProductsForAPK(t *testing.T) {
 		{
 			name: "python-3.6",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package: "python-3.6",
 				},
 			},
@@ -153,7 +151,7 @@ func Test_candidateProductsForAPK(t *testing.T) {
 		{
 			name: "ruby-3.6",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package: "ruby-3.6",
 					URL:     "https://www.ruby-lang.org/",
 				},
@@ -163,7 +161,7 @@ func Test_candidateProductsForAPK(t *testing.T) {
 		{
 			name: "make",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package: "make",
 					URL:     "https://www.gnu.org/software/make",
 				},
@@ -173,7 +171,7 @@ func Test_candidateProductsForAPK(t *testing.T) {
 		{
 			name: "ruby-rake with matching origin",
 			pkg: pkg.Package{
-				Metadata: pkg.ApkMetadata{
+				Metadata: pkg.ApkDBEntry{
 					Package:       "ruby-rake",
 					URL:           "https://github.com/ruby/rake",
 					OriginPackage: "ruby-rake",
@@ -184,10 +182,9 @@ func Test_candidateProductsForAPK(t *testing.T) {
 		{
 			name: "ruby-rake with non-matching origin",
 			pkg: pkg.Package{
-				Name:         "ruby-rake",
-				Type:         pkg.ApkPkg,
-				MetadataType: pkg.ApkMetadataType,
-				Metadata: pkg.ApkMetadata{
+				Name: "ruby-rake",
+				Type: pkg.ApkPkg,
+				Metadata: pkg.ApkDBEntry{
 					Package:       "ruby-rake",
 					URL:           "https://www.ruby-lang.org/",
 					OriginPackage: "ruby",
@@ -206,12 +203,12 @@ func Test_candidateProductsForAPK(t *testing.T) {
 func Test_upstreamCandidates(t *testing.T) {
 	tests := []struct {
 		name     string
-		metadata pkg.ApkMetadata
+		metadata pkg.ApkDBEntry
 		expected []upstreamCandidate
 	}{
 		{
 			name: "gocase",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "p",
 			},
 			expected: []upstreamCandidate{
@@ -220,7 +217,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "same package and origin simple case",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package:       "p",
 				OriginPackage: "p",
 			},
@@ -230,7 +227,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "different package and origin",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package:       "p",
 				OriginPackage: "origin",
 			},
@@ -240,7 +237,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "upstream python package information as qualifier py- prefix",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package:       "py-potatoes",
 				OriginPackage: "py-potatoes",
 			},
@@ -250,7 +247,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "upstream python package information as qualifier py3- prefix",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package:       "py3-potatoes",
 				OriginPackage: "py3-potatoes",
 			},
@@ -260,7 +257,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "python package with distinct origin package",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package:       "py3-non-existant",
 				OriginPackage: "abcdefg",
 			},
@@ -270,7 +267,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "upstream ruby package information as qualifier",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package:       "ruby-something",
 				OriginPackage: "ruby-something",
 			},
@@ -280,7 +277,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "ruby package with distinct origin package",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package:       "ruby-something",
 				OriginPackage: "1234567",
 			},
@@ -290,7 +287,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "postgesql-15 upstream postgresql",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "postgresql-15",
 			},
 			expected: []upstreamCandidate{
@@ -299,7 +296,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "postgesql15 upstream postgresql",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "postgresql15",
 			},
 			expected: []upstreamCandidate{
@@ -308,7 +305,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "go-1.19 upstream go",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "go-1.19",
 			},
 			expected: []upstreamCandidate{
@@ -317,7 +314,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "go1.143 upstream go",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "go1.143",
 			},
 			expected: []upstreamCandidate{
@@ -326,7 +323,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "abc-101.191.23456 upstream abc",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "abc-101.191.23456",
 			},
 			expected: []upstreamCandidate{
@@ -335,7 +332,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "abc101.191.23456 upstream abc",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "abc101.191.23456",
 			},
 			expected: []upstreamCandidate{
@@ -344,7 +341,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "abc101-12345-1045 upstream abc101-12345",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "abc101-12345-1045",
 			},
 			expected: []upstreamCandidate{
@@ -353,7 +350,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "abc101-a12345-1045 upstream abc101-a12345",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "abc101-a12345-1045",
 			},
 			expected: []upstreamCandidate{
@@ -362,7 +359,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "package starting with single digit",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "3proxy",
 			},
 			expected: []upstreamCandidate{
@@ -371,7 +368,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "package starting with multiple digits",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "356proxy",
 			},
 			expected: []upstreamCandidate{
@@ -380,7 +377,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "package composed of only digits",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "123456",
 			},
 			expected: []upstreamCandidate{
@@ -389,7 +386,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "ruby-3.6 upstream ruby",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "ruby-3.6",
 			},
 			expected: []upstreamCandidate{
@@ -398,7 +395,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "ruby3.6 upstream ruby",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "ruby3.6",
 			},
 			expected: []upstreamCandidate{
@@ -407,7 +404,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "ruby3.6-tacos upstream tacos",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "ruby3.6-tacos",
 			},
 			expected: []upstreamCandidate{
@@ -416,7 +413,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "ruby-3.6-tacos upstream tacos",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "ruby-3.6-tacos",
 			},
 			expected: []upstreamCandidate{
@@ -425,7 +422,7 @@ func Test_upstreamCandidates(t *testing.T) {
 		},
 		{
 			name: "abc1234jksajflksa",
-			metadata: pkg.ApkMetadata{
+			metadata: pkg.ApkDBEntry{
 				Package: "abc1234jksajflksa",
 			},
 			expected: []upstreamCandidate{

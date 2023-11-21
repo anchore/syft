@@ -1,5 +1,5 @@
 /*
-Package ruby bundler provides a concrete Cataloger implementation for Ruby Gemfile.lock bundler files.
+Package ruby provides a concrete Cataloger implementation relating to packages within the Ruby language ecosystem.
 */
 package ruby
 
@@ -15,11 +15,11 @@ func NewGemFileLockCataloger() *generic.Cataloger {
 
 // NewInstalledGemSpecCataloger returns a new Bundler cataloger object tailored for detecting installations of gems (e.g. Gemspec).
 func NewInstalledGemSpecCataloger() *generic.Cataloger {
-	return generic.NewCataloger("ruby-gemspec-cataloger").
+	return generic.NewCataloger("ruby-installed-gemspec-cataloger").
 		WithParserByGlobs(parseGemSpecEntries, "**/specifications/**/*.gemspec")
 }
 
-// NewGemSpecCataloger looks for gems with a broader scope.
+// NewGemSpecCataloger looks for gems without the additional requirement of the gem being installed.
 func NewGemSpecCataloger() *generic.Cataloger {
 	return generic.NewCataloger("ruby-gemspec-cataloger").
 		WithParserByGlobs(parseGemSpecEntries, "**/*.gemspec")

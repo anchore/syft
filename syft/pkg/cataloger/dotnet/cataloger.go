@@ -1,3 +1,6 @@
+/*
+Package dotnet provides a concrete Cataloger implementation relating to packages within the C#/.NET language/runtime ecosystem.
+*/
 package dotnet
 
 import (
@@ -10,6 +13,7 @@ func NewDotnetDepsCataloger() *generic.Cataloger {
 		WithParserByGlobs(parseDotnetDeps, "**/*.deps.json")
 }
 
+// NewDotnetPortableExecutableCataloger returns a new Dotnet cataloger object base on portable executable files.
 func NewDotnetPortableExecutableCataloger() *generic.Cataloger {
 	return generic.NewCataloger("dotnet-portable-executable-cataloger").
 		WithParserByGlobs(parseDotnetPortableExecutable, "**/*.dll", "**/*.exe")

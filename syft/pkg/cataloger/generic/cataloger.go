@@ -178,7 +178,7 @@ func (c *GroupedCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []art
 		// If your parser is expecting multiple file contents, ensure its signature reflects this change
 		discoveredPackages, discoveredRelationships, err := parser(resolver, &env, readClosers)
 		for _, rc := range readClosers {
-			internal.CloseAndLogError(rc, rc.VirtualPath)
+			internal.CloseAndLogError(rc, rc.Path())
 		}
 		if err != nil {
 			logger.WithFields("error", err).Warnf("cataloger failed")
@@ -292,7 +292,7 @@ func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.R
 			continue
 		}
 		discoveredPackages, discoveredRelationships, err := parser(resolver, &env, file.NewLocationReadCloser(location, contentReader))
-		internal.CloseAndLogError(contentReader, location.VirtualPath)
+		internal.CloseAndLogError(contentReader, location.AccessPath)
 		if err != nil {
 			logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
 			continue

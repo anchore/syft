@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -60,28 +62,28 @@ func newModelLicensesFromValues(licenses []string) (ml []License) {
 }
 
 func (f *licenses) UnmarshalJSON(b []byte) error {
-	var licenses []License
-	if err := json.Unmarshal(b, &licenses); err != nil {
+	var lics []License
+	if err := json.Unmarshal(b, &lics); err != nil {
 		var simpleLicense []string
 		if err := json.Unmarshal(b, &simpleLicense); err != nil {
 			return fmt.Errorf("unable to unmarshal license: %w", err)
 		}
-		licenses = newModelLicensesFromValues(simpleLicense)
+		lics = newModelLicensesFromValues(simpleLicense)
 	}
-	*f = licenses
+	*f = lics
 	return nil
 }
 
 // PackageCustomData contains ambiguous values (type-wise) from pkg.Package.
 type PackageCustomData struct {
-	MetadataType pkg.MetadataType `json:"metadataType,omitempty"`
-	Metadata     interface{}      `json:"metadata,omitempty"`
+	MetadataType string `json:"metadataType,omitempty"`
+	Metadata     any    `json:"metadata,omitempty"`
 }
 
 // packageMetadataUnpacker is all values needed from Package to disambiguate ambiguous fields during json unmarshaling.
 type packageMetadataUnpacker struct {
-	MetadataType pkg.MetadataType `json:"metadataType"`
-	Metadata     json.RawMessage  `json:"metadata"`
+	MetadataType string          `json:"metadataType"`
+	Metadata     json.RawMessage `json:"metadata"`
 }
 
 func (p *packageMetadataUnpacker) String() string {
@@ -112,32 +114,64 @@ func (p *Package) UnmarshalJSON(b []byte) error {
 }
 
 func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
-	p.MetadataType = pkg.CleanMetadataType(unpacker.MetadataType)
-
-	typ, ok := pkg.MetadataTypeByName[p.MetadataType]
-	if ok {
-		val := reflect.New(typ).Interface()
-		if len(unpacker.Metadata) > 0 {
-			if err := json.Unmarshal(unpacker.Metadata, val); err != nil {
-				return err
-			}
-		}
-		p.Metadata = reflect.ValueOf(val).Elem().Interface()
+	if unpacker.MetadataType == "" {
 		return nil
 	}
 
-	// capture unknown metadata as a generic struct
-	if len(unpacker.Metadata) > 0 {
-		var val interface{}
-		if err := json.Unmarshal(unpacker.Metadata, &val); err != nil {
-			return err
+	// check for legacy correction cases from schema v11 -> v12
+	ty := unpacker.MetadataType
+	switch unpacker.MetadataType {
+	case "HackageMetadataType":
+		for _, l := range p.Locations {
+			if strings.HasSuffix(l.RealPath, ".yaml.lock") {
+				ty = "haskell-hackage-stack-lock-entry"
+				break
+			} else if strings.HasSuffix(l.RealPath, ".yaml") {
+				ty = "haskell-hackage-stack-entry"
+				break
+			}
 		}
-		p.Metadata = val
+	case "RpmMetadata":
+		for _, l := range p.Locations {
+			if strings.HasSuffix(l.RealPath, ".rpm") {
+				ty = "rpm-archive"
+				break
+			}
+		}
+	case "RustCargoPackageMetadata":
+		var found bool
+		for _, l := range p.Locations {
+			if strings.HasSuffix(strings.ToLower(l.RealPath), "cargo.lock") {
+				ty = "rust-cargo-lock-entry"
+				found = true
+				break
+			}
+		}
+		if !found {
+			ty = "rust-cargo-audit-entry"
+		}
 	}
 
-	if p.MetadataType != "" {
+	typ := packagemetadata.ReflectTypeFromJSONName(ty)
+	if typ == nil {
+		// capture unknown metadata as a generic struct
+		if len(unpacker.Metadata) > 0 {
+			var val interface{}
+			if err := json.Unmarshal(unpacker.Metadata, &val); err != nil {
+				return err
+			}
+			p.Metadata = val
+		}
+
 		return errUnknownMetadataType
 	}
 
+	val := reflect.New(typ).Interface()
+	if len(unpacker.Metadata) > 0 {
+		if err := json.Unmarshal(unpacker.Metadata, val); err != nil {
+			return err
+		}
+	}
+	p.Metadata = reflect.ValueOf(val).Elem().Interface()
 	return nil
 }

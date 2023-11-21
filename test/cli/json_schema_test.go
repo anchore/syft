@@ -37,11 +37,6 @@ func TestJSONSchema(t *testing.T) {
 			fixture:    imageFixture,
 		},
 		{
-			name:       "power-user:image:docker-archive:pkg-coverage",
-			subcommand: "power-user",
-			fixture:    imageFixture,
-		},
-		{
 			name:       "packages:dir:pkg-coverage",
 			subcommand: "packages",
 			args:       []string{"-o", "json"},

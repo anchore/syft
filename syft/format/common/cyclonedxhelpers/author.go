@@ -10,9 +10,9 @@ import (
 func encodeAuthor(p pkg.Package) string {
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
-		case pkg.NpmPackageJSONMetadata:
+		case pkg.NpmPackage:
 			return metadata.Author
-		case pkg.PythonPackageMetadata:
+		case pkg.PythonPackage:
 			author := metadata.Author
 			if metadata.AuthorEmail != "" {
 				if author == "" {
@@ -21,7 +21,7 @@ func encodeAuthor(p pkg.Package) string {
 				author += fmt.Sprintf(" <%s>", metadata.AuthorEmail)
 			}
 			return author
-		case pkg.GemMetadata:
+		case pkg.RubyGemspec:
 			if len(metadata.Authors) > 0 {
 				return strings.Join(metadata.Authors, ",")
 			}
@@ -33,15 +33,15 @@ func encodeAuthor(p pkg.Package) string {
 
 func decodeAuthor(author string, metadata interface{}) {
 	switch meta := metadata.(type) {
-	case *pkg.NpmPackageJSONMetadata:
+	case *pkg.NpmPackage:
 		meta.Author = author
-	case *pkg.PythonPackageMetadata:
+	case *pkg.PythonPackage:
 		parts := strings.SplitN(author, " <", 2)
 		meta.Author = parts[0]
 		if len(parts) > 1 {
 			meta.AuthorEmail = strings.TrimSuffix(parts[1], ">")
 		}
-	case *pkg.GemMetadata:
+	case *pkg.RubyGemspec:
 		meta.Authors = strings.Split(author, ",")
 	}
 }

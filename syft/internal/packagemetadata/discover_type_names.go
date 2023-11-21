@@ -14,8 +14,12 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-var metadataExceptions = strset.New(
-	"FileMetadata",
+// these are names of struct types in the pkg package that are not metadata types (thus should not be in the JSON schema)
+var knownNonMetadataTypeNames = strset.New(
+	"Package",
+	"Collection",
+	"License",
+	"LicenseSet",
 )
 
 func DiscoverTypeNames() ([]string, error) {
@@ -67,9 +71,9 @@ func findMetadataDefinitionNames(paths ...string) ([]string, error) {
 	strNames := names.List()
 	sort.Strings(strNames)
 
-	// note: 30 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
+	// note: 35 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
 	// it is really intended to catch any major issues with the generation process that would generate, say, 0 definitions.
-	if len(strNames) < 30 {
+	if len(strNames) < 35 {
 		return nil, fmt.Errorf("not enough metadata definitions found (discovered: " + fmt.Sprintf("%d", len(strNames)) + ")")
 	}
 
@@ -101,23 +105,51 @@ func findMetadataDefinitionNamesInFile(path string) ([]string, []string, error) 
 				continue
 			}
 
-			structType, ok := spec.Type.(*ast.StructType)
-			if !ok {
+			name := spec.Name.String()
+
+			// only look for exported types
+			if !isMetadataTypeCandidate(name) {
 				continue
 			}
 
-			// check if the struct type ends with "Metadata"
-			name := spec.Name.String()
-
-			// only look for exported types that end with "Metadata"
-			if isMetadataTypeCandidate(name) {
-				// print the full declaration of the struct type
-				metadataDefinitions = append(metadataDefinitions, name)
-				usedTypeNames = append(usedTypeNames, typeNamesUsedInStruct(structType)...)
+			structType := extractStructType(spec.Type)
+			if structType == nil {
+				continue
 			}
+
+			metadataDefinitions = append(metadataDefinitions, name)
+			usedTypeNames = append(usedTypeNames, typeNamesUsedInStruct(structType)...)
 		}
 	}
 	return metadataDefinitions, usedTypeNames, nil
+}
+
+func extractStructType(exp ast.Expr) *ast.StructType {
+	var structType *ast.StructType
+	switch ty := exp.(type) {
+	case *ast.StructType:
+		// this is a standard definition:
+		// type FooMetadata struct { ... }
+		structType = ty
+	case *ast.Ident:
+		if ty.Obj == nil {
+			return nil
+		}
+
+		// this might be a type created from another type:
+		// type FooMetadata BarMetadata
+		// ... but we need to check that the other type definition is a struct type
+		typeSpec, ok := ty.Obj.Decl.(*ast.TypeSpec)
+		if !ok {
+			return nil
+		}
+		nestedStructType, ok := typeSpec.Type.(*ast.StructType)
+		if !ok {
+			return nil
+		}
+		structType = nestedStructType
+	}
+	return structType
 }
 
 func typeNamesUsedInStruct(structType *ast.StructType) []string {
@@ -144,7 +176,6 @@ func typeNamesUsedInStruct(structType *ast.StructType) []string {
 
 func isMetadataTypeCandidate(name string) bool {
 	return len(name) > 0 &&
-		strings.HasSuffix(name, "Metadata") &&
 		unicode.IsUpper(rune(name[0])) && // must be exported
-		!metadataExceptions.Has(name)
+		!knownNonMetadataTypeNames.Has(name)
 }

@@ -22,6 +22,7 @@ import (
 func Test_LocalLicenseSearch(t *testing.T) {
 	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
 	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
+	loc3 := file.NewLocation("github.com/someorg/strangelicense@v1.2.3/LiCeNsE.tXt")
 
 	tests := []struct {
 		name     string
@@ -46,6 +47,16 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
 				Locations:      file.NewLocationSet(loc2),
+			},
+		},
+		{
+			name:    "github.com/someorg/strangelicense",
+			version: "v1.2.3",
+			expected: pkg.License{
+				Value:          "Apache-2.0",
+				SPDXExpression: "Apache-2.0",
+				Type:           license.Concluded,
+				Locations:      file.NewLocationSet(loc3),
 			},
 		},
 	}

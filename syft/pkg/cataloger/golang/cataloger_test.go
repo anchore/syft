@@ -30,7 +30,7 @@ func Test_Mod_Cataloger_Globs(t *testing.T) {
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
 				IgnoreUnfulfilledPathResponses("src/go.sum").
-				TestCataloger(t, NewGoModFileCataloger(GoCatalogerOpts{}))
+				TestCataloger(t, NewGoModuleFileCataloger(GoCatalogerOpts{}))
 		})
 	}
 }

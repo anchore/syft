@@ -1,5 +1,5 @@
 /*
-Package golang provides a concrete Cataloger implementation for go.mod files.
+Package golang provides a concrete Cataloger implementation relating to packages within the Go language ecosystem.
 */
 package golang
 
@@ -19,19 +19,19 @@ import (
 
 var versionCandidateGroups = regexp.MustCompile(`(?P<version>\d+(\.\d+)?(\.\d+)?)(?P<candidate>\w*)`)
 
-// NewGoModFileCataloger returns a new Go module cataloger object.
-func NewGoModFileCataloger(opts GoCatalogerOpts) pkg.Cataloger {
+// NewGoModuleFileCataloger returns a new cataloger object that searches within go.mod files.
+func NewGoModuleFileCataloger(opts GoCatalogerOpts) pkg.Cataloger {
 	c := goModCataloger{
 		licenses: newGoLicenses(opts),
 	}
 	return &progressingCataloger{
 		progress: c.licenses.progress,
-		cataloger: generic.NewCataloger("go-mod-file-cataloger").
+		cataloger: generic.NewCataloger("go-module-file-cataloger").
 			WithParserByGlobs(c.parseGoModFile, "**/go.mod"),
 	}
 }
 
-// NewGoModuleBinaryCataloger returns a new Golang cataloger object.
+// NewGoModuleBinaryCataloger returns a new cataloger object that searches within binaries built by the go compiler.
 func NewGoModuleBinaryCataloger(opts GoCatalogerOpts) pkg.Cataloger {
 	c := goBinaryCataloger{
 		licenses: newGoLicenses(opts),
@@ -58,7 +58,7 @@ func (p *progressingCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, [
 	goCompilerPkgs := []pkg.Package{}
 	totalLocations := file.NewLocationSet()
 	for _, goPkg := range pkgs {
-		mValue, ok := goPkg.Metadata.(pkg.GolangBinMetadata)
+		mValue, ok := goPkg.Metadata.(pkg.GolangBinaryBuildinfoEntry)
 		if !ok {
 			continue
 		}
@@ -82,15 +82,15 @@ func newGoStdLib(version string, location file.LocationSet) *pkg.Package {
 		return nil
 	}
 	goCompilerPkg := &pkg.Package{
-		Name:         "stdlib",
-		Version:      version,
-		PURL:         packageURL("stdlib", strings.TrimPrefix(version, "go")),
-		CPEs:         []cpe.CPE{stdlibCpe},
-		Locations:    location,
-		Language:     pkg.Go,
-		Type:         pkg.GoModulePkg,
-		MetadataType: pkg.GolangBinMetadataType,
-		Metadata: pkg.GolangBinMetadata{
+		Name:      "stdlib",
+		Version:   version,
+		PURL:      packageURL("stdlib", strings.TrimPrefix(version, "go")),
+		CPEs:      []cpe.CPE{stdlibCpe},
+		Locations: location,
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("BSD-3-Clause")),
+		Language:  pkg.Go,
+		Type:      pkg.GoModulePkg,
+		Metadata: pkg.GolangBinaryBuildinfoEntry{
 			GoCompiledVersion: version,
 		},
 	}

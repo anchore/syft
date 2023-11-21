@@ -40,7 +40,7 @@ func parseConanfile(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 			inRequirements = false
 		}
 
-		m := pkg.ConanMetadata{
+		m := pkg.ConanfileEntry{
 			Ref: strings.Trim(line, "\n"),
 		}
 

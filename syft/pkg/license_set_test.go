@@ -139,7 +139,7 @@ func TestLicenseSet_Add(t *testing.T) {
 }
 
 func defaultLocationComparer(x, y file.Location) bool {
-	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
+	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.AccessPath, y.AccessPath)
 }
 
 func defaultLicenseComparer(x, y License) bool {

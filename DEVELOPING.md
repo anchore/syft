@@ -61,37 +61,29 @@ For more information on this setup and troubleshooting see [issue 1895](https://
 
 ## Architecture
 
-Syft is used to generate a Software Bill of Materials (SBOM) from different kinds of input.
-
-### Code organization for the cmd package
-
-Syft's entrypoint can be found in the `cmd` package at `cmd/syft/main.go`. `main.go` builds a new syft `cli` via `cli.New()` 
-and then executes the `cli` via `cli.Execute()`. The `cli` package is responsible for parsing command line arguments, 
-setting up the application context and configuration, and executing the application. Each of syft's commands 
-(e.g. `packages`, `attest`, `version`) are implemented as a `cobra.Command` in their respective `<command>.go` files. 
-They are registered in `syft/cli/commands/go`.
+At a high level, this is the package structure of syft:
 ```
-.
-└── syft/
-    ├── cli/
-    │   ├── attest/
-    │   ├── attest.go
-    │   ├── commands.go
-    │   ├── completion.go
-    │   ├── convert/
-    │   ├── convert.go
-    │   ├── eventloop/
-    │   ├── options/
-    │   ├── packages/
-    │   ├── packages.go
-    │   ├── poweruser/
-    │   ├── poweruser.go
-    │   └── version.go
-    └── main.go
+./cmd/syft/
+│   ├── cli/
+│   │   ├── cli.go          // where all commands are wired up
+│   │   ├── commands/       // all command implementations
+│   │   ├── options/        // all command flags and configuration options
+│   │   └── ui/             // all handlers for events that are shown on the UI
+│   └── main.go             // entrypoint for the application
+└── syft/                   // the "core" syft library
+    ├── format/             // contains code to encode or decode to and from SBOM formats
+    ├── pkg/                // contains code to catalog packages from a source
+    ├── sbom/               // contains the definition of an SBOM
+    └── source/             // contains code to create a source object for some input type (e.g. container image, directory, etc)
 ```
 
-#### Execution flow
+Syft's core library is implemented in the `syft` package and subpackages, where the major packages are:
 
+- the `syft/source` package produces a `source.Source` object that can be used to catalog a directory, container, and other source types.
+- the `syft` package contains a single function that can take a `source.Source` object and catalog it, producing an `sbom.SBOM` object
+- the `syft/format` package contains the ability to encode and decode SBOMs to and from different SBOM formats (such as SPDX and CycloneDX)
+
+The `cmd` pacakge at the highest level execution flow wires up [`spf13/cobra`](https://github.com/spf13/cobra) commands for execution in the main application:
 ```mermaid
 sequenceDiagram
     participant main as cmd/syft/main
@@ -115,24 +107,7 @@ sequenceDiagram
     Note right of cmd: Execute SINGLE command from USER
 ```
 
-### Code organization for syft library
-
-Syft's core library (see, exported) functionality is implemented in the `syft` package. The `syft` package is responsible for organizing the core
-SBOM data model, it's translated output formats, and the core SBOM generation logic.
-
-- analysis creates a static SBOM which can be encoded and decoded
-- format objects, should strive to not add or enrich data in encoding that could otherwise be done during analysis
-- package catalogers and their organization can be viewed/added to the `syft/pkg/cataloger` package 
-- file catalogers and their organization can be viewed/added to the `syft/file` package
-- The source package provides an abstraction to allow a user to loosely define a data source that can be cataloged
-
-#### Code example of syft as a library
-
-Here is a gist of using syft as a library to generate a SBOM for a docker image: [link](https://gist.github.com/wagoodman/57ed59a6d57600c23913071b8470175b).
-The execution flow for the example is detailed below.
-
-#### Execution flow examples for the syft library
-
+The `packages` command uses the core library to generate an SBOM for the given user input:
 ```mermaid
 sequenceDiagram
     participant source as source.New(ubuntu:latest)
@@ -151,6 +126,42 @@ sequenceDiagram
     Note right of catalog: cataloger configuration is done based on src
 ```
 
+Additionally, here is a [gist of using syft as a library](https://gist.github.com/spiffcs/3027638b7ba904d07e482a712bc00d3d) to generate a SBOM for a docker image.
+
+
+### `pkg.Package` object
+
+The `pkg.Package` object is a core data structure that represents a software package. Fields like `name` and `version` probably don't need
+a detailed explanation, but some of the other fields are worth a quick overview:
+
+- `FoundBy`: the name of the cataloger that discovered this package (e.g. `python-pip-cataloger`).
+- `Locations`: these are the set of paths and layer ids that were parsed to discover this package (e.g. `python-pip-cataloger`).
+- `Language`: the language of the package (e.g. `python`).
+- `Type`: this is a high-level categorization of the ecosystem the package resides in. For instance, even if the package is a egg, wheel, or requirements.txt reference, it is still logically a "python" package. Not all package types align with a language (e.g. `rpm`) but it is common.
+- `Metadata`: specialized data for specific location(s) parsed. We should try and raise up as much raw information that seems useful. As a rule of thumb the object here should be as flat as possible and use the raw names and values from the underlying source material parsed.
+
+When `pkg.Package` is serialized an additional `MetadataType` is shown. This is a label that helps consumers understand the datashape of the `Metadata` field.
+
+By convention the `MetadataType` value should follow these rules of thumb:
+
+- Only use lowercase letters, numbers, and hyphens. Use hyphens to separate words.
+- **Try to anchor the name in the ecosystem, language, or packaging tooling it belongs to**. For a package manager for a language ecosystem the language, framework or runtime should be used as a prefix. For instance `pubspec-lock` is an OK name, but `dart-pubspec-lock` is better. For an OS package manager this is not necessary (e.g. `apk-db-entry` is a good name, but `alpine-apk-db-entry` is not since `alpine` and the `a` in `apk` is redundant).
+- **Be as specific as possible to what the data represents**. For instance `ruby-gem` is NOT a good `MetadataType` value, but `ruby-gemspec` is. Why? Ruby gem information can come from a gemspec file or a Gemfile.lock, which are very different. The latter name provides more context as to what to expect.
+- **Should describe WHAT the data is, NOT HOW it's used**. For instance `r-description-installed-file` is NOT a good `MetadataType` value since it's trying to convey that we use the DESCRIPTION file in the R ecosystem to detect installed packages. Instead simply describe what the DESCRIPTION file is itself without context of how it's used: `r-description`.
+- **Use the `lock` suffix** to distinct between manifest files that loosely describe package version requirements vs files that strongly specify one and only one version of a package ("lock" files). These should only be used with respect to package managers that have the guide and lock distinction, but would not be appropriate otherwise (e.g. `rpm` does not have a guide vs lock, so `lock` should NOT be used to describe a db entry).
+- **Use the `archive` suffix to indicate a package archive** (e.g. rpm file, apk file, etc) that describes the contents of the package. For example an RPM file that was cataloged would have a `rpm-archive` metadata type (not to be confused with an RPM DB record entry which would be `rpm-db-entry`).
+- **Use the `entry` suffix** to indicate information about a package that was found as a single entry within file that has multiple package entries. If the entry was found within a DB or a flat-file store for an OS package manager, you should use `db-entry`.
+- **Should NOT contain the phrase `package`**, though exceptions are allowed (say if the canonical name literally has the phrase package in it).
+- **Should NOT contain have a `file` suffix** unless the canonical name has the term "file", such as a `pipfile` or `gemfile`. An example of a bad name for this rule is`ruby-gemspec-file`; a better name would be `ruby-gemspec`.
+- **Should NOT contain the exact filename+extensions**. For instance `pipfile.lock` shouldn't really be in the name, instead try and describe what the file is: `python-pipfile-lock` (but shouldn't this be `python-pip-lock` you might ask? No, since the `pip` package manger is not related to the `pipfile` project).
+- **Should NOT contain the phrase `metadata`**, unless the canonical name has this term.
+- **Should represent a single use case**. For example, trying to describe Hackage metadata with a single `HackageMetadata` struct (and thus `MetadataType`) is not allowed since it represents 3 mutually exclusive use cases: representing a `stack.yaml`, `stack.lock`, or `cabal.project` file. Instead, each of these should have their own struct types and `MetadataType` values.
+
+There are other cases that are not covered by these rules... and that's ok! The goal is to provide a consistent naming scheme that is easy to understand and use when it's applicable. If the rules do not exactly apply in your situation then just use your best judgement (or amend these rules as needed whe new common cases come up).
+
+What if the underlying parsed data represents multiple files? There are two approaches to this:
+- use the primary file to represent all the data. For instance, though the `dpkg-cataloger` looks at multiple files to get all information about a package, it's the `status` file that gets represented.
+- nest each individual file's data under the `Metadata` field. For instance, the `java-archive-cataloger` may find information from on or all of the files: `pom.xml`, `pom.properties`, and `MANIFEST.MF`. However, the metadata is simply `java-metadata' with each possibility as a nested optional field.
 
 ### Syft Catalogers
 
@@ -168,6 +179,14 @@ From a high level catalogers have the following properties:
 
 - _Packages created by the cataloger should not be mutated after they are created_. There is one exception made for adding CPEs to a package after the cataloging phase, but that will most likely be moved back into the cataloger in the future.
 
+
+Cataloger names should be unique and named with the following rules of thumb in mind:
+
+- Must end with `-cataloger`
+- Use lowercase letters, numbers, and hyphens only
+- Use hyphens to separate words
+- Catalogers for language ecosystems should start with the language name (e.g. `python-` for a cataloger that raises up python packages)
+- Distinct between when the cataloger is searching for evidence of installed packages vs declared packages. For example, there are currently two different gemspec-based catalogers, the `ruby-gemspec-cataloger` and `ruby-installed-gemspec-cataloger`, where the latter requires that the gemspec is found within a `specifications` directory (which means it was installed, not just at the root of a source repo).
 
 #### Building a new Cataloger
 

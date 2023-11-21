@@ -15,7 +15,7 @@ tools:
 
   - name: golangci-lint
     version:
-      want: v1.55.1
+      want: v1.55.2
     method: github-release
     with:
       repo: golangci/golangci-lint
@@ -29,7 +29,7 @@ tools:
 
   - name: cosign
     version:
-      want: v2.2.0
+      want: v2.2.1
     method: github-release
     with:
       repo: sigstore/cosign
@@ -43,7 +43,7 @@ tools:
 
   - name: goreleaser
     version:
-      want: v1.21.2
+      want: v1.22.1
     method: github-release
     with:
       repo: goreleaser/goreleaser
@@ -90,7 +90,7 @@ tools:
 
   - name: gh
     version:
-      want: v2.37.0
+      want: v2.39.1
     method: github-release
     with:
       repo: cli/cli

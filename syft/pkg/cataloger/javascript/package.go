@@ -20,15 +20,14 @@ func newPackageJSONRootPackage(u packageJSON, indexLocation file.Location) pkg.P
 
 	license := pkg.NewLicensesFromLocation(indexLocation, licenseCandidates...)
 	p := pkg.Package{
-		Name:         u.Name,
-		Version:      u.Version,
-		PURL:         packageURL(u.Name, u.Version),
-		Locations:    file.NewLocationSet(indexLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Language:     pkg.JavaScript,
-		Licenses:     pkg.NewLicenseSet(license...),
-		Type:         pkg.NpmPkg,
-		MetadataType: pkg.NpmPackageJSONMetadataType,
-		Metadata: pkg.NpmPackageJSONMetadata{
+		Name:      u.Name,
+		Version:   u.Version,
+		PURL:      packageURL(u.Name, u.Version),
+		Locations: file.NewLocationSet(indexLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Language:  pkg.JavaScript,
+		Licenses:  pkg.NewLicenseSet(license...),
+		Type:      pkg.NpmPkg,
+		Metadata: pkg.NpmPackage{
 			Name:        u.Name,
 			Version:     u.Version,
 			Description: u.Description,
@@ -42,6 +41,54 @@ func newPackageJSONRootPackage(u packageJSON, indexLocation file.Location) pkg.P
 	p.SetID()
 
 	return p
+}
+
+func newPackageLockV1Package(resolver file.Resolver, location file.Location, name string, u packageLockDependency) pkg.Package {
+	version := u.Version
+
+	const aliasPrefixPackageLockV1 = "npm:"
+
+	// Handles type aliases https://github.com/npm/rfcs/blob/main/implemented/0001-package-aliases.md
+	if strings.HasPrefix(version, aliasPrefixPackageLockV1) {
+		// this is an alias.
+		// `"version": "npm:canonical-name@X.Y.Z"`
+		canonicalPackageAndVersion := version[len(aliasPrefixPackageLockV1):]
+		versionSeparator := strings.LastIndex(canonicalPackageAndVersion, "@")
+
+		name = canonicalPackageAndVersion[:versionSeparator]
+		version = canonicalPackageAndVersion[versionSeparator+1:]
+	}
+
+	return finalizeLockPkg(
+		resolver,
+		location,
+		pkg.Package{
+			Name:      name,
+			Version:   version,
+			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:      packageURL(name, version),
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: u.Resolved, Integrity: u.Integrity},
+		},
+	)
+}
+
+func newPackageLockV2Package(resolver file.Resolver, location file.Location, name string, u packageLockPackage) pkg.Package {
+	return finalizeLockPkg(
+		resolver,
+		location,
+		pkg.Package{
+			Name:      name,
+			Version:   u.Version,
+			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, u.License...)...),
+			PURL:      packageURL(name, u.Version),
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: u.Resolved, Integrity: u.Integrity},
+		},
+	)
 }
 
 func finalizeLockPkg(resolver file.Resolver, location file.Location, p pkg.Package) pkg.Package {
@@ -121,54 +168,4 @@ func packageURL(name, version string) string {
 		nil,
 		"",
 	).ToString()
-}
-
-func newPackageLockV1Package(resolver file.Resolver, location file.Location, name string, u packageLockDependency) pkg.Package {
-	version := u.Version
-
-	const aliasPrefixPackageLockV1 = "npm:"
-
-	// Handles type aliases https://github.com/npm/rfcs/blob/main/implemented/0001-package-aliases.md
-	if strings.HasPrefix(version, aliasPrefixPackageLockV1) {
-		// this is an alias.
-		// `"version": "npm:canonical-name@X.Y.Z"`
-		canonicalPackageAndVersion := version[len(aliasPrefixPackageLockV1):]
-		versionSeparator := strings.LastIndex(canonicalPackageAndVersion, "@")
-
-		name = canonicalPackageAndVersion[:versionSeparator]
-		version = canonicalPackageAndVersion[versionSeparator+1:]
-	}
-
-	return finalizeLockPkg(
-		resolver,
-		location,
-		pkg.Package{
-			Name:         name,
-			Version:      version,
-			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			PURL:         packageURL(name, version),
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
-		},
-	)
-}
-
-func newPackageLockV2Package(resolver file.Resolver, location file.Location, name string, u packageLockPackage) pkg.Package {
-	return finalizeLockPkg(
-		resolver,
-		location,
-		pkg.Package{
-			Name:         name,
-			Version:      u.Version,
-			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, u.License...)...),
-			PURL:         packageURL(name, u.Version),
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Metadata:     pkg.NpmPackageLockJSONMetadata{Resolved: u.Resolved, Integrity: u.Integrity},
-		},
-	)
 }

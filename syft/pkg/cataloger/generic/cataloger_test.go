@@ -20,7 +20,7 @@ func Test_WithParserByGlobColocation(t *testing.T) {
 		var relationships []artifact.Relationship
 
 		for _, reader := range readers {
-			matchedFilesPaths[reader.AccessPath()] = true
+			matchedFilesPaths[reader.Path()] = true
 		}
 		return packages, relationships, nil
 	}
@@ -51,7 +51,7 @@ func Test_WithParserByGlobColocation(t *testing.T) {
 func Test_Cataloger(t *testing.T) {
 	allParsedPaths := make(map[string]bool)
 	parser := func(resolver file.Resolver, env *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-		allParsedPaths[reader.AccessPath()] = true
+		allParsedPaths[reader.Path()] = true
 		contents, err := io.ReadAll(reader)
 		require.NoError(t, err)
 

@@ -419,9 +419,9 @@ func Test_parseSBOM(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, tt.fixture).
-				IgnorePackageFields("Metadata", "MetadataType").
+				IgnorePackageFields("Metadata").
 				Expects(tt.wantPkgs, tt.wantRelationships).
-				TestCataloger(t, NewSBOMCataloger())
+				TestCataloger(t, NewCataloger())
 		})
 	}
 }
@@ -456,7 +456,7 @@ func Test_Cataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewSBOMCataloger())
+				TestCataloger(t, NewCataloger())
 		})
 	}
 }

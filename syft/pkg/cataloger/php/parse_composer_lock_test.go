@@ -22,10 +22,9 @@ func TestParseComposerFileLock(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 			),
-			Language:     pkg.PHP,
-			Type:         pkg.PhpComposerPkg,
-			MetadataType: pkg.PhpComposerJSONMetadataType,
-			Metadata: pkg.PhpComposerJSONMetadata{
+			Language: pkg.PHP,
+			Type:     pkg.PhpComposerPkg,
+			Metadata: pkg.PhpComposerLockEntry{
 				Name:    "adoy/fastcgi-client",
 				Version: "1.0.2",
 				Source: pkg.PhpComposerExternalReference{
@@ -63,9 +62,8 @@ func TestParseComposerFileLock(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 			),
-			Type:         pkg.PhpComposerPkg,
-			MetadataType: pkg.PhpComposerJSONMetadataType,
-			Metadata: pkg.PhpComposerJSONMetadata{
+			Type: pkg.PhpComposerPkg,
+			Metadata: pkg.PhpComposerLockEntry{
 				Name:    "alcaeus/mongo-php-adapter",
 				Version: "1.1.11",
 				Source: pkg.PhpComposerExternalReference{

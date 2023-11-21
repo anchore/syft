@@ -25,7 +25,7 @@ vars:
   SNAPSHOT_BIN: "{{ .PROJECT_ROOT }}/{{ .SNAPSHOT_DIR }}/{{ .OS }}-build_{{ .OS }}_{{ .ARCH }}/{{ .PROJECT }}"
   SNAPSHOT_CMD: "{{ .TOOL_DIR }}/goreleaser release --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --skip=publish --skip=sign"
   BUILD_CMD:    "{{ .TOOL_DIR }}/goreleaser build   --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --single-target"
-  RELEASE_CMD:  "{{ .TOOL_DIR }}/goreleaser release --config {{ .TMP_DIR }}/goreleaser.yaml --clean --release-notes {{ .CHANGELOG }}"
+  RELEASE_CMD:  "{{ .TOOL_DIR }}/goreleaser release --clean --release-notes {{ .CHANGELOG }}"
   VERSION:
     sh: git describe --dirty --always --tags
 
@@ -174,7 +174,9 @@ tasks:
 
   unit:
     desc: Run unit tests
-    deps: [tmpdir]
+    deps:
+      - tmpdir
+      - fixtures
     vars:
       TEST_PKGS:
         sh: "go list ./... | grep -v {{ .OWNER }}/{{ .PROJECT }}/test | tr '\n' ' '"
@@ -261,7 +263,7 @@ tasks:
       - syft/pkg/cataloger/binary/test-fixtures/cache.fingerprint
       - syft/pkg/cataloger/java/test-fixtures/java-builds/cache.fingerprint
       - syft/pkg/cataloger/golang/test-fixtures/archs/binaries.fingerprint
-      - syft/pkg/cataloger/rpm/test-fixtures/rpms.fingerprint
+      - syft/pkg/cataloger/redhat/test-fixtures/rpms.fingerprint
       - syft/pkg/cataloger/kernel/test-fixtures/cache.fingerprint
       - test/install/cache.fingerprint
       - test/cli/test-fixtures/cache.fingerprint
@@ -275,7 +277,7 @@ tasks:
       # for GO BINARY test fixtures
       - "cd syft/pkg/cataloger/golang/test-fixtures/archs && make binaries.fingerprint"
       # for RPM test fixtures
-      - "cd syft/pkg/cataloger/rpm/test-fixtures && make rpms.fingerprint"
+      - "cd syft/pkg/cataloger/redhat/test-fixtures && make rpms.fingerprint"
       # for Kernel test fixtures
       - "cd syft/pkg/cataloger/kernel/test-fixtures && make cache.fingerprint"
       # for INSTALL integration test fixtures
@@ -287,7 +289,7 @@ tasks:
     desc: Generate test fixtures
     cmds:
       - "cd syft/pkg/cataloger/java/test-fixtures/java-builds && make"
-      - "cd syft/pkg/cataloger/rpm/test-fixtures && make"
+      - "cd syft/pkg/cataloger/redhat/test-fixtures && make"
       - "cd syft/pkg/cataloger/binary/test-fixtures && make"
 
   show-test-image-cache:
@@ -365,7 +367,7 @@ tasks:
   generate-json-schema:
     desc: Generate a new JSON schema
     cmds:
-      - "cd syft/internal && go generate . && cd jsonschema && go run ."
+      - "cd syft/internal && go generate . && cd jsonschema && go run . && go fmt ../..."
 
   generate-license-list:
     desc: Generate an updated license processing code off of the latest available SPDX license list
@@ -375,8 +377,9 @@ tasks:
 
   generate-cpe-dictionary-index:
     desc: Generate the CPE index based off of the latest available CPE dictionary
+    dir: "syft/pkg/cataloger/common/cpe/dictionary"
     cmds:
-      - "go run ./cmd/cpe-dictionary-indexer/main.go"
+      - "go generate"
 
 
   ## Build-related targets #################################

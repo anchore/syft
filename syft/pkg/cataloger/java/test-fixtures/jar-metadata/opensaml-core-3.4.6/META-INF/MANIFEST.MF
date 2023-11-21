@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Automatic-Module-Name: org.opensaml.core
+Built-By: putmanb
+Build-Jdk: 1.7.0_80
+Created-By: Apache Maven 3.6.3
+Main-Class: org.opensaml.core.Version
+
+Name: org/opensaml/core/
+Implementation-Vendor: opensaml.org
+Implementation-Title: opensaml-core
+Implementation-Version: 3.4.6
+

@@ -213,6 +213,12 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 
 	switch c.Type {
 	case cyclonedx.ComponentTypeContainer:
+		var labels map[string]string
+
+		if meta.Properties != nil {
+			labels = decodeProperties(*meta.Properties, "syft:image:labels:")
+		}
+
 		return source.Description{
 			ID: "",
 			// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
@@ -221,6 +227,7 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 				UserInput:      c.Name,
 				ID:             c.BOMRef,
 				ManifestDigest: c.Version,
+				Labels:         labels,
 			},
 		}
 	case cyclonedx.ComponentTypeFile:

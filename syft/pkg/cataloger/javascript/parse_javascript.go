@@ -28,24 +28,24 @@ func parseJavaScript(resolver file.Resolver, e *generic.Environment, readers []f
 	for _, reader := range readers {
 		// in the case we find matching files in the node_modules directories, skip those
 		// as the whole purpose of the lock file is for the specific dependencies of the root project
-		if pathContainsNodeModulesDirectory(reader.AccessPath()) {
+		if pathContainsNodeModulesDirectory(reader.Path()) {
 			return nil, nil, nil
 		}
 
-		path := reader.Location.RealPath
-		if filter.JavaScriptYarnLock(path) {
-			yarnMap[path2dir(path)] = parseYarnLockFile(resolver, reader)
+		thePath := reader.Location.Path()
+		if filter.JavaScriptYarnLock(thePath) {
+			yarnMap[path2dir(thePath)] = parseYarnLockFile(resolver, reader)
 			yarnLocation = reader.Location
 		}
-		if filter.JavaScriptPackageJSON(path) {
+		if filter.JavaScriptPackageJSON(thePath) {
 			js, err := parsePackageJSONFile(resolver, e, reader)
 			if err != nil {
 				return nil, nil, err
 			}
-			js.File = path
+			js.File = thePath
 			jsonMap[js.Name] = js
 		}
-		if filter.JavaScriptPackageLock(path) {
+		if filter.JavaScriptPackageLock(thePath) {
 			lock, err := parsePackageLockFile(reader)
 			if err != nil {
 				return nil, nil, err
@@ -53,10 +53,10 @@ func parseJavaScript(resolver file.Resolver, e *generic.Environment, readers []f
 			lockMap[lock.Name] = &lock
 			lockLocation = reader.Location
 		}
-		if filter.JavaScriptPmpmLock(path) {
+		if filter.JavaScriptPmpmLock(thePath) {
 			pMap, pLock := parsePnpmLockFile(reader)
-			pnpmMap[path2dir(path)] = pMap
-			pnpmLock[path2dir(path)] = pLock
+			pnpmMap[path2dir(thePath)] = pMap
+			pnpmLock[path2dir(thePath)] = pLock
 			pnpmLocation = reader.Location
 		}
 	}

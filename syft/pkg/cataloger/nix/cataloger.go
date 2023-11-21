@@ -1,3 +1,6 @@
+/*
+Package nix provides a concrete Cataloger implementation for packages within the Nix packaging ecosystem.
+*/
 package nix
 
 import (
@@ -11,10 +14,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-const (
-	catalogerName = "nix-store-cataloger"
-	nixStoreGlob  = "**/nix/store/*"
-)
+const catalogerName = "nix-store-cataloger"
 
 // StoreCataloger finds package outputs installed in the Nix store location (/nix/store/*).
 type StoreCataloger struct{}
@@ -32,7 +32,7 @@ func (c *StoreCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artif
 	var pkgs []pkg.Package
 	var filesByPath = make(map[string]*file.LocationSet)
 	for location := range resolver.AllLocations() {
-		matchesStorePath, err := doublestar.Match(nixStoreGlob, location.RealPath)
+		matchesStorePath, err := doublestar.Match("**/nix/store/*", location.RealPath)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to match nix store path: %w", err)
 		}
@@ -81,7 +81,7 @@ func (c *StoreCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artif
 }
 
 func appendFiles(p *pkg.Package, location ...file.Location) {
-	metadata, ok := p.Metadata.(pkg.NixStoreMetadata)
+	metadata, ok := p.Metadata.(pkg.NixStoreEntry)
 	if !ok {
 		log.WithFields("package", p.Name).Warn("nix package metadata missing")
 		return

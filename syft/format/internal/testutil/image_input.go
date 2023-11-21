@@ -95,48 +95,52 @@ func changeToDirectoryWithGoldenFixture(t testing.TB, testImage string) func() {
 }
 
 func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
+	// TODO: this helper function is coupled to the image-simple fixture, which seems like a bad idea
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
 	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
 
 	// populate catalog with test data
-	catalog.Add(pkg.Package{
-		Name:    "package-1",
-		Version: "1.0.1",
-		Locations: file.NewLocationSet(
-			file.NewLocationFromImage(string(ref1.RealPath), *ref1.Reference, img),
-		),
-		Type:         pkg.PythonPkg,
-		FoundBy:      "the-cataloger-1",
-		Language:     pkg.Python,
-		MetadataType: pkg.PythonPackageMetadataType,
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
-		),
-		Metadata: pkg.PythonPackageMetadata{
+	if ref1 != nil {
+		catalog.Add(pkg.Package{
 			Name:    "package-1",
 			Version: "1.0.1",
-		},
-		PURL: "a-purl-1", // intentionally a bad pURL for test fixtures
-		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
-		},
-	})
-	catalog.Add(pkg.Package{
-		Name:    "package-2",
-		Version: "2.0.1",
-		Locations: file.NewLocationSet(
-			file.NewLocationFromImage(string(ref2.RealPath), *ref2.Reference, img),
-		),
-		Type:         pkg.DebPkg,
-		FoundBy:      "the-cataloger-2",
-		MetadataType: pkg.DpkgMetadataType,
-		Metadata: pkg.DpkgMetadata{
-			Package: "package-2",
+			Locations: file.NewLocationSet(
+				file.NewLocationFromImage(string(ref1.RealPath), *ref1.Reference, img),
+			),
+			Type:     pkg.PythonPkg,
+			FoundBy:  "the-cataloger-1",
+			Language: pkg.Python,
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicense("MIT"),
+			),
+			Metadata: pkg.PythonPackage{
+				Name:    "package-1",
+				Version: "1.0.1",
+			},
+			PURL: "a-purl-1", // intentionally a bad pURL for test fixtures
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
+			},
+		})
+	}
+
+	if ref2 != nil {
+		catalog.Add(pkg.Package{
+			Name:    "package-2",
 			Version: "2.0.1",
-		},
-		PURL: "pkg:deb/debian/package-2@2.0.1",
-		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
-		},
-	})
+			Locations: file.NewLocationSet(
+				file.NewLocationFromImage(string(ref2.RealPath), *ref2.Reference, img),
+			),
+			Type:    pkg.DebPkg,
+			FoundBy: "the-cataloger-2",
+			Metadata: pkg.DpkgDBEntry{
+				Package: "package-2",
+				Version: "2.0.1",
+			},
+			PURL: "pkg:deb/debian/package-2@2.0.1",
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+			},
+		})
+	}
 }

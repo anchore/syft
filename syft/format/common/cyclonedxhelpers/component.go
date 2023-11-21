@@ -8,11 +8,21 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/common"
+	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/pkg"
 )
 
 func encodeComponent(p pkg.Package) cyclonedx.Component {
 	props := encodeProperties(p, "syft:package")
+
+	if p.Metadata != nil {
+		// encode the metadataType as a property, something that doesn't exist on the core model
+		props = append(props, cyclonedx.Property{
+			Name:  "syft:package:metadataType",
+			Value: packagemetadata.JSONName(p.Metadata),
+		})
+	}
+
 	props = append(props, encodeCPEs(p)...)
 	locations := p.Locations.ToSlice()
 	if len(locations) > 0 {
@@ -85,9 +95,9 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 
 	common.DecodeInto(p, values, "syft:package", CycloneDXFields)
 
-	p.MetadataType = pkg.CleanMetadataType(p.MetadataType)
+	metadataType := values["syft:package:metadataType"]
 
-	p.Metadata = decodePackageMetadata(values, c, p.MetadataType)
+	p.Metadata = decodePackageMetadata(values, c, metadataType)
 
 	if p.Type == "" {
 		p.Type = pkg.TypeFromPURL(p.PURL)
@@ -109,13 +119,13 @@ func decodeLocations(vals map[string]string) file.LocationSet {
 	return file.NewLocationSet(out...)
 }
 
-func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typ pkg.MetadataType) interface{} {
-	if typ != "" && c.Properties != nil {
-		metaTyp, ok := pkg.MetadataTypeByName[typ]
-		if !ok {
+func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeName string) interface{} {
+	if typeName != "" && c.Properties != nil {
+		metadataType := packagemetadata.ReflectTypeFromJSONName(typeName)
+		if metadataType == nil {
 			return nil
 		}
-		metaPtrTyp := reflect.PtrTo(metaTyp)
+		metaPtrTyp := reflect.PtrTo(metadataType)
 		metaPtr := common.Decode(metaPtrTyp, vals, "syft:metadata", CycloneDXFields)
 
 		// Map all explicit metadata properties

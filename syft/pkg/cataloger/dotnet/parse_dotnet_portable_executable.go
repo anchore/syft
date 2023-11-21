@@ -3,6 +3,8 @@ package dotnet
 import (
 	"fmt"
 	"io"
+	"regexp"
+	"strings"
 
 	"github.com/saferwall/pe"
 
@@ -40,16 +42,26 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 		return nil, nil, nil
 	}
 
-	name := versionResources["FileDescription"]
-	if name == "" {
-		log.Tracef("unable to find FileDescription in PE file: %s", f.RealPath)
+	dotNetPkg, err := buildDotNetPackage(versionResources, f)
+	if err != nil {
+		// this is not a fatal error, just log and continue
+		// TODO: consider this case for "known unknowns" (same goes for cases below)
+		log.Tracef("unable to build dotnet package: %w", err)
 		return nil, nil, nil
 	}
 
-	version := versionResources["FileVersion"]
-	if version == "" {
-		log.Tracef("unable to find FileVersion in PE file: %s", f.RealPath)
-		return nil, nil, nil
+	return []pkg.Package{dotNetPkg}, nil, nil
+}
+
+func buildDotNetPackage(versionResources map[string]string, f file.LocationReadCloser) (dnpkg pkg.Package, err error) {
+	name := findName(versionResources)
+	if name == "" {
+		return dnpkg, fmt.Errorf("unable to find FileDescription, or ProductName in PE file: %s", f.RealPath)
+	}
+
+	version := findVersion(versionResources)
+	if strings.TrimSpace(version) == "" {
+		return dnpkg, fmt.Errorf("unable to find FileVersion in PE file: %s", f.RealPath)
 	}
 
 	purl := packageurl.NewPackageURL(
@@ -61,7 +73,7 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 		"",
 	).ToString()
 
-	metadata := pkg.DotnetPortableExecutableMetadata{
+	metadata := pkg.DotnetPortableExecutableEntry{
 		AssemblyVersion: versionResources["Assembly Version"],
 		LegalCopyright:  versionResources["LegalCopyright"],
 		Comments:        versionResources["Comments"],
@@ -71,17 +83,45 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 		ProductVersion:  versionResources["ProductVersion"],
 	}
 
-	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		Locations:    file.NewLocationSet(f.Location),
-		Type:         pkg.DotnetPkg,
-		PURL:         purl,
-		MetadataType: pkg.DotnetPortableExecutableMetadataType,
-		Metadata:     metadata,
+	dnpkg = pkg.Package{
+		Name:      name,
+		Version:   version,
+		Locations: file.NewLocationSet(f.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Type:      pkg.DotnetPkg,
+		Language:  pkg.Dotnet,
+		PURL:      purl,
+		Metadata:  metadata,
 	}
 
-	p.SetID()
+	dnpkg.SetID()
 
-	return []pkg.Package{p}, nil, nil
+	return dnpkg, nil
+}
+
+func findVersion(versionResources map[string]string) string {
+	for _, key := range []string{"FileVersion"} {
+		if version, ok := versionResources[key]; ok {
+			if strings.TrimSpace(version) == "" {
+				continue
+			}
+			fields := strings.Fields(version)
+			if len(fields) > 0 {
+				return fields[0]
+			}
+		}
+	}
+	return ""
+}
+
+func findName(versionResources map[string]string) string {
+	for _, key := range []string{"FileDescription", "ProductName"} {
+		if name, ok := versionResources[key]; ok {
+			if strings.TrimSpace(name) == "" {
+				continue
+			}
+			trimmed := strings.TrimSpace(name)
+			return regexp.MustCompile(`[^a-zA-Z0-9.]+`).ReplaceAllString(trimmed, "")
+		}
+	}
+	return ""
 }

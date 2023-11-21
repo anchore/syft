@@ -44,14 +44,13 @@ func newPnpmLockPackage(resolver file.Resolver, location file.Location, p *pnpmL
 		resolver,
 		location,
 		pkg.Package{
-			Name:         p.Name,
-			Version:      p.Version,
-			Locations:    file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			PURL:         packageURL(p.Name, p.Version),
-			MetadataType: pkg.NpmPackageLockJSONMetadataType,
-			Language:     pkg.JavaScript,
-			Type:         pkg.NpmPkg,
-			Metadata: pkg.NpmPackageLockJSONMetadata{
+			Name:      p.Name,
+			Version:   p.Version,
+			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:      packageURL(p.Name, p.Version),
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{
 				Resolved:  p.Resolved,
 				Integrity: p.Integrity,
 			},
