@@ -106,7 +106,7 @@ func newPnpmPackage(resolver file.Resolver, location file.Location, name, versio
 	)
 }
 
-func newYarnLockPackage(resolver file.Resolver, location file.Location, name, version string) pkg.Package {
+func newYarnLockPackage(resolver file.Resolver, location file.Location, name, version string, resolved string, integrity string) pkg.Package {
 	return finalizeLockPkg(
 		resolver,
 		location,
@@ -117,6 +117,7 @@ func newYarnLockPackage(resolver file.Resolver, location file.Location, name, ve
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  pkg.YarnLockEntry{Resolved: resolved, Integrity: integrity},
 		},
 	)
 }

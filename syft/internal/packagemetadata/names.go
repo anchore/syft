@@ -86,6 +86,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.NixStoreEntry{}, "nix-store-entry", "NixStoreMetadata"),
 	jsonNames(pkg.NpmPackage{}, "javascript-npm-package", "NpmPackageJsonMetadata"),
 	jsonNames(pkg.NpmPackageLockEntry{}, "javascript-npm-package-lock-entry", "NpmPackageLockJsonMetadata"),
+	jsonNames(pkg.YarnLockEntry{}, "javascript-yarn-lock-entry", "YarnLockJsonMetadata"),
 	jsonNames(pkg.PhpComposerLockEntry{}, "php-composer-lock-entry", "PhpComposerJsonMetadata"),
 	jsonNamesWithoutLookup(pkg.PhpComposerInstalledEntry{}, "php-composer-installed-entry", "PhpComposerJsonMetadata"), // the legacy value is split into two types, where the other is preferred
 	jsonNames(pkg.PortageEntry{}, "portage-db-entry", "PortageMetadata"),

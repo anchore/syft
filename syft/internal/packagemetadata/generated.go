@@ -44,5 +44,6 @@ func AllTypes() []any {
 		pkg.RustBinaryAuditEntry{},
 		pkg.RustCargoLockEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
+		pkg.YarnLockEntry{},
 	}
 }
