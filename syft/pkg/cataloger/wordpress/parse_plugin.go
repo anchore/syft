@@ -2,7 +2,6 @@ package wordpress
 
 import (
 	"fmt"
-	"io"
 	"path/filepath"
 	"regexp"
 
@@ -11,6 +10,10 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+)
+
+const (
+	ContentBufferSize = 4096
 )
 
 var patterns = map[string]*regexp.Regexp{
@@ -38,14 +41,16 @@ type pluginData struct {
 func parseWordpressPluginFiles(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
+	buffer := make([]byte, ContentBufferSize)
 
-	bytes, err := io.ReadAll(reader)
+	_, err := reader.Read(buffer)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read %s file: %w", reader.Location.VirtualPath, err)
 	}
 
+	fileContent := string(buffer)
 	for field, pattern := range patterns {
-		matchMap := internal.MatchNamedCaptureGroups(pattern, string(bytes))
+		matchMap := internal.MatchNamedCaptureGroups(pattern, fileContent)
 		if value := matchMap[field]; value != "" {
 			fields[field] = value
 		}
