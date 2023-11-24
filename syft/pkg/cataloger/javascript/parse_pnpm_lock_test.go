@@ -17,11 +17,21 @@ func TestParsePnpmLock(t *testing.T) {
 
 	expectedPkgs := []pkg.Package{
 		{
+			Name:      "pnpm",
+			Version:   "0.0.0",
+			PURL:      "pkg:npm/pnpm@0.0.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
+			Type:      pkg.NpmPkg,
+		},
+		{
 			Name:      "nanoid",
 			Version:   "3.3.4",
 			PURL:      "pkg:npm/nanoid@3.3.4",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -30,6 +40,7 @@ func TestParsePnpmLock(t *testing.T) {
 			PURL:      "pkg:npm/picocolors@1.0.0",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -38,6 +49,7 @@ func TestParsePnpmLock(t *testing.T) {
 			PURL:      "pkg:npm/source-map-js@1.0.2",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -46,6 +58,7 @@ func TestParsePnpmLock(t *testing.T) {
 			PURL:      "pkg:npm/%40bcoe/v8-coverage@0.2.3",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 	}
@@ -61,11 +74,21 @@ func TestParsePnpmV6Lock(t *testing.T) {
 
 	expectedPkgs := []pkg.Package{
 		{
+			Name:      "pnpm-v6",
+			Version:   "0.0.0",
+			PURL:      "pkg:npm/pnpm-v6@0.0.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
+			Type:      pkg.NpmPkg,
+		},
+		{
 			Name:      "@testing-library/jest-dom",
 			Version:   "5.16.5",
 			PURL:      "pkg:npm/%40testing-library/jest-dom@5.16.5",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -74,6 +97,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			PURL:      "pkg:npm/%40testing-library/react@13.4.0",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -82,6 +106,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			PURL:      "pkg:npm/%40testing-library/user-event@13.5.0",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -90,6 +115,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			PURL:      "pkg:npm/react@18.2.0",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -98,6 +124,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			PURL:      "pkg:npm/react-dom@18.2.0",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -106,6 +133,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			PURL:      "pkg:npm/web-vitals@2.1.4",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -114,6 +142,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			PURL:      "pkg:npm/%40babel/core@7.21.4",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -122,6 +151,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			PURL:      "pkg:npm/%40types/eslint@8.37.0",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -130,6 +160,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			PURL:      "pkg:npm/read-cache@1.0.0",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 		{
@@ -138,6 +169,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			PURL:      "pkg:npm/schema-utils@3.1.2",
 			Locations: locationSet,
 			Language:  pkg.JavaScript,
+			Metadata:  pkg.NpmPackageLockEntry{},
 			Type:      pkg.NpmPkg,
 		},
 	}

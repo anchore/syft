@@ -13,6 +13,14 @@ func TestParsePackageLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	expectedPkgs := []pkg.Package{
 		{
+			Name:     "pkg-lock",
+			Version:  "0.0.0",
+			PURL:     "pkg:npm/pkg-lock@0.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{},
+		},
+		{
 			Name:     "@actions/core",
 			Version:  "1.6.0",
 			PURL:     "pkg:npm/%40actions/core@1.6.0",
@@ -110,62 +118,96 @@ func TestParsePackageLock(t *testing.T) {
 }
 
 func TestParsePackageLockV2(t *testing.T) {
-	fixture := "test-fixtures/pkg-lock/package-lock-2.json"
-	var expectedRelationships []artifact.Relationship
+	fixture := "test-fixtures/pkg-lock/lock-2/package-lock.json"
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+	npm := pkg.Package{
+		Name:      "npm",
+		Version:   "6.14.6",
+		Language:  pkg.JavaScript,
+		Type:      pkg.NpmPkg,
+		PURL:      "pkg:npm/npm@6.14.6",
+		Locations: locationSet,
+		Metadata:  pkg.NpmPackageLockEntry{},
+	}
+	propTypes := pkg.Package{
+		Name:     "@types/prop-types",
+		Version:  "15.7.5",
+		PURL:     "pkg:npm/%40types/prop-types@15.7.5",
+		Language: pkg.JavaScript,
+		Type:     pkg.NpmPkg,
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+		),
+		Locations: locationSet,
+		Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha1-XxnSuFqY6VWANvajysyIGUIPBc8="},
+	}
+	typesReact := pkg.Package{
+		Name:     "@types/react",
+		Version:  "18.0.17",
+		PURL:     "pkg:npm/%40types/react@18.0.17",
+		Language: pkg.JavaScript,
+		Type:     pkg.NpmPkg,
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+		),
+		Locations: locationSet,
+		Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.17.tgz", Integrity: "sha1-RYPZwyLWfv5LOak10iPtzHBQzPQ="},
+	}
+	scheduler := pkg.Package{
+		Name:     "@types/scheduler",
+		Version:  "0.16.2",
+		PURL:     "pkg:npm/%40types/scheduler@0.16.2",
+		Language: pkg.JavaScript,
+		Type:     pkg.NpmPkg,
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+		),
+		Locations: locationSet,
+		Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha1-GmL4lSVyPd4kuhsBsJK/XfitTTk="},
+	}
+	csstype := pkg.Package{
+		Name:     "csstype",
+		Version:  "3.1.0",
+		PURL:     "pkg:npm/csstype@3.1.0",
+		Language: pkg.JavaScript,
+		Type:     pkg.NpmPkg,
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+		),
+		Locations: locationSet,
+		Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.0.tgz", Integrity: "sha1-TdysNxjXh8+d8NG30VAzklyPKfI="},
+	}
+
 	expectedPkgs := []pkg.Package{
+		npm,
+		propTypes,
+		typesReact,
+		scheduler,
+		csstype,
+	}
+	expectedRelationships := []artifact.Relationship{
 		{
-			Name:     "npm",
-			Version:  "6.14.6",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			PURL:     "pkg:npm/npm@6.14.6",
-			Metadata: pkg.NpmPackageLockEntry{},
+			From: propTypes,
+			To:   typesReact,
+			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			Name:     "@types/prop-types",
-			Version:  "15.7.5",
-			PURL:     "pkg:npm/%40types/prop-types@15.7.5",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-			),
-			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha1-XxnSuFqY6VWANvajysyIGUIPBc8="},
+			From: typesReact,
+			To:   npm,
+			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			Name:     "@types/react",
-			Version:  "18.0.17",
-			PURL:     "pkg:npm/%40types/react@18.0.17",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-			),
-			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.17.tgz", Integrity: "sha1-RYPZwyLWfv5LOak10iPtzHBQzPQ="},
+			From: scheduler,
+			To:   typesReact,
+			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			Name:     "@types/scheduler",
-			Version:  "0.16.2",
-			PURL:     "pkg:npm/%40types/scheduler@0.16.2",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-			),
-			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha1-GmL4lSVyPd4kuhsBsJK/XfitTTk="},
-		},
-		{
-			Name:     "csstype",
-			Version:  "3.1.0",
-			PURL:     "pkg:npm/csstype@3.1.0",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-			),
-			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.0.tgz", Integrity: "sha1-TdysNxjXh8+d8NG30VAzklyPKfI="},
+			From: csstype,
+			To:   typesReact,
+			Type: artifact.DependencyOfRelationship,
 		},
 	}
+
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
@@ -173,50 +215,85 @@ func TestParsePackageLockV2(t *testing.T) {
 }
 
 func TestParsePackageLockV3(t *testing.T) {
-	fixture := "test-fixtures/pkg-lock/package-lock-3.json"
-	var expectedRelationships []artifact.Relationship
+	fixture := "test-fixtures/pkg-lock/lock-3/package-lock.json"
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+	lockV3Fixture := pkg.Package{
+		Name:      "lock-v3-fixture",
+		Version:   "1.0.0",
+		Language:  pkg.JavaScript,
+		Type:      pkg.NpmPkg,
+		PURL:      "pkg:npm/lock-v3-fixture@1.0.0",
+		Locations: locationSet,
+		Metadata:  pkg.NpmPackageLockEntry{},
+	}
+	propTypes := pkg.Package{
+		Name:      "@types/prop-types",
+		Version:   "15.7.5",
+		Language:  pkg.JavaScript,
+		Type:      pkg.NpmPkg,
+		PURL:      "pkg:npm/%40types/prop-types@15.7.5",
+		Locations: locationSet,
+		Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w=="},
+	}
+	typesReact := pkg.Package{
+		Name:      "@types/react",
+		Version:   "18.0.20",
+		Language:  pkg.JavaScript,
+		Type:      pkg.NpmPkg,
+		PURL:      "pkg:npm/%40types/react@18.0.20",
+		Locations: locationSet,
+		Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.20.tgz", Integrity: "sha512-MWul1teSPxujEHVwZl4a5HxQ9vVNsjTchVA+xRqv/VYGCuKGAU6UhfrTdF5aBefwD1BHUD8i/zq+O/vyCm/FrA=="},
+	}
+	scheduler := pkg.Package{
+		Name:      "@types/scheduler",
+		Version:   "0.16.2",
+		Language:  pkg.JavaScript,
+		Type:      pkg.NpmPkg,
+		PURL:      "pkg:npm/%40types/scheduler@0.16.2",
+		Locations: locationSet,
+		Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew=="},
+	}
+	csstype := pkg.Package{
+		Name:      "csstype",
+		Version:   "3.1.1",
+		Language:  pkg.JavaScript,
+		Type:      pkg.NpmPkg,
+		PURL:      "pkg:npm/csstype@3.1.1",
+		Locations: locationSet,
+		Metadata:  pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.1.tgz", Integrity: "sha512-DJR/VvkAvSZW9bTouZue2sSxDwdTN92uHjqeKVm+0dAqdfNykRzQ95tay8aXMBAAPpUiq4Qcug2L7neoRh2Egw=="},
+	}
+
 	expectedPkgs := []pkg.Package{
+		lockV3Fixture,
+		propTypes,
+		typesReact,
+		scheduler,
+		csstype,
+	}
+
+	expectedRelationships := []artifact.Relationship{
 		{
-			Name:     "lock-v3-fixture",
-			Version:  "1.0.0",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			PURL:     "pkg:npm/lock-v3-fixture@1.0.0",
-			Metadata: pkg.NpmPackageLockEntry{},
+			From: propTypes,
+			To:   typesReact,
+			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			Name:     "@types/prop-types",
-			Version:  "15.7.5",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			PURL:     "pkg:npm/%40types/prop-types@15.7.5",
-			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w=="},
+			From: typesReact,
+			To:   lockV3Fixture,
+			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			Name:     "@types/react",
-			Version:  "18.0.20",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			PURL:     "pkg:npm/%40types/react@18.0.20",
-			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.20.tgz", Integrity: "sha512-MWul1teSPxujEHVwZl4a5HxQ9vVNsjTchVA+xRqv/VYGCuKGAU6UhfrTdF5aBefwD1BHUD8i/zq+O/vyCm/FrA=="},
+			From: scheduler,
+			To:   typesReact,
+			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			Name:     "@types/scheduler",
-			Version:  "0.16.2",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			PURL:     "pkg:npm/%40types/scheduler@0.16.2",
-			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew=="},
-		},
-		{
-			Name:     "csstype",
-			Version:  "3.1.1",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			PURL:     "pkg:npm/csstype@3.1.1",
-			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.1.tgz", Integrity: "sha512-DJR/VvkAvSZW9bTouZue2sSxDwdTN92uHjqeKVm+0dAqdfNykRzQ95tay8aXMBAAPpUiq4Qcug2L7neoRh2Egw=="},
+			From: csstype,
+			To:   typesReact,
+			Type: artifact.DependencyOfRelationship,
 		},
 	}
+
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
@@ -226,6 +303,14 @@ func TestParsePackageLockV3(t *testing.T) {
 func TestParsePackageLockAlias(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	commonPkgs := []pkg.Package{
+		{
+			Name:     "alias-check",
+			Version:  "1.0.0",
+			PURL:     "pkg:npm/alias-check@1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{},
+		},
 		{
 			Name:     "case",
 			Version:  "1.6.2",
@@ -252,9 +337,9 @@ func TestParsePackageLockAlias(t *testing.T) {
 		},
 	}
 
-	packageLockV1 := "test-fixtures/pkg-lock/alias-package-lock-1.json"
-	packageLockV2 := "test-fixtures/pkg-lock/alias-package-lock-2.json"
-	packageLocks := []string{packageLockV1, packageLockV2}
+	packageLockV1 := "test-fixtures/pkg-lock/alias-1/package-lock.json"
+	packageLockV2 := "test-fixtures/pkg-lock/alias-2/package-lock.json"
+	packageLocks := []string{packageLockV1}
 
 	v2Pkg := pkg.Package{
 		Name:     "alias-check",
@@ -284,43 +369,66 @@ func TestParsePackageLockAlias(t *testing.T) {
 }
 
 func TestParsePackageLockLicenseWithArray(t *testing.T) {
-	fixture := "test-fixtures/pkg-lock/array-license-package-lock.json"
-	var expectedRelationships []artifact.Relationship
-	expectedPkgs := []pkg.Package{
-		{
-			Name:     "tmp",
-			Version:  "1.0.0",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("ISC", file.NewLocation(fixture)),
-			),
-			PURL:     "pkg:npm/tmp@1.0.0",
-			Metadata: pkg.NpmPackageLockEntry{},
-		},
-		{
-			Name:     "pause-stream",
-			Version:  "0.0.11",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
+	fixture := "test-fixtures/pkg-lock/array-license/package-lock.json"
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+	pauseStream := pkg.Package{
+		Name:     "pause-stream",
+		Version:  "0.0.11",
+		Language: pkg.JavaScript,
+		Type:     pkg.NpmPkg,
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+			pkg.NewLicenseFromLocations("Apache2", file.NewLocation(fixture)),
+		),
+		Locations: locationSet,
+		PURL:      "pkg:npm/pause-stream@0.0.11",
 
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-				pkg.NewLicenseFromLocations("Apache2", file.NewLocation(fixture)),
-			),
-			PURL:     "pkg:npm/pause-stream@0.0.11",
-			Metadata: pkg.NpmPackageLockEntry{},
+		Metadata: pkg.NpmPackageLockEntry{},
+	}
+	through := pkg.Package{
+		Name:     "through",
+		Version:  "2.3.8",
+		Language: pkg.JavaScript,
+		Type:     pkg.NpmPkg,
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+		),
+		Locations: locationSet,
+		PURL:      "pkg:npm/through@2.3.8",
+
+		Metadata: pkg.NpmPackageLockEntry{},
+	}
+	tmp := pkg.Package{
+		Name:     "tmp",
+		Version:  "1.0.0",
+		Language: pkg.JavaScript,
+		Type:     pkg.NpmPkg,
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromLocations("ISC", file.NewLocation(fixture)),
+		),
+		Locations: locationSet,
+		PURL:      "pkg:npm/tmp@1.0.0",
+
+		Metadata: pkg.NpmPackageLockEntry{},
+	}
+
+	expectedPkgs := []pkg.Package{
+		pauseStream,
+		through,
+		tmp,
+	}
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: pauseStream,
+			To:   tmp,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
 		},
 		{
-			Name:     "through",
-			Version:  "2.3.8",
-			Language: pkg.JavaScript,
-			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-			),
-			PURL:     "pkg:npm/through@2.3.8",
-			Metadata: pkg.NpmPackageLockEntry{},
+			From: through,
+			To:   pauseStream,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
 		},
 	}
 	for i := range expectedPkgs {

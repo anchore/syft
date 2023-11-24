@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"regexp"
 
 	"github.com/mitchellh/mapstructure"
@@ -20,19 +19,24 @@ import (
 // integrity check
 var _ generic.Parser = parsePackageJSON
 
-// packageJSON represents a JavaScript package.json file
 type packageJSON struct {
-	Version      string            `json:"version"`
-	Latest       []string          `json:"latest"`
-	Author       author            `json:"author"`
-	License      json.RawMessage   `json:"license"`
-	Licenses     json.RawMessage   `json:"licenses"`
-	Name         string            `json:"name"`
-	Homepage     string            `json:"homepage"`
-	Description  string            `json:"description"`
-	Dependencies map[string]string `json:"dependencies"`
-	Repository   repository        `json:"repository"`
-	Private      bool              `json:"private"`
+	Name                 string            `json:"name"`
+	Version              string            `json:"version"`
+	Author               author            `json:"author"`
+	License              json.RawMessage   `json:"license"`
+	Licenses             json.RawMessage   `json:"licenses"`
+	Homepage             string            `json:"homepage"`
+	Private              bool              `json:"private"`
+	Description          string            `json:"description"`
+	Develop              bool              `json:"dev"` // lock v3
+	Repository           repository        `json:"repository"`
+	Dependencies         map[string]string `json:"dependencies"`
+	DevDependencies      map[string]string `json:"devDependencies"`
+	PeerDependencies     map[string]string `json:"peerDependencies"`
+	PeerDependenciesMeta map[string]struct {
+		Optional bool `json:"optional"`
+	} `json:"peerDependenciesMeta"`
+	File string `json:"-"`
 }
 
 type author struct {
@@ -50,33 +54,31 @@ type repository struct {
 // ---> name: "Isaac Z. Schlueter" email: "i@izs.me" url: "http://blog.izs.me"
 var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
-// parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
-func parsePackageJSON(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	var pkgs []pkg.Package
-	dec := json.NewDecoder(reader)
-
-	for {
-		var p packageJSON
-		if err := dec.Decode(&p); errors.Is(err, io.EOF) {
-			break
-		} else if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
-		}
-
-		if !p.hasNameAndVersionValues() {
-			log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", reader.Path())
-			return nil, nil, nil
-		}
-
-		pkgs = append(
-			pkgs,
-			newPackageJSONPackage(p, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		)
+func parsePackageJSON(resolver file.Resolver, e *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	pkgjson, err := parsePackageJSONFile(resolver, e, reader)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	pkg.Sort(pkgs)
+	if !pkgjson.hasNameAndVersionValues() {
+		log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", reader.Path())
+		return nil, nil, nil
+	}
 
-	return pkgs, nil, nil
+	rootPkg := newPackageJSONRootPackage(*pkgjson, reader.Location)
+	return []pkg.Package{rootPkg}, nil, nil
+}
+
+// parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
+func parsePackageJSONFile(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (*packageJSON, error) {
+	var js *packageJSON
+	decoder := json.NewDecoder(reader)
+	err := decoder.Decode(&js)
+	if err != nil {
+		return nil, err
+	}
+
+	return js, nil
 }
 
 func (a *author) UnmarshalJSON(b []byte) error {

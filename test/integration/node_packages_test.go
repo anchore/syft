@@ -14,6 +14,8 @@ func TestNpmPackageLockDirectory(t *testing.T) {
 	sbom, _ := catalogDirectory(t, "test-fixtures/npm-lock")
 
 	foundPackages := strset.New()
+	// root pkg
+	foundPackages.Add("npm-lock")
 
 	for actualPkg := range sbom.Artifacts.Packages.Enumerate(pkg.NpmPkg) {
 		for _, actualLocation := range actualPkg.Locations.ToSlice() {
@@ -25,7 +27,7 @@ func TestNpmPackageLockDirectory(t *testing.T) {
 	}
 
 	// ensure that integration test commonTestCases stay in sync with the available catalogers
-	const expectedPackageCount = 6
+	const expectedPackageCount = 7
 	if foundPackages.Size() != expectedPackageCount {
 		t.Errorf("found the wrong set of npm package-lock.json packages (expected: %d, actual: %d)", expectedPackageCount, foundPackages.Size())
 	}
@@ -35,7 +37,7 @@ func TestYarnPackageLockDirectory(t *testing.T) {
 	sbom, _ := catalogDirectory(t, "test-fixtures/yarn-lock")
 
 	foundPackages := strset.New()
-	expectedPackages := strset.New("async@0.9.2", "async@3.2.3", "merge-objects@1.0.5", "should-type@1.3.0", "@4lolo/resize-observer-polyfill@1.5.2")
+	expectedPackages := strset.New("async@0.9.2", "async@3.2.3", "merge-objects@1.0.5", "should-type@1.3.0", "@4lolo/resize-observer-polyfill@1.5.2", "yarn-lock@1.0.0")
 
 	for actualPkg := range sbom.Artifacts.Packages.Enumerate(pkg.NpmPkg) {
 		for _, actualLocation := range actualPkg.Locations.ToSlice() {

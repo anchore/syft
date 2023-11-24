@@ -12,3 +12,4 @@ type Environment struct {
 }
 
 type Parser func(file.Resolver, *Environment, file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error)
+type GroupedParser func(file.Resolver, *Environment, []file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error)

@@ -225,6 +225,34 @@ func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 	p.assertPkgs(t, pkgs, relationships)
 }
 
+func (p *CatalogTester) TestGroupedCataloger(t *testing.T, cataloger pkg.Cataloger) {
+	t.Helper()
+
+	resolver := NewObservingResolver(p.resolver)
+
+	pkgs, relationships, err := cataloger.Catalog(resolver)
+
+	// this is a minimum set, the resolver may return more than just this list
+	for _, path := range p.expectedPathResponses {
+		assert.Truef(t, resolver.ObservedPathResponses(path), "expected path query for %q was not observed", path)
+	}
+
+	// this is a full set, any other queries are unexpected (and will fail the test)
+	if len(p.expectedContentQueries) > 0 {
+		assert.ElementsMatchf(t, p.expectedContentQueries, resolver.AllContentQueries(), "unexpected content queries observed: diff %s", cmp.Diff(p.expectedContentQueries, resolver.AllContentQueries()))
+	}
+
+	if p.assertResultExpectations {
+		p.wantErr(t, err)
+		p.assertPkgs(t, pkgs, relationships)
+	} else {
+		resolver.PruneUnfulfilledPathResponses(p.ignoreUnfulfilledPathResponses, p.ignoreAnyUnfulfilledPaths...)
+
+		// if we aren't testing the results, we should focus on what was searched for (for glob-centric tests)
+		assert.Falsef(t, resolver.HasUnfulfilledPathRequests(), "unfulfilled path requests: \n%v", resolver.PrettyUnfulfilledPathRequests())
+	}
+}
+
 func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	t.Helper()
 
@@ -276,6 +304,7 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 
 	p.compareOptions = append(p.compareOptions,
 		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
+		cmpopts.IgnoreFields(pkg.Package{}, "FoundBy"),
 		cmpopts.SortSlices(pkg.Less),
 		cmpopts.SortSlices(relationshipLess),
 		cmp.Comparer(

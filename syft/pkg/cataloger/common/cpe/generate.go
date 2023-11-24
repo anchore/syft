@@ -180,7 +180,7 @@ func candidateVendors(p pkg.Package) []string {
 	case pkg.ApkDBEntry:
 		vendors.union(candidateVendorsForAPK(p))
 	case pkg.NpmPackage:
-		vendors.union(candidateVendorsForJavascript(p))
+		vendors.union(candidateVendorsForJavaScript(p))
 	}
 
 	// We should no longer be generating vendor candidates with these values ["" and "*"]
