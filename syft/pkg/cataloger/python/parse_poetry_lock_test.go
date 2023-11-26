@@ -20,6 +20,7 @@ func TestParsePoetryLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
+			Metadata:  pkg.PythonPoetryLockEntry{Index: "https://test.pypi.org/simple"},
 		},
 		{
 			Name:      "alabaster",
@@ -28,6 +29,7 @@ func TestParsePoetryLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
+			Metadata:  pkg.PythonPoetryLockEntry{Index: "https://pypi.org/simple"},
 		},
 		{
 			Name:      "appnope",
@@ -36,6 +38,7 @@ func TestParsePoetryLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
+			Metadata:  pkg.PythonPoetryLockEntry{Index: "https://pypi.org/simple"},
 		},
 		{
 			Name:      "asciitree",
@@ -44,6 +47,7 @@ func TestParsePoetryLock(t *testing.T) {
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
+			Metadata:  pkg.PythonPoetryLockEntry{Index: "https://pypi.org/simple"},
 		},
 	}
 

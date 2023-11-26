@@ -61,6 +61,11 @@ type PythonPipfileLockEntry struct {
 	Index  string   `mapstructure:"index" json:"index"`
 }
 
+// PythonPoetryLockEntry represents a single package entry within a Pipfile.lock file.
+type PythonPoetryLockEntry struct {
+	Index string `mapstructure:"index" json:"index"`
+}
+
 // PythonRequirementsEntry represents a single entry within a [*-]requirements.txt file.
 type PythonRequirementsEntry struct {
 	Name              string   `json:"name" mapstruct:"Name"`

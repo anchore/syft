@@ -1373,6 +1373,9 @@
               "$ref": "#/$defs/PythonPipfileLockEntry"
             },
             {
+              "$ref": "#/$defs/PythonPoetryLockEntry"
+            },
+            {
               "$ref": "#/$defs/RDescription"
             },
             {
@@ -1806,6 +1809,17 @@
       "type": "object",
       "required": [
         "hashes",
+        "index"
+      ]
+    },
+    "PythonPoetryLockEntry": {
+      "properties": {
+        "index": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
         "index"
       ]
     },

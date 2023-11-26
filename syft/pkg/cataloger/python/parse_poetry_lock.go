@@ -14,13 +14,20 @@ import (
 // integrity check
 var _ generic.Parser = parsePoetryLock
 
-type poetryMetadata struct {
+type poetryPackageSource struct {
+	Type      string `toml:"type"`
+	Url       string `toml:"url"`
+	reference string `toml:"reference"`
+}
+
+type poetryPackages struct {
 	Packages []struct {
-		Name        string `toml:"name"`
-		Version     string `toml:"version"`
-		Category    string `toml:"category"`
-		Description string `toml:"description"`
-		Optional    bool   `toml:"optional"`
+		Name        string              `toml:"name"`
+		Version     string              `toml:"version"`
+		Category    string              `toml:"category"`
+		Description string              `toml:"description"`
+		Optional    bool                `toml:"optional"`
+		Source      poetryPackageSource `toml:"source"`
 	} `toml:"package"`
 }
 
@@ -31,7 +38,7 @@ func parsePoetryLock(_ file.Resolver, _ *generic.Environment, reader file.Locati
 		return nil, nil, fmt.Errorf("unable to load poetry.lock for parsing: %w", err)
 	}
 
-	metadata := poetryMetadata{}
+	metadata := poetryPackages{}
 	err = tree.Unmarshal(&metadata)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to parse poetry.lock: %w", err)
@@ -39,11 +46,19 @@ func parsePoetryLock(_ file.Resolver, _ *generic.Environment, reader file.Locati
 
 	var pkgs []pkg.Package
 	for _, p := range metadata.Packages {
+		var index string
+		if p.Source.Url != "" {
+			index = p.Source.Url
+		} else {
+			// https://python-poetry.org/docs/repositories/
+			index = "https://pypi.org/simple"
+		}
 		pkgs = append(
 			pkgs,
-			newPackageForIndex(
+			newPackageForIndexWithMetadata(
 				p.Name,
 				p.Version,
+				pkg.PythonPoetryLockEntry{Index: index},
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
