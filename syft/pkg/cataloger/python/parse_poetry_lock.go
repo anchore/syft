@@ -15,9 +15,7 @@ import (
 var _ generic.Parser = parsePoetryLock
 
 type poetryPackageSource struct {
-	Type      string `toml:"type"`
-	Url       string `toml:"url"`
-	reference string `toml:"reference"`
+	URL string `toml:"url"`
 }
 
 type poetryPackages struct {
@@ -47,8 +45,8 @@ func parsePoetryLock(_ file.Resolver, _ *generic.Environment, reader file.Locati
 	var pkgs []pkg.Package
 	for _, p := range metadata.Packages {
 		var index string
-		if p.Source.Url != "" {
-			index = p.Source.Url
+		if p.Source.URL != "" {
+			index = p.Source.URL
 		} else {
 			// https://python-poetry.org/docs/repositories/
 			index = "https://pypi.org/simple"
