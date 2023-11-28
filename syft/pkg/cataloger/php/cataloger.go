@@ -4,6 +4,7 @@ Package php provides a concrete Cataloger implementation relating to packages wi
 package php
 
 import (
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
@@ -11,13 +12,13 @@ import (
 // semantic meanings. The lock file represents what should be installed, whereas the installed file represents what is installed.
 
 // NewComposerInstalledCataloger returns a new cataloger for PHP installed.json files.
-func NewComposerInstalledCataloger() *generic.Cataloger {
+func NewComposerInstalledCataloger() pkg.Cataloger {
 	return generic.NewCataloger("php-composer-installed-cataloger").
 		WithParserByGlobs(parseInstalledJSON, "**/installed.json")
 }
 
 // NewComposerLockCataloger returns a new cataloger for PHP composer.lock files.
-func NewComposerLockCataloger() *generic.Cataloger {
+func NewComposerLockCataloger() pkg.Cataloger {
 	return generic.NewCataloger("php-composer-lock-cataloger").
 		WithParserByGlobs(parseComposerLock, "**/composer.lock")
 }

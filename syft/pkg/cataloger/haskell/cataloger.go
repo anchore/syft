@@ -4,6 +4,7 @@ Package haskell provides a concrete Cataloger implementation relating to package
 package haskell
 
 import (
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
@@ -12,7 +13,7 @@ import (
 // This hints at splitting these into multiple catalogers, but for now we'll keep them together.
 
 // NewHackageCataloger returns a new Haskell cataloger object.
-func NewHackageCataloger() *generic.Cataloger {
+func NewHackageCataloger() pkg.Cataloger {
 	return generic.NewCataloger("haskell-cataloger").
 		WithParserByGlobs(parseStackYaml, "**/stack.yaml").
 		WithParserByGlobs(parseStackLock, "**/stack.yaml.lock").

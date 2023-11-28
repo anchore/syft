@@ -30,7 +30,7 @@ func Test_Mod_Cataloger_Globs(t *testing.T) {
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
 				IgnoreUnfulfilledPathResponses("src/go.sum").
-				TestCataloger(t, NewGoModuleFileCataloger(GoCatalogerOpts{}))
+				TestCataloger(t, NewGoModuleFileCataloger(CatalogerConfig{}))
 		})
 	}
 }
@@ -55,7 +55,7 @@ func Test_Binary_Cataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewGoModuleBinaryCataloger(GoCatalogerOpts{}))
+				TestCataloger(t, NewGoModuleBinaryCataloger(CatalogerConfig{}))
 		})
 	}
 }

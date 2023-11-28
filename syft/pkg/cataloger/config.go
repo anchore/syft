@@ -1,6 +1,7 @@
 package cataloger
 
 import (
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
@@ -10,10 +11,10 @@ import (
 // TODO: these field naming vs helper function naming schemes are inconsistent.
 type Config struct {
 	Search                          SearchConfig
-	Golang                          golang.GoCatalogerOpts
-	LinuxKernel                     kernel.LinuxCatalogerConfig
+	Golang                          golang.CatalogerConfig
+	LinuxKernel                     kernel.LinuxKernelCatalogerConfig
 	Python                          python.CatalogerConfig
-	Java                            java.CatalogerOpts
+	Java                            java.ArchiveCatalogerConfig
 	Catalogers                      []string
 	Parallelism                     int
 	ExcludeBinaryOverlapByOwnership bool
@@ -25,7 +26,7 @@ func DefaultConfig() Config {
 		Parallelism:                     1,
 		LinuxKernel:                     kernel.DefaultLinuxCatalogerConfig(),
 		Python:                          python.DefaultCatalogerConfig(),
-		Java:                            java.DefaultCatalogerOpts(),
+		Java:                            java.DefaultArchiveCatalogerConfig(),
 		ExcludeBinaryOverlapByOwnership: true,
 	}
 }
@@ -33,12 +34,14 @@ func DefaultConfig() Config {
 // JavaConfig merges relevant config values from Config to return a java.Config struct.
 // Values like IncludeUnindexedArchives and IncludeIndexedArchives are used across catalogers
 // and are not specific to Java requiring this merge.
-func (c Config) JavaConfig() java.Config {
-	return java.Config{
-		SearchUnindexedArchives: c.Search.IncludeUnindexedArchives,
-		SearchIndexedArchives:   c.Search.IncludeIndexedArchives,
+func (c Config) JavaConfig() java.ArchiveCatalogerConfig {
+	return java.ArchiveCatalogerConfig{
+		ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+			IncludeUnindexedArchives: c.Search.IncludeUnindexedArchives,
+			IncludeIndexedArchives:   c.Search.IncludeIndexedArchives,
+		},
 		UseNetwork:              c.Java.UseNetwork,
-		MavenBaseURL:            c.Java.MavenURL,
+		MavenBaseURL:            c.Java.MavenBaseURL,
 		MaxParentRecursiveDepth: c.Java.MaxParentRecursiveDepth,
 	}
 }
