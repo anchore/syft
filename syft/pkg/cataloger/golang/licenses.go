@@ -31,7 +31,6 @@ import (
 type goLicenses struct {
 	opts                  CatalogerConfig
 	localModCacheResolver file.WritableResolver
-	progress              *monitor.CatalogerTask
 	lowerLicenseFileNames *strset.Set
 }
 
@@ -39,11 +38,6 @@ func newGoLicenses(opts CatalogerConfig) goLicenses {
 	return goLicenses{
 		opts:                  opts,
 		localModCacheResolver: modCacheResolver(opts.LocalModCacheDir),
-		progress: &monitor.CatalogerTask{
-			SubStatus:          true,
-			RemoveOnCompletion: true,
-			Title:              "Downloading go mod",
-		},
 		lowerLicenseFileNames: strset.New(lowercaseLicenseFiles()...),
 	}
 }
@@ -123,7 +117,15 @@ func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]
 
 	proxies := remotesForModule(c.opts.Proxies, c.opts.NoProxy, moduleName)
 
-	fsys, err := getModule(c.progress, proxies, moduleName, moduleVersion)
+	prog := monitor.StartCatalogerTask(monitor.GenericTask{
+		Title: monitor.Title{
+			Default: "Downloading go mod",
+		},
+		HideOnSuccess: true,
+		ParentID:      "TODO", // TODO: setting this to non-empty will cause the progress bar to be nested, but this needs to be more specific
+	}, -1, "")
+
+	fsys, err := getModule(prog, proxies, moduleName, moduleVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +220,7 @@ func getModule(progress *monitor.CatalogerTask, proxies []string, moduleName, mo
 			fsys, err = getModuleProxy(progress, proxy, moduleName, moduleVersion)
 		case "file":
 			p := filepath.Join(u.Path, moduleName, "@v", moduleVersion)
-			progress.SetValue(fmt.Sprintf("file: %s", p))
+			progress.AtomicStage.Set(fmt.Sprintf("file: %s", p))
 			fsys = os.DirFS(p)
 		}
 		if fsys != nil {
@@ -230,7 +232,7 @@ func getModule(progress *monitor.CatalogerTask, proxies []string, moduleName, mo
 
 func getModuleProxy(progress *monitor.CatalogerTask, proxy string, moduleName string, moduleVersion string) (out fs.FS, _ error) {
 	u := fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion)
-	progress.SetValue(u)
+	progress.AtomicStage.Set(u)
 
 	// get the module zip
 	resp, err := http.Get(u) //nolint:gosec
@@ -241,7 +243,7 @@ func getModuleProxy(progress *monitor.CatalogerTask, proxy string, moduleName st
 
 	if resp.StatusCode != http.StatusOK {
 		u = fmt.Sprintf("%s/%s/@v/%s.zip", proxy, strings.ToLower(moduleName), moduleVersion)
-		progress.SetValue(u)
+		progress.AtomicStage.Set(u)
 
 		// try lowercasing it; some packages have mixed casing that really messes up the proxy
 		resp, err = http.Get(u) //nolint:gosec
@@ -291,7 +293,7 @@ func getModuleRepository(progress *monitor.CatalogerTask, moduleName string, mod
 		repoName = fmt.Sprintf("%s/%s/%s", parts[0], parts[1], parts[2])
 	}
 
-	progress.SetValue(fmt.Sprintf("git: %s", repoName))
+	progress.AtomicStage.Set(fmt.Sprintf("git: %s", repoName))
 
 	f := memfs.New()
 	buf := &bytes.Buffer{}

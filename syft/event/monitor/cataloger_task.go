@@ -8,48 +8,22 @@ import (
 	"github.com/anchore/syft/syft/event"
 )
 
-// TODO: this should be refactored to support read-only/write-only access using idioms of the progress lib
-
 type CatalogerTask struct {
-	prog *progress.Manual
-	// Title
-	Title string
-	// TitleOnCompletion a string to use as title when completed
-	TitleOnCompletion string
-	// SubStatus indicates this progress should be rendered as a sub-item
-	SubStatus bool
-	// RemoveOnCompletion indicates this progress line will be removed when completed
-	RemoveOnCompletion bool
-	// value is the value to display -- not public as SetValue needs to be called to initialize this progress
-	value string
+	*progress.AtomicStage
+	*progress.Manual
 }
 
-func (e *CatalogerTask) init() {
-	e.prog = progress.NewManual(-1)
+func StartCatalogerTask(info GenericTask, size int64, initialStage string) *CatalogerTask {
+	t := &CatalogerTask{
+		AtomicStage: progress.NewAtomicStage(initialStage),
+		Manual:      progress.NewManual(size),
+	}
 
 	bus.Publish(partybus.Event{
 		Type:   event.CatalogerTaskStarted,
-		Source: e,
+		Source: info,
+		Value:  progress.StagedProgressable(t),
 	})
-}
 
-func (e *CatalogerTask) SetCompleted() {
-	if e.prog != nil {
-		e.prog.SetCompleted()
-	}
-}
-
-func (e *CatalogerTask) SetValue(value string) {
-	if e.prog == nil {
-		e.init()
-	}
-	e.value = value
-}
-
-func (e *CatalogerTask) GetValue() string {
-	return e.value
-}
-
-func (e *CatalogerTask) GetMonitor() *progress.Manual {
-	return e.prog
+	return t
 }
