@@ -21,19 +21,13 @@ func TestFileMetadataCataloger(t *testing.T) {
 	c := NewCataloger()
 
 	src, err := source.NewFromStereoscopeImageObject(img, testImage, nil)
-	if err != nil {
-		t.Fatalf("could not create source: %+v", err)
-	}
+	require.NoError(t, err)
 
 	resolver, err := src.FileResolver(source.SquashedScope)
-	if err != nil {
-		t.Fatalf("could not create resolver: %+v", err)
-	}
+	require.NoError(t, err)
 
 	actual, err := c.Catalog(resolver)
-	if err != nil {
-		t.Fatalf("could not catalog: %+v", err)
-	}
+	require.NoError(t, err)
 
 	tests := []struct {
 		path     string
@@ -142,6 +136,70 @@ func TestFileMetadataCataloger(t *testing.T) {
 			require.NoError(t, err)
 
 			l := file.NewLocationFromImage(test.path, *ref.Reference, img)
+
+			if _, ok := actual[l.Coordinates]; ok {
+				// we're not interested in keeping the test fixtures up to date with the latest file modification times
+				// thus ModTime is not under test
+				fi := test.expected.FileInfo.(stereoscopeFile.ManualInfo)
+				fi.ModTimeValue = actual[l.Coordinates].ModTime()
+				test.expected.FileInfo = fi
+			}
+
+			assert.True(t, test.expected.Equal(actual[l.Coordinates]))
+		})
+	}
+
+}
+
+func TestFileMetadataCataloger_GivenCoordinates(t *testing.T) {
+	testImage := "image-file-type-mix"
+
+	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
+
+	c := NewCataloger()
+
+	src, err := source.NewFromStereoscopeImageObject(img, testImage, nil)
+	require.NoError(t, err)
+
+	resolver, err := src.FileResolver(source.SquashedScope)
+	require.NoError(t, err)
+
+	tests := []struct {
+		path     string
+		exists   bool
+		expected file.Metadata
+		err      bool
+	}{
+		{
+			path:   "/file-1.txt",
+			exists: true,
+			expected: file.Metadata{
+				FileInfo: stereoscopeFile.ManualInfo{
+					NameValue: "file-1.txt",
+					ModeValue: 0644,
+					SizeValue: 7,
+				},
+				Path:     "/file-1.txt",
+				Type:     stereoscopeFile.TypeRegular,
+				UserID:   1,
+				GroupID:  2,
+				MIMEType: "text/plain",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			_, ref, err := img.SquashedTree().File(stereoscopeFile.Path(test.path))
+			require.NoError(t, err)
+
+			l := file.NewLocationFromImage(test.path, *ref.Reference, img)
+
+			// note: an important difference between this test and the previous is that this test is using a list
+			// of specific coordinates to catalog
+			actual, err := c.Catalog(resolver, l.Coordinates)
+			require.NoError(t, err)
+			require.Len(t, actual, 1)
 
 			if _, ok := actual[l.Coordinates]; ok {
 				// we're not interested in keeping the test fixtures up to date with the latest file modification times
