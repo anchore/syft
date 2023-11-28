@@ -377,7 +377,7 @@ func recursivelyFindLicensesFromParentPom(groupID, artifactID, version string, c
 	var licenses []string
 	// As there can be nested parent poms, we'll recursively check for licenses until we reach the max depth
 	for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
-		parentPom, err := getPomFromMavenCentral(groupID, artifactID, version, cfg.MavenBaseURL)
+		parentPom, err := getPomFromMavenRepo(groupID, artifactID, version, cfg.MavenBaseURL)
 		if err != nil {
 			return nil, err
 		}
@@ -395,7 +395,7 @@ func recursivelyFindLicensesFromParentPom(groupID, artifactID, version string, c
 	return licenses, nil
 }
 
-func getPomFromMavenCentral(groupID, artifactID, version, mavenBaseURL string) (*gopom.Project, error) {
+func getPomFromMavenRepo(groupID, artifactID, version, mavenBaseURL string) (*gopom.Project, error) {
 	requestURL, err := formatMavenPomURL(groupID, artifactID, version, mavenBaseURL)
 	if err != nil {
 		return nil, err

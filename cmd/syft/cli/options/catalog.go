@@ -138,7 +138,7 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 		},
 		Java: javaCataloger.DefaultArchiveCatalogerConfig().
 			WithUseNetwork(cfg.Java.UseNetwork).
-			WithMavenCentralURL(cfg.Java.MavenURL).
+			WithMavenBaseURL(cfg.Java.MavenURL).
 			WithArchiveTraversal(
 				cataloging.ArchiveSearchConfig{
 					IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,

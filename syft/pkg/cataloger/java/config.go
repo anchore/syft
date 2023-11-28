@@ -28,7 +28,7 @@ func (j ArchiveCatalogerConfig) WithUseNetwork(input bool) ArchiveCatalogerConfi
 	return j
 }
 
-func (j ArchiveCatalogerConfig) WithMavenCentralURL(input string) ArchiveCatalogerConfig {
+func (j ArchiveCatalogerConfig) WithMavenBaseURL(input string) ArchiveCatalogerConfig {
 	if input != "" {
 		j.MavenBaseURL = input
 	}
