@@ -19,7 +19,7 @@ const catalogerName = "nix-store-cataloger"
 // StoreCataloger finds package outputs installed in the Nix store location (/nix/store/*).
 type StoreCataloger struct{}
 
-func NewStoreCataloger() *StoreCataloger {
+func NewStoreCataloger() pkg.Cataloger {
 	return &StoreCataloger{}
 }
 

@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/clio"
 	"github.com/anchore/fangs"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
 	javaCataloger "github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -126,19 +127,24 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 		},
 		Catalogers:  cfg.Catalogers,
 		Parallelism: cfg.Parallelism,
-		Golang: golangCataloger.NewGoCatalogerOpts().
+		Golang: golangCataloger.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
 			WithSearchRemoteLicenses(cfg.Golang.SearchRemoteLicenses).
 			WithProxy(cfg.Golang.Proxy).
 			WithNoProxy(cfg.Golang.NoProxy),
-		LinuxKernel: kernel.LinuxCatalogerConfig{
+		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},
-		Java: javaCataloger.DefaultCatalogerOpts().
+		Java: javaCataloger.DefaultArchiveCatalogerConfig().
 			WithUseNetwork(cfg.Java.UseNetwork).
-			WithMavenURL(cfg.Java.MavenURL).
-			WithMaxParentRecursiveDepth(cfg.Java.MaxParentRecursiveDepth),
+			WithMavenBaseURL(cfg.Java.MavenURL).
+			WithArchiveTraversal(
+				cataloging.ArchiveSearchConfig{
+					IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
+					IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
+				},
+				cfg.Java.MaxParentRecursiveDepth),
 		Python: pythonCataloger.CatalogerConfig{
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},

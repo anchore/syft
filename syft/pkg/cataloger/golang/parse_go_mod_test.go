@@ -142,7 +142,7 @@ func Test_GoSumHashes(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expected, nil).
-				TestCataloger(t, NewGoModuleFileCataloger(GoCatalogerOpts{}))
+				TestCataloger(t, NewGoModuleFileCataloger(CatalogerConfig{}))
 		})
 	}
 }

@@ -53,14 +53,14 @@ type archiveParser struct {
 	contentPath  string
 	fileInfo     archiveFilename
 	detectNested bool
-	cfg          Config
+	cfg          ArchiveCatalogerConfig
 }
 
 type genericArchiveParserAdapter struct {
-	cfg Config
+	cfg ArchiveCatalogerConfig
 }
 
-func newGenericArchiveParserAdapter(cfg Config) genericArchiveParserAdapter {
+func newGenericArchiveParserAdapter(cfg ArchiveCatalogerConfig) genericArchiveParserAdapter {
 	return genericArchiveParserAdapter{cfg: cfg}
 }
 
@@ -85,7 +85,7 @@ func uniquePkgKey(groupID string, p *pkg.Package) string {
 
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
 // and parse nested archives or ignore them.
-func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg Config) (*archiveParser, func(), error) {
+func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg ArchiveCatalogerConfig) (*archiveParser, func(), error) {
 	// fetch the last element of the virtual path
 	virtualElements := strings.Split(reader.Path(), ":")
 	currentFilepath := virtualElements[len(virtualElements)-1]
@@ -338,7 +338,7 @@ func artifactIDMatchesFilename(artifactID, fileName string) bool {
 	return strings.HasPrefix(artifactID, fileName) || strings.HasSuffix(fileName, artifactID)
 }
 
-func findPomLicenses(pomProjectObject *parsedPomProject, cfg Config) {
+func findPomLicenses(pomProjectObject *parsedPomProject, cfg ArchiveCatalogerConfig) {
 	// If we don't have any licenses until now, and if we have a parent Pom, then we'll check the parent pom in maven central for licenses.
 	if pomProjectObject != nil && pomProjectObject.Parent != nil && len(pomProjectObject.Licenses) == 0 {
 		parentLicenses, err := recursivelyFindLicensesFromParentPom(
@@ -373,11 +373,11 @@ func formatMavenPomURL(groupID, artifactID, version, mavenBaseURL string) (reque
 	return requestURL, err
 }
 
-func recursivelyFindLicensesFromParentPom(groupID, artifactID, version string, cfg Config) ([]string, error) {
+func recursivelyFindLicensesFromParentPom(groupID, artifactID, version string, cfg ArchiveCatalogerConfig) ([]string, error) {
 	var licenses []string
 	// As there can be nested parent poms, we'll recursively check for licenses until we reach the max depth
 	for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
-		parentPom, err := getPomFromMavenCentral(groupID, artifactID, version, cfg.MavenBaseURL)
+		parentPom, err := getPomFromMavenRepo(groupID, artifactID, version, cfg.MavenBaseURL)
 		if err != nil {
 			return nil, err
 		}
@@ -395,7 +395,7 @@ func recursivelyFindLicensesFromParentPom(groupID, artifactID, version string, c
 	return licenses, nil
 }
 
-func getPomFromMavenCentral(groupID, artifactID, version, mavenBaseURL string) (*gopom.Project, error) {
+func getPomFromMavenRepo(groupID, artifactID, version, mavenBaseURL string) (*gopom.Project, error) {
 	requestURL, err := formatMavenPomURL(groupID, artifactID, version, mavenBaseURL)
 	if err != nil {
 		return nil, err
@@ -542,7 +542,7 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) (
 
 // discoverPkgsFromZip finds Java archives within Java archives, returning all listed Java packages found and
 // associating each discovered package to the given parent package.
-func discoverPkgsFromZip(location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package, cfg Config) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromZip(location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
 	openers, err := intFile.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(false, archiveFormatGlobs...)...)
 	if err != nil {
@@ -553,7 +553,7 @@ func discoverPkgsFromZip(location file.Location, archivePath, contentPath string
 }
 
 // discoverPkgsFromOpeners finds Java archives within the given files and associates them with the given parent package.
-func discoverPkgsFromOpeners(location file.Location, openers map[string]intFile.Opener, parentPkg *pkg.Package, cfg Config) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromOpeners(location file.Location, openers map[string]intFile.Opener, parentPkg *pkg.Package, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -582,7 +582,7 @@ func discoverPkgsFromOpeners(location file.Location, openers map[string]intFile.
 }
 
 // discoverPkgsFromOpener finds Java archives within the given file.
-func discoverPkgsFromOpener(location file.Location, pathWithinArchive string, archiveOpener intFile.Opener, cfg Config) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromOpener(location file.Location, pathWithinArchive string, archiveOpener intFile.Opener, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	archiveReadCloser, err := archiveOpener.Open()
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to open archived file from tempdir: %w", err)
@@ -669,7 +669,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 
 // newPackageFromMavenData processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
-func newPackageFromMavenData(pomProperties pkg.JavaPomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location, cfg Config) *pkg.Package {
+func newPackageFromMavenData(pomProperties pkg.JavaPomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location, cfg ArchiveCatalogerConfig) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
 	groupID := ""

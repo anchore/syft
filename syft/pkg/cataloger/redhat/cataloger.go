@@ -12,7 +12,7 @@ import (
 )
 
 // NewDBCataloger returns a new RPM DB cataloger object.
-func NewDBCataloger() *generic.Cataloger {
+func NewDBCataloger() pkg.Cataloger {
 	// check if a sqlite driver is available
 	if !isSqliteDriverAvailable() {
 		log.Warnf("sqlite driver is not available, newer RPM databases might not be cataloged")
@@ -24,7 +24,7 @@ func NewDBCataloger() *generic.Cataloger {
 }
 
 // NewArchiveCataloger returns a new RPM file cataloger object.
-func NewArchiveCataloger() *generic.Cataloger {
+func NewArchiveCataloger() pkg.Cataloger {
 	return generic.NewCataloger("rpm-archive-cataloger").
 		WithParserByGlobs(parseRpmArchive, "**/*.rpm")
 }

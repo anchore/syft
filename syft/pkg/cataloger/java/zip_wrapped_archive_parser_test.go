@@ -33,7 +33,7 @@ func Test_parseZipWrappedJavaArchive(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			gzp := newGenericZipWrappedJavaArchiveParser(Config{})
+			gzp := newGenericZipWrappedJavaArchiveParser(ArchiveCatalogerConfig{})
 
 			actualPkgs, _, err := gzp.parseZipWrappedJavaArchive(nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(test.fixture),

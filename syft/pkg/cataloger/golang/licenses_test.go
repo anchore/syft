@@ -67,9 +67,9 @@ func Test_LocalLicenseSearch(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			l := newGoLicenses(
-				GoCatalogerOpts{
-					searchLocalModCacheLicenses: true,
-					localModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
+				CatalogerConfig{
+					SearchLocalModCacheLicenses: true,
+					LocalModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
 				},
 			)
 			licenses, err := l.getLicenses(fileresolver.Empty{}, test.name, test.version)
@@ -154,10 +154,10 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			l := newGoLicenses(GoCatalogerOpts{
-				searchRemoteLicenses: true,
-				proxies:              []string{server.URL},
-				localModCacheDir:     modDir,
+			l := newGoLicenses(CatalogerConfig{
+				SearchRemoteLicenses: true,
+				Proxies:              []string{server.URL},
+				LocalModCacheDir:     modDir,
 			})
 
 			licenses, err := l.getLicenses(fileresolver.Empty{}, test.name, test.version)

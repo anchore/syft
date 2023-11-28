@@ -12,7 +12,7 @@ import (
 
 const catalogerName = "binary-cataloger"
 
-func NewCataloger() *Cataloger {
+func NewCataloger() pkg.Cataloger {
 	return &Cataloger{}
 }
 
