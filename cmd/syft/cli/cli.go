@@ -91,5 +91,8 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 		cranecmd.NewCmdAuthLogin(id.Name), // syft login uses the same command as crane
 	)
 
+	// explicitly set Cobra output to the real stdout to write things like errors and help
+	rootCmd.SetOut(out)
+
 	return app, rootCmd
 }
