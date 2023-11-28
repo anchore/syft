@@ -48,6 +48,22 @@ func TestNewFromFile(t *testing.T) {
 			},
 			expRefs: 1,
 		},
+		{
+			desc:  "normal path",
+			input: "test-fixtures/actual-path/empty",
+			testPathFn: func(resolver file.Resolver) ([]file.Location, error) {
+				return resolver.FilesByPath("empty")
+			},
+			expRefs: 1,
+		},
+		{
+			desc:  "path containing symlink",
+			input: "test-fixtures/symlink/empty",
+			testPathFn: func(resolver file.Resolver) ([]file.Location, error) {
+				return resolver.FilesByPath("empty")
+			},
+			expRefs: 1,
+		},
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
