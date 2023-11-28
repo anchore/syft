@@ -10,7 +10,6 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
-	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/file"
@@ -86,9 +85,6 @@ func Packages(app clio.Application) *cobra.Command {
 		Args:    validatePackagesArgs,
 		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			restoreStdout := ui.CaptureStdoutToTraceLog()
-			defer restoreStdout()
-
 			return runPackages(id, opts, args[0])
 		},
 	}, opts)
