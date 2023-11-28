@@ -1199,4 +1199,5 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"spring-webflow":                                           "org.springframework.webflow",
 	"spring-ws":                                                "org.springframework.ws",
 	"spring-xml":                                               "org.springframework.ws",
+	"xalan":                                                    "xalan", // see https://mvnrepository.com/artifact/xalan/xalan/2.7.2
 }
