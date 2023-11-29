@@ -27,9 +27,16 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 		locations = func() <-chan file.Location {
 			ch := make(chan file.Location)
 			go func() {
-				close(ch)
+				defer close(ch)
 				for _, c := range coordinates {
-					ch <- file.NewLocationFromCoordinates(c)
+					locs, err := resolver.FilesByPath(c.RealPath)
+					if err != nil {
+						log.Warn("unable to get file locations for path %q: %w", c.RealPath, err)
+						continue
+					}
+					for _, loc := range locs {
+						ch <- loc
+					}
 				}
 			}()
 			return ch
