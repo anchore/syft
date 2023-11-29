@@ -119,10 +119,11 @@ func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]
 
 	prog := monitor.StartCatalogerTask(monitor.GenericTask{
 		Title: monitor.Title{
-			Default: "Downloading go mod",
+			Default:      "Download go mod",
+			WhileRunning: "Downloading go mod",
+			OnSuccess:    "Downloaded go mod",
 		},
 		HideOnSuccess: true,
-		ParentID:      "TODO", // TODO: setting this to non-empty will cause the progress bar to be nested, but this needs to be more specific
 	}, -1, "")
 
 	fsys, err := getModule(prog, proxies, moduleName, moduleVersion)

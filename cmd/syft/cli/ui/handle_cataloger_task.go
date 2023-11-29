@@ -43,41 +43,42 @@ func (cts catalogerTaskState) Init() tea.Cmd {
 }
 
 func (cts catalogerTaskState) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if event, ok := msg.(catalogerTaskEvent); ok {
-		info, prog := event.info, event.prog
+	event, ok := msg.(catalogerTaskEvent)
+	if !ok {
+		model, cmd := cts.model.Update(msg)
+		cts.model = model.(tree.Model)
 
-		tsk := cts.modelFactory(
-			taskprogress.Title{
-				Default: info.Title.Default,
-				Running: info.Title.WhileRunning,
-				Success: info.Title.OnSuccess,
-			},
-			taskprogress.WithStagedProgressable(prog),
-		)
-
-		if info.Context != "" {
-			tsk.Context = []string{info.Context}
-		}
-
-		tsk.HideOnSuccess = info.HideOnSuccess
-		tsk.HideStageOnSuccess = info.HideStageOnSuccess
-		tsk.HideProgressOnSuccess = true
-
-		if info.ParentID != "" {
-			tsk.TitleStyle = lipgloss.NewStyle()
-		}
-
-		if err := cts.model.Add(info.ParentID, info.ID, tsk); err != nil {
-			log.WithFields("error", err).Error("unable to add cataloger task to tree model")
-		}
-
-		return cts, tsk.Init()
+		return cts, cmd
 	}
 
-	model, cmd := cts.model.Update(msg)
-	cts.model = model.(tree.Model)
+	info, prog := event.info, event.prog
 
-	return cts, cmd
+	tsk := cts.modelFactory(
+		taskprogress.Title{
+			Default: info.Title.Default,
+			Running: info.Title.WhileRunning,
+			Success: info.Title.OnSuccess,
+		},
+		taskprogress.WithStagedProgressable(prog),
+	)
+
+	if info.Context != "" {
+		tsk.Context = []string{info.Context}
+	}
+
+	tsk.HideOnSuccess = info.HideOnSuccess
+	tsk.HideStageOnSuccess = info.HideStageOnSuccess
+	tsk.HideProgressOnSuccess = true
+
+	if info.ParentID != "" {
+		tsk.TitleStyle = lipgloss.NewStyle()
+	}
+
+	if err := cts.model.Add(info.ParentID, info.ID, tsk); err != nil {
+		log.WithFields("error", err).Error("unable to add cataloger task to tree model")
+	}
+
+	return cts, tsk.Init()
 }
 
 func (cts catalogerTaskState) View() string {
