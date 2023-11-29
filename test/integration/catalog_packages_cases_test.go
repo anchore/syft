@@ -82,7 +82,7 @@ var imageOnlyTestCases = []testCase{
 		pkgType:     pkg.DotnetPkg,
 		pkgLanguage: pkg.Dotnet,
 		pkgInfo: map[string]string{
-			"DocuSign.eSign": "6.8.0",
+			"DocuSign.eSign": "6.8.0.0",
 		},
 	},
 }

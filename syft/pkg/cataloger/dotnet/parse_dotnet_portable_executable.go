@@ -135,11 +135,14 @@ func findVersion(versionResources map[string]string) string {
 		return fileVersion
 	}
 
-	if containsNumber(productVersion) && containsDot(productVersion) {
+	productVersionDetail := punctuationCount(productVersion)
+	fileVersionDetail := punctuationCount(fileVersion)
+
+	if containsNumber(productVersion) && productVersionDetail >= fileVersionDetail {
 		return productVersion
 	}
 
-	if containsNumber(fileVersion) && containsDot(fileVersion) {
+	if containsNumber(fileVersion) && fileVersionDetail > 0 {
 		return fileVersion
 	}
 
@@ -154,17 +157,19 @@ func findVersion(versionResources map[string]string) string {
 	return productVersion
 }
 
-func containsNumber(out string) bool {
-	return strings.ContainsAny(out, "1234567890")
+func containsNumber(s string) bool {
+	return numberRegex.MatchString(s)
 }
 
-func containsDot(out string) bool {
-	return strings.ContainsRune(out, '.')
+func punctuationCount(s string) int {
+	return len(versionPunctuationRegex.FindAllString(s, -1))
 }
 
 var (
 	// spaceRegex includes nbsp (#160) considered to be a space character
-	spaceRegex = regexp.MustCompile(`[\s\xa0]+`)
+	spaceRegex              = regexp.MustCompile(`[\s\xa0]+`)
+	numberRegex             = regexp.MustCompile(`\d`)
+	versionPunctuationRegex = regexp.MustCompile(`[.,]+`)
 )
 
 func findName(versionResources map[string]string) string {

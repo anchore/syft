@@ -169,6 +169,30 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 				Version: "80.1.7.92",
 			},
 		},
+		{
+			name: "Better product version",
+			versionResources: map[string]string{
+				"FileDescription": "Better version",
+				"FileVersion":     "80.1.7",
+				"ProductVersion":  "80.1.7.92",
+			},
+			expectedPackage: pkg.Package{
+				Name:    "Better version",
+				Version: "80.1.7.92",
+			},
+		},
+		{
+			name: "Better file version",
+			versionResources: map[string]string{
+				"FileDescription": "Better version",
+				"FileVersion":     "80.1.7.92",
+				"ProductVersion":  "80.1.7",
+			},
+			expectedPackage: pkg.Package{
+				Name:    "Better version",
+				Version: "80.1.7.92",
+			},
+		},
 	}
 
 	for _, tc := range tests {
