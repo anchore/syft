@@ -69,10 +69,18 @@ var defaultClassifiers = []classifier{
 	{
 		Class:    "java-binary-openjdk",
 		FileGlob: "**/java",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
-			// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
-			`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
+		EvidenceMatcher: evidenceMatchers(
+			fileContentsVersionMatcher(
+				// covers linux/amd64
+				// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
+				// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
+				`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`,
+			),
+			fileContentsVersionMatcher(
+				// covers linux/arm64
+				`(?m)(?P<release>[0-9]+[.0-9]*)(\x00)+(?P<version>[0-9]+[^\x00]+)(\x00)+openjdk(\x00)+java\x00`,
+			),
+		),
 		Package: "java",
 		PURL:    mustPURL("pkg:generic/java@version"),
 		// TODO the updates might need to be part of the CPE, like: 1.8.0:update152
