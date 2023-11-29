@@ -58,22 +58,13 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 func buildDotNetPackage(versionResources map[string]string, f file.LocationReadCloser) (dnpkg pkg.Package, err error) {
 	name := findName(versionResources)
 	if name == "" {
-		return dnpkg, fmt.Errorf("unable to find FileDescription, or ProductName in PE file: %s", f.RealPath)
+		return dnpkg, fmt.Errorf("unable to find PE name in file: %s", f.RealPath)
 	}
 
 	version := findVersion(versionResources)
-	if strings.TrimSpace(version) == "" {
-		return dnpkg, fmt.Errorf("unable to find FileVersion in PE file: %s", f.RealPath)
+	if version == "" {
+		return dnpkg, fmt.Errorf("unable to find PE version in file: %s", f.RealPath)
 	}
-
-	purl := packageurl.NewPackageURL(
-		packageurl.TypeNuget, // See explanation in syft/pkg/cataloger/dotnet/package.go as to why this was chosen.
-		"",
-		name,
-		version,
-		nil,
-		"",
-	).ToString()
 
 	metadata := pkg.DotnetPortableExecutableEntry{
 		AssemblyVersion: versionResources["Assembly Version"],
@@ -91,7 +82,7 @@ func buildDotNetPackage(versionResources map[string]string, f file.LocationReadC
 		Locations: file.NewLocationSet(f.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:      pkg.DotnetPkg,
 		Language:  pkg.Dotnet,
-		PURL:      purl,
+		PURL:      portableExecutablePackageURL(name, version),
 		Metadata:  metadata,
 	}
 
@@ -100,30 +91,128 @@ func buildDotNetPackage(versionResources map[string]string, f file.LocationReadC
 	return dnpkg, nil
 }
 
-func findVersion(versionResources map[string]string) string {
-	for _, key := range []string{"FileVersion"} {
-		if version, ok := versionResources[key]; ok {
-			if strings.TrimSpace(version) == "" {
-				continue
-			}
-			fields := strings.Fields(version)
-			if len(fields) > 0 {
-				return fields[0]
-			}
+func portableExecutablePackageURL(name, version string) string {
+	return packageurl.NewPackageURL(
+		packageurl.TypeNuget, // See explanation in syft/pkg/cataloger/dotnet/package.go as to why this was chosen.
+		"",
+		name,
+		version,
+		nil,
+		"",
+	).ToString()
+}
+
+func extractVersion(version string) string {
+	version = strings.TrimSpace(version)
+
+	out := ""
+
+	// some example versions are: "1, 0, 0, 0", "Release 73" or "4.7.4076.0 built by: NET472REL1LAST_B"
+	// so try to split it and take the first parts that look numeric
+	for i, f := range strings.Fields(version) {
+		// if the output already has a number but the current segment does not have a number,
+		// return what we found for the version
+		if containsNumber(out) && !containsNumber(f) {
+			return out
+		}
+
+		if i == 0 {
+			out = f
+		} else {
+			out += " " + f
 		}
 	}
+
+	return out
+}
+
+func findVersion(versionResources map[string]string) string {
+	productVersion := extractVersion(versionResources["ProductVersion"])
+	fileVersion := extractVersion(versionResources["FileVersion"])
+
+	if productVersion == "" {
+		return fileVersion
+	}
+
+	productVersionDetail := punctuationCount(productVersion)
+	fileVersionDetail := punctuationCount(fileVersion)
+
+	if containsNumber(productVersion) && productVersionDetail >= fileVersionDetail {
+		return productVersion
+	}
+
+	if containsNumber(fileVersion) && fileVersionDetail > 0 {
+		return fileVersion
+	}
+
+	if containsNumber(productVersion) {
+		return productVersion
+	}
+
+	if containsNumber(fileVersion) {
+		return fileVersion
+	}
+
+	return productVersion
+}
+
+func containsNumber(s string) bool {
+	return numberRegex.MatchString(s)
+}
+
+func punctuationCount(s string) int {
+	return len(versionPunctuationRegex.FindAllString(s, -1))
+}
+
+var (
+	// spaceRegex includes nbsp (#160) considered to be a space character
+	spaceRegex              = regexp.MustCompile(`[\s\xa0]+`)
+	numberRegex             = regexp.MustCompile(`\d`)
+	versionPunctuationRegex = regexp.MustCompile(`[.,]+`)
+)
+
+func findName(versionResources map[string]string) string {
+	// PE files found in the wild _not_ authored by Microsoft seem to use ProductName as a clear
+	// identifier of the software
+	nameFields := []string{"ProductName", "FileDescription", "InternalName", "OriginalFilename"}
+
+	if isMicrosoft(versionResources) {
+		// Microsoft seems to be consistent using the FileDescription, with a few that are blank and have
+		// fallbacks to ProductName last, as this is often something very broad like "Microsoft Windows"
+		nameFields = []string{"FileDescription", "InternalName", "OriginalFilename", "ProductName"}
+	}
+
+	for _, field := range nameFields {
+		value := spaceNormalize(versionResources[field])
+		if value == "" {
+			continue
+		}
+		return value
+	}
+
 	return ""
 }
 
-func findName(versionResources map[string]string) string {
-	for _, key := range []string{"FileDescription", "ProductName"} {
-		if name, ok := versionResources[key]; ok {
-			if strings.TrimSpace(name) == "" {
-				continue
-			}
-			trimmed := strings.TrimSpace(name)
-			return regexp.MustCompile(`[^a-zA-Z0-9.]+`).ReplaceAllString(trimmed, "")
-		}
+// normalizes a string to a trimmed version with all contigous whitespace collapsed to a single space character
+func spaceNormalize(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
 	}
-	return ""
+	// ensure valid utf8 text
+	value = strings.ToValidUTF8(value, "")
+	// consolidate all space characters
+	value = spaceRegex.ReplaceAllString(value, " ")
+	// remove other non-space, non-printable characters
+	value = regexp.MustCompile(`[\x00-\x1f]`).ReplaceAllString(value, "")
+	// consolidate all space characters again in case other non-printables were in-between
+	value = spaceRegex.ReplaceAllString(value, " ")
+	// finally, remove any remaining surrounding whitespace
+	value = strings.TrimSpace(value)
+	return value
+}
+
+func isMicrosoft(versionResources map[string]string) bool {
+	return strings.Contains(strings.ToLower(versionResources["CompanyName"]), "microsoft") ||
+		strings.Contains(strings.ToLower(versionResources["ProductName"]), "microsoft")
 }
