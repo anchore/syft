@@ -117,7 +117,6 @@ func extractVersion(version string) string {
 		}
 
 		if i == 0 {
-			// out will ge
 			out = f
 		} else {
 			out += " " + f
