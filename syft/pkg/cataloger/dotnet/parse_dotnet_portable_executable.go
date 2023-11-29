@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strings"
+	"sync"
 
 	"github.com/saferwall/pe"
 
@@ -45,6 +47,11 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 		return nil, nil, nil
 	}
 
+	allVersionResourcesLock.Lock()
+	defer allVersionResourcesLock.Unlock()
+	versionResources[""] = f.RealPath
+	allVersionResources = append(allVersionResources, versionResources)
+
 	dotNetPkg, err := buildDotNetPackage(versionResources, f)
 	if err != nil {
 		// TODO: known-unknown
@@ -53,6 +60,40 @@ func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f fi
 	}
 
 	return []pkg.Package{dotNetPkg}, nil, nil
+}
+
+var (
+	allVersionResourcesLock = sync.Mutex{}
+	allVersionResources     []map[string]string
+)
+
+func AllResourcesCSV(out io.Writer) {
+	write := func(formatString string, vals ...any) { _, _ = fmt.Fprintf(out, formatString, vals...) }
+	var headers []string
+	for _, v := range allVersionResources {
+		for k := range v {
+			if k == "" {
+				continue
+			}
+			if !slices.Contains(headers, k) {
+				headers = append(headers, k)
+			}
+		}
+	}
+	slices.Sort(headers)
+	write(`"FILE"`)
+	for _, h := range headers {
+		write(`,"%s"`, h)
+	}
+	write("\n")
+	for _, v := range allVersionResources {
+		write(`"%s"`, v[""])
+		for _, h := range headers {
+			val := strings.TrimSpace(v[h])
+			write(`,"%s"`, val)
+		}
+		write("\n")
+	}
 }
 
 func buildDotNetPackage(versionResources map[string]string, f file.LocationReadCloser) (dnpkg pkg.Package, err error) {
