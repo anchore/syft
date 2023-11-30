@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/wagoodman/go-progress"
 
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/event/monitor"
@@ -214,7 +215,7 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver
 	return relationships, nil
 }
 
-func monitorPackageCatalogingTask() *monitor.CatalogerTask {
+func monitorPackageCatalogingTask() *monitor.CatalogerTaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default:      "Catalog packages",
@@ -224,5 +225,5 @@ func monitorPackageCatalogingTask() *monitor.CatalogerTask {
 		HideOnSuccess: false,
 	}
 
-	return monitor.StartCatalogerTask(info, -1, "")
+	return bus.StartCatalogerTask(info, -1, "")
 }

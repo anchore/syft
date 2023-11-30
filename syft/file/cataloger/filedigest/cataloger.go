@@ -9,6 +9,7 @@ import (
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/bus"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event/monitor"
@@ -96,7 +97,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	return digests, nil
 }
 
-func digestsCatalogingProgress(locations int64) *monitor.CatalogerTask {
+func digestsCatalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default:      "Catalog file digests",
@@ -105,5 +106,5 @@ func digestsCatalogingProgress(locations int64) *monitor.CatalogerTask {
 		},
 	}
 
-	return monitor.StartCatalogerTask(info, locations, "")
+	return bus.StartCatalogerTask(info, locations, "")
 }

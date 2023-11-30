@@ -5,6 +5,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
@@ -63,7 +64,7 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 	return results, nil
 }
 
-func metadataCatalogingProgress(locations int64) *monitor.CatalogerTask {
+func metadataCatalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default:      "Catalog file metadata",
@@ -72,5 +73,5 @@ func metadataCatalogingProgress(locations int64) *monitor.CatalogerTask {
 		},
 	}
 
-	return monitor.StartCatalogerTask(info, locations, "")
+	return bus.StartCatalogerTask(info, locations, "")
 }
