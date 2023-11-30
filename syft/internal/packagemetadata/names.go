@@ -93,6 +93,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.PythonPipfileLockEntry{}, "python-pipfile-lock-entry", "PythonPipfileLockMetadata"),
 	jsonNames(pkg.PythonRequirementsEntry{}, "python-pip-requirements-entry", "PythonRequirementsMetadata"),
 	jsonNames(pkg.ErlangRebarLockEntry{}, "erlang-rebar-lock-entry", "RebarLockMetadataType"),
+	jsonNames(pkg.ErlangOTPApplication{}, "erlang-otp-application", "OTPApplicationMetadataType"),
 	jsonNames(pkg.RDescription{}, "r-description", "RDescriptionFileMetadataType"),
 	jsonNames(pkg.RpmDBEntry{}, "rpm-db-entry", "RpmMetadata", "RpmdbMetadata"),
 	jsonNamesWithoutLookup(pkg.RpmArchive{}, "rpm-archive", "RpmMetadata"), // the legacy value is split into two types, where the other is preferred

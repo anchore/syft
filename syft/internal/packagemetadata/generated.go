@@ -19,6 +19,7 @@ func AllTypes() []any {
 		pkg.DotnetPortableExecutableEntry{},
 		pkg.DpkgDBEntry{},
 		pkg.ElixirMixLockEntry{},
+		pkg.ErlangOTPApplication{},
 		pkg.ErlangRebarLockEntry{},
 		pkg.GolangBinaryBuildinfoEntry{},
 		pkg.GolangModuleEntry{},

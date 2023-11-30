@@ -35,6 +35,7 @@ func Test_filterCatalogers(t *testing.T) {
 		"dotnet-deps-cataloger",
 		"elixir-mix-lock-cataloger",
 		"erlang-rebar-lock-cataloger",
+		"erlang-otp-application-cataloger",
 		"go-module-file-cataloger",
 		"go-module-binary-cataloger",
 		"haskell-cataloger",

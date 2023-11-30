@@ -48,7 +48,7 @@ func parseRebarLock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 			version = versionNode.Get(2).Get(1).String()
 		}
 
-		p := newPackage(
+		p := newPackageFromRebar(
 			pkg.ErlangRebarLockEntry{
 				Name:    name,
 				Version: version,

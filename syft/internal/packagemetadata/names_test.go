@@ -206,6 +206,11 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 			expected: reflect.TypeOf(pkg.ErlangRebarLockEntry{}),
 		},
 		{
+			name:     "map pkg.ErlangOTPApplication struct type",
+			input:    "OTPApplicationMetadataType",
+			expected: reflect.TypeOf(pkg.ErlangOTPApplication{}),
+		},
+		{
 			name:     "map pkg.RDescription struct type",
 			input:    "RDescriptionFileMetadataType",
 			expected: reflect.TypeOf(pkg.RDescription{}),
@@ -443,6 +448,12 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 			metadata:           pkg.ErlangRebarLockEntry{},
 			expectedJSONName:   "erlang-rebar-lock-entry",
 			expectedLegacyName: "RebarLockMetadataType",
+		},
+		{
+			name:               "OTPApplicationMetadata",
+			metadata:           pkg.ErlangOTPApplication{},
+			expectedJSONName:   "erlang-otp-application",
+			expectedLegacyName: "OTPApplicationMetadataType",
 		},
 		{
 			name:               "RDescriptionFileMetadata",
