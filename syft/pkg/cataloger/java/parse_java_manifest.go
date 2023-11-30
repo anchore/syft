@@ -153,6 +153,22 @@ func extractNameFromApacheMavenBundlePlugin(manifest *pkg.JavaManifest) string {
 	return ""
 }
 
+func extractNameFromArchiveFilename(a archiveFilename) string {
+	if strings.Contains(a.name, ".") {
+		// special case: this *might* be a group id + artifact id. By convention artifact ids do not have "." in them;
+		// however, there are some specific exceptions like with the artifacts under
+		// https://repo1.maven.org/maven2/org/eclipse/platform/
+		if strings.HasPrefix(a.name, "org.eclipse.") {
+			return a.name
+		}
+
+		fields := strings.Split(a.name, ".")
+		return fields[len(fields)-1]
+	}
+
+	return a.name
+}
+
 func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
 	name := extractNameFromApacheMavenBundlePlugin(manifest)
 	if name != "" {
@@ -160,13 +176,9 @@ func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string 
 	}
 
 	// the filename tends to be the next-best reference for the package name
-	if filenameObj.name != "" {
-		if strings.Contains(filenameObj.name, ".") {
-			// special case: this *might* be a group id + artifact id. By convention artifact ids do not have "." in them.
-			fields := strings.Split(filenameObj.name, ".")
-			return fields[len(fields)-1]
-		}
-		return filenameObj.name
+	name = extractNameFromArchiveFilename(filenameObj)
+	if name != "" {
+		return name
 	}
 
 	// remaining fields in the manifest is a bit of a free-for-all depending on the build tooling used and package maintainer preferences

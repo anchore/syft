@@ -210,6 +210,16 @@ func TestSelectName(t *testing.T) {
 			expected: "atlassian-gadgets-api",
 		},
 		{
+			desc: "Skip stripping groupId prefix from archive filename for org.eclipse",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{
+					"Automatic-Module-Name": "org.eclipse.ant.core",
+				},
+			},
+			archive:  newJavaArchiveFilename("/something/org.eclipse.ant.core-3.7.0.jar"),
+			expected: "org.eclipse.ant.core",
+		},
+		{
 			// example: pkg:maven/com.google.oauth-client/google-oauth-client@1.25.0
 			desc: "skip Apache Maven Bundle Plugin logic if symbolic name is same as vendor id",
 			manifest: pkg.JavaManifest{
