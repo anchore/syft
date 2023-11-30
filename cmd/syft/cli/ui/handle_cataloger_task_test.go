@@ -140,7 +140,7 @@ func TestHandler_handleCatalogerTaskStarted(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// need to be able to get the initial catalogerTaskEvent + initialize the nested taskprogress model
+			// need to be able to get the initial newCatalogerTaskRowEvent + initialize the nested taskprogress model
 			if tt.iterations == 0 {
 				tt.iterations = 2
 			}
@@ -178,7 +178,7 @@ func TestHandler_handleCatalogerTaskStarted(t *testing.T) {
 			require.NotNil(t, cmd)
 			model := models[0]
 
-			tr, ok := model.(*catalogerTaskState)
+			tr, ok := model.(*catalogerTaskModel)
 			require.True(t, ok)
 
 			gotModel := runModel(t, tr, tt.iterations, cmd())

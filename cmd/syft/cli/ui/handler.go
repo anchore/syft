@@ -30,7 +30,7 @@ type Handler struct {
 
 	bubbly.EventHandler
 
-	catalogerTasks *catalogerTaskState
+	onNewCatalogerTask *sync.Once
 }
 
 func DefaultHandlerConfig() HandlerConfig {
@@ -43,9 +43,10 @@ func New(cfg HandlerConfig) *Handler {
 	d := bubbly.NewEventDispatcher()
 
 	h := &Handler{
-		EventHandler: d,
-		Running:      &sync.WaitGroup{},
-		Config:       cfg,
+		EventHandler:       d,
+		Running:            &sync.WaitGroup{},
+		Config:             cfg,
+		onNewCatalogerTask: &sync.Once{},
 	}
 
 	// register all supported event types with the respective handler functions
