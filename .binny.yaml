@@ -83,7 +83,7 @@ tools:
 
   - name: task
     version:
-      want: v3.31.0
+      want: v3.32.0
     method: github-release
     with:
       repo: go-task/task
