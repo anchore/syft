@@ -1,12 +1,13 @@
 package filemetadata
 
 import (
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
+	"fmt"
+
+	"github.com/dustin/go-humanize"
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -20,7 +21,6 @@ func NewCataloger() *Cataloger {
 func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates]file.Metadata, error) {
 	results := make(map[file.Coordinates]file.Metadata)
 	var locations <-chan file.Location
-
 	if len(coordinates) == 0 {
 		locations = resolver.AllLocations()
 	} else {
@@ -43,36 +43,35 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 		}()
 	}
 
-	stage, prog := metadataCatalogingProgress(int64(len(locations)))
+	prog := metadataCatalogingProgress(int64(len(locations)))
 	for location := range locations {
-		stage.Current = location.RealPath
+		prog.Increment()
+		prog.AtomicStage.Set(location.Path())
+
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
 			return nil, err
 		}
 
 		results[location.Coordinates] = metadata
-		prog.Increment()
 	}
+
 	log.Debugf("file metadata cataloger processed %d files", prog.Current())
+
+	prog.AtomicStage.Set(fmt.Sprintf("%s locations", humanize.Comma(prog.Current())))
 	prog.SetCompleted()
+
 	return results, nil
 }
 
-func metadataCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {
-	stage := &progress.Stage{}
-	prog := progress.NewManual(locations)
-
-	bus.Publish(partybus.Event{
-		Type: event.FileMetadataCatalogerStarted,
-		Value: struct {
-			progress.Stager
-			progress.Progressable
-		}{
-			Stager:       progress.Stager(stage),
-			Progressable: prog,
+func metadataCatalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
+	info := monitor.GenericTask{
+		Title: monitor.Title{
+			Default:      "Catalog file metadata",
+			WhileRunning: "Cataloging file metadata",
+			OnSuccess:    "Cataloged file metadata",
 		},
-	})
+	}
 
-	return stage, prog
+	return bus.StartCatalogerTask(info, locations, "")
 }

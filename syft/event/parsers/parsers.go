@@ -12,7 +12,6 @@ import (
 
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
-	"github.com/anchore/syft/syft/pkg/cataloger"
 )
 
 type ErrBadPayload struct {
@@ -40,45 +39,6 @@ func checkEventType(actual, expected partybus.EventType) error {
 	return nil
 }
 
-func ParsePackageCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) {
-	if err := checkEventType(e.Type, event.PackageCatalogerStarted); err != nil {
-		return nil, err
-	}
-
-	monitor, ok := e.Value.(cataloger.Monitor)
-	if !ok {
-		return nil, newPayloadErr(e.Type, "Value", e.Value)
-	}
-
-	return &monitor, nil
-}
-
-func ParseFileMetadataCatalogingStarted(e partybus.Event) (progress.StagedProgressable, error) {
-	if err := checkEventType(e.Type, event.FileMetadataCatalogerStarted); err != nil {
-		return nil, err
-	}
-
-	prog, ok := e.Value.(progress.StagedProgressable)
-	if !ok {
-		return nil, newPayloadErr(e.Type, "Value", e.Value)
-	}
-
-	return prog, nil
-}
-
-func ParseFileDigestsCatalogingStarted(e partybus.Event) (progress.StagedProgressable, error) {
-	if err := checkEventType(e.Type, event.FileDigestsCatalogerStarted); err != nil {
-		return nil, err
-	}
-
-	prog, ok := e.Value.(progress.StagedProgressable)
-	if !ok {
-		return nil, newPayloadErr(e.Type, "Value", e.Value)
-	}
-
-	return prog, nil
-}
-
 func ParseFileIndexingStarted(e partybus.Event) (string, progress.StagedProgressable, error) {
 	if err := checkEventType(e.Type, event.FileIndexingStarted); err != nil {
 		return "", nil, err
@@ -97,17 +57,24 @@ func ParseFileIndexingStarted(e partybus.Event) (string, progress.StagedProgress
 	return path, prog, nil
 }
 
-func ParseCatalogerTaskStarted(e partybus.Event) (*monitor.CatalogerTask, error) {
+func ParseCatalogerTaskStarted(e partybus.Event) (progress.StagedProgressable, *monitor.GenericTask, error) {
 	if err := checkEventType(e.Type, event.CatalogerTaskStarted); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	source, ok := e.Source.(*monitor.CatalogerTask)
+	var mon progress.StagedProgressable
+
+	source, ok := e.Source.(monitor.GenericTask)
 	if !ok {
-		return nil, newPayloadErr(e.Type, "Source", e.Source)
+		return nil, nil, newPayloadErr(e.Type, "Source", e.Source)
 	}
 
-	return source, nil
+	mon, ok = e.Value.(progress.StagedProgressable)
+	if !ok {
+		mon = nil
+	}
+
+	return mon, &source, nil
 }
 
 func ParseAttestationStartedEvent(e partybus.Event) (io.Reader, progress.Progressable, *monitor.GenericTask, error) {

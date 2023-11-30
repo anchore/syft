@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/acobaugh/osrelease v0.1.0
-	github.com/anchore/bubbly v0.0.0-20230801194016-acdb4981b461
+	github.com/anchore/bubbly v0.0.0-20231115134915-def0aba654a9
 	github.com/anchore/clio v0.0.0-20231016125544-c98a83e1c7fc
 	github.com/anchore/fangs v0.0.0-20231103141714-84c94dc43a2e
 	github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a
