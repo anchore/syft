@@ -40,6 +40,14 @@ func Test_parseErlang(t *testing.T) {
 ].`,
 		},
 		{
+			name: "empty list",
+			content: `
+{test, [
+ {with_space, [ ]},
+ {without_space, []}
+]}`,
+		},
+		{
 			name:    "invalid string content",
 			wantErr: require.Error,
 			content: `

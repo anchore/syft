@@ -141,8 +141,20 @@ func parseErlangNode(data []byte, i *int) (erlangNode, error) {
 	c := data[*i]
 	switch c {
 	case '[', '{':
+		offset := *i + 1
+		skipWhitespace(data, &offset)
+		c2 := data[offset]
+
+		// Add support for empty lists
+		if (c == '[' && c2 == ']') || (c == '{' && c2 == '}') {
+			*i = offset + 1
+			return node(nil), nil
+		}
+
 		return parseErlangList(data, i)
 	case '"':
+		fallthrough
+	case '\'':
 		return parseErlangString(data, i)
 	case '<':
 		return parseErlangAngleString(data, i)
