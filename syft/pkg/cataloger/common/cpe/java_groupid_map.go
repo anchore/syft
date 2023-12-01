@@ -40,6 +40,11 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"commons-logging":                             "commons-logging", // see e.g. https://mvnrepository.com/artifact/commons-logging/commons-logging/1.1.1
 	"okhttp":                                      "com.squareup.okhttp3",
 	"okio":                                        "com.squareup.okio",
+	"cassandra-all":                               "org.apache.cassandra",
+	"cassandra-clientutil":                        "org.apache.cassandra",
+	"cassandra-javautils":                         "org.apache.cassandra",
+	"cassandra-parent":                            "org.apache.cassandra",
+	"cassandra-thrift":                            "org.apache.cassandra",
 	"apache-geode":                                "org.apache.geode",
 	"geode-all-bom":                               "org.apache.geode",
 	"geode-apis-compatible-with-redis":            "org.apache.geode",
