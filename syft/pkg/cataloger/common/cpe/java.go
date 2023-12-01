@@ -294,7 +294,7 @@ func GetManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (grou
 }
 
 func cleanGroupID(groupID string) string {
-	return strings.TrimSpace(removeOSCIDirectives(groupID))
+	return strings.TrimSpace(strings.Split(removeOSCIDirectives(groupID), "#")[0])
 }
 
 func removeOSCIDirectives(groupID string) string {

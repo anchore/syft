@@ -162,6 +162,17 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			expects: []string{"io.jenkins-ci.plugin.thing"},
 		},
 		{
+			name: "clean # suffixes",
+			pkg: pkg.Package{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
+						GroupID: "org.elasticsearch.plugin#parent-join;6.8.15",
+					},
+				},
+			},
+			expects: []string{"org.elasticsearch.plugin"},
+		},
+		{
 			name: "from artifactID",
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{
