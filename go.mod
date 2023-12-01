@@ -10,7 +10,7 @@ require (
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/anchore/bubbly v0.0.0-20231115134915-def0aba654a9
 	github.com/anchore/clio v0.0.0-20231016125544-c98a83e1c7fc
-	github.com/anchore/fangs v0.0.0-20231103141714-84c94dc43a2e
+	github.com/anchore/fangs v0.0.0-20231201140849-5075d28d6d8b
 	github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a
 	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
