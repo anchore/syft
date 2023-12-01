@@ -217,7 +217,7 @@ func parseErlangString(data []byte, i *int) (erlangNode, error) {
 		buf.WriteByte(c)
 		*i++
 	}
-	return node(buf.String()), nil
+	return node(nil), fmt.Errorf("unterminated string at %d", *i)
 }
 
 func parseErlangList(data []byte, i *int) (erlangNode, error) {

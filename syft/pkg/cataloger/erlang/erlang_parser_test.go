@@ -48,12 +48,27 @@ func Test_parseErlang(t *testing.T) {
 ]}`,
 		},
 		{
+			name: "valid strings",
+			content: `
+{strings, [
+ "foo", 'bar'
+]}`,
+		},
+		{
 			name:    "invalid string content",
 			wantErr: require.Error,
 			content: `
 {"1.2.0
 ">>},
 ].`,
+		},
+		{
+			name:    "string mismach",
+			wantErr: require.Error,
+			content: `
+{bad_string, [
+ 'foo"
+ ]}`,
 		},
 		{
 			name:    "invalid content",
