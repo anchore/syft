@@ -77,6 +77,25 @@ func Test_parseErlang(t *testing.T) {
 {"1.2.0"}.
 ].`,
 		},
+		{
+			name: "valid comments",
+			content: `
+{ comments, [
+	{ foo, bar },
+	%% this is a comment
+	% this is also a comment
+	{ hello, 'bar' }, %%inline comment
+	{ baz }
+]}`,
+		},
+		{
+			name: "starts with a comments",
+			content: `
+%% starts with comment
+{ comments, [
+	{ foo, bar }
+]}`,
+		},
 	}
 
 	for _, test := range tests {
