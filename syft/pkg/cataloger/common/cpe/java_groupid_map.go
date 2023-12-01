@@ -1492,4 +1492,9 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"org.eclipse.update.configurator":                          "org.eclipse.platform",
 	"org.eclipse.update.core":                                  "org.eclipse.platform",
 	"org.eclipse.urischeme":                                    "org.eclipse.platform",
+	"reactor-netty":                                            "io.projectreactor.netty",
+	"reactor-netty-core":                                       "io.projectreactor.netty",
+	"reactor-netty-http":                                       "io.projectreactor.netty",
+	"reactor-netty-http-brave":                                 "io.projectreactor.netty",
+	"reactor-netty-incubator-quic":                             "io.projectreactor.netty.incubator",
 }
