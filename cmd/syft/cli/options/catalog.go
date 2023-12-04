@@ -143,6 +143,7 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},
 		ExcludeBinaryOverlapByOwnership: cfg.ExcludeBinaryOverlapByOwnership,
+		CatalogerGroup:                  cfg.Package.CatalogerGroup,
 	}
 }
 

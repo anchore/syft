@@ -5,9 +5,10 @@ import (
 )
 
 type pkg struct {
-	Cataloger               scope `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
-	SearchUnindexedArchives bool  `yaml:"search-unindexed-archives" json:"search-unindexed-archives" mapstructure:"search-unindexed-archives"`
-	SearchIndexedArchives   bool  `yaml:"search-indexed-archives" json:"search-indexed-archives" mapstructure:"search-indexed-archives"`
+	Cataloger               scope           `yaml:"cataloger" json:"cataloger" mapstructure:"cataloger"`
+	SearchUnindexedArchives bool            `yaml:"search-unindexed-archives" json:"search-unindexed-archives" mapstructure:"search-unindexed-archives"`
+	SearchIndexedArchives   bool            `yaml:"search-indexed-archives" json:"search-indexed-archives" mapstructure:"search-indexed-archives"`
+	CatalogerGroup          cataloger.Group `yaml:"cataloger-group" json:"cataloger-group" mapstructure:"cataloger-group"`
 }
 
 func defaultPkg() pkg {
