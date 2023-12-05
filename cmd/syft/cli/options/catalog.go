@@ -16,6 +16,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
 	javaCataloger "github.com/anchore/syft/syft/pkg/cataloger/java"
+	javascriptCataloger "github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	pythonCataloger "github.com/anchore/syft/syft/pkg/cataloger/python"
 	"github.com/anchore/syft/syft/source"
@@ -26,6 +27,7 @@ type Catalog struct {
 	Package                         pkg          `yaml:"package" json:"package" mapstructure:"package"`
 	Golang                          golang       `yaml:"golang" json:"golang" mapstructure:"golang"`
 	Java                            java         `yaml:"java" json:"java" mapstructure:"java"`
+	Javascript                      javascript   `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
 	LinuxKernel                     linuxKernel  `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Python                          python       `yaml:"python" json:"python" mapstructure:"python"`
 	FileMetadata                    fileMetadata `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
@@ -145,6 +147,9 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 					IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
 				},
 				cfg.Java.MaxParentRecursiveDepth),
+		Javascript: javascriptCataloger.DefaultCatalogerConfig().
+			WithSearchRemoteLicenses(cfg.Javascript.SearchRemoteLicenses).
+			WithNpmBaseURL(cfg.Javascript.NpmBaseURL),
 		Python: pythonCataloger.CatalogerConfig{
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},

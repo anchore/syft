@@ -2,9 +2,13 @@ package javascript
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
@@ -106,19 +110,90 @@ func newPnpmPackage(resolver file.Resolver, location file.Location, name, versio
 	)
 }
 
-func newYarnLockPackage(resolver file.Resolver, location file.Location, name, version string) pkg.Package {
+func newYarnLockPackage(cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string) pkg.Package {
+	var licenseSet pkg.LicenseSet
+
+	if cfg.searchRemoteLicenses {
+		license, err := getLicenseFromNpmRegistry(cfg.npmBaseURL, name, version)
+		if err == nil && license != "" {
+			licenses := pkg.NewLicensesFromValues(license)
+			licenseSet = pkg.NewLicenseSet(licenses...)
+		}
+		if err != nil {
+			log.Warnf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
+		}
+	}
+
 	return finalizeLockPkg(
 		resolver,
 		location,
 		pkg.Package{
 			Name:      name,
 			Version:   version,
+			Licenses:  licenseSet,
 			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 		},
 	)
+}
+
+func formatNpmRegistryURL(baseURL, packageName, version string) (requestURL string, err error) {
+	urlPath := []string{packageName, version}
+	requestURL, err = url.JoinPath(baseURL, urlPath...)
+	if err != nil {
+		return requestURL, fmt.Errorf("unable to format npm request for pkg:version %s%s; %w", packageName, version, err)
+	}
+	return requestURL, nil
+}
+
+func getLicenseFromNpmRegistry(basURL, packageName, version string) (string, error) {
+	// "https://registry.npmjs.org/%s/%s", packageName, version
+	requestURL, err := formatNpmRegistryURL(basURL, packageName, version)
+	if err != nil {
+		return "", fmt.Errorf("unable to format npm request for pkg:version %s%s; %w", packageName, version, err)
+	}
+	log.Tracef("trying to fetch remote package %s", requestURL)
+
+	npmRequest, err := http.NewRequest(http.MethodGet, requestURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("unable to format remote request: %w", err)
+	}
+
+	httpClient := &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	resp, err := httpClient.Do(npmRequest)
+	if err != nil {
+		return "", fmt.Errorf("unable to get package from npm registry: %w", err)
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Errorf("unable to close body: %+v", err)
+		}
+	}()
+
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("unable to parse package from npm registry: %w", err)
+	}
+
+	dec := json.NewDecoder(strings.NewReader(string(bytes)))
+
+	// Read "license" from the response
+	var license struct {
+		License string `json:"license"`
+	}
+
+	if err := dec.Decode(&license); err != nil {
+		return "", fmt.Errorf("unable to parse license from npm registry: %w", err)
+	}
+
+	log.Tracef("Retrieved License: %s", license.License)
+
+	return license.License, nil
 }
 
 func finalizeLockPkg(resolver file.Resolver, location file.Location, p pkg.Package) pkg.Package {

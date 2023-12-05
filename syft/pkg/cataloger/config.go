@@ -4,6 +4,7 @@ import (
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
+	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
 )
@@ -15,6 +16,7 @@ type Config struct {
 	LinuxKernel                     kernel.LinuxKernelCatalogerConfig
 	Python                          python.CatalogerConfig
 	Java                            java.ArchiveCatalogerConfig
+	Javascript                      javascript.CatalogerConfig
 	Catalogers                      []string
 	Parallelism                     int
 	ExcludeBinaryOverlapByOwnership bool
@@ -27,6 +29,7 @@ func DefaultConfig() Config {
 		LinuxKernel:                     kernel.DefaultLinuxCatalogerConfig(),
 		Python:                          python.DefaultCatalogerConfig(),
 		Java:                            java.DefaultArchiveCatalogerConfig(),
+		Javascript:                      javascript.DefaultCatalogerConfig(),
 		ExcludeBinaryOverlapByOwnership: true,
 	}
 }
