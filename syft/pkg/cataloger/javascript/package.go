@@ -119,6 +119,9 @@ func newYarnLockPackage(cfg CatalogerConfig, resolver file.Resolver, location fi
 			licenses := pkg.NewLicensesFromValues(license)
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
+		if err != nil {
+			log.Warnf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
+		}
 	}
 
 	return finalizeLockPkg(
