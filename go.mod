@@ -239,3 +239,5 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
+
+replace github.com/anchore/packageurl-go => github.com/LaurentGoderre/packageurl-go v0.0.0-20231207160803-decab5854c64

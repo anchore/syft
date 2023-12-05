@@ -42,7 +42,7 @@ func newPackageFromOTP(d pkg.ErlangOTPApplication, locations ...file.Location) p
 		Language:  pkg.Erlang,
 		Locations: file.NewLocationSet(locations...),
 		PURL:      packageURLFromOTP(d),
-		Type:      pkg.UnknownPkg,
+		Type:      pkg.ErLangOTPPkg,
 		Metadata:  d,
 	}
 
@@ -55,7 +55,7 @@ func packageURLFromOTP(m pkg.ErlangOTPApplication) string {
 	var qualifiers packageurl.Qualifiers
 
 	return packageurl.NewPackageURL(
-		packageurl.TypeGeneric,
+		packageurl.TypeOTP,
 		"",
 		m.Name,
 		m.Version,

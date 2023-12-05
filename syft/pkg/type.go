@@ -18,6 +18,7 @@ const (
 	DartPubPkg              Type = "dart-pub"
 	DebPkg                  Type = "deb"
 	DotnetPkg               Type = "dotnet"
+	ErLangOTPPkg            Type = "otp"
 	GemPkg                  Type = "gem"
 	GithubActionPkg         Type = "github-action"
 	GithubActionWorkflowPkg Type = "github-action-workflow"
@@ -51,6 +52,7 @@ var AllPkgs = []Type{
 	DartPubPkg,
 	DebPkg,
 	DotnetPkg,
+	ErLangOTPPkg,
 	GemPkg,
 	GithubActionPkg,
 	GithubActionWorkflowPkg,
@@ -92,6 +94,8 @@ func (t Type) PackageURLType() string {
 		return "deb"
 	case DotnetPkg:
 		return packageurl.TypeDotnet
+	case ErLangOTPPkg:
+		return packageurl.TypeOTP
 	case GemPkg:
 		return packageurl.TypeGem
 	case HexPkg:
@@ -146,6 +150,7 @@ func TypeFromPURL(p string) Type {
 	return TypeByName(ptype)
 }
 
+//nolint:funlen
 func TypeByName(name string) Type {
 	switch name {
 	case packageurl.TypeDebian:
@@ -184,6 +189,8 @@ func TypeByName(name string) Type {
 		return PortagePkg
 	case packageurl.TypeHex:
 		return HexPkg
+	case packageurl.TypeOTP:
+		return ErLangOTPPkg
 	case "linux-kernel":
 		return LinuxKernelPkg
 	case "linux-kernel-module":

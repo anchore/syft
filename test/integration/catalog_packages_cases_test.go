@@ -85,6 +85,14 @@ var imageOnlyTestCases = []testCase{
 			"DocuSign.eSign": "6.8.0.0",
 		},
 	},
+	{
+		name:        "find ErLang OTP application resource",
+		pkgType:     pkg.ErLangOTPPkg,
+		pkgLanguage: pkg.Erlang,
+		pkgInfo: map[string]string{
+			"accept": "0.3.5",
+		},
+	},
 }
 
 var dirOnlyTestCases = []testCase{
@@ -366,6 +374,14 @@ var dirOnlyTestCases = []testCase{
 			"parse_trans":         "3.3.1",
 			"ssl_verify_fun":      "1.1.6",
 			"unicode_util_compat": "0.7.0",
+		},
+	},
+	{
+		name:        "find ErLang OTP applications",
+		pkgType:     pkg.ErLangOTPPkg,
+		pkgLanguage: pkg.Erlang,
+		pkgInfo: map[string]string{
+			"accept": "0.3.5",
 		},
 	},
 	{
