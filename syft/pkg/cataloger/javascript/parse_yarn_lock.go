@@ -69,7 +69,7 @@ func (a genericYarnLockAdapter) parseYarnLock(resolver file.Resolver, _ *generic
 		if packageName := findPackageName(line); packageName != noPackage {
 			// When we find a new package, check if we have unsaved identifiers
 			if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-				pkgs = append(pkgs, newYarnLockPackage(a.cfg.searchRemoteLicenses, resolver, reader.Location, currentPackage, currentVersion))
+				pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion))
 				parsedPackages.Add(currentPackage + "@" + currentVersion)
 			}
 
@@ -77,7 +77,7 @@ func (a genericYarnLockAdapter) parseYarnLock(resolver file.Resolver, _ *generic
 		} else if version := findPackageVersion(line); version != noVersion {
 			currentVersion = version
 		} else if packageName, version := findPackageAndVersion(line); packageName != noPackage && version != noVersion && !parsedPackages.Has(packageName+"@"+version) {
-			pkgs = append(pkgs, newYarnLockPackage(a.cfg.searchRemoteLicenses, resolver, reader.Location, packageName, version))
+			pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, packageName, version))
 			parsedPackages.Add(packageName + "@" + version)
 
 			// Cleanup to indicate no unsaved identifiers
@@ -88,7 +88,7 @@ func (a genericYarnLockAdapter) parseYarnLock(resolver file.Resolver, _ *generic
 
 	// check if we have valid unsaved data after end-of-file has reached
 	if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-		pkgs = append(pkgs, newYarnLockPackage(a.cfg.searchRemoteLicenses, resolver, reader.Location, currentPackage, currentVersion))
+		pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion))
 		parsedPackages.Add(currentPackage + "@" + currentVersion)
 	}
 

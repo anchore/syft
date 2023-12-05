@@ -1,0 +1,84 @@
+{
+  "name": "@babel/code-frame",
+  "version": "7.10.4",
+  "description": "Generate errors that contain a code frame that point to source locations.",
+  "author": {
+    "name": "Sebastian McKenzie",
+    "email": "sebmck@gmail.com"
+  },
+  "homepage": "https://babeljs.io/",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/babel/babel.git",
+    "directory": "packages/babel-code-frame"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "@babel/highlight": "^7.10.4"
+  },
+  "devDependencies": {
+    "chalk": "^2.0.0",
+    "strip-ansi": "^4.0.0"
+  },
+  "gitHead": "7fd40d86a0d03ff0e9c3ea16b29689945433d4df",
+  "bugs": {
+    "url": "https://github.com/babel/babel/issues"
+  },
+  "_id": "@babel/code-frame@7.10.4",
+  "_nodeVersion": "14.4.0",
+  "_npmVersion": "lerna/3.19.0/node@v14.4.0+x64 (darwin)",
+  "dist": {
+    "integrity": "sha512-vG6SvB6oYEhvgisZNFRmRCUkLz11c7rp+tbNTynGqc6mS1d5ATd/sGyV6W0KZZnXRKMTzZDRgQT3Ou9jhpAfUg==",
+    "shasum": "168da1a36e90da68ae8d49c0f1b48c7c6249213a",
+    "tarball": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.10.4.tgz",
+    "fileCount": 4,
+    "unpackedSize": 7723,
+    "npm-signature": "-----BEGIN PGP SIGNATURE-----\r\nVersion: OpenPGP.js v3.0.4\r\nComment: https://openpgpjs.org\r\n\r\nwsFcBAEBCAAQBQJe+zovCRA9TVsSAnZWagAAe8cQAKMtKF7FJx92Re+ol+4B\no0f3yGdzxWUhl8B+e8eXgjYcetMe1MZpG1oQF5ocYo45mZ+ASWMzfp1caT1p\nqt3F5rtADrL9int8ti7ICrWkIGQ3ccnrTxmtx1y9NRGANeARYjlB538xg0xy\n2Gin+2NchK2gxkxeX0nPH7LOcLlJpXecv1p2BK8gFZfabhM4fKfcMSSeljUp\ngzBGU/0CQp3++KsFAS/GMtgo6ZLw7wnHn0IVtDbwhA6A7hpDZar1Q5xsleui\nUTFIJCegGBx9exO1z0fYLGjOuvOdB5790fQnGsspbVTMwpImWpjspmuH1kWI\nTtk1ocnUnvEu1wNK2FMspUeKHNmOi5Jr6bkdGTxecXV4W/p9oEoPe3tHItL5\nbG9gNxY4IUkHeL93D86w9DtgaYtFSCYD6+sY7mQQQdhBrilR06AugBtQG3jP\nFpEsOLSn8vhYOQKv18CN//xaJM/uar40NTfZcQTn4VLXjUsuR4W+3eAv+qb+\nSKEpf8YAhgXJR5EFG1m3m4VHCp40SM1oSibh3/Ib74VZmlF/aq0VcPDs9tD2\no/MibYbQcP01cYxzpfObPXRczTH8TSl3scslcf7aVcLuhbyJtw8gblKnmXjo\njNaZrKjGKrpKRYStMBbCt8ILkL+OZTcDJcihy1x0v4oOWT43lrHnPntOAg7D\nqQbp\r\n=RhVa\r\n-----END PGP SIGNATURE-----\r\n",
+    "signatures": [
+      {
+        "keyid": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA",
+        "sig": "MEUCIQDSjBYOah3mnIxnAjEKv638MySMCxhZ0J9pexriecmdogIgAOaTRZg3UeVxrs8Khzr78+n4T+10hMn2Z9DRR7k5qEM="
+      }
+    ]
+  },
+  "maintainers": [
+    {
+      "email": "daniel@tschinder.de",
+      "name": "danez"
+    },
+    {
+      "email": "bng412@gmail.com",
+      "name": "existentialism"
+    },
+    {
+      "email": "hi@henryzoo.com",
+      "name": "hzoo"
+    },
+    {
+      "email": "i@jhuang.me",
+      "name": "jlhwung"
+    },
+    {
+      "email": "loganfsmyth@gmail.com",
+      "name": "loganfsmyth"
+    },
+    {
+      "email": "nicolo.ribaudo@gmail.com",
+      "name": "nicolo-ribaudo"
+    }
+  ],
+  "_npmUser": {
+    "name": "jlhwung",
+    "email": "i@jhuang.me"
+  },
+  "directories": {},
+  "_npmOperationalInternal": {
+    "host": "s3://npm-registry-packages",
+    "tmp": "tmp/code-frame_7.10.4_1593522734690_0.6416145193889038"
+  },
+  "_hasShrinkwrap": false
+}

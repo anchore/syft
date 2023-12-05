@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 	"time"
@@ -109,11 +110,11 @@ func newPnpmPackage(resolver file.Resolver, location file.Location, name, versio
 	)
 }
 
-func newYarnLockPackage(searchRemoteLicenses bool, resolver file.Resolver, location file.Location, name, version string) pkg.Package {
+func newYarnLockPackage(cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string) pkg.Package {
 	var licenseSet pkg.LicenseSet
 
-	if searchRemoteLicenses {
-		license, err := getLicenseFromNpmRegistry(name, version)
+	if cfg.searchRemoteLicenses {
+		license, err := getLicenseFromNpmRegistry(cfg.npmBaseURL, name, version)
 		if err == nil && license != "" {
 			licenses := pkg.NewLicensesFromValues(license)
 			licenseSet = pkg.NewLicenseSet(licenses...)
@@ -135,8 +136,21 @@ func newYarnLockPackage(searchRemoteLicenses bool, resolver file.Resolver, locat
 	)
 }
 
-func getLicenseFromNpmRegistry(packageName, version string) (string, error) {
-	var requestURL = fmt.Sprintf("https://registry.npmjs.org/%s/%s", packageName, version)
+func formatNpmRegistryURL(baseURL, packageName, version string) (requestURL string, err error) {
+	urlPath := []string{packageName, version}
+	requestURL, err = url.JoinPath(baseURL, urlPath...)
+	if err != nil {
+		return requestURL, fmt.Errorf("unable to format npm request for pkg:version %s%s; %w", packageName, version, err)
+	}
+	return requestURL, nil
+}
+
+func getLicenseFromNpmRegistry(basURL, packageName, version string) (string, error) {
+	// "https://registry.npmjs.org/%s/%s", packageName, version
+	requestURL, err := formatNpmRegistryURL(basURL, packageName, version)
+	if err != nil {
+		return "", fmt.Errorf("unable to format npm request for pkg:version %s%s; %w", packageName, version, err)
+	}
 	log.Tracef("trying to fetch remote package %s", requestURL)
 
 	npmRequest, err := http.NewRequest(http.MethodGet, requestURL, nil)

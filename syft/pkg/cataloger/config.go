@@ -29,6 +29,7 @@ func DefaultConfig() Config {
 		LinuxKernel:                     kernel.DefaultLinuxCatalogerConfig(),
 		Python:                          python.DefaultCatalogerConfig(),
 		Java:                            java.DefaultArchiveCatalogerConfig(),
+		Javascript:                      javascript.DefaultCatalogerConfig(),
 		ExcludeBinaryOverlapByOwnership: true,
 	}
 }
