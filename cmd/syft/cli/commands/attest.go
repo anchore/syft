@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -11,15 +12,14 @@ import (
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/clio"
-	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
+	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/spdxjson"
 	"github.com/anchore/syft/syft/format/spdxtagvalue"
@@ -33,6 +33,7 @@ const (
 `
 	attestSchemeHelp = "\n  " + schemeHelpHeader + "\n" + imageSchemeHelp
 	attestHelp       = attestExample + attestSchemeHelp
+	cosignBinName    = "cosign"
 )
 
 type attestOptions struct {
@@ -46,24 +47,7 @@ type attestOptions struct {
 func Attest(app clio.Application) *cobra.Command {
 	id := app.ID()
 
-	opts := &attestOptions{
-		UpdateCheck: options.DefaultUpdateCheck(),
-		Output: options.Output{
-			AllowMultipleOutputs: false,
-			AllowableOptions: []string{
-				string(syftjson.ID),
-				string(cyclonedxjson.ID),
-				string(spdxjson.ID),
-				string(spdxtagvalue.ID),
-			},
-			Outputs: []string{syftjson.ID.String()},
-			OutputFile: options.OutputFile{ // nolint:staticcheck
-				Enabled: false, // explicitly not allowed
-			},
-			Format: options.DefaultFormat(),
-		},
-		Catalog: options.DefaultCatalog(),
-	}
+	opts := defaultAttestOptions()
 
 	// template format explicitly not allowed
 	opts.Format.Template.Enabled = false
@@ -82,83 +66,96 @@ func Attest(app clio.Application) *cobra.Command {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()
 
-			return runAttest(id, opts, args[0])
+			return runAttest(id, &opts, args[0])
 		},
-	}, opts)
+	}, &opts)
+}
+
+func defaultAttestOptions() attestOptions {
+	return attestOptions{
+		Output:      defaultAttestOutputOptions(),
+		UpdateCheck: options.DefaultUpdateCheck(),
+		Catalog:     options.DefaultCatalog(),
+	}
+}
+
+func defaultAttestOutputOptions() options.Output {
+	return options.Output{
+		AllowMultipleOutputs: false,
+		AllowToFile:          false,
+		AllowableOptions: []string{
+			string(syftjson.ID),
+			string(cyclonedxjson.ID),
+			string(spdxjson.ID),
+			string(spdxtagvalue.ID),
+		},
+		Outputs: []string{syftjson.ID.String()},
+		OutputFile: options.OutputFile{ // nolint:staticcheck
+			Enabled: false, // explicitly not allowed
+		},
+		Format: options.DefaultFormat(),
+	}
 }
 
 //nolint:funlen
 func runAttest(id clio.Identification, opts *attestOptions, userInput string) error {
-	_, err := exec.LookPath("cosign")
-	if err != nil {
-		// when cosign is not installed the error will be rendered like so:
-		// 2023/06/30 08:31:52 error during command execution: 'syft attest' requires cosign to be installed: exec: "cosign": executable file not found in $PATH
-		return fmt.Errorf("'syft attest' requires cosign to be installed: %w", err)
+	// TODO: what other validation here besides binary name?
+	if !commandExists(cosignBinName) {
+		return fmt.Errorf("'syft attest' requires cosign to be installed, however it does not appear to be on PATH")
 	}
 
-	s, err := buildSBOM(id, &opts.Catalog, userInput)
-	if err != nil {
-		return fmt.Errorf("unable to build SBOM: %w", err)
-	}
-
+	// this is the file that will contain the SBOM being attested
 	f, err := os.CreateTemp("", "syft-attest-")
 	if err != nil {
 		return fmt.Errorf("unable to create temp file: %w", err)
 	}
 	defer os.Remove(f.Name())
 
-	writer, err := opts.SBOMWriter()
+	s, err := generateSBOMForAttestation(id, &opts.Catalog, userInput)
 	if err != nil {
-		return fmt.Errorf("unable to create SBOM writer: %w", err)
+		return fmt.Errorf("unable to build SBOM: %w", err)
 	}
 
-	if err := writer.Write(*s); err != nil {
-		return fmt.Errorf("unable to write SBOM to temp file: %w", err)
+	if err = writeSBOMToFormattedFile(s, f, opts); err != nil {
+		return fmt.Errorf("unable to write SBOM to file: %w", err)
 	}
 
-	// TODO: what other validation here besides binary name?
-	cmd := "cosign"
-	if !commandExists(cmd) {
-		return fmt.Errorf("unable to find cosign in PATH; make sure you have it installed")
+	if err = createAttestation(f.Name(), opts, userInput); err != nil {
+		return err
 	}
 
-	outputNames := opts.OutputNameSet()
-	var outputName string
-	switch outputNames.Size() {
-	case 0:
-		return fmt.Errorf("no output format specified")
-	case 1:
-		outputName = outputNames.List()[0]
-	default:
-		return fmt.Errorf("multiple output formats specified: %s", strings.Join(outputNames.List(), ", "))
+	bus.Notify("Attestation has been created, please check your registry for the output or use the cosign command:")
+	bus.Notify(fmt.Sprintf("cosign download attestation %s", userInput))
+	return nil
+}
+
+func writeSBOMToFormattedFile(s *sbom.SBOM, sbomFile io.Writer, opts *attestOptions) error {
+	if sbomFile == nil {
+		return fmt.Errorf("no output file provided")
 	}
 
-	// Select Cosign predicate type based on defined output type
-	// As orientation, check: https://github.com/sigstore/cosign/blob/main/pkg/cosign/attestation/attestation.go
-	var predicateType string
-	switch strings.ToLower(outputName) {
-	case "cyclonedx-json":
-		predicateType = "cyclonedx"
-	case "spdx-tag-value", "spdx-tv":
-		predicateType = "spdx"
-	case "spdx-json", "json":
-		predicateType = "spdxjson"
-	default:
-		predicateType = "custom"
+	encs, err := opts.Format.Encoders()
+	if err != nil {
+		return fmt.Errorf("unable to create encoders: %w", err)
 	}
 
-	args := []string{"attest", userInput, "--predicate", f.Name(), "--type", predicateType}
-	if opts.Attest.Key != "" {
-		args = append(args, "--key", opts.Attest.Key.String())
+	encoders := format.NewEncoderCollection(encs...)
+	encoder := encoders.GetByString(opts.Outputs[0])
+	if encoder == nil {
+		return fmt.Errorf("unable to find encoder for %q", opts.Outputs[0])
 	}
 
-	execCmd := exec.Command(cmd, args...)
-	execCmd.Env = os.Environ()
-	if opts.Attest.Key != "" {
-		execCmd.Env = append(execCmd.Env, fmt.Sprintf("COSIGN_PASSWORD=%s", opts.Attest.Password))
-	} else {
-		// no key provided, use cosign's keyless mode
-		execCmd.Env = append(execCmd.Env, "COSIGN_EXPERIMENTAL=1")
+	if err = encoder.Encode(sbomFile, *s); err != nil {
+		return fmt.Errorf("unable to encode SBOM: %w", err)
+	}
+
+	return nil
+}
+
+func createAttestation(sbomFilepath string, opts *attestOptions, userInput string) error {
+	execCmd, err := attestCommand(sbomFilepath, opts, userInput)
+	if err != nil {
+		return fmt.Errorf("unable to craft attest command: %w", err)
 	}
 
 	log.WithFields("cmd", strings.Join(execCmd.Args, " ")).Trace("creating attestation")
@@ -201,59 +198,67 @@ func runAttest(id clio.Identification, opts *attestOptions, userInput string) er
 	}
 
 	mon.SetCompleted()
-
 	return nil
 }
 
-func buildSBOM(id clio.Identification, opts *options.Catalog, userInput string) (*sbom.SBOM, error) {
-	cfg := source.DetectConfig{
-		DefaultImageSource: opts.DefaultImagePullSource,
+func attestCommand(sbomFilepath string, opts *attestOptions, userInput string) (*exec.Cmd, error) {
+	outputNames := opts.OutputNameSet()
+	var outputName string
+	switch outputNames.Size() {
+	case 0:
+		return nil, fmt.Errorf("no output format specified")
+	case 1:
+		outputName = outputNames.List()[0]
+	default:
+		return nil, fmt.Errorf("multiple output formats specified: %s", strings.Join(outputNames.List(), ", "))
 	}
-	detection, err := source.Detect(userInput, cfg)
+
+	args := []string{"attest", userInput, "--predicate", sbomFilepath, "--type", predicateType(outputName), "-y"}
+	if opts.Attest.Key != "" {
+		args = append(args, "--key", opts.Attest.Key.String())
+	}
+
+	execCmd := exec.Command(cosignBinName, args...)
+	execCmd.Env = os.Environ()
+	if opts.Attest.Key != "" {
+		execCmd.Env = append(execCmd.Env, fmt.Sprintf("COSIGN_PASSWORD=%s", opts.Attest.Password))
+	} else {
+		// no key provided, use cosign's keyless mode
+		execCmd.Env = append(execCmd.Env, "COSIGN_EXPERIMENTAL=1")
+	}
+
+	return execCmd, nil
+}
+
+func predicateType(outputName string) string {
+	// Select Cosign predicate type based on defined output type
+	// As orientation, check: https://github.com/sigstore/cosign/blob/main/pkg/cosign/attestation/attestation.go
+	switch strings.ToLower(outputName) {
+	case "cyclonedx-json":
+		return "cyclonedx"
+	case "spdx-tag-value", "spdx-tv":
+		return "spdx"
+	case "spdx-json", "json":
+		return "spdxjson"
+	default:
+		return "custom"
+	}
+}
+
+func generateSBOMForAttestation(id clio.Identification, opts *options.Catalog, userInput string) (*sbom.SBOM, error) {
+	src, err := getSource(opts, userInput, onlyContainerImages)
+
 	if err != nil {
-		return nil, fmt.Errorf("could not deteremine source: %w", err)
+		return nil, err
 	}
 
-	if detection.IsContainerImage() {
-		return nil, fmt.Errorf("attestations are only supported for oci images at this time")
-	}
-
-	var platform *image.Platform
-
-	if opts.Platform != "" {
-		platform, err = image.NewPlatform(opts.Platform)
-		if err != nil {
-			return nil, fmt.Errorf("invalid platform: %w", err)
+	defer func() {
+		if src != nil {
+			if err := src.Close(); err != nil {
+				log.Tracef("unable to close source: %+v", err)
+			}
 		}
-	}
-
-	hashers, err := file.Hashers(opts.Source.File.Digests...)
-	if err != nil {
-		return nil, fmt.Errorf("invalid hash: %w", err)
-	}
-
-	src, err := detection.NewSource(
-		source.DetectionSourceConfig{
-			Alias: source.Alias{
-				Name:    opts.Source.Name,
-				Version: opts.Source.Version,
-			},
-			RegistryOptions: opts.Registry.ToOptions(),
-			Platform:        platform,
-			Exclude: source.ExcludeConfig{
-				Paths: opts.Exclusions,
-			},
-			DigestAlgorithms: hashers,
-			BasePath:         opts.BasePath,
-		},
-	)
-
-	if src != nil {
-		defer src.Close()
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
-	}
+	}()
 
 	s, err := generateSBOM(id, src, opts)
 	if err != nil {
@@ -265,6 +270,13 @@ func buildSBOM(id clio.Identification, opts *options.Catalog, userInput string) 
 	}
 
 	return s, nil
+}
+
+func onlyContainerImages(d *source.Detection) error {
+	if !d.IsContainerImage() {
+		return fmt.Errorf("attestations are only supported for oci images at this time")
+	}
+	return nil
 }
 
 func commandExists(cmd string) bool {

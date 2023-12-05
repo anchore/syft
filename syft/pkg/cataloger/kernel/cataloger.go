@@ -15,16 +15,16 @@ import (
 
 var _ pkg.Cataloger = (*LinuxKernelCataloger)(nil)
 
-type LinuxCatalogerConfig struct {
-	CatalogModules bool
+type LinuxKernelCatalogerConfig struct {
+	CatalogModules bool `yaml:"catalog-modules" json:"catalog-modules" mapstructure:"catalog-modules"`
 }
 
 type LinuxKernelCataloger struct {
-	cfg LinuxCatalogerConfig
+	cfg LinuxKernelCatalogerConfig
 }
 
-func DefaultLinuxCatalogerConfig() LinuxCatalogerConfig {
-	return LinuxCatalogerConfig{
+func DefaultLinuxCatalogerConfig() LinuxKernelCatalogerConfig {
+	return LinuxKernelCatalogerConfig{
 		CatalogModules: true,
 	}
 }
@@ -43,7 +43,7 @@ var kernelModuleGlobs = []string{
 }
 
 // NewLinuxKernelCataloger returns a new kernel files cataloger object.
-func NewLinuxKernelCataloger(cfg LinuxCatalogerConfig) *LinuxKernelCataloger {
+func NewLinuxKernelCataloger(cfg LinuxKernelCatalogerConfig) *LinuxKernelCataloger {
 	return &LinuxKernelCataloger{
 		cfg: cfg,
 	}

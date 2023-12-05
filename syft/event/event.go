@@ -14,19 +14,6 @@ const (
 
 	// Events from the syft library
 
-	// PackageCatalogerStarted is a partybus event that occurs when the package cataloging has begun
-	PackageCatalogerStarted partybus.EventType = typePrefix + "-package-cataloger-started-event"
-
-	//nolint:gosec
-	// SecretsCatalogerStarted is a partybus event that occurs when the secrets cataloging has begun
-	SecretsCatalogerStarted partybus.EventType = typePrefix + "-secrets-cataloger-started-event"
-
-	// FileMetadataCatalogerStarted is a partybus event that occurs when the file metadata cataloging has begun
-	FileMetadataCatalogerStarted partybus.EventType = typePrefix + "-file-metadata-cataloger-started-event"
-
-	// FileDigestsCatalogerStarted is a partybus event that occurs when the file digests cataloging has begun
-	FileDigestsCatalogerStarted partybus.EventType = typePrefix + "-file-digests-cataloger-started-event"
-
 	// FileIndexingStarted is a partybus event that occurs when the directory resolver begins indexing a filesystem
 	FileIndexingStarted partybus.EventType = typePrefix + "-file-indexing-started-event"
 

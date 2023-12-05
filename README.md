@@ -536,10 +536,17 @@ catalogers:
 
 # all format configuration
 format:
+ 
+  # default value for all formats that support the "pretty" option (default is unset)
+  pretty: 
 
   # all syft-json format options
   json:
-      
+
+    # include space indention and newlines (inherits default value from 'format.pretty' or 'false' if parent is unset)
+    # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+    pretty: false
+    
     # transform any syft-json output to conform to an approximation of the v11.0.1 schema. This includes:
     # - using the package metadata type names from before v12 of the JSON schema (changed in https://github.com/anchore/syft/pull/1983)
     #
@@ -556,6 +563,27 @@ format:
     # Note that all template paths are based on the current syft-json schema.
     # same as -t ; SYFT_TEMPLATE_PATH env var
     path: ""
+
+  # all spdx-json format options
+  spdx-json:
+
+    # include space indention and newlines
+    # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+    pretty: false
+
+  # all cyclonedx-json format options
+  cyclonedx-json:
+
+     # include space indention and newlines
+     # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+     pretty: false
+
+  # all cyclonedx-xml format options
+  cyclonedx-xml:
+
+     # include space indention
+     # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+     pretty: false
 
 
 # cataloging packages is exposed through the packages and power-user subcommands
@@ -628,14 +656,13 @@ python:
    # when given an arbitrary constraint will be used (even if that version may not be available/published).
    guess-unpinned-requirements: false
 
-# cataloging file contents is exposed through the power-user subcommand
 file-contents:
   cataloger:
-    # enable/disable cataloging of secrets
+    # enable/disable cataloging of file contents
     # SYFT_FILE_CONTENTS_CATALOGER_ENABLED env var
     enabled: true
 
-    # the search space to look for secrets (options: all-layers, squashed)
+    # the search space to look for file contents (options: all-layers, squashed)
     # SYFT_FILE_CONTENTS_CATALOGER_SCOPE env var
     scope: "squashed"
 
@@ -647,7 +674,6 @@ file-contents:
   # SYFT_FILE_CONTENTS_GLOBS env var
   globs: []
 
-# cataloging file metadata is exposed through the power-user subcommand
 file-metadata:
   cataloger:
     # enable/disable cataloging of file metadata
@@ -664,37 +690,6 @@ file-metadata:
 
 # maximum number of workers used to process the list of package catalogers in parallel
 parallelism: 1
-
-# cataloging secrets is exposed through the power-user subcommand
-secrets:
-  cataloger:
-    # enable/disable cataloging of secrets
-    # SYFT_SECRETS_CATALOGER_ENABLED env var
-    enabled: true
-
-    # the search space to look for secrets (options: all-layers, squashed)
-    # SYFT_SECRETS_CATALOGER_SCOPE env var
-    scope: "all-layers"
-
-  # show extracted secret values in the final JSON report
-  # SYFT_SECRETS_REVEAL_VALUES env var
-  reveal-values: false
-
-  # skip searching a file entirely if it is above the given size (default = 1MB; unit = bytes)
-  # SYFT_SECRETS_SKIP_FILES_ABOVE_SIZE env var
-  skip-files-above-size: 1048576
-
-  # name-regex pairs to consider when searching files for secrets. Note: the regex must match single line patterns
-  # but may also have OPTIONAL multiline capture groups. Regexes with a named capture group of "value" will
-  # use the entire regex to match, but the secret value will be assumed to be entirely contained within the
-  # "value" named capture group.
-  additional-patterns: {}
-
-  # names to exclude from the secrets search, valid values are: "aws-access-key", "aws-secret-key", "pem-private-key",
-  # "docker-config-auth", and "generic-api-key". Note: this does not consider any names introduced in the
-  # "secrets.additional-patterns" config option.
-  # SYFT_SECRETS_EXCLUDE_PATTERN_NAMES env var
-  exclude-pattern-names: []
 
 # options that apply to all scan sources
 source:

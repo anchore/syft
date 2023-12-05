@@ -3,16 +3,16 @@ package filedigest
 import (
 	"crypto"
 	"errors"
+	"fmt"
 
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
+	"github.com/dustin/go-humanize"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	intCataloger "github.com/anchore/syft/syft/file/cataloger/internal"
 )
@@ -41,9 +41,11 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 		}
 	}
 
-	stage, prog := digestsCatalogingProgress(int64(len(locations)))
+	prog := digestsCatalogingProgress(int64(len(locations)))
 	for _, location := range locations {
-		stage.Current = location.RealPath
+		prog.Increment()
+		prog.AtomicStage.Set(location.Path())
+
 		result, err := i.catalogLocation(resolver, location)
 
 		if errors.Is(err, ErrUndigestableFile) {
@@ -61,8 +63,12 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 		prog.Increment()
 		results[location.Coordinates] = result
 	}
+
 	log.Debugf("file digests cataloger processed %d files", prog.Current())
+
+	prog.AtomicStage.Set(fmt.Sprintf("%s digests", humanize.Comma(prog.Current())))
 	prog.SetCompleted()
+
 	return results, nil
 }
 
@@ -91,20 +97,14 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	return digests, nil
 }
 
-func digestsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {
-	stage := &progress.Stage{}
-	prog := progress.NewManual(locations)
-
-	bus.Publish(partybus.Event{
-		Type: event.FileDigestsCatalogerStarted,
-		Value: struct {
-			progress.Stager
-			progress.Progressable
-		}{
-			Stager:       progress.Stager(stage),
-			Progressable: prog,
+func digestsCatalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
+	info := monitor.GenericTask{
+		Title: monitor.Title{
+			Default:      "Catalog file digests",
+			WhileRunning: "Cataloging file digests",
+			OnSuccess:    "Cataloged file digests",
 		},
-	})
+	}
 
-	return stage, prog
+	return bus.StartCatalogerTask(info, locations, "")
 }

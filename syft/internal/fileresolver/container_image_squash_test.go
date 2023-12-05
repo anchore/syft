@@ -547,6 +547,9 @@ func TestSquashResolver_AllLocations(t *testing.T) {
 	// this isn't important for the test, so we remove them.
 	paths.Remove("/proc", "/sys", "/dev", "/etc")
 
+	// Remove cache created by Mac Rosetta when emulating different arches
+	paths.Remove("/.cache/rosetta", "/.cache")
+
 	pathsList := paths.List()
 	sort.Strings(pathsList)
 

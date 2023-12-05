@@ -47,10 +47,10 @@ var genericTarGlobs = []string{
 // a file listing within the archive you must decompress the entire archive and seek through all of the entries.
 
 type genericTarWrappedJavaArchiveParser struct {
-	cfg Config
+	cfg ArchiveCatalogerConfig
 }
 
-func newGenericTarWrappedJavaArchiveParser(cfg Config) genericTarWrappedJavaArchiveParser {
+func newGenericTarWrappedJavaArchiveParser(cfg ArchiveCatalogerConfig) genericTarWrappedJavaArchiveParser {
 	return genericTarWrappedJavaArchiveParser{
 		cfg: cfg,
 	}
@@ -68,7 +68,7 @@ func (gtp genericTarWrappedJavaArchiveParser) parseTarWrappedJavaArchive(_ file.
 	return discoverPkgsFromTar(reader.Location, archivePath, contentPath, gtp.cfg)
 }
 
-func discoverPkgsFromTar(location file.Location, archivePath, contentPath string, cfg Config) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromTar(location file.Location, archivePath, contentPath string, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	openers, err := intFile.ExtractGlobsFromTarToUniqueTempFile(archivePath, contentPath, archiveFormatGlobs...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from tar: %w", err)

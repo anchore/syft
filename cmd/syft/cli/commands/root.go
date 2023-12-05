@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/syft/cmd/syft/internal/ui"
 )
 
 func Root(app clio.Application, packagesCmd *cobra.Command) *cobra.Command {
@@ -21,6 +22,9 @@ func Root(app clio.Application, packagesCmd *cobra.Command) *cobra.Command {
 		Example: packagesCmd.Example,
 		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			restoreStdout := ui.CaptureStdoutToTraceLog()
+			defer restoreStdout()
+
 			return runPackages(id, opts, args[0])
 		},
 	}, opts)

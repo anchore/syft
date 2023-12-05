@@ -58,8 +58,10 @@ var defaultClassifiers = []classifier{
 	{
 		Class:    "redis-binary",
 		FileGlob: "**/redis-server",
-		EvidenceMatcher: fileContentsVersionMatcher(
-			`(?s)payload %5.*(?P<version>\d.\d\.\d\d*?)[a-z0-9]{12}-[0-9]{19}`),
+		EvidenceMatcher: evidenceMatchers(
+			fileContentsVersionMatcher(`(?s)payload %5.*?(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}`),
+			fileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12}-[0-9]{19}\x00.*?payload %5`),
+		),
 		Package: "redis",
 		PURL:    mustPURL("pkg:generic/redis@version"),
 		CPEs:    singleCPE("cpe:2.3:a:redislabs:redis:*:*:*:*:*:*:*:*"),
@@ -208,6 +210,26 @@ var defaultClassifiers = []classifier{
 			`(?m)(\x00|\?)PostgreSQL (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 		Package: "postgresql",
 		PURL:    mustPURL("pkg:generic/postgresql@version"),
+	},
+	{
+		Class:    "mysql-binary",
+		FileGlob: "**/mysql",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// ../../mysql-8.0.34
+			// /mysql-5.6.51/bld/client
+			`(?m).*/mysql-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
+		Package: "mysql",
+		PURL:    mustPURL("pkg:generic/mysql@version"),
+		CPEs:    singleCPE("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "mariadb-binary",
+		FileGlob: "**/mariadb",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// 10.6.15-MariaDB
+			`(?m)(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-MariaDB`),
+		Package: "mariadb",
+		PURL:    mustPURL("pkg:generic/mariadb@version"),
 	},
 	{
 		Class:    "rust-standard-library-linux",

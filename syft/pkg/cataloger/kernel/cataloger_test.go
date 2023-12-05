@@ -87,7 +87,7 @@ func Test_KernelCataloger(t *testing.T) {
 		Expects(expectedPkgs, expectedRelationships).
 		TestCataloger(t,
 			NewLinuxKernelCataloger(
-				LinuxCatalogerConfig{
+				LinuxKernelCatalogerConfig{
 					CatalogModules: true,
 				},
 			),

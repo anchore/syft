@@ -4,13 +4,14 @@ Package python provides a concrete Cataloger implementation relating to packages
 package python
 
 import (
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 const eggInfoGlob = "**/*.egg-info"
 
 type CatalogerConfig struct {
-	GuessUnpinnedRequirements bool
+	GuessUnpinnedRequirements bool `yaml:"guess-unpinned-requirements" json:"guess-unpinned-requirements" mapstructure:"guess-unpinned-requirements"`
 }
 
 func DefaultCatalogerConfig() CatalogerConfig {
@@ -30,7 +31,7 @@ func NewPackageCataloger(cfg CatalogerConfig) *generic.Cataloger {
 }
 
 // NewInstalledPackageCataloger returns a new cataloger for python packages within egg or wheel installation directories.
-func NewInstalledPackageCataloger() *generic.Cataloger {
+func NewInstalledPackageCataloger() pkg.Cataloger {
 	return generic.NewCataloger("python-installed-package-cataloger").
 		WithParserByGlobs(
 			parseWheelOrEgg,

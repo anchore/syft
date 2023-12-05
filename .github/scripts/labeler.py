@@ -8,6 +8,12 @@ import re
 
 DRY_RUN = False
 
+JSON_SCHEMA_LABEL = "json-schema"
+
+# note: we can't use "breaking-change" as the label since that might be applied manually by a user. This is a
+# distinct label that we can use to indicate that the label was applied (or removed) by automation.
+BREAKING_CHANGE_LABEL = "detected-breaking-change"
+
 
 def main(changed_files: str | None = None, merge_base_schema_files: str | None = None):
     global DRY_RUN
@@ -67,17 +73,18 @@ def main(changed_files: str | None = None, merge_base_schema_files: str | None =
     # if there is a new or modified schema, we should add the "json-schema" label to the PR...
     if new_schema_files or removed_or_modified_schema_files:
         print("\nAdding json-schema label...")
-        add_label(pr_number, "json-schema")
+        add_label(pr_number, JSON_SCHEMA_LABEL)
+
     else:
-        remove_label(pr_number, "json-schema")
+        remove_label(pr_number, JSON_SCHEMA_LABEL)
 
     # new schema files should be scrutinized, comparing the latest and added versions to see if it's a breaking
     # change (major version bump). Warn about it on the PR via adding a breaking-change label...
     if is_breaking_change(new_schema_files, og_json_schema_files[-1]):
         print("\nBreaking change detected...")
-        add_label(pr_number, "breaking-change")
+        add_label(pr_number, BREAKING_CHANGE_LABEL)
     else:
-        remove_label(pr_number, "breaking-change")
+        remove_label(pr_number, BREAKING_CHANGE_LABEL)
 
     # modifying an existing schema could be a breaking change, we should warn about it on the PR via a comment...
     # removing schema files should never be allowed, we should warn about it on the PR via a comment...

@@ -11,7 +11,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -20,31 +19,28 @@ import (
 var versionCandidateGroups = regexp.MustCompile(`(?P<version>\d+(\.\d+)?(\.\d+)?)(?P<candidate>\w*)`)
 
 // NewGoModuleFileCataloger returns a new cataloger object that searches within go.mod files.
-func NewGoModuleFileCataloger(opts GoCatalogerOpts) pkg.Cataloger {
+func NewGoModuleFileCataloger(opts CatalogerConfig) pkg.Cataloger {
 	c := goModCataloger{
 		licenses: newGoLicenses(opts),
 	}
 	return &progressingCataloger{
-		progress: c.licenses.progress,
 		cataloger: generic.NewCataloger("go-module-file-cataloger").
 			WithParserByGlobs(c.parseGoModFile, "**/go.mod"),
 	}
 }
 
 // NewGoModuleBinaryCataloger returns a new cataloger object that searches within binaries built by the go compiler.
-func NewGoModuleBinaryCataloger(opts GoCatalogerOpts) pkg.Cataloger {
+func NewGoModuleBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
 	c := goBinaryCataloger{
 		licenses: newGoLicenses(opts),
 	}
 	return &progressingCataloger{
-		progress: c.licenses.progress,
 		cataloger: generic.NewCataloger("go-module-binary-cataloger").
 			WithParserByMimeTypes(c.parseGoBinary, internal.ExecutableMIMETypeSet.List()...),
 	}
 }
 
 type progressingCataloger struct {
-	progress  *monitor.CatalogerTask
 	cataloger *generic.Cataloger
 }
 
@@ -53,7 +49,6 @@ func (p *progressingCataloger) Name() string {
 }
 
 func (p *progressingCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
-	defer p.progress.SetCompleted()
 	pkgs, relationships, err := p.cataloger.Catalog(resolver)
 	goCompilerPkgs := []pkg.Package{}
 	totalLocations := file.NewLocationSet()
@@ -76,6 +71,7 @@ func (p *progressingCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, [
 	pkgs = append(pkgs, goCompilerPkgs...)
 	return pkgs, relationships, err
 }
+
 func newGoStdLib(version string, location file.LocationSet) *pkg.Package {
 	stdlibCpe, err := generateStdlibCpe(version)
 	if err != nil {

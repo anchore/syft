@@ -102,7 +102,7 @@ const nativeImageInvalidIndexError = "parsing the executable file generated an i
 const nativeImageMissingExportedDataDirectoryError = "exported data directory is missing"
 
 // newNativeImageCataloger returns a new Native Image cataloger object.
-func NewNativeImageCataloger() *NativeImageCataloger {
+func NewNativeImageCataloger() pkg.Cataloger {
 	return &NativeImageCataloger{}
 }
 

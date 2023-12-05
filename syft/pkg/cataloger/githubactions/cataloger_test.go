@@ -3,7 +3,7 @@ package githubactions
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
@@ -11,7 +11,7 @@ func TestCataloger_Globs(t *testing.T) {
 	tests := []struct {
 		name      string
 		fixture   string
-		cataloger *generic.Cataloger
+		cataloger pkg.Cataloger
 		expected  []string
 	}{
 		{

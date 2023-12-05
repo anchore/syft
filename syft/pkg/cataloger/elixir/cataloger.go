@@ -4,11 +4,12 @@ Package elixir provides a concrete Cataloger implementation relating to packages
 package elixir
 
 import (
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 // NewMixLockCataloger returns a cataloger object for Elixir mix.lock files.
-func NewMixLockCataloger() *generic.Cataloger {
+func NewMixLockCataloger() pkg.Cataloger {
 	return generic.NewCataloger("elixir-mix-lock-cataloger").
 		WithParserByGlobs(parseMixLock, "**/mix.lock")
 }

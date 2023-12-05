@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/clio"
 	"github.com/anchore/fangs"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/pkg/cataloger"
 	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
 	javaCataloger "github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -22,26 +23,24 @@ import (
 )
 
 type Catalog struct {
-	Catalogers                      []string           `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
-	Package                         pkg                `yaml:"package" json:"package" mapstructure:"package"`
-	Golang                          golang             `yaml:"golang" json:"golang" mapstructure:"golang"`
-	Java                            java               `yaml:"java" json:"java" mapstructure:"java"`
-	Javascript                      javascript         `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
-	LinuxKernel                     linuxKernel        `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
-	Python                          python             `yaml:"python" json:"python" mapstructure:"python"`
-	FileMetadata                    fileMetadata       `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
-	FileClassification              fileClassification `yaml:"file-classification" json:"file-classification" mapstructure:"file-classification"`
-	FileContents                    fileContents       `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
-	Secrets                         secrets            `yaml:"secrets" json:"secrets" mapstructure:"secrets"`
-	Registry                        registry           `yaml:"registry" json:"registry" mapstructure:"registry"`
-	Exclusions                      []string           `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
-	Platform                        string             `yaml:"platform" json:"platform" mapstructure:"platform"`
-	Name                            string             `yaml:"name" json:"name" mapstructure:"name"`
-	Source                          sourceCfg          `yaml:"source" json:"source" mapstructure:"source"`
-	Parallelism                     int                `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"`                                                                         // the number of catalog workers to run in parallel
-	DefaultImagePullSource          string             `yaml:"default-image-pull-source" json:"default-image-pull-source" mapstructure:"default-image-pull-source"`                               // specify default image pull source
-	BasePath                        string             `yaml:"base-path" json:"base-path" mapstructure:"base-path"`                                                                               // specify base path for all file paths
-	ExcludeBinaryOverlapByOwnership bool               `yaml:"exclude-binary-overlap-by-ownership" json:"exclude-binary-overlap-by-ownership" mapstructure:"exclude-binary-overlap-by-ownership"` // exclude synthetic binary packages owned by os package files
+	Catalogers                      []string     `yaml:"catalogers" json:"catalogers" mapstructure:"catalogers"`
+	Package                         pkg          `yaml:"package" json:"package" mapstructure:"package"`
+	Golang                          golang       `yaml:"golang" json:"golang" mapstructure:"golang"`
+	Java                            java         `yaml:"java" json:"java" mapstructure:"java"`
+	Javascript                      javascript   `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
+	LinuxKernel                     linuxKernel  `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
+	Python                          python       `yaml:"python" json:"python" mapstructure:"python"`
+	FileMetadata                    fileMetadata `yaml:"file-metadata" json:"file-metadata" mapstructure:"file-metadata"`
+	FileContents                    fileContents `yaml:"file-contents" json:"file-contents" mapstructure:"file-contents"`
+	Registry                        registry     `yaml:"registry" json:"registry" mapstructure:"registry"`
+	Exclusions                      []string     `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
+	Platform                        string       `yaml:"platform" json:"platform" mapstructure:"platform"`
+	Name                            string       `yaml:"name" json:"name" mapstructure:"name"`
+	Source                          sourceCfg    `yaml:"source" json:"source" mapstructure:"source"`
+	Parallelism                     int          `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"`                                                                         // the number of catalog workers to run in parallel
+	DefaultImagePullSource          string       `yaml:"default-image-pull-source" json:"default-image-pull-source" mapstructure:"default-image-pull-source"`                               // specify default image pull source
+	BasePath                        string       `yaml:"base-path" json:"base-path" mapstructure:"base-path"`                                                                               // specify base path for all file paths
+	ExcludeBinaryOverlapByOwnership bool         `yaml:"exclude-binary-overlap-by-ownership" json:"exclude-binary-overlap-by-ownership" mapstructure:"exclude-binary-overlap-by-ownership"` // exclude synthetic binary packages owned by os package files
 }
 
 var _ interface {
@@ -54,9 +53,7 @@ func DefaultCatalog() Catalog {
 		Package:                         defaultPkg(),
 		LinuxKernel:                     defaultLinuxKernel(),
 		FileMetadata:                    defaultFileMetadata(),
-		FileClassification:              defaultFileClassification(),
 		FileContents:                    defaultFileContents(),
-		Secrets:                         defaultSecrets(),
 		Source:                          defaultSourceCfg(),
 		Parallelism:                     1,
 		ExcludeBinaryOverlapByOwnership: true,
@@ -132,19 +129,24 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 		},
 		Catalogers:  cfg.Catalogers,
 		Parallelism: cfg.Parallelism,
-		Golang: golangCataloger.NewGoCatalogerOpts().
+		Golang: golangCataloger.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
 			WithSearchRemoteLicenses(cfg.Golang.SearchRemoteLicenses).
 			WithProxy(cfg.Golang.Proxy).
 			WithNoProxy(cfg.Golang.NoProxy),
-		LinuxKernel: kernel.LinuxCatalogerConfig{
+		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},
-		Java: javaCataloger.DefaultCatalogerOpts().
+		Java: javaCataloger.DefaultArchiveCatalogerConfig().
 			WithUseNetwork(cfg.Java.UseNetwork).
-			WithMavenURL(cfg.Java.MavenURL).
-			WithMaxParentRecursiveDepth(cfg.Java.MaxParentRecursiveDepth),
+			WithMavenBaseURL(cfg.Java.MavenURL).
+			WithArchiveTraversal(
+				cataloging.ArchiveSearchConfig{
+					IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
+					IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
+				},
+				cfg.Java.MaxParentRecursiveDepth),
 		Javascript: javascriptCataloger.NewCatalogerOpts().
 			WithSearchRemoteLicenses(cfg.Javascript.SearchRemoteLicenses),
 		Python: pythonCataloger.CatalogerConfig{

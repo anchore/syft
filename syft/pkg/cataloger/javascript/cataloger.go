@@ -4,23 +4,20 @@ Package javascript provides a concrete Cataloger implementation for packages rel
 package javascript
 
 import (
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 // NewPackageCataloger returns a new cataloger object for NPM.
-func NewPackageCataloger() *generic.Cataloger {
+func NewPackageCataloger() pkg.Cataloger {
 	return generic.NewCataloger("javascript-package-cataloger").
 		WithParserByGlobs(parsePackageJSON, "**/package.json")
 }
 
 // NewLockCataloger returns a new cataloger object for NPM (and NPM-adjacent, such as yarn) lock files.
-func NewLockCataloger(opts CatalogerOpts) *generic.Cataloger {
-	c := yarnCataloger{
-		opts: opts,
-	}
-
+func NewLockCataloger(_ CatalogerConfig) pkg.Cataloger {
 	return generic.NewCataloger("javascript-lock-cataloger").
 		WithParserByGlobs(parsePackageLock, "**/package-lock.json").
-		WithParserByGlobs(c.parseYarnLock, "**/yarn.lock").
+		WithParserByGlobs(parseYarnLock, "**/yarn.lock").
 		WithParserByGlobs(parsePnpmLock, "**/pnpm-lock.yaml")
 }

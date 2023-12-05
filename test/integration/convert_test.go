@@ -78,10 +78,9 @@ func TestConvertCmd(t *testing.T) {
 			}()
 
 			opts := &commands.ConvertOptions{
-				Output: options.Output{
-					Outputs: []string{fmt.Sprintf("%s=%s", test.format.ID().String(), formatFile.Name())},
-				},
+				Output: options.DefaultOutput(),
 			}
+			opts.Outputs = []string{fmt.Sprintf("%s=%s", test.format.ID().String(), formatFile.Name())}
 			require.NoError(t, opts.PostLoad())
 
 			// stdout reduction of test noise

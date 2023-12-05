@@ -6,14 +6,14 @@ import (
 	"runtime/debug"
 	"sync"
 
+	"github.com/dustin/go-humanize"
 	"github.com/hashicorp/go-multierror"
-	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -33,21 +33,6 @@ type catalogResult struct {
 	// Discovered may sometimes be more than len(packages)
 	Discovered int64
 	Error      error
-}
-
-// newMonitor creates a new Monitor object and publishes the object on the bus as a PackageCatalogerStarted event.
-func newMonitor() (*progress.Manual, *progress.Manual) {
-	filesProcessed := progress.Manual{}
-	packagesDiscovered := progress.Manual{}
-
-	bus.Publish(partybus.Event{
-		Type: event.PackageCatalogerStarted,
-		Value: Monitor{
-			FilesProcessed:     progress.Monitorable(&filesProcessed),
-			PackagesDiscovered: progress.Monitorable(&packagesDiscovered),
-		},
-	})
-	return &filesProcessed, &packagesDiscovered
 }
 
 func runCataloger(cataloger pkg.Cataloger, resolver file.Resolver) (catalogerResult *catalogResult, err error) {
@@ -101,6 +86,7 @@ func runCataloger(cataloger pkg.Cataloger, resolver file.Resolver) (catalogerRes
 		}
 		catalogerResult.Packages = append(catalogerResult.Packages, p)
 	}
+
 	catalogerResult.Relationships = append(catalogerResult.Relationships, relationships...)
 	log.WithFields("cataloger", cataloger.Name()).Trace("cataloging complete")
 	return catalogerResult, err
@@ -116,9 +102,7 @@ func Catalog(resolver file.Resolver, _ *linux.Release, parallelism int, cataloge
 	catalog := pkg.NewCollection()
 	var allRelationships []artifact.Relationship
 
-	filesProcessed, packagesDiscovered := newMonitor()
-	defer filesProcessed.SetCompleted()
-	defer packagesDiscovered.SetCompleted()
+	prog := monitorPackageCatalogingTask()
 
 	// perform analysis, accumulating errors for each failed analysis
 	var errs error
@@ -131,9 +115,10 @@ func Catalog(resolver file.Resolver, _ *linux.Release, parallelism int, cataloge
 
 	jobs := make(chan pkg.Cataloger, nCatalogers)
 	results := make(chan *catalogResult, nCatalogers)
-	discoveredPackages := make(chan int64, nCatalogers)
 
 	waitGroup := sync.WaitGroup{}
+
+	var totalPackagesDiscovered int64
 
 	for i := 0; i < parallelism; i++ {
 		waitGroup.Add(1)
@@ -148,19 +133,15 @@ func Catalog(resolver file.Resolver, _ *linux.Release, parallelism int, cataloge
 				// ensure we set the error to be aggregated
 				result.Error = err
 
-				discoveredPackages <- result.Discovered
+				prog.Add(result.Discovered)
+				totalPackagesDiscovered += result.Discovered
+				count := humanize.Comma(totalPackagesDiscovered)
+				prog.AtomicStage.Set(fmt.Sprintf("%s packages", count))
 
 				results <- result
 			}
 		}()
 	}
-
-	// dynamically show updated discovered package status
-	go func() {
-		for discovered := range discoveredPackages {
-			packagesDiscovered.Add(discovered)
-		}
-	}()
 
 	// Enqueue the jobs
 	for _, cataloger := range catalogers {
@@ -171,7 +152,6 @@ func Catalog(resolver file.Resolver, _ *linux.Release, parallelism int, cataloge
 	// Wait for the jobs to finish
 	waitGroup.Wait()
 	close(results)
-	close(discoveredPackages)
 
 	// collect the results
 	for result := range results {
@@ -185,6 +165,12 @@ func Catalog(resolver file.Resolver, _ *linux.Release, parallelism int, cataloge
 	}
 
 	allRelationships = append(allRelationships, pkg.NewRelationships(catalog)...)
+
+	if errs != nil {
+		prog.SetError(errs)
+	} else {
+		prog.SetCompleted()
+	}
 
 	return catalog, allRelationships, errs
 }
@@ -227,4 +213,17 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver
 		})
 	}
 	return relationships, nil
+}
+
+func monitorPackageCatalogingTask() *monitor.CatalogerTaskProgress {
+	info := monitor.GenericTask{
+		Title: monitor.Title{
+			Default:      "Catalog packages",
+			WhileRunning: "Cataloging packages",
+			OnSuccess:    "Cataloged packages",
+		},
+		HideOnSuccess: false,
+	}
+
+	return bus.StartCatalogerTask(info, -1, "")
 }
