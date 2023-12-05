@@ -656,6 +656,10 @@ python:
    # when given an arbitrary constraint will be used (even if that version may not be available/published).
    guess-unpinned-requirements: false
 
+javascript:
+   search-remote-licenses: false
+   npm-base-url: "https://registry.npmjs.org"
+
 file-contents:
   cataloger:
     # enable/disable cataloging of file contents

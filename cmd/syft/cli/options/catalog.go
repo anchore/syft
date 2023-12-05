@@ -147,8 +147,9 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 					IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
 				},
 				cfg.Java.MaxParentRecursiveDepth),
-		Javascript: javascriptCataloger.NewCatalogerOpts().
-			WithSearchRemoteLicenses(cfg.Javascript.SearchRemoteLicenses),
+		Javascript: javascriptCataloger.DefaultCatalogerConfig().
+			WithSearchRemoteLicenses(cfg.Javascript.SearchRemoteLicenses).
+			WithNpmBaseURL(cfg.Javascript.NpmBaseURL),
 		Python: pythonCataloger.CatalogerConfig{
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},
