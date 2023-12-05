@@ -91,7 +91,8 @@ func TestParseYarnBerry(t *testing.T) {
 		},
 	}
 
-	pkgtest.TestFileParser(t, fixture, parseYarnLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericYarnLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, expectedPkgs, expectedRelationships)
 
 }
 
@@ -177,7 +178,8 @@ func TestParseYarnLock(t *testing.T) {
 		},
 	}
 
-	pkgtest.TestFileParser(t, fixture, parseYarnLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericYarnLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, expectedPkgs, expectedRelationships)
 
 }
 

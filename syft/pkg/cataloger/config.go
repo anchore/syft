@@ -16,7 +16,7 @@ type Config struct {
 	LinuxKernel                     kernel.LinuxKernelCatalogerConfig
 	Python                          python.CatalogerConfig
 	Java                            java.ArchiveCatalogerConfig
-	Javascript                      javascript.YarnLockCatalogerConfig
+	Javascript                      javascript.CatalogerConfig
 	Catalogers                      []string
 	Parallelism                     int
 	ExcludeBinaryOverlapByOwnership bool

@@ -13,9 +13,6 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// integrity check
-var _ generic.Parser = parseYarnLock
-
 var (
 	// packageNameExp matches the name of the dependency in yarn.lock
 	// including scope/namespace prefix if found.
@@ -44,10 +41,10 @@ const (
 )
 
 type genericYarnLockAdapter struct {
-	cfg YarnLockCatalogerConfig
+	cfg CatalogerConfig
 }
 
-func newGenericYarnLockAdapter(cfg YarnLockCatalogerConfig) genericYarnLockAdapter {
+func newGenericYarnLockAdapter(cfg CatalogerConfig) genericYarnLockAdapter {
 	return genericYarnLockAdapter{
 		cfg: cfg,
 	}
