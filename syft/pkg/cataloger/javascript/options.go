@@ -1,18 +1,18 @@
 package javascript
 
-type CatalogerConfig struct {
+type YarnLockCatalogerConfig struct {
 	searchRemoteLicenses bool
 }
 
-func (g CatalogerConfig) WithSearchRemoteLicenses(input bool) CatalogerConfig {
+func (g YarnLockCatalogerConfig) WithSearchRemoteLicenses(input bool) YarnLockCatalogerConfig {
 	g.searchRemoteLicenses = input
 	return g
 }
 
 // NewCatalogerOpts create a NewCatalogerOpts with default options, which includes:
 // - searchRemoteLicenses is false
-func NewCatalogerOpts() CatalogerConfig {
-	g := CatalogerConfig{}
+func NewCatalogerOpts() YarnLockCatalogerConfig {
+	g := YarnLockCatalogerConfig{}
 
 	return g
 }
