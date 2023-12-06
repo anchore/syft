@@ -1775,4 +1775,7 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"java-dataloader":                                          "com.graphql-java",
 	"voyager-spring-boot-autoconfigure":                        "com.graphql-java",
 	"voyager-spring-boot-starter":                              "com.graphql-java",
+	"minio":                                                    "io.minio",
+	"minio-admin":                                              "io.minio",
+	"minio-java":                                               "io.minio",
 }
