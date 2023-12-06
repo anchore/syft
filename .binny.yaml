@@ -29,7 +29,7 @@ tools:
 
   - name: cosign
     version:
-      want: v2.2.1
+      want: v2.2.2
     method: github-release
     with:
       repo: sigstore/cosign
