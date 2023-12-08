@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vifraa/gopom"
 
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
@@ -61,7 +62,15 @@ func Test_parserPomXML(t *testing.T) {
 			for i := range test.expected {
 				test.expected[i].Locations.Add(file.NewLocation(test.input))
 			}
-			pkgtest.TestFileParser(t, test.input, parserPomXML, test.expected, nil)
+
+			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{
+				ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+					IncludeIndexedArchives:   true,
+					IncludeUnindexedArchives: true,
+				},
+			})
+
+			pkgtest.TestFileParser(t, test.input, gap.parserPomXML, test.expected, nil)
 		})
 	}
 }
@@ -276,7 +285,14 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 			for i := range test.expected {
 				test.expected[i].Locations.Add(file.NewLocation(test.input))
 			}
-			pkgtest.TestFileParser(t, test.input, parserPomXML, test.expected, nil)
+
+			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{
+				ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+					IncludeIndexedArchives:   true,
+					IncludeUnindexedArchives: true,
+				},
+			})
+			pkgtest.TestFileParser(t, test.input, gap.parserPomXML, test.expected, nil)
 		})
 	}
 }
