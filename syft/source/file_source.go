@@ -189,7 +189,7 @@ func (s FileSource) FileResolver(_ Scope) (file.Resolver, error) {
 					return fs.SkipDir
 				}
 
-				if path.Base(p) != path.Base(s.config.Path) {
+				if filepath.Base(p) != filepath.Base(s.config.Path) {
 					// we're in the root directory, but this is not the file we want to scan...
 					// we should selectively skip this file (not the directory we're in).
 					return fileresolver.ErrSkipPath
