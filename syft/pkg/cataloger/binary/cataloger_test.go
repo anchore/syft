@@ -716,6 +716,18 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-erlang-25.3.2.7",
+			fixtureDir: "test-fixtures/classifiers/positive/erlang-25.3.2.7",
+			expected: pkg.Package{
+				Name:      "erlang",
+				Version:   "25.3.2.7",
+				Type:      "binary",
+				PURL:      "pkg:generic/erlang@25.3.2.7",
+				Locations: locations("erlexec"),
+				Metadata:  metadata("erlang-binary"),
+			},
+		},
+		{
 			name:       "positive-nginx-1.25.1",
 			fixtureDir: "test-fixtures/classifiers/positive/nginx-1.25.1",
 			expected: pkg.Package{
