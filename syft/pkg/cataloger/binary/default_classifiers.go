@@ -47,6 +47,15 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
 	},
 	{
+		Class:    "julia-binary",
+		FileGlob: "**/libjulia-internal.so",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)__init__\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00verify`),
+		Package: "julia",
+		PURL:    mustPURL("pkg:generic/julia@version"),
+		CPEs:    singleCPE("cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*"),
+	},
+	{
 		Class:    "helm",
 		FileGlob: "**/helm",
 		EvidenceMatcher: fileContentsVersionMatcher(
