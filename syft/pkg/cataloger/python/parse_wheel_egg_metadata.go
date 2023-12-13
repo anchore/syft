@@ -17,6 +17,7 @@ import (
 
 type parsedData struct {
 	Licenses          string `mapstructure:"License"`
+	LicenseFile       string `mapstructure:"LicenseFile"`
 	LicenseLocation   file.Location
 	pkg.PythonPackage `mapstructure:",squash"`
 }
@@ -82,6 +83,8 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (parsedData, error) 
 	pd.SitePackagesRootPath = determineSitePackagesRootPath(path)
 	if pd.Licenses != "" {
 		pd.LicenseLocation = file.NewLocation(path)
+	} else if pd.LicenseFile != "" {
+		pd.LicenseLocation = file.NewLocation(filepath.Join(filepath.Dir(path), pd.LicenseFile))
 	}
 
 	return pd, nil

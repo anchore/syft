@@ -32,7 +32,7 @@ func parseWheelOrEgg(resolver file.Resolver, _ *generic.Environment, reader file
 		return nil, nil, nil
 	}
 
-	pkgs := []pkg.Package{newPackageForPackage(*pd, sources...)}
+	pkgs := []pkg.Package{newPackageForPackage(resolver, *pd, sources...)}
 
 	return pkgs, nil, nil
 }
