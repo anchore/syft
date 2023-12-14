@@ -121,7 +121,7 @@ syft <image> --scope all-layers
 
 ### Supported sources
 
-Syft can generate a SBOM from a variety of sources:
+Syft can generate an SBOM from a variety of sources:
 
 ```
 # catalog a container image archive (from the result of `docker image save ...`, `podman save ...`, or `skopeo copy` commands)
