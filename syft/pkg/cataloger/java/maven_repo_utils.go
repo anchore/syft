@@ -27,6 +27,33 @@ func formatMavenPomURL(groupID, artifactID, version, mavenBaseURL string) (reque
 	return requestURL, err
 }
 
+// An artifact can have its version defined in a parent's DependencyManagement section
+func recursivelyFindVersionFromParentPom(groupID, artifactID, parentGroupID, parentArtifactID, parentVersion string, cfg ArchiveCatalogerConfig) string {
+	// As there can be nested parent poms, we'll recursively check for the version until we reach the max depth
+	for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
+		parentPom, err := getPomFromMavenRepo(parentGroupID, parentArtifactID, parentVersion, cfg.MavenBaseURL)
+		if err != nil {
+			// We don't want to abort here as the parent pom might not exist in Maven Central, we'll just log the error
+			log.Tracef("unable to get parent pom from Maven central: %v", err)
+			break
+		}
+		if parentPom != nil && parentPom.DependencyManagement != nil {
+			for _, dependency := range *parentPom.DependencyManagement.Dependencies {
+				if groupID == *dependency.GroupID && artifactID == *dependency.ArtifactID && dependency.Version != nil {
+					return *dependency.Version
+				}
+			}
+		}
+		if parentPom == nil || parentPom.Parent == nil {
+			break
+		}
+		parentGroupID = *parentPom.Parent.GroupID
+		parentArtifactID = *parentPom.Parent.ArtifactID
+		parentVersion = *parentPom.Parent.Version
+	}
+	return ""
+}
+
 func recursivelyFindLicensesFromParentPom(groupID, artifactID, version string, cfg ArchiveCatalogerConfig) []string {
 	var licenses []string
 	// As there can be nested parent poms, we'll recursively check for licenses until we reach the max depth

@@ -111,16 +111,22 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, cfg ArchiveCatal
 	version := resolveProperty(pom, dep.Version, "version")
 
 	licenses := make([]pkg.License, 0)
-	if version != "" && cfg.UseNetwork {
-		parentLicenses := recursivelyFindLicensesFromParentPom(
-			m.PomProperties.GroupID,
-			m.PomProperties.ArtifactID,
-			version,
-			cfg)
+	if cfg.UseNetwork {
+		if version == "" {
+			// If we have no version then let's try to get it from a parent pom DependencyManagement section
+			version = recursivelyFindVersionFromParentPom(*dep.GroupID, *dep.ArtifactID, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg)
+		}
+		if version != "" {
+			parentLicenses := recursivelyFindLicensesFromParentPom(
+				m.PomProperties.GroupID,
+				m.PomProperties.ArtifactID,
+				version,
+				cfg)
 
-		if len(parentLicenses) > 0 {
-			for _, licenseName := range parentLicenses {
-				licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
+			if len(parentLicenses) > 0 {
+				for _, licenseName := range parentLicenses {
+					licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
+				}
 			}
 		}
 	}
