@@ -59,9 +59,13 @@ func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.Py
 
 func newPackageForPackage(resolver file.Resolver, m parsedData, sources ...file.Location) pkg.Package {
 	var licenseSet pkg.LicenseSet
-	if m.Licenses != "" {
+
+	switch {
+	case m.LicenseExpression != "":
+		licenseSet = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(m.LicenseLocation, m.LicenseExpression)...)
+	case m.Licenses != "":
 		licenseSet = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(m.LicenseLocation, m.Licenses)...)
-	} else if m.LicenseLocation.Path() != "" {
+	case m.LicenseLocation.Path() != "":
 		// If we have a license file then resolve and parse it
 		found, err := resolver.FilesByPath(m.LicenseLocation.Path())
 		if err != nil {
@@ -82,6 +86,7 @@ func newPackageForPackage(resolver file.Resolver, m parsedData, sources ...file.
 			}
 		}
 	}
+
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   m.Version,
