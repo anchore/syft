@@ -249,9 +249,22 @@ func extractDescriptor(meta *cyclonedx.Metadata) (desc sbom.Descriptor) {
 		return
 	}
 
-	for _, t := range *meta.Tools {
-		desc.Name = t.Name
-		desc.Version = t.Version
+	// handle 1.5 component element
+	if meta.Tools.Components != nil {
+		for _, t := range *meta.Tools.Components {
+			desc.Name = t.Name
+			desc.Version = t.Version
+			return
+		}
+	}
+
+	// handle pre-1.5 tool element
+	if meta.Tools.Tools != nil {
+		for _, t := range *meta.Tools.Tools {
+			desc.Name = t.Name
+			desc.Version = t.Version
+			return
+		}
 	}
 
 	return

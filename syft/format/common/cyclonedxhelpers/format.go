@@ -114,11 +114,14 @@ func formatCPE(cpeString string) string {
 func toBomDescriptor(name, version string, srcMetadata source.Description) *cyclonedx.Metadata {
 	return &cyclonedx.Metadata{
 		Timestamp: time.Now().Format(time.RFC3339),
-		Tools: &[]cyclonedx.Tool{
-			{
-				Vendor:  "anchore",
-				Name:    name,
-				Version: version,
+		Tools: &cyclonedx.ToolsChoice{
+			Components: &[]cyclonedx.Component{
+				{
+					Type:    cyclonedx.ComponentTypeApplication,
+					Author:  "anchore",
+					Name:    name,
+					Version: version,
+				},
 			},
 		},
 		Properties: toBomProperties(srcMetadata),
