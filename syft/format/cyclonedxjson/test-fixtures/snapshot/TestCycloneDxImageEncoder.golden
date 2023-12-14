@@ -6,13 +6,16 @@
   "version": 1,
   "metadata": {
     "timestamp": "timestamp:redacted",
-    "tools": [
-      {
-        "vendor": "anchore",
-        "name": "syft",
-        "version": "v0.42.0-bogus"
-      }
-    ],
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "author": "anchore",
+          "name": "syft",
+          "version": "v0.42.0-bogus"
+        }
+      ]
+    },
     "component": {
       "bom-ref":"redacted",
       "type": "container",
