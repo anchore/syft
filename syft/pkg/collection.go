@@ -21,7 +21,7 @@ type Collection struct {
 
 // NewCollection returns a new empty Collection
 func NewCollection(pkgs ...Package) *Collection {
-	catalog := Collection{
+	c := Collection{
 		byID:      make(map[artifact.ID]Package),
 		idsByName: make(map[string]orderedIDSet),
 		idsByType: make(map[Type]orderedIDSet),
@@ -29,10 +29,10 @@ func NewCollection(pkgs ...Package) *Collection {
 	}
 
 	for _, p := range pkgs {
-		catalog.Add(p)
+		c.Add(p)
 	}
 
-	return &catalog
+	return &c
 }
 
 // PackageCount returns the total number of packages that have been added.
@@ -97,32 +97,37 @@ func (c *Collection) packages(ids []artifact.ID) (result []Package) {
 	return result
 }
 
-// Add n packages to the catalog.
+// Add n packages to the collection.
 func (c *Collection) Add(pkgs ...Package) {
+	for _, p := range pkgs {
+		c.add(p)
+	}
+}
+
+// Add a package to the Collection.
+func (c *Collection) add(p Package) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	for _, p := range pkgs {
-		id := p.ID()
-		if id == "" {
-			log.Warnf("found package with empty ID while adding to the catalog: %+v", p)
-			p.SetID()
-			id = p.ID()
-		}
-
-		if existing, exists := c.byID[id]; exists {
-			// there is already a package with this fingerprint merge the existing record with the new one
-			if err := existing.merge(p); err != nil {
-				log.Warnf("failed to merge packages: %+v", err)
-			} else {
-				c.byID[id] = existing
-				c.addPathsToIndex(p)
-			}
-			return
-		}
-
-		c.addToIndex(p)
+	id := p.ID()
+	if id == "" {
+		log.Warnf("found package with empty ID while adding to the collection: %+v", p)
+		p.SetID()
+		id = p.ID()
 	}
+
+	if existing, exists := c.byID[id]; exists {
+		// there is already a package with this fingerprint merge the existing record with the new one
+		if err := existing.merge(p); err != nil {
+			log.Warnf("failed to merge packages: %+v", err)
+		} else {
+			c.byID[id] = existing
+			c.addPathsToIndex(p)
+		}
+		return
+	}
+
+	c.addToIndex(p)
 }
 
 func (c *Collection) addToIndex(p Package) {
@@ -242,7 +247,7 @@ func (c *Collection) Enumerate(types ...Type) <-chan Package {
 		defer close(channel)
 
 		if c == nil {
-			// we should allow enumerating from a catalog that was never created (which will result in no packages enumerated)
+			// we should allow enumerating from a collection that was never created (which will result in no packages enumerated)
 			return
 		}
 
