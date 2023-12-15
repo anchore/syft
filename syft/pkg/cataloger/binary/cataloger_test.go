@@ -20,38 +20,6 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-// These tests require multiple files and or a symlink
-//{
-//name:       "positive-python-duplicates",
-//fixtureDir: "test-fixtures/classifiers/positive/python-duplicates",
-//expected: pkg.Package{
-//Name:      "python",
-//Version:   "3.8.16",
-//Type:      "binary",
-//PURL:      "pkg:generic/python@3.8.16",
-//Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
-//Metadata: pkg.BinarySignature{
-//Matches: []pkg.ClassifierMatch{
-//match("python-binary", "dir/python3.8"),
-//match("python-binary", "python3.8"),
-//match("python-binary-lib", "libpython3.8.so"),
-//},
-//},
-//},
-//},
-
-//{
-//name:     "positive-busybox",
-//contents: []byte("# note: this SHOULD match as busybox 3.33.3\n\nnoise!BusyBox v3.33.3!noise\n"),
-//fileGlob: "[",
-//expected: pkg.Package{
-//Name:      "busybox",
-//Version:   "3.33.3",
-//Locations: locations("["), // note: busybox is a link to [
-//Metadata:  metadata("busybox-binary", "[", "busybox"),
-//},
-//},
-
 func Test_Cataloger_DefaultClassifiers_DynamicCases(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -232,7 +200,7 @@ func Test_Cataloger_DefaultClassifiers_DynamicCases(t *testing.T) {
 	}
 }
 
-func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
+func Test_Cataloger_DefaultClassifiers_PositiveCaseContents(t *testing.T) {
 	tests := []struct {
 		name       string
 		fixtureDir string
@@ -831,7 +799,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:     "positive-openssl-3.1.4",
-			contents: []byte(""),
+			contents: []byte("\u0000\u0000N/A\u0000\u0000\u0000\u0000\u0000OpenSSL 3.1.4 24 Oct 2023\u0000\u0000\n"),
 			fileGlob: "openssl",
 			expected: pkg.Package{
 				Name:      "openssl",
@@ -863,6 +831,50 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 
 			assertPackagesAreEqual(t, test.expected, packages[0])
 		})
+	}
+}
+
+func Test_Cataloger_DefaultClassifiers_PositiveComplexCase(t *testing.T) {
+	tests := []struct {
+		name       string
+		fixtureDir string
+		expected   pkg.Package
+	}{
+		{
+			name:       "positive-python-duplicates regression",
+			fixtureDir: "test-fixtures/classifiers/python-duplicates",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.8.16",
+				Type:      "binary",
+				PURL:      "pkg:generic/python@3.8.16",
+				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("python-binary", "dir/python3.8"),
+						match("python-binary", "python3.8"),
+						match("python-binary-lib", "libpython3.8.so"),
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		c := NewCataloger()
+
+		src, err := source.NewFromDirectoryPath(test.fixtureDir)
+		require.NoError(t, err)
+
+		resolver, err := src.FileResolver(source.SquashedScope)
+		require.NoError(t, err)
+
+		packages, _, err := c.Catalog(resolver)
+		require.NoError(t, err)
+
+		require.Len(t, packages, 1)
+
+		assertPackagesAreEqual(t, test.expected, packages[0])
 	}
 }
 
