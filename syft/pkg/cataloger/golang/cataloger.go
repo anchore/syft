@@ -18,13 +18,18 @@ import (
 
 var versionCandidateGroups = regexp.MustCompile(`(?P<version>\d+(\.\d+)?(\.\d+)?)(?P<candidate>\w*)`)
 
+const (
+	modFileCatalogerName = "go-module-file-cataloger"
+	binaryCatalogerName  = "go-module-binary-cataloger"
+)
+
 // NewGoModuleFileCataloger returns a new cataloger object that searches within go.mod files.
 func NewGoModuleFileCataloger(opts CatalogerConfig) pkg.Cataloger {
 	c := goModCataloger{
-		licenses: newGoLicenses(opts),
+		licenses: newGoLicenses(modFileCatalogerName, opts),
 	}
 	return &progressingCataloger{
-		cataloger: generic.NewCataloger("go-module-file-cataloger").
+		cataloger: generic.NewCataloger(modFileCatalogerName).
 			WithParserByGlobs(c.parseGoModFile, "**/go.mod"),
 	}
 }
@@ -32,10 +37,10 @@ func NewGoModuleFileCataloger(opts CatalogerConfig) pkg.Cataloger {
 // NewGoModuleBinaryCataloger returns a new cataloger object that searches within binaries built by the go compiler.
 func NewGoModuleBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
 	c := goBinaryCataloger{
-		licenses: newGoLicenses(opts),
+		licenses: newGoLicenses(binaryCatalogerName, opts),
 	}
 	return &progressingCataloger{
-		cataloger: generic.NewCataloger("go-module-binary-cataloger").
+		cataloger: generic.NewCataloger(binaryCatalogerName).
 			WithParserByMimeTypes(c.parseGoBinary, internal.ExecutableMIMETypeSet.List()...),
 	}
 }
