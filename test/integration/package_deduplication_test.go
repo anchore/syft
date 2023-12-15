@@ -63,7 +63,7 @@ func TestPackageDeduplication(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.scope), func(t *testing.T) {
-			sbom, _ := catalogFixtureImage(t, "image-vertical-package-dups", tt.scope, nil)
+			sbom, _ := catalogFixtureImage(t, "image-vertical-package-dups", tt.scope)
 			for _, p := range sbom.Artifacts.Packages.Sorted() {
 				if p.Type == pkg.BinaryPkg {
 					assert.NotEmpty(t, p.Name)

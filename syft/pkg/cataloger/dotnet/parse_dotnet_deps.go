@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -122,7 +123,7 @@ func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader file.Locati
 	// sort the relationships for deterministic output
 	// TODO: ideally this would be replaced with artifact.SortRelationships when one exists and is type agnostic.
 	// this will only consider package-to-package relationships.
-	pkg.SortRelationships(relationships)
+	relationship.Sort(relationships)
 
 	return pkgs, relationships, nil
 }

@@ -162,7 +162,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "all-layers-scope-flag-by-env",
 			args: []string{"packages", "-o", "json", hiddenPackagesImage},
 			env: map[string]string{
-				"SYFT_PACKAGE_CATALOGER_SCOPE": "all-layers",
+				"SYFT_SCOPE": "all-layers",
 			},
 			assertions: []traitAssertion{
 				assertPackageCount(163), // packages are now deduplicated for this case
@@ -235,8 +235,8 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "catalogers-option",
-			// This will detect enable python-package-cataloger, python-installed-package-cataloger and ruby-gemspec cataloger
-			args: []string{"packages", "-o", "json", "--catalogers", "python,ruby-gemspec", coverageImage},
+			// This will detect enable python-package-cataloger, python-installed-package-cataloger and ruby-gemspec-cataloger cataloger
+			args: []string{"packages", "-o", "json", "--catalogers", "python,gemspec", coverageImage},
 			assertions: []traitAssertion{
 				assertPackageCount(13),
 				assertSuccessfulReturnCode,
@@ -250,8 +250,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 			assertions: []traitAssertion{
 				// the application config in the log matches that of what we expect to have been configured.
-				assertInOutput("parallelism: 2"),
-				assertInOutput("parallelism=2"),
+				assertInOutput(`parallelism: 2`),
 				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},
@@ -261,8 +260,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", "-vvv", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				// the application config in the log matches that of what we expect to have been configured.
-				assertInOutput("parallelism: 1"),
-				assertInOutput("parallelism=1"),
+				assertInOutput(`parallelism: 1`),
 				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},

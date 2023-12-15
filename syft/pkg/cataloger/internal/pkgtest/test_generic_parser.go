@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -346,8 +347,8 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 		opts = append(opts, cmp.Reporter(&r))
 
 		// order should not matter
-		pkg.SortRelationships(p.expectedRelationships)
-		pkg.SortRelationships(relationships)
+		relationship.Sort(p.expectedRelationships)
+		relationship.Sort(relationships)
 
 		if diff := cmp.Diff(p.expectedRelationships, relationships, opts...); diff != "" {
 			t.Log("Specific Differences:\n" + r.String())

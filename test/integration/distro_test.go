@@ -10,7 +10,7 @@ import (
 )
 
 func TestDistroImage(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-distro-id", source.SquashedScope, nil)
+	sbom, _ := catalogFixtureImage(t, "image-distro-id", source.SquashedScope)
 
 	expected := &linux.Release{
 		PrettyName: "BusyBox v1.31.1",
