@@ -297,10 +297,15 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		},
 	}
 
+	cfg := DefaultEncoderConfig()
+	cfg.Pretty = true
+	enc, err := NewFormatEncoderWithConfig(cfg)
+	require.NoError(t, err)
+
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     s,
-			Format:                      NewFormatEncoder(),
+			Format:                      enc,
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
