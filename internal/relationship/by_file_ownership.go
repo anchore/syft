@@ -1,4 +1,4 @@
-package pkg
+package relationship
 
 import (
 	"sort"
@@ -7,20 +7,23 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 )
 
-// AltRpmDBGlob allows db matches against new locations introduced in fedora:{36,37}
+// altRpmDBGlob allows db matches against new locations introduced in fedora:{36,37}
 // See https://github.com/anchore/syft/issues/1077 for larger context
-const AltRpmDBGlob = "**/rpm/{Packages,Packages.db,rpmdb.sqlite}"
+const altRpmDBGlob = "**/rpm/{Packages,Packages.db,rpmdb.sqlite}"
 
 var globsForbiddenFromBeingOwned = []string{
 	// any OS DBs should automatically be ignored to prevent cyclic issues (e.g. the "rpm" RPM owns the path to the
 	// RPM DB, so if not ignored that package would own all other packages on the system).
-	ApkDBGlob,
-	DpkgDBGlob,
-	RpmDBGlob,
-	AltRpmDBGlob,
+	pkg.ApkDBGlob,
+	pkg.DpkgDBGlob,
+	pkg.RpmDBGlob,
+	altRpmDBGlob,
 	// DEB packages share common copyright info between, this does not mean that sharing these paths implies ownership.
 	"/usr/share/doc/**/copyright",
 }
@@ -29,9 +32,21 @@ type ownershipByFilesMetadata struct {
 	Files []string `json:"files"`
 }
 
-// RelationshipsByFileOwnership creates a package-to-package relationship based on discovering which packages have
+func byFileOwnershipOverlapWorker(accessor sbomsync.Accessor) {
+	var relationships []artifact.Relationship
+
+	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
+		relationships = byFileOwnershipOverlap(s.Artifacts.Packages)
+	})
+
+	accessor.WriteToSBOM(func(s *sbom.SBOM) {
+		s.Relationships = append(s.Relationships, relationships...)
+	})
+}
+
+// byFileOwnershipOverlap creates a package-to-package relationship based on discovering which packages have
 // evidence locations that overlap with ownership claim from another package's package manager metadata.
-func RelationshipsByFileOwnership(catalog *Collection) []artifact.Relationship {
+func byFileOwnershipOverlap(catalog *pkg.Collection) []artifact.Relationship {
 	var relationships = findOwnershipByFilesRelationships(catalog)
 
 	var edges []artifact.Relationship
@@ -39,9 +54,13 @@ func RelationshipsByFileOwnership(catalog *Collection) []artifact.Relationship {
 		for childID, files := range children {
 			fs := files.List()
 			sort.Strings(fs)
+
+			parent := catalog.Package(parentID) // TODO: this is potentially expensive
+			child := catalog.Package(childID)   // TODO: this is potentially expensive
+
 			edges = append(edges, artifact.Relationship{
-				From: catalog.byID[parentID],
-				To:   catalog.byID[childID],
+				From: parent,
+				To:   child,
 				Type: artifact.OwnershipByFileOverlapRelationship,
 				Data: ownershipByFilesMetadata{
 					Files: fs,
@@ -55,7 +74,7 @@ func RelationshipsByFileOwnership(catalog *Collection) []artifact.Relationship {
 
 // findOwnershipByFilesRelationships find overlaps in file ownership with a file that defines another package. Specifically, a .Location.Path of
 // a package is found to be owned by another (from the owner's .Metadata.Files[]).
-func findOwnershipByFilesRelationships(catalog *Collection) map[artifact.ID]map[artifact.ID]*strset.Set {
+func findOwnershipByFilesRelationships(catalog *pkg.Collection) map[artifact.ID]map[artifact.ID]*strset.Set {
 	var relationships = make(map[artifact.ID]map[artifact.ID]*strset.Set)
 
 	if catalog == nil {
@@ -69,7 +88,7 @@ func findOwnershipByFilesRelationships(catalog *Collection) map[artifact.ID]map[
 		}
 
 		// check to see if this is a file owner
-		pkgFileOwner, ok := candidateOwnerPkg.Metadata.(FileOwner)
+		pkgFileOwner, ok := candidateOwnerPkg.Metadata.(pkg.FileOwner)
 		if !ok {
 			continue
 		}

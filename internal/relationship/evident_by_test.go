@@ -1,4 +1,4 @@
-package pkg
+package relationship
 
 import (
 	"testing"
@@ -8,11 +8,12 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
 )
 
 func TestRelationshipsEvidentBy(t *testing.T) {
 
-	c := NewCollection()
+	c := pkg.NewCollection()
 
 	coordA := file.Coordinates{
 		RealPath:     "/somewhere/real",
@@ -26,12 +27,12 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 		RealPath:     "/somewhere/real",
 		FileSystemID: "abc",
 	}
-	pkgA := Package{
+	pkgA := pkg.Package{
 		Locations: file.NewLocationSet(
 			// added!
-			file.NewLocationFromCoordinates(coordA).WithAnnotation(EvidenceAnnotationKey, PrimaryEvidenceAnnotation),
+			file.NewLocationFromCoordinates(coordA).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			// ignored...
-			file.NewLocationFromCoordinates(coordC).WithAnnotation(EvidenceAnnotationKey, SupportingEvidenceAnnotation),
+			file.NewLocationFromCoordinates(coordC).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
 			file.NewLocationFromCoordinates(coordD),
 		),
 	}
@@ -42,10 +43,10 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 		RealPath:     "/somewhere-else/real",
 		FileSystemID: "def",
 	}
-	pkgB := Package{
+	pkgB := pkg.Package{
 		Locations: file.NewLocationSet(
 			// added!
-			file.NewLocationFromCoordinates(coordB).WithAnnotation(EvidenceAnnotationKey, PrimaryEvidenceAnnotation),
+			file.NewLocationFromCoordinates(coordB).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 	}
 	pkgB.SetID()
@@ -53,7 +54,7 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		catalog *Collection
+		catalog *pkg.Collection
 		want    []artifact.Relationship
 	}{
 		{
@@ -75,7 +76,7 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := RelationshipsEvidentBy(tt.catalog)
+			actual := evidentBy(tt.catalog)
 			require.Len(t, actual, len(tt.want))
 			for i := range actual {
 				assert.Equal(t, tt.want[i].From.ID(), actual[i].From.ID(), "from mismatch at index %d", i)

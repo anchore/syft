@@ -1,31 +1,26 @@
-package pkg
+package relationship
 
 import (
 	"sort"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/pkg"
 )
 
-func NewRelationships(catalog *Collection) []artifact.Relationship {
-	rels := RelationshipsByFileOwnership(catalog)
-	rels = append(rels, RelationshipsEvidentBy(catalog)...)
-	return rels
-}
-
-// SortRelationships takes a set of package-to-package relationships and sorts them in a stable order by name and version.
+// Sort takes a set of package-to-package relationships and sorts them in a stable order by name and version.
 // Note: this does not consider package-to-other, other-to-package, or other-to-other relationships.
 // TODO: ideally this should be replaced with a more type-agnostic sort function that resides in the artifact package.
-func SortRelationships(rels []artifact.Relationship) {
+func Sort(rels []artifact.Relationship) {
 	sort.SliceStable(rels, func(i, j int) bool {
-		return relationshipLess(rels[i], rels[j])
+		return less(rels[i], rels[j])
 	})
 }
 
-func relationshipLess(i, j artifact.Relationship) bool {
-	iFrom, ok1 := i.From.(Package)
-	iTo, ok2 := i.To.(Package)
-	jFrom, ok3 := j.From.(Package)
-	jTo, ok4 := j.To.(Package)
+func less(i, j artifact.Relationship) bool {
+	iFrom, ok1 := i.From.(pkg.Package)
+	iTo, ok2 := i.To.(pkg.Package)
+	jFrom, ok3 := j.From.(pkg.Package)
+	jTo, ok4 := j.To.(pkg.Package)
 
 	if !(ok1 && ok2 && ok3 && ok4) {
 		return false
