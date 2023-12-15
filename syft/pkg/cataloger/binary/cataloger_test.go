@@ -20,6 +20,38 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+// These tests require multiple files and or a symlink
+//{
+//name:       "positive-python-duplicates",
+//fixtureDir: "test-fixtures/classifiers/positive/python-duplicates",
+//expected: pkg.Package{
+//Name:      "python",
+//Version:   "3.8.16",
+//Type:      "binary",
+//PURL:      "pkg:generic/python@3.8.16",
+//Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
+//Metadata: pkg.BinarySignature{
+//Matches: []pkg.ClassifierMatch{
+//match("python-binary", "dir/python3.8"),
+//match("python-binary", "python3.8"),
+//match("python-binary-lib", "libpython3.8.so"),
+//},
+//},
+//},
+//},
+
+//{
+//name:     "positive-busybox",
+//contents: []byte("# note: this SHOULD match as busybox 3.33.3\n\nnoise!BusyBox v3.33.3!noise\n"),
+//fileGlob: "[",
+//expected: pkg.Package{
+//Name:      "busybox",
+//Version:   "3.33.3",
+//Locations: locations("["), // note: busybox is a link to [
+//Metadata:  metadata("busybox-binary", "[", "busybox"),
+//},
+//},
+
 func Test_Cataloger_DefaultClassifiers_DynamicCases(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -564,8 +596,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-libpython3.7.so",
-			fixtureDir: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
+			name:     "positive-libpython3.7.so",
+			contents: []byte("r\u0000python3.9\u0000PYTHONIOENCODING\u00003.7.4\u0000<prefix>/lib/pythonX.X\u0000Python %s\n\u0000\n"),
+			fileGlob: "libpython3.7.so",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.7.4",
@@ -577,6 +610,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 
 		{
 			name:       "positive-python-3.5-with-incorrect-match",
+			contents:   []byte("\u0000305\u0000path\u0000path_importer_cache\u0000must be %.50s, not %.50s\u00003.5.3\u0000%.80s (%.80s) %.\n"),
+			fileGlob:   "python3.5",
 			fixtureDir: "test-fixtures/classifiers/positive/python-3.5-with-incorrect-match",
 			expected: pkg.Package{
 				Name:      "python",
@@ -587,8 +622,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-python3.6",
-			fixtureDir: "test-fixtures/classifiers/positive/python-binary-3.6",
+			name:     "positive-python3.6",
+			contents: []byte("r\u0000python3.9\u0000PYTHONIOENCODING\u00003.6.3\u0000<prefix>/lib/pythonX.X\u0000Python %s\n"),
+			fileGlob: "python3.6",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.6.3",
@@ -597,24 +633,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("python-binary"),
 			},
 		},
-		{
-			name:       "positive-python-duplicates",
-			fixtureDir: "test-fixtures/classifiers/positive/python-duplicates",
-			expected: pkg.Package{
-				Name:      "python",
-				Version:   "3.8.16",
-				Type:      "binary",
-				PURL:      "pkg:generic/python@3.8.16",
-				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
-				Metadata: pkg.BinarySignature{
-					Matches: []pkg.ClassifierMatch{
-						match("python-binary", "dir/python3.8"),
-						match("python-binary", "python3.8"),
-						match("python-binary-lib", "libpython3.8.so"),
-					},
-				},
-			},
-		},
+
 		{
 			name: "positive-go",
 			// Note the \x00 is important for this case, as it is a null byte that is used to terminate the string
@@ -630,8 +649,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-node",
-			fixtureDir: "test-fixtures/classifiers/positive/node-19.2.1",
+			name:     "positive-node",
+			contents: []byte("# this should match node 19.2.1\nnode.js/v19.2.1\n"),
+			fileGlob: "node",
 			expected: pkg.Package{
 				Name:      "node",
 				Version:   "19.2.1",
@@ -641,8 +661,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-go-hint",
-			fixtureDir: "test-fixtures/classifiers/positive/go-hint-1.15",
+			name:     "positive-go-hint",
+			contents: []byte("go1.15-beta2\n"),
+			fileGlob: "VERSION",
 			expected: pkg.Package{
 				Name:      "go",
 				Version:   "1.15",
@@ -651,19 +672,11 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("go-binary-hint"),
 			},
 		},
+
 		{
-			name:       "positive-busybox",
-			fixtureDir: "test-fixtures/classifiers/positive/busybox-3.33.3",
-			expected: pkg.Package{
-				Name:      "busybox",
-				Version:   "3.33.3",
-				Locations: locations("["), // note: busybox is a link to [
-				Metadata:  metadata("busybox-binary", "[", "busybox"),
-			},
-		},
-		{
-			name:       "positive-java-openjdk",
-			fixtureDir: "test-fixtures/classifiers/positive/openjdk",
+			name:     "positive-java-openjdk",
+			contents: []byte("\u0000\u0000\u0001\u0000\u0002\u0000openjdk\u0000java\u00001.8\u00001.8.0_352-b08\u0000\u0000\u0001\n"),
+			fileGlob: "java",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "1.8.0_352-b08",
@@ -674,8 +687,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-java-openjdk-lts",
-			fixtureDir: "test-fixtures/classifiers/positive/openjdk-lts",
+			name:     "positive-java-openjdk-lts",
+			contents: []byte("# java LTS pattern\nJDK_JAVA_OPTIONS\u0000_JAVA_LAUNCHER_DEBUG\u0000NOTE: Picked up %s: %s\u0000openjdk\u0000java\u00000.0\u000011.0.17+8-LTS\u0000-J-ms8m\u0000\u0001\u001B\u0003;\n"),
+			fileGlob: "java",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "11.0.17+8-LTS",
@@ -686,8 +700,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-java-oracle",
-			fixtureDir: "test-fixtures/classifiers/positive/oracle",
+			name:     "positive-java-oracle",
+			contents: []byte("#this should be an oracle java binary\nwith: \u0000java\u00000.0\u000019.0.1+10-21\u0000\nand 18.0.2 has nothing to do with the version\n"),
+			fileGlob: "java",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "19.0.1+10-21",
@@ -698,8 +713,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-java-oracle-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/oracle-macos",
+			name:     "positive-java-oracle-macos",
+			contents: []byte("#oracle macos\nis different: \u000019.0.1+10-21\u00000.0\u0000java\u0000\nthis should not be 17.2.2\n"),
+			fileGlob: "java",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "19.0.1+10-21",
@@ -710,8 +726,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-java-ibm",
-			fixtureDir: "test-fixtures/classifiers/positive/ibm",
+			name:     "positive-java-ibm",
+			contents: []byte("# this is an ibm java\n\u0001\u0000\u0002\u0000java\u00001.8\u0000\u0000\u0000\u00001.8.0-foreman_2022_09_22_15_30-b00\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u001B\u0003;4\u0000\u0000\u0000\u0005\u0000\ntype of file 1.9.0 1.8.99\n"),
+			fileGlob: "java",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "1.8.0-foreman_2022_09_22_15_30-b00",
@@ -722,45 +739,48 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-rust-1.50.0-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/rust-1.50.0",
+			name:     "positive-rust-1.50.0-macos",
+			contents: []byte("rust\u0000\u0000\u0000\u0005\u0000X¥g#\u0001\n\uF8FFÜc 1.50.0 (cb75ad5db 2021-02-10)\u0004coreÖ∫¡°é¿»üé\u0001\u0000\u0002\u0011-59ed52fd3946b1c5\u0011compiler_builtins"),
+			fileGlob: "libstd-f6f9eec1635e636a.dylib",
 			expected: pkg.Package{
 				Name:      "rust",
 				Version:   "1.50.0",
 				Type:      "binary",
 				PURL:      "pkg:generic/rust@1.50.0",
-				Locations: locations("lib/rustlib/aarch64-apple-darwin/lib/libstd-f6f9eec1635e636a.dylib"),
+				Locations: locations("libstd-f6f9eec1635e636a.dylib"),
 				Metadata:  metadata("rust-standard-library-macos"),
 			},
 		},
 		{
-			name:       "positive-rust-1.67.1-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-aarch64-apple-darwin",
+			name:     "positive-rust-1.67.1-macos",
+			contents: []byte("rust\u0000\u0000\u0000\u0006\u0000\u0089°·#\u0001\nðec 1.67.1 (d5a82bbd2 2023-02-07)Á\u0002á\u0003\u009AØ\u0098\u0089\u0080ïß\u0097»\u0001\u0000\u0002\u0011-33fcb3a02520939aÁ\n"),
+			fileGlob: "libstd-16f2b65e77054c42.dylib",
 			expected: pkg.Package{
 				Name:      "rust",
 				Version:   "1.67.1",
 				Type:      "binary",
 				PURL:      "pkg:generic/rust@1.67.1",
-				Locations: locations("lib/libstd-16f2b65e77054c42.dylib"),
+				Locations: locations("libstd-16f2b65e77054c42.dylib"),
 				Metadata:  metadata("rust-standard-library-macos"),
 			},
 		},
 		{
-			name:       "positive-rust-1.67.1-linux",
-			fixtureDir: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-x86_64-unknown-linux-musl",
+			name:     "positive-rust-1.67.1-linux",
+			contents: []byte("obj_musl\u0000GNU AS 2.33.1\u0000clang LLVM (rustc version 1.67.1 (d5a82bbd2 2023-02-07))\u0000library/std/src/lib.rs/@/std.d836545c-cgu.0\n"),
+			fileGlob: "libstd-86aefecbddda356d.so",
 			expected: pkg.Package{
 				Name:      "rust",
 				Version:   "1.67.1",
 				Type:      "binary",
 				PURL:      "pkg:generic/rust@1.67.1",
-				Locations: locations("lib/libstd-86aefecbddda356d.so"),
+				Locations: locations("libstd-86aefecbddda356d.so"),
 				Metadata:  metadata("rust-standard-library-linux"),
 			},
 		},
-
 		{
-			name:       "positive-ruby-1.9.3p551",
-			fixtureDir: "test-fixtures/classifiers/positive/ruby-1.9.3p551",
+			name:     "positive-ruby-1.9.3p551",
+			contents: []byte("ruby 1.9.3p551 (2014-11-13 revision 48407) [x86_64-linux]\n"),
+			fileGlob: "ruby",
 			expected: pkg.Package{
 				Name:      "ruby",
 				Version:   "1.9.3p551",
@@ -770,10 +790,10 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("ruby-binary"),
 			},
 		},
-
 		{
-			name:       "positive-nginx-1.25.1",
-			fixtureDir: "test-fixtures/classifiers/positive/nginx-1.25.1",
+			name:     "positive-nginx-1.25.1",
+			contents: []byte("\u0000\u0000nginx version: nginx/1.25.1\n"),
+			fileGlob: "nginx",
 			expected: pkg.Package{
 				Name:      "nginx",
 				Version:   "1.25.1",
@@ -784,8 +804,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-nginx-openresty-1.21.4.2",
-			fixtureDir: "test-fixtures/classifiers/positive/nginx-openresty-1.21.4.2",
+			name:     "positive-nginx-openresty-1.21.4.2",
+			contents: []byte("\u0000\u0000nginx version: openresty/1.21.4.2\n"),
+			fileGlob: "nginx",
 			expected: pkg.Package{
 				Name:      "nginx",
 				Version:   "1.21.4",
@@ -796,8 +817,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-bash-5.2.15",
-			fixtureDir: "test-fixtures/classifiers/positive/bash-5.2.15",
+			name:     "positive-bash-5.2.15",
+			contents: []byte("@(#)Bash version 5.2.15(1) release GNU\n"),
+			fileGlob: "bash",
 			expected: pkg.Package{
 				Name:      "bash",
 				Version:   "5.2.15",
@@ -808,8 +830,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-openssl-3.1.4",
-			fixtureDir: "test-fixtures/classifiers/positive/openssl-3.1.4",
+			name:     "positive-openssl-3.1.4",
+			contents: []byte(""),
+			fileGlob: "openssl",
 			expected: pkg.Package{
 				Name:      "openssl",
 				Version:   "3.1.4",
