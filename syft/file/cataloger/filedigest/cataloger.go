@@ -62,9 +62,9 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 		}
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to process file %q: %w", location.RealPath, err)
 		}
-		prog.Increment()
+
 		results[location.Coordinates] = result
 	}
 
@@ -104,10 +104,9 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 func digestsCatalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
-			Default:      "Catalog file digests",
-			WhileRunning: "Cataloging file digests",
-			OnSuccess:    "Cataloged file digests",
+			Default: "File digests",
 		},
+		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
 	return bus.StartCatalogerTask(info, locations, "")

@@ -67,10 +67,9 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 func metadataCatalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
-			Default:      "Catalog file metadata",
-			WhileRunning: "Cataloging file metadata",
-			OnSuccess:    "Cataloged file metadata",
+			Default: "File metadata",
 		},
+		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
 	return bus.StartCatalogerTask(info, locations, "")
