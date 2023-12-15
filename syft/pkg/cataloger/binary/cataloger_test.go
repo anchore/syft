@@ -848,12 +848,11 @@ func Test_Cataloger_DefaultClassifiers_PositiveComplexCase(t *testing.T) {
 				Version:   "3.8.16",
 				Type:      "binary",
 				PURL:      "pkg:generic/python@3.8.16",
-				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
+				Locations: locations("dir/python3.8", "python3.8"),
 				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "dir/python3.8"),
 						match("python-binary", "python3.8"),
-						match("python-binary-lib", "libpython3.8.so"),
 					},
 				},
 			},
