@@ -1,11 +1,11 @@
 package options
 
-type linuxKernel struct {
+type linuxKernelConfig struct {
 	CatalogModules bool `json:"catalog-modules" yaml:"catalog-modules" mapstructure:"catalog-modules"`
 }
 
-func defaultLinuxKernel() linuxKernel {
-	return linuxKernel{
+func defaultLinuxKernel() linuxKernelConfig {
+	return linuxKernelConfig{
 		CatalogModules: true,
 	}
 }

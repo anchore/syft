@@ -72,19 +72,19 @@ func TestHasNonEmptyCredentials(t *testing.T) {
 func Test_registry_ToOptions(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    registry
+		input    registryConfig
 		expected image.RegistryOptions
 	}{
 		{
 			name:  "no registry options",
-			input: registry{},
+			input: registryConfig{},
 			expected: image.RegistryOptions{
 				Credentials: []image.RegistryCredentials{},
 			},
 		},
 		{
 			name: "set InsecureSkipTLSVerify",
-			input: registry{
+			input: registryConfig{
 				InsecureSkipTLSVerify: true,
 			},
 			expected: image.RegistryOptions{
@@ -94,7 +94,7 @@ func Test_registry_ToOptions(t *testing.T) {
 		},
 		{
 			name: "set InsecureUseHTTP",
-			input: registry{
+			input: registryConfig{
 				InsecureUseHTTP: true,
 			},
 			expected: image.RegistryOptions{
@@ -104,7 +104,7 @@ func Test_registry_ToOptions(t *testing.T) {
 		},
 		{
 			name: "set all bool options",
-			input: registry{
+			input: registryConfig{
 				InsecureSkipTLSVerify: true,
 				InsecureUseHTTP:       true,
 			},
@@ -116,7 +116,7 @@ func Test_registry_ToOptions(t *testing.T) {
 		},
 		{
 			name: "provide all tls configuration",
-			input: registry{
+			input: registryConfig{
 				CACert:                "ca.crt",
 				InsecureSkipTLSVerify: true,
 				Auth: []RegistryCredentials{
