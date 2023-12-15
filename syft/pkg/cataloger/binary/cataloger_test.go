@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -22,11 +24,15 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 	tests := []struct {
 		name       string
 		fixtureDir string
+		contents   []byte
+		fileGlob   string
 		expected   pkg.Package
 	}{
 		{
-			name:       "positive-postgresql-15beta4",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-15beta4",
+			name: "positive-postgresql-15beta4",
+			// note [NUL] prefix is important for the EvidenceMatcher in this case
+			contents: []byte("\u0000PostgreSQL 15beta4\n"),
+			fileGlob: "postgres",
 			expected: pkg.Package{
 				Name:      "postgresql",
 				Version:   "15beta4",
@@ -503,7 +509,11 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-go",
-			fixtureDir: "test-fixtures/classifiers/positive/go-1.14",
+			fixtureDir: "",
+			// Note the \x00 is important for this case, as it is a null byte that is used to terminate the string
+			// this is expected for a positive match on the Golang executable
+			contents: []byte(strings.Join([]string{`"go1.1"`, "go1.2", "go1.14\x00"}, "\n")),
+			fileGlob: "go",
 			expected: pkg.Package{
 				Name:      "go",
 				Version:   "1.14",
@@ -767,9 +777,11 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			dir, cleanup, err := newFixtureFromBytes(test.contents, test.name, test.fileGlob)
+			require.NoError(t, err)
+			defer cleanup()
 			c := NewCataloger()
-
-			src, err := source.NewFromDirectoryPath(test.fixtureDir)
+			src, err := source.NewFromDirectoryPath(dir)
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)
@@ -783,6 +795,25 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			assertPackagesAreEqual(t, test.expected, packages[0])
 		})
 	}
+}
+
+func newFixtureFromBytes(contents []byte, testName, fileGlob string) (string, func(), error) {
+	tempDir, err := os.MkdirTemp("", testName)
+	if err != nil {
+		return "", nil, err
+	}
+
+	cleanup := func() {
+		os.RemoveAll(tempDir)
+	}
+
+	err = os.WriteFile(filepath.Join(tempDir, fileGlob), contents, 0644)
+	if err != nil {
+		return "", cleanup, err
+	}
+
+	return tempDir, cleanup, nil
+
 }
 
 func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
