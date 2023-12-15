@@ -113,8 +113,8 @@ func newPnpmPackage(resolver file.Resolver, location file.Location, name, versio
 func newYarnLockPackage(cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string) pkg.Package {
 	var licenseSet pkg.LicenseSet
 
-	if cfg.searchRemoteLicenses {
-		license, err := getLicenseFromNpmRegistry(cfg.npmBaseURL, name, version)
+	if cfg.SearchRemoteLicenses {
+		license, err := getLicenseFromNpmRegistry(cfg.NPMBaseURL, name, version)
 		if err == nil && license != "" {
 			licenses := pkg.NewLicensesFromValues(license)
 			licenseSet = pkg.NewLicenseSet(licenses...)
