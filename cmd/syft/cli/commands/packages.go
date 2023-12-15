@@ -1,21 +1,23 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/internal/task"
+	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -151,7 +153,7 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 	detection, err := source.Detect(
 		userInput,
 		source.DetectConfig{
-			DefaultImageSource: opts.DefaultImagePullSource,
+			DefaultImageSource: opts.Source.Image.DefaultPullSource,
 		},
 	)
 	if err != nil {
@@ -175,7 +177,7 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 
 	hashers, err := file.Hashers(opts.Source.File.Digests...)
 	if err != nil {
-		return nil, fmt.Errorf("invalid hash: %w", err)
+		return nil, fmt.Errorf("invalid hash algorithm: %w", err)
 	}
 
 	src, err := detection.NewSource(
@@ -190,7 +192,7 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 				Paths: opts.Exclusions,
 			},
 			DigestAlgorithms: hashers,
-			BasePath:         opts.BasePath,
+			BasePath:         opts.Source.BasePath,
 		},
 	)
 
@@ -205,51 +207,228 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 }
 
 func generateSBOM(id clio.Identification, src source.Source, opts *options.Catalog) (*sbom.SBOM, error) {
-	tasks, err := eventloop.Tasks(opts)
+	s, err := syft.CreateSBOM(src, opts.ToSBOMConfig(id))
 	if err != nil {
+		expErrs, err := filterExpressionErrors(err, 0)
+		notifyExpressionErrors(expErrs)
 		return nil, err
 	}
-
-	s := sbom.SBOM{
-		Source: src.Describe(),
-		Descriptor: sbom.Descriptor{
-			Name:          id.Name,
-			Version:       id.Version,
-			Configuration: opts,
-		},
-	}
-
-	err = buildRelationships(&s, src, tasks)
-
-	return &s, err
+	return s, nil
 }
 
-func buildRelationships(s *sbom.SBOM, src source.Source, tasks []eventloop.Task) error {
-	var errs error
+func filterExpressionErrors(err error, depth int) ([]task.ErrInvalidExpression, error) {
+	if err == nil {
+		return nil, nil
+	}
 
-	var relationships []<-chan artifact.Relationship
-	for _, task := range tasks {
-		c := make(chan artifact.Relationship)
-		relationships = append(relationships, c)
-		go func(task eventloop.Task) {
-			err := eventloop.RunTask(task, &s.Artifacts, src, c)
-			if err != nil {
-				errs = multierror.Append(errs, err)
+	expErrs, prunedErr := processErrors(err)
+
+	// if we found any expression errors, they have now been removed. We want to add a single error
+	// back indicating that there were invalid expressions provided. The details of these errors
+	// now show up in the CLI output in a summarized form (over the bus and to the UI)
+	if depth == 0 && len(expErrs) > 0 {
+		prunedErr = multierror.Append(prunedErr, errors.New("invalid cataloger selection expression provided"))
+	}
+
+	return expErrs, prunedErr
+}
+
+// processErrors traverses and prunes custom errors, returning the pruned error chain and a list of pruned errors
+func processErrors(err error) ([]task.ErrInvalidExpression, error) {
+	var prunedErrors []task.ErrInvalidExpression
+
+	var processError func(err error) error
+	processError = func(err error) error {
+		if err == nil {
+			return nil
+		}
+
+		// note: using errors.As will result in surprising behavior (since that will traverse the error chain, potentially
+		// skipping over nodes in a list of errors)
+		if cerr, ok := err.(task.ErrInvalidExpression); ok {
+			prunedErrors = append(prunedErrors, cerr)
+			return nil
+		}
+
+		var multiErr *multierror.Error
+		if errors.As(err, &multiErr) {
+			var remainingErr error
+			for _, merr := range multiErr.Errors {
+				processedErr := processError(merr)
+				if processedErr != nil {
+					remainingErr = multierror.Append(remainingErr, processedErr)
+				}
 			}
-		}(task)
+			return remainingErr
+		}
+
+		// check the error chain to see if there are any expression errors
+		if errors.As(err, &task.ErrInvalidExpression{}) {
+			// this chain has an expression error somewhere, we need to reconstruct the chain without this error
+			var errs error
+			for {
+				if err == nil {
+					break
+				}
+
+				if cerr, ok := err.(task.ErrInvalidExpression); ok {
+					// this is an expression error, we want to prune it from the chain
+					prunedErrors = append(prunedErrors, cerr)
+					break
+				}
+
+				unwrappedErr := errors.Unwrap(err)
+
+				if errs == nil {
+					errs = unwrappedErr
+					continue
+				}
+				errs = fmt.Errorf("%v: %w", errs, unwrappedErr)
+			}
+		}
+
+		// keep the existing chain of errors
+		return err
 	}
 
-	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
-
-	return errs
+	return prunedErrors, processError(err)
 }
 
-func mergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
-	for _, c := range cs {
-		for n := range c {
-			relationships = append(relationships, n)
+func notifyExpressionErrors(expErrs []task.ErrInvalidExpression) {
+	helpText := expressionErrorsHelp(expErrs)
+	if helpText == "" {
+		return
+	}
+
+	bus.Notify(helpText)
+}
+
+func expressionErrorsHelp(expErrs []task.ErrInvalidExpression) string {
+	// enrich all errors found with CLI hints
+	if len(expErrs) == 0 {
+		return ""
+	}
+
+	sb := strings.Builder{}
+
+	plural := ""
+	if len(expErrs) > 1 {
+		plural = "s"
+	}
+
+	sb.WriteString(fmt.Sprintf("Found %d invalid cataloger selection expression%s:\n\n", len(expErrs), plural))
+
+	for i, expErr := range expErrs {
+		help := expressionErrorHelp(expErr)
+		if help == "" {
+			continue
+		}
+		sb.WriteString(help)
+		if i != len(expErrs)-1 {
+			sb.WriteString("\n")
 		}
 	}
 
-	return relationships
+	return sb.String()
+}
+
+const expressionHelpTemplate = " ❖ Given expression %q\n%s%s"
+
+func expressionErrorHelp(expErr task.ErrInvalidExpression) string {
+	if expErr.Err == nil {
+		return ""
+	}
+
+	return fmt.Sprintf(expressionHelpTemplate,
+		getExpression(expErr),
+		indentMsg(getExplanation(expErr)),
+		indentMsg(getHintPhrase(expErr)),
+	)
+}
+
+func indentMsg(msg string) string {
+	if msg == "" {
+		return ""
+	}
+
+	lines := strings.Split(msg, "\n")
+	for i, line := range lines {
+		lines[i] = "   " + line
+	}
+
+	return strings.Join(lines, "\n") + "\n"
+}
+
+func getExpression(expErr task.ErrInvalidExpression) string {
+	flag := "--select-catalogers"
+	if expErr.Operation == task.SetOperation {
+		flag = "--override-default-catalogers"
+	}
+	return fmt.Sprintf("%s %s", flag, expErr.Expression)
+}
+
+func getExplanation(expErr task.ErrInvalidExpression) string {
+	err := expErr.Err
+	if errors.Is(err, task.ErrUnknownNameOrTag) {
+		noun := ""
+		switch expErr.Operation {
+		case task.AddOperation:
+			noun = "name"
+		case task.SubSelectOperation:
+			noun = "tag"
+		default:
+			noun = "name or tag"
+		}
+
+		return fmt.Sprintf("However, %q is not a recognized cataloger %s.", trimOperation(expErr.Expression), noun)
+	}
+
+	if errors.Is(err, task.ErrNamesNotAllowed) {
+		if expErr.Operation == task.SubSelectOperation {
+			return "However, " + err.Error() + ".\nIt seems like you are intending to add a cataloger in addition to the default set." // nolint:goconst
+		}
+		return "However, " + err.Error() + "." // nolint:goconst
+	}
+
+	if errors.Is(err, task.ErrTagsNotAllowed) {
+		return "However, " + err.Error() + ".\nAdding groups of catalogers may result in surprising behavior (create inaccurate SBOMs)." // nolint:goconst
+	}
+
+	if errors.Is(err, task.ErrAllNotAllowed) {
+		return "However, you " + err.Error() + ".\nIt seems like you are intending to use all catalogers (which is not recommended)."
+	}
+
+	if err != nil {
+		return "However, this is not valid: " + err.Error()
+	}
+
+	return ""
+}
+
+func getHintPhrase(expErr task.ErrInvalidExpression) string {
+	if errors.Is(expErr.Err, task.ErrUnknownNameOrTag) {
+		return ""
+	}
+
+	switch expErr.Operation {
+	case task.AddOperation:
+		if errors.Is(expErr.Err, task.ErrTagsNotAllowed) {
+			return fmt.Sprintf("If you are certain this is what you want to do, use %q instead.", "--override-default-catalogers "+trimOperation(expErr.Expression))
+		}
+
+	case task.SubSelectOperation:
+		didYouMean := "... Did you mean %q instead?"
+		if errors.Is(expErr.Err, task.ErrNamesNotAllowed) {
+			return fmt.Sprintf(didYouMean, "--select-catalogers +"+expErr.Expression)
+		}
+
+		if errors.Is(expErr.Err, task.ErrAllNotAllowed) {
+			return fmt.Sprintf(didYouMean, "--override-default-catalogers "+expErr.Expression)
+		}
+	}
+	return ""
+}
+
+func trimOperation(x string) string {
+	return strings.TrimLeft(x, "+-")
 }
