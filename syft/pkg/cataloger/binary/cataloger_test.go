@@ -20,268 +20,12 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
+func Test_Cataloger_DefaultClassifiers_DynamicCases(t *testing.T) {
 	tests := []struct {
 		name       string
 		fixtureDir string
-		contents   []byte
-		fileGlob   string
 		expected   pkg.Package
 	}{
-		{
-			name: "positive-postgresql-15beta4",
-			// note [NUL] prefix is important for the EvidenceMatcher in this case
-			contents: []byte("\u0000PostgreSQL 15beta4\n"),
-			fileGlob: "postgres",
-			expected: pkg.Package{
-				Name:      "postgresql",
-				Version:   "15beta4",
-				Type:      "binary",
-				PURL:      "pkg:generic/postgresql@15beta4",
-				Locations: locations("postgres"),
-				Metadata:  metadata("postgresql-binary"),
-			},
-		},
-		{
-			name:       "positive-postgresql-15.1",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-15.1",
-			expected: pkg.Package{
-				Name:      "postgresql",
-				Version:   "15.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/postgresql@15.1",
-				Locations: locations("postgres"),
-				Metadata:  metadata("postgresql-binary"),
-			},
-		},
-		{
-			name:       "positive-postgresql-9.6.24",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-9.6.24",
-			expected: pkg.Package{
-				Name:      "postgresql",
-				Version:   "9.6.24",
-				Type:      "binary",
-				PURL:      "pkg:generic/postgresql@9.6.24",
-				Locations: locations("postgres"),
-				Metadata:  metadata("postgresql-binary"),
-			},
-		},
-		{
-			name:       "positive-postgresql-9.5alpha1",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-9.5alpha1",
-			expected: pkg.Package{
-				Name:      "postgresql",
-				Version:   "9.5alpha1",
-				Type:      "binary",
-				PURL:      "pkg:generic/postgresql@9.5alpha1",
-				Locations: locations("postgres"),
-				Metadata:  metadata("postgresql-binary"),
-			},
-		},
-		{
-			name:       "positive-mysql-8.0.34",
-			fixtureDir: "test-fixtures/classifiers/positive/mysql-8.0.34",
-			expected: pkg.Package{
-				Name:      "mysql",
-				Version:   "8.0.34",
-				Type:      "binary",
-				PURL:      "pkg:generic/mysql@8.0.34",
-				Locations: locations("mysql"),
-				Metadata:  metadata("mysql-binary"),
-			},
-		},
-		{
-			name:       "positive-mysql-5.6.51",
-			fixtureDir: "test-fixtures/classifiers/positive/mysql-5.6.51",
-			expected: pkg.Package{
-				Name:      "mysql",
-				Version:   "5.6.51",
-				Type:      "binary",
-				PURL:      "pkg:generic/mysql@5.6.51",
-				Locations: locations("mysql"),
-				Metadata:  metadata("mysql-binary"),
-			},
-		},
-		{
-			name:       "positive-mariadb-10.6.15",
-			fixtureDir: "test-fixtures/classifiers/positive/mariadb-10.6.15",
-			expected: pkg.Package{
-				Name:      "mariadb",
-				Version:   "10.6.15",
-				Type:      "binary",
-				PURL:      "pkg:generic/mariadb@10.6.15",
-				Locations: locations("mariadb"),
-				Metadata:  metadata("mariadb-binary"),
-			},
-		},
-		{
-			name:       "positive-traefik-2.9.6",
-			fixtureDir: "test-fixtures/classifiers/positive/traefik-2.9.6",
-			expected: pkg.Package{
-				Name:      "traefik",
-				Version:   "2.9.6",
-				Type:      "binary",
-				PURL:      "pkg:generic/traefik@2.9.6",
-				Locations: locations("traefik"),
-				Metadata:  metadata("traefik-binary"),
-			},
-		},
-		{
-			name:       "positive-traefik-1.7.34",
-			fixtureDir: "test-fixtures/classifiers/positive/traefik-1.7.34",
-			expected: pkg.Package{
-				Name:      "traefik",
-				Version:   "1.7.34",
-				Type:      "binary",
-				PURL:      "pkg:generic/traefik@1.7.34",
-				Locations: locations("traefik"),
-				Metadata:  metadata("traefik-binary"),
-			},
-		},
-		{
-			name:       "positive-memcached-1.6.18",
-			fixtureDir: "test-fixtures/classifiers/positive/memcached-1.6.18",
-			expected: pkg.Package{
-				Name:      "memcached",
-				Version:   "1.6.18",
-				Type:      "binary",
-				PURL:      "pkg:generic/memcached@1.6.18",
-				Locations: locations("memcached"),
-				Metadata:  metadata("memcached-binary"),
-			},
-		},
-		{
-			name:       "positive-httpd-2.4.54",
-			fixtureDir: "test-fixtures/classifiers/positive/httpd-2.4.54",
-			expected: pkg.Package{
-				Name:      "httpd",
-				Version:   "2.4.54",
-				Type:      "binary",
-				PURL:      "pkg:generic/httpd@2.4.54",
-				Locations: locations("httpd"),
-				Metadata:  metadata("httpd-binary"),
-			},
-		},
-		{
-			name:       "positive-php-cli-8.2.1",
-			fixtureDir: "test-fixtures/classifiers/positive/php-cli-8.2.1",
-			expected: pkg.Package{
-				Name:      "php-cli",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php-cli@8.2.1",
-				Locations: locations("php"),
-				Metadata:  metadata("php-cli-binary"),
-			},
-		},
-		{
-			name:       "positive-php-fpm-8.2.1",
-			fixtureDir: "test-fixtures/classifiers/positive/php-fpm-8.2.1",
-			expected: pkg.Package{
-				Name:      "php-fpm",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php-fpm@8.2.1",
-				Locations: locations("php-fpm"),
-				Metadata:  metadata("php-fpm-binary"),
-			},
-		},
-		{
-			name:       "positive-php-apache-8.2.1",
-			fixtureDir: "test-fixtures/classifiers/positive/php-apache-8.2.1",
-			expected: pkg.Package{
-				Name:      "libphp",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php@8.2.1",
-				Locations: locations("libphp.so"),
-				Metadata:  metadata("php-apache-binary"),
-			},
-		},
-		{
-			name:       "positive-perl-5.12.5",
-			fixtureDir: "test-fixtures/classifiers/positive/perl-5.12.5",
-			expected: pkg.Package{
-				Name:      "perl",
-				Version:   "5.12.5",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.12.5",
-				Locations: locations("perl"),
-				Metadata:  metadata("perl-binary"),
-			},
-		},
-		{
-			name:       "positive-perl-5.20.0",
-			fixtureDir: "test-fixtures/classifiers/positive/perl-5.20.0",
-			expected: pkg.Package{
-				Name:      "perl",
-				Version:   "5.20.0",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.20.0",
-				Locations: locations("perl"),
-				Metadata:  metadata("perl-binary"),
-			},
-		},
-		{
-			name:       "positive-perl-5.37.8",
-			fixtureDir: "test-fixtures/classifiers/positive/perl-5.37.8",
-			expected: pkg.Package{
-				Name:      "perl",
-				Version:   "5.37.8",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.37.8",
-				Locations: locations("perl"),
-				Metadata:  metadata("perl-binary"),
-			},
-		},
-		{
-			name:       "positive-haproxy-1.5.14",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.5.14",
-			expected: pkg.Package{
-				Name:      "haproxy",
-				Version:   "1.5.14",
-				Type:      "binary",
-				PURL:      "pkg:generic/haproxy@1.5.14",
-				Locations: locations("haproxy"),
-				Metadata:  metadata("haproxy-binary"),
-			},
-		},
-		{
-			name:       "positive-haproxy-1.8.22",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.8.22",
-			expected: pkg.Package{
-				Name:      "haproxy",
-				Version:   "1.8.22",
-				Type:      "binary",
-				PURL:      "pkg:generic/haproxy@1.8.22",
-				Locations: locations("haproxy"),
-				Metadata:  metadata("haproxy-binary"),
-			},
-		},
-		{
-			name:       "positive-haproxy-2.7.3",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-2.7.3",
-			expected: pkg.Package{
-				Name:      "haproxy",
-				Version:   "2.7.3",
-				Type:      "binary",
-				PURL:      "pkg:generic/haproxy@2.7.3",
-				Locations: locations("haproxy"),
-				Metadata:  metadata("haproxy-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-2.8.23",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-2.8.23",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "2.8.23",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@2.8.23",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
 		{
 			name:       "positive-helm-3.11.1",
 			fixtureDir: "test-fixtures/classifiers/dynamic/helm-3.11.1",
@@ -304,101 +48,6 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				PURL:      "pkg:golang/helm.sh/helm@3.10.3",
 				Locations: locations("helm"),
 				Metadata:  metadata("helm"),
-			},
-		},
-		{
-			name:       "positive-redis-4.0.11",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-4.0.11",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "4.0.11",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@4.0.11",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-5.0.0",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-5.0.0",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "5.0.0",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@5.0.0",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-6.0.16",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-6.0.16",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "6.0.16",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@6.0.16",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-7.0.0",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.0.0",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "7.0.0",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@7.0.0",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-7.0.14",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.0.14",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "7.0.14",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@7.0.14",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-7.2.3-amd64",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.2.3-amd64",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "7.2.3",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@7.2.3",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-7.2.3-arm64",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.2.3-arm64",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "7.2.3",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@7.2.3",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-libpython3.7.so",
-			fixtureDir: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
-			expected: pkg.Package{
-				Name:      "python",
-				Version:   "3.7.4",
-				PURL:      "pkg:generic/python@3.7.4",
-				Locations: locations("libpython3.7.so"),
-				Metadata:  metadata("python-binary-lib"),
 			},
 		},
 		{
@@ -468,6 +117,465 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-ruby-3.2.1",
+			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-3.2.1",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "3.2.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@3.2.1",
+				Locations: locations("ruby", "libruby.so.3.2.1"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.3.2.1"),
+					},
+				},
+			},
+		},
+		{
+			name:       "positive-ruby-2.7.7",
+			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.7.7",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "2.7.7p221",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@2.7.7p221",
+				Locations: locations("ruby", "libruby.so.2.7.7"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.2.7.7"),
+					},
+				},
+			},
+		},
+		{
+			name:       "positive-ruby-2.6.10",
+			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.6.10",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "2.6.10p210",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@2.6.10p210",
+				Locations: locations("ruby", "libruby.so.2.6.10"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.2.6.10"),
+					},
+				},
+			},
+		},
+		{
+			name:       "positive-consul-1.15.2",
+			fixtureDir: "test-fixtures/classifiers/dynamic/consul-1.15.2",
+			expected: pkg.Package{
+				Name:      "consul",
+				Version:   "1.15.2",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/hashicorp/consul@1.15.2",
+				Locations: locations("consul"),
+				Metadata:  metadata("consul-binary"),
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c := NewCataloger()
+
+			src, err := source.NewFromDirectoryPath(test.fixtureDir)
+			require.NoError(t, err)
+
+			resolver, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+
+			packages, _, err := c.Catalog(resolver)
+			require.NoError(t, err)
+
+			require.Len(t, packages, 1)
+
+			assertPackagesAreEqual(t, test.expected, packages[0])
+		})
+	}
+}
+
+func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
+	tests := []struct {
+		name       string
+		fixtureDir string
+		contents   []byte
+		fileGlob   string
+		expected   pkg.Package
+	}{
+		{
+			name: "positive-postgresql-15beta4",
+			// note [NUL] prefix is important for the EvidenceMatcher in this case
+			contents: []byte("\u0000PostgreSQL 15beta4\n"),
+			fileGlob: "postgres",
+			expected: pkg.Package{
+				Name:      "postgresql",
+				Version:   "15beta4",
+				Type:      "binary",
+				PURL:      "pkg:generic/postgresql@15beta4",
+				Locations: locations("postgres"),
+				Metadata:  metadata("postgresql-binary"),
+			},
+		},
+		{
+			name:     "positive-postgresql-15.1",
+			contents: []byte("\u0000PostgreSQL 15.1\n"),
+			fileGlob: "postgres",
+			expected: pkg.Package{
+				Name:      "postgresql",
+				Version:   "15.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/postgresql@15.1",
+				Locations: locations("postgres"),
+				Metadata:  metadata("postgresql-binary"),
+			},
+		},
+		{
+			name:     "positive-postgresql-9.6.24",
+			contents: []byte("\u0000PostgreSQL 9.6.24\n"),
+			fileGlob: "postgres",
+			expected: pkg.Package{
+				Name:      "postgresql",
+				Version:   "9.6.24",
+				Type:      "binary",
+				PURL:      "pkg:generic/postgresql@9.6.24",
+				Locations: locations("postgres"),
+				Metadata:  metadata("postgresql-binary"),
+			},
+		},
+		{
+			name:     "positive-postgresql-9.5alpha1",
+			contents: []byte("\u0000PostgreSQL 9.5alpha1\n"),
+			fileGlob: "postgres",
+			expected: pkg.Package{
+				Name:      "postgresql",
+				Version:   "9.5alpha1",
+				Type:      "binary",
+				PURL:      "pkg:generic/postgresql@9.5alpha1",
+				Locations: locations("postgres"),
+				Metadata:  metadata("postgresql-binary"),
+			},
+		},
+		{
+			name:     "positive-mysql-8.0.34",
+			contents: []byte(" is already loaded\u0000../../mysql-8.0.34/sql-common/client_plugin.cc"),
+			fileGlob: "mysql",
+			expected: pkg.Package{
+				Name:      "mysql",
+				Version:   "8.0.34",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql@8.0.34",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			name:     "positive-mysql-5.6.51",
+			contents: []byte("-backup-restorer-mysql-5.6/mysql-5.6.51/client/completion_hash.cc\u0000/var/vcap/data/compile/database-ba\n"),
+			fileGlob: "mysql",
+			expected: pkg.Package{
+				Name:      "mysql",
+				Version:   "5.6.51",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql@5.6.51",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			name:     "positive-mariadb-10.6.15",
+			contents: []byte(")\u0000Linux\u000010.6.15-MariaDB\u0000readline\u0000x86_64\u0000\n"),
+			fileGlob: "mariadb",
+			expected: pkg.Package{
+				Name:      "mariadb",
+				Version:   "10.6.15",
+				Type:      "binary",
+				PURL:      "pkg:generic/mariadb@10.6.15",
+				Locations: locations("mariadb"),
+				Metadata:  metadata("mariadb-binary"),
+			},
+		},
+		{
+			name:     "positive-traefik-2.9.6",
+			contents: []byte("\u00002.9.6\u0000\n"),
+			fileGlob: "traefik",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.9.6",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			name:     "positive-traefik-1.7.34",
+			contents: []byte("\u0000v1.7.34\u0000\n"),
+			fileGlob: "traefik",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "1.7.34",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@1.7.34",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			name:     "positive-memcached-1.6.18",
+			contents: []byte("memcached 1.6.18\nudp-port\nmemcached 1.6.18\nFailed to allocate memory\nVERSION 1.6.18\nquit\n"),
+			fileGlob: "memcached",
+			expected: pkg.Package{
+				Name:      "memcached",
+				Version:   "1.6.18",
+				Type:      "binary",
+				PURL:      "pkg:generic/memcached@1.6.18",
+				Locations: locations("memcached"),
+				Metadata:  metadata("memcached-binary"),
+			},
+		},
+		{
+			name:     "positive-httpd-2.4.54",
+			contents: []byte("<Directory \"\nmailto:\nApache/2.4.54\n Server at \nApache/2.4.54 (Unix)\nApache\nApache/2.4\nApache/2\n<VirtualHost\n<Limit\n"),
+			fileGlob: "httpd",
+			expected: pkg.Package{
+				Name:      "httpd",
+				Version:   "2.4.54",
+				Type:      "binary",
+				PURL:      "pkg:generic/httpd@2.4.54",
+				Locations: locations("httpd"),
+				Metadata:  metadata("httpd-binary"),
+			},
+		},
+		{
+			name:     "positive-php-cli-8.2.1",
+			contents: []byte("[null]  X-Powered-By: PHP/8.2.1\nindex pointer\nPHP_VERSION\n"),
+			fileGlob: "php",
+			expected: pkg.Package{
+				Name:      "php-cli",
+				Version:   "8.2.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/php-cli@8.2.1",
+				Locations: locations("php"),
+				Metadata:  metadata("php-cli-binary"),
+			},
+		},
+		{
+			name:     "positive-php-fpm-8.2.1",
+			contents: []byte("[null]  Script:  X-Powered-By: PHP/8.2.1\nindex pointer\nPHP_VERSION\n"),
+			fileGlob: "php-fpm",
+			expected: pkg.Package{
+				Name:      "php-fpm",
+				Version:   "8.2.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/php-fpm@8.2.1",
+				Locations: locations("php-fpm"),
+				Metadata:  metadata("php-fpm-binary"),
+			},
+		},
+		{
+			name:     "positive-php-apache-8.2.1",
+			contents: []byte("[null]  X-Powered-By: PHP/8.2.1\nindex pointer\nPHP_VERSION\n"),
+			fileGlob: "libphp.so",
+			expected: pkg.Package{
+				Name:      "libphp",
+				Version:   "8.2.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/php@8.2.1",
+				Locations: locations("libphp.so"),
+				Metadata:  metadata("php-apache-binary"),
+			},
+		},
+		{
+			name:     "positive-perl-5.12.5",
+			contents: []byte(`/usr/local/lib/perl5/5.12.5-e/dev/fd/Can't open)`),
+			fileGlob: "perl",
+			expected: pkg.Package{
+				Name:      "perl",
+				Version:   "5.12.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/perl@5.12.5",
+				Locations: locations("perl"),
+				Metadata:  metadata("perl-binary"),
+			},
+		},
+		{
+			name:     "positive-perl-5.20.0",
+			contents: []byte(`/usr/local/lib/perl5/5.20.0 /dev/null:`),
+			fileGlob: "perl",
+			expected: pkg.Package{
+				Name:      "perl",
+				Version:   "5.20.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/perl@5.20.0",
+				Locations: locations("perl"),
+				Metadata:  metadata("perl-binary"),
+			},
+		},
+		{
+			name:     "positive-perl-5.37.8",
+			contents: []byte(`/usr/local/lib/perl5/5.37.8 /dev/null:`),
+			fileGlob: "perl",
+			expected: pkg.Package{
+				Name:      "perl",
+				Version:   "5.37.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/perl@5.37.8",
+				Locations: locations("perl"),
+				Metadata:  metadata("perl-binary"),
+			},
+		},
+		{
+			name:     "positive-haproxy-1.5.14",
+			contents: []byte("HA-Proxy version 1.5.14 2015/07/02Copyright 2000-2015 Willy Tarreau <willy@haproxy.org>\n"),
+			fileGlob: "haproxy",
+			expected: pkg.Package{
+				Name:      "haproxy",
+				Version:   "1.5.14",
+				Type:      "binary",
+				PURL:      "pkg:generic/haproxy@1.5.14",
+				Locations: locations("haproxy"),
+				Metadata:  metadata("haproxy-binary"),
+			},
+		},
+		{
+			name:     "positive-haproxy-1.8.22",
+			contents: []byte("\u0000HA-Proxy version 1.8.22 2019/10/25\u0000Copyright 2000-2019 Willy Tarreau <willy@haproxy.org>\n"),
+			fileGlob: "haproxy",
+			expected: pkg.Package{
+				Name:      "haproxy",
+				Version:   "1.8.22",
+				Type:      "binary",
+				PURL:      "pkg:generic/haproxy@1.8.22",
+				Locations: locations("haproxy"),
+				Metadata:  metadata("haproxy-binary"),
+			},
+		},
+		{
+			name:     "positive-haproxy-2.7.3",
+			contents: []byte("XZ\u0000\u0000 version 2.7.3-1065b10, released 2023/02/14u0000\u0000\u00002.7.3-1065b10HAProxy version follows\u0000\u0000\n"),
+			fileGlob: "haproxy",
+			expected: pkg.Package{
+				Name:      "haproxy",
+				Version:   "2.7.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/haproxy@2.7.3",
+				Locations: locations("haproxy"),
+				Metadata:  metadata("haproxy-binary"),
+			},
+		},
+		{
+			name: "positive-redis-2.8.23",
+			// note the extraction after payload and the \u000 is important for this case and finding 2.8.23
+			contents: []byte("pl: %5u, pls: %2u, payload %5u} \u000000000000\u0000\u0000\u0000\u0000\u0000\u0000\u00002.8.231640342e135b-1465416213000000000"),
+			fileGlob: "redis-server",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "2.8.23",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@2.8.23",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+
+		{
+			name:     "positive-redis-4.0.11",
+			contents: []byte("\tpayload %5u\n\u0000ziplist.c\u00004.0.11841ce7054bd9-1542359302000000000\u0000"),
+			fileGlob: "redis-server",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "4.0.11",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@4.0.11",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			name:     "positive-redis-5.0.0",
+			contents: []byte("\tpayload %5u\n\u0000ziplist.c\u0000prevlen\u00005.0.05ca5019de136-1539906480000000000\u0000"),
+			fileGlob: "redis-server",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "5.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@5.0.0",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			name:     "positive-redis-6.0.16",
+			contents: []byte("\tpayload %5u\n\u000000000000\u0000%llx\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00006.0.16f823c11b1f9e-1671626578000000000\u0000networking.c\n"),
+			fileGlob: "redis-server",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "6.0.16",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@6.0.16",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			name:       "positive-redis-7.0.0",
+			contents:   []byte("\tpayload %5u\n0000\u0000\u00007.0.0e11381fbd8bd-1653733480000000000\u0000CACHING (YES|NO)\n"),
+			fileGlob:   "redis-server",
+			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.0.0",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.0.0",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			name:     "positive-redis-7.0.14",
+			contents: []byte("\tpayload %5u\n\u0000\u0000\u0000\u0000\u0000\u0000ziplistGet(p, &value, &vlen, &vlval)\u0000\u00007.0.14buildkitsandbox-1698800572000000000\u0000\n"),
+			fileGlob: "redis-server",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.0.14",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.0.14",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			name:     "positive-redis-7.2.3-amd64",
+			contents: []byte("\u00007.2.3707d15b3058f-1698842949000000000\u0000\u0000\u0000zipEntrySafe(zl, zlbytes, p, &e, 0)\tpayload %5u\n"),
+			fileGlob: "redis-server",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.2.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.2.3",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			name:       "positive-libpython3.7.so",
+			fixtureDir: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.7.4",
+				PURL:      "pkg:generic/python@3.7.4",
+				Locations: locations("libpython3.7.so"),
+				Metadata:  metadata("python-binary-lib"),
+			},
+		},
+
+		{
 			name:       "positive-python-3.5-with-incorrect-match",
 			fixtureDir: "test-fixtures/classifiers/positive/python-3.5-with-incorrect-match",
 			expected: pkg.Package{
@@ -508,8 +616,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-go",
-			fixtureDir: "",
+			name: "positive-go",
 			// Note the \x00 is important for this case, as it is a null byte that is used to terminate the string
 			// this is expected for a positive match on the Golang executable
 			contents: []byte(strings.Join([]string{`"go1.1"`, "go1.2", "go1.14\x00"}, "\n")),
@@ -650,57 +757,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("rust-standard-library-linux"),
 			},
 		},
-		{
-			name:       "positive-ruby-3.2.1",
-			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-3.2.1",
-			expected: pkg.Package{
-				Name:      "ruby",
-				Version:   "3.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/ruby@3.2.1",
-				Locations: locations("ruby", "libruby.so.3.2.1"),
-				Metadata: pkg.BinarySignature{
-					Matches: []pkg.ClassifierMatch{
-						match("ruby-binary", "ruby"),
-						match("ruby-binary", "libruby.so.3.2.1"),
-					},
-				},
-			},
-		},
-		{
-			name:       "positive-ruby-2.7.7",
-			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.7.7",
-			expected: pkg.Package{
-				Name:      "ruby",
-				Version:   "2.7.7p221",
-				Type:      "binary",
-				PURL:      "pkg:generic/ruby@2.7.7p221",
-				Locations: locations("ruby", "libruby.so.2.7.7"),
-				Metadata: pkg.BinarySignature{
-					Matches: []pkg.ClassifierMatch{
-						match("ruby-binary", "ruby"),
-						match("ruby-binary", "libruby.so.2.7.7"),
-					},
-				},
-			},
-		},
-		{
-			name:       "positive-ruby-2.6.10",
-			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.6.10",
-			expected: pkg.Package{
-				Name:      "ruby",
-				Version:   "2.6.10p210",
-				Type:      "binary",
-				PURL:      "pkg:generic/ruby@2.6.10p210",
-				Locations: locations("ruby", "libruby.so.2.6.10"),
-				Metadata: pkg.BinarySignature{
-					Matches: []pkg.ClassifierMatch{
-						match("ruby-binary", "ruby"),
-						match("ruby-binary", "libruby.so.2.6.10"),
-					},
-				},
-			},
-		},
+
 		{
 			name:       "positive-ruby-1.9.3p551",
 			fixtureDir: "test-fixtures/classifiers/positive/ruby-1.9.3p551",
@@ -713,18 +770,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("ruby-binary"),
 			},
 		},
-		{
-			name:       "positive-consul-1.15.2",
-			fixtureDir: "test-fixtures/classifiers/dynamic/consul-1.15.2",
-			expected: pkg.Package{
-				Name:      "consul",
-				Version:   "1.15.2",
-				Type:      "binary",
-				PURL:      "pkg:golang/github.com/hashicorp/consul@1.15.2",
-				Locations: locations("consul"),
-				Metadata:  metadata("consul-binary"),
-			},
-		},
+
 		{
 			name:       "positive-nginx-1.25.1",
 			fixtureDir: "test-fixtures/classifiers/positive/nginx-1.25.1",
