@@ -168,7 +168,6 @@ func TestFileMetadataCataloger_GivenCoordinates(t *testing.T) {
 		path     string
 		exists   bool
 		expected file.Metadata
-		err      bool
 	}{
 		{
 			path:   "/file-1.txt",
