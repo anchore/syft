@@ -3,25 +3,25 @@ package javascript
 const npmBaseURL = "https://registry.npmjs.org"
 
 type CatalogerConfig struct {
-	searchRemoteLicenses bool
-	npmBaseURL           string
+	SearchRemoteLicenses bool   `json:"search-remote-licenses" yaml:"search-remote-licenses" mapstructure:"search-remote-licenses"`
+	NPMBaseURL           string `json:"npm-base-url" yaml:"npm-base-url" mapstructure:"npm-base-url"`
 }
 
 func DefaultCatalogerConfig() CatalogerConfig {
 	return CatalogerConfig{
-		searchRemoteLicenses: false,
-		npmBaseURL:           npmBaseURL,
+		SearchRemoteLicenses: false,
+		NPMBaseURL:           npmBaseURL,
 	}
 }
 
 func (j CatalogerConfig) WithSearchRemoteLicenses(input bool) CatalogerConfig {
-	j.searchRemoteLicenses = input
+	j.SearchRemoteLicenses = input
 	return j
 }
 
 func (j CatalogerConfig) WithNpmBaseURL(input string) CatalogerConfig {
 	if input != "" {
-		j.npmBaseURL = input
+		j.NPMBaseURL = input
 	}
 	return j
 }
