@@ -13,10 +13,7 @@ type ArchiveCatalogerConfig struct {
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
 	return ArchiveCatalogerConfig{
-		ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
-			IncludeIndexedArchives:   true,
-			IncludeUnindexedArchives: false,
-		},
+		ArchiveSearchConfig:     cataloging.DefaultArchiveSearchConfig(),
 		UseNetwork:              false,
 		MavenBaseURL:            mavenBaseURL,
 		MaxParentRecursiveDepth: 5,
