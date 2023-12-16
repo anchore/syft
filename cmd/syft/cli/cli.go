@@ -91,8 +91,10 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 		cranecmd.NewCmdAuthLogin(id.Name), // syft login uses the same command as crane
 	)
 
-	// explicitly set Cobra output to the real stdout to write things like errors and help
-	rootCmd.SetOut(out)
+	// note: we would direct cobra to use our writer explicitly with rootCmd.SetOut(out) , however this causes
+	// deprecation warnings to be shown to stdout via the writer instead of stderr. This is unfortunate since this
+	// does not appear to be the correct behavior on cobra's part https://github.com/spf13/cobra/issues/1708 .
+	// In the future this functionality should be restored.
 
 	return app, rootCmd
 }
