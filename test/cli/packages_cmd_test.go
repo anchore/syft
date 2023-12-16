@@ -234,12 +234,48 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 		},
 		{
-			name: "catalogers-option",
-			// This will detect enable python-package-cataloger, python-installed-package-cataloger and ruby-gemspec-cataloger cataloger
+			name: "legacy-catalogers-option",
+			// This will detect enable:
+			// - python-installed-package-cataloger
+			// - python-package-cataloger
+			// - ruby-gemspec-cataloger
+			// - ruby-installed-gemspec-cataloger
 			args: []string{"packages", "-o", "json", "--catalogers", "python,gemspec", coverageImage},
+			assertions: []traitAssertion{
+				assertInOutput("Flag --catalogers has been deprecated, use: override-default-catalogers and select-catalogers"),
+				assertPackageCount(13),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "select-catalogers-option",
+			// This will detect enable:
+			// - python-installed-package-cataloger
+			// - ruby-installed-gemspec-cataloger
+			args: []string{"packages", "-o", "json", "--select-catalogers", "python,gemspec", coverageImage},
+			assertions: []traitAssertion{
+				assertPackageCount(6),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "override-default-catalogers-option",
+			// This will detect enable:
+			// - python-installed-package-cataloger
+			// - python-package-cataloger
+			// - ruby-gemspec-cataloger
+			// - ruby-installed-gemspec-cataloger
+			args: []string{"packages", "-o", "json", "--override-default-catalogers", "python,gemspec", coverageImage},
 			assertions: []traitAssertion{
 				assertPackageCount(13),
 				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "new and old cataloger options are mutually exclusive",
+			args: []string{"packages", "-o", "json", "--override-default-catalogers", "python", "--catalogers", "gemspec", coverageImage},
+			assertions: []traitAssertion{
+				assertFailingReturnCode,
 			},
 		},
 		{

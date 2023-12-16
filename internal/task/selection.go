@@ -128,7 +128,7 @@ func selectByExpressions(ts tasks, nodes Expressions) (tasks, Selection) {
 
 		switch node.Operation {
 		case SetOperation:
-			finalSet = newSet(selectedTasks...)
+			finalSet.Add(selectedTasks...)
 		case AddOperation, "":
 			addSet.Add(selectedTasks...)
 		case RemoveOperation:

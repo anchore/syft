@@ -35,7 +35,7 @@ func createDummyTasks() tasks {
 		dummyTask("conan-info-cataloger", "installed", "image", "language", "cpp", "conan"),
 		dummyTask("javascript-package-cataloger", "installed", "image", "language", "javascript", "node"),
 		dummyTask("php-composer-installed-cataloger", "installed", "image", "language", "php", "composer"),
-		dummyTask("ruby-installed-gemspec-cataloger", "installed", "image", "language", "ruby", "gem"),
+		dummyTask("ruby-installed-gemspec-cataloger", "installed", "image", "language", "ruby", "gem", "gemspec"),
 		dummyTask("rust-cargo-lock-cataloger", "installed", "image", "language", "rust", "binary"),
 
 		// language-specific package declared catalogers
@@ -377,6 +377,39 @@ func TestSelect(t *testing.T) {
 					},
 				},
 				Default:   []string{"all"},
+				Selection: []string{},
+			},
+		},
+		{
+			name:     "set default with multiple tags",
+			allTasks: createDummyTasks(),
+			basis: []string{
+				"gemspec",
+				"python",
+			},
+			expressions: []string{},
+			wantNames: []string{
+				"ruby-installed-gemspec-cataloger",
+				"python-installed-package-cataloger",
+			},
+			wantTokens: map[string]TokenSelection{
+				"ruby-installed-gemspec-cataloger":   newTokenSelection([]string{"gemspec"}, nil),
+				"python-installed-package-cataloger": newTokenSelection([]string{"python"}, nil),
+			},
+			wantRequest: SelectionRequest{
+				Expressions: []Expression{
+					{
+						Operation: SetOperation,
+						Operand:   "gemspec",
+						Errors:    nil,
+					},
+					{
+						Operation: SetOperation,
+						Operand:   "python",
+						Errors:    nil,
+					},
+				},
+				Default:   []string{"gemspec", "python"},
 				Selection: []string{},
 			},
 		},
