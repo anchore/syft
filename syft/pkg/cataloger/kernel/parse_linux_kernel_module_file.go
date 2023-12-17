@@ -3,13 +3,13 @@ package kernel
 import (
 	"debug/elf"
 	"fmt"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
 const modinfoName = ".modinfo"

@@ -7,6 +7,7 @@ import (
 	"debug/pe"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"io"
 	"regexp"
 	"runtime/debug"
@@ -21,7 +22,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
 const GOARCH = "GOARCH"

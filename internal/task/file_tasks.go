@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto"
 	"fmt"
+	"github.com/anchore/syft/syft/file/cataloger/executable"
 
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
@@ -98,6 +99,27 @@ func NewFileContentCatalogerTask(cfg filecontent.Config) Task {
 	}
 
 	return NewTask("file-content-cataloger", fn)
+}
+
+func NewExecutableCatalogerTask(cfg executable.Config) Task {
+	cat := executable.NewCataloger(cfg)
+
+	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+		accessor := builder.(sbomsync.Accessor)
+
+		result, err := cat.Catalog(resolver)
+		if err != nil {
+			return err
+		}
+
+		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
+			sbom.Artifacts.Executables = result
+		})
+
+		return nil
+	}
+
+	return NewTask("file-executable-cataloger", fn)
 }
 
 // TODO: this should be replaced with a fix that allows passing a coordinate or location iterator to the cataloger

@@ -8,8 +8,9 @@ import (
 )
 
 type fileConfig struct {
-	Metadata fileMetadata `yaml:"metadata" json:"metadata" mapstructure:"metadata"`
-	Content  fileContent  `yaml:"content" json:"content" mapstructure:"content"`
+	Metadata   fileMetadata   `yaml:"metadata" json:"metadata" mapstructure:"metadata"`
+	Content    fileContent    `yaml:"content" json:"content" mapstructure:"content"`
+	Executable fileExecutable `yaml:"executable" json:"executable" mapstructure:"executable"`
 }
 
 type fileMetadata struct {
@@ -22,6 +23,10 @@ type fileContent struct {
 	Globs              []string `yaml:"globs" json:"globs" mapstructure:"globs"`
 }
 
+type fileExecutable struct {
+	Globs []string `yaml:"globs" json:"globs" mapstructure:"globs"`
+}
+
 func defaultFileConfig() fileConfig {
 	return fileConfig{
 		Metadata: fileMetadata{
@@ -30,6 +35,9 @@ func defaultFileConfig() fileConfig {
 		},
 		Content: fileContent{
 			SkipFilesAboveSize: 250 * intFile.KB,
+		},
+		Executable: fileExecutable{
+			Globs: nil,
 		},
 	}
 }

@@ -2,6 +2,7 @@ package kernel
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"strconv"
 	"strings"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
 const linuxKernelMagicName = "Linux kernel"

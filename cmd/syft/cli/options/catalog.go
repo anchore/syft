@@ -2,6 +2,7 @@ package options
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"sort"
 	"strings"
 
@@ -111,6 +112,10 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 		Content: filecontent.Config{
 			Globs:              cfg.File.Content.Globs,
 			SkipFilesAboveSize: cfg.File.Content.SkipFilesAboveSize,
+		},
+		Executable: executable.Config{
+			MIMETypes: executable.DefaultConfig().MIMETypes,
+			Globs:     cfg.File.Executable.Globs,
 		},
 	}
 }

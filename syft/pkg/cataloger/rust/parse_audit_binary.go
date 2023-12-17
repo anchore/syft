@@ -2,6 +2,7 @@ package rust
 
 import (
 	"errors"
+	"github.com/anchore/syft/syft/internal/unionreader"
 
 	rustaudit "github.com/microsoft/go-rustaudit"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
 // Catalog identifies executables then attempts to read Rust dependency information from them
