@@ -284,6 +284,17 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:ruby-lang:ruby:*:*:*:*:*:*:*:*"),
 	},
 	{
+		Class:    "erlang-binary",
+		FileGlob: "**/erlexec",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
+			`(?m)\<artificial\>\x00/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+?)/erts/`,
+		),
+		Package: "erlang",
+		PURL:    mustPURL("pkg:generic/erlang@version"),
+		CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*"),
+	},
+	{
 		Class:    "consul-binary",
 		FileGlob: "**/consul",
 		EvidenceMatcher: fileContentsVersionMatcher(
