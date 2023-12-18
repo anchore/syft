@@ -232,7 +232,7 @@ func attestCommand(sbomFilepath string, opts *attestOptions, userInput string) (
 }
 
 func predicateType(outputName string) string {
-	// Select Cosign predicate type based on defined output type
+	// select the Cosign predicate type based on defined output type
 	// As orientation, check: https://github.com/sigstore/cosign/blob/main/pkg/cosign/attestation/attestation.go
 	switch strings.ToLower(outputName) {
 	case "cyclonedx-json":
