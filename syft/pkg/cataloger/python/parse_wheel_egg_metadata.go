@@ -17,6 +17,8 @@ import (
 
 type parsedData struct {
 	Licenses          string `mapstructure:"License"`
+	LicenseFile       string `mapstructure:"LicenseFile"`
+	LicenseExpression string `mapstructure:"LicenseExpression"`
 	LicenseLocation   file.Location
 	pkg.PythonPackage `mapstructure:",squash"`
 }
@@ -80,8 +82,10 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (parsedData, error) 
 	// add additional metadata not stored in the egg/wheel metadata file
 
 	pd.SitePackagesRootPath = determineSitePackagesRootPath(path)
-	if pd.Licenses != "" {
+	if pd.Licenses != "" || pd.LicenseExpression != "" {
 		pd.LicenseLocation = file.NewLocation(path)
+	} else if pd.LicenseFile != "" {
+		pd.LicenseLocation = file.NewLocation(filepath.Join(filepath.Dir(path), pd.LicenseFile))
 	}
 
 	return pd, nil

@@ -204,7 +204,7 @@ func TestSearchYarnForLicenses(t *testing.T) {
 	}{
 		{
 			name:   "search remote licenses returns the expected licenses when search is set to true",
-			config: CatalogerConfig{searchRemoteLicenses: true},
+			config: CatalogerConfig{SearchRemoteLicenses: true},
 			requestHandlers: []handlerPath{
 				{
 					// https://registry.yarnpkg.com/@babel/code-frame/7.10.4
@@ -232,7 +232,7 @@ func TestSearchYarnForLicenses(t *testing.T) {
 			for _, handler := range tc.requestHandlers {
 				mux.HandleFunc(handler.path, handler.handler)
 			}
-			tc.config.npmBaseURL = url
+			tc.config.NPMBaseURL = url
 			adapter := newGenericYarnLockAdapter(tc.config)
 			pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, tc.expectedPackages, nil)
 		})

@@ -37,7 +37,11 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 		locations = intCataloger.AllRegularFiles(resolver)
 	} else {
 		for _, c := range coordinates {
-			locations = append(locations, file.NewLocationFromCoordinates(c))
+			locs, err := resolver.FilesByPath(c.RealPath)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get file locations for path %q: %w", c.RealPath, err)
+			}
+			locations = append(locations, locs...)
 		}
 	}
 

@@ -47,6 +47,15 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
 	},
 	{
+		Class:    "julia-binary",
+		FileGlob: "**/libjulia-internal.so",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)__init__\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00verify`),
+		Package: "julia",
+		PURL:    mustPURL("pkg:generic/julia@version"),
+		CPEs:    singleCPE("cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*"),
+	},
+	{
 		Class:    "helm",
 		FileGlob: "**/helm",
 		EvidenceMatcher: fileContentsVersionMatcher(
@@ -173,6 +182,15 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
 	},
 	{
+		Class:    "php-composer-binary",
+		FileGlob: "**/composer*",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)'pretty_version'\s*=>\s*'(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)'`),
+		Package: "composer",
+		PURL:    mustPURL("pkg:generic/composer@version"),
+		CPEs:    singleCPE("cpe:2.3:a:getcomposer:composer:*:*:*:*:*:*:*:*"),
+	},
+	{
 		Class:    "httpd-binary",
 		FileGlob: "**/httpd",
 		EvidenceMatcher: fileContentsVersionMatcher(
@@ -264,6 +282,17 @@ var defaultClassifiers = []classifier{
 		Package: "ruby",
 		PURL:    mustPURL("pkg:generic/ruby@version"),
 		CPEs:    singleCPE("cpe:2.3:a:ruby-lang:ruby:*:*:*:*:*:*:*:*"),
+	},
+	{
+		Class:    "erlang-binary",
+		FileGlob: "**/erlexec",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
+			`(?m)\<artificial\>\x00/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+?)/erts/`,
+		),
+		Package: "erlang",
+		PURL:    mustPURL("pkg:generic/erlang@version"),
+		CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*"),
 	},
 	{
 		Class:    "consul-binary",

@@ -31,9 +31,11 @@ func NewArchiveCataloger(cfg ArchiveCatalogerConfig) *generic.Cataloger {
 
 // NewPomCataloger returns a cataloger capable of parsing dependencies from a pom.xml file.
 // Pom files list dependencies that maybe not be locally installed yet.
-func NewPomCataloger() pkg.Cataloger {
+func NewPomCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
+	gap := newGenericArchiveParserAdapter(cfg)
+
 	return generic.NewCataloger("java-pom-cataloger").
-		WithParserByGlobs(parserPomXML, "**/pom.xml")
+		WithParserByGlobs(gap.parserPomXML, "**/pom.xml")
 }
 
 // NewGradleLockfileCataloger returns a cataloger capable of parsing dependencies from a gradle.lockfile file.

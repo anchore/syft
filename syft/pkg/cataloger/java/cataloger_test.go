@@ -89,7 +89,15 @@ func Test_POMCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewPomCataloger())
+				TestCataloger(t,
+					NewPomCataloger(
+						ArchiveCatalogerConfig{
+							ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+								IncludeIndexedArchives:   true,
+								IncludeUnindexedArchives: true,
+							},
+						},
+					))
 		})
 	}
 }

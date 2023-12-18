@@ -168,13 +168,14 @@ func Test_toBomDescriptor(t *testing.T) {
 			want: &cyclonedx.Metadata{
 				Timestamp:  "",
 				Lifecycles: nil,
-				Tools: &[]cyclonedx.Tool{
-					{
-						Vendor:             "anchore",
-						Name:               "test-image",
-						Version:            "1.0.0",
-						Hashes:             nil,
-						ExternalReferences: nil,
+				Tools: &cyclonedx.ToolsChoice{
+					Components: &[]cyclonedx.Component{
+						{
+							Type:    cyclonedx.ComponentTypeApplication,
+							Author:  "anchore",
+							Name:    "test-image",
+							Version: "1.0.0",
+						},
 					},
 				},
 				Authors: nil,
