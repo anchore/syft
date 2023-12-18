@@ -2,6 +2,7 @@ package binary
 
 import (
 	"reflect"
+	"strings"
 
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
@@ -9,9 +10,19 @@ import (
 )
 
 func newPackage(classifier classifier, location file.Location, matchMetadata map[string]string) *pkg.Package {
+	var version string
+
 	version, ok := matchMetadata["version"]
 	if !ok {
-		return nil
+		major, ok1 := matchMetadata["major"]
+		minor, ok2 := matchMetadata["minor"]
+		patch, ok3 := matchMetadata["patch"]
+
+		if ok1 && ok2 && ok3 {
+			version = strings.Join([]string{major, minor, patch}, ".")
+		} else {
+			return nil
+		}
 	}
 
 	update := matchMetadata["update"]

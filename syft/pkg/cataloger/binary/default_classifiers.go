@@ -250,6 +250,14 @@ var defaultClassifiers = []classifier{
 		PURL:    mustPURL("pkg:generic/mariadb@version"),
 	},
 	{
+		Class:    "redmine-binary",
+		FileGlob: "**/version.rb",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)module Redmine\s*# @private\s*module VERSION\s*MAJOR\s*=\s*(?P<major>[0-9]+)\s*MINOR\s*=\s*(?P<minor>[0-9]+)\s*TINY\s*=\s*(?P<patch>[0-9]+)`),
+		Package: "redmine",
+		PURL:    mustPURL("pkg:generic/redmine@version"),
+	},
+	{
 		Class:    "rust-standard-library-linux",
 		FileGlob: "**/libstd-????????????????.so",
 		EvidenceMatcher: fileContentsVersionMatcher(
