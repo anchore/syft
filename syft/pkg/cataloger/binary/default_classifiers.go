@@ -173,6 +173,15 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
 	},
 	{
+		Class:    "php-composer-binary",
+		FileGlob: "**/composer*",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)'pretty_version'\s*=>\s*'(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)'`),
+		Package: "composer",
+		PURL:    mustPURL("pkg:generic/composer@version"),
+		CPEs:    singleCPE("cpe:2.3:a:getcomposer:composer:*:*:*:*:*:*:*:*"),
+	},
+	{
 		Class:    "httpd-binary",
 		FileGlob: "**/httpd",
 		EvidenceMatcher: fileContentsVersionMatcher(
