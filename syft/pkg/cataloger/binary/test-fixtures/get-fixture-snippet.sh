@@ -3,10 +3,11 @@
 # Default values for length and prefix length
 LENGTH=100
 PREFIX_LENGTH=10
+SEARCH_FOR=''
 
 # Function to show usage
 usage() {
-    echo "Usage: $0 <path-to-binary> <search-pattern> [--length <length>] [--prefix-length <prefix_length>]"
+    echo "Usage: $0 <path-to-binary> <version> [--search-for <pattern>] [--length <length>] [--prefix-length <prefix_length>]"
     exit 1
 }
 
@@ -15,6 +16,11 @@ while [[ $# -gt 0 ]]; do
     key="$1"
 
     case $key in
+	--search-for)
+	    SEARCH_FOR="$2"
+	    shift # past argument
+            shift # past value
+	    ;;
         --length)
             LENGTH="$2"
             shift # past argument
@@ -28,8 +34,8 @@ while [[ $# -gt 0 ]]; do
         *)
             if [ -z "$BINARY_FILE" ]; then
                 BINARY_FILE="$1"
-            elif [ -z "$PATTERN" ]; then
-                PATTERN="$1"
+            elif [ -z "$VERSION" ]; then
+                VERSION="$1"
             else
                 echo "Unknown option: $1"
                 usage
@@ -40,7 +46,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # check if binary file and pattern are provided
-if [ -z "$BINARY_FILE" ] || [ -z "$PATTERN" ]; then
+if [ -z "$BINARY_FILE" ] || [ -z "$VERSION" ]; then
     usage
 fi
 
@@ -49,6 +55,9 @@ if ! command -v xxd &> /dev/null; then
     echo "xxd not found. Please install xxd."
     exit 1
 fi
+
+
+PATTERN=${SEARCH_FOR:-$VERSION}
 
 PATTERN_RESULTS=$(strings -a -t d "$BINARY_FILE" | grep "$PATTERN")
 
@@ -113,7 +122,7 @@ DATE=$(date)
 BASE64_PATTERN=$(echo -n "$PATTERN" | base64)
 FILENAME=$(basename "$BINARY_FILE")
 INFO=$(file -b "$BINARY_FILE")
-OUTPUT_DIRECTORY="classifiers/positive/$FILENAME-$PATTERN-$SHA256-$OFFSET-$LENGTH"
+OUTPUT_DIRECTORY="classifiers/positive/$FILENAME-$VERSION"
 mkdir "$OUTPUT_DIRECTORY"
 
 OUTPUT_FILE="$OUTPUT_DIRECTORY/$FILENAME"

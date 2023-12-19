@@ -146,7 +146,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-httpd-2.4.54",
-			fixtureDir: "test-fixtures/classifiers/positive/httpd-2.4.54-3e11fbb6fa371cc9c3e513f49f0ab247b482773cd312248eb86e51251e36fafd-546892-100",
+			fixtureDir: "test-fixtures/classifiers/positive/httpd-2.4.54",
 			expected: pkg.Package{
 				Name:      "httpd",
 				Version:   "2.4.54",
