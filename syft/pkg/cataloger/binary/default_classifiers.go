@@ -288,7 +288,7 @@ var defaultClassifiers = []classifier{
 		FileGlob: "**/erlexec",
 		EvidenceMatcher: fileContentsVersionMatcher(
 			// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
-			`(?m)\<artificial\>\x00/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+?)/erts/`,
+			`(?m)/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+?)/erts/`,
 		),
 		Package: "erlang",
 		PURL:    mustPURL("pkg:generic/erlang@version"),

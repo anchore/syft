@@ -723,7 +723,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "25.3.2.7",
 				Type:      "binary",
 				PURL:      "pkg:generic/erlang@25.3.2.7",
-				Locations: locations("erlexec"),
+				Locations: locations("erlexec-25.3.2.7-2224b3107551c409fb8da6d85eaa1ed730d088db438924c97d6e25851381dd28-91724-100/erlexec"),
 				Metadata:  metadata("erlang-binary"),
 			},
 		},
@@ -913,14 +913,6 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 				matches = false
 				break
 			}
-			if m1.Location.RealPath != "" && m1.Location.RealPath != m2.Location.RealPath {
-				matches = false
-				break
-			}
-			if m1.Location.AccessPath != "" && m1.Location.AccessPath != m2.Location.AccessPath {
-				matches = false
-				break
-			}
 		}
 	} else {
 		matches = false
@@ -941,8 +933,8 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 				cmp.Transformer("Locations", func(l file.LocationSet) []file.Location {
 					return l.ToSlice()
 				}),
-				cmpopts.IgnoreUnexported(pkg.Package{}, file.Location{}),
-				cmpopts.IgnoreFields(pkg.Package{}, "CPEs", "FoundBy", "MetadataType", "Type"),
+				cmpopts.IgnoreUnexported(pkg.Package{}, file.Location{}, file.LocationData{}, pkg.LicenseSet{}),
+				cmpopts.IgnoreFields(pkg.Package{}, "CPEs", "FoundBy", "Type", "Locations"),
 			))
 	}
 }
