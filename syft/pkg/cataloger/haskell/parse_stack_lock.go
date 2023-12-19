@@ -83,14 +83,14 @@ func parseStackLock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 
 	return pkgs, nil, nil
 }
+
 func parseStackPackageEncoding(pkgEncoding string) (name, version, hash string) {
 	lastDashIdx := strings.LastIndex(pkgEncoding, "-")
 	if lastDashIdx == -1 {
 		name = pkgEncoding
 		return
-	} else {
-		name = pkgEncoding[:lastDashIdx]
 	}
+	name = pkgEncoding[:lastDashIdx]
 	remainingEncoding := pkgEncoding[lastDashIdx+1:]
 	encodingSplits := strings.Split(remainingEncoding, "@")
 	version = encodingSplits[0]
