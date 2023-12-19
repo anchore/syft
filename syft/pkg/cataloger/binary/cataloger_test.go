@@ -146,7 +146,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-httpd-2.4.54",
-			fixtureDir: "test-fixtures/classifiers/positive/httpd-2.4.54",
+			fixtureDir: "test-fixtures/classifiers/positive/httpd-2.4.54-3e11fbb6fa371cc9c3e513f49f0ab247b482773cd312248eb86e51251e36fafd-546892-100",
 			expected: pkg.Package{
 				Name:      "httpd",
 				Version:   "2.4.54",
@@ -230,13 +230,13 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-haproxy-1.5.14",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.5.14",
+			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.5.14-5ff6ed7c0149382701391f268e78793a623d6b8fd2b9b65fe89c08b6041fd4d4-527350-100",
 			expected: pkg.Package{
 				Name:      "haproxy",
 				Version:   "1.5.14",
 				Type:      "binary",
 				PURL:      "pkg:generic/haproxy@1.5.14",
-				Locations: locations("haproxy-1.5.14-5ff6ed7c0149382701391f268e78793a623d6b8fd2b9b65fe89c08b6041fd4d4-527350-100/haproxy"),
+				Locations: locations("haproxy"),
 				Metadata:  metadata("haproxy-binary"),
 			},
 		},
@@ -254,7 +254,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-haproxy-2.7.3",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-2.7.3",
+			fixtureDir: "test-fixtures/classifiers/positive/haproxy-2.7.3-99d01769ac3457cf33b7e3eb93050453e20c09afe5631f810fd658fb5314bbd3-3156502-100",
 			expected: pkg.Package{
 				Name:      "haproxy",
 				Version:   "2.7.3",
@@ -503,7 +503,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-go",
-			fixtureDir: "test-fixtures/classifiers/positive/go-1.21.3",
+			fixtureDir: "test-fixtures/classifiers/positive/go-1.21.3-6a05bd57efff25a9d682b8e25ce572ee7ff723f4f5bcbba6429012121e247365-7879390-100",
 			expected: pkg.Package{
 				Name:      "go",
 				Version:   "1.21.3",
@@ -582,7 +582,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-java-oracle-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/oracle-macos--java-19.0.1",
+			fixtureDir: "test-fixtures/classifiers/positive/oracle-macos-java-19.0.1",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "19.0.1+10-21",
@@ -717,13 +717,13 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-erlang-25.3.2.7",
-			fixtureDir: "test-fixtures/classifiers/positive/erlang-25.3.2.7",
+			fixtureDir: "test-fixtures/classifiers/positive/erlexec-25.3.2.7-2224b3107551c409fb8da6d85eaa1ed730d088db438924c97d6e25851381dd28-91724-100",
 			expected: pkg.Package{
 				Name:      "erlang",
 				Version:   "25.3.2.7",
 				Type:      "binary",
 				PURL:      "pkg:generic/erlang@25.3.2.7",
-				Locations: locations("erlexec-25.3.2.7-2224b3107551c409fb8da6d85eaa1ed730d088db438924c97d6e25851381dd28-91724-100/erlexec"),
+				Locations: locations("erlexec"),
 				Metadata:  metadata("erlang-binary"),
 			},
 		},
@@ -753,13 +753,13 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-bash-5.1.16",
-			fixtureDir: "test-fixtures/classifiers/positive/bash-5.1.16",
+			fixtureDir: "test-fixtures/classifiers/positive/bash-5.1.16-2c336c63e26881d2f02f34379024e7c314bce572c08cbaa319bacbbec29f93ed-1210190-100",
 			expected: pkg.Package{
 				Name:      "bash",
 				Version:   "5.1.16",
 				Type:      "binary",
 				PURL:      "pkg:generic/bash@5.1.16",
-				Locations: locations("bash-5.1.16-2c336c63e26881d2f02f34379024e7c314bce572c08cbaa319bacbbec29f93ed-1210190-100/bash"),
+				Locations: locations("bash"),
 				Metadata:  metadata("bash-binary"),
 			},
 		},
