@@ -40,13 +40,13 @@ func TestSpdxValidationTooling(t *testing.T) {
 	}{
 		{
 			name:     "spdx validation tooling tag value",
-			syftArgs: []string{"packages", "-o", "spdx"},
+			syftArgs: []string{"scan", "-o", "spdx"},
 			images:   images,
 			env:      env,
 		},
 		{
 			name:     "spdx validation tooling json",
-			syftArgs: []string{"packages", "-o", "spdx-json"},
+			syftArgs: []string{"scan", "-o", "spdx-json"},
 			images:   images,
 			env:      env,
 		},
