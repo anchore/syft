@@ -503,12 +503,12 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-go",
-			fixtureDir: "test-fixtures/classifiers/positive/go-1.14",
+			fixtureDir: "test-fixtures/classifiers/positive/go-1.21.3",
 			expected: pkg.Package{
 				Name:      "go",
-				Version:   "1.14",
-				PURL:      "pkg:generic/go@1.14",
-				Locations: locations("go"),
+				Version:   "1.21.3",
+				PURL:      "pkg:generic/go@1.21.3",
+				Locations: locations("go-1.21.3-6a05bd57efff25a9d682b8e25ce572ee7ff723f4f5bcbba6429012121e247365-7879390-100/go"),
 				Metadata:  metadata("go-binary"),
 			},
 		},
