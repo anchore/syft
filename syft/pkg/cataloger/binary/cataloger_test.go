@@ -236,7 +236,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Version:   "1.5.14",
 				Type:      "binary",
 				PURL:      "pkg:generic/haproxy@1.5.14",
-				Locations: locations("haproxy"),
+				Locations: locations("haproxy-1.5.14-5ff6ed7c0149382701391f268e78793a623d6b8fd2b9b65fe89c08b6041fd4d4-527350-100/haproxy"),
 				Metadata:  metadata("haproxy-binary"),
 			},
 		},
