@@ -242,7 +242,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-haproxy-1.8.22",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.8.22",
+			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.8.22-cc32c297e83f2626d253d8615008c199a1dc9cba13883731f78ecbe9bfc524d4-1386742-100",
 			expected: pkg.Package{
 				Name:      "haproxy",
 				Version:   "1.8.22",
