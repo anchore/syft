@@ -133,13 +133,13 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-memcached-1.6.18",
-			fixtureDir: "test-fixtures/classifiers/positive/memcached-1.6.18",
+			name:       "positive-memcached-1.6.14",
+			fixtureDir: "test-fixtures/classifiers/positive/memcached-1.6.14",
 			expected: pkg.Package{
 				Name:      "memcached",
-				Version:   "1.6.18",
+				Version:   "1.6.14",
 				Type:      "binary",
-				PURL:      "pkg:generic/memcached@1.6.18",
+				PURL:      "pkg:generic/memcached@1.6.14",
 				Locations: locations("memcached"),
 				Metadata:  metadata("memcached-binary"),
 			},
@@ -546,7 +546,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-java-openjdk",
-			fixtureDir: "test-fixtures/classifiers/positive/openjdk",
+			fixtureDir: "test-fixtures/classifiers/positive/openjdk-1.8.0",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "1.8.0_352-b08",
@@ -558,7 +558,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-java-openjdk-lts",
-			fixtureDir: "test-fixtures/classifiers/positive/openjdk-lts",
+			fixtureDir: "test-fixtures/classifiers/positive/openjdk-lts-11.0.17",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "11.0.17+8-LTS",
@@ -570,7 +570,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-java-oracle",
-			fixtureDir: "test-fixtures/classifiers/positive/oracle",
+			fixtureDir: "test-fixtures/classifiers/positive/oracle-java-19.0.1",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "19.0.1+10-21",
@@ -582,7 +582,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-java-oracle-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/oracle-macos",
+			fixtureDir: "test-fixtures/classifiers/positive/oracle-macos-19.0.1",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "19.0.1+10-21",
@@ -594,7 +594,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-java-ibm",
-			fixtureDir: "test-fixtures/classifiers/positive/ibm",
+			fixtureDir: "test-fixtures/classifiers/positive/ibm-java-1.8.0",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "1.8.0-foreman_2022_09_22_15_30-b00",

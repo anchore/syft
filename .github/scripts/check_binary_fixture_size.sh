@@ -8,6 +8,9 @@ fi
 
 directory="$1"
 
+# Remove trailing slash using parameter expansion
+directory="${directory%/}"
+
 # Check if the directory exists
 if [ ! -d "$directory" ]; then
   echo "Directory not found: $directory"
