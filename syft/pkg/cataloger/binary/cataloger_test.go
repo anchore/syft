@@ -582,7 +582,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 		},
 		{
 			name:       "positive-java-oracle-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/oracle-macos-19.0.1",
+			fixtureDir: "test-fixtures/classifiers/positive/oracle-macos--java-19.0.1",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "19.0.1+10-21",
