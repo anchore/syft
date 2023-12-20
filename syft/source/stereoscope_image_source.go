@@ -64,7 +64,6 @@ func NewFromStereoscopeImage(cfg StereoscopeImageConfig) (*StereoscopeImageSourc
 	if cfg.Platform != nil {
 		opts = append(opts, stereoscope.WithPlatform(cfg.Platform.String()))
 	}
-
 	img, err := stereoscope.GetImageFromSource(ctx, cfg.Reference, cfg.From, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load image: %w", err)
