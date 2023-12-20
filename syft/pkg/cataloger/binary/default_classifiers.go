@@ -191,6 +191,15 @@ var defaultClassifiers = []classifier{
 		CPEs:    singleCPE("cpe:2.3:a:getcomposer:composer:*:*:*:*:*:*:*:*"),
 	},
 	{
+		Class:    "drupal-binary",
+		FileGlob: "**/Drupal.php",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			`(?m)const VERSION = '(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)'`),
+		Package: "drupal",
+		PURL:    mustPURL("pkg:generic/drupal@version"),
+		CPEs:    singleCPE("cpe:2.3:a:drupal:drupal:*:*:*:*:*:*:*:*"),
+	},
+	{
 		Class:    "httpd-binary",
 		FileGlob: "**/httpd",
 		EvidenceMatcher: fileContentsVersionMatcher(

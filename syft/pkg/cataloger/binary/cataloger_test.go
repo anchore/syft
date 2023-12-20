@@ -193,6 +193,18 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			name:       "positive-drupal-10.1.6",
+			fixtureDir: "test-fixtures/classifiers/positive/drupal-10.1.6",
+			expected: pkg.Package{
+				Name:      "drupal",
+				Version:   "10.1.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/drupal@10.1.6",
+				Locations: locations("Drupal.php"),
+				Metadata:  metadata("drupal-binary"),
+			},
+		},
+		{
 			name:       "positive-perl-5.12.5",
 			fixtureDir: "test-fixtures/classifiers/positive/perl-5.12.5",
 			expected: pkg.Package{
