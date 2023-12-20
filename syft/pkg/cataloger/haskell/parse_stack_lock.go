@@ -63,6 +63,9 @@ func parseStackLock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 	}
 
 	for _, pack := range lockFile.Packages {
+		if pack.Completed.Hackage == "" {
+			continue
+		}
 		pkgName, pkgVersion, pkgHash := parseStackPackageEncoding(pack.Completed.Hackage)
 		pkgs = append(
 			pkgs,
@@ -80,13 +83,20 @@ func parseStackLock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 
 	return pkgs, nil, nil
 }
+
 func parseStackPackageEncoding(pkgEncoding string) (name, version, hash string) {
 	lastDashIdx := strings.LastIndex(pkgEncoding, "-")
+	if lastDashIdx == -1 {
+		name = pkgEncoding
+		return
+	}
 	name = pkgEncoding[:lastDashIdx]
 	remainingEncoding := pkgEncoding[lastDashIdx+1:]
 	encodingSplits := strings.Split(remainingEncoding, "@")
 	version = encodingSplits[0]
-	startHash, endHash := strings.Index(encodingSplits[1], ":")+1, strings.Index(encodingSplits[1], ",")
-	hash = encodingSplits[1][startHash:endHash]
+	if len(encodingSplits) > 1 {
+		startHash, endHash := strings.Index(encodingSplits[1], ":")+1, strings.Index(encodingSplits[1], ",")
+		hash = encodingSplits[1][startHash:endHash]
+	}
 	return
 }
