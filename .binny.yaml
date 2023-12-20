@@ -1,7 +1,7 @@
 tools:
   - name: binny
     version:
-      want: v0.6.2
+      want: v0.6.3
     method: github-release
     with:
       repo: anchore/binny
