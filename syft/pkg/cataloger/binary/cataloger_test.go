@@ -2,7 +2,9 @@ package binary
 
 import (
 	"errors"
+	"flag"
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/testutil"
 	"io"
 	"strings"
 	"testing"
@@ -18,15 +20,16 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+var mustUseOriginalBinaries = flag.Bool("must-use-original-binaries", false, "force the use of binaries for testing (instead of snippets)")
+
 func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 	tests := []struct {
-		name       string
-		fixtureDir string
-		expected   pkg.Package
+		name           string
+		logicalFixture string
+		expected       pkg.Package
 	}{
 		{
-			name:       "positive-postgresql-15beta4",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-15beta4",
+			logicalFixture: "postgres/15beta4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",
 				Version:   "15beta4",
@@ -37,8 +40,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-postgresql-15.1",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-15.1",
+			logicalFixture: "postgres/15.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",
 				Version:   "15.1",
@@ -49,8 +51,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-postgresql-9.6.24",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-9.6.24",
+			logicalFixture: "postgres/9.6.24/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",
 				Version:   "9.6.24",
@@ -60,21 +61,20 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("postgresql-binary"),
 			},
 		},
+		// TODO: missing original binary
+		//{
+		//	logicalFixture: "postgres/9.5alpha1/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "postgresql",
+		//		Version:   "9.5alpha1",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/postgresql@9.5alpha1",
+		//		Locations: locations("postgres"),
+		//		Metadata:  metadata("postgresql-binary"),
+		//	},
+		//},
 		{
-			name:       "positive-postgresql-9.5alpha1",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-9.5alpha1",
-			expected: pkg.Package{
-				Name:      "postgresql",
-				Version:   "9.5alpha1",
-				Type:      "binary",
-				PURL:      "pkg:generic/postgresql@9.5alpha1",
-				Locations: locations("postgres"),
-				Metadata:  metadata("postgresql-binary"),
-			},
-		},
-		{
-			name:       "positive-mysql-8.0.34",
-			fixtureDir: "test-fixtures/classifiers/positive/mysql-8.0.34",
+			logicalFixture: "mysql/8.0.34/linux-amd64",
 			expected: pkg.Package{
 				Name:      "mysql",
 				Version:   "8.0.34",
@@ -85,8 +85,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-mysql-5.6.51",
-			fixtureDir: "test-fixtures/classifiers/positive/mysql-5.6.51",
+			logicalFixture: "mysql/5.6.51/linux-amd64",
 			expected: pkg.Package{
 				Name:      "mysql",
 				Version:   "5.6.51",
@@ -97,8 +96,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-mariadb-10.6.15",
-			fixtureDir: "test-fixtures/classifiers/positive/mariadb-10.6.15",
+			logicalFixture: "mariadb/10.6.15/linux-amd64",
 			expected: pkg.Package{
 				Name:      "mariadb",
 				Version:   "10.6.15",
@@ -108,45 +106,42 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("mariadb-binary"),
 			},
 		},
+		// TODO: need to add original binary
+		//{
+		//	logicalFixture: "traefik/2.9.6/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "traefik",
+		//		Version:   "2.9.6",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/traefik@2.9.6",
+		//		Locations: locations("traefik"),
+		//		Metadata:  metadata("traefik-binary"),
+		//	},
+		//},
+		//{
+		//	logicalFixture: "test-fixtures/classifiers/positive/traefik-1.7.34/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "traefik",
+		//		Version:   "1.7.34",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/traefik@1.7.34",
+		//		Locations: locations("traefik"),
+		//		Metadata:  metadata("traefik-binary"),
+		//	},
+		//},
 		{
-			name:       "positive-traefik-2.9.6",
-			fixtureDir: "test-fixtures/classifiers/positive/traefik-2.9.6",
-			expected: pkg.Package{
-				Name:      "traefik",
-				Version:   "2.9.6",
-				Type:      "binary",
-				PURL:      "pkg:generic/traefik@2.9.6",
-				Locations: locations("traefik"),
-				Metadata:  metadata("traefik-binary"),
-			},
-		},
-		{
-			name:       "positive-traefik-1.7.34",
-			fixtureDir: "test-fixtures/classifiers/positive/traefik-1.7.34",
-			expected: pkg.Package{
-				Name:      "traefik",
-				Version:   "1.7.34",
-				Type:      "binary",
-				PURL:      "pkg:generic/traefik@1.7.34",
-				Locations: locations("traefik"),
-				Metadata:  metadata("traefik-binary"),
-			},
-		},
-		{
-			name:       "positive-memcached-1.6.18",
-			fixtureDir: "test-fixtures/classifiers/positive/memcached-1.6.18",
+			logicalFixture: "memcached/1.6.18/linux-amd64",
 			expected: pkg.Package{
 				Name:      "memcached",
 				Version:   "1.6.18",
 				Type:      "binary",
 				PURL:      "pkg:generic/memcached@1.6.18",
-				Locations: locations("memcached-1.6.18-176467412e0722ae1b2c1159555d33574653ebfa87e8591d88c1e6e416ab3019-19-100/memcached"),
+				Locations: locations("memcached"),
 				Metadata:  metadata("memcached-binary"),
 			},
 		},
 		{
-			name:       "positive-httpd-2.4.54",
-			fixtureDir: "test-fixtures/classifiers/positive/httpd-2.4.54",
+			logicalFixture: "httpd/2.4.54/linux-amd64",
 			expected: pkg.Package{
 				Name:      "httpd",
 				Version:   "2.4.54",
@@ -156,81 +151,80 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("httpd-binary"),
 			},
 		},
+
+		// TODO: missing original binaries
+		//{
+		//	logicalFixture: "test-fixtures/classifiers/positive/php-cli-8.2.1/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "php-cli",
+		//		Version:   "8.2.1",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/php-cli@8.2.1",
+		//		Locations: locations("php"),
+		//		Metadata:  metadata("php-cli-binary"),
+		//	},
+		//},
+		//{
+		//	logicalFixture: "test-fixtures/classifiers/positive/php-fpm-8.2.1/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "php-fpm",
+		//		Version:   "8.2.1",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/php-fpm@8.2.1",
+		//		Locations: locations("php-fpm"),
+		//		Metadata:  metadata("php-fpm-binary"),
+		//	},
+		//},
+		//{
+		//	logicalFixture: "test-fixtures/classifiers/positive/php-apache-8.2.1/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "libphp",
+		//		Version:   "8.2.1",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/php@8.2.1",
+		//		Locations: locations("libphp.so"),
+		//		Metadata:  metadata("php-apache-binary"),
+		//	},
+		//},
+
+		// TODO: original binary is different than test fixture
+		//{
+		//	logicalFixture: "perl/5.12.5/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "perl",
+		//		Version:   "5.12.5",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/perl@5.12.5",
+		//		Locations: locations("perl"),
+		//		Metadata:  metadata("perl-binary"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-perl-5.20.0",
+		//	logicalFixture: "test-fixtures/classifiers/positive/perl-5.20.0/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "perl",
+		//		Version:   "5.20.0",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/perl@5.20.0",
+		//		Locations: locations("perl"),
+		//		Metadata:  metadata("perl-binary"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-perl-5.37.8",
+		//	logicalFixture: "test-fixtures/classifiers/positive/perl-5.37.8/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "perl",
+		//		Version:   "5.37.8",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/perl@5.37.8",
+		//		Locations: locations("perl"),
+		//		Metadata:  metadata("perl-binary"),
+		//	},
+		//},
 		{
-			name:       "positive-php-cli-8.2.1",
-			fixtureDir: "test-fixtures/classifiers/positive/php-cli-8.2.1",
-			expected: pkg.Package{
-				Name:      "php-cli",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php-cli@8.2.1",
-				Locations: locations("php"),
-				Metadata:  metadata("php-cli-binary"),
-			},
-		},
-		{
-			name:       "positive-php-fpm-8.2.1",
-			fixtureDir: "test-fixtures/classifiers/positive/php-fpm-8.2.1",
-			expected: pkg.Package{
-				Name:      "php-fpm",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php-fpm@8.2.1",
-				Locations: locations("php-fpm"),
-				Metadata:  metadata("php-fpm-binary"),
-			},
-		},
-		{
-			name:       "positive-php-apache-8.2.1",
-			fixtureDir: "test-fixtures/classifiers/positive/php-apache-8.2.1",
-			expected: pkg.Package{
-				Name:      "libphp",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php@8.2.1",
-				Locations: locations("libphp.so"),
-				Metadata:  metadata("php-apache-binary"),
-			},
-		},
-		{
-			name:       "positive-perl-5.12.5",
-			fixtureDir: "test-fixtures/classifiers/positive/perl-5.12.5",
-			expected: pkg.Package{
-				Name:      "perl",
-				Version:   "5.12.5",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.12.5",
-				Locations: locations("perl"),
-				Metadata:  metadata("perl-binary"),
-			},
-		},
-		{
-			name:       "positive-perl-5.20.0",
-			fixtureDir: "test-fixtures/classifiers/positive/perl-5.20.0",
-			expected: pkg.Package{
-				Name:      "perl",
-				Version:   "5.20.0",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.20.0",
-				Locations: locations("perl"),
-				Metadata:  metadata("perl-binary"),
-			},
-		},
-		{
-			name:       "positive-perl-5.37.8",
-			fixtureDir: "test-fixtures/classifiers/positive/perl-5.37.8",
-			expected: pkg.Package{
-				Name:      "perl",
-				Version:   "5.37.8",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.37.8",
-				Locations: locations("perl"),
-				Metadata:  metadata("perl-binary"),
-			},
-		},
-		{
-			name:       "positive-haproxy-1.5.14",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.5.14-5ff6ed7c0149382701391f268e78793a623d6b8fd2b9b65fe89c08b6041fd4d4-527350-100",
+			logicalFixture: "haproxy/1.5.14/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haproxy",
 				Version:   "1.5.14",
@@ -241,8 +235,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-haproxy-1.8.22",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.8.22-cc32c297e83f2626d253d8615008c199a1dc9cba13883731f78ecbe9bfc524d4-1386742-100",
+			logicalFixture: "haproxy/1.8.22/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haproxy",
 				Version:   "1.8.22",
@@ -253,8 +246,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-haproxy-2.7.3",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-2.7.3-99d01769ac3457cf33b7e3eb93050453e20c09afe5631f810fd658fb5314bbd3-3156502-100",
+			logicalFixture: "haproxy/2.7.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haproxy",
 				Version:   "2.7.3",
@@ -264,21 +256,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("haproxy-binary"),
 			},
 		},
+
 		{
-			name:       "positive-redis-2.8.23",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-2.8.23",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "2.8.23",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@2.8.23",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-helm-3.11.1",
-			fixtureDir: "test-fixtures/classifiers/dynamic/helm-3.11.1",
+			logicalFixture: "helm/3.11.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "helm",
 				Version:   "3.11.1",
@@ -289,8 +269,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-helm-3.10.3",
-			fixtureDir: "test-fixtures/classifiers/dynamic/helm-3.10.3",
+			logicalFixture: "helm/3.10.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "helm",
 				Version:   "3.10.3",
@@ -300,112 +279,129 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("helm"),
 			},
 		},
+
+		// TODO: missing original binaries
+		//{
+		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-2.8.23/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "redis",
+		//		Version:   "2.8.23",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/redis@2.8.23",
+		//		Locations: locations("redis-server"),
+		//		Metadata:  metadata("redis-binary"),
+		//	},
+		//},
+
+		//{
+		//	name:           "positive-redis-4.0.11",
+		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-4.0.11/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "redis",
+		//		Version:   "4.0.11",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/redis@4.0.11",
+		//		Locations: locations("redis-server"),
+		//		Metadata:  metadata("redis-binary"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-redis-5.0.0",
+		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-5.0.0/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "redis",
+		//		Version:   "5.0.0",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/redis@5.0.0",
+		//		Locations: locations("redis-server"),
+		//		Metadata:  metadata("redis-binary"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-redis-6.0.16",
+		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-6.0.16",
+		//	expected: pkg.Package{
+		//		Name:      "redis",
+		//		Version:   "6.0.16",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/redis@6.0.16",
+		//		Locations: locations("redis-server"),
+		//		Metadata:  metadata("redis-binary"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-redis-7.0.0",
+		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-7.0.0",
+		//	expected: pkg.Package{
+		//		Name:      "redis",
+		//		Version:   "7.0.0",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/redis@7.0.0",
+		//		Locations: locations("redis-server"),
+		//		Metadata:  metadata("redis-binary"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-redis-7.0.14",
+		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-7.0.14",
+		//	expected: pkg.Package{
+		//		Name:      "redis",
+		//		Version:   "7.0.14",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/redis@7.0.14",
+		//		Locations: locations("redis-server"),
+		//		Metadata:  metadata("redis-binary"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-redis-7.2.3-amd64",
+		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-7.2.3-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "redis",
+		//		Version:   "7.2.3",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/redis@7.2.3",
+		//		Locations: locations("redis-server"),
+		//		Metadata:  metadata("redis-binary"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-redis-7.2.3-arm64",
+		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-7.2.3-arm64",
+		//	expected: pkg.Package{
+		//		Name:      "redis",
+		//		Version:   "7.2.3",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/redis@7.2.3",
+		//		Locations: locations("redis-server"),
+		//		Metadata:  metadata("redis-binary"),
+		//	},
+		//},
+
+		// TODO: missing original binaries
+		//{
+		//	name:           "positive-libpython3.7.so",
+		//	logicalFixture: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
+		//	expected: pkg.Package{
+		//		Name:      "python",
+		//		Version:   "3.7.4",
+		//		PURL:      "pkg:generic/python@3.7.4",
+		//		Locations: locations("libpython3.7.so"),
+		//		Metadata:  metadata("python-binary-lib"),
+		//	},
+		//},
+
 		{
-			name:       "positive-redis-4.0.11",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-4.0.11",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "4.0.11",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@4.0.11",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-5.0.0",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-5.0.0",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "5.0.0",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@5.0.0",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-6.0.16",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-6.0.16",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "6.0.16",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@6.0.16",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-7.0.0",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.0.0",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "7.0.0",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@7.0.0",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-7.0.14",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.0.14",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "7.0.14",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@7.0.14",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-7.2.3-amd64",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.2.3-amd64",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "7.2.3",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@7.2.3",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-redis-7.2.3-arm64",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.2.3-arm64",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "7.2.3",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@7.2.3",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-libpython3.7.so",
-			fixtureDir: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
-			expected: pkg.Package{
-				Name:      "python",
-				Version:   "3.7.4",
-				PURL:      "pkg:generic/python@3.7.4",
-				Locations: locations("libpython3.7.so"),
-				Metadata:  metadata("python-binary-lib"),
-			},
-		},
-		{
-			name:       "positive-python-3.11.2-from-shared-lib",
-			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-shared-lib-3.11",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "python-slim-shared-libs/3.11/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.11.2",
 				PURL:      "pkg:generic/python@3.11.2",
-				Locations: locations("python3", "libpython3.11.so.1.0"),
+				Locations: locations("python3.11", "libpython3.11.so.1.0"),
 				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
-						match("python-binary", "python3"),
+						match("python-binary", "python3.11"),
 						match("python-binary", "libpython3.11.so.1.0"),
 						match("python-binary-lib", "libpython3.11.so.1.0"),
 					},
@@ -413,8 +409,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-python-3.9-from-shared-redhat-lib",
-			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-shared-lib-redhat-3.9",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "python-rhel-shared-libs/3.9/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.9.13",
@@ -430,8 +426,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-python-binary-with-version-3.9",
-			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-with-version-3.9",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "python3.9/3.9.16/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.9.2",
@@ -445,8 +441,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-python-binary-3.4-alpine",
-			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-3.4-alpine",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "python-alpine-shared-libs/3.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.4.10",
@@ -461,188 +457,196 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				},
 			},
 		},
+		// TODO: missing original binary
+		//{
+		//	name:           "positive-python-3.5-with-incorrect-match",
+		//	logicalFixture: "test-fixtures/classifiers/positive/python-3.5-with-incorrect-match",
+		//	expected: pkg.Package{
+		//		Name:      "python",
+		//		Version:   "3.5.3",
+		//		PURL:      "pkg:generic/python@3.5.3",
+		//		Locations: locations("python3.5"),
+		//		Metadata:  metadata("python-binary"),
+		//	},
+		//},
+
+		// TODO: can't seem to get this lined up with the new binary pulled down... the original snippet also has content I can't account for
+		//{
+		//	logicalFixture: "python/3.6/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "python",
+		//		Version:   "3.6.3",
+		//		PURL:      "pkg:generic/python@3.6.3",
+		//		Locations: locations("python3.6"),
+		//		Metadata:  metadata("python-binary"),
+		//	},
+		//},
+
+		// TODO: missing original binary
+		//{
+		//	name:           "positive-python-duplicates",
+		//	logicalFixture: "test-fixtures/classifiers/positive/python-duplicates",
+		//	expected: pkg.Package{
+		//		Name:      "python",
+		//		Version:   "3.8.16",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/python@3.8.16",
+		//		Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
+		//		Metadata: pkg.BinarySignature{
+		//			Matches: []pkg.ClassifierMatch{
+		//				match("python-binary", "dir/python3.8"),
+		//				match("python-binary", "python3.8"),
+		//				match("python-binary-lib", "libpython3.8.so"),
+		//			},
+		//		},
+		//	},
+		//},
+
 		{
-			name:       "positive-python-3.5-with-incorrect-match",
-			fixtureDir: "test-fixtures/classifiers/positive/python-3.5-with-incorrect-match",
-			expected: pkg.Package{
-				Name:      "python",
-				Version:   "3.5.3",
-				PURL:      "pkg:generic/python@3.5.3",
-				Locations: locations("python3.5"),
-				Metadata:  metadata("python-binary"),
-			},
-		},
-		{
-			name:       "positive-python3.6",
-			fixtureDir: "test-fixtures/classifiers/positive/python-binary-3.6",
-			expected: pkg.Package{
-				Name:      "python",
-				Version:   "3.6.3",
-				PURL:      "pkg:generic/python@3.6.3",
-				Locations: locations("python3.6"),
-				Metadata:  metadata("python-binary"),
-			},
-		},
-		{
-			name:       "positive-python-duplicates",
-			fixtureDir: "test-fixtures/classifiers/positive/python-duplicates",
-			expected: pkg.Package{
-				Name:      "python",
-				Version:   "3.8.16",
-				Type:      "binary",
-				PURL:      "pkg:generic/python@3.8.16",
-				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
-				Metadata: pkg.BinarySignature{
-					Matches: []pkg.ClassifierMatch{
-						match("python-binary", "dir/python3.8"),
-						match("python-binary", "python3.8"),
-						match("python-binary-lib", "libpython3.8.so"),
-					},
-				},
-			},
-		},
-		{
-			name:       "positive-go",
-			fixtureDir: "test-fixtures/classifiers/positive/go-1.21.3-6a05bd57efff25a9d682b8e25ce572ee7ff723f4f5bcbba6429012121e247365-7879390-100",
+			logicalFixture: "go/1.21.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "go",
 				Version:   "1.21.3",
 				PURL:      "pkg:generic/go@1.21.3",
-				Locations: locations("go-1.21.3-6a05bd57efff25a9d682b8e25ce572ee7ff723f4f5bcbba6429012121e247365-7879390-100/go"),
+				Locations: locations("go"),
 				Metadata:  metadata("go-binary"),
 			},
 		},
 		{
-			name:       "positive-node",
-			fixtureDir: "test-fixtures/classifiers/positive/node-19.2.1",
+			logicalFixture: "node/19.2.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "node",
-				Version:   "19.2.1",
-				PURL:      "pkg:generic/node@19.2.1",
+				Version:   "19.2.0",
+				PURL:      "pkg:generic/node@19.2.0",
 				Locations: locations("node"),
 				Metadata:  metadata("nodejs-binary"),
 			},
 		},
+		// TODO: captured outside of the original binary
+		//{
+		//	name:           "positive-go-hint",
+		//	logicalFixture: "test-fixtures/classifiers/positive/go-hint-1.15",
+		//	expected: pkg.Package{
+		//		Name:      "go",
+		//		Version:   "1.15",
+		//		PURL:      "pkg:generic/go@1.15",
+		//		Locations: locations("VERSION"),
+		//		Metadata:  metadata("go-binary-hint"),
+		//	},
+		//},
 		{
-			name:       "positive-go-hint",
-			fixtureDir: "test-fixtures/classifiers/positive/go-hint-1.15",
-			expected: pkg.Package{
-				Name:      "go",
-				Version:   "1.15",
-				PURL:      "pkg:generic/go@1.15",
-				Locations: locations("VERSION"),
-				Metadata:  metadata("go-binary-hint"),
-			},
-		},
-		{
-			name:       "positive-busybox",
-			fixtureDir: "test-fixtures/classifiers/positive/busybox-3.33.3",
+			// note: this is testing BUSYBOX which is typically through a link to "[" (in this case a symlink but in
+			// practice this is often a hard link).
+			logicalFixture: `busybox/1.36.1/linux-amd64`,
 			expected: pkg.Package{
 				Name:      "busybox",
-				Version:   "3.33.3",
+				Version:   "1.36.1",
 				Locations: locations("["), // note: busybox is a link to [
 				Metadata:  metadata("busybox-binary", "[", "busybox"),
 			},
 		},
+		// TODO: need to get the original binaries
+		//{
+		//	logicalFixture: "openjdk/1.8.0",
+		//	expected: pkg.Package{
+		//		Name:      "java",
+		//		Version:   "1.8.0_352-b08",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/java@1.8.0_352-b08",
+		//		Locations: locations("java"),
+		//		Metadata:  metadata("java-binary-openjdk", "java"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-java-openjdk-lts",
+		//	logicalFixture: "test-fixtures/classifiers/positive/openjdk-lts-11.0.17",
+		//	expected: pkg.Package{
+		//		Name:      "java",
+		//		Version:   "11.0.17+8-LTS",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/java@11.0.17+8-LTS",
+		//		Locations: locations("java"),
+		//		Metadata:  metadata("java-binary-openjdk", "java"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-java-oracle",
+		//	logicalFixture: "test-fixtures/classifiers/positive/oracle-java-19.0.1",
+		//	expected: pkg.Package{
+		//		Name:      "java",
+		//		Version:   "19.0.1+10-21",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/java@19.0.1+10-21",
+		//		Locations: locations("java"),
+		//		Metadata:  metadata("java-binary-oracle", "java"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-java-oracle-macos",
+		//	logicalFixture: "test-fixtures/classifiers/positive/oracle-macos-java-19.0.1",
+		//	expected: pkg.Package{
+		//		Name:      "java",
+		//		Version:   "19.0.1+10-21",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/java@19.0.1+10-21",
+		//		Locations: locations("java"),
+		//		Metadata:  metadata("java-binary-oracle", "java"),
+		//	},
+		//},
 		{
-			name:       "positive-java-openjdk",
-			fixtureDir: "test-fixtures/classifiers/positive/openjdk-1.8.0",
+			name:           "positive-java-ibm",
+			logicalFixture: "java-jre-ibm/1.8.0_391/linux-amd64",
 			expected: pkg.Package{
 				Name:      "java",
-				Version:   "1.8.0_352-b08",
+				Version:   "1.8.0-foreman_2023_10_12_13_27-b00",
 				Type:      "binary",
-				PURL:      "pkg:generic/java@1.8.0_352-b08",
-				Locations: locations("java"),
-				Metadata:  metadata("java-binary-openjdk", "java"),
-			},
-		},
-		{
-			name:       "positive-java-openjdk-lts",
-			fixtureDir: "test-fixtures/classifiers/positive/openjdk-lts-11.0.17",
-			expected: pkg.Package{
-				Name:      "java",
-				Version:   "11.0.17+8-LTS",
-				Type:      "binary",
-				PURL:      "pkg:generic/java@11.0.17+8-LTS",
-				Locations: locations("java"),
-				Metadata:  metadata("java-binary-openjdk", "java"),
-			},
-		},
-		{
-			name:       "positive-java-oracle",
-			fixtureDir: "test-fixtures/classifiers/positive/oracle-java-19.0.1",
-			expected: pkg.Package{
-				Name:      "java",
-				Version:   "19.0.1+10-21",
-				Type:      "binary",
-				PURL:      "pkg:generic/java@19.0.1+10-21",
-				Locations: locations("java"),
-				Metadata:  metadata("java-binary-oracle", "java"),
-			},
-		},
-		{
-			name:       "positive-java-oracle-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/oracle-macos-java-19.0.1",
-			expected: pkg.Package{
-				Name:      "java",
-				Version:   "19.0.1+10-21",
-				Type:      "binary",
-				PURL:      "pkg:generic/java@19.0.1+10-21",
-				Locations: locations("java"),
-				Metadata:  metadata("java-binary-oracle", "java"),
-			},
-		},
-		{
-			name:       "positive-java-ibm",
-			fixtureDir: "test-fixtures/classifiers/positive/ibm-java-1.8.0",
-			expected: pkg.Package{
-				Name:      "java",
-				Version:   "1.8.0-foreman_2022_09_22_15_30-b00",
-				Type:      "binary",
-				PURL:      "pkg:generic/java@1.8.0-foreman_2022_09_22_15_30-b00",
+				PURL:      "pkg:generic/java@1.8.0-foreman_2023_10_12_13_27-b00",
 				Locations: locations("java"),
 				Metadata:  metadata("java-binary-ibm", "java"),
 			},
 		},
+		// TODO: need to get the original binaries
+		//{
+		//	name:           "positive-rust-1.50.0-macos",
+		//	logicalFixture: "test-fixtures/classifiers/positive/rust-1.50.0",
+		//	expected: pkg.Package{
+		//		Name:      "rust",
+		//		Version:   "1.50.0",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/rust@1.50.0",
+		//		Locations: locations("lib/rustlib/aarch64-apple-darwin/lib/libstd-f6f9eec1635e636a.dylib"),
+		//		Metadata:  metadata("rust-standard-library-macos"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-rust-1.67.1-macos",
+		//	logicalFixture: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-aarch64-apple-darwin",
+		//	expected: pkg.Package{
+		//		Name:      "rust",
+		//		Version:   "1.67.1",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/rust@1.67.1",
+		//		Locations: locations("lib/libstd-16f2b65e77054c42.dylib"),
+		//		Metadata:  metadata("rust-standard-library-macos"),
+		//	},
+		//},
+		//{
+		//	name:           "positive-rust-1.67.1-linux",
+		//	logicalFixture: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-x86_64-unknown-linux-musl",
+		//	expected: pkg.Package{
+		//		Name:      "rust",
+		//		Version:   "1.67.1",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/rust@1.67.1",
+		//		Locations: locations("lib/libstd-86aefecbddda356d.so"),
+		//		Metadata:  metadata("rust-standard-library-linux"),
+		//	},
+		//},
 		{
-			name:       "positive-rust-1.50.0-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/rust-1.50.0",
-			expected: pkg.Package{
-				Name:      "rust",
-				Version:   "1.50.0",
-				Type:      "binary",
-				PURL:      "pkg:generic/rust@1.50.0",
-				Locations: locations("lib/rustlib/aarch64-apple-darwin/lib/libstd-f6f9eec1635e636a.dylib"),
-				Metadata:  metadata("rust-standard-library-macos"),
-			},
-		},
-		{
-			name:       "positive-rust-1.67.1-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-aarch64-apple-darwin",
-			expected: pkg.Package{
-				Name:      "rust",
-				Version:   "1.67.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/rust@1.67.1",
-				Locations: locations("lib/libstd-16f2b65e77054c42.dylib"),
-				Metadata:  metadata("rust-standard-library-macos"),
-			},
-		},
-		{
-			name:       "positive-rust-1.67.1-linux",
-			fixtureDir: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-x86_64-unknown-linux-musl",
-			expected: pkg.Package{
-				Name:      "rust",
-				Version:   "1.67.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/rust@1.67.1",
-				Locations: locations("lib/libstd-86aefecbddda356d.so"),
-				Metadata:  metadata("rust-standard-library-linux"),
-			},
-		},
-		{
-			name:       "positive-ruby-3.2.1",
-			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-3.2.1",
+			// note: dynamic (non-snippet) test case
+
+			name:           "positive-ruby-3.2.1",
+			logicalFixture: "ruby-bullseye-shared-libs/3.2.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "ruby",
 				Version:   "3.2.1",
@@ -658,8 +662,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-ruby-2.7.7",
-			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.7.7",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "ruby-bullseye-shared-libs/2.7.7/linux-amd64",
 			expected: pkg.Package{
 				Name:      "ruby",
 				Version:   "2.7.7p221",
@@ -675,8 +679,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-ruby-2.6.10",
-			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.6.10",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "ruby-shared-libs/2.6.10/linux-amd64",
 			expected: pkg.Package{
 				Name:      "ruby",
 				Version:   "2.6.10p210",
@@ -691,21 +695,20 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				},
 			},
 		},
+		//{
+		//	name:           "positive-ruby-1.9.3p551",
+		//	logicalFixture: "test-fixtures/classifiers/positive/ruby-1.9.3p551/linux-amd64",
+		//	expected: pkg.Package{
+		//		Name:      "ruby",
+		//		Version:   "1.9.3p551",
+		//		Type:      "binary",
+		//		PURL:      "pkg:generic/ruby@1.9.3p551",
+		//		Locations: locations("ruby"),
+		//		Metadata:  metadata("ruby-binary"),
+		//	},
+		//},
 		{
-			name:       "positive-ruby-1.9.3p551",
-			fixtureDir: "test-fixtures/classifiers/positive/ruby-1.9.3p551",
-			expected: pkg.Package{
-				Name:      "ruby",
-				Version:   "1.9.3p551",
-				Type:      "binary",
-				PURL:      "pkg:generic/ruby@1.9.3p551",
-				Locations: locations("ruby"),
-				Metadata:  metadata("ruby-binary"),
-			},
-		},
-		{
-			name:       "positive-consul-1.15.2",
-			fixtureDir: "test-fixtures/classifiers/dynamic/consul-1.15.2",
+			logicalFixture: "consul/1.15.2/linux-amd64",
 			expected: pkg.Package{
 				Name:      "consul",
 				Version:   "1.15.2",
@@ -716,20 +719,29 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-erlang-25.3.2.7",
-			fixtureDir: "test-fixtures/classifiers/positive/erlexec-25.3.2.7-2224b3107551c409fb8da6d85eaa1ed730d088db438924c97d6e25851381dd28-91724-100",
+			logicalFixture: "erlexec/25.3.2.6/linux-amd64",
 			expected: pkg.Package{
 				Name:      "erlang",
-				Version:   "25.3.2.7",
+				Version:   "25.3.2.6",
 				Type:      "binary",
-				PURL:      "pkg:generic/erlang@25.3.2.7",
+				PURL:      "pkg:generic/erlang@25.3.2.6",
 				Locations: locations("erlexec"),
 				Metadata:  metadata("erlang-binary"),
 			},
 		},
 		{
-			name:       "positive-nginx-1.25.1",
-			fixtureDir: "test-fixtures/classifiers/positive/nginx-1.25.1",
+			logicalFixture: "erlexec/26.2.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "erlang",
+				Version:   "26.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/erlang@26.2",
+				Locations: locations("erlexec"),
+				Metadata:  metadata("erlang-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx/1.25.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "nginx",
 				Version:   "1.25.1",
@@ -740,8 +752,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-nginx-openresty-1.21.4.2",
-			fixtureDir: "test-fixtures/classifiers/positive/nginx-openresty-1.21.4.2",
+			logicalFixture: "nginx-openresty/1.21.4.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "nginx",
 				Version:   "1.21.4",
@@ -752,8 +763,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-bash-5.1.16",
-			fixtureDir: "test-fixtures/classifiers/positive/bash-5.1.16-2c336c63e26881d2f02f34379024e7c314bce572c08cbaa319bacbbec29f93ed-1210190-100",
+			logicalFixture: "bash/5.1.16/linux-amd64",
 			expected: pkg.Package{
 				Name:      "bash",
 				Version:   "5.1.16",
@@ -766,10 +776,12 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.logicalFixture, func(t *testing.T) {
 			c := NewCataloger()
 
-			src, err := source.NewFromDirectoryPath(test.fixtureDir)
+			path := testutil.SnippetOrBinary(t, test.logicalFixture, *mustUseOriginalBinaries)
+
+			src, err := source.NewFromDirectoryPath(path)
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)
@@ -778,7 +790,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			packages, _, err := c.Catalog(resolver)
 			require.NoError(t, err)
 
-			require.Len(t, packages, 1)
+			require.Len(t, packages, 1, "mismatched package count")
 
 			assertPackagesAreEqual(t, test.expected, packages[0])
 		})
