@@ -540,6 +540,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "busybox",
 				Version:   "3.33.3",
+				PURL:      "pkg:generic/busybox@3.33.3",
 				Locations: locations("["), // note: busybox is a link to [
 				Metadata:  metadata("busybox-binary", "[", "busybox"),
 			},
@@ -809,6 +810,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "busybox",
 				Version:   "1.35.0",
+				PURL:      "pkg:generic/busybox@1.35.0",
 				Locations: locations("/bin/["),
 				Metadata:  metadata("busybox-binary", "/bin/[", "/bin/busybox"),
 			},
