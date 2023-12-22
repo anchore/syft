@@ -3,9 +3,10 @@ package config
 import (
 	"crypto/sha256"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"path/filepath"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type BinaryFromImage struct {

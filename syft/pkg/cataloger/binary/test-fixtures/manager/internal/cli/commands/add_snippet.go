@@ -2,14 +2,16 @@ package commands
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/ui"
-	"github.com/anmitsu/go-shlex"
-	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/anmitsu/go-shlex"
+	"github.com/spf13/cobra"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/ui"
 )
 
 func AddSnippet(appConfig config.Application) *cobra.Command {
@@ -21,7 +23,6 @@ func AddSnippet(appConfig config.Application) *cobra.Command {
 		Short: "capture snippets from binaries",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-
 			candidates, err := internal.ListAllBinaries(appConfig)
 			if err != nil {
 				return fmt.Errorf("unable to list binaries: %w", err)
@@ -59,7 +60,7 @@ func AddSnippet(appConfig config.Application) *cobra.Command {
 
 	cmd.Flags().StringVar(&searchPattern, "search-for", "", "the pattern to search for in the binary (defaults to the version)")
 	cmd.Flags().IntVar(&length, "length", 100, "the length of the snippet to capture")
-	cmd.Flags().IntVar(&prefixLength, "prefix-length", 10, "number of bytes before the search hit to capture")
+	cmd.Flags().IntVar(&prefixLength, "prefix-length", 20, "number of bytes before the search hit to capture")
 
 	return cmd
 }

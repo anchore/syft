@@ -151,86 +151,47 @@ from-images:
     paths:
       - /usr/local/bin/node
 
-
-  # todo (from existing snippets)...
-
-#
-#  - name: openjdk
-#    version: 1.8.0
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - name: openjdk
-#    version: 11.0.17
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - name: oracle-java
-#    version: 19.0.1
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - name: oracle-java  #macos
-#    version: 19.0.1
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-
-  - version: 5.12.5
+  - name: java-jre-openjdk
+    version: 1.8.0_352-b08
     images:
-      - ref: perl:5.12.5@sha256:68169b63f0dc2fd481563ef02d4173979d981e43e5d36bb39af56a5959961c5e
+      # note: "openjdk" dockerhub repo is deprecated
+      - ref: amazoncorretto:8u352@sha256:392eb90b5f1455578f513e127c599aa4410af0c05b12b81dc7856ee316ecd5d9
         platform: linux/amd64
     paths:
-      - /usr/bin/perl
+      - /usr/lib/jvm/java-1.8.0-amazon-corretto/bin/java
 
-  - version: 5.20.0
+  - name: java-jre-openjdk
+    version: 11.0.17
     images:
-      - ref: perl:5.20.0@sha256:f1b8d36e0be0fd426c40e478fc84ea7603d712158001d72d1b3f929f4e1543f3
+      # note: "openjdk" dockerhub repo is deprecated
+      - ref: amazoncorretto:11.0.17@sha256:792e94e61407ef28d981a0b9a9aeb309690375a61a61f17808499ff16864d0a3
         platform: linux/amd64
     paths:
-      - /usr/bin/perl
+      - /usr/lib/jvm/java-11-amazon-corretto/bin/java
 
-  - version: 5.37.8
-    images:
-      - ref: perl:5.37.8@sha256:6a432250d7bf0b736c58772a6a50e2bf9d1485cd70ac3af10eff6cfccde3957b
-        platform: linux/amd64
-    paths:
-      - /usr/bin/perl
-
-#  - name: php-apache
-#    version: 8.2.1
+# TODO: this is not the original binary used in the test fixture
+#  - version: 5.12.5
 #    images:
-#      - ref:
+#      - ref: perl:5.12.5@sha256:68169b63f0dc2fd481563ef02d4173979d981e43e5d36bb39af56a5959961c5e
 #        platform: linux/amd64
 #    paths:
-#      -
+#      - /usr/bin/perl
 #
-#  - name: php-cli
-#    version: 8.2.1
+  # TODO: this is not the original binary used in the test fixture
+#  - version: 5.20.0
 #    images:
-#      - ref:
+#      - ref: perl:5.20.0@sha256:f1b8d36e0be0fd426c40e478fc84ea7603d712158001d72d1b3f929f4e1543f3
 #        platform: linux/amd64
 #    paths:
-#      -
+#      - /usr/bin/perl
 #
-#  - name: php-fpm
-#    version: 8.2.1
+  # TODO: this is not the original binary used in the test fixture
+#  - version: 5.37.8
 #    images:
-#      - ref:
+#      - ref: perl:5.37.8@sha256:6a432250d7bf0b736c58772a6a50e2bf9d1485cd70ac3af10eff6cfccde3957b
 #        platform: linux/amd64
 #    paths:
-#      -
+#      - /usr/bin/perl
 
   - version: 15.1
     images:
@@ -246,13 +207,6 @@ from-images:
     paths:
       - /usr/lib/postgresql/15/bin/postgres
 
-#  - version: 9.5alpha1   # postgresql
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-
   - version: 9.6.24
     images:
       - ref: postgres:9.6.24@sha256:15055f7b681334cbf0212b58e510148b1b23973639e3904260fb41fa0761a103
@@ -260,128 +214,110 @@ from-images:
     paths:
       - /usr/lib/postgresql/9.6/bin/postgres
 
-#  - name: python-with-incorrect-match
-#    version: 3.5
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-
-  - name: python
-    version: 3.6
+  - name: python-shared-lib
+    version: 3.7.4
     images:
-      - ref: python:3.6.3@sha256:cdef88d8625cf50ca705b7abfe99e8eb33b889652a9389b017eb46a6d2f1aaf3
+      - ref: python:3.7.4@sha256:5be0532f833568d838b7b2d8726b66d0b8abe26f50a15b566aea4611d5951eac
         platform: linux/amd64
     paths:
-      - /usr/local/bin/python3.6
+      - /usr/local/lib/libpython3.7m.so.1.0
 
-#  - name: python-lib
-#    version: 3.7
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: python-duplicates
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 2.8.23  # redis-server
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 4.0.11  # redis-server
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 5.0.0  # redis-server
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 6.0.16  # redis-server
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 7.0.0  # redis-server
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 7.0.14  # redis-server
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 7.2.3-amd64  # redis-server
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 7.2.3-arm64  # redis-server
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 1.9.3p551 # ruby
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 1.50.0 # ruby
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 1.67.1 # ruby
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 1.7.34  # traefik
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
-#
-#  - version: 2.9.6  # traefik
-#    images:
-#      - ref:
-#        platform: linux/amd64
-#    paths:
-#      -
+  - version: 2.8.23
+    images:
+      - ref: redis:2.8.23@sha256:e507029ca6a11b85f8628ff16d7ff73ae54582f16fd757e64431f5ca6d27a13c
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
 
+  - version: 4.0.11
+    images:
+      - ref: redis:4.0.11@sha256:ee891094f0bb1a76d11cdca6e33c4fdce5cba1f13234c5896d341f6d741034b1
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 5.0.0
+    images:
+      - ref: redis:5.0.0@sha256:481678b4b5ea1cb4e8d38ed6677b2da9b9e057cf7e1b6c988ba96651c6f6eff3
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 6.0.16
+    images:
+      - ref: redis:6.0.16@sha256:4a32539b1cc25f98d8667d9854840d7bdd27596268ca1ec1e10b5391534c004b
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 7.0.0
+    images:
+      - ref: redis:7.0.0@sha256:803ec2b3b74c0f95758bf680d7caa370fa8d3b6058b4d57d6485d06d8027a588
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 7.0.14
+    images:
+      - ref: redis:7.0.14@sha256:f5b0eadaa031b40ca70ab2c6517995da56f763c3929264d7f69b72a94a1b48c1
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 7.2.3
+    images:
+      - ref: redis:7.2.3@sha256:d4c84914b872521e215f77d8845914c2268a96b0e35bacd5691e1f5e1f88b500
+        platform: linux/amd64
+      - ref: redis:7.2.3@sha256:a0a0c38b31011b813cddf78d997f8ccba13019c27efd386984b0cfc1e4b618ff
+        platform: linux/arm64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 1.9.3p551
+    images:
+      - ref: ruby:1.9.3-p551@sha256:56b4a74e4fc2492b3b857bc94454dfa910f61e823a4bfab275d279bfa218eb05
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+
+  - name: rust-libstd
+    version: 1.50.0
+    images:
+      - ref: rust:1.50.0@sha256:a37b2a5ba365b9ad5a1b12ff924adb0c0cc27d994e076bbc488a91befb69bf0b
+        platform: linux/amd64
+    paths:
+      - /usr/local/rustup/toolchains/1.50.0-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-6f77337c1826707d.so
+
+  - name: rust-libstd
+    version: 1.67.1
+    images:
+      - ref: rust:1.67.1@sha256:80b9716cb59872769d49f5185a346e5f859081b02338e4aaaa04a8cc7fb884ae
+        platform: linux/amd64
+    paths:
+      - /usr/local/rustup/toolchains/1.67.1-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-c6192dd4c4d410ac.so
+
+  - name: rust-libstd-musl
+    version: 1.67.1
+    images:
+      - ref: rust:1.67.1-alpine@sha256:555332e59c7513233b0f9b52e4fad2924e36128edcb0f80aa97fb34efee3da0e
+        platform: linux/amd64
+    paths:
+      - /usr/local/rustup/toolchains/1.67.1-x86_64-unknown-linux-musl/lib/rustlib/x86_64-unknown-linux-musl/lib/libstd-86aefecbddda356d.so
+
+
+  - version: 1.7.34
+    images:
+      - ref: traefik:1.7.34@sha256:d7bacaf9ca8d59b0e7c304920629d98bb98a545127ca4b10e16c8b252b9351b9
+        platform: linux/amd64
+    paths:
+      - /traefik
+
+  - version: 2.9.6
+    images:
+      - ref: traefik:v2.9.6@sha256:9e76f2ec1bc470ae73a7306acce18e6ca1dbb582e7366b31cbf439f631cda12c
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/traefik
 
 
   # from the original dynamic fixtures...

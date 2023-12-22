@@ -57,7 +57,7 @@ jobs:
       - name: Restore binary cataloger test-fixture cache
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
         with:
-          path: syft/pkg/cataloger/binary/test-fixtures/classifiers/dynamic
+          path: syft/pkg/cataloger/binary/test-fixtures/classifiers/bin
           key: ${{ runner.os }}-unit-binary-cataloger-cache-${{ hashFiles( 'syft/pkg/cataloger/binary/test-fixtures/cache.fingerprint' ) }}
 
       - name: Restore Kernel test-fixture cache

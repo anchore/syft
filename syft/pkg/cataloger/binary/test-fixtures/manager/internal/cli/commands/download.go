@@ -2,9 +2,11 @@ package commands
 
 import (
 	"fmt"
+
+	"github.com/spf13/cobra"
+
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
-	"github.com/spf13/cobra"
 )
 
 func Download(appConfig config.Application) *cobra.Command {
@@ -16,7 +18,6 @@ func Download(appConfig config.Application) *cobra.Command {
 		Use:   "download",
 		Short: "download binaries [name@version ...]",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-
 			if len(args) > 0 {
 				for _, arg := range args {
 					binaryFromImageCfg := appConfig.GetBinaryFromImage(arg, "")

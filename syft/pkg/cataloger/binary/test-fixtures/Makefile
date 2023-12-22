@@ -1,4 +1,4 @@
-.PHONY: default list download download-all fingerprint
+.PHONY: default list download download-all cache.fingerprint
 
 .DEFAULT_GOAL := default
 
@@ -13,9 +13,11 @@ download: ## download only binaries that are not covered by a snippet
 download-all: ## download all managed binaries
 	go run ./manager download
 
-fingerprint: ## prints the sha256sum of the any input to the download command (to determine if there is a cache miss)
-	@cat ./config.yaml | sha256sum | awk '{print $$1}'
+cache.fingerprint: ## prints the sha256sum of the any input to the download command (to determine if there is a cache miss)
+	@cat ./config.yaml | sha256sum | awk '{print $$1}' | tee cache.fingerprint
 
+clean: ## clean up all downloaded binaries
+	rm -rf ./classifiers/bin
 
 ## Halp! #################################
 

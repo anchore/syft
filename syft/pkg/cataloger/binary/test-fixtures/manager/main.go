@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/cli"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/ui"
-	"os"
 )
 
 func main() {

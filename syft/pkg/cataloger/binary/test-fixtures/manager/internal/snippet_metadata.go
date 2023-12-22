@@ -2,9 +2,10 @@ package internal
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"os"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type SnippetMetadata struct {

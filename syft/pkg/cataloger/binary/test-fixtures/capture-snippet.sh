@@ -2,7 +2,7 @@
 
 # Default values for length and prefix length
 LENGTH=100
-PREFIX_LENGTH=10
+PREFIX_LENGTH=20
 SEARCH_FOR=''
 GROUP_NAME=''
 

@@ -2,12 +2,13 @@ package config
 
 import (
 	"fmt"
-	"github.com/hashicorp/go-multierror"
-	"github.com/scylladb/go-set/strset"
-	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/hashicorp/go-multierror"
+	"github.com/scylladb/go-set/strset"
+	"gopkg.in/yaml.v3"
 )
 
 const Path = "config.yaml"
@@ -96,7 +97,6 @@ func (c Application) Validate() error {
 		if len(entry.PathsInImage) == 0 {
 			err = multierror.Append(err, fmt.Errorf("missing paths for entry %d (%s)", i+1, key))
 		}
-
 	}
 	return err
 }

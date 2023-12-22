@@ -2,15 +2,16 @@ package commands
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
+	"strings"
+
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
-	"strings"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
 )
 
 func List(appConfig config.Application) *cobra.Command {
-
 	var showPaths bool
 
 	cmd := &cobra.Command{
@@ -18,7 +19,6 @@ func List(appConfig config.Application) *cobra.Command {
 		Short: "list managed binaries and managed/unmanaged snippets",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			return runList(appConfig, showPaths)
 		},
 	}
@@ -29,7 +29,6 @@ func List(appConfig config.Application) *cobra.Command {
 }
 
 func runList(appConfig config.Application, showPaths bool) error {
-
 	material, err := internal.ListAllEntries(appConfig)
 	if err != nil {
 		return err
@@ -41,6 +40,8 @@ func runList(appConfig config.Application, showPaths bool) error {
 
 	return nil
 }
+
+const yes = "yes"
 
 func renderCatalogerListTable(material map[internal.LogicalEntryKey]internal.EntryInfo, showPaths bool) string {
 	t := table.NewWriter()
@@ -54,7 +55,7 @@ func renderCatalogerListTable(material map[internal.LogicalEntryKey]internal.Ent
 
 		isConfigured := ""
 		if info.IsConfigured {
-			isConfigured = "yes"
+			isConfigured = yes
 		}
 
 		bin := ""
@@ -64,11 +65,11 @@ func renderCatalogerListTable(material map[internal.LogicalEntryKey]internal.Ent
 			snippet = info.SnippetPath
 		} else {
 			if info.BinaryPath != "" {
-				bin = "yes"
+				bin = yes
 			}
 
 			if info.SnippetPath != "" {
-				snippet = "yes"
+				snippet = yes
 			}
 		}
 

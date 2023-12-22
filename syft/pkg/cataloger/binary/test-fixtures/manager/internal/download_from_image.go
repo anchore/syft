@@ -1,13 +1,16 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/ui"
-	"github.com/google/uuid"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/google/uuid"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/ui"
 )
 
 func DownloadFromImage(dest string, config config.BinaryFromImage) error {
@@ -19,9 +22,8 @@ func DownloadFromImage(dest string, config config.BinaryFromImage) error {
 		if !isDownloadStale(config, hostPaths) {
 			t.Skip("already exists")
 			return nil
-		} else {
-			t.Update("stale, updating...")
 		}
+		t.Update("stale, updating...")
 	}
 
 	if err := pullDockerImages(config.Images); err != nil {
@@ -78,22 +80,60 @@ func pullDockerImages(images []config.Image) error {
 	return nil
 }
 
+type imageInspect struct {
+	OS           string `json:"Os"`
+	Architecture string `json:"Architecture"`
+}
+
+func (i imageInspect) Platform() string {
+	return fmt.Sprintf("%s/%s", i.OS, i.Architecture)
+}
+
 func pullDockerImage(imageReference, platform string) error {
 	a := ui.Action{Msg: fmt.Sprintf("pull image %s (%s)", imageReference, platform)}
 	a.Start()
-	cmd := exec.Command("docker", "image", "inspect", imageReference)
-	if err := cmd.Run(); err == nil {
-		a.Skip(fmt.Sprintf("docker image already exists %q", imageReference))
 
+	matches, _, _ := checkArchitecturesMatch(imageReference, platform)
+	if matches {
+		a.Skip(fmt.Sprintf("docker image already exists %q", imageReference))
 		return nil
 	}
 
-	cmd = exec.Command("docker", "pull", "--platform", platform, imageReference)
+	cmd := exec.Command("docker", "pull", "--platform", platform, imageReference)
 	err := cmd.Run()
+	if err != nil {
+		a.Done(err)
+		return err
+	}
+
+	matches, gotPlatform, err := checkArchitecturesMatch(imageReference, platform)
+	if !matches && err == nil {
+		err = fmt.Errorf("image %q pulled but does not match expected platform %q != %q", imageReference, platform, gotPlatform)
+	}
 
 	a.Done(err)
 
 	return err
+}
+
+func checkArchitecturesMatch(imageReference, platform string) (bool, string, error) {
+	cmd := exec.Command("docker", "image", "inspect", imageReference)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, "", err
+	}
+
+	var inspect []imageInspect
+	if err := json.Unmarshal(out, &inspect); err != nil {
+		return false, "", fmt.Errorf("unable to unmarshal image inspect: %w", err)
+	}
+
+	if len(inspect) != 1 {
+		return false, "", fmt.Errorf("expected 1 image inspect, got %d", len(inspect))
+	}
+	gotPlatform := inspect[0].Platform()
+
+	return gotPlatform == platform, gotPlatform, nil
 }
 
 func copyBinariesFromDockerImages(config config.BinaryFromImage, destination string) (err error) {
@@ -116,7 +156,7 @@ func copyBinariesFromDockerImage(config config.BinaryFromImage, destination stri
 
 	defer func() {
 		cmd := exec.Command("docker", "rm", containerName)
-		cmd.Run()
+		cmd.Run() // nolint:errcheck
 	}()
 
 	for i, destinationPath := range config.AllStorePathsForImage(image, destination) {
@@ -130,7 +170,6 @@ func copyBinariesFromDockerImage(config config.BinaryFromImage, destination stri
 }
 
 func copyBinaryFromContainer(containerName, containerPath, destinationPath, fingerprint string) (err error) {
-
 	a := ui.Action{Msg: fmt.Sprintf("extract %s", containerPath)}
 	a.Start()
 
@@ -142,14 +181,15 @@ func copyBinaryFromContainer(containerName, containerPath, destinationPath, fing
 		return err
 	}
 
-	cmd := exec.Command("docker", "cp", fmt.Sprintf("%s:%s", containerName, containerPath), destinationPath)
+	cmd := exec.Command("docker", "cp", fmt.Sprintf("%s:%s", containerName, containerPath), destinationPath) // nolint:gosec
+	// reason for gosec exception: this is for processing test fixtures only, not used in production
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
 	// capture fingerprint file
 	fingerprintPath := destinationPath + ".fingerprint"
-	if err := os.WriteFile(fingerprintPath, []byte(fingerprint), 0644); err != nil {
+	if err := os.WriteFile(fingerprintPath, []byte(fingerprint), 0600); err != nil {
 		return fmt.Errorf("unable to write fingerprint file: %w", err)
 	}
 

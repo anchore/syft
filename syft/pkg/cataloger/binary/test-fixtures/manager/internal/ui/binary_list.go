@@ -2,10 +2,11 @@ package ui
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"os"
 )
 
 var quitTextStyle = lipgloss.NewStyle().Margin(1, 0, 2, 4)

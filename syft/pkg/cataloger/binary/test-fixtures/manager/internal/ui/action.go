@@ -30,7 +30,6 @@ func (a Action) Skip(newMsg ...string) {
 func (a Action) Done(err error) {
 	goToPreviousLineStart()
 	if err != nil {
-
 		fmt.Printf("  %s✗%s  %s%s%s\n", red+bold, reset, red, a.Msg, reset)
 
 		var exitError *exec.ExitError

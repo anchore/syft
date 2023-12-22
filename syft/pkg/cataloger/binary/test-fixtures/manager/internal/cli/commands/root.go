@@ -1,8 +1,9 @@
 package commands
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
 	"github.com/spf13/cobra"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
 )
 
 func Root(_ config.Application) *cobra.Command {

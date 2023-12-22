@@ -5,14 +5,16 @@ import (
 	"debug/macho"
 	"debug/pe"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
 )
 
 func WriteSnippet(appConfig config.Application) *cobra.Command {
@@ -102,7 +104,7 @@ func runWriteSnippet(binaryPath string, offset, length int, snippetPath string) 
 		return fmt.Errorf("unable to marshal metadata: %w", err)
 	}
 
-	splitter := []byte(fmt.Sprintf("\n### byte snippet to follow ###\n"))
+	splitter := []byte("\n### byte snippet to follow ###\n")
 
 	var finalBuf []byte
 	finalBuf = append(finalBuf, metadataBytes...)
@@ -113,7 +115,7 @@ func runWriteSnippet(binaryPath string, offset, length int, snippetPath string) 
 		return fmt.Errorf("unable to create destination directory: %w", err)
 	}
 
-	if err := os.WriteFile(snippetPath, finalBuf, 0644); err != nil {
+	if err := os.WriteFile(snippetPath, finalBuf, 0600); err != nil {
 		return fmt.Errorf("unable to write snippet: %w", err)
 	}
 
@@ -195,6 +197,11 @@ func getPlatform(binaryPath string) (string, error) {
 	return "", fmt.Errorf("unable to determine platform for %q", binaryPath)
 }
 
+const (
+	amd64 = "amd64"
+	arm64 = "arm64"
+)
+
 func getPlatformElf(f *os.File) string {
 	elfFile, err := elf.NewFile(f)
 	if err != nil {
@@ -204,9 +211,9 @@ func getPlatformElf(f *os.File) string {
 	var arch string
 	switch elfFile.Machine {
 	case elf.EM_X86_64:
-		arch = "amd64"
+		arch = amd64
 	case elf.EM_AARCH64:
-		arch = "arm64"
+		arch = arm64
 	// TODO...
 	default:
 		arch = fmt.Sprintf("unknown-%x", elfFile.Machine)
@@ -224,9 +231,9 @@ func getPlatformMac(f *os.File) string {
 	var arch string
 	switch machoFile.Cpu {
 	case macho.CpuAmd64:
-		arch = "amd64"
+		arch = amd64
 	case macho.CpuArm64:
-		arch = "arm64"
+		arch = arm64
 	// TODO...
 	default:
 		arch = fmt.Sprintf("unknown-%x", machoFile.Cpu)
@@ -244,9 +251,9 @@ func getPlatformWindows(f *os.File) string {
 	var arch string
 	switch peFile.Machine {
 	case pe.IMAGE_FILE_MACHINE_AMD64:
-		arch = "amd64"
+		arch = amd64
 	case pe.IMAGE_FILE_MACHINE_ARM64:
-		arch = "arm64"
+		arch = arm64
 	// TODO...
 	default:
 		arch = fmt.Sprintf("unknown-%x", peFile.Machine)

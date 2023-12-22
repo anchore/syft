@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/testutil"
 	"io"
 	"strings"
 	"testing"
@@ -17,12 +16,13 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/testutil"
 	"github.com/anchore/syft/syft/source"
 )
 
 var mustUseOriginalBinaries = flag.Bool("must-use-original-binaries", false, "force the use of binaries for testing (instead of snippets)")
 
-func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
+func Test_Cataloger_PositiveCases(t *testing.T) {
 	tests := []struct {
 		name           string
 		logicalFixture string
@@ -61,18 +61,19 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("postgresql-binary"),
 			},
 		},
-		// TODO: missing original binary
-		//{
-		//	logicalFixture: "postgres/9.5alpha1/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "postgresql",
-		//		Version:   "9.5alpha1",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/postgresql@9.5alpha1",
-		//		Locations: locations("postgres"),
-		//		Metadata:  metadata("postgresql-binary"),
-		//	},
-		//},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "postgres/9.5alpha1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "postgresql",
+				Version:   "9.5alpha1",
+				Type:      "binary",
+				PURL:      "pkg:generic/postgresql@9.5alpha1",
+				Locations: locations("postgres"),
+				Metadata:  metadata("postgresql-binary"),
+			},
+		},
 		{
 			logicalFixture: "mysql/8.0.34/linux-amd64",
 			expected: pkg.Package{
@@ -106,29 +107,28 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("mariadb-binary"),
 			},
 		},
-		// TODO: need to add original binary
-		//{
-		//	logicalFixture: "traefik/2.9.6/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "traefik",
-		//		Version:   "2.9.6",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/traefik@2.9.6",
-		//		Locations: locations("traefik"),
-		//		Metadata:  metadata("traefik-binary"),
-		//	},
-		//},
-		//{
-		//	logicalFixture: "test-fixtures/classifiers/positive/traefik-1.7.34/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "traefik",
-		//		Version:   "1.7.34",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/traefik@1.7.34",
-		//		Locations: locations("traefik"),
-		//		Metadata:  metadata("traefik-binary"),
-		//	},
-		//},
+		{
+			logicalFixture: "traefik/1.7.34/linux-amd64",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "1.7.34",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@1.7.34",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			logicalFixture: "traefik/2.9.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.9.6",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
 		{
 			logicalFixture: "memcached/1.6.18/linux-amd64",
 			expected: pkg.Package{
@@ -151,78 +151,84 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("httpd-binary"),
 			},
 		},
-
-		// TODO: missing original binaries
-		//{
-		//	logicalFixture: "test-fixtures/classifiers/positive/php-cli-8.2.1/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "php-cli",
-		//		Version:   "8.2.1",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/php-cli@8.2.1",
-		//		Locations: locations("php"),
-		//		Metadata:  metadata("php-cli-binary"),
-		//	},
-		//},
-		//{
-		//	logicalFixture: "test-fixtures/classifiers/positive/php-fpm-8.2.1/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "php-fpm",
-		//		Version:   "8.2.1",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/php-fpm@8.2.1",
-		//		Locations: locations("php-fpm"),
-		//		Metadata:  metadata("php-fpm-binary"),
-		//	},
-		//},
-		//{
-		//	logicalFixture: "test-fixtures/classifiers/positive/php-apache-8.2.1/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "libphp",
-		//		Version:   "8.2.1",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/php@8.2.1",
-		//		Locations: locations("libphp.so"),
-		//		Metadata:  metadata("php-apache-binary"),
-		//	},
-		//},
-
-		// TODO: original binary is different than test fixture
-		//{
-		//	logicalFixture: "perl/5.12.5/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "perl",
-		//		Version:   "5.12.5",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/perl@5.12.5",
-		//		Locations: locations("perl"),
-		//		Metadata:  metadata("perl-binary"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-perl-5.20.0",
-		//	logicalFixture: "test-fixtures/classifiers/positive/perl-5.20.0/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "perl",
-		//		Version:   "5.20.0",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/perl@5.20.0",
-		//		Locations: locations("perl"),
-		//		Metadata:  metadata("perl-binary"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-perl-5.37.8",
-		//	logicalFixture: "test-fixtures/classifiers/positive/perl-5.37.8/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "perl",
-		//		Version:   "5.37.8",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/perl@5.37.8",
-		//		Locations: locations("perl"),
-		//		Metadata:  metadata("perl-binary"),
-		//	},
-		//},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "php-cli/8.2.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "php-cli",
+				Version:   "8.2.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/php-cli@8.2.1",
+				Locations: locations("php"),
+				Metadata:  metadata("php-cli-binary"),
+			},
+		},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "php-fpm/8.2.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "php-fpm",
+				Version:   "8.2.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/php-fpm@8.2.1",
+				Locations: locations("php-fpm"),
+				Metadata:  metadata("php-fpm-binary"),
+			},
+		},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "php-apache/8.2.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "libphp",
+				Version:   "8.2.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/php@8.2.1",
+				Locations: locations("libphp.so"),
+				Metadata:  metadata("php-apache-binary"),
+			},
+		},
+		{
+			// TODO: original binary is different than whats in config.yaml
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "perl/5.12.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "perl",
+				Version:   "5.12.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/perl@5.12.5",
+				Locations: locations("perl"),
+				Metadata:  metadata("perl-binary"),
+			},
+		},
+		{
+			// TODO: original binary is different than whats in config.yaml
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "perl/5.20.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "perl",
+				Version:   "5.20.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/perl@5.20.0",
+				Locations: locations("perl"),
+				Metadata:  metadata("perl-binary"),
+			},
+		},
+		{
+			// TODO: original binary is different than whats in config.yaml
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "perl/5.37.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "perl",
+				Version:   "5.37.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/perl@5.37.8",
+				Locations: locations("perl"),
+				Metadata:  metadata("perl-binary"),
+			},
+		},
 		{
 			logicalFixture: "haproxy/1.5.14/linux-amd64",
 			expected: pkg.Package{
@@ -280,116 +286,112 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 
-		// TODO: missing original binaries
-		//{
-		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-2.8.23/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "redis",
-		//		Version:   "2.8.23",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/redis@2.8.23",
-		//		Locations: locations("redis-server"),
-		//		Metadata:  metadata("redis-binary"),
-		//	},
-		//},
-
-		//{
-		//	name:           "positive-redis-4.0.11",
-		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-4.0.11/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "redis",
-		//		Version:   "4.0.11",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/redis@4.0.11",
-		//		Locations: locations("redis-server"),
-		//		Metadata:  metadata("redis-binary"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-redis-5.0.0",
-		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-5.0.0/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "redis",
-		//		Version:   "5.0.0",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/redis@5.0.0",
-		//		Locations: locations("redis-server"),
-		//		Metadata:  metadata("redis-binary"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-redis-6.0.16",
-		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-6.0.16",
-		//	expected: pkg.Package{
-		//		Name:      "redis",
-		//		Version:   "6.0.16",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/redis@6.0.16",
-		//		Locations: locations("redis-server"),
-		//		Metadata:  metadata("redis-binary"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-redis-7.0.0",
-		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-7.0.0",
-		//	expected: pkg.Package{
-		//		Name:      "redis",
-		//		Version:   "7.0.0",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/redis@7.0.0",
-		//		Locations: locations("redis-server"),
-		//		Metadata:  metadata("redis-binary"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-redis-7.0.14",
-		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-7.0.14",
-		//	expected: pkg.Package{
-		//		Name:      "redis",
-		//		Version:   "7.0.14",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/redis@7.0.14",
-		//		Locations: locations("redis-server"),
-		//		Metadata:  metadata("redis-binary"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-redis-7.2.3-amd64",
-		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-7.2.3-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "redis",
-		//		Version:   "7.2.3",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/redis@7.2.3",
-		//		Locations: locations("redis-server"),
-		//		Metadata:  metadata("redis-binary"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-redis-7.2.3-arm64",
-		//	logicalFixture: "test-fixtures/classifiers/positive/redis-server-7.2.3-arm64",
-		//	expected: pkg.Package{
-		//		Name:      "redis",
-		//		Version:   "7.2.3",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/redis@7.2.3",
-		//		Locations: locations("redis-server"),
-		//		Metadata:  metadata("redis-binary"),
-		//	},
-		//},
-
-		// TODO: missing original binaries
-		//{
-		//	name:           "positive-libpython3.7.so",
-		//	logicalFixture: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
-		//	expected: pkg.Package{
-		//		Name:      "python",
-		//		Version:   "3.7.4",
-		//		PURL:      "pkg:generic/python@3.7.4",
-		//		Locations: locations("libpython3.7.so"),
-		//		Metadata:  metadata("python-binary-lib"),
-		//	},
-		//},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/2.8.23/linux-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "2.8.23",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@2.8.23",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/4.0.11/linux-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "4.0.11",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@4.0.11",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/5.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "5.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@5.0.0",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/6.0.16/linux-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "6.0.16",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@6.0.16",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/7.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.0.0",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/7.0.14/linux-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.0.14",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.0.14",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/7.2.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.2.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.2.3",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/7.2.3/linux-arm64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.2.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.2.3",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			logicalFixture: "python-shared-lib/3.7.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.7.4",
+				PURL:      "pkg:generic/python@3.7.4",
+				Locations: locations("libpython3.7m.so.1.0"),
+				Metadata:  metadata("python-binary-lib"),
+			},
+		},
 
 		{
 			// note: dynamic (non-snippet) test case
@@ -457,51 +459,49 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				},
 			},
 		},
-		// TODO: missing original binary
-		//{
-		//	name:           "positive-python-3.5-with-incorrect-match",
-		//	logicalFixture: "test-fixtures/classifiers/positive/python-3.5-with-incorrect-match",
-		//	expected: pkg.Package{
-		//		Name:      "python",
-		//		Version:   "3.5.3",
-		//		PURL:      "pkg:generic/python@3.5.3",
-		//		Locations: locations("python3.5"),
-		//		Metadata:  metadata("python-binary"),
-		//	},
-		//},
-
-		// TODO: can't seem to get this lined up with the new binary pulled down... the original snippet also has content I can't account for
-		//{
-		//	logicalFixture: "python/3.6/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "python",
-		//		Version:   "3.6.3",
-		//		PURL:      "pkg:generic/python@3.6.3",
-		//		Locations: locations("python3.6"),
-		//		Metadata:  metadata("python-binary"),
-		//	},
-		//},
-
-		// TODO: missing original binary
-		//{
-		//	name:           "positive-python-duplicates",
-		//	logicalFixture: "test-fixtures/classifiers/positive/python-duplicates",
-		//	expected: pkg.Package{
-		//		Name:      "python",
-		//		Version:   "3.8.16",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/python@3.8.16",
-		//		Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
-		//		Metadata: pkg.BinarySignature{
-		//			Matches: []pkg.ClassifierMatch{
-		//				match("python-binary", "dir/python3.8"),
-		//				match("python-binary", "python3.8"),
-		//				match("python-binary-lib", "libpython3.8.so"),
-		//			},
-		//		},
-		//	},
-		//},
-
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "python-with-incorrect-match/3.5.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.5.3",
+				PURL:      "pkg:generic/python@3.5.3",
+				Locations: locations("python3.5"),
+				Metadata:  metadata("python-binary"),
+			},
+		},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "python/3.6.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.6.3",
+				PURL:      "pkg:generic/python@3.6.3",
+				Locations: locations("python3.6"),
+				Metadata:  metadata("python-binary"),
+			},
+		},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "python-duplicates/3.8.16/linux-amd64",
+			expected: pkg.Package{
+				Name:      "python",
+				Version:   "3.8.16",
+				Type:      "binary",
+				PURL:      "pkg:generic/python@3.8.16",
+				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("python-binary", "dir/python3.8"),
+						match("python-binary", "python3.8"),
+						match("python-binary-lib", "libpython3.8.so"),
+					},
+				},
+			},
+		},
 		{
 			logicalFixture: "go/1.21.3/linux-amd64",
 			expected: pkg.Package{
@@ -522,18 +522,18 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("nodejs-binary"),
 			},
 		},
-		// TODO: captured outside of the original binary
-		//{
-		//	name:           "positive-go-hint",
-		//	logicalFixture: "test-fixtures/classifiers/positive/go-hint-1.15",
-		//	expected: pkg.Package{
-		//		Name:      "go",
-		//		Version:   "1.15",
-		//		PURL:      "pkg:generic/go@1.15",
-		//		Locations: locations("VERSION"),
-		//		Metadata:  metadata("go-binary-hint"),
-		//	},
-		//},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "go-version-hint/1.15/any",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.15",
+				PURL:      "pkg:generic/go@1.15",
+				Locations: locations("VERSION"),
+				Metadata:  metadata("go-binary-hint"),
+			},
+		},
 		{
 			// note: this is testing BUSYBOX which is typically through a link to "[" (in this case a symlink but in
 			// practice this is often a hard link).
@@ -545,56 +545,55 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("busybox-binary", "[", "busybox"),
 			},
 		},
-		// TODO: need to get the original binaries
-		//{
-		//	logicalFixture: "openjdk/1.8.0",
-		//	expected: pkg.Package{
-		//		Name:      "java",
-		//		Version:   "1.8.0_352-b08",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/java@1.8.0_352-b08",
-		//		Locations: locations("java"),
-		//		Metadata:  metadata("java-binary-openjdk", "java"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-java-openjdk-lts",
-		//	logicalFixture: "test-fixtures/classifiers/positive/openjdk-lts-11.0.17",
-		//	expected: pkg.Package{
-		//		Name:      "java",
-		//		Version:   "11.0.17+8-LTS",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/java@11.0.17+8-LTS",
-		//		Locations: locations("java"),
-		//		Metadata:  metadata("java-binary-openjdk", "java"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-java-oracle",
-		//	logicalFixture: "test-fixtures/classifiers/positive/oracle-java-19.0.1",
-		//	expected: pkg.Package{
-		//		Name:      "java",
-		//		Version:   "19.0.1+10-21",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/java@19.0.1+10-21",
-		//		Locations: locations("java"),
-		//		Metadata:  metadata("java-binary-oracle", "java"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-java-oracle-macos",
-		//	logicalFixture: "test-fixtures/classifiers/positive/oracle-macos-java-19.0.1",
-		//	expected: pkg.Package{
-		//		Name:      "java",
-		//		Version:   "19.0.1+10-21",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/java@19.0.1+10-21",
-		//		Locations: locations("java"),
-		//		Metadata:  metadata("java-binary-oracle", "java"),
-		//	},
-		//},
 		{
-			name:           "positive-java-ibm",
+			logicalFixture: "java-jre-openjdk/1.8.0_352-b08/linux-amd64",
+			expected: pkg.Package{
+				Name:      "java",
+				Version:   "1.8.0_352-b08",
+				Type:      "binary",
+				PURL:      "pkg:generic/java@1.8.0_352-b08",
+				Locations: locations("java"),
+				Metadata:  metadata("java-binary-openjdk", "java"),
+			},
+		},
+		{
+			logicalFixture: "java-jre-openjdk/11.0.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "java",
+				Version:   "11.0.17+8-LTS",
+				Type:      "binary",
+				PURL:      "pkg:generic/java@11.0.17+8-LTS",
+				Locations: locations("java"),
+				Metadata:  metadata("java-binary-openjdk", "java"),
+			},
+		},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "java-jre-oracle/19.0.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "java",
+				Version:   "19.0.1+10-21",
+				Type:      "binary",
+				PURL:      "pkg:generic/java@19.0.1+10-21",
+				Locations: locations("java"),
+				Metadata:  metadata("java-binary-oracle", "java"),
+			},
+		},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "java-jre-oracle/19.0.1/darwin",
+			expected: pkg.Package{
+				Name:      "java",
+				Version:   "19.0.1+10-21",
+				Type:      "binary",
+				PURL:      "pkg:generic/java@19.0.1+10-21",
+				Locations: locations("java"),
+				Metadata:  metadata("java-binary-oracle", "java"),
+			},
+		},
+		{
 			logicalFixture: "java-jre-ibm/1.8.0_391/linux-amd64",
 			expected: pkg.Package{
 				Name:      "java",
@@ -605,43 +604,65 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("java-binary-ibm", "java"),
 			},
 		},
-		// TODO: need to get the original binaries
-		//{
-		//	name:           "positive-rust-1.50.0-macos",
-		//	logicalFixture: "test-fixtures/classifiers/positive/rust-1.50.0",
-		//	expected: pkg.Package{
-		//		Name:      "rust",
-		//		Version:   "1.50.0",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/rust@1.50.0",
-		//		Locations: locations("lib/rustlib/aarch64-apple-darwin/lib/libstd-f6f9eec1635e636a.dylib"),
-		//		Metadata:  metadata("rust-standard-library-macos"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-rust-1.67.1-macos",
-		//	logicalFixture: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-aarch64-apple-darwin",
-		//	expected: pkg.Package{
-		//		Name:      "rust",
-		//		Version:   "1.67.1",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/rust@1.67.1",
-		//		Locations: locations("lib/libstd-16f2b65e77054c42.dylib"),
-		//		Metadata:  metadata("rust-standard-library-macos"),
-		//	},
-		//},
-		//{
-		//	name:           "positive-rust-1.67.1-linux",
-		//	logicalFixture: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-x86_64-unknown-linux-musl",
-		//	expected: pkg.Package{
-		//		Name:      "rust",
-		//		Version:   "1.67.1",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/rust@1.67.1",
-		//		Locations: locations("lib/libstd-86aefecbddda356d.so"),
-		//		Metadata:  metadata("rust-standard-library-linux"),
-		//	},
-		//},
+		{
+			logicalFixture: "rust-libstd/1.50.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.50.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.50.0",
+				Locations: locations("libstd-6f77337c1826707d.so"),
+				Metadata:  metadata("rust-standard-library-linux"),
+			},
+		},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "rust-libstd/1.50.0/darwin",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.50.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.50.0",
+				Locations: locations("libstd-f6f9eec1635e636a.dylib"),
+				Metadata:  metadata("rust-standard-library-macos"),
+			},
+		},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "rust-libstd/1.67.1/darwin",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.67.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.67.1",
+				Locations: locations("libstd-16f2b65e77054c42.dylib"),
+				Metadata:  metadata("rust-standard-library-macos"),
+			},
+		},
+		{
+			logicalFixture: "rust-libstd-musl/1.67.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.67.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.67.1",
+				Locations: locations("libstd-86aefecbddda356d.so"),
+				Metadata:  metadata("rust-standard-library-linux"),
+			},
+		},
+		{
+			logicalFixture: "rust-libstd/1.67.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.67.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.67.1",
+				Locations: locations("libstd-c6192dd4c4d410ac.so"),
+				Metadata:  metadata("rust-standard-library-linux"),
+			},
+		},
 		{
 			// note: dynamic (non-snippet) test case
 
@@ -695,18 +716,17 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				},
 			},
 		},
-		//{
-		//	name:           "positive-ruby-1.9.3p551",
-		//	logicalFixture: "test-fixtures/classifiers/positive/ruby-1.9.3p551/linux-amd64",
-		//	expected: pkg.Package{
-		//		Name:      "ruby",
-		//		Version:   "1.9.3p551",
-		//		Type:      "binary",
-		//		PURL:      "pkg:generic/ruby@1.9.3p551",
-		//		Locations: locations("ruby"),
-		//		Metadata:  metadata("ruby-binary"),
-		//	},
-		//},
+		{
+			logicalFixture: "ruby/1.9.3p551/linux-amd64",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "1.9.3p551",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@1.9.3p551",
+				Locations: locations("ruby"),
+				Metadata:  metadata("ruby-binary"),
+			},
+		},
 		{
 			logicalFixture: "consul/1.15.2/linux-amd64",
 			expected: pkg.Package{

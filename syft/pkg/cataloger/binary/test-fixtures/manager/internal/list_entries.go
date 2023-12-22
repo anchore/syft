@@ -2,11 +2,12 @@ package internal
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
 )
 
 type Entries map[LogicalEntryKey]EntryInfo
@@ -89,7 +90,6 @@ func ListAllBinaries(appConfig config.Application) (Entries, error) {
 }
 
 func ListAllEntries(appConfig config.Application) (Entries, error) {
-
 	snippets, err := allFilePaths(appConfig.SnippetPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to list snippets: %w", err)
@@ -155,7 +155,7 @@ func getLogicalKey(managedBinaryPath string) (*LogicalEntryKey, error) {
 	// infer the logical key from the path alone: name/version/platform/filename
 
 	items := SplitFilepath(managedBinaryPath)
-	if len(items) != 4 {
+	if len(items) < 4 {
 		return nil, fmt.Errorf("invalid managed binary path: %q", managedBinaryPath)
 	}
 
@@ -163,7 +163,7 @@ func getLogicalKey(managedBinaryPath string) (*LogicalEntryKey, error) {
 		OrgName:  items[0],
 		Version:  items[1],
 		Platform: items[2],
-		Filename: items[3],
+		Filename: filepath.Join(items[3:]...),
 	}, nil
 }
 
