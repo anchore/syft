@@ -173,7 +173,7 @@ tasks:
   check-binary-fixture-size:
     desc: Ensure that the binary test fixtures are not too large
     cmds:
-      - .github/scripts/check_binary_fixture_size.sh syft/pkg/cataloger/binary/test-fixtures/classifiers/positive
+      - .github/scripts/check_binary_fixture_size.sh syft/pkg/cataloger/binary/test-fixtures/classifiers/snippets
 
 
   ## Testing tasks #################################
