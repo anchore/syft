@@ -63,6 +63,10 @@ func SnippetOrBinary(t *testing.T, path string, requireBinary bool) string {
 				break
 			}
 
+			if v.SnippetPath != "" && !v.IsConfigured {
+				t.Skip("no binary found, but is covered by a snippet. Please add this case to the 'binary/test-fixtures/config.yaml' and recreate the snippet")
+			}
+
 			t.Fatalf("no binary found for %q", path)
 		}
 	}
