@@ -793,6 +793,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("bash-binary"),
 			},
 		},
+		{
+			logicalFixture: "openssl/3.1.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "openssl",
+				Version:   "3.1.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/openssl@3.1.4",
+				Locations: locations("openssl"),
+				Metadata:  metadata("openssl-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {

@@ -40,6 +40,21 @@ func Test_parseErlang(t *testing.T) {
 ].`,
 		},
 		{
+			name: "empty list",
+			content: `
+{test, [
+ {with_space, [ ]},
+ {without_space, []}
+]}`,
+		},
+		{
+			name: "valid strings",
+			content: `
+{strings, [
+ "foo", 'bar'
+]}`,
+		},
+		{
 			name:    "invalid string content",
 			wantErr: require.Error,
 			content: `
@@ -48,11 +63,38 @@ func Test_parseErlang(t *testing.T) {
 ].`,
 		},
 		{
+			name:    "string mismach",
+			wantErr: require.Error,
+			content: `
+{bad_string, [
+ 'foo"
+ ]}`,
+		},
+		{
 			name:    "invalid content",
 			wantErr: require.Error,
 			content: `
 {"1.2.0"}.
 ].`,
+		},
+		{
+			name: "valid comments",
+			content: `
+{ comments, [
+	{ foo, bar },
+	%% this is a comment
+	% this is also a comment
+	{ hello, 'bar' }, %%inline comment
+	{ baz }
+]}`,
+		},
+		{
+			name: "starts with a comments",
+			content: `
+%% starts with comment
+{ comments, [
+	{ foo, bar }
+]}`,
 		},
 	}
 

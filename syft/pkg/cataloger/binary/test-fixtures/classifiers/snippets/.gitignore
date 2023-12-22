@@ -1,5 +1,0 @@
-# allow for lb patterns (rust, pytho, php and more)
-!lib*.so
-
-# allow for go-hint file
-!VERSION*
