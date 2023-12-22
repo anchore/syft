@@ -763,6 +763,18 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("bash-binary"),
 			},
 		},
+		{
+			name:       "positive-openssl-3.1.4",
+			fixtureDir: "test-fixtures/classifiers/positive/openssl-3.1.4",
+			expected: pkg.Package{
+				Name:      "openssl",
+				Version:   "3.1.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/openssl@3.1.4",
+				Locations: locations("openssl"),
+				Metadata:  metadata("openssl-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {

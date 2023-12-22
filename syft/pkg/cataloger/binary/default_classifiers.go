@@ -334,6 +334,17 @@ var defaultClassifiers = []classifier{
 		PURL:    mustPURL("pkg:generic/bash@version"),
 		CPEs:    singleCPE("cpe:2.3:a:gnu:bash:*:*:*:*:*:*:*:*"),
 	},
+	{
+		Class:    "openssl-binary",
+		FileGlob: "**/openssl",
+		EvidenceMatcher: fileContentsVersionMatcher(
+			// [NUL]OpenSSL 3.1.4'
+			`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
+		),
+		Package: "openssl",
+		PURL:    mustPURL("pkg:generic/openssl@version"),
+		CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*"),
+	},
 }
 
 // in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]
