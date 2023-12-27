@@ -1,0 +1,107 @@
+name: "Release Lineaje"
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: provide the tag to build and release (prefixed with v)
+        required: true
+
+jobs:
+  quality-gate:
+    environment: release
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Check if tag already exists
+        # note: this will fail if the tag does not exist
+        run: |
+            [[ "${{ github.event.inputs.version }}" == v* ]] || (echo "version '${{ github.event.inputs.version }}' does not have a 'v' prefix" && exit 1)
+            if git show-ref --tags --verify --quiet "refs/tags/${{ github.event.inputs.version }}"; then
+              echo "Tag ${{ github.event.inputs.version }} exists"
+            else
+              echo "Tag ${{ github.event.inputs.version }} does not exist"
+            fi
+
+      - name: Checkout tag
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+        with:
+          ref: "${{ github.event.inputs.version }}"
+
+      - name: Check static analysis results
+        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        id: static-analysis
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # This check name is defined as the github action job name (in .github/workflows/testing.yaml)
+          checkName: "Static analysis"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Check acceptance test results (linux)
+        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        id: acceptance-linux
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # This check name is defined as the github action job name (in .github/workflows/testing.yaml)
+          checkName: "Acceptance tests (Linux)"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Check acceptance test results (mac)
+        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        id: acceptance-mac
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # This check name is defined as the github action job name (in .github/workflows/testing.yaml)
+          checkName: "Acceptance tests (Mac)"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Check cli test results (linux)
+        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        id: cli-linux
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # This check name is defined as the github action job name (in .github/workflows/testing.yaml)
+          checkName: "CLI tests (Linux)"
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Quality gate
+        if: steps.static-analysis.outputs.conclusion != 'success' || steps.cli-linux.outputs.conclusion != 'success' || steps.acceptance-linux.outputs.conclusion != 'success' || steps.acceptance-mac.outputs.conclusion != 'success'
+        run: |
+          echo "Static Analysis Status: ${{ steps.static-analysis.conclusion }}"
+          echo "Acceptance Test (Linux) Status: ${{ steps.acceptance-linux.outputs.conclusion }}"
+          echo "Acceptance Test (Mac) Status: ${{ steps.acceptance-mac.outputs.conclusion }}"
+          echo "CLI Test (Linux) Status: ${{ steps.cli-linux.outputs.conclusion }}"
+          false
+
+  release:
+    needs: [quality-gate]
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+
+      - name: Build & publish release artifacts
+        run: make ci-release
+        env:
+          # for creating the release (requires write access to packages and content)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: anchore/sbom-action@fd74a6fb98a204a1ad35bbfae0122c1a302ff88b #v0.15.0
+        continue-on-error: true
+        with:
+          artifact-name: sbom.spdx.json
+
