@@ -1,5 +1,17 @@
 package pkg
 
+type ConanReference struct {
+	Name            string
+	Version         string
+	Username        string
+	Channel         string
+	RecipeRevision  string
+	PackageID       string
+	PackageRevision string
+	TimeStamp       string
+	Ref             string
+}
+
 // ConanLockEntry represents a single "node" entry from a conan.lock file.
 type ConanLockEntry struct {
 	Ref            string            `json:"ref"`
