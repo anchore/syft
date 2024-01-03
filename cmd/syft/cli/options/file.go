@@ -22,7 +22,7 @@ type fileContent struct {
 	Globs              []string `yaml:"globs" json:"globs" mapstructure:"globs"`
 }
 
-func defaultFile() fileConfig {
+func defaultFileConfig() fileConfig {
 	return fileConfig{
 		Metadata: fileMetadata{
 			Selection: file.OwnedFilesSelection,

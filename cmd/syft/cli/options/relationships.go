@@ -5,7 +5,7 @@ type relationshipsConfig struct {
 	FileOwnershipOverlap bool `mapstructure:"file-ownership-overlap" json:"file-ownership-overlap" yaml:"file-ownership-overlap"`
 }
 
-func defaultRelationships() relationshipsConfig {
+func defaultRelationshipsConfig() relationshipsConfig {
 	return relationshipsConfig{
 		FileOwnership:        true,
 		FileOwnershipOverlap: true,

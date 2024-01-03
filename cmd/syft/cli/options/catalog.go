@@ -57,11 +57,11 @@ var _ interface {
 func DefaultCatalog() Catalog {
 	return Catalog{
 		Scope:         source.SquashedScope.String(),
-		Package:       defaultPkg(),
-		LinuxKernel:   defaultLinuxKernel(),
-		File:          defaultFile(),
-		Relationships: defaultRelationships(),
-		Source:        defaultSourceCfg(),
+		Package:       defaultPackageConfig(),
+		LinuxKernel:   defaultLinuxKernelConfig(),
+		File:          defaultFileConfig(),
+		Relationships: defaultRelationshipsConfig(),
+		Source:        defaultSourceConfig(),
 		Parallelism:   1,
 	}
 }
@@ -170,10 +170,10 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 	}
 
 	flags.StringArrayVarP(&cfg.DefaultCatalogers, "override-default-catalogers", "",
-		"set the catalogers to use explicitly as the final cataloger set (defaults to 'image' or 'directory' dynamically depending on the scan source)")
+		"set the base set of catalogers to use (defaults to 'image' or 'directory' depending on the scan source)")
 
 	flags.StringArrayVarP(&cfg.SelectCatalogers, "select-catalogers", "",
-		"add to, remove from, or select a subset of catalogers from the final cataloger set")
+		"add, remove, and filter the catalogers to be used")
 
 	flags.StringVarP(&cfg.Source.Name, "name", "",
 		"set the name of the target being analyzed")

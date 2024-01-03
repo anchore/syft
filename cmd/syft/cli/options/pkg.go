@@ -8,7 +8,7 @@ type packageConfig struct {
 	ExcludeBinaryOverlapByOwnership bool `yaml:"exclude-binary-overlap-by-ownership" json:"exclude-binary-overlap-by-ownership" mapstructure:"exclude-binary-overlap-by-ownership"` // exclude synthetic binary packages owned by os package files
 }
 
-func defaultPkg() packageConfig {
+func defaultPackageConfig() packageConfig {
 	c := cataloging.DefaultArchiveSearchConfig()
 	return packageConfig{
 		SearchIndexedArchives:           c.IncludeIndexedArchives,

@@ -23,7 +23,7 @@ type imageSource struct {
 	DefaultPullSource string `json:"default-pull-source" yaml:"default-pull-source" mapstructure:"default-pull-source"`
 }
 
-func defaultSourceCfg() sourceConfig {
+func defaultSourceConfig() sourceConfig {
 	return sourceConfig{
 		File: fileSource{
 			Digests: []string{"sha256"},

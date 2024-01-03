@@ -169,17 +169,15 @@ By default, Syft will catalog file details and digests for files that are owned 
 
 #### Concepts
 
-Syft uses different sets of catalogers depending on *what is being scanned*: a container image or a directory on disk. 
+> [!IMPORTANT]  
+> Syft uses a different set of catalogers by default when scanning files directly than it does when scanning images
 
 The catalogers for an image scan assumes that package installation steps have already been completed. For example, Syft will identify Python packages that have egg or wheel metadata files under a `site-packages` directory, since this is how the canonical tooling `pip` installs python packages.
 
-The catalogers for a directory scan will look for installed software as well as declared dependencies that are not necessarily installed. For example, dependencies listed in a Python requirements.txt.
+The catalogers for a directory scan will look for installed software as well as declared dependencies that are not necessarily installed. For example, dependencies listed in a Python `requirements.txt`.
 
 This default set of catalogers being dynamic is critical as this allows Syft to be used in a variety of contexts while still generating accurate SBOMs.
 Overriding the set of default catalogers is not recommended for most purposes, however, is possible if needed.
-
-
-#### Rules
 
 Catalogers can be referenced in two different ways:
 - *by name*: the exact cataloger name (e.g. `java-pom-cataloger` or `java-archive-cataloger`)
@@ -187,25 +185,27 @@ Catalogers can be referenced in two different ways:
 
 Syft can take lists of references on the CLI or in the application configuration to define which catalogers to use.
 
-You can **Set** the list of catalogers explicitly to use with the `--override-default-catalogers` CLI flag, accepting a comma-separated list of cataloger names or tags.
+You can **set** the list of catalogers explicitly to use with the `--override-default-catalogers` CLI flag, accepting a comma-separated list of cataloger names or tags.
 
-You can also **Add** to, **remove** from, or **sub-select** catalogers to use within the default set of catalogers by using the `--select-catalogers` CLI flag.
-  - To sub-select catalogers simply provide a tag (e.g. `--select-catalogers TAG`). This is always interpreted from the default set of catalogers. If used, the union of these catalogers becomes the new default set.
-  - To add a cataloger prefix the cataloger name with `+` (e.g. `--select-catalogers +NAME`). This is always interpreted from the universal set of catalogers.
-  - To remove a cataloger prefix the cataloger name or tag with `-` (e.g. `--select-catalogers -NAME_OR_TAG`). This is always interpreted from the final set of catalogers.
+You can also **add** to, **remove** from, or **sub-select** catalogers to use within the default set of catalogers by using the `--select-catalogers` CLI flag.
+  - To **sub-select** catalogers simply provide a tag (e.g. `--select-catalogers TAG`). Catalogers will always be selected from the default set of catalogers (e.g. `--select-catalogers java,go` will select all the `java` catalogers in the default set and all the `go` catalogers in the default set).
+  - To **add** a cataloger prefix the cataloger name with `+` (e.g. `--select-catalogers +NAME`). Added catalogers will _always be added_ regardless of removals, filtering, or other defaults.
+  - To **remove** a cataloger prefix the cataloger name or tag with `-` (e.g. `--select-catalogers -NAME_OR_TAG`). Catalogers are removed from the set of default catalogers after processing any sub-selections.
 
 These rules and the dynamic default cataloger sets approximates to the following logic:
 
 ```
-image_catalogers = all_catalogers & catalogers_tagged("image")
+image_catalogers = all_catalogers AND catalogers_tagged("image")
 
-directory_catalogers = all_catalogers & catalogers_tagged("directory")
+directory_catalogers = all_catalogers AND catalogers_tagged("directory")
 
-default_catalogers = image_catalogers | directory_catalogers
+default_catalogers = image_catalogers OR directory_catalogers
 
-sub_selected_catalogers = default_catalogers [ & catalogers_tagged(TAG) [ + default_catalogers & catalogers_named(NAME) ...] ]
+sub_selected_catalogers = default_catalogers INTERSECT catalogers_tagged(TAG) [ UNION sub_selected_catalogers ... ]
 
-final_set = (sub_selected_catalogers - removed_catalogers)  + added_catalogers
+base_catalogers = default_catalogers OR sub_selected_catalogers
+
+final_set = (base_catalogers SUBTRACT removed_catalogers) UNION added_catalogers
 ```
 
 
@@ -248,7 +248,7 @@ syft <some container image> --select-catalogers "go,+sbom-cataloger"
 # - sbom-cataloger
 ```
 
-Only scan with all catalogers that deal with binary analysis:
+Scan with all catalogers that deal with binary analysis, regardless of the source type:
 ```bash
 syft ... --override-default-catalogers "binary"
 # results in the following catalogers being used:
@@ -258,7 +258,7 @@ syft ... --override-default-catalogers "binary"
 # - go-module-binary-cataloger
 ```
 
-Only scan with the specific "go-module-binary-cataloger" and "go-module-file-cataloger" catalogers:
+Only scan with the specific `go-module-binary-cataloger` and `go-module-file-cataloger` catalogers:
 ```bash
 syft ... --override-default-catalogers "go-module-binary-cataloger,go-module-file-cataloger"
 ```
@@ -520,7 +520,7 @@ check-for-app-update: true
 # maximum number of workers used to process the list of package catalogers in parallel
 parallelism: 1
 
-# a list of globs to exclude from scanning. same as --exclude ; for example:
+# a list of globs to exclude from scanning, for example:
 # exclude:
 #   - "/etc/**"
 #   - "./out/**/*.json"
@@ -748,6 +748,7 @@ source:
      
     # allows users to specify which image source should be used to generate the sbom
     # valid values are: registry, docker, podman
+    # SYFT_SOURCE_IMAGE_DEFAULT_PULL_SOURCE env var
     default-pull-source: ""
 
 
