@@ -209,89 +209,46 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 func generateSBOM(id clio.Identification, src source.Source, opts *options.Catalog) (*sbom.SBOM, error) {
 	s, err := syft.CreateSBOM(src, opts.ToSBOMConfig(id))
 	if err != nil {
-		expErrs, err := filterExpressionErrors(err, 0)
+		expErrs := filterExpressionErrors(err)
 		notifyExpressionErrors(expErrs)
 		return nil, err
 	}
 	return s, nil
 }
 
-func filterExpressionErrors(err error, depth int) ([]task.ErrInvalidExpression, error) {
+func filterExpressionErrors(err error) []task.ErrInvalidExpression {
 	if err == nil {
-		return nil, nil
+		return nil
 	}
 
-	expErrs, prunedErr := processErrors(err)
+	expErrs := processErrors(err)
 
-	// if we found any expression errors, they have now been removed. We want to add a single error
-	// back indicating that there were invalid expressions provided. The details of these errors
-	// now show up in the CLI output in a summarized form (over the bus and to the UI)
-	if depth == 0 && len(expErrs) > 0 {
-		prunedErr = multierror.Append(prunedErr, errors.New("invalid cataloger selection expression provided"))
-	}
-
-	return expErrs, prunedErr
+	return expErrs
 }
 
-// processErrors traverses and prunes custom errors, returning the pruned error chain and a list of pruned errors
-func processErrors(err error) ([]task.ErrInvalidExpression, error) {
-	var prunedErrors []task.ErrInvalidExpression
+// processErrors traverses error chains and multierror lists and returns all ErrInvalidExpression errors found
+func processErrors(err error) []task.ErrInvalidExpression {
+	var result []task.ErrInvalidExpression
 
-	var processError func(err error) error
-	processError = func(err error) error {
-		if err == nil {
-			return nil
-		}
-
-		// note: using errors.As will result in surprising behavior (since that will traverse the error chain, potentially
-		// skipping over nodes in a list of errors)
-		if cerr, ok := err.(task.ErrInvalidExpression); ok {
-			prunedErrors = append(prunedErrors, cerr)
-			return nil
-		}
-
-		var multiErr *multierror.Error
-		if errors.As(err, &multiErr) {
-			var remainingErr error
-			for _, merr := range multiErr.Errors {
-				processedErr := processError(merr)
-				if processedErr != nil {
-					remainingErr = multierror.Append(remainingErr, processedErr)
-				}
+	var processError func(...error)
+	processError = func(errs ...error) {
+		for _, e := range errs {
+			// note: using errors.As will result in surprising behavior (since that will traverse the error chain,
+			// potentially skipping over nodes in a list of errors)
+			if cerr, ok := e.(task.ErrInvalidExpression); ok {
+				result = append(result, cerr)
+				continue
 			}
-			return remainingErr
-		}
-
-		// check the error chain to see if there are any expression errors
-		if errors.As(err, &task.ErrInvalidExpression{}) {
-			// this chain has an expression error somewhere, we need to reconstruct the chain without this error
-			var errs error
-			for {
-				if err == nil {
-					break
-				}
-
-				if cerr, ok := err.(task.ErrInvalidExpression); ok {
-					// this is an expression error, we want to prune it from the chain
-					prunedErrors = append(prunedErrors, cerr)
-					break
-				}
-
-				unwrappedErr := errors.Unwrap(err)
-
-				if errs == nil {
-					errs = unwrappedErr
-					continue
-				}
-				errs = fmt.Errorf("%v: %w", errs, unwrappedErr)
+			var multiErr *multierror.Error
+			if errors.As(e, &multiErr) {
+				processError(multiErr.Errors...)
 			}
 		}
-
-		// keep the existing chain of errors
-		return err
 	}
 
-	return prunedErrors, processError(err)
+	processError(err)
+
+	return result
 }
 
 func notifyExpressionErrors(expErrs []task.ErrInvalidExpression) {
@@ -311,22 +268,23 @@ func expressionErrorsHelp(expErrs []task.ErrInvalidExpression) string {
 
 	sb := strings.Builder{}
 
-	plural := ""
-	if len(expErrs) > 1 {
-		plural = "s"
-	}
+	sb.WriteString("Suggestions:\n\n")
 
-	sb.WriteString(fmt.Sprintf("Found %d invalid cataloger selection expression%s:\n\n", len(expErrs), plural))
-
+	found := false
 	for i, expErr := range expErrs {
-		help := expressionErrorHelp(expErr)
+		help := expressionSuggetions(expErr)
 		if help == "" {
 			continue
 		}
+		found = true
 		sb.WriteString(help)
 		if i != len(expErrs)-1 {
 			sb.WriteString("\n")
 		}
+	}
+
+	if !found {
+		return ""
 	}
 
 	return sb.String()
@@ -334,15 +292,20 @@ func expressionErrorsHelp(expErrs []task.ErrInvalidExpression) string {
 
 const expressionHelpTemplate = " ❖ Given expression %q\n%s%s"
 
-func expressionErrorHelp(expErr task.ErrInvalidExpression) string {
+func expressionSuggetions(expErr task.ErrInvalidExpression) string {
 	if expErr.Err == nil {
+		return ""
+	}
+
+	hint := getHintPhrase(expErr)
+	if hint == "" {
 		return ""
 	}
 
 	return fmt.Sprintf(expressionHelpTemplate,
 		getExpression(expErr),
 		indentMsg(getExplanation(expErr)),
-		indentMsg(getHintPhrase(expErr)),
+		indentMsg(hint),
 	)
 }
 

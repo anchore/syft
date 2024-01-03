@@ -65,12 +65,12 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 				return err
 			}(),
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				// note: the errors are removed and the help text shows the enriched error help
-				expected := `4 errors occurred:
+				expected := `5 errors occurred:
 	* foo
+	* invalid expression: "foo": tags are not allowed with this operation (must use exact names)
 	* bar
+	* invalid expression: "bar": names are not allowed with this operation (must use tags)
 	* last
-	* invalid cataloger selection expression provided
 
 `
 				return assert.Equal(t, expected, err.Error())
@@ -79,7 +79,7 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 				{Expression: "foo", Operation: task.AddOperation, Err: task.ErrTagsNotAllowed},
 				{Expression: "bar", Operation: task.SubSelectOperation, Err: task.ErrNamesNotAllowed},
 			},
-			wantHelp: `Found 2 invalid cataloger selection expressions:
+			wantHelp: `Suggestions:
 
  ❖ Given expression "--select-catalogers foo"
    However, tags are not allowed with this operation (must use exact names).
@@ -104,11 +104,11 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 				return fmt.Errorf("top: %w", fmt.Errorf("middle: %w", err))
 			}(),
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				// note: the errors are removed and the help text shows the enriched error help
-				expected := `3 errors occurred:
+				expected := `top: middle: 4 errors occurred:
 	* foo: bar: last
+	* invalid expression: "foo": tags are not allowed with this operation (must use exact names)
+	* invalid expression: "bar": names are not allowed with this operation (must use tags)
 	* bottom
-	* invalid cataloger selection expression provided
 
 `
 				return assert.Equal(t, expected, err.Error())
@@ -117,7 +117,7 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 				{Expression: "foo", Operation: task.AddOperation, Err: task.ErrTagsNotAllowed},
 				{Expression: "bar", Operation: task.SubSelectOperation, Err: task.ErrNamesNotAllowed},
 			},
-			wantHelp: `Found 2 invalid cataloger selection expressions:
+			wantHelp: `Suggestions:
 
  ❖ Given expression "--select-catalogers foo"
    However, tags are not allowed with this operation (must use exact names).
@@ -143,11 +143,11 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 				return fmt.Errorf("top: %w", fmt.Errorf("middle: %w", err))
 			}(),
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				// note: the errors are removed and the help text shows the enriched error help
-				expected := `3 errors occurred:
+				expected := `top: middle: 4 errors occurred:
 	* foo: bar: last
+	* invalid expression: "foo": tags are not allowed with this operation (must use exact names)
+	* invalid expression: "bar": names are not allowed with this operation (must use tags)
 	* bottom
-	* invalid cataloger selection expression provided
 
 `
 				return assert.Equal(t, expected, err.Error())
@@ -156,7 +156,7 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 				{Expression: "foo", Operation: task.AddOperation, Err: task.ErrTagsNotAllowed},
 				{Expression: "bar", Operation: task.SubSelectOperation, Err: task.ErrNamesNotAllowed},
 			},
-			wantHelp: `Found 2 invalid cataloger selection expressions:
+			wantHelp: `Suggestions:
 
  ❖ Given expression "--select-catalogers foo"
    However, tags are not allowed with this operation (must use exact names).
@@ -180,8 +180,9 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 			}(),
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				// note: the errors are removed and the help text shows the enriched error help
-				expected := `1 error occurred:
-	* invalid cataloger selection expression provided
+				expected := `2 errors occurred:
+	* invalid expression: "foo": tags are not allowed with this operation (must use exact names)
+	* invalid expression: "bar": explanation
 
 `
 				return assert.Equal(t, expected, err.Error())
@@ -190,22 +191,20 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 				{Expression: "foo", Operation: task.AddOperation, Err: task.ErrTagsNotAllowed},
 				{Expression: "bar", Operation: task.SubSelectOperation, Err: errors.New("explanation")},
 			},
-			wantHelp: `Found 2 invalid cataloger selection expressions:
+			wantHelp: `Suggestions:
 
  ❖ Given expression "--select-catalogers foo"
    However, tags are not allowed with this operation (must use exact names).
    Adding groups of catalogers may result in surprising behavior (create inaccurate SBOMs).
    If you are certain this is what you want to do, use "--override-default-catalogers foo" instead.
 
- ❖ Given expression "--select-catalogers bar"
-   However, this is not valid: explanation
 `,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotExpErrs, err := filterExpressionErrors(tt.err, 0)
-			tt.wantErr(t, err)
+			gotExpErrs := filterExpressionErrors(tt.err)
+			tt.wantErr(t, tt.err) // ensure the error still remains
 			assert.Equal(t, tt.wantExpErrs, gotExpErrs)
 
 			gotHelp := expressionErrorsHelp(gotExpErrs)
@@ -214,7 +213,7 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 	}
 }
 
-func Test_expressionErrorHelp(t *testing.T) {
+func Test_expressionSuggestions(t *testing.T) {
 	tests := []struct {
 		name   string
 		expErr task.ErrInvalidExpression
@@ -233,9 +232,7 @@ func Test_expressionErrorHelp(t *testing.T) {
 				Err:        errors.New("general error message"),
 				Expression: "example",
 			},
-			want: ` ❖ Given expression "--select-catalogers example"
-   However, this is not valid: general error message
-`,
+			want: ``,
 		},
 		{
 			name: "ErrUnknownNameOrTag with add operation",
@@ -244,9 +241,7 @@ func Test_expressionErrorHelp(t *testing.T) {
 				Operation:  task.AddOperation,
 				Expression: "+example",
 			},
-			want: ` ❖ Given expression "--select-catalogers +example"
-   However, "example" is not a recognized cataloger name.
-`,
+			want: ``,
 		},
 		{
 			name: "ErrUnknownNameOrTag with subselect operation",
@@ -255,9 +250,7 @@ func Test_expressionErrorHelp(t *testing.T) {
 				Operation:  task.SubSelectOperation,
 				Expression: "example",
 			},
-			want: ` ❖ Given expression "--select-catalogers example"
-   However, "example" is not a recognized cataloger tag.
-`,
+			want: ``,
 		},
 		{
 			name: "ErrNamesNotAllowed with subselect operator",
@@ -301,7 +294,7 @@ func Test_expressionErrorHelp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, expressionErrorHelp(tt.expErr))
+			assert.Equal(t, tt.want, expressionSuggetions(tt.expErr))
 		})
 	}
 }
