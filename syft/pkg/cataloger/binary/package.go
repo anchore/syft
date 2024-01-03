@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackage(classifier classifier, location file.Location, matchMetadata map[string]string) *pkg.Package {
+func newPackage(classifier Classifier, location file.Location, matchMetadata map[string]string) *pkg.Package {
 	version, ok := matchMetadata["version"]
 	if !ok {
 		return nil

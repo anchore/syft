@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/pkg/cataloger"
+	binaryCataloger "github.com/anchore/syft/syft/pkg/cataloger/binary"
 	golangCataloger "github.com/anchore/syft/syft/pkg/cataloger/golang"
 	javaCataloger "github.com/anchore/syft/syft/pkg/cataloger/java"
 	javascriptCataloger "github.com/anchore/syft/syft/pkg/cataloger/javascript"
@@ -150,6 +151,7 @@ func (cfg Catalog) ToCatalogerConfig() cataloger.Config {
 		Javascript: javascriptCataloger.DefaultCatalogerConfig().
 			WithSearchRemoteLicenses(cfg.Javascript.SearchRemoteLicenses).
 			WithNpmBaseURL(cfg.Javascript.NpmBaseURL),
+		Binary: binaryCataloger.DefaultCatalogerConfig(),
 		Python: pythonCataloger.CatalogerConfig{
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},

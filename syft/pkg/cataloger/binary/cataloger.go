@@ -12,8 +12,21 @@ import (
 
 const catalogerName = "binary-cataloger"
 
-func NewCataloger() pkg.Cataloger {
-	return &Cataloger{}
+type CatalogerConfig struct {
+	Classifiers []Classifier
+}
+
+func DefaultCatalogerConfig() CatalogerConfig {
+	return CatalogerConfig{
+		Classifiers: GetDefaultClassifiers(),
+	}
+}
+
+func NewCataloger(cfg CatalogerConfig) pkg.Cataloger {
+	Classifiers := cfg.Classifiers
+	return &Cataloger{
+		Classifiers,
+	}
 }
 
 // Cataloger is the cataloger responsible for surfacing evidence of a very limited set of binary files,
@@ -21,7 +34,9 @@ func NewCataloger() pkg.Cataloger {
 // binary, but rather the specific set that has been curated to be important, predominantly related to toolchain-
 // related runtimes like Python, Go, Java, or Node. Some exceptions can be made for widely-used binaries such
 // as busybox.
-type Cataloger struct{}
+type Cataloger struct {
+	Classifiers []Classifier
+}
 
 // Name returns a string that uniquely describes the Cataloger
 func (c Cataloger) Name() string {
@@ -34,7 +49,7 @@ func (c Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Re
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
-	for _, cls := range defaultClassifiers {
+	for _, cls := range c.Classifiers {
 		log.WithFields("classifier", cls.Class).Trace("cataloging binaries")
 		newPkgs, err := catalog(resolver, cls)
 		if err != nil {
@@ -71,7 +86,7 @@ func mergePackages(target *pkg.Package, extra *pkg.Package) {
 	target.Metadata = meta
 }
 
-func catalog(resolver file.Resolver, cls classifier) (packages []pkg.Package, err error) {
+func catalog(resolver file.Resolver, cls Classifier) (packages []pkg.Package, err error) {
 	locations, err := resolver.FilesByGlob(cls.FileGlob)
 	if err != nil {
 		return nil, err
