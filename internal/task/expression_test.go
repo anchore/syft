@@ -6,9 +6,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 )
 
-func TestParseExpressions(t *testing.T) {
+func Test_newExpressionsFromSelectionRequest(t *testing.T) {
 	ts := []Task{
 		dummyTask("1", "t1"),
 		dummyTask("2", "t2"),
@@ -89,14 +91,14 @@ func TestParseExpressions(t *testing.T) {
 			basis:          []string{"+1"},
 			expressions:    []string{},
 			expected:       nil,
-			expectedErrors: []error{ErrInvalidOperator},
+			expectedErrors: []error{ErrInvalidToken},
 		},
 		{
 			name:           "use - operator in basis",
 			basis:          []string{"-1"},
 			expressions:    []string{},
 			expected:       nil,
-			expectedErrors: []error{ErrInvalidOperator},
+			expectedErrors: []error{ErrInvalidToken},
 		},
 		{
 			name:           "invalid name",
@@ -133,7 +135,9 @@ func TestParseExpressions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			result := parseExpressions(nc, tt.basis, tt.expressions)
+			req := pkgcataloging.NewSelectionRequest().WithDefaults(tt.basis...).WithExpression(tt.expressions...)
+
+			result := newExpressionsFromSelectionRequest(nc, req)
 			if tt.expectedErrors != nil {
 				errs := result.Errors()
 				require.Len(t, errs, len(tt.expectedErrors))

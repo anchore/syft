@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -34,7 +35,11 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{
 		Name:    "syft-tester",
 		Version: "v0.99.0",
-	}).WithDefaultCatalogers("image").WithCatalogerSelection(catalogerSelection...)
+	}).WithCatalogerSelection(
+		pkgcataloging.NewSelectionRequest().
+			WithDefaults(pkgcataloging.ImageTag).
+			WithExpression(catalogerSelection...),
+	)
 	cfg.Search.Scope = scope
 
 	s, err := syft.CreateSBOM(theSource, cfg)
@@ -61,7 +66,11 @@ func catalogDirectory(t *testing.T, dir string, catalogerSelection ...string) (s
 	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{
 		Name:    "syft-tester",
 		Version: "v0.99.0",
-	}).WithDefaultCatalogers("directory").WithCatalogerSelection(catalogerSelection...)
+	}).WithCatalogerSelection(
+		pkgcataloging.NewSelectionRequest().
+			WithDefaults(pkgcataloging.DirectoryTag).
+			WithExpression(catalogerSelection...),
+	)
 	s, err := syft.CreateSBOM(theSource, cfg)
 
 	require.NoError(t, err)

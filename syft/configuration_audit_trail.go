@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
@@ -22,8 +21,8 @@ type configurationAuditTrail struct {
 }
 
 type catalogerManifest struct {
-	Requested task.SelectionRequest `json:"requested" yaml:"requested" mapstructure:"requested"`
-	Used      []string              `json:"used" yaml:"used" mapstructure:"used"`
+	Requested pkgcataloging.SelectionRequest `json:"requested" yaml:"requested" mapstructure:"requested"`
+	Used      []string                       `json:"used" yaml:"used" mapstructure:"used"`
 }
 
 type marshalAPIConfiguration configurationAuditTrail
@@ -44,6 +43,11 @@ func (cfg configurationAuditTrail) MarshalJSON() ([]byte, error) {
 	var dataMap map[string]interface{}
 	if err := json.Unmarshal(initialJSON, &dataMap); err != nil {
 		return nil, err
+	}
+
+	if v, exists := dataMap["extra"]; exists && v == nil {
+		// remove the extra key if it renders as nil
+		delete(dataMap, "extra")
 	}
 
 	return marshalSorted(dataMap)

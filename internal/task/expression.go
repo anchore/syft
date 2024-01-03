@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
-	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/scylladb/go-set/strset"
+
+	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 )
 
 var expressionNodePattern = regexp.MustCompile(`^([a-zA-Z0-9][a-zA-Z0-9-+]*)+$`)
@@ -70,12 +71,6 @@ type expressionContext struct {
 	Tags  *strset.Set
 }
 
-func badExpression(exp string, op Operation, err error) Expression {
-	return Expression{
-		Errors: []error{newErrInvalidExpression(exp, op, err)},
-	}
-}
-
 func newExpressionContext(ts []Task) *expressionContext {
 	ec := &expressionContext{
 		Names: strset.New(tasks(ts).Names()...),
@@ -89,6 +84,22 @@ func newExpressionContext(ts []Task) *expressionContext {
 
 // newExpression creates a new validated Expression object relative to the task names and tags.
 func (ec expressionContext) newExpression(exp string, operation Operation, token string) Expression {
+	if token == "" {
+		return Expression{
+			Operation: operation,
+			Operand:   token,
+			Errors:    []error{newErrInvalidExpression(exp, operation, ErrEmptyToken)},
+		}
+	}
+
+	if !isValidNode(token) {
+		return Expression{
+			Operation: operation,
+			Operand:   token,
+			Errors:    []error{newErrInvalidExpression(exp, operation, ErrInvalidToken)},
+		}
+	}
+
 	var err error
 	switch operation {
 	case SetOperation, RemoveOperation:
@@ -131,63 +142,27 @@ func (ec expressionContext) newExpression(exp string, operation Operation, token
 	}
 }
 
-// parseExpressions parses a list of string expressions, provided as two distinct sets (set operations and all other operations),
-// and returns a list of sorted and validated Expression objects.
-func parseExpressions(nc *expressionContext, basis, expressions []string) Expressions {
+func newExpressionsFromSelectionRequest(nc *expressionContext, selectionRequest pkgcataloging.SelectionRequest) Expressions {
 	var all Expressions
 
-	all = append(all, processOperatorSet(nc, basis, SetOperation)...)
-	all = append(all, processOperatorSet(nc, expressions, SubSelectOperation)...)
+	for _, exp := range selectionRequest.DefaultNamesOrTags {
+		all = append(all, nc.newExpression(exp, SetOperation, exp))
+	}
+
+	for _, exp := range selectionRequest.SubSelectTags {
+		all = append(all, nc.newExpression(exp, SubSelectOperation, exp))
+	}
+
+	for _, exp := range selectionRequest.AddNames {
+		all = append(all, nc.newExpression(exp, AddOperation, exp))
+	}
+
+	for _, exp := range selectionRequest.RemoveNamesOrTags {
+		all = append(all, nc.newExpression(exp, RemoveOperation, exp))
+	}
 
 	sort.Sort(all)
-
 	return all
-}
-
-func processOperatorSet(nc *expressionContext, expressions []string, defaultOperator Operation) []Expression {
-	var all []Expression
-	for _, exp := range expressions {
-		exp = strings.TrimSpace(exp)
-
-		operator, value := splitOnOperator(exp)
-
-		if defaultOperator == SetOperation && operator != "" {
-			all = append(all, badExpression(exp, operator, ErrInvalidOperator))
-			continue
-		}
-
-		if value == "" {
-			all = append(all, badExpression(exp, operator, ErrEmptyToken))
-			continue
-		}
-
-		if operator == "" {
-			operator = defaultOperator
-		}
-
-		if !isValidNode(value) {
-			all = append(all, badExpression(exp, operator, ErrInvalidToken))
-			continue
-		}
-
-		all = append(all, nc.newExpression(exp, operator, value))
-	}
-
-	return all
-}
-
-func splitOnOperator(s string) (Operation, string) {
-	if len(s) == 0 {
-		return "", ""
-	}
-
-	switch s[0] {
-	case '+':
-		return AddOperation, s[1:]
-	case '-':
-		return RemoveOperation, s[1:]
-	}
-	return "", s
 }
 
 func isValidNode(s string) bool {

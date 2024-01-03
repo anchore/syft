@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
+	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -90,9 +91,8 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: task.SelectionRequest{
-					Default:   []string{"image"},
-					Selection: []string{},
+				Requested: pkgcataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
 			},
@@ -109,9 +109,8 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: task.SelectionRequest{
-					Default:   []string{"directory"},
-					Selection: []string{},
+				Requested: pkgcataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"directory"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "directory"),
 			},
@@ -129,9 +128,8 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: task.SelectionRequest{
-					Default:   []string{"directory"},
-					Selection: []string{},
+				Requested: pkgcataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"directory"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "directory"),
 			},
@@ -148,9 +146,8 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: task.SelectionRequest{
-					Default:   []string{"image"},
-					Selection: []string{},
+				Requested: pkgcataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
 			},
@@ -167,9 +164,8 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: task.SelectionRequest{
-					Default:   []string{"image"},
-					Selection: []string{},
+				Requested: pkgcataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
 			},
@@ -189,9 +185,8 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: task.SelectionRequest{
-					Default:   []string{"image"},
-					Selection: []string{},
+				Requested: pkgcataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
 			},
@@ -200,7 +195,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 		{
 			name: "user-provided persistent cataloger is always run (image)",
 			src:  imgSrc,
-			cfg:  DefaultCreateSBOMConfig().WithPersistentCatalogers(newDummyCataloger("persistent")),
+			cfg:  DefaultCreateSBOMConfig().WithCatalogers(newDummyCataloger("persistent")),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "persistent"),
@@ -208,9 +203,8 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: task.SelectionRequest{
-					Default:   []string{"image"},
-					Selection: []string{},
+				Requested: pkgcataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image"},
 				},
 				Used: addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "persistent"),
 			},
@@ -219,7 +213,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 		{
 			name: "user-provided persistent cataloger is always run (directory)",
 			src:  dirSrc,
-			cfg:  DefaultCreateSBOMConfig().WithPersistentCatalogers(newDummyCataloger("persistent")),
+			cfg:  DefaultCreateSBOMConfig().WithCatalogers(newDummyCataloger("persistent")),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgCatalogerNamesWithTagOrName(t, "directory"), "persistent"),
@@ -227,9 +221,8 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: task.SelectionRequest{
-					Default:   []string{"directory"},
-					Selection: []string{},
+				Requested: pkgcataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"directory"},
 				},
 				Used: addTo(pkgCatalogerNamesWithTagOrName(t, "directory"), "persistent"),
 			},
@@ -238,7 +231,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 		{
 			name: "user-provided persistent cataloger is always run (user selection does not affect this)",
 			src:  imgSrc,
-			cfg:  DefaultCreateSBOMConfig().WithPersistentCatalogers(newDummyCataloger("persistent")).WithCatalogerSelection("javascript"),
+			cfg:  DefaultCreateSBOMConfig().WithCatalogers(newDummyCataloger("persistent")).WithCatalogerSelection(pkgcataloging.NewSelectionRequest().WithSubSelections("javascript")),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgIntersect("image", "javascript"), "persistent"),
@@ -246,9 +239,9 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: task.SelectionRequest{
-					Default:   []string{"image"},
-					Selection: []string{"javascript"},
+				Requested: pkgcataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image"},
+					SubSelectTags:      []string{"javascript"},
 				},
 				Used: addTo(pkgIntersect("image", "javascript"), "persistent"),
 			},
@@ -265,9 +258,8 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: task.SelectionRequest{
-					Default:   []string{"image"},
-					Selection: []string{},
+				Requested: pkgcataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image"},
 				},
 				Used: addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "user-provided"),
 			},
@@ -284,9 +276,8 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: task.SelectionRequest{
-					Default:   []string{"image"},
-					Selection: []string{},
+				Requested: pkgcataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
 			},
@@ -325,7 +316,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				t.Errorf("mismatched task group names (-want +got):\n%s", d)
 			}
 
-			if d := cmp.Diff(tt.wantManifest, gotManifest, cmpopts.IgnoreFields(task.SelectionRequest{}, "Expressions")); d != "" {
+			if d := cmp.Diff(tt.wantManifest, gotManifest); d != "" {
 				t.Errorf("mismatched cataloger manifest (-want +got):\n%s", d)
 			}
 		})
@@ -413,11 +404,6 @@ func Test_replaceDefaultTagReferences(t *testing.T) {
 			lst:  []string{"foo", "default", "bar"},
 			want: []string{"foo", "replacement", "bar"},
 		},
-		{
-			name: "replace default tag with prefix",
-			lst:  []string{"foo", "+default", "-default"},
-			want: []string{"foo", "+replacement", "-replacement"},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -439,21 +425,21 @@ func Test_findDefaultTag(t *testing.T) {
 			src: source.Description{
 				Metadata: source.StereoscopeImageSourceMetadata{},
 			},
-			want: task.ImageTag,
+			want: pkgcataloging.ImageTag,
 		},
 		{
 			name: "directory",
 			src: source.Description{
 				Metadata: source.DirectorySourceMetadata{},
 			},
-			want: task.DirectoryTag,
+			want: pkgcataloging.DirectoryTag,
 		},
 		{
 			name: "file",
 			src: source.Description{
 				Metadata: source.FileSourceMetadata{},
 			},
-			want: task.DirectoryTag, // not a mistake...
+			want: pkgcataloging.DirectoryTag, // not a mistake...
 		},
 		{
 			name: "unknown",

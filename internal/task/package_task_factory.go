@@ -150,7 +150,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 
 		return nil
 	}
-	tags = append(tags, PackageTag)
+	tags = append(tags, pkgcataloging.PackageTag)
 
 	return NewTask(c.Name(), fn, tags...)
 }

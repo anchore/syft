@@ -1,4 +1,4 @@
-package task
+package pkgcataloging
 
 const (
 	// InstalledTag is to identify packages found to be positively installed.

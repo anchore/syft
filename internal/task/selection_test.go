@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/sbomsync"
+	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -70,7 +71,7 @@ func TestSelect(t *testing.T) {
 		expressions []string
 		wantNames   []string
 		wantTokens  map[string]TokenSelection
-		wantRequest SelectionRequest
+		wantRequest pkgcataloging.SelectionRequest
 		wantErr     assert.ErrorAssertionFunc
 	}{
 		{
@@ -80,10 +81,7 @@ func TestSelect(t *testing.T) {
 			expressions: []string{},
 			wantNames:   []string{},
 			wantTokens:  map[string]TokenSelection{},
-			wantRequest: SelectionRequest{
-				Default:   []string{},
-				Selection: []string{},
-			},
+			wantRequest: pkgcataloging.SelectionRequest{},
 		},
 		{
 			name:     "use default tasks",
@@ -130,16 +128,8 @@ func TestSelect(t *testing.T) {
 				"binary-cataloger":                     newTokenSelection([]string{"image"}, nil),
 				"sbom-cataloger":                       newTokenSelection([]string{"image"}, nil),
 			},
-			wantRequest: SelectionRequest{
-				Expressions: []Expression{
-					{
-						Operation: SetOperation,
-						Operand:   "image",
-						Errors:    nil,
-					},
-				},
-				Default:   []string{"image"},
-				Selection: []string{},
+			wantRequest: pkgcataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"image"},
 			},
 		},
 		{
@@ -184,35 +174,11 @@ func TestSelect(t *testing.T) {
 				"binary-cataloger":                     newTokenSelection([]string{"image"}, nil),
 				"sbom-cataloger":                       newTokenSelection([]string{"image"}, nil),
 			},
-			wantRequest: SelectionRequest{
-				Expressions: []Expression{
-					{
-						Operation: SetOperation,
-						Operand:   "image",
-						Errors:    nil,
-					},
-					{
-						Operation: SubSelectOperation,
-						Operand:   "os",
-						Errors:    nil,
-					},
-					{
-						Operation: RemoveOperation,
-						Operand:   "dpkg",
-						Errors:    nil,
-					},
-					{
-						Operation: AddOperation,
-						Operand:   "github-actions-usage-cataloger",
-						Errors:    nil,
-					},
-				},
-				Default: []string{"image"},
-				Selection: []string{
-					"os",
-					"-dpkg",
-					"+github-actions-usage-cataloger",
-				},
+			wantRequest: pkgcataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"image"},
+				SubSelectTags:      []string{"os"},
+				RemoveNamesOrTags:  []string{"dpkg"},
+				AddNames:           []string{"github-actions-usage-cataloger"},
 			},
 		},
 		{
@@ -261,47 +227,11 @@ func TestSelect(t *testing.T) {
 				"binary-cataloger":                     newTokenSelection([]string{"image"}, nil),
 				"sbom-cataloger":                       newTokenSelection([]string{"image"}, nil),
 			},
-			wantRequest: SelectionRequest{
-				// note: this is an ordered expression (based on operation primarily)
-				Expressions: []Expression{
-					{
-						Operation: SetOperation,
-						Operand:   "image",
-						Errors:    nil,
-					},
-					{
-						Operation: SubSelectOperation,
-						Operand:   "os",
-						Errors:    nil,
-					},
-					{
-						Operation: SubSelectOperation,
-						Operand:   "rust-cargo-lock-cataloger",
-						Errors:    []error{newErrInvalidExpression("rust-cargo-lock-cataloger", SubSelectOperation, ErrNamesNotAllowed)},
-					},
-					{
-						Operation: RemoveOperation,
-						Operand:   "dpkg",
-						Errors:    nil,
-					},
-					{
-						Operation: AddOperation,
-						Operand:   "github-actions-usage-cataloger",
-						Errors:    nil,
-					},
-					{
-						Operation: AddOperation,
-						Operand:   "python",
-						Errors:    []error{newErrInvalidExpression("+python", AddOperation, ErrTagsNotAllowed)},
-					},
-				},
-				Default: []string{"image"},
-				Selection: []string{
-					// note: nodes that have errors are not included in the selection
-					"os",
-					"-dpkg",
-					"+github-actions-usage-cataloger",
-				},
+			wantRequest: pkgcataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"image"},
+				SubSelectTags:      []string{"os", "rust-cargo-lock-cataloger"},
+				RemoveNamesOrTags:  []string{"dpkg"},
+				AddNames:           []string{"github-actions-usage-cataloger", "python"},
 			},
 			wantErr: assert.Error, // !important!
 		},
@@ -368,16 +298,8 @@ func TestSelect(t *testing.T) {
 				"github-action-workflow-usage-cataloger": newTokenSelection([]string{"all"}, nil),
 				"sbom-cataloger":                         newTokenSelection([]string{"all"}, nil),
 			},
-			wantRequest: SelectionRequest{
-				Expressions: []Expression{
-					{
-						Operation: SetOperation,
-						Operand:   "all",
-						Errors:    nil,
-					},
-				},
-				Default:   []string{"all"},
-				Selection: []string{},
+			wantRequest: pkgcataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"all"},
 			},
 		},
 		{
@@ -396,21 +318,8 @@ func TestSelect(t *testing.T) {
 				"ruby-installed-gemspec-cataloger":   newTokenSelection([]string{"gemspec"}, nil),
 				"python-installed-package-cataloger": newTokenSelection([]string{"python"}, nil),
 			},
-			wantRequest: SelectionRequest{
-				Expressions: []Expression{
-					{
-						Operation: SetOperation,
-						Operand:   "gemspec",
-						Errors:    nil,
-					},
-					{
-						Operation: SetOperation,
-						Operand:   "python",
-						Errors:    nil,
-					},
-				},
-				Default:   []string{"gemspec", "python"},
-				Selection: []string{},
+			wantRequest: pkgcataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"gemspec", "python"},
 			},
 		},
 	}
@@ -419,7 +328,10 @@ func TestSelect(t *testing.T) {
 			if tt.wantErr == nil {
 				tt.wantErr = assert.NoError
 			}
-			got, gotEvidence, err := Select(tt.allTasks, tt.basis, tt.expressions)
+
+			req := pkgcataloging.NewSelectionRequest().WithDefaults(tt.basis...).WithExpression(tt.expressions...)
+
+			got, gotEvidence, err := Select(tt.allTasks, req)
 			tt.wantErr(t, err)
 			if err != nil {
 				// dev note: this is useful for debugging when needed...

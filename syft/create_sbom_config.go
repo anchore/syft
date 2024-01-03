@@ -17,22 +17,21 @@ import (
 // CreateSBOMConfig specifies all parameters needed for creating an SBOM.
 type CreateSBOMConfig struct {
 	// required configuration input to specify how cataloging should be performed
-	Search                     cataloging.SearchConfig
-	Relationships              cataloging.RelationshipsConfig
-	DataGeneration             cataloging.DataGenerationConfig
-	Packages                   pkgcataloging.Config
-	Files                      filecataloging.Config
-	Parallelism                int
-	DefaultCatalogersSelection []string
-	CatalogersSelection        []string
+	Search             cataloging.SearchConfig
+	Relationships      cataloging.RelationshipsConfig
+	DataGeneration     cataloging.DataGenerationConfig
+	Packages           pkgcataloging.Config
+	Files              filecataloging.Config
+	Parallelism        int
+	CatalogerSelection pkgcataloging.SelectionRequest
 
 	// audit what tool is being used to generate the SBOM
 	ToolName          string
 	ToolVersion       string
 	ToolConfiguration interface{}
 
-	packageTaskFactories           task.PackageTaskFactories // syft default + user-provided (WithPersistentCatalogers()
-	persistentPackageTaskFactories task.PackageTaskFactories // user-provided (WithCataloger())
+	packageTaskFactories           task.PackageTaskFactories // syft default + user-provided catalogers with tags to select with
+	persistentPackageTaskFactories task.PackageTaskFactories // user-provided catalogers without tags to select with
 }
 
 func DefaultCreateSBOMConfig() CreateSBOMConfig {
@@ -98,8 +97,8 @@ func (c CreateSBOMConfig) WithFilesConfig(cfg filecataloging.Config) CreateSBOMC
 	return c
 }
 
-// WithNoFiles allows for disabling file cataloging altogether.
-func (c CreateSBOMConfig) WithNoFiles() CreateSBOMConfig {
+// WithoutFiles allows for disabling file cataloging altogether.
+func (c CreateSBOMConfig) WithoutFiles() CreateSBOMConfig {
 	c.Files = filecataloging.Config{
 		Selection: file.NoFilesSelection,
 		Hashers:   nil,
@@ -107,32 +106,23 @@ func (c CreateSBOMConfig) WithNoFiles() CreateSBOMConfig {
 	return c
 }
 
-// WithDefaultCatalogers allows for setting the default catalogers that should be used for cataloging. These catalogers
-// can be selected by cataloger name or tag. If no default catalogers are specified, the catalogers will be selected
-// based on the source type (e.g. image, directory, etc.).
-func (c CreateSBOMConfig) WithDefaultCatalogers(set ...string) CreateSBOMConfig {
-	c.DefaultCatalogersSelection = cleanSelection(set)
-	return c
-}
-
 // WithCatalogerSelection allows for adding to, removing from, or sub-selecting the final set of catalogers by name or tag.
-//   - To sub-select catalogers (by tag) by providing strings that match task tags. (specifying cataloger names is not allowed)
-//   - To add a cataloger (by name) from the universal set of catalogers into the final set, prefix the cataloger name with "+". (specifying tags is not allowed)
-//   - To remove a cataloger (by name or tag) from the final set, prefix the cataloger name or tag with "-".
-func (c CreateSBOMConfig) WithCatalogerSelection(selections ...string) CreateSBOMConfig {
-	c.CatalogersSelection = cleanSelection(selections)
+func (c CreateSBOMConfig) WithCatalogerSelection(selection pkgcataloging.SelectionRequest) CreateSBOMConfig {
+	c.CatalogerSelection = selection
 	return c
 }
 
-// WithNoCatalogers removes all syft-implemented catalogers from the final set of catalogers.
-func (c CreateSBOMConfig) WithNoCatalogers() CreateSBOMConfig {
+// WithoutCatalogers removes all catalogers from the final set of catalogers. This is useful if you want to only use
+// user-provided catalogers (without the default syft-provided catalogers).
+func (c CreateSBOMConfig) WithoutCatalogers() CreateSBOMConfig {
 	c.packageTaskFactories = nil
+	c.persistentPackageTaskFactories = nil
 	return c
 }
 
-// WithPersistentCatalogers allows for adding user-provided catalogers to the final set of catalogers that will always be run
+// WithCatalogers allows for adding user-provided catalogers to the final set of catalogers that will always be run
 // regardless of the source type or any cataloger selections provided.
-func (c CreateSBOMConfig) WithPersistentCatalogers(catalogers ...pkg.Cataloger) CreateSBOMConfig {
+func (c CreateSBOMConfig) WithCatalogers(catalogers ...pkg.Cataloger) CreateSBOMConfig {
 	for _, cat := range catalogers {
 		c.persistentPackageTaskFactories = append(c.persistentPackageTaskFactories,
 			func(cfg task.CatalogingFactoryConfig) task.Task {
@@ -145,10 +135,15 @@ func (c CreateSBOMConfig) WithPersistentCatalogers(catalogers ...pkg.Cataloger) 
 }
 
 // WithCataloger allows for adding a user-provided cataloger to the final set of catalogers that will conditionally
-// be run based on the tags provided, the source type, and the user-provided cataloger selections. If you would like
-// the given cataloger to be run with images, minimally provide the "image" tag. If you would like the given cataloger
-// to be run with directories, minimally provide the "directory" tag.
+// be run based on the tags provided, the source type, and the user-provided cataloger selections. For example, if you
+// would like the given cataloger to be run against container images, minimally provide the "image" tag. If you would
+// like the given cataloger to be run against file systems, minimally provide the "directory" tag. Providing no tags
+// means that the cataloger will always be included in the final cataloger selection.
 func (c CreateSBOMConfig) WithCataloger(cat pkg.Cataloger, tags ...string) CreateSBOMConfig {
+	if len(tags) == 0 {
+		return c.WithCatalogers(cat)
+	}
+
 	c.packageTaskFactories = append(c.packageTaskFactories,
 		func(cfg task.CatalogingFactoryConfig) task.Task {
 			return task.NewPackageTask(cfg, cat, tags...)
@@ -227,23 +222,21 @@ func (c CreateSBOMConfig) packageTasks(src source.Description) ([]task.Task, *ta
 		return nil, nil, fmt.Errorf("unable to create package cataloger tasks: %w", err)
 	}
 
-	defaultTag, err := findDefaultTag(src)
-	if err != nil {
-		return nil, nil, err
+	if len(c.CatalogerSelection.DefaultNamesOrTags) == 0 {
+		defaultTag, err := findDefaultTag(src)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to determine default cataloger tag: %w", err)
+		}
+
+		if defaultTag != "" {
+			c.CatalogerSelection.DefaultNamesOrTags = append(c.CatalogerSelection.DefaultNamesOrTags, defaultTag)
+		}
+
+		c.CatalogerSelection.RemoveNamesOrTags = replaceDefaultTagReferences(defaultTag, c.CatalogerSelection.RemoveNamesOrTags)
+		c.CatalogerSelection.SubSelectTags = replaceDefaultTagReferences(defaultTag, c.CatalogerSelection.SubSelectTags)
 	}
 
-	basis := c.DefaultCatalogersSelection
-	if len(basis) == 0 {
-		// set the entire default cataloger set based on the source
-		basis = []string{defaultTag}
-	} else {
-		// replace "default" with a specific tag based on the source
-		basis = replaceDefaultTagReferences(defaultTag, basis)
-	}
-
-	catalogerSelection := replaceDefaultTagReferences(defaultTag, c.CatalogersSelection)
-
-	finalTasks, selection, err := task.Select(tsks, basis, catalogerSelection)
+	finalTasks, selection, err := task.Select(tsks, c.CatalogerSelection)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -284,35 +277,6 @@ func (c CreateSBOMConfig) environmentTasks() []task.Task {
 	return tsks
 }
 
-func findDefaultTag(src source.Description) (string, error) {
-	switch m := src.Metadata.(type) {
-	case source.StereoscopeImageSourceMetadata:
-		return task.ImageTag, nil
-	case source.FileSourceMetadata, source.DirectorySourceMetadata:
-		return task.DirectoryTag, nil
-	default:
-		return "", fmt.Errorf("unable to determine cataloger defaults for source: %T", m)
-	}
-}
-
-func replaceDefaultTagReferences(defaultTag string, lst []string) []string {
-	for i, tag := range lst {
-		if strings.TrimLeft(strings.ToLower(tag), "-+") != "default" {
-			continue
-		}
-
-		switch {
-		case strings.HasPrefix(tag, "+"):
-			lst[i] = "+" + defaultTag
-		case strings.HasPrefix(tag, "-"):
-			lst[i] = "-" + defaultTag
-		default:
-			lst[i] = defaultTag
-		}
-	}
-	return lst
-}
-
 func (c CreateSBOMConfig) validate() error {
 	if c.Relationships.ExcludeBinaryPackagesWithFileOwnershipOverlap {
 		if !c.Relationships.FileOwnershipOverlap {
@@ -327,16 +291,22 @@ func (c CreateSBOMConfig) Create(src source.Source) (*sbom.SBOM, error) {
 	return CreateSBOM(src, c)
 }
 
-func cleanSelection(tags []string) []string {
-	var cleaned []string
-	for _, tag := range tags {
-		for _, t := range strings.Split(tag, ",") {
-			t = strings.TrimSpace(t)
-			if t == "" {
-				continue
-			}
-			cleaned = append(cleaned, t)
+func findDefaultTag(src source.Description) (string, error) {
+	switch m := src.Metadata.(type) {
+	case source.StereoscopeImageSourceMetadata:
+		return pkgcataloging.ImageTag, nil
+	case source.FileSourceMetadata, source.DirectorySourceMetadata:
+		return pkgcataloging.DirectoryTag, nil
+	default:
+		return "", fmt.Errorf("unable to determine default cataloger tag for source type=%T", m)
+	}
+}
+
+func replaceDefaultTagReferences(defaultTag string, lst []string) []string {
+	for i, tag := range lst {
+		if strings.ToLower(tag) == "default" {
+			lst[i] = defaultTag
 		}
 	}
-	return cleaned
+	return lst
 }

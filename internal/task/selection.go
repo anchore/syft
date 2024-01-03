@@ -7,23 +7,15 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 )
 
 // Selection represents the users request for a subset of tasks to run and the resulting set of task names that were
 // selected. Additionally, all tokens that were matched on to reach the returned conclusion are also provided.
 type Selection struct {
-	Request      SelectionRequest
+	Request      pkgcataloging.SelectionRequest
 	Result       *strset.Set
 	TokensByTask map[string]TokenSelection
-}
-
-// SelectionRequest contains the original user request for a subset of tasks to run as two distinct sets. This also
-// contains the parsed expressions relative to a given set of tasks to help understand how it was interpreted
-// and if ultimately the user request was valid.
-type SelectionRequest struct {
-	Default     []string    `json:"default"`
-	Selection   []string    `json:"selection"`
-	Expressions Expressions `json:"-"`
 }
 
 // TokenSelection represents the tokens that were matched on to either include or exclude a given task (based on expression evaluation).
@@ -50,45 +42,22 @@ func (ts *TokenSelection) merge(other ...TokenSelection) {
 	}
 }
 
-func newEmptySelection(nodes Expressions) Selection {
+func newSelection() Selection {
 	return Selection{
 		Result:       strset.New(),
 		TokensByTask: make(map[string]TokenSelection),
-		Request:      newSelectionRequest(nodes),
-	}
-}
-
-func newSelectionRequest(e Expressions) SelectionRequest {
-	var (
-		// this might be used in JSON output, so collections must be allocated
-		basis      = make([]string, 0)
-		selections = make([]string, 0)
-	)
-	for _, n := range e {
-		if len(n.Errors) > 0 {
-			continue
-		}
-		switch n.Operation {
-		case SetOperation:
-			basis = append(basis, n.Operand)
-		case SubSelectOperation, AddOperation, RemoveOperation:
-			selections = append(selections, n.String())
-		}
-	}
-	return SelectionRequest{
-		Expressions: e,
-		Default:     basis,
-		Selection:   selections,
 	}
 }
 
 // Select parses the given expressions as two sets: expressions that represent a "set" operation, and expressions that
 // represent all other operations. The parsed expressions are then evaluated against the given tasks to return
 // a subset (or the same) set of tasks.
-func Select(allTasks []Task, basis, expressions []string) ([]Task, Selection, error) {
-	nodes := parseExpressions(newExpressionContext(allTasks), basis, expressions)
+func Select(allTasks []Task, selectionRequest pkgcataloging.SelectionRequest) ([]Task, Selection, error) {
+	nodes := newExpressionsFromSelectionRequest(newExpressionContext(allTasks), selectionRequest)
 
 	finalTasks, selection := selectByExpressions(allTasks, nodes)
+
+	selection.Request = selectionRequest
 
 	return finalTasks, selection, nodes.Validate()
 }
@@ -96,7 +65,7 @@ func Select(allTasks []Task, basis, expressions []string) ([]Task, Selection, er
 // selectByExpressions the set of tasks to run based on the given expression(s).
 func selectByExpressions(ts tasks, nodes Expressions) (tasks, Selection) {
 	if len(nodes) == 0 {
-		return ts, newEmptySelection(nodes)
+		return ts, newSelection()
 	}
 
 	finalSet := newSet()
@@ -151,7 +120,6 @@ func selectByExpressions(ts tasks, nodes Expressions) (tasks, Selection) {
 	return finalTasks, Selection{
 		Result:       strset.New(finalTasks.Names()...),
 		TokensByTask: allSelections,
-		Request:      newSelectionRequest(nodes),
 	}
 }
 

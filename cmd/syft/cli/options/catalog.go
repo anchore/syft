@@ -75,8 +75,11 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) syft.CreateSBOMConfig {
 		WithDataGenerationConfig(cfg.ToDataGenerationConfig()).
 		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
-		WithDefaultCatalogers(cfg.DefaultCatalogers...).
-		WithCatalogerSelection(cfg.SelectCatalogers...)
+		WithCatalogerSelection(
+			pkgcataloging.NewSelectionRequest().
+				WithDefaults(cfg.DefaultCatalogers...).
+				WithExpression(cfg.SelectCatalogers...),
+		)
 }
 
 func (cfg Catalog) ToSearchConfig() cataloging.SearchConfig {

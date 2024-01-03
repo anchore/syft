@@ -1,6 +1,7 @@
 package task
 
 import (
+	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpine"
 	"github.com/anchore/syft/syft/pkg/cataloger/arch"
@@ -32,84 +33,84 @@ import (
 func DefaultPackageTaskFactories() PackageTaskFactories {
 	return []packageTaskFactory{
 		// OS package installed catalogers ///////////////////////////////////////////////////////////////////////////
-		newSimplePackageTaskFactory(arch.NewDBCataloger, DirectoryTag, InstalledTag, ImageTag, OSTag, "linux", "alpm", "archlinux"),
-		newSimplePackageTaskFactory(alpine.NewDBCataloger, DirectoryTag, InstalledTag, ImageTag, OSTag, "linux", "apk", "alpine"),
-		newSimplePackageTaskFactory(debian.NewDBCataloger, DirectoryTag, InstalledTag, ImageTag, OSTag, "linux", "dpkg", "debian"),
-		newSimplePackageTaskFactory(gentoo.NewPortageCataloger, DirectoryTag, InstalledTag, ImageTag, OSTag, "linux", "portage", "gentoo"),
-		newSimplePackageTaskFactory(redhat.NewDBCataloger, DirectoryTag, InstalledTag, ImageTag, OSTag, "linux", "rpm", "redhat"),
+		newSimplePackageTaskFactory(arch.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "alpm", "archlinux"),
+		newSimplePackageTaskFactory(alpine.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "apk", "alpine"),
+		newSimplePackageTaskFactory(debian.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "dpkg", "debian"),
+		newSimplePackageTaskFactory(gentoo.NewPortageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "portage", "gentoo"),
+		newSimplePackageTaskFactory(redhat.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "rpm", "redhat"),
 
 		// OS package declared catalogers ///////////////////////////////////////////////////////////////////////////
-		newSimplePackageTaskFactory(redhat.NewArchiveCataloger, DeclaredTag, DirectoryTag, OSTag, "linux", "rpm", "redhat"),
+		newSimplePackageTaskFactory(redhat.NewArchiveCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.OSTag, "linux", "rpm", "redhat"),
 
 		// language-specific package installed catalogers ///////////////////////////////////////////////////////////////////////////
-		newSimplePackageTaskFactory(cpp.NewConanInfoCataloger, InstalledTag, ImageTag, LanguageTag, "cpp", "conan"),
-		newSimplePackageTaskFactory(javascript.NewPackageCataloger, InstalledTag, ImageTag, LanguageTag, "javascript", "node"),
-		newSimplePackageTaskFactory(php.NewComposerInstalledCataloger, InstalledTag, ImageTag, LanguageTag, "php", "composer"),
-		newSimplePackageTaskFactory(r.NewPackageCataloger, InstalledTag, ImageTag, LanguageTag, "r"),
-		newSimplePackageTaskFactory(ruby.NewInstalledGemSpecCataloger, InstalledTag, ImageTag, LanguageTag, "ruby", "gem", "gemspec"),
-		newSimplePackageTaskFactory(rust.NewAuditBinaryCataloger, InstalledTag, ImageTag, LanguageTag, "rust", "binary"),
+		newSimplePackageTaskFactory(cpp.NewConanInfoCataloger, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "cpp", "conan"),
+		newSimplePackageTaskFactory(javascript.NewPackageCataloger, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "javascript", "node"),
+		newSimplePackageTaskFactory(php.NewComposerInstalledCataloger, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "php", "composer"),
+		newSimplePackageTaskFactory(r.NewPackageCataloger, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "r"),
+		newSimplePackageTaskFactory(ruby.NewInstalledGemSpecCataloger, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "ruby", "gem", "gemspec"),
+		newSimplePackageTaskFactory(rust.NewAuditBinaryCataloger, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "rust", "binary"),
 
 		// language-specific package declared catalogers ///////////////////////////////////////////////////////////////////////////
-		newSimplePackageTaskFactory(cpp.NewConanCataloger, DeclaredTag, DirectoryTag, LanguageTag, "cpp", "conan"),
-		newSimplePackageTaskFactory(dart.NewPubspecLockCataloger, DeclaredTag, DirectoryTag, LanguageTag, "dart"),
-		newSimplePackageTaskFactory(dotnet.NewDotnetDepsCataloger, DeclaredTag, DirectoryTag, LanguageTag, "dotnet", "c#"),
-		newSimplePackageTaskFactory(elixir.NewMixLockCataloger, DeclaredTag, DirectoryTag, LanguageTag, "elixir"),
-		newSimplePackageTaskFactory(erlang.NewRebarLockCataloger, DeclaredTag, DirectoryTag, LanguageTag, "erlang"),
-		newSimplePackageTaskFactory(haskell.NewHackageCataloger, DeclaredTag, DirectoryTag, LanguageTag, "haskell", "hackage", "cabal"),
+		newSimplePackageTaskFactory(cpp.NewConanCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "cpp", "conan"),
+		newSimplePackageTaskFactory(dart.NewPubspecLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dart"),
+		newSimplePackageTaskFactory(dotnet.NewDotnetDepsCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#"),
+		newSimplePackageTaskFactory(elixir.NewMixLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "elixir"),
+		newSimplePackageTaskFactory(erlang.NewRebarLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "erlang"),
+		newSimplePackageTaskFactory(haskell.NewHackageCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "haskell", "hackage", "cabal"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return golang.NewGoModuleFileCataloger(cfg.PackagesConfig.Golang)
 			},
-			DeclaredTag, DirectoryTag, LanguageTag, "go", "golang", "gomod",
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "go", "golang", "gomod",
 		),
-		newSimplePackageTaskFactory(java.NewGradleLockfileCataloger, DeclaredTag, DirectoryTag, LanguageTag, "java", "gradle"),
+		newSimplePackageTaskFactory(java.NewGradleLockfileCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "java", "gradle"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return java.NewPomCataloger(cfg.PackagesConfig.JavaArchive)
 			},
-			DeclaredTag, DirectoryTag, LanguageTag, "java", "maven",
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "java", "maven",
 		),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return javascript.NewLockCataloger(cfg.PackagesConfig.Javascript)
 			},
-			DeclaredTag, DirectoryTag, LanguageTag, "javascript", "node", "npm",
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "javascript", "node", "npm",
 		),
-		newSimplePackageTaskFactory(php.NewComposerLockCataloger, DeclaredTag, DirectoryTag, LanguageTag, "php", "composer"),
+		newSimplePackageTaskFactory(php.NewComposerLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "php", "composer"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return python.NewPackageCataloger(cfg.PackagesConfig.Python)
 			},
-			DeclaredTag, DirectoryTag, LanguageTag, "python",
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "python",
 		),
-		newSimplePackageTaskFactory(ruby.NewGemFileLockCataloger, DeclaredTag, DirectoryTag, LanguageTag, "ruby", "gem"),
-		newSimplePackageTaskFactory(ruby.NewGemSpecCataloger, DeclaredTag, DirectoryTag, LanguageTag, "ruby", "gem", "gemspec"),
-		newSimplePackageTaskFactory(rust.NewCargoLockCataloger, DeclaredTag, DirectoryTag, LanguageTag, "rust", "cargo"),
-		newSimplePackageTaskFactory(swift.NewCocoapodsCataloger, DeclaredTag, DirectoryTag, LanguageTag, "swift", "cocoapods"),
-		newSimplePackageTaskFactory(swift.NewSwiftPackageManagerCataloger, DeclaredTag, DirectoryTag, LanguageTag, "swift", "spm"),
+		newSimplePackageTaskFactory(ruby.NewGemFileLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "ruby", "gem"),
+		newSimplePackageTaskFactory(ruby.NewGemSpecCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "ruby", "gem", "gemspec"),
+		newSimplePackageTaskFactory(rust.NewCargoLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "rust", "cargo"),
+		newSimplePackageTaskFactory(swift.NewCocoapodsCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "swift", "cocoapods"),
+		newSimplePackageTaskFactory(swift.NewSwiftPackageManagerCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "swift", "spm"),
 
 		// language-specific package for both image and directory scans (but not necessarily declared) ////////////////////////////////////////
-		newSimplePackageTaskFactory(dotnet.NewDotnetPortableExecutableCataloger, DirectoryTag, InstalledTag, ImageTag, LanguageTag, "dotnet", "c#", "binary"),
-		newSimplePackageTaskFactory(python.NewInstalledPackageCataloger, DirectoryTag, InstalledTag, ImageTag, LanguageTag, "python"),
+		newSimplePackageTaskFactory(dotnet.NewDotnetPortableExecutableCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "dotnet", "c#", "binary"),
+		newSimplePackageTaskFactory(python.NewInstalledPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "python"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return golang.NewGoModuleBinaryCataloger(cfg.PackagesConfig.Golang)
 			},
-			DirectoryTag, InstalledTag, ImageTag, LanguageTag, "go", "golang", "gomod", "binary",
+			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "go", "golang", "gomod", "binary",
 		),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return java.NewArchiveCataloger(cfg.PackagesConfig.JavaArchive)
 			},
-			DirectoryTag, InstalledTag, ImageTag, LanguageTag, "java", "maven",
+			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "java", "maven",
 		),
-		newSimplePackageTaskFactory(java.NewNativeImageCataloger, DirectoryTag, InstalledTag, ImageTag, LanguageTag, "java"),
-		newSimplePackageTaskFactory(nix.NewStoreCataloger, DirectoryTag, InstalledTag, ImageTag, LanguageTag, "nix"),
+		newSimplePackageTaskFactory(java.NewNativeImageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "java"),
+		newSimplePackageTaskFactory(nix.NewStoreCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "nix"),
 
 		// other package catalogers ///////////////////////////////////////////////////////////////////////////
-		newSimplePackageTaskFactory(binary.NewCataloger, DeclaredTag, DirectoryTag, InstalledTag, ImageTag, "binary"),
-		newSimplePackageTaskFactory(githubactions.NewActionUsageCataloger, DeclaredTag, DirectoryTag, "github", "github-actions"),
-		newSimplePackageTaskFactory(githubactions.NewWorkflowUsageCataloger, DeclaredTag, DirectoryTag, "github", "github-actions"),
-		newSimplePackageTaskFactory(sbomCataloger.NewCataloger, ImageTag, DeclaredTag, DirectoryTag, ImageTag, "sbom"), // note: not evidence of installed packages
+		newSimplePackageTaskFactory(binary.NewCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "binary"),
+		newSimplePackageTaskFactory(githubactions.NewActionUsageCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "github", "github-actions"),
+		newSimplePackageTaskFactory(githubactions.NewWorkflowUsageCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "github", "github-actions"),
+		newSimplePackageTaskFactory(sbomCataloger.NewCataloger, pkgcataloging.ImageTag, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "sbom"), // note: not evidence of installed packages
 	}
 }
