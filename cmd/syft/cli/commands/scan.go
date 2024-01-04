@@ -83,7 +83,7 @@ func Scan(app clio.Application) *cobra.Command {
 			"appName": id.Name,
 			"command": "scan",
 		}),
-		Args:    validatePackagesArgs,
+		Args:    validateScanArgs,
 		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
@@ -94,7 +94,7 @@ func Scan(app clio.Application) *cobra.Command {
 	}, opts)
 }
 
-func validatePackagesArgs(cmd *cobra.Command, args []string) error {
+func validateScanArgs(cmd *cobra.Command, args []string) error {
 	return validateArgs(cmd, args, "an image/directory argument is required")
 }
 
