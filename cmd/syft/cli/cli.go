@@ -79,7 +79,7 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 	// we also need the command to have information about the `root` options because of this alias
 	scanCmd := commands.Scan(app)
 
-	// root is currently an alias for the packages command
+	// root is currently an alias for the scan command
 	rootCmd := commands.Root(app, scanCmd)
 
 	// add sub-commands

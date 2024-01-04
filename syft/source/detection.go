@@ -60,7 +60,7 @@ func Detect(userInput string, cfg DetectConfig) (*Detection, error) {
 
 	if src == image.UnknownSource {
 		// only run for these two schemes
-		// only check on packages command, attest we automatically try to pull from userInput
+		// only check on scan command, attest we automatically try to pull from userInput
 		switch ty {
 		case containerImageType, unknownType:
 			ty = containerImageType
