@@ -12,7 +12,7 @@ import (
 func Root(app clio.Application, packagesCmd *cobra.Command) *cobra.Command {
 	id := app.ID()
 
-	opts := defaultPackagesOptions()
+	opts := defaultScanOptions()
 
 	return app.SetupRootCommand(&cobra.Command{
 		Use:     fmt.Sprintf("%s [SOURCE]", app.ID().Name),
@@ -25,7 +25,7 @@ func Root(app clio.Application, packagesCmd *cobra.Command) *cobra.Command {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()
 
-			return runPackages(id, opts, args[0])
+			return runScan(id, opts, args[0])
 		},
 	}, opts)
 }

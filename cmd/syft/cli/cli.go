@@ -77,22 +77,25 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 
 	// since root is aliased as the packages cmd we need to construct this command first
 	// we also need the command to have information about the `root` options because of this alias
-	packagesCmd := commands.Packages(app)
+	scanCmd := commands.Scan(app)
 
-	// rootCmd is currently an alias for the packages command
-	rootCmd := commands.Root(app, packagesCmd)
+	// root is currently an alias for the scan command
+	rootCmd := commands.Root(app, scanCmd)
 
 	// add sub-commands
 	rootCmd.AddCommand(
-		packagesCmd,
+		scanCmd,
+		commands.Packages(app, scanCmd), // this is currently an alias for the scan command
 		commands.Attest(app),
 		commands.Convert(app),
 		clio.VersionCommand(id),
 		cranecmd.NewCmdAuthLogin(id.Name), // syft login uses the same command as crane
 	)
 
-	// explicitly set Cobra output to the real stdout to write things like errors and help
-	rootCmd.SetOut(out)
+	// note: we would direct cobra to use our writer explicitly with rootCmd.SetOut(out) , however this causes
+	// deprecation warnings to be shown to stdout via the writer instead of stderr. This is unfortunate since this
+	// does not appear to be the correct behavior on cobra's part https://github.com/spf13/cobra/issues/1708 .
+	// In the future this functionality should be restored.
 
 	return app, rootCmd
 }
