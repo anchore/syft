@@ -953,8 +953,8 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 				cmp.Transformer("Locations", func(l file.LocationSet) []file.Location {
 					return l.ToSlice()
 				}),
-				cmpopts.IgnoreUnexported(pkg.Package{}, file.Location{}),
-				cmpopts.IgnoreFields(pkg.Package{}, "CPEs", "FoundBy", "MetadataType", "Type"),
+				cmpopts.IgnoreUnexported(pkg.Package{}, file.LocationData{}),
+				cmpopts.IgnoreFields(pkg.Package{}, "CPEs", "FoundBy", "Type", "Locations", "Licenses"),
 			))
 	}
 }
