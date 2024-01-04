@@ -2,6 +2,7 @@ package options
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -9,7 +10,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/mitchellh/go-homedir"
 	"github.com/scylladb/go-set/strset"
 
@@ -44,7 +44,12 @@ func makeSBOMWriter(outputs []string, defaultFile string, encoders []sbom.Format
 }
 
 // parseSBOMOutputFlags utility to parse command-line option strings and retain the existing behavior of default format and file
-func parseSBOMOutputFlags(outputs []string, defaultFile string, encoders []sbom.FormatEncoder) (out []sbomWriterDescription, errs error) {
+func parseSBOMOutputFlags(outputs []string, defaultFile string, encoders []sbom.FormatEncoder) ([]sbomWriterDescription, error) {
+	var (
+		out  []sbomWriterDescription
+		errs []error
+	)
+
 	encoderCollection := format.NewEncoderCollection(encoders...)
 
 	// always should have one option -- we generally get the default of "table", but just make sure
@@ -71,13 +76,13 @@ func parseSBOMOutputFlags(outputs []string, defaultFile string, encoders []sbom.
 
 		enc := encoderCollection.GetByString(name)
 		if enc == nil {
-			errs = multierror.Append(errs, fmt.Errorf(`unsupported output format "%s", supported formats are: %+v`, name, formatVersionOptions(encoderCollection.NameVersions())))
+			errs = append(errs, fmt.Errorf(`unsupported output format "%s", supported formats are: %+v`, name, formatVersionOptions(encoderCollection.NameVersions())))
 			continue
 		}
 
 		out = append(out, newSBOMWriterDescription(enc, file))
 	}
-	return out, errs
+	return out, errors.Join(errs...)
 }
 
 // formatVersionOptions takes a list like ["github-json", "syft-json@11.0.0", "cyclonedx-xml@1.0", "cyclondx-xml@1.1"...]
@@ -200,14 +205,15 @@ func newSBOMMultiWriter(options ...sbomWriterDescription) (_ *sbomMultiWriter, e
 }
 
 // Write writes the SBOM to all writers
-func (m *sbomMultiWriter) Write(s sbom.SBOM) (errs error) {
+func (m *sbomMultiWriter) Write(s sbom.SBOM) error {
+	var errs []error
 	for _, w := range m.writers {
 		err := w.Write(s)
 		if err != nil {
-			errs = multierror.Append(errs, fmt.Errorf("unable to write SBOM: %w", err))
+			errs = append(errs, fmt.Errorf("unable to write SBOM: %w", err))
 		}
 	}
-	return errs
+	return errors.Join(errs...)
 }
 
 // sbomStreamWriter implements sbom.Writer for a given format and io.Writer, also providing a close function for cleanup

@@ -1,12 +1,12 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/hashicorp/go-multierror"
 	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/syft/internal/log"
@@ -41,7 +41,7 @@ func writeEvents(out, err io.Writer, quiet bool, events ...partybus.Event) error
 		},
 	}
 
-	var errs error
+	var errs []error
 	for _, h := range handles {
 		if quiet && h.respectQuiet {
 			continue
@@ -53,11 +53,11 @@ func writeEvents(out, err io.Writer, quiet bool, events ...partybus.Event) error
 			}
 
 			if err := h.dispatch(h.writer, e); err != nil {
-				errs = multierror.Append(errs, err)
+				errs = append(errs, err)
 			}
 		}
 	}
-	return errs
+	return errors.Join(errs...)
 }
 
 func writeReports(writer io.Writer, events ...partybus.Event) error {

@@ -1,9 +1,9 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
@@ -225,7 +225,7 @@ func generateSBOM(id clio.Identification, src source.Source, opts *options.Catal
 }
 
 func buildRelationships(s *sbom.SBOM, src source.Source, tasks []eventloop.Task) error {
-	var errs error
+	var errs []error
 
 	var relationships []<-chan artifact.Relationship
 	for _, task := range tasks {
@@ -234,14 +234,14 @@ func buildRelationships(s *sbom.SBOM, src source.Source, tasks []eventloop.Task)
 		go func(task eventloop.Task) {
 			err := eventloop.RunTask(task, &s.Artifacts, src, c)
 			if err != nil {
-				errs = multierror.Append(errs, err)
+				errs = append(errs, err)
 			}
 		}(task)
 	}
 
 	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
 
-	return errs
+	return errors.Join(errs...)
 }
 
 func mergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {

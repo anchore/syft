@@ -1,13 +1,13 @@
 package cataloger
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"runtime/debug"
 	"sync"
 
 	"github.com/dustin/go-humanize"
-	"github.com/hashicorp/go-multierror"
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/syft/internal/bus"
@@ -105,7 +105,7 @@ func Catalog(resolver file.Resolver, _ *linux.Release, parallelism int, cataloge
 	prog := monitorPackageCatalogingTask()
 
 	// perform analysis, accumulating errors for each failed analysis
-	var errs error
+	var errs []error
 
 	nCatalogers := len(catalogers)
 
@@ -156,7 +156,7 @@ func Catalog(resolver file.Resolver, _ *linux.Release, parallelism int, cataloge
 	// collect the results
 	for result := range results {
 		if result.Error != nil {
-			errs = multierror.Append(errs, result.Error)
+			errs = append(errs, result.Error)
 		}
 		for _, p := range result.Packages {
 			catalog.Add(p)
@@ -166,13 +166,14 @@ func Catalog(resolver file.Resolver, _ *linux.Release, parallelism int, cataloge
 
 	allRelationships = append(allRelationships, pkg.NewRelationships(catalog)...)
 
-	if errs != nil {
-		prog.SetError(errs)
+	err := errors.Join(errs...)
+	if err != nil {
+		prog.SetError(err)
 	} else {
 		prog.SetCompleted()
 	}
 
-	return catalog, allRelationships, errs
+	return catalog, allRelationships, err
 }
 
 func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver) ([]artifact.Relationship, error) {

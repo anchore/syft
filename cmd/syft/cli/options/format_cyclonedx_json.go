@@ -1,7 +1,7 @@
 package options
 
 import (
-	"github.com/hashicorp/go-multierror"
+	"errors"
 
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/sbom"
@@ -18,17 +18,17 @@ func DefaultFormatCyclonedxJSON() FormatCyclonedxJSON {
 func (o FormatCyclonedxJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
 	var (
 		encs []sbom.FormatEncoder
-		errs error
+		errs []error
 	)
 	for _, v := range cyclonedxjson.SupportedVersions() {
 		enc, err := cyclonedxjson.NewFormatEncoderWithConfig(o.buildConfig(v))
 		if err != nil {
-			errs = multierror.Append(errs, err)
+			errs = append(errs, err)
 		} else {
 			encs = append(encs, enc)
 		}
 	}
-	return encs, errs
+	return encs, errors.Join(errs...)
 }
 
 func (o FormatCyclonedxJSON) buildConfig(version string) cyclonedxjson.EncoderConfig {

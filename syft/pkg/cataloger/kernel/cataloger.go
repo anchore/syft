@@ -4,7 +4,7 @@ Package kernel provides a concrete Cataloger implementation for linux kernel and
 package kernel
 
 import (
-	"github.com/hashicorp/go-multierror"
+	"errors"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -56,11 +56,11 @@ func (l LinuxKernelCataloger) Name() string {
 func (l LinuxKernelCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var allPackages []pkg.Package
 	var allRelationships []artifact.Relationship
-	var errs error
+	var errs []error
 
 	kernelPackages, kernelRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelFile, kernelArchiveGlobs...).Catalog(resolver)
 	if err != nil {
-		errs = multierror.Append(errs, err)
+		errs = append(errs, err)
 	}
 
 	allRelationships = append(allRelationships, kernelRelationships...)
@@ -69,7 +69,7 @@ func (l LinuxKernelCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []
 	if l.cfg.CatalogModules {
 		modulePackages, moduleRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelModuleFile, kernelModuleGlobs...).Catalog(resolver)
 		if err != nil {
-			errs = multierror.Append(errs, err)
+			errs = append(errs, err)
 		}
 
 		allPackages = append(allPackages, modulePackages...)
@@ -79,7 +79,7 @@ func (l LinuxKernelCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []
 		allRelationships = append(allRelationships, moduleToKernelRelationships...)
 	}
 
-	return allPackages, allRelationships, errs
+	return allPackages, allRelationships, errors.Join(errs...)
 }
 
 func createKernelToModuleRelationships(kernelPackages, modulePackages []pkg.Package) []artifact.Relationship {

@@ -1,11 +1,11 @@
 package options
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/clio"
@@ -49,14 +49,14 @@ func DefaultOutput() Output {
 }
 
 func (o *Output) PostLoad() error {
-	var errs error
+	var errs []error
 	for _, loader := range []clio.PostLoader{&o.OutputFile, &o.Format} {
 		if err := loader.PostLoad(); err != nil {
-			errs = multierror.Append(errs, err)
+			errs = append(errs, err)
 		}
 	}
 
-	return errs
+	return errors.Join(errs...)
 }
 
 func (o *Output) AddFlags(flags clio.FlagSet) {

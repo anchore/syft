@@ -1,9 +1,8 @@
 package file
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/hashicorp/go-multierror"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -33,18 +32,18 @@ type LocationMetadata struct {
 }
 
 func (m *LocationMetadata) merge(other LocationMetadata) error {
-	var errs error
+	var errs []error
 	for k, v := range other.Annotations {
 		if otherV, ok := m.Annotations[k]; ok {
 			if v != otherV {
 				err := fmt.Errorf("unable to merge location metadata: conflicting values for key=%q: %q != %q", k, v, otherV)
-				errs = multierror.Append(errs, err)
+				errs = append(errs, err)
 				continue
 			}
 		}
 		m.Annotations[k] = v
 	}
-	return errs
+	return errors.Join(errs...)
 }
 
 func (l Location) WithAnnotation(key, value string) Location {

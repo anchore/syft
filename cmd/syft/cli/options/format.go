@@ -1,9 +1,8 @@
 package options
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/hashicorp/go-multierror"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
@@ -64,7 +63,7 @@ func (o *Format) Encoders() ([]sbom.FormatEncoder, error) {
 	list.addWithErr(spdxjson.ID)(o.SPDXJSON.formatEncoders())
 	list.addWithErr(spdxtagvalue.ID)(spdxTagValueEncoders())
 
-	return list.encoders, list.err
+	return list.encoders, errors.Join(list.errs...)
 }
 
 // TODO: when application configuration is made for this format then this should be ported to the options object
@@ -72,33 +71,33 @@ func (o *Format) Encoders() ([]sbom.FormatEncoder, error) {
 func spdxTagValueEncoders() ([]sbom.FormatEncoder, error) {
 	var (
 		encs []sbom.FormatEncoder
-		errs error
+		errs []error
 	)
 	for _, v := range spdxtagvalue.SupportedVersions() {
 		enc, err := spdxtagvalue.NewFormatEncoderWithConfig(spdxtagvalue.EncoderConfig{Version: v})
 		if err != nil {
-			errs = multierror.Append(errs, err)
+			errs = append(errs, err)
 		} else {
 			encs = append(encs, enc)
 		}
 	}
-	return encs, errs
+	return encs, errors.Join(errs...)
 }
 
 type encoderList struct {
 	encoders []sbom.FormatEncoder
-	err      error
+	errs     []error
 }
 
 func (l *encoderList) addWithErr(name sbom.FormatID) func([]sbom.FormatEncoder, error) {
 	return func(encs []sbom.FormatEncoder, err error) {
 		if err != nil {
-			l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: %w", name, err))
+			l.errs = append(l.errs, fmt.Errorf("unable to configure %q format encoder: %w", name, err))
 			return
 		}
 		for _, enc := range encs {
 			if enc == nil {
-				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
+				l.errs = append(l.errs, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
 				continue
 			}
 			l.encoders = append(l.encoders, enc)
@@ -110,7 +109,7 @@ func (l *encoderList) add(name sbom.FormatID) func(...sbom.FormatEncoder) {
 	return func(encs ...sbom.FormatEncoder) {
 		for _, enc := range encs {
 			if enc == nil {
-				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
+				l.errs = append(l.errs, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
 				continue
 			}
 			l.encoders = append(l.encoders, enc)
