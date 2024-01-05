@@ -1,11 +1,12 @@
 # Adding tests for the Binary cataloger
 
 > [!TIP]
-> **TL;DR** to add a test for a new classifier (relative to the `test-fixtures` directory):
->  1. add a new entry to `config.yaml` to track where to get the binary from (verify the entry with `make list`)
->  2. run `make download` to get the binary
->  3. run `go run ./manager add-snippet` and follow the prompts (use `/` to search)
->  4. add a new test case to `Test_Cataloger_PositiveCases` in `cataloger_test.go`
+> **TL;DR** to add a test for a new classifier:
+>  1. head to the correct directory: `cd test-fixtures`
+>  2. add a new entry to `config.yaml` to track where to get the binary from (verify the entry with `make list`)
+>  3. run `make download` to get the binary
+>  4. run `make add-snippet` and follow the prompts (use `/` to search)
+>  5. add a new test case to `Test_Cataloger_PositiveCases` in `../cataloger_test.go`
 
 
 To test the binary cataloger we run it against a set of files ("test fixtures"). There are two kinds of test fixtures:

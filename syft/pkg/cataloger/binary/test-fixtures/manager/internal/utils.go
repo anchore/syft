@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -13,7 +12,7 @@ func SplitFilepath(path string) []string {
 	return strings.Split(path, string(filepath.Separator))
 }
 
-func Sha256SumFile(f *os.File) (string, error) {
+func Sha256SumFile(f io.ReadSeeker) (string, error) {
 	_, err := f.Seek(0, io.SeekStart)
 	if err != nil {
 		return "", fmt.Errorf("unable to seek to start of file: %w", err)

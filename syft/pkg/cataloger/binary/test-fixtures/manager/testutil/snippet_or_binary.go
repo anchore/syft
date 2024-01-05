@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -47,7 +48,7 @@ func SnippetOrBinary(t *testing.T, path string, requireBinary bool) string {
 			if !requireBinary {
 				if v.SnippetPath != "" {
 					t.Logf("using snippet for %q", path)
-					validateSnippet(t, v.BinaryPath, v.SnippetPath)
+					require.NoError(t, validateSnippet(v.BinaryPath, v.SnippetPath))
 					fixturePath = v.SnippetPath
 					break
 				}
@@ -80,26 +81,35 @@ func SnippetOrBinary(t *testing.T, path string, requireBinary bool) string {
 	return filepath.Join("test-fixtures", filepath.Dir(fixturePath))
 }
 
-func validateSnippet(t *testing.T, binaryPath, snippetPath string) {
-	t.Helper()
-
+func validateSnippet(binaryPath, snippetPath string) error {
 	// get a sha256 of the binary
 	if _, err := os.Stat(binaryPath); err != nil {
 		// no binary to validate against (this is ok)
-		return
+		return nil
 	}
 
 	metadata, err := internal.ReadSnippetMetadata(snippetPath)
-	require.NoError(t, err)
+	if err != nil {
+		return err
+	}
 
 	if metadata == nil {
-		return
+		return nil
 	}
 
 	f, err := os.Open(binaryPath)
-	require.NoError(t, err)
-	expected, err := internal.Sha256SumFile(f)
-	require.NoError(t, err)
+	if err != nil {
+		return err
+	}
 
-	require.Equal(t, expected, metadata.FileSha256, "snippet shadows a binary with a different sha256")
+	expected, err := internal.Sha256SumFile(f)
+	if err != nil {
+		return err
+	}
+
+	if expected != metadata.FileSha256 {
+		return errors.New("snippet shadows a binary with a different sha256")
+	}
+
+	return nil
 }
