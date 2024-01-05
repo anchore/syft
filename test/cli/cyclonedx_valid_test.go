@@ -32,7 +32,7 @@ func TestValidCycloneDX(t *testing.T) {
 	}{
 		{
 			name:       "validate cyclonedx output",
-			subcommand: "packages",
+			subcommand: "scan",
 			args:       []string{"-o", "cyclonedx-json"},
 			fixture:    imageFixture,
 			assertions: []traitAssertion{

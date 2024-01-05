@@ -541,6 +541,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "busybox",
 				Version:   "1.36.1",
+				PURL:      "pkg:generic/busybox@1.36.1",
 				Locations: locations("["), // note: busybox is a link to [
 				Metadata:  metadata("busybox-binary", "[", "busybox"),
 			},
@@ -840,6 +841,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "busybox",
 				Version:   "1.35.0",
+				PURL:      "pkg:generic/busybox@1.35.0",
 				Locations: locations("/bin/["),
 				Metadata:  metadata("busybox-binary", "/bin/[", "/bin/busybox"),
 			},
@@ -976,9 +978,10 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 				cmp.Transformer("Locations", func(l file.LocationSet) []file.Location {
 					return l.ToSlice()
 				}),
-				cmpopts.IgnoreUnexported(pkg.Package{}, file.Location{}, file.LocationData{}, pkg.LicenseSet{}),
-				cmpopts.IgnoreFields(pkg.Package{}, "CPEs", "FoundBy", "Type", "Locations"),
-			))
+				cmpopts.IgnoreUnexported(pkg.Package{}, file.LocationData{}),
+				cmpopts.IgnoreFields(pkg.Package{}, "CPEs", "FoundBy", "Type", "Locations", "Licenses"),
+			),
+		)
 	}
 }
 

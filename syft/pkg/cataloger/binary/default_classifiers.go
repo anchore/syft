@@ -131,6 +131,7 @@ var defaultClassifiers = []classifier{
 		EvidenceMatcher: fileContentsVersionMatcher(
 			`(?m)BusyBox\s+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 		Package: "busybox",
+		PURL:    mustPURL("pkg:generic/busybox@version"),
 		CPEs:    singleCPE("cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*"),
 	},
 	{

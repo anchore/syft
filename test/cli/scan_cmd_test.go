@@ -27,7 +27,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 	}{
 		{
 			name: "no-args-shows-help",
-			args: []string{"packages"},
+			args: []string{"scan"},
 			assertions: []traitAssertion{
 				assertInOutput("an image/directory argument is required"),              // specific error that should be shown
 				assertInOutput("Generate a packaged-based Software Bill Of Materials"), // excerpt from help description
@@ -36,7 +36,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "json-output-flag",
-			args: []string{"packages", "-o", "json", coverageImage},
+			args: []string{"scan", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
 				assertInOutput(`"metadataType":"apk-db-entry"`),
@@ -46,7 +46,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "quiet-flag-with-logger",
-			args: []string{"packages", "-qvv", "-o", "json", coverageImage},
+			args: []string{"scan", "-qvv", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
 				assertNoStderr,
@@ -55,7 +55,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "quiet-flag-with-tui",
-			args: []string{"packages", "-q", "-o", "json", coverageImage},
+			args: []string{"scan", "-q", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
 				assertNoStderr,
@@ -64,7 +64,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "multiple-output-flags",
-			args: []string{"packages", "-o", "table", "-o", "json=" + tmp + ".tmp/multiple-output-flag-test.json", coverageImage},
+			args: []string{"scan", "-o", "table", "-o", "json=" + tmp + ".tmp/multiple-output-flag-test.json", coverageImage},
 			assertions: []traitAssertion{
 				assertTableReport,
 				assertFileExists(tmp + ".tmp/multiple-output-flag-test.json"),
@@ -85,7 +85,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		//
 		//	// this is more of an integration test, however, to assert the output we want to see from the application
 		//	// a CLI test is much easier.
-		//	args: []string{"packages", "-vv", badBinariesImage},
+		//	args: []string{"scan", "-vv", badBinariesImage},
 		//	assertions: []traitAssertion{
 		//		assertInOutput("could not parse possible go binary"),
 		//		assertSuccessfulReturnCode,
@@ -96,7 +96,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			env: map[string]string{
 				"SYFT_OUTPUT": "json",
 			},
-			args: []string{"packages", coverageImage},
+			args: []string{"scan", coverageImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
 				assertSuccessfulReturnCode,
@@ -104,7 +104,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "table-output-flag",
-			args: []string{"packages", "-o", "table", coverageImage},
+			args: []string{"scan", "-o", "table", coverageImage},
 			assertions: []traitAssertion{
 				assertTableReport,
 				assertSuccessfulReturnCode,
@@ -112,7 +112,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "default-output-flag",
-			args: []string{"packages", coverageImage},
+			args: []string{"scan", coverageImage},
 			assertions: []traitAssertion{
 				assertTableReport,
 				assertSuccessfulReturnCode,
@@ -120,7 +120,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "legacy-json-output-flag",
-			args: []string{"packages", "-o", "json", coverageImage},
+			args: []string{"scan", "-o", "json", coverageImage},
 			env: map[string]string{
 				"SYFT_FORMAT_JSON_LEGACY": "true",
 			},
@@ -133,7 +133,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "squashed-scope-flag",
-			args: []string{"packages", "-o", "json", "-s", "squashed", coverageImage},
+			args: []string{"scan", "-o", "json", "-s", "squashed", coverageImage},
 			assertions: []traitAssertion{
 				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
@@ -141,7 +141,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "squashed-scope-flag-hidden-packages",
-			args: []string{"packages", "-o", "json", "-s", "squashed", hiddenPackagesImage},
+			args: []string{"scan", "-o", "json", "-s", "squashed", hiddenPackagesImage},
 			assertions: []traitAssertion{
 				assertPackageCount(162),
 				assertNotInOutput("vsftpd"), // hidden package
@@ -150,7 +150,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "all-layers-scope-flag",
-			args: []string{"packages", "-o", "json", "-s", "all-layers", hiddenPackagesImage},
+			args: []string{"scan", "-o", "json", "-s", "all-layers", hiddenPackagesImage},
 			assertions: []traitAssertion{
 				assertPackageCount(163), // packages are now deduplicated for this case
 				assertInOutput("all-layers"),
@@ -160,7 +160,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "all-layers-scope-flag-by-env",
-			args: []string{"packages", "-o", "json", hiddenPackagesImage},
+			args: []string{"scan", "-o", "json", hiddenPackagesImage},
 			env: map[string]string{
 				"SYFT_PACKAGE_CATALOGER_SCOPE": "all-layers",
 			},
@@ -174,7 +174,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		{
 			// we want to make certain that syft can catalog a single go binary and get a SBOM report that is not empty
 			name: "catalog-single-go-binary",
-			args: []string{"packages", "-o", "json", getSyftBinaryLocation(t)},
+			args: []string{"scan", "-o", "json", getSyftBinaryLocation(t)},
 			assertions: []traitAssertion{
 				assertJsonReport,
 				assertStdoutLengthGreaterThan(1000),
@@ -183,7 +183,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "catalog-node-js-binary",
-			args: []string{"packages", "-o", "json", nodeBinaryImage},
+			args: []string{"scan", "-o", "json", nodeBinaryImage},
 			assertions: []traitAssertion{
 				assertJsonReport,
 				assertInOutput("node.js"),
@@ -207,7 +207,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "platform-option-wired-up",
-			args: []string{"packages", "--platform", "arm64", "-o", "json", "registry:busybox:1.31"},
+			args: []string{"scan", "--platform", "arm64", "-o", "json", "registry:busybox:1.31"},
 			assertions: []traitAssertion{
 				assertInOutput("sha256:1ee006886991ad4689838d3a288e0dd3fd29b70e276622f16b67a8922831a853"), // linux/arm64 image digest
 				assertSuccessfulReturnCode,
@@ -215,7 +215,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "json-file-flag",
-			args: []string{"packages", "-o", "json", "--file", filepath.Join(tmp, "output-1.json"), coverageImage},
+			args: []string{"scan", "-o", "json", "--file", filepath.Join(tmp, "output-1.json"), coverageImage},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,
 				assertFileOutput(t, filepath.Join(tmp, "output-1.json"),
@@ -225,7 +225,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "json-output-flag-to-file",
-			args: []string{"packages", "-o", fmt.Sprintf("json=%s", filepath.Join(tmp, "output-2.json")), coverageImage},
+			args: []string{"scan", "-o", fmt.Sprintf("json=%s", filepath.Join(tmp, "output-2.json")), coverageImage},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,
 				assertFileOutput(t, filepath.Join(tmp, "output-2.json"),
@@ -236,7 +236,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		{
 			name: "catalogers-option",
 			// This will detect enable python-package-cataloger, python-installed-package-cataloger and ruby-gemspec cataloger
-			args: []string{"packages", "-o", "json", "--catalogers", "python,ruby-gemspec", coverageImage},
+			args: []string{"scan", "-o", "json", "--catalogers", "python,ruby-gemspec", coverageImage},
 			assertions: []traitAssertion{
 				assertPackageCount(13),
 				assertSuccessfulReturnCode,
@@ -244,7 +244,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "override-default-parallelism",
-			args: []string{"packages", "-vvv", "-o", "json", coverageImage},
+			args: []string{"scan", "-vvv", "-o", "json", coverageImage},
 			env: map[string]string{
 				"SYFT_PARALLELISM": "2",
 			},
@@ -258,7 +258,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "default-parallelism",
-			args: []string{"packages", "-vvv", "-o", "json", coverageImage},
+			args: []string{"scan", "-vvv", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				// the application config in the log matches that of what we expect to have been configured.
 				assertInOutput("parallelism: 1"),
@@ -269,7 +269,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 		},
 		{
 			name: "password and key not in config output",
-			args: []string{"packages", "-vvv", "-o", "json", coverageImage},
+			args: []string{"scan", "-vvv", "-o", "json", coverageImage},
 			env: map[string]string{
 				"SYFT_ATTEST_PASSWORD": "secret_password",
 				"SYFT_ATTEST_KEY":      "secret_key_path",
@@ -278,6 +278,24 @@ func TestPackagesCmdFlags(t *testing.T) {
 				assertNotInOutput("secret_password"),
 				assertNotInOutput("secret_key_path"),
 				assertPackageCount(coverageImageSquashedPackageCount),
+				assertSuccessfulReturnCode,
+			},
+		},
+		// Testing packages alias //////////////////////////////////////////////
+		{
+			name: "packages-alias-command-works",
+			args: []string{"packages", coverageImage},
+			assertions: []traitAssertion{
+				assertTableReport,
+				assertInOutput("Command \"packages\" is deprecated, use `syft scan` instead"),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "packages-alias-command--output-flag",
+			args: []string{"packages", "-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				assertJsonReport,
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -297,7 +315,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 func TestRegistryAuth(t *testing.T) {
 	host := "localhost:17"
 	image := fmt.Sprintf("%s/something:latest", host)
-	args := []string{"packages", "-vvv", fmt.Sprintf("registry:%s", image)}
+	args := []string{"scan", "-vvv", fmt.Sprintf("registry:%s", image)}
 
 	tests := []struct {
 		name       string
