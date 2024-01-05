@@ -51,6 +51,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+LENGTH=$(expr "$LENGTH" + "$PREFIX_LENGTH")
+
 # check if binary file and pattern are provided
 if [ -z "$BINARY_FILE" ] || [ -z "$VERSION" ]; then
     usage

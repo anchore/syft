@@ -1,7 +1,7 @@
 package testutil
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -108,7 +108,7 @@ func validateSnippet(binaryPath, snippetPath string) error {
 	}
 
 	if expected != metadata.FileSha256 {
-		return errors.New("snippet shadows a binary with a different sha256")
+		return fmt.Errorf("snippet shadows a binary with a different sha256 (want %q got %q)", expected, metadata.FileSha256)
 	}
 
 	return nil

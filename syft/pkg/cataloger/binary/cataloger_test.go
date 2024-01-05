@@ -315,7 +315,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			// note: dynamic (non-snippet) test case
 			logicalFixture: "redis-server/5.0.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "redis",
@@ -327,7 +326,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			// note: dynamic (non-snippet) test case
 			logicalFixture: "redis-server/6.0.16/linux-amd64",
 			expected: pkg.Package{
 				Name:      "redis",
@@ -339,7 +337,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			// note: dynamic (non-snippet) test case
 			logicalFixture: "redis-server/7.0.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "redis",
@@ -351,7 +348,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			// note: dynamic (non-snippet) test case
 			logicalFixture: "redis-server/7.0.14/linux-amd64",
 			expected: pkg.Package{
 				Name:      "redis",
