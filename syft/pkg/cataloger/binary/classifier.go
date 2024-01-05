@@ -20,10 +20,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
-var emptyPURL = packageurl.PackageURL{}
-
-// classifier is a generic package classifier that can be used to match a package definition
-// to a file that meets the given content criteria of the evidenceMatcher.
+// Classifier is a generic package classifier that can be used to match a package definition
+// to a file that meets the given content criteria of the EvidenceMatcher.
 type Classifier struct {
 	Class string
 
@@ -32,18 +30,12 @@ type Classifier struct {
 
 	// EvidenceMatcher is what will be used to match against the file in the source
 	// location. If the matcher returns a package, the file will be considered a candidate.
-	EvidenceMatcher evidenceMatcher
+	EvidenceMatcher EvidenceMatcher
 
 	// Information below is used to specify the Package information when returned
 
 	// Package is the name to use for the package
 	Package string
-
-	// Language is the language to classify this package as
-	Language pkg.Language
-
-	// Type is the package type to use for the package
-	Type pkg.Type
 
 	// PURL is the Package URL to use when generating a package
 	PURL packageurl.PackageURL
@@ -52,10 +44,10 @@ type Classifier struct {
 	CPEs []cpe.CPE
 }
 
-// evidenceMatcher is a function called to catalog Packages that match some sort of evidence
-type evidenceMatcher func(resolver file.Resolver, classifier Classifier, location file.Location) ([]pkg.Package, error)
+// EvidenceMatcher is a function called to catalog Packages that match some sort of evidence
+type EvidenceMatcher func(resolver file.Resolver, classifier Classifier, location file.Location) ([]pkg.Package, error)
 
-func EvidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
+func evidenceMatchers(matchers ...EvidenceMatcher) EvidenceMatcher {
 	return func(resolver file.Resolver, classifier Classifier, location file.Location) ([]pkg.Package, error) {
 		for _, matcher := range matchers {
 			match, err := matcher(resolver, classifier, location)
@@ -70,7 +62,7 @@ func EvidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
 	}
 }
 
-func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) evidenceMatcher {
+func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) EvidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
 	return func(resolver file.Resolver, classifier Classifier, location file.Location) ([]pkg.Package, error) {
 		if !pat.MatchString(location.RealPath) {
@@ -116,7 +108,7 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 	}
 }
 
-func FileContentsVersionMatcher(pattern string) evidenceMatcher {
+func FileContentsVersionMatcher(pattern string) EvidenceMatcher {
 	pat := regexp.MustCompile(pattern)
 	return func(resolver file.Resolver, classifier Classifier, location file.Location) ([]pkg.Package, error) {
 		contents, err := getContents(resolver, location)
@@ -136,7 +128,7 @@ func FileContentsVersionMatcher(pattern string) evidenceMatcher {
 }
 
 //nolint:gocognit
-func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evidenceMatcher) evidenceMatcher {
+func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher EvidenceMatcher) EvidenceMatcher {
 	pat := regexp.MustCompile(sharedLibraryPattern)
 	return func(resolver file.Resolver, classifier Classifier, location file.Location) (packages []pkg.Package, _ error) {
 		libs, err := sharedLibraries(resolver, location)

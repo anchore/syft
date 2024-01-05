@@ -864,7 +864,7 @@ func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 }
 
 func Test_Cataloger_CustomClassifiers(t *testing.T) {
-	defaultClassifers := GetDefaultClassifiers()
+	defaultClassifers := DefaultClassifiers()
 
 	golangExpected := pkg.Package{
 		Name:      "go",

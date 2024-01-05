@@ -18,14 +18,13 @@ type CatalogerConfig struct {
 
 func DefaultCatalogerConfig() CatalogerConfig {
 	return CatalogerConfig{
-		Classifiers: GetDefaultClassifiers(),
+		Classifiers: DefaultClassifiers(),
 	}
 }
 
 func NewCataloger(cfg CatalogerConfig) pkg.Cataloger {
-	Classifiers := cfg.Classifiers
 	return &Cataloger{
-		Classifiers,
+		classifiers: cfg.Classifiers,
 	}
 }
 
@@ -35,7 +34,7 @@ func NewCataloger(cfg CatalogerConfig) pkg.Cataloger {
 // related runtimes like Python, Go, Java, or Node. Some exceptions can be made for widely-used binaries such
 // as busybox.
 type Cataloger struct {
-	Classifiers []Classifier
+	classifiers []Classifier
 }
 
 // Name returns a string that uniquely describes the Cataloger
@@ -49,7 +48,7 @@ func (c Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Re
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
-	for _, cls := range c.Classifiers {
+	for _, cls := range c.classifiers {
 		log.WithFields("classifier", cls.Class).Trace("cataloging binaries")
 		newPkgs, err := catalog(resolver, cls)
 		if err != nil {

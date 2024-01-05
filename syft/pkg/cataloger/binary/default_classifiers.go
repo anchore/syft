@@ -2,15 +2,15 @@ package binary
 
 import (
 	"github.com/anchore/syft/syft/cpe"
-	"github.com/anchore/syft/syft/pkg"
 )
 
-func GetDefaultClassifiers() []Classifier {
+//nolint:funlen
+func DefaultClassifiers() []Classifier {
 	return []Classifier{
 		{
 			Class:    "python-binary",
 			FileGlob: "**/python*",
-			EvidenceMatcher: EvidenceMatchers(
+			EvidenceMatcher: evidenceMatchers(
 				// try to find version information from libpython shared libraries
 				sharedLibraryLookup(
 					`^libpython[0-9]+(?:\.[0-9]+)+[a-z]?\.so.*$`,
@@ -68,7 +68,7 @@ func GetDefaultClassifiers() []Classifier {
 		{
 			Class:    "redis-binary",
 			FileGlob: "**/redis-server",
-			EvidenceMatcher: EvidenceMatchers(
+			EvidenceMatcher: evidenceMatchers(
 				FileContentsVersionMatcher(`(?s)payload %5.*?(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}`),
 				FileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12}-[0-9]{19}\x00.*?payload %5`),
 			),
@@ -113,10 +113,9 @@ func GetDefaultClassifiers() []Classifier {
 			FileGlob: "**/node",
 			EvidenceMatcher: FileContentsVersionMatcher(
 				`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-			Package:  "node",
-			Language: pkg.JavaScript,
-			PURL:     mustPURL("pkg:generic/node@version"),
-			CPEs:     singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*"),
+			Package: "node",
+			PURL:    mustPURL("pkg:generic/node@version"),
+			CPEs:    singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "go-binary-hint",
@@ -138,7 +137,7 @@ func GetDefaultClassifiers() []Classifier {
 		{
 			Class:    "haproxy-binary",
 			FileGlob: "**/haproxy",
-			EvidenceMatcher: EvidenceMatchers(
+			EvidenceMatcher: evidenceMatchers(
 				FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 				FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
 			),
@@ -274,7 +273,7 @@ func GetDefaultClassifiers() []Classifier {
 		{
 			Class:    "ruby-binary",
 			FileGlob: "**/ruby",
-			EvidenceMatcher: EvidenceMatchers(
+			EvidenceMatcher: evidenceMatchers(
 				rubyMatcher,
 				sharedLibraryLookup(
 					// try to find version information from libruby shared libraries
