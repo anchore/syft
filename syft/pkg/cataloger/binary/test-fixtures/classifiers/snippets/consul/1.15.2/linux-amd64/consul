@@ -1,0 +1,12 @@
+name: consul
+offset: 57272433
+length: 100
+snippetSha256: a4a955b180d6df471797a9f17f5ebf6f23b92d688d40532712683922e119dac0
+fileSha256: 5c5fed218247eaf43c3b54008b6a4c5d5cfa1b38539d6e7bfc09ac04623389fc
+
+### byte snippet to follow ###
+e%7D" />
+
+  <!-- CONSUL_VERSION: 1.15.2
+ -->
+  <link rel="icon" href="{{.ContentPath}}assets/favicon

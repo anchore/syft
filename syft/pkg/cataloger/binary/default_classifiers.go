@@ -234,8 +234,6 @@ func DefaultClassifiers() []Classifier {
 			Class:    "mysql-binary",
 			FileGlob: "**/mysql",
 			EvidenceMatcher: FileContentsVersionMatcher(
-				// ../../mysql-8.0.34
-				// /mysql-5.6.51/bld/client
 				`(?m).*/mysql-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 			Package: "mysql",
 			PURL:    mustPURL("pkg:generic/mysql@version"),
@@ -287,9 +285,15 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "erlang-binary",
 			FileGlob: "**/erlexec",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
-				`(?m)\<artificial\>\x00/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+?)/erts/`,
+			EvidenceMatcher: evidenceMatchers(
+				FileContentsVersionMatcher(
+					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
+					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+\.[0-9]+)?)/erts/`,
+				),
+				FileContentsVersionMatcher(
+					// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
+					`(?m)/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+(\.[0-9]+\.[0-9]+)?)/erts/`,
+				),
 			),
 			Package: "erlang",
 			PURL:    mustPURL("pkg:generic/erlang@version"),

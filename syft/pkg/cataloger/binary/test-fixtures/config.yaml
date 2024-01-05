@@ -1,0 +1,411 @@
+download-path: classifiers/bin
+snippet-path: classifiers/snippets
+
+# this section is for pulling entire binaries out of container images. You can pull multiple binaries from one or more
+# images, where a list of images is used to enumerate multiple platforms for the same logical image. The group name
+# for the test fixture defaults to the path of the binary extracted. If there is more than one binary extracted from
+# the image(s) then you will need to specify a group name explicitly.
+from-images:
+
+  # from the positive snippets...
+
+  - name: busybox
+    version: 1.36.1
+    images: 
+      - ref: busybox:1.36.1@sha256:058f0df5310fbbbfea7e81a3a3e2b4bf3452438ec841138d170e170adbbd27a4
+        platform: linux/amd64
+    paths:
+      - /bin/[
+
+  - version: 5.1.16
+    images:
+      - ref: bash:5.1.16@sha256:c7a903a541d8f5fe693cbe7f5ece18a1b6a03734c76092d2b153d7e98a964927
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/bash
+
+  - version: 25.3.2.6
+    images:
+      - ref: erlang:25.3.2.6@sha256:0d1e530ec0e8047094f0a1d841754515bad9b0554260a3147fb34df31b3064fe
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/erlang/erts-13.2.2.3/bin/erlexec
+
+  - version: 26.2.0.0
+    images:
+      - ref: erlang:26.2.0.0@sha256:31c3aa505fbe7526ca83c57b64e56ba505e62733e7e6518f4c06219de6e7396e
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/erlang/erts-14.2/bin/erlexec
+
+  - version: 1.21.3
+    images:
+      - ref: golang:1.21.3@sha256:3ce8313c3513515040870c55e0c041a2b94f3576a58cfd3948633604214aa811
+        platform: linux/amd64
+    paths:
+      - /usr/local/go/bin/go
+
+  - version: 1.5.14
+    images:
+      - ref: haproxy:1.5.14@sha256:3d57e3921cc84e860f764e863ce729dd0765e3d28d444775127bc42d68f98e10
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/haproxy
+
+  - version: 1.8.22
+    images:
+      - ref: haproxy:1.8.22@sha256:166ea77f87599b8a679921de4aa847e776801f3f07b4f17ce4e2aec7fb54e3ea
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/haproxy
+
+  - version: 2.7.3
+    images:
+      - ref: haproxy:2.7.3@sha256:17d8aa6bf16882a294bdcccc757dd4002045f34b719e9f94dfd4801614801aea
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/haproxy
+
+  - version: 2.4.54
+    images:
+      - ref: httpd:2.4.54@sha256:c13feaef62bdb03e65e645f47d9780adea5a080c78eb9e4b3c32e861327262b4
+        platform: linux/amd64
+    paths:
+      - /usr/local/apache2/bin/httpd
+
+  - name: java-jre-ibm
+    version: 1.8.0_391
+    images:
+      - ref: ibmjava:8@sha256:05ef6b0f754aa3a8cebcec36260a70c234a217b21240a998604f33459037bc08
+        platform: linux/amd64
+    paths:
+      - /opt/ibm/java/jre/bin/java
+
+  - version: 10.6.15
+    images:
+      - ref: mariadb:10.6.15@sha256:92d499d9e02e92dc55c8160ef4004aa07f2e835197b18864ed214ca441e0dcfc
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mariadb
+
+# TODO: add pattern for mariadbd
+#  - version: 10.6.15
+#    images:
+#      - ref: mariadb:10.6.15@sha256:92d499d9e02e92dc55c8160ef4004aa07f2e835197b18864ed214ca441e0dcfc
+#        platform: linux/amd64
+#    paths:
+#      - /usr/sbin/mariadbd
+
+  - version: 1.6.18
+    images:
+      - ref: memcached:1.6.18@sha256:9af8e788d5f7f4dc82fd49cf4a7efff1a0b5b4673085bc88f3ccb8a1c772ab3e
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/memcached
+
+  - version: 5.6.51
+    images:
+      - ref: mysql:5.6.51@sha256:897086d07d1efa876224b147397ea8d3147e61dd84dce963aace1d5e9dc2802d
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mysql
+
+  - version: 8.0.34
+    images:
+      - ref: mysql:8.0.34@sha256:8b8835a2c32cd7357a5d2ea4b49ad870ff519c8c1d4add362803feddf4a0a973
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mysql
+
+# TODO: add pattern for mysqld
+#  - version: 5.6.51
+#    images:
+#      - ref: mysql:5.6.51@sha256:897086d07d1efa876224b147397ea8d3147e61dd84dce963aace1d5e9dc2802d
+#        platform: linux/amd64
+#    paths:
+#      - /usr/sbin/mysqld
+#
+#  - version: 8.0.34
+#    images:
+#      - ref: mysql:8.0.34@sha256:8b8835a2c32cd7357a5d2ea4b49ad870ff519c8c1d4add362803feddf4a0a973
+#        platform: linux/amd64
+#    paths:
+#      - /usr/sbin/mysqld
+
+  - version: 1.25.1
+    images:
+      - ref: nginx:1.25.1@sha256:73e957703f1266530db0aeac1fd6a3f87c1e59943f4c13eb340bb8521c6041d7
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/nginx
+
+  - name: nginx-openresty
+    version: 1.21.4.3
+    images:
+      - ref: openresty/openresty:1.21.4.3-2-alpine-fat@sha256:9f9b9d86f2a0f903b1226c3e8a6790293cbb58e521a186ac0031a030ea42c39b
+        platform: linux/amd64
+    paths:
+      - /usr/local/openresty/nginx/sbin/nginx
+
+  - version: 19.2.0
+    images:
+      - ref: node:19.2.0@sha256:9bf5846b28f63acab0ccb0a39a245fbc414e6b7ecd467282f58016537c06e159
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/node
+
+  - name: java-jre-openjdk
+    version: 1.8.0_352-b08
+    images:
+      # note: "openjdk" dockerhub repo is deprecated
+      - ref: amazoncorretto:8u352@sha256:392eb90b5f1455578f513e127c599aa4410af0c05b12b81dc7856ee316ecd5d9
+        platform: linux/amd64
+    paths:
+      - /usr/lib/jvm/java-1.8.0-amazon-corretto/bin/java
+
+  - name: java-jre-openjdk
+    version: 11.0.17
+    images:
+      # note: "openjdk" dockerhub repo is deprecated
+      - ref: amazoncorretto:11.0.17@sha256:792e94e61407ef28d981a0b9a9aeb309690375a61a61f17808499ff16864d0a3
+        platform: linux/amd64
+    paths:
+      - /usr/lib/jvm/java-11-amazon-corretto/bin/java
+
+# TODO: this is not the original binary used in the test fixture
+#  - version: 5.12.5
+#    images:
+#      - ref: perl:5.12.5@sha256:68169b63f0dc2fd481563ef02d4173979d981e43e5d36bb39af56a5959961c5e
+#        platform: linux/amd64
+#    paths:
+#      - /usr/bin/perl
+#
+  # TODO: this is not the original binary used in the test fixture
+#  - version: 5.20.0
+#    images:
+#      - ref: perl:5.20.0@sha256:f1b8d36e0be0fd426c40e478fc84ea7603d712158001d72d1b3f929f4e1543f3
+#        platform: linux/amd64
+#    paths:
+#      - /usr/bin/perl
+#
+  # TODO: this is not the original binary used in the test fixture
+#  - version: 5.37.8
+#    images:
+#      - ref: perl:5.37.8@sha256:6a432250d7bf0b736c58772a6a50e2bf9d1485cd70ac3af10eff6cfccde3957b
+#        platform: linux/amd64
+#    paths:
+#      - /usr/bin/perl
+
+  - version: 15.1
+    images:
+      - ref: postgres:15.1@sha256:b4140dd3a62f364f16a82c1bd88d28b9887ecb47f07dbe2941237d073574d428
+        platform: linux/amd64
+    paths:
+      - /usr/lib/postgresql/15/bin/postgres
+
+  - version: 15beta4
+    images:
+      - ref: postgres:15beta4@sha256:f2b4d06ac06f0f50236c39289edfd6701eb1313d2d17f3028c8df0c00f2b21db
+        platform: linux/amd64
+    paths:
+      - /usr/lib/postgresql/15/bin/postgres
+
+  - version: 9.6.24
+    images:
+      - ref: postgres:9.6.24@sha256:15055f7b681334cbf0212b58e510148b1b23973639e3904260fb41fa0761a103
+        platform: linux/amd64
+    paths:
+      - /usr/lib/postgresql/9.6/bin/postgres
+
+  - name: python-shared-lib
+    version: 3.7.4
+    images:
+      - ref: python:3.7.4@sha256:5be0532f833568d838b7b2d8726b66d0b8abe26f50a15b566aea4611d5951eac
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/libpython3.7m.so.1.0
+
+  - version: 2.8.23
+    images:
+      - ref: redis:2.8.23@sha256:e507029ca6a11b85f8628ff16d7ff73ae54582f16fd757e64431f5ca6d27a13c
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 4.0.11
+    images:
+      - ref: redis:4.0.11@sha256:ee891094f0bb1a76d11cdca6e33c4fdce5cba1f13234c5896d341f6d741034b1
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 5.0.0
+    images:
+      - ref: redis:5.0.0@sha256:481678b4b5ea1cb4e8d38ed6677b2da9b9e057cf7e1b6c988ba96651c6f6eff3
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 6.0.16
+    images:
+      - ref: redis:6.0.16@sha256:4a32539b1cc25f98d8667d9854840d7bdd27596268ca1ec1e10b5391534c004b
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 7.0.0
+    images:
+      - ref: redis:7.0.0@sha256:803ec2b3b74c0f95758bf680d7caa370fa8d3b6058b4d57d6485d06d8027a588
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 7.0.14
+    images:
+      - ref: redis:7.0.14@sha256:f5b0eadaa031b40ca70ab2c6517995da56f763c3929264d7f69b72a94a1b48c1
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 7.2.3
+    images:
+      - ref: redis:7.2.3@sha256:d4c84914b872521e215f77d8845914c2268a96b0e35bacd5691e1f5e1f88b500
+        platform: linux/amd64
+      - ref: redis:7.2.3@sha256:a0a0c38b31011b813cddf78d997f8ccba13019c27efd386984b0cfc1e4b618ff
+        platform: linux/arm64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 1.9.3p551
+    images:
+      - ref: ruby:1.9.3-p551@sha256:56b4a74e4fc2492b3b857bc94454dfa910f61e823a4bfab275d279bfa218eb05
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+
+  - name: rust-libstd
+    version: 1.50.0
+    images:
+      - ref: rust:1.50.0@sha256:a37b2a5ba365b9ad5a1b12ff924adb0c0cc27d994e076bbc488a91befb69bf0b
+        platform: linux/amd64
+    paths:
+      - /usr/local/rustup/toolchains/1.50.0-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-6f77337c1826707d.so
+
+  - name: rust-libstd
+    version: 1.67.1
+    images:
+      - ref: rust:1.67.1@sha256:80b9716cb59872769d49f5185a346e5f859081b02338e4aaaa04a8cc7fb884ae
+        platform: linux/amd64
+    paths:
+      - /usr/local/rustup/toolchains/1.67.1-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-c6192dd4c4d410ac.so
+
+  - name: rust-libstd-musl
+    version: 1.67.1
+    images:
+      - ref: rust:1.67.1-alpine@sha256:555332e59c7513233b0f9b52e4fad2924e36128edcb0f80aa97fb34efee3da0e
+        platform: linux/amd64
+    paths:
+      - /usr/local/rustup/toolchains/1.67.1-x86_64-unknown-linux-musl/lib/rustlib/x86_64-unknown-linux-musl/lib/libstd-86aefecbddda356d.so
+
+
+  - version: 1.7.34
+    images:
+      - ref: traefik:1.7.34@sha256:d7bacaf9ca8d59b0e7c304920629d98bb98a545127ca4b10e16c8b252b9351b9
+        platform: linux/amd64
+    paths:
+      - /traefik
+
+  - version: 2.9.6
+    images:
+      - ref: traefik:v2.9.6@sha256:9e76f2ec1bc470ae73a7306acce18e6ca1dbb582e7366b31cbf439f631cda12c
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/traefik
+
+
+  # from the original dynamic fixtures...
+
+  - name: python-rhel-shared-libs
+    version: 3.9
+    images:
+      - ref: registry.access.redhat.com/ubi8/python-39@sha256:f3cf958b96ce016b63e3e163e488f52e42891304dafef5a0811563f22e3cbad0
+        platform: linux/amd64
+    paths:
+      - /usr/bin/python3.9
+      - /usr/lib64/libpython3.9.so.1.0
+
+  - name: python-slim-shared-libs
+    version: 3.11
+    images:
+      - ref: python:3.11-slim@sha256:0b106e1d2bf485c2a41474bc9cd5103e9eea4e179f40f10741b53b127059221e
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/python3.11
+      - /usr/local/lib/libpython3.11.so.1.0
+
+  - version: 3.9.16
+    images:
+      - ref: python:3.9.16-bullseye@sha256:93fb93c461a2e47a2176706fad1f39eaacd5dd40e19c0b018699a28c03eb2e2a
+        platform: linux/amd64
+    paths:
+      - /usr/bin/python3.9
+
+  - name: python-alpine-shared-libs
+    version: 3.4
+    images:
+      - ref: python:3.4-alpine@sha256:c210b660e2ea553a7afa23b41a6ed112f85dbce25cbcb567c75dfe05342a4c4b
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/python3.4
+      - /usr/local/lib/libpython3.4m.so.1.0
+
+  - name: ruby-bullseye-shared-libs
+    version: 3.2.1
+    images:
+      - ref: ruby:3.2.1-bullseye@sha256:b4a140656b0c5d26c0a80559b228b4d343f3fdbf56682fcbe88f6db1fa9afa6b
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.3.2.1
+      - /usr/local/lib/libruby.so.3.2
+
+  - name: ruby-bullseye-shared-libs
+    version: 2.7.7
+    images:
+      - ref: ruby:2.7.7-bullseye@sha256:055191740a063f33fef1f09423e5ed8f91143aae62a3772a90910118464c5120
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.2.7.7
+      - /usr/local/lib/libruby.so.2.7
+
+  - name: ruby-shared-libs
+    version: 2.6.10
+    images:
+      - ref: ruby:2.6.10@sha256:771a810704167e55da8a19970c5dfa6eb795dfee32547adffa29ea72703f7243
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.2.6.10
+      - /usr/local/lib/libruby.so.2.6
+
+  - version: 3.11.1
+    images:
+      - ref: alpine/helm:3.11.1@sha256:8628e3695fb743a8b9de89626f1b7a221280c2152c0e288c2504e59b68233e8b
+        platform: linux/amd64
+    paths:
+      - /usr/bin/helm
+
+  - version: 3.10.3
+    images:
+      - ref: argoproj/argocd:v2.6.4@sha256:61fcbba187ff53c00696cb580edf70cada59c45cf399d8477631acf43cf522ee
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/helm
+
+  - version: 1.15.2
+    images:
+      - ref: hashicorp/consul:1.15.2@sha256:c2169f3bb18dd947ae8eb5f6766896695c71fb439f050a3343e0007d895615b8
+        platform: linux/amd64
+    paths:
+      - /bin/consul
