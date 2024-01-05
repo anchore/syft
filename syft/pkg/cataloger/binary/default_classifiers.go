@@ -39,6 +39,14 @@ func DefaultClassifiers() []Classifier {
 			},
 		},
 		{
+			Class:    "pypy-binary-lib",
+			FileGlob: "**/libpypy*.so*",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)\[PyPy (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			Package: "pypy",
+			PURL:    mustPURL("pkg:generic/pypy@version"),
+		},
+		{
 			Class:    "go-binary",
 			FileGlob: "**/go",
 			EvidenceMatcher: FileContentsVersionMatcher(
