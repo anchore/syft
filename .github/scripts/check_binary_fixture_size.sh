@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # current limit for fixture size
-size=600
+size=1000
 
 if [ $# -eq 0 ]; then
   echo "Usage: $0 <directory>"
