@@ -870,6 +870,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("gcc-binary"),
 			},
 		},
+		{
+			logicalFixture: "wp-cli/2.9.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "wp-cli",
+				Version:   "2.9.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/wp-cli@2.9.0",
+				Locations: locations("wp"),
+				Metadata:  metadata("wordpress-cli-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
