@@ -809,7 +809,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.logicalFixture, func(t *testing.T) {
-			c := NewCataloger()
+			c := NewCataloger(DefaultCatalogerConfig())
 
 			// logicalFixture is the logical path to the full binary or snippet. This is relative to the test-fixtures/classifiers/snippets
 			// or test-fixtures/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
@@ -854,7 +854,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := NewCataloger()
+			c := NewCataloger(DefaultCatalogerConfig())
 
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
 			src, err := source.NewFromStereoscopeImageObject(img, test.fixtureImage, nil)
@@ -885,7 +885,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 }
 
 func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
-	c := NewCataloger()
+	c := NewCataloger(DefaultCatalogerConfig())
 
 	src, err := source.NewFromDirectoryPath("test-fixtures/classifiers/negative")
 	assert.NoError(t, err)
@@ -896,6 +896,129 @@ func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 	actualResults, _, err := c.Catalog(resolver)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(actualResults))
+}
+
+func Test_Cataloger_CustomClassifiers(t *testing.T) {
+	defaultClassifers := DefaultClassifiers()
+
+	golangExpected := pkg.Package{
+		Name:      "go",
+		Version:   "1.14",
+		PURL:      "pkg:generic/go@1.14",
+		Locations: locations("go"),
+		Metadata:  metadata("go-binary"),
+	}
+	customExpected := pkg.Package{
+		Name:      "foo",
+		Version:   "1.2.3",
+		PURL:      "pkg:generic/foo@1.2.3",
+		Locations: locations("foo"),
+		Metadata:  metadata("foo-binary"),
+	}
+	fooClassifier := Classifier{
+		Class:    "foo-binary",
+		FileGlob: "**/foo",
+		EvidenceMatcher: FileContentsVersionMatcher(
+			`(?m)foobar\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		Package: "foo",
+		PURL:    mustPURL("pkg:generic/foo@version"),
+		CPEs:    singleCPE("cpe:2.3:a:foo:foo:*:*:*:*:*:*:*:*"),
+	}
+
+	tests := []struct {
+		name       string
+		config     CatalogerConfig
+		fixtureDir string
+		expected   *pkg.Package
+	}{
+		{
+			name: "empty-negative",
+			config: CatalogerConfig{
+				Classifiers: []Classifier{},
+			},
+			fixtureDir: "test-fixtures/custom/go-1.14",
+			expected:   nil,
+		},
+		{
+			name: "default-positive",
+			config: CatalogerConfig{
+				Classifiers: defaultClassifers,
+			},
+			fixtureDir: "test-fixtures/custom/go-1.14",
+			expected:   &golangExpected,
+		},
+		{
+			name: "nodefault-negative",
+			config: CatalogerConfig{
+				Classifiers: []Classifier{fooClassifier},
+			},
+			fixtureDir: "test-fixtures/custom/go-1.14",
+			expected:   nil,
+		},
+		{
+			name: "default-extended-positive",
+			config: CatalogerConfig{
+				Classifiers: append(
+					append([]Classifier{}, defaultClassifers...),
+					fooClassifier,
+				),
+			},
+			fixtureDir: "test-fixtures/custom/go-1.14",
+			expected:   &golangExpected,
+		},
+		{
+			name: "default-custom-negative",
+			config: CatalogerConfig{
+
+				Classifiers: append(
+					append([]Classifier{}, defaultClassifers...),
+					Classifier{
+						Class:           "foo-binary",
+						FileGlob:        "**/foo",
+						EvidenceMatcher: FileContentsVersionMatcher(`(?m)not there`),
+						Package:         "foo",
+						PURL:            mustPURL("pkg:generic/foo@version"),
+						CPEs:            singleCPE("cpe:2.3:a:foo:foo:*:*:*:*:*:*:*:*"),
+					},
+				),
+			},
+			fixtureDir: "test-fixtures/custom/extra",
+			expected:   nil,
+		},
+		{
+			name: "default-cutsom-positive",
+			config: CatalogerConfig{
+				Classifiers: append(
+					append([]Classifier{}, defaultClassifers...),
+					fooClassifier,
+				),
+			},
+			fixtureDir: "test-fixtures/custom/extra",
+			expected:   &customExpected,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c := NewCataloger(test.config)
+
+			src, err := source.NewFromDirectoryPath(test.fixtureDir)
+			require.NoError(t, err)
+
+			resolver, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+
+			packages, _, err := c.Catalog(resolver)
+			require.NoError(t, err)
+
+			if test.expected == nil {
+				assert.Equal(t, 0, len(packages))
+			} else {
+				require.Len(t, packages, 1)
+
+				assertPackagesAreEqual(t, *test.expected, packages[0])
+			}
+		})
+	}
 }
 
 func locations(locations ...string) file.LocationSet {
@@ -1047,7 +1170,7 @@ func (p *panicyResolver) FileMetadataByLocation(_ file.Location) (file.Metadata,
 var _ file.Resolver = (*panicyResolver)(nil)
 
 func Test_Cataloger_ResilientToErrors(t *testing.T) {
-	c := NewCataloger()
+	c := NewCataloger(DefaultCatalogerConfig())
 
 	resolver := &panicyResolver{}
 	_, _, err := c.Catalog(resolver)

@@ -44,7 +44,7 @@ func ImageCatalogers(cfg Config) []pkg.Cataloger {
 	return filterCatalogers([]pkg.Cataloger{
 		arch.NewDBCataloger(),
 		alpine.NewDBCataloger(),
-		binary.NewCataloger(),
+		binary.NewCataloger(cfg.Binary),
 		cpp.NewConanInfoCataloger(),
 		debian.NewDBCataloger(),
 		dotnet.NewDotnetPortableExecutableCataloger(),
@@ -68,7 +68,7 @@ func DirectoryCatalogers(cfg Config) []pkg.Cataloger {
 	return filterCatalogers([]pkg.Cataloger{
 		arch.NewDBCataloger(),
 		alpine.NewDBCataloger(),
-		binary.NewCataloger(),
+		binary.NewCataloger(cfg.Binary),
 		cpp.NewConanCataloger(),
 		dart.NewPubspecLockCataloger(),
 		debian.NewDBCataloger(),
@@ -107,7 +107,7 @@ func AllCatalogers(cfg Config) []pkg.Cataloger {
 	return filterCatalogers([]pkg.Cataloger{
 		arch.NewDBCataloger(),
 		alpine.NewDBCataloger(),
-		binary.NewCataloger(),
+		binary.NewCataloger(cfg.Binary),
 		cpp.NewConanCataloger(),
 		dart.NewPubspecLockCataloger(),
 		debian.NewDBCataloger(),
