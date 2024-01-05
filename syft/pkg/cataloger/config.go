@@ -2,6 +2,7 @@ package cataloger
 
 import (
 	"github.com/anchore/syft/syft/cataloging"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
@@ -17,6 +18,7 @@ type Config struct {
 	Python                          python.CatalogerConfig
 	Java                            java.ArchiveCatalogerConfig
 	Javascript                      javascript.CatalogerConfig
+	Binary                          binary.CatalogerConfig
 	Catalogers                      []string
 	Parallelism                     int
 	ExcludeBinaryOverlapByOwnership bool
@@ -30,6 +32,7 @@ func DefaultConfig() Config {
 		Python:                          python.DefaultCatalogerConfig(),
 		Java:                            java.DefaultArchiveCatalogerConfig(),
 		Javascript:                      javascript.DefaultCatalogerConfig(),
+		Binary:                          binary.DefaultCatalogerConfig(),
 		ExcludeBinaryOverlapByOwnership: true,
 	}
 }
