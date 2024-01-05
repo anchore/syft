@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 
@@ -73,18 +74,33 @@ func renderCatalogerListTable(material map[internal.LogicalEntryKey]internal.Ent
 			}
 		}
 
+		var invalid bool
+		if bin == "" && snippet == "" {
+			invalid = true
+		}
+
 		t.AppendRow(table.Row{
-			k.OrgName,
-			k.Version,
-			displayPlatform(k.Platform),
-			k.Filename,
-			isConfigured,
-			bin,
-			snippet,
+			renderCell(k.OrgName, invalid),
+			renderCell(k.Version, invalid),
+			renderCell(displayPlatform(k.Platform), invalid),
+			renderCell(k.Filename, invalid),
+			renderCell(isConfigured, invalid),
+			renderCell(bin, invalid),
+			renderCell(snippet, invalid),
 		})
 	}
 
 	return t.Render()
+}
+
+var errorStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("9"))
+var stdStyle = lipgloss.NewStyle()
+
+func renderCell(value string, invalid bool) string {
+	if invalid {
+		return errorStyle.Render(value)
+	}
+	return stdStyle.Render(value)
 }
 
 func displayPlatform(platform string) string {
