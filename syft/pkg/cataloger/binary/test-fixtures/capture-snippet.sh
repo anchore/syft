@@ -70,61 +70,78 @@ fi
 
 PATTERN=${SEARCH_FOR:-$VERSION}
 
+echo "Using binary file:      $BINARY_FILE"
+echo "Searching for pattern:  $PATTERN"
+echo "Capture length:         $LENGTH bytes"
+echo "Capture prefix length:  $PREFIX_LENGTH bytes"
+
 PATTERN_RESULTS=$(strings -t d "$BINARY_FILE" | grep "$PATTERN")
+RESULT_COUNT=$(echo "$PATTERN_RESULTS" | wc -l)
 
-# if there are multiple matches, prompt the user to select one
-if [ $(echo "$PATTERN_RESULTS" | wc -l) -gt 1 ]; then
-    echo "Multiple string matches found in the binary:"
-    echo ""
+CONTINUE_LOOP=true
 
-    # show result lines one at a time (in a numbered list)
-    # but only show everything after the first field (not the offset)
-    echo "$PATTERN_RESULTS" | cut -d ' ' -f 2- | nl -w 1 -s ') '
+while $CONTINUE_LOOP; do
+
+  # if there are multiple matches, prompt the user to select one
+  if [ $RESULT_COUNT -gt 1 ]; then
+      echo "Multiple string matches found in the binary:"
+      echo ""
+
+      # show result lines one at a time (in a numbered list)
+      # but only show everything after the first field (not the offset)
+      echo "$PATTERN_RESULTS" | cut -d ' ' -f 2- | nl -w 1 -s ') '
 
 
-    echo ""
-    read -p "Please select a match: " SELECTION
+      echo ""
+      read -p "Please select a match: " SELECTION
 
-    # if the selection is not a number, exit
-    if ! [[ "$SELECTION" =~ ^[0-9]+$ ]]; then
-        echo "Invalid selection."
-        exit 1
-    fi
+      # if the selection is not a number, exit
+      if ! [[ "$SELECTION" =~ ^[0-9]+$ ]]; then
+          echo "Invalid selection."
+          exit 1
+      fi
 
-    # if the selection is out of bounds, exit
-    if [ "$SELECTION" -gt $(echo "$PATTERN_RESULTS" | wc -l) ]; then
-        echo "Invalid selection."
-        exit 1
-    fi
+      # if the selection is out of bounds, exit
+      if [ "$SELECTION" -gt $(echo "$PATTERN_RESULTS" | wc -l) ]; then
+          echo "Invalid selection."
+          exit 1
+      fi
 
-    # select the line from the results
-    PATTERN_RESULTS=$(echo "$PATTERN_RESULTS" | sed -n "${SELECTION}p")
-fi
+      # select the line from the results
+      SELECTED_RESULT=$(echo "$PATTERN_RESULTS" | sed -n "${SELECTION}p")
+  else
+    SELECTED_RESULT="$PATTERN_RESULTS"
+  fi
 
-# search for the pattern in the binary file and capture the offset
-OFFSET=$(echo "${PATTERN_RESULTS}" | cut -d ' ' -f 1)
+  # search for the pattern in the binary file and capture the offset
+  OFFSET=$(echo "${SELECTED_RESULT}" | cut -d ' ' -f 1)
 
-if [ -z "$OFFSET" ]; then
-    echo "Pattern not found."
-    exit 1
-fi
+  if [ -z "$OFFSET" ]; then
+      echo "Pattern not found."
+      exit 1
+  fi
 
-# adjust the offset to capture prefix length before the match
-OFFSET=$(expr "$OFFSET" - "$PREFIX_LENGTH")
+  # adjust the offset to capture prefix length before the match
+  OFFSET=$(expr "$OFFSET" - "$PREFIX_LENGTH")
 
-# use xxd to capture the specified length from the calculated offset
-SNIPPET=$(xxd -l "$LENGTH" -s "$OFFSET" "$BINARY_FILE")
+  # use xxd to capture the specified length from the calculated offset
+  SNIPPET=$(xxd -l "$LENGTH" -s "$OFFSET" "$BINARY_FILE")
 
-# display the output and prompt the user
-echo ""
-echo "$SNIPPET"
-echo ""
-read -p "Does this snippet capture what you need? (Y/n) " RESPONSE
-RESPONSE=${RESPONSE:-y}
+  # display the output and prompt the user
+  echo ""
+  echo "$SNIPPET"
+  echo ""
+  read -p "Does this snippet capture what you need? (Y/n/q) " RESPONSE
 
-if [ "$RESPONSE" != "y" ]; then
+  RESPONSE=${RESPONSE:-y}
+
+  if [ "$RESPONSE" == "y" ]; then
+    CONTINUE_LOOP=false
+  elif [ $RESULT_COUNT -eq 1 ] || [ "$RESPONSE" == "q" ]; then
     echo "Exiting with no action taken."
-    exit 1
-fi
+    exit 0
+  fi
+
+done
 
 go run ./manager write-snippet "$BINARY_FILE" --offset "$OFFSET" --length "$LENGTH" --name "$GROUP_NAME" --version "$VERSION"

@@ -1,7 +1,10 @@
 download-path: classifiers/bin
 snippet-path: classifiers/snippets
 
-# this section is for pulling entire binaries out of container images
+# this section is for pulling entire binaries out of container images. You can pull multiple binaries from one or more
+# images, where a list of images is used to enumerate multiple platforms for the same logical image. The group name
+# for the test fixture defaults to the path of the binary extracted. If there is more than one binary extracted from
+# the image(s) then you will need to specify a group name explicitly.
 from-images:
 
   # from the positive snippets...

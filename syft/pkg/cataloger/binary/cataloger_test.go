@@ -24,7 +24,11 @@ var mustUseOriginalBinaries = flag.Bool("must-use-original-binaries", false, "fo
 
 func Test_Cataloger_PositiveCases(t *testing.T) {
 	tests := []struct {
-		name           string
+		name string
+		// logicalFixture is the logical path to the full binary or snippet. This is relative to the test-fixtures/classifiers/snippets
+		// or test-fixtures/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
+		// used. If no binary or snippet is found the test will fail. If '-must-use-original-binaries' is used the only
+		// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
 		logicalFixture string
 		expected       pkg.Package
 	}{
@@ -811,6 +815,10 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		t.Run(test.logicalFixture, func(t *testing.T) {
 			c := NewCataloger()
 
+			// logicalFixture is the logical path to the full binary or snippet. This is relative to the test-fixtures/classifiers/snippets
+			// or test-fixtures/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
+			// used. If no binary or snippet is found the test will fail. If '-must-use-original-binaries' is used the only
+			// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
 			path := testutil.SnippetOrBinary(t, test.logicalFixture, *mustUseOriginalBinaries)
 
 			src, err := source.NewFromDirectoryPath(path)
