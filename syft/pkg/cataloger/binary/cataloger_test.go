@@ -90,6 +90,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "percona-server/8.0.35/linux-amd64",
+			expected: pkg.Package{
+				Name:      "percona-server",
+				Version:   "8.0.35",
+				Type:      "binary",
+				PURL:      "pkg:generic/percona-server@8.0.35",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			logicalFixture: "percona-xtradb-cluster/8.0.34/linux-amd64",
+			expected: pkg.Package{
+				Name:      "percona-xtradb-cluster",
+				Version:   "8.0.34",
+				Type:      "binary",
+				PURL:      "pkg:generic/percona-xtradb-cluster@8.0.34",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			logicalFixture: "percona-xtrabackup/8.0.35/linux-amd64",
+			expected: pkg.Package{
+				Name:      "percona-xtrabackup",
+				Version:   "8.0.35",
+				Type:      "binary",
+				PURL:      "pkg:generic/percona-xtrabackup@8.0.35",
+				Locations: locations("xtrabackup"),
+				Metadata:  metadata("xtrabackup-binary"),
+			},
+		},
+		{
 			logicalFixture: "mysql/5.6.51/linux-amd64",
 			expected: pkg.Package{
 				Name:      "mysql",
