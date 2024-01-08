@@ -805,6 +805,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("openssl-binary"),
 			},
 		},
+		{
+			logicalFixture: "gcc/12.3.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "gcc",
+				Version:   "12.3.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/gcc@12.3.0",
+				Locations: locations("gcc"),
+				Metadata:  metadata("gcc-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
