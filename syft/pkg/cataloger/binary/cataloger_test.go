@@ -134,6 +134,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "traefik/2.10.7/linux-amd64",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.10.7",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.10.7",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
 			logicalFixture: "memcached/1.6.18/linux-amd64",
 			expected: pkg.Package{
 				Name:      "memcached",

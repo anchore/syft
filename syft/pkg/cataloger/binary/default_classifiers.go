@@ -214,7 +214,7 @@ func DefaultClassifiers() []Classifier {
 			EvidenceMatcher: FileContentsVersionMatcher(
 				// [NUL]v1.7.34[NUL]
 				// [NUL]2.9.6[NUL]
-				`(?m)\x00v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
+				`(?m)(\x00|\x{FFFD})v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
 			Package: "traefik",
 			PURL:    mustPURL("pkg:generic/traefik@version"),
 		},
