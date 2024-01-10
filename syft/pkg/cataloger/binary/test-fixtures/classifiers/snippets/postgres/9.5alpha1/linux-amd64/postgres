@@ -1,0 +1,10 @@
+name: postgres
+offset: unknown
+length: unknown
+snippetSha256: 8f8323161ded8fd737ba7157b36b794c55354e8a9b8b6c5aa07dab9c3468886c
+fileSha256: unknown
+
+### byte snippet to follow ###
+t
+byteain
+?PostgreSQL 9.5alpha1 on x86_64-unknown-linux-gnu, compiled by gcc (Debian 4.9.2-10) 4.9.2

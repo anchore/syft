@@ -54,6 +54,7 @@ tasks:
       - task: check-licenses
       - task: lint
       - task: check-json-schema-drift
+      - task: check-binary-fixture-size
 
   test:
     desc: Run all levels of test
@@ -168,6 +169,11 @@ tasks:
     desc: Ensure there is no drift between the JSON schema and the code
     cmds:
       - .github/scripts/json-schema-drift-check.sh
+
+  check-binary-fixture-size:
+    desc: Ensure that the binary test fixtures are not too large
+    cmds:
+      - .github/scripts/check_binary_fixture_size.sh syft/pkg/cataloger/binary/test-fixtures/classifiers/snippets
 
 
   ## Testing tasks #################################

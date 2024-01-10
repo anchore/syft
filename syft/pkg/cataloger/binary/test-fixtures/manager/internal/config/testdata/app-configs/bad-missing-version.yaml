@@ -1,0 +1,10 @@
+download-path: classifiers/bin
+snippet-path: classifiers/snippets
+
+from-images:
+
+  - images:
+      - ref: bash:5.1.16@sha256:c7a903a541d8f5fe693cbe7f5ece18a1b6a03734c76092d2b153d7e98a964927
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/bash

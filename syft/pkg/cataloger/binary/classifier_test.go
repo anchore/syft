@@ -13,16 +13,16 @@ func Test_ClassifierCPEs(t *testing.T) {
 	tests := []struct {
 		name       string
 		fixture    string
-		classifier classifier
+		classifier Classifier
 		cpes       []string
 	}{
 		{
 			name:    "no CPEs",
 			fixture: "test-fixtures/version.txt",
-			classifier: classifier{
+			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs:            []cpe.CPE{},
 			},
 			cpes: nil,
@@ -30,10 +30,10 @@ func Test_ClassifierCPEs(t *testing.T) {
 		{
 			name:    "one CPE",
 			fixture: "test-fixtures/version.txt",
-			classifier: classifier{
+			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
 				},
@@ -45,10 +45,10 @@ func Test_ClassifierCPEs(t *testing.T) {
 		{
 			name:    "multiple CPEs",
 			fixture: "test-fixtures/version.txt",
-			classifier: classifier{
+			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: fileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
 					cpe.Must("cpe:2.3:a:some:apps:*:*:*:*:*:*:*:*"),

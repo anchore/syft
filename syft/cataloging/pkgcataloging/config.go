@@ -1,6 +1,7 @@
 package pkgcataloging
 
 import (
+	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
@@ -9,6 +10,7 @@ import (
 )
 
 type Config struct {
+	Binary      binary.CatalogerConfig            `yaml:"binary" json:"binary" mapstructure:"binary"`
 	Golang      golang.CatalogerConfig            `yaml:"golang" json:"golang" mapstructure:"golang"`
 	JavaArchive java.ArchiveCatalogerConfig       `yaml:"java-archive" json:"java-archive" mapstructure:"java-archive"`
 	JavaScript  javascript.CatalogerConfig        `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
@@ -23,6 +25,11 @@ func DefaultConfig() Config {
 		Python:      python.DefaultCatalogerConfig(),
 		JavaArchive: java.DefaultArchiveCatalogerConfig(),
 	}
+}
+
+func (c Config) WithBinaryConfig(cfg binary.CatalogerConfig) Config {
+	c.Binary = cfg
+	return c
 }
 
 func (c Config) WithGolangConfig(cfg golang.CatalogerConfig) Config {
