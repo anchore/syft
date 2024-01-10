@@ -329,6 +329,13 @@ from-images:
     paths:
       - /usr/local/bin/traefik
 
+  - version: 2.10.7
+    images:
+      - ref: traefik:2.10.7@sha256:a98415716a91066ef5e442969887ebb3df7d80775b5bfa7b67fcaed989833d84
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/traefik
+
 
   # from the original dynamic fixtures...
 
