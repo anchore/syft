@@ -1,6 +1,7 @@
 package syft
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
@@ -20,7 +21,10 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func CreateSBOM(src source.Source, cfg CreateSBOMConfig) (*sbom.SBOM, error) {
+func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (*sbom.SBOM, error) {
+	if cfg == nil {
+		cfg = DefaultCreateSBOMConfig()
+	}
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
@@ -62,7 +66,7 @@ func CreateSBOM(src source.Source, cfg CreateSBOMConfig) (*sbom.SBOM, error) {
 
 	builder := sbomsync.NewBuilder(&s)
 	for i := range taskGroups {
-		err := task.NewTaskExecutor(taskGroups[i], cfg.Parallelism).Execute(resolver, builder, catalogingProgress)
+		err := task.NewTaskExecutor(taskGroups[i], cfg.Parallelism).Execute(ctx, resolver, builder, catalogingProgress)
 		if err != nil {
 			// TODO: tie this to the open progress monitors...
 			return nil, fmt.Errorf("failed to run tasks: %w", err)

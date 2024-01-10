@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -14,7 +15,7 @@ import (
 )
 
 func dummyTask(name string, tags ...string) Task {
-	return NewTask(name, func(resolver file.Resolver, sbom sbomsync.Builder) error {
+	return NewTask(name, func(ctx context.Context, resolver file.Resolver, sbom sbomsync.Builder) error {
 		panic("not implemented")
 	}, tags...)
 }

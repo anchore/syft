@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -33,7 +34,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	})
 
 	// build the SBOM
-	s, err := syft.CreateSBOM(theSource, syft.DefaultCreateSBOMConfig())
+	s, err := syft.CreateSBOM(context.Background(), theSource, syft.DefaultCreateSBOMConfig())
 
 	// did it work?
 	require.NoError(b, err)

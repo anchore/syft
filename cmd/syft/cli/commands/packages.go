@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -91,7 +92,7 @@ func Packages(app clio.Application) *cobra.Command {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()
 
-			return runPackages(id, opts, args[0])
+			return runPackages(cmd.Context(), id, opts, args[0])
 		},
 	}, opts)
 }
@@ -113,7 +114,7 @@ func validateArgs(cmd *cobra.Command, args []string, error string) error {
 }
 
 // nolint:funlen
-func runPackages(id clio.Identification, opts *packagesOptions, userInput string) error {
+func runPackages(ctx context.Context, id clio.Identification, opts *packagesOptions, userInput string) error {
 	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err
@@ -133,7 +134,7 @@ func runPackages(id clio.Identification, opts *packagesOptions, userInput string
 		}
 	}()
 
-	s, err := generateSBOM(id, src, &opts.Catalog)
+	s, err := generateSBOM(ctx, id, src, &opts.Catalog)
 	if err != nil {
 		return err
 	}
@@ -206,8 +207,8 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 	return src, nil
 }
 
-func generateSBOM(id clio.Identification, src source.Source, opts *options.Catalog) (*sbom.SBOM, error) {
-	s, err := syft.CreateSBOM(src, opts.ToSBOMConfig(id))
+func generateSBOM(ctx context.Context, id clio.Identification, src source.Source, opts *options.Catalog) (*sbom.SBOM, error) {
+	s, err := syft.CreateSBOM(ctx, src, opts.ToSBOMConfig(id))
 	if err != nil {
 		expErrs := filterExpressionErrors(err)
 		notifyExpressionErrors(expErrs)

@@ -66,7 +66,7 @@ func DefaultCatalog() Catalog {
 	}
 }
 
-func (cfg Catalog) ToSBOMConfig(id clio.Identification) syft.CreateSBOMConfig {
+func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 	return syft.DefaultCreateSBOMConfig().
 		WithTool(id.Name, id.Version).
 		WithParallelism(cfg.Parallelism).
@@ -128,7 +128,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithSearchRemoteLicenses(cfg.Golang.SearchRemoteLicenses).
 			WithProxy(cfg.Golang.Proxy).
 			WithNoProxy(cfg.Golang.NoProxy),
-		Javascript: javascript.DefaultCatalogerConfig().
+		JavaScript: javascript.DefaultCatalogerConfig().
 			WithSearchRemoteLicenses(cfg.Javascript.SearchRemoteLicenses).
 			WithNpmBaseURL(cfg.Javascript.NpmBaseURL),
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{

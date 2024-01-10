@@ -72,7 +72,7 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 		),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
-				return javascript.NewLockCataloger(cfg.PackagesConfig.Javascript)
+				return javascript.NewLockCataloger(cfg.PackagesConfig.JavaScript)
 			},
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "javascript", "node", "npm",
 		),

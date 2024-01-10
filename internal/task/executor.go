@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"fmt"
 	"runtime/debug"
 	"sync"
@@ -31,7 +32,7 @@ func NewTaskExecutor(tasks []Task, numWorkers int) *Executor {
 	return p
 }
 
-func (p *Executor) Execute(resolver file.Resolver, s sbomsync.Builder, prog *monitor.CatalogerTaskProgress) error {
+func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsync.Builder, prog *monitor.CatalogerTaskProgress) error {
 	var errs error
 	wg := &sync.WaitGroup{}
 	for i := 0; i < p.numWorkers; i++ {
@@ -45,7 +46,7 @@ func (p *Executor) Execute(resolver file.Resolver, s sbomsync.Builder, prog *mon
 					return
 				}
 
-				if err := runTaskSafely(tsk, resolver, s); err != nil {
+				if err := runTaskSafely(ctx, tsk, resolver, s); err != nil {
 					errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", err))
 					prog.SetError(err)
 				}
@@ -59,7 +60,7 @@ func (p *Executor) Execute(resolver file.Resolver, s sbomsync.Builder, prog *mon
 	return errs
 }
 
-func runTaskSafely(t Task, resolver file.Resolver, s sbomsync.Builder) (err error) {
+func runTaskSafely(ctx context.Context, t Task, resolver file.Resolver, s sbomsync.Builder) (err error) {
 	// handle individual cataloger panics
 	defer func() {
 		if e := recover(); e != nil {
@@ -67,5 +68,5 @@ func runTaskSafely(t Task, resolver file.Resolver, s sbomsync.Builder) (err erro
 		}
 	}()
 
-	return t.Execute(resolver, s)
+	return t.Execute(ctx, resolver, s)
 }

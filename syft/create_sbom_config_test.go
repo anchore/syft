@@ -75,7 +75,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 	tests := []struct {
 		name          string
 		src           source.Description
-		cfg           CreateSBOMConfig
+		cfg           *CreateSBOMConfig
 		wantTaskNames [][]string
 		wantManifest  *catalogerManifest
 		wantErr       require.ErrorAssertionFunc
@@ -195,7 +195,9 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 		{
 			name: "user-provided persistent cataloger is always run (image)",
 			src:  imgSrc,
-			cfg:  DefaultCreateSBOMConfig().WithCatalogers(newDummyCataloger("persistent")),
+			cfg: DefaultCreateSBOMConfig().WithCatalogers(
+				pkgcataloging.NewAlwaysEnabledCatalogerReference(newDummyCataloger("persistent")),
+			),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "persistent"),
@@ -213,7 +215,9 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 		{
 			name: "user-provided persistent cataloger is always run (directory)",
 			src:  dirSrc,
-			cfg:  DefaultCreateSBOMConfig().WithCatalogers(newDummyCataloger("persistent")),
+			cfg: DefaultCreateSBOMConfig().WithCatalogers(
+				pkgcataloging.NewAlwaysEnabledCatalogerReference(newDummyCataloger("persistent")),
+			),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgCatalogerNamesWithTagOrName(t, "directory"), "persistent"),
@@ -231,7 +235,9 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 		{
 			name: "user-provided persistent cataloger is always run (user selection does not affect this)",
 			src:  imgSrc,
-			cfg:  DefaultCreateSBOMConfig().WithCatalogers(newDummyCataloger("persistent")).WithCatalogerSelection(pkgcataloging.NewSelectionRequest().WithSubSelections("javascript")),
+			cfg: DefaultCreateSBOMConfig().WithCatalogers(
+				pkgcataloging.NewAlwaysEnabledCatalogerReference(newDummyCataloger("persistent")),
+			).WithCatalogerSelection(pkgcataloging.NewSelectionRequest().WithSubSelections("javascript")),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgIntersect("image", "javascript"), "persistent"),
@@ -250,7 +256,9 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 		{
 			name: "user-provided cataloger runs when selected",
 			src:  imgSrc,
-			cfg:  DefaultCreateSBOMConfig().WithCataloger(newDummyCataloger("user-provided"), "image"),
+			cfg: DefaultCreateSBOMConfig().WithCatalogers(
+				pkgcataloging.NewCatalogerReference(newDummyCataloger("user-provided"), []string{"image"}),
+			),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "user-provided"),
@@ -268,7 +276,9 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 		{
 			name: "user-provided cataloger NOT run when NOT selected",
 			src:  imgSrc,
-			cfg:  DefaultCreateSBOMConfig().WithCataloger(newDummyCataloger("user-provided"), "bogus-selector-will-never-be-used"),
+			cfg: DefaultCreateSBOMConfig().WithCatalogers(
+				pkgcataloging.NewCatalogerReference(newDummyCataloger("user-provided"), []string{"bogus-selector-will-never-be-used"}),
+			),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "image"),
@@ -467,7 +477,7 @@ func Test_findDefaultTag(t *testing.T) {
 func TestCreateSBOMConfig_validate(t *testing.T) {
 	tests := []struct {
 		name    string
-		cfg     CreateSBOMConfig
+		cfg     *CreateSBOMConfig
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{

@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -18,7 +19,7 @@ var _ interface {
 // Task is a function that can wrap a cataloger to populate the SBOM with data (coordinated through the mutex).
 type Task interface {
 	Name() string
-	Execute(file.Resolver, sbomsync.Builder) error
+	Execute(context.Context, file.Resolver, sbomsync.Builder) error
 }
 
 type Selector interface {
@@ -31,10 +32,10 @@ type tasks []Task
 type task struct {
 	name      string
 	selectors *strset.Set
-	task      func(file.Resolver, sbomsync.Builder) error
+	task      func(context.Context, file.Resolver, sbomsync.Builder) error
 }
 
-func NewTask(name string, tsk func(file.Resolver, sbomsync.Builder) error, tags ...string) Task {
+func NewTask(name string, tsk func(context.Context, file.Resolver, sbomsync.Builder) error, tags ...string) Task {
 	if tsk == nil {
 		panic(fmt.Errorf("task cannot be nil"))
 	}
@@ -59,8 +60,8 @@ func (t task) Name() string {
 	return t.name
 }
 
-func (t task) Execute(resolver file.Resolver, sbom sbomsync.Builder) error {
-	return t.task(resolver, sbom)
+func (t task) Execute(ctx context.Context, resolver file.Resolver, sbom sbomsync.Builder) error {
+	return t.task(ctx, resolver, sbom)
 }
 
 func (ts tasks) Names() []string {

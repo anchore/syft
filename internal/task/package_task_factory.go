@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -83,7 +84,7 @@ func (f PackageTaskFactories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error)
 //
 //nolint:funlen
 func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string) Task {
-	fn := func(resolver file.Resolver, sbom sbomsync.Builder) error {
+	fn := func(ctx context.Context, resolver file.Resolver, sbom sbomsync.Builder) error {
 		catalogerName := c.Name()
 		log.WithFields("name", catalogerName).Trace("starting package cataloger")
 

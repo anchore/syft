@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"crypto"
 	"fmt"
 
@@ -20,7 +21,7 @@ func NewFileDigestCatalogerTask(selection file.Selection, hashers ...crypto.Hash
 
 	digestsCataloger := filedigest.NewCataloger(hashers)
 
-	fn := func(resolver file.Resolver, builder sbomsync.Builder) error {
+	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		accessor := builder.(sbomsync.Accessor)
 
 		var coordinates []file.Coordinates
@@ -64,7 +65,7 @@ func NewFileMetadataCatalogerTask(selection file.Selection) Task {
 
 	metadataCataloger := filemetadata.NewCataloger()
 
-	fn := func(resolver file.Resolver, builder sbomsync.Builder) error {
+	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		accessor := builder.(sbomsync.Accessor)
 
 		var coordinates []file.Coordinates

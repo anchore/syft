@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -42,7 +43,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 	)
 	cfg.Search.Scope = scope
 
-	s, err := syft.CreateSBOM(theSource, cfg)
+	s, err := syft.CreateSBOM(context.Background(), theSource, cfg)
 
 	require.NoError(t, err)
 	require.NotNil(t, s)
@@ -71,7 +72,7 @@ func catalogDirectory(t *testing.T, dir string, catalogerSelection ...string) (s
 			WithDefaults(pkgcataloging.DirectoryTag).
 			WithExpression(catalogerSelection...),
 	)
-	s, err := syft.CreateSBOM(theSource, cfg)
+	s, err := syft.CreateSBOM(context.Background(), theSource, cfg)
 
 	require.NoError(t, err)
 	require.NotNil(t, s)

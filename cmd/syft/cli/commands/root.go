@@ -25,7 +25,7 @@ func Root(app clio.Application, packagesCmd *cobra.Command) *cobra.Command {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()
 
-			return runPackages(id, opts, args[0])
+			return runPackages(cmd.Context(), id, opts, args[0])
 		},
 	}, opts)
 }

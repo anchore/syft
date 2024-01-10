@@ -11,7 +11,7 @@ import (
 type Config struct {
 	Golang      golang.CatalogerConfig            `yaml:"golang" json:"golang" mapstructure:"golang"`
 	JavaArchive java.ArchiveCatalogerConfig       `yaml:"java-archive" json:"java-archive" mapstructure:"java-archive"`
-	Javascript  javascript.CatalogerConfig        `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
+	JavaScript  javascript.CatalogerConfig        `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
 	LinuxKernel kernel.LinuxKernelCatalogerConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Python      python.CatalogerConfig            `yaml:"python" json:"python" mapstructure:"python"`
 }
@@ -31,7 +31,7 @@ func (c Config) WithGolangConfig(cfg golang.CatalogerConfig) Config {
 }
 
 func (c Config) WithJavascriptConfig(cfg javascript.CatalogerConfig) Config {
-	c.Javascript = cfg
+	c.JavaScript = cfg
 	return c
 }
 

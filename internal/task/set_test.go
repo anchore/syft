@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ type mockTask struct {
 	name string
 }
 
-func (m mockTask) Execute(_ file.Resolver, _ sbomsync.Builder) error {
+func (m mockTask) Execute(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
 	panic("implement me")
 }
 

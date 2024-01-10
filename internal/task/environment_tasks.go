@@ -1,6 +1,8 @@
 package task
 
 import (
+	"context"
+
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -9,7 +11,7 @@ import (
 // TODO: add tui element here?
 
 func NewEnvironmentTask() Task {
-	fn := func(resolver file.Resolver, builder sbomsync.Builder) error {
+	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		release := linux.IdentifyRelease(resolver)
 		if release != nil {
 			builder.SetLinuxDistribution(*release)

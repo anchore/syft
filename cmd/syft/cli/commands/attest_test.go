@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -258,7 +259,7 @@ func Test_buildSBOMForAttestation(t *testing.T) {
 			if tt.wantErr == nil {
 				tt.wantErr = require.NoError
 			}
-			_, err := generateSBOMForAttestation(tt.args.id, tt.args.opts, tt.args.userInput)
+			_, err := generateSBOMForAttestation(context.Background(), tt.args.id, tt.args.opts, tt.args.userInput)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
