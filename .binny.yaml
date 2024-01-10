@@ -90,7 +90,7 @@ tools:
 
   - name: gh
     version:
-      want: v2.40.1
+      want: v2.41.0
     method: github-release
     with:
       repo: cli/cli
