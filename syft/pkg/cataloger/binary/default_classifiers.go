@@ -350,6 +350,17 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/openssl@version"),
 			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*"),
 		},
+		{
+			Class:    "gcc-binary",
+			FileGlob: "**/gcc",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				// GCC: \(GNU\)  12.3.0'
+				`GCC: \(GNU\) (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+			),
+			Package: "gcc",
+			PURL:    mustPURL("pkg:generic/gcc@version"),
+			CPEs:    singleCPE("cpe:2.3:a:gnu:gcc:*:*:*:*:*:*:*:*"),
+		},
 	}
 }
 

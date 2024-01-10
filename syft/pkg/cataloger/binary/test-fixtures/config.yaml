@@ -24,6 +24,13 @@ from-images:
     paths:
       - /usr/local/bin/bash
 
+  - version: 12.3.0
+    images:
+      - ref: gcc:12.3.0-bookworm@sha256:2e3c00752fa23a0993b6618760bbc20263b272a0b34b2d4883159e3ebba9d8b6
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/gcc
+
   - version: 25.3.2.6
     images:
       - ref: erlang:25.3.2.6@sha256:0d1e530ec0e8047094f0a1d841754515bad9b0554260a3147fb34df31b3064fe
