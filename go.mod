@@ -78,7 +78,7 @@ require (
 
 require (
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
-	github.com/charmbracelet/bubbles v0.16.1
+	github.com/charmbracelet/bubbles v0.17.1
 	github.com/jedib0t/go-pretty/v6 v6.5.2
 )
 
@@ -186,7 +186,7 @@ require (
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/sagikazarmark/locafero v0.3.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
-	github.com/sahilm/fuzzy v0.1.0 // indirect
+	github.com/sahilm/fuzzy v0.1.1-0.20230530133925-c48e322e2a8f // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.2.1 // indirect
