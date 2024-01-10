@@ -124,6 +124,30 @@ from-images:
     paths:
       - /usr/bin/mysql
 
+  - name: percona-server
+    version: 8.0.35
+    images:
+      - ref: percona/percona-server:8.0.35@sha256:b76c455d3db1ae297449753b1054547b7910b3fd2ed4fd8c761cc1a6e202095a
+        platform: linux/amd64
+    paths:
+    - /usr/bin/mysql
+
+  - name: percona-xtrabackup
+    version: 8.0.35
+    images:
+      - ref: percona/percona-xtrabackup:8.0.35@sha256:7fe6514db30384145b7387efb0f5250bc1f558dc8779ee15269a81c942bf8698
+        platform: linux/amd64
+    paths:
+    - /usr/bin/xtrabackup
+
+  - name: percona-xtradb-cluster
+    version: 8.0.34
+    images:
+      - ref: percona/percona-xtradb-cluster:8.0.34@sha256:cc5ec8d61a1eb5cccc2727932f85764151aaf4c1dd17c4c20b7c522e2fea57a8
+        platform: linux/amd64
+    paths:
+    - /usr/bin/mysql
+
 # TODO: add pattern for mysqld
 #  - version: 5.6.51
 #    images:

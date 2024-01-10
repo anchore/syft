@@ -248,6 +248,40 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*"),
 		},
 		{
+			Class:    "mysql-binary",
+			FileGlob: "**/mysql",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m).*/percona-server-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
+			Package: "percona-server",
+			PURL:    mustPURL("pkg:generic/percona-server@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*"),
+				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*"),
+			},
+		},
+		{
+			Class:    "mysql-binary",
+			FileGlob: "**/mysql",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m).*/Percona-XtraDB-Cluster-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
+			Package: "percona-xtradb-cluster",
+			PURL:    mustPURL("pkg:generic/percona-xtradb-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*"),
+				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*"),
+				cpe.Must("cpe:2.3:a:percona:xtradb_cluster:*:*:*:*:*:*:*:*"),
+			},
+		},
+		{
+			Class:    "xtrabackup-binary",
+			FileGlob: "**/xtrabackup",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m).*/percona-xtrabackup-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
+			Package: "percona-xtrabackup",
+			PURL:    mustPURL("pkg:generic/percona-xtrabackup@version"),
+			CPEs:    singleCPE("cpe:2.3:a:percona:xtrabackup:*:*:*:*:*:*:*:*"),
+		},
+		{
 			Class:    "mariadb-binary",
 			FileGlob: "**/mariadb",
 			EvidenceMatcher: FileContentsVersionMatcher(
