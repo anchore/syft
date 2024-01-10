@@ -232,6 +232,14 @@ from-images:
     paths:
       - /usr/local/lib/libpython3.7m.so.1.0
 
+  - name: pypy-shared-lib
+    version: 7.3.14
+    images:
+      - ref: pypy:3.9-7.3.14-slim-bullseye@sha256:058f1a0c073534e535aed3d45c1982648378167901a05a0f35056006bf2e13bc
+        platform: linux/amd64
+    paths:
+      - /opt/pypy/bin/libpypy3.9-c.so
+
   - version: 2.8.23
     images:
       - ref: redis:2.8.23@sha256:e507029ca6a11b85f8628ff16d7ff73ae54582f16fd757e64431f5ca6d27a13c

@@ -514,6 +514,16 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "pypy-shared-lib/7.3.14/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pypy",
+				Version:   "7.3.14",
+				PURL:      "pkg:generic/pypy@7.3.14",
+				Locations: locations("libpypy3.9-c.so"),
+				Metadata:  metadata("pypy-binary-lib"),
+			},
+		},
+		{
 			logicalFixture: "go/1.21.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "go",
