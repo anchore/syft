@@ -24,24 +24,10 @@ func NewFileDigestCatalogerTask(selection file.Selection, hashers ...crypto.Hash
 	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		accessor := builder.(sbomsync.Accessor)
 
-		var coordinates []file.Coordinates
-
-		accessor.ReadFromSBOM(func(sbom *sbom.SBOM) {
-			if selection == file.OwnedFilesSelection {
-				for _, r := range sbom.Relationships {
-					// TODO: double check this logic
-					if r.Type != artifact.ContainsRelationship {
-						continue
-					}
-					if _, ok := r.From.(pkg.Package); !ok {
-						continue
-					}
-					if c, ok := r.To.(file.Coordinates); ok {
-						coordinates = append(coordinates, c)
-					}
-				}
-			}
-		})
+		coordinates, ok := coordinatesForSelection(selection, builder)
+		if !ok {
+			return nil
+		}
 
 		result, err := digestsCataloger.Catalog(resolver, coordinates...)
 		if err != nil {
@@ -68,23 +54,10 @@ func NewFileMetadataCatalogerTask(selection file.Selection) Task {
 	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		accessor := builder.(sbomsync.Accessor)
 
-		var coordinates []file.Coordinates
-
-		accessor.ReadFromSBOM(func(sbom *sbom.SBOM) {
-			if selection == file.OwnedFilesSelection {
-				for _, r := range sbom.Relationships {
-					if r.Type != artifact.ContainsRelationship {
-						continue
-					}
-					if _, ok := r.From.(pkg.Package); !ok {
-						continue
-					}
-					if c, ok := r.To.(file.Coordinates); ok {
-						coordinates = append(coordinates, c)
-					}
-				}
-			}
-		})
+		coordinates, ok := coordinatesForSelection(selection, builder)
+		if !ok {
+			return nil
+		}
 
 		result, err := metadataCataloger.Catalog(resolver, coordinates...)
 		if err != nil {
@@ -99,4 +72,40 @@ func NewFileMetadataCatalogerTask(selection file.Selection) Task {
 	}
 
 	return NewTask("file-metadata-cataloger", fn)
+}
+
+// TODO: this should be replaced with a fix that allows passing a coordinate or location iterator to the cataloger
+// Today internal to both cataloger this functions differently: a slice of coordinates vs a channel of locations
+func coordinatesForSelection(selection file.Selection, builder sbomsync.Builder) ([]file.Coordinates, bool) {
+	if selection == file.AllFilesSelection {
+		return nil, true
+	}
+
+	if selection == file.OwnedFilesSelection {
+		var coordinates []file.Coordinates
+
+		accessor := builder.(sbomsync.Accessor)
+
+		accessor.ReadFromSBOM(func(sbom *sbom.SBOM) {
+			for _, r := range sbom.Relationships {
+				if r.Type != artifact.ContainsRelationship {
+					continue
+				}
+				if _, ok := r.From.(pkg.Package); !ok {
+					continue
+				}
+				if c, ok := r.To.(file.Coordinates); ok {
+					coordinates = append(coordinates, c)
+				}
+			}
+		})
+
+		if len(coordinates) == 0 {
+			return nil, false
+		}
+
+		return coordinates, true
+	}
+
+	return nil, false
 }

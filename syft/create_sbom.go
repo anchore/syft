@@ -21,6 +21,8 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+// CreateSBOM creates a software bill-of-materials from the given source. If the CreateSBOMConfig is nil, then
+// default options will be used.
 func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (*sbom.SBOM, error) {
 	if cfg == nil {
 		cfg = DefaultCreateSBOMConfig()
