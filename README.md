@@ -160,9 +160,9 @@ This default behavior can be overridden with the `default-image-pull-source` con
 
 By default, Syft will catalog file details and digests for files that are owned by discovered packages. You can change this behavior by using the `SYFT_FILE_METADATA_SELECTION` environment variable or the `file.metadata.selection` configuration option. The options are:
 
-- `all-files`: capture all files from the search space
-- `owned-files`: capture only files owned by packages (default)
-- `no-files`: disable capturing any file information
+- `all`: capture all files from the search space
+- `owned-by-package`: capture only files owned by packages (default)
+- `none`: disable capturing any file information
 
 
 ### Package cataloger selection

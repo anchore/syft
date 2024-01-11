@@ -24,7 +24,7 @@ func TestConfig_MarshalJSON(t *testing.T) {
 				Selection: file.FilesOwnedByPackageSelection,
 				Hashers:   []crypto.Hash{crypto.SHA256},
 			},
-			want: []byte(`{"selection":"owned-files","hashers":["sha-256"],"content":{"globs":null,"skip-files-above-size":0}}`),
+			want: []byte(`{"selection":"owned-by-package","hashers":["sha-256"],"content":{"globs":null,"skip-files-above-size":0}}`),
 		},
 	}
 	for _, tt := range tests {
@@ -54,7 +54,7 @@ func TestConfig_UnmarshalJSON(t *testing.T) {
 	}{
 		{
 			name: "converts strings to hashers",
-			data: []byte(`{"selection":"owned-files","hashers":["sha-256"]}`),
+			data: []byte(`{"selection":"owned-by-package","hashers":["sha-256"]}`),
 			want: Config{
 				Selection: file.FilesOwnedByPackageSelection,
 				Hashers:   []crypto.Hash{crypto.SHA256},
