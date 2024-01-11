@@ -120,13 +120,11 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 				}
 			}
 
-			if cfg.DataGenerationConfig.GuessLanguageFromPURL {
-				// if we were not able to identify the language we have an opportunity
-				// to try and get this value from the PURL. Worst case we assert that
-				// we could not identify the language at either stage and set UnknownLanguage
-				if p.Language == "" {
-					p.Language = pkg.LanguageFromPURL(p.PURL)
-				}
+			// if we were not able to identify the language we have an opportunity
+			// to try and get this value from the PURL. Worst case we assert that
+			// we could not identify the language at either stage and set UnknownLanguage
+			if p.Language == "" {
+				p.Language = pkg.LanguageFromPURL(p.PURL)
 			}
 
 			if cfg.RelationshipsConfig.FileOwnership {

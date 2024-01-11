@@ -74,7 +74,6 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithParallelism(cfg.Parallelism).
 		WithRelationshipsConfig(cfg.ToRelationshipsConfig()).
 		WithSearchConfig(cfg.ToSearchConfig()).
-		WithDataGenerationConfig(cfg.ToDataGenerationConfig()).
 		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
 		WithCatalogerSelection(
@@ -96,13 +95,6 @@ func (cfg Catalog) ToRelationshipsConfig() cataloging.RelationshipsConfig {
 		FileOwnershipOverlap: cfg.Relationships.FileOwnershipOverlap,
 		// note: this option was surfaced in the syft application configuration before this relationships section was added
 		ExcludeBinaryPackagesWithFileOwnershipOverlap: cfg.Package.ExcludeBinaryOverlapByOwnership,
-	}
-}
-
-func (cfg Catalog) ToDataGenerationConfig() cataloging.DataGenerationConfig {
-	return cataloging.DataGenerationConfig{
-		GenerateCPEs:          true, // TODO: tie to app config
-		GuessLanguageFromPURL: true, // TODO: tie to app config
 	}
 }
 
