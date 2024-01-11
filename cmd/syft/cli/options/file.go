@@ -25,18 +25,18 @@ type fileContent struct {
 func defaultFileConfig() fileConfig {
 	return fileConfig{
 		Metadata: fileMetadata{
-			Selection: file.OwnedFilesSelection,
+			Selection: file.FilesOwnedByPackageSelection,
 			Digests:   []string{"sha1", "sha256"},
 		},
 		Content: fileContent{
-			SkipFilesAboveSize: 1 * intFile.MB,
+			SkipFilesAboveSize: 250 * intFile.KB,
 		},
 	}
 }
 
 func (c *fileConfig) PostLoad() error {
 	switch c.Metadata.Selection {
-	case file.NoFilesSelection, file.OwnedFilesSelection, file.AllFilesSelection:
+	case file.NoFilesSelection, file.FilesOwnedByPackageSelection, file.AllFilesSelection:
 		return nil
 	}
 	return fmt.Errorf("invalid file metadata selection: %q", c.Metadata.Selection)

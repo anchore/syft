@@ -8,6 +8,7 @@ import (
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/file/cataloger/filedigest"
 	"github.com/anchore/syft/syft/file/cataloger/filemetadata"
 	"github.com/anchore/syft/syft/pkg"
@@ -74,6 +75,31 @@ func NewFileMetadataCatalogerTask(selection file.Selection) Task {
 	return NewTask("file-metadata-cataloger", fn)
 }
 
+func NewFileContentCatalogerTask(cfg filecontent.Config) Task {
+	if len(cfg.Globs) == 0 {
+		return nil
+	}
+
+	cat := filecontent.NewCataloger(cfg)
+
+	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+		accessor := builder.(sbomsync.Accessor)
+
+		result, err := cat.Catalog(resolver)
+		if err != nil {
+			return err
+		}
+
+		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
+			sbom.Artifacts.FileContents = result
+		})
+
+		return nil
+	}
+
+	return NewTask("file-content-cataloger", fn)
+}
+
 // TODO: this should be replaced with a fix that allows passing a coordinate or location iterator to the cataloger
 // Today internal to both cataloger this functions differently: a slice of coordinates vs a channel of locations
 func coordinatesForSelection(selection file.Selection, builder sbomsync.Builder) ([]file.Coordinates, bool) {
@@ -81,7 +107,7 @@ func coordinatesForSelection(selection file.Selection, builder sbomsync.Builder)
 		return nil, true
 	}
 
-	if selection == file.OwnedFilesSelection {
+	if selection == file.FilesOwnedByPackageSelection {
 		var coordinates []file.Coordinates
 
 		accessor := builder.(sbomsync.Accessor)

@@ -146,7 +146,7 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	}
 
 	// combine the user-provided and configured tasks
-	if c.Files.Selection == file.OwnedFilesSelection {
+	if c.Files.Selection == file.FilesOwnedByPackageSelection {
 		// special case: we need the package info when we are cataloging files owned by packages
 		taskGroups = append(taskGroups, pkgTasks, fileTasks)
 	} else {
@@ -182,6 +182,10 @@ func (c *CreateSBOMConfig) fileTasks() []task.Task {
 	if t := task.NewFileMetadataCatalogerTask(c.Files.Selection); t != nil {
 		tsks = append(tsks, t)
 	}
+	if t := task.NewFileContentCatalogerTask(c.Files.Content); t != nil {
+		tsks = append(tsks, t)
+	}
+
 	return tsks
 }
 

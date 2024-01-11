@@ -101,8 +101,9 @@ func collectJSONTags(t *testing.T, v reflect.Value, tags *[]string, parentTag st
 }
 
 func assertLowercaseKebab(t *testing.T, tag string) {
+	t.Helper()
 	require.NotEmpty(t, tag)
-	assert.Equal(t, tag, strcase.ToKebab(tag))
+	assert.Equal(t, strcase.ToKebab(tag), tag)
 }
 
 func Test_collectJSONTags(t *testing.T) {
@@ -225,7 +226,7 @@ func Test_configurationAuditTrail_MarshalJSON(t *testing.T) {
 			cfg: configurationAuditTrail{
 
 				Files: filecataloging.Config{
-					Selection: file.OwnedFilesSelection,
+					Selection: file.FilesOwnedByPackageSelection,
 					Hashers: []crypto.Hash{
 						crypto.SHA256,
 					},

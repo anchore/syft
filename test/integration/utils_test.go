@@ -16,6 +16,21 @@ import (
 )
 
 func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Scope, catalogerSelection ...string) (sbom.SBOM, source.Source) {
+	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{
+		Name:    "syft-tester",
+		Version: "v0.99.0",
+	}).WithCatalogerSelection(
+		pkgcataloging.NewSelectionRequest().
+			WithExpression(catalogerSelection...),
+	)
+	cfg.Search.Scope = scope
+
+	return catalogFixtureImageWithConfig(t, fixtureImageName, cfg)
+}
+
+func catalogFixtureImageWithConfig(t *testing.T, fixtureImageName string, cfg *syft.CreateSBOMConfig) (sbom.SBOM, source.Source) {
+	cfg.CatalogerSelection = cfg.CatalogerSelection.WithDefaults(pkgcataloging.ImageTag)
+
 	// get the fixture image tar file
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
@@ -32,17 +47,6 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 		theSource.Close()
 	})
 
-	// build the SBOM
-	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{
-		Name:    "syft-tester",
-		Version: "v0.99.0",
-	}).WithCatalogerSelection(
-		pkgcataloging.NewSelectionRequest().
-			WithDefaults(pkgcataloging.ImageTag).
-			WithExpression(catalogerSelection...),
-	)
-	cfg.Search.Scope = scope
-
 	s, err := syft.CreateSBOM(context.Background(), theSource, cfg)
 
 	require.NoError(t, err)
@@ -52,6 +56,20 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 }
 
 func catalogDirectory(t *testing.T, dir string, catalogerSelection ...string) (sbom.SBOM, source.Source) {
+	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{
+		Name:    "syft-tester",
+		Version: "v0.99.0",
+	}).WithCatalogerSelection(
+		pkgcataloging.NewSelectionRequest().
+			WithExpression(catalogerSelection...),
+	)
+
+	return catalogDirectoryWithConfig(t, dir, cfg)
+}
+
+func catalogDirectoryWithConfig(t *testing.T, dir string, cfg *syft.CreateSBOMConfig) (sbom.SBOM, source.Source) {
+	cfg.CatalogerSelection = cfg.CatalogerSelection.WithDefaults(pkgcataloging.DirectoryTag)
+
 	// get the source to build an sbom against
 	userInput := "dir:" + dir
 	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
@@ -64,14 +82,6 @@ func catalogDirectory(t *testing.T, dir string, catalogerSelection ...string) (s
 	})
 
 	// build the SBOM
-	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{
-		Name:    "syft-tester",
-		Version: "v0.99.0",
-	}).WithCatalogerSelection(
-		pkgcataloging.NewSelectionRequest().
-			WithDefaults(pkgcataloging.DirectoryTag).
-			WithExpression(catalogerSelection...),
-	)
 	s, err := syft.CreateSBOM(context.Background(), theSource, cfg)
 
 	require.NoError(t, err)

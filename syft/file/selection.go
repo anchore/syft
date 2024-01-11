@@ -1,9 +1,9 @@
 package file
 
 const (
-	NoFilesSelection    Selection = "no-files"
-	OwnedFilesSelection Selection = "owned-files"
-	AllFilesSelection   Selection = "all-files"
+	NoFilesSelection             Selection = "none"
+	FilesOwnedByPackageSelection Selection = "owned-by-package"
+	AllFilesSelection            Selection = "all"
 )
 
 type Selection string

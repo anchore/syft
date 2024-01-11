@@ -6,21 +6,40 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/dustin/go-humanize"
+
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/bus"
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 )
+
+type Config struct {
+	// Globs are the file patterns that must be matched for a file to be considered for cataloging.
+	Globs []string `yaml:"globs" json:"globs" mapstructure:"globs"`
+
+	// SkipFilesAboveSize is the maximum file size (in bytes) to allow to be considered while cataloging. If the file is larger than this size it will be skipped.
+	SkipFilesAboveSize int64 `yaml:"skip-files-above-size" json:"skip-files-above-size" mapstructure:"skip-files-above-size"`
+}
 
 type Cataloger struct {
 	globs                     []string
 	skipFilesAboveSizeInBytes int64
 }
 
-func NewCataloger(globs []string, skipFilesAboveSize int64) (*Cataloger, error) {
+func DefaultConfig() Config {
+	return Config{
+		SkipFilesAboveSize: 250 * intFile.KB,
+	}
+}
+
+func NewCataloger(cfg Config) *Cataloger {
 	return &Cataloger{
-		globs:                     globs,
-		skipFilesAboveSizeInBytes: skipFilesAboveSize,
-	}, nil
+		globs:                     cfg.Globs,
+		skipFilesAboveSizeInBytes: cfg.SkipFilesAboveSize,
+	}
 }
 
 func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]string, error) {
@@ -31,9 +50,15 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]string
 	if err != nil {
 		return nil, err
 	}
+
+	prog := catalogingProgress(int64(len(locations)))
+
 	for _, location := range locations {
+		prog.AtomicStage.Set(location.Path())
+
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
+			prog.SetError(err)
 			return nil, err
 		}
 
@@ -47,11 +72,19 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]string
 			continue
 		}
 		if err != nil {
+			prog.SetError(err)
 			return nil, err
 		}
+
+		prog.Increment()
+
 		results[location.Coordinates] = result
 	}
+
 	log.Debugf("file contents cataloger processed %d files", len(results))
+
+	prog.AtomicStage.Set(fmt.Sprintf("%s files", humanize.Comma(prog.Current())))
+	prog.SetCompleted()
 
 	return results, nil
 }
@@ -66,7 +99,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	buf := &bytes.Buffer{}
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
 	if _, err = io.Copy(encoder, contentReader); err != nil {
-		return "", internal.ErrPath{Context: "contents-cataloger", Path: location.RealPath, Err: err}
+		return "", internal.ErrPath{Context: "content-cataloger", Path: location.RealPath, Err: err}
 	}
 	// note: it's important to close the reader before reading from the buffer since closing will flush the remaining bytes
 	if err := encoder.Close(); err != nil {
@@ -74,4 +107,15 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	}
 
 	return buf.String(), nil
+}
+
+func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
+	info := monitor.GenericTask{
+		Title: monitor.Title{
+			Default: "File contents",
+		},
+		ParentID: monitor.TopLevelCatalogingTaskID,
+	}
+
+	return bus.StartCatalogerTask(info, locations, "")
 }

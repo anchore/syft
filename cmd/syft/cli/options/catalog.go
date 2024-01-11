@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
+	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -114,6 +115,10 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 	return filecataloging.Config{
 		Selection: cfg.File.Metadata.Selection,
 		Hashers:   hashers,
+		Content: filecontent.Config{
+			Globs:              cfg.File.Content.Globs,
+			SkipFilesAboveSize: cfg.File.Content.SkipFilesAboveSize,
+		},
 	}
 }
 
