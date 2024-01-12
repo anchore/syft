@@ -54,6 +54,7 @@ type Catalog struct {
 var _ interface {
 	clio.FlagAdder
 	clio.PostLoader
+	fangs.FieldDescriber
 } = (*Catalog)(nil)
 
 func DefaultCatalog() Catalog {
@@ -192,6 +193,10 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 		"base directory for scanning, no links will be followed above this directory, and all paths will be reported relative to this directory")
 }
 
+func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
+	descriptions.Add(&cfg.Parallelism, "number of cataloger workers to run in parallel")
+}
+
 func (cfg *Catalog) PostLoad() error {
 	if cfg.Name != "" {
 		log.Warnf("name parameter is deprecated. please use: source-name. name will be removed in a future version")
@@ -200,7 +205,10 @@ func (cfg *Catalog) PostLoad() error {
 		}
 	}
 
-	if len(cfg.Catalogers) > 0 && (len(cfg.DefaultCatalogers) > 0 || len(cfg.SelectCatalogers) > 0) {
+	usingLegacyCatalogers := len(cfg.Catalogers) > 0
+	usingNewCatalogers := len(cfg.DefaultCatalogers) > 0 || len(cfg.SelectCatalogers) > 0
+
+	if usingLegacyCatalogers && usingNewCatalogers {
 		return fmt.Errorf("cannot use both 'catalogers' and 'select-catalogers'/'default-catalogers' flags")
 	}
 
