@@ -11,7 +11,7 @@ import (
 )
 
 func TestJavaPURLs(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-test-java-purls", source.SquashedScope, nil)
+	sbom, _ := catalogFixtureImage(t, "image-test-java-purls", source.SquashedScope)
 	found := make(map[string]string)
 	for _, p := range sbom.Artifacts.Packages.Sorted() {
 		if p.Type != pkg.JavaPkg && p.Type != pkg.JenkinsPluginPkg {

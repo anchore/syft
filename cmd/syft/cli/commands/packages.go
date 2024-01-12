@@ -23,7 +23,7 @@ func Packages(app clio.Application, scanCmd *cobra.Command) *cobra.Command {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()
 
-			return runScan(id, opts, args[0])
+			return runScan(cmd.Context(), id, opts, args[0])
 		},
 	}, opts)
 

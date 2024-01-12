@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -9,53 +10,39 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/syft/linux"
+	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger"
 	"github.com/anchore/syft/syft/source"
 )
 
 func BenchmarkImagePackageCatalogers(b *testing.B) {
+	// get the fixture image tar file
 	fixtureImageName := "image-pkg-coverage"
 	imagetest.GetFixtureImage(b, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(b, fixtureImageName)
 
-	var pc *pkg.Collection
-	for _, c := range cataloger.ImageCatalogers(cataloger.DefaultConfig()) {
-		// in case of future alteration where state is persisted, assume no dependency is safe to reuse
-		userInput := "docker-archive:" + tarPath
-		detection, err := source.Detect(userInput, source.DefaultDetectConfig())
-		require.NoError(b, err)
-		theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
-		if err != nil {
-			b.Fatalf("unable to get source: %+v", err)
-		}
-		b.Cleanup(func() {
-			theSource.Close()
-		})
+	// get the source object for the image
+	userInput := "docker-archive:" + tarPath
+	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
+	require.NoError(b, err)
 
-		resolver, err := theSource.FileResolver(source.SquashedScope)
-		if err != nil {
-			b.Fatalf("unable to get resolver: %+v", err)
-		}
+	theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
+	require.NoError(b, err)
 
-		theDistro := linux.IdentifyRelease(resolver)
+	b.Cleanup(func() {
+		theSource.Close()
+	})
 
-		b.Run(c.Name(), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				pc, _, err = cataloger.Catalog(resolver, theDistro, 1, c)
-				if err != nil {
-					b.Fatalf("failure during benchmark: %+v", err)
-				}
-			}
-		})
+	// build the SBOM
+	s, err := syft.CreateSBOM(context.Background(), theSource, syft.DefaultCreateSBOMConfig())
 
-		b.Logf("catalog for %q number of packages: %d", c.Name(), pc.PackageCount())
-	}
+	// did it work?
+	require.NoError(b, err)
+	require.NotNil(b, s)
 }
 
 func TestPkgCoverageImage(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
+	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope)
 
 	observedLanguages := strset.New()
 	definedLanguages := strset.New()
@@ -250,29 +237,8 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	}
 }
 
-func TestPkgCoverageCatalogerConfiguration(t *testing.T) {
-	// Check that cataloger configuration can be used to run a cataloger on a source
-	// for which that cataloger isn't enabled by defauly
-	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, []string{"rust"})
-
-	observedLanguages := strset.New()
-	definedLanguages := strset.New()
-	definedLanguages.Add("rust")
-
-	for actualPkg := range sbom.Artifacts.Packages.Enumerate() {
-		observedLanguages.Add(actualPkg.Language.String())
-	}
-
-	assert.Equal(t, definedLanguages, observedLanguages)
-
-	// Verify that rust isn't actually an image cataloger
-	c := cataloger.DefaultConfig()
-	c.Catalogers = []string{"rust"}
-	assert.Len(t, cataloger.ImageCatalogers(c), 0)
-}
-
 func TestPkgCoverageImage_HasEvidence(t *testing.T) {
-	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
+	sbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope)
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)

@@ -13,7 +13,7 @@ import (
 const catalogerName = "binary-cataloger"
 
 type CatalogerConfig struct {
-	Classifiers []Classifier
+	Classifiers []Classifier `yaml:"classifiers" json:"classifiers" mapstructure:"classifiers"`
 }
 
 func DefaultCatalogerConfig() CatalogerConfig {

@@ -11,16 +11,16 @@ func TestSbomCataloger(t *testing.T) {
 	// The image contains a go.mod file with 2 dependencies and an spdx json sbom.
 	// The go.mod file contains 2 dependencies, and the sbom includes a go dependency
 	// that overlaps with the go.mod
-	sbom, _ := catalogFixtureImage(t, "image-sbom-cataloger", source.SquashedScope, []string{"all"})
+	sbom, _ := catalogFixtureImage(t, "image-sbom-cataloger", source.SquashedScope, "+go-module-file-cataloger")
 
 	expectedSbomCatalogerPkgs := 1
 	expectedGoModCatalogerPkgs := 2
 	actualSbomPkgs := 0
 	actualGoModPkgs := 0
-	for pkg := range sbom.Artifacts.Packages.Enumerate(pkg.GoModulePkg) {
-		if pkg.FoundBy == "go-module-file-cataloger" {
+	for p := range sbom.Artifacts.Packages.Enumerate(pkg.GoModulePkg) {
+		if p.FoundBy == "go-module-file-cataloger" {
 			actualGoModPkgs += 1
-		} else if pkg.FoundBy == "sbom-cataloger" {
+		} else if p.FoundBy == "sbom-cataloger" {
 			actualSbomPkgs += 1
 		}
 	}

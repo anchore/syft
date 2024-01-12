@@ -15,7 +15,6 @@ import (
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
 	"github.com/anchore/syft/syft/format/syftjson"
-	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -32,12 +31,12 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		"image-owning-package",
 	}
 	tests := []struct {
-		formatOption sbom.FormatID
-		redactor     func(in []byte) []byte
-		json         bool
+		name     string
+		redactor func(in []byte) []byte
+		json     bool
 	}{
 		{
-			formatOption: syftjson.ID,
+			name: syftjson.ID.String(),
 			redactor: func(in []byte) []byte {
 				// no redactions necessary
 				return in
@@ -45,7 +44,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			json: true,
 		},
 		{
-			formatOption: cyclonedxjson.ID,
+			name: cyclonedxjson.ID.String(),
 			redactor: func(in []byte) []byte {
 				// unstable values
 				in = regexp.MustCompile(`"(timestamp|serialNumber|bom-ref|ref)":\s*"(\n|[^"])+"`).ReplaceAll(in, []byte(`"$1": "redacted"`))
@@ -55,7 +54,7 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			json: true,
 		},
 		{
-			formatOption: cyclonedxxml.ID,
+			name: cyclonedxxml.ID.String(),
 			redactor: func(in []byte) []byte {
 				// unstable values
 				in = regexp.MustCompile(`(serialNumber|bom-ref|ref)="[^"]+"`).ReplaceAll(in, []byte{})
@@ -75,11 +74,11 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 	decoders := format.NewDecoderCollection(format.Decoders()...)
 
 	for _, test := range tests {
-		t.Run(string(test.formatOption), func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			for _, image := range images {
-				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope, nil)
+				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope)
 
-				f := encoders.GetByString(string(test.formatOption))
+				f := encoders.GetByString(test.name)
 				require.NotNil(t, f)
 
 				var buff1 bytes.Buffer

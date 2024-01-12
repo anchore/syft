@@ -25,7 +25,7 @@ func TestGolangCompilerDetection(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sbom, _ := catalogFixtureImage(t, tt.image, source.SquashedScope, nil)
+			sbom, _ := catalogFixtureImage(t, tt.image, source.SquashedScope)
 			packages := sbom.Artifacts.Packages.PackagesByName("stdlib")
 
 			foundCompilerVersions := make(map[string]struct{})

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -66,7 +67,7 @@ func Attest(app clio.Application) *cobra.Command {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()
 
-			return runAttest(id, &opts, args[0])
+			return runAttest(cmd.Context(), id, &opts, args[0])
 		},
 	}, &opts)
 }
@@ -98,7 +99,7 @@ func defaultAttestOutputOptions() options.Output {
 }
 
 //nolint:funlen
-func runAttest(id clio.Identification, opts *attestOptions, userInput string) error {
+func runAttest(ctx context.Context, id clio.Identification, opts *attestOptions, userInput string) error {
 	// TODO: what other validation here besides binary name?
 	if !commandExists(cosignBinName) {
 		return fmt.Errorf("'syft attest' requires cosign to be installed, however it does not appear to be on PATH")
@@ -111,7 +112,7 @@ func runAttest(id clio.Identification, opts *attestOptions, userInput string) er
 	}
 	defer os.Remove(f.Name())
 
-	s, err := generateSBOMForAttestation(id, &opts.Catalog, userInput)
+	s, err := generateSBOMForAttestation(ctx, id, &opts.Catalog, userInput)
 	if err != nil {
 		return fmt.Errorf("unable to build SBOM: %w", err)
 	}
@@ -245,7 +246,7 @@ func predicateType(outputName string) string {
 	}
 }
 
-func generateSBOMForAttestation(id clio.Identification, opts *options.Catalog, userInput string) (*sbom.SBOM, error) {
+func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opts *options.Catalog, userInput string) (*sbom.SBOM, error) {
 	src, err := getSource(opts, userInput, onlyContainerImages)
 
 	if err != nil {
@@ -260,7 +261,7 @@ func generateSBOMForAttestation(id clio.Identification, opts *options.Catalog, u
 		}
 	}()
 
-	s, err := generateSBOM(id, src, opts)
+	s, err := generateSBOM(ctx, id, src, opts)
 	if err != nil {
 		return nil, err
 	}

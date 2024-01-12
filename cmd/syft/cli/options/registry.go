@@ -18,16 +18,16 @@ type RegistryCredentials struct {
 	TLSKey  string `yaml:"tls-key,omitempty" json:"tls-key,omitempty" mapstructure:"tls-key"`
 }
 
-type registry struct {
+type registryConfig struct {
 	InsecureSkipTLSVerify bool                  `yaml:"insecure-skip-tls-verify" json:"insecure-skip-tls-verify" mapstructure:"insecure-skip-tls-verify"`
 	InsecureUseHTTP       bool                  `yaml:"insecure-use-http" json:"insecure-use-http" mapstructure:"insecure-use-http"`
 	Auth                  []RegistryCredentials `yaml:"auth" json:"auth" mapstructure:"auth"`
 	CACert                string                `yaml:"ca-cert" json:"ca-cert" mapstructure:"ca-cert"`
 }
 
-var _ clio.PostLoader = (*registry)(nil)
+var _ clio.PostLoader = (*registryConfig)(nil)
 
-func (cfg *registry) PostLoad() error {
+func (cfg *registryConfig) PostLoad() error {
 	// there may be additional credentials provided by env var that should be appended to the set of credentials
 	authority, username, password, token, tlsCert, tlsKey :=
 		os.Getenv("SYFT_REGISTRY_AUTH_AUTHORITY"),
@@ -62,7 +62,7 @@ func hasNonEmptyCredentials(username, password, token, tlsCert, tlsKey string) b
 	return hasUserPass || hasToken || hasTLSMaterial
 }
 
-func (cfg *registry) ToOptions() *image.RegistryOptions {
+func (cfg *registryConfig) ToOptions() *image.RegistryOptions {
 	var auth = make([]image.RegistryCredentials, len(cfg.Auth))
 	for i, a := range cfg.Auth {
 		auth[i] = image.RegistryCredentials{

@@ -12,7 +12,7 @@ import (
 func TestSqliteRpm(t *testing.T) {
 	// This is a regression test for issue #469 (https://github.com/anchore/syft/issues/469). Recent RPM
 	// based distribution store package data in an sqlite database
-	sbom, _ := catalogFixtureImage(t, "image-sqlite-rpmdb", source.SquashedScope, nil)
+	sbom, _ := catalogFixtureImage(t, "image-sqlite-rpmdb", source.SquashedScope)
 
 	expectedPkgs := 139
 	actualPkgs := 0

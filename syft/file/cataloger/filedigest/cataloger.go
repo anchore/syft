@@ -45,16 +45,15 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 		}
 	}
 
-	prog := digestsCatalogingProgress(int64(len(locations)))
+	prog := catalogingProgress(int64(len(locations)))
 	for _, location := range locations {
-		prog.Increment()
-		prog.AtomicStage.Set(location.Path())
-
 		result, err := i.catalogLocation(resolver, location)
 
 		if errors.Is(err, ErrUndigestableFile) {
 			continue
 		}
+
+		prog.AtomicStage.Set(location.Path())
 
 		if internal.IsErrPathPermission(err) {
 			log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
@@ -62,15 +61,18 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 		}
 
 		if err != nil {
-			return nil, err
+			prog.SetError(err)
+			return nil, fmt.Errorf("failed to process file %q: %w", location.RealPath, err)
 		}
+
 		prog.Increment()
+
 		results[location.Coordinates] = result
 	}
 
 	log.Debugf("file digests cataloger processed %d files", prog.Current())
 
-	prog.AtomicStage.Set(fmt.Sprintf("%s digests", humanize.Comma(prog.Current())))
+	prog.AtomicStage.Set(fmt.Sprintf("%s files", humanize.Comma(prog.Current())))
 	prog.SetCompleted()
 
 	return results, nil
@@ -101,13 +103,12 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	return digests, nil
 }
 
-func digestsCatalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
+func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
-			Default:      "Catalog file digests",
-			WhileRunning: "Cataloging file digests",
-			OnSuccess:    "Cataloged file digests",
+			Default: "File digests",
 		},
+		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
 	return bus.StartCatalogerTask(info, locations, "")

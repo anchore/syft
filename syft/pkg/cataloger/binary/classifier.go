@@ -23,25 +23,25 @@ import (
 // Classifier is a generic package classifier that can be used to match a package definition
 // to a file that meets the given content criteria of the EvidenceMatcher.
 type Classifier struct {
-	Class string
+	Class string `json:"class"`
 
 	// FileGlob is a selector to narrow down file inspection using the **/glob* syntax
-	FileGlob string
+	FileGlob string `json:"fileGlob"`
 
 	// EvidenceMatcher is what will be used to match against the file in the source
 	// location. If the matcher returns a package, the file will be considered a candidate.
-	EvidenceMatcher EvidenceMatcher
+	EvidenceMatcher EvidenceMatcher `json:"-"`
 
 	// Information below is used to specify the Package information when returned
 
 	// Package is the name to use for the package
-	Package string
+	Package string `json:"package"`
 
 	// PURL is the Package URL to use when generating a package
-	PURL packageurl.PackageURL
+	PURL packageurl.PackageURL `json:"purl"`
 
 	// CPEs are the specific CPEs we want to include for this binary with updated version information
-	CPEs []cpe.CPE
+	CPEs []cpe.CPE `json:"cpes"`
 }
 
 // EvidenceMatcher is a function called to catalog Packages that match some sort of evidence

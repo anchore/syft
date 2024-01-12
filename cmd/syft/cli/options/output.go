@@ -96,7 +96,7 @@ func (o Output) SBOMWriter() (sbom.Writer, error) {
 		}
 	}
 
-	return makeSBOMWriter(o.Outputs, o.File, encoders)
+	return makeSBOMWriter(o.Outputs, o.LegacyFile, encoders)
 }
 
 func (o Output) OutputNameSet() *strset.Set {

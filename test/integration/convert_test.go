@@ -59,7 +59,7 @@ func TestConvertCmd(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			syftSbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope, nil)
+			syftSbom, _ := catalogFixtureImage(t, "image-pkg-coverage", source.SquashedScope)
 			syftFormat := syftjson.NewFormatEncoder()
 
 			syftFile, err := os.CreateTemp("", "test-convert-sbom-")

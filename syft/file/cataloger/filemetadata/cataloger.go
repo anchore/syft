@@ -43,15 +43,17 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 		}()
 	}
 
-	prog := metadataCatalogingProgress(int64(len(locations)))
+	prog := catalogingProgress(-1)
 	for location := range locations {
-		prog.Increment()
 		prog.AtomicStage.Set(location.Path())
 
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
+			prog.SetError(err)
 			return nil, err
 		}
+
+		prog.Increment()
 
 		results[location.Coordinates] = metadata
 	}
@@ -64,13 +66,12 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 	return results, nil
 }
 
-func metadataCatalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
+func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
-			Default:      "Catalog file metadata",
-			WhileRunning: "Cataloging file metadata",
-			OnSuccess:    "Cataloged file metadata",
+			Default: "File metadata",
 		},
+		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
 	return bus.StartCatalogerTask(info, locations, "")

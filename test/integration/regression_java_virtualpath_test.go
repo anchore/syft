@@ -12,7 +12,7 @@ import (
 
 func TestWarCatalogedCorrectlyIfRenamed(t *testing.T) {
 	// install hudson-war@2.2.1 and renames the file to `/hudson.war`
-	sbom, _ := catalogFixtureImage(t, "image-java-virtualpath-regression", source.SquashedScope, nil)
+	sbom, _ := catalogFixtureImage(t, "image-java-virtualpath-regression", source.SquashedScope)
 
 	badPURL := "pkg:maven/hudson/hudson@2.2.1"
 	goodPURL := "pkg:maven/org.jvnet.hudson.main/hudson-war@2.2.1"

@@ -1,21 +1,27 @@
 package commands
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"os"
+	"reflect"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/cmd/syft/cli/eventloop"
 	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/internal/task"
+	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -89,9 +95,55 @@ func Scan(app clio.Application) *cobra.Command {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()
 
-			return runScan(id, opts, args[0])
+			return runScan(cmd.Context(), id, opts, args[0])
 		},
 	}, opts)
+}
+
+func (o *scanOptions) PostLoad() error {
+	return o.validateLegacyOptionsNotUsed()
+}
+
+func (o *scanOptions) validateLegacyOptionsNotUsed() error {
+	if o.Config.ConfigFile == "" {
+		return nil
+	}
+
+	// check for legacy config file shapes that are no longer valid
+	type legacyConfig struct {
+		BasePath                        *string `yaml:"base-path" json:"base-path" mapstructure:"base-path"`
+		DefaultImagePullSource          *string `yaml:"default-image-pull-source" json:"default-image-pull-source" mapstructure:"default-image-pull-source"`
+		ExcludeBinaryOverlapByOwnership *bool   `yaml:"exclude-binary-overlap-by-ownership" json:"exclude-binary-overlap-by-ownership" mapstructure:"exclude-binary-overlap-by-ownership"`
+		File                            any     `yaml:"file" json:"file" mapstructure:"file"`
+	}
+
+	by, err := os.ReadFile(o.Config.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("unable to read config file during validations %q: %w", o.Config.ConfigFile, err)
+	}
+
+	var legacy legacyConfig
+	if err := yaml.Unmarshal(by, &legacy); err != nil {
+		return fmt.Errorf("unable to parse config file during validations %q: %w", o.Config.ConfigFile, err)
+	}
+
+	if legacy.DefaultImagePullSource != nil {
+		return fmt.Errorf("the config file option 'default-image-pull-source' has been removed, please use 'source.image.default-pull-source' instead")
+	}
+
+	if legacy.ExcludeBinaryOverlapByOwnership != nil {
+		return fmt.Errorf("the config file option 'exclude-binary-overlap-by-ownership' has been removed, please use 'relationships.exclude-binary-packages-with-file-ownership-overlap' instead")
+	}
+
+	if legacy.BasePath != nil {
+		return fmt.Errorf("the config file option 'base-path' has been removed, please use 'source.base-path' instead")
+	}
+
+	if legacy.File != nil && reflect.TypeOf(legacy.File).Kind() == reflect.String {
+		return fmt.Errorf("the config file option 'file' has been removed, please use 'outputs' instead")
+	}
+
+	return nil
 }
 
 func validateScanArgs(cmd *cobra.Command, args []string) error {
@@ -111,7 +163,7 @@ func validateArgs(cmd *cobra.Command, args []string, error string) error {
 }
 
 // nolint:funlen
-func runScan(id clio.Identification, opts *scanOptions, userInput string) error {
+func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, userInput string) error {
 	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err
@@ -131,7 +183,7 @@ func runScan(id clio.Identification, opts *scanOptions, userInput string) error 
 		}
 	}()
 
-	s, err := generateSBOM(id, src, &opts.Catalog)
+	s, err := generateSBOM(ctx, id, src, &opts.Catalog)
 	if err != nil {
 		return err
 	}
@@ -151,7 +203,7 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 	detection, err := source.Detect(
 		userInput,
 		source.DetectConfig{
-			DefaultImageSource: opts.DefaultImagePullSource,
+			DefaultImageSource: opts.Source.Image.DefaultPullSource,
 		},
 	)
 	if err != nil {
@@ -175,7 +227,7 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 
 	hashers, err := file.Hashers(opts.Source.File.Digests...)
 	if err != nil {
-		return nil, fmt.Errorf("invalid hash: %w", err)
+		return nil, fmt.Errorf("invalid hash algorithm: %w", err)
 	}
 
 	src, err := detection.NewSource(
@@ -190,7 +242,7 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 				Paths: opts.Exclusions,
 			},
 			DigestAlgorithms: hashers,
-			BasePath:         opts.BasePath,
+			BasePath:         opts.Source.BasePath,
 		},
 	)
 
@@ -204,52 +256,192 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 	return src, nil
 }
 
-func generateSBOM(id clio.Identification, src source.Source, opts *options.Catalog) (*sbom.SBOM, error) {
-	tasks, err := eventloop.Tasks(opts)
+func generateSBOM(ctx context.Context, id clio.Identification, src source.Source, opts *options.Catalog) (*sbom.SBOM, error) {
+	s, err := syft.CreateSBOM(ctx, src, opts.ToSBOMConfig(id))
 	if err != nil {
+		expErrs := filterExpressionErrors(err)
+		notifyExpressionErrors(expErrs)
 		return nil, err
 	}
-
-	s := sbom.SBOM{
-		Source: src.Describe(),
-		Descriptor: sbom.Descriptor{
-			Name:          id.Name,
-			Version:       id.Version,
-			Configuration: opts,
-		},
-	}
-
-	err = buildRelationships(&s, src, tasks)
-
-	return &s, err
+	return s, nil
 }
 
-func buildRelationships(s *sbom.SBOM, src source.Source, tasks []eventloop.Task) error {
-	var errs error
+func filterExpressionErrors(err error) []task.ErrInvalidExpression {
+	if err == nil {
+		return nil
+	}
 
-	var relationships []<-chan artifact.Relationship
-	for _, task := range tasks {
-		c := make(chan artifact.Relationship)
-		relationships = append(relationships, c)
-		go func(task eventloop.Task) {
-			err := eventloop.RunTask(task, &s.Artifacts, src, c)
-			if err != nil {
-				errs = multierror.Append(errs, err)
+	expErrs := processErrors(err)
+
+	return expErrs
+}
+
+// processErrors traverses error chains and multierror lists and returns all ErrInvalidExpression errors found
+func processErrors(err error) []task.ErrInvalidExpression {
+	var result []task.ErrInvalidExpression
+
+	var processError func(...error)
+	processError = func(errs ...error) {
+		for _, e := range errs {
+			// note: using errors.As will result in surprising behavior (since that will traverse the error chain,
+			// potentially skipping over nodes in a list of errors)
+			if cerr, ok := e.(task.ErrInvalidExpression); ok {
+				result = append(result, cerr)
+				continue
 			}
-		}(task)
-	}
-
-	s.Relationships = append(s.Relationships, mergeRelationships(relationships...)...)
-
-	return errs
-}
-
-func mergeRelationships(cs ...<-chan artifact.Relationship) (relationships []artifact.Relationship) {
-	for _, c := range cs {
-		for n := range c {
-			relationships = append(relationships, n)
+			var multiErr *multierror.Error
+			if errors.As(e, &multiErr) {
+				processError(multiErr.Errors...)
+			}
 		}
 	}
 
-	return relationships
+	processError(err)
+
+	return result
+}
+
+func notifyExpressionErrors(expErrs []task.ErrInvalidExpression) {
+	helpText := expressionErrorsHelp(expErrs)
+	if helpText == "" {
+		return
+	}
+
+	bus.Notify(helpText)
+}
+
+func expressionErrorsHelp(expErrs []task.ErrInvalidExpression) string {
+	// enrich all errors found with CLI hints
+	if len(expErrs) == 0 {
+		return ""
+	}
+
+	sb := strings.Builder{}
+
+	sb.WriteString("Suggestions:\n\n")
+
+	found := false
+	for i, expErr := range expErrs {
+		help := expressionSuggetions(expErr)
+		if help == "" {
+			continue
+		}
+		found = true
+		sb.WriteString(help)
+		if i != len(expErrs)-1 {
+			sb.WriteString("\n")
+		}
+	}
+
+	if !found {
+		return ""
+	}
+
+	return sb.String()
+}
+
+const expressionHelpTemplate = " ❖ Given expression %q\n%s%s"
+
+func expressionSuggetions(expErr task.ErrInvalidExpression) string {
+	if expErr.Err == nil {
+		return ""
+	}
+
+	hint := getHintPhrase(expErr)
+	if hint == "" {
+		return ""
+	}
+
+	return fmt.Sprintf(expressionHelpTemplate,
+		getExpression(expErr),
+		indentMsg(getExplanation(expErr)),
+		indentMsg(hint),
+	)
+}
+
+func indentMsg(msg string) string {
+	if msg == "" {
+		return ""
+	}
+
+	lines := strings.Split(msg, "\n")
+	for i, line := range lines {
+		lines[i] = "   " + line
+	}
+
+	return strings.Join(lines, "\n") + "\n"
+}
+
+func getExpression(expErr task.ErrInvalidExpression) string {
+	flag := "--select-catalogers"
+	if expErr.Operation == task.SetOperation {
+		flag = "--override-default-catalogers"
+	}
+	return fmt.Sprintf("%s %s", flag, expErr.Expression)
+}
+
+func getExplanation(expErr task.ErrInvalidExpression) string {
+	err := expErr.Err
+	if errors.Is(err, task.ErrUnknownNameOrTag) {
+		noun := ""
+		switch expErr.Operation {
+		case task.AddOperation:
+			noun = "name"
+		case task.SubSelectOperation:
+			noun = "tag"
+		default:
+			noun = "name or tag"
+		}
+
+		return fmt.Sprintf("However, %q is not a recognized cataloger %s.", trimOperation(expErr.Expression), noun)
+	}
+
+	if errors.Is(err, task.ErrNamesNotAllowed) {
+		if expErr.Operation == task.SubSelectOperation {
+			return "However, " + err.Error() + ".\nIt seems like you are intending to add a cataloger in addition to the default set." // nolint:goconst
+		}
+		return "However, " + err.Error() + "." // nolint:goconst
+	}
+
+	if errors.Is(err, task.ErrTagsNotAllowed) {
+		return "However, " + err.Error() + ".\nAdding groups of catalogers may result in surprising behavior (create inaccurate SBOMs)." // nolint:goconst
+	}
+
+	if errors.Is(err, task.ErrAllNotAllowed) {
+		return "However, you " + err.Error() + ".\nIt seems like you are intending to use all catalogers (which is not recommended)."
+	}
+
+	if err != nil {
+		return "However, this is not valid: " + err.Error()
+	}
+
+	return ""
+}
+
+func getHintPhrase(expErr task.ErrInvalidExpression) string {
+	if errors.Is(expErr.Err, task.ErrUnknownNameOrTag) {
+		return ""
+	}
+
+	switch expErr.Operation {
+	case task.AddOperation:
+		if errors.Is(expErr.Err, task.ErrTagsNotAllowed) {
+			return fmt.Sprintf("If you are certain this is what you want to do, use %q instead.", "--override-default-catalogers "+trimOperation(expErr.Expression))
+		}
+
+	case task.SubSelectOperation:
+		didYouMean := "... Did you mean %q instead?"
+		if errors.Is(expErr.Err, task.ErrNamesNotAllowed) {
+			return fmt.Sprintf(didYouMean, "--select-catalogers +"+expErr.Expression)
+		}
+
+		if errors.Is(expErr.Err, task.ErrAllNotAllowed) {
+			return fmt.Sprintf(didYouMean, "--override-default-catalogers "+expErr.Expression)
+		}
+	}
+	return ""
+}
+
+func trimOperation(x string) string {
+	return strings.TrimLeft(x, "+-")
 }

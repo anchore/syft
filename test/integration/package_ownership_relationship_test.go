@@ -25,7 +25,7 @@ func TestPackageOwnershipRelationships(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			sbom, _ := catalogFixtureImage(t, test.fixture, source.SquashedScope, nil)
+			sbom, _ := catalogFixtureImage(t, test.fixture, source.SquashedScope)
 
 			output := bytes.NewBufferString("")
 			err := syftjson.NewFormatEncoder().Encode(output, sbom)
@@ -60,7 +60,7 @@ func TestPackageOwnershipExclusions(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			sbom, _ := catalogFixtureImage(t, test.fixture, source.SquashedScope, nil)
+			sbom, _ := catalogFixtureImage(t, test.fixture, source.SquashedScope)
 			binaryPackages := make([]pkg.Package, 0)
 			apkPackages := make([]pkg.Package, 0)
 			for p := range sbom.Artifacts.Packages.Enumerate() {
