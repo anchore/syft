@@ -11,7 +11,7 @@ func Finalize(builder sbomsync.Builder, cfg cataloging.RelationshipsConfig, src 
 	accessor := builder.(sbomsync.Accessor)
 
 	// add relationships showing packages that are evident by a file which is owned by another package (package-to-package)
-	if cfg.FileOwnershipOverlap {
+	if cfg.PackageFileOwnershipOverlap {
 		byFileOwnershipOverlapWorker(accessor)
 	}
 

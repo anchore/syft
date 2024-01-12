@@ -127,7 +127,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 				p.Language = pkg.LanguageFromPURL(p.PURL)
 			}
 
-			if cfg.RelationshipsConfig.FileOwnership {
+			if cfg.RelationshipsConfig.PackageFileOwnership {
 				// create file-to-package relationships for files owned by the package
 				owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
 				if err != nil {

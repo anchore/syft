@@ -1,13 +1,13 @@
 package options
 
 type relationshipsConfig struct {
-	FileOwnership        bool `mapstructure:"file-ownership" json:"file-ownership" yaml:"file-ownership"`
-	FileOwnershipOverlap bool `mapstructure:"file-ownership-overlap" json:"file-ownership-overlap" yaml:"file-ownership-overlap"`
+	PackageFileOwnership        bool `mapstructure:"package-file-ownership" json:"package-file-ownership" yaml:"package-file-ownership"`
+	PackageFileOwnershipOverlap bool `mapstructure:"package-file-ownership-overlap" json:"package-file-ownership-overlap" yaml:"package-file-ownership-overlap"`
 }
 
 func defaultRelationshipsConfig() relationshipsConfig {
 	return relationshipsConfig{
-		FileOwnership:        true,
-		FileOwnershipOverlap: true,
+		PackageFileOwnership:        true,
+		PackageFileOwnershipOverlap: true,
 	}
 }

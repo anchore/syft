@@ -302,7 +302,7 @@ func (c *CreateSBOMConfig) environmentTasks() []task.Task {
 
 func (c *CreateSBOMConfig) validate() error {
 	if c.Relationships.ExcludeBinaryPackagesWithFileOwnershipOverlap {
-		if !c.Relationships.FileOwnershipOverlap {
+		if !c.Relationships.PackageFileOwnershipOverlap {
 			return fmt.Errorf("invalid configuration: to exclude binary packages based on file ownership overlap relationships, cataloging file ownership overlap relationships must be enabled")
 		}
 	}

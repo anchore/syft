@@ -486,7 +486,7 @@ func TestCreateSBOMConfig_validate(t *testing.T) {
 				WithRelationshipsConfig(
 					cataloging.DefaultRelationshipsConfig().
 						WithExcludeBinaryPackagesWithFileOwnershipOverlap(true).
-						WithFileOwnershipOverlap(false),
+						WithPackageFileOwnershipOverlap(false),
 				),
 			wantErr: assert.Error,
 		},

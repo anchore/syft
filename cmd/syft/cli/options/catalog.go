@@ -91,8 +91,8 @@ func (cfg Catalog) ToSearchConfig() cataloging.SearchConfig {
 
 func (cfg Catalog) ToRelationshipsConfig() cataloging.RelationshipsConfig {
 	return cataloging.RelationshipsConfig{
-		FileOwnership:        cfg.Relationships.FileOwnership,
-		FileOwnershipOverlap: cfg.Relationships.FileOwnershipOverlap,
+		PackageFileOwnership:        cfg.Relationships.PackageFileOwnership,
+		PackageFileOwnershipOverlap: cfg.Relationships.PackageFileOwnershipOverlap,
 		// note: this option was surfaced in the syft application configuration before this relationships section was added
 		ExcludeBinaryPackagesWithFileOwnershipOverlap: cfg.Package.ExcludeBinaryOverlapByOwnership,
 	}
