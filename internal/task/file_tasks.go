@@ -25,7 +25,7 @@ func NewFileDigestCatalogerTask(selection file.Selection, hashers ...crypto.Hash
 	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		accessor := builder.(sbomsync.Accessor)
 
-		coordinates, ok := coordinatesForSelection(selection, builder)
+		coordinates, ok := coordinatesForSelection(selection, builder.(sbomsync.Accessor))
 		if !ok {
 			return nil
 		}
@@ -55,7 +55,7 @@ func NewFileMetadataCatalogerTask(selection file.Selection) Task {
 	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		accessor := builder.(sbomsync.Accessor)
 
-		coordinates, ok := coordinatesForSelection(selection, builder)
+		coordinates, ok := coordinatesForSelection(selection, builder.(sbomsync.Accessor))
 		if !ok {
 			return nil
 		}
@@ -102,15 +102,13 @@ func NewFileContentCatalogerTask(cfg filecontent.Config) Task {
 
 // TODO: this should be replaced with a fix that allows passing a coordinate or location iterator to the cataloger
 // Today internal to both cataloger this functions differently: a slice of coordinates vs a channel of locations
-func coordinatesForSelection(selection file.Selection, builder sbomsync.Builder) ([]file.Coordinates, bool) {
+func coordinatesForSelection(selection file.Selection, accessor sbomsync.Accessor) ([]file.Coordinates, bool) {
 	if selection == file.AllFilesSelection {
 		return nil, true
 	}
 
 	if selection == file.FilesOwnedByPackageSelection {
 		var coordinates []file.Coordinates
-
-		accessor := builder.(sbomsync.Accessor)
 
 		accessor.ReadFromSBOM(func(sbom *sbom.SBOM) {
 			for _, r := range sbom.Relationships {
