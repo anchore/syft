@@ -37,31 +37,31 @@ jobs:
         uses: ./.github/actions/bootstrap
 
       - name: Restore Java test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: syft/pkg/cataloger/java/test-fixtures/java-builds/packages
           key: ${{ runner.os }}-unit-java-cache-${{ hashFiles( 'syft/pkg/cataloger/java/test-fixtures/java-builds/cache.fingerprint' ) }}
 
       - name: Restore RPM test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: syft/pkg/cataloger/redhat/test-fixtures/rpms
           key: ${{ runner.os }}-unit-rpm-cache-${{ hashFiles( 'syft/pkg/cataloger/redhat/test-fixtures/rpms.fingerprint' ) }}
 
       - name: Restore go binary test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: syft/pkg/cataloger/golang/test-fixtures/archs/binaries
           key: ${{ runner.os }}-unit-go-binaries-cache-${{ hashFiles( 'syft/pkg/cataloger/golang/test-fixtures/archs/binaries.fingerprint' ) }}
 
       - name: Restore binary cataloger test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: syft/pkg/cataloger/binary/test-fixtures/classifiers/bin
           key: ${{ runner.os }}-unit-binary-cataloger-cache-${{ hashFiles( 'syft/pkg/cataloger/binary/test-fixtures/cache.fingerprint' ) }}
 
       - name: Restore Kernel test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: syft/pkg/cataloger/kernel/test-fixtures/cache
           key: ${{ runner.os }}-unit-kernel-cache-${{ hashFiles( 'syft/pkg/cataloger/kernel/test-fixtures/cache.fingerprint' ) }}
@@ -84,7 +84,7 @@ jobs:
         run: make validate-cyclonedx-schema
 
       - name: Restore integration test cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: ${{ github.workspace }}/test/integration/test-fixtures/cache
           key: ${{ runner.os }}-integration-test-cache-${{ hashFiles('test/integration/test-fixtures/cache.fingerprint') }}
@@ -110,7 +110,7 @@ jobs:
       # why not use actions/upload-artifact? It is very slow (3 minutes to upload ~600MB of data, vs 10 seconds with this approach).
       # see https://github.com/actions/upload-artifact/issues/199 for more info
       - name: Upload snapshot artifacts
-        uses: actions/cache/save@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache/save@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           # we need to preserve the snapshot data itself as well as the task data that confirms if the
           # snapshot build is stale or not. Otherwise the downstream jobs will attempt to rebuild the snapshot
@@ -134,7 +134,7 @@ jobs:
 
       - name: Download snapshot build
         id: snapshot-cache
-        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache/restore@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: |
             snapshot
@@ -152,7 +152,7 @@ jobs:
 
       - name: Restore install.sh test image cache
         id: install-test-image-cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: ${{ github.workspace }}/test/install/cache
           key: ${{ runner.os }}-install-test-image-cache-${{ hashFiles('test/install/cache.fingerprint') }}
@@ -187,7 +187,7 @@ jobs:
 
       - name: Download snapshot build
         id: snapshot-cache
-        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache/restore@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: |
             snapshot
@@ -202,7 +202,7 @@ jobs:
 
       - name: Restore docker image cache for compare testing
         id: mac-compare-testing-cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: image.tar
           key: ${{ runner.os }}-${{ hashFiles('test/compare/mac.sh') }}
@@ -226,14 +226,14 @@ jobs:
         uses: ./.github/actions/bootstrap
 
       - name: Restore CLI test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: ${{ github.workspace }}/test/cli/test-fixtures/cache
           key: ${{ runner.os }}-cli-test-cache-${{ hashFiles('test/cli/test-fixtures/cache.fingerprint') }}
 
       - name: Download snapshot build
         id: snapshot-cache
-        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache/restore@e12d46a63a90f2fae62d114769bbf2a179198b5c #v3.3.3
         with:
           path: |
             snapshot
