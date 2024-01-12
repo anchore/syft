@@ -39,7 +39,7 @@ type Catalog struct {
 	// ecosystem-specific cataloger configuration
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
-	Javascript  javascriptConfig  `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
+	JavaScript  javaScriptConfig  `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
 	LinuxKernel linuxKernelConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Python      pythonConfig      `yaml:"python" json:"python" mapstructure:"python"`
 
@@ -129,8 +129,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithProxy(cfg.Golang.Proxy).
 			WithNoProxy(cfg.Golang.NoProxy),
 		JavaScript: javascript.DefaultCatalogerConfig().
-			WithSearchRemoteLicenses(cfg.Javascript.SearchRemoteLicenses).
-			WithNpmBaseURL(cfg.Javascript.NpmBaseURL),
+			WithSearchRemoteLicenses(cfg.JavaScript.SearchRemoteLicenses).
+			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},

@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"reflect"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -95,6 +98,52 @@ func Scan(app clio.Application) *cobra.Command {
 			return runScan(cmd.Context(), id, opts, args[0])
 		},
 	}, opts)
+}
+
+func (o *scanOptions) PostLoad() error {
+	return o.validateLegacyOptionsNotUsed()
+}
+
+func (o *scanOptions) validateLegacyOptionsNotUsed() error {
+	if o.Config.ConfigFile == "" {
+		return nil
+	}
+
+	// check for legacy config file shapes that are no longer valid
+	type legacyConfig struct {
+		BasePath                        *string `yaml:"base-path" json:"base-path" mapstructure:"base-path"`
+		DefaultImagePullSource          *string `yaml:"default-image-pull-source" json:"default-image-pull-source" mapstructure:"default-image-pull-source"`
+		ExcludeBinaryOverlapByOwnership *bool   `yaml:"exclude-binary-overlap-by-ownership" json:"exclude-binary-overlap-by-ownership" mapstructure:"exclude-binary-overlap-by-ownership"`
+		File                            any     `yaml:"file" json:"file" mapstructure:"file"`
+	}
+
+	by, err := os.ReadFile(o.Config.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("unable to read config file during validations %q: %w", o.Config.ConfigFile, err)
+	}
+
+	var legacy legacyConfig
+	if err := yaml.Unmarshal(by, &legacy); err != nil {
+		return fmt.Errorf("unable to parse config file during validations %q: %w", o.Config.ConfigFile, err)
+	}
+
+	if legacy.DefaultImagePullSource != nil {
+		return fmt.Errorf("the config file option 'default-image-pull-source' has been removed, please use 'source.image.default-pull-source' instead")
+	}
+
+	if legacy.ExcludeBinaryOverlapByOwnership != nil {
+		return fmt.Errorf("the config file option 'exclude-binary-overlap-by-ownership' has been removed, please use 'relationships.exclude-binary-packages-with-file-ownership-overlap' instead")
+	}
+
+	if legacy.BasePath != nil {
+		return fmt.Errorf("the config file option 'base-path' has been removed, please use 'source.base-path' instead")
+	}
+
+	if legacy.File != nil && reflect.TypeOf(legacy.File).Kind() == reflect.String {
+		return fmt.Errorf("the config file option 'file' has been removed, please use 'outputs' instead")
+	}
+
+	return nil
 }
 
 func validateScanArgs(cmd *cobra.Command, args []string) error {
