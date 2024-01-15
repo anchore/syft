@@ -34,10 +34,14 @@ func (o *catalogerListOptions) AddFlags(flags clio.FlagSet) {
 	flags.BoolVarP(&o.ShowHidden, "show-hidden", "s", "show catalogers that have been de-selected")
 }
 
-func CatalogerList(app clio.Application) *cobra.Command {
-	opts := &catalogerListOptions{
+func defaultCatalogerListOptions() *catalogerListOptions {
+	return &catalogerListOptions{
 		DefaultCatalogers: []string{"all"},
 	}
+}
+
+func CatalogerList(app clio.Application) *cobra.Command {
+	opts := defaultCatalogerListOptions()
 
 	return app.SetupCommand(&cobra.Command{
 		Use:   "list [OPTIONS]",
@@ -55,30 +59,9 @@ func runCatalogerList(opts *catalogerListOptions) error {
 		return fmt.Errorf("unable to create cataloger tasks: %w", err)
 	}
 
-	selectedTasks, selectionEvidence, err := task.Select(allTasks,
-		pkgcataloging.NewSelectionRequest().
-			WithDefaults(opts.DefaultCatalogers...).
-			WithExpression(opts.SelectCatalogers...),
-	)
+	report, err := catalogerListReport(opts, allTasks)
 	if err != nil {
-		return fmt.Errorf("unable to select catalogers: %w", err)
-	}
-
-	var report string
-
-	switch opts.Output {
-	case "json":
-		report, err = renderCatalogerListJSON(selectedTasks, selectionEvidence, opts.SelectCatalogers)
-	case "table", "":
-		if opts.ShowHidden {
-			report = renderCatalogerListTable(allTasks, selectionEvidence, opts.SelectCatalogers)
-		} else {
-			report = renderCatalogerListTable(selectedTasks, selectionEvidence, opts.SelectCatalogers)
-		}
-	}
-
-	if err != nil {
-		return fmt.Errorf("unable to render cataloger list: %w", err)
+		return fmt.Errorf("unable to generate cataloger list report: %w", err)
 	}
 
 	bus.Report(report)
@@ -86,7 +69,36 @@ func runCatalogerList(opts *catalogerListOptions) error {
 	return nil
 }
 
-func renderCatalogerListJSON(tasks []task.Task, selection task.Selection, expressions []string) (string, error) {
+func catalogerListReport(opts *catalogerListOptions, allTasks []task.Task) (string, error) {
+	selectedTasks, selectionEvidence, err := task.Select(allTasks,
+		pkgcataloging.NewSelectionRequest().
+			WithDefaults(opts.DefaultCatalogers...).
+			WithExpression(opts.SelectCatalogers...),
+	)
+	if err != nil {
+		return "", fmt.Errorf("unable to select catalogers: %w", err)
+	}
+	var report string
+
+	switch opts.Output {
+	case "json":
+		report, err = renderCatalogerListJSON(selectedTasks, selectionEvidence, opts.DefaultCatalogers, opts.SelectCatalogers)
+	case "table", "":
+		if opts.ShowHidden {
+			report = renderCatalogerListTable(allTasks, selectionEvidence, opts.DefaultCatalogers, opts.SelectCatalogers)
+		} else {
+			report = renderCatalogerListTable(selectedTasks, selectionEvidence, opts.DefaultCatalogers, opts.SelectCatalogers)
+		}
+	}
+
+	if err != nil {
+		return "", fmt.Errorf("unable to render cataloger list: %w", err)
+	}
+
+	return report, nil
+}
+
+func renderCatalogerListJSON(tasks []task.Task, selection task.Selection, defaultSelections, selections []string) (string, error) {
 	type node struct {
 		Name string   `json:"name"`
 		Tags []string `json:"tags"`
@@ -98,6 +110,11 @@ func renderCatalogerListJSON(tasks []task.Task, selection task.Selection, expres
 
 	for name := range tagsByName {
 		tagsSelected := selection.TokensByTask[name].SelectedOn.List()
+
+		if len(tagsSelected) == 1 && tagsSelected[0] == "all" {
+			tagsSelected = tagsByName[name]
+		}
+
 		sort.Strings(tagsSelected)
 
 		if tagsSelected == nil {
@@ -112,17 +129,19 @@ func renderCatalogerListJSON(tasks []task.Task, selection task.Selection, expres
 	}
 
 	type document struct {
-		Expressions []string `json:"expressions"`
-		Catalogers  []node   `json:"catalogers"`
+		DefaultSelection []string `json:"default"`
+		Selection        []string `json:"selection"`
+		Catalogers       []node   `json:"catalogers"`
 	}
 
-	if expressions == nil {
+	if selections == nil {
 		// ensure collections are not null
-		expressions = []string{}
+		selections = []string{}
 	}
 
 	doc := document{
-		Expressions: expressions,
+		DefaultSelection: defaultSelections,
+		Selection:        selections,
 	}
 
 	for _, name := range names {
@@ -134,7 +153,7 @@ func renderCatalogerListJSON(tasks []task.Task, selection task.Selection, expres
 	return string(by), err
 }
 
-func renderCatalogerListTable(tasks []task.Task, selection task.Selection, expressions []string) string {
+func renderCatalogerListTable(tasks []task.Task, selection task.Selection, defaultSelections, selections []string) string {
 	t := table.NewWriter()
 	t.SetStyle(table.StyleLight)
 	t.AppendHeader(table.Row{"Cataloger", "Tags"})
@@ -153,9 +172,17 @@ func renderCatalogerListTable(tasks []task.Task, selection task.Selection, expre
 
 	report := t.Render()
 
-	if len(expressions) > 0 {
+	if len(selections) > 0 {
 		header := "Selected by expressions:\n"
-		for _, expr := range expressions {
+		for _, expr := range selections {
+			header += fmt.Sprintf("  - %q\n", expr)
+		}
+		report = header + report
+	}
+
+	if len(defaultSelections) > 0 {
+		header := "Default selections:\n"
+		for _, expr := range defaultSelections {
 			header += fmt.Sprintf("  - %q\n", expr)
 		}
 		report = header + report

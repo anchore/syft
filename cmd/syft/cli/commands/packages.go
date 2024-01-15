@@ -5,6 +5,7 @@ import (
 
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
+	"github.com/anchore/syft/internal"
 )
 
 func Packages(app clio.Application, scanCmd *cobra.Command) *cobra.Command {
@@ -13,11 +14,14 @@ func Packages(app clio.Application, scanCmd *cobra.Command) *cobra.Command {
 	opts := defaultScanOptions()
 
 	cmd := app.SetupCommand(&cobra.Command{
-		Use:     "packages [SOURCE]",
-		Short:   scanCmd.Short,
-		Long:    scanCmd.Long,
-		Args:    scanCmd.Args,
-		Example: scanCmd.Example,
+		Use:   "packages [SOURCE]",
+		Short: scanCmd.Short,
+		Long:  scanCmd.Long,
+		Args:  scanCmd.Args,
+		Example: internal.Tprintf(scanHelp, map[string]interface{}{
+			"appName": id.Name,
+			"command": "packages",
+		}),
 		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			restoreStdout := ui.CaptureStdoutToTraceLog()

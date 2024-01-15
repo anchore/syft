@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	attestExample = `  {{.appName}} {{.command}} --output [FORMAT] alpine:latest defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry
+	attestExample = `  {{.appName}} {{.command}} --output [FORMAT] alpine:latest            defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry
 `
 	attestSchemeHelp = "\n  " + schemeHelpHeader + "\n" + imageSchemeHelp
 	attestHelp       = attestExample + attestSchemeHelp
