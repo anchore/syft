@@ -4,11 +4,11 @@ import (
 	"context"
 	"crypto"
 	"fmt"
-	"github.com/anchore/syft/syft/file/cataloger/executable"
 
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/file/cataloger/filedigest"
 	"github.com/anchore/syft/syft/file/cataloger/filemetadata"

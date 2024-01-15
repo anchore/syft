@@ -2,13 +2,13 @@ package rust
 
 import (
 	"errors"
-	"github.com/anchore/syft/syft/internal/unionreader"
 
 	rustaudit "github.com/microsoft/go-rustaudit"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )

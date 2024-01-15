@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/binary"
-	"github.com/anchore/syft/syft/internal/unionreader"
 	"io"
 	"os"
 	"path"
@@ -14,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 )
 

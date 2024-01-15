@@ -130,7 +130,6 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 		if f.Executable != nil {
 			ret.Executables[coord] = *f.Executable
 		}
-
 	}
 
 	return ret

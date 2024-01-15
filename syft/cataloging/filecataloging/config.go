@@ -4,12 +4,12 @@ import (
 	"crypto"
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"strings"
 
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 )
 

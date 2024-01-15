@@ -6,14 +6,16 @@ import (
 	"debug/macho"
 	"encoding/binary"
 	"fmt"
+
+	"github.com/bmatcuk/doublestar/v4"
+	"github.com/dustin/go-humanize"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
-	"github.com/bmatcuk/doublestar/v4"
-	"github.com/dustin/go-humanize"
 )
 
 type Config struct {
@@ -96,7 +98,6 @@ func filterByGlobs(locs []file.Location, globs []string) ([]file.Location, error
 	}
 	var filteredLocs []file.Location
 	for _, loc := range locs {
-
 		matches, err := locationMatchesGlob(loc, globs)
 		if err != nil {
 			return nil, err
@@ -104,7 +105,6 @@ func filterByGlobs(locs []file.Location, globs []string) ([]file.Location, error
 		if matches {
 			filteredLocs = append(filteredLocs, loc)
 		}
-
 	}
 	return filteredLocs, nil
 }
@@ -221,12 +221,13 @@ func isELF(by []byte) bool {
 }
 
 func findSecurityFeatures(format file.ExecutableFormat, reader unionreader.UnionReader) (*file.ELFSecurityFeatures, error) {
-	switch format {
+	// TODO: add support for PE and MachO
+	switch format { //nolint: gocritic
 	case file.ELF:
-		return findELFSecurityFeatures(reader)
-		//case file.PE:
+		return findELFSecurityFeatures(reader) //nolint: gocritic
+		// case file.PE:
 		//	return findPESecurityFeatures(reader)
-		//case file.MachO:
+		// case file.MachO:
 		//	return findMachOSecurityFeatures(reader)
 	}
 	return nil, fmt.Errorf("unsupported executable format: %q", format)

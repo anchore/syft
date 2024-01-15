@@ -47,5 +47,5 @@ type ELFSecurityFeatures struct {
 
 	//// Selfrando provides function order shuffling to defend against ROP and other types of code reuse
 	//// see https://github.com/runsafesecurity/selfrando
-	//Selfrando *bool `json:"selfrando,omitempty" yaml:"selfrando" mapstructure:"selfrando"`
+	// Selfrando *bool `json:"selfrando,omitempty" yaml:"selfrando" mapstructure:"selfrando"`
 }
