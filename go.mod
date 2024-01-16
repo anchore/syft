@@ -17,10 +17,12 @@ require (
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.1.1-0.20230104203445-02e0a6721501
 	github.com/anchore/stereoscope v0.0.0-20231220161148-590920dabc54
+	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	// we are hinting brotli to latest due to warning when installing archiver v3:
 	// go: warning: github.com/andybalholm/brotli@v1.0.1: retracted by module author: occasional panics and data corruption
 	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
 	github.com/bmatcuk/doublestar/v4 v4.6.1
+	github.com/charmbracelet/bubbles v0.17.1
 	github.com/charmbracelet/bubbletea v0.25.0
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/dave/jennifer v1.7.0
@@ -42,6 +44,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/iancoleman/strcase v0.3.0
 	github.com/invopop/jsonschema v0.7.0
+	github.com/jedib0t/go-pretty/v6 v6.5.2
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
 	github.com/knqyf263/go-rpmdb v0.0.0-20230301153543-ba94b245509b
@@ -74,12 +77,6 @@ require (
 	golang.org/x/net v0.20.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.28.0
-)
-
-require (
-	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
-	github.com/charmbracelet/bubbles v0.17.1
-	github.com/jedib0t/go-pretty/v6 v6.5.3
 )
 
 require (

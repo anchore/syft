@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	attestExample = `  {{.appName}} {{.command}} --output [FORMAT] alpine:latest defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry
+	attestExample = `  {{.appName}} {{.command}} --output [FORMAT] alpine:latest            defaults to using images from a Docker daemon. If Docker is not present, the image is pulled directly from the registry
 `
 	attestSchemeHelp = "\n  " + schemeHelpHeader + "\n" + imageSchemeHelp
 	attestHelp       = attestExample + attestSchemeHelp
@@ -232,7 +232,7 @@ func attestCommand(sbomFilepath string, opts *attestOptions, userInput string) (
 }
 
 func predicateType(outputName string) string {
-	// Select Cosign predicate type based on defined output type
+	// select the Cosign predicate type based on defined output type
 	// As orientation, check: https://github.com/sigstore/cosign/blob/main/pkg/cosign/attestation/attestation.go
 	switch strings.ToLower(outputName) {
 	case "cyclonedx-json":

@@ -86,6 +86,7 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 	rootCmd.AddCommand(
 		scanCmd,
 		commands.Packages(app, scanCmd), // this is currently an alias for the scan command
+		commands.Cataloger(app),
 		commands.Attest(app),
 		commands.Convert(app),
 		clio.VersionCommand(id),
