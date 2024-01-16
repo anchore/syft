@@ -48,7 +48,7 @@ func parseConanlock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 
 	// Support for conan lock 2.x requires field
 	for _, ref := range cl.Requires {
-		reference := parseConanRenference(ref)
+		reference := parseConanV2Reference(ref)
 		if reference.Name == "" {
 			continue
 		}
@@ -72,7 +72,7 @@ func parseConanlock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 	var parsedPkgRequires = map[artifact.ID][]string{}
 
 	for idx, node := range cl.GraphLock.Nodes {
-		metadata := pkg.ConanLockEntry{
+		metadata := pkg.ConanV1LockEntry{
 			Ref:       node.Ref,
 			Options:   parseOptions(node.Options),
 			Path:      node.Path,
@@ -128,9 +128,9 @@ func parseOptions(options string) map[string]string {
 	return o
 }
 
-func parseConanRenference(ref string) pkg.ConanReference {
+func parseConanV2Reference(ref string) pkg.ConanV2LockEntry {
 	// very flexible format name/version[@username[/channel]][#rrev][:pkgid[#prev]][%timestamp]
-	reference := pkg.ConanReference{Ref: ref}
+	reference := pkg.ConanV2LockEntry{Ref: ref}
 
 	parts := strings.SplitN(ref, "%", 2)
 	if len(parts) == 2 {

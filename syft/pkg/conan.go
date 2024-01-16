@@ -1,19 +1,19 @@
 package pkg
 
-type ConanReference struct {
-	Name            string
-	Version         string
-	Username        string
-	Channel         string
-	RecipeRevision  string
-	PackageID       string
-	PackageRevision string
-	TimeStamp       string
-	Ref             string
+type ConanV2LockEntry struct {
+	Name            string `json:"name,omitempty"`
+	Version         string `json:"version,omitempty"`
+	Username        string `json:"username,omitempty"`
+	Channel         string `json:"channel,omitempty"`
+	RecipeRevision  string `json:"recipe_revision,omitempty"`
+	PackageID       string `json:"package_id,omitempty"`
+	PackageRevision string `json:"package_revision,omitempty"`
+	TimeStamp       string `json:"timestamp,omitempty"`
+	Ref             string `json:"ref"`
 }
 
-// ConanLockEntry represents a single "node" entry from a conan.lock file.
-type ConanLockEntry struct {
+// ConanV1LockEntry represents a single "node" entry from a conan.lock file.
+type ConanV1LockEntry struct {
 	Ref            string            `json:"ref"`
 	PackageID      string            `json:"package_id,omitempty"`
 	Prev           string            `json:"prev,omitempty"`
