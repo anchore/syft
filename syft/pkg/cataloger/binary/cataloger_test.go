@@ -13,7 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/testutil"
@@ -1241,4 +1243,50 @@ func Test_Cataloger_ResilientToErrors(t *testing.T) {
 	_, _, err := c.Catalog(resolver)
 	assert.NoError(t, err)
 	assert.True(t, resolver.searchCalled)
+}
+
+func TestCatalogerConfig_MarshalJSON(t *testing.T) {
+
+	tests := []struct {
+		name    string
+		cfg     CatalogerConfig
+		want    string
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "only show names of classes",
+			cfg: CatalogerConfig{
+				Classifiers: []Classifier{
+					{
+						Class:           "class",
+						FileGlob:        "glob",
+						EvidenceMatcher: FileContentsVersionMatcher(".thing"),
+						Package:         "pkg",
+						PURL: packageurl.PackageURL{
+							Type:       "type",
+							Namespace:  "namespace",
+							Name:       "name",
+							Version:    "version",
+							Qualifiers: nil,
+							Subpath:    "subpath",
+						},
+						CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*")},
+					},
+				},
+			},
+			want: `["class"]`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = assert.NoError
+			}
+			got, err := tt.cfg.MarshalJSON()
+			if !tt.wantErr(t, err) {
+				return
+			}
+			assert.Equal(t, tt.want, string(got))
+		})
+	}
 }
