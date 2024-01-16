@@ -87,7 +87,7 @@ $(BIN)/protected: $(SRC)
 	gcc $< -o $@ $(GCCFLAGS) $(CANARY) $(NX) $(RELRO) $(PIE)
 
 verify:
-	/bin/checksec --dir=$(BIN) --extended
+	/bin/checksec --dir=$(BIN) --extended --output=xml
 
 clean:
 	rm -rf $(BINS)

@@ -19,8 +19,8 @@ build: tools
 
 verify: tools
 	@rm -f $(VERIFY_FILE)
-	docker run -i -v $(shell pwd):/mount -w /mount/project $(TOOL_IMAGE) make verify  | tee $(VERIFY_FILE)
-	@diff -u expected_verify $(VERIFY_FILE) && (echo "PASS" || (echo "FAIL" && exit 1))
+	docker run -i -v $(shell pwd):/mount -w /mount/project $(TOOL_IMAGE) make verify > $(VERIFY_FILE)
+	@diff expected_verify $(VERIFY_FILE) && (echo "PASS: Binary features built as with expected features" || (echo "FAIL: different binary features detected" && exit 1))
 
 debug:
 	docker run -i --rm -v $(shell pwd):/mount -w /mount/project $(TOOL_IMAGE) bash
