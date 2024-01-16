@@ -3,8 +3,10 @@ package binary
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 )
@@ -80,6 +82,49 @@ func Test_ClassifierCPEs(t *testing.T) {
 				cpes = append(cpes, cpe.String(c))
 			}
 			require.Equal(t, test.cpes, cpes)
+		})
+	}
+}
+
+func TestClassifier_MarshalJSON(t *testing.T) {
+
+	tests := []struct {
+		name       string
+		classifier Classifier
+		want       string
+		wantErr    assert.ErrorAssertionFunc
+	}{
+		{
+			name: "go case",
+			classifier: Classifier{
+				Class:           "class",
+				FileGlob:        "glob",
+				EvidenceMatcher: FileContentsVersionMatcher(".thing"),
+				Package:         "pkg",
+				PURL: packageurl.PackageURL{
+					Type:       "type",
+					Namespace:  "namespace",
+					Name:       "name",
+					Version:    "version",
+					Qualifiers: nil,
+					Subpath:    "subpath",
+				},
+				CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*")},
+			},
+			want: `{"class":"class","fileGlob":"glob","package":"pkg","purl":"pkg:type/namespace/name@version#subpath","cpes":["cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"]}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = assert.NoError
+			}
+			cfg := tt.classifier
+			got, err := cfg.MarshalJSON()
+			if !tt.wantErr(t, err) {
+				return
+			}
+			assert.Equal(t, tt.want, string(got))
 		})
 	}
 }

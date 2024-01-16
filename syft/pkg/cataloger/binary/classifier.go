@@ -5,6 +5,7 @@ import (
 	"debug/elf"
 	"debug/macho"
 	"debug/pe"
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
@@ -42,6 +43,31 @@ type Classifier struct {
 
 	// CPEs are the specific CPEs we want to include for this binary with updated version information
 	CPEs []cpe.CPE `json:"cpes"`
+}
+
+func (cfg Classifier) MarshalJSON() ([]byte, error) {
+	type marshalled struct {
+		Class    string   `json:"class"`
+		FileGlob string   `json:"fileGlob"`
+		Package  string   `json:"package"`
+		PURL     string   `json:"purl"`
+		CPEs     []string `json:"cpes"`
+	}
+
+	var marshalledCPEs []string
+	for _, c := range cfg.CPEs {
+		marshalledCPEs = append(marshalledCPEs, c.BindToFmtString())
+	}
+
+	m := marshalled{
+		Class:    cfg.Class,
+		FileGlob: cfg.FileGlob,
+		Package:  cfg.Package,
+		PURL:     cfg.PURL.String(),
+		CPEs:     marshalledCPEs,
+	}
+
+	return json.Marshal(m)
 }
 
 // EvidenceMatcher is a function called to catalog Packages that match some sort of evidence

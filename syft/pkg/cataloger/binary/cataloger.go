@@ -4,6 +4,8 @@ Package binary provides a concrete Cataloger implementations for surfacing possi
 package binary
 
 import (
+	"encoding/json"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -26,6 +28,15 @@ func NewCataloger(cfg CatalogerConfig) pkg.Cataloger {
 	return &Cataloger{
 		classifiers: cfg.Classifiers,
 	}
+}
+
+func (cfg CatalogerConfig) MarshalJSON() ([]byte, error) {
+	// only keep the class names
+	var names []string
+	for _, cls := range cfg.Classifiers {
+		names = append(names, cls.Class)
+	}
+	return json.Marshal(names)
 }
 
 // Cataloger is the cataloger responsible for surfacing evidence of a very limited set of binary files,
