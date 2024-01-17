@@ -403,6 +403,17 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/gcc@version"),
 			CPEs:    singleCPE("cpe:2.3:a:gnu:gcc:*:*:*:*:*:*:*:*"),
 		},
+		{
+			Class:    "wordpress-cli-binary",
+			FileGlob: "**/wp",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				// wp-cli/wp-cli 2.9.0'
+				`(?m)wp-cli/wp-cli (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+			),
+			Package: "wp-cli",
+			PURL:    mustPURL("pkg:generic/wp-cli@version"),
+			CPEs:    singleCPE("cpe:2.3:a:wp-cli:wp-cli:*:*:*:*:*:*:*:*"),
+		},
 	}
 }
 
