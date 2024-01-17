@@ -20,6 +20,7 @@ type Config struct {
 
 func DefaultConfig() Config {
 	return Config{
+		Binary:      binary.DefaultCatalogerConfig(),
 		Golang:      golang.DefaultCatalogerConfig(),
 		LinuxKernel: kernel.DefaultLinuxCatalogerConfig(),
 		Python:      python.DefaultCatalogerConfig(),
