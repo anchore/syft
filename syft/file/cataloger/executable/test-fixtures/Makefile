@@ -1,17 +1,22 @@
 BIN=./bin
 TOOL_IMAGE=localhost/syft-bin-build-tools:latest
+DIFF_IMAGE=localhost/differ:latest
 VERIFY_FILE=actual_verify
 
 all: build verify
 
-dockerfile-check:
-	@sha256sum -c Dockerfile.sha256 || (echo "Dockerfile has changed" && exit 1)
+tools-check:
+	@sha256sum -c Dockerfile.sha256 || (echo "Tools Dockerfile has changed" && exit 1)
+
+differ-check:
+	@sha256sum -c ./differ/Dockerfile.sha256 || (echo "Differ Dockerfile has changed" && exit 1)
 
 # for selfrando...
 # docker buildx build --platform linux/amd64 -t $(TOOL_IMAGE) .
 
 tools:
-	@(docker inspect $(TOOL_IMAGE) > /dev/null && make dockerfile-check) || (docker build -t $(TOOL_IMAGE) . && sha256sum Dockerfile > Dockerfile.sha256)
+	@(docker inspect $(TOOL_IMAGE) > /dev/null && make tools-check) || (docker build -t $(TOOL_IMAGE) . && sha256sum Dockerfile > Dockerfile.sha256)
+	@(docker inspect $(DIFF_IMAGE) > /dev/null && make differ-check) || (docker build -t $(DIFF_IMAGE) ./differ && sha256sum Dockerfile > ./differ/Dockerfile.sha256)
 
 build: tools
 	mkdir -p $(BIN)
@@ -20,7 +25,7 @@ build: tools
 verify: tools
 	@rm -f $(VERIFY_FILE)
 	docker run -i -v $(shell pwd):/mount -w /mount/project $(TOOL_IMAGE) make verify > $(VERIFY_FILE)
-	@diff expected_verify $(VERIFY_FILE) && (echo "PASS: Binary features built as with expected features" || (echo "FAIL: different binary features detected" && exit 1))
+	@docker run -i --rm -v $(shell pwd):/mount $(DIFF_IMAGE) /mount/expected_verify /mount/$(VERIFY_FILE) && (echo "PASS: Binary features built as with expected features" || (echo "FAIL: different binary features detected" && exit 1))
 
 debug:
 	docker run -i --rm -v $(shell pwd):/mount -w /mount/project $(TOOL_IMAGE) bash
