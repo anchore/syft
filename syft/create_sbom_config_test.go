@@ -87,7 +87,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "image"),
-				fileCatalogerNames(true, true),
+				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
@@ -105,7 +105,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "directory"),
-				fileCatalogerNames(true, true),
+				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
@@ -124,7 +124,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "directory"),
-				fileCatalogerNames(true, true),
+				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
@@ -142,7 +142,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "image"),
-				fileCatalogerNames(false, true), // note: the digest cataloger is not included
+				fileCatalogerNames(false, true, true), // note: the digest cataloger is not included
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
@@ -180,7 +180,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				// note: there is a single group of catalogers for pkgs and files
 				append(
 					pkgCatalogerNamesWithTagOrName(t, "image"),
-					fileCatalogerNames(true, true)...,
+					fileCatalogerNames(true, true, true)...,
 				),
 				relationshipCatalogerNames(),
 			},
@@ -201,7 +201,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "persistent"),
-				fileCatalogerNames(true, true),
+				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
@@ -221,7 +221,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgCatalogerNamesWithTagOrName(t, "directory"), "persistent"),
-				fileCatalogerNames(true, true),
+				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
@@ -241,7 +241,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgIntersect("image", "javascript"), "persistent"),
-				fileCatalogerNames(true, true),
+				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
@@ -262,7 +262,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "user-provided"),
-				fileCatalogerNames(true, true),
+				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
@@ -282,7 +282,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "image"),
-				fileCatalogerNames(true, true),
+				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
 			},
 			wantManifest: &catalogerManifest{
@@ -366,10 +366,13 @@ func pkgCatalogerNamesWithTagOrName(t *testing.T, token string) []string {
 	return names
 }
 
-func fileCatalogerNames(digest, metadata bool) []string {
+func fileCatalogerNames(digest, metadata, executable bool) []string {
 	var names []string
 	if digest {
 		names = append(names, "file-digest-cataloger")
+	}
+	if executable {
+		names = append(names, "file-executable-cataloger")
 	}
 	if metadata {
 		names = append(names, "file-metadata-cataloger")

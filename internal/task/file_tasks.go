@@ -101,7 +101,11 @@ func NewFileContentCatalogerTask(cfg filecontent.Config) Task {
 	return NewTask("file-content-cataloger", fn)
 }
 
-func NewExecutableCatalogerTask(cfg executable.Config) Task {
+func NewExecutableCatalogerTask(selection file.Selection, cfg executable.Config) Task {
+	if selection == file.NoFilesSelection {
+		return nil
+	}
+
 	cat := executable.NewCataloger(cfg)
 
 	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {

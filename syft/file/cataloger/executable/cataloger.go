@@ -19,7 +19,7 @@ import (
 )
 
 type Config struct {
-	MIMETypes []string `json:"mimeTypes" yaml:"mimeTypes" mapstructure:"mimeTypes"`
+	MIMETypes []string `json:"mime-types" yaml:"mime-types" mapstructure:"mime-types"`
 	Globs     []string `json:"globs" yaml:"globs" mapstructure:"globs"`
 }
 

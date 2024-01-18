@@ -230,6 +230,7 @@ func Test_toSyftFiles(t *testing.T) {
 			want: sbom.Artifacts{
 				FileMetadata: map[file.Coordinates]file.Metadata{},
 				FileDigests:  map[file.Coordinates][]file.Digest{},
+				Executables:  map[file.Coordinates]file.Executable{},
 			},
 		},
 		{
@@ -245,6 +246,7 @@ func Test_toSyftFiles(t *testing.T) {
 							Value:     "123",
 						},
 					},
+					Executable: nil,
 				},
 			},
 			want: sbom.Artifacts{
@@ -257,6 +259,7 @@ func Test_toSyftFiles(t *testing.T) {
 						},
 					},
 				},
+				Executables: map[file.Coordinates]file.Executable{},
 			},
 		},
 		{
@@ -278,6 +281,20 @@ func Test_toSyftFiles(t *testing.T) {
 						{
 							Algorithm: "sha256",
 							Value:     "123",
+						},
+					},
+					Executable: &file.Executable{
+						Format: file.ELF,
+						SecurityFeatures: &file.ELFSecurityFeatures{
+							SymbolTableStripped:           false,
+							StackCanary:                   boolRef(true),
+							NoExecutable:                  false,
+							RelocationReadOnly:            "partial",
+							PositionIndependentExecutable: false,
+							DynamicSharedObject:           false,
+							LlvmSafeStack:                 boolRef(false),
+							LlvmControlFlowIntegrity:      boolRef(true),
+							ClangFortifySource:            boolRef(true),
 						},
 					},
 				},
@@ -306,6 +323,22 @@ func Test_toSyftFiles(t *testing.T) {
 						},
 					},
 				},
+				Executables: map[file.Coordinates]file.Executable{
+					coord: {
+						Format: file.ELF,
+						SecurityFeatures: &file.ELFSecurityFeatures{
+							SymbolTableStripped:           false,
+							StackCanary:                   boolRef(true),
+							NoExecutable:                  false,
+							RelocationReadOnly:            "partial",
+							PositionIndependentExecutable: false,
+							DynamicSharedObject:           false,
+							LlvmSafeStack:                 boolRef(false),
+							LlvmControlFlowIntegrity:      boolRef(true),
+							ClangFortifySource:            boolRef(true),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -318,7 +351,11 @@ func Test_toSyftFiles(t *testing.T) {
 	}
 }
 
-func Test_toSyfRelationship(t *testing.T) {
+func boolRef(b bool) *bool {
+	return &b
+}
+
+func Test_toSyftRelationship(t *testing.T) {
 	packageWithId := func(id string) *pkg.Package {
 		p := &pkg.Package{}
 		p.OverrideID(artifact.ID(id))
