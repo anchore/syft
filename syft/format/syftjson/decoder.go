@@ -10,6 +10,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/format/internal/stream"
 	"github.com/anchore/syft/syft/format/syftjson/model"
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -22,9 +23,10 @@ func NewFormatDecoder() sbom.FormatDecoder {
 	return decoder{}
 }
 
-func (d decoder) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string, error) {
-	if reader == nil {
-		return nil, "", "", fmt.Errorf("no SBOM bytes provided")
+func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) {
+	reader, err := stream.SeekableReader(r)
+	if err != nil {
+		return nil, "", "", err
 	}
 
 	id, version := d.Identify(reader)
@@ -39,8 +41,7 @@ func (d decoder) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string
 
 	dec := json.NewDecoder(reader)
 
-	err := dec.Decode(&doc)
-	if err != nil {
+	if err = dec.Decode(&doc); err != nil {
 		return nil, "", "", fmt.Errorf("unable to decode syft-json document: %w", err)
 	}
 
@@ -51,8 +52,9 @@ func (d decoder) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string
 	return toSyftModel(doc), ID, doc.Schema.Version, nil
 }
 
-func (d decoder) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
-	if reader == nil {
+func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
+	reader, err := stream.SeekableReader(r)
+	if err != nil {
 		return "", ""
 	}
 
@@ -68,8 +70,7 @@ func (d decoder) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
 	dec := json.NewDecoder(reader)
 
 	var doc Document
-	err := dec.Decode(&doc)
-	if err != nil {
+	if err = dec.Decode(&doc); err != nil {
 		// maybe not json? maybe not valid? doesn't matter, we won't process it.
 		return "", ""
 	}
