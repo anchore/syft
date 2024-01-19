@@ -11,7 +11,6 @@ import (
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/artifact"
@@ -77,8 +76,6 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 
 	packageCatalogingProgress.SetCompleted()
 	catalogingProgress.SetCompleted()
-
-	relationship.Finalize(builder, cfg.Relationships, src)
 
 	return &s, nil
 }
