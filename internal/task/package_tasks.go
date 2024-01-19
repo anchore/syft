@@ -115,6 +115,6 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "binary"),
 		newSimplePackageTaskFactory(githubactions.NewActionUsageCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "github", "github-actions"),
 		newSimplePackageTaskFactory(githubactions.NewWorkflowUsageCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "github", "github-actions"),
-		newSimplePackageTaskFactory(sbomCataloger.NewCataloger, pkgcataloging.ImageTag, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "sbom"), // note: not evidence of installed packages
+		newSimplePackageTaskFactory(sbomCataloger.NewCataloger, pkgcataloging.ImageTag, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "sbom"), // note: not evidence of installed packages
 	}
 }
