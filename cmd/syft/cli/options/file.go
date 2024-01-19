@@ -2,6 +2,9 @@ package options
 
 import (
 	"fmt"
+	"sort"
+
+	"github.com/scylladb/go-set/strset"
 
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/file"
@@ -35,6 +38,10 @@ func defaultFileConfig() fileConfig {
 }
 
 func (c *fileConfig) PostLoad() error {
+	digests := strset.New(c.Metadata.Digests...).List()
+	sort.Strings(digests)
+	c.Metadata.Digests = digests
+
 	switch c.Metadata.Selection {
 	case file.NoFilesSelection, file.FilesOwnedByPackageSelection, file.AllFilesSelection:
 		return nil

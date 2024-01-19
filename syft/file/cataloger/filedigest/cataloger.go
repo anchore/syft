@@ -25,7 +25,7 @@ type Cataloger struct {
 
 func NewCataloger(hashes []crypto.Hash) *Cataloger {
 	return &Cataloger{
-		hashes: hashes,
+		hashes: intFile.NormalizeHashes(hashes),
 	}
 }
 

@@ -73,6 +73,6 @@ func (cfg Config) WithSelection(selection file.Selection) Config {
 }
 
 func (cfg Config) WithHashers(hashers []crypto.Hash) Config {
-	cfg.Hashers = hashers
+	cfg.Hashers = intFile.NormalizeHashes(hashers)
 	return cfg
 }

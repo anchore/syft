@@ -22,6 +22,7 @@ func supportedHashAlgorithms() []crypto.Hash {
 }
 
 func NewDigestsFromFile(closer io.ReadCloser, hashes []crypto.Hash) ([]file.Digest, error) {
+	hashes = NormalizeHashes(hashes)
 	// create a set of hasher objects tied together with a single writer to feed content into
 	hashers := make([]hash.Hash, len(hashes))
 	writers := make([]io.Writer, len(hashes))
@@ -67,7 +68,7 @@ func Hashers(names ...string) ([]crypto.Hash, error) {
 		}
 		hashers = append(hashers, hashObj)
 	}
-	return hashers, nil
+	return NormalizeHashes(hashers), nil
 }
 
 func CleanDigestAlgorithmName(name string) string {

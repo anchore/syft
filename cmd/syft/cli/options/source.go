@@ -2,6 +2,7 @@ package options
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
@@ -34,7 +35,14 @@ func defaultSourceConfig() sourceConfig {
 	}
 }
 
-func (c imageSource) PostLoad() error {
+func (c *fileSource) PostLoad() error {
+	digests := strset.New(c.Digests...).List()
+	sort.Strings(digests)
+	c.Digests = digests
+	return nil
+}
+
+func (c *imageSource) PostLoad() error {
 	return checkDefaultSourceValues(c.DefaultPullSource)
 }
 
