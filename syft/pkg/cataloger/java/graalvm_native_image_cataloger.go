@@ -101,7 +101,7 @@ const nativeImageMissingSymbolsError = "one or more symbols are missing from the
 const nativeImageInvalidIndexError = "parsing the executable file generated an invalid index"
 const nativeImageMissingExportedDataDirectoryError = "exported data directory is missing"
 
-// newNativeImageCataloger returns a new Native Image cataloger object.
+// NewNativeImageCataloger returns a new Native Image cataloger object.
 func NewNativeImageCataloger() pkg.Cataloger {
 	return &NativeImageCataloger{}
 }
