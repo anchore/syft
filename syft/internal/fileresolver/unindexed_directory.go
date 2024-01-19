@@ -238,13 +238,11 @@ func (u UnindexedDirectory) AllLocations(ctx context.Context) <-chan file.Locati
 				return nil
 			}
 			p = strings.TrimPrefix(p, "/")
-			for {
-				select { // TODO: for is necessary?
-				case out <- file.NewLocation(p):
-					return nil
-				case <-ctx.Done():
-					return errWalkCanceled
-				}
+			select {
+			case out <- file.NewLocation(p):
+				return nil
+			case <-ctx.Done():
+				return errWalkCanceled
 			}
 		})
 		if err != nil && !errors.Is(err, errWalkCanceled) {
