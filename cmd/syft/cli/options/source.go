@@ -42,7 +42,7 @@ func (c *fileSource) PostLoad() error {
 	return nil
 }
 
-func (c *imageSource) PostLoad() error {
+func (c imageSource) PostLoad() error {
 	return checkDefaultSourceValues(c.DefaultPullSource)
 }
 
