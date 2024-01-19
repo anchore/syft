@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"io"
 
 	"github.com/anchore/syft/syft/file"
@@ -34,7 +35,7 @@ func (e Empty) RelativeFileByPath(_ file.Location, _ string) *file.Location {
 	return nil
 }
 
-func (e Empty) AllLocations() <-chan file.Location {
+func (e Empty) AllLocations(_ context.Context) <-chan file.Location {
 	return nil
 }
 

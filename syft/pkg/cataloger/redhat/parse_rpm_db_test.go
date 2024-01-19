@@ -1,6 +1,7 @@
 package redhat
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"testing"
@@ -34,7 +35,7 @@ func (r rpmdbTestFileResolverMock) FileContentsByLocation(location file.Location
 	panic("not implemented")
 }
 
-func (r rpmdbTestFileResolverMock) AllLocations() <-chan file.Location {
+func (r rpmdbTestFileResolverMock) AllLocations(_ context.Context) <-chan file.Location {
 	panic("not implemented")
 }
 

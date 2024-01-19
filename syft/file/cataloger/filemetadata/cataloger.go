@@ -1,6 +1,7 @@
 package filemetadata
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/dustin/go-humanize"
@@ -21,8 +22,10 @@ func NewCataloger() *Cataloger {
 func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates]file.Metadata, error) {
 	results := make(map[file.Coordinates]file.Metadata)
 	var locations <-chan file.Location
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
 	if len(coordinates) == 0 {
-		locations = resolver.AllLocations()
+		locations = resolver.AllLocations(ctx)
 	} else {
 		locations = func() <-chan file.Location {
 			ch := make(chan file.Location)
@@ -35,7 +38,12 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 						continue
 					}
 					for _, loc := range locs {
-						ch <- loc
+						select {
+						case <-ctx.Done():
+							return
+						case ch <- loc:
+							continue
+						}
 					}
 				}
 			}()
