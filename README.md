@@ -502,19 +502,20 @@ Configuration options (example values are the default):
 
 ```yaml
 # the output format(s) of the SBOM report (options: syft-table, syft-text, syft-json, spdx-json, ...)
-# same as -o, --output, and SYFT_OUTPUT env var
 # to specify multiple output files in differing formats, use a list:
 # output:
 #   - "syft-json=<syft-json-output-file>"
 #   - "spdx-json=<spdx-json-output-file>"
-output: "syft-table"
+# SYFT_OUTPUT env var / -o, --output flags
+output: 
+  - "syft-table"
 
 # suppress all output (except for the SBOM report)
-# same as -q ; SYFT_QUIET env var
+# SYFT_QUIET env var / -q flag
 quiet: false
 
 # enable/disable checking for application updates on startup
-# same as SYFT_CHECK_FOR_APP_UPDATE env var
+# SYFT_CHECK_FOR_APP_UPDATE env var 
 check-for-app-update: true
 
 # maximum number of workers used to process the list of package catalogers in parallel
@@ -524,15 +525,11 @@ parallelism: 1
 # exclude:
 #   - "/etc/**"
 #   - "./out/**/*.json"
-# same as --exclude ; SYFT_EXCLUDE env var
+# SYFT_EXCLUDE env var / --exclude flag
 exclude: []
 
-# allows users to exclude synthetic binary packages from the sbom
-# these packages are removed if an overlap with a non-synthetic package is found
-exclude-binary-overlap-by-ownership: true
-
 # os and/or architecture to use when referencing container images (e.g. "windows/armv6" or "arm64")
-# same as --platform; SYFT_PLATFORM env var
+# SYFT_PLATFORM env var / --platform flag
 platform: ""
 
 # the search space to look for file and package data (options: all-layers, squashed)
@@ -541,43 +538,18 @@ scope: "squashed"
 
 # set the list of package catalogers to use when generating the SBOM
 # default = empty (cataloger set determined automatically by the source type [image or file/directory])
-# catalogers:
-#   - alpm-db-cataloger
-#   - apkdb-cataloger
-#   - binary-cataloger
-#   - cargo-auditable-binary-cataloger
-#   - cocoapods-cataloger
-#   - conan-cataloger
-#   - dartlang-lock-cataloger
-#   - dotnet-deps-cataloger
-#   - dotnet-portable-executable-cataloger
-#   - dpkg-db-cataloger
-#   - elixir-mix-lock-cataloger
-#   - erlang-rebar-lock-cataloger
-#   - go-module-file-cataloger
-#   - go-module-binary-cataloger
-#   - graalvm-native-image-cataloger
-#   - haskell-cataloger
-#   - java-cataloger
-#   - java-gradle-lockfile-cataloger
-#   - java-pom-cataloger
-#   - javascript-lock-cataloger
-#   - javascript-package-cataloger
-#   - linux-kernel-cataloger
-#   - nix-store-cataloger
-#   - php-composer-installed-cataloger
-#   - php-composer-lock-cataloger
-#   - portage-cataloger
-#   - python-package-cataloger
-#   - python-installed-package-cataloger
-#   - rpm-db-cataloger
-#   - rpm-archive-cataloger
-#   - ruby-gemfile-cataloger
-#   - ruby-installed-gemspec-cataloger
-#   - rust-cargo-lock-cataloger
-#   - sbom-cataloger
-#   - spm-cataloger
+# Use `syft cataloger list` for a list of catalogers you can specify
+# DEPRECATED: please use default-catalogers and select-catalogers configuration options instead
+# SYFT_CATALOGERS env var / --catalogers flag
 catalogers:
+
+# set the base set of catalogers to use (defaults to 'image' or 'directory' depending on the scan source)
+# SYFT_DEFAULT_CATALOGERS env var / --override-default-catalogers flag
+default-catalogers: []
+
+# add, remove, and filter the catalogers to be used
+# SYFT_SELECT_CATALOGERS env var / --select-cataloger flag;
+select-catalogers: []
 
 # all format configuration
 format:
@@ -606,7 +578,7 @@ format:
   template:
     # path to the template file to use when rendering the output with the `template` output format. 
     # Note that all template paths are based on the current syft-json schema.
-    # same as -t ; SYFT_TEMPLATE_PATH env var
+    # SYFT_TEMPLATE_PATH env var / -t flag 
     path: ""
 
   # all spdx-json format options
@@ -636,16 +608,17 @@ file:
    metadata: 
       # select which files should be captured by the file-metadata cataloger and included in the SBOM. 
       # Options include:
-      #  - "all-files": capture all files from the search space
-      #  - "owned-files": capture only files owned by packages
-      #  - "unowned-files": capture only files not owned by packages
-      #  - "no-files", "": do not capture any files
+      #  - "all": capture all files from the search space
+      #  - "owned-by-package": capture only files owned by packages
+      #  - "none", "": do not capture any files
       # SYFT_FILE_METADATA_SELECTION env var
-      selection: "owned-files"
+      selection: "owned-by-package"
 
       # the file digest algorithms to use when cataloging files (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
       # SYFT_FILE_METADATA_DIGESTS env var
-      digests: ["sha256"]
+      digests:
+      - "sha256"
+      - "sha1"
 
    # capture the contents of select files in the SBOM
    content:
@@ -674,6 +647,7 @@ package:
 
   # allows users to exclude synthetic binary packages from the sbom
   # these packages are removed if an overlap with a non-synthetic package is found
+  # SYFT_PACKAGE_EXCLUDE_BINARY_OVERLAP_BY_OWNERSHIP env var
   exclude-binary-overlap-by-ownership: true
 
 
@@ -732,17 +706,23 @@ javascript:
 # configuration for the source that the SBOM is generated from (e.g. a file, directory, or container image)
 source:
   # alias name for the source
-  # SYFT_SOURCE_NAME env var; --source-name flag
+  # SYFT_SOURCE_NAME env var / --source-name flag
   name: ""
    
   # alias version for the source
-  # SYFT_SOURCE_VERSION env var; --source-version flag
+  # SYFT_SOURCE_VERSION env var / --source-version flag
   version: ""
-   
-  # options affecting the file source type
+
+  # base directory for scanning, no links will be followed above this directory, and all paths will be 
+  # reported relative to this directory
+  # SYFT_SOURCE_BASE_PATH env var
+  base-path: ''
+
+   # options affecting the file source type
   file:
     # the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
-    digests: ["sha256"]
+    digests: 
+     - "sha256"
 
   image:
      
@@ -804,15 +784,15 @@ attest:
 
 log:
   # use structured logging
-  # same as SYFT_LOG_STRUCTURED env var
+  # SYFT_LOG_STRUCTURED env var
   structured: false
 
   # the log level; note: detailed logging suppress the ETUI
-  # same as SYFT_LOG_LEVEL env var
+  # SYFT_LOG_LEVEL env var
   level: "error"
 
   # location to write the log file (default is not to have a log file)
-  # same as SYFT_LOG_FILE env var
+  # SYFT_LOG_FILE env var
   file: ""
 ```
 
