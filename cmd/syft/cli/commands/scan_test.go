@@ -29,7 +29,7 @@ func Test_scanOptions_validateLegacyOptionsNotUsed(t *testing.T) {
 		{
 			name:    "config file with exclude-binary-overlap-by-ownership legacy option",
 			cfg:     "test-fixtures/scan-configs/with-exclude-binary-overlap-by-ownership.yaml",
-			wantErr: assertErrorContains("relationships.exclude-binary-packages-with-file-ownership-overlap"),
+			wantErr: assertErrorContains("package.exclude-binary-overlap-by-ownership"),
 		},
 		{
 			name:    "config file with file string legacy option",

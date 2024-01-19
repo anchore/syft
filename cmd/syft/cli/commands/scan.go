@@ -132,7 +132,7 @@ func (o *scanOptions) validateLegacyOptionsNotUsed() error {
 	}
 
 	if legacy.ExcludeBinaryOverlapByOwnership != nil {
-		return fmt.Errorf("the config file option 'exclude-binary-overlap-by-ownership' has been removed, please use 'relationships.exclude-binary-packages-with-file-ownership-overlap' instead")
+		return fmt.Errorf("the config file option 'exclude-binary-overlap-by-ownership' has been removed, please use 'package.exclude-binary-overlap-by-ownership' instead")
 	}
 
 	if legacy.BasePath != nil {
