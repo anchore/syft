@@ -5,7 +5,6 @@ package fileresolver
 
 import (
 	"context"
-	"go.uber.org/goleak"
 	"io"
 	"io/fs"
 	"os"
@@ -19,6 +18,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
@@ -1460,7 +1460,7 @@ func TestAllLocationsDoesNotLeakGoRoutine(t *testing.T) {
 	resolver, err := NewFromDirectory("./test-fixtures/symlinks-from-image-symlinks-fixture", "")
 	require.NoError(t, err)
 	ctx, cancel := context.WithCancel(context.Background())
-	for _ = range resolver.AllLocations(ctx) {
+	for range resolver.AllLocations(ctx) {
 		break
 	}
 	cancel()

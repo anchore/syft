@@ -156,7 +156,6 @@ func (r MockResolver) AllLocations(ctx context.Context) <-chan Location {
 			case results <- l:
 				continue
 			}
-
 		}
 	}()
 	return results

@@ -248,7 +248,6 @@ func (r *ContainerImageAllLayers) AllLocations(ctx context.Context) <-chan file.
 				case results <- file.NewLocationFromImage(string(ref.RealPath), ref, r.img):
 					continue
 				}
-
 			}
 		}
 	}()

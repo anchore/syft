@@ -5,7 +5,6 @@ package fileresolver
 
 import (
 	"context"
-	"go.uber.org/goleak"
 	"io"
 	"os"
 	"path"
@@ -19,6 +18,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
