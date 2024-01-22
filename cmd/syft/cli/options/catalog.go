@@ -46,7 +46,6 @@ type Catalog struct {
 	// configuration for the source (the subject being analyzed)
 	Registry   registryConfig `yaml:"registry" json:"registry" mapstructure:"registry"`
 	Platform   string         `yaml:"platform" json:"platform" mapstructure:"platform"`
-	Name       string         `yaml:"name" json:"name" mapstructure:"name"` // deprecated
 	Source     sourceConfig   `yaml:"source" json:"source" mapstructure:"source"`
 	Exclusions []string       `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
 }
@@ -175,14 +174,6 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 	flags.StringArrayVarP(&cfg.SelectCatalogers, "select-catalogers", "",
 		"add, remove, and filter the catalogers to be used")
 
-	flags.StringVarP(&cfg.Source.Name, "name", "",
-		"set the name of the target being analyzed")
-
-	if pfp, ok := flags.(fangs.PFlagSetProvider); ok {
-		flagSet := pfp.PFlagSet()
-		flagSet.Lookup("name").Deprecated = "use: source-name"
-	}
-
 	flags.StringVarP(&cfg.Source.Name, "source-name", "",
 		"set the name of the target being analyzed")
 
@@ -198,13 +189,6 @@ func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
 }
 
 func (cfg *Catalog) PostLoad() error {
-	if cfg.Name != "" {
-		log.Warnf("name parameter is deprecated. please use: source-name. name will be removed in a future version")
-		if cfg.Source.Name == "" {
-			cfg.Source.Name = cfg.Name
-		}
-	}
-
 	usingLegacyCatalogers := len(cfg.Catalogers) > 0
 	usingNewCatalogers := len(cfg.DefaultCatalogers) > 0 || len(cfg.SelectCatalogers) > 0
 
