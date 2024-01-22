@@ -2,6 +2,7 @@ package filecontent
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -42,7 +43,7 @@ func NewCataloger(cfg Config) *Cataloger {
 	}
 }
 
-func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]string, error) {
+func (i *Cataloger) Catalog(_ context.Context, resolver file.Resolver) (map[file.Coordinates]string, error) {
 	results := make(map[file.Coordinates]string)
 	var locations []file.Location
 

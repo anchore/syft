@@ -8,8 +8,8 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-func AllRegularFiles(resolver file.Resolver) (locations []file.Location) {
-	ctx, cancel := context.WithCancel(context.Background())
+func AllRegularFiles(ctx context.Context, resolver file.Resolver) (locations []file.Location) {
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	for location := range resolver.AllLocations(ctx) {
 		resolvedLocations, err := resolver.FilesByPath(location.RealPath)

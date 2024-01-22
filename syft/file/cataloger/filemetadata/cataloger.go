@@ -19,10 +19,10 @@ func NewCataloger() *Cataloger {
 	return &Cataloger{}
 }
 
-func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates]file.Metadata, error) {
+func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates]file.Metadata, error) {
 	results := make(map[file.Coordinates]file.Metadata)
 	var locations <-chan file.Location
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	if len(coordinates) == 0 {
 		locations = resolver.AllLocations(ctx)

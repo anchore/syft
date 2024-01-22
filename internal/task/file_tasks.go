@@ -30,7 +30,7 @@ func NewFileDigestCatalogerTask(selection file.Selection, hashers ...crypto.Hash
 			return nil
 		}
 
-		result, err := digestsCataloger.Catalog(resolver, coordinates...)
+		result, err := digestsCataloger.Catalog(ctx, resolver, coordinates...)
 		if err != nil {
 			return fmt.Errorf("unable to catalog file digests: %w", err)
 		}
@@ -60,7 +60,7 @@ func NewFileMetadataCatalogerTask(selection file.Selection) Task {
 			return nil
 		}
 
-		result, err := metadataCataloger.Catalog(resolver, coordinates...)
+		result, err := metadataCataloger.Catalog(ctx, resolver, coordinates...)
 		if err != nil {
 			return err
 		}
@@ -85,7 +85,7 @@ func NewFileContentCatalogerTask(cfg filecontent.Config) Task {
 	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		accessor := builder.(sbomsync.Accessor)
 
-		result, err := cat.Catalog(resolver)
+		result, err := cat.Catalog(ctx, resolver)
 		if err != nil {
 			return err
 		}

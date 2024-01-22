@@ -1,6 +1,7 @@
 package filecontent
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -73,7 +74,7 @@ func TestContentsCataloger(t *testing.T) {
 			})
 
 			resolver := file.NewMockResolverForPaths(test.files...)
-			actual, err := c.Catalog(resolver)
+			actual, err := c.Catalog(context.Background(), resolver)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, actual, "mismatched contents")
 

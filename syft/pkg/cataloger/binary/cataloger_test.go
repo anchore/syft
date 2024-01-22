@@ -902,7 +902,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
-			packages, _, err := c.Catalog(resolver)
+			packages, _, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
 			require.Len(t, packages, 1, "mismatched package count")
@@ -942,7 +942,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
-			packages, _, err := c.Catalog(resolver)
+			packages, _, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
 			for _, p := range packages {
@@ -972,7 +972,7 @@ func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 	resolver, err := src.FileResolver(source.SquashedScope)
 	assert.NoError(t, err)
 
-	actualResults, _, err := c.Catalog(resolver)
+	actualResults, _, err := c.Catalog(context.Background(), resolver)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(actualResults))
 }
@@ -1086,7 +1086,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
-			packages, _, err := c.Catalog(resolver)
+			packages, _, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
 			if test.expected == nil {
@@ -1252,7 +1252,7 @@ func Test_Cataloger_ResilientToErrors(t *testing.T) {
 	c := NewCataloger(DefaultCatalogerConfig())
 
 	resolver := &panicyResolver{}
-	_, _, err := c.Catalog(resolver)
+	_, _, err := c.Catalog(context.Background(), resolver)
 	assert.NoError(t, err)
 	assert.True(t, resolver.searchCalled)
 }

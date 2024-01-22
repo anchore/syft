@@ -3,6 +3,7 @@ package java
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"debug/elf"
 	"debug/macho"
 	"debug/pe"
@@ -570,7 +571,7 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) []pkg.Package {
 }
 
 // Catalog attempts to find any native image executables reachable from a resolver.
-func (c *NativeImageCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *NativeImageCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	fileMatches, err := resolver.FilesByMIMEType(internal.ExecutableMIMETypeSet.List()...)
 	if err != nil {

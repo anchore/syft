@@ -1,6 +1,7 @@
 package javascript
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"regexp"
@@ -25,7 +26,7 @@ type pnpmLockYaml struct {
 	Packages     map[string]interface{} `json:"packages" yaml:"packages"`
 }
 
-func parsePnpmLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePnpmLock(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load pnpm-lock.yaml file: %w", err)

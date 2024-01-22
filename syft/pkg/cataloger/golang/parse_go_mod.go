@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"sort"
@@ -23,7 +24,7 @@ type goModCataloger struct {
 // parseGoModFile takes a go.mod and lists all packages discovered.
 //
 //nolint:funlen
-func (c *goModCataloger) parseGoModFile(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goModCataloger) parseGoModFile(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make(map[string]pkg.Package)
 
 	contents, err := io.ReadAll(reader)

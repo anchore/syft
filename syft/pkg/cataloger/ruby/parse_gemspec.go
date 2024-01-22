@@ -2,6 +2,7 @@ package ruby
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -65,7 +66,7 @@ func processList(s string) []string {
 }
 
 // parseGemSpecEntries parses the gemspec file and returns the packages and relationships found.
-func parseGemSpecEntries(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGemSpecEntries(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
 	scanner := bufio.NewScanner(reader)

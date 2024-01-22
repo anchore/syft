@@ -100,7 +100,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 
 		t := bus.StartCatalogerTask(info, -1, "")
 
-		pkgs, relationships, err := c.Catalog(resolver)
+		pkgs, relationships, err := c.Catalog(ctx, resolver)
 		if err != nil {
 			return fmt.Errorf("unable to catalog packages with %q: %w", c.Name(), err)
 		}
