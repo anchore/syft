@@ -16,10 +16,6 @@ import (
 
 var _ generic.Parser = parseConanfile
 
-type Conanfile struct {
-	Requires []string `toml:"requires"`
-}
-
 // parseConanfile is a parser function for conanfile.txt contents, returning all packages discovered.
 func parseConanfile(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
