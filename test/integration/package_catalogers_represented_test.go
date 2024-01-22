@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/task"
+	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 )
 
 func TestAllPackageCatalogersReachableInTasks(t *testing.T) {
@@ -50,6 +51,13 @@ func TestAllPackageCatalogersReachableInTasks(t *testing.T) {
 	}
 
 	assert.Equal(t, len(taskTagsByName), constructorCount, "mismatch in number of cataloger constructors and task names")
+
+	for taskName, tags := range taskTagsByName {
+		if !strset.New(tags...).HasAny(pkgcataloging.ImageTag, pkgcataloging.DirectoryTag) {
+			t.Errorf("task %q is missing 'directory' or 'image' a tag", taskName)
+		}
+	}
+
 }
 
 func TestAllPackageCatalogersRepresentedInSource(t *testing.T) {
