@@ -123,6 +123,6 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 			},
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "linux", "kernel",
 		),
-		newSimplePackageTaskFactory(sbomCataloger.NewCataloger, pkgcataloging.ImageTag, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "sbom"), // note: not evidence of installed packages
+		newSimplePackageTaskFactory(sbomCataloger.NewCataloger, "sbom"), // note: not evidence of installed packages
 	}
 }

@@ -53,6 +53,9 @@ func TestAllPackageCatalogersReachableInTasks(t *testing.T) {
 	assert.Equal(t, len(taskTagsByName), constructorCount, "mismatch in number of cataloger constructors and task names")
 
 	for taskName, tags := range taskTagsByName {
+		if taskName == "sbom-cataloger" {
+			continue // this is a special case
+		}
 		if !strset.New(tags...).HasAny(pkgcataloging.ImageTag, pkgcataloging.DirectoryTag) {
 			t.Errorf("task %q is missing 'directory' or 'image' a tag", taskName)
 		}
