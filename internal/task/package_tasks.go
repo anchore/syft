@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
+	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
@@ -112,9 +113,16 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return binary.NewCataloger(cfg.PackagesConfig.Binary)
 			},
-			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "binary"),
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "binary",
+		),
 		newSimplePackageTaskFactory(githubactions.NewActionUsageCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "github", "github-actions"),
 		newSimplePackageTaskFactory(githubactions.NewWorkflowUsageCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "github", "github-actions"),
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return kernel.NewLinuxKernelCataloger(cfg.PackagesConfig.LinuxKernel)
+			},
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "linux", "kernel",
+		),
 		newSimplePackageTaskFactory(sbomCataloger.NewCataloger, pkgcataloging.ImageTag, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "sbom"), // note: not evidence of installed packages
 	}
 }
