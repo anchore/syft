@@ -1042,6 +1042,7 @@
       "aniso8601": "cpe:2.3:a:aniso8601_project:aniso8601:*:*:*:*:*:*:*:*",
       "api-res-py": "cpe:2.3:a:api-res-py_project:api-res-py:*:*:*:*:*:python:*:*",
       "asyncua": "cpe:2.3:a:freeopcua:opcua-asyncio:*:*:*:*:*:python:*:*",
+      "cdo-local-uuid": "cpe:2.3:a:lfprojects:cdo_local_uuid_utility:*:*:*:*:*:python:*:*",
       "cloudlabeling": "cpe:2.3:a:pypi:cloudlabeling:*:*:*:*:*:pypi:*:*",
       "cloudtoken": "cpe:2.3:a:atlassian:cloudtoken:*:*:*:*:*:*:*:*",
       "conference-scheduler-cli": "cpe:2.3:a:pyconuk:conference-scheduler-cli:*:*:*:*:*:*:*:*",
