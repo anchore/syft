@@ -1,11 +1,13 @@
 package integration
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -14,6 +16,101 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func Test_packageCatalogerExports(t *testing.T) {
+	// sanity check that we are actually finding exports
+
+	exports := packageCatalogerExports(t)
+	require.NotEmpty(t, exports)
+
+	expectAtLeast := map[string]*strset.Set{
+		"golang": strset.New("NewGoModuleFileCataloger", "NewGoModuleBinaryCataloger", "CatalogerConfig", "DefaultCatalogerConfig"),
+	}
+
+	for pkg, expected := range expectAtLeast {
+		actual, ok := exports[pkg]
+		require.True(t, ok, pkg)
+		require.True(t, expected.IsSubset(actual.Names()), pkg)
+	}
+
+}
+
+func Test_validatePackageCatalogerExport(t *testing.T) {
+	cases := []struct {
+		name    string
+		export  exportToken
+		wantErr assert.ErrorAssertionFunc
+	}{
+		// valid...
+		{
+			name: "valid constructor",
+			export: exportToken{
+				Name:          "NewFooCataloger",
+				Type:          "*ast.FuncType",
+				SignatureSize: 1,
+			},
+		},
+		{
+			name: "valid default config",
+			export: exportToken{
+				Name:          "DefaultFooConfig",
+				Type:          "*ast.FuncType",
+				SignatureSize: 0,
+			},
+		},
+		{
+			name: "valid config",
+			export: exportToken{
+				Name: "FooConfig",
+				Type: "*ast.StructType",
+			},
+		},
+		// invalid...
+		{
+			name: "struct with constructor name",
+			export: exportToken{
+				Name: "NewFooCataloger",
+				Type: "*ast.StructType",
+			},
+			wantErr: assert.Error,
+		},
+		{
+			name: "struct with default config fn name",
+			export: exportToken{
+				Name: "DefaultFooConfig",
+				Type: "*ast.StructType",
+			},
+			wantErr: assert.Error,
+		},
+		{
+			name: "fn with struct name",
+			export: exportToken{
+				Name: "FooConfig",
+				Type: "*ast.FuncType",
+			},
+			wantErr: assert.Error,
+		},
+		{
+			name: "default config with parameters",
+			export: exportToken{
+				Name:          "DefaultFooConfig",
+				Type:          "*ast.FuncType",
+				SignatureSize: 1,
+			},
+			wantErr: assert.Error,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if c.wantErr == nil {
+				c.wantErr = assert.NoError
+			}
+			err := validatePackageCatalogerExport(t, "test", c.export)
+			c.wantErr(t, err)
+		})
+	}
+}
 
 func Test_PackageCatalogerConventions(t *testing.T) {
 	// look at each package in syft/pkg/cataloger...
@@ -32,56 +129,121 @@ func Test_PackageCatalogerConventions(t *testing.T) {
 	//for debugging purposes...
 	//for pkg, exports := range exportsPerPackage {
 	//	t.Log(pkg)
-	//	for _, export := range exports.List() {
-	//		t.Logf("  %s", export)
+	//	for _, export := range exports {
+	//		t.Logf("  %#v", export)
 	//	}
 	//}
 
 	for pkg, exports := range exportsPerPackage {
 		for _, export := range exports.List() {
 			// assert the export name is valid...
-			validatePackageCatalogerExport(t, pkg, export)
+			assert.NoError(t, validatePackageCatalogerExport(t, pkg, export))
 
 			// assert that config structs have a Default*Config functions to pair with them...
-			if strings.Contains(export, "Config") && !strings.Contains(export, "Default") {
+			if strings.Contains(export.Name, "Config") && !strings.Contains(export.Name, "Default") {
 				// this is a config struct, make certain there is a pairing with a Default*Config function
-				assert.True(t, exports.Has("Default"+export), "cataloger config struct %q in pkg %q must have a 'Default%s' function", export, pkg, export)
+				assert.True(t, exports.Has("Default"+export.Name), "cataloger config struct %q in pkg %q must have a 'Default%s' function", export.Name, pkg, export.Name)
 			}
 		}
 	}
 }
 
-func validatePackageCatalogerExport(t *testing.T, pkg, export string) {
-	t.Helper()
+func validatePackageCatalogerExport(t *testing.T, pkg string, export exportToken) error {
 
-	constructorMatches, err := doublestar.Match("New*Cataloger", export)
+	constructorMatches, err := doublestar.Match("New*Cataloger", export.Name)
 	require.NoError(t, err)
 
-	defaultConfigMatches, err := doublestar.Match("Default*Config", export)
+	defaultConfigMatches, err := doublestar.Match("Default*Config", export.Name)
 	require.NoError(t, err)
 
-	configMatches, err := doublestar.Match("*Config", export)
+	configMatches, err := doublestar.Match("*Config", export.Name)
 	require.NoError(t, err)
 
 	switch {
-	case constructorMatches, defaultConfigMatches, configMatches:
-		return
+	case constructorMatches:
+		if !export.isFunction() {
+			return fmt.Errorf("constructor convention used for non-function in pkg=%q: %#v", pkg, export)
+		}
+	case defaultConfigMatches:
+		if !export.isFunction() {
+			return fmt.Errorf("default config convention used for non-function in pkg=%q: %#v", pkg, export)
+		}
+		if export.SignatureSize != 0 {
+			return fmt.Errorf("default config convention used for non-zero signature size in pkg=%q: %#v", pkg, export)
+		}
+	case configMatches:
+		if !export.isStruct() {
+			return fmt.Errorf("config convention used for non-struct in pkg=%q: %#v", pkg, export)
+		}
+	default:
+		return fmt.Errorf("unexpected export in pkg=%q: %#v", pkg, export)
 	}
-
-	t.Errorf("unexpected export in pkg=%q: %q", pkg, export)
+	return nil
 }
 
-func packageCatalogerExports(t *testing.T) map[string]*strset.Set {
+type exportToken struct {
+	Name          string
+	Type          string
+	SignatureSize int
+}
+
+func (e exportToken) isFunction() bool {
+	return strings.Contains(e.Type, "ast.FuncType")
+}
+
+func (e exportToken) isStruct() bool {
+	return strings.Contains(e.Type, "ast.StructType")
+}
+
+type exportTokenSet map[string]exportToken
+
+func (s exportTokenSet) Names() *strset.Set {
+	set := strset.New()
+	for k := range s {
+		set.Add(k)
+	}
+	return set
+}
+
+func (s exportTokenSet) Has(name string) bool {
+	_, ok := s[name]
+	return ok
+}
+
+func (s exportTokenSet) Add(tokens ...exportToken) {
+	for _, t := range tokens {
+		if _, ok := s[t.Name]; ok {
+			panic("duplicate token name: " + t.Name)
+		}
+		s[t.Name] = t
+	}
+}
+
+func (s exportTokenSet) Remove(names ...string) {
+	for _, name := range names {
+		delete(s, name)
+	}
+}
+
+func (s exportTokenSet) List() []exportToken {
+	var tokens []exportToken
+	for _, t := range s {
+		tokens = append(tokens, t)
+	}
+	return tokens
+}
+
+func packageCatalogerExports(t *testing.T) map[string]exportTokenSet {
 	t.Helper()
-	root := repoRoot(t)
-	catalogerPath := filepath.Join(root, "syft", "pkg", "cataloger")
+
+	catalogerPath := filepath.Join(repoRoot(t), "syft", "pkg", "cataloger")
 
 	ignorePaths := []string{
 		filepath.Join(catalogerPath, "common"),
 		filepath.Join(catalogerPath, "generic"),
 	}
 
-	exportsPerPackage := make(map[string]*strset.Set)
+	exportsPerPackage := make(map[string]exportTokenSet)
 
 	err := filepath.Walk(catalogerPath, func(path string, info os.FileInfo, err error) error {
 		require.NoError(t, err)
@@ -105,30 +267,33 @@ func packageCatalogerExports(t *testing.T) map[string]*strset.Set {
 		require.NoError(t, err)
 
 		pkg := node.Name.Name
-		if _, ok := exportsPerPackage[pkg]; !ok {
-			exportsPerPackage[pkg] = strset.New()
-		}
-
 		for _, f := range node.Decls {
 			switch decl := f.(type) {
 			case *ast.GenDecl:
 				for _, spec := range decl.Specs {
 					switch spec := spec.(type) {
-					case *ast.ValueSpec:
-						for _, name := range spec.Names {
-							if name.IsExported() {
-								exportsPerPackage[pkg].Add(name.Name)
-							}
-						}
 					case *ast.TypeSpec:
 						if spec.Name.IsExported() {
-							exportsPerPackage[pkg].Add(spec.Name.Name)
+							if _, ok := exportsPerPackage[pkg]; !ok {
+								exportsPerPackage[pkg] = make(exportTokenSet)
+							}
+							exportsPerPackage[pkg].Add(exportToken{
+								Name: spec.Name.Name,
+								Type: reflect.TypeOf(spec.Type).String(),
+							})
 						}
 					}
 				}
 			case *ast.FuncDecl:
 				if decl.Recv == nil && decl.Name.IsExported() {
-					exportsPerPackage[pkg].Add(decl.Name.Name)
+					if _, ok := exportsPerPackage[pkg]; !ok {
+						exportsPerPackage[pkg] = make(exportTokenSet)
+					}
+					exportsPerPackage[pkg].Add(exportToken{
+						Name:          decl.Name.Name,
+						Type:          reflect.TypeOf(decl.Type).String(),
+						SignatureSize: len(decl.Type.Params.List),
+					})
 				}
 			}
 		}
@@ -140,27 +305,9 @@ func packageCatalogerExports(t *testing.T) map[string]*strset.Set {
 
 	// remove exceptions
 	// these are known violations to the common convention that are allowed.
-	if v, ok := exportsPerPackage["binary"]; ok {
-		v.Remove("Classifier", "EvidenceMatcher", "FileContentsVersionMatcher", "DefaultClassifiers")
+	if vs, ok := exportsPerPackage["binary"]; ok {
+		vs.Remove("Classifier", "EvidenceMatcher", "FileContentsVersionMatcher", "DefaultClassifiers")
 	}
 
 	return exportsPerPackage
-}
-
-func Test_packageCatalogerExports(t *testing.T) {
-	// sanity check that we are actually finding exports
-
-	exports := packageCatalogerExports(t)
-	require.NotEmpty(t, exports)
-
-	expectAtLeast := map[string]*strset.Set{
-		"golang": strset.New("NewGoModuleFileCataloger", "NewGoModuleBinaryCataloger", "CatalogerConfig", "DefaultCatalogerConfig"),
-	}
-
-	for pkg, expected := range expectAtLeast {
-		actual, ok := exports[pkg]
-		require.True(t, ok, pkg)
-		require.True(t, expected.IsSubset(actual), pkg)
-	}
-
 }
