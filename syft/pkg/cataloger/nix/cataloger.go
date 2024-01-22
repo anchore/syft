@@ -28,11 +28,11 @@ func (c *StoreCataloger) Name() string {
 	return catalogerName
 }
 
-func (c *StoreCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *StoreCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	// we want to search for only directories, which isn't possible via the stereoscope API, so we need to apply the glob manually on all returned paths
 	var pkgs []pkg.Package
 	var filesByPath = make(map[string]*file.LocationSet)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	for location := range resolver.AllLocations(ctx) {
 		matchesStorePath, err := doublestar.Match("**/nix/store/*", location.RealPath)

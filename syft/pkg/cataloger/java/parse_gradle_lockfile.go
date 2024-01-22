@@ -2,6 +2,7 @@ package java
 
 import (
 	"bufio"
+	"context"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -12,14 +13,14 @@ import (
 
 const gradleLockfileGlob = "**/gradle.lockfile*"
 
-// Dependency represents a single dependency in the gradle.lockfile file
+// LockfileDependency represents a single dependency in the gradle.lockfile file
 type LockfileDependency struct {
 	Group   string
 	Name    string
 	Version string
 }
 
-func parseGradleLockfile(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	// Create a new scanner to read the file

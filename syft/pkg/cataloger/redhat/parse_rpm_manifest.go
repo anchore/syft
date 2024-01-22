@@ -2,6 +2,7 @@ package redhat
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"io"
 	"strings"
@@ -14,7 +15,7 @@ import (
 )
 
 // Parses an RPM manifest file, as used in Mariner distroless containers, and returns the Packages listed
-func parseRpmManifest(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRpmManifest(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 	allPkgs := make([]pkg.Package, 0)
 

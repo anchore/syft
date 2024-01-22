@@ -2,6 +2,7 @@ package javascript
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"regexp"
 
@@ -50,7 +51,7 @@ func newGenericYarnLockAdapter(cfg CatalogerConfig) genericYarnLockAdapter {
 	}
 }
 
-func (a genericYarnLockAdapter) parseYarnLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (a genericYarnLockAdapter) parseYarnLock(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find yarn.lock files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the project
 	if pathContainsNodeModulesDirectory(reader.Path()) {

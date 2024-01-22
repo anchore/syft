@@ -4,6 +4,7 @@ Package golang provides a concrete Cataloger implementation relating to packages
 package golang
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -53,8 +54,8 @@ func (p *progressingCataloger) Name() string {
 	return p.cataloger.Name()
 }
 
-func (p *progressingCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
-	pkgs, relationships, err := p.cataloger.Catalog(resolver)
+func (p *progressingCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+	pkgs, relationships, err := p.cataloger.Catalog(ctx, resolver)
 	goCompilerPkgs := []pkg.Package{}
 	totalLocations := file.NewLocationSet()
 	for _, goPkg := range pkgs {

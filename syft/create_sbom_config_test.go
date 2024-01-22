@@ -1,6 +1,7 @@
 package syft
 
 import (
+	"context"
 	"sort"
 	"testing"
 
@@ -34,7 +35,7 @@ func (d dummyCataloger) Name() string {
 	return d.name
 }
 
-func (d dummyCataloger) Catalog(_ file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (d dummyCataloger) Catalog(_ context.Context, _ file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	return nil, nil, nil
 }
 

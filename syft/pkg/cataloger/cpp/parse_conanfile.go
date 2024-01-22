@@ -2,6 +2,7 @@ package cpp
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -20,7 +21,7 @@ type Conanfile struct {
 }
 
 // parseConanfile is a parser function for conanfile.txt contents, returning all packages discovered.
-func parseConanfile(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseConanfile(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 	inRequirements := false
 	var pkgs []pkg.Package

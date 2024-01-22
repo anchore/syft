@@ -2,6 +2,7 @@ package python
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -92,7 +93,7 @@ func newRequirementsParser(cfg CatalogerConfig) requirementsParser {
 
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
 // specific version.
-func (rp requirementsParser) parseRequirementsTxt(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 
 	scanner := bufio.NewScanner(reader)

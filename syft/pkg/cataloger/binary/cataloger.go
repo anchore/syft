@@ -4,6 +4,7 @@ Package binary provides a concrete Cataloger implementations for surfacing possi
 package binary
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/anchore/syft/internal/log"
@@ -55,7 +56,7 @@ func (c Cataloger) Name() string {
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages
 // after analyzing the catalog source.
-func (c Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c Cataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 

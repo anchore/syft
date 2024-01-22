@@ -1,6 +1,7 @@
 package filedigest
 
 import (
+	"context"
 	"crypto"
 	"fmt"
 	"io"
@@ -82,7 +83,7 @@ func TestDigestsCataloger(t *testing.T) {
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
-			actual, err := c.Catalog(resolver)
+			actual, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, actual, "mismatched digests")
@@ -138,7 +139,7 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 		t.Run(test.path, func(t *testing.T) {
 			c := NewCataloger([]crypto.Hash{crypto.MD5})
 
-			actual, err := c.Catalog(resolver)
+			actual, err := c.Catalog(context.Background(), resolver)
 			if err != nil {
 				t.Fatalf("could not catalog: %+v", err)
 			}
@@ -195,7 +196,7 @@ func TestFileDigestCataloger_GivenCoordinates(t *testing.T) {
 
 			// note: an important difference between this test and the previous is that this test is using a list
 			// of specific coordinates to catalog
-			actual, err := c.Catalog(resolver, l.Coordinates)
+			actual, err := c.Catalog(context.Background(), resolver, l.Coordinates)
 			require.NoError(t, err)
 			require.Len(t, actual, 1)
 

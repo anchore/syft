@@ -2,6 +2,7 @@ package java
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -136,7 +137,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			defer cleanupFn()
 
 			// assert licenses are discovered from upstream
-			_, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo()
+			_, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo(context.Background())
 			assert.Equal(t, tc.expectedLicenses, licenses)
 		})
 	}
@@ -405,7 +406,7 @@ func TestParseJar(t *testing.T) {
 			defer cleanupFn()
 			require.NoError(t, err)
 
-			actual, _, err := parser.parse()
+			actual, _, err := parser.parse(context.Background())
 			require.NoError(t, err)
 
 			if len(actual) != len(test.expected) {
@@ -669,7 +670,7 @@ func TestParseNestedJar(t *testing.T) {
 			require.NoError(t, err)
 			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{})
 
-			actual, _, err := gap.parseJavaArchive(nil, nil, file.LocationReadCloser{
+			actual, _, err := gap.parseJavaArchive(context.Background(), nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			})
@@ -1089,7 +1090,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			}
 			test.expectedParent.Locations = locations
 
-			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, file.NewLocation(virtualPath), DefaultArchiveCatalogerConfig())
+			actualPackage := newPackageFromMavenData(context.Background(), test.props, test.project, test.parent, file.NewLocation(virtualPath), DefaultArchiveCatalogerConfig())
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {

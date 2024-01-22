@@ -1,6 +1,7 @@
 package pkgtest
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -221,7 +222,7 @@ func (p *CatalogTester) IgnoreUnfulfilledPathResponses(paths ...string) *Catalog
 
 func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 	t.Helper()
-	pkgs, relationships, err := parser(p.resolver, p.env, p.reader)
+	pkgs, relationships, err := parser(context.Background(), p.resolver, p.env, p.reader)
 	p.wantErr(t, err)
 	p.assertPkgs(t, pkgs, relationships)
 }
@@ -231,7 +232,7 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 
 	resolver := NewObservingResolver(p.resolver)
 
-	pkgs, relationships, err := cataloger.Catalog(resolver)
+	pkgs, relationships, err := cataloger.Catalog(context.Background(), resolver)
 
 	// this is a minimum set, the resolver may return more that just this list
 	for _, path := range p.expectedPathResponses {
