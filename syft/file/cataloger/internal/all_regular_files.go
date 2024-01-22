@@ -1,13 +1,17 @@
 package internal
 
 import (
+	"context"
+
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 )
 
 func AllRegularFiles(resolver file.Resolver) (locations []file.Location) {
-	for location := range resolver.AllLocations() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for location := range resolver.AllLocations(ctx) {
 		resolvedLocations, err := resolver.FilesByPath(location.RealPath)
 		if err != nil {
 			log.Warnf("unable to resolve %+v: %+v", location, err)

@@ -1,6 +1,7 @@
 package binary
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -1237,7 +1238,7 @@ func (p *panicyResolver) RelativeFileByPath(_ file.Location, _ string) *file.Loc
 	return nil
 }
 
-func (p *panicyResolver) AllLocations() <-chan file.Location {
+func (p *panicyResolver) AllLocations(_ context.Context) <-chan file.Location {
 	return nil
 }
 
