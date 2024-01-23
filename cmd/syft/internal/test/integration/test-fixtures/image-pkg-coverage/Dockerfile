@@ -28,7 +28,7 @@ COPY --from=0 /lib/modules/6.0.7-301.fc37.x86_64/vmlinuz /lib/modules/6.0.7-301.
 COPY --from=0 /lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko /lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko
 
 
-COPY pkgs/ .
+COPY pkgs .
 # we duplicate to show a package count difference between all-layers and squashed scopes
 COPY lib lib
-COPY etc/ .
+COPY etc .

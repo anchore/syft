@@ -11,8 +11,8 @@ import (
 
 	"github.com/anchore/clio"
 	hashiVersion "github.com/anchore/go-version"
-	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/cmd/syft/internal"
+	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"

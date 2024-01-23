@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/cmd/syft/cli/options"
+	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/format/template"
 )

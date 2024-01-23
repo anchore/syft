@@ -32,7 +32,6 @@ VERSION
 /test/results
 coverage.txt
 *.log
-test/integration/test-fixtures/**/go.sum
 
 # probable archives
 .images

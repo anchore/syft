@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
-	"github.com/anchore/syft/cmd/syft/cli/options"
+	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"

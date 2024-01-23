@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/cmd/syft/cli/options"
+	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"

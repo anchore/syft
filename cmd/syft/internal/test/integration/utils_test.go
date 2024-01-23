@@ -8,7 +8,7 @@ import (
 
 	"github.com/anchore/clio"
 	"github.com/anchore/stereoscope/pkg/imagetest"
-	"github.com/anchore/syft/cmd/syft/cli/options"
+	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/sbom"
