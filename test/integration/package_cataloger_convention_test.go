@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -48,6 +49,9 @@ func Test_validatePackageCatalogerExport(t *testing.T) {
 				Name:          "NewFooCataloger",
 				Type:          "*ast.FuncType",
 				SignatureSize: 1,
+				ReturnTypeNames: []string{
+					"pkg.Cataloger",
+				},
 			},
 		},
 		{
@@ -66,6 +70,18 @@ func Test_validatePackageCatalogerExport(t *testing.T) {
 			},
 		},
 		// invalid...
+		{
+			name: "constructor that returns a concrete type",
+			export: exportToken{
+				Name:          "NewFooCataloger",
+				Type:          "*ast.FuncType",
+				SignatureSize: 1,
+				ReturnTypeNames: []string{
+					"*generic.Cataloger",
+				},
+			},
+			wantErr: assert.Error,
+		},
 		{
 			name: "struct with constructor name",
 			export: exportToken{
@@ -122,7 +138,9 @@ func Test_PackageCatalogerConventions(t *testing.T) {
 	// anything else that is exported should result in the test failing.
 	// note: this is meant to apply to things in static space, not methods on structs or within interfaces.
 	//
-	// this additionally ensures that any config struct has a Default*Config function to pair with it.
+	// this additionally ensures that:
+	// - any config struct has a Default*Config function to pair with it.
+	// - all cataloger constructors return pkg.Cataloger interface instead of a concrete type
 
 	exportsPerPackage := packageCatalogerExports(t)
 
@@ -164,6 +182,12 @@ func validatePackageCatalogerExport(t *testing.T, pkg string, export exportToken
 		if !export.isFunction() {
 			return fmt.Errorf("constructor convention used for non-function in pkg=%q: %#v", pkg, export)
 		}
+
+		returnTypes := strset.New(export.ReturnTypeNames...)
+		if !returnTypes.Has("pkg.Cataloger") {
+			return fmt.Errorf("constructor convention is to return pkg.Cataloger and not concrete types. pkg=%q constructor=%q types=%+v", pkg, export.Name, strings.Join(export.ReturnTypeNames, ","))
+		}
+
 	case defaultConfigMatches:
 		if !export.isFunction() {
 			return fmt.Errorf("default config convention used for non-function in pkg=%q: %#v", pkg, export)
@@ -182,9 +206,10 @@ func validatePackageCatalogerExport(t *testing.T, pkg string, export exportToken
 }
 
 type exportToken struct {
-	Name          string
-	Type          string
-	SignatureSize int
+	Name            string
+	Type            string
+	SignatureSize   int
+	ReturnTypeNames []string
 }
 
 func (e exportToken) isFunction() bool {
@@ -286,13 +311,25 @@ func packageCatalogerExports(t *testing.T) map[string]exportTokenSet {
 				}
 			case *ast.FuncDecl:
 				if decl.Recv == nil && decl.Name.IsExported() {
+					var returnTypes []string
+					if decl.Type.Results != nil {
+						for _, field := range decl.Type.Results.List {
+							// TODO: there is probably a better way to extract the specific type name
+							//ty := strings.Join(strings.Split(fmt.Sprint(field.Type), " "), ".")
+							ty := types.ExprString(field.Type)
+
+							returnTypes = append(returnTypes, ty)
+						}
+					}
+
 					if _, ok := exportsPerPackage[pkg]; !ok {
 						exportsPerPackage[pkg] = make(exportTokenSet)
 					}
 					exportsPerPackage[pkg].Add(exportToken{
-						Name:          decl.Name.Name,
-						Type:          reflect.TypeOf(decl.Type).String(),
-						SignatureSize: len(decl.Type.Params.List),
+						Name:            decl.Name.Name,
+						Type:            reflect.TypeOf(decl.Type).String(),
+						SignatureSize:   len(decl.Type.Params.List),
+						ReturnTypeNames: returnTypes,
 					})
 				}
 			}
