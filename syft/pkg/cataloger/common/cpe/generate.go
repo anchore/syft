@@ -30,7 +30,7 @@ func newCPE(product, vendor, version, targetSW string) *cpe.CPE {
 	c.Vendor = vendor
 	c.Version = version
 	c.TargetSW = targetSW
-	if cpe.ValidateString(cpe.String(c)) != nil {
+	if cpe.ValidateString(c.String()) != nil {
 		return nil
 	}
 	return &c

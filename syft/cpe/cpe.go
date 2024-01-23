@@ -62,7 +62,7 @@ func New(cpeStr string) (CPE, error) {
 	}
 
 	// ensure that this CPE can be validated after being fully sanitized
-	if ValidateString(String(c)) != nil {
+	if ValidateString(c.String()) != nil {
 		return CPE{}, err
 	}
 
@@ -142,7 +142,7 @@ func stripSlashes(s string) string {
 	return sb.String()
 }
 
-func String(c CPE) string {
+func (c CPE) String() string {
 	output := CPE{}
 	output.Vendor = sanitize(c.Vendor)
 	output.Product = sanitize(c.Product)
