@@ -2,15 +2,17 @@ package cli
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
 	"github.com/anchore/syft/syft/format/spdxjson"
 	"github.com/anchore/syft/syft/format/spdxtagvalue"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/stretchr/testify/require"
-	"strings"
-	"testing"
 )
 
 func TestConvertCmd(t *testing.T) {

@@ -10,6 +10,6 @@ func TestFormatSyftJSON_buildConfig(t *testing.T) {
 	ft := &FormatSyftJSON{}
 	ft = setAllToNonZero(t, ft).(*FormatSyftJSON)
 
-	subject := ft.buildConfig()
+	subject := ft.config()
 	assertExpectedValue(t, subject)
 }

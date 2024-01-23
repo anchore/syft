@@ -3,7 +3,6 @@ package options
 import (
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/syft/format/template"
-	"github.com/anchore/syft/syft/sbom"
 )
 
 var _ clio.FlagAdder = (*FormatTemplate)(nil)
@@ -26,12 +25,8 @@ func (o *FormatTemplate) AddFlags(flags clio.FlagSet) {
 	}
 }
 
-func (o FormatTemplate) formatEncoders() ([]sbom.FormatEncoder, error) {
-	if !o.Enabled {
-		return nil, nil
-	}
-	enc, err := template.NewFormatEncoder(template.EncoderConfig{
+func (o FormatTemplate) config() template.EncoderConfig {
+	return template.EncoderConfig{
 		TemplatePath: o.Path,
-	})
-	return []sbom.FormatEncoder{enc}, err
+	}
 }

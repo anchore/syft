@@ -10,6 +10,6 @@ func TestFormatCyclonedxXML_buildConfig(t *testing.T) {
 	ft := FormatCyclonedxXML{}
 	ftp := setAllToNonZero(t, &ft).(*FormatCyclonedxXML)
 
-	subject := ftp.buildConfig("Version")
+	subject := ftp.config("Version")
 	assertExpectedValue(t, subject)
 }

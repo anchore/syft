@@ -10,6 +10,6 @@ func TestFormatSPDXJSON_buildConfig(t *testing.T) {
 	ft := &FormatSPDXJSON{}
 	ft = setAllToNonZero(t, ft).(*FormatSPDXJSON)
 
-	subject := ft.buildConfig("Version")
+	subject := ft.config("Version")
 	assertExpectedValue(t, subject)
 }

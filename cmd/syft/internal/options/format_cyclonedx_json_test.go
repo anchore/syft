@@ -13,7 +13,7 @@ func TestFormatCyclonedxJSON_buildConfig(t *testing.T) {
 	ft := &FormatCyclonedxJSON{}
 	ft = setAllToNonZero(t, ft).(*FormatCyclonedxJSON)
 
-	subject := ft.buildConfig("Version")
+	subject := ft.config("Version")
 	assertExpectedValue(t, subject)
 }
 

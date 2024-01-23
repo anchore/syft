@@ -7,3 +7,4 @@
 !image-pkg-coverage/pkgs/java/*.hpi
 
 **/go.sum
+!image-go-bin-arch-coverage/go.sum

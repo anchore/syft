@@ -2,7 +2,6 @@ package options
 
 import (
 	"github.com/anchore/syft/syft/format/syftjson"
-	"github.com/anchore/syft/syft/sbom"
 )
 
 type FormatSyftJSON struct {
@@ -16,12 +15,7 @@ func DefaultFormatJSON() FormatSyftJSON {
 	}
 }
 
-func (o FormatSyftJSON) formatEncoders() ([]sbom.FormatEncoder, error) {
-	enc, err := syftjson.NewFormatEncoderWithConfig(o.buildConfig())
-	return []sbom.FormatEncoder{enc}, err
-}
-
-func (o FormatSyftJSON) buildConfig() syftjson.EncoderConfig {
+func (o FormatSyftJSON) config() syftjson.EncoderConfig {
 	var pretty bool
 	if o.Pretty != nil {
 		pretty = *o.Pretty
