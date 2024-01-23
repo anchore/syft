@@ -101,15 +101,16 @@ func TestParseRpmDB(t *testing.T) {
 						pkg.NewLicenseFromLocations("MIT", packagesLocation),
 					),
 					Metadata: pkg.RpmDBEntry{
-						Name:      "dive",
-						Epoch:     nil,
-						Arch:      "x86_64",
-						Release:   "1",
-						Version:   "0.9.2",
-						SourceRpm: "dive-0.9.2-1.src.rpm",
-						Size:      12406784,
-						Vendor:    "",
-						Files:     []pkg.RpmFileRecord{},
+						Name:            "dive",
+						Epoch:           nil,
+						Arch:            "x86_64",
+						Release:         "1",
+						Version:         "0.9.2",
+						SourceRpm:       "dive-0.9.2-1.src.rpm",
+						Size:            12406784,
+						Vendor:          "",
+						ModularityLabel: strRef(""),
+						Files:           []pkg.RpmFileRecord{},
 					},
 				},
 			},
@@ -129,14 +130,15 @@ func TestParseRpmDB(t *testing.T) {
 						pkg.NewLicenseFromLocations("MIT", packagesLocation),
 					),
 					Metadata: pkg.RpmDBEntry{
-						Name:      "dive",
-						Epoch:     nil,
-						Arch:      "x86_64",
-						Release:   "1",
-						Version:   "0.9.2",
-						SourceRpm: "dive-0.9.2-1.src.rpm",
-						Size:      12406784,
-						Vendor:    "",
+						Name:            "dive",
+						Epoch:           nil,
+						Arch:            "x86_64",
+						Release:         "1",
+						Version:         "0.9.2",
+						SourceRpm:       "dive-0.9.2-1.src.rpm",
+						Size:            12406784,
+						Vendor:          "",
+						ModularityLabel: strRef(""),
 						Files: []pkg.RpmFileRecord{
 							{
 								Path: "/usr/local/bin/dive",
@@ -212,4 +214,8 @@ func TestToElVersion(t *testing.T) {
 
 func intRef(i int) *int {
 	return &i
+}
+
+func strRef(s string) *string {
+	return &s
 }
