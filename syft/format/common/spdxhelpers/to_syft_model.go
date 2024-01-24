@@ -627,7 +627,8 @@ func findPURLValue(p *spdx.Package) string {
 	return ""
 }
 
-func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
+func extractCPEs(p *spdx.Package) (cpes []cpe.SourcedCPE) {
+	// TODO: WILL: what do to when source is unknown?
 	for _, r := range p.PackageExternalReferences {
 		if r.RefType == string(helpers.Cpe23ExternalRefType) {
 			c, err := cpe.New(r.Locator)
@@ -635,7 +636,7 @@ func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 				log.Warnf("unable to extract SPDX CPE=%q: %+v", r.Locator, err)
 				continue
 			}
-			cpes = append(cpes, c)
+			cpes = append(cpes, c.WithUnknownSource())
 		}
 	}
 	return cpes

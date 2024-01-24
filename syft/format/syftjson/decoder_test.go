@@ -157,13 +157,16 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 		}),
 		Language: "language",
 		Type:     "type",
-		CPEs: []cpe.CPE{
+		CPEs: []cpe.SourcedCPE{
 			{
-				Part:    "a",
-				Vendor:  "vendor",
-				Product: "product",
-				Version: "version",
-				Update:  "update",
+				CPE: cpe.CPE{
+					Part:    "a",
+					Vendor:  "vendor",
+					Product: "product",
+					Version: "version",
+					Update:  "update",
+				},
+				Source: "test-source",
 			},
 		},
 		PURL:     "pkg:generic/pkg@version",

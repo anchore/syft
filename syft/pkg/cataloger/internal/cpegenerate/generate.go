@@ -109,7 +109,7 @@ func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 // FromPackageAttributes Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
 // generate the minimal set of representative CPEs, which implies that optional fields should not be included
 // (such as target SW).
-func FromPackageAttributes(p pkg.Package) []cpe.CPE {
+func FromPackageAttributes(p pkg.Package) []cpe.SourcedCPE {
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
 	if len(products) == 0 {
@@ -137,8 +137,12 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 	cpes = filter(cpes, p, cpeFilters...)
 
 	sort.Sort(cpe.BySpecificity(cpes))
+	var result []cpe.SourcedCPE
+	for _, cpe := range cpes {
+		result = append(result, cpe.WithGeneratedSource())
+	}
 
-	return cpes
+	return result
 }
 
 func candidateVendors(p pkg.Package) []string {

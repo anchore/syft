@@ -712,8 +712,11 @@ func TestGeneratePackageCPEs(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := FromPackageAttributes(test.p)
+			expectedCpeSet := set.NewStringSet()
+			for _, cpeStr := range test.expected {
+				expectedCpeSet.Add("syft-generated:" + cpeStr)
+			}
 
-			expectedCpeSet := set.NewStringSet(test.expected...)
 			actualCpeSet := set.NewStringSet()
 			for _, a := range actual {
 				actualCpeSet.Add(a.String())

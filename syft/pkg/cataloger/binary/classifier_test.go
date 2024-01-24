@@ -79,7 +79,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 
 			var cpes []string
 			for _, c := range p.CPEs {
-				cpes = append(cpes, c.String())
+				cpes = append(cpes, c.CPE.String())
 			}
 			require.Equal(t, test.cpes, cpes)
 		})

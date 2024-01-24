@@ -229,9 +229,12 @@ func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
 
 // toPackageModel crates a new Package from the given pkg.Package.
 func toPackageModel(p pkg.Package, cfg EncoderConfig) model.Package {
-	var cpes = make([]string, len(p.CPEs))
+	var cpes = make([]model.SourcedCPE, len(p.CPEs))
 	for i, c := range p.CPEs {
-		cpes[i] = c.String()
+		cpes[i] = model.SourcedCPE{
+			CPE:    c.CPE.String(),
+			Source: c.Source,
+		}
 	}
 
 	// we want to make sure all catalogers are

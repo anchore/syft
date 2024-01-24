@@ -10,8 +10,8 @@ import (
 )
 
 func Test_encodeCPE(t *testing.T) {
-	testCPE := cpe.Must("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*")
-	testCPE2 := cpe.Must("cpe:2.3:a:name:name2:3.2:*:*:*:*:*:*:*")
+	testCPE := cpe.Must("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*").WithSource("test-source")
+	testCPE2 := cpe.Must("cpe:2.3:a:name:name2:3.2:*:*:*:*:*:*:*").WithSource("test-source-2")
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -21,14 +21,14 @@ func Test_encodeCPE(t *testing.T) {
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION
 			name: "no metadata",
 			input: pkg.Package{
-				CPEs: []cpe.CPE{},
+				CPEs: []cpe.SourcedCPE{},
 			},
 			expected: "",
 		},
 		{
 			name: "single CPE",
 			input: pkg.Package{
-				CPEs: []cpe.CPE{
+				CPEs: []cpe.SourcedCPE{
 					testCPE,
 				},
 			},
@@ -37,7 +37,7 @@ func Test_encodeCPE(t *testing.T) {
 		{
 			name: "multiple CPEs",
 			input: pkg.Package{
-				CPEs: []cpe.CPE{
+				CPEs: []cpe.SourcedCPE{
 					testCPE2,
 					testCPE,
 				},

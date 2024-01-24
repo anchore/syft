@@ -78,24 +78,33 @@ func TestParseNativeImageSbom(t *testing.T) {
 							GroupID: "io.netty",
 						},
 					},
-					CPEs: []cpe.CPE{
+					CPEs: []cpe.SourcedCPE{
 						{
-							Part:    "a",
-							Vendor:  "codec",
-							Product: "codec",
-							Version: "4.1.73.Final",
+							CPE: cpe.CPE{
+								Part:    "a",
+								Vendor:  "codec",
+								Product: "codec",
+								Version: "4.1.73.Final",
+							},
+							Source: "declared",
 						},
 						{
-							Part:    "a",
-							Vendor:  "codec",
-							Product: "netty-codec-http2",
-							Version: "4.1.73.Final",
+							CPE: cpe.CPE{
+								Part:    "a",
+								Vendor:  "codec",
+								Product: "netty-codec-http2",
+								Version: "4.1.73.Final",
+							},
+							Source: "declared",
 						},
 						{
-							Part:    "a",
-							Vendor:  "codec",
-							Product: "netty_codec_http2",
-							Version: "4.1.73.Final",
+							CPE: cpe.CPE{
+								Part:    "a",
+								Vendor:  "codec",
+								Product: "netty_codec_http2",
+								Version: "4.1.73.Final",
+							},
+							Source: "declared",
 						},
 					},
 				},

@@ -19,11 +19,11 @@ func newPackage(classifier Classifier, location file.Location, matchMetadata map
 
 	update := matchMetadata["update"]
 
-	var cpes []cpe.CPE
+	var cpes []cpe.SourcedCPE
 	for _, c := range classifier.CPEs {
 		c.Version = version
 		c.Update = update
-		cpes = append(cpes, c)
+		cpes = append(cpes, c.WithGeneratedSource()) // TODO: is "the binary classifier just picked" the same as "generated"
 	}
 
 	p := pkg.Package{

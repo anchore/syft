@@ -10,7 +10,7 @@ func ExternalRefs(p pkg.Package) (externalRefs []ExternalRef) {
 	for _, c := range p.CPEs {
 		externalRefs = append(externalRefs, ExternalRef{
 			ReferenceCategory: SecurityReferenceCategory,
-			ReferenceLocator:  c.String(),
+			ReferenceLocator:  c.CPE.String(),
 			ReferenceType:     Cpe23ExternalRefType,
 		})
 	}

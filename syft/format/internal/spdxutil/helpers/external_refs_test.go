@@ -10,7 +10,7 @@ import (
 )
 
 func Test_ExternalRefs(t *testing.T) {
-	testCPE := cpe.Must("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*")
+	testCPE := cpe.Must("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*").WithUnknownSource()
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -19,7 +19,7 @@ func Test_ExternalRefs(t *testing.T) {
 		{
 			name: "cpe + purl",
 			input: pkg.Package{
-				CPEs: []cpe.CPE{
+				CPEs: []cpe.SourcedCPE{
 					testCPE,
 				},
 				PURL: "a-purl",
@@ -27,7 +27,7 @@ func Test_ExternalRefs(t *testing.T) {
 			expected: []ExternalRef{
 				{
 					ReferenceCategory: SecurityReferenceCategory,
-					ReferenceLocator:  testCPE.String(),
+					ReferenceLocator:  testCPE.CPE.String(),
 					ReferenceType:     Cpe23ExternalRefType,
 				},
 				{

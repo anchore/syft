@@ -33,6 +33,10 @@ func (c BySpecificity) Less(i, j int) bool {
 	return c[i].BindToFmtString() < c[j].BindToFmtString()
 }
 
+//func (c BySpecificity) WithGeneratedSource() []SourcedCPE {
+//	// TODO: not what we want?
+//}
+
 func countFieldLength(cpe CPE) int {
 	return len(cpe.Part + cpe.Vendor + cpe.Product + cpe.Version + cpe.TargetSW)
 }

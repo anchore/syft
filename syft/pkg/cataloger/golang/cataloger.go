@@ -88,7 +88,7 @@ func newGoStdLib(version string, location file.LocationSet) *pkg.Package {
 		Name:      "stdlib",
 		Version:   version,
 		PURL:      packageURL("stdlib", strings.TrimPrefix(version, "go")),
-		CPEs:      []cpe.CPE{stdlibCpe},
+		CPEs:      []cpe.SourcedCPE{stdlibCpe.WithGeneratedSource()},
 		Locations: location,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("BSD-3-Clause")),
 		Language:  pkg.Go,

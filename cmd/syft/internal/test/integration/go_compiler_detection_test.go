@@ -12,14 +12,14 @@ func TestGolangCompilerDetection(t *testing.T) {
 		name              string
 		image             string
 		expectedCompilers []string
-		expectedCPE       []cpe.CPE
+		expectedCPE       []cpe.SourcedCPE
 		expectedPURL      []string
 	}{
 		{
 			name:              "syft can detect a single golang compiler given the golang base image",
 			image:             "image-golang-compiler",
 			expectedCompilers: []string{"go1.18.10"},
-			expectedCPE:       []cpe.CPE{cpe.Must("cpe:2.3:a:golang:go:1.18.10:-:*:*:*:*:*:*")},
+			expectedCPE:       []cpe.SourcedCPE{cpe.Must("cpe:2.3:a:golang:go:1.18.10:-:*:*:*:*:*:*").WithGeneratedSource()},
 			expectedPURL:      []string{"pkg:golang/stdlib@1.18.10"},
 		},
 	}
@@ -29,7 +29,7 @@ func TestGolangCompilerDetection(t *testing.T) {
 			packages := sbom.Artifacts.Packages.PackagesByName("stdlib")
 
 			foundCompilerVersions := make(map[string]struct{})
-			foundCPE := make(map[cpe.CPE]struct{})
+			foundCPE := make(map[cpe.SourcedCPE]struct{})
 			foundPURL := make(map[string]struct{})
 
 			for _, pkg := range packages {

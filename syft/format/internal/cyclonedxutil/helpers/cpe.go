@@ -12,7 +12,7 @@ func encodeSingleCPE(p pkg.Package) string {
 	// Since the CPEs in a package are sorted by specificity
 	// we can extract the first CPE as the one to output in cyclonedx
 	if len(p.CPEs) > 0 {
-		return p.CPEs[0].String()
+		return p.CPEs[0].CPE.String()
 	}
 	return ""
 }
@@ -31,13 +31,13 @@ func encodeCPEs(p pkg.Package) (out []cyclonedx.Property) {
 	return
 }
 
-func decodeCPEs(c *cyclonedx.Component) (out []cpe.CPE) {
+func decodeCPEs(c *cyclonedx.Component) (out []cpe.SourcedCPE) {
 	if c.CPE != "" {
 		cp, err := cpe.New(c.CPE)
 		if err != nil {
 			log.Warnf("invalid CPE: %s", c.CPE)
 		} else {
-			out = append(out, cp)
+			out = append(out, cp.WithDeclaredSource())
 		}
 	}
 
@@ -48,7 +48,7 @@ func decodeCPEs(c *cyclonedx.Component) (out []cpe.CPE) {
 				if err != nil {
 					log.Warnf("invalid CPE: %s", p.Value)
 				} else {
-					out = append(out, cp)
+					out = append(out, cp.WithDeclaredSource())
 				}
 			}
 		}

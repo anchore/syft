@@ -32,8 +32,13 @@ type PackageBasicData struct {
 	Locations []file.Location `json:"locations"`
 	Licenses  licenses        `json:"licenses"`
 	Language  pkg.Language    `json:"language"`
-	CPEs      []string        `json:"cpes"`
+	CPEs      []SourcedCPE    `json:"cpes"`
 	PURL      string          `json:"purl"`
+}
+
+type SourcedCPE struct {
+	CPE    string `json:"cpe"`
+	Source string `json:"source"`
 }
 
 type licenses []License
