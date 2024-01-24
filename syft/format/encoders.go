@@ -72,9 +72,7 @@ func (o EncodersConfig) Encoders() ([]sbom.FormatEncoder, error) {
 }
 
 func (o EncodersConfig) templateEncoders() ([]sbom.FormatEncoder, error) {
-	enc, err := template.NewFormatEncoder(template.EncoderConfig{
-		TemplatePath: o.Template.TemplatePath,
-	})
+	enc, err := template.NewFormatEncoder(o.Template)
 	return []sbom.FormatEncoder{enc}, err
 }
 

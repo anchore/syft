@@ -1,6 +1,8 @@
 package template
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -19,6 +21,7 @@ const ID sbom.FormatID = "template"
 
 type EncoderConfig struct {
 	TemplatePath string
+	Legacy       bool
 	syftjson.EncoderConfig
 }
 
@@ -90,6 +93,28 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		return fmt.Errorf("unable to parse template: %w", err)
 	}
 
-	doc := syftjson.ToFormatModel(s, e.cfg.EncoderConfig)
+	var doc any
+	if e.cfg.Legacy {
+		doc = syftjson.ToFormatModel(s, e.cfg.EncoderConfig)
+	} else {
+		enc, err := syftjson.NewFormatEncoderWithConfig(e.cfg.EncoderConfig)
+		if err != nil {
+			return fmt.Errorf("unable to create json encoder: %w", err)
+		}
+
+		var buff bytes.Buffer
+		if err = enc.Encode(&buff, s); err != nil {
+			return fmt.Errorf("unable to encode json: %w", err)
+		}
+
+		deserializedDoc := make(map[string]any)
+
+		if err = json.Unmarshal(buff.Bytes(), &deserializedDoc); err != nil {
+			return fmt.Errorf("unable to unmarshal json for template: %w", err)
+		}
+
+		doc = deserializedDoc
+	}
+
 	return tmpl.Execute(writer, doc)
 }
