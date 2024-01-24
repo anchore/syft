@@ -2,7 +2,7 @@ package options
 
 import (
 	"github.com/anchore/clio"
-	"github.com/anchore/syft/internal/encoders"
+	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -38,13 +38,13 @@ func DefaultFormat() Format {
 }
 
 func (o Format) Encoders() ([]sbom.FormatEncoder, error) {
-	return encoders.Formats{
+	return format.EncodersConfig{
 		Template:      o.Template.config(),
 		SyftJSON:      o.SyftJSON.config(),
-		SPDXJSON:      o.SPDXJSON.config(""),      // we support multiple versions, not just a single version
-		CyclonedxJSON: o.CyclonedxJSON.config(""), // we support multiple versions, not just a single version
-		CyclonedxXML:  o.CyclonedxXML.config(""),  // we support multiple versions, not just a single version
-	}.EncoderForAllVersions()
+		SPDXJSON:      o.SPDXJSON.config(format.AllVersions),      // we support multiple versions, not just a single version
+		CyclonedxJSON: o.CyclonedxJSON.config(format.AllVersions), // we support multiple versions, not just a single version
+		CyclonedxXML:  o.CyclonedxXML.config(format.AllVersions),  // we support multiple versions, not just a single version
+	}.Encoders()
 }
 
 func multiLevelOption[T any](defaultValue T, option ...*T) *T {
