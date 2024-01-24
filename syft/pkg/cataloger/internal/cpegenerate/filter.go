@@ -1,9 +1,7 @@
-package cpe
+package cpegenerate
 
 import (
 	"strings"
-
-	"github.com/facebookincubator/nvdtools/wfn"
 
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
@@ -45,18 +43,18 @@ func disallowNonParseableCPEs(c cpe.CPE, _ pkg.Package) bool {
 }
 
 // jenkins plugins should not match against jenkins
-func disallowJenkinsServerCPEForPluginPackage(cpe cpe.CPE, p pkg.Package) bool {
-	if p.Type == pkg.JenkinsPluginPkg && cpe.Product == jenkinsName {
+func disallowJenkinsServerCPEForPluginPackage(c cpe.CPE, p pkg.Package) bool {
+	if p.Type == pkg.JenkinsPluginPkg && c.Product == jenkinsName {
 		return true
 	}
 	return false
 }
 
 // filter to account that packages that are not for jenkins but have a CPE generated that will match against jenkins
-func disallowJenkinsCPEsNotAssociatedWithJenkins(cpe cpe.CPE, p pkg.Package) bool {
+func disallowJenkinsCPEsNotAssociatedWithJenkins(c cpe.CPE, p pkg.Package) bool {
 	// jenkins server should only match against a product with the name jenkins
-	if cpe.Product == jenkinsName && !strings.Contains(strings.ToLower(p.Name), jenkinsName) {
-		if cpe.Vendor == wfn.Any || cpe.Vendor == jenkinsName || cpe.Vendor == "cloudbees" {
+	if c.Product == jenkinsName && !strings.Contains(strings.ToLower(p.Name), jenkinsName) {
+		if c.Vendor == cpe.Any || c.Vendor == jenkinsName || c.Vendor == "cloudbees" {
 			return true
 		}
 	}
@@ -64,10 +62,10 @@ func disallowJenkinsCPEsNotAssociatedWithJenkins(cpe cpe.CPE, p pkg.Package) boo
 }
 
 // filter to account for packages which are jira client packages but have a CPE that will match against jira
-func disallowJiraClientServerMismatch(cpe cpe.CPE, p pkg.Package) bool {
+func disallowJiraClientServerMismatch(c cpe.CPE, p pkg.Package) bool {
 	// jira / atlassian should not apply to clients
-	if cpe.Product == "jira" && strings.Contains(strings.ToLower(p.Name), "client") {
-		if cpe.Vendor == wfn.Any || cpe.Vendor == "jira" || cpe.Vendor == "atlassian" {
+	if c.Product == "jira" && strings.Contains(strings.ToLower(p.Name), "client") {
+		if c.Vendor == cpe.Any || c.Vendor == "jira" || c.Vendor == "atlassian" {
 			return true
 		}
 	}

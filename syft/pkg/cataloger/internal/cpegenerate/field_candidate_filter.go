@@ -1,4 +1,4 @@
-package cpe
+package cpegenerate
 
 // A fieldCandidateCondition returns true if the condition is true for a given fieldCandidate.
 type fieldCandidateCondition func(fieldCandidate) bool

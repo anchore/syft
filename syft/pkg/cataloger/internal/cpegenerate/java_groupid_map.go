@@ -1,4 +1,4 @@
-package cpe
+package cpegenerate
 
 var DefaultArtifactIDToGroupID = map[string]string{
 	"ant":                                         "org.apache.ant",

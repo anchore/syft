@@ -1,4 +1,4 @@
-package cpe
+package cpegenerate
 
 import (
 	"fmt"
@@ -711,7 +711,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := Generate(test.p)
+			actual := FromPackageAttributes(test.p)
 
 			expectedCpeSet := set.NewStringSet(test.expected...)
 			actualCpeSet := set.NewStringSet()
@@ -994,7 +994,7 @@ func TestDictionaryFindIsWired(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, gotExists := DictionaryFind(tt.pkg)
+			got, gotExists := FromDictionaryFind(tt.pkg)
 
 			assert.Equal(t, tt.want, got.BindToFmtString())
 			assert.Equal(t, tt.wantExists, gotExists)
