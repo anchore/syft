@@ -6,11 +6,10 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/cpegenerate"
 )
 
-func Create(p pkg.Package) []cpe.CPE {
-	dictionaryCPE, ok := cpegenerate.FromDictionaryFind(p)
-	if ok {
-		return []cpe.CPE{dictionaryCPE}
-	}
-
+func Generate(p pkg.Package) []cpe.CPE {
 	return cpegenerate.FromPackageAttributes(p)
+}
+
+func DictionaryFind(p pkg.Package) (cpe.CPE, bool) {
+	return cpegenerate.FromDictionaryFind(p)
 }
