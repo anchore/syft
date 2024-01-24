@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
@@ -82,7 +81,7 @@ func Test_Binary_Cataloger_Stdlib_Cpe(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := generateStdlibCpe(tc.candidate)
 			assert.NoError(t, err, "expected no err; got %v", err)
-			assert.Equal(t, cpe.String(got), tc.want)
+			assert.Equal(t, got.String(), tc.want)
 		})
 	}
 }

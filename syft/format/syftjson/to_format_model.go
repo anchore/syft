@@ -9,7 +9,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/syftjson/model"
 	"github.com/anchore/syft/syft/internal/packagemetadata"
@@ -232,7 +231,7 @@ func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
 func toPackageModel(p pkg.Package, cfg EncoderConfig) model.Package {
 	var cpes = make([]string, len(p.CPEs))
 	for i, c := range p.CPEs {
-		cpes[i] = cpe.String(c)
+		cpes[i] = c.String()
 	}
 
 	// we want to make sure all catalogers are

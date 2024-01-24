@@ -27,7 +27,7 @@ func Test_ExternalRefs(t *testing.T) {
 			expected: []ExternalRef{
 				{
 					ReferenceCategory: SecurityReferenceCategory,
-					ReferenceLocator:  cpe.String(testCPE),
+					ReferenceLocator:  testCPE.String(),
 					ReferenceType:     Cpe23ExternalRefType,
 				},
 				{

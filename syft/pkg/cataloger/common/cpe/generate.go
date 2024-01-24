@@ -23,14 +23,14 @@ import (
 // the CPE database, so they will be preferred over other candidates:
 var knownVendors = strset.New("apache")
 
-func newCPE(product, vendor, version, targetSW string) *wfn.Attributes {
-	c := *(wfn.NewAttributesWithAny())
+func newCPE(product, vendor, version, targetSW string) *cpe.CPE {
+	c := cpe.NewWithAny()
 	c.Part = "a"
 	c.Product = product
 	c.Vendor = vendor
 	c.Version = version
 	c.TargetSW = targetSW
-	if cpe.ValidateString(cpe.String(c)) != nil {
+	if cpe.ValidateString(c.String()) != nil {
 		return nil
 	}
 	return &c

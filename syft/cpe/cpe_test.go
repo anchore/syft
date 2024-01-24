@@ -3,6 +3,7 @@ package cpe
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"os"
 	"strings"
 	"testing"
@@ -41,8 +42,8 @@ func Test_New(t *testing.T) {
 				t.Fatalf("got an error while creating CPE: %+v", err)
 			}
 
-			if String(actual) != String(test.expected) {
-				t.Errorf("mismatched entries:\n\texpected:%+v\n\t  actual:%+v\n", String(test.expected), String(actual))
+			if d := cmp.Diff(actual, test.expected); d != "" {
+				t.Errorf("CPE mismatch (-want +got):\n%s", d)
 			}
 
 		})
@@ -98,7 +99,7 @@ func Test_CPEParser(t *testing.T) {
 			assert.Equal(t, c1, c2)
 			assert.Equal(t, c1, test.WFN)
 			assert.Equal(t, c2, test.WFN)
-			assert.Equal(t, String(test.WFN), test.CPEString)
+			assert.Equal(t, test.WFN.String(), test.CPEString)
 		})
 	}
 }
@@ -164,12 +165,12 @@ func Test_InvalidCPE(t *testing.T) {
 			if test.expectedErr {
 				assert.Error(t, err)
 				if t.Failed() {
-					t.Logf("got CPE: %q details: %+v", String(c), c)
+					t.Logf("got CPE: %q details: %+v", c, c)
 				}
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, test.expected, String(c))
+			assert.Equal(t, test.expected, c.String())
 		})
 	}
 }
@@ -215,13 +216,13 @@ func Test_RoundTrip(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// CPE string must be preserved through a round trip
-			assert.Equal(t, test.cpe, String(Must(test.cpe)))
+			assert.Equal(t, test.cpe, Must(test.cpe).String())
 			// The parsed CPE must be the same after a round trip
-			assert.Equal(t, Must(test.cpe), Must(String(Must(test.cpe))))
+			assert.Equal(t, Must(test.cpe), Must(Must(test.cpe).String()))
 			// The test case parsed CPE must be the same after parsing the input string
 			assert.Equal(t, test.parsedCPE, Must(test.cpe))
 			// The test case parsed CPE must produce the same string as the input cpe
-			assert.Equal(t, String(test.parsedCPE), test.cpe)
+			assert.Equal(t, test.parsedCPE.String(), test.cpe)
 		})
 	}
 }
