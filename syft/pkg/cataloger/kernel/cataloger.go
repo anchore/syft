@@ -15,17 +15,17 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var _ pkg.Cataloger = (*LinuxKernelCataloger)(nil)
+var _ pkg.Cataloger = (*linuxKernelCataloger)(nil)
 
 type LinuxKernelCatalogerConfig struct {
 	CatalogModules bool `yaml:"catalog-modules" json:"catalog-modules" mapstructure:"catalog-modules"`
 }
 
-type LinuxKernelCataloger struct {
+type linuxKernelCataloger struct {
 	cfg LinuxKernelCatalogerConfig
 }
 
-func DefaultLinuxCatalogerConfig() LinuxKernelCatalogerConfig {
+func DefaultLinuxKernelCatalogerConfig() LinuxKernelCatalogerConfig {
 	return LinuxKernelCatalogerConfig{
 		CatalogModules: true,
 	}
@@ -45,17 +45,17 @@ var kernelModuleGlobs = []string{
 }
 
 // NewLinuxKernelCataloger returns a new kernel files cataloger object.
-func NewLinuxKernelCataloger(cfg LinuxKernelCatalogerConfig) *LinuxKernelCataloger {
-	return &LinuxKernelCataloger{
+func NewLinuxKernelCataloger(cfg LinuxKernelCatalogerConfig) pkg.Cataloger {
+	return &linuxKernelCataloger{
 		cfg: cfg,
 	}
 }
 
-func (l LinuxKernelCataloger) Name() string {
+func (l linuxKernelCataloger) Name() string {
 	return "linux-kernel-cataloger"
 }
 
-func (l LinuxKernelCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (l linuxKernelCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var allPackages []pkg.Package
 	var allRelationships []artifact.Relationship
 	var errs error

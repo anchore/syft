@@ -92,7 +92,7 @@ type nativeImagePE struct {
 	header        exportPrefixPE
 }
 
-type NativeImageCataloger struct{}
+type nativeImageCataloger struct{}
 
 const nativeImageCatalogerName = "graalvm-native-image-cataloger"
 const nativeImageSbomSymbol = "sbom"
@@ -104,11 +104,11 @@ const nativeImageMissingExportedDataDirectoryError = "exported data directory is
 
 // NewNativeImageCataloger returns a new Native Image cataloger object.
 func NewNativeImageCataloger() pkg.Cataloger {
-	return &NativeImageCataloger{}
+	return &nativeImageCataloger{}
 }
 
 // Name returns a string that uniquely describes a native image cataloger
-func (c *NativeImageCataloger) Name() string {
+func (c *nativeImageCataloger) Name() string {
 	return nativeImageCatalogerName
 }
 
@@ -571,7 +571,7 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) []pkg.Package {
 }
 
 // Catalog attempts to find any native image executables reachable from a resolver.
-func (c *NativeImageCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *nativeImageCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	fileMatches, err := resolver.FilesByMIMEType(internal.ExecutableMIMETypeSet.List()...)
 	if err != nil {

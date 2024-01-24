@@ -1,5 +1,5 @@
 /*
-Package binary provides a concrete Cataloger implementations for surfacing possible packages based on signatures found within binary files.
+Package binary provides a concrete cataloger implementations for surfacing possible packages based on signatures found within binary files.
 */
 package binary
 
@@ -26,7 +26,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 }
 
 func NewCataloger(cfg CatalogerConfig) pkg.Cataloger {
-	return &Cataloger{
+	return &cataloger{
 		classifiers: cfg.Classifiers,
 	}
 }
@@ -40,23 +40,23 @@ func (cfg CatalogerConfig) MarshalJSON() ([]byte, error) {
 	return json.Marshal(names)
 }
 
-// Cataloger is the cataloger responsible for surfacing evidence of a very limited set of binary files,
-// which have been identified by the classifiers. The Cataloger is _NOT_ a place to catalog any and every
+// cataloger is the cataloger responsible for surfacing evidence of a very limited set of binary files,
+// which have been identified by the classifiers. The cataloger is _NOT_ a place to catalog any and every
 // binary, but rather the specific set that has been curated to be important, predominantly related to toolchain-
 // related runtimes like Python, Go, Java, or Node. Some exceptions can be made for widely-used binaries such
 // as busybox.
-type Cataloger struct {
+type cataloger struct {
 	classifiers []Classifier
 }
 
-// Name returns a string that uniquely describes the Cataloger
-func (c Cataloger) Name() string {
+// Name returns a string that uniquely describes the cataloger
+func (c cataloger) Name() string {
 	return catalogerName
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages
 // after analyzing the catalog source.
-func (c Cataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c cataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 

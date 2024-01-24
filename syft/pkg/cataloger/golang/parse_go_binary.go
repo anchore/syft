@@ -25,7 +25,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
-const GOARCH = "GOARCH"
+const goArch = "GOARCH"
 
 var (
 	// errUnrecognizedFormat is returned when a given executable file doesn't
@@ -154,7 +154,7 @@ func extractVersionFromLDFlags(ldflags string) (majorVersion string, fullVersion
 
 func getGOARCH(settings []debug.BuildSetting) string {
 	for _, s := range settings {
-		if s.Key == GOARCH {
+		if s.Key == goArch {
 			return s.Value
 		}
 	}

@@ -29,11 +29,11 @@ type pipfileLock struct {
 			VerifySsl bool   `json:"verify_ssl"`
 		} `json:"sources"`
 	} `json:"_meta"`
-	Default map[string]Dependency `json:"default"`
-	Develop map[string]Dependency `json:"develop"`
+	Default map[string]pipfileLockDependency `json:"default"`
+	Develop map[string]pipfileLockDependency `json:"develop"`
 }
 
-type Dependency struct {
+type pipfileLockDependency struct {
 	Hashes  []string `json:"hashes"`
 	Version string   `json:"version"`
 	Index   string   `json:"index"`
