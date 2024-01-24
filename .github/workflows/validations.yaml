@@ -86,8 +86,8 @@ jobs:
       - name: Restore integration test cache
         uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 #v4.0.0
         with:
-          path: ${{ github.workspace }}/test/integration/test-fixtures/cache
-          key: ${{ runner.os }}-integration-test-cache-${{ hashFiles('test/integration/test-fixtures/cache.fingerprint') }}
+          path: ${{ github.workspace }}/cmd/syft/internal/test/integration/test-fixtures/cache
+          key: ${{ runner.os }}-integration-test-cache-${{ hashFiles('/cmd/syft/internal/test/integration/test-fixtures/cache.fingerprint') }}
 
       - name: Run integration tests
         run: make integration

@@ -9,8 +9,8 @@ import (
 
 	"github.com/anchore/clio"
 	"github.com/anchore/stereoscope"
-	"github.com/anchore/syft/cmd/syft/cli/commands"
 	handler "github.com/anchore/syft/cmd/syft/cli/ui"
+	"github.com/anchore/syft/cmd/syft/internal/commands"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
