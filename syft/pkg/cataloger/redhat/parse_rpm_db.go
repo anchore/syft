@@ -66,7 +66,7 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 			SourceRpm:       entry.SourceRpm,
 			Vendor:          entry.Vendor,
 			Size:            entry.Size,
-			ModularityLabel: entry.Modularitylabel,
+			ModularityLabel: &entry.Modularitylabel,
 			Files:           extractRpmFileRecords(resolver, *entry),
 		}
 
