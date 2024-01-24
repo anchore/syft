@@ -8,8 +8,8 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/format/common/cyclonedxhelpers"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil"
+	"github.com/anchore/syft/syft/format/internal/cyclonedxutil/helpers"
 	"github.com/anchore/syft/syft/format/internal/stream"
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -45,7 +45,7 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 		return nil, id, version, fmt.Errorf("unable to decode cyclonedx json document: %w", err)
 	}
 
-	s, err := cyclonedxhelpers.ToSyftModel(doc)
+	s, err := helpers.ToSyftModel(doc)
 	if err != nil {
 		return nil, id, version, err
 	}
