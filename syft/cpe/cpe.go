@@ -8,7 +8,35 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-type CPE = wfn.Attributes
+type CPE struct {
+	Part      string
+	Vendor    string
+	Product   string
+	Version   string
+	Update    string
+	Edition   string
+	SWEdition string
+	TargetSW  string
+	TargetHW  string
+	Other     string
+	Language  string
+}
+
+func (c CPE) asAttributes() wfn.Attributes {
+	return wfn.Attributes(c)
+}
+
+func fromAttributes(a wfn.Attributes) CPE {
+	return CPE(a)
+}
+
+func (c CPE) BindToFmtString() string {
+	return c.asAttributes().BindToFmtString()
+}
+
+func NewWithAny() CPE {
+	return fromAttributes(*(wfn.NewAttributesWithAny()))
+}
 
 const (
 	allowedCPEPunctuation = "-!\"#$%&'()+,./:;<=>@[]^`{|}~"
@@ -34,7 +62,7 @@ func New(cpeStr string) (CPE, error) {
 	}
 
 	// ensure that this CPE can be validated after being fully sanitized
-	if ValidateString(String(c)) != nil {
+	if ValidateString(c.String()) != nil {
 		return CPE{}, err
 	}
 
@@ -71,20 +99,22 @@ func newWithoutValidation(cpeStr string) (CPE, error) {
 		return CPE{}, fmt.Errorf("failed to parse CPE=%q", cpeStr)
 	}
 
-	// we need to compare the raw data since we are constructing CPEs in other locations
-	value.Vendor = normalizeField(value.Vendor)
-	value.Product = normalizeField(value.Product)
-	value.Language = normalizeField(value.Language)
-	value.Version = normalizeField(value.Version)
-	value.TargetSW = normalizeField(value.TargetSW)
-	value.Part = normalizeField(value.Part)
-	value.Edition = normalizeField(value.Edition)
-	value.Other = normalizeField(value.Other)
-	value.SWEdition = normalizeField(value.SWEdition)
-	value.TargetHW = normalizeField(value.TargetHW)
-	value.Update = normalizeField(value.Update)
+	syftCPE := fromAttributes(*value)
 
-	return *value, nil
+	// we need to compare the raw data since we are constructing CPEs in other locations
+	syftCPE.Vendor = normalizeField(syftCPE.Vendor)
+	syftCPE.Product = normalizeField(syftCPE.Product)
+	syftCPE.Language = normalizeField(syftCPE.Language)
+	syftCPE.Version = normalizeField(syftCPE.Version)
+	syftCPE.TargetSW = normalizeField(syftCPE.TargetSW)
+	syftCPE.Part = normalizeField(syftCPE.Part)
+	syftCPE.Edition = normalizeField(syftCPE.Edition)
+	syftCPE.Other = normalizeField(syftCPE.Other)
+	syftCPE.SWEdition = normalizeField(syftCPE.SWEdition)
+	syftCPE.TargetHW = normalizeField(syftCPE.TargetHW)
+	syftCPE.Update = normalizeField(syftCPE.Update)
+
+	return syftCPE, nil
 }
 
 func normalizeField(field string) string {
@@ -112,7 +142,7 @@ func stripSlashes(s string) string {
 	return sb.String()
 }
 
-func String(c CPE) string {
+func (c CPE) String() string {
 	output := CPE{}
 	output.Vendor = sanitize(c.Vendor)
 	output.Product = sanitize(c.Product)

@@ -2,13 +2,11 @@ package cpe
 
 import (
 	"sort"
-
-	"github.com/facebookincubator/nvdtools/wfn"
 )
 
 var _ sort.Interface = (*BySpecificity)(nil)
 
-type BySpecificity []wfn.Attributes
+type BySpecificity []CPE
 
 func (c BySpecificity) Len() int { return len(c) }
 
@@ -35,17 +33,17 @@ func (c BySpecificity) Less(i, j int) bool {
 	return c[i].BindToFmtString() < c[j].BindToFmtString()
 }
 
-func countFieldLength(cpe wfn.Attributes) int {
+func countFieldLength(cpe CPE) int {
 	return len(cpe.Part + cpe.Vendor + cpe.Product + cpe.Version + cpe.TargetSW)
 }
 
-func weightedCountForSpecifiedFields(cpe wfn.Attributes) int {
-	checksForSpecifiedField := []func(cpe wfn.Attributes) (bool, int){
-		func(cpe wfn.Attributes) (bool, int) { return cpe.Part != "", 2 },
-		func(cpe wfn.Attributes) (bool, int) { return cpe.Vendor != "", 3 },
-		func(cpe wfn.Attributes) (bool, int) { return cpe.Product != "", 4 },
-		func(cpe wfn.Attributes) (bool, int) { return cpe.Version != "", 1 },
-		func(cpe wfn.Attributes) (bool, int) { return cpe.TargetSW != "", 1 },
+func weightedCountForSpecifiedFields(cpe CPE) int {
+	checksForSpecifiedField := []func(cpe CPE) (bool, int){
+		func(cpe CPE) (bool, int) { return cpe.Part != "", 2 },
+		func(cpe CPE) (bool, int) { return cpe.Vendor != "", 3 },
+		func(cpe CPE) (bool, int) { return cpe.Product != "", 4 },
+		func(cpe CPE) (bool, int) { return cpe.Version != "", 1 },
+		func(cpe CPE) (bool, int) { return cpe.TargetSW != "", 1 },
 	}
 
 	weightedCount := 0

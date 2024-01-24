@@ -20,7 +20,7 @@ func NewDecoderCollection(decoders ...sbom.FormatDecoder) sbom.FormatDecoder {
 }
 
 // Decode takes a set of bytes and attempts to decode it into an SBOM relative to the decoders in the collection.
-func (c *DecoderCollection) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string, error) {
+func (c *DecoderCollection) Decode(reader io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) {
 	if reader == nil {
 		return nil, "", "", fmt.Errorf("no SBOM bytes provided")
 	}
@@ -45,7 +45,7 @@ func (c *DecoderCollection) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.Forma
 }
 
 // Identify takes a set of bytes and attempts to identify the format of the SBOM relative to the decoders in the collection.
-func (c *DecoderCollection) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
+func (c *DecoderCollection) Identify(reader io.Reader) (sbom.FormatID, string) {
 	if reader == nil {
 		return "", ""
 	}
