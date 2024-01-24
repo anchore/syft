@@ -61,7 +61,7 @@ For commercial support options with Syft or Grype, please [contact Anchore](http
 
 ### Recommended
 ```bash
-curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh -s -- -b /usr/local/bin
 ```
 
 ... or, you can specify a release version and destination directory for the installation:
