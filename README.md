@@ -555,6 +555,7 @@ select-catalogers: []
 format:
  
   # default value for all formats that support the "pretty" option (default is unset)
+  # SYFT_FORMAT_PRETTY env var
   pretty: 
 
   # all syft-json format options
@@ -562,6 +563,7 @@ format:
 
     # include space indention and newlines (inherits default value from 'format.pretty' or 'false' if parent is unset)
     # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+    # SYFT_FORMAT_JSON_PRETTY env var
     pretty: false
     
     # transform any syft-json output to conform to an approximation of the v11.0.1 schema. This includes:
@@ -571,21 +573,30 @@ format:
     # that output might not strictly be json schema v11 compliant, however, for consumers that require time to port
     # over to the final syft 1.0 json output this option can be used to ease the transition.
     #
-    # Note: long term support for this option is not guaranteed.
+    # Note: long term support for this option is not guaranteed (it may change or break at any time).
+    # SYFT_FORMAT_JSON_LEGACY env var
     legacy: false
 
   # all template format options
   template:
     # path to the template file to use when rendering the output with the `template` output format. 
     # Note that all template paths are based on the current syft-json schema.
-    # SYFT_TEMPLATE_PATH env var / -t flag 
+    # SYFT_FORMAT_TEMPLATE_PATH env var / -t flag 
     path: ""
+    
+    # if true, uses the go structs for the syft-json format for templating. 
+    # if false, uses the syft-json output for templating (which follows the syft JSON schema exactly).
+    #
+    # Note: long term support for this option is not guaranteed (it may change or break at any time).
+    # SYFT_FORMAT_TEMPLATE_LEGACY env var
+    legacy: false
 
   # all spdx-json format options
   spdx-json:
 
     # include space indention and newlines
     # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+    # SYFT_FORMAT_SPDX_JSON_PRETTY env var
     pretty: false
 
   # all cyclonedx-json format options
@@ -593,6 +604,7 @@ format:
 
      # include space indention and newlines
      # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+     # SYFT_FORMAT_CYCLONEDX_JSON_PRETTY env var
      pretty: false
 
   # all cyclonedx-xml format options
@@ -600,6 +612,7 @@ format:
 
      # include space indention
      # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+     # SYFT_FORMAT_CYCLONEDX_XML_PRETTY env var
      pretty: false
 
 
