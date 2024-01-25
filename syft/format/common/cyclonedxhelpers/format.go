@@ -107,7 +107,7 @@ func formatCPE(cpeString string) string {
 		log.Debugf("skipping invalid CPE: %s", cpeString)
 		return ""
 	}
-	return cpe.String(c)
+	return c.String()
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.

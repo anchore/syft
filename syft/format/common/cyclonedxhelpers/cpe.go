@@ -12,7 +12,7 @@ func encodeSingleCPE(p pkg.Package) string {
 	// Since the CPEs in a package are sorted by specificity
 	// we can extract the first CPE as the one to output in cyclonedx
 	if len(p.CPEs) > 0 {
-		return cpe.String(p.CPEs[0])
+		return p.CPEs[0].String()
 	}
 	return ""
 }
@@ -25,7 +25,7 @@ func encodeCPEs(p pkg.Package) (out []cyclonedx.Property) {
 		}
 		out = append(out, cyclonedx.Property{
 			Name:  "syft:cpe23",
-			Value: cpe.String(c),
+			Value: c.String(),
 		})
 	}
 	return

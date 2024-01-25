@@ -1,6 +1,7 @@
 package java
 
 import (
+	"context"
 	"fmt"
 
 	intFile "github.com/anchore/syft/internal/file"
@@ -56,7 +57,7 @@ func newGenericTarWrappedJavaArchiveParser(cfg ArchiveCatalogerConfig) genericTa
 	}
 }
 
-func (gtp genericTarWrappedJavaArchiveParser) parseTarWrappedJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (gtp genericTarWrappedJavaArchiveParser) parseTarWrappedJavaArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader.Path(), reader)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
@@ -65,14 +66,14 @@ func (gtp genericTarWrappedJavaArchiveParser) parseTarWrappedJavaArchive(_ file.
 	}
 
 	// look for java archives within the tar archive
-	return discoverPkgsFromTar(reader.Location, archivePath, contentPath, gtp.cfg)
+	return discoverPkgsFromTar(ctx, reader.Location, archivePath, contentPath, gtp.cfg)
 }
 
-func discoverPkgsFromTar(location file.Location, archivePath, contentPath string, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromTar(ctx context.Context, location file.Location, archivePath, contentPath string, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	openers, err := intFile.ExtractGlobsFromTarToUniqueTempFile(archivePath, contentPath, archiveFormatGlobs...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from tar: %w", err)
 	}
 
-	return discoverPkgsFromOpeners(location, openers, nil, cfg)
+	return discoverPkgsFromOpeners(ctx, location, openers, nil, cfg)
 }

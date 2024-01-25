@@ -1,6 +1,7 @@
 package cpp
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
@@ -30,7 +31,7 @@ type conanLock struct {
 }
 
 // parseConanlock is a parser function for conan.lock contents, returning all packages discovered.
-func parseConanlock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseConanlock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var cl conanLock
 	if err := json.NewDecoder(reader).Decode(&cl); err != nil {

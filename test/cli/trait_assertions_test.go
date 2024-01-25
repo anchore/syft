@@ -122,6 +122,7 @@ func assertPackageCount(length uint) traitAssertion {
 		type NameAndVersion struct {
 			Name    string `json:"name"`
 			Version string `json:"version"`
+			Type    string `json:"type"`
 		}
 		type partial struct {
 			Artifacts []NameAndVersion `json:"artifacts"`
@@ -136,7 +137,7 @@ func assertPackageCount(length uint) traitAssertion {
 			tb.Errorf("expected package count of %d, but found %d", length, len(data.Artifacts))
 			debugArtifacts := make([]string, len(data.Artifacts))
 			for i, a := range data.Artifacts {
-				debugArtifacts[i] = fmt.Sprintf("%s:%s", a.Name, a.Version)
+				debugArtifacts[i] = fmt.Sprintf("%s@%s (%s)", a.Name, a.Version, a.Type)
 			}
 			sort.Strings(debugArtifacts)
 			for i, a := range debugArtifacts {

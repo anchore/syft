@@ -4,6 +4,8 @@ Package kernel provides a concrete Cataloger implementation for linux kernel and
 package kernel
 
 import (
+	"context"
+
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/anchore/syft/internal/log"
@@ -13,17 +15,17 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var _ pkg.Cataloger = (*LinuxKernelCataloger)(nil)
+var _ pkg.Cataloger = (*linuxKernelCataloger)(nil)
 
 type LinuxKernelCatalogerConfig struct {
 	CatalogModules bool `yaml:"catalog-modules" json:"catalog-modules" mapstructure:"catalog-modules"`
 }
 
-type LinuxKernelCataloger struct {
+type linuxKernelCataloger struct {
 	cfg LinuxKernelCatalogerConfig
 }
 
-func DefaultLinuxCatalogerConfig() LinuxKernelCatalogerConfig {
+func DefaultLinuxKernelCatalogerConfig() LinuxKernelCatalogerConfig {
 	return LinuxKernelCatalogerConfig{
 		CatalogModules: true,
 	}
@@ -43,22 +45,22 @@ var kernelModuleGlobs = []string{
 }
 
 // NewLinuxKernelCataloger returns a new kernel files cataloger object.
-func NewLinuxKernelCataloger(cfg LinuxKernelCatalogerConfig) *LinuxKernelCataloger {
-	return &LinuxKernelCataloger{
+func NewLinuxKernelCataloger(cfg LinuxKernelCatalogerConfig) pkg.Cataloger {
+	return &linuxKernelCataloger{
 		cfg: cfg,
 	}
 }
 
-func (l LinuxKernelCataloger) Name() string {
+func (l linuxKernelCataloger) Name() string {
 	return "linux-kernel-cataloger"
 }
 
-func (l LinuxKernelCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (l linuxKernelCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var allPackages []pkg.Package
 	var allRelationships []artifact.Relationship
 	var errs error
 
-	kernelPackages, kernelRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelFile, kernelArchiveGlobs...).Catalog(resolver)
+	kernelPackages, kernelRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelFile, kernelArchiveGlobs...).Catalog(ctx, resolver)
 	if err != nil {
 		errs = multierror.Append(errs, err)
 	}
@@ -67,7 +69,7 @@ func (l LinuxKernelCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []
 	allPackages = append(allPackages, kernelPackages...)
 
 	if l.cfg.CatalogModules {
-		modulePackages, moduleRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelModuleFile, kernelModuleGlobs...).Catalog(resolver)
+		modulePackages, moduleRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelModuleFile, kernelModuleGlobs...).Catalog(ctx, resolver)
 		if err != nil {
 			errs = multierror.Append(errs, err)
 		}

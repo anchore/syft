@@ -12,6 +12,42 @@ import (
 
 var updateSnapshot = flag.Bool("update-template", false, "update the *.golden files for json encoders")
 
+func TestFormatWithOption_Legacy(t *testing.T) {
+	f, err := NewFormatEncoder(EncoderConfig{
+		TemplatePath: "test-fixtures/legacy/csv.template",
+		Legacy:       true,
+	})
+	require.NoError(t, err)
+
+	testutil.AssertEncoderAgainstGoldenSnapshot(t,
+		testutil.EncoderSnapshotTestConfig{
+			Subject:                     testutil.DirectoryInput(t, t.TempDir()),
+			Format:                      f,
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      false,
+		},
+	)
+}
+
+func TestFormatWithOptionAndHasField_Legacy(t *testing.T) {
+	f, err := NewFormatEncoder(EncoderConfig{
+		TemplatePath: "test-fixtures/legacy/csv-hasField.template",
+		Legacy:       true,
+	})
+	require.NoError(t, err)
+
+	testutil.AssertEncoderAgainstGoldenSnapshot(t,
+		testutil.EncoderSnapshotTestConfig{
+			Subject:                     testutil.DirectoryInputWithAuthorField(t),
+			Format:                      f,
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      false,
+		},
+	)
+}
+
 func TestFormatWithOption(t *testing.T) {
 	f, err := NewFormatEncoder(EncoderConfig{
 		TemplatePath: "test-fixtures/csv.template",
@@ -44,7 +80,6 @@ func TestFormatWithOptionAndHasField(t *testing.T) {
 			IsJSON:                      false,
 		},
 	)
-
 }
 
 func TestFormatWithoutOptions(t *testing.T) {

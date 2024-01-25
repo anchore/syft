@@ -9,8 +9,8 @@ import (
 
 	"github.com/anchore/clio"
 	"github.com/anchore/stereoscope"
-	"github.com/anchore/syft/cmd/syft/cli/commands"
 	handler "github.com/anchore/syft/cmd/syft/cli/ui"
+	"github.com/anchore/syft/cmd/syft/internal/commands"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -86,6 +86,7 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 	rootCmd.AddCommand(
 		scanCmd,
 		commands.Packages(app, scanCmd), // this is currently an alias for the scan command
+		commands.Cataloger(app),
 		commands.Attest(app),
 		commands.Convert(app),
 		clio.VersionCommand(id),

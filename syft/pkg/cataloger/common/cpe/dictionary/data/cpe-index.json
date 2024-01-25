@@ -282,6 +282,7 @@
       "zulip": "cpe:2.3:a:jenkins:zulip:*:*:*:*:*:jenkins:*:*"
     },
     "npm": {
+      "%40perfood/couch-auth": "cpe:2.3:a:perfood:couchauth:*:*:*:*:*:node.js:*:*",
       "11xiaoli": "cpe:2.3:a:11xiaoli_project:11xiaoli:*:*:*:*:*:node.js:*:*",
       "22lixian": "cpe:2.3:a:22lixian_project:22lixian:*:*:*:*:*:node.js:*:*",
       "360class.jansenhm": "cpe:2.3:a:360class.jansenhm_project:360class.jansenhm:*:*:*:*:*:node.js:*:*",
@@ -1041,6 +1042,7 @@
       "aniso8601": "cpe:2.3:a:aniso8601_project:aniso8601:*:*:*:*:*:*:*:*",
       "api-res-py": "cpe:2.3:a:api-res-py_project:api-res-py:*:*:*:*:*:python:*:*",
       "asyncua": "cpe:2.3:a:freeopcua:opcua-asyncio:*:*:*:*:*:python:*:*",
+      "cdo-local-uuid": "cpe:2.3:a:lfprojects:cdo_local_uuid_utility:*:*:*:*:*:python:*:*",
       "cloudlabeling": "cpe:2.3:a:pypi:cloudlabeling:*:*:*:*:*:pypi:*:*",
       "cloudtoken": "cpe:2.3:a:atlassian:cloudtoken:*:*:*:*:*:*:*:*",
       "conference-scheduler-cli": "cpe:2.3:a:pyconuk:conference-scheduler-cli:*:*:*:*:*:*:*:*",
@@ -1082,6 +1084,7 @@
       "py7zr": "cpe:2.3:a:py7zr_project:py7zr:*:*:*:*:*:python:*:*",
       "pybluemonday": "cpe:2.3:a:python:pybluemonday:*:*:*:*:*:*:*:*",
       "pycryptodome": "cpe:2.3:a:python:pycryptodome:*:*:*:*:*:*:*:*",
+      "pycryptodomex": "cpe:2.3:a:pycryptodome:pycryptodomex:*:*:*:*:*:python:*:*",
       "pyload-ng": "cpe:2.3:a:pyload-ng_project:pyload-ng:*:*:*:*:*:python:*:*",
       "pymatgen": "cpe:2.3:a:pymatgen:pymatgen:*:*:*:*:*:*:*:*",
       "pyo": "cpe:2.3:a:pyo_project:pyo:*:*:*:*:*:*:*:*",

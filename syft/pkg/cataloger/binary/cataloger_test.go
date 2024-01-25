@@ -1,6 +1,7 @@
 package binary
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -13,7 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/testutil"
@@ -870,6 +873,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("gcc-binary"),
 			},
 		},
+		{
+			logicalFixture: "wp/2.9.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "wp-cli",
+				Version:   "2.9.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/wp-cli@2.9.0",
+				Locations: locations("wp"),
+				Metadata:  metadata("wordpress-cli-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -888,7 +902,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
-			packages, _, err := c.Catalog(resolver)
+			packages, _, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
 			require.Len(t, packages, 1, "mismatched package count")
@@ -928,7 +942,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
-			packages, _, err := c.Catalog(resolver)
+			packages, _, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
 			for _, p := range packages {
@@ -958,7 +972,7 @@ func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 	resolver, err := src.FileResolver(source.SquashedScope)
 	assert.NoError(t, err)
 
-	actualResults, _, err := c.Catalog(resolver)
+	actualResults, _, err := c.Catalog(context.Background(), resolver)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(actualResults))
 }
@@ -1072,7 +1086,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
-			packages, _, err := c.Catalog(resolver)
+			packages, _, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
 			if test.expected == nil {
@@ -1224,7 +1238,7 @@ func (p *panicyResolver) RelativeFileByPath(_ file.Location, _ string) *file.Loc
 	return nil
 }
 
-func (p *panicyResolver) AllLocations() <-chan file.Location {
+func (p *panicyResolver) AllLocations(_ context.Context) <-chan file.Location {
 	return nil
 }
 
@@ -1238,7 +1252,53 @@ func Test_Cataloger_ResilientToErrors(t *testing.T) {
 	c := NewCataloger(DefaultCatalogerConfig())
 
 	resolver := &panicyResolver{}
-	_, _, err := c.Catalog(resolver)
+	_, _, err := c.Catalog(context.Background(), resolver)
 	assert.NoError(t, err)
 	assert.True(t, resolver.searchCalled)
+}
+
+func TestCatalogerConfig_MarshalJSON(t *testing.T) {
+
+	tests := []struct {
+		name    string
+		cfg     CatalogerConfig
+		want    string
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "only show names of classes",
+			cfg: CatalogerConfig{
+				Classifiers: []Classifier{
+					{
+						Class:           "class",
+						FileGlob:        "glob",
+						EvidenceMatcher: FileContentsVersionMatcher(".thing"),
+						Package:         "pkg",
+						PURL: packageurl.PackageURL{
+							Type:       "type",
+							Namespace:  "namespace",
+							Name:       "name",
+							Version:    "version",
+							Qualifiers: nil,
+							Subpath:    "subpath",
+						},
+						CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*")},
+					},
+				},
+			},
+			want: `["class"]`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = assert.NoError
+			}
+			got, err := tt.cfg.MarshalJSON()
+			if !tt.wantErr(t, err) {
+				return
+			}
+			assert.Equal(t, tt.want, string(got))
+		})
+	}
 }

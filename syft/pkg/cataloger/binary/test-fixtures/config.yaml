@@ -315,6 +315,13 @@ from-images:
     paths:
       - /usr/local/bin/redis-server
 
+  - version: 2.9.0
+    images:
+      - ref: wordpress:cli-2.9.0-php8.3@sha256:3a008aafccc6a8d2d7ec2b069722cb43b3569b61cd833f9f2f13d74a9284746e
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/wp
+
   - version: 1.9.3p551
     images:
       - ref: ruby:1.9.3-p551@sha256:56b4a74e4fc2492b3b857bc94454dfa910f61e823a4bfab275d279bfa218eb05

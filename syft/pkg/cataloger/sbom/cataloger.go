@@ -5,6 +5,7 @@ package sbom
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 
@@ -36,7 +37,7 @@ func NewCataloger() pkg.Cataloger {
 		)
 }
 
-func parseSBOM(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	readSeeker, err := adaptToReadSeeker(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read SBOM file %q: %w", reader.Location.RealPath, err)

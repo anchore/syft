@@ -1,6 +1,7 @@
 package java
 
 import (
+	"context"
 	"os"
 	"path"
 	"testing"
@@ -35,7 +36,7 @@ func Test_parseZipWrappedJavaArchive(t *testing.T) {
 
 			gzp := newGenericZipWrappedJavaArchiveParser(ArchiveCatalogerConfig{})
 
-			actualPkgs, _, err := gzp.parseZipWrappedJavaArchive(nil, nil, file.LocationReadCloser{
+			actualPkgs, _, err := gzp.parseZipWrappedJavaArchive(context.Background(), nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(test.fixture),
 				ReadCloser: fixture,
 			})

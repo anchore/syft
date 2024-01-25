@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -69,13 +70,18 @@ func (r *excluding) RelativeFileByPath(location file.Location, path string) *fil
 	return l
 }
 
-func (r *excluding) AllLocations() <-chan file.Location {
+func (r *excluding) AllLocations(ctx context.Context) <-chan file.Location {
 	c := make(chan file.Location)
 	go func() {
 		defer close(c)
-		for location := range r.delegate.AllLocations() {
+		for location := range r.delegate.AllLocations(ctx) {
 			if !locationMatches(&location, r.excludeFn) {
-				c <- location
+				select {
+				case <-ctx.Done():
+					return
+				case c <- location:
+					continue
+				}
 			}
 		}
 	}()

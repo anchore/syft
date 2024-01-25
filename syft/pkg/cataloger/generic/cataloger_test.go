@@ -1,6 +1,7 @@
 package generic
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"testing"
@@ -15,7 +16,7 @@ import (
 
 func Test_Cataloger(t *testing.T) {
 	allParsedPaths := make(map[string]bool)
-	parser := func(resolver file.Resolver, env *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	parser := func(_ context.Context, resolver file.Resolver, env *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 		allParsedPaths[reader.Path()] = true
 		contents, err := io.ReadAll(reader)
 		require.NoError(t, err)
@@ -45,7 +46,7 @@ func Test_Cataloger(t *testing.T) {
 		WithParserByPath(parser, "test-fixtures/another-path.txt", "test-fixtures/last/path.txt").
 		WithParserByGlobs(parser, "**/a-path.txt", "**/empty.txt")
 
-	actualPkgs, relationships, err := cataloger.Catalog(resolver)
+	actualPkgs, relationships, err := cataloger.Catalog(context.Background(), resolver)
 	assert.NoError(t, err)
 
 	expectedPkgs := make(map[string]pkg.Package)

@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"io"
 
 	"github.com/anchore/syft/internal/log"
@@ -80,13 +81,13 @@ func (d *Deferred) RelativeFileByPath(location file.Location, path string) *file
 	return r.RelativeFileByPath(location, path)
 }
 
-func (d *Deferred) AllLocations() <-chan file.Location {
+func (d *Deferred) AllLocations(ctx context.Context) <-chan file.Location {
 	r, err := d.getResolver()
 	if err != nil {
 		log.Debug("unable to get resolver: %v", err)
 		return nil
 	}
-	return r.AllLocations()
+	return r.AllLocations(ctx)
 }
 
 func (d *Deferred) FileMetadataByLocation(location file.Location) (file.Metadata, error) {

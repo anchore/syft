@@ -1,6 +1,7 @@
 package filedigest
 
 import (
+	"context"
 	"crypto"
 	"errors"
 	"fmt"
@@ -25,16 +26,16 @@ type Cataloger struct {
 
 func NewCataloger(hashes []crypto.Hash) *Cataloger {
 	return &Cataloger{
-		hashes: hashes,
+		hashes: intFile.NormalizeHashes(hashes),
 	}
 }
 
-func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates][]file.Digest, error) {
+func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates][]file.Digest, error) {
 	results := make(map[file.Coordinates][]file.Digest)
 	var locations []file.Location
 
 	if len(coordinates) == 0 {
-		locations = intCataloger.AllRegularFiles(resolver)
+		locations = intCataloger.AllRegularFiles(ctx, resolver)
 	} else {
 		for _, c := range coordinates {
 			locs, err := resolver.FilesByPath(c.RealPath)

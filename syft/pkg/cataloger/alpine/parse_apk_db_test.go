@@ -1,6 +1,7 @@
 package alpine
 
 import (
+	"context"
 	"io"
 	"os"
 	"path/filepath"
@@ -64,7 +65,7 @@ func TestExtraFileAttributes(t *testing.T) {
 			fixturePath := "test-fixtures/extra-file-attributes"
 			lrc := newLocationReadCloser(t, fixturePath)
 
-			pkgs, _, err := parseApkDB(nil, new(generic.Environment), lrc)
+			pkgs, _, err := parseApkDB(context.Background(), nil, new(generic.Environment), lrc)
 			assert.NoError(t, err)
 			require.Len(t, pkgs, 1)
 			metadata := pkgs[0].Metadata.(pkg.ApkDBEntry)
@@ -1055,7 +1056,7 @@ func TestPackageDbDependenciesByParse(t *testing.T) {
 			require.NoError(t, err)
 			t.Cleanup(func() { require.NoError(t, f.Close()) })
 
-			pkgs, relationships, err := parseApkDB(nil, nil, file.LocationReadCloser{
+			pkgs, relationships, err := parseApkDB(context.Background(), nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(test.fixture),
 				ReadCloser: f,
 			})
@@ -1146,7 +1147,7 @@ func Test_parseApkDB_expectedPkgNames(t *testing.T) {
 			fixturePath := filepath.Join("test-fixtures", test.fixture)
 			lrc := newLocationReadCloser(t, fixturePath)
 
-			pkgs, _, err := parseApkDB(nil, new(generic.Environment), lrc)
+			pkgs, _, err := parseApkDB(context.Background(), nil, new(generic.Environment), lrc)
 			test.wantErr(t, err)
 
 			names := toPackageNames(pkgs)

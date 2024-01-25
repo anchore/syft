@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -172,12 +173,17 @@ func (r *ContainerImageSquash) FileContentsByLocation(location file.Location) (i
 	return r.img.OpenReference(location.Reference())
 }
 
-func (r *ContainerImageSquash) AllLocations() <-chan file.Location {
+func (r *ContainerImageSquash) AllLocations(ctx context.Context) <-chan file.Location {
 	results := make(chan file.Location)
 	go func() {
 		defer close(results)
 		for _, ref := range r.img.SquashedTree().AllFiles(stereoscopeFile.AllTypes()...) {
-			results <- file.NewLocationFromImage(string(ref.RealPath), ref, r.img)
+			select {
+			case <-ctx.Done():
+				return
+			case results <- file.NewLocationFromImage(string(ref.RealPath), ref, r.img):
+				continue
+			}
 		}
 	}()
 	return results

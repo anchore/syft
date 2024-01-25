@@ -1,6 +1,7 @@
 package redhat
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -16,7 +17,7 @@ import (
 )
 
 // parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.
-func parseRpmDB(resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	f, err := os.CreateTemp("", "rpmdb")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
@@ -65,7 +66,7 @@ func parseRpmDB(resolver file.Resolver, env *generic.Environment, reader file.Lo
 			SourceRpm:       entry.SourceRpm,
 			Vendor:          entry.Vendor,
 			Size:            entry.Size,
-			ModularityLabel: entry.Modularitylabel,
+			ModularityLabel: &entry.Modularitylabel,
 			Files:           extractRpmFileRecords(resolver, *entry),
 		}
 

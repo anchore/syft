@@ -1,6 +1,7 @@
 package dotnet
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -38,7 +39,7 @@ type dotnetDepsLibrary struct {
 }
 
 //nolint:funlen
-func parseDotnetDeps(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDotnetDeps(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var pkgMap = make(map[string]pkg.Package)
 	var relationships []artifact.Relationship

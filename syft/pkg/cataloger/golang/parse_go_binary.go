@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bytes"
+	"context"
 	"debug/elf"
 	"debug/macho"
 	"debug/pe"
@@ -24,7 +25,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
 )
 
-const GOARCH = "GOARCH"
+const goArch = "GOARCH"
 
 var (
 	// errUnrecognizedFormat is returned when a given executable file doesn't
@@ -48,7 +49,7 @@ type goBinaryCataloger struct {
 }
 
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
-func (c *goBinaryCataloger) parseGoBinary(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
@@ -153,7 +154,7 @@ func extractVersionFromLDFlags(ldflags string) (majorVersion string, fullVersion
 
 func getGOARCH(settings []debug.BuildSetting) string {
 	for _, s := range settings {
-		if s.Key == GOARCH {
+		if s.Key == goArch {
 			return s.Value
 		}
 	}

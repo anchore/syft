@@ -1,6 +1,7 @@
 package rust
 
 import (
+	"context"
 	"errors"
 
 	rustaudit "github.com/microsoft/go-rustaudit"
@@ -14,7 +15,7 @@ import (
 )
 
 // Catalog identifies executables then attempts to read Rust dependency information from them
-func parseAuditBinary(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseAuditBinary(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)

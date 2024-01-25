@@ -1,6 +1,7 @@
 package dotnet
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"regexp"
@@ -18,7 +19,7 @@ import (
 
 var _ generic.Parser = parseDotnetPortableExecutable
 
-func parseDotnetPortableExecutable(_ file.Resolver, _ *generic.Environment, f file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generic.Environment, f file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	by, err := io.ReadAll(f)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)

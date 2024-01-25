@@ -1,6 +1,8 @@
 package generic
 
 import (
+	"context"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -104,7 +106,7 @@ func (c *Cataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -126,7 +128,7 @@ func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.R
 			continue
 		}
 
-		discoveredPackages, discoveredRelationships, err := parser(resolver, &env, file.NewLocationReadCloser(location, contentReader))
+		discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, &env, file.NewLocationReadCloser(location, contentReader))
 		internal.CloseAndLogError(contentReader, location.AccessPath)
 		if err != nil {
 			logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
