@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/anchore/clio/testutils"
+	"github.com/anchore/syft/cmd/syft/internal"
+	"io"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -267,3 +270,51 @@ func Test_buildSBOMForAttestation(t *testing.T) {
 		})
 	}
 }
+
+func Test_attestCLIWiring(t *testing.T) {
+	// TODO: panics on redact store
+	id := clio.Identification{
+		Name:    "syft-testing",
+		Version: "syft-testing",
+	}
+	tests := []struct {
+		name          string
+		assertionFunc func(*testing.T, ...any)
+		args          []string
+		env           map[string]string
+	}{
+		{
+			name: "key flag is accepted",
+			args: []string{"some-image:some-tag", "--key", "some-cosign-key.key"},
+			assertionFunc: func(t *testing.T, cfgs ...any) {
+				assert.Equal(t, len(cfgs), 1)
+				opts, ok := cfgs[0].(*attestOptions)
+				require.True(t, ok)
+				assert.Equal(t, opts.Attest.Key.String(), "some-cosign-key.key")
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.env != nil {
+				for k, v := range tt.env {
+					t.Setenv(k, v)
+				}
+			}
+			app := testutils.NewForTesting(t, internal.AppClioSetupConfig(id, io.Discard), tt.assertionFunc)
+			cmd := Attest(app)
+			cmd.SetArgs(tt.args)
+			err := cmd.Execute()
+			assert.NoError(t, err)
+		})
+	}
+}
+
+//func assertionFunc(t *testing.T, predicates ...func(...any) error) func(...any) {
+//	return func(a ...any) {
+//		for _, predicate := range predicates {
+//			err := predicate(a)
+//			assert.NoError(t, err)
+//		}
+//	}
+//}
