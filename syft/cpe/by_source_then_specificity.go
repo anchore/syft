@@ -9,16 +9,14 @@ func (b BySourceThenSpecificity) Len() int {
 }
 
 func (b BySourceThenSpecificity) Less(i, j int) bool {
-	//TODO implement me
-	// Define the order of sources
-	sourceOrder := map[CPESource]int{
+	sourceOrder := map[Source]int{
 		NVDDictionaryLookupSource: 1,
 		DeclaredSource:            2,
 		GeneratedSource:           3,
 	}
 
 	// Function to get the rank of a source
-	getRank := func(source CPESource) int {
+	getRank := func(source Source) int {
 		if rank, exists := sourceOrder[source]; exists {
 			return rank
 		}

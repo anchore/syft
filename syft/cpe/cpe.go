@@ -13,19 +13,19 @@ import (
 // vs looked up in the NVD CPE dictionary
 type SourcedCPE struct {
 	CPE    CPE
-	Source CPESource
+	Source Source
 }
 
-type CPESource string
+type Source string
 
-func (c CPESource) String() string {
+func (c Source) String() string {
 	return string(c)
 }
 
 const (
-	GeneratedSource           CPESource = "syft-generated"
-	NVDDictionaryLookupSource CPESource = "nvd-cpe-dictionary"
-	DeclaredSource            CPESource = "declared"
+	GeneratedSource           Source = "syft-generated"
+	NVDDictionaryLookupSource Source = "nvd-cpe-dictionary"
+	DeclaredSource            Source = "declared"
 )
 
 // Notes from Alex
@@ -46,7 +46,7 @@ func (c CPE) WithDeclaredSource() SourcedCPE {
 	return c.WithSource(DeclaredSource)
 }
 
-func (c CPE) WithSource(source CPESource) SourcedCPE {
+func (c CPE) WithSource(source Source) SourcedCPE {
 	return SourcedCPE{
 		CPE:    c,
 		Source: source,

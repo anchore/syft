@@ -307,7 +307,7 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 			continue
 		}
 
-		cpes = append(cpes, value.WithSource(cpe.CPESource(c.Source)))
+		cpes = append(cpes, value.WithSource(cpe.Source(c.Source)))
 	}
 
 	out := pkg.Package{
