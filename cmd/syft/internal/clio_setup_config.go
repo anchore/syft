@@ -10,16 +10,13 @@ import (
 	"github.com/anchore/syft/internal/redact"
 	"io"
 	"os"
-	"sync"
 )
-
-var initOnce sync.Once
 
 func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig {
 	clioCfg := clio.NewSetupConfig(id).
-		WithGlobalConfigFlag().   // add persistent -c <path> for reading an application config from
+		WithGlobalConfigFlag(). // add persistent -c <path> for reading an application config from
 		WithGlobalLoggingFlags(). // add persistent -v and -q flags tied to the logging config
-		WithConfigInRootHelp().   // --help on the root command renders the full application config in the help text
+		WithConfigInRootHelp(). // --help on the root command renders the full application config in the help text
 		WithUIConstructor(
 			// select a UI based on the logging configuration and state of stdin (if stdin is a tty)
 			func(cfg clio.Config) ([]clio.UI, error) {
@@ -40,15 +37,13 @@ func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig
 			func(state *clio.State) error {
 				// clio is setting up and providing the bus, redact store, and logger to the application. Once loaded,
 				// we can hoist them into the internal packages for global use.
-				initOnce.Do(func() {
-					stereoscope.SetBus(state.Bus)
-					bus.Set(state.Bus)
+				stereoscope.SetBus(state.Bus)
+				bus.Set(state.Bus)
 
-					redact.Set(state.RedactStore)
+				redact.Set(state.RedactStore)
 
-					log.Set(state.Logger)
-					stereoscope.SetLogger(state.Logger)
-				})
+				log.Set(state.Logger)
+				stereoscope.SetLogger(state.Logger)
 				return nil
 			},
 		).
