@@ -28,8 +28,6 @@ const (
 	DeclaredSource            Source = "declared"
 )
 
-// Notes from Alex
-
 func (c CPE) WithGeneratedSource() SourcedCPE {
 	return c.WithSource(GeneratedSource)
 }
