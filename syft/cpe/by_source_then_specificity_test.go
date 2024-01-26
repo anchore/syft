@@ -1,61 +1,44 @@
 package cpe
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"sort"
+	"testing"
 )
 
-func TestBySourceThenSpecificity_Len(t *testing.T) {
-	tests := []struct {
-		name string
-		b    BySourceThenSpecificity
-		want int
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, tt.b.Len(), "Len()")
-		})
-	}
-}
-
-func TestBySourceThenSpecificity_Less(t *testing.T) {
+func TestBySourceThenSpecificity(t *testing.T) {
 	type args struct {
 		i int
 		j int
 	}
 	tests := []struct {
-		name string
-		b    BySourceThenSpecificity
-		args args
-		want bool
+		name  string
+		input []SourcedCPE
+		want  []SourcedCPE
 	}{
-		// TODO: Add test cases.
+		{
+			name: "empty case",
+		},
+		{
+			name: "nvd before generated",
+			input: []SourcedCPE{
+				mustSourcedCPE(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+			},
+			want: []SourcedCPE{
+				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustSourcedCPE(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, tt.b.Less(tt.args.i, tt.args.j), "Less(%v, %v)", tt.args.i, tt.args.j)
+			sort.Sort(BySourceThenSpecificity(tt.input))
+			assert.Equal(t, tt.want, tt.input)
 		})
 	}
 }
 
-func TestBySourceThenSpecificity_Swap(t *testing.T) {
-	type args struct {
-		i int
-		j int
-	}
-	tests := []struct {
-		name string
-		b    BySourceThenSpecificity
-		args args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.b.Swap(tt.args.i, tt.args.j)
-		})
-	}
+func mustSourcedCPE(source Source, str string) SourcedCPE {
+	return Must(str).WithSource(source)
 }
