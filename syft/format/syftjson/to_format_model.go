@@ -233,7 +233,7 @@ func toPackageModel(p pkg.Package, cfg EncoderConfig) model.Package {
 	for i, c := range p.CPEs {
 		cpes[i] = model.SourcedCPE{
 			CPE:    c.CPE.String(),
-			Source: c.Source,
+			Source: asRef(c.Source.String()),
 		}
 	}
 
@@ -308,4 +308,8 @@ func toSourceModel(src source.Description) model.Source {
 	}
 
 	return m
+}
+
+func asRef(s string) *string {
+	return &s
 }

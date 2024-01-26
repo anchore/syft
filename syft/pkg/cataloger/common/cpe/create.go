@@ -6,10 +6,11 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/cpegenerate"
 )
 
-func Generate(p pkg.Package) []cpe.CPE {
+func Generate(p pkg.Package) []cpe.SourcedCPE {
 	return cpegenerate.FromPackageAttributes(p)
 }
 
-func DictionaryFind(p pkg.Package) (cpe.CPE, bool) {
-	return cpegenerate.FromDictionaryFind(p)
+func DictionaryFind(p pkg.Package) (cpe.SourcedCPE, bool) {
+	c, ok := cpegenerate.FromDictionaryFind(p)
+	return c.WithNVDDictionarySource(), ok
 }

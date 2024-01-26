@@ -123,7 +123,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		},
 		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
 		CPEs: []cpe.SourcedCPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*").WithUnknownSource(),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*").WithoutSource(),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -140,7 +140,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		},
 		PURL: "pkg:deb/debian/package-2@2.0.1",
 		CPEs: []cpe.SourcedCPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*").WithUnknownSource(),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*").WithoutSource(),
 		},
 	})
 

@@ -636,7 +636,7 @@ func extractCPEs(p *spdx.Package) (cpes []cpe.SourcedCPE) {
 				log.Warnf("unable to extract SPDX CPE=%q: %+v", r.Locator, err)
 				continue
 			}
-			cpes = append(cpes, c.WithUnknownSource())
+			cpes = append(cpes, c.WithoutSource())
 		}
 	}
 	return cpes
