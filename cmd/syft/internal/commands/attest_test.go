@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/anchore/clio/testutils"
 	"github.com/anchore/syft/cmd/syft/internal"
+	"github.com/google/go-cmp/cmp"
+	"github.com/spf13/cobra"
 	"io"
 	"os/exec"
 	"regexp"
@@ -272,26 +274,32 @@ func Test_buildSBOMForAttestation(t *testing.T) {
 }
 
 func Test_attestCLIWiring(t *testing.T) {
-	// TODO: panics on redact store
 	id := clio.Identification{
-		Name:    "syft-testing",
-		Version: "syft-testing",
+		Name:    "syft",
+		Version: "testing",
 	}
 	tests := []struct {
 		name          string
-		assertionFunc func(*testing.T, ...any)
+		assertionFunc func(*testing.T, *cobra.Command, []string, ...any)
+		wantOpts      attestOptions
 		args          []string
 		env           map[string]string
 	}{
 		{
-			name: "key flag is accepted",
-			args: []string{"some-image:some-tag", "--key", "some-cosign-key.key"},
-			assertionFunc: func(t *testing.T, cfgs ...any) {
-				assert.Equal(t, len(cfgs), 1)
-				opts, ok := cfgs[0].(*attestOptions)
-				require.True(t, ok)
-				assert.Equal(t, opts.Attest.Key.String(), "some-cosign-key.key")
+			name:          "key flag is accepted",
+			args:          []string{"some-image:some-tag", "--key", "some-cosign-key.key"},
+			assertionFunc: hasAttestOpts(options.Attest{Key: "some-cosign-key.key"}),
+		},
+		{
+			name: "key password is read from env",
+			args: []string{"some-image:some-tag", "--key", "cosign.key"},
+			env: map[string]string{
+				"SYFT_ATTEST_PASSWORD": "some-password",
 			},
+			assertionFunc: hasAttestOpts(options.Attest{
+				Key:      "cosign.key",
+				Password: "some-password",
+			}),
 		},
 	}
 	for _, tt := range tests {
@@ -310,11 +318,13 @@ func Test_attestCLIWiring(t *testing.T) {
 	}
 }
 
-//func assertionFunc(t *testing.T, predicates ...func(...any) error) func(...any) {
-//	return func(a ...any) {
-//		for _, predicate := range predicates {
-//			err := predicate(a)
-//			assert.NoError(t, err)
-//		}
-//	}
-//}
+func hasAttestOpts(wantOpts options.Attest) testutils.AssertionFunc {
+	return func(t *testing.T, _ *cobra.Command, _ []string, cfgs ...any) {
+		assert.Equal(t, len(cfgs), 1)
+		attestOpts, ok := cfgs[0].(*attestOptions)
+		require.True(t, ok)
+		if d := cmp.Diff(wantOpts, attestOpts.Attest); d != "" {
+			t.Errorf("mismatched attest options (-want +got):\n%s", d)
+		}
+	}
+}
