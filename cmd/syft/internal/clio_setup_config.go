@@ -10,7 +10,10 @@ import (
 	"github.com/anchore/syft/internal/redact"
 	"io"
 	"os"
+	"sync"
 )
+
+var initOnce sync.Once
 
 func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig {
 	clioCfg := clio.NewSetupConfig(id).
@@ -37,14 +40,15 @@ func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig
 			func(state *clio.State) error {
 				// clio is setting up and providing the bus, redact store, and logger to the application. Once loaded,
 				// we can hoist them into the internal packages for global use.
-				stereoscope.SetBus(state.Bus)
-				bus.Set(state.Bus)
+				initOnce.Do(func() {
+					stereoscope.SetBus(state.Bus)
+					bus.Set(state.Bus)
 
-				redact.Set(state.RedactStore)
+					redact.Set(state.RedactStore)
 
-				log.Set(state.Logger)
-				stereoscope.SetLogger(state.Logger)
-
+					log.Set(state.Logger)
+					stereoscope.SetLogger(state.Logger)
+				})
 				return nil
 			},
 		).

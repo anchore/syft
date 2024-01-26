@@ -278,6 +278,8 @@ func Test_attestCLIWiring(t *testing.T) {
 		Name:    "syft",
 		Version: "testing",
 	}
+	cfg := internal.AppClioSetupConfig(id, io.Discard)
+	a := clio.New(*cfg)
 	tests := []struct {
 		name          string
 		assertionFunc func(*testing.T, *cobra.Command, []string, ...any)
@@ -309,7 +311,7 @@ func Test_attestCLIWiring(t *testing.T) {
 					t.Setenv(k, v)
 				}
 			}
-			app := testutils.NewForTesting(t, internal.AppClioSetupConfig(id, io.Discard), tt.assertionFunc)
+			app := testutils.WrapForTesting(t, a, tt.assertionFunc)
 			cmd := Attest(app)
 			cmd.SetArgs(tt.args)
 			err := cmd.Execute()
