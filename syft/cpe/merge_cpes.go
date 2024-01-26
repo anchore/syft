@@ -42,6 +42,6 @@ func MergeSourcedCPEs(a, b []SourcedCPE) []SourcedCPE {
 	for _, val := range dedupe {
 		result = append(result, val)
 	}
-	// TODO: deterministic sort!
+	sort.Sort(BySourceThenSpecificity(result))
 	return result
 }
