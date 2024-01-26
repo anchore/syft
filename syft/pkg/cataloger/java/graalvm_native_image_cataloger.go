@@ -16,6 +16,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
@@ -573,7 +574,7 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) []pkg.Package {
 // Catalog attempts to find any native image executables reachable from a resolver.
 func (c *nativeImageCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
-	fileMatches, err := resolver.FilesByMIMEType(internal.ExecutableMIMETypeSet.List()...)
+	fileMatches, err := resolver.FilesByMIMEType(mimetype.ExecutableMIMETypeSet.List()...)
 	if err != nil {
 		return pkgs, nil, fmt.Errorf("failed to find binaries by mime types: %w", err)
 	}

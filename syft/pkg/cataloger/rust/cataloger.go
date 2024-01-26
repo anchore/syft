@@ -4,7 +4,7 @@ Package rust provides a concrete Cataloger implementation relating to packages w
 package rust
 
 import (
-	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
@@ -19,5 +19,5 @@ func NewCargoLockCataloger() pkg.Cataloger {
 // in binaries produced with https://github.com/Shnatsel/rust-audit
 func NewAuditBinaryCataloger() pkg.Cataloger {
 	return generic.NewCataloger("cargo-auditable-binary-cataloger").
-		WithParserByMimeTypes(parseAuditBinary, internal.ExecutableMIMETypeSet.List()...)
+		WithParserByMimeTypes(parseAuditBinary, mimetype.ExecutableMIMETypeSet.List()...)
 }
