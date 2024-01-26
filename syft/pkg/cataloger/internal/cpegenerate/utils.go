@@ -1,4 +1,4 @@
-package cpe
+package cpegenerate
 
 import "strings"
 

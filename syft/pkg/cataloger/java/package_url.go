@@ -5,7 +5,7 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/cpegenerate"
 )
 
 // PackageURL returns the PURL for the specific java package (see https://github.com/package-url/purl-spec)
@@ -53,7 +53,7 @@ func groupIDFromJavaMetadata(pkgName string, metadata pkg.JavaArchive) (groupID 
 }
 
 func groupIDFromKnownPackageList(pkgName string) (groupID string) {
-	if groupID, ok := cpe.DefaultArtifactIDToGroupID[pkgName]; ok {
+	if groupID, ok := cpegenerate.DefaultArtifactIDToGroupID[pkgName]; ok {
 		return groupID
 	}
 	return groupID
@@ -64,13 +64,13 @@ func groupIDFromJavaManifest(manifest *pkg.JavaManifest) (groupID string) {
 		return groupID
 	}
 
-	groupIDS := cpe.GetManifestFieldGroupIDs(manifest, cpe.PrimaryJavaManifestGroupIDFields)
+	groupIDS := cpegenerate.GetManifestFieldGroupIDs(manifest, cpegenerate.PrimaryJavaManifestGroupIDFields)
 	// assumes that primaryJavaManifestNameFields are ordered by priority
 	if len(groupIDS) != 0 {
 		return groupIDS[0]
 	}
 
-	groupIDS = cpe.GetManifestFieldGroupIDs(manifest, cpe.SecondaryJavaManifestGroupIDFields)
+	groupIDS = cpegenerate.GetManifestFieldGroupIDs(manifest, cpegenerate.SecondaryJavaManifestGroupIDFields)
 
 	if len(groupIDS) != 0 {
 		return groupIDS[0]

@@ -1,4 +1,4 @@
-package cpe
+package cpegenerate
 
 import (
 	"bufio"
@@ -10,13 +10,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/facebookincubator/nvdtools/wfn"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe/dictionary"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/cpegenerate/dictionary"
 )
 
 // knownVendors contains vendor strings that are known to exist in
@@ -59,7 +58,7 @@ func GetIndexedDictionary() (_ *dictionary.Indexed, err error) {
 	return indexedCPEDictionary, err
 }
 
-func DictionaryFind(p pkg.Package) (cpe.CPE, bool) {
+func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 	dict, err := GetIndexedDictionary()
 	if err != nil {
 		log.Debugf("dictionary CPE lookup not available: %+v", err)
@@ -107,10 +106,10 @@ func DictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 	return parsedCPE, true
 }
 
-// Generate Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
+// FromPackageAttributes Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
 // generate the minimal set of representative CPEs, which implies that optional fields should not be included
 // (such as target SW).
-func Generate(p pkg.Package) []cpe.CPE {
+func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
 	if len(products) == 0 {
@@ -128,7 +127,7 @@ func Generate(p pkg.Package) []cpe.CPE {
 			}
 			keys.Add(key)
 			// add a new entry...
-			if c := newCPE(product, vendor, p.Version, wfn.Any); c != nil {
+			if c := newCPE(product, vendor, p.Version, cpe.Any); c != nil {
 				cpes = append(cpes, *c)
 			}
 		}

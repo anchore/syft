@@ -8,6 +8,8 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
+const Any = ""
+
 type CPE struct {
 	Part      string
 	Vendor    string
@@ -123,7 +125,7 @@ func normalizeField(field string) string {
 
 	// keep dashes and forward slashes unescaped
 	if field == "*" {
-		return wfn.Any
+		return Any
 	}
 	return stripSlashes(field)
 }
