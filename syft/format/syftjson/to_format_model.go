@@ -231,10 +231,14 @@ func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
 func toPackageModel(p pkg.Package, cfg EncoderConfig) model.Package {
 	var cpes = make([]model.SourcedCPE, len(p.CPEs))
 	for i, c := range p.CPEs {
-		cpes[i] = model.SourcedCPE{
-			CPE:    c.CPE.String(),
-			Source: asRef(c.Source.String()),
+		convertedCPE := model.SourcedCPE{
+			CPE: c.CPE.String(),
 		}
+		src := c.Source.String()
+		if src != "" {
+			convertedCPE.Source = &src
+		}
+		cpes[i] = convertedCPE
 	}
 
 	// we want to make sure all catalogers are
@@ -308,8 +312,4 @@ func toSourceModel(src source.Description) model.Source {
 	}
 
 	return m
-}
-
-func asRef(s string) *string {
-	return &s
 }
