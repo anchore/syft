@@ -232,11 +232,8 @@ func toPackageModel(p pkg.Package, cfg EncoderConfig) model.Package {
 	var cpes = make([]model.SourcedCPE, len(p.CPEs))
 	for i, c := range p.CPEs {
 		convertedCPE := model.SourcedCPE{
-			CPE: c.CPE.String(),
-		}
-		src := c.Source.String()
-		if src != "" {
-			convertedCPE.Source = &src
+			CPE:    c.CPE.String(),
+			Source: c.Source.String(),
 		}
 		cpes[i] = convertedCPE
 	}

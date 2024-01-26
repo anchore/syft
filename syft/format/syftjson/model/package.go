@@ -39,8 +39,8 @@ type PackageBasicData struct {
 type cpes []SourcedCPE
 
 type SourcedCPE struct {
-	CPE    string  `json:"cpe"`
-	Source *string `json:"source,omitempty"`
+	CPE    string `json:"cpe"`
+	Source string `json:"source,omitempty"`
 }
 
 type licenses []License

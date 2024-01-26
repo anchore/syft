@@ -1248,10 +1248,7 @@
           "type": "string"
         },
         "cpes": {
-          "items": {
-            "$ref": "#/$defs/SourcedCPE"
-          },
-          "type": "array"
+          "$ref": "#/$defs/cpes"
         },
         "purl": {
           "type": "string"
@@ -2138,8 +2135,7 @@
       },
       "type": "object",
       "required": [
-        "cpe",
-        "source"
+        "cpe"
       ]
     },
     "SwiftPackageManagerLockEntry": {
@@ -2152,6 +2148,12 @@
       "required": [
         "revision"
       ]
+    },
+    "cpes": {
+      "items": {
+        "$ref": "#/$defs/SourcedCPE"
+      },
+      "type": "array"
     },
     "licenses": {
       "items": {
