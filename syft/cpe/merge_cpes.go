@@ -1,6 +1,7 @@
 package cpe
 
 import (
+	"fmt"
 	"sort"
 )
 
@@ -29,11 +30,14 @@ func Merge(a, b []CPE) (result []CPE) {
 func MergeSourcedCPEs(a, b []SourcedCPE) []SourcedCPE {
 	var result []SourcedCPE
 	dedupe := make(map[string]SourcedCPE)
+	key := func(scpe SourcedCPE) string {
+		return fmt.Sprintf("%s:%s", scpe.Source.String(), scpe.CPE.String())
+	}
 	for _, s := range a {
-		dedupe[s.String()] = s
+		dedupe[key(s)] = s
 	}
 	for _, s := range b {
-		dedupe[s.String()] = s
+		dedupe[key(s)] = s
 	}
 	for _, val := range dedupe {
 		result = append(result, val)

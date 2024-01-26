@@ -46,10 +46,6 @@ func (c CPE) WithDeclaredSource() SourcedCPE {
 	return c.WithSource(DeclaredSource)
 }
 
-func (s SourcedCPE) String() string {
-	return fmt.Sprintf("%s:%s", s.Source, s.CPE.String())
-}
-
 func (c CPE) WithSource(source CPESource) SourcedCPE {
 	return SourcedCPE{
 		CPE:    c,

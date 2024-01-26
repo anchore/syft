@@ -25,7 +25,7 @@ func encodeCPEs(p pkg.Package) (out []cyclonedx.Property) {
 		}
 		out = append(out, cyclonedx.Property{
 			Name:  "syft:cpe23",
-			Value: c.String(),
+			Value: c.CPE.String(),
 		})
 	}
 	return
