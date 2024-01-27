@@ -84,8 +84,8 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 		return main
 	}
 
-	version, hasVersion := gbs["vcs.revision"]
-	timestamp, hasTimestamp := gbs["vcs.time"]
+	version, hasVersion := gbs.Get("vcs.revision")
+	timestamp, hasTimestamp := gbs.Get("vcs.time")
 
 	var ldflags string
 	if metadata, ok := main.Metadata.(pkg.GolangBinaryBuildinfoEntry); ok {
@@ -95,7 +95,7 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 		// there is a matching vcs tag to match that could be referenced. This assumption could
 		// be incorrect in terms of the go.mod contents, but is not incorrect in terms of the logical
 		// version of the package.
-		ldflags = metadata.BuildSettings["-ldflags"]
+		ldflags, _ = metadata.BuildSettings.Get("-ldflags")
 	}
 
 	majorVersion, fullVersion := extractVersionFromLDFlags(ldflags)
@@ -207,10 +207,13 @@ func getGOARCHFromBin(r io.ReaderAt) (string, error) {
 	return arch, nil
 }
 
-func getBuildSettings(settings []debug.BuildSetting) map[string]string {
-	m := make(map[string]string)
+func getBuildSettings(settings []debug.BuildSetting) pkg.KeyValues {
+	m := make(pkg.KeyValues, 0)
 	for _, s := range settings {
-		m[s.Key] = s.Value
+		m = append(m, pkg.KeyValue{
+			Key:   s.Key,
+			Value: s.Value,
+		})
 	}
 	return m
 }
