@@ -1,10 +1,11 @@
 package commands
 
 import (
-	gologgerredact "github.com/anchore/go-logger/adapter/redact"
-	"github.com/anchore/syft/internal/redact"
 	"os"
 	"testing"
+
+	gologgerredact "github.com/anchore/go-logger/adapter/redact"
+	"github.com/anchore/syft/internal/redact"
 )
 
 func TestMain(m *testing.M) {

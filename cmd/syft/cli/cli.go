@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"github.com/anchore/syft/cmd/syft/internal"
 	"io"
 	"os"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/syft/cmd/syft/internal"
 	"github.com/anchore/syft/cmd/syft/internal/commands"
 )
 

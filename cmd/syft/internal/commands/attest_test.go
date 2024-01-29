@@ -4,21 +4,21 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/anchore/clio/testutils"
-	"github.com/anchore/syft/cmd/syft/internal"
-	"github.com/google/go-cmp/cmp"
-	"github.com/spf13/cobra"
 	"io"
 	"os/exec"
 	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/scylladb/go-set/strset"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/clio/cliotestutils"
+	"github.com/anchore/syft/cmd/syft/internal"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -310,7 +310,7 @@ func Test_attestCLIWiring(t *testing.T) {
 					t.Setenv(k, v)
 				}
 			}
-			app := testutils.NewForTesting(t, cfg, tt.assertionFunc)
+			app := cliotestutils.NewApplication(t, cfg, tt.assertionFunc)
 			cmd := Attest(app)
 			cmd.SetArgs(tt.args)
 			err := cmd.Execute()
@@ -319,7 +319,7 @@ func Test_attestCLIWiring(t *testing.T) {
 	}
 }
 
-func hasAttestOpts(wantOpts options.Attest) testutils.AssertionFunc {
+func hasAttestOpts(wantOpts options.Attest) cliotestutils.AssertionFunc {
 	return func(t *testing.T, _ *cobra.Command, _ []string, cfgs ...any) {
 		assert.Equal(t, len(cfgs), 1)
 		attestOpts, ok := cfgs[0].(*attestOptions)

@@ -1,6 +1,9 @@
 package internal
 
 import (
+	"io"
+	"os"
+
 	"github.com/anchore/clio"
 	"github.com/anchore/stereoscope"
 	ui2 "github.com/anchore/syft/cmd/syft/cli/ui"
@@ -8,8 +11,6 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/redact"
-	"io"
-	"os"
 )
 
 func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig {
