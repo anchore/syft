@@ -1,4 +1,6 @@
 tools:
+
+  # we want to use a pinned version of binny to manage the toolchain (so binny manages itself!)
   - name: binny
     version:
       want: v0.6.3
@@ -6,6 +8,15 @@ tools:
     with:
       repo: anchore/binny
 
+  # used to produce SBOMs during release
+  - name: syft
+    version:
+      want: latest
+    method: github-release
+    with:
+      repo: anchore/syft
+
+  # used to sign mac binaries at release
   - name: quill
     version:
       want: v0.4.1
@@ -13,6 +24,7 @@ tools:
     with:
       repo: anchore/quill
 
+  # used for linting
   - name: golangci-lint
     version:
       want: v1.55.2
@@ -20,6 +32,7 @@ tools:
     with:
       repo: golangci/golangci-lint
 
+  # used for showing the changelog at release
   - name: glow
     version:
       want: v1.5.1
@@ -27,6 +40,7 @@ tools:
     with:
       repo: charmbracelet/glow
 
+  # used for signing the checksums file at release
   - name: cosign
     version:
       want: v2.2.2
@@ -34,6 +48,7 @@ tools:
     with:
       repo: sigstore/cosign
 
+  # used in integration tests to verify JSON schemas
   - name: yajsv
     version:
       want: v1.4.1
@@ -41,6 +56,7 @@ tools:
     with:
       repo: neilpa/yajsv
 
+  # used to release all artifacts
   - name: goreleaser
     version:
       want: v1.23.0
@@ -48,6 +64,7 @@ tools:
     with:
       repo: goreleaser/goreleaser
 
+  # used for organizing imports during static analysis
   - name: gosimports
     version:
       want: v0.3.8
@@ -55,6 +72,7 @@ tools:
     with:
       repo: rinchsan/gosimports
 
+  # used at release to generate the changelog
   - name: chronicle
     version:
       want: v0.8.0
@@ -62,6 +80,7 @@ tools:
     with:
       repo: anchore/chronicle
 
+  # used during static analysis for license compliance
   - name: bouncer
     version:
       want: v0.4.0
@@ -69,6 +88,7 @@ tools:
     with:
       repo: wagoodman/go-bouncer
 
+  # used for showing benchmark testing
   - name: benchstat
     version:
       want: latest
@@ -81,6 +101,7 @@ tools:
       entrypoint: cmd/benchstat
       module: golang.org/x/perf
 
+  # used for running all local and CI tasks
   - name: task
     version:
       want: v3.34.1
@@ -88,6 +109,7 @@ tools:
     with:
       repo: go-task/task
 
+  # used for triggering a release
   - name: gh
     version:
       want: v2.42.1
