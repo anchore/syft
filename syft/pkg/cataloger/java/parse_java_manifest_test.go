@@ -210,6 +210,14 @@ func TestSelectName(t *testing.T) {
 			expected: "atlassian-gadgets-api",
 		},
 		{
+			desc: "Filename has period that is not groupid + artifact id",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{},
+			},
+			archive:  newJavaArchiveFilename("/something/http4s-crypto_2.12-0.1.0.jar"),
+			expected: "http4s-crypto_2.12",
+		},
+		{
 			desc: "Skip stripping groupId prefix from archive filename for org.eclipse",
 			manifest: pkg.JavaManifest{
 				Main: map[string]string{
