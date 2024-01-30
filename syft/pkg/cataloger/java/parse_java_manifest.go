@@ -165,14 +165,14 @@ func extractNameFromArchiveFilename(a archiveFilename) string {
 
 		// Maybe the filename is like groupid + . + artifactid. If so, return artifact id.
 		fields := strings.Split(a.name, ".")
-		maybeGroupId := true
+		maybeGroupID := true
 		for _, f := range fields {
 			if !isValidJavaIdentifier(f) {
-				maybeGroupId = false
+				maybeGroupID = false
 				break
 			}
 		}
-		if maybeGroupId {
+		if maybeGroupID {
 			return fields[len(fields)-1]
 		}
 	}
