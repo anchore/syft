@@ -51,7 +51,6 @@ var noAssertion = map[string]string{
 	"/packages/TwilioNotifier.hpi:WEB-INF/lib/sdk-3.0.jar":                                           "pkg:maven/sdk/sdk@3.0",
 
 	// syft generates incorrect purls
-	"/packages/kafka_2.13-3.2.2.jar":                             "pkg:maven/org.apache.kafka/kafka_2.13@3.2.2",
 	"/packages/akka-actor_2.13-2.6.6.jar":                        "pkg:maven/com.typesafe.akka/akka-actor_2.13@2.6.6",
 	"/packages/akka-management-cluster-bootstrap_2.13-1.2.0.jar": "pkg:maven/com.lightbend.akka.management/akka-management-cluster-bootstrap_2.13@1.2.0",
 	"/packages/hudson.war:WEB-INF/lib/asm-2.2.3.jar":             "pkg:maven/asm/asm@2.2.3",
@@ -366,10 +365,10 @@ var expectedPURLs = map[string]string{
 	"/packages/jruby-stdlib-9.1.15.0.jar:META-INF/jruby.home/lib/ruby/stdlib/org/yaml/snakeyaml/1.18/snakeyaml-1.18.jar":                   "pkg:maven/org.yaml/snakeyaml@1.18",
 	"/packages/jruby-stdlib-9.1.15.0.jar:META-INF/jruby.home/lib/ruby/stdlib/readline.jar:jline:jline":                                     "pkg:maven/jline/jline@2.11",
 	"/packages/jruby-stdlib-9.1.15.0.jar:META-INF/jruby.home/lib/ruby/stdlib/readline.jar:rubygems:jruby-readline":                         "pkg:maven/rubygems/jruby-readline@1.2.0",
-	"/packages/jruby-stdlib-9.1.15.0.jar": "pkg:maven/org.jruby/jruby-stdlib@9.1.15.0",
-	"/packages/jsch-0.1.55.jar":           "pkg:maven/com.jcraft/jsch@0.1.55",
-	"/packages/junit-4.13.1.jar":          "pkg:maven/junit/junit@4.13.1",
-	// "/packages/kafka_2.13-3.2.2.jar":                                                                                                       "pkg:maven/org.apache.kafka/kafka_2.13@3.2.2",
+	"/packages/jruby-stdlib-9.1.15.0.jar":                                                          "pkg:maven/org.jruby/jruby-stdlib@9.1.15.0",
+	"/packages/jsch-0.1.55.jar":                                                                    "pkg:maven/com.jcraft/jsch@0.1.55",
+	"/packages/junit-4.13.1.jar":                                                                   "pkg:maven/junit/junit@4.13.1",
+	"/packages/kafka_2.13-3.2.2.jar":                                                               "pkg:maven/org.apache.kafka/kafka_2.13@3.2.2",
 	"/packages/keycloak-core-22.0.2.jar":                                                           "pkg:maven/org.keycloak/keycloak-core@22.0.2",
 	"/packages/log4j-1.2.16.jar":                                                                   "pkg:maven/log4j/log4j@1.2.16",
 	"/packages/log4j-core-2.17.0.jar":                                                              "pkg:maven/org.apache.logging.log4j/log4j-core@2.17.0",
