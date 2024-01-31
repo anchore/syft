@@ -1,5 +1,4 @@
 tools:
-
   # we want to use a pinned version of binny to manage the toolchain (so binny manages itself!)
   - name: binny
     version:
