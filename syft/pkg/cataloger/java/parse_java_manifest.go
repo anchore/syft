@@ -6,6 +6,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
@@ -162,11 +163,38 @@ func extractNameFromArchiveFilename(a archiveFilename) string {
 			return a.name
 		}
 
+		// Maybe the filename is like groupid + . + artifactid. If so, return artifact id.
 		fields := strings.Split(a.name, ".")
-		return fields[len(fields)-1]
+		maybeGroupID := true
+		for _, f := range fields {
+			if !isValidJavaIdentifier(f) {
+				maybeGroupID = false
+				break
+			}
+		}
+		if maybeGroupID {
+			return fields[len(fields)-1]
+		}
 	}
 
 	return a.name
+}
+
+func isValidJavaIdentifier(field string) bool {
+	runes := []rune(field)
+	if len(runes) == 0 {
+		return false
+	}
+	// check whether first rune can start an identifier name in Java
+	// Java identifier start = [Lu]|[Ll]|[Lt]|[Lm]|[Lo]|[Nl]|[Sc]|[Pc]
+	// see https://developer.classpath.org/doc/java/lang/Character-source.html
+	// line 3295
+	r := runes[0]
+	return unicode.Is(unicode.Lu, r) ||
+		unicode.Is(unicode.Ll, r) || unicode.Is(unicode.Lt, r) ||
+		unicode.Is(unicode.Lm, r) || unicode.Is(unicode.Lo, r) ||
+		unicode.Is(unicode.Nl, r) ||
+		unicode.Is(unicode.Sc, r) || unicode.Is(unicode.Pc, r)
 }
 
 func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
