@@ -94,6 +94,8 @@ jobs:
     permissions:
       contents: write
       packages: write
+      # required for goreleaser signs section with cosign
+      id-token: write
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
         with:
