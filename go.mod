@@ -9,7 +9,7 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/anchore/bubbly v0.0.0-20231115134915-def0aba654a9
-	github.com/anchore/clio v0.0.0-20231016125544-c98a83e1c7fc
+	github.com/anchore/clio v0.0.0-20240131202212-9eba61247448
 	github.com/anchore/fangs v0.0.0-20231201140849-5075d28d6d8b
 	github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a
 	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb
