@@ -89,6 +89,8 @@ github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuy
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
+github.com/anchore/archiver/v3 v3.5.2 h1:Bjemm2NzuRhmHy3m0lRe5tNoClB9A4zYyDV58PaB6aA=
+github.com/anchore/archiver/v3 v3.5.2/go.mod h1:e3dqJ7H78uzsRSEACH1joayhuSyhnonssnDhppzS1L4=
 github.com/anchore/bubbly v0.0.0-20231115134915-def0aba654a9 h1:p0ZIe0htYOX284Y4axJaGBvXHU0VCCzLN5Wf5XbKStU=
 github.com/anchore/bubbly v0.0.0-20231115134915-def0aba654a9/go.mod h1:3ZsFB9tzW3vl4gEiUeuSOMDnwroWxIxJelOOHUp8dSw=
 github.com/anchore/clio v0.0.0-20231016125544-c98a83e1c7fc h1:A1KFO+zZZmbNlz1+WKsCF0RKVx6XRoxsAG3lrqH9hUQ=
@@ -107,8 +109,8 @@ github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b h1:e1bmaoJfZV
 github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b/go.mod h1:Bkc+JYWjMCF8OyZ340IMSIi2Ebf3uwByOk6ho4wne1E=
 github.com/anchore/packageurl-go v0.1.1-0.20230104203445-02e0a6721501 h1:AV7qjwMcM4r8wFhJq3jLRztew3ywIyPTRapl2T1s9o8=
 github.com/anchore/packageurl-go v0.1.1-0.20230104203445-02e0a6721501/go.mod h1:Blo6OgJNiYF41ufcgHKkbCKF2MDOMlrqhXv/ij6ocR4=
-github.com/anchore/stereoscope v0.0.0-20240118133533-eb656fc71793 h1:wji+qdjsV7ooolBwb3faVZnEK3WtY/kcT5473kxVZS4=
-github.com/anchore/stereoscope v0.0.0-20240118133533-eb656fc71793/go.mod h1:IylG7ofLoUKHwS1XDF6rPhOmaE3GgpAgsMdvvYfooTU=
+github.com/anchore/stereoscope v0.0.1 h1:OxF7PaxMltnAxjLnDMyka+SKRIQar/bBkDdavsnjyxM=
+github.com/anchore/stereoscope v0.0.1/go.mod h1:IylG7ofLoUKHwS1XDF6rPhOmaE3GgpAgsMdvvYfooTU=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/andybalholm/brotli v1.0.1/go.mod h1:loMXtMfwqflxFJPmdbJO0a3KNoPuLBgiu3qAvBg8x/Y=
 github.com/andybalholm/brotli v1.0.4 h1:V7DdXeJtZscaqfNuAdSRuRFzuiKlHSC/Zh3zl9qY3JY=
@@ -551,8 +553,6 @@ github.com/mattn/go-sqlite3 v1.14.16/go.mod h1:2eHXhiwb8IkHr+BDWZGa96P6+rkvnG63S
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d h1:5PJl274Y63IEHC+7izoQE9x6ikvDFZS2mDVS3drnohI=
 github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d/go.mod h1:01TrycV0kFyexm33Z7vhZRXopbI8J3TDReVlkTgMUxE=
-github.com/mholt/archiver/v3 v3.5.1 h1:rDjOBX9JSF5BvoJGvjqK479aL70qh9DIpZCl+k7Clwo=
-github.com/mholt/archiver/v3 v3.5.1/go.mod h1:e3dqJ7H78uzsRSEACH1joayhuSyhnonssnDhppzS1L4=
 github.com/microsoft/go-rustaudit v0.0.0-20220730194248-4b17361d90a5 h1:tQRHcLQwnwrPq2j2Qra/NnyjyESBGwdeBeVdAE9kXYg=
 github.com/microsoft/go-rustaudit v0.0.0-20220730194248-4b17361d90a5/go.mod h1:vYT9HE7WCvL64iVeZylKmCsWKfE+JZ8105iuh2Trk8g=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
