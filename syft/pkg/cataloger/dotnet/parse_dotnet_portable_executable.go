@@ -175,7 +175,7 @@ var (
 func findName(versionResources map[string]string) string {
 	// PE files found in the wild _not_ authored by Microsoft seem to use ProductName as a clear
 	// identifier of the software
-	nameFields := []string{"ProductName", "FileDescription", "InternalName", "OriginalFilename"}
+	nameFields := []string{"InternalName", "OriginalFilename", "ProductName", "FileDescription"}
 
 	if isMicrosoft(versionResources) {
 		// Microsoft seems to be consistent using the FileDescription, with a few that are blank and have
@@ -188,6 +188,9 @@ func findName(versionResources map[string]string) string {
 		if value == "" {
 			continue
 		}
+
+		value = strings.TrimSuffix(strings.ReplaceAll(value, " ", "."), ".dll")
+
 		return value
 	}
 
