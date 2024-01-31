@@ -218,6 +218,14 @@ func TestSelectName(t *testing.T) {
 			expected: "http4s-crypto_2.12",
 		},
 		{
+			desc: "Filename has period that is not groupid + artifact id, kafka",
+			manifest: pkg.JavaManifest{
+				Main: map[string]string{},
+			},
+			archive:  newJavaArchiveFilename("/something//kafka_2.13-3.2.2.jar"),
+			expected: "kafka_2.13", // see https://mvnrepository.com/artifact/org.apache.kafka/kafka_2.13/3.2.2
+		},
+		{
 			desc: "Skip stripping groupId prefix from archive filename for org.eclipse",
 			manifest: pkg.JavaManifest{
 				Main: map[string]string{
