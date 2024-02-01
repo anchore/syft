@@ -261,12 +261,7 @@
           "type": "array"
         },
         "options": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/KeyValues"
         },
         "path": {
           "type": "string"
@@ -710,12 +705,7 @@
     "GoModuleBuildinfoEntry": {
       "properties": {
         "goBuildSettings": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/KeyValues"
         },
         "goCompiledVersion": {
           "type": "string"
@@ -804,25 +794,13 @@
     "JavaManifest": {
       "properties": {
         "main": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/KeyValues"
         },
-        "namedSections": {
-          "patternProperties": {
-            ".*": {
-              "patternProperties": {
-                ".*": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/KeyValues"
           },
-          "type": "object"
+          "type": "array"
         }
       },
       "type": "object"
@@ -969,6 +947,27 @@
         "resolved",
         "integrity"
       ]
+    },
+    "KeyValue": {
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ]
+    },
+    "KeyValues": {
+      "items": {
+        "$ref": "#/$defs/KeyValue"
+      },
+      "type": "array"
     },
     "License": {
       "properties": {
