@@ -1,31 +1,37 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"github.com/anchore/syft/syft/format"
+	"io"
 	"os"
+	"strings"
 )
 
-const exampleFile = "alpine.syft.json"
+//go:embed alpine.syft.json
+var sbomContents string
 
 func main() {
 	// read file from sys args (or use the default)
-	var filePath string
+	var reader io.Reader
 	if len(os.Args) < 2 {
-		filePath = exampleFile
+		reader = strings.NewReader(sbomContents)
 	} else {
-		filePath = os.Args[1]
+		var err error
+		reader, err = os.Open(os.Args[1])
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	file, err := os.Open(filePath)
-	if err != nil {
-		panic(err)
-	}
+	fmt.Printf("len %d", len(sbomContents))
 
 	// decode the SBOM
-	sbom, sbomFormat, formatVersion, err := format.Decode(file)
+	sbom, sbomFormat, formatVersion, err := format.Decode(reader)
 	if err != nil {
-		panic(err)
+		fmt.Printf("failed to decode sbom: %+v\n", err)
+		os.Exit(1)
 	}
 
 	fmt.Printf("SBOM format: %s@%s\n", sbomFormat, formatVersion)

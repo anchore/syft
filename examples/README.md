@@ -13,8 +13,3 @@ You can run any of these examples from this directory with:
 ```bash
 go run ./DIRECTORY_NAME
 ```
-
-# TODO
-
-Missing examples:
-- see intermediate progress on the bus
