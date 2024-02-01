@@ -66,7 +66,7 @@ func vendorsFromJavaManifestNames(p pkg.Package) fieldCandidateSet {
 
 	for _, name := range javaManifestNameFields {
 		if metadata.Manifest.Main != nil {
-			if value, exists := metadata.Manifest.Main[name]; exists {
+			if value, exists := metadata.Manifest.Main.Get(name); exists {
 				if !startsWithTopLevelDomain(value) {
 					vendors.add(fieldCandidate{
 						value:                 normalizePersonName(value),
@@ -75,12 +75,12 @@ func vendorsFromJavaManifestNames(p pkg.Package) fieldCandidateSet {
 				}
 			}
 		}
-		if metadata.Manifest.NamedSections != nil {
-			for _, section := range metadata.Manifest.NamedSections {
+		if metadata.Manifest.Sections != nil {
+			for _, section := range metadata.Manifest.Sections {
 				if section == nil {
 					continue
 				}
-				if value, exists := section[name]; exists {
+				if value, exists := section.Get(name); exists {
 					if !startsWithTopLevelDomain(value) {
 						vendors.add(fieldCandidate{
 							value:                 normalizePersonName(value),
@@ -275,13 +275,13 @@ func GetManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (grou
 	}
 
 	for _, name := range fields {
-		if value, exists := manifest.Main[name]; exists {
+		if value, exists := manifest.Main.Get(name); exists {
 			if startsWithTopLevelDomain(value) {
 				groupIDs = append(groupIDs, cleanGroupID(value))
 			}
 		}
-		for _, section := range manifest.NamedSections {
-			if value, exists := section[name]; exists {
+		for _, section := range manifest.Sections {
+			if value, exists := section.Get(name); exists {
 				if startsWithTopLevelDomain(value) {
 					groupIDs = append(groupIDs, cleanGroupID(value))
 				}

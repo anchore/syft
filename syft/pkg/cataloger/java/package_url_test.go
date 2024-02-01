@@ -24,8 +24,11 @@ func Test_packageURL(t *testing.T) {
 				Metadata: pkg.JavaArchive{
 					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
-							"Manifest-Version": "1.0",
+						Main: []pkg.KeyValue{
+							{
+								Key:   "Manifest-Version",
+								Value: "1.0",
+							},
 						},
 					},
 					PomProperties: &pkg.JavaPomProperties{
@@ -49,8 +52,11 @@ func Test_packageURL(t *testing.T) {
 				Metadata: pkg.JavaArchive{
 					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
-							"Manifest-Version": "1.0",
+						Main: []pkg.KeyValue{
+							{
+								Key:   "Manifest-Version",
+								Value: "1.0",
+							},
 						},
 					},
 					PomProperties: &pkg.JavaPomProperties{
@@ -74,8 +80,11 @@ func Test_packageURL(t *testing.T) {
 				Metadata: pkg.JavaArchive{
 					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
-							"Manifest-Version": "1.0",
+						Main: []pkg.KeyValue{
+							{
+								Key:   "Manifest-Version",
+								Value: "1.0",
+							},
 						},
 					},
 					PomProperties: &pkg.JavaPomProperties{
@@ -101,8 +110,11 @@ func Test_packageURL(t *testing.T) {
 				Metadata: pkg.JavaArchive{
 					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
-							"Manifest-Version": "1.0",
+						Main: []pkg.KeyValue{
+							{
+								Key:   "Manifest-Version",
+								Value: "1.0",
+							},
 						},
 					},
 					PomProperties: &pkg.JavaPomProperties{
@@ -163,8 +175,11 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 			name: "java manifest",
 			metadata: pkg.JavaArchive{
 				Manifest: &pkg.JavaManifest{
-					Main: map[string]string{
-						"Implementation-Vendor": "org.anchore",
+					Main: []pkg.KeyValue{
+						{
+							Key:   "Implementation-Vendor",
+							Value: "org.anchore",
+						},
 					},
 				},
 			},
