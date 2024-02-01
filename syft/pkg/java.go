@@ -66,6 +66,15 @@ func (p JavaPomProperties) PkgTypeIndicated() Type {
 
 // JavaManifest represents the fields of interest extracted from a Java archive's META-INF/MANIFEST.MF file.
 type JavaManifest struct {
-	Main          map[string]string            `json:"main,omitempty"`
-	NamedSections map[string]map[string]string `json:"namedSections,omitempty"`
+	Main     KeyValues   `json:"main,omitempty"`
+	Sections []KeyValues `json:"sections,omitempty"`
+}
+
+func (m JavaManifest) Section(name string) KeyValues {
+	for _, section := range m.Sections {
+		if sectionName, ok := section.Get("Name"); ok && sectionName == name {
+			return section
+		}
+	}
+	return nil
 }

@@ -87,8 +87,8 @@ func parseConanlock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	return pkgs, relationships, nil
 }
 
-func parseOptions(options string) map[string]string {
-	o := make(map[string]string)
+func parseOptions(options string) []pkg.KeyValue {
+	o := make([]pkg.KeyValue, 0)
 	if len(options) == 0 {
 		return nil
 	}
@@ -97,7 +97,10 @@ func parseOptions(options string) map[string]string {
 	for _, kvp := range kvps {
 		kv := strings.Split(kvp, "=")
 		if len(kv) == 2 {
-			o[kv[0]] = kv[1]
+			o = append(o, pkg.KeyValue{
+				Key:   kv[0],
+				Value: kv[1],
+			})
 		}
 	}
 

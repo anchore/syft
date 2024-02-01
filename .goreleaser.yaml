@@ -247,3 +247,28 @@ docker_manifests:
       - ghcr.io/anchore/syft:{{.Tag}}-arm64v8
       - ghcr.io/anchore/syft:{{.Tag}}-ppc64le
       - ghcr.io/anchore/syft:{{.Tag}}-s390x
+
+sboms:
+  - artifacts: archive
+    # this is relative to the snapshot/dist directory, not the root of the repo
+    cmd: ../.tool/syft
+    documents:
+      - "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}.sbom"
+    args:
+      - "scan"
+      - "$artifact"
+      - "--output"
+      - "json=$document"
+
+signs:
+  - cmd: .tool/cosign
+    signature: "${artifact}.sig"
+    certificate: "${artifact}.pem"
+    args:
+      - "sign-blob"
+      - "--oidc-issuer=https://token.actions.githubusercontent.com"
+      - "--output-certificate=${certificate}"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - "--yes"
+    artifacts: checksum

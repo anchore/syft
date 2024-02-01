@@ -4,16 +4,21 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os/exec"
 	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/scylladb/go-set/strset"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/clio/cliotestutils"
+	"github.com/anchore/syft/cmd/syft/internal"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -265,5 +270,62 @@ func Test_buildSBOMForAttestation(t *testing.T) {
 				return
 			}
 		})
+	}
+}
+
+func Test_attestCLIWiring(t *testing.T) {
+	id := clio.Identification{
+		Name:    "syft",
+		Version: "testing",
+	}
+	cfg := internal.AppClioSetupConfig(id, io.Discard)
+	tests := []struct {
+		name          string
+		assertionFunc func(*testing.T, *cobra.Command, []string, ...any)
+		wantOpts      attestOptions
+		args          []string
+		env           map[string]string
+	}{
+		{
+			name:          "key flag is accepted",
+			args:          []string{"some-image:some-tag", "--key", "some-cosign-key.key"},
+			assertionFunc: hasAttestOpts(options.Attest{Key: "some-cosign-key.key"}),
+		},
+		{
+			name: "key password is read from env",
+			args: []string{"some-image:some-tag", "--key", "cosign.key"},
+			env: map[string]string{
+				"SYFT_ATTEST_PASSWORD": "some-password",
+			},
+			assertionFunc: hasAttestOpts(options.Attest{
+				Key:      "cosign.key",
+				Password: "some-password",
+			}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.env != nil {
+				for k, v := range tt.env {
+					t.Setenv(k, v)
+				}
+			}
+			app := cliotestutils.NewApplication(t, cfg, tt.assertionFunc)
+			cmd := Attest(app)
+			cmd.SetArgs(tt.args)
+			err := cmd.Execute()
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func hasAttestOpts(wantOpts options.Attest) cliotestutils.AssertionFunc {
+	return func(t *testing.T, _ *cobra.Command, _ []string, cfgs ...any) {
+		assert.Equal(t, len(cfgs), 1)
+		attestOpts, ok := cfgs[0].(*attestOptions)
+		require.True(t, ok)
+		if d := cmp.Diff(wantOpts, attestOpts.Attest); d != "" {
+			t.Errorf("mismatched attest options (-want +got):\n%s", d)
+		}
 	}
 }

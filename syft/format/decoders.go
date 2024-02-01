@@ -28,11 +28,11 @@ func Decoders() []sbom.FormatDecoder {
 }
 
 // Identify takes a set of bytes and attempts to identify the format of the SBOM.
-func Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
+func Identify(reader io.Reader) (sbom.FormatID, string) {
 	return staticDecoders.Identify(reader)
 }
 
 // Decode takes a set of bytes and attempts to decode it into an SBOM.
-func Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string, error) {
+func Decode(reader io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) {
 	return staticDecoders.Decode(reader)
 }

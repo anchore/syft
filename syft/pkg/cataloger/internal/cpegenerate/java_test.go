@@ -188,8 +188,11 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
-							"Extension-Name": "io.jenkins-ci.plugin.thing",
+						Main: pkg.KeyValues{
+							{
+								Key:   "Extension-Name",
+								Value: "io.jenkins-ci.plugin.thing",
+							},
 						},
 					},
 				},
@@ -201,9 +204,16 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						NamedSections: map[string]map[string]string{
-							"section": {
-								"Extension-Name": "io.jenkins-ci.plugin.thing",
+						Sections: []pkg.KeyValues{
+							{
+								{
+									Key:   "Name",
+									Value: "section",
+								},
+								{
+									Key:   "Extension-Name",
+									Value: "io.jenkins-ci.plugin.thing",
+								},
 							},
 						},
 					},
@@ -216,20 +226,20 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
+						Main: []pkg.KeyValue{
 							// positive cases
 							// tier 1
-							"Extension-Name":           "io.jenkins-ci.plugin.1",
-							"Specification-Vendor":     "io.jenkins-ci.plugin.2",
-							"Implementation-Vendor":    "io.jenkins-ci.plugin.3",
-							"Bundle-SymbolicName":      "io.jenkins-ci.plugin.4",
-							"Implementation-Vendor-Id": "io.jenkins-ci.plugin.5",
-							"Implementation-Title":     "io.jenkins-ci.plugin.6",
-							"Bundle-Activator":         "io.jenkins-ci.plugin.7",
+							{Key: "Extension-Name", Value: "io.jenkins-ci.plugin.1"},
+							{Key: "Specification-Vendor", Value: "io.jenkins-ci.plugin.2"},
+							{Key: "Implementation-Vendor", Value: "io.jenkins-ci.plugin.3"},
+							{Key: "Bundle-SymbolicName", Value: "io.jenkins-ci.plugin.4"},
+							{Key: "Implementation-Vendor-Id", Value: "io.jenkins-ci.plugin.5"},
+							{Key: "Implementation-Title", Value: "io.jenkins-ci.plugin.6"},
+							{Key: "Bundle-Activator", Value: "io.jenkins-ci.plugin.7"},
 							// tier 2
-							"Automatic-Module-Name": "io.jenkins-ci.plugin.8",
-							"Main-Class":            "io.jenkins-ci.plugin.9",
-							"Package":               "io.jenkins-ci.plugin.10",
+							{Key: "Automatic-Module-Name", Value: "io.jenkins-ci.plugin.8"},
+							{Key: "Main-Class", Value: "io.jenkins-ci.plugin.9"},
+							{Key: "Package", Value: "io.jenkins-ci.plugin.10"},
 						},
 					},
 				},
@@ -249,11 +259,11 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
+						Main: []pkg.KeyValue{
 							// positive cases
-							"Automatic-Module-Name": "io.jenkins-ci.plugin.8",
-							"Main-Class":            "io.jenkins-ci.plugin.9",
-							"Package":               "io.jenkins-ci.plugin.10",
+							{Key: "Automatic-Module-Name", Value: "io.jenkins-ci.plugin.8"},
+							{Key: "Main-Class", Value: "io.jenkins-ci.plugin.9"},
+							{Key: "Package", Value: "io.jenkins-ci.plugin.10"},
 						},
 					},
 				},
@@ -269,10 +279,10 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
+						Main: []pkg.KeyValue{
 							// negative cases
-							"Extension-Name": "not.a-group.id",
-							"bogus":          "io.jenkins-ci.plugin.please-dont-find-me",
+							{Key: "Extension-Name", Value: "not.a-group.id"},
+							{Key: "bogus", Value: "io.jenkins-ci.plugin.please-dont-find-me"},
 						},
 					},
 				},
@@ -284,21 +294,55 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						NamedSections: map[string]map[string]string{
-							"section": {
+						Sections: []pkg.KeyValues{
+							{
+								{
+									Key:   "Name",
+									Value: "section",
+								},
 								// positive cases
 								// tier 1
-								"Extension-Name":           "io.jenkins-ci.plugin.1",
-								"Specification-Vendor":     "io.jenkins-ci.plugin.2",
-								"Implementation-Vendor":    "io.jenkins-ci.plugin.3",
-								"Bundle-SymbolicName":      "io.jenkins-ci.plugin.4",
-								"Implementation-Vendor-Id": "io.jenkins-ci.plugin.5",
-								"Implementation-Title":     "io.jenkins-ci.plugin.6",
-								"Bundle-Activator":         "io.jenkins-ci.plugin.7",
+								{
+									Key:   "Extension-Name",
+									Value: "io.jenkins-ci.plugin.1",
+								},
+								{
+									Key:   "Specification-Vendor",
+									Value: "io.jenkins-ci.plugin.2",
+								},
+								{
+									Key:   "Implementation-Vendor",
+									Value: "io.jenkins-ci.plugin.3",
+								},
+								{
+									Key:   "Bundle-SymbolicName",
+									Value: "io.jenkins-ci.plugin.4",
+								},
+								{
+									Key:   "Implementation-Vendor-Id",
+									Value: "io.jenkins-ci.plugin.5",
+								},
+								{
+									Key:   "Implementation-Title",
+									Value: "io.jenkins-ci.plugin.6",
+								},
+								{
+									Key:   "Bundle-Activator",
+									Value: "io.jenkins-ci.plugin.7",
+								},
 								// tier 2
-								"Automatic-Module-Name": "io.jenkins-ci.plugin.8",
-								"Main-Class":            "io.jenkins-ci.plugin.9",
-								"Package":               "io.jenkins-ci.plugin.10",
+								{
+									Key:   "Automatic-Module-Name",
+									Value: "io.jenkins-ci.plugin.8",
+								},
+								{
+									Key:   "Main-Class",
+									Value: "io.jenkins-ci.plugin.9",
+								},
+								{
+									Key:   "Package",
+									Value: "io.jenkins-ci.plugin.10",
+								},
 							},
 						},
 					},
@@ -319,11 +363,20 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						NamedSections: map[string]map[string]string{
-							"section": {
-								// negative cases
-								"Extension-Name": "not.a-group.id",
-								"bogus":          "io.jenkins-ci.plugin.please-dont-find-me",
+						Sections: []pkg.KeyValues{
+							{
+								{
+									Key:   "Name",
+									Value: "section",
+								},
+								{
+									Key:   "Extension-Name",
+									Value: "not.a-group.id",
+								},
+								{
+									Key:   "bogus",
+									Value: "io.jenkins-ci.plugin.please-dont-find-me",
+								},
 							},
 						},
 					},
@@ -403,11 +456,21 @@ func Test_vendorsFromJavaManifestNames(t *testing.T) {
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						NamedSections: map[string]map[string]string{
-							"section": {
+						Sections: []pkg.KeyValues{
+							{
+								{
+									Key:   "Name",
+									Value: "section",
+								},
 								// positive cases
-								"Specification-Vendor":  "Alex Goodman",
-								"Implementation-Vendor": "William Goodman",
+								{
+									Key:   "Specification-Vendor",
+									Value: "Alex Goodman",
+								},
+								{
+									Key:   "Implementation-Vendor",
+									Value: "William Goodman",
+								},
 							},
 						},
 					},
@@ -420,11 +483,22 @@ func Test_vendorsFromJavaManifestNames(t *testing.T) {
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						NamedSections: map[string]map[string]string{
-							"section": {
+						Sections: []pkg.KeyValues{
+							{
+								{
+									Key:   "Name",
+									Value: "section",
+								},
 								// negative cases
-								"Specification-Vendor":     "io.jenkins-ci.plugin.thing",
-								"Implementation-Vendor-ID": "William Goodman",
+
+								{
+									Key:   "Specification-Vendor",
+									Value: "io.jenkins-ci.plugin.thing",
+								},
+								{
+									Key:   "Implementation-Vendor-ID",
+									Value: "William Goodman",
+								},
 							},
 						},
 					},
@@ -459,8 +533,11 @@ func Test_groupIDsFromJavaManifest(t *testing.T) {
 		{
 			name: "spring-foo",
 			manifest: pkg.JavaManifest{
-				Main: map[string]string{
-					"Implementation-Vendor": "org.foo",
+				Main: []pkg.KeyValue{
+					{
+						Key:   "Implementation-Vendor",
+						Value: "org.foo",
+					},
 				},
 			},
 			expected: []string{"org.foo"},
