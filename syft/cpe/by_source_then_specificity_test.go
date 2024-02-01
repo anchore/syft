@@ -1,9 +1,10 @@
 package cpe
 
 import (
-	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBySourceThenSpecificity(t *testing.T) {
@@ -28,6 +29,43 @@ func TestBySourceThenSpecificity(t *testing.T) {
 			want: []CPE{
 				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
 				mustSourcedCPE(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+			},
+		},
+		{
+			name: "declared before generated",
+			input: []CPE{
+				mustSourcedCPE(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustSourcedCPE(DeclaredSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+			},
+			want: []CPE{
+				mustSourcedCPE(DeclaredSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustSourcedCPE(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+			},
+		},
+		{
+			name: "most specific attributes of equal sources",
+			input: []CPE{
+				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
+				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
+				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
+			},
+			want: []CPE{
+				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
+				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
+				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
+			},
+		},
+		{
+			name: "most specific attributes of unknown sources",
+			input: []CPE{
+				mustSourcedCPE("", "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
+				mustSourcedCPE("some-other-unknown-source", "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
+				mustSourcedCPE("some-unknown-source", "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
+			},
+			want: []CPE{
+				mustSourcedCPE("some-other-unknown-source", "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
+				mustSourcedCPE("", "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
+				mustSourcedCPE("some-unknown-source", "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
 			},
 		},
 	}

@@ -15,7 +15,6 @@ func (b BySourceThenSpecificity) Less(i, j int) bool {
 		GeneratedSource:           3,
 	}
 
-	// Function to get the rank of a source
 	getRank := func(source Source) int {
 		if rank, exists := sourceOrder[source]; exists {
 			return rank
@@ -30,7 +29,7 @@ func (b BySourceThenSpecificity) Less(i, j int) bool {
 		return rankI < rankJ
 	}
 
-	return weightedCountForSpecifiedFields(b[i].Attributes) < weightedCountForSpecifiedFields(b[j].Attributes)
+	return isMoreSpecific(b[i].Attributes, b[j].Attributes)
 }
 
 func (b BySourceThenSpecificity) Swap(i, j int) {
