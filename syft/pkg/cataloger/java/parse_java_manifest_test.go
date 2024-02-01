@@ -276,18 +276,14 @@ func TestSelectName(t *testing.T) {
 			expected: "atlassian-gadgets-api",
 		},
 		{
-			desc: "Filename has period that is not groupid + artifact id",
-			manifest: pkg.JavaManifest{
-				Main: map[string]string{},
-			},
+			desc:     "Filename has period that is not groupid + artifact id",
+			manifest: pkg.JavaManifest{},
 			archive:  newJavaArchiveFilename("/something/http4s-crypto_2.12-0.1.0.jar"),
 			expected: "http4s-crypto_2.12",
 		},
 		{
-			desc: "Filename has period that is not groupid + artifact id, kafka",
-			manifest: pkg.JavaManifest{
-				Main: map[string]string{},
-			},
+			desc:     "Filename has period that is not groupid + artifact id, kafka",
+			manifest: pkg.JavaManifest{},
 			archive:  newJavaArchiveFilename("/something//kafka_2.13-3.2.2.jar"),
 			expected: "kafka_2.13", // see https://mvnrepository.com/artifact/org.apache.kafka/kafka_2.13/3.2.2
 		},
