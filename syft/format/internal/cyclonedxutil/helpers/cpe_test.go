@@ -21,14 +21,14 @@ func Test_encodeCPE(t *testing.T) {
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION
 			name: "no metadata",
 			input: pkg.Package{
-				CPEs: []cpe.SourcedCPE{},
+				CPEs: []cpe.CPE{},
 			},
 			expected: "",
 		},
 		{
-			name: "single CPE",
+			name: "single Attributes",
 			input: pkg.Package{
-				CPEs: []cpe.SourcedCPE{
+				CPEs: []cpe.CPE{
 					testCPE,
 				},
 			},
@@ -37,7 +37,7 @@ func Test_encodeCPE(t *testing.T) {
 		{
 			name: "multiple CPEs",
 			input: pkg.Package{
-				CPEs: []cpe.SourcedCPE{
+				CPEs: []cpe.CPE{
 					testCPE2,
 					testCPE,
 				},

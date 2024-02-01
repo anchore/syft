@@ -2,7 +2,7 @@ package cpe
 
 import "sort"
 
-type BySourceThenSpecificity []SourcedCPE
+type BySourceThenSpecificity []CPE
 
 func (b BySourceThenSpecificity) Len() int {
 	return len(b)
@@ -30,7 +30,7 @@ func (b BySourceThenSpecificity) Less(i, j int) bool {
 		return rankI < rankJ
 	}
 
-	return weightedCountForSpecifiedFields(b[i].CPE) < weightedCountForSpecifiedFields(b[j].CPE)
+	return weightedCountForSpecifiedFields(b[i].Attributes) < weightedCountForSpecifiedFields(b[j].Attributes)
 }
 
 func (b BySourceThenSpecificity) Swap(i, j int) {

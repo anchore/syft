@@ -719,7 +719,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 
 			actualCpeSet := set.NewStringSet()
 			for _, a := range actual {
-				actualCpeSet.Add(fmt.Sprintf("%s:%s", a.Source.String(), a.CPE.String()))
+				actualCpeSet.Add(fmt.Sprintf("%s:%s", a.Source.String(), a.Attributes.String()))
 			}
 
 			extra := strset.Difference(actualCpeSet, expectedCpeSet).List()

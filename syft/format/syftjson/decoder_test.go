@@ -157,8 +157,8 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 		}),
 		Language: "language",
 		Type:     "type",
-		CPEs: []cpe.SourcedCPE{
-			cpe.CPE{
+		CPEs: []cpe.CPE{
+			cpe.Attributes{
 				Part:    "a",
 				Vendor:  "vendor",
 				Product: "product",

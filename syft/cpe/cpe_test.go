@@ -16,7 +16,7 @@ func Test_New(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
-		expected CPE
+		expected Attributes
 	}{
 		{
 			name:     "gocase",
@@ -39,11 +39,11 @@ func Test_New(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			actual, err := New(test.input)
 			if err != nil {
-				t.Fatalf("got an error while creating CPE: %+v", err)
+				t.Fatalf("got an error while creating Attributes: %+v", err)
 			}
 
 			if d := cmp.Diff(actual, test.expected); d != "" {
-				t.Errorf("CPE mismatch (-want +got):\n%s", d)
+				t.Errorf("Attributes mismatch (-want +got):\n%s", d)
 			}
 
 		})
@@ -82,9 +82,9 @@ func Test_normalizeCpeField(t *testing.T) {
 
 func Test_CPEParser(t *testing.T) {
 	var testCases []struct {
-		CPEString string `json:"cpe-string"`
-		CPEUrl    string `json:"cpe-url"`
-		WFN       CPE    `json:"wfn"`
+		CPEString string     `json:"cpe-string"`
+		CPEUrl    string     `json:"cpe-url"`
+		WFN       Attributes `json:"wfn"`
 	}
 	out, err := os.ReadFile("test-fixtures/cpe-data.json")
 	require.NoError(t, err)
@@ -165,7 +165,7 @@ func Test_InvalidCPE(t *testing.T) {
 			if test.expectedErr {
 				assert.Error(t, err)
 				if t.Failed() {
-					t.Logf("got CPE: %q details: %+v", c, c)
+					t.Logf("got Attributes: %q details: %+v", c, c)
 				}
 				return
 			}
@@ -179,12 +179,12 @@ func Test_RoundTrip(t *testing.T) {
 	tests := []struct {
 		name      string
 		cpe       string
-		parsedCPE CPE
+		parsedCPE Attributes
 	}{
 		{
 			name: "normal",
 			cpe:  "cpe:2.3:a:some-vendor:name:3.2:*:*:*:*:*:*:*",
-			parsedCPE: CPE{
+			parsedCPE: Attributes{
 				Part:    "a",
 				Vendor:  "some-vendor",
 				Product: "name",
@@ -194,7 +194,7 @@ func Test_RoundTrip(t *testing.T) {
 		{
 			name: "escaped colon",
 			cpe:  "cpe:2.3:a:some-vendor:name:1\\:3.2:*:*:*:*:*:*:*",
-			parsedCPE: CPE{
+			parsedCPE: Attributes{
 				Part:    "a",
 				Vendor:  "some-vendor",
 				Product: "name",
@@ -204,7 +204,7 @@ func Test_RoundTrip(t *testing.T) {
 		{
 			name: "escaped forward slash",
 			cpe:  "cpe:2.3:a:test\\/some-vendor:name:3.2:*:*:*:*:*:*:*",
-			parsedCPE: CPE{
+			parsedCPE: Attributes{
 				Part:    "a",
 				Vendor:  "test/some-vendor",
 				Product: "name",
@@ -215,13 +215,13 @@ func Test_RoundTrip(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			// CPE string must be preserved through a round trip
+			// Attributes string must be preserved through a round trip
 			assert.Equal(t, test.cpe, Must(test.cpe).String())
-			// The parsed CPE must be the same after a round trip
+			// The parsed Attributes must be the same after a round trip
 			assert.Equal(t, Must(test.cpe), Must(Must(test.cpe).String()))
-			// The test case parsed CPE must be the same after parsing the input string
+			// The test case parsed Attributes must be the same after parsing the input string
 			assert.Equal(t, test.parsedCPE, Must(test.cpe))
-			// The test case parsed CPE must produce the same string as the input cpe
+			// The test case parsed Attributes must produce the same string as the input cpe
 			assert.Equal(t, test.parsedCPE.String(), test.cpe)
 		})
 	}

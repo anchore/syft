@@ -88,7 +88,7 @@ func newGoStdLib(version string, location file.LocationSet) *pkg.Package {
 		Name:      "stdlib",
 		Version:   version,
 		PURL:      packageURL("stdlib", strings.TrimPrefix(version, "go")),
-		CPEs:      []cpe.SourcedCPE{stdlibCpe.WithGeneratedSource()},
+		CPEs:      []cpe.CPE{stdlibCpe.WithGeneratedSource()},
 		Locations: location,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("BSD-3-Clause")),
 		Language:  pkg.Go,
@@ -102,7 +102,7 @@ func newGoStdLib(version string, location file.LocationSet) *pkg.Package {
 	return goCompilerPkg
 }
 
-func generateStdlibCpe(version string) (stdlibCpe cpe.CPE, err error) {
+func generateStdlibCpe(version string) (stdlibCpe cpe.Attributes, err error) {
 	// GoCompiledVersion when pulled from a binary is prefixed by go
 	version = strings.TrimPrefix(version, "go")
 

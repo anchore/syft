@@ -42,7 +42,7 @@ type Classifier struct {
 	PURL packageurl.PackageURL `json:"purl"`
 
 	// CPEs are the specific CPEs we want to include for this binary with updated version information
-	CPEs []cpe.CPE `json:"cpes"`
+	CPEs []cpe.Attributes `json:"cpes"`
 }
 
 func (cfg Classifier) MarshalJSON() ([]byte, error) {
@@ -225,9 +225,9 @@ func getContents(resolver file.Resolver, location file.Location) ([]byte, error)
 	return contents, nil
 }
 
-// singleCPE returns a []pkg.CPE based on the cpe string or panics if the CPE is invalid
-func singleCPE(cpeString string) []cpe.CPE {
-	return []cpe.CPE{
+// singleCPE returns a []cpe.Attributes based on the cpe string or panics if the Attributes is invalid
+func singleCPE(cpeString string) []cpe.Attributes {
+	return []cpe.Attributes{
 		cpe.Must(cpeString),
 	}
 }

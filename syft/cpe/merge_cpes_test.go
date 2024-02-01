@@ -9,12 +9,12 @@ import (
 func Test_Merge(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    [][]CPE
-		expected []CPE
+		input    [][]Attributes
+		expected []Attributes
 	}{
 		{
 			name: "merge, removing duplicates and ordered",
-			input: [][]CPE{
+			input: [][]Attributes{
 				{
 					Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*"),
 					Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
@@ -24,7 +24,7 @@ func Test_Merge(t *testing.T) {
 					Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
 				},
 			},
-			expected: []CPE{
+			expected: []Attributes{
 				Must("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
 				Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
 				Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*"),

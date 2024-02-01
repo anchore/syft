@@ -151,7 +151,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			Files:   []pkg.PythonFileRecord{},
 		},
 		PURL: "a-purl-1",
-		CPEs: []cpe.SourcedCPE{
+		CPEs: []cpe.CPE{
 			cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*").WithNVDDictionarySource(),
 		},
 	}
@@ -172,7 +172,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			Files:   []pkg.DpkgFileRecord{},
 		},
 		PURL: "a-purl-2",
-		CPEs: []cpe.SourcedCPE{
+		CPEs: []cpe.CPE{
 			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*").WithGeneratedSource(),
 		},
 	}

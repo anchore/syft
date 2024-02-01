@@ -78,9 +78,9 @@ func TestParseNativeImageSbom(t *testing.T) {
 							GroupID: "io.netty",
 						},
 					},
-					CPEs: []cpe.SourcedCPE{
+					CPEs: []cpe.CPE{
 						{
-							CPE: cpe.CPE{
+							Attributes: cpe.Attributes{
 								Part:    "a",
 								Vendor:  "codec",
 								Product: "codec",
@@ -89,7 +89,7 @@ func TestParseNativeImageSbom(t *testing.T) {
 							Source: "declared",
 						},
 						{
-							CPE: cpe.CPE{
+							Attributes: cpe.Attributes{
 								Part:    "a",
 								Vendor:  "codec",
 								Product: "netty-codec-http2",
@@ -98,7 +98,7 @@ func TestParseNativeImageSbom(t *testing.T) {
 							Source: "declared",
 						},
 						{
-							CPE: cpe.CPE{
+							Attributes: cpe.Attributes{
 								Part:    "a",
 								Vendor:  "codec",
 								Product: "netty_codec_http2",

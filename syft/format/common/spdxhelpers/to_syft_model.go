@@ -627,7 +627,7 @@ func findPURLValue(p *spdx.Package) string {
 	return ""
 }
 
-func extractCPEs(p *spdx.Package) (cpes []cpe.SourcedCPE) {
+func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 	for _, r := range p.PackageExternalReferences {
 		if r.RefType == string(helpers.Cpe23ExternalRefType) {
 			c, err := cpe.New(r.Locator)

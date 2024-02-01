@@ -25,18 +25,18 @@ func Test_ClassifierCPEs(t *testing.T) {
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
 				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				CPEs:            []cpe.CPE{},
+				CPEs:            []cpe.Attributes{},
 			},
 			cpes: nil,
 		},
 		{
-			name:    "one CPE",
+			name:    "one Attributes",
 			fixture: "test-fixtures/version.txt",
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
 				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				CPEs: []cpe.CPE{
+				CPEs: []cpe.Attributes{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
 				},
 			},
@@ -51,7 +51,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
 				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				CPEs: []cpe.CPE{
+				CPEs: []cpe.Attributes{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
 					cpe.Must("cpe:2.3:a:some:apps:*:*:*:*:*:*:*:*"),
 				},
@@ -79,7 +79,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 
 			var cpes []string
 			for _, c := range p.CPEs {
-				cpes = append(cpes, c.CPE.String())
+				cpes = append(cpes, c.Attributes.String())
 			}
 			require.Equal(t, test.cpes, cpes)
 		})
@@ -109,7 +109,7 @@ func TestClassifier_MarshalJSON(t *testing.T) {
 					Qualifiers: nil,
 					Subpath:    "subpath",
 				},
-				CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*")},
+				CPEs: []cpe.Attributes{cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*")},
 			},
 			want: `{"class":"class","fileGlob":"glob","package":"pkg","purl":"pkg:type/namespace/name@version#subpath","cpes":["cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"]}`,
 		},

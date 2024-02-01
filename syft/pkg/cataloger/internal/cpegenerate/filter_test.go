@@ -12,7 +12,7 @@ import (
 func Test_disallowJenkinsServerCPEForPluginPackage(t *testing.T) {
 	tests := []struct {
 		name     string
-		cpe      cpe.CPE
+		cpe      cpe.Attributes
 		pkg      pkg.Package
 		expected bool
 	}{
@@ -51,7 +51,7 @@ func Test_disallowJenkinsServerCPEForPluginPackage(t *testing.T) {
 func Test_disallowJenkinsCPEsNotAssociatedWithJenkins(t *testing.T) {
 	tests := []struct {
 		name     string
-		cpe      cpe.CPE
+		cpe      cpe.Attributes
 		pkg      pkg.Package
 		expected bool
 	}{
@@ -111,7 +111,7 @@ func Test_disallowJenkinsCPEsNotAssociatedWithJenkins(t *testing.T) {
 func Test_disallowJiraClientServerMismatch(t *testing.T) {
 	tests := []struct {
 		name     string
-		cpe      cpe.CPE
+		cpe      cpe.Attributes
 		pkg      pkg.Package
 		expected bool
 	}{

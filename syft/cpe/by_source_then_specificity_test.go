@@ -13,19 +13,19 @@ func TestBySourceThenSpecificity(t *testing.T) {
 	}
 	tests := []struct {
 		name  string
-		input []SourcedCPE
-		want  []SourcedCPE
+		input []CPE
+		want  []CPE
 	}{
 		{
 			name: "empty case",
 		},
 		{
 			name: "nvd before generated",
-			input: []SourcedCPE{
+			input: []CPE{
 				mustSourcedCPE(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
 				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
 			},
-			want: []SourcedCPE{
+			want: []CPE{
 				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
 				mustSourcedCPE(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
 			},
@@ -39,6 +39,6 @@ func TestBySourceThenSpecificity(t *testing.T) {
 	}
 }
 
-func mustSourcedCPE(source Source, str string) SourcedCPE {
+func mustSourcedCPE(source Source, str string) CPE {
 	return Must(str).WithSource(source)
 }

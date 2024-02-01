@@ -5,8 +5,8 @@ import (
 	"sort"
 )
 
-func Merge(a, b []CPE) (result []CPE) {
-	aCPEs := make(map[string]CPE)
+func Merge(a, b []Attributes) (result []Attributes) {
+	aCPEs := make(map[string]Attributes)
 
 	// keep all CPEs from a and create a quick string-based lookup
 	for _, aCPE := range a {
@@ -27,11 +27,11 @@ func Merge(a, b []CPE) (result []CPE) {
 
 // MergeSourcedCPEs returns unique SourcedCPEs that are found in A or B
 // Two SourcedCPEs are identical if their source and normalized string are identical
-func MergeSourcedCPEs(a, b []SourcedCPE) []SourcedCPE {
-	var result []SourcedCPE
-	dedupe := make(map[string]SourcedCPE)
-	key := func(scpe SourcedCPE) string {
-		return fmt.Sprintf("%s:%s", scpe.Source.String(), scpe.CPE.String())
+func MergeSourcedCPEs(a, b []CPE) []CPE {
+	var result []CPE
+	dedupe := make(map[string]CPE)
+	key := func(scpe CPE) string {
+		return fmt.Sprintf("%s:%s", scpe.Source.String(), scpe.Attributes.String())
 	}
 	for _, s := range a {
 		dedupe[key(s)] = s

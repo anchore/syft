@@ -19,7 +19,7 @@ func Test_ExternalRefs(t *testing.T) {
 		{
 			name: "cpe + purl",
 			input: pkg.Package{
-				CPEs: []cpe.SourcedCPE{
+				CPEs: []cpe.CPE{
 					testCPE,
 				},
 				PURL: "a-purl",
@@ -27,7 +27,7 @@ func Test_ExternalRefs(t *testing.T) {
 			expected: []ExternalRef{
 				{
 					ReferenceCategory: SecurityReferenceCategory,
-					ReferenceLocator:  testCPE.CPE.String(),
+					ReferenceLocator:  testCPE.Attributes.String(),
 					ReferenceType:     Cpe23ExternalRefType,
 				},
 				{

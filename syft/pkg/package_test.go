@@ -33,7 +33,7 @@ func TestIDUniqueness(t *testing.T) {
 		),
 		Language: "math",
 		Type:     PythonPkg,
-		CPEs: []cpe.SourcedCPE{
+		CPEs: []cpe.CPE{
 			cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`).WithNVDDictionarySource(),
 		},
 		PURL: "pkg:pypi/pi@3.14",
@@ -159,7 +159,7 @@ func TestIDUniqueness(t *testing.T) {
 		{
 			name: "CPEs is ignored",
 			transform: func(pkg Package) Package {
-				pkg.CPEs = []cpe.SourcedCPE{}
+				pkg.CPEs = []cpe.CPE{}
 				return pkg
 			},
 			expectedIDComparison: assert.Equal,
@@ -255,7 +255,7 @@ func TestPackage_Merge(t *testing.T) {
 				),
 				Language: "math",
 				Type:     PythonPkg,
-				CPEs: []cpe.SourcedCPE{
+				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`).WithNVDDictionarySource(),
 				},
 				PURL: "pkg:pypi/pi@3.14",
@@ -277,7 +277,7 @@ func TestPackage_Merge(t *testing.T) {
 				),
 				Language: "math",
 				Type:     PythonPkg,
-				CPEs: []cpe.SourcedCPE{
+				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`).WithNVDDictionarySource(), // NOTE: difference
 				},
 				PURL: "pkg:pypi/pi@3.14",
@@ -300,7 +300,7 @@ func TestPackage_Merge(t *testing.T) {
 				),
 				Language: "math",
 				Type:     PythonPkg,
-				CPEs: []cpe.SourcedCPE{
+				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`).WithNVDDictionarySource(),
 					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`).WithNVDDictionarySource(), // NOTE: merge!
 				},
@@ -326,7 +326,7 @@ func TestPackage_Merge(t *testing.T) {
 				),
 				Language: "math",
 				Type:     PythonPkg,
-				CPEs: []cpe.SourcedCPE{
+				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`).WithNVDDictionarySource(),
 				},
 				PURL: "pkg:pypi/pi@3.14",
@@ -348,7 +348,7 @@ func TestPackage_Merge(t *testing.T) {
 				),
 				Language: "math",
 				Type:     PythonPkg,
-				CPEs: []cpe.SourcedCPE{
+				CPEs: []cpe.CPE{
 					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`).WithNVDDictionarySource(),
 				},
 				PURL: "pkg:pypi/pi@3.14",

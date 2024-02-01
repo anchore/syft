@@ -122,7 +122,7 @@ func newDirectoryCatalog() *pkg.Collection {
 			},
 		},
 		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
-		CPEs: []cpe.SourcedCPE{
+		CPEs: []cpe.CPE{
 			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*").WithoutSource(),
 		},
 	})
@@ -139,7 +139,7 @@ func newDirectoryCatalog() *pkg.Collection {
 			Version: "2.0.1",
 		},
 		PURL: "pkg:deb/debian/package-2@2.0.1",
-		CPEs: []cpe.SourcedCPE{
+		CPEs: []cpe.CPE{
 			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*").WithoutSource(),
 		},
 	})
@@ -174,7 +174,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 			},
 		},
 		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
-		CPEs: []cpe.SourcedCPE{
+		CPEs: []cpe.CPE{
 			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*").WithGeneratedSource(),
 		},
 	})
@@ -191,7 +191,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 			Version: "2.0.1",
 		},
 		PURL: "pkg:deb/debian/package-2@2.0.1",
-		CPEs: []cpe.SourcedCPE{
+		CPEs: []cpe.CPE{
 			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*").WithSource("another-test-source"),
 		},
 	})

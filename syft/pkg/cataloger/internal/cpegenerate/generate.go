@@ -22,7 +22,7 @@ import (
 // the CPE database, so they will be preferred over other candidates:
 var knownVendors = strset.New("apache")
 
-func newCPE(product, vendor, version, targetSW string) *cpe.CPE {
+func newCPE(product, vendor, version, targetSW string) *cpe.Attributes {
 	c := cpe.NewWithAny()
 	c.Part = "a"
 	c.Product = product
@@ -51,18 +51,18 @@ func GetIndexedDictionary() (_ *dictionary.Indexed, err error) {
 	}
 
 	if indexedCPEDictionary == nil {
-		err = fmt.Errorf("failed to unmarshal indexed CPE dictionary")
+		err = fmt.Errorf("failed to unmarshal indexed Attributes dictionary")
 		return
 	}
 
 	return indexedCPEDictionary, err
 }
 
-func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
+func FromDictionaryFind(p pkg.Package) (cpe.Attributes, bool) {
 	dict, err := GetIndexedDictionary()
 	if err != nil {
-		log.Debugf("dictionary CPE lookup not available: %+v", err)
-		return cpe.CPE{}, false
+		log.Debugf("dictionary Attributes lookup not available: %+v", err)
+		return cpe.Attributes{}, false
 	}
 
 	var (
@@ -88,17 +88,17 @@ func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 
 	default:
 		// The dictionary doesn't support this package type yet.
-		return cpe.CPE{}, false
+		return cpe.Attributes{}, false
 	}
 
 	if !ok {
-		// The dictionary doesn't have a CPE for this package.
-		return cpe.CPE{}, false
+		// The dictionary doesn't have a Attributes for this package.
+		return cpe.Attributes{}, false
 	}
 
 	parsedCPE, err := cpe.New(cpeString)
 	if err != nil {
-		return cpe.CPE{}, false
+		return cpe.Attributes{}, false
 	}
 
 	parsedCPE.Version = p.Version
@@ -109,7 +109,7 @@ func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 // FromPackageAttributes Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
 // generate the minimal set of representative CPEs, which implies that optional fields should not be included
 // (such as target SW).
-func FromPackageAttributes(p pkg.Package) []cpe.SourcedCPE {
+func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
 	if len(products) == 0 {
@@ -117,7 +117,7 @@ func FromPackageAttributes(p pkg.Package) []cpe.SourcedCPE {
 	}
 
 	keys := strset.New()
-	cpes := make([]cpe.CPE, 0)
+	cpes := make([]cpe.Attributes, 0)
 	for _, product := range products {
 		for _, vendor := range vendors {
 			// prevent duplicate entries...
@@ -137,7 +137,7 @@ func FromPackageAttributes(p pkg.Package) []cpe.SourcedCPE {
 	cpes = filter(cpes, p, cpeFilters...)
 
 	sort.Sort(cpe.BySpecificity(cpes))
-	var result []cpe.SourcedCPE
+	var result []cpe.CPE
 	for _, cpe := range cpes {
 		result = append(result, cpe.WithGeneratedSource())
 	}

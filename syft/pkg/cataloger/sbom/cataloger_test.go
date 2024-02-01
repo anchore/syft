@@ -12,17 +12,17 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func mustCPEs(s ...string) (c []cpe.SourcedCPE) {
+func mustCPEs(s ...string) (c []cpe.CPE) {
 	for _, i := range s {
 		c = append(c, mustCPE(i).WithoutSource())
 	}
 	return
 }
 
-func mustCPE(c string) cpe.CPE {
+func mustCPE(c string) cpe.Attributes {
 	return must(cpe.New(c))
 }
-func must(c cpe.CPE, e error) cpe.CPE {
+func must(c cpe.Attributes, e error) cpe.Attributes {
 	if e != nil {
 		panic(e)
 	}
