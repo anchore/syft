@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/15.0.0/document",
+  "$id": "anchore.io/schema/syft/json/16.0.0/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -261,7 +261,12 @@
           "type": "array"
         },
         "options": {
-          "$ref": "#/$defs/KeyValues"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "path": {
           "type": "string"
@@ -705,7 +710,12 @@
     "GoModuleBuildinfoEntry": {
       "properties": {
         "goBuildSettings": {
-          "$ref": "#/$defs/KeyValues"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "goCompiledVersion": {
           "type": "string"
@@ -794,13 +804,25 @@
     "JavaManifest": {
       "properties": {
         "main": {
-          "$ref": "#/$defs/KeyValues"
-        },
-        "sections": {
-          "items": {
-            "$ref": "#/$defs/KeyValues"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
-          "type": "array"
+          "type": "object"
+        },
+        "namedSections": {
+          "patternProperties": {
+            ".*": {
+              "patternProperties": {
+                ".*": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
         }
       },
       "type": "object"
@@ -947,27 +969,6 @@
         "resolved",
         "integrity"
       ]
-    },
-    "KeyValue": {
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "value": {
-          "type": "string"
-        }
-      },
-      "type": "object",
-      "required": [
-        "key",
-        "value"
-      ]
-    },
-    "KeyValues": {
-      "items": {
-        "$ref": "#/$defs/KeyValue"
-      },
-      "type": "array"
     },
     "License": {
       "properties": {
@@ -1247,10 +1248,7 @@
           "type": "string"
         },
         "cpes": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "$ref": "#/$defs/cpes"
         },
         "purl": {
           "type": "string"
@@ -2126,6 +2124,20 @@
         "metadata"
       ]
     },
+    "SourcedCPE": {
+      "properties": {
+        "cpe": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "cpe"
+      ]
+    },
     "SwiftPackageManagerLockEntry": {
       "properties": {
         "revision": {
@@ -2136,6 +2148,12 @@
       "required": [
         "revision"
       ]
+    },
+    "cpes": {
+      "items": {
+        "$ref": "#/$defs/SourcedCPE"
+      },
+      "type": "array"
     },
     "licenses": {
       "items": {
