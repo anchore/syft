@@ -25,11 +25,11 @@ import (
 
 */
 
-const imageRef = "alpine:3.19"
+const defaultImage = "alpine:3.19"
 
 func main() {
 	detection, err := source.Detect(
-		imageRef,
+		imageReference(),
 		source.DetectConfig{
 			DefaultImageSource: "docker",
 		},
@@ -51,4 +51,12 @@ func main() {
 	if err := enc.Encode(src.Describe()); err != nil {
 		panic(err)
 	}
+}
+
+func imageReference() string {
+	// read an image string reference from the command line or use a default
+	if len(os.Args) > 1 {
+		return os.Args[1]
+	}
+	return defaultImage
 }

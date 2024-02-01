@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/format"
@@ -11,11 +12,11 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-const imageRef = "alpine:3.19"
+const defaultImage = "alpine:3.19"
 
 func main() {
 	// automagically get a source.Source for arbitrary string input
-	src := getSource(imageRef)
+	src := getSource(imageReference())
 
 	// catalog the given source and return a SBOM
 	sbom := getSBOM(src)
@@ -25,6 +26,14 @@ func main() {
 
 	// show the SBOM!
 	fmt.Println(string(bytes))
+}
+
+func imageReference() string {
+	// read an image string reference from the command line or use a default
+	if len(os.Args) > 1 {
+		return os.Args[1]
+	}
+	return defaultImage
 }
 
 func getSource(input string) source.Source {

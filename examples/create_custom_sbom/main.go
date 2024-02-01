@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto"
 	"fmt"
+	"os"
 
 	"gopkg.in/yaml.v3"
 
@@ -16,11 +17,11 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-const imageRef = "alpine:3.19"
+const defaultImage = "alpine:3.19"
 
 func main() {
 	// automagically get a source.Source for arbitrary string input
-	src := getSource(imageRef)
+	src := getSource(imageReference())
 
 	// will catalog the given source and return a SBOM keeping in mind several configurable options
 	sbom := getSBOM(src)
@@ -32,7 +33,17 @@ func main() {
 	showAlpineConfiguration(sbom)
 }
 
+func imageReference() string {
+	// read an image string reference from the command line or use a default
+	if len(os.Args) > 1 {
+		return os.Args[1]
+	}
+	return defaultImage
+}
+
 func getSource(input string) source.Source {
+	fmt.Println("detecting source type for input:", input, "...")
+
 	detection, err := source.Detect(input,
 		source.DetectConfig{
 			DefaultImageSource: "docker",
@@ -53,6 +64,8 @@ func getSource(input string) source.Source {
 }
 
 func getSBOM(src source.Source) sbom.SBOM {
+	fmt.Println("creating SBOM...")
+
 	cfg := syft.DefaultCreateSBOMConfig().
 		// run the catalogers in parallel (5 at a time concurrently max)
 		WithParallelism(5).
@@ -115,7 +128,7 @@ func showAlpineConfiguration(s sbom.SBOM) {
 
 	p := pkgs[0]
 
-	fmt.Printf("alpine-configuration: %s\n", p.Version)
+	fmt.Printf("All 'alpine-configuration' packages: %s\n", p.Version)
 	meta, err := yaml.Marshal(p.Metadata)
 	if err != nil {
 		panic(err)

@@ -13,10 +13,9 @@ import (
  expecting to catalog a container image and always from the same source (e.g. docker daemon, podman, registry, etc).
 */
 
-const imageRef = "alpine:3.19"
+const defaultImage = "alpine:3.19"
 
 func main() {
-
 	platform, err := image.NewPlatform("linux/amd64")
 	if err != nil {
 		panic(err)
@@ -24,7 +23,7 @@ func main() {
 
 	src, err := source.NewFromStereoscopeImage(
 		source.StereoscopeImageConfig{
-			Reference: imageRef,
+			Reference: imageReference(),
 			From:      image.OciRegistrySource, // always use the registry, there are several other "Source" options here
 			Platform:  platform,
 		},
@@ -40,5 +39,12 @@ func main() {
 	if err := enc.Encode(src.Describe()); err != nil {
 		panic(err)
 	}
+}
 
+func imageReference() string {
+	// read an image string reference from the command line or use a default
+	if len(os.Args) > 1 {
+		return os.Args[1]
+	}
+	return defaultImage
 }
