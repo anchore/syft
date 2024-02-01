@@ -16,9 +16,11 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+const imageRef = "alpine:3.19"
+
 func main() {
 	// automagically get a source.Source for arbitrary string input
-	src := getSource("alpine:3.19")
+	src := getSource(imageRef)
 
 	// will catalog the given source and return a SBOM keeping in mind several configurable options
 	sbom := getSBOM(src)
@@ -31,19 +33,17 @@ func main() {
 }
 
 func getSource(input string) source.Source {
-	// refactor: source.Detect should take pointer? (to allow for nil default)
-	// refactor: keith has suggestions for refactoring the source.Detection flow
-	detection, err := source.Detect(input, source.DetectConfig{
-		// refactor: this is a magic string
-		DefaultImageSource: "docker",
-	})
+	detection, err := source.Detect(input,
+		source.DetectConfig{
+			DefaultImageSource: "docker",
+		},
+	)
 
 	if err != nil {
 		panic(err)
 	}
 
-	// refactor: take pointer and allow for nil?
-	src, err := detection.NewSource(source.DetectionSourceConfig{})
+	src, err := detection.NewSource(source.DefaultDetectionSourceConfig())
 
 	if err != nil {
 		panic(err)
@@ -60,15 +60,12 @@ func getSBOM(src source.Source) sbom.SBOM {
 		WithTool("my-tool", "v1.0").
 		// catalog all files with 3 digests
 		WithFilesConfig(
-			// refactor: need to add WithContent() and related
 			filecataloging.DefaultConfig().
 				WithSelection(file.AllFilesSelection).
 				WithHashers(
-					[]crypto.Hash{
-						crypto.MD5,
-						crypto.SHA1,
-						crypto.SHA256,
-					},
+					crypto.MD5,
+					crypto.SHA1,
+					crypto.SHA256,
 				),
 		).
 		// only use OS related catalogers that would have been used with the kind of

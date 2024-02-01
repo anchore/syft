@@ -139,7 +139,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 		{
 			name: "no file digest cataloger",
 			src:  imgSrc,
-			cfg:  DefaultCreateSBOMConfig().WithFilesConfig(filecataloging.DefaultConfig().WithHashers(nil)),
+			cfg:  DefaultCreateSBOMConfig().WithFilesConfig(filecataloging.DefaultConfig().WithHashers()),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "image"),

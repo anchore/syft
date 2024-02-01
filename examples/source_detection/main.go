@@ -25,20 +25,21 @@ import (
 
 */
 
+const imageRef = "alpine:3.19"
+
 func main() {
-	// refactor: source.Detect should take pointer? (to allow for nil default)
-	// refactor: keith has suggestions for refactoring the source.Detection flow
-	detection, err := source.Detect("alpine:3.19", source.DetectConfig{
-		// refactor: this is a magic string
-		DefaultImageSource: "docker",
-	})
+	detection, err := source.Detect(
+		imageRef,
+		source.DetectConfig{
+			DefaultImageSource: "docker",
+		},
+	)
 
 	if err != nil {
 		panic(err)
 	}
 
-	// refactor: take pointer and allow for nil?
-	src, err := detection.NewSource(source.DetectionSourceConfig{})
+	src, err := detection.NewSource(source.DefaultDetectionSourceConfig())
 
 	if err != nil {
 		panic(err)

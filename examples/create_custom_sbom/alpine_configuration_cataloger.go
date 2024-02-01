@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -28,7 +29,7 @@ func (m alpineConfigurationCataloger) Name() string {
 	return "apk-configuration-cataloger"
 }
 
-func (m alpineConfigurationCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (m alpineConfigurationCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	version, versionLocations, err := getVersion(resolver)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get alpine version: %w", err)

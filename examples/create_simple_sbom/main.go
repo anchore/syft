@@ -11,37 +11,34 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-/*
-This example demonstrates the most straight forward way to create an SBOM.
-  - getSource() will automagically get a source.Source for arbitrary string input
-  - getSBOM() will catalog the given source and return a SBOM
-  - formatSBOM() will take the SBOM object and encode it into the syft-json representation
-*/
+const imageRef = "alpine:3.19"
 
 func main() {
-	src := getSource("alpine:3.19")
+	// automagically get a source.Source for arbitrary string input
+	src := getSource(imageRef)
 
+	// catalog the given source and return a SBOM
 	sbom := getSBOM(src)
 
+	// take the SBOM object and encode it into the syft-json representation
 	bytes := formatSBOM(sbom)
 
+	// show the SBOM!
 	fmt.Println(string(bytes))
 }
 
 func getSource(input string) source.Source {
-	// refactor: source.Detect should take pointer? (to allow for nil default)
-	// refactor: keith has suggestions for refactoring the source.Detection flow
-	detection, err := source.Detect(input, source.DetectConfig{
-		// refactor: this is a magic string
-		DefaultImageSource: "docker",
-	})
+	detection, err := source.Detect(input,
+		source.DetectConfig{
+			DefaultImageSource: "docker",
+		},
+	)
 
 	if err != nil {
 		panic(err)
 	}
 
-	// refactor: take pointer and allow for nil?
-	src, err := detection.NewSource(source.DetectionSourceConfig{})
+	src, err := detection.NewSource(source.DefaultDetectionSourceConfig())
 
 	if err != nil {
 		panic(err)
