@@ -19,7 +19,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockEntry{
+			Metadata: pkg.ConanV1LockEntry{
 				Ref: "mfast/1.2.2@my_user/my_channel#c6f6387c9b99780f0ee05e25f99d0f39",
 				Options: pkg.KeyValues{
 					{Key: "fPIC", Value: "True"},
@@ -110,7 +110,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockEntry{
+			Metadata: pkg.ConanV1LockEntry{
 				Ref: "boost/1.75.0#a9c318f067216f900900e044e7af4ab1",
 				Options: pkg.KeyValues{
 					{Key: "addr2line_location", Value: "/usr/bin/addr2line"},
@@ -196,7 +196,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockEntry{
+			Metadata: pkg.ConanV1LockEntry{
 				Ref: "zlib/1.2.12#c67ce17f2e96b972d42393ce50a76a1a",
 				Options: pkg.KeyValues{
 					{
@@ -220,7 +220,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockEntry{
+			Metadata: pkg.ConanV1LockEntry{
 				Ref: "bzip2/1.0.8#62a8031289639043797cf53fa876d0ef",
 				Options: []pkg.KeyValue{
 					{
@@ -248,7 +248,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockEntry{
+			Metadata: pkg.ConanV1LockEntry{
 				Ref: "libbacktrace/cci.20210118#76e40b760e0bcd602d46db56b22820ab",
 				Options: []pkg.KeyValue{
 					{
@@ -272,7 +272,7 @@ func TestParseConanlock(t *testing.T) {
 			Locations: file.NewLocationSet(file.NewLocation(fixture)),
 			Language:  pkg.CPP,
 			Type:      pkg.ConanPkg,
-			Metadata: pkg.ConanLockEntry{
+			Metadata: pkg.ConanV1LockEntry{
 				Ref: "tinyxml2/9.0.0#9f13a36ebfc222cd55fe531a0a8d94d1",
 				Options: []pkg.KeyValue{
 					{

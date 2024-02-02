@@ -26,8 +26,13 @@ type conanLock struct {
 			Path           string   `json:"path"`
 		} `json:"nodes"`
 	} `json:"graph_lock"`
-	Version     string `json:"version"`
-	ProfileHost string `json:"profile_host"`
+	Version      string `json:"version"`
+	ProfileHost  string `json:"profile_host"`
+	ProfileBuild string `json:"profile_build,omitempty"`
+	// conan v0.5+ lockfiles use "requires", "build_requires" and "python_requires"
+	Requires       []string `json:"requires,omitempty"`
+	BuildRequires  []string `json:"build_requires,omitempty"`
+	PythonRequires []string `json:"python_requires,omitempty"`
 }
 
 // parseConanlock is a parser function for conan.lock contents, returning all packages discovered.
@@ -42,13 +47,33 @@ func parseConanlock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	// in a second iteration
 	var indexToPkgMap = map[string]pkg.Package{}
 
+	// Support for conan lock 2.x requires field
+	for _, ref := range cl.Requires {
+		reference := parseConanV2Reference(ref)
+		if reference.Name == "" {
+			continue
+		}
+
+		p := newConanRefrencePackage(
+			reference,
+			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
+
+		if p != nil {
+			pk := *p
+			pkgs = append(pkgs, pk)
+			indexToPkgMap[reference.Name] = pk
+		}
+
+	}
+
 	// we do not want to store the index list requires in the conan metadata, because it is not useful to have it in
 	// the SBOM. Instead, we will store it in a map and then use it to build the relationships
 	// maps pkg.ID to a list of indices
 	var parsedPkgRequires = map[artifact.ID][]string{}
 
 	for idx, node := range cl.GraphLock.Nodes {
-		metadata := pkg.ConanLockEntry{
+		metadata := pkg.ConanV1LockEntry{
 			Ref:       node.Ref,
 			Options:   parseOptions(node.Options),
 			Path:      node.Path,
@@ -105,4 +130,55 @@ func parseOptions(options string) []pkg.KeyValue {
 	}
 
 	return o
+}
+
+func parseConanV2Reference(ref string) pkg.ConanV2LockEntry {
+	// very flexible format name/version[@username[/channel]][#rrev][:pkgid[#prev]][%timestamp]
+	reference := pkg.ConanV2LockEntry{Ref: ref}
+
+	parts := strings.SplitN(ref, "%", 2)
+	if len(parts) == 2 {
+		ref = parts[0]
+		reference.TimeStamp = parts[1]
+	}
+
+	parts = strings.SplitN(ref, ":", 2)
+	if len(parts) == 2 {
+		ref = parts[0]
+		parts = strings.SplitN(parts[1], "#", 2)
+		reference.PackageID = parts[0]
+		if len(parts) == 2 {
+			reference.PackageRevision = parts[1]
+		}
+	}
+
+	parts = strings.SplitN(ref, "#", 2)
+	if len(parts) == 2 {
+		ref = parts[0]
+		reference.RecipeRevision = parts[1]
+	}
+
+	parts = strings.SplitN(ref, "@", 2)
+	if len(parts) == 2 {
+		ref = parts[0]
+		UsernameChannel := parts[1]
+
+		parts = strings.SplitN(UsernameChannel, "/", 2)
+		reference.Username = parts[0]
+		if len(parts) == 2 {
+			reference.Channel = parts[1]
+		}
+	}
+
+	parts = strings.SplitN(ref, "/", 2)
+	if len(parts) == 2 {
+		reference.Name = parts[0]
+		reference.Version = parts[1]
+	} else {
+		// consumer conanfile.txt or conanfile.py might not have a name
+		reference.Name = ""
+		reference.Version = ref
+	}
+
+	return reference
 }
