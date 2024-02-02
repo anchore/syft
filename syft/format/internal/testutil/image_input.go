@@ -119,7 +119,7 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 			},
 			PURL: "a-purl-1", // intentionally a bad pURL for test fixtures
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
+				cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*", cpe.GeneratedSource),
 			},
 		})
 	}
@@ -139,7 +139,7 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 			},
 			PURL: "pkg:deb/debian/package-2@2.0.1",
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+				cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 			},
 		})
 	}

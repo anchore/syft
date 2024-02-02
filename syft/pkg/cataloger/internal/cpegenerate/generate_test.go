@@ -723,11 +723,14 @@ func TestGeneratePackageCPEs(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := FromPackageAttributes(test.p)
+			expectedCpeSet := set.NewStringSet()
+			for _, cpeStr := range test.expected {
+				expectedCpeSet.Add("syft-generated:" + cpeStr)
+			}
 
-			expectedCpeSet := set.NewStringSet(test.expected...)
 			actualCpeSet := set.NewStringSet()
 			for _, a := range actual {
-				actualCpeSet.Add(a.String())
+				actualCpeSet.Add(fmt.Sprintf("%s:%s", a.Source.String(), a.Attributes.String()))
 			}
 
 			extra := strset.Difference(actualCpeSet, expectedCpeSet).List()
@@ -1007,7 +1010,7 @@ func TestDictionaryFindIsWired(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, gotExists := FromDictionaryFind(tt.pkg)
 
-			assert.Equal(t, tt.want, got.BindToFmtString())
+			assert.Equal(t, tt.want, got.Attributes.BindToFmtString())
 			assert.Equal(t, tt.wantExists, gotExists)
 		})
 	}

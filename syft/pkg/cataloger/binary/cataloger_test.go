@@ -1282,7 +1282,7 @@ func TestCatalogerConfig_MarshalJSON(t *testing.T) {
 							Qualifiers: nil,
 							Subpath:    "subpath",
 						},
-						CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*")},
+						CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource)},
 					},
 				},
 			},

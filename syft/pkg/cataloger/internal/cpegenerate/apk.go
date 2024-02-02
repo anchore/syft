@@ -23,7 +23,7 @@ type upstreamCandidate struct {
 }
 
 func upstreamCandidates(m pkg.ApkDBEntry) (candidates []upstreamCandidate) {
-	// Do not consider OriginPackage variations when generating CPE candidates for the child package
+	// Do not consider OriginPackage variations when generating CPE Attributes candidates for the child package
 	// because doing so will result in false positives when matching to vulnerabilities in Grype since
 	// it won't know to lookup apk fix entries using the OriginPackage name.
 

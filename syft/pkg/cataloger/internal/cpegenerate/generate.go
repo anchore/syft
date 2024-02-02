@@ -22,7 +22,7 @@ import (
 // the CPE database, so they will be preferred over other candidates:
 var knownVendors = strset.New("apache")
 
-func newCPE(product, vendor, version, targetSW string) *cpe.CPE {
+func newCPE(product, vendor, version, targetSW string) *cpe.Attributes {
 	c := cpe.NewWithAny()
 	c.Part = "a"
 	c.Product = product
@@ -61,7 +61,7 @@ func GetIndexedDictionary() (_ *dictionary.Indexed, err error) {
 func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 	dict, err := GetIndexedDictionary()
 	if err != nil {
-		log.Debugf("dictionary CPE lookup not available: %+v", err)
+		log.Debugf("CPE dictionary lookup not available: %+v", err)
 		return cpe.CPE{}, false
 	}
 
@@ -96,12 +96,12 @@ func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 		return cpe.CPE{}, false
 	}
 
-	parsedCPE, err := cpe.New(cpeString)
+	parsedCPE, err := cpe.New(cpeString, cpe.NVDDictionaryLookupSource)
 	if err != nil {
 		return cpe.CPE{}, false
 	}
 
-	parsedCPE.Version = p.Version
+	parsedCPE.Attributes.Version = p.Version
 
 	return parsedCPE, true
 }
@@ -117,7 +117,7 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 	}
 
 	keys := strset.New()
-	cpes := make([]cpe.CPE, 0)
+	cpes := make([]cpe.Attributes, 0)
 	for _, product := range products {
 		for _, vendor := range vendors {
 			// prevent duplicate entries...
@@ -137,8 +137,12 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 	cpes = filter(cpes, p, cpeFilters...)
 
 	sort.Sort(cpe.BySpecificity(cpes))
+	var result []cpe.CPE
+	for _, c := range cpes {
+		result = append(result, cpe.CPE{Attributes: c, Source: cpe.GeneratedSource})
+	}
 
-	return cpes
+	return result
 }
 
 func candidateVendors(p pkg.Package) []string {

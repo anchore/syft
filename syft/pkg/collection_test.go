@@ -368,7 +368,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 			name: "multiple Locations with shared path",
 			pkgs: []Package{
 				{
-					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:1:1:*:*:*:*:*:*:*")},
+					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:1:1:*:*:*:*:*:*:*", cpe.GeneratedSource)},
 					Locations: file.NewLocationSet(
 						file.NewVirtualLocationFromCoordinates(
 							file.Coordinates{
@@ -381,7 +381,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					Type: RpmPkg,
 				},
 				{
-					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:b:package:1:1:*:*:*:*:*:*:*")},
+					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:b:package:1:1:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource)},
 					Locations: file.NewLocationSet(
 						file.NewVirtualLocationFromCoordinates(
 							file.Coordinates{

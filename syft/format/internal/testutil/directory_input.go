@@ -123,7 +123,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		},
 		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", cpe.Source("")),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -140,7 +140,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		},
 		PURL: "pkg:deb/debian/package-2@2.0.1",
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", cpe.Source("")),
 		},
 	})
 
@@ -175,7 +175,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		},
 		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", cpe.GeneratedSource),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -192,7 +192,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		},
 		PURL: "pkg:deb/debian/package-2@2.0.1",
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", "another-test-source"),
 		},
 	})
 

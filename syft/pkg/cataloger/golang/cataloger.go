@@ -127,5 +127,5 @@ func generateStdlibCpe(version string) (stdlibCpe cpe.CPE, err error) {
 		cpeString = fmt.Sprintf("cpe:2.3:a:golang:go:%s:%s:*:*:*:*:*:*", vr, candidate)
 	}
 
-	return cpe.New(cpeString)
+	return cpe.New(cpeString, cpe.GeneratedSource)
 }
