@@ -35,7 +35,7 @@ cpeLoop:
 
 func disallowNonParseableCPEs(c cpe.Attributes, _ pkg.Package) bool {
 	v := c.String()
-	_, err := cpe.New(v)
+	_, err := cpe.NewAttributes(v)
 
 	cannotParse := err != nil
 

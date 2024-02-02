@@ -37,7 +37,7 @@ func Test_New(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := New(test.input)
+			actual, err := NewAttributes(test.input)
 			if err != nil {
 				t.Fatalf("got an error while creating Attributes: %+v", err)
 			}
@@ -92,9 +92,9 @@ func Test_CPEParser(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.CPEString, func(t *testing.T) {
-			c1, err := New(test.CPEString)
+			c1, err := NewAttributes(test.CPEString)
 			assert.NoError(t, err)
-			c2, err := New(test.CPEUrl)
+			c2, err := NewAttributes(test.CPEUrl)
 			assert.NoError(t, err)
 			assert.Equal(t, c1, c2)
 			assert.Equal(t, c1, test.WFN)
@@ -161,7 +161,7 @@ func Test_InvalidCPE(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c, err := New(test.in)
+			c, err := NewAttributes(test.in)
 			if test.expectedErr {
 				assert.Error(t, err)
 				if t.Failed() {

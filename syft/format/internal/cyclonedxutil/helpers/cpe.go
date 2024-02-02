@@ -33,7 +33,7 @@ func encodeCPEs(p pkg.Package) (out []cyclonedx.Property) {
 
 func decodeCPEs(c *cyclonedx.Component) (out []cpe.CPE) {
 	if c.CPE != "" {
-		cp, err := cpe.New(c.CPE)
+		cp, err := cpe.NewAttributes(c.CPE)
 		if err != nil {
 			log.Warnf("invalid CPE: %s", c.CPE)
 		} else {
@@ -44,7 +44,7 @@ func decodeCPEs(c *cyclonedx.Component) (out []cpe.CPE) {
 	if c.Properties != nil {
 		for _, p := range *c.Properties {
 			if p.Name == "syft:cpe23" {
-				cp, err := cpe.New(p.Value)
+				cp, err := cpe.NewAttributes(p.Value)
 				if err != nil {
 					log.Warnf("invalid CPE: %s", p.Value)
 				} else {

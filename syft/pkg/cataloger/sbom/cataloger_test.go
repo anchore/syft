@@ -20,7 +20,7 @@ func mustCPEs(s ...string) (c []cpe.CPE) {
 }
 
 func mustCPE(c string) cpe.Attributes {
-	return must(cpe.New(c))
+	return must(cpe.NewAttributes(c))
 }
 func must(c cpe.Attributes, e error) cpe.Attributes {
 	if e != nil {

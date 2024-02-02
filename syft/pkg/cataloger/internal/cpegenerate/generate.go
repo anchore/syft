@@ -96,7 +96,7 @@ func FromDictionaryFind(p pkg.Package) (cpe.Attributes, bool) {
 		return cpe.Attributes{}, false
 	}
 
-	parsedCPE, err := cpe.New(cpeString)
+	parsedCPE, err := cpe.NewAttributes(cpeString)
 	if err != nil {
 		return cpe.Attributes{}, false
 	}
