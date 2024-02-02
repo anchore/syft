@@ -3,11 +3,13 @@
   <metadata>
     <timestamp>redacted</timestamp>
     <tools>
-      <tool>
-        <vendor>anchore</vendor>
-        <name>syft</name>
-        <version>v0.42.0-bogus</version>
-      </tool>
+      <components>
+        <component type="application">
+          <author>anchore</author>
+          <name>syft</name>
+          <version>v0.42.0-bogus</version>
+        </component>
+      </components>
     </tools>
     <component bom-ref="redacted" type="file">
       <name>some/path</name>

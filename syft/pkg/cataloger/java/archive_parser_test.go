@@ -2,6 +2,7 @@ package java
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/gookit/color"
 	"github.com/scylladb/go-set/strset"
@@ -78,7 +80,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 		name             string
 		fixture          string
 		detectNested     bool
-		config           Config
+		config           ArchiveCatalogerConfig
 		requestPath      string
 		requestHandlers  []handlerPath
 		expectedLicenses []pkg.License
@@ -87,7 +89,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			name:         "searchMavenForLicenses returns the expected licenses when search is set to true",
 			fixture:      "opensaml-core-3.4.6",
 			detectNested: false,
-			config: Config{
+			config: ArchiveCatalogerConfig{
 				UseNetwork:              true,
 				MavenBaseURL:            url,
 				MaxParentRecursiveDepth: 2,
@@ -136,7 +138,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			defer cleanupFn()
 
 			// assert licenses are discovered from upstream
-			_, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo()
+			_, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo(context.Background())
 			assert.Equal(t, tc.expectedLicenses, licenses)
 		})
 	}
@@ -161,7 +163,7 @@ func TestFormatMavenURL(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			requestURL, err := formatMavenPomURL(tc.groupID, tc.artifactID, tc.version, MavenBaseURL)
+			requestURL, err := formatMavenPomURL(tc.groupID, tc.artifactID, tc.version, mavenBaseURL)
 			assert.NoError(t, err, "expected no err; got %w", err)
 			assert.Equal(t, tc.expected, requestURL)
 		})
@@ -196,31 +198,31 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 						Manifest: &pkg.JavaManifest{
-							Main: map[string]string{
-								"Manifest-Version":       "1.0",
-								"Specification-Title":    "Example Jenkins Plugin",
-								"Specification-Version":  "1.0",
-								"Implementation-Title":   "Example Jenkins Plugin",
-								"Implementation-Version": "1.0-SNAPSHOT",
+							Main: pkg.KeyValues{
+								{Key: "Manifest-Version", Value: "1.0"},
+								{Key: "Created-By", Value: "Maven Archiver 3.6.0"},
+								{Key: "Build-Jdk-Spec", Value: "18"},
+								{Key: "Specification-Title", Value: "Example Jenkins Plugin"},
+								{Key: "Specification-Version", Value: "1.0"},
+								{Key: "Implementation-Title", Value: "Example Jenkins Plugin"},
+								{Key: "Implementation-Version", Value: "1.0-SNAPSHOT"},
+								{Key: "Group-Id", Value: "io.jenkins.plugins"},
+								{Key: "Short-Name", Value: "example-jenkins-plugin"},
+								{Key: "Long-Name", Value: "Example Jenkins Plugin"},
+								{Key: "Hudson-Version", Value: "2.204"},
+								{Key: "Jenkins-Version", Value: "2.204"},
+								{Key: "Plugin-Dependencies", Value: "structs:1.20"},
+								{Key: "Plugin-Developers", Value: ""},
+								{Key: "Plugin-License-Name", Value: "MIT License"},
+								{Key: "Plugin-License-Url", Value: "https://opensource.org/licenses/MIT"},
+								{Key: "Plugin-ScmUrl", Value: "https://github.com/jenkinsci/plugin-pom/example-jenkins-plugin"},
 								// extra fields...
-								//"Archiver-Version":    "Plexus Archiver",
-								"Plugin-License-Url":  "https://opensource.org/licenses/MIT",
-								"Plugin-License-Name": "MIT License",
-								"Created-By":          "Maven Archiver 3.6.0",
-								//"Built-By":            "?",
-								//"Build-Jdk":            "14.0.1",
-								"Build-Jdk-Spec":  "18",
-								"Jenkins-Version": "2.204",
-								//"Minimum-Java-Version": "1.8",
-								"Plugin-Developers": "",
-								"Plugin-ScmUrl":     "https://github.com/jenkinsci/plugin-pom/example-jenkins-plugin",
-								//"Extension-Name":      "example-jenkins-plugin",
-								"Short-Name":          "example-jenkins-plugin",
-								"Group-Id":            "io.jenkins.plugins",
-								"Plugin-Dependencies": "structs:1.20",
-								//"Plugin-Version": "1.0-SNAPSHOT (private-07/09/2020 13:30-?)",
-								"Hudson-Version": "2.204",
-								"Long-Name":      "Example Jenkins Plugin",
+								//{Key: "Minimum-Java-Version", Value: "1.8"},
+								//{Key: "Archiver-Version", Value: "Plexus Archiver"},
+								//{Key: "Built-By", Value: "?"},
+								//{Key: "Build-Jdk", Value: "14.0.1"},
+								//{Key: "Extension-Name", Value: "example-jenkins-plugin"},
+								//{Key: "Plugin-Version", Value: "1.0-SNAPSHOT (private-07/09/2020 13:30-?)"},
 							},
 						},
 						PomProperties: &pkg.JavaPomProperties{
@@ -254,9 +256,15 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
-							Main: map[string]string{
-								"Manifest-Version": "1.0",
-								"Main-Class":       "hello.HelloWorld",
+							Main: []pkg.KeyValue{
+								{
+									Key:   "Manifest-Version",
+									Value: "1.0",
+								},
+								{
+									Key:   "Main-Class",
+									Value: "hello.HelloWorld",
+								},
 							},
 						},
 					},
@@ -325,14 +333,32 @@ func TestParseJar(t *testing.T) {
 					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
-							Main: map[string]string{
-								"Manifest-Version": "1.0",
+							Main: []pkg.KeyValue{
+								{
+									Key:   "Manifest-Version",
+									Value: "1.0",
+								},
 								// extra fields...
-								"Archiver-Version": "Plexus Archiver",
-								"Created-By":       "Apache Maven 3.8.6",
-								//"Built-By":         "?",
-								//"Build-Jdk":        "14.0.1",
-								"Main-Class": "hello.HelloWorld",
+								{
+									Key:   "Archiver-Version",
+									Value: "Plexus Archiver",
+								},
+								{
+									Key:   "Created-By",
+									Value: "Apache Maven 3.8.6",
+								},
+								//{
+								//  Key:   "Built-By",
+								//  Value: "?",
+								//},
+								//{
+								//	Key:   "Build-Jdk",
+								//	Value: "14.0.1",
+								//},
+								{
+									Key:   "Main-Class",
+									Value: "hello.HelloWorld",
+								},
 							},
 						},
 						PomProperties: &pkg.JavaPomProperties{
@@ -401,11 +427,11 @@ func TestParseJar(t *testing.T) {
 			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
-			}, false, Config{UseNetwork: false})
+			}, false, ArchiveCatalogerConfig{UseNetwork: false})
 			defer cleanupFn()
 			require.NoError(t, err)
 
-			actual, _, err := parser.parse()
+			actual, _, err := parser.parse(context.Background())
 			require.NoError(t, err)
 
 			if len(actual) != len(test.expected) {
@@ -454,7 +480,14 @@ func TestParseJar(t *testing.T) {
 				// ignore select fields (only works for the main section)
 				for _, field := range test.ignoreExtras {
 					if metadata.Manifest != nil && metadata.Manifest.Main != nil {
-						delete(metadata.Manifest.Main, field)
+						newMain := make(pkg.KeyValues, 0)
+						for i, kv := range metadata.Manifest.Main {
+							if kv.Key == field {
+								continue
+							}
+							newMain = append(newMain, metadata.Manifest.Main[i])
+						}
+						metadata.Manifest.Main = newMain
 					}
 				}
 
@@ -667,9 +700,9 @@ func TestParseNestedJar(t *testing.T) {
 
 			fixture, err := os.Open(test.fixture)
 			require.NoError(t, err)
-			gap := newGenericArchiveParserAdapter(Config{})
+			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{})
 
-			actual, _, err := gap.parseJavaArchive(nil, nil, file.LocationReadCloser{
+			actual, _, err := gap.parseJavaArchive(context.Background(), nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			})
@@ -1089,7 +1122,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			}
 			test.expectedParent.Locations = locations
 
-			actualPackage := newPackageFromMavenData(test.props, test.project, test.parent, file.NewLocation(virtualPath), Config{})
+			actualPackage := newPackageFromMavenData(context.Background(), test.props, test.project, test.parent, file.NewLocation(virtualPath), DefaultArchiveCatalogerConfig())
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {
@@ -1157,32 +1190,32 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar",
 						Manifest: &pkg.JavaManifest{
-							Main: map[string]string{
-								"Build-Jdk-Spec":           "1.8",
-								"Bundle-Description":       "Core Jackson processing abstractions",
-								"Bundle-DocURL":            "https://github.com/FasterXML/jackson-core",
-								"Bundle-License":           "https://www.apache.org/licenses/LICENSE-2.0.txt",
-								"Bundle-ManifestVersion":   "2",
-								"Bundle-Name":              "Jackson-core",
-								"Bundle-SymbolicName":      "com.fasterxml.jackson.core.jackson-core",
-								"Bundle-Vendor":            "FasterXML",
-								"Bundle-Version":           "2.15.2",
-								"Created-By":               "Apache Maven Bundle Plugin 5.1.8",
-								"Export-Package":           "com.fasterxml.jackson.core;version...snip",
-								"Implementation-Title":     "Jackson-core",
-								"Implementation-Vendor":    "FasterXML",
-								"Implementation-Vendor-Id": "com.fasterxml.jackson.core",
-								"Implementation-Version":   "2.15.2",
-								"Import-Package":           "com.fasterxml.jackson.core;version=...snip",
-								"Manifest-Version":         "1.0",
-								"Multi-Release":            "true",
-								"Require-Capability":       `osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"`,
-								"Specification-Title":      "Jackson-core",
-								"Specification-Vendor":     "FasterXML",
-								"Specification-Version":    "2.15.2",
-								"Tool":                     "Bnd-6.3.1.202206071316",
-								"X-Compile-Source-JDK":     "1.8",
-								"X-Compile-Target-JDK":     "1.8",
+							Main: pkg.KeyValues{
+								{Key: "Manifest-Version", Value: "1.0"},
+								{Key: "Bundle-License", Value: "https://www.apache.org/licenses/LICENSE-2.0.txt"},
+								{Key: "Bundle-SymbolicName", Value: "com.fasterxml.jackson.core.jackson-core"},
+								{Key: "Implementation-Vendor-Id", Value: "com.fasterxml.jackson.core"},
+								{Key: "Specification-Title", Value: "Jackson-core"},
+								{Key: "Bundle-DocURL", Value: "https://github.com/FasterXML/jackson-core"},
+								{Key: "Import-Package", Value: "com.fasterxml.jackson.core;version=...snip"},
+								{Key: "Require-Capability", Value: `osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"`},
+								{Key: "Export-Package", Value: "com.fasterxml.jackson.core;version...snip"},
+								{Key: "Bundle-Name", Value: "Jackson-core"},
+								{Key: "Multi-Release", Value: "true"},
+								{Key: "Build-Jdk-Spec", Value: "1.8"},
+								{Key: "Bundle-Description", Value: "Core Jackson processing abstractions"},
+								{Key: "Implementation-Title", Value: "Jackson-core"},
+								{Key: "Implementation-Version", Value: "2.15.2"},
+								{Key: "Bundle-ManifestVersion", Value: "2"},
+								{Key: "Specification-Vendor", Value: "FasterXML"},
+								{Key: "Bundle-Vendor", Value: "FasterXML"},
+								{Key: "Tool", Value: "Bnd-6.3.1.202206071316"},
+								{Key: "Implementation-Vendor", Value: "FasterXML"},
+								{Key: "Bundle-Version", Value: "2.15.2"},
+								{Key: "X-Compile-Target-JDK", Value: "1.8"},
+								{Key: "X-Compile-Source-JDK", Value: "1.8"},
+								{Key: "Created-By", Value: "Apache Maven Bundle Plugin 5.1.8"},
+								{Key: "Specification-Version", Value: "2.15.2"},
 							},
 						},
 						// not under test
@@ -1211,32 +1244,32 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar",
 						Manifest: &pkg.JavaManifest{
-							Main: map[string]string{
-								"Build-Jdk-Spec":           "1.8",
-								"Bundle-Description":       "Core Jackson processing abstractions",
-								"Bundle-DocURL":            "https://github.com/FasterXML/jackson-core",
-								"Bundle-License":           "https://www.apache.org/licenses/LICENSE-2.0.txt",
-								"Bundle-ManifestVersion":   "2",
-								"Bundle-Name":              "Jackson-core",
-								"Bundle-SymbolicName":      "com.fasterxml.jackson.core.jackson-core",
-								"Bundle-Vendor":            "FasterXML",
-								"Bundle-Version":           "2.15.2",
-								"Created-By":               "Apache Maven Bundle Plugin 5.1.8",
-								"Export-Package":           "com.fasterxml.jackson.core;version...snip",
-								"Implementation-Title":     "Jackson-core",
-								"Implementation-Vendor":    "FasterXML",
-								"Implementation-Vendor-Id": "com.fasterxml.jackson.core",
-								"Implementation-Version":   "2.15.2",
-								"Import-Package":           "com.fasterxml.jackson.core;version=...snip",
-								"Manifest-Version":         "1.0",
-								"Multi-Release":            "true",
-								"Require-Capability":       `osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"`,
-								"Specification-Title":      "Jackson-core",
-								"Specification-Vendor":     "FasterXML",
-								"Specification-Version":    "2.15.2",
-								"Tool":                     "Bnd-6.3.1.202206071316",
-								"X-Compile-Source-JDK":     "1.8",
-								"X-Compile-Target-JDK":     "1.8",
+							Main: pkg.KeyValues{
+								{Key: "Manifest-Version", Value: "1.0"},
+								{Key: "Bundle-License", Value: "https://www.apache.org/licenses/LICENSE-2.0.txt"},
+								{Key: "Bundle-SymbolicName", Value: "com.fasterxml.jackson.core.jackson-core"},
+								{Key: "Implementation-Vendor-Id", Value: "com.fasterxml.jackson.core"},
+								{Key: "Specification-Title", Value: "Jackson-core"},
+								{Key: "Bundle-DocURL", Value: "https://github.com/FasterXML/jackson-core"},
+								{Key: "Import-Package", Value: "com.fasterxml.jackson.core;version=...snip"},
+								{Key: "Require-Capability", Value: `osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"`},
+								{Key: "Export-Package", Value: "com.fasterxml.jackson.core;version...snip"},
+								{Key: "Bundle-Name", Value: "Jackson-core"},
+								{Key: "Multi-Release", Value: "true"},
+								{Key: "Build-Jdk-Spec", Value: "1.8"},
+								{Key: "Bundle-Description", Value: "Core Jackson processing abstractions"},
+								{Key: "Implementation-Title", Value: "Jackson-core"},
+								{Key: "Implementation-Version", Value: "2.15.2"},
+								{Key: "Bundle-ManifestVersion", Value: "2"},
+								{Key: "Specification-Vendor", Value: "FasterXML"},
+								{Key: "Bundle-Vendor", Value: "FasterXML"},
+								{Key: "Tool", Value: "Bnd-6.3.1.202206071316"},
+								{Key: "Implementation-Vendor", Value: "FasterXML"},
+								{Key: "Bundle-Version", Value: "2.15.2"},
+								{Key: "X-Compile-Target-JDK", Value: "1.8"},
+								{Key: "X-Compile-Source-JDK", Value: "1.8"},
+								{Key: "Created-By", Value: "Apache Maven Bundle Plugin 5.1.8"},
+								{Key: "Specification-Version", Value: "2.15.2"},
 							},
 						},
 						// not under test
@@ -1260,11 +1293,23 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/jar-metadata/cache/api-all-2.0.0-sources.jar",
 						Manifest: &pkg.JavaManifest{
-							Main: map[string]string{
-								"Build-Jdk":        "1.8.0_191",
-								"Built-By":         "elecharny",
-								"Created-By":       "Apache Maven 3.6.0",
-								"Manifest-Version": "1.0",
+							Main: []pkg.KeyValue{
+								{
+									Key:   "Manifest-Version",
+									Value: "1.0",
+								},
+								{
+									Key:   "Built-By",
+									Value: "elecharny",
+								},
+								{
+									Key:   "Created-By",
+									Value: "Apache Maven 3.6.0",
+								},
+								{
+									Key:   "Build-Jdk",
+									Value: "1.8.0_191",
+								},
 							},
 						},
 						PomProperties: &pkg.JavaPomProperties{
@@ -1309,14 +1354,29 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gap := newGenericArchiveParserAdapter(Config{})
+			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{})
 			if tt.assignParent {
 				assignParent(&tt.expectedPkgs[0], tt.expectedPkgs[1:]...)
+			}
+			for i := range tt.expectedPkgs {
+				tt.expectedPkgs[i].SetID()
 			}
 			pkgtest.NewCatalogTester().
 				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName)).
 				Expects(tt.expectedPkgs, tt.expectedRelationships).
-				WithCompareOptions(cmpopts.IgnoreFields(pkg.JavaArchive{}, "ArchiveDigests")).
+				WithCompareOptions(
+					cmpopts.IgnoreFields(pkg.JavaArchive{}, "ArchiveDigests"),
+					cmp.Comparer(func(x, y pkg.KeyValue) bool {
+						if x.Key != y.Key {
+							return false
+						}
+						if x.Value != y.Value {
+							return false
+						}
+
+						return true
+					}),
+				).
 				TestParser(t, gap.parseJavaArchive)
 		})
 	}

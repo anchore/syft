@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/cmd/syft/cli/options"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/format/template"
 )
@@ -22,12 +21,7 @@ func TestAllFormatsExpressible(t *testing.T) {
 		assertSuccessfulReturnCode,
 	}
 
-	opts := options.DefaultOutput()
-	require.NoError(t, opts.PostLoad())
-	encoders, err := opts.Encoders()
-	require.NoError(t, err)
-
-	encs := format.NewEncoderCollection(encoders...)
+	encs := format.NewEncoderCollection(format.Encoders()...)
 	formatIDs := encs.IDs()
 	require.NotEmpty(t, formatIDs)
 	for _, o := range formatIDs {

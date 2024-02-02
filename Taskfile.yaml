@@ -54,6 +54,7 @@ tasks:
       - task: check-licenses
       - task: lint
       - task: check-json-schema-drift
+      - task: check-binary-fixture-size
 
   test:
     desc: Run all levels of test
@@ -169,6 +170,11 @@ tasks:
     cmds:
       - .github/scripts/json-schema-drift-check.sh
 
+  check-binary-fixture-size:
+    desc: Ensure that the binary test fixtures are not too large
+    cmds:
+      - .github/scripts/check_binary_fixture_size.sh syft/pkg/cataloger/binary/test-fixtures/classifiers/snippets
+
 
   ## Testing tasks #################################
 
@@ -179,7 +185,7 @@ tasks:
       - fixtures
     vars:
       TEST_PKGS:
-        sh: "go list ./... | grep -v {{ .OWNER }}/{{ .PROJECT }}/test | tr '\n' ' '"
+        sh: "go list ./... | grep -v {{ .OWNER }}/{{ .PROJECT }}/test | grep -v {{ .OWNER }}/{{ .PROJECT }}/cmd/syft/internal/test | tr '\n' ' '"
 
       # unit test coverage threshold (in % coverage)
       COVERAGE_THRESHOLD: 62
@@ -191,7 +197,7 @@ tasks:
   integration:
     desc: Run integration tests
     cmds:
-      - "go test -v ./test/integration"
+      - "go test -v ./cmd/syft/internal/test/integration"
       # exercise most of the CLI with the data race detector
       - "go run -race cmd/syft/main.go alpine:latest"
 
@@ -259,7 +265,8 @@ tasks:
   fingerprints:
     desc: Generate test fixture fingerprints
     generates:
-      - test/integration/test-fixtures/cache.fingerprint
+      - cmd/syft/internal/test/integration/test-fixtures/cache.fingerprint
+      - syft/file/cataloger/executable/test-fixtures/cache.fingerprint
       - syft/pkg/cataloger/binary/test-fixtures/cache.fingerprint
       - syft/pkg/cataloger/java/test-fixtures/java-builds/cache.fingerprint
       - syft/pkg/cataloger/golang/test-fixtures/archs/binaries.fingerprint
@@ -268,19 +275,21 @@ tasks:
       - test/install/cache.fingerprint
       - test/cli/test-fixtures/cache.fingerprint
     cmds:
+      # for EXECUTABLE unit test fixtures
+      - "cd syft/file/cataloger/executable/test-fixtures && make cache.fingerprint"
       # for IMAGE integration test fixtures
-      - "cd test/integration/test-fixtures && make cache.fingerprint"
-      # for BINARY test fixtures
+      - "cd cmd/syft/internal/test/integration/test-fixtures && make cache.fingerprint"
+      # for BINARY unit test fixtures
       - "cd syft/pkg/cataloger/binary/test-fixtures && make cache.fingerprint"
-      # for JAVA BUILD test fixtures
+      # for JAVA BUILD unit test fixtures
       - "cd syft/pkg/cataloger/java/test-fixtures/java-builds && make cache.fingerprint"
-      # for GO BINARY test fixtures
+      # for GO BINARY unit test fixtures
       - "cd syft/pkg/cataloger/golang/test-fixtures/archs && make binaries.fingerprint"
-      # for RPM test fixtures
+      # for RPM unit test fixtures
       - "cd syft/pkg/cataloger/redhat/test-fixtures && make rpms.fingerprint"
-      # for Kernel test fixtures
+      # for Kernel unit test fixtures
       - "cd syft/pkg/cataloger/kernel/test-fixtures && make cache.fingerprint"
-      # for INSTALL integration test fixtures
+      # for INSTALL test fixtures
       - "cd test/install && make cache.fingerprint"
       # for CLI test fixtures
       - "cd test/cli/test-fixtures && make cache.fingerprint"
@@ -288,6 +297,7 @@ tasks:
   fixtures:
     desc: Generate test fixtures
     cmds:
+      - "cd syft/file/cataloger/executable/test-fixtures && make"
       - "cd syft/pkg/cataloger/java/test-fixtures/java-builds && make"
       - "cd syft/pkg/cataloger/redhat/test-fixtures && make"
       - "cd syft/pkg/cataloger/binary/test-fixtures && make"

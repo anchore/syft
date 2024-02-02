@@ -1,6 +1,7 @@
 package filedigest
 
 import (
+	"context"
 	"crypto"
 	"fmt"
 	"io"
@@ -82,7 +83,7 @@ func TestDigestsCataloger(t *testing.T) {
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
-			actual, err := c.Catalog(resolver)
+			actual, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, actual, "mismatched digests")
@@ -138,7 +139,7 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 		t.Run(test.path, func(t *testing.T) {
 			c := NewCataloger([]crypto.Hash{crypto.MD5})
 
-			actual, err := c.Catalog(resolver)
+			actual, err := c.Catalog(context.Background(), resolver)
 			if err != nil {
 				t.Fatalf("could not catalog: %+v", err)
 			}
@@ -159,4 +160,48 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFileDigestCataloger_GivenCoordinates(t *testing.T) {
+	testImage := "image-file-type-mix"
+
+	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
+
+	c := NewCataloger([]crypto.Hash{crypto.SHA256})
+
+	src, err := source.NewFromStereoscopeImageObject(img, testImage, nil)
+	require.NoError(t, err)
+
+	resolver, err := src.FileResolver(source.SquashedScope)
+	require.NoError(t, err)
+
+	tests := []struct {
+		path     string
+		exists   bool
+		expected string
+	}{
+		{
+			path:     "/file-1.txt",
+			exists:   true,
+			expected: "b089629781f05ef805b4511e93717f2ffa4c9d991771d5cbfa4b7242b4ef5fff",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			_, ref, err := img.SquashedTree().File(stereoscopeFile.Path(test.path))
+			require.NoError(t, err)
+
+			l := file.NewLocationFromImage(test.path, *ref.Reference, img)
+
+			// note: an important difference between this test and the previous is that this test is using a list
+			// of specific coordinates to catalog
+			actual, err := c.Catalog(context.Background(), resolver, l.Coordinates)
+			require.NoError(t, err)
+			require.Len(t, actual, 1)
+
+			assert.Equal(t, test.expected, actual[l.Coordinates][0].Value, "mismatched digests")
+		})
+	}
+
 }

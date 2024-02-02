@@ -132,7 +132,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "test-fixtures/pkg-lock").
 		Expects(expectedPkgs, nil).
-		TestCataloger(t, NewLockCataloger())
+		TestCataloger(t, NewLockCataloger(CatalogerConfig{}))
 
 }
 
@@ -183,7 +183,7 @@ func Test_LockCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewLockCataloger())
+				TestCataloger(t, NewLockCataloger(CatalogerConfig{}))
 		})
 	}
 }

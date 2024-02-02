@@ -2,6 +2,7 @@ package cpp
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -78,7 +79,7 @@ func parseFullRequiresLine(line string, reader file.LocationReadCloser, pkgs *[]
 // The conaninfo.txt gives:
 // - package requires (full_requires)
 // - recipe revision (recipe_hash)
-func parseConaninfo(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseConaninfo(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// First set the base package info by checking the relative path
 	fullFilePath := string(reader.Location.LocationData.Reference().RealPath)
 	if len(fullFilePath) == 0 {

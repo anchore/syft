@@ -159,11 +159,10 @@ func (s FileSource) FileResolver(_ Scope) (file.Resolver, error) {
 	}
 	isArchiveAnalysis := fi.IsDir()
 
-	absAnalysisPath, err := filepath.Abs(s.analysisPath)
+	absParentDir, err := absoluteSymlinkFreePathToParent(s.analysisPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get absolute path for analysis path=%q: %w", s.analysisPath, err)
+		return nil, err
 	}
-	absParentDir := filepath.Dir(absAnalysisPath)
 
 	var res *fileresolver.Directory
 	if isArchiveAnalysis {
@@ -190,7 +189,7 @@ func (s FileSource) FileResolver(_ Scope) (file.Resolver, error) {
 					return fs.SkipDir
 				}
 
-				if path.Base(p) != path.Base(s.config.Path) {
+				if filepath.Base(p) != filepath.Base(s.config.Path) {
 					// we're in the root directory, but this is not the file we want to scan...
 					// we should selectively skip this file (not the directory we're in).
 					return fileresolver.ErrSkipPath
@@ -208,6 +207,18 @@ func (s FileSource) FileResolver(_ Scope) (file.Resolver, error) {
 	s.resolver = res
 
 	return s.resolver, nil
+}
+
+func absoluteSymlinkFreePathToParent(path string) (string, error) {
+	absAnalysisPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("unable to get absolute path for analysis path=%q: %w", path, err)
+	}
+	dereferencedAbsAnalysisPath, err := filepath.EvalSymlinks(absAnalysisPath)
+	if err != nil {
+		return "", fmt.Errorf("unable to get absolute path for analysis path=%q: %w", path, err)
+	}
+	return filepath.Dir(dereferencedAbsAnalysisPath), nil
 }
 
 func (s *FileSource) Close() error {

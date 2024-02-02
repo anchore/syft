@@ -2,6 +2,7 @@ package java
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -24,7 +25,7 @@ const pomXMLGlob = "*pom.xml"
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
-func parserPomXML(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
 	if err != nil {
 		return nil, nil, err
@@ -34,8 +35,10 @@ func parserPomXML(_ file.Resolver, _ *generic.Environment, reader file.LocationR
 	if pom.Dependencies != nil {
 		for _, dep := range *pom.Dependencies {
 			p := newPackageFromPom(
+				ctx,
 				pom,
 				dep,
+				gap.cfg,
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			)
 			if p.Name == "" {
@@ -97,7 +100,7 @@ func newPomProject(path string, p gopom.Project, location file.Location) *parsed
 	}
 }
 
-func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...file.Location) pkg.Package {
+func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Dependency, cfg ArchiveCatalogerConfig, locations ...file.Location) pkg.Package {
 	m := pkg.JavaArchive{
 		PomProperties: &pkg.JavaPomProperties{
 			GroupID:    resolveProperty(pom, dep.GroupID, "groupId"),
@@ -109,10 +112,33 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...fil
 	name := safeString(dep.ArtifactID)
 	version := resolveProperty(pom, dep.Version, "version")
 
+	licenses := make([]pkg.License, 0)
+	if cfg.UseNetwork {
+		if version == "" {
+			// If we have no version then let's try to get it from a parent pom DependencyManagement section
+			version = recursivelyFindVersionFromParentPom(ctx, *dep.GroupID, *dep.ArtifactID, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg)
+		}
+		if version != "" {
+			parentLicenses := recursivelyFindLicensesFromParentPom(
+				ctx,
+				m.PomProperties.GroupID,
+				m.PomProperties.ArtifactID,
+				version,
+				cfg)
+
+			if len(parentLicenses) > 0 {
+				for _, licenseName := range parentLicenses {
+					licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
+				}
+			}
+		}
+	}
+
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
 		Locations: file.NewLocationSet(locations...),
+		Licenses:  pkg.NewLicenseSet(licenses...),
 		PURL:      packageURL(name, version, m),
 		Language:  pkg.Java,
 		Type:      pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?

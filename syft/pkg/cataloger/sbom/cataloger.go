@@ -5,6 +5,7 @@ package sbom
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 
@@ -19,7 +20,7 @@ import (
 const catalogerName = "sbom-cataloger"
 
 // NewCataloger returns a new SBOM cataloger object loaded from saved SBOM JSON.
-func NewCataloger() *generic.Cataloger {
+func NewCataloger() pkg.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseSBOM,
 			"**/*.syft.json",
@@ -36,7 +37,7 @@ func NewCataloger() *generic.Cataloger {
 		)
 }
 
-func parseSBOM(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	readSeeker, err := adaptToReadSeeker(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read SBOM file %q: %w", reader.Location.RealPath, err)

@@ -100,18 +100,21 @@ func TestHandler_handleAttestationStarted(t *testing.T) {
 				Height: 80,
 			}
 
-			models := handler.Handle(event)
+			models, _ := handler.Handle(event)
 			require.Len(t, models, 2)
 
 			t.Run("task line", func(t *testing.T) {
 				tsk, ok := models[0].(taskprogress.Model)
 				require.True(t, ok)
 
-				got := runModel(t, tsk, tt.iterations, taskprogress.TickMsg{
+				gotModel := runModel(t, tsk, tt.iterations, taskprogress.TickMsg{
 					Time:     time.Now(),
 					Sequence: tsk.Sequence(),
 					ID:       tsk.ID(),
 				})
+
+				got := gotModel.View()
+
 				t.Log(got)
 				snaps.MatchSnapshot(t, got)
 			})
@@ -119,11 +122,15 @@ func TestHandler_handleAttestationStarted(t *testing.T) {
 			t.Run("log", func(t *testing.T) {
 				log, ok := models[1].(attestLogFrame)
 				require.True(t, ok)
-				got := runModel(t, log, tt.iterations, attestLogFrameTickMsg{
+
+				gotModel := runModel(t, log, tt.iterations, attestLogFrameTickMsg{
 					Time:     time.Now(),
 					Sequence: log.sequence,
 					ID:       log.id,
 				}, log.reader.running)
+
+				got := gotModel.View()
+
 				t.Log(got)
 				snaps.MatchSnapshot(t, got)
 			})

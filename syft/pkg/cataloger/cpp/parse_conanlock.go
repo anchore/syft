@@ -1,6 +1,7 @@
 package cpp
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
@@ -30,7 +31,7 @@ type conanLock struct {
 }
 
 // parseConanlock is a parser function for conan.lock contents, returning all packages discovered.
-func parseConanlock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseConanlock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var cl conanLock
 	if err := json.NewDecoder(reader).Decode(&cl); err != nil {
@@ -86,8 +87,8 @@ func parseConanlock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 	return pkgs, relationships, nil
 }
 
-func parseOptions(options string) map[string]string {
-	o := make(map[string]string)
+func parseOptions(options string) []pkg.KeyValue {
+	o := make([]pkg.KeyValue, 0)
 	if len(options) == 0 {
 		return nil
 	}
@@ -96,7 +97,10 @@ func parseOptions(options string) map[string]string {
 	for _, kvp := range kvps {
 		kv := strings.Split(kvp, "=")
 		if len(kv) == 2 {
-			o[kv[0]] = kv[1]
+			o = append(o, pkg.KeyValue{
+				Key:   kv[0],
+				Value: kv[1],
+			})
 		}
 	}
 

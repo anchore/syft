@@ -152,7 +152,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		},
 		PURL: "a-purl-1",
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 
@@ -173,7 +173,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		},
 		PURL: "a-purl-2",
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", cpe.GeneratedSource),
 		},
 	}
 
@@ -297,10 +297,15 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		},
 	}
 
+	cfg := DefaultEncoderConfig()
+	cfg.Pretty = true
+	enc, err := NewFormatEncoderWithConfig(cfg)
+	require.NoError(t, err)
+
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     s,
-			Format:                      NewFormatEncoder(),
+			Format:                      enc,
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,

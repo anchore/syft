@@ -80,7 +80,7 @@ func LanguageByName(name string) Language {
 		return Rust
 	case packageurl.TypePub, string(DartPubPkg), string(Dart):
 		return Dart
-	case packageurl.TypeDotnet:
+	case string(Dotnet), ".net", packageurl.TypeNuget:
 		return Dotnet
 	case packageurl.TypeCocoapods, packageurl.TypeSwift, string(CocoapodsPkg), string(SwiftPkg):
 		return Swift
@@ -88,7 +88,7 @@ func LanguageByName(name string) Language {
 		return CPP
 	case packageurl.TypeHackage, string(Haskell):
 		return Haskell
-	case packageurl.TypeHex, "beam", "elixir", "erlang":
+	case packageurl.TypeHex, packageurl.TypeOTP, "beam", "elixir", "erlang":
 		// should we support returning multiple languages to support this case?
 		// answer: no. We want this to definitively answer "which language does this package represent?"
 		// which might not be possible in all cases. See for more context: https://github.com/package-url/purl-spec/pull/178

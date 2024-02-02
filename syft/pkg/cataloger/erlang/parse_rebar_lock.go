@@ -1,6 +1,8 @@
 package erlang
 
 import (
+	"context"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -11,7 +13,7 @@ import (
 // parseRebarLock parses a rebar.lock and returns the discovered Elixir packages.
 //
 //nolint:funlen
-func parseRebarLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRebarLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	doc, err := parseErlang(reader)
 	if err != nil {
 		return nil, nil, err
@@ -48,7 +50,7 @@ func parseRebarLock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 			version = versionNode.Get(2).Get(1).String()
 		}
 
-		p := newPackage(
+		p := newPackageFromRebar(
 			pkg.ErlangRebarLockEntry{
 				Name:    name,
 				Version: version,

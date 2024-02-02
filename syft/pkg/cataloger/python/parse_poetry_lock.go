@@ -1,6 +1,7 @@
 package python
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pelletier/go-toml"
@@ -30,7 +31,7 @@ type poetryPackages struct {
 }
 
 // parsePoetryLock is a parser function for poetry.lock contents, returning all python packages discovered.
-func parsePoetryLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePoetryLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to load poetry.lock for parsing: %w", err)

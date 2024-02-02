@@ -1,6 +1,7 @@
 package java
 
 import (
+	"context"
 	"fmt"
 
 	intFile "github.com/anchore/syft/internal/file"
@@ -19,16 +20,16 @@ var genericZipGlobs = []string{
 // parseZipWrappedJavaArchive is a parser function for java archive contents contained within arbitrary zip files.
 
 type genericZipWrappedJavaArchiveParser struct {
-	cfg Config
+	cfg ArchiveCatalogerConfig
 }
 
-func newGenericZipWrappedJavaArchiveParser(cfg Config) genericZipWrappedJavaArchiveParser {
+func newGenericZipWrappedJavaArchiveParser(cfg ArchiveCatalogerConfig) genericZipWrappedJavaArchiveParser {
 	return genericZipWrappedJavaArchiveParser{
 		cfg: cfg,
 	}
 }
 
-func (gzp genericZipWrappedJavaArchiveParser) parseZipWrappedJavaArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (gzp genericZipWrappedJavaArchiveParser) parseZipWrappedJavaArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader.Path(), reader)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
@@ -46,5 +47,5 @@ func (gzp genericZipWrappedJavaArchiveParser) parseZipWrappedJavaArchive(_ file.
 	}
 
 	// look for java archives within the zip archive
-	return discoverPkgsFromZip(reader.Location, archivePath, contentPath, fileManifest, nil, gzp.cfg)
+	return discoverPkgsFromZip(ctx, reader.Location, archivePath, contentPath, fileManifest, nil, gzp.cfg)
 }

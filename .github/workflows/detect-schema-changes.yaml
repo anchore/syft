@@ -1,0 +1,54 @@
+name: "Detect schema changes"
+
+on:
+  # IMPORTANT! This workflow is triggered by the `pull_request_target` event
+  # which means that forked PRs will run with access secrets from the repo
+  # it's forked from (the "target" repo).
+  #
+  # For this reason we only NEVER checkout the code from the pull request
+  # (e.g. "ref: ${{ github.event.pull_request.head.sha }}") to prevent
+  # accidentally running potentially untrusted code.
+  #
+  # By default the checkout will be:
+  #   - GITHUB_SHA: Last commit on the PR base branch
+  #   - GITHUB_REF: PR base branch
+  #
+  # ...unlike a typical PR where:
+  #   - GITHUB_SHA: Last merge commit on the GITHUB_REF branch
+  #   - GITHUB_REF: PR merge branch refs/pull/:prNumber/merge
+  pull_request_target:
+
+env:
+  # note: this is used within hashFiles() so must be within the GITHUB_WORKSPACE path (or will silently fail)
+  CI_COMMENT_FILE: .tmp/labeler-comment.txt
+  # needs to be any string to uniquely identify the comment on a PR across multiple runs
+  COMMENT_HEADER: "label-commentary"
+
+jobs:
+  label:
+    name: "Label changes"
+    runs-on: ubuntu-22.04
+    steps:
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+
+      - run: python .github/scripts/labeler.py
+        env:
+          # note: this token has write access to the repo
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PR_NUMBER: ${{ github.event.number }}
+
+      - name: Delete existing comment
+        if: ${{ hashFiles( env.CI_COMMENT_FILE ) == '' }}
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 #v2.9.0
+        with:
+          header: ${{ env.COMMENT_HEADER }}
+          hide: true
+          hide_classify: "OUTDATED"
+
+      - name: Add comment
+        if: ${{ hashFiles( env.CI_COMMENT_FILE ) != '' }}
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 #v2.9.0
+        with:
+          header: ${{ env.COMMENT_HEADER }}
+          path: ${{ env.CI_COMMENT_FILE }}

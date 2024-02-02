@@ -1,6 +1,7 @@
 package dart
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"sort"
@@ -55,7 +56,7 @@ func (p *pubspecLockDescription) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-func parsePubspecLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePubspecLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	dec := yaml.NewDecoder(reader)

@@ -2,6 +2,7 @@ package debian
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -519,7 +520,7 @@ func Test_associateRelationships(t *testing.T) {
 
 			reader := file.NewLocationReadCloser(file.NewLocation(tt.fixture), f)
 
-			pkgs, relationships, err := parseDpkgDB(nil, &generic.Environment{}, reader)
+			pkgs, relationships, err := parseDpkgDB(context.Background(), nil, &generic.Environment{}, reader)
 			require.NotEmpty(t, pkgs)
 			require.NotEmpty(t, relationships)
 			require.NoError(t, err)

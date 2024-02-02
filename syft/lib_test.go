@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -34,7 +35,7 @@ func Test_removeRelationshipsByID(t *testing.T) {
 
 	for _, r := range relationships {
 		if r.From.ID() == "1" || r.From.ID() == "2" {
-			relationships = removeRelationshipsByID(relationships, r.From.ID())
+			relationships = relationship.RemoveRelationshipsByID(relationships, r.From.ID())
 		}
 	}
 

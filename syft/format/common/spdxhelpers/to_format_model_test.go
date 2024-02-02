@@ -14,6 +14,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -368,7 +369,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "application/vnd.unknown",
 			},
 			expected: []string{
-				string(ApplicationFileType),
+				string(helpers.ApplicationFileType),
 			},
 		},
 		{
@@ -377,8 +378,8 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "application/zip",
 			},
 			expected: []string{
-				string(ApplicationFileType),
-				string(ArchiveFileType),
+				string(helpers.ApplicationFileType),
+				string(helpers.ArchiveFileType),
 			},
 		},
 		{
@@ -387,7 +388,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "audio/ogg",
 			},
 			expected: []string{
-				string(AudioFileType),
+				string(helpers.AudioFileType),
 			},
 		},
 		{
@@ -396,7 +397,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "video/3gpp",
 			},
 			expected: []string{
-				string(VideoFileType),
+				string(helpers.VideoFileType),
 			},
 		},
 		{
@@ -405,7 +406,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "text/html",
 			},
 			expected: []string{
-				string(TextFileType),
+				string(helpers.TextFileType),
 			},
 		},
 		{
@@ -414,7 +415,7 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "image/png",
 			},
 			expected: []string{
-				string(ImageFileType),
+				string(helpers.ImageFileType),
 			},
 		},
 		{
@@ -423,8 +424,8 @@ func Test_toFileTypes(t *testing.T) {
 				MIMEType: "application/x-sharedlib",
 			},
 			expected: []string{
-				string(ApplicationFileType),
-				string(BinaryFileType),
+				string(helpers.ApplicationFileType),
+				string(helpers.BinaryFileType),
 			},
 		},
 	}
@@ -440,24 +441,24 @@ func Test_lookupRelationship(t *testing.T) {
 	tests := []struct {
 		input   artifact.RelationshipType
 		exists  bool
-		ty      RelationshipType
+		ty      helpers.RelationshipType
 		comment string
 	}{
 		{
 			input:  artifact.ContainsRelationship,
 			exists: true,
-			ty:     ContainsRelationship,
+			ty:     helpers.ContainsRelationship,
 		},
 		{
 			input:   artifact.OwnershipByFileOverlapRelationship,
 			exists:  true,
-			ty:      OtherRelationship,
+			ty:      helpers.OtherRelationship,
 			comment: "ownership-by-file-overlap: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by",
 		},
 		{
 			input:   artifact.EvidentByRelationship,
 			exists:  true,
-			ty:      OtherRelationship,
+			ty:      helpers.OtherRelationship,
 			comment: "evident-by: indicates the package's existence is evident by the given file",
 		},
 		{
@@ -774,6 +775,77 @@ func Test_toSPDXID(t *testing.T) {
 			// trim the hash
 			got = regexp.MustCompile(`-[a-z0-9]*$`).ReplaceAllString(got, "")
 			require.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func Test_otherLicenses(t *testing.T) {
+	pkg1 := pkg.Package{
+		Name:    "first-pkg",
+		Version: "1.1",
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicense("MIT"),
+		),
+	}
+	pkg2 := pkg.Package{
+		Name:    "second-pkg",
+		Version: "2.2",
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicense("non spdx license"),
+		),
+	}
+	bigText := `
+                                 Apache License
+                           Version 2.0, January 2004`
+	pkg3 := pkg.Package{
+		Name:    "third-pkg",
+		Version: "3.3",
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicense(bigText),
+		),
+	}
+
+	tests := []struct {
+		name     string
+		packages []pkg.Package
+		expected []*spdx.OtherLicense
+	}{
+		{
+			name:     "no other licenses when all valid spdx expressions",
+			packages: []pkg.Package{pkg1},
+			expected: nil,
+		},
+		{
+			name:     "other licenses includes original text",
+			packages: []pkg.Package{pkg2},
+			expected: []*spdx.OtherLicense{
+				{
+					LicenseIdentifier: "LicenseRef-non-spdx-license",
+					ExtractedText:     "non spdx license",
+				},
+			},
+		},
+		{
+			name:     "big licenses get hashed",
+			packages: []pkg.Package{pkg3},
+			expected: []*spdx.OtherLicense{
+				{
+					LicenseIdentifier: "LicenseRef-e9a1e42833d3e456f147052f4d312101bd171a0798893169fe596ca6b55c049e",
+					ExtractedText:     bigText,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(test.packages...),
+				},
+			}
+			got := ToFormatModel(s)
+			require.Equal(t, test.expected, got.OtherLicenses)
 		})
 	}
 }

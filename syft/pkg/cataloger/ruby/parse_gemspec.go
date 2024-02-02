@@ -2,6 +2,7 @@ package ruby
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -64,8 +65,8 @@ func processList(s string) []string {
 	return results
 }
 
-// parseGemFileLockEntries parses the gemfile.lock file and returns the packages and relationships found.
-func parseGemSpecEntries(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+// parseGemSpecEntries parses the gemspec file and returns the packages and relationships found.
+func parseGemSpecEntries(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
 	scanner := bufio.NewScanner(reader)
@@ -113,7 +114,7 @@ func parseGemSpecEntries(_ file.Resolver, _ *generic.Environment, reader file.Lo
 	return pkgs, nil, nil
 }
 
-// renderUtf8 takes any string escaped string sub-sections from the ruby string and replaces those sections with the UTF8 runes.
+// renderUtf8 takes any string escaped string subsections from the ruby string and replaces those sections with the UTF8 runes.
 func renderUtf8(s string) string {
 	fullReplacement := unicodePattern.ReplaceAllStringFunc(s, func(unicodeSection string) string {
 		var replacement string

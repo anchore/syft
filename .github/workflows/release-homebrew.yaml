@@ -30,7 +30,7 @@ jobs:
           echo -n "commit=$(git rev-parse HEAD)" | tee -a $GITHUB_OUTPUT
 
       - name: Update Homebrew formula
-        uses: dawidd6/action-homebrew-bump-formula@d3667e5ae14df19579e4414897498e3e88f2f458 # v3.10.0
+        uses: dawidd6/action-homebrew-bump-formula@75ed025ff3ad1d617862838b342b06d613a0ddf3 # v3.10.1
         with:
           token: ${{ secrets.HOMEBREW_TOKEN }}
           org: anchore
@@ -38,7 +38,7 @@ jobs:
           tag: ${{ steps.release_info.outputs.tag_name }}
           revision: ${{ steps.git_info.outputs.commit }}
 
-      - uses: 8398a7/action-slack@fbd6aa58ba854a740e11a35d0df80cb5d12101d8 #v3.15.1
+      - uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 #v3.16.2
         if: ${{ failure() }}
         with:
           status: ${{ job.status }}

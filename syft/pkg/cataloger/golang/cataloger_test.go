@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
@@ -30,7 +29,7 @@ func Test_Mod_Cataloger_Globs(t *testing.T) {
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
 				IgnoreUnfulfilledPathResponses("src/go.sum").
-				TestCataloger(t, NewGoModuleFileCataloger(GoCatalogerOpts{}))
+				TestCataloger(t, NewGoModuleFileCataloger(CatalogerConfig{}))
 		})
 	}
 }
@@ -55,7 +54,7 @@ func Test_Binary_Cataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewGoModuleBinaryCataloger(GoCatalogerOpts{}))
+				TestCataloger(t, NewGoModuleBinaryCataloger(CatalogerConfig{}))
 		})
 	}
 }
@@ -82,7 +81,7 @@ func Test_Binary_Cataloger_Stdlib_Cpe(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := generateStdlibCpe(tc.candidate)
 			assert.NoError(t, err, "expected no err; got %v", err)
-			assert.Equal(t, cpe.String(got), tc.want)
+			assert.Equal(t, got.Attributes.String(), tc.want)
 		})
 	}
 }

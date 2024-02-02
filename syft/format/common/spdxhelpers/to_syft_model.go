@@ -18,7 +18,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/format/common/util"
+	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -227,15 +227,15 @@ func extractSourceFromNamespace(ns string) source.Description {
 	parts := strings.Split(u.Path, "/")
 	for _, p := range parts {
 		switch p {
-		case inputFile:
+		case helpers.InputFile:
 			return source.Description{
 				Metadata: source.FileSourceMetadata{},
 			}
-		case inputImage:
+		case helpers.InputImage:
 			return source.Description{
 				Metadata: source.StereoscopeImageSourceMetadata{},
 			}
-		case inputDirectory:
+		case helpers.InputDirectory:
 			return source.Description{
 				Metadata: source.DirectorySourceMetadata{},
 			}
@@ -322,20 +322,20 @@ func fromChecksumAlgorithm(algorithm common.ChecksumAlgorithm) string {
 func toFileMetadata(f *spdx.File) (meta file.Metadata) {
 	// FIXME Syft is currently lossy due to the SPDX 2.2.1 spec not supporting arbitrary mimetypes
 	for _, typ := range f.FileTypes {
-		switch FileType(typ) {
-		case ImageFileType:
+		switch helpers.FileType(typ) {
+		case helpers.ImageFileType:
 			meta.MIMEType = "image/"
-		case VideoFileType:
+		case helpers.VideoFileType:
 			meta.MIMEType = "video/"
-		case ApplicationFileType:
+		case helpers.ApplicationFileType:
 			meta.MIMEType = "application/"
-		case TextFileType:
+		case helpers.TextFileType:
 			meta.MIMEType = "text/"
-		case AudioFileType:
+		case helpers.AudioFileType:
 			meta.MIMEType = "audio/"
-		case BinaryFileType:
-		case ArchiveFileType:
-		case OtherFileType:
+		case helpers.BinaryFileType:
+		case helpers.ArchiveFileType:
+		case helpers.OtherFileType:
 		}
 	}
 	return meta
@@ -368,11 +368,11 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 		var to artifact.Identifiable
 		var typ artifact.RelationshipType
 		if toLocationOk {
-			switch RelationshipType(r.Relationship) {
-			case ContainsRelationship:
+			switch helpers.RelationshipType(r.Relationship) {
+			case helpers.ContainsRelationship:
 				typ = artifact.ContainsRelationship
 				to = toLocation
-			case OtherRelationship:
+			case helpers.OtherRelationship:
 				// Encoding uses a specifically formatted comment...
 				if strings.Index(r.RelationshipComment, string(artifact.EvidentByRelationship)) == 0 {
 					typ = artifact.EvidentByRelationship
@@ -380,11 +380,11 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 				}
 			}
 		} else {
-			switch RelationshipType(r.Relationship) {
-			case ContainsRelationship:
+			switch helpers.RelationshipType(r.Relationship) {
+			case helpers.ContainsRelationship:
 				typ = artifact.ContainsRelationship
 				to = toPackage
-			case OtherRelationship:
+			case helpers.OtherRelationship:
 				// Encoding uses a specifically formatted comment...
 				if strings.Index(r.RelationshipComment, string(artifact.OwnershipByFileOverlapRelationship)) == 0 {
 					typ = artifact.OwnershipByFileOverlapRelationship
@@ -518,14 +518,14 @@ func parseSPDXLicenses(p *spdx.Package) []pkg.License {
 	licenses := make([]pkg.License, 0)
 
 	// concluded
-	if p.PackageLicenseConcluded != NOASSERTION && p.PackageLicenseConcluded != NONE && p.PackageLicenseConcluded != "" {
+	if p.PackageLicenseConcluded != helpers.NOASSERTION && p.PackageLicenseConcluded != helpers.NONE && p.PackageLicenseConcluded != "" {
 		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseConcluded))
 		l.Type = license.Concluded
 		licenses = append(licenses, l)
 	}
 
 	// declared
-	if p.PackageLicenseDeclared != NOASSERTION && p.PackageLicenseDeclared != NONE && p.PackageLicenseDeclared != "" {
+	if p.PackageLicenseDeclared != helpers.NOASSERTION && p.PackageLicenseDeclared != helpers.NONE && p.PackageLicenseDeclared != "" {
 		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseDeclared))
 		l.Type = license.Declared
 		licenses = append(licenses, l)
@@ -603,7 +603,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) any {
 	case pkg.GoModulePkg:
 		var h1Digest string
 		for _, value := range p.PackageChecksums {
-			digest, err := util.HDigestFromSHA(fromChecksumAlgorithm(value.Algorithm), value.Value)
+			digest, err := helpers.HDigestFromSHA(fromChecksumAlgorithm(value.Algorithm), value.Value)
 			if err != nil {
 				log.Debugf("invalid h1digest: %v %v", value, err)
 				continue
@@ -620,7 +620,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) any {
 
 func findPURLValue(p *spdx.Package) string {
 	for _, r := range p.PackageExternalReferences {
-		if r.RefType == string(PurlExternalRefType) {
+		if r.RefType == string(helpers.PurlExternalRefType) {
 			return r.Locator
 		}
 	}
@@ -629,8 +629,8 @@ func findPURLValue(p *spdx.Package) string {
 
 func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 	for _, r := range p.PackageExternalReferences {
-		if r.RefType == string(Cpe23ExternalRefType) {
-			c, err := cpe.New(r.Locator)
+		if r.RefType == string(helpers.Cpe23ExternalRefType) {
+			c, err := cpe.New(r.Locator, cpe.DeclaredSource)
 			if err != nil {
 				log.Warnf("unable to extract SPDX CPE=%q: %+v", r.Locator, err)
 				continue

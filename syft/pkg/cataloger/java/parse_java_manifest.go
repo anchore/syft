@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
@@ -19,7 +19,7 @@ const manifestGlob = "/META-INF/MANIFEST.MF"
 //nolint:funlen
 func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error) {
 	var manifest pkg.JavaManifest
-	var sections []map[string]string
+	sections := make([]pkg.KeyValues, 0)
 
 	currentSection := func() int {
 		return len(sections) - 1
@@ -50,7 +50,9 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 				continue
 			}
 
-			sections[currentSection()][lastKey] += strings.TrimSpace(line)
+			lastSection := sections[currentSection()]
+
+			sections[currentSection()][len(lastSection)-1].Value += strings.TrimSpace(line)
 
 			continue
 		}
@@ -72,10 +74,13 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 
 		if lastKey == "" {
 			// we're entering a new section
-			sections = append(sections, make(map[string]string))
+			sections = append(sections, make(pkg.KeyValues, 0))
 		}
 
-		sections[currentSection()][key] = value
+		sections[currentSection()] = append(sections[currentSection()], pkg.KeyValue{
+			Key:   key,
+			Value: value,
+		})
 
 		// keep track of key for potential future continuations
 		lastKey = key
@@ -88,20 +93,7 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 	if len(sections) > 0 {
 		manifest.Main = sections[0]
 		if len(sections) > 1 {
-			manifest.NamedSections = make(map[string]map[string]string)
-			for i, s := range sections[1:] {
-				name, ok := s["Name"]
-				if !ok {
-					// per the manifest spec (https://docs.oracle.com/en/java/javase/11/docs/specs/jar/jar.html#jar-manifest)
-					// this should never happen. If it does, we want to know about it, but not necessarily stop
-					// cataloging entirely... for this reason we only log.
-					log.Debugf("java manifest section found without a name: %s", path)
-					name = strconv.Itoa(i)
-				} else {
-					delete(s, "Name")
-				}
-				manifest.NamedSections[name] = s
-			}
+			manifest.Sections = sections[1:]
 		}
 	}
 
@@ -126,12 +118,12 @@ func extractNameFromApacheMavenBundlePlugin(manifest *pkg.JavaManifest) string {
 	//   The computed symbolic name is also stored in the $(maven-symbolicname) property in case you want to add attributes or directives to it.
 	//
 	if manifest != nil {
-		if strings.Contains(manifest.Main["Created-By"], "Apache Maven Bundle Plugin") {
-			if symbolicName := manifest.Main["Bundle-SymbolicName"]; symbolicName != "" {
+		if strings.Contains(manifest.Main.MustGet("Created-By"), "Apache Maven Bundle Plugin") {
+			if symbolicName := manifest.Main.MustGet("Bundle-SymbolicName"); symbolicName != "" {
 				// It is possible that `Bundle-SymbolicName` is just the groupID (like in the case of
 				// https://repo1.maven.org/maven2/com/google/oauth-client/google-oauth-client/1.25.0/google-oauth-client-1.25.0.jar),
 				// so if `Implementation-Vendor-Id` is equal to `Bundle-SymbolicName`, bail on this logic
-				if vendorID := manifest.Main["Implementation-Vendor-Id"]; vendorID != "" && vendorID == symbolicName {
+				if vendorID := manifest.Main.MustGet("Implementation-Vendor-Id"); vendorID != "" && vendorID == symbolicName {
 					return ""
 				}
 
@@ -153,6 +145,49 @@ func extractNameFromApacheMavenBundlePlugin(manifest *pkg.JavaManifest) string {
 	return ""
 }
 
+func extractNameFromArchiveFilename(a archiveFilename) string {
+	if strings.Contains(a.name, ".") {
+		// special case: this *might* be a group id + artifact id. By convention artifact ids do not have "." in them;
+		// however, there are some specific exceptions like with the artifacts under
+		// https://repo1.maven.org/maven2/org/eclipse/platform/
+		if strings.HasPrefix(a.name, "org.eclipse.") {
+			return a.name
+		}
+
+		// Maybe the filename is like groupid + . + artifactid. If so, return artifact id.
+		fields := strings.Split(a.name, ".")
+		maybeGroupID := true
+		for _, f := range fields {
+			if !isValidJavaIdentifier(f) {
+				maybeGroupID = false
+				break
+			}
+		}
+		if maybeGroupID {
+			return fields[len(fields)-1]
+		}
+	}
+
+	return a.name
+}
+
+func isValidJavaIdentifier(field string) bool {
+	runes := []rune(field)
+	if len(runes) == 0 {
+		return false
+	}
+	// check whether first rune can start an identifier name in Java
+	// Java identifier start = [Lu]|[Ll]|[Lt]|[Lm]|[Lo]|[Nl]|[Sc]|[Pc]
+	// see https://developer.classpath.org/doc/java/lang/Character-source.html
+	// line 3295
+	r := runes[0]
+	return unicode.Is(unicode.Lu, r) ||
+		unicode.Is(unicode.Ll, r) || unicode.Is(unicode.Lt, r) ||
+		unicode.Is(unicode.Lm, r) || unicode.Is(unicode.Lo, r) ||
+		unicode.Is(unicode.Nl, r) ||
+		unicode.Is(unicode.Sc, r) || unicode.Is(unicode.Pc, r)
+}
+
 func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
 	name := extractNameFromApacheMavenBundlePlugin(manifest)
 	if name != "" {
@@ -160,33 +195,29 @@ func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string 
 	}
 
 	// the filename tends to be the next-best reference for the package name
-	if filenameObj.name != "" {
-		if strings.Contains(filenameObj.name, ".") {
-			// special case: this *might* be a group id + artifact id. By convention artifact ids do not have "." in them.
-			fields := strings.Split(filenameObj.name, ".")
-			return fields[len(fields)-1]
-		}
-		return filenameObj.name
+	name = extractNameFromArchiveFilename(filenameObj)
+	if name != "" {
+		return name
 	}
 
 	// remaining fields in the manifest is a bit of a free-for-all depending on the build tooling used and package maintainer preferences
 	if manifest != nil {
 		switch {
-		case manifest.Main["Name"] != "":
+		case manifest.Main.MustGet("Name") != "":
 			// Manifest original spec...
-			return manifest.Main["Name"]
-		case manifest.Main["Bundle-Name"] != "":
+			return manifest.Main.MustGet("Name")
+		case manifest.Main.MustGet("Bundle-Name") != "":
 			// BND tooling... TODO: this does not seem accurate (I don't see a reference in the BND tooling docs for this)
-			return manifest.Main["Bundle-Name"]
-		case manifest.Main["Short-Name"] != "":
+			return manifest.Main.MustGet("Bundle-Name")
+		case manifest.Main.MustGet("Short-Name") != "":
 			// Jenkins...
-			return manifest.Main["Short-Name"]
-		case manifest.Main["Extension-Name"] != "":
+			return manifest.Main.MustGet("Short-Name")
+		case manifest.Main.MustGet("Extension-Name") != "":
 			// Jenkins...
-			return manifest.Main["Extension-Name"]
-		case manifest.Main["Implementation-Title"] != "":
+			return manifest.Main.MustGet("Extension-Name")
+		case manifest.Main.MustGet("Implementation-Title") != "":
 			// last ditch effort...
-			return manifest.Main["Implementation-Title"]
+			return manifest.Main.MustGet("Implementation-Title")
 		}
 	}
 	return ""
@@ -238,12 +269,12 @@ func selectLicenses(manifest *pkg.JavaManifest) []string {
 }
 
 func fieldValueFromManifest(manifest pkg.JavaManifest, fieldName string) string {
-	if value := manifest.Main[fieldName]; value != "" {
+	if value := manifest.Main.MustGet(fieldName); value != "" {
 		return value
 	}
 
-	for _, section := range manifest.NamedSections {
-		if value := section[fieldName]; value != "" {
+	for _, section := range manifest.Sections {
+		if value := section.MustGet(fieldName); value != "" {
 			return value
 		}
 	}

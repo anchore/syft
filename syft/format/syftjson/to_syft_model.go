@@ -35,6 +35,7 @@ func toSyftModel(doc model.Document) *sbom.SBOM {
 			FileDigests:       fileArtifacts.FileDigests,
 			FileContents:      fileArtifacts.FileContents,
 			FileLicenses:      fileArtifacts.FileLicenses,
+			Executables:       fileArtifacts.Executables,
 			LinuxDistribution: toSyftLinuxRelease(doc.Distro),
 		},
 		Source:        *toSyftSourceData(doc.Source),
@@ -69,6 +70,7 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 		FileDigests:  make(map[file.Coordinates][]file.Digest),
 		FileContents: make(map[file.Coordinates]string),
 		FileLicenses: make(map[file.Coordinates][]file.License),
+		Executables:  make(map[file.Coordinates]file.Executable),
 	}
 
 	for _, f := range files {
@@ -123,6 +125,10 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 				Type:            l.Type,
 				LicenseEvidence: evidence,
 			})
+		}
+
+		if f.Executable != nil {
+			ret.Executables[coord] = *f.Executable
 		}
 	}
 
@@ -301,9 +307,9 @@ func toSyftCatalog(pkgs []model.Package, idAliases map[string]string) *pkg.Colle
 func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 	var cpes []cpe.CPE
 	for _, c := range p.CPEs {
-		value, err := cpe.New(c)
+		value, err := cpe.New(c.Value, cpe.Source(c.Source))
 		if err != nil {
-			log.Warnf("excluding invalid CPE %q: %v", c, err)
+			log.Warnf("excluding invalid Attributes %q: %v", c, err)
 			continue
 		}
 

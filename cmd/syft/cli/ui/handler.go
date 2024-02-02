@@ -29,6 +29,8 @@ type Handler struct {
 	Config     HandlerConfig
 
 	bubbly.EventHandler
+
+	onNewCatalogerTask *sync.Once
 }
 
 func DefaultHandlerConfig() HandlerConfig {
@@ -41,26 +43,30 @@ func New(cfg HandlerConfig) *Handler {
 	d := bubbly.NewEventDispatcher()
 
 	h := &Handler{
-		EventHandler: d,
-		Running:      &sync.WaitGroup{},
-		Config:       cfg,
+		EventHandler:       d,
+		Running:            &sync.WaitGroup{},
+		Config:             cfg,
+		onNewCatalogerTask: &sync.Once{},
 	}
 
 	// register all supported event types with the respective handler functions
 	d.AddHandlers(map[partybus.EventType]bubbly.EventHandlerFn{
-		stereoscopeEvent.PullDockerImage:       h.handlePullDockerImage,
-		stereoscopeEvent.PullContainerdImage:   h.handlePullContainerdImage,
-		stereoscopeEvent.ReadImage:             h.handleReadImage,
-		stereoscopeEvent.FetchImage:            h.handleFetchImage,
-		syftEvent.PackageCatalogerStarted:      h.handlePackageCatalogerStarted,
-		syftEvent.FileDigestsCatalogerStarted:  h.handleFileDigestsCatalogerStarted,
-		syftEvent.FileMetadataCatalogerStarted: h.handleFileMetadataCatalogerStarted,
-		syftEvent.FileIndexingStarted:          h.handleFileIndexingStarted,
-		syftEvent.AttestationStarted:           h.handleAttestationStarted,
-		syftEvent.CatalogerTaskStarted:         h.handleCatalogerTaskStarted,
+		stereoscopeEvent.PullDockerImage:     simpleHandler(h.handlePullDockerImage),
+		stereoscopeEvent.PullContainerdImage: simpleHandler(h.handlePullContainerdImage),
+		stereoscopeEvent.ReadImage:           simpleHandler(h.handleReadImage),
+		stereoscopeEvent.FetchImage:          simpleHandler(h.handleFetchImage),
+		syftEvent.FileIndexingStarted:        simpleHandler(h.handleFileIndexingStarted),
+		syftEvent.AttestationStarted:         simpleHandler(h.handleAttestationStarted),
+		syftEvent.CatalogerTaskStarted:       h.handleCatalogerTaskStarted,
 	})
 
 	return h
+}
+
+func simpleHandler(fn func(partybus.Event) []tea.Model) bubbly.EventHandlerFn {
+	return func(e partybus.Event) ([]tea.Model, tea.Cmd) {
+		return fn(e), nil
+	}
 }
 
 func (m *Handler) OnMessage(msg tea.Msg) {

@@ -1,7 +1,6 @@
 package golang
 
 import (
-	"regexp"
 	"runtime/debug"
 	"strings"
 
@@ -11,7 +10,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debug.Module, mainModule, goVersion, architecture string, buildSettings map[string]string, cryptoSettings []string, locations ...file.Location) pkg.Package {
+func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings []string, locations ...file.Location) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}
@@ -48,22 +47,27 @@ func packageURL(moduleName, moduleVersion string) string {
 	// source: https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst#golang
 	// note: "The version is often empty when a commit is not specified and should be the commit in most cases when available."
 
-	re := regexp.MustCompile(`(/)[^/]*$`)
-	fields := re.Split(moduleName, -1)
+	fields := strings.Split(moduleName, "/")
 	if len(fields) == 0 {
 		return ""
 	}
-	namespace := fields[0]
-	name := strings.TrimPrefix(strings.TrimPrefix(moduleName, namespace), "/")
 
-	if name == "" {
-		// this is a "short" url (with no namespace)
-		name = namespace
-		namespace = ""
-	}
-
+	namespace := ""
+	name := ""
 	// The subpath is used to point to a subpath inside a package (e.g. pkg:golang/google.golang.org/genproto#googleapis/api/annotations)
-	subpath := "" // TODO: not implemented
+	subpath := ""
+
+	switch len(fields) {
+	case 1:
+		name = fields[0]
+	case 2:
+		name = fields[1]
+		namespace = fields[0]
+	default:
+		name = fields[2]
+		namespace = strings.Join(fields[0:2], "/")
+		subpath = strings.Join(fields[3:], "/")
+	}
 
 	return packageurl.NewPackageURL(
 		packageurl.TypeGolang,

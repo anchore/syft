@@ -1,6 +1,9 @@
 package file
 
-import "io"
+import (
+	"context"
+	"io"
+)
 
 // Resolver is an interface that encompasses how to get specific file references and file contents for a generic data source.
 type Resolver interface {
@@ -53,7 +56,7 @@ type LocationResolver interface {
 	// The implementation for this may vary, however, generally the following considerations should be made:
 	// - NO symlink resolution should be performed on results
 	// - returns locations for any file or directory
-	AllLocations() <-chan Location
+	AllLocations(ctx context.Context) <-chan Location
 }
 
 type WritableResolver interface {
