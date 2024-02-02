@@ -60,6 +60,11 @@ class Labeler(unittest.TestCase):
         expected_sorted_files = ["schema/json/schema-1.2.1.json", "schema/json/schema-1.12.1.json"]
         self.assertEqual(labeler.sort_json_schema_files(files), expected_sorted_files)
 
+        # ensure that "latest" doesn't cause a problem and is ultimately ignored
+        files = ["schema/json/schema-1.12.1.json", "schema/json/schema-_bogus.json"]
+        expected_sorted_files = ["schema/json/schema-_bogus.json", "schema/json/schema-1.12.1.json"]
+        self.assertEqual(labeler.sort_json_schema_files(files), expected_sorted_files)
+
 
 if __name__ == "__main__":
     unittest.main()
