@@ -82,15 +82,12 @@ func (a genericYarnLockAdapter) parseYarnLock(_ context.Context, resolver file.R
 			}
 
 			currentPackage = packageName
-
 		} else if version := findPackageVersion(line); version != "" {
 			currentVersion = version
-
 		} else if packageName, version, resolved := findResolvedPackageAndVersion(line); packageName != "" && version != "" && resolved != "" {
 			currentResolved = resolved
 			currentPackage = packageName
 			currentVersion = version
-
 		} else if integrity := findIntegrity(line); integrity != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
 			pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, integrity))
 			parsedPackages.Add(currentPackage + "@" + currentVersion)
