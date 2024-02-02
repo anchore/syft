@@ -62,7 +62,7 @@ func parsePipfileLock(_ context.Context, _ file.Resolver, _ *generic.Environment
 			if pkgMeta.Index != "" {
 				index = sourcesMap[pkgMeta.Index]
 			} else {
-				// https://pipenv.pypa.io/en/latest/advanced/#specifying-package-indexes
+				// https://pipenv.pypa.io/en/latest/indexes.html
 				index = "https://pypi.org/simple"
 			}
 			version := strings.TrimPrefix(pkgMeta.Version, "==")

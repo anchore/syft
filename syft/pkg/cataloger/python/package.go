@@ -25,7 +25,7 @@ func newPackageForIndex(name, version string, locations ...file.Location) pkg.Pa
 	return p
 }
 
-func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPipfileLockEntry, locations ...file.Location) pkg.Package {
+func newPackageForIndexWithMetadata(name, version string, metadata interface{}, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,

@@ -110,7 +110,7 @@ func newPnpmPackage(resolver file.Resolver, location file.Location, name, versio
 	)
 }
 
-func newYarnLockPackage(cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string) pkg.Package {
+func newYarnLockPackage(cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string, resolved string, integrity string) pkg.Package {
 	var licenseSet pkg.LicenseSet
 
 	if cfg.SearchRemoteLicenses {
@@ -123,7 +123,6 @@ func newYarnLockPackage(cfg CatalogerConfig, resolver file.Resolver, location fi
 			log.Warnf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
 		}
 	}
-
 	return finalizeLockPkg(
 		resolver,
 		location,
@@ -135,6 +134,7 @@ func newYarnLockPackage(cfg CatalogerConfig, resolver file.Resolver, location fi
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  pkg.YarnLockEntry{Resolved: resolved, Integrity: integrity},
 		},
 	)
 }
