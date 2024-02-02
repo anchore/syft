@@ -462,3 +462,340 @@ from-images:
         platform: linux/amd64
     paths:
       - /bin/consul
+
+  # PHP Extensions
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/bcmath.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+    - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/bz2.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/calendar.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/ctype.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/curl.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/dba.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/dl_test.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/enchant.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/exif.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/ffi.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/fileinfo.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/filter.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/ftp.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/gd.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/gettext.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/gmp.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/iconv.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/intl.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/ldap.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/mbstring.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/mysqli.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/odbc.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/opcache.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/pcntl.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/pdo_dblib.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/pdo_firebird.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/pdo_mysql.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/pdo_odbc.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/pdo_pgsql.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/pgsql.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/phar.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/posix.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/session.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/shmop.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/simplexml.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/snmp.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/soap.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/sockets.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/sodium.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/sysvmsg.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/sysvsem.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/sysvshm.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/tidy.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/xml.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/xmlreader.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/xmlwriter.so
+
+  - version: 8.2.15
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/xsl.so
+
+  - version: 1.21.1
+    images:
+      - ref: laurentgoderre689/php-ext:8.2-apache-bookworm@sha256:5af700c24a0cf3924b29078d1d588ceffadf6a845b5cc769d93f82ecc5a74f1c
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/php/extensions/no-debug-non-zts-20220829/zip.so
