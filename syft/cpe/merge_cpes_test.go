@@ -9,25 +9,27 @@ import (
 func Test_Merge(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    [][]Attributes
-		expected []Attributes
+		input    [][]CPE
+		expected []CPE
 	}{
 		{
 			name: "merge, removing duplicates and ordered",
-			input: [][]Attributes{
+			input: [][]CPE{
 				{
-					Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*"),
-					Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
+					Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*").WithNVDDictionarySource(),
+					Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*").WithDeclaredSource(),
+					Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*").WithGeneratedSource(),
 				},
 				{
-					Must("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
-					Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
+					Must("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*").WithDeclaredSource(),
+					Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*").WithGeneratedSource(),
 				},
 			},
-			expected: []Attributes{
-				Must("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*"),
+			expected: []CPE{
+				Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*").WithNVDDictionarySource(),
+				Must("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*").WithDeclaredSource(),
+				Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*").WithDeclaredSource(),
+				Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*").WithGeneratedSource(),
 			},
 		},
 	}

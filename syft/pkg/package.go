@@ -65,7 +65,7 @@ func (p *Package) merge(other Package) error {
 	p.Locations.Add(other.Locations.ToSlice()...)
 	p.Licenses.Add(other.Licenses.ToSlice()...)
 
-	p.CPEs = cpe.MergeSourcedCPEs(p.CPEs, other.CPEs)
+	p.CPEs = cpe.Merge(p.CPEs, other.CPEs)
 
 	if p.PURL == "" {
 		p.PURL = other.PURL

@@ -23,49 +23,49 @@ func TestBySourceThenSpecificity(t *testing.T) {
 		{
 			name: "nvd before generated",
 			input: []CPE{
-				mustSourcedCPE(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
-				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustWithSource(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustWithSource(NVDDictionaryLookupSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
 			},
 			want: []CPE{
-				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
-				mustSourcedCPE(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustWithSource(NVDDictionaryLookupSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustWithSource(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
 			},
 		},
 		{
 			name: "declared before generated",
 			input: []CPE{
-				mustSourcedCPE(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
-				mustSourcedCPE(DeclaredSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustWithSource(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustWithSource(DeclaredSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
 			},
 			want: []CPE{
-				mustSourcedCPE(DeclaredSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
-				mustSourcedCPE(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustWithSource(DeclaredSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				mustWithSource(GeneratedSource, "cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
 			},
 		},
 		{
 			name: "most specific attributes of equal sources",
 			input: []CPE{
-				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
-				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
-				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
+				mustWithSource(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
+				mustWithSource(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
+				mustWithSource(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
 			},
 			want: []CPE{
-				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
-				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
-				mustSourcedCPE(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
+				mustWithSource(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
+				mustWithSource(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
+				mustWithSource(NVDDictionaryLookupSource, "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
 			},
 		},
 		{
 			name: "most specific attributes of unknown sources",
 			input: []CPE{
-				mustSourcedCPE("", "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
-				mustSourcedCPE("some-other-unknown-source", "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
-				mustSourcedCPE("some-unknown-source", "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
+				mustWithSource("", "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
+				mustWithSource("some-other-unknown-source", "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
+				mustWithSource("some-unknown-source", "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
 			},
 			want: []CPE{
-				mustSourcedCPE("some-other-unknown-source", "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
-				mustSourcedCPE("", "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
-				mustSourcedCPE("some-unknown-source", "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
+				mustWithSource("some-other-unknown-source", "cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
+				mustWithSource("", "cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
+				mustWithSource("some-unknown-source", "cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
 			},
 		},
 	}
@@ -77,6 +77,6 @@ func TestBySourceThenSpecificity(t *testing.T) {
 	}
 }
 
-func mustSourcedCPE(source Source, str string) CPE {
+func mustWithSource(source Source, str string) CPE {
 	return Must(str).WithSource(source)
 }
