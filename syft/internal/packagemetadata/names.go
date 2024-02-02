@@ -67,6 +67,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.BinarySignature{}, "binary-signature", "BinaryMetadata"),
 	jsonNames(pkg.CocoaPodfileLockEntry{}, "cocoa-podfile-lock-entry", "CocoapodsMetadataType"),
 	jsonNames(pkg.ConanV1LockEntry{}, "c-conan-lock-entry", "ConanLockMetadataType"),
+	jsonNames(pkg.ConanV2LockEntry{}, "c-conan-lock-v2-entry"),
 	jsonNames(pkg.ConanfileEntry{}, "c-conan-file-entry", "ConanMetadataType"),
 	jsonNames(pkg.ConaninfoEntry{}, "c-conan-info-entry"),
 	jsonNames(pkg.DartPubspecLockEntry{}, "dart-pubspec-lock-entry", "DartPubMetadata"),

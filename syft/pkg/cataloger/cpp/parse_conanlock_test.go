@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func TestParseConanlock(t *testing.T) {
+func TestParseConanLock(t *testing.T) {
 	fixture := "test-fixtures/conan.lock"
 	expected := []pkg.Package{
 		{
@@ -330,5 +330,46 @@ func TestParseConanlock(t *testing.T) {
 		},
 	}
 
-	pkgtest.TestFileParser(t, fixture, parseConanlock, expected, expectedRelationships)
+	pkgtest.TestFileParser(t, fixture, parseConanLock, expected, expectedRelationships)
+}
+
+func TestParseConanLockV2(t *testing.T) {
+	fixture := "test-fixtures/conanlock-v2/conan.lock"
+	expected := []pkg.Package{
+		{
+			Name:      "matrix",
+			Version:   "1.1",
+			PURL:      "pkg:conan/matrix@1.1",
+			Locations: file.NewLocationSet(file.NewLocation(fixture)),
+			Language:  pkg.CPP,
+			Type:      pkg.ConanPkg,
+			Metadata: pkg.ConanV2LockEntry{
+				Ref:            "matrix/1.1#905c3f0babc520684c84127378fefdd0%1675278901.7527816",
+				RecipeRevision: "905c3f0babc520684c84127378fefdd0",
+				TimeStamp:      "1675278901.7527816",
+			},
+		},
+		{
+			Name:      "sound32",
+			Version:   "1.0",
+			PURL:      "pkg:conan/sound32@1.0",
+			Locations: file.NewLocationSet(file.NewLocation(fixture)),
+			Language:  pkg.CPP,
+			Type:      pkg.ConanPkg,
+			Metadata: pkg.ConanV2LockEntry{
+				Ref:            "sound32/1.0#83d4b7bf607b3b60a6546f8b58b5cdd7%1675278904.0791488",
+				RecipeRevision: "83d4b7bf607b3b60a6546f8b58b5cdd7",
+				TimeStamp:      "1675278904.0791488",
+			},
+		},
+	}
+
+	// relationships require IDs to be set to be sorted similarly
+	for i := range expected {
+		expected[i].SetID()
+	}
+
+	var expectedRelationships []artifact.Relationship
+
+	pkgtest.TestFileParser(t, fixture, parseConanLock, expected, expectedRelationships)
 }

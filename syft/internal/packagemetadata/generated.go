@@ -12,6 +12,7 @@ func AllTypes() []any {
 		pkg.BinarySignature{},
 		pkg.CocoaPodfileLockEntry{},
 		pkg.ConanV1LockEntry{},
+		pkg.ConanV2LockEntry{},
 		pkg.ConanfileEntry{},
 		pkg.ConaninfoEntry{},
 		pkg.DartPubspecLockEntry{},
