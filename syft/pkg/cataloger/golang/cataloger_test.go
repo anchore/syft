@@ -81,7 +81,7 @@ func Test_Binary_Cataloger_Stdlib_Cpe(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := generateStdlibCpe(tc.candidate)
 			assert.NoError(t, err, "expected no err; got %v", err)
-			assert.Equal(t, got.String(), tc.want)
+			assert.Equal(t, got.Attributes.String(), tc.want)
 		})
 	}
 }

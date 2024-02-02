@@ -58,11 +58,11 @@ func GetIndexedDictionary() (_ *dictionary.Indexed, err error) {
 	return indexedCPEDictionary, err
 }
 
-func FromDictionaryFind(p pkg.Package) (cpe.Attributes, bool) {
+func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 	dict, err := GetIndexedDictionary()
 	if err != nil {
 		log.Debugf("dictionary Attributes lookup not available: %+v", err)
-		return cpe.Attributes{}, false
+		return cpe.CPE{}, false
 	}
 
 	var (
@@ -88,20 +88,20 @@ func FromDictionaryFind(p pkg.Package) (cpe.Attributes, bool) {
 
 	default:
 		// The dictionary doesn't support this package type yet.
-		return cpe.Attributes{}, false
+		return cpe.CPE{}, false
 	}
 
 	if !ok {
 		// The dictionary doesn't have a Attributes for this package.
-		return cpe.Attributes{}, false
+		return cpe.CPE{}, false
 	}
 
-	parsedCPE, err := cpe.NewAttributes(cpeString)
+	parsedCPE, err := cpe.New(cpeString, cpe.NVDDictionaryLookupSource)
 	if err != nil {
-		return cpe.Attributes{}, false
+		return cpe.CPE{}, false
 	}
 
-	parsedCPE.Version = p.Version
+	parsedCPE.Attributes.Version = p.Version
 
 	return parsedCPE, true
 }
@@ -138,8 +138,8 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 
 	sort.Sort(cpe.BySpecificity(cpes))
 	var result []cpe.CPE
-	for _, cpe := range cpes {
-		result = append(result, cpe.WithGeneratedSource())
+	for _, c := range cpes {
+		result = append(result, cpe.CPE{Attributes: c, Source: cpe.GeneratedSource})
 	}
 
 	return result

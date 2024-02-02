@@ -11,6 +11,5 @@ func Generate(p pkg.Package) []cpe.CPE {
 }
 
 func DictionaryFind(p pkg.Package) (cpe.CPE, bool) {
-	c, ok := cpegenerate.FromDictionaryFind(p)
-	return c.WithNVDDictionarySource(), ok
+	return cpegenerate.FromDictionaryFind(p)
 }

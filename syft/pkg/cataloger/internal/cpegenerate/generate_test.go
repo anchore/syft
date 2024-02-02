@@ -1010,7 +1010,7 @@ func TestDictionaryFindIsWired(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, gotExists := FromDictionaryFind(tt.pkg)
 
-			assert.Equal(t, tt.want, got.BindToFmtString())
+			assert.Equal(t, tt.want, got.Attributes.BindToFmtString())
 			assert.Equal(t, tt.wantExists, gotExists)
 		})
 	}

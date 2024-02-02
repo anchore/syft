@@ -117,12 +117,12 @@ func (c *nativeImageCataloger) Name() string {
 func getPackage(component nativeImageComponent) pkg.Package {
 	var cpes []cpe.CPE
 	for _, property := range component.Properties {
-		c, err := cpe.NewAttributes(property.Value)
+		c, err := cpe.New(property.Value, cpe.DeclaredSource)
 		if err != nil {
 			log.Debugf("unable to parse Attributes: %v", err)
 			continue
 		}
-		cpes = append(cpes, c.WithDeclaredSource())
+		cpes = append(cpes, c)
 	}
 	return pkg.Package{
 		Name:     component.Name,

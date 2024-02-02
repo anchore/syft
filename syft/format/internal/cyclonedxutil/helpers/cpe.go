@@ -33,22 +33,22 @@ func encodeCPEs(p pkg.Package) (out []cyclonedx.Property) {
 
 func decodeCPEs(c *cyclonedx.Component) (out []cpe.CPE) {
 	if c.CPE != "" {
-		cp, err := cpe.NewAttributes(c.CPE)
+		cp, err := cpe.New(c.CPE, cpe.DeclaredSource)
 		if err != nil {
 			log.Warnf("invalid CPE: %s", c.CPE)
 		} else {
-			out = append(out, cp.WithDeclaredSource())
+			out = append(out, cp)
 		}
 	}
 
 	if c.Properties != nil {
 		for _, p := range *c.Properties {
 			if p.Name == "syft:cpe23" {
-				cp, err := cpe.NewAttributes(p.Value)
+				cp, err := cpe.New(p.Value, cpe.DeclaredSource)
 				if err != nil {
 					log.Warnf("invalid CPE: %s", p.Value)
 				} else {
-					out = append(out, cp.WithDeclaredSource())
+					out = append(out, cp)
 				}
 			}
 		}

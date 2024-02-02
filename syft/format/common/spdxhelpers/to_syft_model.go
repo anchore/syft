@@ -630,12 +630,12 @@ func findPURLValue(p *spdx.Package) string {
 func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 	for _, r := range p.PackageExternalReferences {
 		if r.RefType == string(helpers.Cpe23ExternalRefType) {
-			c, err := cpe.NewAttributes(r.Locator)
+			c, err := cpe.New(r.Locator, cpe.DeclaredSource)
 			if err != nil {
 				log.Warnf("unable to extract SPDX CPE=%q: %+v", r.Locator, err)
 				continue
 			}
-			cpes = append(cpes, c.WithoutSource())
+			cpes = append(cpes, c)
 		}
 	}
 	return cpes

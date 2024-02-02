@@ -28,29 +28,6 @@ const (
 	DeclaredSource            Source = "declared"
 )
 
-func (c Attributes) WithGeneratedSource() CPE {
-	return c.WithSource(GeneratedSource)
-}
-
-func (c Attributes) WithNVDDictionarySource() CPE {
-	return c.WithSource(NVDDictionaryLookupSource)
-}
-
-func (c Attributes) WithoutSource() CPE {
-	return CPE{Attributes: c}
-}
-
-func (c Attributes) WithDeclaredSource() CPE {
-	return c.WithSource(DeclaredSource)
-}
-
-func (c Attributes) WithSource(source Source) CPE {
-	return CPE{
-		Attributes: c,
-		Source:     source,
-	}
-}
-
 const Any = ""
 
 type Attributes struct {
@@ -102,7 +79,10 @@ func New(value string, source Source) (CPE, error) {
 	if err != nil {
 		return CPE{}, err
 	}
-	return attributes.WithSource(source), nil
+	return CPE{
+		Attributes: attributes,
+		Source:     source,
+	}, nil
 }
 
 // NewAttributes will parse a formatted Attributes string and return a Attributes object. Some input, such as the existence of whitespace
