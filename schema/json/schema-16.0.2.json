@@ -2242,6 +2242,12 @@
       },
       "type": "array"
     },
+    "cpes": {
+      "items": {
+        "$ref": "#/$defs/CPE"
+      },
+      "type": "array"
+    },
     "licenses": {
       "items": {
         "$ref": "#/$defs/License"
