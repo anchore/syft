@@ -23,8 +23,8 @@ func DefaultClassifiers() []Classifier {
 			Package: "python",
 			PURL:    mustPURL("pkg:generic/python@version"),
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
+				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 			},
 		},
 		{
@@ -34,8 +34,8 @@ func DefaultClassifiers() []Classifier {
 			Package:         "python",
 			PURL:            mustPURL("pkg:generic/python@version"),
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
+				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 			},
 		},
 		{
@@ -93,7 +93,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
 			Package: "java",
 			PURL:    mustPURL("pkg:generic/java@version"),
-			// TODO the updates might need to be part of the CPE, like: 1.8.0:update152
+			// TODO the updates might need to be part of the CPE Attributes, like: 1.8.0:update152
 			CPEs: singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*"),
 		},
 		{
@@ -255,8 +255,8 @@ func DefaultClassifiers() []Classifier {
 			Package: "percona-server",
 			PURL:    mustPURL("pkg:generic/percona-server@version"),
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*"),
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 			},
 		},
 		{
@@ -267,9 +267,9 @@ func DefaultClassifiers() []Classifier {
 			Package: "percona-xtradb-cluster",
 			PURL:    mustPURL("pkg:generic/percona-xtradb-cluster@version"),
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:percona:xtradb_cluster:*:*:*:*:*:*:*:*"),
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:percona:xtradb_cluster:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 			},
 		},
 		{
@@ -363,8 +363,8 @@ func DefaultClassifiers() []Classifier {
 			Package: "nginx",
 			PURL:    mustPURL("pkg:generic/nginx@version"),
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*"),
+				cpe.Must("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 			},
 		},
 		{

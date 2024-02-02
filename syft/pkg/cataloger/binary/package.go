@@ -21,8 +21,8 @@ func newPackage(classifier Classifier, location file.Location, matchMetadata map
 
 	var cpes []cpe.CPE
 	for _, c := range classifier.CPEs {
-		c.Version = version
-		c.Update = update
+		c.Attributes.Version = version
+		c.Attributes.Update = update
 		cpes = append(cpes, c)
 	}
 

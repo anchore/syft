@@ -1,25 +1,27 @@
 package cpe
 
 import (
+	"fmt"
 	"sort"
 )
 
-func Merge(a, b []CPE) (result []CPE) {
-	aCPEs := make(map[string]CPE)
-
-	// keep all CPEs from a and create a quick string-based lookup
-	for _, aCPE := range a {
-		aCPEs[aCPE.BindToFmtString()] = aCPE
-		result = append(result, aCPE)
+// Merge returns unique SourcedCPEs that are found in A or B
+// Two SourcedCPEs are identical if their source and normalized string are identical
+func Merge(a, b []CPE) []CPE {
+	var result []CPE
+	dedupe := make(map[string]CPE)
+	key := func(scpe CPE) string {
+		return fmt.Sprintf("%s:%s", scpe.Source.String(), scpe.Attributes.BindToFmtString())
 	}
-
-	// keep all unique CPEs from b
-	for _, bCPE := range b {
-		if _, exists := aCPEs[bCPE.BindToFmtString()]; !exists {
-			result = append(result, bCPE)
-		}
+	for _, s := range a {
+		dedupe[key(s)] = s
 	}
-
-	sort.Sort(BySpecificity(result))
+	for _, s := range b {
+		dedupe[key(s)] = s
+	}
+	for _, val := range dedupe {
+		result = append(result, val)
+	}
+	sort.Sort(BySourceThenSpecificity(result))
 	return result
 }

@@ -103,7 +103,7 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 }
 
 func formatCPE(cpeString string) string {
-	c, err := cpe.New(cpeString)
+	c, err := cpe.NewAttributes(cpeString)
 	if err != nil {
 		log.Debugf("skipping invalid CPE: %s", cpeString)
 		return ""

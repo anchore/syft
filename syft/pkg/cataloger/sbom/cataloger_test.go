@@ -14,19 +14,9 @@ import (
 
 func mustCPEs(s ...string) (c []cpe.CPE) {
 	for _, i := range s {
-		c = append(c, mustCPE(i))
+		c = append(c, cpe.Must(i, ""))
 	}
 	return
-}
-
-func mustCPE(c string) cpe.CPE {
-	return must(cpe.New(c))
-}
-func must(c cpe.CPE, e error) cpe.CPE {
-	if e != nil {
-		panic(e)
-	}
-	return c
 }
 
 func Test_parseSBOM(t *testing.T) {
