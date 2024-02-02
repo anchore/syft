@@ -29,10 +29,7 @@ func parseOTPApp(_ file.Resolver, _ *generic.Environment, reader file.LocationRe
 			version := key.Get(1).String()
 
 			p := newPackageFromOTP(
-				pkg.ErlangOTPApplication{
-					Name:    name,
-					Version: version,
-				},
+				name, version,
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			)
 

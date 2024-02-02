@@ -23,10 +23,6 @@ func TestParseOTPApplication(t *testing.T) {
 					Language: pkg.Erlang,
 					Type:     pkg.ErLangOTPPkg,
 					PURL:     "pkg:otp/rabbit@3.12.10",
-					Metadata: pkg.ErlangOTPApplication{
-						Name:    "rabbit",
-						Version: "3.12.10",
-					},
 				},
 			},
 		},

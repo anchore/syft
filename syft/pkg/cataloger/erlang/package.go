@@ -35,15 +35,14 @@ func packageURLFromRebar(m pkg.ErlangRebarLockEntry) string {
 	).ToString()
 }
 
-func newPackageFromOTP(d pkg.ErlangOTPApplication, locations ...file.Location) pkg.Package {
+func newPackageFromOTP(name, version string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:      d.Name,
-		Version:   d.Version,
+		Name:      name,
+		Version:   version,
 		Language:  pkg.Erlang,
 		Locations: file.NewLocationSet(locations...),
-		PURL:      packageURLFromOTP(d),
+		PURL:      packageURLFromOTP(name, version),
 		Type:      pkg.ErLangOTPPkg,
-		Metadata:  d,
 	}
 
 	p.SetID()
@@ -51,14 +50,14 @@ func newPackageFromOTP(d pkg.ErlangOTPApplication, locations ...file.Location) p
 	return p
 }
 
-func packageURLFromOTP(m pkg.ErlangOTPApplication) string {
+func packageURLFromOTP(name, version string) string {
 	var qualifiers packageurl.Qualifiers
 
 	return packageurl.NewPackageURL(
 		packageurl.TypeOTP,
 		"",
-		m.Name,
-		m.Version,
+		name,
+		version,
 		qualifiers,
 		"",
 	).ToString()

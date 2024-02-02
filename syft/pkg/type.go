@@ -18,7 +18,7 @@ const (
 	DartPubPkg              Type = "dart-pub"
 	DebPkg                  Type = "deb"
 	DotnetPkg               Type = "dotnet"
-	ErLangOTPPkg            Type = "otp"
+	ErLangOTPPkg            Type = "erlang-otp"
 	GemPkg                  Type = "gem"
 	GithubActionPkg         Type = "github-action"
 	GithubActionWorkflowPkg Type = "github-action-workflow"
