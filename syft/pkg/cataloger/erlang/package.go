@@ -54,8 +54,7 @@ func packageURLFromOTP(name, version string) string {
 	var qualifiers packageurl.Qualifiers
 
 	return packageurl.NewPackageURL(
-		// TODO: replace this with packageurl.TypeOTP once https://github.com/anchore/packageurl-go/pull/16 is merged
-		"otp",
+		packageurl.TypeOTP,
 		"",
 		name,
 		version,

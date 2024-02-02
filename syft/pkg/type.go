@@ -93,7 +93,7 @@ func (t Type) PackageURLType() string {
 	case DebPkg:
 		return "deb"
 	case DotnetPkg:
-		return packageurl.TypeDotnet
+		return "dotnet"
 	case ErLangOTPPkg:
 		return packageurl.TypeOTP
 	case GemPkg:
@@ -177,7 +177,7 @@ func TypeByName(name string) Type {
 		return RustPkg
 	case packageurl.TypePub:
 		return DartPubPkg
-	case packageurl.TypeDotnet:
+	case "dotnet": // here to support legacy use cases
 		return DotnetPkg
 	case packageurl.TypeCocoapods:
 		return CocoapodsPkg
