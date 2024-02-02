@@ -93,7 +93,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
 			Package: "java",
 			PURL:    mustPURL("pkg:generic/java@version"),
-			// TODO the updates might need to be part of the Attributes, like: 1.8.0:update152
+			// TODO the updates might need to be part of the CPE Attributes, like: 1.8.0:update152
 			CPEs: singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*"),
 		},
 		{

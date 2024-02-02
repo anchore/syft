@@ -51,7 +51,7 @@ func GetIndexedDictionary() (_ *dictionary.Indexed, err error) {
 	}
 
 	if indexedCPEDictionary == nil {
-		err = fmt.Errorf("failed to unmarshal indexed Attributes dictionary")
+		err = fmt.Errorf("failed to unmarshal indexed CPE dictionary")
 		return
 	}
 
@@ -61,7 +61,7 @@ func GetIndexedDictionary() (_ *dictionary.Indexed, err error) {
 func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 	dict, err := GetIndexedDictionary()
 	if err != nil {
-		log.Debugf("dictionary Attributes lookup not available: %+v", err)
+		log.Debugf("CPE dictionary lookup not available: %+v", err)
 		return cpe.CPE{}, false
 	}
 
@@ -92,7 +92,7 @@ func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 	}
 
 	if !ok {
-		// The dictionary doesn't have a Attributes for this package.
+		// The dictionary doesn't have a CPE for this package.
 		return cpe.CPE{}, false
 	}
 

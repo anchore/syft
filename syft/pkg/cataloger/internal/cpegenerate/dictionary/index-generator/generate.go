@@ -90,7 +90,7 @@ func filterCpeList(cpeList CpeList) CpeList {
 	return processedCpeList
 }
 
-// normalizeCPE removes the version and update parts of a Attributes.
+// normalizeCPE removes the version and update parts of CPE Attributes.
 func normalizeCPE(cpe *wfn.Attributes) *wfn.Attributes {
 	cpeCopy := *cpe
 

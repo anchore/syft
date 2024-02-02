@@ -9,7 +9,7 @@ import (
 
 const jenkinsName = "jenkins"
 
-// filterFn instances should return true if the given Attributes should be removed from a collection for the given package
+// filterFn instances should return true if the given CPE attributes should be removed from a collection for the given package
 type filterFn func(cpe cpe.Attributes, p pkg.Package) bool
 
 var cpeFilters = []filterFn{
@@ -27,7 +27,7 @@ cpeLoop:
 				continue cpeLoop
 			}
 		}
-		// all filter functions passed on filtering this Attributes
+		// all filter functions passed on filtering this CPE
 		result = append(result, c)
 	}
 	return result

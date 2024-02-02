@@ -225,7 +225,8 @@ func getContents(resolver file.Resolver, location file.Location) ([]byte, error)
 	return contents, nil
 }
 
-// singleCPE returns a []cpe.Attributes based on the cpe string or panics if the Attributes is invalid
+// singleCPE returns a []cpe.CPE with Source: Generated based on the cpe string or panics if the
+// cpe string cannot be parsed into valid CPE Attributes
 func singleCPE(cpeString string) []cpe.CPE {
 	return []cpe.CPE{
 		cpe.Must(cpeString, cpe.GeneratedSource),
