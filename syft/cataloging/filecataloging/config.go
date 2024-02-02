@@ -77,7 +77,7 @@ func (cfg Config) WithHashers(hashers ...crypto.Hash) Config {
 	return cfg
 }
 
-func (cfg Config) WithContent(content filecontent.Config) Config {
+func (cfg Config) WithContentConfig(content filecontent.Config) Config {
 	cfg.Content = content
 	return cfg
 }
