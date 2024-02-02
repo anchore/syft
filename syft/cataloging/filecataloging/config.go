@@ -72,7 +72,12 @@ func (cfg Config) WithSelection(selection file.Selection) Config {
 	return cfg
 }
 
-func (cfg Config) WithHashers(hashers []crypto.Hash) Config {
+func (cfg Config) WithHashers(hashers ...crypto.Hash) Config {
 	cfg.Hashers = intFile.NormalizeHashes(hashers)
+	return cfg
+}
+
+func (cfg Config) WithContentConfig(content filecontent.Config) Config {
+	cfg.Content = content
 	return cfg
 }
