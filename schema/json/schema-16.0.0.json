@@ -275,6 +275,20 @@
         "ref"
       ]
     },
+    "CPE": {
+      "properties": {
+        "cpe": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "cpe"
+      ]
+    },
     "ClassifierMatch": {
       "properties": {
         "classifier": {
@@ -2123,20 +2137,6 @@
         "metadata"
       ]
     },
-    "SourcedCPE": {
-      "properties": {
-        "cpe": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        }
-      },
-      "type": "object",
-      "required": [
-        "cpe"
-      ]
-    },
     "SwiftPackageManagerLockEntry": {
       "properties": {
         "revision": {
@@ -2150,7 +2150,7 @@
     },
     "cpes": {
       "items": {
-        "$ref": "#/$defs/SourcedCPE"
+        "$ref": "#/$defs/CPE"
       },
       "type": "array"
     },
