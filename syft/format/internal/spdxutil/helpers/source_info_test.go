@@ -268,7 +268,7 @@ func Test_SourceInfo(t *testing.T) {
 				Type: pkg.WordpressPluginPkg,
 			},
 			expected: []string{
-				"acquired package info from found wordpress plugin files",
+				"acquired package info from found wordpress plugin PHP source files",
 			},
 		},
 	}

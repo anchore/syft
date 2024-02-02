@@ -61,7 +61,7 @@ func SourceInfo(p pkg.Package) string {
 	case pkg.GithubActionPkg, pkg.GithubActionWorkflowPkg:
 		answer = "acquired package info from GitHub Actions workflow file or composite action file"
 	case pkg.WordpressPluginPkg:
-		answer = "acquired package info from found wordpress plugin files"
+		answer = "acquired package info from found wordpress plugin PHP source files"
 	default:
 		answer = "acquired package info from the following paths"
 	}
