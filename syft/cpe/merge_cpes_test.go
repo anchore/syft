@@ -16,20 +16,20 @@ func Test_Merge(t *testing.T) {
 			name: "merge, removing duplicates and ordered",
 			input: [][]CPE{
 				{
-					Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*").WithNVDDictionarySource(),
-					Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*").WithDeclaredSource(),
-					Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*").WithGeneratedSource(),
+					Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*", NVDDictionaryLookupSource),
+					Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*", DeclaredSource),
+					Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*", GeneratedSource),
 				},
 				{
-					Must("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*").WithDeclaredSource(),
-					Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*").WithGeneratedSource(),
+					Must("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*", DeclaredSource),
+					Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*", GeneratedSource),
 				},
 			},
 			expected: []CPE{
-				Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*").WithNVDDictionarySource(),
-				Must("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*").WithDeclaredSource(),
-				Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*").WithDeclaredSource(),
-				Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*").WithGeneratedSource(),
+				Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*", NVDDictionaryLookupSource),
+				Must("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*", DeclaredSource),
+				Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*", DeclaredSource),
+				Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*", GeneratedSource),
 			},
 		},
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_New(t *testing.T) {
+func Test_NewAttributes(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -21,17 +21,17 @@ func Test_New(t *testing.T) {
 		{
 			name:     "gocase",
 			input:    `cpe:/a:10web:form_maker:1.0.0::~~~wordpress~~`,
-			expected: Must(`cpe:2.3:a:10web:form_maker:1.0.0:*:*:*:*:wordpress:*:*`),
+			expected: MustAttributes(`cpe:2.3:a:10web:form_maker:1.0.0:*:*:*:*:wordpress:*:*`),
 		},
 		{
 			name:     "dashes",
 			input:    `cpe:/a:7-zip:7-zip:4.56:beta:~~~windows~~`,
-			expected: Must(`cpe:2.3:a:7-zip:7-zip:4.56:beta:*:*:*:windows:*:*`),
+			expected: MustAttributes(`cpe:2.3:a:7-zip:7-zip:4.56:beta:*:*:*:windows:*:*`),
 		},
 		{
 			name:     "URL escape characters",
 			input:    `cpe:/a:%240.99_kindle_books_project:%240.99_kindle_books:6::~~~android~~`,
-			expected: Must(`cpe:2.3:a:\$0.99_kindle_books_project:\$0.99_kindle_books:6:*:*:*:*:android:*:*`),
+			expected: MustAttributes(`cpe:2.3:a:\$0.99_kindle_books_project:\$0.99_kindle_books:6:*:*:*:*:android:*:*`),
 		},
 	}
 
@@ -216,11 +216,11 @@ func Test_RoundTrip(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// Attributes string must be preserved through a round trip
-			assert.Equal(t, test.cpe, Must(test.cpe).String())
+			assert.Equal(t, test.cpe, MustAttributes(test.cpe).String())
 			// The parsed Attributes must be the same after a round trip
-			assert.Equal(t, Must(test.cpe), Must(Must(test.cpe).String()))
+			assert.Equal(t, MustAttributes(test.cpe), MustAttributes(MustAttributes(test.cpe).String()))
 			// The test case parsed Attributes must be the same after parsing the input string
-			assert.Equal(t, test.parsedCPE, Must(test.cpe))
+			assert.Equal(t, test.parsedCPE, MustAttributes(test.cpe))
 			// The test case parsed Attributes must produce the same string as the input cpe
 			assert.Equal(t, test.parsedCPE.String(), test.cpe)
 		})

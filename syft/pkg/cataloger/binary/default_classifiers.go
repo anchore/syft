@@ -22,9 +22,9 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "python",
 			PURL:    mustPURL("pkg:generic/python@version"),
-			CPEs: []cpe.Attributes{
-				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 			},
 		},
 		{
@@ -33,9 +33,9 @@ func DefaultClassifiers() []Classifier {
 			EvidenceMatcher: libpythonMatcher,
 			Package:         "python",
 			PURL:            mustPURL("pkg:generic/python@version"),
-			CPEs: []cpe.Attributes{
-				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 			},
 		},
 		{
@@ -254,9 +254,9 @@ func DefaultClassifiers() []Classifier {
 				`(?m).*/percona-server-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 			Package: "percona-server",
 			PURL:    mustPURL("pkg:generic/percona-server@version"),
-			CPEs: []cpe.Attributes{
-				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 			},
 		},
 		{
@@ -266,10 +266,10 @@ func DefaultClassifiers() []Classifier {
 				`(?m).*/Percona-XtraDB-Cluster-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 			Package: "percona-xtradb-cluster",
 			PURL:    mustPURL("pkg:generic/percona-xtradb-cluster@version"),
-			CPEs: []cpe.Attributes{
-				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:percona:xtradb_cluster:*:*:*:*:*:*:*:*"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:percona:xtradb_cluster:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 			},
 		},
 		{
@@ -362,9 +362,9 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "nginx",
 			PURL:    mustPURL("pkg:generic/nginx@version"),
-			CPEs: []cpe.Attributes{
-				cpe.Must("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*"),
-				cpe.Must("cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 			},
 		},
 		{

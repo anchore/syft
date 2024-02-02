@@ -10,8 +10,8 @@ import (
 )
 
 func Test_encodeCPE(t *testing.T) {
-	testCPE := cpe.Must("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*").WithSource("test-source")
-	testCPE2 := cpe.Must("cpe:2.3:a:name:name2:3.2:*:*:*:*:*:*:*").WithSource("test-source-2")
+	testCPE := cpe.Must("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*", "test-source")
+	testCPE2 := cpe.Must("cpe:2.3:a:name:name2:3.2:*:*:*:*:*:*:*", "test-source-2")
 	tests := []struct {
 		name     string
 		input    pkg.Package

@@ -10,7 +10,7 @@ import (
 )
 
 func Test_ExternalRefs(t *testing.T) {
-	testCPE := cpe.Must("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*").WithoutSource()
+	testCPE := cpe.Must("cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*", cpe.Source(""))
 	tests := []struct {
 		name     string
 		input    pkg.Package

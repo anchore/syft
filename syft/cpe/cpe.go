@@ -97,6 +97,14 @@ const cpeRegexString = ((`^([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\._\-~%]*){0,6})`)
 
 var cpeRegex = regexp.MustCompile(cpeRegexString)
 
+func New(value string, source Source) (CPE, error) {
+	attributes, err := NewAttributes(value)
+	if err != nil {
+		return CPE{}, err
+	}
+	return attributes.WithSource(source), nil
+}
+
 // NewAttributes will parse a formatted Attributes string and return a Attributes object. Some input, such as the existence of whitespace
 // characters is allowed, however, a more strict validation is done after this sanitization process.
 func NewAttributes(cpeStr string) (Attributes, error) {
@@ -116,8 +124,16 @@ func NewAttributes(cpeStr string) (Attributes, error) {
 	return c, nil
 }
 
-// Must returns a Attributes or panics if the provided string is not valid
-func Must(cpeStr string) Attributes {
+// Must returns a CPE or panics if the provided string is not valid
+func Must(cpeStr string, source Source) CPE {
+	c := MustAttributes(cpeStr)
+	return CPE{
+		Attributes: c,
+		Source:     source,
+	}
+}
+
+func MustAttributes(cpeStr string) Attributes {
 	c, err := NewAttributes(cpeStr)
 	if err != nil {
 		panic(err)

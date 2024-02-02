@@ -25,7 +25,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
 				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				CPEs:            []cpe.Attributes{},
+				CPEs:            []cpe.CPE{},
 			},
 			cpes: nil,
 		},
@@ -36,8 +36,8 @@ func Test_ClassifierCPEs(t *testing.T) {
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
 				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				CPEs: []cpe.Attributes{
-					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
+				CPEs: []cpe.CPE{
+					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 				},
 			},
 			cpes: []string{
@@ -51,9 +51,9 @@ func Test_ClassifierCPEs(t *testing.T) {
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
 				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
-				CPEs: []cpe.Attributes{
-					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"),
-					cpe.Must("cpe:2.3:a:some:apps:*:*:*:*:*:*:*:*"),
+				CPEs: []cpe.CPE{
+					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+					cpe.Must("cpe:2.3:a:some:apps:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 				},
 			},
 			cpes: []string{
@@ -109,7 +109,7 @@ func TestClassifier_MarshalJSON(t *testing.T) {
 					Qualifiers: nil,
 					Subpath:    "subpath",
 				},
-				CPEs: []cpe.Attributes{cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*")},
+				CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource)},
 			},
 			want: `{"class":"class","fileGlob":"glob","package":"pkg","purl":"pkg:type/namespace/name@version#subpath","cpes":["cpe:2.3:a:some:app:*:*:*:*:*:*:*:*"]}`,
 		},
