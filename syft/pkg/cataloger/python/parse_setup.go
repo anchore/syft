@@ -2,6 +2,7 @@ package python
 
 import (
 	"bufio"
+	"context"
 	"regexp"
 	"strings"
 
@@ -22,7 +23,7 @@ var _ generic.Parser = parseSetup
 //	" mypy2 == v0.770", ' mypy3== v0.770',  --> match(name=mypy2 version=v0.770), match(name=mypy3, version=v0.770)
 var pinnedDependency = regexp.MustCompile(`['"]\W?(\w+\W?==\W?[\w.]*)`)
 
-func parseSetup(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseSetup(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 
 	scanner := bufio.NewScanner(reader)

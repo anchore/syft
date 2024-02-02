@@ -23,7 +23,7 @@ jobs:
         uses: ./.github/actions/bootstrap
 
       - name: Restore base benchmark result
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 #v4.0.0
         with:
           path: test/results/benchmark-main.txt
           # use base sha for PR or new commit hash for main push in benchmark result key
@@ -39,13 +39,13 @@ jobs:
           OUTPUT="${OUTPUT//$'\r'/'%0D'}" # URL encode all '\r' characters
           echo "result=$OUTPUT" >> $GITHUB_OUTPUT
 
-      - uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
+      - uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           name: benchmark-test-results
           path: test/results/**/*
 
       - name: Update PR benchmark results comment
-        uses: marocchino/sticky-pull-request-comment@efaaab3fd41a9c3de579aba759d2552635e590fd #v2.8.0
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 #v2.9.0
         continue-on-error: true
         with:
           header: benchmark

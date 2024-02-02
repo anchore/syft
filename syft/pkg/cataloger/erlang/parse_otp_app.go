@@ -1,19 +1,23 @@
 package erlang
 
 import (
+	"context"
+
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// parseRebarLock parses a rebar.lock and returns the discovered Elixir packages.
-//
-//nolint:funlen
-func parseOTPApp(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+// parseOTPApp parses a OTP *.app files to a package objects
+func parseOTPApp(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	doc, err := parseErlang(reader)
 	if err != nil {
-		return nil, nil, err
+		// there are multiple file formats that use the *.app extension, so it's possible that this is not an OTP app file at all
+		// ... which means we should not return an error here
+		log.WithFields("error", err).Trace("unable to parse Erlang OTP app")
+		return nil, nil, nil
 	}
 
 	var packages []pkg.Package

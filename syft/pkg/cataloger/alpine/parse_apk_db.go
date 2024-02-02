@@ -2,6 +2,7 @@ package alpine
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -34,7 +35,7 @@ type parsedData struct {
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
 //nolint:funlen,gocognit
-func parseApkDB(resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
 
 	var apks []parsedData

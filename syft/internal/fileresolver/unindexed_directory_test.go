@@ -4,6 +4,7 @@
 package fileresolver
 
 import (
+	"context"
 	"io"
 	"os"
 	"path"
@@ -17,6 +18,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
@@ -536,6 +538,19 @@ func Test_UnindexedDirectoryResolver_Basic(t *testing.T) {
 	locations, err := r.FilesByGlob("image-symlinks/*")
 	require.NoError(t, err)
 	require.Len(t, locations, 5)
+}
+
+func Test_UnindexedDirectoryResolver_NoGoroutineLeak(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
+	r := NewFromUnindexedDirectory(path.Join(wd, "test-fixtures"))
+	ctx, cancel := context.WithCancel(context.Background())
+	for range r.AllLocations(ctx) {
+		break
+	}
+	cancel()
 }
 
 func Test_UnindexedDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {
@@ -1168,7 +1183,9 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 func Test_UnindexedDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 	resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-prune-indexing")
 
-	allLocations := resolver.AllLocations()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	allLocations := resolver.AllLocations(ctx)
 	var allRealPaths []stereoscopeFile.Path
 	for l := range allLocations {
 		allRealPaths = append(allRealPaths, stereoscopeFile.Path(l.RealPath))
@@ -1200,7 +1217,9 @@ func Test_UnindexedDirectoryResolver_AllLocations(t *testing.T) {
 	resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-from-image-symlinks-fixture")
 
 	paths := strset.New()
-	for loc := range resolver.AllLocations() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for loc := range resolver.AllLocations(ctx) {
 		if strings.HasPrefix(loc.RealPath, "/") {
 			// ignore outside of the fixture root for now
 			continue

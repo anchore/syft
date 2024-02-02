@@ -1,0 +1,10 @@
+# we should strive to not commit blobs to the repo and strive to keep the build process of how blobs are acquired in-repo.
+# this blob is generated from syft/syft/catalogers/java/test-fixtures/java-builds , however, preserving the build process
+# twice in the repo seems redundant (even via symlink). Given that the fixture is a few kilobytes in size, the build process is already
+# captured, and integration tests should only be testing if jars can be discovered (not necessarily depth in java detection
+# functionality), committing it seems like an acceptable exception.
+!image-pkg-coverage/pkgs/java/*.jar
+!image-pkg-coverage/pkgs/java/*.hpi
+
+**/go.sum
+!image-go-bin-arch-coverage/go.sum

@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"context"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 )
@@ -12,5 +14,5 @@ type Cataloger interface {
 	// Name returns a string that uniquely describes a cataloger
 	Name() string
 	// Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-	Catalog(resolver file.Resolver) ([]Package, []artifact.Relationship, error)
+	Catalog(context.Context, file.Resolver) ([]Package, []artifact.Relationship, error)
 }

@@ -1,6 +1,7 @@
 package githubactions
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -35,7 +36,7 @@ type stepDef struct {
 	} `yaml:"with"`
 }
 
-func parseWorkflowForWorkflowUsage(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseWorkflowForWorkflowUsage(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read yaml workflow file: %w", err)
@@ -61,7 +62,7 @@ func parseWorkflowForWorkflowUsage(_ file.Resolver, _ *generic.Environment, read
 	return pkgs.Sorted(), nil, nil
 }
 
-func parseWorkflowForActionUsage(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseWorkflowForActionUsage(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read yaml workflow file: %w", err)

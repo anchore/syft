@@ -3,6 +3,7 @@ package arch
 import (
 	"bufio"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -36,7 +37,7 @@ type parsedData struct {
 }
 
 // parseAlpmDB parses the arch linux pacman database flat-files and returns the packages and relationships found within.
-func parseAlpmDB(resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseAlpmDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	data, err := parseAlpmDBEntry(reader)
 	if err != nil {
 		return nil, nil, err

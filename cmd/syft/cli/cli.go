@@ -8,13 +8,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
-	"github.com/anchore/stereoscope"
-	"github.com/anchore/syft/cmd/syft/cli/commands"
-	handler "github.com/anchore/syft/cmd/syft/cli/ui"
-	"github.com/anchore/syft/cmd/syft/internal/ui"
-	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/redact"
+	"github.com/anchore/syft/cmd/syft/internal"
+	"github.com/anchore/syft/cmd/syft/internal/commands"
 )
 
 // Application constructs the `syft packages` command and aliases the root command to `syft packages`.
@@ -34,65 +29,32 @@ func Command(id clio.Identification) *cobra.Command {
 }
 
 func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Command) {
-	clioCfg := clio.NewSetupConfig(id).
-		WithGlobalConfigFlag().   // add persistent -c <path> for reading an application config from
-		WithGlobalLoggingFlags(). // add persistent -v and -q flags tied to the logging config
-		WithConfigInRootHelp().   // --help on the root command renders the full application config in the help text
-		WithUIConstructor(
-			// select a UI based on the logging configuration and state of stdin (if stdin is a tty)
-			func(cfg clio.Config) ([]clio.UI, error) {
-				noUI := ui.None(out, cfg.Log.Quiet)
-				if !cfg.Log.AllowUI(os.Stdin) || cfg.Log.Quiet {
-					return []clio.UI{noUI}, nil
-				}
-
-				return []clio.UI{
-					ui.New(out, cfg.Log.Quiet,
-						handler.New(handler.DefaultHandlerConfig()),
-					),
-					noUI,
-				}, nil
-			},
-		).
-		WithInitializers(
-			func(state *clio.State) error {
-				// clio is setting up and providing the bus, redact store, and logger to the application. Once loaded,
-				// we can hoist them into the internal packages for global use.
-				stereoscope.SetBus(state.Bus)
-				bus.Set(state.Bus)
-
-				redact.Set(state.RedactStore)
-
-				log.Set(state.Logger)
-				stereoscope.SetLogger(state.Logger)
-
-				return nil
-			},
-		).
-		WithPostRuns(func(state *clio.State, err error) {
-			stereoscope.Cleanup()
-		})
+	clioCfg := internal.AppClioSetupConfig(id, out)
 
 	app := clio.New(*clioCfg)
 
 	// since root is aliased as the packages cmd we need to construct this command first
 	// we also need the command to have information about the `root` options because of this alias
-	packagesCmd := commands.Packages(app)
+	scanCmd := commands.Scan(app)
 
-	// rootCmd is currently an alias for the packages command
-	rootCmd := commands.Root(app, packagesCmd)
+	// root is currently an alias for the scan command
+	rootCmd := commands.Root(app, scanCmd)
 
 	// add sub-commands
 	rootCmd.AddCommand(
-		packagesCmd,
+		scanCmd,
+		commands.Packages(app, scanCmd), // this is currently an alias for the scan command
+		commands.Cataloger(app),
 		commands.Attest(app),
 		commands.Convert(app),
 		clio.VersionCommand(id),
 		cranecmd.NewCmdAuthLogin(id.Name), // syft login uses the same command as crane
 	)
 
-	// explicitly set Cobra output to the real stdout to write things like errors and help
-	rootCmd.SetOut(out)
+	// note: we would direct cobra to use our writer explicitly with rootCmd.SetOut(out) , however this causes
+	// deprecation warnings to be shown to stdout via the writer instead of stderr. This is unfortunate since this
+	// does not appear to be the correct behavior on cobra's part https://github.com/spf13/cobra/issues/1708 .
+	// In the future this functionality should be restored.
 
 	return app, rootCmd
 }

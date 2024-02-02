@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -54,7 +55,7 @@ func Test_allRegularFiles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			resolver := tt.setup()
-			locations := AllRegularFiles(resolver)
+			locations := AllRegularFiles(context.Background(), resolver)
 			realLocations := strset.New()
 			virtualLocations := strset.New()
 			for _, l := range locations {

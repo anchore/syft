@@ -30,13 +30,15 @@ import (
 )
 
 type goLicenses struct {
+	catalogerName         string
 	opts                  CatalogerConfig
 	localModCacheResolver file.WritableResolver
 	lowerLicenseFileNames *strset.Set
 }
 
-func newGoLicenses(opts CatalogerConfig) goLicenses {
+func newGoLicenses(catalogerName string, opts CatalogerConfig) goLicenses {
 	return goLicenses{
+		catalogerName:         catalogerName,
 		opts:                  opts,
 		localModCacheResolver: modCacheResolver(opts.LocalModCacheDir),
 		lowerLicenseFileNames: strset.New(lowercaseLicenseFiles()...),
@@ -125,6 +127,7 @@ func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]
 			OnSuccess:    "Downloaded go mod",
 		},
 		HideOnSuccess: true,
+		ParentID:      c.catalogerName,
 	}, -1, "")
 
 	fsys, err := getModule(prog, proxies, moduleName, moduleVersion)

@@ -2,6 +2,7 @@ package r
 
 import (
 	"bufio"
+	"context"
 	"io"
 	"regexp"
 	"strings"
@@ -28,7 +29,7 @@ License: Part of R 4.3.0
 License: Unlimited
 */
 
-func parseDescriptionFile(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDescriptionFile(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	values := extractFieldsFromDescriptionFile(reader)
 	m := parseDataFromDescriptionMap(values)
 	p := newPackage(m, []file.Location{reader.Location}...)

@@ -2,6 +2,7 @@ package gentoo
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -24,7 +25,7 @@ var (
 )
 
 // parses individual CONTENTS files from the portage flat-file store (e.g. /var/db/pkg/*/*/CONTENTS).
-func parsePortageContents(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	cpvMatch := cpvRe.FindStringSubmatch(reader.Location.RealPath)
 	if cpvMatch == nil {
 		return nil, nil, fmt.Errorf("failed to match package and version in %s", reader.Location.RealPath)

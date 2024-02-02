@@ -4,6 +4,7 @@ Package nix provides a concrete Cataloger implementation for packages within the
 package nix
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -16,22 +17,24 @@ import (
 
 const catalogerName = "nix-store-cataloger"
 
-// StoreCataloger finds package outputs installed in the Nix store location (/nix/store/*).
-type StoreCataloger struct{}
+// storeCataloger finds package outputs installed in the Nix store location (/nix/store/*).
+type storeCataloger struct{}
 
 func NewStoreCataloger() pkg.Cataloger {
-	return &StoreCataloger{}
+	return &storeCataloger{}
 }
 
-func (c *StoreCataloger) Name() string {
+func (c *storeCataloger) Name() string {
 	return catalogerName
 }
 
-func (c *StoreCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *storeCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	// we want to search for only directories, which isn't possible via the stereoscope API, so we need to apply the glob manually on all returned paths
 	var pkgs []pkg.Package
 	var filesByPath = make(map[string]*file.LocationSet)
-	for location := range resolver.AllLocations() {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	for location := range resolver.AllLocations(ctx) {
 		matchesStorePath, err := doublestar.Match("**/nix/store/*", location.RealPath)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to match nix store path: %w", err)

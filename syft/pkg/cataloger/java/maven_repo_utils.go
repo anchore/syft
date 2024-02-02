@@ -1,6 +1,7 @@
 package java
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -28,10 +29,10 @@ func formatMavenPomURL(groupID, artifactID, version, mavenBaseURL string) (reque
 }
 
 // An artifact can have its version defined in a parent's DependencyManagement section
-func recursivelyFindVersionFromParentPom(groupID, artifactID, parentGroupID, parentArtifactID, parentVersion string, cfg ArchiveCatalogerConfig) string {
+func recursivelyFindVersionFromParentPom(ctx context.Context, groupID, artifactID, parentGroupID, parentArtifactID, parentVersion string, cfg ArchiveCatalogerConfig) string {
 	// As there can be nested parent poms, we'll recursively check for the version until we reach the max depth
 	for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
-		parentPom, err := getPomFromMavenRepo(parentGroupID, parentArtifactID, parentVersion, cfg.MavenBaseURL)
+		parentPom, err := getPomFromMavenRepo(ctx, parentGroupID, parentArtifactID, parentVersion, cfg.MavenBaseURL)
 		if err != nil {
 			// We don't want to abort here as the parent pom might not exist in Maven Central, we'll just log the error
 			log.Tracef("unable to get parent pom from Maven central: %v", err)
@@ -54,11 +55,11 @@ func recursivelyFindVersionFromParentPom(groupID, artifactID, parentGroupID, par
 	return ""
 }
 
-func recursivelyFindLicensesFromParentPom(groupID, artifactID, version string, cfg ArchiveCatalogerConfig) []string {
+func recursivelyFindLicensesFromParentPom(ctx context.Context, groupID, artifactID, version string, cfg ArchiveCatalogerConfig) []string {
 	var licenses []string
 	// As there can be nested parent poms, we'll recursively check for licenses until we reach the max depth
 	for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
-		parentPom, err := getPomFromMavenRepo(groupID, artifactID, version, cfg.MavenBaseURL)
+		parentPom, err := getPomFromMavenRepo(ctx, groupID, artifactID, version, cfg.MavenBaseURL)
 		if err != nil {
 			// We don't want to abort here as the parent pom might not exist in Maven Central, we'll just log the error
 			log.Tracef("unable to get parent pom from Maven central: %v", err)
@@ -78,7 +79,7 @@ func recursivelyFindLicensesFromParentPom(groupID, artifactID, version string, c
 	return licenses
 }
 
-func getPomFromMavenRepo(groupID, artifactID, version, mavenBaseURL string) (*gopom.Project, error) {
+func getPomFromMavenRepo(ctx context.Context, groupID, artifactID, version, mavenBaseURL string) (*gopom.Project, error) {
 	requestURL, err := formatMavenPomURL(groupID, artifactID, version, mavenBaseURL)
 	if err != nil {
 		return nil, err
@@ -93,6 +94,8 @@ func getPomFromMavenRepo(groupID, artifactID, version, mavenBaseURL string) (*go
 	httpClient := &http.Client{
 		Timeout: time.Second * 10,
 	}
+
+	mavenRequest = mavenRequest.WithContext(ctx)
 
 	resp, err := httpClient.Do(mavenRequest)
 	if err != nil {

@@ -1,6 +1,7 @@
 package filemetadata
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -26,7 +27,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 	resolver, err := src.FileResolver(source.SquashedScope)
 	require.NoError(t, err)
 
-	actual, err := c.Catalog(resolver)
+	actual, err := c.Catalog(context.Background(), resolver)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -196,7 +197,7 @@ func TestFileMetadataCataloger_GivenCoordinates(t *testing.T) {
 
 			// note: an important difference between this test and the previous is that this test is using a list
 			// of specific coordinates to catalog
-			actual, err := c.Catalog(resolver, l.Coordinates)
+			actual, err := c.Catalog(context.Background(), resolver, l.Coordinates)
 			require.NoError(t, err)
 			require.Len(t, actual, 1)
 

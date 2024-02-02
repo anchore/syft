@@ -2,6 +2,7 @@ package java
 
 import (
 	"bufio"
+	"context"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -12,21 +13,21 @@ import (
 
 const gradleLockfileGlob = "**/gradle.lockfile*"
 
-// Dependency represents a single dependency in the gradle.lockfile file
-type LockfileDependency struct {
+// lockfileDependency represents a single dependency in the gradle.lockfile file
+type lockfileDependency struct {
 	Group   string
 	Name    string
 	Version string
 }
 
-func parseGradleLockfile(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	// Create a new scanner to read the file
 	scanner := bufio.NewScanner(reader)
 
 	// Create slices to hold the dependencies and plugins
-	dependencies := []LockfileDependency{}
+	dependencies := []lockfileDependency{}
 
 	// Loop over all lines in the file
 	for scanner.Scan() {
@@ -42,7 +43,7 @@ func parseGradleLockfile(_ file.Resolver, _ *generic.Environment, reader file.Lo
 		// we have a version directly specified
 		if len(parts) == 3 {
 			// Create a new Dependency struct and add it to the dependencies slice
-			dep := LockfileDependency{Group: parts[0], Name: parts[1], Version: parts[2]}
+			dep := lockfileDependency{Group: parts[0], Name: parts[1], Version: parts[2]}
 			dependencies = append(dependencies, dep)
 		}
 	}

@@ -68,6 +68,10 @@ func findMetadataDefinitionNames(paths ...string) ([]string, error) {
 	// any definition that is used within another struct should not be considered a top-level metadata definition
 	names.Remove(usedNames.List()...)
 
+	// remove known exceptions, that is, types exported in the pkg Package that are not used
+	// in a metadata type but are not metadata types themselves.
+	names.Remove("Licenses", "KeyValue")
+
 	strNames := names.List()
 	sort.Strings(strNames)
 
@@ -114,7 +118,11 @@ func findMetadataDefinitionNamesInFile(path string) ([]string, []string, error) 
 
 			structType := extractStructType(spec.Type)
 			if structType == nil {
-				continue
+				// maybe this is a slice of structs? This is useful (say type KeyValues is []KeyValue)
+				structType = extractSliceOfStructType(spec.Type)
+				if structType == nil {
+					continue
+				}
 			}
 
 			metadataDefinitions = append(metadataDefinitions, name)
@@ -122,6 +130,34 @@ func findMetadataDefinitionNamesInFile(path string) ([]string, []string, error) 
 		}
 	}
 	return metadataDefinitions, usedTypeNames, nil
+}
+
+func extractSliceOfStructType(exp ast.Expr) *ast.StructType {
+	var structType *ast.StructType
+	switch ty := exp.(type) {
+	case *ast.ArrayType:
+		// this is a standard definition:
+		// type FooMetadata []BarMetadata
+		structType = extractStructType(ty.Elt)
+	case *ast.Ident:
+		if ty.Obj == nil {
+			return nil
+		}
+
+		// this might be a type created from another type:
+		// type FooMetadata BarMetadata
+		// ... but we need to check that the other type definition is a struct type
+		typeSpec, ok := ty.Obj.Decl.(*ast.TypeSpec)
+		if !ok {
+			return nil
+		}
+		nestedStructType, ok := typeSpec.Type.(*ast.StructType)
+		if !ok {
+			return nil
+		}
+		structType = nestedStructType
+	}
+	return structType
 }
 
 func extractStructType(exp ast.Expr) *ast.StructType {

@@ -5,6 +5,7 @@ import (
 	"debug/elf"
 	"debug/macho"
 	"debug/pe"
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
@@ -16,47 +17,64 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
-var emptyPURL = packageurl.PackageURL{}
-
-// classifier is a generic package classifier that can be used to match a package definition
-// to a file that meets the given content criteria of the evidenceMatcher.
-type classifier struct {
-	Class string
+// Classifier is a generic package classifier that can be used to match a package definition
+// to a file that meets the given content criteria of the EvidenceMatcher.
+type Classifier struct {
+	Class string `json:"class"`
 
 	// FileGlob is a selector to narrow down file inspection using the **/glob* syntax
-	FileGlob string
+	FileGlob string `json:"fileGlob"`
 
 	// EvidenceMatcher is what will be used to match against the file in the source
 	// location. If the matcher returns a package, the file will be considered a candidate.
-	EvidenceMatcher evidenceMatcher
+	EvidenceMatcher EvidenceMatcher `json:"-"`
 
 	// Information below is used to specify the Package information when returned
 
 	// Package is the name to use for the package
-	Package string
-
-	// Language is the language to classify this package as
-	Language pkg.Language
-
-	// Type is the package type to use for the package
-	Type pkg.Type
+	Package string `json:"package"`
 
 	// PURL is the Package URL to use when generating a package
-	PURL packageurl.PackageURL
+	PURL packageurl.PackageURL `json:"purl"`
 
 	// CPEs are the specific CPEs we want to include for this binary with updated version information
-	CPEs []cpe.CPE
+	CPEs []cpe.CPE `json:"cpes"`
 }
 
-// evidenceMatcher is a function called to catalog Packages that match some sort of evidence
-type evidenceMatcher func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error)
+func (cfg Classifier) MarshalJSON() ([]byte, error) {
+	type marshalled struct {
+		Class    string   `json:"class"`
+		FileGlob string   `json:"fileGlob"`
+		Package  string   `json:"package"`
+		PURL     string   `json:"purl"`
+		CPEs     []string `json:"cpes"`
+	}
 
-func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
-	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
+	var marshalledCPEs []string
+	for _, c := range cfg.CPEs {
+		marshalledCPEs = append(marshalledCPEs, c.Attributes.BindToFmtString())
+	}
+
+	m := marshalled{
+		Class:    cfg.Class,
+		FileGlob: cfg.FileGlob,
+		Package:  cfg.Package,
+		PURL:     cfg.PURL.String(),
+		CPEs:     marshalledCPEs,
+	}
+
+	return json.Marshal(m)
+}
+
+// EvidenceMatcher is a function called to catalog Packages that match some sort of evidence
+type EvidenceMatcher func(resolver file.Resolver, classifier Classifier, location file.Location) ([]pkg.Package, error)
+
+func evidenceMatchers(matchers ...EvidenceMatcher) EvidenceMatcher {
+	return func(resolver file.Resolver, classifier Classifier, location file.Location) ([]pkg.Package, error) {
 		for _, matcher := range matchers {
 			match, err := matcher(resolver, classifier, location)
 			if err != nil {
@@ -70,9 +88,9 @@ func evidenceMatchers(matchers ...evidenceMatcher) evidenceMatcher {
 	}
 }
 
-func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) evidenceMatcher {
+func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) EvidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
-	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
+	return func(resolver file.Resolver, classifier Classifier, location file.Location) ([]pkg.Package, error) {
 		if !pat.MatchString(location.RealPath) {
 			return nil, nil
 		}
@@ -116,9 +134,9 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 	}
 }
 
-func fileContentsVersionMatcher(pattern string) evidenceMatcher {
+func FileContentsVersionMatcher(pattern string) EvidenceMatcher {
 	pat := regexp.MustCompile(pattern)
-	return func(resolver file.Resolver, classifier classifier, location file.Location) ([]pkg.Package, error) {
+	return func(resolver file.Resolver, classifier Classifier, location file.Location) ([]pkg.Package, error) {
 		contents, err := getContents(resolver, location)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
@@ -136,9 +154,9 @@ func fileContentsVersionMatcher(pattern string) evidenceMatcher {
 }
 
 //nolint:gocognit
-func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher evidenceMatcher) evidenceMatcher {
+func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher EvidenceMatcher) EvidenceMatcher {
 	pat := regexp.MustCompile(sharedLibraryPattern)
-	return func(resolver file.Resolver, classifier classifier, location file.Location) (packages []pkg.Package, _ error) {
+	return func(resolver file.Resolver, classifier Classifier, location file.Location) (packages []pkg.Package, _ error) {
 		libs, err := sharedLibraries(resolver, location)
 		if err != nil {
 			return nil, err
@@ -207,10 +225,11 @@ func getContents(resolver file.Resolver, location file.Location) ([]byte, error)
 	return contents, nil
 }
 
-// singleCPE returns a []pkg.CPE based on the cpe string or panics if the CPE is invalid
+// singleCPE returns a []cpe.CPE with Source: Generated based on the cpe string or panics if the
+// cpe string cannot be parsed into valid CPE Attributes
 func singleCPE(cpeString string) []cpe.CPE {
 	return []cpe.CPE{
-		cpe.Must(cpeString),
+		cpe.Must(cpeString, cpe.GeneratedSource),
 	}
 }
 

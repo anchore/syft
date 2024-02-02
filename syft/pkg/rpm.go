@@ -34,7 +34,7 @@ type RpmDBEntry struct {
 	SourceRpm       string          `json:"sourceRpm" cyclonedx:"sourceRpm"`
 	Size            int             `json:"size" cyclonedx:"size"`
 	Vendor          string          `json:"vendor"`
-	ModularityLabel string          `json:"modularityLabel"`
+	ModularityLabel *string         `json:"modularityLabel,omitempty"`
 	Files           []RpmFileRecord `json:"files"`
 }
 

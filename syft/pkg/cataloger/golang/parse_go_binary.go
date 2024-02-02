@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bytes"
+	"context"
 	"debug/elf"
 	"debug/macho"
 	"debug/pe"
@@ -18,13 +19,13 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
-const GOARCH = "GOARCH"
+const goArch = "GOARCH"
 
 var (
 	// errUnrecognizedFormat is returned when a given executable file doesn't
@@ -48,7 +49,7 @@ type goBinaryCataloger struct {
 }
 
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
-func (c *goBinaryCataloger) parseGoBinary(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
@@ -83,8 +84,8 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 		return main
 	}
 
-	version, hasVersion := gbs["vcs.revision"]
-	timestamp, hasTimestamp := gbs["vcs.time"]
+	version, hasVersion := gbs.Get("vcs.revision")
+	timestamp, hasTimestamp := gbs.Get("vcs.time")
 
 	var ldflags string
 	if metadata, ok := main.Metadata.(pkg.GolangBinaryBuildinfoEntry); ok {
@@ -94,7 +95,7 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 		// there is a matching vcs tag to match that could be referenced. This assumption could
 		// be incorrect in terms of the go.mod contents, but is not incorrect in terms of the logical
 		// version of the package.
-		ldflags = metadata.BuildSettings["-ldflags"]
+		ldflags, _ = metadata.BuildSettings.Get("-ldflags")
 	}
 
 	majorVersion, fullVersion := extractVersionFromLDFlags(ldflags)
@@ -153,7 +154,7 @@ func extractVersionFromLDFlags(ldflags string) (majorVersion string, fullVersion
 
 func getGOARCH(settings []debug.BuildSetting) string {
 	for _, s := range settings {
-		if s.Key == GOARCH {
+		if s.Key == goArch {
 			return s.Value
 		}
 	}
@@ -206,10 +207,13 @@ func getGOARCHFromBin(r io.ReaderAt) (string, error) {
 	return arch, nil
 }
 
-func getBuildSettings(settings []debug.BuildSetting) map[string]string {
-	m := make(map[string]string)
+func getBuildSettings(settings []debug.BuildSetting) pkg.KeyValues {
+	m := make(pkg.KeyValues, 0)
 	for _, s := range settings {
-		m[s.Key] = s.Value
+		m = append(m, pkg.KeyValue{
+			Key:   s.Key,
+			Value: s.Value,
+		})
 	}
 	return m
 }

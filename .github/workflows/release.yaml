@@ -94,6 +94,8 @@ jobs:
     permissions:
       contents: write
       packages: write
+      # required for goreleaser signs section with cosign
+      id-token: write
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
         with:
@@ -141,12 +143,12 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.TOOLBOX_AWS_SECRET_ACCESS_KEY }}
 
-      - uses: anchore/sbom-action@5ecf649a417b8ae17dc8383dc32d46c03f2312df #v0.15.1
+      - uses: anchore/sbom-action@b6a39da80722a2cb0ef5d197531764a89b5d48c3 #v0.15.8
         continue-on-error: true
         with:
           artifact-name: sbom.spdx.json
 
-      - uses: 8398a7/action-slack@fbd6aa58ba854a740e11a35d0df80cb5d12101d8 #v3.15.1
+      - uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 #v3.16.2
         continue-on-error: true
         with:
           status: ${{ job.status }}

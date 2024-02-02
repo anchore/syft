@@ -80,7 +80,7 @@ func LanguageByName(name string) Language {
 		return Rust
 	case packageurl.TypePub, string(DartPubPkg), string(Dart):
 		return Dart
-	case packageurl.TypeDotnet:
+	case packageurl.TypeDotnet, packageurl.TypeNuget:
 		return Dotnet
 	case packageurl.TypeCocoapods, packageurl.TypeSwift, string(CocoapodsPkg), string(SwiftPkg):
 		return Swift

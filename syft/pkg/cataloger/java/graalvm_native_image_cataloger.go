@@ -3,6 +3,7 @@ package java
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"debug/elf"
 	"debug/macho"
 	"debug/pe"
@@ -15,11 +16,12 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
 type nativeImageCycloneDX struct {
@@ -91,7 +93,7 @@ type nativeImagePE struct {
 	header        exportPrefixPE
 }
 
-type NativeImageCataloger struct{}
+type nativeImageCataloger struct{}
 
 const nativeImageCatalogerName = "graalvm-native-image-cataloger"
 const nativeImageSbomSymbol = "sbom"
@@ -101,13 +103,13 @@ const nativeImageMissingSymbolsError = "one or more symbols are missing from the
 const nativeImageInvalidIndexError = "parsing the executable file generated an invalid index"
 const nativeImageMissingExportedDataDirectoryError = "exported data directory is missing"
 
-// newNativeImageCataloger returns a new Native Image cataloger object.
+// NewNativeImageCataloger returns a new Native Image cataloger object.
 func NewNativeImageCataloger() pkg.Cataloger {
-	return &NativeImageCataloger{}
+	return &nativeImageCataloger{}
 }
 
 // Name returns a string that uniquely describes a native image cataloger
-func (c *NativeImageCataloger) Name() string {
+func (c *nativeImageCataloger) Name() string {
 	return nativeImageCatalogerName
 }
 
@@ -115,9 +117,9 @@ func (c *NativeImageCataloger) Name() string {
 func getPackage(component nativeImageComponent) pkg.Package {
 	var cpes []cpe.CPE
 	for _, property := range component.Properties {
-		c, err := cpe.New(property.Value)
+		c, err := cpe.New(property.Value, cpe.DeclaredSource)
 		if err != nil {
-			log.Debugf("unable to parse CPE: %v", err)
+			log.Debugf("unable to parse Attributes: %v", err)
 			continue
 		}
 		cpes = append(cpes, c)
@@ -570,9 +572,9 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) []pkg.Package {
 }
 
 // Catalog attempts to find any native image executables reachable from a resolver.
-func (c *NativeImageCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *nativeImageCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
-	fileMatches, err := resolver.FilesByMIMEType(internal.ExecutableMIMETypeSet.List()...)
+	fileMatches, err := resolver.FilesByMIMEType(mimetype.ExecutableMIMETypeSet.List()...)
 	if err != nil {
 		return pkgs, nil, fmt.Errorf("failed to find binaries by mime types: %w", err)
 	}

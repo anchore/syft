@@ -32,8 +32,15 @@ type PackageBasicData struct {
 	Locations []file.Location `json:"locations"`
 	Licenses  licenses        `json:"licenses"`
 	Language  pkg.Language    `json:"language"`
-	CPEs      []string        `json:"cpes"`
+	CPEs      cpes            `json:"cpes"`
 	PURL      string          `json:"purl"`
+}
+
+type cpes []CPE
+
+type CPE struct {
+	Value  string `json:"cpe"`
+	Source string `json:"source,omitempty"`
 }
 
 type licenses []License
@@ -71,6 +78,29 @@ func (f *licenses) UnmarshalJSON(b []byte) error {
 		lics = newModelLicensesFromValues(simpleLicense)
 	}
 	*f = lics
+	return nil
+}
+
+func sourcedCPESfromSimpleCPEs(simpleCPEs []string) []CPE {
+	var result []CPE
+	for _, s := range simpleCPEs {
+		result = append(result, CPE{
+			Value: s,
+		})
+	}
+	return result
+}
+
+func (c *cpes) UnmarshalJSON(b []byte) error {
+	var cs []CPE
+	if err := json.Unmarshal(b, &cs); err != nil {
+		var simpleCPEs []string
+		if err := json.Unmarshal(b, &simpleCPEs); err != nil {
+			return fmt.Errorf("unable to unmarshal cpes: %w", err)
+		}
+		cs = sourcedCPESfromSimpleCPEs(simpleCPEs)
+	}
+	*c = cs
 	return nil
 }
 

@@ -1,6 +1,7 @@
 package redhat
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -14,7 +15,7 @@ import (
 )
 
 // parseRpmArchive parses a single RPM
-func parseRpmArchive(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRpmArchive(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	rpm, err := rpmutils.ReadRpm(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("RPM file found but unable to read: %s (%w)", reader.Location.RealPath, err)

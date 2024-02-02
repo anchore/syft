@@ -40,7 +40,7 @@ jobs:
 
       - name: Delete existing comment
         if: ${{ hashFiles( env.CI_COMMENT_FILE ) == '' }}
-        uses: marocchino/sticky-pull-request-comment@efaaab3fd41a9c3de579aba759d2552635e590fd #v2.8.0
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 #v2.9.0
         with:
           header: ${{ env.COMMENT_HEADER }}
           hide: true
@@ -48,7 +48,7 @@ jobs:
 
       - name: Add comment
         if: ${{ hashFiles( env.CI_COMMENT_FILE ) != '' }}
-        uses: marocchino/sticky-pull-request-comment@efaaab3fd41a9c3de579aba759d2552635e590fd #v2.8.0
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 #v2.9.0
         with:
           header: ${{ env.COMMENT_HEADER }}
           path: ${{ env.CI_COMMENT_FILE }}

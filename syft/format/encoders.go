@@ -1,143 +1,223 @@
 package format
 
 import (
-	"bytes"
 	"fmt"
-	"regexp"
-	"sort"
-	"strings"
 
-	"github.com/scylladb/go-set/strset"
+	"github.com/hashicorp/go-multierror"
 
-	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/format/cyclonedxjson"
+	"github.com/anchore/syft/syft/format/cyclonedxxml"
+	"github.com/anchore/syft/syft/format/github"
+	"github.com/anchore/syft/syft/format/spdxjson"
+	"github.com/anchore/syft/syft/format/spdxtagvalue"
+	"github.com/anchore/syft/syft/format/syftjson"
+	"github.com/anchore/syft/syft/format/table"
+	"github.com/anchore/syft/syft/format/template"
+	"github.com/anchore/syft/syft/format/text"
 	"github.com/anchore/syft/syft/sbom"
 )
 
-type EncoderCollection struct {
-	encoders []sbom.FormatEncoder
+const AllVersions = "all-versions"
+
+type EncodersConfig struct {
+	Template      template.EncoderConfig
+	SyftJSON      syftjson.EncoderConfig
+	SPDXJSON      spdxjson.EncoderConfig
+	SPDXTagValue  spdxtagvalue.EncoderConfig
+	CyclonedxJSON cyclonedxjson.EncoderConfig
+	CyclonedxXML  cyclonedxxml.EncoderConfig
 }
 
-func NewEncoderCollection(encoders ...sbom.FormatEncoder) *EncoderCollection {
-	return &EncoderCollection{
-		encoders: encoders,
-	}
+func Encoders() []sbom.FormatEncoder {
+	encs, _ := DefaultEncodersConfig().Encoders()
+	return encs
 }
 
-// IDs returns all format IDs represented in the collection.
-func (e EncoderCollection) IDs() []sbom.FormatID {
-	idSet := strset.New()
-	for _, f := range e.encoders {
-		idSet.Add(string(f.ID()))
+func DefaultEncodersConfig() EncodersConfig {
+	cfg := EncodersConfig{
+		Template:      template.DefaultEncoderConfig(),
+		SyftJSON:      syftjson.DefaultEncoderConfig(),
+		SPDXJSON:      spdxjson.DefaultEncoderConfig(),
+		SPDXTagValue:  spdxtagvalue.DefaultEncoderConfig(),
+		CyclonedxJSON: cyclonedxjson.DefaultEncoderConfig(),
+		CyclonedxXML:  cyclonedxxml.DefaultEncoderConfig(),
 	}
 
-	idList := idSet.List()
-	sort.Strings(idList)
+	// empty value means to support all versions
+	cfg.SPDXJSON.Version = AllVersions
+	cfg.SPDXTagValue.Version = AllVersions
+	cfg.CyclonedxJSON.Version = AllVersions
+	cfg.CyclonedxXML.Version = AllVersions
 
-	var ids []sbom.FormatID
-	for _, id := range idList {
-		ids = append(ids, sbom.FormatID(id))
-	}
-
-	return ids
+	return cfg
 }
 
-// NameVersions returns all formats that are supported by the collection as a list of "name@version" strings.
-func (e EncoderCollection) NameVersions() []string {
-	set := strset.New()
-	for _, f := range e.encoders {
-		if f.Version() == sbom.AnyVersion {
-			set.Add(string(f.ID()))
-		} else {
-			set.Add(fmt.Sprintf("%s@%s", f.ID(), f.Version()))
-		}
+func (o EncodersConfig) Encoders() ([]sbom.FormatEncoder, error) {
+	var l encodersList
+
+	if o.Template.TemplatePath != "" {
+		l.addWithErr(template.ID)(o.templateEncoders())
 	}
 
-	list := set.List()
-	sort.Strings(list)
+	l.addWithErr(syftjson.ID)(o.syftJSONEncoders())
+	l.add(table.ID)(table.NewFormatEncoder())
+	l.add(text.ID)(text.NewFormatEncoder())
+	l.add(github.ID)(github.NewFormatEncoder())
+	l.addWithErr(cyclonedxxml.ID)(o.cyclonedxXMLEncoders())
+	l.addWithErr(cyclonedxjson.ID)(o.cyclonedxJSONEncoders())
+	l.addWithErr(spdxjson.ID)(o.spdxJSONEncoders())
+	l.addWithErr(spdxtagvalue.ID)(o.spdxTagValueEncoders())
 
-	return list
+	return l.encoders, l.err
 }
 
-// Aliases returns all format aliases represented in the collection (where an ID would be "spdx-tag-value" the alias would be "spdx").
-func (e EncoderCollection) Aliases() []string {
-	aliases := strset.New()
-	for _, f := range e.encoders {
-		aliases.Add(f.Aliases()...)
-	}
-	lst := aliases.List()
-	sort.Strings(lst)
-	return lst
+func (o EncodersConfig) templateEncoders() ([]sbom.FormatEncoder, error) {
+	enc, err := template.NewFormatEncoder(o.Template)
+	return []sbom.FormatEncoder{enc}, err
 }
 
-// Get returns the contained encoder for a given format name and version.
-func (e EncoderCollection) Get(name string, version string) sbom.FormatEncoder {
-	log.WithFields("name", name, "version", version).Trace("looking for matching encoder")
+func (o EncodersConfig) syftJSONEncoders() ([]sbom.FormatEncoder, error) {
+	enc, err := syftjson.NewFormatEncoderWithConfig(o.SyftJSON)
+	return []sbom.FormatEncoder{enc}, err
+}
 
-	name = cleanFormatName(name)
-	var mostRecentFormat sbom.FormatEncoder
+func (o EncodersConfig) cyclonedxXMLEncoders() ([]sbom.FormatEncoder, error) {
+	var (
+		encs []sbom.FormatEncoder
+		errs error
+	)
 
-	for _, f := range e.encoders {
-		log.WithFields("name", f.ID(), "version", f.Version(), "aliases", f.Aliases()).Trace("considering format")
-		names := []string{string(f.ID())}
-		names = append(names, f.Aliases()...)
-		for _, n := range names {
-			if cleanFormatName(n) == name && versionMatches(f.Version(), version) {
-				if mostRecentFormat == nil || f.Version() > mostRecentFormat.Version() {
-					mostRecentFormat = f
-				}
-			}
-		}
-	}
+	cfg := o.CyclonedxXML
 
-	if mostRecentFormat != nil {
-		log.WithFields("name", mostRecentFormat.ID(), "version", mostRecentFormat.Version()).Trace("found matching encoder")
+	var versions []string
+	if cfg.Version == AllVersions {
+		versions = cyclonedxxml.SupportedVersions()
 	} else {
-		log.WithFields("search-name", name, "search-version", version).Trace("no matching encoder found")
+		versions = []string{cfg.Version}
 	}
 
-	return mostRecentFormat
+	for _, v := range versions {
+		cfg.Version = v
+		enc, err := cyclonedxxml.NewFormatEncoderWithConfig(cfg)
+		if err != nil {
+			errs = multierror.Append(errs, err)
+		} else {
+			encs = append(encs, enc)
+		}
+	}
+	return encs, errs
 }
 
-// GetByString accepts a name@version string, such as:
-//   - json
-//   - spdx-json@2.1
-//   - cdx@1.5
-func (e EncoderCollection) GetByString(s string) sbom.FormatEncoder {
-	parts := strings.SplitN(s, "@", 2)
-	version := sbom.AnyVersion
-	if len(parts) > 1 {
-		version = parts[1]
+func (o EncodersConfig) cyclonedxJSONEncoders() ([]sbom.FormatEncoder, error) {
+	var (
+		encs []sbom.FormatEncoder
+		errs error
+	)
+
+	cfg := o.CyclonedxJSON
+
+	var versions []string
+	if cfg.Version == AllVersions {
+		versions = cyclonedxjson.SupportedVersions()
+	} else {
+		versions = []string{cfg.Version}
 	}
-	return e.Get(parts[0], version)
+
+	for _, v := range versions {
+		cfg.Version = v
+		enc, err := cyclonedxjson.NewFormatEncoderWithConfig(cfg)
+		if err != nil {
+			errs = multierror.Append(errs, err)
+		} else {
+			encs = append(encs, enc)
+		}
+	}
+	return encs, errs
 }
 
-func versionMatches(version string, match string) bool {
-	if version == sbom.AnyVersion || match == sbom.AnyVersion {
-		return true
+func (o EncodersConfig) spdxJSONEncoders() ([]sbom.FormatEncoder, error) {
+	var (
+		encs []sbom.FormatEncoder
+		errs error
+	)
+
+	cfg := o.SPDXJSON
+
+	var versions []string
+	if cfg.Version == AllVersions {
+		versions = spdxjson.SupportedVersions()
+	} else {
+		versions = []string{cfg.Version}
 	}
 
-	match = strings.ReplaceAll(match, ".", "\\.")
-	match = strings.ReplaceAll(match, "*", ".*")
-	match = fmt.Sprintf("^%s(\\..*)*$", match)
-	matcher, err := regexp.Compile(match)
-	if err != nil {
-		return false
+	for _, v := range versions {
+		cfg.Version = v
+		enc, err := spdxjson.NewFormatEncoderWithConfig(cfg)
+		if err != nil {
+			errs = multierror.Append(errs, err)
+		} else {
+			encs = append(encs, enc)
+		}
 	}
-	return matcher.MatchString(version)
+	return encs, errs
 }
 
-func cleanFormatName(name string) string {
-	r := strings.NewReplacer("-", "", "_", "")
-	return strings.ToLower(r.Replace(name))
-}
+func (o EncodersConfig) spdxTagValueEncoders() ([]sbom.FormatEncoder, error) {
+	var (
+		encs []sbom.FormatEncoder
+		errs error
+	)
 
-// Encode takes all SBOM elements and a format option and encodes an SBOM document.
-func Encode(s sbom.SBOM, f sbom.FormatEncoder) ([]byte, error) {
-	buff := bytes.Buffer{}
+	cfg := o.SPDXTagValue
 
-	if err := f.Encode(&buff, s); err != nil {
-		return nil, fmt.Errorf("unable to encode sbom: %w", err)
+	var versions []string
+	if cfg.Version == AllVersions {
+		versions = spdxtagvalue.SupportedVersions()
+	} else {
+		versions = []string{cfg.Version}
 	}
 
-	return buff.Bytes(), nil
+	for _, v := range versions {
+		cfg.Version = v
+		enc, err := spdxtagvalue.NewFormatEncoderWithConfig(cfg)
+		if err != nil {
+			errs = multierror.Append(errs, err)
+		} else {
+			encs = append(encs, enc)
+		}
+	}
+	return encs, errs
+}
+
+type encodersList struct {
+	encoders []sbom.FormatEncoder
+	err      error
+}
+
+func (l *encodersList) addWithErr(name sbom.FormatID) func([]sbom.FormatEncoder, error) {
+	return func(encs []sbom.FormatEncoder, err error) {
+		if err != nil {
+			l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: %w", name, err))
+			return
+		}
+		for _, enc := range encs {
+			if enc == nil {
+				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
+				continue
+			}
+			l.encoders = append(l.encoders, enc)
+		}
+	}
+}
+
+func (l *encodersList) add(name sbom.FormatID) func(...sbom.FormatEncoder) {
+	return func(encs ...sbom.FormatEncoder) {
+		for _, enc := range encs {
+			if enc == nil {
+				l.err = multierror.Append(l.err, fmt.Errorf("unable to configure %q format encoder: nil encoder returned", name))
+				continue
+			}
+			l.encoders = append(l.encoders, enc)
+		}
+	}
 }

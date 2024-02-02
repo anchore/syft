@@ -109,13 +109,13 @@ nix-shell -p syft
 
 To generate an SBOM for a container image:
 
-```
+```bash
 syft <image>
 ```
 
 The above output includes only software that is visible in the container (i.e., the squashed representation of the image). To include software from all image layers in the SBOM, regardless of its presence in the final image, provide `--scope all-layers`:
 
-```
+```bash
 syft <image> --scope all-layers
 ```
 
@@ -123,7 +123,7 @@ syft <image> --scope all-layers
 
 Syft can generate an SBOM from a variety of sources:
 
-```
+```bash
 # catalog a container image archive (from the result of `docker image save ...`, `podman save ...`, or `skopeo copy` commands)
 syft path/to/image.tar
 
@@ -155,69 +155,114 @@ If docker is not present, then the Podman daemon is attempted next, followed by 
 
 This default behavior can be overridden with the `default-image-pull-source` configuration option (See [Configuration](https://github.com/anchore/syft#configuration) for more details).
 
-### Default Cataloger Configuration by scan type
 
-Syft uses different default sets of catalogers depending on what it is scanning: a container image or a directory on disk. The default catalogers for an image scan assumes that package installation steps have already been completed. For example, Syft will identify Python packages that have egg or wheel metadata files under a site-packages directory, since this indicates software actually installed on an image.
+### File selection
 
-However, if you are scanning a directory, Syft doesn't assume that all relevant software is installed, and will use catalogers that can identify declared dependencies that may not yet be installed on the final system: for example, dependencies listed in a Python requirements.txt.
+By default, Syft will catalog file details and digests for files that are owned by discovered packages. You can change this behavior by using the `SYFT_FILE_METADATA_SELECTION` environment variable or the `file.metadata.selection` configuration option. The options are:
 
-You can override the list of enabled/disabled catalogers by using the "catalogers" keyword in the [Syft configuration file](https://github.com/anchore/syft#configuration).
+- `all`: capture all files from the search space
+- `owned-by-package`: capture only files owned by packages (default)
+- `none`: disable capturing any file information
 
-##### Image Scanning:
-- alpmdb
-- apkdb
-- binary
-- dotnet-deps
-- dotnet-portable-executable
-- dpkgdb
-- go-module-binary
-- graalvm-native-image
-- java
-- javascript-package
-- linux-kernel
-- nix-store
-- php-composer-installed
-- portage
-- python-package
-- rpm-db
-- ruby-gemspec
-- sbom
 
-##### Directory Scanning:
-- alpmdb
-- apkdb
-- binary
-- cocoapods
-- conan
-- dartlang-lock
-- dotnet-deps
-- dotnet-portable-executable
-- dpkgdb
-- elixir-mix-lock
-- erlang-rebar-lock
-- go-mod-file
-- go-module-binary
-- graalvm-native-image
-- haskell
-- java
-- java-gradle-lockfile
-- java-pom
-- javascript-lock
-- linux-kernel
-- nix-store
-- php-composer-lock
-- portage
-- python-index
-- python-package
-- rpm-db
-- rpm-file
-- ruby-gemfile
-- rust-cargo-lock
-- sbom
-- swift-package-manager
+### Package cataloger selection
 
-##### Non Default:
-- cargo-auditable-binary
+#### Concepts
+
+> [!IMPORTANT]  
+> Syft uses a different set of catalogers by default when scanning files directly than it does when scanning images
+
+The catalogers for an image scan assumes that package installation steps have already been completed. For example, Syft will identify Python packages that have egg or wheel metadata files under a `site-packages` directory, since this is how the canonical tooling `pip` installs python packages.
+
+The catalogers for a directory scan will look for installed software as well as declared dependencies that are not necessarily installed. For example, dependencies listed in a Python `requirements.txt`.
+
+This default set of catalogers being dynamic is critical as this allows Syft to be used in a variety of contexts while still generating accurate SBOMs.
+Overriding the set of default catalogers is not recommended for most purposes, however, is possible if needed.
+
+Catalogers can be referenced in two different ways:
+- *by name*: the exact cataloger name (e.g. `java-pom-cataloger` or `java-archive-cataloger`)
+- *by tag*: a tag that is associated with a cataloger (e.g. `java`)
+
+Syft can take lists of references on the CLI or in the application configuration to define which catalogers to use.
+
+You can **set** the list of catalogers explicitly to use with the `--override-default-catalogers` CLI flag, accepting a comma-separated list of cataloger names or tags.
+
+You can also **add** to, **remove** from, or **sub-select** catalogers to use within the default set of catalogers by using the `--select-catalogers` CLI flag.
+  - To **sub-select** catalogers simply provide a tag (e.g. `--select-catalogers TAG`). Catalogers will always be selected from the default set of catalogers (e.g. `--select-catalogers java,go` will select all the `java` catalogers in the default set and all the `go` catalogers in the default set).
+  - To **add** a cataloger prefix the cataloger name with `+` (e.g. `--select-catalogers +NAME`). Added catalogers will _always be added_ regardless of removals, filtering, or other defaults.
+  - To **remove** a cataloger prefix the cataloger name or tag with `-` (e.g. `--select-catalogers -NAME_OR_TAG`). Catalogers are removed from the set of default catalogers after processing any sub-selections.
+
+These rules and the dynamic default cataloger sets approximates to the following logic:
+
+```
+image_catalogers = all_catalogers AND catalogers_tagged("image")
+
+directory_catalogers = all_catalogers AND catalogers_tagged("directory")
+
+default_catalogers = image_catalogers OR directory_catalogers
+
+sub_selected_catalogers = default_catalogers INTERSECT catalogers_tagged(TAG) [ UNION sub_selected_catalogers ... ]
+
+base_catalogers = default_catalogers OR sub_selected_catalogers
+
+final_set = (base_catalogers SUBTRACT removed_catalogers) UNION added_catalogers
+```
+
+
+#### Examples
+
+Only scan for python related packages with catalogers appropriate for the source type (image or directory):
+```bash
+syft <some container image> --select-catalogers "python"
+# results in the following catalogers being used:
+# - python-installed-package-cataloger
+```
+
+Same command, but the set of catalogers changes based on what is being analyzed (in this case a directory):
+```bash
+syft <a directory> --select-catalogers "python"
+# results in the following catalogers being used:
+# - python-installed-package-cataloger
+# - python-package-cataloger
+```
+
+Use the default set of catalogers and add a cataloger to the set:
+```bash
+syft ... --catalogers "+sbom-cataloger"
+```
+
+Use the default set of catalogers but remove any catalogers that deal with RPMs:
+```bash
+syft ... --catalogers "-rpm"
+```
+
+Only scan with catalogers that:
+- are tagged with "go"
+- always use the sbom-cataloger
+- are appropriate for the source type (image or directory)
+
+```bash
+syft <some container image> --select-catalogers "go,+sbom-cataloger"
+# results in the following catalogers being used:
+# - go-module-binary-cataloger
+# - sbom-cataloger
+```
+
+Scan with all catalogers that deal with binary analysis, regardless of the source type:
+```bash
+syft ... --override-default-catalogers "binary"
+# results in the following catalogers being used:
+# - binary-cataloger
+# - cargo-auditable-binary-cataloger
+# - dotnet-portable-executable-cataloger
+# - go-module-binary-cataloger
+```
+
+Only scan with the specific `go-module-binary-cataloger` and `go-module-file-cataloger` catalogers:
+```bash
+syft ... --override-default-catalogers "go-module-binary-cataloger,go-module-file-cataloger"
+```
+
 
 ### Excluding file paths
 
@@ -457,87 +502,60 @@ Configuration options (example values are the default):
 
 ```yaml
 # the output format(s) of the SBOM report (options: syft-table, syft-text, syft-json, spdx-json, ...)
-# same as -o, --output, and SYFT_OUTPUT env var
 # to specify multiple output files in differing formats, use a list:
 # output:
 #   - "syft-json=<syft-json-output-file>"
 #   - "spdx-json=<spdx-json-output-file>"
-output: "syft-table"
+# SYFT_OUTPUT env var / -o, --output flags
+output: 
+  - "syft-table"
 
 # suppress all output (except for the SBOM report)
-# same as -q ; SYFT_QUIET env var
+# SYFT_QUIET env var / -q flag
 quiet: false
 
-# same as --file; write output report to a file (default is to write to stdout)
-file: ""
-
 # enable/disable checking for application updates on startup
-# same as SYFT_CHECK_FOR_APP_UPDATE env var
+# SYFT_CHECK_FOR_APP_UPDATE env var 
 check-for-app-update: true
 
-# allows users to specify which image source should be used to generate the sbom
-# valid values are: registry, docker, podman
-default-image-pull-source: ""
+# maximum number of workers used to process the list of package catalogers in parallel
+parallelism: 1
 
-# a list of globs to exclude from scanning. same as --exclude ; for example:
+# a list of globs to exclude from scanning, for example:
 # exclude:
 #   - "/etc/**"
 #   - "./out/**/*.json"
+# SYFT_EXCLUDE env var / --exclude flag
 exclude: []
 
-# allows users to exclude synthetic binary packages from the sbom
-# these packages are removed if an overlap with a non-synthetic package is found
-exclude-binary-overlap-by-ownership: true
-
 # os and/or architecture to use when referencing container images (e.g. "windows/armv6" or "arm64")
-# same as --platform; SYFT_PLATFORM env var
+# SYFT_PLATFORM env var / --platform flag
 platform: ""
+
+# the search space to look for file and package data (options: all-layers, squashed)
+# SYFT_SCOPE env var
+scope: "squashed"
 
 # set the list of package catalogers to use when generating the SBOM
 # default = empty (cataloger set determined automatically by the source type [image or file/directory])
-# catalogers:
-#   - alpm-db-cataloger
-#   - apkdb-cataloger
-#   - binary-cataloger
-#   - cargo-auditable-binary-cataloger
-#   - cocoapods-cataloger
-#   - conan-cataloger
-#   - dartlang-lock-cataloger
-#   - dotnet-deps-cataloger
-#   - dotnet-portable-executable-cataloger
-#   - dpkg-db-cataloger
-#   - elixir-mix-lock-cataloger
-#   - erlang-rebar-lock-cataloger
-#   - go-module-file-cataloger
-#   - go-module-binary-cataloger
-#   - graalvm-native-image-cataloger
-#   - haskell-cataloger
-#   - java-cataloger
-#   - java-gradle-lockfile-cataloger
-#   - java-pom-cataloger
-#   - javascript-lock-cataloger
-#   - javascript-package-cataloger
-#   - linux-kernel-cataloger
-#   - nix-store-cataloger
-#   - php-composer-installed-cataloger
-#   - php-composer-lock-cataloger
-#   - portage-cataloger
-#   - python-package-cataloger
-#   - python-installed-package-cataloger
-#   - rpm-db-cataloger
-#   - rpm-archive-cataloger
-#   - ruby-gemfile-cataloger
-#   - ruby-installed-gemspec-cataloger
-#   - rust-cargo-lock-cataloger
-#   - sbom-cataloger
-#   - spm-cataloger
+# Use `syft cataloger list` for a list of catalogers you can specify
+# DEPRECATED: please use default-catalogers and select-catalogers configuration options instead
+# SYFT_CATALOGERS env var / --catalogers flag
 catalogers:
 
+# set the base set of catalogers to use (defaults to 'image' or 'directory' depending on the scan source)
+# SYFT_DEFAULT_CATALOGERS env var / --override-default-catalogers flag
+default-catalogers: []
+
+# add, remove, and filter the catalogers to be used
+# SYFT_SELECT_CATALOGERS env var / --select-catalogers flag;
+select-catalogers: []
 
 # all format configuration
 format:
  
   # default value for all formats that support the "pretty" option (default is unset)
+  # SYFT_FORMAT_PRETTY env var
   pretty: 
 
   # all syft-json format options
@@ -545,6 +563,7 @@ format:
 
     # include space indention and newlines (inherits default value from 'format.pretty' or 'false' if parent is unset)
     # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+    # SYFT_FORMAT_JSON_PRETTY env var
     pretty: false
     
     # transform any syft-json output to conform to an approximation of the v11.0.1 schema. This includes:
@@ -554,21 +573,30 @@ format:
     # that output might not strictly be json schema v11 compliant, however, for consumers that require time to port
     # over to the final syft 1.0 json output this option can be used to ease the transition.
     #
-    # Note: long term support for this option is not guaranteed.
+    # Note: long term support for this option is not guaranteed (it may change or break at any time).
+    # SYFT_FORMAT_JSON_LEGACY env var
     legacy: false
 
   # all template format options
   template:
     # path to the template file to use when rendering the output with the `template` output format. 
     # Note that all template paths are based on the current syft-json schema.
-    # same as -t ; SYFT_TEMPLATE_PATH env var
+    # SYFT_FORMAT_TEMPLATE_PATH env var / -t flag 
     path: ""
+    
+    # if true, uses the go structs for the syft-json format for templating. 
+    # if false, uses the syft-json output for templating (which follows the syft JSON schema exactly).
+    #
+    # Note: long term support for this option is not guaranteed (it may change or break at any time).
+    # SYFT_FORMAT_TEMPLATE_LEGACY env var
+    legacy: false
 
   # all spdx-json format options
   spdx-json:
 
     # include space indention and newlines
     # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+    # SYFT_FORMAT_SPDX_JSON_PRETTY env var
     pretty: false
 
   # all cyclonedx-json format options
@@ -576,6 +604,7 @@ format:
 
      # include space indention and newlines
      # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+     # SYFT_FORMAT_CYCLONEDX_JSON_PRETTY env var
      pretty: false
 
   # all cyclonedx-xml format options
@@ -583,12 +612,41 @@ format:
 
      # include space indention
      # note: inherits default value from 'format.pretty' or 'false' if parent is unset
+     # SYFT_FORMAT_CYCLONEDX_XML_PRETTY env var
      pretty: false
+
+
+file:
+
+   metadata: 
+      # select which files should be captured by the file-metadata cataloger and included in the SBOM. 
+      # Options include:
+      #  - "all": capture all files from the search space
+      #  - "owned-by-package": capture only files owned by packages
+      #  - "none", "": do not capture any files
+      # SYFT_FILE_METADATA_SELECTION env var
+      selection: "owned-by-package"
+
+      # the file digest algorithms to use when cataloging files (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
+      # SYFT_FILE_METADATA_DIGESTS env var
+      digests:
+      - "sha256"
+      - "sha1"
+
+   # capture the contents of select files in the SBOM
+   content:
+      # skip searching a file entirely if it is above the given size (default = 1MB; unit = bytes)
+      # SYFT_FILE_CONTENT_SKIP_FILES_ABOVE_SIZE env var
+      skip-files-above-size: 1048576
+   
+      # file globs for the cataloger to match on
+      # SYFT_FILE_CONTENT_GLOBS env var
+      globs: []
 
 
 # cataloging packages is exposed through the packages and power-user subcommands
 package:
-
+   
   # search within archives that do contain a file index to search against (zip)
   # note: for now this only applies to the java package cataloger
   # SYFT_PACKAGE_SEARCH_INDEXED_ARCHIVES env var
@@ -600,14 +658,11 @@ package:
   # SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES env var
   search-unindexed-archives: false
 
-  cataloger:
-    # enable/disable cataloging of packages
-    # SYFT_PACKAGE_CATALOGER_ENABLED env var
-    enabled: true
+  # allows users to exclude synthetic binary packages from the sbom
+  # these packages are removed if an overlap with a non-synthetic package is found
+  # SYFT_PACKAGE_EXCLUDE_BINARY_OVERLAP_BY_OWNERSHIP env var
+  exclude-binary-overlap-by-ownership: true
 
-    # the search space to look for packages (options: all-layers, squashed)
-    # same as -s ; SYFT_PACKAGE_CATALOGER_SCOPE env var
-    scope: "squashed"
 
 golang:
    # search for go package licences in the GOPATH of the system running Syft, note that this is outside the
@@ -657,58 +712,38 @@ python:
    guess-unpinned-requirements: false
 
 javascript:
-   search-remote-licenses: false
-   npm-base-url: "https://registry.npmjs.org"
+  search-remote-licenses: false
+  npm-base-url: "https://registry.npmjs.org"
 
-file-contents:
-  cataloger:
-    # enable/disable cataloging of file contents
-    # SYFT_FILE_CONTENTS_CATALOGER_ENABLED env var
-    enabled: true
 
-    # the search space to look for file contents (options: all-layers, squashed)
-    # SYFT_FILE_CONTENTS_CATALOGER_SCOPE env var
-    scope: "squashed"
-
-  # skip searching a file entirely if it is above the given size (default = 1MB; unit = bytes)
-  # SYFT_FILE_CONTENTS_SKIP_FILES_ABOVE_SIZE env var
-  skip-files-above-size: 1048576
-
-  # file globs for the cataloger to match on
-  # SYFT_FILE_CONTENTS_GLOBS env var
-  globs: []
-
-file-metadata:
-  cataloger:
-    # enable/disable cataloging of file metadata
-    # SYFT_FILE_METADATA_CATALOGER_ENABLED env var
-    enabled: true
-
-    # the search space to look for file metadata (options: all-layers, squashed)
-    # SYFT_FILE_METADATA_CATALOGER_SCOPE env var
-    scope: "squashed"
-
-  # the file digest algorithms to use when cataloging files (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
-  # SYFT_FILE_METADATA_DIGESTS env var
-  digests: ["sha256"]
-
-# maximum number of workers used to process the list of package catalogers in parallel
-parallelism: 1
-
-# options that apply to all scan sources
+# configuration for the source that the SBOM is generated from (e.g. a file, directory, or container image)
 source:
   # alias name for the source
-  # SYFT_SOURCE_NAME env var; --source-name flag
+  # SYFT_SOURCE_NAME env var / --source-name flag
   name: ""
    
   # alias version for the source
-  # SYFT_SOURCE_VERSION env var; --source-version flag
+  # SYFT_SOURCE_VERSION env var / --source-version flag
   version: ""
-   
-  # options affecting the file source type
+
+  # base directory for scanning, no links will be followed above this directory, and all paths will be 
+  # reported relative to this directory
+  # SYFT_SOURCE_BASE_PATH env var
+  base-path: ''
+
+   # options affecting the file source type
   file:
     # the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")
-    digests: ["sha256"]
+    digests: 
+     - "sha256"
+
+  image:
+     
+    # allows users to specify which image source should be used to generate the sbom
+    # valid values are: registry, docker, podman
+    # SYFT_SOURCE_IMAGE_DEFAULT_PULL_SOURCE env var
+    default-pull-source: ""
+
 
 # options when pulling directly from a registry via the "registry:" or "containerd:" scheme
 registry:
@@ -762,15 +797,15 @@ attest:
 
 log:
   # use structured logging
-  # same as SYFT_LOG_STRUCTURED env var
+  # SYFT_LOG_STRUCTURED env var
   structured: false
 
   # the log level; note: detailed logging suppress the ETUI
-  # same as SYFT_LOG_LEVEL env var
+  # SYFT_LOG_LEVEL env var
   level: "error"
 
   # location to write the log file (default is not to have a log file)
-  # same as SYFT_LOG_FILE env var
+  # SYFT_LOG_FILE env var
   file: ""
 ```
 

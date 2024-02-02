@@ -33,7 +33,7 @@ jobs:
           app_id: ${{ secrets.TOKEN_APP_ID }}
           private_key: ${{ secrets.TOKEN_APP_PRIVATE_KEY }}
 
-      - uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 #v5.0.2
+      - uses: peter-evans/create-pull-request@b1ddad2c994a25fbc81a28b3ec0e368bb2021c50 #v6.0.0
         with:
           signoff: true
           delete-branch: true
@@ -45,7 +45,7 @@ jobs:
             Update CPE dictionary index based on the latest available CPE dictionary
           token: ${{ steps.generate-token.outputs.token }}
 
-      - uses: 8398a7/action-slack@fbd6aa58ba854a740e11a35d0df80cb5d12101d8 #v3.15.1
+      - uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 #v3.16.2
         with:
           status: ${{ job.status }}
           fields: workflow,eventName,job

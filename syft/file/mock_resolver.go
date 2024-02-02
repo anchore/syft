@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -144,12 +145,17 @@ func (r MockResolver) RelativeFileByPath(_ Location, path string) *Location {
 	return &paths[0]
 }
 
-func (r MockResolver) AllLocations() <-chan Location {
+func (r MockResolver) AllLocations(ctx context.Context) <-chan Location {
 	results := make(chan Location)
 	go func() {
 		defer close(results)
 		for _, l := range r.locations {
-			results <- l
+			select {
+			case <-ctx.Done():
+				return
+			case results <- l:
+				continue
+			}
 		}
 	}()
 	return results

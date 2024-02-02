@@ -8,6 +8,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+// NewSwiftPackageManagerCataloger returns a new Swift package manager cataloger object.
 func NewSwiftPackageManagerCataloger() pkg.Cataloger {
 	return generic.NewCataloger("swift-package-manager-cataloger").
 		WithParserByGlobs(parsePackageResolved, "**/Package.resolved", "**/.package.resolved")
