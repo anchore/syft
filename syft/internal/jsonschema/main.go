@@ -115,7 +115,7 @@ func build() *jsonschema.Schema {
 	// ensure the generated list of names is stable between runs
 	sort.Strings(metadataNames)
 
-	var metadataTypes = []map[string]string{
+	metadataTypes := []map[string]string{
 		// allow for no metadata to be provided
 		{"type": "null"},
 	}
@@ -134,7 +134,7 @@ func build() *jsonschema.Schema {
 }
 
 func encode(schema *jsonschema.Schema) []byte {
-	var newSchemaBuffer = new(bytes.Buffer)
+	newSchemaBuffer := new(bytes.Buffer)
 	enc := json.NewEncoder(newSchemaBuffer)
 	// prevent > and < from being escaped in the payload
 	enc.SetEscapeHTML(false)
@@ -154,6 +154,7 @@ func write(schema []byte) {
 		os.Exit(1)
 	}
 	schemaPath := filepath.Join(repoRoot, "schema", "json", fmt.Sprintf("schema-%s.json", internal.JSONSchemaVersion))
+	latestSchemaPath := filepath.Join(repoRoot, "schema", "json", "schema-latest.json")
 
 	if _, err := os.Stat(schemaPath); !os.IsNotExist(err) {
 		// check if the schema is the same...
@@ -182,13 +183,23 @@ func write(schema []byte) {
 	if err != nil {
 		panic(err)
 	}
+	defer fh.Close()
 
 	_, err = fh.Write(schema)
 	if err != nil {
 		panic(err)
 	}
 
-	defer fh.Close()
+	latestFile, err := os.Create(latestSchemaPath)
+	if err != nil {
+		panic(err)
+	}
+	defer latestFile.Close()
+
+	_, err = latestFile.Write(schema)
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Printf("Wrote new schema to %q\n", schemaPath)
 }
