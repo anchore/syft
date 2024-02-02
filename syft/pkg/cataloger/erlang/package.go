@@ -42,7 +42,7 @@ func newPackageFromOTP(name, version string, locations ...file.Location) pkg.Pac
 		Language:  pkg.Erlang,
 		Locations: file.NewLocationSet(locations...),
 		PURL:      packageURLFromOTP(name, version),
-		Type:      pkg.ErLangOTPPkg,
+		Type:      pkg.ErlangOTPPkg,
 	}
 
 	p.SetID()

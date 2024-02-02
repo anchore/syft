@@ -21,7 +21,7 @@ func TestParseOTPApplication(t *testing.T) {
 					Name:     "rabbit",
 					Version:  "3.12.10",
 					Language: pkg.Erlang,
-					Type:     pkg.ErLangOTPPkg,
+					Type:     pkg.ErlangOTPPkg,
 					PURL:     "pkg:otp/rabbit@3.12.10",
 				},
 			},

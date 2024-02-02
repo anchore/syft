@@ -85,7 +85,7 @@ func TestTypeFromPURL(t *testing.T) {
 		},
 		{
 			purl:     "pkg:otp/accept@0.3.5",
-			expected: ErLangOTPPkg,
+			expected: ErlangOTPPkg,
 		},
 		{
 			purl:     "pkg:generic/linux-kernel@5.10.15",
