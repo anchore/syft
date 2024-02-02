@@ -25,6 +25,7 @@ type Artifacts struct {
 	FileDigests       map[file.Coordinates][]file.Digest
 	FileContents      map[file.Coordinates]string
 	FileLicenses      map[file.Coordinates][]file.License
+	Executables       map[file.Coordinates]file.Executable
 	LinuxDistribution *linux.Release
 }
 

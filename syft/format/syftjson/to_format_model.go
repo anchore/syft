@@ -119,13 +119,19 @@ func toFile(s sbom.SBOM) []model.File {
 			})
 		}
 
+		var executable *file.Executable
+		if exec, exists := artifacts.Executables[coordinates]; exists {
+			executable = &exec
+		}
+
 		results = append(results, model.File{
-			ID:       string(coordinates.ID()),
-			Location: coordinates,
-			Metadata: toFileMetadataEntry(coordinates, metadata),
-			Digests:  digests,
-			Contents: contents,
-			Licenses: licenses,
+			ID:         string(coordinates.ID()),
+			Location:   coordinates,
+			Metadata:   toFileMetadataEntry(coordinates, metadata),
+			Digests:    digests,
+			Contents:   contents,
+			Licenses:   licenses,
+			Executable: executable,
 		})
 	}
 

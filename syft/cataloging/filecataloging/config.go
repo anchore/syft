@@ -9,13 +9,15 @@ import (
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 )
 
 type Config struct {
-	Selection file.Selection     `yaml:"selection" json:"selection" mapstructure:"selection"`
-	Hashers   []crypto.Hash      `yaml:"hashers" json:"hashers" mapstructure:"hashers"`
-	Content   filecontent.Config `yaml:"content" json:"content" mapstructure:"content"`
+	Selection  file.Selection     `yaml:"selection" json:"selection" mapstructure:"selection"`
+	Hashers    []crypto.Hash      `yaml:"hashers" json:"hashers" mapstructure:"hashers"`
+	Content    filecontent.Config `yaml:"content" json:"content" mapstructure:"content"`
+	Executable executable.Config  `yaml:"executable" json:"executable" mapstructure:"executable"`
 }
 
 type configMarshaledForm struct {
@@ -30,9 +32,10 @@ func DefaultConfig() Config {
 		log.WithFields("error", err).Warn("unable to create file hashers")
 	}
 	return Config{
-		Selection: file.FilesOwnedByPackageSelection,
-		Hashers:   hashers,
-		Content:   filecontent.DefaultConfig(),
+		Selection:  file.FilesOwnedByPackageSelection,
+		Hashers:    hashers,
+		Content:    filecontent.DefaultConfig(),
+		Executable: executable.DefaultConfig(),
 	}
 }
 

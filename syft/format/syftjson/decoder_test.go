@@ -221,6 +221,22 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 					},
 				},
 			},
+			Executables: map[file.Coordinates]file.Executable{
+				c: {
+					Format: file.ELF,
+					SecurityFeatures: &file.ELFSecurityFeatures{
+						SymbolTableStripped:           false,
+						StackCanary:                   boolRef(true),
+						NoExecutable:                  false,
+						RelocationReadOnly:            "partial",
+						PositionIndependentExecutable: false,
+						DynamicSharedObject:           false,
+						LlvmSafeStack:                 boolRef(false),
+						LlvmControlFlowIntegrity:      boolRef(true),
+						ClangFortifySource:            boolRef(true),
+					},
+				},
+			},
 			LinuxDistribution: &linux.Release{
 				PrettyName:       "some os",
 				Name:             "os",

@@ -185,6 +185,9 @@ func (c *CreateSBOMConfig) fileTasks() []task.Task {
 	if t := task.NewFileContentCatalogerTask(c.Files.Content); t != nil {
 		tsks = append(tsks, t)
 	}
+	if t := task.NewExecutableCatalogerTask(c.Files.Selection, c.Files.Executable); t != nil {
+		tsks = append(tsks, t)
+	}
 
 	return tsks
 }

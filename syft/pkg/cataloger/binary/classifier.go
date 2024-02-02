@@ -17,8 +17,8 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
 // Classifier is a generic package classifier that can be used to match a package definition

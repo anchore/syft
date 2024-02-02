@@ -19,10 +19,10 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
 const goArch = "GOARCH"

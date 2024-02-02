@@ -35,6 +35,7 @@ func toSyftModel(doc model.Document) *sbom.SBOM {
 			FileDigests:       fileArtifacts.FileDigests,
 			FileContents:      fileArtifacts.FileContents,
 			FileLicenses:      fileArtifacts.FileLicenses,
+			Executables:       fileArtifacts.Executables,
 			LinuxDistribution: toSyftLinuxRelease(doc.Distro),
 		},
 		Source:        *toSyftSourceData(doc.Source),
@@ -69,6 +70,7 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 		FileDigests:  make(map[file.Coordinates][]file.Digest),
 		FileContents: make(map[file.Coordinates]string),
 		FileLicenses: make(map[file.Coordinates][]file.License),
+		Executables:  make(map[file.Coordinates]file.Executable),
 	}
 
 	for _, f := range files {
@@ -123,6 +125,10 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 				Type:            l.Type,
 				LicenseEvidence: evidence,
 			})
+		}
+
+		if f.Executable != nil {
+			ret.Executables[coord] = *f.Executable
 		}
 	}
 

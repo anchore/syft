@@ -266,6 +266,7 @@ tasks:
     desc: Generate test fixture fingerprints
     generates:
       - cmd/syft/internal/test/integration/test-fixtures/cache.fingerprint
+      - syft/file/cataloger/executable/test-fixtures/cache.fingerprint
       - syft/pkg/cataloger/binary/test-fixtures/cache.fingerprint
       - syft/pkg/cataloger/java/test-fixtures/java-builds/cache.fingerprint
       - syft/pkg/cataloger/golang/test-fixtures/archs/binaries.fingerprint
@@ -274,17 +275,19 @@ tasks:
       - test/install/cache.fingerprint
       - test/cli/test-fixtures/cache.fingerprint
     cmds:
+      # for EXECUTABLE unit test fixtures
+      - "cd syft/file/cataloger/executable/test-fixtures && make cache.fingerprint"
       # for IMAGE integration test fixtures
       - "cd cmd/syft/internal/test/integration/test-fixtures && make cache.fingerprint"
-      # for BINARY test fixtures
+      # for BINARY unit test fixtures
       - "cd syft/pkg/cataloger/binary/test-fixtures && make cache.fingerprint"
-      # for JAVA BUILD test fixtures
+      # for JAVA BUILD unit test fixtures
       - "cd syft/pkg/cataloger/java/test-fixtures/java-builds && make cache.fingerprint"
-      # for GO BINARY test fixtures
+      # for GO BINARY unit test fixtures
       - "cd syft/pkg/cataloger/golang/test-fixtures/archs && make binaries.fingerprint"
-      # for RPM test fixtures
+      # for RPM unit test fixtures
       - "cd syft/pkg/cataloger/redhat/test-fixtures && make rpms.fingerprint"
-      # for Kernel test fixtures
+      # for Kernel unit test fixtures
       - "cd syft/pkg/cataloger/kernel/test-fixtures && make cache.fingerprint"
       # for INSTALL test fixtures
       - "cd test/install && make cache.fingerprint"
@@ -294,6 +297,7 @@ tasks:
   fixtures:
     desc: Generate test fixtures
     cmds:
+      - "cd syft/file/cataloger/executable/test-fixtures && make"
       - "cd syft/pkg/cataloger/java/test-fixtures/java-builds && make"
       - "cd syft/pkg/cataloger/redhat/test-fixtures && make"
       - "cd syft/pkg/cataloger/binary/test-fixtures && make"
