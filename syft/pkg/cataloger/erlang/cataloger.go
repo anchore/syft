@@ -1,5 +1,5 @@
 /*
-Package erlang provides a concrete Cataloger implementation relating to packages within the Erlang language ecosystem.
+Package erlang provides concrete Catalogers implementation relating to packages within the Erlang language ecosystem.
 */
 package erlang
 
@@ -12,4 +12,9 @@ import (
 func NewRebarLockCataloger() pkg.Cataloger {
 	return generic.NewCataloger("erlang-rebar-lock-cataloger").
 		WithParserByGlobs(parseRebarLock, "**/rebar.lock")
+}
+
+func NewOTPCataloger() pkg.Cataloger {
+	return generic.NewCataloger("erlang-otp-application-cataloger").
+		WithParserByGlobs(parseOTPApp, "**/*.app")
 }

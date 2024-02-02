@@ -201,6 +201,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.ErlangOTPPkg,
+			},
+			expected: []string{
+				"from ErLang application resource file",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.LinuxKernelPkg,
 			},
 			expected: []string{

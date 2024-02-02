@@ -84,6 +84,10 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: HexPkg,
 		},
 		{
+			purl:     "pkg:otp/accept@0.3.5",
+			expected: ErlangOTPPkg,
+		},
+		{
 			purl:     "pkg:generic/linux-kernel@5.10.15",
 			expected: LinuxKernelPkg,
 		},

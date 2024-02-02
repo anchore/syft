@@ -57,8 +57,8 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedLanguages.Remove(pkg.Swift.String())
 	definedLanguages.Remove(pkg.CPP.String())
 	definedLanguages.Remove(pkg.Haskell.String())
-	definedLanguages.Remove(pkg.Erlang.String())
 	definedLanguages.Remove(pkg.Elixir.String())
+	definedLanguages.Remove(pkg.Erlang.String())
 
 	observedPkgs := strset.New()
 	definedPkgs := strset.New()
@@ -71,6 +71,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.GoModulePkg))
 	definedPkgs.Remove(string(pkg.RustPkg))
 	definedPkgs.Remove(string(pkg.DartPubPkg))
+	definedPkgs.Remove(string(pkg.ErlangOTPPkg))
 	definedPkgs.Remove(string(pkg.CocoapodsPkg))
 	definedPkgs.Remove(string(pkg.ConanPkg))
 	definedPkgs.Remove(string(pkg.HackagePkg))
