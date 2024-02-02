@@ -48,13 +48,6 @@ var (
 	integrityExp = regexp.MustCompile(`^\s+integrity\s+([^\s]+)`)
 )
 
-const (
-	noPackage   = ""
-	noVersion   = ""
-	noResolved  = ""
-	noIntegrity = ""
-)
-
 type genericYarnLockAdapter struct {
 	cfg CatalogerConfig
 }
@@ -73,44 +66,45 @@ func (a genericYarnLockAdapter) parseYarnLock(_ context.Context, resolver file.R
 	}
 
 	var pkgs []pkg.Package
+	var currentPackage, currentVersion, currentResolved, currentIntegrity string
+
 	scanner := bufio.NewScanner(reader)
 	parsedPackages := strset.New()
-	currentPackage := noPackage
-	currentVersion := noVersion
-	currentResolved := noResolved
-	currentIntegrity := noIntegrity
 
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if packageName := findPackageName(line); packageName != noPackage {
+		if packageName := findPackageName(line); packageName != "" {
 			// When we find a new package, check if we have unsaved identifiers
-			if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
+			if currentPackage != "" && currentVersion != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
 				pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, currentIntegrity))
 				parsedPackages.Add(currentPackage + "@" + currentVersion)
 			}
 
 			currentPackage = packageName
-		} else if version := findPackageVersion(line); version != noVersion {
+
+		} else if version := findPackageVersion(line); version != "" {
 			currentVersion = version
-		} else if packageName, version, resolved := findResolvedPackageAndVersion(line); packageName != noPackage && version != noVersion && resolved != noResolved {
+
+		} else if packageName, version, resolved := findResolvedPackageAndVersion(line); packageName != "" && version != "" && resolved != "" {
 			currentResolved = resolved
 			currentPackage = packageName
 			currentVersion = version
-		} else if integrity := findIntegrity(line); integrity != noIntegrity && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
+
+		} else if integrity := findIntegrity(line); integrity != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
 			pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, integrity))
 			parsedPackages.Add(currentPackage + "@" + currentVersion)
 
 			// Cleanup to indicate no unsaved identifiers
-			currentPackage = noPackage
-			currentVersion = noVersion
-			currentResolved = noResolved
-			currentIntegrity = noIntegrity
+			currentPackage = ""
+			currentVersion = ""
+			currentResolved = ""
+			currentIntegrity = ""
 		}
 	}
 
 	// check if we have valid unsaved data after end-of-file has reached
-	if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
+	if currentPackage != "" && currentVersion != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
 		pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, currentIntegrity))
 		parsedPackages.Add(currentPackage + "@" + currentVersion)
 	}
@@ -129,7 +123,7 @@ func findPackageName(line string) string {
 		return matches[1]
 	}
 
-	return noPackage
+	return ""
 }
 
 func findPackageVersion(line string) string {
@@ -137,11 +131,11 @@ func findPackageVersion(line string) string {
 		return matches[1]
 	}
 
-	return noVersion
+	return ""
 }
 
 func findResolvedPackageAndVersion(line string) (string, string, string) {
-	resolved := noResolved
+	var resolved string
 	if matches := resolvedExp.FindStringSubmatch(line); len(matches) >= 2 {
 		resolved = matches[1]
 	}
@@ -149,7 +143,7 @@ func findResolvedPackageAndVersion(line string) (string, string, string) {
 		return matches[1], matches[2], resolved
 	}
 
-	return noPackage, noVersion, noResolved
+	return "", "", ""
 }
 
 func findIntegrity(line string) string {
@@ -157,5 +151,5 @@ func findIntegrity(line string) string {
 		return matches[1]
 	}
 
-	return noResolved
+	return ""
 }
