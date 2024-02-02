@@ -60,26 +60,44 @@ test_negative_snapshot_download_asset() {
   rm -rf -- "$tmpdir"
 }
 
+test_sboms_have_packages() {
+  find "$(snapshot_dir)/" -name "*.sbom" -print0 | while IFS= read -r -d '' file; do
+      count=$(cat "$file" | jq ".artifacts | length")
+      if [ "$count" -gt 80 ]; then
+          echo "not enough packages found for file: $file"
+          exit 1
+      fi
+  done
+}
+
 
 worker_pid=$(setup_snapshot_server)
 trap 'teardown_snapshot_server ${worker_pid}' EXIT
 
 # exercise all possible assets
+run_test_case test_positive_snapshot_download_asset "linux" "amd64" "sbom"
 run_test_case test_positive_snapshot_download_asset "linux" "amd64" "tar.gz"
 run_test_case test_positive_snapshot_download_asset "linux" "amd64" "rpm"
 run_test_case test_positive_snapshot_download_asset "linux" "amd64" "deb"
+run_test_case test_positive_snapshot_download_asset "linux" "arm64" "sbom"
 run_test_case test_positive_snapshot_download_asset "linux" "arm64" "tar.gz"
 run_test_case test_positive_snapshot_download_asset "linux" "arm64" "rpm"
 run_test_case test_positive_snapshot_download_asset "linux" "arm64" "deb"
+run_test_case test_positive_snapshot_download_asset "linux" "ppc64le" "sbom"
 run_test_case test_positive_snapshot_download_asset "linux" "ppc64le" "tar.gz"
 run_test_case test_positive_snapshot_download_asset "linux" "ppc64le" "rpm"
 run_test_case test_positive_snapshot_download_asset "linux" "ppc64le" "deb"
+run_test_case test_positive_snapshot_download_asset "linux" "s390x" "sbom"
 run_test_case test_positive_snapshot_download_asset "linux" "s390x" "tar.gz"
 run_test_case test_positive_snapshot_download_asset "linux" "s390x" "rpm"
 run_test_case test_positive_snapshot_download_asset "linux" "s390x" "deb"
 
+run_test_case test_positive_snapshot_download_asset "darwin" "amd64" "sbom"
 run_test_case test_positive_snapshot_download_asset "darwin" "amd64" "tar.gz"
+run_test_case test_positive_snapshot_download_asset "darwin" "arm64" "sbom"
 run_test_case test_positive_snapshot_download_asset "darwin" "arm64" "tar.gz"
+
+run_test_case test_positive_snapshot_download_asset "windows" "amd64" "sbom"
 run_test_case test_positive_snapshot_download_asset "windows" "amd64" "zip"
 # note: the mac signing process produces a dmg which is not part of the snapshot process (thus is not exercised here)
 
@@ -88,6 +106,9 @@ run_test_case test_download_snapshot_asset_exercised_all_assets
 
 # make certain we handle missing assets alright
 run_test_case test_negative_snapshot_download_asset "bogus" "amd64" "zip"
+
+# given we've downloaded the SBOMs, sanity check that they have a reasonable number of packages
+run_test_case test_sboms_have_packages
 
 trap - EXIT
 teardown_snapshot_server "${worker_pid}"

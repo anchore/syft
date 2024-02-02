@@ -42,7 +42,7 @@ type attestOptions struct {
 	options.Output      `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 	options.Catalog     `yaml:",inline" mapstructure:",squash"`
-	options.Attest      `yaml:",inline" mapstructure:",squash"`
+	Attest              options.Attest `yaml:"attest" mapstructure:"attest"`
 }
 
 func Attest(app clio.Application) *cobra.Command {

@@ -548,7 +548,7 @@ catalogers:
 default-catalogers: []
 
 # add, remove, and filter the catalogers to be used
-# SYFT_SELECT_CATALOGERS env var / --select-cataloger flag;
+# SYFT_SELECT_CATALOGERS env var / --select-catalogers flag;
 select-catalogers: []
 
 # all format configuration

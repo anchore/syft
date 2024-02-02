@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
@@ -42,7 +43,7 @@ func NewGoModuleBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
 	}
 	return &progressingCataloger{
 		cataloger: generic.NewCataloger(binaryCatalogerName).
-			WithParserByMimeTypes(c.parseGoBinary, internal.ExecutableMIMETypeSet.List()...),
+			WithParserByMimeTypes(c.parseGoBinary, mimetype.ExecutableMIMETypeSet.List()...),
 	}
 }
 

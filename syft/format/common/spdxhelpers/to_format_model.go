@@ -14,12 +14,12 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/format/common/util"
+	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -43,7 +43,7 @@ const (
 //
 //nolint:funlen
 func ToFormatModel(s sbom.SBOM) *spdx.Document {
-	name, namespace := DocumentNameAndNamespace(s.Source, s.Descriptor)
+	name, namespace := helpers.DocumentNameAndNamespace(s.Source, s.Descriptor)
 
 	packages := toPackages(s.Artifacts.Packages, s)
 
@@ -68,7 +68,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		RefA: spdx.DocElementID{
 			ElementRefID: "DOCUMENT",
 		},
-		Relationship: string(DescribesRelationship),
+		Relationship: string(helpers.DescribesRelationship),
 		RefB: spdx.DocElementID{
 			ElementRefID: describesID,
 		},
@@ -161,7 +161,7 @@ func toRootRelationships(rootPackage *spdx.Package, packages []*spdx.Package) (o
 			RefA: spdx.DocElementID{
 				ElementRefID: rootPackage.PackageSPDXIdentifier,
 			},
-			Relationship: string(ContainsRelationship),
+			Relationship: string(helpers.ContainsRelationship),
 			RefB: spdx.DocElementID{
 				ElementRefID: p.PackageSPDXIdentifier,
 			},
@@ -236,22 +236,22 @@ func toRootPackage(s source.Description) *spdx.Package {
 
 	p := &spdx.Package{
 		PackageName:               name,
-		PackageSPDXIdentifier:     spdx.ElementID(SanitizeElementID(fmt.Sprintf("DocumentRoot-%s-%s", prefix, name))),
+		PackageSPDXIdentifier:     spdx.ElementID(helpers.SanitizeElementID(fmt.Sprintf("DocumentRoot-%s-%s", prefix, name))),
 		PackageVersion:            version,
 		PackageChecksums:          checksums,
 		PackageExternalReferences: nil,
 		PrimaryPackagePurpose:     purpose,
 		PackageSupplier: &spdx.Supplier{
-			Supplier: NOASSERTION,
+			Supplier: helpers.NOASSERTION,
 		},
-		PackageDownloadLocation: NOASSERTION,
+		PackageDownloadLocation: helpers.NOASSERTION,
 	}
 
 	if purl != nil {
 		p.PackageExternalReferences = []*spdx.PackageExternalReference{
 			{
-				Category: string(PackageManagerReferenceCategory),
-				RefType:  string(PurlExternalRefType),
+				Category: string(helpers.PackageManagerReferenceCategory),
+				RefType:  string(helpers.PurlExternalRefType),
 				Locator:  purl.String(),
 			},
 		}
@@ -294,7 +294,7 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 		id = string(identifiable.ID())
 	}
 	// NOTE: the spdx library prepend SPDXRef-, so we don't do it here
-	return spdx.ElementID(SanitizeElementID(id))
+	return spdx.ElementID(helpers.SanitizeElementID(id))
 }
 
 // packages populates all Package Information from the package Collection (see https://spdx.github.io/spdx-spec/3-package-information/)
@@ -309,7 +309,7 @@ func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Packag
 		// in the Comments on License field (section 7.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 7.16) is preferred.
 		// extract these correctly to the spdx license format
-		concluded, declared := License(p)
+		concluded, declared := helpers.License(p)
 
 		// two ways to get filesAnalyzed == true:
 		// 1. syft has generated a sha1 digest for the package itself - usually in the java cataloger
@@ -370,7 +370,7 @@ func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Packag
 			//   (i) the SPDX file creator has attempted to but cannot reach a reasonable objective determination;
 			//   (ii) the SPDX file creator has made no attempt to determine this field; or
 			//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
-			PackageDownloadLocation: DownloadLocation(p),
+			PackageDownloadLocation: helpers.DownloadLocation(p),
 
 			// 7.8: FilesAnalyzed
 			// Cardinality: optional, one; default value is "true" if omitted
@@ -403,11 +403,11 @@ func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Packag
 
 			// 7.11: Package Home Page
 			// Cardinality: optional, one
-			PackageHomePage: Homepage(p),
+			PackageHomePage: helpers.Homepage(p),
 
 			// 7.12: Source Information
 			// Cardinality: optional, one
-			PackageSourceInfo: SourceInfo(p),
+			PackageSourceInfo: helpers.SourceInfo(p),
 
 			// 7.13: Concluded License: SPDX License Expression, "NONE" or "NOASSERTION"
 			// Cardinality: mandatory, one
@@ -449,7 +449,7 @@ func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Packag
 
 			// 7.19: Package Detailed Description
 			// Cardinality: optional, one
-			PackageDescription: Description(p),
+			PackageDescription: helpers.Description(p),
 
 			// 7.20: Package Comment
 			// Cardinality: optional, one
@@ -491,7 +491,7 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 		}
 	case pkg.GolangBinaryBuildinfoEntry:
 		// because the H1 digest is found in the Golang metadata we cannot claim that the files were analyzed
-		algo, hexStr, err := util.HDigestToSHA(meta.H1Digest)
+		algo, hexStr, err := helpers.HDigestToSHA(meta.H1Digest)
 		if err != nil {
 			log.Debugf("invalid h1digest: %s: %v", meta.H1Digest, err)
 			break
@@ -506,7 +506,7 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 }
 
 func toPackageOriginator(p pkg.Package) *spdx.Originator {
-	kind, originator := Originator(p)
+	kind, originator := helpers.Originator(p)
 	if kind == "" || originator == "" {
 		return nil
 	}
@@ -519,10 +519,10 @@ func toPackageOriginator(p pkg.Package) *spdx.Originator {
 func toPackageSupplier(p pkg.Package) *spdx.Supplier {
 	// this uses the Originator function for now until
 	// a better distinction can be made for supplier
-	kind, supplier := Originator(p)
+	kind, supplier := helpers.Originator(p)
 	if kind == "" || supplier == "" {
 		return &spdx.Supplier{
-			Supplier: NOASSERTION,
+			Supplier: helpers.NOASSERTION,
 		}
 	}
 	return &spdx.Supplier{
@@ -532,7 +532,7 @@ func toPackageSupplier(p pkg.Package) *spdx.Supplier {
 }
 
 func formatSPDXExternalRefs(p pkg.Package) (refs []*spdx.PackageExternalReference) {
-	for _, ref := range ExternalRefs(p) {
+	for _, ref := range helpers.ExternalRefs(p) {
 		refs = append(refs, &spdx.PackageExternalReference{
 			Category:           string(ref.ReferenceCategory),
 			RefType:            string(ref.ReferenceType),
@@ -572,16 +572,16 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 	return result
 }
 
-func lookupRelationship(ty artifact.RelationshipType) (bool, RelationshipType, string) {
+func lookupRelationship(ty artifact.RelationshipType) (bool, helpers.RelationshipType, string) {
 	switch ty {
 	case artifact.ContainsRelationship:
-		return true, ContainsRelationship, ""
+		return true, helpers.ContainsRelationship, ""
 	case artifact.DependencyOfRelationship:
-		return true, DependencyOfRelationship, ""
+		return true, helpers.DependencyOfRelationship, ""
 	case artifact.OwnershipByFileOverlapRelationship:
-		return true, OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
+		return true, helpers.OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
 	case artifact.EvidentByRelationship:
-		return true, OtherRelationship, fmt.Sprintf("%s: indicates the package's existence is evident by the given file", ty)
+		return true, helpers.OtherRelationship, fmt.Sprintf("%s: indicates the package's existence is evident by the given file", ty)
 	}
 	return false, "", ""
 }
@@ -673,28 +673,28 @@ func toFileTypes(metadata *file.Metadata) (ty []string) {
 	mimeTypePrefix := strings.Split(metadata.MIMEType, "/")[0]
 	switch mimeTypePrefix {
 	case "image":
-		ty = append(ty, string(ImageFileType))
+		ty = append(ty, string(helpers.ImageFileType))
 	case "video":
-		ty = append(ty, string(VideoFileType))
+		ty = append(ty, string(helpers.VideoFileType))
 	case "application":
-		ty = append(ty, string(ApplicationFileType))
+		ty = append(ty, string(helpers.ApplicationFileType))
 	case "text":
-		ty = append(ty, string(TextFileType))
+		ty = append(ty, string(helpers.TextFileType))
 	case "audio":
-		ty = append(ty, string(AudioFileType))
+		ty = append(ty, string(helpers.AudioFileType))
 	}
 
-	if internal.IsExecutable(metadata.MIMEType) {
-		ty = append(ty, string(BinaryFileType))
+	if mimetype.IsExecutable(metadata.MIMEType) {
+		ty = append(ty, string(helpers.BinaryFileType))
 	}
 
-	if internal.IsArchive(metadata.MIMEType) {
-		ty = append(ty, string(ArchiveFileType))
+	if mimetype.IsArchive(metadata.MIMEType) {
+		ty = append(ty, string(helpers.ArchiveFileType))
 	}
 
 	// TODO: add support for source, spdx, and documentation file types
 	if len(ty) == 0 {
-		ty = append(ty, string(OtherFileType))
+		ty = append(ty, string(helpers.OtherFileType))
 	}
 
 	return ty
@@ -703,18 +703,18 @@ func toFileTypes(metadata *file.Metadata) (ty []string) {
 // other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
 // field. The spdxexpression field is only filled given a validated Value field.
 func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
-	licenses := map[string]spdxLicense{}
+	licenses := map[string]helpers.SPDXLicense{}
 
 	for p := range catalog.Enumerate() {
-		declaredLicenses, concludedLicenses := parseLicenses(p.Licenses.ToSlice())
+		declaredLicenses, concludedLicenses := helpers.ParseLicenses(p.Licenses.ToSlice())
 		for _, l := range declaredLicenses {
-			if l.value != "" {
-				licenses[l.id] = l
+			if l.Value != "" {
+				licenses[l.ID] = l
 			}
 		}
 		for _, l := range concludedLicenses {
-			if l.value != "" {
-				licenses[l.id] = l
+			if l.Value != "" {
+				licenses[l.ID] = l
 			}
 		}
 	}
@@ -730,8 +730,8 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	for _, id := range ids {
 		license := licenses[id]
 		result = append(result, &spdx.OtherLicense{
-			LicenseIdentifier: license.id,
-			ExtractedText:     license.value,
+			LicenseIdentifier: license.ID,
+			ExtractedText:     license.Value,
 		})
 	}
 	return result

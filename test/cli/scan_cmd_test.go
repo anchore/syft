@@ -191,6 +191,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 		},
 		{
+			// TODO: this could be a unit test
 			name: "responds-to-package-cataloger-search-options",
 			args: []string{"--help"},
 			env: map[string]string{
