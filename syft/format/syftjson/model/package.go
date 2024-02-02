@@ -36,10 +36,10 @@ type PackageBasicData struct {
 	PURL      string          `json:"purl"`
 }
 
-type cpes []SourcedCPE
+type cpes []CPE
 
-type SourcedCPE struct {
-	CPE    string `json:"cpe"`
+type CPE struct {
+	Value  string `json:"cpe"`
 	Source string `json:"source,omitempty"`
 }
 
@@ -81,18 +81,18 @@ func (f *licenses) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func sourcedCPESfromSimpleCPEs(simpleCPEs []string) []SourcedCPE {
-	var result []SourcedCPE
+func sourcedCPESfromSimpleCPEs(simpleCPEs []string) []CPE {
+	var result []CPE
 	for _, s := range simpleCPEs {
-		result = append(result, SourcedCPE{
-			CPE: s,
+		result = append(result, CPE{
+			Value: s,
 		})
 	}
 	return result
 }
 
 func (c *cpes) UnmarshalJSON(b []byte) error {
-	var cs []SourcedCPE
+	var cs []CPE
 	if err := json.Unmarshal(b, &cs); err != nil {
 		var simpleCPEs []string
 		if err := json.Unmarshal(b, &simpleCPEs); err != nil {

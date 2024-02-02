@@ -301,7 +301,7 @@ func toSyftCatalog(pkgs []model.Package, idAliases map[string]string) *pkg.Colle
 func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 	var cpes []cpe.CPE
 	for _, c := range p.CPEs {
-		value, err := cpe.New(c.CPE)
+		value, err := cpe.New(c.Value)
 		if err != nil {
 			log.Warnf("excluding invalid Attributes %q: %v", c, err)
 			continue
