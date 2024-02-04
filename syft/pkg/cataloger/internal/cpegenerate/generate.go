@@ -185,7 +185,7 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.union(candidateVendorsForAPK(p))
 	case pkg.NpmPackage:
 		vendors.union(candidateVendorsForJavascript(p))
-	case pkg.WordpressPluginMetadataType:
+	case pkg.WordpressPluginEntry:
 		vendors.clear()
 		vendors.union(candidateVendorsForWordpressPlugin(p))
 	}
@@ -247,7 +247,7 @@ func candidateProducts(p pkg.Package) []string {
 		products.union(candidateProductsForAPK(p))
 	}
 
-	if p.MetadataType == pkg.WordpressPluginMetadataType {
+	if _, hasWordpressMetadata := p.Metadata.(pkg.WordpressPluginEntry); hasWordpressMetadata {
 		products.clear()
 		products.union(candidateProductsForWordpressPlugin(p))
 	}

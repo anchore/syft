@@ -1,6 +1,7 @@
 package wordpress
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -34,18 +35,18 @@ var patterns = map[string]*regexp.Regexp{
 }
 
 type pluginData struct {
-	Licenses                    []string `mapstructure:"licenses" json:"licenses,omitempty"`
-	pkg.WordpressPluginMetadata `mapstructure:",squash" json:",inline"`
+	Licenses                 []string `mapstructure:"licenses" json:"licenses,omitempty"`
+	pkg.WordpressPluginEntry `mapstructure:",squash" json:",inline"`
 }
 
-func parseWordpressPluginFiles(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseWordpressPluginFiles(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
 	buffer := make([]byte, ContentBufferSize)
 
 	_, err := reader.Read(buffer)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to read %s file: %w", reader.Location.VirtualPath, err)
+		return nil, nil, fmt.Errorf("failed to read %s file: %w", reader.Location.Path(), err)
 	}
 
 	fileContent := string(buffer)
@@ -65,7 +66,7 @@ func parseWordpressPluginFiles(_ file.Resolver, _ *generic.Environment, reader f
 	if nameOk && name != "" && versionOk && version != "" {
 		var metadata pluginData
 
-		metadata.PluginName = pluginName
+		metadata.Name = pluginName
 
 		author, authorOk := fields["author"]
 		if authorOk && author != "" {

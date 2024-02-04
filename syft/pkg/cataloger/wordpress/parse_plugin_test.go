@@ -20,12 +20,11 @@ func TestParseWordpressPluginFiles(t *testing.T) {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocations("GPLv2"),
 		),
-		Language:     pkg.PHP,
-		MetadataType: pkg.WordpressPluginMetadataType,
-		Metadata: pkg.WordpressPluginMetadata{
-			PluginName: "akismet",
-			Author:     "Automattic - Anti-spam Team",
-			AuthorURI:  "https://automattic.com/wordpress-plugins/",
+		Language: pkg.PHP,
+		Metadata: pkg.WordpressPluginEntry{
+			Name:      "akismet",
+			Author:    "Automattic - Anti-spam Team",
+			AuthorURI: "https://automattic.com/wordpress-plugins/",
 		},
 	}
 

@@ -1493,6 +1493,9 @@
             },
             {
               "$ref": "#/$defs/SwiftPackageManagerLockEntry"
+            },
+            {
+              "$ref": "#/$defs/WordpressPluginEntry"
             }
           ]
         }
@@ -2266,6 +2269,23 @@
       "type": "object",
       "required": [
         "revision"
+      ]
+    },
+    "WordpressPluginEntry": {
+      "properties": {
+        "plugin_name": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "author_uri": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "plugin_name"
       ]
     },
     "cpes": {
