@@ -12,6 +12,11 @@ natsort = "*"
 six = "*"
 sphinx = "*"
 
+[package.source]
+type = "legacy"
+url = "https://test.pypi.org/simple"
+reference = "test"
+
 [package.extras]
 deploy = ["bumpversion", "twine", "wheel"]
 docs = ["sphinx", "sphinx-rtd-theme"]

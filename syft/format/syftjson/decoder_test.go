@@ -159,11 +159,14 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 		Type:     "type",
 		CPEs: []cpe.CPE{
 			{
-				Part:    "a",
-				Vendor:  "vendor",
-				Product: "product",
-				Version: "version",
-				Update:  "update",
+				Attributes: cpe.Attributes{
+					Part:    "a",
+					Vendor:  "vendor",
+					Product: "product",
+					Version: "version",
+					Update:  "update",
+				},
+				Source: "test-source",
 			},
 		},
 		PURL:     "pkg:generic/pkg@version",
@@ -215,6 +218,22 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 							Offset:     2,
 							Extent:     3,
 						},
+					},
+				},
+			},
+			Executables: map[file.Coordinates]file.Executable{
+				c: {
+					Format: file.ELF,
+					SecurityFeatures: &file.ELFSecurityFeatures{
+						SymbolTableStripped:           false,
+						StackCanary:                   boolRef(true),
+						NoExecutable:                  false,
+						RelocationReadOnly:            "partial",
+						PositionIndependentExecutable: false,
+						DynamicSharedObject:           false,
+						LlvmSafeStack:                 boolRef(false),
+						LlvmControlFlowIntegrity:      boolRef(true),
+						ClangFortifySource:            boolRef(true),
 					},
 				},
 			},

@@ -36,6 +36,7 @@ func AllTypes() []any {
 		pkg.PortageEntry{},
 		pkg.PythonPackage{},
 		pkg.PythonPipfileLockEntry{},
+		pkg.PythonPoetryLockEntry{},
 		pkg.PythonRequirementsEntry{},
 		pkg.RDescription{},
 		pkg.RpmArchive{},
@@ -44,5 +45,6 @@ func AllTypes() []any {
 		pkg.RustBinaryAuditEntry{},
 		pkg.RustCargoLockEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
+		pkg.YarnLockEntry{},
 	}
 }

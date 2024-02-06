@@ -39,13 +39,13 @@ jobs:
           OUTPUT="${OUTPUT//$'\r'/'%0D'}" # URL encode all '\r' characters
           echo "result=$OUTPUT" >> $GITHUB_OUTPUT
 
-      - uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+      - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: benchmark-test-results
           path: test/results/**/*
 
       - name: Update PR benchmark results comment
-        uses: marocchino/sticky-pull-request-comment@efaaab3fd41a9c3de579aba759d2552635e590fd #v2.8.0
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 #v2.9.0
         continue-on-error: true
         with:
           header: benchmark

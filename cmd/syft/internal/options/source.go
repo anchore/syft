@@ -3,11 +3,12 @@ package options
 import (
 	"crypto"
 	"fmt"
-	"github.com/anchore/syft/syft"
 	"sort"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
+
+	"github.com/anchore/syft/syft"
 )
 
 type sourceConfig struct {

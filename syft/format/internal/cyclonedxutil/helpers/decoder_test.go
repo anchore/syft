@@ -222,7 +222,7 @@ func Test_decode(t *testing.T) {
 						if e.cpe != "" {
 							foundCPE := false
 							for _, c := range p.CPEs {
-								cstr := c.BindToFmtString()
+								cstr := c.Attributes.BindToFmtString()
 								if e.cpe == cstr {
 									foundCPE = true
 									break

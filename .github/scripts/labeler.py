@@ -176,7 +176,8 @@ def filter_to_schema_files(list_of_files: list[str]) -> list[str]:
 
 def list_json_schema_files() -> list[str]:
     # list files in "schema/json" directory matching the pattern of "schema-*.json"
-    return sort_json_schema_files(list(glob.glob("schema/json/schema-*.json")))
+    # special case: always ignore the "latest" schema file
+    return sort_json_schema_files([f for f in glob.glob("schema/json/schema-*.json") if "latest" not in f])
 
 
 def run(command: str,  **kwargs) -> subprocess.CompletedProcess:
@@ -197,7 +198,7 @@ def sort_json_schema_files(files: list[str]) -> list[str]:
     # so that "schema/json/schema-1.2.1.json" comes before "schema/json/schema-1.12.1.json".
     versions = [get_semver(file) for file in files if file]
     
-    versions = sorted(versions, key=lambda s: [int(u) for u in s.split('.')])
+    versions = sorted(versions, key=lambda s: [int(u) for u in s.split('.') if "." in s])
 
     return [f"schema/json/schema-{version}.json" for version in versions]
 

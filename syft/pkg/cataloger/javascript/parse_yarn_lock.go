@@ -34,11 +34,18 @@ var (
 	//		`resolved "https://registry.yarnpkg.com/@4lolo/resize-observer-polyfill/-/resize-observer-polyfill-1.5.2.tgz#58868fc7224506236b5550d0c68357f0a874b84b"`
 	//			would return "@4lolo/resize-observer-polyfill" and "1.5.2"
 	packageURLExp = regexp.MustCompile(`^\s+resolved\s+"https://registry\.(?:yarnpkg\.com|npmjs\.org)/(.+?)/-/(?:.+?)-(\d+\..+?)\.tgz`)
-)
 
-const (
-	noPackage = ""
-	noVersion = ""
+	// resolvedExp matches the resolved of the dependency in yarn.lock
+	// For example:
+	// 		resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d"
+	// 			would return "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d"
+	resolvedExp = regexp.MustCompile(`^\s+resolved\s+"(.+?)"`)
+
+	// integrityExp matches the integrity of the dependency in yarn.lock
+	// For example:
+	//		integrity sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==
+	// 			would return "sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==""
+	integrityExp = regexp.MustCompile(`^\s+integrity\s+([^\s]+)`)
 )
 
 type genericYarnLockAdapter struct {
@@ -59,37 +66,43 @@ func (a genericYarnLockAdapter) parseYarnLock(_ context.Context, resolver file.R
 	}
 
 	var pkgs []pkg.Package
+	var currentPackage, currentVersion, currentResolved, currentIntegrity string
+
 	scanner := bufio.NewScanner(reader)
 	parsedPackages := strset.New()
-	currentPackage := noPackage
-	currentVersion := noVersion
 
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if packageName := findPackageName(line); packageName != noPackage {
+		if packageName := findPackageName(line); packageName != "" {
 			// When we find a new package, check if we have unsaved identifiers
-			if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-				pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion))
+			if currentPackage != "" && currentVersion != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
+				pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, currentIntegrity))
 				parsedPackages.Add(currentPackage + "@" + currentVersion)
 			}
 
 			currentPackage = packageName
-		} else if version := findPackageVersion(line); version != noVersion {
+		} else if version := findPackageVersion(line); version != "" {
 			currentVersion = version
-		} else if packageName, version := findPackageAndVersion(line); packageName != noPackage && version != noVersion && !parsedPackages.Has(packageName+"@"+version) {
-			pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, packageName, version))
-			parsedPackages.Add(packageName + "@" + version)
+		} else if packageName, version, resolved := findResolvedPackageAndVersion(line); packageName != "" && version != "" && resolved != "" {
+			currentResolved = resolved
+			currentPackage = packageName
+			currentVersion = version
+		} else if integrity := findIntegrity(line); integrity != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
+			pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, integrity))
+			parsedPackages.Add(currentPackage + "@" + currentVersion)
 
 			// Cleanup to indicate no unsaved identifiers
-			currentPackage = noPackage
-			currentVersion = noVersion
+			currentPackage = ""
+			currentVersion = ""
+			currentResolved = ""
+			currentIntegrity = ""
 		}
 	}
 
 	// check if we have valid unsaved data after end-of-file has reached
-	if currentPackage != noPackage && currentVersion != noVersion && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-		pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion))
+	if currentPackage != "" && currentVersion != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
+		pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, currentIntegrity))
 		parsedPackages.Add(currentPackage + "@" + currentVersion)
 	}
 
@@ -107,7 +120,7 @@ func findPackageName(line string) string {
 		return matches[1]
 	}
 
-	return noPackage
+	return ""
 }
 
 func findPackageVersion(line string) string {
@@ -115,13 +128,25 @@ func findPackageVersion(line string) string {
 		return matches[1]
 	}
 
-	return noVersion
+	return ""
 }
 
-func findPackageAndVersion(line string) (string, string) {
+func findResolvedPackageAndVersion(line string) (string, string, string) {
+	var resolved string
+	if matches := resolvedExp.FindStringSubmatch(line); len(matches) >= 2 {
+		resolved = matches[1]
+	}
 	if matches := packageURLExp.FindStringSubmatch(line); len(matches) >= 2 {
-		return matches[1], matches[2]
+		return matches[1], matches[2], resolved
 	}
 
-	return noPackage, noVersion
+	return "", "", ""
+}
+
+func findIntegrity(line string) string {
+	if matches := integrityExp.FindStringSubmatch(line); len(matches) >= 2 {
+		return matches[1]
+	}
+
+	return ""
 }

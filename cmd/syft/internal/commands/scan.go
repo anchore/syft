@@ -253,7 +253,7 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 
 	explicitSources := opts.From
 	if len(explicitSources) == 0 {
-		explicitSource, newUserInput := stereoscope.ExtractScheme(sourceProviders, userInput)
+		explicitSource, newUserInput := stereoscope.ExtractSchemeSource(sourceProviders, userInput)
 		if explicitSource != "" {
 			explicitSources = append(explicitSources, explicitSource)
 			userInput = newUserInput

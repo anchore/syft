@@ -12,38 +12,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_New(t *testing.T) {
+func Test_NewAttributes(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
-		expected CPE
+		expected Attributes
 	}{
 		{
 			name:     "gocase",
 			input:    `cpe:/a:10web:form_maker:1.0.0::~~~wordpress~~`,
-			expected: Must(`cpe:2.3:a:10web:form_maker:1.0.0:*:*:*:*:wordpress:*:*`),
+			expected: MustAttributes(`cpe:2.3:a:10web:form_maker:1.0.0:*:*:*:*:wordpress:*:*`),
 		},
 		{
 			name:     "dashes",
 			input:    `cpe:/a:7-zip:7-zip:4.56:beta:~~~windows~~`,
-			expected: Must(`cpe:2.3:a:7-zip:7-zip:4.56:beta:*:*:*:windows:*:*`),
+			expected: MustAttributes(`cpe:2.3:a:7-zip:7-zip:4.56:beta:*:*:*:windows:*:*`),
 		},
 		{
 			name:     "URL escape characters",
 			input:    `cpe:/a:%240.99_kindle_books_project:%240.99_kindle_books:6::~~~android~~`,
-			expected: Must(`cpe:2.3:a:\$0.99_kindle_books_project:\$0.99_kindle_books:6:*:*:*:*:android:*:*`),
+			expected: MustAttributes(`cpe:2.3:a:\$0.99_kindle_books_project:\$0.99_kindle_books:6:*:*:*:*:android:*:*`),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := New(test.input)
+			actual, err := NewAttributes(test.input)
 			if err != nil {
-				t.Fatalf("got an error while creating CPE: %+v", err)
+				t.Fatalf("got an error while creating Attributes: %+v", err)
 			}
 
 			if d := cmp.Diff(actual, test.expected); d != "" {
-				t.Errorf("CPE mismatch (-want +got):\n%s", d)
+				t.Errorf("Attributes mismatch (-want +got):\n%s", d)
 			}
 
 		})
@@ -82,9 +82,9 @@ func Test_normalizeCpeField(t *testing.T) {
 
 func Test_CPEParser(t *testing.T) {
 	var testCases []struct {
-		CPEString string `json:"cpe-string"`
-		CPEUrl    string `json:"cpe-url"`
-		WFN       CPE    `json:"wfn"`
+		CPEString string     `json:"cpe-string"`
+		CPEUrl    string     `json:"cpe-url"`
+		WFN       Attributes `json:"wfn"`
 	}
 	out, err := os.ReadFile("test-fixtures/cpe-data.json")
 	require.NoError(t, err)
@@ -92,9 +92,9 @@ func Test_CPEParser(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.CPEString, func(t *testing.T) {
-			c1, err := New(test.CPEString)
+			c1, err := NewAttributes(test.CPEString)
 			assert.NoError(t, err)
-			c2, err := New(test.CPEUrl)
+			c2, err := NewAttributes(test.CPEUrl)
 			assert.NoError(t, err)
 			assert.Equal(t, c1, c2)
 			assert.Equal(t, c1, test.WFN)
@@ -161,11 +161,11 @@ func Test_InvalidCPE(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c, err := New(test.in)
+			c, err := NewAttributes(test.in)
 			if test.expectedErr {
 				assert.Error(t, err)
 				if t.Failed() {
-					t.Logf("got CPE: %q details: %+v", c, c)
+					t.Logf("got Attributes: %q details: %+v", c, c)
 				}
 				return
 			}
@@ -179,12 +179,12 @@ func Test_RoundTrip(t *testing.T) {
 	tests := []struct {
 		name      string
 		cpe       string
-		parsedCPE CPE
+		parsedCPE Attributes
 	}{
 		{
 			name: "normal",
 			cpe:  "cpe:2.3:a:some-vendor:name:3.2:*:*:*:*:*:*:*",
-			parsedCPE: CPE{
+			parsedCPE: Attributes{
 				Part:    "a",
 				Vendor:  "some-vendor",
 				Product: "name",
@@ -194,7 +194,7 @@ func Test_RoundTrip(t *testing.T) {
 		{
 			name: "escaped colon",
 			cpe:  "cpe:2.3:a:some-vendor:name:1\\:3.2:*:*:*:*:*:*:*",
-			parsedCPE: CPE{
+			parsedCPE: Attributes{
 				Part:    "a",
 				Vendor:  "some-vendor",
 				Product: "name",
@@ -204,7 +204,7 @@ func Test_RoundTrip(t *testing.T) {
 		{
 			name: "escaped forward slash",
 			cpe:  "cpe:2.3:a:test\\/some-vendor:name:3.2:*:*:*:*:*:*:*",
-			parsedCPE: CPE{
+			parsedCPE: Attributes{
 				Part:    "a",
 				Vendor:  "test/some-vendor",
 				Product: "name",
@@ -215,13 +215,13 @@ func Test_RoundTrip(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			// CPE string must be preserved through a round trip
-			assert.Equal(t, test.cpe, Must(test.cpe).String())
-			// The parsed CPE must be the same after a round trip
-			assert.Equal(t, Must(test.cpe), Must(Must(test.cpe).String()))
-			// The test case parsed CPE must be the same after parsing the input string
-			assert.Equal(t, test.parsedCPE, Must(test.cpe))
-			// The test case parsed CPE must produce the same string as the input cpe
+			// Attributes string must be preserved through a round trip
+			assert.Equal(t, test.cpe, MustAttributes(test.cpe).String())
+			// The parsed Attributes must be the same after a round trip
+			assert.Equal(t, MustAttributes(test.cpe), MustAttributes(MustAttributes(test.cpe).String()))
+			// The test case parsed Attributes must be the same after parsing the input string
+			assert.Equal(t, test.parsedCPE, MustAttributes(test.cpe))
+			// The test case parsed Attributes must produce the same string as the input cpe
 			assert.Equal(t, test.parsedCPE.String(), test.cpe)
 		})
 	}

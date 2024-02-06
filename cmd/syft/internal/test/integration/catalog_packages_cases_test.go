@@ -369,6 +369,14 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
+		name:        "find ErLang OTP applications",
+		pkgType:     pkg.ErlangOTPPkg,
+		pkgLanguage: pkg.Erlang,
+		pkgInfo: map[string]string{
+			"accept": "0.3.5",
+		},
+	},
+	{
 		name:        "find swift package manager packages",
 		pkgType:     pkg.SwiftPkg,
 		pkgLanguage: pkg.Swift,

@@ -13,6 +13,17 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+func keyValues(m map[string]string) []pkg.KeyValue {
+	var kvs []pkg.KeyValue
+	for k, v := range m {
+		kvs = append(kvs, pkg.KeyValue{
+			Key:   k,
+			Value: v,
+		})
+	}
+	return kvs
+}
+
 func TestGeneratePackageCPEs(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -201,7 +212,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Type:    pkg.JavaPkg,
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
+						Main: keyValues(map[string]string{
 							"Ant-Version":            "Apache Ant 1.6.5",
 							"Built-By":               "tatu",
 							"Created-By":             "1.4.2_03-b02 (Sun Microsystems Inc.)",
@@ -212,7 +223,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 							"Specification-Title":    "StAX 1.0 API",
 							"Specification-Vendor":   "http://jcp.org/en/jsr/detail?id=173",
 							"Specification-Version":  "1.0",
-						},
+						}),
 					},
 				},
 			},
@@ -253,7 +264,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Metadata: pkg.JavaArchive{
 					VirtualPath: "/opt/jboss/keycloak/modules/system/layers/base/org/apache/cxf/impl/main/cxf-rt-bindings-xml-3.3.10.jar",
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
+						Main: keyValues(map[string]string{
 							"Automatic-Module-Name":    "org.apache.cxf.binding.xml",
 							"Bnd-LastModified":         "1615836524860",
 							"Build-Jdk":                "1.8.0_261",
@@ -278,7 +289,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 							"Specification-Vendor":     "The Apache Software Foundation",
 							"Specification-Version":    "3.3.10",
 							"Tool":                     "Bnd-4.2.0.201903051501",
-						},
+						}),
 					},
 					PomProperties: &pkg.JavaPomProperties{
 						Path:       "META-INF/maven/org.apache.cxf/cxf-rt-bindings-xml/pom.properties",
@@ -558,7 +569,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				FoundBy:  "java-cataloger",
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
+						Main: keyValues(map[string]string{
 							"Extension-Name":         "handlebars",
 							"Group-Id":               "org.jenkins-ci.ui",
 							"Hudson-Version":         "2.204",
@@ -566,7 +577,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 							"Implementation-Version": "3.0.8",
 							"Plugin-Version":         "3.0.8",
 							"Short-Name":             "handlebars",
-						},
+						}),
 					},
 					PomProperties: &pkg.JavaPomProperties{
 						GroupID:    "org.jenkins-ci.ui",
@@ -594,10 +605,10 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				Language: pkg.Java,
 				Metadata: pkg.JavaArchive{
 					Manifest: &pkg.JavaManifest{
-						Main: map[string]string{
+						Main: keyValues(map[string]string{
 							"Extension-Name": "active-directory",
 							"Group-Id":       "org.jenkins-ci.plugins",
-						},
+						}),
 					},
 					PomProperties: &pkg.JavaPomProperties{
 						GroupID:    "org.jenkins-ci.plugins",
@@ -712,11 +723,14 @@ func TestGeneratePackageCPEs(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := FromPackageAttributes(test.p)
+			expectedCpeSet := set.NewStringSet()
+			for _, cpeStr := range test.expected {
+				expectedCpeSet.Add("syft-generated:" + cpeStr)
+			}
 
-			expectedCpeSet := set.NewStringSet(test.expected...)
 			actualCpeSet := set.NewStringSet()
 			for _, a := range actual {
-				actualCpeSet.Add(a.String())
+				actualCpeSet.Add(fmt.Sprintf("%s:%s", a.Source.String(), a.Attributes.String()))
 			}
 
 			extra := strset.Difference(actualCpeSet, expectedCpeSet).List()
@@ -996,7 +1010,7 @@ func TestDictionaryFindIsWired(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, gotExists := FromDictionaryFind(tt.pkg)
 
-			assert.Equal(t, tt.want, got.BindToFmtString())
+			assert.Equal(t, tt.want, got.Attributes.BindToFmtString())
 			assert.Equal(t, tt.wantExists, gotExists)
 		})
 	}

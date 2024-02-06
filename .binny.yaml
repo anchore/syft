@@ -1,5 +1,4 @@
 tools:
-
   # we want to use a pinned version of binny to manage the toolchain (so binny manages itself!)
   - name: binny
     version:
@@ -43,7 +42,7 @@ tools:
   # used for signing the checksums file at release
   - name: cosign
     version:
-      want: v2.2.2
+      want: v2.2.3
     method: github-release
     with:
       repo: sigstore/cosign
@@ -59,7 +58,7 @@ tools:
   # used to release all artifacts
   - name: goreleaser
     version:
-      want: v1.23.0
+      want: v1.24.0
     method: github-release
     with:
       repo: goreleaser/goreleaser
@@ -112,7 +111,7 @@ tools:
   # used for triggering a release
   - name: gh
     version:
-      want: v2.42.1
+      want: v2.43.1
     method: github-release
     with:
       repo: cli/cli
