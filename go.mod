@@ -31,6 +31,7 @@ require (
 	github.com/distribution/reference v0.5.0
 	github.com/docker/docker v26.0.0+incompatible
 	github.com/dustin/go-humanize v1.0.1
+	github.com/elliotchance/phpserialize v1.4.0
 	github.com/facebookincubator/nvdtools v0.1.5
 	github.com/github/go-spdx/v2 v2.2.0
 	github.com/gkampitakis/go-snaps v0.5.2
