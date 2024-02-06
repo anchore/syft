@@ -26,7 +26,7 @@ import (
 	"github.com/anchore/syft/syft/format/spdxtagvalue"
 	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 const (
@@ -247,7 +247,7 @@ func predicateType(outputName string) string {
 }
 
 func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opts *options.Catalog, userInput string) (*sbom.SBOM, error) {
-	src, err := getSource(opts, userInput, onlyContainerImages)
+	src, err := getSource(ctx, opts, userInput, stereoscope.ImageTag)
 
 	if err != nil {
 		return nil, err
@@ -271,13 +271,6 @@ func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opt
 	}
 
 	return s, nil
-}
-
-func onlyContainerImages(d *source.Detection) error {
-	if !d.IsContainerImage() {
-		return fmt.Errorf("attestations are only supported for oci images at this time")
-	}
-	return nil
 }
 
 func commandExists(cmd string) bool {

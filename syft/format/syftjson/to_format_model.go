@@ -17,6 +17,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 // MetadataType infers the metadata type value based on the pkg.Metadata payload.
@@ -293,7 +294,7 @@ func toSourceModel(src source.Description) model.Source {
 		Metadata: src.Metadata,
 	}
 
-	if metadata, ok := src.Metadata.(source.StereoscopeImageSourceMetadata); ok {
+	if metadata, ok := src.Metadata.(stereoscope.ImageSourceMetadata); ok {
 		// ensure that empty collections are not shown as null
 		if metadata.RepoDigests == nil {
 			metadata.RepoDigests = []string{}

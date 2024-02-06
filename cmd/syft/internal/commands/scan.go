@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
@@ -162,14 +163,13 @@ func validateArgs(cmd *cobra.Command, args []string, error string) error {
 	return cobra.MaximumNArgs(1)(cmd, args)
 }
 
-// nolint:funlen
 func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, userInput string) error {
 	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err
 	}
 
-	src, err := getSource(&opts.Catalog, userInput)
+	src, err := getSource(ctx, &opts.Catalog, userInput)
 
 	if err != nil {
 		return err
@@ -199,23 +199,8 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	return nil
 }
 
-func getSource(opts *options.Catalog, userInput string, filters ...func(*source.Detection) error) (source.Source, error) {
-	detection, err := source.Detect(
-		userInput,
-		source.DetectConfig{
-			DefaultImageSource: opts.Source.Image.DefaultPullSource,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not deteremine source: %w", err)
-	}
-
-	for _, filter := range filters {
-		if err := filter(detection); err != nil {
-			return nil, err
-		}
-	}
-
+func getSource(ctx context.Context, opts *options.Catalog, userInput string, sources ...image.Source) (source.Source, error) {
+	var err error
 	var platform *image.Platform
 
 	if opts.Platform != "" {
@@ -230,21 +215,71 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 		return nil, fmt.Errorf("invalid hash algorithm: %w", err)
 	}
 
-	src, err := detection.NewSource(
-		source.DetectionSourceConfig{
-			Alias: source.Alias{
-				Name:    opts.Source.Name,
-				Version: opts.Source.Version,
-			},
-			RegistryOptions: opts.Registry.ToOptions(),
-			Platform:        platform,
-			Exclude: source.ExcludeConfig{
-				Paths: opts.Exclusions,
-			},
-			DigestAlgorithms: hashers,
-			BasePath:         opts.Source.BasePath,
+	sourceProviders := syft.SourceProviders(syft.SourceProviderConfig{
+		Alias: source.Alias{
+			Name:    opts.Source.Name,
+			Version: opts.Source.Version,
 		},
+		RegistryOptions: opts.Registry.ToOptions(),
+		Platform:        platform,
+		Exclude: source.ExcludeConfig{
+			Paths: opts.Exclusions,
+		},
+		DigestAlgorithms: hashers,
+		BasePath:         opts.Source.BasePath,
+	})
+
+	// narrow the sources to those explicitly requested (e.g. only pull sources for attest)
+	for _, s := range sources {
+		sourceProviders = sourceProviders.Select(s)
+		if len(sourceProviders) == 0 {
+			return nil, fmt.Errorf("invalid source provider: %s", s)
+		}
+	}
+
+	// if the "default image pull source" is set, we move this as the first pull source
+	if opts.Source.Image.DefaultPullSource != "" {
+		base := sourceProviders.Remove("pull")
+		pull := sourceProviders.Select("pull")
+		if !pull.HasTag(opts.Source.Image.DefaultPullSource) {
+			return nil, fmt.Errorf("invalid pull source: %s", opts.Source.Image.DefaultPullSource)
+		}
+		sourceProviders = base.Join(
+			pull.Select(opts.Source.Image.DefaultPullSource)...,
+		).Join(
+			pull.Remove(opts.Source.Image.DefaultPullSource)...,
+		)
+	}
+
+	explicitSources := opts.From
+	if len(explicitSources) == 0 {
+		explicitSource, newUserInput := stereoscope.ExtractScheme(sourceProviders, userInput)
+		if explicitSource != "" {
+			explicitSources = append(explicitSources, explicitSource)
+			userInput = newUserInput
+		}
+	}
+
+	if len(explicitSources) > 0 {
+		for _, s := range explicitSources {
+			if !sourceProviders.HasTag(s) {
+				return nil, fmt.Errorf("invalid source selector: %s", s)
+			}
+		}
+		sourceProviders = sourceProviders.Select(explicitSources...)
+		if len(sourceProviders) == 0 {
+			return nil, fmt.Errorf("no sources returned from selectors: %v", explicitSources)
+		}
+	}
+
+	src, err := syft.GetSource(
+		ctx,
+		userInput,
+		sourceProviders.Collect()...,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("could not determine source: %w", err)
+	}
 
 	if err != nil {
 		if userInput == "power-user" {

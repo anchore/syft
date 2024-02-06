@@ -1,4 +1,4 @@
-package source
+package file
 
 import (
 	"io"
@@ -14,6 +14,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestNewFromFile(t *testing.T) {
@@ -75,9 +76,9 @@ func TestNewFromFile(t *testing.T) {
 				require.NoError(t, src.Close())
 			})
 
-			assert.Equal(t, test.input, src.Describe().Metadata.(FileSourceMetadata).Path)
+			assert.Equal(t, test.input, src.Describe().Metadata.(SourceMetadata).Path)
 
-			res, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
 			refs, err := test.testPathFn(res)
@@ -128,9 +129,9 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 				require.NoError(t, src.Close())
 			})
 
-			assert.Equal(t, archivePath, src.Describe().Metadata.(FileSourceMetadata).Path)
+			assert.Equal(t, archivePath, src.Describe().Metadata.(SourceMetadata).Path)
 
-			res, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
 			refs, err := res.FilesByPath(test.inputPaths...)
@@ -262,7 +263,7 @@ func Test_FileSource_ID(t *testing.T) {
 			name: "with path and alias",
 			cfg: FileConfig{
 				Path: "./test-fixtures/image-simple/Dockerfile",
-				Alias: Alias{
+				Alias: source.Alias{
 					Name:    "name-me-that!",
 					Version: "version-me-this!",
 				},
@@ -274,7 +275,7 @@ func Test_FileSource_ID(t *testing.T) {
 			name: "other fields do not affect ID",
 			cfg: FileConfig{
 				Path: "test-fixtures/image-simple/Dockerfile",
-				Exclude: ExcludeConfig{
+				Exclude: source.ExcludeConfig{
 					Paths: []string{"a", "b"},
 				},
 			},

@@ -10,6 +10,9 @@ import (
 
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 const (
@@ -27,11 +30,11 @@ func DocumentNamespace(name string, src source.Description, desc sbom.Descriptor
 	name = cleanName(name)
 	input := "unknown-source-type"
 	switch src.Metadata.(type) {
-	case source.StereoscopeImageSourceMetadata:
+	case stereoscope.ImageSourceMetadata:
 		input = InputImage
-	case source.DirectorySourceMetadata:
+	case directory.Metadata:
 		input = InputDirectory
-	case source.FileSourceMetadata:
+	case file.SourceMetadata:
 		input = InputFile
 	}
 

@@ -4,13 +4,15 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 var jsonNameFromType = map[reflect.Type][]string{
-	reflect.TypeOf(source.DirectorySourceMetadata{}):        {"directory", "dir"},
-	reflect.TypeOf(source.FileSourceMetadata{}):             {"file"},
-	reflect.TypeOf(source.StereoscopeImageSourceMetadata{}): {"image"},
+	reflect.TypeOf(directory.Metadata{}):              {"directory", "dir"},
+	reflect.TypeOf(file.SourceMetadata{}):             {"file"},
+	reflect.TypeOf(stereoscope.ImageSourceMetadata{}): {"image"},
 }
 
 func AllTypeNames() []string {

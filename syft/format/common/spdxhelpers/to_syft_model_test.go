@@ -17,6 +17,8 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 func TestToSyftModel(t *testing.T) {
@@ -199,15 +201,15 @@ func TestExtractSourceFromNamespaces(t *testing.T) {
 	}{
 		{
 			namespace: "https://anchore.com/syft/file/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.FileSourceMetadata{},
+			expected:  file.SourceMetadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/image/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.StereoscopeImageSourceMetadata{},
+			expected:  stereoscope.ImageSourceMetadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/dir/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.DirectorySourceMetadata{},
+			expected:  directory.Metadata{},
 		},
 		{
 			namespace: "https://another-host/blob/123",
@@ -460,7 +462,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			name: "image source",
 			source: source.Description{
 				ID: "DocumentRoot-Image-some-image",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: stereoscope.ImageSourceMetadata{
 					ID:             "DocumentRoot-Image-some-image",
 					UserInput:      "some-image:some-tag",
 					ManifestDigest: "sha256:ab8b83234bc28f28d8e",
@@ -476,7 +478,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-.",
 				Name: ".",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: directory.Metadata{
 					Path: ".",
 				},
 			},
@@ -488,7 +490,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-my-app",
 				Name: "my-app",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: directory.Metadata{
 					Path: "my-app",
 				},
 			},
@@ -499,7 +501,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			name: "file source",
 			source: source.Description{
 				ID: "DocumentRoot-File-my-app.exe",
-				Metadata: source.FileSourceMetadata{
+				Metadata: file.SourceMetadata{
 					Path: "my-app.exe",
 					Digests: []file.Digest{
 						{

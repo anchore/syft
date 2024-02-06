@@ -12,7 +12,7 @@
 //   - https://github.com/golang/go/blob/3aea422e2cb8b1ec2e0c2774be97fe96c7299838/src/path/filepath/path_windows.go#L216
 // ... which means we can't extract this functionality without build tags.
 
-package source
+package directory
 
 import (
 	"testing"
@@ -53,7 +53,7 @@ func Test_DirectorySource_crossPlatformExclusions(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			fns, err := getDirectoryExclusionFunctions(test.root, []string{test.exclude})
+			fns, err := GetDirectoryExclusionFunctions(test.root, []string{test.exclude})
 			require.NoError(t, err)
 
 			for _, f := range fns {

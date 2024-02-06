@@ -16,6 +16,9 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
@@ -196,7 +199,7 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 }
 
 func toBomProperties(srcMetadata source.Description) *[]cyclonedx.Property {
-	metadata, ok := srcMetadata.Metadata.(source.StereoscopeImageSourceMetadata)
+	metadata, ok := srcMetadata.Metadata.(stereoscope.ImageSourceMetadata)
 	if ok {
 		props := helpers.EncodeProperties(metadata.Labels, "syft:image:labels")
 		return &props
@@ -208,7 +211,7 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 	name := srcMetadata.Name
 	version := srcMetadata.Version
 	switch metadata := srcMetadata.Metadata.(type) {
-	case source.StereoscopeImageSourceMetadata:
+	case stereoscope.ImageSourceMetadata:
 		if name == "" {
 			name = metadata.UserInput
 		}
@@ -225,7 +228,7 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 			Name:    name,
 			Version: version,
 		}
-	case source.DirectorySourceMetadata:
+	case directory.Metadata:
 		if name == "" {
 			name = metadata.Path
 		}
@@ -240,7 +243,7 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 			Name:    name,
 			Version: version,
 		}
-	case source.FileSourceMetadata:
+	case file.SourceMetadata:
 		if name == "" {
 			name = metadata.Path
 		}

@@ -1,10 +1,12 @@
-package source
+package stereoscope
 
-import "github.com/anchore/stereoscope/pkg/image"
+import (
+	"github.com/anchore/stereoscope/pkg/image"
+)
 
-// StereoscopeImageSourceMetadata represents all static metadata that defines what a container image is. This is useful to later describe
+// ImageSourceMetadata represents all static metadata that defines what a container image is. This is useful to later describe
 // "what" was cataloged without needing the more complicated stereoscope Image objects or FileResolver objects.
-type StereoscopeImageSourceMetadata struct {
+type ImageSourceMetadata struct {
 	UserInput      string                     `json:"userInput"`
 	ID             string                     `json:"imageID"`
 	ManifestDigest string                     `json:"manifestDigest"`
@@ -29,13 +31,13 @@ type StereoscopeLayerMetadata struct {
 }
 
 // NewStereoscopeImageMetadata creates a new ImageMetadata object populated from the given stereoscope Image object and user configuration.
-func NewStereoscopeImageMetadata(img *image.Image, userInput string) StereoscopeImageSourceMetadata {
+func NewStereoscopeImageMetadata(img *image.Image, userInput string) ImageSourceMetadata {
 	// populate artifacts...
 	tags := make([]string, len(img.Metadata.Tags))
 	for idx, tag := range img.Metadata.Tags {
 		tags[idx] = tag.String()
 	}
-	theImg := StereoscopeImageSourceMetadata{
+	theImg := ImageSourceMetadata{
 		ID:             img.Metadata.ID,
 		UserInput:      userInput,
 		ManifestDigest: img.Metadata.ManifestDigest,

@@ -1,6 +1,7 @@
-package source
+package stereoscope
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"strings"
@@ -9,9 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_StereoscopeImage_Exclusions(t *testing.T) {
@@ -76,22 +79,28 @@ func Test_StereoscopeImage_Exclusions(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			src, err := NewFromStereoscopeImage(
+			imageName := strings.SplitN(imagetest.PrepareFixtureImage(t, "docker-archive", test.input), ":", 2)[1]
+
+			img, err := stereoscope.GetImage(context.TODO(), imageName)
+			require.NoError(t, err)
+			require.NotNil(t, img)
+
+			src := NewStereoscopeImageSource(
+				img,
 				StereoscopeImageConfig{
-					Reference: strings.SplitN(imagetest.PrepareFixtureImage(t, "docker-archive", test.input), ":", 2)[1],
+					Reference: imageName,
 					From:      image.DockerTarballSource,
-					Exclude: ExcludeConfig{
+					Exclude: source.ExcludeConfig{
 						Paths: test.exclusions,
 					},
 				},
 			)
 
-			require.NoError(t, err)
 			t.Cleanup(func() {
 				require.NoError(t, src.Close())
 			})
 
-			res, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
 			contents, err := res.FilesByGlob(test.glob)
@@ -105,13 +114,13 @@ func Test_StereoscopeImage_Exclusions(t *testing.T) {
 func Test_StereoscopeImageSource_ID(t *testing.T) {
 	tests := []struct {
 		name     string
-		alias    Alias
-		metadata StereoscopeImageSourceMetadata
+		alias    source.Alias
+		metadata ImageSourceMetadata
 		want     artifact.ID
 	}{
 		{
 			name: "use raw manifest over chain ID or user input",
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: ImageSourceMetadata{
 				UserInput: "user-input",
 				Layers: []StereoscopeLayerMetadata{
 					{
@@ -134,7 +143,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "use chain ID over user input",
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: ImageSourceMetadata{
 				//UserInput: "user-input",
 				Layers: []StereoscopeLayerMetadata{
 					{
@@ -165,7 +174,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "use user input last",
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: ImageSourceMetadata{
 				UserInput: "user-input",
 			},
 			want: func() artifact.ID {
@@ -176,7 +185,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "without alias (first)",
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: ImageSourceMetadata{
 				UserInput: "user-input",
 				Layers: []StereoscopeLayerMetadata{
 					{
@@ -195,11 +204,11 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "always consider alias (first)",
-			alias: Alias{
+			alias: source.Alias{
 				Name:    "alias",
 				Version: "version",
 			},
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: ImageSourceMetadata{
 				UserInput: "user-input",
 				Layers: []StereoscopeLayerMetadata{
 					{
@@ -218,18 +227,18 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "without alias (last)",
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: ImageSourceMetadata{
 				UserInput: "user-input",
 			},
 			want: "ab0dff627d80b9753193d7280bec8f45e8ec6b4cb0912c6fffcf7cd782d9739e",
 		},
 		{
 			name: "always consider alias (last)",
-			alias: Alias{
+			alias: source.Alias{
 				Name:    "alias",
 				Version: "version",
 			},
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: ImageSourceMetadata{
 				UserInput: "user-input",
 			},
 			want: "fe86c0eecd5654d3c0c0b2176aa394aef6440347c241aa8d9b628dfdde4287cf",
@@ -246,17 +255,17 @@ func Test_Describe(t *testing.T) {
 	tests := []struct {
 		name     string
 		source   StereoscopeImageSource
-		expected Description
+		expected source.Description
 	}{
 		{
 			name: "name from user input",
 			source: StereoscopeImageSource{
 				id: "some-id",
-				metadata: StereoscopeImageSourceMetadata{
+				metadata: ImageSourceMetadata{
 					UserInput: "user input",
 				},
 			},
-			expected: Description{
+			expected: source.Description{
 				ID:   "some-id",
 				Name: "user input",
 			},

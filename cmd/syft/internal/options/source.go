@@ -1,7 +1,9 @@
 package options
 
 import (
+	"crypto"
 	"fmt"
+	"github.com/anchore/syft/syft"
 	"sort"
 	"strings"
 
@@ -25,14 +27,20 @@ type imageSource struct {
 }
 
 func defaultSourceConfig() sourceConfig {
+	defaults := syft.DefaultSourceProviderConfig()
 	return sourceConfig{
 		File: fileSource{
-			Digests: []string{"sha256"},
-		},
-		Image: imageSource{
-			DefaultPullSource: "",
+			Digests: Map(defaults.DigestAlgorithms, func(alg crypto.Hash) string { return alg.String() }),
 		},
 	}
+}
+
+func Map[From any, To any](values []From, fn func(From) To) []To {
+	out := make([]To, len(values))
+	for i, v := range values {
+		out[i] = fn(v)
+	}
+	return out
 }
 
 func (c *fileSource) PostLoad() error {

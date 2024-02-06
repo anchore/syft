@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
 )
 
 var updateSnapshot = flag.Bool("update-spdx-tv", false, "update the *.golden files for spdx-tv encoders")
@@ -72,7 +73,7 @@ func TestSPDXJSONSPDXIDs(t *testing.T) {
 		Relationships: nil,
 		Source: source.Description{
 			Name:     "foobar/baz", // in this case, foobar is used as the spdx document name
-			Metadata: source.DirectorySourceMetadata{},
+			Metadata: directory.Metadata{},
 		},
 		Descriptor: sbom.Descriptor{
 			Name:    "syft",

@@ -152,7 +152,7 @@ func parseErlangNode(data []byte, i *int) (erlangNode, error) {
 		skipWhitespace(data, &offset)
 		c2 := data[offset]
 
-		// Add support for empty lists
+		// Join support for empty lists
 		if (c == '[' && c2 == ']') || (c == '{' && c2 == '}') {
 			*i = offset + 1
 			return node(nil), nil

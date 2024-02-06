@@ -19,6 +19,9 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
+	fileSource "github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 var _ pkg.Cataloger = (*dummyCataloger)(nil)
@@ -62,15 +65,15 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 	}
 
 	imgSrc := source.Description{
-		Metadata: source.StereoscopeImageSourceMetadata{},
+		Metadata: stereoscope.ImageSourceMetadata{},
 	}
 
 	dirSrc := source.Description{
-		Metadata: source.DirectorySourceMetadata{},
+		Metadata: directory.Metadata{},
 	}
 
 	fileSrc := source.Description{
-		Metadata: source.FileSourceMetadata{},
+		Metadata: fileSource.SourceMetadata{},
 	}
 
 	tests := []struct {
@@ -434,21 +437,21 @@ func Test_findDefaultTag(t *testing.T) {
 		{
 			name: "image",
 			src: source.Description{
-				Metadata: source.StereoscopeImageSourceMetadata{},
+				Metadata: stereoscope.ImageSourceMetadata{},
 			},
 			want: pkgcataloging.ImageTag,
 		},
 		{
 			name: "directory",
 			src: source.Description{
-				Metadata: source.DirectorySourceMetadata{},
+				Metadata: directory.Metadata{},
 			},
 			want: pkgcataloging.DirectoryTag,
 		},
 		{
 			name: "file",
 			src: source.Description{
-				Metadata: source.FileSourceMetadata{},
+				Metadata: fileSource.SourceMetadata{},
 			},
 			want: pkgcataloging.DirectoryTag, // not a mistake...
 		},

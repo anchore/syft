@@ -1,4 +1,4 @@
-package source
+package file
 
 import (
 	"crypto"
@@ -18,21 +18,17 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
+	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
 )
 
-var _ Source = (*FileSource)(nil)
+var _ source.Source = (*FileSource)(nil)
 
 type FileConfig struct {
 	Path             string
-	Exclude          ExcludeConfig
+	Exclude          source.ExcludeConfig
 	DigestAlgorithms []crypto.Hash
-	Alias            Alias
-}
-
-type FileSourceMetadata struct {
-	Path     string        `json:"path" yaml:"path"`
-	Digests  []file.Digest `json:"digests,omitempty" yaml:"digests,omitempty"`
-	MIMEType string        `json:"mimeType" yaml:"mimeType"`
+	Alias            source.Alias
 }
 
 type FileSource struct {
@@ -108,14 +104,14 @@ func deriveIDFromFile(cfg FileConfig) (artifact.ID, string) {
 		info += fmt.Sprintf(":%s@%s", cfg.Alias.Name, cfg.Alias.Version)
 	}
 
-	return artifactIDFromDigest(digest.SHA256.FromString(info).String()), d
+	return source.ArtifactIDFromDigest(digest.SHA256.FromString(info).String()), d
 }
 
 func (s FileSource) ID() artifact.ID {
 	return s.id
 }
 
-func (s FileSource) Describe() Description {
+func (s FileSource) Describe() source.Description {
 	name := path.Base(s.config.Path)
 	version := s.digestForVersion
 	if !s.config.Alias.IsEmpty() {
@@ -128,11 +124,11 @@ func (s FileSource) Describe() Description {
 			version = a.Version
 		}
 	}
-	return Description{
+	return source.Description{
 		ID:      string(s.id),
 		Name:    name,
 		Version: version,
-		Metadata: FileSourceMetadata{
+		Metadata: SourceMetadata{
 			Path:     s.config.Path,
 			Digests:  s.digests,
 			MIMEType: s.mimeType,
@@ -140,7 +136,7 @@ func (s FileSource) Describe() Description {
 	}
 }
 
-func (s FileSource) FileResolver(_ Scope) (file.Resolver, error) {
+func (s FileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -148,7 +144,7 @@ func (s FileSource) FileResolver(_ Scope) (file.Resolver, error) {
 		return s.resolver, nil
 	}
 
-	exclusionFunctions, err := getDirectoryExclusionFunctions(s.analysisPath, s.config.Exclude.Paths)
+	exclusionFunctions, err := directory.GetDirectoryExclusionFunctions(s.analysisPath, s.config.Exclude.Paths)
 	if err != nil {
 		return nil, err
 	}

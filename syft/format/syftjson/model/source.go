@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 // Source object represents the thing that was cataloged
@@ -89,7 +91,7 @@ func extractPreSchemaV9Metadata(t string, target []byte) (interface{}, error) {
 			cleanTarget = string(target)
 		}
 
-		return source.DirectorySourceMetadata{
+		return directory.Metadata{
 			Path: cleanTarget,
 		}, nil
 
@@ -99,12 +101,12 @@ func extractPreSchemaV9Metadata(t string, target []byte) (interface{}, error) {
 			cleanTarget = string(target)
 		}
 
-		return source.FileSourceMetadata{
+		return file.SourceMetadata{
 			Path: cleanTarget,
 		}, nil
 
 	case "image":
-		var payload source.StereoscopeImageSourceMetadata
+		var payload stereoscope.ImageSourceMetadata
 		if err := json.Unmarshal(target, &payload); err != nil {
 			return nil, err
 		}

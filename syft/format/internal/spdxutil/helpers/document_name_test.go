@@ -9,6 +9,9 @@ import (
 
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 func Test_DocumentName(t *testing.T) {
@@ -23,7 +26,7 @@ func Test_DocumentName(t *testing.T) {
 		{
 			name: "image",
 			srcMetadata: source.Description{
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: stereoscope.ImageSourceMetadata{
 					UserInput:      "image-repo/name:tag",
 					ID:             "id",
 					ManifestDigest: "digest",
@@ -34,14 +37,14 @@ func Test_DocumentName(t *testing.T) {
 		{
 			name: "directory",
 			srcMetadata: source.Description{
-				Metadata: source.DirectorySourceMetadata{Path: "some/path/to/place"},
+				Metadata: directory.Metadata{Path: "some/path/to/place"},
 			},
 			expected: "some/path/to/place",
 		},
 		{
 			name: "file",
 			srcMetadata: source.Description{
-				Metadata: source.FileSourceMetadata{Path: "some/path/to/place"},
+				Metadata: file.SourceMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/path/to/place",
 		},
@@ -49,7 +52,7 @@ func Test_DocumentName(t *testing.T) {
 			name: "named",
 			srcMetadata: source.Description{
 				Name:     "some/name",
-				Metadata: source.FileSourceMetadata{Path: "some/path/to/place"},
+				Metadata: file.SourceMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/name",
 		},

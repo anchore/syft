@@ -12,6 +12,9 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 // ToGithubModel converts the provided SBOM to a GitHub dependency model
@@ -116,16 +119,16 @@ func toPath(s source.Description, p pkg.Package) string {
 		}
 		packagePath = strings.TrimPrefix(packagePath, "/")
 		switch metadata := s.Metadata.(type) {
-		case source.StereoscopeImageSourceMetadata:
+		case stereoscope.ImageSourceMetadata:
 			image := strings.ReplaceAll(metadata.UserInput, ":/", "//")
 			return fmt.Sprintf("%s:/%s", image, packagePath)
-		case source.FileSourceMetadata:
+		case file.SourceMetadata:
 			path := trimRelative(metadata.Path)
 			if isArchive(metadata.Path) {
 				return fmt.Sprintf("%s:/%s", path, packagePath)
 			}
 			return path
-		case source.DirectorySourceMetadata:
+		case directory.Metadata:
 			path := trimRelative(metadata.Path)
 			if path != "" {
 				return fmt.Sprintf("%s/%s", path, packagePath)

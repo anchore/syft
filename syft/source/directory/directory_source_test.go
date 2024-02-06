@@ -1,8 +1,9 @@
-package source
+package directory
 
 import (
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -13,9 +14,17 @@ import (
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/internal/fileresolver"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestNewFromDirectory(t *testing.T) {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	err = os.Chdir(path.Join(wd, "..")) // use test fixtures up a directory
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = os.Chdir(wd)
+	})
 	testCases := []struct {
 		desc         string
 		input        string
@@ -54,7 +63,7 @@ func TestNewFromDirectory(t *testing.T) {
 			if test.cxErr == nil {
 				test.cxErr = require.NoError
 			}
-			src, err := NewFromDirectory(DirectoryConfig{
+			src, err := New(Config{
 				Path: test.input,
 			})
 			test.cxErr(t, err)
@@ -65,9 +74,9 @@ func TestNewFromDirectory(t *testing.T) {
 			t.Cleanup(func() {
 				require.NoError(t, src.Close())
 			})
-			assert.Equal(t, test.input, src.Describe().Metadata.(DirectorySourceMetadata).Path)
+			assert.Equal(t, test.input, src.Describe().Metadata.(Metadata).Path)
 
-			res, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
 			refs, err := res.FilesByPath(test.inputPaths...)
@@ -109,10 +118,10 @@ func Test_DirectorySource_FilesByGlob(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			src, err := NewFromDirectory(DirectoryConfig{Path: test.input})
+			src, err := New(Config{Path: test.input})
 			require.NoError(t, err)
 
-			res, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				require.NoError(t, src.Close())
@@ -270,9 +279,9 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			src, err := NewFromDirectory(DirectoryConfig{
+			src, err := New(Config{
 				Path: test.input,
-				Exclude: ExcludeConfig{
+				Exclude: source.ExcludeConfig{
 					Paths: test.exclusions,
 				},
 			})
@@ -282,13 +291,13 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 			})
 
 			if test.err {
-				_, err = src.FileResolver(SquashedScope)
+				_, err = src.FileResolver(source.SquashedScope)
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
 
-			res, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
 			locations, err := res.FilesByGlob(test.glob)
@@ -388,7 +397,7 @@ func Test_getDirectoryExclusionFunctions_crossPlatform(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			fns, err := getDirectoryExclusionFunctions(test.root, []string{test.exclude})
+			fns, err := GetDirectoryExclusionFunctions(test.root, []string{test.exclude})
 			require.NoError(t, err)
 
 			for _, f := range fns {
@@ -414,13 +423,13 @@ func Test_DirectorySource_FilesByPathDoesNotExist(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			src, err := NewFromDirectory(DirectoryConfig{Path: test.input})
+			src, err := New(Config{Path: test.input})
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				require.NoError(t, src.Close())
 			})
 
-			res, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
 			refs, err := res.FilesByPath(test.path)
@@ -434,39 +443,39 @@ func Test_DirectorySource_FilesByPathDoesNotExist(t *testing.T) {
 func Test_DirectorySource_ID(t *testing.T) {
 	tests := []struct {
 		name    string
-		cfg     DirectoryConfig
+		cfg     Config
 		want    artifact.ID
 		wantErr require.ErrorAssertionFunc
 	}{
 		{
 			name:    "empty",
-			cfg:     DirectoryConfig{},
+			cfg:     Config{},
 			wantErr: require.Error,
 		},
 		{
 			name: "to a non-existent directory",
-			cfg: DirectoryConfig{
+			cfg: Config{
 				Path: "./test-fixtures/does-not-exist",
 			},
 			wantErr: require.Error,
 		},
 		{
 			name:    "with odd unclean path through non-existent directory",
-			cfg:     DirectoryConfig{Path: "test-fixtures/does-not-exist/../"},
+			cfg:     Config{Path: "test-fixtures/does-not-exist/../"},
 			wantErr: require.Error,
 		},
 		{
 			name: "to a file (not a directory)",
-			cfg: DirectoryConfig{
+			cfg: Config{
 				Path: "./test-fixtures/image-simple/Dockerfile",
 			},
 			wantErr: require.Error,
 		},
 		{
 			name: "to dir with name and version",
-			cfg: DirectoryConfig{
+			cfg: Config{
 				Path: "./test-fixtures",
-				Alias: Alias{
+				Alias: source.Alias{
 					Name:    "name-me-that!",
 					Version: "version-me-this!",
 				},
@@ -475,9 +484,9 @@ func Test_DirectorySource_ID(t *testing.T) {
 		},
 		{
 			name: "to different dir with name and version",
-			cfg: DirectoryConfig{
+			cfg: Config{
 				Path: "./test-fixtures/image-simple",
-				Alias: Alias{
+				Alias: source.Alias{
 					Name:    "name-me-that!",
 					Version: "version-me-this!",
 				},
@@ -487,20 +496,20 @@ func Test_DirectorySource_ID(t *testing.T) {
 		},
 		{
 			name: "with path",
-			cfg:  DirectoryConfig{Path: "./test-fixtures"},
+			cfg:  Config{Path: "./test-fixtures"},
 			want: artifact.ID("c2f936b0054dc6114fc02a3446bf8916bde8fdf87166a23aee22ea011b443522"),
 		},
 		{
 			name: "with unclean path",
-			cfg:  DirectoryConfig{Path: "test-fixtures/image-simple/../"},
+			cfg:  Config{Path: "test-fixtures/image-simple/../"},
 			want: artifact.ID("c2f936b0054dc6114fc02a3446bf8916bde8fdf87166a23aee22ea011b443522"),
 		},
 		{
 			name: "other fields do not affect ID",
-			cfg: DirectoryConfig{
+			cfg: Config{
 				Path: "test-fixtures",
 				Base: "a-base!",
-				Exclude: ExcludeConfig{
+				Exclude: source.ExcludeConfig{
 					Paths: []string{"a", "b"},
 				},
 			},
@@ -512,7 +521,7 @@ func Test_DirectorySource_ID(t *testing.T) {
 			if tt.wantErr == nil {
 				tt.wantErr = require.NoError
 			}
-			s, err := NewFromDirectory(tt.cfg)
+			s, err := New(tt.cfg)
 			tt.wantErr(t, err)
 			if err != nil {
 				return

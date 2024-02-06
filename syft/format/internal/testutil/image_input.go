@@ -16,7 +16,7 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBOM {
@@ -42,7 +42,7 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 	// this is a hard coded value that is not given by the fixture helper and must be provided manually
 	img.Metadata.ManifestDigest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
 
-	src, err := source.NewFromStereoscopeImageObject(img, "user-image-input", nil)
+	src, err := stereoscope.NewFromStereoscopeImageObject(img, "user-image-input", nil)
 	assert.NoError(t, err)
 
 	return sbom.SBOM{

@@ -6,7 +6,9 @@ import (
 	"text/tabwriter"
 
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 const ID sbom.FormatID = "syft-text"
@@ -38,11 +40,11 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	w.Init(writer, 0, 8, 0, '\t', tabwriter.AlignRight)
 
 	switch metadata := s.Source.Metadata.(type) {
-	case source.DirectorySourceMetadata:
+	case directory.Metadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
-	case source.FileSourceMetadata:
+	case file.SourceMetadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
-	case source.StereoscopeImageSourceMetadata:
+	case stereoscope.ImageSourceMetadata:
 		fmt.Fprintln(w, "[Image]")
 
 		for idx, l := range metadata.Layers {
