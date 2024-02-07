@@ -519,7 +519,7 @@ func Test_UnmarshalJSON(t *testing.T) {
   }
 }`),
 			assert: func(p *Package) {
-				metadata := p.Metadata.(pkg.ConanLockEntry)
+				metadata := p.Metadata.(pkg.ConanV1LockEntry)
 				assert.Equal(t, "False", metadata.Options.MustGet("asio_no_deprecated"))
 			},
 		},
