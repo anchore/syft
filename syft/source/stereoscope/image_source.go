@@ -17,9 +17,9 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-var _ source.Source = (*StereoscopeImageSource)(nil)
+var _ source.Source = (*ImageSource)(nil)
 
-type StereoscopeImageConfig struct {
+type ImageConfig struct {
 	Reference       string
 	From            image.Source
 	Platform        *image.Platform
@@ -28,17 +28,17 @@ type StereoscopeImageConfig struct {
 	Alias           source.Alias
 }
 
-type StereoscopeImageSource struct {
+type ImageSource struct {
 	id       artifact.ID
-	config   StereoscopeImageConfig
+	config   ImageConfig
 	image    *image.Image
 	metadata ImageSourceMetadata
 }
 
-func NewStereoscopeImageSource(img *image.Image, cfg StereoscopeImageConfig) *StereoscopeImageSource {
+func NewStereoscopeImageSource(img *image.Image, cfg ImageConfig) *ImageSource {
 	metadata := imageMetadataFromStereoscopeImage(img, cfg.Reference)
 
-	return &StereoscopeImageSource{
+	return &ImageSource{
 		id:       deriveIDFromStereoscopeImage(cfg.Alias, metadata),
 		config:   cfg,
 		image:    img,
@@ -46,7 +46,7 @@ func NewStereoscopeImageSource(img *image.Image, cfg StereoscopeImageConfig) *St
 	}
 }
 
-func GetImage(ctx context.Context, cfg StereoscopeImageConfig) (*StereoscopeImageSource, error) {
+func GetImage(ctx context.Context, cfg ImageConfig) (*ImageSource, error) {
 	if cfg.Reference == "" {
 		return nil, fmt.Errorf("must specify cfg.Reference property for GetImage")
 	}
@@ -70,11 +70,11 @@ func GetImage(ctx context.Context, cfg StereoscopeImageConfig) (*StereoscopeImag
 	return NewStereoscopeImageSource(img, cfg), nil
 }
 
-func (s StereoscopeImageSource) ID() artifact.ID {
+func (s ImageSource) ID() artifact.ID {
 	return s.id
 }
 
-func (s StereoscopeImageSource) Describe() source.Description {
+func (s ImageSource) Describe() source.Description {
 	a := s.config.Alias
 
 	name := a.Name
@@ -121,7 +121,7 @@ func (s StereoscopeImageSource) Describe() source.Description {
 	}
 }
 
-func (s StereoscopeImageSource) FileResolver(scope source.Scope) (file.Resolver, error) {
+func (s ImageSource) FileResolver(scope source.Scope) (file.Resolver, error) {
 	var res file.Resolver
 	var err error
 
@@ -146,7 +146,7 @@ func (s StereoscopeImageSource) FileResolver(scope source.Scope) (file.Resolver,
 	return res, nil
 }
 
-func (s StereoscopeImageSource) Close() error {
+func (s ImageSource) Close() error {
 	if s.image == nil {
 		return nil
 	}
@@ -159,9 +159,9 @@ func imageMetadataFromStereoscopeImage(img *image.Image, reference string) Image
 		tags[idx] = tag.String()
 	}
 
-	layers := make([]StereoscopeLayerMetadata, len(img.Layers))
+	layers := make([]LayerMetadata, len(img.Layers))
 	for idx, l := range img.Layers {
-		layers[idx] = StereoscopeLayerMetadata{
+		layers[idx] = LayerMetadata{
 			MediaType: string(l.Metadata.MediaType),
 			Digest:    l.Metadata.Digest,
 			Size:      l.Metadata.Size,
@@ -219,7 +219,7 @@ func deriveIDFromStereoscopeImage(alias source.Alias, metadata ImageSourceMetada
 	return source.ArtifactIDFromDigest(input)
 }
 
-func calculateChainID(lm []StereoscopeLayerMetadata) string {
+func calculateChainID(lm []LayerMetadata) string {
 	if len(lm) < 1 {
 		return ""
 	}
@@ -232,7 +232,7 @@ func calculateChainID(lm []StereoscopeLayerMetadata) string {
 	return id
 }
 
-func chain(chainID string, layers []StereoscopeLayerMetadata) string {
+func chain(chainID string, layers []LayerMetadata) string {
 	if len(layers) < 1 {
 		return chainID
 	}

@@ -23,7 +23,7 @@ func main() {
 	}
 
 	src, err := stereoscope.GetImage(context.Background(),
-		stereoscope.StereoscopeImageConfig{
+		stereoscope.ImageConfig{
 			Reference: imageReference(),
 			From:      image.OciRegistrySource, // always use the registry, there are several other "Source" options here
 			Platform:  platform,

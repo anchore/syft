@@ -154,7 +154,7 @@ func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *Cat
 	t.Helper()
 	img := imagetest.GetFixtureImage(t, "docker-archive", fixtureName)
 
-	s := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{})
+	s := stereoscope.NewStereoscopeImageSource(img, stereoscope.ImageConfig{})
 
 	r, err := s.FileResolver(source.SquashedScope)
 	require.NoError(t, err)

@@ -22,7 +22,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 	c := NewCataloger()
 
-	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{
+	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.ImageConfig{
 		Reference: testImage,
 	})
 
@@ -161,7 +161,7 @@ func TestFileMetadataCataloger_GivenCoordinates(t *testing.T) {
 
 	c := NewCataloger()
 
-	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{
+	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.ImageConfig{
 		Reference: testImage,
 	})
 

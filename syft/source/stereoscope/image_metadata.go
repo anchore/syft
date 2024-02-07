@@ -7,24 +7,24 @@ import (
 // ImageSourceMetadata represents all static metadata that defines what a container image is. This is useful to later describe
 // "what" was cataloged without needing the more complicated stereoscope Image objects or FileResolver objects.
 type ImageSourceMetadata struct {
-	UserInput      string                     `json:"userInput"`
-	ID             string                     `json:"imageID"`
-	ManifestDigest string                     `json:"manifestDigest"`
-	MediaType      string                     `json:"mediaType"`
-	Tags           []string                   `json:"tags"`
-	Size           int64                      `json:"imageSize"`
-	Layers         []StereoscopeLayerMetadata `json:"layers"`
-	RawManifest    []byte                     `json:"manifest"`
-	RawConfig      []byte                     `json:"config"`
-	RepoDigests    []string                   `json:"repoDigests"`
-	Architecture   string                     `json:"architecture"`
-	Variant        string                     `json:"architectureVariant,omitempty"`
-	OS             string                     `json:"os"`
-	Labels         map[string]string          `json:"labels,omitempty"`
+	UserInput      string            `json:"userInput"`
+	ID             string            `json:"imageID"`
+	ManifestDigest string            `json:"manifestDigest"`
+	MediaType      string            `json:"mediaType"`
+	Tags           []string          `json:"tags"`
+	Size           int64             `json:"imageSize"`
+	Layers         []LayerMetadata   `json:"layers"`
+	RawManifest    []byte            `json:"manifest"`
+	RawConfig      []byte            `json:"config"`
+	RepoDigests    []string          `json:"repoDigests"`
+	Architecture   string            `json:"architecture"`
+	Variant        string            `json:"architectureVariant,omitempty"`
+	OS             string            `json:"os"`
+	Labels         map[string]string `json:"labels,omitempty"`
 }
 
-// StereoscopeLayerMetadata represents all static metadata that defines what a container image layer is.
-type StereoscopeLayerMetadata struct {
+// LayerMetadata represents all static metadata that defines what a container image layer is.
+type LayerMetadata struct {
 	MediaType string `json:"mediaType"`
 	Digest    string `json:"digest"`
 	Size      int64  `json:"size"`
@@ -44,7 +44,7 @@ func NewStereoscopeImageMetadata(img *image.Image, userInput string) ImageSource
 		Size:           img.Metadata.Size,
 		MediaType:      string(img.Metadata.MediaType),
 		Tags:           tags,
-		Layers:         make([]StereoscopeLayerMetadata, len(img.Layers)),
+		Layers:         make([]LayerMetadata, len(img.Layers)),
 		RawConfig:      img.Metadata.RawConfig,
 		RawManifest:    img.Metadata.RawManifest,
 		RepoDigests:    img.Metadata.RepoDigests,
@@ -56,7 +56,7 @@ func NewStereoscopeImageMetadata(img *image.Image, userInput string) ImageSource
 
 	// populate image metadata
 	for idx, l := range img.Layers {
-		theImg.Layers[idx] = StereoscopeLayerMetadata{
+		theImg.Layers[idx] = LayerMetadata{
 			MediaType: string(l.Metadata.MediaType),
 			Digest:    l.Metadata.Digest,
 			Size:      l.Metadata.Size,

@@ -938,7 +938,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			c := NewCataloger(DefaultCatalogerConfig())
 
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
-			src := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{})
+			src := stereoscope.NewStereoscopeImageSource(img, stereoscope.ImageConfig{})
 
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)

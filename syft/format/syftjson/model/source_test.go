@@ -76,7 +76,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 					MediaType:      "application/vnd.docker.distribution.manifest.v2+json",
 					Tags:           []string{},
 					Size:           5576169,
-					Layers: []stereoscope.StereoscopeLayerMetadata{
+					Layers: []stereoscope.LayerMetadata{
 						{
 							MediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
 							Digest:    "sha256:9fb3aa2f8b8023a4bebbf92aa567caf88e38e969ada9f0ac12643b2847391635",
@@ -248,7 +248,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 					MediaType:      "application/vnd.docker.distribution.manifest.v2+json",
 					Tags:           []string{},
 					Size:           5576169,
-					Layers: []stereoscope.StereoscopeLayerMetadata{
+					Layers: []stereoscope.LayerMetadata{
 						{
 							MediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
 							Digest:    "sha256:9fb3aa2f8b8023a4bebbf92aa567caf88e38e969ada9f0ac12643b2847391635",

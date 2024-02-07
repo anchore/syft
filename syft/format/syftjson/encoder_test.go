@@ -270,7 +270,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 					"stereoscope-fixture-image-simple:85066c51088bdd274f7a89e99e00490f666c49e72ffc955707cd6e18f0e22c5b",
 				},
 				Size: 38,
-				Layers: []stereoscope.StereoscopeLayerMetadata{
+				Layers: []stereoscope.LayerMetadata{
 					{
 						MediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
 						Digest:    "sha256:3de16c5b8659a2e8d888b8ded8427be7a5686a3c8c4e4dd30de20f362827285b",

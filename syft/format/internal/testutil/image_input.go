@@ -41,7 +41,7 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 	// this is a hard coded value that is not given by the fixture helper and must be provided manually
 	img.Metadata.ManifestDigest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
 
-	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{}) // "user-image-input", nil)
+	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.ImageConfig{}) // "user-image-input", nil)
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{

@@ -30,7 +30,7 @@ func Test_allRegularFiles(t *testing.T) {
 
 				img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
-				s := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{
+				s := stereoscope.NewStereoscopeImageSource(img, stereoscope.ImageConfig{
 					Reference: testImage,
 				})
 

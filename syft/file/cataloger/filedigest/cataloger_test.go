@@ -98,7 +98,7 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 
 	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
-	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{
+	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.ImageConfig{
 		Reference: testImage,
 	})
 
@@ -170,7 +170,7 @@ func TestFileDigestCataloger_GivenCoordinates(t *testing.T) {
 
 	c := NewCataloger([]crypto.Hash{crypto.SHA256})
 
-	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{
+	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.ImageConfig{
 		Reference: testImage,
 	})
 

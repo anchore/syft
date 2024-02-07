@@ -32,7 +32,7 @@ func (l stereoscopeSourceProvider) Provide(ctx context.Context, userInput string
 	if !l.alias.IsEmpty() {
 		alias = *l.alias
 	}
-	cfg := StereoscopeImageConfig{
+	cfg := ImageConfig{
 		Reference:       userInput,
 		From:            l.stereoscopeProvider.Name(),
 		Platform:        l.cfg.Platform,

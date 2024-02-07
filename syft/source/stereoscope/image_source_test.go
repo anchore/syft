@@ -87,7 +87,7 @@ func Test_StereoscopeImage_Exclusions(t *testing.T) {
 
 			src := NewStereoscopeImageSource(
 				img,
-				StereoscopeImageConfig{
+				ImageConfig{
 					Reference: imageName,
 					From:      image.DockerTarballSource,
 					Exclude: source.ExcludeConfig{
@@ -122,7 +122,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 			name: "use raw manifest over chain ID or user input",
 			metadata: ImageSourceMetadata{
 				UserInput: "user-input",
-				Layers: []StereoscopeLayerMetadata{
+				Layers: []LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -145,7 +145,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 			name: "use chain ID over user input",
 			metadata: ImageSourceMetadata{
 				//UserInput: "user-input",
-				Layers: []StereoscopeLayerMetadata{
+				Layers: []LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -158,7 +158,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 				},
 			},
 			want: func() artifact.ID {
-				metadata := []StereoscopeLayerMetadata{
+				metadata := []LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -187,7 +187,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 			name: "without alias (first)",
 			metadata: ImageSourceMetadata{
 				UserInput: "user-input",
-				Layers: []StereoscopeLayerMetadata{
+				Layers: []LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -210,7 +210,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 			},
 			metadata: ImageSourceMetadata{
 				UserInput: "user-input",
-				Layers: []StereoscopeLayerMetadata{
+				Layers: []LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -254,12 +254,12 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 func Test_Describe(t *testing.T) {
 	tests := []struct {
 		name     string
-		source   StereoscopeImageSource
+		source   ImageSource
 		expected source.Description
 	}{
 		{
 			name: "name from user input",
-			source: StereoscopeImageSource{
+			source: ImageSource{
 				id: "some-id",
 				metadata: ImageSourceMetadata{
 					UserInput: "user input",
