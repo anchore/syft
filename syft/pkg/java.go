@@ -1,6 +1,9 @@
 package pkg
 
 import (
+	"encoding/json"
+	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -68,6 +71,46 @@ func (p JavaPomProperties) PkgTypeIndicated() Type {
 type JavaManifest struct {
 	Main     KeyValues   `json:"main,omitempty"`
 	Sections []KeyValues `json:"sections,omitempty"`
+}
+
+type unmarshalJavaManifest JavaManifest
+
+type legacyJavaManifest struct {
+	Main          map[string]string            `json:"main"`
+	NamedSections map[string]map[string]string `json:"namedSections"`
+}
+
+func (m *JavaManifest) UnmarshalJSON(b []byte) error {
+	var jm unmarshalJavaManifest
+	// TODO: extra key doesn't error :/
+	if err := json.Unmarshal(b, &jm); err != nil {
+		var lm legacyJavaManifest
+		if err := json.Unmarshal(b, &lm); err != nil {
+			return fmt.Errorf("could not unmarshal java manifest: %w", err)
+		}
+		mainSection := keyValuesFromMap(lm.Main)
+		jm.Main = mainSection
+
+		var sectionNames []string
+		for k := range lm.NamedSections {
+			sectionNames = append(sectionNames, k)
+		}
+		sort.Strings(sectionNames)
+		var sections []KeyValues
+		for _, name := range sectionNames {
+			section := KeyValues{
+				KeyValue{
+					Key:   "Name",
+					Value: name,
+				},
+			}
+			section = append(section, keyValuesFromMap(lm.NamedSections[name])...)
+			sections = append(sections, section)
+		}
+		jm.Sections = sections
+	}
+	*m = JavaManifest(jm)
+	return nil
 }
 
 func (m JavaManifest) Section(name string) KeyValues {

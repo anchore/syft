@@ -386,6 +386,52 @@ func Test_UnmarshalJSON(t *testing.T) {
 				assert.Equal(t, reflect.TypeOf(pkg.RustBinaryAuditEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
+		{
+			name: "map-based java metadata",
+			packageData: []byte(`{
+  "id": "e6f845bdaa69ddb2",
+  "name": "SparseBitSet",
+  "version": "1.2",
+  "type": "java-archive",
+  "foundBy": "java-archive-cataloger",
+  "locations": [],
+  "licenses": [],
+  "language": "java",
+  "cpes": [],
+  "purl": "pkg:maven/com.zaxxer/SparseBitSet@1.2",
+  "metadataType": "java-archive",
+  "metadata": {
+    "virtualPath": "/opt/solr-9.4.1/modules/extraction/lib/SparseBitSet-1.2.jar",
+    "manifest": {
+      "main": {
+        "Archiver-Version": "Plexus Archiver",
+        "Build-Jdk": "1.8.0_73",
+        "Built-By": "lbayer",
+        "Created-By": "Apache Maven 3.5.0",
+        "Manifest-Version": "1.0"
+      },
+      "namedSections": {
+        "META-INF/mailcap": {
+          "SHA-256-Digest": "kXN4VupOQOJhduMGwxumj4ijmD/YAlz97a9Mp7CVXtk="
+        },
+        "META-INF/versions/9/module-info.class": {
+          "SHA-256-Digest": "cMeIRa5l8DWPgrVWavr/6TKVBUGixVKGcu6yOTZMlKk="
+        }
+      }
+    }
+  }
+}`),
+			assert: func(p *Package) {
+				meta := p.Metadata.(pkg.JavaArchive)
+				manifest := meta.Manifest
+				assert.Equal(t, "1.8.0_73", manifest.Main.MustGet("Build-Jdk"))
+				require.Equal(t, 2, len(manifest.Sections))
+				assert.Equal(t, "META-INF/mailcap", manifest.Sections[0].MustGet("Name"))
+				assert.Equal(t, "kXN4VupOQOJhduMGwxumj4ijmD/YAlz97a9Mp7CVXtk=", manifest.Sections[0].MustGet("SHA-256-Digest"))
+				assert.Equal(t, "META-INF/versions/9/module-info.class", manifest.Sections[1].MustGet("Name"))
+				assert.Equal(t, "cMeIRa5l8DWPgrVWavr/6TKVBUGixVKGcu6yOTZMlKk=", manifest.Sections[1].MustGet("SHA-256-Digest"))
+			},
+		},
 	}
 
 	for _, test := range tests {

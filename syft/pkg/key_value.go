@@ -1,5 +1,9 @@
 package pkg
 
+import (
+	"sort"
+)
+
 type KeyValue struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
@@ -25,4 +29,20 @@ func (k KeyValues) MustGet(key string) string {
 	}
 
 	return ""
+}
+
+func keyValuesFromMap(m map[string]string) KeyValues {
+	var result KeyValues
+	var mapKeys []string
+	for k := range m {
+		mapKeys = append(mapKeys, k)
+	}
+	sort.Strings(mapKeys)
+	for _, k := range mapKeys {
+		result = append(result, KeyValue{
+			Key:   k,
+			Value: m[k],
+		})
+	}
+	return result
 }

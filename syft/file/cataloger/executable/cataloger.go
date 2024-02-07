@@ -6,6 +6,7 @@ import (
 	"debug/macho"
 	"encoding/binary"
 	"fmt"
+	"sort"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/dustin/go-humanize"
@@ -28,8 +29,10 @@ type Cataloger struct {
 }
 
 func DefaultConfig() Config {
+	m := mimetype.ExecutableMIMETypeSet.List()
+	sort.Strings(m)
 	return Config{
-		MIMETypes: mimetype.ExecutableMIMETypeSet.List(),
+		MIMETypes: m,
 		Globs:     nil,
 	}
 }
