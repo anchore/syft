@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"encoding/json"
+	"fmt"
 	"sort"
 )
 
@@ -45,4 +47,24 @@ func keyValuesFromMap(m map[string]string) KeyValues {
 		})
 	}
 	return result
+}
+
+func (k *KeyValues) UnmarshalJSON(b []byte) error {
+	var kvs []KeyValue
+	if err := json.Unmarshal(b, &kvs); err != nil {
+		var legacyMap map[string]string
+		if err := json.Unmarshal(b, &legacyMap); err != nil {
+			return fmt.Errorf("unable to unmarshal KeyValues: %w", err)
+		}
+		var keys []string
+		for k := range legacyMap {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			kvs = append(kvs, KeyValue{Key: k, Value: legacyMap[k]})
+		}
+	}
+	*k = kvs
+	return nil
 }
