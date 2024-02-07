@@ -140,8 +140,8 @@ func safeFileModeConvert(val int) (fs.FileMode, error) {
 		// Value is out of the range that int32 can represent
 		return 0, fmt.Errorf("value %d is out of the range that int32 can represent", val)
 	}
-	// Safe to convert
-	// we need to convert to a string first to ensure that the value is interpreted as octal
+
+	// Safe to convert to os.FileMode
 	mode, err := strconv.ParseInt(strconv.Itoa(val), 8, 64)
 	if err != nil {
 		return 0, err
