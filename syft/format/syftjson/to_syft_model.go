@@ -79,7 +79,6 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 			mode, ok := safeConvertToInt32(f.Metadata.Mode)
 			if !ok {
 				log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coord, f.Metadata.Mode)
-				mode = 0
 			}
 
 			fm := os.FileMode(mode)
