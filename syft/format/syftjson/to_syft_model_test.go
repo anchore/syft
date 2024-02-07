@@ -2,6 +2,9 @@ package syftjson
 
 import (
 	"errors"
+	"io/fs"
+	"math"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -467,6 +470,48 @@ func Test_deduplicateErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := deduplicateErrors(tt.errors)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_safeFileModeConvert(t *testing.T) {
+	tests := []struct {
+		name    string
+		val     int
+		want    fs.FileMode
+		wantErr bool
+	}{
+		{
+			// fs.go ModePerm 511 = FileMode = 0777 // Unix permission bits :192
+			name:    "valid perm",
+			val:     777,
+			want:    os.FileMode(511), // 777 in octal equals 511 in decimal
+			wantErr: false,
+		},
+		{
+			name:    "outside int32 high",
+			val:     int(math.MaxInt32) + 1,
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "outside int32 low",
+			val:     int(math.MinInt32) - 1,
+			want:    0,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := safeFileModeConvert(tt.val)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Equal(t, tt.want, got)
+				return
+			}
+			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
 	}

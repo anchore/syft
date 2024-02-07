@@ -2,6 +2,7 @@ package syftjson
 
 import (
 	"fmt"
+	"io/fs"
 	"math"
 	"os"
 	"path"
@@ -77,13 +78,11 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 	for _, f := range files {
 		coord := f.Location
 		if f.Metadata != nil {
-			mode, err := safeConvertToInt32(f.Metadata.Mode)
+			fm, err := safeFileModeConvert(f.Metadata.Mode)
 			if err != nil {
 				log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coord, f.Metadata.Mode, err)
-				mode = 0
+				fm = 0
 			}
-
-			fm := os.FileMode(mode)
 
 			ret.FileMetadata[coord] = file.Metadata{
 				FileInfo: stereoscopeFile.ManualInfo{
@@ -136,17 +135,18 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 	return ret
 }
 
-func safeConvertToInt32(val int) (int32, error) {
+func safeFileModeConvert(val int) (fs.FileMode, error) {
 	if val < math.MinInt32 || val > math.MaxInt32 {
 		// Value is out of the range that int32 can represent
 		return 0, fmt.Errorf("value %d is out of the range that int32 can represent", val)
 	}
 	// Safe to convert
+	// we need to convert to a string first to ensure that the value is interpreted as octal
 	mode, err := strconv.ParseInt(strconv.Itoa(val), 8, 64)
 	if err != nil {
 		return 0, err
 	}
-	return int32(mode), nil
+	return os.FileMode(mode), nil
 }
 
 func toSyftLicenses(m []model.License) (p []pkg.License) {
