@@ -103,7 +103,7 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 		{
 			name:     "map pkg.ConanLockEntry struct type",
 			input:    "ConanLockMetadataType",
-			expected: reflect.TypeOf(pkg.ConanLockEntry{}),
+			expected: reflect.TypeOf(pkg.ConanV1LockEntry{}),
 		},
 		{
 			name:     "map pkg.ConanfileEntry struct type",
@@ -290,7 +290,7 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 		},
 		{
 			name:               "ConanLockMetadata",
-			metadata:           pkg.ConanLockEntry{},
+			metadata:           pkg.ConanV1LockEntry{},
 			expectedJSONName:   "c-conan-lock-entry",
 			expectedLegacyName: "ConanLockMetadataType",
 		},

@@ -9,6 +9,7 @@ import (
 
 	"github.com/saferwall/pe"
 
+	version "github.com/anchore/go-version"
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -127,12 +128,42 @@ func extractVersion(version string) string {
 	return out
 }
 
+func keepGreaterSemanticVersion(productVersion string, fileVersion string) string {
+	semanticProductVersion, err := version.NewVersion(productVersion)
+
+	if err != nil || semanticProductVersion == nil {
+		log.Tracef("Unable to create semantic version from portable executable product version %s", productVersion)
+		return ""
+	}
+
+	semanticFileVersion, err := version.NewVersion(fileVersion)
+
+	if err != nil || semanticFileVersion == nil {
+		log.Tracef("Unable to create semantic version from portable executable file version %s", fileVersion)
+		return productVersion
+	}
+
+	// Make no choice when they are semantically equal so that it falls
+	// through to the other comparison cases
+	if semanticProductVersion.Equal(semanticFileVersion) {
+		return ""
+	}
+
+	if semanticFileVersion.GreaterThan(semanticProductVersion) {
+		return fileVersion
+	}
+
+	return productVersion
+}
+
 func findVersion(versionResources map[string]string) string {
 	productVersion := extractVersion(versionResources["ProductVersion"])
 	fileVersion := extractVersion(versionResources["FileVersion"])
 
-	if productVersion == "" {
-		return fileVersion
+	semanticVersionCompareResult := keepGreaterSemanticVersion(productVersion, fileVersion)
+
+	if semanticVersionCompareResult != "" {
+		return semanticVersionCompareResult
 	}
 
 	productVersionDetail := punctuationCount(productVersion)
