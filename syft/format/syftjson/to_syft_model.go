@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
@@ -76,9 +77,10 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 	for _, f := range files {
 		coord := f.Location
 		if f.Metadata != nil {
-			mode, ok := safeConvertToInt32(f.Metadata.Mode)
-			if !ok {
-				log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coord, f.Metadata.Mode)
+			mode, err := safeConvertToInt32(f.Metadata.Mode)
+			if err != nil {
+				log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coord, f.Metadata.Mode, err)
+				mode = 0
 			}
 
 			fm := os.FileMode(mode)
@@ -134,13 +136,18 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 	return ret
 }
 
-func safeConvertToInt32(val int) (int32, bool) {
+func safeConvertToInt32(val int) (int32, error) {
 	if val < math.MinInt32 || val > math.MaxInt32 {
 		// Value is out of the range that int32 can represent
-		return 0, false
+		return 0, fmt.Errorf("value %d is out of the range that int32 can represent", val)
 	}
 	// Safe to convert
-	return int32(val), true
+	mode, err := strconv.ParseInt(strconv.Itoa(val), 8, 64)
+	if err != nil {
+		log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coord, f.Metadata.Mode)
+		return 0, err
+	}
+	return int32(mode), nil
 }
 
 func toSyftLicenses(m []model.License) (p []pkg.License) {
