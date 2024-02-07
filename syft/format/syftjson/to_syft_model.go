@@ -144,7 +144,6 @@ func safeConvertToInt32(val int) (int32, error) {
 	// Safe to convert
 	mode, err := strconv.ParseInt(strconv.Itoa(val), 8, 64)
 	if err != nil {
-		log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coord, f.Metadata.Mode)
 		return 0, err
 	}
 	return int32(mode), nil
