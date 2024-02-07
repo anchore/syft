@@ -2,9 +2,9 @@ package syftjson
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
@@ -76,9 +76,9 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 	for _, f := range files {
 		coord := f.Location
 		if f.Metadata != nil {
-			mode, err := strconv.ParseInt(strconv.Itoa(f.Metadata.Mode), 8, 32)
-			if err != nil {
-				log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coord, f.Metadata.Mode, err)
+			mode, ok := safeConvertToInt32(f.Metadata.Mode)
+			if !ok {
+				log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coord, f.Metadata.Mode)
 				mode = 0
 			}
 
@@ -133,6 +133,15 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 	}
 
 	return ret
+}
+
+func safeConvertToInt32(val int) (int32, bool) {
+	if val < math.MinInt32 || val > math.MaxInt32 {
+		// Value is out of the range that int32 can represent
+		return 0, false
+	}
+	// Safe to convert
+	return int32(val), true
 }
 
 func toSyftLicenses(m []model.License) (p []pkg.License) {
