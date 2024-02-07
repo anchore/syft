@@ -70,7 +70,11 @@ func newConanfilePackage(m pkg.ConanfileEntry, locations ...file.Location) *pkg.
 	return newConanPackage(m.Ref, m, locations...)
 }
 
-func newConanlockPackage(m pkg.ConanLockEntry, locations ...file.Location) *pkg.Package {
+func newConanlockPackage(m pkg.ConanV1LockEntry, locations ...file.Location) *pkg.Package {
+	return newConanPackage(m.Ref, m, locations...)
+}
+
+func newConanReferencePackage(m pkg.ConanV2LockEntry, locations ...file.Location) *pkg.Package {
 	return newConanPackage(m.Ref, m, locations...)
 }
 

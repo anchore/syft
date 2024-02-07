@@ -28,7 +28,7 @@ require (
 	github.com/dave/jennifer v1.7.0
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
 	github.com/distribution/reference v0.5.0
-	github.com/docker/docker v25.0.2+incompatible
+	github.com/docker/docker v25.0.3+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/facebookincubator/nvdtools v0.1.5
 	github.com/github/go-spdx/v2 v2.2.0
@@ -74,7 +74,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1
 	go.uber.org/goleak v1.3.0
-	golang.org/x/mod v0.14.0
+	golang.org/x/mod v0.15.0
 	golang.org/x/net v0.20.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.28.0
