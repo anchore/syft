@@ -20,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/filesource"
 )
 
 func Test_EncodeDecodeCycle(t *testing.T) {
@@ -263,7 +264,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 			ID:      "some-id",
 			Name:    "some-name",
 			Version: "some-version",
-			Metadata: file.SourceMetadata{
+			Metadata: filesource.SourceMetadata{
 				Path: "/some-file-source-path",
 				Digests: []file.Digest{
 					{

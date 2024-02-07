@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directory"
-	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -34,7 +34,7 @@ func DocumentNamespace(name string, src source.Description, desc sbom.Descriptor
 		input = InputImage
 	case directory.Metadata:
 		input = InputDirectory
-	case file.SourceMetadata:
+	case filesource.SourceMetadata:
 		input = InputFile
 	}
 

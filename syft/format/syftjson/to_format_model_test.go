@@ -16,6 +16,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -83,7 +84,7 @@ func Test_toSourceModel(t *testing.T) {
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: file.SourceMetadata{
+				Metadata: filesource.SourceMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -94,7 +95,7 @@ func Test_toSourceModel(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "file",
-				Metadata: file.SourceMetadata{
+				Metadata: filesource.SourceMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -153,7 +154,7 @@ func Test_toSourceModel(t *testing.T) {
 			name: "file - no name/version",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: file.SourceMetadata{
+				Metadata: filesource.SourceMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -162,7 +163,7 @@ func Test_toSourceModel(t *testing.T) {
 			expected: model.Source{
 				ID:   "test-id",
 				Type: "file",
-				Metadata: file.SourceMetadata{
+				Metadata: filesource.SourceMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",

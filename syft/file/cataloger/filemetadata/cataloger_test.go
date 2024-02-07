@@ -22,8 +22,9 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 	c := NewCataloger()
 
-	src, err := stereoscope.NewFromStereoscopeImageObject(img, testImage, nil)
-	require.NoError(t, err)
+	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{
+		Reference: testImage,
+	})
 
 	resolver, err := src.FileResolver(source.SquashedScope)
 	require.NoError(t, err)
@@ -160,8 +161,9 @@ func TestFileMetadataCataloger_GivenCoordinates(t *testing.T) {
 
 	c := NewCataloger()
 
-	src, err := stereoscope.NewFromStereoscopeImageObject(img, testImage, nil)
-	require.NoError(t, err)
+	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{
+		Reference: testImage,
+	})
 
 	resolver, err := src.FileResolver(source.SquashedScope)
 	require.NoError(t, err)

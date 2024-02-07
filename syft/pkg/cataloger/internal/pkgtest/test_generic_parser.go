@@ -22,6 +22,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directory"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -89,7 +90,7 @@ func DefaultLicenseComparer(x, y pkg.License) bool {
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
 	t.Helper()
 
-	s, err := directory.NewFromDirectoryPath(path)
+	s, err := directory.NewFromPath(path)
 	require.NoError(t, err)
 
 	resolver, err := s.FileResolver(source.AllLayersScope)
@@ -153,8 +154,7 @@ func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *Cat
 	t.Helper()
 	img := imagetest.GetFixtureImage(t, "docker-archive", fixtureName)
 
-	s, err := stereoscope.NewFromStereoscopeImageObject(img, fixtureName, nil)
-	require.NoError(t, err)
+	s := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{})
 
 	r, err := s.FileResolver(source.SquashedScope)
 	require.NoError(t, err)

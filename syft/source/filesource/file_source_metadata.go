@@ -1,4 +1,4 @@
-package file
+package filesource
 
 import "github.com/anchore/syft/syft/file"
 

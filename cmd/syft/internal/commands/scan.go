@@ -200,6 +200,17 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 }
 
 func getSource(ctx context.Context, opts *options.Catalog, userInput string, sources ...image.Source) (source.Source, error) {
+	cfg := syft.DefaultGetSourceConfig().
+		WithRegistryOptions(opts.Registry.ToOptions()).
+		WithAlias(source.Alias{
+			Name:    opts.Source.Name,
+			Version: opts.Source.Version,
+		}).
+		WithExcludeConfig(source.ExcludeConfig{
+			Paths: opts.Exclusions,
+		}).
+		WithBasePath(opts.Source.BasePath)
+
 	var err error
 	var platform *image.Platform
 
@@ -208,75 +219,30 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 		if err != nil {
 			return nil, fmt.Errorf("invalid platform: %w", err)
 		}
+		cfg = cfg.WithPlatform(platform)
 	}
 
-	hashers, err := file.Hashers(opts.Source.File.Digests...)
-	if err != nil {
-		return nil, fmt.Errorf("invalid hash algorithm: %w", err)
-	}
-
-	sourceProviders := syft.SourceProviders(syft.SourceProviderConfig{
-		Alias: source.Alias{
-			Name:    opts.Source.Name,
-			Version: opts.Source.Version,
-		},
-		RegistryOptions: opts.Registry.ToOptions(),
-		Platform:        platform,
-		Exclude: source.ExcludeConfig{
-			Paths: opts.Exclusions,
-		},
-		DigestAlgorithms: hashers,
-		BasePath:         opts.Source.BasePath,
-	})
-
-	// narrow the sources to those explicitly requested (e.g. only pull sources for attest)
-	for _, s := range sources {
-		sourceProviders = sourceProviders.Select(s)
-		if len(sourceProviders) == 0 {
-			return nil, fmt.Errorf("invalid source provider: %s", s)
+	if opts.Source.File.Digests != nil {
+		hashers, err := file.Hashers(opts.Source.File.Digests...)
+		if err != nil {
+			return nil, fmt.Errorf("invalid hash algorithm: %w", err)
 		}
-	}
-
-	// if the "default image pull source" is set, we move this as the first pull source
-	if opts.Source.Image.DefaultPullSource != "" {
-		base := sourceProviders.Remove("pull")
-		pull := sourceProviders.Select("pull")
-		if !pull.HasTag(opts.Source.Image.DefaultPullSource) {
-			return nil, fmt.Errorf("invalid pull source: %s", opts.Source.Image.DefaultPullSource)
-		}
-		sourceProviders = base.Join(
-			pull.Select(opts.Source.Image.DefaultPullSource)...,
-		).Join(
-			pull.Remove(opts.Source.Image.DefaultPullSource)...,
-		)
+		cfg = cfg.WithDigestAlgorithms(hashers...)
 	}
 
 	explicitSources := opts.From
 	if len(explicitSources) == 0 {
-		explicitSource, newUserInput := stereoscope.ExtractSchemeSource(sourceProviders, userInput)
+		// extract a scheme if it matches any provider tag; this is a holdover for compatibility, using the --from flag is recommended
+		explicitSource, newUserInput := stereoscope.ExtractSchemeSource(syft.SourceProviders(syft.DefaultSourceProviderConfig()), userInput)
 		if explicitSource != "" {
 			explicitSources = append(explicitSources, explicitSource)
 			userInput = newUserInput
 		}
 	}
 
-	if len(explicitSources) > 0 {
-		for _, s := range explicitSources {
-			if !sourceProviders.HasTag(s) {
-				return nil, fmt.Errorf("invalid source selector: %s", s)
-			}
-		}
-		sourceProviders = sourceProviders.Select(explicitSources...)
-		if len(sourceProviders) == 0 {
-			return nil, fmt.Errorf("no sources returned from selectors: %v", explicitSources)
-		}
-	}
+	cfg = cfg.WithBaseSources(sources...).WithFromSource(explicitSources...).WithDefaultImageSource(opts.Source.Image.DefaultPullSource)
 
-	src, err := syft.GetSource(
-		ctx,
-		userInput,
-		sourceProviders.Collect()...,
-	)
+	src, err := syft.GetSource(ctx, userInput, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("could not determine source: %w", err)
 	}

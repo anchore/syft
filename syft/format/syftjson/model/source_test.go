@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -125,7 +126,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			expected: &Source{
 				ID:   "foobar",
 				Type: "file",
-				Metadata: file.SourceMetadata{
+				Metadata: filesource.SourceMetadata{
 					Path: "/var/lib/foo/go.mod",
 					Digests: []file.Digest{
 						{
@@ -289,7 +290,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "file",
-				Metadata: file.SourceMetadata{
+				Metadata: filesource.SourceMetadata{
 					Path: "/var/lib/foo/go.mod",
 				},
 			},

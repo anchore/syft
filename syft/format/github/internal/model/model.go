@@ -13,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directory"
-	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -122,7 +122,7 @@ func toPath(s source.Description, p pkg.Package) string {
 		case stereoscope.ImageSourceMetadata:
 			image := strings.ReplaceAll(metadata.UserInput, ":/", "//")
 			return fmt.Sprintf("%s:/%s", image, packagePath)
-		case file.SourceMetadata:
+		case filesource.SourceMetadata:
 			path := trimRelative(metadata.Path)
 			if isArchive(metadata.Path) {
 				return fmt.Sprintf("%s:/%s", path, packagePath)

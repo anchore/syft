@@ -1,12 +1,14 @@
 package stereoscope
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/distribution/reference"
 	"github.com/opencontainers/go-digest"
 
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -44,16 +46,28 @@ func NewStereoscopeImageSource(img *image.Image, cfg StereoscopeImageConfig) *St
 	}
 }
 
-func NewFromStereoscopeImageObject(img *image.Image, reference string, alias *source.Alias) *StereoscopeImageSource {
-	var aliasVal source.Alias
-	if !alias.IsEmpty() {
-		aliasVal = *alias
+func GetImage(ctx context.Context, cfg StereoscopeImageConfig) (*StereoscopeImageSource, error) {
+	if cfg.Reference == "" {
+		return nil, fmt.Errorf("must specify cfg.Reference property for GetImage")
 	}
-	cfg := StereoscopeImageConfig{
-		Reference: reference,
-		Alias:     aliasVal,
+	var opts []stereoscope.Option
+	if cfg.Platform != nil {
+		opts = append(opts, stereoscope.WithPlatform(cfg.Platform.String()))
 	}
-	return NewStereoscopeImageSource(img, cfg)
+	if cfg.RegistryOptions != nil {
+		opts = append(opts, stereoscope.WithRegistryOptions(*cfg.RegistryOptions))
+	}
+	var err error
+	var img *image.Image
+	if cfg.From == "" {
+		img, err = stereoscope.GetImage(ctx, cfg.Reference, opts...)
+	} else {
+		img, err = stereoscope.GetImageFromSource(ctx, cfg.Reference, cfg.From, opts...)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return NewStereoscopeImageSource(img, cfg), nil
 }
 
 func (s StereoscopeImageSource) ID() artifact.ID {

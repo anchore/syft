@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -167,12 +168,12 @@ func Test_toGithubModel(t *testing.T) {
 		},
 		{
 			name:     "file",
-			metadata: file.SourceMetadata{Path: "./executable"},
+			metadata: filesource.SourceMetadata{Path: "./executable"},
 			testPath: "executable",
 		},
 		{
 			name:     "archive",
-			metadata: file.SourceMetadata{Path: "./archive.tar.gz"},
+			metadata: filesource.SourceMetadata{Path: "./archive.tar.gz"},
 			testPath: "archive.tar.gz:/etc",
 		},
 	}

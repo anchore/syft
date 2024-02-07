@@ -9,7 +9,7 @@ import (
 
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source/directory"
-	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -101,7 +101,7 @@ func extractPreSchemaV9Metadata(t string, target []byte) (interface{}, error) {
 			cleanTarget = string(target)
 		}
 
-		return file.SourceMetadata{
+		return filesource.SourceMetadata{
 			Path: cleanTarget,
 		}, nil
 

@@ -25,7 +25,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directory"
-	filesource "github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 

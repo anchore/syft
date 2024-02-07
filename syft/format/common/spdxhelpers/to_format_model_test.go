@@ -20,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -172,7 +173,7 @@ func Test_toFormatModel(t *testing.T) {
 				Source: source.Description{
 					Name:    "path/to/some.file",
 					Version: "sha256:d34db33f",
-					Metadata: file.SourceMetadata{
+					Metadata: filesource.SourceMetadata{
 						Path: "path/to/some.file",
 						Digests: []file.Digest{
 							{

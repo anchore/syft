@@ -20,7 +20,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directory"
-	fileSource "github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -73,7 +73,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 	}
 
 	fileSrc := source.Description{
-		Metadata: fileSource.SourceMetadata{},
+		Metadata: filesource.SourceMetadata{},
 	}
 
 	tests := []struct {
@@ -454,7 +454,7 @@ func Test_findDefaultTag(t *testing.T) {
 		{
 			name: "file",
 			src: source.Description{
-				Metadata: fileSource.SourceMetadata{},
+				Metadata: filesource.SourceMetadata{},
 			},
 			want: pkgcataloging.DirectoryTag, // not a mistake...
 		},

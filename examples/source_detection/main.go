@@ -1,10 +1,11 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft"
 )
 
 /*
@@ -28,18 +29,11 @@ import (
 const defaultImage = "alpine:3.19"
 
 func main() {
-	detection, err := source.Detect(
-		imageReference(),
-		source.DetectConfig{
+	src, err := syft.GetSource(context.Background(), imageReference(),
+		syft.GetSourceConfig{
 			DefaultImageSource: "docker",
 		},
 	)
-
-	if err != nil {
-		panic(err)
-	}
-
-	src, err := detection.NewSource(source.DefaultDetectionSourceConfig())
 
 	if err != nil {
 		panic(err)

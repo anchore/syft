@@ -5,13 +5,13 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/syft/source/directory"
-	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 var jsonNameFromType = map[reflect.Type][]string{
 	reflect.TypeOf(directory.Metadata{}):              {"directory", "dir"},
-	reflect.TypeOf(file.SourceMetadata{}):             {"file"},
+	reflect.TypeOf(filesource.SourceMetadata{}):       {"file"},
 	reflect.TypeOf(stereoscope.ImageSourceMetadata{}): {"image"},
 }
 

@@ -1,11 +1,12 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
 /*
@@ -21,8 +22,8 @@ func main() {
 		panic(err)
 	}
 
-	src, err := source.NewFromStereoscopeImage(
-		source.StereoscopeImageConfig{
+	src, err := stereoscope.GetImage(context.Background(),
+		stereoscope.StereoscopeImageConfig{
 			Reference: imageReference(),
 			From:      image.OciRegistrySource, // always use the registry, there are several other "Source" options here
 			Platform:  platform,

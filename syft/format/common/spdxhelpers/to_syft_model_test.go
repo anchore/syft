@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -201,7 +202,7 @@ func TestExtractSourceFromNamespaces(t *testing.T) {
 	}{
 		{
 			namespace: "https://anchore.com/syft/file/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  file.SourceMetadata{},
+			expected:  file.Metadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/image/d42b01d0-7325-409b-b03f-74082935c4d3",
@@ -501,7 +502,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			name: "file source",
 			source: source.Description{
 				ID: "DocumentRoot-File-my-app.exe",
-				Metadata: file.SourceMetadata{
+				Metadata: filesource.SourceMetadata{
 					Path: "my-app.exe",
 					Digests: []file.Digest{
 						{

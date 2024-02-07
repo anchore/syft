@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -237,7 +237,7 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 		// TODO: this is lossy... we can't know if this is a file or a directory
 		return source.Description{
 			ID:       "",
-			Metadata: file.SourceMetadata{Path: c.Name},
+			Metadata: filesource.SourceMetadata{Path: c.Name},
 		}
 	}
 	return source.Description{}

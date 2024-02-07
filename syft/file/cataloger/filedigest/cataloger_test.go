@@ -98,10 +98,9 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 
 	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
-	src := stereoscope.NewStereoscopeImageMetadata(img, testImage)
-	if err != nil {
-		t.Fatalf("could not create source: %+v", err)
-	}
+	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{
+		Reference: testImage,
+	})
 
 	resolver, err := src.FileResolver(source.SquashedScope)
 	if err != nil {
@@ -171,8 +170,9 @@ func TestFileDigestCataloger_GivenCoordinates(t *testing.T) {
 
 	c := NewCataloger([]crypto.Hash{crypto.SHA256})
 
-	src, err := stereoscope.NewFromStereoscopeImageObject(img, testImage, nil)
-	require.NoError(t, err)
+	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.StereoscopeImageConfig{
+		Reference: testImage,
+	})
 
 	resolver, err := src.FileResolver(source.SquashedScope)
 	require.NoError(t, err)

@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directory"
-	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -50,7 +50,7 @@ func Test_documentNamespace(t *testing.T) {
 			name:      "file",
 			inputName: "my-name",
 			src: source.Description{
-				Metadata: file.SourceMetadata{
+				Metadata: filesource.SourceMetadata{
 					Path: "some/path/to/place",
 				},
 			},

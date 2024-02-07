@@ -7,7 +7,7 @@ import (
 
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source/directory"
-	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -42,7 +42,7 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	switch metadata := s.Source.Metadata.(type) {
 	case directory.Metadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
-	case file.SourceMetadata:
+	case filesource.SourceMetadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
 	case stereoscope.ImageSourceMetadata:
 		fmt.Fprintln(w, "[Image]")

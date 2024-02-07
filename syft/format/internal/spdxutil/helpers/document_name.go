@@ -3,7 +3,7 @@ package helpers
 import (
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directory"
-	"github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -17,7 +17,7 @@ func DocumentName(src source.Description) string {
 		return metadata.UserInput
 	case directory.Metadata:
 		return metadata.Path
-	case file.SourceMetadata:
+	case filesource.SourceMetadata:
 		return metadata.Path
 	default:
 		return "unknown"

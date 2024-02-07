@@ -1,0 +1,129 @@
+package syft
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"slices"
+
+	"github.com/anchore/stereoscope/tagged"
+	"github.com/anchore/syft/syft/source"
+)
+
+func GetSource(ctx context.Context, userInput string, getSourceConfig ...GetSourceConfig) (source.Source, error) {
+	cfg := DefaultGetSourceConfig()
+	if len(getSourceConfig) > 1 {
+		return nil, fmt.Errorf("the optional GetSourceConfig requires a single value; got multiple: %v", getSourceConfig)
+	}
+	if len(getSourceConfig) == 1 {
+		cfg = getSourceConfig[0]
+	}
+
+	providers := cfg.SourceProviders
+	if len(providers) == 0 {
+		providers = SourceProviders(cfg.SourceProviderConfig)
+	}
+
+	// narrow the sources to those generally programmatically requested (e.g. only pull sources for attest)
+	if len(cfg.BaseSources) > 0 {
+		// select the explicitly provided sources, in order
+		providers = providers.Select(cfg.BaseSources...)
+	}
+
+	// if the "default image pull source" is set, we move this as the first pull source
+	if cfg.DefaultImageSource != "" {
+		base := providers.Remove("pull")
+		pull := providers.Select("pull")
+		def := pull.Select(cfg.DefaultImageSource)
+		if len(def) == 0 {
+			return nil, fmt.Errorf("invalid DefaultImageSource: %s; available values are: %v", cfg.DefaultImageSource, allTags(pull))
+		}
+		providers = base.Join(def...).Join(pull...)
+	}
+
+	// narrow the sources to those explicitly requested generally by a user
+	if len(cfg.FromSource) > 0 {
+		// select the explicitly provided sources, in order
+		providers = providers.Select(cfg.FromSource...)
+	}
+
+	var errs []error
+	var fileNotfound error
+
+	// call each source provider until we find a valid source
+	for _, p := range providers.Collect() {
+		src, err := p.Provide(ctx, userInput)
+		if err != nil {
+			err = eachError(err, func(err error) error {
+				if errors.Is(err, os.ErrNotExist) {
+					fileNotfound = err
+					return nil
+				}
+				return err
+			})
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+		if src != nil {
+			// if we have a non-image type and platform is specified, it's an error
+			// if _, ok := src.(*stereoscope.StereoscopeImageSource); !ok && cfg.Platform != nil {
+			//	return src, fmt.Errorf("invalid argument: --platform specified with non-image source")
+			//}
+			return src, nil
+		}
+	}
+
+	if fileNotfound != nil {
+		errs = append([]error{fileNotfound}, errs...)
+	}
+	return nil, sourceError(userInput, errs...)
+}
+
+func allTags(values tagged.Values[source.Provider]) (out []string) {
+	for _, v := range values {
+		for _, t := range v.Tags {
+			if !slices.Contains(out, t) {
+				out = append(out, t)
+			}
+		}
+	}
+	return out
+}
+
+func sourceError(userInput string, errs ...error) error {
+	errorTexts := ""
+	for _, e := range errs {
+		errorTexts += fmt.Sprintf("\n  - %s", e)
+	}
+	return fmt.Errorf("an error occurred attempting to resolve '%s'; the following errors occurred:%s", userInput, errorTexts)
+}
+
+func eachError(err error, fn func(error) error) error {
+	out := fn(err)
+	// unwrap singly wrapped errors
+	if e, ok := err.(interface {
+		Unwrap() error
+	}); ok {
+		wrapped := e.Unwrap()
+		got := eachError(wrapped, fn)
+		// return the outer error if received the same wrapped error
+		if errors.Is(got, wrapped) {
+			return err
+		}
+		return got
+	}
+	// unwrap errors from errors.Join
+	if errs, ok := err.(interface {
+		Unwrap() []error
+	}); ok {
+		for _, e := range errs.Unwrap() {
+			e = eachError(e, fn)
+			if e != nil {
+				out = errors.Join(out, e)
+			}
+		}
+	}
+	return out
+}

@@ -14,7 +14,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directory"
-	fileSource "github.com/anchore/syft/syft/source/file"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscope"
 )
 
@@ -324,7 +324,7 @@ func findDefaultTag(src source.Description) (string, error) {
 	switch m := src.Metadata.(type) {
 	case stereoscope.ImageSourceMetadata:
 		return pkgcataloging.ImageTag, nil
-	case fileSource.SourceMetadata, directory.Metadata:
+	case filesource.SourceMetadata, directory.Metadata:
 		return pkgcataloging.DirectoryTag, nil
 	default:
 		return "", fmt.Errorf("unable to determine default cataloger tag for source type=%T", m)
