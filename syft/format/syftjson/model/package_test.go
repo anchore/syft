@@ -386,6 +386,143 @@ func Test_UnmarshalJSON(t *testing.T) {
 				assert.Equal(t, reflect.TypeOf(pkg.RustBinaryAuditEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
+		{
+			name: "map-based java metadata",
+			packageData: []byte(`{
+  "id": "e6f845bdaa69ddb2",
+  "name": "SparseBitSet",
+  "version": "1.2",
+  "type": "java-archive",
+  "foundBy": "java-archive-cataloger",
+  "locations": [],
+  "licenses": [],
+  "language": "java",
+  "cpes": [],
+  "purl": "pkg:maven/com.zaxxer/SparseBitSet@1.2",
+  "metadataType": "java-archive",
+  "metadata": {
+    "virtualPath": "/opt/solr-9.4.1/modules/extraction/lib/SparseBitSet-1.2.jar",
+    "manifest": {
+      "main": {
+        "Archiver-Version": "Plexus Archiver",
+        "Build-Jdk": "1.8.0_73",
+        "Built-By": "lbayer",
+        "Created-By": "Apache Maven 3.5.0",
+        "Manifest-Version": "1.0"
+      },
+      "namedSections": {
+        "META-INF/mailcap": {
+          "SHA-256-Digest": "kXN4VupOQOJhduMGwxumj4ijmD/YAlz97a9Mp7CVXtk="
+        },
+        "META-INF/versions/9/module-info.class": {
+          "SHA-256-Digest": "cMeIRa5l8DWPgrVWavr/6TKVBUGixVKGcu6yOTZMlKk="
+        }
+      }
+    }
+  }
+}`),
+			assert: func(p *Package) {
+				meta := p.Metadata.(pkg.JavaArchive)
+				manifest := meta.Manifest
+				assert.Equal(t, "1.8.0_73", manifest.Main.MustGet("Build-Jdk"))
+				require.Equal(t, 2, len(manifest.Sections))
+				assert.Equal(t, "META-INF/mailcap", manifest.Sections[0].MustGet("Name"))
+				assert.Equal(t, "kXN4VupOQOJhduMGwxumj4ijmD/YAlz97a9Mp7CVXtk=", manifest.Sections[0].MustGet("SHA-256-Digest"))
+				assert.Equal(t, "META-INF/versions/9/module-info.class", manifest.Sections[1].MustGet("Name"))
+				assert.Equal(t, "cMeIRa5l8DWPgrVWavr/6TKVBUGixVKGcu6yOTZMlKk=", manifest.Sections[1].MustGet("SHA-256-Digest"))
+			},
+		},
+		{
+			name: "pre key-value golang metadata",
+			packageData: []byte(`{
+  "id": "e348ed25484a94c9",
+  "name": "github.com/anchore/syft",
+  "version": "v0.101.1-SNAPSHOT-4c777834",
+  "type": "go-module",
+  "foundBy": "go-module-binary-cataloger",
+  "locations": [
+    {
+      "path": "/syft",
+      "layerID": "sha256:2274947a5f3527e48d8725a96646aefdcce3d99340c1eefb1e7c894043863c92",
+      "accessPath": "/syft",
+      "annotations": {
+        "evidence": "primary"
+      }
+    }
+  ],
+  "licenses": [],
+  "language": "go",
+  "cpes": [
+    "cpe:2.3:a:anchore:syft:v0.101.1-SNAPSHOT-4c777834:*:*:*:*:*:*:*"
+  ],
+  "purl": "pkg:golang/github.com/anchore/syft@v0.101.1-SNAPSHOT-4c777834",
+  "metadataType": "go-module-buildinfo-entry",
+  "metadata": {
+    "goBuildSettings": {
+      "-buildmode": "exe",
+      "-compiler": "gc",
+      "-ldflags": "-w -s -extldflags '-static' -X main.version=0.101.1-SNAPSHOT-4c777834 -X main.gitCommit=4c777834618b2ad8ad94cd200a45d6670bc1c013 -X main.buildDate=2024-01-22T16:43:49Z -X main.gitDescription=v0.101.1-4-g4c777834 ",
+      "CGO_ENABLED": "0",
+      "GOAMD64": "v1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "vcs": "git",
+      "vcs.modified": "false",
+      "vcs.revision": "4c777834618b2ad8ad94cd200a45d6670bc1c013",
+      "vcs.time": "2024-01-22T16:31:41Z"
+    },
+    "goCompiledVersion": "go1.21.2",
+    "architecture": "amd64",
+    "mainModule": "github.com/anchore/syft"
+  }
+}
+`),
+			assert: func(p *Package) {
+				buildInfo := p.Metadata.(pkg.GolangBinaryBuildinfoEntry)
+				assert.Equal(t, "exe", buildInfo.BuildSettings.MustGet("-buildmode"))
+			},
+		},
+		{
+			name: "conan lock with legacy options",
+			packageData: []byte(`{
+  "id": "75eb35307226c921",
+  "name": "boost",
+  "version": "1.75.0",
+  "type": "conan",
+  "foundBy": "conan-cataloger",
+  "locations": [
+    {
+      "path": "/conan.lock",
+      "accessPath": "/conan.lock",
+      "annotations": {
+        "evidence": "primary"
+      }
+    }
+  ],
+  "licenses": [],
+  "language": "c++",
+  "cpes": [
+    "cpe:2.3:a:boost:boost:1.75.0:*:*:*:*:*:*:*"
+  ],
+  "purl": "pkg:conan/boost@1.75.0",
+  "metadataType": "c-conan-lock-entry",
+  "metadata": {
+    "ref": "boost/1.75.0#a9c318f067216f900900e044e7af4ab1",
+    "package_id": "dc8aedd23a0f0a773a5fcdcfe1ae3e89c4205978",
+    "prev": "b9d7912e6131dfa453c725593b36c808",
+    "options": {
+      "addr2line_location": "/usr/bin/addr2line",
+      "asio_no_deprecated": "False",
+      "zstd": "False"
+    },
+    "context": "host"
+  }
+}`),
+			assert: func(p *Package) {
+				metadata := p.Metadata.(pkg.ConanV1LockEntry)
+				assert.Equal(t, "False", metadata.Options.MustGet("asio_no_deprecated"))
+			},
+		},
 	}
 
 	for _, test := range tests {
