@@ -249,6 +249,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.LuaRocksPkg,
+			},
+			expected: []string{
+				"acquired package info from Rockspec package file",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.SwiftPkg,
 			},
 			expected: []string{

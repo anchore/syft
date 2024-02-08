@@ -27,6 +27,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.HackageStackYamlLockEntry{},
 		pkg.HackageStackYamlEntry{},
 		pkg.LinuxKernel{},
+		pkg.LuaRocksPackage{},
 		pkg.MicrosoftKbPatch{},
 		pkg.NixStoreEntry{},
 		pkg.NpmPackageLockEntry{},
@@ -184,6 +185,14 @@ func Test_OriginatorSupplier(t *testing.T) {
 			},
 			originator: "Person: auth",
 			supplier:   "Person: auth",
+		},
+		{
+			name: "from Lua Rockspecs",
+			input: pkg.Package{
+				Metadata: pkg.LuaRocksPackage{},
+			},
+			originator: "",
+			supplier:   "",
 		},
 		{
 			name: "from npm",

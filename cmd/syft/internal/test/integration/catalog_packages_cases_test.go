@@ -468,4 +468,12 @@ var commonTestCases = []testCase{
 			"memcached": "3.2.0",
 		},
 	},
+	{
+		name:        "find lua rock package",
+		pkgType:     pkg.LuaRocksPkg,
+		pkgLanguage: pkg.Lua,
+		pkgInfo: map[string]string{
+			"kong": "3.7.0-0",
+		},
+	},
 }
