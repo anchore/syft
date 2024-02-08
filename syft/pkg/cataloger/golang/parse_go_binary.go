@@ -17,6 +17,7 @@ import (
 	"golang.org/x/mod/module"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -61,13 +62,53 @@ func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resol
 	internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
 	for _, mod := range mods {
-		pkgs = append(pkgs, c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch)...)
+		pkgs = append(pkgs, c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch, unionReader)...)
 	}
 
 	return pkgs, nil, nil
 }
 
-func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location) pkg.Package {
+func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) []pkg.Package {
+	var pkgs []pkg.Package
+	if mod == nil {
+		return pkgs
+	}
+
+	var empty debug.Module
+	if mod.Main == empty && mod.Path != "" {
+		mod.Main = createMainModuleFromPath(mod.Path)
+	}
+
+	for _, dep := range mod.Deps {
+		if dep == nil {
+			continue
+		}
+		p := c.newGoBinaryPackage(
+			resolver,
+			dep,
+			mod.Main.Path,
+			mod.GoVersion,
+			arch,
+			nil,
+			mod.cryptoSettings,
+			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
+		if pkg.IsValid(&p) {
+			pkgs = append(pkgs, p)
+		}
+	}
+
+	if mod.Main == empty {
+		return pkgs
+	}
+
+	main := c.makeGoMainPackage(resolver, mod, arch, location, reader)
+	pkgs = append(pkgs, main)
+
+	return pkgs
+}
+
+func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	main := c.newGoBinaryPackage(
 		resolver,
@@ -81,14 +122,35 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 	)
 
 	if main.Version != devel {
+		// found a full package with a non-development version... return it as is...
 		return main
 	}
 
-	version, hasVersion := gbs.Get("vcs.revision")
+	// we have a package, but the version is "devel"... let's try and find a better answer
+	var metadata *pkg.GolangBinaryBuildinfoEntry
+	if v, ok := main.Metadata.(pkg.GolangBinaryBuildinfoEntry); ok {
+		metadata = &v
+	}
+	version := findMainModuleVersion(metadata, gbs, reader)
+
+	if version != "" {
+		main.Version = version
+		main.PURL = packageURL(main.Name, main.Version)
+
+		main.SetID()
+	}
+
+	return main
+}
+
+var semverPattern = regexp.MustCompile(`\x00(?P<version>v?(\d+\.\d+\.\d+[-\w]*[+\w]*))\x00`)
+
+func findMainModuleVersion(metadata *pkg.GolangBinaryBuildinfoEntry, gbs pkg.KeyValues, reader io.ReadSeekCloser) string {
+	vcsVersion, hasVersion := gbs.Get("vcs.revision")
 	timestamp, hasTimestamp := gbs.Get("vcs.time")
 
 	var ldflags string
-	if metadata, ok := main.Metadata.(pkg.GolangBinaryBuildinfoEntry); ok {
+	if metadata != nil {
 		// we've found a specific version from the ldflags! use it as the version.
 		// why not combine that with the pseudo version (e.g. v1.2.3-0.20210101000000-abcdef123456)?
 		// short answer: we're assuming that if a specific semver was provided in the ldflags that
@@ -100,26 +162,38 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 
 	majorVersion, fullVersion := extractVersionFromLDFlags(ldflags)
 	if fullVersion != "" {
-		version = fullVersion
-	} else if hasVersion && hasTimestamp {
+		return fullVersion
+	}
+
+	// guess the version from pattern matching in the binary (can result in false positives)
+	_, _ = reader.Seek(0, io.SeekStart)
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		log.WithFields("error", err).Trace("unable to read from go binary reader")
+	} else {
+		matchMetadata := internal.MatchNamedCaptureGroups(semverPattern, string(contents))
+
+		version, ok := matchMetadata["version"]
+		if ok {
+			return version
+		}
+	}
+
+	// fallback to using the go standard pseudo v0.0.0 version
+	if hasVersion && hasTimestamp {
+		version := vcsVersion
 		//NOTE: err is ignored, because if parsing fails
 		// we still use the empty Time{} struct to generate an empty date, like 00010101000000
 		// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
 		ts, _ := time.Parse(time.RFC3339, timestamp)
-		if len(version) >= 12 {
-			version = version[:12]
+		if len(vcsVersion) >= 12 {
+			version = vcsVersion[:12]
 		}
 
-		version = module.PseudoVersion(majorVersion, fullVersion, ts, version)
-	}
-	if version != "" {
-		main.Version = version
-		main.PURL = packageURL(main.Name, main.Version)
-
-		main.SetID()
+		return module.PseudoVersion(majorVersion, fullVersion, ts, version)
 	}
 
-	return main
+	return ""
 }
 
 func extractVersionFromLDFlags(ldflags string) (majorVersion string, fullVersion string) {
@@ -222,44 +296,4 @@ func createMainModuleFromPath(path string) (mod debug.Module) {
 	mod.Path = path
 	mod.Version = devel
 	return
-}
-
-func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string) []pkg.Package {
-	var pkgs []pkg.Package
-	if mod == nil {
-		return pkgs
-	}
-
-	var empty debug.Module
-	if mod.Main == empty && mod.Path != "" {
-		mod.Main = createMainModuleFromPath(mod.Path)
-	}
-
-	for _, dep := range mod.Deps {
-		if dep == nil {
-			continue
-		}
-		p := c.newGoBinaryPackage(
-			resolver,
-			dep,
-			mod.Main.Path,
-			mod.GoVersion,
-			arch,
-			nil,
-			mod.cryptoSettings,
-			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-		)
-		if pkg.IsValid(&p) {
-			pkgs = append(pkgs, p)
-		}
-	}
-
-	if mod.Main == empty {
-		return pkgs
-	}
-
-	main := c.makeGoMainPackage(resolver, mod, arch, location)
-	pkgs = append(pkgs, main)
-
-	return pkgs
 }

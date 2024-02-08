@@ -45,7 +45,7 @@ func hasAnyDynamicSymbols(file *elf.File, symbolNames ...string) *bool {
 	dynSyms, err := file.DynamicSymbols()
 	if err != nil {
 		// TODO: known-unknowns
-		log.WithFields("error", err).Warn("unable to read dynamic symbols from elf file")
+		log.WithFields("error", err).Trace("unable to read dynamic symbols from elf file")
 		return nil
 	}
 
