@@ -1,6 +1,7 @@
 package wordpress
 
 import (
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
@@ -9,7 +10,7 @@ const (
 	wordpressPluginsGlob = "**/wp-content/plugins/*/*.php"
 )
 
-func NewWordpressPluginCataloger() *generic.Cataloger {
+func NewWordpressPluginCataloger() pkg.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseWordpressPluginFiles, wordpressPluginsGlob)
 }
