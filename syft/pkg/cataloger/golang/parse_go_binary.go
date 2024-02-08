@@ -38,7 +38,7 @@ var (
 	// inject the correct version into the main module of the build process
 
 	knownBuildFlagPatterns = []*regexp.Regexp{
-		regexp.MustCompile(`(?m)\.([gG]it)?([bB]uild)?[vV]ersion=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
+		regexp.MustCompile(`(?m)\.([gG]it)?([bB]uild)?[vV]er(sion)?=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
 		regexp.MustCompile(`(?m)\.([tT]ag)=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
 	}
 )
@@ -46,7 +46,8 @@ var (
 const devel = "(devel)"
 
 type goBinaryCataloger struct {
-	licenses goLicenses
+	licenses          goLicenses
+	mainModuleVersion MainModuleVersionConfig
 }
 
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
@@ -131,7 +132,7 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 	if v, ok := main.Metadata.(pkg.GolangBinaryBuildinfoEntry); ok {
 		metadata = &v
 	}
-	version := findMainModuleVersion(metadata, gbs, reader)
+	version := c.findMainModuleVersion(metadata, gbs, reader)
 
 	if version != "" {
 		main.Version = version
@@ -145,12 +146,12 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 
 var semverPattern = regexp.MustCompile(`\x00(?P<version>v?(\d+\.\d+\.\d+[-\w]*[+\w]*))\x00`)
 
-func findMainModuleVersion(metadata *pkg.GolangBinaryBuildinfoEntry, gbs pkg.KeyValues, reader io.ReadSeekCloser) string {
+func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuildinfoEntry, gbs pkg.KeyValues, reader io.ReadSeekCloser) string {
 	vcsVersion, hasVersion := gbs.Get("vcs.revision")
 	timestamp, hasTimestamp := gbs.Get("vcs.time")
 
-	var ldflags string
-	if metadata != nil {
+	var ldflags, majorVersion, fullVersion string
+	if c.mainModuleVersion.FromLDFlags && metadata != nil {
 		// we've found a specific version from the ldflags! use it as the version.
 		// why not combine that with the pseudo version (e.g. v1.2.3-0.20210101000000-abcdef123456)?
 		// short answer: we're assuming that if a specific semver was provided in the ldflags that
@@ -158,29 +159,31 @@ func findMainModuleVersion(metadata *pkg.GolangBinaryBuildinfoEntry, gbs pkg.Key
 		// be incorrect in terms of the go.mod contents, but is not incorrect in terms of the logical
 		// version of the package.
 		ldflags, _ = metadata.BuildSettings.Get("-ldflags")
-	}
 
-	majorVersion, fullVersion := extractVersionFromLDFlags(ldflags)
-	if fullVersion != "" {
-		return fullVersion
+		majorVersion, fullVersion = extractVersionFromLDFlags(ldflags)
+		if fullVersion != "" {
+			return fullVersion
+		}
 	}
 
 	// guess the version from pattern matching in the binary (can result in false positives)
-	_, _ = reader.Seek(0, io.SeekStart)
-	contents, err := io.ReadAll(reader)
-	if err != nil {
-		log.WithFields("error", err).Trace("unable to read from go binary reader")
-	} else {
-		matchMetadata := internal.MatchNamedCaptureGroups(semverPattern, string(contents))
+	if c.mainModuleVersion.FromContents {
+		_, _ = reader.Seek(0, io.SeekStart)
+		contents, err := io.ReadAll(reader)
+		if err != nil {
+			log.WithFields("error", err).Trace("unable to read from go binary reader")
+		} else {
+			matchMetadata := internal.MatchNamedCaptureGroups(semverPattern, string(contents))
 
-		version, ok := matchMetadata["version"]
-		if ok {
-			return version
+			version, ok := matchMetadata["version"]
+			if ok {
+				return version
+			}
 		}
 	}
 
 	// fallback to using the go standard pseudo v0.0.0 version
-	if hasVersion && hasTimestamp {
+	if c.mainModuleVersion.FromBuildSettings && hasVersion && hasTimestamp {
 		version := vcsVersion
 		//NOTE: err is ignored, because if parsing fails
 		// we still use the empty Time{} struct to generate an empty date, like 00010101000000
