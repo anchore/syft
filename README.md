@@ -305,7 +305,7 @@ Where the `formats` available are:
 
 ## Using templates
 
-Syft lets you define custom output formats, using [Go templates](https://pkg.go.dev/text/template). Here's how it works:
+Syft lets you define custom output formats, using [Go templates](https://pkg.go.dev/text/template) relative to the Syft JSON output. Here's how it works:
 
 - Define your format as a Go template, and save this template as a file.
 
@@ -319,9 +319,9 @@ Syft lets you define custom output formats, using [Go templates](https://pkg.go.
 
 Here's what the `csv.tmpl` file might look like:
 ```gotemplate
-"Package","Version Installed","Found by"
-{{- range .Artifacts}}
-"{{.Name}}","{{.Version}}","{{.FoundBy}}"
+"Package","Version Installed", "Found by"
+{{- range .artifacts}}
+"{{.name}}","{{.version}}","{{.foundBy}}"
 {{- end}}
 ```
 
@@ -337,6 +337,9 @@ Which would produce output like:
 Syft also includes a vast array of utility templating functions from [sprig](http://masterminds.github.io/sprig/) apart from the default Golang [text/template](https://pkg.go.dev/text/template#hdr-Functions) to allow users to customize the output format.
 
 Lastly, Syft has custom templating functions defined in `./syft/format/template/encoder.go` to help parse the passed-in JSON structs.
+
+> [!NOTE]
+> If you have templates being used before Syft v0.102.0 that are no longer working. This is because templating keys were relative to the internal go structs before this version whereas now the keys are relative to the Syft JSON output. To get the legacy behavior back you can set the `format.template.legacy` option to `true` in your configuration.
 
 ## Multiple outputs
 
