@@ -45,8 +45,8 @@ func (l sourceProvider) Provide(_ context.Context, userInput string) (source.Sou
 		return nil, fmt.Errorf("not a file source: %s", userInput)
 	}
 
-	return NewFromFile(
-		FileConfig{
+	return New(
+		Config{
 			Path:             location,
 			Exclude:          l.exclude,
 			DigestAlgorithms: l.digestAlgorithms,

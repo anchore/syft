@@ -502,7 +502,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			name: "file source",
 			source: source.Description{
 				ID: "DocumentRoot-File-my-app.exe",
-				Metadata: filesource.SourceMetadata{
+				Metadata: filesource.Metadata{
 					Path: "my-app.exe",
 					Digests: []file.Digest{
 						{

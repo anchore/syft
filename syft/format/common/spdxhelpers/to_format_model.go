@@ -218,7 +218,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 		prefix = prefixDirectory
 		purpose = spdxPrimaryPurposeFile
 
-	case filesource.SourceMetadata:
+	case filesource.Metadata:
 		prefix = prefixFile
 		purpose = spdxPrimaryPurposeFile
 

@@ -50,7 +50,7 @@ func Test_documentNamespace(t *testing.T) {
 			name:      "file",
 			inputName: "my-name",
 			src: source.Description{
-				Metadata: filesource.SourceMetadata{
+				Metadata: filesource.Metadata{
 					Path: "some/path/to/place",
 				},
 			},

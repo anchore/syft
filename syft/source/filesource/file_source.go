@@ -24,7 +24,7 @@ import (
 
 var _ source.Source = (*FileSource)(nil)
 
-type FileConfig struct {
+type Config struct {
 	Path             string
 	Exclude          source.ExcludeConfig
 	DigestAlgorithms []crypto.Hash
@@ -34,7 +34,7 @@ type FileConfig struct {
 type FileSource struct {
 	id               artifact.ID
 	digestForVersion string
-	config           FileConfig
+	config           Config
 	resolver         *fileresolver.Directory
 	mutex            *sync.Mutex
 	closer           func() error
@@ -43,7 +43,7 @@ type FileSource struct {
 	analysisPath     string
 }
 
-func NewFromFile(cfg FileConfig) (*FileSource, error) {
+func New(cfg Config) (*FileSource, error) {
 	fileMeta, err := os.Stat(cfg.Path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to stat path=%q: %w", cfg.Path, err)
@@ -94,7 +94,7 @@ func NewFromFile(cfg FileConfig) (*FileSource, error) {
 // deriveIDFromFile derives an artifact ID from the contents of a file. If an alias is provided, it will be included
 // in the ID derivation (along with contents). This way if the user scans the same item but is considered to be
 // logically different, then ID will express that.
-func deriveIDFromFile(cfg FileConfig) (artifact.ID, string) {
+func deriveIDFromFile(cfg Config) (artifact.ID, string) {
 	d := digestOfFileContents(cfg.Path)
 	info := d
 
@@ -128,7 +128,7 @@ func (s FileSource) Describe() source.Description {
 		ID:      string(s.id),
 		Name:    name,
 		Version: version,
-		Metadata: SourceMetadata{
+		Metadata: Metadata{
 			Path:     s.config.Path,
 			Digests:  s.digests,
 			MIMEType: s.mimeType,

@@ -60,7 +60,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "file",
-				Metadata: filesource.SourceMetadata{
+				Metadata: filesource.Metadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -70,7 +70,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: filesource.SourceMetadata{
+				Metadata: filesource.Metadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -128,7 +128,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			src: model.Source{
 				ID:   "the-id",
 				Type: "file",
-				Metadata: filesource.SourceMetadata{
+				Metadata: filesource.Metadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -136,7 +136,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			},
 			expected: &source.Description{
 				ID: "the-id",
-				Metadata: filesource.SourceMetadata{
+				Metadata: filesource.Metadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -181,7 +181,7 @@ func Test_idsHaveChanged(t *testing.T) {
 	s := toSyftModel(model.Document{
 		Source: model.Source{
 			Type:     "file",
-			Metadata: filesource.SourceMetadata{Path: "some/path"},
+			Metadata: filesource.Metadata{Path: "some/path"},
 		},
 		Artifacts: []model.Package{
 			{

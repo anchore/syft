@@ -42,7 +42,7 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	switch metadata := s.Source.Metadata.(type) {
 	case directory.Metadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
-	case filesource.SourceMetadata:
+	case filesource.Metadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
 	case stereoscope.ImageSourceMetadata:
 		fmt.Fprintln(w, "[Image]")

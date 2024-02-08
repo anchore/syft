@@ -12,7 +12,7 @@ import (
 
 // SourceProviders returns all the configured source providers known to syft
 func SourceProviders(sourceProviderConfig ...SourceProviderConfig) tagged.Values[source.Provider] {
-	cfg, stereoscopeProviders := getStereoscopeSourceProviders(sourceProviderConfig)
+	cfg, stereoscopeProviders := stereoscopeSourceProviders(sourceProviderConfig...)
 
 	return tagged.Values[source.Provider]{}.
 		// --from file, dir, oci-archive, etc.
@@ -20,14 +20,11 @@ func SourceProviders(sourceProviderConfig ...SourceProviderConfig) tagged.Values
 		Join(provider(filesource.NewSourceProvider(cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), "file")).
 		Join(provider(directory.NewSourceProvider(cfg.Exclude, cfg.Alias, cfg.BasePath), "dir")).
 
-		// --from docker,registry,etc.
-		Join(stereoscopeProviders.Select("pull")...).
-
-		// any other detectors not tagged with file, dir, or pull
-		Join(stereoscopeProviders.Remove("file", "dir", "pull")...)
+		// --from docker, registry, etc.
+		Join(stereoscopeProviders.Select("pull")...)
 }
 
-func getStereoscopeSourceProviders(sourceProviderConfig []SourceProviderConfig) (SourceProviderConfig, tagged.Values[source.Provider]) {
+func stereoscopeSourceProviders(sourceProviderConfig ...SourceProviderConfig) (SourceProviderConfig, tagged.Values[source.Provider]) {
 	cfg := DefaultSourceProviderConfig()
 	if len(sourceProviderConfig) > 1 {
 		panic(fmt.Sprintf("at most one sourceProviderConfig may be specified, got %v", sourceProviderConfig))

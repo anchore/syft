@@ -173,7 +173,7 @@ func Test_toFormatModel(t *testing.T) {
 				Source: source.Description{
 					Name:    "path/to/some.file",
 					Version: "sha256:d34db33f",
-					Metadata: filesource.SourceMetadata{
+					Metadata: filesource.Metadata{
 						Path: "path/to/some.file",
 						Digests: []file.Digest{
 							{

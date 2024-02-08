@@ -168,12 +168,12 @@ func Test_toGithubModel(t *testing.T) {
 		},
 		{
 			name:     "file",
-			metadata: filesource.SourceMetadata{Path: "./executable"},
+			metadata: filesource.Metadata{Path: "./executable"},
 			testPath: "executable",
 		},
 		{
 			name:     "archive",
-			metadata: filesource.SourceMetadata{Path: "./archive.tar.gz"},
+			metadata: filesource.Metadata{Path: "./archive.tar.gz"},
 			testPath: "archive.tar.gz:/etc",
 		},
 	}

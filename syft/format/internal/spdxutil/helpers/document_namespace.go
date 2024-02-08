@@ -34,7 +34,7 @@ func DocumentNamespace(name string, src source.Description, desc sbom.Descriptor
 		input = InputImage
 	case directory.Metadata:
 		input = InputDirectory
-	case filesource.SourceMetadata:
+	case filesource.Metadata:
 		input = InputFile
 	}
 

@@ -126,7 +126,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			expected: &Source{
 				ID:   "foobar",
 				Type: "file",
-				Metadata: filesource.SourceMetadata{
+				Metadata: filesource.Metadata{
 					Path: "/var/lib/foo/go.mod",
 					Digests: []file.Digest{
 						{
@@ -290,7 +290,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "file",
-				Metadata: filesource.SourceMetadata{
+				Metadata: filesource.Metadata{
 					Path: "/var/lib/foo/go.mod",
 				},
 			},

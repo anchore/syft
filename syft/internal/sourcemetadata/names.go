@@ -11,7 +11,7 @@ import (
 
 var jsonNameFromType = map[reflect.Type][]string{
 	reflect.TypeOf(directory.Metadata{}):              {"directory", "dir"},
-	reflect.TypeOf(filesource.SourceMetadata{}):       {"file"},
+	reflect.TypeOf(filesource.Metadata{}):             {"file"},
 	reflect.TypeOf(stereoscope.ImageSourceMetadata{}): {"image"},
 }
 

@@ -122,7 +122,7 @@ func toPath(s source.Description, p pkg.Package) string {
 		case stereoscope.ImageSourceMetadata:
 			image := strings.ReplaceAll(metadata.UserInput, ":/", "//")
 			return fmt.Sprintf("%s:/%s", image, packagePath)
-		case filesource.SourceMetadata:
+		case filesource.Metadata:
 			path := trimRelative(metadata.Path)
 			if isArchive(metadata.Path) {
 				return fmt.Sprintf("%s:/%s", path, packagePath)
