@@ -41,7 +41,7 @@ jobs:
       with:
         remove-dotnet: 'true'
         remove-android: 'true'
-        remove-hasketll: 'true'
+        remove-haskell: 'true'
         remove-docker-images: 'true'
 
     - name: Checkout repository
