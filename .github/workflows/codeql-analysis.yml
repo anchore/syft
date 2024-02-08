@@ -35,6 +35,14 @@ jobs:
         # https://docs.github.com/en/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#overriding-automatic-language-detection
 
     steps:
+    - name: Maximize build space
+      uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # no version in release
+      with:
+        remove-dotnet: 'true'
+        remove-android: 'true'
+        remove-hasketll: 'true'
+        remove-docker-images: 'true'
+
     - name: Checkout repository
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
 
