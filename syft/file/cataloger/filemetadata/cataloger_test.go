@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func TestFileMetadataCataloger(t *testing.T) {
@@ -22,7 +22,7 @@ func TestFileMetadataCataloger(t *testing.T) {
 
 	c := NewCataloger()
 
-	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.ImageConfig{
+	src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
 		Reference: testImage,
 	})
 
@@ -161,7 +161,7 @@ func TestFileMetadataCataloger_GivenCoordinates(t *testing.T) {
 
 	c := NewCataloger()
 
-	src := stereoscope.NewStereoscopeImageSource(img, stereoscope.ImageConfig{
+	src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
 		Reference: testImage,
 	})
 

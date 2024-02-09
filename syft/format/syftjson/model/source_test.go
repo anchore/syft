@@ -10,9 +10,9 @@ import (
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func TestSource_UnmarshalJSON(t *testing.T) {
@@ -34,7 +34,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			expected: &Source{
 				ID:   "foobar",
 				Type: "directory",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "/var/lib/foo",
 					//Base: "/nope", // note: should be ignored entirely
 				},
@@ -69,14 +69,14 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			expected: &Source{
 				ID:   "foobar",
 				Type: "image",
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					UserInput:      "alpine:3.10",
 					ID:             "sha256:e7b300aee9f9bf3433d32bc9305bfdd22183beb59d933b48d77ab56ba53a197a",
 					ManifestDigest: "sha256:e515aad2ed234a5072c4d2ef86a1cb77d5bfe4b11aa865d9214875734c4eeb3c",
 					MediaType:      "application/vnd.docker.distribution.manifest.v2+json",
 					Tags:           []string{},
 					Size:           5576169,
-					Layers: []stereoscope.LayerMetadata{
+					Layers: []stereoscopesource.LayerMetadata{
 						{
 							MediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
 							Digest:    "sha256:9fb3aa2f8b8023a4bebbf92aa567caf88e38e969ada9f0ac12643b2847391635",
@@ -190,7 +190,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "directory",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "/var/lib/foo",
 				},
 			},
@@ -206,7 +206,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "directory",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "/var/lib/foo",
 				},
 			},
@@ -241,14 +241,14 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "image",
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					UserInput:      "alpine:3.10",
 					ID:             "sha256:e7b300aee9f9bf3433d32bc9305bfdd22183beb59d933b48d77ab56ba53a197a",
 					ManifestDigest: "sha256:e515aad2ed234a5072c4d2ef86a1cb77d5bfe4b11aa865d9214875734c4eeb3c",
 					MediaType:      "application/vnd.docker.distribution.manifest.v2+json",
 					Tags:           []string{},
 					Size:           5576169,
-					Layers: []stereoscope.LayerMetadata{
+					Layers: []stereoscopesource.LayerMetadata{
 						{
 							MediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
 							Digest:    "sha256:9fb3aa2f8b8023a4bebbf92aa567caf88e38e969ada9f0ac12643b2847391635",

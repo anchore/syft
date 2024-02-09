@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func ToSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
@@ -224,7 +224,7 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 			ID: "",
 			// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
 
-			Metadata: stereoscope.ImageSourceMetadata{
+			Metadata: stereoscopesource.ImageMetadata{
 				UserInput:      c.Name,
 				ID:             c.BOMRef,
 				ManifestDigest: c.Version,

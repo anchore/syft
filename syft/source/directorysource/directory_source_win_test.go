@@ -12,7 +12,7 @@
 //   - https://github.com/golang/go/blob/3aea422e2cb8b1ec2e0c2774be97fe96c7299838/src/path/filepath/path_windows.go#L216
 // ... which means we can't extract this functionality without build tags.
 
-package directory
+package directorysource
 
 import (
 	"testing"

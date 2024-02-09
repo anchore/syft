@@ -10,9 +10,9 @@ import (
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func Test_documentNamespace(t *testing.T) {
@@ -28,7 +28,7 @@ func Test_documentNamespace(t *testing.T) {
 			name:      "image",
 			inputName: "my-name",
 			src: source.Description{
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					UserInput:      "image-repo/name:tag",
 					ID:             "id",
 					ManifestDigest: "digest",
@@ -40,7 +40,7 @@ func Test_documentNamespace(t *testing.T) {
 			name:      "directory",
 			inputName: "my-name",
 			src: source.Description{
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path/to/place",
 				},
 			},

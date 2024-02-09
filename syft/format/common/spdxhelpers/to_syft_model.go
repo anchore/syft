@@ -24,9 +24,9 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
@@ -149,7 +149,7 @@ func containerSource(p *spdx.Package) source.Description {
 		ID:      id,
 		Name:    p.PackageName,
 		Version: p.PackageVersion,
-		Metadata: stereoscope.ImageSourceMetadata{
+		Metadata: stereoscopesource.ImageMetadata{
 			UserInput:      container,
 			ID:             id,
 			Layers:         nil, // TODO handle formats with nested layer packages like Tern and K8s BOM tool
@@ -209,7 +209,7 @@ func fileSourceMetadata(p *spdx.Package) (any, string) {
 }
 
 func directorySourceMetadata(p *spdx.Package) (any, string) {
-	return directory.Metadata{
+	return directorysource.Metadata{
 		Path: p.PackageName,
 		Base: "",
 	}, p.PackageVersion
@@ -236,11 +236,11 @@ func extractSourceFromNamespace(ns string) source.Description {
 			}
 		case helpers.InputImage:
 			return source.Description{
-				Metadata: stereoscope.ImageSourceMetadata{},
+				Metadata: stereoscopesource.ImageMetadata{},
 			}
 		case helpers.InputDirectory:
 			return source.Description{
-				Metadata: directory.Metadata{},
+				Metadata: directorysource.Metadata{},
 			}
 		}
 	}

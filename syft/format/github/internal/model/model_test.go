@@ -14,9 +14,9 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func sbomFixture() sbom.SBOM {
@@ -25,7 +25,7 @@ func sbomFixture() sbom.SBOM {
 			Name: "syft",
 		},
 		Source: source.Description{
-			Metadata: stereoscope.ImageSourceMetadata{
+			Metadata: stereoscopesource.ImageMetadata{
 				UserInput:    "ubuntu:18.04",
 				Architecture: "amd64",
 			},
@@ -153,17 +153,17 @@ func Test_toGithubModel(t *testing.T) {
 		},
 		{
 			name:     "current directory",
-			metadata: directory.Metadata{Path: "."},
+			metadata: directorysource.Metadata{Path: "."},
 			testPath: "etc",
 		},
 		{
 			name:     "relative directory",
-			metadata: directory.Metadata{Path: "./artifacts"},
+			metadata: directorysource.Metadata{Path: "./artifacts"},
 			testPath: "artifacts/etc",
 		},
 		{
 			name:     "absolute directory",
-			metadata: directory.Metadata{Path: "/artifacts"},
+			metadata: directorysource.Metadata{Path: "/artifacts"},
 			testPath: "/artifacts/etc",
 		},
 		{

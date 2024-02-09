@@ -1,4 +1,4 @@
-package directory
+package directorysource
 
 import (
 	"io/fs"

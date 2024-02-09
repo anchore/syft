@@ -5,9 +5,9 @@ import (
 
 	"github.com/anchore/stereoscope/tagged"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 // SourceProviders returns all the configured source providers known to syft
@@ -18,7 +18,7 @@ func SourceProviders(sourceProviderConfig ...SourceProviderConfig) tagged.ValueS
 		// --from file, dir, oci-archive, etc.
 		Join(stereoscopeProviders.Select("file", "dir")...).
 		Join(provider(filesource.NewSourceProvider(cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), "file")).
-		Join(provider(directory.NewSourceProvider(cfg.Exclude, cfg.Alias, cfg.BasePath), "dir")).
+		Join(provider(directorysource.NewSourceProvider(cfg.Exclude, cfg.Alias, cfg.BasePath), "dir")).
 
 		// --from docker, registry, etc.
 		Join(stereoscopeProviders.Select("pull")...)
@@ -35,7 +35,7 @@ func stereoscopeSourceProviders(sourceProviderConfig ...SourceProviderConfig) (S
 			cfg.RegistryOptions = in.RegistryOptions
 		}
 	}
-	stereoscopeProviders := stereoscope.SourceProviders(stereoscope.SourceProviderConfig{
+	stereoscopeProviders := stereoscopesource.Providers(stereoscopesource.ProviderConfig{
 		RegistryOptions: cfg.RegistryOptions,
 		Alias:           &cfg.Alias,
 		Exclude:         cfg.Exclude,

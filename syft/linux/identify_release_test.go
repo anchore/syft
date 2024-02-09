@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
 )
 
 func TestIdentifyRelease(t *testing.T) {
@@ -337,7 +337,7 @@ func TestIdentifyRelease(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			s, err := directory.New(directory.Config{
+			s, err := directorysource.New(directorysource.Config{
 				Path: test.fixture,
 			})
 			require.NoError(t, err)

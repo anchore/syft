@@ -2,9 +2,9 @@ package helpers
 
 import (
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func DocumentName(src source.Description) string {
@@ -13,9 +13,9 @@ func DocumentName(src source.Description) string {
 	}
 
 	switch metadata := src.Metadata.(type) {
-	case stereoscope.ImageSourceMetadata:
+	case stereoscopesource.ImageMetadata:
 		return metadata.UserInput
-	case directory.Metadata:
+	case directorysource.Metadata:
 		return metadata.Path
 	case filesource.Metadata:
 		return metadata.Path

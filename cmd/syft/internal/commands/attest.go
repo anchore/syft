@@ -26,7 +26,7 @@ import (
 	"github.com/anchore/syft/syft/format/spdxtagvalue"
 	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 const (
@@ -247,7 +247,7 @@ func predicateType(outputName string) string {
 }
 
 func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opts *options.Catalog, userInput string) (*sbom.SBOM, error) {
-	src, err := getSource(ctx, opts, userInput, stereoscope.ImageTag)
+	src, err := getSource(ctx, opts, userInput, stereoscopesource.ImageTag)
 
 	if err != nil {
 		return nil, err

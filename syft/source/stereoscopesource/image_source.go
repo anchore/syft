@@ -1,44 +1,41 @@
-package stereoscope
+package stereoscopesource
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/distribution/reference"
 	"github.com/opencontainers/go-digest"
 
-	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ source.Source = (*ImageSource)(nil)
+var _ source.Source = (*stereoscopeImageSource)(nil)
 
 type ImageConfig struct {
 	Reference       string
-	From            image.Source
 	Platform        *image.Platform
 	RegistryOptions *image.RegistryOptions
 	Exclude         source.ExcludeConfig
 	Alias           source.Alias
 }
 
-type ImageSource struct {
+type stereoscopeImageSource struct {
 	id       artifact.ID
 	config   ImageConfig
 	image    *image.Image
-	metadata ImageSourceMetadata
+	metadata ImageMetadata
 }
 
-func NewStereoscopeImageSource(img *image.Image, cfg ImageConfig) *ImageSource {
+func New(img *image.Image, cfg ImageConfig) source.Source {
 	metadata := imageMetadataFromStereoscopeImage(img, cfg.Reference)
-
-	return &ImageSource{
+	return &stereoscopeImageSource{
 		id:       deriveIDFromStereoscopeImage(cfg.Alias, metadata),
 		config:   cfg,
 		image:    img,
@@ -46,35 +43,11 @@ func NewStereoscopeImageSource(img *image.Image, cfg ImageConfig) *ImageSource {
 	}
 }
 
-func GetImage(ctx context.Context, cfg ImageConfig) (*ImageSource, error) {
-	if cfg.Reference == "" {
-		return nil, fmt.Errorf("must specify cfg.Reference property for GetImage")
-	}
-	var opts []stereoscope.Option
-	if cfg.Platform != nil {
-		opts = append(opts, stereoscope.WithPlatform(cfg.Platform.String()))
-	}
-	if cfg.RegistryOptions != nil {
-		opts = append(opts, stereoscope.WithRegistryOptions(*cfg.RegistryOptions))
-	}
-	var err error
-	var img *image.Image
-	if cfg.From == "" {
-		img, err = stereoscope.GetImage(ctx, cfg.Reference, opts...)
-	} else {
-		img, err = stereoscope.GetImageFromSource(ctx, cfg.Reference, cfg.From, opts...)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return NewStereoscopeImageSource(img, cfg), nil
-}
-
-func (s ImageSource) ID() artifact.ID {
+func (s stereoscopeImageSource) ID() artifact.ID {
 	return s.id
 }
 
-func (s ImageSource) Describe() source.Description {
+func (s stereoscopeImageSource) Describe() source.Description {
 	a := s.config.Alias
 
 	name := a.Name
@@ -121,7 +94,7 @@ func (s ImageSource) Describe() source.Description {
 	}
 }
 
-func (s ImageSource) FileResolver(scope source.Scope) (file.Resolver, error) {
+func (s stereoscopeImageSource) FileResolver(scope source.Scope) (file.Resolver, error) {
 	var res file.Resolver
 	var err error
 
@@ -146,14 +119,14 @@ func (s ImageSource) FileResolver(scope source.Scope) (file.Resolver, error) {
 	return res, nil
 }
 
-func (s ImageSource) Close() error {
+func (s stereoscopeImageSource) Close() error {
 	if s.image == nil {
 		return nil
 	}
 	return s.image.Cleanup()
 }
 
-func imageMetadataFromStereoscopeImage(img *image.Image, reference string) ImageSourceMetadata {
+func imageMetadataFromStereoscopeImage(img *image.Image, reference string) ImageMetadata {
 	tags := make([]string, len(img.Metadata.Tags))
 	for idx, tag := range img.Metadata.Tags {
 		tags[idx] = tag.String()
@@ -168,7 +141,7 @@ func imageMetadataFromStereoscopeImage(img *image.Image, reference string) Image
 		}
 	}
 
-	return ImageSourceMetadata{
+	return ImageMetadata{
 		ID:             img.Metadata.ID,
 		UserInput:      reference,
 		ManifestDigest: img.Metadata.ManifestDigest,
@@ -193,7 +166,7 @@ func imageMetadataFromStereoscopeImage(img *image.Image, reference string) Image
 //
 // in all cases, if an alias is provided, it is additionally considered in the ID calculation. This allows for the
 // same image to be scanned multiple times with different aliases and be considered logically different.
-func deriveIDFromStereoscopeImage(alias source.Alias, metadata ImageSourceMetadata) artifact.ID {
+func deriveIDFromStereoscopeImage(alias source.Alias, metadata ImageMetadata) artifact.ID {
 	var input string
 
 	if len(metadata.RawManifest) > 0 {
@@ -216,7 +189,7 @@ func deriveIDFromStereoscopeImage(alias source.Alias, metadata ImageSourceMetada
 		input = digest.Canonical.FromString(input + aliasStr).String()
 	}
 
-	return source.ArtifactIDFromDigest(input)
+	return internal.ArtifactIDFromDigest(input)
 }
 
 func calculateChainID(lm []LayerMetadata) string {

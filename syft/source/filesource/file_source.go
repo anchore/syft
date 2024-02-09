@@ -19,10 +19,11 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
+	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ source.Source = (*FileSource)(nil)
+var _ source.Source = (*fileSource)(nil)
 
 type Config struct {
 	Path             string
@@ -31,7 +32,7 @@ type Config struct {
 	Alias            source.Alias
 }
 
-type FileSource struct {
+type fileSource struct {
 	id               artifact.ID
 	digestForVersion string
 	config           Config
@@ -43,7 +44,7 @@ type FileSource struct {
 	analysisPath     string
 }
 
-func New(cfg Config) (*FileSource, error) {
+func New(cfg Config) (source.Source, error) {
 	fileMeta, err := os.Stat(cfg.Path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to stat path=%q: %w", cfg.Path, err)
@@ -79,7 +80,7 @@ func New(cfg Config) (*FileSource, error) {
 
 	id, versionDigest := deriveIDFromFile(cfg)
 
-	return &FileSource{
+	return &fileSource{
 		id:               id,
 		config:           cfg,
 		mutex:            &sync.Mutex{},
@@ -104,14 +105,14 @@ func deriveIDFromFile(cfg Config) (artifact.ID, string) {
 		info += fmt.Sprintf(":%s@%s", cfg.Alias.Name, cfg.Alias.Version)
 	}
 
-	return source.ArtifactIDFromDigest(digest.SHA256.FromString(info).String()), d
+	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(info).String()), d
 }
 
-func (s FileSource) ID() artifact.ID {
+func (s fileSource) ID() artifact.ID {
 	return s.id
 }
 
-func (s FileSource) Describe() source.Description {
+func (s fileSource) Describe() source.Description {
 	name := path.Base(s.config.Path)
 	version := s.digestForVersion
 	if !s.config.Alias.IsEmpty() {
@@ -136,7 +137,7 @@ func (s FileSource) Describe() source.Description {
 	}
 }
 
-func (s FileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
+func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -144,7 +145,7 @@ func (s FileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 		return s.resolver, nil
 	}
 
-	exclusionFunctions, err := directory.GetDirectoryExclusionFunctions(s.analysisPath, s.config.Exclude.Paths)
+	exclusionFunctions, err := directorysource.GetDirectoryExclusionFunctions(s.analysisPath, s.config.Exclude.Paths)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +218,7 @@ func absoluteSymlinkFreePathToParent(path string) (string, error) {
 	return filepath.Dir(dereferencedAbsAnalysisPath), nil
 }
 
-func (s *FileSource) Close() error {
+func (s *fileSource) Close() error {
 	if s.closer == nil {
 		return nil
 	}

@@ -17,9 +17,9 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func TestToSyftModel(t *testing.T) {
@@ -206,11 +206,11 @@ func TestExtractSourceFromNamespaces(t *testing.T) {
 		},
 		{
 			namespace: "https://anchore.com/syft/image/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  stereoscope.ImageSourceMetadata{},
+			expected:  stereoscopesource.ImageMetadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/dir/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  directory.Metadata{},
+			expected:  directorysource.Metadata{},
 		},
 		{
 			namespace: "https://another-host/blob/123",
@@ -463,7 +463,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			name: "image source",
 			source: source.Description{
 				ID: "DocumentRoot-Image-some-image",
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					ID:             "DocumentRoot-Image-some-image",
 					UserInput:      "some-image:some-tag",
 					ManifestDigest: "sha256:ab8b83234bc28f28d8e",
@@ -479,7 +479,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-.",
 				Name: ".",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: ".",
 				},
 			},
@@ -491,7 +491,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-my-app",
 				Name: "my-app",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "my-app",
 				},
 			},

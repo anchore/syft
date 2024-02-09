@@ -15,9 +15,9 @@ import (
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func Test_toSourceModel_IgnoreBase(t *testing.T) {
@@ -29,7 +29,7 @@ func Test_toSourceModel_IgnoreBase(t *testing.T) {
 			name: "directory",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -62,7 +62,7 @@ func Test_toSourceModel(t *testing.T) {
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -72,7 +72,7 @@ func Test_toSourceModel(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "directory",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -108,7 +108,7 @@ func Test_toSourceModel(t *testing.T) {
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -120,7 +120,7 @@ func Test_toSourceModel(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "image",
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -136,7 +136,7 @@ func Test_toSourceModel(t *testing.T) {
 			name: "directory - no name/version",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -144,7 +144,7 @@ func Test_toSourceModel(t *testing.T) {
 			expected: model.Source{
 				ID:   "test-id",
 				Type: "directory",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -174,7 +174,7 @@ func Test_toSourceModel(t *testing.T) {
 			name: "image - no name/version",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -184,7 +184,7 @@ func Test_toSourceModel(t *testing.T) {
 			expected: model.Source{
 				ID:   "test-id",
 				Type: "image",
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",

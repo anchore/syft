@@ -1,4 +1,4 @@
-package stereoscope
+package stereoscopesource
 
 import (
 	"context"
@@ -14,7 +14,7 @@ const ImageTag = "image"
 type stereoscopeSourceProvider struct {
 	stereoscopeProvider image.Provider
 	alias               *source.Alias
-	cfg                 *SourceProviderConfig
+	cfg                 *ProviderConfig
 }
 
 var _ source.Provider = (*stereoscopeSourceProvider)(nil)
@@ -34,7 +34,6 @@ func (l stereoscopeSourceProvider) Provide(ctx context.Context, req source.Reque
 	}
 	cfg := ImageConfig{
 		Reference:       req.Input,
-		From:            l.stereoscopeProvider.Name(),
 		Platform:        req.Platform,
 		RegistryOptions: l.cfg.RegistryOptions,
 		Exclude:         l.cfg.Exclude,
@@ -43,17 +42,16 @@ func (l stereoscopeSourceProvider) Provide(ctx context.Context, req source.Reque
 	if err != nil {
 		return nil, err
 	}
-	return NewStereoscopeImageSource(img, cfg), nil
+	return New(img, cfg), nil
 }
 
-type SourceProviderConfig struct {
+type ProviderConfig struct {
 	RegistryOptions *image.RegistryOptions
-	// Platform        *image.Platform
-	Alias   *source.Alias
-	Exclude source.ExcludeConfig
+	Alias           *source.Alias
+	Exclude         source.ExcludeConfig
 }
 
-func SourceProviders(cfg SourceProviderConfig) tagged.ValueSet[source.Provider] {
+func Providers(cfg ProviderConfig) []tagged.Value[source.Provider] {
 	var registry image.RegistryOptions
 	if cfg.RegistryOptions != nil {
 		registry = *cfg.RegistryOptions

@@ -1,4 +1,4 @@
-package directory
+package directorysource
 
 import (
 	"fmt"
@@ -15,9 +15,10 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ source.Source = (*Source)(nil)
+var _ source.Source = (*directorySource)(nil)
 
 type Config struct {
 	Path    string
@@ -31,21 +32,21 @@ type Metadata struct {
 	Base string `json:"-" yaml:"-"` // though this is important, for display purposes it leaks too much information (abs paths)
 }
 
-type Source struct {
+type directorySource struct {
 	id       artifact.ID
 	config   Config
 	resolver *fileresolver.Directory
 	mutex    *sync.Mutex
 }
 
-func NewFromPath(path string) (*Source, error) {
+func NewFromPath(path string) (source.Source, error) {
 	cfg := Config{
 		Path: path,
 	}
 	return New(cfg)
 }
 
-func New(cfg Config) (*Source, error) {
+func New(cfg Config) (source.Source, error) {
 	fi, err := os.Stat(cfg.Path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to stat path=%q: %w", cfg.Path, err)
@@ -55,7 +56,7 @@ func New(cfg Config) (*Source, error) {
 		return nil, fmt.Errorf("given path is not a directory: %q", cfg.Path)
 	}
 
-	return &Source{
+	return &directorySource{
 		id:     deriveIDFromDirectory(cfg),
 		config: cfg,
 		mutex:  &sync.Mutex{},
@@ -79,7 +80,7 @@ func deriveIDFromDirectory(cfg Config) artifact.ID {
 		info = cleanDirPath(cfg.Path, cfg.Base)
 	}
 
-	return source.ArtifactIDFromDigest(digest.SHA256.FromString(filepath.Clean(info)).String())
+	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(filepath.Clean(info)).String())
 }
 
 func cleanDirPath(path, base string) string {
@@ -109,11 +110,11 @@ func cleanDirPath(path, base string) string {
 	return path
 }
 
-func (s Source) ID() artifact.ID {
+func (s directorySource) ID() artifact.ID {
 	return s.id
 }
 
-func (s Source) Describe() source.Description {
+func (s directorySource) Describe() source.Description {
 	name := cleanDirPath(s.config.Path, s.config.Base)
 	version := ""
 	if !s.config.Alias.IsEmpty() {
@@ -136,7 +137,7 @@ func (s Source) Describe() source.Description {
 	}
 }
 
-func (s *Source) FileResolver(_ source.Scope) (file.Resolver, error) {
+func (s *directorySource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -157,7 +158,7 @@ func (s *Source) FileResolver(_ source.Scope) (file.Resolver, error) {
 	return s.resolver, nil
 }
 
-func (s *Source) Close() error {
+func (s *directorySource) Close() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.resolver = nil

@@ -19,9 +19,9 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 var _ pkg.Cataloger = (*dummyCataloger)(nil)
@@ -65,11 +65,11 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 	}
 
 	imgSrc := source.Description{
-		Metadata: stereoscope.ImageSourceMetadata{},
+		Metadata: stereoscopesource.ImageMetadata{},
 	}
 
 	dirSrc := source.Description{
-		Metadata: directory.Metadata{},
+		Metadata: directorysource.Metadata{},
 	}
 
 	fileSrc := source.Description{
@@ -440,14 +440,14 @@ func Test_findDefaultTag(t *testing.T) {
 		{
 			name: "image",
 			src: source.Description{
-				Metadata: stereoscope.ImageSourceMetadata{},
+				Metadata: stereoscopesource.ImageMetadata{},
 			},
 			want: pkgcataloging.ImageTag,
 		},
 		{
 			name: "directory",
 			src: source.Description{
-				Metadata: directory.Metadata{},
+				Metadata: directorysource.Metadata{},
 			},
 			want: pkgcataloging.DirectoryTag,
 		},

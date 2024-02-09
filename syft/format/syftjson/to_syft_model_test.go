@@ -18,9 +18,9 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
+	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func Test_toSyftSourceData(t *testing.T) {
@@ -38,7 +38,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "directory",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -47,7 +47,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -84,7 +84,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "image",
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -95,7 +95,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -110,14 +110,14 @@ func Test_toSyftSourceData(t *testing.T) {
 			src: model.Source{
 				ID:   "the-id",
 				Type: "directory",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
 			},
 			expected: &source.Description{
 				ID: "the-id",
-				Metadata: directory.Metadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -148,7 +148,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			src: model.Source{
 				ID:   "the-id",
 				Type: "image",
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -157,7 +157,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			},
 			expected: &source.Description{
 				ID: "the-id",
-				Metadata: stereoscope.ImageSourceMetadata{
+				Metadata: stereoscopesource.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",

@@ -12,8 +12,8 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directory"
-	"github.com/anchore/syft/syft/source/stereoscope"
+	"github.com/anchore/syft/syft/source/directorysource"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func Test_allRegularFiles(t *testing.T) {
@@ -30,7 +30,7 @@ func Test_allRegularFiles(t *testing.T) {
 
 				img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
-				s := stereoscope.NewStereoscopeImageSource(img, stereoscope.ImageConfig{
+				s := stereoscopesource.New(img, stereoscopesource.ImageConfig{
 					Reference: testImage,
 				})
 
@@ -45,7 +45,7 @@ func Test_allRegularFiles(t *testing.T) {
 		{
 			name: "directory",
 			setup: func() file.Resolver {
-				s, err := directory.NewFromPath("test-fixtures/symlinked-root/nested/link-root")
+				s, err := directorysource.NewFromPath("test-fixtures/symlinked-root/nested/link-root")
 				require.NoError(t, err)
 				r, err := s.FileResolver(source.SquashedScope)
 				require.NoError(t, err)
