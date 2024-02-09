@@ -14,6 +14,7 @@ func TestVersionCmdPrintsToStdout(t *testing.T) {
 			name: "version command prints to stdout",
 			assertions: []traitAssertion{
 				assertInOutput("Version:"),
+				assertNoStderr,
 			},
 		},
 	}
