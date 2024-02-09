@@ -13,9 +13,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-const (
-	ContentBufferSize = 4096
-)
+const contentBufferSize = 4096
 
 var patterns = map[string]*regexp.Regexp{
 	// match example:	"Plugin Name: WP Migration"	--->	WP Migration
@@ -42,7 +40,7 @@ type pluginData struct {
 func parseWordpressPluginFiles(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
-	buffer := make([]byte, ContentBufferSize)
+	buffer := make([]byte, contentBufferSize)
 
 	_, err := reader.Read(buffer)
 	if err != nil {
