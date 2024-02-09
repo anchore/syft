@@ -1057,6 +1057,7 @@
       "drxhello": "cpe:2.3:a:pypi:drxhello:*:*:*:*:*:pypi:*:*",
       "easy-parse": "cpe:2.3:a:easy-parse_project:easy-parse:*:*:*:*:*:python:*:*",
       "easy-xml": "cpe:2.3:a:easyxml_project:easyxml:*:*:*:*:*:python:*:*",
+      "ecdsa": "cpe:2.3:a:tlsfuzzer:ecdsa:*:*:*:*:*:python:*:*",
       "enum34": "cpe:2.3:a:python:enum34:*:*:*:*:*:*:*:*",
       "exotel": "cpe:2.3:a:exotel_project:exotel:*:*:*:*:*:python:*:*",
       "flask-restx": "cpe:2.3:a:flask-restx_project:flask-restx:*:*:*:*:*:python:*:*",
