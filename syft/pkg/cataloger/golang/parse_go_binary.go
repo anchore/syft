@@ -175,16 +175,20 @@ func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuil
 
 	// guess the version from pattern matching in the binary (can result in false positives)
 	if c.mainModuleVersion.FromContents {
-		_, _ = reader.Seek(0, io.SeekStart)
-		contents, err := io.ReadAll(reader)
+		_, err := reader.Seek(0, io.SeekStart)
 		if err != nil {
-			log.WithFields("error", err).Trace("unable to read from go binary reader")
+			log.WithFields("error", err).Trace("unable to seek to start of go binary reader")
 		} else {
-			matchMetadata := internal.MatchNamedCaptureGroups(semverPattern, string(contents))
+			contents, err := io.ReadAll(reader)
+			if err != nil {
+				log.WithFields("error", err).Trace("unable to read from go binary reader")
+			} else {
+				matchMetadata := internal.MatchNamedCaptureGroups(semverPattern, string(contents))
 
-			version, ok := matchMetadata["version"]
-			if ok {
-				return version
+				version, ok := matchMetadata["version"]
+				if ok {
+					return version
+				}
 			}
 		}
 	}
