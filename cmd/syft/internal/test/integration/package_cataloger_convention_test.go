@@ -31,7 +31,9 @@ func Test_packageCatalogerExports(t *testing.T) {
 	for pkg, expected := range expectAtLeast {
 		actual, ok := exports[pkg]
 		require.True(t, ok, pkg)
-		require.True(t, expected.IsSubset(actual.Names()), pkg)
+		if !assert.True(t, actual.Names().IsSubset(expected), pkg) {
+			t.Logf("missing: %s", strset.SymmetricDifference(expected, actual.Names()))
+		}
 	}
 
 }
