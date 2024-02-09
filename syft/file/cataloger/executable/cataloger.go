@@ -149,7 +149,7 @@ func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file
 
 	securityFeatures, err := findSecurityFeatures(format, reader)
 	if err != nil {
-		log.WithFields("error", err).Warnf("unable to determine security features for %q", loc.RealPath)
+		log.WithFields("error", err).Tracef("unable to determine security features for %q", loc.RealPath)
 		return nil, nil
 	}
 
@@ -228,10 +228,12 @@ func findSecurityFeatures(format file.ExecutableFormat, reader unionreader.Union
 	switch format { //nolint: gocritic
 	case file.ELF:
 		return findELFSecurityFeatures(reader) //nolint: gocritic
-		// case file.PE:
-		//	return findPESecurityFeatures(reader)
-		// case file.MachO:
-		//	return findMachOSecurityFeatures(reader)
+	case file.PE:
+		// return findPESecurityFeatures(reader)
+		return nil, nil
+	case file.MachO:
+		// return findMachOSecurityFeatures(reader)
+		return nil, nil
 	}
 	return nil, fmt.Errorf("unsupported executable format: %q", format)
 }

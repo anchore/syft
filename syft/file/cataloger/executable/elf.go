@@ -45,7 +45,7 @@ func hasAnyDynamicSymbols(file *elf.File, symbolNames ...string) *bool {
 	dynSyms, err := file.DynamicSymbols()
 	if err != nil {
 		// TODO: known-unknowns
-		log.WithFields("error", err).Warn("unable to read dynamic symbols from elf file")
+		log.WithFields("error", err).Trace("unable to read dynamic symbols from elf file")
 		return nil
 	}
 
@@ -112,7 +112,7 @@ func hasElfDynFlag(f *elf.File, flag elf.DynFlag) bool {
 	vals, err := f.DynValue(elf.DT_FLAGS)
 	if err != nil {
 		// TODO: known-unknowns
-		log.WithFields("error", err).Warn("unable to read DT_FLAGS from elf file")
+		log.WithFields("error", err).Trace("unable to read DT_FLAGS from elf file")
 		return false
 	}
 	for _, val := range vals {
@@ -127,7 +127,7 @@ func hasElfDynFlag1(f *elf.File, flag elf.DynFlag1) bool {
 	vals, err := f.DynValue(elf.DT_FLAGS_1)
 	if err != nil {
 		// TODO: known-unknowns
-		log.WithFields("error", err).Warn("unable to read DT_FLAGS_1 from elf file")
+		log.WithFields("error", err).Trace("unable to read DT_FLAGS_1 from elf file")
 		return false
 	}
 	for _, val := range vals {
