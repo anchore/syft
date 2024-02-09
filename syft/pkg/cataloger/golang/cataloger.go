@@ -38,12 +38,12 @@ func NewGoModuleFileCataloger(opts CatalogerConfig) pkg.Cataloger {
 
 // NewGoModuleBinaryCataloger returns a new cataloger object that searches within binaries built by the go compiler.
 func NewGoModuleBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
-	c := goBinaryCataloger{
-		licenses: newGoLicenses(binaryCatalogerName, opts),
-	}
 	return &progressingCataloger{
 		cataloger: generic.NewCataloger(binaryCatalogerName).
-			WithParserByMimeTypes(c.parseGoBinary, mimetype.ExecutableMIMETypeSet.List()...),
+			WithParserByMimeTypes(
+				newGoBinaryCataloger(opts).parseGoBinary,
+				mimetype.ExecutableMIMETypeSet.List()...,
+			),
 	}
 }
 

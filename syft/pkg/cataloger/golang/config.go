@@ -20,11 +20,18 @@ var (
 )
 
 type CatalogerConfig struct {
-	SearchLocalModCacheLicenses bool     `yaml:"search-local-mod-cache-licenses" json:"search-local-mod-cache-licenses" mapstructure:"search-local-mod-cache-licenses"`
-	LocalModCacheDir            string   `yaml:"local-mod-cache-dir" json:"local-mod-cache-dir" mapstructure:"local-mod-cache-dir"`
-	SearchRemoteLicenses        bool     `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
-	Proxies                     []string `yaml:"proxies,omitempty" json:"proxies,omitempty" mapstructure:"proxies"`
-	NoProxy                     []string `yaml:"no-proxy,omitempty" json:"no-proxy,omitempty" mapstructure:"no-proxy"`
+	SearchLocalModCacheLicenses bool                    `yaml:"search-local-mod-cache-licenses" json:"search-local-mod-cache-licenses" mapstructure:"search-local-mod-cache-licenses"`
+	LocalModCacheDir            string                  `yaml:"local-mod-cache-dir" json:"local-mod-cache-dir" mapstructure:"local-mod-cache-dir"`
+	SearchRemoteLicenses        bool                    `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
+	Proxies                     []string                `yaml:"proxies,omitempty" json:"proxies,omitempty" mapstructure:"proxies"`
+	NoProxy                     []string                `yaml:"no-proxy,omitempty" json:"no-proxy,omitempty" mapstructure:"no-proxy"`
+	MainModuleVersion           MainModuleVersionConfig `yaml:"main-module-version" json:"main-module-version" mapstructure:"main-module-version"`
+}
+
+type MainModuleVersionConfig struct {
+	FromLDFlags       bool `yaml:"from-ld-flags" json:"from-ld-flags" mapstructure:"from-ld-flags"`
+	FromContents      bool `yaml:"from-contents" json:"from-contents" mapstructure:"from-contents"`
+	FromBuildSettings bool `yaml:"from-build-settings" json:"from-build-settings" mapstructure:"from-build-settings"`
 }
 
 // DefaultCatalogerConfig create a CatalogerConfig with default options, which includes:
@@ -32,7 +39,9 @@ type CatalogerConfig struct {
 // - setting the default no proxy if none is provided
 // - setting the default local module cache dir if none is provided
 func DefaultCatalogerConfig() CatalogerConfig {
-	g := CatalogerConfig{}
+	g := CatalogerConfig{
+		MainModuleVersion: DefaultMainModuleVersionConfig(),
+	}
 
 	// first process the proxy settings
 	if len(g.Proxies) == 0 {
@@ -76,6 +85,14 @@ func DefaultCatalogerConfig() CatalogerConfig {
 	return g
 }
 
+func DefaultMainModuleVersionConfig() MainModuleVersionConfig {
+	return MainModuleVersionConfig{
+		FromLDFlags:       true,
+		FromContents:      true,
+		FromBuildSettings: true,
+	}
+}
+
 func (g CatalogerConfig) WithSearchLocalModCacheLicenses(input bool) CatalogerConfig {
 	g.SearchLocalModCacheLicenses = input
 	return g
@@ -110,5 +127,25 @@ func (g CatalogerConfig) WithNoProxy(input string) CatalogerConfig {
 		return g
 	}
 	g.NoProxy = strings.Split(input, ",")
+	return g
+}
+
+func (g CatalogerConfig) WithMainModuleVersion(input MainModuleVersionConfig) CatalogerConfig {
+	g.MainModuleVersion = input
+	return g
+}
+
+func (g MainModuleVersionConfig) WithFromLDFlags(input bool) MainModuleVersionConfig {
+	g.FromLDFlags = input
+	return g
+}
+
+func (g MainModuleVersionConfig) WithFromContents(input bool) MainModuleVersionConfig {
+	g.FromContents = input
+	return g
+}
+
+func (g MainModuleVersionConfig) WithFromBuildSettings(input bool) MainModuleVersionConfig {
+	g.FromBuildSettings = input
 	return g
 }
