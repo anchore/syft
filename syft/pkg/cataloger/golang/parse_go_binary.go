@@ -50,6 +50,13 @@ type goBinaryCataloger struct {
 	mainModuleVersion MainModuleVersionConfig
 }
 
+func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
+	return &goBinaryCataloger{
+		licenses:          newGoLicenses(binaryCatalogerName, opts),
+		mainModuleVersion: opts.MainModuleVersion,
+	}
+}
+
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
 func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package

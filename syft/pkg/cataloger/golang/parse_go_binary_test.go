@@ -921,7 +921,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			)
 
-			c := goBinaryCataloger{}
+			c := newGoBinaryCataloger(DefaultCatalogerConfig())
 			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
 			require.NoError(t, err)
 			pkgs := c.buildGoPkgInfo(fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
