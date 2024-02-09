@@ -11,10 +11,10 @@ import (
 )
 
 // SourceProviders returns all the configured source providers known to syft
-func SourceProviders(sourceProviderConfig ...SourceProviderConfig) tagged.Values[source.Provider] {
+func SourceProviders(sourceProviderConfig ...SourceProviderConfig) tagged.ValueSet[source.Provider] {
 	cfg, stereoscopeProviders := stereoscopeSourceProviders(sourceProviderConfig...)
 
-	return tagged.Values[source.Provider]{}.
+	return tagged.ValueSet[source.Provider]{}.
 		// --from file, dir, oci-archive, etc.
 		Join(stereoscopeProviders.Select("file", "dir")...).
 		Join(provider(filesource.NewSourceProvider(cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), "file")).
@@ -24,7 +24,7 @@ func SourceProviders(sourceProviderConfig ...SourceProviderConfig) tagged.Values
 		Join(stereoscopeProviders.Select("pull")...)
 }
 
-func stereoscopeSourceProviders(sourceProviderConfig ...SourceProviderConfig) (SourceProviderConfig, tagged.Values[source.Provider]) {
+func stereoscopeSourceProviders(sourceProviderConfig ...SourceProviderConfig) (SourceProviderConfig, tagged.ValueSet[source.Provider]) {
 	cfg := DefaultSourceProviderConfig()
 	if len(sourceProviderConfig) > 1 {
 		panic(fmt.Sprintf("at most one sourceProviderConfig may be specified, got %v", sourceProviderConfig))
@@ -34,13 +34,9 @@ func stereoscopeSourceProviders(sourceProviderConfig ...SourceProviderConfig) (S
 		if in.RegistryOptions != nil {
 			cfg.RegistryOptions = in.RegistryOptions
 		}
-		if in.Platform != nil {
-			cfg.Platform = in.Platform
-		}
 	}
 	stereoscopeProviders := stereoscope.SourceProviders(stereoscope.SourceProviderConfig{
 		RegistryOptions: cfg.RegistryOptions,
-		Platform:        cfg.Platform,
 		Alias:           &cfg.Alias,
 		Exclude:         cfg.Exclude,
 	})

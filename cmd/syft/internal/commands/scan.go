@@ -233,7 +233,7 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 	explicitSources := opts.From
 	if len(explicitSources) == 0 {
 		// extract a scheme if it matches any provider tag; this is a holdover for compatibility, using the --from flag is recommended
-		explicitSource, newUserInput := stereoscope.ExtractSchemeSource(syft.SourceProviders(syft.DefaultSourceProviderConfig()), userInput)
+		explicitSource, newUserInput := stereoscope.ExtractSchemeSource(userInput, syft.SourceProviders(syft.DefaultSourceProviderConfig()).Tags()...)
 		if explicitSource != "" {
 			explicitSources = append(explicitSources, explicitSource)
 			userInput = newUserInput

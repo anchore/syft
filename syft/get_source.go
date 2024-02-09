@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"slices"
 
-	"github.com/anchore/stereoscope/tagged"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -37,7 +35,7 @@ func GetSource(ctx context.Context, userInput string, getSourceConfig ...GetSour
 		pull := providers.Select("pull")
 		def := pull.Select(cfg.DefaultImageSource)
 		if len(def) == 0 {
-			return nil, fmt.Errorf("invalid DefaultImageSource: %s; available values are: %v", cfg.DefaultImageSource, allTags(pull))
+			return nil, fmt.Errorf("invalid DefaultImageSource: %s; available values are: %v", cfg.DefaultImageSource, pull.Tags())
 		}
 		providers = base.Join(def...).Join(pull...)
 	}
@@ -53,7 +51,10 @@ func GetSource(ctx context.Context, userInput string, getSourceConfig ...GetSour
 
 	// call each source provider until we find a valid source
 	for _, p := range providers.Collect() {
-		src, err := p.Provide(ctx, userInput)
+		src, err := p.Provide(ctx, source.Request{
+			Input:    userInput,
+			Platform: cfg.Platform,
+		})
 		if err != nil {
 			err = eachError(err, func(err error) error {
 				if errors.Is(err, os.ErrNotExist) {
@@ -81,23 +82,18 @@ func GetSource(ctx context.Context, userInput string, getSourceConfig ...GetSour
 	return nil, sourceError(userInput, errs...)
 }
 
-func allTags(values tagged.Values[source.Provider]) (out []string) {
-	for _, v := range values {
-		for _, t := range v.Tags {
-			if !slices.Contains(out, t) {
-				out = append(out, t)
-			}
-		}
-	}
-	return out
-}
-
 func sourceError(userInput string, errs ...error) error {
+	switch len(errs) {
+	case 0:
+		return nil
+	case 1:
+		return fmt.Errorf("an error occurred attempting to resolve '%s': %w", userInput, errs[0])
+	}
 	errorTexts := ""
 	for _, e := range errs {
 		errorTexts += fmt.Sprintf("\n  - %s", e)
 	}
-	return fmt.Errorf("an error occurred attempting to resolve '%s'; the following errors occurred:%s", userInput, errorTexts)
+	return fmt.Errorf("errors occurred attempting to resolve '%s':%s", userInput, errorTexts)
 }
 
 func eachError(err error, fn func(error) error) error {

@@ -28,8 +28,8 @@ func (l sourceProvider) Name() string {
 	return "local-directory"
 }
 
-func (l sourceProvider) Provide(_ context.Context, userInput string) (source.Source, error) {
-	location, err := homedir.Expand(userInput)
+func (l sourceProvider) Provide(_ context.Context, req source.Request) (source.Source, error) {
+	location, err := homedir.Expand(req.Input)
 	if err != nil {
 		return nil, fmt.Errorf("unable to expand potential directory path: %w", err)
 	}
@@ -41,7 +41,7 @@ func (l sourceProvider) Provide(_ context.Context, userInput string) (source.Sou
 	}
 
 	if !fileMeta.IsDir() {
-		return nil, fmt.Errorf("not a directory source: %s", userInput)
+		return nil, fmt.Errorf("not a directory source: %s", req.Input)
 	}
 
 	return New(

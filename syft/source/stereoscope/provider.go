@@ -23,8 +23,8 @@ func (l stereoscopeSourceProvider) Name() string {
 	return l.stereoscopeProvider.Name()
 }
 
-func (l stereoscopeSourceProvider) Provide(ctx context.Context, userInput string) (source.Source, error) {
-	img, err := l.stereoscopeProvider.Provide(ctx, userInput)
+func (l stereoscopeSourceProvider) Provide(ctx context.Context, req source.Request) (source.Source, error) {
+	img, err := l.stereoscopeProvider.Provide(ctx, req.Input, req.Platform)
 	if err != nil {
 		return nil, err
 	}
@@ -33,9 +33,9 @@ func (l stereoscopeSourceProvider) Provide(ctx context.Context, userInput string
 		alias = *l.alias
 	}
 	cfg := ImageConfig{
-		Reference:       userInput,
+		Reference:       req.Input,
 		From:            l.stereoscopeProvider.Name(),
-		Platform:        l.cfg.Platform,
+		Platform:        req.Platform,
 		RegistryOptions: l.cfg.RegistryOptions,
 		Exclude:         l.cfg.Exclude,
 		Alias:           alias,
@@ -48,20 +48,19 @@ func (l stereoscopeSourceProvider) Provide(ctx context.Context, userInput string
 
 type SourceProviderConfig struct {
 	RegistryOptions *image.RegistryOptions
-	Platform        *image.Platform
-	Alias           *source.Alias
-	Exclude         source.ExcludeConfig
+	// Platform        *image.Platform
+	Alias   *source.Alias
+	Exclude source.ExcludeConfig
 }
 
-func SourceProviders(cfg SourceProviderConfig) tagged.Values[source.Provider] {
+func SourceProviders(cfg SourceProviderConfig) tagged.ValueSet[source.Provider] {
 	var registry image.RegistryOptions
 	if cfg.RegistryOptions != nil {
 		registry = *cfg.RegistryOptions
 	}
-	stereoscopeProviders := tagged.Values[source.Provider]{}
+	stereoscopeProviders := tagged.ValueSet[source.Provider]{}
 	providers := stereoscope.ImageProviders(stereoscope.ImageProviderConfig{
 		Registry: registry,
-		Platform: cfg.Platform,
 	})
 	for _, provider := range providers {
 		var sourceProvider source.Provider = stereoscopeSourceProvider{

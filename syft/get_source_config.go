@@ -12,8 +12,11 @@ type GetSourceConfig struct {
 	// SourceProviderConfig may optionally be provided to be used when constructing the default set of source providers, unused if SourceProviders specified
 	SourceProviderConfig SourceProviderConfig
 
+	// Platform is used during the source lookup
+	Platform *image.Platform
+
 	// SourceProviders the tagged set of known source.Provider to use, will use Syft's default set if not provided
-	SourceProviders tagged.Values[source.Provider]
+	SourceProviders tagged.ValueSet[source.Provider]
 
 	// BaseSources is used to restrict the set of sources prior to user-provided
 	BaseSources []image.Source
@@ -36,7 +39,7 @@ func (c GetSourceConfig) WithRegistryOptions(registryOptions *image.RegistryOpti
 }
 
 func (c GetSourceConfig) WithPlatform(platform *image.Platform) GetSourceConfig {
-	c.SourceProviderConfig.Platform = platform
+	c.Platform = platform
 	return c
 }
 
