@@ -190,22 +190,23 @@ func TestPackagesCmdFlags(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
-		{
-			// TODO: this could be a unit test
-			name: "responds-to-package-cataloger-search-options",
-			args: []string{"--help"},
-			env: map[string]string{
-				"SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES": "true",
-				"SYFT_PACKAGE_SEARCH_INDEXED_ARCHIVES":   "false",
-			},
-			assertions: []traitAssertion{
-				// the application config in the log matches that of what we expect to have been configured. Note:
-				// we are not testing further wiring of this option, only that the config responds to
-				// package-cataloger-level options.
-				assertInOutput("search-unindexed-archives: true"),
-				assertInOutput("search-indexed-archives: false"),
-			},
-		},
+		// TODO: uncomment this test when we can use `syft config`
+		//{
+		//	// TODO: this could be a unit test
+		//	name: "responds-to-package-cataloger-search-options",
+		//	args: []string{"--help"},
+		//	env: map[string]string{
+		//		"SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES": "true",
+		//		"SYFT_PACKAGE_SEARCH_INDEXED_ARCHIVES":   "false",
+		//	},
+		//	assertions: []traitAssertion{
+		//		// the application config in the log matches that of what we expect to have been configured. Note:
+		//		// we are not testing further wiring of this option, only that the config responds to
+		//		// package-cataloger-level options.
+		//		assertInOutput("search-unindexed-archives: true"),
+		//		assertInOutput("search-indexed-archives: false"),
+		//	},
+		//},
 		{
 			name: "platform-option-wired-up",
 			args: []string{"scan", "--platform", "arm64", "-o", "json", "registry:busybox:1.31"},
