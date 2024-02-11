@@ -22,9 +22,9 @@ func TestParseWordpressPluginFiles(t *testing.T) {
 		),
 		Language: pkg.PHP,
 		Metadata: pkg.WordpressPluginEntry{
-			Name:      "akismet",
-			Author:    "Automattic - Anti-spam Team",
-			AuthorURI: "https://automattic.com/wordpress-plugins/",
+			PluginInstallDirectory: "akismet",
+			Author:                 "Automattic - Anti-spam Team",
+			AuthorURI:              "https://automattic.com/wordpress-plugins/",
 		},
 	}
 

@@ -7,9 +7,9 @@ import (
 
 func newWordpressPluginPackage(name, version string, m pluginData, location file.Location) pkg.Package {
 	meta := pkg.WordpressPluginEntry{
-		Name:      m.Name,
-		Author:    m.Author,
-		AuthorURI: m.AuthorURI,
+		PluginInstallDirectory: m.PluginInstallDirectory,
+		Author:                 m.Author,
+		AuthorURI:              m.AuthorURI,
 	}
 
 	p := pkg.Package{

@@ -19,9 +19,9 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 			pkg: pkg.Package{
 				Name: "Akismet Anti-spam: Spam Protection",
 				Metadata: pkg.WordpressPluginEntry{
-					Name:      "akismet",
-					Author:    "Automattic - Anti-spam Team",
-					AuthorURI: "https://automattic.com/wordpress-plugins/",
+					PluginInstallDirectory: "akismet",
+					Author:                 "Automattic - Anti-spam Team",
+					AuthorURI:              "https://automattic.com/wordpress-plugins/",
 				},
 			},
 			expected: []string{"automattic"},
@@ -31,8 +31,8 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 			pkg: pkg.Package{
 				Name: "All-in-One WP Migration",
 				Metadata: pkg.WordpressPluginEntry{
-					Name:      "all-in-one-wp-migration",
-					AuthorURI: "https://servmask.com",
+					PluginInstallDirectory: "all-in-one-wp-migration",
+					AuthorURI:              "https://servmask.com",
 				},
 			},
 			expected: []string{"servmask"},
@@ -42,9 +42,9 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 			pkg: pkg.Package{
 				Name: "Booking Ultra Pro Appointments Booking Calendar",
 				Metadata: pkg.WordpressPluginEntry{
-					Name:      "booking-ultra-pro",
-					Author:    "Booking Ultra Pro",
-					AuthorURI: "https://bookingultrapro.com/",
+					PluginInstallDirectory: "booking-ultra-pro",
+					Author:                 "Booking Ultra Pro",
+					AuthorURI:              "https://bookingultrapro.com/",
 				},
 			},
 			expected: []string{"bookingultrapro"},
@@ -53,9 +53,9 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 			name: "Coming Soon Chop Chop",
 			pkg: pkg.Package{
 				Metadata: pkg.WordpressPluginEntry{
-					Name:      "cc-coming-soon",
-					Author:    "Chop-Chop.org",
-					AuthorURI: "https://www.chop-chop.org",
+					PluginInstallDirectory: "cc-coming-soon",
+					Author:                 "Chop-Chop.org",
+					AuthorURI:              "https://www.chop-chop.org",
 				},
 			},
 			expected: []string{"chop-chop"},
@@ -65,7 +65,7 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 			pkg: pkg.Package{
 				Name: "Access Code Feeder",
 				Metadata: pkg.WordpressPluginEntry{
-					Name: "access-code-feeder",
+					PluginInstallDirectory: "access-code-feeder",
 				},
 			},
 			// When a plugin as no `Author URI` use plugin_name + _project as a vendor
@@ -91,7 +91,7 @@ func Test_candidateProductsWordpressPlugin(t *testing.T) {
 			pkg: pkg.Package{
 				Name: "All-in-One WP Migration",
 				Metadata: pkg.WordpressPluginEntry{
-					Name: "all-in-one-wp-migration",
+					PluginInstallDirectory: "all-in-one-wp-migration",
 				},
 			},
 			expected: []string{"all-in-one_wp_migration", "all-in-one-wp-migration"},
@@ -101,7 +101,7 @@ func Test_candidateProductsWordpressPlugin(t *testing.T) {
 			pkg: pkg.Package{
 				Name: "Akismet Anti-spam: Spam Protection",
 				Metadata: pkg.WordpressPluginEntry{
-					Name: "akismet",
+					PluginInstallDirectory: "akismet",
 				},
 			},
 			expected: []string{"akismet_anti-spam:_spam_protection", "akismet"},
@@ -111,7 +111,7 @@ func Test_candidateProductsWordpressPlugin(t *testing.T) {
 			pkg: pkg.Package{
 				Name: "Access Code Feeder",
 				Metadata: pkg.WordpressPluginEntry{
-					Name: "access-code-feeder",
+					PluginInstallDirectory: "access-code-feeder",
 				},
 			},
 			expected: []string{"access_code_feeder", "access-code-feeder"},
@@ -121,7 +121,7 @@ func Test_candidateProductsWordpressPlugin(t *testing.T) {
 			pkg: pkg.Package{
 				Name: "CampTix Event Ticketing",
 				Metadata: pkg.WordpressPluginEntry{
-					Name: "camptix",
+					PluginInstallDirectory: "camptix",
 				},
 			},
 			expected: []string{"camptix_event_ticketing", "camptix"},

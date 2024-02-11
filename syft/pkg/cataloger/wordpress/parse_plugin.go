@@ -59,12 +59,12 @@ func parseWordpressPluginFiles(_ context.Context, _ file.Resolver, _ *generic.En
 	version, versionOk := fields["version"]
 
 	// get a plugin name from a plugin's directory name
-	pluginName := filepath.Base(filepath.Dir(reader.RealPath))
+	pluginInstallDirectory := filepath.Base(filepath.Dir(reader.RealPath))
 
 	if nameOk && name != "" && versionOk && version != "" {
 		var metadata pluginData
 
-		metadata.Name = pluginName
+		metadata.PluginInstallDirectory = pluginInstallDirectory
 
 		author, authorOk := fields["author"]
 		if authorOk && author != "" {

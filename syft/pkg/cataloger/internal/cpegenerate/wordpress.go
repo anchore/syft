@@ -42,7 +42,7 @@ func candidateProductsForWordpressPlugin(p pkg.Package) fieldCandidateSet {
 	products := newFieldCandidateSet()
 
 	products.addValue(normalizeWordpressPluginName(p.Name))
-	products.addValue(normalizeWordpressPluginName(metadata.Name))
+	products.addValue(normalizeWordpressPluginName(metadata.PluginInstallDirectory))
 
 	return products
 }
