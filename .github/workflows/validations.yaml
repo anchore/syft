@@ -39,8 +39,8 @@ jobs:
       - name: Restore file executable test-fixture cache
         uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 #v4.0.0
         with:
-          path: syft/file/cataloger/executable/test-fixtures/bin
-          key: ${{ runner.os }}-unit-file-executable-cache-${{ hashFiles( 'syft/file/cataloger/executable/test-fixtures/cache.fingerprint' ) }}
+          path: syft/file/cataloger/executable/test-fixtures/elf/bin
+          key: ${{ runner.os }}-unit-file-executable-cache-${{ hashFiles( 'syft/file/cataloger/executable/test-fixtures/elf/cache.fingerprint' ) }}
 
       - name: Restore Java test-fixture cache
         uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 #v4.0.0

@@ -288,7 +288,7 @@ func Test_toSyftFiles(t *testing.T) {
 					},
 					Executable: &file.Executable{
 						Format: file.ELF,
-						SecurityFeatures: &file.ELFSecurityFeatures{
+						ELFSecurityFeatures: &file.ELFSecurityFeatures{
 							SymbolTableStripped:           false,
 							StackCanary:                   boolRef(true),
 							NoExecutable:                  false,
@@ -329,7 +329,7 @@ func Test_toSyftFiles(t *testing.T) {
 				Executables: map[file.Coordinates]file.Executable{
 					coord: {
 						Format: file.ELF,
-						SecurityFeatures: &file.ELFSecurityFeatures{
+						ELFSecurityFeatures: &file.ELFSecurityFeatures{
 							SymbolTableStripped:           false,
 							StackCanary:                   boolRef(true),
 							NoExecutable:                  false,

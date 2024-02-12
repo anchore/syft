@@ -1,6 +1,7 @@
 package executable
 
 import (
+	"debug/elf"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,7 +17,7 @@ func Test_findELFSecurityFeatures(t *testing.T) {
 
 	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
 		t.Helper()
-		f, err := os.Open(filepath.Join("test-fixtures", fixture))
+		f, err := os.Open(filepath.Join("test-fixtures/elf", fixture))
 		require.NoError(t, err)
 		return f
 	}
@@ -26,7 +27,6 @@ func Test_findELFSecurityFeatures(t *testing.T) {
 		fixture      string
 		want         *file.ELFSecurityFeatures
 		wantStripped bool
-		wantErr      require.ErrorAssertionFunc
 	}{
 		{
 			name:    "detect canary",
@@ -145,14 +145,10 @@ func Test_findELFSecurityFeatures(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantErr == nil {
-				tt.wantErr = require.NoError
-			}
-			got, err := findELFSecurityFeatures(readerForFixture(t, tt.fixture))
-			tt.wantErr(t, err)
-			if err != nil {
-				return
-			}
+			f, err := elf.NewFile(readerForFixture(t, tt.fixture))
+			require.NoError(t, err)
+
+			got := findELFSecurityFeatures(f)
 
 			if d := cmp.Diff(tt.want, got); d != "" {
 				t.Errorf("findELFSecurityFeatures() mismatch (-want +got):\n%s", d)
