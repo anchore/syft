@@ -9,7 +9,7 @@ import (
 // Provider is able to resolve a source request
 type Provider interface {
 	Name() string
-	Provide(ctx context.Context, req Request) (Source, error)
+	ProvideSource(ctx context.Context, req Request) (Source, error)
 }
 
 // Request holds all the common arguments passed to a Provider.Provide call

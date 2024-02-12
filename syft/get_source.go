@@ -51,7 +51,7 @@ func GetSource(ctx context.Context, userInput string, getSourceConfig ...GetSour
 
 	// call each source provider until we find a valid source
 	for _, p := range providers.Collect() {
-		src, err := p.Provide(ctx, source.Request{
+		src, err := p.ProvideSource(ctx, source.Request{
 			Input:    userInput,
 			Platform: cfg.Platform,
 		})

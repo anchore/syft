@@ -23,7 +23,7 @@ func (l stereoscopeSourceProvider) Name() string {
 	return l.stereoscopeProvider.Name()
 }
 
-func (l stereoscopeSourceProvider) Provide(ctx context.Context, req source.Request) (source.Source, error) {
+func (l stereoscopeSourceProvider) ProvideSource(ctx context.Context, req source.Request) (source.Source, error) {
 	img, err := l.stereoscopeProvider.Provide(ctx, req.Input, req.Platform)
 	if err != nil {
 		return nil, err
