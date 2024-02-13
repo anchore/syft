@@ -1,6 +1,7 @@
 package cyclonedxhelpers
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -82,10 +83,12 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 	if len(props) > 0 {
 		properties = &props
 	}
+	bomRef := fmt.Sprintf("os:%s@%s", distro.ID, distro.VersionID)
 	return []cyclonedx.Component{
 		{
-			Type: cyclonedx.ComponentTypeOS,
-			// FIXME is it idiomatic to be using SWID here for specific name and version information?
+			BOMRef: bomRef,
+			Type:   cyclonedx.ComponentTypeOS,
+			// is it idiomatic to be using SWID here for specific name and version information?
 			SWID: &cyclonedx.SWID{
 				TagID:   distro.ID,
 				Name:    distro.ID,
@@ -94,7 +97,7 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 			Description: distro.PrettyName,
 			Name:        distro.ID,
 			Version:     distro.VersionID,
-			// TODO should we add a PURL?
+			// should we add a PURL?
 			CPE:                formatCPE(distro.CPEName),
 			ExternalReferences: eRefs,
 			Properties:         properties,

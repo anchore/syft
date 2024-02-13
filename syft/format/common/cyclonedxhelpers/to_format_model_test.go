@@ -11,6 +11,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil/helpers"
+	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -231,6 +232,52 @@ func Test_toBomDescriptor(t *testing.T) {
 			if d := cmp.Diff(tt.want, subject); d != "" {
 				t.Errorf("toBomDescriptor() mismatch (-want +got):\n%s", d)
 			}
+		})
+	}
+}
+
+func Test_toOsComponent(t *testing.T) {
+	tests := []struct {
+		name     string
+		release  linux.Release
+		expected cyclonedx.Component
+	}{
+		{
+			name: "basic os component",
+			release: linux.Release{
+				ID:        "myLinux",
+				VersionID: "myVersion",
+			},
+			expected: cyclonedx.Component{
+				BOMRef:  "os:myLinux@myVersion",
+				Type:    cyclonedx.ComponentTypeOS,
+				Name:    "myLinux",
+				Version: "myVersion",
+				SWID: &cyclonedx.SWID{
+					TagID:   "myLinux",
+					Name:    "myLinux",
+					Version: "myVersion",
+				},
+				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:distro:id",
+						Value: "myLinux",
+					},
+					{
+						Name:  "syft:distro:versionID",
+						Value: "myVersion",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gotSlice := toOSComponent(&test.release)
+			require.Len(t, gotSlice, 1)
+			got := gotSlice[0]
+			require.Equal(t, test.expected, got)
 		})
 	}
 }
