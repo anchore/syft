@@ -18,6 +18,9 @@ func GetSource(ctx context.Context, userInput string, getSourceConfig ...GetSour
 		cfg = getSourceConfig[0]
 	}
 
+	// must set userInput before getting source providers, it is important configuration for them all
+	cfg.SourceProviderConfig.UserInput = userInput
+
 	providers := cfg.SourceProviders
 	if len(providers) == 0 {
 		providers = SourceProviders(cfg.SourceProviderConfig)
@@ -51,10 +54,7 @@ func GetSource(ctx context.Context, userInput string, getSourceConfig ...GetSour
 
 	// call each source provider until we find a valid source
 	for _, p := range providers.Collect() {
-		src, err := p.ProvideSource(ctx, source.Request{
-			Input:    userInput,
-			Platform: cfg.Platform,
-		})
+		src, err := p.ProvideSource(ctx)
 		if err != nil {
 			err = eachError(err, func(err error) error {
 				if errors.Is(err, os.ErrNotExist) {

@@ -7,8 +7,10 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-// SourceProviderConfig contains all the source provider configuration known to Syft
+// SourceProviderConfig is the uber-configuration for all Syft source providers
 type SourceProviderConfig struct {
+	UserInput        string
+	Platform         *image.Platform
 	Alias            source.Alias
 	RegistryOptions  *image.RegistryOptions
 	Exclude          source.ExcludeConfig

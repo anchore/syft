@@ -10,8 +10,9 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func NewSourceProvider(exclude source.ExcludeConfig, alias source.Alias, basePath string) source.Provider {
+func NewSourceProvider(path string, exclude source.ExcludeConfig, alias source.Alias, basePath string) source.Provider {
 	return &sourceProvider{
+		path:     path,
 		basePath: basePath,
 		exclude:  exclude,
 		alias:    alias,
@@ -19,6 +20,7 @@ func NewSourceProvider(exclude source.ExcludeConfig, alias source.Alias, basePat
 }
 
 type sourceProvider struct {
+	path     string
 	basePath string
 	exclude  source.ExcludeConfig
 	alias    source.Alias
@@ -28,8 +30,8 @@ func (l sourceProvider) Name() string {
 	return "local-directory"
 }
 
-func (l sourceProvider) ProvideSource(_ context.Context, req source.Request) (source.Source, error) {
-	location, err := homedir.Expand(req.Input)
+func (l sourceProvider) ProvideSource(_ context.Context) (source.Source, error) {
+	location, err := homedir.Expand(l.path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to expand potential directory path: %w", err)
 	}
@@ -41,7 +43,7 @@ func (l sourceProvider) ProvideSource(_ context.Context, req source.Request) (so
 	}
 
 	if !fileMeta.IsDir() {
-		return nil, fmt.Errorf("not a directory source: %s", req.Input)
+		return nil, fmt.Errorf("not a directory source: %s", l.path)
 	}
 
 	return New(

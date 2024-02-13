@@ -11,10 +11,15 @@ import (
 
 const ImageTag = "image"
 
+type ProviderConfig struct {
+	StereoscopeImageProviderConfig stereoscope.ImageProviderConfig
+	Exclude                        source.ExcludeConfig
+	Alias                          source.Alias
+}
+
 type stereoscopeSourceProvider struct {
 	stereoscopeProvider image.Provider
-	alias               *source.Alias
-	cfg                 *ProviderConfig
+	cfg                 ProviderConfig
 }
 
 var _ source.Provider = (*stereoscopeSourceProvider)(nil)
@@ -23,21 +28,17 @@ func (l stereoscopeSourceProvider) Name() string {
 	return l.stereoscopeProvider.Name()
 }
 
-func (l stereoscopeSourceProvider) ProvideSource(ctx context.Context, req source.Request) (source.Source, error) {
-	img, err := l.stereoscopeProvider.Provide(ctx, req.Input, req.Platform)
+func (l stereoscopeSourceProvider) ProvideSource(ctx context.Context) (source.Source, error) {
+	img, err := l.stereoscopeProvider.Provide(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var alias source.Alias
-	if !l.alias.IsEmpty() {
-		alias = *l.alias
-	}
 	cfg := ImageConfig{
-		Reference:       req.Input,
-		Platform:        req.Platform,
-		RegistryOptions: l.cfg.RegistryOptions,
+		Reference:       l.cfg.StereoscopeImageProviderConfig.UserInput,
+		Platform:        l.cfg.StereoscopeImageProviderConfig.Platform,
+		RegistryOptions: &l.cfg.StereoscopeImageProviderConfig.Registry,
 		Exclude:         l.cfg.Exclude,
-		Alias:           alias,
+		Alias:           l.cfg.Alias,
 	}
 	if err != nil {
 		return nil, err
@@ -45,26 +46,13 @@ func (l stereoscopeSourceProvider) ProvideSource(ctx context.Context, req source
 	return New(img, cfg), nil
 }
 
-type ProviderConfig struct {
-	RegistryOptions *image.RegistryOptions
-	Alias           *source.Alias
-	Exclude         source.ExcludeConfig
-}
-
 func Providers(cfg ProviderConfig) []tagged.Value[source.Provider] {
-	var registry image.RegistryOptions
-	if cfg.RegistryOptions != nil {
-		registry = *cfg.RegistryOptions
-	}
 	stereoscopeProviders := tagged.ValueSet[source.Provider]{}
-	providers := stereoscope.ImageProviders(stereoscope.ImageProviderConfig{
-		Registry: registry,
-	})
+	providers := stereoscope.ImageProviders(cfg.StereoscopeImageProviderConfig)
 	for _, provider := range providers {
 		var sourceProvider source.Provider = stereoscopeSourceProvider{
 			stereoscopeProvider: provider.Value,
-			alias:               cfg.Alias,
-			cfg:                 &cfg,
+			cfg:                 cfg,
 		}
 		stereoscopeProviders = append(stereoscopeProviders,
 			tagged.New(sourceProvider, append([]string{provider.Value.Name(), ImageTag}, provider.Tags...)...))

@@ -11,8 +11,9 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func NewSourceProvider(exclude source.ExcludeConfig, digestAlgorithms []crypto.Hash, alias source.Alias) source.Provider {
+func NewSourceProvider(path string, exclude source.ExcludeConfig, digestAlgorithms []crypto.Hash, alias source.Alias) source.Provider {
 	return &sourceProvider{
+		path:             path,
 		exclude:          exclude,
 		digestAlgorithms: digestAlgorithms,
 		alias:            alias,
@@ -20,17 +21,18 @@ func NewSourceProvider(exclude source.ExcludeConfig, digestAlgorithms []crypto.H
 }
 
 type sourceProvider struct {
+	path             string
 	exclude          source.ExcludeConfig
 	digestAlgorithms []crypto.Hash
 	alias            source.Alias
 }
 
-func (l sourceProvider) Name() string {
+func (p sourceProvider) Name() string {
 	return "local-file"
 }
 
-func (l sourceProvider) ProvideSource(_ context.Context, req source.Request) (source.Source, error) {
-	location, err := homedir.Expand(req.Input)
+func (p sourceProvider) ProvideSource(_ context.Context) (source.Source, error) {
+	location, err := homedir.Expand(p.path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to expand potential directory path: %w", err)
 	}
@@ -42,15 +44,15 @@ func (l sourceProvider) ProvideSource(_ context.Context, req source.Request) (so
 	}
 
 	if fileMeta.IsDir() {
-		return nil, fmt.Errorf("not a file source: %s", req.Input)
+		return nil, fmt.Errorf("not a file source: %s", p.path)
 	}
 
 	return New(
 		Config{
 			Path:             location,
-			Exclude:          l.exclude,
-			DigestAlgorithms: l.digestAlgorithms,
-			Alias:            l.alias,
+			Exclude:          p.exclude,
+			DigestAlgorithms: p.digestAlgorithms,
+			Alias:            p.alias,
 		},
 	)
 }
