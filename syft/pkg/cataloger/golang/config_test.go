@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Options(t *testing.T) {
+func Test_Config(t *testing.T) {
 	type opts struct {
 		local    bool
 		cacheDir string
@@ -51,6 +51,7 @@ func Test_Options(t *testing.T) {
 				SearchRemoteLicenses:        false,
 				Proxies:                     []string{"https://my.proxy"},
 				NoProxy:                     []string{"my.private", "no.proxy"},
+				MainModuleVersion:           DefaultMainModuleVersionConfig(),
 			},
 		},
 		{
@@ -74,6 +75,7 @@ func Test_Options(t *testing.T) {
 				SearchRemoteLicenses:        true,
 				Proxies:                     []string{"https://alt.proxy", "direct"},
 				NoProxy:                     []string{"alt.no.proxy"},
+				MainModuleVersion:           DefaultMainModuleVersionConfig(),
 			},
 		},
 	}

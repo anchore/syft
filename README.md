@@ -304,7 +304,7 @@ Where the `formats` available are:
 
 ## Using templates
 
-Syft lets you define custom output formats, using [Go templates](https://pkg.go.dev/text/template). Here's how it works:
+Syft lets you define custom output formats, using [Go templates](https://pkg.go.dev/text/template) relative to the Syft JSON output. Here's how it works:
 
 - Define your format as a Go template, and save this template as a file.
 
@@ -318,9 +318,9 @@ Syft lets you define custom output formats, using [Go templates](https://pkg.go.
 
 Here's what the `csv.tmpl` file might look like:
 ```gotemplate
-"Package","Version Installed","Found by"
-{{- range .Artifacts}}
-"{{.Name}}","{{.Version}}","{{.FoundBy}}"
+"Package","Version Installed", "Found by"
+{{- range .artifacts}}
+"{{.name}}","{{.version}}","{{.foundBy}}"
 {{- end}}
 ```
 
@@ -336,6 +336,9 @@ Which would produce output like:
 Syft also includes a vast array of utility templating functions from [sprig](http://masterminds.github.io/sprig/) apart from the default Golang [text/template](https://pkg.go.dev/text/template#hdr-Functions) to allow users to customize the output format.
 
 Lastly, Syft has custom templating functions defined in `./syft/format/template/encoder.go` to help parse the passed-in JSON structs.
+
+> [!NOTE]
+> If you have templates being used before Syft v0.102.0 that are no longer working. This is because templating keys were relative to the internal go structs before this version whereas now the keys are relative to the Syft JSON output. To get the legacy behavior back you can set the `format.template.legacy` option to `true` in your configuration.
 
 ## Multiple outputs
 
@@ -686,6 +689,24 @@ golang:
    # if unset this defaults to $GONOPROXY
    # SYFT_GOLANG_NOPROXY env var
    no-proxy: ""
+  
+   # the go main module version discovered from binaries built with the go compiler will
+   # always show (devel) as the version. Use these options to control heuristics to guess
+   # a more accurate version from the binary.
+   main-module-version:
+      
+      # look for LD flags that appear to be setting a version (e.g. -X main.version=1.0.0)
+      # SYFT_GOLANG_MAIN_MODULE_VERSION_FROM_LD_FLAGS env var
+      from-ld-flags: true
+      
+      # use the build settings (e.g. vcs.version & vcs.time) to craft a v0 pseudo version 
+      # (e.g. v0.0.0-20220308212642-53e6d0aaf6fb) when a more accurate version cannot be found otherwise.
+      # SYFT_GOLANG_MAIN_MODULE_VERSION_FROM_BUILD_SETTINGS env var
+      from-build-settings: true
+      
+      # search for semver-like strings in the binary contents.
+      # SYFT_GOLANG_MAIN_MODULE_VERSION_FROM_CONTENTS env var
+      from-contents: true
   
 java:
    maven-url: "https://repo1.maven.org/maven2"

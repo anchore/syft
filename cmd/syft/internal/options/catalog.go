@@ -63,6 +63,7 @@ func DefaultCatalog() Catalog {
 		Scope:         source.SquashedScope.String(),
 		Package:       defaultPackageConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
+		Golang:        defaultGolangConfig(),
 		File:          defaultFileConfig(),
 		Relationships: defaultRelationshipsConfig(),
 		Source:        defaultSourceConfig(),
@@ -132,7 +133,13 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
 			WithSearchRemoteLicenses(cfg.Golang.SearchRemoteLicenses).
 			WithProxy(cfg.Golang.Proxy).
-			WithNoProxy(cfg.Golang.NoProxy),
+			WithNoProxy(cfg.Golang.NoProxy).
+			WithMainModuleVersion(
+				golang.DefaultMainModuleVersionConfig().
+					WithFromContents(cfg.Golang.MainModuleVersion.FromContents).
+					WithFromBuildSettings(cfg.Golang.MainModuleVersion.FromBuildSettings).
+					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
+			),
 		JavaScript: javascript.DefaultCatalogerConfig().
 			WithSearchRemoteLicenses(cfg.JavaScript.SearchRemoteLicenses).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),

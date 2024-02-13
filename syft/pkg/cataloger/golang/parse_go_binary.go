@@ -17,6 +17,7 @@ import (
 	"golang.org/x/mod/module"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -37,7 +38,7 @@ var (
 	// inject the correct version into the main module of the build process
 
 	knownBuildFlagPatterns = []*regexp.Regexp{
-		regexp.MustCompile(`(?m)\.([gG]it)?([bB]uild)?[vV]ersion=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
+		regexp.MustCompile(`(?m)\.([gG]it)?([bB]uild)?[vV]er(sion)?=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
 		regexp.MustCompile(`(?m)\.([tT]ag)=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
 	}
 )
@@ -45,7 +46,15 @@ var (
 const devel = "(devel)"
 
 type goBinaryCataloger struct {
-	licenses goLicenses
+	licenses          goLicenses
+	mainModuleVersion MainModuleVersionConfig
+}
+
+func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
+	return &goBinaryCataloger{
+		licenses:          newGoLicenses(binaryCatalogerName, opts),
+		mainModuleVersion: opts.MainModuleVersion,
+	}
 }
 
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
@@ -61,13 +70,53 @@ func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resol
 	internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
 	for _, mod := range mods {
-		pkgs = append(pkgs, c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch)...)
+		pkgs = append(pkgs, c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch, unionReader)...)
 	}
 
 	return pkgs, nil, nil
 }
 
-func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location) pkg.Package {
+func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) []pkg.Package {
+	var pkgs []pkg.Package
+	if mod == nil {
+		return pkgs
+	}
+
+	var empty debug.Module
+	if mod.Main == empty && mod.Path != "" {
+		mod.Main = createMainModuleFromPath(mod.Path)
+	}
+
+	for _, dep := range mod.Deps {
+		if dep == nil {
+			continue
+		}
+		p := c.newGoBinaryPackage(
+			resolver,
+			dep,
+			mod.Main.Path,
+			mod.GoVersion,
+			arch,
+			nil,
+			mod.cryptoSettings,
+			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
+		if pkg.IsValid(&p) {
+			pkgs = append(pkgs, p)
+		}
+	}
+
+	if mod.Main == empty {
+		return pkgs
+	}
+
+	main := c.makeGoMainPackage(resolver, mod, arch, location, reader)
+	pkgs = append(pkgs, main)
+
+	return pkgs
+}
+
+func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	main := c.newGoBinaryPackage(
 		resolver,
@@ -81,37 +130,17 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 	)
 
 	if main.Version != devel {
+		// found a full package with a non-development version... return it as is...
 		return main
 	}
 
-	version, hasVersion := gbs.Get("vcs.revision")
-	timestamp, hasTimestamp := gbs.Get("vcs.time")
-
-	var ldflags string
-	if metadata, ok := main.Metadata.(pkg.GolangBinaryBuildinfoEntry); ok {
-		// we've found a specific version from the ldflags! use it as the version.
-		// why not combine that with the pseudo version (e.g. v1.2.3-0.20210101000000-abcdef123456)?
-		// short answer: we're assuming that if a specific semver was provided in the ldflags that
-		// there is a matching vcs tag to match that could be referenced. This assumption could
-		// be incorrect in terms of the go.mod contents, but is not incorrect in terms of the logical
-		// version of the package.
-		ldflags, _ = metadata.BuildSettings.Get("-ldflags")
+	// we have a package, but the version is "devel"... let's try and find a better answer
+	var metadata *pkg.GolangBinaryBuildinfoEntry
+	if v, ok := main.Metadata.(pkg.GolangBinaryBuildinfoEntry); ok {
+		metadata = &v
 	}
+	version := c.findMainModuleVersion(metadata, gbs, reader)
 
-	majorVersion, fullVersion := extractVersionFromLDFlags(ldflags)
-	if fullVersion != "" {
-		version = fullVersion
-	} else if hasVersion && hasTimestamp {
-		//NOTE: err is ignored, because if parsing fails
-		// we still use the empty Time{} struct to generate an empty date, like 00010101000000
-		// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
-		ts, _ := time.Parse(time.RFC3339, timestamp)
-		if len(version) >= 12 {
-			version = version[:12]
-		}
-
-		version = module.PseudoVersion(majorVersion, fullVersion, ts, version)
-	}
 	if version != "" {
 		main.Version = version
 		main.PURL = packageURL(main.Name, main.Version)
@@ -120,6 +149,65 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 	}
 
 	return main
+}
+
+var semverPattern = regexp.MustCompile(`\x00(?P<version>v?(\d+\.\d+\.\d+[-\w]*[+\w]*))\x00`)
+
+func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuildinfoEntry, gbs pkg.KeyValues, reader io.ReadSeekCloser) string {
+	vcsVersion, hasVersion := gbs.Get("vcs.revision")
+	timestamp, hasTimestamp := gbs.Get("vcs.time")
+
+	var ldflags, majorVersion, fullVersion string
+	if c.mainModuleVersion.FromLDFlags && metadata != nil {
+		// we've found a specific version from the ldflags! use it as the version.
+		// why not combine that with the pseudo version (e.g. v1.2.3-0.20210101000000-abcdef123456)?
+		// short answer: we're assuming that if a specific semver was provided in the ldflags that
+		// there is a matching vcs tag to match that could be referenced. This assumption could
+		// be incorrect in terms of the go.mod contents, but is not incorrect in terms of the logical
+		// version of the package.
+		ldflags, _ = metadata.BuildSettings.Get("-ldflags")
+
+		majorVersion, fullVersion = extractVersionFromLDFlags(ldflags)
+		if fullVersion != "" {
+			return fullVersion
+		}
+	}
+
+	// guess the version from pattern matching in the binary (can result in false positives)
+	if c.mainModuleVersion.FromContents {
+		_, err := reader.Seek(0, io.SeekStart)
+		if err != nil {
+			log.WithFields("error", err).Trace("unable to seek to start of go binary reader")
+		} else {
+			contents, err := io.ReadAll(reader)
+			if err != nil {
+				log.WithFields("error", err).Trace("unable to read from go binary reader")
+			} else {
+				matchMetadata := internal.MatchNamedCaptureGroups(semverPattern, string(contents))
+
+				version, ok := matchMetadata["version"]
+				if ok {
+					return version
+				}
+			}
+		}
+	}
+
+	// fallback to using the go standard pseudo v0.0.0 version
+	if c.mainModuleVersion.FromBuildSettings && hasVersion && hasTimestamp {
+		version := vcsVersion
+		//NOTE: err is ignored, because if parsing fails
+		// we still use the empty Time{} struct to generate an empty date, like 00010101000000
+		// for consistency with the pseudo-version format: https://go.dev/ref/mod#pseudo-versions
+		ts, _ := time.Parse(time.RFC3339, timestamp)
+		if len(vcsVersion) >= 12 {
+			version = vcsVersion[:12]
+		}
+
+		return module.PseudoVersion(majorVersion, fullVersion, ts, version)
+	}
+
+	return ""
 }
 
 func extractVersionFromLDFlags(ldflags string) (majorVersion string, fullVersion string) {
@@ -222,44 +310,4 @@ func createMainModuleFromPath(path string) (mod debug.Module) {
 	mod.Path = path
 	mod.Version = devel
 	return
-}
-
-func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string) []pkg.Package {
-	var pkgs []pkg.Package
-	if mod == nil {
-		return pkgs
-	}
-
-	var empty debug.Module
-	if mod.Main == empty && mod.Path != "" {
-		mod.Main = createMainModuleFromPath(mod.Path)
-	}
-
-	for _, dep := range mod.Deps {
-		if dep == nil {
-			continue
-		}
-		p := c.newGoBinaryPackage(
-			resolver,
-			dep,
-			mod.Main.Path,
-			mod.GoVersion,
-			arch,
-			nil,
-			mod.cryptoSettings,
-			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-		)
-		if pkg.IsValid(&p) {
-			pkgs = append(pkgs, p)
-		}
-	}
-
-	if mod.Main == empty {
-		return pkgs
-	}
-
-	main := c.makeGoMainPackage(resolver, mod, arch, location)
-	pkgs = append(pkgs, main)
-
-	return pkgs
 }
