@@ -282,7 +282,7 @@ func Test_toOsComponent(t *testing.T) {
 	}
 }
 
-func Test_toBomRef(t *testing.T) {
+func Test_toOSBomRef(t *testing.T) {
 	tests := []struct {
 		name      string
 		osName    string
