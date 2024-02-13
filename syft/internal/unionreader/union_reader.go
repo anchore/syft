@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
-// unionReader is a single interface with all reading functions needed by multi-arch binary catalogers
+// UnionReader is a single interface with all reading functions needed by multi-arch binary catalogers
 // cataloger.
 type UnionReader interface {
 	io.Reader
@@ -18,7 +18,7 @@ type UnionReader interface {
 	io.Closer
 }
 
-// getReaders extracts one or more io.ReaderAt objects representing binaries that can be processed (multiple binaries in the case for multi-architecture binaries).
+// GetReaders extracts one or more io.ReaderAt objects representing binaries that can be processed (multiple binaries in the case for multi-architecture binaries).
 func GetReaders(f UnionReader) ([]io.ReaderAt, error) {
 	if macho.IsUniversalMachoBinary(f) {
 		machoReaders, err := macho.ExtractReaders(f)
