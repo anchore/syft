@@ -83,10 +83,9 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 	if len(props) > 0 {
 		properties = &props
 	}
-	bomRef := fmt.Sprintf("os:%s@%s", distro.ID, distro.VersionID)
 	return []cyclonedx.Component{
 		{
-			BOMRef: bomRef,
+			BOMRef: toOSBomRef(distro.ID, distro.VersionID),
 			Type:   cyclonedx.ComponentTypeOS,
 			// is it idiomatic to be using SWID here for specific name and version information?
 			SWID: &cyclonedx.SWID{
@@ -103,6 +102,16 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 			Properties:         properties,
 		},
 	}
+}
+
+func toOSBomRef(name string, version string) string {
+	if name == "" {
+		name = "UNKNOWN_NAME"
+	}
+	if version == "" {
+		version = "UNKNOWN_VERSION"
+	}
+	return fmt.Sprintf("os:%s@%s", name, version)
 }
 
 func formatCPE(cpeString string) string {

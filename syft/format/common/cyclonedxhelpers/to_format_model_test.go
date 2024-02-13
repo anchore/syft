@@ -281,3 +281,43 @@ func Test_toOsComponent(t *testing.T) {
 		})
 	}
 }
+
+func Test_toBomRef(t *testing.T) {
+	tests := []struct {
+		name      string
+		osName    string
+		osVersion string
+		expected  string
+	}{
+		{
+			name:      "no name or version specified",
+			osName:    "",
+			osVersion: "",
+			expected:  "os:UNKNOWN_NAME@UNKNOWN_VERSION",
+		},
+		{
+			name:      "no version specified",
+			osName:    "my-name",
+			osVersion: "",
+			expected:  "os:my-name@UNKNOWN_VERSION",
+		},
+		{
+			name:      "no name specified",
+			osName:    "",
+			osVersion: "my-version",
+			expected:  "os:UNKNOWN_NAME@my-version",
+		},
+		{
+			name:      "both name and version specified",
+			osName:    "my-name",
+			osVersion: "my-version",
+			expected:  "os:my-name@my-version",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := toOSBomRef(test.osName, test.osVersion)
+			require.Equal(t, test.expected, got)
+		})
+	}
+}
