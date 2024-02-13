@@ -66,7 +66,15 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]file.E
 			log.WithFields("error", err).Warnf("unable to get file contents for %q", loc.RealPath)
 			continue
 		}
-		exec, err := processExecutable(loc, reader.(unionreader.UnionReader))
+
+		uReader, err := unionreader.GetUnionReader(reader)
+		if err != nil {
+			// TODO: known-unknowns
+			log.WithFields("error", err).Warnf("unable to get union reader for %q", loc.RealPath)
+			continue
+		}
+
+		exec, err := processExecutable(loc, uReader)
 		if err != nil {
 			log.WithFields("error", err).Warnf("unable to process executable %q", loc.RealPath)
 		}
