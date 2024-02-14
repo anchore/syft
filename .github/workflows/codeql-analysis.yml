@@ -20,7 +20,7 @@ permissions:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04-4core-16gb
 
     permissions:
       security-events: write
