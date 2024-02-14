@@ -176,6 +176,13 @@ func isRealPath(root string) (bool, error) {
 func (r *directoryIndexer) indexBranch(root string, stager *progress.Stage) ([]string, error) {
 	rootRealPath, err := filepath.EvalSymlinks(root)
 	if err != nil {
+		var pathErr *os.PathError
+		if errors.As(err, &pathErr) {
+			// we can't index the path, but we shouldn't consider this to be fatal
+			// TODO: known-unknowns
+			log.WithFields("root", root, "error", err).Trace("unable to evaluate symlink while indexing branch")
+			return nil, nil
+		}
 		return nil, err
 	}
 

@@ -222,6 +222,18 @@ func TestDirectoryIndexer_index(t *testing.T) {
 	}
 }
 
+func TestDirectoryIndexer_index_survive_badSymlink(t *testing.T) {
+	// test-fixtures/bad-symlinks
+	// ├── root
+	// │   ├── place
+	// │   │   └── fd -> ../somewhere/self/fd
+	// │   └── somewhere
+	// ...
+	indexer := newDirectoryIndexer("test-fixtures/bad-symlinks/root/place/fd", "test-fixtures/bad-symlinks/root/place/fd")
+	_, _, err := indexer.build()
+	require.NoError(t, err)
+}
+
 func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
 	var observedPaths []string
 	pathObserver := func(_, p string, _ os.FileInfo, _ error) error {
