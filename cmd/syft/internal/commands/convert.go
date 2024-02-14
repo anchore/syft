@@ -47,7 +47,7 @@ func Convert(app clio.Application) *cobra.Command {
 		}),
 		Args:    validateConvertArgs,
 		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()
 

@@ -26,7 +26,7 @@ func WriteSnippet(appConfig config.Application) *cobra.Command {
 		Use:   "write-snippet [binary]",
 		Short: "capture snippets from binaries",
 		Args:  cobra.ExactArgs(1),
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, args []string) error {
 			if len(args) == 0 && (name != "" || version != "") {
 				return fmt.Errorf("cannot provide name or version without a binary path")
 			}
@@ -38,7 +38,7 @@ func WriteSnippet(appConfig config.Application) *cobra.Command {
 
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			platform, err := getPlatform(binaryPath)
 			if err != nil {
 				return fmt.Errorf("unable to get platform: %w", err)

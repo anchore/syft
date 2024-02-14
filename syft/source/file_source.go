@@ -177,7 +177,7 @@ func (s FileSource) FileResolver(_ Scope) (file.Resolver, error) {
 		exclusionFunctions = append([]fileresolver.PathIndexVisitor{
 
 			// note: we should exclude these kinds of paths first before considering any other user-provided exclusions
-			func(p string, info os.FileInfo, err error) error {
+			func(p string, _ os.FileInfo, _ error) error {
 				if p == absParentDir {
 					// this is the root directory... always include it
 					return nil

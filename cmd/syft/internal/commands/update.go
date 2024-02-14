@@ -28,7 +28,7 @@ var latestAppVersionURL = struct {
 }
 
 func applicationUpdateCheck(id clio.Identification, check *options.UpdateCheck) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
+	return func(_ *cobra.Command, _ []string) error {
 		if check.CheckForAppUpdate {
 			checkForApplicationUpdate(id)
 		}

@@ -48,7 +48,7 @@ func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig
 				return nil
 			},
 		).
-		WithPostRuns(func(state *clio.State, err error) {
+		WithPostRuns(func(_ *clio.State, _ error) {
 			stereoscope.Cleanup()
 		})
 	return clioCfg

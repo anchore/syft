@@ -17,7 +17,7 @@ func Download(appConfig config.Application) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "download",
 		Short: "download binaries [name@version ...]",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				for _, arg := range args {
 					binaryFromImageCfg := appConfig.GetBinaryFromImage(arg, "")
@@ -40,7 +40,7 @@ func Download(appConfig config.Application) *cobra.Command {
 
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			for _, binaryFromImageCfg := range configs {
 				if err := internal.DownloadFromImage(appConfig.DownloadPath, binaryFromImageCfg); err != nil {
 					return err
