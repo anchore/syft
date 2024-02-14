@@ -197,7 +197,7 @@ func getDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 	}
 
 	return []fileresolver.PathIndexVisitor{
-		func(path string, info os.FileInfo, _ error) error {
+		func(_, path string, info os.FileInfo, _ error) error {
 			for _, exclusion := range exclusions {
 				// this is required to handle Windows filepaths
 				path = filepath.ToSlash(path)

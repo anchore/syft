@@ -392,7 +392,7 @@ func Test_getDirectoryExclusionFunctions_crossPlatform(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, f := range fns {
-				result := f(test.path, test.finfo, nil)
+				result := f("", test.path, test.finfo, nil)
 				require.Equal(t, test.walkHint, result)
 			}
 		})
