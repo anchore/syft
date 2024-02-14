@@ -126,7 +126,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
 	}
 	return pkgcataloging.Config{
-		Binary: binary.DefaultCatalogerConfig(),
+		Binary: binary.DefaultClassifierCatalogerConfig(),
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).

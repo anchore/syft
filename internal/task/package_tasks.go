@@ -112,7 +112,7 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 		// other package catalogers ///////////////////////////////////////////////////////////////////////////
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
-				return binary.NewCataloger(cfg.PackagesConfig.Binary)
+				return binary.NewClassifierCataloger(cfg.PackagesConfig.Binary)
 			},
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "binary",
 		),
