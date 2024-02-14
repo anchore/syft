@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"strings"
 
 	"github.com/anchore/syft/internal/task"
@@ -44,7 +45,32 @@ func DefaultCreateSBOMConfig() *CreateSBOMConfig {
 		Files:                filecataloging.DefaultConfig(),
 		Parallelism:          1,
 		packageTaskFactories: task.DefaultPackageTaskFactories(),
+
+		// library consumers are free to override the tool values to fit their needs, however, we have some sane defaults
+		// to ensure that SBOMs generated don't have missing tool metadata.
+		ToolName:    "syft",
+		ToolVersion: syftVersion(),
 	}
+}
+
+func syftVersion() string {
+	// extract the syft version from the go module info from the current binary that is running. This is useful for
+	// library consumers to at least encode the version of syft that was used to generate the SBOM. Note: we don't
+	// use the version info from main because it's baked in with ldflags, which we don't control for library consumers.
+	// This approach won't work in all cases though, such as when the binary is stripped of the buildinfo section.
+
+	buildInfo, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+
+	for _, d := range buildInfo.Deps {
+		if d.Path == "github.com/anchore/syft" && d.Version != "(devel)" {
+			return d.Version
+		}
+	}
+
+	return ""
 }
 
 // WithTool allows for setting the specific name, version, and any additional configuration that is not captured
