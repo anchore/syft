@@ -30,7 +30,7 @@ jobs:
           echo -n "commit=$(git rev-parse HEAD)" | tee -a $GITHUB_OUTPUT
 
       - name: Update Homebrew formula
-        uses: dawidd6/action-homebrew-bump-formula@75ed025ff3ad1d617862838b342b06d613a0ddf3 # v3.10.1
+        uses: dawidd6/action-homebrew-bump-formula@baf2b60c51fc1f8453c884b0c61052668a71bd1d # v3.11.0
         with:
           token: ${{ secrets.HOMEBREW_TOKEN }}
           org: anchore
