@@ -27,7 +27,7 @@ type Cataloger struct {
 
 func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger {
 	c.processor = append(c.processor,
-		func(resolver file.Resolver, env Environment) []request {
+		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			for _, g := range globs {
 				log.WithFields("glob", g).Trace("searching for paths matching glob")
@@ -47,7 +47,7 @@ func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger
 
 func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Cataloger {
 	c.processor = append(c.processor,
-		func(resolver file.Resolver, env Environment) []request {
+		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			log.WithFields("mimetypes", types).Trace("searching for paths matching mimetype")
 			matches, err := resolver.FilesByMIMEType(types...)
@@ -64,7 +64,7 @@ func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Catal
 
 func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger {
 	c.processor = append(c.processor,
-		func(resolver file.Resolver, env Environment) []request {
+		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			for _, p := range paths {
 				log.WithFields("path", p).Trace("searching for path")

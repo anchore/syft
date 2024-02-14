@@ -46,7 +46,7 @@ func CatalogerList(app clio.Application) *cobra.Command {
 	return app.SetupCommand(&cobra.Command{
 		Use:   "list [OPTIONS]",
 		Short: "List available catalogers",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return runCatalogerList(opts)
 		},
 	}, opts)
