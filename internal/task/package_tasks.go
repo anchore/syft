@@ -28,6 +28,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/rust"
 	sbomCataloger "github.com/anchore/syft/syft/pkg/cataloger/sbom"
 	"github.com/anchore/syft/syft/pkg/cataloger/swift"
+	"github.com/anchore/syft/syft/pkg/cataloger/wordpress"
 )
 
 //nolint:funlen
@@ -125,5 +126,6 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "linux", "kernel",
 		),
 		newSimplePackageTaskFactory(sbomCataloger.NewCataloger, "sbom"), // note: not evidence of installed packages
+		newSimplePackageTaskFactory(wordpress.NewWordpressPluginCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "wordpress"),
 	}
 }

@@ -263,6 +263,14 @@ func Test_SourceInfo(t *testing.T) {
 				"from GitHub Actions workflow file or composite action file",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.WordpressPluginPkg,
+			},
+			expected: []string{
+				"acquired package info from found wordpress plugin PHP source files",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {
