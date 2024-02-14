@@ -2273,19 +2273,19 @@
     },
     "WordpressPluginEntry": {
       "properties": {
-        "plugin_name": {
+        "pluginInstallDirectory": {
           "type": "string"
         },
         "author": {
           "type": "string"
         },
-        "author_uri": {
+        "authorUri": {
           "type": "string"
         }
       },
       "type": "object",
       "required": [
-        "plugin_name"
+        "pluginInstallDirectory"
       ]
     },
     "cpes": {
