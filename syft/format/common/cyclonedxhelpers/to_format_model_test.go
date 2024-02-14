@@ -293,19 +293,19 @@ func Test_toOSBomRef(t *testing.T) {
 			name:      "no name or version specified",
 			osName:    "",
 			osVersion: "",
-			expected:  "os:UNKNOWN_NAME@UNKNOWN_VERSION",
+			expected:  "os:unknown",
 		},
 		{
 			name:      "no version specified",
 			osName:    "my-name",
 			osVersion: "",
-			expected:  "os:my-name@UNKNOWN_VERSION",
+			expected:  "os:my-name",
 		},
 		{
 			name:      "no name specified",
 			osName:    "",
 			osVersion: "my-version",
-			expected:  "os:UNKNOWN_NAME@my-version",
+			expected:  "os:unknown",
 		},
 		{
 			name:      "both name and version specified",

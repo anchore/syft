@@ -106,10 +106,10 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 
 func toOSBomRef(name string, version string) string {
 	if name == "" {
-		name = "UNKNOWN_NAME"
+		return "os:unknown"
 	}
 	if version == "" {
-		version = "UNKNOWN_VERSION"
+		return fmt.Sprintf("os:%s", name)
 	}
 	return fmt.Sprintf("os:%s@%s", name, version)
 }
