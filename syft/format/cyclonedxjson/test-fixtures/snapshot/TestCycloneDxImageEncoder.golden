@@ -100,6 +100,7 @@
       ]
     },
     {
+      "bom-ref":"redacted",
       "type": "operating-system",
       "name": "debian",
       "version": "1.2.3",
