@@ -13,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-const catalogerName = "binary-cataloger"
+const catalogerName = "binary-classifier-cataloger"
 
 type ClassifierCatalogerConfig struct {
 	Classifiers []Classifier `yaml:"classifiers" json:"classifiers" mapstructure:"classifiers"`
