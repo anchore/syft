@@ -28,7 +28,7 @@ func (l stereoscopeSourceProvider) Name() string {
 	return l.stereoscopeProvider.Name()
 }
 
-func (l stereoscopeSourceProvider) ProvideSource(ctx context.Context) (source.Source, error) {
+func (l stereoscopeSourceProvider) Provide(ctx context.Context) (source.Source, error) {
 	img, err := l.stereoscopeProvider.Provide(ctx)
 	if err != nil {
 		return nil, err

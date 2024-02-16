@@ -7,5 +7,5 @@ import (
 // Provider is able to resolve a source request
 type Provider interface {
 	Name() string
-	ProvideSource(ctx context.Context) (Source, error)
+	Provide(ctx context.Context) (Source, error)
 }

@@ -30,7 +30,7 @@ func (l sourceProvider) Name() string {
 	return "local-directory"
 }
 
-func (l sourceProvider) ProvideSource(_ context.Context) (source.Source, error) {
+func (l sourceProvider) Provide(_ context.Context) (source.Source, error) {
 	location, err := homedir.Expand(l.path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to expand potential directory path: %w", err)

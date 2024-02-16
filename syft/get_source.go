@@ -31,7 +31,7 @@ func GetSource(ctx context.Context, userInput string, getSourceConfig ...GetSour
 
 	// call each source provider until we find a valid source
 	for _, p := range providers {
-		src, err := p.ProvideSource(ctx)
+		src, err := p.Provide(ctx)
 		if err != nil {
 			err = eachError(err, func(err error) error {
 				if errors.Is(err, os.ErrNotExist) {
