@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/go-collections"
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/internal/options"
@@ -233,14 +234,16 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 	explicitSources := opts.From
 	if len(explicitSources) == 0 {
 		// extract a scheme if it matches any provider tag; this is a holdover for compatibility, using the --from flag is recommended
-		explicitSource, newUserInput := stereoscope.ExtractSchemeSource(userInput, syft.SourceProviders(syft.DefaultSourceProviderConfig()).Tags()...)
+		explicitSource, newUserInput := stereoscope.ExtractSchemeSource(userInput, allSourceProviderTags()...)
 		if explicitSource != "" {
 			explicitSources = append(explicitSources, explicitSource)
 			userInput = newUserInput
 		}
 	}
 
-	cfg = cfg.WithBaseSources(sources...).WithFromSource(explicitSources...).WithDefaultImageSource(opts.Source.Image.DefaultPullSource)
+	cfg = cfg.WithBaseSources(sources...).
+		WithFromSource(explicitSources...).
+		WithDefaultImageSource(opts.Source.Image.DefaultPullSource)
 
 	src, err := syft.GetSource(ctx, userInput, cfg)
 	if err != nil {
@@ -445,4 +448,8 @@ func getHintPhrase(expErr task.ErrInvalidExpression) string {
 
 func trimOperation(x string) string {
 	return strings.TrimLeft(x, "+-")
+}
+
+func allSourceProviderTags() []string {
+	return collections.TaggedValueSet[source.Provider]{}.Join(syft.SourceProviders(syft.DefaultSourceProviderConfig())...).Tags()
 }

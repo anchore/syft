@@ -80,6 +80,8 @@ require (
 	modernc.org/sqlite v1.29.0
 )
 
+require github.com/anchore/go-collections v0.0.0-20240216171411-9321230ce537
+
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect

@@ -97,6 +97,8 @@ github.com/anchore/clio v0.0.0-20240209204744-cb94e40a4f65 h1:u9XrEabKlGPsrmRvAE
 github.com/anchore/clio v0.0.0-20240209204744-cb94e40a4f65/go.mod h1:8Jr7CjmwFVcBPtkJdTpaAGHimoGJGfbExypjzOu87Og=
 github.com/anchore/fangs v0.0.0-20231201140849-5075d28d6d8b h1:L/djgY7ZbZ/38+wUtdkk398W3PIBJLkt1N8nU/7e47A=
 github.com/anchore/fangs v0.0.0-20231201140849-5075d28d6d8b/go.mod h1:TLcE0RE5+8oIx2/NPWem/dq1DeaMoC+fPEH7hoSzPLo=
+github.com/anchore/go-collections v0.0.0-20240216171411-9321230ce537 h1:GjNGuwK5jWjJMyVppBjYS54eOiiSNv4Ba869k4wh72Q=
+github.com/anchore/go-collections v0.0.0-20240216171411-9321230ce537/go.mod h1:1aiktV46ATCkuVg0O573ZrH56BUawTECPETbZyBcqT8=
 github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a h1:nJ2G8zWKASyVClGVgG7sfM5mwoZlZ2zYpIzN2OhjWkw=
 github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a/go.mod h1:ubLFmlsv8/DFUQrZwY5syT5/8Er3ugSr4rDFwHsE3hg=
 github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb h1:iDMnx6LIjtjZ46C0akqveX83WFzhpTD3eqOthawb5vU=

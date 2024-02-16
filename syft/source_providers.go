@@ -1,9 +1,9 @@
 package syft
 
 import (
+	"github.com/anchore/go-collections"
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/stereoscope/tagged"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
@@ -11,10 +11,10 @@ import (
 )
 
 // SourceProviders returns all the configured source providers known to syft
-func SourceProviders(cfg SourceProviderConfig) tagged.ValueSet[source.Provider] {
+func SourceProviders(cfg SourceProviderConfig) []collections.TaggedValue[source.Provider] {
 	stereoscopeProviders := stereoscopeSourceProviders(cfg)
 
-	return tagged.ValueSet[source.Provider]{}.
+	return collections.TaggedValueSet[source.Provider]{}.
 		// --from file, dir, oci-archive, etc.
 		Join(stereoscopeProviders.Select("file", "dir")...).
 		Join(provider(filesource.NewSourceProvider(cfg.UserInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), "file")).
@@ -24,7 +24,7 @@ func SourceProviders(cfg SourceProviderConfig) tagged.ValueSet[source.Provider] 
 		Join(stereoscopeProviders.Select("pull")...)
 }
 
-func stereoscopeSourceProviders(cfg SourceProviderConfig) tagged.ValueSet[source.Provider] {
+func stereoscopeSourceProviders(cfg SourceProviderConfig) collections.TaggedValueSet[source.Provider] {
 	var registry image.RegistryOptions
 	if cfg.RegistryOptions != nil {
 		registry = *cfg.RegistryOptions
@@ -41,6 +41,6 @@ func stereoscopeSourceProviders(cfg SourceProviderConfig) tagged.ValueSet[source
 	return stereoscopeProviders
 }
 
-func provider(provider source.Provider, tags ...string) tagged.Value[source.Provider] {
-	return tagged.New(provider, append([]string{provider.Name()}, tags...)...)
+func provider(provider source.Provider, tags ...string) collections.TaggedValue[source.Provider] {
+	return collections.NewTaggedValue(provider, append([]string{provider.Name()}, tags...)...)
 }

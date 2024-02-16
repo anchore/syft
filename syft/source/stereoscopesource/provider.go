@@ -3,9 +3,9 @@ package stereoscopesource
 import (
 	"context"
 
+	"github.com/anchore/go-collections"
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/stereoscope/tagged"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -46,8 +46,8 @@ func (l stereoscopeSourceProvider) ProvideSource(ctx context.Context) (source.So
 	return New(img, cfg), nil
 }
 
-func Providers(cfg ProviderConfig) []tagged.Value[source.Provider] {
-	stereoscopeProviders := tagged.ValueSet[source.Provider]{}
+func Providers(cfg ProviderConfig) []collections.TaggedValue[source.Provider] {
+	stereoscopeProviders := collections.TaggedValueSet[source.Provider]{}
 	providers := stereoscope.ImageProviders(cfg.StereoscopeImageProviderConfig)
 	for _, provider := range providers {
 		var sourceProvider source.Provider = stereoscopeSourceProvider{
@@ -55,7 +55,7 @@ func Providers(cfg ProviderConfig) []tagged.Value[source.Provider] {
 			cfg:                 cfg,
 		}
 		stereoscopeProviders = append(stereoscopeProviders,
-			tagged.New(sourceProvider, append([]string{provider.Value.Name(), ImageTag}, provider.Tags...)...))
+			collections.NewTaggedValue(sourceProvider, append([]string{provider.Value.Name(), ImageTag}, provider.Tags...)...))
 	}
 	return stereoscopeProviders
 }

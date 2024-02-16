@@ -21,39 +21,16 @@ func GetSource(ctx context.Context, userInput string, getSourceConfig ...GetSour
 	// must set userInput before getting source providers, it is important configuration for them all
 	cfg.SourceProviderConfig.UserInput = userInput
 
-	providers := cfg.SourceProviders
-	if len(providers) == 0 {
-		providers = SourceProviders(cfg.SourceProviderConfig)
-	}
-
-	// narrow the sources to those generally programmatically requested (e.g. only pull sources for attest)
-	if len(cfg.BaseSources) > 0 {
-		// select the explicitly provided sources, in order
-		providers = providers.Select(cfg.BaseSources...)
-	}
-
-	// if the "default image pull source" is set, we move this as the first pull source
-	if cfg.DefaultImageSource != "" {
-		base := providers.Remove("pull")
-		pull := providers.Select("pull")
-		def := pull.Select(cfg.DefaultImageSource)
-		if len(def) == 0 {
-			return nil, fmt.Errorf("invalid DefaultImageSource: %s; available values are: %v", cfg.DefaultImageSource, pull.Tags())
-		}
-		providers = base.Join(def...).Join(pull...)
-	}
-
-	// narrow the sources to those explicitly requested generally by a user
-	if len(cfg.FromSource) > 0 {
-		// select the explicitly provided sources, in order
-		providers = providers.Select(cfg.FromSource...)
+	providers, err := cfg.GetProviders()
+	if err != nil {
+		return nil, err
 	}
 
 	var errs []error
 	var fileNotfound error
 
 	// call each source provider until we find a valid source
-	for _, p := range providers.Collect() {
+	for _, p := range providers {
 		src, err := p.ProvideSource(ctx)
 		if err != nil {
 			err = eachError(err, func(err error) error {
