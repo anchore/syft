@@ -63,6 +63,15 @@ multiline = [[
 `,
 		},
 		{
+			name: "variables",
+			content: `
+local foo = "bar"
+local baz = foo
+
+hello = baz
+`,
+		},
+		{
 			name: "complex syntax",
 			content: `
 foo = "bar"
@@ -152,6 +161,13 @@ list = {
 	"foo",
 	"bar",
 	-`,
+		},
+		{
+			name:    "undefined local",
+			wantErr: require.Error,
+			content: `
+test = hello
+		`,
 		},
 	}
 	for _, test := range tests {
