@@ -72,6 +72,13 @@ hello = baz
 `,
 		},
 		{
+			name: "skip expressions",
+			content: `
+test = (hello == "world") and "foo" or "bar"
+baz = "123"
+`,
+		},
+		{
 			name: "complex syntax",
 			content: `
 foo = "bar"
