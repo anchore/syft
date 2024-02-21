@@ -264,7 +264,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 			ID:      "some-id",
 			Name:    "some-name",
 			Version: "some-version",
-			Metadata: filesource.Metadata{
+			Metadata: filesource.FileMetadata{
 				Path: "/some-file-source-path",
 				Digests: []file.Digest{
 					{

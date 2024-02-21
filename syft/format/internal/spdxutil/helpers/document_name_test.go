@@ -37,14 +37,14 @@ func Test_DocumentName(t *testing.T) {
 		{
 			name: "directory",
 			srcMetadata: source.Description{
-				Metadata: directorysource.Metadata{Path: "some/path/to/place"},
+				Metadata: directorysource.DirectoryMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/path/to/place",
 		},
 		{
 			name: "file",
 			srcMetadata: source.Description{
-				Metadata: filesource.Metadata{Path: "some/path/to/place"},
+				Metadata: filesource.FileMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/path/to/place",
 		},
@@ -52,7 +52,7 @@ func Test_DocumentName(t *testing.T) {
 			name: "named",
 			srcMetadata: source.Description{
 				Name:     "some/name",
-				Metadata: filesource.Metadata{Path: "some/path/to/place"},
+				Metadata: filesource.FileMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/name",
 		},

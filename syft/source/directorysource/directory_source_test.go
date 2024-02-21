@@ -20,7 +20,7 @@ import (
 func TestNewFromDirectory(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
-	err = os.Chdir(path.Join(wd, "..")) // use test fixtures up a directory
+	err = os.Chdir(path.Dir(wd)) // use shared test fixtures up a directory
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		_ = os.Chdir(wd)
@@ -74,7 +74,7 @@ func TestNewFromDirectory(t *testing.T) {
 			t.Cleanup(func() {
 				require.NoError(t, src.Close())
 			})
-			assert.Equal(t, test.input, src.Describe().Metadata.(Metadata).Path)
+			assert.Equal(t, test.input, src.Describe().Metadata.(DirectoryMetadata).Path)
 
 			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)

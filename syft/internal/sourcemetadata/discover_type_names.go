@@ -21,7 +21,7 @@ func DiscoverTypeNames() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	files, err := filepath.Glob(filepath.Join(root, "syft/source/*.go"))
+	files, err := filepath.Glob(filepath.Join(root, "syft/source/**/*.go"))
 	if err != nil {
 		return nil, err
 	}
@@ -50,10 +50,10 @@ func findMetadataDefinitionNames(paths ...string) ([]string, error) {
 		}
 
 		// useful for debugging...
-		// fmt.Println(path)
-		// fmt.Println("Defs:", metadataDefinitions)
-		// fmt.Println("Used Types:", usedTypeNames)
-		// fmt.Println()
+		fmt.Println(path)
+		fmt.Println("Defs:", metadataDefinitions)
+		fmt.Println("Used Types:", usedTypeNames)
+		fmt.Println()
 
 		names.Add(metadataDefinitions...)
 		usedNames.Add(usedTypeNames...)

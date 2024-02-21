@@ -153,27 +153,27 @@ func Test_toGithubModel(t *testing.T) {
 		},
 		{
 			name:     "current directory",
-			metadata: directorysource.Metadata{Path: "."},
+			metadata: directorysource.DirectoryMetadata{Path: "."},
 			testPath: "etc",
 		},
 		{
 			name:     "relative directory",
-			metadata: directorysource.Metadata{Path: "./artifacts"},
+			metadata: directorysource.DirectoryMetadata{Path: "./artifacts"},
 			testPath: "artifacts/etc",
 		},
 		{
 			name:     "absolute directory",
-			metadata: directorysource.Metadata{Path: "/artifacts"},
+			metadata: directorysource.DirectoryMetadata{Path: "/artifacts"},
 			testPath: "/artifacts/etc",
 		},
 		{
 			name:     "file",
-			metadata: filesource.Metadata{Path: "./executable"},
+			metadata: filesource.FileMetadata{Path: "./executable"},
 			testPath: "executable",
 		},
 		{
 			name:     "archive",
-			metadata: filesource.Metadata{Path: "./archive.tar.gz"},
+			metadata: filesource.FileMetadata{Path: "./archive.tar.gz"},
 			testPath: "archive.tar.gz:/etc",
 		},
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
-// AllTypes returns a list of all source metadata types that syft supports (that are represented in the source.Description.Metadata field).
+// AllTypes returns a list of all source metadata types that syft supports (that are represented in the source.Description.FileMetadata field).
 func AllTypes() []any {
-	return []any{directorysource.Metadata{}, filesource.Metadata{}, stereoscopesource.ImageMetadata{}}
+	return []any{directorysource.DirectoryMetadata{}, filesource.FileMetadata{}, stereoscopesource.ImageMetadata{}}
 }

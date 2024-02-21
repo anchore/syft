@@ -210,7 +210,7 @@ func TestExtractSourceFromNamespaces(t *testing.T) {
 		},
 		{
 			namespace: "https://anchore.com/syft/dir/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  directorysource.Metadata{},
+			expected:  directorysource.DirectoryMetadata{},
 		},
 		{
 			namespace: "https://another-host/blob/123",
@@ -479,7 +479,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-.",
 				Name: ".",
-				Metadata: directorysource.Metadata{
+				Metadata: directorysource.DirectoryMetadata{
 					Path: ".",
 				},
 			},
@@ -491,7 +491,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-my-app",
 				Name: "my-app",
-				Metadata: directorysource.Metadata{
+				Metadata: directorysource.DirectoryMetadata{
 					Path: "my-app",
 				},
 			},
@@ -502,7 +502,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			name: "file source",
 			source: source.Description{
 				ID: "DocumentRoot-File-my-app.exe",
-				Metadata: filesource.Metadata{
+				Metadata: filesource.FileMetadata{
 					Path: "my-app.exe",
 					Digests: []file.Digest{
 						{

@@ -76,7 +76,7 @@ func TestNewFromFile(t *testing.T) {
 				require.NoError(t, src.Close())
 			})
 
-			assert.Equal(t, test.input, src.Describe().Metadata.(Metadata).Path)
+			assert.Equal(t, test.input, src.Describe().Metadata.(FileMetadata).Path)
 
 			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
@@ -129,7 +129,7 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 				require.NoError(t, src.Close())
 			})
 
-			assert.Equal(t, archivePath, src.Describe().Metadata.(Metadata).Path)
+			assert.Equal(t, archivePath, src.Describe().Metadata.(FileMetadata).Path)
 
 			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)

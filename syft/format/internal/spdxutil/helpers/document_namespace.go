@@ -32,9 +32,9 @@ func DocumentNamespace(name string, src source.Description, desc sbom.Descriptor
 	switch src.Metadata.(type) {
 	case stereoscopesource.ImageMetadata:
 		input = InputImage
-	case directorysource.Metadata:
+	case directorysource.DirectoryMetadata:
 		input = InputDirectory
-	case filesource.Metadata:
+	case filesource.FileMetadata:
 		input = InputFile
 	}
 

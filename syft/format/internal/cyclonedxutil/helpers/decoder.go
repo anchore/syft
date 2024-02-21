@@ -237,7 +237,7 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 		// TODO: this is lossy... we can't know if this is a file or a directory
 		return source.Description{
 			ID:       "",
-			Metadata: filesource.Metadata{Path: c.Name},
+			Metadata: filesource.FileMetadata{Path: c.Name},
 		}
 	}
 	return source.Description{}

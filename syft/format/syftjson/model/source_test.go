@@ -34,7 +34,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			expected: &Source{
 				ID:   "foobar",
 				Type: "directory",
-				Metadata: directorysource.Metadata{
+				Metadata: directorysource.DirectoryMetadata{
 					Path: "/var/lib/foo",
 					//Base: "/nope", // note: should be ignored entirely
 				},
@@ -126,7 +126,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			expected: &Source{
 				ID:   "foobar",
 				Type: "file",
-				Metadata: filesource.Metadata{
+				Metadata: filesource.FileMetadata{
 					Path: "/var/lib/foo/go.mod",
 					Digests: []file.Digest{
 						{
@@ -190,7 +190,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "directory",
-				Metadata: directorysource.Metadata{
+				Metadata: directorysource.DirectoryMetadata{
 					Path: "/var/lib/foo",
 				},
 			},
@@ -206,7 +206,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "directory",
-				Metadata: directorysource.Metadata{
+				Metadata: directorysource.DirectoryMetadata{
 					Path: "/var/lib/foo",
 				},
 			},
@@ -290,7 +290,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "file",
-				Metadata: filesource.Metadata{
+				Metadata: filesource.FileMetadata{
 					Path: "/var/lib/foo/go.mod",
 				},
 			},
