@@ -445,7 +445,18 @@ func parseLocal(data []byte, i *int, locals map[string]string) error {
 			return err
 		}
 
-		value := locals[ref]
+		// Skip if it's an expression
+		skipWhitespaceNoNewLine(data, i)
+		c := data[*i]
+
+		var value string
+
+		if c != '\n' && c != '\r' {
+			skipExpression(data, i)
+			value = ""
+		} else {
+			value = locals[ref]
+		}
 
 		locals[key] = value
 	}

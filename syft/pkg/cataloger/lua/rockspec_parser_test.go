@@ -79,6 +79,15 @@ baz = "123"
 `,
 		},
 		{
+			name: "skip expressions in locals",
+			content: `
+local var1 = "foo"
+local var2 = var1 == "foo" and "true" or ("false")
+
+foo = "bar"
+`,
+		},
+		{
 			name: "concatenation",
 			content: `
 local foo = "bar"
