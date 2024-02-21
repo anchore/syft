@@ -17,8 +17,8 @@ func SourceProviders(cfg SourceProviderConfig) []collections.TaggedValue[source.
 	return collections.TaggedValueSet[source.Provider]{}.
 		// --from file, dir, oci-archive, etc.
 		Join(stereoscopeProviders.Select("file", "dir")...).
-		Join(provider(filesource.NewSourceProvider(cfg.UserInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), "file")).
-		Join(provider(directorysource.NewSourceProvider(cfg.UserInput, cfg.Exclude, cfg.Alias, cfg.BasePath), "dir")).
+		Join(tagProvider(filesource.NewSourceProvider(cfg.UserInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), "file")).
+		Join(tagProvider(directorysource.NewSourceProvider(cfg.UserInput, cfg.Exclude, cfg.Alias, cfg.BasePath), "dir")).
 
 		// --from docker, registry, etc.
 		Join(stereoscopeProviders.Select("pull")...)
@@ -41,6 +41,6 @@ func stereoscopeSourceProviders(cfg SourceProviderConfig) collections.TaggedValu
 	return stereoscopeProviders
 }
 
-func provider(provider source.Provider, tags ...string) collections.TaggedValue[source.Provider] {
+func tagProvider(provider source.Provider, tags ...string) collections.TaggedValue[source.Provider] {
 	return collections.NewTaggedValue(provider, append([]string{provider.Name()}, tags...)...)
 }
