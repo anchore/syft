@@ -918,7 +918,7 @@ func Test_isUnallowableFileType(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, disallowByFileType("dont/care", test.info, nil))
+			assert.Equal(t, test.expected, disallowByFileType("", "dont/care", test.info, nil))
 		})
 	}
 }
@@ -999,7 +999,7 @@ func Test_IndexingNestedSymLinks(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
-	filterFn := func(path string, _ os.FileInfo, _ error) error {
+	filterFn := func(_, path string, _ os.FileInfo, _ error) error {
 		if strings.HasSuffix(path, string(filepath.Separator)+"readme") {
 			return ErrSkipPath
 		}
@@ -1144,7 +1144,7 @@ func Test_isUnixSystemRuntimePath(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			assert.Equal(t, test.expected, disallowUnixSystemRuntimePath(test.path, nil, nil))
+			assert.Equal(t, test.expected, disallowUnixSystemRuntimePath("", test.path, nil, nil))
 		})
 	}
 }

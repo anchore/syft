@@ -452,4 +452,12 @@ var commonTestCases = []testCase{
 			"glibc": "2.34-210",
 		},
 	},
+	{
+		name:        "find wordpress plugins",
+		pkgType:     pkg.WordpressPluginPkg,
+		pkgLanguage: pkg.PHP,
+		pkgInfo: map[string]string{
+			"Akismet Anti-spam: Spam Protection": "5.3",
+		},
+	},
 }

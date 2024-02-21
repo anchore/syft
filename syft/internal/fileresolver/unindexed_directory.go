@@ -232,7 +232,7 @@ func (u UnindexedDirectory) AllLocations(ctx context.Context) <-chan file.Locati
 	errWalkCanceled := fmt.Errorf("walk canceled")
 	go func() {
 		defer close(out)
-		err := afero.Walk(u.fs, u.absPath("."), func(p string, info fs.FileInfo, err error) error {
+		err := afero.Walk(u.fs, u.absPath("."), func(p string, _ fs.FileInfo, _ error) error {
 			p = strings.TrimPrefix(p, u.dir)
 			if p == "" {
 				return nil

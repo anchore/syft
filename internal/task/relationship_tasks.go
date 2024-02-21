@@ -22,7 +22,7 @@ func (s sourceIdentifierAdapter) ID() artifact.ID {
 }
 
 func NewRelationshipsTask(cfg cataloging.RelationshipsConfig, src source.Description) Task {
-	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+	fn := func(_ context.Context, _ file.Resolver, builder sbomsync.Builder) error {
 		relationship.Finalize(
 			builder,
 			cfg,

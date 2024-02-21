@@ -108,7 +108,7 @@ func NewExecutableCatalogerTask(selection file.Selection, cfg executable.Config)
 
 	cat := executable.NewCataloger(cfg)
 
-	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+	fn := func(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		accessor := builder.(sbomsync.Accessor)
 
 		result, err := cat.Catalog(resolver)

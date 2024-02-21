@@ -145,6 +145,7 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 	return result
 }
 
+//nolint:funlen
 func candidateVendors(p pkg.Package) []string {
 	// in ecosystems where the packaging metadata does not have a clear field to indicate a vendor (or a field that
 	// could be interpreted indirectly as such) the project name tends to be a common stand in. Examples of this
@@ -184,6 +185,9 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.union(candidateVendorsForAPK(p))
 	case pkg.NpmPackage:
 		vendors.union(candidateVendorsForJavascript(p))
+	case pkg.WordpressPluginEntry:
+		vendors.clear()
+		vendors.union(candidateVendorsForWordpressPlugin(p))
 	}
 
 	// We should no longer be generating vendor candidates with these values ["" and "*"]
@@ -241,6 +245,11 @@ func candidateProducts(p pkg.Package) []string {
 
 	if _, hasAPKMetadata := p.Metadata.(pkg.ApkDBEntry); hasAPKMetadata {
 		products.union(candidateProductsForAPK(p))
+	}
+
+	if _, hasWordpressMetadata := p.Metadata.(pkg.WordpressPluginEntry); hasWordpressMetadata {
+		products.clear()
+		products.union(candidateProductsForWordpressPlugin(p))
 	}
 
 	// it is never OK to have candidates with these values ["" and "*"] (since CPEs will match any other value)

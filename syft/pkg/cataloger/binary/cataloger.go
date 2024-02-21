@@ -13,25 +13,25 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-const catalogerName = "binary-cataloger"
+const catalogerName = "binary-classifier-cataloger"
 
-type CatalogerConfig struct {
+type ClassifierCatalogerConfig struct {
 	Classifiers []Classifier `yaml:"classifiers" json:"classifiers" mapstructure:"classifiers"`
 }
 
-func DefaultCatalogerConfig() CatalogerConfig {
-	return CatalogerConfig{
+func DefaultClassifierCatalogerConfig() ClassifierCatalogerConfig {
+	return ClassifierCatalogerConfig{
 		Classifiers: DefaultClassifiers(),
 	}
 }
 
-func NewCataloger(cfg CatalogerConfig) pkg.Cataloger {
+func NewClassifierCataloger(cfg ClassifierCatalogerConfig) pkg.Cataloger {
 	return &cataloger{
 		classifiers: cfg.Classifiers,
 	}
 }
 
-func (cfg CatalogerConfig) MarshalJSON() ([]byte, error) {
+func (cfg ClassifierCatalogerConfig) MarshalJSON() ([]byte, error) {
 	// only keep the class names
 	var names []string
 	for _, cls := range cfg.Classifiers {
