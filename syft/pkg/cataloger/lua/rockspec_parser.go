@@ -206,17 +206,6 @@ func parseRockspecNode(data []byte, i *int, locals map[string]string) (*rockspec
 		return &rockspecNode{
 			key: ",",
 		}, nil
-	case '"', '\'':
-		str, err := parseRockspecString(data, i, locals)
-
-		if err != nil {
-			return nil, err
-		}
-		value := str.value
-
-		return &rockspecNode{
-			key, value,
-		}, nil
 	case '[':
 		offset := *i + 1
 		if offset >= len(data) {
@@ -248,25 +237,17 @@ func parseRockspecNode(data []byte, i *int, locals map[string]string) (*rockspec
 		return &rockspecNode{
 			key, value,
 		}, nil
-	default:
-		local, err := parseRockspecLiteral(data, i, locals)
-
-		if err != nil {
-			return nil, err
-		}
-
-		value, ok := locals[local]
-
-		if !ok {
-			return nil, fmt.Errorf("unknown local: %s", local)
-		}
-
-		return &rockspecNode{
-			key, value,
-		}, nil
 	}
 
-	return nil, nil
+	value, err := parseRockspecValue(data, i, locals, "")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &rockspecNode{
+		key, value,
+	}, nil
 }
 
 func parseRockspecListItem(data []byte, i *int, locals map[string]string) (*rockspecNode, error) {
@@ -308,6 +289,62 @@ func parseRockspecListItem(data []byte, i *int, locals map[string]string) (*rock
 	return str, nil
 }
 
+func parseRockspecValue(data []byte, i *int, locals map[string]string, initialValue string) (string, error) {
+	c := data[*i]
+
+	var value string
+
+	switch c {
+	case '"', '\'':
+		str, err := parseRockspecString(data, i, locals)
+
+		if err != nil {
+			return "", err
+		}
+		value = str.value.(string)
+	default:
+		local, err := parseRockspecLiteral(data, i, locals)
+
+		if err != nil {
+			return "", err
+		}
+
+		l, ok := locals[local]
+
+		if !ok {
+			return "", fmt.Errorf("unknown local: %s", local)
+		}
+
+		value = l
+	}
+
+	value = fmt.Sprintf("%s%s", initialValue, value)
+
+	skipWhitespaceNoNewLine(data, i)
+
+	if len(data) > *i+2 {
+		if data[*i] == '.' && data[*i+1] == '.' {
+			*i += 2
+
+			skipWhitespaceNoNewLine(data, i)
+
+			if *i >= len(data) {
+				return "", fmt.Errorf("unexpected end of expression at %d", *i)
+			}
+
+			v, err := parseRockspecValue(data, i, locals, value)
+
+			if err != nil {
+				return "", err
+			}
+
+			value = v
+		}
+	}
+
+	return value, nil
+}
+
 func parseRockspecLiteral(data []byte, i *int, locals map[string]string) (string, error) {
 	var buf bytes.Buffer
 out:
@@ -335,7 +372,7 @@ out:
 	return buf.String(), nil
 }
 
-func parseRockspecString(data []byte, i *int, locals map[string]string) (*rockspecNode, error) {
+func parseRockspecString(data []byte, i *int, _ map[string]string) (*rockspecNode, error) {
 	delim := data[*i]
 	var endDelim byte
 	switch delim {
@@ -420,9 +457,18 @@ func skipExpression(data []byte, i *int) {
 	parseComment(data, i)
 }
 
+func skipWhitespaceNoNewLine(data []byte, i *int) {
+	for *i < len(data) && (data[*i] == ' ' || data[*i] == '\t') {
+		*i++
+	}
+}
+
 func isLiteral(c byte) bool {
 	if c == '[' || c == ']' {
 		return true
+	}
+	if c == '.' {
+		return false
 	}
 	return parsing.IsLiteral(c)
 }

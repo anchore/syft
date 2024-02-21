@@ -79,6 +79,16 @@ baz = "123"
 `,
 		},
 		{
+			name: "concatenation",
+			content: `
+local foo = "bar"
+local baz = "123"
+hello = "world"..baz
+baz = foo.." "..baz
+test = foo .. baz
+`,
+		},
+		{
 			name: "complex syntax",
 			content: `
 foo = "bar"
@@ -175,6 +185,13 @@ list = {
 			content: `
 test = hello
 		`,
+		},
+		{
+			name:    "unterminated concatenation",
+			wantErr: require.Error,
+			content: `
+local foo = "123"
+hello = foo..  `,
 		},
 	}
 	for _, test := range tests {
