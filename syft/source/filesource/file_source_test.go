@@ -227,6 +227,14 @@ func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string, l
 }
 
 func Test_FileSource_ID(t *testing.T) {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	err = os.Chdir(path.Dir(wd))
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = os.Chdir(wd)
+	})
+
 	tests := []struct {
 		name       string
 		cfg        Config
@@ -288,11 +296,12 @@ func Test_FileSource_ID(t *testing.T) {
 			if tt.wantErr == nil {
 				tt.wantErr = require.NoError
 			}
-			s, err := New(tt.cfg)
+			newSource, err := New(tt.cfg)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
 			}
+			s := newSource.(*fileSource)
 			assert.Equalf(t, tt.want, s.ID(), "ID() mismatch")
 			assert.Equalf(t, tt.wantDigest, s.digestForVersion, "digestForVersion mismatch")
 		})

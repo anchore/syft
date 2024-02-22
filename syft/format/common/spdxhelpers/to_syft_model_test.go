@@ -202,7 +202,7 @@ func TestExtractSourceFromNamespaces(t *testing.T) {
 	}{
 		{
 			namespace: "https://anchore.com/syft/file/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  file.Metadata{},
+			expected:  filesource.FileMetadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/image/d42b01d0-7325-409b-b03f-74082935c4d3",
