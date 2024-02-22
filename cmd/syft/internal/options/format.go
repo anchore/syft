@@ -3,6 +3,7 @@ package options
 import (
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/syft/format"
+	"github.com/anchore/syft/syft/format/spdxtagvalue"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -41,9 +42,10 @@ func (o Format) Encoders() ([]sbom.FormatEncoder, error) {
 	return format.EncodersConfig{
 		Template:      o.Template.config(),
 		SyftJSON:      o.SyftJSON.config(),
-		SPDXJSON:      o.SPDXJSON.config(format.AllVersions),      // we support multiple versions, not just a single version
-		CyclonedxJSON: o.CyclonedxJSON.config(format.AllVersions), // we support multiple versions, not just a single version
-		CyclonedxXML:  o.CyclonedxXML.config(format.AllVersions),  // we support multiple versions, not just a single version
+		SPDXJSON:      o.SPDXJSON.config(format.AllVersions),                   // we support multiple versions, not just a single version
+		SPDXTagValue:  spdxtagvalue.EncoderConfig{Version: format.AllVersions}, // we support multiple versions, not just a single version
+		CyclonedxJSON: o.CyclonedxJSON.config(format.AllVersions),              // we support multiple versions, not just a single version
+		CyclonedxXML:  o.CyclonedxXML.config(format.AllVersions),               // we support multiple versions, not just a single version
 	}.Encoders()
 }
 
