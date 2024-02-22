@@ -118,6 +118,17 @@ object = {
 `,
 		},
 		{
+			name: "content start with comment",
+			content: `
+foo = "bar"
+-- this is a comment
+object = {
+	-- this is another comment
+	hello = "world"
+}
+`,
+		},
+		{
 			name: "list with comment",
 			content: `
 list = {
