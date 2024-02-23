@@ -351,7 +351,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 func TestRegistryAuth(t *testing.T) {
 	host := "localhost:17"
 	image := fmt.Sprintf("%s/something:latest", host)
-	args := []string{"scan", "-vvv", fmt.Sprintf("registry:%s", image)}
+	args := []string{"scan", "-vvv", image, "--from", "registry"}
 
 	tests := []struct {
 		name       string
@@ -363,7 +363,7 @@ func TestRegistryAuth(t *testing.T) {
 			name: "fallback to keychain",
 			args: args,
 			assertions: []traitAssertion{
-				assertInOutput("source=OciRegistry"),
+				assertInOutput("from registry"),
 				assertInOutput(image),
 				assertInOutput(fmt.Sprintf("no registry credentials configured for %q, using the default keychain", host)),
 			},
@@ -377,7 +377,7 @@ func TestRegistryAuth(t *testing.T) {
 				"SYFT_REGISTRY_AUTH_PASSWORD":  "password",
 			},
 			assertions: []traitAssertion{
-				assertInOutput("source=OciRegistry"),
+				assertInOutput("from registry"),
 				assertInOutput(image),
 				assertInOutput(fmt.Sprintf(`using basic auth for registry "%s"`, host)),
 			},
@@ -390,7 +390,7 @@ func TestRegistryAuth(t *testing.T) {
 				"SYFT_REGISTRY_AUTH_TOKEN":     "my-token",
 			},
 			assertions: []traitAssertion{
-				assertInOutput("source=OciRegistry"),
+				assertInOutput("from registry"),
 				assertInOutput(image),
 				assertInOutput(fmt.Sprintf(`using token for registry "%s"`, host)),
 			},
@@ -402,7 +402,7 @@ func TestRegistryAuth(t *testing.T) {
 				"SYFT_REGISTRY_AUTH_AUTHORITY": host,
 			},
 			assertions: []traitAssertion{
-				assertInOutput("source=OciRegistry"),
+				assertInOutput("from registry"),
 				assertInOutput(image),
 				assertInOutput(fmt.Sprintf(`no registry credentials configured for %q, using the default keychain`, host)),
 			},
