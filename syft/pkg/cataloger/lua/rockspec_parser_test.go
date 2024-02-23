@@ -140,6 +140,20 @@ list = {
 `,
 		},
 		{
+			name: "skip build section",
+			content: `
+foo = "bar"
+build = {
+	a = {
+		{
+			content
+		}
+	}
+}
+bar = "baz"
+`,
+		},
+		{
 			name:    "invalid complex syntax",
 			wantErr: require.Error,
 			content: `
