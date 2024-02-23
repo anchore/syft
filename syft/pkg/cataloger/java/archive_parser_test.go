@@ -91,6 +91,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			detectNested: false,
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              true,
+				UseMaven:                false,
 				MavenBaseURL:            url,
 				MaxParentRecursiveDepth: 2,
 			},
@@ -1337,7 +1338,9 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 						},
 						PomProject: &pkg.JavaPomProject{
 							Path:        "META-INF/maven/org.apache.directory.api/api-asn1-api/pom.xml",
+							GroupID:     "org.apache.directory.api",
 							ArtifactID:  "api-asn1-api",
+							Version:     "2.0.0",
 							Name:        "Apache Directory API ASN.1 API",
 							Description: "ASN.1 API",
 							Parent: &pkg.JavaPomParent{
