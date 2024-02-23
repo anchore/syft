@@ -154,6 +154,19 @@ bar = "baz"
 `,
 		},
 		{
+			name: "skip functions",
+			content: `
+local function test
+	if foo == bar then
+		if hello = world then
+			blah
+		end
+	end
+end
+test = "blah"
+`,
+		},
+		{
 			name:    "invalid complex syntax",
 			wantErr: require.Error,
 			content: `

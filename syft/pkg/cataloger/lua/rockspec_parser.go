@@ -435,6 +435,14 @@ func parseLocal(data []byte, i *int, locals map[string]string) error {
 		return err
 	}
 
+	if key == "function" {
+		err := skipFunction(data, i)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	parsing.SkipWhitespace(data, i)
 
 	c := data[*i]
@@ -499,6 +507,33 @@ func skipBuildNode(data []byte, i *int) {
 
 		*i++
 	}
+}
+
+func skipFunction(data []byte, i *int) error {
+	blocks := 1
+
+	for *i < len(data)-5 {
+		if parsing.IsWhitespace(data[*i]) {
+			switch {
+			case string(data[*i+1:*i+3]) == "if" && parsing.IsWhitespace(data[*i+3]):
+				blocks++
+				*i += 3
+			case string(data[*i+1:*i+4]) == "end" && parsing.IsWhitespace(data[*i+4]):
+				blocks--
+				*i += 4
+
+				if blocks == 0 {
+					return nil
+				}
+			default:
+				*i++
+			}
+		} else {
+			*i++
+		}
+	}
+
+	return fmt.Errorf("unterminated function at %d", *i)
 }
 
 func skipExpression(data []byte, i *int) {
