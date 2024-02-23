@@ -40,9 +40,9 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	w.Init(writer, 0, 8, 0, '\t', tabwriter.AlignRight)
 
 	switch metadata := s.Source.Metadata.(type) {
-	case directorysource.DirectoryMetadata:
+	case directorysource.Metadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
-	case filesource.FileMetadata:
+	case filesource.Metadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
 	case stereoscopesource.ImageMetadata:
 		fmt.Fprintln(w, "[Image]")

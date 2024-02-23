@@ -91,7 +91,7 @@ func extractPreSchemaV9Metadata(t string, target []byte) (interface{}, error) {
 			cleanTarget = string(target)
 		}
 
-		return directorysource.DirectoryMetadata{
+		return directorysource.Metadata{
 			Path: cleanTarget,
 		}, nil
 
@@ -101,7 +101,7 @@ func extractPreSchemaV9Metadata(t string, target []byte) (interface{}, error) {
 			cleanTarget = string(target)
 		}
 
-		return filesource.FileMetadata{
+		return filesource.Metadata{
 			Path: cleanTarget,
 		}, nil
 

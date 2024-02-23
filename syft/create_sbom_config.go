@@ -350,7 +350,7 @@ func findDefaultTag(src source.Description) (string, error) {
 	switch m := src.Metadata.(type) {
 	case stereoscopesource.ImageMetadata:
 		return pkgcataloging.ImageTag, nil
-	case filesource.FileMetadata, directorysource.DirectoryMetadata:
+	case filesource.Metadata, directorysource.Metadata:
 		return pkgcataloging.DirectoryTag, nil
 	default:
 		return "", fmt.Errorf("unable to determine default cataloger tag for source type=%T", m)

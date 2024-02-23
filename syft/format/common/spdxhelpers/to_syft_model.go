@@ -190,7 +190,7 @@ func fileSource(p *spdx.Package) source.Description {
 func fileSourceMetadata(p *spdx.Package) (any, string) {
 	version := p.PackageVersion
 
-	m := filesource.FileMetadata{
+	m := filesource.Metadata{
 		Path: p.PackageName,
 	}
 	// if this is a Syft SBOM, we might have output a digest as the version
@@ -209,7 +209,7 @@ func fileSourceMetadata(p *spdx.Package) (any, string) {
 }
 
 func directorySourceMetadata(p *spdx.Package) (any, string) {
-	return directorysource.DirectoryMetadata{
+	return directorysource.Metadata{
 		Path: p.PackageName,
 		Base: "",
 	}, p.PackageVersion
@@ -232,7 +232,7 @@ func extractSourceFromNamespace(ns string) source.Description {
 		switch p {
 		case helpers.InputFile:
 			return source.Description{
-				Metadata: filesource.FileMetadata{},
+				Metadata: filesource.Metadata{},
 			}
 		case helpers.InputImage:
 			return source.Description{
@@ -240,7 +240,7 @@ func extractSourceFromNamespace(ns string) source.Description {
 			}
 		case helpers.InputDirectory:
 			return source.Description{
-				Metadata: directorysource.DirectoryMetadata{},
+				Metadata: directorysource.Metadata{},
 			}
 		}
 	}

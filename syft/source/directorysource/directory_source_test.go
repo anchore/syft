@@ -69,7 +69,7 @@ func TestNewFromDirectory(t *testing.T) {
 			t.Cleanup(func() {
 				require.NoError(t, src.Close())
 			})
-			assert.Equal(t, test.input, src.Describe().Metadata.(DirectoryMetadata).Path)
+			assert.Equal(t, test.input, src.Describe().Metadata.(Metadata).Path)
 
 			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)

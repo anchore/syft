@@ -202,7 +202,7 @@ func TestExtractSourceFromNamespaces(t *testing.T) {
 	}{
 		{
 			namespace: "https://anchore.com/syft/file/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  filesource.FileMetadata{},
+			expected:  filesource.Metadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/image/d42b01d0-7325-409b-b03f-74082935c4d3",
@@ -210,7 +210,7 @@ func TestExtractSourceFromNamespaces(t *testing.T) {
 		},
 		{
 			namespace: "https://anchore.com/syft/dir/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  directorysource.DirectoryMetadata{},
+			expected:  directorysource.Metadata{},
 		},
 		{
 			namespace: "https://another-host/blob/123",
@@ -479,7 +479,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-.",
 				Name: ".",
-				Metadata: directorysource.DirectoryMetadata{
+				Metadata: directorysource.Metadata{
 					Path: ".",
 				},
 			},
@@ -491,7 +491,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-my-app",
 				Name: "my-app",
-				Metadata: directorysource.DirectoryMetadata{
+				Metadata: directorysource.Metadata{
 					Path: "my-app",
 				},
 			},
@@ -502,7 +502,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			name: "file source",
 			source: source.Description{
 				ID: "DocumentRoot-File-my-app.exe",
-				Metadata: filesource.FileMetadata{
+				Metadata: filesource.Metadata{
 					Path: "my-app.exe",
 					Digests: []file.Digest{
 						{
@@ -538,7 +538,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 				cmpopts.IgnoreUnexported(pkg.Collection{}),
 				cmpopts.IgnoreUnexported(pkg.Package{}),
 				cmpopts.IgnoreUnexported(pkg.LicenseSet{}),
-				cmpopts.IgnoreFields(sbom.Artifacts{}, "FileMetadata", "FileDigests"),
+				cmpopts.IgnoreFields(sbom.Artifacts{}, "Metadata", "FileDigests"),
 			); diff != "" {
 				t.Fatalf("packages do not match:\n%s", diff)
 			}

@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"golang.org/x/mod/modfile"
 
 	"github.com/anchore/syft/internal"
@@ -45,7 +46,7 @@ func DiscoverTypes() ([]*TypeInfo, error) {
 	if srcImportBase == "" {
 		return nil, fmt.Errorf("unable to determine go module name from: %s", modFilePath)
 	}
-	files, err := filepath.Glob(filepath.Join(root, "syft/source/**/*.go"))
+	files, err := doublestar.FilepathGlob(filepath.Join(root, "syft/source/**/*.go"))
 	if err != nil {
 		return nil, err
 	}

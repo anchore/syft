@@ -29,7 +29,7 @@ func Test_toSourceModel_IgnoreBase(t *testing.T) {
 			name: "directory",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: directorysource.DirectoryMetadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -62,7 +62,7 @@ func Test_toSourceModel(t *testing.T) {
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: directorysource.DirectoryMetadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -72,7 +72,7 @@ func Test_toSourceModel(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "directory",
-				Metadata: directorysource.DirectoryMetadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -84,7 +84,7 @@ func Test_toSourceModel(t *testing.T) {
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: filesource.FileMetadata{
+				Metadata: filesource.Metadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -95,7 +95,7 @@ func Test_toSourceModel(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "file",
-				Metadata: filesource.FileMetadata{
+				Metadata: filesource.Metadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -136,7 +136,7 @@ func Test_toSourceModel(t *testing.T) {
 			name: "directory - no name/version",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: directorysource.DirectoryMetadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -144,7 +144,7 @@ func Test_toSourceModel(t *testing.T) {
 			expected: model.Source{
 				ID:   "test-id",
 				Type: "directory",
-				Metadata: directorysource.DirectoryMetadata{
+				Metadata: directorysource.Metadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -154,7 +154,7 @@ func Test_toSourceModel(t *testing.T) {
 			name: "file - no name/version",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: filesource.FileMetadata{
+				Metadata: filesource.Metadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -163,7 +163,7 @@ func Test_toSourceModel(t *testing.T) {
 			expected: model.Source{
 				ID:   "test-id",
 				Type: "file",
-				Metadata: filesource.FileMetadata{
+				Metadata: filesource.Metadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",

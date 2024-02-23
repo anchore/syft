@@ -240,7 +240,7 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 			Name:    name,
 			Version: version,
 		}
-	case directorysource.DirectoryMetadata:
+	case directorysource.Metadata:
 		if name == "" {
 			name = metadata.Path
 		}
@@ -255,7 +255,7 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 			Name:    name,
 			Version: version,
 		}
-	case filesource.FileMetadata:
+	case filesource.Metadata:
 		if name == "" {
 			name = metadata.Path
 		}

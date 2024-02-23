@@ -15,9 +15,9 @@ func DocumentName(src source.Description) string {
 	switch metadata := src.Metadata.(type) {
 	case stereoscopesource.ImageMetadata:
 		return metadata.UserInput
-	case directorysource.DirectoryMetadata:
+	case directorysource.Metadata:
 		return metadata.Path
-	case filesource.FileMetadata:
+	case filesource.Metadata:
 		return metadata.Path
 	default:
 		return "unknown"
