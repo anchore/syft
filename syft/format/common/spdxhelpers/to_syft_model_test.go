@@ -538,7 +538,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 				cmpopts.IgnoreUnexported(pkg.Collection{}),
 				cmpopts.IgnoreUnexported(pkg.Package{}),
 				cmpopts.IgnoreUnexported(pkg.LicenseSet{}),
-				cmpopts.IgnoreFields(sbom.Artifacts{}, "Metadata", "FileDigests"),
+				cmpopts.IgnoreFields(sbom.Artifacts{}, "FileMetadata", "FileDigests"),
 			); diff != "" {
 				t.Fatalf("packages do not match:\n%s", diff)
 			}
