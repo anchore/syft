@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"github.com/anchore/syft/syft/testutil"
 	"strings"
 	"testing"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/testutil"
 )
 
 func Test_StereoscopeImage_Exclusions(t *testing.T) {
