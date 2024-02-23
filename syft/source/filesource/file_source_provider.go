@@ -12,7 +12,7 @@ import (
 )
 
 func NewSourceProvider(path string, exclude source.ExcludeConfig, digestAlgorithms []crypto.Hash, alias source.Alias) source.Provider {
-	return &sourceProvider{
+	return &fileSourceProvider{
 		path:             path,
 		exclude:          exclude,
 		digestAlgorithms: digestAlgorithms,
@@ -20,18 +20,18 @@ func NewSourceProvider(path string, exclude source.ExcludeConfig, digestAlgorith
 	}
 }
 
-type sourceProvider struct {
+type fileSourceProvider struct {
 	path             string
 	exclude          source.ExcludeConfig
 	digestAlgorithms []crypto.Hash
 	alias            source.Alias
 }
 
-func (p sourceProvider) Name() string {
+func (p fileSourceProvider) Name() string {
 	return "local-file"
 }
 
-func (p sourceProvider) Provide(_ context.Context) (source.Source, error) {
+func (p fileSourceProvider) Provide(_ context.Context) (source.Source, error) {
 	location, err := homedir.Expand(p.path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to expand potential directory path: %w", err)

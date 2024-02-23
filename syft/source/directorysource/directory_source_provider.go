@@ -11,7 +11,7 @@ import (
 )
 
 func NewSourceProvider(path string, exclude source.ExcludeConfig, alias source.Alias, basePath string) source.Provider {
-	return &sourceProvider{
+	return &directorySourceProvider{
 		path:     path,
 		basePath: basePath,
 		exclude:  exclude,
@@ -19,18 +19,18 @@ func NewSourceProvider(path string, exclude source.ExcludeConfig, alias source.A
 	}
 }
 
-type sourceProvider struct {
+type directorySourceProvider struct {
 	path     string
 	basePath string
 	exclude  source.ExcludeConfig
 	alias    source.Alias
 }
 
-func (l sourceProvider) Name() string {
+func (l directorySourceProvider) Name() string {
 	return "local-directory"
 }
 
-func (l sourceProvider) Provide(_ context.Context) (source.Source, error) {
+func (l directorySourceProvider) Provide(_ context.Context) (source.Source, error) {
 	location, err := homedir.Expand(l.path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to expand potential directory path: %w", err)

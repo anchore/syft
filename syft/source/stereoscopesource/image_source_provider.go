@@ -17,18 +17,18 @@ type ProviderConfig struct {
 	Alias                          source.Alias
 }
 
-type stereoscopeSourceProvider struct {
+type stereoscopeImageSourceProvider struct {
 	stereoscopeProvider image.Provider
 	cfg                 ProviderConfig
 }
 
-var _ source.Provider = (*stereoscopeSourceProvider)(nil)
+var _ source.Provider = (*stereoscopeImageSourceProvider)(nil)
 
-func (l stereoscopeSourceProvider) Name() string {
+func (l stereoscopeImageSourceProvider) Name() string {
 	return l.stereoscopeProvider.Name()
 }
 
-func (l stereoscopeSourceProvider) Provide(ctx context.Context) (source.Source, error) {
+func (l stereoscopeImageSourceProvider) Provide(ctx context.Context) (source.Source, error) {
 	img, err := l.stereoscopeProvider.Provide(ctx)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func Providers(cfg ProviderConfig) []collections.TaggedValue[source.Provider] {
 	stereoscopeProviders := collections.TaggedValueSet[source.Provider]{}
 	providers := stereoscope.ImageProviders(cfg.StereoscopeImageProviderConfig)
 	for _, provider := range providers {
-		var sourceProvider source.Provider = stereoscopeSourceProvider{
+		var sourceProvider source.Provider = stereoscopeImageSourceProvider{
 			stereoscopeProvider: provider.Value,
 			cfg:                 cfg,
 		}
