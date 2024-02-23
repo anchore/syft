@@ -1,6 +1,7 @@
 package filesource
 
 import (
+	"github.com/anchore/syft/syft/testutil"
 	"io"
 	"os"
 	"os/exec"
@@ -18,6 +19,8 @@ import (
 )
 
 func TestNewFromFile(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	testCases := []struct {
 		desc       string
 		input      string
@@ -93,6 +96,8 @@ func TestNewFromFile(t *testing.T) {
 }
 
 func TestNewFromFile_WithArchive(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	testCases := []struct {
 		desc       string
 		input      string
@@ -227,13 +232,7 @@ func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string, l
 }
 
 func Test_FileSource_ID(t *testing.T) {
-	wd, err := os.Getwd()
-	require.NoError(t, err)
-	err = os.Chdir(path.Dir(wd))
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		_ = os.Chdir(wd)
-	})
+	testutil.Chdir(t, "..") // run with source/test-fixtures
 
 	tests := []struct {
 		name       string

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/anchore/syft/syft/testutil"
 	"strings"
 	"testing"
 
@@ -17,6 +18,8 @@ import (
 )
 
 func Test_StereoscopeImage_Exclusions(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	testCases := []struct {
 		desc       string
 		input      string

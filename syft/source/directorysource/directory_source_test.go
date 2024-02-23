@@ -1,9 +1,9 @@
 package directorysource
 
 import (
+	"github.com/anchore/syft/syft/testutil"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"testing"
 
@@ -18,13 +18,8 @@ import (
 )
 
 func TestNewFromDirectory(t *testing.T) {
-	wd, err := os.Getwd()
-	require.NoError(t, err)
-	err = os.Chdir(path.Dir(wd)) // use shared test fixtures up a directory
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		_ = os.Chdir(wd)
-	})
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	testCases := []struct {
 		desc         string
 		input        string
@@ -91,6 +86,8 @@ func TestNewFromDirectory(t *testing.T) {
 }
 
 func Test_DirectorySource_FilesByGlob(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	testCases := []struct {
 		desc     string
 		input    string
@@ -138,6 +135,8 @@ func Test_DirectorySource_FilesByGlob(t *testing.T) {
 }
 
 func Test_DirectorySource_Exclusions(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	testCases := []struct {
 		desc       string
 		input      string
@@ -409,6 +408,8 @@ func Test_getDirectoryExclusionFunctions_crossPlatform(t *testing.T) {
 }
 
 func Test_DirectorySource_FilesByPathDoesNotExist(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	testCases := []struct {
 		desc     string
 		input    string
@@ -441,6 +442,8 @@ func Test_DirectorySource_FilesByPathDoesNotExist(t *testing.T) {
 }
 
 func Test_DirectorySource_ID(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	tests := []struct {
 		name    string
 		cfg     Config
@@ -532,6 +535,7 @@ func Test_DirectorySource_ID(t *testing.T) {
 }
 
 func Test_cleanDirPath(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
 
 	abs, err := filepath.Abs("test-fixtures")
 	require.NoError(t, err)
