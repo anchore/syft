@@ -150,8 +150,8 @@ dir                read directly from a path on disk (any directory)
 file               read directly from a path on disk (any single file)
 registry           pull image directly from a registry (no container runtime required)
 ```
-If a source is not provided and Syft identifies the input as an image reference Syft will use:
-the Docker daemon if present, the Podman daemon if present, or direct registry access if no daemon was found.
+If a source is not provided and Syft identifies the input as a potential image reference, Syft will attempt to resolve it using:
+the Docker, Podman, and Containerd daemons followed by direct registry access, in that order.
 
 This default behavior can be overridden with the `default-image-pull-source` configuration option (See [Configuration](#configuration) for more details).
 
