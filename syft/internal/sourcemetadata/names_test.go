@@ -7,6 +7,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal"
 )
 
 func TestAllNames(t *testing.T) {
@@ -15,8 +17,8 @@ func TestAllNames(t *testing.T) {
 	expectedTypes, err := DiscoverTypes()
 	require.NoError(t, err)
 
-	expected := reduce(expectedTypes, []string{}, func(prev []string, value *TypeInfo) []string {
-		return append(prev, nameOf(value.Spec.Name))
+	expected := internal.Map(expectedTypes, func(value *TypeInfo) string {
+		return nameOf(value.Spec.Name)
 	})
 
 	actual := AllTypeNames()

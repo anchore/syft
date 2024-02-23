@@ -13,6 +13,8 @@ import (
 	"strings"
 
 	"golang.org/x/mod/modfile"
+
+	"github.com/anchore/syft/internal"
 )
 
 type FileInfo struct {
@@ -84,12 +86,12 @@ func findMetadataDefinitions(srcImportBase string, root string, paths ...string)
 	}
 
 	// remove structs without Metadata in the name
-	metadata = removeFunc(metadata, func(t *TypeInfo) bool {
+	metadata = internal.Remove(metadata, func(t *TypeInfo) bool {
 		return !strings.HasSuffix(t.Spec.Name.String(), "Metadata")
 	})
 
 	// any definition that is used within another struct should not be considered a top-level metadata definition
-	metadata = removeFunc(metadata, func(t *TypeInfo) bool {
+	metadata = internal.Remove(metadata, func(t *TypeInfo) bool {
 		return isUsedInStructs(metadata, t)
 	})
 
@@ -98,8 +100,8 @@ func findMetadataDefinitions(srcImportBase string, root string, paths ...string)
 	// note: 3 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
 	// it is really intended to catch any major issues with the generation process that would generate, say, 0 definitions.
 	if len(metadata) < 3 {
-		names := reduce(metadata, []string{}, func(prev []string, value *TypeInfo) []string {
-			return append(prev, fmt.Sprintf("%s.%s", path.Base(value.FileInfo.PkgPath), nameOf(value.Spec.Name)))
+		names := internal.Map(metadata, func(value *TypeInfo) string {
+			return fmt.Sprintf("%s.%s", path.Base(value.FileInfo.PkgPath), nameOf(value.Spec.Name))
 		})
 		return nil, fmt.Errorf("not enough metadata definitions found (discovered %d: %v)", len(metadata), names)
 	}
@@ -131,8 +133,8 @@ func findTypeDefinitions(srcImportBase string, root string, paths ...string) ([]
 		// useful for debugging...
 		fmt.Println(file)
 		fmt.Printf("Package: %v \n", fi.PkgPath)
-		fmt.Printf("Specs: %v \n", reduce(typeSpecs, nil, func(prev []string, value *ast.TypeSpec) []string {
-			return append(prev, value.Name.String())
+		fmt.Printf("Specs: %v \n", internal.Map(typeSpecs, func(value *ast.TypeSpec) string {
+			return value.Name.String()
 		}))
 		fmt.Println()
 	}
@@ -140,17 +142,6 @@ func findTypeDefinitions(srcImportBase string, root string, paths ...string) ([]
 	slices.SortFunc(topLevelStructs, compareTypeInfo)
 
 	return topLevelStructs, nil
-}
-
-func removeFunc[T any](values []T, remove func(T) bool) []T {
-	var out []T
-	for _, t := range values {
-		if remove(t) {
-			continue
-		}
-		out = append(out, t)
-	}
-	return out
 }
 
 func findTopLevelStructs(file string) (*ast.File, []*ast.TypeSpec, error) {
@@ -259,11 +250,4 @@ func nameOf(expr ast.Node) string {
 		return strings.Trim(e.Value, `"`)
 	}
 	return ""
-}
-
-func reduce[T any, R any](values []T, initialValue R, reducer func(prev R, value T) R) R {
-	for _, v := range values {
-		initialValue = reducer(initialValue, v)
-	}
-	return initialValue
 }

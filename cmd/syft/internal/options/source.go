@@ -8,6 +8,7 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft"
 )
 
@@ -31,17 +32,9 @@ func defaultSourceConfig() sourceConfig {
 	defaults := syft.DefaultSourceProviderConfig()
 	return sourceConfig{
 		File: fileSource{
-			Digests: Map(defaults.DigestAlgorithms, func(alg crypto.Hash) string { return alg.String() }),
+			Digests: internal.Map(defaults.DigestAlgorithms, func(alg crypto.Hash) string { return alg.String() }),
 		},
 	}
-}
-
-func Map[From any, To any](values []From, fn func(From) To) []To {
-	out := make([]To, len(values))
-	for i, v := range values {
-		out[i] = fn(v)
-	}
-	return out
 }
 
 func (c *fileSource) PostLoad() error {
