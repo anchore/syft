@@ -23,10 +23,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 
 	// get the source object for the image
 	userInput := "docker-archive:" + tarPath
-	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
-	require.NoError(b, err)
-
-	theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
+	theSource, err := syft.GetSource(context.Background(), userInput)
 	require.NoError(b, err)
 
 	b.Cleanup(func() {
