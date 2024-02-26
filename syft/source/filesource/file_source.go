@@ -44,6 +44,10 @@ type fileSource struct {
 	analysisPath     string
 }
 
+func NewFromPath(path string) (source.Source, error) {
+	return New(Config{Path: path})
+}
+
 func New(cfg Config) (source.Source, error) {
 	fileMeta, err := os.Stat(cfg.Path)
 	if err != nil {

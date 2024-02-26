@@ -11,27 +11,27 @@ import (
 )
 
 // SourceProviders returns all the configured source providers known to syft
-func SourceProviders(cfg SourceProviderConfig) []collections.TaggedValue[source.Provider] {
-	stereoscopeProviders := stereoscopeSourceProviders(cfg)
+func SourceProviders(userInput string, cfg SourceProviderConfig) []collections.TaggedValue[source.Provider] {
+	stereoscopeProviders := stereoscopeSourceProviders(userInput, cfg)
 
 	return collections.TaggedValueSet[source.Provider]{}.
 		// --from file, dir, oci-archive, etc.
 		Join(stereoscopeProviders.Select("file", "dir")...).
-		Join(tagProvider(filesource.NewSourceProvider(cfg.UserInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), "file")).
-		Join(tagProvider(directorysource.NewSourceProvider(cfg.UserInput, cfg.Exclude, cfg.Alias, cfg.BasePath), "dir")).
+		Join(tagProvider(filesource.NewSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), "file")).
+		Join(tagProvider(directorysource.NewSourceProvider(userInput, cfg.Exclude, cfg.Alias, cfg.BasePath), "dir")).
 
 		// --from docker, registry, etc.
 		Join(stereoscopeProviders.Select("pull")...)
 }
 
-func stereoscopeSourceProviders(cfg SourceProviderConfig) collections.TaggedValueSet[source.Provider] {
+func stereoscopeSourceProviders(userInput string, cfg SourceProviderConfig) collections.TaggedValueSet[source.Provider] {
 	var registry image.RegistryOptions
 	if cfg.RegistryOptions != nil {
 		registry = *cfg.RegistryOptions
 	}
 	stereoscopeProviders := stereoscopesource.Providers(stereoscopesource.ProviderConfig{
 		StereoscopeImageProviderConfig: stereoscope.ImageProviderConfig{
-			UserInput: cfg.UserInput,
+			UserInput: userInput,
 			Platform:  cfg.Platform,
 			Registry:  registry,
 		},

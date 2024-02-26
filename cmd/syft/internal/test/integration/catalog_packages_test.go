@@ -26,7 +26,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	require.NoError(b, err)
 
 	b.Cleanup(func() {
-		_ = theSource.Close()
+		require.NoError(b, theSource.Close())
 	})
 
 	// build the SBOM

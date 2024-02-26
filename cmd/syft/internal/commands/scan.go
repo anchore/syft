@@ -451,5 +451,5 @@ func trimOperation(x string) string {
 }
 
 func allSourceProviderTags() []string {
-	return collections.TaggedValueSet[source.Provider]{}.Join(syft.SourceProviders(syft.DefaultSourceProviderConfig())...).Tags()
+	return collections.TaggedValueSet[source.Provider]{}.Join(syft.SourceProviders("", syft.DefaultSourceProviderConfig())...).Tags()
 }

@@ -9,7 +9,6 @@ import (
 
 // SourceProviderConfig is the uber-configuration for all Syft source providers
 type SourceProviderConfig struct {
-	UserInput        string
 	Platform         *image.Platform
 	Alias            source.Alias
 	RegistryOptions  *image.RegistryOptions
@@ -25,6 +24,11 @@ func (c SourceProviderConfig) WithAlias(alias source.Alias) SourceProviderConfig
 
 func (c SourceProviderConfig) WithRegistryOptions(registryOptions *image.RegistryOptions) SourceProviderConfig {
 	c.RegistryOptions = registryOptions
+	return c
+}
+
+func (c SourceProviderConfig) WithPlatform(platform *image.Platform) SourceProviderConfig {
+	c.Platform = platform
 	return c
 }
 

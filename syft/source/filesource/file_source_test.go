@@ -14,8 +14,8 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/testutil"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/testutil"
 )
 
 func TestNewFromFile(t *testing.T) {

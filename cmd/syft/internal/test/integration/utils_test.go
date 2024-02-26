@@ -40,7 +40,7 @@ func catalogFixtureImageWithConfig(t *testing.T, fixtureImageName string, cfg *s
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		_ = theSource.Close()
+		require.NoError(t, theSource.Close())
 	})
 
 	s, err := syft.CreateSBOM(context.Background(), theSource, cfg)
@@ -70,7 +70,7 @@ func catalogDirectoryWithConfig(t *testing.T, dir string, cfg *syft.CreateSBOMCo
 	theSource, err := syft.GetSource(context.Background(), dir, syft.DefaultGetSourceConfig().WithFromSource("dir"))
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		_ = theSource.Close()
+		require.NoError(t, theSource.Close())
 	})
 
 	// build the SBOM

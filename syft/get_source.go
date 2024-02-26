@@ -18,10 +18,7 @@ func GetSource(ctx context.Context, userInput string, getSourceConfig ...GetSour
 		cfg = getSourceConfig[0]
 	}
 
-	// must set userInput before getting source providers, it is important configuration for them all
-	cfg.SourceProviderConfig.UserInput = userInput
-
-	providers, err := cfg.GetProviders()
+	providers, err := cfg.getProviders(userInput)
 	if err != nil {
 		return nil, err
 	}

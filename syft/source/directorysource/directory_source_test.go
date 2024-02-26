@@ -13,8 +13,8 @@ import (
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/internal/fileresolver"
+	"github.com/anchore/syft/syft/internal/testutil"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/testutil"
 )
 
 func TestNewFromDirectory(t *testing.T) {

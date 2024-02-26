@@ -76,10 +76,10 @@ func (c GetSourceConfig) WithDefaultImageSource(defaultImageSource image.Source)
 	return c
 }
 
-func (c GetSourceConfig) GetProviders() ([]source.Provider, error) {
+func (c GetSourceConfig) getProviders(userInput string) ([]source.Provider, error) {
 	providers := collections.TaggedValueSet[source.Provider]{}.Join(c.SourceProviders...)
 	if len(providers) == 0 {
-		providers = providers.Join(SourceProviders(c.SourceProviderConfig)...)
+		providers = providers.Join(SourceProviders(userInput, c.SourceProviderConfig)...)
 	}
 
 	// narrow the sources to those generally programmatically requested (e.g. only pull sources for attest)

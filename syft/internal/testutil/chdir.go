@@ -3,6 +3,8 @@ package testutil
 import (
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Chdir(t *testing.T, dir string) {
@@ -19,6 +21,6 @@ func Chdir(t *testing.T, dir string) {
 	}
 
 	t.Cleanup(func() {
-		_ = os.Chdir(wd)
+		require.NoError(t, os.Chdir(wd))
 	})
 }
