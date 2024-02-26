@@ -28,8 +28,24 @@ func formatMavenPomURL(groupID, artifactID, version, mavenBaseURL string) (reque
 	return requestURL, err
 }
 
+// Add all properties that are not already in the map.
+func addMissingProperties(properties map[string]string, pom gopom.Project) {
+	if pom.Properties != nil && pom.Properties.Entries != nil {
+		for name, value := range pom.Properties.Entries {
+			_, exists := properties[name]
+			if !exists {
+				properties[name] = value
+				log.Debugf("  Added property %s=%s", name, value)
+			}
+		}
+	}
+}
+
 // An artifact can have its version defined in a parent's DependencyManagement section
-func recursivelyFindVersionFromParentPom(ctx context.Context, groupID, artifactID, parentGroupID, parentArtifactID, parentVersion string, cfg ArchiveCatalogerConfig) string {
+func recursivelyFindVersionFromParentPom(ctx context.Context, groupID, artifactID, parentGroupID, parentArtifactID, parentVersion string, cfg ArchiveCatalogerConfig) (string, map[string]string) {
+	log.Debugf("recursively finding version from parent Pom for artifact [%v:%v], using parent pom: [%v:%v:%v]",
+		groupID, artifactID, parentGroupID, parentArtifactID, parentVersion)
+	var projectProperties map[string]string = make(map[string]string)
 	// As there can be nested parent poms, we'll recursively check for the version until we reach the max depth
 	for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
 		parentPom, err := getPomFromMavenRepo(ctx, parentGroupID, parentArtifactID, parentVersion, cfg.MavenBaseURL)
@@ -38,10 +54,22 @@ func recursivelyFindVersionFromParentPom(ctx context.Context, groupID, artifactI
 			log.Tracef("unable to get parent pom from Maven central: %v", err)
 			break
 		}
-		if parentPom != nil && parentPom.DependencyManagement != nil {
-			for _, dependency := range *parentPom.DependencyManagement.Dependencies {
-				if groupID == *dependency.GroupID && artifactID == *dependency.ArtifactID && dependency.Version != nil {
-					return *dependency.Version
+		if parentPom != nil {
+			addMissingProperties(projectProperties, *parentPom)
+			if parentPom.DependencyManagement != nil {
+				log.Debug("Here")
+				for _, dependency := range *parentPom.DependencyManagement.Dependencies {
+					// imported pom files should be treated just like parent poms, they are use to define versions of dependencies
+					if dependency.Type != nil && dependency.Scope != nil &&
+						*dependency.Type == "pom" && *dependency.Scope == "import" {
+						depVersion := resolveProperty(*parentPom, dependency.Version, "version")
+						foundVersion, properties := recursivelyFindVersionFromParentPom(ctx, groupID, artifactID, *dependency.GroupID, *dependency.ArtifactID, depVersion, cfg)
+						return foundVersion, properties
+					}
+					if groupID == *dependency.GroupID && artifactID == *dependency.ArtifactID && dependency.Version != nil {
+						version := resolveProperty(*parentPom, dependency.Version, "version")
+						return version, projectProperties
+					}
 				}
 			}
 		}
@@ -52,10 +80,12 @@ func recursivelyFindVersionFromParentPom(ctx context.Context, groupID, artifactI
 		parentArtifactID = *parentPom.Parent.ArtifactID
 		parentVersion = *parentPom.Parent.Version
 	}
-	return ""
+	return "", projectProperties
 }
 
 func recursivelyFindLicensesFromParentPom(ctx context.Context, groupID, artifactID, version string, cfg ArchiveCatalogerConfig) []string {
+	log.Debugf("recursively finding license from parent Pom for artifact [%v:%v], using parent pom: [%v:%v:%v]",
+		groupID, artifactID, groupID, artifactID, version)
 	var licenses []string
 	// As there can be nested parent poms, we'll recursively check for licenses until we reach the max depth
 	for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
@@ -80,6 +110,9 @@ func recursivelyFindLicensesFromParentPom(ctx context.Context, groupID, artifact
 }
 
 func getPomFromMavenRepo(ctx context.Context, groupID, artifactID, version, mavenBaseURL string) (*gopom.Project, error) {
+	if len(groupID) == 0 || len(artifactID) == 0 || len(version) == 0 || strings.HasPrefix(version, "${") {
+		return nil, fmt.Errorf("missing/incomplete maven artifact coordinates: groupId:artifactId:version = %s:%s:%s", groupID, artifactID, version)
+	}
 	requestURL, err := formatMavenPomURL(groupID, artifactID, version, mavenBaseURL)
 	if err != nil {
 		return nil, err

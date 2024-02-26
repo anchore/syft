@@ -111,14 +111,18 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 
 	name := safeString(dep.ArtifactID)
 	version := resolveProperty(pom, dep.Version, "version")
+	var properties map[string]string
 
 	licenses := make([]pkg.License, 0)
 	if cfg.UseNetwork {
 		if version == "" {
 			// If we have no version then let's try to get it from a parent pom DependencyManagement section
-			version = recursivelyFindVersionFromParentPom(ctx, *dep.GroupID, *dep.ArtifactID, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg)
+			version, properties = recursivelyFindVersionFromParentPom(ctx, *dep.GroupID, *dep.ArtifactID, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg)
+			pom.Properties.Entries = properties
+			version = resolveProperty(pom, &version, "version")
 		}
 		if version != "" {
+
 			parentLicenses := recursivelyFindLicensesFromParentPom(
 				ctx,
 				m.PomProperties.GroupID,
@@ -132,6 +136,10 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 				}
 			}
 		}
+	}
+
+	if strings.HasPrefix(version, "${") {
+		log.Warnf("Got version '%s' for artifact: %s", version, name)
 	}
 
 	p := pkg.Package{
