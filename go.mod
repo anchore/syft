@@ -77,7 +77,7 @@ require (
 	golang.org/x/mod v0.15.0
 	golang.org/x/net v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.29.1
+	modernc.org/sqlite v1.29.2
 )
 
 require github.com/anchore/go-collections v0.0.0-20240216171411-9321230ce537

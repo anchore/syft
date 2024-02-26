@@ -39,3 +39,40 @@ func TestAllFormatsExpressible(t *testing.T) {
 		})
 	}
 }
+
+func Test_formatVersionsExpressible(t *testing.T) {
+	tests := []struct {
+		format    string
+		assertion traitAssertion
+	}{
+		{
+			format:    "spdx@2.1",
+			assertion: assertInOutput("SPDXVersion: SPDX-2.1"),
+		},
+		{
+			format:    "spdx@2.2",
+			assertion: assertInOutput("SPDXVersion: SPDX-2.2"),
+		},
+		{
+			format:    "spdx@2.3",
+			assertion: assertInOutput("SPDXVersion: SPDX-2.3"),
+		},
+		{
+			format:    "spdx-json@2.2",
+			assertion: assertInOutput(`"spdxVersion":"SPDX-2.2"`),
+		},
+		{
+			format:    "spdx-json@2.3",
+			assertion: assertInOutput(`"spdxVersion":"SPDX-2.3"`),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.format, func(t *testing.T) {
+			args := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", test.format}
+			cmd, stdout, stderr := runSyft(t, nil, args...)
+			test.assertion(t, stdout, stderr, cmd.ProcessState.ExitCode())
+			logOutputOnFailure(t, cmd, stdout, stderr)
+		})
+	}
+}
