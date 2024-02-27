@@ -27,11 +27,6 @@ type Config struct {
 	Alias   source.Alias
 }
 
-type Metadata struct {
-	Path string `json:"path" yaml:"path"`
-	Base string `json:"-" yaml:"-"` // though this is important, for display purposes it leaks too much information (abs paths)
-}
-
 type directorySource struct {
 	id       artifact.ID
 	config   Config
@@ -130,7 +125,7 @@ func (s directorySource) Describe() source.Description {
 		ID:      string(s.id),
 		Name:    name,
 		Version: version,
-		Metadata: Metadata{
+		Metadata: source.DirectoryMetadata{
 			Path: s.config.Path,
 			Base: s.config.Base,
 		},

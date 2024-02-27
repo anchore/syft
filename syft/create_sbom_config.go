@@ -14,9 +14,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directorysource"
-	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 // CreateSBOMConfig specifies all parameters needed for creating an SBOM.
@@ -348,9 +345,9 @@ func (c *CreateSBOMConfig) Create(ctx context.Context, src source.Source) (*sbom
 
 func findDefaultTag(src source.Description) (string, error) {
 	switch m := src.Metadata.(type) {
-	case stereoscopesource.ImageMetadata:
+	case source.ImageMetadata:
 		return pkgcataloging.ImageTag, nil
-	case filesource.Metadata, directorysource.Metadata:
+	case source.FileMetadata, source.DirectoryMetadata:
 		return pkgcataloging.DirectoryTag, nil
 	default:
 		return "", fmt.Errorf("unable to determine default cataloger tag for source type=%T", m)

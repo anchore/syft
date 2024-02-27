@@ -15,9 +15,6 @@ import (
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directorysource"
-	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func Test_toSourceModel_IgnoreBase(t *testing.T) {
@@ -29,7 +26,7 @@ func Test_toSourceModel_IgnoreBase(t *testing.T) {
 			name: "directory",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: directorysource.Metadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -62,7 +59,7 @@ func Test_toSourceModel(t *testing.T) {
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: directorysource.Metadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -72,7 +69,7 @@ func Test_toSourceModel(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "directory",
-				Metadata: directorysource.Metadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -84,7 +81,7 @@ func Test_toSourceModel(t *testing.T) {
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: filesource.Metadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -95,7 +92,7 @@ func Test_toSourceModel(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "file",
-				Metadata: filesource.Metadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -108,7 +105,7 @@ func Test_toSourceModel(t *testing.T) {
 				ID:      "test-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: stereoscopesource.ImageMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -120,7 +117,7 @@ func Test_toSourceModel(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "image",
-				Metadata: stereoscopesource.ImageMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -136,7 +133,7 @@ func Test_toSourceModel(t *testing.T) {
 			name: "directory - no name/version",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: directorysource.Metadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -144,7 +141,7 @@ func Test_toSourceModel(t *testing.T) {
 			expected: model.Source{
 				ID:   "test-id",
 				Type: "directory",
-				Metadata: directorysource.Metadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -154,7 +151,7 @@ func Test_toSourceModel(t *testing.T) {
 			name: "file - no name/version",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: filesource.Metadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -163,7 +160,7 @@ func Test_toSourceModel(t *testing.T) {
 			expected: model.Source{
 				ID:   "test-id",
 				Type: "file",
-				Metadata: filesource.Metadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -174,7 +171,7 @@ func Test_toSourceModel(t *testing.T) {
 			name: "image - no name/version",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: stereoscopesource.ImageMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -184,7 +181,7 @@ func Test_toSourceModel(t *testing.T) {
 			expected: model.Source{
 				ID:   "test-id",
 				Type: "image",
-				Metadata: stereoscopesource.ImageMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",

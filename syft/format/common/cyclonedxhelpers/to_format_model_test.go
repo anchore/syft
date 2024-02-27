@@ -15,7 +15,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func Test_formatCPE(t *testing.T) {
@@ -161,7 +160,7 @@ func Test_toBomDescriptor(t *testing.T) {
 				name:    "test-image",
 				version: "1.0.0",
 				srcMetadata: source.Description{
-					Metadata: stereoscopesource.ImageMetadata{
+					Metadata: source.ImageMetadata{
 						Labels: map[string]string{
 							"key1": "value1",
 						},

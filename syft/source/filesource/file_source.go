@@ -133,7 +133,7 @@ func (s fileSource) Describe() source.Description {
 		ID:      string(s.id),
 		Name:    name,
 		Version: version,
-		Metadata: Metadata{
+		Metadata: source.FileMetadata{
 			Path:     s.config.Path,
 			Digests:  s.digests,
 			MIMEType: s.mimeType,

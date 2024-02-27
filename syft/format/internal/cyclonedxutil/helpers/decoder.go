@@ -11,8 +11,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func ToSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
@@ -224,7 +222,7 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 			ID: "",
 			// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
 
-			Metadata: stereoscopesource.ImageMetadata{
+			Metadata: source.ImageMetadata{
 				UserInput:      c.Name,
 				ID:             c.BOMRef,
 				ManifestDigest: c.Version,
@@ -237,7 +235,7 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 		// TODO: this is lossy... we can't know if this is a file or a directory
 		return source.Description{
 			ID:       "",
-			Metadata: filesource.Metadata{Path: c.Name},
+			Metadata: source.FileMetadata{Path: c.Name},
 		}
 	}
 	return source.Description{}

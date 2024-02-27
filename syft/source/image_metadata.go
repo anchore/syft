@@ -1,4 +1,4 @@
-package stereoscopesource
+package source
 
 // ImageMetadata represents all static metadata that defines what a container image is. This is useful to later describe
 // "what" was cataloged without needing the more complicated stereoscope Image objects or FileResolver objects.

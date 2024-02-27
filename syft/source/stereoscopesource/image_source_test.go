@@ -116,14 +116,14 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 	tests := []struct {
 		name     string
 		alias    source.Alias
-		metadata ImageMetadata
+		metadata source.ImageMetadata
 		want     artifact.ID
 	}{
 		{
 			name: "use raw manifest over chain ID or user input",
-			metadata: ImageMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
-				Layers: []LayerMetadata{
+				Layers: []source.LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -144,9 +144,9 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "use chain ID over user input",
-			metadata: ImageMetadata{
+			metadata: source.ImageMetadata{
 				//UserInput: "user-input",
-				Layers: []LayerMetadata{
+				Layers: []source.LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -159,7 +159,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 				},
 			},
 			want: func() artifact.ID {
-				metadata := []LayerMetadata{
+				metadata := []source.LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -175,7 +175,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "use user input last",
-			metadata: ImageMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
 			},
 			want: func() artifact.ID {
@@ -186,9 +186,9 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "without alias (first)",
-			metadata: ImageMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
-				Layers: []LayerMetadata{
+				Layers: []source.LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -209,9 +209,9 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 				Name:    "alias",
 				Version: "version",
 			},
-			metadata: ImageMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
-				Layers: []LayerMetadata{
+				Layers: []source.LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -228,7 +228,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "without alias (last)",
-			metadata: ImageMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
 			},
 			want: "ab0dff627d80b9753193d7280bec8f45e8ec6b4cb0912c6fffcf7cd782d9739e",
@@ -239,7 +239,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 				Name:    "alias",
 				Version: "version",
 			},
-			metadata: ImageMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
 			},
 			want: "fe86c0eecd5654d3c0c0b2176aa394aef6440347c241aa8d9b628dfdde4287cf",
@@ -262,7 +262,7 @@ func Test_Describe(t *testing.T) {
 			name: "name from user input",
 			source: stereoscopeImageSource{
 				id: "some-id",
-				metadata: ImageMetadata{
+				metadata: source.ImageMetadata{
 					UserInput: "user input",
 				},
 			},

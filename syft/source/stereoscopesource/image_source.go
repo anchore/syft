@@ -30,7 +30,7 @@ type stereoscopeImageSource struct {
 	id       artifact.ID
 	config   ImageConfig
 	image    *image.Image
-	metadata ImageMetadata
+	metadata source.ImageMetadata
 }
 
 func New(img *image.Image, cfg ImageConfig) source.Source {
@@ -126,22 +126,22 @@ func (s stereoscopeImageSource) Close() error {
 	return s.image.Cleanup()
 }
 
-func imageMetadataFromStereoscopeImage(img *image.Image, reference string) ImageMetadata {
+func imageMetadataFromStereoscopeImage(img *image.Image, reference string) source.ImageMetadata {
 	tags := make([]string, len(img.Metadata.Tags))
 	for idx, tag := range img.Metadata.Tags {
 		tags[idx] = tag.String()
 	}
 
-	layers := make([]LayerMetadata, len(img.Layers))
+	layers := make([]source.LayerMetadata, len(img.Layers))
 	for idx, l := range img.Layers {
-		layers[idx] = LayerMetadata{
+		layers[idx] = source.LayerMetadata{
 			MediaType: string(l.Metadata.MediaType),
 			Digest:    l.Metadata.Digest,
 			Size:      l.Metadata.Size,
 		}
 	}
 
-	return ImageMetadata{
+	return source.ImageMetadata{
 		ID:             img.Metadata.ID,
 		UserInput:      reference,
 		ManifestDigest: img.Metadata.ManifestDigest,
@@ -166,7 +166,7 @@ func imageMetadataFromStereoscopeImage(img *image.Image, reference string) Image
 //
 // in all cases, if an alias is provided, it is additionally considered in the ID calculation. This allows for the
 // same image to be scanned multiple times with different aliases and be considered logically different.
-func deriveIDFromStereoscopeImage(alias source.Alias, metadata ImageMetadata) artifact.ID {
+func deriveIDFromStereoscopeImage(alias source.Alias, metadata source.ImageMetadata) artifact.ID {
 	var input string
 
 	if len(metadata.RawManifest) > 0 {
@@ -192,7 +192,7 @@ func deriveIDFromStereoscopeImage(alias source.Alias, metadata ImageMetadata) ar
 	return internal.ArtifactIDFromDigest(input)
 }
 
-func calculateChainID(lm []LayerMetadata) string {
+func calculateChainID(lm []source.LayerMetadata) string {
 	if len(lm) < 1 {
 		return ""
 	}
@@ -205,7 +205,7 @@ func calculateChainID(lm []LayerMetadata) string {
 	return id
 }
 
-func chain(chainID string, layers []LayerMetadata) string {
+func chain(chainID string, layers []source.LayerMetadata) string {
 	if len(layers) < 1 {
 		return chainID
 	}

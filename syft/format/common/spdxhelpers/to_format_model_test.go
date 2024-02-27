@@ -19,9 +19,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directorysource"
-	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func Test_toFormatModel(t *testing.T) {
@@ -38,7 +35,7 @@ func Test_toFormatModel(t *testing.T) {
 				Source: source.Description{
 					Name:    "alpine",
 					Version: "sha256:d34db33f",
-					Metadata: stereoscopesource.ImageMetadata{
+					Metadata: source.ImageMetadata{
 						UserInput:      "alpine:latest",
 						ManifestDigest: "sha256:d34db33f",
 					},
@@ -109,7 +106,7 @@ func Test_toFormatModel(t *testing.T) {
 			in: sbom.SBOM{
 				Source: source.Description{
 					Name: "some/directory",
-					Metadata: directorysource.Metadata{
+					Metadata: source.DirectoryMetadata{
 						Path: "some/directory",
 					},
 				},
@@ -173,7 +170,7 @@ func Test_toFormatModel(t *testing.T) {
 				Source: source.Description{
 					Name:    "path/to/some.file",
 					Version: "sha256:d34db33f",
-					Metadata: filesource.Metadata{
+					Metadata: source.FileMetadata{
 						Path: "path/to/some.file",
 						Digests: []file.Digest{
 							{

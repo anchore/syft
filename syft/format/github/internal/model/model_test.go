@@ -14,9 +14,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directorysource"
-	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func sbomFixture() sbom.SBOM {
@@ -25,7 +22,7 @@ func sbomFixture() sbom.SBOM {
 			Name: "syft",
 		},
 		Source: source.Description{
-			Metadata: stereoscopesource.ImageMetadata{
+			Metadata: source.ImageMetadata{
 				UserInput:    "ubuntu:18.04",
 				Architecture: "amd64",
 			},
@@ -153,27 +150,27 @@ func Test_toGithubModel(t *testing.T) {
 		},
 		{
 			name:     "current directory",
-			metadata: directorysource.Metadata{Path: "."},
+			metadata: source.DirectoryMetadata{Path: "."},
 			testPath: "etc",
 		},
 		{
 			name:     "relative directory",
-			metadata: directorysource.Metadata{Path: "./artifacts"},
+			metadata: source.DirectoryMetadata{Path: "./artifacts"},
 			testPath: "artifacts/etc",
 		},
 		{
 			name:     "absolute directory",
-			metadata: directorysource.Metadata{Path: "/artifacts"},
+			metadata: source.DirectoryMetadata{Path: "/artifacts"},
 			testPath: "/artifacts/etc",
 		},
 		{
 			name:     "file",
-			metadata: filesource.Metadata{Path: "./executable"},
+			metadata: source.FileMetadata{Path: "./executable"},
 			testPath: "executable",
 		},
 		{
 			name:     "archive",
-			metadata: filesource.Metadata{Path: "./archive.tar.gz"},
+			metadata: source.FileMetadata{Path: "./archive.tar.gz"},
 			testPath: "archive.tar.gz:/etc",
 		},
 	}

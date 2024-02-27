@@ -23,9 +23,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/directorysource"
-	"github.com/anchore/syft/syft/source/filesource"
-	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 const (
@@ -184,7 +181,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 	purpose := ""
 	var checksums []spdx.Checksum
 	switch m := s.Metadata.(type) {
-	case stereoscopesource.ImageMetadata:
+	case source.ImageMetadata:
 		prefix = prefixImage
 		purpose = spdxPrimaryPurposeContainer
 
@@ -214,11 +211,11 @@ func toRootPackage(s source.Description) *spdx.Package {
 			}
 		}
 
-	case directorysource.Metadata:
+	case source.DirectoryMetadata:
 		prefix = prefixDirectory
 		purpose = spdxPrimaryPurposeFile
 
-	case filesource.Metadata:
+	case source.FileMetadata:
 		prefix = prefixFile
 		purpose = spdxPrimaryPurposeFile
 
