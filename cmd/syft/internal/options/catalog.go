@@ -224,6 +224,8 @@ func (cfg *Catalog) PostLoad() error {
 		return out
 	}
 
+	cfg.From = flatten(cfg.From)
+
 	cfg.Catalogers = flatten(cfg.Catalogers)
 	cfg.DefaultCatalogers = flatten(cfg.DefaultCatalogers)
 	cfg.SelectCatalogers = flatten(cfg.SelectCatalogers)

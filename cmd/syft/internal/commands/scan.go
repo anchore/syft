@@ -220,7 +220,9 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 		WithExcludeConfig(source.ExcludeConfig{
 			Paths: opts.Exclusions,
 		}).
-		WithBasePath(opts.Source.BasePath)
+		WithBasePath(opts.Source.BasePath).
+		WithSources(sources...).
+		WithDefaultImagePullSource(opts.Source.Image.DefaultPullSource)
 
 	var err error
 	var platform *image.Platform
@@ -240,9 +242,6 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 		}
 		cfg = cfg.WithDigestAlgorithms(hashers...)
 	}
-
-	cfg = cfg.WithSources(sources...).
-		WithDefaultImagePullSource(opts.Source.Image.DefaultPullSource)
 
 	src, err := syft.GetSource(ctx, userInput, cfg)
 	if err != nil {
