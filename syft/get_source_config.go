@@ -66,8 +66,8 @@ func (c *GetSourceConfig) getProviders(userInput string) ([]source.Provider, err
 
 	// if the "default image pull source" is set, we move this as the first pull source
 	if c.DefaultImagePullSource != "" {
-		base := providers.Remove("pull")
-		pull := providers.Select("pull")
+		base := providers.Remove(sourceproviders.PullTag)
+		pull := providers.Select(sourceproviders.PullTag)
 		def := pull.Select(c.DefaultImagePullSource)
 		if len(def) == 0 {
 			return nil, fmt.Errorf("invalid DefaultImagePullSource: %s; available values are: %v", c.DefaultImagePullSource, pull.Tags())
