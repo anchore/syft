@@ -11,7 +11,7 @@ import (
 
 type GetSourceConfig struct {
 	// SourceProviderConfig may optionally be provided to be used when constructing the default set of source providers, unused if SourceProviders specified
-	SourceProviderConfig SourceProviderConfig
+	SourceProviderConfig *SourceProviderConfig
 
 	// Sources is an explicit list of source names to use, in order, to attempt to locate a source
 	Sources []string
@@ -21,32 +21,32 @@ type GetSourceConfig struct {
 }
 
 func (c *GetSourceConfig) WithAlias(alias source.Alias) *GetSourceConfig {
-	c.SourceProviderConfig.Alias = alias
+	c.SourceProviderConfig = c.SourceProviderConfig.WithAlias(alias)
 	return c
 }
 
 func (c *GetSourceConfig) WithRegistryOptions(registryOptions *image.RegistryOptions) *GetSourceConfig {
-	c.SourceProviderConfig.RegistryOptions = registryOptions
+	c.SourceProviderConfig = c.SourceProviderConfig.WithRegistryOptions(registryOptions)
 	return c
 }
 
 func (c *GetSourceConfig) WithPlatform(platform *image.Platform) *GetSourceConfig {
-	c.SourceProviderConfig.Platform = platform
+	c.SourceProviderConfig = c.SourceProviderConfig.WithPlatform(platform)
 	return c
 }
 
 func (c *GetSourceConfig) WithExcludeConfig(excludeConfig source.ExcludeConfig) *GetSourceConfig {
-	c.SourceProviderConfig.Exclude = excludeConfig
+	c.SourceProviderConfig = c.SourceProviderConfig.WithExcludeConfig(excludeConfig)
 	return c
 }
 
 func (c *GetSourceConfig) WithDigestAlgorithms(algorithms ...crypto.Hash) *GetSourceConfig {
-	c.SourceProviderConfig.DigestAlgorithms = algorithms
+	c.SourceProviderConfig = c.SourceProviderConfig.WithDigestAlgorithms(algorithms...)
 	return c
 }
 
 func (c *GetSourceConfig) WithBasePath(basePath string) *GetSourceConfig {
-	c.SourceProviderConfig.BasePath = basePath
+	c.SourceProviderConfig = c.SourceProviderConfig.WithBasePath(basePath)
 	return c
 }
 

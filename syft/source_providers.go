@@ -11,7 +11,10 @@ import (
 )
 
 // SourceProviders returns all the configured source providers known to syft
-func SourceProviders(userInput string, cfg SourceProviderConfig) []collections.TaggedValue[source.Provider] {
+func SourceProviders(userInput string, cfg *SourceProviderConfig) []collections.TaggedValue[source.Provider] {
+	if cfg == nil {
+		cfg = DefaultSourceProviderConfig()
+	}
 	stereoscopeProviders := stereoscopeSourceProviders(userInput, cfg)
 
 	return collections.TaggedValueSet[source.Provider]{}.
@@ -24,7 +27,7 @@ func SourceProviders(userInput string, cfg SourceProviderConfig) []collections.T
 		Join(stereoscopeProviders.Select("pull")...)
 }
 
-func stereoscopeSourceProviders(userInput string, cfg SourceProviderConfig) collections.TaggedValueSet[source.Provider] {
+func stereoscopeSourceProviders(userInput string, cfg *SourceProviderConfig) collections.TaggedValueSet[source.Provider] {
 	var registry image.RegistryOptions
 	if cfg.RegistryOptions != nil {
 		registry = *cfg.RegistryOptions
