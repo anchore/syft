@@ -22,7 +22,7 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	tarPath := imagetest.GetFixtureImageTarPath(b, fixtureImageName)
 
 	// get the source object for the image
-	theSource, err := syft.GetSource(context.Background(), tarPath, syft.DefaultGetSourceConfig().WithFromSource("docker-archive"))
+	theSource, err := syft.GetSource(context.Background(), tarPath, syft.DefaultGetSourceConfig().WithSources("docker-archive"))
 	require.NoError(b, err)
 
 	b.Cleanup(func() {
