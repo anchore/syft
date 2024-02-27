@@ -19,7 +19,7 @@ func List(appConfig config.Application) *cobra.Command {
 		Use:   "list",
 		Short: "list managed binaries and managed/unmanaged snippets",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return runList(appConfig, showPaths)
 		},
 	}

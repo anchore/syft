@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 
-	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/stereoscope"
+	"github.com/anchore/stereoscope/pkg/image/oci"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 /*
@@ -16,22 +18,15 @@ import (
 const defaultImage = "alpine:3.19"
 
 func main() {
-	platform, err := image.NewPlatform("linux/amd64")
+	// using oci.Registry causes the lookup to always use the registry, there are several other "Source" options here
+	img, err := stereoscope.GetImageFromSource(context.Background(), imageReference(), oci.Registry, stereoscope.WithPlatform("linux/amd64"))
 	if err != nil {
 		panic(err)
 	}
 
-	src, err := source.NewFromStereoscopeImage(
-		source.StereoscopeImageConfig{
-			Reference: imageReference(),
-			From:      image.OciRegistrySource, // always use the registry, there are several other "Source" options here
-			Platform:  platform,
-		},
-	)
-
-	if err != nil {
-		panic(err)
-	}
+	src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+		Reference: imageReference(),
+	})
 
 	// Show a basic description of the source to the screen
 	enc := json.NewEncoder(os.Stdout)

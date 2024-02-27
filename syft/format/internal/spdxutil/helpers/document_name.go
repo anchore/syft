@@ -10,11 +10,11 @@ func DocumentName(src source.Description) string {
 	}
 
 	switch metadata := src.Metadata.(type) {
-	case source.StereoscopeImageSourceMetadata:
+	case source.ImageMetadata:
 		return metadata.UserInput
-	case source.DirectorySourceMetadata:
+	case source.DirectoryMetadata:
 		return metadata.Path
-	case source.FileSourceMetadata:
+	case source.FileMetadata:
 		return metadata.Path
 	default:
 		return "unknown"

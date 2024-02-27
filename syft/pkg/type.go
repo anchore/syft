@@ -40,6 +40,7 @@ const (
 	RpmPkg                  Type = "rpm"
 	RustPkg                 Type = "rust-crate"
 	SwiftPkg                Type = "swift"
+	WordpressPluginPkg      Type = "wordpress-plugin"
 )
 
 // AllPkgs represents all supported package types
@@ -73,6 +74,7 @@ var AllPkgs = []Type{
 	RpmPkg,
 	RustPkg,
 	SwiftPkg,
+	WordpressPluginPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -131,6 +133,8 @@ func (t Type) PackageURLType() string {
 		return "cargo"
 	case SwiftPkg:
 		return packageurl.TypeSwift
+	case WordpressPluginPkg:
+		return "wordpress-plugin"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -201,6 +205,8 @@ func TypeByName(name string) Type {
 		return Rpkg
 	case packageurl.TypeSwift:
 		return SwiftPkg
+	case "wordpress-plugin":
+		return WordpressPluginPkg
 	default:
 		return UnknownPkg
 	}

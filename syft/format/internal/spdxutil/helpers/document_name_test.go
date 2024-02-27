@@ -23,7 +23,7 @@ func Test_DocumentName(t *testing.T) {
 		{
 			name: "image",
 			srcMetadata: source.Description{
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "image-repo/name:tag",
 					ID:             "id",
 					ManifestDigest: "digest",
@@ -34,14 +34,14 @@ func Test_DocumentName(t *testing.T) {
 		{
 			name: "directory",
 			srcMetadata: source.Description{
-				Metadata: source.DirectorySourceMetadata{Path: "some/path/to/place"},
+				Metadata: source.DirectoryMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/path/to/place",
 		},
 		{
 			name: "file",
 			srcMetadata: source.Description{
-				Metadata: source.FileSourceMetadata{Path: "some/path/to/place"},
+				Metadata: source.FileMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/path/to/place",
 		},
@@ -49,7 +49,7 @@ func Test_DocumentName(t *testing.T) {
 			name: "named",
 			srcMetadata: source.Description{
 				Name:     "some/name",
-				Metadata: source.FileSourceMetadata{Path: "some/path/to/place"},
+				Metadata: source.FileMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/name",
 		},

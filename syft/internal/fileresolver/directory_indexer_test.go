@@ -135,7 +135,7 @@ func TestDirectoryIndexer_handleFileAccessErr(t *testing.T) {
 }
 
 func TestDirectoryIndexer_IncludeRootPathInIndex(t *testing.T) {
-	filterFn := func(path string, _ os.FileInfo, _ error) error {
+	filterFn := func(_, path string, _ os.FileInfo, _ error) error {
 		if path != "/" {
 			return fs.SkipDir
 		}
@@ -222,9 +222,21 @@ func TestDirectoryIndexer_index(t *testing.T) {
 	}
 }
 
+func TestDirectoryIndexer_index_survive_badSymlink(t *testing.T) {
+	// test-fixtures/bad-symlinks
+	// ├── root
+	// │   ├── place
+	// │   │   └── fd -> ../somewhere/self/fd
+	// │   └── somewhere
+	// ...
+	indexer := newDirectoryIndexer("test-fixtures/bad-symlinks/root/place/fd", "test-fixtures/bad-symlinks/root/place/fd")
+	_, _, err := indexer.build()
+	require.NoError(t, err)
+}
+
 func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
 	var observedPaths []string
-	pathObserver := func(p string, _ os.FileInfo, _ error) error {
+	pathObserver := func(_, p string, _ os.FileInfo, _ error) error {
 		fields := strings.Split(p, "test-fixtures/symlinks-prune-indexing")
 		if len(fields) < 2 {
 			return nil
@@ -380,6 +392,87 @@ func Test_allContainedPaths(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, allContainedPaths(tt.path))
+		})
+	}
+}
+
+func Test_relativePath(t *testing.T) {
+	tests := []struct {
+		name      string
+		basePath  string
+		givenPath string
+		want      string
+	}{
+		{
+			name:      "root: same relative path",
+			basePath:  "a/b/c",
+			givenPath: "a/b/c",
+			want:      "/",
+		},
+		{
+			name:      "root: same absolute path",
+			basePath:  "/a/b/c",
+			givenPath: "/a/b/c",
+			want:      "/",
+		},
+		{
+			name:      "contained path: relative",
+			basePath:  "a/b/c",
+			givenPath: "a/b/c/dev",
+			want:      "/dev",
+		},
+		{
+			name:      "contained path: absolute",
+			basePath:  "/a/b/c",
+			givenPath: "/a/b/c/dev",
+			want:      "/dev",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, relativePath(tt.basePath, tt.givenPath))
+		})
+	}
+}
+
+func Test_disallowUnixSystemRuntimePath(t *testing.T) {
+	tests := []struct {
+		name    string
+		base    string
+		path    string
+		wantErr require.ErrorAssertionFunc
+	}{
+		{
+			name:    "no base, matching path",
+			base:    "",
+			path:    "/dev",
+			wantErr: require.Error,
+		},
+		{
+			name:    "no base, non-matching path",
+			base:    "",
+			path:    "/not-dev",
+			wantErr: require.NoError,
+		},
+		{
+			name:    "base, matching path",
+			base:    "/a/b/c",
+			path:    "/a/b/c/dev",
+			wantErr: require.Error,
+		},
+		{
+			name:    "base, non-matching path due to bad relative alignment",
+			base:    "/a/b/c",
+			path:    "/dev",
+			wantErr: require.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = require.NoError
+			}
+			tt.wantErr(t, disallowUnixSystemRuntimePath(tt.base, tt.path, nil, nil))
 		})
 	}
 }

@@ -22,15 +22,11 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	tarPath := imagetest.GetFixtureImageTarPath(b, fixtureImageName)
 
 	// get the source object for the image
-	userInput := "docker-archive:" + tarPath
-	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
-	require.NoError(b, err)
-
-	theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
+	theSource, err := syft.GetSource(context.Background(), tarPath, syft.DefaultGetSourceConfig().WithSources("docker-archive"))
 	require.NoError(b, err)
 
 	b.Cleanup(func() {
-		theSource.Close()
+		require.NoError(b, theSource.Close())
 	})
 
 	// build the SBOM
@@ -123,7 +119,6 @@ func TestPkgCoverageImage(t *testing.T) {
 				}
 				t.Fatalf("unexpected package count: %d!=%d", pkgCount, len(c.pkgInfo))
 			}
-
 		})
 	}
 
@@ -211,7 +206,6 @@ func TestPkgCoverageDirectory(t *testing.T) {
 				}
 				t.Fatalf("unexpected package count: %d!=%d", actualPkgCount, len(test.pkgInfo))
 			}
-
 		})
 	}
 
@@ -249,7 +243,6 @@ func TestPkgCoverageImage_HasEvidence(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-
 			for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
 				assert.NotEmpty(t, a.Locations.ToSlice(), "package %q has no locations (type=%q)", a.Name, a.Type)
 				for _, l := range a.Locations.ToSlice() {
@@ -259,7 +252,6 @@ func TestPkgCoverageImage_HasEvidence(t *testing.T) {
 					}
 				}
 			}
-
 		})
 	}
 
@@ -279,7 +271,6 @@ func TestPkgCoverageDirectory_HasEvidence(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-
 			for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
 				assert.NotEmpty(t, a.Locations.ToSlice(), "package %q has no locations (type=%q)", a.Name, a.Type)
 				for _, l := range a.Locations.ToSlice() {
@@ -289,7 +280,6 @@ func TestPkgCoverageDirectory_HasEvidence(t *testing.T) {
 					}
 				}
 			}
-
 		})
 	}
 

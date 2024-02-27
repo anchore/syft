@@ -21,6 +21,8 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/testutil"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 var mustUseOriginalBinaries = flag.Bool("must-use-original-binaries", false, "force the use of binaries for testing (instead of snippets)")
@@ -888,7 +890,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.logicalFixture, func(t *testing.T) {
-			c := NewCataloger(DefaultCatalogerConfig())
+			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
 			// logicalFixture is the logical path to the full binary or snippet. This is relative to the test-fixtures/classifiers/snippets
 			// or test-fixtures/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
@@ -896,7 +898,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
 			path := testutil.SnippetOrBinary(t, test.logicalFixture, *mustUseOriginalBinaries)
 
-			src, err := source.NewFromDirectoryPath(path)
+			src, err := directorysource.NewFromPath(path)
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)
@@ -933,11 +935,12 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := NewCataloger(DefaultCatalogerConfig())
+			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
-			src, err := source.NewFromStereoscopeImageObject(img, test.fixtureImage, nil)
-			require.NoError(t, err)
+			src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+				Reference: test.fixtureImage,
+			})
 
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
@@ -964,9 +967,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 }
 
 func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
-	c := NewCataloger(DefaultCatalogerConfig())
+	c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
-	src, err := source.NewFromDirectoryPath("test-fixtures/classifiers/negative")
+	src, err := directorysource.NewFromPath("test-fixtures/classifiers/negative")
 	assert.NoError(t, err)
 
 	resolver, err := src.FileResolver(source.SquashedScope)
@@ -1006,13 +1009,13 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		config     CatalogerConfig
+		config     ClassifierCatalogerConfig
 		fixtureDir string
 		expected   *pkg.Package
 	}{
 		{
 			name: "empty-negative",
-			config: CatalogerConfig{
+			config: ClassifierCatalogerConfig{
 				Classifiers: []Classifier{},
 			},
 			fixtureDir: "test-fixtures/custom/go-1.14",
@@ -1020,7 +1023,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 		},
 		{
 			name: "default-positive",
-			config: CatalogerConfig{
+			config: ClassifierCatalogerConfig{
 				Classifiers: defaultClassifers,
 			},
 			fixtureDir: "test-fixtures/custom/go-1.14",
@@ -1028,7 +1031,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 		},
 		{
 			name: "nodefault-negative",
-			config: CatalogerConfig{
+			config: ClassifierCatalogerConfig{
 				Classifiers: []Classifier{fooClassifier},
 			},
 			fixtureDir: "test-fixtures/custom/go-1.14",
@@ -1036,7 +1039,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 		},
 		{
 			name: "default-extended-positive",
-			config: CatalogerConfig{
+			config: ClassifierCatalogerConfig{
 				Classifiers: append(
 					append([]Classifier{}, defaultClassifers...),
 					fooClassifier,
@@ -1047,7 +1050,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 		},
 		{
 			name: "default-custom-negative",
-			config: CatalogerConfig{
+			config: ClassifierCatalogerConfig{
 
 				Classifiers: append(
 					append([]Classifier{}, defaultClassifers...),
@@ -1066,7 +1069,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 		},
 		{
 			name: "default-cutsom-positive",
-			config: CatalogerConfig{
+			config: ClassifierCatalogerConfig{
 				Classifiers: append(
 					append([]Classifier{}, defaultClassifers...),
 					fooClassifier,
@@ -1078,9 +1081,9 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := NewCataloger(test.config)
+			c := NewClassifierCataloger(test.config)
 
-			src, err := source.NewFromDirectoryPath(test.fixtureDir)
+			src, err := directorysource.NewFromPath(test.fixtureDir)
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)
@@ -1249,7 +1252,7 @@ func (p *panicyResolver) FileMetadataByLocation(_ file.Location) (file.Metadata,
 var _ file.Resolver = (*panicyResolver)(nil)
 
 func Test_Cataloger_ResilientToErrors(t *testing.T) {
-	c := NewCataloger(DefaultCatalogerConfig())
+	c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
 	resolver := &panicyResolver{}
 	_, _, err := c.Catalog(context.Background(), resolver)
@@ -1261,13 +1264,13 @@ func TestCatalogerConfig_MarshalJSON(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		cfg     CatalogerConfig
+		cfg     ClassifierCatalogerConfig
 		want    string
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "only show names of classes",
-			cfg: CatalogerConfig{
+			cfg: ClassifierCatalogerConfig{
 				Classifiers: []Classifier{
 					{
 						Class:           "class",

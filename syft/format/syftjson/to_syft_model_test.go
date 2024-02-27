@@ -35,7 +35,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "directory",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -44,7 +44,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -57,7 +57,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "file",
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -67,7 +67,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -81,7 +81,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "image",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -92,7 +92,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -107,14 +107,14 @@ func Test_toSyftSourceData(t *testing.T) {
 			src: model.Source{
 				ID:   "the-id",
 				Type: "directory",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
 			},
 			expected: &source.Description{
 				ID: "the-id",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -125,7 +125,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			src: model.Source{
 				ID:   "the-id",
 				Type: "file",
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -133,7 +133,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			},
 			expected: &source.Description{
 				ID: "the-id",
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -145,7 +145,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			src: model.Source{
 				ID:   "the-id",
 				Type: "image",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -154,7 +154,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			},
 			expected: &source.Description{
 				ID: "the-id",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -178,7 +178,7 @@ func Test_idsHaveChanged(t *testing.T) {
 	s := toSyftModel(model.Document{
 		Source: model.Source{
 			Type:     "file",
-			Metadata: source.FileSourceMetadata{Path: "some/path"},
+			Metadata: source.FileMetadata{Path: "some/path"},
 		},
 		Artifacts: []model.Package{
 			{

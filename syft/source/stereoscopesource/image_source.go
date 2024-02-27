@@ -1,90 +1,53 @@
-package source
+package stereoscopesource
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/distribution/reference"
 	"github.com/opencontainers/go-digest"
 
-	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
+	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ Source = (*StereoscopeImageSource)(nil)
+var _ source.Source = (*stereoscopeImageSource)(nil)
 
-type StereoscopeImageConfig struct {
+type ImageConfig struct {
 	Reference       string
-	From            image.Source
 	Platform        *image.Platform
 	RegistryOptions *image.RegistryOptions
-	Exclude         ExcludeConfig
-	Alias           Alias
+	Exclude         source.ExcludeConfig
+	Alias           source.Alias
 }
 
-type StereoscopeImageSource struct {
+type stereoscopeImageSource struct {
 	id       artifact.ID
-	config   StereoscopeImageConfig
+	config   ImageConfig
 	image    *image.Image
-	metadata StereoscopeImageSourceMetadata
+	metadata source.ImageMetadata
 }
 
-func NewFromStereoscopeImageObject(img *image.Image, reference string, alias *Alias) (*StereoscopeImageSource, error) {
-	var aliasVal Alias
-	if !alias.IsEmpty() {
-		aliasVal = *alias
-	}
-	cfg := StereoscopeImageConfig{
-		Reference: reference,
-		Alias:     aliasVal,
-	}
+func New(img *image.Image, cfg ImageConfig) source.Source {
 	metadata := imageMetadataFromStereoscopeImage(img, cfg.Reference)
-
-	return &StereoscopeImageSource{
+	return &stereoscopeImageSource{
 		id:       deriveIDFromStereoscopeImage(cfg.Alias, metadata),
 		config:   cfg,
 		image:    img,
 		metadata: metadata,
-	}, nil
+	}
 }
 
-func NewFromStereoscopeImage(cfg StereoscopeImageConfig) (*StereoscopeImageSource, error) {
-	ctx := context.TODO()
-
-	var opts []stereoscope.Option
-	if cfg.RegistryOptions != nil {
-		opts = append(opts, stereoscope.WithRegistryOptions(*cfg.RegistryOptions))
-	}
-
-	if cfg.Platform != nil {
-		opts = append(opts, stereoscope.WithPlatform(cfg.Platform.String()))
-	}
-
-	img, err := stereoscope.GetImageFromSource(ctx, cfg.Reference, cfg.From, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("unable to load image: %w", err)
-	}
-
-	metadata := imageMetadataFromStereoscopeImage(img, cfg.Reference)
-
-	return &StereoscopeImageSource{
-		id:       deriveIDFromStereoscopeImage(cfg.Alias, metadata),
-		config:   cfg,
-		image:    img,
-		metadata: metadata,
-	}, nil
-}
-
-func (s StereoscopeImageSource) ID() artifact.ID {
+func (s stereoscopeImageSource) ID() artifact.ID {
 	return s.id
 }
 
-func (s StereoscopeImageSource) Describe() Description {
+func (s stereoscopeImageSource) Describe() source.Description {
 	a := s.config.Alias
 
 	name := a.Name
@@ -123,7 +86,7 @@ func (s StereoscopeImageSource) Describe() Description {
 	nameIfUnset(s.metadata.UserInput)
 	versionIfUnset(s.metadata.ManifestDigest)
 
-	return Description{
+	return source.Description{
 		ID:       string(s.id),
 		Name:     name,
 		Version:  version,
@@ -131,14 +94,14 @@ func (s StereoscopeImageSource) Describe() Description {
 	}
 }
 
-func (s StereoscopeImageSource) FileResolver(scope Scope) (file.Resolver, error) {
+func (s stereoscopeImageSource) FileResolver(scope source.Scope) (file.Resolver, error) {
 	var res file.Resolver
 	var err error
 
 	switch scope {
-	case SquashedScope:
+	case source.SquashedScope:
 		res, err = fileresolver.NewFromContainerImageSquash(s.image)
-	case AllLayersScope:
+	case source.AllLayersScope:
 		res, err = fileresolver.NewFromContainerImageAllLayers(s.image)
 	default:
 		return nil, fmt.Errorf("bad image scope provided: %+v", scope)
@@ -156,29 +119,29 @@ func (s StereoscopeImageSource) FileResolver(scope Scope) (file.Resolver, error)
 	return res, nil
 }
 
-func (s StereoscopeImageSource) Close() error {
+func (s stereoscopeImageSource) Close() error {
 	if s.image == nil {
 		return nil
 	}
 	return s.image.Cleanup()
 }
 
-func imageMetadataFromStereoscopeImage(img *image.Image, reference string) StereoscopeImageSourceMetadata {
+func imageMetadataFromStereoscopeImage(img *image.Image, reference string) source.ImageMetadata {
 	tags := make([]string, len(img.Metadata.Tags))
 	for idx, tag := range img.Metadata.Tags {
 		tags[idx] = tag.String()
 	}
 
-	layers := make([]StereoscopeLayerMetadata, len(img.Layers))
+	layers := make([]source.LayerMetadata, len(img.Layers))
 	for idx, l := range img.Layers {
-		layers[idx] = StereoscopeLayerMetadata{
+		layers[idx] = source.LayerMetadata{
 			MediaType: string(l.Metadata.MediaType),
 			Digest:    l.Metadata.Digest,
 			Size:      l.Metadata.Size,
 		}
 	}
 
-	return StereoscopeImageSourceMetadata{
+	return source.ImageMetadata{
 		ID:             img.Metadata.ID,
 		UserInput:      reference,
 		ManifestDigest: img.Metadata.ManifestDigest,
@@ -203,7 +166,7 @@ func imageMetadataFromStereoscopeImage(img *image.Image, reference string) Stere
 //
 // in all cases, if an alias is provided, it is additionally considered in the ID calculation. This allows for the
 // same image to be scanned multiple times with different aliases and be considered logically different.
-func deriveIDFromStereoscopeImage(alias Alias, metadata StereoscopeImageSourceMetadata) artifact.ID {
+func deriveIDFromStereoscopeImage(alias source.Alias, metadata source.ImageMetadata) artifact.ID {
 	var input string
 
 	if len(metadata.RawManifest) > 0 {
@@ -226,10 +189,10 @@ func deriveIDFromStereoscopeImage(alias Alias, metadata StereoscopeImageSourceMe
 		input = digest.Canonical.FromString(input + aliasStr).String()
 	}
 
-	return artifactIDFromDigest(input)
+	return internal.ArtifactIDFromDigest(input)
 }
 
-func calculateChainID(lm []StereoscopeLayerMetadata) string {
+func calculateChainID(lm []source.LayerMetadata) string {
 	if len(lm) < 1 {
 		return ""
 	}
@@ -242,7 +205,7 @@ func calculateChainID(lm []StereoscopeLayerMetadata) string {
 	return id
 }
 
-func chain(chainID string, layers []StereoscopeLayerMetadata) string {
+func chain(chainID string, layers []source.LayerMetadata) string {
 	if len(layers) < 1 {
 		return chainID
 	}
