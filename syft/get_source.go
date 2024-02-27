@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 // GetSource uses all of Syft's known source providers to attempt to resolve the user input to a usable source.Source
@@ -39,10 +40,11 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 			}
 		}
 		if src != nil {
+			meta := src.Describe().Metadata
 			// if we have a non-image type and platform is specified, it's an error
-			// if _, ok := src.(*stereoscope.StereoscopeImageSource); !ok && cfg.Platform != nil {
-			//	return src, fmt.Errorf("invalid argument: --platform specified with non-image source")
-			//}
+			if _, ok := meta.(*stereoscopesource.ImageMetadata); !ok && cfg.SourceProviderConfig.Platform != nil {
+				return src, fmt.Errorf("invalid argument: --platform specified with non-image source")
+			}
 			return src, nil
 		}
 	}
