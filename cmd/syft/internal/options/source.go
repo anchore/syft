@@ -1,14 +1,12 @@
 package options
 
 import (
-	"crypto"
 	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft"
 )
 
@@ -29,10 +27,13 @@ type imageSource struct {
 }
 
 func defaultSourceConfig() sourceConfig {
-	defaults := syft.DefaultSourceProviderConfig()
+	var digests []string
+	for _, alg := range syft.DefaultSourceProviderConfig().DigestAlgorithms {
+		digests = append(digests, alg.String())
+	}
 	return sourceConfig{
 		File: fileSource{
-			Digests: internal.Map(defaults.DigestAlgorithms, func(alg crypto.Hash) string { return alg.String() }),
+			Digests: digests,
 		},
 	}
 }

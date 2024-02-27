@@ -14,8 +14,6 @@ import (
 
 	"github.com/bmatcuk/doublestar/v4"
 	"golang.org/x/mod/modfile"
-
-	"github.com/anchore/syft/internal"
 )
 
 type FileInfo struct {
@@ -86,13 +84,12 @@ func findMetadataDefinitions(srcImportBase string, root string, paths ...string)
 		return nil, err
 	}
 
-	// remove structs without Metadata in the name
-	metadata = internal.Remove(metadata, func(t *TypeInfo) bool {
+	metadata = slices.DeleteFunc(metadata, func(t *TypeInfo) bool {
 		return !strings.HasSuffix(t.Spec.Name.String(), "Metadata")
 	})
 
 	// any definition that is used within another struct should not be considered a top-level metadata definition
-	metadata = internal.Remove(metadata, func(t *TypeInfo) bool {
+	metadata = slices.DeleteFunc(metadata, func(t *TypeInfo) bool {
 		return isUsedInStructs(metadata, t)
 	})
 
@@ -101,7 +98,7 @@ func findMetadataDefinitions(srcImportBase string, root string, paths ...string)
 	// note: 3 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
 	// it is really intended to catch any major issues with the generation process that would generate, say, 0 definitions.
 	if len(metadata) < 3 {
-		names := internal.Map(metadata, func(value *TypeInfo) string {
+		names := mapFunc(metadata, func(value *TypeInfo) string {
 			return fmt.Sprintf("%s.%s", path.Base(value.FileInfo.PkgPath), nameOf(value.Spec.Name))
 		})
 		return nil, fmt.Errorf("not enough metadata definitions found (discovered %d: %v)", len(metadata), names)
@@ -134,7 +131,7 @@ func findTypeDefinitions(srcImportBase string, root string, paths ...string) ([]
 		// useful for debugging...
 		fmt.Println(file)
 		fmt.Printf("Package: %v \n", fi.PkgPath)
-		fmt.Printf("Specs: %v \n", internal.Map(typeSpecs, func(value *ast.TypeSpec) string {
+		fmt.Printf("Specs: %v \n", mapFunc(typeSpecs, func(value *ast.TypeSpec) string {
 			return value.Name.String()
 		}))
 		fmt.Println()
@@ -251,4 +248,13 @@ func nameOf(expr ast.Node) string {
 		return strings.Trim(e.Value, `"`)
 	}
 	return ""
+}
+
+// Map maps each value to a function call, returning a new slice of returned types
+func mapFunc[From any, To any](values []From, fn func(From) To) []To {
+	out := make([]To, len(values))
+	for i := range values {
+		out[i] = fn(values[i])
+	}
+	return out
 }
