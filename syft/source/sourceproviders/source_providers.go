@@ -11,10 +11,9 @@ import (
 )
 
 const (
-	FileTag  = stereoscope.FileTag
-	DirTag   = stereoscope.DirTag
-	PullTag  = stereoscope.PullTag
-	ImageTag = stereoscopesource.ImageTag
+	FileTag = stereoscope.FileTag
+	DirTag  = stereoscope.DirTag
+	PullTag = stereoscope.PullTag
 )
 
 // All returns all the configured source providers known to syft
