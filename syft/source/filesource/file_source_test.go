@@ -1,4 +1,4 @@
-package source
+package filesource
 
 import (
 	"io"
@@ -14,9 +14,13 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/testutil"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestNewFromFile(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	testCases := []struct {
 		desc       string
 		input      string
@@ -67,7 +71,7 @@ func TestNewFromFile(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			src, err := NewFromFile(FileConfig{
+			src, err := New(Config{
 				Path: test.input,
 			})
 			require.NoError(t, err)
@@ -75,9 +79,9 @@ func TestNewFromFile(t *testing.T) {
 				require.NoError(t, src.Close())
 			})
 
-			assert.Equal(t, test.input, src.Describe().Metadata.(FileSourceMetadata).Path)
+			assert.Equal(t, test.input, src.Describe().Metadata.(source.FileMetadata).Path)
 
-			res, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
 			refs, err := test.testPathFn(res)
@@ -92,6 +96,8 @@ func TestNewFromFile(t *testing.T) {
 }
 
 func TestNewFromFile_WithArchive(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	testCases := []struct {
 		desc       string
 		input      string
@@ -120,7 +126,7 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			archivePath := setupArchiveTest(t, test.input, test.layer2)
 
-			src, err := NewFromFile(FileConfig{
+			src, err := New(Config{
 				Path: archivePath,
 			})
 			require.NoError(t, err)
@@ -128,9 +134,9 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 				require.NoError(t, src.Close())
 			})
 
-			assert.Equal(t, archivePath, src.Describe().Metadata.(FileSourceMetadata).Path)
+			assert.Equal(t, archivePath, src.Describe().Metadata.(source.FileMetadata).Path)
 
-			res, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
 			refs, err := res.FilesByPath(test.inputPaths...)
@@ -226,43 +232,45 @@ func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string, l
 }
 
 func Test_FileSource_ID(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	tests := []struct {
 		name       string
-		cfg        FileConfig
+		cfg        Config
 		want       artifact.ID
 		wantDigest string
 		wantErr    require.ErrorAssertionFunc
 	}{
 		{
 			name:    "empty",
-			cfg:     FileConfig{},
+			cfg:     Config{},
 			wantErr: require.Error,
 		},
 		{
 			name: "does not exist",
-			cfg: FileConfig{
+			cfg: Config{
 				Path: "./test-fixtures/does-not-exist",
 			},
 			wantErr: require.Error,
 		},
 		{
 			name: "to dir",
-			cfg: FileConfig{
+			cfg: Config{
 				Path: "./test-fixtures/image-simple",
 			},
 			wantErr: require.Error,
 		},
 		{
 			name:       "with path",
-			cfg:        FileConfig{Path: "./test-fixtures/image-simple/Dockerfile"},
+			cfg:        Config{Path: "./test-fixtures/image-simple/Dockerfile"},
 			want:       artifact.ID("db7146472cf6d49b3ac01b42812fb60020b0b4898b97491b21bb690c808d5159"),
 			wantDigest: "sha256:38601c0bb4269a10ce1d00590ea7689c1117dd9274c758653934ab4f2016f80f",
 		},
 		{
 			name: "with path and alias",
-			cfg: FileConfig{
+			cfg: Config{
 				Path: "./test-fixtures/image-simple/Dockerfile",
-				Alias: Alias{
+				Alias: source.Alias{
 					Name:    "name-me-that!",
 					Version: "version-me-this!",
 				},
@@ -272,9 +280,9 @@ func Test_FileSource_ID(t *testing.T) {
 		},
 		{
 			name: "other fields do not affect ID",
-			cfg: FileConfig{
+			cfg: Config{
 				Path: "test-fixtures/image-simple/Dockerfile",
-				Exclude: ExcludeConfig{
+				Exclude: source.ExcludeConfig{
 					Paths: []string{"a", "b"},
 				},
 			},
@@ -287,11 +295,12 @@ func Test_FileSource_ID(t *testing.T) {
 			if tt.wantErr == nil {
 				tt.wantErr = require.NoError
 			}
-			s, err := NewFromFile(tt.cfg)
+			newSource, err := New(tt.cfg)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
 			}
+			s := newSource.(*fileSource)
 			assert.Equalf(t, tt.want, s.ID(), "ID() mismatch")
 			assert.Equalf(t, tt.wantDigest, s.digestForVersion, "digestForVersion mismatch")
 		})

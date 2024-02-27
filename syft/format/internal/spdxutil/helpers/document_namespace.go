@@ -27,11 +27,11 @@ func DocumentNamespace(name string, src source.Description, desc sbom.Descriptor
 	name = cleanName(name)
 	input := "unknown-source-type"
 	switch src.Metadata.(type) {
-	case source.StereoscopeImageSourceMetadata:
+	case source.ImageMetadata:
 		input = InputImage
-	case source.DirectorySourceMetadata:
+	case source.DirectoryMetadata:
 		input = InputDirectory
-	case source.FileSourceMetadata:
+	case source.FileMetadata:
 		input = InputFile
 	}
 

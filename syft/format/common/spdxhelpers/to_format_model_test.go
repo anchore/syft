@@ -35,7 +35,7 @@ func Test_toFormatModel(t *testing.T) {
 				Source: source.Description{
 					Name:    "alpine",
 					Version: "sha256:d34db33f",
-					Metadata: source.StereoscopeImageSourceMetadata{
+					Metadata: source.ImageMetadata{
 						UserInput:      "alpine:latest",
 						ManifestDigest: "sha256:d34db33f",
 					},
@@ -106,7 +106,7 @@ func Test_toFormatModel(t *testing.T) {
 			in: sbom.SBOM{
 				Source: source.Description{
 					Name: "some/directory",
-					Metadata: source.DirectorySourceMetadata{
+					Metadata: source.DirectoryMetadata{
 						Path: "some/directory",
 					},
 				},
@@ -170,7 +170,7 @@ func Test_toFormatModel(t *testing.T) {
 				Source: source.Description{
 					Name:    "path/to/some.file",
 					Version: "sha256:d34db33f",
-					Metadata: source.FileSourceMetadata{
+					Metadata: source.FileMetadata{
 						Path: "path/to/some.file",
 						Digests: []file.Digest{
 							{

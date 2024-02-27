@@ -1,4 +1,4 @@
-package source
+package directorysource
 
 import (
 	"fmt"
@@ -14,37 +14,34 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
+	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ Source = (*DirectorySource)(nil)
+var _ source.Source = (*directorySource)(nil)
 
-type DirectoryConfig struct {
+type Config struct {
 	Path    string
 	Base    string
-	Exclude ExcludeConfig
-	Alias   Alias
+	Exclude source.ExcludeConfig
+	Alias   source.Alias
 }
 
-type DirectorySourceMetadata struct {
-	Path string `json:"path" yaml:"path"`
-	Base string `json:"-" yaml:"-"` // though this is important, for display purposes it leaks too much information (abs paths)
-}
-
-type DirectorySource struct {
+type directorySource struct {
 	id       artifact.ID
-	config   DirectoryConfig
+	config   Config
 	resolver *fileresolver.Directory
 	mutex    *sync.Mutex
 }
 
-func NewFromDirectoryPath(path string) (*DirectorySource, error) {
-	cfg := DirectoryConfig{
+func NewFromPath(path string) (source.Source, error) {
+	cfg := Config{
 		Path: path,
 	}
-	return NewFromDirectory(cfg)
+	return New(cfg)
 }
 
-func NewFromDirectory(cfg DirectoryConfig) (*DirectorySource, error) {
+func New(cfg Config) (source.Source, error) {
 	fi, err := os.Stat(cfg.Path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to stat path=%q: %w", cfg.Path, err)
@@ -54,7 +51,7 @@ func NewFromDirectory(cfg DirectoryConfig) (*DirectorySource, error) {
 		return nil, fmt.Errorf("given path is not a directory: %q", cfg.Path)
 	}
 
-	return &DirectorySource{
+	return &directorySource{
 		id:     deriveIDFromDirectory(cfg),
 		config: cfg,
 		mutex:  &sync.Mutex{},
@@ -66,7 +63,7 @@ func NewFromDirectory(cfg DirectoryConfig) (*DirectorySource, error) {
 // from the path provided with an attempt to prune a prefix if a base is given. Since the contents of the directory
 // are not considered, there is no semantic meaning to the artifact ID -- this is why the alias is preferred without
 // consideration for the path.
-func deriveIDFromDirectory(cfg DirectoryConfig) artifact.ID {
+func deriveIDFromDirectory(cfg Config) artifact.ID {
 	var info string
 	if !cfg.Alias.IsEmpty() {
 		// don't use any of the path information -- instead use the alias name and version as the artifact ID.
@@ -78,7 +75,7 @@ func deriveIDFromDirectory(cfg DirectoryConfig) artifact.ID {
 		info = cleanDirPath(cfg.Path, cfg.Base)
 	}
 
-	return artifactIDFromDigest(digest.SHA256.FromString(filepath.Clean(info)).String())
+	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(filepath.Clean(info)).String())
 }
 
 func cleanDirPath(path, base string) string {
@@ -108,11 +105,11 @@ func cleanDirPath(path, base string) string {
 	return path
 }
 
-func (s DirectorySource) ID() artifact.ID {
+func (s directorySource) ID() artifact.ID {
 	return s.id
 }
 
-func (s DirectorySource) Describe() Description {
+func (s directorySource) Describe() source.Description {
 	name := cleanDirPath(s.config.Path, s.config.Base)
 	version := ""
 	if !s.config.Alias.IsEmpty() {
@@ -124,23 +121,23 @@ func (s DirectorySource) Describe() Description {
 			version = a.Version
 		}
 	}
-	return Description{
+	return source.Description{
 		ID:      string(s.id),
 		Name:    name,
 		Version: version,
-		Metadata: DirectorySourceMetadata{
+		Metadata: source.DirectoryMetadata{
 			Path: s.config.Path,
 			Base: s.config.Base,
 		},
 	}
 }
 
-func (s *DirectorySource) FileResolver(_ Scope) (file.Resolver, error) {
+func (s *directorySource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	if s.resolver == nil {
-		exclusionFunctions, err := getDirectoryExclusionFunctions(s.config.Path, s.config.Exclude.Paths)
+		exclusionFunctions, err := GetDirectoryExclusionFunctions(s.config.Path, s.config.Exclude.Paths)
 		if err != nil {
 			return nil, err
 		}
@@ -156,14 +153,14 @@ func (s *DirectorySource) FileResolver(_ Scope) (file.Resolver, error) {
 	return s.resolver, nil
 }
 
-func (s *DirectorySource) Close() error {
+func (s *directorySource) Close() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.resolver = nil
 	return nil
 }
 
-func getDirectoryExclusionFunctions(root string, exclusions []string) ([]fileresolver.PathIndexVisitor, error) {
+func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileresolver.PathIndexVisitor, error) {
 	if len(exclusions) == 0 {
 		return nil, nil
 	}

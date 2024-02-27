@@ -1,6 +1,7 @@
-package source
+package stereoscopesource
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"strings"
@@ -9,12 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/internal/testutil"
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_StereoscopeImage_Exclusions(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
 	testCases := []struct {
 		desc       string
 		input      string
@@ -76,22 +81,27 @@ func Test_StereoscopeImage_Exclusions(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			src, err := NewFromStereoscopeImage(
-				StereoscopeImageConfig{
-					Reference: strings.SplitN(imagetest.PrepareFixtureImage(t, "docker-archive", test.input), ":", 2)[1],
-					From:      image.DockerTarballSource,
-					Exclude: ExcludeConfig{
+			imageName := strings.SplitN(imagetest.PrepareFixtureImage(t, "docker-archive", test.input), ":", 2)[1]
+
+			img, err := stereoscope.GetImage(context.TODO(), imageName)
+			require.NoError(t, err)
+			require.NotNil(t, img)
+
+			src := New(
+				img,
+				ImageConfig{
+					Reference: imageName,
+					Exclude: source.ExcludeConfig{
 						Paths: test.exclusions,
 					},
 				},
 			)
 
-			require.NoError(t, err)
 			t.Cleanup(func() {
 				require.NoError(t, src.Close())
 			})
 
-			res, err := src.FileResolver(SquashedScope)
+			res, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
 			contents, err := res.FilesByGlob(test.glob)
@@ -105,15 +115,15 @@ func Test_StereoscopeImage_Exclusions(t *testing.T) {
 func Test_StereoscopeImageSource_ID(t *testing.T) {
 	tests := []struct {
 		name     string
-		alias    Alias
-		metadata StereoscopeImageSourceMetadata
+		alias    source.Alias
+		metadata source.ImageMetadata
 		want     artifact.ID
 	}{
 		{
 			name: "use raw manifest over chain ID or user input",
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
-				Layers: []StereoscopeLayerMetadata{
+				Layers: []source.LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -134,9 +144,9 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "use chain ID over user input",
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: source.ImageMetadata{
 				//UserInput: "user-input",
-				Layers: []StereoscopeLayerMetadata{
+				Layers: []source.LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -149,7 +159,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 				},
 			},
 			want: func() artifact.ID {
-				metadata := []StereoscopeLayerMetadata{
+				metadata := []source.LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -165,7 +175,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "use user input last",
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
 			},
 			want: func() artifact.ID {
@@ -176,9 +186,9 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "without alias (first)",
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
-				Layers: []StereoscopeLayerMetadata{
+				Layers: []source.LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -195,13 +205,13 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "always consider alias (first)",
-			alias: Alias{
+			alias: source.Alias{
 				Name:    "alias",
 				Version: "version",
 			},
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
-				Layers: []StereoscopeLayerMetadata{
+				Layers: []source.LayerMetadata{
 					{
 						Digest: "a",
 					},
@@ -218,18 +228,18 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		},
 		{
 			name: "without alias (last)",
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
 			},
 			want: "ab0dff627d80b9753193d7280bec8f45e8ec6b4cb0912c6fffcf7cd782d9739e",
 		},
 		{
 			name: "always consider alias (last)",
-			alias: Alias{
+			alias: source.Alias{
 				Name:    "alias",
 				Version: "version",
 			},
-			metadata: StereoscopeImageSourceMetadata{
+			metadata: source.ImageMetadata{
 				UserInput: "user-input",
 			},
 			want: "fe86c0eecd5654d3c0c0b2176aa394aef6440347c241aa8d9b628dfdde4287cf",
@@ -245,18 +255,18 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 func Test_Describe(t *testing.T) {
 	tests := []struct {
 		name     string
-		source   StereoscopeImageSource
-		expected Description
+		source   stereoscopeImageSource
+		expected source.Description
 	}{
 		{
 			name: "name from user input",
-			source: StereoscopeImageSource{
+			source: stereoscopeImageSource{
 				id: "some-id",
-				metadata: StereoscopeImageSourceMetadata{
+				metadata: source.ImageMetadata{
 					UserInput: "user input",
 				},
 			},
-			expected: Description{
+			expected: source.Description{
 				ID:   "some-id",
 				Name: "user input",
 			},

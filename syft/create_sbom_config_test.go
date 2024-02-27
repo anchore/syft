@@ -62,15 +62,15 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 	}
 
 	imgSrc := source.Description{
-		Metadata: source.StereoscopeImageSourceMetadata{},
+		Metadata: source.ImageMetadata{},
 	}
 
 	dirSrc := source.Description{
-		Metadata: source.DirectorySourceMetadata{},
+		Metadata: source.DirectoryMetadata{},
 	}
 
 	fileSrc := source.Description{
-		Metadata: source.FileSourceMetadata{},
+		Metadata: source.FileMetadata{},
 	}
 
 	tests := []struct {
@@ -437,21 +437,21 @@ func Test_findDefaultTag(t *testing.T) {
 		{
 			name: "image",
 			src: source.Description{
-				Metadata: source.StereoscopeImageSourceMetadata{},
+				Metadata: source.ImageMetadata{},
 			},
 			want: pkgcataloging.ImageTag,
 		},
 		{
 			name: "directory",
 			src: source.Description{
-				Metadata: source.DirectorySourceMetadata{},
+				Metadata: source.DirectoryMetadata{},
 			},
 			want: pkgcataloging.DirectoryTag,
 		},
 		{
 			name: "file",
 			src: source.Description{
-				Metadata: source.FileSourceMetadata{},
+				Metadata: source.FileMetadata{},
 			},
 			want: pkgcataloging.DirectoryTag, // not a mistake...
 		},

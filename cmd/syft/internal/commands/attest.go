@@ -13,6 +13,7 @@ import (
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
@@ -26,7 +27,6 @@ import (
 	"github.com/anchore/syft/syft/format/spdxtagvalue"
 	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -247,7 +247,11 @@ func predicateType(outputName string) string {
 }
 
 func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opts *options.Catalog, userInput string) (*sbom.SBOM, error) {
-	src, err := getSource(opts, userInput, onlyContainerImages)
+	if len(opts.From) > 1 || (len(opts.From) == 1 && opts.From[0] != stereoscope.RegistryTag) {
+		return nil, fmt.Errorf("attest requires use of an OCI registry directly, one or more of the specified sources is unsupported: %v", opts.From)
+	}
+
+	src, err := getSource(ctx, opts, userInput, stereoscope.RegistryTag)
 
 	if err != nil {
 		return nil, err
@@ -271,13 +275,6 @@ func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opt
 	}
 
 	return s, nil
-}
-
-func onlyContainerImages(d *source.Detection) error {
-	if !d.IsContainerImage() {
-		return fmt.Errorf("attestations are only supported for oci images at this time")
-	}
-	return nil
 }
 
 func commandExists(cmd string) bool {

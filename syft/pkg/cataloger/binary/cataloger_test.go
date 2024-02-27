@@ -21,6 +21,8 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/testutil"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 var mustUseOriginalBinaries = flag.Bool("must-use-original-binaries", false, "force the use of binaries for testing (instead of snippets)")
@@ -896,7 +898,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
 			path := testutil.SnippetOrBinary(t, test.logicalFixture, *mustUseOriginalBinaries)
 
-			src, err := source.NewFromDirectoryPath(path)
+			src, err := directorysource.NewFromPath(path)
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)
@@ -936,8 +938,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
-			src, err := source.NewFromStereoscopeImageObject(img, test.fixtureImage, nil)
-			require.NoError(t, err)
+			src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+				Reference: test.fixtureImage,
+			})
 
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
@@ -966,7 +969,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 	c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
-	src, err := source.NewFromDirectoryPath("test-fixtures/classifiers/negative")
+	src, err := directorysource.NewFromPath("test-fixtures/classifiers/negative")
 	assert.NoError(t, err)
 
 	resolver, err := src.FileResolver(source.SquashedScope)
@@ -1080,7 +1083,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := NewClassifierCataloger(test.config)
 
-			src, err := source.NewFromDirectoryPath(test.fixtureDir)
+			src, err := directorysource.NewFromPath(test.fixtureDir)
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)

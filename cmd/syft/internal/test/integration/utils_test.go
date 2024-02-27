@@ -34,17 +34,13 @@ func catalogFixtureImageWithConfig(t *testing.T, fixtureImageName string, cfg *s
 	// get the fixture image tar file
 	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
-	userInput := "docker-archive:" + tarPath
 
 	// get the source to build an SBOM against
-	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
-	require.NoError(t, err)
-
-	theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
+	theSource, err := syft.GetSource(context.Background(), tarPath, syft.DefaultGetSourceConfig().WithSources("docker-archive"))
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		theSource.Close()
+		require.NoError(t, theSource.Close())
 	})
 
 	s, err := syft.CreateSBOM(context.Background(), theSource, cfg)
@@ -71,14 +67,10 @@ func catalogDirectoryWithConfig(t *testing.T, dir string, cfg *syft.CreateSBOMCo
 	cfg.CatalogerSelection = cfg.CatalogerSelection.WithDefaults(pkgcataloging.DirectoryTag)
 
 	// get the source to build an sbom against
-	userInput := "dir:" + dir
-	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
-	require.NoError(t, err)
-
-	theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
+	theSource, err := syft.GetSource(context.Background(), dir, syft.DefaultGetSourceConfig().WithSources("dir"))
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		theSource.Close()
+		require.NoError(t, theSource.Close())
 	})
 
 	// build the SBOM

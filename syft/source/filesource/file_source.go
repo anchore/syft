@@ -1,4 +1,4 @@
-package source
+package filesource
 
 import (
 	"crypto"
@@ -18,27 +18,24 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
+	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
+	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ Source = (*FileSource)(nil)
+var _ source.Source = (*fileSource)(nil)
 
-type FileConfig struct {
+type Config struct {
 	Path             string
-	Exclude          ExcludeConfig
+	Exclude          source.ExcludeConfig
 	DigestAlgorithms []crypto.Hash
-	Alias            Alias
+	Alias            source.Alias
 }
 
-type FileSourceMetadata struct {
-	Path     string        `json:"path" yaml:"path"`
-	Digests  []file.Digest `json:"digests,omitempty" yaml:"digests,omitempty"`
-	MIMEType string        `json:"mimeType" yaml:"mimeType"`
-}
-
-type FileSource struct {
+type fileSource struct {
 	id               artifact.ID
 	digestForVersion string
-	config           FileConfig
+	config           Config
 	resolver         *fileresolver.Directory
 	mutex            *sync.Mutex
 	closer           func() error
@@ -47,7 +44,11 @@ type FileSource struct {
 	analysisPath     string
 }
 
-func NewFromFile(cfg FileConfig) (*FileSource, error) {
+func NewFromPath(path string) (source.Source, error) {
+	return New(Config{Path: path})
+}
+
+func New(cfg Config) (source.Source, error) {
 	fileMeta, err := os.Stat(cfg.Path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to stat path=%q: %w", cfg.Path, err)
@@ -83,7 +84,7 @@ func NewFromFile(cfg FileConfig) (*FileSource, error) {
 
 	id, versionDigest := deriveIDFromFile(cfg)
 
-	return &FileSource{
+	return &fileSource{
 		id:               id,
 		config:           cfg,
 		mutex:            &sync.Mutex{},
@@ -98,7 +99,7 @@ func NewFromFile(cfg FileConfig) (*FileSource, error) {
 // deriveIDFromFile derives an artifact ID from the contents of a file. If an alias is provided, it will be included
 // in the ID derivation (along with contents). This way if the user scans the same item but is considered to be
 // logically different, then ID will express that.
-func deriveIDFromFile(cfg FileConfig) (artifact.ID, string) {
+func deriveIDFromFile(cfg Config) (artifact.ID, string) {
 	d := digestOfFileContents(cfg.Path)
 	info := d
 
@@ -108,14 +109,14 @@ func deriveIDFromFile(cfg FileConfig) (artifact.ID, string) {
 		info += fmt.Sprintf(":%s@%s", cfg.Alias.Name, cfg.Alias.Version)
 	}
 
-	return artifactIDFromDigest(digest.SHA256.FromString(info).String()), d
+	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(info).String()), d
 }
 
-func (s FileSource) ID() artifact.ID {
+func (s fileSource) ID() artifact.ID {
 	return s.id
 }
 
-func (s FileSource) Describe() Description {
+func (s fileSource) Describe() source.Description {
 	name := path.Base(s.config.Path)
 	version := s.digestForVersion
 	if !s.config.Alias.IsEmpty() {
@@ -128,11 +129,11 @@ func (s FileSource) Describe() Description {
 			version = a.Version
 		}
 	}
-	return Description{
+	return source.Description{
 		ID:      string(s.id),
 		Name:    name,
 		Version: version,
-		Metadata: FileSourceMetadata{
+		Metadata: source.FileMetadata{
 			Path:     s.config.Path,
 			Digests:  s.digests,
 			MIMEType: s.mimeType,
@@ -140,7 +141,7 @@ func (s FileSource) Describe() Description {
 	}
 }
 
-func (s FileSource) FileResolver(_ Scope) (file.Resolver, error) {
+func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -148,7 +149,7 @@ func (s FileSource) FileResolver(_ Scope) (file.Resolver, error) {
 		return s.resolver, nil
 	}
 
-	exclusionFunctions, err := getDirectoryExclusionFunctions(s.analysisPath, s.config.Exclude.Paths)
+	exclusionFunctions, err := directorysource.GetDirectoryExclusionFunctions(s.analysisPath, s.config.Exclude.Paths)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +222,7 @@ func absoluteSymlinkFreePathToParent(path string) (string, error) {
 	return filepath.Dir(dereferencedAbsAnalysisPath), nil
 }
 
-func (s *FileSource) Close() error {
+func (s *fileSource) Close() error {
 	if s.closer == nil {
 		return nil
 	}
