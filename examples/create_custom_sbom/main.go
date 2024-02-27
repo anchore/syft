@@ -44,11 +44,7 @@ func imageReference() string {
 func getSource(input string) source.Source {
 	fmt.Println("detecting source type for input:", input, "...")
 
-	src, err := syft.GetSource(context.Background(), input,
-		syft.GetSourceConfig{
-			DefaultImageSource: "docker",
-		},
-	)
+	src, err := syft.GetSource(context.Background(), input, nil)
 
 	if err != nil {
 		panic(err)

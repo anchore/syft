@@ -9,13 +9,10 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func GetSource(ctx context.Context, userInput string, getSourceConfig ...GetSourceConfig) (source.Source, error) {
-	cfg := DefaultGetSourceConfig()
-	if len(getSourceConfig) > 1 {
-		return nil, fmt.Errorf("the optional GetSourceConfig requires a single value; got multiple: %v", getSourceConfig)
-	}
-	if len(getSourceConfig) == 1 {
-		cfg = getSourceConfig[0]
+// GetSource uses all of Syft's known source providers to attempt to resolve the user input to a usable source.Source
+func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (source.Source, error) {
+	if cfg == nil {
+		cfg = DefaultGetSourceConfig()
 	}
 
 	providers, err := cfg.getProviders(userInput)

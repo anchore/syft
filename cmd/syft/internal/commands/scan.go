@@ -170,7 +170,17 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 		return err
 	}
 
-	src, err := getSource(ctx, &opts.Catalog, userInput)
+	sources := opts.From
+	if len(sources) == 0 {
+		// extract a scheme if it matches any provider tag; this is a holdover for compatibility, using the --from flag is recommended
+		explicitSource, newUserInput := stereoscope.ExtractSchemeSource(userInput, allSourceProviderTags()...)
+		if explicitSource != "" {
+			sources = append(sources, explicitSource)
+			userInput = newUserInput
+		}
+	}
+
+	src, err := getSource(ctx, &opts.Catalog, userInput, sources...)
 
 	if err != nil {
 		return err
@@ -200,7 +210,7 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	return nil
 }
 
-func getSource(ctx context.Context, opts *options.Catalog, userInput string, sources ...image.Source) (source.Source, error) {
+func getSource(ctx context.Context, opts *options.Catalog, userInput string, sources ...string) (source.Source, error) {
 	cfg := syft.DefaultGetSourceConfig().
 		WithRegistryOptions(opts.Registry.ToOptions()).
 		WithAlias(source.Alias{
@@ -231,19 +241,8 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 		cfg = cfg.WithDigestAlgorithms(hashers...)
 	}
 
-	explicitSources := opts.From
-	if len(explicitSources) == 0 {
-		// extract a scheme if it matches any provider tag; this is a holdover for compatibility, using the --from flag is recommended
-		explicitSource, newUserInput := stereoscope.ExtractSchemeSource(userInput, allSourceProviderTags()...)
-		if explicitSource != "" {
-			explicitSources = append(explicitSources, explicitSource)
-			userInput = newUserInput
-		}
-	}
-
-	cfg = cfg.WithBaseSources(sources...).
-		WithFromSource(explicitSources...).
-		WithDefaultImageSource(opts.Source.Image.DefaultPullSource)
+	cfg = cfg.WithSources(sources...).
+		WithDefaultImagePullSource(opts.Source.Image.DefaultPullSource)
 
 	src, err := syft.GetSource(ctx, userInput, cfg)
 	if err != nil {

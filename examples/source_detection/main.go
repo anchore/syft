@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"os"
 
+	"github.com/anchore/go-collections"
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/source"
 )
 
 /*
@@ -29,11 +32,18 @@ import (
 const defaultImage = "alpine:3.19"
 
 func main() {
-	src, err := syft.GetSource(context.Background(), imageReference(),
-		syft.GetSourceConfig{
-			DefaultImageSource: "docker",
-		},
-	)
+	userInput := imageReference()
+
+	// parse the scheme against the known set of schemes
+	schemeSource, newUserInput := stereoscope.ExtractSchemeSource(userInput, allSourceTags()...)
+
+	// set up the GetSourceConfig
+	getSourceCfg := syft.DefaultGetSourceConfig()
+	if schemeSource != "" {
+		getSourceCfg = getSourceCfg.WithSources(schemeSource)
+		userInput = newUserInput
+	}
+	src, err := syft.GetSource(context.Background(), userInput, getSourceCfg)
 
 	if err != nil {
 		panic(err)
@@ -53,4 +63,8 @@ func imageReference() string {
 		return os.Args[1]
 	}
 	return defaultImage
+}
+
+func allSourceTags() []string {
+	return collections.TaggedValueSet[source.Provider]{}.Join(syft.SourceProviders("", syft.DefaultSourceProviderConfig())...).Tags()
 }
