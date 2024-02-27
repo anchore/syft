@@ -28,6 +28,18 @@ func findPEFeatures(data *file.Executable, reader unionreader.UnionReader) error
 }
 
 func peHasEntrypoint(f *pe.File) bool {
+	// DLLs can have entrypoints, but they are not "executables" in the traditional sense,
+	// but instead point to an initialization function (DLLMain).
+	// The PE format does not require an entrypoint, so it is possible to not have one, however,
+	// the microsoft C runtime does: https://learn.microsoft.com/en-US/troubleshoot/developer/visualstudio/cpp/libraries/use-c-run-time
+	//
+	// > When building a DLL which uses any of the C Run-time libraries, in order to ensure that the CRT is properly initialized, either
+	// > 1. the initialization function must be named DllMain() and the entry point must be specified with the linker option -entry:_DllMainCRTStartup@12 - or -
+	// > 2. the DLL's entry point must explicitly call CRT_INIT() on process attach and process detach
+	//
+	// This isn't really helpful from a user perspective when it comes to indicating if there is an entrypoint or not
+	// since it will always effectively be true for DLLs!
+
 	switch v := f.OptionalHeader.(type) {
 	case *pe.OptionalHeader32:
 		return v.AddressOfEntryPoint > 0

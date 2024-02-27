@@ -25,9 +25,7 @@ func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) erro
 
 	data.ImportedLibraries = libs
 	data.ELFSecurityFeatures = findELFSecurityFeatures(f)
-	// this is akin to
-	//    readelf -h ./path/to/bin | grep "Entry point address"
-	data.HasEntrypoint = f.Entry > 0
+	data.HasEntrypoint = elfHasEntrypoint(f)
 	data.HasExports = elfHasExports(f)
 
 	return nil
@@ -234,6 +232,12 @@ func checkClangFortifySource(file *elf.File) *bool {
 	return boolRef(false)
 }
 
+func elfHasEntrypoint(f *elf.File) bool {
+	// this is akin to
+	//    readelf -h ./path/to/bin | grep "Entry point address"
+	return f.Entry > 0
+}
+
 func elfHasExports(f *elf.File) bool {
 	// this is akin to:
 	//    nm -D --defined-only ./path/to/bin | grep ' T \| W \| B '
@@ -248,5 +252,12 @@ func elfHasExports(f *elf.File) bool {
 		return false
 	}
 
-	return len(symbols) > 0
+	for _, s := range symbols {
+		// check if the section is SHN_UNDEF
+		if s.Section != elf.SHN_UNDEF {
+			return true
+		}
+	}
+
+	return false
 }

@@ -36,11 +36,17 @@ jobs:
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
 
-      - name: Restore file executable test-fixture cache
+      - name: Restore file executable elf test-fixture cache
         uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 #v4.0.0
         with:
           path: syft/file/cataloger/executable/test-fixtures/elf/bin
-          key: ${{ runner.os }}-unit-file-executable-cache-${{ hashFiles( 'syft/file/cataloger/executable/test-fixtures/elf/cache.fingerprint' ) }}
+          key: ${{ runner.os }}-unit-file-executable-elf-cache-${{ hashFiles( 'syft/file/cataloger/executable/test-fixtures/elf/cache.fingerprint' ) }}
+
+      - name: Restore file executable shared-info test-fixture cache
+        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 #v4.0.0
+        with:
+          path: syft/file/cataloger/executable/test-fixtures/shared-info/bin
+          key: ${{ runner.os }}-unit-file-executable-shared-info-cache-${{ hashFiles( 'syft/file/cataloger/executable/test-fixtures/shared-info/cache.fingerprint' ) }}
 
       - name: Restore Java test-fixture cache
         uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 #v4.0.0

@@ -156,3 +156,74 @@ func Test_findELFSecurityFeatures(t *testing.T) {
 		})
 	}
 }
+
+func Test_elfHasEntrypoint(t *testing.T) {
+
+	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
+		t.Helper()
+		f, err := os.Open(filepath.Join("test-fixtures/shared-info", fixture))
+		require.NoError(t, err)
+		return f
+	}
+
+	tests := []struct {
+		name    string
+		fixture string
+		want    bool
+	}{
+		{
+			name:    "shared lib",
+			fixture: "bin/libhello.so",
+			want:    false,
+		},
+		{
+			name:    "application",
+			fixture: "bin/hello_linux",
+			want:    true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f, err := elf.NewFile(readerForFixture(t, tt.fixture))
+			require.NoError(t, err)
+			if got := elfHasEntrypoint(f); got != tt.want {
+				t.Errorf("elfHasEntrypoint() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_elfHasExports(t *testing.T) {
+	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
+		t.Helper()
+		f, err := os.Open(filepath.Join("test-fixtures/shared-info", fixture))
+		require.NoError(t, err)
+		return f
+	}
+
+	tests := []struct {
+		name    string
+		fixture string
+		want    bool
+	}{
+		{
+			name:    "shared lib",
+			fixture: "bin/libhello.so",
+			want:    true,
+		},
+		{
+			name:    "application",
+			fixture: "bin/hello_linux",
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f, err := elf.NewFile(readerForFixture(t, tt.fixture))
+			require.NoError(t, err)
+			if got := elfHasExports(f); got != tt.want {
+				t.Errorf("elfHasExports() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
