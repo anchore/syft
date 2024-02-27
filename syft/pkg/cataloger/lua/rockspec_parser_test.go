@@ -72,6 +72,14 @@ hello = baz
 `,
 		},
 		{
+			name: "multiple variables in one line",
+			content: `
+local foo, bar = "hello", "world"
+baz = foo
+test = bar
+`,
+		},
+		{
 			name: "skip expressions",
 			content: `
 test = (hello == "world") and "foo" or "bar"

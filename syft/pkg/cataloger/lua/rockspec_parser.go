@@ -429,60 +429,102 @@ func parseComment(data []byte, i *int) {
 	}
 }
 
+//nolint:funlen
 func parseLocal(data []byte, i *int, locals map[string]string) error {
-	key, err := parseRockspecLiteral(data, i, locals)
-	if err != nil {
-		return err
-	}
+	keys := []string{}
+	values := []string{}
 
-	if key == "function" {
-		err := skipFunction(data, i)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
+keys:
+	for {
+		parsing.SkipWhitespace(data, i)
 
-	parsing.SkipWhitespace(data, i)
-
-	c := data[*i]
-
-	if c != '=' {
-		return fmt.Errorf("unexpected character: %s", string(c))
-	}
-
-	*i++
-	parsing.SkipWhitespace(data, i)
-	c = data[*i]
-
-	switch c {
-	case '"', '\'':
-		value, err := parseRockspecString(data, i, locals)
-
-		if err != nil {
-			return err
-		}
-		locals[key] = value.value.(string)
-	default:
-		ref, err := parseRockspecLiteral(data, i, locals)
+		key, err := parseRockspecLiteral(data, i, locals)
 		if err != nil {
 			return err
 		}
 
-		// Skip if it's an expression
-		skipWhitespaceNoNewLine(data, i)
+		if key == "function" {
+			err := skipFunction(data, i)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+
+		keys = append(keys, key)
+
+		parsing.SkipWhitespace(data, i)
+
 		c := data[*i]
 
-		var value string
+		switch c {
+		case ',':
+			*i++
+			continue
+		case '=':
+			*i++
+			break keys
+		default:
+			return fmt.Errorf("unexpected character: %s", string(c))
+		}
+	}
 
-		if c != '\n' && c != '\r' {
-			skipExpression(data, i)
-			value = ""
-		} else {
-			value = locals[ref]
+values:
+	for {
+		skipWhitespaceNoNewLine(data, i)
+
+		c := data[*i]
+
+		switch c {
+		case '"', '\'':
+			value, err := parseRockspecString(data, i, locals)
+
+			if err != nil {
+				return err
+			}
+			values = append(values, value.value.(string))
+		default:
+			ref, err := parseRockspecLiteral(data, i, locals)
+			if err != nil {
+				return err
+			}
+
+			// Skip if it's an expression
+			skipWhitespaceNoNewLine(data, i)
+			c := data[*i]
+
+			var value string
+
+			if c != '\n' && c != '\r' {
+				skipExpression(data, i)
+				value = ""
+			} else {
+				value = locals[ref]
+			}
+
+			values = append(values, value)
 		}
 
-		locals[key] = value
+		skipWhitespaceNoNewLine(data, i)
+
+		c = data[*i]
+
+		switch c {
+		case ',':
+			*i++
+			continue
+		case '\n', '\r':
+			parsing.SkipWhitespace(data, i)
+			break values
+		}
+	}
+
+	if len(keys) != len(values) {
+		return fmt.Errorf("expected %d values got %d", len(keys), len(values))
+	}
+
+	for i := 0; i < len(keys); i++ {
+		locals[keys[i]] = values[i]
 	}
 
 	return nil
