@@ -7,11 +7,12 @@ import (
 	"github.com/anchore/go-collections"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
 type GetSourceConfig struct {
-	// SourceProviderConfig may optionally be provided to be used when constructing the default set of source providers, unused if SourceProviders specified
-	SourceProviderConfig *SourceProviderConfig
+	// SourceProviderConfig may optionally be provided to be used when constructing the default set of source providers, unused if All specified
+	SourceProviderConfig *sourceproviders.Config
 
 	// Sources is an explicit list of source names to use, in order, to attempt to locate a source
 	Sources []string
@@ -61,7 +62,7 @@ func (c *GetSourceConfig) WithDefaultImagePullSource(defaultImagePullSource stri
 }
 
 func (c *GetSourceConfig) getProviders(userInput string) ([]source.Provider, error) {
-	providers := collections.TaggedValueSet[source.Provider]{}.Join(SourceProviders(userInput, c.SourceProviderConfig)...)
+	providers := collections.TaggedValueSet[source.Provider]{}.Join(sourceproviders.All(userInput, c.SourceProviderConfig)...)
 
 	// if the "default image pull source" is set, we move this as the first pull source
 	if c.DefaultImagePullSource != "" {
@@ -85,6 +86,6 @@ func (c *GetSourceConfig) getProviders(userInput string) ([]source.Provider, err
 
 func DefaultGetSourceConfig() *GetSourceConfig {
 	return &GetSourceConfig{
-		SourceProviderConfig: DefaultSourceProviderConfig(),
+		SourceProviderConfig: sourceproviders.DefaultConfig(),
 	}
 }

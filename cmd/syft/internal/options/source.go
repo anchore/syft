@@ -7,7 +7,7 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 
-	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
 type sourceConfig struct {
@@ -28,7 +28,7 @@ type imageSource struct {
 
 func defaultSourceConfig() sourceConfig {
 	var digests []string
-	for _, alg := range syft.DefaultSourceProviderConfig().DigestAlgorithms {
+	for _, alg := range sourceproviders.DefaultConfig().DigestAlgorithms {
 		digests = append(digests, alg.String())
 	}
 	return sourceConfig{

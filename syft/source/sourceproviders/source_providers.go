@@ -1,4 +1,4 @@
-package syft
+package sourceproviders
 
 import (
 	"github.com/anchore/go-collections"
@@ -10,10 +10,10 @@ import (
 	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
-// SourceProviders returns all the configured source providers known to syft
-func SourceProviders(userInput string, cfg *SourceProviderConfig) []collections.TaggedValue[source.Provider] {
+// All returns all the configured source providers known to syft
+func All(userInput string, cfg *Config) []collections.TaggedValue[source.Provider] {
 	if cfg == nil {
-		cfg = DefaultSourceProviderConfig()
+		cfg = DefaultConfig()
 	}
 	stereoscopeProviders := stereoscopeSourceProviders(userInput, cfg)
 
@@ -27,7 +27,7 @@ func SourceProviders(userInput string, cfg *SourceProviderConfig) []collections.
 		Join(stereoscopeProviders.Select("pull")...)
 }
 
-func stereoscopeSourceProviders(userInput string, cfg *SourceProviderConfig) collections.TaggedValueSet[source.Provider] {
+func stereoscopeSourceProviders(userInput string, cfg *Config) collections.TaggedValueSet[source.Provider] {
 	var registry image.RegistryOptions
 	if cfg.RegistryOptions != nil {
 		registry = *cfg.RegistryOptions

@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
 /*
@@ -66,5 +67,5 @@ func imageReference() string {
 }
 
 func allSourceTags() []string {
-	return collections.TaggedValueSet[source.Provider]{}.Join(syft.SourceProviders("", syft.DefaultSourceProviderConfig())...).Tags()
+	return collections.TaggedValueSet[source.Provider]{}.Join(sourceproviders.All("", nil)...).Tags()
 }

@@ -26,6 +26,7 @@ import (
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
 const (
@@ -449,5 +450,5 @@ func trimOperation(x string) string {
 }
 
 func allSourceProviderTags() []string {
-	return collections.TaggedValueSet[source.Provider]{}.Join(syft.SourceProviders("", syft.DefaultSourceProviderConfig())...).Tags()
+	return collections.TaggedValueSet[source.Provider]{}.Join(sourceproviders.All("", nil)...).Tags()
 }

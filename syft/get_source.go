@@ -42,7 +42,7 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 			meta := src.Describe().Metadata
 			// if we have a non-image type and platform is specified, it's an error
 			if _, ok := meta.(*source.ImageMetadata); !ok && cfg.SourceProviderConfig.Platform != nil {
-				return src, fmt.Errorf("invalid argument: --platform specified with non-image source")
+				return src, fmt.Errorf("platform specified with non-image source")
 			}
 			return src, nil
 		}
