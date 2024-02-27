@@ -681,28 +681,13 @@
         "format": {
           "type": "string"
         },
-        "hasExports": {
-          "type": "boolean"
-        },
-        "hasEntrypoint": {
-          "type": "boolean"
-        },
-        "importedLibraries": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "elfSecurityFeatures": {
           "$ref": "#/$defs/ELFSecurityFeatures"
         }
       },
       "type": "object",
       "required": [
-        "format",
-        "hasExports",
-        "hasEntrypoint",
-        "importedLibraries"
+        "format"
       ]
     },
     "File": {
@@ -1508,6 +1493,9 @@
             },
             {
               "$ref": "#/$defs/SwiftPackageManagerLockEntry"
+            },
+            {
+              "$ref": "#/$defs/WordpressPluginEntry"
             }
           ]
         }
@@ -2281,6 +2269,23 @@
       "type": "object",
       "required": [
         "revision"
+      ]
+    },
+    "WordpressPluginEntry": {
+      "properties": {
+        "pluginInstallDirectory": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "authorUri": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "pluginInstallDirectory"
       ]
     },
     "cpes": {
