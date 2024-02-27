@@ -5,57 +5,27 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
-	"slices"
+	"sort"
 	"strings"
+	"unicode"
 
-	"github.com/bmatcuk/doublestar/v4"
-	"golang.org/x/mod/modfile"
+	"github.com/scylladb/go-set/strset"
 )
 
-type FileInfo struct {
-	PkgPath string
-	File    *ast.File
-}
+var metadataExceptions = strset.New()
 
-type TypeInfo struct {
-	FileInfo *FileInfo
-	Spec     *ast.TypeSpec
-}
-
-func DiscoverTypes() ([]*TypeInfo, error) {
+func DiscoverTypeNames() ([]string, error) {
 	root, err := repoRoot()
 	if err != nil {
 		return nil, err
 	}
-	modFilePath := path.Join(root, "go.mod")
-	data, err := os.ReadFile(modFilePath)
+	files, err := filepath.Glob(filepath.Join(root, "syft/source/*.go"))
 	if err != nil {
 		return nil, err
 	}
-	mod, err := modfile.Parse(modFilePath, data, nil)
-	if err != nil {
-		return nil, err
-	}
-	srcImportBase := moduleName(mod)
-	if srcImportBase == "" {
-		return nil, fmt.Errorf("unable to determine go module name from: %s", modFilePath)
-	}
-	files, err := doublestar.FilepathGlob(filepath.Join(root, "syft/source/**/*.go"))
-	if err != nil {
-		return nil, err
-	}
-	return findMetadataDefinitions(srcImportBase, root, files...)
-}
-
-func moduleName(mod *modfile.File) string {
-	if mod == nil || mod.Module == nil {
-		return ""
-	}
-	return mod.Module.Mod.Path
+	return findMetadataDefinitionNames(files...)
 }
 
 func repoRoot() (string, error) {
@@ -70,87 +40,50 @@ func repoRoot() (string, error) {
 	return absRepoRoot, nil
 }
 
-func compareTypeInfo(a, b *TypeInfo) int {
-	v := strings.Compare(a.FileInfo.PkgPath, b.FileInfo.PkgPath)
-	if v != 0 {
-		return v
-	}
-	return strings.Compare(a.Spec.Name.String(), b.Spec.Name.String())
-}
-
-func findMetadataDefinitions(srcImportBase string, root string, paths ...string) ([]*TypeInfo, error) {
-	metadata, err := findTypeDefinitions(srcImportBase, root, paths...)
-	if err != nil {
-		return nil, err
-	}
-
-	metadata = slices.DeleteFunc(metadata, func(t *TypeInfo) bool {
-		return !strings.HasSuffix(t.Spec.Name.String(), "Metadata")
-	})
-
-	// any definition that is used within another struct should not be considered a top-level metadata definition
-	metadata = slices.DeleteFunc(metadata, func(t *TypeInfo) bool {
-		return isUsedInStructs(metadata, t)
-	})
-
-	slices.SortFunc(metadata, compareTypeInfo)
-
-	// note: 3 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
-	// it is really intended to catch any major issues with the generation process that would generate, say, 0 definitions.
-	if len(metadata) < 3 {
-		names := mapFunc(metadata, func(value *TypeInfo) string {
-			return fmt.Sprintf("%s.%s", path.Base(value.FileInfo.PkgPath), nameOf(value.Spec.Name))
-		})
-		return nil, fmt.Errorf("not enough metadata definitions found (discovered %d: %v)", len(metadata), names)
-	}
-
-	return metadata, nil
-}
-
-func findTypeDefinitions(srcImportBase string, root string, paths ...string) ([]*TypeInfo, error) {
-	var topLevelStructs []*TypeInfo
-	for _, file := range paths {
-		f, typeSpecs, err := findTopLevelStructs(file)
+func findMetadataDefinitionNames(paths ...string) ([]string, error) {
+	names := strset.New()
+	usedNames := strset.New()
+	for _, path := range paths {
+		metadataDefinitions, usedTypeNames, err := findMetadataDefinitionNamesInFile(path)
 		if err != nil {
 			return nil, err
 		}
 
-		pkgPath := strings.TrimLeft(path.Dir(strings.TrimPrefix(file, root)), "/\\")
-		fi := &FileInfo{
-			PkgPath: strings.ReplaceAll(fmt.Sprintf("%s/%s", srcImportBase, pkgPath), "\\", "/"),
-			File:    f,
-		}
-
-		for _, typeSpec := range typeSpecs {
-			topLevelStructs = append(topLevelStructs, &TypeInfo{
-				FileInfo: fi,
-				Spec:     typeSpec,
-			})
-		}
-
 		// useful for debugging...
-		fmt.Println(file)
-		fmt.Printf("Package: %v \n", fi.PkgPath)
-		fmt.Printf("Specs: %v \n", mapFunc(typeSpecs, func(value *ast.TypeSpec) string {
-			return value.Name.String()
-		}))
-		fmt.Println()
+		// fmt.Println(path)
+		// fmt.Println("Defs:", metadataDefinitions)
+		// fmt.Println("Used Types:", usedTypeNames)
+		// fmt.Println()
+
+		names.Add(metadataDefinitions...)
+		usedNames.Add(usedTypeNames...)
 	}
 
-	slices.SortFunc(topLevelStructs, compareTypeInfo)
+	// any definition that is used within another struct should not be considered a top-level metadata definition
+	names.Remove(usedNames.List()...)
 
-	return topLevelStructs, nil
+	strNames := names.List()
+	sort.Strings(strNames)
+
+	// note: 3 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
+	// it is really intended to catch any major issues with the generation process that would generate, say, 0 definitions.
+	if len(strNames) < 3 {
+		return nil, fmt.Errorf("not enough metadata definitions found (discovered: " + fmt.Sprintf("%d", len(strNames)) + ")")
+	}
+
+	return strNames, nil
 }
 
-func findTopLevelStructs(file string) (*ast.File, []*ast.TypeSpec, error) {
+func findMetadataDefinitionNamesInFile(path string) ([]string, []string, error) {
 	// set up the parser
 	fs := token.NewFileSet()
-	f, err := parser.ParseFile(fs, file, nil, parser.ParseComments)
+	f, err := parser.ParseFile(fs, path, nil, parser.ParseComments)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var typeSpecs []*ast.TypeSpec
+	var metadataDefinitions []string
+	var usedTypeNames []string
 	for _, decl := range f.Decls {
 		// check if the declaration is a type declaration
 		spec, ok := decl.(*ast.GenDecl)
@@ -166,95 +99,50 @@ func findTopLevelStructs(file string) (*ast.File, []*ast.TypeSpec, error) {
 				continue
 			}
 
-			// only care about exported structs
-			if !spec.Name.IsExported() {
+			structType, ok := spec.Type.(*ast.StructType)
+			if !ok {
 				continue
 			}
 
-			typeSpecs = append(typeSpecs, spec)
+			// check if the struct type ends with "Metadata"
+			name := spec.Name.String()
+
+			// only look for exported types that end with "Metadata"
+			if isMetadataTypeCandidate(name) {
+				// print the full declaration of the struct type
+				metadataDefinitions = append(metadataDefinitions, name)
+				usedTypeNames = append(usedTypeNames, typeNamesUsedInStruct(structType)...)
+			}
 		}
 	}
-	return f, typeSpecs, nil
+	return metadataDefinitions, usedTypeNames, nil
 }
 
-func isUsedInStructs(topLevelStructs []*TypeInfo, checkIfUsed *TypeInfo) bool {
-	for _, s := range topLevelStructs {
-		if isUsedInStruct(s, checkIfUsed) {
-			return true
-		}
-	}
-	return false
-}
-
-func isUsedInStruct(typeInfo *TypeInfo, checkIfUsed *TypeInfo) bool {
-	structType, ok := typeInfo.Spec.Type.(*ast.StructType)
-	if !ok {
-		return false
-	}
-	used := false
+func typeNamesUsedInStruct(structType *ast.StructType) []string {
 	// recursively find all type names used in the struct type
+	var names []string
 	for i := range structType.Fields.List {
-		// capture names of all the types (not field names)
-		fieldType := structType.Fields.List[i].Type
-		ast.Inspect(fieldType, func(n ast.Node) bool {
-			importPath := typeInfo.FileInfo.PkgPath
-
-			var ident *ast.Ident
-			sel, ok := n.(*ast.SelectorExpr)
-			if ok {
-				name := nameOf(sel.X)
-				// find matching import
-				for _, imp := range typeInfo.FileInfo.File.Imports {
-					impAlias := nameOf(imp.Name)
-					impPath := nameOf(imp.Path)
-					if impAlias == name || (impAlias == "" && name == path.Base(impPath)) {
-						importPath = impPath
-						break
-					}
-				}
-				ident = sel.Sel
-			} else {
-				ident, _ = n.(*ast.Ident)
+		// capture names of all of the types (not field names)
+		ast.Inspect(structType.Fields.List[i].Type, func(n ast.Node) bool {
+			ident, ok := n.(*ast.Ident)
+			if !ok {
+				return true
 			}
 
-			if ident == nil || !ident.IsExported() {
-				return true // continue inspecting
-			}
+			// add the type name to the list
+			names = append(names, ident.Name)
 
-			if importPath == checkIfUsed.FileInfo.PkgPath &&
-				ident.Name == checkIfUsed.Spec.Name.Name {
-				used = true
-				return false // stop inspecting
-			}
-
-			return true // continue inspecting
+			// continue inspecting
+			return true
 		})
 	}
 
-	return used
+	return names
 }
 
-func nameOf(expr ast.Node) string {
-	switch e := expr.(type) {
-	case *ast.Ident:
-		if e == nil {
-			return ""
-		}
-		return e.Name
-	case *ast.BasicLit:
-		if e == nil {
-			return ""
-		}
-		return strings.Trim(e.Value, `"`)
-	}
-	return ""
-}
-
-// Map maps each value to a function call, returning a new slice of returned types
-func mapFunc[From any, To any](values []From, fn func(From) To) []To {
-	out := make([]To, len(values))
-	for i := range values {
-		out[i] = fn(values[i])
-	}
-	return out
+func isMetadataTypeCandidate(name string) bool {
+	return len(name) > 0 &&
+		strings.HasSuffix(name, "Metadata") &&
+		unicode.IsUpper(rune(name[0])) && // must be exported
+		!metadataExceptions.Has(name)
 }

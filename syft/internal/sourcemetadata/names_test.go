@@ -12,12 +12,8 @@ import (
 func TestAllNames(t *testing.T) {
 	// note: this is a form of completion testing relative to the current code base.
 
-	expectedTypes, err := DiscoverTypes()
+	expected, err := DiscoverTypeNames()
 	require.NoError(t, err)
-
-	expected := mapFunc(expectedTypes, func(value *TypeInfo) string {
-		return nameOf(value.Spec.Name)
-	})
 
 	actual := AllTypeNames()
 
