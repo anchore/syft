@@ -472,18 +472,20 @@ func keepUnixSystemMountPaths(infos []*mountinfo.Info) []string {
 		if info == nil {
 			continue
 		}
-		// on a unix system you may see:
-		// - tmpfs: a memory-based filesystem (e.g. /tmp, /dev, /sys/firmware)
-		// - devtmpfs: a virtual filesystem that provides access to devices (e.g. /dev)
-		// - shm: a shared memory filesystem (e.g. /dev/shm)
-		// - proc: a virtual filesystem that provides access to process information (e.g. /proc)
-		// - sysfs: a virtual filesystem that provides access to kernel information (e.g. /sys)
-
-		// on a darwin system you may see:
-		// - devfs: a virtual filesystem that provides access to devices (e.g. /dev)
+		// we're only interested in ignoring the logical filesystems typically found at these mount points:
+		// - /proc
+		//     - procfs
+		//     - proc
+		// - /sys
+		//     - sysfs
+		// - /dev
+		//     - devfs - BSD/darwin flavored systems and old linux systems
+		//     - devtmpfs - driver core maintained /dev tmpfs
+		//     - udev - userspace implementation that replaced devfs
+		//     - tmpfs - used for /dev in special instances (within a container)
 
 		switch info.FSType {
-		case "tmpfs", "devfs", "devtmpfs", "shm", "proc", "sysfs":
+		case "proc", "procfs", "sysfs", "devfs", "devtmpfs", "udev", "tmpfs":
 			log.WithFields("mountpoint", info.Mountpoint).Debug("ignoring system mountpoint")
 
 			mountPaths = append(mountPaths, info.Mountpoint)

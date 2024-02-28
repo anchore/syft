@@ -470,42 +470,62 @@ func Test_disallowUnixSystemRuntimePath(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		base    string
-		path    string
-		wantErr require.ErrorAssertionFunc
+		name     string
+		path     string
+		base     string
+		expected error
 	}{
 		{
-			name:    "no base, matching path",
-			base:    "",
-			path:    "/dev",
-			wantErr: require.Error,
+			name: "relative path to proc is allowed",
+			path: "proc/place",
 		},
 		{
-			name:    "no base, non-matching path",
-			base:    "",
-			path:    "/not-dev",
-			wantErr: require.NoError,
+			name:     "relative path within proc is not allowed",
+			path:     "/proc/place",
+			expected: fs.SkipDir,
 		},
 		{
-			name:    "do not consider base when matching paths (non-matching)",
-			base:    "/a/b/c",
-			path:    "/a/b/c/dev",
-			wantErr: require.NoError,
+			name:     "path exactly to proc is not allowed",
+			path:     "/proc",
+			expected: fs.SkipDir,
 		},
 		{
-			name:    "do not consider base when matching paths (matching)",
-			base:    "/a/b/c",
-			path:    "/dev",
-			wantErr: require.Error,
+			name: "similar to proc",
+			path: "/pro/c",
+		},
+		{
+			name: "similar to proc",
+			path: "/pro",
+		},
+		{
+			name:     "dev is not allowed",
+			path:     "/dev",
+			expected: fs.SkipDir,
+		},
+		{
+			name:     "sys is not allowed",
+			path:     "/sys",
+			expected: fs.SkipDir,
+		},
+		{
+			name: "unrelated allowed path",
+			path: "/something/sys",
+		},
+		{
+			name: "do not consider base when matching paths (non-matching)",
+			base: "/a/b/c",
+			path: "/a/b/c/dev",
+		},
+		{
+			name:     "do not consider base when matching paths (matching)",
+			base:     "/a/b/c",
+			path:     "/dev",
+			expected: fs.SkipDir,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantErr == nil {
-				tt.wantErr = require.NoError
-			}
-			tt.wantErr(t, unixSubject.disallowUnixSystemRuntimePath(tt.base, tt.path, nil, nil))
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			assert.Equal(t, test.expected, unixSubject.disallowUnixSystemRuntimePath(test.base, test.path, nil, nil))
 		})
 	}
 }
@@ -543,6 +563,10 @@ func Test_keepUnixSystemMountPaths(t *testing.T) {
 					FSType:     "proc",
 				},
 				{
+					Mountpoint: "/proc-2",
+					FSType:     "procfs",
+				},
+				{
 					Mountpoint: "/sys",
 					FSType:     "sysfs",
 				},
@@ -551,25 +575,26 @@ func Test_keepUnixSystemMountPaths(t *testing.T) {
 					FSType:     "devfs",
 				},
 				{
-					Mountpoint: "/dev-new",
+					Mountpoint: "/dev-u",
+					FSType:     "udev",
+				},
+				{
+					Mountpoint: "/dev-tmp",
 					FSType:     "devtmpfs",
 				},
 				{
 					Mountpoint: "/run",
 					FSType:     "tmpfs",
 				},
-				{
-					Mountpoint: "/run/lock",
-					FSType:     "tmpfs",
-				},
 			},
 			want: []string{
 				"/proc",
+				"/proc-2",
 				"/sys",
 				"/dev",
-				"/dev-new",
+				"/dev-u",
+				"/dev-tmp",
 				"/run",
-				"/run/lock",
 			},
 		},
 	}
