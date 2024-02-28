@@ -11,6 +11,7 @@ require (
 	github.com/anchore/bubbly v0.0.0-20231115134915-def0aba654a9
 	github.com/anchore/clio v0.0.0-20240209204744-cb94e40a4f65
 	github.com/anchore/fangs v0.0.0-20231201140849-5075d28d6d8b
+	github.com/anchore/go-collections v0.0.0-20240216171411-9321230ce537
 	github.com/anchore/go-logger v0.0.0-20230725134548-c21dafa1ec5a
 	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
@@ -53,6 +54,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/moby/sys/mountinfo v0.7.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/pelletier/go-toml v1.9.5
@@ -79,8 +81,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.29.2
 )
-
-require github.com/anchore/go-collections v0.0.0-20240216171411-9321230ce537
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
@@ -161,7 +161,6 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
-	github.com/moby/sys/mountinfo v0.6.2 // indirect
 	github.com/moby/sys/sequential v0.5.0 // indirect
 	github.com/moby/sys/signal v0.7.0 // indirect
 	github.com/muesli/ansi v0.0.0-20211031195517-c9f0611b6c70 // indirect

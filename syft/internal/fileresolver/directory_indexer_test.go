@@ -4,11 +4,13 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/moby/sys/mountinfo"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -435,7 +437,38 @@ func Test_relativePath(t *testing.T) {
 	}
 }
 
+func relativePath(basePath, givenPath string) string {
+	var relPath string
+	var relErr error
+
+	if basePath != "" {
+		relPath, relErr = filepath.Rel(basePath, givenPath)
+		cleanPath := filepath.Clean(relPath)
+		if relErr == nil {
+			if cleanPath == "." {
+				relPath = string(filepath.Separator)
+			} else {
+				relPath = cleanPath
+			}
+		}
+		if !filepath.IsAbs(relPath) {
+			relPath = string(filepath.Separator) + relPath
+		}
+	}
+
+	if relErr != nil || basePath == "" {
+		relPath = givenPath
+	}
+
+	return relPath
+}
+
 func Test_disallowUnixSystemRuntimePath(t *testing.T) {
+	unixSubject := unixSystemMountFinder{
+		// mock out detecting the mount points
+		disallowedMountPaths: []string{"/proc", "/sys", "/dev"},
+	}
+
 	tests := []struct {
 		name    string
 		base    string
@@ -455,16 +488,16 @@ func Test_disallowUnixSystemRuntimePath(t *testing.T) {
 			wantErr: require.NoError,
 		},
 		{
-			name:    "base, matching path",
+			name:    "do not consider base when matching paths (non-matching)",
 			base:    "/a/b/c",
 			path:    "/a/b/c/dev",
-			wantErr: require.Error,
+			wantErr: require.NoError,
 		},
 		{
-			name:    "base, non-matching path due to bad relative alignment",
+			name:    "do not consider base when matching paths (matching)",
 			base:    "/a/b/c",
 			path:    "/dev",
-			wantErr: require.NoError,
+			wantErr: require.Error,
 		},
 	}
 	for _, tt := range tests {
@@ -472,7 +505,77 @@ func Test_disallowUnixSystemRuntimePath(t *testing.T) {
 			if tt.wantErr == nil {
 				tt.wantErr = require.NoError
 			}
-			tt.wantErr(t, disallowUnixSystemRuntimePath(tt.base, tt.path, nil, nil))
+			tt.wantErr(t, unixSubject.disallowUnixSystemRuntimePath(tt.base, tt.path, nil, nil))
+		})
+	}
+}
+
+func Test_keepUnixSystemMountPaths(t *testing.T) {
+
+	tests := []struct {
+		name  string
+		infos []*mountinfo.Info
+		want  []string
+	}{
+		{
+			name: "all valid filesystems",
+			infos: []*mountinfo.Info{
+				{
+					Mountpoint: "/etc/hostname",
+					FSType:     "/dev/vda1",
+				},
+				{
+					Mountpoint: "/sys/fs/cgroup",
+					FSType:     "cgroup",
+				},
+				{
+					Mountpoint: "/",
+					FSType:     "overlay",
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "no valid filesystems",
+			infos: []*mountinfo.Info{
+				{
+					Mountpoint: "/proc",
+					FSType:     "proc",
+				},
+				{
+					Mountpoint: "/sys",
+					FSType:     "sysfs",
+				},
+				{
+					Mountpoint: "/dev",
+					FSType:     "devfs",
+				},
+				{
+					Mountpoint: "/dev-new",
+					FSType:     "devtmpfs",
+				},
+				{
+					Mountpoint: "/run",
+					FSType:     "tmpfs",
+				},
+				{
+					Mountpoint: "/run/lock",
+					FSType:     "tmpfs",
+				},
+			},
+			want: []string{
+				"/proc",
+				"/sys",
+				"/dev",
+				"/dev-new",
+				"/run",
+				"/run/lock",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, keepUnixSystemMountPaths(tt.infos))
 		})
 	}
 }

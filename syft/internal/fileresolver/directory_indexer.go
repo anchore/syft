@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/moby/sys/mountinfo"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 
@@ -34,12 +35,18 @@ type directoryIndexer struct {
 
 func newDirectoryIndexer(path, base string, visitors ...PathIndexVisitor) *directoryIndexer {
 	i := &directoryIndexer{
-		path:              path,
-		base:              base,
-		tree:              filetree.New(),
-		index:             filetree.NewIndex(),
-		pathIndexVisitors: append([]PathIndexVisitor{requireFileInfo, disallowByFileType, disallowUnixSystemRuntimePath}, visitors...),
-		errPaths:          make(map[string]error),
+		path:  path,
+		base:  base,
+		tree:  filetree.New(),
+		index: filetree.NewIndex(),
+		pathIndexVisitors: append(
+			[]PathIndexVisitor{
+				requireFileInfo,
+				disallowByFileType,
+				newUnixSystemMountFinder().disallowUnixSystemRuntimePath},
+			visitors...,
+		),
+		errPaths: make(map[string]error),
 	}
 
 	// these additional stateful visitors should be the first thing considered when walking / indexing
@@ -443,11 +450,50 @@ func (r *directoryIndexer) disallowRevisitingVisitor(_, path string, _ os.FileIn
 	return nil
 }
 
-func disallowUnixSystemRuntimePath(base, path string, _ os.FileInfo, _ error) error {
-	// note: we need to consider all paths relative to the base when being filtered, which is how they would appear
-	// when the resolver is being used. Then something like /some/mountpoint/dev with a base of /some/mountpoint
-	// would be considered as /dev when being filtered.
-	if internal.HasAnyOfPrefixes(relativePath(base, path), unixSystemRuntimePrefixes...) {
+type unixSystemMountFinder struct {
+	disallowedMountPaths []string
+}
+
+func newUnixSystemMountFinder() unixSystemMountFinder {
+	infos, err := mountinfo.GetMounts(nil)
+	if err != nil {
+		log.WithFields("error", err).Warnf("unable to get system mounts")
+		return unixSystemMountFinder{}
+	}
+
+	return unixSystemMountFinder{
+		disallowedMountPaths: keepUnixSystemMountPaths(infos),
+	}
+}
+
+func keepUnixSystemMountPaths(infos []*mountinfo.Info) []string {
+	var mountPaths []string
+	for _, info := range infos {
+		if info == nil {
+			continue
+		}
+		// on a unix system you may see:
+		// - tmpfs: a memory-based filesystem (e.g. /tmp, /dev, /sys/firmware)
+		// - devtmpfs: a virtual filesystem that provides access to devices (e.g. /dev)
+		// - shm: a shared memory filesystem (e.g. /dev/shm)
+		// - proc: a virtual filesystem that provides access to process information (e.g. /proc)
+		// - sysfs: a virtual filesystem that provides access to kernel information (e.g. /sys)
+
+		// on a darwin system you may see:
+		// - devfs: a virtual filesystem that provides access to devices (e.g. /dev)
+
+		switch info.FSType {
+		case "tmpfs", "devfs", "devtmpfs", "shm", "proc", "sysfs":
+			log.WithFields("mountpoint", info.Mountpoint).Debug("ignoring system mountpoint")
+
+			mountPaths = append(mountPaths, info.Mountpoint)
+		}
+	}
+	return mountPaths
+}
+
+func (f unixSystemMountFinder) disallowUnixSystemRuntimePath(_, path string, _ os.FileInfo, _ error) error {
+	if internal.HasAnyOfPrefixes(path, f.disallowedMountPaths...) {
 		return fs.SkipDir
 	}
 	return nil
@@ -473,32 +519,6 @@ func requireFileInfo(_, _ string, info os.FileInfo, _ error) error {
 		return ErrSkipPath
 	}
 	return nil
-}
-
-func relativePath(basePath, givenPath string) string {
-	var relPath string
-	var relErr error
-
-	if basePath != "" {
-		relPath, relErr = filepath.Rel(basePath, givenPath)
-		cleanPath := filepath.Clean(relPath)
-		if relErr == nil {
-			if cleanPath == "." {
-				relPath = string(filepath.Separator)
-			} else {
-				relPath = cleanPath
-			}
-		}
-		if !filepath.IsAbs(relPath) {
-			relPath = string(filepath.Separator) + relPath
-		}
-	}
-
-	if relErr != nil || basePath == "" {
-		relPath = givenPath
-	}
-
-	return relPath
 }
 
 func indexingProgress(path string) (*progress.Stage, *progress.Manual) {

@@ -1109,6 +1109,10 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 }
 
 func Test_isUnixSystemRuntimePath(t *testing.T) {
+	unixSubject := unixSystemMountFinder{
+		// mock out detecting the mount points
+		disallowedMountPaths: []string{"/proc", "/sys", "/dev"},
+	}
 	tests := []struct {
 		path     string
 		expected error
@@ -1144,7 +1148,7 @@ func Test_isUnixSystemRuntimePath(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			assert.Equal(t, test.expected, disallowUnixSystemRuntimePath("", test.path, nil, nil))
+			assert.Equal(t, test.expected, unixSubject.disallowUnixSystemRuntimePath("", test.path, nil, nil))
 		})
 	}
 }
