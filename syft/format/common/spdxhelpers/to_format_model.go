@@ -627,7 +627,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 			FileName:         coordinates.RealPath,
 			FileTypes:        toFileTypes(metadata),
 			LicenseInfoInFiles: []string{ // required in SPDX 2.2
-				NOASSERTION,
+				helpers.NOASSERTION,
 			},
 		})
 	}
