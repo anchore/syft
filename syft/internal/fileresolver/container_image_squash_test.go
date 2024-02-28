@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"io"
 	"sort"
 	"testing"
@@ -74,9 +75,7 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
-			if err != nil {
-				t.Fatalf("could not create resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			hasPath := resolver.HasPath(c.linkPath)
 			if !c.forcePositiveHasPath {
@@ -90,9 +89,7 @@ func TestImageSquashResolver_FilesByPath(t *testing.T) {
 			}
 
 			refs, err := resolver.FilesByPath(c.linkPath)
-			if err != nil {
-				t.Fatalf("could not use resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			expectedRefs := 1
 			if c.resolvePath == "" {
@@ -187,14 +184,10 @@ func TestImageSquashResolver_FilesByGlob(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageSquash(img)
-			if err != nil {
-				t.Fatalf("could not create resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			refs, err := resolver.FilesByGlob(c.glob)
-			if err != nil {
-				t.Fatalf("could not use resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			expectedRefs := 1
 			if c.resolvePath == "" {
@@ -351,7 +344,9 @@ func TestSquashImageResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	assert.NoError(t, err)
 
 	var dirLoc *file.Location
-	for loc := range resolver.AllLocations() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for loc := range resolver.AllLocations(ctx) {
 		entry, err := resolver.img.FileCatalog.Get(loc.Reference())
 		require.NoError(t, err)
 		if entry.Metadata.IsDir() {
@@ -541,7 +536,9 @@ func TestSquashResolver_AllLocations(t *testing.T) {
 	assert.NoError(t, err)
 
 	paths := strset.New()
-	for loc := range resolver.AllLocations() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for loc := range resolver.AllLocations(ctx) {
 		paths.Add(loc.RealPath)
 	}
 	expected := []string{
@@ -554,6 +551,9 @@ func TestSquashResolver_AllLocations(t *testing.T) {
 	// depending on how the image is built (either from linux or mac), sys and proc might accidentally be added to the image.
 	// this isn't important for the test, so we remove them.
 	paths.Remove("/proc", "/sys", "/dev", "/etc")
+
+	// Remove cache created by Mac Rosetta when emulating different arches
+	paths.Remove("/.cache/rosetta", "/.cache")
 
 	pathsList := paths.List()
 	sort.Strings(pathsList)

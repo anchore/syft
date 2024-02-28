@@ -86,7 +86,10 @@ func assertNotInOutput(data string) traitAssertion {
 func assertNoStderr(tb testing.TB, _, stderr string, _ int) {
 	tb.Helper()
 	if len(stderr) > 0 {
-		tb.Errorf("expected stderr to be empty, but got %q", stderr)
+		tb.Errorf("expected stderr to be empty, but wasn't")
+		if showOutput != nil && *showOutput {
+			tb.Errorf("STDERR:%s", stderr)
+		}
 	}
 }
 
@@ -96,7 +99,10 @@ func assertInOutput(data string) traitAssertion {
 		stdout = stripansi.Strip(stdout)
 		stderr = stripansi.Strip(stderr)
 		if !strings.Contains(stdout, data) && !strings.Contains(stderr, data) {
-			tb.Errorf("data=%q was NOT found in any output, but should have been there\nSTDOUT:%s\nSTDERR:%s", data, stdout, stderr)
+			tb.Errorf("data=%q was NOT found in any output, but should have been there", data)
+			if showOutput != nil && *showOutput {
+				tb.Errorf("STDOUT:%s\nSTDERR:%s", stdout, stderr)
+			}
 		}
 	}
 }
@@ -116,6 +122,7 @@ func assertPackageCount(length uint) traitAssertion {
 		type NameAndVersion struct {
 			Name    string `json:"name"`
 			Version string `json:"version"`
+			Type    string `json:"type"`
 		}
 		type partial struct {
 			Artifacts []NameAndVersion `json:"artifacts"`
@@ -130,7 +137,7 @@ func assertPackageCount(length uint) traitAssertion {
 			tb.Errorf("expected package count of %d, but found %d", length, len(data.Artifacts))
 			debugArtifacts := make([]string, len(data.Artifacts))
 			for i, a := range data.Artifacts {
-				debugArtifacts[i] = fmt.Sprintf("%s:%s", a.Name, a.Version)
+				debugArtifacts[i] = fmt.Sprintf("%s@%s (%s)", a.Name, a.Version, a.Type)
 			}
 			sort.Strings(debugArtifacts)
 			for i, a := range debugArtifacts {

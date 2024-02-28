@@ -8,12 +8,12 @@ import (
 )
 
 var jsonNameFromType = map[reflect.Type][]string{
-	reflect.TypeOf(source.DirectorySourceMetadata{}):        {"directory", "dir"},
-	reflect.TypeOf(source.FileSourceMetadata{}):             {"file"},
-	reflect.TypeOf(source.StereoscopeImageSourceMetadata{}): {"image"},
+	reflect.TypeOf(source.DirectoryMetadata{}): {"directory", "dir"},
+	reflect.TypeOf(source.FileMetadata{}):      {"file"},
+	reflect.TypeOf(source.ImageMetadata{}):     {"image"},
 }
 
-func AllNames() []string {
+func AllTypeNames() []string {
 	names := make([]string, 0)
 	for _, t := range AllTypes() {
 		names = append(names, reflect.TypeOf(t).Name())
@@ -32,7 +32,7 @@ func ReflectTypeFromJSONName(name string) reflect.Type {
 	name = strings.ToLower(name)
 	for t, vs := range jsonNameFromType {
 		for _, v := range vs {
-			if v == name {
+			if strings.ToLower(v) == name {
 				return t
 			}
 		}

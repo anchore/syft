@@ -39,7 +39,7 @@ func TestLocation_ID(t *testing.T) {
 			l := Location{
 				LocationData: LocationData{
 					Coordinates: test.coordinates,
-					VirtualPath: test.virtualPath,
+					AccessPath:  test.virtualPath,
 					ref:         test.ref,
 				},
 			}

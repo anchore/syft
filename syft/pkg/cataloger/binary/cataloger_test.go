@@ -1,7 +1,9 @@
 package binary
 
 import (
+	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"strings"
@@ -12,21 +14,31 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/testutil"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
-func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
+var mustUseOriginalBinaries = flag.Bool("must-use-original-binaries", false, "force the use of binaries for testing (instead of snippets)")
+
+func Test_Cataloger_PositiveCases(t *testing.T) {
 	tests := []struct {
-		name       string
-		fixtureDir string
-		expected   pkg.Package
+		name string
+		// logicalFixture is the logical path to the full binary or snippet. This is relative to the test-fixtures/classifiers/snippets
+		// or test-fixtures/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
+		// used. If no binary or snippet is found the test will fail. If '-must-use-original-binaries' is used the only
+		// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
+		logicalFixture string
+		expected       pkg.Package
 	}{
 		{
-			name:       "positive-postgresql-15beta4",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-15beta4",
+			logicalFixture: "postgres/15beta4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",
 				Version:   "15beta4",
@@ -37,8 +49,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-postgresql-15.1",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-15.1",
+			logicalFixture: "postgres/15.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",
 				Version:   "15.1",
@@ -49,8 +60,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-postgresql-9.6.24",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-9.6.24",
+			logicalFixture: "postgres/9.6.24/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",
 				Version:   "9.6.24",
@@ -61,8 +71,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-postgresql-9.5alpha1",
-			fixtureDir: "test-fixtures/classifiers/positive/postgresql-9.5alpha1",
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "postgres/9.5alpha1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",
 				Version:   "9.5alpha1",
@@ -73,20 +84,73 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-traefik-2.9.6",
-			fixtureDir: "test-fixtures/classifiers/positive/traefik-2.9.6",
+			logicalFixture: "mysql/8.0.34/linux-amd64",
 			expected: pkg.Package{
-				Name:      "traefik",
-				Version:   "2.9.6",
+				Name:      "mysql",
+				Version:   "8.0.34",
 				Type:      "binary",
-				PURL:      "pkg:generic/traefik@2.9.6",
-				Locations: locations("traefik"),
-				Metadata:  metadata("traefik-binary"),
+				PURL:      "pkg:generic/mysql@8.0.34",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
 			},
 		},
 		{
-			name:       "positive-traefik-1.7.34",
-			fixtureDir: "test-fixtures/classifiers/positive/traefik-1.7.34",
+			logicalFixture: "percona-server/8.0.35/linux-amd64",
+			expected: pkg.Package{
+				Name:      "percona-server",
+				Version:   "8.0.35",
+				Type:      "binary",
+				PURL:      "pkg:generic/percona-server@8.0.35",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			logicalFixture: "percona-xtradb-cluster/8.0.34/linux-amd64",
+			expected: pkg.Package{
+				Name:      "percona-xtradb-cluster",
+				Version:   "8.0.34",
+				Type:      "binary",
+				PURL:      "pkg:generic/percona-xtradb-cluster@8.0.34",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			logicalFixture: "percona-xtrabackup/8.0.35/linux-amd64",
+			expected: pkg.Package{
+				Name:      "percona-xtrabackup",
+				Version:   "8.0.35",
+				Type:      "binary",
+				PURL:      "pkg:generic/percona-xtrabackup@8.0.35",
+				Locations: locations("xtrabackup"),
+				Metadata:  metadata("xtrabackup-binary"),
+			},
+		},
+		{
+			logicalFixture: "mysql/5.6.51/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql",
+				Version:   "5.6.51",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql@5.6.51",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			logicalFixture: "mariadb/10.6.15/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mariadb",
+				Version:   "10.6.15",
+				Type:      "binary",
+				PURL:      "pkg:generic/mariadb@10.6.15",
+				Locations: locations("mariadb"),
+				Metadata:  metadata("mariadb-binary"),
+			},
+		},
+		{
+			logicalFixture: "traefik/1.7.34/linux-amd64",
 			expected: pkg.Package{
 				Name:      "traefik",
 				Version:   "1.7.34",
@@ -97,8 +161,29 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-memcached-1.6.18",
-			fixtureDir: "test-fixtures/classifiers/positive/memcached-1.6.18",
+			logicalFixture: "traefik/2.9.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.9.6",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			logicalFixture: "traefik/2.10.7/linux-amd64",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.10.7",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.10.7",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			logicalFixture: "memcached/1.6.18/linux-amd64",
 			expected: pkg.Package{
 				Name:      "memcached",
 				Version:   "1.6.18",
@@ -109,8 +194,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-httpd-2.4.54",
-			fixtureDir: "test-fixtures/classifiers/positive/httpd-2.4.54",
+			logicalFixture: "httpd/2.4.54/linux-amd64",
 			expected: pkg.Package{
 				Name:      "httpd",
 				Version:   "2.4.54",
@@ -121,8 +205,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-php-cli-8.2.1",
-			fixtureDir: "test-fixtures/classifiers/positive/php-cli-8.2.1",
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "php-cli/8.2.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "php-cli",
 				Version:   "8.2.1",
@@ -133,8 +218,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-php-fpm-8.2.1",
-			fixtureDir: "test-fixtures/classifiers/positive/php-fpm-8.2.1",
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "php-fpm/8.2.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "php-fpm",
 				Version:   "8.2.1",
@@ -145,8 +231,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-php-apache-8.2.1",
-			fixtureDir: "test-fixtures/classifiers/positive/php-apache-8.2.1",
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "php-apache/8.2.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "libphp",
 				Version:   "8.2.1",
@@ -157,8 +244,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-perl-5.12.5",
-			fixtureDir: "test-fixtures/classifiers/positive/perl-5.12.5",
+			// TODO: original binary is different than whats in config.yaml
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "perl/5.12.5/linux-amd64",
 			expected: pkg.Package{
 				Name:      "perl",
 				Version:   "5.12.5",
@@ -169,8 +257,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-perl-5.20.0",
-			fixtureDir: "test-fixtures/classifiers/positive/perl-5.20.0",
+			// TODO: original binary is different than whats in config.yaml
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "perl/5.20.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "perl",
 				Version:   "5.20.0",
@@ -181,8 +270,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-perl-5.37.8",
-			fixtureDir: "test-fixtures/classifiers/positive/perl-5.37.8",
+			// TODO: original binary is different than whats in config.yaml
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "perl/5.37.8/linux-amd64",
 			expected: pkg.Package{
 				Name:      "perl",
 				Version:   "5.37.8",
@@ -193,8 +283,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-haproxy-1.5.14",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.5.14",
+			logicalFixture: "haproxy/1.5.14/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haproxy",
 				Version:   "1.5.14",
@@ -205,8 +294,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-haproxy-1.8.22",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-1.8.22",
+			logicalFixture: "haproxy/1.8.22/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haproxy",
 				Version:   "1.8.22",
@@ -217,8 +305,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-haproxy-2.7.3",
-			fixtureDir: "test-fixtures/classifiers/positive/haproxy-2.7.3",
+			logicalFixture: "haproxy/2.7.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haproxy",
 				Version:   "2.7.3",
@@ -228,21 +315,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("haproxy-binary"),
 			},
 		},
+
 		{
-			name:       "positive-redis-2.8.23",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-2.8.23",
-			expected: pkg.Package{
-				Name:      "redis",
-				Version:   "2.8.23",
-				Type:      "binary",
-				PURL:      "pkg:generic/redis@2.8.23",
-				Locations: locations("redis-server"),
-				Metadata:  metadata("redis-binary"),
-			},
-		},
-		{
-			name:       "positive-helm-3.11.1",
-			fixtureDir: "test-fixtures/classifiers/dynamic/helm-3.11.1",
+			logicalFixture: "helm/3.11.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "helm",
 				Version:   "3.11.1",
@@ -253,8 +328,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-helm-3.10.3",
-			fixtureDir: "test-fixtures/classifiers/dynamic/helm-3.10.3",
+			logicalFixture: "helm/3.10.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "helm",
 				Version:   "3.10.3",
@@ -264,9 +338,22 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 				Metadata:  metadata("helm"),
 			},
 		},
+
 		{
-			name:       "positive-redis-4.0.11",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-4.0.11",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/2.8.23/linux-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "2.8.23",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@2.8.23",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/4.0.11/linux-amd64",
 			expected: pkg.Package{
 				Name:      "redis",
 				Version:   "4.0.11",
@@ -277,8 +364,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-redis-5.0.0",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-5.0.0",
+			logicalFixture: "redis-server/5.0.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "redis",
 				Version:   "5.0.0",
@@ -289,8 +375,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-redis-6.0.16",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-6.0.16",
+			logicalFixture: "redis-server/6.0.16/linux-amd64",
 			expected: pkg.Package{
 				Name:      "redis",
 				Version:   "6.0.16",
@@ -301,8 +386,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-redis-7.0.0",
-			fixtureDir: "test-fixtures/classifiers/positive/redis-server-7.0.0",
+			logicalFixture: "redis-server/7.0.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "redis",
 				Version:   "7.0.0",
@@ -313,27 +397,62 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-libpython3.7.so",
-			fixtureDir: "test-fixtures/classifiers/positive/python-binary-lib-3.7",
+			logicalFixture: "redis-server/7.0.14/linux-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.0.14",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.0.14",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/7.2.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.2.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.2.3",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "redis-server/7.2.3/linux-arm64",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.2.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.2.3",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			logicalFixture: "python-shared-lib/3.7.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.7.4",
 				PURL:      "pkg:generic/python@3.7.4",
-				Locations: locations("libpython3.7.so"),
+				Locations: locations("libpython3.7m.so.1.0"),
 				Metadata:  metadata("python-binary-lib"),
 			},
 		},
+
 		{
-			name:       "positive-python-3.11.2-from-shared-lib",
-			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-shared-lib-3.11",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "python-slim-shared-libs/3.11/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.11.2",
 				PURL:      "pkg:generic/python@3.11.2",
-				Locations: locations("python3", "libpython3.11.so.1.0"),
-				Metadata: pkg.BinaryMetadata{
+				Locations: locations("python3.11", "libpython3.11.so.1.0"),
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
-						match("python-binary", "python3"),
+						match("python-binary", "python3.11"),
 						match("python-binary", "libpython3.11.so.1.0"),
 						match("python-binary-lib", "libpython3.11.so.1.0"),
 					},
@@ -341,14 +460,14 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-python-3.9-from-shared-redhat-lib",
-			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-shared-lib-redhat-3.9",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "python-rhel-shared-libs/3.9/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.9.13",
 				PURL:      "pkg:generic/python@3.9.13",
 				Locations: locations("python3.9", "libpython3.9.so.1.0"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.9"),
 						match("python-binary", "libpython3.9.so.1.0"),
@@ -358,14 +477,14 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-python-binary-with-version-3.9",
-			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-with-version-3.9",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "python3.9/3.9.16/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.9.2",
 				PURL:      "pkg:generic/python@3.9.2",
 				Locations: locations("python3.9"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.9"),
 					},
@@ -373,14 +492,14 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-python-binary-3.4-alpine",
-			fixtureDir: "test-fixtures/classifiers/dynamic/python-binary-3.4-alpine",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "python-alpine-shared-libs/3.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.4.10",
 				PURL:      "pkg:generic/python@3.4.10",
 				Locations: locations("python3.4", "libpython3.4m.so.1.0"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.4"),
 						match("python-binary", "libpython3.4m.so.1.0"),
@@ -390,8 +509,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-python-3.5-with-incorrect-match",
-			fixtureDir: "test-fixtures/classifiers/positive/python-3.5-with-incorrect-match",
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "python-with-incorrect-match/3.5.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.5.3",
@@ -401,8 +521,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-python3.6",
-			fixtureDir: "test-fixtures/classifiers/positive/python-binary-3.6",
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "python/3.6.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.6.3",
@@ -412,15 +533,16 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-python-duplicates",
-			fixtureDir: "test-fixtures/classifiers/positive/python-duplicates",
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "python-duplicates/3.8.16/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
 				Version:   "3.8.16",
 				Type:      "binary",
 				PURL:      "pkg:generic/python@3.8.16",
 				Locations: locations("dir/python3.8", "python3.8", "libpython3.8.so"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "dir/python3.8"),
 						match("python-binary", "python3.8"),
@@ -430,30 +552,39 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-go",
-			fixtureDir: "test-fixtures/classifiers/positive/go-1.14",
+			logicalFixture: "pypy-shared-lib/7.3.14/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pypy",
+				Version:   "7.3.14",
+				PURL:      "pkg:generic/pypy@7.3.14",
+				Locations: locations("libpypy3.9-c.so"),
+				Metadata:  metadata("pypy-binary-lib"),
+			},
+		},
+		{
+			logicalFixture: "go/1.21.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "go",
-				Version:   "1.14",
-				PURL:      "pkg:generic/go@1.14",
+				Version:   "1.21.3",
+				PURL:      "pkg:generic/go@1.21.3",
 				Locations: locations("go"),
 				Metadata:  metadata("go-binary"),
 			},
 		},
 		{
-			name:       "positive-node",
-			fixtureDir: "test-fixtures/classifiers/positive/node-19.2.1",
+			logicalFixture: "node/19.2.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "node",
-				Version:   "19.2.1",
-				PURL:      "pkg:generic/node@19.2.1",
+				Version:   "19.2.0",
+				PURL:      "pkg:generic/node@19.2.0",
 				Locations: locations("node"),
 				Metadata:  metadata("nodejs-binary"),
 			},
 		},
 		{
-			name:       "positive-go-hint",
-			fixtureDir: "test-fixtures/classifiers/positive/go-hint-1.15",
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "go-version-hint/1.15/any",
 			expected: pkg.Package{
 				Name:      "go",
 				Version:   "1.15",
@@ -463,18 +594,19 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-busybox",
-			fixtureDir: "test-fixtures/classifiers/positive/busybox-3.33.3",
+			// note: this is testing BUSYBOX which is typically through a link to "[" (in this case a symlink but in
+			// practice this is often a hard link).
+			logicalFixture: `busybox/1.36.1/linux-amd64`,
 			expected: pkg.Package{
 				Name:      "busybox",
-				Version:   "3.33.3",
+				Version:   "1.36.1",
+				PURL:      "pkg:generic/busybox@1.36.1",
 				Locations: locations("["), // note: busybox is a link to [
 				Metadata:  metadata("busybox-binary", "[", "busybox"),
 			},
 		},
 		{
-			name:       "positive-java-openjdk",
-			fixtureDir: "test-fixtures/classifiers/positive/openjdk",
+			logicalFixture: "java-jre-openjdk/1.8.0_352-b08/linux-amd64",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "1.8.0_352-b08",
@@ -485,8 +617,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-java-openjdk-lts",
-			fixtureDir: "test-fixtures/classifiers/positive/openjdk-lts",
+			logicalFixture: "java-jre-openjdk/11.0.17/linux-amd64",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "11.0.17+8-LTS",
@@ -497,8 +628,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-java-oracle",
-			fixtureDir: "test-fixtures/classifiers/positive/oracle",
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "java-jre-oracle/19.0.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "19.0.1+10-21",
@@ -509,8 +641,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-java-oracle-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/oracle-macos",
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "java-jre-oracle/19.0.1/darwin",
 			expected: pkg.Package{
 				Name:      "java",
 				Version:   "19.0.1+10-21",
@@ -521,63 +654,87 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-java-ibm",
-			fixtureDir: "test-fixtures/classifiers/positive/ibm",
+			logicalFixture: "java-jre-ibm/1.8.0_391/linux-amd64",
 			expected: pkg.Package{
 				Name:      "java",
-				Version:   "1.8.0-foreman_2022_09_22_15_30-b00",
+				Version:   "1.8.0-foreman_2023_10_12_13_27-b00",
 				Type:      "binary",
-				PURL:      "pkg:generic/java@1.8.0-foreman_2022_09_22_15_30-b00",
+				PURL:      "pkg:generic/java@1.8.0-foreman_2023_10_12_13_27-b00",
 				Locations: locations("java"),
 				Metadata:  metadata("java-binary-ibm", "java"),
 			},
 		},
 		{
-			name:       "positive-rust-1.50.0-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/rust-1.50.0",
+			logicalFixture: "rust-libstd/1.50.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "rust",
 				Version:   "1.50.0",
 				Type:      "binary",
 				PURL:      "pkg:generic/rust@1.50.0",
-				Locations: locations("lib/rustlib/aarch64-apple-darwin/lib/libstd-f6f9eec1635e636a.dylib"),
-				Metadata:  metadata("rust-standard-library-macos"),
-			},
-		},
-		{
-			name:       "positive-rust-1.67.1-macos",
-			fixtureDir: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-aarch64-apple-darwin",
-			expected: pkg.Package{
-				Name:      "rust",
-				Version:   "1.67.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/rust@1.67.1",
-				Locations: locations("lib/libstd-16f2b65e77054c42.dylib"),
-				Metadata:  metadata("rust-standard-library-macos"),
-			},
-		},
-		{
-			name:       "positive-rust-1.67.1-linux",
-			fixtureDir: "test-fixtures/classifiers/positive/rust-1.67.1/toolchains/stable-x86_64-unknown-linux-musl",
-			expected: pkg.Package{
-				Name:      "rust",
-				Version:   "1.67.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/rust@1.67.1",
-				Locations: locations("lib/libstd-86aefecbddda356d.so"),
+				Locations: locations("libstd-6f77337c1826707d.so"),
 				Metadata:  metadata("rust-standard-library-linux"),
 			},
 		},
 		{
-			name:       "positive-ruby-3.2.1",
-			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-3.2.1",
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "rust-libstd/1.50.0/darwin",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.50.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.50.0",
+				Locations: locations("libstd-f6f9eec1635e636a.dylib"),
+				Metadata:  metadata("rust-standard-library-macos"),
+			},
+		},
+		{
+			// TODO: find original binary...
+			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "rust-libstd/1.67.1/darwin",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.67.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.67.1",
+				Locations: locations("libstd-16f2b65e77054c42.dylib"),
+				Metadata:  metadata("rust-standard-library-macos"),
+			},
+		},
+		{
+			logicalFixture: "rust-libstd-musl/1.67.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.67.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.67.1",
+				Locations: locations("libstd-86aefecbddda356d.so"),
+				Metadata:  metadata("rust-standard-library-linux"),
+			},
+		},
+		{
+			logicalFixture: "rust-libstd/1.67.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "rust",
+				Version:   "1.67.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/rust@1.67.1",
+				Locations: locations("libstd-c6192dd4c4d410ac.so"),
+				Metadata:  metadata("rust-standard-library-linux"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+
+			name:           "positive-ruby-3.2.1",
+			logicalFixture: "ruby-bullseye-shared-libs/3.2.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "ruby",
 				Version:   "3.2.1",
 				Type:      "binary",
 				PURL:      "pkg:generic/ruby@3.2.1",
 				Locations: locations("ruby", "libruby.so.3.2.1"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("ruby-binary", "ruby"),
 						match("ruby-binary", "libruby.so.3.2.1"),
@@ -586,15 +743,15 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-ruby-2.7.7",
-			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.7.7",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "ruby-bullseye-shared-libs/2.7.7/linux-amd64",
 			expected: pkg.Package{
 				Name:      "ruby",
 				Version:   "2.7.7p221",
 				Type:      "binary",
 				PURL:      "pkg:generic/ruby@2.7.7p221",
 				Locations: locations("ruby", "libruby.so.2.7.7"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("ruby-binary", "ruby"),
 						match("ruby-binary", "libruby.so.2.7.7"),
@@ -603,15 +760,15 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-ruby-2.6.10",
-			fixtureDir: "test-fixtures/classifiers/dynamic/ruby-library-2.6.10",
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "ruby-shared-libs/2.6.10/linux-amd64",
 			expected: pkg.Package{
 				Name:      "ruby",
 				Version:   "2.6.10p210",
 				Type:      "binary",
 				PURL:      "pkg:generic/ruby@2.6.10p210",
 				Locations: locations("ruby", "libruby.so.2.6.10"),
-				Metadata: pkg.BinaryMetadata{
+				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
 						match("ruby-binary", "ruby"),
 						match("ruby-binary", "libruby.so.2.6.10"),
@@ -620,8 +777,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-ruby-1.9.3p551",
-			fixtureDir: "test-fixtures/classifiers/positive/ruby-1.9.3p551",
+			logicalFixture: "ruby/1.9.3p551/linux-amd64",
 			expected: pkg.Package{
 				Name:      "ruby",
 				Version:   "1.9.3p551",
@@ -632,8 +788,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-consul-1.15.2",
-			fixtureDir: "test-fixtures/classifiers/dynamic/consul-1.15.2",
+			logicalFixture: "consul/1.15.2/linux-amd64",
 			expected: pkg.Package{
 				Name:      "consul",
 				Version:   "1.15.2",
@@ -644,8 +799,29 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-nginx-1.25.1",
-			fixtureDir: "test-fixtures/classifiers/positive/nginx-1.25.1",
+			logicalFixture: "erlexec/25.3.2.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "erlang",
+				Version:   "25.3.2.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/erlang@25.3.2.6",
+				Locations: locations("erlexec"),
+				Metadata:  metadata("erlang-binary"),
+			},
+		},
+		{
+			logicalFixture: "erlexec/26.2.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "erlang",
+				Version:   "26.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/erlang@26.2",
+				Locations: locations("erlexec"),
+				Metadata:  metadata("erlang-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx/1.25.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "nginx",
 				Version:   "1.25.1",
@@ -656,8 +832,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-nginx-openresty-1.21.4.2",
-			fixtureDir: "test-fixtures/classifiers/positive/nginx-openresty-1.21.4.2",
+			logicalFixture: "nginx-openresty/1.21.4.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "nginx",
 				Version:   "1.21.4",
@@ -668,33 +843,71 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			name:       "positive-bash-5.2.15",
-			fixtureDir: "test-fixtures/classifiers/positive/bash-5.2.15",
+			logicalFixture: "bash/5.1.16/linux-amd64",
 			expected: pkg.Package{
 				Name:      "bash",
-				Version:   "5.2.15",
+				Version:   "5.1.16",
 				Type:      "binary",
-				PURL:      "pkg:generic/bash@5.2.15",
+				PURL:      "pkg:generic/bash@5.1.16",
 				Locations: locations("bash"),
 				Metadata:  metadata("bash-binary"),
+			},
+		},
+		{
+			logicalFixture: "openssl/3.1.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "openssl",
+				Version:   "3.1.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/openssl@3.1.4",
+				Locations: locations("openssl"),
+				Metadata:  metadata("openssl-binary"),
+			},
+		},
+		{
+			logicalFixture: "gcc/12.3.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "gcc",
+				Version:   "12.3.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/gcc@12.3.0",
+				Locations: locations("gcc"),
+				Metadata:  metadata("gcc-binary"),
+			},
+		},
+		{
+			logicalFixture: "wp/2.9.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "wp-cli",
+				Version:   "2.9.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/wp-cli@2.9.0",
+				Locations: locations("wp"),
+				Metadata:  metadata("wordpress-cli-binary"),
 			},
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			c := NewCataloger()
+		t.Run(test.logicalFixture, func(t *testing.T) {
+			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
-			src, err := source.NewFromDirectoryPath(test.fixtureDir)
+			// logicalFixture is the logical path to the full binary or snippet. This is relative to the test-fixtures/classifiers/snippets
+			// or test-fixtures/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
+			// used. If no binary or snippet is found the test will fail. If '-must-use-original-binaries' is used the only
+			// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
+			path := testutil.SnippetOrBinary(t, test.logicalFixture, *mustUseOriginalBinaries)
+
+			src, err := directorysource.NewFromPath(path)
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
-			packages, _, err := c.Catalog(resolver)
+			packages, _, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
-			require.Len(t, packages, 1)
+			require.Len(t, packages, 1, "mismatched package count")
 
 			assertPackagesAreEqual(t, test.expected, packages[0])
 		})
@@ -713,6 +926,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "busybox",
 				Version:   "1.35.0",
+				PURL:      "pkg:generic/busybox@1.35.0",
 				Locations: locations("/bin/["),
 				Metadata:  metadata("busybox-binary", "/bin/[", "/bin/busybox"),
 			},
@@ -721,16 +935,17 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := NewCataloger()
+			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
-			src, err := source.NewFromStereoscopeImageObject(img, test.fixtureImage, nil)
-			require.NoError(t, err)
+			src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+				Reference: test.fixtureImage,
+			})
 
 			resolver, err := src.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 
-			packages, _, err := c.Catalog(resolver)
+			packages, _, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
 			for _, p := range packages {
@@ -752,17 +967,140 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 }
 
 func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
-	c := NewCataloger()
+	c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
-	src, err := source.NewFromDirectoryPath("test-fixtures/classifiers/negative")
+	src, err := directorysource.NewFromPath("test-fixtures/classifiers/negative")
 	assert.NoError(t, err)
 
 	resolver, err := src.FileResolver(source.SquashedScope)
 	assert.NoError(t, err)
 
-	actualResults, _, err := c.Catalog(resolver)
+	actualResults, _, err := c.Catalog(context.Background(), resolver)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(actualResults))
+}
+
+func Test_Cataloger_CustomClassifiers(t *testing.T) {
+	defaultClassifers := DefaultClassifiers()
+
+	golangExpected := pkg.Package{
+		Name:      "go",
+		Version:   "1.14",
+		PURL:      "pkg:generic/go@1.14",
+		Locations: locations("go"),
+		Metadata:  metadata("go-binary"),
+	}
+	customExpected := pkg.Package{
+		Name:      "foo",
+		Version:   "1.2.3",
+		PURL:      "pkg:generic/foo@1.2.3",
+		Locations: locations("foo"),
+		Metadata:  metadata("foo-binary"),
+	}
+	fooClassifier := Classifier{
+		Class:    "foo-binary",
+		FileGlob: "**/foo",
+		EvidenceMatcher: FileContentsVersionMatcher(
+			`(?m)foobar\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		Package: "foo",
+		PURL:    mustPURL("pkg:generic/foo@version"),
+		CPEs:    singleCPE("cpe:2.3:a:foo:foo:*:*:*:*:*:*:*:*"),
+	}
+
+	tests := []struct {
+		name       string
+		config     ClassifierCatalogerConfig
+		fixtureDir string
+		expected   *pkg.Package
+	}{
+		{
+			name: "empty-negative",
+			config: ClassifierCatalogerConfig{
+				Classifiers: []Classifier{},
+			},
+			fixtureDir: "test-fixtures/custom/go-1.14",
+			expected:   nil,
+		},
+		{
+			name: "default-positive",
+			config: ClassifierCatalogerConfig{
+				Classifiers: defaultClassifers,
+			},
+			fixtureDir: "test-fixtures/custom/go-1.14",
+			expected:   &golangExpected,
+		},
+		{
+			name: "nodefault-negative",
+			config: ClassifierCatalogerConfig{
+				Classifiers: []Classifier{fooClassifier},
+			},
+			fixtureDir: "test-fixtures/custom/go-1.14",
+			expected:   nil,
+		},
+		{
+			name: "default-extended-positive",
+			config: ClassifierCatalogerConfig{
+				Classifiers: append(
+					append([]Classifier{}, defaultClassifers...),
+					fooClassifier,
+				),
+			},
+			fixtureDir: "test-fixtures/custom/go-1.14",
+			expected:   &golangExpected,
+		},
+		{
+			name: "default-custom-negative",
+			config: ClassifierCatalogerConfig{
+
+				Classifiers: append(
+					append([]Classifier{}, defaultClassifers...),
+					Classifier{
+						Class:           "foo-binary",
+						FileGlob:        "**/foo",
+						EvidenceMatcher: FileContentsVersionMatcher(`(?m)not there`),
+						Package:         "foo",
+						PURL:            mustPURL("pkg:generic/foo@version"),
+						CPEs:            singleCPE("cpe:2.3:a:foo:foo:*:*:*:*:*:*:*:*"),
+					},
+				),
+			},
+			fixtureDir: "test-fixtures/custom/extra",
+			expected:   nil,
+		},
+		{
+			name: "default-cutsom-positive",
+			config: ClassifierCatalogerConfig{
+				Classifiers: append(
+					append([]Classifier{}, defaultClassifers...),
+					fooClassifier,
+				),
+			},
+			fixtureDir: "test-fixtures/custom/extra",
+			expected:   &customExpected,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c := NewClassifierCataloger(test.config)
+
+			src, err := directorysource.NewFromPath(test.fixtureDir)
+			require.NoError(t, err)
+
+			resolver, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+
+			packages, _, err := c.Catalog(context.Background(), resolver)
+			require.NoError(t, err)
+
+			if test.expected == nil {
+				assert.Equal(t, 0, len(packages))
+			} else {
+				require.Len(t, packages, 1)
+
+				assertPackagesAreEqual(t, *test.expected, packages[0])
+			}
+		})
+	}
 }
 
 func locations(locations ...string) file.LocationSet {
@@ -774,8 +1112,8 @@ func locations(locations ...string) file.LocationSet {
 }
 
 // metadata paths are: realPath, virtualPath
-func metadata(classifier string, paths ...string) pkg.BinaryMetadata {
-	return pkg.BinaryMetadata{
+func metadata(classifier string, paths ...string) pkg.BinarySignature {
+	return pkg.BinarySignature{
 		Matches: []pkg.ClassifierMatch{
 			match(classifier, paths...),
 		},
@@ -819,21 +1157,13 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 		}
 	}
 
-	m1 := expected.Metadata.(pkg.BinaryMetadata).Matches
-	m2 := p.Metadata.(pkg.BinaryMetadata).Matches
+	m1 := expected.Metadata.(pkg.BinarySignature).Matches
+	m2 := p.Metadata.(pkg.BinarySignature).Matches
 	matches := true
 	if len(m1) == len(m2) {
 		for i, m1 := range m1 {
 			m2 := m2[i]
 			if m1.Classifier != m2.Classifier {
-				matches = false
-				break
-			}
-			if m1.Location.RealPath != "" && m1.Location.RealPath != m2.Location.RealPath {
-				matches = false
-				break
-			}
-			if m1.Location.VirtualPath != "" && m1.Location.VirtualPath != m2.Location.VirtualPath {
 				matches = false
 				break
 			}
@@ -857,9 +1187,10 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 				cmp.Transformer("Locations", func(l file.LocationSet) []file.Location {
 					return l.ToSlice()
 				}),
-				cmpopts.IgnoreUnexported(pkg.Package{}, file.Location{}),
-				cmpopts.IgnoreFields(pkg.Package{}, "CPEs", "FoundBy", "MetadataType", "Type"),
-			))
+				cmpopts.IgnoreUnexported(pkg.Package{}, file.LocationData{}),
+				cmpopts.IgnoreFields(pkg.Package{}, "CPEs", "FoundBy", "Type", "Locations", "Licenses"),
+			),
+		)
 	}
 }
 
@@ -910,7 +1241,7 @@ func (p *panicyResolver) RelativeFileByPath(_ file.Location, _ string) *file.Loc
 	return nil
 }
 
-func (p *panicyResolver) AllLocations() <-chan file.Location {
+func (p *panicyResolver) AllLocations(_ context.Context) <-chan file.Location {
 	return nil
 }
 
@@ -921,10 +1252,56 @@ func (p *panicyResolver) FileMetadataByLocation(_ file.Location) (file.Metadata,
 var _ file.Resolver = (*panicyResolver)(nil)
 
 func Test_Cataloger_ResilientToErrors(t *testing.T) {
-	c := NewCataloger()
+	c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
 	resolver := &panicyResolver{}
-	_, _, err := c.Catalog(resolver)
+	_, _, err := c.Catalog(context.Background(), resolver)
 	assert.NoError(t, err)
 	assert.True(t, resolver.searchCalled)
+}
+
+func TestCatalogerConfig_MarshalJSON(t *testing.T) {
+
+	tests := []struct {
+		name    string
+		cfg     ClassifierCatalogerConfig
+		want    string
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "only show names of classes",
+			cfg: ClassifierCatalogerConfig{
+				Classifiers: []Classifier{
+					{
+						Class:           "class",
+						FileGlob:        "glob",
+						EvidenceMatcher: FileContentsVersionMatcher(".thing"),
+						Package:         "pkg",
+						PURL: packageurl.PackageURL{
+							Type:       "type",
+							Namespace:  "namespace",
+							Name:       "name",
+							Version:    "version",
+							Qualifiers: nil,
+							Subpath:    "subpath",
+						},
+						CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource)},
+					},
+				},
+			},
+			want: `["class"]`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = assert.NoError
+			}
+			got, err := tt.cfg.MarshalJSON()
+			if !tt.wantErr(t, err) {
+				return
+			}
+			assert.Equal(t, tt.want, string(got))
+		})
+	}
 }

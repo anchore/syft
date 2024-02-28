@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"io"
 	"os"
 
 	"github.com/wagoodman/go-partybus"
@@ -12,13 +13,17 @@ import (
 var _ clio.UI = (*NoUI)(nil)
 
 type NoUI struct {
+	out            io.Writer
+	err            io.Writer
 	finalizeEvents []partybus.Event
 	subscription   partybus.Unsubscribable
 	quiet          bool
 }
 
-func None(quiet bool) *NoUI {
+func None(out io.Writer, quiet bool) *NoUI {
 	return &NoUI{
+		out:   out,
+		err:   os.Stderr,
 		quiet: quiet,
 	}
 }
@@ -38,5 +43,5 @@ func (n *NoUI) Handle(e partybus.Event) error {
 }
 
 func (n NoUI) Teardown(_ bool) error {
-	return newPostUIEventWriter(os.Stdout, os.Stderr).write(n.quiet, n.finalizeEvents...)
+	return writeEvents(n.out, n.err, n.quiet, n.finalizeEvents...)
 }

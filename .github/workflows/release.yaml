@@ -15,7 +15,7 @@ jobs:
     environment: release
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
 
       - name: Check if tag already exists
         # note: this will fail if the tag already exists
@@ -94,16 +94,15 @@ jobs:
     permissions:
       contents: write
       packages: write
+      # required for goreleaser signs section with cosign
+      id-token: write
     steps:
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac #v4.0.0
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
         with:
           fetch-depth: 0
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
-        with:
-          # use the same cache we used for building snapshots
-          build-cache-key-prefix: "snapshot"
 
       - name: Login to Docker Hub
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d  #v3.0.0
@@ -144,12 +143,12 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.TOOLBOX_AWS_SECRET_ACCESS_KEY }}
 
-      - uses: anchore/sbom-action@78fc58e266e87a38d4194b2137a3d4e9bcaf7ca1 #v0.14.3
+      - uses: anchore/sbom-action@b6a39da80722a2cb0ef5d197531764a89b5d48c3 #v0.15.8
         continue-on-error: true
         with:
           artifact-name: sbom.spdx.json
 
-      - uses: 8398a7/action-slack@fbd6aa58ba854a740e11a35d0df80cb5d12101d8 #v3.15.1
+      - uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 #v3.16.2
         continue-on-error: true
         with:
           status: ${{ job.status }}

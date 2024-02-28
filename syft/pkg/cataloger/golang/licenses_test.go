@@ -13,7 +13,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/license"
@@ -23,6 +22,7 @@ import (
 func Test_LocalLicenseSearch(t *testing.T) {
 	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
 	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
+	loc3 := file.NewLocation("github.com/someorg/strangelicense@v1.2.3/LiCeNsE.tXt")
 
 	tests := []struct {
 		name     string
@@ -37,7 +37,6 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
 				Locations:      file.NewLocationSet(loc1),
-				URLs:           internal.NewStringSet(),
 			},
 		},
 		{
@@ -48,7 +47,16 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
 				Locations:      file.NewLocationSet(loc2),
-				URLs:           internal.NewStringSet(),
+			},
+		},
+		{
+			name:    "github.com/someorg/strangelicense",
+			version: "v1.2.3",
+			expected: pkg.License{
+				Value:          "Apache-2.0",
+				SPDXExpression: "Apache-2.0",
+				Type:           license.Concluded,
+				Locations:      file.NewLocationSet(loc3),
 			},
 		},
 	}
@@ -59,9 +67,10 @@ func Test_LocalLicenseSearch(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			l := newGoLicenses(
-				GoCatalogerOpts{
-					searchLocalModCacheLicenses: true,
-					localModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
+				"",
+				CatalogerConfig{
+					SearchLocalModCacheLicenses: true,
+					LocalModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
 				},
 			)
 			licenses, err := l.getLicenses(fileresolver.Empty{}, test.name, test.version)
@@ -128,7 +137,6 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
 				Locations:      file.NewLocationSet(loc1),
-				URLs:           internal.NewStringSet(),
 			},
 		},
 		{
@@ -139,7 +147,6 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
 				Locations:      file.NewLocationSet(loc2),
-				URLs:           internal.NewStringSet(),
 			},
 		},
 	}
@@ -148,11 +155,14 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			l := newGoLicenses(GoCatalogerOpts{
-				searchRemoteLicenses: true,
-				proxies:              []string{server.URL},
-				localModCacheDir:     modDir,
-			})
+			l := newGoLicenses(
+				"",
+				CatalogerConfig{
+					SearchRemoteLicenses: true,
+					Proxies:              []string{server.URL},
+					LocalModCacheDir:     modDir,
+				},
+			)
 
 			licenses, err := l.getLicenses(fileresolver.Empty{}, test.name, test.version)
 			require.NoError(t, err)

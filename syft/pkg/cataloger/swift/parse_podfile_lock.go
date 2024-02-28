@@ -1,6 +1,7 @@
 package swift
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -25,7 +26,7 @@ type podfileLock struct {
 }
 
 // parsePodfileLock is a parser function for Podfile.lock contents, returning all cocoapods pods discovered.
-func parsePodfileLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePodfileLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)

@@ -2,6 +2,7 @@ package java
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -24,7 +25,7 @@ const pomXMLGlob = "*pom.xml"
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
-func parserPomXML(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
 	if err != nil {
 		return nil, nil, err
@@ -34,8 +35,10 @@ func parserPomXML(_ file.Resolver, _ *generic.Environment, reader file.LocationR
 	if pom.Dependencies != nil {
 		for _, dep := range *pom.Dependencies {
 			p := newPackageFromPom(
+				ctx,
 				pom,
 				dep,
+				gap.cfg,
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			)
 			if p.Name == "" {
@@ -49,34 +52,57 @@ func parserPomXML(_ file.Resolver, _ *generic.Environment, reader file.LocationR
 	return pkgs, nil, nil
 }
 
-func parsePomXMLProject(path string, reader io.Reader) (*pkg.PomProject, error) {
+func parsePomXMLProject(path string, reader io.Reader, location file.Location) (*parsedPomProject, error) {
 	project, err := decodePomXML(reader)
 	if err != nil {
 		return nil, err
 	}
-	return newPomProject(path, project), nil
+	return newPomProject(path, project, location), nil
 }
 
-func newPomProject(path string, p gopom.Project) *pkg.PomProject {
+func newPomProject(path string, p gopom.Project, location file.Location) *parsedPomProject {
 	artifactID := safeString(p.ArtifactID)
 	name := safeString(p.Name)
 	projectURL := safeString(p.URL)
+
+	var licenses []pkg.License
+	if p.Licenses != nil {
+		for _, license := range *p.Licenses {
+			var licenseName, licenseURL string
+			if license.Name != nil {
+				licenseName = *license.Name
+			}
+			if license.URL != nil {
+				licenseURL = *license.URL
+			}
+
+			if licenseName == "" && licenseURL == "" {
+				continue
+			}
+
+			licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, licenseURL, &location))
+		}
+	}
+
 	log.WithFields("path", path, "artifactID", artifactID, "name", name, "projectURL", projectURL).Trace("parsing pom.xml")
-	return &pkg.PomProject{
-		Path:        path,
-		Parent:      pomParent(p, p.Parent),
-		GroupID:     resolveProperty(p, p.GroupID, "groupId"),
-		ArtifactID:  artifactID,
-		Version:     resolveProperty(p, p.Version, "version"),
-		Name:        name,
-		Description: cleanDescription(p.Description),
-		URL:         projectURL,
+	return &parsedPomProject{
+		JavaPomProject: &pkg.JavaPomProject{
+			Path:        path,
+			Parent:      pomParent(p, p.Parent),
+			GroupID:     resolveProperty(p, p.GroupID, "groupId"),
+			ArtifactID:  artifactID,
+			Version:     resolveProperty(p, p.Version, "version"),
+			Name:        name,
+			Description: cleanDescription(p.Description),
+			URL:         projectURL,
+		},
+		Licenses: licenses,
 	}
 }
 
-func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...file.Location) pkg.Package {
-	m := pkg.JavaMetadata{
-		PomProperties: &pkg.PomProperties{
+func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Dependency, cfg ArchiveCatalogerConfig, locations ...file.Location) pkg.Package {
+	m := pkg.JavaArchive{
+		PomProperties: &pkg.JavaPomProperties{
 			GroupID:    resolveProperty(pom, dep.GroupID, "groupId"),
 			ArtifactID: resolveProperty(pom, dep.ArtifactID, "artifactId"),
 			Scope:      resolveProperty(pom, dep.Scope, "scope"),
@@ -86,15 +112,37 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, locations ...fil
 	name := safeString(dep.ArtifactID)
 	version := resolveProperty(pom, dep.Version, "version")
 
+	licenses := make([]pkg.License, 0)
+	if cfg.UseNetwork {
+		if version == "" {
+			// If we have no version then let's try to get it from a parent pom DependencyManagement section
+			version = recursivelyFindVersionFromParentPom(ctx, *dep.GroupID, *dep.ArtifactID, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg)
+		}
+		if version != "" {
+			parentLicenses := recursivelyFindLicensesFromParentPom(
+				ctx,
+				m.PomProperties.GroupID,
+				m.PomProperties.ArtifactID,
+				version,
+				cfg)
+
+			if len(parentLicenses) > 0 {
+				for _, licenseName := range parentLicenses {
+					licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
+				}
+			}
+		}
+	}
+
 	p := pkg.Package{
-		Name:         name,
-		Version:      version,
-		Locations:    file.NewLocationSet(locations...),
-		PURL:         packageURL(name, version, m),
-		Language:     pkg.Java,
-		Type:         pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
-		MetadataType: pkg.JavaMetadataType,
-		Metadata:     m,
+		Name:      name,
+		Version:   version,
+		Locations: file.NewLocationSet(locations...),
+		Licenses:  pkg.NewLicenseSet(licenses...),
+		PURL:      packageURL(name, version, m),
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
+		Metadata:  m,
 	}
 
 	p.SetID()
@@ -146,13 +194,13 @@ func getUtf8Reader(content io.Reader) (io.Reader, error) {
 	return inputReader, nil
 }
 
-func pomParent(pom gopom.Project, parent *gopom.Parent) (result *pkg.PomParent) {
+func pomParent(pom gopom.Project, parent *gopom.Parent) (result *pkg.JavaPomParent) {
 	if parent == nil {
 		return nil
 	}
 
 	artifactID := safeString(parent.ArtifactID)
-	result = &pkg.PomParent{
+	result = &pkg.JavaPomParent{
 		GroupID:    resolveProperty(pom, parent.GroupID, "groupId"),
 		ArtifactID: artifactID,
 		Version:    resolveProperty(pom, parent.Version, "version"),

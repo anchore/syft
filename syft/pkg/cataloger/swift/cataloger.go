@@ -1,19 +1,21 @@
 /*
-Package swift provides a concrete Cataloger implementation for Podfile.lock and Package.resolved files.
+Package swift provides a concrete Cataloger implementation relating to packages within the swift language ecosystem.
 */
 package swift
 
 import (
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-func NewSwiftPackageManagerCataloger() *generic.Cataloger {
-	return generic.NewCataloger("spm-cataloger").
+// NewSwiftPackageManagerCataloger returns a new Swift package manager cataloger object.
+func NewSwiftPackageManagerCataloger() pkg.Cataloger {
+	return generic.NewCataloger("swift-package-manager-cataloger").
 		WithParserByGlobs(parsePackageResolved, "**/Package.resolved", "**/.package.resolved")
 }
 
 // NewCocoapodsCataloger returns a new Swift Cocoapods lock file cataloger object.
-func NewCocoapodsCataloger() *generic.Cataloger {
+func NewCocoapodsCataloger() pkg.Cataloger {
 	return generic.NewCataloger("cocoapods-cataloger").
 		WithParserByGlobs(parsePodfileLock, "**/Podfile.lock")
 }

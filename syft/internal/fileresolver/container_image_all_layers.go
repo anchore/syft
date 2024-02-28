@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -193,10 +194,10 @@ func (r *ContainerImageAllLayers) FileContentsByLocation(location file.Location)
 	switch entry.Metadata.Type {
 	case stereoscopeFile.TypeSymLink, stereoscopeFile.TypeHardLink:
 		// the location we are searching may be a symlink, we should always work with the resolved file
-		newLocation := r.RelativeFileByPath(location, location.VirtualPath)
+		newLocation := r.RelativeFileByPath(location, location.AccessPath)
 		if newLocation == nil {
 			// this is a dead link
-			return nil, fmt.Errorf("no contents for location=%q", location.VirtualPath)
+			return nil, fmt.Errorf("no contents for location=%q", location.AccessPath)
 		}
 		location = *newLocation
 	case stereoscopeFile.TypeDirectory:
@@ -234,14 +235,19 @@ func (r *ContainerImageAllLayers) FilesByMIMEType(types ...string) ([]file.Locat
 	return uniqueLocations, nil
 }
 
-func (r *ContainerImageAllLayers) AllLocations() <-chan file.Location {
+func (r *ContainerImageAllLayers) AllLocations(ctx context.Context) <-chan file.Location {
 	results := make(chan file.Location)
 	go func() {
 		defer close(results)
 		for _, layerIdx := range r.layers {
 			tree := r.img.Layers[layerIdx].Tree
 			for _, ref := range tree.AllFiles(stereoscopeFile.AllTypes()...) {
-				results <- file.NewLocationFromImage(string(ref.RealPath), ref, r.img)
+				select {
+				case <-ctx.Done():
+					return
+				case results <- file.NewLocationFromImage(string(ref.RealPath), ref, r.img):
+					continue
+				}
 			}
 		}
 	}()

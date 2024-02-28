@@ -1,6 +1,8 @@
 package fileresolver
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -165,8 +167,8 @@ nextPath:
 			for i := range out {
 				existing := &out[i]
 				if existing.RealPath == l.RealPath {
-					if l.VirtualPath == "" {
-						existing.VirtualPath = ""
+					if l.AccessPath == "" {
+						existing.AccessPath = ""
 					}
 					continue nextPath
 				}
@@ -225,20 +227,25 @@ func (u UnindexedDirectory) RelativeFileByPath(l file.Location, p string) *file.
 
 // - NO symlink resolution should be performed on results
 // - returns locations for any file or directory
-func (u UnindexedDirectory) AllLocations() <-chan file.Location {
+func (u UnindexedDirectory) AllLocations(ctx context.Context) <-chan file.Location {
 	out := make(chan file.Location)
+	errWalkCanceled := fmt.Errorf("walk canceled")
 	go func() {
 		defer close(out)
-		err := afero.Walk(u.fs, u.absPath("."), func(p string, info fs.FileInfo, err error) error {
+		err := afero.Walk(u.fs, u.absPath("."), func(p string, _ fs.FileInfo, _ error) error {
 			p = strings.TrimPrefix(p, u.dir)
 			if p == "" {
 				return nil
 			}
 			p = strings.TrimPrefix(p, "/")
-			out <- file.NewLocation(p)
-			return nil
+			select {
+			case out <- file.NewLocation(p):
+				return nil
+			case <-ctx.Done():
+				return errWalkCanceled
+			}
 		})
-		if err != nil {
+		if err != nil && !errors.Is(err, errWalkCanceled) {
 			log.Debug(err)
 		}
 	}()
@@ -261,13 +268,14 @@ func (u UnindexedDirectory) Write(location file.Location, reader io.Reader) erro
 func (u UnindexedDirectory) newLocation(filePath string, resolveLinks bool) *file.Location {
 	filePath = path.Clean(filePath)
 
-	virtualPath := ""
+	virtualPath := filePath
 	realPath := filePath
 
 	if resolveLinks {
 		paths := u.resolveLinks(filePath)
 		if len(paths) > 1 {
 			realPath = paths[len(paths)-1]
+			// TODO: this is not quite correct, as the equivalent of os.EvalSymlinks needs to be done (in the context of afero)
 			if realPath != path.Clean(filePath) {
 				virtualPath = paths[0]
 			}

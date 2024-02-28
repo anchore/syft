@@ -1,0 +1,11 @@
+download-path: classifiers/bin
+snippet-path: classifiers/snippets
+
+from-images:
+
+  - name: busybox
+    version: 1.36.1
+    images:
+      - platform: linux/amd64
+    paths:
+      - /bin/[

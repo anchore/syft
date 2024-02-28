@@ -1,6 +1,7 @@
 package pkgtest
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -14,12 +15,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 type locationComparer func(x, y file.Location) bool
@@ -61,7 +65,7 @@ func NewCatalogTester() *CatalogTester {
 }
 
 func DefaultLocationComparer(x, y file.Location) bool {
-	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.VirtualPath, y.VirtualPath)
+	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.AccessPath, y.AccessPath)
 }
 
 func DefaultLicenseComparer(x, y pkg.License) bool {
@@ -86,7 +90,7 @@ func DefaultLicenseComparer(x, y pkg.License) bool {
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
 	t.Helper()
 
-	s, err := source.NewFromDirectoryPath(path)
+	s, err := directorysource.NewFromPath(path)
 	require.NoError(t, err)
 
 	resolver, err := s.FileResolver(source.AllLayersScope)
@@ -150,8 +154,9 @@ func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *Cat
 	t.Helper()
 	img := imagetest.GetFixtureImage(t, "docker-archive", fixtureName)
 
-	s, err := source.NewFromStereoscopeImageObject(img, fixtureName, nil)
-	require.NoError(t, err)
+	s := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+		Reference: fixtureName,
+	})
 
 	r, err := s.FileResolver(source.SquashedScope)
 	require.NoError(t, err)
@@ -161,7 +166,7 @@ func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *Cat
 
 func (p *CatalogTester) IgnoreLocationLayer() *CatalogTester {
 	p.locationComparer = func(x, y file.Location) bool {
-		return cmp.Equal(x.Coordinates.RealPath, y.Coordinates.RealPath) && cmp.Equal(x.VirtualPath, y.VirtualPath)
+		return cmp.Equal(x.Coordinates.RealPath, y.Coordinates.RealPath) && cmp.Equal(x.AccessPath, y.AccessPath)
 	}
 
 	// we need to update the license comparer to use the ignored location layer
@@ -220,7 +225,7 @@ func (p *CatalogTester) IgnoreUnfulfilledPathResponses(paths ...string) *Catalog
 
 func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 	t.Helper()
-	pkgs, relationships, err := parser(p.resolver, p.env, p.reader)
+	pkgs, relationships, err := parser(context.Background(), p.resolver, p.env, p.reader)
 	p.wantErr(t, err)
 	p.assertPkgs(t, pkgs, relationships)
 }
@@ -230,7 +235,7 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 
 	resolver := NewObservingResolver(p.resolver)
 
-	pkgs, relationships, err := cataloger.Catalog(resolver)
+	pkgs, relationships, err := cataloger.Catalog(context.Background(), resolver)
 
 	// this is a minimum set, the resolver may return more that just this list
 	for _, path := range p.expectedPathResponses {
@@ -329,6 +334,10 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 		opts = append(opts, p.compareOptions...)
 		opts = append(opts, cmp.Reporter(&r))
 
+		// order should not matter
+		pkg.Sort(p.expectedPkgs)
+		pkg.Sort(pkgs)
+
 		if diff := cmp.Diff(p.expectedPkgs, pkgs, opts...); diff != "" {
 			t.Log("Specific Differences:\n" + r.String())
 			t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
@@ -340,6 +349,10 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 
 		opts = append(opts, p.compareOptions...)
 		opts = append(opts, cmp.Reporter(&r))
+
+		// order should not matter
+		relationship.Sort(p.expectedRelationships)
+		relationship.Sort(relationships)
 
 		if diff := cmp.Diff(p.expectedRelationships, relationships, opts...); diff != "" {
 			t.Log("Specific Differences:\n" + r.String())

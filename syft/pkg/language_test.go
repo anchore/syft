@@ -39,6 +39,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			want: Dotnet,
 		},
 		{
+			purl: "pkg:nuget/Newtonsoft.Json@13.0.0",
+			want: Dotnet,
+		},
+		{
 			purl: "pkg:cargo/clap@2.33.0",
 			want: Rust,
 		},

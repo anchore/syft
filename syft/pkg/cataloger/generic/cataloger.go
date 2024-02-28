@@ -1,6 +1,8 @@
 package generic
 
 import (
+	"context"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -25,7 +27,7 @@ type Cataloger struct {
 
 func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger {
 	c.processor = append(c.processor,
-		func(resolver file.Resolver, env Environment) []request {
+		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			for _, g := range globs {
 				log.WithFields("glob", g).Trace("searching for paths matching glob")
@@ -45,7 +47,7 @@ func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger
 
 func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Cataloger {
 	c.processor = append(c.processor,
-		func(resolver file.Resolver, env Environment) []request {
+		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			log.WithFields("mimetypes", types).Trace("searching for paths matching mimetype")
 			matches, err := resolver.FilesByMIMEType(types...)
@@ -62,7 +64,7 @@ func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Catal
 
 func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger {
 	c.processor = append(c.processor,
-		func(resolver file.Resolver, env Environment) []request {
+		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			for _, p := range paths {
 				log.WithFields("path", p).Trace("searching for path")
@@ -104,7 +106,7 @@ func (c *Cataloger) Name() string {
 }
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
-func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -126,8 +128,8 @@ func (c *Cataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.R
 			continue
 		}
 
-		discoveredPackages, discoveredRelationships, err := parser(resolver, &env, file.NewLocationReadCloser(location, contentReader))
-		internal.CloseAndLogError(contentReader, location.VirtualPath)
+		discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, &env, file.NewLocationReadCloser(location, contentReader))
+		internal.CloseAndLogError(contentReader, location.AccessPath)
 		if err != nil {
 			logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
 			continue

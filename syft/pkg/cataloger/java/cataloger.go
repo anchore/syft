@@ -1,41 +1,46 @@
 /*
-Package java provides a concrete Cataloger implementation for Java archives (jar, war, ear, par, sar, jpi, hpi, and native-image formats).
+Package java provides a concrete Cataloger implementation for packages relating to the Java language ecosystem.
 */
 package java
 
 import (
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// NewJavaCataloger returns a new Java archive cataloger object.
-func NewJavaCataloger(cfg Config) *generic.Cataloger {
-	c := generic.NewCataloger("java-cataloger").
-		WithParserByGlobs(parseJavaArchive, archiveFormatGlobs...)
+// NewArchiveCataloger returns a new Java archive cataloger object for detecting packages with archives (jar, war, ear, par, sar, jpi, hpi, and native-image formats)
+func NewArchiveCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
+	gap := newGenericArchiveParserAdapter(cfg)
 
-	if cfg.SearchIndexedArchives {
+	c := generic.NewCataloger("java-archive-cataloger").
+		WithParserByGlobs(gap.parseJavaArchive, archiveFormatGlobs...)
+
+	if cfg.IncludeIndexedArchives {
 		// java archives wrapped within zip files
-		c.WithParserByGlobs(parseZipWrappedJavaArchive, genericZipGlobs...)
+		gzp := newGenericZipWrappedJavaArchiveParser(cfg)
+		c.WithParserByGlobs(gzp.parseZipWrappedJavaArchive, genericZipGlobs...)
 	}
 
-	if cfg.SearchUnindexedArchives {
+	if cfg.IncludeUnindexedArchives {
 		// java archives wrapped within tar files
-		c.WithParserByGlobs(parseTarWrappedJavaArchive, genericTarGlobs...)
+		gtp := newGenericTarWrappedJavaArchiveParser(cfg)
+		c.WithParserByGlobs(gtp.parseTarWrappedJavaArchive, genericTarGlobs...)
 	}
 	return c
 }
 
-// NewJavaPomCataloger returns a cataloger capable of parsing
-// dependencies from a pom.xml file.
+// NewPomCataloger returns a cataloger capable of parsing dependencies from a pom.xml file.
 // Pom files list dependencies that maybe not be locally installed yet.
-func NewJavaPomCataloger() *generic.Cataloger {
+func NewPomCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
+	gap := newGenericArchiveParserAdapter(cfg)
+
 	return generic.NewCataloger("java-pom-cataloger").
-		WithParserByGlobs(parserPomXML, "**/pom.xml")
+		WithParserByGlobs(gap.parserPomXML, "**/pom.xml")
 }
 
-// NewJavaGradleLockfileCataloger returns a cataloger capable of parsing
-// dependencies from a gradle.lockfile file.
-// older versions of lockfiles aren't supported yet
-func NewJavaGradleLockfileCataloger() *generic.Cataloger {
+// NewGradleLockfileCataloger returns a cataloger capable of parsing dependencies from a gradle.lockfile file.
+// Note: Older versions of lockfiles aren't supported yet
+func NewGradleLockfileCataloger() pkg.Cataloger {
 	return generic.NewCataloger("java-gradle-lockfile-cataloger").
 		WithParserByGlobs(parseGradleLockfile, gradleLockfileGlob)
 }

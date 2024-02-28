@@ -1,0 +1,10 @@
+name: wp
+offset: 6967657
+length: 120
+snippetSha256: fe7afa7db1b4efc55b3099b5b1fb46a34e34b147c708be0a74d1dd9fce2b5cac
+fileSha256: af6b7ccc21ed0907cb504db5a059f0e120117905a6017bfdd4375cee3c93d864
+
+### byte snippet to follow ###
+ND CERTIFICATE-----
+wp-cli/wp-cli 2.9.0 2023-10-25T09:10:40+00:00
+composer/ca-bundle 1.3.7 76e46335014860eec1aa5a724799a

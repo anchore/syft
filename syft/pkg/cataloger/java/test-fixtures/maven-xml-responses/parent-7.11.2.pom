@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>net.shibboleth</groupId>
+    <artifactId>parent</artifactId>
+    <version>7.11.2</version>
+    <packaging>pom</packaging>
+
+    <name>Shibboleth Project V3 Super POM</name>
+    <description>
+        A POM containing properties, profiles, plugin configurations, etc. that are common across all Shibboleth V3 projects.
+    </description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+
+        <bouncycastle.version>1.59</bouncycastle.version>
+        <cryptacular.version>1.1.4</cryptacular.version>
+        <!-- IMPORTANT: httpclient and httpcore versions need to be updated together.  -->
+        <httpclient.groupId>org.apache.httpcomponents</httpclient.groupId>
+        <httpclient.version>4.5.13</httpclient.version>
+        <httpclient.httpcore.version>4.4.14</httpclient.httpcore.version>
+        <guava.version>20.0</guava.version>
+        <jetty.groupId>org.eclipse.jetty</jetty.groupId>
+        <jetty.version>9.2.14.v20151106</jetty.version>
+        <ldaptive.version>1.0.13</ldaptive.version>
+        <logback.version>1.2.3</logback.version>
+        <metrics.version>3.1.5</metrics.version>
+        <jackson.version>2.10.4</jackson.version>
+        <slf4j.groupId>org.slf4j</slf4j.groupId>
+        <slf4j.version>1.7.30</slf4j.version>
+        <spring.groupId>org.springframework</spring.groupId>
+        <spring.version>4.3.30.RELEASE</spring.version>
+        <spring-webflow.groupId>org.springframework.webflow</spring-webflow.groupId>
+        <spring-webflow.version>2.4.8.RELEASE</spring-webflow.version>
+        <xmlsec.version>2.0.10</xmlsec.version>
+        <xmlunit.version>2.5.1</xmlunit.version>
+
+        <checkstyle.version>8.26</checkstyle.version>
+        <checkstyle-plugin.version>3.1.0</checkstyle-plugin.version>
+        <checkstyle.configLocation>checkstyle.xml</checkstyle.configLocation>
+
+        <maven-javadoc-plugin.version>3.0.0</maven-javadoc-plugin.version>
+
+        <maven.central.url>https://repo1.maven.org/maven2</maven.central.url>
+        <shibboleth.site.url>https://build.shibboleth.net/nexus/content/sites/site/</shibboleth.site.url>
+
+        <shibboleth.scm.connection>scm:git:https://git.shibboleth.net/git/</shibboleth.scm.connection>
+        <shibboleth.scm.developerConnection>scm:git:git@git.shibboleth.net:</shibboleth.scm.developerConnection>
+        <shibboleth.scm.url>https://git.shibboleth.net/view/?p=</shibboleth.scm.url>
+
+    </properties>
+
+    <!-- The Maven version prerequisite applies to the maven-versions-plugin:display-plugin-updates goal only. -->
+    <prerequisites>
+        <maven>3.3.1</maven>
+    </prerequisites>
+
+    <!-- Dependencies set for all projects. Be certain anything added here really should apply to every single project. -->
+    <dependencies>
+    </dependencies>
+
+    <!-- Dependencies with fixed versions and excludes that may be used by projects. -->
+    <dependencyManagement>
+    </dependencyManagement>
+
+    <distributionManagement>
+    </distributionManagement>
+
+    <build>
+    </build>
+
+    <reporting>
+    </reporting>
+
+    <profiles>
+    </profiles>
+
+
+    <!-- Project Metadata -->
+    <url>http://shibboleth.net/</url>
+
+    <inceptionYear>1999</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <mailingLists>
+
+    </mailingLists>
+
+    <issueManagement>
+    </issueManagement>
+
+    <scm>
+        <connection>${shibboleth.scm.connection}java-parent-project-v3</connection>
+        <developerConnection>${shibboleth.scm.developerConnection}java-parent-project-v3</developerConnection>
+        <url>${shibboleth.scm.url}java-parent-project-v3.git</url>
+    </scm>
+
+    <developers>
+    </developers>
+
+    <contributors>
+    </contributors>
+
+    <organization>
+    </organization>
+</project>

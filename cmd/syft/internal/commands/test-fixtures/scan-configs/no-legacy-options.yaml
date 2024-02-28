@@ -1,0 +1,2 @@
+# simple, valid syft config with no legacy fields used
+parallelism: 5

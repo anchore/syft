@@ -80,18 +80,21 @@ func TestHandler_handleFileIndexingStarted(t *testing.T) {
 				Height: 80,
 			}
 
-			models := handler.Handle(event)
+			models, _ := handler.Handle(event)
 			require.Len(t, models, 1)
 			model := models[0]
 
 			tsk, ok := model.(taskprogress.Model)
 			require.True(t, ok)
 
-			got := runModel(t, tsk, tt.iterations, taskprogress.TickMsg{
+			gotModel := runModel(t, tsk, tt.iterations, taskprogress.TickMsg{
 				Time:     time.Now(),
 				Sequence: tsk.Sequence(),
 				ID:       tsk.ID(),
 			})
+
+			got := gotModel.View()
+
 			t.Log(got)
 			snaps.MatchSnapshot(t, got)
 		})

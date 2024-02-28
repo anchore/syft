@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
 func TestParseNativeImage(t *testing.T) {
@@ -68,35 +68,43 @@ func TestParseNativeImageSbom(t *testing.T) {
 			fixture: "test-fixtures/graalvm-sbom/micronaut.json",
 			expected: []pkg.Package{
 				{
-					Name:         "netty-codec-http2",
-					Version:      "4.1.73.Final",
-					Language:     pkg.Java,
-					Type:         pkg.GraalVMNativeImagePkg,
-					MetadataType: pkg.JavaMetadataType,
-					FoundBy:      nativeImageCatalogerName,
-					Metadata: pkg.JavaMetadata{
-						PomProperties: &pkg.PomProperties{
+					Name:     "netty-codec-http2",
+					Version:  "4.1.73.Final",
+					Language: pkg.Java,
+					Type:     pkg.GraalVMNativeImagePkg,
+					FoundBy:  nativeImageCatalogerName,
+					Metadata: pkg.JavaArchive{
+						PomProperties: &pkg.JavaPomProperties{
 							GroupID: "io.netty",
 						},
 					},
 					CPEs: []cpe.CPE{
 						{
-							Part:    "a",
-							Vendor:  "codec",
-							Product: "codec",
-							Version: "4.1.73.Final",
+							Attributes: cpe.Attributes{
+								Part:    "a",
+								Vendor:  "codec",
+								Product: "codec",
+								Version: "4.1.73.Final",
+							},
+							Source: "declared",
 						},
 						{
-							Part:    "a",
-							Vendor:  "codec",
-							Product: "netty-codec-http2",
-							Version: "4.1.73.Final",
+							Attributes: cpe.Attributes{
+								Part:    "a",
+								Vendor:  "codec",
+								Product: "netty-codec-http2",
+								Version: "4.1.73.Final",
+							},
+							Source: "declared",
 						},
 						{
-							Part:    "a",
-							Vendor:  "codec",
-							Product: "netty_codec_http2",
-							Version: "4.1.73.Final",
+							Attributes: cpe.Attributes{
+								Part:    "a",
+								Vendor:  "codec",
+								Product: "netty_codec_http2",
+								Version: "4.1.73.Final",
+							},
+							Source: "declared",
 						},
 					},
 				},

@@ -1,0 +1,48 @@
+name: "Release Homebrew"
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - released
+
+jobs:
+  homebrew:
+    runs-on: ubuntu-20.04
+    steps:
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+        with:
+          # we need to be able to get the commit for a tag
+          fetch-depth: 0
+
+      - name: Get release info
+        id: release_info
+        run: |
+          echo -n "tag_name=$(gh release view --json tagName --jq '.tagName')" | tee -a $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get commit info
+        id: git_info
+        run: |
+          git checkout ${{ steps.release_info.outputs.tag_name }}
+          echo -n "commit=$(git rev-parse HEAD)" | tee -a $GITHUB_OUTPUT
+
+      - name: Update Homebrew formula
+        uses: dawidd6/action-homebrew-bump-formula@baf2b60c51fc1f8453c884b0c61052668a71bd1d # v3.11.0
+        with:
+          token: ${{ secrets.HOMEBREW_TOKEN }}
+          org: anchore
+          formula: syft
+          tag: ${{ steps.release_info.outputs.tag_name }}
+          revision: ${{ steps.git_info.outputs.commit }}
+
+      - uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 #v3.16.2
+        if: ${{ failure() }}
+        with:
+          status: ${{ job.status }}
+          fields: repo,workflow,action,eventName
+          text: "Post-release homebrew publish workflow has failed: https://github.com/anchore/syft/actions/workflows/release-homebrew.yaml"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}

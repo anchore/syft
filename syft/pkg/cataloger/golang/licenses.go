@@ -18,7 +18,9 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/storage/memory"
+	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event/monitor"
@@ -28,21 +30,27 @@ import (
 )
 
 type goLicenses struct {
-	opts                  GoCatalogerOpts
+	catalogerName         string
+	opts                  CatalogerConfig
 	localModCacheResolver file.WritableResolver
-	progress              *monitor.CatalogerTask
+	lowerLicenseFileNames *strset.Set
 }
 
-func newGoLicenses(opts GoCatalogerOpts) goLicenses {
+func newGoLicenses(catalogerName string, opts CatalogerConfig) goLicenses {
 	return goLicenses{
+		catalogerName:         catalogerName,
 		opts:                  opts,
-		localModCacheResolver: modCacheResolver(opts.localModCacheDir),
-		progress: &monitor.CatalogerTask{
-			SubStatus:          true,
-			RemoveOnCompletion: true,
-			Title:              "Downloading go mod",
-		},
+		localModCacheResolver: modCacheResolver(opts.LocalModCacheDir),
+		lowerLicenseFileNames: strset.New(lowercaseLicenseFiles()...),
 	}
+}
+
+func lowercaseLicenseFiles() []string {
+	fileNames := licenses.FileNames()
+	for i := range fileNames {
+		fileNames[i] = strings.ToLower(fileNames[i])
+	}
+	return fileNames
 }
 
 func remotesForModule(proxies []string, noProxy []string, module string) []string {
@@ -77,7 +85,7 @@ func modCacheResolver(modCacheDir string) file.WritableResolver {
 }
 
 func (c *goLicenses) getLicenses(resolver file.Resolver, moduleName, moduleVersion string) (licenses []pkg.License, err error) {
-	licenses, err = findLicenses(resolver,
+	licenses, err = c.findLicenses(resolver,
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
 	if err != nil || len(licenses) > 0 {
@@ -96,23 +104,33 @@ func (c *goLicenses) getLicenses(resolver file.Resolver, moduleName, moduleVersi
 }
 
 func (c *goLicenses) getLicensesFromLocal(moduleName, moduleVersion string) ([]pkg.License, error) {
-	if !c.opts.searchLocalModCacheLicenses {
+	if !c.opts.SearchLocalModCacheLicenses {
 		return nil, nil
 	}
 
 	// if we're running against a directory on the filesystem, it may not include the
 	// user's homedir / GOPATH, so we defer to using the localModCacheResolver
-	return findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
+	return c.findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
 }
 
 func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]pkg.License, error) {
-	if !c.opts.searchRemoteLicenses {
+	if !c.opts.SearchRemoteLicenses {
 		return nil, nil
 	}
 
-	proxies := remotesForModule(c.opts.proxies, c.opts.noProxy, moduleName)
+	proxies := remotesForModule(c.opts.Proxies, c.opts.NoProxy, moduleName)
 
-	fsys, err := getModule(c.progress, proxies, moduleName, moduleVersion)
+	prog := bus.StartCatalogerTask(monitor.GenericTask{
+		Title: monitor.Title{
+			Default:      "Download go mod",
+			WhileRunning: "Downloading go mod",
+			OnSuccess:    "Downloaded go mod",
+		},
+		HideOnSuccess: true,
+		ParentID:      c.catalogerName,
+	}, -1, "")
+
+	fsys, err := getModule(prog, proxies, moduleName, moduleVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +157,37 @@ func (c *goLicenses) getLicensesFromRemote(moduleName, moduleVersion string) ([]
 		log.Tracef("remote proxy walk failed for: %s", moduleName)
 	}
 
-	return findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
+	return c.findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
+}
+
+func (c *goLicenses) findLicenses(resolver file.Resolver, globMatch string) (out []pkg.License, err error) {
+	out = make([]pkg.License, 0)
+	if resolver == nil {
+		return
+	}
+
+	locations, err := resolver.FilesByGlob(globMatch)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, l := range locations {
+		fileName := path.Base(l.RealPath)
+		if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
+			contents, err := resolver.FileContentsByLocation(l)
+			if err != nil {
+				return nil, err
+			}
+			parsed, err := licenses.Parse(contents, l)
+			if err != nil {
+				return nil, err
+			}
+
+			out = append(out, parsed...)
+		}
+	}
+
+	return
 }
 
 func moduleDir(moduleName, moduleVersion string) string {
@@ -157,36 +205,6 @@ func requireCollection(licenses []pkg.License) []pkg.License {
 	return licenses
 }
 
-func findLicenses(resolver file.Resolver, globMatch string) (out []pkg.License, err error) {
-	out = make([]pkg.License, 0)
-	if resolver == nil {
-		return
-	}
-
-	locations, err := resolver.FilesByGlob(globMatch)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, l := range locations {
-		fileName := path.Base(l.RealPath)
-		if licenses.FileNameSet.Contains(fileName) {
-			contents, err := resolver.FileContentsByLocation(l)
-			if err != nil {
-				return nil, err
-			}
-			parsed, err := licenses.Parse(contents, l)
-			if err != nil {
-				return nil, err
-			}
-
-			out = append(out, parsed...)
-		}
-	}
-
-	return
-}
-
 var capReplacer = regexp.MustCompile("[A-Z]")
 
 func processCaps(s string) string {
@@ -195,7 +213,7 @@ func processCaps(s string) string {
 	})
 }
 
-func getModule(progress *monitor.CatalogerTask, proxies []string, moduleName, moduleVersion string) (fsys fs.FS, err error) {
+func getModule(progress *monitor.CatalogerTaskProgress, proxies []string, moduleName, moduleVersion string) (fsys fs.FS, err error) {
 	for _, proxy := range proxies {
 		u, _ := url.Parse(proxy)
 		if proxy == "direct" {
@@ -207,7 +225,7 @@ func getModule(progress *monitor.CatalogerTask, proxies []string, moduleName, mo
 			fsys, err = getModuleProxy(progress, proxy, moduleName, moduleVersion)
 		case "file":
 			p := filepath.Join(u.Path, moduleName, "@v", moduleVersion)
-			progress.SetValue(fmt.Sprintf("file: %s", p))
+			progress.AtomicStage.Set(fmt.Sprintf("file: %s", p))
 			fsys = os.DirFS(p)
 		}
 		if fsys != nil {
@@ -217,18 +235,21 @@ func getModule(progress *monitor.CatalogerTask, proxies []string, moduleName, mo
 	return
 }
 
-func getModuleProxy(progress *monitor.CatalogerTask, proxy string, moduleName string, moduleVersion string) (out fs.FS, _ error) {
+func getModuleProxy(progress *monitor.CatalogerTaskProgress, proxy string, moduleName string, moduleVersion string) (out fs.FS, _ error) {
 	u := fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion)
-	progress.SetValue(u)
+	progress.AtomicStage.Set(u)
+
 	// get the module zip
 	resp, err := http.Get(u) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
+
 	if resp.StatusCode != http.StatusOK {
 		u = fmt.Sprintf("%s/%s/@v/%s.zip", proxy, strings.ToLower(moduleName), moduleVersion)
-		progress.SetValue(u)
+		progress.AtomicStage.Set(u)
+
 		// try lowercasing it; some packages have mixed casing that really messes up the proxy
 		resp, err = http.Get(u) //nolint:gosec
 		if err != nil {
@@ -239,19 +260,23 @@ func getModuleProxy(progress *monitor.CatalogerTask, proxy string, moduleName st
 			return nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
 		}
 	}
+
 	// read the zip
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
+
 	out, err = zip.NewReader(bytes.NewReader(b), resp.ContentLength)
 	versionPath := findVersionPath(out, ".")
 	out = getSubFS(out, versionPath)
+
 	return out, err
 }
 
 func findVersionPath(f fs.FS, dir string) string {
 	list, _ := fs.ReadDir(f, dir)
+
 	for _, entry := range list {
 		name := entry.Name()
 		if strings.Contains(name, "@") {
@@ -262,16 +287,19 @@ func findVersionPath(f fs.FS, dir string) string {
 			return path.Join(name, found)
 		}
 	}
+
 	return ""
 }
 
-func getModuleRepository(progress *monitor.CatalogerTask, moduleName string, moduleVersion string) (fs.FS, error) {
+func getModuleRepository(progress *monitor.CatalogerTaskProgress, moduleName string, moduleVersion string) (fs.FS, error) {
 	repoName := moduleName
 	parts := strings.Split(moduleName, "/")
 	if len(parts) > 2 {
 		repoName = fmt.Sprintf("%s/%s/%s", parts[0], parts[1], parts[2])
 	}
-	progress.SetValue(fmt.Sprintf("git: %s", repoName))
+
+	progress.AtomicStage.Set(fmt.Sprintf("git: %s", repoName))
+
 	f := memfs.New()
 	buf := &bytes.Buffer{}
 	_, err := git.Clone(memory.NewStorage(), f, &git.CloneOptions{
@@ -281,6 +309,7 @@ func getModuleRepository(progress *monitor.CatalogerTask, moduleName string, mod
 		Depth:         1,
 		Progress:      buf,
 	})
+
 	if err != nil {
 		return nil, fmt.Errorf("%w -- %s", err, buf.String())
 	}

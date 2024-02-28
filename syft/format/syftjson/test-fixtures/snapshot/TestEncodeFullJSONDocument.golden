@@ -1,0 +1,206 @@
+{
+ "artifacts": [
+  {
+   "id": "d748d4614750058d",
+   "name": "package-1",
+   "version": "1.0.1",
+   "type": "python",
+   "foundBy": "the-cataloger-1",
+   "locations": [
+    {
+     "path": "/a/place/a",
+     "accessPath": "/a/place/a"
+    }
+   ],
+   "licenses": [
+    {
+     "value": "MIT",
+     "spdxExpression": "MIT",
+     "type": "declared",
+     "urls": [],
+     "locations": []
+    }
+   ],
+   "language": "python",
+   "cpes": [
+    {
+     "cpe": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
+     "source": "nvd-cpe-dictionary"
+    }
+   ],
+   "purl": "a-purl-1",
+   "metadataType": "python-package",
+   "metadata": {
+    "name": "package-1",
+    "version": "1.0.1",
+    "author": "",
+    "authorEmail": "",
+    "platform": "",
+    "sitePackagesRootPath": ""
+   }
+  },
+  {
+   "id": "fa4ec37eccd65756",
+   "name": "package-2",
+   "version": "2.0.1",
+   "type": "deb",
+   "foundBy": "the-cataloger-2",
+   "locations": [
+    {
+     "path": "/b/place/b",
+     "accessPath": "/b/place/b"
+    }
+   ],
+   "licenses": [],
+   "language": "",
+   "cpes": [
+    {
+     "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "source": "syft-generated"
+    }
+   ],
+   "purl": "a-purl-2",
+   "metadataType": "dpkg-db-entry",
+   "metadata": {
+    "package": "package-2",
+    "source": "",
+    "version": "2.0.1",
+    "sourceVersion": "",
+    "architecture": "",
+    "maintainer": "",
+    "installedSize": 0,
+    "files": []
+   }
+  }
+ ],
+ "artifactRelationships": [
+  {
+   "parent": "",
+   "child": "",
+   "type": "ownership-by-file-overlap",
+   "metadata": {
+    "file": "path"
+   }
+  }
+ ],
+ "files": [
+  {
+   "id": "913b4592e2c2ebdf",
+   "location": {
+    "path": "/a/place"
+   },
+   "metadata": {
+    "mode": 775,
+    "type": "Directory",
+    "userID": 0,
+    "groupID": 0,
+    "mimeType": "",
+    "size": 0
+   }
+  },
+  {
+   "id": "0e7c88bd18e11b0b",
+   "location": {
+    "path": "/a/place/a"
+   },
+   "metadata": {
+    "mode": 775,
+    "type": "RegularFile",
+    "userID": 0,
+    "groupID": 0,
+    "mimeType": "",
+    "size": 0
+   },
+   "contents": "the-contents",
+   "digests": [
+    {
+     "algorithm": "sha256",
+     "value": "366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703"
+    }
+   ]
+  },
+  {
+   "id": "5c3dc6885f48b5a1",
+   "location": {
+    "path": "/b"
+   },
+   "metadata": {
+    "mode": 775,
+    "type": "SymbolicLink",
+    "linkDestination": "/c",
+    "userID": 0,
+    "groupID": 0,
+    "mimeType": "",
+    "size": 0
+   }
+  },
+  {
+   "id": "799d2f12da0bcec4",
+   "location": {
+    "path": "/b/place/b"
+   },
+   "metadata": {
+    "mode": 644,
+    "type": "RegularFile",
+    "userID": 1,
+    "groupID": 2,
+    "mimeType": "",
+    "size": 0
+   },
+   "digests": [
+    {
+     "algorithm": "sha256",
+     "value": "1b3722da2a7d90d033b87581a2a3f12021647445653e34666ef041e3b4f3707c"
+    }
+   ]
+  }
+ ],
+ "source": {
+  "id": "c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
+  "name": "",
+  "version": "",
+  "type": "image",
+  "metadata": {
+   "userInput": "user-image-input",
+   "imageID": "sha256:c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
+   "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
+   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+   "tags": [
+    "stereoscope-fixture-image-simple:85066c51088bdd274f7a89e99e00490f666c49e72ffc955707cd6e18f0e22c5b"
+   ],
+   "imageSize": 38,
+   "layers": [
+    {
+     "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+     "digest": "sha256:3de16c5b8659a2e8d888b8ded8427be7a5686a3c8c4e4dd30de20f362827285b",
+     "size": 22
+    },
+    {
+     "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+     "digest": "sha256:366a3f5653e34673b875891b021647440d0127c2ef041e3b1a22da2a7d4f3703",
+     "size": 16
+    }
+   ],
+   "manifest": "ZXlKelkyaGxiV0ZXWlhKemFXOXVJam95TENKdFpXUnBZVlI1Y0dVaU9pSmguLi4=",
+   "config": "ZXlKaGNtTm9hWFJsWTNSMWNtVWlPaUpoYldRMk5DSXNJbU52Ym1acC4uLg==",
+   "repoDigests": [],
+   "architecture": "",
+   "os": ""
+  }
+ },
+ "distro": {
+  "id": "redhat",
+  "idLike": [
+   "rhel"
+  ],
+  "version": "7",
+  "versionID": "7"
+ },
+ "descriptor": {
+  "name": "syft",
+  "version": "v0.42.0-bogus",
+  "configuration": {
+   "config-key": "config-value"
+  }
+ }
+}

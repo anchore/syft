@@ -11,10 +11,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/invopop/jsonschema"
 
 	"github.com/anchore/syft/internal"
-	syftJsonModel "github.com/anchore/syft/syft/formats/syftjson/model"
+	syftJsonModel "github.com/anchore/syft/syft/format/syftjson/model"
 	"github.com/anchore/syft/syft/internal/packagemetadata"
 )
 
@@ -35,12 +36,22 @@ func schemaID() jsonschema.ID {
 	return jsonschema.ID(fmt.Sprintf("anchore.io/schema/syft/json/%s", internal.JSONSchemaVersion))
 }
 
-func assembleTypeContainer(items []any) any {
+func assembleTypeContainer(items []any) (any, map[string]string) {
 	structFields := make([]reflect.StructField, len(items))
-
+	mapping := make(map[string]string, len(items))
+	typesMissingNames := make([]reflect.Type, 0)
 	for i, item := range items {
 		itemType := reflect.TypeOf(item)
-		fieldName := itemType.Name()
+
+		jsonName := packagemetadata.JSONName(item)
+		fieldName := strcase.ToCamel(jsonName)
+
+		if jsonName == "" {
+			typesMissingNames = append(typesMissingNames, itemType)
+			continue
+		}
+
+		mapping[itemType.Name()] = fieldName
 
 		structFields[i] = reflect.StructField{
 			Name: fieldName,
@@ -48,8 +59,16 @@ func assembleTypeContainer(items []any) any {
 		}
 	}
 
+	if len(typesMissingNames) > 0 {
+		fmt.Println("the following types are missing JSON names (manually curated in ./syft/internal/packagemetadata/names.go):")
+		for _, t := range typesMissingNames {
+			fmt.Println("  - ", t.Name())
+		}
+		os.Exit(1)
+	}
+
 	structType := reflect.StructOf(structFields)
-	return reflect.New(structType).Elem().Interface()
+	return reflect.New(structType).Elem().Interface(), mapping
 }
 
 func build() *jsonschema.Schema {
@@ -61,7 +80,7 @@ func build() *jsonschema.Schema {
 		},
 	}
 
-	pkgMetadataContainer := assembleTypeContainer(packagemetadata.AllTypes())
+	pkgMetadataContainer, pkgMetadataMapping := assembleTypeContainer(packagemetadata.AllTypes())
 	pkgMetadataContainerType := reflect.TypeOf(pkgMetadataContainer)
 
 	// srcMetadataContainer := assembleTypeContainer(sourcemetadata.AllTypes())
@@ -73,24 +92,30 @@ func build() *jsonschema.Schema {
 
 	// TODO: add source metadata types
 
-	// inject the definitions of all packages metadatas into the schema definitions
+	// inject the definitions of all packages metadata into the schema definitions
 
 	var metadataNames []string
-	for name, definition := range pkgMetadataSchema.Definitions {
-		if name == pkgMetadataContainerType.Name() {
+	for typeName, definition := range pkgMetadataSchema.Definitions {
+		if typeName == pkgMetadataContainerType.Name() {
 			// ignore the definition for the fake container
 			continue
 		}
-		documentSchema.Definitions[name] = definition
-		if strings.HasSuffix(name, "Metadata") {
-			metadataNames = append(metadataNames, name)
+
+		displayName, ok := pkgMetadataMapping[typeName]
+		if ok {
+			// this is a package metadata type...
+			documentSchema.Definitions[displayName] = definition
+			metadataNames = append(metadataNames, displayName)
+		} else {
+			// this is a type that the metadata type uses (e.g. DpkgFileRecord)
+			documentSchema.Definitions[typeName] = definition
 		}
 	}
 
 	// ensure the generated list of names is stable between runs
 	sort.Strings(metadataNames)
 
-	var metadataTypes = []map[string]string{
+	metadataTypes := []map[string]string{
 		// allow for no metadata to be provided
 		{"type": "null"},
 	}
@@ -109,7 +134,7 @@ func build() *jsonschema.Schema {
 }
 
 func encode(schema *jsonschema.Schema) []byte {
-	var newSchemaBuffer = new(bytes.Buffer)
+	newSchemaBuffer := new(bytes.Buffer)
 	enc := json.NewEncoder(newSchemaBuffer)
 	// prevent > and < from being escaped in the payload
 	enc.SetEscapeHTML(false)
@@ -129,6 +154,7 @@ func write(schema []byte) {
 		os.Exit(1)
 	}
 	schemaPath := filepath.Join(repoRoot, "schema", "json", fmt.Sprintf("schema-%s.json", internal.JSONSchemaVersion))
+	latestSchemaPath := filepath.Join(repoRoot, "schema", "json", "schema-latest.json")
 
 	if _, err := os.Stat(schemaPath); !os.IsNotExist(err) {
 		// check if the schema is the same...
@@ -157,13 +183,23 @@ func write(schema []byte) {
 	if err != nil {
 		panic(err)
 	}
+	defer fh.Close()
 
 	_, err = fh.Write(schema)
 	if err != nil {
 		panic(err)
 	}
 
-	defer fh.Close()
+	latestFile, err := os.Create(latestSchemaPath)
+	if err != nil {
+		panic(err)
+	}
+	defer latestFile.Close()
+
+	_, err = latestFile.Write(schema)
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Printf("Wrote new schema to %q\n", schemaPath)
 }

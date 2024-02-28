@@ -1,6 +1,7 @@
 package rust
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pelletier/go-toml"
@@ -14,11 +15,11 @@ import (
 var _ generic.Parser = parseCargoLock
 
 type cargoLockFile struct {
-	Packages []pkg.CargoPackageMetadata `toml:"package"`
+	Packages []pkg.RustCargoLockEntry `toml:"package"`
 }
 
 // parseCargoLock is a parser function for Cargo.lock contents, returning all rust cargo crates discovered.
-func parseCargoLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to load Cargo.lock for parsing: %w", err)

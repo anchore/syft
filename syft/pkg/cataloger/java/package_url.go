@@ -5,11 +5,11 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/cpegenerate"
 )
 
 // PackageURL returns the PURL for the specific java package (see https://github.com/package-url/purl-spec)
-func packageURL(name, version string, metadata pkg.JavaMetadata) string {
+func packageURL(name, version string, metadata pkg.JavaArchive) string {
 	var groupID = name
 
 	if gID := groupIDFromJavaMetadata(name, metadata); gID != "" {
@@ -32,7 +32,7 @@ func packageURL(name, version string, metadata pkg.JavaMetadata) string {
 // 2. The group ID from the POM project
 // 3. The group ID from a select map of known group IDs
 // 4. The group ID from the Java manifest
-func groupIDFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupID string) {
+func groupIDFromJavaMetadata(pkgName string, metadata pkg.JavaArchive) (groupID string) {
 	if groupID = groupIDFromPomProperties(metadata.PomProperties); groupID != "" {
 		return groupID
 	}
@@ -53,7 +53,7 @@ func groupIDFromJavaMetadata(pkgName string, metadata pkg.JavaMetadata) (groupID
 }
 
 func groupIDFromKnownPackageList(pkgName string) (groupID string) {
-	if groupID, ok := cpe.DefaultArtifactIDToGroupID[pkgName]; ok {
+	if groupID, ok := cpegenerate.DefaultArtifactIDToGroupID[pkgName]; ok {
 		return groupID
 	}
 	return groupID
@@ -64,22 +64,22 @@ func groupIDFromJavaManifest(manifest *pkg.JavaManifest) (groupID string) {
 		return groupID
 	}
 
-	groupIDS := cpe.GetManifestFieldGroupIDs(manifest, cpe.PrimaryJavaManifestGroupIDFields)
+	groupIDs := cpegenerate.GetManifestFieldGroupIDs(manifest, cpegenerate.PrimaryJavaManifestGroupIDFields)
 	// assumes that primaryJavaManifestNameFields are ordered by priority
-	if len(groupIDS) != 0 {
-		return groupIDS[0]
+	if len(groupIDs) != 0 {
+		return groupIDs[0]
 	}
 
-	groupIDS = cpe.GetManifestFieldGroupIDs(manifest, cpe.SecondaryJavaManifestGroupIDFields)
+	groupIDs = cpegenerate.GetManifestFieldGroupIDs(manifest, cpegenerate.SecondaryJavaManifestGroupIDFields)
 
-	if len(groupIDS) != 0 {
-		return groupIDS[0]
+	if len(groupIDs) != 0 {
+		return groupIDs[0]
 	}
 
 	return groupID
 }
 
-func groupIDFromPomProperties(properties *pkg.PomProperties) (groupID string) {
+func groupIDFromPomProperties(properties *pkg.JavaPomProperties) (groupID string) {
 	if properties == nil {
 		return groupID
 	}
@@ -97,7 +97,7 @@ func groupIDFromPomProperties(properties *pkg.PomProperties) (groupID string) {
 	return groupID
 }
 
-func groupIDFromPomProject(project *pkg.PomProject) (groupID string) {
+func groupIDFromPomProject(project *pkg.JavaPomProject) (groupID string) {
 	if project == nil {
 		return groupID
 	}

@@ -1,0 +1,64 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: foobar/baz
+DocumentNamespace: redacted
+LicenseListVersion: redacted
+Creator: Organization: Anchore, Inc
+Creator: Tool: syft-v0.42.0-bogus
+Created: redacted
+
+##### Package: foobar/baz
+
+PackageName: foobar/baz
+SPDXID: SPDXRef-DocumentRoot-Directory-foobar-baz
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+PrimaryPackagePurpose: FILE
+FilesAnalyzed: false
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+
+##### Package: @at-sign
+
+PackageName: @at-sign
+SPDXID: SPDXRef-Package--at-sign-1c8c811ea5b1cd46
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+
+##### Package: some/slashes
+
+PackageName: some/slashes
+SPDXID: SPDXRef-Package-some-slashes-8a8e95924316c66b
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+
+##### Package: under_scores
+
+PackageName: under_scores
+SPDXID: SPDXRef-Package-under-scores-883703d950ec00f3
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from the following paths: 
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+
+##### Relationships
+
+Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package--at-sign-1c8c811ea5b1cd46
+Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package-some-slashes-8a8e95924316c66b
+Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package-under-scores-883703d950ec00f3
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Directory-foobar-baz
+

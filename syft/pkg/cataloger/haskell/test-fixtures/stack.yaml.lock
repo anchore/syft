@@ -67,6 +67,19 @@ packages:
       sha256: 557c438345de19f82bf01d676100da2a191ef06f624e7a4b90b09ac17cbb52a5
   original:
     hackage: ptr-0.16.8.2@sha256:708ebb95117f2872d2c5a554eb6804cf1126e86abe793b2673f913f14e5eb1ac,3959
+- completed:
+    commit: a5847301404583e16d55cd4d051b8e605d704fbc
+    git: https://github.com/runtimeverification/haskell-backend.git
+    name: kore
+    pantry-tree:
+      sha256: 30a502eda589be5af735b1b59760ce3e0235c0cae8961978a46b3564dd8db32b
+      size: 44685
+    subdir: kore
+    version: 0.60.0.0
+  original:
+    commit: a5847301404583e16d55cd4d051b8e605d704fbc
+    git: https://github.com/runtimeverification/haskell-backend.git
+    subdir: kore
 snapshots:
 - completed:
     size: 618951

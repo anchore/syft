@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -110,7 +111,7 @@ func (r Directory) FilesByPath(userPaths ...string) ([]file.Location, error) {
 			continue
 		}
 
-		// we should be resolving symlinks and preserving this information as a VirtualPath to the real file
+		// we should be resolving symlinks and preserving this information as a AccessPath to the real file
 		ref, err := r.searchContext.SearchByPath(userStrPath, filetree.FollowBasenameLinks)
 		if err != nil {
 			log.Tracef("unable to evaluate symlink for path=%q : %+v", userPath, err)
@@ -229,12 +230,17 @@ func (r Directory) FileContentsByLocation(location file.Location) (io.ReadCloser
 	return stereoscopeFile.NewLazyReadCloser(filePath), nil
 }
 
-func (r *Directory) AllLocations() <-chan file.Location {
+func (r *Directory) AllLocations(ctx context.Context) <-chan file.Location {
 	results := make(chan file.Location)
 	go func() {
 		defer close(results)
 		for _, ref := range r.tree.AllFiles(stereoscopeFile.AllTypes()...) {
-			results <- file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref)
+			select {
+			case <-ctx.Done():
+				return
+			case results <- file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref):
+				continue
+			}
 		}
 	}()
 	return results
@@ -264,8 +270,9 @@ func (r *Directory) FilesByMIMEType(types ...string) ([]file.Location, error) {
 		if uniqueFileIDs.Contains(*refVia.Reference) {
 			continue
 		}
-		location := file.NewLocationFromDirectory(
+		location := file.NewVirtualLocationFromDirectory(
 			r.responsePath(string(refVia.Reference.RealPath)),
+			r.responsePath(string(refVia.RequestPath)),
 			*refVia.Reference,
 		)
 		uniqueFileIDs.Add(*refVia.Reference)

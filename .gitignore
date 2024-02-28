@@ -14,6 +14,8 @@ bin/
 /build
 /dist
 /snapshot
+/.tool
+/.task
 
 # changelog generation
 CHANGELOG.md
@@ -30,7 +32,6 @@ VERSION
 /test/results
 coverage.txt
 *.log
-test/integration/test-fixtures/**/go.sum
 
 # probable archives
 .images
@@ -64,3 +65,8 @@ test/integration/test-fixtures/**/go.sum
 # attestation
 cosign.key
 cosign.pub
+
+# Byte-compiled object files for python
+__pycache__/
+*.py[cod]
+*$py.class

@@ -84,6 +84,10 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: HexPkg,
 		},
 		{
+			purl:     "pkg:otp/accept@0.3.5",
+			expected: ErlangOTPPkg,
+		},
+		{
 			purl:     "pkg:generic/linux-kernel@5.10.15",
 			expected: LinuxKernelPkg,
 		},
@@ -115,6 +119,7 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(BinaryPkg))
 	expectedTypes.Remove(string(LinuxKernelModulePkg))
 	expectedTypes.Remove(string(GithubActionPkg), string(GithubActionWorkflowPkg))
+	expectedTypes.Remove(string(WordpressPluginPkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {

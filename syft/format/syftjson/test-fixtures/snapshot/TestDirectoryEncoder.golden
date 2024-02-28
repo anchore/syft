@@ -1,0 +1,106 @@
+{
+ "artifacts": [
+  {
+   "id": "fb6bef15e281ea43",
+   "name": "package-1",
+   "version": "1.0.1",
+   "type": "python",
+   "foundBy": "the-cataloger-1",
+   "locations": [
+    {
+     "path": "/some/path/pkg1",
+     "accessPath": "/some/path/pkg1"
+    }
+   ],
+   "licenses": [
+    {
+     "value": "MIT",
+     "spdxExpression": "MIT",
+     "type": "declared",
+     "urls": [],
+     "locations": []
+    }
+   ],
+   "language": "python",
+   "cpes": [
+    {
+     "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
+    }
+   ],
+   "purl": "a-purl-2",
+   "metadataType": "python-package",
+   "metadata": {
+    "name": "package-1",
+    "version": "1.0.1",
+    "author": "",
+    "authorEmail": "",
+    "platform": "",
+    "files": [
+     {
+      "path": "/some/path/pkg1/dependencies/foo"
+     }
+    ],
+    "sitePackagesRootPath": ""
+   }
+  },
+  {
+   "id": "39392bb5e270f669",
+   "name": "package-2",
+   "version": "2.0.1",
+   "type": "deb",
+   "foundBy": "the-cataloger-2",
+   "locations": [
+    {
+     "path": "/some/path/pkg1",
+     "accessPath": "/some/path/pkg1"
+    }
+   ],
+   "licenses": [],
+   "language": "",
+   "cpes": [
+    {
+     "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
+    }
+   ],
+   "purl": "pkg:deb/debian/package-2@2.0.1",
+   "metadataType": "dpkg-db-entry",
+   "metadata": {
+    "package": "package-2",
+    "source": "",
+    "version": "2.0.1",
+    "sourceVersion": "",
+    "architecture": "",
+    "maintainer": "",
+    "installedSize": 0,
+    "files": null
+   }
+  }
+ ],
+ "artifactRelationships": [],
+ "source": {
+  "id": "d1563248892cd59af469f406eee907c76fa4f9041f5410d45b93aef903bc4216",
+  "name": "some/path",
+  "version": "",
+  "type": "directory",
+  "metadata": {
+   "path": "redacted/some/path"
+  }
+ },
+ "distro": {
+  "prettyName": "debian",
+  "name": "debian",
+  "id": "debian",
+  "idLike": [
+   "like!"
+  ],
+  "version": "1.2.3",
+  "versionID": "1.2.3"
+ },
+ "descriptor": {
+  "name": "syft",
+  "version": "v0.42.0-bogus",
+  "configuration": {
+   "config-key": "config-value"
+  }
+ }
+}

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -16,7 +17,9 @@ import (
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 // make will run the default make target for the given test fixture path
@@ -124,10 +127,20 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		goCompiledVersion = "1.18"
 		archDetails       = "amd64"
 	)
-	defaultBuildSettings := map[string]string{
-		"GOARCH":  "amd64",
-		"GOOS":    "darwin",
-		"GOAMD64": "v1",
+
+	defaultBuildSettings := []pkg.KeyValue{
+		{
+			Key:   "GOARCH",
+			Value: "amd64",
+		},
+		{
+			Key:   "GOOS",
+			Value: "darwin",
+		},
+		{
+			Key:   "GOAMD64",
+			Value: "v1",
+		},
 	}
 
 	unmodifiedMain := pkg.Package{
@@ -144,8 +157,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		MetadataType: pkg.GolangBinMetadataType,
-		Metadata: pkg.GolangBinMetadata{
+		Metadata: pkg.GolangBinaryBuildinfoEntry{
 			GoCompiledVersion: goCompiledVersion,
 			Architecture:      archDetails,
 			BuildSettings:     defaultBuildSettings,
@@ -154,9 +166,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		mod      *extendedBuildInfo
-		expected []pkg.Package
+		name          string
+		mod           *extendedBuildInfo
+		expected      []pkg.Package
+		binaryContent string
 	}{
 		{
 			name: "package without name",
@@ -189,8 +202,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata:     pkg.GolangBinMetadata{},
+					Metadata: pkg.GolangBinaryBuildinfoEntry{},
 				},
 			},
 		},
@@ -235,8 +247,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
@@ -263,7 +274,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				{
 					Name:     "github.com/a/b/c",
 					Version:  "(devel)",
-					PURL:     "pkg:golang/github.com/a/b/c@(devel)",
+					PURL:     "pkg:golang/github.com/a/b@(devel)#c",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
@@ -274,15 +285,23 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "",
-						BuildSettings: map[string]string{
-							"GOAMD64": "v1",
-							"GOARCH":  "amd64",
-							"GOOS":    "darwin",
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "GOARCH",
+								Value: archDetails,
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
 						},
 						MainModule:       "github.com/a/b/c",
 						GoCryptoSettings: []string{"boringcrypto + fips"},
@@ -340,17 +359,34 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						BuildSettings: map[string]string{
-							"GOARCH":       archDetails,
-							"GOOS":         "darwin",
-							"GOAMD64":      "v1",
-							"vcs.revision": "41bc6bb410352845f22766e27dd48ba93aa825a4",
-							"vcs.time":     "2022-10-14T19:54:57Z",
-							"-ldflags":     `build	-ldflags="-w -s -extldflags '-static' -X blah=foobar`,
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "GOARCH",
+								Value: archDetails,
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+							{
+								Key:   "vcs.revision",
+								Value: "41bc6bb410352845f22766e27dd48ba93aa825a4",
+							},
+							{
+								Key:   "vcs.time",
+								Value: "2022-10-14T19:54:57Z",
+							},
+							{
+								Key:   "-ldflags",
+								Value: `build	-ldflags="-w -s -extldflags '-static' -X blah=foobar`,
+							},
 						},
 						MainModule: "github.com/anchore/syft",
 					},
@@ -390,17 +426,34 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						BuildSettings: map[string]string{
-							"GOARCH":       archDetails,
-							"GOOS":         "darwin",
-							"GOAMD64":      "v1",
-							"vcs.revision": "41bc6bb410352845f22766e27dd48ba93aa825a4",
-							"vcs.time":     "2022-10-14T19:54:57Z",
-							"-ldflags":     `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`,
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "GOARCH",
+								Value: archDetails,
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+							{
+								Key:   "vcs.revision",
+								Value: "41bc6bb410352845f22766e27dd48ba93aa825a4",
+							},
+							{
+								Key:   "vcs.time",
+								Value: "2022-10-14T19:54:57Z",
+							},
+							{
+								Key:   "-ldflags",
+								Value: `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`,
+							},
 						},
 						MainModule: "github.com/anchore/syft",
 					},
@@ -438,15 +491,26 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						BuildSettings: map[string]string{
-							"GOARCH":   archDetails,
-							"GOOS":     "darwin",
-							"GOAMD64":  "v1",
-							"-ldflags": `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`,
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "GOARCH",
+								Value: archDetails,
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+							{
+								Key:   "-ldflags",
+								Value: `build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0`,
+							},
 						},
 						MainModule: "github.com/anchore/syft",
 					},
@@ -484,15 +548,26 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						BuildSettings: map[string]string{
-							"GOARCH":   archDetails,
-							"GOOS":     "darwin",
-							"GOAMD64":  "v1",
-							"-ldflags": `build	-ldflags="-w -s -extldflags '-static' -X main.version=0.79.0`,
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "GOARCH",
+								Value: archDetails,
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+							{
+								Key:   "-ldflags",
+								Value: `build	-ldflags="-w -s -extldflags '-static' -X main.version=0.79.0`,
+							},
 						},
 						MainModule: "github.com/anchore/syft",
 					},
@@ -530,15 +605,26 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						BuildSettings: map[string]string{
-							"GOARCH":   archDetails,
-							"GOOS":     "darwin",
-							"GOAMD64":  "v1",
-							"-ldflags": `build	-ldflags="-w -s -extldflags '-static' -X main.Version=0.79.0`,
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "GOARCH",
+								Value: archDetails,
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+							{
+								Key:   "-ldflags",
+								Value: `build	-ldflags="-w -s -extldflags '-static' -X main.Version=0.79.0`,
+							},
 						},
 						MainModule: "github.com/anchore/syft",
 					},
@@ -577,16 +663,30 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						BuildSettings: map[string]string{
-							"GOARCH":       archDetails,
-							"GOOS":         "darwin",
-							"GOAMD64":      "v1",
-							"vcs.revision": "41bc6bb410352845f22766e27dd48ba93aa825a4",
-							"vcs.time":     "2022-10-14T19:54:57Z",
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "GOARCH",
+								Value: archDetails,
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+							{
+								Key:   "vcs.revision",
+								Value: "41bc6bb410352845f22766e27dd48ba93aa825a4",
+							},
+							{
+								Key:   "vcs.time",
+								Value: "2022-10-14T19:54:57Z",
+							},
 						},
 						MainModule: "github.com/anchore/syft",
 					},
@@ -635,8 +735,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:VSVdnH7cQ7V+B33qSJHTCRlNgra1607Q8PzEmnvb2Ic=",
@@ -657,8 +756,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:DYssiUV1pBmKqzKsm4mqXx8artqC0Q8HgZsVI3lMsAg=",
@@ -715,8 +813,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
@@ -736,8 +833,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					MetadataType: pkg.GolangBinMetadataType,
-					Metadata: pkg.GolangBinMetadata{
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:Ihq/mm/suC88gF8WFcVwk+OV6Tq+wyA1O0E5UEvDglI=",
@@ -745,6 +841,69 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					},
 				},
 				unmodifiedMain,
+			},
+		},
+		{
+			name: "parse main mod and replace devel with pattern from binary contents",
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+						{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"}, // important! missing revision
+						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X blah=foobar`},
+					},
+				},
+				cryptoSettings: nil,
+				arch:           archDetails,
+			},
+			binaryContent: "\x00v1.0.0-somethingelse+incompatible\x00",
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/anchore/syft",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v1.0.0-somethingelse+incompatible",
+					PURL:     "pkg:golang/github.com/anchore/syft@v1.0.0-somethingelse+incompatible",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "GOARCH",
+								Value: archDetails,
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+							{
+								Key:   "vcs.time",
+								Value: "2022-10-14T19:54:57Z",
+							},
+							{
+								Key:   "-ldflags",
+								Value: `build	-ldflags="-w -s -extldflags '-static' -X blah=foobar`,
+							},
+						},
+						MainModule: "github.com/anchore/syft",
+					},
+				},
 			},
 		},
 	}
@@ -762,9 +921,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			)
 
-			c := goBinaryCataloger{}
-			pkgs := c.buildGoPkgInfo(fileresolver.Empty{}, location, test.mod, test.mod.arch)
-			assert.Equal(t, test.expected, pkgs)
+			c := newGoBinaryCataloger(DefaultCatalogerConfig())
+			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
+			require.NoError(t, err)
+			pkgs := c.buildGoPkgInfo(fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
+			require.Len(t, pkgs, len(test.expected))
+			for i, p := range pkgs {
+				pkgtest.AssertPackagesEqual(t, test.expected[i], p)
+			}
 		})
 	}
 }

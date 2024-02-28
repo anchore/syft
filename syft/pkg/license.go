@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/anchore/syft/internal"
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -23,11 +24,11 @@ var _ sort.Interface = (*Licenses)(nil)
 // this is different for licenses since we're only looking for evidence
 // of where a license was declared/concluded for a given package
 type License struct {
-	Value          string             `json:"value"`
-	SPDXExpression string             `json:"spdxExpression"`
-	Type           license.Type       `json:"type"`
-	URLs           internal.StringSet `hash:"ignore"`
-	Locations      file.LocationSet   `hash:"ignore"`
+	Value          string
+	SPDXExpression string
+	Type           license.Type
+	URLs           []string         `hash:"ignore"`
+	Locations      file.LocationSet `hash:"ignore"`
 }
 
 type Licenses []License
@@ -60,31 +61,23 @@ func (l Licenses) Swap(i, j int) {
 }
 
 func NewLicense(value string) License {
-	spdxExpression, err := license.ParseExpression(value)
-	if err != nil {
-		log.Trace("unable to parse license expression for %q: %w", value, err)
-	}
-
-	return License{
-		Value:          value,
-		SPDXExpression: spdxExpression,
-		Type:           license.Declared,
-		URLs:           internal.NewStringSet(),
-		Locations:      file.NewLocationSet(),
-	}
+	return NewLicenseFromType(value, license.Declared)
 }
 
 func NewLicenseFromType(value string, t license.Type) License {
-	spdxExpression, err := license.ParseExpression(value)
-	if err != nil {
-		log.Trace("unable to parse license expression: %w", err)
+	var spdxExpression string
+	if value != "" {
+		var err error
+		spdxExpression, err = license.ParseExpression(value)
+		if err != nil {
+			log.Trace("unable to parse license expression: %w", err)
+		}
 	}
 
 	return License{
 		Value:          value,
 		SPDXExpression: spdxExpression,
 		Type:           t,
-		URLs:           internal.NewStringSet(),
 		Locations:      file.NewLocationSet(),
 	}
 }
@@ -116,15 +109,34 @@ func NewLicenseFromLocations(value string, locations ...file.Location) License {
 
 func NewLicenseFromURLs(value string, urls ...string) License {
 	l := NewLicense(value)
-	for _, u := range urls {
-		if u != "" {
-			l.URLs.Add(u)
+	s := strset.New()
+	for _, url := range urls {
+		if url != "" {
+			s.Add(url)
 		}
 	}
+
+	l.URLs = s.List()
+	sort.Strings(l.URLs)
+
 	return l
 }
 
-// this is a bit of a hack to not infinitely recurse when hashing a license
+func NewLicenseFromFields(value, url string, location *file.Location) License {
+	l := NewLicense(value)
+	if location != nil {
+		l.Locations.Add(*location)
+	}
+	if url != "" {
+		l.URLs = append(l.URLs, url)
+	}
+
+	return l
+}
+
+// Merge two licenses into a new license object. If the merge is not possible due to unmergeable fields
+// (e.g. different values for Value, SPDXExpression, Type, or any non-collection type) an error is returned.
+// TODO: this is a bit of a hack to not infinitely recurse when hashing a license
 func (s License) Merge(l License) (*License, error) {
 	sHash, err := artifact.IDByHash(s)
 	if err != nil {
@@ -141,11 +153,24 @@ func (s License) Merge(l License) (*License, error) {
 		return nil, fmt.Errorf("cannot merge licenses with different hash")
 	}
 
-	s.URLs.Add(l.URLs.ToSlice()...)
-	if s.Locations.Empty() && l.Locations.Empty() {
+	// try to keep s.URLs unallocated unless necessary (which is the default state from the constructor)
+	if len(l.URLs) > 0 {
+		s.URLs = append(s.URLs, l.URLs...)
+	}
+
+	if len(s.URLs) > 0 {
+		s.URLs = strset.New(s.URLs...).List()
+		sort.Strings(s.URLs)
+	}
+
+	if l.Locations.Empty() {
 		return &s, nil
 	}
 
-	s.Locations.Add(l.Locations.ToSlice()...)
+	// since the set instance has a reference type (map) we must make a new instance
+	locations := file.NewLocationSet(s.Locations.ToSlice()...)
+	locations.Add(l.Locations.ToSlice()...)
+	s.Locations = locations
+
 	return &s, nil
 }

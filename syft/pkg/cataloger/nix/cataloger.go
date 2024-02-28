@@ -1,6 +1,10 @@
+/*
+Package nix provides a concrete Cataloger implementation for packages within the Nix packaging ecosystem.
+*/
 package nix
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -11,28 +15,27 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-const (
-	catalogerName = "nix-store-cataloger"
-	nixStoreGlob  = "**/nix/store/*"
-)
+const catalogerName = "nix-store-cataloger"
 
-// StoreCataloger finds package outputs installed in the Nix store location (/nix/store/*).
-type StoreCataloger struct{}
+// storeCataloger finds package outputs installed in the Nix store location (/nix/store/*).
+type storeCataloger struct{}
 
-func NewStoreCataloger() *StoreCataloger {
-	return &StoreCataloger{}
+func NewStoreCataloger() pkg.Cataloger {
+	return &storeCataloger{}
 }
 
-func (c *StoreCataloger) Name() string {
+func (c *storeCataloger) Name() string {
 	return catalogerName
 }
 
-func (c *StoreCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *storeCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	// we want to search for only directories, which isn't possible via the stereoscope API, so we need to apply the glob manually on all returned paths
 	var pkgs []pkg.Package
 	var filesByPath = make(map[string]*file.LocationSet)
-	for location := range resolver.AllLocations() {
-		matchesStorePath, err := doublestar.Match(nixStoreGlob, location.RealPath)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	for location := range resolver.AllLocations(ctx) {
+		matchesStorePath, err := doublestar.Match("**/nix/store/*", location.RealPath)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to match nix store path: %w", err)
 		}
@@ -81,7 +84,7 @@ func (c *StoreCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artif
 }
 
 func appendFiles(p *pkg.Package, location ...file.Location) {
-	metadata, ok := p.Metadata.(pkg.NixStoreMetadata)
+	metadata, ok := p.Metadata.(pkg.NixStoreEntry)
 	if !ok {
 		log.WithFields("package", p.Name).Warn("nix package metadata missing")
 		return
