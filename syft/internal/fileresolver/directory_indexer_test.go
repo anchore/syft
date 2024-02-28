@@ -4,11 +4,13 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/moby/sys/mountinfo"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -435,44 +437,170 @@ func Test_relativePath(t *testing.T) {
 	}
 }
 
+func relativePath(basePath, givenPath string) string {
+	var relPath string
+	var relErr error
+
+	if basePath != "" {
+		relPath, relErr = filepath.Rel(basePath, givenPath)
+		cleanPath := filepath.Clean(relPath)
+		if relErr == nil {
+			if cleanPath == "." {
+				relPath = string(filepath.Separator)
+			} else {
+				relPath = cleanPath
+			}
+		}
+		if !filepath.IsAbs(relPath) {
+			relPath = string(filepath.Separator) + relPath
+		}
+	}
+
+	if relErr != nil || basePath == "" {
+		relPath = givenPath
+	}
+
+	return relPath
+}
+
 func Test_disallowUnixSystemRuntimePath(t *testing.T) {
+	unixSubject := unixSystemMountFinder{
+		// mock out detecting the mount points
+		disallowedMountPaths: []string{"/proc", "/sys", "/dev"},
+	}
+
 	tests := []struct {
-		name    string
-		base    string
-		path    string
-		wantErr require.ErrorAssertionFunc
+		name     string
+		path     string
+		base     string
+		expected error
 	}{
 		{
-			name:    "no base, matching path",
-			base:    "",
-			path:    "/dev",
-			wantErr: require.Error,
+			name: "relative path to proc is allowed",
+			path: "proc/place",
 		},
 		{
-			name:    "no base, non-matching path",
-			base:    "",
-			path:    "/not-dev",
-			wantErr: require.NoError,
+			name:     "relative path within proc is not allowed",
+			path:     "/proc/place",
+			expected: fs.SkipDir,
 		},
 		{
-			name:    "base, matching path",
-			base:    "/a/b/c",
-			path:    "/a/b/c/dev",
-			wantErr: require.Error,
+			name:     "path exactly to proc is not allowed",
+			path:     "/proc",
+			expected: fs.SkipDir,
 		},
 		{
-			name:    "base, non-matching path due to bad relative alignment",
-			base:    "/a/b/c",
-			path:    "/dev",
-			wantErr: require.NoError,
+			name: "similar to proc",
+			path: "/pro/c",
+		},
+		{
+			name: "similar to proc",
+			path: "/pro",
+		},
+		{
+			name:     "dev is not allowed",
+			path:     "/dev",
+			expected: fs.SkipDir,
+		},
+		{
+			name:     "sys is not allowed",
+			path:     "/sys",
+			expected: fs.SkipDir,
+		},
+		{
+			name: "unrelated allowed path",
+			path: "/something/sys",
+		},
+		{
+			name: "do not consider base when matching paths (non-matching)",
+			base: "/a/b/c",
+			path: "/a/b/c/dev",
+		},
+		{
+			name:     "do not consider base when matching paths (matching)",
+			base:     "/a/b/c",
+			path:     "/dev",
+			expected: fs.SkipDir,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			assert.Equal(t, test.expected, unixSubject.disallowUnixSystemRuntimePath(test.base, test.path, nil, nil))
+		})
+	}
+}
+
+func Test_keepUnixSystemMountPaths(t *testing.T) {
+
+	tests := []struct {
+		name  string
+		infos []*mountinfo.Info
+		want  []string
+	}{
+		{
+			name: "all valid filesystems",
+			infos: []*mountinfo.Info{
+				{
+					Mountpoint: "/etc/hostname",
+					FSType:     "/dev/vda1",
+				},
+				{
+					Mountpoint: "/sys/fs/cgroup",
+					FSType:     "cgroup",
+				},
+				{
+					Mountpoint: "/",
+					FSType:     "overlay",
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "no valid filesystems",
+			infos: []*mountinfo.Info{
+				{
+					Mountpoint: "/proc",
+					FSType:     "proc",
+				},
+				{
+					Mountpoint: "/proc-2",
+					FSType:     "procfs",
+				},
+				{
+					Mountpoint: "/sys",
+					FSType:     "sysfs",
+				},
+				{
+					Mountpoint: "/dev",
+					FSType:     "devfs",
+				},
+				{
+					Mountpoint: "/dev-u",
+					FSType:     "udev",
+				},
+				{
+					Mountpoint: "/dev-tmp",
+					FSType:     "devtmpfs",
+				},
+				{
+					Mountpoint: "/run",
+					FSType:     "tmpfs",
+				},
+			},
+			want: []string{
+				"/proc",
+				"/proc-2",
+				"/sys",
+				"/dev",
+				"/dev-u",
+				"/dev-tmp",
+				"/run",
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantErr == nil {
-				tt.wantErr = require.NoError
-			}
-			tt.wantErr(t, disallowUnixSystemRuntimePath(tt.base, tt.path, nil, nil))
+			assert.Equal(t, tt.want, keepUnixSystemMountPaths(tt.infos))
 		})
 	}
 }
