@@ -21,9 +21,25 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+// MavenCoordinate is the unique identifier for a package in Maven.
+type MavenCoordinate struct {
+	GroupID    string
+	ArtifactID string
+	Version    string
+}
+
+// GroupId and ArtifactId of (managed) dependencies
+type GroupArtifact struct {
+	GroupID    string
+	ArtifactID string
+}
+
 const pomXMLGlob = "*pom.xml"
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
+
+// Map containing all pom.xml files that have been parsed. Used for caching as pom files (might) have been downloaded from the internet
+var parsedPomFilesCache map[MavenCoordinate]*gopom.Project = make(map[MavenCoordinate]*gopom.Project)
 
 func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
@@ -46,6 +62,10 @@ func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.
 			}
 
 			pkgs = append(pkgs, p)
+
+			if len(p.Version) == 0 || strings.HasPrefix(p.Version, "${") {
+				log.Infof("Found artifact without version: %s:%s, version: %q", *dep.GroupID, *dep.ArtifactID, p.Version)
+			}
 		}
 	}
 
@@ -101,24 +121,33 @@ func newPomProject(path string, p gopom.Project, location file.Location) *parsed
 }
 
 func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Dependency, cfg ArchiveCatalogerConfig, locations ...file.Location) pkg.Package {
+	groupId := resolveProperty(pom, dep.GroupID, "groupId")
+	artifactId := resolveProperty(pom, dep.ArtifactID, "artifactId")
+
 	m := pkg.JavaArchive{
 		PomProperties: &pkg.JavaPomProperties{
-			GroupID:    resolveProperty(pom, dep.GroupID, "groupId"),
-			ArtifactID: resolveProperty(pom, dep.ArtifactID, "artifactId"),
+			GroupID:    groupId,
+			ArtifactID: artifactId,
 			Scope:      resolveProperty(pom, dep.Scope, "scope"),
 		},
 	}
 
 	name := safeString(dep.ArtifactID)
 	version := resolveProperty(pom, dep.Version, "version")
-	var properties map[string]string
+	log.Infof("New dependency: [%s, %s, %s].", groupId, artifactId, version)
+	var allProperties map[string]string
 
 	licenses := make([]pkg.License, 0)
 	if cfg.UseNetwork {
 		if version == "" {
 			// If we have no version then let's try to get it from a parent pom DependencyManagement section
-			version, properties = recursivelyFindVersionFromParentPom(ctx, *dep.GroupID, *dep.ArtifactID, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg)
-			pom.Properties.Entries = properties
+			version, allProperties = recursivelyFindVersionFromManagedOrInherited(ctx, *dep.GroupID, *dep.ArtifactID, &pom, cfg, nil)
+			pom.Properties.Entries = allProperties
+			version = resolveProperty(pom, &version, "version")
+		} else if strings.HasPrefix(version, "${") {
+			// If we are missing the property for this version, search the pom hierarchy for it.
+			_, allProperties = recursivelyFindVersionFromManagedOrInherited(ctx, *dep.GroupID, *dep.ArtifactID, &pom, cfg, nil)
+			pom.Properties.Entries = allProperties
 			version = resolveProperty(pom, &version, "version")
 		}
 		if version != "" {
@@ -135,6 +164,8 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 					licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
 				}
 			}
+		} else {
+			log.Warnf("Could not determine version for package: [%s, %s]", groupId, artifactId)
 		}
 	}
 
@@ -170,6 +201,26 @@ func decodePomXML(content io.Reader) (project gopom.Project, err error) {
 
 	if err := decoder.Decode(&project); err != nil {
 		return project, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
+	}
+
+	// For modules groupID and version are almost always inherited from parent pom
+	if project.GroupID == nil && project.Parent != nil {
+		project.GroupID = project.Parent.GroupID
+	}
+	if project.Version == nil && project.Parent != nil {
+		project.Version = project.Parent.Version
+	}
+
+	// If missing, add maven built-in version property often used in multi-module projects
+	if project.Version != nil {
+		if project.Properties == nil {
+			var props gopom.Properties
+			props.Entries = make(map[string]string)
+			props.Entries["project.version"] = *project.Version
+			project.Properties = &props
+		} else {
+			project.Properties.Entries["project.version"] = *project.Version
+		}
 	}
 
 	return project, nil
@@ -242,11 +293,17 @@ func cleanDescription(original *string) (cleaned string) {
 //nolint:gocognit
 func resolveProperty(pom gopom.Project, property *string, propertyName string) string {
 	propertyCase := safeString(property)
+	if !strings.Contains(propertyCase, "${") {
+		//nothing to resolve
+		// log.Tracef("resolving property: value [%s] contains no variable", propertyName)
+		return propertyCase
+	}
 	log.WithFields("existingPropertyValue", propertyCase, "propertyName", propertyName).Trace("resolving property")
 	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
 		propertyName := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
 		entries := pomProperties(pom)
 		if value, ok := entries[propertyName]; ok {
+			log.WithFields("existingPropertyValue", value, "propertyName", propertyName).Trace("resolved property")
 			return value
 		}
 
@@ -287,7 +344,9 @@ func resolveProperty(pom gopom.Project, property *string, propertyName string) s
 						}
 						// If this was the last part of the property name, return the value
 						if partNum == numParts-1 {
-							return fmt.Sprintf("%v", pomValue.Interface())
+							value := fmt.Sprintf("%v", pomValue.Interface())
+							log.WithFields("existingPropertyValue", value, "propertyName", propertyName).Trace("resolved property")
+							return value
 						}
 						break
 					}
