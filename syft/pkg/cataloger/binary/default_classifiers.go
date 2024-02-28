@@ -1,12 +1,14 @@
 package binary
 
 import (
+	"fmt"
+
 	"github.com/anchore/syft/syft/cpe"
 )
 
 //nolint:funlen
 func DefaultClassifiers() []Classifier {
-	return []Classifier{
+	classifiers := []Classifier{
 		{
 			Class:    "python-binary",
 			FileGlob: "**/python*",
@@ -415,6 +417,94 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:wp-cli:wp-cli:*:*:*:*:*:*:*:*"),
 		},
 	}
+
+	classifiers = append(classifiers, phpExtensionsClassifiers()...)
+
+	return classifiers
+}
+
+//nolint:funlen
+func phpExtensionsClassifiers() []Classifier {
+	classifiers := make([]Classifier, 0)
+
+	extensions := []string{
+		"bcmath",
+		"bz2",
+		"calendar",
+		"ctype",
+		"curl",
+		"dba",
+		"dl_test",
+		// "dom",
+		"enchant",
+		"exif",
+		"ffi",
+		"fileinfo",
+		"filter",
+		"ftp",
+		"gd",
+		"gettext",
+		"gmp",
+		"iconv",
+		"intl",
+		"ldap",
+		"mbstring",
+		"mysqli",
+		"odbc",
+		"opcache",
+		"pcntl",
+		"pdo_dblib",
+		"pdo_firebird",
+		"pdo_mysql",
+		"pdo_odbc",
+		"pdo_pgsql",
+		"pgsql",
+		"phar",
+		"posix",
+		"session",
+		"shmop",
+		"simplexml",
+		"snmp",
+		"soap",
+		"sockets",
+		"sodium",
+		"sysvmsg",
+		"sysvsem",
+		"sysvshm",
+		"tidy",
+		"xml",
+		"xmlreader",
+		"xmlwriter",
+		"xsl",
+		"zip",
+	}
+
+	for _, ext := range extensions {
+		match := ""
+
+		switch ext {
+		// TODO: case "dom:"
+		case "mysqli":
+			match = `mysqlnd (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00{2}`
+		case "opcache":
+			match = `overflow\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00{2}Zend`
+		case "zip":
+			match = `\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00{2}Zip`
+		default:
+			match = fmt.Sprintf(`(?m)(\x00+%s)?\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00{2}API`, ext)
+		}
+
+		classifiers = append(classifiers, Classifier{
+			Class:           fmt.Sprintf("php-ext-%s-binary", ext),
+			FileGlob:        fmt.Sprintf("**/%s.so", ext),
+			EvidenceMatcher: FileContentsVersionMatcher(match),
+			Package:         ext,
+			PURL:            mustPURL(fmt.Sprintf("pkg:generic/%s@version", ext)),
+			CPEs:            singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
+		})
+	}
+
+	return classifiers
 }
 
 // in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]
