@@ -23,7 +23,7 @@ func TestTableEncoder(t *testing.T) {
 	)
 }
 
-func TestRemoveDuplicateRows(t *testing.T) {
+func Test_markDuplicateRows(t *testing.T) {
 	data := [][]string{
 		{"1", "2", "3"},
 		{"a", "b", "c"},
@@ -35,13 +35,13 @@ func TestRemoveDuplicateRows(t *testing.T) {
 	}
 
 	expected := [][]string{
-		{"1", "2", "3"},
-		{"a", "b", "c"},
-		{"4", "5", "6"},
-		{"1", "2", "1"},
+		{"1", "2", "3", "(+2 duplicates)"},
+		{"a", "b", "c", "(+1 duplicate)"},
+		{"4", "5", "6", ""},
+		{"1", "2", "1", ""},
 	}
 
-	actual := removeDuplicateRows(data)
+	actual := markDuplicateRows(data)
 
 	if diffs := deep.Equal(expected, actual); len(diffs) > 0 {
 		t.Errorf("found diffs!")
