@@ -48,24 +48,31 @@ func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.
 	}
 
 	var pkgs []pkg.Package
-	if pom.Dependencies != nil {
-		for _, dep := range *pom.Dependencies {
-			p := newPackageFromPom(
-				ctx,
-				pom,
-				dep,
-				gap.cfg,
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-			)
-			if p.Name == "" {
-				continue
-			}
 
-			pkgs = append(pkgs, p)
+	// Add all properties defined in parent poms to this project for resolving properties.
+	if pom.Parent != nil {
+		var allProperties map[string]string = make(map[string]string)
+		getPropertiesFromParentPoms(
+			ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, gap.cfg, nil)
+		addPropertiesToProject(&pom, allProperties)
+	}
 
-			if len(p.Version) == 0 || strings.HasPrefix(p.Version, "${") {
-				log.Infof("Found artifact without version: %s:%s, version: %q", *dep.GroupID, *dep.ArtifactID, p.Version)
-			}
+	for _, dep := range *getPomDependencies(&pom) {
+		p := newPackageFromPom(
+			ctx,
+			pom,
+			dep,
+			gap.cfg,
+			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		)
+		if p.Name == "" {
+			continue
+		}
+
+		pkgs = append(pkgs, p)
+
+		if len(p.Version) == 0 || strings.HasPrefix(p.Version, "${") {
+			log.Infof("Found artifact without version: %s:%s, version: %q", *dep.GroupID, *dep.ArtifactID, p.Version)
 		}
 	}
 
@@ -142,12 +149,16 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 		if version == "" {
 			// If we have no version then let's try to get it from a parent pom DependencyManagement section
 			version, allProperties = recursivelyFindVersionFromManagedOrInherited(ctx, *dep.GroupID, *dep.ArtifactID, &pom, cfg, nil)
+			log.Info("return 3")
 			pom.Properties.Entries = allProperties
 			version = resolveProperty(pom, &version, "version")
 		} else if strings.HasPrefix(version, "${") {
+			log.Error("THIS SHOULD NOT HAPPEN!")
 			// If we are missing the property for this version, search the pom hierarchy for it.
-			_, allProperties = recursivelyFindVersionFromManagedOrInherited(ctx, *dep.GroupID, *dep.ArtifactID, &pom, cfg, nil)
-			pom.Properties.Entries = allProperties
+			if pom.Parent != nil {
+				getPropertiesFromParentPoms(ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version,
+					cfg, nil)
+			}
 			version = resolveProperty(pom, &version, "version")
 		}
 		if version != "" {
