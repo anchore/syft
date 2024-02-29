@@ -466,7 +466,7 @@ from-images:
   - name: openssl
     version: 1.1.1w
     images:
-      - ref: openresty/openresty:1.25.3.1-2-alpine
+      - ref: openresty/openresty:1.25.3.1-2-alpine@sha256:b1cb45b1556801b8cb1bc29ea78faf2eaf67926a37b052dd070866e44d7df07a
         platform: linux/arm64
     paths:
       - /usr/local/openresty/openssl/bin/openssl
