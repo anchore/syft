@@ -462,3 +462,11 @@ from-images:
         platform: linux/amd64
     paths:
       - /bin/consul
+
+  - name: openssl
+    version: 1.1.1w
+    images:
+      - ref: openresty/openresty:1.25.3.1-2-alpine
+        platform: linux/arm64
+    paths:
+      - /usr/local/openresty/openssl/bin/openssl

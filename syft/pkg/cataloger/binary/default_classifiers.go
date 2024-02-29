@@ -386,7 +386,8 @@ func DefaultClassifiers() []Classifier {
 			FileGlob: "**/openssl",
 			EvidenceMatcher: FileContentsVersionMatcher(
 				// [NUL]OpenSSL 3.1.4'
-				`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
+				// [NUL]OpenSSL 1.1.1w'
+				`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+([a-z]|-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
 			),
 			Package: "openssl",
 			PURL:    mustPURL("pkg:generic/openssl@version"),
