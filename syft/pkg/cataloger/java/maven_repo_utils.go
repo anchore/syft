@@ -28,16 +28,54 @@ func formatMavenPomURL(groupID, artifactID, version, mavenBaseURL string) (reque
 	return requestURL, err
 }
 
+func resolveRecursiveByPropertyName(pomProperties map[string]string, propertyName string) string {
+	if strings.HasPrefix(propertyName, "${") {
+		name := getPropertyName(propertyName)
+		// log.Debugf("--Name: %s", name)
+		if value, ok := pomProperties[name]; ok {
+			// log.Debugf("--Value: %s", value)
+			if strings.HasPrefix(value, "${") {
+				log.Trace("recurse resolveRecursiveByPropertyName")
+				return resolveRecursiveByPropertyName(pomProperties, value)
+			} else {
+				// log.Debugf("++Value: %s", value)
+				return value
+			}
+		}
+		// log.Debugf("**Value: %s", propertyName)
+		return propertyName
+	} else {
+		// log.Debugf("&&Value: %s", propertyName)
+		return propertyName
+	}
+}
+
+func getPropertyName(value string) string {
+	propertyName := value
+	if strings.HasPrefix(propertyName, "${") {
+		propertyName = strings.TrimSpace(propertyName[2 : len(propertyName)-1]) // remove leading ${ and trailing }
+	}
+	return propertyName
+}
+
 // Add all properties from the project 'pom' to the map 'allProperties' that are not already in the map.
 func addMissingPropertiesFromProject(allProperties map[string]string, pom *gopom.Project) {
 	if pom != nil && pom.Properties != nil && pom.Properties.Entries != nil {
 		for name, value := range pom.Properties.Entries {
 			_, exists := allProperties[name]
 			if !exists {
+				value = resolveProperty(*pom, &value, getPropertyName(value))
 				allProperties[name] = value
-				// log.Tracef("  Added property %s=%s to pom", name, value)
+				log.Tracef("  Added from project, property %s=%s to allProperties", name, value)
 			}
 		}
+		// resolve
+		for name, value := range allProperties {
+			if strings.HasPrefix(value, "${") {
+				allProperties[name] = resolveRecursiveByPropertyName(allProperties, value)
+			}
+		}
+
 	} else {
 		log.Tracef("addMissingPropertiesToProject: nothing to do for project: %s", *pom.ArtifactID)
 	}
@@ -94,7 +132,7 @@ func getPropertiesFromParentPoms(ctx context.Context, allProperties map[string]s
 	_, alreadyParsed := parsedPomFiles[pomCoordinates]
 	if alreadyParsed {
 		// Nothing new here, already parsed
-		log.Info("Nothing new here, already processed.")
+		log.Info("1 Nothing new here, already processed.")
 		return
 	}
 
@@ -121,9 +159,9 @@ func getPropertiesFromParentPoms(ctx context.Context, allProperties map[string]s
 // Try to find the version of a dependency (groupID, artifactID) by parsing all parent poms and imported managed dependencies (maven BOMs).
 // Properties are gathered in the order that they are encountered: in Maven the latest definition of a property (highest in hierarchy) is used.
 // parsedPomFiles contains all previously parsed pom files encountered by earlier invocations of this function on the stack. So for the first
-// call parsedPomFiles should be nill. It is used to prevent cycles (endless loops).
+// call parsedPomFiles should be nil. It is used to prevent cycles (endless loops).
 func recursivelyFindVersionFromManagedOrInherited(ctx context.Context, findGroupID, findArtifactID string,
-	pom *gopom.Project, cfg ArchiveCatalogerConfig, parsedPomFiles map[MavenCoordinate]bool) (string, map[string]string) {
+	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, parsedPomFiles map[MavenCoordinate]bool) string {
 
 	log.Debugf("Recursively finding version from managed or inherited dependencies for dependency [%v:%v] in pom [%s, %s, %s]",
 		findGroupID, findArtifactID, *pom.GroupID, *pom.ArtifactID, *pom.Version)
@@ -138,19 +176,23 @@ func recursivelyFindVersionFromManagedOrInherited(ctx context.Context, findGroup
 	_, alreadyParsed := parsedPomFiles[pomCoordinates]
 	if alreadyParsed {
 		// Nothing new here, already parsed
-		log.Info("Nothing new here, already processed.")
-		return "", nil
+		log.Info("2 Nothing new here, already processed.")
+		return ""
 	} else {
 		parsedPomFiles[pomCoordinates] = true
 	}
-
-	// Map with all properties defined in all parsed pom files
-	var allProperties map[string]string = make(map[string]string)
-
 	addMissingPropertiesFromProject(allProperties, pom)
 
-	// If a parent exists, first parse the parent POM. It may contain required properties and/or
-	// managed dependencies.
+	foundVersion := ""
+	if pom.DependencyManagement != nil {
+		foundVersion = findVersionInDependencyManagement(
+			ctx, findGroupID, findArtifactID, pom, cfg, allProperties, parsedPomFiles)
+	}
+	if isPropertyResolved(foundVersion) {
+		return foundVersion
+	}
+
+	// If a parent exists, search it recursively.
 	if pom.Parent != nil {
 		parentGroupID := *pom.Parent.GroupID
 		parentArtifactID := *pom.Parent.ArtifactID
@@ -160,63 +202,22 @@ func recursivelyFindVersionFromManagedOrInherited(ctx context.Context, findGroup
 
 		if parentPom != nil {
 			log.Infof("Found a parent pom: [%s, %s, %s]", *parentPom.GroupID, *parentPom.ArtifactID, *parentPom.Version)
-			// Mark this parent pom as parsed to prevent re-parsing/cycles later on
-			parsedPomFilesCache[MavenCoordinate{*parentPom.GroupID, *parentPom.ArtifactID, *parentPom.Version}] = parentPom
-
 			addMissingPropertiesFromProject(allProperties, parentPom)
 			addPropertiesToProject(parentPom, allProperties)
-
-			// TODO: Recurse into parent to gather properties (searching dependencies of parent poms)
-			// TODO: create function to just gather properties from all parents
-			// _, parentProperties := recursivelyFindVersionFromManagedOrInherited(
-			// 	ctx, findGroupID, findArtifactID, parentPom, cfg, parsedPomFiles)
-			// log.Info("return 1")
-			// addMissingPropertiesToMap(allProperties, parentProperties)
-			// addPropertiesToProject(parentPom, allProperties)
-
-			foundVersion := ""
-
-			if parentPom.Dependencies != nil {
-				foundVersion = findVersionInDependencies(findGroupID, findArtifactID, parentPom)
-			}
-			if foundVersion == "" && parentPom.DependencyManagement != nil {
-				foundVersion = findVersionInDependencyManagement(
-					ctx, findGroupID, findArtifactID, parentPom, cfg, allProperties, parsedPomFiles)
-				log.Infof("====> 1 Here: %s", foundVersion)
-			}
-			log.Infof("====> 2 Here: %s", foundVersion)
-			foundVersion = resolveProperty(*parentPom, &foundVersion, "version")
-			log.Infof("====> 3 Here: %s", foundVersion)
-			if isPropertyResolved(foundVersion) {
-				log.Infof("1Found version [%s] for dependency: [%s, %s]", foundVersion, findGroupID, findArtifactID)
-				return foundVersion, allProperties
-			}
-			// if foundVersion != "" || strings.HasPrefix(foundVersion, "${}") {
-			// 	foundVersion := resolveProperty(*parentPom, &foundVersion, "version")
-			// 	log.Infof("Found version [%s] for dependency: [%s, %s]", foundVersion, findGroupID, findArtifactID)
-			// 	return foundVersion, allProperties
-			// }
+			foundVersion = recursivelyFindVersionFromManagedOrInherited(
+				ctx, findGroupID, findArtifactID, parentPom, cfg, allProperties, parsedPomFiles)
 		} else {
 			log.Warnf("unable to get parent pom [%s, %s, %s]: %v",
 				parentGroupID, parentArtifactID, parentVersion, err)
 		}
 	}
 
-	foundVersion := ""
-	if pom.DependencyManagement != nil {
-		foundVersion = findVersionInDependencyManagement(
-			ctx, findGroupID, findArtifactID, pom, cfg, allProperties, parsedPomFiles)
-	}
-	if pom.Dependencies != nil {
-		foundVersion = findVersionInDependencies(findGroupID, findArtifactID, pom)
-	}
-
 	if foundVersion == "" {
-		log.Infof("No version found for dependency: [%s, %s]", foundVersion, findGroupID, findArtifactID)
+		log.Infof("No version found for dependency: [%s, %s]", findGroupID, findArtifactID)
 	} else {
 		log.Infof("2Found version [%s] for dependency: [%s, %s]", foundVersion, findGroupID, findArtifactID)
 	}
-	return foundVersion, allProperties
+	return foundVersion
 }
 
 // Returns true when value is not empty and does not start with "${" (contains an unresolved property).
@@ -234,6 +235,9 @@ func getPomFromMavenOrCache(ctx context.Context, parentGroupID, parentArtifactID
 		parentPom, err = getPomFromMavenRepo(ctx, parentGroupID, parentArtifactID, parentVersion, cfg.MavenBaseURL)
 		if err == nil {
 			addPropertiesToProject(parentPom, allProperties)
+			addMissingPropertiesFromProject(allProperties, parentPom)
+			// Store in cache
+			parsedPomFilesCache[MavenCoordinate{parentGroupID, parentArtifactID, parentVersion}] = parentPom
 		}
 	}
 	return parentPom, err
@@ -245,25 +249,27 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, parsedPomFiles map[MavenCoordinate]bool) string {
 
 	for _, dependency := range *getPomManagedDependencies(pom) {
-		// log.Tracef("  Found managed dependency:  [%s, %s, %s]",
-		// 	safeString(dependency.GroupID), safeString(dependency.ArtifactID), safeString(dependency.Version))
+		log.Tracef("  Found managed dependency:  [%s, %s, %s]",
+			safeString(dependency.GroupID), safeString(dependency.ArtifactID), safeString(dependency.Version))
 
 		// imported pom files should be treated just like parent poms, they are use to define versions of dependencies
 		if dependency.Type != nil && dependency.Scope != nil &&
 			*dependency.Type == "pom" && *dependency.Scope == "import" {
 
-			bomVersion := resolveProperty(*pom, dependency.Version, "version")
+			bomVersion := resolveProperty(*pom, dependency.Version, getPropertyName(*dependency.Version))
 			log.Debugf("Found BOM: [%s, %s, %s]", *dependency.GroupID, *dependency.ArtifactID, bomVersion)
 			// Recurse into BOM, which should be treated just like a parent pom
 			bomProject, err := getPomFromMavenOrCache(ctx, *dependency.GroupID, *dependency.ArtifactID, bomVersion, allProperties, cfg)
 			if err == nil {
-				foundVersion, bomProperties := recursivelyFindVersionFromManagedOrInherited(ctx, findGroupID, findArtifactID, bomProject, cfg, parsedPomFiles)
+				foundVersion := recursivelyFindVersionFromManagedOrInherited(
+					ctx, findGroupID, findArtifactID, bomProject, cfg, allProperties, parsedPomFiles)
+
 				log.Info("return 2")
 				log.Debugf("Finished processing BOM: [%s, %s, %s], found version: [%s]", *dependency.GroupID, *dependency.ArtifactID, bomVersion, foundVersion)
-				addMissingPropertiesToMap(allProperties, bomProperties)
+
 				addMissingPropertiesFromProject(allProperties, pom)
+
 				if isPropertyResolved(foundVersion) {
-					log.Infof("---> HERE!: %s", foundVersion)
 					return foundVersion
 				}
 				if foundVersion != "" {
@@ -276,6 +282,9 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 			}
 
 		} else if *dependency.GroupID == findGroupID && *dependency.ArtifactID == findArtifactID {
+			if strings.HasPrefix(*dependency.Version, "${") {
+
+			}
 			foundVersion := resolveProperty(*pom, dependency.Version, "version")
 			if foundVersion != "" && !strings.HasPrefix(foundVersion, "${") {
 				log.Tracef("Found version for managed dependency: [%s, %s, %s]", *dependency.GroupID, *dependency.ArtifactID, foundVersion)
@@ -290,9 +299,9 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 // Find given dependency (groupID, artifactID) in the dependencies section of project 'pom'.
 func findVersionInDependencies(groupID, artifactID string, pom *gopom.Project) string {
 
-	for _, dependency := range *pom.Dependencies {
+	for _, dependency := range *getPomDependencies(pom) {
 		if *dependency.GroupID == groupID && *dependency.ArtifactID == artifactID {
-			depVersion := resolveProperty(*pom, dependency.Version, "version")
+			depVersion := resolveProperty(*pom, dependency.Version, getPropertyName(*dependency.Version))
 			// TODO: -> trace
 			log.Infof("Found dependency: [%s, %s, %s]", *dependency.GroupID, *dependency.ArtifactID, depVersion)
 			return depVersion
@@ -303,6 +312,7 @@ func findVersionInDependencies(groupID, artifactID string, pom *gopom.Project) s
 }
 
 func recursivelyFindLicensesFromParentPom(ctx context.Context, groupID, artifactID, version string, cfg ArchiveCatalogerConfig) []string {
+	return make([]string, 0)
 	log.Debugf("recursively finding license from parent Pom for artifact [%v:%v], using parent pom: [%v:%v:%v]",
 		groupID, artifactID, groupID, artifactID, version)
 	var licenses []string

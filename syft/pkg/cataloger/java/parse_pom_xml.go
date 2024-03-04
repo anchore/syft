@@ -8,6 +8,7 @@ import (
 	"io"
 	"reflect"
 	"regexp"
+	"runtime/debug"
 	"strings"
 
 	"github.com/saintfish/chardet"
@@ -43,13 +44,14 @@ var parsedPomFilesCache map[MavenCoordinate]*gopom.Project = make(map[MavenCoord
 
 func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
+
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var pkgs []pkg.Package
 
-	// Add all properties defined in parent poms to this project for resolving properties.
+	// Add all properties defined in parent poms to this project for resolving properties later on.
 	if pom.Parent != nil {
 		var allProperties map[string]string = make(map[string]string)
 		getPropertiesFromParentPoms(
@@ -142,26 +144,27 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 	name := safeString(dep.ArtifactID)
 	version := resolveProperty(pom, dep.Version, "version")
 	log.Infof("New dependency: [%s, %s, %s].", groupId, artifactId, version)
-	var allProperties map[string]string
+	var allProperties map[string]string = make(map[string]string)
+	addMissingPropertiesFromProject(allProperties, &pom)
 
 	licenses := make([]pkg.License, 0)
 	if cfg.UseNetwork {
 		if version == "" {
 			// If we have no version then let's try to get it from a parent pom DependencyManagement section
-			version, allProperties = recursivelyFindVersionFromManagedOrInherited(ctx, *dep.GroupID, *dep.ArtifactID, &pom, cfg, nil)
+			version = recursivelyFindVersionFromManagedOrInherited(ctx, *dep.GroupID, *dep.ArtifactID, &pom, cfg, allProperties, nil)
 			log.Info("return 3")
-			pom.Properties.Entries = allProperties
 			version = resolveProperty(pom, &version, "version")
 		} else if strings.HasPrefix(version, "${") {
-			log.Error("THIS SHOULD NOT HAPPEN!")
+			log.Error("===>THIS SHOULD NOT HAPPEN!")
 			// If we are missing the property for this version, search the pom hierarchy for it.
 			if pom.Parent != nil {
 				getPropertiesFromParentPoms(ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version,
 					cfg, nil)
 			}
-			version = resolveProperty(pom, &version, "version")
+			// version = resolveProperty(pom, &version, "version")
+			version = resolveProperty(pom, &version, getPropertyName(version))
 		}
-		if version != "" {
+		if isPropertyResolved(version) {
 
 			parentLicenses := recursivelyFindLicensesFromParentPom(
 				ctx,
@@ -181,7 +184,7 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 	}
 
 	if strings.HasPrefix(version, "${") {
-		log.Warnf("Got version '%s' for artifact: %s", version, name)
+		log.Warnf("Got unresolved version '%s' for artifact: %s", version, name)
 	}
 
 	p := pkg.Package{
@@ -233,7 +236,8 @@ func decodePomXML(content io.Reader) (project gopom.Project, err error) {
 			project.Properties.Entries["project.version"] = *project.Version
 		}
 	}
-
+	// Store in cache
+	parsedPomFilesCache[MavenCoordinate{*project.GroupID, *project.ArtifactID, *project.Version}] = &project
 	return project, nil
 }
 
@@ -302,25 +306,30 @@ func cleanDescription(original *string) (cleaned string) {
 // If no match is found, the entire expression including ${} is returned
 //
 //nolint:gocognit
-func resolveProperty(pom gopom.Project, property *string, propertyName string) string {
-	propertyCase := safeString(property)
+func resolveProperty(pom gopom.Project, propertyValue *string, propertyName string) string {
+	propertyCase := safeString(propertyValue)
 	if !strings.Contains(propertyCase, "${") {
 		//nothing to resolve
 		// log.Tracef("resolving property: value [%s] contains no variable", propertyName)
 		return propertyCase
 	}
+	if propertyCase == "${mockito-junit-jupiter.version}" {
+		debug.PrintStack()
+		log.Debugf("allProperties: %+v", pom.Properties.Entries)
+	}
 	log.WithFields("existingPropertyValue", propertyCase, "propertyName", propertyName).Trace("resolving property")
 	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
-		propertyName := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
 		entries := pomProperties(pom)
-		if value, ok := entries[propertyName]; ok {
-			log.WithFields("existingPropertyValue", value, "propertyName", propertyName).Trace("resolved property")
+		value := resolveRecursiveByPropertyName(entries, match)
+		if isPropertyResolved(value) {
+			log.WithFields("PropertyValue", value, "propertyName", match).Trace("resolved property")
 			return value
 		}
 
 		// if we don't find anything directly in the pom properties,
 		// see if we have a project.x expression and process this based
 		// on the xml tags in gopom
+		propertyName := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
 		parts := strings.Split(propertyName, ".")
 		numParts := len(parts)
 		if numParts > 1 && strings.TrimSpace(parts[0]) == "project" {
