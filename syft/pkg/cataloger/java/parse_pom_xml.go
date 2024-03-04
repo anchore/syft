@@ -8,7 +8,6 @@ import (
 	"io"
 	"reflect"
 	"regexp"
-	"runtime/debug"
 	"strings"
 
 	"github.com/saintfish/chardet"
@@ -56,10 +55,13 @@ func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.
 		var allProperties map[string]string = make(map[string]string)
 		getPropertiesFromParentPoms(
 			ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, gap.cfg, nil)
+		log.Debugf("parserPomXML - allProperties count: %i", len(allProperties))
 		addPropertiesToProject(&pom, allProperties)
+		log.Debugf("project Properties count: %i", len(pom.Properties.Entries))
 	}
 
 	for _, dep := range *getPomDependencies(&pom) {
+		log.Debugf("parserPomXML - dependency: [%s, %s, %s]", *dep.GroupID, *dep.ArtifactID)
 		p := newPackageFromPom(
 			ctx,
 			pom,
@@ -81,12 +83,24 @@ func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.
 	return pkgs, nil, nil
 }
 
-func parsePomXMLProject(path string, reader io.Reader, location file.Location) (*parsedPomProject, error) {
-	project, err := decodePomXML(reader)
+func parsePomXMLProject(ctx context.Context, path string, reader io.Reader, location file.Location, cfg ArchiveCatalogerConfig) (*parsedPomProject, error) {
+	pom, err := decodePomXML(reader)
 	if err != nil {
 		return nil, err
 	}
-	return newPomProject(path, project, location), nil
+
+	// Add all properties defined in parent poms to this project for resolving properties later on.
+	if pom.Parent != nil {
+		var allProperties map[string]string = make(map[string]string)
+		getPropertiesFromParentPoms(
+			ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg, nil)
+
+		log.Debugf("parsePomXMLProject - allProperties count: %i", len(allProperties))
+		addPropertiesToProject(&pom, allProperties)
+		log.Debugf("2 project Properties count: %i", len(pom.Properties.Entries))
+	}
+
+	return newPomProject(path, pom, location), nil
 }
 
 func newPomProject(path string, p gopom.Project, location file.Location) *parsedPomProject {
@@ -160,6 +174,9 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 			if pom.Parent != nil {
 				getPropertiesFromParentPoms(ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version,
 					cfg, nil)
+				log.Debugf("newPackageFromPom - allProperties count: %i", len(allProperties))
+				addPropertiesToProject(&pom, allProperties)
+				log.Debugf("2 project Properties count: %i", len(pom.Properties.Entries))
 			}
 			// version = resolveProperty(pom, &version, "version")
 			version = resolveProperty(pom, &version, getPropertyName(version))
@@ -313,10 +330,7 @@ func resolveProperty(pom gopom.Project, propertyValue *string, propertyName stri
 		// log.Tracef("resolving property: value [%s] contains no variable", propertyName)
 		return propertyCase
 	}
-	if propertyCase == "${mockito-junit-jupiter.version}" {
-		debug.PrintStack()
-		log.Debugf("allProperties: %+v", pom.Properties.Entries)
-	}
+
 	log.WithFields("existingPropertyValue", propertyCase, "propertyName", propertyName).Trace("resolving property")
 	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
 		entries := pomProperties(pom)

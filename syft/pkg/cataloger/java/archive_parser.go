@@ -67,7 +67,7 @@ func (gap genericArchiveParserAdapter) parseJavaArchive(ctx context.Context, _ f
 	if err != nil {
 		return nil, nil, err
 	}
-	return parser.parse(ctx)
+	return parser.parse(ctx, gap.cfg)
 }
 
 // uniquePkgKey creates a unique string to identify the given package.
@@ -107,7 +107,7 @@ func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg
 }
 
 // parse the loaded archive and return all packages found.
-func (j *archiveParser) parse(ctx context.Context) ([]pkg.Package, []artifact.Relationship, error) {
+func (j *archiveParser) parse(ctx context.Context, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -119,7 +119,7 @@ func (j *archiveParser) parse(ctx context.Context) ([]pkg.Package, []artifact.Re
 
 	// find aux packages from pom.properties/pom.xml and potentially modify the existing parentPkg
 	// NOTE: we cannot generate sha1 digests from packages discovered via pom.properties/pom.xml
-	auxPkgs, err := j.discoverPkgsFromAllMavenFiles(ctx, parentPkg)
+	auxPkgs, err := j.discoverPkgsFromAllMavenFiles(ctx, parentPkg, cfg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -221,7 +221,7 @@ func (j *archiveParser) parseLicenses(ctx context.Context, manifest *pkg.JavaMan
 		3. manifest
 		4. filename
 	*/
-	name, version, pomLicenses := j.guessMainPackageNameAndVersionFromPomInfo(ctx)
+	name, version, pomLicenses := j.guessMainPackageNameAndVersionFromPomInfo(ctx, j.cfg)
 	if name == "" {
 		name = selectName(manifest, j.fileInfo)
 	}
@@ -281,7 +281,7 @@ type parsedPomProject struct {
 	Licenses []pkg.License
 }
 
-func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo(ctx context.Context) (name, version string, licenses []pkg.License) {
+func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo(ctx context.Context, cfg ArchiveCatalogerConfig) (name, version string, licenses []pkg.License) {
 	pomPropertyMatches := j.fileManifest.GlobMatch(false, pomPropertiesGlob)
 	pomMatches := j.fileManifest.GlobMatch(false, pomXMLGlob)
 	var pomPropertiesObject pkg.JavaPomProperties
@@ -289,7 +289,7 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo(ctx context.Co
 
 	// Find the pom.properties/pom.xml if the names seem like a plausible match
 	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, pomPropertyMatches)
-	projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
+	projects, _ := pomProjectByParentPath(ctx, j.archivePath, j.location, pomMatches, cfg)
 
 	for parentPath, propertiesObj := range properties {
 		if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name) {
@@ -359,7 +359,7 @@ func findPomLicenses(ctx context.Context, pomProjectObject *parsedPomProject, cf
 // parent package, returning all listed Java packages found for each pom
 // properties discovered and potentially updating the given parentPkg with new
 // data.
-func (j *archiveParser) discoverPkgsFromAllMavenFiles(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, error) {
+func (j *archiveParser) discoverPkgsFromAllMavenFiles(ctx context.Context, parentPkg *pkg.Package, cfg ArchiveCatalogerConfig) ([]pkg.Package, error) {
 	if parentPkg == nil {
 		return nil, nil
 	}
@@ -373,7 +373,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(ctx context.Context, paren
 	}
 
 	// pom.xml
-	projects, err := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
+	projects, err := pomProjectByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob), cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -543,7 +543,7 @@ func pomPropertiesByParentPath(archivePath string, location file.Location, extra
 	return propertiesByParentPath, nil
 }
 
-func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]*parsedPomProject, error) {
+func pomProjectByParentPath(ctx context.Context, archivePath string, location file.Location, extractPaths []string, cfg ArchiveCatalogerConfig) (map[string]*parsedPomProject, error) {
 	contentsOfMavenProjectFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
@@ -552,7 +552,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 	projectByParentPath := make(map[string]*parsedPomProject)
 	for filePath, fileContents := range contentsOfMavenProjectFiles {
 		// TODO: when we support locations of paths within archives we should start passing the specific pom.xml location object instead of the top jar
-		pomProject, err := parsePomXMLProject(filePath, strings.NewReader(fileContents), location)
+		pomProject, err := parsePomXMLProject(ctx, filePath, strings.NewReader(fileContents), location, cfg)
 		if err != nil {
 			log.WithFields("contents-path", filePath, "location", location.Path()).Warnf("failed to parse pom.xml: %+v", err)
 			continue

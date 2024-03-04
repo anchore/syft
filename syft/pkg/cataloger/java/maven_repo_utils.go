@@ -81,20 +81,20 @@ func addMissingPropertiesFromProject(allProperties map[string]string, pom *gopom
 	}
 }
 
-// Add all properties from the map 'additionalProperties' to the map 'allProperties' that are not already in the map.
-func addMissingPropertiesToMap(allProperties, additionalProperties map[string]string) {
-	if len(additionalProperties) > 0 {
-		for name, value := range additionalProperties {
-			_, exists := additionalProperties[name]
-			if !exists {
-				allProperties[name] = value
-				// log.Tracef("  Added property to allProperties %s=%s", name, value)
-			}
-		}
-	} else {
-		log.Tracef("addMissingPropertiesToMap: Supplied map was empty.")
-	}
-}
+// // Add all properties from the map 'additionalProperties' to the map 'allProperties' that are not already in the map.
+// func addMissingPropertiesToMap(allProperties, additionalProperties map[string]string) {
+// 	if len(additionalProperties) > 0 {
+// 		for name, value := range additionalProperties {
+// 			_, exists := additionalProperties[name]
+// 			if !exists {
+// 				allProperties[name] = value
+// 				// log.Tracef("  Added property to allProperties %s=%s", name, value)
+// 			}
+// 		}
+// 	} else {
+// 		log.Tracef("addMissingPropertiesToMap: Supplied map was empty.")
+// 	}
+// }
 
 // Add all properties from map 'allProperties' to the project 'pom' that are not already defined in the pom.
 // This increases the chance of the 'resolveProperty' function succeeding.
@@ -109,7 +109,7 @@ func addPropertiesToProject(pom *gopom.Project, allProperties map[string]string)
 		for name, value := range allProperties {
 			_, exists := pom.Properties.Entries[name]
 			if !exists {
-				allProperties[name] = value
+				pom.Properties.Entries[name] = value
 				// log.Tracef("  Added property %s=%s to pom [%s, %s, %s]", name, value, *pom.GroupID, *pom.ArtifactID, *pom.Version)
 			}
 		}
@@ -147,6 +147,7 @@ func getPropertiesFromParentPoms(ctx context.Context, allProperties map[string]s
 			if parentPom.Parent != nil {
 				getPropertiesFromParentPoms(ctx, allProperties, *parentPom.GroupID, *parentPom.ArtifactID, *parentPom.Version,
 					cfg, parsedPomFiles)
+				log.Debugf("getPropertiesFromParentPoms - allProperties count: %i", len(allProperties))
 			}
 		} else {
 			log.Error("Got empty parent pom, error: %w")
@@ -273,7 +274,7 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 					return foundVersion
 				}
 				if foundVersion != "" {
-					foundVersion = resolveProperty(*pom, dependency.Version, "version")
+					foundVersion = resolveProperty(*pom, dependency.Version, getPropertyName(*dependency.Version))
 					if foundVersion != "" && !strings.HasPrefix(foundVersion, "${") {
 						log.Tracef("Found version for managed dependency in BOM: [%s, %s, %s]", findGroupID, findArtifactID, foundVersion)
 						return foundVersion
@@ -282,10 +283,7 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 			}
 
 		} else if *dependency.GroupID == findGroupID && *dependency.ArtifactID == findArtifactID {
-			if strings.HasPrefix(*dependency.Version, "${") {
-
-			}
-			foundVersion := resolveProperty(*pom, dependency.Version, "version")
+			foundVersion := resolveProperty(*pom, dependency.Version, getPropertyName(*dependency.Version))
 			if foundVersion != "" && !strings.HasPrefix(foundVersion, "${") {
 				log.Tracef("Found version for managed dependency: [%s, %s, %s]", *dependency.GroupID, *dependency.ArtifactID, foundVersion)
 				return foundVersion
@@ -313,29 +311,29 @@ func findVersionInDependencies(groupID, artifactID string, pom *gopom.Project) s
 
 func recursivelyFindLicensesFromParentPom(ctx context.Context, groupID, artifactID, version string, cfg ArchiveCatalogerConfig) []string {
 	return make([]string, 0)
-	log.Debugf("recursively finding license from parent Pom for artifact [%v:%v], using parent pom: [%v:%v:%v]",
-		groupID, artifactID, groupID, artifactID, version)
-	var licenses []string
-	// As there can be nested parent poms, we'll recursively check for licenses until we reach the max depth
-	for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
-		parentPom, err := getPomFromMavenRepo(ctx, groupID, artifactID, version, cfg.MavenBaseURL)
-		if err != nil {
-			// We don't want to abort here as the parent pom might not exist in Maven Central, we'll just log the error
-			log.Tracef("unable to get parent pom from Maven repository: %v", err)
-			return []string{}
-		}
-		parentLicenses := parseLicensesFromPom(parentPom)
-		if len(parentLicenses) > 0 || parentPom == nil || parentPom.Parent == nil {
-			licenses = parentLicenses
-			break
-		}
+	// log.Debugf("recursively finding license from parent Pom for artifact [%v:%v], using parent pom: [%v:%v:%v]",
+	// 	groupID, artifactID, groupID, artifactID, version)
+	// var licenses []string
+	// // As there can be nested parent poms, we'll recursively check for licenses until we reach the max depth
+	// for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
+	// 	parentPom, err := getPomFromMavenRepo(ctx, groupID, artifactID, version, cfg.MavenBaseURL)
+	// 	if err != nil {
+	// 		// We don't want to abort here as the parent pom might not exist in Maven Central, we'll just log the error
+	// 		log.Tracef("unable to get parent pom from Maven repository: %v", err)
+	// 		return []string{}
+	// 	}
+	// 	parentLicenses := parseLicensesFromPom(parentPom)
+	// 	if len(parentLicenses) > 0 || parentPom == nil || parentPom.Parent == nil {
+	// 		licenses = parentLicenses
+	// 		break
+	// 	}
 
-		groupID = *parentPom.Parent.GroupID
-		artifactID = *parentPom.Parent.ArtifactID
-		version = *parentPom.Parent.Version
-	}
+	// 	groupID = *parentPom.Parent.GroupID
+	// 	artifactID = *parentPom.Parent.ArtifactID
+	// 	version = *parentPom.Parent.Version
+	// }
 
-	return licenses
+	// return licenses
 }
 
 func getPomFromMavenRepo(ctx context.Context, groupID, artifactID, version, mavenBaseURL string) (*gopom.Project, error) {
@@ -377,6 +375,18 @@ func getPomFromMavenRepo(ctx context.Context, groupID, artifactID, version, mave
 	pom, err := decodePomXML(strings.NewReader(string(bytes)))
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse pom from Maven repository: %w", err)
+	}
+
+	// Add all properties defined in parent poms to this project for resolving properties later on.
+	if pom.Parent != nil {
+		var allProperties map[string]string = make(map[string]string)
+		getPropertiesFromParentPoms(
+			ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version,
+			ArchiveCatalogerConfig{MavenBaseURL: mavenBaseURL}, nil)
+
+		log.Debugf("getPomFromMavenRepo - allProperties count: %i", len(allProperties))
+		addPropertiesToProject(&pom, allProperties)
+		log.Debugf("2 project Properties count: %i", len(pom.Properties.Entries))
 	}
 
 	return &pom, nil

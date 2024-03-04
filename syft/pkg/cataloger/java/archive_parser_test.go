@@ -138,7 +138,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			defer cleanupFn()
 
 			// assert licenses are discovered from upstream
-			_, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo(context.Background())
+			_, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo(context.Background(), tc.config)
 			assert.Equal(t, tc.expectedLicenses, licenses)
 		})
 	}
@@ -424,14 +424,15 @@ func TestParseJar(t *testing.T) {
 				test.expected[k] = p
 			}
 
+			cfg := ArchiveCatalogerConfig{UseNetwork: false}
 			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
-			}, false, ArchiveCatalogerConfig{UseNetwork: false})
+			}, false, cfg)
 			defer cleanupFn()
 			require.NoError(t, err)
 
-			actual, _, err := parser.parse(context.Background())
+			actual, _, err := parser.parse(context.Background(), cfg)
 			require.NoError(t, err)
 
 			if len(actual) != len(test.expected) {

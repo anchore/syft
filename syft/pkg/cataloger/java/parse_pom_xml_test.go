@@ -1,6 +1,7 @@
 package java
 
 import (
+	"context"
 	"encoding/base64"
 	"io"
 	"os"
@@ -368,8 +369,9 @@ func Test_parsePomXMLProject(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			fixture, err := os.Open(test.expected.Path)
 			assert.NoError(t, err)
+			cfg := ArchiveCatalogerConfig{}
 
-			actual, err := parsePomXMLProject(fixture.Name(), fixture, jarLocation)
+			actual, err := parsePomXMLProject(context.Background(), fixture.Name(), fixture, jarLocation, cfg)
 			assert.NoError(t, err)
 
 			assert.Equal(t, &test.expected, actual)
