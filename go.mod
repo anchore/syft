@@ -48,7 +48,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.5.4
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
-	github.com/knqyf263/go-rpmdb v0.0.0-20230301153543-ba94b245509b
+	github.com/knqyf263/go-rpmdb v0.1.0
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/microsoft/go-rustaudit v0.0.0-20220730194248-4b17361d90a5
 	github.com/mitchellh/go-homedir v1.1.0
