@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -147,7 +148,7 @@ func copyBinariesFromDockerImages(config config.BinaryFromImage, destination str
 }
 
 func copyBinariesFromDockerImage(config config.BinaryFromImage, destination string, image config.Image) (err error) {
-	containerName := fmt.Sprintf("%s-%s-%s", config.Name(), config.Version, uuid.New().String())
+	containerName := fmt.Sprintf("%s-%s-%s", config.Name(), strings.ReplaceAll(config.Version, "+", "-"), uuid.New().String())
 
 	cmd := exec.Command("docker", "create", "--name", containerName, image.Reference)
 	if err = cmd.Run(); err != nil {

@@ -628,6 +628,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "java-graal-openjdk/17.0.3+7-jvmci-22.1-b06/linux-amd64",
+			expected: pkg.Package{
+				Name:      "java",
+				Version:   "17.0.3+7-jvmci-22.1-b06",
+				Type:      "binary",
+				PURL:      "pkg:generic/java@17.0.3+7-jvmci-22.1-b06",
+				Locations: locations("java"),
+				Metadata:  metadata("java-binary-graalvm", "java"),
+			},
+		},
+		{
 			// TODO: find original binary...
 			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
 			logicalFixture: "java-jre-oracle/19.0.1/linux-amd64",
