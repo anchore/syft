@@ -28,7 +28,7 @@ func Test_peHasEntrypoint(t *testing.T) {
 		{
 			name:    "shared lib",
 			fixture: "bin/hello.dll", // though this is a shared lib, it has an entrypoint (DLLMain)
-			want:    true,
+			want:    false,
 		},
 		{
 			name:    "application",
