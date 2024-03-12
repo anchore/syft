@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -40,9 +41,7 @@ func Test_peHasEntrypoint(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f, err := pe.NewFile(readerForFixture(t, tt.fixture))
 			require.NoError(t, err)
-			if got := peHasEntrypoint(f); got != tt.want {
-				t.Errorf("peHasEntrypoint() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, peHasEntrypoint(f))
 		})
 	}
 }
@@ -75,9 +74,7 @@ func Test_peHasExports(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f, err := pe.NewFile(readerForFixture(t, tt.fixture))
 			require.NoError(t, err)
-			if got := peHasExports(f); got != tt.want {
-				t.Errorf("peHasExports() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, peHasExports(f))
 		})
 	}
 }

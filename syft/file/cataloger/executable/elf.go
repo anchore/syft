@@ -20,7 +20,13 @@ func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) erro
 
 	libs, err := f.ImportedLibraries()
 	if err != nil {
-		return err
+		// TODO: known-unknowns
+		log.WithFields("error", err).Trace("unable to read imported libraries from elf file")
+		libs = nil
+	}
+
+	if libs == nil {
+		libs = []string{}
 	}
 
 	data.ImportedLibraries = libs
@@ -253,7 +259,8 @@ func elfHasExports(f *elf.File) bool {
 	}
 
 	for _, s := range symbols {
-		// check if the section is SHN_UNDEF
+		// check if the section is SHN_UNDEF, which is the "U" output type from "nm -D" meaning that the symbol
+		// is undefined, meaning it is not an export. Any entry that is not undefined is considered an export.
 		if s.Section != elf.SHN_UNDEF {
 			return true
 		}

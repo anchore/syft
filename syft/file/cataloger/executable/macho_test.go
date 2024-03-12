@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -40,9 +41,7 @@ func Test_machoHasEntrypoint(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f, err := macho.NewFile(readerForFixture(t, tt.fixture))
 			require.NoError(t, err)
-			if got := machoHasEntrypoint(f); got != tt.want {
-				t.Errorf("machoHasEntrypoint() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, machoHasEntrypoint(f))
 		})
 	}
 }
@@ -75,9 +74,7 @@ func Test_machoHasExports(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f, err := macho.NewFile(readerForFixture(t, tt.fixture))
 			require.NoError(t, err)
-			if got := machoHasExports(f); got != tt.want {
-				t.Errorf("machoHasExports() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, machoHasExports(f))
 		})
 	}
 }

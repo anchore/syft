@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
@@ -186,9 +187,7 @@ func Test_elfHasEntrypoint(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f, err := elf.NewFile(readerForFixture(t, tt.fixture))
 			require.NoError(t, err)
-			if got := elfHasEntrypoint(f); got != tt.want {
-				t.Errorf("elfHasEntrypoint() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, elfHasEntrypoint(f))
 		})
 	}
 }
@@ -221,9 +220,7 @@ func Test_elfHasExports(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f, err := elf.NewFile(readerForFixture(t, tt.fixture))
 			require.NoError(t, err)
-			if got := elfHasExports(f); got != tt.want {
-				t.Errorf("elfHasExports() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, elfHasExports(f))
 		})
 	}
 }
