@@ -19,14 +19,18 @@ var _ pkg.Cataloger = (*elfPackageCataloger)(nil)
 type elfPackageCataloger struct {
 }
 
+// TODO: for now this accounts for a single data shape from the .note.package section of an ELF binary.
+// In the future, this should be generalized to support multiple data shapes, including non-json data.
+// For example, fedora includes an ELF section header as a prefix to the JSON payload: https://github.com/anchore/syft/issues/2713
+
 type elfBinaryPackageNotes struct {
-	Name                      string `json:"name"`
-	Version                   string `json:"version"`
-	PURL                      string `json:"purl"`
-	CPE                       string `json:"cpe"`
-	License                   string `json:"license"`
-	pkg.ELFBinaryPackageNotes `json:",inline"`
-	Location                  file.Location `json:"-"`
+	Name                                string `json:"name"`
+	Version                             string `json:"version"`
+	PURL                                string `json:"purl"`
+	CPE                                 string `json:"cpe"`
+	License                             string `json:"license"`
+	pkg.ELFBinaryPackageNoteJSONPayload `json:",inline"`
+	Location                            file.Location `json:"-"`
 }
 
 type elfPackageKey struct {

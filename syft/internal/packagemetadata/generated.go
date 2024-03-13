@@ -19,7 +19,7 @@ func AllTypes() []any {
 		pkg.DotnetDepsEntry{},
 		pkg.DotnetPortableExecutableEntry{},
 		pkg.DpkgDBEntry{},
-		pkg.ELFBinaryPackageNotes{},
+		pkg.ELFBinaryPackageNoteJSONPayload{},
 		pkg.ElixirMixLockEntry{},
 		pkg.ErlangRebarLockEntry{},
 		pkg.GolangBinaryBuildinfoEntry{},
