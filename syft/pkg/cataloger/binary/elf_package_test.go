@@ -80,11 +80,6 @@ func Test_newELFPackage(t *testing.T) {
 		},
 	}
 
-	// for _, test := range tests {
-	// 	t.Run(test.name, func(t *testing.T) {
-	// 		assert.Equal(t, test.expected, newELFPackage(test.metadata, file.NewLocationSet(), nil))
-	// 	})
-	// }
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := newELFPackage(test.metadata, file.NewLocationSet(), nil)
