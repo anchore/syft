@@ -22,7 +22,7 @@ func Test_packageURL(t *testing.T) {
 			notes: elfBinaryPackageNotes{
 				Name:    "github.com/anchore/syft",
 				Version: "v0.1.0",
-				ELFBinaryPackageNotes: pkg.ELFBinaryPackageNotes{
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
 					System: "syftsys",
 				},
 			},
@@ -33,7 +33,7 @@ func Test_packageURL(t *testing.T) {
 			notes: elfBinaryPackageNotes{
 				Name:    "go.opencensus.io",
 				Version: "v0.23.0",
-				ELFBinaryPackageNotes: pkg.ELFBinaryPackageNotes{
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
 					System: "syftsys",
 				},
 			},
@@ -61,7 +61,7 @@ func Test_newELFPackage(t *testing.T) {
 				Version: "0.01",
 				PURL:    "pkg:generic/syftsys/syfttestfixture@0.01",
 				CPE:     "cpe:/o:syft:syftsys_testfixture_syfttestfixture:0.01",
-				ELFBinaryPackageNotes: pkg.ELFBinaryPackageNotes{
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
 					Type:   "binary",
 					System: "syftsys",
 				},
@@ -72,7 +72,7 @@ func Test_newELFPackage(t *testing.T) {
 				Version: "0.01",
 				Type:    "binary",
 				PURL:    "pkg:generic/syftsys/syfttestfixture@0.01",
-				Metadata: pkg.ELFBinaryPackageNotes{
+				Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 					Type:   "binary",
 					System: "syftsys",
 				},

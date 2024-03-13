@@ -20,7 +20,7 @@ all: testfixture
 
 $(LIB_SO): $(LIB_OBJ) | $(LIB_DIR)
 	$(CC) -shared -o $@ $<
-	echo '{"type": "testfixture","vendor": "syft","system": "syftsys","name": "libhello_world.so","version": "0.01","purl": "pkg:generic/syftsys/syfttestfixture@0.01","cpe": "cpe:/o:syft:syftsys_testfixture_syfttestfixture:0.01"}' | objcopy --add-section .note.package=/dev/stdin --set-section-flags .note.package=noload,readonly $@
+	echo '{"type": "testfixture","license":"MIT","commit":"5534c38d0ffef9a3f83154f0b7a7fb6ab0ab6dbb","sourceRepo":"https://github.com/someone/somewhere.git","vendor": "syft","system": "syftsys","name": "libhello_world.so","version": "0.01","purl": "pkg:generic/syftsys/syfttestfixture@0.01","cpe": "cpe:/o:syft:syftsys_testfixture_syfttestfixture:0.01"}' | objcopy --add-section .note.package=/dev/stdin --set-section-flags .note.package=noload,readonly $@
 
 $(LIB_OBJ): $(LIB_SRC) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
@@ -37,7 +37,7 @@ $(LIB_DIR):
 
 $(BIN_DIR)/$(EXECUTABLE): $(EXEC_OBJ) $(LIB_SO) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $^ -L$(LIB_DIR) -l$(LIB_NAME) $(LDFLAGS)
-	echo '{"type": "testfixture","vendor": "syft","system": "syftsys","name": "syfttestfixture","version": "0.01","purl": "pkg:generic/syftsys/syfttestfixture@0.01","cpe": "cpe:/o:syft:syftsys_testfixture_syfttestfixture:0.01"}' | objcopy --add-section .note.package=/dev/stdin --set-section-flags .note.package=noload,readonly $@
+	echo '{"type": "testfixture","license":"MIT","commit":"5534c38d0ffef9a3f83154f0b7a7fb6ab0ab6dbb","sourceRepo":"https://github.com/someone/somewhere.git","vendor": "syft","system": "syftsys","name": "syfttestfixture","version": "0.01","purl": "pkg:generic/syftsys/syfttestfixture@0.01","cpe": "cpe:/o:syft:syftsys_testfixture_syfttestfixture:0.01"}' | objcopy --add-section .note.package=/dev/stdin --set-section-flags .note.package=noload,readonly $@
 
 testfixture: $(BIN_DIR)/$(EXECUTABLE)
 

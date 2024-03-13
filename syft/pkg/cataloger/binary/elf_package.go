@@ -14,7 +14,7 @@ func newELFPackage(metadata elfBinaryPackageNotes, locations file.LocationSet, l
 		PURL:      packageURL(metadata),
 		Type:      pkg.BinaryPkg,
 		Locations: locations,
-		Metadata:  metadata.ELFBinaryPackageNotes,
+		Metadata:  metadata.ELFBinaryPackageNoteJSONPayload,
 	}
 
 	p.SetID()
