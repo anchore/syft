@@ -67,7 +67,7 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 			ReadCloser: reader,
 		})
 		if err != nil {
-			log.Warnf("unable to parse ELF notes: %v", err)
+			log.WithFields("file", location.Path(), "error", err).Trace("unable to parse ELF notes")
 			continue
 		}
 
@@ -137,13 +137,12 @@ func getELFNotes(r file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
 
 	notes, err := noteSection.Data()
 	if err != nil {
-		log.WithFields("error", err).Trace("unable to read .note.package")
 		return nil, err
 	}
 
 	var metadata elfBinaryPackageNotes
 	if err := json.Unmarshal(notes, &metadata); err != nil {
-		log.WithFields("error", err).Trace("unable to unmarshal ELF package notes as JSON")
+		log.WithFields("file", r.Location.Path(), "error", err).Trace("unable to unmarshal ELF package notes as JSON")
 		return nil, nil
 	}
 
