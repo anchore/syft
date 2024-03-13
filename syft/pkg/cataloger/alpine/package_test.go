@@ -80,7 +80,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.4.6",
 			},
-			expected: "pkg:apk/alpine/g++@v84?arch=am86&distro=alpine-3.4.6",
+			expected: "pkg:apk/alpine/g%2B%2B@v84?arch=am86&distro=alpine-3.4.6",
 		},
 		{
 			metadata: parsedData{

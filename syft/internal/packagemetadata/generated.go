@@ -28,6 +28,7 @@ func AllTypes() []any {
 		pkg.JavaArchive{},
 		pkg.LinuxKernel{},
 		pkg.LinuxKernelModule{},
+		pkg.LuaRockPackage{},
 		pkg.MicrosoftKbPatch{},
 		pkg.NixStoreEntry{},
 		pkg.NpmPackage{},

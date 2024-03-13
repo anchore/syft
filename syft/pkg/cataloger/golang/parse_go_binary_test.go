@@ -867,7 +867,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Version:  "v1.0.0-somethingelse+incompatible",
-					PURL:     "pkg:golang/github.com/anchore/syft@v1.0.0-somethingelse+incompatible",
+					PURL:     "pkg:golang/github.com/anchore/syft@v1.0.0-somethingelse%2Bincompatible",
 					Locations: file.NewLocationSet(
 						file.NewLocationFromCoordinates(
 							file.Coordinates{

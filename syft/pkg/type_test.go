@@ -100,6 +100,10 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: Rpkg,
 		},
 		{
+			purl:     "pkg:luarock/kong@3.7.0",
+			expected: LuaRockPkg,
+		},
+		{
 			purl:     "pkg:swift/github.com/apple/swift-numerics/swift-numerics@1.0.2",
 			expected: SwiftPkg,
 		},

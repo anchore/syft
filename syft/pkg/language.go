@@ -21,6 +21,7 @@ const (
 	Haskell         Language = "haskell"
 	Java            Language = "java"
 	JavaScript      Language = "javascript"
+	Lua             Language = "lua"
 	PHP             Language = "php"
 	Python          Language = "python"
 	R               Language = "R"
@@ -40,6 +41,7 @@ var AllLanguages = []Language{
 	Haskell,
 	Java,
 	JavaScript,
+	Lua,
 	PHP,
 	Python,
 	R,
@@ -72,6 +74,8 @@ func LanguageByName(name string) Language {
 		return Go
 	case packageurl.TypeNPM, string(JavaScript), "nodejs", "node.js":
 		return JavaScript
+	case packageurl.TypeLuaRock, string(Lua):
+		return Lua
 	case packageurl.TypePyPi, string(Python):
 		return Python
 	case packageurl.TypeGem, string(Ruby):

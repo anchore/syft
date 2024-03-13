@@ -78,6 +78,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:swift/github.com/apple/swift-numerics/swift-numerics@1.0.2",
 			want: Swift,
 		},
+		{
+			purl: "pkg:luarock/kong@3.7.0",
+			want: Lua,
+		},
 	}
 
 	var languages = strset.New()

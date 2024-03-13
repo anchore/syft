@@ -56,6 +56,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from nix store path"
 	case pkg.Rpkg:
 		answer = "acquired package info from R-package DESCRIPTION file"
+	case pkg.LuaRockPkg:
+		answer = "acquired package info from Rockspec package file"
 	case pkg.SwiftPkg:
 		answer = "acquired package info from resolved Swift package manifest"
 	case pkg.GithubActionPkg, pkg.GithubActionWorkflowPkg:
