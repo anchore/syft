@@ -630,6 +630,33 @@
         "dso"
       ]
     },
+    "ElfBinaryPackageNotes": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "system": {
+          "type": "string"
+        },
+        "sourceRepo": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "type",
+        "vendor",
+        "system",
+        "sourceRepo",
+        "commit"
+      ]
+    },
     "ElixirMixLockEntry": {
       "properties": {
         "name": {
@@ -1409,6 +1436,9 @@
             },
             {
               "$ref": "#/$defs/DpkgDbEntry"
+            },
+            {
+              "$ref": "#/$defs/ElfBinaryPackageNotes"
             },
             {
               "$ref": "#/$defs/ElixirMixLockEntry"

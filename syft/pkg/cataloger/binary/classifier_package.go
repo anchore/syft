@@ -11,7 +11,7 @@ import (
 
 var emptyPURL = packageurl.PackageURL{}
 
-func newPackage(classifier Classifier, location file.Location, matchMetadata map[string]string) *pkg.Package {
+func newClassifierPackage(classifier Classifier, location file.Location, matchMetadata map[string]string) *pkg.Package {
 	version, ok := matchMetadata["version"]
 	if !ok {
 		return nil
