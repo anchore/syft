@@ -12,13 +12,33 @@ import (
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
-func findELFSecurityFeatures(reader unionreader.UnionReader) (*file.ELFSecurityFeatures, error) {
+func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) error {
 	f, err := elf.NewFile(reader)
 	if err != nil {
-		return nil, nil
+		return err
 	}
 
-	features := file.ELFSecurityFeatures{
+	libs, err := f.ImportedLibraries()
+	if err != nil {
+		// TODO: known-unknowns
+		log.WithFields("error", err).Trace("unable to read imported libraries from elf file")
+		libs = nil
+	}
+
+	if libs == nil {
+		libs = []string{}
+	}
+
+	data.ImportedLibraries = libs
+	data.ELFSecurityFeatures = findELFSecurityFeatures(f)
+	data.HasEntrypoint = elfHasEntrypoint(f)
+	data.HasExports = elfHasExports(f)
+
+	return nil
+}
+
+func findELFSecurityFeatures(f *elf.File) *file.ELFSecurityFeatures {
+	return &file.ELFSecurityFeatures{
 		SymbolTableStripped:           isElfSymbolTableStripped(f),
 		StackCanary:                   checkElfStackCanary(f),
 		NoExecutable:                  checkElfNXProtection(f),
@@ -29,8 +49,6 @@ func findELFSecurityFeatures(reader unionreader.UnionReader) (*file.ELFSecurityF
 		LlvmControlFlowIntegrity:      checkLLVMControlFlowIntegrity(f),
 		ClangFortifySource:            checkClangFortifySource(f),
 	}
-
-	return &features, nil
 }
 
 func isElfSymbolTableStripped(file *elf.File) bool {
@@ -218,4 +236,35 @@ func checkClangFortifySource(file *elf.File) *bool {
 		}
 	}
 	return boolRef(false)
+}
+
+func elfHasEntrypoint(f *elf.File) bool {
+	// this is akin to
+	//    readelf -h ./path/to/bin | grep "Entry point address"
+	return f.Entry > 0
+}
+
+func elfHasExports(f *elf.File) bool {
+	// this is akin to:
+	//    nm -D --defined-only ./path/to/bin | grep ' T \| W \| B '
+	// where:
+	//   T - symbol in the text section
+	//   W - weak symbol that might be overwritten
+	//   B - variable located in the uninitialized data section
+	// really anything that is not marked with 'U' (undefined) is considered an export.
+	symbols, err := f.DynamicSymbols()
+	if err != nil {
+		// TODO: known-unknowns?
+		return false
+	}
+
+	for _, s := range symbols {
+		// check if the section is SHN_UNDEF, which is the "U" output type from "nm -D" meaning that the symbol
+		// is undefined, meaning it is not an export. Any entry that is not undefined is considered an export.
+		if s.Section != elf.SHN_UNDEF {
+			return true
+		}
+	}
+
+	return false
 }

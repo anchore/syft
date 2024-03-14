@@ -74,6 +74,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.DotnetDepsEntry{}, "dotnet-deps-entry", "DotnetDepsMetadata"),
 	jsonNames(pkg.DotnetPortableExecutableEntry{}, "dotnet-portable-executable-entry"),
 	jsonNames(pkg.DpkgDBEntry{}, "dpkg-db-entry", "DpkgMetadata"),
+	jsonNames(pkg.ELFBinaryPackageNoteJSONPayload{}, "elf-binary-package-note-json-payload"),
 	jsonNames(pkg.RubyGemspec{}, "ruby-gemspec", "GemMetadata"),
 	jsonNames(pkg.GolangBinaryBuildinfoEntry{}, "go-module-buildinfo-entry", "GolangBinMetadata", "GolangMetadata"),
 	jsonNames(pkg.GolangModuleEntry{}, "go-module-entry", "GolangModMetadata"),

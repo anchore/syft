@@ -12,3 +12,12 @@ type ClassifierMatch struct {
 	Classifier string        `mapstructure:"Classifier" json:"classifier"`
 	Location   file.Location `mapstructure:"Location" json:"location"`
 }
+
+// ELFBinaryPackageNoteJSONPayload Represents metadata captured from the .note.package section of the binary
+type ELFBinaryPackageNoteJSONPayload struct {
+	Type       string `json:"type,omitempty"`
+	Vendor     string `json:"vendor,omitempty"`
+	System     string `json:"system,omitempty"`
+	SourceRepo string `json:"sourceRepo,omitempty"`
+	Commit     string `json:"commit,omitempty"`
+}
