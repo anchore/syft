@@ -90,7 +90,9 @@ func DefaultClassifiers() []Classifier {
 			EvidenceMatcher: FileContentsVersionMatcher(
 				// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
 				// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
-				`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
+				// Equivalent to the following regexp with lookahead support:
+				// (?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<release>[0-9]+[.0-9]*) (?P<version>[0-9]+[^-\x00]+(-(?!jvmci)[^-\x00]+)+)
+				`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^-\s]+(-([^-j\x00][^-\x00]?|[^-\x00][^-v\x00][^-\x00]?|[^-\x00][^-\x00][^-m\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-c\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-\x00][^-i\s].?|[^-\x00]{6,}))+)\x00`),
 			Package: "java",
 			PURL:    mustPURL("pkg:generic/java@version"),
 			// TODO the updates might need to be part of the CPE Attributes, like: 1.8.0:update152
@@ -115,6 +117,15 @@ func DefaultClassifiers() []Classifier {
 			Package: "java",
 			PURL:    mustPURL("pkg:generic/java@version"),
 			CPEs:    singleCPE("cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "java-binary-graalvm",
+			FileGlob: "**/java",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)\x00(?P<version>[0-9]+[.0-9]+[.0-9]+\+[0-9]+-jvmci-[0-9]+[.0-9]+-b[0-9]+)\x00`),
+			Package: "java",
+			PURL:    mustPURL("pkg:generic/java@version"),
+			CPEs:    singleCPE("cpe:2.3:a:oracle:graalvm:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "nodejs-binary",
