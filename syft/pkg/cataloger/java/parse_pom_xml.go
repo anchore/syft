@@ -38,12 +38,8 @@ const pomXMLGlob = "*pom.xml"
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
-// Map containing all pom.xml files that have been parsed. Used for caching as pom files (might) have been downloaded from the internet
-var parsedPomFilesCache map[MavenCoordinate]*gopom.Project = make(map[MavenCoordinate]*gopom.Project)
-
 func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -55,13 +51,11 @@ func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.
 		var allProperties map[string]string = make(map[string]string)
 		getPropertiesFromParentPoms(
 			ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, gap.cfg, nil)
-		log.Debugf("parserPomXML - allProperties count: %i", len(allProperties))
 		addPropertiesToProject(&pom, allProperties)
-		log.Debugf("project Properties count: %i", len(pom.Properties.Entries))
 	}
 
 	for _, dep := range *getPomDependencies(&pom) {
-		log.Debugf("parserPomXML - dependency: [%s, %s, %s]", *dep.GroupID, *dep.ArtifactID)
+		log.Debugf("Add dependency to SBOM : [%s, %s, %s]", *dep.GroupID, *dep.ArtifactID, safeString(dep.Version))
 		p := newPackageFromPom(
 			ctx,
 			pom,
@@ -94,10 +88,7 @@ func parsePomXMLProject(ctx context.Context, path string, reader io.Reader, loca
 		var allProperties map[string]string = make(map[string]string)
 		getPropertiesFromParentPoms(
 			ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg, nil)
-
-		log.Debugf("parsePomXMLProject - allProperties count: %i", len(allProperties))
 		addPropertiesToProject(&pom, allProperties)
-		log.Debugf("2 project Properties count: %i", len(pom.Properties.Entries))
 	}
 
 	return newPomProject(path, pom, location), nil
@@ -157,51 +148,43 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 
 	name := safeString(dep.ArtifactID)
 	version := resolveProperty(pom, dep.Version, "version")
-	log.Infof("New dependency: [%s, %s, %s].", groupId, artifactId, version)
 	var allProperties map[string]string = make(map[string]string)
 	addMissingPropertiesFromProject(allProperties, &pom)
 
 	licenses := make([]pkg.License, 0)
-	if cfg.UseNetwork {
-		if version == "" {
-			// If we have no version then let's try to get it from a parent pom DependencyManagement section
-			version = recursivelyFindVersionFromManagedOrInherited(ctx, *dep.GroupID, *dep.ArtifactID, &pom, cfg, allProperties, nil)
-			log.Info("return 3")
-			version = resolveProperty(pom, &version, "version")
-		} else if strings.HasPrefix(version, "${") {
-			log.Error("===>THIS SHOULD NOT HAPPEN!")
-			// If we are missing the property for this version, search the pom hierarchy for it.
-			if pom.Parent != nil {
-				getPropertiesFromParentPoms(ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version,
-					cfg, nil)
-				log.Debugf("newPackageFromPom - allProperties count: %i", len(allProperties))
-				addPropertiesToProject(&pom, allProperties)
-				log.Debugf("2 project Properties count: %i", len(pom.Properties.Entries))
-			}
-			// version = resolveProperty(pom, &version, "version")
-			version = resolveProperty(pom, &version, getPropertyName(version))
+	if version == "" {
+		// If we have no version then let's try to get it from a parent pom DependencyManagement section
+		version = recursivelyFindVersionFromManagedOrInherited(ctx, *dep.GroupID, *dep.ArtifactID, &pom, cfg, allProperties, nil)
+		version = resolveProperty(pom, &version, "version")
+	} else if strings.HasPrefix(version, "${") {
+		// If we are missing the property for this version, search the pom hierarchy for it.
+		if pom.Parent != nil {
+			getPropertiesFromParentPoms(ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version,
+				cfg, nil)
+			addPropertiesToProject(&pom, allProperties)
 		}
-		if isPropertyResolved(version) {
+		version = resolveProperty(pom, &version, getPropertyName(version))
+	}
+	if isPropertyResolved(version) {
 
-			parentLicenses := recursivelyFindLicensesFromParentPom(
-				ctx,
-				m.PomProperties.GroupID,
-				m.PomProperties.ArtifactID,
-				version,
-				cfg)
+		parentLicenses := recursivelyFindLicensesFromParentPom(
+			ctx,
+			m.PomProperties.GroupID,
+			m.PomProperties.ArtifactID,
+			version,
+			cfg)
 
-			if len(parentLicenses) > 0 {
-				for _, licenseName := range parentLicenses {
-					licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
-				}
+		if len(parentLicenses) > 0 {
+			for _, licenseName := range parentLicenses {
+				licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
 			}
-		} else {
-			log.Warnf("Could not determine version for package: [%s, %s]", groupId, artifactId)
 		}
+	} else {
+		log.Warnf("Could not determine version for package: [%s, %s]", groupId, artifactId)
 	}
 
 	if strings.HasPrefix(version, "${") {
-		log.Warnf("Got unresolved version '%s' for artifact: %s", version, name)
+		log.Infof("Got unresolved version '%s' for artifact: %s", version, name)
 	}
 
 	p := pkg.Package{
