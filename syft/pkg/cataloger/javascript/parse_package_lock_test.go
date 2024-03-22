@@ -106,7 +106,8 @@ func TestParsePackageLock(t *testing.T) {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
 
-	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
 }
 
 func TestParsePackageLockV2(t *testing.T) {
@@ -169,7 +170,8 @@ func TestParsePackageLockV2(t *testing.T) {
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
-	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
 }
 
 func TestParsePackageLockV3(t *testing.T) {
@@ -220,7 +222,8 @@ func TestParsePackageLockV3(t *testing.T) {
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
-	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
 }
 
 func TestParsePackageLockAlias(t *testing.T) {
@@ -279,7 +282,8 @@ func TestParsePackageLockAlias(t *testing.T) {
 		for i := range expected {
 			expected[i].Locations.Add(file.NewLocation(pl))
 		}
-		pkgtest.TestFileParser(t, pl, parsePackageLock, expected, expectedRelationships)
+		adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+		pkgtest.TestFileParser(t, pl, adapter.parsePackageLock, expected, expectedRelationships)
 	}
 }
 
@@ -326,5 +330,6 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
-	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
 }

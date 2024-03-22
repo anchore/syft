@@ -17,8 +17,9 @@ func NewPackageCataloger() pkg.Cataloger {
 // NewLockCataloger returns a new cataloger object for NPM (and NPM-adjacent, such as yarn) lock files.
 func NewLockCataloger(cfg CatalogerConfig) pkg.Cataloger {
 	yarnLockAdapter := newGenericYarnLockAdapter(cfg)
+	packageLockAdapter := newGenericPackageLockAdapter(cfg)
 	return generic.NewCataloger("javascript-lock-cataloger").
-		WithParserByGlobs(parsePackageLock, "**/package-lock.json").
+		WithParserByGlobs(packageLockAdapter.parsePackageLock, "**/package-lock.json").
 		WithParserByGlobs(yarnLockAdapter.parseYarnLock, "**/yarn.lock").
 		WithParserByGlobs(parsePnpmLock, "**/pnpm-lock.yaml")
 }

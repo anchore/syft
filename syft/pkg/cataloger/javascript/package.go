@@ -47,7 +47,7 @@ func newPackageJSONPackage(u packageJSON, indexLocation file.Location) pkg.Packa
 	return p
 }
 
-func newPackageLockV1Package(resolver file.Resolver, location file.Location, name string, u lockDependency) pkg.Package {
+func newPackageLockV1Package(cfg CatalogerConfig, resolver file.Resolver, location file.Location, name string, u lockDependency) pkg.Package {
 	version := u.Version
 
 	const aliasPrefixPackageLockV1 = "npm:"
@@ -63,12 +63,26 @@ func newPackageLockV1Package(resolver file.Resolver, location file.Location, nam
 		version = canonicalPackageAndVersion[versionSeparator+1:]
 	}
 
+	var licenseSet pkg.LicenseSet
+
+	if cfg.SearchRemoteLicenses {
+		license, err := getLicenseFromNpmRegistry(cfg.NPMBaseURL, name, version)
+		if err == nil && license != "" {
+			licenses := pkg.NewLicensesFromValues(license)
+			licenseSet = pkg.NewLicenseSet(licenses...)
+		}
+		if err != nil {
+			log.Warnf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
+		}
+	}
+
 	return finalizeLockPkg(
 		resolver,
 		location,
 		pkg.Package{
 			Name:      name,
 			Version:   version,
+			Licenses:  licenseSet,
 			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
@@ -78,7 +92,22 @@ func newPackageLockV1Package(resolver file.Resolver, location file.Location, nam
 	)
 }
 
-func newPackageLockV2Package(resolver file.Resolver, location file.Location, name string, u lockPackage) pkg.Package {
+func newPackageLockV2Package(cfg CatalogerConfig, resolver file.Resolver, location file.Location, name string, u lockPackage) pkg.Package {
+	var licenseSet pkg.LicenseSet
+
+	if u.License != nil {
+		licenseSet = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, u.License...)...)
+	} else if cfg.SearchRemoteLicenses {
+		license, err := getLicenseFromNpmRegistry(cfg.NPMBaseURL, name, u.Version)
+		if err == nil && license != "" {
+			licenses := pkg.NewLicensesFromValues(license)
+			licenseSet = pkg.NewLicenseSet(licenses...)
+		}
+		if err != nil {
+			log.Warnf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, u.Version, err)
+		}
+	}
+
 	return finalizeLockPkg(
 		resolver,
 		location,
@@ -86,7 +115,7 @@ func newPackageLockV2Package(resolver file.Resolver, location file.Location, nam
 			Name:      name,
 			Version:   u.Version,
 			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(location, u.License...)...),
+			Licenses:  licenseSet,
 			PURL:      packageURL(name, u.Version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
