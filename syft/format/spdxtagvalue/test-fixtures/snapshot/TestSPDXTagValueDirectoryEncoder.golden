@@ -16,6 +16,8 @@ PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 PrimaryPackagePurpose: FILE
 FilesAnalyzed: false
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
 
 ##### Package: package-2
 
