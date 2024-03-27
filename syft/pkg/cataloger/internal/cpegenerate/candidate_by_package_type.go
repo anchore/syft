@@ -344,6 +344,17 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "wpa_supplicant"},
 			candidateAddition{AdditionalVendors: []string{"w1.fi"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "dnsmasq", Vendor: "dnsmasq"},
+			candidateAddition{AdditionalVendors: []string{"thekelleys"}},
+		},
+		// Debian packages
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "dnsmasq", Vendor: "dnsmasq"},
+			candidateAddition{AdditionalVendors: []string{"thekelleys"}},
+		},
 		//
 		// Binary packages
 		{
