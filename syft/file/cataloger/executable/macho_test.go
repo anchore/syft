@@ -69,6 +69,11 @@ func Test_machoHasExports(t *testing.T) {
 			fixture: "bin/hello_mac",
 			want:    false,
 		},
+		{
+			name:    "gcc-amd64-darwin-exec-debug",
+			fixture: "bin/gcc-amd64-darwin-exec-debug",
+			want:    false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

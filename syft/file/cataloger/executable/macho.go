@@ -57,6 +57,9 @@ func machoHasEntrypoint(f *macho.File) bool {
 }
 
 func machoHasExports(f *macho.File) bool {
+	if f == nil || f.Symtab == nil {
+		return false
+	}
 	for _, sym := range f.Symtab.Syms {
 		// look for symbols that are:
 		//  - not private and are external
