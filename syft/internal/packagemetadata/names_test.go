@@ -201,6 +201,11 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 			expected: reflect.TypeOf(pkg.PythonRequirementsEntry{}),
 		},
 		{
+			name:     "map pkg.PhpPeclEntry struct type",
+			input:    "PhpPeclMetadata",
+			expected: reflect.TypeOf(pkg.PhpPeclEntry{}),
+		},
+		{
 			name:     "map pkg.ErlangRebarLockEntry struct type",
 			input:    "RebarLockMetadataType",
 			expected: reflect.TypeOf(pkg.ErlangRebarLockEntry{}),
@@ -413,6 +418,12 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 			metadata:           pkg.PhpComposerInstalledEntry{},
 			expectedJSONName:   "php-composer-installed-entry",
 			expectedLegacyName: "PhpComposerJsonMetadata", // note: maps to multiple entries (v11-12 breaking change)
+		},
+		{
+			name:               "PhpPeclMetadata",
+			metadata:           pkg.PhpPeclEntry{},
+			expectedJSONName:   "php-pecl-entry",
+			expectedLegacyName: "PhpPeclMetadata",
 		},
 		{
 			name:               "PortageMetadata",

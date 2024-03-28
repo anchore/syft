@@ -35,6 +35,7 @@ func AllTypes() []any {
 		pkg.NpmPackageLockEntry{},
 		pkg.PhpComposerInstalledEntry{},
 		pkg.PhpComposerLockEntry{},
+		pkg.PhpPeclEntry{},
 		pkg.PortageEntry{},
 		pkg.PythonPackage{},
 		pkg.PythonPipfileLockEntry{},
