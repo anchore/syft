@@ -6,6 +6,9 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -23,9 +26,50 @@ import (
 
 const pomXMLGlob = "*pom.xml"
 
+var checkedForMaven bool = false
+var mavenAvailable bool = false
+
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
 func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+
+	var pom string
+	// try to get absolute path first. This fails for tests, so fall back to AccessPath
+	if reader.Reference().RealPath != "" {
+		pom = string(reader.Reference().RealPath.Normalize())
+	} else {
+		pom = reader.AccessPath
+	}
+
+	var effectivePom string = filepath.Join(filepath.Dir(pom), "target", "effective-pom.xml")
+
+	log.Tracef("Found POM in dir: %q", filepath.Dir(pom))
+
+	trueLocation := reader.Location
+
+	if gap.cfg.UseMaven && isMavenAvailable(gap.cfg.MavenCommand) {
+		generateEffectivePom(pom, effectivePom, gap.cfg.MavenCommand, gap.cfg.UseNetwork)
+
+		var pomReader io.ReadCloser
+		pomReader, err := os.Open(effectivePom)
+
+		if err == nil {
+			var pomLocation file.Location = file.NewLocation(effectivePom)
+
+			reader = file.NewLocationReadCloser(pomLocation, pomReader)
+			log.Debugf("Parsing effective POM: %q", effectivePom)
+		} else {
+			log.Errorf("Could not open file %q : %w", effectivePom, err)
+		}
+	} else {
+		log.Debugf("Parsing unresolved POM: %q", pom)
+	}
+
+	return parserPomXML(ctx, reader, gap, trueLocation)
+}
+
+// Parse pom file, when an effective pom file was generated, originalPom points to the original pom file
+func parserPomXML(ctx context.Context, reader file.LocationReadCloser, gap genericArchiveParserAdapter, originalPom file.Location) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
 	if err != nil {
 		return nil, nil, err
@@ -34,22 +78,76 @@ func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.
 	var pkgs []pkg.Package
 	if pom.Dependencies != nil {
 		for _, dep := range *pom.Dependencies {
+			var location file.Location
+			if originalPom.Coordinates != reader.Location.Coordinates {
+				location = originalPom.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
+			} else {
+				location = reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
+			}
+
 			p := newPackageFromPom(
 				ctx,
 				pom,
 				dep,
 				gap.cfg,
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				location,
 			)
 			if p.Name == "" {
 				continue
 			}
 
 			pkgs = append(pkgs, p)
+
+			if len(p.Version) == 0 || strings.HasPrefix(p.Version, "${") {
+				groupId := *dep.GroupID
+				artifactId := *dep.ArtifactID
+				artifact := groupId + ":" + artifactId
+				log.Infof("Found artifact without version: %q, version: %q", artifact, p.Version)
+			}
 		}
 	}
-
 	return pkgs, nil, nil
+}
+
+func isMavenAvailable(mvnCommand string) bool {
+
+	// Only check for Maven on first call
+	if !checkedForMaven {
+		log.Tracef("Running command: %q -v", mvnCommand)
+
+		cmd := exec.Command(mvnCommand, "-v")
+		_, err := cmd.Output()
+
+		if err == nil {
+			log.Trace("Maven is available.")
+			mavenAvailable = true
+		} else {
+			log.Warnf("Maven is not available java pom.xml file analysis might be incomplete/incorrect! %+v", err)
+		}
+		checkedForMaven = true
+	}
+	return mavenAvailable
+}
+
+func generateEffectivePom(pomFile string, effectivePomFile string, mvnCommand string, useNetwork bool) {
+	log.Debugf("Generating effective POM for: %q", pomFile)
+
+	var args = []string{"help:effective-pom", "--non-recursive"}
+
+	if !useNetwork {
+		args = append(args, "--offline")
+	}
+
+	args = append(args, "-Doutput="+effectivePomFile, "--file", pomFile)
+
+	cmd := exec.Command(mvnCommand, args...) // #nosec G204
+	output, err := cmd.Output()
+
+	if err != nil {
+		log.Errorf("failed to execute command: %q: %+v", cmd, err)
+		log.Debug(string(output))
+	}
+	log.Trace(string(output))
 }
 
 func parsePomXMLProject(path string, reader io.Reader, location file.Location) (*parsedPomProject, error) {
@@ -162,6 +260,26 @@ func decodePomXML(content io.Reader) (project gopom.Project, err error) {
 
 	if err := decoder.Decode(&project); err != nil {
 		return project, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
+	}
+
+	// For modules groupID and version are almost always inherited from parent pom
+	if project.GroupID == nil && project.Parent != nil {
+		project.GroupID = project.Parent.GroupID
+	}
+	if project.Version == nil && project.Parent != nil {
+		project.Version = project.Parent.Version
+	}
+
+	// If missing, add maven built-in version property often used in multi-module projects
+	if project.Version != nil {
+		if project.Properties == nil {
+			var props gopom.Properties
+			props.Entries = make(map[string]string)
+			props.Entries["project.version"] = *project.Version
+			project.Properties = &props
+		} else {
+			project.Properties.Entries["project.version"] = *project.Version
+		}
 	}
 
 	return project, nil

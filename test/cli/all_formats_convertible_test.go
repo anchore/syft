@@ -34,6 +34,7 @@ func TestAllFormatsConvertable(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("from %s to %s", test.from, test.to), func(t *testing.T) {
 			sbomArgs := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", test.from}
+			sbomArgs = append(sbomArgs, "-c", "test-fixtures/.syft-no-maven.yaml")
 			cmd, stdout, stderr := runSyft(t, test.env, sbomArgs...)
 			if cmd.ProcessState.ExitCode() != 0 {
 				t.Log("STDOUT:\n", stdout)

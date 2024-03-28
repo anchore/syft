@@ -51,6 +51,7 @@ func TestSPDXJSONSchema(t *testing.T) {
 				test.subcommand, fixtureRef, "-q",
 			}
 			args = append(args, test.args...)
+			args = append(args, "-c", "test-fixtures/.syft-no-maven.yaml")
 
 			_, stdout, _ := runSyft(t, nil, args...)
 

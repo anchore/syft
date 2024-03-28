@@ -2,6 +2,7 @@ package java
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,6 +31,8 @@ func formatMavenPomURL(groupID, artifactID, version, mavenBaseURL string) (reque
 
 // An artifact can have its version defined in a parent's DependencyManagement section
 func recursivelyFindVersionFromParentPom(ctx context.Context, groupID, artifactID, parentGroupID, parentArtifactID, parentVersion string, cfg ArchiveCatalogerConfig) string {
+	log.Debugf("recursively finding version from parent Pom for artifact [%v:%v], using parent pom: [%v:%v:%v]",
+		groupID, artifactID, parentGroupID, parentArtifactID, parentVersion)
 	// As there can be nested parent poms, we'll recursively check for the version until we reach the max depth
 	for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
 		parentPom, err := getPomFromMavenRepo(ctx, parentGroupID, parentArtifactID, parentVersion, cfg.MavenBaseURL)
@@ -80,7 +83,11 @@ func recursivelyFindLicensesFromParentPom(ctx context.Context, groupID, artifact
 }
 
 func getPomFromMavenRepo(ctx context.Context, groupID, artifactID, version, mavenBaseURL string) (*gopom.Project, error) {
+	if len(groupID) == 0 || len(artifactID) == 0 || len(version) == 0 {
+		return nil, errors.New("missing/incomplete maven artiface coordinates, cannot download pom from repository")
+	}
 	requestURL, err := formatMavenPomURL(groupID, artifactID, version, mavenBaseURL)
+	log.Tracef("Requesting pom for artifact %s:%s:%s", groupID, artifactID, version)
 	if err != nil {
 		return nil, err
 	}
