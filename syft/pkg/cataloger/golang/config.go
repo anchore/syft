@@ -2,7 +2,7 @@ package golang
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
@@ -75,11 +75,11 @@ func DefaultCatalogerConfig() CatalogerConfig {
 			if err != nil {
 				log.Debug("unable to determine user home dir: %v", err)
 			} else {
-				goPath = path.Join(homeDir, "go")
+				goPath = filepath.Join(homeDir, "go")
 			}
 		}
 		if goPath != "" {
-			g.LocalModCacheDir = path.Join(goPath, "pkg", "mod")
+			g.LocalModCacheDir = filepath.Join(goPath, "pkg", "mod")
 		}
 	}
 	return g
