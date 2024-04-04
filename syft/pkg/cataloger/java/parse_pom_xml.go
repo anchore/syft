@@ -74,7 +74,7 @@ func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.
 	}
 
 	for _, dep := range *getPomDependencies(&pom) {
-		log.Debugf("Add dependency to SBOM : [%s, %s, %s]", *dep.GroupID, *dep.ArtifactID, safeString(dep.Version))
+		log.Debugf("add dependency to SBOM : [%s, %s, %s]", *dep.GroupID, *dep.ArtifactID, safeString(dep.Version))
 		p := newPackageFromPom(
 			ctx,
 			pom,
@@ -89,7 +89,7 @@ func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.
 		pkgs = append(pkgs, p)
 
 		if len(p.Version) == 0 || strings.HasPrefix(p.Version, "${") {
-			log.Infof("Found artifact without version: %s:%s, version: %q", *dep.GroupID, *dep.ArtifactID, p.Version)
+			log.Infof("found artifact without version: %s:%s, version: %q", *dep.GroupID, *dep.ArtifactID, p.Version)
 		}
 	}
 
@@ -199,11 +199,11 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 			}
 		}
 	} else {
-		log.Warnf("Could not determine version for package: [%s, %s]", groupId, artifactId)
+		log.Warnf("could not determine version for package: [%s, %s]", groupId, artifactId)
 	}
 
 	if strings.HasPrefix(version, "${") {
-		log.Infof("Got unresolved version '%s' for artifact: %s", version, name)
+		log.Infof("got unresolved version '%s' for artifact: %s", version, name)
 	}
 
 	p := pkg.Package{
@@ -244,17 +244,6 @@ func decodePomXML(content io.Reader) (project gopom.Project, err error) {
 		project.Version = project.Parent.Version
 	}
 
-	// If missing, add maven built-in version property often used in multi-module projects
-	// if project.Version != nil {
-	// 	if project.Properties == nil {
-	// 		var props gopom.Properties
-	// 		props.Entries = make(map[string]string)
-	// 		props.Entries["project.version"] = *project.Version
-	// 		project.Properties = &props
-	// 	} else {
-	// 		project.Properties.Entries["project.version"] = *project.Version
-	// 	}
-	// }
 	// Store in cache
 	parsedPomFilesCache[mavenCoordinate{*project.GroupID, *project.ArtifactID, *project.Version}] = &project
 	return project, nil
@@ -338,7 +327,7 @@ func resolveProperty(pom gopom.Project, propertyValue *string, propertyName stri
 		entries := pomProperties(pom)
 		value := resolveRecursiveByPropertyName(entries, match)
 		if isPropertyResolved(value) {
-			log.WithFields("PropertyValue", value, "propertyName", match).Trace("resolved property")
+			log.WithFields("propertyValue", value, "propertyName", match).Trace("resolved property")
 			return value
 		}
 
