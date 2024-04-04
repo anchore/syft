@@ -16,9 +16,16 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
+// mavenCoordinate is the unique identifier for a package in Maven.
+type mavenCoordinate struct {
+	GroupID    string
+	ArtifactID string
+	Version    string
+}
+
 // Map containing all pom.xml files that have been parsed. They are cached because properties might have been added
 // and also to prevent downloading multiple times from a remote repository.
-var parsedPomFilesCache map[MavenCoordinate]*gopom.Project = make(map[MavenCoordinate]*gopom.Project)
+var parsedPomFilesCache map[mavenCoordinate]*gopom.Project = make(map[mavenCoordinate]*gopom.Project)
 
 var checkedForMavenLocalRepo bool = false
 var mavenLocalRepoDir string = ""
@@ -42,16 +49,16 @@ func formatMavenPomURL(groupID, artifactID, version, mavenBaseURL string) (reque
 // parsedPomFiles contains all previously parsed pom files encountered by earlier invocations of this function on the stack. So for the first
 // call parsedPomFiles should be nil. It is used to prevent cycles (endless loops).
 func recursivelyFindVersionFromManagedOrInherited(ctx context.Context, findGroupID, findArtifactID string,
-	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, parsedPomFiles map[MavenCoordinate]bool) string {
+	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, parsedPomFiles map[mavenCoordinate]bool) string {
 
 	// Create map to keep track of parsed pom files and to prevent cycles.
 	if parsedPomFiles == nil {
-		parsedPomFiles = make(map[MavenCoordinate]bool)
+		parsedPomFiles = make(map[mavenCoordinate]bool)
 	}
-	log.Debugf("Recursively finding version from managed or inherited dependencies for dependency [%v:%v] in pom [%s, %s, %s]. recursion depth: %s",
+	log.Debugf("Recursively finding version from managed or inherited dependencies for dependency [%v:%v] in pom [%s, %s, %s]. recursion depth: %d",
 		findGroupID, findArtifactID, *pom.GroupID, *pom.ArtifactID, *pom.Version, len(parsedPomFiles))
 
-	pomCoordinates := MavenCoordinate{*pom.GroupID, *pom.ArtifactID, *pom.Version}
+	pomCoordinates := mavenCoordinate{*pom.GroupID, *pom.ArtifactID, *pom.Version}
 	_, alreadyParsed := parsedPomFiles[pomCoordinates]
 	if alreadyParsed {
 		log.Debug("Skipping already processed pom.")
@@ -100,13 +107,13 @@ func recursivelyFindVersionFromManagedOrInherited(ctx context.Context, findGroup
 
 // Returns true when value is not empty and does not start with "${" (contains an unresolved property).
 func isPropertyResolved(value string) bool {
-	return value != "" && !strings.HasPrefix(value, "${}")
+	return value != "" && !strings.HasPrefix(value, "${")
 }
 
 // Find given dependency (groupID, artifactID) in the dependencyManagement section of project 'pom'.
 // May recursively call recursivelyFindVersionFromManagedOrInherited when a Maven BOM is found.
 func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArtifactID string,
-	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, parsedPomFiles map[MavenCoordinate]bool) string {
+	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, parsedPomFiles map[mavenCoordinate]bool) string {
 
 	for _, dependency := range *getPomManagedDependencies(pom) {
 		log.Tracef("Got managed dependency:  [%s, %s, %s]",
@@ -183,13 +190,15 @@ func getPomFromCacheOrMaven(ctx context.Context, groupID, artifactID, version st
 	var err error = nil
 
 	// Try get from cache first.
-	parentPom, found := parsedPomFilesCache[MavenCoordinate{groupID, artifactID, version}]
+	parentPom, found := parsedPomFilesCache[mavenCoordinate{groupID, artifactID, version}]
 
 	if found {
 		return parentPom, err
 	} else {
 		// Then try to get from local file system.
-		parentPom, found = getPomFromMavenUserLocalRepository(groupID, artifactID, version)
+		if cfg.UseMavenLocalRepository {
+			parentPom, found = getPomFromMavenUserLocalRepository(groupID, artifactID, version)
+		}
 
 		if !found && cfg.UseNetwork {
 			// If all fails, then try to get from Maven repository over HTTP
@@ -211,7 +220,7 @@ func getPomFromCacheOrMaven(ctx context.Context, groupID, artifactID, version st
 			addMissingPropertiesFromProject(allProperties, parentPom)
 
 			// Store in cache
-			parsedPomFilesCache[MavenCoordinate{groupID, artifactID, version}] = parentPom
+			parsedPomFilesCache[mavenCoordinate{groupID, artifactID, version}] = parentPom
 		}
 	}
 	return parentPom, err
@@ -393,16 +402,16 @@ func getPomManagedDependencies(pom *gopom.Project) *[]gopom.Dependency {
 // This function recursively processes each encountered parent pom until no parent pom
 // is found.
 func getPropertiesFromParentPoms(ctx context.Context, allProperties map[string]string, parentGroupID, parentArtifactID, parentVersion string,
-	cfg ArchiveCatalogerConfig, parsedPomFiles map[MavenCoordinate]bool) {
+	cfg ArchiveCatalogerConfig, parsedPomFiles map[mavenCoordinate]bool) {
 
 	// Create map to keep track of parsed pom files and to prevent cycles.
 	if parsedPomFiles == nil {
-		parsedPomFiles = make(map[MavenCoordinate]bool)
+		parsedPomFiles = make(map[mavenCoordinate]bool)
 	}
 	log.Debugf("Recursively gathering all properties from pom [%s, %s, %s], recursion depth: %d",
 		parentGroupID, parentArtifactID, parentVersion, len(parsedPomFiles))
 
-	pomCoordinates := MavenCoordinate{parentGroupID, parentArtifactID, parentVersion}
+	pomCoordinates := mavenCoordinate{parentGroupID, parentArtifactID, parentVersion}
 	_, alreadyParsed := parsedPomFiles[pomCoordinates]
 	if alreadyParsed {
 		// Nothing new here, already parsed

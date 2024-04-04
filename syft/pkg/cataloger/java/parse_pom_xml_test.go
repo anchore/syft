@@ -292,6 +292,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					IncludeIndexedArchives:   true,
 					IncludeUnindexedArchives: true,
 				},
+				UseMavenLocalRepository: false,
 			})
 			pkgtest.TestFileParser(t, test.input, gap.parserPomXML, test.expected, nil)
 		})

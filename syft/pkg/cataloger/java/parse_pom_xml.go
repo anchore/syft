@@ -10,9 +10,12 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/gookit/color"
+	"github.com/pborman/indent"
 	"github.com/saintfish/chardet"
 	"github.com/vifraa/gopom"
 	"golang.org/x/net/html/charset"
+	"gopkg.in/yaml.v2"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -21,24 +24,40 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// MavenCoordinate is the unique identifier for a package in Maven.
-type MavenCoordinate struct {
-	GroupID    string
-	ArtifactID string
-	Version    string
-}
-
-// GroupId and ArtifactId of (managed) dependencies
-type GroupArtifact struct {
-	GroupID    string
-	ArtifactID string
-}
-
 const pomXMLGlob = "*pom.xml"
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
+func logConfiguration(cfg ArchiveCatalogerConfig) {
+	var sb strings.Builder
+
+	var str string
+	// yaml is pretty human friendly (at least when compared to json)
+	cfgBytes, err := yaml.Marshal(cfg)
+	if err != nil {
+		str = fmt.Sprintf("%+v", err)
+	} else {
+		str = string(cfgBytes)
+	}
+
+	str = strings.TrimSpace(str)
+
+	if str != "" && str != "{}" {
+		sb.WriteString(str + "\n")
+	}
+
+	content := sb.String()
+
+	if content != "" {
+		formatted := color.Magenta.Sprint(indent.String("  ", strings.TrimSpace(content)))
+		log.Debugf("config:\n%+v", formatted)
+	} else {
+		log.Debug("config: (none)")
+	}
+}
+
 func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	logConfiguration(gap.cfg)
 	pom, err := decodePomXML(reader)
 	if err != nil {
 		return nil, nil, err
@@ -226,18 +245,18 @@ func decodePomXML(content io.Reader) (project gopom.Project, err error) {
 	}
 
 	// If missing, add maven built-in version property often used in multi-module projects
-	if project.Version != nil {
-		if project.Properties == nil {
-			var props gopom.Properties
-			props.Entries = make(map[string]string)
-			props.Entries["project.version"] = *project.Version
-			project.Properties = &props
-		} else {
-			project.Properties.Entries["project.version"] = *project.Version
-		}
-	}
+	// if project.Version != nil {
+	// 	if project.Properties == nil {
+	// 		var props gopom.Properties
+	// 		props.Entries = make(map[string]string)
+	// 		props.Entries["project.version"] = *project.Version
+	// 		project.Properties = &props
+	// 	} else {
+	// 		project.Properties.Entries["project.version"] = *project.Version
+	// 	}
+	// }
 	// Store in cache
-	parsedPomFilesCache[MavenCoordinate{*project.GroupID, *project.ArtifactID, *project.Version}] = &project
+	parsedPomFilesCache[mavenCoordinate{*project.GroupID, *project.ArtifactID, *project.Version}] = &project
 	return project, nil
 }
 

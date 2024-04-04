@@ -91,6 +91,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			detectNested: false,
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              true,
+				UseMavenLocalRepository: false,
 				MavenBaseURL:            url,
 				MaxParentRecursiveDepth: 2,
 			},
@@ -424,7 +425,10 @@ func TestParseJar(t *testing.T) {
 				test.expected[k] = p
 			}
 
-			cfg := ArchiveCatalogerConfig{UseNetwork: false}
+			cfg := ArchiveCatalogerConfig{
+				UseNetwork:              false,
+				UseMavenLocalRepository: false,
+			}
 			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
@@ -1339,6 +1343,8 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 						PomProject: &pkg.JavaPomProject{
 							Path:        "META-INF/maven/org.apache.directory.api/api-asn1-api/pom.xml",
 							ArtifactID:  "api-asn1-api",
+							GroupID:     "org.apache.directory.api",
+							Version:     "2.0.0",
 							Name:        "Apache Directory API ASN.1 API",
 							Description: "ASN.1 API",
 							Parent: &pkg.JavaPomParent{
