@@ -432,7 +432,7 @@ func getPropertiesFromParentPoms(ctx context.Context, allProperties map[string]s
 					cfg, parsedPomFiles)
 			}
 		} else {
-			log.Error("Got empty parent pom, error: %w")
+			log.Errorf("Got empty parent pom, error: %w")
 		}
 	} else {
 		log.Errorf("Could not get parent pom: %w", err)
