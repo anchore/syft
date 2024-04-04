@@ -66,6 +66,7 @@ func DefaultCatalog() Catalog {
 		Package:       defaultPackageConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
 		Golang:        defaultGolangConfig(),
+		Java:          defaultJavaConfig(),
 		File:          defaultFileConfig(),
 		Relationships: defaultRelationshipsConfig(),
 		Source:        defaultSourceConfig(),
