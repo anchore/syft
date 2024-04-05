@@ -211,6 +211,14 @@ from-images:
     paths:
       - /opt/java/bin/java
 
+  - name: java-jdk-openjdk
+    version: 21.0.2+13-LTS
+    images:
+      - ref: eclipse-temurin:21.0.2_13-jdk-alpine@sha256:b5d37df8ee5bb964bb340acca83957f9a09291d07768fba1881f6bfc8048e4f5
+        platform: linux/amd64
+    paths:
+      - opt/java/openjdk/bin/jdb
+
 
 # TODO: this is not the original binary used in the test fixture
 #  - version: 5.12.5
