@@ -137,147 +137,8 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 	}{
 		{
 			input: "test-fixtures/pom/commons-text.pom.xml",
-			expected: []pkg.Package{
-				{
-					Name:     "commons-lang3",
-					Version:  "3.12.0",
-					PURL:     "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaArchive{
-						PomProperties: &pkg.JavaPomProperties{
-							GroupID:    "org.apache.commons",
-							ArtifactID: "commons-lang3",
-						},
-					},
-				},
-				{
-					Name:     "junit-jupiter",
-					Version:  "",
-					PURL:     "pkg:maven/org.junit.jupiter/junit-jupiter",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaArchive{
-						PomProperties: &pkg.JavaPomProperties{
-							GroupID:    "org.junit.jupiter",
-							ArtifactID: "junit-jupiter",
-							Scope:      "test",
-						},
-					},
-				},
-				{
-					Name:     "assertj-core",
-					Version:  "3.23.1",
-					PURL:     "pkg:maven/org.assertj/assertj-core@3.23.1",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaArchive{
-						PomProperties: &pkg.JavaPomProperties{
-							GroupID:    "org.assertj",
-							ArtifactID: "assertj-core",
-							Scope:      "test",
-						},
-					},
-				},
-				{
-					Name:     "commons-io",
-					Version:  "2.11.0",
-					PURL:     "pkg:maven/commons-io/commons-io@2.11.0",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaArchive{
-						PomProperties: &pkg.JavaPomProperties{
-							GroupID:    "commons-io",
-							ArtifactID: "commons-io",
-							Scope:      "test",
-						},
-					},
-				},
-				{
-					Name:     "mockito-inline",
-					Version:  "4.8.0",
-					PURL:     "pkg:maven/org.mockito/mockito-inline@4.8.0",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaArchive{
-						PomProperties: &pkg.JavaPomProperties{
-							GroupID:    "org.mockito",
-							ArtifactID: "mockito-inline",
-							Scope:      "test",
-						},
-					},
-				},
-				{
-					Name:     "js",
-					Version:  "22.0.0.2",
-					PURL:     "pkg:maven/org.graalvm.js/js@22.0.0.2",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaArchive{
-						PomProperties: &pkg.JavaPomProperties{
-							GroupID:    "org.graalvm.js",
-							ArtifactID: "js",
-							Scope:      "test",
-						},
-					},
-				},
-				{
-					Name:     "js-scriptengine",
-					Version:  "22.0.0.2",
-					PURL:     "pkg:maven/org.graalvm.js/js-scriptengine@22.0.0.2",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaArchive{
-						PomProperties: &pkg.JavaPomProperties{
-							GroupID:    "org.graalvm.js",
-							ArtifactID: "js-scriptengine",
-							Scope:      "test",
-						},
-					},
-				},
-				{
-					Name:     "commons-rng-simple",
-					Version:  "1.4",
-					PURL:     "pkg:maven/org.apache.commons/commons-rng-simple@1.4",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaArchive{
-						PomProperties: &pkg.JavaPomProperties{
-							GroupID:    "org.apache.commons",
-							ArtifactID: "commons-rng-simple",
-							Scope:      "test",
-						},
-					},
-				},
-				{
-					Name:     "jmh-core",
-					Version:  "1.35",
-					PURL:     "pkg:maven/org.openjdk.jmh/jmh-core@1.35",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaArchive{
-						PomProperties: &pkg.JavaPomProperties{
-							GroupID:    "org.openjdk.jmh",
-							ArtifactID: "jmh-core",
-							Scope:      "test",
-						},
-					},
-				},
-				{
-					Name:     "jmh-generator-annprocess",
-					Version:  "1.35",
-					PURL:     "pkg:maven/org.openjdk.jmh/jmh-generator-annprocess@1.35",
-					Language: pkg.Java,
-					Type:     pkg.JavaPkg,
-					Metadata: pkg.JavaArchive{
-						PomProperties: &pkg.JavaPomProperties{
-							GroupID:    "org.openjdk.jmh",
-							ArtifactID: "jmh-generator-annprocess",
-							Scope:      "test",
-						},
-					},
-				},
-			},
+
+			expected: getCommonsTextExpectedPackages(),
 		},
 	}
 
@@ -292,6 +153,121 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					IncludeIndexedArchives:   true,
 					IncludeUnindexedArchives: true,
 				},
+				UseMavenLocalRepository: false,
+			})
+			pkgtest.TestFileParser(t, test.input, gap.parserPomXML, test.expected, nil)
+		})
+	}
+}
+
+func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
+	// Using the local repository, the version of junit-jupiter will be resolved
+	expectedPackages := getCommonsTextExpectedPackages()
+
+	for i := 0; i < len(expectedPackages); i++ {
+		if expectedPackages[i].Name == "junit-jupiter" {
+			expPkg := &expectedPackages[i]
+			expPkg.Version = "5.9.0"
+			expPkg.PURL = "pkg:maven/org.junit.jupiter/junit-jupiter@5.9.0"
+			expPkg.Metadata = pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.junit.jupiter",
+					ArtifactID: "junit-jupiter",
+					Scope:      "test",
+				},
+			}
+		}
+	}
+
+	tests := []struct {
+		input    string
+		expected []pkg.Package
+	}{
+		{
+			input:    "test-fixtures/pom/commons-text.pom.xml",
+			expected: expectedPackages,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			for i := range test.expected {
+				test.expected[i].Locations.Add(file.NewLocation(test.input))
+			}
+
+			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{
+				ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+					IncludeIndexedArchives:   true,
+					IncludeUnindexedArchives: true,
+				},
+				UseMavenLocalRepository: true,
+				MavenLocalRepositoryDir: "test-fixtures/pom/maven-repo",
+			})
+			pkgtest.TestFileParser(t, test.input, gap.parserPomXML, test.expected, nil)
+		})
+	}
+}
+
+func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
+	mux, url, teardown := setup()
+	defer teardown()
+	// Using the local repository, the version of junit-jupiter will be resolved
+	expectedPackages := getCommonsTextExpectedPackages()
+
+	for i := 0; i < len(expectedPackages); i++ {
+		if expectedPackages[i].Name == "junit-jupiter" {
+			expPkg := &expectedPackages[i]
+			expPkg.Version = "5.9.0"
+			expPkg.PURL = "pkg:maven/org.junit.jupiter/junit-jupiter@5.9.0"
+			expPkg.Metadata = pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.junit.jupiter",
+					ArtifactID: "junit-jupiter",
+					Scope:      "test",
+				},
+			}
+		}
+	}
+
+	tests := []struct {
+		input           string
+		expected        []pkg.Package
+		requestHandlers []handlerPath
+	}{
+		{
+			input:    "test-fixtures/pom/commons-text.pom.xml",
+			expected: expectedPackages,
+			requestHandlers: []handlerPath{
+				{
+					path:    "/org/apache/commons/commons-parent/54/commons-parent-54.pom",
+					handler: generateMockMavenHandler("test-fixtures/pom/maven-repo/org/apache/commons/commons-parent/54/commons-parent-54.pom"),
+				},
+				{
+					path:    "/org/junit/junit-bom/5.9.0/junit-bom-5.9.0.pom",
+					handler: generateMockMavenHandler("test-fixtures/pom/maven-repo/org/junit/junit-bom/5.9.0/junit-bom-5.9.0.pom"),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			// configure maven central requests
+			for _, hdlr := range test.requestHandlers {
+				mux.HandleFunc(hdlr.path, hdlr.handler)
+			}
+
+			for i := range test.expected {
+				test.expected[i].Locations.Add(file.NewLocation(test.input))
+			}
+
+			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{
+				ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+					IncludeIndexedArchives:   true,
+					IncludeUnindexedArchives: true,
+				},
+				UseNetwork:              true,
+				MavenBaseURL:            url,
 				UseMavenLocalRepository: false,
 			})
 			pkgtest.TestFileParser(t, test.input, gap.parserPomXML, test.expected, nil)
@@ -553,5 +529,149 @@ func Test_getUtf8Reader(t *testing.T) {
 			// if we couldn't decode the section as UTF-8, we should get a replacement character
 			assert.Contains(t, string(gotBytes), "�")
 		})
+	}
+}
+
+func getCommonsTextExpectedPackages() []pkg.Package {
+	return []pkg.Package{
+		{
+			Name:     "commons-lang3",
+			Version:  "3.12.0",
+			PURL:     "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.apache.commons",
+					ArtifactID: "commons-lang3",
+				},
+			},
+		},
+		{
+			Name:     "junit-jupiter",
+			Version:  "",
+			PURL:     "pkg:maven/org.junit.jupiter/junit-jupiter",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.junit.jupiter",
+					ArtifactID: "junit-jupiter",
+					Scope:      "test",
+				},
+			},
+		},
+		{
+			Name:     "assertj-core",
+			Version:  "3.23.1",
+			PURL:     "pkg:maven/org.assertj/assertj-core@3.23.1",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.assertj",
+					ArtifactID: "assertj-core",
+					Scope:      "test",
+				},
+			},
+		},
+		{
+			Name:     "commons-io",
+			Version:  "2.11.0",
+			PURL:     "pkg:maven/commons-io/commons-io@2.11.0",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "commons-io",
+					ArtifactID: "commons-io",
+					Scope:      "test",
+				},
+			},
+		},
+		{
+			Name:     "mockito-inline",
+			Version:  "4.8.0",
+			PURL:     "pkg:maven/org.mockito/mockito-inline@4.8.0",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.mockito",
+					ArtifactID: "mockito-inline",
+					Scope:      "test",
+				},
+			},
+		},
+		{
+			Name:     "js",
+			Version:  "22.0.0.2",
+			PURL:     "pkg:maven/org.graalvm.js/js@22.0.0.2",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.graalvm.js",
+					ArtifactID: "js",
+					Scope:      "test",
+				},
+			},
+		},
+		{
+			Name:     "js-scriptengine",
+			Version:  "22.0.0.2",
+			PURL:     "pkg:maven/org.graalvm.js/js-scriptengine@22.0.0.2",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.graalvm.js",
+					ArtifactID: "js-scriptengine",
+					Scope:      "test",
+				},
+			},
+		},
+		{
+			Name:     "commons-rng-simple",
+			Version:  "1.4",
+			PURL:     "pkg:maven/org.apache.commons/commons-rng-simple@1.4",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.apache.commons",
+					ArtifactID: "commons-rng-simple",
+					Scope:      "test",
+				},
+			},
+		},
+		{
+			Name:     "jmh-core",
+			Version:  "1.35",
+			PURL:     "pkg:maven/org.openjdk.jmh/jmh-core@1.35",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.openjdk.jmh",
+					ArtifactID: "jmh-core",
+					Scope:      "test",
+				},
+			},
+		},
+		{
+			Name:     "jmh-generator-annprocess",
+			Version:  "1.35",
+			PURL:     "pkg:maven/org.openjdk.jmh/jmh-generator-annprocess@1.35",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.openjdk.jmh",
+					ArtifactID: "jmh-generator-annprocess",
+					Scope:      "test",
+				},
+			},
+		},
 	}
 }
