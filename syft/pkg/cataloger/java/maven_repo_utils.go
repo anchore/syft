@@ -124,9 +124,11 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 
 			bomVersion := resolveProperty(*pom, dependency.Version, getPropertyName(*dependency.Version))
 			log.Debugf("found BOM: [%s, %s, %s]", *dependency.GroupID, *dependency.ArtifactID, bomVersion)
+
 			// Recurse into BOM, which should be treated just like a parent pom
 			bomProject, err := getPomFromCacheOrMaven(ctx, *dependency.GroupID, *dependency.ArtifactID, bomVersion, allProperties, cfg)
-			if err == nil {
+
+			if err == nil && bomProject != nil {
 				foundVersion := recursivelyFindVersionFromManagedOrInherited(
 					ctx, findGroupID, findArtifactID, bomProject, cfg, allProperties, parsedPomFiles)
 
@@ -139,7 +141,7 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 				}
 				if foundVersion != "" {
 					foundVersion = resolveProperty(*pom, dependency.Version, getPropertyName(*dependency.Version))
-					if foundVersion != "" && !strings.HasPrefix(foundVersion, "${") {
+					if isPropertyResolved(foundVersion) {
 						log.Debugf("found version for managed dependency in BOM: [%s, %s, %s]", findGroupID, findArtifactID, foundVersion)
 						return foundVersion
 					}
@@ -148,7 +150,7 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 
 		} else if *dependency.GroupID == findGroupID && *dependency.ArtifactID == findArtifactID {
 			foundVersion := resolveProperty(*pom, dependency.Version, getPropertyName(*dependency.Version))
-			if foundVersion != "" && !strings.HasPrefix(foundVersion, "${") {
+			if isPropertyResolved(foundVersion) {
 				log.Debugf("found version for managed dependency: [%s, %s, %s]", *dependency.GroupID, *dependency.ArtifactID, foundVersion)
 				return foundVersion
 			}
@@ -189,6 +191,10 @@ func getPomFromCacheOrMaven(ctx context.Context, groupID, artifactID, version st
 	cfg ArchiveCatalogerConfig) (*gopom.Project, error) {
 	var err error = nil
 
+	if !isPropertyResolved(version) {
+		return nil, fmt.Errorf("cannot get POM without resolved version: %s", version)
+	}
+
 	// Try get from cache first.
 	parentPom, found := parsedPomFilesCache[mavenCoordinate{groupID, artifactID, version}]
 
@@ -197,7 +203,7 @@ func getPomFromCacheOrMaven(ctx context.Context, groupID, artifactID, version st
 	} else {
 		// Then try to get from local file system.
 		if cfg.UseMavenLocalRepository {
-			parentPom, found = getPomFromMavenUserLocalRepository(groupID, artifactID, version)
+			parentPom, found = getPomFromMavenUserLocalRepository(groupID, artifactID, version, cfg)
 		}
 
 		if !found && cfg.UseNetwork {
@@ -227,8 +233,8 @@ func getPomFromCacheOrMaven(ctx context.Context, groupID, artifactID, version st
 
 // Try to get the Pom from the users local repository in the users home dir.
 // Returns (nil, false) when file cannot be found or read for any reason.
-func getPomFromMavenUserLocalRepository(groupID, artifactID, version string) (*gopom.Project, bool) {
-	localRepoDir, exists := getLocalRepositoryExists()
+func getPomFromMavenUserLocalRepository(groupID, artifactID, version string, cfg ArchiveCatalogerConfig) (*gopom.Project, bool) {
+	localRepoDir, exists := getLocalRepositoryExists(cfg)
 
 	if !exists {
 		return nil, false
@@ -257,7 +263,7 @@ func getPomFromMavenUserLocalRepository(groupID, artifactID, version string) (*g
 }
 
 // Get Maven local repository of current user, if it exists. Only checks once and store the result in 'mavenLocalRepoDir'.
-func getLocalRepositoryExists() (string, bool) {
+func getLocalRepositoryExists(cfg ArchiveCatalogerConfig) (string, bool) {
 	found := false
 	if checkedForMavenLocalRepo {
 		if mavenLocalRepoDir != "" {
@@ -266,16 +272,12 @@ func getLocalRepositoryExists() (string, bool) {
 		return mavenLocalRepoDir, found
 	} else {
 		if !checkedForMavenLocalRepo {
-			homeDir, err := os.UserHomeDir()
-			if err != nil {
-				log.Errorf("could not find user home dir: %w", err)
-			}
-			localRepoDir := filepath.Join(homeDir, ".m2", "repository")
-			if _, err := os.Stat(homeDir); !os.IsNotExist(err) {
+			localRepoDir := cfg.MavenLocalRepositoryDir
+			if _, err := os.Stat(localRepoDir); !os.IsNotExist(err) {
 				mavenLocalRepoDir = localRepoDir
 				found = true
 			} else {
-				log.Infof("local Maven repository not found at [%s],", localRepoDir)
+				log.Errorf("local Maven repository not found at [%s],", localRepoDir)
 			}
 			checkedForMavenLocalRepo = true
 		}
@@ -283,9 +285,24 @@ func getLocalRepositoryExists() (string, bool) {
 	}
 }
 
+// Get default location of the Maven local repository at <USER HOME DIR>/.m2/repository
+func GetDefaultMavenLocalRepoLocation() (string, error) {
+	homeDir, err := os.UserHomeDir()
+
+	if err != nil {
+		return "", err
+	}
+	localRepoDir := filepath.Join(homeDir, ".m2", "repository")
+	if _, err := os.Stat(homeDir); !os.IsNotExist(err) {
+		return localRepoDir, nil
+	} else {
+		return "", fmt.Errorf("local Maven repository not found at default location [%s],", localRepoDir)
+	}
+}
+
 // Download the pom file from a (remote) Maven repository over HTTP.
 func getPomFromMavenRepo(ctx context.Context, groupID, artifactID, version, mavenBaseURL string) (*gopom.Project, error) {
-	if len(groupID) == 0 || len(artifactID) == 0 || len(version) == 0 || strings.HasPrefix(version, "${") {
+	if len(groupID) == 0 || len(artifactID) == 0 || !isPropertyResolved(version) {
 		return nil, fmt.Errorf("missing/incomplete maven artifact coordinates: groupId:artifactId:version = %s:%s:%s", groupID, artifactID, version)
 	}
 	requestURL, err := formatMavenPomURL(groupID, artifactID, version, mavenBaseURL)
