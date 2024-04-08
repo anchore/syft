@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/source"
 	"os"
 	"strings"
+
+	"github.com/anchore/syft/syft/source"
 )
 
 // GetSource uses all of Syft's known source providers to attempt to resolve the user input to a usable source.Source
