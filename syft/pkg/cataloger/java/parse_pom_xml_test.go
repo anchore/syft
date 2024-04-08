@@ -20,6 +20,7 @@ import (
 )
 
 func Test_parserPomXML(t *testing.T) {
+	resetRepoUtils()
 	tests := []struct {
 		input    string
 		expected []pkg.Package
@@ -161,6 +162,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 }
 
 func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
+	resetRepoUtils()
 	// Using the local repository, the version of junit-jupiter will be resolved
 	expectedPackages := getCommonsTextExpectedPackages()
 
@@ -177,6 +179,10 @@ func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
 				},
 			}
 		}
+		// if i < 3 {
+		// 	&expectedPackages[i].Licenses
+
+		// }
 	}
 
 	tests := []struct {
@@ -209,6 +215,7 @@ func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
 }
 
 func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
+	resetRepoUtils()
 	mux, url, teardown := setup()
 	defer teardown()
 	// Using the local repository, the version of junit-jupiter will be resolved
@@ -276,6 +283,7 @@ func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
 }
 
 func Test_parsePomXMLProject(t *testing.T) {
+	resetRepoUtils()
 	// TODO: ideally we would have the path to the contained pom.xml, not the jar
 	jarLocation := file.NewLocation("path/to/archive.jar")
 	tests := []struct {
@@ -674,4 +682,11 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			},
 		},
 	}
+}
+
+// Reset caches in maven_repo_utils for independent unit tests.
+func resetRepoUtils() {
+	parsedPomFilesCache = make(map[mavenCoordinate]*gopom.Project)
+	checkedForMavenLocalRepo = false
+	mavenLocalRepoDir = ""
 }
