@@ -190,7 +190,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithUseMavenLocalRepository(cfg.Java.UseMavenLocalRepository).
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
 			WithMavenBaseURL(cfg.Java.MavenURL).
-			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth),
+			WithArchiveTraversal(archiveSearch),
 	}
 }
 
