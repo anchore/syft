@@ -10,12 +10,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/gookit/color"
-	"github.com/pborman/indent"
 	"github.com/saintfish/chardet"
 	"github.com/vifraa/gopom"
 	"golang.org/x/net/html/charset"
-	"gopkg.in/yaml.v2"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -28,36 +25,7 @@ const pomXMLGlob = "*pom.xml"
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
-func logConfiguration(cfg ArchiveCatalogerConfig) {
-	var sb strings.Builder
-
-	var str string
-	// yaml is pretty human friendly (at least when compared to json)
-	cfgBytes, err := yaml.Marshal(cfg)
-	if err != nil {
-		str = fmt.Sprintf("%+v", err)
-	} else {
-		str = string(cfgBytes)
-	}
-
-	str = strings.TrimSpace(str)
-
-	if str != "" && str != "{}" {
-		sb.WriteString(str + "\n")
-	}
-
-	content := sb.String()
-
-	if content != "" {
-		formatted := color.Magenta.Sprint(indent.String("  ", strings.TrimSpace(content)))
-		log.Debugf("config:\n%+v", formatted)
-	} else {
-		log.Debug("config: (none)")
-	}
-}
-
 func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	logConfiguration(gap.cfg)
 	pom, err := decodePomXML(reader)
 	if err != nil {
 		return nil, nil, err

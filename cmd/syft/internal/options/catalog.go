@@ -5,10 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gookit/color"
 	"github.com/iancoleman/strcase"
-	"github.com/pborman/indent"
-	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/fangs"
@@ -75,8 +72,7 @@ func DefaultCatalog() Catalog {
 }
 
 func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
-
-	config := syft.DefaultCreateSBOMConfig().
+	return syft.DefaultCreateSBOMConfig().
 		WithTool(id.Name, id.Version).
 		WithParallelism(cfg.Parallelism).
 		WithRelationshipsConfig(cfg.ToRelationshipsConfig()).
@@ -88,38 +84,6 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 				WithDefaults(cfg.DefaultCatalogers...).
 				WithExpression(cfg.SelectCatalogers...),
 		)
-
-	// log.Tracef("scan SBOMConfig: %+v", config)
-	logConfiguration(config.Packages.JavaArchive)
-	return config
-}
-
-func logConfiguration(cfg java.ArchiveCatalogerConfig) {
-	var sb strings.Builder
-
-	var str string
-	// yaml is pretty human friendly (at least when compared to json)
-	cfgBytes, err := yaml.Marshal(cfg)
-	if err != nil {
-		str = fmt.Sprintf("%+v", err)
-	} else {
-		str = string(cfgBytes)
-	}
-
-	str = strings.TrimSpace(str)
-
-	if str != "" && str != "{}" {
-		sb.WriteString(str + "\n")
-	}
-
-	content := sb.String()
-
-	if content != "" {
-		formatted := color.Magenta.Sprint(indent.String("  ", strings.TrimSpace(content)))
-		log.Debugf("config:\n%+v", formatted)
-	} else {
-		log.Debug("config: (none)")
-	}
 }
 
 func (cfg Catalog) ToSearchConfig() cataloging.SearchConfig {
