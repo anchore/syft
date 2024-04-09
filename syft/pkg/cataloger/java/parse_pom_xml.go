@@ -186,7 +186,7 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 	}
 	if isPropertyResolved(version) {
 
-		parentLicenses := recursivelyFindLicensesFromParentPom(
+		parentLicenses, _ := recursivelyFindLicensesFromParentPom(
 			ctx,
 			m.PomProperties.GroupID,
 			m.PomProperties.ArtifactID,

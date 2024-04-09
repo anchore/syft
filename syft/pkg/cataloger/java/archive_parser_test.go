@@ -93,7 +93,6 @@ func TestSearchMavenForLicenses(t *testing.T) {
 				UseNetwork:              true,
 				UseMavenLocalRepository: false,
 				MavenBaseURL:            url,
-				MaxParentRecursiveDepth: 2,
 			},
 			requestHandlers: []handlerPath{
 				{
@@ -139,7 +138,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			defer cleanupFn()
 
 			// assert licenses are discovered from upstream
-			_, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo(context.Background(), tc.config)
+			_, _, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo(context.Background(), tc.config)
 			assert.Equal(t, tc.expectedLicenses, licenses)
 		})
 	}

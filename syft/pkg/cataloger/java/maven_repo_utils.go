@@ -46,32 +46,32 @@ func formatMavenPomURL(groupID, artifactID, version, mavenBaseURL string) (reque
 
 // Try to find the version of a dependency (groupID, artifactID) by parsing all parent poms and imported managed dependencies (maven BOMs).
 // Properties are gathered in the order that they are encountered: in Maven the latest definition of a property (highest in hierarchy) is used.
-// parsedPomFiles contains all previously parsed pom files encountered by earlier invocations of this function on the stack. So for the first
-// call parsedPomFiles should be nil. It is used to prevent cycles (endless loops).
+// processedPomFiles contains all previously processed pom files encountered by earlier invocations of this function on the stack. So for the first
+// call processedPomFiles should be nil. It is used to prevent cycles (endless loops).
 func recursivelyFindVersionFromManagedOrInherited(ctx context.Context, findGroupID, findArtifactID string,
-	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, parsedPomFiles map[mavenCoordinate]bool) string {
+	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, processedPomFiles map[mavenCoordinate]bool) string {
 
-	// Create map to keep track of parsed pom files and to prevent cycles.
-	if parsedPomFiles == nil {
-		parsedPomFiles = make(map[mavenCoordinate]bool)
+	// Create map to keep track of processed pom files and to prevent cycles.
+	if processedPomFiles == nil {
+		processedPomFiles = make(map[mavenCoordinate]bool)
 	}
 	log.Debugf("recursively finding version from managed or inherited dependencies for dependency [%v:%v] in pom [%s, %s, %s]. recursion depth: %d",
-		findGroupID, findArtifactID, *pom.GroupID, *pom.ArtifactID, *pom.Version, len(parsedPomFiles))
+		findGroupID, findArtifactID, *pom.GroupID, *pom.ArtifactID, *pom.Version, len(processedPomFiles))
 
 	pomCoordinates := mavenCoordinate{*pom.GroupID, *pom.ArtifactID, *pom.Version}
-	_, alreadyParsed := parsedPomFiles[pomCoordinates]
-	if alreadyParsed {
+	_, alreadyProcessed := processedPomFiles[pomCoordinates]
+	if alreadyProcessed {
 		log.Debug("skipping already processed pom.")
 		return ""
 	} else {
-		parsedPomFiles[pomCoordinates] = true
+		processedPomFiles[pomCoordinates] = true
 	}
 	addMissingPropertiesFromProject(allProperties, pom)
 
 	foundVersion := ""
 	if pom.DependencyManagement != nil {
 		foundVersion = findVersionInDependencyManagement(
-			ctx, findGroupID, findArtifactID, pom, cfg, allProperties, parsedPomFiles)
+			ctx, findGroupID, findArtifactID, pom, cfg, allProperties, processedPomFiles)
 	}
 	if isPropertyResolved(foundVersion) {
 		return foundVersion
@@ -90,7 +90,7 @@ func recursivelyFindVersionFromManagedOrInherited(ctx context.Context, findGroup
 			addMissingPropertiesFromProject(allProperties, parentPom)
 			addPropertiesToProject(parentPom, allProperties)
 			foundVersion = recursivelyFindVersionFromManagedOrInherited(
-				ctx, findGroupID, findArtifactID, parentPom, cfg, allProperties, parsedPomFiles)
+				ctx, findGroupID, findArtifactID, parentPom, cfg, allProperties, processedPomFiles)
 		} else {
 			log.Warnf("unable to get parent pom [%s, %s, %s]: %v",
 				parentGroupID, parentArtifactID, parentVersion, err)
@@ -113,7 +113,7 @@ func isPropertyResolved(value string) bool {
 // Find given dependency (groupID, artifactID) in the dependencyManagement section of project 'pom'.
 // May recursively call recursivelyFindVersionFromManagedOrInherited when a Maven BOM is found.
 func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArtifactID string,
-	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, parsedPomFiles map[mavenCoordinate]bool) string {
+	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, processedPomFiles map[mavenCoordinate]bool) string {
 
 	for _, dependency := range *getPomManagedDependencies(pom) {
 		log.Tracef("got managed dependency:  [%s, %s, %s]",
@@ -130,7 +130,7 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 
 			if err == nil && bomProject != nil {
 				foundVersion := recursivelyFindVersionFromManagedOrInherited(
-					ctx, findGroupID, findArtifactID, bomProject, cfg, allProperties, parsedPomFiles)
+					ctx, findGroupID, findArtifactID, bomProject, cfg, allProperties, processedPomFiles)
 
 				log.Tracef("finished processing BOM: [%s, %s, %s], found version: [%s]", *dependency.GroupID, *dependency.ArtifactID, bomVersion, foundVersion)
 
@@ -160,30 +160,48 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 	return ""
 }
 
-func recursivelyFindLicensesFromParentPom(ctx context.Context, groupID, artifactID, version string, cfg ArchiveCatalogerConfig) []string {
-	log.Debugf("recursively finding license from parent Pom for artifact [%v:%v], using parent pom: [%v:%v:%v]",
+// Search pom for license, traversing parent poms if needed. Also returns if a pom file was found in order to differentiate between no pom and no license found.
+func recursivelyFindLicensesFromParentPom(ctx context.Context, groupID, artifactID, version string, cfg ArchiveCatalogerConfig) ([]string, bool) {
+	log.Debugf("recursively finding licenses from parent Pom for artifact [%v:%v], using parent pom: [%v:%v:%v]",
 		groupID, artifactID, groupID, artifactID, version)
 	var licenses []string
-	// As there can be nested parent poms, we'll recursively check for licenses until we reach the max depth
-	for i := 0; i < cfg.MaxParentRecursiveDepth; i++ {
+	var foundPom bool = false
+	processedPomFiles := make(map[mavenCoordinate]bool)
+
+	// As there can be nested parent poms, we'll recursively check for licenses until no parent is found
+	recursionLevel := 0
+	for safeString(&artifactID) != "" {
+		log.Tracef("recursively find licenses for [%s, %s, %s], recursion level: %d", groupID, artifactID, version, recursionLevel)
+		recursionLevel++
+
 		parentPom, err := getPomFromCacheOrMaven(ctx, groupID, artifactID, version, make(map[string]string), cfg)
 		if err != nil {
 			// We don't want to abort here as the parent pom might not exist in Maven Central, we'll just log the error
-			log.Tracef("unable to get parent pom from Maven repository: %v", err)
-			return []string{}
+			log.Tracef("unable to get parent pom: %v", err)
+			return []string{}, foundPom
 		}
 		parentLicenses := parseLicensesFromPom(parentPom)
 		if len(parentLicenses) > 0 || parentPom == nil || parentPom.Parent == nil {
 			licenses = parentLicenses
+			foundPom = true
 			break
 		}
+		// Check for cycle and store processed pom ID when not
+		pomCoordinates := mavenCoordinate{*parentPom.Parent.GroupID, *parentPom.Parent.ArtifactID, *parentPom.Parent.Version}
+		_, alreadyProcessed := processedPomFiles[pomCoordinates]
+		if alreadyProcessed {
+			log.Debug("already processed parent pom, stop searching.")
+			break
+		} else {
+			processedPomFiles[pomCoordinates] = true
+		}
 
-		groupID = *parentPom.Parent.GroupID
-		artifactID = *parentPom.Parent.ArtifactID
-		version = *parentPom.Parent.Version
+		groupID = pomCoordinates.GroupID
+		artifactID = pomCoordinates.ArtifactID
+		version = pomCoordinates.Version
 	}
 
-	return licenses
+	return licenses, foundPom
 }
 
 // Get a parent pom from cache, local repository or download from a Maven repository
@@ -286,7 +304,7 @@ func getLocalRepositoryExists(cfg ArchiveCatalogerConfig) (string, bool) {
 }
 
 // Get default location of the Maven local repository at <USER HOME DIR>/.m2/repository
-func GetDefaultMavenLocalRepoLocation() (string, error) {
+func getDefaultMavenLocalRepoLocation() (string, error) {
 	homeDir, err := os.UserHomeDir()
 
 	if err != nil {
@@ -305,6 +323,12 @@ func getPomFromMavenRepo(ctx context.Context, groupID, artifactID, version, mave
 	if len(groupID) == 0 || len(artifactID) == 0 || !isPropertyResolved(version) {
 		return nil, fmt.Errorf("missing/incomplete maven artifact coordinates: groupId:artifactId:version = %s:%s:%s", groupID, artifactID, version)
 	}
+	// Downloading snapshots requires additional steps to determine the latest snapshot version.
+	// See: https://maven.apache.org/ref/3-LATEST/maven-repository-metadata/
+	if strings.HasSuffix(version, "-SNAPSHOT") {
+		return nil, fmt.Errorf("downloading snapshot artifacts is not supported: groupId:artifactId:version = %s:%s:%s", groupID, artifactID, version)
+	}
+
 	requestURL, err := formatMavenPomURL(groupID, artifactID, version, mavenBaseURL)
 	if err != nil {
 		return nil, err

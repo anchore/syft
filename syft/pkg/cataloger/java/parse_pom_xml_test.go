@@ -179,10 +179,6 @@ func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
 				},
 			}
 		}
-		// if i < 3 {
-		// 	&expectedPackages[i].Licenses
-
-		// }
 	}
 
 	tests := []struct {

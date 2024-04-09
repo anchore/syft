@@ -711,15 +711,25 @@ golang:
       from-contents: true
   
 java:
+   # the remote repository to use for downloading pom files. If you have a caching proxy, such as
+   # Artifactory or Nexus Repository server available, you are advised to use that server for
+   # improved speed and limiting the amount of requests to Maven Central.
+   # e.g.: https://nexus.example.net/repository/maven-public/
    maven-url: "https://repo1.maven.org/maven2"
-   max-parent-recursive-depth: 5
-   # enables Syft to use the network to fill in more detailed information about artifacts
-   # currently this enables searching maven-url for license data
-   # when running across pom.xml files that could have more information, syft will
-   # explicitly search maven for license information by querying the online pom when this is true
+   # enables Syft to use the network to fill in more detailed information about artifacts.
+   # this enables searching maven-url for dependency and license data
+   # when running across pom.xml files that could have more information, syft will explicitly search 
+   # maven for dependency and license information by querying the online pom when this is true.
    # this option is helpful for when the parent pom has more data,
    # that is not accessible from within the final built artifact
    use-network: false
+   # use the local Maven repository to retrieve pom files. When Maven is installed and was used
+   # for building the software that is being scanned, then most pom files will be available in this
+   # repository on the local file system.
+   use-maven-localrepository: true
+   # override the default location of the local Maven repository. 
+   # the default is the subdirectory '.m2/repository' in your home dir.
+   MavenLocalRepositoryDir: <your home dir>/.m2/repository
 
 linux-kernel:
    # whether to catalog linux kernel modules found within lib/modules/** directories
