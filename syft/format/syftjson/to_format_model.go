@@ -303,7 +303,7 @@ func toSourceModel(src source.Description) model.Source {
 		Metadata: src.Metadata,
 	}
 
-	if metadata, ok := src.Metadata.(source.StereoscopeImageSourceMetadata); ok {
+	if metadata, ok := src.Metadata.(source.ImageMetadata); ok {
 		// ensure that empty collections are not shown as null
 		if metadata.RepoDigests == nil {
 			metadata.RepoDigests = []string{}

@@ -351,6 +351,12 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "node"},
 			candidateAddition{AdditionalProducts: []string{"nodejs", "node.js"}},
 		},
+		// Conan packages
+		{
+			pkg.ConanPkg,
+			candidateKey{PkgName: "poco"},
+			candidateAddition{AdditionalVendors: []string{"pocoproject"}},
+		},
 	})
 
 var defaultCandidateRemovals = buildCandidateRemovalLookup(

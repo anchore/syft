@@ -460,4 +460,12 @@ var commonTestCases = []testCase{
 			"Akismet Anti-spam: Spam Protection": "5.3",
 		},
 	},
+	{
+		name:        "find php pecl package",
+		pkgType:     pkg.PhpPeclPkg,
+		pkgLanguage: pkg.PHP,
+		pkgInfo: map[string]string{
+			"memcached": "3.2.0",
+		},
+	},
 }

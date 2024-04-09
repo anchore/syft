@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/anchore/syft/syft/sbom"
@@ -61,7 +62,9 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		}
 		return false
 	})
-	rows = removeDuplicateRows(rows)
+
+	columns = append(columns, "") // add a column for duplicate annotations
+	rows = markDuplicateRows(rows)
 
 	table := tablewriter.NewWriter(writer)
 
@@ -84,19 +87,38 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	return nil
 }
 
-func removeDuplicateRows(items [][]string) [][]string {
-	seen := map[string][]string{}
+func markDuplicateRows(items [][]string) [][]string {
+	seen := map[string]int{}
 	var result [][]string
 
 	for _, v := range items {
 		key := strings.Join(v, "|")
-		if seen[key] != nil {
+		if _, ok := seen[key]; ok {
 			// dup!
+			seen[key]++
 			continue
 		}
 
-		seen[key] = v
+		seen[key] = 1
 		result = append(result, v)
 	}
+
+	style := lipgloss.NewStyle().Foreground(lipgloss.Color("#777777"))
+	for i, v := range result {
+		key := strings.Join(v, "|")
+		// var name string
+		var annotation string
+		switch seen[key] {
+		case 0, 1:
+		case 2:
+			annotation = "(+1 duplicate)"
+		default:
+			annotation = fmt.Sprintf("(+%d duplicates)", seen[key]-1)
+		}
+
+		annotation = style.Render(annotation)
+		result[i] = append(v, annotation)
+	}
+
 	return result
 }

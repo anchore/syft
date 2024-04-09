@@ -155,13 +155,25 @@ func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file
 
 	data.Format = format
 
-	securityFeatures, err := findSecurityFeatures(format, reader)
-	if err != nil {
-		log.WithFields("error", err).Tracef("unable to determine security features for %q", loc.RealPath)
-		return nil, nil
+	switch format {
+	case file.ELF:
+		if err := findELFFeatures(&data, reader); err != nil {
+			log.WithFields("error", err).Tracef("unable to determine ELF features for %q", loc.RealPath)
+		}
+	case file.PE:
+		if err := findPEFeatures(&data, reader); err != nil {
+			log.WithFields("error", err).Tracef("unable to determine PE features for %q", loc.RealPath)
+		}
+	case file.MachO:
+		if err := findMachoFeatures(&data, reader); err != nil {
+			log.WithFields("error", err).Tracef("unable to determine Macho features for %q", loc.RealPath)
+		}
 	}
 
-	data.SecurityFeatures = securityFeatures
+	// always allocate collections for presentation
+	if data.ImportedLibraries == nil {
+		data.ImportedLibraries = []string{}
+	}
 
 	return &data, nil
 }
@@ -229,19 +241,4 @@ func isPE(by []byte) bool {
 
 func isELF(by []byte) bool {
 	return bytes.HasPrefix(by, []byte(elf.ELFMAG))
-}
-
-func findSecurityFeatures(format file.ExecutableFormat, reader unionreader.UnionReader) (*file.ELFSecurityFeatures, error) {
-	// TODO: add support for PE and MachO
-	switch format { //nolint: gocritic
-	case file.ELF:
-		return findELFSecurityFeatures(reader) //nolint: gocritic
-	case file.PE:
-		// return findPESecurityFeatures(reader)
-		return nil, nil
-	case file.MachO:
-		// return findMachOSecurityFeatures(reader)
-		return nil, nil
-	}
-	return nil, fmt.Errorf("unsupported executable format: %q", format)
 }

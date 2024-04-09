@@ -37,7 +37,7 @@ func newDotnetDepsPackage(nameVersion string, lib dotnetDepsLibrary, locations .
 }
 
 func getDepsJSONFilePrefix(p string) string {
-	r := regexp.MustCompile(`([^\/]+)\.deps\.json$`)
+	r := regexp.MustCompile(`([^\\\/]+)\.deps\.json$`)
 	match := r.FindStringSubmatch(p)
 	if len(match) > 1 {
 		return match[1]

@@ -146,7 +146,7 @@ func containerSource(p *spdx.Package) source.Description {
 		ID:      id,
 		Name:    p.PackageName,
 		Version: p.PackageVersion,
-		Metadata: source.StereoscopeImageSourceMetadata{
+		Metadata: source.ImageMetadata{
 			UserInput:      container,
 			ID:             id,
 			Layers:         nil, // TODO handle formats with nested layer packages like Tern and K8s BOM tool
@@ -187,7 +187,7 @@ func fileSource(p *spdx.Package) source.Description {
 func fileSourceMetadata(p *spdx.Package) (any, string) {
 	version := p.PackageVersion
 
-	m := source.FileSourceMetadata{
+	m := source.FileMetadata{
 		Path: p.PackageName,
 	}
 	// if this is a Syft SBOM, we might have output a digest as the version
@@ -206,7 +206,7 @@ func fileSourceMetadata(p *spdx.Package) (any, string) {
 }
 
 func directorySourceMetadata(p *spdx.Package) (any, string) {
-	return source.DirectorySourceMetadata{
+	return source.DirectoryMetadata{
 		Path: p.PackageName,
 		Base: "",
 	}, p.PackageVersion
@@ -229,15 +229,15 @@ func extractSourceFromNamespace(ns string) source.Description {
 		switch p {
 		case helpers.InputFile:
 			return source.Description{
-				Metadata: source.FileSourceMetadata{},
+				Metadata: source.FileMetadata{},
 			}
 		case helpers.InputImage:
 			return source.Description{
-				Metadata: source.StereoscopeImageSourceMetadata{},
+				Metadata: source.ImageMetadata{},
 			}
 		case helpers.InputDirectory:
 			return source.Description{
-				Metadata: source.DirectorySourceMetadata{},
+				Metadata: source.DirectoryMetadata{},
 			}
 		}
 	}

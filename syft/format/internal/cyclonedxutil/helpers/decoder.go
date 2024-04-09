@@ -222,7 +222,7 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 			ID: "",
 			// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
 
-			Metadata: source.StereoscopeImageSourceMetadata{
+			Metadata: source.ImageMetadata{
 				UserInput:      c.Name,
 				ID:             c.BOMRef,
 				ManifestDigest: c.Version,
@@ -235,7 +235,7 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 		// TODO: this is lossy... we can't know if this is a file or a directory
 		return source.Description{
 			ID:       "",
-			Metadata: source.FileSourceMetadata{Path: c.Name},
+			Metadata: source.FileMetadata{Path: c.Name},
 		}
 	}
 	return source.Description{}

@@ -224,7 +224,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 			Executables: map[file.Coordinates]file.Executable{
 				c: {
 					Format: file.ELF,
-					SecurityFeatures: &file.ELFSecurityFeatures{
+					ELFSecurityFeatures: &file.ELFSecurityFeatures{
 						SymbolTableStripped:           false,
 						StackCanary:                   boolRef(true),
 						NoExecutable:                  false,
@@ -263,7 +263,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 			ID:      "some-id",
 			Name:    "some-name",
 			Version: "some-version",
-			Metadata: source.FileSourceMetadata{
+			Metadata: source.FileMetadata{
 				Path: "/some-file-source-path",
 				Digests: []file.Digest{
 					{

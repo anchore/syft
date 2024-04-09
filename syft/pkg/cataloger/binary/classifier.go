@@ -125,7 +125,7 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 
 		matchMetadata := internal.MatchNamedCaptureGroups(tmplPattern, string(contents))
 
-		p := newPackage(classifier, location, matchMetadata)
+		p := newClassifierPackage(classifier, location, matchMetadata)
 		if p == nil {
 			return nil, nil
 		}
@@ -144,7 +144,7 @@ func FileContentsVersionMatcher(pattern string) EvidenceMatcher {
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pat, string(contents))
 
-		p := newPackage(classifier, location, matchMetadata)
+		p := newClassifierPackage(classifier, location, matchMetadata)
 		if p == nil {
 			return nil, nil
 		}
