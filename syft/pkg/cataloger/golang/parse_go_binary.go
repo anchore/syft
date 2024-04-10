@@ -151,7 +151,10 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 	return main
 }
 
-var semverPattern = regexp.MustCompile(`\x00(?P<version>v?(\d+\.\d+\.\d+[-\w]*[+\w]*))\x00`)
+// this is checking for (.L)? because at least one binary seems to have \xA0L preceding the version string, but for some reason
+// this is unable to be matched by the regex here as \x00\xA0L;
+// the only thing that seems to work is to just look for version strings following both \x00 and \x00.L for now
+var semverPattern = regexp.MustCompile(`\x00(.L)?(?P<version>v?(\d+\.\d+\.\d+[-\w]*[+\w]*))\x00`)
 
 func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuildinfoEntry, gbs pkg.KeyValues, reader io.ReadSeekCloser) string {
 	vcsVersion, hasVersion := gbs.Get("vcs.revision")
