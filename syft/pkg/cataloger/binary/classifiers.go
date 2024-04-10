@@ -93,7 +93,7 @@ func DefaultClassifiers() []Classifier {
 					// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
 					// Equivalent to the following regexp with lookahead support:
 					// (?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<release>[0-9]+[.0-9]*) (?P<version>[0-9]+[^-\x00]+(-(?!jvmci)[^-\x00]+)+)
-					`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^-\s]+(-([^-j\x00][^-\x00]?|[^-\x00][^-v\x00][^-\x00]?|[^-\x00][^-\x00][^-m\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-c\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-\x00][^-i\s].?|[^-\x00]{6,}))+)\x00`,
+					`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^-\s\x00]+(-([^-j\x00][^-\x00]?|[^-\x00][^-v\x00][^-\x00]?|[^-\x00][^-\x00][^-m\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-c\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-\x00][^-i\s].?|[^-\x00]{6,}))+)\x00`,
 				),
 				FileContentsVersionMatcher(
 					`(?m)\x00(?P<release>[0-9]+[.0-9]*)\x00+(?P<version>[0-9]+[^-\s]+(-([^-j\x00][^-\x00]?|[^-\x00][^-v\x00][^-\x00]?|[^-\x00][^-\x00][^-m\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-c\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-\x00][^-i\s].?|[^-\x00]{6,}))+)\x00+openjdk\x00java`,
