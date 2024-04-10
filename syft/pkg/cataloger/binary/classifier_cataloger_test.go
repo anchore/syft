@@ -635,7 +635,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Type:      "binary",
 				PURL:      "pkg:generic/java/jre@11.0.22%2B7",
 				Locations: locations("java"),
-				Metadata:  metadata("java-binary-oracle", "java"),
+				Metadata:  metadata("java-binary-openjdk", "java"),
 			},
 		},
 		{
@@ -646,7 +646,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Type:      "binary",
 				PURL:      "pkg:generic/java/jre@11.0.22%2B7",
 				Locations: locations("java"),
-				Metadata:  metadata("java-binary-oracle", "java"),
+				Metadata:  metadata("java-binary-openjdk", "java"),
 			},
 		},
 		{

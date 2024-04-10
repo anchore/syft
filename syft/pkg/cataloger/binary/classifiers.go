@@ -87,17 +87,17 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "java-binary-openjdk",
 			FileGlob: "**/java",
-			EvidenceMatcher: evidenceMatchers(
-				FileContentsVersionMatcher(
-					// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
-					// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
-					// Equivalent to the following regexp with lookahead support:
-					// (?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<release>[0-9]+[.0-9]*) (?P<version>[0-9]+[^-\x00]+(-(?!jvmci)[^-\x00]+)+)
-					`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^-\s\x00]+(-([^-j\x00][^-\x00]?|[^-\x00][^-v\x00][^-\x00]?|[^-\x00][^-\x00][^-m\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-c\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-\x00][^-i\s].?|[^-\x00]{6,}))+)\x00`,
+			EvidenceMatcher: matchExcluding(
+				evidenceMatchers(
+					FileContentsVersionMatcher(
+						// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
+						// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
+						`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
+					FileContentsVersionMatcher(
+						// arm64 versions: [NUL]0.0[NUL][NUL][NUL][NUL][NUL]11.0.22+7[NUL][NUL][NUL][NUL][NUL][NUL][NUL]openjdk[NUL]java[NUL]
+						`(?m)\x00(?P<release>[0-9]+[.0-9]*)\x00+(?P<version>[0-9]+[^\x00]+)\x00+openjdk\x00java`),
 				),
-				FileContentsVersionMatcher(
-					`(?m)\x00(?P<release>[0-9]+[.0-9]*)\x00+(?P<version>[0-9]+[^-\s]+(-([^-j\x00][^-\x00]?|[^-\x00][^-v\x00][^-\x00]?|[^-\x00][^-\x00][^-m\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-c\x00][^-\x00]?|[^-\x00][^-\x00][^-\x00][^-\x00][^-i\s].?|[^-\x00]{6,}))+)\x00+openjdk\x00java`,
-				),
+				"-jvmci-",
 			),
 			Package: "java/jre",
 			PURL:    mustPURL("pkg:generic/java/jre@version"),
@@ -117,9 +117,13 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "java-binary-oracle",
 			FileGlob: "**/java",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				// [NUL]19.0.1+10-21[NUL]
-				`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`),
+			EvidenceMatcher: matchExcluding(
+				FileContentsVersionMatcher(
+					// [NUL]19.0.1+10-21[NUL]
+					`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`),
+				// don't match openjdk
+				`\x00openjdk\x00`,
+			),
 			Package: "java/jre",
 			PURL:    mustPURL("pkg:generic/java/jre@version"),
 			CPEs:    singleCPE("cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*"),
