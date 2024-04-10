@@ -68,16 +68,17 @@ func recursivelyFindVersionFromManagedOrInherited(ctx context.Context, findGroup
 	}
 	addMissingPropertiesFromProject(allProperties, pom)
 
-	foundVersion := ""
+	foundDepMngVersion := ""
 	if pom.DependencyManagement != nil {
-		foundVersion = findVersionInDependencyManagement(
+		foundDepMngVersion = findVersionInDependencyManagement(
 			ctx, findGroupID, findArtifactID, pom, cfg, allProperties, processedPomFiles)
 	}
-	if isPropertyResolved(foundVersion) {
-		return foundVersion
+	if isPropertyResolved(foundDepMngVersion) {
+		return foundDepMngVersion
 	}
 
 	// If a parent exists, search it recursively.
+	foundRecVersion := ""
 	if pom.Parent != nil {
 		parentGroupID := *pom.Parent.GroupID
 		parentArtifactID := *pom.Parent.ArtifactID
@@ -87,13 +88,24 @@ func recursivelyFindVersionFromManagedOrInherited(ctx context.Context, findGroup
 
 		if parentPom != nil {
 			log.Debugf("found a parent pom: [%s, %s, %s]", *parentPom.GroupID, *parentPom.ArtifactID, *parentPom.Version)
-			addMissingPropertiesFromProject(allProperties, parentPom)
-			addPropertiesToProject(parentPom, allProperties)
-			foundVersion = recursivelyFindVersionFromManagedOrInherited(
+			foundRecVersion = recursivelyFindVersionFromManagedOrInherited(
 				ctx, findGroupID, findArtifactID, parentPom, cfg, allProperties, processedPomFiles)
+			addMissingPropertiesFromProject(allProperties, pom)
+			addPropertiesToProject(pom, allProperties)
 		} else {
 			log.Warnf("unable to get parent pom [%s, %s, %s]: %v",
 				parentGroupID, parentArtifactID, parentVersion, err)
+		}
+	}
+
+	foundVersion := resolveProperty(*pom, &foundRecVersion, getPropertyName(foundRecVersion))
+
+	// foundDepMngVersion may contain the version in a property that could not previously be resolved.
+	if !isPropertyResolved(foundVersion) && foundDepMngVersion != "" {
+		foundDepMngVersion = resolveProperty(*pom, &foundDepMngVersion, getPropertyName(foundDepMngVersion))
+
+		if isPropertyResolved(foundDepMngVersion) {
+			foundVersion = foundDepMngVersion
 		}
 	}
 
@@ -152,6 +164,10 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 			foundVersion := resolveProperty(*pom, dependency.Version, getPropertyName(*dependency.Version))
 			if isPropertyResolved(foundVersion) {
 				log.Debugf("found version for managed dependency: [%s, %s, %s]", *dependency.GroupID, *dependency.ArtifactID, foundVersion)
+				return foundVersion
+			}
+			if strings.HasPrefix(foundVersion, "${") {
+				log.Tracef("found version in property reference for managed dependency: [%s, %s, %s]", *dependency.GroupID, *dependency.ArtifactID, foundVersion)
 				return foundVersion
 			}
 		}
