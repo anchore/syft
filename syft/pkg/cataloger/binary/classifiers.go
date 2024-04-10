@@ -97,6 +97,7 @@ func DefaultClassifiers() []Classifier {
 						// arm64 versions: [NUL]0.0[NUL][NUL][NUL][NUL][NUL]11.0.22+7[NUL][NUL][NUL][NUL][NUL][NUL][NUL]openjdk[NUL]java[NUL]
 						`(?m)\x00(?P<release>[0-9]+[.0-9]*)\x00+(?P<version>[0-9]+[^\x00]+)\x00+openjdk\x00java`),
 				),
+				// don't match graalvm
 				"-jvmci-",
 			),
 			Package: "java/jre",
