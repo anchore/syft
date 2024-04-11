@@ -26,13 +26,12 @@ import (
 
 const pomXMLGlob = "*pom.xml"
 
-var checkedForMaven bool = false
-var mavenAvailable bool = false
+var checkedForMaven = false
+var mavenAvailable = false
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
 func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-
 	var pom string
 	// try to get absolute path first. This fails for tests, so fall back to AccessPath
 	if reader.Reference().RealPath != "" {
@@ -53,7 +52,7 @@ func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.
 			return parserPomXML(ctx, reader, gap, trueLocation)
 		}
 
-		var effectivePomFile string = filepath.Join(filepath.Dir(absPathPom), "target", "effective-pom.xml")
+		var effectivePomFile = filepath.Join(filepath.Dir(absPathPom), "target", "effective-pom.xml")
 
 		generateEffectivePom(pom, effectivePomFile, gap.cfg.MavenCommand, gap.cfg.UseNetwork)
 
@@ -106,9 +105,9 @@ func parserPomXML(ctx context.Context, reader file.LocationReadCloser, gap gener
 			pkgs = append(pkgs, p)
 
 			if len(p.Version) == 0 || strings.HasPrefix(p.Version, "${") {
-				groupId := *dep.GroupID
-				artifactId := *dep.ArtifactID
-				artifact := groupId + ":" + artifactId
+				groupID := *dep.GroupID
+				artifactID := *dep.ArtifactID
+				artifact := groupID + ":" + artifactID
 				log.Infof("Found artifact without version: %q, version: %q", artifact, p.Version)
 			}
 		}
@@ -117,7 +116,6 @@ func parserPomXML(ctx context.Context, reader file.LocationReadCloser, gap gener
 }
 
 func isMavenAvailable(mvnCommand string) bool {
-
 	// Only check for Maven on first call
 	if !checkedForMaven {
 		log.Tracef("Running command: %q -v", mvnCommand)
