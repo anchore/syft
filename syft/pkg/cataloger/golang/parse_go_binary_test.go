@@ -2,6 +2,8 @@ package golang
 
 import (
 	"bufio"
+	"bytes"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
@@ -1089,4 +1091,54 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 			assert.Equal(t, tt.wantFullVersion, gotFullVersion, "unexpected full version")
 		})
 	}
+}
+
+func Test_extractVersionFromContents(t *testing.T) {
+	tests := []struct {
+		name     string
+		contents io.Reader
+		want     string
+	}{
+		{
+			name:     "empty string on error",
+			contents: &alwaysErrorReader{},
+			want:     "",
+		},
+		{
+			name:     "empty string on empty reader",
+			contents: bytes.NewReader([]byte{}),
+			want:     "",
+		},
+		{
+			name:     "null-byte delimited semver",
+			contents: strings.NewReader("\x001.2.3\x00"),
+			want:     "1.2.3",
+		},
+		{
+			name:     "null-byte delimited semver with v prefix",
+			contents: strings.NewReader("\x00v1.2.3\x00"),
+			want:     "v1.2.3",
+		},
+		{
+			// 01a0bfc8: 0e74 5a3b 0000 a04c 7631 2e39 2e35 0000  .tZ;...Lv1.9.5.. from nginx-ingress-controller
+			// at /nginx-ingress-controller in registry.k8s.io/ingress-nginx/controller:v1.9.5
+			// digest: sha256:b3aba22b1da80e7acfc52b115cae1d4c687172cbf2b742d5b502419c25ff340e
+			// TODO: eventually use something for managing snippets, similar to what's used with binary classifier tests
+			name:     "null byte, then random byte, then L then semver",
+			contents: strings.NewReader("\x0e\x74\x5a\x3b\x00\x00\xa0\x4cv1.9.5\x00\x00"),
+			want:     "v1.9.5",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := extractVersionFromContents(tt.contents)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+type alwaysErrorReader struct{}
+
+func (alwaysErrorReader) Read(_ []byte) (int, error) {
+	return 0, errors.New("read from always error reader")
 }
