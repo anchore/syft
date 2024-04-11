@@ -41,25 +41,32 @@ func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.
 		pom = reader.AccessPath
 	}
 
-	var effectivePom string = filepath.Join(filepath.Dir(pom), "target", "effective-pom.xml")
-
 	log.Tracef("Found POM in dir: %q", filepath.Dir(pom))
 
 	trueLocation := reader.Location
 
 	if gap.cfg.UseMaven && isMavenAvailable(gap.cfg.MavenCommand) {
-		generateEffectivePom(pom, effectivePom, gap.cfg.MavenCommand, gap.cfg.UseNetwork)
+		absPathPom, err := filepath.Abs(pom)
+
+		if err != nil {
+			log.Errorf("skipping generating effective pom: could not get absolute location of pom file %q : %w", pom, err)
+			return parserPomXML(ctx, reader, gap, trueLocation)
+		}
+
+		var effectivePomFile string = filepath.Join(filepath.Dir(absPathPom), "target", "effective-pom.xml")
+
+		generateEffectivePom(pom, effectivePomFile, gap.cfg.MavenCommand, gap.cfg.UseNetwork)
 
 		var pomReader io.ReadCloser
-		pomReader, err := os.Open(effectivePom)
+		pomReader, err = os.Open(effectivePomFile)
 
 		if err == nil {
-			var pomLocation file.Location = file.NewLocation(effectivePom)
+			var pomLocation file.Location = file.NewLocation(effectivePomFile)
 
 			reader = file.NewLocationReadCloser(pomLocation, pomReader)
-			log.Debugf("Parsing effective POM: %q", effectivePom)
+			log.Debugf("Parsing effective POM: %q", effectivePomFile)
 		} else {
-			log.Errorf("Could not open file %q : %w", effectivePom, err)
+			log.Errorf("Could not open file %q : %w", effectivePomFile, err)
 		}
 	} else {
 		log.Debugf("Parsing unresolved POM: %q", pom)
