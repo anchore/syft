@@ -713,18 +713,18 @@ java:
    # the remote repository to use for downloading pom files. If you have a caching proxy, such as
    # Artifactory or Nexus Repository server available, you are advised to use that server for
    # improved speed and limiting the amount of requests to Maven Central.
-   # e.g.: https://nexus.example.net/repository/maven-public/
+   # e.g.: https://nexus.mycompany.net/repository/maven-public/
    maven-url: "https://repo1.maven.org/maven2"
-   # enables Syft to use the network to fill in more detailed information about artifacts.
-   # this enables searching maven-url for dependency and license data
-   # when running across pom.xml files that could have more information, syft will explicitly search 
-   # maven for dependency and license information by querying the online pom when this is true.
-   # this option is helpful for when the parent pom has more data,
-   # that is not accessible from within the final built artifact
+   # enables Syft to use the network to fetch version and license information for packages when
+   # a parent or imported pom file is not found in the local maven repository.
+   # the pom files are downloaded from the remote Maven repository at `maven-url`.
    use-network: false
-   # use the local Maven repository to retrieve pom files. When Maven is installed and was used
+   # use the local Maven repository to retrieve pom files. When Maven is installed and was previously used
    # for building the software that is being scanned, then most pom files will be available in this
-   # repository on the local file system.
+   # repository on the local file system. this greatly speeds up scans. when all pom files are available
+   # in the local repository, then `use-network` is not needed.
+   # TIP: If you want to download all required pom files to the local repository without running a full
+   # build, run `mvn help:effective-pom` before performing the scan with syft.
    use-maven-localrepository: true
    # override the default location of the local Maven repository. 
    # the default is the subdirectory '.m2/repository' in your home dir.
