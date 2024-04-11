@@ -160,7 +160,7 @@ func Test_toBomDescriptor(t *testing.T) {
 				name:    "test-image",
 				version: "1.0.0",
 				srcMetadata: source.Description{
-					Metadata: source.StereoscopeImageSourceMetadata{
+					Metadata: source.ImageMetadata{
 						Labels: map[string]string{
 							"key1": "value1",
 						},

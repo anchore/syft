@@ -46,6 +46,7 @@ type Catalog struct {
 
 	// configuration for the source (the subject being analyzed)
 	Registry   registryConfig `yaml:"registry" json:"registry" mapstructure:"registry"`
+	From       []string       `yaml:"from" json:"from" mapstructure:"from"`
 	Platform   string         `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Source     sourceConfig   `yaml:"source" json:"source" mapstructure:"source"`
 	Exclusions []string       `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
@@ -165,6 +166,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 	flags.StringVarP(&cfg.Scope, "scope", "s",
 		fmt.Sprintf("selection of layers to catalog, options=%v", validScopeValues))
 
+	flags.StringArrayVarP(&cfg.From, "from", "",
+		"specify the source behavior to use (e.g. docker, registry, oci-dir, ...)")
+
 	flags.StringVarP(&cfg.Platform, "platform", "",
 		"an optional platform specifier for container image sources (e.g. 'linux/arm64', 'linux/arm64/v8', 'arm64', 'linux')")
 
@@ -221,6 +225,8 @@ func (cfg *Catalog) PostLoad() error {
 
 		return out
 	}
+
+	cfg.From = flatten(cfg.From)
 
 	cfg.Catalogers = flatten(cfg.Catalogers)
 	cfg.DefaultCatalogers = flatten(cfg.DefaultCatalogers)

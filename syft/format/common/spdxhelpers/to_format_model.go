@@ -181,7 +181,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 	purpose := ""
 	var checksums []spdx.Checksum
 	switch m := s.Metadata.(type) {
-	case source.StereoscopeImageSourceMetadata:
+	case source.ImageMetadata:
 		prefix = prefixImage
 		purpose = spdxPrimaryPurposeContainer
 
@@ -211,11 +211,11 @@ func toRootPackage(s source.Description) *spdx.Package {
 			}
 		}
 
-	case source.DirectorySourceMetadata:
+	case source.DirectoryMetadata:
 		prefix = prefixDirectory
 		purpose = spdxPrimaryPurposeFile
 
-	case source.FileSourceMetadata:
+	case source.FileMetadata:
 		prefix = prefixFile
 		purpose = spdxPrimaryPurposeFile
 

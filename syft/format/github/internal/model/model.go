@@ -116,16 +116,16 @@ func toPath(s source.Description, p pkg.Package) string {
 		}
 		packagePath = strings.TrimPrefix(packagePath, "/")
 		switch metadata := s.Metadata.(type) {
-		case source.StereoscopeImageSourceMetadata:
+		case source.ImageMetadata:
 			image := strings.ReplaceAll(metadata.UserInput, ":/", "//")
 			return fmt.Sprintf("%s:/%s", image, packagePath)
-		case source.FileSourceMetadata:
+		case source.FileMetadata:
 			path := trimRelative(metadata.Path)
 			if isArchive(metadata.Path) {
 				return fmt.Sprintf("%s:/%s", path, packagePath)
 			}
 			return path
-		case source.DirectorySourceMetadata:
+		case source.DirectoryMetadata:
 			path := trimRelative(metadata.Path)
 			if path != "" {
 				return fmt.Sprintf("%s/%s", path, packagePath)

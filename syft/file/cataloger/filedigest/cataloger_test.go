@@ -17,6 +17,8 @@ import (
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Hash) map[file.Coordinates][]file.Digest {
@@ -77,7 +79,7 @@ func TestDigestsCataloger(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := NewCataloger(test.digests)
 
-			src, err := source.NewFromDirectoryPath("test-fixtures/last/")
+			src, err := directorysource.NewFromPath("test-fixtures/last/")
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)
@@ -96,10 +98,9 @@ func TestDigestsCataloger_MixFileTypes(t *testing.T) {
 
 	img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
-	src, err := source.NewFromStereoscopeImageObject(img, testImage, nil)
-	if err != nil {
-		t.Fatalf("could not create source: %+v", err)
-	}
+	src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+		Reference: testImage,
+	})
 
 	resolver, err := src.FileResolver(source.SquashedScope)
 	if err != nil {
@@ -169,8 +170,9 @@ func TestFileDigestCataloger_GivenCoordinates(t *testing.T) {
 
 	c := NewCataloger([]crypto.Hash{crypto.SHA256})
 
-	src, err := source.NewFromStereoscopeImageObject(img, testImage, nil)
-	require.NoError(t, err)
+	src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+		Reference: testImage,
+	})
 
 	resolver, err := src.FileResolver(source.SquashedScope)
 	require.NoError(t, err)

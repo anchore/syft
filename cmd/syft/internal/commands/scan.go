@@ -13,6 +13,8 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/go-collections"
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
@@ -24,6 +26,7 @@ import (
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
 const (
@@ -162,14 +165,23 @@ func validateArgs(cmd *cobra.Command, args []string, error string) error {
 	return cobra.MaximumNArgs(1)(cmd, args)
 }
 
-// nolint:funlen
 func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, userInput string) error {
 	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err
 	}
 
-	src, err := getSource(&opts.Catalog, userInput)
+	sources := opts.From
+	if len(sources) == 0 {
+		// extract a scheme if it matches any provider tag; this is a holdover for compatibility, using the --from flag is recommended
+		explicitSource, newUserInput := stereoscope.ExtractSchemeSource(userInput, allSourceProviderTags()...)
+		if explicitSource != "" {
+			sources = append(sources, explicitSource)
+			userInput = newUserInput
+		}
+	}
+
+	src, err := getSource(ctx, &opts.Catalog, userInput, sources...)
 
 	if err != nil {
 		return err
@@ -199,23 +211,21 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	return nil
 }
 
-func getSource(opts *options.Catalog, userInput string, filters ...func(*source.Detection) error) (source.Source, error) {
-	detection, err := source.Detect(
-		userInput,
-		source.DetectConfig{
-			DefaultImageSource: opts.Source.Image.DefaultPullSource,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not deteremine source: %w", err)
-	}
+func getSource(ctx context.Context, opts *options.Catalog, userInput string, sources ...string) (source.Source, error) {
+	cfg := syft.DefaultGetSourceConfig().
+		WithRegistryOptions(opts.Registry.ToOptions()).
+		WithAlias(source.Alias{
+			Name:    opts.Source.Name,
+			Version: opts.Source.Version,
+		}).
+		WithExcludeConfig(source.ExcludeConfig{
+			Paths: opts.Exclusions,
+		}).
+		WithBasePath(opts.Source.BasePath).
+		WithSources(sources...).
+		WithDefaultImagePullSource(opts.Source.Image.DefaultPullSource)
 
-	for _, filter := range filters {
-		if err := filter(detection); err != nil {
-			return nil, err
-		}
-	}
-
+	var err error
 	var platform *image.Platform
 
 	if opts.Platform != "" {
@@ -223,34 +233,20 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 		if err != nil {
 			return nil, fmt.Errorf("invalid platform: %w", err)
 		}
+		cfg = cfg.WithPlatform(platform)
 	}
 
-	hashers, err := file.Hashers(opts.Source.File.Digests...)
-	if err != nil {
-		return nil, fmt.Errorf("invalid hash algorithm: %w", err)
-	}
-
-	src, err := detection.NewSource(
-		source.DetectionSourceConfig{
-			Alias: source.Alias{
-				Name:    opts.Source.Name,
-				Version: opts.Source.Version,
-			},
-			RegistryOptions: opts.Registry.ToOptions(),
-			Platform:        platform,
-			Exclude: source.ExcludeConfig{
-				Paths: opts.Exclusions,
-			},
-			DigestAlgorithms: hashers,
-			BasePath:         opts.Source.BasePath,
-		},
-	)
-
-	if err != nil {
-		if userInput == "power-user" {
-			bus.Notify("Note: the 'power-user' command has been removed.")
+	if opts.Source.File.Digests != nil {
+		hashers, err := file.Hashers(opts.Source.File.Digests...)
+		if err != nil {
+			return nil, fmt.Errorf("invalid hash algorithm: %w", err)
 		}
-		return nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
+		cfg = cfg.WithDigestAlgorithms(hashers...)
+	}
+
+	src, err := syft.GetSource(ctx, userInput, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("could not determine source: %w", err)
 	}
 
 	return src, nil
@@ -444,4 +440,8 @@ func getHintPhrase(expErr task.ErrInvalidExpression) string {
 
 func trimOperation(x string) string {
 	return strings.TrimLeft(x, "+-")
+}
+
+func allSourceProviderTags() []string {
+	return collections.TaggedValueSet[source.Provider]{}.Join(sourceproviders.All("", nil)...).Tags()
 }

@@ -8,9 +8,9 @@ import (
 )
 
 var jsonNameFromType = map[reflect.Type][]string{
-	reflect.TypeOf(source.DirectorySourceMetadata{}):        {"directory", "dir"},
-	reflect.TypeOf(source.FileSourceMetadata{}):             {"file"},
-	reflect.TypeOf(source.StereoscopeImageSourceMetadata{}): {"image"},
+	reflect.TypeOf(source.DirectoryMetadata{}): {"directory", "dir"},
+	reflect.TypeOf(source.FileMetadata{}):      {"file"},
+	reflect.TypeOf(source.ImageMetadata{}):     {"image"},
 }
 
 func AllTypeNames() []string {

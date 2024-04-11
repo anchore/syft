@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
 )
 
 func DirectoryInput(t testing.TB, dir string) sbom.SBOM {
@@ -22,8 +22,8 @@ func DirectoryInput(t testing.TB, dir string) sbom.SBOM {
 
 	require.NoError(t, os.MkdirAll(path, 0755))
 
-	src, err := source.NewFromDirectory(
-		source.DirectoryConfig{
+	src, err := directorysource.New(
+		directorysource.Config{
 			Path: path,
 			Base: dir,
 		},
@@ -63,8 +63,8 @@ func DirectoryInputWithAuthorField(t testing.TB) sbom.SBOM {
 
 	require.NoError(t, os.MkdirAll(path, 0755))
 
-	src, err := source.NewFromDirectory(
-		source.DirectoryConfig{
+	src, err := directorysource.New(
+		directorysource.Config{
 			Path: path,
 			Base: dir,
 		},

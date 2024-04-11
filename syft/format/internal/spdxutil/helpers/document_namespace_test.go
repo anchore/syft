@@ -25,7 +25,7 @@ func Test_documentNamespace(t *testing.T) {
 			name:      "image",
 			inputName: "my-name",
 			src: source.Description{
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "image-repo/name:tag",
 					ID:             "id",
 					ManifestDigest: "digest",
@@ -37,7 +37,7 @@ func Test_documentNamespace(t *testing.T) {
 			name:      "directory",
 			inputName: "my-name",
 			src: source.Description{
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path/to/place",
 				},
 			},
@@ -47,7 +47,7 @@ func Test_documentNamespace(t *testing.T) {
 			name:      "file",
 			inputName: "my-name",
 			src: source.Description{
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path: "some/path/to/place",
 				},
 			},

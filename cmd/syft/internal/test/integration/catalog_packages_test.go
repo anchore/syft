@@ -22,15 +22,11 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	tarPath := imagetest.GetFixtureImageTarPath(b, fixtureImageName)
 
 	// get the source object for the image
-	userInput := "docker-archive:" + tarPath
-	detection, err := source.Detect(userInput, source.DefaultDetectConfig())
-	require.NoError(b, err)
-
-	theSource, err := detection.NewSource(source.DefaultDetectionSourceConfig())
+	theSource, err := syft.GetSource(context.Background(), tarPath, syft.DefaultGetSourceConfig().WithSources("docker-archive"))
 	require.NoError(b, err)
 
 	b.Cleanup(func() {
-		theSource.Close()
+		require.NoError(b, theSource.Close())
 	})
 
 	// build the SBOM

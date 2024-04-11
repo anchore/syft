@@ -6,5 +6,5 @@ import "github.com/anchore/syft/syft/source"
 
 // AllTypes returns a list of all source metadata types that syft supports (that are represented in the source.Description.Metadata field).
 func AllTypes() []any {
-	return []any{source.DirectorySourceMetadata{}, source.FileSourceMetadata{}, source.StereoscopeImageSourceMetadata{}}
+	return []any{source.DirectoryMetadata{}, source.FileMetadata{}, source.ImageMetadata{}}
 }

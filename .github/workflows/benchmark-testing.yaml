@@ -17,13 +17,13 @@ jobs:
     # the job by event.
     steps:
       - name: Checkout code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
 
       - name: Restore base benchmark result
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 #v4.0.0
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           path: test/results/benchmark-main.txt
           # use base sha for PR or new commit hash for main push in benchmark result key

@@ -74,6 +74,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.DotnetDepsEntry{}, "dotnet-deps-entry", "DotnetDepsMetadata"),
 	jsonNames(pkg.DotnetPortableExecutableEntry{}, "dotnet-portable-executable-entry"),
 	jsonNames(pkg.DpkgDBEntry{}, "dpkg-db-entry", "DpkgMetadata"),
+	jsonNames(pkg.ELFBinaryPackageNoteJSONPayload{}, "elf-binary-package-note-json-payload"),
 	jsonNames(pkg.RubyGemspec{}, "ruby-gemspec", "GemMetadata"),
 	jsonNames(pkg.GolangBinaryBuildinfoEntry{}, "go-module-buildinfo-entry", "GolangBinMetadata", "GolangMetadata"),
 	jsonNames(pkg.GolangModuleEntry{}, "go-module-entry", "GolangModMetadata"),
@@ -90,6 +91,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.YarnLockEntry{}, "javascript-yarn-lock-entry", "YarnLockJsonMetadata"),
 	jsonNames(pkg.PhpComposerLockEntry{}, "php-composer-lock-entry", "PhpComposerJsonMetadata"),
 	jsonNamesWithoutLookup(pkg.PhpComposerInstalledEntry{}, "php-composer-installed-entry", "PhpComposerJsonMetadata"), // the legacy value is split into two types, where the other is preferred
+	jsonNames(pkg.PhpPeclEntry{}, "php-pecl-entry", "PhpPeclMetadata"),
 	jsonNames(pkg.PortageEntry{}, "portage-db-entry", "PortageMetadata"),
 	jsonNames(pkg.PythonPackage{}, "python-package", "PythonPackageMetadata"),
 	jsonNames(pkg.PythonPipfileLockEntry{}, "python-pipfile-lock-entry", "PythonPipfileLockMetadata"),

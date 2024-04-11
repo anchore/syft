@@ -345,9 +345,9 @@ func (c *CreateSBOMConfig) Create(ctx context.Context, src source.Source) (*sbom
 
 func findDefaultTag(src source.Description) (string, error) {
 	switch m := src.Metadata.(type) {
-	case source.StereoscopeImageSourceMetadata:
+	case source.ImageMetadata:
 		return pkgcataloging.ImageTag, nil
-	case source.FileSourceMetadata, source.DirectorySourceMetadata:
+	case source.FileMetadata, source.DirectoryMetadata:
 		return pkgcataloging.DirectoryTag, nil
 	default:
 		return "", fmt.Errorf("unable to determine default cataloger tag for source type=%T", m)

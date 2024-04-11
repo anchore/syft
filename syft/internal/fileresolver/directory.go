@@ -14,12 +14,6 @@ import (
 	"github.com/anchore/syft/syft/internal/windows"
 )
 
-var unixSystemRuntimePrefixes = []string{
-	"/proc",
-	"/dev",
-	"/sys",
-}
-
 var ErrSkipPath = errors.New("skip path")
 
 var _ file.Resolver = (*Directory)(nil)

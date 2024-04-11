@@ -1108,47 +1108,6 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	}
 }
 
-func Test_isUnixSystemRuntimePath(t *testing.T) {
-	tests := []struct {
-		path     string
-		expected error
-	}{
-		{
-			path: "proc/place",
-		},
-		{
-			path:     "/proc/place",
-			expected: fs.SkipDir,
-		},
-		{
-			path:     "/proc",
-			expected: fs.SkipDir,
-		},
-		{
-			path: "/pro/c",
-		},
-		{
-			path: "/pro",
-		},
-		{
-			path:     "/dev",
-			expected: fs.SkipDir,
-		},
-		{
-			path:     "/sys",
-			expected: fs.SkipDir,
-		},
-		{
-			path: "/something/sys",
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.path, func(t *testing.T) {
-			assert.Equal(t, test.expected, disallowUnixSystemRuntimePath("", test.path, nil, nil))
-		})
-	}
-}
-
 func Test_SymlinkLoopWithGlobsShouldResolve(t *testing.T) {
 	test := func(t *testing.T) {
 		resolver, err := NewFromDirectory("./test-fixtures/symlinks-loop", "")

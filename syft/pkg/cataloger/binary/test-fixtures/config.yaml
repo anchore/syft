@@ -203,6 +203,15 @@ from-images:
     paths:
       - /usr/lib/jvm/java-11-amazon-corretto/bin/java
 
+  - name: java-graal-openjdk
+    version: 17.0.3+7-jvmci-22.1-b06
+    images:
+      - ref: springci/graalvm-ce:java17-0.12.x@sha256:110bf78b81e4e29c9217b565f10a1f11bb2ec0486d7336c047d803428e09685d
+        platform: linux/amd64
+    paths:
+      - /opt/java/bin/java
+
+
 # TODO: this is not the original binary used in the test fixture
 #  - version: 5.12.5
 #    images:
@@ -462,3 +471,11 @@ from-images:
         platform: linux/amd64
     paths:
       - /bin/consul
+
+  - name: openssl
+    version: 1.1.1w
+    images:
+      - ref: openresty/openresty:1.25.3.1-2-alpine@sha256:b1cb45b1556801b8cb1bc29ea78faf2eaf67926a37b052dd070866e44d7df07a
+        platform: linux/arm64
+    paths:
+      - /usr/local/openresty/openssl/bin/openssl
