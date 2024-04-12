@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/elliotchance/phpserialize"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/elliotchance/phpserialize"
 )
 
 // parsePeclSerialized is a parser function for PECL metadata contents, returning "Default" php packages discovered.

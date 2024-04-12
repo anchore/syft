@@ -203,6 +203,22 @@ from-images:
     paths:
       - /usr/lib/jvm/java-11-amazon-corretto/bin/java
 
+  - name: java-jre-openjdk-eclipse
+    version: 11.0.22
+    images:
+      - ref: eclipse-temurin:11.0.22_7-jre@sha256:137960b9ec016cddeb366b7137546d37207d0f284f9492c23abf16a9c171dd51
+        platform: linux/amd64
+    paths:
+      - /opt/java/openjdk/bin/java
+
+  - name: java-jre-openjdk-arm64-eclipse
+    version: 11.0.22
+    images:
+      - ref: eclipse-temurin:11.0.22_7-jre@sha256:9bb82e8801e12e5377222fde83b5c91d87dc16f76c89e9f8affa678208f56797
+        platform: linux/arm64
+    paths:
+      - /opt/java/openjdk/bin/java
+
   - name: java-graal-openjdk
     version: 17.0.3+7-jvmci-22.1-b06
     images:
@@ -210,6 +226,14 @@ from-images:
         platform: linux/amd64
     paths:
       - /opt/java/bin/java
+
+  - name: java-jdk-openjdk
+    version: 21.0.2+13-LTS
+    images:
+      - ref: eclipse-temurin:21.0.2_13-jdk-alpine@sha256:b5d37df8ee5bb964bb340acca83957f9a09291d07768fba1881f6bfc8048e4f5
+        platform: linux/amd64
+    paths:
+      - opt/java/openjdk/bin/jdb
 
 
 # TODO: this is not the original binary used in the test fixture
