@@ -201,7 +201,7 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 			expected: reflect.TypeOf(pkg.PythonRequirementsEntry{}),
 		},
 		{
-			name:     "map pkg.PhpPeclEntry struct type",
+			name:     "map pkg.PhpPearEntry struct type",
 			input:    "PhpPeclMetadata",
 			expected: reflect.TypeOf(pkg.PhpPeclEntry{}),
 		},

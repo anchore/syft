@@ -35,7 +35,7 @@ func Test_packageURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := packageURL(test.packageName, test.packageVersion)
+			actual := packageURLFromComposer(test.packageName, test.packageVersion)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)
@@ -45,22 +45,33 @@ func Test_packageURL(t *testing.T) {
 	}
 }
 
-func Test_packageURLFromPecl(t *testing.T) {
+func Test_packageURLFromPear(t *testing.T) {
 	tests := []struct {
 		name     string
+		channel  string
 		version  string
+		fallback string
 		expected string
 	}{
 		{
 			name:     "memcached",
+			channel:  "pecl.php.net",
 			version:  "3.2.0",
-			expected: "pkg:pecl/memcached@3.2.0",
+			fallback: "FALLBACK.php.net",
+			expected: "pkg:pear/pecl.php.net/memcached@3.2.0",
+		},
+		{
+			name:     "memcached-fallback",
+			channel:  "",
+			version:  "3.2.0",
+			fallback: "FALLBACK.php.net",
+			expected: "pkg:pear/FALLBACK.php.net/memcached-fallback@3.2.0",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := packageURLFromPecl(test.name, test.version)
+			actual := packageURLFromPear(test.name, test.channel, test.version, test.fallback)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

@@ -37,8 +37,14 @@ type PhpComposerAuthors struct {
 	Homepage string `json:"homepage,omitempty"`
 }
 
-type PhpPeclEntry struct {
+// PhpPeclEntry represents a single package entry found from a pecl.php.net package.xml file.
+// Deprecated: please use PhpPearEntry instead with the pear cataloger.
+type PhpPeclEntry PhpPearEntry
+
+// PhpPearEntry represents a single package entry found from a pear.php.net package.xml file.
+type PhpPearEntry struct {
 	Name    string   `json:"name"`
+	Channel string   `json:"channel"`
 	Version string   `json:"version"`
 	License []string `json:"license,omitempty"`
 }
