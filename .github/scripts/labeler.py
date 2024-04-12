@@ -119,7 +119,7 @@ def add_label(pr_number: str, label: str):
     # run "gh pr edit --add-label <label>"
     result = run(f"gh pr edit {pr_number} --add-label {label}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode != 0:
-        print(f"Unable to add  {label!r} label to PR with")
+        print(f"Unable to add '{label!r}' label to PR, error:")
         print(str(result.stderr))
         sys.exit(1)
 
@@ -128,7 +128,7 @@ def remove_label(pr_number: str, label: str):
     # run "gh pr edit --remove-label <label>"
     result = run(f"gh pr edit {pr_number} --remove-label {label}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode != 0:
-        print(f"Unable to label PR with {label!r}")
+        print(f"Unable to remove '{label!r}' label from PR, error:")
         print(str(result.stderr))
         sys.exit(1)
 
