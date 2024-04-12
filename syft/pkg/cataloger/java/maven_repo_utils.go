@@ -27,8 +27,8 @@ type mavenCoordinate struct {
 // and also to prevent downloading multiple times from a remote repository.
 var parsedPomFilesCache map[mavenCoordinate]*gopom.Project = make(map[mavenCoordinate]*gopom.Project)
 
-var checkedForMavenLocalRepo bool = false
-var mavenLocalRepoDir string = ""
+var checkedForMavenLocalRepo = false
+var mavenLocalRepoDir = ""
 
 func formatMavenPomURL(groupID, artifactID, version, mavenBaseURL string) (requestURL string, err error) {
 	// groupID needs to go from maven.org -> maven/org
@@ -50,7 +50,6 @@ func formatMavenPomURL(groupID, artifactID, version, mavenBaseURL string) (reque
 // call processedPomFiles should be nil. It is used to prevent cycles (endless loops).
 func recursivelyFindVersionFromManagedOrInherited(ctx context.Context, findGroupID, findArtifactID string,
 	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, processedPomFiles map[mavenCoordinate]bool) string {
-
 	// Create map to keep track of processed pom files and to prevent cycles.
 	if processedPomFiles == nil {
 		processedPomFiles = make(map[mavenCoordinate]bool)
@@ -63,9 +62,10 @@ func recursivelyFindVersionFromManagedOrInherited(ctx context.Context, findGroup
 	if alreadyProcessed {
 		log.Debug("skipping already processed pom.")
 		return ""
-	} else {
-		processedPomFiles[pomCoordinates] = true
 	}
+
+	processedPomFiles[pomCoordinates] = true
+
 	addMissingPropertiesFromProject(allProperties, pom)
 
 	foundDepMngVersion := ""
@@ -126,14 +126,12 @@ func isPropertyResolved(value string) bool {
 // May recursively call recursivelyFindVersionFromManagedOrInherited when a Maven BOM is found.
 func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArtifactID string,
 	pom *gopom.Project, cfg ArchiveCatalogerConfig, allProperties map[string]string, processedPomFiles map[mavenCoordinate]bool) string {
-
 	for _, dependency := range *getPomManagedDependencies(pom) {
 		log.Tracef("got managed dependency:  [%s, %s, %s]",
 			safeString(dependency.GroupID), safeString(dependency.ArtifactID), safeString(dependency.Version))
 
 		// imported pom files should be treated just like parent poms, they are use to define versions of dependencies
 		if safeString(dependency.Type) == "pom" && safeString(dependency.Scope) == "import" {
-
 			bomVersion := resolveProperty(*pom, dependency.Version, getPropertyName(*dependency.Version))
 			log.Debugf("found BOM: [%s, %s, %s]", *dependency.GroupID, *dependency.ArtifactID, bomVersion)
 
@@ -159,7 +157,6 @@ func findVersionInDependencyManagement(ctx context.Context, findGroupID, findArt
 					}
 				}
 			}
-
 		} else if *dependency.GroupID == findGroupID && *dependency.ArtifactID == findArtifactID {
 			foundVersion := resolveProperty(*pom, dependency.Version, getPropertyName(*dependency.Version))
 			if isPropertyResolved(foundVersion) {
@@ -181,7 +178,7 @@ func recursivelyFindLicensesFromParentPom(ctx context.Context, groupID, artifact
 	log.Debugf("recursively finding licenses from parent Pom for artifact [%v:%v], using parent pom: [%v:%v:%v]",
 		groupID, artifactID, groupID, artifactID, version)
 	var licenses []string
-	var foundPom bool = false
+	var foundPom = false
 	processedPomFiles := make(map[mavenCoordinate]bool)
 
 	// As there can be nested parent poms, we'll recursively check for licenses until no parent is found
@@ -208,9 +205,9 @@ func recursivelyFindLicensesFromParentPom(ctx context.Context, groupID, artifact
 		if alreadyProcessed {
 			log.Debug("already processed parent pom, stop searching.")
 			break
-		} else {
-			processedPomFiles[pomCoordinates] = true
 		}
+
+		processedPomFiles[pomCoordinates] = true
 
 		groupID = pomCoordinates.GroupID
 		artifactID = pomCoordinates.ArtifactID
@@ -223,7 +220,7 @@ func recursivelyFindLicensesFromParentPom(ctx context.Context, groupID, artifact
 // Get a parent pom from cache, local repository or download from a Maven repository
 func getPomFromCacheOrMaven(ctx context.Context, groupID, artifactID, version string, allProperties map[string]string,
 	cfg ArchiveCatalogerConfig) (*gopom.Project, error) {
-	var err error = nil
+	var err error
 
 	if !isPropertyResolved(version) {
 		return nil, fmt.Errorf("cannot get POM without resolved version: %s", version)
@@ -234,34 +231,35 @@ func getPomFromCacheOrMaven(ctx context.Context, groupID, artifactID, version st
 
 	if found {
 		return parentPom, err
-	} else {
-		// Then try to get from local file system.
-		if cfg.UseMavenLocalRepository {
-			parentPom, found = getPomFromMavenUserLocalRepository(groupID, artifactID, version, cfg)
-		}
+	}
 
-		if !found && cfg.UseNetwork {
-			// If all fails, then try to get from Maven repository over HTTP
-			parentPom, err = getPomFromMavenRepo(ctx, groupID, artifactID, version, cfg.MavenBaseURL)
-			if err != nil && parentPom != nil {
-				found = true
-			}
-		}
+	// Next try to get from local file system (Maven local repository).
+	if cfg.UseMavenLocalRepository {
+		parentPom, found = getPomFromMavenUserLocalRepository(groupID, artifactID, version, cfg)
+	}
 
-		if found {
-			// Get and add all properties defined in parent poms to this project for resolving properties later on.
-			if parentPom.Parent != nil {
-				getPropertiesFromParentPoms(
-					ctx, allProperties, *parentPom.Parent.GroupID, *parentPom.Parent.ArtifactID, *parentPom.Parent.Version,
-					ArchiveCatalogerConfig{MavenBaseURL: mavenBaseURL}, nil)
-			}
-			addPropertiesToProject(parentPom, allProperties)
-			addMissingPropertiesFromProject(allProperties, parentPom)
-
-			// Store in cache
-			parsedPomFilesCache[mavenCoordinate{groupID, artifactID, version}] = parentPom
+	if !found && cfg.UseNetwork {
+		// If all fails, then try to get from Maven repository over HTTP
+		parentPom, err = getPomFromMavenRepo(ctx, groupID, artifactID, version, cfg.MavenBaseURL)
+		if err != nil && parentPom != nil {
+			found = true
 		}
 	}
+
+	if found {
+		// Get and add all properties defined in parent poms to this project for resolving properties later on.
+		if parentPom.Parent != nil {
+			getPropertiesFromParentPoms(
+				ctx, allProperties, *parentPom.Parent.GroupID, *parentPom.Parent.ArtifactID, *parentPom.Parent.Version,
+				ArchiveCatalogerConfig{MavenBaseURL: mavenBaseURL}, nil)
+		}
+		addPropertiesToProject(parentPom, allProperties)
+		addMissingPropertiesFromProject(allProperties, parentPom)
+
+		// Store in cache
+		parsedPomFilesCache[mavenCoordinate{groupID, artifactID, version}] = parentPom
+	}
+
 	return parentPom, err
 }
 
@@ -290,9 +288,10 @@ func getPomFromMavenUserLocalRepository(groupID, artifactID, version string, cfg
 			return nil, false
 		}
 		return &pom, true
-	} else {
-		log.Debugf("could not find pom file: [%s]", pomFile)
 	}
+
+	log.Debugf("could not find pom file: [%s]", pomFile)
+
 	return nil, false
 }
 
@@ -301,22 +300,22 @@ func getLocalRepositoryExists(cfg ArchiveCatalogerConfig) (string, bool) {
 	found := false
 	if checkedForMavenLocalRepo {
 		if mavenLocalRepoDir != "" {
+			// dir was found in previous call of this function
 			found = true
 		}
 		return mavenLocalRepoDir, found
-	} else {
-		if !checkedForMavenLocalRepo {
-			localRepoDir := cfg.MavenLocalRepositoryDir
-			if _, err := os.Stat(localRepoDir); !os.IsNotExist(err) {
-				mavenLocalRepoDir = localRepoDir
-				found = true
-			} else {
-				log.Errorf("local Maven repository not found at [%s],", localRepoDir)
-			}
-			checkedForMavenLocalRepo = true
-		}
-		return mavenLocalRepoDir, found
 	}
+
+	localRepoDir := cfg.MavenLocalRepositoryDir
+	if _, err := os.Stat(localRepoDir); !os.IsNotExist(err) {
+		mavenLocalRepoDir = localRepoDir
+		found = true
+	} else {
+		log.Warnf("local Maven repository not found at [%s],", localRepoDir)
+	}
+	checkedForMavenLocalRepo = true
+
+	return mavenLocalRepoDir, found
 }
 
 // Get default location of the Maven local repository at <USER HOME DIR>/.m2/repository
@@ -329,9 +328,8 @@ func getDefaultMavenLocalRepoLocation() (string, error) {
 	localRepoDir := filepath.Join(homeDir, ".m2", "repository")
 	if _, err := os.Stat(homeDir); !os.IsNotExist(err) {
 		return localRepoDir, nil
-	} else {
-		return "", fmt.Errorf("local Maven repository not found at default location [%s],", localRepoDir)
 	}
+	return "", fmt.Errorf("local Maven repository not found at default location [%s],", localRepoDir)
 }
 
 // Download the pom file from a (remote) Maven repository over HTTP.
@@ -418,14 +416,13 @@ func getPomDependencies(pom *gopom.Project) *[]gopom.Dependency {
 			}
 		}
 		return &dependencies
-
-	} else {
-		if pom.Dependencies != nil {
-			return pom.Dependencies
-		} else {
-			return &dependencies
-		}
 	}
+
+	if pom.Dependencies != nil {
+		return pom.Dependencies
+	}
+
+	return &dependencies
 }
 
 // Returns all managed dependencies in a project, including all defined in profiles.
@@ -442,15 +439,14 @@ func getPomManagedDependencies(pom *gopom.Project) *[]gopom.Dependency {
 			}
 		}
 		return &mDependencies
-
-	} else {
-		if pom.DependencyManagement != nil && pom.DependencyManagement.Dependencies != nil {
-			return pom.DependencyManagement.Dependencies
-		} else {
-			var mDependencies []gopom.Dependency = make([]gopom.Dependency, 0)
-			return &mDependencies
-		}
 	}
+
+	if pom.DependencyManagement != nil && pom.DependencyManagement.Dependencies != nil {
+		return pom.DependencyManagement.Dependencies
+	}
+
+	var mDependencies []gopom.Dependency = make([]gopom.Dependency, 0)
+	return &mDependencies
 }
 
 // Traverse the parent pom hierarchy and return all found properties.
@@ -459,7 +455,6 @@ func getPomManagedDependencies(pom *gopom.Project) *[]gopom.Dependency {
 // is found.
 func getPropertiesFromParentPoms(ctx context.Context, allProperties map[string]string, parentGroupID, parentArtifactID, parentVersion string,
 	cfg ArchiveCatalogerConfig, parsedPomFiles map[mavenCoordinate]bool) {
-
 	// Create map to keep track of parsed pom files and to prevent cycles.
 	if parsedPomFiles == nil {
 		parsedPomFiles = make(map[mavenCoordinate]bool)
@@ -502,9 +497,8 @@ func resolveRecursiveByPropertyName(pomProperties map[string]string, propertyNam
 		if value, ok := pomProperties[name]; ok {
 			if strings.HasPrefix(value, "${") {
 				return resolveRecursiveByPropertyName(pomProperties, value)
-			} else {
-				return value
 			}
+			return value
 		}
 	}
 	return propertyName
@@ -523,11 +517,12 @@ func getPropertyName(value string) string {
 // Add all properties from the project 'pom' to the map 'allProperties' that are not already in the map.
 func addMissingPropertiesFromProject(allProperties map[string]string, pom *gopom.Project) {
 	if pom != nil && pom.Properties != nil && pom.Properties.Entries != nil {
-		for name, value := range pom.Properties.Entries {
+		for name := range pom.Properties.Entries {
 			// Add property from pom that is not yet in allProperties map.
 			_, exists := allProperties[name]
 			if !exists {
-				value = resolveProperty(*pom, &value, getPropertyName(value))
+				currentValue := pom.Properties.Entries[name]
+				value := resolveProperty(*pom, &currentValue, getPropertyName(currentValue))
 				allProperties[name] = value
 				// log.Tracef("added property ['%s'='%s'] from pom [%s, %s, %s] to allProperties", name, value,
 				// 	*pom.GroupID, *pom.ArtifactID, *pom.Version)
@@ -539,14 +534,12 @@ func addMissingPropertiesFromProject(allProperties map[string]string, pom *gopom
 				allProperties[name] = resolveRecursiveByPropertyName(allProperties, value)
 			}
 		}
-
 	}
 }
 
 // Add all properties from map 'allProperties' to the project 'pom' that are not already defined in the pom.
 // This increases the chance of the 'resolveProperty' function succeeding.
 func addPropertiesToProject(pom *gopom.Project, allProperties map[string]string) {
-
 	if len(allProperties) > 0 {
 		if pom.Properties == nil {
 			var props gopom.Properties

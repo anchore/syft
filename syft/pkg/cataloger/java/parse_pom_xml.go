@@ -35,7 +35,7 @@ func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.
 
 	// Add all properties defined in parent poms to this project for resolving properties later on.
 	if pom.Parent != nil {
-		var allProperties map[string]string = make(map[string]string)
+		var allProperties = make(map[string]string)
 		getPropertiesFromParentPoms(
 			ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, gap.cfg, nil)
 		addPropertiesToProject(&pom, allProperties)
@@ -72,7 +72,7 @@ func parsePomXMLProject(ctx context.Context, path string, reader io.Reader, loca
 
 	// Add all properties defined in parent poms to this project for resolving properties later on.
 	if pom.Parent != nil {
-		var allProperties map[string]string = make(map[string]string)
+		var allProperties = make(map[string]string)
 		getPropertiesFromParentPoms(
 			ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg, nil)
 		addPropertiesToProject(&pom, allProperties)
@@ -122,20 +122,20 @@ func newPomProject(path string, p gopom.Project, location file.Location) *parsed
 }
 
 func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Dependency, cfg ArchiveCatalogerConfig, locations ...file.Location) pkg.Package {
-	groupId := resolveProperty(pom, dep.GroupID, "groupId")
-	artifactId := resolveProperty(pom, dep.ArtifactID, "artifactId")
+	groupID := resolveProperty(pom, dep.GroupID, "groupId")
+	artifactID := resolveProperty(pom, dep.ArtifactID, "artifactId")
 
 	m := pkg.JavaArchive{
 		PomProperties: &pkg.JavaPomProperties{
-			GroupID:    groupId,
-			ArtifactID: artifactId,
+			GroupID:    groupID,
+			ArtifactID: artifactID,
 			Scope:      resolveProperty(pom, dep.Scope, "scope"),
 		},
 	}
 
 	name := safeString(dep.ArtifactID)
 	version := resolveProperty(pom, dep.Version, "version")
-	var allProperties map[string]string = make(map[string]string)
+	var allProperties = make(map[string]string)
 	addMissingPropertiesFromProject(allProperties, &pom)
 
 	licenses := make([]pkg.License, 0)
@@ -153,7 +153,6 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 		version = resolveProperty(pom, &version, getPropertyName(version))
 	}
 	if isPropertyResolved(version) {
-
 		parentLicenses, _ := recursivelyFindLicensesFromParentPom(
 			ctx,
 			m.PomProperties.GroupID,
@@ -167,7 +166,7 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 			}
 		}
 	} else {
-		log.Warnf("could not determine version for package: [%s, %s]", groupId, artifactId)
+		log.Warnf("could not determine version for package: [%s, %s]", groupID, artifactID)
 	}
 
 	if strings.HasPrefix(version, "${") {
@@ -285,7 +284,7 @@ func cleanDescription(original *string) (cleaned string) {
 func resolveProperty(pom gopom.Project, propertyValue *string, propertyName string) string {
 	propertyCase := safeString(propertyValue)
 	if !strings.Contains(propertyCase, "${") {
-		//nothing to resolve
+		// nothing to resolve
 		// log.Tracef("resolving property: value [%s] contains no variable", propertyName)
 		return propertyCase
 	}
