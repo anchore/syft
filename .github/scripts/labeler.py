@@ -56,6 +56,8 @@ def main(changed_files: str | None = None, merge_base_schema_files: str | None =
 
     pr_json_schema_files = filter_to_schema_files(pr_changed_files)
 
+    pr_labels = get_pr_labels(pr_number)
+
     # print("schema files in pr:   ", summarize_schema_files(pr_json_schema_files))
     # print("og schema files:      ", summarize_schema_files(og_json_schema_files))
 
@@ -76,7 +78,8 @@ def main(changed_files: str | None = None, merge_base_schema_files: str | None =
         add_label(pr_number, JSON_SCHEMA_LABEL)
 
     else:
-        remove_label(pr_number, JSON_SCHEMA_LABEL)
+        if JSON_SCHEMA_LABEL in pr_labels:
+            remove_label(pr_number, JSON_SCHEMA_LABEL)
 
     # new schema files should be scrutinized, comparing the latest and added versions to see if it's a breaking
     # change (major version bump). Warn about it on the PR via adding a breaking-change label...
@@ -84,7 +87,8 @@ def main(changed_files: str | None = None, merge_base_schema_files: str | None =
         print("\nBreaking change detected...")
         add_label(pr_number, BREAKING_CHANGE_LABEL)
     else:
-        remove_label(pr_number, BREAKING_CHANGE_LABEL)
+        if BREAKING_CHANGE_LABEL in pr_labels:        
+            remove_label(pr_number, BREAKING_CHANGE_LABEL)
 
     # modifying an existing schema could be a breaking change, we should warn about it on the PR via a comment...
     # removing schema files should never be allowed, we should warn about it on the PR via a comment...
@@ -163,6 +167,17 @@ def get_pr_changed_files(pr_number: str) -> list[str]:
     
     list_of_files = result.stdout.splitlines()
     return list_of_files
+
+
+def get_pr_labels(pr_number: str) -> list[str]:
+    result = run(f"gh pr view {pr_number} --json labels --jq '.labels[].name'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if result.returncode != 0:
+        print("Unable to get list of labels on PR")
+        print(str(result.stderr))
+        sys.exit(1)
+    
+    list_of_labels = result.stdout.splitlines()
+    return list_of_labels
 
 
 def filter_to_schema_files(list_of_files: list[str]) -> list[str]:
