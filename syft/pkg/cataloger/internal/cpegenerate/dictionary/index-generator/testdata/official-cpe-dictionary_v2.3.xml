@@ -24983,4 +24983,24 @@
     </references>
     <cpe-23:cpe23-item name="cpe:2.3:a:html_quickform_project:html_quickform:2.1:*:*:*:*:*:*:*"/>
   </cpe-item>
+  <cpe-item name="cpe:/a:jenkins:_subversion_partial_release_manager:1.0.1::~~~jenkins~~" deprecated="true" deprecation_date="2020-06-04T11:50:37.430Z">
+    <title xml:lang="en-US">Jenkins Subversion Partial Release Manager 1.0.1 for Jenkins</title>
+    <references>
+      <reference href="https://github.com/jenkinsci/svn-partial-release-mgr-plugin">Version</reference>
+      <reference href="https://plugins.jenkins.io/svn-partial-release-mgr">Product</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:jenkins:_subversion_partial_release_manager:1.0.1:*:*:*:*:jenkins:*:*">
+      <cpe-23:deprecation date="2020-06-04T07:50:37.430-04:00">
+        <cpe-23:deprecated-by name="cpe:2.3:a:jenkins:subversion_partial_release_manager:1.0.1:*:*:*:*:jenkins:*:*" type="NAME_CORRECTION"/>
+      </cpe-23:deprecation>
+    </cpe-23:cpe23-item>
+  </cpe-item>
+  <cpe-item name="cpe:/a:jenkins:360_fireline:1.0::~~~jenkins~~">
+    <title xml:lang="en-US">Jenkins 360 FireLine 1.0 for Jenkins</title>
+    <references>
+      <reference href="https://plugins.jenkins.io/fireline">Product</reference>
+      <reference href="https://github.com/jenkinsci/fireline-plugin">Version</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:jenkins:360_fireline:1.0:*:*:*:*:jenkins:*:*"/>
+  </cpe-item>
 </cpe-list>

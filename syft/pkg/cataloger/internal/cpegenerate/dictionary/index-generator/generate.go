@@ -101,17 +101,18 @@ func normalizeCPE(cpe *wfn.Attributes) *wfn.Attributes {
 }
 
 const (
-	prefixForNPMPackages    = "https://www.npmjs.com/package/"
-	prefixForRubyGems       = "https://rubygems.org/gems/"
-	prefixForRubyGemsHTTP   = "http://rubygems.org/gems/"
-	prefixForNativeRubyGems = "https://github.com/ruby/"
-	prefixForPyPIPackages   = "https://pypi.org/project/"
-	prefixForJenkinsPlugins = "https://github.com/jenkinsci/"
-	prefixForRustCrates     = "https://crates.io/crates/"
-	prefixForPHPPear        = "https://pear.php.net/"
-	prefixForPHPPearHTTP    = "http://pear.php.net/"
-	prefixForPHPPecl        = "https://pecl.php.net/"
-	prefixForPHPPeclHTTP    = "http://pecl.php.net/"
+	prefixForNPMPackages          = "https://www.npmjs.com/package/"
+	prefixForRubyGems             = "https://rubygems.org/gems/"
+	prefixForRubyGemsHTTP         = "http://rubygems.org/gems/"
+	prefixForNativeRubyGems       = "https://github.com/ruby/"
+	prefixForPyPIPackages         = "https://pypi.org/project/"
+	prefixForJenkinsPlugins       = "https://plugins.jenkins.io/"
+	prefixForJenkinsPluginsGitHub = "https://github.com/jenkinsci/"
+	prefixForRustCrates           = "https://crates.io/crates/"
+	prefixForPHPPear              = "https://pear.php.net/"
+	prefixForPHPPearHTTP          = "http://pear.php.net/"
+	prefixForPHPPecl              = "https://pecl.php.net/"
+	prefixForPHPPeclHTTP          = "http://pecl.php.net/"
 )
 
 // indexCPEList creates an index of CPEs by ecosystem.
@@ -139,8 +140,11 @@ func indexCPEList(list CpeList) *dictionary.Indexed {
 			case strings.HasPrefix(ref, prefixForPyPIPackages):
 				addEntryForPyPIPackage(indexed, ref, cpeItemName)
 
-			case strings.HasPrefix(ref, prefixForJenkinsPlugins):
+			case strings.HasPrefix(ref, prefixForJenkinsPluginsGitHub):
 				// It _might_ be a jenkins plugin!
+				addEntryForJenkinsPluginGitHub(indexed, ref, cpeItemName)
+
+			case strings.HasPrefix(ref, prefixForJenkinsPlugins):
 				addEntryForJenkinsPlugin(indexed, ref, cpeItemName)
 
 			case strings.HasPrefix(ref, prefixForRustCrates):
@@ -170,9 +174,9 @@ func addEntryForRustCrate(indexed *dictionary.Indexed, ref string, cpeItemName s
 	indexed.EcosystemPackages[dictionary.EcosystemRustCrates][ref] = cpeItemName
 }
 
-func addEntryForJenkinsPlugin(indexed *dictionary.Indexed, ref string, cpeItemName string) {
+func addEntryForJenkinsPluginGitHub(indexed *dictionary.Indexed, ref string, cpeItemName string) {
 	// Prune off the non-package-name parts of the URL
-	ref = strings.TrimPrefix(ref, prefixForJenkinsPlugins)
+	ref = strings.TrimPrefix(ref, prefixForJenkinsPluginsGitHub)
 	ref = strings.Split(ref, "/")[0]
 
 	if !strings.HasSuffix(ref, "-plugin") {
@@ -181,6 +185,22 @@ func addEntryForJenkinsPlugin(indexed *dictionary.Indexed, ref string, cpeItemNa
 	}
 
 	ref = strings.TrimSuffix(ref, "-plugin")
+
+	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins]; !ok {
+		indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins] = make(dictionary.Packages)
+	}
+
+	indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins][ref] = cpeItemName
+}
+
+func addEntryForJenkinsPlugin(indexed *dictionary.Indexed, ref string, cpeItemName string) {
+	// Prune off the non-package-name parts of the URL
+	ref = strings.TrimPrefix(ref, prefixForJenkinsPlugins)
+	ref = strings.Split(ref, "/")[0]
+
+	if ref == "" {
+		return
+	}
 
 	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins]; !ok {
 		indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins] = make(dictionary.Packages)

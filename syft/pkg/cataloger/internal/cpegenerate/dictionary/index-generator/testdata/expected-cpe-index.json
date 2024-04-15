@@ -1,7 +1,9 @@
 {
   "ecosystems": {
     "jenkins_plugins": {
-      "sonarqube": "cpe:2.3:a:sonarsource:sonarqube_scanner:*:*:*:*:*:jenkins:*:*"
+      "fireline": "cpe:2.3:a:jenkins:360_fireline:*:*:*:*:*:jenkins:*:*",
+      "sonarqube": "cpe:2.3:a:sonarsource:sonarqube_scanner:*:*:*:*:*:jenkins:*:*",
+      "svn-partial-release-mgr": "cpe:2.3:a:jenkins:_subversion_partial_release_manager:*:*:*:*:*:jenkins:*:*"
     },
     "npm": {
       "merge-recursive": "cpe:2.3:a:umbraengineering:merge-recursive:*:*:*:*:*:node.js:*:*",
