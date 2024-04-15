@@ -514,6 +514,31 @@ func Test_resolveProperty(t *testing.T) {
 			},
 			expected: "${project.parent.groupId}",
 		},
+		{
+			name:     "double dereference",
+			property: "${springboot.version}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					Version: stringPointer("1.2.3"),
+				},
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"springboot.version": "${project.parent.version}",
+					},
+				},
+			},
+			expected: "1.2.3",
+		},
+		{
+			name:     "map missing stops double dereference",
+			property: "${springboot.version}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					Version: stringPointer("1.2.3"),
+				},
+			},
+			expected: "${springboot.version}",
+		},
 	}
 
 	for _, test := range tests {

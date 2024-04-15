@@ -235,59 +235,66 @@ func cleanDescription(original *string) (cleaned string) {
 func resolveProperty(pom gopom.Project, property *string, propertyName string) string {
 	propertyCase := safeString(property)
 	log.WithFields("existingPropertyValue", propertyCase, "propertyName", propertyName).Trace("resolving property")
-	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
-		propertyName := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
-		entries := pomProperties(pom)
-		if value, ok := entries[propertyName]; ok {
-			return value
-		}
+	for propertyMatcher.MatchString(propertyCase) {
+		oldPropertyCase := propertyCase
+		propertyCase = propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
+			propertyName := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
+			entries := pomProperties(pom)
+			if value, ok := entries[propertyName]; ok {
+				return value
+			}
 
-		// if we don't find anything directly in the pom properties,
-		// see if we have a project.x expression and process this based
-		// on the xml tags in gopom
-		parts := strings.Split(propertyName, ".")
-		numParts := len(parts)
-		if numParts > 1 && strings.TrimSpace(parts[0]) == "project" {
-			pomValue := reflect.ValueOf(pom)
-			pomValueType := pomValue.Type()
-			for partNum := 1; partNum < numParts; partNum++ {
-				if pomValueType.Kind() != reflect.Struct {
-					break
-				}
-				part := parts[partNum]
-				for fieldNum := 0; fieldNum < pomValueType.NumField(); fieldNum++ {
-					f := pomValueType.Field(fieldNum)
-					tag := f.Tag.Get("xml")
-					tag = strings.Split(tag, ",")[0]
-					// a segment of the property name matches the xml tag for the field,
-					// so we need to recurse down the nested structs or return a match
-					// if we're done.
-					if part == tag {
-						pomValue = pomValue.Field(fieldNum)
-						pomValueType = pomValue.Type()
-						if pomValueType.Kind() == reflect.Ptr {
-							// we were recursing down the nested structs, but one of the steps
-							// we need to take is a nil pointer, so give up and return the original match
-							if pomValue.IsNil() {
-								return match
-							}
-							pomValue = pomValue.Elem()
-							if !pomValue.IsZero() {
-								// we found a non-zero value whose tag matches this part of the property name
-								pomValueType = pomValue.Type()
-							}
-						}
-						// If this was the last part of the property name, return the value
-						if partNum == numParts-1 {
-							return fmt.Sprintf("%v", pomValue.Interface())
-						}
+			// if we don't find anything directly in the pom properties,
+			// see if we have a project.x expression and process this based
+			// on the xml tags in gopom
+			parts := strings.Split(propertyName, ".")
+			numParts := len(parts)
+			if numParts > 1 && strings.TrimSpace(parts[0]) == "project" {
+				pomValue := reflect.ValueOf(pom)
+				pomValueType := pomValue.Type()
+				for partNum := 1; partNum < numParts; partNum++ {
+					if pomValueType.Kind() != reflect.Struct {
 						break
+					}
+					part := parts[partNum]
+					for fieldNum := 0; fieldNum < pomValueType.NumField(); fieldNum++ {
+						f := pomValueType.Field(fieldNum)
+						tag := f.Tag.Get("xml")
+						tag = strings.Split(tag, ",")[0]
+						// a segment of the property name matches the xml tag for the field,
+						// so we need to recurse down the nested structs or return a match
+						// if we're done.
+						if part == tag {
+							pomValue = pomValue.Field(fieldNum)
+							pomValueType = pomValue.Type()
+							if pomValueType.Kind() == reflect.Ptr {
+								// we were recursing down the nested structs, but one of the steps
+								// we need to take is a nil pointer, so give up and return the original match
+								if pomValue.IsNil() {
+									return match
+								}
+								pomValue = pomValue.Elem()
+								if !pomValue.IsZero() {
+									// we found a non-zero value whose tag matches this part of the property name
+									pomValueType = pomValue.Type()
+								}
+							}
+							// If this was the last part of the property name, return the value
+							if partNum == numParts-1 {
+								return fmt.Sprintf("%v", pomValue.Interface())
+							}
+							break
+						}
 					}
 				}
 			}
+			return match
+		})
+		if oldPropertyCase == propertyCase {
+			break // don't loop forever if replaceAll is making no changes
 		}
-		return match
-	})
+	}
+	return propertyCase
 }
 
 func pomProperties(p gopom.Project) map[string]string {
