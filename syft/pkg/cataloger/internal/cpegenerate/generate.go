@@ -86,6 +86,9 @@ func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 	case pkg.RustPkg:
 		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemRustCrates][p.Name]
 
+	case pkg.PhpPeclPkg:
+		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemPHPPecl][p.Name]
+
 	default:
 		// The dictionary doesn't support this package type yet.
 		return cpe.CPE{}, false

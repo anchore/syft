@@ -108,6 +108,10 @@ const (
 	prefixForPyPIPackages   = "https://pypi.org/project/"
 	prefixForJenkinsPlugins = "https://github.com/jenkinsci/"
 	prefixForRustCrates     = "https://crates.io/crates/"
+	prefixForPHPPear        = "https://pear.php.net/"
+	prefixForPHPPearHTTP    = "http://pear.php.net/"
+	prefixForPHPPecl        = "https://pecl.php.net/"
+	prefixForPHPPeclHTTP    = "http://pecl.php.net/"
 )
 
 // indexCPEList creates an index of CPEs by ecosystem.
@@ -141,6 +145,12 @@ func indexCPEList(list CpeList) *dictionary.Indexed {
 
 			case strings.HasPrefix(ref, prefixForRustCrates):
 				addEntryForRustCrate(indexed, ref, cpeItemName)
+
+			case strings.HasPrefix(ref, prefixForPHPPear), strings.HasPrefix(ref, prefixForPHPPearHTTP):
+				addEntryForPHPPearPackage(indexed, ref, cpeItemName)
+
+			case strings.HasPrefix(ref, prefixForPHPPecl), strings.HasPrefix(ref, prefixForPHPPeclHTTP):
+				addEntryForPHPPeclPackage(indexed, ref, cpeItemName)
 			}
 		}
 	}
@@ -227,4 +237,64 @@ func addEntryForNPMPackage(indexed *dictionary.Indexed, ref string, cpeItemName 
 	}
 
 	indexed.EcosystemPackages[dictionary.EcosystemNPM][ref] = cpeItemName
+}
+
+func phpExtensionPackageFromURLFragment(ref string) string {
+	if strings.HasPrefix(ref, "package/") { // package/HTML_QuickForm/download
+		ref = strings.TrimPrefix(ref, "package/")
+		components := strings.Split(ref, "/")
+
+		if len(components) < 1 {
+			return ""
+		}
+
+		ref = components[0]
+	} else if strings.Contains(ref, "?package=") { // package-changelog.php?package=xhprof&amp;release=0.9.4
+		components := strings.Split(ref, "?package=")
+
+		if len(components) < 2 {
+			return ""
+		}
+
+		components = strings.Split(components[1], "&")
+		if len(components) < 2 {
+			return ""
+		}
+
+		ref = components[0]
+	}
+
+	return ref
+}
+
+func addEntryForPHPPearPackage(indexed *dictionary.Indexed, ref string, cpeItemName string) {
+	ref = strings.TrimPrefix(ref, prefixForPHPPear)
+	ref = strings.TrimPrefix(ref, prefixForPHPPearHTTP)
+	ref = phpExtensionPackageFromURLFragment(ref)
+
+	if ref == "" {
+		return
+	}
+
+	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemPHPPear]; !ok {
+		indexed.EcosystemPackages[dictionary.EcosystemPHPPear] = make(dictionary.Packages)
+	}
+
+	indexed.EcosystemPackages[dictionary.EcosystemPHPPear][ref] = cpeItemName
+}
+
+func addEntryForPHPPeclPackage(indexed *dictionary.Indexed, ref string, cpeItemName string) {
+	ref = strings.TrimPrefix(ref, prefixForPHPPecl)
+	ref = strings.TrimPrefix(ref, prefixForPHPPeclHTTP)
+	ref = phpExtensionPackageFromURLFragment(ref)
+
+	if ref == "" {
+		return
+	}
+
+	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemPHPPecl]; !ok {
+		indexed.EcosystemPackages[dictionary.EcosystemPHPPecl] = make(dictionary.Packages)
+	}
+
+	indexed.EcosystemPackages[dictionary.EcosystemPHPPecl][ref] = cpeItemName
 }

@@ -1031,6 +1031,19 @@
       "zjjserver": "cpe:2.3:a:zjjserver_project:zjjserver:*:*:*:*:*:node.js:*:*",
       "zwserver": "cpe:2.3:a:zwserver_project:zwserver:*:*:*:*:*:node.js:*:*"
     },
+    "php_pear": {
+      "Archive_Tar": "cpe:2.3:a:php:pear_archive_tar:*:*:*:*:*:*:*:*",
+      "HTML_AJAX": "cpe:2.3:a:pear:html_ajax:*:*:*:*:*:*:*:*",
+      "HTML_QuickForm": "cpe:2.3:a:html_quickform_project:html_quickform:*:*:*:*:*:*:*:*",
+      "PEAR": "cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*",
+      "XML_RPC": "cpe:2.3:a:php:xml_rpc:*:*:*:*:*:pear:*:*"
+    },
+    "php_pecl": {
+      "imagick": "cpe:2.3:a:php:imagick:*:*:*:*:*:*:*:*",
+      "memcached": "cpe:2.3:a:php:memcached:*:*:*:*:*:*:*:*",
+      "pecl_http": "cpe:2.3:a:php:pecl_http:*:*:*:*:*:*:*:*",
+      "xhprof": "cpe:2.3:a:php:xhprof:*:*:*:*:*:*:*:*"
+    },
     "pypi": {
       "0.0.1": "cpe:2.3:a:pypi:pypi:*:*:*:*:*:*:*:*",
       "AAmiles": "cpe:2.3:a:pypi:aamiles:*:*:*:*:*:pypi:*:*",

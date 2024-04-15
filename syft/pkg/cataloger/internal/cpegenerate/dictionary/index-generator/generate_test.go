@@ -151,6 +151,58 @@ func Test_addEntryFuncs(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:             "addEntryForPHPPeclPackage",
+			addEntryFunc:     addEntryForPHPPeclPackage,
+			inputRef:         "https://pecl.php.net/package/imagick/something/something/v4007.0",
+			inputCpeItemName: "cpe:2.3:a:php:imagick:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPecl: {
+						"imagick": "cpe:2.3:a:php:imagick:*:*:*:*:*:*:*:*",
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPPeclPackage http changelog",
+			addEntryFunc:     addEntryForPHPPeclPackage,
+			inputRef:         "http://pecl.php.net/package-changelog.php?package=memcached&amp;release",
+			inputCpeItemName: "cpe:2.3:a:php:memcached:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPecl: {
+						"memcached": "cpe:2.3:a:php:memcached:*:*:*:*:*:*:*:*",
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPPearPackage",
+			addEntryFunc:     addEntryForPHPPearPackage,
+			inputRef:         "https://pear.php.net/package/PEAR/download",
+			inputCpeItemName: "cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPear: {
+						"PEAR": "cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*",
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPPearPackage http changelog",
+			addEntryFunc:     addEntryForPHPPearPackage,
+			inputRef:         "http://pear.php.net/package-changelog.php?package=abcdefg&amp;release",
+			inputCpeItemName: "cpe:2.3:a:php:abcdefg:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPear: {
+						"abcdefg": "cpe:2.3:a:php:abcdefg:*:*:*:*:*:*:*:*",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
