@@ -692,7 +692,6 @@
       "mockserve": "cpe:2.3:a:mockserve_project:mockserve:*:*:*:*:*:node.js:*:*",
       "moment": "cpe:2.3:a:momentjs:moment:*:*:*:*:*:node.js:*:*",
       "mongodb-instance": "cpe:2.3:a:mongodb-instance_project:mongodb-instance:*:*:*:*:*:node.js:*:*",
-      "mongoose": "cpe:2.3:a:mongoosejs:mongoose:*:*:*:*:*:node.js:*:*",
       "mongose": "cpe:2.3:a:mongose_project:mongose:*:*:*:*:*:node.js:*:*",
       "monorepo-build": "cpe:2.3:a:monorepo-build_project:monorepo-build:*:*:*:*:*:node.js:*:*",
       "mootools": "cpe:2.3:a:mootools_project:mootools:*:*:*:*:*:node.js:*:*",
