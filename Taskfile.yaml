@@ -390,7 +390,7 @@ tasks:
 
   generate-cpe-dictionary-index:
     desc: Generate the CPE index based off of the latest available CPE dictionary
-    dir: "syft/pkg/cataloger/common/cpe/dictionary"
+    dir: "syft/pkg/cataloger/internal/cpegenerate/dictionary"
     cmds:
       - "go generate"
 
