@@ -63,6 +63,7 @@ func locationsThatProvideLibraries(accessor sbomsync.Accessor) (map[string]file.
 	allLibLocations := file.NewCoordinateSet()
 
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
+		// PROBLEM: this does not consider all symlinks to real paths that are libraries
 		for coord, f := range s.Artifacts.Executables {
 			if !f.HasExports {
 				continue
@@ -84,12 +85,20 @@ func packagesWithLibraryOwnership(resolver file.Resolver, accessor sbomsync.Acce
 
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
 		for _, p := range s.Artifacts.Packages.Sorted() {
-			fileOwner, ok := p.Metadata.(pkg.FileOwner)
-			if !ok {
-				continue
+			var ownedFilePaths []string
+			if p.Type == pkg.BinaryPkg {
+				for _, loc := range p.Locations.ToSlice() {
+					ownedFilePaths = append(ownedFilePaths, loc.Path())
+				}
+			} else {
+				fileOwner, ok := p.Metadata.(pkg.FileOwner)
+				if !ok {
+					continue
+				}
+				ownedFilePaths = fileOwner.OwnedFiles()
 			}
 
-			for _, pth := range fileOwner.OwnedFiles() {
+			for _, pth := range ownedFilePaths {
 				ownedLocation, err := resolver.FilesByPath(pth)
 				if err != nil {
 					log.WithFields("error", err, "path", pth).Trace("unable to find path for owned file")

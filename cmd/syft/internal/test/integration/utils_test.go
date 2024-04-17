@@ -32,7 +32,6 @@ func catalogFixtureImageWithConfig(t *testing.T, fixtureImageName string, cfg *s
 	cfg.CatalogerSelection = cfg.CatalogerSelection.WithDefaults(pkgcataloging.ImageTag)
 
 	// get the fixture image tar file
-	imagetest.GetFixtureImage(t, "docker-archive", fixtureImageName)
 	tarPath := imagetest.GetFixtureImageTarPath(t, fixtureImageName)
 
 	// get the source to build an SBOM against
