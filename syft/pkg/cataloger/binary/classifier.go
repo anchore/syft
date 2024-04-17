@@ -125,7 +125,7 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 
 		matchMetadata := internal.MatchNamedCaptureGroups(tmplPattern, string(contents))
 
-		p := newPackage(classifier, location, matchMetadata)
+		p := newClassifierPackage(classifier, location, matchMetadata)
 		if p == nil {
 			return nil, nil
 		}
@@ -144,12 +144,33 @@ func FileContentsVersionMatcher(pattern string) EvidenceMatcher {
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pat, string(contents))
 
-		p := newPackage(classifier, location, matchMetadata)
+		p := newClassifierPackage(classifier, location, matchMetadata)
 		if p == nil {
 			return nil, nil
 		}
 
 		return []pkg.Package{*p}, nil
+	}
+}
+
+// matchExcluding tests the provided regular expressions against the file, and if matched, DOES NOT return
+// anything that the matcher would otherwise return
+func matchExcluding(matcher EvidenceMatcher, contentPatternsToExclude ...string) EvidenceMatcher {
+	var nonMatchPatterns []*regexp.Regexp
+	for _, p := range contentPatternsToExclude {
+		nonMatchPatterns = append(nonMatchPatterns, regexp.MustCompile(p))
+	}
+	return func(resolver file.Resolver, classifier Classifier, location file.Location) ([]pkg.Package, error) {
+		contents, err := getContents(resolver, location)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
+		}
+		for _, nonMatch := range nonMatchPatterns {
+			if nonMatch.Match(contents) {
+				return nil, nil
+			}
+		}
+		return matcher(resolver, classifier, location)
 	}
 }
 

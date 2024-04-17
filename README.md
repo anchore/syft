@@ -228,12 +228,12 @@ syft <a directory> --select-catalogers "python"
 
 Use the default set of catalogers and add a cataloger to the set:
 ```bash
-syft ... --catalogers "+sbom-cataloger"
+syft ... --select-catalogers "+sbom-cataloger"
 ```
 
 Use the default set of catalogers but remove any catalogers that deal with RPMs:
 ```bash
-syft ... --catalogers "-rpm"
+syft ... --select-catalogers "-rpm"
 ```
 
 Only scan with catalogers that:

@@ -151,7 +151,10 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 	return main
 }
 
-var semverPattern = regexp.MustCompile(`\x00(?P<version>v?(\d+\.\d+\.\d+[-\w]*[+\w]*))\x00`)
+// this is checking for (.L)? because at least one binary seems to have \xA0L preceding the version string, but for some reason
+// this is unable to be matched by the regex here as \x00\xA0L;
+// the only thing that seems to work is to just look for version strings following both \x00 and \x00.L for now
+var semverPattern = regexp.MustCompile(`\x00(.L)?(?P<version>v?(\d+\.\d+\.\d+[-\w]*[+\w]*))\x00`)
 
 func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuildinfoEntry, gbs pkg.KeyValues, reader io.ReadSeekCloser) string {
 	vcsVersion, hasVersion := gbs.Get("vcs.revision")
@@ -179,16 +182,8 @@ func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuil
 		if err != nil {
 			log.WithFields("error", err).Trace("unable to seek to start of go binary reader")
 		} else {
-			contents, err := io.ReadAll(reader)
-			if err != nil {
-				log.WithFields("error", err).Trace("unable to read from go binary reader")
-			} else {
-				matchMetadata := internal.MatchNamedCaptureGroups(semverPattern, string(contents))
-
-				version, ok := matchMetadata["version"]
-				if ok {
-					return version
-				}
+			if v := extractVersionFromContents(reader); v != "" {
+				return v
 			}
 		}
 	}
@@ -207,6 +202,21 @@ func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuil
 		return module.PseudoVersion(majorVersion, fullVersion, ts, version)
 	}
 
+	return ""
+}
+
+func extractVersionFromContents(reader io.Reader) string {
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		log.WithFields("error", err).Trace("unable to read from go binary reader")
+		return ""
+	}
+	matchMetadata := internal.MatchNamedCaptureGroups(semverPattern, string(contents))
+
+	version, ok := matchMetadata["version"]
+	if ok {
+		return version
+	}
 	return ""
 }
 

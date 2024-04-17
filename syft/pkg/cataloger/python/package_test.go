@@ -35,7 +35,7 @@ func Test_packageURL(t *testing.T) {
 					CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				},
 			},
-			want: "pkg:pypi/name@v0.1.0?vcs_url=git+https://github.com/test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			want: "pkg:pypi/name@v0.1.0?vcs_url=git%2Bhttps://github.com/test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		},
 	}
 	for _, tt := range tests {

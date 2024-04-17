@@ -19,7 +19,10 @@ type Executable struct {
 	// Format denotes either ELF, Mach-O, or PE
 	Format ExecutableFormat `json:"format" yaml:"format" mapstructure:"format"`
 
-	SecurityFeatures *ELFSecurityFeatures `json:"elfSecurityFeatures,omitempty" yaml:"elfSecurityFeatures" mapstructure:"elfSecurityFeatures"`
+	HasExports          bool                 `json:"hasExports" yaml:"hasExports" mapstructure:"hasExports"`
+	HasEntrypoint       bool                 `json:"hasEntrypoint" yaml:"hasEntrypoint" mapstructure:"hasEntrypoint"`
+	ImportedLibraries   []string             `json:"importedLibraries" yaml:"importedLibraries" mapstructure:"importedLibraries"`
+	ELFSecurityFeatures *ELFSecurityFeatures `json:"elfSecurityFeatures,omitempty" yaml:"elfSecurityFeatures" mapstructure:"elfSecurityFeatures"`
 }
 
 type ELFSecurityFeatures struct {

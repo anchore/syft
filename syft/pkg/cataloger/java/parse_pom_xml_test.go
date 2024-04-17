@@ -514,6 +514,86 @@ func Test_resolveProperty(t *testing.T) {
 			},
 			expected: "${project.parent.groupId}",
 		},
+		{
+			name:     "double dereference",
+			property: "${springboot.version}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					Version: stringPointer("1.2.3"),
+				},
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"springboot.version": "${project.parent.version}",
+					},
+				},
+			},
+			expected: "1.2.3",
+		},
+		{
+			name:     "map missing stops double dereference",
+			property: "${springboot.version}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					Version: stringPointer("1.2.3"),
+				},
+			},
+			expected: "${springboot.version}",
+		},
+		{
+			name:     "resolution halts even if it resolves to a variable",
+			property: "${springboot.version}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					Version: stringPointer("${undefined.version}"),
+				},
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"springboot.version": "${project.parent.version}",
+					},
+				},
+			},
+			expected: "${undefined.version}",
+		},
+		{
+			name:     "resolution halts even if cyclic",
+			property: "${springboot.version}",
+			pom: gopom.Project{
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"springboot.version": "${springboot.version}",
+					},
+				},
+			},
+			expected: "${springboot.version}",
+		},
+		{
+			name:     "resolution halts even if cyclic more steps",
+			property: "${cyclic.version}",
+			pom: gopom.Project{
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"other.version":      "${cyclic.version}",
+						"springboot.version": "${other.version}",
+						"cyclic.version":     "${springboot.version}",
+					},
+				},
+			},
+			expected: "${cyclic.version}",
+		},
+		{
+			name:     "resolution  halts even if cyclic involving parent",
+			property: "${cyclic.version}",
+			pom: gopom.Project{
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"other.version":      "${cyclic.version}",
+						"springboot.version": "${other.version}",
+						"cyclic.version":     "${springboot.version}",
+					},
+				},
+			},
+			expected: "${cyclic.version}",
+		},
 	}
 
 	for _, test := range tests {

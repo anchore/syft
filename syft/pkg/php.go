@@ -36,3 +36,9 @@ type PhpComposerAuthors struct {
 	Email    string `json:"email,omitempty"`
 	Homepage string `json:"homepage,omitempty"`
 }
+
+type PhpPeclEntry struct {
+	Name    string   `json:"name"`
+	Version string   `json:"version"`
+	License []string `json:"license,omitempty"`
+}

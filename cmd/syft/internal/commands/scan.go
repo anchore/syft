@@ -249,13 +249,6 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 		return nil, fmt.Errorf("could not determine source: %w", err)
 	}
 
-	if err != nil {
-		if userInput == "power-user" {
-			bus.Notify("Note: the 'power-user' command has been removed.")
-		}
-		return nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
-	}
-
 	return src, nil
 }
 

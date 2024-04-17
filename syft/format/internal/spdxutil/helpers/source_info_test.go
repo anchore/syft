@@ -129,6 +129,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.PhpPeclPkg,
+			},
+			expected: []string{
+				"from PHP Pecl manifest",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.DartPubPkg,
 			},
 			expected: []string{

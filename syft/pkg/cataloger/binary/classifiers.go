@@ -87,12 +87,21 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "java-binary-openjdk",
 			FileGlob: "**/java",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
-				// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
-				`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
-			Package: "java",
-			PURL:    mustPURL("pkg:generic/java@version"),
+			EvidenceMatcher: matchExcluding(
+				evidenceMatchers(
+					FileContentsVersionMatcher(
+						// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
+						// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
+						`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
+					FileContentsVersionMatcher(
+						// arm64 versions: [NUL]0.0[NUL][NUL][NUL][NUL][NUL]11.0.22+7[NUL][NUL][NUL][NUL][NUL][NUL][NUL]openjdk[NUL]java[NUL]
+						`(?m)\x00(?P<release>[0-9]+[.0-9]*)\x00+(?P<version>[0-9]+[^\x00]+)\x00+openjdk\x00java`),
+				),
+				// don't match graalvm
+				"-jvmci-",
+			),
+			Package: "java/jre",
+			PURL:    mustPURL("pkg:generic/java/jre@version"),
 			// TODO the updates might need to be part of the CPE Attributes, like: 1.8.0:update152
 			CPEs: singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*"),
 		},
@@ -102,19 +111,41 @@ func DefaultClassifiers() []Classifier {
 			EvidenceMatcher: FileContentsVersionMatcher(
 				// [NUL]java[NUL]1.8[NUL][NUL][NUL][NUL]1.8.0-foreman_2022_09_22_15_30-b00[NUL]
 				`(?m)\x00java\x00(?P<release>[0-9]+[.0-9]+)\x00{4}(?P<version>[0-9]+[-._a-zA-Z0-9]+)\x00`),
-			Package: "java",
-			PURL:    mustPURL("pkg:generic/java@version"),
+			Package: "java/jre",
+			PURL:    mustPURL("pkg:generic/java/jre@version"),
 			CPEs:    singleCPE("cpe:2.3:a:ibm:java:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "java-binary-oracle",
 			FileGlob: "**/java",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				// [NUL]19.0.1+10-21[NUL]
-				`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`),
-			Package: "java",
-			PURL:    mustPURL("pkg:generic/java@version"),
+			EvidenceMatcher: matchExcluding(
+				FileContentsVersionMatcher(
+					// [NUL]19.0.1+10-21[NUL]
+					`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`),
+				// don't match openjdk
+				`\x00openjdk\x00`,
+			),
+			Package: "java/jre",
+			PURL:    mustPURL("pkg:generic/java/jre@version"),
 			CPEs:    singleCPE("cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "java-binary-graalvm",
+			FileGlob: "**/java",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)\x00(?P<version>[0-9]+[.0-9]+[.0-9]+\+[0-9]+-jvmci-[0-9]+[.0-9]+-b[0-9]+)\x00`),
+			Package: "java/graalvm",
+			PURL:    mustPURL("pkg:generic/java/graalvm@version"),
+			CPEs:    singleCPE("cpe:2.3:a:oracle:graalvm:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "java-binary-jdk",
+			FileGlob: "**/jdb",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?([-._a-zA-Z0-9]+)?)\x00`),
+			Package: "java/jdk",
+			PURL:    mustPURL("pkg:generic/java/jdk@version"),
+			CPEs:    singleCPE("cpe:2.3:a:oracle:jdk:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "nodejs-binary",
@@ -386,7 +417,8 @@ func DefaultClassifiers() []Classifier {
 			FileGlob: "**/openssl",
 			EvidenceMatcher: FileContentsVersionMatcher(
 				// [NUL]OpenSSL 3.1.4'
-				`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
+				// [NUL]OpenSSL 1.1.1w'
+				`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+([a-z]|-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
 			),
 			Package: "openssl",
 			PURL:    mustPURL("pkg:generic/openssl@version"),

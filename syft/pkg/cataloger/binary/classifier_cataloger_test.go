@@ -608,10 +608,10 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		{
 			logicalFixture: "java-jre-openjdk/1.8.0_352-b08/linux-amd64",
 			expected: pkg.Package{
-				Name:      "java",
+				Name:      "java/jre",
 				Version:   "1.8.0_352-b08",
 				Type:      "binary",
-				PURL:      "pkg:generic/java@1.8.0_352-b08",
+				PURL:      "pkg:generic/java/jre@1.8.0_352-b08",
 				Locations: locations("java"),
 				Metadata:  metadata("java-binary-openjdk", "java"),
 			},
@@ -619,12 +619,45 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		{
 			logicalFixture: "java-jre-openjdk/11.0.17/linux-amd64",
 			expected: pkg.Package{
-				Name:      "java",
+				Name:      "java/jre",
 				Version:   "11.0.17+8-LTS",
 				Type:      "binary",
-				PURL:      "pkg:generic/java@11.0.17+8-LTS",
+				PURL:      "pkg:generic/java/jre@11.0.17%2B8-LTS",
 				Locations: locations("java"),
 				Metadata:  metadata("java-binary-openjdk", "java"),
+			},
+		},
+		{
+			logicalFixture: "java-jre-openjdk-eclipse/11.0.22/linux-amd64",
+			expected: pkg.Package{
+				Name:      "java/jre",
+				Version:   "11.0.22+7",
+				Type:      "binary",
+				PURL:      "pkg:generic/java/jre@11.0.22%2B7",
+				Locations: locations("java"),
+				Metadata:  metadata("java-binary-openjdk", "java"),
+			},
+		},
+		{
+			logicalFixture: "java-jre-openjdk-arm64-eclipse/11.0.22/linux-arm64",
+			expected: pkg.Package{
+				Name:      "java/jre",
+				Version:   "11.0.22+7",
+				Type:      "binary",
+				PURL:      "pkg:generic/java/jre@11.0.22%2B7",
+				Locations: locations("java"),
+				Metadata:  metadata("java-binary-openjdk", "java"),
+			},
+		},
+		{
+			logicalFixture: "java-graal-openjdk/17.0.3+7-jvmci-22.1-b06/linux-amd64",
+			expected: pkg.Package{
+				Name:      "java/graalvm",
+				Version:   "17.0.3+7-jvmci-22.1-b06",
+				Type:      "binary",
+				PURL:      "pkg:generic/java/graalvm@17.0.3%2B7-jvmci-22.1-b06",
+				Locations: locations("java"),
+				Metadata:  metadata("java-binary-graalvm", "java"),
 			},
 		},
 		{
@@ -632,10 +665,10 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
 			logicalFixture: "java-jre-oracle/19.0.1/linux-amd64",
 			expected: pkg.Package{
-				Name:      "java",
+				Name:      "java/jre",
 				Version:   "19.0.1+10-21",
 				Type:      "binary",
-				PURL:      "pkg:generic/java@19.0.1+10-21",
+				PURL:      "pkg:generic/java/jre@19.0.1%2B10-21",
 				Locations: locations("java"),
 				Metadata:  metadata("java-binary-oracle", "java"),
 			},
@@ -645,10 +678,10 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
 			logicalFixture: "java-jre-oracle/19.0.1/darwin",
 			expected: pkg.Package{
-				Name:      "java",
+				Name:      "java/jre",
 				Version:   "19.0.1+10-21",
 				Type:      "binary",
-				PURL:      "pkg:generic/java@19.0.1+10-21",
+				PURL:      "pkg:generic/java/jre@19.0.1%2B10-21",
 				Locations: locations("java"),
 				Metadata:  metadata("java-binary-oracle", "java"),
 			},
@@ -656,12 +689,23 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		{
 			logicalFixture: "java-jre-ibm/1.8.0_391/linux-amd64",
 			expected: pkg.Package{
-				Name:      "java",
+				Name:      "java/jre",
 				Version:   "1.8.0-foreman_2023_10_12_13_27-b00",
 				Type:      "binary",
-				PURL:      "pkg:generic/java@1.8.0-foreman_2023_10_12_13_27-b00",
+				PURL:      "pkg:generic/java/jre@1.8.0-foreman_2023_10_12_13_27-b00",
 				Locations: locations("java"),
 				Metadata:  metadata("java-binary-ibm", "java"),
+			},
+		},
+		{
+			logicalFixture: "java-jdk-openjdk/21.0.2+13-LTS/linux-amd64",
+			expected: pkg.Package{
+				Name:      "java/jdk",
+				Version:   "21.0.2+13-LTS",
+				Type:      "binary",
+				PURL:      "pkg:generic/java/jdk@21.0.2%2B13-LTS",
+				Locations: locations("jdb"),
+				Metadata:  metadata("java-binary-jdk", "java"),
 			},
 		},
 		{
@@ -860,6 +904,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "3.1.4",
 				Type:      "binary",
 				PURL:      "pkg:generic/openssl@3.1.4",
+				Locations: locations("openssl"),
+				Metadata:  metadata("openssl-binary"),
+			},
+		},
+		{
+			logicalFixture: "openssl/1.1.1w/linux-arm64",
+			expected: pkg.Package{
+				Name:      "openssl",
+				Version:   "1.1.1w",
+				Type:      "binary",
+				PURL:      "pkg:generic/openssl@1.1.1w",
 				Locations: locations("openssl"),
 				Metadata:  metadata("openssl-binary"),
 			},
