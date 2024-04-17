@@ -1,1 +1,1 @@
-FROM anchore/test_images:java-1abc58f@sha256:3add9f90e9ed35739cc99b7830767e09eec921052e2412adf4491648c741f066
+FROM anchore/test_images:java-6ec7f71@sha256:e68db8ae97cc84b5b58f7bea0c138e00440aea188d74a2f4a2c2f6402e57d3a9
