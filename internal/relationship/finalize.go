@@ -31,7 +31,7 @@ func Finalize(resolver file.Resolver, builder sbomsync.Builder, cfg cataloging.R
 	accessor.WriteToSBOM(func(s *sbom.SBOM) {
 		s.Relationships = append(s.Relationships, newBinaryRelationships...)
 	})
-
+	builder.AddRelationships(newBinaryRelationships...)
 	// add source "contains package" relationship (source-to-package)
 	var sourceRelationships []artifact.Relationship
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
