@@ -502,7 +502,7 @@ func Test_resolveProperty(t *testing.T) {
 			pom: gopom.Project{
 				Parent: nil,
 			},
-			expected: "${project.parent.groupId}",
+			expected: "",
 		},
 		{
 			name:     "nil string pointer halts search",
@@ -512,7 +512,7 @@ func Test_resolveProperty(t *testing.T) {
 					GroupID: nil,
 				},
 			},
-			expected: "${project.parent.groupId}",
+			expected: "",
 		},
 		{
 			name:     "double dereference",
@@ -537,7 +537,7 @@ func Test_resolveProperty(t *testing.T) {
 					Version: stringPointer("1.2.3"),
 				},
 			},
-			expected: "${springboot.version}",
+			expected: "",
 		},
 		{
 			name:     "resolution halts even if it resolves to a variable",
@@ -552,7 +552,7 @@ func Test_resolveProperty(t *testing.T) {
 					},
 				},
 			},
-			expected: "${undefined.version}",
+			expected: "",
 		},
 		{
 			name:     "resolution halts even if cyclic",
@@ -564,7 +564,7 @@ func Test_resolveProperty(t *testing.T) {
 					},
 				},
 			},
-			expected: "${springboot.version}",
+			expected: "",
 		},
 		{
 			name:     "resolution halts even if cyclic more steps",
@@ -578,7 +578,7 @@ func Test_resolveProperty(t *testing.T) {
 					},
 				},
 			},
-			expected: "${cyclic.version}",
+			expected: "",
 		},
 		{
 			name:     "resolution  halts even if cyclic involving parent",
@@ -592,7 +592,7 @@ func Test_resolveProperty(t *testing.T) {
 					},
 				},
 			},
-			expected: "${cyclic.version}",
+			expected: "",
 		},
 	}
 
