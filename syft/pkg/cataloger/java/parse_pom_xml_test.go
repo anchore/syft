@@ -584,9 +584,12 @@ func Test_resolveProperty(t *testing.T) {
 			name:     "resolution  halts even if cyclic involving parent",
 			property: "${cyclic.version}",
 			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					Version: stringPointer("${cyclic.version}"),
+				},
 				Properties: &gopom.Properties{
 					Entries: map[string]string{
-						"other.version":      "${cyclic.version}",
+						"other.version":      "${parent.version}",
 						"springboot.version": "${other.version}",
 						"cyclic.version":     "${springboot.version}",
 					},
