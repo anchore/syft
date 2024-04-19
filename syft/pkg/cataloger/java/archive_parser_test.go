@@ -1353,7 +1353,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 		{
 			name:         "exclude instrumentation jars with Weave-Classes in manifest",
 			fixtureName:  "spring-instrumentation-4.3.0-1.0",
-			expectedPkgs: nil, // we expect no packages to be discovered from this
+			expectedPkgs: nil, // we expect no packages to be discovered when Weave-Classes present in the manifest
 		},
 	}
 	for _, tt := range tests {
