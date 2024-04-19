@@ -40,9 +40,6 @@ func (l stereoscopeImageSourceProvider) Provide(ctx context.Context) (source.Sou
 		Exclude:         l.cfg.Exclude,
 		Alias:           l.cfg.Alias,
 	}
-	if err != nil {
-		return nil, err
-	}
 	return New(img, cfg), nil
 }
 
