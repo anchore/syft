@@ -181,6 +181,13 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 		return nil, nil
 	}
 
+	// check for existence of Weave-Classes manifest key in order to exclude jars getting misrepresented as
+	// their targeted counterparts, e.g. newrelic spring and tomcat instrumentation
+	if _, ok := manifest.Main.Get("Weave-Classes"); ok {
+		log.Debugf("excluding archive due to Weave-Classes manifest entry: %s", j.location)
+		return nil, nil
+	}
+
 	// grab and assign digest for the entire archive
 	digests, err := getDigestsFromArchive(j.archivePath)
 	if err != nil {
