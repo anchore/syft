@@ -13,6 +13,16 @@
       "unicode": "cpe:2.3:a:unicode_project:unicode:*:*:*:*:*:node.js:*:*",
       "unicorn-list": "cpe:2.3:a:unicorn-list_project:unicorn-list:*:*:*:*:*:node.js:*:*"
     },
+    "php_pear": {
+      "HTML_QuickForm": "cpe:2.3:a:html_quickform_project:html_quickform:*:*:*:*:*:*:*:*",
+      "PEAR": "cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*",
+      "XML_RPC": "cpe:2.3:a:php:xml_rpc:*:*:*:*:*:pear:*:*"
+    },
+    "php_pecl": {
+      "imagick": "cpe:2.3:a:php:imagick:*:*:*:*:*:*:*:*",
+      "memcached": "cpe:2.3:a:php:memcached:*:*:*:*:*:*:*:*",
+      "xhprof": "cpe:2.3:a:php:xhprof:*:*:*:*:*:*:*:*"
+    },
     "rubygems": {
       "openssl": "cpe:2.3:a:ruby-lang:openssl:*:*:*:*:*:*:*:*"
     },
