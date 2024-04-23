@@ -203,6 +203,19 @@ func Test_addEntryFuncs(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:             "addEntryForPHPComposerPackage",
+			addEntryFunc:     addEntryForPHPComposerPackage,
+			inputRef:         "https://packagist.org/packages/frappant/frp-form-answers",
+			inputCpeItemName: "cpe:2.3:a:frappant:forms_export:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPComposer: {
+						"frappant/frp-form-answers": "cpe:2.3:a:frappant:forms_export:*:*:*:*:*:*:*:*",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

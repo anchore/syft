@@ -108,6 +108,7 @@ const (
 	prefixForPHPPearHTTP    = "http://pear.php.net/"
 	prefixForPHPPecl        = "https://pecl.php.net/"
 	prefixForPHPPeclHTTP    = "http://pecl.php.net/"
+	prefixForPHPComposer    = "https://packagist.org/packages/"
 )
 
 // indexCPEList creates an index of CPEs by ecosystem.
@@ -147,6 +148,9 @@ func indexCPEList(list CpeList) *dictionary.Indexed {
 
 			case strings.HasPrefix(ref, prefixForPHPPecl), strings.HasPrefix(ref, prefixForPHPPeclHTTP):
 				addEntryForPHPPeclPackage(indexed, ref, cpeItemName)
+
+			case strings.HasPrefix(ref, prefixForPHPComposer):
+				addEntryForPHPComposerPackage(indexed, ref, cpeItemName)
 			}
 		}
 	}
@@ -293,4 +297,22 @@ func addEntryForPHPPeclPackage(indexed *dictionary.Indexed, ref string, cpeItemN
 	}
 
 	indexed.EcosystemPackages[dictionary.EcosystemPHPPecl][ref] = cpeItemName
+}
+
+func addEntryForPHPComposerPackage(indexed *dictionary.Indexed, ref string, cpeItemName string) {
+	// Prune off the non-package-name parts of the URL
+	ref = strings.TrimPrefix(ref, prefixForPHPComposer)
+	components := strings.Split(ref, "/")
+
+	if len(components) < 2 {
+		return
+	}
+
+	ref = components[0] + "/" + components[1]
+
+	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemPHPComposer]; !ok {
+		indexed.EcosystemPackages[dictionary.EcosystemPHPComposer] = make(dictionary.Packages)
+	}
+
+	indexed.EcosystemPackages[dictionary.EcosystemPHPComposer][ref] = cpeItemName
 }
