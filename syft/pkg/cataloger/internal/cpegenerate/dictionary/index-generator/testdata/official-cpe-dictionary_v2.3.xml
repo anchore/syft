@@ -24972,6 +24972,7 @@
     <references>
       <reference href="http://pear.php.net/package/HTML_QuickForm/">Project</reference>
       <reference href="http://pear.php.net/package/HTML_QuickForm/download">Version</reference>
+      <reference href="http://some-other-unrelated-reference">Test</reference>
     </references>
     <cpe-23:cpe23-item name="cpe:2.3:a:html_quickform_project:html_quickform:2.0:*:*:*:*:*:*:*"/>
   </cpe-item>
@@ -24980,6 +24981,7 @@
     <references>
       <reference href="http://pear.php.net/package/HTML_QuickForm/">Project</reference>
       <reference href="http://pear.php.net/package/HTML_QuickForm/download">Version</reference>
+      <reference href="http://some-other-unrelated-reference">Test</reference>
     </references>
     <cpe-23:cpe23-item name="cpe:2.3:a:html_quickform_project:html_quickform:2.1:*:*:*:*:*:*:*"/>
   </cpe-item>

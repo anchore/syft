@@ -3,8 +3,8 @@ package main
 type CpeItem struct {
 	Name       string `xml:"name,attr"`
 	Title      string `xml:"title"`
-	References []struct {
-		Reference struct {
+	References struct {
+		Reference []struct {
 			Href string `xml:"href,attr"`
 			Body string `xml:",chardata"`
 		} `xml:"reference"`

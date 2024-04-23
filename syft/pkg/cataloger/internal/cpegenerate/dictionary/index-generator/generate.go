@@ -52,11 +52,9 @@ func generateIndexedDictionaryJSON(rawGzipData io.Reader) ([]byte, error) {
 func filterCpeList(cpeList CpeList) CpeList {
 	var processedCpeList CpeList
 
-	seen := make(map[string]struct{})
-
 	for _, cpeItem := range cpeList.CpeItems {
 		// Skip CPE items that don't have any references.
-		if len(cpeItem.References) == 0 {
+		if len(cpeItem.References.Reference) == 0 {
 			continue
 		}
 
@@ -64,6 +62,7 @@ func filterCpeList(cpeList CpeList) CpeList {
 		parsedName, err := wfn.Parse(cpeItem.Name)
 		if err != nil {
 			log.Printf("unable to parse CPE URI %q: %s", cpeItem.Name, err)
+			continue
 		}
 
 		if slices.Contains([]string{"h", "o"}, parsedName.Part) {
@@ -71,15 +70,12 @@ func filterCpeList(cpeList CpeList) CpeList {
 		}
 
 		normalizedName := normalizeCPE(parsedName).BindToURI()
-		if _, ok := seen[normalizedName]; ok {
-			continue
-		}
-		seen[normalizedName] = struct{}{}
 		cpeItem.Name = normalizedName
 
 		parsedCPE, err := wfn.Parse(cpeItem.Cpe23Item.Name)
 		if err != nil {
 			log.Printf("unable to parse CPE value %q: %s", cpeItem.Cpe23Item.Name, err)
+			continue
 		}
 
 		cpeItem.Cpe23Item.Name = normalizeCPE(parsedCPE).BindToFmtString()
@@ -123,8 +119,8 @@ func indexCPEList(list CpeList) *dictionary.Indexed {
 	for _, cpeItem := range list.CpeItems {
 		cpeItemName := cpeItem.Cpe23Item.Name
 
-		for _, reference := range cpeItem.References {
-			ref := reference.Reference.Href
+		for _, reference := range cpeItem.References.Reference {
+			ref := reference.Href
 
 			switch {
 			case strings.HasPrefix(ref, prefixForNPMPackages):
