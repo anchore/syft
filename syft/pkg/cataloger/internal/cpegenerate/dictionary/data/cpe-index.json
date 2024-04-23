@@ -1514,6 +1514,18 @@
       "zjjserver": "cpe:2.3:a:zjjserver_project:zjjserver:*:*:*:*:*:node.js:*:*",
       "zwserver": "cpe:2.3:a:zwserver_project:zwserver:*:*:*:*:*:node.js:*:*"
     },
+    "php_composer": {
+      "alfnru/password_recovery": "cpe:2.3:a:password_recovery_project:password_recovery:*:*:*:*:*:roundcube:*:*",
+      "fineuploader/php-traditional-server": "cpe:2.3:a:php-traditional-server_project:php-traditional-server:*:*:*:*:*:*:*:*",
+      "frappant/frp-form-answers": "cpe:2.3:a:frappant:forms_export:*:*:*:*:*:typo3:*:*",
+      "joomla/session": "cpe:2.3:a:joomla:session:*:*:*:*:*:*:*:*",
+      "mustache/mustache": "cpe:2.3:a:mustache_project:mustache:*:*:*:*:*:php:*:*",
+      "phpfastcache/phpfastcache": "cpe:2.3:a:phpfastcache:phpfastcache:*:*:*:*:*:*:*:*",
+      "shopware/shopware": "cpe:2.3:a:shopware:shopware:*:*:*:*:*:*:*:*",
+      "typo3/html-sanitizer": "cpe:2.3:a:typo3:html_sanitizer:*:*:*:*:*:*:*:*",
+      "typo3/phar-stream-wrapper": "cpe:2.3:a:typo3:pharstreamwrapper:*:*:*:*:*:*:*:*",
+      "yab/quarx": "cpe:2.3:a:quarx_cms_project:quarx_cms:*:*:*:*:*:*:*:*"
+    },
     "php_pear": {
       "Archive_Tar": "cpe:2.3:a:php:pear_archive_tar:*:*:*:*:*:*:*:*",
       "HTML_AJAX": "cpe:2.3:a:pear:html_ajax:*:*:*:*:*:*:*:*",

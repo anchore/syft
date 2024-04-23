@@ -16,6 +16,9 @@
       "unicode-json": "cpe:2.3:a:unicode:unicode-json:*:*:*:*:*:node.js:*:*",
       "unicorn-list": "cpe:2.3:a:unicorn-list_project:unicorn-list:*:*:*:*:*:node.js:*:*"
     },
+    "php_composer": {
+      "frappant/frp-form-answers": "cpe:2.3:a:frappant:forms_export:*:*:*:*:*:typo3:*:*"
+    },
     "php_pear": {
       "HTML_QuickForm": "cpe:2.3:a:html_quickform_project:html_quickform:*:*:*:*:*:*:*:*",
       "PEAR": "cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*",

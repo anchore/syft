@@ -24985,4 +24985,13 @@
     </references>
     <cpe-23:cpe23-item name="cpe:2.3:a:html_quickform_project:html_quickform:2.1:*:*:*:*:*:*:*"/>
   </cpe-item>
+  <cpe-item name="cpe:/a:frappant:forms_export:-::~~~typo3~~">
+    <title xml:lang="en-US">!Frappant Forms Export for TYPO3</title>
+    <references>
+      <reference href="https://packagist.org/packages/frappant/frp-form-answers">Version</reference>
+      <reference href="https://frappant.ch/">Vendor</reference>
+      <reference href="https://extensions.typo3.org/extension/frp_form_answers">Product</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:frappant:forms_export:-:*:*:*:*:typo3:*:*"/>
+  </cpe-item>
 </cpe-list>
