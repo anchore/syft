@@ -4,6 +4,9 @@ const (
 	EcosystemNPM            = "npm"
 	EcosystemRubyGems       = "rubygems"
 	EcosystemPyPI           = "pypi"
+	EcosystemPHPPear        = "php_pear"
+	EcosystemPHPPecl        = "php_pecl"
+	EcosystemPHPComposer    = "php_composer"
 	EcosystemJenkinsPlugins = "jenkins_plugins"
 	EcosystemRustCrates     = "rust_crates"
 )

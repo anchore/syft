@@ -65,8 +65,8 @@ func Test_addEntryFuncs(t *testing.T) {
 			},
 		},
 		{
-			name:             "addEntryForJenkinsPlugin",
-			addEntryFunc:     addEntryForJenkinsPlugin,
+			name:             "addEntryForJenkinsPluginGitHub",
+			addEntryFunc:     addEntryForJenkinsPluginGitHub,
 			inputRef:         "https://github.com/jenkinsci/sonarqube-plugin",
 			inputCpeItemName: "cpe:2.3:a:sonarsource:sonarqube_scanner:2.7:*:*:*:*:jenkins:*:*",
 			expectedIndexed: dictionary.Indexed{
@@ -78,12 +78,25 @@ func Test_addEntryFuncs(t *testing.T) {
 			},
 		},
 		{
-			name:             "addEntryForJenkinsPlugin: not actually a plugin",
-			addEntryFunc:     addEntryForJenkinsPlugin,
+			name:             "addEntryForJenkinsPluginGitHub: not actually a plugin",
+			addEntryFunc:     addEntryForJenkinsPluginGitHub,
 			inputRef:         "https://github.com/jenkinsci/jenkins",
 			inputCpeItemName: "cpe:2.3:a:jenkins:jenkinsci:2.7:*:*:*:*:*:*:*",
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{},
+			},
+		},
+		{
+			name:             "addEntryForJenkinsPlugin",
+			addEntryFunc:     addEntryForJenkinsPlugin,
+			inputRef:         "https://plugins.jenkins.io/svn-partial-release-mgr/release",
+			inputCpeItemName: "cpe:2.3:a:jenkins:subversion_partial_release_manager:1.0.1:*:*:*:*:jenkins:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemJenkinsPlugins: {
+						"svn-partial-release-mgr": "cpe:2.3:a:jenkins:subversion_partial_release_manager:1.0.1:*:*:*:*:jenkins:*:*",
+					},
+				},
 			},
 		},
 		{
@@ -147,6 +160,71 @@ func Test_addEntryFuncs(t *testing.T) {
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemNPM: {
 						"@nubosoftware/node-static": "cpe:2.3:a:\\@nubosoftware\\/node-static_project:\\@nubosoftware\\/node-static:-:*:*:*:*:node.js:*:*",
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPPeclPackage",
+			addEntryFunc:     addEntryForPHPPeclPackage,
+			inputRef:         "https://pecl.php.net/package/imagick/something/something/v4007.0",
+			inputCpeItemName: "cpe:2.3:a:php:imagick:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPecl: {
+						"imagick": "cpe:2.3:a:php:imagick:*:*:*:*:*:*:*:*",
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPPeclPackage http changelog",
+			addEntryFunc:     addEntryForPHPPeclPackage,
+			inputRef:         "http://pecl.php.net/package-changelog.php?package=memcached&amp;release",
+			inputCpeItemName: "cpe:2.3:a:php:memcached:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPecl: {
+						"memcached": "cpe:2.3:a:php:memcached:*:*:*:*:*:*:*:*",
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPPearPackage",
+			addEntryFunc:     addEntryForPHPPearPackage,
+			inputRef:         "https://pear.php.net/package/PEAR/download",
+			inputCpeItemName: "cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPear: {
+						"PEAR": "cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*",
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPPearPackage http changelog",
+			addEntryFunc:     addEntryForPHPPearPackage,
+			inputRef:         "http://pear.php.net/package-changelog.php?package=abcdefg&amp;release",
+			inputCpeItemName: "cpe:2.3:a:php:abcdefg:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPear: {
+						"abcdefg": "cpe:2.3:a:php:abcdefg:*:*:*:*:*:*:*:*",
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPComposerPackage",
+			addEntryFunc:     addEntryForPHPComposerPackage,
+			inputRef:         "https://packagist.org/packages/frappant/frp-form-answers",
+			inputCpeItemName: "cpe:2.3:a:frappant:forms_export:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPComposer: {
+						"frappant/frp-form-answers": "cpe:2.3:a:frappant:forms_export:*:*:*:*:*:*:*:*",
 					},
 				},
 			},

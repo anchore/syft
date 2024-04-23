@@ -628,6 +628,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "java-jre-openjdk-eclipse/11.0.22/linux-amd64",
+			expected: pkg.Package{
+				Name:      "java/jre",
+				Version:   "11.0.22+7",
+				Type:      "binary",
+				PURL:      "pkg:generic/java/jre@11.0.22%2B7",
+				Locations: locations("java"),
+				Metadata:  metadata("java-binary-openjdk", "java"),
+			},
+		},
+		{
+			logicalFixture: "java-jre-openjdk-arm64-eclipse/11.0.22/linux-arm64",
+			expected: pkg.Package{
+				Name:      "java/jre",
+				Version:   "11.0.22+7",
+				Type:      "binary",
+				PURL:      "pkg:generic/java/jre@11.0.22%2B7",
+				Locations: locations("java"),
+				Metadata:  metadata("java-binary-openjdk", "java"),
+			},
+		},
+		{
 			logicalFixture: "java-graal-openjdk/17.0.3+7-jvmci-22.1-b06/linux-amd64",
 			expected: pkg.Package{
 				Name:      "java/graalvm",

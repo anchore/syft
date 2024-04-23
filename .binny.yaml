@@ -42,7 +42,7 @@ tools:
   # used for signing the checksums file at release
   - name: cosign
     version:
-      want: v2.2.3
+      want: v2.2.4
     method: github-release
     with:
       repo: sigstore/cosign
@@ -103,7 +103,7 @@ tools:
   # used for running all local and CI tasks
   - name: task
     version:
-      want: v3.35.1
+      want: v3.36.0
     method: github-release
     with:
       repo: go-task/task
@@ -111,7 +111,7 @@ tools:
   # used for triggering a release
   - name: gh
     version:
-      want: v2.47.0
+      want: v2.48.0
     method: github-release
     with:
       repo: cli/cli

@@ -230,16 +230,30 @@ func cleanDescription(original *string) (cleaned string) {
 // resolveProperty emulates some maven property resolution logic by looking in the project's variables
 // as well as supporting the project expressions like ${project.parent.groupId}.
 // If no match is found, the entire expression including ${} is returned
-//
-//nolint:gocognit
 func resolveProperty(pom gopom.Project, property *string, propertyName string) string {
 	propertyCase := safeString(property)
 	log.WithFields("existingPropertyValue", propertyCase, "propertyName", propertyName).Trace("resolving property")
+	seenBeforePropertyNames := map[string]struct{}{
+		propertyName: {},
+	}
+	result := recursiveResolveProperty(pom, propertyCase, seenBeforePropertyNames)
+	if propertyMatcher.MatchString(result) {
+		return "" // dereferencing variable failed; fall back to empty string
+	}
+	return result
+}
+
+//nolint:gocognit
+func recursiveResolveProperty(pom gopom.Project, propertyCase string, seenPropertyNames map[string]struct{}) string {
 	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
 		propertyName := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
+		if _, seen := seenPropertyNames[propertyName]; seen {
+			return propertyCase
+		}
 		entries := pomProperties(pom)
 		if value, ok := entries[propertyName]; ok {
-			return value
+			seenPropertyNames[propertyName] = struct{}{}
+			return recursiveResolveProperty(pom, value, seenPropertyNames) // recursively resolve in case a variable points to a variable.
 		}
 
 		// if we don't find anything directly in the pom properties,
