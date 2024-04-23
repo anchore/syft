@@ -54,7 +54,7 @@ func filterCpeList(cpeList CpeList) CpeList {
 
 	for _, cpeItem := range cpeList.CpeItems {
 		// Skip CPE items that don't have any references.
-		if len(cpeItem.References) == 0 {
+		if len(cpeItem.References.Reference) == 0 {
 			continue
 		}
 
@@ -119,8 +119,8 @@ func indexCPEList(list CpeList) *dictionary.Indexed {
 	for _, cpeItem := range list.CpeItems {
 		cpeItemName := cpeItem.Cpe23Item.Name
 
-		for _, reference := range cpeItem.References {
-			ref := reference.Reference.Href
+		for _, reference := range cpeItem.References.Reference {
+			ref := reference.Href
 
 			switch {
 			case strings.HasPrefix(ref, prefixForNPMPackages):
