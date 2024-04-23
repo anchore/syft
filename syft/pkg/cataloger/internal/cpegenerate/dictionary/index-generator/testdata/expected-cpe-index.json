@@ -11,6 +11,7 @@
       "underscore": "cpe:2.3:a:underscorejs:underscore:*:*:*:*:*:node.js:*:*",
       "underscore-99xp": "cpe:2.3:a:underscore-99xp_project:underscore-99xp:*:*:*:*:*:node.js:*:*",
       "unicode": "cpe:2.3:a:unicode_project:unicode:*:*:*:*:*:node.js:*:*",
+      "unicode-json": "cpe:2.3:a:unicode:unicode-json:*:*:*:*:*:node.js:*:*",
       "unicorn-list": "cpe:2.3:a:unicorn-list_project:unicorn-list:*:*:*:*:*:node.js:*:*"
     },
     "php_pear": {
