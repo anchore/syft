@@ -167,16 +167,24 @@ func indexCPEList(list CpeList) *dictionary.Indexed {
 	return indexed
 }
 
+func updateIndex(indexed *dictionary.Indexed, ecosystem string, pkgName string, cpe string) {
+	if _, exists := indexed.EcosystemPackages[ecosystem]; !exists {
+		indexed.EcosystemPackages[ecosystem] = make(dictionary.Packages)
+	}
+
+	if indexed.EcosystemPackages[ecosystem][pkgName] == nil {
+		indexed.EcosystemPackages[ecosystem][pkgName] = dictionary.NewSet()
+	}
+
+	indexed.EcosystemPackages[ecosystem][pkgName].Add(cpe)
+}
+
 func addEntryForRustCrate(indexed *dictionary.Indexed, ref string, cpeItemName string) {
 	// Prune off the non-package-name parts of the URL
 	ref = strings.TrimPrefix(ref, prefixForRustCrates)
 	ref = strings.Split(ref, "/")[0]
 
-	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemRustCrates]; !ok {
-		indexed.EcosystemPackages[dictionary.EcosystemRustCrates] = make(dictionary.Packages)
-	}
-
-	indexed.EcosystemPackages[dictionary.EcosystemRustCrates][ref] = cpeItemName
+	updateIndex(indexed, dictionary.EcosystemRustCrates, ref, cpeItemName)
 }
 
 func addEntryForJenkinsPluginGitHub(indexed *dictionary.Indexed, ref string, cpeItemName string) {
@@ -190,12 +198,7 @@ func addEntryForJenkinsPluginGitHub(indexed *dictionary.Indexed, ref string, cpe
 	}
 
 	ref = strings.TrimSuffix(ref, "-plugin")
-
-	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins]; !ok {
-		indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins] = make(dictionary.Packages)
-	}
-
-	indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins][ref] = cpeItemName
+	updateIndex(indexed, dictionary.EcosystemJenkinsPlugins, ref, cpeItemName)
 }
 
 func addEntryForJenkinsPlugin(indexed *dictionary.Indexed, ref string, cpeItemName string) {
@@ -207,11 +210,7 @@ func addEntryForJenkinsPlugin(indexed *dictionary.Indexed, ref string, cpeItemNa
 		return
 	}
 
-	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins]; !ok {
-		indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins] = make(dictionary.Packages)
-	}
-
-	indexed.EcosystemPackages[dictionary.EcosystemJenkinsPlugins][ref] = cpeItemName
+	updateIndex(indexed, dictionary.EcosystemJenkinsPlugins, ref, cpeItemName)
 }
 
 func addEntryForPyPIPackage(indexed *dictionary.Indexed, ref string, cpeItemName string) {
@@ -219,11 +218,7 @@ func addEntryForPyPIPackage(indexed *dictionary.Indexed, ref string, cpeItemName
 	ref = strings.TrimPrefix(ref, prefixForPyPIPackages)
 	ref = strings.Split(ref, "/")[0]
 
-	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemPyPI]; !ok {
-		indexed.EcosystemPackages[dictionary.EcosystemPyPI] = make(dictionary.Packages)
-	}
-
-	indexed.EcosystemPackages[dictionary.EcosystemPyPI][ref] = cpeItemName
+	updateIndex(indexed, dictionary.EcosystemPyPI, ref, cpeItemName)
 }
 
 func addEntryForNativeRubyGem(indexed *dictionary.Indexed, ref string, cpeItemName string) {
@@ -231,11 +226,7 @@ func addEntryForNativeRubyGem(indexed *dictionary.Indexed, ref string, cpeItemNa
 	ref = strings.TrimPrefix(ref, prefixForNativeRubyGems)
 	ref = strings.Split(ref, "/")[0]
 
-	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemRubyGems]; !ok {
-		indexed.EcosystemPackages[dictionary.EcosystemRubyGems] = make(dictionary.Packages)
-	}
-
-	indexed.EcosystemPackages[dictionary.EcosystemRubyGems][ref] = cpeItemName
+	updateIndex(indexed, dictionary.EcosystemRubyGems, ref, cpeItemName)
 }
 
 func addEntryForRubyGem(indexed *dictionary.Indexed, ref string, cpeItemName string) {
@@ -244,11 +235,7 @@ func addEntryForRubyGem(indexed *dictionary.Indexed, ref string, cpeItemName str
 	ref = strings.TrimPrefix(ref, prefixForRubyGemsHTTP)
 	ref = strings.Split(ref, "/")[0]
 
-	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemRubyGems]; !ok {
-		indexed.EcosystemPackages[dictionary.EcosystemRubyGems] = make(dictionary.Packages)
-	}
-
-	indexed.EcosystemPackages[dictionary.EcosystemRubyGems][ref] = cpeItemName
+	updateIndex(indexed, dictionary.EcosystemRubyGems, ref, cpeItemName)
 }
 
 func addEntryForNPMPackage(indexed *dictionary.Indexed, ref string, cpeItemName string) {
@@ -257,11 +244,7 @@ func addEntryForNPMPackage(indexed *dictionary.Indexed, ref string, cpeItemName 
 	ref = strings.Split(ref, "?")[0]
 	ref = strings.TrimPrefix(ref, prefixForNPMPackages)
 
-	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemNPM]; !ok {
-		indexed.EcosystemPackages[dictionary.EcosystemNPM] = make(dictionary.Packages)
-	}
-
-	indexed.EcosystemPackages[dictionary.EcosystemNPM][ref] = cpeItemName
+	updateIndex(indexed, dictionary.EcosystemNPM, ref, cpeItemName)
 }
 
 func phpExtensionPackageFromURLFragment(ref string) string {
@@ -301,11 +284,7 @@ func addEntryForPHPPearPackage(indexed *dictionary.Indexed, ref string, cpeItemN
 		return
 	}
 
-	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemPHPPear]; !ok {
-		indexed.EcosystemPackages[dictionary.EcosystemPHPPear] = make(dictionary.Packages)
-	}
-
-	indexed.EcosystemPackages[dictionary.EcosystemPHPPear][ref] = cpeItemName
+	updateIndex(indexed, dictionary.EcosystemPHPPear, ref, cpeItemName)
 }
 
 func addEntryForPHPPeclPackage(indexed *dictionary.Indexed, ref string, cpeItemName string) {
@@ -317,11 +296,7 @@ func addEntryForPHPPeclPackage(indexed *dictionary.Indexed, ref string, cpeItemN
 		return
 	}
 
-	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemPHPPecl]; !ok {
-		indexed.EcosystemPackages[dictionary.EcosystemPHPPecl] = make(dictionary.Packages)
-	}
-
-	indexed.EcosystemPackages[dictionary.EcosystemPHPPecl][ref] = cpeItemName
+	updateIndex(indexed, dictionary.EcosystemPHPPecl, ref, cpeItemName)
 }
 
 func addEntryForPHPComposerPackage(indexed *dictionary.Indexed, ref string, cpeItemName string) {
@@ -335,9 +310,5 @@ func addEntryForPHPComposerPackage(indexed *dictionary.Indexed, ref string, cpeI
 
 	ref = components[0] + "/" + components[1]
 
-	if _, ok := indexed.EcosystemPackages[dictionary.EcosystemPHPComposer]; !ok {
-		indexed.EcosystemPackages[dictionary.EcosystemPHPComposer] = make(dictionary.Packages)
-	}
-
-	indexed.EcosystemPackages[dictionary.EcosystemPHPComposer][ref] = cpeItemName
+	updateIndex(indexed, dictionary.EcosystemPHPComposer, ref, cpeItemName)
 }

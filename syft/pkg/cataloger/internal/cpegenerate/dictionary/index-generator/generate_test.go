@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -59,7 +60,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemRustCrates: {
-						"unicycle": "cpe:2.3:a:unicycle_project:unicycle:*:*:*:*:*:rust:*:*",
+						"unicycle": dictionary.NewSet("cpe:2.3:a:unicycle_project:unicycle:*:*:*:*:*:rust:*:*"),
 					},
 				},
 			},
@@ -72,7 +73,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemJenkinsPlugins: {
-						"sonarqube": "cpe:2.3:a:sonarsource:sonarqube_scanner:2.7:*:*:*:*:jenkins:*:*",
+						"sonarqube": dictionary.NewSet("cpe:2.3:a:sonarsource:sonarqube_scanner:2.7:*:*:*:*:jenkins:*:*"),
 					},
 				},
 			},
@@ -94,7 +95,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemJenkinsPlugins: {
-						"svn-partial-release-mgr": "cpe:2.3:a:jenkins:subversion_partial_release_manager:1.0.1:*:*:*:*:jenkins:*:*",
+						"svn-partial-release-mgr": dictionary.NewSet("cpe:2.3:a:jenkins:subversion_partial_release_manager:1.0.1:*:*:*:*:jenkins:*:*"),
 					},
 				},
 			},
@@ -107,7 +108,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemPyPI: {
-						"vault-cli": "cpe:2.3:a:vault-cli_project:vault-cli:*:*:*:*:*:python:*:*",
+						"vault-cli": dictionary.NewSet("cpe:2.3:a:vault-cli_project:vault-cli:*:*:*:*:*:python:*:*"),
 					},
 				},
 			},
@@ -120,7 +121,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemRubyGems: {
-						"openssl": "cpe:2.3:a:ruby-lang:openssl:-:*:*:*:*:ruby:*:*",
+						"openssl": dictionary.NewSet("cpe:2.3:a:ruby-lang:openssl:-:*:*:*:*:ruby:*:*"),
 					},
 				},
 			},
@@ -133,7 +134,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemRubyGems: {
-						"actionview": "cpe:2.3:a:action_view_project:action_view:*:*:*:*:*:ruby:*:*",
+						"actionview": dictionary.NewSet("cpe:2.3:a:action_view_project:action_view:*:*:*:*:*:ruby:*:*"),
 					},
 				},
 			},
@@ -146,7 +147,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemRubyGems: {
-						"rbovirt": "cpe:2.3:a:amos_benari:rbovirt:*:*:*:*:*:ruby:*:*",
+						"rbovirt": dictionary.NewSet("cpe:2.3:a:amos_benari:rbovirt:*:*:*:*:*:ruby:*:*"),
 					},
 				},
 			},
@@ -159,7 +160,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemNPM: {
-						"@nubosoftware/node-static": "cpe:2.3:a:\\@nubosoftware\\/node-static_project:\\@nubosoftware\\/node-static:-:*:*:*:*:node.js:*:*",
+						"@nubosoftware/node-static": dictionary.NewSet("cpe:2.3:a:\\@nubosoftware\\/node-static_project:\\@nubosoftware\\/node-static:-:*:*:*:*:node.js:*:*"),
 					},
 				},
 			},
@@ -172,7 +173,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemPHPPecl: {
-						"imagick": "cpe:2.3:a:php:imagick:*:*:*:*:*:*:*:*",
+						"imagick": dictionary.NewSet("cpe:2.3:a:php:imagick:*:*:*:*:*:*:*:*"),
 					},
 				},
 			},
@@ -185,7 +186,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemPHPPecl: {
-						"memcached": "cpe:2.3:a:php:memcached:*:*:*:*:*:*:*:*",
+						"memcached": dictionary.NewSet("cpe:2.3:a:php:memcached:*:*:*:*:*:*:*:*"),
 					},
 				},
 			},
@@ -198,7 +199,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemPHPPear: {
-						"PEAR": "cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*",
+						"PEAR": dictionary.NewSet("cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*"),
 					},
 				},
 			},
@@ -211,7 +212,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemPHPPear: {
-						"abcdefg": "cpe:2.3:a:php:abcdefg:*:*:*:*:*:*:*:*",
+						"abcdefg": dictionary.NewSet("cpe:2.3:a:php:abcdefg:*:*:*:*:*:*:*:*"),
 					},
 				},
 			},
@@ -224,7 +225,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemPHPComposer: {
-						"frappant/frp-form-answers": "cpe:2.3:a:frappant:forms_export:*:*:*:*:*:*:*:*",
+						"frappant/frp-form-answers": dictionary.NewSet("cpe:2.3:a:frappant:forms_export:*:*:*:*:*:*:*:*"),
 					},
 				},
 			},
@@ -239,7 +240,7 @@ func Test_addEntryFuncs(t *testing.T) {
 
 			tt.addEntryFunc(indexed, tt.inputRef, tt.inputCpeItemName)
 
-			if diff := cmp.Diff(tt.expectedIndexed, *indexed); diff != "" {
+			if diff := cmp.Diff(tt.expectedIndexed, *indexed, cmp.AllowUnexported(strset.Set{})); diff != "" {
 				t.Errorf("addEntry* mismatch (-want +got):\n%s", diff)
 			}
 		})
