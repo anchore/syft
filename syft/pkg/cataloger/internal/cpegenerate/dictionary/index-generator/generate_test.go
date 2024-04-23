@@ -65,8 +65,8 @@ func Test_addEntryFuncs(t *testing.T) {
 			},
 		},
 		{
-			name:             "addEntryForJenkinsPlugin",
-			addEntryFunc:     addEntryForJenkinsPlugin,
+			name:             "addEntryForJenkinsPluginGitHub",
+			addEntryFunc:     addEntryForJenkinsPluginGitHub,
 			inputRef:         "https://github.com/jenkinsci/sonarqube-plugin",
 			inputCpeItemName: "cpe:2.3:a:sonarsource:sonarqube_scanner:2.7:*:*:*:*:jenkins:*:*",
 			expectedIndexed: dictionary.Indexed{
@@ -78,12 +78,25 @@ func Test_addEntryFuncs(t *testing.T) {
 			},
 		},
 		{
-			name:             "addEntryForJenkinsPlugin: not actually a plugin",
-			addEntryFunc:     addEntryForJenkinsPlugin,
+			name:             "addEntryForJenkinsPluginGitHub: not actually a plugin",
+			addEntryFunc:     addEntryForJenkinsPluginGitHub,
 			inputRef:         "https://github.com/jenkinsci/jenkins",
 			inputCpeItemName: "cpe:2.3:a:jenkins:jenkinsci:2.7:*:*:*:*:*:*:*",
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{},
+			},
+		},
+		{
+			name:             "addEntryForJenkinsPlugin",
+			addEntryFunc:     addEntryForJenkinsPlugin,
+			inputRef:         "https://plugins.jenkins.io/svn-partial-release-mgr/release",
+			inputCpeItemName: "cpe:2.3:a:jenkins:subversion_partial_release_manager:1.0.1:*:*:*:*:jenkins:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemJenkinsPlugins: {
+						"svn-partial-release-mgr": "cpe:2.3:a:jenkins:subversion_partial_release_manager:1.0.1:*:*:*:*:jenkins:*:*",
+					},
+				},
 			},
 		},
 		{

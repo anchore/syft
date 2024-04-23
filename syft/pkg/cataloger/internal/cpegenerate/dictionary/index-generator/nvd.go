@@ -10,7 +10,12 @@ type CpeItem struct {
 		} `xml:"reference"`
 	} `xml:"references"`
 	Cpe23Item struct {
-		Name string `xml:"name,attr"`
+		Name        string `xml:"name,attr"`
+		Deprecation struct {
+			DeprecatedBy struct {
+				Name string `xml:"name,attr"`
+			} `xml:"deprecated-by"`
+		} `xml:"deprecation"`
 	} `xml:"cpe23-item"`
 }
 

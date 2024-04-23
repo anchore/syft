@@ -1,7 +1,9 @@
 {
   "ecosystems": {
     "jenkins_plugins": {
-      "sonarqube": "cpe:2.3:a:sonarsource:sonarqube_scanner:*:*:*:*:*:jenkins:*:*"
+      "fireline": "cpe:2.3:a:jenkins:360_fireline:*:*:*:*:*:jenkins:*:*",
+      "sonarqube": "cpe:2.3:a:sonarsource:sonarqube_scanner:*:*:*:*:*:jenkins:*:*",
+      "svn-partial-release-mgr": "cpe:2.3:a:jenkins:subversion_partial_release_manager:*:*:*:*:*:jenkins:*:*"
     },
     "npm": {
       "merge-recursive": "cpe:2.3:a:umbraengineering:merge-recursive:*:*:*:*:*:node.js:*:*",
@@ -30,7 +32,7 @@
       "xhprof": "cpe:2.3:a:php:xhprof:*:*:*:*:*:*:*:*"
     },
     "pypi": {
-      "vault-cli": "cpe:2.3:a:ukg:vault-cli:*:*:*:*:*:python:*:*"
+      "vault-cli": "cpe:2.3:a:vault-cli_project:vault-cli:*:*:*:*:*:python:*:*"
     },
     "rubygems": {
       "openssl": "cpe:2.3:a:ruby-lang:openssl:*:*:*:*:*:*:*:*"
