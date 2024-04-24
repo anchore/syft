@@ -49,8 +49,12 @@ func (c *lazyUnionReader) ReadAt(p []byte, off int64) (n int, err error) {
 	needUntil := int64(len(p)) + off
 	err = c.ensureReadUntil(needUntil)
 	end := min(off+int64(len(p)), int64(len(c.buf)))
-	copy(p, c.buf[off:end])
-	return int(end - off), err
+	start := min(off, c.maxRead())
+	if off > start {
+		return 0, io.EOF
+	}
+	copy(p, c.buf[start:end])
+	return int(end - start), err
 }
 
 func (c *lazyUnionReader) Seek(offset int64, whence int) (int64, error) {
@@ -63,6 +67,7 @@ func (c *lazyUnionReader) Seek(offset int64, whence int) (int64, error) {
 		trueOffset = offset
 	case io.SeekCurrent:
 		trueOffset = offset + c.cursor
+		err = c.ensureReadUntil(trueOffset)
 	case io.SeekEnd:
 		err = c.readAll()
 		trueOffset = c.maxRead() + offset
@@ -73,6 +78,7 @@ func (c *lazyUnionReader) Seek(offset int64, whence int) (int64, error) {
 	if trueOffset < 0 {
 		return 0, fmt.Errorf("request to read negative offset impossible %v", trueOffset)
 	}
+	trueOffset = min(c.maxRead(), trueOffset)
 	c.cursor = trueOffset
 	return c.cursor, nil
 }

@@ -101,6 +101,21 @@ func Test_lazyUnionReader_ReadAt(t *testing.T) {
 			wantBytes: []byte("ef"),
 			wantEOF:   true,
 		},
+		{
+			name:    "read way out of bounds",
+			dst:     make([]byte, 4),
+			off:     512,
+			wantN:   0,
+			wantEOF: true,
+		},
+		{
+			name:      "buffer more than available",
+			dst:       make([]byte, 512),
+			off:       0,
+			wantN:     16,
+			wantBytes: []byte("0123456789abcdef"),
+			wantEOF:   true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
