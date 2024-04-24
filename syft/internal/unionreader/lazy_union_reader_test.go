@@ -26,16 +26,14 @@ func Test_lazyUnionReader_Close(t *testing.T) {
 		false,
 		r,
 	}
-	subject, err := newLazyUnionReader(sc)
-	require.NoError(t, err)
+	subject := newLazyUnionReader(sc)
 	require.NoError(t, subject.Close())
 	assert.True(t, sc.closed)
 }
 
 func Test_lazyUnionReader_ReadAll(t *testing.T) {
 	rc := io.NopCloser(strings.NewReader("some data"))
-	subject, err := newLazyUnionReader(rc)
-	require.NoError(t, err)
+	subject := newLazyUnionReader(rc)
 
 	b, err := io.ReadAll(subject)
 	require.NoError(t, err)
@@ -45,8 +43,7 @@ func Test_lazyUnionReader_ReadAll(t *testing.T) {
 func Test_lazyUnionReader_RepeatedlyRead(t *testing.T) {
 	data := "some data for our reader that we need to read!"
 	rc := io.NopCloser(strings.NewReader(data))
-	subject, err := newLazyUnionReader(rc)
-	require.NoError(t, err)
+	subject := newLazyUnionReader(rc)
 	var readErr error
 	var readResult []byte
 	for readErr == nil {
@@ -119,8 +116,7 @@ func Test_lazyUnionReader_ReadAt(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rc := io.NopCloser(strings.NewReader("0123456789abcdef"))
-			subject, err := newLazyUnionReader(rc)
-			require.NoError(t, err)
+			subject := newLazyUnionReader(rc)
 			n, err := subject.ReadAt(tt.dst, tt.off)
 			assert.Equal(t, tt.wantN, n)
 			assert.Equal(t, string(tt.wantBytes), string(tt.dst[:tt.wantN]))
@@ -195,8 +191,7 @@ func Test_lazyUnionReader_Seek(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rc := io.NopCloser(bytes.NewReader(data))
-			subject, err := newLazyUnionReader(rc)
-			require.NoError(t, err)
+			subject := newLazyUnionReader(rc)
 			var readSeekErr error
 			var readResult []byte
 			for _, c := range tt.commands {

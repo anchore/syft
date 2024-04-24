@@ -41,5 +41,5 @@ func GetUnionReader(readerCloser io.ReadCloser) (UnionReader, error) {
 	if ok {
 		return reader, nil
 	}
-	return newLazyUnionReader(readerCloser)
+	return newLazyUnionReader(readerCloser), nil
 }

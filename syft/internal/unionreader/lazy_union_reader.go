@@ -127,9 +127,9 @@ func min(ints ...int64) int64 {
 	return minSeeen
 }
 
-func newLazyUnionReader(readCloser io.ReadCloser) (UnionReader, error) {
+func newLazyUnionReader(readCloser io.ReadCloser) UnionReader {
 	return &lazyUnionReader{
 		rc: readCloser,
 		mu: sync.Mutex{},
-	}, nil
+	}
 }
