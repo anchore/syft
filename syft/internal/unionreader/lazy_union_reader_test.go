@@ -2,13 +2,12 @@ package unionreader
 
 import (
 	"bytes"
-	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"strings"
-	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type spyingCloser struct {
@@ -38,9 +37,9 @@ func Test_lazyUnionReader_ReadAll(t *testing.T) {
 	subject, err := newLazyUnionReader(rc)
 	require.NoError(t, err)
 
-	bytes, err := io.ReadAll(subject)
+	b, err := io.ReadAll(subject)
 	require.NoError(t, err)
-	assert.Equal(t, "some data", string(bytes))
+	assert.Equal(t, "some data", string(b))
 }
 
 func Test_lazyUnionReader_RepeatedlyRead(t *testing.T) {
@@ -183,6 +182,15 @@ func Test_lazyUnionReader_Seek(t *testing.T) {
 			},
 			wantBytes: []byte("harehare"),
 		},
+		{
+			name: "read 4, skip 4, read 4",
+			commands: []command{
+				{readDst: make([]byte, 4)},
+				{seekOffset: 4, seekWhence: io.SeekCurrent},
+				{readDst: make([]byte, 4)},
+			},
+			wantBytes: []byte("thisa st"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -204,93 +212,6 @@ func Test_lazyUnionReader_Seek(t *testing.T) {
 				assert.ErrorIs(t, readSeekErr, io.EOF)
 			}
 			assert.Equal(t, string(tt.wantBytes), string(readResult))
-		})
-	}
-}
-
-func Test_lazyUnionReader_ensureReadUntil(t *testing.T) {
-	type fields struct {
-		buf     []byte
-		cursor  int64
-		maxRead int64
-		done    bool
-		rc      io.ReadCloser
-		mu      sync.Mutex
-	}
-	type args struct {
-		offset int64
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &lazyUnionReader{
-				buf:    tt.fields.buf,
-				cursor: tt.fields.cursor,
-				done:   tt.fields.done,
-				rc:     tt.fields.rc,
-				mu:     tt.fields.mu,
-			}
-			tt.wantErr(t, c.ensureReadUntil(tt.args.offset), fmt.Sprintf("ensureReadUntil(%v)", tt.args.offset))
-		})
-	}
-}
-
-func Test_lazyUnionReader_readAll(t *testing.T) {
-	type fields struct {
-		buf     []byte
-		cursor  int64
-		maxRead int64
-		done    bool
-		rc      io.ReadCloser
-		mu      sync.Mutex
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr assert.ErrorAssertionFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &lazyUnionReader{
-				buf:    tt.fields.buf,
-				cursor: tt.fields.cursor,
-				done:   tt.fields.done,
-				rc:     tt.fields.rc,
-				mu:     tt.fields.mu,
-			}
-			tt.wantErr(t, c.readAll(), fmt.Sprintf("readAll()"))
-		})
-	}
-}
-
-func Test_newLazyUnionReader(t *testing.T) {
-	type args struct {
-		readCloser io.ReadCloser
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    UnionReader
-		wantErr assert.ErrorAssertionFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := newLazyUnionReader(tt.args.readCloser)
-			if !tt.wantErr(t, err, fmt.Sprintf("newLazyUnionReader(%v)", tt.args.readCloser)) {
-				return
-			}
-			assert.Equalf(t, tt.want, got, "newLazyUnionReader(%v)", tt.args.readCloser)
 		})
 	}
 }

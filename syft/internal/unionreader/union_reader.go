@@ -1,9 +1,10 @@
 package unionreader
 
 import (
+	"io"
+
 	macho "github.com/anchore/go-macholibre"
 	"github.com/anchore/syft/internal/log"
-	"io"
 )
 
 // UnionReader is a single interface with all reading functions needed by multi-arch binary catalogers
@@ -41,23 +42,4 @@ func GetUnionReader(readerCloser io.ReadCloser) (UnionReader, error) {
 		return reader, nil
 	}
 	return newLazyUnionReader(readerCloser)
-	//
-	//b, err := io.ReadAll(readerCloser)
-	//if err != nil {
-	//	return nil, fmt.Errorf("unable to read contents from binary: %w", err)
-	//}
-	//
-	//bytesReader := bytes.NewReader(b)
-	//
-	//reader = struct {
-	//	io.ReadCloser
-	//	io.ReaderAt
-	//	io.Seeker
-	//}{
-	//	ReadCloser: io.NopCloser(bytesReader),
-	//	ReaderAt:   bytesReader,
-	//	Seeker:     bytesReader,
-	//}
-	//
-	//return reader, nil
 }

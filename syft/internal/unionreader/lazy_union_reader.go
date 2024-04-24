@@ -9,8 +9,6 @@ import (
 	"sync"
 )
 
-const readSize int64 = 1024 * 1024
-
 // lazyUnionReader must implement UnionReader
 var _ UnionReader = (*lazyUnionReader)(nil)
 
@@ -21,7 +19,6 @@ var _ UnionReader = (*lazyUnionReader)(nil)
 type lazyUnionReader struct {
 	buf    []byte        // the bytes that have been read so far
 	cursor int64         // the current position where Read() will take place
-	done   bool          // whether we have seen EOF from rc
 	rc     io.ReadCloser // the underlying reader
 	mu     sync.Mutex    // exported methods must acquire this lock before changing any field. Unexported methods assume their caller acquired the lock
 }
@@ -35,7 +32,8 @@ func (c *lazyUnionReader) Read(p []byte) (n int, err error) {
 	if err != nil && !errors.Is(err, io.EOF) {
 		return 0, err
 	}
-	// stop reading either at cursor + length p, or the end of the buffer, whichever is sooner
+	// stop reading either at cursor + length p, or the end of the underlying reader,
+	// whichever is sooner
 	end := min(c.cursor+int64(len(p)), int64(len(c.buf)))
 	copy(p, c.buf[c.cursor:end])
 	n = int(end - c.cursor)
@@ -97,7 +95,6 @@ func (c *lazyUnionReader) readAll() error {
 	case err != nil:
 		return err
 	}
-	//c.maxRead = c.maxRead() + int64(len(buf))
 	c.buf = append(c.buf, buf...)
 	return nil
 }
@@ -118,16 +115,6 @@ func (c *lazyUnionReader) ensureReadUntil(offset int64) error {
 
 func (c *lazyUnionReader) maxRead() int64 {
 	return int64(len(c.buf))
-}
-
-func max(ints ...int64) int64 {
-	var maxSeen int64
-	for _, in := range ints {
-		if in > maxSeen {
-			maxSeen = in
-		}
-	}
-	return maxSeen
 }
 
 func min(ints ...int64) int64 {
