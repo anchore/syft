@@ -96,7 +96,7 @@ func (c *lazyUnionReader) readAll() error {
 		return err
 	}
 	c.buf = append(c.buf, buf...)
-	return nil
+	return err
 }
 
 func (c *lazyUnionReader) ensureReadUntil(offset int64) error {
