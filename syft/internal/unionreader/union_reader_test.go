@@ -49,13 +49,15 @@ func (p2 *panickingUnionReader) Close() error {
 	panic("don't call this in your unit test!")
 }
 
+var _ UnionReader = (*panickingUnionReader)(nil)
+
 func Test_getUnionReader_fileLocationReadCloser(t *testing.T) {
 	// panickingUnionReader is a UnionReader
-	var _ UnionReader = (*panickingUnionReader)(nil)
-	embedsUnionReader := file.NewLocationReadCloser(file.Location{}, &panickingUnionReader{})
+	p := &panickingUnionReader{}
+	embedsUnionReader := file.NewLocationReadCloser(file.Location{}, p)
 
 	// embedded union reader is returned without "ReadAll" invocation
 	ur, err := GetUnionReader(embedsUnionReader)
 	require.NoError(t, err)
-	require.NotNil(t, ur)
+	require.Equal(t, p, ur)
 }
