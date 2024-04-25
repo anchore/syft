@@ -28,3 +28,8 @@ $(CACHE_DIR)/$(SPRING_INSTRUMENTATION).jar: $(CACHE_DIR)
 
 $(CACHE_DIR)/$(MULTIPLE_MATCHING).jar: $(CACHE_DIR)
 	cd $(MULTIPLE_MATCHING) && zip -r $(CACHE_PATH)/$(MULTIPLE_MATCHING).jar .
+
+# Jenkins plugins typically do not have the version included in the archive name, 
+# so it is important to not include it in the generated test fixture
+$(CACHE_DIR)/gradle.hpi: $(CACHE_DIR)
+	cd jenkins-plugins/gradle/2.11 && zip -r $(CACHE_PATH)/gradle.hpi .
