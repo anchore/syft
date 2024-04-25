@@ -111,10 +111,10 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 			if cfg.DataGenerationConfig.GenerateCPEs {
 				// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
 				// we might have binary classified CPE already with the package so we want to append here
-				dictionaryCPE, ok := cpe.DictionaryFind(p)
+				dictionaryCPEs, ok := cpe.DictionaryFind(p)
 				if ok {
-					log.Tracef("used CPE dictionary to find CPE for %s package %q: %s", p.Type, p.Name, dictionaryCPE.Attributes.BindToFmtString())
-					p.CPEs = append(p.CPEs, dictionaryCPE)
+					log.Tracef("used CPE dictionary to find CPEs for %s package %q: %s", p.Type, p.Name, dictionaryCPEs)
+					p.CPEs = append(p.CPEs, dictionaryCPEs...)
 				} else {
 					p.CPEs = append(p.CPEs, cpe.Generate(p)...)
 				}

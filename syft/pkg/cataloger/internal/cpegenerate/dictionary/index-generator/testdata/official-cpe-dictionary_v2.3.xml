@@ -25014,6 +25014,40 @@
     </references>
     <cpe-23:cpe23-item name="cpe:2.3:a:jenkins:360_fireline:1.0:*:*:*:*:jenkins:*:*"/>
   </cpe-item>
+  <cpe-item name="cpe:/a:anchore:container_image_scanner:-::~~~jenkins~~">
+    <title xml:lang="en-US">Anchore Container Image Scanner for Jenkins</title>
+    <references>
+      <reference href="https://jenkins.io/security/advisory/2018-07-30/#SECURITY-1039">Advisory</reference>
+      <reference href="https://github.com/jenkinsci/anchore-container-scanner-plugin/releases">Version</reference>
+      <reference href="https://plugins.jenkins.io/anchore-container-scanner">Product</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:anchore:container_image_scanner:-:*:*:*:*:jenkins:*:*"/>
+  </cpe-item>
+  <cpe-item name="cpe:/a:anchore:container_image_scanner:1.0.0::~~~jenkins~~">
+    <title xml:lang="en-US">Anchore Container Image Scanner 1.0.0 for Jenkins</title>
+    <references>
+      <reference href="https://jenkins.io/security/advisory/2018-07-30/#SECURITY-1039">Advisory</reference>
+      <reference href="https://github.com/jenkinsci/anchore-container-scanner-plugin/releases">Version</reference>
+      <reference href="https://plugins.jenkins.io/anchore-container-scanner">Product</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:anchore:container_image_scanner:1.0.0:*:*:*:*:jenkins:*:*"/>
+  </cpe-item>
+  <cpe-item name="cpe:/a:jenkins:anchore_container_image_scanner:1.0.0::~~~jenkins~~">
+    <title xml:lang="en-US">Jenkins Anchore Container Image Scanner 1.0.0 for Jenkins</title>
+    <references>
+      <reference href="https://plugins.jenkins.io/anchore-container-scanner">Product</reference>
+      <reference href="https://github.com/jenkinsci/anchore-container-scanner-plugin">Version</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:jenkins:anchore_container_image_scanner:1.0.0:*:*:*:*:jenkins:*:*"/>
+  </cpe-item>
+  <cpe-item name="cpe:/a:jenkins:anchore_container_image_scanner:1.0.1::~~~jenkins~~">
+    <title xml:lang="en-US">Jenkins Anchore Container Image Scanner 1.0.1 for Jenkins</title>
+    <references>
+      <reference href="https://plugins.jenkins.io/anchore-container-scanner">Product</reference>
+      <reference href="https://github.com/jenkinsci/anchore-container-scanner-plugin">Version</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:jenkins:anchore_container_image_scanner:1.0.1:*:*:*:*:jenkins:*:*"/>
+  </cpe-item>
 </cpe-list>
 </cpe-list>
 </cpe-list>
