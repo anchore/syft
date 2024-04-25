@@ -1,13 +1,14 @@
 package unionreader
 
 import (
-	"github.com/anchore/syft/syft/file"
 	"io"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/file"
 )
 
 func Test_getUnionReader_notUnionReader(t *testing.T) {
