@@ -3,6 +3,7 @@ package unionreader
 import (
 	"bytes"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
 	"io"
 
 	macho "github.com/anchore/go-macholibre"
@@ -42,6 +43,17 @@ func GetUnionReader(readerCloser io.ReadCloser) (UnionReader, error) {
 	reader, ok := readerCloser.(UnionReader)
 	if ok {
 		return reader, nil
+	}
+
+	// file.LocationReadCloser embeds a ReadCloser, which is likely
+	// to implement UnionReader. Check whether the embedded read closer
+	// implements UnionReader, and just return that if so.
+	r, ok := readerCloser.(file.LocationReadCloser)
+	if ok {
+		ur, ok := r.ReadCloser.(UnionReader)
+		if ok {
+			return ur, nil
+		}
 	}
 
 	b, err := io.ReadAll(readerCloser)
