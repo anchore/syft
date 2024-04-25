@@ -36,13 +36,14 @@ func (i *sharedLibraryIndex) build(resolver file.Resolver, accessor sbomsync.Acc
 	i.packagesByLibraryPath = packagesWithLibraryOwnership(resolver, accessor, i.allLibLocations)
 }
 
-func (i *sharedLibraryIndex) owningLibraryLocations(libraryBasename string) file.CoordinateSet {
-	if set, ok := i.libLocationsByBasename[libraryBasename]; ok {
-		return set
-	}
-
-	return file.NewCoordinateSet()
-}
+// TODO: we might need this
+// func (i *sharedLibraryIndex) owningLibraryLocations(libraryBasename string) file.CoordinateSet {
+//	if set, ok := i.libLocationsByBasename[libraryBasename]; ok {
+//		return set
+//	}
+//
+//	return file.NewCoordinateSet()
+// }
 
 func (i *sharedLibraryIndex) owningLibraryPackage(libraryBasename string) *pkg.Collection {
 	// find all packages that own a library by it's basename
@@ -98,29 +99,33 @@ func packagesWithLibraryOwnership(resolver file.Resolver, accessor sbomsync.Acce
 				ownedFilePaths = fileOwner.OwnedFiles()
 			}
 
-			for _, pth := range ownedFilePaths {
-				ownedLocation, err := resolver.FilesByPath(pth)
-				if err != nil {
-					log.WithFields("error", err, "path", pth).Trace("unable to find path for owned file")
-					continue
-				}
-
-				for _, loc := range ownedLocation {
-					// if the location is a library, add the package to the set of packages that own the library
-					if !allLibLocations.Contains(loc.Coordinates) {
-						continue
-					}
-
-					if _, ok := packagesByLibraryPath[loc.Coordinates]; !ok {
-						packagesByLibraryPath[loc.Coordinates] = pkg.NewCollection()
-					}
-
-					// we have a library path, add the package to the set of packages that own the library
-					packagesByLibraryPath[loc.Coordinates].Add(p)
-				}
-			}
+			populatePackagesByLibraryPath(resolver, allLibLocations, packagesByLibraryPath, p, ownedFilePaths)
 		}
 	})
 
 	return packagesByLibraryPath
+}
+
+func populatePackagesByLibraryPath(resolver file.Resolver, allLibLocations file.CoordinateSet, packagesByLibraryPath map[file.Coordinates]*pkg.Collection, p pkg.Package, ownedFilePaths []string) {
+	for _, pth := range ownedFilePaths {
+		ownedLocation, err := resolver.FilesByPath(pth)
+		if err != nil {
+			log.WithFields("error", err, "path", pth).Trace("unable to find path for owned file")
+			continue
+		}
+
+		for _, loc := range ownedLocation {
+			// if the location is a library, add the package to the set of packages that own the library
+			if !allLibLocations.Contains(loc.Coordinates) {
+				continue
+			}
+
+			if _, ok := packagesByLibraryPath[loc.Coordinates]; !ok {
+				packagesByLibraryPath[loc.Coordinates] = pkg.NewCollection()
+			}
+
+			// we have a library path, add the package to the set of packages that own the library
+			packagesByLibraryPath[loc.Coordinates].Add(p)
+		}
+	}
 }

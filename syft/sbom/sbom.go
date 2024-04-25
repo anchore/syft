@@ -75,7 +75,7 @@ func (s SBOM) RelationshipsForPackage(p pkg.Package, rt ...artifact.Relationship
 		rt = artifact.AllRelationshipTypes()
 	}
 
-	pId := p.ID()
+	pID := p.ID()
 
 	var relationships []artifact.Relationship
 	for _, relationship := range s.Relationships {
@@ -83,11 +83,11 @@ func (s SBOM) RelationshipsForPackage(p pkg.Package, rt ...artifact.Relationship
 			log.Debugf("relationship has nil edge, skipping: %#v", relationship)
 			continue
 		}
-		fromId := relationship.From.ID()
-		toId := relationship.To.ID()
-		hasPkgId := fromId == pId || toId == pId
+		fromID := relationship.From.ID()
+		toID := relationship.To.ID()
+		hasPkgID := fromID == pID || toID == pID
 
-		if !hasPkgId {
+		if !hasPkgID {
 			continue
 		}
 
