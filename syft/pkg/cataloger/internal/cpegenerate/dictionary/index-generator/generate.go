@@ -115,6 +115,7 @@ const (
 	prefixForPHPPecl              = "https://pecl.php.net/"
 	prefixForPHPPeclHTTP          = "http://pecl.php.net/"
 	prefixForPHPComposer          = "https://packagist.org/packages/"
+	prefixForGoModules            = "https://pkg.go.dev/"
 )
 
 // indexCPEList creates an index of CPEs by ecosystem.
@@ -160,6 +161,9 @@ func indexCPEList(list CpeList) *dictionary.Indexed {
 
 			case strings.HasPrefix(ref, prefixForPHPComposer):
 				addEntryForPHPComposerPackage(indexed, ref, cpeItemName)
+
+			case strings.HasPrefix(ref, prefixForGoModules):
+				addEntryForGoModulePackage(indexed, ref, cpeItemName)
 			}
 		}
 	}
@@ -311,4 +315,17 @@ func addEntryForPHPComposerPackage(indexed *dictionary.Indexed, ref string, cpeI
 	ref = components[0] + "/" + components[1]
 
 	updateIndex(indexed, dictionary.EcosystemPHPComposer, ref, cpeItemName)
+}
+
+func addEntryForGoModulePackage(indexed *dictionary.Indexed, ref string, cpeItemName string) {
+	// Prune off the non-package-name parts of the URL
+	ref = strings.Split(ref, "?")[0]
+	ref = strings.TrimPrefix(ref, prefixForGoModules)
+
+	// Ignore the vulnerability reports endpoints
+	if strings.HasPrefix(ref, "vuln/") {
+		return
+	}
+
+	updateIndex(indexed, dictionary.EcosystemGoModules, ref, cpeItemName)
 }

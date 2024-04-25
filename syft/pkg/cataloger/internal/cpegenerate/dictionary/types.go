@@ -16,6 +16,7 @@ const (
 	EcosystemPHPComposer    = "php_composer"
 	EcosystemJenkinsPlugins = "jenkins_plugins"
 	EcosystemRustCrates     = "rust_crates"
+	EcosystemGoModules      = "go_modules"
 )
 
 type Indexed struct {

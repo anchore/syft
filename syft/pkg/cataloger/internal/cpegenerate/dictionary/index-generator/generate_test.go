@@ -230,6 +230,19 @@ func Test_addEntryFuncs(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:             "addEntryForGoModulePackage",
+			addEntryFunc:     addEntryForGoModulePackage,
+			inputRef:         "https://pkg.go.dev/github.com/abc/123?whatever=xvgfhfhf",
+			inputCpeItemName: "cpe:2.3:a:abc:123:*:*:*:*:*:go:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemGoModules: {
+						"github.com/abc/123": dictionary.NewSet("cpe:2.3:a:abc:123:*:*:*:*:*:go:*:*"),
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
