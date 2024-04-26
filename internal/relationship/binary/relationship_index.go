@@ -45,6 +45,7 @@ func (i *relationshipIndex) track(r artifact.Relationship) bool {
 }
 
 // add a new relationship to the index, returning true if the relationship is new to the index, false otherwise (thus is a duplicate).
+// nolint:unparam
 func (i *relationshipIndex) add(r artifact.Relationship) bool {
 	if !i.track(r) {
 		i.additional = append(i.additional, r)
