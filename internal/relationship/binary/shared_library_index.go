@@ -46,16 +46,17 @@ func (i *sharedLibraryIndex) build(resolver file.Resolver, accessor sbomsync.Acc
 // }
 
 func (i *sharedLibraryIndex) owningLibraryPackage(libraryBasename string) *pkg.Collection {
-	// find all packages that own a library by it's basename
+	// find all packages that own a library by its basename
+	collection := pkg.NewCollection()
 	if set, ok := i.libLocationsByBasename[libraryBasename]; ok {
 		for _, coord := range set.ToSlice() {
 			if pkgSet, ok := i.packagesByLibraryPath[coord]; ok {
-				return pkgSet
+				collection.Add(pkgSet.PackagesByPath(coord.RealPath)...)
 			}
 		}
 	}
 
-	return nil
+	return collection
 }
 
 func locationsThatProvideLibraries(accessor sbomsync.Accessor) (map[string]file.CoordinateSet, file.CoordinateSet) {

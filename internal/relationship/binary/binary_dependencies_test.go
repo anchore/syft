@@ -20,10 +20,8 @@ import (
 // sytftestfixture (lib executable)... that imports GLIBC
 
 // 1. ELF P (a) --> exec (a) ---> imports of (a) --> (b) executable (imported executable) (ELF P --> file)
-// 1. ... but there is no primary evidence (Green)
-// 1. ... but there is no executable for the ELF package (We get this for free from positive test)
 // 1. ... negative case excluding things that are not binary packages that it checks metadata for file owner
-// 1. ... No duplicate relationships created
+// 1. ... No duplicate relationships created when they already exist
 // 1. ... if the file resolver returns no answers given an owned claim we survive
 // 1. ... multiple paths on the RPM package file metadata, but we only want one relationship created
 // 1. ... executable maps to one base bath, which is represented by two RPM, we make two relationships
@@ -42,9 +40,10 @@ func TestNewDependencyRelationships(t *testing.T) {
 
 	// rpm package that was discovered in linked section of the ELF binary package
 	glibCPackage := pkg.Package{
-		Name:    "glibc",
-		Version: "2.28-236.el8_9.12",
-		Type:    pkg.RpmPkg,
+		Name:      "glibc",
+		Version:   "2.28-236.el8_9.12",
+		Locations: file.NewLocationSet(file.NewLocation(glibcCoordinate.RealPath)),
+		Type:      pkg.RpmPkg,
 		Metadata: pkg.RpmDBEntry{
 			Files: []pkg.RpmFileRecord{
 				{
@@ -56,9 +55,10 @@ func TestNewDependencyRelationships(t *testing.T) {
 
 	// second rpm package that could be discovered in linked section of the ELF binary package
 	glibCustomPackage := pkg.Package{
-		Name:    "glibc",
-		Version: "2.28-236.el8_9.12",
-		Type:    pkg.RpmPkg,
+		Name:      "glibc",
+		Version:   "2.28-236.el8_9.12",
+		Locations: file.NewLocationSet(file.NewLocation(secondGlibcCoordinate.RealPath)),
+		Type:      pkg.RpmPkg,
 		Metadata: pkg.RpmDBEntry{
 			Files: []pkg.RpmFileRecord{
 				{
@@ -144,6 +144,7 @@ func TestNewDependencyRelationships(t *testing.T) {
 			name: "given a package that imports glibc, expect a relationship between the two packages when the package is an executable",
 			resolver: file.NewMockResolverForPaths(
 				glibcCoordinate.RealPath,
+				secondGlibcCoordinate.RealPath,
 				nestedLibCoordinate.RealPath,
 				parrallelLibCoordinate.RealPath,
 			),
