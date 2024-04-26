@@ -20,13 +20,7 @@ import (
 // sytftestfixture (lib executable)... that imports GLIBC
 
 // 1. ELF P (a) --> exec (a) ---> imports of (a) --> (b) executable (imported executable) (ELF P --> file)
-// 1. ... negative case excluding things that are not binary packages that it checks metadata for file owner
-// 1. ... No duplicate relationships created when they already exist
 // 1. ... if the file resolver returns no answers given an owned claim we survive
-// 1. ... multiple paths on the RPM package file metadata, but we only want one relationship created
-// 1. ... executable maps to one base bath, which is represented by two RPM, we make two relationships
-
-// 2. ELF P (a) --> exec (a) ---> imports of (a) --> (b) executable (imported executable) --> resolves to RPM package ( ELF P --> RPM)
 
 // Case 3 needs to be covered somewhere else given that NewDependency relationships should already have accessor with deduped packages
 // 3. ELF P (a) is a part of RPM P (b), thus ELF P (a) is deleted from the SBOM... this means that (b) gets all relationships of (a)
@@ -40,20 +34,27 @@ func TestNewDependencyRelationships(t *testing.T) {
 
 	// rpm package that was discovered in linked section of the ELF binary package
 	glibCPackage := pkg.Package{
-		Name:      "glibc",
-		Version:   "2.28-236.el8_9.12",
-		Locations: file.NewLocationSet(file.NewLocation(glibcCoordinate.RealPath)),
-		Type:      pkg.RpmPkg,
+		Name:    "glibc",
+		Version: "2.28-236.el8_9.12",
+		Locations: file.NewLocationSet(
+			file.NewLocation(glibcCoordinate.RealPath),
+			file.NewLocation("some/other/path"),
+		),
+		Type: pkg.RpmPkg,
 		Metadata: pkg.RpmDBEntry{
 			Files: []pkg.RpmFileRecord{
 				{
 					Path: glibcCoordinate.RealPath,
 				},
+				{
+					Path: "some/other/path",
+				},
 			},
 		},
 	}
+	glibCPackage.SetID()
 
-	// second rpm package that could be discovered in linked section of the ELF binary package
+	// second rpm package that could be discovered in linked section of the ELF binary package (same base path as above)
 	glibCustomPackage := pkg.Package{
 		Name:      "glibc",
 		Version:   "2.28-236.el8_9.12",
@@ -67,6 +68,7 @@ func TestNewDependencyRelationships(t *testing.T) {
 			},
 		},
 	}
+	glibCustomPackage.SetID()
 
 	// binary package that is an executable that can link against above rpm packages
 	syftTestFixturePackage := pkg.Package{
@@ -88,6 +90,7 @@ func TestNewDependencyRelationships(t *testing.T) {
 			Commit:     "5534c38d0ffef9a3f83154f0b7a7fb6ab0ab6dbb",
 		},
 	}
+	syftTestFixturePackage.SetID()
 
 	// dummy executable representation of glibc
 	glibcExecutable := file.Executable{
@@ -127,11 +130,12 @@ func TestNewDependencyRelationships(t *testing.T) {
 	}
 
 	tests := []struct {
-		name            string
-		resolver        file.Resolver
-		coordinateIndex map[file.Coordinates]file.Executable
-		packages        []pkg.Package
-		want            []artifact.Relationship
+		name                    string
+		resolver                file.Resolver
+		coordinateIndex         map[file.Coordinates]file.Executable
+		packages                []pkg.Package
+		prexistingRelationships []artifact.Relationship
+		want                    []artifact.Relationship
 	}{
 		{
 			name:            "blank sbom and accessor returns empty relationships",
@@ -144,7 +148,6 @@ func TestNewDependencyRelationships(t *testing.T) {
 			name: "given a package that imports glibc, expect a relationship between the two packages when the package is an executable",
 			resolver: file.NewMockResolverForPaths(
 				glibcCoordinate.RealPath,
-				secondGlibcCoordinate.RealPath,
 				nestedLibCoordinate.RealPath,
 				parrallelLibCoordinate.RealPath,
 			),
@@ -192,12 +195,34 @@ func TestNewDependencyRelationships(t *testing.T) {
 			},
 		},
 		{
+			name: "given some dependency relationships already exist, expect no duplicate relationships to be created",
+			resolver: file.NewMockResolverForPaths(
+				glibcCoordinate.RealPath,
+				nestedLibCoordinate.RealPath,
+				parrallelLibCoordinate.RealPath,
+			),
+			coordinateIndex: map[file.Coordinates]file.Executable{
+				glibcCoordinate:        glibcExecutable,
+				nestedLibCoordinate:    syftTestFixtureExecutable,
+				parrallelLibCoordinate: syftTestFixtureExecutable2,
+			},
+			packages: []pkg.Package{glibCPackage, glibCustomPackage, syftTestFixturePackage},
+			prexistingRelationships: []artifact.Relationship{
+				{
+					From: glibCPackage,
+					To:   syftTestFixturePackage,
+					Type: artifact.DependencyOfRelationship,
+				},
+			},
+			want: []artifact.Relationship{},
+		},
+		{
 			name: "given multiple owned paths for RPM package, expect only one relationship to be created",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			accessor := newAccesorClosure(tt.packages, tt.coordinateIndex)
+			accessor := newAccesorClosure(tt.packages, tt.coordinateIndex, tt.prexistingRelationships)
 			// given a resolver that knows about the paths of the packages and executables,
 			// and given an SBOM accessor that knows about the packages and executables,
 			// we should be able to create a set of relationships between the packages and executables
@@ -214,7 +239,7 @@ func TestNewDependencyRelationships(t *testing.T) {
 	}
 }
 
-func newAccesorClosure(pkgs []pkg.Package, coordinateIndex map[file.Coordinates]file.Executable) sbomsync.Accessor {
+func newAccesorClosure(pkgs []pkg.Package, coordinateIndex map[file.Coordinates]file.Executable, prexistingRelationships []artifact.Relationship) sbomsync.Accessor {
 	sb := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			Packages: pkg.NewCollection(),
@@ -227,6 +252,9 @@ func newAccesorClosure(pkgs []pkg.Package, coordinateIndex map[file.Coordinates]
 	accessor := builder.(sbomsync.Accessor)
 	accessor.WriteToSBOM(func(s *sbom.SBOM) {
 		s.Artifacts.Executables = coordinateIndex
+		if prexistingRelationships != nil {
+			s.Relationships = prexistingRelationships
+		}
 	})
 	return accessor
 }

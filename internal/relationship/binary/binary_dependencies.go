@@ -22,7 +22,10 @@ func NewDependencyRelationships(resolver file.Resolver, accessor sbomsync.Access
 
 	// 3. craft package-to-package relationships for each binary that represent shared library dependencies
 	//note: we only care about package-to-package relationships
-	relIndex := newRelationshipIndex()
+	var relIndex *relationshipIndex
+	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
+		relIndex = newRelationshipIndex(s.Relationships...)
+	})
 
 	return generateRelationships(resolver, accessor, index, relIndex)
 }
