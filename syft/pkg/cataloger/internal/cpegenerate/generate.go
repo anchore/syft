@@ -93,6 +93,9 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 	case pkg.PhpPeclPkg:
 		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemPHPPecl][p.Name]
 
+	case pkg.GoModulePkg:
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemGoModules][p.Name]
+
 	default:
 		// The dictionary doesn't support this package type yet.
 		return parsedCPEs, false

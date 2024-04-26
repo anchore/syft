@@ -25048,6 +25048,51 @@
     </references>
     <cpe-23:cpe23-item name="cpe:2.3:a:jenkins:anchore_container_image_scanner:1.0.1:*:*:*:*:jenkins:*:*"/>
   </cpe-item>
+  <cpe-item name="cpe:/a:square:squalor:-::~~~go~~">
+    <title xml:lang="en-US">Square Squalor - for Go</title>
+    <references>
+      <reference href="https://github.com/square/squalor/commit/f6f0a47cc344711042eb0970cb423e6950ba3f93">Advisory</reference>
+      <reference href="https://pkg.go.dev/github.com/square/squalor?tab=versions">Version</reference>
+      <reference href="https://square.github.io/">Product</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:square:squalor:-:*:*:*:*:go:*:*"/>
+  </cpe-item>
+  <cpe-item name="cpe:/a:tar-utils_project:tar-utils:-::~~~go~~">
+    <title xml:lang="en-US">Tar-utils Project Tar-utils - for Go</title>
+    <references>
+      <reference href="https://github.com/whyrusleeping/tar-utils">Project</reference>
+      <reference href="https://pkg.go.dev/vuln/GO-2021-0106">Advisory</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:tar-utils_project:tar-utils:-:*:*:*:*:go:*:*"/>
+  </cpe-item>
+  <cpe-item name="cpe:/a:web_project:web:1.0.0::~~~go~~">
+    <title xml:lang="en-US">Web Project Web 1.0.0 for Go</title>
+    <references>
+      <reference href="https://github.com/ecnepsnai/web/releases">Change Log</reference>
+      <reference href="https://github.com/ecnepsnai/web">Product</reference>
+      <reference href="https://pkg.go.dev/github.com/ecnepsnai/web">Project</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:web_project:web:1.0.0:*:*:*:*:go:*:*"/>
+  </cpe-item>
+  <cpe-item name="cpe:/a:aahframework:aah:-::~~~go~~">
+    <title xml:lang="en-US">aah framework aah for Go</title>
+    <references>
+      <reference href="https://pkg.go.dev/aahframe.work">Product</reference>
+      <reference href="https://pkg.go.dev/vuln/GO-2020-0033">Advisory</reference>
+      <reference href="https://aahframework.org/">Vendor</reference>
+      <reference href="https://github.com/go-aah/aah/releases">Change Log</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:aahframework:aah:-:*:*:*:*:go:*:*"/>
+  </cpe-item>
+  <cpe-item name="cpe:/a:yaml_project:yaml:2.3.0::~~~go~~">
+    <title xml:lang="en-US">YAML Project YAML 2.3.0 for Go</title>
+    <references>
+      <reference href="https://pkg.go.dev/gopkg.in/yaml.v3">Project</reference>
+      <reference href="https://github.com/go-yaml/yaml">Project</reference>
+      <reference href="https://github.com/go-yaml/yaml/tags">Version</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:yaml_project:yaml:2.3.0:*:*:*:*:go:*:*"/>
+  </cpe-item>
 </cpe-list>
 </cpe-list>
 </cpe-list>

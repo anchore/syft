@@ -1,5 +1,138 @@
 {
   "ecosystems": {
+    "go_modules": {
+      "aahframe.work": [
+        "cpe:2.3:a:aahframework:aah:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/Masterminds/goutils": [
+        "cpe:2.3:a:goutils_project:goutils:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/SimonWaldherr/zplgfa": [
+        "cpe:2.3:a:simonwaldherr:zplgfa:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/apptainer/apptainer": [
+        "cpe:2.3:a:lfprojects:apptainer:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/aws/aws-sdk-go": [
+        "cpe:2.3:a:amazon:aws_software_development_kit:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/b3log/wide": [
+        "cpe:2.3:a:wide_project:wide:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/charmbracelet/soft-serve": [
+        "cpe:2.3:a:charm:soft_serve:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/containers/psgo": [
+        "cpe:2.3:a:psgo_project:psgo:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/crewjam/saml": [
+        "cpe:2.3:a:saml_project:saml:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/deis/workflow-manager#section-readme": [
+        "cpe:2.3:a:deis:workflow_manager:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/disintegration/imaging": [
+        "cpe:2.3:a:disintegration:imaging:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/ecnepsnai/web": [
+        "cpe:2.3:a:web_project:web:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/free5gc/udm": [
+        "cpe:2.3:a:free5gc:udm:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/ginuerzh/gost": [
+        "cpe:2.3:a:go_simple_tunnel_project:go_simple_tunnel:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/go-resty/resty/v2": [
+        "cpe:2.3:a:resty_project:resty:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/gofiber/template/django": [
+        "cpe:2.3:a:gofiber:django:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/gofiber/template/django/v2": [
+        "cpe:2.3:a:gofiber:django:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/gofiber/template/django/v3": [
+        "cpe:2.3:a:gofiber:django:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/gookit/goutil": [
+        "cpe:2.3:a:go_util_project:go_util:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/hamba/avro/v2": [
+        "cpe:2.3:a:avro_project:avro:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/jumpserver/koko/pkg/koko": [
+        "cpe:2.3:a:fit2cloud:koko:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/libp2p/go-libp2p": [
+        "cpe:2.3:a:protocol:libp2p:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/mojocn/base64Captcha": [
+        "cpe:2.3:a:mojotv:base64captcha:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/moov-io/signedxml": [
+        "cpe:2.3:a:moov:signedxml:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/mukul-shaunik/play-with-docker": [
+        "cpe:2.3:a:play-with-docker:play_with_docker:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/nektos/act/pkg/model": [
+        "cpe:2.3:a:act_project:act:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/notaryproject/notation-go": [
+        "cpe:2.3:a:notaryproject:notation-go:*:*:*:*:*:*:*:*"
+      ],
+      "github.com/ntbosscher/gobase": [
+        "cpe:2.3:a:gobase_project:gobase:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/proglottis/gpgme": [
+        "cpe:2.3:a:gpgme_project:gpgme:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/sap/cloud-security-client-go": [
+        "cpe:2.3:a:sap:cloud-security-client-go:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/sigstore/gitsign": [
+        "cpe:2.3:a:sigstore:gitsign:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/square/squalor": [
+        "cpe:2.3:a:square:squalor:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/valyala/fasthttp": [
+        "cpe:2.3:a:fasthttp_project:fasthttp:*:*:*:*:*:*:*:*"
+      ],
+      "github.com/whilp/git-urls": [
+        "cpe:2.3:a:git-urls_project:git-urls:*:*:*:*:*:go:*:*"
+      ],
+      "golang.org/x/crypto/ssh": [
+        "cpe:2.3:a:golang:package_ssh:*:*:*:*:*:*:*:*",
+        "cpe:2.3:a:golang:ssh:*:*:*:*:*:*:*:*"
+      ],
+      "golang.org/x/image": [
+        "cpe:2.3:a:golang:image:*:*:*:*:*:go:*:*"
+      ],
+      "golang.org/x/image/tiff": [
+        "cpe:2.3:a:golang:tiff:*:*:*:*:*:go:*:*"
+      ],
+      "golang.org/x/net": [
+        "cpe:2.3:a:golang:networking:*:*:*:*:*:go:*:*"
+      ],
+      "golang.org/x/net/http2": [
+        "cpe:2.3:a:golang:http2:*:*:*:*:*:*:*:*",
+        "cpe:2.3:a:golang:http2:*:*:*:*:*:go:*:*"
+      ],
+      "golang.org/x/net/http2/h2c": [
+        "cpe:2.3:a:golang:h2c:*:*:*:*:*:go:*:*"
+      ],
+      "golang.org/x/net/http2/hpack": [
+        "cpe:2.3:a:golang:hpack:*:*:*:*:*:go:*:*"
+      ],
+      "golang.org/x/text": [
+        "cpe:2.3:a:golang:text:*:*:*:*:*:*:*:*"
+      ],
+      "gopkg.in/yaml.v3": [
+        "cpe:2.3:a:yaml_project:yaml:*:*:*:*:*:go:*:*"
+      ]
+    },
     "jenkins_plugins": {
       "DotCi": [
         "cpe:2.3:a:jenkins:dotci:*:*:*:*:*:jenkins:*:*"

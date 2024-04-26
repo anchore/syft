@@ -1,5 +1,19 @@
 {
   "ecosystems": {
+    "go_modules": {
+      "aahframe.work": [
+        "cpe:2.3:a:aahframework:aah:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/ecnepsnai/web": [
+        "cpe:2.3:a:web_project:web:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/square/squalor": [
+        "cpe:2.3:a:square:squalor:*:*:*:*:*:go:*:*"
+      ],
+      "gopkg.in/yaml.v3": [
+        "cpe:2.3:a:yaml_project:yaml:*:*:*:*:*:go:*:*"
+      ]
+    },
     "jenkins_plugins": {
       "anchore-container-scanner": [
         "cpe:2.3:a:anchore:container_image_scanner:*:*:*:*:*:jenkins:*:*",
