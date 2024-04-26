@@ -20,7 +20,6 @@ import (
 // sytftestfixture (lib executable)... that imports GLIBC
 
 // 1. ELF P (a) --> exec (a) ---> imports of (a) --> (b) executable (imported executable) (ELF P --> file)
-// 1. ... if the file resolver returns no answers given an owned claim we survive
 
 // Case 3 needs to be covered somewhere else given that NewDependency relationships should already have accessor with deduped packages
 // 3. ELF P (a) is a part of RPM P (b), thus ELF P (a) is deleted from the SBOM... this means that (b) gets all relationships of (a)
@@ -217,7 +216,15 @@ func TestNewDependencyRelationships(t *testing.T) {
 			want: []artifact.Relationship{},
 		},
 		{
-			name: "given multiple owned paths for RPM package, expect only one relationship to be created",
+			name:     "given a package that imports a library that is not tracked by the resolver, expect no relationships to be created",
+			resolver: file.NewMockResolverForPaths(),
+			coordinateIndex: map[file.Coordinates]file.Executable{
+				glibcCoordinate:        glibcExecutable,
+				nestedLibCoordinate:    syftTestFixtureExecutable,
+				parrallelLibCoordinate: syftTestFixtureExecutable2,
+			},
+			packages: []pkg.Package{glibCPackage, syftTestFixturePackage},
+			want:     []artifact.Relationship{},
 		},
 	}
 	for _, tt := range tests {
