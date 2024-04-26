@@ -58,52 +58,69 @@ func GetIndexedDictionary() (_ *dictionary.Indexed, err error) {
 	return indexedCPEDictionary, err
 }
 
-func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
+func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 	dict, err := GetIndexedDictionary()
+	parsedCPEs := []cpe.CPE{}
 	if err != nil {
 		log.Debugf("CPE dictionary lookup not available: %+v", err)
-		return cpe.CPE{}, false
+		return parsedCPEs, false
 	}
 
 	var (
-		cpeString string
-		ok        bool
+		cpes *dictionary.Set
+		ok   bool
 	)
 
 	switch p.Type {
 	case pkg.NpmPkg:
-		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemNPM][p.Name]
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemNPM][p.Name]
 
 	case pkg.GemPkg:
-		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemRubyGems][p.Name]
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemRubyGems][p.Name]
 
 	case pkg.PythonPkg:
-		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemPyPI][p.Name]
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemPyPI][p.Name]
 
 	case pkg.JenkinsPluginPkg:
-		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemJenkinsPlugins][p.Name]
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemJenkinsPlugins][p.Name]
 
 	case pkg.RustPkg:
-		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemRustCrates][p.Name]
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemRustCrates][p.Name]
+
+	case pkg.PhpComposerPkg:
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemPHPComposer][p.Name]
+
+	case pkg.PhpPeclPkg:
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemPHPPecl][p.Name]
+
+	case pkg.GoModulePkg:
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemGoModules][p.Name]
 
 	default:
 		// The dictionary doesn't support this package type yet.
-		return cpe.CPE{}, false
+		return parsedCPEs, false
 	}
 
 	if !ok {
 		// The dictionary doesn't have a CPE for this package.
-		return cpe.CPE{}, false
+		return parsedCPEs, false
 	}
 
-	parsedCPE, err := cpe.New(cpeString, cpe.NVDDictionaryLookupSource)
-	if err != nil {
-		return cpe.CPE{}, false
+	for _, c := range cpes.List() {
+		parsedCPE, err := cpe.New(c, cpe.NVDDictionaryLookupSource)
+		if err != nil {
+			continue
+		}
+
+		parsedCPE.Attributes.Version = p.Version
+		parsedCPEs = append(parsedCPEs, parsedCPE)
 	}
 
-	parsedCPE.Attributes.Version = p.Version
+	if len(parsedCPEs) == 0 {
+		return []cpe.CPE{}, false
+	}
 
-	return parsedCPE, true
+	return parsedCPEs, true
 }
 
 // FromPackageAttributes Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
