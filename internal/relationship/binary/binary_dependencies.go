@@ -52,7 +52,7 @@ func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, i
 					continue
 				}
 
-				relIndex = populateRelatiionships(exec, parentPkg, resolver, relIndex, index)
+				relIndex = populateRelationships(exec, parentPkg, resolver, relIndex, index)
 			}
 		}
 	})
@@ -60,7 +60,7 @@ func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, i
 	return relIndex.newRelationships()
 }
 
-func populateRelatiionships(exec file.Executable, parentPkg pkg.Package, resolver file.Resolver, relIndex *relationshipIndex, index *sharedLibraryIndex) *relationshipIndex {
+func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver file.Resolver, relIndex *relationshipIndex, index *sharedLibraryIndex) *relationshipIndex {
 	for _, libReference := range exec.ImportedLibraries {
 		// for each library reference, check s.Artifacts.Packages.Sorted(pkg.BinaryPkg) for a binary package that represents that library
 		// if found, create a relationship between the parent package and the library package

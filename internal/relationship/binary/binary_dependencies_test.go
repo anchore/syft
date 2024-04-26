@@ -1,6 +1,7 @@
 package binary
 
 import (
+	"path"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -19,15 +20,27 @@ import (
 // sytftestfixture (lib executable)... that imports GLIBC
 
 // 1. ELF P (a) --> exec (a) ---> imports of (a) --> (b) executable (imported executable) (ELF P --> file)
-// 1... but with symlinks!
-// 1. ... but there is no primary evidence
-// 1. ... but there is no executable for the ELF package
+// 1. ... but there is no primary evidence (Green)
+// 1. ... but there is no executable for the ELF package (We get this for free from positive test)
+// 1. ... negative case excluding things that are not binary packages that it checks metadata for file owner
+// 1. ... No duplicate relationships created
+// 1. ... if the file resolver returns no answers given an owned claim we survive
+// 1. ... multiple paths on the RPM package file metadata, but we only want one relationship created
+// 1. ... executable maps to one base bath, which is represented by two RPM, we make two relationships
 
 // 2. ELF P (a) --> exec (a) ---> imports of (a) --> (b) executable (imported executable) --> resolves to RPM package ( ELF P --> RPM)
+
+// Case 3 needs to be covered somewhere else given that NewDependency relationships should already have accessor with deduped packages
 // 3. ELF P (a) is a part of RPM P (b), thus ELF P (a) is deleted from the SBOM... this means that (b) gets all relationships of (a)
 
 func TestNewDependencyRelationships(t *testing.T) {
-	// package discovered in the executable
+	// coordinates for the files under test
+	glibcCoordinate := file.Coordinates{RealPath: "/usr/lib64/libc.so.6"}
+	secondGlibcCoordinate := file.Coordinates{RealPath: "/usr/local/lib64/libc.so.6"}
+	nestedLibCoordinate := file.Coordinates{RealPath: "/usr/local/bin/elftests/elfbinwithnestedlib/bin/elfbinwithnestedlib"}
+	parrallelLibCoordinate := file.Coordinates{RealPath: "/usr/local/bin/elftests/elfbinwithsisterlib/bin/elfwithparallellibbin1"}
+
+	// rpm package that was discovered in linked section of the ELF binary package
 	glibCPackage := pkg.Package{
 		Name:    "glibc",
 		Version: "2.28-236.el8_9.12",
@@ -35,21 +48,35 @@ func TestNewDependencyRelationships(t *testing.T) {
 		Metadata: pkg.RpmDBEntry{
 			Files: []pkg.RpmFileRecord{
 				{
-					Path: "/usr/lib64/libc.so.6",
+					Path: glibcCoordinate.RealPath,
 				},
 			},
 		},
 	}
 
-	// package that is an executable
+	// second rpm package that could be discovered in linked section of the ELF binary package
+	glibCustomPackage := pkg.Package{
+		Name:    "glibc",
+		Version: "2.28-236.el8_9.12",
+		Type:    pkg.RpmPkg,
+		Metadata: pkg.RpmDBEntry{
+			Files: []pkg.RpmFileRecord{
+				{
+					Path: secondGlibcCoordinate.RealPath,
+				},
+			},
+		},
+	}
+
+	// binary package that is an executable that can link against above rpm packages
 	syftTestFixturePackage := pkg.Package{
 		Name:    "syfttestfixture",
 		Version: "0.01",
 		PURL:    "pkg:generic/syftsys/syfttestfixture@0.01",
 		FoundBy: "",
 		Locations: file.NewLocationSet(
-			file.NewLocation("/usr/local/bin/elftests/elfbinwithnestedlib/bin/elfbinwithnestedlib").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-			file.NewLocation("/usr/local/bin/elftests/elfbinwithsisterlib/bin/elfwithparallellibbin1").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			file.NewLocation(nestedLibCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			file.NewLocation(parrallelLibCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
 		),
 		Language: "",
 		Type:     pkg.BinaryPkg,
@@ -62,13 +89,40 @@ func TestNewDependencyRelationships(t *testing.T) {
 		},
 	}
 
-	// executable representation of the above binary pkg
+	// dummy executable representation of glibc
+	glibcExecutable := file.Executable{
+		Format:            "elf",
+		HasExports:        true,
+		HasEntrypoint:     true,
+		ImportedLibraries: []string{},
+	}
+
+	// dummy executable representation of glibc
+	secondGlibcExecutable := file.Executable{
+		Format:            "elf",
+		HasExports:        true,
+		HasEntrypoint:     true,
+		ImportedLibraries: []string{},
+	}
+
+	// executable representation of the syftTestFixturePackage
 	syftTestFixtureExecutable := file.Executable{
 		Format:        "elf",
 		HasExports:    true,
 		HasEntrypoint: true,
 		ImportedLibraries: []string{
-			"libc.so.6",
+			path.Base(glibcCoordinate.RealPath),
+		},
+	}
+
+	// second executable representation that has no parent package
+	syftTestFixtureExecutable2 := file.Executable{
+		Format:        "elf",
+		HasExports:    true,
+		HasEntrypoint: true,
+		ImportedLibraries: []string{
+			// this should not be a relationship because it is not a coordinate
+			"foo.so.6",
 		},
 	}
 
@@ -87,28 +141,17 @@ func TestNewDependencyRelationships(t *testing.T) {
 			want:            make([]artifact.Relationship, 0),
 		},
 		{
-			name: "given a package that imports glibC, expect a relationship between the two packages when the package is an executable",
+			name: "given a package that imports glibc, expect a relationship between the two packages when the package is an executable",
 			resolver: file.NewMockResolverForPaths(
-				"/usr/lib64/libc.so.6",
-				"/usr/local/bin/elftests/elfbinwithnestedlib/bin/elfbinwithnestedlib",
-				"/usr/local/bin/elftests/elfbinwithsisterlib/bin/elfwithparallellibbin1",
+				glibcCoordinate.RealPath,
+				nestedLibCoordinate.RealPath,
+				parrallelLibCoordinate.RealPath,
 			),
 			// path -> executable (above mock resolver needs to be able to resolve to paths in this map)
 			coordinateIndex: map[file.Coordinates]file.Executable{
-				{
-					RealPath: "/usr/lib64/libc.so.6",
-				}: {
-					Format:            "elf",
-					HasExports:        true,
-					HasEntrypoint:     true,
-					ImportedLibraries: []string{},
-				},
-				{
-					RealPath: "/usr/local/bin/elftests/elfbinwithnestedlib/bin/elfbinwithnestedlib",
-				}: syftTestFixtureExecutable,
-				{
-					RealPath: "/usr/local/bin/elftests/elfbinwithsisterlib/bin/elfwithparallellibbin1",
-				}: syftTestFixtureExecutable,
+				glibcCoordinate:        glibcExecutable,
+				nestedLibCoordinate:    syftTestFixtureExecutable,
+				parrallelLibCoordinate: syftTestFixtureExecutable2,
 			},
 			packages: []pkg.Package{glibCPackage, syftTestFixturePackage},
 			want: []artifact.Relationship{
@@ -118,6 +161,37 @@ func TestNewDependencyRelationships(t *testing.T) {
 					Type: artifact.DependencyOfRelationship,
 				},
 			},
+		},
+		{
+			name: "given an executable maps to one base path represented by two RPM we make two relationships",
+			resolver: file.NewMockResolverForPaths(
+				glibcCoordinate.RealPath,
+				secondGlibcCoordinate.RealPath,
+				nestedLibCoordinate.RealPath,
+				parrallelLibCoordinate.RealPath,
+			),
+			coordinateIndex: map[file.Coordinates]file.Executable{
+				glibcCoordinate:        glibcExecutable,
+				secondGlibcCoordinate:  secondGlibcExecutable,
+				nestedLibCoordinate:    syftTestFixtureExecutable,
+				parrallelLibCoordinate: syftTestFixtureExecutable2,
+			},
+			packages: []pkg.Package{glibCPackage, glibCustomPackage, syftTestFixturePackage},
+			want: []artifact.Relationship{
+				{
+					From: glibCPackage,
+					To:   syftTestFixturePackage,
+					Type: artifact.DependencyOfRelationship,
+				},
+				{
+					From: glibCustomPackage,
+					To:   syftTestFixturePackage,
+					Type: artifact.DependencyOfRelationship,
+				},
+			},
+		},
+		{
+			name: "given multiple owned paths for RPM package, expect only one relationship to be created",
 		},
 	}
 	for _, tt := range tests {
