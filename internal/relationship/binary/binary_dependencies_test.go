@@ -21,8 +21,10 @@ import (
 
 // 1. ELF P (a) --> exec (a) ---> imports of (a) --> (b) executable (imported executable) (ELF P --> file)
 
-// Case 3 needs to be covered somewhere else given that NewDependency relationships should already have accessor with deduped packages
+// Case 3 needs to be covered somewhere else given that NewDependency relationships should already have accessor with
+// de duplicatied packages
 // 3. ELF P (a) is a part of RPM P (b), thus ELF P (a) is deleted from the SBOM... this means that (b) gets all relationships of (a)
+// SEE TODO in finalize
 
 func TestNewDependencyRelationships(t *testing.T) {
 	// coordinates for the files under test

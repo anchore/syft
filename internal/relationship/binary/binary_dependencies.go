@@ -82,15 +82,15 @@ func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver
 			// are you in our index?
 			realBaseName := path.Base(loc.RealPath)
 			pkgCollection := index.owningLibraryPackage(realBaseName)
-			//if pkgCollection.PackageCount() < 1 {
-			//	relIndex.add(
-			//		artifact.Relationship{
-			//			From: loc.Coordinates,
-			//			To:   parentPkg,
-			//			Type: artifact.DependencyOfRelationship,
-			//		},
-			//	)
-			//}
+			if pkgCollection.PackageCount() < 1 {
+				relIndex.add(
+					artifact.Relationship{
+						From: loc.Coordinates,
+						To:   parentPkg,
+						Type: artifact.DependencyOfRelationship,
+					},
+				)
+			}
 			for _, p := range pkgCollection.Sorted() {
 				relIndex.add(
 					artifact.Relationship{
