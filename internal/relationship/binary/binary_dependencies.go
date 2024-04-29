@@ -55,7 +55,7 @@ func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, i
 					continue
 				}
 
-				relIndex = populateRelationships(exec, parentPkg, resolver, relIndex, index)
+				populateRelationships(exec, parentPkg, resolver, relIndex, index)
 			}
 		}
 	})
@@ -63,7 +63,7 @@ func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, i
 	return relIndex.newRelationships()
 }
 
-func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver file.Resolver, relIndex *relationshipIndex, index *sharedLibraryIndex) *relationshipIndex {
+func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver file.Resolver, relIndex *relationshipIndex, index *sharedLibraryIndex) {
 	for _, libReference := range exec.ImportedLibraries {
 		// for each library reference, check s.Artifacts.Packages.Sorted(pkg.BinaryPkg) for a binary package that represents that library
 		// if found, create a relationship between the parent package and the library package
@@ -82,15 +82,15 @@ func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver
 			// are you in our index?
 			realBaseName := path.Base(loc.RealPath)
 			pkgCollection := index.owningLibraryPackage(realBaseName)
-			if pkgCollection.PackageCount() < 1 {
-				relIndex.add(
-					artifact.Relationship{
-						From: loc.Coordinates,
-						To:   parentPkg,
-						Type: artifact.DependencyOfRelationship,
-					},
-				)
-			}
+			//if pkgCollection.PackageCount() < 1 {
+			//	relIndex.add(
+			//		artifact.Relationship{
+			//			From: loc.Coordinates,
+			//			To:   parentPkg,
+			//			Type: artifact.DependencyOfRelationship,
+			//		},
+			//	)
+			//}
 			for _, p := range pkgCollection.Sorted() {
 				relIndex.add(
 					artifact.Relationship{
@@ -102,5 +102,4 @@ func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver
 			}
 		}
 	}
-	return relIndex
 }

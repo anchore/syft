@@ -51,7 +51,8 @@ func (i *sharedLibraryIndex) owningLibraryPackage(libraryBasename string) *pkg.C
 	if set, ok := i.libLocationsByBasename[libraryBasename]; ok {
 		for _, coord := range set.ToSlice() {
 			if pkgSet, ok := i.packagesByLibraryPath[coord]; ok {
-				collection.Add(pkgSet.PackagesByPath(coord.RealPath)...)
+				toAdd := pkgSet.Sorted()
+				collection.Add(toAdd...)
 			}
 		}
 	}
@@ -100,14 +101,20 @@ func packagesWithLibraryOwnership(resolver file.Resolver, accessor sbomsync.Acce
 				ownedFilePaths = fileOwner.OwnedFiles()
 			}
 
-			populatePackagesByLibraryPath(resolver, allLibLocations, packagesByLibraryPath, p, ownedFilePaths)
+			packagesByLibraryPath = populatePackagesByLibraryPath(resolver, allLibLocations, packagesByLibraryPath, p, ownedFilePaths)
 		}
 	})
 
 	return packagesByLibraryPath
 }
 
-func populatePackagesByLibraryPath(resolver file.Resolver, allLibLocations file.CoordinateSet, packagesByLibraryPath map[file.Coordinates]*pkg.Collection, p pkg.Package, ownedFilePaths []string) {
+func populatePackagesByLibraryPath(
+	resolver file.Resolver,
+	allLibLocations file.CoordinateSet,
+	packagesByLibraryPath map[file.Coordinates]*pkg.Collection,
+	p pkg.Package,
+	ownedFilePaths []string,
+) map[file.Coordinates]*pkg.Collection {
 	for _, pth := range ownedFilePaths {
 		ownedLocation, err := resolver.FilesByPath(pth)
 		if err != nil {
@@ -129,4 +136,5 @@ func populatePackagesByLibraryPath(resolver file.Resolver, allLibLocations file.
 			packagesByLibraryPath[loc.Coordinates].Add(p)
 		}
 	}
+	return packagesByLibraryPath
 }
