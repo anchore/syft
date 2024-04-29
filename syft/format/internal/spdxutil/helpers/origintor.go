@@ -7,7 +7,23 @@ import (
 )
 
 // Originator needs to conform to the SPDX spec here:
-// https://spdx.github.io/spdx-spec/package-information/#76-package-originator-field
+// https://spdx.github.io/spdx-spec/v2.2.2/package-information/#76-package-originator-field
+//
+// Definition:
+//
+//	If the package identified in the SPDX document originated from a different person or
+//	organization than identified as Package Supplier (see 7.5 above), this field identifies from
+//	where or whom the package originally came. In some cases, a package may be created and
+//	originally distributed by a different third party than the Package Supplier of the package.
+//	For example, the SPDX document identifies the package as glibc and the Package Supplier as
+//	Red Hat, but the Free Software Foundation is the Package Originator.
+//
+// Use NOASSERTION if:
+//
+//   - the SPDX document creator has attempted to but cannot reach a reasonable objective determination;
+//   - the SPDX document creator has made no attempt to determine this field; or
+//   - the SPDX document creator has intentionally provided no information (no meaning should be implied by doing so).
+//
 // Available options are: <omit>, NOASSERTION, Person: <person>, Organization: <org>
 // return values are: <type>, <value>
 func Originator(p pkg.Package) (string, string) {

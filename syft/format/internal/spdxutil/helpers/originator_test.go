@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,7 @@ import (
 )
 
 func Test_Originator(t *testing.T) {
+	completionTester := packagemetadata.NewCompletionTester(t)
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -98,7 +100,7 @@ func Test_Originator(t *testing.T) {
 		},
 		{
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION
-			name: "empty",
+			name: "from npm -- empty author",
 			input: pkg.Package{
 				Metadata: pkg.NpmPackage{
 					Author: "",
@@ -106,9 +108,11 @@ func Test_Originator(t *testing.T) {
 			},
 			expected: "",
 		},
+		{},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			completionTester.Tested(t, test.input.Metadata)
 			typ, value := Originator(test.input)
 			if typ != "" {
 				value = typ + ": " + value
