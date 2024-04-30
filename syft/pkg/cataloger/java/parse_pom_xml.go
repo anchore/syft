@@ -236,7 +236,11 @@ func resolveProperty(pom gopom.Project, property *string, propertyName string) s
 	seenBeforePropertyNames := map[string]struct{}{
 		propertyName: {},
 	}
-	return recursiveResolveProperty(pom, propertyCase, seenBeforePropertyNames)
+	result := recursiveResolveProperty(pom, propertyCase, seenBeforePropertyNames)
+	if propertyMatcher.MatchString(result) {
+		return "" // dereferencing variable failed; fall back to empty string
+	}
+	return result
 }
 
 //nolint:gocognit

@@ -10,6 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -991,7 +992,7 @@ func TestDictionaryFindIsWired(t *testing.T) {
 	tests := []struct {
 		name       string
 		pkg        pkg.Package
-		want       string
+		want       []cpe.CPE
 		wantExists bool
 	}{
 		{
@@ -1001,7 +1002,10 @@ func TestDictionaryFindIsWired(t *testing.T) {
 				Version: "1.0.2k",
 				Type:    pkg.GemPkg,
 			},
-			want: "cpe:2.3:a:ruby-lang:openssl:1.0.2k:*:*:*:*:*:*:*",
+			want: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:ruby-lang:openssl:1.0.2k:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:ruby-lang:openssl:1.0.2k:*:*:*:*:ruby:*:*", cpe.NVDDictionaryLookupSource),
+			},
 			// without the cpe data wired up, this would be empty (generation also creates cpe:2.3:a:openssl:openssl:1.0.2k:*:*:*:*:*:*:*)
 			wantExists: true,
 		},
@@ -1009,8 +1013,7 @@ func TestDictionaryFindIsWired(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, gotExists := FromDictionaryFind(tt.pkg)
-
-			assert.Equal(t, tt.want, got.Attributes.BindToFmtString())
+			assert.ElementsMatch(t, tt.want, got)
 			assert.Equal(t, tt.wantExists, gotExists)
 		})
 	}

@@ -15,7 +15,7 @@ jobs:
     environment: release
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b #v4.1.4
 
       - name: Check if tag already exists
         # note: this will fail if the tag already exists
@@ -97,7 +97,7 @@ jobs:
       # required for goreleaser signs section with cosign
       id-token: write
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b #v4.1.4
         with:
           fetch-depth: 0
 
@@ -143,7 +143,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.TOOLBOX_AWS_SECRET_ACCESS_KEY }}
 
-      - uses: anchore/sbom-action@ab5d7b5f48981941c4c5d6bf33aeb98fe3bae38c #v0.15.10
+      - uses: anchore/sbom-action@7ccf588e3cf3cc2611714c2eeae48550fbc17552 #v0.15.11
         continue-on-error: true
         with:
           artifact-name: sbom.spdx.json

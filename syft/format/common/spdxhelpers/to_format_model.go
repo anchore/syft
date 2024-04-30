@@ -517,9 +517,7 @@ func toPackageOriginator(p pkg.Package) *spdx.Originator {
 }
 
 func toPackageSupplier(p pkg.Package) *spdx.Supplier {
-	// this uses the Originator function for now until
-	// a better distinction can be made for supplier
-	kind, supplier := helpers.Originator(p)
+	kind, supplier := helpers.Supplier(p)
 	if kind == "" || supplier == "" {
 		return &spdx.Supplier{
 			Supplier: helpers.NOASSERTION,
