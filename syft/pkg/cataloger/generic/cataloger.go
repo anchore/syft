@@ -125,8 +125,7 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, logger, parser, &env)
 		if err != nil {
-			logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
-			continue
+			continue // logging is handled within invokeParser
 		}
 
 		for _, p := range discoveredPackages {
@@ -143,12 +142,17 @@ func invokeParser(ctx context.Context, resolver file.Resolver, location file.Loc
 	contentReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
-		return nil, nil, nil
+		return nil, nil, err
 	}
 	defer internal.CloseAndLogError(contentReader, location.AccessPath)
 
 	discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, env, file.NewLocationReadCloser(location, contentReader))
-	return discoveredPackages, discoveredRelationships, err
+	if err != nil {
+		logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
+		return nil, nil, err
+	}
+
+	return discoveredPackages, discoveredRelationships, nil
 }
 
 // selectFiles takes a set of file trees and resolves and file references of interest for future cataloging
