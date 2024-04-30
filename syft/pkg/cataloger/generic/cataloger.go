@@ -118,21 +118,20 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 	}
 
 	for _, req := range c.selectFiles(resolver) {
-		log.WithFields("path", req.Location.RealPath).Trace("parsing file contents")
+		location, parser := req.Location, req.Parser
 
-		invokeParser := func(location file.Location, parser Parser) ([]pkg.Package, []artifact.Relationship, error) {
-			contentReader, err := resolver.FileContentsByLocation(location)
-			if err != nil {
-				logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
-				return nil, nil, nil
-			}
-			defer internal.CloseAndLogError(contentReader, location.AccessPath)
+		log.WithFields("path", location.RealPath).Trace("parsing file contents")
 
-			return parser(ctx, resolver, &env, file.NewLocationReadCloser(location, contentReader))
-		}
-		discoveredPackages, discoveredRelationships, err := invokeParser(req.Location, req.Parser)
+		contentReader, err := resolver.FileContentsByLocation(location)
 		if err != nil {
-			logger.WithFields("location", req.Location.RealPath, "error", err).Warnf("cataloger failed")
+			logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
+			continue
+		}
+
+		discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, &env, file.NewLocationReadCloser(location, contentReader))
+		internal.CloseAndLogError(contentReader, location.AccessPath)
+		if err != nil {
+			logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
 			continue
 		}
 
