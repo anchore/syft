@@ -3,14 +3,14 @@ package spdxjson
 import (
 	"bytes"
 	"flag"
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/file"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/spdxutil"
 	"github.com/anchore/syft/syft/format/internal/testutil"
 	"github.com/anchore/syft/syft/pkg"
