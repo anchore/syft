@@ -258,6 +258,15 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/traefik@version"),
 		},
 		{
+			Class:    "arangodb-binary",
+			FileGlob: "**/arangosh",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)ArangoDB\s\x00*(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\s\[linux\]`),
+			Package: "arangodb",
+			PURL:    mustPURL("pkg:generic/arangodb@version"),
+			CPEs:    singleCPE("cpe:2.3:a:arangodb:arangodb:*:*:*:*:*:*:*:*"),
+		},
+		{
 			Class:    "postgresql-binary",
 			FileGlob: "**/postgres",
 			EvidenceMatcher: FileContentsVersionMatcher(

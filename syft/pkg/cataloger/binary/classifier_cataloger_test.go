@@ -38,6 +38,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		expected       pkg.Package
 	}{
 		{
+			logicalFixture: "arangodb/3.11.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "arangodb",
+				Version:   "3.11.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/arangodb@3.11.8",
+				Locations: locations("arangosh"),
+				Metadata:  metadata("arangodb-binary"),
+			},
+		},
+		{
 			logicalFixture: "postgres/15beta4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",

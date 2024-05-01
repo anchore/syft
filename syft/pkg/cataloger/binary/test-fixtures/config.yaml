@@ -260,6 +260,13 @@ from-images:
 #    paths:
 #      - /usr/bin/perl
 
+  - name: arangodb
+    version: 3.11.8
+    images:
+      - ref: arangodb:3.11.8@sha256:16893e767f47d28e3297839637741e5c4023e815adf860dfc674e1a36c7c7db0
+        platform: linux/amd64
+    paths:
+      - /usr/bin/arangosh
   - version: 15.1
     images:
       - ref: postgres:15.1@sha256:b4140dd3a62f364f16a82c1bd88d28b9887ecb47f07dbe2941237d073574d428
