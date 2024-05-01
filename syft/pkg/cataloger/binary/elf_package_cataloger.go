@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/artifact"
@@ -57,30 +58,12 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 	// first find all ELF binaries that have notes
 	var notesByLocation = make(map[elfPackageKey][]elfBinaryPackageNotes)
 	for _, location := range locations {
-		reader, err := resolver.FileContentsByLocation(location)
+		notes, key, err := parseElfPackageNotes(resolver, location, c)
 		if err != nil {
-			return nil, nil, fmt.Errorf("unable to get binary contents %q: %w", location.Path(), err)
+			return nil, nil, err
 		}
-
-		notes, err := c.parseElfNotes(file.LocationReadCloser{
-			Location:   location,
-			ReadCloser: reader,
-		})
-		if err != nil {
-			log.WithFields("file", location.Path(), "error", err).Trace("unable to parse ELF notes")
-			continue
-		}
-
 		if notes == nil {
 			continue
-		}
-
-		notes.Location = location
-		key := elfPackageKey{
-			Name:    notes.Name,
-			Version: notes.Version,
-			PURL:    notes.PURL,
-			CPE:     notes.CPE,
 		}
 		notesByLocation[key] = append(notesByLocation[key], *notes)
 	}
@@ -103,6 +86,37 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 	// each binary. After all files and packages are processed there is a final task that creates package-to-package
 	// and package-to-file relationships based on the dynamic libraries imported by each binary.
 	return pkgs, nil, nil
+}
+
+func parseElfPackageNotes(resolver file.Resolver, location file.Location, c *elfPackageCataloger) (*elfBinaryPackageNotes, elfPackageKey, error) {
+	reader, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		return nil, elfPackageKey{}, fmt.Errorf("unable to get binary contents %q: %w", location.Path(), err)
+	}
+	defer internal.CloseAndLogError(reader, location.AccessPath)
+
+	notes, err := c.parseElfNotes(file.LocationReadCloser{
+		Location:   location,
+		ReadCloser: reader,
+	})
+
+	if err != nil {
+		log.WithFields("file", location.Path(), "error", err).Trace("unable to parse ELF notes")
+		return nil, elfPackageKey{}, nil
+	}
+
+	if notes == nil {
+		return nil, elfPackageKey{}, nil
+	}
+
+	notes.Location = location
+	key := elfPackageKey{
+		Name:    notes.Name,
+		Version: notes.Version,
+		PURL:    notes.PURL,
+		CPE:     notes.CPE,
+	}
+	return notes, key, nil
 }
 
 func (c *elfPackageCataloger) parseElfNotes(reader file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
