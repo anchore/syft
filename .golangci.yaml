@@ -49,6 +49,9 @@ linters-settings:
     # If lower than 0, disable the check.
     # Default: 40
     statements: 50
+  gocritic:
+    enabled-checks:
+      - deferInLoop
 output:
   uniq-by-line: false
 run:
