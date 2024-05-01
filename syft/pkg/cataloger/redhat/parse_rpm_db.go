@@ -17,6 +17,7 @@ import (
 )
 
 // parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.
+// nolint:funlen
 func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	f, err := os.CreateTemp("", "rpmdb")
 	if err != nil {
@@ -24,6 +25,10 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 	}
 
 	defer func() {
+		err = f.Close()
+		if err != nil {
+			log.Errorf("failed to close temp rpmdb file: %+v", err)
+		}
 		err = os.Remove(f.Name())
 		if err != nil {
 			log.Errorf("failed to remove temp rpmdb file: %+v", err)
@@ -39,6 +44,7 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 	if err != nil {
 		return nil, nil, err
 	}
+	defer db.Close()
 
 	pkgList, err := db.ListPackages()
 	if err != nil {
