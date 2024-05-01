@@ -26,7 +26,7 @@ func packageURL(name, version string, metadata pkg.JavaArchive) string {
 	return pURL.ToString()
 }
 
-// GroupIDFromJavaPackage returns the authoritative group ID for a Java package.
+// groupIDFromJavaMetadata returns the authoritative group ID for a Java package.
 // The order of precedence is:
 // 1. The group ID from the POM properties
 // 2. The group ID from the POM project
