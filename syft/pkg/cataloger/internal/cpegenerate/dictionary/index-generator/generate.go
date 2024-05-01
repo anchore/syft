@@ -102,20 +102,29 @@ func normalizeCPE(cpe *wfn.Attributes) *wfn.Attributes {
 }
 
 const (
-	prefixForNPMPackages          = "https://www.npmjs.com/package/"
-	prefixForRubyGems             = "https://rubygems.org/gems/"
-	prefixForRubyGemsHTTP         = "http://rubygems.org/gems/"
-	prefixForNativeRubyGems       = "https://github.com/ruby/"
-	prefixForPyPIPackages         = "https://pypi.org/project/"
-	prefixForJenkinsPlugins       = "https://plugins.jenkins.io/"
-	prefixForJenkinsPluginsGitHub = "https://github.com/jenkinsci/"
-	prefixForRustCrates           = "https://crates.io/crates/"
-	prefixForPHPPear              = "https://pear.php.net/"
-	prefixForPHPPearHTTP          = "http://pear.php.net/"
-	prefixForPHPPecl              = "https://pecl.php.net/"
-	prefixForPHPPeclHTTP          = "http://pecl.php.net/"
-	prefixForPHPComposer          = "https://packagist.org/packages/"
-	prefixForGoModules            = "https://pkg.go.dev/"
+	prefixForNPMPackages                   = "https://www.npmjs.com/package/"
+	prefixForRubyGems                      = "https://rubygems.org/gems/"
+	prefixForRubyGemsHTTP                  = "http://rubygems.org/gems/"
+	prefixForNativeRubyGems                = "https://github.com/ruby/"
+	prefixForPyPIPackages                  = "https://pypi.org/project/"
+	prefixForJenkinsPlugins                = "https://plugins.jenkins.io/"
+	prefixForJenkinsPluginsGitHub          = "https://github.com/jenkinsci/"
+	prefixForRustCrates                    = "https://crates.io/crates/"
+	prefixForPHPPear                       = "https://pear.php.net/"
+	prefixForPHPPearHTTP                   = "http://pear.php.net/"
+	prefixForPHPPecl                       = "https://pecl.php.net/"
+	prefixForPHPPeclHTTP                   = "http://pecl.php.net/"
+	prefixForPHPComposer                   = "https://packagist.org/packages/"
+	prefixForGoModules                     = "https://pkg.go.dev/"
+	prefixForWordpressPlugins              = "https://wordpress.org/plugins/"
+	prefixForWordpressPluginsTracBrowser   = "https://plugins.trac.wordpress.org/browser/"
+	prefixForWordpressPluginsTracLog       = "https://plugins.trac.wordpress.org/log/"
+	prefixForWordpressPluginsGitHubArchive = "https://github.com/wp-plugins/"
+	prefixForWordpressPluginsWordfence     = "https://www.wordfence.com/threat-intel/vulnerabilities/wordpress-plugins/"
+	prefixForWordpressThemes               = "https://wordpress.org/themes/"
+	prefixForWordpressThemesTracBrowser    = "https://themes.trac.wordpress.org/browser/"
+	prefixForWordpressThemesTracLog        = "https://themes.trac.wordpress.org/log/"
+	prefixForWordpressThemesWordfence      = "https://www.wordfence.com/threat-intel/vulnerabilities/wordpress-themes/"
 )
 
 // indexCPEList creates an index of CPEs by ecosystem.
@@ -164,6 +173,13 @@ func indexCPEList(list CpeList) *dictionary.Indexed {
 
 			case strings.HasPrefix(ref, prefixForGoModules):
 				addEntryForGoModulePackage(indexed, ref, cpeItemName)
+
+			case strings.HasPrefix(ref, prefixForWordpressPlugins), strings.HasPrefix(ref, prefixForWordpressPluginsTracBrowser), strings.HasPrefix(ref, prefixForWordpressPluginsTracLog), strings.HasPrefix(ref, prefixForWordpressPluginsGitHubArchive), strings.HasPrefix(ref, prefixForWordpressPluginsWordfence):
+				addEntryForWordpressPlugin(indexed, ref, cpeItemName)
+
+			case strings.HasPrefix(ref, prefixForWordpressThemes), strings.HasPrefix(ref, prefixForWordpressThemesTracBrowser), strings.HasPrefix(ref, prefixForWordpressThemesTracLog), strings.HasPrefix(ref, prefixForWordpressThemesWordfence):
+				addEntryForWordpressTheme(indexed, ref, cpeItemName)
+
 			}
 		}
 	}
@@ -181,6 +197,37 @@ func updateIndex(indexed *dictionary.Indexed, ecosystem string, pkgName string, 
 	}
 
 	indexed.EcosystemPackages[ecosystem][pkgName].Add(cpe)
+}
+
+func addEntryForWordpressPlugin(indexed *dictionary.Indexed, ref string, cpeItemName string) {
+	// Prune off the non-package-name parts of the URL
+	ref = strings.TrimPrefix(ref, prefixForWordpressPlugins)
+	ref = strings.TrimPrefix(ref, prefixForWordpressPluginsTracBrowser)
+	ref = strings.TrimPrefix(ref, prefixForWordpressPluginsTracLog)
+	ref = strings.TrimPrefix(ref, prefixForWordpressPluginsGitHubArchive)
+	ref = strings.TrimPrefix(ref, prefixForWordpressPluginsWordfence)
+	ref = strings.Split(ref, "?")[0]
+	ref = strings.Split(ref, "/")[0]
+	if ref == "" {
+		return
+	}
+
+	updateIndex(indexed, dictionary.EcosystemWordpressPlugins, ref, cpeItemName)
+}
+
+func addEntryForWordpressTheme(indexed *dictionary.Indexed, ref string, cpeItemName string) {
+	// Prune off the non-package-name parts of the URL
+	ref = strings.TrimPrefix(ref, prefixForWordpressThemes)
+	ref = strings.TrimPrefix(ref, prefixForWordpressThemesTracBrowser)
+	ref = strings.TrimPrefix(ref, prefixForWordpressThemesTracLog)
+	ref = strings.TrimPrefix(ref, prefixForWordpressThemesWordfence)
+	ref = strings.Split(ref, "?")[0]
+	ref = strings.Split(ref, "/")[0]
+	if ref == "" {
+		return
+	}
+
+	updateIndex(indexed, dictionary.EcosystemWordpressThemes, ref, cpeItemName)
 }
 
 func addEntryForRustCrate(indexed *dictionary.Indexed, ref string, cpeItemName string) {
