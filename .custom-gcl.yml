@@ -1,0 +1,6 @@
+version: v1.57.0
+destination: ./.tool/
+plugins:
+  - module: 'github.com/anchore/syft'
+    import: 'github.com/anchore/syft/test/linters/ensuredefer'
+    path: .

@@ -14,6 +14,7 @@ linters:
     - bodyclose
     - dogsled
     - dupl
+    - ensuredefer
     - errcheck
     - exportloopref
     - funlen
@@ -52,6 +53,13 @@ linters-settings:
   gocritic:
     enabled-checks:
       - deferInLoop
+  custom:
+    ensuredefer:
+      type: "module"
+      description: Ensure that all important closers are called with defer
+      settings:
+        symbols:
+          - github.com/anchore/syft/internal.CloseAndLogError
 output:
   uniq-by-line: false
 run:

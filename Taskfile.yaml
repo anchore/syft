@@ -150,8 +150,10 @@ tasks:
       # ensure there are no files with ":" in it (a known back case in the go ecosystem)
       - cmd: 'test -z "{{ .BAD_FILE_NAMES }}" || (echo "files with bad names: [{{ .BAD_FILE_NAMES }}]"; exit 1)'
         silent: true
+      # build custom linter executable
+      - "{{ .TOOL_DIR }}/golangci-lint custom -v"
       # run linting
-      - "{{ .TOOL_DIR }}/golangci-lint run --tests=false"
+      - "{{ .TOOL_DIR }}/custom-gcl run --tests=false"
 
 
   check-licenses:
