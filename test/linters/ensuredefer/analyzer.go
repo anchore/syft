@@ -1,15 +1,16 @@
 package ensuredefer
 
 import (
-	"github.com/golangci/plugin-module-register/register"
 	"go/ast"
+
+	"github.com/golangci/plugin-module-register/register"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 func init() {
-	register.Plugin("ensuredefer", func(conf any) (register.LinterPlugin, error) {
+	register.Plugin("ensuredefer", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{}, nil
 	})
 }
@@ -18,13 +19,11 @@ func run(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	nodeFilter := []ast.Node{
 		(*ast.ExprStmt)(nil),
-		(*ast.DeferStmt)(nil),
 	}
 	insp.Preorder(nodeFilter, func(node ast.Node) {
 		// if we have a *ast.ExprStmt that calls internal.CloseAndLogError, report a problem.
 		// (if the function is correctly called in a defer statement, the block will have
-		switch t := node.(type) {
-		case *ast.ExprStmt:
+		if t, ok := node.(*ast.ExprStmt); ok {
 			if !isExprStmtAllowed(t, pass) {
 				pass.Reportf(t.Pos(), "internal.CloseAndLogError must be called in defer")
 			}
