@@ -83,6 +83,8 @@ require (
 	modernc.org/sqlite v1.29.8
 )
 
+require github.com/quasilyte/go-ruleguard/dsl v0.3.22
+
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
