@@ -128,12 +128,19 @@ tasks:
       - "{{ .TOOL_DIR }}/gosimports -local github.com/anchore -w ."
       - go mod tidy
 
-  lint-fix:
-    desc: Auto-format all source code + run golangci lint fixers
+  custom-linter:
+    desc: Compile a version of golangci-lint that includes our plugins
     deps: [tools]
     cmds:
+      # build custom linter executable
+      - "{{ .TOOL_DIR }}/golangci-lint custom -v"
+
+  lint-fix:
+    desc: Auto-format all source code + run golangci lint fixers
+    deps: [tools, custom-linter]
+    cmds:
       - task: format
-      - "{{ .TOOL_DIR }}/golangci-lint run --tests=false --fix"
+      - "{{ .TOOL_DIR }}/custom-gcl run --tests=false --fix"
 
   lint:
     desc: Run gofmt + golangci lint checks
@@ -142,7 +149,7 @@ tasks:
         sh: gofmt -l -s .
       BAD_FILE_NAMES:
         sh: "find . | grep -e ':' || true"
-    deps: [tools]
+    deps: [tools, custom-linter]
     cmds:
       # ensure there are no go fmt differences
       - cmd: 'test -z "{{ .BAD_FMT_FILES }}" || (echo "files with gofmt issues: [{{ .BAD_FMT_FILES }}]"; exit 1)'
@@ -150,8 +157,6 @@ tasks:
       # ensure there are no files with ":" in it (a known back case in the go ecosystem)
       - cmd: 'test -z "{{ .BAD_FILE_NAMES }}" || (echo "files with bad names: [{{ .BAD_FILE_NAMES }}]"; exit 1)'
         silent: true
-      # build custom linter executable
-      - "{{ .TOOL_DIR }}/golangci-lint custom -v"
       # run linting
       - "{{ .TOOL_DIR }}/custom-gcl run --tests=false"
 
