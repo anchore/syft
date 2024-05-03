@@ -69,13 +69,16 @@ func buildDotNetPackage(versionResources map[string]string, f file.LocationReadC
 	}
 
 	metadata := pkg.DotnetPortableExecutableEntry{
-		AssemblyVersion: versionResources["Assembly Version"],
-		LegalCopyright:  versionResources["LegalCopyright"],
-		Comments:        versionResources["Comments"],
-		InternalName:    versionResources["InternalName"],
-		CompanyName:     versionResources["CompanyName"],
-		ProductName:     versionResources["ProductName"],
-		ProductVersion:  versionResources["ProductVersion"],
+		AssemblyVersion:  versionResources["Assembly Version"],
+		LegalCopyright:   versionResources["LegalCopyright"],
+		Comments:         versionResources["Comments"],
+		InternalName:     versionResources["InternalName"],
+		CompanyName:      versionResources["CompanyName"],
+		ProductName:      versionResources["ProductName"],
+		ProductVersion:   versionResources["ProductVersion"],
+		FileDescription:  versionResources["FileDescription"],
+		FileVersion:      versionResources["FileVersion"],
+		OriginalFilename: versionResources["OriginalFilename"],
 	}
 
 	dnpkg = pkg.Package{
@@ -215,7 +218,7 @@ func findName(versionResources map[string]string) string {
 	}
 
 	for _, field := range nameFields {
-		value := spaceNormalize(versionResources[field])
+		value := resolveValue(versionResources[field], versionResources, nil)
 		if value == "" {
 			continue
 		}
@@ -223,6 +226,40 @@ func findName(versionResources map[string]string) string {
 	}
 
 	return ""
+}
+
+func resolveValue(value string, collection map[string]string, visited map[string]bool) string {
+	value = spaceNormalize(value)
+
+	if value == "" {
+		return ""
+	}
+
+	if visited == nil {
+		visited = make(map[string]bool)
+	}
+
+	if visited[value] {
+		return value
+	}
+	visited[value] = true
+
+	hasIndirect, nextKey := hasIndirectFieldPrefix(value)
+	if !hasIndirect {
+		return value
+	}
+
+	return resolveValue(collection[nextKey], collection, visited)
+}
+
+func hasIndirectFieldPrefix(value string) (bool, string) {
+	for _, prefix := range []string{"f#", "p("} {
+		cleanValue := strings.TrimPrefix(value, prefix)
+		if cleanValue != value {
+			return true, cleanValue
+		}
+	}
+	return false, value
 }
 
 // normalizes a string to a trimmed version with all contigous whitespace collapsed to a single space character

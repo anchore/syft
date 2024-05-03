@@ -346,3 +346,126 @@ func Test_spaceNormalize(t *testing.T) {
 		})
 	}
 }
+
+func Test_resolveValue(t *testing.T) {
+
+	tests := []struct {
+		name       string
+		value      string
+		collection map[string]string
+		want       string
+	}{
+		{
+			name:  "simple value",
+			value: "value",
+			collection: map[string]string{
+				"key": "value",
+			},
+			want: "value",
+		},
+		{
+			name:  "simple value with spaces",
+			value: " value ",
+			collection: map[string]string{
+				"key": "value",
+			},
+			want: "value",
+		},
+		{
+			name:  "indirect value - f#",
+			value: "f#other",
+			collection: map[string]string{
+				"key":   "f#other",
+				"other": "value",
+			},
+			want: "value",
+		},
+		{
+			name:  "indirect value - p(",
+			value: "f#other",
+			collection: map[string]string{
+				"key":   "p(other",
+				"other": "value",
+			},
+			want: "value",
+		},
+		{
+			name:  "indirect value with cycles",
+			value: "f#other",
+			collection: map[string]string{
+				"key":   "f#other",
+				"other": "f#key",
+			},
+			want: "f#other", // this is NOT ideal, but there is no "good" answer here
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, resolveValue(tt.value, tt.collection, nil))
+		})
+	}
+}
+
+func Test_findVersion(t *testing.T) {
+
+	tests := []struct {
+		name             string
+		versionResources map[string]string
+		want             string
+	}{
+		{
+			name: "prefer file version over product version (when both semver)",
+			versionResources: map[string]string{
+				"FileVersion":    "1.2.3",
+				"ProductVersion": "4.5.6",
+			},
+			want: "4.5.6",
+		},
+		{
+			name: "prefer file version over product version (when both semver)",
+			versionResources: map[string]string{
+				"FileVersion":    "1.2.3",
+				"ProductVersion": "4.5.6.7",
+			},
+			want: "1.2.3",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, findVersion(tt.versionResources))
+		})
+	}
+}
+
+func Test_keepGreaterSemanticVersion(t *testing.T) {
+	tests := []struct {
+		name           string
+		productVersion string
+		fileVersion    string
+		want           string
+	}{
+		{
+			name:           "product semver is greater",
+			productVersion: "3.0.0",
+			fileVersion:    "2.0.0",
+			want:           "3.0.0",
+		},
+		{
+			name:           "file semver is greater",
+			productVersion: "2.0.0",
+			fileVersion:    "3.0.0",
+			want:           "3.0.0",
+		},
+		{
+			name:           "semver preferred over non-semver",
+			productVersion: "3.0.0.2",
+			fileVersion:    "3.0.0",
+			want:           "3.0.0",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, keepGreaterSemanticVersion(tt.productVersion, tt.fileVersion))
+		})
+	}
+}
