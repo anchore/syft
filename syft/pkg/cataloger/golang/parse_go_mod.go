@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/mod/modfile"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -119,6 +120,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 	if err != nil {
 		return nil, err
 	}
+	defer internal.CloseAndLogError(contents, goSumLocation.AccessPath)
 
 	// go.sum has the format like:
 	// github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
