@@ -12,6 +12,7 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -65,6 +66,7 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) 
 		log.WithFields("path", dbLocation.RealPath).Warnf("failed to fetch portage contents (package=%s): %+v", p.Name, err)
 		return
 	}
+	defer internal.CloseAndLogError(contentsReader, dbLocation.RealPath)
 
 	entry, ok := p.Metadata.(pkg.PortageEntry)
 	if !ok {
@@ -106,6 +108,7 @@ func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Packag
 		log.WithFields("path", dbLocation.RealPath).Warnf("failed to fetch portage LICENSE: %+v", err)
 		return
 	}
+	defer internal.CloseAndLogError(licenseReader, location.RealPath)
 
 	findings := strset.New()
 	scanner := bufio.NewScanner(licenseReader)
@@ -141,6 +144,7 @@ func addSize(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 		log.WithFields("name", p.Name).Warnf("failed to fetch portage SIZE: %+v", err)
 		return
 	}
+	defer internal.CloseAndLogError(sizeReader, location.RealPath)
 
 	scanner := bufio.NewScanner(sizeReader)
 	for scanner.Scan() {
