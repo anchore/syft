@@ -156,6 +156,7 @@ func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
 		log.Tracef("unable to fetch contents for APK repositories file %q: %+v", reposLocation, err)
 		return nil
 	}
+	defer internal.CloseAndLogError(reposReader, location.RealPath)
 
 	return parseReleasesFromAPKRepository(file.LocationReadCloser{
 		Location:   location,
