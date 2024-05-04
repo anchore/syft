@@ -26,7 +26,7 @@ tools:
   # used for linting
   - name: golangci-lint
     version:
-      want: v1.57.2
+      want: v1.58.0
     method: github-release
     with:
       repo: golangci/golangci-lint
@@ -111,7 +111,7 @@ tools:
   # used for triggering a release
   - name: gh
     version:
-      want: v2.48.0
+      want: v2.49.0
     method: github-release
     with:
       repo: cli/cli
