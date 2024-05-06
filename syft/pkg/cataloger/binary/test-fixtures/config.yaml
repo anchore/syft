@@ -31,19 +31,29 @@ from-images:
     paths:
       - /usr/local/bin/gcc
 
-  - version: 25.3.2.6
+  - name: erlang
+    version: 25.3.2.6
     images:
       - ref: erlang:25.3.2.6@sha256:0d1e530ec0e8047094f0a1d841754515bad9b0554260a3147fb34df31b3064fe
         platform: linux/amd64
     paths:
       - /usr/local/lib/erlang/erts-13.2.2.3/bin/erlexec
 
-  - version: 26.2.0.0
+  - name: erlang
+    version: 26.2.0.0
     images:
       - ref: erlang:26.2.0.0@sha256:31c3aa505fbe7526ca83c57b64e56ba505e62733e7e6518f4c06219de6e7396e
         platform: linux/amd64
     paths:
       - /usr/local/lib/erlang/erts-14.2/bin/erlexec
+
+  - name: erlang
+    version: 26.2.4
+    images:
+      - ref: erlang:26.2.4.0@sha256:bdb5bac0612856ec85982171dcd4a11de2e08e7f7469c86f3eb936bdfd1ec204
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/erlang/erts-14.2.4/lib/internal/liberts_internal.a
 
   - version: 1.21.3
     images:

@@ -843,7 +843,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			logicalFixture: "erlexec/25.3.2.6/linux-amd64",
+			logicalFixture: "erlang/25.3.2.6/linux-amd64",
 			expected: pkg.Package{
 				Name:      "erlang",
 				Version:   "25.3.2.6",
@@ -854,7 +854,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			logicalFixture: "erlexec/26.2.0.0/linux-amd64",
+			logicalFixture: "erlang/26.2.0.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "erlang",
 				Version:   "26.2",
@@ -862,6 +862,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/erlang@26.2",
 				Locations: locations("erlexec"),
 				Metadata:  metadata("erlang-binary"),
+			},
+		},
+		{
+			logicalFixture: "erlang/26.2.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "erlang",
+				Version:   "26.2.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/erlang@26.2.4",
+				Locations: locations("liberts_internal.a"),
+				Metadata:  metadata("erlang-library"),
 			},
 		},
 		{
