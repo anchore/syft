@@ -36,14 +36,22 @@ type Accessor interface {
 }
 
 type sbomBuilder struct {
-	sbom *sbom.SBOM
-	lock *sync.RWMutex
+	sbom    *sbom.SBOM
+	lock    *sync.RWMutex
+	onWrite []func(*sbom.SBOM)
 }
 
-func NewBuilder(s *sbom.SBOM) Builder {
+func NewBuilder(s *sbom.SBOM, onWrite ...func(*sbom.SBOM)) Builder {
 	return &sbomBuilder{
-		sbom: s,
-		lock: &sync.RWMutex{},
+		sbom:    s,
+		lock:    &sync.RWMutex{},
+		onWrite: onWrite,
+	}
+}
+
+func (b sbomBuilder) onWriteEvent() {
+	for _, fn := range b.onWrite {
+		fn(b.sbom)
 	}
 }
 
@@ -52,6 +60,7 @@ func (b sbomBuilder) WriteToSBOM(fn func(*sbom.SBOM)) {
 	defer b.lock.Unlock()
 
 	fn(b.sbom)
+	b.onWriteEvent()
 }
 
 func (b sbomBuilder) ReadFromSBOM(fn func(*sbom.SBOM)) {
@@ -66,6 +75,7 @@ func (b sbomBuilder) AddPackages(p ...pkg.Package) {
 	defer b.lock.Unlock()
 
 	b.sbom.Artifacts.Packages.Add(p...)
+	b.onWriteEvent()
 }
 
 func (b sbomBuilder) AddRelationships(relationship ...artifact.Relationship) {
@@ -73,6 +83,7 @@ func (b sbomBuilder) AddRelationships(relationship ...artifact.Relationship) {
 	defer b.lock.Unlock()
 
 	b.sbom.Relationships = append(b.sbom.Relationships, relationship...)
+	b.onWriteEvent()
 }
 
 func (b sbomBuilder) SetLinuxDistribution(release linux.Release) {
@@ -80,4 +91,5 @@ func (b sbomBuilder) SetLinuxDistribution(release linux.Release) {
 	defer b.lock.Unlock()
 
 	b.sbom.Artifacts.LinuxDistribution = &release
+	b.onWriteEvent()
 }
