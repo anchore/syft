@@ -246,6 +246,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)memcached\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "memcached",
 			PURL:    mustPURL("pkg:generic/memcached@version"),
+			CPEs:    singleCPE("cpe:2.3:a:memcached:memcached:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "traefik-binary",
@@ -256,6 +257,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)(\x00|\x{FFFD})v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
 			Package: "traefik",
 			PURL:    mustPURL("pkg:generic/traefik@version"),
+			CPEs:    singleCPE("cpe:2.3:a:traefik:traefik:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "postgresql-binary",
@@ -268,6 +270,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)(\x00|\?)PostgreSQL (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 			Package: "postgresql",
 			PURL:    mustPURL("pkg:generic/postgresql@version"),
+			CPEs:    singleCPE("cpe:2.3:a:postgresql:postgresql:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "mysql-binary",
