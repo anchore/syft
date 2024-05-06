@@ -2870,6 +2870,9 @@
       "earlybird": [
         "cpe:2.3:a:earlybird_project:earlybird:*:*:*:*:*:node.js:*:*"
       ],
+      "easy-email-editor": [
+        "cpe:2.3:a:zalify:easy_email:*:*:*:*:*:node.js:*:*"
+      ],
       "easy-static-server": [
         "cpe:2.3:a:easy-static-server_project:easy-static-server:*:*:*:*:*:node.js:*:*"
       ],
