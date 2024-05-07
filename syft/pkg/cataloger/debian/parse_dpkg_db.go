@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 	"io"
 	"regexp"
 	"strings"
@@ -38,7 +37,7 @@ func parseDpkgDB(_ context.Context, resolver file.Resolver, env *generic.Environ
 		pkgs = append(pkgs, newDpkgPackage(m, reader.Location, resolver, env.LinuxRelease))
 	}
 
-	return pkgs, dependency.Resolve(pkgs, newProsumer()), nil
+	return pkgs, nil, nil
 }
 
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.

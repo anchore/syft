@@ -1,18 +1,19 @@
 package debian
 
 import (
+	"strings"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
-	"strings"
 )
 
 var _ dependency.Prosumer = (*dpkgDBEntryProsumer)(nil)
 
 type dpkgDBEntryProsumer struct{}
 
-func newProsumer() dpkgDBEntryProsumer {
+func newDBProsumer() dpkgDBEntryProsumer {
 	return dpkgDBEntryProsumer{}
 }
 

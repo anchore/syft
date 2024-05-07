@@ -16,7 +16,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
@@ -28,7 +27,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 	}{
 		{
 			name:        "single package",
-			fixturePath: "test-fixtures/status/single",
+			fixturePath: "test-fixtures/var/lib/dpkg/status.d/single",
 			expected: []pkg.DpkgDBEntry{
 				{
 					Package:       "apt",
@@ -102,7 +101,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 		},
 		{
 			name:        "single package with installed size",
-			fixturePath: "test-fixtures/status/installed-size-4KB",
+			fixturePath: "test-fixtures/var/lib/dpkg/status.d/installed-size-4KB",
 			expected: []pkg.DpkgDBEntry{
 				{
 					Package:       "apt",
@@ -143,7 +142,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 		},
 		{
 			name:        "multiple entries",
-			fixturePath: "test-fixtures/status/multiple",
+			fixturePath: "test-fixtures/var/lib/dpkg/status.d/multiple",
 			expected: []pkg.DpkgDBEntry{
 				{
 					Package: "no-version",
@@ -477,7 +476,7 @@ func Test_associateRelationships(t *testing.T) {
 	}{
 		{
 			name:    "relationships for coreutils",
-			fixture: "test-fixtures/status/coreutils-relationships",
+			fixture: "test-fixtures/var/lib/dpkg/status.d/coreutils-relationships",
 			wantRelationships: map[string][]string{
 				"coreutils":    {"libacl1", "libattr1", "libc6", "libgmp10", "libselinux1"},
 				"libacl1":      {"libc6"},
@@ -491,36 +490,31 @@ func Test_associateRelationships(t *testing.T) {
 		},
 		{
 			name:    "relationships from dpkg example docs",
-			fixture: "test-fixtures/status/doc-examples",
+			fixture: "test-fixtures/var/lib/dpkg/status.d/doc-examples",
 			wantRelationships: map[string][]string{
-				"made-up-package-1": {"kernel-headers-2.2.10", "hurd-dev", "gnumach-dev"},
-				"made-up-package-2": {"libluajit5.1-dev", "liblua5.1-dev"},
-				"made-up-package-3": {"foo", "bar"},
+				"made-up-package-1": {"gnumach-dev", "hurd-dev", "kernel-headers-2.2.10"},
+				"made-up-package-2": {"liblua5.1-dev", "libluajit5.1-dev"},
+				"made-up-package-3": {"bar", "foo"},
 				// note that the "made-up-package-4" depends on "made-up-package-5" but not via the direct
 				// package name, but through the "provides" virtual package name "virtual-package-5".
 				"made-up-package-4": {"made-up-package-5"},
 				// note that though there is a "default-mta | mail-transport-agent | not-installed"
 				// dependency choice we raise up the packages that are installed for every choice.
 				// In this case that means that "default-mta" and "mail-transport-agent".
-				"mutt": {"libc6", "default-mta", "mail-transport-agent"},
+				"mutt": {"default-mta", "libc6", "mail-transport-agent"},
 			},
 		},
 		{
 			name:    "relationships for libpam-runtime",
-			fixture: "test-fixtures/status/libpam-runtime",
+			fixture: "test-fixtures/var/lib/dpkg/status.d/libpam-runtime",
 			wantRelationships: map[string][]string{
-				"libpam-runtime": {"debconf1", "debconf-2.0", "debconf2", "cdebconf", "libpam-modules"},
+				"libpam-runtime": {"cdebconf", "debconf-2.0", "debconf1", "debconf2", "libpam-modules"},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f, err := os.Open(tt.fixture)
-			require.NoError(t, err)
-
-			reader := file.NewLocationReadCloser(file.NewLocation(tt.fixture), f)
-
-			pkgs, relationships, err := parseDpkgDB(context.Background(), nil, &generic.Environment{}, reader)
+			pkgs, relationships, err := NewDBCataloger().Catalog(context.Background(), file.NewMockResolverForPaths(tt.fixture))
 			require.NotEmpty(t, pkgs)
 			require.NotEmpty(t, relationships)
 			require.NoError(t, err)

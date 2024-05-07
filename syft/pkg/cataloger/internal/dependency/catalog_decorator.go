@@ -2,6 +2,7 @@ package dependency
 
 import (
 	"context"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
