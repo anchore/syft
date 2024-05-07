@@ -1,0 +1,8 @@
+%NAME%
+fuzzy
+
+%VERSION%
+1.2-3
+
+%DEPENDS%
+tree-sitter

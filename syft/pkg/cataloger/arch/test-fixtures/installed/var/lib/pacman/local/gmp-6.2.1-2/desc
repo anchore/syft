@@ -41,4 +41,4 @@ pgp
 %DEPENDS%
 gcc-libs
 sh
-
+libtree-sitter.so=1-64
