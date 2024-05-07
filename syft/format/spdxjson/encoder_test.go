@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/spdxutil"
 	"github.com/anchore/syft/syft/format/internal/testutil"
 	"github.com/anchore/syft/syft/pkg"
@@ -105,6 +107,74 @@ func TestSPDXJSONImageEncoder(t *testing.T) {
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.ImageInput(t, testImage, testutil.FromSnapshot()),
 			Format:                      getEncoder(t),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      true,
+			Redactor:                    redactor(),
+		},
+	)
+}
+
+func TestSPDX22JSONRequredProperties(t *testing.T) {
+	cfg := DefaultEncoderConfig()
+	cfg.Pretty = true
+	cfg.Version = "2.2"
+
+	enc, err := NewFormatEncoderWithConfig(cfg)
+	require.NoError(t, err)
+
+	coords := file.Coordinates{
+		RealPath:     "/some/file",
+		FileSystemID: "ac897d978b6c38749a1",
+	}
+
+	p1 := pkg.Package{
+		Name:      "files-analyzed-true",
+		Version:   "v1",
+		Locations: file.NewLocationSet(file.NewLocation(coords.RealPath)),
+		Licenses:  pkg.LicenseSet{},
+		Language:  pkg.Java,
+		Metadata: pkg.JavaArchive{
+			ArchiveDigests: []file.Digest{
+				{
+					Algorithm: "sha256",
+					Value:     "a9b87321a9879c79d87987987a97c97b9789ce978dffea987",
+				},
+			},
+			Parent: nil,
+		},
+	}
+	p1.SetID()
+
+	p2 := pkg.Package{
+		Name:    "files-analyzed-false",
+		Version: "v2",
+	}
+	p2.SetID()
+
+	testutil.AssertEncoderAgainstGoldenSnapshot(t,
+		testutil.EncoderSnapshotTestConfig{
+			Subject: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(p1, p2),
+					FileDigests: map[file.Coordinates][]file.Digest{
+						coords: {
+							{
+								Algorithm: "sha1",
+								Value:     "3b4ab96c371d913e2a88c269844b6c5fb5cbe761",
+							},
+						},
+					},
+				},
+				Relationships: []artifact.Relationship{
+					{
+						From: p1,
+						To:   coords,
+						Type: artifact.ContainsRelationship,
+					},
+				},
+			},
+			Format:                      enc,
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,

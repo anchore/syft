@@ -3,6 +3,7 @@ package generic
 import (
 	"context"
 
+	"github.com/anchore/go-logger"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -122,17 +123,9 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")
 
-		contentReader, err := resolver.FileContentsByLocation(location)
+		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, logger, parser, &env)
 		if err != nil {
-			logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
-			continue
-		}
-
-		discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, &env, file.NewLocationReadCloser(location, contentReader))
-		internal.CloseAndLogError(contentReader, location.AccessPath)
-		if err != nil {
-			logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
-			continue
+			continue // logging is handled within invokeParser
 		}
 
 		for _, p := range discoveredPackages {
@@ -143,6 +136,23 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 		relationships = append(relationships, discoveredRelationships...)
 	}
 	return packages, relationships, nil
+}
+
+func invokeParser(ctx context.Context, resolver file.Resolver, location file.Location, logger logger.Logger, parser Parser, env *Environment) ([]pkg.Package, []artifact.Relationship, error) {
+	contentReader, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
+		return nil, nil, err
+	}
+	defer internal.CloseAndLogError(contentReader, location.AccessPath)
+
+	discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, env, file.NewLocationReadCloser(location, contentReader))
+	if err != nil {
+		logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
+		return nil, nil, err
+	}
+
+	return discoveredPackages, discoveredRelationships, nil
 }
 
 // selectFiles takes a set of file trees and resolves and file references of interest for future cataloging

@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/scylladb/go-set/strset"
-	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/sbomsync"
@@ -63,9 +61,9 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 	}
 
 	catalogingProgress := monitorCatalogingTask(src.ID(), taskGroups)
-	packageCatalogingProgress := monitorPackageCatalogingTask(s.Artifacts.Packages)
+	packageCatalogingProgress := monitorPackageCatalogingTask()
 
-	builder := sbomsync.NewBuilder(&s)
+	builder := sbomsync.NewBuilder(&s, monitorPackageCount(packageCatalogingProgress))
 	for i := range taskGroups {
 		err := task.NewTaskExecutor(taskGroups[i], cfg.Parallelism).Execute(ctx, resolver, builder, catalogingProgress)
 		if err != nil {
@@ -80,7 +78,14 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 	return &s, nil
 }
 
-func monitorPackageCatalogingTask(pkgs *pkg.Collection) *monitor.CatalogerTaskProgress {
+func monitorPackageCount(prog *monitor.CatalogerTaskProgress) func(s *sbom.SBOM) {
+	return func(s *sbom.SBOM) {
+		count := humanize.Comma(int64(s.Artifacts.Packages.PackageCount()))
+		prog.AtomicStage.Set(fmt.Sprintf("%s packages", count))
+	}
+}
+
+func monitorPackageCatalogingTask() *monitor.CatalogerTaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "Packages",
@@ -90,25 +95,7 @@ func monitorPackageCatalogingTask(pkgs *pkg.Collection) *monitor.CatalogerTaskPr
 		ParentID:      monitor.TopLevelCatalogingTaskID,
 	}
 
-	prog := bus.StartCatalogerTask(info, -1, "")
-
-	go func() {
-		ticker := time.NewTicker(200 * time.Millisecond)
-		defer ticker.Stop()
-
-		for {
-			<-ticker.C
-
-			count := humanize.Comma(int64(pkgs.PackageCount()))
-			prog.AtomicStage.Set(fmt.Sprintf("%s packages", count))
-
-			if progress.IsCompleted(prog) {
-				break
-			}
-		}
-	}()
-
-	return prog
+	return bus.StartCatalogerTask(info, -1, "")
 }
 
 func monitorCatalogingTask(srcID artifact.ID, tasks [][]task.Task) *monitor.CatalogerTaskProgress {

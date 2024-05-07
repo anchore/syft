@@ -49,6 +49,13 @@ linters-settings:
     # If lower than 0, disable the check.
     # Default: 40
     statements: 50
+  gocritic:
+    enabled-checks:
+      - deferInLoop
+      - ruleguard
+    settings:
+      ruleguard:
+        rules: "test/rules/rules.go"
 output:
   uniq-by-line: false
 run:

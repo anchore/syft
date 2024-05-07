@@ -13,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-// parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
+// parseWheelOrEggRecord takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
 func parseWheelOrEggRecord(reader io.Reader) []pkg.PythonFileRecord {
 	var records []pkg.PythonFileRecord
