@@ -17,7 +17,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -231,14 +230,10 @@ func getContents(resolver file.Resolver, location file.Location) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-
-	unionReader, err := unionreader.GetUnionReader(reader)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get union reader for file: %w", err)
-	}
+	defer internal.CloseAndLogError(reader, location.AccessPath)
 
 	// TODO: there may be room for improvement here, as this may use an excessive amount of memory. Alternate approach is to leverage a RuneReader.
-	contents, err := io.ReadAll(unionReader)
+	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get contents for file: %w", err)
 	}

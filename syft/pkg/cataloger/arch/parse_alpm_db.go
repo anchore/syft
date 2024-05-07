@@ -14,6 +14,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/vbatts/go-mtree"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -132,6 +133,7 @@ func getFileReader(path string, resolver file.Resolver) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer internal.CloseAndLogError(dbContentReader, locs[0].RealPath)
 	return dbContentReader, nil
 }
 

@@ -580,20 +580,27 @@ func (c *nativeImageCataloger) Catalog(_ context.Context, resolver file.Resolver
 	}
 
 	for _, location := range fileMatches {
-		readerCloser, err := resolver.FileContentsByLocation(location)
-		if err != nil {
-			log.Debugf("error opening file: %v", err)
-			continue
-		}
-
-		reader, err := unionreader.GetUnionReader(readerCloser)
+		newPkgs, err := processLocation(location, resolver)
 		if err != nil {
 			return nil, nil, err
 		}
-		newPkgs := fetchPkgs(reader, location.RealPath)
 		pkgs = append(pkgs, newPkgs...)
-		internal.CloseAndLogError(readerCloser, location.RealPath)
 	}
 
 	return pkgs, nil, nil
+}
+
+func processLocation(location file.Location, resolver file.Resolver) ([]pkg.Package, error) {
+	readerCloser, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		log.Debugf("error opening file: %v", err)
+		return nil, nil
+	}
+	defer internal.CloseAndLogError(readerCloser, location.RealPath)
+
+	reader, err := unionreader.GetUnionReader(readerCloser)
+	if err != nil {
+		return nil, err
+	}
+	return fetchPkgs(reader, location.RealPath), nil
 }

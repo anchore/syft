@@ -59,6 +59,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/pelletier/go-toml v1.9.5
+	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/saferwall/pe v1.5.2
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
 	github.com/sanity-io/litter v1.5.5

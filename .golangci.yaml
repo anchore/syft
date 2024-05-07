@@ -52,6 +52,10 @@ linters-settings:
   gocritic:
     enabled-checks:
       - deferInLoop
+      - ruleguard
+    settings:
+      ruleguard:
+        rules: "test/rules/rules.go"
 output:
   uniq-by-line: false
 run:

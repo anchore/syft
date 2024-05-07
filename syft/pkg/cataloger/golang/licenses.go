@@ -20,6 +20,7 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
@@ -160,22 +161,33 @@ func (c *goLicenses) findLicenses(resolver file.Resolver, globMatch string) (out
 	}
 
 	for _, l := range locations {
-		fileName := path.Base(l.RealPath)
-		if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
-			contents, err := resolver.FileContentsByLocation(l)
-			if err != nil {
-				return nil, err
-			}
-			parsed, err := licenses.Parse(contents, l)
-			if err != nil {
-				return nil, err
-			}
-
-			out = append(out, parsed...)
+		parsed, err := c.parseLicenseFromLocation(l, resolver)
+		if err != nil {
+			return nil, err
 		}
+		out = append(out, parsed...)
 	}
 
 	return
+}
+
+func (c *goLicenses) parseLicenseFromLocation(l file.Location, resolver file.Resolver) ([]pkg.License, error) {
+	var out []pkg.License
+	fileName := path.Base(l.RealPath)
+	if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
+		contents, err := resolver.FileContentsByLocation(l)
+		if err != nil {
+			return nil, err
+		}
+		defer internal.CloseAndLogError(contents, l.RealPath)
+		parsed, err := licenses.Parse(contents, l)
+		if err != nil {
+			return nil, err
+		}
+
+		out = append(out, parsed...)
+	}
+	return out, nil
 }
 
 func moduleDir(moduleName, moduleVersion string) string {
