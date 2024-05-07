@@ -23,8 +23,8 @@ func NewComposerLockCataloger() pkg.Cataloger {
 		WithParserByGlobs(parseComposerLock, "**/composer.lock")
 }
 
-// NewPeclCataloger returns a new cataloger for PHP PECL metadata“.
-func NewPeclCataloger() pkg.Cataloger {
-	return generic.NewCataloger("php-pecl-serialized-cataloger").
-		WithParserByGlobs(parsePeclSerialized, "**/php/.registry/.channel.*/*.reg")
+// NewPearCataloger returns a new cataloger for PHP Pear metadata“.
+func NewPearCataloger() pkg.Cataloger {
+	return generic.NewCataloger("php-pear-serialized-cataloger").
+		WithParserByGlobs(parsePearSerialized, "**/php/.registry/**/*.reg")
 }

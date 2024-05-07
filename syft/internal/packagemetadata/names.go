@@ -91,7 +91,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.YarnLockEntry{}, "javascript-yarn-lock-entry", "YarnLockJsonMetadata"),
 	jsonNames(pkg.PhpComposerLockEntry{}, "php-composer-lock-entry", "PhpComposerJsonMetadata"),
 	jsonNamesWithoutLookup(pkg.PhpComposerInstalledEntry{}, "php-composer-installed-entry", "PhpComposerJsonMetadata"), // the legacy value is split into two types, where the other is preferred
-	jsonNames(pkg.PhpPeclEntry{}, "php-pecl-entry", "PhpPeclMetadata"),
+	jsonNames(pkg.PhpPearEntry{}, "php-pear-entry", "PhpPearMetadata"),
 	jsonNames(pkg.PortageEntry{}, "portage-db-entry", "PortageMetadata"),
 	jsonNames(pkg.PythonPackage{}, "python-package", "PythonPackageMetadata"),
 	jsonNames(pkg.PythonPipfileLockEntry{}, "python-pipfile-lock-entry", "PythonPipfileLockMetadata"),

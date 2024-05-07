@@ -34,7 +34,7 @@ const (
 	NixPkg                  Type = "nix"
 	NpmPkg                  Type = "npm"
 	PhpComposerPkg          Type = "php-composer"
-	PhpPeclPkg              Type = "php-pecl"
+	PhpPearPkg              Type = "php-pear"
 	PortagePkg              Type = "portage"
 	PythonPkg               Type = "python"
 	Rpkg                    Type = "R-package"
@@ -69,7 +69,7 @@ var AllPkgs = []Type{
 	NixPkg,
 	NpmPkg,
 	PhpComposerPkg,
-	PhpPeclPkg,
+	PhpPearPkg,
 	PortagePkg,
 	PythonPkg,
 	Rpkg,
@@ -119,8 +119,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeGeneric
 	case PhpComposerPkg:
 		return packageurl.TypeComposer
-	case PhpPeclPkg:
-		return "pecl"
+	case PhpPearPkg:
+		return "pear"
 	case PythonPkg:
 		return packageurl.TypePyPi
 	case PortagePkg:
@@ -173,8 +173,8 @@ func TypeByName(name string) Type {
 		return JavaPkg
 	case packageurl.TypeComposer:
 		return PhpComposerPkg
-	case "pecl":
-		return PhpPeclPkg
+	case "pear":
+		return PhpPearPkg
 	case packageurl.TypeGolang:
 		return GoModulePkg
 	case packageurl.TypeNPM:

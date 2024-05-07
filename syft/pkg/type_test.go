@@ -60,8 +60,8 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: PhpComposerPkg,
 		},
 		{
-			purl:     "pkg:pecl/memcached@3.2.0",
-			expected: PhpPeclPkg,
+			purl:     "pkg:pear/pecl.php.net/memcached@3.2.0",
+			expected: PhpPearPkg,
 		},
 		{
 			purl:     "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1?type=zip&classifier=dist",

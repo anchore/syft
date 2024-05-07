@@ -40,15 +40,15 @@ func newComposerInstalledPackage(pd parsedInstalledData, indexLocation file.Loca
 	return p
 }
 
-func newPeclPackage(pd pkg.PhpPeclEntry, indexLocation file.Location) pkg.Package {
+func newPearPackage(pd pkg.PhpPearEntry, indexLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      pd.Name,
 		Version:   pd.Version,
 		Locations: file.NewLocationSet(indexLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, pd.License...)...),
-		PURL:      packageURLFromPecl(pd.Name, pd.Version),
+		PURL:      packageURLFromPear(pd.Name, pd.Channel, pd.Version),
 		Language:  pkg.PHP,
-		Type:      pkg.PhpPeclPkg,
+		Type:      pkg.PhpPearPkg,
 		Metadata:  pd,
 	}
 
@@ -82,10 +82,10 @@ func packageURL(name, version string) string {
 	return pURL.ToString()
 }
 
-func packageURLFromPecl(pkgName, version string) string {
+func packageURLFromPear(pkgName, channel, version string) string {
 	pURL := packageurl.NewPackageURL(
-		"pecl",
-		"",
+		"pear",
+		channel,
 		pkgName,
 		version,
 		nil,

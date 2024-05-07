@@ -45,22 +45,24 @@ func Test_packageURL(t *testing.T) {
 	}
 }
 
-func Test_packageURLFromPecl(t *testing.T) {
+func Test_packageURLFromPear(t *testing.T) {
 	tests := []struct {
 		name     string
+		channel  string
 		version  string
 		expected string
 	}{
 		{
 			name:     "memcached",
+			channel:  "pecl.php.net",
 			version:  "3.2.0",
-			expected: "pkg:pecl/memcached@3.2.0",
+			expected: "pkg:pear/pecl.php.net/memcached@3.2.0",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := packageURLFromPecl(test.name, test.version)
+			actual := packageURLFromPear(test.name, test.channel, test.version)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

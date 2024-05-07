@@ -80,7 +80,7 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "javascript", "node", "npm",
 		),
 		newSimplePackageTaskFactory(php.NewComposerLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "php", "composer"),
-		newSimplePackageTaskFactory(php.NewPeclCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, pkgcataloging.ImageTag, "php", "pecl"),
+		newSimplePackageTaskFactory(php.NewPearCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, pkgcataloging.ImageTag, "php", "pear"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return python.NewPackageCataloger(cfg.PackagesConfig.Python)

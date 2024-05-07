@@ -56,14 +56,14 @@ func Test_ComposerLockCataloger_Globs(t *testing.T) {
 	}
 }
 
-func Test_PeclCataloger_Globs(t *testing.T) {
+func Test_PearCataloger_Globs(t *testing.T) {
 	tests := []struct {
 		name     string
 		fixture  string
 		expected []string
 	}{
 		{
-			name:    "obtain pecl files",
+			name:    "obtain pear files",
 			fixture: "test-fixtures/glob-paths",
 			expected: []string{
 				"php/.registry/.channel.pecl.php.net/memcached.reg",
@@ -76,7 +76,7 @@ func Test_PeclCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewPeclCataloger())
+				TestCataloger(t, NewPearCataloger())
 		})
 	}
 }

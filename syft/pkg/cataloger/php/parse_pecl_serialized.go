@@ -14,8 +14,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// parsePeclSerialized is a parser function for PECL metadata contents, returning "Default" php packages discovered.
-func parsePeclSerialized(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+// parsePearSerialized is a parser function for Pear metadata contents, returning "Default" php packages discovered.
+func parsePearSerialized(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	data, err := io.ReadAll(reader)
 
@@ -28,12 +28,17 @@ func parsePeclSerialized(_ context.Context, _ file.Resolver, _ *generic.Environm
 	)
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse pecl metadata file: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse pear metadata file: %w", err)
 	}
 
 	name, ok := metadata["name"].(string)
 	if !ok {
-		return nil, nil, fmt.Errorf("failed to parse pecl package name: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse pear package name: %w", err)
+	}
+
+	channel, ok := metadata["channel"].(string)
+	if !ok {
+		return nil, nil, fmt.Errorf("failed to parse pear package channel: %w", err)
 	}
 
 	version := readStruct(metadata, "version", "release")
@@ -41,9 +46,10 @@ func parsePeclSerialized(_ context.Context, _ file.Resolver, _ *generic.Environm
 
 	pkgs = append(
 		pkgs,
-		newPeclPackage(
-			pkg.PhpPeclEntry{
+		newPearPackage(
+			pkg.PhpPearEntry{
 				Name:    name,
+				Channel: channel,
 				Version: version,
 				License: []string{
 					license,

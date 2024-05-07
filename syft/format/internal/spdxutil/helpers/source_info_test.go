@@ -129,10 +129,10 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
-				Type: pkg.PhpPeclPkg,
+				Type: pkg.PhpPearPkg,
 			},
 			expected: []string{
-				"from PHP Pecl manifest",
+				"from PHP Pear manifest",
 			},
 		},
 		{

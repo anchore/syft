@@ -37,8 +37,9 @@ type PhpComposerAuthors struct {
 	Homepage string `json:"homepage,omitempty"`
 }
 
-type PhpPeclEntry struct {
+type PhpPearEntry struct {
 	Name    string   `json:"name"`
+	Channel string   `json:"channel"`
 	Version string   `json:"version"`
 	License []string `json:"license,omitempty"`
 }
