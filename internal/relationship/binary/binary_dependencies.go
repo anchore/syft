@@ -66,39 +66,64 @@ func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, i
 // PackagesToRemove returns a list of binary packages (resolved by the ELF cataloger) that should be removed from the SBOM
 // These packages are removed because they are already represented by a higher order packages in the SBOM.
 func PackagesToRemove(resolver file.Resolver, accessor sbomsync.Accessor) []artifact.ID {
-	elfPackageToDelete := []artifact.ID{}
-	elfExecutables := []file.Executable{}
+	pkgsToDelete := make([]artifact.ID, 0)
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
-		for _, e := range s.Artifacts.Executables {
-			if e.Format == file.ELF {
-				elfExecutables = append(elfExecutables, e)
-			}
-		}
+		// OTHER > ELF > Binary
+		pkgsToDelete = append(pkgsToDelete, getBinaryPackagesToDelete(resolver, s)...)
+		pkgsToDelete = append(pkgsToDelete, compareElfBinaryPackages(resolver, s)...)
 	})
+	return pkgsToDelete
+}
 
-	sharedLibraryIndex := newShareLibIndex(resolver, accessor)
-	for _, e := range elfExecutables {
-		for _, lib := range e.ImportedLibraries {
-			// find the basename of the library
-			libBasename := path.Base(lib)
-			sharedCoord := sharedLibraryIndex.owningLibraryLocations(libBasename)
-
-			for _, loc := range sharedCoord.ToSlice() {
-				// are you in our index?
-				realBaseName := path.Base(loc.RealPath)
-				pkgCollection := sharedLibraryIndex.owningLibraryPackage(realBaseName)
-				// no overlap continue
-				if pkgCollection.PackageCount() > 1 {
-					for _, p := range pkgCollection.Sorted() {
-						if p.Type == pkg.BinaryPkg {
-							elfPackageToDelete = append(elfPackageToDelete, p.ID())
-						}
+func compareElfBinaryPackages(resolver file.Resolver, s *sbom.SBOM) []artifact.ID {
+	pkgsToDelete := make([]artifact.ID, 0)
+	for _, p := range s.Artifacts.Packages.Sorted(pkg.BinaryPkg) {
+		for _, loc := range p.Locations.ToSlice() {
+			if loc.Annotations[pkg.EvidenceAnnotationKey] != pkg.PrimaryEvidenceAnnotation {
+				continue
+			}
+			locations, err := resolver.FilesByPath(loc.RealPath)
+			if err != nil {
+				log.WithFields("error", err).Trace("unable to find path for owned file")
+				continue
+			}
+			for _, ownedL := range locations {
+				for _, pathPkg := range s.Artifacts.Packages.PackagesByPath(ownedL.RealPath) {
+					if _, ok := pathPkg.Metadata.(pkg.ELFBinaryPackageNoteJSONPayload); !ok {
+						pkgsToDelete = append(pkgsToDelete, pathPkg.ID())
 					}
 				}
 			}
 		}
 	}
-	return elfPackageToDelete
+	return pkgsToDelete
+}
+
+func getBinaryPackagesToDelete(resolver file.Resolver, s *sbom.SBOM) []artifact.ID {
+	pkgsToDelete := make([]artifact.ID, 0)
+	for p := range s.Artifacts.Packages.Enumerate() {
+		if p.Type == pkg.BinaryPkg {
+			continue
+		}
+		fileOwner, ok := p.Metadata.(pkg.FileOwner)
+		if !ok {
+			continue
+		}
+		ownedFiles := fileOwner.OwnedFiles()
+		locations, err := resolver.FilesByPath(ownedFiles...)
+		if err != nil {
+			log.WithFields("error", err).Trace("unable to find path for owned file")
+			continue
+		}
+		for _, loc := range locations {
+			for _, pathPkg := range s.Artifacts.Packages.PackagesByPath(loc.RealPath) {
+				if pathPkg.Type == pkg.BinaryPkg {
+					pkgsToDelete = append(pkgsToDelete, pathPkg.ID())
+				}
+			}
+		}
+	}
+	return pkgsToDelete
 }
 
 func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver file.Resolver, relIndex *relationshipIndex, index *sharedLibraryIndex) {

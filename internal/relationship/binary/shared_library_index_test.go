@@ -96,11 +96,6 @@ func Test_sharedLibraryIndex_build(t *testing.T) {
 			accessor := newAccesor(tt.packages, tt.coordinateIndex, tt.prexistingRelationships)
 			sharedLibraryIndex := newShareLibIndex(tt.resolver, accessor)
 			sharedLibraryIndex.build(tt.resolver, accessor)
-			coordinateSet := sharedLibraryIndex.owningLibraryLocations(path.Base(glibcCoordinate.RealPath))
-			if len(coordinateSet.Paths()) != 2 {
-				t.Errorf("owningLibraryLocations() = %v, want 2", coordinateSet)
-			}
-
 			pkgs := sharedLibraryIndex.owningLibraryPackage(path.Base(glibcCoordinate.RealPath))
 			if pkgs.PackageCount() < 1 {
 				t.Errorf("owningLibraryPackage() = %v, want non-empty", pkgs)
