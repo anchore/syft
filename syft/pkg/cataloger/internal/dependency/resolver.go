@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 // Prosumer is a producer and consumer, in this context, for packages that provide resources and require resources.
@@ -22,6 +23,13 @@ type RelationshipResolver struct {
 func NewRelationshipResolver(p Prosumer) RelationshipResolver {
 	return RelationshipResolver{
 		prosumer: p,
+	}
+}
+
+func Processor(p Prosumer) generic.Processor {
+	return func(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+		rels = append(rels, NewRelationshipResolver(p).Resolve(pkgs)...)
+		return pkgs, rels, err
 	}
 }
 

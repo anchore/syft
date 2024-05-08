@@ -1,9 +1,11 @@
 package dependency
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -125,4 +127,80 @@ func abstractRelationships(t testing.TB, relationships []artifact.Relationship) 
 	}
 
 	return abstracted
+}
+
+func Test_Processor(t *testing.T) {
+	a := pkg.Package{
+		Name: "a",
+	}
+
+	b := pkg.Package{
+		Name: "b",
+	}
+
+	c := pkg.Package{
+		Name: "c",
+	}
+
+	subjects := []pkg.Package{a, b, c}
+
+	for _, p := range subjects {
+		p.SetID()
+	}
+
+	tests := []struct {
+		name         string
+		prosumer     Prosumer
+		pkgs         []pkg.Package
+		rels         []artifact.Relationship
+		err          error
+		wantPkgCount int
+		wantRelCount int
+		wantErr      assert.ErrorAssertionFunc
+	}{
+		{
+			name:     "happy path preserves decorated values",
+			prosumer: newMockProsumer().WithProvides(b, "b-resource").WithRequires(c, "b-resource"),
+			pkgs:     []pkg.Package{a, b, c},
+			rels: []artifact.Relationship{
+				{
+					From: a,
+					To:   b,
+					Type: artifact.DependencyOfRelationship,
+				},
+			},
+
+			wantPkgCount: 3,
+			wantRelCount: 2, // original + new
+		},
+		{
+			name:     "error from cataloger is propagated",
+			prosumer: newMockProsumer().WithProvides(b, "b-resource").WithRequires(c, "b-resource"),
+			err:      errors.New("surprise!"),
+			pkgs:     []pkg.Package{a, b, c},
+			rels: []artifact.Relationship{
+				{
+					From: a,
+					To:   b,
+					Type: artifact.DependencyOfRelationship,
+				},
+			},
+			wantPkgCount: 3,
+			wantRelCount: 2, // original + new
+			wantErr:      assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = assert.NoError
+			}
+
+			gotPkgs, gotRels, err := Processor(tt.prosumer)(tt.pkgs, tt.rels, tt.err)
+
+			tt.wantErr(t, err)
+			assert.Len(t, gotPkgs, tt.wantPkgCount)
+			assert.Len(t, gotRels, tt.wantRelCount)
+		})
+	}
 }

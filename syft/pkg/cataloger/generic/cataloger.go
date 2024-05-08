@@ -12,7 +12,9 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-type processor func(resolver file.Resolver, env Environment) []request
+type Processor func([]pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error)
+
+type requester func(resolver file.Resolver, env Environment) []request
 
 type request struct {
 	file.Location
@@ -22,12 +24,13 @@ type request struct {
 // Cataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
 // a given path or glob pattern. This is intended to be reusable across many package cataloger types.
 type Cataloger struct {
-	processor         []processor
+	processors        []Processor
+	requesters        []requester
 	upstreamCataloger string
 }
 
 func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger {
-	c.processor = append(c.processor,
+	c.requesters = append(c.requesters,
 		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			for _, g := range globs {
@@ -47,7 +50,7 @@ func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger
 }
 
 func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Cataloger {
-	c.processor = append(c.processor,
+	c.requesters = append(c.requesters,
 		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			log.WithFields("mimetypes", types).Trace("searching for paths matching mimetype")
@@ -64,7 +67,7 @@ func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Catal
 }
 
 func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger {
-	c.processor = append(c.processor,
+	c.requesters = append(c.requesters,
 		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			for _, p := range paths {
@@ -80,6 +83,11 @@ func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger 
 			return requests
 		},
 	)
+	return c
+}
+
+func (c *Cataloger) WithProcessors(processors ...Processor) *Cataloger {
+	c.processors = append(c.processors, processors...)
 	return c
 }
 
@@ -135,7 +143,14 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 		relationships = append(relationships, discoveredRelationships...)
 	}
-	return packages, relationships, nil
+	return c.process(packages, relationships, nil)
+}
+
+func (c *Cataloger) process(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	for _, proc := range c.processors {
+		pkgs, rels, err = proc(pkgs, rels, err)
+	}
+	return pkgs, rels, err
 }
 
 func invokeParser(ctx context.Context, resolver file.Resolver, location file.Location, logger logger.Logger, parser Parser, env *Environment) ([]pkg.Package, []artifact.Relationship, error) {
@@ -158,7 +173,7 @@ func invokeParser(ctx context.Context, resolver file.Resolver, location file.Loc
 // selectFiles takes a set of file trees and resolves and file references of interest for future cataloging
 func (c *Cataloger) selectFiles(resolver file.Resolver) []request {
 	var requests []request
-	for _, proc := range c.processor {
+	for _, proc := range c.requesters {
 		requests = append(requests, proc(resolver, Environment{})...)
 	}
 	return requests
