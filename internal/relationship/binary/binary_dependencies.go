@@ -14,7 +14,6 @@ import (
 
 func NewDependencyRelationships(resolver file.Resolver, accessor sbomsync.Accessor) []artifact.Relationship {
 	// TODO: consider library format (e.g. ELF, Mach-O, PE) for the meantime assume all binaries are homogeneous format
-
 	// start with building new package-to-package relationships for executables-to-executables
 	// each relationship must be unique, store in a map[id]map[id]relationship to avoid duplicates
 	// 1 & 2... build an index of all shared libraries and their owning packages to search against

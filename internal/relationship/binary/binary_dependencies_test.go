@@ -14,6 +14,60 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
+func TestPackagesToRemove(t *testing.T) {
+	glibcCoordinate := file.NewCoordinates("/usr/lib64/libc.so.6", "")
+	glibCPackage := pkg.Package{
+		Name:    "glibc",
+		Version: "2.28-236.el8_9.12",
+		Locations: file.NewLocationSet(
+			file.NewLocation(glibcCoordinate.RealPath),
+		),
+		Type: pkg.RpmPkg,
+		Metadata: pkg.RpmDBEntry{
+			Files: []pkg.RpmFileRecord{
+				{
+					Path: glibcCoordinate.RealPath,
+				},
+			},
+		},
+	}
+	glibCBinaryPackage := pkg.Package{
+		Name:    "glibc",
+		Version: "",
+		Locations: file.NewLocationSet(
+			file.NewLocation(glibcCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
+		Language: "",
+		Type:     pkg.BinaryPkg,
+		Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
+			Type:       "testfixture",
+			Vendor:     "syft",
+			System:     "syftsys",
+			SourceRepo: "https://github.com/someone/somewhere.git",
+			Commit:     "5534c38d0ffef9a3f83154f0b7a7fb6ab0ab6dbb",
+		},
+	}
+	tests := []struct {
+		name     string
+		resolver file.Resolver
+		accessor sbomsync.Accessor
+	}{
+		{
+			name:     "remove packages that are overlapping",
+			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
+			accessor: newAccesor([]pkg.Package{glibCPackage, glibCBinaryPackage}, map[file.Coordinates]file.Executable{}, nil),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgsToDelete := PackagesToRemove(tt.resolver, tt.accessor)
+			if diff := cmp.Diff([]artifact.ID{glibCBinaryPackage.ID()}, pkgsToDelete); diff != "" {
+				t.Errorf("unexpected packages to delete (-want, +got): %s", diff)
+			}
+		})
+	}
+}
+
 func TestNewDependencyRelationships(t *testing.T) {
 	// coordinates for the files under test
 	glibcCoordinate := file.NewCoordinates("/usr/lib64/libc.so.6", "")
