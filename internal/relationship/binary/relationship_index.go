@@ -41,13 +41,13 @@ func (i *relationshipIndex) track(r artifact.Relationship) bool {
 	}
 
 	i.typesByFromTo[fromID][toID].Add(string(r.Type))
-	return exists
+	return !exists
 }
 
 // add a new relationship to the index, returning true if the relationship is new to the index, false otherwise (thus is a duplicate).
 // nolint:unparam
 func (i *relationshipIndex) add(r artifact.Relationship) bool {
-	if !i.track(r) {
+	if i.track(r) {
 		i.additional = append(i.additional, r)
 		return true
 	}

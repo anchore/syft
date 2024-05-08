@@ -14,18 +14,6 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-// GLIBC [RPM]
-// GLIBC [lib executable]
-// sytftestfixture [ELF P]
-// sytftestfixture (lib executable)... that imports GLIBC
-
-// 1. ELF P (a) --> exec (a) ---> imports of (a) --> (b) executable (imported executable) (ELF P --> file)
-
-// Case 3 needs to be covered somewhere else given that NewDependency relationships should already have accessor with
-// de duplicatied packages
-// 3. ELF P (a) is a part of RPM P (b), thus ELF P (a) is deleted from the SBOM... this means that (b) gets all relationships of (a)
-// SEE TODO in finalize
-
 func TestNewDependencyRelationships(t *testing.T) {
 	// coordinates for the files under test
 	glibcCoordinate := file.NewCoordinates("/usr/lib64/libc.so.6", "")
@@ -101,14 +89,6 @@ func TestNewDependencyRelationships(t *testing.T) {
 		ImportedLibraries: []string{},
 	}
 
-	// dummy executable representation of glibc
-	secondGlibcExecutable := file.Executable{
-		Format:            "elf",
-		HasExports:        true,
-		HasEntrypoint:     true,
-		ImportedLibraries: []string{},
-	}
-
 	// executable representation of the syftTestFixturePackage
 	syftTestFixtureExecutable := file.Executable{
 		Format:        "elf",
@@ -177,7 +157,7 @@ func TestNewDependencyRelationships(t *testing.T) {
 			),
 			coordinateIndex: map[file.Coordinates]file.Executable{
 				glibcCoordinate:        glibcExecutable,
-				secondGlibcCoordinate:  secondGlibcExecutable,
+				secondGlibcCoordinate:  glibcExecutable,
 				nestedLibCoordinate:    syftTestFixtureExecutable,
 				parrallelLibCoordinate: syftTestFixtureExecutable2,
 			},
@@ -231,24 +211,28 @@ func TestNewDependencyRelationships(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			accessor := newAccesorClosure(tt.packages, tt.coordinateIndex, tt.prexistingRelationships)
+			accessor := newAccesor(tt.packages, tt.coordinateIndex, tt.prexistingRelationships)
 			// given a resolver that knows about the paths of the packages and executables,
 			// and given an SBOM accessor that knows about the packages and executables,
 			// we should be able to create a set of relationships between the packages and executables
 			relationships := NewDependencyRelationships(tt.resolver, accessor)
-			if d := cmp.Diff(tt.want, relationships, cmpopts.IgnoreUnexported(
-				pkg.Package{},
-				artifact.Relationship{},
-				file.LocationSet{},
-				pkg.LicenseSet{},
-			)); d != "" {
-				t.Errorf("unexpected relationships (-want, +got): %s", d)
+			if diff := relationshipComparer(tt.want, relationships); diff != "" {
+				t.Errorf("unexpected relationships (-want, +got): %s", diff)
 			}
 		})
 	}
 }
 
-func newAccesorClosure(pkgs []pkg.Package, coordinateIndex map[file.Coordinates]file.Executable, prexistingRelationships []artifact.Relationship) sbomsync.Accessor {
+func relationshipComparer(x, y []artifact.Relationship) string {
+	return cmp.Diff(x, y, cmpopts.IgnoreUnexported(
+		pkg.Package{},
+		artifact.Relationship{},
+		file.LocationSet{},
+		pkg.LicenseSet{},
+	))
+}
+
+func newAccesor(pkgs []pkg.Package, coordinateIndex map[file.Coordinates]file.Executable, prexistingRelationships []artifact.Relationship) sbomsync.Accessor {
 	sb := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			Packages: pkg.NewCollection(),
