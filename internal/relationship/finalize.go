@@ -12,7 +12,9 @@ import (
 func Finalize(resolver file.Resolver, builder sbomsync.Builder, cfg cataloging.RelationshipsConfig, src artifact.Identifiable) {
 	accessor := builder.(sbomsync.Accessor)
 
-	// TODO (also, how should we update the TUI to reflect that we removed packages?)
+	// remove ELF packages and Binary packages that are already
+	// represented by a source package (e.g. a package that is evident by some package manager)
+	builder.DeletePackages(binary.PackagesToRemove(resolver, accessor)...)
 
 	// add relationships showing packages that are evident by a file which is owned by another package (package-to-package)
 	if cfg.PackageFileOwnershipOverlap {
@@ -43,8 +45,6 @@ func Finalize(resolver file.Resolver, builder sbomsync.Builder, cfg cataloging.R
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
 		evidentByRelationships = evidentBy(s.Artifacts.Packages)
 	})
-	builder.AddRelationships(evidentByRelationships...)
 
-	// remove ELF packages that are already represented by a non-ELF package
-	builder.DeletePackages(binary.PackagesToRemove(resolver, accessor)...)
+	builder.AddRelationships(evidentByRelationships...)
 }

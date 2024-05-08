@@ -20,7 +20,6 @@ func TestBinaryElfRelationships(t *testing.T) {
 		"libhello_world.so": {
 			"syfttestfixture",
 		},
-		// TODO: we need to capture devel package
 	}
 
 	// run the test...
