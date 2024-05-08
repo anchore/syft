@@ -32,7 +32,8 @@ func TestPackagesToRemove(t *testing.T) {
 		},
 	}
 	glibCPackage.SetID()
-	glibCBinaryPackage := pkg.Package{
+
+	glibCBinaryELFPackage := pkg.Package{
 		Name:    "glibc",
 		Version: "",
 		Locations: file.NewLocationSet(
@@ -48,22 +49,49 @@ func TestPackagesToRemove(t *testing.T) {
 			Commit:     "5534c38d0ffef9a3f83154f0b7a7fb6ab0ab6dbb",
 		},
 	}
-	glibCBinaryPackage.SetID()
+	glibCBinaryELFPackage.SetID()
+
+	glibCBinaryClassifierPackage := pkg.Package{
+		Name:    "glibc",
+		Version: "",
+		Locations: file.NewLocationSet(
+			file.NewLocation(glibcCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+		),
+		Language: "",
+		Type:     pkg.BinaryPkg,
+		Metadata: pkg.BinarySignature{},
+	}
+	glibCBinaryClassifierPackage.SetID()
+
 	tests := []struct {
 		name     string
 		resolver file.Resolver
 		accessor sbomsync.Accessor
+		want     []artifact.ID
 	}{
 		{
-			name:     "remove packages that are overlapping",
+			name:     "remove packages that are overlapping rpm --> binary",
 			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
-			accessor: newAccesor([]pkg.Package{glibCPackage, glibCBinaryPackage}, map[file.Coordinates]file.Executable{}, nil),
+			accessor: newAccesor([]pkg.Package{glibCPackage, glibCBinaryELFPackage}, map[file.Coordinates]file.Executable{}, nil),
+			want:     []artifact.ID{glibCBinaryELFPackage.ID()},
+		},
+		{
+			name:     "remove no packages when there is a single binary package",
+			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
+			accessor: newAccesor([]pkg.Package{glibCBinaryELFPackage}, map[file.Coordinates]file.Executable{}, nil),
+			want:     []artifact.ID{},
+		},
+		{
+			name:     "remove packages when there is a single binary package and a classifier package",
+			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
+			accessor: newAccesor([]pkg.Package{glibCBinaryELFPackage, glibCBinaryClassifierPackage}, map[file.Coordinates]file.Executable{}, nil),
+			want:     []artifact.ID{glibCBinaryClassifierPackage.ID()},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pkgsToDelete := PackagesToRemove(tt.resolver, tt.accessor)
-			if diff := cmp.Diff([]artifact.ID{glibCBinaryPackage.ID()}, pkgsToDelete); diff != "" {
+			if diff := cmp.Diff(tt.want, pkgsToDelete); diff != "" {
 				t.Errorf("unexpected packages to delete (-want, +got): %s", diff)
 			}
 		})
