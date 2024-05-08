@@ -88,6 +88,10 @@ func compareElfBinaryPackages(resolver file.Resolver, s *sbom.SBOM) []artifact.I
 			}
 			for _, ownedL := range locations {
 				for _, pathPkg := range s.Artifacts.Packages.PackagesByPath(ownedL.RealPath) {
+					// we only care about comparing binary packages to each other (not other types)
+					if pathPkg.Type != pkg.BinaryPkg {
+						continue
+					}
 					if _, ok := pathPkg.Metadata.(pkg.ELFBinaryPackageNoteJSONPayload); !ok {
 						pkgsToDelete = append(pkgsToDelete, pathPkg.ID())
 					}

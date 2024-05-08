@@ -31,6 +31,7 @@ func TestPackagesToRemove(t *testing.T) {
 			},
 		},
 	}
+	glibCPackage.SetID()
 	glibCBinaryPackage := pkg.Package{
 		Name:    "glibc",
 		Version: "",
@@ -47,6 +48,7 @@ func TestPackagesToRemove(t *testing.T) {
 			Commit:     "5534c38d0ffef9a3f83154f0b7a7fb6ab0ab6dbb",
 		},
 	}
+	glibCBinaryPackage.SetID()
 	tests := []struct {
 		name     string
 		resolver file.Resolver
