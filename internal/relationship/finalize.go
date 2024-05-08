@@ -12,7 +12,6 @@ import (
 func Finalize(resolver file.Resolver, builder sbomsync.Builder, cfg cataloging.RelationshipsConfig, src artifact.Identifiable) {
 	accessor := builder.(sbomsync.Accessor)
 
-	// remove ELF packages that are already represented by a non-ELF package
 	// TODO (also, how should we update the TUI to reflect that we removed packages?)
 
 	// add relationships showing packages that are evident by a file which is owned by another package (package-to-package)
@@ -45,4 +44,7 @@ func Finalize(resolver file.Resolver, builder sbomsync.Builder, cfg cataloging.R
 		evidentByRelationships = evidentBy(s.Artifacts.Packages)
 	})
 	builder.AddRelationships(evidentByRelationships...)
+
+	// remove ELF packages that are already represented by a non-ELF package
+	builder.DeletePackages(binary.PackagesToRemove(resolver, accessor)...)
 }

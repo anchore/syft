@@ -63,6 +63,44 @@ func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, i
 	return relIndex.newRelationships()
 }
 
+// PackagesToRemove returns a list of binary packages (resolved by the ELF cataloger) that should be removed from the SBOM
+// These packages are removed because they are already represented by a higher order packages in the SBOM.
+func PackagesToRemove(resolver file.Resolver, accessor sbomsync.Accessor) []artifact.ID {
+	elfPackageToDelete := []artifact.ID{}
+	elfExecutables := []file.Executable{}
+	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
+		for _, e := range s.Artifacts.Executables {
+			if e.Format == file.ELF {
+				elfExecutables = append(elfExecutables, e)
+			}
+		}
+	})
+
+	sharedLibraryIndex := newShareLibIndex(resolver, accessor)
+	for _, e := range elfExecutables {
+		for _, lib := range e.ImportedLibraries {
+			// find the basename of the library
+			libBasename := path.Base(lib)
+			sharedCoord := sharedLibraryIndex.owningLibraryLocations(libBasename)
+
+			for _, loc := range sharedCoord.ToSlice() {
+				// are you in our index?
+				realBaseName := path.Base(loc.RealPath)
+				pkgCollection := sharedLibraryIndex.owningLibraryPackage(realBaseName)
+				// no overlap continue
+				if pkgCollection.PackageCount() > 1 {
+					for _, p := range pkgCollection.Sorted() {
+						if p.Type == pkg.BinaryPkg {
+							elfPackageToDelete = append(elfPackageToDelete, p.ID())
+						}
+					}
+				}
+			}
+		}
+	}
+	return elfPackageToDelete
+}
+
 func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver file.Resolver, relIndex *relationshipIndex, index *sharedLibraryIndex) {
 	for _, libReference := range exec.ImportedLibraries {
 		// for each library reference, check s.Artifacts.Packages.Sorted(pkg.BinaryPkg) for a binary package that represents that library
