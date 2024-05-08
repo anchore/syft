@@ -28,10 +28,10 @@ import (
 
 func TestNewDependencyRelationships(t *testing.T) {
 	// coordinates for the files under test
-	glibcCoordinate := file.Coordinates{RealPath: "/usr/lib64/libc.so.6"}
-	secondGlibcCoordinate := file.Coordinates{RealPath: "/usr/local/lib64/libc.so.6"}
-	nestedLibCoordinate := file.Coordinates{RealPath: "/usr/local/bin/elftests/elfbinwithnestedlib/bin/elfbinwithnestedlib"}
-	parrallelLibCoordinate := file.Coordinates{RealPath: "/usr/local/bin/elftests/elfbinwithsisterlib/bin/elfwithparallellibbin1"}
+	glibcCoordinate := file.NewCoordinates("/usr/lib64/libc.so.6", "")
+	secondGlibcCoordinate := file.NewCoordinates("/usr/local/lib64/libc.so.6", "")
+	nestedLibCoordinate := file.NewCoordinates("/usr/local/bin/elftests/elfbinwithnestedlib/bin/elfbinwithnestedlib", "")
+	parrallelLibCoordinate := file.NewCoordinates("/usr/local/bin/elftests/elfbinwithsisterlib/bin/elfwithparallellibbin1", "")
 
 	// rpm package that was discovered in linked section of the ELF binary package
 	glibCPackage := pkg.Package{
