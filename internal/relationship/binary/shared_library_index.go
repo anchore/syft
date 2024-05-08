@@ -36,14 +36,13 @@ func (i *sharedLibraryIndex) build(resolver file.Resolver, accessor sbomsync.Acc
 	i.packagesByLibraryPath = packagesWithLibraryOwnership(resolver, accessor, i.allLibLocations)
 }
 
-// TODO: we might need this
-// func (i *sharedLibraryIndex) owningLibraryLocations(libraryBasename string) file.CoordinateSet {
-//	if set, ok := i.libLocationsByBasename[libraryBasename]; ok {
-//		return set
-//	}
-//
-//	return file.NewCoordinateSet()
-// }
+func (i *sharedLibraryIndex) owningLibraryLocations(libraryBasename string) file.CoordinateSet {
+	if set, ok := i.libLocationsByBasename[libraryBasename]; ok {
+		return set
+	}
+
+	return file.NewCoordinateSet()
+}
 
 func (i *sharedLibraryIndex) owningLibraryPackage(libraryBasename string) *pkg.Collection {
 	// find all packages that own a library by its basename
