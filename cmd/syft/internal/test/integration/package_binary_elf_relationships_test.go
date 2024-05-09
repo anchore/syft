@@ -1,10 +1,12 @@
 package integration
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/source"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestBinaryElfRelationships(t *testing.T) {
