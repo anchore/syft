@@ -4,7 +4,6 @@ import (
 	"path"
 
 	"github.com/anchore/syft/internal/log"
-
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -67,39 +66,57 @@ func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, i
 func PackagesToRemove(resolver file.Resolver, accessor sbomsync.Accessor) []artifact.ID {
 	pkgsToDelete := make([]artifact.ID, 0)
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
-		// OTHER > ELF > Binary
+		// OTHER package type > ELF package type > Binary package type
 		pkgsToDelete = append(pkgsToDelete, getBinaryPackagesToDelete(resolver, s)...)
-		pkgsToDelete = append(pkgsToDelete, compareElfBinaryPackages(resolver, s)...)
+		pkgsToDelete = append(pkgsToDelete, compareElfBinaryPackages(s)...)
 	})
 	return pkgsToDelete
 }
 
-func compareElfBinaryPackages(resolver file.Resolver, s *sbom.SBOM) []artifact.ID {
+func compareElfBinaryPackages(s *sbom.SBOM) []artifact.ID {
 	pkgsToDelete := make([]artifact.ID, 0)
-	for _, p := range s.Artifacts.Packages.Sorted(pkg.BinaryPkg) {
-		for _, loc := range p.Locations.ToSlice() {
-			if loc.Annotations[pkg.EvidenceAnnotationKey] != pkg.PrimaryEvidenceAnnotation {
-				continue
-			}
-			locations, err := resolver.FilesByPath(loc.RealPath)
-			if err != nil {
-				log.WithFields("error", err).Trace("unable to find path for owned file")
-				continue
-			}
-			for _, ownedL := range locations {
-				for _, pathPkg := range s.Artifacts.Packages.PackagesByPath(ownedL.RealPath) {
-					// we only care about comparing binary packages to each other (not other types)
-					if pathPkg.Type != pkg.BinaryPkg {
-						continue
-					}
-					if _, ok := pathPkg.Metadata.(pkg.ELFBinaryPackageNoteJSONPayload); !ok {
-						pkgsToDelete = append(pkgsToDelete, pathPkg.ID())
-					}
+	for _, elfPkg := range allElfPackages(s) {
+		for _, loc := range onlyPrimaryEvidenceLocations(elfPkg) {
+			for _, otherPkg := range s.Artifacts.Packages.PackagesByPath(loc.RealPath) {
+				// we only care about comparing binary packages to each other (not other types)
+				if otherPkg.Type != pkg.BinaryPkg {
+					continue
+				}
+				if !isElfPackage(otherPkg) {
+					pkgsToDelete = append(pkgsToDelete, otherPkg.ID())
 				}
 			}
 		}
 	}
 	return pkgsToDelete
+}
+
+func onlyPrimaryEvidenceLocations(p pkg.Package) []file.Location {
+	var locs []file.Location
+	for _, loc := range p.Locations.ToSlice() {
+		if loc.Annotations[pkg.EvidenceAnnotationKey] != pkg.PrimaryEvidenceAnnotation {
+			continue
+		}
+		locs = append(locs, loc)
+	}
+
+	return locs
+}
+
+func allElfPackages(s *sbom.SBOM) []pkg.Package {
+	var elfPkgs []pkg.Package
+	for _, p := range s.Artifacts.Packages.Sorted(pkg.BinaryPkg) {
+		if !isElfPackage(p) {
+			continue
+		}
+		elfPkgs = append(elfPkgs, p)
+	}
+	return elfPkgs
+}
+
+func isElfPackage(p pkg.Package) bool {
+	_, ok := p.Metadata.(pkg.ELFBinaryPackageNoteJSONPayload)
+	return ok
 }
 
 func getBinaryPackagesToDelete(resolver file.Resolver, s *sbom.SBOM) []artifact.ID {

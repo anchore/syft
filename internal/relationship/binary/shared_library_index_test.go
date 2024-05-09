@@ -27,7 +27,7 @@ func Test_newShareLibIndex(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			accessor := newAccesor(tt.packages, tt.coordinateIndex, tt.prexistingRelationships)
+			accessor := newAccessor(tt.packages, tt.coordinateIndex, tt.prexistingRelationships)
 			sharedLibraryIndex := newShareLibIndex(tt.resolver, accessor)
 			if sharedLibraryIndex == nil {
 				t.Errorf("newShareLibIndex() = %v, want non-nil", sharedLibraryIndex)
@@ -93,7 +93,7 @@ func Test_sharedLibraryIndex_build(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			accessor := newAccesor(tt.packages, tt.coordinateIndex, tt.prexistingRelationships)
+			accessor := newAccessor(tt.packages, tt.coordinateIndex, tt.prexistingRelationships)
 			sharedLibraryIndex := newShareLibIndex(tt.resolver, accessor)
 			sharedLibraryIndex.build(tt.resolver, accessor)
 			pkgs := sharedLibraryIndex.owningLibraryPackage(path.Base(glibcCoordinate.RealPath))

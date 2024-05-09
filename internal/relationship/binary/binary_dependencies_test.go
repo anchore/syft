@@ -34,13 +34,11 @@ func TestPackagesToRemove(t *testing.T) {
 	glibCPackage.SetID()
 
 	glibCBinaryELFPackage := pkg.Package{
-		Name:    "glibc",
-		Version: "",
+		Name: "glibc",
 		Locations: file.NewLocationSet(
 			file.NewLocation(glibcCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		Language: "",
-		Type:     pkg.BinaryPkg,
+		Type: pkg.BinaryPkg,
 		Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 			Type:       "testfixture",
 			Vendor:     "syft",
@@ -52,16 +50,24 @@ func TestPackagesToRemove(t *testing.T) {
 	glibCBinaryELFPackage.SetID()
 
 	glibCBinaryClassifierPackage := pkg.Package{
-		Name:    "glibc",
-		Version: "",
+		Name: "glibc",
 		Locations: file.NewLocationSet(
 			file.NewLocation(glibcCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
 		),
-		Language: "",
 		Type:     pkg.BinaryPkg,
 		Metadata: pkg.BinarySignature{},
 	}
 	glibCBinaryClassifierPackage.SetID()
+
+	libCBinaryClassifierPackage := pkg.Package{
+		Name: "libc",
+		Locations: file.NewLocationSet(
+			file.NewLocation(glibcCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
+		Type:     pkg.BinaryPkg,
+		Metadata: pkg.BinarySignature{},
+	}
+	libCBinaryClassifierPackage.SetID()
 
 	tests := []struct {
 		name     string
@@ -72,20 +78,32 @@ func TestPackagesToRemove(t *testing.T) {
 		{
 			name:     "remove packages that are overlapping rpm --> binary",
 			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
-			accessor: newAccesor([]pkg.Package{glibCPackage, glibCBinaryELFPackage}, map[file.Coordinates]file.Executable{}, nil),
+			accessor: newAccessor([]pkg.Package{glibCPackage, glibCBinaryELFPackage}, map[file.Coordinates]file.Executable{}, nil),
 			want:     []artifact.ID{glibCBinaryELFPackage.ID()},
 		},
 		{
 			name:     "remove no packages when there is a single binary package",
 			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
-			accessor: newAccesor([]pkg.Package{glibCBinaryELFPackage}, map[file.Coordinates]file.Executable{}, nil),
+			accessor: newAccessor([]pkg.Package{glibCBinaryELFPackage}, map[file.Coordinates]file.Executable{}, nil),
 			want:     []artifact.ID{},
 		},
 		{
 			name:     "remove packages when there is a single binary package and a classifier package",
 			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
-			accessor: newAccesor([]pkg.Package{glibCBinaryELFPackage, glibCBinaryClassifierPackage}, map[file.Coordinates]file.Executable{}, nil),
+			accessor: newAccessor([]pkg.Package{glibCBinaryELFPackage, glibCBinaryClassifierPackage}, map[file.Coordinates]file.Executable{}, nil),
 			want:     []artifact.ID{glibCBinaryClassifierPackage.ID()},
+		},
+		{
+			name:     "ensure we're considering ELF packages, not just binary packages (supporting evidence)",
+			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
+			accessor: newAccessor([]pkg.Package{glibCBinaryClassifierPackage}, map[file.Coordinates]file.Executable{}, nil),
+			want:     []artifact.ID{},
+		},
+		{
+			name:     "ensure we're considering ELF packages, not just binary packages (primary evidence)",
+			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
+			accessor: newAccessor([]pkg.Package{libCBinaryClassifierPackage}, map[file.Coordinates]file.Executable{}, nil),
+			want:     []artifact.ID{},
 		},
 	}
 	for _, tt := range tests {
@@ -103,7 +121,7 @@ func TestNewDependencyRelationships(t *testing.T) {
 	glibcCoordinate := file.NewCoordinates("/usr/lib64/libc.so.6", "")
 	secondGlibcCoordinate := file.NewCoordinates("/usr/local/lib64/libc.so.6", "")
 	nestedLibCoordinate := file.NewCoordinates("/usr/local/bin/elftests/elfbinwithnestedlib/bin/elfbinwithnestedlib", "")
-	parrallelLibCoordinate := file.NewCoordinates("/usr/local/bin/elftests/elfbinwithsisterlib/bin/elfwithparallellibbin1", "")
+	parallelLibCoordinate := file.NewCoordinates("/usr/local/bin/elftests/elfbinwithsisterlib/bin/elfwithparallellibbin1", "")
 
 	// rpm package that was discovered in linked section of the ELF binary package
 	glibCPackage := pkg.Package{
@@ -151,7 +169,7 @@ func TestNewDependencyRelationships(t *testing.T) {
 		FoundBy: "",
 		Locations: file.NewLocationSet(
 			file.NewLocation(nestedLibCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-			file.NewLocation(parrallelLibCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+			file.NewLocation(parallelLibCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
 		),
 		Language: "",
 		Type:     pkg.BinaryPkg,
@@ -214,13 +232,13 @@ func TestNewDependencyRelationships(t *testing.T) {
 			resolver: file.NewMockResolverForPaths(
 				glibcCoordinate.RealPath,
 				nestedLibCoordinate.RealPath,
-				parrallelLibCoordinate.RealPath,
+				parallelLibCoordinate.RealPath,
 			),
 			// path -> executable (above mock resolver needs to be able to resolve to paths in this map)
 			coordinateIndex: map[file.Coordinates]file.Executable{
-				glibcCoordinate:        glibcExecutable,
-				nestedLibCoordinate:    syftTestFixtureExecutable,
-				parrallelLibCoordinate: syftTestFixtureExecutable2,
+				glibcCoordinate:       glibcExecutable,
+				nestedLibCoordinate:   syftTestFixtureExecutable,
+				parallelLibCoordinate: syftTestFixtureExecutable2,
 			},
 			packages: []pkg.Package{glibCPackage, syftTestFixturePackage},
 			want: []artifact.Relationship{
@@ -237,13 +255,13 @@ func TestNewDependencyRelationships(t *testing.T) {
 				glibcCoordinate.RealPath,
 				secondGlibcCoordinate.RealPath,
 				nestedLibCoordinate.RealPath,
-				parrallelLibCoordinate.RealPath,
+				parallelLibCoordinate.RealPath,
 			),
 			coordinateIndex: map[file.Coordinates]file.Executable{
-				glibcCoordinate:        glibcExecutable,
-				secondGlibcCoordinate:  glibcExecutable,
-				nestedLibCoordinate:    syftTestFixtureExecutable,
-				parrallelLibCoordinate: syftTestFixtureExecutable2,
+				glibcCoordinate:       glibcExecutable,
+				secondGlibcCoordinate: glibcExecutable,
+				nestedLibCoordinate:   syftTestFixtureExecutable,
+				parallelLibCoordinate: syftTestFixtureExecutable2,
 			},
 			packages: []pkg.Package{glibCPackage, glibCustomPackage, syftTestFixturePackage},
 			want: []artifact.Relationship{
@@ -264,12 +282,12 @@ func TestNewDependencyRelationships(t *testing.T) {
 			resolver: file.NewMockResolverForPaths(
 				glibcCoordinate.RealPath,
 				nestedLibCoordinate.RealPath,
-				parrallelLibCoordinate.RealPath,
+				parallelLibCoordinate.RealPath,
 			),
 			coordinateIndex: map[file.Coordinates]file.Executable{
-				glibcCoordinate:        glibcExecutable,
-				nestedLibCoordinate:    syftTestFixtureExecutable,
-				parrallelLibCoordinate: syftTestFixtureExecutable2,
+				glibcCoordinate:       glibcExecutable,
+				nestedLibCoordinate:   syftTestFixtureExecutable,
+				parallelLibCoordinate: syftTestFixtureExecutable2,
 			},
 			packages: []pkg.Package{glibCPackage, glibCustomPackage, syftTestFixturePackage},
 			prexistingRelationships: []artifact.Relationship{
@@ -285,9 +303,9 @@ func TestNewDependencyRelationships(t *testing.T) {
 			name:     "given a package that imports a library that is not tracked by the resolver, expect no relationships to be created",
 			resolver: file.NewMockResolverForPaths(),
 			coordinateIndex: map[file.Coordinates]file.Executable{
-				glibcCoordinate:        glibcExecutable,
-				nestedLibCoordinate:    syftTestFixtureExecutable,
-				parrallelLibCoordinate: syftTestFixtureExecutable2,
+				glibcCoordinate:       glibcExecutable,
+				nestedLibCoordinate:   syftTestFixtureExecutable,
+				parallelLibCoordinate: syftTestFixtureExecutable2,
 			},
 			packages: []pkg.Package{glibCPackage, syftTestFixturePackage},
 			want:     []artifact.Relationship{},
@@ -295,7 +313,7 @@ func TestNewDependencyRelationships(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			accessor := newAccesor(tt.packages, tt.coordinateIndex, tt.prexistingRelationships)
+			accessor := newAccessor(tt.packages, tt.coordinateIndex, tt.prexistingRelationships)
 			// given a resolver that knows about the paths of the packages and executables,
 			// and given an SBOM accessor that knows about the packages and executables,
 			// we should be able to create a set of relationships between the packages and executables
@@ -316,7 +334,7 @@ func relationshipComparer(x, y []artifact.Relationship) string {
 	))
 }
 
-func newAccesor(pkgs []pkg.Package, coordinateIndex map[file.Coordinates]file.Executable, prexistingRelationships []artifact.Relationship) sbomsync.Accessor {
+func newAccessor(pkgs []pkg.Package, coordinateIndex map[file.Coordinates]file.Executable, preexistingRelationships []artifact.Relationship) sbomsync.Accessor {
 	sb := sbom.SBOM{
 		Artifacts: sbom.Artifacts{
 			Packages: pkg.NewCollection(),
@@ -329,8 +347,8 @@ func newAccesor(pkgs []pkg.Package, coordinateIndex map[file.Coordinates]file.Ex
 	accessor := builder.(sbomsync.Accessor)
 	accessor.WriteToSBOM(func(s *sbom.SBOM) {
 		s.Artifacts.Executables = coordinateIndex
-		if prexistingRelationships != nil {
-			s.Relationships = prexistingRelationships
+		if preexistingRelationships != nil {
+			s.Relationships = preexistingRelationships
 		}
 	})
 	return accessor
