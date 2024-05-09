@@ -20,6 +20,8 @@ type Builder interface {
 
 	AddPackages(...pkg.Package)
 
+	DeletePackages(...artifact.ID)
+
 	// edges
 
 	AddRelationships(...artifact.Relationship)
@@ -75,6 +77,34 @@ func (b sbomBuilder) AddPackages(p ...pkg.Package) {
 	defer b.lock.Unlock()
 
 	b.sbom.Artifacts.Packages.Add(p...)
+	b.onWriteEvent()
+}
+
+func (b sbomBuilder) DeletePackages(ids ...artifact.ID) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
+	deleted := make(map[artifact.ID]struct{})
+	for _, id := range ids {
+		b.sbom.Artifacts.Packages.Delete(id)
+		deleted[id] = struct{}{}
+	}
+
+	// remove any relationships that reference the deleted packages
+	var relationships []artifact.Relationship
+	for _, rel := range b.sbom.Relationships {
+		if _, ok := deleted[rel.From.ID()]; ok {
+			continue
+		}
+		if _, ok := deleted[rel.To.ID()]; ok {
+			continue
+		}
+
+		// only keep relationships that don't reference the deleted packages
+		relationships = append(relationships, rel)
+	}
+
+	b.sbom.Relationships = relationships
 	b.onWriteEvent()
 }
 
