@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strings"
@@ -61,11 +62,11 @@ func NewFromUnindexedDirectoryFS(fs afero.Fs, dir string, base string) file.Writ
 	}
 	wd, err := os.Getwd()
 	if err == nil {
-		if !path.IsAbs(dir) {
-			dir = path.Clean(path.Join(wd, dir))
+		if !filepath.IsAbs(dir) {
+			dir = filepath.Clean(filepath.Join(wd, dir))
 		}
-		if base != "" && !path.IsAbs(base) {
-			base = path.Clean(path.Join(wd, base))
+		if base != "" && !filepath.IsAbs(base) {
+			base = filepath.Clean(filepath.Join(wd, base))
 		}
 	}
 	return UnindexedDirectory{
