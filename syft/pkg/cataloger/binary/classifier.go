@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -142,6 +143,22 @@ func FileContentsVersionMatcher(pattern string) EvidenceMatcher {
 		}
 
 		matchMetadata := internal.MatchNamedCaptureGroups(pat, string(contents))
+
+		// Convert {major: 1, minor: 2, patch: 3} to "1.2.3"
+		_, versionOk := matchMetadata["version"]
+		majorStr, majorOk := matchMetadata["major"]
+		minorStr, minorOk := matchMetadata["minor"]
+		patchStr, patchOk := matchMetadata["patch"]
+
+		if !versionOk && majorOk && minorOk && patchOk {
+			major, majorErr := strconv.Atoi(majorStr)
+			minor, minorErr := strconv.Atoi(minorStr)
+			patch, patchErr := strconv.Atoi(patchStr)
+
+			if majorErr == nil && minorErr == nil && patchErr == nil {
+				matchMetadata["version"] = fmt.Sprintf("%d.%d.%d", major, minor, patch)
+			}
+		}
 
 		p := newClassifierPackage(classifier, location, matchMetadata)
 		if p == nil {

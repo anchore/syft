@@ -61,6 +61,17 @@ func Test_ClassifierCPEs(t *testing.T) {
 				"cpe:2.3:a:some:apps:1.8:*:*:*:*:*:*:*",
 			},
 		},
+		{
+			name:    "version in parts",
+			fixture: "test-fixtures/version-parts.txt",
+			classifier: Classifier{
+				Package:         "some-app",
+				FileGlob:        "**/version-parts.txt",
+				EvidenceMatcher: FileContentsVersionMatcher(`(?m)\x00(?P<major>[0-9.]+)\x00(?P<minor>[0-9.]+)\x00(?P<patch>[0-9.]+)\x00`),
+				CPEs:            []cpe.CPE{},
+			},
+			cpes: nil,
+		},
 	}
 
 	for _, test := range tests {
