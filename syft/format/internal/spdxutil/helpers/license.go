@@ -11,9 +11,9 @@ import (
 )
 
 func License(p pkg.Package) (concluded, declared string) {
-	// source: https://spdx.github.io/spdx-spec/3-package-information/#313-concluded-license
+	// source: https://spdx.github.io/spdx-spec/v2.3/package-information/#713-concluded-license-field
 	// The options to populate this field are limited to:
-	// A valid SPDX License Expression as defined in Appendix IV;
+	// A valid SPDX License Expression as defined in Annex D;
 	// NONE, if the SPDX file creator concludes there is no license available for this package; or
 	// NOASSERTION if:
 	//   (i) the SPDX file creator has attempted to but cannot reach a reasonable objective determination;
