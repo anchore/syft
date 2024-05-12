@@ -219,7 +219,7 @@ func extractSourceVersion(source string) (string, string) {
 func handleNewKeyValue(line string) (key string, val interface{}, err error) {
 	if i := strings.Index(line, ":"); i > 0 {
 		key = strings.TrimSpace(line[0:i])
-		// mapstruct cant handle "-"
+		// mapstruct can't handle "-"
 		key = strings.ReplaceAll(key, "-", "")
 		val := strings.TrimSpace(line[i+1:])
 
