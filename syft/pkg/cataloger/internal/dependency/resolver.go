@@ -99,8 +99,8 @@ func (r RelationshipResolver) Resolve(pkgs []pkg.Package) (relationships []artif
 }
 
 func deduplicate(ss []string) []string {
+	// note: we sort the set such that multiple invocations of this function will be deterministic
 	set := strset.New(ss...)
-	// note: this must be a stable function
 	list := set.List()
 	sort.Strings(list)
 	return list
