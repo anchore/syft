@@ -13,5 +13,5 @@ import (
 func NewDBCataloger() pkg.Cataloger {
 	return generic.NewCataloger("alpm-db-cataloger").
 		WithParserByGlobs(parseAlpmDB, pkg.AlpmDBGlob).
-		WithProcessors(dependency.Processor(newDBProsumer()))
+		WithProcessors(dependency.Processor(dbEntryDependencySpecifier))
 }
