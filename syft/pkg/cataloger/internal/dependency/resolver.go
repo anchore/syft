@@ -10,53 +10,83 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// Prosumer is a producer and consumer, in this context, for packages that provide resources and require resources.
-type Prosumer interface {
-	Provides(pkg.Package) []string
-	Requires(pkg.Package) []string
+// Specification holds strings that indicate abstract resources that a package provides for other packages and
+// requires for itself. These strings can represent anything from file paths, package names, or any other concept
+// that is useful for dependency resolution within that packing ecosystem.
+type Specification struct {
+	// Provides holds a list of abstract resources that this package provides for other packages.
+	Provides []string
+
+	// Requires holds a list of abstract resources that this package requires from other packages.
+	Requires []string
 }
 
+// Specifier is a function that takes a package and extracts a Specification, describing resources
+// the package provides and needs.
+type Specifier func(pkg.Package) Specification
+
+// RelationshipResolver uses a Specifier to resolve relationships between packages based on generic dependency claims
+// and provider claims from any given package.
 type RelationshipResolver struct {
-	prosumer Prosumer
+	specifier Specifier
 }
 
-func NewRelationshipResolver(p Prosumer) RelationshipResolver {
+func NewRelationshipResolver(s Specifier) RelationshipResolver {
 	return RelationshipResolver{
-		prosumer: p,
+		specifier: s,
 	}
 }
 
-func Processor(p Prosumer) generic.Processor {
+// Processor returns a generic processor that will resolve relationships between packages based on the dependency claims.
+func Processor(s Specifier) generic.Processor {
 	return func(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
-		rels = append(rels, NewRelationshipResolver(p).Resolve(pkgs)...)
+		// we can't move forward unless all package IDs have been set
+		for idx, p := range pkgs {
+			id := p.ID()
+			if id == "" {
+				p.SetID()
+				pkgs[idx] = p
+			}
+		}
+
+		rels = append(rels, NewRelationshipResolver(s).Resolve(pkgs)...)
 		return pkgs, rels, err
 	}
 }
 
-// Resolve will create relationships between packages based on the "Depends" and "Provides" specifications from the given packages.
+// Resolve will create relationships between packages based on the dependency claims of each package.
 func (r RelationshipResolver) Resolve(pkgs []pkg.Package) (relationships []artifact.Relationship) {
-	lookup := make(map[string][]pkg.Package)
+	pkgsProvidingResource := make(map[string][]artifact.ID)
+
+	pkgsByID := make(map[artifact.ID]pkg.Package)
+	specsByPkg := make(map[artifact.ID]Specification)
 
 	for _, p := range pkgs {
-		for _, key := range deduplicate(r.prosumer.Provides(p)) {
-			lookup[key] = append(lookup[key], p)
+		id := p.ID()
+		pkgsByID[id] = p
+		specsByPkg[id] = r.specifier(p)
+		for _, resource := range deduplicate(r.specifier(p).Provides) {
+			pkgsProvidingResource[resource] = append(pkgsProvidingResource[resource], id)
 		}
 	}
 
 	seen := strset.New()
-	for _, p := range pkgs {
-		for _, requirement := range deduplicate(r.prosumer.Requires(p)) {
-			for _, depPkg := range lookup[requirement] {
+	for _, dependantPkg := range pkgs {
+		spec := specsByPkg[dependantPkg.ID()]
+		for _, resource := range deduplicate(spec.Requires) {
+			for _, providingPkgID := range pkgsProvidingResource[resource] {
 				// prevent creating duplicate relationships
-				pairKey := string(depPkg.ID()) + "-" + string(p.ID())
+				pairKey := string(providingPkgID) + "-" + string(dependantPkg.ID())
 				if seen.Has(pairKey) {
 					continue
 				}
 
+				providingPkg := pkgsByID[providingPkgID]
+
 				relationships = append(relationships,
 					artifact.Relationship{
-						From: depPkg,
-						To:   p,
+						From: providingPkg,
+						To:   dependantPkg,
 						Type: artifact.DependencyOfRelationship,
 					},
 				)
@@ -74,8 +104,4 @@ func deduplicate(ss []string) []string {
 	list := set.List()
 	sort.Strings(list)
 	return list
-}
-
-func Resolve(pkgs []pkg.Package, prosumer Prosumer) []artifact.Relationship {
-	return NewRelationshipResolver(prosumer).Resolve(pkgs)
 }

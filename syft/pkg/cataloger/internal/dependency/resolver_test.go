@@ -15,40 +15,41 @@ func TestRelationshipResolver_Resolve(t *testing.T) {
 	a := pkg.Package{
 		Name: "a",
 	}
+	a.SetID()
 
 	b := pkg.Package{
 		Name: "b",
 	}
+	b.SetID()
 
 	c := pkg.Package{
 		Name: "c",
 	}
+	c.SetID()
 
 	subjects := []pkg.Package{a, b, c}
 
-	for _, p := range subjects {
-		p.SetID()
-	}
-
 	tests := []struct {
-		name     string
-		prosumer Prosumer
-		want     map[string][]string
+		name string
+		s    Specifier
+		want map[string][]string
 	}{
 		{
 			name: "find relationships between packages",
-			prosumer: newMockProsumer().
+			s: newSpecifierBuilder().
 				WithProvides(a /* provides */, "a-resource").
-				WithRequires(b /* requires */, "a-resource"),
+				WithRequires(b /* requires */, "a-resource").
+				Specifier(),
 			want: map[string][]string{
 				"b": /* depends on */ {"a"},
 			},
 		},
 		{
 			name: "deduplicates provider keys",
-			prosumer: newMockProsumer().
+			s: newSpecifierBuilder().
 				WithProvides(a /* provides */, "a-resource", "a-resource", "a-resource").
-				WithRequires(b /* requires */, "a-resource", "a-resource", "a-resource"),
+				WithRequires(b /* requires */, "a-resource", "a-resource", "a-resource").
+				Specifier(),
 			want: map[string][]string{
 				"b": /* depends on */ {"a"},
 				// note: we're NOT seeing:
@@ -57,9 +58,10 @@ func TestRelationshipResolver_Resolve(t *testing.T) {
 		},
 		{
 			name: "deduplicates crafted relationships",
-			prosumer: newMockProsumer().
+			s: newSpecifierBuilder().
 				WithProvides(a /* provides */, "a1-resource", "a2-resource", "a3-resource").
-				WithRequires(b /* requires */, "a1-resource", "a2-resource"),
+				WithRequires(b /* requires */, "a1-resource", "a2-resource").
+				Specifier(),
 			want: map[string][]string{
 				"b": /* depends on */ {"a"},
 				// note: we're NOT seeing:
@@ -69,7 +71,7 @@ func TestRelationshipResolver_Resolve(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			relationships := NewRelationshipResolver(tt.prosumer).Resolve(subjects)
+			relationships := NewRelationshipResolver(tt.s).Resolve(subjects)
 			if d := cmp.Diff(tt.want, abstractRelationships(t, relationships)); d != "" {
 				t.Errorf("unexpected relationships (-want +got):\n%s", d)
 			}
@@ -77,35 +79,35 @@ func TestRelationshipResolver_Resolve(t *testing.T) {
 	}
 }
 
-type mockProsumer struct {
+type specifierBuilder struct {
 	provides map[string][]string
 	requires map[string][]string
 }
 
-func newMockProsumer() *mockProsumer {
-	return &mockProsumer{
+func newSpecifierBuilder() *specifierBuilder {
+	return &specifierBuilder{
 		provides: make(map[string][]string),
 		requires: make(map[string][]string),
 	}
 }
 
-func (m *mockProsumer) WithProvides(p pkg.Package, provides ...string) *mockProsumer {
+func (m *specifierBuilder) WithProvides(p pkg.Package, provides ...string) *specifierBuilder {
 	m.provides[p.Name] = append(m.provides[p.Name], provides...)
 	return m
 }
 
-func (m *mockProsumer) WithRequires(p pkg.Package, requires ...string) *mockProsumer {
+func (m *specifierBuilder) WithRequires(p pkg.Package, requires ...string) *specifierBuilder {
 	m.requires[p.Name] = append(m.requires[p.Name], requires...)
 	return m
 }
 
-func (m mockProsumer) Provides(p pkg.Package) []string {
-	return m.provides[p.Name]
-}
-
-func (m mockProsumer) Requires(p pkg.Package) []string {
-	return m.requires[p.Name]
-
+func (m specifierBuilder) Specifier() Specifier {
+	return func(p pkg.Package) Specification {
+		return Specification{
+			Provides: m.provides[p.Name],
+			Requires: m.requires[p.Name],
+		}
+	}
 }
 
 func abstractRelationships(t testing.TB, relationships []artifact.Relationship) map[string][]string {
@@ -133,24 +135,21 @@ func Test_Processor(t *testing.T) {
 	a := pkg.Package{
 		Name: "a",
 	}
+	a.SetID()
 
 	b := pkg.Package{
 		Name: "b",
 	}
+	b.SetID()
 
 	c := pkg.Package{
 		Name: "c",
 	}
-
-	subjects := []pkg.Package{a, b, c}
-
-	for _, p := range subjects {
-		p.SetID()
-	}
+	c.SetID()
 
 	tests := []struct {
 		name         string
-		prosumer     Prosumer
+		sp           Specifier
 		pkgs         []pkg.Package
 		rels         []artifact.Relationship
 		err          error
@@ -159,9 +158,12 @@ func Test_Processor(t *testing.T) {
 		wantErr      assert.ErrorAssertionFunc
 	}{
 		{
-			name:     "happy path preserves decorated values",
-			prosumer: newMockProsumer().WithProvides(b, "b-resource").WithRequires(c, "b-resource"),
-			pkgs:     []pkg.Package{a, b, c},
+			name: "happy path preserves decorated values",
+			sp: newSpecifierBuilder().
+				WithProvides(b, "b-resource").
+				WithRequires(c, "b-resource").
+				Specifier(),
+			pkgs: []pkg.Package{a, b, c},
 			rels: []artifact.Relationship{
 				{
 					From: a,
@@ -174,10 +176,13 @@ func Test_Processor(t *testing.T) {
 			wantRelCount: 2, // original + new
 		},
 		{
-			name:     "error from cataloger is propagated",
-			prosumer: newMockProsumer().WithProvides(b, "b-resource").WithRequires(c, "b-resource"),
-			err:      errors.New("surprise!"),
-			pkgs:     []pkg.Package{a, b, c},
+			name: "error from cataloger is propagated",
+			sp: newSpecifierBuilder().
+				WithProvides(b, "b-resource").
+				WithRequires(c, "b-resource").
+				Specifier(),
+			err:  errors.New("surprise!"),
+			pkgs: []pkg.Package{a, b, c},
 			rels: []artifact.Relationship{
 				{
 					From: a,
@@ -196,7 +201,7 @@ func Test_Processor(t *testing.T) {
 				tt.wantErr = assert.NoError
 			}
 
-			gotPkgs, gotRels, err := Processor(tt.prosumer)(tt.pkgs, tt.rels, tt.err)
+			gotPkgs, gotRels, err := Processor(tt.sp)(tt.pkgs, tt.rels, tt.err)
 
 			tt.wantErr(t, err)
 			assert.Len(t, gotPkgs, tt.wantPkgCount)
