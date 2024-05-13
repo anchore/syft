@@ -9,43 +9,38 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
-var _ dependency.Prosumer = (*dpkgDBEntryProsumer)(nil)
+var _ dependency.Specifier = dbEntryDependencySpecifier
 
-type dpkgDBEntryProsumer struct{}
-
-func newDBProsumer() dpkgDBEntryProsumer {
-	return dpkgDBEntryProsumer{}
-}
-
-func (ps dpkgDBEntryProsumer) Provides(p pkg.Package) []string {
+func dbEntryDependencySpecifier(p pkg.Package) dependency.Specification {
 	meta, ok := p.Metadata.(pkg.DpkgDBEntry)
 	if !ok {
-		log.Warnf("cataloger failed to extract dpkg 'provides' metadata for package %+v", p.Name)
-		return nil
+		log.Tracef("cataloger failed to extract dpkg metadata for package %+v", p.Name)
+		return dependency.Specification{}
 	}
-	keys := []string{p.Name}
-	for _, provides := range meta.Provides {
-		keys = append(keys, stripVersionSpecifier(provides))
-	}
-	return keys
-}
-
-func (ps dpkgDBEntryProsumer) Requires(p pkg.Package) []string {
-	meta, ok := p.Metadata.(pkg.DpkgDBEntry)
-	if !ok {
-		log.Warnf("cataloger failed to extract dpkg 'requires' metadata for package %+v", p.Name)
-		return nil
+	provides := []string{p.Name}
+	for _, key := range meta.Provides {
+		if key == "" {
+			continue
+		}
+		provides = append(provides, stripVersionSpecifier(key))
 	}
 
 	var allDeps []string
 	allDeps = append(allDeps, meta.Depends...)
 	allDeps = append(allDeps, meta.PreDepends...)
 
-	var keys []string
+	var requires []string
 	for _, depSpecifier := range allDeps {
-		keys = append(keys, splitPackageChoice(depSpecifier)...)
+		if depSpecifier == "" {
+			continue
+		}
+		requires = append(requires, splitPackageChoice(depSpecifier)...)
 	}
-	return keys
+
+	return dependency.Specification{
+		Provides: provides,
+		Requires: requires,
+	}
 }
 
 func stripVersionSpecifier(s string) string {
@@ -56,12 +51,7 @@ func stripVersionSpecifier(s string) string {
 	// default-mta | mail-transport-agent  -->  default-mta | mail-transport-agent
 	// kernel-headers-2.2.10 [!hurd-i386]  -->  kernel-headers-2.2.10
 
-	items := internal.SplitAny(s, "[(<>=")
-	if len(items) == 0 {
-		return s
-	}
-
-	return strings.TrimSpace(items[0])
+	return strings.TrimSpace(internal.SplitAny(s, "[(<>=")[0])
 }
 
 func splitPackageChoice(s string) (ret []string) {
