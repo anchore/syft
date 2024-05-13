@@ -381,6 +381,13 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 			}
 		} else {
 			switch helpers.RelationshipType(r.Relationship) {
+			case helpers.DependencyOfRelationship:
+				typ = artifact.DependencyOfRelationship
+				to = toPackage
+			case helpers.DependsOnRelationship:
+				typ = artifact.DependencyOfRelationship
+				to = from
+				from = toPackage
 			case helpers.ContainsRelationship:
 				typ = artifact.ContainsRelationship
 				to = toPackage
