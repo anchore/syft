@@ -59,8 +59,8 @@ func byFileOwnershipOverlap(catalog *pkg.Collection) []artifact.Relationship {
 			child := catalog.Package(childID)   // TODO: this is potentially expensive
 
 			edges = append(edges, artifact.Relationship{
-				From: parent,
-				To:   child,
+				From: *parent,
+				To:   *child,
 				Type: artifact.OwnershipByFileOverlapRelationship,
 				Data: ownershipByFilesMetadata{
 					Files: fs,
