@@ -44,6 +44,7 @@ type CatalogTester struct {
 	compareOptions                 []cmp.Option
 	locationComparer               locationComparer
 	licenseComparer                licenseComparer
+	customAssertions               []func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship)
 }
 
 func NewCatalogTester() *CatalogTester {
@@ -164,6 +165,11 @@ func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *Cat
 	return p
 }
 
+func (p *CatalogTester) ExpectsAssertion(a func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship)) *CatalogTester {
+	p.customAssertions = append(p.customAssertions, a)
+	return p
+}
+
 func (p *CatalogTester) IgnoreLocationLayer() *CatalogTester {
 	p.locationComparer = func(x, y file.Location) bool {
 		return cmp.Equal(x.Coordinates.RealPath, y.Coordinates.RealPath) && cmp.Equal(x.AccessPath, y.AccessPath)
@@ -250,7 +256,13 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	if p.assertResultExpectations {
 		p.wantErr(t, err)
 		p.assertPkgs(t, pkgs, relationships)
-	} else {
+	}
+
+	for _, a := range p.customAssertions {
+		a(t, pkgs, relationships)
+	}
+
+	if !p.assertResultExpectations && len(p.customAssertions) == 0 {
 		resolver.PruneUnfulfilledPathResponses(p.ignoreUnfulfilledPathResponses, p.ignoreAnyUnfulfilledPaths...)
 
 		// if we aren't testing the results, we should focus on what was searched for (for glob-centric tests)
