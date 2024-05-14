@@ -2,7 +2,6 @@ package pkgtest
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -10,11 +9,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/sanity-io/litter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/cmptest"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -25,9 +24,6 @@ import (
 	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
-
-type locationComparer func(x, y file.Location) bool
-type licenseComparer func(x, y pkg.License) bool
 
 type CatalogTester struct {
 	expectedPkgs                   []pkg.Package
@@ -42,16 +38,16 @@ type CatalogTester struct {
 	resolver                       file.Resolver
 	wantErr                        require.ErrorAssertionFunc
 	compareOptions                 []cmp.Option
-	locationComparer               locationComparer
-	licenseComparer                licenseComparer
+	locationComparer               cmptest.LocationComparer
+	licenseComparer                cmptest.LicenseComparer
 	customAssertions               []func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship)
 }
 
 func NewCatalogTester() *CatalogTester {
 	return &CatalogTester{
 		wantErr:          require.NoError,
-		locationComparer: DefaultLocationComparer,
-		licenseComparer:  DefaultLicenseComparer,
+		locationComparer: cmptest.DefaultLocationComparer,
+		licenseComparer:  cmptest.DefaultLicenseComparer,
 		ignoreUnfulfilledPathResponses: map[string][]string{
 			"FilesByPath": {
 				// most catalogers search for a linux release, which will not be fulfilled in testing
@@ -63,29 +59,6 @@ func NewCatalogTester() *CatalogTester {
 			},
 		},
 	}
-}
-
-func DefaultLocationComparer(x, y file.Location) bool {
-	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.AccessPath, y.AccessPath)
-}
-
-func DefaultLicenseComparer(x, y pkg.License) bool {
-	return cmp.Equal(x, y, cmp.Comparer(DefaultLocationComparer), cmp.Comparer(
-		func(x, y file.LocationSet) bool {
-			xs := x.ToSlice()
-			ys := y.ToSlice()
-			if len(xs) != len(ys) {
-				return false
-			}
-			for i, xe := range xs {
-				ye := ys[i]
-				if !DefaultLocationComparer(xe, ye) {
-					return false
-				}
-			}
-			return true
-		},
-	))
 }
 
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
@@ -270,77 +243,14 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	}
 }
 
-var relationshipStringer = litter.Options{
-	Compact:           true,
-	StripPackageNames: false,
-	HidePrivateFields: true, // we want to ignore package IDs
-	HideZeroValues:    true,
-	StrictGo:          true,
-	//FieldExclusions: ...  // these can be added for future values that need to be ignored
-	//FieldFilter: ...
-}
-
-func relationshipLess(x, y artifact.Relationship) bool {
-	// we just need a stable sort, the ordering does not need to be sensible
-	xStr := relationshipStringer.Sdump(x)
-	yStr := relationshipStringer.Sdump(y)
-	return xStr < yStr
-}
-
 // nolint:funlen
 func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 	t.Helper()
 
-	p.compareOptions = append(p.compareOptions,
-		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
-		cmpopts.SortSlices(pkg.Less),
-		cmpopts.SortSlices(relationshipLess),
-		cmp.Comparer(
-			func(x, y file.LocationSet) bool {
-				xs := x.ToSlice()
-				ys := y.ToSlice()
-
-				if len(xs) != len(ys) {
-					return false
-				}
-				for i, xe := range xs {
-					ye := ys[i]
-					if !p.locationComparer(xe, ye) {
-						return false
-					}
-				}
-
-				return true
-			},
-		),
-		cmp.Comparer(
-			func(x, y pkg.LicenseSet) bool {
-				xs := x.ToSlice()
-				ys := y.ToSlice()
-
-				if len(xs) != len(ys) {
-					return false
-				}
-				for i, xe := range xs {
-					ye := ys[i]
-					if !p.licenseComparer(xe, ye) {
-						return false
-					}
-				}
-
-				return true
-			},
-		),
-		cmp.Comparer(
-			p.locationComparer,
-		),
-		cmp.Comparer(
-			p.licenseComparer,
-		),
-	)
+	p.compareOptions = append(p.compareOptions, cmptest.CommonOptions(p.licenseComparer, p.locationComparer)...)
 
 	{
-		var r diffReporter
+		r := cmptest.NewDiffReporter()
 		var opts []cmp.Option
 
 		opts = append(opts, p.compareOptions...)
@@ -356,7 +266,7 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 		}
 	}
 	{
-		var r diffReporter
+		r := cmptest.NewDiffReporter()
 		var opts []cmp.Option
 
 		opts = append(opts, p.compareOptions...)
@@ -399,7 +309,7 @@ func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
 				}
 				for i, xe := range xs {
 					ye := ys[i]
-					if !DefaultLocationComparer(xe, ye) {
+					if !cmptest.DefaultLocationComparer(xe, ye) {
 						return false
 					}
 				}
@@ -417,7 +327,7 @@ func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
 				}
 				for i, xe := range xs {
 					ye := ys[i]
-					if !DefaultLicenseComparer(xe, ye) {
+					if !cmptest.DefaultLicenseComparer(xe, ye) {
 						return false
 					}
 				}
@@ -426,39 +336,14 @@ func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
 			},
 		),
 		cmp.Comparer(
-			DefaultLocationComparer,
+			cmptest.DefaultLocationComparer,
 		),
 		cmp.Comparer(
-			DefaultLicenseComparer,
+			cmptest.DefaultLicenseComparer,
 		),
 	}
 
 	if diff := cmp.Diff(a, b, opts...); diff != "" {
 		t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
 	}
-}
-
-// diffReporter is a simple custom reporter that only records differences detected during comparison.
-type diffReporter struct {
-	path  cmp.Path
-	diffs []string
-}
-
-func (r *diffReporter) PushStep(ps cmp.PathStep) {
-	r.path = append(r.path, ps)
-}
-
-func (r *diffReporter) Report(rs cmp.Result) {
-	if !rs.Equal() {
-		vx, vy := r.path.Last().Values()
-		r.diffs = append(r.diffs, fmt.Sprintf("%#v:\n\t-: %+v\n\t+: %+v\n", r.path, vx, vy))
-	}
-}
-
-func (r *diffReporter) PopStep() {
-	r.path = r.path[:len(r.path)-1]
-}
-
-func (r *diffReporter) String() string {
-	return strings.Join(r.diffs, "\n")
 }
