@@ -189,19 +189,12 @@ jobs:
     steps:
       - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b #v4.1.5
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 30
-        with:
-          limit-access-to-actor: true
-
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
         with:
           bootstrap-apt-packages: ""
           compute-fingerprints: "false"
           go-dependencies: false
-          go-version: ""
 
       - name: Download snapshot build
         id: snapshot-cache
