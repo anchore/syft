@@ -25,18 +25,6 @@ type Specification struct {
 // the package provides and needs.
 type Specifier func(pkg.Package) Specification
 
-// RelationshipResolver uses a Specifier to resolve relationships between packages based on generic dependency claims
-// and provider claims from any given package.
-type RelationshipResolver struct {
-	specifier Specifier
-}
-
-func NewRelationshipResolver(s Specifier) RelationshipResolver {
-	return RelationshipResolver{
-		specifier: s,
-	}
-}
-
 // Processor returns a generic processor that will resolve relationships between packages based on the dependency claims.
 func Processor(s Specifier) generic.Processor {
 	return func(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
@@ -49,13 +37,13 @@ func Processor(s Specifier) generic.Processor {
 			}
 		}
 
-		rels = append(rels, NewRelationshipResolver(s).Resolve(pkgs)...)
+		rels = append(rels, resolve(s, pkgs)...)
 		return pkgs, rels, err
 	}
 }
 
-// Resolve will create relationships between packages based on the dependency claims of each package.
-func (r RelationshipResolver) Resolve(pkgs []pkg.Package) (relationships []artifact.Relationship) {
+// resolve will create relationships between packages based on the dependency claims of each package.
+func resolve(specifier Specifier, pkgs []pkg.Package) (relationships []artifact.Relationship) {
 	pkgsProvidingResource := make(map[string][]artifact.ID)
 
 	pkgsByID := make(map[artifact.ID]pkg.Package)
@@ -64,8 +52,8 @@ func (r RelationshipResolver) Resolve(pkgs []pkg.Package) (relationships []artif
 	for _, p := range pkgs {
 		id := p.ID()
 		pkgsByID[id] = p
-		specsByPkg[id] = r.specifier(p)
-		for _, resource := range deduplicate(r.specifier(p).Provides) {
+		specsByPkg[id] = specifier(p)
+		for _, resource := range deduplicate(specifier(p).Provides) {
 			pkgsProvidingResource[resource] = append(pkgsProvidingResource[resource], id)
 		}
 	}

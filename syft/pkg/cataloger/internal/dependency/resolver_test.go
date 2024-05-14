@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func TestRelationshipResolver_Resolve(t *testing.T) {
+func Test_resolve(t *testing.T) {
 	a := pkg.Package{
 		Name: "a",
 	}
@@ -71,7 +71,7 @@ func TestRelationshipResolver_Resolve(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			relationships := NewRelationshipResolver(tt.s).Resolve(subjects)
+			relationships := resolve(tt.s, subjects)
 			if d := cmp.Diff(tt.want, abstractRelationships(t, relationships)); d != "" {
 				t.Errorf("unexpected relationships (-want +got):\n%s", d)
 			}
