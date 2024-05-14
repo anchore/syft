@@ -8,7 +8,7 @@ const (
 	OtherReferenceCategory          ReferenceCategory = "OTHER"
 )
 
-// source: https://spdx.github.io/spdx-spec/appendix-VI-external-repository-identifiers/
+// source: https://spdx.github.io/spdx-spec/v2.2.2/external-repository-identifiers/
 
 type ExternalRefType string
 

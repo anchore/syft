@@ -1,6 +1,6 @@
 package helpers
 
-// source: https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/
+// source: https://spdx.github.io/spdx-spec/v2.2.2/relationships-between-SPDX-elements/
 type RelationshipType string
 
 const (
