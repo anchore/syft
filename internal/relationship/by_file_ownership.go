@@ -58,6 +58,16 @@ func byFileOwnershipOverlap(catalog *pkg.Collection) []artifact.Relationship {
 			parent := catalog.Package(parentID) // TODO: this is potentially expensive
 			child := catalog.Package(childID)   // TODO: this is potentially expensive
 
+			if parent == nil {
+				log.Tracef("parent package not found: %v", parentID)
+				continue
+			}
+
+			if child == nil {
+				log.Tracef("child package not found: %v", childID)
+				continue
+			}
+
 			edges = append(edges, artifact.Relationship{
 				From: *parent,
 				To:   *child,
