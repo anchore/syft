@@ -2,6 +2,7 @@ package python
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,7 +18,7 @@ import (
 
 // parseWheelOrEgg takes the primary metadata file reference and returns the python package it represents. Contained
 // fields are governed by the PyPA core metadata specification (https://packaging.python.org/en/latest/specifications/core-metadata/).
-func parseWheelOrEgg(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseWheelOrEgg(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pd, sources, err := assembleEggOrWheelMetadata(resolver, reader.Location)
 	if err != nil {
 		return nil, nil, err
@@ -37,7 +38,7 @@ func parseWheelOrEgg(resolver file.Resolver, _ *generic.Environment, reader file
 	return pkgs, nil, nil
 }
 
-// fetchRecordFiles finds a corresponding installed-files.txt file for the given python package metadata file and returns the set of file records contained.
+// fetchInstalledFiles finds a corresponding installed-files.txt file for the given python package metadata file and returns the set of file records contained.
 func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location, sitePackagesRootPath string) (files []pkg.PythonFileRecord, sources []file.Location, err error) {
 	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important

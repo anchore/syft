@@ -1,8 +1,10 @@
 package generic
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +17,7 @@ import (
 
 func Test_Cataloger(t *testing.T) {
 	allParsedPaths := make(map[string]bool)
-	parser := func(resolver file.Resolver, env *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	parser := func(_ context.Context, resolver file.Resolver, env *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 		allParsedPaths[reader.Path()] = true
 		contents, err := io.ReadAll(reader)
 		require.NoError(t, err)
@@ -45,7 +47,7 @@ func Test_Cataloger(t *testing.T) {
 		WithParserByPath(parser, "test-fixtures/another-path.txt", "test-fixtures/last/path.txt").
 		WithParserByGlobs(parser, "**/a-path.txt", "**/empty.txt")
 
-	actualPkgs, relationships, err := cataloger.Catalog(resolver)
+	actualPkgs, relationships, err := cataloger.Catalog(context.Background(), resolver)
 	assert.NoError(t, err)
 
 	expectedPkgs := make(map[string]pkg.Package)
@@ -84,4 +86,104 @@ func Test_Cataloger(t *testing.T) {
 			t.Errorf("bad contents mapping: %+v", p.Locations)
 		}
 	}
+}
+
+type spyReturningFileResolver struct {
+	m *file.MockResolver
+	s *spyingIoReadCloser
+}
+
+type spyingIoReadCloser struct {
+	rc     io.ReadCloser
+	closed bool
+}
+
+func newSpyReturningFileResolver(s *spyingIoReadCloser, paths ...string) file.Resolver {
+	m := file.NewMockResolverForPaths(paths...)
+	return spyReturningFileResolver{
+		m: m,
+		s: s,
+	}
+}
+
+func (s *spyingIoReadCloser) Read(p []byte) (n int, err error) {
+	return s.Read(p)
+}
+
+func (s *spyingIoReadCloser) Close() error {
+	s.closed = true
+	return s.rc.Close()
+}
+
+var _ io.ReadCloser = (*spyingIoReadCloser)(nil)
+
+func (m spyReturningFileResolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
+	return m.s, nil
+}
+
+func (m spyReturningFileResolver) HasPath(path string) bool {
+	return m.m.HasPath(path)
+}
+
+func (m spyReturningFileResolver) FilesByPath(paths ...string) ([]file.Location, error) {
+	return m.m.FilesByPath(paths...)
+}
+
+func (m spyReturningFileResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
+	return m.m.FilesByGlob(patterns...)
+}
+
+func (m spyReturningFileResolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
+	return m.m.FilesByMIMEType(types...)
+}
+
+func (m spyReturningFileResolver) RelativeFileByPath(f file.Location, path string) *file.Location {
+	return m.m.RelativeFileByPath(f, path)
+}
+
+func (m spyReturningFileResolver) AllLocations(ctx context.Context) <-chan file.Location {
+	return m.m.AllLocations(ctx)
+}
+
+func (m spyReturningFileResolver) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
+	return m.m.FileMetadataByLocation(location)
+}
+
+var _ file.Resolver = (*spyReturningFileResolver)(nil)
+
+func TestClosesFileOnParserPanic(t *testing.T) {
+	rc := io.NopCloser(strings.NewReader("some string"))
+	spy := spyingIoReadCloser{
+		rc: rc,
+	}
+	resolver := newSpyReturningFileResolver(&spy, "test-fixtures/another-path.txt")
+	ctx := context.TODO()
+
+	processors := []processor{
+		func(resolver file.Resolver, env Environment) []request {
+			return []request{
+				{
+					Location: file.Location{
+						LocationData: file.LocationData{
+							Coordinates: file.Coordinates{},
+							AccessPath:  "/some/access/path",
+						},
+					},
+					Parser: func(context.Context, file.Resolver, *Environment, file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+						panic("panic!")
+					},
+				},
+			}
+		},
+	}
+
+	c := Cataloger{
+		processor:         processors,
+		upstreamCataloger: "unit-test-cataloger",
+	}
+
+	assert.PanicsWithValue(t, "panic!", func() {
+		_, _, _ = c.Catalog(ctx, resolver)
+	})
+	require.True(t, spy.closed)
 }

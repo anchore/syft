@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"sort"
@@ -9,6 +10,7 @@ import (
 
 	"golang.org/x/mod/modfile"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -23,7 +25,7 @@ type goModCataloger struct {
 // parseGoModFile takes a go.mod and lists all packages discovered.
 //
 //nolint:funlen
-func (c *goModCataloger) parseGoModFile(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goModCataloger) parseGoModFile(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make(map[string]pkg.Package)
 
 	contents, err := io.ReadAll(reader)
@@ -118,6 +120,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 	if err != nil {
 		return nil, err
 	}
+	defer internal.CloseAndLogError(contents, goSumLocation.AccessPath)
 
 	// go.sum has the format like:
 	// github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=

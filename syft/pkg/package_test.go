@@ -34,7 +34,7 @@ func TestIDUniqueness(t *testing.T) {
 		Language: "math",
 		Type:     PythonPkg,
 		CPEs: []cpe.CPE{
-			cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
+			cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`, cpe.NVDDictionaryLookupSource),
 		},
 		PURL: "pkg:pypi/pi@3.14",
 		Metadata: PythonPackage{
@@ -256,7 +256,7 @@ func TestPackage_Merge(t *testing.T) {
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
-					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
+					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`, cpe.NVDDictionaryLookupSource),
 				},
 				PURL: "pkg:pypi/pi@3.14",
 				Metadata: PythonPackage{
@@ -278,7 +278,7 @@ func TestPackage_Merge(t *testing.T) {
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
-					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`), // NOTE: difference
+					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`, cpe.NVDDictionaryLookupSource), // NOTE: difference
 				},
 				PURL: "pkg:pypi/pi@3.14",
 				Metadata: PythonPackage{
@@ -301,8 +301,8 @@ func TestPackage_Merge(t *testing.T) {
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
-					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
-					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`), // NOTE: merge!
+					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`, cpe.NVDDictionaryLookupSource),
+					cpe.Must(`cpe:2.3:a:DIFFERENT:pi:3.14:*:*:*:*:math:*:*`, cpe.NVDDictionaryLookupSource), // NOTE: merge!
 				},
 				PURL: "pkg:pypi/pi@3.14",
 				Metadata: PythonPackage{
@@ -327,7 +327,7 @@ func TestPackage_Merge(t *testing.T) {
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
-					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
+					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`, cpe.NVDDictionaryLookupSource),
 				},
 				PURL: "pkg:pypi/pi@3.14",
 				Metadata: PythonPackage{
@@ -349,7 +349,7 @@ func TestPackage_Merge(t *testing.T) {
 				Language: "math",
 				Type:     PythonPkg,
 				CPEs: []cpe.CPE{
-					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`),
+					cpe.Must(`cpe:2.3:a:Archimedes:pi:3.14:*:*:*:*:math:*:*`, cpe.NVDDictionaryLookupSource),
 				},
 				PURL: "pkg:pypi/pi@3.14",
 				Metadata: PythonPackage{

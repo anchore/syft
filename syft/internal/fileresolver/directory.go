@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -12,12 +13,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/windows"
 )
-
-var unixSystemRuntimePrefixes = []string{
-	"/proc",
-	"/dev",
-	"/sys",
-}
 
 var ErrSkipPath = errors.New("skip path")
 
@@ -229,12 +224,17 @@ func (r Directory) FileContentsByLocation(location file.Location) (io.ReadCloser
 	return stereoscopeFile.NewLazyReadCloser(filePath), nil
 }
 
-func (r *Directory) AllLocations() <-chan file.Location {
+func (r *Directory) AllLocations(ctx context.Context) <-chan file.Location {
 	results := make(chan file.Location)
 	go func() {
 		defer close(results)
 		for _, ref := range r.tree.AllFiles(stereoscopeFile.AllTypes()...) {
-			results <- file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref)
+			select {
+			case <-ctx.Done():
+				return
+			case results <- file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref):
+				continue
+			}
 		}
 	}()
 	return results

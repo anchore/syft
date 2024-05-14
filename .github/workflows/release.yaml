@@ -15,7 +15,7 @@ jobs:
     environment: release
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b #v4.1.5
 
       - name: Check if tag already exists
         # note: this will fail if the tag already exists
@@ -24,7 +24,7 @@ jobs:
           git tag ${{ github.event.inputs.version }}
 
       - name: Check static analysis results
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: static-analysis
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -33,7 +33,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check unit test results
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: unit
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -42,7 +42,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check integration test results
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: integration
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -51,7 +51,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check acceptance test results (linux)
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: acceptance-linux
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -60,7 +60,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check acceptance test results (mac)
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: acceptance-mac
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -69,7 +69,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check cli test results (linux)
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: cli-linux
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -94,8 +94,10 @@ jobs:
     permissions:
       contents: write
       packages: write
+      # required for goreleaser signs section with cosign
+      id-token: write
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b #v4.1.5
         with:
           fetch-depth: 0
 
@@ -103,13 +105,13 @@ jobs:
         uses: ./.github/actions/bootstrap
 
       - name: Login to Docker Hub
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d  #v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20  #v3.1.0
         with:
-          username: ${{ secrets.TOOLBOX_DOCKER_USER }}
-          password: ${{ secrets.TOOLBOX_DOCKER_PASS }}
+          username: ${{ secrets.ANCHOREOSSWRITE_DH_USERNAME }}
+          password: ${{ secrets.ANCHOREOSSWRITE_DH_PAT }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d  #v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20  #v3.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -136,17 +138,14 @@ jobs:
           # for creating the release (requires write access to packages and content)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # for updating brew formula in anchore/homebrew-syft
-          GITHUB_BREW_TOKEN: ${{ secrets.ANCHORE_GIT_READ_TOKEN }}
-          # for updating the VERSION file in S3...
-          AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.TOOLBOX_AWS_SECRET_ACCESS_KEY }}
+          GITHUB_BREW_TOKEN: ${{ secrets.ANCHOREOPS_GITHUB_OSS_WRITE_TOKEN }}
 
-      - uses: anchore/sbom-action@5ecf649a417b8ae17dc8383dc32d46c03f2312df #v0.15.1
+      - uses: anchore/sbom-action@7ccf588e3cf3cc2611714c2eeae48550fbc17552 #v0.15.11
         continue-on-error: true
         with:
           artifact-name: sbom.spdx.json
 
-      - uses: 8398a7/action-slack@fbd6aa58ba854a740e11a35d0df80cb5d12101d8 #v3.15.1
+      - uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 #v3.16.2
         continue-on-error: true
         with:
           status: ${{ job.status }}
@@ -155,3 +154,10 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
         if: ${{ success() }}
+
+  release-version-file:
+    needs: [release]
+    uses: ./.github/workflows/release-version-file.yaml
+    with:
+      version: ${{ github.event.inputs.version }}
+    secrets: inherit

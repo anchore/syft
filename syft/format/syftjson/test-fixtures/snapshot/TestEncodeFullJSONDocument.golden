@@ -23,7 +23,10 @@
    ],
    "language": "python",
    "cpes": [
-    "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
+    {
+     "cpe": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
+     "source": "nvd-cpe-dictionary"
+    }
    ],
    "purl": "a-purl-1",
    "metadataType": "python-package",
@@ -51,7 +54,10 @@
    "licenses": [],
    "language": "",
    "cpes": [
-    "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
+    {
+     "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "source": "syft-generated"
+    }
    ],
    "purl": "a-purl-2",
    "metadataType": "dpkg-db-entry",

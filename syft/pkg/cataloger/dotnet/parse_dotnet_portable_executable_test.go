@@ -193,6 +193,78 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 				Version: "80.1.7.92",
 			},
 		},
+		{
+			name: "Higher semantic version Product Version",
+			versionResources: map[string]string{
+				"FileDescription": "Higher semantic version Product Version",
+				"FileVersion":     "3.0.0.0",
+				"ProductVersion":  "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+			},
+			expectedPackage: pkg.Package{
+				Name:    "Higher semantic version Product Version",
+				Version: "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+			},
+		},
+		{
+			name: "Higher semantic version File Version",
+			versionResources: map[string]string{
+				"FileDescription": "Higher semantic version File Version",
+				"FileVersion":     "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+				"ProductVersion":  "3.0.0",
+			},
+			expectedPackage: pkg.Package{
+				Name:    "Higher semantic version File Version",
+				Version: "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+			},
+		},
+		{
+			name: "Invalid semantic version File Version",
+			versionResources: map[string]string{
+				"FileDescription": "Invalid semantic version File Version",
+				"FileVersion":     "A",
+				"ProductVersion":  "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+			},
+			expectedPackage: pkg.Package{
+				Name:    "Invalid semantic version File Version",
+				Version: "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+			},
+		},
+		{
+			name: "Invalid semantic version File Version",
+			versionResources: map[string]string{
+				"FileDescription": "Invalid semantic version File Version",
+				"FileVersion":     "A",
+				"ProductVersion":  "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+			},
+			expectedPackage: pkg.Package{
+				Name:    "Invalid semantic version File Version",
+				Version: "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+			},
+		},
+		{
+			name: "Invalid semantic version Product Version",
+			versionResources: map[string]string{
+				"FileDescription": "Invalid semantic version Product Version",
+				"FileVersion":     "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+				"ProductVersion":  "A",
+			},
+			expectedPackage: pkg.Package{
+				Name:    "Invalid semantic version Product Version",
+				Version: "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+			},
+		},
+		{
+			name: "Semantically equal falls through, chooses File Version with more components",
+			versionResources: map[string]string{
+				"FileDescription": "Semantically equal falls through, chooses File Version with more components",
+				"FileVersion":     "3.0.0.0",
+				"ProductVersion":  "3.0.0",
+			},
+			expectedPackage: pkg.Package{
+				Name:    "Semantically equal falls through, chooses File Version with more components",
+				Version: "3.0.0.0",
+			},
+		},
 	}
 
 	for _, tc := range tests {

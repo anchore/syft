@@ -18,6 +18,7 @@ const (
 	DartPubPkg              Type = "dart-pub"
 	DebPkg                  Type = "deb"
 	DotnetPkg               Type = "dotnet"
+	ErlangOTPPkg            Type = "erlang-otp"
 	GemPkg                  Type = "gem"
 	GithubActionPkg         Type = "github-action"
 	GithubActionWorkflowPkg Type = "github-action-workflow"
@@ -33,12 +34,14 @@ const (
 	NixPkg                  Type = "nix"
 	NpmPkg                  Type = "npm"
 	PhpComposerPkg          Type = "php-composer"
+	PhpPeclPkg              Type = "php-pecl"
 	PortagePkg              Type = "portage"
 	PythonPkg               Type = "python"
 	Rpkg                    Type = "R-package"
 	RpmPkg                  Type = "rpm"
 	RustPkg                 Type = "rust-crate"
 	SwiftPkg                Type = "swift"
+	WordpressPluginPkg      Type = "wordpress-plugin"
 )
 
 // AllPkgs represents all supported package types
@@ -51,6 +54,7 @@ var AllPkgs = []Type{
 	DartPubPkg,
 	DebPkg,
 	DotnetPkg,
+	ErlangOTPPkg,
 	GemPkg,
 	GithubActionPkg,
 	GithubActionWorkflowPkg,
@@ -65,12 +69,14 @@ var AllPkgs = []Type{
 	NixPkg,
 	NpmPkg,
 	PhpComposerPkg,
+	PhpPeclPkg,
 	PortagePkg,
 	PythonPkg,
 	Rpkg,
 	RpmPkg,
 	RustPkg,
 	SwiftPkg,
+	WordpressPluginPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -91,7 +97,9 @@ func (t Type) PackageURLType() string {
 	case DebPkg:
 		return "deb"
 	case DotnetPkg:
-		return packageurl.TypeDotnet
+		return "dotnet"
+	case ErlangOTPPkg:
+		return packageurl.TypeOTP
 	case GemPkg:
 		return packageurl.TypeGem
 	case HexPkg:
@@ -111,6 +119,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeGeneric
 	case PhpComposerPkg:
 		return packageurl.TypeComposer
+	case PhpPeclPkg:
+		return "pecl"
 	case PythonPkg:
 		return packageurl.TypePyPi
 	case PortagePkg:
@@ -127,6 +137,8 @@ func (t Type) PackageURLType() string {
 		return "cargo"
 	case SwiftPkg:
 		return packageurl.TypeSwift
+	case WordpressPluginPkg:
+		return "wordpress-plugin"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -146,6 +158,7 @@ func TypeFromPURL(p string) Type {
 	return TypeByName(ptype)
 }
 
+//nolint:funlen
 func TypeByName(name string) Type {
 	switch name {
 	case packageurl.TypeDebian:
@@ -160,6 +173,8 @@ func TypeByName(name string) Type {
 		return JavaPkg
 	case packageurl.TypeComposer:
 		return PhpComposerPkg
+	case "pecl":
+		return PhpPeclPkg
 	case packageurl.TypeGolang:
 		return GoModulePkg
 	case packageurl.TypeNPM:
@@ -172,7 +187,7 @@ func TypeByName(name string) Type {
 		return RustPkg
 	case packageurl.TypePub:
 		return DartPubPkg
-	case packageurl.TypeDotnet:
+	case "dotnet": // here to support legacy use cases
 		return DotnetPkg
 	case packageurl.TypeCocoapods:
 		return CocoapodsPkg
@@ -184,6 +199,8 @@ func TypeByName(name string) Type {
 		return PortagePkg
 	case packageurl.TypeHex:
 		return HexPkg
+	case packageurl.TypeOTP:
+		return ErlangOTPPkg
 	case "linux-kernel":
 		return LinuxKernelPkg
 	case "linux-kernel-module":
@@ -194,6 +211,8 @@ func TypeByName(name string) Type {
 		return Rpkg
 	case packageurl.TypeSwift:
 		return SwiftPkg
+	case "wordpress-plugin":
+		return WordpressPluginPkg
 	default:
 		return UnknownPkg
 	}

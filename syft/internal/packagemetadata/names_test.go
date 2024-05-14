@@ -103,7 +103,7 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 		{
 			name:     "map pkg.ConanLockEntry struct type",
 			input:    "ConanLockMetadataType",
-			expected: reflect.TypeOf(pkg.ConanLockEntry{}),
+			expected: reflect.TypeOf(pkg.ConanV1LockEntry{}),
 		},
 		{
 			name:     "map pkg.ConanfileEntry struct type",
@@ -201,6 +201,11 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 			expected: reflect.TypeOf(pkg.PythonRequirementsEntry{}),
 		},
 		{
+			name:     "map pkg.PhpPeclEntry struct type",
+			input:    "PhpPeclMetadata",
+			expected: reflect.TypeOf(pkg.PhpPeclEntry{}),
+		},
+		{
 			name:     "map pkg.ErlangRebarLockEntry struct type",
 			input:    "RebarLockMetadataType",
 			expected: reflect.TypeOf(pkg.ErlangRebarLockEntry{}),
@@ -290,7 +295,7 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 		},
 		{
 			name:               "ConanLockMetadata",
-			metadata:           pkg.ConanLockEntry{},
+			metadata:           pkg.ConanV1LockEntry{},
 			expectedJSONName:   "c-conan-lock-entry",
 			expectedLegacyName: "ConanLockMetadataType",
 		},
@@ -413,6 +418,12 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 			metadata:           pkg.PhpComposerInstalledEntry{},
 			expectedJSONName:   "php-composer-installed-entry",
 			expectedLegacyName: "PhpComposerJsonMetadata", // note: maps to multiple entries (v11-12 breaking change)
+		},
+		{
+			name:               "PhpPeclMetadata",
+			metadata:           pkg.PhpPeclEntry{},
+			expectedJSONName:   "php-pecl-entry",
+			expectedLegacyName: "PhpPeclMetadata",
 		},
 		{
 			name:               "PortageMetadata",

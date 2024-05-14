@@ -168,7 +168,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 	f.TargetMachine = magic
 
 	// Read XCOFF file header
-	if _, err := sr.Seek(0, os.SEEK_SET); err != nil {
+	if _, err := sr.Seek(0, io.SeekStart); err != nil {
 		return nil, err
 	}
 	var nscns uint16
@@ -205,7 +205,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 
 	// Read string table (located right after symbol table).
 	offset := symptr + uint64(nsyms)*SYMESZ
-	if _, err := sr.Seek(int64(offset), os.SEEK_SET); err != nil {
+	if _, err := sr.Seek(int64(offset), io.SeekStart); err != nil {
 		return nil, err
 	}
 	// The first 4 bytes contain the length (in bytes).
@@ -214,7 +214,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 		return nil, err
 	}
 	if l > 4 {
-		if _, err := sr.Seek(int64(offset), os.SEEK_SET); err != nil {
+		if _, err := sr.Seek(int64(offset), io.SeekStart); err != nil {
 			return nil, err
 		}
 		f.StringTable = make([]byte, l)
@@ -224,7 +224,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 	}
 
 	// Read section headers
-	if _, err := sr.Seek(int64(hdrsz)+int64(opthdr), os.SEEK_SET); err != nil {
+	if _, err := sr.Seek(int64(hdrsz)+int64(opthdr), io.SeekStart); err != nil {
 		return nil, err
 	}
 	f.Sections = make([]*Section, nscns)
@@ -270,7 +270,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 	var idxToSym = make(map[int]*Symbol)
 
 	// Read symbol table
-	if _, err := sr.Seek(int64(symptr), os.SEEK_SET); err != nil {
+	if _, err := sr.Seek(int64(symptr), io.SeekStart); err != nil {
 		return nil, err
 	}
 	f.Symbols = make([]*Symbol, 0)
@@ -356,7 +356,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 
 		// Read csect auxiliary entry (by convention, it is the last).
 		if !needAuxFcn {
-			if _, err := sr.Seek(int64(numaux-1)*SYMESZ, os.SEEK_CUR); err != nil {
+			if _, err := sr.Seek(int64(numaux-1)*SYMESZ, io.SeekCurrent); err != nil {
 				return nil, err
 			}
 		}
@@ -383,7 +383,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 		f.Symbols = append(f.Symbols, sym)
 	skip:
 		i += numaux // Skip auxiliary entries
-		if _, err := sr.Seek(int64(numaux)*SYMESZ, os.SEEK_CUR); err != nil {
+		if _, err := sr.Seek(int64(numaux)*SYMESZ, io.SeekCurrent); err != nil {
 			return nil, err
 		}
 	}
@@ -398,7 +398,7 @@ func NewFile(r io.ReaderAt) (*File, error) {
 		if sect.Relptr == 0 {
 			continue
 		}
-		if _, err := sr.Seek(int64(sect.Relptr), os.SEEK_SET); err != nil {
+		if _, err := sr.Seek(int64(sect.Relptr), io.SeekStart); err != nil {
 			return nil, err
 		}
 		for i := uint32(0); i < sect.Nreloc; i++ {
@@ -509,7 +509,7 @@ func (s *Section) Data() ([]byte, error) {
 // Library name pattern is either path/base/member or base/member
 func (f *File) readImportIDs(s *Section) ([]string, error) {
 	// Read loader header
-	if _, err := s.sr.Seek(0, os.SEEK_SET); err != nil {
+	if _, err := s.sr.Seek(0, io.SeekStart); err != nil {
 		return nil, err
 	}
 	var istlen uint32
@@ -535,7 +535,7 @@ func (f *File) readImportIDs(s *Section) ([]string, error) {
 	}
 
 	// Read loader import file ID table
-	if _, err := s.sr.Seek(int64(impoff), os.SEEK_SET); err != nil {
+	if _, err := s.sr.Seek(int64(impoff), io.SeekStart); err != nil {
 		return nil, err
 	}
 	table := make([]byte, istlen)
@@ -578,7 +578,7 @@ func (f *File) ImportedSymbols() ([]ImportedSymbol, error) {
 		return nil, nil
 	}
 	// Read loader header
-	if _, err := s.sr.Seek(0, os.SEEK_SET); err != nil {
+	if _, err := s.sr.Seek(0, io.SeekStart); err != nil {
 		return nil, err
 	}
 	var stlen uint32
@@ -607,7 +607,7 @@ func (f *File) ImportedSymbols() ([]ImportedSymbol, error) {
 	}
 
 	// Read loader section string table
-	if _, err := s.sr.Seek(int64(stoff), os.SEEK_SET); err != nil {
+	if _, err := s.sr.Seek(int64(stoff), io.SeekStart); err != nil {
 		return nil, err
 	}
 	st := make([]byte, stlen)
@@ -622,7 +622,7 @@ func (f *File) ImportedSymbols() ([]ImportedSymbol, error) {
 	}
 
 	// Read loader symbol table
-	if _, err := s.sr.Seek(int64(symoff), os.SEEK_SET); err != nil {
+	if _, err := s.sr.Seek(int64(symoff), io.SeekStart); err != nil {
 		return nil, err
 	}
 	all := make([]ImportedSymbol, 0)

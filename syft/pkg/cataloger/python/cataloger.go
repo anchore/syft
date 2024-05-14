@@ -21,7 +21,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 }
 
 // NewPackageCataloger returns a new cataloger for python packages referenced from poetry lock files, requirements.txt files, and setup.py files.
-func NewPackageCataloger(cfg CatalogerConfig) *generic.Cataloger {
+func NewPackageCataloger(cfg CatalogerConfig) pkg.Cataloger {
 	rqp := newRequirementsParser(cfg)
 	return generic.NewCataloger("python-package-cataloger").
 		WithParserByGlobs(rqp.parseRequirementsTxt, "**/*requirements*.txt").

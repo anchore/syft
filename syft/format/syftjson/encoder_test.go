@@ -152,7 +152,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		},
 		PURL: "a-purl-1",
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:1:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 
@@ -173,7 +173,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		},
 		PURL: "a-purl-2",
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", cpe.GeneratedSource),
 		},
 	}
 
@@ -260,7 +260,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		},
 		Source: source.Description{
 			ID: "c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
-			Metadata: source.StereoscopeImageSourceMetadata{
+			Metadata: source.ImageMetadata{
 				UserInput:      "user-image-input",
 				ID:             "sha256:c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
 				ManifestDigest: "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
@@ -269,7 +269,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 					"stereoscope-fixture-image-simple:85066c51088bdd274f7a89e99e00490f666c49e72ffc955707cd6e18f0e22c5b",
 				},
 				Size: 38,
-				Layers: []source.StereoscopeLayerMetadata{
+				Layers: []source.LayerMetadata{
 					{
 						MediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
 						Digest:    "sha256:3de16c5b8659a2e8d888b8ded8427be7a5686a3c8c4e4dd30de20f362827285b",

@@ -10,6 +10,7 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/format/common/spdxhelpers"
+	"github.com/anchore/syft/syft/format/internal/stream"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -22,9 +23,10 @@ func NewFormatDecoder() sbom.FormatDecoder {
 	return decoder{}
 }
 
-func (d decoder) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string, error) {
-	if reader == nil {
-		return nil, "", "", fmt.Errorf("no SBOM bytes provided")
+func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) {
+	reader, err := stream.SeekableReader(r)
+	if err != nil {
+		return nil, "", "", err
 	}
 
 	// since spdx lib will always return the latest version of the document, we need to identify the version
@@ -54,8 +56,9 @@ func (d decoder) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string
 	return s, id, version, nil
 }
 
-func (d decoder) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
-	if reader == nil {
+func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
+	reader, err := stream.SeekableReader(r)
+	if err != nil {
 		return "", ""
 	}
 

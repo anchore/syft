@@ -1,6 +1,7 @@
 package filemetadata
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/dustin/go-humanize"
@@ -18,11 +19,13 @@ func NewCataloger() *Cataloger {
 	return &Cataloger{}
 }
 
-func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates]file.Metadata, error) {
+func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates]file.Metadata, error) {
 	results := make(map[file.Coordinates]file.Metadata)
 	var locations <-chan file.Location
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	if len(coordinates) == 0 {
-		locations = resolver.AllLocations()
+		locations = resolver.AllLocations(ctx)
 	} else {
 		locations = func() <-chan file.Location {
 			ch := make(chan file.Location)
@@ -35,7 +38,12 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 						continue
 					}
 					for _, loc := range locs {
-						ch <- loc
+						select {
+						case <-ctx.Done():
+							return
+						case ch <- loc:
+							continue
+						}
 					}
 				}
 			}()
@@ -43,15 +51,17 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 		}()
 	}
 
-	prog := metadataCatalogingProgress(int64(len(locations)))
+	prog := catalogingProgress(-1)
 	for location := range locations {
-		prog.Increment()
 		prog.AtomicStage.Set(location.Path())
 
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
+			prog.SetError(err)
 			return nil, err
 		}
+
+		prog.Increment()
 
 		results[location.Coordinates] = metadata
 	}
@@ -64,13 +74,12 @@ func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordina
 	return results, nil
 }
 
-func metadataCatalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
+func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
-			Default:      "Catalog file metadata",
-			WhileRunning: "Cataloging file metadata",
-			OnSuccess:    "Cataloged file metadata",
+			Default: "File metadata",
 		},
+		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
 	return bus.StartCatalogerTask(info, locations, "")

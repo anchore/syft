@@ -1,6 +1,7 @@
 package r
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -57,7 +58,7 @@ func Test_parseDescriptionFile(t *testing.T) {
 				Location:   file.NewLocation(tt.fixture),
 				ReadCloser: f,
 			}
-			got, _, err := parseDescriptionFile(nil, nil, input)
+			got, _, err := parseDescriptionFile(context.Background(), nil, nil, input)
 			assert.NoError(t, err)
 			for _, assertion := range tt.assertions {
 				assertion(t, got)

@@ -67,6 +67,8 @@
    "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
    "filesAnalyzed": false,
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
    "primaryPackagePurpose": "FILE"
   }
  ],

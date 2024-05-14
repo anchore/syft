@@ -9,8 +9,9 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/format/common/cyclonedxhelpers"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil"
+	"github.com/anchore/syft/syft/format/internal/cyclonedxutil/helpers"
+	"github.com/anchore/syft/syft/format/internal/stream"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -26,9 +27,10 @@ func NewFormatDecoder() sbom.FormatDecoder {
 	}
 }
 
-func (d decoder) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string, error) {
-	if reader == nil {
-		return nil, "", "", fmt.Errorf("no SBOM bytes provided")
+func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) {
+	reader, err := stream.SeekableReader(r)
+	if err != nil {
+		return nil, "", "", err
 	}
 
 	id, version := d.Identify(reader)
@@ -44,7 +46,7 @@ func (d decoder) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string
 		return nil, id, version, fmt.Errorf("unable to decode cyclonedx xml document: %w", err)
 	}
 
-	s, err := cyclonedxhelpers.ToSyftModel(doc)
+	s, err := helpers.ToSyftModel(doc)
 	if err != nil {
 		return nil, id, version, err
 	}
@@ -52,8 +54,9 @@ func (d decoder) Decode(reader io.ReadSeeker) (*sbom.SBOM, sbom.FormatID, string
 	return s, id, version, nil
 }
 
-func (d decoder) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
-	if reader == nil {
+func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
+	reader, err := stream.SeekableReader(r)
+	if err != nil {
 		return "", ""
 	}
 
@@ -69,8 +72,7 @@ func (d decoder) Identify(reader io.ReadSeeker) (sbom.FormatID, string) {
 	dec := xml.NewDecoder(reader)
 
 	var doc Document
-	err := dec.Decode(&doc)
-	if err != nil {
+	if err = dec.Decode(&doc); err != nil {
 		// maybe not xml? maybe not valid? doesn't matter, we won't process it.
 		return "", ""
 	}

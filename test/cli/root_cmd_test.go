@@ -69,8 +69,8 @@ func TestPersistentFlags(t *testing.T) {
 	}{
 		{
 			name: "quiet-flag",
-			// note: the root command will always show the deprecation warning, so the packages command is used instead
-			args: []string{"packages", "-q", request},
+			// note: the root command will always show the deprecation warning, so the scan command is used instead
+			args: []string{"scan", "-q", request},
 			assertions: []traitAssertion{
 				func(tb testing.TB, stdout, stderr string, rc int) {
 					// ensure there is no status

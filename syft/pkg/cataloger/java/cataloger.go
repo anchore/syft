@@ -9,7 +9,7 @@ import (
 )
 
 // NewArchiveCataloger returns a new Java archive cataloger object for detecting packages with archives (jar, war, ear, par, sar, jpi, hpi, and native-image formats)
-func NewArchiveCataloger(cfg ArchiveCatalogerConfig) *generic.Cataloger {
+func NewArchiveCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
 	gap := newGenericArchiveParserAdapter(cfg)
 
 	c := generic.NewCataloger("java-archive-cataloger").

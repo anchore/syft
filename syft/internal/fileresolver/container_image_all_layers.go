@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -234,14 +235,19 @@ func (r *ContainerImageAllLayers) FilesByMIMEType(types ...string) ([]file.Locat
 	return uniqueLocations, nil
 }
 
-func (r *ContainerImageAllLayers) AllLocations() <-chan file.Location {
+func (r *ContainerImageAllLayers) AllLocations(ctx context.Context) <-chan file.Location {
 	results := make(chan file.Location)
 	go func() {
 		defer close(results)
 		for _, layerIdx := range r.layers {
 			tree := r.img.Layers[layerIdx].Tree
 			for _, ref := range tree.AllFiles(stereoscopeFile.AllTypes()...) {
-				results <- file.NewLocationFromImage(string(ref.RealPath), ref, r.img)
+				select {
+				case <-ctx.Done():
+					return
+				case results <- file.NewLocationFromImage(string(ref.RealPath), ref, r.img):
+					continue
+				}
 			}
 		}
 	}()

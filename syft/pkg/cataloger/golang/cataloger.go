@@ -4,11 +4,13 @@ Package golang provides a concrete Cataloger implementation relating to packages
 package golang
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
@@ -18,25 +20,30 @@ import (
 
 var versionCandidateGroups = regexp.MustCompile(`(?P<version>\d+(\.\d+)?(\.\d+)?)(?P<candidate>\w*)`)
 
+const (
+	modFileCatalogerName = "go-module-file-cataloger"
+	binaryCatalogerName  = "go-module-binary-cataloger"
+)
+
 // NewGoModuleFileCataloger returns a new cataloger object that searches within go.mod files.
 func NewGoModuleFileCataloger(opts CatalogerConfig) pkg.Cataloger {
 	c := goModCataloger{
-		licenses: newGoLicenses(opts),
+		licenses: newGoLicenses(modFileCatalogerName, opts),
 	}
 	return &progressingCataloger{
-		cataloger: generic.NewCataloger("go-module-file-cataloger").
+		cataloger: generic.NewCataloger(modFileCatalogerName).
 			WithParserByGlobs(c.parseGoModFile, "**/go.mod"),
 	}
 }
 
 // NewGoModuleBinaryCataloger returns a new cataloger object that searches within binaries built by the go compiler.
 func NewGoModuleBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
-	c := goBinaryCataloger{
-		licenses: newGoLicenses(opts),
-	}
 	return &progressingCataloger{
-		cataloger: generic.NewCataloger("go-module-binary-cataloger").
-			WithParserByMimeTypes(c.parseGoBinary, internal.ExecutableMIMETypeSet.List()...),
+		cataloger: generic.NewCataloger(binaryCatalogerName).
+			WithParserByMimeTypes(
+				newGoBinaryCataloger(opts).parseGoBinary,
+				mimetype.ExecutableMIMETypeSet.List()...,
+			),
 	}
 }
 
@@ -48,8 +55,8 @@ func (p *progressingCataloger) Name() string {
 	return p.cataloger.Name()
 }
 
-func (p *progressingCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
-	pkgs, relationships, err := p.cataloger.Catalog(resolver)
+func (p *progressingCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+	pkgs, relationships, err := p.cataloger.Catalog(ctx, resolver)
 	goCompilerPkgs := []pkg.Package{}
 	totalLocations := file.NewLocationSet()
 	for _, goPkg := range pkgs {
@@ -120,5 +127,5 @@ func generateStdlibCpe(version string) (stdlibCpe cpe.CPE, err error) {
 		cpeString = fmt.Sprintf("cpe:2.3:a:golang:go:%s:%s:*:*:*:*:*:*", vr, candidate)
 	}
 
-	return cpe.New(cpeString)
+	return cpe.New(cpeString, cpe.GeneratedSource)
 }

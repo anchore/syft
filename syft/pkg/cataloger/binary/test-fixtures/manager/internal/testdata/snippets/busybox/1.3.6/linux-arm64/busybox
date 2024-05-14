@@ -1,0 +1,8 @@
+name: busybox
+offset: 890794
+length: 6
+snippetSha256: 784ed38fdb1ad0498a159b15b710563ee43d1d88e361171b764e4f191888cbc0
+fileSha256: eaf375f5db77595ae732fddfd45c44a88a39598715829fe187b6eaeb2efcd41b
+
+### byte snippet to follow ###
+fake 2

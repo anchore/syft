@@ -16,3 +16,9 @@ type NpmPackageLockEntry struct {
 	Resolved  string `mapstructure:"resolved" json:"resolved"`
 	Integrity string `mapstructure:"integrity" json:"integrity"`
 }
+
+// YarnLockEntry represents a single entry section of a yarn.lock file.
+type YarnLockEntry struct {
+	Resolved  string `mapstructure:"resolved" json:"resolved"`
+	Integrity string `mapstructure:"integrity" json:"integrity"`
+}

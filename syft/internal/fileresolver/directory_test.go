@@ -4,6 +4,7 @@
 package fileresolver
 
 import (
+	"context"
 	"io"
 	"io/fs"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
@@ -916,7 +918,7 @@ func Test_isUnallowableFileType(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, disallowByFileType("dont/care", test.info, nil))
+			assert.Equal(t, test.expected, disallowByFileType("", "dont/care", test.info, nil))
 		})
 	}
 }
@@ -997,7 +999,7 @@ func Test_IndexingNestedSymLinks(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
-	filterFn := func(path string, _ os.FileInfo, _ error) error {
+	filterFn := func(_, path string, _ os.FileInfo, _ error) error {
 		if strings.HasSuffix(path, string(filepath.Separator)+"readme") {
 			return ErrSkipPath
 		}
@@ -1102,47 +1104,6 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, test.expects, string(b))
 			}
-		})
-	}
-}
-
-func Test_isUnixSystemRuntimePath(t *testing.T) {
-	tests := []struct {
-		path     string
-		expected error
-	}{
-		{
-			path: "proc/place",
-		},
-		{
-			path:     "/proc/place",
-			expected: fs.SkipDir,
-		},
-		{
-			path:     "/proc",
-			expected: fs.SkipDir,
-		},
-		{
-			path: "/pro/c",
-		},
-		{
-			path: "/pro",
-		},
-		{
-			path:     "/dev",
-			expected: fs.SkipDir,
-		},
-		{
-			path:     "/sys",
-			expected: fs.SkipDir,
-		},
-		{
-			path: "/something/sys",
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.path, func(t *testing.T) {
-			assert.Equal(t, test.expected, disallowUnixSystemRuntimePath(test.path, nil, nil))
 		})
 	}
 }
@@ -1380,7 +1341,7 @@ func TestDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 	require.NoError(t, err)
 
 	var allRealPaths []stereoscopeFile.Path
-	for l := range resolver.AllLocations() {
+	for l := range resolver.AllLocations(context.Background()) {
 		allRealPaths = append(allRealPaths, stereoscopeFile.Path(l.RealPath))
 	}
 	pathSet := stereoscopeFile.NewPathSet(allRealPaths...)
@@ -1398,11 +1359,14 @@ func TestDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	resolver, err := NewFromDirectory("./test-fixtures/system_paths", "")
 	assert.NoError(t, err)
 
 	var dirLoc *file.Location
-	for loc := range resolver.AllLocations() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for loc := range resolver.AllLocations(ctx) {
 		entry, err := resolver.index.Get(loc.Reference())
 		require.NoError(t, err)
 		if entry.Metadata.IsDir() {
@@ -1423,7 +1387,7 @@ func TestDirectoryResolver_AllLocations(t *testing.T) {
 	assert.NoError(t, err)
 
 	paths := strset.New()
-	for loc := range resolver.AllLocations() {
+	for loc := range resolver.AllLocations(context.Background()) {
 		if strings.HasPrefix(loc.RealPath, "/") {
 			// ignore outside the fixture root for now
 			continue
@@ -1448,4 +1412,15 @@ func TestDirectoryResolver_AllLocations(t *testing.T) {
 	sort.Strings(pathsList)
 
 	assert.ElementsMatchf(t, expected, pathsList, "expected all paths to be indexed, but found different paths: \n%s", cmp.Diff(expected, paths.List()))
+}
+
+func TestAllLocationsDoesNotLeakGoRoutine(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	resolver, err := NewFromDirectory("./test-fixtures/symlinks-from-image-symlinks-fixture", "")
+	require.NoError(t, err)
+	ctx, cancel := context.WithCancel(context.Background())
+	for range resolver.AllLocations(ctx) {
+		break
+	}
+	cancel()
 }

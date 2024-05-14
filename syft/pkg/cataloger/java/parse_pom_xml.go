@@ -2,6 +2,7 @@ package java
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -24,7 +25,7 @@ const pomXMLGlob = "*pom.xml"
 
 var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
-func (gap genericArchiveParserAdapter) parserPomXML(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
 	if err != nil {
 		return nil, nil, err
@@ -34,6 +35,7 @@ func (gap genericArchiveParserAdapter) parserPomXML(_ file.Resolver, _ *generic.
 	if pom.Dependencies != nil {
 		for _, dep := range *pom.Dependencies {
 			p := newPackageFromPom(
+				ctx,
 				pom,
 				dep,
 				gap.cfg,
@@ -98,7 +100,7 @@ func newPomProject(path string, p gopom.Project, location file.Location) *parsed
 	}
 }
 
-func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, cfg ArchiveCatalogerConfig, locations ...file.Location) pkg.Package {
+func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Dependency, cfg ArchiveCatalogerConfig, locations ...file.Location) pkg.Package {
 	m := pkg.JavaArchive{
 		PomProperties: &pkg.JavaPomProperties{
 			GroupID:    resolveProperty(pom, dep.GroupID, "groupId"),
@@ -114,10 +116,11 @@ func newPackageFromPom(pom gopom.Project, dep gopom.Dependency, cfg ArchiveCatal
 	if cfg.UseNetwork {
 		if version == "" {
 			// If we have no version then let's try to get it from a parent pom DependencyManagement section
-			version = recursivelyFindVersionFromParentPom(*dep.GroupID, *dep.ArtifactID, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg)
+			version = recursivelyFindVersionFromParentPom(ctx, *dep.GroupID, *dep.ArtifactID, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg)
 		}
 		if version != "" {
 			parentLicenses := recursivelyFindLicensesFromParentPom(
+				ctx,
 				m.PomProperties.GroupID,
 				m.PomProperties.ArtifactID,
 				version,
@@ -227,16 +230,30 @@ func cleanDescription(original *string) (cleaned string) {
 // resolveProperty emulates some maven property resolution logic by looking in the project's variables
 // as well as supporting the project expressions like ${project.parent.groupId}.
 // If no match is found, the entire expression including ${} is returned
-//
-//nolint:gocognit
 func resolveProperty(pom gopom.Project, property *string, propertyName string) string {
 	propertyCase := safeString(property)
 	log.WithFields("existingPropertyValue", propertyCase, "propertyName", propertyName).Trace("resolving property")
+	seenBeforePropertyNames := map[string]struct{}{
+		propertyName: {},
+	}
+	result := recursiveResolveProperty(pom, propertyCase, seenBeforePropertyNames)
+	if propertyMatcher.MatchString(result) {
+		return "" // dereferencing variable failed; fall back to empty string
+	}
+	return result
+}
+
+//nolint:gocognit
+func recursiveResolveProperty(pom gopom.Project, propertyCase string, seenPropertyNames map[string]struct{}) string {
 	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
 		propertyName := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
+		if _, seen := seenPropertyNames[propertyName]; seen {
+			return propertyCase
+		}
 		entries := pomProperties(pom)
 		if value, ok := entries[propertyName]; ok {
-			return value
+			seenPropertyNames[propertyName] = struct{}{}
+			return recursiveResolveProperty(pom, value, seenPropertyNames) // recursively resolve in case a variable points to a variable.
 		}
 
 		// if we don't find anything directly in the pom properties,

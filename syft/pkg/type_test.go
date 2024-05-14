@@ -60,6 +60,10 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: PhpComposerPkg,
 		},
 		{
+			purl:     "pkg:pecl/memcached@3.2.0",
+			expected: PhpPeclPkg,
+		},
+		{
 			purl:     "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1?type=zip&classifier=dist",
 			expected: JavaPkg,
 		},
@@ -82,6 +86,10 @@ func TestTypeFromPURL(t *testing.T) {
 		{
 			purl:     "pkg:hex/hpax/hpax@0.1.1",
 			expected: HexPkg,
+		},
+		{
+			purl:     "pkg:otp/accept@0.3.5",
+			expected: ErlangOTPPkg,
 		},
 		{
 			purl:     "pkg:generic/linux-kernel@5.10.15",
@@ -115,6 +123,7 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(BinaryPkg))
 	expectedTypes.Remove(string(LinuxKernelModulePkg))
 	expectedTypes.Remove(string(GithubActionPkg), string(GithubActionWorkflowPkg))
+	expectedTypes.Remove(string(WordpressPluginPkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {

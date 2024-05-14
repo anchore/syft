@@ -1,0 +1,12 @@
+name: libphp.so
+offset: unknown
+length: unknown
+snippetSha256: d39ac8dadf5ba868455c487f1d0bb4c8bec64006fd7e5d76e3e27a26e47e637f
+fileSha256: unknown
+
+### byte snippet to follow ###
+%s'
+%s,%s
+X-Powered-By: PHP/8.2.1
+index pointer
+PHP_VERSION

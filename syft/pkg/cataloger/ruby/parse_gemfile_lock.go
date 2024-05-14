@@ -2,6 +2,7 @@ package ruby
 
 import (
 	"bufio"
+	"context"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
@@ -17,7 +18,7 @@ var _ generic.Parser = parseGemFileLockEntries
 var sectionsOfInterest = strset.New("GEM", "GIT", "PATH", "PLUGIN SOURCE")
 
 // parseGemFileLockEntries is a parser function for Gemfile.lock contents, returning all Gems discovered.
-func parseGemFileLockEntries(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGemFileLockEntries(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	scanner := bufio.NewScanner(reader)
 

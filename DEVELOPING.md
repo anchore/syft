@@ -234,7 +234,7 @@ rough outline how that works:
   the `/test` directory. These tests should focus on correctness of functionality in depth. % test coverage metrics 
   only considers unit tests and no other forms of testing.
 
-- `integration`: located within `test/integration`, these tests focus on the behavior surfaced by the common library 
+- `integration`: located within `cmd/syft/internal/test/integration`, these tests focus on the behavior surfaced by the common library 
   entrypoints from the `syft` package and make light assertions about the results surfaced. Additionally, these tests
   tend to make diversity assertions for enum-like objects, ensuring that as enum values are added to a definition
   that integration tests will automatically fail if no test attempts to use that enum value. For more details see 

@@ -9,13 +9,16 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackage(m *parsedData, release *linux.Release, dbLocation file.Location) pkg.Package {
+func newPackage(m *parsedData, release *linux.Release, dbLocation file.Location, otherLocations ...file.Location) pkg.Package {
 	licenseCandidates := strings.Split(m.Licenses, "\n")
+
+	locs := file.NewLocationSet(dbLocation)
+	locs.Add(otherLocations...)
 
 	p := pkg.Package{
 		Name:      m.Package,
 		Version:   m.Version,
-		Locations: file.NewLocationSet(dbLocation),
+		Locations: locs,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation.WithoutAnnotations(), licenseCandidates...)...),
 		Type:      pkg.AlpmPkg,
 		PURL:      packageURL(m, release),

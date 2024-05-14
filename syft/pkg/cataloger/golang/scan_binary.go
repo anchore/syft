@@ -9,7 +9,7 @@ import (
 	"github.com/kastenhq/goversion/version"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
+	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
 type extendedBuildInfo struct {

@@ -1,0 +1,100 @@
+{
+ "spdxVersion": "SPDX-2.2",
+ "dataLicense": "CC0-1.0",
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "unknown",
+ "documentNamespace":"redacted",
+ "creationInfo": {
+  "licenseListVersion":"redacted",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: -"
+  ],
+  "created":"redacted"
+ },
+ "packages": [
+  {
+   "SPDXID": "SPDXRef-Package-files-analyzed-false-7d37ba9d2f7c574b",
+   "copyrightText": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "name": "files-analyzed-false",
+   "sourceInfo": "acquired package info from the following paths: ",
+   "supplier": "NOASSERTION",
+   "versionInfo": "v2"
+  },
+  {
+   "name": "files-analyzed-true",
+   "SPDXID": "SPDXRef-Package-files-analyzed-true-035066c2086b8bb4",
+   "versionInfo": "v1",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": true,
+   "packageVerificationCode": {
+    "packageVerificationCodeValue": "6fe0c471faaaa544e33cae0918eabcdc1c798d18"
+   },
+   "checksums": [
+    {
+     "algorithm": "SHA256",
+     "checksumValue": "a9b87321a9879c79d87987987a97c97b9789ce978dffea987"
+    }
+   ],
+   "sourceInfo": "acquired package info from the following paths: /some/file",
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "copyrightText": "NOASSERTION"
+  },
+  {
+   "SPDXID": "SPDXRef-DocumentRoot-Unknown-",
+   "copyrightText": "",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "name": "",
+   "supplier": "NOASSERTION"
+  }
+ ],
+ "files": [
+  {
+   "fileName": "/some/file",
+   "SPDXID": "SPDXRef-File-some-file-2c5bc344430decac",
+   "checksums": [
+    {
+     "algorithm": "SHA1",
+     "checksumValue": "3b4ab96c371d913e2a88c269844b6c5fb5cbe761"
+    }
+   ],
+   "licenseConcluded": "NOASSERTION",
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
+   "copyrightText": "",
+   "comment": "layerID: ac897d978b6c38749a1"
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-Package-files-analyzed-true-035066c2086b8bb4",
+   "relatedSpdxElement": "SPDXRef-File-some-file-2c5bc344430decac",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DocumentRoot-Unknown-",
+   "relatedSpdxElement": "SPDXRef-Package-files-analyzed-false-7d37ba9d2f7c574b",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DocumentRoot-Unknown-",
+   "relatedSpdxElement": "SPDXRef-Package-files-analyzed-true-035066c2086b8bb4",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DOCUMENT",
+   "relatedSpdxElement": "SPDXRef-DocumentRoot-Unknown-",
+   "relationshipType": "DESCRIBES"
+  }
+ ]
+}

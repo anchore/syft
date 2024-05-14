@@ -1,6 +1,7 @@
 package python
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -114,7 +115,7 @@ func Test_PackageCataloger(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:     "Pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/Pygments@2.6.1?vcs_url=git+https://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				PURL:     "pkg:pypi/Pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
@@ -153,7 +154,7 @@ func Test_PackageCataloger(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:     "Pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/Pygments@2.6.1?vcs_url=git+https://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				PURL:     "pkg:pypi/Pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
@@ -296,7 +297,7 @@ func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 		t.Run(test.MetadataFixture, func(t *testing.T) {
 			resolver := file.NewMockResolverForPaths(test.MetadataFixture)
 
-			actual, _, err := NewInstalledPackageCataloger().Catalog(resolver)
+			actual, _, err := NewInstalledPackageCataloger().Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
 			if len(actual) != 0 {

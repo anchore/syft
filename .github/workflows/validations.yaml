@@ -17,7 +17,7 @@ jobs:
     name: "Static analysis"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b #v4.1.5
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -31,37 +31,49 @@ jobs:
     name: "Unit tests"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b #v4.1.5
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
 
+      - name: Restore file executable test-fixture cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
+        with:
+          path: syft/file/cataloger/executable/test-fixtures/elf/bin
+          key: ${{ runner.os }}-unit-file-executable-elf-cache-${{ hashFiles( 'syft/file/cataloger/executable/test-fixtures/elf/cache.fingerprint' ) }}
+
+      - name: Restore file executable shared-info test-fixture cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
+        with:
+          path: syft/file/cataloger/executable/test-fixtures/shared-info/bin
+          key: ${{ runner.os }}-unit-file-executable-shared-info-cache-${{ hashFiles( 'syft/file/cataloger/executable/test-fixtures/shared-info/cache.fingerprint' ) }}
+
       - name: Restore Java test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           path: syft/pkg/cataloger/java/test-fixtures/java-builds/packages
           key: ${{ runner.os }}-unit-java-cache-${{ hashFiles( 'syft/pkg/cataloger/java/test-fixtures/java-builds/cache.fingerprint' ) }}
 
       - name: Restore RPM test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           path: syft/pkg/cataloger/redhat/test-fixtures/rpms
           key: ${{ runner.os }}-unit-rpm-cache-${{ hashFiles( 'syft/pkg/cataloger/redhat/test-fixtures/rpms.fingerprint' ) }}
 
       - name: Restore go binary test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           path: syft/pkg/cataloger/golang/test-fixtures/archs/binaries
           key: ${{ runner.os }}-unit-go-binaries-cache-${{ hashFiles( 'syft/pkg/cataloger/golang/test-fixtures/archs/binaries.fingerprint' ) }}
 
       - name: Restore binary cataloger test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
-          path: syft/pkg/cataloger/binary/test-fixtures/classifiers/dynamic
+          path: syft/pkg/cataloger/binary/test-fixtures/classifiers/bin
           key: ${{ runner.os }}-unit-binary-cataloger-cache-${{ hashFiles( 'syft/pkg/cataloger/binary/test-fixtures/cache.fingerprint' ) }}
 
       - name: Restore Kernel test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           path: syft/pkg/cataloger/kernel/test-fixtures/cache
           key: ${{ runner.os }}-unit-kernel-cache-${{ hashFiles( 'syft/pkg/cataloger/kernel/test-fixtures/cache.fingerprint' ) }}
@@ -75,7 +87,7 @@ jobs:
     name: "Integration tests"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b #v4.1.5
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -84,10 +96,10 @@ jobs:
         run: make validate-cyclonedx-schema
 
       - name: Restore integration test cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
-          path: ${{ github.workspace }}/test/integration/test-fixtures/cache
-          key: ${{ runner.os }}-integration-test-cache-${{ hashFiles('test/integration/test-fixtures/cache.fingerprint') }}
+          path: ${{ github.workspace }}/cmd/syft/internal/test/integration/test-fixtures/cache
+          key: ${{ runner.os }}-integration-test-cache-${{ hashFiles('/cmd/syft/internal/test/integration/test-fixtures/cache.fingerprint') }}
 
       - name: Run integration tests
         run: make integration
@@ -97,7 +109,7 @@ jobs:
     name: "Build snapshot artifacts"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b #v4.1.5
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -110,7 +122,7 @@ jobs:
       # why not use actions/upload-artifact? It is very slow (3 minutes to upload ~600MB of data, vs 10 seconds with this approach).
       # see https://github.com/actions/upload-artifact/issues/199 for more info
       - name: Upload snapshot artifacts
-        uses: actions/cache/save@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           # we need to preserve the snapshot data itself as well as the task data that confirms if the
           # snapshot build is stale or not. Otherwise the downstream jobs will attempt to rebuild the snapshot
@@ -127,14 +139,14 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b #v4.1.5
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
 
       - name: Download snapshot build
         id: snapshot-cache
-        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           path: |
             snapshot
@@ -152,7 +164,7 @@ jobs:
 
       - name: Restore install.sh test image cache
         id: install-test-image-cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           path: ${{ github.workspace }}/test/install/cache
           key: ${{ runner.os }}-install-test-image-cache-${{ hashFiles('test/install/cache.fingerprint') }}
@@ -175,7 +187,7 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b #v4.1.5
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -187,7 +199,7 @@ jobs:
 
       - name: Download snapshot build
         id: snapshot-cache
-        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           path: |
             snapshot
@@ -202,7 +214,7 @@ jobs:
 
       - name: Restore docker image cache for compare testing
         id: mac-compare-testing-cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           path: image.tar
           key: ${{ runner.os }}-${{ hashFiles('test/compare/mac.sh') }}
@@ -220,20 +232,20 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b #v4.1.5
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
 
       - name: Restore CLI test-fixture cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           path: ${{ github.workspace }}/test/cli/test-fixtures/cache
           key: ${{ runner.os }}-cli-test-cache-${{ hashFiles('test/cli/test-fixtures/cache.fingerprint') }}
 
       - name: Download snapshot build
         id: snapshot-cache
-        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 #v3.3.2
+        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
           path: |
             snapshot

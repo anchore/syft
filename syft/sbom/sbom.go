@@ -25,6 +25,7 @@ type Artifacts struct {
 	FileDigests       map[file.Coordinates][]file.Digest
 	FileContents      map[file.Coordinates]string
 	FileLicenses      map[file.Coordinates][]file.License
+	Executables       map[file.Coordinates]file.Executable
 	LinuxDistribution *linux.Release
 }
 
@@ -74,15 +75,22 @@ func (s SBOM) RelationshipsForPackage(p pkg.Package, rt ...artifact.Relationship
 		rt = artifact.AllRelationshipTypes()
 	}
 
+	pID := p.ID()
+
 	var relationships []artifact.Relationship
 	for _, relationship := range s.Relationships {
 		if relationship.From == nil || relationship.To == nil {
 			log.Debugf("relationship has nil edge, skipping: %#v", relationship)
 			continue
 		}
-		if relationship.From.ID() != p.ID() {
+		fromID := relationship.From.ID()
+		toID := relationship.To.ID()
+		hasPkgID := fromID == pID || toID == pID
+
+		if !hasPkgID {
 			continue
 		}
+
 		// check if the relationship is one we're searching for; rt is inclusive
 		if !slices.ContainsFunc(rt, func(r artifact.RelationshipType) bool { return relationship.Type == r }) {
 			continue

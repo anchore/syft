@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
 )
 
 func DirectoryInput(t testing.TB, dir string) sbom.SBOM {
@@ -22,8 +22,8 @@ func DirectoryInput(t testing.TB, dir string) sbom.SBOM {
 
 	require.NoError(t, os.MkdirAll(path, 0755))
 
-	src, err := source.NewFromDirectory(
-		source.DirectoryConfig{
+	src, err := directorysource.New(
+		directorysource.Config{
 			Path: path,
 			Base: dir,
 		},
@@ -63,8 +63,8 @@ func DirectoryInputWithAuthorField(t testing.TB) sbom.SBOM {
 
 	require.NoError(t, os.MkdirAll(path, 0755))
 
-	src, err := source.NewFromDirectory(
-		source.DirectoryConfig{
+	src, err := directorysource.New(
+		directorysource.Config{
 			Path: path,
 			Base: dir,
 		},
@@ -123,7 +123,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		},
 		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", cpe.Source("")),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -140,7 +140,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		},
 		PURL: "pkg:deb/debian/package-2@2.0.1",
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", cpe.Source("")),
 		},
 	})
 
@@ -175,7 +175,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		},
 		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", cpe.GeneratedSource),
 		},
 	})
 	catalog.Add(pkg.Package{
@@ -192,7 +192,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		},
 		PURL: "pkg:deb/debian/package-2@2.0.1",
 		CPEs: []cpe.CPE{
-			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"),
+			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", "another-test-source"),
 		},
 	})
 

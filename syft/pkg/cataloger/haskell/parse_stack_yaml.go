@@ -1,6 +1,7 @@
 package haskell
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -20,7 +21,7 @@ type stackYaml struct {
 }
 
 // parseStackYaml is a parser function for stack.yaml contents, returning all packages discovered.
-func parseStackYaml(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseStackYaml(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load stack.yaml file: %w", err)

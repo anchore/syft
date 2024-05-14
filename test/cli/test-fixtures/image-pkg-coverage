@@ -1,1 +1,1 @@
-../../integration/test-fixtures/image-pkg-coverage
+../../../cmd/syft/internal/test/integration/test-fixtures/image-pkg-coverage

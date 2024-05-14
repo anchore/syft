@@ -89,7 +89,7 @@ func extractPreSchemaV9Metadata(t string, target []byte) (interface{}, error) {
 			cleanTarget = string(target)
 		}
 
-		return source.DirectorySourceMetadata{
+		return source.DirectoryMetadata{
 			Path: cleanTarget,
 		}, nil
 
@@ -99,12 +99,12 @@ func extractPreSchemaV9Metadata(t string, target []byte) (interface{}, error) {
 			cleanTarget = string(target)
 		}
 
-		return source.FileSourceMetadata{
+		return source.FileMetadata{
 			Path: cleanTarget,
 		}, nil
 
 	case "image":
-		var payload source.StereoscopeImageSourceMetadata
+		var payload source.ImageMetadata
 		if err := json.Unmarshal(target, &payload); err != nil {
 			return nil, err
 		}

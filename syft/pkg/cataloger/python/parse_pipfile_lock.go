@@ -1,6 +1,7 @@
 package python
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,11 +29,11 @@ type pipfileLock struct {
 			VerifySsl bool   `json:"verify_ssl"`
 		} `json:"sources"`
 	} `json:"_meta"`
-	Default map[string]Dependency `json:"default"`
-	Develop map[string]Dependency `json:"develop"`
+	Default map[string]pipfileLockDependency `json:"default"`
+	Develop map[string]pipfileLockDependency `json:"develop"`
 }
 
-type Dependency struct {
+type pipfileLockDependency struct {
 	Hashes  []string `json:"hashes"`
 	Version string   `json:"version"`
 	Index   string   `json:"index"`
@@ -41,7 +42,7 @@ type Dependency struct {
 var _ generic.Parser = parsePipfileLock
 
 // parsePipfileLock is a parser function for Pipfile.lock contents, returning "Default" python packages discovered.
-func parsePipfileLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePipfileLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pkgs := make([]pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 
@@ -61,7 +62,7 @@ func parsePipfileLock(_ file.Resolver, _ *generic.Environment, reader file.Locat
 			if pkgMeta.Index != "" {
 				index = sourcesMap[pkgMeta.Index]
 			} else {
-				// https://pipenv.pypa.io/en/latest/advanced/#specifying-package-indexes
+				// https://pipenv.pypa.io/en/latest/indexes.html
 				index = "https://pypi.org/simple"
 			}
 			version := strings.TrimPrefix(pkgMeta.Version, "==")

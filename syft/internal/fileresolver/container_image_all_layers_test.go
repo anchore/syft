@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"io"
 	"sort"
 	"testing"
@@ -358,7 +359,9 @@ func TestAllLayersImageResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	assert.NoError(t, err)
 
 	var dirLoc *file.Location
-	for loc := range resolver.AllLocations() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for loc := range resolver.AllLocations(ctx) {
 		entry, err := resolver.img.FileCatalog.Get(loc.Reference())
 		require.NoError(t, err)
 		if entry.Metadata.IsDir() {
@@ -517,7 +520,9 @@ func TestAllLayersResolver_AllLocations(t *testing.T) {
 	assert.NoError(t, err)
 
 	paths := strset.New()
-	for loc := range resolver.AllLocations() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for loc := range resolver.AllLocations(ctx) {
 		paths.Add(loc.RealPath)
 	}
 	expected := []string{

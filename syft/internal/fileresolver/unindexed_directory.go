@@ -1,11 +1,14 @@
 package fileresolver
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strings"
@@ -59,11 +62,11 @@ func NewFromUnindexedDirectoryFS(fs afero.Fs, dir string, base string) file.Writ
 	}
 	wd, err := os.Getwd()
 	if err == nil {
-		if !path.IsAbs(dir) {
-			dir = path.Clean(path.Join(wd, dir))
+		if !filepath.IsAbs(dir) {
+			dir = filepath.Clean(filepath.Join(wd, dir))
 		}
-		if base != "" && !path.IsAbs(base) {
-			base = path.Clean(path.Join(wd, base))
+		if base != "" && !filepath.IsAbs(base) {
+			base = filepath.Clean(filepath.Join(wd, base))
 		}
 	}
 	return UnindexedDirectory{
@@ -225,20 +228,25 @@ func (u UnindexedDirectory) RelativeFileByPath(l file.Location, p string) *file.
 
 // - NO symlink resolution should be performed on results
 // - returns locations for any file or directory
-func (u UnindexedDirectory) AllLocations() <-chan file.Location {
+func (u UnindexedDirectory) AllLocations(ctx context.Context) <-chan file.Location {
 	out := make(chan file.Location)
+	errWalkCanceled := fmt.Errorf("walk canceled")
 	go func() {
 		defer close(out)
-		err := afero.Walk(u.fs, u.absPath("."), func(p string, info fs.FileInfo, err error) error {
+		err := afero.Walk(u.fs, u.absPath("."), func(p string, _ fs.FileInfo, _ error) error {
 			p = strings.TrimPrefix(p, u.dir)
 			if p == "" {
 				return nil
 			}
 			p = strings.TrimPrefix(p, "/")
-			out <- file.NewLocation(p)
-			return nil
+			select {
+			case out <- file.NewLocation(p):
+				return nil
+			case <-ctx.Done():
+				return errWalkCanceled
+			}
 		})
-		if err != nil {
+		if err != nil && !errors.Is(err, errWalkCanceled) {
 			log.Debug(err)
 		}
 	}()
