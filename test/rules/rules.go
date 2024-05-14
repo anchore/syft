@@ -44,5 +44,5 @@ func packagesInRelationshipsAsValues(m dsl.Matcher) {
 		`$x.To = $y`,
 	).
 		Where(isRelationship(m) && hasPointerType(m)).
-		Report("pointer used as a value for From/To field in artifact.Relationship")
+		Report("pointer used as a value for From/To field in artifact.Relationship (use values instead)")
 }
