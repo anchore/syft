@@ -195,7 +195,6 @@ jobs:
           bootstrap-apt-packages: ""
           compute-fingerprints: "false"
           go-dependencies: false
-          go-version: ""
 
       - name: Download snapshot build
         id: snapshot-cache
