@@ -8,13 +8,6 @@ import (
 	"github.com/quasilyte/go-ruleguard/dsl"
 )
 
-type Relationship struct {
-	From any
-	To   any
-	Type string
-	Data any
-}
-
 // nolint:unused
 func resourceCleanup(m dsl.Matcher) {
 	// this rule defends against use of internal.CloseAndLogError() without a defer statement
