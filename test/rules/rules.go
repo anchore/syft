@@ -1,4 +1,4 @@
-////go:build gorules
+//go:build gorules
 
 package rules
 
