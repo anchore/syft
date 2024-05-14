@@ -1,4 +1,4 @@
-//go:build gorules
+////go:build gorules
 
 package rules
 
@@ -33,13 +33,23 @@ func isPtr(ctx *dsl.VarFilterContext) bool {
 
 // nolint:unused
 func packagesInRelationshipsAsValues(m dsl.Matcher) {
+	m.Import("github.com/anchore/syft/syft/artifact")
+
+	isRelationship := func(m dsl.Matcher) bool {
+		return m["x"].Type.Is("artifact.Relationship")
+	}
+
+	hasPointerType := func(m dsl.Matcher) bool {
+		return m["y"].Filter(isPtr)
+	}
+
 	// this rule defends against using pointers as values in artifact.Relationship
 	m.Match(
-		`$x.From = $y`, `$x.To = $y`,
-		`$x.From = &$y`, `$x.To = &$y`,
-		`artifact.Relationship{From: $y, $*_}`,
-		`artifact.Relationship{To: $y, $*_}`,
+		`$x{$*_, From: $y, $*_}`,
+		`$x{$*_, To: $y, $*_}`,
+		`$x.From = $y`,
+		`$x.To = $y`,
 	).
-		Where(m["y"].Filter(isPtr)).
+		Where(isRelationship(m) && hasPointerType(m)).
 		Report("pointer used as a value for From/To field in artifact.Relationship")
 }
