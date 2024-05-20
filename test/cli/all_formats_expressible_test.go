@@ -27,6 +27,7 @@ func TestAllFormatsExpressible(t *testing.T) {
 	for _, o := range formatIDs {
 		t.Run(fmt.Sprintf("format:%s", o), func(t *testing.T) {
 			args := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", string(o)}
+			args = append(args, "-c", "test-fixtures/.syft-no-maven.yaml")
 			if o == template.ID {
 				args = append(args, "-t", "test-fixtures/csv.template")
 			}

@@ -719,6 +719,14 @@ java:
    # this option is helpful for when the parent pom has more data,
    # that is not accessible from within the final built artifact
    use-network: false
+   # Enables use of Maven application to resolve found pom.xml files, ensures all properties are resolved
+   # and all configuration is inherited from parent poms. 
+   # When `use-network` is false, Maven will work in offline mode. If a Maven build has been run before 
+   # the scan, all required pom files will be available locally.
+   # If Maven is not available a warning will be logged and the unresolved pom.xml will be used.
+   use-maven: true
+   # Command used to run Maven. May include full path.
+   maven-command: "mvn"
 
 linux-kernel:
    # whether to catalog linux kernel modules found within lib/modules/** directories

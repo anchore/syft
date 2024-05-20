@@ -61,6 +61,13 @@ func newGenericArchiveParserAdapter(cfg ArchiveCatalogerConfig) genericArchivePa
 
 // parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
 func (gap genericArchiveParserAdapter) parseJavaArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	// Get full path
+	archiveFilename := string(reader.Reference().RealPath.Normalize())
+	// Get path to file within the archive
+	if archiveFilename == "/" {
+		archiveFilename = reader.AccessPath
+	}
+	log.Tracef("Processing Java archive: '%q'", archiveFilename)
 	parser, cleanupFn, err := newJavaArchiveParser(reader, true, gap.cfg)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
