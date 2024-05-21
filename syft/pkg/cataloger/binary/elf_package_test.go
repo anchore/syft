@@ -82,7 +82,7 @@ func Test_newELFPackage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := newELFPackage(test.metadata, file.NewLocationSet(), nil)
+			actual := newELFPackage(test.metadata, file.NewLocationSet())
 			if diff := cmp.Diff(test.expected, actual, cmpopts.IgnoreFields(pkg.Package{}, "id"), cmpopts.IgnoreUnexported(pkg.Package{}, file.LocationSet{}, pkg.LicenseSet{})); diff != "" {
 				t.Errorf("newELFPackage() mismatch (-want +got):\n%s", diff)
 			}
