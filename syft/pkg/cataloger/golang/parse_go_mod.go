@@ -70,6 +70,10 @@ func (c *goModCataloger) parseGoModFile(_ context.Context, resolver file.Resolve
 			log.Tracef("error getting licenses for package: %s %v", m.New.Path, err)
 		}
 
+		// the old path and new path may be the same, in which case this is a noop,
+		// but if they're different we need to remove the old package.
+		delete(packages, m.Old.Path)
+
 		packages[m.New.Path] = pkg.Package{
 			Name:      m.New.Path,
 			Version:   m.New.Version,
