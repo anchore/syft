@@ -17,6 +17,6 @@ func defaultRelationshipsConfig() relationshipsConfig {
 }
 
 func (r *relationshipsConfig) DescribeFields(descriptions fangs.FieldDescriptionSet) {
-	descriptions.Add(&r.PackageFileOwnership, "include package-to-file relationships that indicate which files are owned by which packages.")
-	descriptions.Add(&r.PackageFileOwnershipOverlap, "include package-to-package relationships that indicate one package is owned by another due to files claimed to be owned by one package are also evidence of another package's existence.")
+	descriptions.Add(&r.PackageFileOwnership, "include package-to-file relationships that indicate which files are owned by which packages")
+	descriptions.Add(&r.PackageFileOwnershipOverlap, "include package-to-package relationships that indicate one package is owned by another due to files claimed to be owned by one package are also evidence of another package's existence")
 }
