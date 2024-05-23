@@ -908,6 +908,44 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "parse a mod with go experiments",
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: "go1.22.2 X:nocoverageredesign,noallocheaders,noexectracer2",
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+				},
+				cryptoSettings: nil,
+				arch:           archDetails,
+			},
+			expected: []pkg.Package{{
+				Name:     "github.com/anchore/syft",
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
+				Version:  "(devel)",
+				PURL:     "pkg:golang/github.com/anchore/syft@(devel)",
+				Locations: file.NewLocationSet(
+					file.NewLocationFromCoordinates(
+						file.Coordinates{
+							RealPath:     "/a-path",
+							FileSystemID: "layer-id",
+						},
+					).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				),
+				Metadata: pkg.GolangBinaryBuildinfoEntry{
+					GoCompiledVersion: "go1.22.2",
+					Architecture:      archDetails,
+					BuildSettings:     defaultBuildSettings,
+					MainModule:        "github.com/anchore/syft",
+					GoExperiments:     []string{"nocoverageredesign", "noallocheaders", "noexectracer2"},
+				},
+			}},
+		},
 	}
 
 	for _, test := range tests {
