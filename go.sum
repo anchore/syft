@@ -497,8 +497,8 @@ github.com/klauspost/compress v1.17.8/go.mod h1:Di0epgTjJY877eYKx5yC51cX2A2Vl2ib
 github.com/klauspost/cpuid v1.2.0/go.mod h1:Pj4uuM528wm8OyEC2QMXAi2YiTZ96dNQPGgoMS4s3ek=
 github.com/klauspost/pgzip v1.2.5 h1:qnWYvvKqedOF2ulHpMG72XQol4ILEJ8k2wwRl/Km8oE=
 github.com/klauspost/pgzip v1.2.5/go.mod h1:Ch1tH69qFZu15pkjo5kYi6mth2Zzwzt50oCQKQE9RUs=
-github.com/knqyf263/go-rpmdb v0.1.0 h1:pOgjtOGtW0B+ibY905hP3ETrYFmLZsHiReKsplcs+to=
-github.com/knqyf263/go-rpmdb v0.1.0/go.mod h1:9LQcoMCMQ9vrF7HcDtXfvqGO4+ddxFQ8+YF/0CVGDww=
+github.com/knqyf263/go-rpmdb v0.1.1 h1:oh68mTCvp1XzxdU7EfafcWzzfstUZAEa3MW0IJye584=
+github.com/knqyf263/go-rpmdb v0.1.1/go.mod h1:9LQcoMCMQ9vrF7HcDtXfvqGO4+ddxFQ8+YF/0CVGDww=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kr/fs v0.1.0/go.mod h1:FFnZGqtBN9Gxj7eW1uZ42v5BccTP0vu6NEaFoC2HwRg=
 github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515/go.mod h1:+0opPa2QZZtGFBFZlji/RkVcI2GknAs/DXo4wKdlNEc=
