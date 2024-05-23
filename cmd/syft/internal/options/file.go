@@ -6,6 +6,7 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/clio"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/file"
 )
@@ -45,6 +46,11 @@ func defaultFileConfig() fileConfig {
 	}
 }
 
+var _ interface {
+	clio.PostLoader
+	clio.FieldDescriber
+} = (*fileConfig)(nil)
+
 func (c *fileConfig) PostLoad() error {
 	digests := strset.New(c.Metadata.Digests...).List()
 	sort.Strings(digests)
@@ -55,4 +61,18 @@ func (c *fileConfig) PostLoad() error {
 		return nil
 	}
 	return fmt.Errorf("invalid file metadata selection: %q", c.Metadata.Selection)
+}
+
+func (c *fileConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
+	descriptions.Add(&c.Metadata.Selection, `select which files should be captured by the file-metadata cataloger and included in the SBOM. 
+Options include:
+ - "all": capture all files from the search space
+ - "owned-by-package": capture only files owned by packages
+ - "none", "": do not capture any files`)
+	descriptions.Add(&c.Metadata.Digests, `the file digest algorithms to use when cataloging files (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")`)
+
+	descriptions.Add(&c.Content.SkipFilesAboveSize, `skip searching a file entirely if it is above the given size (default = 1MB; unit = bytes)`)
+	descriptions.Add(&c.Content.Globs, `file globs for the cataloger to match on`)
+
+	descriptions.Add(&c.Executable.Globs, `file globs for the cataloger to match on`)
 }

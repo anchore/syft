@@ -24,6 +24,7 @@ import (
 var _ interface {
 	clio.FlagAdder
 	clio.PostLoader
+	clio.FieldDescriber
 } = (*Output)(nil)
 
 // Output has the standard output options syft accepts: multiple -o, --file, --template
@@ -68,6 +69,15 @@ func (o *Output) AddFlags(flags clio.FlagSet) {
 
 	flags.StringArrayVarP(&o.Outputs, "output", "o",
 		fmt.Sprintf("report output format (<format>=<file> to output to a file), formats=%v", names))
+}
+
+func (o *Output) DescribeFields(descriptions clio.FieldDescriptionSet) {
+	descriptions.Add(&o.Outputs, `the output format(s) of the SBOM report (options: syft-table, syft-text, syft-json, spdx-json, ...)
+to specify multiple output files in differing formats, use a list:
+output:
+  - "syft-json=<syft-json-output-file>"
+  - "spdx-json=<spdx-json-output-file>"
+`)
 }
 
 func (o Output) SBOMWriter() (sbom.Writer, error) {
