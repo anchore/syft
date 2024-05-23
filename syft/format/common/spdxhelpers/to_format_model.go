@@ -124,7 +124,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		CreationInfo: &spdx.CreationInfo{
 			// 6.7: License List Version
 			// Cardinality: optional, one
-			LicenseListVersion: spdxlicense.Version,
+			LicenseListVersion: trimPatchVersion(spdxlicense.Version),
 
 			// 6.8: Creators: may have multiple keys for Person, Organization
 			//      and/or Tool
@@ -790,4 +790,14 @@ func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *spdx.PackageVeri
 		// Cardinality: mandatory, one
 		Value: fmt.Sprintf("%+x", hasher.Sum(nil)),
 	}
+}
+
+// SPDX 2.2 spec requires that the patch version be removed from the semver string
+// for the license list version field
+func trimPatchVersion(semver string) string {
+	parts := strings.Split(semver, ".")
+	if len(parts) >= 3 {
+		return strings.Join(parts[:2], ".")
+	}
+	return semver
 }
