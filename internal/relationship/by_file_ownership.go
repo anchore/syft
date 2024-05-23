@@ -32,7 +32,7 @@ type ownershipByFilesMetadata struct {
 	Files []string `json:"files"`
 }
 
-func byFileOwnershipOverlapWorker(accessor sbomsync.Accessor) {
+func ByFileOwnershipOverlapWorker(accessor sbomsync.Accessor) {
 	var relationships []artifact.Relationship
 
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {

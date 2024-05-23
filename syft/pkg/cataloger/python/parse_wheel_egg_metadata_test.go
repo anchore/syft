@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
 
+	"github.com/anchore/syft/internal/cmptest"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -29,6 +31,8 @@ func TestParseWheelEggMetadata(t *testing.T) {
 					Author:               "Kenneth Reitz",
 					AuthorEmail:          "me@kennethreitz.org",
 					SitePackagesRootPath: "test-fixtures",
+					RequiresPython:       ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
+					ProvidesExtra:        []string{"security", "socks"},
 				},
 			},
 		},
@@ -46,6 +50,9 @@ func TestParseWheelEggMetadata(t *testing.T) {
 					Author:               "Georg Brandl",
 					AuthorEmail:          "georg@python.org",
 					SitePackagesRootPath: "test-fixtures",
+					RequiresPython:       ">=3.5",
+					RequiresDist:         []string{"soupsieve (>1.2)", "html5lib ; extra == 'html5lib'", "lxml ; extra == 'lxml'"},
+					ProvidesExtra:        []string{"html5lib", "lxml"},
 				},
 			},
 		},
@@ -58,13 +65,15 @@ func TestParseWheelEggMetadata(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual, err := parseWheelOrEggMetadata(test.Fixture, fixture)
+			l := file.NewLocationReadCloser(file.NewLocation(test.Fixture), fixture)
+
+			actual, err := parseWheelOrEggMetadata(l)
 			if err != nil {
 				t.Fatalf("failed to parse: %+v", err)
 			}
 
-			for _, d := range deep.Equal(actual, test.ExpectedMetadata) {
-				t.Errorf("diff: %+v", d)
+			if d := cmp.Diff(test.ExpectedMetadata, actual, cmptest.DefaultCommonOptions()...); d != "" {
+				t.Errorf("metadata mismatch (-want +got):\n%s", d)
 			}
 		})
 	}
@@ -158,7 +167,9 @@ func TestParseWheelEggMetadataInvalid(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual, err := parseWheelOrEggMetadata(test.Fixture, fixture)
+			l := file.NewLocationReadCloser(file.NewLocation(test.Fixture), fixture)
+
+			actual, err := parseWheelOrEggMetadata(l)
 			if err != nil {
 				t.Fatalf("failed to parse: %+v", err)
 			}

@@ -2,10 +2,15 @@ package python
 
 import (
 	"context"
+	"fmt"
+	"path"
+	"sort"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -65,6 +70,8 @@ func Test_PackageCataloger(t *testing.T) {
 						{Path: "requests/utils.py", Digest: &pkg.PythonFileDigest{"sha256", "LtPJ1db6mJff2TJSJWKi7rBpzjPS3mSOrjC9zRhoD3A"}, Size: "30049"},
 					},
 					TopLevelPackages: []string{"requests"},
+					RequiresPython:   ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
+					ProvidesExtra:    []string{"security", "socks"},
 				},
 			},
 		},
@@ -101,6 +108,8 @@ func Test_PackageCataloger(t *testing.T) {
 						{Path: "requests/utils.py", Digest: &pkg.PythonFileDigest{"sha256", "LtPJ1db6mJff2TJSJWKi7rBpzjPS3mSOrjC9zRhoD3A"}, Size: "30049"},
 					},
 					TopLevelPackages: []string{"requests"},
+					RequiresPython:   ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
+					ProvidesExtra:    []string{"security", "socks"},
 				},
 			},
 		},
@@ -140,6 +149,9 @@ func Test_PackageCataloger(t *testing.T) {
 					},
 					TopLevelPackages: []string{"pygments", "something_else"},
 					DirectURLOrigin:  &pkg.PythonDirectURLOriginInfo{URL: "https://github.com/python-test/test.git", VCS: "git", CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+					RequiresPython:   ">=3.5",
+					RequiresDist:     []string{"soupsieve (>1.2)", "html5lib ; extra == 'html5lib'", "lxml ; extra == 'lxml'"},
+					ProvidesExtra:    []string{"html5lib", "lxml"},
 				},
 			},
 		},
@@ -179,6 +191,7 @@ func Test_PackageCataloger(t *testing.T) {
 					},
 					TopLevelPackages: []string{"pygments", "something_else"},
 					DirectURLOrigin:  &pkg.PythonDirectURLOriginInfo{URL: "https://github.com/python-test/test.git", VCS: "git", CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+					RequiresPython:   ">=3.5",
 				},
 			},
 		},
@@ -211,6 +224,7 @@ func Test_PackageCataloger(t *testing.T) {
 						{Path: "../../Scripts/flask.exe", Size: "89470", Digest: &pkg.PythonFileDigest{"sha256", "jvqh4N3qOqXLlq40i6ZOLCY9tAOwfwdzIpLDYhRjoqQ"}},
 						{Path: "Flask-1.0.2.dist-info/INSTALLER", Size: "4", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}},
 					},
+					RequiresPython: ">=3.5",
 				},
 			},
 		},
@@ -236,6 +250,7 @@ func Test_PackageCataloger(t *testing.T) {
 					Author:               "Georg Brandl",
 					AuthorEmail:          "georg@python.org",
 					SitePackagesRootPath: "test-fixtures",
+					RequiresPython:       ">=3.5",
 				},
 			},
 		},
@@ -259,6 +274,8 @@ func Test_PackageCataloger(t *testing.T) {
 					Author:               "Kenneth Reitz",
 					AuthorEmail:          "me@kennethreitz.org",
 					SitePackagesRootPath: "test-fixtures",
+					RequiresPython:       ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
+					ProvidesExtra:        []string{"security", "socks"},
 				},
 			},
 		},
@@ -362,7 +379,155 @@ func Test_PackageCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
+				IgnoreUnfulfilledPathResponses("**/pyvenv.cfg").
 				TestCataloger(t, NewInstalledPackageCataloger())
 		})
 	}
+}
+
+func Test_PackageCataloger_SitePackageRelationships(t *testing.T) {
+	tests := []struct {
+		name                  string
+		fixture               string
+		expectedRelationships []string
+	}{
+		{
+			name:    "with multiple python installations and virtual envs",
+			fixture: "image-multi-site-package",
+			expectedRelationships: []string{
+				// purely python 3.9 dist-packages
+				//
+				// in the container, you can get a sense for dependencies with :
+				//   $ python3.9 -m pip list | tail -n +3 | awk '{print $1}' | xargs python3.9 -m pip show | grep -e 'Name:' -e 'Requires:' -e '\-\-\-'
+				//
+				// which approximates to (all in system packages):
+				//
+				// - beautifulsoup4: soupsieve
+				// - requests: certifi, chardet, idna, urllib3
+				// - blessed: six, wcwidth
+				// - virtualenv: distlib, filelock, platformdirs
+				"certifi @ 2020.12.5 (/usr/local/lib/python3.9/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.9/dist-packages)",
+				"certifi @ 2020.12.5 (/usr/local/lib/python3.9/dist-packages) [dependency-of] urllib3 @ 1.26.18 (/usr/local/lib/python3.9/dist-packages)", // available when extra == "secure", but another dependency is primarily installing it
+				"chardet @ 3.0.4 (/usr/local/lib/python3.9/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.9/dist-packages)",
+				"idna @ 2.10 (/usr/local/lib/python3.9/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.9/dist-packages)",
+				"six @ 1.16.0 (/usr/local/lib/python3.9/dist-packages) [dependency-of] blessed @ 1.20.0 (/usr/local/lib/python3.9/dist-packages)",
+				"soupsieve @ 2.2.1 (/usr/local/lib/python3.9/dist-packages) [dependency-of] beautifulsoup4 @ 4.9.3 (/usr/local/lib/python3.9/dist-packages)",
+				"urllib3 @ 1.26.18 (/usr/local/lib/python3.9/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.9/dist-packages)",
+				"wcwidth @ 0.2.13 (/usr/local/lib/python3.9/dist-packages) [dependency-of] blessed @ 1.20.0 (/usr/local/lib/python3.9/dist-packages)",
+
+				// purely python 3.8 dist-packages
+				//
+				// in the container, you can get a sense for dependencies with :
+				//   $ python3.8 -m pip list | tail -n +3 | awk '{print $1}' | xargs python3.8 -m pip show | grep -e 'Name:' -e 'Requires:' -e '\-\-\-'
+				//
+				// which approximates to (all in system packages):
+				//
+				// - beautifulsoup4: soupsieve
+				// - requests: certifi, chardet, idna, urllib3
+				// - runs: xmod
+				// - virtualenv: distlib, filelock, platformdirs
+				"certifi @ 2020.12.5 (/usr/local/lib/python3.8/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.8/dist-packages)",
+				"certifi @ 2020.12.5 (/usr/local/lib/python3.8/dist-packages) [dependency-of] urllib3 @ 1.26.18 (/usr/local/lib/python3.8/dist-packages)", // available when extra == "secure", but another dependency is primarily installing it
+				"chardet @ 3.0.4 (/usr/local/lib/python3.8/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.8/dist-packages)",
+				"idna @ 2.10 (/usr/local/lib/python3.8/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.8/dist-packages)",
+				"soupsieve @ 2.2 (/usr/local/lib/python3.8/dist-packages) [dependency-of] beautifulsoup4 @ 4.9.2 (/usr/local/lib/python3.8/dist-packages)",
+				"urllib3 @ 1.26.18 (/usr/local/lib/python3.8/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.8/dist-packages)",
+				"xmod @ 1.8.1 (/usr/local/lib/python3.8/dist-packages) [dependency-of] runs @ 1.2.2 (/usr/local/lib/python3.8/dist-packages)",
+
+				// project 1 virtual env
+				//
+				// in the container, you can get a sense for dependencies with :
+				//   $ source /app/project1/venv/bin/activate
+				//   $ pip list | tail -n +3 | awk '{print $1}' | xargs pip show | grep -e 'Name:' -e 'Requires:' -e '\-\-\-' -e 'Location:' | grep -A 1 -B 1 '\-packages'
+				//
+				// which approximates to (some in virtual env, some in system packages):
+				//
+				// - beautifulsoup4: soupsieve
+				// - requests [SYSTEM]: certifi [SYSTEM], chardet [SYSTEM], idna [SYSTEM], urllib3 [SYSTEM]
+				// - blessed [SYSTEM]: six [SYSTEM], wcwidth [SYSTEM]
+				// - virtualenv [SYSTEM]: distlib [SYSTEM], filelock [SYSTEM], platformdirs [SYSTEM]
+				// - inquirer: python-editor [SYSTEM], blessed [SYSTEM], readchar
+				//
+				// Note: we'll only see new relationships, so any relationship where there is at least one new player (in FROM or TO)
+				"blessed @ 1.20.0 (/usr/local/lib/python3.9/dist-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)",      // note: depends on global site package!
+				"python-editor @ 1.0.4 (/usr/local/lib/python3.9/dist-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)", // note: depends on global site package!
+				"readchar @ 4.1.0 (/app/project1/venv/lib/python3.9/site-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)",
+				"soupsieve @ 2.3 (/app/project1/venv/lib/python3.9/site-packages) [dependency-of] beautifulsoup4 @ 4.10.0 (/app/project1/venv/lib/python3.9/site-packages)",
+
+				// project 2 virtual env
+				//
+				// in the container, you can get a sense for dependencies with :
+				//   $ source /app/project2/venv/bin/activate
+				//   $ pip list | tail -n +3 | awk '{print $1}' | xargs pip show | grep -e 'Name:' -e 'Requires:' -e '\-\-\-' -e 'Location:'
+				//
+				// which approximates to (all in virtual env):
+				//
+				// - blessed: six, wcwidth
+				// - editor: runs, xmod
+				// - runs: xmod
+				// - inquirer: editor, blessed, readchar
+				"blessed @ 1.20.0 (/app/project2/venv/lib/python3.8/site-packages) [dependency-of] inquirer @ 3.2.4 (/app/project2/venv/lib/python3.8/site-packages)",
+				"editor @ 1.6.6 (/app/project2/venv/lib/python3.8/site-packages) [dependency-of] inquirer @ 3.2.4 (/app/project2/venv/lib/python3.8/site-packages)",
+				"readchar @ 4.1.0 (/app/project2/venv/lib/python3.8/site-packages) [dependency-of] inquirer @ 3.2.4 (/app/project2/venv/lib/python3.8/site-packages)",
+				"runs @ 1.2.2 (/app/project2/venv/lib/python3.8/site-packages) [dependency-of] editor @ 1.6.6 (/app/project2/venv/lib/python3.8/site-packages)",
+				"six @ 1.16.0 (/app/project2/venv/lib/python3.8/site-packages) [dependency-of] blessed @ 1.20.0 (/app/project2/venv/lib/python3.8/site-packages)",
+				"wcwidth @ 0.2.13 (/app/project2/venv/lib/python3.8/site-packages) [dependency-of] blessed @ 1.20.0 (/app/project2/venv/lib/python3.8/site-packages)",
+				"xmod @ 1.8.1 (/app/project2/venv/lib/python3.8/site-packages) [dependency-of] editor @ 1.6.6 (/app/project2/venv/lib/python3.8/site-packages)",
+				"xmod @ 1.8.1 (/app/project2/venv/lib/python3.8/site-packages) [dependency-of] runs @ 1.2.2 (/app/project2/venv/lib/python3.8/site-packages)",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				WithImageResolver(t, test.fixture).
+				ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+					diffRelationships(t, test.expectedRelationships, relationships, pkgs)
+				}).
+				TestCataloger(t, NewInstalledPackageCataloger())
+		})
+	}
+}
+
+func diffRelationships(t *testing.T, expected []string, actual []artifact.Relationship, pkgs []pkg.Package) {
+	pkgsByID := make(map[artifact.ID]pkg.Package)
+	for _, p := range pkgs {
+		pkgsByID[p.ID()] = p
+	}
+	sort.Strings(expected)
+	if d := cmp.Diff(expected, stringRelationships(actual, pkgsByID)); d != "" {
+		t.Errorf("unexpected relationships (-want, +got): %s", d)
+	}
+}
+
+func stringRelationships(relationships []artifact.Relationship, nameLookup map[artifact.ID]pkg.Package) []string {
+	var result []string
+	for _, r := range relationships {
+		var fromName, toName string
+		{
+			fromPkg, ok := nameLookup[r.From.ID()]
+			if !ok {
+				fromName = string(r.From.ID())
+			} else {
+				loc := path.Dir(path.Dir(fromPkg.Locations.ToSlice()[0].RealPath))
+				fromName = fmt.Sprintf("%s @ %s (%s)", fromPkg.Name, fromPkg.Version, loc)
+			}
+		}
+
+		{
+			toPkg, ok := nameLookup[r.To.ID()]
+			if !ok {
+				toName = string(r.To.ID())
+			} else {
+				loc := path.Dir(path.Dir(toPkg.Locations.ToSlice()[0].RealPath))
+				toName = fmt.Sprintf("%s @ %s (%s)", toPkg.Name, toPkg.Version, loc)
+			}
+		}
+
+		result = append(result, fromName+" ["+string(r.Type)+"] "+toName)
+	}
+	sort.Strings(result)
+	return result
+
 }
