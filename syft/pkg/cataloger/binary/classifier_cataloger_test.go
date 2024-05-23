@@ -952,6 +952,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "haskell-ghc/9.6.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/ghc",
+				Version:   "9.6.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/ghc@9.6.5",
+				Locations: locations("ghc-9.6.5"),
+				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-cabal/3.10.3.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/cabal",
+				Version:   "3.10.3.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/cabal@3.10.3.0",
+				Locations: locations("cabal"),
+				Metadata:  metadata("haskell-cabal-binary"),
+			},
+		},
+		{
 			logicalFixture: "nginx/1.25.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "nginx",
