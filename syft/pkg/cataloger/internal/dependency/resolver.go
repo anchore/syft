@@ -1,6 +1,7 @@
 package dependency
 
 import (
+	"github.com/anchore/syft/internal"
 	"sort"
 
 	"github.com/scylladb/go-set/strset"
@@ -19,6 +20,10 @@ type Specification struct {
 
 	// Requires holds a list of abstract resources that this package requires from other packages.
 	Requires []string
+
+	// Variants allows for specifying multiple sets of provides/requires for a single package. This is useful
+	// in cases when you have conditional optional dependencies for a package.
+	Variants []Specification
 }
 
 // Specifier is a function that takes a package and extracts a Specification, describing resources
@@ -37,53 +42,68 @@ func Processor(s Specifier) generic.Processor {
 			}
 		}
 
-		rels = append(rels, resolve(s, pkgs)...)
+		rels = append(rels, Resolve(s, pkgs)...)
 		return pkgs, rels, err
 	}
 }
 
-// resolve will create relationships between packages based on the dependency claims of each package.
-func resolve(specifier Specifier, pkgs []pkg.Package) (relationships []artifact.Relationship) {
-	pkgsProvidingResource := make(map[string][]artifact.ID)
+// Resolve will create relationships between packages based on the dependency claims of each package.
+func Resolve(specifier Specifier, pkgs []pkg.Package) (relationships []artifact.Relationship) {
+	pkgsProvidingResource := make(map[string]internal.Set[artifact.ID])
 
 	pkgsByID := make(map[artifact.ID]pkg.Package)
-	specsByPkg := make(map[artifact.ID]Specification)
+	specsByPkg := make(map[artifact.ID][]Specification)
 
 	for _, p := range pkgs {
 		id := p.ID()
 		pkgsByID[id] = p
-		specsByPkg[id] = specifier(p)
-		for _, resource := range deduplicate(specifier(p).Provides) {
-			pkgsProvidingResource[resource] = append(pkgsProvidingResource[resource], id)
-		}
+		specs := []Specification{}
+		specs = append(specs, specifier(p).Variants...)
+		specsByPkg[id] = allProvides(pkgsProvidingResource, id, specifier(p))
 	}
 
 	seen := strset.New()
 	for _, dependantPkg := range pkgs {
-		spec := specsByPkg[dependantPkg.ID()]
-		for _, resource := range deduplicate(spec.Requires) {
-			for _, providingPkgID := range pkgsProvidingResource[resource] {
-				// prevent creating duplicate relationships
-				pairKey := string(providingPkgID) + "-" + string(dependantPkg.ID())
-				if seen.Has(pairKey) {
-					continue
+		specs := specsByPkg[dependantPkg.ID()]
+		for _, spec := range specs {
+			for _, resource := range deduplicate(spec.Requires) {
+				for providingPkgID := range pkgsProvidingResource[resource] {
+					// prevent creating duplicate relationships
+					pairKey := string(providingPkgID) + "-" + string(dependantPkg.ID())
+					if seen.Has(pairKey) {
+						continue
+					}
+
+					providingPkg := pkgsByID[providingPkgID]
+
+					relationships = append(relationships,
+						artifact.Relationship{
+							From: providingPkg,
+							To:   dependantPkg,
+							Type: artifact.DependencyOfRelationship,
+						},
+					)
+
+					seen.Add(pairKey)
 				}
-
-				providingPkg := pkgsByID[providingPkgID]
-
-				relationships = append(relationships,
-					artifact.Relationship{
-						From: providingPkg,
-						To:   dependantPkg,
-						Type: artifact.DependencyOfRelationship,
-					},
-				)
-
-				seen.Add(pairKey)
 			}
 		}
 	}
 	return relationships
+}
+
+func allProvides(pkgsProvidingResource map[string]internal.Set[artifact.ID], id artifact.ID, spec Specification) []Specification {
+	specs := []Specification{spec}
+	for _, resource := range deduplicate(spec.Provides) {
+		if pkgsProvidingResource[resource] == nil {
+			pkgsProvidingResource[resource] = internal.NewSet[artifact.ID]()
+		}
+		pkgsProvidingResource[resource].Add(id)
+	}
+	for _, variant := range spec.Variants {
+		specs = append(specs, allProvides(pkgsProvidingResource, id, variant)...)
+	}
+	return specs
 }
 
 func deduplicate(ss []string) []string {

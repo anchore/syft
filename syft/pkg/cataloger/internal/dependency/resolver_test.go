@@ -45,6 +45,19 @@ func Test_resolve(t *testing.T) {
 			},
 		},
 		{
+			name: "find relationships between packages with variants",
+			s: newSpecifierBuilder().
+				WithProvides(a /* provides */, "a-resource").
+				WithRequires(b /* requires */, "a[variant]").
+				WithProvides(c /* provides */, "c-resource").
+				WithVariant(a /* provides */, "variant" /* which requires */, "c-resource").
+				Specifier(),
+			want: map[string][]string{
+				"b":/* depends on */ {"a"},
+				"a":/* depends on */ {"c"},
+			},
+		},
+		{
 			name: "deduplicates provider keys",
 			s: newSpecifierBuilder().
 				WithProvides(a /* provides */, "a-resource", "a-resource", "a-resource").
@@ -71,7 +84,7 @@ func Test_resolve(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			relationships := resolve(tt.s, subjects)
+			relationships := Resolve(tt.s, subjects)
 			if d := cmp.Diff(tt.want, abstractRelationships(t, relationships)); d != "" {
 				t.Errorf("unexpected relationships (-want +got):\n%s", d)
 			}
@@ -82,12 +95,14 @@ func Test_resolve(t *testing.T) {
 type specifierBuilder struct {
 	provides map[string][]string
 	requires map[string][]string
+	variants map[string]map[string][]string
 }
 
 func newSpecifierBuilder() *specifierBuilder {
 	return &specifierBuilder{
 		provides: make(map[string][]string),
 		requires: make(map[string][]string),
+		variants: make(map[string]map[string][]string),
 	}
 }
 
@@ -101,11 +116,28 @@ func (m *specifierBuilder) WithRequires(p pkg.Package, requires ...string) *spec
 	return m
 }
 
+func (m *specifierBuilder) WithVariant(p pkg.Package, variantName string, requires ...string) *specifierBuilder {
+	if _, ok := m.variants[p.Name]; !ok {
+		m.variants[p.Name] = make(map[string][]string)
+	}
+	m.variants[p.Name][variantName] = append(m.variants[p.Name][variantName], requires...)
+	return m
+}
+
 func (m specifierBuilder) Specifier() Specifier {
 	return func(p pkg.Package) Specification {
+		var specs []Specification
+		for variantName, requires := range m.variants[p.Name] {
+			specs = append(specs, Specification{
+				Provides: []string{p.Name + "[" + variantName + "]"},
+				Requires: requires,
+			})
+		}
+
 		return Specification{
 			Provides: m.provides[p.Name],
 			Requires: m.requires[p.Name],
+			Variants: specs,
 		}
 	}
 }
