@@ -1973,6 +1973,21 @@
         },
         "directUrlOrigin": {
           "$ref": "#/$defs/PythonDirectURLOriginInfo"
+        },
+        "requiresPython": {
+          "type": "string"
+        },
+        "requiresDist": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "providesExtra": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object",
