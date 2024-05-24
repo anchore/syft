@@ -10,7 +10,7 @@ import (
 )
 
 func TestParsePoetryLock(t *testing.T) {
-	fixture := "test-fixtures/poetry/poetry.lock"
+	fixture := "test-fixtures/poetry/dev-deps/poetry.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
@@ -51,7 +51,6 @@ func TestParsePoetryLock(t *testing.T) {
 		},
 	}
 
-	// TODO: relationships are not under test
 	var expectedRelationships []artifact.Relationship
 
 	pkgtest.TestFileParser(t, fixture, parsePoetryLock, expectedPkgs, expectedRelationships)
