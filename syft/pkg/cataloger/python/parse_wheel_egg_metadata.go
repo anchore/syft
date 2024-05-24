@@ -93,21 +93,32 @@ func extractRFC5322Fields(locationReader file.LocationReadCloser) (map[string]an
 				key = strings.ReplaceAll(strings.TrimSpace(line[0:i]), "-", "")
 				val := getFieldType(key, strings.TrimSpace(line[i+1:]))
 
-				if strSlice, ok := val.([]string); ok {
-					if fields[key] == nil {
-						fields[key] = strSlice
-					} else {
-						fields[key] = append(fields[key].([]string), strSlice...)
-					}
-				} else {
-					fields[key] = val
-				}
+				fields[key] = handleSingleOrMultiField(fields[key], val)
 			} else {
 				log.Warnf("cannot parse field from path: %q from line: %q", locationReader.Path(), line)
 			}
 		}
 	}
 	return fields, nil
+}
+
+func handleSingleOrMultiField(existingValue, val any) any {
+	strSlice, ok := val.([]string)
+	if !ok {
+		return val
+	}
+	if existingValue == nil {
+		return strSlice
+	}
+
+	switch existingValueTy := existingValue.(type) {
+	case []string:
+		return append(existingValueTy, strSlice...)
+	case string:
+		return append([]string{existingValueTy}, strSlice...)
+	}
+
+	return append([]string{fmt.Sprintf("%s", existingValue)}, strSlice...)
 }
 
 func getFieldType(key, in string) any {

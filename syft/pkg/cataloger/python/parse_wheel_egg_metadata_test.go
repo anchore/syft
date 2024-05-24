@@ -1,11 +1,15 @@
 package python
 
 import (
+	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/go-test/deep"
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/cmptest"
 	"github.com/anchore/syft/syft/file"
@@ -177,6 +181,62 @@ func TestParseWheelEggMetadataInvalid(t *testing.T) {
 			for _, d := range deep.Equal(actual, test.ExpectedMetadata) {
 				t.Errorf("diff: %+v", d)
 			}
+		})
+	}
+}
+
+func Test_extractRFC5322Fields(t *testing.T) {
+
+	tests := []struct {
+		name    string
+		input   string
+		want    map[string]any
+		wantErr require.ErrorAssertionFunc
+	}{
+		{
+			name: "with valid plural fields",
+			input: `
+Name: mxnet
+Version: 1.8.0
+Requires-Dist: numpy (>=1.16.6)
+Requires-Dist: requests (>=2.22.0)
+ProvidesExtra: cryptoutils ; extra == 'secure'
+ProvidesExtra: socks ; extra == 'secure'
+`,
+			want: map[string]any{
+				"Name":          "mxnet",
+				"Version":       "1.8.0",
+				"RequiresDist":  []string{"numpy (>=1.16.6)", "requests (>=2.22.0)"},
+				"ProvidesExtra": []string{"cryptoutils ; extra == 'secure'", "socks ; extra == 'secure'"},
+			},
+		},
+		{
+			name: "with invalid plural fields (overwrite)",
+			input: `
+Name: mxnet
+Version: 1.8.0
+Version: 1.9.0
+`,
+			want: map[string]any{
+				"Name":    "mxnet",
+				"Version": "1.9.0",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = require.NoError
+			}
+
+			reader := file.NewLocationReadCloser(
+				file.NewLocation("/made/up"),
+				io.NopCloser(strings.NewReader(tt.input)),
+			)
+
+			got, err := extractRFC5322Fields(reader)
+			tt.wantErr(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
