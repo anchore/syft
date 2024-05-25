@@ -91,14 +91,17 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 		if dep == nil {
 			continue
 		}
+
+		gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 		p := c.newGoBinaryPackage(
 			resolver,
 			dep,
 			mod.Main.Path,
-			mod.GoVersion,
+			gover,
 			arch,
 			nil,
 			mod.cryptoSettings,
+			experiments,
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if pkg.IsValid(&p) {
@@ -118,14 +121,16 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 
 func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
+	gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 	main := c.newGoBinaryPackage(
 		resolver,
 		&mod.Main,
 		mod.Main.Path,
-		mod.GoVersion,
+		gover,
 		arch,
 		gbs,
 		mod.cryptoSettings,
+		experiments,
 		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
@@ -314,6 +319,23 @@ func getBuildSettings(settings []debug.BuildSetting) pkg.KeyValues {
 		})
 	}
 	return m
+}
+
+func getExperimentsFromVersion(version string) (string, []string) {
+	// See: https://github.com/anchore/grype/issues/1851
+	var experiments []string
+	version, rest, ok := strings.Cut(version, " ")
+	if ok {
+		// Assume they may add more non-version chunks in the future, so only look for "X:".
+		for _, chunk := range strings.Split(rest, " ") {
+			if strings.HasPrefix(rest, "X:") {
+				csv := strings.TrimPrefix(chunk, "X:")
+				experiments = append(experiments, strings.Split(csv, ",")...)
+			}
+		}
+	}
+
+	return version, experiments
 }
 
 func createMainModuleFromPath(path string) (mod debug.Module) {

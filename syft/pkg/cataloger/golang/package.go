@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings []string, locations ...file.Location) pkg.Package {
+func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings, experiments []string, locations ...file.Location) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}
@@ -35,6 +35,7 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debu
 			BuildSettings:     buildSettings,
 			MainModule:        mainModule,
 			GoCryptoSettings:  cryptoSettings,
+			GoExperiments:     experiments,
 		},
 	}
 
