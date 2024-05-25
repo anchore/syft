@@ -953,6 +953,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "fluent-bit/3.0.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "fluent-bit",
+				Version:   "3.0.2",
+				Type:      "binary",
+				PURL:      "pkg:github/fluent/fluent-bit@3.0.2",
+				Locations: locations("fluent-bit"),
+				Metadata:  metadata("fluent-bit-binary"),
+			},
+		},
+		{
+			logicalFixture: "fluent-bit/2.2.1/linux-arm64",
+			expected: pkg.Package{
+				Name:      "fluent-bit",
+				Version:   "2.2.1",
+				Type:      "binary",
+				PURL:      "pkg:github/fluent/fluent-bit@2.2.1",
+				Locations: locations("fluent-bit"),
+				Metadata:  metadata("fluent-bit-binary"),
+			},
+		},
+		{
 			logicalFixture: "wp/2.9.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "wp-cli",
