@@ -40,5 +40,5 @@ func NewInstalledPackageCataloger() pkg.Cataloger {
 			"**/*egg-info/PKG-INFO",
 			"**/*DIST-INFO/METADATA",
 			"**/*EGG-INFO/PKG-INFO",
-		)
+		).WithResolvingProcessors(wheelEggRelationships)
 }

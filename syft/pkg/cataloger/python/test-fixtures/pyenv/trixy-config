@@ -1,0 +1,17 @@
+
+# last one wins... but we should survive multiple entries too
+include-system-site-packages = true
+include-system-site-packages = true
+
+# note: empty lines
+
+
+
+# note: bad entry
+include system-site-packages = false
+
+# note: in comment
+# include-system-site-packages = false
+
+# note: lots of spaces
+   version  =  3.3.3

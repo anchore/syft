@@ -12,7 +12,11 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+// Processor is a function that can filter or augment existing packages and relationships based on existing material.
 type Processor func([]pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error)
+
+// ResolvingProcessor is a Processor with the additional behavior of being able to reference additional material from a file resolver.
+type ResolvingProcessor func(context.Context, file.Resolver, []pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error)
 
 type requester func(resolver file.Resolver, env Environment) []request
 
@@ -21,10 +25,30 @@ type request struct {
 	Parser
 }
 
+type processExecutor interface {
+	process(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error)
+}
+
+type processorWrapper struct {
+	Processor
+}
+
+func (p processorWrapper) process(_ context.Context, _ file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	return p.Processor(pkgs, rels, err)
+}
+
+type resolvingProcessorWrapper struct {
+	ResolvingProcessor
+}
+
+func (p resolvingProcessorWrapper) process(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	return p.ResolvingProcessor(ctx, resolver, pkgs, rels, err)
+}
+
 // Cataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
 // a given path or glob pattern. This is intended to be reusable across many package cataloger types.
 type Cataloger struct {
-	processors        []Processor
+	processors        []processExecutor
 	requesters        []requester
 	upstreamCataloger string
 }
@@ -87,7 +111,16 @@ func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger 
 }
 
 func (c *Cataloger) WithProcessors(processors ...Processor) *Cataloger {
-	c.processors = append(c.processors, processors...)
+	for _, p := range processors {
+		c.processors = append(c.processors, processorWrapper{Processor: p})
+	}
+	return c
+}
+
+func (c *Cataloger) WithResolvingProcessors(processors ...ResolvingProcessor) *Cataloger {
+	for _, p := range processors {
+		c.processors = append(c.processors, resolvingProcessorWrapper{ResolvingProcessor: p})
+	}
 	return c
 }
 
@@ -143,12 +176,12 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 		relationships = append(relationships, discoveredRelationships...)
 	}
-	return c.process(packages, relationships, nil)
+	return c.process(ctx, resolver, packages, relationships, nil)
 }
 
-func (c *Cataloger) process(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
-	for _, proc := range c.processors {
-		pkgs, rels, err = proc(pkgs, rels, err)
+func (c *Cataloger) process(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	for _, p := range c.processors {
+		pkgs, rels, err = p.process(ctx, resolver, pkgs, rels, err)
 	}
 	return pkgs, rels, err
 }

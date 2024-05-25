@@ -23,7 +23,7 @@ var (
 	}
 )
 
-func excludeBinariesByFileOwnershipOverlap(accessor sbomsync.Accessor) {
+func ExcludeBinariesByFileOwnershipOverlap(accessor sbomsync.Accessor) {
 	accessor.WriteToSBOM(func(s *sbom.SBOM) {
 		for _, r := range s.Relationships {
 			if excludeBinaryByFileOwnershipOverlap(r, s.Artifacts.Packages) {

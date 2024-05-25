@@ -5,7 +5,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func evidentBy(catalog *pkg.Collection) []artifact.Relationship {
+func EvidentBy(catalog *pkg.Collection) []artifact.Relationship {
 	var edges []artifact.Relationship
 	for _, p := range catalog.Sorted() {
 		for _, l := range p.Locations.ToSlice() {

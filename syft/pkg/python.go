@@ -22,6 +22,9 @@ type PythonPackage struct {
 	SitePackagesRootPath string                     `json:"sitePackagesRootPath"`
 	TopLevelPackages     []string                   `json:"topLevelPackages,omitempty"`
 	DirectURLOrigin      *PythonDirectURLOriginInfo `json:"directUrlOrigin,omitempty"`
+	RequiresPython       string                     `json:"requiresPython,omitempty" mapstruct:"RequiresPython"`
+	RequiresDist         []string                   `json:"requiresDist,omitempty" mapstruct:"RequiresDist"`
+	ProvidesExtra        []string                   `json:"providesExtra,omitempty" mapstruct:"ProvidesExtra"`
 }
 
 // PythonFileDigest represents the file metadata for a single file attributed to a python package.

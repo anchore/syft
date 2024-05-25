@@ -1,8 +1,9 @@
 package lua
 
 import (
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"testing"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 func Test_PackageCataloger_Globs(t *testing.T) {

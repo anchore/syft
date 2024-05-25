@@ -225,7 +225,6 @@ func TestNewDependencyRelationships(t *testing.T) {
 			resolver:        nil,
 			coordinateIndex: map[file.Coordinates]file.Executable{},
 			packages:        []pkg.Package{},
-			want:            make([]artifact.Relationship, 0),
 		},
 		{
 			name: "given a package that imports glibc, expect a relationship between the two packages when the package is an executable",
@@ -297,7 +296,6 @@ func TestNewDependencyRelationships(t *testing.T) {
 					Type: artifact.DependencyOfRelationship,
 				},
 			},
-			want: []artifact.Relationship{},
 		},
 		{
 			name:     "given a package that imports a library that is not tracked by the resolver, expect no relationships to be created",
@@ -308,7 +306,6 @@ func TestNewDependencyRelationships(t *testing.T) {
 				parallelLibCoordinate: syftTestFixtureExecutable2,
 			},
 			packages: []pkg.Package{glibCPackage, syftTestFixturePackage},
-			want:     []artifact.Relationship{},
 		},
 	}
 	for _, tt := range tests {
