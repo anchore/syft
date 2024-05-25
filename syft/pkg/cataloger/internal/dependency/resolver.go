@@ -1,11 +1,11 @@
 package dependency
 
 import (
-	"github.com/anchore/syft/internal"
 	"sort"
 
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -57,8 +57,6 @@ func Resolve(specifier Specifier, pkgs []pkg.Package) (relationships []artifact.
 	for _, p := range pkgs {
 		id := p.ID()
 		pkgsByID[id] = p
-		specs := []Specification{}
-		specs = append(specs, specifier(p).Variants...)
 		specsByPkg[id] = allProvides(pkgsProvidingResource, id, specifier(p))
 	}
 

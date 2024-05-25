@@ -1,10 +1,16 @@
 package python
 
 import (
+	"os"
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
-	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_poetryLockDependencySpecifier(t *testing.T) {
@@ -166,6 +172,82 @@ func Test_poetryLockDependencySpecifier(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, poetryLockDependencySpecifier(tt.p))
+		})
+	}
+}
+
+func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
+	tests := []struct {
+		name    string
+		fixture string
+		want    []dependency.Specification
+	}{
+		{
+			name:    "simple dependencies with extras",
+			fixture: "test-fixtures/poetry/simple-deps/poetry.lock",
+			want: []dependency.Specification{
+				{
+					Provides: []string{"certifi"},
+				},
+				{
+					Provides: []string{"charset-normalizer"},
+				},
+				{
+					Provides: []string{"idna"},
+				},
+				{
+					Provides: []string{"requests"},
+					Requires: []string{"certifi", "charset-normalizer", "idna", "urllib3"},
+					Variants: []dependency.Specification{
+						{
+							Provides: []string{"requests[socks]"},
+							Requires: []string{"PySocks"},
+						},
+						{
+							Provides: []string{"requests[use-chardet-on-py3]"},
+							Requires: []string{"chardet"},
+						},
+					},
+				},
+				{
+					Provides: []string{"urllib3"},
+					Variants: []dependency.Specification{
+						{
+							Provides: []string{"urllib3[brotli]"},
+							Requires: []string{"brotli", "brotlicffi"},
+						},
+						{
+							Provides: []string{"urllib3[h2]"},
+							Requires: []string{"h2"}},
+						{
+							Provides: []string{"urllib3[socks]"},
+							Requires: []string{"pysocks"},
+						},
+						{
+							Provides: []string{"urllib3[zstd]"},
+							Requires: []string{"zstandard"},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fh, err := os.Open(tt.fixture)
+			require.NoError(t, err)
+
+			pkgs, err := poetryLockPackages(file.NewLocationReadCloser(file.NewLocation(tt.fixture), fh))
+			require.NoError(t, err)
+
+			var got []dependency.Specification
+			for _, p := range pkgs {
+				got = append(got, poetryLockDependencySpecifier(p))
+			}
+
+			if d := cmp.Diff(tt.want, got); d != "" {
+				t.Errorf("wrong result (-want +got):\n%s", d)
+			}
 		})
 	}
 }

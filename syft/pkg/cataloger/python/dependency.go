@@ -45,7 +45,6 @@ func poetryLockDependencySpecifier(p pkg.Package) dependency.Specification {
 			// is correct and name[extra1,extra2] will result in dependency resolution failure)
 			requires = append(requires, packageRef(dep.Name, extra))
 		}
-
 	}
 
 	var variants []dependency.Specification

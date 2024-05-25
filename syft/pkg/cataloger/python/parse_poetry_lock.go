@@ -3,8 +3,8 @@ package python
 import (
 	"context"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 	"sort"
+	"strings"
 
 	"github.com/pelletier/go-toml"
 
@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
 // integrity check
@@ -33,6 +34,7 @@ type poetryPackage struct {
 	Optional     bool                               `toml:"optional"`
 	Source       poetryPackageSource                `toml:"source"`
 	Dependencies map[string]poetryPackageDependency `toml:"dependencies"`
+	Extras       map[string][]string                `toml:"extras"`
 }
 
 type poetryPackageDependency struct {
@@ -43,53 +45,63 @@ type poetryPackageDependency struct {
 }
 
 func (d *poetryPackageDependency) UnmarshalText(data []byte) error {
-	// attempt as string first, which is just the version
-	{
-		var version string
-		if err := toml.Unmarshal(data, &version); err == nil {
-			d.Version = version
-			return nil
-		}
-	}
-
-	// if not a string, then try a map
+	// attempt to parse as a map first
 	var dep map[string]interface{}
-	if err := toml.Unmarshal(data, &dep); err != nil {
-		return fmt.Errorf("unable to unmarshal poetry package dependency: %w", err)
+	if err := toml.Unmarshal(data, &dep); err == nil {
+		if extras, ok := dep["extras"]; ok {
+			if extrasList, ok := extras.([]string); ok {
+				d.Extras = extrasList
+			}
+		}
+
+		if markers, ok := dep["markers"]; ok {
+			if markersString, ok := markers.(string); ok {
+				d.Markers = markersString
+			}
+		}
+
+		if version, ok := dep["version"]; ok {
+			if versionString, ok := version.(string); ok {
+				d.Version = versionString
+			}
+		}
+		return nil
 	}
 
-	if extras, ok := dep["extras"]; ok {
-		if extrasList, ok := extras.([]string); ok {
-			d.Extras = extrasList
-		}
+	if strings.ContainsAny(string(data), "[]{}") {
+		// odds are this is really a malformed toml array or object
+		return fmt.Errorf("unable to parse poetry dependency: version is malformed array/object: %q", string(data))
 	}
 
-	if markers, ok := dep["markers"]; ok {
-		if markersString, ok := markers.(string); ok {
-			d.Markers = markersString
-		}
-	}
-
-	if version, ok := dep["version"]; ok {
-		if versionString, ok := version.(string); ok {
-			d.Version = versionString
-		}
-	}
+	// assume this is a simple version string
+	d.Version = string(data)
 
 	return nil
 }
 
 // parsePoetryLock is a parser function for poetry.lock contents, returning all python packages discovered.
 func parsePoetryLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	pkgs, err := poetryLockPackages(reader)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// since we would never expect to create relationships for packages across multiple poetry.lock files
+	// we should do this on a file parser level (each poetry.lock) instead of a cataloger level (across all
+	// poetry.lock files)
+	return pkgs, dependency.Resolve(poetryLockDependencySpecifier, pkgs), nil
+}
+
+func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to load poetry.lock for parsing: %w", err)
+		return nil, fmt.Errorf("unable to load poetry.lock for parsing: %w", err)
 	}
 
 	metadata := poetryPackages{}
 	err = tree.Unmarshal(&metadata)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to parse poetry.lock: %w", err)
+		return nil, fmt.Errorf("unable to parse poetry.lock: %w", err)
 	}
 
 	var pkgs []pkg.Package
@@ -104,17 +116,14 @@ func parsePoetryLock(_ context.Context, _ file.Resolver, _ *generic.Environment,
 			),
 		)
 	}
-
-	// since we would never expect to create relationships for packages across multiple poetry.lock files
-	// we should do this on a file parser level (each poetry.lock) instead of a cataloger level (across all
-	// poetry.lock files)
-	return pkgs, dependency.Resolve(poetryLockDependencySpecifier, pkgs), nil
+	return pkgs, nil
 }
 
 func newPythonPoetryLockEntry(p poetryPackage) pkg.PythonPoetryLockEntry {
 	return pkg.PythonPoetryLockEntry{
 		Index:        extractIndex(p),
 		Dependencies: extractPoetryDependencies(p),
+		Extras:       extractPoetryExtras(p),
 	}
 }
 
@@ -140,4 +149,18 @@ func extractPoetryDependencies(p poetryPackage) []pkg.PythonPoetryLockDependency
 		return deps[i].Name < deps[j].Name
 	})
 	return deps
+}
+
+func extractPoetryExtras(p poetryPackage) []pkg.PythonPoetryLockExtraEntry {
+	var extras []pkg.PythonPoetryLockExtraEntry
+	for name, deps := range p.Extras {
+		extras = append(extras, pkg.PythonPoetryLockExtraEntry{
+			Name:         name,
+			Dependencies: deps,
+		})
+	}
+	sort.Slice(extras, func(i, j int) bool {
+		return extras[i].Name < extras[j].Name
+	})
+	return extras
 }
