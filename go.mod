@@ -24,7 +24,7 @@ require (
 	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
 	github.com/bmatcuk/doublestar/v4 v4.6.1
 	github.com/charmbracelet/bubbles v0.18.0
-	github.com/charmbracelet/bubbletea v0.26.2
+	github.com/charmbracelet/bubbletea v0.26.3
 	github.com/charmbracelet/lipgloss v0.11.0
 	github.com/dave/jennifer v1.7.0
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
@@ -107,6 +107,9 @@ require (
 	github.com/becheran/wildmatch-go v1.0.0 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
 	github.com/charmbracelet/x/ansi v0.1.1 // indirect
+	github.com/charmbracelet/x/input v0.1.0 // indirect
+	github.com/charmbracelet/x/term v0.1.1 // indirect
+	github.com/charmbracelet/x/windows v0.1.0 // indirect
 	github.com/cloudflare/circl v1.3.8 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/containerd/containerd v1.7.11 // indirect
@@ -215,7 +218,7 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
+	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0 // indirect
 	go.opentelemetry.io/otel v1.19.0 // indirect
