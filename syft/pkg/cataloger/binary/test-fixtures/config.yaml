@@ -513,6 +513,20 @@ from-images:
     paths:
       - /bin/consul
 
+  - version: 3.0.2
+    images:
+      - ref: fluent/fluent-bit:3.0.2-amd64@sha256:7e6fe8efd51dda0739e355f58bf5e3b1623cbf2d4a23c06c7a365d9553e2d242
+        platform: linux/amd64
+    paths:
+      - /fluent-bit/bin/fluent-bit
+
+  - version: 2.2.1
+    images:
+      - ref: fluent/fluent-bit:2.2.1-arm64@sha256:28eb03950eb0dac0ca6faead7fdd7261291d669a2b2f010113dab2c25b52b6bf
+        platform: linux/arm64
+    paths:
+      - /fluent-bit/bin/fluent-bit
+
   - name: openssl
     version: 1.1.1w
     images:

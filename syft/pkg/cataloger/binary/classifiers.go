@@ -465,6 +465,19 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:gnu:gcc:*:*:*:*:*:*:*:*"),
 		},
 		{
+			Class:    "fluent-bit-binary",
+			FileGlob: "**/fluent-bit",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				// [NUL]3.0.2[NUL]%sFluent Bit
+				// [NUL]2.2.3[NUL]Fluent Bit
+				// [NUL]2.2.1[NUL][NUL][NUL]Fluent Bit
+				`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00[^\d]*Fluent`,
+			),
+			Package: "fluent-bit",
+			PURL:    mustPURL("pkg:github/fluent/fluent-bit@version"),
+			CPEs:    singleCPE("cpe:2.3:a:treasuredata:fluent_bit:*:*:*:*:*:*:*:*"),
+		},
+		{
 			Class:    "wordpress-cli-binary",
 			FileGlob: "**/wp",
 			EvidenceMatcher: FileContentsVersionMatcher(
