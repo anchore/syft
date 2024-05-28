@@ -125,6 +125,7 @@ const (
 	prefixForWordpressThemesTracBrowser    = "https://themes.trac.wordpress.org/browser/"
 	prefixForWordpressThemesTracLog        = "https://themes.trac.wordpress.org/log/"
 	prefixForWordpressThemesWordfence      = "https://www.wordfence.com/threat-intel/vulnerabilities/wordpress-themes/"
+	prefixForGitHubRepo                    = "https://github.com/"
 )
 
 // indexCPEList creates an index of CPEs by ecosystem.
@@ -181,6 +182,10 @@ func indexCPEList(list CpeList) *dictionary.Indexed {
 				addEntryForWordpressTheme(indexed, ref, cpeItemName)
 
 			}
+
+			if strings.HasPrefix(ref, prefixForGitHubRepo) {
+				addEntryForGitHubRepo(indexed, ref, cpeItemName)
+			}
 		}
 	}
 
@@ -197,6 +202,30 @@ func updateIndex(indexed *dictionary.Indexed, ecosystem string, pkgName string, 
 	}
 
 	indexed.EcosystemPackages[ecosystem][pkgName].Add(cpe)
+}
+
+func addEntryForGitHubRepo(indexed *dictionary.Indexed, ref string, cpeItemName string) {
+	// Prune off the non-package-name parts of the URL
+	ref = strings.TrimPrefix(ref, prefixForGitHubRepo)
+	ref = strings.Split(ref, "?")[0]
+	components := strings.Split(ref, "/")
+
+	if len(components) < 2 {
+		return
+	}
+
+	owner := strings.ToLower(components[0])
+	project := strings.ToLower(components[1])
+
+	if owner == "advisories" {
+		return
+	}
+
+	if owner == "cveproject" && project == "cvelist" {
+		return
+	}
+
+	updateIndex(indexed, "github", owner+"/"+project, cpeItemName)
 }
 
 func addEntryForWordpressPlugin(indexed *dictionary.Indexed, ref string, cpeItemName string) {
