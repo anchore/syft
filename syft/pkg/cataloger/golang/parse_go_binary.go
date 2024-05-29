@@ -69,17 +69,38 @@ func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resol
 	mods := scanFile(unionReader, reader.RealPath)
 	internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
+	var rels []artifact.Relationship
 	for _, mod := range mods {
-		pkgs = append(pkgs, c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch, unionReader)...)
+		var depPkgs []pkg.Package
+		mainPkg, depPkgs := c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch, unionReader)
+		if mainPkg != nil {
+			rels = createModuleRelationships(*mainPkg, depPkgs)
+			pkgs = append(pkgs, *mainPkg)
+		}
+		pkgs = append(pkgs, depPkgs...)
 	}
 
-	return pkgs, nil, nil
+	return pkgs, rels, nil
 }
 
-func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) []pkg.Package {
+func createModuleRelationships(main pkg.Package, deps []pkg.Package) []artifact.Relationship {
+	var relationships []artifact.Relationship
+
+	for _, dep := range deps {
+		relationships = append(relationships, artifact.Relationship{
+			From: dep,
+			To:   main,
+			Type: artifact.DependencyOfRelationship,
+		})
+	}
+
+	return relationships
+}
+
+func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) (*pkg.Package, []pkg.Package) {
 	var pkgs []pkg.Package
 	if mod == nil {
-		return pkgs
+		return nil, pkgs
 	}
 
 	var empty debug.Module
@@ -110,13 +131,12 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 	}
 
 	if mod.Main == empty {
-		return pkgs
+		return nil, pkgs
 	}
 
 	main := c.makeGoMainPackage(resolver, mod, arch, location, reader)
-	pkgs = append(pkgs, main)
 
-	return pkgs
+	return &main, pkgs
 }
 
 func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {

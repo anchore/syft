@@ -2,8 +2,10 @@ package pkgtest
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 	"testing"
 
@@ -40,6 +42,7 @@ type CatalogTester struct {
 	compareOptions                 []cmp.Option
 	locationComparer               cmptest.LocationComparer
 	licenseComparer                cmptest.LicenseComparer
+	packageStringer                func(pkg.Package) string
 	customAssertions               []func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship)
 }
 
@@ -48,6 +51,7 @@ func NewCatalogTester() *CatalogTester {
 		wantErr:          require.NoError,
 		locationComparer: cmptest.DefaultLocationComparer,
 		licenseComparer:  cmptest.DefaultLicenseComparer,
+		packageStringer:  stringPackage,
 		ignoreUnfulfilledPathResponses: map[string][]string{
 			"FilesByPath": {
 				// most catalogers search for a linux release, which will not be fulfilled in testing
@@ -185,6 +189,23 @@ func (p *CatalogTester) Expects(pkgs []pkg.Package, relationships []artifact.Rel
 	p.expectedPkgs = pkgs
 	p.expectedRelationships = relationships
 	return p
+}
+
+func (p *CatalogTester) WithPackageStringer(fn func(pkg.Package) string) *CatalogTester {
+	p.packageStringer = fn
+	return p
+}
+
+func (p *CatalogTester) ExpectsPackageStrings(expected []string) *CatalogTester {
+	return p.ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+		diffPackages(t, expected, pkgs, p.packageStringer)
+	})
+}
+
+func (p *CatalogTester) ExpectsRelationshipStrings(expected []string) *CatalogTester {
+	return p.ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+		diffRelationships(t, expected, relationships, pkgs, p.packageStringer)
+	})
 }
 
 func (p *CatalogTester) ExpectsResolverPathResponses(locations []string) *CatalogTester {
@@ -346,4 +367,71 @@ func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
 	if diff := cmp.Diff(a, b, opts...); diff != "" {
 		t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
 	}
+}
+
+func diffPackages(t *testing.T, expected []string, actual []pkg.Package, pkgStringer func(pkg.Package) string) {
+	t.Helper()
+	sort.Strings(expected)
+	if d := cmp.Diff(expected, stringPackages(actual, pkgStringer)); d != "" {
+		t.Errorf("unexpected package strings (-want, +got): %s", d)
+	}
+}
+
+func diffRelationships(t *testing.T, expected []string, actual []artifact.Relationship, pkgs []pkg.Package, pkgStringer func(pkg.Package) string) {
+	t.Helper()
+	pkgsByID := make(map[artifact.ID]pkg.Package)
+	for _, p := range pkgs {
+		pkgsByID[p.ID()] = p
+	}
+	sort.Strings(expected)
+	if d := cmp.Diff(expected, stringRelationships(actual, pkgsByID, pkgStringer)); d != "" {
+		t.Errorf("unexpected relationship strings (-want, +got): %s", d)
+	}
+}
+
+func stringRelationships(relationships []artifact.Relationship, nameLookup map[artifact.ID]pkg.Package, pkgStringer func(pkg.Package) string) []string {
+	var result []string
+	for _, r := range relationships {
+		var fromName, toName string
+		{
+			fromPkg, ok := nameLookup[r.From.ID()]
+			if !ok {
+				fromName = string(r.From.ID())
+			} else {
+				fromName = pkgStringer(fromPkg)
+			}
+		}
+
+		{
+			toPkg, ok := nameLookup[r.To.ID()]
+			if !ok {
+				toName = string(r.To.ID())
+			} else {
+				toName = pkgStringer(toPkg)
+			}
+		}
+
+		result = append(result, fromName+" ["+string(r.Type)+"] "+toName)
+	}
+	sort.Strings(result)
+	return result
+}
+
+func stringPackages(pkgs []pkg.Package, pkgStringer func(pkg.Package) string) []string {
+	var result []string
+	for _, p := range pkgs {
+		result = append(result, pkgStringer(p))
+	}
+	sort.Strings(result)
+	return result
+}
+
+func stringPackage(p pkg.Package) string {
+	locs := p.Locations.ToSlice()
+	var loc string
+	if len(locs) > 0 {
+		loc = p.Locations.ToSlice()[0].RealPath
+	}
+
+	return fmt.Sprintf("%s @ %s (%s)", p.Name, p.Version, loc)
 }
