@@ -15,16 +15,18 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource/alias"
 	"github.com/anchore/syft/syft/source/internal"
 )
 
 var _ source.Source = (*directorySource)(nil)
 
 type Config struct {
-	Path    string
-	Base    string
-	Exclude source.ExcludeConfig
-	Alias   source.Alias
+	Path        string
+	Base        string
+	Exclude     source.ExcludeConfig
+	Alias       source.Alias
+	Identifiers []alias.Identifier
 }
 
 type directorySource struct {
@@ -51,11 +53,22 @@ func New(cfg Config) (source.Source, error) {
 		return nil, fmt.Errorf("given path is not a directory: %q", cfg.Path)
 	}
 
-	return &directorySource{
-		id:     deriveIDFromDirectory(cfg),
+	src := &directorySource{
 		config: cfg,
 		mutex:  &sync.Mutex{},
-	}, nil
+	}
+
+	for _, identifier := range cfg.Identifiers {
+		id := identifier(src)
+		if !id.IsEmpty() {
+			src.config.Alias = *id
+			break
+		}
+	}
+
+	src.id = deriveIDFromDirectory(src.config)
+
+	return src, nil
 }
 
 // deriveIDFromDirectory generates an artifact ID from the given directory config. If an alias is provided, then

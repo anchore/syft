@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/afero"
 
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource/alias"
 )
 
 func NewSourceProvider(path string, exclude source.ExcludeConfig, alias source.Alias, basePath string) source.Provider {
@@ -48,10 +49,11 @@ func (l directorySourceProvider) Provide(_ context.Context) (source.Source, erro
 
 	return New(
 		Config{
-			Path:    location,
-			Base:    basePath(l.basePath, location),
-			Exclude: l.exclude,
-			Alias:   l.alias,
+			Path:        location,
+			Base:        basePath(l.basePath, location),
+			Exclude:     l.exclude,
+			Alias:       l.alias,
+			Identifiers: alias.DefaultIdentifiers(),
 		},
 	)
 }
