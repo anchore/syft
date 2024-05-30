@@ -964,7 +964,10 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			c := newGoBinaryCataloger(DefaultCatalogerConfig())
 			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
 			require.NoError(t, err)
-			pkgs := c.buildGoPkgInfo(fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
+			mainPkg, pkgs := c.buildGoPkgInfo(fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
+			if mainPkg != nil {
+				pkgs = append(pkgs, *mainPkg)
+			}
 			require.Len(t, pkgs, len(test.expected))
 			for i, p := range pkgs {
 				pkgtest.AssertPackagesEqual(t, test.expected[i], p)

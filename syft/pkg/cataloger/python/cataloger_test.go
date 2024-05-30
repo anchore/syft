@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"path"
-	"sort"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -482,52 +479,20 @@ func Test_PackageCataloger_SitePackageRelationships(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				WithImageResolver(t, test.fixture).
-				ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
-					diffRelationships(t, test.expectedRelationships, relationships, pkgs)
-				}).
+				WithPackageStringer(stringPackage).
+				ExpectsRelationshipStrings(test.expectedRelationships).
 				TestCataloger(t, NewInstalledPackageCataloger())
 		})
 	}
 }
 
-func diffRelationships(t *testing.T, expected []string, actual []artifact.Relationship, pkgs []pkg.Package) {
-	pkgsByID := make(map[artifact.ID]pkg.Package)
-	for _, p := range pkgs {
-		pkgsByID[p.ID()] = p
+func stringPackage(p pkg.Package) string {
+	locs := p.Locations.ToSlice()
+	var loc string
+	if len(locs) > 0 {
+		// we want the location of the site-packages, not the metadata file
+		loc = path.Dir(path.Dir(p.Locations.ToSlice()[0].RealPath))
 	}
-	sort.Strings(expected)
-	if d := cmp.Diff(expected, stringRelationships(actual, pkgsByID)); d != "" {
-		t.Errorf("unexpected relationships (-want, +got): %s", d)
-	}
-}
 
-func stringRelationships(relationships []artifact.Relationship, nameLookup map[artifact.ID]pkg.Package) []string {
-	var result []string
-	for _, r := range relationships {
-		var fromName, toName string
-		{
-			fromPkg, ok := nameLookup[r.From.ID()]
-			if !ok {
-				fromName = string(r.From.ID())
-			} else {
-				loc := path.Dir(path.Dir(fromPkg.Locations.ToSlice()[0].RealPath))
-				fromName = fmt.Sprintf("%s @ %s (%s)", fromPkg.Name, fromPkg.Version, loc)
-			}
-		}
-
-		{
-			toPkg, ok := nameLookup[r.To.ID()]
-			if !ok {
-				toName = string(r.To.ID())
-			} else {
-				loc := path.Dir(path.Dir(toPkg.Locations.ToSlice()[0].RealPath))
-				toName = fmt.Sprintf("%s @ %s (%s)", toPkg.Name, toPkg.Version, loc)
-			}
-		}
-
-		result = append(result, fromName+" ["+string(r.Type)+"] "+toName)
-	}
-	sort.Strings(result)
-	return result
-
+	return fmt.Sprintf("%s @ %s (%s)", p.Name, p.Version, loc)
 }
