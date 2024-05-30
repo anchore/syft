@@ -76,6 +76,27 @@ func TestParseRockspec(t *testing.T) {
 				},
 			},
 		},
+		{
+			Fixture: "test-fixtures/rockspec/luasyslog-2.0.1-1.rockspec",
+			ExpectedPkg: pkg.Package{
+				Name:     "luasyslog",
+				Version:  "2.0.1-1",
+				PURL:     "pkg:luarocks/luasyslog@2.0.1-1",
+				Type:     pkg.LuaRocksPkg,
+				Language: pkg.Lua,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocations("MIT/X11", file.NewLocation("test-fixtures/rockspec/luasyslog-2.0.1-1.rockspec")),
+				),
+				Metadata: pkg.LuaRocksPackage{
+					Name:        "luasyslog",
+					Version:     "2.0.1-1",
+					License:     "MIT/X11",
+					Homepage:    "https://github.com/lunarmodules/luasyslog",
+					Description: "Syslog logging for Lua",
+					URL:         "git://github.com/lunarmodules/luasyslog.git",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

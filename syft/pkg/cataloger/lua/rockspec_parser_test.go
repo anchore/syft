@@ -63,6 +63,49 @@ multiline = [[
 `,
 		},
 		{
+			name: "variables",
+			content: `
+local foo = "bar"
+local baz = foo
+
+hello = baz
+`,
+		},
+		{
+			name: "multiple variables in one line",
+			content: `
+local foo, bar = "hello", "world"
+baz = foo
+test = bar
+`,
+		},
+		{
+			name: "skip expressions",
+			content: `
+test = (hello == "world") and "foo" or "bar"
+baz = "123"
+`,
+		},
+		{
+			name: "skip expressions in locals",
+			content: `
+local var1 = "foo"
+local var2 = var1 == "foo" and "true" or ("false")
+
+foo = "bar"
+`,
+		},
+		{
+			name: "concatenation",
+			content: `
+local foo = "bar"
+local baz = "123"
+hello = "world"..baz
+baz = foo.." "..baz
+test = foo .. baz
+`,
+		},
+		{
 			name: "complex syntax",
 			content: `
 foo = "bar"
@@ -83,6 +126,17 @@ object = {
 `,
 		},
 		{
+			name: "content start with comment",
+			content: `
+foo = "bar"
+-- this is a comment
+object = {
+	-- this is another comment
+	hello = "world"
+}
+`,
+		},
+		{
 			name: "list with comment",
 			content: `
 list = {
@@ -91,6 +145,33 @@ list = {
 	-- "baz"
 	"hello"
 }
+`,
+		},
+		{
+			name: "skip build section",
+			content: `
+foo = "bar"
+build = {
+	a = {
+		{
+			content
+		}
+	}
+}
+bar = "baz"
+`,
+		},
+		{
+			name: "skip functions",
+			content: `
+local function test
+	if foo == bar then
+		if hello = world then
+			blah
+		end
+	end
+end
+test = "blah"
 `,
 		},
 		{
@@ -152,6 +233,20 @@ list = {
 	"foo",
 	"bar",
 	-`,
+		},
+		{
+			name:    "undefined local",
+			wantErr: require.Error,
+			content: `
+test = hello
+		`,
+		},
+		{
+			name:    "unterminated concatenation",
+			wantErr: require.Error,
+			content: `
+local foo = "123"
+hello = foo..  `,
 		},
 	}
 	for _, test := range tests {
