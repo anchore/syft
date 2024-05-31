@@ -43,7 +43,8 @@ func newDirectoryIndexer(path, base string, visitors ...PathIndexVisitor) *direc
 			[]PathIndexVisitor{
 				requireFileInfo,
 				disallowByFileType,
-				newUnixSystemMountFinder().disallowUnixSystemRuntimePath},
+				NewPathSkipper(path, base),
+			},
 			visitors...,
 		),
 		errPaths: make(map[string]error),
