@@ -88,7 +88,7 @@ ubuntu-20.04:
 
 ## ALPINE #######################################################
 
-# note: unit tests cannot be run with sh (alpine dosn't have bash by default)
+# note: unit tests cannot be run with sh (alpine doesn't have bash by default)
 
 .PHONY: acceptance-alpine-3.6
 acceptance-alpine-3.6: alpine-3.6
@@ -103,7 +103,7 @@ alpine-3.6:
 
 ## BUSYBOX #######################################################
 
-# note: unit tests cannot be run with sh (busybox dosn't have bash by default)
+# note: unit tests cannot be run with sh (busybox doesn't have bash by default)
 
 # note: busybox by default will not have cacerts, so you will get TLS warnings (we want to test under these conditions)
 
