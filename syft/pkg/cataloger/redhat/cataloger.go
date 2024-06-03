@@ -48,6 +48,10 @@ func NewArchiveCataloger() pkg.Cataloger {
 }
 
 func isSqliteDriverAvailable() bool {
-	_, err := sql.Open("sqlite", ":memory:")
-	return err == nil
+	db, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		return false
+	}
+	_ = db.Close()
+	return true
 }
