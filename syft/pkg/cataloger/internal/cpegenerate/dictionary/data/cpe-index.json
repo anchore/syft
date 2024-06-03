@@ -10,6 +10,9 @@
       "github.com/SimonWaldherr/zplgfa": [
         "cpe:2.3:a:simonwaldherr:zplgfa:*:*:*:*:*:go:*:*"
       ],
+      "github.com/anchore/stereoscope": [
+        "cpe:2.3:a:anchore:stereoscope:*:*:*:*:*:go:*:*"
+      ],
       "github.com/apptainer/apptainer": [
         "cpe:2.3:a:lfprojects:apptainer:*:*:*:*:*:go:*:*"
       ],
