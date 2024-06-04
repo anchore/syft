@@ -62,7 +62,8 @@ func newPathSkipperFromMounts(root string, infos []*mountinfo.Info) pathSkipper 
 		"devfs":    nil,
 		"devtmpfs": nil,
 		"udev":     nil,
-		// note: order matters here. The most specific path should be listed first (e.g. /sys/something should precede /sys)
+		// note: there should be no order required (e.g. search /sys/thing before /sys) since that would imply that
+		// we could not ignore a nested path within a path that would be ignored anyway.
 		"tmpfs": {"/run", "/dev", "/var/run", "/var/lock", "/sys"},
 	}
 
@@ -89,16 +90,11 @@ func newPathSkipperFromMounts(root string, infos []*mountinfo.Info) pathSkipper 
 }
 
 func (ps pathSkipper) pathIndexVisitor(_ string, givenPath string, _ os.FileInfo, _ error) error {
-	// Rule 1: don't entirely ignore the dir we're supposed to be scanning
-	if givenPath == ps.scanTarget {
-		return nil
-	}
-
 	for _, mi := range ps.mounts {
 		conditionalPaths, ignorable := ps.ignorableMountTypes[mi.FSType]
 
 		if len(conditionalPaths) == 0 {
-			// Rule 2: ignore any path within a mount point that is of the given filesystem type unconditionally
+			// Rule 1: ignore any path within a mount point that is of the given filesystem type unconditionally
 			if !containsPath(givenPath, mi.Mountpoint) {
 				continue
 			}
@@ -118,18 +114,12 @@ func (ps pathSkipper) pathIndexVisitor(_ string, givenPath string, _ os.FileInfo
 			return fs.SkipDir
 		}
 
-		// Rule 3: ignore any path within a mount point that is of the given filesystem type, only if
+		// Rule 2: ignore any path within a mount point that is of the given filesystem type, only if
 		// the path is on a known blocklist of paths for that filesystem type.
 		// For example: /dev can be mounted as a tmpfs, which should always be skipped.
 		for _, conditionalPath := range conditionalPaths {
 			if !containsPath(givenPath, conditionalPath) {
 				continue
-			}
-
-			if !ignorable {
-				// we've matched on the most specific path at this point, which means we should stop searching
-				// mount points for this path
-				break
 			}
 
 			log.WithFields(

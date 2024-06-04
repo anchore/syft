@@ -144,6 +144,62 @@ func Test_newPathSkipper(t *testing.T) {
 			},
 		},
 		{
+			name: "keep some tmpfs mounts conditionally",
+			root: "/",
+			mounts: []*mountinfo.Info{
+				{
+					Mountpoint: "/run/somewhere",
+					FSType:     "tmpfs",
+				},
+				{
+					Mountpoint: "/run/terrafirma",
+					FSType:     "/dev/disk3s8",
+				},
+				{
+					Mountpoint: "/tmp",
+					FSType:     "tmpfs",
+				},
+				{
+					Mountpoint: "/else/othertmp",
+					FSType:     "tmpfs",
+				},
+				{
+					Mountpoint: "/else/othertmp/includeme",
+					FSType:     "/dev/disk3s7",
+				},
+			},
+			want: []expect{
+				{
+					// since /run is explicitly ignored, this should be skipped
+					path:    "/run/somewhere/else",
+					wantErr: assertSkipErr(),
+				},
+				{
+					path: "/run/terrafirma",
+				},
+				{
+					path: "/run/terrafirma/nested",
+				},
+				{
+					path: "/tmp",
+				},
+				{
+					path: "/else/othertmp/includeme",
+				},
+				{
+					path: "/else/othertmp/includeme/nested",
+				},
+				{
+					// no mount path, so we should include it
+					path: "/somewhere/dev/includeme",
+				},
+				{
+					// keep additional tmpfs mounts that are not explicitly ignored
+					path: "/else/othertmp",
+				},
+			},
+		},
+		{
 			name: "ignore known trixy tmpfs paths",
 			root: "/",
 			mounts: []*mountinfo.Info{
@@ -268,6 +324,36 @@ func Test_newPathSkipper(t *testing.T) {
 				{
 					// do not consider base when matching paths (matching)
 					path:    "/dev",
+					wantErr: assertSkipErr(),
+				},
+			},
+		},
+		{
+			name: "mimic nixos setup",
+			root: "/",
+			mounts: []*mountinfo.Info{
+				{
+					Mountpoint: "/",
+					FSType:     "tmpfs", // this is an odd setup, but valid
+				},
+				{
+					Mountpoint: "/home",
+					FSType:     "/dev/disk3s7",
+				},
+			},
+			want: []expect{
+				{
+					path: "/home/somewhere",
+				},
+				{
+					path: "/home",
+				},
+				{
+					path: "/somewhere",
+				},
+				{
+					// still not allowed...
+					path:    "/run",
 					wantErr: assertSkipErr(),
 				},
 			},
