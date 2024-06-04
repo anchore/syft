@@ -38,8 +38,10 @@ func dbEntryDependencySpecifier(p pkg.Package) dependency.Specification {
 	}
 
 	return dependency.Specification{
-		Provides: provides,
-		Requires: requires,
+		ProvidesRequires: dependency.ProvidesRequires{
+			Provides: provides,
+			Requires: requires,
+		},
 	}
 }
 

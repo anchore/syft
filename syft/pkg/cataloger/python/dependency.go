@@ -15,7 +15,72 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
-var _ dependency.Specifier = wheelEggDependencySpecifier
+func poetryLockDependencySpecifier(p pkg.Package) dependency.Specification {
+	meta, ok := p.Metadata.(pkg.PythonPoetryLockEntry)
+	if !ok {
+		log.Tracef("cataloger failed to extract poetry lock metadata for package %+v", p.Name)
+		return dependency.Specification{}
+	}
+
+	// this package reference always includes the package name and no extras
+	provides := []string{packageRef(p.Name, "")}
+
+	var requires []string
+	// add required dependencies (those which a marker is not present indicating it is explicitly optional or needs an extra marker)
+	for _, dep := range meta.Dependencies {
+		if isDependencyForExtra(dep) {
+			continue
+		}
+
+		// we always have the base package requirement without any extras to get base dependencies
+		requires = append(requires, packageRef(dep.Name, ""))
+
+		// if there are extras, we need to add a requirement for each extra individually
+		// for example:
+		//    uvicorn = {version = ">=0.12.0", extras = ["standard", "else"]}
+		// then we must install uvicorn with the extras "standard" and "else" to satisfy the requirement
+		for _, extra := range dep.Extras {
+			// always refer to extras with the package name (e.g. name[extra])
+			// note: this must always be done independent of other extras (e.g.  name[extra1] and name[extra2] separately
+			// is correct and name[extra1,extra2] will result in dependency resolution failure)
+			requires = append(requires, packageRef(dep.Name, extra))
+		}
+	}
+
+	var variants []dependency.ProvidesRequires
+	for _, extra := range meta.Extras {
+		variants = append(variants,
+			dependency.ProvidesRequires{
+				// always refer to extras with the package name (e.g. name[extra])
+				// note: this must always be done independent of other extras (e.g.  name[extra1] and name[extra2] separately
+				// is correct and name[extra1,extra2] will result in dependency resolution failure)
+				Provides: []string{packageRef(p.Name, extra.Name)},
+				Requires: extractPackageNames(extra.Dependencies),
+			},
+		)
+	}
+
+	return dependency.Specification{
+		ProvidesRequires: dependency.ProvidesRequires{
+			Provides: provides,
+			Requires: requires,
+		},
+		Variants: variants,
+	}
+}
+
+func isDependencyForExtra(dep pkg.PythonPoetryLockDependencyEntry) bool {
+	return strings.Contains(dep.Markers, "extra ==")
+}
+
+func packageRef(name, extra string) string {
+	cleanExtra := strings.TrimSpace(extra)
+	cleanName := strings.TrimSpace(name)
+	if cleanExtra == "" {
+		return cleanName
+	}
+	return cleanName + "[" + cleanExtra + "]"
+}
 
 func wheelEggDependencySpecifier(p pkg.Package) dependency.Specification {
 	meta, ok := p.Metadata.(pkg.PythonPackage)
@@ -35,7 +100,7 @@ func wheelEggDependencySpecifier(p pkg.Package) dependency.Specification {
 	// how extras function, where there tends to be a try/except around imports as an indication if that extra
 	// functionality should be executed or not (there isn't a package declaration to reference at runtime).
 	for _, depSpecifier := range meta.RequiresDist {
-		depSpecifier = extractPackageNameFromRequiresDest(depSpecifier)
+		depSpecifier = extractPackageName(depSpecifier)
 		if depSpecifier == "" {
 			continue
 		}
@@ -43,19 +108,28 @@ func wheelEggDependencySpecifier(p pkg.Package) dependency.Specification {
 	}
 
 	return dependency.Specification{
-		Provides: provides,
-		Requires: requires,
+		ProvidesRequires: dependency.ProvidesRequires{
+			Provides: provides,
+			Requires: requires,
+		},
 	}
 }
 
-// extractPackageNameFromRequiresDest removes any extras or version constraints from a given Requires-Dist field value,
-// leaving only the package name.
-func extractPackageNameFromRequiresDest(s string) string {
+// extractPackageName removes any extras or version constraints from a given Requires-Dist field value (and
+// semantically similar fields), leaving only the package name.
+func extractPackageName(s string) string {
 	// examples:
 	// html5lib ; extra == 'html5lib'   -->  html5lib
 	// soupsieve (>1.2)					-->  soupsieve
 
 	return strings.TrimSpace(internal.SplitAny(s, "(;")[0])
+}
+func extractPackageNames(ss []string) []string {
+	var names []string
+	for _, s := range ss {
+		names = append(names, extractPackageName(s))
+	}
+	return names
 }
 
 func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {

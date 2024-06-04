@@ -25,8 +25,10 @@ func Test_dbEntryDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"package-c", "a-thing", "a-thing"}, //  note: gets deduplicated downstream
-				Requires: []string{"b-thing"},
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"package-c", "a-thing", "a-thing"}, //  note: gets deduplicated downstream
+					Requires: []string{"b-thing"},
+				},
 			},
 		},
 		{
@@ -39,8 +41,10 @@ func Test_dbEntryDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"package-a", "libtree-sitter.so.me=1-64", "libtree-sitter.so.me"},
-				Requires: []string{"libtree-sitter.so.thing=2-64"},
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"package-a", "libtree-sitter.so.me=1-64", "libtree-sitter.so.me"},
+					Requires: []string{"libtree-sitter.so.thing=2-64"},
+				},
 			},
 		},
 		{
@@ -53,8 +57,10 @@ func Test_dbEntryDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"package-a"},
-				Requires: nil,
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"package-a"},
+					Requires: nil,
+				},
 			},
 		},
 	}

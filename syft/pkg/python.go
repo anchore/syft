@@ -66,7 +66,22 @@ type PythonPipfileLockEntry struct {
 
 // PythonPoetryLockEntry represents a single package entry within a Pipfile.lock file.
 type PythonPoetryLockEntry struct {
-	Index string `mapstructure:"index" json:"index"`
+	Index        string                            `mapstructure:"index" json:"index"`
+	Dependencies []PythonPoetryLockDependencyEntry `json:"dependencies"`
+	Extras       []PythonPoetryLockExtraEntry      `json:"extras,omitempty"`
+}
+
+type PythonPoetryLockDependencyEntry struct {
+	Name     string   `json:"name"`
+	Version  string   `json:"version"`
+	Optional bool     `json:"optional"`
+	Markers  string   `json:"markers,omitempty"`
+	Extras   []string `json:"extras,omitempty"`
+}
+
+type PythonPoetryLockExtraEntry struct {
+	Name         string   `json:"name"`
+	Dependencies []string `json:"dependencies"`
 }
 
 // PythonRequirementsEntry represents a single entry within a [*-]requirements.txt file.
