@@ -1,6 +1,6 @@
 module github.com/anchore/syft
 
-go 1.21.0
+go 1.22.0
 
 require (
 	github.com/CycloneDX/cyclonedx-go v0.8.0
