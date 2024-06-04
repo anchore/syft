@@ -126,18 +126,20 @@ func (m *specifierBuilder) WithVariant(p pkg.Package, variantName string, requir
 
 func (m specifierBuilder) Specifier() Specifier {
 	return func(p pkg.Package) Specification {
-		var specs []Specification
+		var prs []ProvidesRequires
 		for variantName, requires := range m.variants[p.Name] {
-			specs = append(specs, Specification{
+			prs = append(prs, ProvidesRequires{
 				Provides: []string{p.Name + "[" + variantName + "]"},
 				Requires: requires,
 			})
 		}
 
 		return Specification{
-			Provides: m.provides[p.Name],
-			Requires: m.requires[p.Name],
-			Variants: specs,
+			ProvidesRequires: ProvidesRequires{
+				Provides: m.provides[p.Name],
+				Requires: m.requires[p.Name],
+			},
+			Variants: prs,
 		}
 	}
 }

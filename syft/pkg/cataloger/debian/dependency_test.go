@@ -25,8 +25,10 @@ func Test_dbEntryDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"package-c", "a-thing"},
-				Requires: []string{"b-thing"},
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"package-c", "a-thing"},
+					Requires: []string{"b-thing"},
+				},
 			},
 		},
 		{
@@ -39,8 +41,10 @@ func Test_dbEntryDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"package-a", "foo"},
-				Requires: []string{"libgmp10", "default-mta", "mail-transport-agent"},
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"package-a", "foo"},
+					Requires: []string{"libgmp10", "default-mta", "mail-transport-agent"},
+				},
 			},
 		},
 		{
@@ -53,8 +57,10 @@ func Test_dbEntryDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"package-a"},
-				Requires: nil,
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"package-a"},
+					Requires: nil,
+				},
 			},
 		},
 	}

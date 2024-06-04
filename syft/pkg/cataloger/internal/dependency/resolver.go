@@ -15,15 +15,19 @@ import (
 // requires for itself. These strings can represent anything from file paths, package names, or any other concept
 // that is useful for dependency resolution within that packing ecosystem.
 type Specification struct {
+	ProvidesRequires
+
+	// Variants allows for specifying multiple sets of provides/requires for a single package. This is useful
+	// in cases when you have conditional optional dependencies for a package.
+	Variants []ProvidesRequires
+}
+
+type ProvidesRequires struct {
 	// Provides holds a list of abstract resources that this package provides for other packages.
 	Provides []string
 
 	// Requires holds a list of abstract resources that this package requires from other packages.
 	Requires []string
-
-	// Variants allows for specifying multiple sets of provides/requires for a single package. This is useful
-	// in cases when you have conditional optional dependencies for a package.
-	Variants []Specification
 }
 
 // Specifier is a function that takes a package and extracts a Specification, describing resources
@@ -52,7 +56,7 @@ func Resolve(specifier Specifier, pkgs []pkg.Package) (relationships []artifact.
 	pkgsProvidingResource := make(map[string]internal.Set[artifact.ID])
 
 	pkgsByID := make(map[artifact.ID]pkg.Package)
-	specsByPkg := make(map[artifact.ID][]Specification)
+	specsByPkg := make(map[artifact.ID][]ProvidesRequires)
 
 	for _, p := range pkgs {
 		id := p.ID()
@@ -90,18 +94,20 @@ func Resolve(specifier Specifier, pkgs []pkg.Package) (relationships []artifact.
 	return relationships
 }
 
-func allProvides(pkgsProvidingResource map[string]internal.Set[artifact.ID], id artifact.ID, spec Specification) []Specification {
-	specs := []Specification{spec}
-	for _, resource := range deduplicate(spec.Provides) {
-		if pkgsProvidingResource[resource] == nil {
-			pkgsProvidingResource[resource] = internal.NewSet[artifact.ID]()
+func allProvides(pkgsProvidingResource map[string]internal.Set[artifact.ID], id artifact.ID, spec Specification) []ProvidesRequires {
+	prs := []ProvidesRequires{spec.ProvidesRequires}
+	prs = append(prs, spec.Variants...)
+
+	for _, pr := range prs {
+		for _, resource := range deduplicate(pr.Provides) {
+			if pkgsProvidingResource[resource] == nil {
+				pkgsProvidingResource[resource] = internal.NewSet[artifact.ID]()
+			}
+			pkgsProvidingResource[resource].Add(id)
 		}
-		pkgsProvidingResource[resource].Add(id)
 	}
-	for _, variant := range spec.Variants {
-		specs = append(specs, allProvides(pkgsProvidingResource, id, variant)...)
-	}
-	return specs
+
+	return prs
 }
 
 func deduplicate(ss []string) []string {

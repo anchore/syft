@@ -29,7 +29,9 @@ func Test_poetryLockDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"foo"},
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"foo"},
+				},
 			},
 		},
 		{
@@ -46,8 +48,10 @@ func Test_poetryLockDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"foo"},
-				Requires: []string{"bar"},
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"foo"},
+					Requires: []string{"bar"},
+				},
 			},
 		},
 		{
@@ -65,8 +69,10 @@ func Test_poetryLockDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"foo"},
-				Requires: []string{"bar"},
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"foo"},
+					Requires: []string{"bar"},
+				},
 			},
 		},
 		{
@@ -86,8 +92,10 @@ func Test_poetryLockDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"foo"},
-				Requires: nil, // no requirements for non-required extra
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"foo"},
+					Requires: nil, // no requirements for non-required extra
+				},
 			},
 		},
 		{
@@ -114,9 +122,11 @@ func Test_poetryLockDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"foo"},
-				Requires: nil, // no requirements for non-required extra
-				Variants: []dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"foo"},
+					Requires: nil, // no requirements for non-required extra
+				},
+				Variants: []dependency.ProvidesRequires{
 					{
 						Provides: []string{"foo[baz]"},
 						Requires: []string{"qux"},
@@ -151,16 +161,18 @@ func Test_poetryLockDependencySpecifier(t *testing.T) {
 				},
 			},
 			want: dependency.Specification{
-				Provides: []string{"foo"},
-				Requires: []string{
-					"starlette",
-					// note: we break out the package and extra requirements separately
-					// and extras are never combined
-					"bar",
-					"bar[standard]",
-					"bar[things]",
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"foo"},
+					Requires: []string{
+						"starlette",
+						// note: we break out the package and extra requirements separately
+						// and extras are never combined
+						"bar",
+						"bar[standard]",
+						"bar[things]",
+					},
 				},
-				Variants: []dependency.Specification{
+				Variants: []dependency.ProvidesRequires{
 					{
 						Provides: []string{"foo[baz]"},
 						Requires: []string{"qux"},
@@ -187,18 +199,26 @@ func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
 			fixture: "test-fixtures/poetry/simple-deps/poetry.lock",
 			want: []dependency.Specification{
 				{
-					Provides: []string{"certifi"},
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"certifi"},
+					},
 				},
 				{
-					Provides: []string{"charset-normalizer"},
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"charset-normalizer"},
+					},
 				},
 				{
-					Provides: []string{"idna"},
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"idna"},
+					},
 				},
 				{
-					Provides: []string{"requests"},
-					Requires: []string{"certifi", "charset-normalizer", "idna", "urllib3"},
-					Variants: []dependency.Specification{
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"requests"},
+						Requires: []string{"certifi", "charset-normalizer", "idna", "urllib3"},
+					},
+					Variants: []dependency.ProvidesRequires{
 						{
 							Provides: []string{"requests[socks]"},
 							Requires: []string{"PySocks"},
@@ -210,8 +230,10 @@ func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
 					},
 				},
 				{
-					Provides: []string{"urllib3"},
-					Variants: []dependency.Specification{
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"urllib3"},
+					},
+					Variants: []dependency.ProvidesRequires{
 						{
 							Provides: []string{"urllib3[brotli]"},
 							Requires: []string{"brotli", "brotlicffi"},

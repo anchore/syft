@@ -22,8 +22,10 @@ func dbEntryDependencySpecifier(p pkg.Package) dependency.Specification {
 	provides = append(provides, stripVersionSpecifiers(meta.Provides)...)
 
 	return dependency.Specification{
-		Provides: provides,
-		Requires: stripVersionSpecifiers(meta.Dependencies),
+		ProvidesRequires: dependency.ProvidesRequires{
+			Provides: provides,
+			Requires: stripVersionSpecifiers(meta.Dependencies),
+		},
 	}
 }
 

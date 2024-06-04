@@ -47,10 +47,10 @@ func poetryLockDependencySpecifier(p pkg.Package) dependency.Specification {
 		}
 	}
 
-	var variants []dependency.Specification
+	var variants []dependency.ProvidesRequires
 	for _, extra := range meta.Extras {
 		variants = append(variants,
-			dependency.Specification{
+			dependency.ProvidesRequires{
 				// always refer to extras with the package name (e.g. name[extra])
 				// note: this must always be done independent of other extras (e.g.  name[extra1] and name[extra2] separately
 				// is correct and name[extra1,extra2] will result in dependency resolution failure)
@@ -61,8 +61,10 @@ func poetryLockDependencySpecifier(p pkg.Package) dependency.Specification {
 	}
 
 	return dependency.Specification{
-		Provides: provides,
-		Requires: requires,
+		ProvidesRequires: dependency.ProvidesRequires{
+			Provides: provides,
+			Requires: requires,
+		},
 		Variants: variants,
 	}
 }
@@ -106,8 +108,10 @@ func wheelEggDependencySpecifier(p pkg.Package) dependency.Specification {
 	}
 
 	return dependency.Specification{
-		Provides: provides,
-		Requires: requires,
+		ProvidesRequires: dependency.ProvidesRequires{
+			Provides: provides,
+			Requires: requires,
+		},
 	}
 }
 
