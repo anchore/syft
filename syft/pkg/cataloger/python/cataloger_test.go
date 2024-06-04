@@ -570,9 +570,8 @@ func Test_PoetryLockCataloger_Relationships(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
-					diffRelationships(t, test.expectedRelationships, relationships, pkgs)
-				}).
+				WithPackageStringer(stringPackage).
+				ExpectsRelationshipStrings(test.expectedRelationships).
 				TestCataloger(t, NewPackageCataloger(DefaultCatalogerConfig()))
 		})
 	}
