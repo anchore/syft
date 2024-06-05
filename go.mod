@@ -78,7 +78,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1
 	go.uber.org/goleak v1.3.0
-	golang.org/x/mod v0.17.0
+	golang.org/x/mod v0.18.0
 	golang.org/x/net v0.25.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.30.0
