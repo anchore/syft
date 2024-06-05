@@ -31,7 +31,7 @@ func Test_PackageCataloger_Binary(t *testing.T) {
 				"github.com/pierrec/lz4/v4 @ v4.1.2 (/run-me)",
 				"github.com/ulikunitz/xz @ v0.5.9 (/run-me)",
 				"github.com/xi2/xz @ v0.0.0-20171230120015-48954b6210f8 (/run-me)",
-				"stdlib @ go1.22.3 (/run-me)",
+				"stdlib @ go1.22.4 (/run-me)",
 			},
 			expectedRels: []string{
 				"github.com/andybalholm/brotli @ v1.0.1 (/run-me) [dependency-of] anchore.io/not/real @ (devel) (/run-me)",
@@ -44,7 +44,7 @@ func Test_PackageCataloger_Binary(t *testing.T) {
 				"github.com/pierrec/lz4/v4 @ v4.1.2 (/run-me) [dependency-of] anchore.io/not/real @ (devel) (/run-me)",
 				"github.com/ulikunitz/xz @ v0.5.9 (/run-me) [dependency-of] anchore.io/not/real @ (devel) (/run-me)",
 				"github.com/xi2/xz @ v0.0.0-20171230120015-48954b6210f8 (/run-me) [dependency-of] anchore.io/not/real @ (devel) (/run-me)",
-				"stdlib @ go1.22.3 (/run-me) [dependency-of] anchore.io/not/real @ (devel) (/run-me)",
+				"stdlib @ go1.22.4 (/run-me) [dependency-of] anchore.io/not/real @ (devel) (/run-me)",
 			},
 		},
 		{
@@ -64,7 +64,7 @@ func Test_PackageCataloger_Binary(t *testing.T) {
 				"github.com/pierrec/lz4/v4 @ v4.1.2 (/run-me)",
 				"github.com/ulikunitz/xz @ v0.5.9 (/run-me)",
 				"github.com/xi2/xz @ v0.0.0-20171230120015-48954b6210f8 (/run-me)",
-				"stdlib @ go1.22.3 (/run-me)",
+				"stdlib @ go1.22.4 (/run-me)",
 			},
 			expectedRels: []string{
 				"github.com/andybalholm/brotli @ v1.0.1 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
@@ -77,7 +77,7 @@ func Test_PackageCataloger_Binary(t *testing.T) {
 				"github.com/pierrec/lz4/v4 @ v4.1.2 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
 				"github.com/ulikunitz/xz @ v0.5.9 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
 				"github.com/xi2/xz @ v0.0.0-20171230120015-48954b6210f8 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
-				"stdlib @ go1.22.3 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
+				"stdlib @ go1.22.4 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
 			},
 		},
 	}
