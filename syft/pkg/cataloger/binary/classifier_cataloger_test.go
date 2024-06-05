@@ -617,6 +617,16 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: `util-linux/2.37.4/linux-amd64`,
+			expected: pkg.Package{
+				Name:      "util-linux",
+				Version:   "2.37.4",
+				PURL:      "pkg:generic/util-linux@2.37.4",
+				Locations: locations("getopt"),
+				Metadata:  metadata("util-linux-binary"),
+			},
+		},
+		{
 			logicalFixture: "java-jre-openjdk/1.8.0_352-b08/linux-amd64",
 			expected: pkg.Package{
 				Name:      "java/jre",

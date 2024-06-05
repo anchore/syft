@@ -17,6 +17,14 @@ from-images:
     paths:
       - /bin/[
 
+  - name: util-linux
+    version: 2.37.4
+    images:
+      - ref: cirros:0.6.2@sha256:7ba1f5bc57923f65c99677e53758d386320ed699b621d9630b1f2bd7ceb3a878
+        platform: linux/amd64
+    paths:
+      - /usr/bin/getopt
+
   - version: 5.1.16
     images:
       - ref: bash:5.1.16@sha256:c7a903a541d8f5fe693cbe7f5ece18a1b6a03734c76092d2b153d7e98a964927

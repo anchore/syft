@@ -174,6 +174,15 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*"),
 		},
 		{
+			Class:    "util-linux-binary",
+			FileGlob: "**/getopt",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00util-linux\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
+			Package: "util-linux",
+			PURL:    mustPURL("pkg:generic/util-linux@version"),
+			CPEs:    singleCPE("cpe:2.3:a:kernel:util-linux:*:*:*:*:*:*:*:*"),
+		},
+		{
 			Class:    "haproxy-binary",
 			FileGlob: "**/haproxy",
 			EvidenceMatcher: evidenceMatchers(
