@@ -79,7 +79,7 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 		}
 
 		// create a package for each unique name/version pair (based on the first note found)
-		pkgs = append(pkgs, newELFPackage(notes[0], noteLocations, nil))
+		pkgs = append(pkgs, newELFPackage(notes[0], noteLocations))
 	}
 
 	// why not return relationships? We have an executable cataloger that will note the dynamic libraries imported by

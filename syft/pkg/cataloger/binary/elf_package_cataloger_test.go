@@ -20,6 +20,10 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 				file.NewVirtualLocation("/usr/local/bin/elftests/elfbinwithsisterlib/lib/libhello_world.so", "/usr/local/bin/elftests/elfbinwithsisterlib/lib/libhello_world.so"),
 				file.NewVirtualLocation("/usr/local/bin/elftests/elfbinwithsisterlib/lib/libhello_world2.so", "/usr/local/bin/elftests/elfbinwithsisterlib/lib/libhello_world2.so"),
 			),
+			Licenses: pkg.NewLicenseSet(
+				pkg.License{Value: "MIT", SPDXExpression: "MIT", Type: "declared"},
+			),
+
 			Language: "",
 			Type:     pkg.BinaryPkg,
 			Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
@@ -39,6 +43,9 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 				file.NewLocation("/usr/local/bin/elftests/elfbinwithnestedlib/bin/elfbinwithnestedlib").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				file.NewLocation("/usr/local/bin/elftests/elfbinwithsisterlib/bin/elfwithparallellibbin1").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				file.NewLocation("/usr/local/bin/elftests/elfbinwithsisterlib/bin/elfwithparallellibbin2").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+			Licenses: pkg.NewLicenseSet(
+				pkg.License{Value: "MIT", SPDXExpression: "MIT", Type: "declared"},
 			),
 			Language: "",
 			Type:     pkg.BinaryPkg,
