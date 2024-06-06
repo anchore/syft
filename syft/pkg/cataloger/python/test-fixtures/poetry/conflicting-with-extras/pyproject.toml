@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 httpx = {extras = ["brotli", "http2", "socks"], version = "^0.27.0"}
-pygments = "1.6"
+pygments = "2.15.0"
 click = "<8"
 rich = "<10"
 
