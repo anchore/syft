@@ -40,11 +40,10 @@ Syft binaries are provided for Linux, macOS and Windows.
 > curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 > ```
 
-... or, you can specify a release version and destination directory for the installation:
-
-> ```bash
-> curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b <DESTINATION_DIR> <RELEASE_VERSION>
-> ```
+Install script options:
+-	`-b`: Specify a custom installation directory (defaults to `./bin`)
+-	`-d`: More verbose logging levels (`-d` for debug, `-dd` for trace)
+-	`-v`: Verify the signature of the downloaded artifact before installation (requires [`cosign`](https://github.com/sigstore/cosign) to be installed)
 
 ### Homebrew
 ```bash
