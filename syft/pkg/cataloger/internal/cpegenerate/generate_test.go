@@ -719,6 +719,31 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:ruby_rake:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
 			},
 		},
+		{
+			name: "wordpress plugin",
+			p: pkg.Package{
+				Name:    "WP Coder",
+				Version: "2.5.1",
+				Type:    pkg.WordpressPluginPkg,
+				Metadata: pkg.WordpressPluginEntry{
+					PluginInstallDirectory: "wp-coder",
+					Author:                 "Wow-Company",
+					AuthorURI:              "https://wow-estore.com",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:wow-company:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow-company:wp_coder:2.5.1:*:*:*:*:wordpress:*:*", // this is the correct CPE relative to CVE-2021-25053
+				"cpe:2.3:a:wow-estore:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow-estore:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_company:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_company:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_estore:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_estore:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {

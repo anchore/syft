@@ -24,7 +24,7 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 					AuthorURI:              "https://automattic.com/wordpress-plugins/",
 				},
 			},
-			expected: []string{"Automattic - Anti-spam Team", "automattic"},
+			expected: []string{"automattic - anti-spam team", "automattic"},
 		},
 		{
 			name: "All-in-One WP Migration",
@@ -47,7 +47,7 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 					AuthorURI:              "https://bookingultrapro.com/",
 				},
 			},
-			expected: []string{"Booking Ultra Pro", "bookingultrapro"},
+			expected: []string{"booking ultra pro", "bookingultrapro"},
 		},
 		{
 			name: "Coming Soon Chop Chop",
@@ -58,7 +58,7 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 					AuthorURI:              "https://www.chop-chop.org",
 				},
 			},
-			expected: []string{"Chop-Chop.org", "chop-chop"},
+			expected: []string{"chop-chop.org", "chop-chop"},
 		},
 		{
 			name: "Access Code Feeder",
@@ -83,7 +83,7 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 			},
 			// found in the wild https://plugins.trac.wordpress.org/browser/wp-coder/tags/2.5.1/wp-coder.php
 			expected: []string{
-				"Wow-Company", // this is the correct answer relative to CPEs registered on CVE-2021-25053
+				"wow-company", // this is the correct answer relative to CPEs registered on CVE-2021-25053
 				"wow-estore",
 			},
 		},

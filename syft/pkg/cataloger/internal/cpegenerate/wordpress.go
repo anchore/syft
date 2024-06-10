@@ -22,13 +22,13 @@ func candidateVendorsForWordpressPlugin(p pkg.Package) fieldCandidateSet {
 	vendors := newFieldCandidateSet()
 
 	if metadata.Author != "" {
-		vendors.addValue(metadata.Author)
+		vendors.addValue(strings.ToLower(metadata.Author))
 	}
 
 	if metadata.AuthorURI != "" {
 		matchMap := internal.MatchNamedCaptureGroups(vendorFromURLRegexp, metadata.AuthorURI)
 		if vendor, ok := matchMap["vendor"]; ok && vendor != "" {
-			vendors.addValue(vendor)
+			vendors.addValue(strings.ToLower(vendor))
 		}
 	}
 
