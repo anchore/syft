@@ -503,6 +503,11 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 			Algorithm: spdx.ChecksumAlgorithm(algo),
 			Value:     hexStr,
 		})
+	case pkg.RustCargoLockEntry:
+		checksums = append(checksums, spdx.Checksum{
+			Algorithm: meta.GetChecksumType(),
+			Value:     meta.Checksum,
+		})
 	}
 	return checksums, filesAnalyzed
 }

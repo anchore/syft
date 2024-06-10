@@ -15,6 +15,7 @@ import (
 var _ generic.Parser = parseCargoLock
 
 type cargoLockFile struct {
+	Version  int                      `toml:"version"`
 	Packages []pkg.RustCargoLockEntry `toml:"package"`
 }
 
@@ -34,6 +35,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	var pkgs []pkg.Package
 
 	for _, p := range m.Packages {
+		p.CargoLockVersion = m.Version
 		if p.Dependencies == nil {
 			p.Dependencies = make([]string, 0)
 		}

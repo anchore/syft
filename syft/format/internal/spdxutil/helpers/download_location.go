@@ -1,6 +1,9 @@
 package helpers
 
-import "github.com/anchore/syft/syft/pkg"
+import (
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/pkg"
+)
 
 const NONE = "NONE"
 const NOASSERTION = "NOASSERTION"
@@ -22,6 +25,14 @@ func DownloadLocation(p pkg.Package) string {
 			return NoneIfEmpty(metadata.URL)
 		case pkg.NpmPackageLockEntry:
 			return NoneIfEmpty(metadata.Resolved)
+		case pkg.RustCargoLockEntry:
+			var url, err = metadata.GetDownloadLink()
+			if err != nil {
+				log.Info(err)
+				return NONE
+			} else {
+				return NoneIfEmpty(url)
+			}
 		}
 	}
 	return NOASSERTION
