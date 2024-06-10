@@ -21,12 +21,18 @@ func candidateVendorsForWordpressPlugin(p pkg.Package) fieldCandidateSet {
 
 	vendors := newFieldCandidateSet()
 
+	if metadata.Author != "" {
+		vendors.addValue(strings.ToLower(metadata.Author))
+	}
+
 	if metadata.AuthorURI != "" {
 		matchMap := internal.MatchNamedCaptureGroups(vendorFromURLRegexp, metadata.AuthorURI)
 		if vendor, ok := matchMap["vendor"]; ok && vendor != "" {
-			vendors.addValue(vendor)
+			vendors.addValue(strings.ToLower(vendor))
 		}
-	} else {
+	}
+
+	if len(vendors) == 0 {
 		// add plugin_name + _project as a vendor if no Author URI found
 		vendors.addValue(fmt.Sprintf("%s_project", normalizeWordpressPluginName(p.Name)))
 	}

@@ -24,7 +24,7 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 					AuthorURI:              "https://automattic.com/wordpress-plugins/",
 				},
 			},
-			expected: []string{"automattic"},
+			expected: []string{"automattic - anti-spam team", "automattic"},
 		},
 		{
 			name: "All-in-One WP Migration",
@@ -47,7 +47,7 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 					AuthorURI:              "https://bookingultrapro.com/",
 				},
 			},
-			expected: []string{"bookingultrapro"},
+			expected: []string{"booking ultra pro", "bookingultrapro"},
 		},
 		{
 			name: "Coming Soon Chop Chop",
@@ -58,7 +58,7 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 					AuthorURI:              "https://www.chop-chop.org",
 				},
 			},
-			expected: []string{"chop-chop"},
+			expected: []string{"chop-chop.org", "chop-chop"},
 		},
 		{
 			name: "Access Code Feeder",
@@ -70,6 +70,22 @@ func Test_candidateVendorsForWordpressPlugin(t *testing.T) {
 			},
 			// When a plugin as no `Author URI` use plugin_name + _project as a vendor
 			expected: []string{"access_code_feeder_project"},
+		},
+		{
+			name: "WP Coder",
+			pkg: pkg.Package{
+				Name: "WP Coder",
+				Metadata: pkg.WordpressPluginEntry{
+					PluginInstallDirectory: "wp-coder",
+					Author:                 "Wow-Company",
+					AuthorURI:              "https://wow-estore.com/",
+				},
+			},
+			// found in the wild https://plugins.trac.wordpress.org/browser/wp-coder/tags/2.5.1/wp-coder.php
+			expected: []string{
+				"wow-company", // this is the correct answer relative to CPEs registered on CVE-2021-25053
+				"wow-estore",
+			},
 		},
 	}
 	for _, test := range tests {
