@@ -25,8 +25,8 @@ func DownloadLocation(p pkg.Package) string {
 		case pkg.NpmPackageLockEntry:
 			return NoneIfEmpty(metadata.Resolved)
 		case pkg.RustCargoLockEntry:
-			var url, err = metadata.GetDownloadLink()
-			if err != nil {
+			var url, isLocal, err = metadata.GetDownloadLink()
+			if isLocal || err != nil {
 				return NOASSERTION
 			} else {
 				return NoneIfEmpty(url)

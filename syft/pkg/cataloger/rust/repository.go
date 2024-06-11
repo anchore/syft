@@ -12,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -24,6 +25,10 @@ type RepositoryConfig struct {
 type SourceId struct {
 	kind string
 	url  string
+}
+
+func (i *SourceId) IsLocalSource() bool {
+	return i.kind == SourceKindLocalRegistry
 }
 
 func GetSourceId(r *pkg.RustCargoLockEntry) (*SourceId, error) {
@@ -48,6 +53,14 @@ const (
 	SourceKindLocalDirectory = "directory"
 )
 
+const (
+	Crate          = "{crate}"
+	Version        = "{version}"
+	Prefix         = "{prefix}"
+	LowerPrefix    = "{lowerprefix}"
+	Sha256Checksum = "{sha256-checksum}"
+)
+
 var RegistryRepos = make(map[string]*memory.Storage)
 var RegistryConfig = make(map[string]RepositoryConfig)
 
@@ -55,6 +68,14 @@ var RegistryConfig = make(map[string]RepositoryConfig)
 const RepositoryConfigName = "config.json"
 
 func (i *SourceId) GetConfig() (*RepositoryConfig, error) {
+	if i.kind == SourceKindLocalRegistry {
+		//see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/local.rs#L14-L57
+		return &RepositoryConfig{
+			Download:     fmt.Sprintf("%s/%s-%s.crate", i.url, Crate, Version),
+			API:          "",
+			AuthRequired: false,
+		}, nil
+	}
 	if repoConfig, ok := RegistryConfig[i.url]; ok {
 		return &repoConfig, nil
 	}
@@ -74,6 +95,11 @@ func (i *SourceId) GetConfig() (*RepositoryConfig, error) {
 func (i *SourceId) GetPath(path string) ([]byte, error) {
 	var content []byte
 	switch i.kind {
+	case SourceKindLocalRegistry:
+		if path == RepositoryConfigName {
+			return nil, nil
+		}
+		return os.ReadFile(fmt.Sprintf("%s/index/%s", i.url, path))
 	case SourceKindSparse:
 		var resp, err = http.Get(fmt.Sprintf("%s/%s", i.url, path))
 		if err != nil {

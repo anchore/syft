@@ -9,6 +9,7 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -49,59 +50,63 @@ func (r *RustCargoLockEntry) GetPrefix() string {
 	}
 }
 
-func (r *RustCargoLockEntry) GetDownloadLink() (string, error) {
-	var sourceId, err = rust.GetSourceId(r)
+func (r *RustCargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err error) {
+	sourceId, err := rust.GetSourceId(r)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
+	isLocalFile = sourceId.IsLocalSource()
 	var repoConfig *rust.RepositoryConfig = nil
 	repoConfig, err = sourceId.GetConfig()
 	if err != nil {
-		return "", err
+		return "", isLocalFile, err
 	}
-	return r.getDownloadLink(repoConfig.Download), err
+	return r.getDownloadLink(repoConfig.Download), isLocalFile, err
 }
 
 func (r *RustCargoLockEntry) getDownloadLink(url string) string {
-	const Crate = "{crate}"
-	const Version = "{version}"
-	const Prefix = "{prefix}"
-	const LowerPrefix = "{lowerprefix}"
-	const Sha256Checksum = "{sha256-checksum}"
-	if !strings.Contains(url, Crate) &&
-		!strings.Contains(url, Version) &&
-		!strings.Contains(url, Prefix) &&
-		!strings.Contains(url, LowerPrefix) &&
-		!strings.Contains(url, Sha256Checksum) {
+	if !strings.Contains(url, rust.Crate) &&
+		!strings.Contains(url, rust.Version) &&
+		!strings.Contains(url, rust.Prefix) &&
+		!strings.Contains(url, rust.LowerPrefix) &&
+		!strings.Contains(url, rust.Sha256Checksum) {
 		return url + fmt.Sprintf("/%s/%s/download", r.Name, r.Version)
 	}
 
 	var link = url
-	link = strings.ReplaceAll(link, Crate, r.Name)
-	link = strings.ReplaceAll(link, Version, r.Version)
-	link = strings.ReplaceAll(link, Prefix, r.GetPrefix())
-	link = strings.ReplaceAll(link, LowerPrefix, strings.ToLower(r.GetPrefix()))
-	link = strings.ReplaceAll(link, Sha256Checksum, r.Checksum)
+	link = strings.ReplaceAll(link, rust.Crate, r.Name)
+	link = strings.ReplaceAll(link, rust.Version, r.Version)
+	link = strings.ReplaceAll(link, rust.Prefix, r.GetPrefix())
+	link = strings.ReplaceAll(link, rust.LowerPrefix, strings.ToLower(r.GetPrefix()))
+	link = strings.ReplaceAll(link, rust.Sha256Checksum, r.Checksum)
 	return link
 }
 func (r *RustCargoLockEntry) GetIndexPath() string {
 	return fmt.Sprintf("%s/%s", strings.ToLower(r.GetPrefix()), strings.ToLower(r.Name))
 }
 func (r *RustCargoLockEntry) GetDownloadSha() []byte {
-	var link, err = r.GetDownloadLink()
-	if err != nil {
-		return nil
-	}
-	var resp *http.Response
-	resp, err = http.Get(link)
+	var link, isLocal, err = r.GetDownloadLink()
 	if err != nil {
 		return nil
 	}
 
 	var content []byte
-	content, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return nil
+	if !isLocal {
+		var resp *http.Response
+		resp, err = http.Get(link)
+		if err != nil {
+			return nil
+		}
+
+		content, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return nil
+		}
+	} else {
+		content, err = os.ReadFile(link)
+		if err != nil {
+			return nil
+		}
 	}
 
 	var hash = sha256.New().Sum(content)
