@@ -1,9 +1,9 @@
 package rust
 
 type CargoToml struct {
-	Package `toml:"package"`
+	Package TomlPackage `toml:"package"`
 }
-type Package struct {
+type TomlPackage struct {
 	License     string `toml:"license"`
 	LicenseFile string `toml:"license"`
 }

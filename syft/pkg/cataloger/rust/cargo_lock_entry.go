@@ -26,6 +26,13 @@ type CargoLockEntry struct {
 	Dependencies     []string `toml:"dependencies" json:"dependencies"`
 }
 
+func (r *CargoLockEntry) toPackageId() (id PackageId) {
+	return PackageId{
+		Name:    r.Name,
+		Version: r.Version,
+	}
+}
+
 // GetChecksumType This exists, to made adopting new potential cargo.lock versions easier
 func (r *CargoLockEntry) GetChecksumType() spdx.ChecksumAlgorithm {
 	//Cargo currently always uses Sha256: https://github.com/rust-lang/cargo/blob/a9ee3e82b57df019dfc0385f844bc6928150ee63/src/cargo/sources/registry/download.rs#L125
