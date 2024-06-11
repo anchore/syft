@@ -52,7 +52,7 @@ func (r *RustCargoLockEntry) GetPrefix() string {
 }
 
 func (r *RustCargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err error) {
-	sourceID, err := GetSourceId(r)
+	sourceID, err := getSourceId(r)
 	if err != nil {
 		return "", false, err
 	}
@@ -94,7 +94,7 @@ func (r *RustCargoLockEntry) GetDownloadSha() []byte {
 }
 func (r *RustCargoLockEntry) GetIndexContent() ([]dependencyInformation, []error) {
 	var deps []dependencyInformation
-	var sourceID, err = GetSourceId(r)
+	var sourceID, err = getSourceId(r)
 	if err != nil {
 		return deps, []error{err}
 	}

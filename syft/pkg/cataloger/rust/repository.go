@@ -22,16 +22,16 @@ type repositoryConfig struct {
 	AuthRequired bool   `json:"auth-required"`
 }
 
-type SourceId struct {
+type sourceId struct {
 	kind string
 	url  string
 }
 
-func (i *SourceId) IsLocalSource() bool {
+func (i *sourceId) IsLocalSource() bool {
 	return i.kind == SourceKindLocalRegistry
 }
 
-func GetSourceId(r *RustCargoLockEntry) (*SourceId, error) {
+func getSourceId(r *RustCargoLockEntry) (*sourceId, error) {
 	if len(r.Source) == 0 {
 		//Todo: add handling for looking in the current workspace, finding all Cargo.toml's and checking if any matches.
 		//		if a match is found license information could potentially still be added.
@@ -43,7 +43,7 @@ func GetSourceId(r *RustCargoLockEntry) (*SourceId, error) {
 		return nil, fmt.Errorf("did not find \"+\" in source field of dependency: Name: %s, Version: %s, Source: %s", r.Name, r.Version, r.Source)
 	}
 
-	return &SourceId{
+	return &sourceId{
 		kind: before,
 		url:  after,
 	}, nil
@@ -73,7 +73,7 @@ var RegistryConfig = make(map[string]repositoryConfig)
 // RepositoryConfigName see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/mod.rs#L962
 const RepositoryConfigName = "config.json"
 
-func (i *SourceId) GetConfig() (*repositoryConfig, error) {
+func (i *sourceId) GetConfig() (*repositoryConfig, error) {
 	if i.kind == SourceKindLocalRegistry {
 		//see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/local.rs#L14-L57
 		return &repositoryConfig{
@@ -99,7 +99,7 @@ func (i *SourceId) GetConfig() (*repositoryConfig, error) {
 	return &repoConfig, err
 }
 
-func (i *SourceId) GetPath(path string) ([]byte, error) {
+func (i *sourceId) GetPath(path string) ([]byte, error) {
 	var content []byte
 	switch i.kind {
 	case SourceKindLocalRegistry:
