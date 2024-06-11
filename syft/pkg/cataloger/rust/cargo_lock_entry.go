@@ -18,7 +18,8 @@ import (
 	"sync"
 )
 
-type CargoLockEntry struct {
+//goland:noinspection GoNameStartsWithPackageName
+type RustCargoLockEntry struct {
 	CargoLockVersion int `toml:"-" json:"-"`
 	PackageID        `toml:"-" json:"-"`
 	Name             string   `toml:"name" json:"name"`
@@ -29,13 +30,13 @@ type CargoLockEntry struct {
 }
 
 // GetChecksumType This exists, to made adopting new potential cargo.lock versions easier
-func (r *CargoLockEntry) GetChecksumType() spdx.ChecksumAlgorithm {
+func (r *RustCargoLockEntry) GetChecksumType() spdx.ChecksumAlgorithm {
 	//Cargo currently always uses Sha256: https://github.com/rust-lang/cargo/blob/a9ee3e82b57df019dfc0385f844bc6928150ee63/src/cargo/sources/registry/download.rs#L125
 	return spdx.SHA256
 }
 
 // GetPrefix get {path} for https://doc.rust-lang.org/cargo/reference/registry-index.html
-func (r *CargoLockEntry) GetPrefix() string {
+func (r *RustCargoLockEntry) GetPrefix() string {
 	switch len(r.Name) {
 	case 0:
 		return ""
@@ -50,7 +51,7 @@ func (r *CargoLockEntry) GetPrefix() string {
 	}
 }
 
-func (r *CargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err error) {
+func (r *RustCargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err error) {
 	sourceID, err := GetSourceId(r)
 	if err != nil {
 		return "", false, err
@@ -64,7 +65,7 @@ func (r *CargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err er
 	return r.getDownloadLink(repoConfig.Download), isLocalFile, err
 }
 
-func (r *CargoLockEntry) getDownloadLink(url string) string {
+func (r *RustCargoLockEntry) getDownloadLink(url string) string {
 	if !strings.Contains(url, Crate) &&
 		!strings.Contains(url, Version) &&
 		!strings.Contains(url, Prefix) &&
@@ -81,17 +82,17 @@ func (r *CargoLockEntry) getDownloadLink(url string) string {
 	link = strings.ReplaceAll(link, Sha256Checksum, r.Checksum)
 	return link
 }
-func (r *CargoLockEntry) GetIndexPath() string {
+func (r *RustCargoLockEntry) GetIndexPath() string {
 	return fmt.Sprintf("%s/%s", strings.ToLower(r.GetPrefix()), strings.ToLower(r.Name))
 }
-func (r *CargoLockEntry) GetDownloadSha() []byte {
+func (r *RustCargoLockEntry) GetDownloadSha() []byte {
 	info, err := r.getGeneratedInformation()
 	if err != nil {
 		return nil
 	}
 	return info.downloadSha[:]
 }
-func (r *CargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
+func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
 	var deps []DependencyInformation
 	var sourceID, err = GetSourceId(r)
 	if err != nil {
@@ -116,7 +117,7 @@ func (r *CargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
 
 var GeneratedInformation = make(map[PackageID]*outerGeneratedDepInfo)
 
-func (r *CargoLockEntry) getGeneratedInformation() (generatedDepInfo, error) {
+func (r *RustCargoLockEntry) getGeneratedInformation() (generatedDepInfo, error) {
 	genDepInfo, ok := GeneratedInformation[r.PackageID]
 	if ok {
 		var generatedDepInfoInner generatedDepInfo
@@ -224,7 +225,7 @@ func (r *CargoLockEntry) getGeneratedInformation() (generatedDepInfo, error) {
 	}
 }
 
-func (r *CargoLockEntry) GetLicenseInformation() []string {
+func (r *RustCargoLockEntry) GetLicenseInformation() []string {
 	info, err := r.getGeneratedInformation()
 	if err != nil {
 		return make([]string, 0)

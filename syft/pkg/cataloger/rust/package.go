@@ -9,7 +9,7 @@ import (
 )
 
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the Cargo.lock metadata.
-func newPackageFromCargoMetadata(m CargoLockEntry, locations ...file.Location) pkg.Package {
+func newPackageFromCargoMetadata(m RustCargoLockEntry, locations ...file.Location) pkg.Package {
 	var licenseSet = pkg.NewLicenseSet()
 	gen, err := m.getGeneratedInformation()
 	if err == nil {

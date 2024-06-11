@@ -63,7 +63,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 				Language: pkg.Rust,
 				Type:     pkg.RustPkg,
 				Licenses: pkg.NewLicenseSet(),
-				Metadata: rust.CargoLockEntry{
+				Metadata: rust.RustCargoLockEntry{
 					Name:     "ansi_term",
 					Version:  "0.12.1",
 					Source:   "registry+https://github.com/rust-lang/crates.io-index",

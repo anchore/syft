@@ -16,8 +16,8 @@ import (
 var _ generic.Parser = parseCargoLock
 
 type cargoLockFile struct {
-	Version  int              `toml:"version"`
-	Packages []CargoLockEntry `toml:"package"`
+	Version  int                  `toml:"version"`
+	Packages []RustCargoLockEntry `toml:"package"`
 }
 
 // parseCargoLock is a parser function for Cargo.lock contents, returning all rust cargo crates discovered.

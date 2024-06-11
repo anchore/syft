@@ -31,7 +31,7 @@ func (i *SourceId) IsLocalSource() bool {
 	return i.kind == SourceKindLocalRegistry
 }
 
-func GetSourceId(r *CargoLockEntry) (*SourceId, error) {
+func GetSourceId(r *RustCargoLockEntry) (*SourceId, error) {
 	if len(r.Source) == 0 {
 		//Todo: add handling for looking in the current workspace, finding all Cargo.toml's and checking if any matches.
 		//		if a match is found license information could potentially still be added.

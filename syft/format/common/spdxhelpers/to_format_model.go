@@ -505,7 +505,7 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 			Algorithm: spdx.ChecksumAlgorithm(algo),
 			Value:     hexStr,
 		})
-	case rust.CargoLockEntry:
+	case rust.RustCargoLockEntry:
 		hasChecksum := len(meta.Checksum) > 0
 		checksum := spdx.Checksum{
 			Algorithm: meta.GetChecksumType(),

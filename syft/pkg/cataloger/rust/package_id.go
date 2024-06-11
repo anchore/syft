@@ -9,5 +9,5 @@ type PackageID struct {
 
 type packageWrap struct {
 	spdxPackage pkg.Package
-	rustPackage CargoLockEntry
+	rustPackage RustCargoLockEntry
 }
