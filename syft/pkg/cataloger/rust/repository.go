@@ -107,7 +107,7 @@ func (i *SourceId) GetPath(path string) ([]byte, error) {
 		}
 		return os.ReadFile(fmt.Sprintf("%s/index/%s", i.url, path))
 	case SourceKindSparse:
-		var resp, err = http.Get(fmt.Sprintf("%s/%s", i.url, path))
+		resp, err := http.Get(fmt.Sprintf("%s/%s", i.url, path))
 		if err != nil {
 			return content, fmt.Errorf("could not get the path %s/%s from sparse registry: %s", i.url, path, err)
 		}
@@ -117,22 +117,19 @@ func (i *SourceId) GetPath(path string) ([]byte, error) {
 		}
 		return content, err
 	case SourceKindRegistry:
-		var _, repo, err = getOrInitRepo(i.url)
+		_, repo, err := getOrInitRepo(i.url)
 		if err != nil {
 			return content, err
 		}
-		var tree *object.Tree = nil
-		tree, err = getTree(repo)
+		tree, err := getTree(repo)
 		if err != nil {
 			return content, err
 		}
-		var file *object.File = nil
-		file, err = tree.File(path)
+		file, err := tree.File(path)
 		if err != nil {
 			return content, fmt.Errorf("failed to find path %s in tree: %s", path, err)
 		}
-		var reader io.ReadCloser = nil
-		reader, err = file.Reader()
+		reader, err := file.Reader()
 		if err != nil {
 			err = fmt.Errorf("failed to get reader for file %s: %s", path, err)
 		}
@@ -174,7 +171,7 @@ func getOrInitRepo(url string) (*memory.Storage, *git.Repository, error) {
 func updateRepo(repo *git.Repository, url string) error {
 	//Todo: cargo re-initialises the repo, if the fetch fails. Do we need to copy that?
 	//see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/git/utils.rs#L1150
-	var remote, err = repo.CreateRemoteAnonymous(&config.RemoteConfig{
+	remote, err := repo.CreateRemoteAnonymous(&config.RemoteConfig{
 		Name:   "anonymous",
 		URLs:   []string{url},
 		Mirror: false,
@@ -204,20 +201,18 @@ func updateRepo(repo *git.Repository, url string) error {
 }
 
 func getTree(repo *git.Repository) (*object.Tree, error) {
-	var ref, err = repo.Reference("refs/remotes/origin/HEAD", true)
+	ref, err := repo.Reference("refs/remotes/origin/HEAD", true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get reference to refs/remotes/origin/HEAD: %s", err)
 	}
 
 	var hash = ref.Hash()
-	var commit *object.Commit = nil
-	commit, err = repo.CommitObject(hash)
+	commit, err := repo.CommitObject(hash)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get commit from repo head: %s", err)
 	}
 
-	var tree *object.Tree = nil
-	tree, err = commit.Tree()
+	tree, err := commit.Tree()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Tree from Commit: %s", err)
 	}
