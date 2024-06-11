@@ -46,13 +46,13 @@ var (
 const devel = "(devel)"
 
 type goBinaryCataloger struct {
-	licenses          goLicenses
+	licenseResolver   goLicenseResolver
 	mainModuleVersion MainModuleVersionConfig
 }
 
 func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 	return &goBinaryCataloger{
-		licenses:          newGoLicenses(binaryCatalogerName, opts),
+		licenseResolver:   newGoLicenseResolver(binaryCatalogerName, opts),
 		mainModuleVersion: opts.MainModuleVersion,
 	}
 }

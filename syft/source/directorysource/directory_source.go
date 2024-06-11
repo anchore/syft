@@ -142,6 +142,9 @@ func (s *directorySource) FileResolver(_ source.Scope) (file.Resolver, error) {
 			return nil, err
 		}
 
+		// this should be the only file resolver that might have overlap with where files are cached
+		exclusionFunctions = append(exclusionFunctions, excludeCachePathVisitors()...)
+
 		res, err := fileresolver.NewFromDirectory(s.config.Path, s.config.Base, exclusionFunctions...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create directory resolver: %w", err)

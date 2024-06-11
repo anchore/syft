@@ -86,7 +86,10 @@ require (
 
 require google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17 // indirect
 
-require github.com/magiconair/properties v1.8.7
+require (
+	github.com/adrg/xdg v0.4.0
+	github.com/magiconair/properties v1.8.7
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
@@ -98,7 +101,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
-	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/aquasecurity/go-version v0.0.0-20210121072130-637058cfe492 // indirect
