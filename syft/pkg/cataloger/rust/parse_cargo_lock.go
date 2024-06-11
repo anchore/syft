@@ -32,11 +32,11 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	var relationships []artifact.Relationship
 
 	pkgName := make(map[string][]packageWrap)
-	pkgMap := make(map[PackageID]packageWrap)
+	pkgMap := make(map[packageID]packageWrap)
 
 	for _, p := range m.Packages {
 		p.CargoLockVersion = m.Version
-		p.PackageID = PackageID{
+		p.packageID = packageID{
 			Name:    p.Name,
 			Version: p.Version,
 		}
@@ -49,7 +49,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 			spdxPackage: spkg,
 			rustPackage: p,
 		}
-		pkgMap[p.PackageID] = wrappedPkg
+		pkgMap[p.packageID] = wrappedPkg
 		list, _ := pkgName[p.Name]
 		if list == nil {
 			pkgName[p.Name] = []packageWrap{wrappedPkg}
@@ -64,7 +64,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 			var depPkg packageWrap
 			name, versionString, found := strings.Cut(dep, " ")
 			if found {
-				depPkg, found = pkgMap[PackageID{
+				depPkg, found = pkgMap[packageID{
 					Name:    name,
 					Version: versionString,
 				}]

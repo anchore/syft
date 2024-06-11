@@ -2,7 +2,7 @@ package rust
 
 import "github.com/anchore/syft/syft/pkg"
 
-type PackageID struct {
+type packageID struct {
 	Name    string
 	Version string
 }
