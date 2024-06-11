@@ -6,11 +6,12 @@ import (
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/spdx/tools-golang/spdx"
+	"io"
+	"net/http"
 	"strings"
 )
 
@@ -149,11 +150,26 @@ func (i *SourceId) GetConfig() (*RustRepositoryConfig, error) {
 	return &repoConfig, err
 }
 
-func (i *SourceId) GetPath(path string) (string, error) {
+func (i *SourceId) GetPath(path string) ([]byte, error) {
+	var content []byte
 	switch i.kind {
+	case SourceKindSparse:
+		var resp, err = http.Get(fmt.Sprintf("%s/%s", i.url, path))
+		if err != nil {
+			return content, fmt.Errorf("could not get the path %s/%s from sparse registry: %s", i.url, path, err)
+		}
+		content, err = io.ReadAll(resp.Body)
+		if err != nil {
+			err = fmt.Errorf("failed to get contents of response %s: %s", path, err)
+		}
+		return content, err
 	case SourceKindRegistry:
-		var content = ""
-		var tree, err = getTree(i.url)
+		var _, repo, err = getOrInitRepo(i.url)
+		if err != nil {
+			return content, err
+		}
+		var tree *object.Tree = nil
+		tree, err = getTree(repo)
 		if err != nil {
 			return content, err
 		}
@@ -162,13 +178,18 @@ func (i *SourceId) GetPath(path string) (string, error) {
 		if err != nil {
 			return content, fmt.Errorf("failed to find path %s in tree: %s", path, err)
 		}
-		content, err = file.Contents()
+		var reader io.ReadCloser = nil
+		reader, err = file.Reader()
+		if err != nil {
+			err = fmt.Errorf("failed to get reader for file %s: %s", path, err)
+		}
+		content, err = io.ReadAll(reader)
 		if err != nil {
 			err = fmt.Errorf("failed to get contents of file %s: %s", path, err)
 		}
 		return content, err
 	}
-	return "", fmt.Errorf("unsupported Remote")
+	return content, fmt.Errorf("unsupported Remote")
 }
 
 func getOrInitRepo(url string) (*memory.Storage, *git.Repository, error) {
@@ -229,14 +250,8 @@ func updateRepo(repo *git.Repository, url string) error {
 	return err
 }
 
-func getTree(url string) (*object.Tree, error) {
-	var _, repo, err = getOrInitRepo(url)
-	if err != nil {
-		return nil, err
-	}
-
-	var ref *plumbing.Reference = nil
-	ref, err = repo.Reference("refs/remotes/origin/HEAD", true)
+func getTree(repo *git.Repository) (*object.Tree, error) {
+	var ref, err = repo.Reference("refs/remotes/origin/HEAD", true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get reference to refs/remotes/origin/HEAD: %s", err)
 	}
