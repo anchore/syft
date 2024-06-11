@@ -20,9 +20,13 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 )
 
-//revive:noinspection exported
+// For JSON naming purposes, it is important, that the name stays the same here!
+
+//revive:disable:exported
 //goland:noinspection GoNameStartsWithPackageName
 type RustCargoLockEntry pkg.RustCargoLockEntry
+
+//revive:enable:exported
 
 func (r *RustCargoLockEntry) ToPackageID() PackageID {
 	return PackageID{
@@ -59,8 +63,7 @@ func (r *RustCargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, er
 		return "", false, err
 	}
 	isLocalFile = sourceID.IsLocalSource()
-	var repoConfig *repositoryConfig = nil
-	repoConfig, err = sourceID.GetConfig()
+	repoConfig, err := sourceID.GetConfig()
 	if err != nil {
 		return "", isLocalFile, err
 	}
@@ -103,6 +106,9 @@ func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error
 	var content []byte
 	var errors []error
 	content, err = sourceID.GetPath(r.GetIndexPath())
+	if err != nil {
+		return deps, []error{err}
+	}
 	for _, v := range bytes.Split(content, []byte("\n")) {
 		var depInfo = DependencyInformation{
 			StructVersion: 1,
@@ -129,9 +135,42 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error)
 		genDepInfo.mutex.Unlock()
 		return generatedDepInfoInner, nil
 	}
+	return r.getGeneratedInformationUncached()
+}
 
+func (r *RustCargoLockEntry) getContent() ([]byte, string, error) {
+	var content []byte
+	var link, isLocal, err = r.GetDownloadLink()
+	if err != nil {
+		return content, link, err
+	}
+	log.Tracef("got download link of: link: %s, local: %t", link, isLocal)
+
+	if !isLocal {
+		var resp *http.Response
+		resp, err = http.Get(link) //#nosec G107 -- This is a request with a variable url, but due to the design it has to be this way.
+		if err != nil {
+			return content, link, err
+		}
+
+		content, err = io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		if err != nil {
+			return content, link, err
+		}
+	} else {
+		content, err = os.ReadFile(link)
+		if err != nil {
+			return content, link, err
+		}
+	}
+	log.Tracef("got content for: link: %s, local: %t", link, isLocal)
+	return content, link, nil
+}
+
+func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo, error) {
 	log.Tracef("Generating information for %s-%s", r.Name, r.Version)
-	genDepInfo = &outerGeneratedDepInfo{
+	genDepInfo := &outerGeneratedDepInfo{
 		mutex: sync.Mutex{},
 		GeneratedDepInfo: GeneratedDepInfo{
 			Licenses: make([]string, 0),
@@ -140,41 +179,13 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error)
 	GeneratedInformation[r.ToPackageID()] = genDepInfo
 
 	genDepInfo.mutex.Lock()
-	var link, isLocal, err = r.GetDownloadLink()
+	content, link, err := r.getContent()
 	genDepInfo.DownloadLink = link
 	if err != nil {
 		delete(GeneratedInformation, r.ToPackageID())
 		genDepInfo.mutex.Unlock()
 		return genDepInfo.GeneratedDepInfo, err
 	}
-	log.Tracef("got download link of: link: %s, local: %t", link, isLocal)
-
-	var content []byte
-	if !isLocal {
-		var resp *http.Response
-		//gosec:noinspection G107
-		resp, err = http.Get(link)
-		if err != nil {
-			delete(GeneratedInformation, r.ToPackageID())
-			genDepInfo.mutex.Unlock()
-			return genDepInfo.GeneratedDepInfo, err
-		}
-
-		content, err = io.ReadAll(resp.Body)
-		if err != nil {
-			delete(GeneratedInformation, r.ToPackageID())
-			genDepInfo.mutex.Unlock()
-			return genDepInfo.GeneratedDepInfo, err
-		}
-	} else {
-		content, err = os.ReadFile(link)
-		if err != nil {
-			delete(GeneratedInformation, r.ToPackageID())
-			genDepInfo.mutex.Unlock()
-			return genDepInfo.GeneratedDepInfo, err
-		}
-	}
-	log.Tracef("got content for: link: %s, local: %t", link, isLocal)
 
 	genDepInfo.downloadSha = sha256.Sum256(content)
 	hexHash := hex.EncodeToString(genDepInfo.downloadSha[:])
@@ -192,6 +203,7 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error)
 	for {
 		next, err := tarReader.Next()
 		if err != nil {
+			_ = gzReader.Close()
 			delete(GeneratedInformation, r.ToPackageID())
 			genDepInfo.mutex.Unlock()
 			log.Tracef("Tar reader error for %s-%s: %s", r.Name, r.Version, err)
@@ -201,6 +213,7 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error)
 			log.Tracef("Got Cargo.toml for %s-%s", r.Name, r.Version)
 			cargoTomlBytes, err := io.ReadAll(tarReader)
 			if err != nil {
+				_ = gzReader.Close()
 				delete(GeneratedInformation, r.ToPackageID())
 				genDepInfo.mutex.Unlock()
 				return genDepInfo.GeneratedDepInfo, err
@@ -209,6 +222,7 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error)
 			var cargoToml cargoToml
 			err = toml.Unmarshal(cargoTomlBytes, &cargoToml)
 			if err != nil {
+				_ = gzReader.Close()
 				delete(GeneratedInformation, r.ToPackageID())
 				genDepInfo.mutex.Unlock()
 				return genDepInfo.GeneratedDepInfo, err

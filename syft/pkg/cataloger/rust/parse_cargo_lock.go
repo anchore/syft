@@ -36,7 +36,6 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	}
 
 	var pkgs []pkg.Package
-	var relationships []artifact.Relationship
 
 	pkgName := make(map[string][]packageWrap)
 	pkgMap := make(map[rust.PackageID]packageWrap)
@@ -56,21 +55,27 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 			rustPackage: p,
 		}
 		pkgMap[p.ToPackageID()] = wrappedPkg
-		list, _ := pkgName[p.Name]
-		if list == nil {
+		list, ok := pkgName[p.Name]
+		if list == nil || !ok {
 			pkgName[p.Name] = []packageWrap{wrappedPkg}
 		} else {
 			pkgName[p.Name] = append(list, wrappedPkg)
 		}
 	}
 
-	for _, p := range pkgMap {
+	return pkgs, populateRelationships(&pkgName, &pkgMap), nil
+}
+
+func populateRelationships(pkgName *map[string][]packageWrap, pkgMap *map[rust.PackageID]packageWrap) []artifact.Relationship {
+	var relationships []artifact.Relationship
+
+	for _, p := range *pkgMap {
 		log.Debugf("%s-%s deps: %s", p.rustPackage.Name, p.rustPackage.Version, p.rustPackage.Dependencies)
 		for _, dep := range p.rustPackage.Dependencies {
 			var depPkg packageWrap
 			name, versionString, found := strings.Cut(dep, " ")
 			if found {
-				depPkg, found = pkgMap[rust.PackageID{
+				depPkg, found = (*pkgMap)[rust.PackageID{
 					Name:    name,
 					Version: versionString,
 				}]
@@ -80,7 +85,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 				}
 			} else {
 				log.Debugf("%s-%s dep: name: %s, version: %s", p.rustPackage.Name, p.rustPackage.Version, name, versionString)
-				depPkgs, ok := pkgName[name]
+				depPkgs, ok := (*pkgName)[name]
 				if !ok || depPkgs == nil || len(depPkgs) == 0 {
 					log.Warn("A Dependency of a Dependency was not found. Not including in Relationships.")
 					continue
@@ -101,5 +106,5 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		}
 	}
 
-	return pkgs, relationships, nil
+	return relationships
 }

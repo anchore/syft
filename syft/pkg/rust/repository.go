@@ -114,6 +114,7 @@ func (i *sourceID) GetPath(path string) ([]byte, error) {
 			return content, fmt.Errorf("could not get the path %s/%s from sparse registry: %s", i.url, path, err)
 		}
 		content, err = io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
 		if err != nil {
 			err = fmt.Errorf("failed to get contents of response %s: %s", path, err)
 		}
@@ -133,11 +134,11 @@ func (i *sourceID) GetPath(path string) ([]byte, error) {
 		}
 		reader, err := file.Reader()
 		if err != nil {
-			err = fmt.Errorf("failed to get reader for file %s: %s", path, err)
+			return content, fmt.Errorf("failed to get reader for file %s: %s", path, err)
 		}
 		content, err = io.ReadAll(reader)
 		if err != nil {
-			err = fmt.Errorf("failed to get contents of file %s: %s", path, err)
+			return content, fmt.Errorf("failed to get contents of file %s: %s", path, err)
 		}
 		return content, err
 	}
