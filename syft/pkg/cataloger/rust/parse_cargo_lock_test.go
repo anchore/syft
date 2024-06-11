@@ -1,6 +1,7 @@
 package rust
 
 import (
+	"github.com/anchore/syft/syft/pkg/rust"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -21,7 +22,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
 			Licenses:  pkg.NewLicenseSet(),
-			Metadata: RustCargoLockEntry{
+			Metadata: rust.RustCargoLockEntry{
 				Name:     "ansi_term",
 				Version:  "0.12.1",
 				Source:   "registry+https://github.com/rust-lang/crates.io-index",
@@ -39,7 +40,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
 			Licenses:  pkg.NewLicenseSet(),
-			Metadata: RustCargoLockEntry{
+			Metadata: rust.RustCargoLockEntry{
 				Name:         "matches",
 				Version:      "0.1.8",
 				Source:       "registry+https://github.com/rust-lang/crates.io-index",
@@ -55,7 +56,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
 			Licenses:  pkg.NewLicenseSet(),
-			Metadata: RustCargoLockEntry{
+			Metadata: rust.RustCargoLockEntry{
 				Name:         "memchr",
 				Version:      "2.3.3",
 				Source:       "registry+https://github.com/rust-lang/crates.io-index",
@@ -71,7 +72,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
 			Licenses:  pkg.NewLicenseSet(),
-			Metadata: RustCargoLockEntry{
+			Metadata: rust.RustCargoLockEntry{
 				Name:         "natord",
 				Version:      "1.0.9",
 				Source:       "registry+https://github.com/rust-lang/crates.io-index",
@@ -87,7 +88,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
 			Licenses:  pkg.NewLicenseSet(),
-			Metadata: RustCargoLockEntry{
+			Metadata: rust.RustCargoLockEntry{
 				Name:     "nom",
 				Version:  "4.2.3",
 				Source:   "registry+https://github.com/rust-lang/crates.io-index",
@@ -106,7 +107,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
 			Licenses:  pkg.NewLicenseSet(),
-			Metadata: RustCargoLockEntry{
+			Metadata: rust.RustCargoLockEntry{
 				Name:     "unicode-bidi",
 				Version:  "0.3.4",
 				Source:   "registry+https://github.com/rust-lang/crates.io-index",
@@ -124,7 +125,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
 			Licenses:  pkg.NewLicenseSet(),
-			Metadata: RustCargoLockEntry{
+			Metadata: rust.RustCargoLockEntry{
 				Name:         "version_check",
 				Version:      "0.1.5",
 				Source:       "registry+https://github.com/rust-lang/crates.io-index",
@@ -140,7 +141,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
 			Licenses:  pkg.NewLicenseSet(),
-			Metadata: RustCargoLockEntry{
+			Metadata: rust.RustCargoLockEntry{
 				Name:     "winapi",
 				Version:  "0.3.9",
 				Source:   "registry+https://github.com/rust-lang/crates.io-index",
@@ -159,7 +160,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
 			Licenses:  pkg.NewLicenseSet(),
-			Metadata: RustCargoLockEntry{
+			Metadata: rust.RustCargoLockEntry{
 				Name:         "winapi-i686-pc-windows-gnu",
 				Version:      "0.4.0",
 				Source:       "registry+https://github.com/rust-lang/crates.io-index",
@@ -175,7 +176,7 @@ func TestParseCargoLock(t *testing.T) {
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
 			Licenses:  pkg.NewLicenseSet(),
-			Metadata: RustCargoLockEntry{
+			Metadata: rust.RustCargoLockEntry{
 				Name:         "winapi-x86_64-pc-windows-gnu",
 				Version:      "0.4.0",
 				Source:       "registry+https://github.com/rust-lang/crates.io-index",

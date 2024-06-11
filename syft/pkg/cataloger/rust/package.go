@@ -5,13 +5,14 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/rust"
 	"github.com/microsoft/go-rustaudit"
 )
 
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the Cargo.lock metadata.
-func newPackageFromCargoMetadata(m RustCargoLockEntry, locations ...file.Location) pkg.Package {
+func newPackageFromCargoMetadata(m rust.RustCargoLockEntry, locations ...file.Location) pkg.Package {
 	var licenseSet = pkg.NewLicenseSet()
-	gen, err := m.getGeneratedInformation()
+	gen, err := m.GetGeneratedInformation()
 	if err == nil {
 		if len(gen.Licenses) == 0 {
 			log.Warnf("no licenses for %s-%s!", m.Name, m.Version)

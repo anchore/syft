@@ -4,7 +4,7 @@ package packagemetadata
 
 import (
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/rust"
+	"github.com/anchore/syft/syft/pkg/rust"
 )
 
 // AllTypes returns a list of all pkg metadata types that syft supports (that are represented in the pkg.Package.Metadata field).

@@ -2,7 +2,7 @@ package helpers
 
 import (
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/rust"
+	"github.com/anchore/syft/syft/pkg/rust"
 )
 
 const NONE = "NONE"

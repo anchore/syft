@@ -3,7 +3,6 @@ package rust
 import (
 	"context"
 	"errors"
-
 	rustaudit "github.com/microsoft/go-rustaudit"
 
 	"github.com/anchore/syft/internal/log"

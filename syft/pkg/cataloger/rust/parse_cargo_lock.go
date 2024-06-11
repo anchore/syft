@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/pkg/rust"
 	"github.com/pelletier/go-toml/v2"
 	"strings"
 
@@ -15,9 +16,14 @@ import (
 
 var _ generic.Parser = parseCargoLock
 
+type packageWrap struct {
+	spdxPackage pkg.Package
+	rustPackage rust.RustCargoLockEntry
+}
+
 type cargoLockFile struct {
-	Version  int                  `toml:"version"`
-	Packages []RustCargoLockEntry `toml:"package"`
+	Version  int                       `toml:"version"`
+	Packages []rust.RustCargoLockEntry `toml:"package"`
 }
 
 // parseCargoLock is a parser function for Cargo.lock contents, returning all rust cargo crates discovered.
@@ -32,11 +38,11 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	var relationships []artifact.Relationship
 
 	pkgName := make(map[string][]packageWrap)
-	pkgMap := make(map[packageID]packageWrap)
+	pkgMap := make(map[rust.PackageID]packageWrap)
 
 	for _, p := range m.Packages {
 		p.CargoLockVersion = m.Version
-		p.packageID = packageID{
+		p.PackageID = rust.PackageID{
 			Name:    p.Name,
 			Version: p.Version,
 		}
@@ -49,7 +55,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 			spdxPackage: spkg,
 			rustPackage: p,
 		}
-		pkgMap[p.packageID] = wrappedPkg
+		pkgMap[p.PackageID] = wrappedPkg
 		list, _ := pkgName[p.Name]
 		if list == nil {
 			pkgName[p.Name] = []packageWrap{wrappedPkg}
@@ -64,7 +70,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 			var depPkg packageWrap
 			name, versionString, found := strings.Cut(dep, " ")
 			if found {
-				depPkg, found = pkgMap[packageID{
+				depPkg, found = pkgMap[rust.PackageID{
 					Name:    name,
 					Version: versionString,
 				}]
