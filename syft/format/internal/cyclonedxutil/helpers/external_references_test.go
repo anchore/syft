@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"github.com/anchore/syft/syft/pkg/cataloger/rust"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -62,7 +63,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 				Language: pkg.Rust,
 				Type:     pkg.RustPkg,
 				Licenses: pkg.NewLicenseSet(),
-				Metadata: pkg.RustCargoLockEntry{
+				Metadata: rust.CargoLockEntry{
 					Name:     "ansi_term",
 					Version:  "0.12.1",
 					Source:   "registry+https://github.com/rust-lang/crates.io-index",

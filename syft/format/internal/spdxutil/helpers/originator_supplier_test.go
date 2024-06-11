@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"github.com/anchore/syft/syft/pkg/cataloger/rust"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,7 +39,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.PythonRequirementsEntry{},
 		pkg.PythonPoetryLockEntry{},
 		pkg.RustBinaryAuditEntry{},
-		pkg.RustCargoLockEntry{},
+		rust.CargoLockEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.YarnLockEntry{},
 	)
