@@ -3,6 +3,7 @@ package rust
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/internal/log"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -90,6 +91,7 @@ func (i *SourceId) GetConfig() (*RepositoryConfig, error) {
 	}
 	var repoConfig = RepositoryConfig{}
 	err = json.Unmarshal(content, &repoConfig)
+	log.Debugf("repo config for url %s and kind %s: dl: %s, from: %s", i.url, i.kind, repoConfig.Download, string(content))
 	if err != nil {
 		err = fmt.Errorf("failed to deserialize rust repository configuration: %s", err)
 	}

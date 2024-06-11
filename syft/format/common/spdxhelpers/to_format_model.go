@@ -515,8 +515,10 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 		if hash != nil {
 			hexHash := hex.EncodeToString(hash)
 			if hexHash == meta.Checksum {
+				log.Debugf("setting files analysed to true for %s-%s", meta.Name, meta.Version)
 				filesAnalyzed = true
 			} else {
+				log.Debugf("hash mismatch for %s-%s", meta.Name, meta.Version)
 				//Todo: what do we do on a hash mismatch?
 			}
 		}

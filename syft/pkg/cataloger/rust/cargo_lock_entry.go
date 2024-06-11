@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/internal/log"
 	"github.com/pelletier/go-toml"
 	"github.com/spdx/tools-golang/spdx"
 	"io"
@@ -87,6 +89,7 @@ func (r *CargoLockEntry) GetDownloadSha() []byte {
 	}
 
 	var content []byte
+	log.Debugf("got download link of: link: %s, local: %t", link, isLocal)
 	if !isLocal {
 		var resp *http.Response
 		resp, err = http.Get(link)
@@ -104,9 +107,11 @@ func (r *CargoLockEntry) GetDownloadSha() []byte {
 			return nil
 		}
 	}
+	log.Debugf("got reader for: link: %s, local: %t", link, isLocal)
 
-	var hash = sha256.New().Sum(content)
-	return hash
+	var hash = sha256.Sum256(content)
+	log.Debugf("got hash: %s (%s expected) %t", hex.EncodeToString(hash[:]), r.Checksum, hex.EncodeToString(hash[:]) == r.Checksum)
+	return hash[:]
 }
 func (r *CargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
 	var deps []DependencyInformation
