@@ -92,8 +92,8 @@ func (r *RustCargoLockEntry) GetDownloadSha() []byte {
 	}
 	return info.downloadSha[:]
 }
-func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
-	var deps []DependencyInformation
+func (r *RustCargoLockEntry) GetIndexContent() ([]dependencyInformation, []error) {
+	var deps []dependencyInformation
 	var sourceID, err = GetSourceId(r)
 	if err != nil {
 		return deps, []error{err}
@@ -102,7 +102,7 @@ func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error
 	var errors []error
 	content, err = sourceID.GetPath(r.GetIndexPath())
 	for _, v := range bytes.Split(content, []byte("\n")) {
-		var depInfo = DependencyInformation{
+		var depInfo = dependencyInformation{
 			StructVersion: 1,
 		}
 		err = json.Unmarshal(v, &depInfo)
