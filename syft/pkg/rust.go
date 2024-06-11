@@ -142,6 +142,9 @@ func (i *SourceId) GetConfig() (*RustRepositoryConfig, error) {
 	}
 	var repoConfig = RustRepositoryConfig{}
 	err = json.Unmarshal([]byte(content), &repoConfig)
+	if err != nil {
+		err = fmt.Errorf("failed to deserialize rust repository configuration: %s", err)
+	}
 	RegistryConfig[i.url] = repoConfig
 	return &repoConfig, err
 }
@@ -157,9 +160,12 @@ func (i *SourceId) GetPath(path string) (string, error) {
 		var file *object.File = nil
 		file, err = tree.File(path)
 		if err != nil {
-			return content, err
+			return content, fmt.Errorf("failed to find path %s in tree: %s", path, err)
 		}
 		content, err = file.Contents()
+		if err != nil {
+			err = fmt.Errorf("failed to get contents of file %s: %s", path, err)
+		}
 		return content, err
 	}
 	return "", fmt.Errorf("unsupported Remote")
@@ -176,11 +182,17 @@ func getOrInitRepo(url string) (*memory.Storage, *git.Repository, error) {
 		RegistryRepos[url] = storage
 		repo, err = git.Init(storage, memfs.New())
 		if err != nil {
-			return storage, nil, err
+			return storage, nil, fmt.Errorf("unable to initialise repo: %s", err)
 		}
 		err = updateRepo(repo, url)
+		if err != nil {
+			err = fmt.Errorf("unable to fetch registry information: %s", err)
+		}
 	} else {
 		repo, err = git.Open(storage, memfs.New())
+		if err != nil {
+			err = fmt.Errorf("unable to open repository: %s", err)
+		}
 	}
 	return storage, repo, err
 }
@@ -196,7 +208,7 @@ func updateRepo(repo *git.Repository, url string) error {
 		Fetch: []config.RefSpec{"+HEAD:refs/remotes/origin/HEAD"},
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create anonymous remote for url %s: %s", url, err)
 	}
 	err = remote.Fetch(&git.FetchOptions{
 		RemoteName: "origin",
@@ -211,6 +223,9 @@ func updateRepo(repo *git.Repository, url string) error {
 		ProxyOptions:    transport.ProxyOptions{},
 		Prune:           false,
 	})
+	if err != nil {
+		return fmt.Errorf("failed to fetch registry information from url %s: %s", url, err)
+	}
 	return err
 }
 
