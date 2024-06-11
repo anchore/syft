@@ -1,8 +1,9 @@
 package rust
 
 import (
-	"github.com/anchore/syft/syft/pkg/rust"
 	"testing"
+
+	"github.com/anchore/syft/syft/pkg/rust"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"

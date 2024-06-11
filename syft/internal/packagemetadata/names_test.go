@@ -1,9 +1,10 @@
 package packagemetadata
 
 import (
-	"github.com/anchore/syft/syft/pkg/rust"
 	"reflect"
 	"testing"
+
+	"github.com/anchore/syft/syft/pkg/rust"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"

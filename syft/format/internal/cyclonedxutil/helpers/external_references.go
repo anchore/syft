@@ -2,9 +2,10 @@ package helpers
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/rust"
 	"net/url"
 	"strings"
+
+	"github.com/anchore/syft/syft/pkg/rust"
 
 	"github.com/CycloneDX/cyclonedx-go"
 

@@ -3,10 +3,11 @@ package rust
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg/rust"
 	"github.com/pelletier/go-toml/v2"
-	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"

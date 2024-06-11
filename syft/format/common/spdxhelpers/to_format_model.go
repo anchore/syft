@@ -5,12 +5,13 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg/rust"
 	"path"
 	"slices"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/anchore/syft/syft/pkg/rust"
 
 	"github.com/distribution/reference"
 	"github.com/spdx/tools-golang/spdx"

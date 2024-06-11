@@ -8,15 +8,16 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/pelletier/go-toml/v2"
-	"github.com/spdx/tools-golang/spdx"
 	"io"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/pelletier/go-toml/v2"
+	"github.com/spdx/tools-golang/spdx"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -31,7 +32,7 @@ func (r *RustCargoLockEntry) ToPackageID() PackageID {
 
 // GetChecksumType This exists, to made adopting new potential cargo.lock versions easier
 func (r *RustCargoLockEntry) GetChecksumType() spdx.ChecksumAlgorithm {
-	//Cargo currently always uses Sha256: https://github.com/rust-lang/cargo/blob/a9ee3e82b57df019dfc0385f844bc6928150ee63/src/cargo/sources/registry/download.rs#L125
+	// Cargo currently always uses Sha256: https://github.com/rust-lang/cargo/blob/a9ee3e82b57df019dfc0385f844bc6928150ee63/src/cargo/sources/registry/download.rs#L125
 	return spdx.SHA256
 }
 
@@ -52,7 +53,7 @@ func (r *RustCargoLockEntry) GetPrefix() string {
 }
 
 func (r *RustCargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err error) {
-	sourceID, err := getSourceId(r)
+	sourceID, err := r.getSourceID()
 	if err != nil {
 		return "", false, err
 	}
@@ -92,9 +93,9 @@ func (r *RustCargoLockEntry) GetDownloadSha() []byte {
 	}
 	return info.downloadSha[:]
 }
-func (r *RustCargoLockEntry) GetIndexContent() ([]dependencyInformation, []error) {
-	var deps []dependencyInformation
-	var sourceID, err = getSourceId(r)
+func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
+	var deps []DependencyInformation
+	var sourceID, err = r.getSourceID()
 	if err != nil {
 		return deps, []error{err}
 	}
@@ -102,7 +103,7 @@ func (r *RustCargoLockEntry) GetIndexContent() ([]dependencyInformation, []error
 	var errors []error
 	content, err = sourceID.GetPath(r.GetIndexPath())
 	for _, v := range bytes.Split(content, []byte("\n")) {
-		var depInfo = dependencyInformation{
+		var depInfo = DependencyInformation{
 			StructVersion: 1,
 		}
 		err = json.Unmarshal(v, &depInfo)
@@ -152,6 +153,7 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error)
 	var content []byte
 	if !isLocal {
 		var resp *http.Response
+		//gosec:noinspection G107
 		resp, err = http.Get(link)
 		if err != nil {
 			delete(GeneratedInformation, r.ToPackageID())
@@ -197,8 +199,7 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error)
 			log.Tracef("Tar reader error for %s-%s: %s", r.Name, r.Version, err)
 			return genDepInfo.GeneratedDepInfo, err
 		}
-		switch next.Name {
-		case r.Name + "-" + r.Version + "/Cargo.toml":
+		if next.Name == r.Name+"-"+r.Version+"/Cargo.toml" {
 			log.Tracef("Got Cargo.toml for %s-%s", r.Name, r.Version)
 			cargoTomlBytes, err := io.ReadAll(tarReader)
 			if err != nil {

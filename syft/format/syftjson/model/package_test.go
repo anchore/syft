@@ -2,9 +2,10 @@ package model
 
 import (
 	"encoding/json"
-	"github.com/anchore/syft/syft/pkg/rust"
 	"reflect"
 	"testing"
+
+	"github.com/anchore/syft/syft/pkg/rust"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

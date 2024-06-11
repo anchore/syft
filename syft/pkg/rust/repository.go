@@ -3,6 +3,11 @@ package rust
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
@@ -10,10 +15,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
-	"io"
-	"net/http"
-	"os"
-	"strings"
 )
 
 type repositoryConfig struct {
@@ -22,16 +23,16 @@ type repositoryConfig struct {
 	AuthRequired bool   `json:"auth-required"`
 }
 
-type sourceId struct {
+type sourceID struct {
 	kind string
 	url  string
 }
 
-func (i *sourceId) IsLocalSource() bool {
+func (i *sourceID) IsLocalSource() bool {
 	return i.kind == SourceKindLocalRegistry
 }
 
-func getSourceId(r *RustCargoLockEntry) (*sourceId, error) {
+func (r *RustCargoLockEntry) getSourceID() (*sourceID, error) {
 	if len(r.Source) == 0 {
 		//Todo: add handling for looking in the current workspace, finding all Cargo.toml's and checking if any matches.
 		//		if a match is found license information could potentially still be added.
@@ -43,7 +44,7 @@ func getSourceId(r *RustCargoLockEntry) (*sourceId, error) {
 		return nil, fmt.Errorf("did not find \"+\" in source field of dependency: Name: %s, Version: %s, Source: %s", r.Name, r.Version, r.Source)
 	}
 
-	return &sourceId{
+	return &sourceID{
 		kind: before,
 		url:  after,
 	}, nil
@@ -73,9 +74,9 @@ var RegistryConfig = make(map[string]repositoryConfig)
 // RepositoryConfigName see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/mod.rs#L962
 const RepositoryConfigName = "config.json"
 
-func (i *sourceId) GetConfig() (*repositoryConfig, error) {
+func (i *sourceID) GetConfig() (*repositoryConfig, error) {
 	if i.kind == SourceKindLocalRegistry {
-		//see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/local.rs#L14-L57
+		// see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/local.rs#L14-L57
 		return &repositoryConfig{
 			Download:     fmt.Sprintf("%s/%s-%s.crate", i.url, Crate, Version),
 			API:          "",
@@ -99,7 +100,7 @@ func (i *sourceId) GetConfig() (*repositoryConfig, error) {
 	return &repoConfig, err
 }
 
-func (i *sourceId) GetPath(path string) ([]byte, error) {
+func (i *sourceID) GetPath(path string) ([]byte, error) {
 	var content []byte
 	switch i.kind {
 	case SourceKindLocalRegistry:

@@ -1,9 +1,9 @@
 package rust
 
-type dependencyInformation struct {
+type DependencyInformation struct {
 	Name          string                            `json:"name"`
 	Version       string                            `json:"vers"`
-	Dependencies  []dependencyDependencyInformation `json:"deps"`
+	Dependencies  []DependencyDependencyInformation `json:"deps"`
 	Checksum      string                            `json:"cksum"`
 	Features      map[string]string                 `json:"features"`
 	Yanked        bool                              `json:"yanked"`
@@ -12,7 +12,7 @@ type dependencyInformation struct {
 	Features2     map[string]string                 `json:"features2"`
 	RustVersion   string                            `json:"rust_version"`
 }
-type dependencyDependencyInformation struct {
+type DependencyDependencyInformation struct {
 	Name           string   `json:"name"`
 	Requirement    string   `json:"req"`
 	Features       []string `json:"features"`
