@@ -31,8 +31,8 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
-	pkgName := make(map[string][]Package)
-	pkgMap := make(map[PackageID]Package)
+	pkgName := make(map[string][]packageWrap)
+	pkgMap := make(map[PackageID]packageWrap)
 
 	for _, p := range m.Packages {
 		p.CargoLockVersion = m.Version
@@ -45,14 +45,14 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		pkgs = append(pkgs, spkg)
-		wrappedPkg := Package{
+		wrappedPkg := packageWrap{
 			spdxPackage: spkg,
 			rustPackage: p,
 		}
 		pkgMap[p.PackageID] = wrappedPkg
 		list, _ := pkgName[p.Name]
 		if list == nil {
-			pkgName[p.Name] = []Package{wrappedPkg}
+			pkgName[p.Name] = []packageWrap{wrappedPkg}
 		} else {
 			pkgName[p.Name] = append(list, wrappedPkg)
 		}
@@ -61,7 +61,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	for _, p := range pkgMap {
 		log.Debugf("%s-%s deps: %s", p.rustPackage.Name, p.rustPackage.Version, p.rustPackage.Dependencies)
 		for _, dep := range p.rustPackage.Dependencies {
-			var depPkg Package
+			var depPkg packageWrap
 			name, versionString, found := strings.Cut(dep, " ")
 			if found {
 				depPkg, found = pkgMap[PackageID{

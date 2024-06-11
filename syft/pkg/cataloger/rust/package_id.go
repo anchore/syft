@@ -7,7 +7,7 @@ type PackageID struct {
 	Version string
 }
 
-type Package struct {
+type packageWrap struct {
 	spdxPackage pkg.Package
 	rustPackage CargoLockEntry
 }

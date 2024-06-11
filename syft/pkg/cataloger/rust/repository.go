@@ -16,7 +16,7 @@ import (
 	"strings"
 )
 
-type RepositoryConfig struct {
+type repositoryConfig struct {
 	Download     string `json:"dl"`
 	API          string `json:"api"`
 	AuthRequired bool   `json:"auth-required"`
@@ -68,15 +68,15 @@ const (
 )
 
 var RegistryRepos = make(map[string]*memory.Storage)
-var RegistryConfig = make(map[string]RepositoryConfig)
+var RegistryConfig = make(map[string]repositoryConfig)
 
 // RepositoryConfigName see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/mod.rs#L962
 const RepositoryConfigName = "config.json"
 
-func (i *SourceId) GetConfig() (*RepositoryConfig, error) {
+func (i *SourceId) GetConfig() (*repositoryConfig, error) {
 	if i.kind == SourceKindLocalRegistry {
 		//see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/local.rs#L14-L57
-		return &RepositoryConfig{
+		return &repositoryConfig{
 			Download:     fmt.Sprintf("%s/%s-%s.crate", i.url, Crate, Version),
 			API:          "",
 			AuthRequired: false,
@@ -89,7 +89,7 @@ func (i *SourceId) GetConfig() (*RepositoryConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	var repoConfig = RepositoryConfig{}
+	var repoConfig = repositoryConfig{}
 	err = json.Unmarshal(content, &repoConfig)
 	log.Debugf("repo config for url %s and kind %s: dl: %s, from: %s", i.url, i.kind, repoConfig.Download, string(content))
 	if err != nil {

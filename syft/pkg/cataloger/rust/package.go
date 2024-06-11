@@ -11,7 +11,7 @@ import (
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the Cargo.lock metadata.
 func newPackageFromCargoMetadata(m CargoLockEntry, locations ...file.Location) pkg.Package {
 	var licenseSet = pkg.NewLicenseSet()
-	gen, err := m.GetGeneratedInformation()
+	gen, err := m.getGeneratedInformation()
 	if err == nil {
 		if len(gen.Licenses) == 0 {
 			log.Warnf("no licenses for %s-%s!", m.Name, m.Version)
