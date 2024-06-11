@@ -42,10 +42,6 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 
 	for _, p := range m.Packages {
 		p.CargoLockVersion = m.Version
-		p.PackageID = rust.PackageID{
-			Name:    p.Name,
-			Version: p.Version,
-		}
 		spkg := newPackageFromCargoMetadata(
 			p,
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
@@ -55,7 +51,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 			spdxPackage: spkg,
 			rustPackage: p,
 		}
-		pkgMap[p.PackageID] = wrappedPkg
+		pkgMap[p.ToPackageID()] = wrappedPkg
 		list, _ := pkgName[p.Name]
 		if list == nil {
 			pkgName[p.Name] = []packageWrap{wrappedPkg}

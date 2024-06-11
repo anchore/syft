@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/spdx/tools-golang/spdx"
 	"io"
@@ -19,14 +20,13 @@ import (
 )
 
 //goland:noinspection GoNameStartsWithPackageName
-type RustCargoLockEntry struct {
-	CargoLockVersion int `toml:"-" json:"-"`
-	PackageID        `toml:"-" json:"-"`
-	Name             string   `toml:"name" json:"name"`
-	Version          string   `toml:"version" json:"version"`
-	Source           string   `toml:"source" json:"source"`
-	Checksum         string   `toml:"checksum" json:"checksum"`
-	Dependencies     []string `toml:"dependencies" json:"dependencies"`
+type RustCargoLockEntry pkg.RustCargoLockEntry
+
+func (r *RustCargoLockEntry) ToPackageID() PackageID {
+	return PackageID{
+		Name:    r.Name,
+		Version: r.Version,
+	}
 }
 
 // GetChecksumType This exists, to made adopting new potential cargo.lock versions easier
@@ -117,12 +117,12 @@ func (r *RustCargoLockEntry) GetIndexContent() ([]dependencyInformation, []error
 
 var GeneratedInformation = make(map[PackageID]*outerGeneratedDepInfo)
 
-func (r *RustCargoLockEntry) GetGeneratedInformation() (generatedDepInfo, error) {
-	genDepInfo, ok := GeneratedInformation[r.PackageID]
+func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error) {
+	genDepInfo, ok := GeneratedInformation[r.ToPackageID()]
 	if ok {
-		var generatedDepInfoInner generatedDepInfo
+		var generatedDepInfoInner GeneratedDepInfo
 		genDepInfo.mutex.Lock()
-		generatedDepInfoInner = genDepInfo.generatedDepInfo
+		generatedDepInfoInner = genDepInfo.GeneratedDepInfo
 		log.Debugf("Got cached generated information for %s-%s", r.Name, r.Version)
 		genDepInfo.mutex.Unlock()
 		return generatedDepInfoInner, nil
@@ -130,22 +130,22 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (generatedDepInfo, error)
 		log.Tracef("Generating information for %s-%s", r.Name, r.Version)
 		genDepInfo = &outerGeneratedDepInfo{
 			mutex: sync.Mutex{},
-			generatedDepInfo: generatedDepInfo{
+			GeneratedDepInfo: GeneratedDepInfo{
 				Licenses: make([]string, 0),
 			},
 		}
-		GeneratedInformation[r.PackageID] = genDepInfo
+		GeneratedInformation[r.ToPackageID()] = genDepInfo
 	}
 
 	genDepInfo.mutex.Lock()
-	GeneratedInformation[r.PackageID] = genDepInfo
+	GeneratedInformation[r.ToPackageID()] = genDepInfo
 	var link, isLocal, err = r.GetDownloadLink()
 	genDepInfo.DownloadLink = link
-	GeneratedInformation[r.PackageID] = genDepInfo
+	GeneratedInformation[r.ToPackageID()] = genDepInfo
 	if err != nil {
-		delete(GeneratedInformation, r.PackageID)
+		delete(GeneratedInformation, r.ToPackageID())
 		genDepInfo.mutex.Unlock()
-		return genDepInfo.generatedDepInfo, err
+		return genDepInfo.GeneratedDepInfo, err
 	}
 	log.Tracef("got download link of: link: %s, local: %t", link, isLocal)
 
@@ -154,23 +154,23 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (generatedDepInfo, error)
 		var resp *http.Response
 		resp, err = http.Get(link)
 		if err != nil {
-			delete(GeneratedInformation, r.PackageID)
+			delete(GeneratedInformation, r.ToPackageID())
 			genDepInfo.mutex.Unlock()
-			return genDepInfo.generatedDepInfo, err
+			return genDepInfo.GeneratedDepInfo, err
 		}
 
 		content, err = io.ReadAll(resp.Body)
 		if err != nil {
-			delete(GeneratedInformation, r.PackageID)
+			delete(GeneratedInformation, r.ToPackageID())
 			genDepInfo.mutex.Unlock()
-			return genDepInfo.generatedDepInfo, err
+			return genDepInfo.GeneratedDepInfo, err
 		}
 	} else {
 		content, err = os.ReadFile(link)
 		if err != nil {
-			delete(GeneratedInformation, r.PackageID)
+			delete(GeneratedInformation, r.ToPackageID())
 			genDepInfo.mutex.Unlock()
-			return genDepInfo.generatedDepInfo, err
+			return genDepInfo.GeneratedDepInfo, err
 		}
 	}
 	log.Tracef("got content for: link: %s, local: %t", link, isLocal)
@@ -178,13 +178,13 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (generatedDepInfo, error)
 	genDepInfo.downloadSha = sha256.Sum256(content)
 	hexHash := hex.EncodeToString(genDepInfo.downloadSha[:])
 	log.Tracef("got hash: %s (%s expected) %t", hexHash, r.Checksum, hexHash == r.Checksum)
-	GeneratedInformation[r.PackageID] = genDepInfo
+	GeneratedInformation[r.ToPackageID()] = genDepInfo
 
 	gzReader, err := gzip.NewReader(bytes.NewReader(content))
 	if err != nil {
-		delete(GeneratedInformation, r.PackageID)
+		delete(GeneratedInformation, r.ToPackageID())
 		genDepInfo.mutex.Unlock()
-		return genDepInfo.generatedDepInfo, err
+		return genDepInfo.GeneratedDepInfo, err
 	}
 	tarReader := tar.NewReader(gzReader)
 	log.Tracef("Got tar-reader: %s-%s", r.Name, r.Version)
@@ -192,33 +192,33 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (generatedDepInfo, error)
 	for {
 		next, err := tarReader.Next()
 		if err != nil {
-			delete(GeneratedInformation, r.PackageID)
+			delete(GeneratedInformation, r.ToPackageID())
 			genDepInfo.mutex.Unlock()
 			log.Tracef("Tar reader error for %s-%s: %s", r.Name, r.Version, err)
-			return genDepInfo.generatedDepInfo, err
+			return genDepInfo.GeneratedDepInfo, err
 		}
 		switch next.Name {
 		case r.Name + "-" + r.Version + "/Cargo.toml":
 			log.Tracef("Got Cargo.toml for %s-%s", r.Name, r.Version)
 			cargoTomlBytes, err := io.ReadAll(tarReader)
 			if err != nil {
-				delete(GeneratedInformation, r.PackageID)
+				delete(GeneratedInformation, r.ToPackageID())
 				genDepInfo.mutex.Unlock()
-				return genDepInfo.generatedDepInfo, err
+				return genDepInfo.GeneratedDepInfo, err
 			}
 
 			var cargoToml cargoToml
 			err = toml.Unmarshal(cargoTomlBytes, &cargoToml)
 			if err != nil {
-				delete(GeneratedInformation, r.PackageID)
+				delete(GeneratedInformation, r.ToPackageID())
 				genDepInfo.mutex.Unlock()
-				return genDepInfo.generatedDepInfo, err
+				return genDepInfo.GeneratedDepInfo, err
 			}
 			log.Tracef("Got Deserialized Cargo.toml for %s-%s: %s", r.Name, r.Version, cargoToml.Package.License)
 
 			genDepInfo.Licenses = append(genDepInfo.Licenses, cargoToml.Package.License)
-			GeneratedInformation[r.PackageID] = genDepInfo
-			var generatedInfoInner = genDepInfo.generatedDepInfo
+			GeneratedInformation[r.ToPackageID()] = genDepInfo
+			var generatedInfoInner = genDepInfo.GeneratedDepInfo
 			genDepInfo.mutex.Unlock()
 			return generatedInfoInner, nil
 		}

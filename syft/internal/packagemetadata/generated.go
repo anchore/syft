@@ -4,7 +4,6 @@ package packagemetadata
 
 import (
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/rust"
 )
 
 // AllTypes returns a list of all pkg metadata types that syft supports (that are represented in the pkg.Package.Metadata field).
@@ -50,7 +49,7 @@ func AllTypes() []any {
 		pkg.RpmDBEntry{},
 		pkg.RubyGemspec{},
 		pkg.RustBinaryAuditEntry{},
-		rust.RustCargoLockEntry{},
+		pkg.RustCargoLockEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.WordpressPluginEntry{},
 		pkg.YarnLockEntry{},

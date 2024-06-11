@@ -7,10 +7,10 @@ import (
 
 type outerGeneratedDepInfo struct {
 	mutex sync.Mutex
-	generatedDepInfo
+	GeneratedDepInfo
 }
 
-type generatedDepInfo struct {
+type GeneratedDepInfo struct {
 	DownloadLink string
 	downloadSha  [sha256.Size]byte
 	Licenses     []string
