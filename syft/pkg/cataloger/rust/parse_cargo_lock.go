@@ -78,14 +78,12 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 				if !ok || depPkgs == nil || len(depPkgs) == 0 {
 					log.Warn("A Dependency of a Dependency was not found. Not including in Relationships.")
 					continue
-				} else {
-					if len(depPkgs) > 1 {
-						log.Warn("A Dependency was ambiguous. Not including in Relationships.")
-						continue
-					} else {
-						depPkg = depPkgs[0]
-					}
 				}
+				if len(depPkgs) > 1 {
+					log.Warn("A Dependency was ambiguous. Not including in Relationships.")
+					continue
+				}
+				depPkg = depPkgs[0]
 			}
 			log.Debugf("Adding dependency-of relationshop between %s-%s and %s-%s.", depPkg.rustPackage.Name, depPkg.rustPackage.Version, p.rustPackage.Name, p.rustPackage.Version)
 			//Todo: is this the correct direction?
