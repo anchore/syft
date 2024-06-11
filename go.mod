@@ -58,7 +58,7 @@ require (
 	github.com/moby/sys/mountinfo v0.7.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/pelletier/go-toml v1.9.5
+	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/saferwall/pe v1.5.3
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
@@ -86,7 +86,10 @@ require (
 
 require google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17 // indirect
 
-require github.com/magiconair/properties v1.8.7
+require (
+	github.com/magiconair/properties v1.8.7
+	github.com/pelletier/go-toml/v2 v2.1.0
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
@@ -184,7 +187,6 @@ require (
 	github.com/opencontainers/runtime-spec v1.1.0-rc.1 // indirect
 	github.com/opencontainers/selinux v1.11.0 // indirect
 	github.com/pborman/indent v1.2.1 // indirect
-	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

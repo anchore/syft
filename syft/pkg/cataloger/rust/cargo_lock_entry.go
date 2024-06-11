@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/anchore/syft/internal/log"
-	"github.com/pelletier/go-toml"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/spdx/tools-golang/spdx"
 	"io"
 	"net/http"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/anchore/syft/internal/log"
-	"github.com/pelletier/go-toml"
+	"github.com/pelletier/go-toml/v2"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -22,15 +22,10 @@ type cargoLockFile struct {
 
 // parseCargoLock is a parser function for Cargo.lock contents, returning all rust cargo crates discovered.
 func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	tree, err := toml.LoadReader(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to load Cargo.lock for parsing: %w", err)
-	}
-
 	m := cargoLockFile{}
-	err = tree.Unmarshal(&m)
+	err := toml.NewDecoder(reader).Decode(&m)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to parse Cargo.lock: %w", err)
+		return nil, nil, fmt.Errorf("unable to load or parse Cargo.lock: %w", err)
 	}
 
 	var pkgs []pkg.Package
