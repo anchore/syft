@@ -27,7 +27,7 @@ func DownloadLocation(p pkg.Package) string {
 		case pkg.RustCargoLockEntry:
 			var url, err = metadata.GetDownloadLink()
 			if err != nil {
-				return NONE
+				return NOASSERTION
 			} else {
 				return NoneIfEmpty(url)
 			}
