@@ -145,8 +145,8 @@ func (i *sourceID) GetPath(path string) ([]byte, error) {
 }
 
 func getOrInitRepo(url string) (*memory.Storage, *git.Repository, error) {
-	var repo *git.Repository = nil
-	var err error = nil
+	var repo *git.Repository
+	var err error
 
 	var storage, ok = RegistryRepos[url]
 	// Todo: Should we use an on-disk storage?

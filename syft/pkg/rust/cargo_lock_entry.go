@@ -20,6 +20,7 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 )
 
+//revive:noinspection exported
 //goland:noinspection GoNameStartsWithPackageName
 type RustCargoLockEntry pkg.RustCargoLockEntry
 
@@ -127,22 +128,20 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error)
 		log.Debugf("Got cached generated information for %s-%s", r.Name, r.Version)
 		genDepInfo.mutex.Unlock()
 		return generatedDepInfoInner, nil
-	} else {
-		log.Tracef("Generating information for %s-%s", r.Name, r.Version)
-		genDepInfo = &outerGeneratedDepInfo{
-			mutex: sync.Mutex{},
-			GeneratedDepInfo: GeneratedDepInfo{
-				Licenses: make([]string, 0),
-			},
-		}
-		GeneratedInformation[r.ToPackageID()] = genDepInfo
 	}
 
-	genDepInfo.mutex.Lock()
+	log.Tracef("Generating information for %s-%s", r.Name, r.Version)
+	genDepInfo = &outerGeneratedDepInfo{
+		mutex: sync.Mutex{},
+		GeneratedDepInfo: GeneratedDepInfo{
+			Licenses: make([]string, 0),
+		},
+	}
 	GeneratedInformation[r.ToPackageID()] = genDepInfo
+
+	genDepInfo.mutex.Lock()
 	var link, isLocal, err = r.GetDownloadLink()
 	genDepInfo.DownloadLink = link
-	GeneratedInformation[r.ToPackageID()] = genDepInfo
 	if err != nil {
 		delete(GeneratedInformation, r.ToPackageID())
 		genDepInfo.mutex.Unlock()
@@ -180,7 +179,6 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error)
 	genDepInfo.downloadSha = sha256.Sum256(content)
 	hexHash := hex.EncodeToString(genDepInfo.downloadSha[:])
 	log.Tracef("got hash: %s (%s expected) %t", hexHash, r.Checksum, hexHash == r.Checksum)
-	GeneratedInformation[r.ToPackageID()] = genDepInfo
 
 	gzReader, err := gzip.NewReader(bytes.NewReader(content))
 	if err != nil {
@@ -218,7 +216,6 @@ func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error)
 			log.Tracef("Got Deserialized Cargo.toml for %s-%s: %s", r.Name, r.Version, cargoToml.Package.License)
 
 			genDepInfo.Licenses = append(genDepInfo.Licenses, cargoToml.Package.License)
-			GeneratedInformation[r.ToPackageID()] = genDepInfo
 			var generatedInfoInner = genDepInfo.GeneratedDepInfo
 			genDepInfo.mutex.Unlock()
 			return generatedInfoInner, nil
