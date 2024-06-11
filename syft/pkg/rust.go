@@ -42,6 +42,27 @@ type SourceId struct {
 }
 
 type DependencyInformation struct {
+	Name          string                            `json:"name"`
+	Version       string                            `json:"vers"`
+	Dependencies  []DependencyDependencyInformation `json:"deps"`
+	Checksum      string                            `json:"cksum"`
+	Features      map[string]string                 `json:"features"`
+	Yanked        bool                              `json:"yanked"`
+	Links         string                            `json:"links"`
+	StructVersion int                               `json:"v"`
+	Features2     map[string]string                 `json:"features2"`
+	RustVersion   string                            `json:"rust_version"`
+}
+type DependencyDependencyInformation struct {
+	Name           string   `json:"name"`
+	Requirement    string   `json:"req"`
+	Features       []string `json:"features"`
+	Optional       bool     `json:"optional"`
+	DefaultTargets bool     `json:"default_targets"`
+	Target         string   `json:"target"`
+	Kind           string   `json:"kind"`
+	Registry       string   `json:"registry"`
+	Package        string   `json:"package"`
 }
 
 // see https://github.com/rust-lang/cargo/blob/master/crates/cargo-util-schemas/src/core/source_kind.rs
@@ -126,8 +147,30 @@ func (r *RustCargoLockEntry) getDownloadLink(url string) string {
 	link = strings.ReplaceAll(link, Sha256Checksum, r.Checksum)
 	return link
 }
-func (r *RustCargoLockEntry) getIndexPath() string {
+func (r *RustCargoLockEntry) GetIndexPath() string {
 	return fmt.Sprintf("%s/%s", strings.ToLower(r.GetPrefix()), strings.ToLower(r.Name))
+}
+func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
+	var deps []DependencyInformation
+	var sourceID, err = r.getSourceId()
+	if err != nil {
+		return deps, []error{err}
+	}
+	var content []byte
+	var errors []error
+	content, err = sourceID.GetPath(r.GetIndexPath())
+	for _, v := range bytes.Split(content, []byte("\n")) {
+		var depInfo = DependencyInformation{
+			StructVersion: 1,
+		}
+		err = json.Unmarshal(v, &depInfo)
+		if err == nil {
+			deps = append(deps, depInfo)
+		} else {
+			errors = append(errors, err)
+		}
+	}
+	return deps, errors
 }
 
 // RepositoryConfigName see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/mod.rs#L962
