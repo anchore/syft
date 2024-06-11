@@ -20,13 +20,13 @@ type Cache struct {
 }
 
 func (c *Cache) DescribeFields(descriptions clio.FieldDescriptionSet) {
-	descriptions.Add(&c.Dir, "root directory to cache any downloaded content; defaults to use $XDG_CACHE_HOME or $HOME/.cache")
+	descriptions.Add(&c.Dir, "root directory to cache any downloaded content")
 	descriptions.Add(&c.TTL, "time to live for cached data, in seconds")
 }
 
 func (c *Cache) PostLoad() error {
 	if c.Dir != "" {
-		ttl := c.TTL * time.Second
+		ttl := c.TTL
 		dir, err := homedir.Expand(c.Dir)
 		if err != nil {
 			log.Warnf("unable to expand cache directory %s: %v", c.Dir, err)
@@ -52,7 +52,7 @@ var _ interface {
 func DefaultCache() Cache {
 	return Cache{
 		Dir: defaultDir(),
-		TTL: 7 * 24 * 60 * 60, // 7 days, in seconds
+		TTL: 7 * 24 * time.Hour,
 	}
 }
 
