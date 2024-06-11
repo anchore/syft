@@ -20,7 +20,7 @@ import (
 
 type CargoLockEntry struct {
 	CargoLockVersion int `toml:"-" json:"-"`
-	PackageId        `toml:"-" json:"-"`
+	PackageID        `toml:"-" json:"-"`
 	Name             string   `toml:"name" json:"name"`
 	Version          string   `toml:"version" json:"version"`
 	Source           string   `toml:"source" json:"source"`
@@ -114,10 +114,10 @@ func (r *CargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
 	return deps, errors
 }
 
-var GeneratedInformation = make(map[PackageId]*outerGeneratedDepInfo)
+var GeneratedInformation = make(map[PackageID]*outerGeneratedDepInfo)
 
 func (r *CargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error) {
-	generatedDepInfo, ok := GeneratedInformation[r.PackageId]
+	generatedDepInfo, ok := GeneratedInformation[r.PackageID]
 	if ok {
 		var generatedDepInfoInner GeneratedDepInfo
 		generatedDepInfo.mutex.Lock()
@@ -133,16 +133,16 @@ func (r *CargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error) {
 				Licenses: make([]string, 0),
 			},
 		}
-		GeneratedInformation[r.PackageId] = generatedDepInfo
+		GeneratedInformation[r.PackageID] = generatedDepInfo
 	}
 
 	generatedDepInfo.mutex.Lock()
-	GeneratedInformation[r.PackageId] = generatedDepInfo
+	GeneratedInformation[r.PackageID] = generatedDepInfo
 	var link, isLocal, err = r.GetDownloadLink()
 	generatedDepInfo.DownloadLink = link
-	GeneratedInformation[r.PackageId] = generatedDepInfo
+	GeneratedInformation[r.PackageID] = generatedDepInfo
 	if err != nil {
-		delete(GeneratedInformation, r.PackageId)
+		delete(GeneratedInformation, r.PackageID)
 		generatedDepInfo.mutex.Unlock()
 		return generatedDepInfo.GeneratedDepInfo, err
 	}
@@ -153,21 +153,21 @@ func (r *CargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error) {
 		var resp *http.Response
 		resp, err = http.Get(link)
 		if err != nil {
-			delete(GeneratedInformation, r.PackageId)
+			delete(GeneratedInformation, r.PackageID)
 			generatedDepInfo.mutex.Unlock()
 			return generatedDepInfo.GeneratedDepInfo, err
 		}
 
 		content, err = io.ReadAll(resp.Body)
 		if err != nil {
-			delete(GeneratedInformation, r.PackageId)
+			delete(GeneratedInformation, r.PackageID)
 			generatedDepInfo.mutex.Unlock()
 			return generatedDepInfo.GeneratedDepInfo, err
 		}
 	} else {
 		content, err = os.ReadFile(link)
 		if err != nil {
-			delete(GeneratedInformation, r.PackageId)
+			delete(GeneratedInformation, r.PackageID)
 			generatedDepInfo.mutex.Unlock()
 			return generatedDepInfo.GeneratedDepInfo, err
 		}
@@ -177,11 +177,11 @@ func (r *CargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error) {
 	generatedDepInfo.downloadSha = sha256.Sum256(content)
 	hexHash := hex.EncodeToString(generatedDepInfo.downloadSha[:])
 	log.Tracef("got hash: %s (%s expected) %t", hexHash, r.Checksum, hexHash == r.Checksum)
-	GeneratedInformation[r.PackageId] = generatedDepInfo
+	GeneratedInformation[r.PackageID] = generatedDepInfo
 
 	gzReader, err := gzip.NewReader(bytes.NewReader(content))
 	if err != nil {
-		delete(GeneratedInformation, r.PackageId)
+		delete(GeneratedInformation, r.PackageID)
 		generatedDepInfo.mutex.Unlock()
 		return generatedDepInfo.GeneratedDepInfo, err
 	}
@@ -191,7 +191,7 @@ func (r *CargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error) {
 	for {
 		next, err := tarReader.Next()
 		if err != nil {
-			delete(GeneratedInformation, r.PackageId)
+			delete(GeneratedInformation, r.PackageID)
 			generatedDepInfo.mutex.Unlock()
 			log.Tracef("Tar reader error for %s-%s: %s", r.Name, r.Version, err)
 			return generatedDepInfo.GeneratedDepInfo, err
@@ -201,7 +201,7 @@ func (r *CargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error) {
 			log.Tracef("Got Cargo.toml for %s-%s", r.Name, r.Version)
 			cargoTomlBytes, err := io.ReadAll(tarReader)
 			if err != nil {
-				delete(GeneratedInformation, r.PackageId)
+				delete(GeneratedInformation, r.PackageID)
 				generatedDepInfo.mutex.Unlock()
 				return generatedDepInfo.GeneratedDepInfo, err
 			}
@@ -209,14 +209,14 @@ func (r *CargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error) {
 			var cargoToml CargoToml
 			err = toml.Unmarshal(cargoTomlBytes, &cargoToml)
 			if err != nil {
-				delete(GeneratedInformation, r.PackageId)
+				delete(GeneratedInformation, r.PackageID)
 				generatedDepInfo.mutex.Unlock()
 				return generatedDepInfo.GeneratedDepInfo, err
 			}
 			log.Tracef("Got Deserialized Cargo.toml for %s-%s: %s", r.Name, r.Version, cargoToml.Package.License)
 
 			generatedDepInfo.Licenses = append(generatedDepInfo.Licenses, cargoToml.Package.License)
-			GeneratedInformation[r.PackageId] = generatedDepInfo
+			GeneratedInformation[r.PackageID] = generatedDepInfo
 			var generatedInfoInner = generatedDepInfo.GeneratedDepInfo
 			generatedDepInfo.mutex.Unlock()
 			return generatedInfoInner, nil
