@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"github.com/anchore/syft/syft/pkg/cataloger/rust"
 	"path"
 	"slices"
 	"sort"
@@ -504,7 +505,7 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 			Algorithm: spdx.ChecksumAlgorithm(algo),
 			Value:     hexStr,
 		})
-	case pkg.RustCargoLockEntry:
+	case rust.RustCargoLockEntry:
 		hasChecksum := len(meta.Checksum) > 0
 		checksum := spdx.Checksum{
 			Algorithm: meta.GetChecksumType(),

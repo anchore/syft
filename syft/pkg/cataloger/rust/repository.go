@@ -3,7 +3,6 @@ package rust
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -31,7 +30,7 @@ func (i *SourceId) IsLocalSource() bool {
 	return i.kind == SourceKindLocalRegistry
 }
 
-func GetSourceId(r *pkg.RustCargoLockEntry) (*SourceId, error) {
+func GetSourceId(r *RustCargoLockEntry) (*SourceId, error) {
 	if len(r.Source) == 0 {
 		//Todo: add handling for looking in the current workspace, finding all Cargo.toml's and checking if any matches.
 		//		if a match is found license information could potentially still be added.
