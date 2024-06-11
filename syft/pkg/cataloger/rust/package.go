@@ -2,6 +2,7 @@ package rust
 
 import (
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/microsoft/go-rustaudit"
@@ -9,10 +10,16 @@ import (
 
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the Cargo.lock metadata.
 func newPackageFromCargoMetadata(m CargoLockEntry, locations ...file.Location) pkg.Package {
+	var licenseSet = pkg.NewLicenseSet()
+	for _, license := range m.GetLicenseInformation() {
+		log.Debugf("Got license %s for %s-%s", license, m.Name, m.Version)
+		licenseSet.Add(pkg.NewLicense(license))
+	}
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   m.Version,
 		Locations: file.NewLocationSet(locations...),
+		Licenses:  licenseSet,
 		PURL:      packageURL(m.Name, m.Version),
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,

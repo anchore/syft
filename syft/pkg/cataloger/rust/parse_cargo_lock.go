@@ -41,6 +41,10 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 
 	for _, p := range m.Packages {
 		p.CargoLockVersion = m.Version
+		p.PackageId = PackageId{
+			Name:    p.Name,
+			Version: p.Version,
+		}
 		spkg := newPackageFromCargoMetadata(
 			p,
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
@@ -50,7 +54,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 			spdxPackage: spkg,
 			rustPackage: p,
 		}
-		pkgMap[p.toPackageId()] = wrappedPkg
+		pkgMap[p.PackageId] = wrappedPkg
 		list, _ := pkgName[p.Name]
 		if list == nil {
 			pkgName[p.Name] = []Package{wrappedPkg}
@@ -59,9 +63,8 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		}
 	}
 
-	log.Info("Test")
 	for _, p := range pkgMap {
-		log.Infof("%s-%s deps: %s", p.rustPackage.Name, p.rustPackage.Version, p.rustPackage.Dependencies)
+		log.Debugf("%s-%s deps: %s", p.rustPackage.Name, p.rustPackage.Version, p.rustPackage.Dependencies)
 		for _, dep := range p.rustPackage.Dependencies {
 			var depPkg Package
 			name, versionString, found := strings.Cut(dep, " ")
@@ -75,7 +78,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 					continue
 				}
 			} else {
-				log.Infof("%s-%s dep: name: %s, version: %s", p.rustPackage.Name, p.rustPackage.Version, name, versionString)
+				log.Debugf("%s-%s dep: name: %s, version: %s", p.rustPackage.Name, p.rustPackage.Version, name, versionString)
 				depPkgs, ok := pkgName[name]
 				if !ok || depPkgs == nil || len(depPkgs) == 0 {
 					log.Warn("A Dependency of a Dependency was not found. Not including in Relationships.")

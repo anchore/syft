@@ -5,5 +5,5 @@ type CargoToml struct {
 }
 type TomlPackage struct {
 	License     string `toml:"license"`
-	LicenseFile string `toml:"license"`
+	LicenseFile string `toml:"license-file"`
 }

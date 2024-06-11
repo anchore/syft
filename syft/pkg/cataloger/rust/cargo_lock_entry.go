@@ -15,22 +15,17 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 )
 
 type CargoLockEntry struct {
-	CargoLockVersion int      `toml:"-" json:"-"`
+	CargoLockVersion int `toml:"-" json:"-"`
+	PackageId        `toml:"-" json:"-"`
 	Name             string   `toml:"name" json:"name"`
 	Version          string   `toml:"version" json:"version"`
 	Source           string   `toml:"source" json:"source"`
 	Checksum         string   `toml:"checksum" json:"checksum"`
 	Dependencies     []string `toml:"dependencies" json:"dependencies"`
-}
-
-func (r *CargoLockEntry) toPackageId() (id PackageId) {
-	return PackageId{
-		Name:    r.Name,
-		Version: r.Version,
-	}
 }
 
 // GetChecksumType This exists, to made adopting new potential cargo.lock versions easier
@@ -90,35 +85,11 @@ func (r *CargoLockEntry) GetIndexPath() string {
 	return fmt.Sprintf("%s/%s", strings.ToLower(r.GetPrefix()), strings.ToLower(r.Name))
 }
 func (r *CargoLockEntry) GetDownloadSha() []byte {
-	var link, isLocal, err = r.GetDownloadLink()
+	info, err := r.GetGeneratedInformation()
 	if err != nil {
 		return nil
 	}
-
-	var content []byte
-	log.Debugf("got download link of: link: %s, local: %t", link, isLocal)
-	if !isLocal {
-		var resp *http.Response
-		resp, err = http.Get(link)
-		if err != nil {
-			return nil
-		}
-
-		content, err = io.ReadAll(resp.Body)
-		if err != nil {
-			return nil
-		}
-	} else {
-		content, err = os.ReadFile(link)
-		if err != nil {
-			return nil
-		}
-	}
-	log.Debugf("got reader for: link: %s, local: %t", link, isLocal)
-
-	var hash = sha256.Sum256(content)
-	log.Debugf("got hash: %s (%s expected) %t", hex.EncodeToString(hash[:]), r.Checksum, hex.EncodeToString(hash[:]) == r.Checksum)
-	return hash[:]
+	return info.downloadSha[:]
 }
 func (r *CargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
 	var deps []DependencyInformation
@@ -143,51 +114,120 @@ func (r *CargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
 	return deps, errors
 }
 
-func (r *CargoLockEntry) GetLicenseInformation() []string {
-	var licenseSet []string
-	var link, isLocal, err = r.GetDownloadLink()
-	if err != nil {
-		return licenseSet
+var GeneratedInformation = make(map[PackageId]*outerGeneratedDepInfo)
+
+func (r *CargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error) {
+	generatedDepInfo, ok := GeneratedInformation[r.PackageId]
+	if ok {
+		var generatedDepInfoInner GeneratedDepInfo
+		generatedDepInfo.mutex.Lock()
+		generatedDepInfoInner = generatedDepInfo.GeneratedDepInfo
+		log.Debugf("Got cached generated information for %s-%s", r.Name, r.Version)
+		generatedDepInfo.mutex.Unlock()
+		return generatedDepInfoInner, nil
+	} else {
+		log.Tracef("Generating information for %s-%s", r.Name, r.Version)
+		generatedDepInfo = &outerGeneratedDepInfo{
+			mutex: sync.Mutex{},
+			GeneratedDepInfo: GeneratedDepInfo{
+				Licenses: make([]string, 0),
+			},
+		}
+		GeneratedInformation[r.PackageId] = generatedDepInfo
 	}
 
-	var content io.ReadCloser
+	generatedDepInfo.mutex.Lock()
+	GeneratedInformation[r.PackageId] = generatedDepInfo
+	var link, isLocal, err = r.GetDownloadLink()
+	generatedDepInfo.DownloadLink = link
+	GeneratedInformation[r.PackageId] = generatedDepInfo
+	if err != nil {
+		delete(GeneratedInformation, r.PackageId)
+		generatedDepInfo.mutex.Unlock()
+		return generatedDepInfo.GeneratedDepInfo, err
+	}
+	log.Tracef("got download link of: link: %s, local: %t", link, isLocal)
+
+	var content []byte
 	if !isLocal {
 		var resp *http.Response
 		resp, err = http.Get(link)
 		if err != nil {
-			return licenseSet
+			delete(GeneratedInformation, r.PackageId)
+			generatedDepInfo.mutex.Unlock()
+			return generatedDepInfo.GeneratedDepInfo, err
 		}
 
-		content = resp.Body
-	} else {
-		content, err = os.Open(link)
+		content, err = io.ReadAll(resp.Body)
 		if err != nil {
-			return licenseSet
+			delete(GeneratedInformation, r.PackageId)
+			generatedDepInfo.mutex.Unlock()
+			return generatedDepInfo.GeneratedDepInfo, err
+		}
+	} else {
+		content, err = os.ReadFile(link)
+		if err != nil {
+			delete(GeneratedInformation, r.PackageId)
+			generatedDepInfo.mutex.Unlock()
+			return generatedDepInfo.GeneratedDepInfo, err
 		}
 	}
-	gzReader, err := gzip.NewReader(content)
+	log.Tracef("got content for: link: %s, local: %t", link, isLocal)
+
+	generatedDepInfo.downloadSha = sha256.Sum256(content)
+	hexHash := hex.EncodeToString(generatedDepInfo.downloadSha[:])
+	log.Tracef("got hash: %s (%s expected) %t", hexHash, r.Checksum, hexHash == r.Checksum)
+	GeneratedInformation[r.PackageId] = generatedDepInfo
+
+	gzReader, err := gzip.NewReader(bytes.NewReader(content))
 	if err != nil {
-		return licenseSet
+		delete(GeneratedInformation, r.PackageId)
+		generatedDepInfo.mutex.Unlock()
+		return generatedDepInfo.GeneratedDepInfo, err
 	}
 	tarReader := tar.NewReader(gzReader)
+	log.Tracef("Got tar-reader: %s-%s", r.Name, r.Version)
+
 	for {
 		next, err := tarReader.Next()
 		if err != nil {
-			return licenseSet
+			delete(GeneratedInformation, r.PackageId)
+			generatedDepInfo.mutex.Unlock()
+			log.Tracef("Tar reader error for %s-%s: %s", r.Name, r.Version, err)
+			return generatedDepInfo.GeneratedDepInfo, err
 		}
-		if next.Name != "Cargo.toml" {
-			continue
+		switch next.Name {
+		case r.Name + "-" + r.Version + "/Cargo.toml":
+			log.Tracef("Got Cargo.toml for %s-%s", r.Name, r.Version)
+			cargoTomlBytes, err := io.ReadAll(tarReader)
+			if err != nil {
+				delete(GeneratedInformation, r.PackageId)
+				generatedDepInfo.mutex.Unlock()
+				return generatedDepInfo.GeneratedDepInfo, err
+			}
+
+			var cargoToml CargoToml
+			err = toml.Unmarshal(cargoTomlBytes, &cargoToml)
+			if err != nil {
+				delete(GeneratedInformation, r.PackageId)
+				generatedDepInfo.mutex.Unlock()
+				return generatedDepInfo.GeneratedDepInfo, err
+			}
+			log.Tracef("Got Deserialized Cargo.toml for %s-%s: %s", r.Name, r.Version, cargoToml.Package.License)
+
+			generatedDepInfo.Licenses = append(generatedDepInfo.Licenses, cargoToml.Package.License)
+			GeneratedInformation[r.PackageId] = generatedDepInfo
+			var generatedInfoInner = generatedDepInfo.GeneratedDepInfo
+			generatedDepInfo.mutex.Unlock()
+			return generatedInfoInner, nil
 		}
-		cargoTomlBytes, err := io.ReadAll(tarReader)
-		if err != nil {
-			return licenseSet
-		}
-		var cargoToml CargoToml
-		err = toml.Unmarshal(cargoTomlBytes, &cargoToml)
-		if err != nil {
-			return licenseSet
-		}
-		licenseSet = append(licenseSet, cargoToml.Package.License)
-		return licenseSet
 	}
+}
+
+func (r *CargoLockEntry) GetLicenseInformation() []string {
+	info, err := r.GetGeneratedInformation()
+	if err != nil {
+		return make([]string, 0)
+	}
+	return info.Licenses
 }
