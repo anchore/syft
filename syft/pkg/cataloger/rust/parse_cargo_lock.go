@@ -42,6 +42,9 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 
 	for _, p := range m.Packages {
 		p.CargoLockVersion = m.Version
+		if p.Dependencies == nil {
+			p.Dependencies = []string{}
+		}
 		spkg := newPackageFromCargoMetadata(
 			p,
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
