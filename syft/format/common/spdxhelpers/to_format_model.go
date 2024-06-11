@@ -3,6 +3,7 @@ package spdxhelpers
 
 import (
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"path"
 	"slices"
@@ -504,10 +505,24 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 			Value:     hexStr,
 		})
 	case pkg.RustCargoLockEntry:
-		checksums = append(checksums, spdx.Checksum{
+		hasChecksum := len(meta.Checksum) > 0
+		checksum := spdx.Checksum{
 			Algorithm: meta.GetChecksumType(),
 			Value:     meta.Checksum,
-		})
+		}
+		hash := meta.GetDownloadSha()
+		if hash != nil {
+			hexHash := hex.EncodeToString(hash)
+			if hexHash == meta.Checksum {
+				filesAnalyzed = true
+			} else {
+				//Todo: what do we do on a hash mismatch?
+			}
+		}
+
+		if hasChecksum {
+			checksums = append(checksums, checksum)
+		}
 	}
 	return checksums, filesAnalyzed
 }

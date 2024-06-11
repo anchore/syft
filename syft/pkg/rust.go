@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"github.com/go-git/go-billy/v5/memfs"
@@ -150,6 +152,26 @@ func (r *RustCargoLockEntry) getDownloadLink(url string) string {
 func (r *RustCargoLockEntry) GetIndexPath() string {
 	return fmt.Sprintf("%s/%s", strings.ToLower(r.GetPrefix()), strings.ToLower(r.Name))
 }
+func (r *RustCargoLockEntry) GetDownloadSha() []byte {
+	var link, err = r.GetDownloadLink()
+	if err != nil {
+		return nil
+	}
+	var resp *http.Response
+	resp, err = http.Get(link)
+	if err != nil {
+		return nil
+	}
+
+	var content []byte
+	content, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return nil
+	}
+
+	var hash = sha256.New().Sum(content)
+	return hash
+}
 func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
 	var deps []DependencyInformation
 	var sourceID, err = r.getSourceId()
@@ -185,7 +207,7 @@ func (i *SourceId) GetConfig() (*RustRepositoryConfig, error) {
 		return nil, err
 	}
 	var repoConfig = RustRepositoryConfig{}
-	err = json.Unmarshal([]byte(content), &repoConfig)
+	err = json.Unmarshal(content, &repoConfig)
 	if err != nil {
 		err = fmt.Errorf("failed to deserialize rust repository configuration: %s", err)
 	}
