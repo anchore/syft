@@ -50,7 +50,7 @@ func AllTypes() []any {
 		pkg.RpmDBEntry{},
 		pkg.RubyGemspec{},
 		pkg.RustBinaryAuditEntry{},
-		rust.RustCargoLockEntry{},
+		rust.CargoLockEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.WordpressPluginEntry{},
 		pkg.YarnLockEntry{},

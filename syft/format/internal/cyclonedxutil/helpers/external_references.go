@@ -27,7 +27,7 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 					Type: cyclonedx.ERTypeDistribution,
 				})
 			}
-		case rust.RustCargoLockEntry:
+		case rust.CargoLockEntry:
 			if metadata.Source != "" {
 				refs = append(refs, cyclonedx.ExternalReference{
 					URL:  metadata.Source,
@@ -108,7 +108,7 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 	switch meta := metadata.(type) {
 	case *pkg.ApkDBEntry:
 		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)
-	case *rust.RustCargoLockEntry:
+	case *rust.CargoLockEntry:
 		meta.Source = refURL(c, cyclonedx.ERTypeDistribution)
 	case *pkg.NpmPackage:
 		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)

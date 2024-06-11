@@ -1,10 +1,13 @@
 package rust
 
 import (
+	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/pelletier/go-toml"
 	"github.com/spdx/tools-golang/spdx"
 	"io"
 	"net/http"
@@ -12,7 +15,7 @@ import (
 	"strings"
 )
 
-type RustCargoLockEntry struct {
+type CargoLockEntry struct {
 	CargoLockVersion int      `toml:"-" json:"-"`
 	Name             string   `toml:"name" json:"name"`
 	Version          string   `toml:"version" json:"version"`
@@ -22,13 +25,13 @@ type RustCargoLockEntry struct {
 }
 
 // GetChecksumType This exists, to made adopting new potential cargo.lock versions easier
-func (r *RustCargoLockEntry) GetChecksumType() spdx.ChecksumAlgorithm {
+func (r *CargoLockEntry) GetChecksumType() spdx.ChecksumAlgorithm {
 	//Cargo currently always uses Sha256: https://github.com/rust-lang/cargo/blob/a9ee3e82b57df019dfc0385f844bc6928150ee63/src/cargo/sources/registry/download.rs#L125
 	return spdx.SHA256
 }
 
 // GetPrefix get {path} for https://doc.rust-lang.org/cargo/reference/registry-index.html
-func (r *RustCargoLockEntry) GetPrefix() string {
+func (r *CargoLockEntry) GetPrefix() string {
 	switch len(r.Name) {
 	case 0:
 		return ""
@@ -43,7 +46,7 @@ func (r *RustCargoLockEntry) GetPrefix() string {
 	}
 }
 
-func (r *RustCargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err error) {
+func (r *CargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err error) {
 	sourceId, err := GetSourceId(r)
 	if err != nil {
 		return "", false, err
@@ -57,13 +60,13 @@ func (r *RustCargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, er
 	return r.getDownloadLink(repoConfig.Download), isLocalFile, err
 }
 
-func (r *RustCargoLockEntry) getDownloadLink(url string) string {
+func (r *CargoLockEntry) getDownloadLink(url string) string {
 	if !strings.Contains(url, Crate) &&
 		!strings.Contains(url, Version) &&
 		!strings.Contains(url, Prefix) &&
 		!strings.Contains(url, LowerPrefix) &&
 		!strings.Contains(url, Sha256Checksum) {
-		return url + fmt.Sprintf("/%s/%s/download", r.Name, r.Version)
+		return fmt.Sprintf("%s/%s/%s/download", url, r.Name, r.Version)
 	}
 
 	var link = url
@@ -74,10 +77,10 @@ func (r *RustCargoLockEntry) getDownloadLink(url string) string {
 	link = strings.ReplaceAll(link, Sha256Checksum, r.Checksum)
 	return link
 }
-func (r *RustCargoLockEntry) GetIndexPath() string {
+func (r *CargoLockEntry) GetIndexPath() string {
 	return fmt.Sprintf("%s/%s", strings.ToLower(r.GetPrefix()), strings.ToLower(r.Name))
 }
-func (r *RustCargoLockEntry) GetDownloadSha() []byte {
+func (r *CargoLockEntry) GetDownloadSha() []byte {
 	var link, isLocal, err = r.GetDownloadLink()
 	if err != nil {
 		return nil
@@ -105,7 +108,7 @@ func (r *RustCargoLockEntry) GetDownloadSha() []byte {
 	var hash = sha256.New().Sum(content)
 	return hash
 }
-func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
+func (r *CargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
 	var deps []DependencyInformation
 	var sourceID, err = GetSourceId(r)
 	if err != nil {
@@ -126,4 +129,53 @@ func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error
 		}
 	}
 	return deps, errors
+}
+
+func (r *CargoLockEntry) GetLicenseInformation() []string {
+	var licenseSet []string
+	var link, isLocal, err = r.GetDownloadLink()
+	if err != nil {
+		return licenseSet
+	}
+
+	var content io.ReadCloser
+	if !isLocal {
+		var resp *http.Response
+		resp, err = http.Get(link)
+		if err != nil {
+			return licenseSet
+		}
+
+		content = resp.Body
+	} else {
+		content, err = os.Open(link)
+		if err != nil {
+			return licenseSet
+		}
+	}
+	gzReader, err := gzip.NewReader(content)
+	if err != nil {
+		return licenseSet
+	}
+	tarReader := tar.NewReader(gzReader)
+	for {
+		next, err := tarReader.Next()
+		if err != nil {
+			return licenseSet
+		}
+		if next.Name != "Cargo.toml" {
+			continue
+		}
+		cargoTomlBytes, err := io.ReadAll(tarReader)
+		if err != nil {
+			return licenseSet
+		}
+		var cargoToml CargoToml
+		err = toml.Unmarshal(cargoTomlBytes, &cargoToml)
+		if err != nil {
+			return licenseSet
+		}
+		licenseSet = append(licenseSet, cargoToml.Package.License)
+		return licenseSet
+	}
 }

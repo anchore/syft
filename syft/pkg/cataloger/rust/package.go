@@ -8,8 +8,7 @@ import (
 )
 
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the Cargo.lock metadata.
-func newPackageFromCargoMetadata(m pkg.RustCargoLockEntry, locations ...file.Location) pkg.Package {
-func newPackageFromCargoMetadata(m RustCargoLockEntry, locations ...file.Location) pkg.Package {
+func newPackageFromCargoMetadata(m CargoLockEntry, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   m.Version,
