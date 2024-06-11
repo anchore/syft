@@ -51,13 +51,13 @@ func (r *CargoLockEntry) GetPrefix() string {
 }
 
 func (r *CargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err error) {
-	sourceId, err := GetSourceId(r)
+	sourceID, err := GetSourceId(r)
 	if err != nil {
 		return "", false, err
 	}
-	isLocalFile = sourceId.IsLocalSource()
+	isLocalFile = sourceID.IsLocalSource()
 	var repoConfig *RepositoryConfig = nil
-	repoConfig, err = sourceId.GetConfig()
+	repoConfig, err = sourceID.GetConfig()
 	if err != nil {
 		return "", isLocalFile, err
 	}
