@@ -148,7 +148,7 @@ func getOrInitRepo(url string) (*memory.Storage, *git.Repository, error) {
 	var err error = nil
 
 	var storage, ok = RegistryRepos[url]
-	//Todo: Should we use an on-disk storage?
+	// Todo: Should we use an on-disk storage?
 	if !ok {
 		storage = memory.NewStorage()
 		RegistryRepos[url] = storage
@@ -170,13 +170,13 @@ func getOrInitRepo(url string) (*memory.Storage, *git.Repository, error) {
 }
 
 func updateRepo(repo *git.Repository, url string) error {
-	//Todo: cargo re-initialises the repo, if the fetch fails. Do we need to copy that?
-	//see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/git/utils.rs#L1150
+	// Todo: cargo re-initialises the repo, if the fetch fails. Do we need to copy that?
+	// see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/git/utils.rs#L1150
 	remote, err := repo.CreateRemoteAnonymous(&config.RemoteConfig{
 		Name:   "anonymous",
 		URLs:   []string{url},
 		Mirror: false,
-		//see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/git/utils.rs#L979
+		// see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/git/utils.rs#L979
 		Fetch: []config.RefSpec{"+HEAD:refs/remotes/origin/HEAD"},
 	})
 	if err != nil {
@@ -185,7 +185,7 @@ func updateRepo(repo *git.Repository, url string) error {
 	err = remote.Fetch(&git.FetchOptions{
 		RemoteName: "origin",
 		Depth:      1,
-		//Todo: support private repos by allowing auth information to be specified
+		// Todo: support private repos by allowing auth information to be specified
 		Auth:            nil,
 		Progress:        nil,
 		Tags:            git.NoTags,
