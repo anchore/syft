@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -28,7 +27,6 @@ func DownloadLocation(p pkg.Package) string {
 		case pkg.RustCargoLockEntry:
 			var url, err = metadata.GetDownloadLink()
 			if err != nil {
-				log.Info(err)
 				return NONE
 			} else {
 				return NoneIfEmpty(url)
