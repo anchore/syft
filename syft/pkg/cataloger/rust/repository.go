@@ -32,6 +32,12 @@ func (i *SourceId) IsLocalSource() bool {
 }
 
 func GetSourceId(r *pkg.RustCargoLockEntry) (*SourceId, error) {
+	if len(r.Source) == 0 {
+		//Todo: add handling for looking in the current workspace, finding all Cargo.toml's and checking if any matches.
+		//		if a match is found license information could potentially still be added.
+		//	 	In that scenario adding "path" or "directory" support might make sense.
+		return nil, fmt.Errorf("no Source was found for Dependency with Name %s and Version %s", r.Name, r.Version)
+	}
 	var before, after, found = strings.Cut(r.Source, "+")
 	if !found {
 		return nil, fmt.Errorf("did not find \"+\" in source field of dependency: Name: %s, Version: %s, Source: %s", r.Name, r.Version, r.Source)
