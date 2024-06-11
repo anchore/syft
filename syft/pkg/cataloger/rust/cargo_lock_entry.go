@@ -207,7 +207,7 @@ func (r *RustCargoLockEntry) getGeneratedInformation() (generatedDepInfo, error)
 				return genDepInfo.generatedDepInfo, err
 			}
 
-			var cargoToml CargoToml
+			var cargoToml cargoToml
 			err = toml.Unmarshal(cargoTomlBytes, &cargoToml)
 			if err != nil {
 				delete(GeneratedInformation, r.packageID)
