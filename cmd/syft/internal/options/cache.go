@@ -1,8 +1,12 @@
 package options
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/adrg/xdg"
@@ -15,8 +19,8 @@ import (
 
 // Cache provides configuration for the Syft caching behavior
 type Cache struct {
-	Dir string        `yaml:"dir" mapstructure:"dir"`
-	TTL time.Duration `yaml:"ttl" mapstructure:"ttl"`
+	Dir string `yaml:"dir" mapstructure:"dir"`
+	TTL string `yaml:"ttl" mapstructure:"ttl"`
 }
 
 func (c *Cache) DescribeFields(descriptions clio.FieldDescriptionSet) {
@@ -26,7 +30,11 @@ func (c *Cache) DescribeFields(descriptions clio.FieldDescriptionSet) {
 
 func (c *Cache) PostLoad() error {
 	if c.Dir != "" {
-		ttl := c.TTL
+		ttl, err := parseDuration(c.TTL)
+		if err != nil {
+			log.Warnf("unable to parse duration '%v', using default (%s) due to: %v", c.TTL, durationToString(defaultTTL()), err)
+			ttl = defaultTTL()
+		}
 		dir, err := homedir.Expand(c.Dir)
 		if err != nil {
 			log.Warnf("unable to expand cache directory %s: %v", c.Dir, err)
@@ -52,8 +60,12 @@ var _ interface {
 func DefaultCache() Cache {
 	return Cache{
 		Dir: defaultDir(),
-		TTL: 7 * 24 * time.Hour,
+		TTL: durationToString(defaultTTL()),
 	}
+}
+
+func defaultTTL() time.Duration {
+	return 7 * 24 * time.Hour
 }
 
 func defaultDir() string {
@@ -70,4 +82,41 @@ func defaultDir() string {
 	}
 
 	return filepath.Join(cacheRoot, "syft")
+}
+
+func durationToString(duration time.Duration) string {
+	days := int64(duration / (24 * time.Hour))
+	remain := duration % (24 * time.Hour)
+	out := ""
+	if days > 0 {
+		out = fmt.Sprintf("%vd", days)
+	}
+	if remain != 0 {
+		out += remain.String()
+	}
+	if out == "" {
+		return "0"
+	}
+	return out
+}
+
+var whitespace = regexp.MustCompile(`\s+`)
+
+func parseDuration(duration string) (time.Duration, error) {
+	duration = strings.ToLower(whitespace.ReplaceAllString(duration, ""))
+	parts := strings.SplitN(duration, "d", 2)
+	var days time.Duration
+	var remain time.Duration
+	var err error
+	if len(parts) > 1 {
+		numDays, daysErr := strconv.Atoi(parts[0])
+		if daysErr != nil {
+			return 0, daysErr
+		}
+		days = time.Duration(numDays) * 24 * time.Hour
+		remain, err = time.ParseDuration(parts[1])
+	} else {
+		remain, err = time.ParseDuration(duration)
+	}
+	return days + remain, err
 }
