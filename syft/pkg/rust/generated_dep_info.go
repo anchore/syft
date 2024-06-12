@@ -15,5 +15,4 @@ type GeneratedDepInfo struct {
 	downloadSha  [sha256.Size]byte
 	Licenses     []string
 	CargoToml
-	PathSha1Hashes map[string][sha1.Size]byte
 }
