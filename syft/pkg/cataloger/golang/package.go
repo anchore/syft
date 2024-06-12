@@ -15,7 +15,7 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debu
 		dep = dep.Replace
 	}
 
-	licenses, err := c.licenses.getLicenses(resolver, dep.Path, dep.Version)
+	licenses, err := c.licenseResolver.getLicenses(resolver, dep.Path, dep.Version)
 	if err != nil {
 		log.Tracef("error getting licenses for golang package: %s %v", dep.Path, err)
 	}
