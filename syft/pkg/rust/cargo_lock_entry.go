@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -173,7 +174,8 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 	genDepInfo := &outerGeneratedDepInfo{
 		mutex: sync.Mutex{},
 		GeneratedDepInfo: GeneratedDepInfo{
-			Licenses: make([]string, 0),
+			Licenses:       make([]string, 0),
+			PathSha1Hashes: make(map[string][20]byte),
 		},
 	}
 	GeneratedInformation[r.ToPackageID()] = genDepInfo
@@ -202,6 +204,9 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 
 	for {
 		next, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
 		if err != nil {
 			_ = gzReader.Close()
 			delete(GeneratedInformation, r.ToPackageID())
@@ -209,18 +214,19 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 			log.Tracef("Tar reader error for %s-%s: %s", r.Name, r.Version, err)
 			return genDepInfo.GeneratedDepInfo, err
 		}
+		content, err := io.ReadAll(tarReader)
+		if err != nil {
+			_ = gzReader.Close()
+			delete(GeneratedInformation, r.ToPackageID())
+			genDepInfo.mutex.Unlock()
+			return genDepInfo.GeneratedDepInfo, err
+		}
+		genDepInfo.PathSha1Hashes[next.Name] = sha1.Sum(content)
+
 		if next.Name == r.Name+"-"+r.Version+"/Cargo.toml" {
 			log.Tracef("Got Cargo.toml for %s-%s", r.Name, r.Version)
-			cargoTomlBytes, err := io.ReadAll(tarReader)
-			if err != nil {
-				_ = gzReader.Close()
-				delete(GeneratedInformation, r.ToPackageID())
-				genDepInfo.mutex.Unlock()
-				return genDepInfo.GeneratedDepInfo, err
-			}
-
 			var cargoToml CargoToml
-			err = toml.Unmarshal(cargoTomlBytes, &cargoToml)
+			err = toml.Unmarshal(content, &cargoToml)
 			if err != nil {
 				_ = gzReader.Close()
 				delete(GeneratedInformation, r.ToPackageID())
@@ -231,11 +237,11 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 
 			genDepInfo.CargoToml = cargoToml
 			genDepInfo.Licenses = append(genDepInfo.Licenses, cargoToml.Package.License)
-			var generatedInfoInner = genDepInfo.GeneratedDepInfo
-			genDepInfo.mutex.Unlock()
-			return generatedInfoInner, nil
 		}
 	}
+	var generatedInfoInner = genDepInfo.GeneratedDepInfo
+	genDepInfo.mutex.Unlock()
+	return generatedInfoInner, nil
 }
 
 func (r *RustCargoLockEntry) GetLicenseInformation() []string {

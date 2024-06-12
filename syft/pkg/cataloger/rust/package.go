@@ -2,7 +2,6 @@ package rust
 
 import (
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/rust"
@@ -10,20 +9,7 @@ import (
 )
 
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the Cargo.lock metadata.
-func newPackageFromCargoMetadata(m rust.RustCargoLockEntry, locations ...file.Location) pkg.Package {
-	var licenseSet = pkg.NewLicenseSet()
-	gen, err := m.GetGeneratedInformation()
-	if err == nil {
-		if len(gen.Licenses) == 0 {
-			log.Warnf("no licenses for %s-%s!", m.Name, m.Version)
-		}
-	} else {
-		log.Warnf("error whilst generating info for %s-%s: %s", m.Name, m.Version, err)
-	}
-	for _, license := range gen.Licenses {
-		log.Debugf("Got license %s for %s-%s", license, m.Name, m.Version)
-		licenseSet.Add(pkg.NewLicense(license))
-	}
+func newPackageFromCargoMetadata(m rust.RustCargoLockEntry, licenseSet pkg.LicenseSet, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   m.Version,

@@ -791,6 +791,14 @@ func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *spdx.PackageVeri
 		digests = append(digests, d)
 	}
 
+	for _, r := range sbom.RelationshipsForPackage(p, artifact.ContainsRelationship) {
+		if digest, exists := r.Data.(file.Digest); exists {
+			if digest.Algorithm == "sha1" {
+				digests = append(digests, digest)
+			}
+		}
+	}
+
 	if len(digests) == 0 {
 		return nil
 	}

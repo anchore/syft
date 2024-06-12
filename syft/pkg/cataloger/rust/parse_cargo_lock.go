@@ -2,6 +2,7 @@ package rust
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -40,15 +41,35 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	pkgName := make(map[string][]packageWrap)
 	pkgMap := make(map[rust.PackageID]packageWrap)
 
+	var relationships []artifact.Relationship
 	for _, p := range m.Packages {
 		p.CargoLockVersion = m.Version
 		if p.Dependencies == nil {
 			p.Dependencies = []string{}
 		}
+
+		var licenseSet = pkg.NewLicenseSet()
+		gen, err := p.GetGeneratedInformation()
+		if err == nil {
+			if len(gen.Licenses) == 0 {
+				log.Debugf("no licenses for %s-%s!", p.Name, p.Version)
+			}
+		} else {
+			log.Warnf("error whilst generating info for %s-%s: %s", p.Name, p.Version, err)
+		}
+		for _, license := range gen.Licenses {
+			log.Debugf("Got license %s for %s-%s", license, p.Name, p.Version)
+			licenseSet.Add(pkg.NewLicense(license))
+		}
+
 		spkg := newPackageFromCargoMetadata(
 			p,
+			licenseSet,
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
+
+		relationships = append(relationships, populatePackageContainsRelationships(&spkg, &gen)...)
+
 		pkgs = append(pkgs, spkg)
 		wrappedPkg := packageWrap{
 			spdxPackage: spkg,
@@ -63,12 +84,25 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		}
 	}
 
-	return pkgs, populateRelationships(&pkgName, &pkgMap), nil
+	relationships = append(relationships, populatePackageDependencyRelationships(&pkgName, &pkgMap)...)
+
+	return pkgs, relationships, nil
 }
-
-func populateRelationships(pkgName *map[string][]packageWrap, pkgMap *map[rust.PackageID]packageWrap) []artifact.Relationship {
-	var relationships []artifact.Relationship
-
+func populatePackageContainsRelationships(p *pkg.Package, gen *rust.GeneratedDepInfo) (relationships []artifact.Relationship) {
+	for path, h := range gen.PathSha1Hashes {
+		relationships = append(relationships, artifact.Relationship{
+			From: p,
+			To:   file.NewCoordinates(path, gen.DownloadLink),
+			Type: artifact.ContainsRelationship,
+			Data: file.Digest{
+				Algorithm: "sha1",
+				Value:     strings.ToLower(hex.EncodeToString(h[:])),
+			},
+		})
+	}
+	return relationships
+}
+func populatePackageDependencyRelationships(pkgName *map[string][]packageWrap, pkgMap *map[rust.PackageID]packageWrap) (relationships []artifact.Relationship) {
 	for _, p := range *pkgMap {
 		log.Debugf("%s-%s deps: %s", p.rustPackage.Name, p.rustPackage.Version, p.rustPackage.Dependencies)
 		for _, dep := range p.rustPackage.Dependencies {
@@ -105,6 +139,5 @@ func populateRelationships(pkgName *map[string][]packageWrap, pkgMap *map[rust.P
 			})
 		}
 	}
-
 	return relationships
 }
