@@ -17,7 +17,11 @@ func Homepage(p pkg.Package) string {
 			if err != nil {
 				return ""
 			}
-			return information.CargoToml.Package.Homepage
+			homepage := information.CargoToml.Package.Homepage
+			if homepage == "" {
+				homepage = information.CargoToml.Package.Repository
+			}
+			return homepage
 		}
 	}
 	return ""

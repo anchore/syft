@@ -6,6 +6,7 @@ type CargoToml struct {
 type TomlPackage struct {
 	Description string `toml:"description"`
 	Homepage    string `toml:"homepage"`
+	Repository  string `toml:"repository"`
 	License     string `toml:"license"`
 	LicenseFile string `toml:"license-file"`
 }
