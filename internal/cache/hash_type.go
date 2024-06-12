@@ -3,7 +3,6 @@ package cache
 import (
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/mitchellh/hashstructure/v2"
 )
@@ -46,7 +45,7 @@ func emptyValue(t reflect.Type) reflect.Value {
 		// get all empty field values, too
 		for i := 0; i < v.NumField(); i++ {
 			f := t.Field(i)
-			if !f.IsExported() || strings.Contains(f.Tag.Get("hash"), "ignore") {
+			if isIgnored(f) {
 				continue
 			}
 			fv := v.Field(i)
@@ -58,4 +57,15 @@ func emptyValue(t reflect.Type) reflect.Value {
 	default:
 		return reflect.New(t).Elem()
 	}
+}
+
+func isIgnored(f reflect.StructField) bool {
+	if !f.IsExported() {
+		return true
+	}
+	tag := f.Tag.Get("hash")
+	if tag == "-" || tag == "ignore" {
+		return true
+	}
+	return false
 }

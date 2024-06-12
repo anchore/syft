@@ -1,8 +1,10 @@
 package cache
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/mitchellh/hashstructure/v2"
 	"github.com/stretchr/testify/require"
 )
 
@@ -93,4 +95,29 @@ func Test_hashType(t *testing.T) {
 			require.Equal(t, test.expected, test.hash())
 		})
 	}
+}
+
+func Test_hashIgnores(t *testing.T) {
+	hash := func(v any) string {
+		v, err := hashstructure.Hash(v, hashstructure.FormatV2, &hashstructure.HashOptions{})
+		require.NoError(t, err)
+		return fmt.Sprintf("%x", v)
+	}
+	type t1 struct {
+		Name        string
+		notExported string
+	}
+	require.Equal(t, hash(t1{notExported: "a value"}), hashType[t1]())
+
+	type t2 struct {
+		Name     string
+		Exported string `hash:"ignore"`
+	}
+	require.Equal(t, hash(t2{Exported: "another value"}), hashType[t2]())
+
+	type t3 struct {
+		Name     string
+		Exported string `hash:"-"`
+	}
+	require.Equal(t, hash(t3{Exported: "still valued"}), hashType[t3]())
 }
