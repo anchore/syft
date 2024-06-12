@@ -13,7 +13,7 @@ func Test_errorResolver(t *testing.T) {
 	defer SetManager(original)
 	SetManager(NewInMemory(time.Hour))
 
-	resolver := GetResolverCachingErrors[string]("theCache")
+	resolver := GetResolverCachingErrors[string]("theCache", "theVersion")
 
 	resolveCount := 0
 	resolveFunc := func() (string, error) {

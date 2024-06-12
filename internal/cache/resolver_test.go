@@ -26,9 +26,9 @@ func Test_Resolver(t *testing.T) {
 	}
 
 	versionHash := hashType[thing]()
-	cache := GetManager().GetCache("test", versionHash)
+	cache := GetManager().GetCache("test", "v7/"+versionHash)
 
-	resolver := GetResolver[thing]("test")
+	resolver := GetResolver[thing]("test", "v7")
 	require.NotNil(t, resolver)
 
 	require.IsType(t, &cacheResolver[thing]{}, resolver)
