@@ -25,7 +25,6 @@ import (
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -41,22 +40,22 @@ type goLicense struct {
 type goLicenseResolver struct {
 	catalogerName         string
 	opts                  CatalogerConfig
-	localModCacheResolver file.Resolver
+	localModCacheDir      fs.FS
 	licenseCache          cache.Resolver[[]goLicense]
 	lowerLicenseFileNames *strset.Set
 }
 
 func newGoLicenseResolver(catalogerName string, opts CatalogerConfig) goLicenseResolver {
-	var localModCacheResolver file.Resolver
+	var localModCacheDir fs.FS
 	if opts.SearchLocalModCacheLicenses {
-		localModCacheResolver = fileresolver.NewFromUnindexedDirectory(opts.LocalModCacheDir)
+		localModCacheDir = os.DirFS(opts.LocalModCacheDir)
 	}
 
 	return goLicenseResolver{
 		catalogerName:         catalogerName,
 		opts:                  opts,
-		localModCacheResolver: localModCacheResolver,
-		licenseCache:          cache.GetResolverCachingErrors[[]goLicense]("golang"),
+		localModCacheDir:      localModCacheDir,
+		licenseCache:          cache.GetResolverCachingErrors[[]goLicense]("golang", "v1"),
 		lowerLicenseFileNames: strset.New(lowercaseLicenseFiles()...),
 	}
 }
@@ -82,7 +81,7 @@ func remotesForModule(proxies []string, noProxy []string, module string) []strin
 
 func (c *goLicenseResolver) getLicenses(resolver file.Resolver, moduleName, moduleVersion string) ([]pkg.License, error) {
 	// search the scan target first, ignoring local and remote sources
-	goLicenses, err := c.findLicenses(resolver,
+	goLicenses, err := c.findLicensesInSource(resolver,
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
 	if err != nil || len(goLicenses) > 0 {
@@ -106,47 +105,68 @@ func (c *goLicenseResolver) getLicenses(resolver file.Resolver, moduleName, modu
 }
 
 func (c *goLicenseResolver) getLicensesFromLocal(moduleName, moduleVersion string) ([]goLicense, error) {
-	if c.localModCacheResolver == nil {
+	if c.localModCacheDir == nil {
 		return nil, nil
+	}
+
+	subdir := moduleDir(moduleName, moduleVersion)
+
+	// get the local subdirectory containing the specific go module
+	dir, err := fs.Sub(c.localModCacheDir, subdir)
+	if err != nil {
+		return nil, err
 	}
 
 	// if we're running against a directory on the filesystem, it may not include the
 	// user's homedir / GOPATH, so we defer to using the localModCacheResolver
-	return c.findLicenses(c.localModCacheResolver, moduleSearchGlob(moduleName, moduleVersion))
+	// we use $GOPATH/pkg/mod to avoid leaking information about the user's system
+	return c.findLicensesInFS("file://$GOPATH/pkg/mod/"+subdir+"/", dir)
 }
 
 func (c *goLicenseResolver) getLicensesFromRemote(moduleName, moduleVersion string) ([]goLicense, error) {
 	return c.licenseCache.Resolve(fmt.Sprintf("%s/%s", moduleName, moduleVersion), func() ([]goLicense, error) {
 		proxies := remotesForModule(c.opts.Proxies, c.opts.NoProxy, moduleName)
 
-		fsys, err := getModule(proxies, moduleName, moduleVersion)
+		urlPrefix, fsys, err := getModule(proxies, moduleName, moduleVersion)
 		if err != nil {
 			return nil, err
 		}
 
-		var out []goLicense
-		err = fs.WalkDir(fsys, ".", func(filePath string, d fs.DirEntry, _ error) error {
-			if !c.lowerLicenseFileNames.Has(strings.ToLower(d.Name())) {
-				return nil
-			}
-			rdr, err := fsys.Open(filePath)
-			if err != nil {
-				log.Debugf("error opening license file %s: %v", filePath, err)
-				return nil
-			}
-			parsed, err := licenses.Parse(rdr, file.NewLocation(path.Join(moduleDir(moduleName, moduleVersion), filePath)))
-			if err != nil {
-				log.Debugf("error parsing license file %s: %v", filePath, err)
-				return nil
-			}
-			out = append(out, toGoLicenses(parsed)...)
-			return nil
-		})
-		return out, err
+		return c.findLicensesInFS(urlPrefix, fsys)
 	})
 }
 
-func (c *goLicenseResolver) findLicenses(resolver file.Resolver, globMatch string) ([]goLicense, error) {
+func (c *goLicenseResolver) findLicensesInFS(urlPrefix string, fsys fs.FS) ([]goLicense, error) {
+	var out []goLicense
+	err := fs.WalkDir(fsys, ".", func(filePath string, d fs.DirEntry, _ error) error {
+		if !c.lowerLicenseFileNames.Has(strings.ToLower(d.Name())) {
+			return nil
+		}
+		rdr, err := fsys.Open(filePath)
+		if err != nil {
+			log.Debugf("error opening license file %s: %v", filePath, err)
+			return nil
+		}
+		defer internal.CloseAndLogError(rdr, filePath)
+		parsed, err := licenses.Parse(rdr, file.NewLocation(filePath))
+		if err != nil {
+			log.Debugf("error parsing license file %s: %v", filePath, err)
+			return nil
+		}
+		// since these licenses are found in an external fs.FS, not in the scanned source,
+		// get rid of the locations but keep information about the where the license was found
+		// by prepending the urlPrefix to the internal path for an accurate representation
+		for _, l := range toGoLicenses(parsed) {
+			l.URLs = []string{urlPrefix + filePath}
+			l.Locations = nil
+			out = append(out, l)
+		}
+		return nil
+	})
+	return out, err
+}
+
+func (c *goLicenseResolver) findLicensesInSource(resolver file.Resolver, globMatch string) ([]goLicense, error) {
 	var out []goLicense
 	locations, err := resolver.FilesByGlob(globMatch)
 	if err != nil {
@@ -195,10 +215,6 @@ func moduleDir(moduleName, moduleVersion string) string {
 	return fmt.Sprintf("%s@%s", processCaps(moduleName), moduleVersion)
 }
 
-func moduleSearchGlob(moduleName, moduleVersion string) string {
-	return fmt.Sprintf("%s/*", moduleDir(moduleName, moduleVersion))
-}
-
 func requireCollection[T any](licenses []T) []T {
 	if licenses == nil {
 		return make([]T, 0)
@@ -214,18 +230,19 @@ func processCaps(s string) string {
 	})
 }
 
-func getModule(proxies []string, moduleName, moduleVersion string) (fsys fs.FS, err error) {
+func getModule(proxies []string, moduleName, moduleVersion string) (urlPrefix string, fsys fs.FS, err error) {
 	for _, proxy := range proxies {
 		u, _ := url.Parse(proxy)
 		if proxy == "direct" {
-			fsys, err = getModuleRepository(moduleName, moduleVersion)
+			urlPrefix, fsys, err = getModuleRepository(moduleName, moduleVersion)
 			continue
 		}
 		switch u.Scheme {
 		case "https", "http":
-			fsys, err = getModuleProxy(proxy, moduleName, moduleVersion)
+			urlPrefix, fsys, err = getModuleProxy(proxy, moduleName, moduleVersion)
 		case "file":
 			p := filepath.Join(u.Path, moduleName, "@v", moduleVersion)
+			urlPrefix = path.Join("file://", p) + "/"
 			fsys = os.DirFS(p)
 		}
 		if fsys != nil {
@@ -235,13 +252,13 @@ func getModule(proxies []string, moduleName, moduleVersion string) (fsys fs.FS, 
 	return
 }
 
-func getModuleProxy(proxy string, moduleName string, moduleVersion string) (out fs.FS, _ error) {
+func getModuleProxy(proxy string, moduleName string, moduleVersion string) (moduleURL string, out fs.FS, _ error) {
 	u := fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion)
 
 	// get the module zip
 	resp, err := http.Get(u) //nolint:gosec
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -251,25 +268,25 @@ func getModuleProxy(proxy string, moduleName string, moduleVersion string) (out 
 		// try lowercasing it; some packages have mixed casing that really messes up the proxy
 		resp, err = http.Get(u) //nolint:gosec
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
 		defer func() { _ = resp.Body.Close() }()
 		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
+			return "", nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
 		}
 	}
 
 	// read the zip
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	out, err = zip.NewReader(bytes.NewReader(b), resp.ContentLength)
 	versionPath := findVersionPath(out, ".")
 	out = getSubFS(out, versionPath)
 
-	return out, err
+	return u + "#" + versionPath + "/", out, err
 }
 
 func findVersionPath(f fs.FS, dir string) string {
@@ -289,28 +306,59 @@ func findVersionPath(f fs.FS, dir string) string {
 	return ""
 }
 
-func getModuleRepository(moduleName string, moduleVersion string) (fs.FS, error) {
+func getModuleRepository(moduleName string, moduleVersion string) (string, fs.FS, error) {
 	repoName := moduleName
 	parts := strings.Split(moduleName, "/")
 	if len(parts) > 2 {
 		repoName = fmt.Sprintf("%s/%s/%s", parts[0], parts[1], parts[2])
 	}
 
+	// see if there's a hash and use that if so, otherwise use a tag
+	splitVersion := strings.Split(moduleVersion, "-")
+	var cloneRefName plumbing.ReferenceName
+	refPath := ""
+	if len(splitVersion) < 3 {
+		tagName := splitVersion[0]
+		cloneRefName = plumbing.NewTagReferenceName(tagName)
+		refPath = "/tags/" + tagName
+	}
+
 	f := memfs.New()
 	buf := &bytes.Buffer{}
-	_, err := git.Clone(memory.NewStorage(), f, &git.CloneOptions{
-		URL:           fmt.Sprintf("https://%s", repoName),
-		ReferenceName: plumbing.NewTagReferenceName(moduleVersion), // FIXME version might be a SHA
+	repoURL := fmt.Sprintf("https://%s", repoName)
+	r, err := git.Clone(memory.NewStorage(), f, &git.CloneOptions{
+		URL:           repoURL,
+		ReferenceName: cloneRefName,
 		SingleBranch:  true,
 		Depth:         1,
 		Progress:      buf,
 	})
-
 	if err != nil {
-		return nil, fmt.Errorf("%w -- %s", err, buf.String())
+		return "", nil, fmt.Errorf("%w -- %s", err, buf.String())
 	}
 
-	return billyFSAdapter{fs: f}, nil
+	if len(splitVersion) > 2 {
+		sha := splitVersion[len(splitVersion)-1]
+		hash, err := r.ResolveRevision(plumbing.Revision(sha))
+		if err != nil || hash == nil {
+			log.Tracef("unable to resolve hash %s: %v", sha, err)
+		} else {
+			w, err := r.Worktree()
+			if err != nil {
+				log.Tracef("unable to get worktree, using default: %v", err)
+			}
+			err = w.Checkout(&git.CheckoutOptions{
+				Hash: *hash,
+			})
+			if err != nil {
+				log.Tracef("unable to checkout commit, using default: %v", err)
+			} else {
+				refPath = "/refs/" + hash.String()
+			}
+		}
+	}
+
+	return repoURL + refPath + "/", billyFSAdapter{fs: f}, err
 }
 
 type noLicensesFound struct {

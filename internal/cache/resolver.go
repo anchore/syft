@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"path"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -19,8 +20,9 @@ type Resolver[T any] interface {
 
 // GetResolver returns a cache resolver for persistent cached data across Syft runs, stored in a unique
 // location based on the provided name and versioned by the type
-func GetResolver[T any](name string) Resolver[T] {
-	versionKey := hashType[T]()
+func GetResolver[T any](name, version string) Resolver[T] {
+	typeHash := hashType[T]()
+	versionKey := path.Join(version, typeHash)
 	return &cacheResolver[T]{
 		name:  fmt.Sprintf("%s/%s", name, versionKey),
 		cache: manager.GetCache(name, versionKey),
@@ -51,13 +53,13 @@ func (r *cacheResolver[T]) Resolve(key string, resolver resolverFunc[T]) (T, err
 
 	dec := json.NewDecoder(rdr)
 	if dec == nil {
-		log.Debugf("error getting cache json decoder for %s %v: %v", r.name, key, err)
+		log.Tracef("error getting cache json decoder for %s %v: %v", r.name, key, err)
 		return r.resolveAndCache(key, resolver)
 	}
 	var t T
 	err = dec.Decode(&t)
 	if err != nil {
-		log.Debugf("error decoding cached entry for %s %v: %v", r.name, key, err)
+		log.Tracef("error decoding cached entry for %s %v: %v", r.name, key, err)
 		return r.resolveAndCache(key, resolver)
 	}
 	// no error, able to resolve from cache

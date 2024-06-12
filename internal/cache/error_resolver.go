@@ -4,9 +4,9 @@ import "fmt"
 
 // GetResolverCachingErrors returns a Resolver that caches errors and will return them
 // instead of continuing to call the provided resolve functions
-func GetResolverCachingErrors[T any](name string) Resolver[T] {
+func GetResolverCachingErrors[T any](name, version string) Resolver[T] {
 	return &errorResolver[T]{
-		resolver: GetResolver[errResponse[T]](name),
+		resolver: GetResolver[errResponse[T]](name, version),
 	}
 }
 
