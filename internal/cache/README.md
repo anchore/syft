@@ -31,7 +31,7 @@ but this is discouraged in order to decouple changes to them from affecting the 
 
 To get a cache for this type:
 ```go
-resolver := cache.GetResolver[myCacheItem]("myCacheName")
+resolver := cache.GetResolver[myCacheItem]("myCacheName", "v1")
 ```
 
 Using the `resolver` is a single call, which manages checking for items in the cache, expiry times,
