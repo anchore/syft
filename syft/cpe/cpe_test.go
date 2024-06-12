@@ -17,6 +17,7 @@ func Test_NewAttributes(t *testing.T) {
 		name     string
 		input    string
 		expected Attributes
+		wantErr  require.ErrorAssertionFunc
 	}{
 		{
 			name:     "gocase",
@@ -33,14 +34,21 @@ func Test_NewAttributes(t *testing.T) {
 			input:    `cpe:/a:%240.99_kindle_books_project:%240.99_kindle_books:6::~~~android~~`,
 			expected: MustAttributes(`cpe:2.3:a:\$0.99_kindle_books_project:\$0.99_kindle_books:6:*:*:*:*:android:*:*`),
 		},
+		{
+			name:    "null byte in version for some reason",
+			input:   "cpe:2.3:a:oracle:openjdk:11.0.22+7\u0000-J-ms8m:*:*:*:*:*:*:*",
+			wantErr: require.Error,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual, err := NewAttributes(test.input)
-			if err != nil {
-				t.Fatalf("got an error while creating Attributes: %+v", err)
+			if test.wantErr != nil {
+				test.wantErr(t, err)
+				return
 			}
+			require.NoError(t, err)
 
 			if d := cmp.Diff(actual, test.expected); d != "" {
 				t.Errorf("Attributes mismatch (-want +got):\n%s", d)
