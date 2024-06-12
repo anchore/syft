@@ -21,7 +21,7 @@ type Cache struct {
 
 func (c *Cache) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&c.Dir, "root directory to cache any downloaded content")
-	descriptions.Add(&c.TTL, "time to live for cached data, in seconds")
+	descriptions.Add(&c.TTL, "time to live for cached data")
 }
 
 func (c *Cache) PostLoad() error {
