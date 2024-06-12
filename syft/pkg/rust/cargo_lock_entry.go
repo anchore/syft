@@ -219,7 +219,7 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 				return genDepInfo.GeneratedDepInfo, err
 			}
 
-			var cargoToml cargoToml
+			var cargoToml CargoToml
 			err = toml.Unmarshal(cargoTomlBytes, &cargoToml)
 			if err != nil {
 				_ = gzReader.Close()
@@ -229,6 +229,7 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 			}
 			log.Tracef("Got Deserialized Cargo.toml for %s-%s: %s", r.Name, r.Version, cargoToml.Package.License)
 
+			genDepInfo.CargoToml = cargoToml
 			genDepInfo.Licenses = append(genDepInfo.Licenses, cargoToml.Package.License)
 			var generatedInfoInner = genDepInfo.GeneratedDepInfo
 			genDepInfo.mutex.Unlock()
