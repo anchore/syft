@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 	"reflect"
 	"strings"
 
@@ -106,8 +107,8 @@ func (c *cpes) UnmarshalJSON(b []byte) error {
 
 // PackageCustomData contains ambiguous values (type-wise) from pkg.Package.
 type PackageCustomData struct {
-	MetadataType string `json:"metadataType,omitempty"`
-	Metadata     any    `json:"metadata,omitempty"`
+	MetadataType string             `json:"metadataType,omitempty"`
+	Metadata     sort.TryComparable `json:"metadata,omitempty"`
 }
 
 // packageMetadataUnpacker is all values needed from Package to disambiguate ambiguous fields during json unmarshaling.
@@ -186,7 +187,7 @@ func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 	if typ == nil {
 		// capture unknown metadata as a generic struct
 		if len(unpacker.Metadata) > 0 {
-			var val interface{}
+			var val sort.TryComparable
 			if err := json.Unmarshal(unpacker.Metadata, &val); err != nil {
 				return err
 			}
@@ -202,6 +203,11 @@ func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 			return err
 		}
 	}
-	p.Metadata = reflect.ValueOf(val).Elem().Interface()
+	// FIXME Is there a better way?
+	if v, ok := reflect.ValueOf(val).Elem().Interface().(sort.TryComparable); ok {
+		p.Metadata = v
+	} else {
+		p.Metadata = nil
+	}
 	return nil
 }

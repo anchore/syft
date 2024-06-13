@@ -1,5 +1,9 @@
 package pkg
 
+import (
+	"github.com/anchore/syft/syft/sort"
+)
+
 // RubyGemspec represents all metadata parsed from the *.gemspec file
 type RubyGemspec struct {
 	Name    string `mapstructure:"name" json:"name"`
@@ -22,4 +26,30 @@ type RubyGemspec struct {
 	Files    []string `mapstructure:"files" json:"files,omitempty"`
 	Authors  []string `mapstructure:"authors" json:"authors,omitempty"`
 	Homepage string   `mapstructure:"homepage" json:"homepage,omitempty"`
+}
+
+func (spec RubyGemspec) Compare(other RubyGemspec) int {
+	if i := sort.CompareOrd(spec.Name, other.Name); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(spec.Version, other.Version); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(spec.Files, other.Files); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(spec.Authors, other.Authors); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(spec.Homepage, other.Homepage); i != 0 {
+		return i
+	}
+	return 0
+}
+
+func (spec RubyGemspec) TryCompare(other any) (bool, int) {
+	if otherRuby, exists := other.(RubyGemspec); exists {
+		return true, spec.Compare(otherRuby)
+	}
+	return false, 0
 }

@@ -2,6 +2,7 @@ package python
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/licenses"
@@ -25,7 +26,7 @@ func newPackageForIndex(name, version string, locations ...file.Location) pkg.Pa
 	return p
 }
 
-func newPackageForIndexWithMetadata(name, version string, metadata interface{}, locations ...file.Location) pkg.Package {
+func newPackageForIndexWithMetadata(name, version string, metadata sort.TryComparable, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,

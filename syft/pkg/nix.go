@@ -1,9 +1,9 @@
 package pkg
 
 import (
-	"sort"
-
+	"github.com/anchore/syft/syft/sort"
 	"github.com/scylladb/go-set/strset"
+	stdSort "sort"
 )
 
 type NixStoreEntry struct {
@@ -20,6 +20,21 @@ type NixStoreEntry struct {
 
 func (m NixStoreEntry) OwnedFiles() (result []string) {
 	result = strset.New(m.Files...).List()
-	sort.Strings(result)
+	stdSort.Strings(result)
 	return
+}
+func (m NixStoreEntry) Compare(other NixStoreEntry) int {
+	if i := sort.CompareOrd(m.OutputHash, other.OutputHash); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Output, other.Output); i != 0 {
+		return i
+	}
+	return sort.CompareArraysOrd(m.Files, other.Files)
+}
+func (m NixStoreEntry) TryCompare(other any) (bool, int) {
+	if otherNix, exists := other.(NixStoreEntry); exists {
+		return true, m.Compare(otherNix)
+	}
+	return false, 0
 }

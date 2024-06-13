@@ -45,3 +45,13 @@ func (e emptySource) Describe() Description {
 func (e emptySource) Close() error {
 	return nil // no-op
 }
+
+func (e emptySource) Compare(other emptySource) int {
+	return e.description.Compare(other.description)
+}
+func (e emptySource) TryCompare(other any) (bool, int) {
+	if other, exists := other.(emptySource); exists {
+		return true, e.Compare(other)
+	}
+	return false, 0
+}

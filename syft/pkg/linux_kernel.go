@@ -1,5 +1,7 @@
 package pkg
 
+import "github.com/anchore/syft/syft/sort"
+
 // LinuxKernel represents all captured data for a Linux kernel
 type LinuxKernel struct {
 	Name            string `mapstructure:"name" json:"name" cyclonedx:"name"`
@@ -31,4 +33,103 @@ type LinuxKernelModule struct {
 type LinuxKernelModuleParameter struct {
 	Type        string `mapstructure:"type" json:"type,omitempty" cyclonedx:"type"`
 	Description string `mapstructure:"description" json:"description,omitempty" cyclonedx:"description"`
+}
+
+func (m LinuxKernel) Compare(other LinuxKernel) int {
+	if i := sort.CompareOrd(m.Name, other.Name); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Architecture, other.Architecture); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Version, other.Version); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.ExtendedVersion, other.ExtendedVersion); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.BuildTime, other.BuildTime); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Author, other.Author); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Format, other.Format); i != 0 {
+		return i
+	}
+	if i := sort.CompareBool(m.RWRootFS, other.RWRootFS); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.SwapDevice, other.SwapDevice); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.RootDevice, other.RootDevice); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.VideoMode, other.VideoMode); i != 0 {
+		return i
+	}
+	return 0
+}
+func (m LinuxKernelModule) Compare(other LinuxKernelModule) int {
+	if i := sort.CompareOrd(m.Name, other.Name); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Version, other.Version); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.SourceVersion, other.SourceVersion); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Path, other.Path); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Description, other.Description); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Author, other.Author); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.License, other.License); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.KernelVersion, other.KernelVersion); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.VersionMagic, other.VersionMagic); i != 0 {
+		return i
+	}
+	if i := sort.CompareMap(m.Parameters, other.Parameters); i != 0 {
+		return i
+	}
+	return 0
+}
+func (m LinuxKernelModuleParameter) Compare(other LinuxKernelModuleParameter) int {
+	if i := sort.CompareOrd(m.Type, other.Type); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Description, other.Description); i != 0 {
+		return i
+	}
+	return 0
+}
+
+func (m LinuxKernel) TryCompare(other any) (bool, int) {
+	if other, exists := other.(LinuxKernel); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
+}
+func (m LinuxKernelModule) TryCompare(other any) (bool, int) {
+	if other, exists := other.(LinuxKernelModule); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
+}
+
+func (m LinuxKernelModuleParameter) TryCompare(other any) (bool, int) {
+	if other, exists := other.(LinuxKernelModuleParameter); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
 }

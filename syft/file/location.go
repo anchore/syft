@@ -2,6 +2,8 @@ package file
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 
@@ -193,4 +195,20 @@ func (l Location) Equals(other Location) bool {
 	return l.RealPath == other.RealPath &&
 		l.AccessPath == other.AccessPath &&
 		l.FileSystemID == other.FileSystemID
+}
+
+func (l LocationData) Compare(other LocationData) int {
+	if i := sort.Compare(l.Coordinates, other.Coordinates); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(l.AccessPath, other.AccessPath); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(uint64(l.ref.ID()), uint64(other.ref.ID())); i != 0 {
+		return i
+	}
+	return strings.Compare(string(l.ref.RealPath), string(other.ref.RealPath))
+}
+func (l Location) Compare(other Location) int {
+	return l.LocationData.Compare(other.LocationData)
 }

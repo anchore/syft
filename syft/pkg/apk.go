@@ -3,8 +3,9 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 	"reflect"
-	"sort"
+	stdSort "sort"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -110,6 +111,70 @@ func (m ApkDBEntry) OwnedFiles() (result []string) {
 		}
 	}
 	result = s.List()
-	sort.Strings(result)
+	stdSort.Strings(result)
 	return result
+}
+
+func (m ApkFileRecord) Compare(other ApkFileRecord) int {
+	if i := sort.CompareOrd(m.Path, other.Path); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.OwnerUID, other.OwnerUID); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.OwnerGID, other.OwnerGID); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Permissions, other.Permissions); i != 0 {
+		return i
+	}
+	return sort.ComparePtr(m.Digest, other.Digest)
+}
+func (m ApkDBEntry) Compare(other ApkDBEntry) int {
+	if i := sort.CompareOrd(m.Package, other.Package); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.OriginPackage, other.OriginPackage); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Maintainer, other.Maintainer); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Version, other.Version); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Architecture, other.Architecture); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.URL, other.URL); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Description, other.Description); i != 0 {
+		return i
+	}
+	if i := m.Size - other.Size; i != 0 {
+		return i
+	}
+	if i := m.InstalledSize - other.InstalledSize; i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(m.Dependencies, other.Dependencies); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(m.Provides, other.Provides); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Checksum, other.Checksum); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.GitCommit, other.GitCommit); i != 0 {
+		return i
+	}
+	return sort.CompareArrays(m.Files, other.Files)
+}
+func (m ApkDBEntry) TryCompare(other any) (bool, int) {
+	if otherApk, exists := other.(ApkDBEntry); exists {
+		return true, m.Compare(otherApk)
+	}
+	return false, 0
 }

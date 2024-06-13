@@ -1,7 +1,8 @@
 package relationship
 
 import (
-	"sort"
+	"github.com/anchore/syft/syft/sort"
+	stdSort "sort"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/scylladb/go-set/strset"
@@ -32,6 +33,16 @@ type ownershipByFilesMetadata struct {
 	Files []string `json:"files"`
 }
 
+func (fm ownershipByFilesMetadata) Compare(other ownershipByFilesMetadata) int {
+	return sort.CompareArraysOrd(fm.Files, other.Files)
+}
+func (fm ownershipByFilesMetadata) TryCompare(other any) (bool, int) {
+	if other, exists := other.(ownershipByFilesMetadata); exists {
+		return true, fm.Compare(other)
+	}
+	return false, 0
+}
+
 func ByFileOwnershipOverlapWorker(accessor sbomsync.Accessor) {
 	var relationships []artifact.Relationship
 
@@ -53,7 +64,7 @@ func byFileOwnershipOverlap(catalog *pkg.Collection) []artifact.Relationship {
 	for parentID, children := range relationships {
 		for childID, files := range children {
 			fs := files.List()
-			sort.Strings(fs)
+			stdSort.Strings(fs)
 
 			parent := catalog.Package(parentID) // TODO: this is potentially expensive
 			child := catalog.Package(childID)   // TODO: this is potentially expensive

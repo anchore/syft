@@ -2,6 +2,7 @@ package stereoscopesource
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/distribution/reference"
@@ -31,6 +32,42 @@ type stereoscopeImageSource struct {
 	config   ImageConfig
 	image    *image.Image
 	metadata source.ImageMetadata
+}
+
+func (cfg ImageConfig) Compare(other ImageConfig) int {
+	if i := sort.CompareOrd(cfg.Reference, other.Reference); i != 0 {
+		return i
+	}
+	// FIXME RegistryOptions is not considered in comparison and support for Platform could be better
+	if i := sort.CompareOrd(cfg.Platform.String(), other.Platform.String()); i != 0 {
+		return i
+	}
+	if i := sort.Compare(cfg.Exclude, other.Exclude); i != 0 {
+		return i
+	}
+	if i := sort.Compare(cfg.Alias, other.Alias); i != 0 {
+		return i
+	}
+	return 0
+}
+func (s stereoscopeImageSource) Compare(other stereoscopeImageSource) int {
+	if i := sort.CompareOrd(s.id, other.id); i != 0 {
+		return i
+	}
+	if i := sort.Compare(s.config, other.config); i != 0 {
+		return i
+	}
+	// FIXME image is not considered in comparison
+	if i := sort.Compare(s.metadata, other.metadata); i != 0 {
+		return i
+	}
+	return 0
+}
+func (s stereoscopeImageSource) TryCompare(other any) (bool, int) {
+	if other, exists := other.(stereoscopeImageSource); exists {
+		return true, s.Compare(other)
+	}
+	return false, 0
 }
 
 func New(img *image.Image, cfg ImageConfig) source.Source {

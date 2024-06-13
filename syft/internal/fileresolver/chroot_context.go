@@ -2,6 +2,7 @@ package fileresolver
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 	"os"
 	"path"
 	"path/filepath"
@@ -18,6 +19,22 @@ type ChrootContext struct {
 	base              string
 	cwd               string
 	cwdRelativeToRoot string
+}
+
+func (r ChrootContext) Compare(other ChrootContext) int {
+	if i := sort.CompareOrd(r.root, other.root); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(r.base, other.base); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(r.cwd, other.cwd); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(r.cwdRelativeToRoot, other.cwdRelativeToRoot); i != 0 {
+		return i
+	}
+	return 0
 }
 
 func NewChrootContextFromCWD(root, base string) (*ChrootContext, error) {

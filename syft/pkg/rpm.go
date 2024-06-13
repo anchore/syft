@@ -1,7 +1,9 @@
 package pkg
 
 import (
-	"sort"
+	"github.com/anchore/syft/syft/sort"
+	stdSort "sort"
+	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -54,6 +56,35 @@ type RpmFileRecord struct {
 // RpmFileMode is the raw file mode for a single file. This can be interpreted as the linux stat.h mode (see https://pubs.opengroup.org/onlinepubs/007908799/xsh/sysstat.h.html)
 type RpmFileMode uint16
 
+func (fm RpmFileMode) Compare(other RpmFileMode) int {
+	return int(fm) - int(other)
+}
+
+func (fm RpmFileRecord) Compare(other RpmFileRecord) int {
+	if i := strings.Compare(fm.Path, other.Path); i != 0 {
+		return i
+	}
+	if i := sort.Compare(fm.Mode, other.Mode); i != 0 {
+		return i
+	}
+	if i := fm.Size - other.Size; i != 0 {
+		return i
+	}
+	if i := sort.Compare(fm.Digest, other.Digest); i != 0 {
+		return i
+	}
+	if i := strings.Compare(fm.UserName, other.UserName); i != 0 {
+		return i
+	}
+	if i := strings.Compare(fm.GroupName, other.GroupName); i != 0 {
+		return i
+	}
+	if i := strings.Compare(fm.Flags, other.Flags); i != 0 {
+		return i
+	}
+	return 0
+}
+
 func (m RpmDBEntry) OwnedFiles() (result []string) {
 	s := strset.New()
 	for _, f := range m.Files {
@@ -62,6 +93,67 @@ func (m RpmDBEntry) OwnedFiles() (result []string) {
 		}
 	}
 	result = s.List()
-	sort.Strings(result)
+	stdSort.Strings(result)
 	return result
+}
+
+func (m RpmDBEntry) Compare(other RpmDBEntry) int {
+	if i := strings.Compare(m.Name, other.Name); i != 0 {
+		return i
+	}
+	if i := strings.Compare(m.Version, other.Version); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtrOrd(m.Epoch, other.Epoch); i != 0 {
+		return i
+	}
+	if i := strings.Compare(m.Arch, other.Arch); i != 0 {
+		return i
+	}
+	if i := strings.Compare(m.Release, other.Release); i != 0 {
+		return i
+	}
+	if i := strings.Compare(m.SourceRpm, other.SourceRpm); i != 0 {
+		return i
+	}
+	if i := m.Size - other.Size; i != 0 {
+		return i
+	}
+	if i := strings.Compare(m.Vendor, other.Vendor); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtrOrd(m.ModularityLabel, other.ModularityLabel); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(m.Provides, other.Provides); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(m.Requires, other.Requires); i != 0 {
+		return i
+	}
+	if i := sort.CompareArrays(m.Files, other.Files); i != 0 {
+		return i
+	}
+
+	return 0
+}
+
+func (m RpmDBEntry) TryCompare(other any) (bool, int) {
+	if otherRpm, exists := other.(RpmDBEntry); exists {
+		return true, m.Compare(otherRpm)
+	}
+	return false, 0
+}
+
+func (m RpmArchive) Compare(other RpmArchive) int {
+	if i := sort.Compare(RpmDBEntry(m), RpmDBEntry(other)); i != 0 {
+		return i
+	}
+	return 0
+}
+func (m RpmArchive) TryCompare(other any) (bool, int) {
+	if otherRpm, exists := other.(RpmArchive); exists {
+		return true, m.Compare(otherRpm)
+	}
+	return false, 0
 }

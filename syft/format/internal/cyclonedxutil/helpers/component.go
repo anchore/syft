@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"github.com/anchore/syft/syft/sort"
 	"reflect"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -118,7 +119,7 @@ func decodeLocations(vals map[string]string) file.LocationSet {
 	return file.NewLocationSet(out...)
 }
 
-func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeName string) interface{} {
+func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeName string) sort.TryComparable {
 	if typeName != "" && c.Properties != nil {
 		metadataType := packagemetadata.ReflectTypeFromJSONName(typeName)
 		if metadataType == nil {
@@ -135,8 +136,16 @@ func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeN
 		decodeExternalReferences(c, metaPtr)
 
 		// return the actual interface{} -> struct ... not interface{} -> *struct
-		return PtrToStruct(metaPtr)
+		// FIXME Is there a better way?
+		return filterAnyToTryComparable(PtrToStruct(metaPtr))
 	}
 
+	return nil
+}
+
+func filterAnyToTryComparable(v any) sort.TryComparable {
+	if v, exists := v.(sort.TryComparable); exists {
+		return v
+	}
 	return nil
 }

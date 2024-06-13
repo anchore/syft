@@ -75,7 +75,7 @@ func (rel Relationship) Compare(other Relationship) int {
 		return i
 	}
 
-	if ok, i := rel.Data.TryCompare(other.Data); ok {
+	if ok, i := sort.TryCompare(rel.Data, other.Data); ok {
 		return i
 	}
 

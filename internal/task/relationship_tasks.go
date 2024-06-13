@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/relationship/binary"
@@ -17,6 +18,20 @@ var _ artifact.Identifiable = (*sourceIdentifierAdapter)(nil)
 
 type sourceIdentifierAdapter struct {
 	desc source.Description
+}
+
+func (s sourceIdentifierAdapter) Compare(other sourceIdentifierAdapter) int {
+	if i := sort.Compare(s.desc, other.desc); i != 0 {
+		return i
+	}
+	return 0
+}
+
+func (s sourceIdentifierAdapter) TryCompare(other any) (bool, int) {
+	if other, exists := other.(sourceIdentifierAdapter); exists {
+		return true, s.Compare(other)
+	}
+	return false, 0
 }
 
 func (s sourceIdentifierAdapter) ID() artifact.ID {

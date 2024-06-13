@@ -84,44 +84,42 @@ func (p *Package) merge(other Package) error {
 func IsValid(p *Package) bool {
 	return p != nil && p.Name != ""
 }
-
-//nolint:gocognit
-func Less(i, j Package) bool {
-	if i.Name == j.Name {
-		if i.Version == j.Version {
-			iLocations := i.Locations.ToSlice()
-			jLocations := j.Locations.ToSlice()
-			if i.Type == j.Type {
-				maxLen := len(iLocations)
-				if len(jLocations) > maxLen {
-					maxLen = len(jLocations)
-				}
-				for l := 0; l < maxLen; l++ {
-					if len(iLocations) < l+1 || len(jLocations) < l+1 {
-						if len(iLocations) == len(jLocations) {
-							break
-						}
-						return len(iLocations) < len(jLocations)
-					}
-					if iLocations[l].RealPath == jLocations[l].RealPath {
-						continue
-					}
-					return iLocations[l].RealPath < jLocations[l].RealPath
-				}
-				// compare remaining metadata as a final fallback
-				// note: we cannot guarantee that IDs (which digests the metadata) are stable enough to sort on
-				// when there are potentially missing elements there is too much reduction in the dimensions to
-				// lean on ID comparison. The best fallback is to look at the string representation of the metadata.
-				return strings.Compare(fmt.Sprintf("%#v", i.Metadata), fmt.Sprintf("%#v", j.Metadata)) < 0
-			}
-			return i.Type < j.Type
-		}
-		return i.Version < j.Version
+func (p Package) Compare(other Package) int {
+	if i := sort.CompareOrd(p.Name, other.Name); i == 0 {
+		return i
 	}
-	return i.Name < j.Name
+	if i := sort.CompareOrd(p.Version, other.Version); i == 0 {
+		return i
+	}
+	if i := sort.Compare(p.Type, other.Type); i == 0 {
+		return i
+	}
+
+	if i := sort.CompareArrays(p.Locations.ToSlice(), other.Locations.ToSlice()); i != 0 {
+		return i
+	}
+	if canBeCompared, i := p.Metadata.TryCompare(other.Metadata); canBeCompared {
+		return i
+	}
+	// compare remaining metadata as a final fallback
+	// note: we cannot guarantee that IDs (which digests the metadata) are stable enough to sort on
+	// when there are potentially missing elements there is too much reduction in the dimensions to
+	// lean on ID comparison. The best fallback is to look at the string representation of the metadata.
+	return strings.Compare(fmt.Sprintf("%#v", p.Metadata), fmt.Sprintf("%#v", other.Metadata))
 }
+func (p Package) TryCompare(other any) (bool, int) {
+	if other, exists := other.(Package); exists {
+		return true, p.Compare(other)
+	}
+	return false, 0
+}
+
+func Less(i, j Package) bool {
+	return sort.Less(i, j)
+}
+
 func Sort(pkgs []Package) {
-	sort.SliceStable(pkgs, func(i, j int) bool {
-		return Less(pkgs[i], pkgs[j])
+	slices.SortStableFunc(pkgs, func(a, b Package) int {
+		return a.Compare(b)
 	})
 }

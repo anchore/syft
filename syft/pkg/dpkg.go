@@ -1,7 +1,8 @@
 package pkg
 
 import (
-	"sort"
+	"github.com/anchore/syft/syft/sort"
+	stdSort "sort"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -73,6 +74,63 @@ func (m DpkgDBEntry) OwnedFiles() (result []string) {
 		}
 	}
 	result = s.List()
-	sort.Strings(result)
+	stdSort.Strings(result)
 	return
+}
+func (m DpkgFileRecord) Compare(other DpkgFileRecord) int {
+	if i := sort.CompareOrd(m.Path, other.Path); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtr(m.Digest, other.Digest); i != 0 {
+		return i
+	}
+	if i := sort.CompareBool(m.IsConfigFile, other.IsConfigFile); i != 0 {
+		return i
+	}
+	return 0
+}
+func (m DpkgDBEntry) Compare(other DpkgDBEntry) int {
+	if i := sort.CompareOrd(m.Package, other.Package); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Source, other.Source); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Version, other.Version); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.SourceVersion, other.SourceVersion); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Architecture, other.Architecture); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Maintainer, other.Maintainer); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.InstalledSize, other.InstalledSize); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Description, other.Description); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(m.Provides, other.Provides); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(m.Depends, other.Depends); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(m.PreDepends, other.PreDepends); i != 0 {
+		return i
+	}
+	if i := sort.CompareArrays(m.Files, other.Files); i != 0 {
+		return i
+	}
+	return 0
+}
+func (m DpkgDBEntry) TryCompare(other any) (bool, int) {
+	if other, exists := other.(DpkgDBEntry); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
 }

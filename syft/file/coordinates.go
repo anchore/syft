@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -38,4 +39,17 @@ func (c Coordinates) String() string {
 		str += fmt.Sprintf(" Layer=%q", c.FileSystemID)
 	}
 	return fmt.Sprintf("Location<%s>", str)
+}
+
+func (c Coordinates) Compare(other Coordinates) int {
+	if i := strings.Compare(c.RealPath, other.RealPath); i != 0 {
+		return i
+	}
+	return strings.Compare(c.FileSystemID, other.FileSystemID)
+}
+func (c Coordinates) TryCompare(other any) (bool, int) {
+	if other, exists := other.(Coordinates); exists {
+		return true, c.Compare(other)
+	}
+	return false, 0
 }

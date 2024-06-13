@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 	"io"
 	"os"
 
@@ -26,6 +27,16 @@ type Directory struct {
 	index         filetree.IndexReader
 	searchContext filetree.Searcher
 	indexer       *directoryIndexer
+}
+
+func (r Directory) Compare(other Directory) int {
+	if i := sort.CompareOrd(r.path, other.path); i != 0 {
+		return i
+	}
+	if i := sort.Compare(r.chroot, other.chroot); i != 0 {
+		return i
+	}
+	return 0
 }
 
 func NewFromDirectory(root string, base string, pathFilters ...PathIndexVisitor) (*Directory, error) {

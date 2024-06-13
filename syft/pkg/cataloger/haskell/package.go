@@ -4,9 +4,10 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sort"
 )
 
-func newPackage(name, version string, m any, location file.Location) pkg.Package {
+func newPackage(name, version string, m sort.TryComparable, location file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,

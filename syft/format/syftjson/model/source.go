@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 	"reflect"
 	"strconv"
 	"strings"
@@ -13,11 +14,11 @@ import (
 
 // Source object represents the thing that was cataloged
 type Source struct {
-	ID       string      `json:"id"`
-	Name     string      `json:"name"`
-	Version  string      `json:"version"`
-	Type     string      `json:"type"`
-	Metadata interface{} `json:"metadata"`
+	ID       string             `json:"id"`
+	Name     string             `json:"name"`
+	Version  string             `json:"version"`
+	Type     string             `json:"type"`
+	Metadata sort.TryComparable `json:"metadata"`
 }
 
 // sourceUnpacker is used to unmarshal Source objects
@@ -68,7 +69,12 @@ func unpackSrcMetadata(s *Source, unpacker sourceUnpacker) error {
 		}
 	}
 
-	s.Metadata = reflect.ValueOf(val).Elem().Interface()
+	// FIXME Is there a better way?
+	if v, ok := reflect.ValueOf(val).Elem().Interface().(sort.TryComparable); ok {
+		s.Metadata = v
+	} else {
+		s.Metadata = nil
+	}
 
 	return nil
 }
@@ -81,7 +87,7 @@ func cleanPreSchemaV9MetadataType(t string) string {
 	return t
 }
 
-func extractPreSchemaV9Metadata(t string, target []byte) (interface{}, error) {
+func extractPreSchemaV9Metadata(t string, target []byte) (sort.TryComparable, error) {
 	switch t {
 	case "directory", "dir":
 		cleanTarget, err := strconv.Unquote(string(target))

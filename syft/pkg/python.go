@@ -1,7 +1,8 @@
 package pkg
 
 import (
-	"sort"
+	"github.com/anchore/syft/syft/sort"
+	stdSort "sort"
 
 	"github.com/scylladb/go-set/strset"
 )
@@ -54,7 +55,7 @@ func (m PythonPackage) OwnedFiles() (result []string) {
 		}
 	}
 	result = s.List()
-	sort.Strings(result)
+	stdSort.Strings(result)
 	return result
 }
 
@@ -91,4 +92,163 @@ type PythonRequirementsEntry struct {
 	VersionConstraint string   `json:"versionConstraint" mapstruct:"VersionConstraint"`
 	URL               string   `json:"url,omitempty" mapstruct:"URL"`
 	Markers           string   `json:"markers,omitempty" mapstruct:"Markers"`
+}
+
+func (duoi PythonDirectURLOriginInfo) Compare(other PythonDirectURLOriginInfo) int {
+	if i := sort.CompareOrd(duoi.URL, other.URL); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(duoi.CommitID, other.CommitID); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(duoi.VCS, other.VCS); i != 0 {
+		return i
+	}
+	return 0
+}
+func (fr PythonFileRecord) Compare(other PythonFileRecord) int {
+	if i := sort.CompareOrd(fr.Path, other.Path); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtr(fr.Digest, other.Digest); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(fr.Size, other.Size); i != 0 {
+		return i
+	}
+	return 0
+}
+func (fd PythonFileDigest) Compare(other PythonFileDigest) int {
+	if i := sort.CompareOrd(fd.Algorithm, other.Algorithm); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(fd.Value, other.Value); i != 0 {
+		return i
+	}
+	return 0
+}
+
+func (m PythonPackage) Compare(other PythonPackage) int {
+	if i := sort.CompareOrd(m.Name, other.Name); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Version, other.Version); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Author, other.Author); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.AuthorEmail, other.AuthorEmail); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Platform, other.Platform); i != 0 {
+		return i
+	}
+	if i := sort.CompareArrays(m.Files, other.Files); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.SitePackagesRootPath, other.SitePackagesRootPath); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(m.TopLevelPackages, other.TopLevelPackages); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtr(m.DirectURLOrigin, other.DirectURLOrigin); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.RequiresPython, other.RequiresPython); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(m.RequiresDist, other.RequiresDist); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(m.ProvidesExtra, other.ProvidesExtra); i != 0 {
+		return i
+	}
+
+	return 0
+}
+func (m PythonPackage) TryCompare(other any) (bool, int) {
+	if other, exists := other.(PythonPackage); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
+}
+func (m PythonPoetryLockEntry) TryCompare(other any) (bool, int) {
+	if other, exists := other.(PythonPoetryLockEntry); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
+}
+func (m PythonPoetryLockExtraEntry) TryCompare(other any) (bool, int) {
+	if other, exists := other.(PythonPoetryLockExtraEntry); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
+}
+func (m PythonRequirementsEntry) TryCompare(other any) (bool, int) {
+	if other, exists := other.(PythonRequirementsEntry); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
+}
+func (m PythonPipfileLockEntry) TryCompare(other any) (bool, int) {
+	if other, exists := other.(PythonPipfileLockEntry); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
+}
+func (m PythonPipfileLockEntry) Compare(other PythonPipfileLockEntry) int {
+	if i := sort.CompareArraysOrd(m.Hashes, other.Hashes); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Index, other.Index); i != 0 {
+		return i
+	}
+	return 0
+}
+func (m PythonPoetryLockEntry) Compare(other PythonPoetryLockEntry) int {
+	if i := sort.CompareOrd(m.Index, other.Index); i != 0 {
+		return i
+	}
+	if i := sort.CompareArrays(m.Dependencies, other.Dependencies); i != 0 {
+		return i
+	}
+	if i := sort.CompareArrays(m.Extras, other.Extras); i != 0 {
+		return i
+	}
+	return 0
+}
+func (m PythonPoetryLockDependencyEntry) Compare(other PythonPoetryLockDependencyEntry) int {
+	if i := sort.CompareOrd(m.Name, other.Name); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(m.Version, other.Version); i != 0 {
+		return i
+	}
+	if m.Optional != other.Optional {
+		if m.Optional {
+			return -1
+		}
+		return 1
+	}
+	if i := sort.CompareOrd(m.Markers, other.Markers); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(m.Extras, other.Extras); i != 0 {
+		return i
+	}
+	return 0
+}
+func (m PythonPoetryLockExtraEntry) Compare(other PythonPoetryLockExtraEntry) int {
+	if i := sort.CompareOrd(m.Name, other.Name); i != 0 {
+		return i
+	}
+	return 0
+}
+func (m PythonRequirementsEntry) Compare(other PythonRequirementsEntry) int {
+	if i := sort.CompareOrd(m.Name, other.Name); i != 0 {
+		return i
+	}
+	return 0
 }

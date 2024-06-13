@@ -3,7 +3,8 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
+	"github.com/anchore/syft/syft/sort"
+	stdSort "sort"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -73,6 +74,106 @@ type JavaManifest struct {
 	Sections []KeyValues `json:"sections,omitempty"`
 }
 
+func (m JavaManifest) Compare(other JavaManifest) int {
+	if i := sort.Compare(m.Main, other.Main); i != 0 {
+		return i
+	}
+	if i := sort.CompareArrays(m.Sections, other.Sections); i != 0 {
+		return i
+	}
+	return 0
+}
+func (p JavaPomProperties) Compare(other JavaPomProperties) int {
+	if i := sort.CompareOrd(p.Path, other.Path); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.Name, other.Name); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.GroupID, other.GroupID); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.ArtifactID, other.ArtifactID); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.Version, other.Version); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.Scope, other.Scope); i != 0 {
+		return i
+	}
+	if i := sort.CompareMapOrd(p.Extra, other.Extra); i != 0 {
+		return i
+	}
+	return 0
+}
+func (p JavaPomProject) Compare(other JavaPomProject) int {
+	if i := sort.CompareOrd(p.Path, other.Path); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtr(p.Parent, other.Parent); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.GroupID, other.GroupID); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.ArtifactID, other.ArtifactID); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.Version, other.Version); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.Name, other.Name); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.Description, other.Description); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.URL, other.URL); i != 0 {
+		return i
+	}
+	return 0
+}
+func (p JavaPomParent) Compare(other JavaPomParent) int {
+	if i := sort.CompareOrd(p.GroupID, other.GroupID); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.ArtifactID, other.ArtifactID); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(p.Version, other.Version); i != 0 {
+		return i
+	}
+	return 0
+}
+func (p JavaArchive) Compare(other JavaArchive) int {
+	if i := sort.CompareOrd(p.VirtualPath, other.VirtualPath); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtr(p.Manifest, other.Manifest); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtr(p.PomProperties, other.PomProperties); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtr(p.PomProject, other.PomProject); i != 0 {
+		return i
+	}
+	if i := sort.CompareArrays(p.ArchiveDigests, other.ArchiveDigests); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtr(p.Parent, other.Parent); i != 0 {
+		return i
+	}
+	return 0
+}
+func (p JavaArchive) TryCompare(other any) (bool, int) {
+	if other, exists := other.(JavaArchive); exists {
+		return true, p.Compare(other)
+	}
+	return false, 0
+}
+
 type unmarshalJavaManifest JavaManifest
 
 type legacyJavaManifest struct {
@@ -110,7 +211,7 @@ func (lm legacyJavaManifest) toNewManifest() JavaManifest {
 	for k := range lm.NamedSections {
 		sectionNames = append(sectionNames, k)
 	}
-	sort.Strings(sectionNames)
+	stdSort.Strings(sectionNames)
 	var sections []KeyValues
 	for _, name := range sectionNames {
 		section := KeyValues{

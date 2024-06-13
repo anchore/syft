@@ -1,6 +1,7 @@
 package cpp
 
 import (
+	"github.com/anchore/syft/syft/sort"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -82,7 +83,7 @@ func newConaninfoPackage(m pkg.ConaninfoEntry, locations ...file.Location) *pkg.
 	return newConanPackage(m.Ref, m, locations...)
 }
 
-func newConanPackage(refStr string, metadata any, locations ...file.Location) *pkg.Package {
+func newConanPackage(refStr string, metadata sort.TryComparable, locations ...file.Location) *pkg.Package {
 	ref := splitConanRef(refStr)
 	if ref == nil {
 		return nil

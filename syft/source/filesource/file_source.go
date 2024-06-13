@@ -3,6 +3,7 @@ package filesource
 import (
 	"crypto"
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 	"io/fs"
 	"os"
 	"path"
@@ -42,6 +43,52 @@ type fileSource struct {
 	digests          []file.Digest
 	mimeType         string
 	analysisPath     string
+}
+
+func (cfg Config) Compare(other Config) int {
+	if i := sort.CompareOrd(cfg.Path, other.Path); i != 0 {
+		return i
+	}
+	if i := sort.Compare(cfg.Exclude, other.Exclude); i != 0 {
+		return i
+	}
+	if i := sort.CompareArraysOrd(cfg.DigestAlgorithms, other.DigestAlgorithms); i != 0 {
+		return i
+	}
+	if i := sort.Compare(cfg.Alias, other.Alias); i != 0 {
+		return i
+	}
+	return 0
+}
+func (s fileSource) Compare(other fileSource) int {
+	if i := sort.Compare(s.id, other.id); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(s.digestForVersion, other.digestForVersion); i != 0 {
+		return i
+	}
+	if i := sort.Compare(s.config, other.config); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtr(s.resolver, other.resolver); i != 0 {
+		return i
+	}
+	if i := sort.CompareArrays(s.digests, other.digests); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(s.mimeType, other.mimeType); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(s.analysisPath, other.analysisPath); i != 0 {
+		return i
+	}
+	return 0
+}
+func (s fileSource) TryCompare(other any) (bool, int) {
+	if other, exists := other.(fileSource); exists {
+		return true, s.Compare(other)
+	}
+	return false, 0
 }
 
 func NewFromPath(path string) (source.Source, error) {

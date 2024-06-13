@@ -1,7 +1,8 @@
 package pkg
 
 import (
-	"sort"
+	"github.com/anchore/syft/syft/sort"
+	stdSort "sort"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -30,6 +31,33 @@ func (m PortageEntry) OwnedFiles() (result []string) {
 		}
 	}
 	result = s.List()
-	sort.Strings(result)
+	stdSort.Strings(result)
 	return result
+}
+
+func (m PortageEntry) Compare(other PortageEntry) int {
+	if i := sort.CompareOrd(m.InstalledSize, other.InstalledSize); i != 0 {
+		return i
+	}
+	if i := sort.CompareArrays(m.Files, other.Files); i != 0 {
+		return i
+	}
+	return 0
+}
+
+func (m PortageEntry) TryCompare(other any) (bool, int) {
+	if other, exists := other.(PortageEntry); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
+}
+
+func (m PortageFileRecord) Compare(other PortageFileRecord) int {
+	if i := sort.CompareOrd(m.Path, other.Path); i != 0 {
+		return i
+	}
+	if i := sort.ComparePtr(m.Digest, other.Digest); i != 0 {
+		return i
+	}
+	return 0
 }

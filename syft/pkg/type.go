@@ -2,10 +2,15 @@ package pkg
 
 import (
 	"github.com/anchore/packageurl-go"
+	"strings"
 )
 
 // Type represents a Package Type for or within a language ecosystem (there may be multiple package types within a language ecosystem)
 type Type string
+
+func (t Type) Compare(other Type) int {
+	return strings.Compare(string(t), string(other))
+}
 
 const (
 	// the full set of supported packages

@@ -3,7 +3,8 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
+	"github.com/anchore/syft/syft/sort"
+	stdSort "sort"
 )
 
 type KeyValue struct {
@@ -11,7 +12,24 @@ type KeyValue struct {
 	Value string `json:"value"`
 }
 
+func (k KeyValue) Compare(other KeyValue) int {
+	if i := sort.CompareOrd(k.Key, other.Key); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(k.Value, other.Value); i != 0 {
+		return i
+	}
+	return 0
+}
+
 type KeyValues []KeyValue
+
+func (k KeyValues) Compare(other KeyValues) int {
+	if i := sort.CompareArrays(k, other); i != 0 {
+		return i
+	}
+	return 0
+}
 
 func (k KeyValues) Get(key string) (string, bool) {
 	for _, kv := range k {
@@ -39,7 +57,7 @@ func keyValuesFromMap(m map[string]string) KeyValues {
 	for k := range m {
 		mapKeys = append(mapKeys, k)
 	}
-	sort.Strings(mapKeys)
+	stdSort.Strings(mapKeys)
 	for _, k := range mapKeys {
 		result = append(result, KeyValue{
 			Key:   k,
@@ -60,7 +78,7 @@ func (k *KeyValues) UnmarshalJSON(b []byte) error {
 		for k := range legacyMap {
 			keys = append(keys, k)
 		}
-		sort.Strings(keys)
+		stdSort.Strings(keys)
 		for _, k := range keys {
 			kvs = append(kvs, KeyValue{Key: k, Value: legacyMap[k]})
 		}

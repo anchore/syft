@@ -1,6 +1,9 @@
 package pkg
 
-import "github.com/anchore/syft/syft/file"
+import (
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/sort"
+)
 
 // BinarySignature represents a set of matched values within a binary file.
 type BinarySignature struct {
@@ -45,4 +48,65 @@ type ELFBinaryPackageNoteJSONPayload struct {
 
 	// Commit is the commit hash of the source repository for which the binary was built from
 	Commit string `json:"commit,omitempty"`
+}
+
+func (cm ClassifierMatch) Compare(other ClassifierMatch) int {
+	if i := sort.CompareOrd(cm.Classifier, other.Classifier); i != 0 {
+		return i
+	}
+	if i := sort.Compare(cm.Location, other.Location); i != 0 {
+		return i
+	}
+	return 0
+}
+
+func (cm BinarySignature) Compare(other BinarySignature) int {
+	if i := sort.CompareArrays(cm.Matches, other.Matches); i != 0 {
+		return i
+	}
+	return 0
+}
+func (cm BinarySignature) TryCompare(other any) (bool, int) {
+	if otherRpm, exists := other.(BinarySignature); exists {
+		return true, cm.Compare(otherRpm)
+	}
+	return false, 0
+}
+
+func (pn ELFBinaryPackageNoteJSONPayload) Compare(other ELFBinaryPackageNoteJSONPayload) int {
+	if i := sort.CompareOrd(pn.Type, other.Type); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(pn.Architecture, other.Architecture); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(pn.OSCPE, other.OSCPE); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(pn.OS, other.OS); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(pn.OSVersion, other.OSVersion); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(pn.System, other.System); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(pn.Vendor, other.Vendor); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(pn.SourceRepo, other.SourceRepo); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(pn.Commit, other.Commit); i != 0 {
+		return i
+	}
+	return 0
+}
+
+func (pn ELFBinaryPackageNoteJSONPayload) TryCompare(other any) (bool, int) {
+	if otherRpm, exists := other.(ELFBinaryPackageNoteJSONPayload); exists {
+		return true, pn.Compare(otherRpm)
+	}
+	return false, 0
 }

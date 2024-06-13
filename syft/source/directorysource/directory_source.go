@@ -2,6 +2,7 @@ package directorysource
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,6 +57,37 @@ func New(cfg Config) (source.Source, error) {
 		config: cfg,
 		mutex:  &sync.Mutex{},
 	}, nil
+}
+
+func (cfg Config) Compare(other Config) int {
+	if i := sort.CompareOrd(cfg.Path, other.Path); i != 0 {
+		return i
+	}
+	if i := sort.CompareOrd(cfg.Base, other.Base); i != 0 {
+		return i
+	}
+	if i := sort.Compare(cfg.Exclude, other.Exclude); i != 0 {
+		return i
+	}
+	if i := sort.Compare(cfg.Alias, other.Alias); i != 0 {
+		return i
+	}
+	return 0
+}
+func (s directorySource) Compare(other directorySource) int {
+	if i := sort.CompareOrd(s.id, other.id); i != 0 {
+		return i
+	}
+	if i := sort.Compare(s.config, other.config); i != 0 {
+		return i
+	}
+	return 0
+}
+func (s directorySource) TryCompare(other any) (bool, int) {
+	if otherDirSource, exists := other.(directorySource); exists {
+		return true, s.Compare(otherDirSource)
+	}
+	return false, 0
 }
 
 // deriveIDFromDirectory generates an artifact ID from the given directory config. If an alias is provided, then

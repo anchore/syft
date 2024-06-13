@@ -3,6 +3,7 @@ package spdxhelpers
 import (
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 	"net/url"
 	"path"
 	"regexp"
@@ -160,7 +161,7 @@ func fileSource(p *spdx.Package) source.Description {
 	typeName := typeRegex.ReplaceAllString(string(p.PackageSPDXIdentifier), "$1")
 
 	var version string
-	var metadata any
+	var metadata sort.TryComparable
 	switch {
 	case typeName == prefixDirectory:
 		// is a Syft SBOM, explicitly a directory source
@@ -184,7 +185,7 @@ func fileSource(p *spdx.Package) source.Description {
 	}
 }
 
-func fileSourceMetadata(p *spdx.Package) (any, string) {
+func fileSourceMetadata(p *spdx.Package) (sort.TryComparable, string) {
 	version := p.PackageVersion
 
 	m := source.FileMetadata{
@@ -205,7 +206,7 @@ func fileSourceMetadata(p *spdx.Package) (any, string) {
 	return m, version
 }
 
-func directorySourceMetadata(p *spdx.Package) (any, string) {
+func directorySourceMetadata(p *spdx.Package) (sort.TryComparable, string) {
 	return source.DirectoryMetadata{
 		Path: p.PackageName,
 		Base: "",
@@ -546,7 +547,7 @@ func cleanSPDXID(id string) string {
 }
 
 //nolint:funlen
-func extractMetadata(p *spdx.Package, info pkgInfo) any {
+func extractMetadata(p *spdx.Package, info pkgInfo) sort.TryComparable {
 	arch := info.qualifierValue(pkg.PURLQualifierArch)
 	upstreamValue := info.qualifierValue(pkg.PURLQualifierUpstream)
 	upstream := strings.SplitN(upstreamValue, "@", 2)
