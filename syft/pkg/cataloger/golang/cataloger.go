@@ -20,12 +20,8 @@ const (
 
 // NewGoModuleFileCataloger returns a new cataloger object that searches within go.mod files.
 func NewGoModuleFileCataloger(opts CatalogerConfig) pkg.Cataloger {
-	c := goModCataloger{
-		licenses: newGoLicenses(modFileCatalogerName, opts),
-	}
-
 	return generic.NewCataloger(modFileCatalogerName).
-		WithParserByGlobs(c.parseGoModFile, "**/go.mod")
+		WithParserByGlobs(newGoModCataloger(opts).parseGoModFile, "**/go.mod")
 }
 
 // NewGoModuleBinaryCataloger returns a new cataloger object that searches within binaries built by the go compiler.
