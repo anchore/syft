@@ -1,5 +1,11 @@
 package artifact
 
+import (
+	"github.com/anchore/syft/syft/sort"
+	"reflect"
+	"strings"
+)
+
 const (
 	// OwnershipByFileOverlapRelationship (supports package-to-package linkages) indicates that the parent package
 	// claims ownership of a child package since the parent metadata indicates overlap with a location that a
@@ -34,9 +40,44 @@ func AllRelationshipTypes() []RelationshipType {
 
 type RelationshipType string
 
+func (rel RelationshipType) Compare(other RelationshipType) int {
+	return strings.Compare(string(rel), string(other))
+}
+
 type Relationship struct {
 	From Identifiable
 	To   Identifiable
 	Type RelationshipType
-	Data interface{}
+	Data sort.TryComparable
+}
+
+func (rel Relationship) Compare(other Relationship) int {
+	if ok, i := rel.From.TryCompare(other.From); ok {
+		if i != 0 {
+			return i
+		}
+	} else {
+		if i := rel.From.ID().Compare(other.From.ID()); i != 0 {
+			return i
+		}
+	}
+	if ok, i := rel.To.TryCompare(other.To); ok {
+		if i != 0 {
+			return i
+		}
+	} else {
+		if i := rel.To.ID().Compare(other.To.ID()); i != 0 {
+			return i
+		}
+	}
+
+	if i := rel.Type.Compare(other.Type); i != 0 {
+		return i
+	}
+
+	if ok, i := rel.Data.TryCompare(other.Data); ok {
+		return i
+	}
+
+	return sort.CompareOrd(reflect.ValueOf(rel.Data).Type().Name(), reflect.ValueOf(other.Data).Type().Name())
 }
