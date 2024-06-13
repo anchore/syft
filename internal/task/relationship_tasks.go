@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+
 	"github.com/anchore/syft/syft/sort"
 
 	"github.com/anchore/syft/internal/relationship"

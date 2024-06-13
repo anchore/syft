@@ -3,8 +3,9 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
 	stdSort "sort"
+
+	"github.com/anchore/syft/syft/sort"
 )
 
 type KeyValue struct {

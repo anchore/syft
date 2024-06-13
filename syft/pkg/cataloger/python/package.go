@@ -2,6 +2,7 @@ package python
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/syft/sort"
 
 	"github.com/anchore/packageurl-go"

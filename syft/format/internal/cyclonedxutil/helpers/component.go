@@ -1,8 +1,9 @@
 package helpers
 
 import (
-	"github.com/anchore/syft/syft/sort"
 	"reflect"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/CycloneDX/cyclonedx-go"
 

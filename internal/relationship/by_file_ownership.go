@@ -1,8 +1,9 @@
 package relationship
 
 import (
-	"github.com/anchore/syft/syft/sort"
 	stdSort "sort"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/scylladb/go-set/strset"

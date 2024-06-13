@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/syft/sort"
 	"github.com/hashicorp/go-multierror"
 

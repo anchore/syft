@@ -3,9 +3,10 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
 	stdSort "sort"
 	"strings"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"

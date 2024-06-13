@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
 	"io"
 	"path"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"

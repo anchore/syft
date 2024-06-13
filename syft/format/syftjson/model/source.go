@@ -3,10 +3,11 @@ package model
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source"

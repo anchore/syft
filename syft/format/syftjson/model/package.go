@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
 	"reflect"
 	"strings"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"

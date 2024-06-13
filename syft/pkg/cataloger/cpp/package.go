@@ -1,8 +1,9 @@
 package cpp
 
 import (
-	"github.com/anchore/syft/syft/sort"
 	"strings"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"

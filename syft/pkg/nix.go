@@ -1,9 +1,10 @@
 package pkg
 
 import (
+	stdSort "sort"
+
 	"github.com/anchore/syft/syft/sort"
 	"github.com/scylladb/go-set/strset"
-	stdSort "sort"
 )
 
 type NixStoreEntry struct {

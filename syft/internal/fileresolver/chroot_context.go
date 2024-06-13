@@ -2,11 +2,12 @@ package fileresolver
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/anchore/syft/syft/internal/windows"
 )

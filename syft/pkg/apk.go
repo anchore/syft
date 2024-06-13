@@ -3,10 +3,11 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
 	"reflect"
 	stdSort "sort"
 	"strings"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/scylladb/go-set/strset"

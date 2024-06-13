@@ -1,8 +1,9 @@
 package artifact
 
 import (
-	"github.com/anchore/syft/syft/sort"
 	"reflect"
+
+	"github.com/anchore/syft/syft/sort"
 )
 
 const (

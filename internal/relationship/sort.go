@@ -1,9 +1,10 @@
 package relationship
 
 import (
+	"slices"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/sort"
-	"slices"
 )
 
 // Sort takes a set of package-to-package relationships and sorts them in a stable order by name and version.

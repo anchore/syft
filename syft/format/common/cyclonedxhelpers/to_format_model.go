@@ -2,9 +2,10 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
 	"slices"
 	"time"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/google/uuid"

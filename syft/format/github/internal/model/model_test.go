@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/anchore/syft/syft/sort"
 	"testing"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"

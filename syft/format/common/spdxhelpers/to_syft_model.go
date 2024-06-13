@@ -3,12 +3,13 @@ package spdxhelpers
 import (
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
 	"net/url"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/spdx/tools-golang/spdx/v2/common"

@@ -2,6 +2,7 @@ package artifact
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/syft/sort"
 	"github.com/mitchellh/hashstructure/v2"
 )

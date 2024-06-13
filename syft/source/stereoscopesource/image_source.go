@@ -2,6 +2,7 @@ package stereoscopesource
 
 import (
 	"fmt"
+
 	"github.com/anchore/syft/syft/sort"
 
 	"github.com/bmatcuk/doublestar/v4"

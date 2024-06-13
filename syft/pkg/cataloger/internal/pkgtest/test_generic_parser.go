@@ -3,12 +3,13 @@ package pkgtest
 import (
 	"context"
 	"fmt"
-	sort2 "github.com/anchore/syft/syft/sort"
 	"io"
 	"os"
 	"sort"
 	"strings"
 	"testing"
+
+	sort2 "github.com/anchore/syft/syft/sort"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"

@@ -1,9 +1,10 @@
 package pkg
 
 import (
-	"github.com/anchore/syft/syft/sort"
 	stdSort "sort"
 	"time"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/scylladb/go-set/strset"
 

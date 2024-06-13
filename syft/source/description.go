@@ -1,8 +1,9 @@
 package source
 
 import (
-	"github.com/anchore/syft/syft/sort"
 	"reflect"
+
+	"github.com/anchore/syft/syft/sort"
 )
 
 // Description represents any static source data that helps describe "what" was cataloged.

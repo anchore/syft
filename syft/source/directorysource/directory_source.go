@@ -2,11 +2,12 @@ package directorysource
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/opencontainers/go-digest"

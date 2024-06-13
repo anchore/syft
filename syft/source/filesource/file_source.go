@@ -3,12 +3,13 @@ package filesource
 import (
 	"crypto"
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
 	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 	"sync"
+
+	"github.com/anchore/syft/syft/sort"
 
 	"github.com/mholt/archiver/v3"
 	"github.com/opencontainers/go-digest"
