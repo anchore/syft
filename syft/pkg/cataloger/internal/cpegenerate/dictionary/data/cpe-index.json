@@ -1005,6 +1005,9 @@
       "anchore/anchore-engine": [
         "cpe:2.3:a:anchore:engine:*:*:*:*:*:*:*:*"
       ],
+      "anchore/stereoscope": [
+        "cpe:2.3:a:anchore:stereoscope:*:*:*:*:*:go:*:*"
+      ],
       "anchore/syft": [
         "cpe:2.3:a:anchore:syft:*:*:*:*:*:*:*:*"
       ],
@@ -1948,6 +1951,9 @@
       ],
       "arm-software/astc-encoder": [
         "cpe:2.3:a:arm:adaptive_scalable_texture_compression_encoder:*:*:*:*:*:*:*:*"
+      ],
+      "armanidrisi/devblog": [
+        "cpe:2.3:a:armanidrisi:dev_blog:*:*:*:*:*:*:*:*"
       ],
       "armink/struct2json": [
         "cpe:2.3:a:struct2json_project:struct2json:*:*:*:*:*:*:*:*"
@@ -3617,6 +3623,9 @@
       "borgbackup/borg": [
         "cpe:2.3:a:borgbackup:borg:*:*:*:*:*:*:*:*"
       ],
+      "born05/craft-twofactorauthentication": [
+        "cpe:2.3:a:born05:two-factor_authentication:*:*:*:*:*:craftcms:*:*"
+      ],
       "bortzmeyer/echoping": [
         "cpe:2.3:a:echoping_project:echoping:*:*:*:*:*:*:*:*"
       ],
@@ -4103,6 +4112,9 @@
       ],
       "careteditor/releases": [
         "cpe:2.3:a:caret:caret:*:*:*:*:*:*:*:*"
+      ],
+      "carglglz/upydev": [
+        "cpe:2.3:a:carglglz:upydev:*:*:*:*:*:*:*:*"
       ],
       "carhartl/jquery-cookie": [
         "cpe:2.3:a:jquery.cookie_project:jquery.cookie:*:*:*:*:*:node.js:*:*"
@@ -5715,942 +5727,6 @@
         "cpe:2.3:a:cve:cve-services:*:*:*:*:*:*:*:*",
         "cpe:2.3:a:mitre:cve_services:*:*:*:*:*:node.js:*:*"
       ],
-      "cveproject/cvelist": [
-        "cpe:2.3:a:360:chrome:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:360:safe_browser:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:360:safeguard:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:360:total_security:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:3ds:3dexperience_solidworks:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:42gears:suremdm:*:*:*:*:on-premise:*:*:*",
-        "cpe:2.3:a:4d:server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:60indexpage_project:60indexpage:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:7-card:fakabao:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:71note:go-bbs:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:abb:800xa:*:*:*:*:*:*:ac_800m:*",
-        "cpe:2.3:a:abb:base_software:*:*:*:*:*:softcontrol:*:*",
-        "cpe:2.3:a:abb:compact_product_suite:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:abb:control_builder_safe:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:abb:platform_engineering_tools:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:accellion:fta:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:accruent:maintenance_connection:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:acemetrix:jquery-deparam:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:aceware:aceweb_online_portal:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:actian:ingres:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:activeitzone:active_ecommerce_cms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:adbyby_project:adbyby:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:adium:adium:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:adminer_login_project:adminer_login:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:admiror-design-studio:admiror_gallery:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:adobe:acrobat:*:*:*:*:*:edge:*:*",
-        "cpe:2.3:a:adobe:adobe_air:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:adobe:after_effects:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:adobe:coldfusion:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:adobe:flash_player:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:adobe:illustrator:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:agora:video_software_development_kit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:agro-school_management_system_project:agro-school_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:air_transfer_project:air_transfer:*:*:*:*:*:ipad:*:*",
-        "cpe:2.3:a:alleghenycreative:openrepeater:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:alphaware_simple_e-commerce_system_project:alphaware_simple_e-commerce_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:amazon:hotpatch:*:*:*:*:*:log4j:*:*",
-        "cpe:2.3:a:amb1_sdk_project:amb1_sdk:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ambarella:oryx_rtsp_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ami:megarac_spx:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:anaconda:anaconda3:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:anant:google-enterprise-connector-dctm:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:antd-admin_project:antd-admin:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:anuvaad-corpus_project:anuvaad-corpus:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:apache:couchdb:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:apache:soap:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:apartment_visitor_management_system_project:apartment_visitor_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:aprelium:abyss_web_server_x1:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:arc2_project:arc2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:arcserve:udp:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ardupilot:apweb:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:arkeia:arkeia:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:articlecms_project:articlecms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:artifex:mupdf:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:artio:joomdoc:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:artstation:the_isle_evrima:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:asosegitim:sobiad:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:asus:asusliveupdate:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:asus:asussoftwaremanger:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:asus:asusswitch:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:asus:system_control_interface:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:asustor:adm:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:asustor:looksgood:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:asustor:soundsgood:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:atlassian:assets_discovery_cloud:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:atlassian:assets_discovery_data_center:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:atlassian:assets_discovery_data_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:atlassian:confluence_data_center:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:atlassian:jira_data_center:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:atlassian:jira_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:atlassian:jira_service_desk:*:*:*:*:data_center:*:*:*",
-        "cpe:2.3:a:atlassian:jira_service_desk:*:*:*:*:server:*:*:*",
-        "cpe:2.3:a:atlassian:jira_service_management:*:*:*:*:data_center:*:*:*",
-        "cpe:2.3:a:atlassian:jira_service_management:*:*:*:*:server:*:*:*",
-        "cpe:2.3:a:att:xmill:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:audio_aligner_app_project:audio_aligner_app:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:august:august_home:*:*:*:*:*:android:*:*",
-        "cpe:2.3:a:autodesk:fbx_review:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:autodesk:licensing_services:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:automatedquizeval_project:automatedquizeval:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:avanquest:pdfescape:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:avast:antivirus:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:avg:anti-virus:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:avira:antivirus:*:*:*:*:*:windows:*:*",
-        "cpe:2.3:a:avira:phantom_vpn:*:*:*:*:*:macos:*:*",
-        "cpe:2.3:a:axigen:axigen_mail_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:axiosys:bento4:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:axis:device_manager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:azexo:page_builder_with_image_map_by_azexo:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:b1:eosio_batdappboomx:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:bagesoft:bagecms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:baramundi:enterprise_mobility_management:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:barangay_management_system_project:barangay_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:barry_voice_assistant_project:barry_voice_assistant:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:bblog:bblog:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:bd:guardrails_cqi_reporter:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:best_fee_management_system_project:best_fee_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:bestaddon:bestaddon_gallery:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:bestweather_project:bestweather:*:*:*:*:*:android:*:*",
-        "cpe:2.3:a:beyondtrust:privilege_management_for_windows:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:billing_management_system_project:billing_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:billing_system_project_project:billing_system_project:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:binance:trust_wallet:*:*:*:*:*:iphone_os:*:*",
-        "cpe:2.3:a:bitbanksoftware:jpegdec:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:bitdefender:endpoint_security_tools:*:*:*:*:*:linux:*:*",
-        "cpe:2.3:a:bitdefender:endpoint_security_tools:*:*:*:*:*:windows:*:*",
-        "cpe:2.3:a:bitdefender:gravityzone:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:bitdefender:update_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:blender:blender:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:bluetens:bluetensq:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:bluez:bluez:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:book_store_management_system_project:book_store_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:bosch:video_security:*:*:*:*:*:android:*:*",
-        "cpe:2.3:a:braincert:virtual_classroom:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:brandy_project:brandy:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:brassica:soy_cms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:brave:browser:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:brave:browser:*:*:*:*:*:iphone_os:*:*",
-        "cpe:2.3:a:broadcom:raid_controller_web_interface:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:broadcom:symantec_siteminder:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:broadcom:xcom_data_transport:*:*:*:*:*:linux:*:*",
-        "cpe:2.3:a:broadcom:xcom_data_transport:*:*:*:*:*:unix:*:*",
-        "cpe:2.3:a:broadcom:xcom_data_transport:*:*:*:*:*:windows:*:*",
-        "cpe:2.3:a:bt_lnmp_project:bt_lnmp:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:bus_dispatch_and_information_system_project:bus_dispatch_and_information_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:byzoro:smart_s85f:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:c-http_project:c-http:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:campcodes:chic_beauty_salon:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:canonical:accountsservice:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:canonical:add-apt-repository:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:canonical:apport:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:canonical:remote-login-service:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:canonical:snapd:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:canonical:software-properties:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:canonical:ubuntu-ui-toolkit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:canonical:ubuntu_pipewire-pulse:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:card_holder_management_system_project:card_holder_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:caretakerr-api_project:caretakerr-api:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cashit:cashit\\!:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:catontechnology:ctp_relay_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cdatatec:web_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cdsoft:winhotel.mx:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ceneo-web-scrapper_project:ceneo-web-scrapper:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cert:vince:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:changepop-back_project:changepop-back:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:changingtec:megaservisignadapter:*:*:*:*:*:windows:*:*",
-        "cpe:2.3:a:charactell:formstorm:*:*:*:*:enterprise:*:*:*",
-        "cpe:2.3:a:checkpoint:endpoint_security:*:*:*:*:*:windows:*:*",
-        "cpe:2.3:a:checkpoint:gaia_portal:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:checkpoint:identity_agent:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:checkpoint:vpn-1_secureclient:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:christophe.varoqui:multipath-tools:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:chshcms:mccms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cimg:cimg:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cisco:anyconnect_secure_mobility_client:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cisco:broadworks_xtended_services_platform:*:*:*:*:release_independent:*:*:*",
-        "cpe:2.3:a:cisco:email_security_appliance:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cisco:enterprise_nfv_infrastructure_software:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cisco:firepower_management_center:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cisco:firepower_threat_defense:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cisco:identity_services_engine:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cisco:secure_client:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cisco:secure_endpoint:*:*:*:*:*:windows:*:*",
-        "cpe:2.3:a:cisco:unified_computing_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:citrix:cloud_connector:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:citrix:gateway:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cjvnjde:google_translate_api_browser:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:clanscripts_project:clanscripts:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:class_scheduling_system_project:class_scheduling_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:click-2:ingenium_learning_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:clusterlabs:pcs:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cms-corephp_project:cms-corephp:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cnesty:helpcom:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cnoa_oa_project:cnoa_oa:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cockpit-project:cockpit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cockybook_project:cockybook:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:control_for_beaglebone:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:control_for_empc-a\\/imx6:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:control_for_iot2000:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:control_for_pfc100:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:control_for_pfc200:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:control_for_raspberry_pi:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:control_rte:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:control_v3_runtime_system_toolkit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:control_win:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:embedded_target_visu_toolkit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:remote_target_visu_toolkit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:runtime_plcwinnt:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:codesys:runtime_system_toolkit:*:*:*:*:*:*:x86:*",
-        "cpe:2.3:a:codesys:simulation_runtime:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:collabora:online:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:comment_system_project:comment_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:contact_manager_app_project:contact_manager_app:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:controlid:idsecure:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:controlid:rhid:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:coreftp:core_ftp:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:corveda:phpsandbox:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cpcommerce_project:cpcommerce:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:creative-solutions:creative_gallery:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:creativedream_file_uploader_project:creativedream_file_uploader:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ctrlo:lenio:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:cyberark:privileged_session_manager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dart:dart_software_development_kit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dassault:3dswymer_3dexperience_2022:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dassault:3dswymer_3dexperience_2023:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:data_stream_algorithm_benchmark_project:data_stream_algorithm_benchmark:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:datalust:seq:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dav-cogs_project:dav-cogs:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:deconf:clicky_analytics_dashboard:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:dell:bsafe_crypto-c:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dell:container_storage_modules:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dell:emc_secure_connect_gateway_policy_manager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:deltaww:ispsoft:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:deltaww:wplsoft:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:devexpress:devexpress:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dhcms_project:dhcms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:digium:asterisk_appliance_developer_kit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:distrotech:cvs:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:django-helpdesk_project:django-helpdesk:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dmg2img_project:dmg2img:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:docker_dashboard_project:docker_dashboard:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dotplant:dotplant2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dovecot:dovecot:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:drd:drdrive:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dreamlu:mica:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:drweb:security_space:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dscms_project:dscms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dump_project:dump:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:dwbooster:calendar_event_multi_view:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:east-tec:eraser:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:easycorp:zentao:*:*:*:*:community:*:*:*",
-        "cpe:2.3:a:easycorp:zentao_biz:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:easycorp:zentao_max:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:easyuse:mailhunter_ultimate:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:eaton:easysoft:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ec_cloud_e-commerce_system_project:ec_cloud_e-commerce_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ecisolutions:printanista_managed_print_service:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ecisp:espcms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ed01-cms_project:ed01-cms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:egavilanmedia:ecm_address_book:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:eic:e-document_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:elastic:endpoint:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:electronic_shelf_label_protocol_project:electronic_shelf_label_protocol:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:element-it:http_commander:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:elf-parser_project:elf-parser:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:elfutils_project:elfutils:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:elipse:equinox_p2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:elisebosse:frontpage_manager:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:elite:webfax:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:elitecms:elite_cms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:employee_payslip_generator_system_project:employee_payslip_generator_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:enrollment_system_project:enrollment_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:envoyproxy:envoy:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:eqs:integrity_line:*:*:*:*:professional:*:*:*",
-        "cpe:2.3:a:eskom:e-belediye:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ethereal:ethereal:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ethereum:blockchain:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:etsi:terrestrial_trunked_radio:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:eve-ng:eve-ng:*:*:*:*:community:*:*:*",
-        "cpe:2.3:a:eve-ng:eve-ng:*:*:*:*:professional:*:*:*",
-        "cpe:2.3:a:evenbalance:punkbuster:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:everywhere:everywhere_cms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:evoko:home:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:extplorer:extplorer:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:f-secure:mobile_security:*:*:*:*:*:android:*:*",
-        "cpe:2.3:a:facebook:mvfst:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:facebook:proxygen:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:faculty_evaulation_system_project:faculty_evaulation_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:fancy_gallery_project:fancy_gallery:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:fastcms_project:fastcms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:fedoraproject:fedora_linux_kernel:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:fedoraproject:supybot-fedora:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:feep:libtar:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:fidelissecurity:deception:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:fidelissecurity:network:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:fieldthemes:fieldpopupnewsletter:*:*:*:*:*:prestashop:*:*",
-        "cpe:2.3:a:filezilla-project:filezilla_client:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:fiserv:prologue:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:fishtank_project:fishtank:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:flask-mongo-skel_project:flask-mongo-skel:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:flask-nginx_base_helm_project:flask-nginx_base_helm:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:flask-yeoman_project:flask-yeoman:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:flower_project:flower:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:fluffycogs_project:fluffycogs:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:flycms_project:flycms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:fortinet:forticlient_enterprise_management_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:frappe:erpnext:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:freebsd:advanced_intrusion_detection_environment:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:freebsd:libfetch:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ftp_project:ftp:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:gaim_project:gaim:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:game_result_matrix_system_project:game_result_matrix_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:garmin:connect-iq:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ge:proficy_real-time_information_portal:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:generalized_electric_vehicle_reverse_engineering_tool_project:generalized_electric_vehicle_reverse_engineering_tool:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:getgrav:grav-plugin-admin:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:getgrav:grav_admin:*:*:*:*:*:grav:*:*",
-        "cpe:2.3:a:gg18_project:gg18:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:gg20_project:gg20:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:github:enterprise_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:gitlab:gitlab:*:*:*:*:community:*:*:*",
-        "cpe:2.3:a:gitlab:gitlab:*:*:*:*:enterprise:*:*:*",
-        "cpe:2.3:a:glance_project:glance:*:*:*:*:*:-:*:*",
-        "cpe:2.3:a:gm:mylink_infotainment_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:gnu:emacs:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:gnu:grub2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:gnu:hurd:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:gnu:inetutils:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:golang:text:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:goldenftpserver:golden_ftp_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:golem_project:golem:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:google:bindiff:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:google:data_transfer_project:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:google:gerrit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:google:google\\/apple_exposure_notifications:*:*:*:*:*:android:*:*",
-        "cpe:2.3:a:google:perfetto:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:gpac:gpac:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:grafana:enterprise_metrics:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:grafana:grafana:*:*:*:*:enterprise:*:*:*",
-        "cpe:2.3:a:gruparge:smartpower_web:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:guest_management_system_project:guest_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:gxlcms:gxlcms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:h2o:h2o:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:haokekeji:yiqiniu:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:harpaitalia:mcuboict:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:haxx:curl:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:haxx:libcurl:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hcltech:bigfix_insights_for_vulnerability_remediation:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hcltech:bigfix_platform:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hcltech:bigfix_webui:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:heidenhain:tnc_640_programming_station:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:height8tech:h8_ssrms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:helpu:helpu:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hexagongeospatial:geomedia_webmap:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:heysoft:eventsave:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:heysoft:eventsave\\+:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hfish_project:hfish:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hin-eng-preprocessing_project:hin-eng-preprocessing:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hinet:hicos_natural_person_credential_component_client:*:*:*:*:*:linux:*:*",
-        "cpe:2.3:a:hinet:hicos_natural_person_credential_component_client:*:*:*:*:*:macos:*:*",
-        "cpe:2.3:a:hinet:hicos_natural_person_credential_component_client:*:*:*:*:*:windows:*:*",
-        "cpe:2.3:a:hitachi:automation_director:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hitachi:infrastructure_analytics_advisor:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hitachi:ops_center_analyzer:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hitachi:ops_center_automator:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hitachi:ops_center_viewpoint:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hitachi:vantara_pentaho_business_intelligence_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hitachienergy:sdm600:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:home__internet_project:home__internet:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:homepage_project:homepage:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:honeywell:prowatch:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hospital_management_system_project:hospital_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hotels_server_project:hotels_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hoyoverse:mhyprot2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hp:operations_manager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hpe:intelligent_provisioning:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hpe:service_pack_for_proliant:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hpe:smartstart_scripting_toolkit:*:*:*:*:*:linux:*:*",
-        "cpe:2.3:a:hr_portal_project:hr_portal:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:huawei:atune:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:huge-it:portfolio_gallery:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:hundredplus:101eip:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:huorong:internet_security:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hyperguard_web_application_firewall_project:hyperguard_web_application_firewall:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:hypr:workforce_access:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:iasset_project:iasset:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ibm:cloud_pak_for_multicloud_management_monitoring:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ibm:cloudant:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ibm:lotus_domino:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ibm:merge_efilm_workstation:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:icssolution:ics_business_manager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:idmsistemas:sinergia:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ieee:ieee_802.2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ietf:p802.1q:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:infogami:infogami:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:inpiazza:cloud_wifi:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:inscada_project:inscada:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:install-package_project:install-package:*:*:*:*:*:node.js:*:*",
-        "cpe:2.3:a:institutional_management_website_project:institutional_management_website:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:intel:connman:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:internshipsystem_project:internshipsystem:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:invisioncommunity:gallery:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:iobit:driver_booster:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:iobit:itop_screen_recorder:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:iobit:itop_screenshot:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:iobit:itop_vpn:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:iongroup:wallstreet_suite:*:*:*:*:*:*:x64:*",
-        "cpe:2.3:a:iportalis:ics:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:iss-oberlausitz:bluepage_cms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:issuer_project:issuer:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:istrong:mountain_flood_disaster_prevention_monitoring_and_early_warning_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ivanti:avalanche:*:*:*:*:premise:*:*:*",
-        "cpe:2.3:a:ivanti:mobileiron:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:j2global:myfax:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:janobe:life_insurance_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:jboss:aerogear:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:jeremiahorem:custom_user_css:*:*:*:*:*:*:wordpress:*",
-        "cpe:2.3:a:jetbrains:teamcity:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:jetico:bcwipe:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:jettison_project:jettison:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:jfinalcms_project:jfinalcms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:jfinaloa_project:jfinaloa:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:joinmastodon:mastodon:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:joomcode:jcdashboard:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:joomlart:s5_register:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:joomstar:starshop:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:jpeg:libjpeg:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:jsish:jsish:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:json-c:json-c:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:jsonlint_project:jsonlint_c\\+\\+:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:jtekt:kostac_plc:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:juanpao:jpshop:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kantega-sso:kantega_saml_sso_oidc_kerberos_single_sign-on:*:*:*:*:*:bamboo:*:*",
-        "cpe:2.3:a:kantega-sso:kantega_saml_sso_oidc_kerberos_single_sign-on:*:*:*:*:*:bitbucket:*:*",
-        "cpe:2.3:a:kantega-sso:kantega_saml_sso_oidc_kerberos_single_sign-on:*:*:*:*:*:confluence:*:*",
-        "cpe:2.3:a:kantega-sso:kantega_saml_sso_oidc_kerberos_single_sign-on:*:*:*:*:*:fecru:*:*",
-        "cpe:2.3:a:kantega-sso:kantega_saml_sso_oidc_kerberos_single_sign-on:*:*:*:*:*:jira:*:*",
-        "cpe:2.3:a:karmasis:infraskope_siem\\+:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kaspersky:anti-virus:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kaspersky:endpoint_security:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kaspersky:internet_security:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kaspersky:internet_security:*:*:*:*:*:macos:*:*",
-        "cpe:2.3:a:kaspersky:password_manager:*:*:*:*:*:android:*:*",
-        "cpe:2.3:a:kaspersky:password_manager:*:*:*:*:*:iphone_os:*:*",
-        "cpe:2.3:a:kaspersky:password_manager:*:*:*:*:*:windows:*:*",
-        "cpe:2.3:a:kaspersky:security_cloud:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kaspersky:small_office_security:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kaspersky:total_security:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kavitareader:kavita:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kayrasoft:kayrasoft:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:keyget_project:keyget:*:*:*:*:*:node.js:*:*",
-        "cpe:2.3:a:keymaker_project:keymaker:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kg-fashion-chatbot_project:kg-fashion-chatbot:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:khronos:opencl:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:khronos:vulkan:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kicad:kicad_eda:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:klapp:app:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:knowband:supercheckout:*:*:*:*:*:prestashop:*:*",
-        "cpe:2.3:a:knx:engineering_tool_software_5:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kodcloud:kodbox:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kopano:groupware_core:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kubernetes:cri-o:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kvf-admin_project:kvf-admin:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:kyocera:net_viewer:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:l7-networks:instantqos:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:l7-networks:instantscan:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lanproxy_project:lanproxy:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:larvata:flygo:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lcnet:smart_evision:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:le-yan_dental_management_system_project:le-yan_dental_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:leadshop:leadshop:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lenovo:safecenter:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lenovo:system_interface_foundation:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lenovo:system_update:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lfprojects:mlflow:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lg:ipsfullhd:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lg:lg_ultrawide:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lg:lgpcsuite_setup:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lg:ultra_hd_driver_setup:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:libgit2:libgit2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:libjxl_project:libjxl:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:libraw:libraw:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:librdf:raptor_rdf_syntax_library:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:librenms:librenms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:libreoffice:libreoffice:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:libreswan:libreswan:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:libretro:retroarch:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:libssh:libssh:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:liferay:digital_experience_platform:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:liferay:dxp:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:liferay:liferay_portal:*:*:*:*:community:*:*:*",
-        "cpe:2.3:a:ligeo-archives:ligeo_basics:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:linecorp:line:*:*:*:*:*:iphone_os:*:*",
-        "cpe:2.3:a:linuxfoundation:nats.ws:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:linuxfoundation:zowe:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:livro_python_project:livro_python:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:logrhythm:platform_manager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:logrocket-oauth2-example_project:logrocket-oauth2-example:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lrx0014:examsys:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:lsoft:listserv:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:luadec_project:luadec:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:maff:electronic_delivery_check_system:*:*:*:*:heisei_31_era:*:*:*",
-        "cpe:2.3:a:malwarebytes:binisoft_windows_firewall_control:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:man2html_project:man2html:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:margox:braft-editor:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:markdown_preview_enhanced_project:markdown_preview_enhanced:*:*:*:*:*:atom:*:*",
-        "cpe:2.3:a:markdown_preview_enhanced_project:markdown_preview_enhanced:*:*:*:*:*:vscode:*:*",
-        "cpe:2.3:a:marvell:software_development_kit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mate-desktop:atril:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mattermost:mattermost:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mbconnectline:mbconnect24:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mbconnectline:mymbconnect24:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mbedthis:appweb_http_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mcafee:epolicy_orchestrator:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mcusystem:mcusystem:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:md2roff_project:md2roff:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mdweb_project:mdweb:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mediateknet:netwave_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mediawiki:mediawiki:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:megaeis:dbd\\+:*:*:*:*:*:andoird:*:*",
-        "cpe:2.3:a:megaeis:dbd\\+:*:*:*:*:*:iphone_os:*:*",
-        "cpe:2.3:a:mepsan:stawiz_usc\\+\\+:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:metersphere:metersphere:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:metinfo:metinfo:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mgetty_project:mgetty:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mgt-commerce:cloudpanel:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mi:mi_browser:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:miateknoloji:mia-med:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:microfocus:self_service_password_reset:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:microsoft:azure_arc_jumpstart:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:microsoft:azure_machine_learning:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:microsoft:onedrive:*:*:*:*:*:android:*:*",
-        "cpe:2.3:a:microsoft:onedrive:*:*:*:*:*:iphone_os:*:*",
-        "cpe:2.3:a:microsoft:onedrive:*:*:*:*:*:macos:*:*",
-        "cpe:2.3:a:microsoft:send_customer_voice_survey_from_dynamics_365:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:microsoft:skype:*:*:*:*:*:macos:*:*",
-        "cpe:2.3:a:microstrategy:microstrategy_web:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:microweber:microweber:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:midnight-commander:midnight_commander:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mindspore:mindspore:*:*:*:*:*:openeuler:*:*",
-        "cpe:2.3:a:mingsoft:mcms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mingyuefusu_project:mingyuefusu:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:miniblog.core_project:miniblog.core:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mintplexlabs:vector_admin:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mipcms:mipcms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mit:kerberos_5:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mitake:smart_stock_selection:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mlwebtechnologies:livingword:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:modelconverter_project:modelconverter:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:modern_honey_network_project:modern_honey_network:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:moecraft:tieba-cloud-sign:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:monospace:directus:*:*:*:*:*:-:*:*",
-        "cpe:2.3:a:mootools:mootools-more:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mootools:mootools:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:movie-review-sentiment-analysis_project:movie-review-sentiment-analysis:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mpm-itk_project:mpm-itk:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mqtt:mqtt:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mruby:mruby:*:*:*:*:*:ruby:*:*",
-        "cpe:2.3:a:mtab:bookmark:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:munhak:munhak-moa:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:mv:idce:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:myq-solution:central_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:myq-solution:print_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nanoleaf:nanoleaf_desktop:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nasa:openmct:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ncast_project:ncast:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:neomutt:neomutt:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:net-snmp:net-snmp:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:netapp:ontap:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:netdatasoft:divvy_drive:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:netexplorer:my_smtp_contact:*:*:*:*:*:getsimple:*:*",
-        "cpe:2.3:a:netmodule:netmodule_router_software:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nette:application:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:networkoptix:nxcloud:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nexenta:nexentastor:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nfine_rapid_development_platform_project:nfine_rapid_development_platform:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nhi:health_insurance_web_service_component:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ni:measurementlink:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nintendo:ds_wireless_communication:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nintendo:mario_kart_wii:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nintex:workflow:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nlnetlabs:unbound:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nodejs:node.js:*:*:*:*:-:*:*:*",
-        "cpe:2.3:a:nodejs:node.js:*:*:*:*:lts:*:*:*",
-        "cpe:2.3:a:nokia:bts_trs_web_console:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nokia:network_functions_manager_for_transport:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:nothings:stb_image.h:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:novell:edirectory:*:*:*:*:*:windows:*:*",
-        "cpe:2.3:a:nurse_quest_project:nurse_quest:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:oasys_project:oasys:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:octopus:tentacle:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ok-file-formats_project:ok-file-formats:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:omron:sysmac_studio:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:onepeloton:peloton:*:*:*:*:*:android:*:*",
-        "cpe:2.3:a:online_flight_booking_management_system_project:online_flight_booking_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:online_ordering_system_project:online_ordering_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:onlyoffice:core:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:opcfoundation:ua_.net_standard_stack:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:openam:openam:*:*:*:*:consortium:*:*:*",
-        "cpe:2.3:a:openbi:openbi:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:openclinica:openclinica:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:openeuler:icr:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:openldap:openldap:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:opennms:horizon:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:opennms:meridian:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:opennms:newts:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:openshift:origin:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:openstack:neutron:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:opensuse:autoyast2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:opensuse:cryptctl:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:opensuse:inn:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:opensuse:openldap2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:opensuse:pcp:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:opensuse:supportutils:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:openteknik:open_source_social_network:*:*:*:*:lts:*:*:*",
-        "cpe:2.3:a:oracle:application_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:oracle:database:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:oracle:database:*:*:*:*:*:fips:*:*",
-        "cpe:2.3:a:oracle:general_ledger:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:oracle:siebel_marketing:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:oracle:talent_acquisition_cloud:*:*:*:*:taleo_enterprise:*:*:*",
-        "cpe:2.3:a:oracle:workflow:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:osgeo:mapserver:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:otrs:ticket_forms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ovirt:log_collector:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:owasp:coreruleset:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:owasp:enterprise_security_api_for_java:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:p5-encode_project:p5-encode:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:palantir:foundry_campaigns:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:palantir:foundry_multipass:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:paloaltonetworks:bridgecrew_checkov:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pam_setquota_project:pam_setquota:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:passwork:passwork:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:paxton-access:net2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:payara:payara:*:*:*:*:community:*:*:*",
-        "cpe:2.3:a:pdfbook_project:pdfbook:*:*:*:*:*:mediawiki:*:*",
-        "cpe:2.3:a:pdfzorro:pdfzorro:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pentasecurity:wapples:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:perl:perl:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pfsense:pfsense-pkg-wireguard:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:phoenixcontact:energy_axc_pu:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:phoenixcontact:plcnext_engineer:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:photo_tag_project:photo_tag:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:php-cms_project:php-cms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:php-fusion:phpfusion:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:php-saml-sp_project:php-saml-sp:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:phpbb:phpbb:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:phpems:phpems:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:phpgurukul:bp_monitoring_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:phpgurukul:online_shopping_portal:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:phpok:phpok:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pingidentity:pingdirectory:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pingidentity:pingfederate:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pingidentity:pingid_adapter_for_pingfederate:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pingidentity:pingid_integration_for_mac_login:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pingidentity:pingid_integration_kit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pingidentity:pingid_radius_pcv:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pingidentity:pingone_mfa_integration_kit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pingidentity:radius_pcv:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:plain_craft_launcher_2_project:plain_craft_launcher_2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:plasma-web:quickform:*:*:*:*:*:joomla\\!:*:*",
-        "cpe:2.3:a:pluck-cms:pluck:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:podman_project:podman:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:priority-software:priority:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:private_cloud_management_platform_project:private_cloud_management_platform:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:privateoctopus:picoquic:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:progress:openedge:*:*:*:*:lts:*:*:*",
-        "cpe:2.3:a:progress:openedge_explorer:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:progress:openedge_management:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:projects_project:projects:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:propius:machineselector:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:protonmail:web_client:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pttemkart:pttem_kart:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pubnub:c-core:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pubnub:kotlin:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pubnub:pubnub:*:*:*:*:*:-:*:*",
-        "cpe:2.3:a:pubnub:pubnub:*:*:*:*:*:go:*:*",
-        "cpe:2.3:a:pubnub:swift:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pureftpd:pure-ftpd:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:purethemes:workscout:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:purethemes:workscout_core:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:putil-merge_project:putil-merge:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pwndoc_project:pwndoc:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pystemon_project:pystemon:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pythagorean_oa_office_system_project:pythagorean_oa_office_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:python-flask-restful-api_project:python-flask-restful-api:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:python-hyperkitty_project:python-hyperkitty:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:python-scciclient_project:python-scciclient:*:*:*:*:*:python:*:*",
-        "cpe:2.3:a:python:pillow:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:python:python:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:python_athena_stack_project:python_athena_stack:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:pythonweb_project:pythonweb:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:qnap:helpdesk:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:qt:qt:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:qualcomm:eudora:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:qualys:cloud_agent:*:*:*:*:*:windows:*:*",
-        "cpe:2.3:a:quickjs_project:quickjs:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:radare:radare2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rapid7:insightvm:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rapid7:metasploit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rconfig:rconfig:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:realestate_project:realestate:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:realnetworks:helix_universal_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:3scale:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:ansible_engine:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:cluster_suite:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:data_grid:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:jboss_aerogear:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:keycloak:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:openshift-origin-msg-node-mcollective:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:openshift-origin-node-util:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:openshift:*:*:*:*:-:*:*:*",
-        "cpe:2.3:a:redhat:openshift_container_platform:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:openshift_machine-config-operator:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:openshift_serverless:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:resteasy:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:servicemesh-operator:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:spacewalk-java:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:undertow:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:redhat:wildfly_elytron:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:relic_project:relic:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:reportlab:reportlab:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:resortdata:internet_reservation_module_next_generation:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:resourcexpress:meeting_monitor:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rexians:rex-web:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rigatur:online_booking_and_hotel_management_system:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:riverbed:steelcentral_appinternals_dynamic_sampling_agent:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:robo-tom_project:robo-tom:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rockcarry:ffjpeg:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rocket.chat:rocket.chat:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rockoa:rockoa:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rockwellautomation:arena_simulation:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rockwellautomation:factorytalk_view:*:*:*:*:machine:*:*:*",
-        "cpe:2.3:a:rockwellautomation:pavilion8:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rockwellautomation:studio_5000_logix_emulate:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rockwellautomation:thinmanager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rotem-dynamics:rotem_crm:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rpm:rpm:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rsa:archer:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rsa:netwitness:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rtb1_project:rtb1:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:rymcu:forest:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:s-mall-ssm_project:s-mall-ssm:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:s3label_project:s3label:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sage:sage_frp_1000:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sage:syracuse:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:saison:dataspider_servista:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:samsung:accessibility:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:samsung:factorycamerafb:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:samsung:link_to_windows_service:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sap:business_planning_and_consolidation:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sap:enterprise_performance_management:*:*:*:*:*:microsoft_office:*:*",
-        "cpe:2.3:a:sap:enterprise_performance_management:*:*:*:*:*:sap_analysis_office:*:*",
-        "cpe:2.3:a:sap:grc_process_control:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sap:mobile_sdk_certificate_provider:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sap:netweaver:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sap:netweaver:*:*:*:*:java_as:*:*:*",
-        "cpe:2.3:a:sap:netweaver_application_server_abap:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sapplica:sentrifugo:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:savoirfairelinux:jami:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:scorelab:openmf:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sdgc:pnpscada:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:seagate:cortx-s3_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:secomea:gatemanager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:semver-regex_project:semver-regex:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sentcms:sentcms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:setupbox_project:setupbox:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:shackerpanel_project:shackerpanel:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:shipstation:shipstation:*:*:*:*:*:cs-cart:*:*",
-        "cpe:2.3:a:showdoc:showdoc:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:silabs:emberznet:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:silabs:gecko_bootloader:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:silabs:gecko_software_development_kit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:silabs:micrium_uc-http:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:silabs:z\\/ip_gateway_sdk:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:silverwaregames:silverwaregames:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sitecore:experience_manager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sitecore:experience_platform:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:siyucms:siyucms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sleep_learner_project:sleep_learner:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:slixmpp_project:slixmpp:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:smartweb_infotech_job_board_project:smartweb_infotech_job_board:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:snakeyaml_project:snakeyaml:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:solar-system-simulator_project:solar-system-simulator:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:solarwinds:dameware_mini_remote_control:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:solarwinds:network_performance_monitor:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:solarwinds:pingdom:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:solarwinds:serv-u:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:solarwinds:web_help_desk:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sophos:email_appliance:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sophos:home:*:*:*:*:*:macos:*:*",
-        "cpe:2.3:a:sophos:intercept_x:*:*:*:*:central:macos:*:*",
-        "cpe:2.3:a:sophos:intercept_x:*:*:*:*:opm:macos:*:*",
-        "cpe:2.3:a:sos_project:sos:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:southrivertech:titan_ftp_server_nextgen:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:soxft:timemail:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:spacewalk_project:spacewalk:*:*:*:*:*:linux:*:*",
-        "cpe:2.3:a:sphere_imagebackend_project:sphere_imagebackend:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sphere_project:sphere:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:spice-space:spice-server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:splunk:enterprise_security:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:starwindsoftware:starwind_san_\\\u0026_nas:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:stb_project:stb:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sterc:google_analytics_dashboard_for_modx:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:stormshield:network_security:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:submitbymailplugin_project:submitbymailplugin:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sunhater:kcfinder:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:suse:arpwatch:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:suse:cups:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:suse:linux_enterprise_high_performance_computing:*:*:*:*:espos:*:*:*",
-        "cpe:2.3:a:suse:linux_enterprise_high_performance_computing:*:*:*:*:ltss:*:*:*",
-        "cpe:2.3:a:suse:manager_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:suse:salt-netapi-client:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:swig-templates_project:swig-templates:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:swig_project:swig:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:symantec:endpoint_detection_and_response:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:syncfusion:nodejs_file_system_provider:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:syrabond_project:syrabond:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sysaid:okta_sso:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:sysjust:cts_web:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:systemd_project:systemd:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:systemtap:systemtap:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tad_book3_project:tad_book3:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:talelin:lin-cms-flask:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tang_project:tang:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tasks:tasks:*:*:*:*:*:android:*:*",
-        "cpe:2.3:a:tcpdump:tcpdump:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:teacms_project:teacms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:teamplus:team\\+_pro:*:*:*:*:private_cloud:android:*:*",
-        "cpe:2.3:a:teamplus:team\\+_pro:*:*:*:*:private_cloud:iphone_os:*:*",
-        "cpe:2.3:a:telegram:telegram:*:*:*:*:*:android:*:*",
-        "cpe:2.3:a:telegram:telegram:*:*:*:*:*:iphone_os:*:*",
-        "cpe:2.3:a:telegram:telegram_desktop:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tencent:tscancode:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tesla:solarcity_solar_monitoring_gateway:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thalesgroup:safenet_keysecure:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:theaccessgroup:corehr_core_portal:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:theforeman:smart_proxy_salt:*:*:*:*:*:foreman:*:*",
-        "cpe:2.3:a:thekelleys:dnsmasq:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thinkingsoftware:efence:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thrivethemes:focusblog:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thrivethemes:ignition:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thrivethemes:luxe:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thrivethemes:minus:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thrivethemes:performag:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thrivethemes:pressive:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thrivethemes:rise:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thrivethemes:squared:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thrivethemes:storied:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thrivethemes:thrive_apprentice:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:thrivethemes:thrive_clever_widgets:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:thrivethemes:thrive_comments:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:thrivethemes:thrive_dashboard:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:thrivethemes:thrive_headline_optimizer:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:thrivethemes:thrive_optimize:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:thrivethemes:thrive_ovation:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:thrivethemes:thrive_quiz_builder:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:thrivethemes:thrive_themes_builder:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:thrivethemes:thrive_visual_editor:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:thrivethemes:voice:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tianocore:edk2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tibco:ebx_add-ons:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tildeslash:monit:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tinylab:cloud_lab:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tinylab:linux_lab:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tinyshop_project:tinyshop:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tinyxml_project:tinyxml:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:titanhq:spamtitan:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tokensale_project:tokensale:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tolvanen:eraser:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tongda2000:office_anywhere_2017:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tp-shop:tp-shop:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:trainenergyserver_project:trainenergyserver:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:transsoft:broker_ftp_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:trellix:enterprise_security_manager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:trteksolutions:education_portal:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:trustedcomputinggroup:trusted_platform_module:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:trustport:antivirus:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:trustport:pc_security:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:trustwallet:trust_wallet:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:trustwallet:trust_wallet_browser_extension:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tsingsee:easyplayerpro:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:tuzicms_project:tuzicms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ulfius_project:ulfius:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ultimate_php_board_project:ultimate_php_board:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:umbral_project:umbral:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:unified-automation:.net_based_opc_ua_client\\/server_sdk:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:unix4lyfe:darkhttpd:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:valvesoftware:steam_client:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:vanderschaarlab:temporai:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:vcita:contact_form_and_calls_to_action_by_vcita:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:vcita:contact_form_builder_by_vcita:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:veno_file_manager_project:veno_file_manager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:veom:service_tracking:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:verint:desktop_and_process_analytics:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:veritas:backup_exec:*:*:*:*:*:netware:*:*",
-        "cpe:2.3:a:veritas:backup_exec:*:*:*:*:*:windows_server:*:*",
-        "cpe:2.3:a:vfairs:vfairs:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:vicidial:vicidial:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:videoserver_project:videoserver:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:vinchin:vinchin_backup_and_recovery:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:visioglobe:visioweb:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:visualware:myconnection_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:vivawallet:viva_wallet:*:*:*:*:*:prestashop:*:*",
-        "cpe:2.3:a:vivo:frame_service:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:vprj_project:vprj:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:web-audimex:audimexee:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:webfwd:mail_subscribe_list:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:webkitgtk:webkit2gtk3:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:webmproject:libwebp:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:westerndigital:sandisk_security_installer:*:*:*:*:*:windows:*:*",
-        "cpe:2.3:a:whatsapp:whatsapp:*:*:*:*:desktop:mac_os_x:*:*",
-        "cpe:2.3:a:whatsapp:whatsapp:*:*:*:*:desktop:windows:*:*",
-        "cpe:2.3:a:wire:restund:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:wisecleaner:wise_system_monitor:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:wondershare:dr.fone:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:wpdownloadmanager:download_manager:*:*:*:*:pro:wordpress:*:*",
-        "cpe:2.3:a:x.org:libx11:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:x.org:xorg-server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:xerox:xmpie_ustore:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:xfce:xfce:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:xitami:xitami:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:xlightftpd:xlight_ftp_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:xpand-it:write-back_manager:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:xwiki:xwiki:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:y18n_project:y18n:*:*:*:*:*:node.js:*:*",
-        "cpe:2.3:a:yfcmf:yfcmf:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:yonyou:yonbip:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:youke365:youke_365:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:youtube-php-mirroring_project:youtube-php-mirroring:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:youtube_shortcode_project:youtube_shortcode:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:ysoft:safeq:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ytdl-sync_project:ytdl-sync:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zabbix:frontend:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zabbix:zabbix-agent2:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zabbix:zabbix:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zammad:zammad:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zcfees_project:zcfees:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zcms_project:zcms:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zend:zend_framework:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zerof:web_server:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zeroxracer_project:zeroxracer:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zimbra:zimbra:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zkteco:zktime:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zohocorp:manageengine_analytics_plus:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zoom:zoom_on-premise_meeting_connector_controller:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zoom:zoom_on-premise_meeting_connector_mmr:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zoom:zoom_on-premise_recording_connector:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zoom:zoom_on-premise_virtual_room_connector:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zoom:zoom_on-premise_virtual_room_connector_load_balancer:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:zscaler:zscaler_internet_access_admin_portal:*:*:*:*:*:*:*:*",
-        "cpe:2.3:o:cisco:ios_xe:*:*:*:*:*:*:*:*"
-      ],
       "cvjark/poc": [
         "cpe:2.3:a:otfcc_project:otfcc:*:*:*:*:*:*:*:*"
       ],
@@ -6713,7 +5789,8 @@
         "cpe:2.3:a:cygwin:cygwin:*:*:*:*:*:*:*:*"
       ],
       "cyrusimap/cyrus-imapd": [
-        "cpe:2.3:a:cyrus:imap:*:*:*:*:*:*:*:*"
+        "cpe:2.3:a:cyrus:imap:*:*:*:*:*:*:*:*",
+        "cpe:2.3:a:cyrusimap:cyrus_imap:*:*:*:*:*:*:*:*"
       ],
       "cyrusimap/cyrus-sasl": [
         "cpe:2.3:a:cyrusimap:cyrus-sasl:*:*:*:*:*:*:*:*",
@@ -7843,6 +6920,9 @@
       "dromara/sureness": [
         "cpe:2.3:a:dromara:sureness:*:*:*:*:*:*:*:*"
       ],
+      "drone-lab/dronetag-vulnerability": [
+        "cpe:2.3:a:dronetag:drone_scanner:*:*:*:*:*:*:*:*"
+      ],
       "droolsjbpm/drools": [
         "cpe:2.3:a:redhat:drools:*:*:*:*:*:*:*:*"
       ],
@@ -8554,6 +7634,9 @@
         "cpe:2.3:a:block:eos:*:*:*:*:*:*:*:*",
         "cpe:2.3:a:block:jit-wasm:*:*:*:*:*:*:*:*",
         "cpe:2.3:a:eosio_project:eos:*:*:*:*:*:*:*:*"
+      ],
+      "epiphyt/embed-privacy": [
+        "cpe:2.3:a:epiph:embed_privacy:*:*:*:*:*:wordpress:*:*"
       ],
       "epiphyt/form-block": [
         "cpe:2.3:a:epiph:form_block:*:*:*:*:*:wordpress:*:*"
@@ -9385,6 +8468,9 @@
       "fireblinkltd/object-collider": [
         "cpe:2.3:a:fireblink:object-collider:*:*:*:*:*:node.js:*:*"
       ],
+      "fireblocks-labs/zengo-lindell17-exploit-poc": [
+        "cpe:2.3:a:lindell17_project:lindell17:*:*:*:*:*:*:*:*"
+      ],
       "firecracker-microvm/firecracker": [
         "cpe:2.3:a:amazon:firecracker:*:*:*:*:*:*:*:*"
       ],
@@ -10021,6 +9107,9 @@
       ],
       "gagliardetto/binary": [
         "cpe:2.3:a:binary_project:binary:*:*:*:*:*:go:*:*"
+      ],
+      "gaizhenbiao/chuanhuchatgpt": [
+        "cpe:2.3:a:gaizhenbiao:chuanhuchatgpt:*:*:*:*:*:*:*:*"
       ],
       "galapogos/my-aia-sg-vulnerabilities": [
         "cpe:2.3:a:aia:my_aia_sg:*:*:*:*:*:android:*:*"
@@ -11134,6 +10223,9 @@
       ],
       "grafana/loki": [
         "cpe:2.3:a:grafana:loki:*:*:*:*:*:*:*:*"
+      ],
+      "grafana/oncall": [
+        "cpe:2.3:a:grafana:oncall:*:*:*:*:*:*:*:*"
       ],
       "grafana/piechart-panel": [
         "cpe:2.3:a:grafana:piechart-panel:*:*:*:*:*:grafana:*:*"
@@ -12432,6 +11524,9 @@
       ],
       "imapsync/imapsync": [
         "cpe:2.3:a:imapsync_project:imapsync:*:*:*:*:*:*:*:*"
+      ],
+      "imatix/xitami-25": [
+        "cpe:2.3:a:xitami:xitami:*:*:*:*:*:*:*:*"
       ],
       "imbrn/v8n": [
         "cpe:2.3:a:v8n_project:v8n:*:*:*:*:*:node.js:*:*"
@@ -16051,6 +15146,9 @@
       "langchain-ai/langchain": [
         "cpe:2.3:a:langchain:langchain:*:*:*:*:*:*:*:*"
       ],
+      "langflow-ai/langflow": [
+        "cpe:2.3:a:langflow:langflow:*:*:*:*:*:*:*:*"
+      ],
       "langhsu/mblog": [
         "cpe:2.3:a:mblog_project:mblog:*:*:*:*:*:*:*:*"
       ],
@@ -16254,6 +15352,9 @@
       ],
       "leozide/leocad": [
         "cpe:2.3:a:leocad:leocad:*:*:*:*:*:*:*:*"
+      ],
+      "lepture/authlib": [
+        "cpe:2.3:a:authlib:authlib:*:*:*:*:*:*:*:*"
       ],
       "lepture/mistune": [
         "cpe:2.3:a:mistune_project:mistune:*:*:*:*:*:*:*:*"
@@ -17564,6 +16665,9 @@
       "mastodon/mastodon": [
         "cpe:2.3:a:joinmastodon:mastodon:*:*:*:*:*:*:*:*"
       ],
+      "masum0009/clcknshop": [
+        "cpe:2.3:a:infosoftbd:clcknshop:*:*:*:*:*:*:*:*"
+      ],
       "mat-sz/lettersanitizer": [
         "cpe:2.3:a:lettersanitizer_project:lettersanitizer:*:*:*:*:*:node.js:*:*"
       ],
@@ -18333,8 +17437,7 @@
         "cpe:2.3:a:miniupnp_project:miniupnpd:*:*:*:*:*:*:*:*"
       ],
       "miniupnp/ngiflib": [
-        "cpe:2.3:a:miniupnp_project:ngiflib:*:*:*:*:*:*:*:*",
-        "cpe:2.3:a:ngiflib_project:ngiflib:*:*:*:*:*:*:*:*"
+        "cpe:2.3:a:miniupnp_project:ngiflib:*:*:*:*:*:*:*:*"
       ],
       "minotauro2020/cve-2023-40868": [
         "cpe:2.3:a:moosocial:moosocial:*:*:*:*:*:*:*:*"
@@ -19293,6 +18396,9 @@
       "nci-agency/anet": [
         "cpe:2.3:a:ncia:advisor_network:*:*:*:*:*:*:*:*"
       ],
+      "ndevilla/iniparser": [
+        "cpe:2.3:a:ndevilla:iniparser:*:*:*:*:*:*:*:*"
+      ],
       "ndlib/sipity": [
         "cpe:2.3:a:nd:sipity:*:*:*:*:*:*:*:*"
       ],
@@ -19464,6 +18570,9 @@
       ],
       "netty/netty": [
         "cpe:2.3:a:netty:netty:*:*:*:*:*:*:*:*"
+      ],
+      "netty/netty-incubator-codec-ohttp": [
+        "cpe:2.3:a:netty:netty-incubator-codec-ohttp:*:*:*:*:*:*:*:*"
       ],
       "netvl/xml-rs": [
         "cpe:2.3:a:xml_library_project:xml_library:*:*:*:*:*:rust:*:*"
@@ -24450,6 +23559,9 @@
       "rustcrypto/utils": [
         "cpe:2.3:a:zeroize_derive_project:zeroize_derive:*:*:*:*:*:rust:*:*"
       ],
+      "rustdesk/rustdesk": [
+        "cpe:2.3:a:rustdesk:rustdesk:*:*:*:*:*:*:*:*"
+      ],
       "rusyasoft/trainenergyserver": [
         "cpe:2.3:a:trainenergyserver_project:trainenergyserver:*:*:*:*:*:*:*:*"
       ],
@@ -24751,6 +23863,7 @@
         "cpe:2.3:a:inventorymanagementsystem_project:inventorymanagementsystem:*:*:*:*:*:*:*:*"
       ],
       "sbaresearch/advisories": [
+        "cpe:2.3:a:born05:two-factor_authentication:*:*:*:*:*:craftcms:*:*",
         "cpe:2.3:a:rxtec:rxadmin:*:*:*:*:*:*:*:*"
       ],
       "sbpp/sourcebans-pp": [
@@ -28861,6 +27974,9 @@
       "vixusfoxy/cve": [
         "cpe:2.3:a:valvesoftware:steam_client:*:*:*:*:*:*:*:*"
       ],
+      "viz-rs/nano-id": [
+        "cpe:2.3:a:viz:nano_id:*:*:*:*:*:rust:*:*"
+      ],
       "vknabel/vscode-apple-swift-format": [
         "cpe:2.3:a:apple-swift-format_project:apple-swift-format:*:*:*:*:*:visual_studio:*:*"
       ],
@@ -29835,6 +28951,9 @@
       ],
       "xayrga/xenfcoresharp": [
         "cpe:2.3:a:xayr:xenfcoresharp:*:*:*:*:*:*:*:*"
+      ],
+      "xcanwin/cve-2024-4577-php-rce": [
+        "cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"
       ],
       "xcat2/xcat-core": [
         "cpe:2.3:a:xcat_project:xcat:*:*:*:*:*:*:*:*"
@@ -30953,6 +30072,9 @@
       ],
       "zyx0814/dzzoffice": [
         "cpe:2.3:a:dzzoffice:dzzoffice:*:*:*:*:*:*:*:*"
+      ],
+      "zyx0814/pichome": [
+        "cpe:2.3:a:oaooa:pichome:*:*:*:*:*:*:*:*"
       ],
       "zzh-newlearner/record": [
         "cpe:2.3:a:luowice:luowice:*:*:*:*:*:android:*:*",
@@ -38178,6 +37300,9 @@
       "addthis": [
         "cpe:2.3:a:addthis:addthis:*:*:*:*:*:wordpress:*:*"
       ],
+      "adfoxly": [
+        "cpe:2.3:a:wpfoxly:adfoxly:*:*:*:*:*:wordpress:*:*"
+      ],
       "adl-team": [
         "cpe:2.3:a:wpwax:team:*:*:*:*:*:wordpress:*:*"
       ],
@@ -38351,6 +37476,9 @@
       ],
       "ai-engine": [
         "cpe:2.3:a:meowapps:ai_engine:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ai-post-generator": [
+        "cpe:2.3:a:autowriter:ai_post_generator_\\|_autowriter:*:*:*:*:*:wordpress:*:*"
       ],
       "aio-time-clock-lite": [
         "cpe:2.3:a:codebangers:all_in_one_time_clock_lite:*:*:*:*:*:wordpress:*:*"
@@ -38666,6 +37794,9 @@
       ],
       "attendance-manager": [
         "cpe:2.3:a:sukimalab:attendance_manager:*:*:*:*:*:wordpress:*:*"
+      ],
+      "attire-blocks": [
+        "cpe:2.3:a:wpattire:attire_blocks:*:*:*:*:*:wordpress:*:*"
       ],
       "audio-merchant": [
         "cpe:2.3:a:myaudiomerchant:audio_merchant:*:*:*:*:*:wordpress:*:*"
@@ -39077,17 +38208,26 @@
       "bookshelf": [
         "cpe:2.3:a:bookshelf_project:bookshelf:*:*:*:*:*:wordpress:*:*"
       ],
+      "boostify-header-footer-builder": [
+        "cpe:2.3:a:woostify:boostify_header_footer_builder_for_elementor:*:*:*:*:*:wordpress:*:*"
+      ],
       "border-loading-bar": [
         "cpe:2.3:a:border_loading_bar_project:border_loading_bar:*:*:*:*:*:wordpress:*:*"
       ],
       "borderless": [
         "cpe:2.3:a:visualmodo:borderless:*:*:*:*:*:wordpress:*:*"
       ],
+      "bosa-elementor-for-woocommerce": [
+        "cpe:2.3:a:bosathemes:bosa_elementor_addons_and_templates_for_woocommerce:*:*:*:*:*:wordpress:*:*"
+      ],
       "boxzilla": [
         "cpe:2.3:a:ibericode:boxzilla:*:*:*:*:*:wordpress:*:*"
       ],
       "bp-better-messages": [
         "cpe:2.3:a:wordplus:better_messages:*:*:*:*:*:wordpress:*:*"
+      ],
+      "bp-cover": [
+        "cpe:2.3:a:buddypress_cover_project:buddypress_cover:*:*:*:*:*:wordpress:*:*"
       ],
       "bp-profile-search": [
         "cpe:2.3:a:dontdream:bp_profile_search:*:*:*:*:*:wordpress:*:*"
@@ -39097,6 +38237,9 @@
       ],
       "bp-social-connect": [
         "cpe:2.3:a:vibethemes:bp_social_connect:*:*:*:*:*:wordpress:*:*"
+      ],
+      "brave-popup-builder": [
+        "cpe:2.3:a:getbrave:brave:*:*:*:*:*:wordpress:*:*"
       ],
       "bravo-translate": [
         "cpe:2.3:a:guelbetech:bravo_translate:*:*:*:*:*:wordpress:*:*"
@@ -39347,6 +38490,9 @@
       "cardoza-wordpress-poll": [
         "cpe:2.3:a:cardozatechnologies:wordpress_poll:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:wordpress_poll_project:wordpress_poll:*:*:*:*:*:wordpress:*:*"
+      ],
+      "caret-country-access-limit": [
+        "cpe:2.3:a:caret:country_access_limit:*:*:*:*:*:wordpress:*:*"
       ],
       "carousel-ck": [
         "cpe:2.3:a:ceikay:carousel_ck:*:*:*:*:*:wordpress:*:*"
@@ -39992,6 +39138,9 @@
       "coupon-zen": [
         "cpe:2.3:a:hasthemes:coupon_zen:*:*:*:*:*:wordpress:*:*"
       ],
+      "cowidgets-elementor-addons": [
+        "cpe:2.3:a:codeless:cowidgets_-_elementor:*:*:*:*:*:wordpress:*:*"
+      ],
       "cp-appointment-calendar": [
         "cpe:2.3:a:codepeople:cp_appointment_calendar:*:*:*:*:*:wordpress:*:*"
       ],
@@ -40176,6 +39325,9 @@
       "custom-fields-search": [
         "cpe:2.3:a:bestwebsoft:custom_fields_search:*:*:*:*:*:wordpress:*:*"
       ],
+      "custom-font-uploader": [
+        "cpe:2.3:a:wbcomdesigns:custom_font_uploader:*:*:*:*:*:wordpress:*:*"
+      ],
       "custom-global-variables": [
         "cpe:2.3:a:newtarget:custom_global_variables:*:*:*:*:*:wordpress:*:*"
       ],
@@ -40280,6 +39432,9 @@
       ],
       "dark-mode": [
         "cpe:2.3:a:dark_mode_project:dark_mode:*:*:*:*:*:wordpress:*:*"
+      ],
+      "dashboard-to-do-list": [
+        "cpe:2.3:a:arwebdesign:dashboard_to-do_list:*:*:*:*:*:wordpress:*:*"
       ],
       "dashboard-widgets-suite": [
         "cpe:2.3:a:plugin-planet:dashboard_widget_suite:*:*:*:*:*:wordpress:*:*"
@@ -40759,6 +39914,9 @@
       "ecwid-shopping-cart": [
         "cpe:2.3:a:lightspeedhq:ecwid_ecommerce_shopping_cart:*:*:*:*:*:wordpress:*:*"
       ],
+      "edd-recent-purchases": [
+        "cpe:2.3:a:wow-company:easy_digital_downloads:*:*:*:*:*:wordpress:*:*"
+      ],
       "edit-comments": [
         "cpe:2.3:a:edit_comments_project:edit_comments:*:*:*:*:*:wordpress:*:*"
       ],
@@ -40907,6 +40065,9 @@
       "envira-gallery-lite": [
         "cpe:2.3:a:enviragallery:envira_gallery:*:*:*:*:lite:wordpress:*:*"
       ],
+      "envo-extra": [
+        "cpe:2.3:a:envothemes:envo_extra:*:*:*:*:*:wordpress:*:*"
+      ],
       "eonet-manual-user-approve": [
         "cpe:2.3:a:xtendify:eonet_manual_user_approve:*:*:*:*:*:wordpress:*:*"
       ],
@@ -40991,6 +40152,9 @@
       ],
       "event-tickets": [
         "cpe:2.3:a:tri:event_tickets:*:*:*:*:*:wordpress:*:*"
+      ],
+      "event-tickets-with-ticket-scanner": [
+        "cpe:2.3:a:vollstart:event_tickets_with_ticket_scanner:*:*:*:*:*:wordpress:*:*"
       ],
       "eventify": [
         "cpe:2.3:a:eventify_project:eventify:*:*:*:*:*:wordpress:*:*"
@@ -41077,6 +40241,9 @@
       "export-users-to-csv": [
         "cpe:2.3:a:export_users_to_csv_project:export_users_to_csv:*:*:*:*:*:wordpress:*:*"
       ],
+      "export-woocommerce": [
+        "cpe:2.3:a:wpfactory:products\\,_order_\\\u0026_customers_export_for_woocommerce:*:*:*:*:*:wordpress:*:*"
+      ],
       "export-woocommerce-customer-list": [
         "cpe:2.3:a:piwebsolution:export_customers_list_csv_for_woocommerce:*:*:*:*:*:*:*:*"
       ],
@@ -41106,6 +40273,9 @@
       ],
       "external-videos": [
         "cpe:2.3:a:gingertech:external_videos:*:*:*:*:*:wordpress:*:*"
+      ],
+      "extra-product-options-for-woocommerce": [
+        "cpe:2.3:a:actpro:extra_product_options_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "extra-user-details": [
         "cpe:2.3:a:vadimk:extra_user_details:*:*:*:*:*:wordpress:*:*"
@@ -41245,6 +40415,9 @@
       "filedownload": [
         "cpe:2.3:a:filedownload_project:filedownload:*:*:*:*:*:wordpress:*:*"
       ],
+      "fileorganizer": [
+        "cpe:2.3:a:fileorganizer:fileorganizer:*:*:*:*:*:wordpress:*:*"
+      ],
       "filester": [
         "cpe:2.3:a:ninjateam:filester:*:*:*:*:*:wordpress:*:*"
       ],
@@ -41253,6 +40426,9 @@
       ],
       "filr-protection": [
         "cpe:2.3:a:filr_project:filr:*:*:*:*:*:wordpress:*:*"
+      ],
+      "filter-custom-fields-taxonomies-light": [
+        "cpe:2.3:a:websupporter_filter_custom_fields_\\\u0026_taxonomies_light_project:websupporter_filter_custom_fields_\\\u0026_taxonomies_light:*:*:*:*:*:wordpress:*:*"
       ],
       "filter-portfolio-gallery": [
         "cpe:2.3:a:phoeniixx:filter_portfolio_gallery:*:*:*:*:*:wordpress:*:*"
@@ -41570,6 +40746,9 @@
       "gamipress": [
         "cpe:2.3:a:gamipress:gamipress:*:*:*:*:*:wordpress:*:*"
       ],
+      "gamipress-link": [
+        "cpe:2.3:a:gamipress:gamipress_-_link:*:*:*:*:*:wordpress:*:*"
+      ],
       "garden-gnome-package": [
         "cpe:2.3:a:ggnome:garden_gnome_package:*:*:*:*:*:wordpress:*:*"
       ],
@@ -41756,6 +40935,9 @@
       "google-captcha": [
         "cpe:2.3:a:bestwebsoft:google_captcha:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:bestwebsoft:google_captcha_\\(recaptcha\\):*:*:*:*:*:wordpress:*:*"
+      ],
+      "google-cse": [
+        "cpe:2.3:a:erikeng:google_cse:*:*:*:*:*:wordpress:*:*"
       ],
       "google-document-embedder": [
         "cpe:2.3:a:google_doc_embedder:google_doc_embedder:*:*:*:*:*:wordpress:*:*",
@@ -42447,6 +41629,7 @@
         "cpe:2.3:a:ip2location:country_blocker:*:*:*:*:*:wordpress:*:*"
       ],
       "ipages-flipbook": [
+        "cpe:2.3:a:avirtum:ipages_flipbook:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:ipages_flipbook_project:ipages_flipbook:*:*:*:*:*:wordpress:*:*"
       ],
       "ipanorama-360-virtual-tour-builder-lite": [
@@ -42690,6 +41873,9 @@
       ],
       "lara-google-analytics": [
         "cpe:2.3:a:lara\\'s_google_analytics_project:lara\\'s_google_analytics:*:*:*:*:*:wordpress:*:*"
+      ],
+      "lastudio-element-kit": [
+        "cpe:2.3:a:la-studioweb:element_kit_for_elementor:*:*:*:*:*:wordpress:*:*"
       ],
       "latest-tweets-widget": [
         "cpe:2.3:a:latest_tweets_widget_project:latest_tweets_widget:*:*:*:*:*:wordpress:*:*"
@@ -43081,6 +42267,9 @@
         "cpe:2.3:a:markdown_on_save_improved_project:markdown_on_save_improved:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:markdown_on_saved_improved_project:markdown_on_saved_improved:*:*:*:*:*:wordpress:*:*"
       ],
+      "market-exporter": [
+        "cpe:2.3:a:vanyukov:market_exporter:*:*:*:*:*:wordpress:*:*"
+      ],
       "marketo-forms-and-tracking": [
         "cpe:2.3:a:hutchhouse:marketo_forms_and_tracking:*:*:*:*:*:wordpress:*:*"
       ],
@@ -43096,6 +42285,9 @@
       ],
       "mass-pagesposts-creator": [
         "cpe:2.3:a:dotstore:mass_pages\\/posts_creator:*:*:*:*:*:wordpress:*:*"
+      ],
+      "master-addons": [
+        "cpe:2.3:a:master-addons:master_addons:*:*:*:*:*:wordpress:*:*"
       ],
       "master-slider": [
         "cpe:2.3:a:averta:master_slider:*:*:*:*:*:wordpress:*:*"
@@ -43182,6 +42374,9 @@
       ],
       "meks-smart-social-widget": [
         "cpe:2.3:a:mekshq:meks_smart_social_widget:*:*:*:*:*:wordpress:*:*"
+      ],
+      "melapress-login-security": [
+        "cpe:2.3:a:melapress:melapress_login_security:*:*:*:*:*:wordpress:*:*"
       ],
       "member-hero": [
         "cpe:2.3:a:memberhero:member_hero:*:*:*:*:*:wordpress:*:*"
@@ -43329,6 +42524,9 @@
       "molie-instructure-canvas-linking-tool": [
         "cpe:2.3:a:molie_instructure_canvas_linking_tool_project:molie_instructure_canvas_linking_tool:*:*:*:*:*:wordpress:*:*"
       ],
+      "mollie-forms": [
+        "cpe:2.3:a:wobbie:mollie_forms:*:*:*:*:*:wordpress:*:*"
+      ],
       "molongui-authorship": [
         "cpe:2.3:a:amitzy:molongui_authorship:*:*:*:*:*:wordpress:*:*"
       ],
@@ -43373,6 +42571,9 @@
       ],
       "mousewheel-smooth-scroll": [
         "cpe:2.3:a:mousewheel_smooth_scroll_project:mousewheel_smooth_scroll:*:*:*:*:*:wordpress:*:*"
+      ],
+      "move-addons": [
+        "cpe:2.3:a:moveaddons:move_addons_for_elementor:*:*:*:*:*:wordpress:*:*"
       ],
       "movies": [
         "cpe:2.3:a:movies_project:movies:*:*:*:*:*:wordpress:*:*"
@@ -43571,6 +42772,9 @@
       "neshan-maps": [
         "cpe:2.3:a:neshan:neshan_maps:*:*:*:*:*:wordpress:*:*"
       ],
+      "netgsm": [
+        "cpe:2.3:a:netgsm:netgsm:*:*:*:*:*:wordpress:*:*"
+      ],
       "netreviews": [
         "cpe:2.3:a:skeepers:verified_reviews_\\(avis_verifies\\):*:*:*:*:*:wordpress:*:*"
       ],
@@ -43588,6 +42792,9 @@
       ],
       "new-grid-gallery": [
         "cpe:2.3:a:awplife:grid_gallery:*:*:*:*:*:wordpress:*:*"
+      ],
+      "new-image-gallery": [
+        "cpe:2.3:a:awplife:image_gallery:*:*:*:*:*:wordpress:*:*"
       ],
       "new-user-approve": [
         "cpe:2.3:a:wpexperts:new_user_approve:*:*:*:*:*:wordpress:*:*"
@@ -43775,6 +42982,9 @@
       "one-click-ssl": [
         "cpe:2.3:a:tribulant:one_click_ssl:*:*:*:*:*:wordpress:*:*"
       ],
+      "one-page-express-companion": [
+        "cpe:2.3:a:horea_radu:one_page_express_companion:*:*:*:*:*:wordpress:*:*"
+      ],
       "one-user-avatar": [
         "cpe:2.3:a:onedesigns:one_user_avatar:*:*:*:*:*:wordpress:*:*"
       ],
@@ -43819,6 +43029,9 @@
       ],
       "open-user-map": [
         "cpe:2.3:a:100plugins:open_user_map:*:*:*:*:*:wordpress:*:*"
+      ],
+      "opengraph": [
+        "cpe:2.3:a:willnorris:open_graph:*:*:*:*:*:wordpress:*:*"
       ],
       "opening-hours": [
         "cpe:2.3:a:designextreme:we\\'re_open\\!:*:*:*:*:*:wordpress:*:*"
@@ -43883,6 +43096,9 @@
       ],
       "outbound-link-manager": [
         "cpe:2.3:a:sparro:outbound_link_manager:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ovic-import-demo": [
+        "cpe:2.3:a:ovic_importer_project:ovic_importer:*:*:*:*:*:wordpress:*:*"
       ],
       "ovic-vc-addon": [
         "cpe:2.3:a:kutethemes:ovic_responsive_wpbakery:*:*:*:*:*:wordpress:*:*"
@@ -44123,6 +43339,9 @@
       ],
       "pi-woocommerce-order-date-time-and-type": [
         "cpe:2.3:a:piwebsolution:pi-woocommerce-order-date-time-and-type:*:*:*:*:*:wordpress:*:*"
+      ],
+      "picture-gallery": [
+        "cpe:2.3:a:videowhisper:picture_gallery:*:*:*:*:*:wordpress:*:*"
       ],
       "pie-forms-for-wp": [
         "cpe:2.3:a:pieforms:drag_\\\u0026_drop_builder:*:*:*:*:*:wordpress:*:*"
@@ -44570,6 +43789,9 @@
       "qi-addons-for-elementor": [
         "cpe:2.3:a:qodeinteractive:qi_addons_for_elementor:*:*:*:*:*:wordpress:*:*"
       ],
+      "qi-blocks": [
+        "cpe:2.3:a:qodeinteractive:qi_blocks:*:*:*:*:*:wordpress:*:*"
+      ],
       "qode-essential-addons": [
         "cpe:2.3:a:qodeinteractive:qode_essential_addons:*:*:*:*:*:wordpress:*:*"
       ],
@@ -44668,6 +43890,9 @@
       ],
       "radio-forge": [
         "cpe:2.3:a:radioforge:radio_forge_muses_player_with_skins:*:*:*:*:*:wordpress:*:*"
+      ],
+      "rafflepress": [
+        "cpe:2.3:a:seedprod:rafflepress:*:*:*:*:*:wordpress:*:*"
       ],
       "random-banner": [
         "cpe:2.3:a:buffercode:random_banner:*:*:*:*:*:wordpress:*:*"
@@ -44865,7 +44090,8 @@
         "cpe:2.3:a:resmush.it:resmush.it_image_optimizer:*:*:*:*:*:wordpress:*:*"
       ],
       "responsive-add-ons": [
-        "cpe:2.3:a:cyberchimps:gutenberg_\\\u0026_elementor_templates_importer_for_responsive:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:cyberchimps:gutenberg_\\\u0026_elementor_templates_importer_for_responsive:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:cyberchimps:responsive_addons:*:*:*:*:*:wordpress:*:*"
       ],
       "responsive-column-widgets": [
         "cpe:2.3:a:michaeluno:responsive_column_widgets:*:*:*:*:*:wordpress:*:*"
@@ -45012,6 +44238,9 @@
       "rsvpmaker-excel": [
         "cpe:2.3:a:carrcommunications:rsvpmaker_excel:*:*:*:*:*:wordpress:*:*"
       ],
+      "rt-easy-builder-advanced-addons-for-elementor": [
+        "cpe:2.3:a:risethemes:rt_easy_builder:*:*:*:*:*:wordpress:*:*"
+      ],
       "rt-prettyphoto": [
         "cpe:2.3:a:royaltechbd:royal_prettyphoto:*:*:*:*:*:wordpress:*:*"
       ],
@@ -45056,6 +44285,9 @@
       ],
       "sassy-social-share": [
         "cpe:2.3:a:heateor:sassy_social_share:*:*:*:*:*:wordpress:*:*"
+      ],
+      "save-as-pdf-by-pdfcrowd": [
+        "cpe:2.3:a:pdfcrowd:save_as_pdf:*:*:*:*:*:wordpress:*:*"
       ],
       "save-grab": [
         "cpe:2.3:a:neobie:grab_\\\u0026_save:*:*:*:*:*:wordpress:*:*"
@@ -45394,6 +44626,9 @@
       "simple-cloudflare-turnstile": [
         "cpe:2.3:a:replywp:simple_cloudfare_turnstile:*:*:*:*:*:wordpress:*:*"
       ],
+      "simple-cod-fee-for-woocommerce": [
+        "cpe:2.3:a:83pixel:simple_cod_fees_for_woocommerce:*:*:*:*:*:wordpress:*:*"
+      ],
       "simple-custom-author-profiles": [
         "cpe:2.3:a:usbmemorydirect:simple_custom_author_profiles:*:*:*:*:*:wordpress:*:*"
       ],
@@ -45670,6 +44905,9 @@
       ],
       "slider-range-htapps": [
         "cpe:2.3:a:ht_slider_range_for_amazon_affiliates_project:ht_slider_range_for_amazon_affiliates:*:*:*:*:*:wordpress:*:*"
+      ],
+      "slider-responsive-slideshow": [
+        "cpe:2.3:a:awplife:slider_responsive_slideshow:*:*:*:*:*:wordpress:*:*"
       ],
       "slider-slideshow": [
         "cpe:2.3:a:web-settler:layer_slider:*:*:*:*:*:wordpress:*:*"
@@ -46017,6 +45255,9 @@
       ],
       "storefront-footer-text": [
         "cpe:2.3:a:wooassist:storefront_footer_text:*:*:*:*:*:wordpress:*:*"
+      ],
+      "strategery-migrations": [
+        "cpe:2.3:a:strategery_migrations_project:strategery_migrations:*:*:*:*:*:wordpress:*:*"
       ],
       "stream": [
         "cpe:2.3:a:xwp:stream:*:*:*:*:*:wordpress:*:*"
@@ -46676,11 +45917,17 @@
       "updraftplus": [
         "cpe:2.3:a:updraftplus:updraftplus:*:*:*:*:*:wordpress:*:*"
       ],
+      "upload-fields-for-wpforms": [
+        "cpe:2.3:a:softlabbd:upload_fields_for_wpforms:*:*:*:*:*:wordpress:*:*"
+      ],
       "upload-file-type-settings-plugin": [
         "cpe:2.3:a:upload_file_type_settings_plugin_project:upload_file_type_settings_plugin:*:*:*:*:*:wordpress:*:*"
       ],
       "uploading-svgwebp-and-ico-files": [
         "cpe:2.3:a:uploading_svg\\,_webp_and_ico_files_project:uploading_svg\\,_webp_and_ico_files:*:*:*:*:*:wordpress:*:*"
+      ],
+      "upunzipper": [
+        "cpe:2.3:a:upunzipper_project:upunzipper:*:*:*:*:*:wordpress:*:*"
       ],
       "url-shortify": [
         "cpe:2.3:a:kaizencoders:url_shortify:*:*:*:*:*:wordpress:*:*"
@@ -46872,6 +46119,9 @@
       "visual-portfolio": [
         "cpe:2.3:a:visualportfolio:visual_portfolio\\,_photo_gallery_\\\u0026_post_grid:*:*:*:*:*:wordpress:*:*"
       ],
+      "visualcomposer": [
+        "cpe:2.3:a:visualcomposer:visual_composer_website_builder:*:*:*:*:*:wordpress:*:*"
+      ],
       "visualizer": [
         "cpe:2.3:a:themeisle:visualizer:*:*:*:*:*:wordpress:*:*"
       ],
@@ -46978,6 +46228,9 @@
       ],
       "wc-vendors": [
         "cpe:2.3:a:wcvendors:woocommerce_multi-vendor\\,_woocommerce_marketplace\\,_product_vendors:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wc4bp": [
+        "cpe:2.3:a:themekraft:buddypress_woocommerce_my_account_integration:*:*:*:*:*:wordpress:*:*"
       ],
       "wck-custom-fields-and-custom-post-types-creator": [
         "cpe:2.3:a:cozmoslabs:custom_post_types_and_custom_fields_creator:*:*:*:*:*:wordpress:*:*"
@@ -47202,7 +46455,8 @@
         "cpe:2.3:a:villatheme:cart_all_in_one_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "woo-checkout-field-editor-pro": [
-        "cpe:2.3:a:themehigh:checkout_field_editor_for_woocommerce:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:themehigh:checkout_field_editor_for_woocommerce:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:themehigh:checkout_field_editor_for_woocommerce:*:*:*:*:pro:wordpress:*:*"
       ],
       "woo-checkout-for-digital-goods": [
         "cpe:2.3:a:dotstore:woocommerce_checkout_for_digital_goods:*:*:*:*:*:wordpress:*:*"
@@ -47385,7 +46639,8 @@
         "cpe:2.3:a:wpovernight:woocommerce_pdf_invoices\\\u0026_packing_slips:*:*:*:*:*:wordpress:*:*"
       ],
       "woocommerce-product-addon": [
-        "cpe:2.3:a:najeebmedia:ppom_for_woocommerce:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:najeebmedia:ppom_for_woocommerce:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:themeisle:product_addons_\\\u0026_fields_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "woocommerce-product-importer": [
         "cpe:2.3:a:visser:woocommerce_-_product_importer:*:*:*:*:*:wordpress:*:*"
@@ -47899,6 +47154,9 @@
       "wp-fevents-book": [
         "cpe:2.3:a:wp_fevents_book_project:wp_fevents_book:*:*:*:*:*:wordpress:*:*"
       ],
+      "wp-file-checker": [
+        "cpe:2.3:a:sc_filechecker_project:sc_filechecker:*:*:*:*:*:wordpress:*:*"
+      ],
       "wp-file-get-contents": [
         "cpe:2.3:a:surniaulula:jsm_file_get_contents\\(\\)_shortcode:*:*:*:*:*:wordpress:*:*"
       ],
@@ -48044,6 +47302,9 @@
       ],
       "wp-image-zoooom": [
         "cpe:2.3:a:silkypress:wp_image_zoom:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-imageflow2": [
+        "cpe:2.3:a:spiffyplugins:wp_flow_plus:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-import-export-lite": [
         "cpe:2.3:a:vjinfotech:wp_import_export_lite:*:*:*:*:*:wordpress:*:*"
@@ -48873,6 +48134,9 @@
       "wpupper-share-buttons": [
         "cpe:2.3:a:wpupper_share_buttons_project:wpupper_share_buttons:*:*:*:*:*:wordpress:*:*"
       ],
+      "wpvivid-backup-mainwp": [
+        "cpe:2.3:a:wpvivid:wpvivid_backup_for_mainwp:*:*:*:*:*:wordpress:*:*"
+      ],
       "wpvivid-backuprestore": [
         "cpe:2.3:a:wpvivid:migration\\,_backup\\,_staging:*:*:*:*:*:wordpress:*:*"
       ],
@@ -48980,6 +48244,7 @@
         "cpe:2.3:a:yikesinc:custom_product_tabs_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "yikes-inc-easy-mailchimp-extender": [
+        "cpe:2.3:a:codeparrots:easy_forms_for_mailchimp:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:yikesinc:easy_forms_for_mailchimp:*:*:*:*:*:wordpress:*:*"
       ],
       "yith-desktop-notifications-for-woocommerce": [
@@ -48991,6 +48256,9 @@
       "yith-woocommerce-gift-cards": [
         "cpe:2.3:a:yithemes:yith_woocommerce_gift_cards:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:yithemes:yith_woocommerce_gift_cards:*:*:*:*:free:wordpress:*:*"
+      ],
+      "yith-woocommerce-product-add-ons": [
+        "cpe:2.3:a:yithemes:yith_woocommerce_product_add-ons:*:*:*:*:free:wordpress:*:*"
       ],
       "yookassa": [
         "cpe:2.3:a:yookassa:yukassa_for_woocommerce:*:*:*:*:*:wordpress:*:*"
@@ -49164,6 +48432,9 @@
       "bingle": [
         "cpe:2.3:a:accesspressthemes:bingle:*:*:*:*:*:wordpress:*:*"
       ],
+      "blocksy": [
+        "cpe:2.3:a:creativethemes:blocksy:*:*:*:*:*:wordpress:*:*"
+      ],
       "bloger": [
         "cpe:2.3:a:accesspressthemes:bloger:*:*:*:*:*:wordpress:*:*"
       ],
@@ -49275,6 +48546,9 @@
       ],
       "regina-lite": [
         "cpe:2.3:a:machothemes:regina_lite:*:*:*:*:*:wordpress:*:*"
+      ],
+      "responsive": [
+        "cpe:2.3:a:cyberchimps:responsive:*:*:*:*:*:wordpress:*:*"
       ],
       "royal-elementor-kit": [
         "cpe:2.3:a:royal-elementor-addons:royal_elementor_kit:*:*:*:*:*:wordpress:*:*"
