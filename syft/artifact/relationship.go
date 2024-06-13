@@ -47,26 +47,49 @@ type Relationship struct {
 	From Identifiable
 	To   Identifiable
 	Type RelationshipType
-	Data sort.TryComparable
+	// FIXME map[string]interface{} is not TryComparable. Thus this field can't be.
+	Data interface{}
 }
 
 func (rel Relationship) Compare(other Relationship) int {
-	if ok, i := rel.From.TryCompare(other.From); ok {
-		if i != 0 {
+	if rel.From != nil && other.From == nil {
+		return 1
+	}
+	if rel.From == nil && other.From != nil {
+		return -1
+	}
+	if rel.From != nil {
+		if i := sort.CompareOrd(reflect.ValueOf(rel.From).Type().Name(), reflect.ValueOf(other.From).Type().Name()); i != 0 {
 			return i
 		}
-	} else {
-		if i := rel.From.ID().Compare(other.From.ID()); i != 0 {
-			return i
+		if ok, i := rel.From.TryCompare(other.From); ok {
+			if i != 0 {
+				return i
+			}
+		} else {
+			if i := rel.From.ID().Compare(other.From.ID()); i != 0 {
+				return i
+			}
 		}
 	}
-	if ok, i := rel.To.TryCompare(other.To); ok {
-		if i != 0 {
+	if rel.To != nil && other.To == nil {
+		return 1
+	}
+	if rel.To == nil && other.To != nil {
+		return -1
+	}
+	if rel.To != nil {
+		if i := sort.CompareOrd(reflect.ValueOf(rel.To).Type().Name(), reflect.ValueOf(other.To).Type().Name()); i != 0 {
 			return i
 		}
-	} else {
-		if i := rel.To.ID().Compare(other.To.ID()); i != 0 {
-			return i
+		if ok, i := rel.To.TryCompare(other.To); ok {
+			if i != 0 {
+				return i
+			}
+		} else {
+			if i := rel.To.ID().Compare(other.To.ID()); i != 0 {
+				return i
+			}
 		}
 	}
 
@@ -74,9 +97,20 @@ func (rel Relationship) Compare(other Relationship) int {
 		return i
 	}
 
-	if ok, i := sort.TryCompare(rel.Data, other.Data); ok {
-		return i
+	if rel.Data != nil && other.Data == nil {
+		return 1
+	}
+	if rel.Data == nil && other.Data != nil {
+		return -1
+	}
+	if rel.Data != nil {
+		if i := sort.CompareOrd(reflect.ValueOf(rel.Data).Type().Name(), reflect.ValueOf(other.Data).Type().Name()); i != 0 {
+			return i
+		}
+		if ok, i := sort.TryCompare(rel.Data, other.Data); ok {
+			return i
+		}
 	}
 
-	return sort.CompareOrd(reflect.ValueOf(rel.Data).Type().Name(), reflect.ValueOf(other.Data).Type().Name())
+	return 0
 }

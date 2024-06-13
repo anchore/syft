@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 	"io"
 	"path"
 
@@ -124,4 +125,18 @@ func getAPKKeys(resolver file.Resolver) (map[string]string, []file.Location, err
 type AlpineConfiguration struct {
 	APKKeys map[string]string `json:"apkKeys" yaml:"apkKeys"`
 	// Add more data you want to capture as part of the package metadata here...
+}
+
+func (m AlpineConfiguration) Compare(other AlpineConfiguration) int {
+	if i := sort.CompareMapOrd(m.APKKeys, other.APKKeys); i != 0 {
+		return i
+	}
+	return 0
+}
+
+func (m AlpineConfiguration) TryCompare(other any) (bool, int) {
+	if other, exists := other.(AlpineConfiguration); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
 }

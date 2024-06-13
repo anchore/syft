@@ -340,7 +340,7 @@ func Test_toPackageChecksums(t *testing.T) {
 				Name:     "test",
 				Version:  "1.0.0",
 				Language: pkg.Java,
-				Metadata: struct{}{},
+				Metadata: emptyMeta{},
 			},
 			expected:      []spdx.Checksum{},
 			filesAnalyzed: false,
@@ -354,6 +354,15 @@ func Test_toPackageChecksums(t *testing.T) {
 			assert.Equal(t, test.filesAnalyzed, filesAnalyzed)
 		})
 	}
+}
+
+type emptyMeta struct{}
+
+func (e emptyMeta) TryCompare(t any) (bool, int) {
+	if _, ok := t.(emptyMeta); ok {
+		return true, 0
+	}
+	return false, 0
 }
 
 func Test_toFileTypes(t *testing.T) {

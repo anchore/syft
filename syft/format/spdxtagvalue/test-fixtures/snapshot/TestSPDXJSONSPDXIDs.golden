@@ -57,8 +57,8 @@ PackageCopyrightText: NOASSERTION
 
 ##### Relationships
 
-Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package--at-sign-1c8c811ea5b1cd46
 Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package-some-slashes-8a8e95924316c66b
+Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package--at-sign-1c8c811ea5b1cd46
 Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package-under-scores-883703d950ec00f3
 Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Directory-foobar-baz
 

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/anchore/syft/syft/sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -87,7 +88,7 @@ func Test_toGithubModel(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		metadata any
+		metadata sort.TryComparable
 		testPath string
 		expected *DependencySnapshot
 	}{

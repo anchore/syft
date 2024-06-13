@@ -101,13 +101,13 @@ func TestToSyftModel(t *testing.T) {
 
 	assert.Len(t, pkgs, 2)
 
-	p1 := pkgs[0]
+	p1 := pkgs[1]
 	assert.Equal(t, p1.Name, "pkg-1")
 	p1meta := p1.Metadata.(pkg.ApkDBEntry)
 	assert.Equal(t, p1meta.OriginPackage, "p1-origin")
 	assert.Len(t, p1.CPEs, 2)
 
-	p2 := pkgs[1]
+	p2 := pkgs[0]
 	assert.Equal(t, p2.Name, "pkg-2")
 	p2meta := p2.Metadata.(pkg.DpkgDBEntry)
 	assert.Equal(t, p2meta.Source, "p2-origin")

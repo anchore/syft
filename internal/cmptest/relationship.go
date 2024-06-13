@@ -1,6 +1,7 @@
 package cmptest
 
 import (
+	"github.com/anchore/syft/syft/sort"
 	"github.com/sanity-io/litter"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -20,7 +21,8 @@ var relationshipStringer = litter.Options{
 
 func DefaultRelationshipComparer(x, y artifact.Relationship) bool {
 	// we just need a stable sort, the ordering does not need to be sensible
-	xStr := relationshipStringer.Sdump(x)
-	yStr := relationshipStringer.Sdump(y)
-	return xStr < yStr
+	//xStr := relationshipStringer.Sdump(x)
+	//yStr := relationshipStringer.Sdump(y)
+	//return xStr < yStr
+	return sort.Less(x, y)
 }

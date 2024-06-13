@@ -97,16 +97,16 @@ func Test_relationships(t *testing.T) {
 			},
 			expected: &[]cyclonedx.Dependency{
 				{
+					Ref: helpers.DeriveBomRef(p2),
+					Dependencies: &[]string{
+						helpers.DeriveBomRef(p4),
+					},
+				},
+				{
 					Ref: helpers.DeriveBomRef(p1),
 					Dependencies: &[]string{
 						helpers.DeriveBomRef(p2),
 						helpers.DeriveBomRef(p3),
-					},
-				},
-				{
-					Ref: helpers.DeriveBomRef(p2),
-					Dependencies: &[]string{
-						helpers.DeriveBomRef(p4),
 					},
 				},
 			},

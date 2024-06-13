@@ -3,6 +3,7 @@ package pkgtest
 import (
 	"context"
 	"fmt"
+	sort2 "github.com/anchore/syft/syft/sort"
 	"io"
 	"os"
 	"sort"
@@ -277,14 +278,13 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 		opts = append(opts, p.compareOptions...)
 		opts = append(opts, cmp.Reporter(&r))
 
-		// order should not matter
-		pkg.Sort(p.expectedPkgs)
-		pkg.Sort(pkgs)
-
-		if diff := cmp.Diff(p.expectedPkgs, pkgs, opts...); diff != "" {
-			t.Log("Specific Differences:\n" + r.String())
-			t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
+		if i := sort2.CompareArrays(p.expectedPkgs, pkgs); i != 0 {
+			if diff := cmp.Diff(p.expectedPkgs, pkgs, opts...); diff != "" {
+				t.Log("Specific Differences:\n" + r.String())
+				t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
+			}
 		}
+
 	}
 	{
 		r := cmptest.NewDiffReporter()
@@ -296,11 +296,23 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 		// order should not matter
 		relationship.Sort(p.expectedRelationships)
 		relationship.Sort(relationships)
+		i := 0
+		for {
+			if i >= max(len(p.expectedRelationships), len(relationships)) {
+				break
+			}
+			if c := sort2.Compare(p.expectedRelationships[i], relationships[i]); c != 0 {
+				t.Logf("Expected relationship and Actual relationship differ at index %d\nExpected: %v\nActual:%v", i, p.expectedRelationships[i], relationships[i])
+			}
+			i++
+		}
 
-		if diff := cmp.Diff(p.expectedRelationships, relationships, opts...); diff != "" {
-			t.Log("Specific Differences:\n" + r.String())
+		if i := sort2.CompareArrays(p.expectedRelationships, relationships); i != 0 {
+			if diff := cmp.Diff(p.expectedRelationships, relationships, opts...); diff != "" {
+				t.Log("Specific Differences:\n" + r.String())
 
-			t.Errorf("unexpected relationships from parsing (-expected +actual)\n%s", diff)
+				t.Errorf("unexpected relationships from parsing (-expected +actual)\n%s", diff)
+			}
 		}
 	}
 }

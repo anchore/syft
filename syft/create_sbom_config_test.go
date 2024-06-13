@@ -458,7 +458,7 @@ func Test_findDefaultTag(t *testing.T) {
 		{
 			name: "unknown",
 			src: source.Description{
-				Metadata: struct{}{},
+				Metadata: emptyMeta{},
 			},
 			wantErr: require.Error,
 		},
@@ -476,6 +476,15 @@ func Test_findDefaultTag(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+type emptyMeta struct{}
+
+func (e emptyMeta) TryCompare(t any) (bool, int) {
+	if _, ok := t.(emptyMeta); ok {
+		return true, 0
+	}
+	return false, 0
 }
 
 func TestCreateSBOMConfig_validate(t *testing.T) {

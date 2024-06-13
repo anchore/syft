@@ -27,6 +27,40 @@
     {
       "bom-ref":"redacted",
       "type": "library",
+      "name": "package-2",
+      "version": "2.0.1",
+      "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+      "purl": "pkg:deb/debian/package-2@2.0.1",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "the-cataloger-2"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "deb"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "dpkg-db-entry"
+        },
+        {
+          "name": "syft:location:0:layerID",
+          "value": "sha256:redacted"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/somefile-2.txt"
+        },
+        {
+          "name": "syft:metadata:installedSize",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "bom-ref":"redacted",
+      "type": "library",
       "name": "package-1",
       "version": "1.0.1",
       "licenses": [
@@ -62,40 +96,6 @@
         {
           "name": "syft:location:0:path",
           "value": "/somefile-1.txt"
-        }
-      ]
-    },
-    {
-      "bom-ref":"redacted",
-      "type": "library",
-      "name": "package-2",
-      "version": "2.0.1",
-      "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
-      "purl": "pkg:deb/debian/package-2@2.0.1",
-      "properties": [
-        {
-          "name": "syft:package:foundBy",
-          "value": "the-cataloger-2"
-        },
-        {
-          "name": "syft:package:type",
-          "value": "deb"
-        },
-        {
-          "name": "syft:package:metadataType",
-          "value": "dpkg-db-entry"
-        },
-        {
-          "name": "syft:location:0:layerID",
-          "value": "sha256:redacted"
-        },
-        {
-          "name": "syft:location:0:path",
-          "value": "/somefile-2.txt"
-        },
-        {
-          "name": "syft:metadata:installedSize",
-          "value": "0"
         }
       ]
     },

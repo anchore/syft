@@ -14,6 +14,30 @@
  },
  "packages": [
   {
+   "SPDXID": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "copyrightText": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
+    },
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:deb/debian/package-2@2.0.1"
+    }
+   ],
+   "filesAnalyzed": false,
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "name": "package-2",
+   "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
+   "supplier": "NOASSERTION",
+   "versionInfo": "2.0.1"
+  },
+  {
    "name": "package-1",
    "SPDXID": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
    "versionInfo": "1.0.1",
@@ -34,30 +58,6 @@
      "referenceCategory": "PACKAGE-MANAGER",
      "referenceType": "purl",
      "referenceLocator": "a-purl-1"
-    }
-   ]
-  },
-  {
-   "name": "package-2",
-   "SPDXID": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
-   "versionInfo": "2.0.1",
-   "supplier": "NOASSERTION",
-   "downloadLocation": "NOASSERTION",
-   "filesAnalyzed": false,
-   "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
-   "licenseConcluded": "NOASSERTION",
-   "licenseDeclared": "NOASSERTION",
-   "copyrightText": "NOASSERTION",
-   "externalRefs": [
-    {
-     "referenceCategory": "SECURITY",
-     "referenceType": "cpe23Type",
-     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
-    },
-    {
-     "referenceCategory": "PACKAGE-MANAGER",
-     "referenceType": "purl",
-     "referenceLocator": "pkg:deb/debian/package-2@2.0.1"
     }
    ]
   },
@@ -89,12 +89,12 @@
  "relationships": [
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
-   "relatedSpdxElement": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
+   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
    "relationshipType": "CONTAINS"
   },
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
-   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "relatedSpdxElement": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
    "relationshipType": "CONTAINS"
   },
   {

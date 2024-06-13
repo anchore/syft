@@ -30,6 +30,12 @@ func (k KeyValues) Compare(other KeyValues) int {
 	}
 	return 0
 }
+func (m KeyValues) TryCompare(other any) (bool, int) {
+	if other, exists := other.(KeyValues); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
+}
 
 func (k KeyValues) Get(key string) (string, bool) {
 	for _, kv := range k {

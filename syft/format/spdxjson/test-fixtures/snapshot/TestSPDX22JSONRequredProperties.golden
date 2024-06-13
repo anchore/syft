@@ -14,18 +14,6 @@
  },
  "packages": [
   {
-   "SPDXID": "SPDXRef-Package-files-analyzed-false-7d37ba9d2f7c574b",
-   "copyrightText": "NOASSERTION",
-   "downloadLocation": "NOASSERTION",
-   "filesAnalyzed": false,
-   "licenseConcluded": "NOASSERTION",
-   "licenseDeclared": "NOASSERTION",
-   "name": "files-analyzed-false",
-   "sourceInfo": "acquired package info from the following paths: ",
-   "supplier": "NOASSERTION",
-   "versionInfo": "v2"
-  },
-  {
    "name": "files-analyzed-true",
    "SPDXID": "SPDXRef-Package-files-analyzed-true-035066c2086b8bb4",
    "versionInfo": "v1",
@@ -45,6 +33,18 @@
    "licenseConcluded": "NOASSERTION",
    "licenseDeclared": "NOASSERTION",
    "copyrightText": "NOASSERTION"
+  },
+  {
+   "SPDXID": "SPDXRef-Package-files-analyzed-false-7d37ba9d2f7c574b",
+   "copyrightText": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "name": "files-analyzed-false",
+   "sourceInfo": "acquired package info from the following paths: ",
+   "supplier": "NOASSERTION",
+   "versionInfo": "v2"
   },
   {
    "SPDXID": "SPDXRef-DocumentRoot-Unknown-",
@@ -83,12 +83,12 @@
   },
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Unknown-",
-   "relatedSpdxElement": "SPDXRef-Package-files-analyzed-false-7d37ba9d2f7c574b",
+   "relatedSpdxElement": "SPDXRef-Package-files-analyzed-true-035066c2086b8bb4",
    "relationshipType": "CONTAINS"
   },
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Unknown-",
-   "relatedSpdxElement": "SPDXRef-Package-files-analyzed-true-035066c2086b8bb4",
+   "relatedSpdxElement": "SPDXRef-Package-files-analyzed-false-7d37ba9d2f7c574b",
    "relationshipType": "CONTAINS"
   },
   {

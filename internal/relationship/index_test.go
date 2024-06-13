@@ -1,6 +1,7 @@
 package relationship
 
 import (
+	"github.com/anchore/syft/syft/sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -222,4 +223,18 @@ type fakeIdentifiable struct {
 
 func (f fakeIdentifiable) ID() artifact.ID {
 	return artifact.ID(f.id)
+}
+
+func (m fakeIdentifiable) Compare(other fakeIdentifiable) int {
+	if i := sort.CompareOrd(m.id, other.id); i != 0 {
+		return i
+	}
+	return 0
+}
+
+func (m fakeIdentifiable) TryCompare(other any) (bool, int) {
+	if other, exists := other.(fakeIdentifiable); exists {
+		return true, m.Compare(other)
+	}
+	return false, 0
 }
