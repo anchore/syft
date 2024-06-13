@@ -3,7 +3,6 @@ package artifact
 import (
 	"github.com/anchore/syft/syft/sort"
 	"reflect"
-	"strings"
 )
 
 const (
@@ -41,7 +40,7 @@ func AllRelationshipTypes() []RelationshipType {
 type RelationshipType string
 
 func (rel RelationshipType) Compare(other RelationshipType) int {
-	return strings.Compare(string(rel), string(other))
+	return sort.CompareOrd(string(rel), string(other))
 }
 
 type Relationship struct {

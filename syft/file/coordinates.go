@@ -2,10 +2,9 @@ package file
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/sort"
 )
 
 // Coordinates contains the minimal information needed to describe how to find a file within any possible source object (e.g. image and directory sources)
@@ -42,10 +41,10 @@ func (c Coordinates) String() string {
 }
 
 func (c Coordinates) Compare(other Coordinates) int {
-	if i := strings.Compare(c.RealPath, other.RealPath); i != 0 {
+	if i := sort.CompareOrd(c.RealPath, other.RealPath); i != 0 {
 		return i
 	}
-	return strings.Compare(c.FileSystemID, other.FileSystemID)
+	return sort.CompareOrd(c.FileSystemID, other.FileSystemID)
 }
 func (c Coordinates) TryCompare(other any) (bool, int) {
 	if other, exists := other.(Coordinates); exists {

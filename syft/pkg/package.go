@@ -5,14 +5,12 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/sort"
-	"slices"
-	"strings"
-
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/sort"
+	"slices"
 )
 
 // Package represents an application or library that has been bundled into a distributable format.
@@ -105,7 +103,7 @@ func (p Package) Compare(other Package) int {
 	// note: we cannot guarantee that IDs (which digests the metadata) are stable enough to sort on
 	// when there are potentially missing elements there is too much reduction in the dimensions to
 	// lean on ID comparison. The best fallback is to look at the string representation of the metadata.
-	return strings.Compare(fmt.Sprintf("%#v", p.Metadata), fmt.Sprintf("%#v", other.Metadata))
+	return sort.CompareOrd(fmt.Sprintf("%#v", p.Metadata), fmt.Sprintf("%#v", other.Metadata))
 }
 func (p Package) TryCompare(other any) (bool, int) {
 	if other, exists := other.(Package); exists {

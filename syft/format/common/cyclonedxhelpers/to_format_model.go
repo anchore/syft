@@ -2,8 +2,8 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/sort"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -201,7 +201,7 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 	}
 
 	slices.SortFunc(result, func(a, b cyclonedx.Dependency) int {
-		return strings.Compare(a.Ref, b.Ref)
+		return sort.CompareOrd(a.Ref, b.Ref)
 	})
 
 	return result

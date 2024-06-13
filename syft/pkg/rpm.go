@@ -2,10 +2,8 @@ package pkg
 
 import (
 	"github.com/anchore/syft/syft/sort"
-	stdSort "sort"
-	"strings"
-
 	"github.com/scylladb/go-set/strset"
+	stdSort "sort"
 
 	"github.com/anchore/syft/syft/file"
 )
@@ -61,7 +59,7 @@ func (fm RpmFileMode) Compare(other RpmFileMode) int {
 }
 
 func (fm RpmFileRecord) Compare(other RpmFileRecord) int {
-	if i := strings.Compare(fm.Path, other.Path); i != 0 {
+	if i := sort.CompareOrd(fm.Path, other.Path); i != 0 {
 		return i
 	}
 	if i := sort.Compare(fm.Mode, other.Mode); i != 0 {
@@ -73,13 +71,13 @@ func (fm RpmFileRecord) Compare(other RpmFileRecord) int {
 	if i := sort.Compare(fm.Digest, other.Digest); i != 0 {
 		return i
 	}
-	if i := strings.Compare(fm.UserName, other.UserName); i != 0 {
+	if i := sort.CompareOrd(fm.UserName, other.UserName); i != 0 {
 		return i
 	}
-	if i := strings.Compare(fm.GroupName, other.GroupName); i != 0 {
+	if i := sort.CompareOrd(fm.GroupName, other.GroupName); i != 0 {
 		return i
 	}
-	if i := strings.Compare(fm.Flags, other.Flags); i != 0 {
+	if i := sort.CompareOrd(fm.Flags, other.Flags); i != 0 {
 		return i
 	}
 	return 0
@@ -98,28 +96,28 @@ func (m RpmDBEntry) OwnedFiles() (result []string) {
 }
 
 func (m RpmDBEntry) Compare(other RpmDBEntry) int {
-	if i := strings.Compare(m.Name, other.Name); i != 0 {
+	if i := sort.CompareOrd(m.Name, other.Name); i != 0 {
 		return i
 	}
-	if i := strings.Compare(m.Version, other.Version); i != 0 {
+	if i := sort.CompareOrd(m.Version, other.Version); i != 0 {
 		return i
 	}
 	if i := sort.ComparePtrOrd(m.Epoch, other.Epoch); i != 0 {
 		return i
 	}
-	if i := strings.Compare(m.Arch, other.Arch); i != 0 {
+	if i := sort.CompareOrd(m.Arch, other.Arch); i != 0 {
 		return i
 	}
-	if i := strings.Compare(m.Release, other.Release); i != 0 {
+	if i := sort.CompareOrd(m.Release, other.Release); i != 0 {
 		return i
 	}
-	if i := strings.Compare(m.SourceRpm, other.SourceRpm); i != 0 {
+	if i := sort.CompareOrd(m.SourceRpm, other.SourceRpm); i != 0 {
 		return i
 	}
 	if i := m.Size - other.Size; i != 0 {
 		return i
 	}
-	if i := strings.Compare(m.Vendor, other.Vendor); i != 0 {
+	if i := sort.CompareOrd(m.Vendor, other.Vendor); i != 0 {
 		return i
 	}
 	if i := sort.ComparePtrOrd(m.ModularityLabel, other.ModularityLabel); i != 0 {

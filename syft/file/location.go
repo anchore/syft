@@ -3,8 +3,6 @@ package file
 import (
 	"fmt"
 	"github.com/anchore/syft/syft/sort"
-	"strings"
-
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/anchore/stereoscope/pkg/file"
@@ -207,7 +205,7 @@ func (l LocationData) Compare(other LocationData) int {
 	if i := sort.CompareOrd(uint64(l.ref.ID()), uint64(other.ref.ID())); i != 0 {
 		return i
 	}
-	return strings.Compare(string(l.ref.RealPath), string(other.ref.RealPath))
+	return sort.CompareOrd(string(l.ref.RealPath), string(other.ref.RealPath))
 }
 func (l Location) Compare(other Location) int {
 	return l.LocationData.Compare(other.LocationData)

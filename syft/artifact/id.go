@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"github.com/anchore/syft/syft/sort"
 	"github.com/mitchellh/hashstructure/v2"
-	"strings"
 )
 
 // ID represents a unique value for each package added to a package catalog.
 type ID string
 
 func (id ID) Compare(other ID) int {
-	return strings.Compare(string(id), string(other))
+	return sort.CompareOrd(string(id), string(other))
 }
 
 type Identifiable interface {

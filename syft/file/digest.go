@@ -1,6 +1,6 @@
 package file
 
-import "strings"
+import "github.com/anchore/syft/syft/sort"
 
 type Digest struct {
 	Algorithm string `json:"algorithm"`
@@ -8,8 +8,8 @@ type Digest struct {
 }
 
 func (dig Digest) Compare(other Digest) int {
-	if i := strings.Compare(dig.Algorithm, other.Algorithm); i != 0 {
+	if i := sort.CompareOrd(dig.Algorithm, other.Algorithm); i != 0 {
 		return i
 	}
-	return strings.Compare(dig.Value, other.Value)
+	return sort.CompareOrd(dig.Value, other.Value)
 }
