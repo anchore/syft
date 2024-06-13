@@ -3,6 +3,7 @@ package sort
 import (
 	"cmp"
 	"fmt"
+	"reflect"
 	"slices"
 )
 
@@ -220,11 +221,28 @@ func TryCompare(a1 any, a2 any) (bool, int) {
 	}
 	return false, 0
 }
+func TryCompareWithType(a1 any, a2 any) (bool, int) {
+	if a1 == nil && a2 == nil {
+		return true, 0
+	}
+	if a1 == nil {
+		return true, -1
+	}
+	if a2 == nil {
+		return true, 1
+	}
+	if i := CompareOrd(reflect.ValueOf(a1).Type().Name(), reflect.ValueOf(a2).Type().Name()); i != 0 {
+		return true, i
+	}
+	if a1, ok := a1.(TryComparable); ok {
+		return a1.TryCompare(a2)
+	}
+	return false, 0
+}
 
 func UnmarshalToTryComparable(t any) (TryComparable, error) {
 	switch meta := t.(type) {
 	case nil:
-		t = nil
 		return nil, nil
 	case bool:
 		return TryComparableWrap[ComparableBool]{Data: ComparableBool(meta)}, nil

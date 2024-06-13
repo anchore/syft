@@ -1,8 +1,6 @@
 package artifact
 
 import (
-	"reflect"
-
 	"github.com/anchore/syft/syft/sort"
 )
 
@@ -53,64 +51,19 @@ type Relationship struct {
 }
 
 func (rel Relationship) Compare(other Relationship) int {
-	if rel.From != nil && other.From == nil {
-		return 1
+	if ok, i := sort.TryCompareWithType(rel.From, other.From); ok && i != 0 {
+		return i
 	}
-	if rel.From == nil && other.From != nil {
-		return -1
-	}
-	if rel.From != nil {
-		if i := sort.CompareOrd(reflect.ValueOf(rel.From).Type().Name(), reflect.ValueOf(other.From).Type().Name()); i != 0 {
-			return i
-		}
-		if ok, i := rel.From.TryCompare(other.From); ok {
-			if i != 0 {
-				return i
-			}
-		} else {
-			if i := rel.From.ID().Compare(other.From.ID()); i != 0 {
-				return i
-			}
-		}
-	}
-	if rel.To != nil && other.To == nil {
-		return 1
-	}
-	if rel.To == nil && other.To != nil {
-		return -1
-	}
-	if rel.To != nil {
-		if i := sort.CompareOrd(reflect.ValueOf(rel.To).Type().Name(), reflect.ValueOf(other.To).Type().Name()); i != 0 {
-			return i
-		}
-		if ok, i := rel.To.TryCompare(other.To); ok {
-			if i != 0 {
-				return i
-			}
-		} else {
-			if i := rel.To.ID().Compare(other.To.ID()); i != 0 {
-				return i
-			}
-		}
+	if ok, i := sort.TryCompareWithType(rel.To, other.To); ok && i != 0 {
+		return i
 	}
 
 	if i := rel.Type.Compare(other.Type); i != 0 {
 		return i
 	}
 
-	if rel.Data != nil && other.Data == nil {
-		return 1
-	}
-	if rel.Data == nil && other.Data != nil {
-		return -1
-	}
-	if rel.Data != nil {
-		if i := sort.CompareOrd(reflect.ValueOf(rel.Data).Type().Name(), reflect.ValueOf(other.Data).Type().Name()); i != 0 {
-			return i
-		}
-		if ok, i := sort.TryCompare(rel.Data, other.Data); ok {
-			return i
-		}
+	if ok, i := sort.TryCompareWithType(rel.Data, other.Data); ok && i != 0 {
+		return i
 	}
 
 	return 0
