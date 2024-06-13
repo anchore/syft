@@ -68,7 +68,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 
-		relationships = append(relationships, populatePackageContainsRelationships(&spkg, &gen)...)
+		relationships = append(relationships, populatePackageContainsRelationships(spkg, &gen)...)
 
 		pkgs = append(pkgs, spkg)
 		wrappedPkg := packageWrap{
@@ -88,7 +88,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 
 	return pkgs, relationships, nil
 }
-func populatePackageContainsRelationships(p *pkg.Package, gen *rust.GeneratedDepInfo) (relationships []artifact.Relationship) {
+func populatePackageContainsRelationships(p pkg.Package, gen *rust.GeneratedDepInfo) (relationships []artifact.Relationship) {
 	for path, h := range gen.PathSha1Hashes {
 		relationships = append(relationships, artifact.Relationship{
 			From: p,

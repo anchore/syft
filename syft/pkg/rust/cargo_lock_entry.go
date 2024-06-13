@@ -4,7 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
-	"crypto/sha1"
+	"crypto/sha1" //#nosec G505 G401 -- sha1 is used as a required hash function for SPDX, not a crypto function
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -181,6 +181,7 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 	GeneratedInformation[r.ToPackageID()] = genDepInfo
 
 	genDepInfo.mutex.Lock()
+	defer genDepInfo.mutex.Unlock()
 	content, link, err := r.getContent()
 	genDepInfo.DownloadLink = link
 	if err != nil {
@@ -218,10 +219,9 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 		if err != nil {
 			_ = gzReader.Close()
 			delete(GeneratedInformation, r.ToPackageID())
-			genDepInfo.mutex.Unlock()
 			return genDepInfo.GeneratedDepInfo, err
 		}
-		genDepInfo.PathSha1Hashes[next.Name] = sha1.Sum(content)
+		genDepInfo.PathSha1Hashes[next.Name] = sha1.Sum(content) //#nosec G505 G401 -- sha1 is used as a required hash function for SPDX, not a crypto function
 
 		if next.Name == r.Name+"-"+r.Version+"/Cargo.toml" {
 			log.Tracef("Got Cargo.toml for %s-%s", r.Name, r.Version)
@@ -230,7 +230,6 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 			if err != nil {
 				_ = gzReader.Close()
 				delete(GeneratedInformation, r.ToPackageID())
-				genDepInfo.mutex.Unlock()
 				return genDepInfo.GeneratedDepInfo, err
 			}
 			log.Tracef("Got Deserialized Cargo.toml for %s-%s: %s", r.Name, r.Version, cargoToml.Package.License)
@@ -240,7 +239,6 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 		}
 	}
 	var generatedInfoInner = genDepInfo.GeneratedDepInfo
-	genDepInfo.mutex.Unlock()
 	return generatedInfoInner, nil
 }
 
