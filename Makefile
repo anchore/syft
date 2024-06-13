@@ -1,6 +1,3 @@
+.PHONY: %
 %:
-	@cd buildtools && go run . $@
-
-.PHONY: help
-help:
-	@cd buildtools && go run . help
+	@go run -C buildtools . $@
