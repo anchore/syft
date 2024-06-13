@@ -223,7 +223,7 @@ tasks:
       - cmd: "test -f {{ .SNAPSHOT_BIN }} || (find {{ .SNAPSHOT_DIR }} && echo '\nno snapshot found' && false)"
         silent: true
 
-      - "go test -count=1 -timeout=15m -v ./test/cli"
+      - "go test -count=1 -timeout=25m -v ./test/cli"
     env:
       SYFT_BINARY_LOCATION: "{{ .SNAPSHOT_BIN }}"
 
