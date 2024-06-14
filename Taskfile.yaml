@@ -68,32 +68,32 @@ tasks:
 
   ## Bootstrap tasks #################################
 
-  binny:
-    internal: true
-    # desc: Get the binny tool
-    generates:
-      - "{{ .TOOL_DIR }}/binny"
-    status:
-      - "test -f {{ .TOOL_DIR }}/binny"
-    cmd: "curl -sSfL https://raw.githubusercontent.com/anchore/binny/main/install.sh | sh -s -- -b .tool"
-    silent: true
+#  binny:
+#    internal: true
+#    # desc: Get the binny tool
+#    generates:
+#      - "{{ .TOOL_DIR }}/binny"
+#    status:
+#      - "test -f {{ .TOOL_DIR }}/binny"
+#    cmd: "curl -sSfL https://raw.githubusercontent.com/anchore/binny/main/install.sh | sh -s -- -b .tool"
+#    silent: true
 
-  tools:
-    desc: Install all tools needed for CI and local development
-    deps: [binny]
-    aliases:
-      - bootstrap
-    generates:
-      - ".binny.yaml"
-      - "{{ .TOOL_DIR }}/*"
-    status:
-      - "{{ .TOOL_DIR }}/binny check -v"
-    cmd: "{{ .TOOL_DIR }}/binny install -v"
-    silent: true
+#  tools:
+#    desc: Install all tools needed for CI and local development
+#    deps: [binny]
+#    aliases:
+#      - bootstrap
+#    generates:
+#      - ".binny.yaml"
+#      - "{{ .TOOL_DIR }}/*"
+#    status:
+#      - "{{ .TOOL_DIR }}/binny check -v"
+#    cmd: "{{ .TOOL_DIR }}/binny install -v"
+#    silent: true
 
   update-tools:
     desc: Update pinned versions of all tools to their latest available versions
-    deps: [binny]
+#    deps: [binny]
     generates:
       - ".binny.yaml"
       - "{{ .TOOL_DIR }}/*"
@@ -102,13 +102,13 @@ tasks:
 
   list-tools:
     desc: List all tools needed for CI and local development
-    deps: [binny]
+#    deps: [binny]
     cmd: "{{ .TOOL_DIR }}/binny list"
     silent: true
 
   list-tool-updates:
     desc: List all tools that are not up to date relative to the binny config
-    deps: [binny]
+#    deps: [binny]
     cmd: "{{ .TOOL_DIR }}/binny list --updates"
     silent: true
 
@@ -122,7 +122,7 @@ tasks:
 
   format:
     desc: Auto-format all source code
-    deps: [tools]
+#    deps: [tools]
     cmds:
       - gofmt -w -s .
       - "{{ .TOOL_DIR }}/gosimports -local github.com/anchore -w ."
@@ -130,7 +130,7 @@ tasks:
 
   lint-fix:
     desc: Auto-format all source code + run golangci lint fixers
-    deps: [tools]
+#    deps: [tools]
     cmds:
       - task: format
       - "{{ .TOOL_DIR }}/golangci-lint run --tests=false --fix"
@@ -142,7 +142,7 @@ tasks:
         sh: gofmt -l -s .
       BAD_FILE_NAMES:
         sh: "find . | grep -e ':' || true"
-    deps: [tools]
+#    deps: [tools]
     cmds:
       # ensure there are no go fmt differences
       - cmd: 'test -z "{{ .BAD_FMT_FILES }}" || (echo "files with gofmt issues: [{{ .BAD_FMT_FILES }}]"; exit 1)'
@@ -156,7 +156,7 @@ tasks:
 
   check-licenses:
     # desc: Ensure transitive dependencies are compliant with the current license policy
-    deps: [tools]
+#    deps: [tools]
     cmd: "{{ .TOOL_DIR }}/bouncer check ./..."
 
   check-go-mod-tidy:
@@ -211,7 +211,7 @@ tasks:
     # note: we don't want to regenerate the snapshot unless we have to. In CI it's probable
     # that the cache being restored with the correct binary will be rebuilt since the timestamps
     # and local checksums will not line up.
-    deps: [tools, snapshot]
+    deps: [snapshot]
     sources:
       - "{{ .SNAPSHOT_BIN }}"
       - ./test/cli/**
@@ -399,7 +399,7 @@ tasks:
 
   build:
     desc: Build the project
-    deps: [tools, tmpdir]
+    deps: [tmpdir]
     generates:
       - "{{ .PROJECT }}"
     cmds:
@@ -414,7 +414,7 @@ tasks:
     desc: Create a snapshot release
     aliases:
       - build
-    deps: [tools, tmpdir]
+    deps: [tmpdir]
     sources:
       - cmd/**/*.go
       - syft/**/*.go
@@ -432,7 +432,7 @@ tasks:
 
   changelog:
     desc: Generate a changelog
-    deps: [tools]
+#    deps: [tools]
     generates:
       - "{{ .CHANGELOG }}"
       - "{{ .NEXT_VERSION }}"
@@ -446,7 +446,7 @@ tasks:
   release:
     desc: Create a release
     interactive: true
-    deps: [tools]
+#    deps: [tools]
     cmds:
       - cmd: .github/scripts/trigger-release.sh
         silent: true
@@ -462,7 +462,7 @@ tasks:
 
   ci-release:
     # desc: "[CI only] Create a release"
-    deps: [tools]
+#    deps: [tools]
     cmds:
       - task: ci-check
       - "{{ .TOOL_DIR }}/chronicle -vvv > CHANGELOG.md"
@@ -472,7 +472,7 @@ tasks:
 
   ci-release-version-file:
     # desc: "[CI only] Update the version file"
-    deps: [tools]
+#    deps: [tools]
     cmds:
       - task: ci-check
       - ".github/scripts/update-version-file.sh {{ .RELEASE_VERSION }}"

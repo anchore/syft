@@ -5,22 +5,41 @@ import (
 	"os"
 	"os/exec"
 
-	_ "github.com/go-task/task/v3"
+	_ "github.com/anchore/binny/cmd/binny/cli" // so go mod tidy doesn't remove necessary packages
 )
 
 func main() {
-	err := runTask(os.Args[1:]...)
-	if err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, fmt.Sprintf("ERROR: %v", err))
+	noerr(buildIfMissing("../.tool/binny", "github.com/anchore/binny/cmd/binny"))
+	noerr(os.Chdir(".."))
+	noerr(run(".tool/binny", "install", "-v"))
+	noerr(run(".tool/task", os.Args[1:]...))
+}
+
+func buildIfMissing(file, pkg string) error {
+	_, err := os.Stat(file)
+	if err == nil {
+		return nil
 	}
+	write("Building: %s", pkg)
+	return run("go", "build", "-o", file, pkg)
 }
 
 //nolint:gosec
-func runTask(args ...string) error {
-	taskArgs := []string{"run", "github.com/go-task/task/v3/cmd/task"}
-	c := exec.Command("go", append(taskArgs, args...)...)
+func run(cmd string, args ...string) error {
+	c := exec.Command(cmd, args...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 	c.Stdin = os.Stdin
 	return c.Run()
+}
+
+func noerr(e error) {
+	if e != nil {
+		write("ERROR: %v", e)
+		os.Exit(1)
+	}
+}
+
+func write(msg string, args ...any) {
+	_, _ = fmt.Fprintln(os.Stderr, fmt.Sprintf(msg, args...))
 }
