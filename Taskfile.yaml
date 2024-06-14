@@ -78,18 +78,18 @@ tasks:
 #    cmd: "curl -sSfL https://raw.githubusercontent.com/anchore/binny/main/install.sh | sh -s -- -b .tool"
 #    silent: true
 
-#  tools:
-#    desc: Install all tools needed for CI and local development
+  tools:
+    desc: Install all tools needed for CI and local development
 #    deps: [binny]
-#    aliases:
-#      - bootstrap
+    aliases:
+      - bootstrap
 #    generates:
 #      - ".binny.yaml"
 #      - "{{ .TOOL_DIR }}/*"
 #    status:
 #      - "{{ .TOOL_DIR }}/binny check -v"
 #    cmd: "{{ .TOOL_DIR }}/binny install -v"
-#    silent: true
+    silent: true
 
   update-tools:
     desc: Update pinned versions of all tools to their latest available versions
