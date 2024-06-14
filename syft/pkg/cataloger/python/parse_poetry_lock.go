@@ -67,49 +67,24 @@ func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 	}
 
 	for i, p := range metadata.Packages {
+		dependencies := make(map[string][]poetryPackageDependency)
 		for pkgName, du := range p.DependenciesUnmarshal {
-			if p.Dependencies == nil {
-				p.Dependencies = make(map[string][]poetryPackageDependency)
+			var (
+				single    string
+				singleObj poetryPackageDependency
+				multiObj  []poetryPackageDependency
+			)
+
+			switch {
+			case md.PrimitiveDecode(du, &single) == nil:
+				dependencies[pkgName] = append(dependencies[pkgName], poetryPackageDependency{Version: single})
+			case md.PrimitiveDecode(du, &poetryPackageDependency{}) == nil:
+				dependencies[pkgName] = append(dependencies[pkgName], singleObj)
+			case md.PrimitiveDecode(du, &multiObj) == nil:
+				dependencies[pkgName] = append(dependencies[pkgName], multiObj...)
 			}
-
-			var single string
-			if err := md.PrimitiveDecode(du, &single); err != nil {
-				fmt.Println("single err: " + err.Error())
-				var singleObj poetryPackageDependency
-				if err := md.PrimitiveDecode(du, &singleObj); err != nil {
-					fmt.Println("poetryPackageDependency err: " + err.Error())
-					var multiObj []poetryPackageDependency
-					if err := md.PrimitiveDecode(du, &multiObj); err != nil {
-						fmt.Println("[]poetryPackageDependency err: " + err.Error())
-					} else {
-						fmt.Println("WROTE MULTI OBJ :" + pkgName)
-						p.Dependencies[pkgName] = append(p.Dependencies[pkgName], multiObj...)
-					}
-				} else {
-					fmt.Println("WROTE OBJ :" + pkgName)
-					p.Dependencies[pkgName] = append(p.Dependencies[pkgName], singleObj)
-				}
-			} else {
-				fmt.Println("WROTE SINGLE :" + pkgName)
-				p.Dependencies[pkgName] = append(p.Dependencies[pkgName], poetryPackageDependency{Version: single})
-			}
-
-			//var single string
-			//var singleObj poetryPackageDependency
-			//var multiObj []poetryPackageDependency
-			//
-			//switch {
-			//case md.PrimitiveDecode(du, &single) == nil:
-			//	p.Dependencies[pkgName] = append(p.Dependencies[pkgName], poetryPackageDependency{Version: single})
-			//case md.PrimitiveDecode(du, &poetryPackageDependency{}) == nil:
-			//	p.Dependencies[pkgName] = append(p.Dependencies[pkgName], singleObj)
-			//case md.PrimitiveDecode(du, &multiObj) == nil:
-			//	p.Dependencies[pkgName] = append(p.Dependencies[pkgName], multiObj...)
-			//}
-
-			metadata.Packages[i].Dependencies = p.Dependencies
-
 		}
+		metadata.Packages[i].Dependencies = dependencies
 	}
 
 	var pkgs []pkg.Package
@@ -145,16 +120,16 @@ func extractIndex(p poetryPackage) string {
 
 func extractPoetryDependencies(p poetryPackage) []pkg.PythonPoetryLockDependencyEntry {
 	var deps []pkg.PythonPoetryLockDependencyEntry
-	//for name, dependencies := range p.Dependencies {
-	//	for _, d := range dependencies {
-	//		deps = append(deps, pkg.PythonPoetryLockDependencyEntry{
-	//			Name:    name,
-	//			Version: d.Version,
-	//			Extras:  d.Extras,
-	//			Markers: d.Markers,
-	//		})
-	//	}
-	//}
+	for name, dependencies := range p.Dependencies {
+		for _, d := range dependencies {
+			deps = append(deps, pkg.PythonPoetryLockDependencyEntry{
+				Name:    name,
+				Version: d.Version,
+				Extras:  d.Extras,
+				Markers: d.Markers,
+			})
+		}
+	}
 	sort.Slice(deps, func(i, j int) bool {
 		return deps[i].Name < deps[j].Name
 	})
