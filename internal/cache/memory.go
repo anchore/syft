@@ -8,6 +8,9 @@ import (
 
 // NewInMemory returns an in-memory only cache manager
 func NewInMemory(ttl time.Duration) Manager {
+	if ttl <= 0 {
+		return &bypassedCache{}
+	}
 	return &filesystemCache{
 		dir: "",
 		fs:  afero.NewMemMapFs(),
