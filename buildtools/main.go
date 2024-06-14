@@ -4,15 +4,18 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
+	"runtime"
 
 	_ "github.com/anchore/binny/cmd/binny/cli" // so go mod tidy doesn't remove necessary packages
 )
 
 func main() {
-	noerr(buildIfMissing("../.tool/binny", "github.com/anchore/binny/cmd/binny"))
+	noerr(buildIfMissing(exe("../.tool/binny"), "github.com/anchore/binny/cmd/binny"))
 	noerr(os.Chdir(".."))
-	noerr(run(".tool/binny", "install", "-v"))
-	noerr(run(".tool/task", os.Args[1:]...))
+	noerr(run(exe(".tool/binny"), "install", "-v"))
+	noerr(run(exe(".tool/task"), os.Args[1:]...))
 }
 
 func buildIfMissing(file, pkg string) error {
@@ -42,4 +45,12 @@ func noerr(e error) {
 
 func write(msg string, args ...any) {
 	_, _ = fmt.Fprintln(os.Stderr, fmt.Sprintf(msg, args...))
+}
+
+func exe(s string) string {
+	out := filepath.Join(path.Split(s))
+	if runtime.GOOS == "windows" {
+		out += ".exe"
+	}
+	return out
 }
