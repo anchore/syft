@@ -7,6 +7,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -78,10 +79,12 @@ func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 			switch {
 			case md.PrimitiveDecode(du, &single) == nil:
 				dependencies[pkgName] = append(dependencies[pkgName], poetryPackageDependency{Version: single})
-			case md.PrimitiveDecode(du, &poetryPackageDependency{}) == nil:
+			case md.PrimitiveDecode(du, &singleObj) == nil:
 				dependencies[pkgName] = append(dependencies[pkgName], singleObj)
 			case md.PrimitiveDecode(du, &multiObj) == nil:
 				dependencies[pkgName] = append(dependencies[pkgName], multiObj...)
+			default:
+				log.Trace("failed to decode poetry lock package dependencies for %s; skipping", pkgName)
 			}
 		}
 		metadata.Packages[i].Dependencies = dependencies
