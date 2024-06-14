@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pelletier/go-toml/v2"
+	"github.com/pelletier/go-toml"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -93,10 +93,15 @@ func parsePoetryLock(_ context.Context, _ file.Resolver, _ *generic.Environment,
 }
 
 func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
-	metadata := poetryPackages{}
-	err := toml.NewDecoder(reader).Decode(&metadata)
+	tree, err := toml.LoadReader(reader)
 	if err != nil {
-		return nil, fmt.Errorf("unable to load or parse poetry.lock: %w", err)
+		return nil, fmt.Errorf("unable to load poetry.lock for parsing: %w", err)
+	}
+
+	metadata := poetryPackages{}
+	err = tree.Unmarshal(&metadata)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse poetry.lock: %w", err)
 	}
 
 	var pkgs []pkg.Package
