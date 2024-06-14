@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"golang.org/x/mod/modfile"
+
 	_ "github.com/anchore/binny/cmd/binny/cli" // so go mod tidy doesn't remove necessary packages
 )
 
@@ -24,7 +26,7 @@ func buildIfMissing(file, pkg string) error {
 		return nil
 	}
 	write("Building: %s", pkg)
-	return run("go", "build", "-o", file, pkg)
+	return run("go", "build", "-o", file, "-ldflags", "-w -s -extldflags '-static' -X main.version="+binnyVersion(), pkg)
 }
 
 //nolint:gosec
@@ -43,6 +45,14 @@ func noerr(e error) {
 	}
 }
 
+func noerrGet[T any](t T, e error) T {
+	if e != nil {
+		write("ERROR: %v", e)
+		os.Exit(1)
+	}
+	return t
+}
+
 func write(msg string, args ...any) {
 	_, _ = fmt.Fprintln(os.Stderr, fmt.Sprintf(msg, args...))
 }
@@ -53,4 +63,15 @@ func exe(s string) string {
 		out += ".exe"
 	}
 	return out
+}
+
+func binnyVersion() string {
+	contents := noerrGet(os.ReadFile("go.mod"))
+	f := noerrGet(modfile.Parse("go.mod", contents, nil))
+	for _, r := range f.Require {
+		if r.Mod.Path == "github.com/anchore/binny" {
+			return r.Mod.Version
+		}
+	}
+	return "UNKNOWN"
 }

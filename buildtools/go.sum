@@ -60,8 +60,8 @@ github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpH
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/adrg/xdg v0.4.0 h1:RzRqFcjH4nE5C6oTAxhBtoE2IRyjBSa62SCbyPidvls=
 github.com/adrg/xdg v0.4.0/go.mod h1:N6ag73EX4wyxeaoeHctc1mas01KZgsj5tYiAIwqJE/E=
-github.com/anchore/binny v0.8.1-0.20240614085331-b51303f637b3 h1:E79DjUKQTpMwrc/tZ+hzJWgsqkWJkmWndXs3URC73WM=
-github.com/anchore/binny v0.8.1-0.20240614085331-b51303f637b3/go.mod h1:47TM7cz+CWP8PbjnhWh/gnKGWRNGpz4pCVQEwslotnw=
+github.com/anchore/binny v0.8.1-0.20240614195116-079f3456d94d h1:xtxFtTeJtw7bzPfCJUFBDZRzf8xbSJUFV6nVo3pbOjQ=
+github.com/anchore/binny v0.8.1-0.20240614195116-079f3456d94d/go.mod h1:47TM7cz+CWP8PbjnhWh/gnKGWRNGpz4pCVQEwslotnw=
 github.com/anchore/bubbly v0.0.0-20230919123500-747f4abea05f h1:E07BVOkDIGo/X5vorYhvPTi2OtDSpFGEBL5lBiZgufA=
 github.com/anchore/bubbly v0.0.0-20230919123500-747f4abea05f/go.mod h1:SdETcagajuKOviIn97OXc045X4Uej+Wa4x6nfJ17ESQ=
 github.com/anchore/clio v0.0.0-20230823172630-c42d666061af h1:dBVKZyMZeA0oZK0+aCCRoqxhxUvx/7xy/VEaLMMMnb0=

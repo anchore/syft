@@ -2,7 +2,10 @@ module github.com/anchore/syft/buildtools
 
 go 1.21.1
 
-require github.com/anchore/binny v0.8.1-0.20240614085331-b51303f637b3
+require (
+	github.com/anchore/binny v0.8.1-0.20240614195116-079f3456d94d
+	golang.org/x/mod v0.14.0
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
@@ -116,7 +119,6 @@ require (
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
-	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
