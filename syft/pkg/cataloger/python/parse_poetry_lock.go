@@ -3,7 +3,6 @@ package python
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"sort"
 
 	"github.com/BurntSushi/toml"
@@ -29,14 +28,15 @@ type poetryPackages struct {
 }
 
 type poetryPackage struct {
-	Name         string                               `toml:"name"`
-	Version      string                               `toml:"version"`
-	Category     string                               `toml:"category"`
-	Description  string                               `toml:"description"`
-	Optional     bool                                 `toml:"optional"`
-	Source       poetryPackageSource                  `toml:"source"`
-	Dependencies map[string][]poetryPackageDependency `toml:"dependencies"`
-	Extras       map[string][]string                  `toml:"extras"`
+	Name                  string                    `toml:"name"`
+	Version               string                    `toml:"version"`
+	Category              string                    `toml:"category"`
+	Description           string                    `toml:"description"`
+	Optional              bool                      `toml:"optional"`
+	Source                poetryPackageSource       `toml:"source"`
+	DependenciesUnmarshal map[string]toml.Primitive `toml:"dependencies"`
+	Extras                map[string][]string       `toml:"extras"`
+	Dependencies          map[string][]poetryPackageDependency
 }
 
 type poetryPackageDependency struct {
@@ -44,153 +44,6 @@ type poetryPackageDependency struct {
 	Markers  string   `toml:"markers"`
 	Optional bool     `toml:"optional"`
 	Extras   []string `toml:"extras"`
-}
-
-func (p *poetryPackage) UnmarshalTOML(data any) error {
-	d, _ := data.(map[string]any)
-	err := p.decodeTomlFields(d)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-func (p *poetryPackage) decodeTomlFields(d map[string]interface{}) error {
-	newPackage := poetryPackage{}
-	structType := reflect.TypeOf(newPackage)
-	structValue := reflect.ValueOf(&newPackage).Elem()
-	for i := 0; i < structType.NumField(); i++ {
-		field := structType.Field(i)
-		tag := field.Tag.Get("toml")
-		if tag == "" {
-			continue
-		}
-
-		// Check if the field exists in the map
-		value, ok := d[tag]
-		if !ok {
-			continue
-		}
-
-		// Set the field value in the struct
-		structField := structValue.FieldByName(field.Name)
-		if !structField.IsValid() || !structField.CanSet() {
-			continue
-		}
-
-		// Convert the value to the field type
-		switch structField.Kind() {
-		case reflect.String:
-			structField.SetString(value.(string))
-		case reflect.Int:
-			structField.SetInt(int64(value.(int)))
-		case reflect.Bool:
-			structField.SetBool(value.(bool))
-		case reflect.Struct:
-			// If the field is a struct, recursively decode it
-			mapValue := value.(map[string]interface{})
-			decodeStruct(mapValue, structField.Addr().Interface())
-		case reflect.Map:
-			switch tag {
-			case "dependencies":
-				value = parseDependencies(value)
-				structField.Set(reflect.ValueOf(value))
-			case "extras":
-				value = parsePoetryExtras(value)
-				structField.Set(reflect.ValueOf(value))
-			}
-		default:
-		}
-	}
-	p.Name = newPackage.Name
-	p.Version = newPackage.Version
-	p.Category = newPackage.Category
-	p.Description = newPackage.Description
-	p.Optional = newPackage.Optional
-	p.Source = newPackage.Source
-	p.Extras = newPackage.Extras
-	p.Dependencies = newPackage.Dependencies
-	p.Extras = newPackage.Extras
-	return nil
-}
-
-func parsePoetryExtras(d any) map[string][]string {
-	extras := map[string][]string{}
-	parsedData := d.(map[string]interface{})
-	for key, value := range parsedData {
-		extras[key] = convertSliceString(value)
-	}
-	return extras
-}
-
-func convertSliceString(is interface{}) []string {
-	// Convert slice of interface{} to slice of string
-	iss := is.([]interface{})
-	var stringSlice []string
-	for _, val := range iss {
-		if str, ok := val.(string); ok {
-			stringSlice = append(stringSlice, str)
-		}
-	}
-	return stringSlice
-}
-
-func parseDependencies(d any) map[string][]poetryPackageDependency {
-	dependencies := map[string][]poetryPackageDependency{}
-	// we know we have dependencies here so let's convert to a map[string]interface{}
-	parsedData := d.(map[string]interface{})
-	for key, value := range parsedData {
-		dependencies[key] = make([]poetryPackageDependency, 0)
-		t := reflect.TypeOf(value)
-		switch t.Kind() {
-		case reflect.String:
-			dependencies[key] = append(dependencies[key], poetryPackageDependency{Version: value.(string)})
-		case reflect.Slice:
-			complexDeps := value.([]interface{})
-			for _, complex := range complexDeps {
-				convertedComplex := complex.(map[string]interface{})
-				// TODO: we need to assert these map values or we will panic
-				newDep := poetryPackageDependency{
-					Version: convertedComplex["version"].(string),
-					Markers: convertedComplex["markers"].(string),
-				}
-				dependencies[key] = append(dependencies[key], newDep)
-			}
-		}
-	}
-	return dependencies
-}
-
-func decodeStruct(data map[string]interface{}, v interface{}) {
-	structType := reflect.TypeOf(v).Elem()
-	structValue := reflect.ValueOf(v).Elem()
-
-	for i := 0; i < structType.NumField(); i++ {
-		field := structType.Field(i)
-		tag := field.Tag.Get("toml")
-		if tag == "" {
-			continue
-		}
-
-		value, ok := data[tag]
-		if !ok {
-			continue
-		}
-
-		fieldValue := structValue.Field(i)
-		if !fieldValue.IsValid() || !fieldValue.CanSet() {
-			continue
-		}
-
-		switch fieldValue.Kind() {
-		case reflect.String:
-			fieldValue.SetString(value.(string))
-		case reflect.Int:
-			fieldValue.SetInt(int64(value.(int)))
-		default:
-			fmt.Println("Unsupported type")
-		}
-	}
 }
 
 // parsePoetryLock is a parser function for poetry.lock contents, returning all python packages discovered.
@@ -208,9 +61,55 @@ func parsePoetryLock(_ context.Context, _ file.Resolver, _ *generic.Environment,
 
 func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 	metadata := poetryPackages{}
-	_, err := toml.NewDecoder(reader).Decode(&metadata)
+	md, err := toml.NewDecoder(reader).Decode(&metadata)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read poetry lock package: %w", err)
+	}
+
+	for i, p := range metadata.Packages {
+		for pkgName, du := range p.DependenciesUnmarshal {
+			if p.Dependencies == nil {
+				p.Dependencies = make(map[string][]poetryPackageDependency)
+			}
+
+			var single string
+			if err := md.PrimitiveDecode(du, &single); err != nil {
+				fmt.Println("single err: " + err.Error())
+				var singleObj poetryPackageDependency
+				if err := md.PrimitiveDecode(du, &singleObj); err != nil {
+					fmt.Println("poetryPackageDependency err: " + err.Error())
+					var multiObj []poetryPackageDependency
+					if err := md.PrimitiveDecode(du, &multiObj); err != nil {
+						fmt.Println("[]poetryPackageDependency err: " + err.Error())
+					} else {
+						fmt.Println("WROTE MULTI OBJ :" + pkgName)
+						p.Dependencies[pkgName] = append(p.Dependencies[pkgName], multiObj...)
+					}
+				} else {
+					fmt.Println("WROTE OBJ :" + pkgName)
+					p.Dependencies[pkgName] = append(p.Dependencies[pkgName], singleObj)
+				}
+			} else {
+				fmt.Println("WROTE SINGLE :" + pkgName)
+				p.Dependencies[pkgName] = append(p.Dependencies[pkgName], poetryPackageDependency{Version: single})
+			}
+
+			//var single string
+			//var singleObj poetryPackageDependency
+			//var multiObj []poetryPackageDependency
+			//
+			//switch {
+			//case md.PrimitiveDecode(du, &single) == nil:
+			//	p.Dependencies[pkgName] = append(p.Dependencies[pkgName], poetryPackageDependency{Version: single})
+			//case md.PrimitiveDecode(du, &poetryPackageDependency{}) == nil:
+			//	p.Dependencies[pkgName] = append(p.Dependencies[pkgName], singleObj)
+			//case md.PrimitiveDecode(du, &multiObj) == nil:
+			//	p.Dependencies[pkgName] = append(p.Dependencies[pkgName], multiObj...)
+			//}
+
+			metadata.Packages[i].Dependencies = p.Dependencies
+
+		}
 	}
 
 	var pkgs []pkg.Package
@@ -246,16 +145,16 @@ func extractIndex(p poetryPackage) string {
 
 func extractPoetryDependencies(p poetryPackage) []pkg.PythonPoetryLockDependencyEntry {
 	var deps []pkg.PythonPoetryLockDependencyEntry
-	for name, dependencies := range p.Dependencies {
-		for _, d := range dependencies {
-			deps = append(deps, pkg.PythonPoetryLockDependencyEntry{
-				Name:    name,
-				Version: d.Version,
-				Extras:  d.Extras,
-				Markers: d.Markers,
-			})
-		}
-	}
+	//for name, dependencies := range p.Dependencies {
+	//	for _, d := range dependencies {
+	//		deps = append(deps, pkg.PythonPoetryLockDependencyEntry{
+	//			Name:    name,
+	//			Version: d.Version,
+	//			Extras:  d.Extras,
+	//			Markers: d.Markers,
+	//		})
+	//	}
+	//}
 	sort.Slice(deps, func(i, j int) bool {
 		return deps[i].Name < deps[j].Name
 	})
