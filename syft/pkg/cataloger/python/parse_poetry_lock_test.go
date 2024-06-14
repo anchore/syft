@@ -24,7 +24,11 @@ func TestParsePoetryLock(t *testing.T) {
 				Index: "https://test.pypi.org/simple",
 				Dependencies: []pkg.PythonPoetryLockDependencyEntry{
 					{Name: "docutils", Version: "*"},
+					{Name: "msal", Version: ">=0.4.1,<2.0.0"},
 					{Name: "natsort", Version: "*"},
+					{Name: "packaging", Version: "*"},
+					{Name: "portalocker", Version: ">=1.0,<3", Markers: `platform_system != "Windows"`},
+					{Name: "portalocker", Version: ">=1.6,<3", Markers: `platform_system == "Windows"`},
 					{Name: "six", Version: "*"},
 					{Name: "sphinx", Version: "*"},
 				},

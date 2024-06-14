@@ -243,6 +243,123 @@ func Test_addEntryFuncs(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:             "addEntryForWordpressPlugin",
+			addEntryFunc:     addEntryForWordpressPlugin,
+			inputRef:         "https://wordpress.org/plugins/armadillo/releases",
+			inputCpeItemName: "cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressPlugins: {
+						"armadillo": dictionary.NewSet("cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressPlugin from Trac Browser",
+			addEntryFunc:     addEntryForWordpressPlugin,
+			inputRef:         "https://plugins.trac.wordpress.org/browser/armadillo/something",
+			inputCpeItemName: "cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressPlugins: {
+						"armadillo": dictionary.NewSet("cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressPlugin from Trac Log",
+			addEntryFunc:     addEntryForWordpressPlugin,
+			inputRef:         "https://plugins.trac.wordpress.org/log/armadillo/log",
+			inputCpeItemName: "cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressPlugins: {
+						"armadillo": dictionary.NewSet("cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressPlugin from GitHub wp-plugins archive",
+			addEntryFunc:     addEntryForWordpressPlugin,
+			inputRef:         "https://github.com/wp-plugins/armadillo/something",
+			inputCpeItemName: "cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressPlugins: {
+						"armadillo": dictionary.NewSet("cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressPlugin wordfence",
+			addEntryFunc:     addEntryForWordpressPlugin,
+			inputRef:         "https://www.wordfence.com/threat-intel/vulnerabilities/wordpress-plugins/armadillo/skjfhskdjhf/12344",
+			inputCpeItemName: "cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressPlugins: {
+						"armadillo": dictionary.NewSet("cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressTheme",
+			addEntryFunc:     addEntryForWordpressTheme,
+			inputRef:         "https://wordpress.org/themes/basic/releases",
+			inputCpeItemName: "cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressThemes: {
+						"basic": dictionary.NewSet("cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressTheme from Trac Browser",
+			addEntryFunc:     addEntryForWordpressTheme,
+			inputRef:         "https://themes.trac.wordpress.org/browser/basic/something",
+			inputCpeItemName: "cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressThemes: {
+						"basic": dictionary.NewSet("cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressTheme from Trac Log",
+			addEntryFunc:     addEntryForWordpressTheme,
+			inputRef:         "https://themes.trac.wordpress.org/log/basic/log",
+			inputCpeItemName: "cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressThemes: {
+						"basic": dictionary.NewSet("cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressTheme wordfence",
+			addEntryFunc:     addEntryForWordpressTheme,
+			inputRef:         "https://www.wordfence.com/threat-intel/vulnerabilities/wordpress-themes/basic/skjfhskdjhf/12344",
+			inputCpeItemName: "cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressThemes: {
+						"basic": dictionary.NewSet("cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

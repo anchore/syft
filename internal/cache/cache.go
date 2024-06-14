@@ -36,7 +36,8 @@ func GetManager() Manager {
 	return manager
 }
 
-// SetManager sets the global cache manager, which is used to instantiate all caches
+// SetManager sets the global cache manager, which is used to instantiate all caches.
+// Setting this to nil disables caching.
 func SetManager(m Manager) {
 	if m == nil {
 		manager = &bypassedCache{}

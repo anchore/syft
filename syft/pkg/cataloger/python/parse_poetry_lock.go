@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strings"
 
-	"github.com/pelletier/go-toml"
+	"github.com/BurntSushi/toml"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -19,7 +19,9 @@ import (
 var _ generic.Parser = parsePoetryLock
 
 type poetryPackageSource struct {
-	URL string `toml:"url"`
+	URL       string `toml:"url"`
+	Type      string `toml:"type"`
+	Reference string `toml:"reference"`
 }
 
 type poetryPackages struct {
@@ -27,14 +29,15 @@ type poetryPackages struct {
 }
 
 type poetryPackage struct {
-	Name         string                             `toml:"name"`
-	Version      string                             `toml:"version"`
-	Category     string                             `toml:"category"`
-	Description  string                             `toml:"description"`
-	Optional     bool                               `toml:"optional"`
-	Source       poetryPackageSource                `toml:"source"`
-	Dependencies map[string]poetryPackageDependency `toml:"dependencies"`
-	Extras       map[string][]string                `toml:"extras"`
+	Name                  string                    `toml:"name"`
+	Version               string                    `toml:"version"`
+	Category              string                    `toml:"category"`
+	Description           string                    `toml:"description"`
+	Optional              bool                      `toml:"optional"`
+	Source                poetryPackageSource       `toml:"source"`
+	DependenciesUnmarshal map[string]toml.Primitive `toml:"dependencies"`
+	Extras                map[string][]string       `toml:"extras"`
+	Dependencies          map[string][]poetryPackageDependency
 }
 
 type poetryPackageDependency struct {
@@ -42,41 +45,6 @@ type poetryPackageDependency struct {
 	Markers  string   `toml:"markers"`
 	Optional bool     `toml:"optional"`
 	Extras   []string `toml:"extras"`
-}
-
-func (d *poetryPackageDependency) UnmarshalText(data []byte) error {
-	// attempt to parse as a map first
-	var dep map[string]interface{}
-	if err := toml.Unmarshal(data, &dep); err == nil {
-		if extras, ok := dep["extras"]; ok {
-			if extrasList, ok := extras.([]string); ok {
-				d.Extras = extrasList
-			}
-		}
-
-		if markers, ok := dep["markers"]; ok {
-			if markersString, ok := markers.(string); ok {
-				d.Markers = markersString
-			}
-		}
-
-		if version, ok := dep["version"]; ok {
-			if versionString, ok := version.(string); ok {
-				d.Version = versionString
-			}
-		}
-		return nil
-	}
-
-	if strings.ContainsAny(string(data), "[]{}") {
-		// odds are this is really a malformed toml array or object
-		return fmt.Errorf("unable to parse poetry dependency: version is malformed array/object: %q", string(data))
-	}
-
-	// assume this is a simple version string
-	d.Version = string(data)
-
-	return nil
 }
 
 // parsePoetryLock is a parser function for poetry.lock contents, returning all python packages discovered.
@@ -93,15 +61,33 @@ func parsePoetryLock(_ context.Context, _ file.Resolver, _ *generic.Environment,
 }
 
 func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
-	tree, err := toml.LoadReader(reader)
+	metadata := poetryPackages{}
+	md, err := toml.NewDecoder(reader).Decode(&metadata)
 	if err != nil {
-		return nil, fmt.Errorf("unable to load poetry.lock for parsing: %w", err)
+		return nil, fmt.Errorf("failed to read poetry lock package: %w", err)
 	}
 
-	metadata := poetryPackages{}
-	err = tree.Unmarshal(&metadata)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse poetry.lock: %w", err)
+	for i, p := range metadata.Packages {
+		dependencies := make(map[string][]poetryPackageDependency)
+		for pkgName, du := range p.DependenciesUnmarshal {
+			var (
+				single    string
+				singleObj poetryPackageDependency
+				multiObj  []poetryPackageDependency
+			)
+
+			switch {
+			case md.PrimitiveDecode(du, &single) == nil:
+				dependencies[pkgName] = append(dependencies[pkgName], poetryPackageDependency{Version: single})
+			case md.PrimitiveDecode(du, &singleObj) == nil:
+				dependencies[pkgName] = append(dependencies[pkgName], singleObj)
+			case md.PrimitiveDecode(du, &multiObj) == nil:
+				dependencies[pkgName] = append(dependencies[pkgName], multiObj...)
+			default:
+				log.Trace("failed to decode poetry lock package dependencies for %s; skipping", pkgName)
+			}
+		}
+		metadata.Packages[i].Dependencies = dependencies
 	}
 
 	var pkgs []pkg.Package
@@ -137,13 +123,15 @@ func extractIndex(p poetryPackage) string {
 
 func extractPoetryDependencies(p poetryPackage) []pkg.PythonPoetryLockDependencyEntry {
 	var deps []pkg.PythonPoetryLockDependencyEntry
-	for name, dep := range p.Dependencies {
-		deps = append(deps, pkg.PythonPoetryLockDependencyEntry{
-			Name:    name,
-			Version: dep.Version,
-			Extras:  dep.Extras,
-			Markers: dep.Markers,
-		})
+	for name, dependencies := range p.Dependencies {
+		for _, d := range dependencies {
+			deps = append(deps, pkg.PythonPoetryLockDependencyEntry{
+				Name:    name,
+				Version: d.Version,
+				Extras:  d.Extras,
+				Markers: d.Markers,
+			})
+		}
 	}
 	sort.Slice(deps, func(i, j int) bool {
 		return deps[i].Name < deps[j].Name
