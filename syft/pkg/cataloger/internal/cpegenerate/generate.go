@@ -96,6 +96,13 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 	case pkg.GoModulePkg:
 		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemGoModules][p.Name]
 
+	case pkg.WordpressPluginPkg:
+		metadata, valid := p.Metadata.(pkg.WordpressPluginEntry)
+		if !valid {
+			return parsedCPEs, false
+		}
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemWordpressPlugins][metadata.PluginInstallDirectory]
+
 	default:
 		// The dictionary doesn't support this package type yet.
 		return parsedCPEs, false
