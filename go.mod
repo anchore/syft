@@ -87,6 +87,7 @@ require (
 require google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17 // indirect
 
 require (
+	github.com/BurntSushi/toml v1.4.0
 	github.com/adrg/xdg v0.4.0
 	github.com/magiconair/properties v1.8.7
 	github.com/pelletier/go-toml/v2 v2.1.0

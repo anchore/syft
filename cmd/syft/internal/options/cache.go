@@ -24,29 +24,37 @@ type Cache struct {
 }
 
 func (c *Cache) DescribeFields(descriptions clio.FieldDescriptionSet) {
-	descriptions.Add(&c.Dir, "root directory to cache any downloaded content")
-	descriptions.Add(&c.TTL, "time to live for cached data")
+	descriptions.Add(&c.Dir, "root directory to cache any downloaded content; empty string will use an in-memory cache")
+	descriptions.Add(&c.TTL, "time to live for cached data; setting this to 0 will disable caching entirely")
 }
 
 func (c *Cache) PostLoad() error {
-	if c.Dir != "" {
-		ttl, err := parseDuration(c.TTL)
+	ttl, err := parseDuration(c.TTL)
+	if err != nil {
+		log.Warnf("unable to parse duration '%v', using default (%s) due to: %v", c.TTL, durationToString(defaultTTL()), err)
+		ttl = defaultTTL()
+	}
+	// if TTL is <= 0, disable caching entirely
+	if ttl <= 0 {
+		cache.SetManager(nil)
+		return nil
+	}
+	// if dir == "" but we have a TTL, use an in-memory cache
+	if c.Dir == "" {
+		cache.SetManager(cache.NewInMemory(ttl))
+		return nil
+	}
+	dir, err := homedir.Expand(c.Dir)
+	if err != nil {
+		log.Warnf("unable to expand cache directory %s: %v", c.Dir, err)
+		cache.SetManager(cache.NewInMemory(ttl))
+	} else {
+		m, err := cache.NewFromDir(dir, ttl)
 		if err != nil {
-			log.Warnf("unable to parse duration '%v', using default (%s) due to: %v", c.TTL, durationToString(defaultTTL()), err)
-			ttl = defaultTTL()
-		}
-		dir, err := homedir.Expand(c.Dir)
-		if err != nil {
-			log.Warnf("unable to expand cache directory %s: %v", c.Dir, err)
+			log.Warnf("unable to get filesystem cache at %s: %v", c.Dir, err)
 			cache.SetManager(cache.NewInMemory(ttl))
 		} else {
-			m, err := cache.NewFromDir(dir, ttl)
-			if err != nil {
-				log.Warnf("unable to get filesystem cache at %s: %v", c.Dir, err)
-				cache.SetManager(cache.NewInMemory(ttl))
-			} else {
-				cache.SetManager(m)
-			}
+			cache.SetManager(m)
 		}
 	}
 	return nil
@@ -100,9 +108,8 @@ func durationToString(duration time.Duration) string {
 	return out
 }
 
-var whitespace = regexp.MustCompile(`\s+`)
-
 func parseDuration(duration string) (time.Duration, error) {
+	whitespace := regexp.MustCompile(`\s+`)
 	duration = strings.ToLower(whitespace.ReplaceAllString(duration, ""))
 	parts := strings.SplitN(duration, "d", 2)
 	var days time.Duration
@@ -114,7 +121,9 @@ func parseDuration(duration string) (time.Duration, error) {
 			return 0, daysErr
 		}
 		days = time.Duration(numDays) * 24 * time.Hour
-		remain, err = time.ParseDuration(parts[1])
+		if len(parts[1]) > 0 {
+			remain, err = time.ParseDuration(parts[1])
+		}
 	} else {
 		remain, err = time.ParseDuration(duration)
 	}

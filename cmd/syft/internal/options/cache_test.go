@@ -1,6 +1,7 @@
 package options
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,9 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/mitchellh/go-homedir"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/cache"
 )
 
 func Test_defaultDir(t *testing.T) {
@@ -91,12 +95,135 @@ func Test_defaultDir(t *testing.T) {
 	}
 }
 
+func Test_cacheOptions(t *testing.T) {
+	tmp := t.TempDir()
+	tests := []struct {
+		name string
+		opts Cache
+		test func(t *testing.T)
+	}{
+		{
+			name: "disable-1",
+			opts: Cache{
+				Dir: "some-dir",
+				TTL: "0",
+			},
+			test: func(t *testing.T) {
+				c := cache.GetManager().GetCache("test-disable-1", "v-disable-1")
+				err := c.Write("key-disable-1", strings.NewReader("some-value-disable-1"))
+				require.NoError(t, err)
+				rdr, err := c.Read("key-disable-1")
+				require.Nil(t, rdr)
+				require.Error(t, err)
+			},
+		},
+		{
+			name: "disable-2",
+			opts: Cache{
+				Dir: "some-dir",
+				TTL: "0s",
+			},
+			test: func(t *testing.T) {
+				c := cache.GetManager().GetCache("test-disable-2", "v-disable-2")
+				err := c.Write("key-disable-2", strings.NewReader("some-value-disable-2"))
+				require.NoError(t, err)
+				rdr, err := c.Read("key-disable-2")
+				require.Nil(t, rdr)
+				require.Error(t, err)
+			},
+		},
+
+		{
+			name: "disable-3",
+			opts: Cache{
+				Dir: "some-dir",
+				TTL: "0d",
+			},
+			test: func(t *testing.T) {
+				c := cache.GetManager().GetCache("test-disable-3", "v-disable-3")
+				err := c.Write("key-disable-3", strings.NewReader("some-value-disable-3"))
+				require.NoError(t, err)
+				rdr, err := c.Read("key-disable-3")
+				require.Nil(t, rdr)
+				require.Error(t, err)
+			},
+		},
+		{
+			name: "in-memory",
+			opts: Cache{
+				Dir: "",
+				TTL: "10m",
+			},
+			test: func(t *testing.T) {
+				c := cache.GetManager().GetCache("test-mem", "v-mem")
+				err := c.Write("key-mem", strings.NewReader("some-value-mem"))
+				require.NoError(t, err)
+				rdr, err := c.Read("key-mem")
+				require.NotNil(t, rdr)
+				defer internal.CloseAndLogError(rdr, "")
+				require.NoError(t, err)
+				data, err := io.ReadAll(rdr)
+				require.NoError(t, err)
+				require.Equal(t, "some-value-mem", string(data))
+				require.NoDirExists(t, filepath.Join("test-mem", "v-mem"))
+			},
+		},
+		{
+			name: "on disk",
+			opts: Cache{
+				Dir: tmp,
+				TTL: "10m",
+			},
+			test: func(t *testing.T) {
+				c := cache.GetManager().GetCache("test-disk", "v-disk")
+				err := c.Write("key-disk", strings.NewReader("some-value-disk"))
+				require.NoError(t, err)
+				rdr, err := c.Read("key-disk")
+				require.NotNil(t, rdr)
+				defer internal.CloseAndLogError(rdr, "")
+				require.NoError(t, err)
+				data, err := io.ReadAll(rdr)
+				require.NoError(t, err)
+				require.Equal(t, "some-value-disk", string(data))
+				require.DirExists(t, filepath.Join(tmp, "test-disk", "v-disk"))
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			original := cache.GetManager()
+			defer cache.SetManager(original)
+
+			err := test.opts.PostLoad()
+			require.NoError(t, err)
+
+			test.test(t)
+		})
+	}
+}
+
 func Test_parseDuration(t *testing.T) {
 	tests := []struct {
 		duration string
 		expect   time.Duration
 		err      require.ErrorAssertionFunc
 	}{
+		{
+			duration: "0d",
+			expect:   0,
+		},
+		{
+			duration: "0m",
+			expect:   0,
+		},
+		{
+			duration: "0s",
+			expect:   0,
+		},
+		{
+			duration: "0",
+			expect:   0,
+		},
 		{
 			duration: "1d",
 			expect:   24 * time.Hour,
@@ -141,6 +268,8 @@ func Test_parseDuration(t *testing.T) {
 			if test.err != nil {
 				test.err(t, err)
 				return
+			} else {
+				require.NoError(t, err)
 			}
 			require.Equal(t, test.expect, got)
 		})

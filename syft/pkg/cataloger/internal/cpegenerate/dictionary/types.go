@@ -8,15 +8,17 @@ import (
 )
 
 const (
-	EcosystemNPM            = "npm"
-	EcosystemRubyGems       = "rubygems"
-	EcosystemPyPI           = "pypi"
-	EcosystemPHPPear        = "php_pear"
-	EcosystemPHPPecl        = "php_pecl"
-	EcosystemPHPComposer    = "php_composer"
-	EcosystemJenkinsPlugins = "jenkins_plugins"
-	EcosystemRustCrates     = "rust_crates"
-	EcosystemGoModules      = "go_modules"
+	EcosystemNPM              = "npm"
+	EcosystemRubyGems         = "rubygems"
+	EcosystemPyPI             = "pypi"
+	EcosystemPHPPear          = "php_pear"
+	EcosystemPHPPecl          = "php_pecl"
+	EcosystemPHPComposer      = "php_composer"
+	EcosystemJenkinsPlugins   = "jenkins_plugins"
+	EcosystemRustCrates       = "rust_crates"
+	EcosystemGoModules        = "go_modules"
+	EcosystemWordpressPlugins = "wordpress_plugins"
+	EcosystemWordpressThemes  = "wordpress_themes"
 )
 
 type Indexed struct {

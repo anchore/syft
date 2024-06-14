@@ -25093,6 +25093,14 @@
     </references>
     <cpe-23:cpe23-item name="cpe:2.3:a:yaml_project:yaml:2.3.0:*:*:*:*:go:*:*"/>
   </cpe-item>
+  <cpe-item name="cpe:/a:0mk_shortener_project:0mk_shortener:0.2::~~~wordpress~~">
+    <title xml:lang="en-US">0mk Shortener Project 0mk Shortener 0.2 for WordPress</title>
+    <references>
+      <reference href="https://www.wordfence.com/threat-intel/vulnerabilities/wordpress-plugins/0mk-shortener/0mk-shortener-02-cross-site-request-forgery-to-stored-cross-site-scripting">Advisory</reference>
+      <reference href="https://wordpress.org/plugins/0mk-shortener/">Project</reference>
+    </references>
+    <cpe-23:cpe23-item name="cpe:2.3:a:0mk_shortener_project:0mk_shortener:0.2:*:*:*:*:wordpress:*:*"/>
+  </cpe-item>
 </cpe-list>
 </cpe-list>
 </cpe-list>
