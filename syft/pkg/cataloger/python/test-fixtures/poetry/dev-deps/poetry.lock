@@ -11,6 +11,12 @@ docutils = "*"
 natsort = "*"
 six = "*"
 sphinx = "*"
+packaging = "*"
+msal = ">=0.4.1,<2.0.0"
+portalocker = [
+    {version = ">=1.0,<3", markers = "platform_system != \"Windows\""},
+    {version = ">=1.6,<3", markers = "platform_system == \"Windows\""},
+]
 
 [package.source]
 type = "legacy"
