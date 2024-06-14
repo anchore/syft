@@ -17,7 +17,7 @@ jobs:
     name: "Static analysis"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 #v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #v4.1.7
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -31,7 +31,7 @@ jobs:
     name: "Unit tests"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 #v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #v4.1.7
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -87,7 +87,7 @@ jobs:
     name: "Integration tests"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 #v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #v4.1.7
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -109,7 +109,7 @@ jobs:
     name: "Build snapshot artifacts"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 #v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #v4.1.7
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -139,7 +139,7 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 #v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #v4.1.7
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -190,7 +190,7 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3.5.0
 
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 #v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #v4.1.7
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -234,7 +234,7 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 #v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #v4.1.7
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap

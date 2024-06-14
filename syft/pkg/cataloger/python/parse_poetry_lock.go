@@ -3,14 +3,16 @@ package python
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"sort"
+
 	"github.com/BurntSushi/toml"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
-	"reflect"
-	"sort"
 )
 
 // integrity check

@@ -1080,6 +1080,18 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 			wantMajorVersion: "4",
 			wantFullVersion:  "v4.5.7",
 		},
+		{
+			name:             "TiDB 7.5.0 ldflags",
+			ldflags:          `build	-ldflags="-X \"github.com/pingcap/tidb/pkg/parser/mysql.TiDBReleaseVersion=v7.5.0\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBBuildTS=2023-11-24 08:51:04\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBGitHash=069631e2ecfedc000ffb92c67207bea81380f020\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBGitBranch=heads/refs/tags/v7.5.0\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBEdition=Community\" "`,
+			wantMajorVersion: "7",
+			wantFullVersion:  "v7.5.0",
+		},
+		{
+			name:             "TiDB 6.1.7 ldflags",
+			ldflags:          `build	-ldflags="-X \"github.com/pingcap/tidb/parser/mysql.TiDBReleaseVersion=v6.1.7\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBBuildTS=2023-07-04 12:06:03\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBGitHash=613ecc5f731b2843e1d53a43915e2cd8da795936\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBGitBranch=heads/refs/tags/v6.1.7\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBEdition=Community\" "`,
+			wantMajorVersion: "6",
+			wantFullVersion:  "v6.1.7",
+		},
 		//////////////////////////////////////////////////////////////////
 		// negative cases
 		{

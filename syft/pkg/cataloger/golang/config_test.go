@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/mitchellh/go-homedir"
@@ -47,7 +48,7 @@ func Test_Config(t *testing.T) {
 			opts: opts{},
 			expected: CatalogerConfig{
 				SearchLocalModCacheLicenses: false,
-				LocalModCacheDir:            "/go/pkg/mod",
+				LocalModCacheDir:            filepath.Join("/go", "pkg", "mod"),
 				SearchRemoteLicenses:        false,
 				Proxies:                     []string{"https://my.proxy"},
 				NoProxy:                     []string{"my.private", "no.proxy"},

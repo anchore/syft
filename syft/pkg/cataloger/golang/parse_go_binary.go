@@ -38,21 +38,21 @@ var (
 	// inject the correct version into the main module of the build process
 
 	knownBuildFlagPatterns = []*regexp.Regexp{
-		regexp.MustCompile(`(?m)\.([gG]it)?([bB]uild)?[vV]er(sion)?=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
-		regexp.MustCompile(`(?m)\.([tT]ag)=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
+		regexp.MustCompile(`(?m)\.[a-zA-Z0-9]*([rR]elease)?([gG]it)?([bB]uild)?[vV]er(sion)?=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
+		regexp.MustCompile(`(?m)\.[a-zA-Z0-9]*([tT]ag)=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
 	}
 )
 
 const devel = "(devel)"
 
 type goBinaryCataloger struct {
-	licenses          goLicenses
+	licenseResolver   goLicenseResolver
 	mainModuleVersion MainModuleVersionConfig
 }
 
 func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 	return &goBinaryCataloger{
-		licenses:          newGoLicenses(binaryCatalogerName, opts),
+		licenseResolver:   newGoLicenseResolver(binaryCatalogerName, opts),
 		mainModuleVersion: opts.MainModuleVersion,
 	}
 }
