@@ -2,7 +2,7 @@ module github.com/anchore/syft/buildtools
 
 go 1.21.1
 
-require github.com/anchore/binny v0.8.0
+require github.com/anchore/binny v0.8.1-0.20240614060000-b23ef5cfaf5d
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
