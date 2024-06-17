@@ -1,40 +1,6 @@
 {
  "artifacts": [
   {
-   "cpes": [
-    {
-     "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
-     "source": "nvd-cpe-dictionary"
-    }
-   ],
-   "foundBy": "the-cataloger-2",
-   "id": "4b756c6f6fb127a3",
-   "language": "",
-   "licenses": [],
-   "locations": [
-    {
-     "path": "/somefile-2.txt",
-     "layerID": "sha256:000fb9200890d3a19138478b20023023c0dce1c54352007c2863716780f049eb",
-     "accessPath": "/somefile-2.txt"
-    }
-   ],
-   "metadata": {
-    "architecture": "",
-    "files": null,
-    "installedSize": 0,
-    "maintainer": "",
-    "package": "package-2",
-    "source": "",
-    "sourceVersion": "",
-    "version": "2.0.1"
-   },
-   "metadataType": "dpkg-db-entry",
-   "name": "package-2",
-   "purl": "pkg:deb/debian/package-2@2.0.1",
-   "type": "deb",
-   "version": "2.0.1"
-  },
-  {
    "id": "c5cf7ac34cbca450",
    "name": "package-1",
    "version": "1.0.1",
@@ -72,6 +38,40 @@
     "authorEmail": "",
     "platform": "",
     "sitePackagesRootPath": ""
+   }
+  },
+  {
+   "id": "4b756c6f6fb127a3",
+   "name": "package-2",
+   "version": "2.0.1",
+   "type": "deb",
+   "foundBy": "the-cataloger-2",
+   "locations": [
+    {
+     "path": "/somefile-2.txt",
+     "layerID": "sha256:000fb9200890d3a19138478b20023023c0dce1c54352007c2863716780f049eb",
+     "accessPath": "/somefile-2.txt"
+    }
+   ],
+   "licenses": [],
+   "language": "",
+   "cpes": [
+    {
+     "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "source": "nvd-cpe-dictionary"
+    }
+   ],
+   "purl": "pkg:deb/debian/package-2@2.0.1",
+   "metadataType": "dpkg-db-entry",
+   "metadata": {
+    "package": "package-2",
+    "source": "",
+    "version": "2.0.1",
+    "sourceVersion": "",
+    "architecture": "",
+    "maintainer": "",
+    "installedSize": 0,
+    "files": null
    }
   }
  ],

@@ -14,30 +14,6 @@
  },
  "packages": [
   {
-   "SPDXID": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
-   "copyrightText": "NOASSERTION",
-   "downloadLocation": "NOASSERTION",
-   "externalRefs": [
-    {
-     "referenceCategory": "SECURITY",
-     "referenceType": "cpe23Type",
-     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
-    },
-    {
-     "referenceCategory": "PACKAGE-MANAGER",
-     "referenceType": "purl",
-     "referenceLocator": "pkg:deb/debian/package-2@2.0.1"
-    }
-   ],
-   "filesAnalyzed": false,
-   "licenseConcluded": "NOASSERTION",
-   "licenseDeclared": "NOASSERTION",
-   "name": "package-2",
-   "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
-   "supplier": "NOASSERTION",
-   "versionInfo": "2.0.1"
-  },
-  {
    "name": "package-1",
    "SPDXID": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
    "versionInfo": "1.0.1",
@@ -58,6 +34,30 @@
      "referenceCategory": "PACKAGE-MANAGER",
      "referenceType": "purl",
      "referenceLocator": "a-purl-1"
+    }
+   ]
+  },
+  {
+   "name": "package-2",
+   "SPDXID": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "versionInfo": "2.0.1",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "copyrightText": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
+    },
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:deb/debian/package-2@2.0.1"
     }
    ]
   },
@@ -198,43 +198,43 @@
  ],
  "relationships": [
   {
-   "spdxElementId": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "spdxElementId": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
    "relatedSpdxElement": "SPDXRef-File-f1-5265a4dde3edbf7c",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "spdxElementId": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
    "relatedSpdxElement": "SPDXRef-File-z1-f5-839d99ee67d9d174",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "spdxElementId": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
    "relatedSpdxElement": "SPDXRef-File-a1-f6-9c2f7510199b17f6",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "spdxElementId": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
    "relatedSpdxElement": "SPDXRef-File-d2-f4-c641caa71518099f",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "spdxElementId": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
    "relatedSpdxElement": "SPDXRef-File-d1-f3-c6f5b29dca12661f",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "spdxElementId": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
    "relatedSpdxElement": "SPDXRef-File-f2-f9e49132a4b96ccd",
    "relationshipType": "CONTAINS"
   },
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
-   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "relatedSpdxElement": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
    "relationshipType": "CONTAINS"
   },
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
-   "relatedSpdxElement": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
+   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
    "relationshipType": "CONTAINS"
   },
   {

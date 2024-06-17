@@ -54,7 +54,7 @@ ExternalRef: PACKAGE-MANAGER purl a-purl-1
 
 ##### Relationships
 
-Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-deb-package-2-4b756c6f6fb127a3
 Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-python-package-1-c5cf7ac34cbca450
+Relationship: SPDXRef-DocumentRoot-Image-user-image-input CONTAINS SPDXRef-Package-deb-package-2-4b756c6f6fb127a3
 Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Image-user-image-input
 

@@ -1,39 +1,6 @@
 {
  "artifacts": [
   {
-   "cpes": [
-    {
-     "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
-     "source": "syft-generated"
-    }
-   ],
-   "foundBy": "the-cataloger-2",
-   "id": "fa4ec37eccd65756",
-   "language": "",
-   "licenses": [],
-   "locations": [
-    {
-     "accessPath": "/b/place/b",
-     "path": "/b/place/b"
-    }
-   ],
-   "metadata": {
-    "architecture": "",
-    "files": [],
-    "installedSize": 0,
-    "package": "package-2",
-    "maintainer": "",
-    "source": "",
-    "sourceVersion": "",
-    "version": "2.0.1"
-   },
-   "metadataType": "dpkg-db-entry",
-   "name": "package-2",
-   "purl": "a-purl-2",
-   "type": "deb",
-   "version": "2.0.1"
-  },
-  {
    "id": "ad3ecac55fe1c30f",
    "name": "package-1",
    "version": "1.0.1",
@@ -70,6 +37,39 @@
     "authorEmail": "",
     "platform": "",
     "sitePackagesRootPath": ""
+   }
+  },
+  {
+   "id": "fa4ec37eccd65756",
+   "name": "package-2",
+   "version": "2.0.1",
+   "type": "deb",
+   "foundBy": "the-cataloger-2",
+   "locations": [
+    {
+     "path": "/b/place/b",
+     "accessPath": "/b/place/b"
+    }
+   ],
+   "licenses": [],
+   "language": "",
+   "cpes": [
+    {
+     "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "source": "syft-generated"
+    }
+   ],
+   "purl": "a-purl-2",
+   "metadataType": "dpkg-db-entry",
+   "metadata": {
+    "package": "package-2",
+    "source": "",
+    "version": "2.0.1",
+    "sourceVersion": "",
+    "architecture": "",
+    "maintainer": "",
+    "installedSize": 0,
+    "files": []
    }
   }
  ],

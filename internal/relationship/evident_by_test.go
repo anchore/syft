@@ -62,13 +62,13 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 			catalog: c,
 			want: []artifact.Relationship{
 				{
-					From: pkgA,
-					To:   coordA,
+					From: pkgB,
+					To:   coordB,
 					Type: artifact.EvidentByRelationship,
 				},
 				{
-					From: pkgB,
-					To:   coordB,
+					From: pkgA,
+					To:   coordA,
 					Type: artifact.EvidentByRelationship,
 				},
 			},

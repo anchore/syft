@@ -5,13 +5,12 @@ package pkg
 
 import (
 	"fmt"
-	"slices"
-
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/sort"
+	"slices"
 )
 
 // Package represents an application or library that has been bundled into a distributable format.
@@ -98,14 +97,10 @@ func (p Package) Compare(other Package) int {
 	if i := sort.CompareArrays(p.Locations.ToSlice(), other.Locations.ToSlice()); i != 0 {
 		return i
 	}
-	if p.Metadata != nil {
-		if meta, ok := p.Metadata.(sort.TryComparable); ok {
-			if canBeCompared, i := meta.TryCompare(other.Metadata); canBeCompared {
-				return i
-			}
-		}
+	if ok, i := sort.TryCompareWithType(p.Metadata, other.Metadata); ok && i != 0 {
+		return i
 	}
-	// compare remaining metadata as a final fallback
+	// compare remaining metadata in stringed representation as a final fallback
 	// note: we cannot guarantee that IDs (which digests the metadata) are stable enough to sort on
 	// when there are potentially missing elements there is too much reduction in the dimensions to
 	// lean on ID comparison. The best fallback is to look at the string representation of the metadata.

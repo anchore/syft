@@ -9,13 +9,13 @@
  Size:		 16
  MediaType:	 application/vnd.docker.image.rootfs.diff.tar.gzip
 
-[package-2]
- Version:	 2.0.1
- Type:		 deb
- Found by:	 the-cataloger-2
-
 [package-1]
  Version:	 1.0.1
  Type:		 python
  Found by:	 the-cataloger-1
+
+[package-2]
+ Version:	 2.0.1
+ Type:		 deb
+ Found by:	 the-cataloger-2
 

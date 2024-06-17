@@ -197,6 +197,10 @@ func (l Location) Equals(other Location) bool {
 }
 
 func (l LocationData) Compare(other LocationData) int {
+	if i := sort.CompareOrd(l.RealPath, other.RealPath); i != 0 {
+		return -i
+	}
+
 	if i := sort.Compare(l.Coordinates, other.Coordinates); i != 0 {
 		return i
 	}

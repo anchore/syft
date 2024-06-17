@@ -18,20 +18,6 @@
   </metadata>
   <components>
     <component bom-ref="redacted" type="library">
-      <name>package-2</name>
-      <version>2.0.1</version>
-      <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
-      <purl>pkg:deb/debian/package-2@2.0.1</purl>
-      <properties>
-        <property name="syft:package:foundBy">the-cataloger-2</property>
-        <property name="syft:package:type">deb</property>
-        <property name="syft:package:metadataType">dpkg-db-entry</property>
-        <property name="syft:location:0:layerID">sha256:redacted</property>
-        <property name="syft:location:0:path">/somefile-2.txt</property>
-        <property name="syft:metadata:installedSize">0</property>
-      </properties>
-    </component>
-    <component bom-ref="redacted" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>
@@ -48,6 +34,20 @@
         <property name="syft:package:metadataType">python-package</property>
         <property name="syft:location:0:layerID">sha256:redacted</property>
         <property name="syft:location:0:path">/somefile-1.txt</property>
+      </properties>
+    </component>
+    <component bom-ref="redacted" type="library">
+      <name>package-2</name>
+      <version>2.0.1</version>
+      <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
+      <purl>pkg:deb/debian/package-2@2.0.1</purl>
+      <properties>
+        <property name="syft:package:foundBy">the-cataloger-2</property>
+        <property name="syft:package:type">deb</property>
+        <property name="syft:package:metadataType">dpkg-db-entry</property>
+        <property name="syft:location:0:layerID">sha256:redacted</property>
+        <property name="syft:location:0:path">/somefile-2.txt</property>
+        <property name="syft:metadata:installedSize">0</property>
       </properties>
     </component>
     <component bom-ref="redacted" type="operating-system">
