@@ -69,7 +69,7 @@ require (
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3
 	github.com/spdx/tools-golang v0.5.4
 	github.com/spf13/afero v1.11.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
 	github.com/vbatts/go-mtree v0.5.4
 	github.com/vifraa/gopom v1.0.0
