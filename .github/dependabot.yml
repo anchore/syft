@@ -17,3 +17,11 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
+
+  - package-ecosystem: "github-actions"
+    directory: "/.github/actions/boostrap"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
