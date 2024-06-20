@@ -13,15 +13,13 @@ func Homepage(p pkg.Package) string {
 		case pkg.NpmPackage:
 			return metadata.Homepage
 		case rust.RustCargoLockEntry:
-			information, err := metadata.GetGeneratedInformation()
-			if err != nil {
-				return ""
+			if sourceInfo := metadata.SourceGeneratedDepInfo; sourceInfo != nil {
+				homepage := sourceInfo.CargoToml.Package.Homepage
+				if homepage == "" {
+					homepage = sourceInfo.CargoToml.Package.Repository
+				}
+				return homepage
 			}
-			homepage := information.CargoToml.Package.Homepage
-			if homepage == "" {
-				homepage = information.CargoToml.Package.Repository
-			}
-			return homepage
 		}
 	}
 	return ""

@@ -1471,7 +1471,7 @@ func TestParseCargoLock(t *testing.T) {
 		},
 	}
 
-	pkgtest.TestFileParser(t, fixture, parseCargoLock, expectedPkgs, expectedRelationships)
+	pkgtest.TestFileParser(t, fixture, newCargoModCataloger(rust.DefaultCatalogerConfig()).parseCargoLock, expectedPkgs, expectedRelationships)
 	//pkgtest.NewCatalogTester().WithCompareOptions(cm).FromFile(t, fixture).Expects(expectedPkgs, expectedRelationships).TestParser(t, parseCargoLock)
 
 }

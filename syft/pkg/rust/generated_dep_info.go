@@ -3,18 +3,27 @@ package rust
 import (
 	"crypto/sha1" //#nosec G505 G401 -- sha1 is used as a required hash function for SPDX, not a crypto function
 	"crypto/sha256"
-	"sync"
 )
 
-type outerGeneratedDepInfo struct {
-	mutex sync.Mutex
-	GeneratedDepInfo
+type RegistryGeneratedDepInfo struct {
+	IsLocalFile bool
+	repositoryConfig
 }
 
-type GeneratedDepInfo struct {
+func EmptyRegistryGeneratedDepInfo() RegistryGeneratedDepInfo {
+	return RegistryGeneratedDepInfo{
+		repositoryConfig: emptyRepositoryConfig(),
+	}
+}
+
+type SourceGeneratedDepInfo struct {
 	DownloadLink string
-	downloadSha  [sha256.Size]byte //#nosec G505 G401 -- sha1 is used as a required hash function for SPDX, not a crypto function
+	DownloadSha  [sha256.Size]byte
 	Licenses     []string
 	CargoToml
-	PathSha1Hashes map[string][sha1.Size]byte
+	PathSha1Hashes map[string][sha1.Size]byte //#nosec G505 G401 -- sha1 is used as a required hash function for SPDX, not a crypto function
+}
+
+func EmptySourceGeneratedDepInfo() SourceGeneratedDepInfo {
+	return SourceGeneratedDepInfo{}
 }

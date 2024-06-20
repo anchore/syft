@@ -13,10 +13,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/spdx/tools-golang/spdx"
 )
@@ -25,7 +23,16 @@ import (
 
 //revive:disable:exported
 //goland:noinspection GoNameStartsWithPackageName
-type RustCargoLockEntry pkg.RustCargoLockEntry
+type RustCargoLockEntry struct {
+	CargoLockVersion int      `toml:"-" json:"-"`
+	Name             string   `toml:"name" json:"name"`
+	Version          string   `toml:"version" json:"version"`
+	Source           string   `toml:"source" json:"source"`
+	Checksum         string   `toml:"checksum" json:"checksum"`
+	Dependencies     []string `toml:"dependencies" json:"dependencies"`
+	*RegistryGeneratedDepInfo
+	*SourceGeneratedDepInfo
+}
 
 //revive:enable:exported
 
@@ -42,33 +49,27 @@ func (r *RustCargoLockEntry) GetChecksumType() spdx.ChecksumAlgorithm {
 	return spdx.SHA256
 }
 
-// GetPrefix get {path} for https://doc.rust-lang.org/cargo/reference/registry-index.html
-func (r *RustCargoLockEntry) GetPrefix() string {
-	switch len(r.Name) {
-	case 0:
-		return ""
-	case 1:
-		return fmt.Sprintf("1/%s", r.Name[0:1])
-	case 2:
-		return fmt.Sprintf("2/%s", r.Name[0:2])
-	case 3:
-		return fmt.Sprintf("3/%s", r.Name[0:1])
-	default:
-		return fmt.Sprintf("%s/%s", r.Name[0:2], r.Name[2:4])
+func (r *RustCargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err error) {
+	if r.RegistryGeneratedDepInfo == nil {
+		return "", false, fmt.Errorf("RegistryGeneratedDepInfo is nil")
 	}
+	return r.getDownloadLink(r.RegistryGeneratedDepInfo.Download), r.RegistryGeneratedDepInfo.IsLocalFile, err
 }
 
-func (r *RustCargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err error) {
+func (r *RustCargoLockEntry) toRegistryGeneratedDepInfo() (RegistryGeneratedDepInfo, error) {
 	sourceID, err := r.getSourceID()
 	if err != nil {
-		return "", false, err
+		return EmptyRegistryGeneratedDepInfo(), err
 	}
-	isLocalFile = sourceID.IsLocalSource()
+	isLocalFile := sourceID.IsLocalSource()
 	repoConfig, err := sourceID.GetConfig()
 	if err != nil {
-		return "", isLocalFile, err
+		return EmptyRegistryGeneratedDepInfo(), err
 	}
-	return r.getDownloadLink(repoConfig.Download), isLocalFile, err
+	return RegistryGeneratedDepInfo{
+		IsLocalFile:      isLocalFile,
+		repositoryConfig: *repoConfig,
+	}, nil
 }
 
 func (r *RustCargoLockEntry) getDownloadLink(url string) string {
@@ -83,22 +84,33 @@ func (r *RustCargoLockEntry) getDownloadLink(url string) string {
 	var link = url
 	link = strings.ReplaceAll(link, Crate, r.Name)
 	link = strings.ReplaceAll(link, Version, r.Version)
-	link = strings.ReplaceAll(link, Prefix, r.GetPrefix())
-	link = strings.ReplaceAll(link, LowerPrefix, strings.ToLower(r.GetPrefix()))
+	link = strings.ReplaceAll(link, Prefix, r.getPrefix())
+	link = strings.ReplaceAll(link, LowerPrefix, strings.ToLower(r.getPrefix()))
 	link = strings.ReplaceAll(link, Sha256Checksum, r.Checksum)
 	return link
 }
-func (r *RustCargoLockEntry) GetIndexPath() string {
-	return fmt.Sprintf("%s/%s", strings.ToLower(r.GetPrefix()), strings.ToLower(r.Name))
-}
-func (r *RustCargoLockEntry) GetDownloadSha() []byte {
-	info, err := r.GetGeneratedInformation()
-	if err != nil {
-		return nil
+
+// getPrefix get {path} for https://doc.rust-lang.org/cargo/reference/registry-index.html
+func (r *RustCargoLockEntry) getPrefix() string {
+	switch len(r.Name) {
+	case 0:
+		return ""
+	case 1:
+		return fmt.Sprintf("1/%s", r.Name[0:1])
+	case 2:
+		return fmt.Sprintf("2/%s", r.Name[0:2])
+	case 3:
+		return fmt.Sprintf("3/%s", r.Name[0:1])
+	default:
+		return fmt.Sprintf("%s/%s", r.Name[0:2], r.Name[2:4])
 	}
-	return info.downloadSha[:]
 }
-func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error) {
+
+func (r *RustCargoLockEntry) getIndexPath() string {
+	return fmt.Sprintf("%s/%s", strings.ToLower(r.getPrefix()), strings.ToLower(r.Name))
+}
+
+func (r *RustCargoLockEntry) getIndexContent() ([]DependencyInformation, []error) {
 	var deps []DependencyInformation
 	var sourceID, err = r.getSourceID()
 	if err != nil {
@@ -106,7 +118,7 @@ func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error
 	}
 	var content []byte
 	var errors []error
-	content, err = sourceID.GetPath(r.GetIndexPath())
+	content, err = sourceID.GetPath(r.getIndexPath())
 	if err != nil {
 		return deps, []error{err}
 	}
@@ -122,21 +134,6 @@ func (r *RustCargoLockEntry) GetIndexContent() ([]DependencyInformation, []error
 		}
 	}
 	return deps, errors
-}
-
-var GeneratedInformation = make(map[PackageID]*outerGeneratedDepInfo)
-
-func (r *RustCargoLockEntry) GetGeneratedInformation() (GeneratedDepInfo, error) {
-	genDepInfo, ok := GeneratedInformation[r.ToPackageID()]
-	if ok {
-		var generatedDepInfoInner GeneratedDepInfo
-		genDepInfo.mutex.Lock()
-		generatedDepInfoInner = genDepInfo.GeneratedDepInfo
-		log.Debugf("Got cached generated information for %s-%s", r.Name, r.Version)
-		genDepInfo.mutex.Unlock()
-		return generatedDepInfoInner, nil
-	}
-	return r.getGeneratedInformationUncached()
 }
 
 func (r *RustCargoLockEntry) getContent() ([]byte, string, error) {
@@ -169,37 +166,30 @@ func (r *RustCargoLockEntry) getContent() ([]byte, string, error) {
 	return content, link, nil
 }
 
-func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo, error) {
+func (r *RustCargoLockEntry) getGeneratedInformationUncached() (SourceGeneratedDepInfo, error) {
 	log.Tracef("Generating information for %s-%s", r.Name, r.Version)
-	genDepInfo := &outerGeneratedDepInfo{
-		mutex: sync.Mutex{},
-		GeneratedDepInfo: GeneratedDepInfo{
-			Licenses:       make([]string, 0),
-			PathSha1Hashes: make(map[string][20]byte),
-		},
+	genDepInfo := SourceGeneratedDepInfo{
+		Licenses:       make([]string, 0),
+		PathSha1Hashes: make(map[string][20]byte),
 	}
-	GeneratedInformation[r.ToPackageID()] = genDepInfo
 
-	genDepInfo.mutex.Lock()
-	defer genDepInfo.mutex.Unlock()
 	content, link, err := r.getContent()
 	genDepInfo.DownloadLink = link
 	if err != nil {
-		delete(GeneratedInformation, r.ToPackageID())
-		genDepInfo.mutex.Unlock()
-		return genDepInfo.GeneratedDepInfo, err
+		return genDepInfo, err
 	}
 
-	genDepInfo.downloadSha = sha256.Sum256(content)
-	hexHash := hex.EncodeToString(genDepInfo.downloadSha[:])
+	genDepInfo.DownloadSha = sha256.Sum256(content)
+	hexHash := hex.EncodeToString(genDepInfo.DownloadSha[:])
 	log.Tracef("got hash: %s (%s expected) %t", hexHash, r.Checksum, hexHash == r.Checksum)
 
 	gzReader, err := gzip.NewReader(bytes.NewReader(content))
 	if err != nil {
-		delete(GeneratedInformation, r.ToPackageID())
-		genDepInfo.mutex.Unlock()
-		return genDepInfo.GeneratedDepInfo, err
+		return genDepInfo, err
 	}
+	defer func(reader *gzip.Reader) {
+		_ = reader.Close()
+	}(gzReader)
 	tarReader := tar.NewReader(gzReader)
 	log.Tracef("Got tar-reader: %s-%s", r.Name, r.Version)
 
@@ -209,17 +199,12 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 			break
 		}
 		if err != nil {
-			_ = gzReader.Close()
-			delete(GeneratedInformation, r.ToPackageID())
-			genDepInfo.mutex.Unlock()
 			log.Tracef("Tar reader error for %s-%s: %s", r.Name, r.Version, err)
-			return genDepInfo.GeneratedDepInfo, err
+			return genDepInfo, err
 		}
 		content, err := io.ReadAll(tarReader)
 		if err != nil {
-			_ = gzReader.Close()
-			delete(GeneratedInformation, r.ToPackageID())
-			return genDepInfo.GeneratedDepInfo, err
+			return genDepInfo, err
 		}
 		genDepInfo.PathSha1Hashes[next.Name] = sha1.Sum(content) //#nosec G505 G401 -- sha1 is used as a required hash function for SPDX, not a crypto function
 
@@ -228,9 +213,7 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 			var cargoToml CargoToml
 			err = toml.Unmarshal(content, &cargoToml)
 			if err != nil {
-				_ = gzReader.Close()
-				delete(GeneratedInformation, r.ToPackageID())
-				return genDepInfo.GeneratedDepInfo, err
+				return genDepInfo, err
 			}
 			log.Tracef("Got Deserialized Cargo.toml for %s-%s: %s", r.Name, r.Version, cargoToml.Package.License)
 
@@ -238,14 +221,5 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (GeneratedDepInfo
 			genDepInfo.Licenses = append(genDepInfo.Licenses, cargoToml.Package.License)
 		}
 	}
-	var generatedInfoInner = genDepInfo.GeneratedDepInfo
-	return generatedInfoInner, nil
-}
-
-func (r *RustCargoLockEntry) GetLicenseInformation() []string {
-	info, err := r.GetGeneratedInformation()
-	if err != nil {
-		return make([]string, 0)
-	}
-	return info.Licenses
+	return genDepInfo, nil
 }

@@ -7,11 +7,13 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
+	"github.com/anchore/syft/syft/pkg/rust"
 )
 
 type Config struct {
 	Binary      binary.ClassifierCatalogerConfig  `yaml:"binary" json:"binary" mapstructure:"binary"`
 	Golang      golang.CatalogerConfig            `yaml:"golang" json:"golang" mapstructure:"golang"`
+	Cargo       rust.CatalogerConfig              `yaml:"cargo" json:"cargo" mapstructure:"cargo"`
 	JavaArchive java.ArchiveCatalogerConfig       `yaml:"java-archive" json:"java-archive" mapstructure:"java-archive"`
 	JavaScript  javascript.CatalogerConfig        `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
 	LinuxKernel kernel.LinuxKernelCatalogerConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
@@ -22,6 +24,7 @@ func DefaultConfig() Config {
 	return Config{
 		Binary:      binary.DefaultClassifierCatalogerConfig(),
 		Golang:      golang.DefaultCatalogerConfig(),
+		Cargo:       rust.DefaultCatalogerConfig(),
 		LinuxKernel: kernel.DefaultLinuxKernelCatalogerConfig(),
 		Python:      python.DefaultCatalogerConfig(),
 		JavaArchive: java.DefaultArchiveCatalogerConfig(),

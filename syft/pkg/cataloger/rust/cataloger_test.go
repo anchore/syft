@@ -3,6 +3,8 @@ package rust
 import (
 	"testing"
 
+	"github.com/anchore/syft/syft/pkg/rust"
+
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -68,7 +70,7 @@ func Test_CargoLockCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewCargoLockCataloger())
+				TestCataloger(t, NewCargoLockCataloger(rust.DefaultCatalogerConfig()))
 		})
 	}
 }

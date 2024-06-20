@@ -1,8 +1,9 @@
 package helpers
 
 import (
-	"github.com/anchore/syft/syft/pkg/rust"
 	"testing"
+
+	"github.com/anchore/syft/syft/pkg/rust"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"

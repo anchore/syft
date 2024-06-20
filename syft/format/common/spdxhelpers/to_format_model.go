@@ -512,8 +512,8 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 			Algorithm: meta.GetChecksumType(),
 			Value:     meta.Checksum,
 		}
-		hash := meta.GetDownloadSha()
-		if hash != nil {
+		if sourceInfo := meta.SourceGeneratedDepInfo; sourceInfo != nil {
+			hash := sourceInfo.DownloadSha[:]
 			hexHash := hex.EncodeToString(hash)
 			if hexHash == meta.Checksum {
 				log.Debugf("setting files analysed to true for %s-%s", meta.Name, meta.Version)

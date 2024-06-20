@@ -16,7 +16,15 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var _ generic.Parser = parseCargoLock
+type cargoModCataloger struct {
+	infoResolver rust.CargoInfoResolver
+}
+
+func newCargoModCataloger(opts rust.CatalogerConfig) *cargoModCataloger {
+	return &cargoModCataloger{
+		infoResolver: rust.NewCargoInfoResolver("cargo-registry-cataloger", opts),
+	}
+}
 
 type packageWrap struct {
 	spdxPackage pkg.Package
@@ -29,7 +37,7 @@ type cargoLockFile struct {
 }
 
 // parseCargoLock is a parser function for Cargo.lock contents, returning all rust cargo crates discovered.
-func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c cargoModCataloger) parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	m := cargoLockFile{}
 	err := toml.NewDecoder(reader).Decode(&m)
 	if err != nil {
@@ -49,7 +57,9 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		}
 
 		var licenseSet = pkg.NewLicenseSet()
-		gen, err := p.GetGeneratedInformation()
+		_, _ = c.infoResolver.ResolveRepo(p)
+		gen, err := c.infoResolver.Resolve(p)
+
 		if err == nil {
 			if len(gen.Licenses) == 0 {
 				log.Debugf("no licenses for %s-%s!", p.Name, p.Version)
@@ -88,7 +98,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 
 	return pkgs, relationships, nil
 }
-func populatePackageContainsRelationships(p pkg.Package, gen *rust.GeneratedDepInfo) (relationships []artifact.Relationship) {
+func populatePackageContainsRelationships(p pkg.Package, gen *rust.SourceGeneratedDepInfo) (relationships []artifact.Relationship) {
 	for path, h := range gen.PathSha1Hashes {
 		relationships = append(relationships, artifact.Relationship{
 			From: p,

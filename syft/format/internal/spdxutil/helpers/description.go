@@ -13,11 +13,9 @@ func Description(p pkg.Package) string {
 		case pkg.NpmPackage:
 			return metadata.Description
 		case rust.RustCargoLockEntry:
-			information, err := metadata.GetGeneratedInformation()
-			if err != nil {
-				return ""
+			if sourceInfo := metadata.SourceGeneratedDepInfo; sourceInfo != nil {
+				return sourceInfo.CargoToml.Package.Description
 			}
-			return information.CargoToml.Package.Description
 		}
 	}
 	return ""

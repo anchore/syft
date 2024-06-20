@@ -17,6 +17,10 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 )
 
+func emptyRepositoryConfig() repositoryConfig {
+	return repositoryConfig{}
+}
+
 type repositoryConfig struct {
 	Download     string `json:"dl"`
 	API          string `json:"api"`
@@ -69,7 +73,6 @@ const (
 )
 
 var RegistryRepos = make(map[string]*memory.Storage)
-var RegistryConfig = make(map[string]repositoryConfig)
 
 // RepositoryConfigName see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/mod.rs#L962
 const RepositoryConfigName = "config.json"
@@ -83,9 +86,6 @@ func (i *sourceID) GetConfig() (*repositoryConfig, error) {
 			AuthRequired: false,
 		}, nil
 	}
-	if repoConfig, ok := RegistryConfig[i.url]; ok {
-		return &repoConfig, nil
-	}
 	content, err := i.GetPath(RepositoryConfigName)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,6 @@ func (i *sourceID) GetConfig() (*repositoryConfig, error) {
 	if err != nil {
 		err = fmt.Errorf("failed to deserialize rust repository configuration: %s", err)
 	}
-	RegistryConfig[i.url] = repoConfig
 	return &repoConfig, err
 }
 

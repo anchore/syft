@@ -483,7 +483,7 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 		},
 		{
 			name:               "CargoPackageMetadata",
-			metadata:           pkg.RustCargoLockEntry{},
+			metadata:           rust.RustCargoLockEntry{},
 			expectedJSONName:   "rust-cargo-lock-entry",
 			expectedLegacyName: "RustCargoPackageMetadata", // note: maps to multiple entries (v11-12 breaking change)
 		},
