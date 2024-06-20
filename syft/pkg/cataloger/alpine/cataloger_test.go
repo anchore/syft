@@ -136,6 +136,10 @@ func TestApkDBCataloger(t *testing.T) {
 		readlinePkg,
 	}
 
+	for _, e := range expectedPkgs {
+		e.SetID()
+	}
+
 	// # apk info --depends bash
 	//   bash-5.2.21-r0 depends on:
 	//   /bin/sh
