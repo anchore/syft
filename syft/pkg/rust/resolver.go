@@ -36,9 +36,7 @@ func (r *CargoInfoResolver) Resolve(entry RustCargoLockEntry) (SourceGeneratedDe
 		return EmptySourceGeneratedDepInfo(), fmt.Errorf("no Registry Information present")
 	}
 
-	return r.crateCache.Resolve(entry.Source, func() (SourceGeneratedDepInfo, error) {
-		return entry.getGeneratedInformationUncached()
-	})
+	return r.crateCache.Resolve(entry.Source, entry.getGeneratedInformationUncached)
 }
 
 func (r *CargoInfoResolver) ResolveRepo(entry RustCargoLockEntry) (RegistryGeneratedInfo, error) {
@@ -51,7 +49,5 @@ func (r *CargoInfoResolver) ResolveRepo(entry RustCargoLockEntry) (RegistryGener
 		return EmptyRegistryGeneratedDepInfo(), fmt.Errorf("we are not allowed to search remotly for extra info")
 	}
 
-	return r.repoCache.Resolve(entry.Source, func() (RegistryGeneratedInfo, error) {
-		return entry.toRegistryGeneratedDepInfo()
-	})
+	return r.repoCache.Resolve(entry.Source, entry.toRegistryGeneratedDepInfo)
 }

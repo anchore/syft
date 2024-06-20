@@ -7,7 +7,6 @@ import (
 	"crypto/sha1" //#nosec G505 G401 -- sha1 is used as a required hash function for SPDX, not a crypto function
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -106,35 +105,36 @@ func (r *RustCargoLockEntry) getPrefix() string {
 	}
 }
 
-func (r *RustCargoLockEntry) getIndexPath() string {
-	return fmt.Sprintf("%s/%s", strings.ToLower(r.getPrefix()), strings.ToLower(r.Name))
-}
-
-func (r *RustCargoLockEntry) getIndexContent() ([]DependencyInformation, []error) {
-	var deps []DependencyInformation
-	var sourceID, err = r.getSourceID()
-	if err != nil {
-		return deps, []error{err}
-	}
-	var content []byte
-	var errors []error
-	content, err = sourceID.GetPath(r.getIndexPath())
-	if err != nil {
-		return deps, []error{err}
-	}
-	for _, v := range bytes.Split(content, []byte("\n")) {
-		var depInfo = DependencyInformation{
-			StructVersion: 1,
-		}
-		err = json.Unmarshal(v, &depInfo)
-		if err == nil {
-			deps = append(deps, depInfo)
-		} else {
-			errors = append(errors, err)
-		}
-	}
-	return deps, errors
-}
+// Todo: Do we care about any metadata present in the rust repository index?
+// func (r *RustCargoLockEntry) getIndexPath() string {
+// 	return fmt.Sprintf("%s/%s", strings.ToLower(r.getPrefix()), strings.ToLower(r.Name))
+// }
+//
+// func (r *RustCargoLockEntry) getIndexContent() ([]DependencyInformation, []error) {
+// 	var deps []DependencyInformation
+// 	var sourceID, err = r.getSourceID()
+// 	if err != nil {
+// 		return deps, []error{err}
+// 	}
+// 	var content []byte
+// 	var errors []error
+// 	content, err = sourceID.GetPath(r.getIndexPath())
+// 	if err != nil {
+// 		return deps, []error{err}
+// 	}
+// 	for _, v := range bytes.Split(content, []byte("\n")) {
+// 		var depInfo = DependencyInformation{
+// 			StructVersion: 1,
+// 		}
+// 		err = json.Unmarshal(v, &depInfo)
+// 		if err == nil {
+// 			deps = append(deps, depInfo)
+// 		} else {
+// 			errors = append(errors, err)
+// 		}
+// 	}
+// 	return deps, errors
+// }
 
 func (r *RustCargoLockEntry) getContent() ([]byte, string, error) {
 	var content []byte
