@@ -30,7 +30,7 @@ func DefaultRelationshipComparer(x, y artifact.Relationship) bool {
 	if reflect.ValueOf(x.To).Type().Name() < reflect.ValueOf(y.To).Type().Name() {
 		return true
 	}
-	if x.To.ID() < y.From.ID() {
+	if x.To.ID() < y.To.ID() {
 		return true
 	}
 	if x.Type < y.Type {
