@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "http://cyclonedx.org/schema/bom-1.5.schema.json",
+  "$id": "http://cyclonedx.org/schema/bom-1.6.schema.json",
   "type": "object",
-  "title": "CycloneDX Software Bill of Materials Standard",
+  "title": "CycloneDX Bill of Materials Standard",
   "$comment" : "CycloneDX JSON schema is published under the terms of the Apache License 2.0.",
   "required": [
     "bomFormat",
@@ -11,15 +11,12 @@
   "additionalProperties": false,
   "properties": {
     "$schema": {
-      "type": "string",
-      "enum": [
-        "http://cyclonedx.org/schema/bom-1.5.schema.json"
-      ]
+      "type": "string"
     },
     "bomFormat": {
       "type": "string",
       "title": "BOM Format",
-      "description": "Specifies the format of the BOM. This helps to identify the file as CycloneDX since BOMs do not have a filename convention nor does JSON schema support namespaces. This value MUST be \"CycloneDX\".",
+      "description": "Specifies the format of the BOM. This helps to identify the file as CycloneDX since BOMs do not have a filename convention, nor does JSON schema support namespaces. This value MUST be \"CycloneDX\".",
       "enum": [
         "CycloneDX"
       ]
@@ -27,13 +24,13 @@
     "specVersion": {
       "type": "string",
       "title": "CycloneDX Specification Version",
-      "description": "The version of the CycloneDX specification a BOM conforms to (starting at version 1.2).",
-      "examples": ["1.5"]
+      "description": "The version of the CycloneDX specification the BOM conforms to.",
+      "examples": ["1.6"]
     },
     "serialNumber": {
       "type": "string",
       "title": "BOM Serial Number",
-      "description": "Every BOM generated SHOULD have a unique serial number, even if the contents of the BOM have not changed over time. If specified, the serial number MUST conform to RFC-4122. Use of serial numbers are RECOMMENDED.",
+      "description": "Every BOM generated SHOULD have a unique serial number, even if the contents of the BOM have not changed over time. If specified, the serial number MUST conform to RFC-4122. Use of serial numbers is RECOMMENDED.",
       "examples": ["urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79"],
       "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
     },
@@ -68,14 +65,14 @@
       "type": "array",
       "items": {"$ref": "#/definitions/externalReference"},
       "title": "External References",
-      "description": "External references provide a way to document systems, sites, and information that may be relevant, but are not included with the BOM. They may also establish specific relationships within or external to the BOM."
+      "description": "External references provide a way to document systems, sites, and information that may be relevant but are not included with the BOM. They may also establish specific relationships within or external to the BOM."
     },
     "dependencies": {
       "type": "array",
       "items": {"$ref": "#/definitions/dependency"},
       "uniqueItems": true,
       "title": "Dependencies",
-      "description": "Provides the ability to document dependency relationships."
+      "description": "Provides the ability to document dependency relationships including provided & implemented components."
     },
     "compositions": {
       "type": "array",
@@ -96,7 +93,7 @@
       "items": {"$ref": "#/definitions/annotations"},
       "uniqueItems": true,
       "title": "Annotations",
-      "description": "Comments made by people, organizations, or tools about any object with a bom-ref, such as components, services, vulnerabilities, or the BOM itself. Unlike inventory information, annotations may contain opinion or commentary from various stakeholders. Annotations may be inline (with inventory) or externalized via BOM-Link, and may optionally be signed."
+      "description": "Comments made by people, organizations, or tools about any object with a bom-ref, such as components, services, vulnerabilities, or the BOM itself. Unlike inventory information, annotations may contain opinions or commentary from various stakeholders. Annotations may be inline (with inventory) or externalized via BOM-Link and may optionally be signed."
     },
     "formulation": {
       "type": "array",
@@ -104,6 +101,420 @@
       "uniqueItems": true,
       "title": "Formulation",
       "description": "Describes how a component or service was manufactured or deployed. This is achieved through the use of formulas, workflows, tasks, and steps, which declare the precise steps to reproduce along with the observed formulas describing the steps which transpired in the manufacturing process."
+    },
+    "declarations": {
+      "type": "object",
+      "title": "Declarations",
+      "description": "The list of declarations which describe the conformance to standards. Each declaration may include attestations, claims, and evidence.",
+      "additionalProperties": false,
+      "properties": {
+        "assessors": {
+          "type": "array",
+          "title": "Assessors",
+          "description": "The list of assessors evaluating claims and determining conformance to requirements and confidence in that assessment.",
+          "items": {
+            "type": "object",
+            "title": "Assessor",
+            "description": "The assessor who evaluates claims and determines conformance to requirements and confidence in that assessment.",
+            "additionalProperties": false,
+            "properties": {
+              "bom-ref": {
+                "$ref": "#/definitions/refType",
+                "title": "BOM Reference",
+                "description": "An optional identifier which can be used to reference the object elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+              },
+              "thirdParty": {
+                "type": "boolean",
+                "title": "Third Party",
+                "description": "The boolean indicating if the assessor is outside the organization generating claims. A value of false indicates a self assessor."
+              },
+              "organization": {
+                "$ref": "#/definitions/organizationalEntity",
+                "title": "Organization",
+                "description": "The entity issuing the assessment."
+              }
+            }
+          }
+        },
+        "attestations": {
+          "type": "array",
+          "title": "Attestations",
+          "description": "The list of attestations asserted by an assessor that maps requirements to claims.",
+          "items": {
+            "type": "object",
+            "title": "Attestation",
+            "additionalProperties": false,
+            "properties": {
+              "summary":  {
+                "type": "string",
+                "title": "Summary",
+                "description": "The short description explaining the main points of the attestation."
+              },
+              "assessor": {
+                "$ref": "#/definitions/refLinkType",
+                "title": "Assessor",
+                "description": "The `bom-ref` to the assessor asserting the attestation."
+              },
+              "map": {
+                "type": "array",
+                "title": "Map",
+                "description": "The grouping of requirements to claims and the attestors declared conformance and confidence thereof.",
+                "items": {
+                  "type": "object",
+                  "title": "Map",
+                  "additionalProperties": false,
+                  "properties": {
+                    "requirement": {
+                      "$ref": "#/definitions/refLinkType",
+                      "title": "Requirement",
+                      "description": "The `bom-ref` to the requirement being attested to."
+                    },
+                    "claims": {
+                      "type": "array",
+                      "title": "Claims",
+                      "description": "The list of `bom-ref` to the claims being attested to.",
+                      "items": { "$ref": "#/definitions/refLinkType" }
+                    },
+                    "counterClaims": {
+                      "type": "array",
+                      "title": "Counter Claims",
+                      "description": "The list of  `bom-ref` to the counter claims being attested to.",
+                      "items": { "$ref": "#/definitions/refLinkType" }
+                    },
+                    "conformance": {
+                      "type": "object",
+                      "title": "Conformance",
+                      "description": "The conformance of the claim meeting a requirement.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "score": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1,
+                          "title": "Score",
+                          "description": "The conformance of the claim between and inclusive of 0 and 1, where 1 is 100% conformance."
+                        },
+                        "rationale": {
+                          "type": "string",
+                          "title": "Rationale",
+                          "description": "The rationale for the conformance score."
+                        },
+                        "mitigationStrategies": {
+                          "type": "array",
+                          "title": "Mitigation Strategies",
+                          "description": "The list of  `bom-ref` to the evidence provided describing the mitigation strategies.",
+                          "items": { "$ref": "#/definitions/refLinkType" }
+                        }
+                      }
+                    },
+                    "confidence": {
+                      "type": "object",
+                      "title": "Confidence",
+                      "description": "The confidence of the claim meeting the requirement.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "score": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1,
+                          "title": "Score",
+                          "description": "The confidence of the claim between and inclusive of 0 and 1, where 1 is 100% confidence."
+                        },
+                        "rationale": {
+                          "type": "string",
+                          "title": "Rationale",
+                          "description": "The rationale for the confidence score."
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "signature": {
+                "$ref": "#/definitions/signature",
+                "title": "Signature",
+                "description": "Enveloped signature in [JSON Signature Format (JSF)](https://cyberphone.github.io/doc/security/jsf.html)."
+              }
+            }
+          }
+        },
+        "claims": {
+          "type": "array",
+          "title": "Claims",
+          "description": "The list of claims.",
+          "items": {
+            "type": "object",
+            "title": "Claim",
+            "additionalProperties": false,
+            "properties": {
+              "bom-ref": {
+                "$ref": "#/definitions/refType",
+                "title": "BOM Reference",
+                "description": "An optional identifier which can be used to reference the object elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+              },
+              "target": {
+                "$ref": "#/definitions/refLinkType",
+                "title": "Target",
+                "description": "The `bom-ref` to a target representing a specific system, application, API, module, team, person, process, business unit, company, etc...  that this claim is being applied to."
+              },
+              "predicate": {
+                "type": "string",
+                "title": "Predicate",
+                "description": "The specific statement or assertion about the target."
+              },
+              "mitigationStrategies": {
+                "type": "array",
+                "title": "Mitigation Strategies",
+                "description": "The list of  `bom-ref` to the evidence provided describing the mitigation strategies. Each mitigation strategy should include an explanation of how any weaknesses in the evidence will be mitigated.",
+                "items": { "$ref": "#/definitions/refLinkType" }
+              },
+              "reasoning": {
+                "type": "string",
+                "title": "Reasoning",
+                "description": "The written explanation of why the evidence provided substantiates the claim."
+              },
+              "evidence": {
+                "type": "array",
+                "title": "Evidence",
+                "description": "The list of `bom-ref` to evidence that supports this claim.",
+                "items": { "$ref": "#/definitions/refLinkType" }
+              },
+              "counterEvidence": {
+                "type": "array",
+                "title": "Counter Evidence",
+                "description": "The list of `bom-ref` to counterEvidence that supports this claim.",
+                "items": { "$ref": "#/definitions/refLinkType" }
+              },
+              "externalReferences": {
+                "type": "array",
+                "items": {"$ref": "#/definitions/externalReference"},
+                "title": "External References",
+                "description": "External references provide a way to document systems, sites, and information that may be relevant but are not included with the BOM. They may also establish specific relationships within or external to the BOM."
+              },
+              "signature": {
+                "$ref": "#/definitions/signature",
+                "title": "Signature",
+                "description": "Enveloped signature in [JSON Signature Format (JSF)](https://cyberphone.github.io/doc/security/jsf.html)."
+              }
+            }
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "title": "Evidence",
+          "description": "The list of evidence",
+          "items": {
+            "type": "object",
+            "title": "Evidence",
+            "additionalProperties": false,
+            "properties": {
+              "bom-ref": {
+                "$ref": "#/definitions/refType",
+                "title": "BOM Reference",
+                "description": "An optional identifier which can be used to reference the object elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+              },
+              "propertyName": {
+                "type": "string",
+                "title": "Property Name",
+                "description": "The reference to the property name as defined in the [CycloneDX Property Taxonomy](https://github.com/CycloneDX/cyclonedx-property-taxonomy/)."
+              },
+              "description": {
+                "type": "string",
+                "title": "Description",
+                "description": "The written description of what this evidence is and how it was created."
+              },
+              "data": {
+                "type": "array",
+                "title": "Data",
+                "description": "The output or analysis that supports claims.",
+                "items": {
+                  "type": "object",
+                  "title": "Data",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "title": "Data Name",
+                      "description": "The name of the data.",
+                      "type": "string"
+                    },
+                    "contents": {
+                      "type": "object",
+                      "title": "Data Contents",
+                      "description": "The contents or references to the contents of the data being described.",
+                      "additionalProperties": false,
+                      "properties": {
+                        "attachment": {
+                          "title": "Data Attachment",
+                          "description": "An optional way to include textual or encoded data.",
+                          "$ref": "#/definitions/attachment"
+                        },
+                        "url": {
+                          "type": "string",
+                          "title": "Data URL",
+                          "description": "The URL to where the data can be retrieved.",
+                          "format": "iri-reference"
+                        }
+                      }
+                    },
+                    "classification": {
+                      "$ref": "#/definitions/dataClassification"
+                    },
+                    "sensitiveData": {
+                      "type": "array",
+                      "title": "Sensitive Data",
+                      "description": "A description of any sensitive data included.",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "governance": {
+                      "title": "Data Governance",
+                      "$ref": "#/definitions/dataGovernance"
+                    }
+                  }
+                }
+              },
+              "created": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Created",
+                "description": "The date and time (timestamp) when the evidence was created."
+              },
+              "expires": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Expires",
+                "description": "The optional date and time (timestamp) when the evidence is no longer valid."
+              },
+              "author": {
+                "$ref": "#/definitions/organizationalContact",
+                "title": "Author",
+                "description": "The author of the evidence."
+              },
+              "reviewer": {
+                "$ref": "#/definitions/organizationalContact",
+                "title": "Reviewer",
+                "description": "The reviewer of the evidence."
+              },
+              "signature": {
+                "$ref": "#/definitions/signature",
+                "title": "Signature",
+                "description": "Enveloped signature in [JSON Signature Format (JSF)](https://cyberphone.github.io/doc/security/jsf.html)."
+              }
+            }
+          }
+        },
+        "targets": {
+          "type": "object",
+          "title": "Targets",
+          "description": "The list of targets which claims are made against.",
+          "additionalProperties": false,
+          "properties": {
+            "organizations": {
+              "type": "array",
+              "title": "Organizations",
+              "description": "The list of organizations which claims are made against.",
+              "items": {"$ref": "#/definitions/organizationalEntity"}
+            },
+            "components": {
+              "type": "array",
+              "title": "Components",
+              "description": "The list of components which claims are made against.",
+              "items": {"$ref": "#/definitions/component"}
+            },
+            "services": {
+              "type": "array",
+              "title": "Services",
+              "description": "The list of services which claims are made against.",
+              "items": {"$ref": "#/definitions/service"}
+            }
+          }
+        },
+        "affirmation": {
+          "type": "object",
+          "title": "Affirmation",
+          "additionalProperties": false,
+          "properties": {
+            "statement": {
+              "type": "string",
+              "title": "Statement",
+              "description": "The brief statement affirmed by an individual regarding all declarations.\n*- Notes This could be an affirmation of acceptance by a third-party auditor or receiving individual of a file.",
+              "examples": [ "I certify, to the best of my knowledge, that all information is correct." ]
+            },
+            "signatories": {
+              "type": "array",
+              "title": "Signatories",
+              "description": "The list of signatories authorized on behalf of an organization to assert validity of this document.",
+              "items": {
+                "type": "object",
+                "title": "Signatory",
+                "additionalProperties": false,
+                "oneOf": [
+                  {
+                    "required": ["signature"]
+                  },
+                  {
+                    "required": ["externalReference", "organization"]
+                  }
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "title": "Name",
+                    "description": "The signatory's name."
+                  },
+                  "role": {
+                    "type": "string",
+                    "title": "Role",
+                    "description": "The signatory's role within an organization."
+                  },
+                  "signature": {
+                    "$ref": "#/definitions/signature",
+                    "title": "Signature",
+                    "description": "Enveloped signature in [JSON Signature Format (JSF)](https://cyberphone.github.io/doc/security/jsf.html)."
+                  },
+                  "organization": {
+                    "$ref": "#/definitions/organizationalEntity",
+                    "title": "Organization",
+                    "description": "The signatory's organization."
+                  },
+                  "externalReference": {
+                    "$ref": "#/definitions/externalReference",
+                    "title": "External Reference",
+                    "description": "External references provide a way to document systems, sites, and information that may be relevant but are not included with the BOM. They may also establish specific relationships within or external to the BOM."
+                  }
+                }
+              }
+            },
+            "signature": {
+              "$ref": "#/definitions/signature",
+              "title": "Signature",
+              "description": "Enveloped signature in [JSON Signature Format (JSF)](https://cyberphone.github.io/doc/security/jsf.html)."
+            }
+          }
+        },
+        "signature": {
+          "$ref": "#/definitions/signature",
+          "title": "Signature",
+          "description": "Enveloped signature in [JSON Signature Format (JSF)](https://cyberphone.github.io/doc/security/jsf.html)."
+        }
+      }
+    },
+    "definitions": {
+      "type": "object",
+      "title": "Definitions",
+      "description": "A collection of reusable objects that are defined and may be used elsewhere in the BOM.",
+      "additionalProperties": false,
+      "properties": {
+        "standards": {
+          "type": "array",
+          "title": "Standards",
+          "description": "The list of standards which may consist of regulations, industry or organizational-specific standards, maturity models, best practices, or any other requirements which can be evaluated against or attested to.",
+          "items": {
+            "$ref": "#/definitions/standard"
+          }
+        }
+      }
     },
     "properties": {
       "type": "array",
@@ -121,14 +532,14 @@
   },
   "definitions": {
     "refType": {
-      "description": "Identifier for referable and therefore interlink-able elements.",
+      "description": "Identifier for referable and therefore interlinkable elements.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links.",
       "type": "string",
       "minLength": 1,
-      "$comment": "value SHOULD not start with the BOM-Link intro 'urn:cdx:'"
+      "$comment": "TODO (breaking change): add a format constraint that prevents the value from staring with 'urn:cdx:'"
     },
     "refLinkType": {
       "description": "Descriptor for an element identified by the attribute 'bom-ref' in the same BOM document.\nIn contrast to `bomLinkElementType`.",
-      "allOf": [{"$ref": "#/definitions/refType"}]
+      "$ref": "#/definitions/refType"
     },
     "bomLinkDocumentType": {
       "title": "BOM-Link Document",
@@ -147,6 +558,7 @@
       "$comment": "part of the pattern is based on `bom.serialNumber`'s pattern"
     },
     "bomLink": {
+      "title": "BOM-Link",
       "anyOf": [
         {
           "title": "BOM-Link Document",
@@ -160,7 +572,7 @@
     },
     "metadata": {
       "type": "object",
-      "title": "BOM Metadata Object",
+      "title": "BOM Metadata",
       "additionalProperties": false,
       "properties": {
         "timestamp": {
@@ -172,20 +584,21 @@
         "lifecycles": {
           "type": "array",
           "title": "Lifecycles",
-          "description": "",
+          "description": "Lifecycles communicate the stage(s) in which data in the BOM was captured. Different types of data may be available at various phases of a lifecycle, such as the Software Development Lifecycle (SDLC), IT Asset Management (ITAM), and Software Asset Management (SAM). Thus, a BOM may include data specific to or only obtainable in a given lifecycle.",
           "items": {
             "type": "object",
             "title": "Lifecycle",
             "description": "The product lifecycle(s) that this BOM represents.",
             "oneOf": [
               {
+                "title": "Pre-Defined Phase",
                 "required": ["phase"],
                 "additionalProperties": false,
                 "properties": {
                   "phase": {
                     "type": "string",
                     "title": "Phase",
-                    "description": "A pre-defined phase in the product lifecycle.\n\n* __design__ = BOM produced early in the development lifecycle containing inventory of components and services that are proposed or planned to be used. The inventory may need to be procured, retrieved, or resourced prior to use.\n* __pre-build__ = BOM consisting of information obtained prior to a build process and may contain source files and development artifacts and manifests. The inventory may need to be resolved and retrieved prior to use.\n* __build__ = BOM consisting of information obtained during a build process where component inventory is available for use. The precise versions of resolved components are usually available at this time as well as the provenance of where the components were retrieved from.\n* __post-build__ = BOM consisting of information obtained after a build process has completed and the resulting components(s) are available for further analysis. Built components may exist as the result of a CI/CD process, may have been installed or deployed to a system or device, and may need to be retrieved or extracted from the system or device.\n* __operations__ = BOM produced that represents inventory that is running and operational. This may include staging or production environments and will generally encompass multiple SBOMs describing the applications and operating system, along with HBOMs describing the hardware that makes up the system. Operations Bill of Materials (OBOM) can provide full-stack inventory of runtime environments, configurations, and additional dependencies.\n* __discovery__ = BOM consisting of information observed through network discovery providing point-in-time enumeration of embedded, on-premise, and cloud-native services such as server applications, connected devices, microservices, and serverless functions.\n* __decommission__ = BOM containing inventory that will be, or has been retired from operations.",
+                    "description": "A pre-defined phase in the product lifecycle.",
                     "enum": [
                       "design",
                       "pre-build",
@@ -194,11 +607,21 @@
                       "operations",
                       "discovery",
                       "decommission"
-                    ]
+                    ],
+                    "meta:enum": {
+                      "design": "BOM produced early in the development lifecycle containing an inventory of components and services that are proposed or planned to be used. The inventory may need to be procured, retrieved, or resourced prior to use.",
+                      "pre-build": "BOM consisting of information obtained prior to a build process and may contain source files and development artifacts and manifests. The inventory may need to be resolved and retrieved prior to use.",
+                      "build": "BOM consisting of information obtained during a build process where component inventory is available for use. The precise versions of resolved components are usually available at this time as well as the provenance of where the components were retrieved from.",
+                      "post-build": "BOM consisting of information obtained after a build process has completed and the resulting components(s) are available for further analysis. Built components may exist as the result of a CI/CD process, may have been installed or deployed to a system or device, and may need to be retrieved or extracted from the system or device.",
+                      "operations": "BOM produced that represents inventory that is running and operational. This may include staging or production environments and will generally encompass multiple SBOMs describing the applications and operating system, along with HBOMs describing the hardware that makes up the system. Operations Bill of Materials (OBOM) can provide full-stack inventory of runtime environments, configurations, and additional dependencies.",
+                      "discovery": "BOM consisting of information observed through network discovery providing point-in-time enumeration of embedded, on-premise, and cloud-native services such as server applications, connected devices, microservices, and serverless functions.",
+                      "decommission": "BOM containing inventory that will be, or has been retired from operations."
+                    }
                   }
                 }
               },
               {
+                "title": "Custom Phase",
                 "required": ["name"],
                 "additionalProperties": false,
                 "properties": {
@@ -216,13 +639,15 @@
               }
             ]
           }
-        },
+      },
         "tools": {
+          "title": "Tools",
+          "description": "The tool(s) used in the creation, enrichment, and validation of the BOM.",
           "oneOf": [
             {
               "type": "object",
-              "title": "Creation Tools",
-              "description": "The tool(s) used in the creation of the BOM.",
+              "title": "Tools",
+              "description": "The tool(s) used in the creation, enrichment, and validation of the BOM.",
               "additionalProperties": false,
               "properties": {
                 "components": {
@@ -230,7 +655,7 @@
                   "items": {"$ref": "#/definitions/component"},
                   "uniqueItems": true,
                   "title": "Components",
-                  "description": "A list of software and hardware components used as tools"
+                  "description": "A list of software and hardware components used as tools."
                 },
                 "services": {
                   "type": "array",
@@ -243,16 +668,21 @@
             },
             {
               "type": "array",
-              "title": "Creation Tools (legacy)",
-              "description": "[Deprecated] The tool(s) used in the creation of the BOM.",
+              "title": "Tools (legacy)",
+              "description": "[Deprecated] The tool(s) used in the creation, enrichment, and validation of the BOM.",
               "items": {"$ref": "#/definitions/tool"}
             }
           ]
         },
-        "authors" :{
+        "manufacturer": {
+          "title": "BOM Manufacturer",
+          "description": "The organization that created the BOM.\nManufacturer is common in BOMs created through automated processes. BOMs created through manual means may have `@.authors` instead.",
+          "$ref": "#/definitions/organizationalEntity"
+        },
+        "authors": {
           "type": "array",
-          "title": "Authors",
-          "description": "The person(s) who created the BOM. Authors are common in BOMs created through manual processes. BOMs created through automated means may not have authors.",
+          "title": "BOM Authors",
+          "description": "The person(s) who created the BOM.\nAuthors are common in BOMs created through manual processes. BOMs created through automated means may have `@.manufacturer` instead.",
           "items": {"$ref": "#/definitions/organizationalContact"}
         },
         "component": {
@@ -261,8 +691,9 @@
           "$ref": "#/definitions/component"
         },
         "manufacture": {
-          "title": "Manufacture",
-          "description": "The organization that manufactured the component that the BOM describes.",
+          "deprecated": true,
+          "title": "Component Manufacture (legacy)",
+          "description": "[Deprecated] This will be removed in a future version. Use the `@.component.manufacturer` instead.\nThe organization that manufactured the component that the BOM describes.",
           "$ref": "#/definitions/organizationalEntity"
         },
         "supplier": {
@@ -272,6 +703,7 @@
         },
         "licenses": {
           "title": "BOM License(s)",
+          "description": "The license information for the BOM document.\nThis may be different from the license(s) of the component(s) that the BOM describes.",
           "$ref": "#/definitions/licenseChoice"
         },
         "properties": {
@@ -285,7 +717,7 @@
     "tool": {
       "type": "object",
       "title": "Tool",
-      "description": "[Deprecated] - DO NOT USE. This will be removed in a future version. This will be removed in a future version. Use component or service instead. Information about the automated or manual tool used",
+      "description": "[Deprecated] This will be removed in a future version. Use component or service instead. Information about the automated or manual tool used",
       "additionalProperties": false,
       "properties": {
         "vendor": {
@@ -299,7 +731,7 @@
           "description": "The name of the tool"
         },
         "version": {
-          "type": "string",
+          "$ref": "#/definitions/version",
           "title": "Tool Version",
           "description": "The version of the tool"
         },
@@ -319,22 +751,27 @@
     },
     "organizationalEntity": {
       "type": "object",
-      "title": "Organizational Entity Object",
+      "title": "Organizational Entity",
       "description": "",
       "additionalProperties": false,
       "properties": {
         "bom-ref": {
           "$ref": "#/definitions/refType",
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the object elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+          "description": "An optional identifier which can be used to reference the object elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
         },
         "name": {
           "type": "string",
-          "title": "Name",
+          "title": "Organization Name",
           "description": "The name of the organization",
           "examples": [
             "Example Inc."
           ]
+        },
+        "address": {
+          "$ref": "#/definitions/postalAddress",
+          "title": "Organization Address",
+          "description": "The physical address (location) of the organization"
         },
         "url": {
           "type": "array",
@@ -342,13 +779,13 @@
             "type": "string",
             "format": "iri-reference"
           },
-          "title": "URL",
+          "title": "Organization URL(s)",
           "description": "The URL of the organization. Multiple URLs are allowed.",
           "examples": ["https://example.com"]
         },
         "contact": {
           "type": "array",
-          "title": "Contact",
+          "title": "Organizational Contact",
           "description": "A contact at the organization. Multiple contacts are allowed.",
           "items": {"$ref": "#/definitions/organizationalContact"}
         }
@@ -356,14 +793,14 @@
     },
     "organizationalContact": {
       "type": "object",
-      "title": "Organizational Contact Object",
+      "title": "Organizational Contact",
       "description": "",
       "additionalProperties": false,
       "properties": {
         "bom-ref": {
           "$ref": "#/definitions/refType",
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the object elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+          "description": "An optional identifier which can be used to reference the object elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
         },
         "name": {
           "type": "string",
@@ -388,7 +825,7 @@
     },
     "component": {
       "type": "object",
-      "title": "Component Object",
+      "title": "Component",
       "required": [
         "type",
         "name"
@@ -409,33 +846,61 @@
             "firmware",
             "file",
             "machine-learning-model",
-            "data"
+            "data",
+            "cryptographic-asset"
           ],
+          "meta:enum": {
+            "application": "A software application. Refer to [https://en.wikipedia.org/wiki/Application_software](https://en.wikipedia.org/wiki/Application_software) for information about applications.",
+            "framework": "A software framework. Refer to [https://en.wikipedia.org/wiki/Software_framework](https://en.wikipedia.org/wiki/Software_framework) for information on how frameworks vary slightly from libraries.",
+            "library": "A software library. Refer to [https://en.wikipedia.org/wiki/Library_(computing)](https://en.wikipedia.org/wiki/Library_(computing)) for information about libraries. All third-party and open source reusable components will likely be a library. If the library also has key features of a framework, then it should be classified as a framework. If not, or is unknown, then specifying library is RECOMMENDED.",
+            "container": "A packaging and/or runtime format, not specific to any particular technology, which isolates software inside the container from software outside of a container through virtualization technology. Refer to [https://en.wikipedia.org/wiki/OS-level_virtualization](https://en.wikipedia.org/wiki/OS-level_virtualization).",
+            "platform": "A runtime environment which interprets or executes software. This may include runtimes such as those that execute bytecode or low-code/no-code application platforms.",
+            "operating-system": "A software operating system without regard to deployment model (i.e. installed on physical hardware, virtual machine, image, etc) Refer to [https://en.wikipedia.org/wiki/Operating_system](https://en.wikipedia.org/wiki/Operating_system).",
+            "device": "A hardware device such as a processor or chip-set. A hardware device containing firmware SHOULD include a component for the physical hardware itself and another component of type 'firmware' or 'operating-system' (whichever is relevant), describing information about the software running on the device. See also the list of [known device properties](https://github.com/CycloneDX/cyclonedx-property-taxonomy/blob/main/cdx/device.md).",
+            "device-driver": "A special type of software that operates or controls a particular type of device. Refer to [https://en.wikipedia.org/wiki/Device_driver](https://en.wikipedia.org/wiki/Device_driver).",
+            "firmware": "A special type of software that provides low-level control over a device's hardware. Refer to [https://en.wikipedia.org/wiki/Firmware](https://en.wikipedia.org/wiki/Firmware).",
+            "file": "A computer file. Refer to [https://en.wikipedia.org/wiki/Computer_file](https://en.wikipedia.org/wiki/Computer_file) for information about files.",
+            "machine-learning-model": "A model based on training data that can make predictions or decisions without being explicitly programmed to do so.",
+            "data": "A collection of discrete values that convey information.",
+            "cryptographic-asset": "A cryptographic asset including algorithms, protocols, certificates, keys, tokens, and secrets."
+          },
           "title": "Component Type",
-          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component. Types include:\n\n* __application__ = A software application. Refer to [https://en.wikipedia.org/wiki/Application_software](https://en.wikipedia.org/wiki/Application_software) for information about applications.\n* __framework__ = A software framework. Refer to [https://en.wikipedia.org/wiki/Software_framework](https://en.wikipedia.org/wiki/Software_framework) for information on how frameworks vary slightly from libraries.\n* __library__ = A software library. Refer to [https://en.wikipedia.org/wiki/Library_(computing)](https://en.wikipedia.org/wiki/Library_(computing))\n for information about libraries. All third-party and open source reusable components will likely be a library. If the library also has key features of a framework, then it should be classified as a framework. If not, or is unknown, then specifying library is RECOMMENDED.\n* __container__ = A packaging and/or runtime format, not specific to any particular technology, which isolates software inside the container from software outside of a container through virtualization technology. Refer to [https://en.wikipedia.org/wiki/OS-level_virtualization](https://en.wikipedia.org/wiki/OS-level_virtualization)\n* __platform__ = A runtime environment which interprets or executes software. This may include runtimes such as those that execute bytecode or low-code/no-code application platforms.\n* __operating-system__ = A software operating system without regard to deployment model (i.e. installed on physical hardware, virtual machine, image, etc) Refer to [https://en.wikipedia.org/wiki/Operating_system](https://en.wikipedia.org/wiki/Operating_system)\n* __device__ = A hardware device such as a processor, or chip-set. A hardware device containing firmware SHOULD include a component for the physical hardware itself, and another component of type 'firmware' or 'operating-system' (whichever is relevant), describing information about the software running on the device.\n  See also the list of [known device properties](https://github.com/CycloneDX/cyclonedx-property-taxonomy/blob/main/cdx/device.md).\n* __device-driver__ = A special type of software that operates or controls a particular type of device. Refer to [https://en.wikipedia.org/wiki/Device_driver](https://en.wikipedia.org/wiki/Device_driver)\n* __firmware__ = A special type of software that provides low-level control over a devices hardware. Refer to [https://en.wikipedia.org/wiki/Firmware](https://en.wikipedia.org/wiki/Firmware)\n* __file__ = A computer file. Refer to [https://en.wikipedia.org/wiki/Computer_file](https://en.wikipedia.org/wiki/Computer_file) for information about files.\n* __machine-learning-model__ = A model based on training data that can make predictions or decisions without being explicitly programmed to do so.\n* __data__ = A collection of discrete values that convey information.",
+          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component.",
           "examples": ["library"]
         },
         "mime-type": {
           "type": "string",
           "title": "Mime-Type",
-          "description": "The optional mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented such as an image, font, or executable. Some library or framework components may also have an associated mime-type.",
+          "description": "The optional mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type.",
           "examples": ["image/jpeg"],
           "pattern": "^[-+a-z0-9.]+/[-+a-z0-9.]+$"
         },
         "bom-ref": {
           "$ref": "#/definitions/refType",
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
         },
         "supplier": {
           "title": "Component Supplier",
           "description": " The organization that supplied the component. The supplier may often be the manufacturer, but may also be a distributor or repackager.",
           "$ref": "#/definitions/organizationalEntity"
         },
+        "manufacturer": {
+          "title": "Component Manufacturer",
+          "description": "The organization that created the component.\nManufacturer is common in components created through automated processes. Components created through manual means may have `@.authors` instead.",
+          "$ref": "#/definitions/organizationalEntity"
+        },
+        "authors" :{
+          "type": "array",
+          "title": "Component Authors",
+          "description": "The person(s) who created the component.\nAuthors are common in components created through manual processes. Components created through automated means may have `@.manufacturer` instead.",
+          "items": {"$ref": "#/definitions/organizationalContact"}
+        },
         "author": {
+          "deprecated": true,
           "type": "string",
-          "title": "Component Author",
-          "description": "The person(s) or organization(s) that authored the component",
+          "title": "Component Author (legacy)",
+          "description": "[Deprecated] This will be removed in a future version. Use `@.authors` or `@.manufacturer` instead.\nThe person(s) or organization(s) that authored the component",
           "examples": ["Acme Inc"]
         },
         "publisher": {
@@ -457,10 +922,9 @@
           "examples": ["tomcat-catalina"]
         },
         "version": {
-          "type": "string",
+          "$ref": "#/definitions/version",
           "title": "Component Version",
-          "description": "The component version. The version should ideally comply with semantic versioning but is not enforced.",
-          "examples": ["9.0.14"]
+          "description": "The component version. The version should ideally comply with semantic versioning but is not enforced."
         },
         "description": {
           "type": "string",
@@ -474,6 +938,11 @@
             "optional",
             "excluded"
           ],
+          "meta:enum": {
+            "required": "The component is required for runtime",
+            "optional": "The component is optional at runtime. Optional components are components that are not capable of being called due to them not being installed or otherwise accessible by any means. Components that are installed but due to configuration or other restrictions are prohibited from being called must be scoped as 'required'.",
+            "excluded": "Components that are excluded provide the ability to document component usage for test and other non-runtime purposes. Excluded components are not reachable within a call graph at runtime."
+          },
           "title": "Component Scope",
           "description": "Specifies the scope of the component. If scope is not specified, 'required' scope SHOULD be assumed by the consumer of the BOM.",
           "default": "required"
@@ -481,6 +950,7 @@
         "hashes": {
           "type": "array",
           "title": "Component Hashes",
+          "description": "The hashes of the component.",
           "items": {"$ref": "#/definitions/hash"}
         },
         "licenses": {
@@ -495,25 +965,42 @@
         },
         "cpe": {
           "type": "string",
-          "title": "Component Common Platform Enumeration (CPE)",
-          "description": "Specifies a well-formed CPE name that conforms to the CPE 2.2 or 2.3 specification. See [https://nvd.nist.gov/products/cpe](https://nvd.nist.gov/products/cpe)",
+          "title": "Common Platform Enumeration (CPE)",
+          "description": "Asserts the identity of the component using CPE. The CPE must conform to the CPE 2.2 or 2.3 specification. See [https://nvd.nist.gov/products/cpe](https://nvd.nist.gov/products/cpe). Refer to `@.evidence.identity` to optionally provide evidence that substantiates the assertion of the component's identity.",
           "examples": ["cpe:2.3:a:acme:component_framework:-:*:*:*:*:*:*:*"]
         },
         "purl": {
           "type": "string",
-          "title": "Component Package URL (purl)",
-          "description": "Specifies the package-url (purl). The purl, if specified, MUST be valid and conform to the specification defined at: [https://github.com/package-url/purl-spec](https://github.com/package-url/purl-spec)",
+          "title": "Package URL (purl)",
+          "description": "Asserts the identity of the component using package-url (purl). The purl, if specified, MUST be valid and conform to the specification defined at: [https://github.com/package-url/purl-spec](https://github.com/package-url/purl-spec). Refer to `@.evidence.identity` to optionally provide evidence that substantiates the assertion of the component's identity.",
           "examples": ["pkg:maven/com.acme/tomcat-catalina@9.0.14?packaging=jar"]
+        },
+        "omniborId": {
+          "type": "array",
+          "title": "OmniBOR Artifact Identifier (gitoid)",
+          "description": "Asserts the identity of the component using the OmniBOR Artifact ID. The OmniBOR, if specified, MUST be valid and conform to the specification defined at: [https://www.iana.org/assignments/uri-schemes/prov/gitoid](https://www.iana.org/assignments/uri-schemes/prov/gitoid). Refer to `@.evidence.identity` to optionally provide evidence that substantiates the assertion of the component's identity.",
+          "items": { "type": "string" },
+          "examples": [
+            "gitoid:blob:sha1:a94a8fe5ccb19ba61c4c0873d391e987982fbbd3",
+            "gitoid:blob:sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+          ]
+        },
+        "swhid": {
+          "type": "array",
+          "title": "SoftWare Heritage Identifier",
+          "description": "Asserts the identity of the component using the Software Heritage persistent identifier (SWHID). The SWHID, if specified, MUST be valid and conform to the specification defined at: [https://docs.softwareheritage.org/devel/swh-model/persistent-identifiers.html](https://docs.softwareheritage.org/devel/swh-model/persistent-identifiers.html). Refer to `@.evidence.identity` to optionally provide evidence that substantiates the assertion of the component's identity.",
+          "items": { "type": "string" },
+          "examples": ["swh:1:cnt:94a9ed024d3859793618152ea559a168bbcbb5e2"]
         },
         "swid": {
           "$ref": "#/definitions/swid",
           "title": "SWID Tag",
-          "description": "Specifies metadata and content for [ISO-IEC 19770-2 Software Identification (SWID) Tags](https://www.iso.org/standard/65666.html)."
+          "description": "Asserts the identity of the component using [ISO-IEC 19770-2 Software Identification (SWID) Tags](https://www.iso.org/standard/65666.html). Refer to `@.evidence.identity` to optionally provide evidence that substantiates the assertion of the component's identity."
         },
         "modified": {
           "type": "boolean",
           "title": "Component Modified From Original",
-          "description": "[Deprecated] - DO NOT USE. This will be removed in a future version. Use the pedigree element instead to supply information on exactly how the component was modified. A boolean value indicating if the component has been modified from the original. A value of true indicates the component is a derivative of the original. A value of false indicates the component has not been modified from the original."
+          "description": "[Deprecated] This will be removed in a future version. Use the pedigree element instead to supply information on exactly how the component was modified. A boolean value indicating if the component has been modified from the original. A value of true indicates the component is a derivative of the original. A value of false indicates the component has not been modified from the original."
         },
         "pedigree": {
           "type": "object",
@@ -536,7 +1023,7 @@
             "variants": {
               "type": "array",
               "title": "Variants",
-              "description": "Variants describe relations where the relationship between the components are not known. For example, if Component A contains nearly identical code to Component B. They are both related, but it is unclear if one is derived from the other, or if they share a common ancestor.",
+              "description": "Variants describe relations where the relationship between the components is not known. For example, if Component A contains nearly identical code to Component B. They are both related, but it is unclear if one is derived from the other, or if they share a common ancestor.",
               "items": {"$ref": "#/definitions/component"}
             },
             "commits": {
@@ -548,7 +1035,7 @@
             "patches": {
               "type": "array",
               "title": "Patches",
-              "description": ">A list of zero or more patches describing how the component deviates from an ancestor, descendant, or variant. Patches may be complimentary to commits or may be used in place of commits.",
+              "description": ">A list of zero or more patches describing how the component deviates from an ancestor, descendant, or variant. Patches may be complementary to commits or may be used in place of commits.",
               "items": {"$ref": "#/definitions/patch"}
             },
             "notes": {
@@ -562,7 +1049,7 @@
           "type": "array",
           "items": {"$ref": "#/definitions/externalReference"},
           "title": "External References",
-          "description": "External references provide a way to document systems, sites, and information that may be relevant, but are not included with the BOM. They may also establish specific relationships within or external to the BOM."
+          "description": "External references provide a way to document systems, sites, and information that may be relevant but are not included with the BOM. They may also establish specific relationships within or external to the BOM."
         },
         "components": {
           "type": "array",
@@ -581,9 +1068,9 @@
           "title": "Release notes",
           "description": "Specifies optional release notes."
         },
-        "modelCard": {
+         "modelCard": {
           "$ref": "#/definitions/modelCard",
-          "title": "Machine Learning Model Card"
+          "title": "AI/ML Model Card"
         },
         "data": {
           "type": "array",
@@ -591,11 +1078,19 @@
           "title": "Data",
           "description": "This object SHOULD be specified for any component of type `data` and MUST NOT be specified for other component types."
         },
+        "cryptoProperties": {
+          "$ref": "#/definitions/cryptoProperties",
+          "title": "Cryptographic Properties"
+        },
         "properties": {
           "type": "array",
           "title": "Properties",
           "description": "Provides the ability to document properties in a name-value store. This provides flexibility to include data not officially supported in the standard without having to use additional namespaces or create extensions. Unlike key-value stores, properties support duplicate names, each potentially having different values. Property names of interest to the general public are encouraged to be registered in the [CycloneDX Property Taxonomy](https://github.com/CycloneDX/cyclonedx-property-taxonomy). Formal registration is OPTIONAL.",
           "items": {"$ref": "#/definitions/property"}
+        },
+        "tags": {
+          "$ref": "#/definitions/tags",
+          "title": "Tags"
         },
         "signature": {
           "$ref": "#/definitions/signature",
@@ -676,7 +1171,10 @@
           "description": "Specifies the optional encoding the text is represented in.",
           "enum": [
             "base64"
-          ]
+          ],
+          "meta:enum": {
+            "base64": "Base64 is a binary-to-text encoding scheme that represents binary data in an ASCII string."
+          }
         },
         "content": {
           "type": "string",
@@ -687,7 +1185,7 @@
     },
     "hash": {
       "type": "object",
-      "title": "Hash Objects",
+      "title": "Hash",
       "required": [
         "alg",
         "content"
@@ -704,6 +1202,8 @@
     },
     "hash-alg": {
       "type": "string",
+      "title": "Hash Algorithm",
+      "description": "The algorithm that generated the hash value.",
       "enum": [
         "MD5",
         "SHA-1",
@@ -717,18 +1217,18 @@
         "BLAKE2b-384",
         "BLAKE2b-512",
         "BLAKE3"
-      ],
-      "title": "Hash Algorithm"
+      ]
     },
     "hash-content": {
       "type": "string",
-      "title": "Hash Content (value)",
+      "title": "Hash Value",
+      "description": "The value of the hash.",
       "examples": ["3942447fac867ae5cdb3229b658f4d48"],
       "pattern": "^([a-fA-F0-9]{32}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64}|[a-fA-F0-9]{96}|[a-fA-F0-9]{128})$"
     },
     "license": {
       "type": "object",
-      "title": "License Object",
+      "title": "License",
       "oneOf": [
         {
           "required": ["id"]
@@ -742,7 +1242,7 @@
         "bom-ref": {
           "$ref": "#/definitions/refType",
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the license elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+          "description": "An optional identifier which can be used to reference the license elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
         },
         "id": {
           "$ref": "spdx.schema.json",
@@ -755,6 +1255,9 @@
           "title": "License Name",
           "description": "If SPDX does not define the license used, this field may be used to provide the license name",
           "examples": ["Acme Software License"]
+        },
+        "acknowledgement": {
+          "$ref": "#/definitions/licenseAcknowledgementEnumeration"
         },
         "text": {
           "title": "License text",
@@ -868,7 +1371,7 @@
             "licenseTypes": {
               "type": "array",
               "title": "License Type",
-              "description": "The type of license(s) that was granted to the licensee\n\n* __academic__ = A license that grants use of software solely for the purpose of education or research.\n* __appliance__ = A license covering use of software embedded in a specific piece of hardware.\n* __client-access__ = A Client Access License (CAL) allows client computers to access services provided by server software.\n* __concurrent-user__ = A Concurrent User license (aka floating license) limits the number of licenses for a software application and licenses are shared among a larger number of users.\n* __core-points__ = A license where the core of a computer's processor is assigned a specific number of points.\n* __custom-metric__ = A license for which consumption is measured by non-standard metrics.\n* __device__ = A license that covers a defined number of installations on computers and other types of devices.\n* __evaluation__ = A license that grants permission to install and use software for trial purposes.\n* __named-user__ = A license that grants access to the software to one or more pre-defined users.\n* __node-locked__ = A license that grants access to the software on one or more pre-defined computers or devices.\n* __oem__ = An Original Equipment Manufacturer license that is delivered with hardware, cannot be transferred to other hardware, and is valid for the life of the hardware.\n* __perpetual__ = A license where the software is sold on a one-time basis and the licensee can use a copy of the software indefinitely.\n* __processor-points__ = A license where each installation consumes points per processor.\n* __subscription__ = A license where the licensee pays a fee to use the software or service.\n* __user__ = A license that grants access to the software or service by a specified number of users.\n* __other__ = Another license type.\n",
+              "description": "The type of license(s) that was granted to the licensee.",
               "items": {
                 "type": "string",
                 "enum": [
@@ -888,7 +1391,25 @@
                   "subscription",
                   "user",
                   "other"
-                ]
+                ],
+                "meta:enum": {
+                  "academic": "A license that grants use of software solely for the purpose of education or research.",
+                  "appliance": "A license covering use of software embedded in a specific piece of hardware.",
+                  "client-access": "A Client Access License (CAL) allows client computers to access services provided by server software.",
+                  "concurrent-user": "A Concurrent User license (aka floating license) limits the number of licenses for a software application and licenses are shared among a larger number of users.",
+                  "core-points": "A license where the core of a computer's processor is assigned a specific number of points.",
+                  "custom-metric": "A license for which consumption is measured by non-standard metrics.",
+                  "device": "A license that covers a defined number of installations on computers and other types of devices.",
+                  "evaluation": "A license that grants permission to install and use software for trial purposes.",
+                  "named-user": "A license that grants access to the software to one or more pre-defined users.",
+                  "node-locked": "A license that grants access to the software on one or more pre-defined computers or devices.",
+                  "oem": "An Original Equipment Manufacturer license that is delivered with hardware, cannot be transferred to other hardware, and is valid for the life of the hardware.",
+                  "perpetual": "A license where the software is sold on a one-time basis and the licensee can use a copy of the software indefinitely.",
+                  "processor-points": "A license where each installation consumes points per processor.",
+                  "subscription": "A license where the licensee pays a fee to use the software or service.",
+                  "user": "A license that grants access to the software or service by a specified number of users.",
+                  "other": "Another license type."
+                }
               }
             },
             "lastRenewal": {
@@ -913,6 +1434,19 @@
         }
       }
     },
+    "licenseAcknowledgementEnumeration": {
+      "title": "License Acknowledgement",
+      "description": "Declared licenses and concluded licenses represent two different stages in the licensing process within software development. Declared licenses refer to the initial intention of the software authors regarding the licensing terms under which their code is released. On the other hand, concluded licenses are the result of a comprehensive analysis of the project's codebase to identify and confirm the actual licenses of the components used, which may differ from the initially declared licenses. While declared licenses provide an upfront indication of the licensing intentions, concluded licenses offer a more thorough understanding of the actual licensing within a project, facilitating proper compliance and risk management. Observed licenses are defined in `@.evidence.licenses`. Observed licenses form the evidence necessary to substantiate a concluded license.",
+      "type": "string",
+      "enum": [
+        "declared",
+        "concluded"
+      ],
+      "meta:enum": {
+        "declared": "Declared licenses represent the initial intentions of authors regarding the licensing terms of their code.",
+        "concluded": "Concluded licenses are verified and confirmed."
+      }
+    },
     "licenseChoice": {
       "title": "License Choice",
       "description": "EITHER (list of SPDX licenses and/or named licenses) OR (tuple of one SPDX License Expression)",
@@ -924,6 +1458,7 @@
           "type": "array",
           "items": {
             "type": "object",
+            "title": "License",
             "required": ["license"],
             "additionalProperties": false,
             "properties": {
@@ -946,15 +1481,19 @@
               "expression": {
                 "type": "string",
                 "title": "SPDX License Expression",
+                "description": "A valid SPDX license expression.\nRefer to https://spdx.org/specifications for syntax requirements",
                 "examples": [
                   "Apache-2.0 AND (MIT OR GPL-2.0-only)",
                   "GPL-3.0-only WITH Classpath-exception-2.0"
                 ]
               },
+              "acknowledgement": {
+                "$ref": "#/definitions/licenseAcknowledgementEnumeration"
+              },
               "bom-ref": {
                 "$ref": "#/definitions/refType",
                 "title": "BOM Reference",
-                "description": "An optional identifier which can be used to reference the license elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+                "description": "An optional identifier which can be used to reference the license elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
               }
             }
           }]
@@ -1012,12 +1551,18 @@
             "backport",
             "cherry-pick"
           ],
-          "title": "Type",
-          "description": "Specifies the purpose for the patch including the resolution of defects, security issues, or new behavior or functionality.\n\n* __unofficial__ = A patch which is not developed by the creators or maintainers of the software being patched. Refer to [https://en.wikipedia.org/wiki/Unofficial_patch](https://en.wikipedia.org/wiki/Unofficial_patch)\n* __monkey__ = A patch which dynamically modifies runtime behavior. Refer to [https://en.wikipedia.org/wiki/Monkey_patch](https://en.wikipedia.org/wiki/Monkey_patch)\n* __backport__ = A patch which takes code from a newer version of software and applies it to older versions of the same software. Refer to [https://en.wikipedia.org/wiki/Backporting](https://en.wikipedia.org/wiki/Backporting)\n* __cherry-pick__ = A patch created by selectively applying commits from other versions or branches of the same software."
+          "meta:enum": {
+            "unofficial": "A patch which is not developed by the creators or maintainers of the software being patched. Refer to [https://en.wikipedia.org/wiki/Unofficial_patch](https://en.wikipedia.org/wiki/Unofficial_patch).",
+            "monkey": "A patch which dynamically modifies runtime behavior. Refer to [https://en.wikipedia.org/wiki/Monkey_patch](https://en.wikipedia.org/wiki/Monkey_patch).",
+            "backport": "A patch which takes code from a newer version of the software and applies it to older versions of the same software. Refer to [https://en.wikipedia.org/wiki/Backporting](https://en.wikipedia.org/wiki/Backporting).",
+            "cherry-pick": "A patch created by selectively applying commits from other versions or branches of the same software."
+          },
+          "title": "Patch Type",
+          "description": "Specifies the purpose for the patch including the resolution of defects, security issues, or new behavior or functionality."
         },
         "diff": {
           "title": "Diff",
-          "description": "The patch file (or diff) that show changes. Refer to [https://en.wikipedia.org/wiki/Diff](https://en.wikipedia.org/wiki/Diff)",
+          "description": "The patch file (or diff) that shows changes. Refer to [https://en.wikipedia.org/wiki/Diff](https://en.wikipedia.org/wiki/Diff)",
           "$ref": "#/definitions/diff"
         },
         "resolves": {
@@ -1031,7 +1576,7 @@
     "diff": {
       "type": "object",
       "title": "Diff",
-      "description": "The patch file (or diff) that show changes. Refer to https://en.wikipedia.org/wiki/Diff",
+      "description": "The patch file (or diff) that shows changes. Refer to https://en.wikipedia.org/wiki/Diff",
       "additionalProperties": false,
       "properties": {
         "text": {
@@ -1049,7 +1594,7 @@
     },
     "issue": {
       "type": "object",
-      "title": "Diff",
+      "title": "Issue",
       "description": "An individual issue that has been resolved.",
       "required": [
         "type"
@@ -1063,22 +1608,27 @@
             "enhancement",
             "security"
           ],
-          "title": "Type",
+          "meta:enum": {
+            "defect": "A fault, flaw, or bug in software.",
+            "enhancement": "A new feature or behavior in software.",
+            "security": "A special type of defect which impacts security."
+          },
+          "title": "Issue Type",
           "description": "Specifies the type of issue"
         },
         "id": {
           "type": "string",
-          "title": "ID",
+          "title": "Issue ID",
           "description": "The identifier of the issue assigned by the source of the issue"
         },
         "name": {
           "type": "string",
-          "title": "Name",
+          "title": "Issue Name",
           "description": "The name of the issue"
         },
         "description": {
           "type": "string",
-          "title": "Description",
+          "title": "Issue Description",
           "description": "A description of the issue"
         },
         "source": {
@@ -1090,7 +1640,12 @@
             "name": {
               "type": "string",
               "title": "Name",
-              "description": "The name of the source. For example 'National Vulnerability Database', 'NVD', and 'Apache'"
+              "description": "The name of the source.",
+              "examples": [
+                "National Vulnerability Database",
+                "NVD",
+                "Apache"
+              ]
             },
             "url": {
               "type": "string",
@@ -1140,7 +1695,7 @@
     "externalReference": {
       "type": "object",
       "title": "External Reference",
-      "description": "External references provide a way to document systems, sites, and information that may be relevant, but are not included with the BOM. They may also establish specific relationships within or external to the BOM.",
+      "description": "External references provide a way to document systems, sites, and information that may be relevant but are not included with the BOM. They may also establish specific relationships within or external to the BOM.",
       "required": [
         "url",
         "type"
@@ -1170,7 +1725,7 @@
         "type": {
           "type": "string",
           "title": "Type",
-          "description": "Specifies the type of external reference.\n\n* __vcs__ = Version Control System\n* __issue-tracker__ = Issue or defect tracking system, or an Application Lifecycle Management (ALM) system\n* __website__ = Website\n* __advisories__ = Security advisories\n* __bom__ = Bill of Materials (SBOM, OBOM, HBOM, SaaSBOM, etc)\n* __mailing-list__ = Mailing list or discussion group\n* __social__ = Social media account\n* __chat__ = Real-time chat platform\n* __documentation__ = Documentation, guides, or how-to instructions\n* __support__ = Community or commercial support\n* __distribution__ = Direct or repository download location\n* __distribution-intake__ = The location where a component was published to. This is often the same as \"distribution\" but may also include specialized publishing processes that act as an intermediary\n* __license__ = The URL to the license file. If a license URL has been defined in the license node, it should also be defined as an external reference for completeness\n* __build-meta__ = Build-system specific meta file (i.e. pom.xml, package.json, .nuspec, etc)\n* __build-system__ = URL to an automated build system\n* __release-notes__ = URL to release notes\n* __security-contact__ = Specifies a way to contact the maintainer, supplier, or provider in the event of a security incident. Common URIs include links to a disclosure procedure, a mailto (RFC-2368) that specifies an email address, a tel (RFC-3966) that specifies a phone number, or dns (RFC-4501) that specifies the records containing DNS Security TXT\n* __model-card__ = A model card describes the intended uses of a machine learning model, potential limitations, biases, ethical considerations, training parameters, datasets used to train the model, performance metrics, and other relevant data useful for ML transparency\n* __log__ = A record of events that occurred in a computer system or application, such as problems, errors, or information on current operations\n* __configuration__ = Parameters or settings that may be used by other components or services\n* __evidence__ = Information used to substantiate a claim\n* __formulation__ = Describes how a component or service was manufactured or deployed\n* __attestation__ = Human or machine-readable statements containing facts, evidence, or testimony\n* __threat-model__ = An enumeration of identified weaknesses, threats, and countermeasures, dataflow diagram (DFD), attack tree, and other supporting documentation in human-readable or machine-readable format\n* __adversary-model__ = The defined assumptions, goals, and capabilities of an adversary.\n* __risk-assessment__ = Identifies and analyzes the potential of future events that may negatively impact individuals, assets, and/or the environment. Risk assessments may also include judgments on the tolerability of each risk.\n* __vulnerability-assertion__ = A Vulnerability Disclosure Report (VDR) which asserts the known and previously unknown vulnerabilities that affect a component, service, or product including the analysis and findings describing the impact (or lack of impact) that the reported vulnerability has on a component, service, or product.\n* __exploitability-statement__ = A Vulnerability Exploitability eXchange (VEX) which asserts the known vulnerabilities that do not affect a product, product family, or organization, and optionally the ones that do. The VEX should include the analysis and findings describing the impact (or lack of impact) that the reported vulnerability has on the product, product family, or organization.\n* __pentest-report__ = Results from an authorized simulated cyberattack on a component or service, otherwise known as a penetration test\n* __static-analysis-report__ = SARIF or proprietary machine or human-readable report for which static analysis has identified code quality, security, and other potential issues with the source code\n* __dynamic-analysis-report__ = Dynamic analysis report that has identified issues such as vulnerabilities and misconfigurations\n* __runtime-analysis-report__ = Report generated by analyzing the call stack of a running application\n* __component-analysis-report__ = Report generated by Software Composition Analysis (SCA), container analysis, or other forms of component analysis\n* __maturity-report__ = Report containing a formal assessment of an organization, business unit, or team against a maturity model\n* __certification-report__ = Industry, regulatory, or other certification from an accredited (if applicable) certification body\n* __quality-metrics__ = Report or system in which quality metrics can be obtained\n* __codified-infrastructure__ = Code or configuration that defines and provisions virtualized infrastructure, commonly referred to as Infrastructure as Code (IaC)\n* __poam__ = Plans of Action and Milestones (POAM) compliment an \"attestation\" external reference. POAM is defined by NIST as a \"document that identifies tasks needing to be accomplished. It details resources required to accomplish the elements of the plan, any milestones in meeting the tasks and scheduled completion dates for the milestones\".\n* __other__ = Use this if no other types accurately describe the purpose of the external reference",
+          "description": "Specifies the type of external reference.",
           "enum": [
             "vcs",
             "issue-tracker",
@@ -1182,6 +1737,7 @@
             "chat",
             "documentation",
             "support",
+            "source-distribution",
             "distribution",
             "distribution-intake",
             "license",
@@ -1210,8 +1766,56 @@
             "codified-infrastructure",
             "quality-metrics",
             "poam",
+            "electronic-signature",
+            "digital-signature",
+            "rfc-9116",
             "other"
-          ]
+          ],
+          "meta:enum": {
+            "vcs": "Version Control System",
+            "issue-tracker": "Issue or defect tracking system, or an Application Lifecycle Management (ALM) system",
+            "website": "Website",
+            "advisories": "Security advisories",
+            "bom": "Bill of Materials (SBOM, OBOM, HBOM, SaaSBOM, etc)",
+            "mailing-list": "Mailing list or discussion group",
+            "social": "Social media account",
+            "chat": "Real-time chat platform",
+            "documentation": "Documentation, guides, or how-to instructions",
+            "support": "Community or commercial support",
+            "source-distribution": "The location where the source code distributable can be obtained. This is often an archive format such as zip or tgz. The source-distribution type complements use of the version control (vcs) type.",
+            "distribution": "Direct or repository download location",
+            "distribution-intake": "The location where a component was published to. This is often the same as \"distribution\" but may also include specialized publishing processes that act as an intermediary.",
+            "license": "The reference to the license file. If a license URL has been defined in the license node, it should also be defined as an external reference for completeness.",
+            "build-meta": "Build-system specific meta file (i.e. pom.xml, package.json, .nuspec, etc)",
+            "build-system": "Reference to an automated build system",
+            "release-notes": "Reference to release notes",
+            "security-contact": "Specifies a way to contact the maintainer, supplier, or provider in the event of a security incident. Common URIs include links to a disclosure procedure, a mailto (RFC-2368) that specifies an email address, a tel (RFC-3966) that specifies a phone number, or dns (RFC-4501) that specifies the records containing DNS Security TXT.",
+            "model-card": "A model card describes the intended uses of a machine learning model, potential limitations, biases, ethical considerations, training parameters, datasets used to train the model, performance metrics, and other relevant data useful for ML transparency.",
+            "log": "A record of events that occurred in a computer system or application, such as problems, errors, or information on current operations.",
+            "configuration": "Parameters or settings that may be used by other components or services.",
+            "evidence": "Information used to substantiate a claim.",
+            "formulation": "Describes how a component or service was manufactured or deployed.",
+            "attestation": "Human or machine-readable statements containing facts, evidence, or testimony.",
+            "threat-model": "An enumeration of identified weaknesses, threats, and countermeasures, dataflow diagram (DFD), attack tree, and other supporting documentation in human-readable or machine-readable format.",
+            "adversary-model": "The defined assumptions, goals, and capabilities of an adversary.",
+            "risk-assessment": "Identifies and analyzes the potential of future events that may negatively impact individuals, assets, and/or the environment. Risk assessments may also include judgments on the tolerability of each risk.",
+            "vulnerability-assertion": "A Vulnerability Disclosure Report (VDR) which asserts the known and previously unknown vulnerabilities that affect a component, service, or product including the analysis and findings describing the impact (or lack of impact) that the reported vulnerability has on a component, service, or product.",
+            "exploitability-statement": "A Vulnerability Exploitability eXchange (VEX) which asserts the known vulnerabilities that do not affect a product, product family, or organization, and optionally the ones that do. The VEX should include the analysis and findings describing the impact (or lack of impact) that the reported vulnerability has on the product, product family, or organization.",
+            "pentest-report": "Results from an authorized simulated cyberattack on a component or service, otherwise known as a penetration test.",
+            "static-analysis-report": "SARIF or proprietary machine or human-readable report for which static analysis has identified code quality, security, and other potential issues with the source code.",
+            "dynamic-analysis-report": "Dynamic analysis report that has identified issues such as vulnerabilities and misconfigurations.",
+            "runtime-analysis-report": "Report generated by analyzing the call stack of a running application.",
+            "component-analysis-report": "Report generated by Software Composition Analysis (SCA), container analysis, or other forms of component analysis.",
+            "maturity-report": "Report containing a formal assessment of an organization, business unit, or team against a maturity model.",
+            "certification-report": "Industry, regulatory, or other certification from an accredited (if applicable) certification body.",
+            "codified-infrastructure": "Code or configuration that defines and provisions virtualized infrastructure, commonly referred to as Infrastructure as Code (IaC).",
+            "quality-metrics": "Report or system in which quality metrics can be obtained.",
+            "poam": "Plans of Action and Milestones (POAM) complement an \"attestation\" external reference. POAM is defined by NIST as a \"document that identifies tasks needing to be accomplished. It details resources required to accomplish the elements of the plan, any milestones in meeting the tasks and scheduled completion dates for the milestones\".",
+            "electronic-signature": "An e-signature is commonly a scanned representation of a written signature or a stylized script of the person's name.",
+            "digital-signature": "A signature that leverages cryptography, typically public/private key pairs, which provides strong authenticity verification.",
+            "rfc-9116": "Document that complies with RFC-9116 (A File Format to Aid in Security Vulnerability Disclosure)",
+            "other": "Use this if no other types accurately describe the purpose of the external reference."
+          }
         },
         "hashes": {
           "type": "array",
@@ -1224,7 +1828,7 @@
     "dependency": {
       "type": "object",
       "title": "Dependency",
-      "description": "Defines the direct dependencies of a component or service. Components or services that do not have their own dependencies MUST be declared as empty elements within the graph. Components or services that are not represented in the dependency graph MAY have unknown dependencies. It is RECOMMENDED that implementations assume this to be opaque and not an indicator of a object being dependency-free. It is RECOMMENDED to leverage compositions to indicate unknown dependency graphs.",
+      "description": "Defines the direct dependencies of a component, service, or the components provided/implemented by a given component. Components or services that do not have their own dependencies MUST be declared as empty elements within the graph. Components or services that are not represented in the dependency graph MAY have unknown dependencies. It is RECOMMENDED that implementations assume this to be opaque and not an indicator of an object being dependency-free. It is RECOMMENDED to leverage compositions to indicate unknown dependency graphs.",
       "required": [
         "ref"
       ],
@@ -1243,12 +1847,21 @@
           },
           "title": "Depends On",
           "description": "The bom-ref identifiers of the components or services that are dependencies of this dependency object."
+        },
+        "provides": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/refLinkType"
+          },
+          "title": "Provides",
+          "description": "The bom-ref identifiers of the components or services that define a given specification or standard, which are provided or implemented by this dependency object.\nFor example, a cryptographic library which implements a cryptographic algorithm. A component which implements another component does not imply that the implementation is in use."
         }
       }
     },
     "service": {
       "type": "object",
-      "title": "Service Object",
+      "title": "Service",
       "required": [
         "name"
       ],
@@ -1257,7 +1870,7 @@
         "bom-ref": {
           "$ref": "#/definitions/refType",
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the service elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+          "description": "An optional identifier which can be used to reference the service elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
         },
         "provider": {
           "title": "Provider",
@@ -1277,10 +1890,9 @@
           "examples": ["ticker-service"]
         },
         "version": {
-          "type": "string",
+          "$ref": "#/definitions/version",
           "title": "Service Version",
-          "description": "The service version.",
-          "examples": ["1.0.0"]
+          "description": "The service version."
         },
         "description": {
           "type": "string",
@@ -1326,7 +1938,7 @@
           "type": "array",
           "items": {"$ref": "#/definitions/externalReference"},
           "title": "External References",
-          "description": "External references provide a way to document systems, sites, and information that may be relevant, but are not included with the BOM. They may also establish specific relationships within or external to the BOM."
+          "description": "External references provide a way to document systems, sites, and information that may be relevant but are not included with the BOM. They may also establish specific relationships within or external to the BOM."
         },
         "services": {
           "type": "array",
@@ -1345,6 +1957,10 @@
           "title": "Properties",
           "description": "Provides the ability to document properties in a name-value store. This provides flexibility to include data not officially supported in the standard without having to use additional namespaces or create extensions. Unlike key-value stores, properties support duplicate names, each potentially having different values. Property names of interest to the general public are encouraged to be registered in the [CycloneDX Property Taxonomy](https://github.com/CycloneDX/cyclonedx-property-taxonomy). Formal registration is OPTIONAL.",
           "items": {"$ref": "#/definitions/property"}
+        },
+        "tags": {
+          "$ref": "#/definitions/tags",
+          "title": "Tags"
         },
         "signature": {
           "$ref": "#/definitions/signature",
@@ -1365,7 +1981,7 @@
         "flow": {
           "$ref": "#/definitions/dataFlowDirection",
           "title": "Directional Flow",
-          "description": "Specifies the flow direction of the data. Direction is relative to the service. Inbound flow states that data enters the service. Outbound flow states that data leaves the service. Bi-directional states that data flows both ways, and unknown states that the direction is not known."
+          "description": "Specifies the flow direction of the data. Direction is relative to the service. Inbound flow states that data enters the service. Outbound flow states that data leaves the service. Bi-directional states that data flows both ways and unknown states that the direction is not known."
         },
         "classification": {
           "$ref": "#/definitions/dataClassification"
@@ -1387,7 +2003,6 @@
           ]
         },
         "governance": {
-          "type": "object",
           "title": "Data Governance",
           "$ref": "#/definitions/dataGovernance"
         },
@@ -1437,10 +2052,15 @@
         "bi-directional",
         "unknown"
       ],
+      "meta:enum": {
+        "inbound": "Data that enters a service.",
+        "outbound": "Data that exits a service.",
+        "bi-directional": "Data flows in and out of the service.",
+        "unknown": "The directional flow of data is not known."
+      },
       "title": "Data flow direction",
-      "description": "Specifies the flow direction of the data. Direction is relative to the service. Inbound flow states that data enters the service. Outbound flow states that data leaves the service. Bi-directional states that data flows both ways, and unknown states that the direction is not known."
+      "description": "Specifies the flow direction of the data. Direction is relative to the service."
     },
-
     "copyright": {
       "type": "object",
       "title": "Copyright",
@@ -1462,89 +2082,21 @@
       "additionalProperties": false,
       "properties": {
         "identity": {
-          "type": "object",
-          "description": "Evidence that substantiates the identity of a component.",
-          "required": [ "field" ],
-          "additionalProperties": false,
-          "properties": {
-            "field": {
-              "type": "string",
-              "enum": [
-                "group", "name", "version", "purl", "cpe", "swid", "hash"
-              ],
-              "title": "Field",
-              "description": "The identity field of the component which the evidence describes."
-            },
-            "confidence": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 1,
-              "title": "Confidence",
-              "description": "The overall confidence of the evidence from 0 - 1, where 1 is 100% confidence."
-            },
-            "methods": {
+          "title": "Identity Evidence",
+          "description": "Evidence that substantiates the identity of a component. The identity may be an object or an array of identity objects. Support for specifying identity as a single object was introduced in CycloneDX v1.5. Arrays were introduced in v1.6. It is RECOMMENDED that all implementations use arrays, even if only one identity object is specified.",
+          "oneOf" : [
+            {
               "type": "array",
-              "title": "Methods",
-              "description": "The methods used to extract and/or analyze the evidence.",
-              "items": {
-                "type": "object",
-                "required": [
-                  "technique" ,
-                  "confidence"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                  "technique": {
-                    "title": "Technique",
-                    "description": "The technique used in this method of analysis.",
-                    "type": "string",
-                    "enum": [
-                      "source-code-analysis",
-                      "binary-analysis",
-                      "manifest-analysis",
-                      "ast-fingerprint",
-                      "hash-comparison",
-                      "instrumentation",
-                      "dynamic-analysis",
-                      "filename",
-                      "attestation",
-                      "other"
-                    ]
-                  },
-                  "confidence": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1,
-                    "title": "Confidence",
-                    "description": "The confidence of the evidence from 0 - 1, where 1 is 100% confidence. Confidence is specific to the technique used. Each technique of analysis can have independent confidence."
-                  },
-                  "value": {
-                    "type": "string",
-                    "title": "Value",
-                    "description": "The value or contents of the evidence."
-                  }
-                }
-              }
+              "title": "Array of Identity Objects",
+              "items": { "$ref": "#/definitions/componentIdentityEvidence" }
             },
-            "tools": {
-              "type": "array",
-              "uniqueItems": true,
-              "items": {
-                "anyOf": [
-                  {
-                    "title": "Ref",
-                    "$ref": "#/definitions/refLinkType"
-                  },
-                  {
-                    "title": "BOM-Link Element",
-                    "$ref": "#/definitions/bomLinkElementType"
-                  }
-                ]
-              },
-              "title": "BOM References",
-              "description": "The object in the BOM identified by its bom-ref. This is often a component or service, but may be any object type supporting bom-refs. Tools used for analysis should already be defined in the BOM, either in the metadata/tools, components, or formulation."
+            {
+              "title": "A Single Identity Object",
+              "description": "[Deprecated]",
+              "$ref": "#/definitions/componentIdentityEvidence",
+              "deprecated": true
             }
-          }
+          ]
         },
         "occurrences": {
           "type": "array",
@@ -1558,24 +2110,48 @@
               "bom-ref": {
                 "$ref": "#/definitions/refType",
                 "title": "BOM Reference",
-                "description": "An optional identifier which can be used to reference the occurrence elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+                "description": "An optional identifier which can be used to reference the occurrence elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
               },
               "location": {
                 "type": "string",
                 "title": "Location",
                 "description": "The location or path to where the component was found."
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 0,
+                "title": "Line Number",
+                "description": "The line number where the component was found."
+              },
+              "offset": {
+                "type": "integer",
+                "minimum": 0,
+                "title": "Offset",
+                "description": "The offset where the component was found."
+              },
+              "symbol": {
+                "type": "string",
+                "title": "Symbol",
+                "description": "The symbol name that was found associated with the component."
+              },
+              "additionalContext": {
+                "type": "string",
+                "title": "Additional Context",
+                "description": "Any additional context of the detected component (e.g. a code snippet)."
               }
             }
           }
         },
         "callstack": {
           "type": "object",
+          "title": "Call Stack",
           "description": "Evidence of the components use through the callstack.",
           "additionalProperties": false,
           "properties": {
             "frames": {
               "type": "array",
-              "title": "Methods",
+              "title": "Frames",
+              "description": "Within a call stack, a frame is a discrete unit that encapsulates an execution context, including local variables, parameters, and the return address. As function calls are made, frames are pushed onto the stack, forming an array-like structure that orchestrates the flow of program execution and manages the sequence of function invocations.",
               "items": {
                 "type": "object",
                 "required": [
@@ -1628,12 +2204,13 @@
         },
         "licenses": {
           "$ref": "#/definitions/licenseChoice",
-          "title": "Component License(s)"
+          "title": "License Evidence"
         },
         "copyright": {
           "type": "array",
           "items": {"$ref": "#/definitions/copyright"},
-          "title": "Copyright"
+          "title": "Copyright Evidence",
+          "description": "Copyright evidence captures intellectual property assertions, providing evidence of possible ownership and legal protection."
         }
       }
     },
@@ -1648,12 +2225,12 @@
         "bom-ref": {
           "$ref": "#/definitions/refType",
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the composition elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+          "description": "An optional identifier which can be used to reference the composition elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
         },
         "aggregate": {
           "$ref": "#/definitions/aggregateType",
           "title": "Aggregate",
-          "description": "Specifies an aggregate type that describe how complete a relationship is.\n\n* __complete__ = The relationship is complete. No further relationships including constituent components, services, or dependencies are known to exist.\n* __incomplete__ = The relationship is incomplete. Additional relationships exist and may include constituent components, services, or dependencies.\n* __incomplete&#95;first&#95;party&#95;only__ = The relationship is incomplete. Only relationships for first-party components, services, or their dependencies are represented.\n* __incomplete&#95;first&#95;party&#95;proprietary&#95;only__ = The relationship is incomplete. Only relationships for first-party components, services, or their dependencies are represented, limited specifically to those that are proprietary.\n* __incomplete&#95;first&#95;party&#95;opensource&#95;only__ = The relationship is incomplete. Only relationships for first-party components, services, or their dependencies are represented, limited specifically to those that are opensource.\n* __incomplete&#95;third&#95;party&#95;only__ = The relationship is incomplete. Only relationships for third-party components, services, or their dependencies are represented.\n* __incomplete&#95;third&#95;party&#95;proprietary&#95;only__ = The relationship is incomplete. Only relationships for third-party components, services, or their dependencies are represented, limited specifically to those that are proprietary.\n* __incomplete&#95;third&#95;party&#95;opensource&#95;only__ = The relationship is incomplete. Only relationships for third-party components, services, or their dependencies are represented, limited specifically to those that are opensource.\n* __unknown__ = The relationship may be complete or incomplete. This usually signifies a 'best-effort' to obtain constituent components, services, or dependencies but the completeness is inconclusive.\n* __not&#95;specified__ = The relationship completeness is not specified.\n"
+          "description": "Specifies an aggregate type that describe how complete a relationship is."
         },
         "assemblies": {
           "type": "array",
@@ -1712,12 +2289,27 @@
         "incomplete_third_party_opensource_only",
         "unknown",
         "not_specified"
-      ]
+      ],
+      "meta:enum": {
+        "complete": "The relationship is complete. No further relationships including constituent components, services, or dependencies are known to exist.",
+        "incomplete": "The relationship is incomplete. Additional relationships exist and may include constituent components, services, or dependencies.",
+        "incomplete_first_party_only": "The relationship is incomplete. Only relationships for first-party components, services, or their dependencies are represented.",
+        "incomplete_first_party_proprietary_only": "The relationship is incomplete. Only relationships for first-party components, services, or their dependencies are represented, limited specifically to those that are proprietary.",
+        "incomplete_first_party_opensource_only": "The relationship is incomplete. Only relationships for first-party components, services, or their dependencies are represented, limited specifically to those that are opensource.",
+        "incomplete_third_party_only": "The relationship is incomplete. Only relationships for third-party components, services, or their dependencies are represented.",
+        "incomplete_third_party_proprietary_only": "The relationship is incomplete. Only relationships for third-party components, services, or their dependencies are represented, limited specifically to those that are proprietary.",
+        "incomplete_third_party_opensource_only": "The relationship is incomplete. Only relationships for third-party components, services, or their dependencies are represented, limited specifically to those that are opensource.",
+        "unknown": "The relationship may be complete or incomplete. This usually signifies a 'best-effort' to obtain constituent components, services, or dependencies but the completeness is inconclusive.",
+        "not_specified": "The relationship completeness is not specified."
+      }
     },
     "property": {
       "type": "object",
       "title": "Lightweight name-value pair",
       "description": "Provides the ability to document properties in a name-value store. This provides flexibility to include data not officially supported in the standard without having to use additional namespaces or create extensions. Unlike key-value stores, properties support duplicate names, each potentially having different values. Property names of interest to the general public are encouraged to be registered in the [CycloneDX Property Taxonomy](https://github.com/CycloneDX/cyclonedx-property-taxonomy). Formal registration is OPTIONAL.",
+      "required": [
+        "name"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -1729,7 +2321,8 @@
           "title": "Value",
           "description": "The value of the property."
         }
-      }
+      },
+      "additionalProperties": false
     },
     "localeType": {
       "type": "string",
@@ -1819,12 +2412,8 @@
           "description": "One or more alternate names the release may be referred to. This may include unofficial terms used by development and marketing teams (e.g. code names)."
         },
         "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "title": "Tags",
-          "description": "One or more tags that may aid in search or retrieval of the release note."
+          "$ref": "#/definitions/tags",
+          "title": "Tags"
         },
         "resolves": {
           "type": "array",
@@ -1884,12 +2473,21 @@
         "info",
         "none",
         "unknown"
-      ]
+      ],
+      "meta:enum": {
+        "critical": "Critical severity",
+        "high": "High severity",
+        "medium": "Medium severity",
+        "low": "Low severity",
+        "info": "Informational warning.",
+        "none": "None",
+        "unknown": "The severity is not known"
+      }
     },
     "scoreMethod": {
       "type": "string",
       "title": "Method",
-      "description": "Specifies the severity or risk scoring methodology or standard used.\n\n* CVSSv2 - [Common Vulnerability Scoring System v2](https://www.first.org/cvss/v2/)\n* CVSSv3 - [Common Vulnerability Scoring System v3](https://www.first.org/cvss/v3-0/)\n* CVSSv31 - [Common Vulnerability Scoring System v3.1](https://www.first.org/cvss/v3-1/)\n* CVSSv4 - [Common Vulnerability Scoring System v4](https://www.first.org/cvss/v4-0/)\n* OWASP - [OWASP Risk Rating Methodology](https://owasp.org/www-community/OWASP_Risk_Rating_Methodology)\n* SSVC - [Stakeholder Specific Vulnerability Categorization](https://github.com/CERTCC/SSVC) (all versions)",
+      "description": "Specifies the severity or risk scoring methodology or standard used.",
       "enum": [
         "CVSSv2",
         "CVSSv3",
@@ -1898,12 +2496,21 @@
         "OWASP",
         "SSVC",
         "other"
-      ]
+      ],
+      "meta:enum": {
+        "CVSSv2": "Common Vulnerability Scoring System v2.0",
+        "CVSSv3": "Common Vulnerability Scoring System v3.0",
+        "CVSSv31": "Common Vulnerability Scoring System v3.1",
+        "CVSSv4": "Common Vulnerability Scoring System v4.0",
+        "OWASP": "OWASP Risk Rating Methodology",
+        "SSVC": "Stakeholder Specific Vulnerability Categorization",
+        "other": "Another severity or risk scoring methodology"
+      }
     },
     "impactAnalysisState": {
       "type": "string",
       "title": "Impact Analysis State",
-      "description": "Declares the current state of an occurrence of a vulnerability, after automated or manual analysis. \n\n* __resolved__ = the vulnerability has been remediated. \n* __resolved\\_with\\_pedigree__ = the vulnerability has been remediated and evidence of the changes are provided in the affected components pedigree containing verifiable commit history and/or diff(s). \n* __exploitable__ = the vulnerability may be directly or indirectly exploitable. \n* __in\\_triage__ = the vulnerability is being investigated. \n* __false\\_positive__ = the vulnerability is not specific to the component or service and was falsely identified or associated. \n* __not\\_affected__ = the component or service is not affected by the vulnerability. Justification should be specified for all not_affected cases.",
+      "description": "Declares the current state of an occurrence of a vulnerability, after automated or manual analysis.",
       "enum": [
         "resolved",
         "resolved_with_pedigree",
@@ -1911,12 +2518,20 @@
         "in_triage",
         "false_positive",
         "not_affected"
-      ]
+      ],
+      "meta:enum": {
+        "resolved": "The vulnerability has been remediated.",
+        "resolved_with_pedigree": "The vulnerability has been remediated and evidence of the changes are provided in the affected components pedigree containing verifiable commit history and/or diff(s).",
+        "exploitable": "The vulnerability may be directly or indirectly exploitable.",
+        "in_triage": "The vulnerability is being investigated.",
+        "false_positive": "The vulnerability is not specific to the component or service and was falsely identified or associated.",
+        "not_affected": "The component or service is not affected by the vulnerability. Justification should be specified for all not_affected cases."
+      }
     },
     "impactAnalysisJustification": {
       "type": "string",
       "title": "Impact Analysis Justification",
-      "description": "The rationale of why the impact analysis state was asserted. \n\n* __code\\_not\\_present__ = the code has been removed or tree-shaked. \n* __code\\_not\\_reachable__ = the vulnerable code is not invoked at runtime. \n* __requires\\_configuration__ = exploitability requires a configurable option to be set/unset. \n* __requires\\_dependency__ = exploitability requires a dependency that is not present. \n* __requires\\_environment__ = exploitability requires a certain environment which is not present. \n* __protected\\_by\\_compiler__ = exploitability requires a compiler flag to be set/unset. \n* __protected\\_at\\_runtime__ = exploits are prevented at runtime. \n* __protected\\_at\\_perimeter__ = attacks are blocked at physical, logical, or network perimeter. \n* __protected\\_by\\_mitigating\\_control__ = preventative measures have been implemented that reduce the likelihood and/or impact of the vulnerability.",
+      "description": "The rationale of why the impact analysis state was asserted.",
       "enum": [
         "code_not_present",
         "code_not_reachable",
@@ -1927,7 +2542,18 @@
         "protected_at_runtime",
         "protected_at_perimeter",
         "protected_by_mitigating_control"
-      ]
+      ],
+      "meta:enum": {
+        "code_not_present": "The code has been removed or tree-shaked.",
+        "code_not_reachable": "The vulnerable code is not invoked at runtime.",
+        "requires_configuration": "Exploitability requires a configurable option to be set/unset.",
+        "requires_dependency": "Exploitability requires a dependency that is not present.",
+        "requires_environment": "Exploitability requires a certain environment which is not present.",
+        "protected_by_compiler": "Exploitability requires a compiler flag to be set/unset.",
+        "protected_at_runtime": "Exploits are prevented at runtime.",
+        "protected_at_perimeter": "Attacks are blocked at physical, logical, or network perimeter.",
+        "protected_by_mitigating_control": "Preventative measures have been implemented that reduce the likelihood and/or impact of the vulnerability."
+      }
     },
     "rating": {
       "type": "object",
@@ -2000,7 +2626,7 @@
         "bom-ref": {
           "$ref": "#/definitions/refType",
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the vulnerability elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+          "description": "An optional identifier which can be used to reference the vulnerability elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
         },
         "id": {
           "type": "string",
@@ -2056,7 +2682,7 @@
         "cwes": {
           "type": "array",
           "title": "CWEs",
-          "description": "List of Common Weaknesses Enumerations (CWEs) codes that describes this vulnerability. For example 399 (of https://cwe.mitre.org/data/definitions/399.html)",
+          "description": "List of Common Weaknesses Enumerations (CWEs) codes that describes this vulnerability.",
           "examples": [399],
           "items": {
             "$ref": "#/definitions/cwe"
@@ -2162,6 +2788,8 @@
           }
         },
         "tools": {
+          "title": "Tools",
+          "description": "The tool(s) used to identify, confirm, or score the vulnerability.",
           "oneOf": [
             {
               "type": "object",
@@ -2174,7 +2802,7 @@
                   "items": {"$ref": "#/definitions/component"},
                   "uniqueItems": true,
                   "title": "Components",
-                  "description": "A list of software and hardware components used as tools"
+                  "description": "A list of software and hardware components used as tools."
                 },
                 "services": {
                   "type": "array",
@@ -2217,7 +2845,14 @@
                   "update",
                   "rollback",
                   "workaround_available"
-                ]
+                ],
+                "meta:enum": {
+                  "can_not_fix": "Can not fix",
+                  "will_not_fix": "Will not fix",
+                  "update": "Update to a different revision or release",
+                  "rollback": "Revert to a previous revision or release",
+                  "workaround_available": "There is a workaround available"
+                }
               }
             },
             "detail": {
@@ -2280,14 +2915,17 @@
                   "additionalProperties": false,
                   "properties": {
                     "version": {
+                      "title": "Version",
                       "description": "A single version of a component or service.",
                       "$ref": "#/definitions/version"
                     },
                     "range": {
+                      "title": "Version Range",
                       "description": "A version range specified in Package URL Version Range syntax (vers) which is defined at https://github.com/package-url/purl-spec/VERSION-RANGE-SPEC.rst",
-                      "$ref": "#/definitions/range"
+                      "$ref": "#/definitions/versionRange"
                     },
                     "status": {
+                      "title": "Status",
                       "description": "The vulnerability status for the version or range of versions.",
                       "$ref": "#/definitions/affectedStatus",
                       "default": "affected"
@@ -2317,19 +2955,43 @@
         "affected",
         "unaffected",
         "unknown"
-      ]
+      ],
+      "meta:enum": {
+        "affected": "The version is affected by the vulnerability.",
+        "unaffected": "The version is not affected by the vulnerability.",
+        "unknown": "It is unknown (or unspecified) whether the given version is affected."
+      }
     },
     "version": {
-      "description": "A single version of a component or service.",
+      "description": "A single disjunctive version identifier, for a component or service.",
       "type": "string",
-      "minLength": 1,
-      "maxLength": 1024
+      "maxLength": 1024,
+      "examples": [
+        "9.0.14",
+        "v1.33.7",
+        "7.0.0-M1",
+        "2.0pre1",
+        "1.0.0-beta1",
+        "0.8.15"
+      ]
     },
-    "range": {
+    "versionRange": {
       "description": "A version range specified in Package URL Version Range syntax (vers) which is defined at https://github.com/package-url/purl-spec/VERSION-RANGE-SPEC.rst",
       "type": "string",
       "minLength": 1,
-      "maxLength": 1024
+      "maxLength": 4096,
+      "examples": [
+        "vers:cargo/9.0.14",
+        "vers:npm/1.2.3|>=2.0.0|<5.0.0",
+        "vers:pypi/0.0.0|0.0.1|0.0.2|0.0.3|1.0|2.0pre1",
+        "vers:tomee/>=1.0.0-beta1|<=1.7.5|>=7.0.0-M1|<=7.0.7|>=7.1.0|<=7.1.2|>=8.0.0-M1|<=8.0.1",
+        "vers:gem/>=2.2.0|!= 2.2.1|<2.3.0"
+      ]
+    },
+    "range": {
+      "deprecated": true,
+      "description": "Deprecated definition. use definition `versionRange` instead.",
+      "$ref": "#/definitions/versionRange"
     },
     "annotations": {
       "type": "object",
@@ -2346,7 +3008,7 @@
         "bom-ref": {
           "$ref": "#/definitions/refType",
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the annotation elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+          "description": "An optional identifier which can be used to reference the annotation elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
         },
         "subjects": {
           "type": "array",
@@ -2363,7 +3025,7 @@
               }
             ]
           },
-          "title": "BOM References",
+          "title": "Subjects",
           "description": "The object in the BOM identified by its bom-ref. This is often a component or service, but may be any object type supporting bom-refs."
         },
         "annotator": {
@@ -2440,7 +3102,7 @@
         "bom-ref": {
           "$ref": "#/definitions/refType",
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the model card elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+          "description": "An optional identifier which can be used to reference the model card elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
         },
         "modelParameters": {
           "type": "object",
@@ -2464,7 +3126,14 @@
                     "reinforcement-learning",
                     "semi-supervised",
                     "self-supervised"
-                  ]
+                  ],
+                  "meta:enum": {
+                    "supervised": "Supervised machine learning involves training an algorithm on labeled data to predict or classify new data based on the patterns learned from the labeled examples.",
+                    "unsupervised": "Unsupervised machine learning involves training algorithms on unlabeled data to discover patterns, structures, or relationships without explicit guidance, allowing the model to identify inherent structures or clusters within the data.",
+                    "reinforcement-learning": "Reinforcement learning is a type of machine learning where an agent learns to make decisions by interacting with an environment to maximize cumulative rewards, through trial and error.",
+                    "semi-supervised": "Semi-supervised machine learning utilizes a combination of labeled and unlabeled data during training to improve model performance, leveraging the benefits of both supervised and unsupervised learning techniques.",
+                    "self-supervised": "Self-supervised machine learning involves training models to predict parts of the input data from other parts of the same data, without requiring external labels, enabling learning from large amounts of unlabeled data."
+                  }
                 }
               }
             },
@@ -2490,12 +3159,12 @@
               "items" : {
                 "oneOf" : [
                   {
-                    "title": "Inline Component Data",
+                    "title": "Inline Data Information",
                     "$ref": "#/definitions/componentData"
                   },
                   {
                     "type": "object",
-                    "title": "Data Component Reference",
+                    "title": "Data Reference",
                     "additionalProperties": false,
                     "properties": {
                       "ref": {
@@ -2587,8 +3256,13 @@
             "ethicalConsiderations": {
               "type": "array",
               "title": "Ethical Considerations",
-              "description": "What are the ethical (or environmental) risks involved in the application of this model?",
+              "description": "What are the ethical risks involved in the application of this model?",
               "items": { "$ref": "#/definitions/risk" }
+            },
+            "environmentalConsiderations":{
+              "$ref": "#/definitions/environmentalConsiderations",
+              "title": "Environmental Considerations",
+              "description": "What are the various environmental impacts the corresponding machine learning model has exhibited across its lifecycle?"
             },
             "fairnessAssessments": {
               "type": "array",
@@ -2614,8 +3288,10 @@
       "additionalProperties": false,
       "properties": {
         "format": {
-          "description": "The data format for input/output to the model. Example formats include string, image, time-series",
-          "type": "string"
+          "title": "Input/Output Format",
+          "description": "The data format for input/output to the model.",
+          "type": "string",
+          "examples": [ "string", "image", "time-series"]
         }
       }
     },
@@ -2629,21 +3305,29 @@
         "bom-ref": {
           "$ref": "#/definitions/refType",
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the dataset elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+          "description": "An optional identifier which can be used to reference the dataset elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links."
         },
         "type": {
           "type": "string",
           "title": "Type of Data",
-          "description": "The general theme or subject matter of the data being specified.\n\n* __source-code__ = Any type of code, code snippet, or data-as-code.\n* __configuration__ = Parameters or settings that may be used by other components.\n* __dataset__ = A collection of data.\n* __definition__ = Data that can be used to create new instances of what the definition defines.\n* __other__ = Any other type of data that does not fit into existing definitions.",
+          "description": "The general theme or subject matter of the data being specified.",
           "enum": [
             "source-code",
             "configuration",
             "dataset",
             "definition",
             "other"
-          ]
+          ],
+          "meta:enum": {
+            "source-code": "Any type of code, code snippet, or data-as-code.",
+            "configuration": "Parameters or settings that may be used by other components.",
+            "dataset": "A collection of data.",
+            "definition": "Data that can be used to create new instances of what the definition defines.",
+            "other": "Any other type of data that does not fit into existing definitions."
+          }
         },
         "name": {
+          "title": "Dataset Name",
           "description": "The name of the dataset.",
           "type": "string"
         },
@@ -2679,6 +3363,7 @@
         },
         "sensitiveData": {
           "type": "array",
+          "title": "Sensitive Data",
           "description": "A description of any sensitive data in a dataset.",
           "items": {
             "type": "string"
@@ -2686,11 +3371,11 @@
         },
         "graphics": { "$ref": "#/definitions/graphicsCollection" },
         "description": {
+          "title": "Dataset Description",
           "description": "A description of the dataset. Can describe size of dataset, whether it's used for source code, training, testing, or validation, etc.",
           "type": "string"
         },
         "governance": {
-          "type": "object",
           "title": "Data Governance",
           "$ref": "#/definitions/dataGovernance"
         }
@@ -2699,6 +3384,7 @@
     "dataGovernance": {
       "type": "object",
       "title": "Data Governance",
+      "description": "Data governance captures information regarding data ownership, stewardship, and custodianship, providing insights into the individuals or entities responsible for managing, overseeing, and safeguarding the data throughout its lifecycle.",
       "additionalProperties": false,
       "properties": {
         "custodians": {
@@ -2750,10 +3436,12 @@
       "additionalProperties": false,
       "properties": {
         "description": {
+          "title": "Description",
           "description": "A description of this collection of graphics.",
           "type": "string"
         },
         "collection": {
+          "title": "Collection",
           "description": "A collection of graphics.",
           "type": "array",
           "items": { "$ref": "#/definitions/graphic" }
@@ -2762,9 +3450,11 @@
     },
     "graphic": {
       "type": "object",
+      "title": "Graphic",
       "additionalProperties": false,
       "properties": {
         "name": {
+          "title": "Name",
           "description": "The name of the graphic.",
           "type": "string"
         },
@@ -2777,30 +3467,37 @@
     },
     "performanceMetric": {
       "type": "object",
+      "title": "Performance Metric",
       "additionalProperties": false,
       "properties": {
         "type": {
+          "title": "Type",
           "description": "The type of performance metric.",
           "type": "string"
         },
         "value": {
+          "title": "Value",
           "description": "The value of the performance metric.",
           "type": "string"
         },
         "slice": {
+          "title": "Slice",
           "description": "The name of the slice this metric was computed on. By default, assume this metric is not sliced.",
           "type": "string"
         },
         "confidenceInterval": {
+          "title": "Confidence Interval",
           "description": "The confidence interval of the metric.",
           "type": "object",
           "additionalProperties": false,
           "properties": {
             "lowerBound": {
+              "title": "Lower Bound",
               "description": "The lower bound of the confidence interval.",
               "type": "string"
             },
             "upperBound": {
+              "title": "Upper Bound",
               "description": "The upper bound of the confidence interval.",
               "type": "string"
             }
@@ -2810,13 +3507,16 @@
     },
     "risk": {
       "type": "object",
+      "title": "Risk",
       "additionalProperties": false,
       "properties": {
         "name": {
+          "title": "Name",
           "description": "The name of the risk.",
           "type": "string"
         },
         "mitigationStrategy": {
+          "title": "Mitigation Strategy",
           "description": "Strategy used to address this risk.",
           "type": "string"
         }
@@ -2830,18 +3530,22 @@
       "properties": {
         "groupAtRisk": {
           "type": "string",
+          "title": "Group at Risk",
           "description": "The groups or individuals at risk of being systematically disadvantaged by the model."
         },
         "benefits": {
           "type": "string",
+          "title": "Benefits",
           "description": "Expected benefits to the identified groups."
         },
         "harms": {
           "type": "string",
+          "title": "Harms",
           "description": "Expected harms to the identified groups."
         },
         "mitigationStrategy": {
           "type": "string",
+          "title": "Mitigation Strategy",
           "description": "With respect to the benefits and harms outlined, please describe any mitigation strategy implemented."
         }
       }
@@ -2851,6 +3555,267 @@
       "title": "Data Classification",
       "description": "Data classification tags data according to its type, sensitivity, and value if altered, stolen, or destroyed."
     },
+    "environmentalConsiderations": {
+      "type": "object",
+      "title": "Environmental Considerations",
+      "description": "Describes various environmental impact metrics.",
+      "additionalProperties": false,
+      "properties": {
+        "energyConsumptions": {
+          "title": "Energy Consumptions",
+          "description": "Describes energy consumption information incurred for one or more component lifecycle activities.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/energyConsumption"
+          }
+        },
+        "properties": {
+          "type": "array",
+          "title": "Properties",
+          "items": {
+            "$ref": "#/definitions/property"
+          }
+        }
+      }
+    },
+    "energyConsumption": {
+      "title": "Energy consumption",
+      "description": "Describes energy consumption information incurred for the specified lifecycle activity.",
+      "type": "object",
+      "required": [
+        "activity",
+        "energyProviders",
+        "activityEnergyCost"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "activity": {
+          "type": "string",
+          "title": "Activity",
+          "description": "The type of activity that is part of a machine learning model development or operational lifecycle.",
+          "enum": [
+            "design",
+            "data-collection",
+            "data-preparation",
+            "training",
+            "fine-tuning",
+            "validation",
+            "deployment",
+            "inference",
+            "other"
+          ],
+          "meta:enum": {
+            "design": "A model design including problem framing, goal definition and algorithm selection.",
+            "data-collection": "Model data acquisition including search, selection and transfer.",
+            "data-preparation": "Model data preparation including data cleaning, labeling and conversion.",
+            "training": "Model building, training and generalized tuning.",
+            "fine-tuning": "Refining a trained model to produce desired outputs for a given problem space.",
+            "validation": "Model validation including model output evaluation and testing.",
+            "deployment": "Explicit model deployment to a target hosting infrastructure.",
+            "inference": "Generating an output response from a hosted model from a set of inputs.",
+            "other": "A lifecycle activity type whose description does not match currently defined values."
+          }
+        },
+        "energyProviders": {
+          "title": "Energy Providers",
+          "description": "The provider(s) of the energy consumed by the associated model development lifecycle activity.",
+          "type": "array",
+          "items": { "$ref": "#/definitions/energyProvider" }
+        },
+        "activityEnergyCost": {
+          "title": "Activity Energy Cost",
+          "description": "The total energy cost associated with the model lifecycle activity.",
+          "$ref": "#/definitions/energyMeasure"
+        },
+        "co2CostEquivalent": {
+          "title": "CO2 Equivalent Cost",
+          "description": "The CO2 cost (debit) equivalent to the total energy cost.",
+          "$ref": "#/definitions/co2Measure"
+        },
+        "co2CostOffset": {
+          "title": "CO2 Cost Offset",
+          "description": "The CO2 offset (credit) for the CO2 equivalent cost.",
+          "$ref": "#/definitions/co2Measure"
+        },
+        "properties": {
+          "type": "array",
+          "title": "Properties",
+          "items": {
+            "$ref": "#/definitions/property"
+          }
+        }
+      }
+    },
+    "energyMeasure": {
+      "type": "object",
+      "title": "Energy Measure",
+      "description": "A measure of energy.",
+      "required": [
+        "value",
+        "unit"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "number",
+          "title": "Value",
+          "description": "Quantity of energy."
+        },
+        "unit": {
+          "type": "string",
+          "enum": [ "kWh" ],
+          "title": "Unit",
+          "description": "Unit of energy.",
+          "meta:enum": {
+            "kWh": "Kilowatt-hour (kWh) is the energy delivered by one kilowatt (kW) of power for one hour (h)."
+          }
+        }
+      }
+    },
+    "co2Measure": {
+      "type": "object",
+      "title": "CO2 Measure",
+      "description": "A measure of carbon dioxide (CO2).",
+      "required": [
+        "value",
+        "unit"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "number",
+          "title": "Value",
+          "description": "Quantity of carbon dioxide (CO2)."
+        },
+        "unit": {
+          "type": "string",
+          "enum": [ "tCO2eq" ],
+          "title": "Unit",
+          "description": "Unit of carbon dioxide (CO2).",
+          "meta:enum": {
+            "tCO2eq": "Tonnes (t) of carbon dioxide (CO2) equivalent (eq)."
+          }
+        }
+      }
+    },
+    "energyProvider": {
+      "type": "object",
+      "title": "Energy Provider",
+      "description": "Describes the physical provider of energy used for model development or operations.",
+      "required": [
+        "organization",
+        "energySource",
+        "energyProvided"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "bom-ref": {
+          "title": "BOM Reference",
+          "description": "An optional identifier which can be used to reference the energy provider elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links.",
+          "$ref": "#/definitions/refType"
+        },
+        "description": {
+          "type": "string",
+          "title": "Description",
+          "description": "A description of the energy provider."
+        },
+        "organization": {
+          "type": "object",
+          "title": "Organization",
+          "$ref": "#/definitions/organizationalEntity"
+        },
+        "energySource": {
+          "type": "string",
+          "enum": [
+            "coal",
+            "oil",
+            "natural-gas",
+            "nuclear",
+            "wind",
+            "solar",
+            "geothermal",
+            "hydropower",
+            "biofuel",
+            "unknown",
+            "other"
+          ],
+          "meta:enum": {
+            "coal": "Energy produced by types of coal.",
+            "oil": "Petroleum products (primarily crude oil and its derivative fuel oils).",
+            "natural-gas": "Hydrocarbon gas liquids (HGL) that occur as gases at atmospheric pressure and as liquids under higher pressures including Natural gas (C5H12 and heavier), Ethane (C2H6), Propane (C3H8), etc.",
+            "nuclear": "Energy produced from the cores of atoms (i.e., through nuclear fission or fusion).",
+            "wind": "Energy produced from moving air.",
+            "solar": "Energy produced from the sun (i.e., solar radiation).",
+            "geothermal": "Energy produced from heat within the earth.",
+            "hydropower": "Energy produced from flowing water.",
+            "biofuel": "Liquid fuels produced from biomass feedstocks (i.e., organic materials such as plants or animals).",
+            "unknown": "The energy source is unknown.",
+            "other": "An energy source that is not listed."
+          },
+          "title": "Energy Source",
+          "description": "The energy source for the energy provider."
+        },
+        "energyProvided": {
+          "$ref": "#/definitions/energyMeasure",
+          "title": "Energy Provided",
+          "description": "The energy provided by the energy source for an associated activity."
+        },
+        "externalReferences": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/externalReference"},
+          "title": "External References",
+          "description": "External references provide a way to document systems, sites, and information that may be relevant but are not included with the BOM. They may also establish specific relationships within or external to the BOM."
+        }
+      }
+    },
+    "postalAddress": {
+      "type": "object",
+      "title": "Postal address",
+      "description": "An address used to identify a contactable location.",
+      "additionalProperties": false,
+      "properties": {
+        "bom-ref": {
+          "title": "BOM Reference",
+          "description": "An optional identifier which can be used to reference the address elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links.",
+          "$ref": "#/definitions/refType"
+        },
+        "country": {
+          "type": "string",
+          "title": "Country",
+          "description": "The country name or the two-letter ISO 3166-1 country code."
+        },
+        "region": {
+          "type": "string",
+          "title": "Region",
+          "description": "The region or state in the country.",
+          "examples": [ "Texas" ]
+        },
+        "locality": {
+          "type": "string",
+          "title": "Locality",
+          "description": "The locality or city within the country.",
+          "examples": [ "Austin" ]
+        },
+        "postOfficeBoxNumber": {
+          "type": "string",
+          "title": "Post Office Box Number",
+          "description": "The post office box number.",
+          "examples": [ "901" ]
+        },
+        "postalCode": {
+          "type": "string",
+          "title": "Postal Code",
+          "description": "The postal code.",
+          "examples": [ "78758" ]
+        },
+        "streetAddress": {
+          "type": "string",
+          "title": "Street Address",
+          "description": "The street address.",
+          "examples": [ "100 Main Street" ]
+        }
+      }
+    },
     "formula": {
       "title": "Formula",
       "description": "Describes workflows and resources that captures rules and other aspects of how the associated BOM component or service was formed.",
@@ -2859,7 +3824,7 @@
       "properties": {
         "bom-ref": {
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the formula elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.",
+          "description": "An optional identifier which can be used to reference the formula elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links.",
           "$ref": "#/definitions/refType"
         },
         "components": {
@@ -2913,7 +3878,7 @@
       "properties": {
         "bom-ref": {
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the workflow elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.",
+          "description": "An optional identifier which can be used to reference the workflow elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links.",
           "$ref": "#/definitions/refType"
         },
         "uid": {
@@ -3056,7 +4021,7 @@
       "properties": {
         "bom-ref": {
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the task elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.",
+          "description": "An optional identifier which can be used to reference the task elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links.",
           "$ref": "#/definitions/refType"
         },
         "uid": {
@@ -3228,7 +4193,7 @@
       "properties": {
         "bom-ref": {
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the workspace elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.",
+          "description": "An optional identifier which can be used to reference the workspace elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links.",
           "$ref": "#/definitions/refType"
         },
         "uid": {
@@ -3375,7 +4340,7 @@
       "properties": {
         "bom-ref": {
           "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the trigger elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.",
+          "description": "An optional identifier which can be used to reference the trigger elsewhere in the BOM. Every bom-ref MUST be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links.",
           "$ref": "#/definitions/refType"
         },
         "uid": {
@@ -3420,6 +4385,7 @@
         },
         "conditions": {
           "type": "array",
+          "title": "Conditions",
           "uniqueItems": true,
           "items": {
             "$ref": "#/definitions/condition"
@@ -3536,7 +4502,7 @@
       "properties": {
         "source": {
           "title": "Source",
-          "description": "A references to the component or service that provided the input to the task (e.g., reference to a service with data flow value of `inbound`)",
+          "description": "A reference to the component or service that provided the input to the task (e.g., reference to a service with data flow value of `inbound`)",
           "examples": [
             "source code repository",
             "database"
@@ -3556,8 +4522,8 @@
           "title": "Resource",
           "description": "A reference to an independent resource provided as an input to a task by the workflow runtime.",
           "examples": [
-            "reference to a configuration file in a repository (i.e., a bom-ref)",
-            "reference to a scanning service used in a task (i.e., a bom-ref)"
+            "a reference to a configuration file in a repository (i.e., a bom-ref)",
+            "a reference to a scanning service used in a task (i.e., a bom-ref)"
           ],
           "$ref": "#/definitions/resourceReferenceChoice"
         },
@@ -3765,7 +4731,21 @@
         "release",
         "clean",
         "other"
-      ]
+      ],
+      "meta:enum": {
+        "copy": "A task that copies software or data used to accomplish other tasks in the workflow.",
+        "clone": "A task that clones a software repository into the workflow in order to retrieve its source code or data for use in a build step.",
+        "lint": "A task that checks source code for programmatic and stylistic errors.",
+        "scan": "A task that performs a scan against source code, or built or deployed components and services. Scans are typically run to gather or test for security vulnerabilities or policy compliance.",
+        "merge": "A task that merges changes or fixes into source code prior to a build step in the workflow.",
+        "build": "A task that builds the source code, dependencies and/or data into an artifact that can be deployed to and executed on target systems.",
+        "test": "A task that verifies the functionality of a component or service.",
+        "deliver": "A task that delivers a built artifact to one or more target repositories or storage systems.",
+        "deploy": "A task that deploys a built artifact for execution on one or more target systems.",
+        "release": "A task that releases a built, versioned artifact to a target repository or distribution system.",
+        "clean": "A task that cleans unnecessary tools, build artifacts and/or data from workflow storage.",
+        "other": "A workflow task that does not match current task type definitions."
+      }
     },
     "parameter": {
       "title": "Parameter",
@@ -3790,10 +4770,904 @@
         }
       }
     },
+    "componentIdentityEvidence": {
+      "type": "object",
+      "title": "Identity Evidence",
+      "description": "Evidence that substantiates the identity of a component.",
+      "required": [ "field" ],
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string",
+          "enum": [
+            "group", "name", "version", "purl", "cpe", "omniborId", "swhid", "swid", "hash"
+          ],
+          "title": "Field",
+          "description": "The identity field of the component which the evidence describes."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "title": "Confidence",
+          "description": "The overall confidence of the evidence from 0 - 1, where 1 is 100% confidence."
+        },
+        "concludedValue": {
+          "type": "string",
+          "title": "Concluded Value",
+          "description": "The value of the field (cpe, purl, etc) that has been concluded based on the aggregate of all methods (if available)."
+        },
+        "methods": {
+          "type": "array",
+          "title": "Methods",
+          "description": "The methods used to extract and/or analyze the evidence.",
+          "items": {
+            "type": "object",
+            "required": [
+              "technique" ,
+              "confidence"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "technique": {
+                "title": "Technique",
+                "description": "The technique used in this method of analysis.",
+                "type": "string",
+                "enum": [
+                  "source-code-analysis",
+                  "binary-analysis",
+                  "manifest-analysis",
+                  "ast-fingerprint",
+                  "hash-comparison",
+                  "instrumentation",
+                  "dynamic-analysis",
+                  "filename",
+                  "attestation",
+                  "other"
+                ]
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "title": "Confidence",
+                "description": "The confidence of the evidence from 0 - 1, where 1 is 100% confidence. Confidence is specific to the technique used. Each technique of analysis can have independent confidence."
+              },
+              "value": {
+                "type": "string",
+                "title": "Value",
+                "description": "The value or contents of the evidence."
+              }
+            }
+          }
+        },
+        "tools": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "anyOf": [
+              {
+                "title": "Ref",
+                "$ref": "#/definitions/refLinkType"
+              },
+              {
+                "title": "BOM-Link Element",
+                "$ref": "#/definitions/bomLinkElementType"
+              }
+            ]
+          },
+          "title": "BOM References",
+          "description": "The object in the BOM identified by its bom-ref. This is often a component or service but may be any object type supporting bom-refs. Tools used for analysis should already be defined in the BOM, either in the metadata/tools, components, or formulation."
+        }
+      }
+    },
+    "standard": {
+      "type": "object",
+      "title": "Standard",
+      "description": "A standard may consist of regulations, industry or organizational-specific standards, maturity models, best practices, or any other requirements which can be evaluated against or attested to.",
+      "additionalProperties": false,
+      "properties": {
+        "bom-ref": {
+          "$ref": "#/definitions/refType",
+          "title": "BOM Reference",
+          "description": "An optional identifier which can be used to reference the object elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+        },
+        "name": {
+          "type": "string",
+          "title": "Name",
+          "description": "The name of the standard. This will often be a shortened, single name of the standard."
+        },
+        "version": {
+          "type": "string",
+          "title": "Version",
+          "description": "The version of the standard."
+        },
+        "description": {
+          "type": "string",
+          "title": "Description",
+          "description": "The description of the standard."
+        },
+        "owner": {
+          "type": "string",
+          "title": "Owner",
+          "description": "The owner of the standard, often the entity responsible for its release."
+        },
+        "requirements": {
+          "type": "array",
+          "title": "Requirements",
+          "description": "The list of requirements comprising the standard.",
+          "items": {
+            "type": "object",
+            "title": "Requirement",
+            "additionalProperties": false,
+            "properties": {
+              "bom-ref": {
+                "$ref": "#/definitions/refType",
+                "title": "BOM Reference",
+                "description": "An optional identifier which can be used to reference the object elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+              },
+              "identifier": {
+                "type": "string",
+                "title": "Identifier",
+                "description": "The unique identifier used in the standard to identify a specific requirement. This should match what is in the standard and should not be the requirements bom-ref."
+              },
+              "title": {
+                "type": "string",
+                "title": "Title",
+                "description": "The title of the requirement."
+              },
+              "text": {
+                "type": "string",
+                "title": "Text",
+                "description": "The textual content of the requirement."
+              },
+              "descriptions": {
+                "type": "array",
+                "title": "Descriptions",
+                "description": "The supplemental text that provides additional guidance or context to the requirement, but is not directly part of the requirement.",
+                "items": { "type":  "string" }
+              },
+              "openCre": {
+                "type": "array",
+                "title": "OWASP OpenCRE Identifier(s)",
+                "description": "The Common Requirements Enumeration (CRE) identifier(s). CRE is a structured and standardized framework for uniting security standards and guidelines. CRE links each section of a resource to a shared topic identifier (a Common Requirement). Through this shared topic link, all resources map to each other. Use of CRE promotes clear and unambiguous communication among stakeholders.",
+                "items": {
+                  "type":  "string",
+                  "pattern": "^CRE:[0-9]+-[0-9]+$",
+                  "examples": [ "CRE:764-507" ]
+                }
+              },
+              "parent": {
+                "$ref": "#/definitions/refLinkType",
+                "title": "Parent BOM Reference",
+                "description": "The optional `bom-ref` to a parent requirement. This establishes a hierarchy of requirements. Top-level requirements must not define a parent. Only child requirements should define parents."
+              },
+              "properties": {
+                "type": "array",
+                "title": "Properties",
+                "description": "Provides the ability to document properties in a name-value store. This provides flexibility to include data not officially supported in the standard without having to use additional namespaces or create extensions. Unlike key-value stores, properties support duplicate names, each potentially having different values. Property names of interest to the general public are encouraged to be registered in the [CycloneDX Property Taxonomy](https://github.com/CycloneDX/cyclonedx-property-taxonomy). Formal registration is OPTIONAL.",
+                "items": {
+                  "$ref": "#/definitions/property"
+                }
+              },
+              "externalReferences": {
+                "type": "array",
+                "items": {"$ref": "#/definitions/externalReference"},
+                "title": "External References",
+                "description": "External references provide a way to document systems, sites, and information that may be relevant, but are not included with the BOM. They may also establish specific relationships within or external to the BOM."
+              }
+            }
+          }
+        },
+        "levels": {
+          "type": "array",
+          "title": "Levels",
+          "description": "The list of levels associated with the standard. Some standards have different levels of compliance.",
+          "items": {
+            "type": "object",
+            "title": "Level",
+            "additionalProperties": false,
+            "properties": {
+              "bom-ref": {
+                "$ref": "#/definitions/refType",
+                "title": "BOM Reference",
+                "description": "An optional identifier which can be used to reference the object elsewhere in the BOM. Every bom-ref MUST be unique within the BOM."
+              },
+              "identifier": {
+                "type": "string",
+                "title": "Identifier",
+                "description": "The identifier used in the standard to identify a specific level."
+              },
+              "title": {
+                "type": "string",
+                "title": "Title",
+                "description": "The title of the level."
+              },
+              "description": {
+                "type": "string",
+                "title": "Description",
+                "description": "The description of the level."
+              },
+              "requirements": {
+                "type": "array",
+                "title": "Requirements",
+                "description": "The list of requirement `bom-ref`s that comprise the level.",
+                "items": { "$ref": "#/definitions/refLinkType" }
+              }
+            }
+          }
+        },
+        "externalReferences": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/externalReference"},
+          "title": "External References",
+          "description": "External references provide a way to document systems, sites, and information that may be relevant but are not included with the BOM. They may also establish specific relationships within or external to the BOM."
+        },
+        "signature": {
+          "$ref": "#/definitions/signature",
+          "title": "Signature",
+          "description": "Enveloped signature in [JSON Signature Format (JSF)](https://cyberphone.github.io/doc/security/jsf.html)."
+        }
+      }
+    },
     "signature": {
       "$ref": "jsf-0.82.schema.json#/definitions/signature",
       "title": "Signature",
       "description": "Enveloped signature in [JSON Signature Format (JSF)](https://cyberphone.github.io/doc/security/jsf.html)."
+    },
+    "cryptoProperties": {
+      "type": "object",
+      "title": "Cryptographic Properties",
+      "description": "Cryptographic assets have properties that uniquely define them and that make them actionable for further reasoning. As an example, it makes a difference if one knows the algorithm family (e.g. AES) or the specific variant or instantiation (e.g. AES-128-GCM). This is because the security level and the algorithm primitive (authenticated encryption) are only defined by the definition of the algorithm variant. The presence of a weak cryptographic algorithm like SHA1 vs. HMAC-SHA1 also makes a difference.",
+      "additionalProperties": false,
+      "required": [
+        "assetType"
+      ],
+      "properties": {
+        "assetType": {
+          "type": "string",
+          "title": "Asset Type",
+          "description": "Cryptographic assets occur in several forms. Algorithms and protocols are most commonly implemented in specialized cryptographic libraries. They may, however, also be 'hardcoded' in software components. Certificates and related cryptographic material like keys, tokens, secrets or passwords are other cryptographic assets to be modelled.",
+          "enum": [
+            "algorithm",
+            "certificate",
+            "protocol",
+            "related-crypto-material"
+          ],
+          "meta:enum": {
+            "algorithm": "Mathematical function commonly used for data encryption, authentication, and digital signatures.",
+            "certificate": "An electronic document that is used to provide the identity or validate a public key.",
+            "protocol": "A set of rules and guidelines that govern the behavior and communication with each other.",
+            "related-crypto-material": "Other cryptographic assets related to algorithms, certificates, and protocols such as keys and tokens."
+          }
+        },
+        "algorithmProperties": {
+          "type": "object",
+          "title": "Algorithm Properties",
+          "description": "Additional properties specific to a cryptographic algorithm.",
+          "additionalProperties": false,
+          "properties": {
+            "primitive": {
+              "type": "string",
+              "title": "primitive",
+              "description": "Cryptographic building blocks used in higher-level cryptographic systems and protocols. Primitives represent different cryptographic routines: deterministic random bit generators (drbg, e.g. CTR_DRBG from NIST SP800-90A-r1), message authentication codes (mac, e.g. HMAC-SHA-256), blockciphers (e.g. AES), streamciphers (e.g. Salsa20), signatures (e.g. ECDSA), hash functions (e.g. SHA-256), public-key encryption schemes (pke, e.g. RSA), extended output functions (xof, e.g. SHAKE256), key derivation functions (e.g. pbkdf2), key agreement algorithms (e.g. ECDH), key encapsulation mechanisms (e.g. ML-KEM), authenticated encryption (ae, e.g. AES-GCM) and the combination of multiple algorithms (combiner, e.g. SP800-56Cr2).",
+              "enum": [
+                "drbg",
+                "mac",
+                "block-cipher",
+                "stream-cipher",
+                "signature",
+                "hash",
+                "pke",
+                "xof",
+                "kdf",
+                "key-agree",
+                "kem",
+                "ae",
+                "combiner",
+                "other",
+                "unknown"
+              ],
+              "meta:enum": {
+                "drbg": "Deterministic Random Bit Generator (DRBG) is a type of pseudorandom number generator designed to produce a sequence of bits from an initial seed value. DRBGs are commonly used in cryptographic applications where reproducibility of random values is important.",
+                "mac": "In cryptography, a Message Authentication Code (MAC) is information used for authenticating and integrity-checking a message.",
+                "block-cipher": "A block cipher is a symmetric key algorithm that operates on fixed-size blocks of data. It encrypts or decrypts the data in block units, providing confidentiality. Block ciphers are widely used in various cryptographic modes and protocols for secure data transmission.",
+                "stream-cipher": "A stream cipher is a symmetric key cipher where plaintext digits are combined with a pseudorandom cipher digit stream (keystream).",
+                "signature": "In cryptography, a signature is a digital representation of a message or data that proves its origin, identity, and integrity. Digital signatures are generated using cryptographic algorithms and are widely used for authentication and verification in secure communication.",
+                "hash": "A hash function is a mathematical algorithm that takes an input (or 'message') and produces a fixed-size string of characters, which is typically a hash value. Hash functions are commonly used in various cryptographic applications, including data integrity verification and password hashing.",
+                "pke": "Public Key Encryption (PKE) is a type of encryption that uses a pair of public and private keys for secure communication. The public key is used for encryption, while the private key is used for decryption. PKE is a fundamental component of public-key cryptography.",
+                "xof": "An XOF is an extendable output function that can take arbitrary input and creates a stream of output, up to a limit determined by the size of the internal state of the hash function that underlies the XOF.",
+                "kdf": "A Key Derivation Function (KDF) derives key material from another source of entropy while preserving the entropy of the input.",
+                "key-agree": "In cryptography, a key-agreement is a protocol whereby two or more parties agree on a cryptographic key in such a way that both influence the outcome.",
+                "kem": "A Key Encapsulation Mechanism (KEM) algorithm is a mechanism for transporting random keying material to a recipient using the recipient's public key.",
+                "ae": "Authenticated Encryption (AE) is a cryptographic process that provides both confidentiality and data integrity. It ensures that the encrypted data has not been tampered with and comes from a legitimate source. AE is commonly used in secure communication protocols.",
+                "combiner": "A combiner aggregates many candidates for a cryptographic primitive and generates a new candidate for the same primitive.",
+                "other": "Another primitive type.",
+                "unknown": "The primitive is not known."
+              }
+            },
+            "parameterSetIdentifier": {
+              "type": "string",
+              "title": "Parameter Set Identifier",
+              "description": "An identifier for the parameter set of the cryptographic algorithm. Examples: in AES128, '128' identifies the key length in bits, in SHA256, '256' identifies the digest length, '128' in SHAKE128 identifies its maximum security level in bits, and 'SHA2-128s' identifies a parameter set used in SLH-DSA (FIPS205)."
+            },
+            "curve": {
+              "type": "string",
+              "title": "Elliptic Curve",
+              "description": "The specific underlying Elliptic Curve (EC) definition employed which is an indicator of the level of security strength, performance and complexity. Absent an authoritative source of curve names, CycloneDX recommends using curve names as defined at [https://neuromancer.sk/std/](https://neuromancer.sk/std/), the source of which can be found at [https://github.com/J08nY/std-curves](https://github.com/J08nY/std-curves)."
+            },
+            "executionEnvironment": {
+              "type": "string",
+              "title": "Execution Environment",
+              "description": "The target and execution environment in which the algorithm is implemented in.",
+              "enum": [
+                "software-plain-ram",
+                "software-encrypted-ram",
+                "software-tee",
+                "hardware",
+                "other",
+                "unknown"
+              ],
+              "meta:enum": {
+                "software-plain-ram": "A software implementation running in plain unencrypted RAM.",
+                "software-encrypted-ram": "A software implementation running in encrypted RAM.",
+                "software-tee": "A software implementation running in a trusted execution environment.",
+                "hardware": "A hardware implementation.",
+                "other": "Another implementation environment.",
+                "unknown": "The execution environment is not known."
+              }
+            },
+            "implementationPlatform": {
+              "type": "string",
+              "title": "implementation platform",
+              "description": "The target platform for which the algorithm is implemented. The implementation can be 'generic', running on any platform or for a specific platform.",
+              "enum": [
+                "generic",
+                "x86_32",
+                "x86_64",
+                "armv7-a",
+                "armv7-m",
+                "armv8-a",
+                "armv8-m",
+                "armv9-a",
+                "armv9-m",
+                "s390x",
+                "ppc64",
+                "ppc64le",
+                "other",
+                "unknown"
+              ]
+            },
+            "certificationLevel": {
+              "type": "array",
+              "title": "Certification Level",
+              "description": "The certification that the implementation of the cryptographic algorithm has received, if any. Certifications include revisions and levels of FIPS 140 or Common Criteria of different Extended Assurance Levels (CC-EAL).",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "fips140-1-l1",
+                  "fips140-1-l2",
+                  "fips140-1-l3",
+                  "fips140-1-l4",
+                  "fips140-2-l1",
+                  "fips140-2-l2",
+                  "fips140-2-l3",
+                  "fips140-2-l4",
+                  "fips140-3-l1",
+                  "fips140-3-l2",
+                  "fips140-3-l3",
+                  "fips140-3-l4",
+                  "cc-eal1",
+                  "cc-eal1+",
+                  "cc-eal2",
+                  "cc-eal2+",
+                  "cc-eal3",
+                  "cc-eal3+",
+                  "cc-eal4",
+                  "cc-eal4+",
+                  "cc-eal5",
+                  "cc-eal5+",
+                  "cc-eal6",
+                  "cc-eal6+",
+                  "cc-eal7",
+                  "cc-eal7+",
+                  "other",
+                  "unknown"
+                ],
+                "meta:enum": {
+                  "none": "No certification obtained",
+                  "fips140-1-l1": "FIPS 140-1 Level 1",
+                  "fips140-1-l2": "FIPS 140-1 Level 2",
+                  "fips140-1-l3": "FIPS 140-1 Level 3",
+                  "fips140-1-l4": "FIPS 140-1 Level 4",
+                  "fips140-2-l1": "FIPS 140-2 Level 1",
+                  "fips140-2-l2": "FIPS 140-2 Level 2",
+                  "fips140-2-l3": "FIPS 140-2 Level 3",
+                  "fips140-2-l4": "FIPS 140-2 Level 4",
+                  "fips140-3-l1": "FIPS 140-3 Level 1",
+                  "fips140-3-l2": "FIPS 140-3 Level 2",
+                  "fips140-3-l3": "FIPS 140-3 Level 3",
+                  "fips140-3-l4": "FIPS 140-3 Level 4",
+                  "cc-eal1": "Common Criteria - Evaluation Assurance Level 1",
+                  "cc-eal1+": "Common Criteria - Evaluation Assurance Level 1 (Augmented)",
+                  "cc-eal2": "Common Criteria - Evaluation Assurance Level 2",
+                  "cc-eal2+": "Common Criteria - Evaluation Assurance Level 2 (Augmented)",
+                  "cc-eal3": "Common Criteria - Evaluation Assurance Level 3",
+                  "cc-eal3+": "Common Criteria - Evaluation Assurance Level 3 (Augmented)",
+                  "cc-eal4": "Common Criteria - Evaluation Assurance Level 4",
+                  "cc-eal4+": "Common Criteria - Evaluation Assurance Level 4 (Augmented)",
+                  "cc-eal5": "Common Criteria - Evaluation Assurance Level 5",
+                  "cc-eal5+": "Common Criteria - Evaluation Assurance Level 5 (Augmented)",
+                  "cc-eal6": "Common Criteria - Evaluation Assurance Level 6",
+                  "cc-eal6+": "Common Criteria - Evaluation Assurance Level 6 (Augmented)",
+                  "cc-eal7": "Common Criteria - Evaluation Assurance Level 7",
+                  "cc-eal7+": "Common Criteria - Evaluation Assurance Level 7 (Augmented)",
+                  "other": "Another certification",
+                  "unknown": "The certification level is not known"
+                }
+              }
+            },
+            "mode": {
+              "type": "string",
+              "title": "Mode",
+              "description": "The mode of operation in which the cryptographic algorithm (block cipher) is used.",
+              "enum": [
+                "cbc",
+                "ecb",
+                "ccm",
+                "gcm",
+                "cfb",
+                "ofb",
+                "ctr",
+                "other",
+                "unknown"
+              ],
+              "meta:enum": {
+                "cbc": "Cipher block chaining",
+                "ecb": "Electronic codebook",
+                "ccm": "Counter with cipher block chaining message authentication code",
+                "gcm": "Galois/counter",
+                "cfb": "Cipher feedback",
+                "ofb": "Output feedback",
+                "ctr": "Counter",
+                "other": "Another mode of operation",
+                "unknown": "The mode of operation is not known"
+              }
+            },
+            "padding": {
+              "type": "string",
+              "title": "Padding",
+              "description": "The padding scheme that is used for the cryptographic algorithm.",
+              "enum": [
+                "pkcs5",
+                "pkcs7",
+                "pkcs1v15",
+                "oaep",
+                "raw",
+                "other",
+                "unknown"
+              ],
+              "meta:enum": {
+                "pkcs5": "Public Key Cryptography Standard: Password-Based Cryptography",
+                "pkcs7": "Public Key Cryptography Standard: Cryptographic Message Syntax",
+                "pkcs1v15": "Public Key Cryptography Standard: RSA Cryptography v1.5",
+                "oaep": "Optimal asymmetric encryption padding",
+                "raw": "Raw",
+                "other": "Another padding scheme",
+                "unknown": "The padding scheme is not known"
+              }
+            },
+            "cryptoFunctions": {
+              "type": "array",
+              "title": "Cryptographic functions",
+              "description": "The cryptographic functions implemented by the cryptographic algorithm.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "generate",
+                  "keygen",
+                  "encrypt",
+                  "decrypt",
+                  "digest",
+                  "tag",
+                  "keyderive",
+                  "sign",
+                  "verify",
+                  "encapsulate",
+                  "decapsulate",
+                  "other",
+                  "unknown"
+                ]
+              }
+            },
+            "classicalSecurityLevel": {
+              "type": "integer",
+              "title": "classical security level",
+              "description": "The classical security level that a cryptographic algorithm provides (in bits).",
+              "minimum": 0
+            },
+            "nistQuantumSecurityLevel": {
+              "type": "integer",
+              "title": "NIST security strength category",
+              "description": "The NIST security strength category as defined in https://csrc.nist.gov/projects/post-quantum-cryptography/post-quantum-cryptography-standardization/evaluation-criteria/security-(evaluation-criteria). A value of 0 indicates that none of the categories are met.",
+              "minimum": 0,
+              "maximum": 6
+            }
+          }
+        },
+        "certificateProperties": {
+          "type": "object",
+          "title": "Certificate Properties",
+          "description": "Properties for cryptographic assets of asset type 'certificate'",
+          "additionalProperties": false,
+          "properties": {
+            "subjectName": {
+              "type": "string",
+              "title": "Subject Name",
+              "description": "The subject name for the certificate"
+            },
+            "issuerName": {
+              "type": "string",
+              "title": "Issuer Name",
+              "description": "The issuer name for the certificate"
+            },
+            "notValidBefore": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Not Valid Before",
+              "description": "The date and time according to ISO-8601 standard from which the certificate is valid"
+            },
+            "notValidAfter": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Not Valid After",
+              "description": "The date and time according to ISO-8601 standard from which the certificate is not valid anymore"
+            },
+            "signatureAlgorithmRef": {
+              "$ref": "#/definitions/refType",
+              "title": "Algorithm Reference",
+              "description": "The bom-ref to signature algorithm used by the certificate"
+            },
+            "subjectPublicKeyRef": {
+              "$ref": "#/definitions/refType",
+              "title": "Key reference",
+              "description": "The bom-ref to the public key of the subject"
+            },
+            "certificateFormat": {
+              "type": "string",
+              "title": "Certificate Format",
+              "description": "The format of the certificate",
+              "examples": [
+                "X.509",
+                "PEM",
+                "DER",
+                "CVC"
+              ]
+            },
+            "certificateExtension": {
+              "type": "string",
+              "title": "Certificate File Extension",
+              "description": "The file extension of the certificate",
+              "examples": [
+                "crt",
+                "pem",
+                "cer",
+                "der",
+                "p12"
+              ]
+            }
+          }
+        },
+        "relatedCryptoMaterialProperties": {
+          "type": "object",
+          "title": "Related Cryptographic Material Properties",
+          "description": "Properties for cryptographic assets of asset type: `related-crypto-material`",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "relatedCryptoMaterialType",
+              "description": "The type for the related cryptographic material",
+              "enum": [
+                "private-key",
+                "public-key",
+                "secret-key",
+                "key",
+                "ciphertext",
+                "signature",
+                "digest",
+                "initialization-vector",
+                "nonce",
+                "seed",
+                "salt",
+                "shared-secret",
+                "tag",
+                "additional-data",
+                "password",
+                "credential",
+                "token",
+                "other",
+                "unknown"
+              ],
+              "meta:enum": {
+                "private-key": "The confidential key of a key pair used in asymmetric cryptography.",
+                "public-key": "The non-confidential key of a key pair used in asymmetric cryptography.",
+                "secret-key": "A key used to encrypt and decrypt messages in symmetric cryptography.",
+                "key": "A piece of information, usually an octet string, which, when processed through a cryptographic algorithm, processes cryptographic data.",
+                "ciphertext": "The result of encryption performed on plaintext using an algorithm (or cipher).",
+                "signature": "A cryptographic value that is calculated from the data and a key known only by the signer.",
+                "digest": "The output of the hash function.",
+                "initialization-vector": "A fixed-size random or pseudo-random value used as an input parameter for cryptographic algorithms.",
+                "nonce": "A random or pseudo-random number that can only be used once in a cryptographic communication.",
+                "seed": "The input to a pseudo-random number generator. Different seeds generate different pseudo-random sequences.",
+                "salt": "A value used in a cryptographic process, usually to ensure that the results of computations for one instance cannot be reused by an attacker.",
+                "shared-secret": "A piece of data known only to the parties involved, in a secure communication.",
+                "tag": "A message authentication code (MAC), sometimes known as an authentication tag, is a short piece of information used for authenticating and integrity-checking a message.",
+                "additional-data": "An unspecified collection of data with relevance to cryptographic activity.",
+                "password": "A secret word, phrase, or sequence of characters used during authentication or authorization.",
+                "credential": "Establishes the identity of a party to communication, usually in the form of cryptographic keys or passwords.",
+                "token": "An object encapsulating a security identity.",
+                "other": "Another type of cryptographic asset.",
+                "unknown": "The type of cryptographic asset is not known."
+              }
+            },
+            "id": {
+                "type": "string",
+                "title": "ID",
+                "description": "The optional unique identifier for the related cryptographic material."
+            },
+            "state": {
+                "type": "string",
+                "title": "State",
+                "description": "The key state as defined by NIST SP 800-57.",
+                "enum": [
+                    "pre-activation",
+                    "active",
+                    "suspended",
+                    "deactivated",
+                    "compromised",
+                    "destroyed"
+                ]
+            },
+            "algorithmRef": {
+                "$ref": "#/definitions/refType",
+                "title": "Algorithm Reference",
+                "description": "The bom-ref to the algorithm used to generate the related cryptographic material."
+            },
+            "creationDate": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Creation Date",
+                "description": "The date and time (timestamp) when the related cryptographic material was created."
+            },
+            "activationDate": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Activation Date",
+                "description": "The date and time (timestamp) when the related cryptographic material was activated."
+            },
+            "updateDate": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Update Date",
+                "description": "The date and time (timestamp) when the related cryptographic material was updated."
+            },
+            "expirationDate": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Expiration Date",
+                "description": "The date and time (timestamp) when the related cryptographic material expires."
+            },
+            "value": {
+                "type": "string",
+                "title": "Value",
+                "description": "The associated value of the cryptographic material."
+            },
+            "size": {
+                "type": "integer",
+                "title":"Size",
+                "description": "The size of the cryptographic asset (in bits)."
+            },
+            "format": {
+                "type": "string",
+                "title": "Format",
+                "description": "The format of the related cryptographic material (e.g. P8, PEM, DER)."
+            },
+            "securedBy": {
+                "$ref": "#/definitions/securedBy",
+                "title": "Secured By",
+                "description": "The mechanism by which the cryptographic asset is secured by."
+            }
+          }
+        },
+        "protocolProperties": {
+          "type": "object",
+          "title": "Protocol Properties",
+          "description": "Properties specific to cryptographic assets of type: `protocol`.",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Type",
+              "description": "The concrete protocol type.",
+              "enum": [
+                "tls",
+                "ssh",
+                "ipsec",
+                "ike",
+                "sstp",
+                "wpa",
+                "other",
+                "unknown"
+              ],
+              "meta:enum": {
+                "tls": "Transport Layer Security",
+                "ssh": "Secure Shell",
+                "ipsec": "Internet Protocol Security",
+                "ike": "Internet Key Exchange",
+                "sstp": "Secure Socket Tunneling Protocol",
+                "wpa": "Wi-Fi Protected Access",
+                "other": "Another protocol type",
+                "unknown": "The protocol type is not known"
+              }
+            },
+            "version": {
+              "type": "string",
+              "title": "Protocol Version",
+              "description": "The version of the protocol.",
+              "examples": [
+                "1.0",
+                "1.2",
+                "1.99"
+              ]
+            },
+            "cipherSuites": {
+              "type": "array",
+              "title": "Cipher Suites",
+              "description": "A list of cipher suites related to the protocol.",
+              "items": {
+                "$ref": "#/definitions/cipherSuite",
+                "title": "Cipher Suite"
+              }
+            },
+            "ikev2TransformTypes": {
+              "type": "object",
+              "title": "IKEv2 Transform Types",
+              "description": "The IKEv2 transform types supported (types 1-4), defined in RFC7296 section 3.3.2, and additional properties.",
+              "additionalProperties": false,
+              "properties": {
+                "encr": {
+                  "$ref": "#/definitions/cryptoRefArray",
+                  "title": "Encryption Algorithm (ENCR)",
+                  "description": "Transform Type 1: encryption algorithms"
+                },
+                "prf": {
+                  "$ref": "#/definitions/cryptoRefArray",
+                  "title": "Pseudorandom Function (PRF)",
+                  "description": "Transform Type 2: pseudorandom functions"
+                },
+                "integ": {
+                  "$ref": "#/definitions/cryptoRefArray",
+                  "title": "Integrity Algorithm (INTEG)",
+                  "description": "Transform Type 3: integrity algorithms"
+                },
+                "ke": {
+                  "$ref": "#/definitions/cryptoRefArray",
+                  "title": "Key Exchange Method (KE)",
+                  "description": "Transform Type 4: Key Exchange Method (KE) per RFC9370, formerly called Diffie-Hellman Group (D-H)"
+                },
+                "esn": {
+                  "type": "boolean",
+                  "title": "Extended Sequence Numbers (ESN)",
+                  "description": "Specifies if an Extended Sequence Number (ESN) is used."
+                },
+                "auth": {
+                  "$ref": "#/definitions/cryptoRefArray",
+                  "title": "IKEv2 Authentication method",
+                  "description": "IKEv2 Authentication method"
+                }
+              }
+            },
+            "cryptoRefArray": {
+              "$ref": "#/definitions/cryptoRefArray",
+              "title": "Cryptographic References",
+              "description": "A list of protocol-related cryptographic assets"
+            }
+          }
+        },
+        "oid": {
+          "type": "string",
+          "title": "OID",
+          "description": "The object identifier (OID) of the cryptographic asset."
+        }
+      }
+    },
+    "cipherSuite": {
+      "type": "object",
+      "title": "Cipher Suite",
+      "description": "Object representing a cipher suite",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Common Name",
+          "description": "A common name for the cipher suite.",
+          "examples": [
+            "TLS_DHE_RSA_WITH_AES_128_CCM"
+          ]
+        },
+        "algorithms": {
+          "type": "array",
+          "title": "Related Algorithms",
+          "description": "A list of algorithms related to the cipher suite.",
+          "items": {
+            "$ref": "#/definitions/refType",
+            "title": "Algorithm reference",
+            "description": "The bom-ref to algorithm cryptographic asset."
+          }
+        },
+        "identifiers": {
+          "type": "array",
+          "title": "Cipher Suite Identifiers",
+          "description": "A list of common identifiers for the cipher suite.",
+          "items": {
+            "type": "string",
+            "title": "identifier",
+            "description": "Cipher suite identifier",
+            "examples": [
+              "0xC0",
+              "0x9E"
+            ]
+          }
+        }
+      }
+    },
+    "cryptoRefArray" : {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/refType"
+      }
+    },
+    "securedBy": {
+      "type": "object",
+      "title": "Secured By",
+      "description": "Specifies the mechanism by which the cryptographic asset is secured by",
+      "additionalProperties": false,
+      "properties": {
+        "mechanism": {
+          "type": "string",
+          "title": "Mechanism",
+          "description": "Specifies the mechanism by which the cryptographic asset is secured by.",
+          "examples": [
+            "HSM",
+            "TPM",
+            "SGX",
+            "Software",
+            "None"
+          ]
+        },
+        "algorithmRef": {
+          "$ref": "#/definitions/refType",
+          "title": "Algorithm Reference",
+          "description": "The bom-ref to the algorithm."
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "description": "Textual strings that aid in discovery, search, and retrieval of the associated object. Tags often serve as a way to group or categorize similar or related objects by various attributes.",
+      "examples": [
+        "json-parser",
+        "object-persistence",
+        "text-to-image",
+        "translation",
+        "object-detection"
+      ]
     }
   }
 }
