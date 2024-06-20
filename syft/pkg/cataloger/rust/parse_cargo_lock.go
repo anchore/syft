@@ -57,19 +57,20 @@ func (c cargoModCataloger) parseCargoLock(_ context.Context, _ file.Resolver, _ 
 		}
 
 		var licenseSet = pkg.NewLicenseSet()
-		_, _ = c.infoResolver.ResolveRepo(p)
+		repo, err := c.infoResolver.ResolveRepo(p)
+		if err == nil {
+			p.RegistryGeneratedInfo = &repo
+		}
 		gen, err := c.infoResolver.Resolve(p)
 
 		if err == nil {
-			if len(gen.Licenses) == 0 {
-				log.Debugf("no licenses for %s-%s!", p.Name, p.Version)
+			p.SourceGeneratedDepInfo = &gen
+			for _, license := range gen.Licenses {
+				log.Debugf("Got license %s for %s-%s", license, p.Name, p.Version)
+				licenseSet.Add(pkg.NewLicense(license))
 			}
 		} else {
 			log.Warnf("error whilst generating info for %s-%s: %s", p.Name, p.Version, err)
-		}
-		for _, license := range gen.Licenses {
-			log.Debugf("Got license %s for %s-%s", license, p.Name, p.Version)
-			licenseSet.Add(pkg.NewLicense(license))
 		}
 
 		spkg := newPackageFromCargoMetadata(

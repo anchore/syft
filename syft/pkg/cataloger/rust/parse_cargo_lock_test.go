@@ -1,7 +1,11 @@
 package rust
 
 import (
+	"crypto/sha1"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg/rust"
@@ -21,11 +25,50 @@ const (
 
 type packageInfo struct {
 	pkg.Package
-	downloadLocation      string
-	coordinatePathPrepend string
+	RustMeta              rust.RustCargoLockEntry
+	CoordinatePathPrepend string
 }
 
-func newPackage(name string, version string, locations file.LocationSet, license string, registry registryLink, checksum string, dependencies []string) packageInfo {
+func newPackage(
+	t *testing.T,
+	name string,
+	version string,
+	locations file.LocationSet,
+	toml rust.CargoToml,
+	registry registryLink,
+	checksum string,
+	dependencies []string,
+	pathSha1Hashes map[string][sha1.Size]byte, //#nosec G505 G401 -- sha1 is used as a required hash function for SPDX, not a crypto function
+) packageInfo {
+	downloadShaUnl, err := hex.DecodeString(checksum)
+	if err != nil {
+		t.Fatal("Failed to decode checksum as a hex string")
+	}
+	var downloadSha [sha256.Size]byte
+	copy(downloadSha[:], downloadShaUnl)
+	sourceInfo := rust.SourceGeneratedDepInfo{
+		DownloadLink:   fmt.Sprintf("https://static.crates.io/crates/%s/%s/download", name, version),
+		DownloadSha:    downloadSha,
+		Licenses:       []string{toml.Package.License},
+		CargoToml:      toml,
+		PathSha1Hashes: pathSha1Hashes,
+	}
+	rustMeta := rust.RustCargoLockEntry{
+		Name:         name,
+		Version:      version,
+		Source:       string(registry),
+		Checksum:     checksum,
+		Dependencies: dependencies,
+		RegistryGeneratedInfo: &rust.RegistryGeneratedInfo{
+			IsLocalFile: false,
+			RepositoryConfig: rust.RepositoryConfig{
+				Download:     "https://static.crates.io/crates",
+				API:          "https://crates.io",
+				AuthRequired: false,
+			},
+		},
+		SourceGeneratedDepInfo: &sourceInfo,
+	}
 	return packageInfo{
 		Package: pkg.Package{
 			Name:      name,
@@ -34,17 +77,11 @@ func newPackage(name string, version string, locations file.LocationSet, license
 			Locations: locations,
 			Language:  pkg.Rust,
 			Type:      pkg.RustPkg,
-			Licenses:  pkg.NewLicenseSet(pkg.NewLicense(license)),
-			Metadata: rust.RustCargoLockEntry{
-				Name:         name,
-				Version:      version,
-				Source:       string(registry),
-				Checksum:     checksum,
-				Dependencies: dependencies,
-			},
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicense(toml.Package.License)),
+			Metadata:  rustMeta,
 		},
-		downloadLocation:      fmt.Sprintf("https://static.crates.io/crates/%s/%s/download", name, version),
-		coordinatePathPrepend: fmt.Sprintf("%s-%s/", name, version),
+		RustMeta:              rustMeta,
+		CoordinatePathPrepend: fmt.Sprintf("%s-%s/", name, version),
 	}
 }
 
@@ -55,84 +92,315 @@ func TestParseCargoLock(t *testing.T) {
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	//goland:noinspection GoSnakeCaseUsage
 	ansi_term := newPackage(
+		t,
 		"ansi_term",
 		"0.12.1",
 		locations,
-		"MIT",
+		rust.CargoToml{
+			Package: rust.TomlPackage{
+				Description: "Library for ANSI terminal colours and styles (bold, underline)",
+				Homepage:    "https://github.com/ogham/rust-ansi-term",
+				Repository:  "https://github.com/ogham/rust-ansi-term",
+				License:     "MIT",
+				LicenseFile: "",
+			},
+		},
 		OfficialRegistry,
 		"d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2",
 		[]string{}, // see comment at the head of the function
+		map[string][20]byte{
+			"ansi_term-0.12.1/.appveyor.yml":             {0xc4, 0x2d, 0x6a, 0x3f, 0x7e, 0x50, 0x34, 0xfa, 0xa6, 0x57, 0x5f, 0xfb, 0x3f, 0xbd, 0xbb, 0xdf, 0xf1, 0xc7, 0xae, 0x36},
+			"ansi_term-0.12.1/.gitignore":                {0xa6, 0x1a, 0x3e, 0x6e, 0x96, 0xc7, 0x0b, 0xfd, 0x3e, 0x73, 0x17, 0xe2, 0x73, 0xe4, 0xbc, 0x73, 0x96, 0x6c, 0xd2, 0x06},
+			"ansi_term-0.12.1/.rustfmt.toml":             {0xc5, 0x76, 0x47, 0x22, 0x07, 0x9c, 0x8d, 0x29, 0x35, 0x5b, 0x51, 0xc5, 0x29, 0xd3, 0x3a, 0xa9, 0x87, 0x30, 0x8d, 0x96},
+			"ansi_term-0.12.1/.travis.yml":               {0x87, 0xb6, 0x30, 0x0a, 0x2c, 0x64, 0xfd, 0x5c, 0x27, 0x7b, 0x23, 0x9c, 0xcf, 0x3a, 0x19, 0x7a, 0xc9, 0x33, 0x30, 0xa9},
+			"ansi_term-0.12.1/Cargo.toml.orig":           {0x02, 0x86, 0x52, 0xd4, 0x2e, 0x04, 0xc0, 0x77, 0x10, 0x1d, 0xe1, 0x91, 0x54, 0x42, 0xbc, 0x91, 0xb9, 0x69, 0xb0, 0xb8},
+			"ansi_term-0.12.1/Cargo.toml":                {0x02, 0x93, 0xcd, 0xba, 0x28, 0x4e, 0xad, 0x16, 0x1e, 0x8b, 0xb2, 0x28, 0x10, 0xdf, 0x81, 0xda, 0x7e, 0x0d, 0x4d, 0x46},
+			"ansi_term-0.12.1/examples/256_colours.rs":   {0x69, 0xe1, 0x80, 0x3a, 0x4e, 0x8c, 0xeb, 0x7b, 0x9a, 0xc8, 0x24, 0x10, 0x5e, 0x13, 0x2e, 0x36, 0xda, 0xc5, 0xf8, 0x3d},
+			"ansi_term-0.12.1/examples/basic_colours.rs": {0x1b, 0x01, 0x2d, 0x37, 0xd1, 0x82, 0x1e, 0xb9, 0x62, 0x78, 0x1e, 0x3b, 0x70, 0xf8, 0xa1, 0x04, 0x95, 0x68, 0xa6, 0x84},
+			"ansi_term-0.12.1/examples/rgb_colours.rs":   {0xfe, 0x54, 0xd6, 0x38, 0x2d, 0xe0, 0x9f, 0x91, 0x05, 0x6c, 0xd0, 0xf0, 0xe2, 0x3e, 0xe0, 0xcf, 0x08, 0xf4, 0xa4, 0x65},
+			"ansi_term-0.12.1/LICENCE":                   {0x72, 0x93, 0x92, 0x0a, 0xac, 0x55, 0xf4, 0xd2, 0x75, 0xce, 0xf8, 0x3b, 0xa1, 0x0d, 0x70, 0x65, 0x85, 0x62, 0x2a, 0x53},
+			"ansi_term-0.12.1/README.md":                 {0x02, 0x56, 0x09, 0x7d, 0x83, 0xaf, 0xe0, 0x2e, 0x62, 0x9b, 0x92, 0x45, 0x38, 0xe6, 0x4d, 0xaa, 0x5c, 0xc9, 0x6c, 0xfc},
+			"ansi_term-0.12.1/src/ansi.rs":               {0xa4, 0x4f, 0xeb, 0xd8, 0x38, 0xc3, 0xc6, 0xa0, 0x83, 0xad, 0x78, 0x55, 0xf8, 0xf2, 0x56, 0x12, 0x0f, 0x59, 0x10, 0xe5},
+			"ansi_term-0.12.1/src/debug.rs":              {0x9a, 0x14, 0x4e, 0xac, 0x56, 0x9f, 0xaa, 0xdf, 0x34, 0x76, 0x39, 0x4b, 0x6c, 0xcb, 0x14, 0xc5, 0x35, 0xd5, 0xa4, 0xb3},
+			"ansi_term-0.12.1/src/difference.rs":         {0xb2, 0x7f, 0x3d, 0x41, 0xbb, 0xaa, 0x70, 0xb4, 0x27, 0xa6, 0xbe, 0x96, 0x5b, 0x20, 0x3d, 0x14, 0xb0, 0x2b, 0x46, 0x1f},
+			"ansi_term-0.12.1/src/display.rs":            {0x0c, 0x0a, 0x49, 0xac, 0x7f, 0x10, 0xfe, 0xd5, 0x13, 0x12, 0x84, 0x4f, 0x07, 0x36, 0xd9, 0xb2, 0x7b, 0x21, 0xe2, 0x89},
+			"ansi_term-0.12.1/src/lib.rs":                {0x68, 0x5f, 0x66, 0xc3, 0xd2, 0xfd, 0x04, 0x87, 0xde, 0xad, 0x77, 0x76, 0x4d, 0x8d, 0x4a, 0x1d, 0x88, 0x2a, 0xad, 0x38},
+			"ansi_term-0.12.1/src/style.rs":              {0x30, 0xe0, 0xf9, 0x15, 0x77, 0x60, 0xb3, 0x74, 0xca, 0xff, 0x3e, 0xbc, 0xdc, 0xb0, 0xb9, 0x32, 0x11, 0x5f, 0xc4, 0x9f},
+			"ansi_term-0.12.1/src/util.rs":               {0xec, 0x08, 0x5d, 0xab, 0xb9, 0xf7, 0x10, 0x3e, 0xcf, 0x9c, 0x3c, 0x15, 0x0d, 0x1f, 0x57, 0xcf, 0x33, 0xa4, 0xc6, 0xeb},
+			"ansi_term-0.12.1/src/windows.rs":            {0xa2, 0x27, 0x13, 0x41, 0xa4, 0x24, 0x89, 0x16, 0xee, 0xba, 0xf9, 0x07, 0xb2, 0x7b, 0xe2, 0x17, 0x0c, 0x12, 0xd4, 0x5c},
+			"ansi_term-0.12.1/src/write.rs":              {0xac, 0x7f, 0x43, 0x5f, 0x78, 0xef, 0x8c, 0x2e, 0xd7, 0x33, 0x57, 0x3c, 0x62, 0xc4, 0x28, 0xc7, 0xa9, 0x79, 0x40, 0x38},
+			"ansi_term-0.12.1/.cargo_vcs_info.json":      {0x21, 0x6d, 0x8c, 0x4b, 0x73, 0xc5, 0xc9, 0x20, 0xe5, 0x0b, 0x93, 0x81, 0x79, 0x9f, 0xab, 0xee, 0xb6, 0xdb, 0x9e, 0x2b},
+			"ansi_term-0.12.1/Cargo.lock":                {0x4f, 0xe4, 0xf3, 0x1e, 0xcf, 0x55, 0x87, 0x74, 0x9e, 0xf3, 0x6a, 0x0d, 0x73, 0x75, 0x20, 0x50, 0x5e, 0x2b, 0x73, 0x8a},
+		},
 	)
 	matches := newPackage(
+		t,
 		"matches",
 		"0.1.8",
 		locations,
-		"MIT",
+		rust.CargoToml{
+			Package: rust.TomlPackage{
+				Description: "A macro to evaluate, as a boolean, whether an expression matches a pattern.",
+				Homepage:    "",
+				Repository:  "https://github.com/SimonSapin/rust-std-candidates",
+				License:     "MIT",
+				LicenseFile: "",
+			},
+		},
 		OfficialSparse,
 		"7ffc5c5338469d4d3ea17d269fa8ea3512ad247247c30bd2df69e68309ed0a08",
 		[]string{},
+		map[string][20]byte{
+			"matches-0.1.8/Cargo.toml.orig":        {0x81, 0x8c, 0x35, 0xd1, 0xd7, 0x80, 0x08, 0xa9, 0xd8, 0xe2, 0xe7, 0xb3, 0x3b, 0xb3, 0x16, 0xee, 0xa0, 0x2d, 0x77, 0x11},
+			"matches-0.1.8/Cargo.toml":             {0xae, 0x58, 0x0a, 0xdb, 0x71, 0xd8, 0xa0, 0x7f, 0xe5, 0x86, 0x5c, 0xd9, 0x95, 0x1b, 0xc6, 0x88, 0x6a, 0xb3, 0xe3, 0xa4},
+			"matches-0.1.8/LICENSE":                {0x1b, 0x0e, 0x91, 0x3d, 0x41, 0xa6, 0x6c, 0x98, 0x83, 0x76, 0x89, 0x8a, 0xa9, 0x95, 0xd6, 0xc2, 0xf4, 0x5b, 0xb5, 0x0c},
+			"matches-0.1.8/lib.rs":                 {0xc6, 0x32, 0x9e, 0xf2, 0x16, 0x2b, 0x8b, 0x59, 0xdd, 0x2b, 0xcd, 0xa7, 0x40, 0x21, 0x51, 0xc4, 0x7a, 0x7c, 0xf9, 0x9f},
+			"matches-0.1.8/tests/macro_use_one.rs": {0xfa, 0xad, 0x09, 0x5b, 0x61, 0x82, 0xc1, 0x59, 0x29, 0x02, 0x0d, 0x79, 0x58, 0x16, 0x61, 0xf1, 0xa3, 0x31, 0xda, 0xa3},
+		},
 	)
 	memchr := newPackage(
+		t,
 		"memchr",
 		"2.3.3",
 		locations,
-		"Unlicense/MIT",
+		rust.CargoToml{
+			Package: rust.TomlPackage{
+				Description: "Safe interface to memchr.",
+				Homepage:    "https://github.com/BurntSushi/rust-memchr",
+				Repository:  "https://github.com/BurntSushi/rust-memchr",
+				License:     "Unlicense/MIT",
+				LicenseFile: "",
+			},
+		},
 		OfficialRegistry,
 		"3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400",
 		[]string{},
+		map[string][20]byte{
+			"memchr-2.3.3/.github/workflows/ci.yml": {0x98, 0x73, 0x72, 0xcc, 0x6a, 0x27, 0x66, 0x8c, 0x02, 0xb8, 0xe9, 0xa9, 0xfe, 0x68, 0xe7, 0x67, 0xcd, 0x4c, 0x65, 0x8c},
+			"memchr-2.3.3/.gitignore":               {0x55, 0x6d, 0x32, 0xe5, 0xcb, 0x6d, 0xfb, 0xdb, 0xfc, 0x67, 0xe2, 0xdd, 0x06, 0xf9, 0x48, 0xb7, 0x6f, 0xe8, 0xb9, 0xd3},
+			"memchr-2.3.3/.ignore":                  {0xe4, 0x83, 0x05, 0xd0, 0x30, 0xf8, 0xae, 0xbb, 0xe1, 0xa8, 0x9f, 0xcb, 0x84, 0xf4, 0xac, 0x19, 0xbb, 0x07, 0x39, 0x75},
+			"memchr-2.3.3/COPYING":                  {0xdd, 0x44, 0x57, 0x10, 0xe6, 0xe4, 0xca, 0xcc, 0xc4, 0xf8, 0xa5, 0x87, 0xa1, 0x30, 0xea, 0xee, 0xbe, 0x83, 0xf6, 0xf6},
+			"memchr-2.3.3/Cargo.toml.orig":          {0xfe, 0x07, 0x39, 0xea, 0xcb, 0x95, 0x77, 0xf2, 0x2f, 0xa4, 0xcd, 0x9c, 0x35, 0x09, 0x6c, 0x2a, 0xc1, 0x1e, 0xad, 0x76},
+			"memchr-2.3.3/Cargo.toml":               {0x39, 0x5d, 0x46, 0xc2, 0x21, 0x6b, 0xc3, 0xa5, 0x09, 0x2b, 0x37, 0xc3, 0xdc, 0x75, 0x16, 0x56, 0x64, 0x67, 0xdf, 0xd4},
+			"memchr-2.3.3/LICENSE-MIT":              {0x4c, 0x89, 0x90, 0xad, 0xd9, 0x18, 0x0f, 0xc5, 0x9e, 0xfa, 0x5b, 0x0d, 0x8f, 0xaf, 0x64, 0x3c, 0x97, 0x09, 0x50, 0x1e},
+			"memchr-2.3.3/README.md":                {0x80, 0x2d, 0x3b, 0xfe, 0xa6, 0xff, 0x17, 0xd5, 0xf0, 0x82, 0xec, 0xce, 0xb5, 0x11, 0x91, 0x30, 0x21, 0x39, 0x06, 0x99},
+			"memchr-2.3.3/UNLICENSE":                {0xff, 0x00, 0x7c, 0xe1, 0x1f, 0x3f, 0xf7, 0x96, 0x4f, 0x1a, 0x5b, 0x04, 0x20, 0x2c, 0x4e, 0x95, 0xb5, 0xc8, 0x2c, 0x85},
+			"memchr-2.3.3/build.rs":                 {0x59, 0xfc, 0xa6, 0x95, 0x12, 0x75, 0xd4, 0xfe, 0xba, 0x14, 0xc0, 0x71, 0x09, 0xc4, 0xbb, 0x35, 0x1d, 0xa1, 0x87, 0xd5},
+			"memchr-2.3.3/rustfmt.toml":             {0x55, 0x8a, 0x7c, 0x72, 0xe4, 0x15, 0x54, 0x4f, 0x0b, 0x87, 0x90, 0xcd, 0x8c, 0x75, 0x26, 0x90, 0xd0, 0xbc, 0x05, 0xc6},
+			"memchr-2.3.3/src/c.rs":                 {0xc7, 0x50, 0x95, 0x49, 0x3e, 0x42, 0xaf, 0xfe, 0x48, 0xa2, 0x3e, 0x7d, 0xe9, 0xc7, 0x7c, 0x95, 0xec, 0x13, 0x9c, 0x7c},
+			"memchr-2.3.3/src/fallback.rs":          {0x7f, 0x13, 0xc3, 0x50, 0x2f, 0x30, 0x06, 0x46, 0xa2, 0x4e, 0x58, 0x17, 0x2d, 0x99, 0xd7, 0x80, 0x33, 0xe3, 0x39, 0xb2},
+			"memchr-2.3.3/src/iter.rs":              {0xb0, 0x1c, 0xc8, 0x99, 0x87, 0xd9, 0xc2, 0xf6, 0x1b, 0xaa, 0x97, 0xf7, 0x46, 0x5c, 0xa2, 0xb8, 0x1c, 0xe8, 0x0b, 0x52},
+			"memchr-2.3.3/src/lib.rs":               {0x35, 0xfa, 0xc0, 0xbe, 0xa5, 0x20, 0xbf, 0xeb, 0x99, 0x19, 0x7c, 0xfd, 0x97, 0x05, 0x6b, 0xed, 0x99, 0x58, 0x2c, 0xe2},
+			"memchr-2.3.3/src/naive.rs":             {0xfc, 0xb7, 0x09, 0x37, 0x5b, 0xf7, 0xa2, 0x0d, 0xdd, 0x97, 0x38, 0x89, 0x82, 0x05, 0x0d, 0x5d, 0x5d, 0xa5, 0xf1, 0x5f},
+			"memchr-2.3.3/src/tests/iter.rs":        {0xda, 0xaf, 0x6a, 0x0b, 0x80, 0x05, 0x63, 0xde, 0xb4, 0x52, 0x27, 0xb2, 0xe7, 0xfb, 0x6f, 0xda, 0xe4, 0x64, 0xae, 0x84},
+			"memchr-2.3.3/src/tests/memchr.rs":      {0x37, 0xf4, 0x4d, 0xc2, 0x9c, 0x8e, 0xfb, 0x1d, 0x19, 0xee, 0xa6, 0xf2, 0x92, 0x4a, 0x19, 0xba, 0x86, 0xc1, 0x4b, 0x3b},
+			"memchr-2.3.3/src/tests/miri.rs":        {0xc6, 0x56, 0x9d, 0x55, 0xc1, 0x82, 0x55, 0xa5, 0x2f, 0x5a, 0x75, 0x25, 0x6f, 0x95, 0x16, 0x71, 0x01, 0xd9, 0xdb, 0xeb},
+			"memchr-2.3.3/src/tests/mod.rs":         {0xcd, 0xd9, 0xc0, 0x08, 0x5c, 0xec, 0xcf, 0x76, 0x09, 0x0b, 0xc3, 0x27, 0x84, 0x0e, 0x6a, 0x93, 0x15, 0x49, 0x9a, 0xcc},
+			"memchr-2.3.3/src/x86/avx.rs":           {0x4b, 0xc5, 0x6e, 0xd4, 0xfa, 0xa1, 0xb0, 0x26, 0xb3, 0x99, 0xc1, 0x69, 0x79, 0x0a, 0x67, 0x8b, 0x6a, 0xf6, 0xa9, 0x41},
+			"memchr-2.3.3/src/x86/mod.rs":           {0xbe, 0x86, 0x44, 0xc7, 0xba, 0xd1, 0x42, 0x7b, 0x23, 0x43, 0x6e, 0x6d, 0x59, 0x92, 0xc1, 0x6e, 0x51, 0x29, 0xc2, 0x16},
+			"memchr-2.3.3/src/x86/sse2.rs":          {0xd2, 0xb6, 0x40, 0xc7, 0x7a, 0x02, 0x23, 0x81, 0x2f, 0xa6, 0xa6, 0xf5, 0x50, 0xe6, 0x1f, 0xf4, 0x26, 0x93, 0x20, 0xf0},
+			"memchr-2.3.3/src/x86/sse42.rs":         {0xf0, 0x53, 0x48, 0x24, 0x27, 0x71, 0x29, 0x18, 0xed, 0xf5, 0x0a, 0xea, 0x0c, 0xb7, 0xe2, 0xfb, 0x95, 0xa2, 0xcc, 0xc1},
+			"memchr-2.3.3/.cargo_vcs_info.json":     {0xb1, 0xec, 0xb8, 0x75, 0x1a, 0x0d, 0x53, 0xcc, 0xcb, 0x6b, 0xe6, 0x06, 0xed, 0xe1, 0x75, 0x73, 0x6d, 0x51, 0xda, 0x04},
+		},
 	)
 	natord := newPackage(
+		t,
 		"natord",
 		"1.0.9",
 		locations,
-		"MIT",
+		rust.CargoToml{
+			Package: rust.TomlPackage{
+				Description: "Natural ordering for Rust",
+				Homepage:    "https://github.com/lifthrasiir/rust-natord",
+				Repository:  "https://github.com/lifthrasiir/rust-natord",
+				License:     "MIT",
+				LicenseFile: "",
+			},
+		},
 		OfficialSparse,
 		"308d96db8debc727c3fd9744aac51751243420e46edf401010908da7f8d5e57c",
 		[]string{},
+		map[string][20]byte{
+			"natord-1.0.9/.gitignore":  {0x32, 0x54, 0xb5, 0xd5, 0x53, 0x81, 0x66, 0xf1, 0xfd, 0x5a, 0x0b, 0xb4, 0x1f, 0x7f, 0x3d, 0x3b, 0xbd, 0x45, 0x5c, 0x56},
+			"natord-1.0.9/.travis.yml": {0x4e, 0xad, 0xee, 0x39, 0x32, 0x4e, 0x1c, 0xc0, 0xe1, 0x56, 0xd4, 0xc1, 0x63, 0x2f, 0xc4, 0x17, 0xf9, 0xed, 0x8a, 0x7e},
+			"natord-1.0.9/Cargo.toml":  {0xbf, 0xfd, 0xbe, 0x1b, 0x6b, 0x25, 0x76, 0xae, 0x1b, 0x17, 0xd4, 0x69, 0x35, 0x45, 0xaa, 0x01, 0x45, 0xb4, 0x35, 0xbe},
+			"natord-1.0.9/lib.rs":      {0x83, 0x32, 0x02, 0x72, 0xb3, 0xd9, 0x22, 0xf5, 0xbe, 0xd4, 0x08, 0xd0, 0x4f, 0xb1, 0x89, 0x54, 0xc3, 0x49, 0x58, 0xb0},
+			"natord-1.0.9/LICENSE.txt": {0xbf, 0x18, 0xc5, 0xcc, 0x6c, 0x1d, 0xb9, 0x3e, 0xb4, 0xe2, 0xe9, 0x5b, 0x11, 0x35, 0x2e, 0x46, 0x60, 0x40, 0x8f, 0xec},
+			"natord-1.0.9/README.md":   {0xc2, 0x95, 0x88, 0x54, 0xfd, 0xc1, 0x03, 0x29, 0xe4, 0x09, 0x90, 0x62, 0x92, 0x50, 0x6d, 0x6e, 0x24, 0xdd, 0x78, 0xb5},
+		},
 	)
 	nom := newPackage(
+		t,
 		"nom",
 		"4.2.3",
 		locations,
-		"MIT",
+		rust.CargoToml{
+			Package: rust.TomlPackage{
+				Description: "A byte-oriented, zero-copy, parser combinators library",
+				Homepage:    "",
+				Repository:  "https://github.com/Geal/nom",
+				License:     "MIT",
+				LicenseFile: "",
+			},
+		},
 		OfficialRegistry,
 		"2ad2a91a8e869eeb30b9cb3119ae87773a8f4ae617f41b1eb9c154b2905f7bd6",
 		[]string{
 			"memchr",
 			"version_check",
 		},
+		map[string][20]byte{
+			"nom-4.2.3/CHANGELOG.md":                 {0x48, 0xba, 0x21, 0x32, 0x6a, 0x9a, 0x3b, 0xdf, 0x15, 0x04, 0xa6, 0x42, 0xa4, 0x2c, 0xf7, 0xf8, 0x4a, 0x00, 0x76, 0xe8},
+			"nom-4.2.3/Cargo.toml.orig":              {0xc1, 0xd3, 0x74, 0x94, 0x1f, 0xf2, 0x33, 0x92, 0xf4, 0x09, 0xb9, 0x33, 0xc7, 0x99, 0xe8, 0x49, 0xbd, 0x94, 0x8b, 0x0e},
+			"nom-4.2.3/Cargo.toml":                   {0xe0, 0x41, 0xd8, 0xad, 0x32, 0xb7, 0x19, 0xe9, 0xab, 0x49, 0xc3, 0xf7, 0xf1, 0x87, 0xd2, 0x90, 0x2e, 0xa4, 0x91, 0xf9},
+			"nom-4.2.3/LICENSE":                      {0xe7, 0xb3, 0x26, 0x57, 0xd4, 0x60, 0x8c, 0xb4, 0xa5, 0x7a, 0xfa, 0x79, 0x08, 0x01, 0xec, 0xb9, 0xc2, 0xa0, 0x37, 0xf5},
+			"nom-4.2.3/build.rs":                     {0xc5, 0x9d, 0x60, 0xb5, 0x50, 0x9a, 0x47, 0x0f, 0xf9, 0x44, 0x5c, 0x43, 0xee, 0x41, 0x4a, 0x02, 0x97, 0x24, 0x50, 0x4e},
+			"nom-4.2.3/src/bits.rs":                  {0x41, 0x9b, 0xf0, 0xa2, 0x57, 0x19, 0x92, 0x04, 0xfb, 0xf7, 0xe9, 0x8c, 0xa2, 0x90, 0x4e, 0xaf, 0xd9, 0x9f, 0x22, 0x64},
+			"nom-4.2.3/src/branch.rs":                {0x38, 0x8f, 0x6a, 0xe6, 0xce, 0x5d, 0x44, 0x1d, 0xbe, 0x36, 0x0b, 0xcc, 0x1b, 0xe4, 0x93, 0x31, 0x53, 0x86, 0xe7, 0x3a},
+			"nom-4.2.3/src/bytes.rs":                 {0x48, 0x3c, 0xae, 0x38, 0xa9, 0xeb, 0x91, 0x29, 0xe6, 0xa7, 0x95, 0x8f, 0x1c, 0xa4, 0x0b, 0xe9, 0xd9, 0xbb, 0x25, 0x71},
+			"nom-4.2.3/src/character.rs":             {0xa7, 0xec, 0x8c, 0xc1, 0x04, 0x25, 0x01, 0xdc, 0xed, 0x6c, 0x35, 0xf4, 0x36, 0x34, 0x2e, 0x86, 0x5a, 0xac, 0x97, 0xbe},
+			"nom-4.2.3/src/internal.rs":              {0x2f, 0xfa, 0xf1, 0x9d, 0xf1, 0x6c, 0x69, 0x1d, 0xa9, 0xd2, 0x50, 0x84, 0x0d, 0x9f, 0xbd, 0xf5, 0x6e, 0x24, 0x03, 0xbb},
+			"nom-4.2.3/src/lib.rs":                   {0x39, 0xe4, 0xe9, 0x67, 0xce, 0x4a, 0x55, 0x9f, 0xb0, 0x8b, 0x3b, 0xb0, 0xd7, 0xb3, 0x8f, 0x8c, 0x94, 0x29, 0xfe, 0x82},
+			"nom-4.2.3/src/macros.rs":                {0x39, 0xa2, 0x44, 0x61, 0xed, 0xd8, 0xad, 0xc7, 0x4a, 0x28, 0xc3, 0x6d, 0x14, 0x69, 0x9b, 0x07, 0x28, 0xe9, 0x0f, 0x9d},
+			"nom-4.2.3/src/methods.rs":               {0x3b, 0x93, 0x4d, 0x58, 0x8e, 0xe1, 0x49, 0x65, 0xb1, 0x9d, 0x83, 0x1e, 0xfc, 0x7f, 0x0b, 0x63, 0xcf, 0x78, 0xe0, 0xa9},
+			"nom-4.2.3/src/multi.rs":                 {0x09, 0x8b, 0xa3, 0xb2, 0xfa, 0xcc, 0xdf, 0x34, 0x85, 0x49, 0x1d, 0x88, 0xe5, 0x21, 0xa3, 0xc9, 0xf5, 0x66, 0x7d, 0xdc},
+			"nom-4.2.3/src/nom.rs":                   {0xc7, 0x44, 0x54, 0x75, 0x2b, 0x17, 0xc2, 0xa7, 0xfa, 0x8a, 0xbe, 0x39, 0x80, 0x93, 0x61, 0x7f, 0x81, 0x41, 0xf6, 0xf7},
+			"nom-4.2.3/src/regexp.rs":                {0x28, 0x75, 0x00, 0x9c, 0xe9, 0xd7, 0xdf, 0x67, 0x87, 0xd7, 0x94, 0xa4, 0xa8, 0x07, 0xa6, 0x77, 0xa5, 0xf1, 0xe6, 0x00},
+			"nom-4.2.3/src/sequence.rs":              {0x1a, 0x49, 0x6d, 0xbd, 0x10, 0x94, 0xe9, 0x3f, 0x14, 0x09, 0xba, 0xd3, 0x0b, 0x31, 0x86, 0x7a, 0x56, 0x6d, 0xe0, 0x89},
+			"nom-4.2.3/src/simple_errors.rs":         {0x58, 0x5b, 0xa0, 0xd7, 0x74, 0xa4, 0xd6, 0xc4, 0x82, 0x29, 0xf6, 0x1e, 0x05, 0x13, 0x68, 0x33, 0x3b, 0xa1, 0x6b, 0xf9},
+			"nom-4.2.3/src/str.rs":                   {0x2e, 0x73, 0x03, 0xa4, 0x2f, 0x0f, 0x31, 0x64, 0x7c, 0x68, 0xc9, 0xb4, 0x5c, 0x85, 0xe8, 0x15, 0xc7, 0xc9, 0xd2, 0xf4},
+			"nom-4.2.3/src/traits.rs":                {0x74, 0xca, 0x43, 0xbd, 0x49, 0xa2, 0xb8, 0x17, 0x99, 0xdf, 0xef, 0x4b, 0x8f, 0xbe, 0xcf, 0xd1, 0xf7, 0x78, 0x84, 0xe9},
+			"nom-4.2.3/src/types.rs":                 {0x30, 0x32, 0xdb, 0xa2, 0x6c, 0xdd, 0xcd, 0x70, 0x18, 0xc0, 0xe4, 0x82, 0x95, 0xe3, 0x0a, 0xe4, 0x03, 0x90, 0x2d, 0x7e},
+			"nom-4.2.3/src/util.rs":                  {0xfc, 0x1a, 0x7d, 0xc1, 0x25, 0x0b, 0x69, 0x2c, 0x5f, 0x84, 0x9f, 0x2b, 0xfb, 0x6b, 0x84, 0x24, 0x1e, 0xff, 0x9d, 0x0a},
+			"nom-4.2.3/src/verbose_errors.rs":        {0x4d, 0x5e, 0xe9, 0x06, 0xc5, 0x2b, 0x72, 0x08, 0x0d, 0x8a, 0x6e, 0xee, 0x5a, 0x92, 0x27, 0xab, 0x4e, 0x76, 0x50, 0x6b},
+			"nom-4.2.3/src/whitespace.rs":            {0x2d, 0x5c, 0xb6, 0x2b, 0xf4, 0xc5, 0xe7, 0x10, 0x7d, 0x12, 0x2f, 0x12, 0x06, 0x03, 0xcc, 0x6c, 0x38, 0xc7, 0x47, 0xbe},
+			"nom-4.2.3/tests/arithmetic.rs":          {0xa8, 0x5e, 0xf1, 0x4d, 0xf0, 0xe3, 0x7e, 0x94, 0x55, 0xb2, 0x54, 0x3e, 0xd0, 0xd4, 0x3c, 0x5f, 0x7a, 0x60, 0x0a, 0x7d},
+			"nom-4.2.3/tests/arithmetic_ast.rs":      {0x1b, 0x75, 0x23, 0x96, 0xf0, 0x83, 0xd8, 0xea, 0x50, 0x0a, 0x04, 0xea, 0x0c, 0xe7, 0x99, 0xb7, 0x8f, 0xf4, 0x20, 0x98},
+			"nom-4.2.3/tests/blockbuf-arithmetic.rs": {0x8b, 0x41, 0xaf, 0xbc, 0xc7, 0x79, 0xce, 0x04, 0x10, 0xa1, 0x29, 0x5b, 0x98, 0x7b, 0x43, 0x40, 0xd3, 0x07, 0x98, 0xb9},
+			"nom-4.2.3/tests/complete_arithmetic.rs": {0xbe, 0x31, 0x00, 0x87, 0x88, 0xba, 0x4b, 0xa2, 0xf9, 0x01, 0xec, 0xbf, 0x53, 0x37, 0xe5, 0x5f, 0x6c, 0x20, 0x82, 0x8e},
+			"nom-4.2.3/tests/complete_float.rs":      {0xc1, 0xe4, 0xb1, 0x0c, 0x80, 0xc2, 0x61, 0x84, 0x2e, 0x80, 0x85, 0x17, 0xd8, 0x5f, 0x98, 0xbf, 0xf6, 0xca, 0x00, 0x6a},
+			"nom-4.2.3/tests/css.rs":                 {0xa6, 0xbf, 0x48, 0x3a, 0xe3, 0x64, 0xc9, 0x82, 0x04, 0x28, 0xc1, 0xb8, 0x30, 0xe2, 0x8c, 0x0e, 0x4e, 0xed, 0xde, 0xc3},
+			"nom-4.2.3/tests/custom_errors.rs":       {0x41, 0xd9, 0x4a, 0x40, 0x8d, 0xfb, 0x23, 0xee, 0xd0, 0x14, 0x2d, 0x7b, 0x9c, 0x98, 0x2a, 0x4f, 0xdf, 0xbd, 0x29, 0x3a},
+			"nom-4.2.3/tests/float.rs":               {0xcb, 0xe1, 0x9c, 0x77, 0xcd, 0x0b, 0x14, 0x91, 0x98, 0xd6, 0x10, 0xcb, 0xdb, 0x82, 0x5a, 0x06, 0xd2, 0x7c, 0x1e, 0xa4},
+			"nom-4.2.3/tests/inference.rs":           {0xce, 0xe9, 0x4e, 0x42, 0x24, 0xa7, 0x2c, 0xee, 0xd0, 0xc2, 0x15, 0x49, 0xed, 0x2e, 0xf1, 0x34, 0x16, 0x57, 0xfc, 0x32},
+			"nom-4.2.3/tests/ini.rs":                 {0x6c, 0x51, 0xaf, 0x96, 0x42, 0x60, 0x32, 0xb9, 0xf4, 0x42, 0xca, 0xea, 0xb5, 0x42, 0xb9, 0x00, 0xb1, 0x12, 0x87, 0x19},
+			"nom-4.2.3/tests/ini_str.rs":             {0xaa, 0x97, 0x1f, 0x48, 0xe7, 0x8b, 0x79, 0x76, 0x6d, 0xeb, 0xa7, 0x21, 0x7d, 0xfc, 0xa7, 0x8a, 0x9b, 0x96, 0x08, 0x55},
+			"nom-4.2.3/tests/issues.rs":              {0x5f, 0x61, 0xb6, 0x90, 0x52, 0xfa, 0xd5, 0xb4, 0x13, 0xd9, 0xe5, 0x88, 0xff, 0xec, 0xab, 0x80, 0x04, 0x84, 0x97, 0x88},
+			"nom-4.2.3/tests/json.rs":                {0xb4, 0x5c, 0x8b, 0x0d, 0xb1, 0x54, 0x18, 0x03, 0x50, 0xc3, 0x4c, 0x2d, 0x20, 0x86, 0xfa, 0x35, 0x5b, 0x1b, 0x45, 0xe5},
+			"nom-4.2.3/tests/mp4.rs":                 {0x72, 0x88, 0x43, 0x38, 0x29, 0xb9, 0xb3, 0xf3, 0x05, 0x76, 0x1b, 0x24, 0x0c, 0x8c, 0x9b, 0x60, 0x52, 0x9f, 0x66, 0xa1},
+			"nom-4.2.3/tests/multiline.rs":           {0x27, 0x0c, 0x16, 0xeb, 0xaf, 0x0c, 0x38, 0x39, 0xe9, 0xeb, 0xe6, 0x6c, 0xca, 0x28, 0x80, 0x3f, 0xe6, 0x4b, 0xbc, 0x05},
+			"nom-4.2.3/tests/named_args.rs":          {0xf6, 0x7e, 0xf9, 0x9a, 0x7d, 0xf4, 0x47, 0x05, 0xee, 0xcf, 0x64, 0xde, 0x45, 0xf2, 0x00, 0xc2, 0x96, 0xec, 0x46, 0x48},
+			"nom-4.2.3/tests/overflow.rs":            {0x1a, 0xd7, 0xe1, 0xbd, 0xc3, 0xb0, 0x70, 0xbd, 0x33, 0x66, 0x80, 0xf3, 0x92, 0x94, 0xf7, 0x40, 0x0b, 0xf5, 0x0d, 0x61},
+			"nom-4.2.3/tests/reborrow_fold.rs":       {0x4b, 0xa8, 0x9f, 0x2b, 0x42, 0xdc, 0xf8, 0x03, 0xa2, 0x68, 0x7b, 0x37, 0x0c, 0x83, 0x5e, 0x21, 0x34, 0xf1, 0x1a, 0xf1},
+			"nom-4.2.3/tests/test1.rs":               {0xf7, 0xc2, 0x23, 0x20, 0x85, 0x09, 0x24, 0x2a, 0x9b, 0x66, 0xd9, 0xfb, 0xfa, 0xcc, 0xc5, 0x09, 0xd2, 0xa1, 0x4b, 0xef},
+			"nom-4.2.3/.cargo_vcs_info.json":         {0x93, 0xed, 0xe0, 0xfa, 0xfa, 0x3c, 0xcc, 0xa2, 0x17, 0x78, 0x71, 0x67, 0xb2, 0xa7, 0xa9, 0xc2, 0x2c, 0xdf, 0x0b, 0x88},
+		},
 	)
 	//goland:noinspection GoSnakeCaseUsage
 	unicode_bidi := newPackage(
+		t,
 		"unicode-bidi",
 		"0.3.4",
 		locations,
-		"MIT / Apache-2.0",
+		rust.CargoToml{
+			Package: rust.TomlPackage{
+				Description: "Implementation of the Unicode Bidirectional Algorithm",
+				Homepage:    "",
+				Repository:  "https://github.com/servo/unicode-bidi",
+				License:     "MIT / Apache-2.0",
+				LicenseFile: "",
+			},
+		},
 		OfficialSparse,
 		"49f2bd0c6468a8230e1db229cff8029217cf623c767ea5d60bfbd42729ea54d5",
 		[]string{
 			"matches",
 		},
+		map[string][20]byte{
+			"unicode-bidi-0.3.4/.appveyor.yml":           {0xe6, 0xa4, 0xb7, 0x1b, 0x2e, 0x46, 0x1d, 0x29, 0x89, 0x1f, 0x69, 0x38, 0x15, 0xfb, 0x8d, 0x94, 0x6a, 0x46, 0x8d, 0xd5},
+			"unicode-bidi-0.3.4/.gitignore":              {0x49, 0xb1, 0x3a, 0x4a, 0xa5, 0x53, 0x69, 0x41, 0x85, 0xbb, 0x35, 0xd9, 0xba, 0x50, 0x8e, 0x55, 0x54, 0x5c, 0xcb, 0x5c},
+			"unicode-bidi-0.3.4/.rustfmt.toml":           {0x76, 0xa8, 0x1d, 0x84, 0xfe, 0x87, 0x0a, 0xde, 0x0d, 0x22, 0xf3, 0xe9, 0x52, 0xa6, 0x1d, 0x0d, 0x75, 0xeb, 0x5a, 0x87},
+			"unicode-bidi-0.3.4/.travis.yml":             {0xe4, 0xac, 0xfe, 0xc5, 0xe6, 0xf3, 0xaf, 0xef, 0x42, 0xe8, 0x46, 0x1a, 0x15, 0xa0, 0x23, 0x48, 0xab, 0xd5, 0xd7, 0x41},
+			"unicode-bidi-0.3.4/AUTHORS":                 {0x05, 0xbb, 0x8f, 0x0c, 0x2d, 0x2c, 0x48, 0x0a, 0xb3, 0x71, 0xdf, 0xbc, 0x7d, 0x58, 0xcc, 0x44, 0xb9, 0x18, 0x44, 0x03},
+			"unicode-bidi-0.3.4/COPYRIGHT":               {0x87, 0x1b, 0x99, 0x12, 0xab, 0x96, 0xcf, 0x7d, 0x79, 0xcb, 0x8a, 0xe8, 0x3c, 0xa0, 0xb0, 0x8c, 0xd5, 0xd0, 0xcb, 0xfd},
+			"unicode-bidi-0.3.4/Cargo.toml.orig":         {0x51, 0xdc, 0xde, 0xea, 0xa5, 0xe9, 0x6a, 0x9b, 0x02, 0x47, 0x1b, 0x6b, 0xa8, 0xa1, 0xfd, 0xd0, 0x8e, 0xc6, 0xaa, 0x03},
+			"unicode-bidi-0.3.4/Cargo.toml":              {0xf6, 0xb0, 0xf6, 0x3b, 0xf8, 0x0d, 0x80, 0xeb, 0x4d, 0x5d, 0xf4, 0x4f, 0x3c, 0x6d, 0x77, 0x94, 0x7a, 0x93, 0x0a, 0xcb},
+			"unicode-bidi-0.3.4/LICENSE-APACHE":          {0x57, 0x98, 0x83, 0x2c, 0x31, 0x66, 0x3c, 0xed, 0xc1, 0x61, 0x8d, 0x18, 0x54, 0x4d, 0x44, 0x5d, 0xa0, 0x29, 0x52, 0x29},
+			"unicode-bidi-0.3.4/LICENSE-MIT":             {0x60, 0xc3, 0x52, 0x20, 0x81, 0xbf, 0x15, 0xd7, 0xac, 0x1d, 0x4c, 0x5a, 0x63, 0xde, 0x42, 0x5e, 0xf2, 0x53, 0xe8, 0x7a},
+			"unicode-bidi-0.3.4/README.md":               {0x78, 0xd6, 0xf2, 0x56, 0x91, 0xfa, 0x62, 0x3f, 0x95, 0x0e, 0xfd, 0xf9, 0xd2, 0xa9, 0xaa, 0xe1, 0x29, 0xe3, 0x0e, 0x2d},
+			"unicode-bidi-0.3.4/src/char_data/mod.rs":    {0x7a, 0x08, 0xa4, 0x61, 0x93, 0xd7, 0x1d, 0xf1, 0x5d, 0xa9, 0xd9, 0x00, 0xc3, 0x39, 0xa4, 0xdb, 0xce, 0x0a, 0x5f, 0x45},
+			"unicode-bidi-0.3.4/src/char_data/tables.rs": {0xe4, 0x95, 0xd7, 0x99, 0x81, 0x92, 0x9f, 0x5b, 0xb2, 0xf0, 0x45, 0x7d, 0x45, 0x2d, 0xe8, 0xa4, 0xb5, 0x2f, 0x66, 0x66},
+			"unicode-bidi-0.3.4/src/deprecated.rs":       {0x43, 0xac, 0x50, 0x28, 0xa8, 0xf1, 0xd5, 0xdd, 0xba, 0x76, 0x82, 0x21, 0x47, 0xfb, 0x36, 0x3e, 0xf0, 0x22, 0x26, 0x01},
+			"unicode-bidi-0.3.4/src/explicit.rs":         {0xee, 0xd6, 0xc9, 0x86, 0x59, 0x90, 0xa3, 0x34, 0x98, 0x33, 0x9e, 0x5f, 0x0f, 0xe9, 0xba, 0x63, 0x35, 0x2d, 0x08, 0xf1},
+			"unicode-bidi-0.3.4/src/format_chars.rs":     {0x46, 0x8f, 0x7b, 0x50, 0xf5, 0xa2, 0x90, 0xb6, 0xbd, 0xbb, 0x07, 0x07, 0x38, 0x1d, 0xfb, 0x5a, 0x61, 0xe9, 0x00, 0x12},
+			"unicode-bidi-0.3.4/src/implicit.rs":         {0x1a, 0x47, 0x01, 0x2f, 0x5d, 0xa7, 0x12, 0xa4, 0xf8, 0xd0, 0x41, 0x8a, 0x54, 0xb9, 0x3a, 0xc5, 0xe0, 0x11, 0xce, 0xce},
+			"unicode-bidi-0.3.4/src/level.rs":            {0xc9, 0xfa, 0xbd, 0x87, 0xfb, 0x70, 0x6e, 0x9e, 0xa6, 0xaa, 0x9b, 0xbf, 0xcf, 0xf0, 0x0c, 0xad, 0x11, 0xef, 0xae, 0x07},
+			"unicode-bidi-0.3.4/src/lib.rs":              {0x7e, 0xa0, 0xfb, 0x0b, 0x66, 0x11, 0x5b, 0x1e, 0xc7, 0x66, 0xa9, 0xad, 0x90, 0xb9, 0x37, 0x49, 0x6e, 0x66, 0x10, 0xae},
+			"unicode-bidi-0.3.4/src/prepare.rs":          {0x50, 0x30, 0xd5, 0xcb, 0xb3, 0x28, 0xb1, 0xf0, 0x4b, 0x79, 0x87, 0x9e, 0xe8, 0xa4, 0x55, 0x60, 0x9b, 0x79, 0xf2, 0x09},
+		},
 	)
 	//goland:noinspection GoSnakeCaseUsage
 	version_check := newPackage(
+		t,
 		"version_check",
 		"0.1.5",
 		locations,
-		"MIT/Apache-2.0",
+		rust.CargoToml{
+			Package: rust.TomlPackage{
+				Description: "Tiny crate to check the version of the installed/running rustc.",
+				Homepage:    "",
+				Repository:  "https://github.com/SergioBenitez/version_check",
+				License:     "MIT/Apache-2.0",
+				LicenseFile: "",
+			},
+		},
 		OfficialRegistry,
 		"914b1a6776c4c929a602fafd8bc742e06365d4bcbe48c30f9cca5824f70dc9dd",
 		[]string{},
+		map[string][20]byte{
+			"version_check-0.1.5/.gitignore":           {0x32, 0x54, 0xb5, 0xd5, 0x53, 0x81, 0x66, 0xf1, 0xfd, 0x5a, 0x0b, 0xb4, 0x1f, 0x7f, 0x3d, 0x3b, 0xbd, 0x45, 0x5c, 0x56},
+			"version_check-0.1.5/Cargo.toml.orig":      {0xfc, 0xdc, 0x04, 0x76, 0x76, 0xe0, 0x85, 0x74, 0x85, 0xf2, 0x83, 0x4e, 0xed, 0xa2, 0x7d, 0x97, 0x10, 0x9e, 0x24, 0x38},
+			"version_check-0.1.5/Cargo.toml":           {0x00, 0xd6, 0xf8, 0x2c, 0xe9, 0x31, 0xab, 0x8d, 0xe0, 0x90, 0xf7, 0x99, 0xbe, 0x41, 0xaf, 0xa1, 0x20, 0xf2, 0x3d, 0xa7},
+			"version_check-0.1.5/LICENSE-APACHE":       {0x57, 0x98, 0x83, 0x2c, 0x31, 0x66, 0x3c, 0xed, 0xc1, 0x61, 0x8d, 0x18, 0x54, 0x4d, 0x44, 0x5d, 0xa0, 0x29, 0x52, 0x29},
+			"version_check-0.1.5/LICENSE-MIT":          {0xcf, 0xcb, 0x55, 0x2e, 0xf0, 0xaf, 0xbe, 0x7c, 0xcb, 0x41, 0x28, 0x89, 0x1c, 0x0d, 0xe0, 0x06, 0x85, 0x98, 0x8a, 0x4b},
+			"version_check-0.1.5/README.md":            {0xa8, 0x8c, 0x57, 0x6b, 0x3d, 0xc0, 0x5d, 0x78, 0x01, 0x22, 0x17, 0xf3, 0x4a, 0x10, 0xfd, 0x9a, 0xe5, 0xa5, 0x14, 0xda},
+			"version_check-0.1.5/src/lib.rs":           {0x0b, 0x69, 0xc0, 0xdb, 0xa2, 0x82, 0x4a, 0x1b, 0xfd, 0x0b, 0x3f, 0x3d, 0xa7, 0x1c, 0x21, 0xec, 0x2e, 0x27, 0x95, 0xfa},
+			"version_check-0.1.5/.cargo_vcs_info.json": {0xc2, 0xcb, 0xaa, 0x20, 0x21, 0x2e, 0x0f, 0x8e, 0xb1, 0xe2, 0xd1, 0x87, 0x5b, 0xe2, 0xa1, 0x7d, 0x5a, 0xb2, 0x23, 0xc2},
+		},
 	)
 	//goland:noinspection GoSnakeCaseUsage
 	accesskit_winit := newPackage(
+		t,
 		"accesskit_winit",
 		"0.16.1",
 		locations,
-		"Apache-2.0",
+		rust.CargoToml{
+			Package: rust.TomlPackage{
+				Description: "AccessKit UI accessibility infrastructure: winit adapter",
+				Homepage:    "",
+				Repository:  "https://github.com/AccessKit/accesskit",
+				License:     "Apache-2.0",
+				LicenseFile: "",
+			},
+		},
 		OfficialSparse,
 		"5284218aca17d9e150164428a0ebc7b955f70e3a9a78b4c20894513aabf98a67",
 		[]string{}, // see comment at the head of the function
+		map[string][20]byte{
+			"accesskit_winit-0.16.1/.cargo_vcs_info.json":         {0x41, 0x67, 0x0c, 0xdd, 0x89, 0x86, 0x8c, 0xae, 0xaf, 0x12, 0xac, 0x15, 0x1b, 0xa7, 0x26, 0x12, 0x1a, 0x7f, 0x2f, 0xcb},
+			"accesskit_winit-0.16.1/CHANGELOG.md":                 {0x73, 0x6e, 0x12, 0xda, 0x4b, 0xf0, 0x6f, 0x14, 0x2c, 0x78, 0x15, 0x34, 0x9f, 0xe4, 0xd9, 0xfc, 0x8d, 0x8a, 0x4e, 0x49},
+			"accesskit_winit-0.16.1/Cargo.lock":                   {0x8c, 0x0f, 0xf3, 0x0a, 0x7c, 0x7d, 0x82, 0x4d, 0x6b, 0x4f, 0xf7, 0x2c, 0xbf, 0xcc, 0x47, 0xae, 0xb5, 0xde, 0x42, 0xba},
+			"accesskit_winit-0.16.1/Cargo.toml":                   {0xf6, 0xee, 0x42, 0x0b, 0x53, 0x3c, 0x6a, 0x8b, 0x36, 0x82, 0xd1, 0xaf, 0xe1, 0x38, 0xe5, 0x23, 0xc4, 0xcf, 0xb8, 0x22},
+			"accesskit_winit-0.16.1/Cargo.toml.orig":              {0x28, 0x43, 0x01, 0xa6, 0x50, 0x7e, 0x77, 0x01, 0xba, 0xd8, 0xc7, 0xb1, 0x60, 0x69, 0x06, 0xac, 0xe5, 0x47, 0x86, 0x00},
+			"accesskit_winit-0.16.1/README.md":                    {0x19, 0xf7, 0x31, 0xae, 0x27, 0x7a, 0xad, 0x4a, 0x74, 0x0b, 0x23, 0xe0, 0x03, 0x54, 0xcb, 0x53, 0xdd, 0xb5, 0x08, 0x64},
+			"accesskit_winit-0.16.1/examples/simple.rs":           {0x7c, 0xd8, 0x64, 0xd6, 0x18, 0x3b, 0x46, 0xb0, 0xe2, 0x13, 0x78, 0xaa, 0xae, 0x2e, 0xcb, 0x0a, 0xbc, 0x8a, 0xcd, 0xd3},
+			"accesskit_winit-0.16.1/src/lib.rs":                   {0x7d, 0x1e, 0x3b, 0xc6, 0xd8, 0x08, 0x0e, 0x8f, 0x34, 0x8d, 0x46, 0x90, 0xbd, 0xf6, 0xdc, 0x5d, 0x44, 0xb3, 0xc8, 0x15},
+			"accesskit_winit-0.16.1/src/platform_impl/macos.rs":   {0xb9, 0xcb, 0xa6, 0x9f, 0xa2, 0x90, 0x2d, 0x2f, 0x6c, 0xc9, 0xb2, 0x31, 0x91, 0x69, 0xfa, 0x5c, 0xf3, 0x97, 0x5f, 0x05},
+			"accesskit_winit-0.16.1/src/platform_impl/mod.rs":     {0x7a, 0xac, 0xdc, 0xea, 0xfb, 0xe2, 0xc1, 0xbb, 0x92, 0x0d, 0x6c, 0x84, 0xa6, 0x85, 0xa3, 0x54, 0xba, 0xcf, 0xd8, 0x3d},
+			"accesskit_winit-0.16.1/src/platform_impl/null.rs":    {0xec, 0xd4, 0x20, 0x9a, 0x6a, 0x40, 0x80, 0xa3, 0xc0, 0x2b, 0xfd, 0x01, 0xc8, 0x0f, 0x32, 0xa1, 0xc0, 0x25, 0x1c, 0x66},
+			"accesskit_winit-0.16.1/src/platform_impl/unix.rs":    {0x70, 0x10, 0xe6, 0xaa, 0xd7, 0xfb, 0x9c, 0xbd, 0xc9, 0x6b, 0xf3, 0x84, 0x62, 0x18, 0x16, 0xc0, 0x12, 0x72, 0x76, 0xf8},
+			"accesskit_winit-0.16.1/src/platform_impl/windows.rs": {0x6d, 0x80, 0x68, 0x7a, 0x1b, 0x62, 0x76, 0x79, 0x30, 0xef, 0xb8, 0xdf, 0xfb, 0x4f, 0xa9, 0x64, 0x52, 0xa7, 0x79, 0x16},
+		},
 	)
 	expectedPkgs := []pkg.Package{
 		ansi_term.Package,
@@ -148,1312 +416,7 @@ func TestParseCargoLock(t *testing.T) {
 		p.SetID()
 	}
 
-	// all the contains relations were generated, by:
-	// 1. downloading the crates via wget
-	// wget https://static.crates.io/crates/ansi_term/0.12.1/download
-	// wget https://static.crates.io/crates/matches/0.1.8/download
-	// wget https://static.crates.io/crates/memchr/2.3.3/download
-	// wget https://static.crates.io/crates/natord/1.0.9/download
-	// wget https://static.crates.io/crates/nom/4.2.3/download
-	// wget https://static.crates.io/crates/unicode-bidi/0.3.4/download
-	// wget https://static.crates.io/crates/version_check/0.1.5/download
-	// wget https://static.crates.io/crates/accesskit_winit/0.16.1/download
-	// 2. extracting them via tar -xvf
-	// for i in *; do tar -xvf $i; done
-	// 3. deleting the downloads
-	// rm download*
-	// 4. mv unicode-bidi-0.3.4 unicode_bidi-0.3.4
-	// 7. find -type f -exec sha1sum {} >> sums.sha1 +
-	// 8. remove the last line, which contains the hash of sums.sha1 itself
-	// 9. in sums.sha1 regex replacing "([0-9a-f]+)\s+\./(.*?)-[0-9]+\.[0-9]+\.[0-9]+/(.*)" to "\t\t{\n\t\t\tFrom: \2,\n\t\t\tTo: file.NewCoordinates(\2.coordinatePathPrepend+"\3", \2.downloadLocation),\n\t\t\tType: artifact.ContainsRelationship,\n\t\t\tData: file.Digest{\n\t\t\t\tAlgorithm: "sha1",\n\t\t\t\tValue: "\1",\n\t\t\t},\n\t\t},"
 	var expectedRelationships = []artifact.Relationship{
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+".appveyor.yml", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c42d6a3f7e5034faa6575ffb3fbdbbdff1c7ae36",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+".gitignore", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "a61a3e6e96c70bfd3e7317e273e4bc73966cd206",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+".rustfmt.toml", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c5764722079c8d29355b51c529d33aa987308d96",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+".travis.yml", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "87b6300a2c64fd5c277b239ccf3a197ac93330a9",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"Cargo.toml.orig", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "028652d42e04c077101de1915442bc91b969b0b8",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"Cargo.toml", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "0293cdba284ead161e8bb22810df81da7e0d4d46",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"examples/256_colours.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "69e1803a4e8ceb7b9ac824105e132e36dac5f83d",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"examples/basic_colours.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "1b012d37d1821eb962781e3b70f8a1049568a684",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"examples/rgb_colours.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "fe54d6382de09f91056cd0f0e23ee0cf08f4a465",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"LICENCE", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "7293920aac55f4d275cef83ba10d706585622a53",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"README.md", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "0256097d83afe02e629b924538e64daa5cc96cfc",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"src/ansi.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "a44febd838c3c6a083ad7855f8f256120f5910e5",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"src/debug.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "9a144eac569faadf3476394b6ccb14c535d5a4b3",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"src/difference.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "b27f3d41bbaa70b427a6be965b203d14b02b461f",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"src/display.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "0c0a49ac7f10fed51312844f0736d9b27b21e289",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"src/lib.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "685f66c3d2fd0487dead77764d8d4a1d882aad38",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"src/style.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "30e0f9157760b374caff3ebcdcb0b932115fc49f",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"src/util.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "ec085dabb9f7103ecf9c3c150d1f57cf33a4c6eb",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"src/windows.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "a2271341a4248916eebaf907b27be2170c12d45c",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"src/write.rs", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "ac7f435f78ef8c2ed733573c62c428c7a9794038",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+".cargo_vcs_info.json", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "216d8c4b73c5c920e50b9381799fabeeb6db9e2b",
-			},
-		},
-		{
-			From: ansi_term,
-			To:   file.NewCoordinates(ansi_term.coordinatePathPrepend+"Cargo.lock", ansi_term.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "4fe4f31ecf5587749ef36a0d737520505e2b738a",
-			},
-		},
-		{
-			From: matches,
-			To:   file.NewCoordinates(matches.coordinatePathPrepend+"Cargo.toml.orig", matches.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "818c35d1d78008a9d8e2e7b33bb316eea02d7711",
-			},
-		},
-		{
-			From: matches,
-			To:   file.NewCoordinates(matches.coordinatePathPrepend+"Cargo.toml", matches.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "ae580adb71d8a07fe5865cd9951bc6886ab3e3a4",
-			},
-		},
-		{
-			From: matches,
-			To:   file.NewCoordinates(matches.coordinatePathPrepend+"LICENSE", matches.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "1b0e913d41a66c988376898aa995d6c2f45bb50c",
-			},
-		},
-		{
-			From: matches,
-			To:   file.NewCoordinates(matches.coordinatePathPrepend+"lib.rs", matches.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c6329ef2162b8b59dd2bcda7402151c47a7cf99f",
-			},
-		},
-		{
-			From: matches,
-			To:   file.NewCoordinates(matches.coordinatePathPrepend+"tests/macro_use_one.rs", matches.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "faad095b6182c15929020d79581661f1a331daa3",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+".cargo_vcs_info.json", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "41670cdd89868caeaf12ac151ba726121a7f2fcb",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"CHANGELOG.md", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "736e12da4bf06f142c7815349fe4d9fc8d8a4e49",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"Cargo.lock", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "8c0ff30a7c7d824d6b4ff72cbfcc47aeb5de42ba",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"Cargo.toml", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "f6ee420b533c6a8b3682d1afe138e523c4cfb822",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"Cargo.toml.orig", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "284301a6507e7701bad8c7b1606906ace5478600",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"README.md", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "19f731ae277aad4a740b23e00354cb53ddb50864",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"examples/simple.rs", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "7cd864d6183b46b0e21378aaae2ecb0abc8acdd3",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"src/lib.rs", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "7d1e3bc6d8080e8f348d4690bdf6dc5d44b3c815",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"src/platform_impl/macos.rs", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "b9cba69fa2902d2f6cc9b2319169fa5cf3975f05",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"src/platform_impl/mod.rs", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "7aacdceafbe2c1bb920d6c84a685a354bacfd83d",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"src/platform_impl/null.rs", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "ecd4209a6a4080a3c02bfd01c80f32a1c0251c66",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"src/platform_impl/unix.rs", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "7010e6aad7fb9cbdc96bf384621816c0127276f8",
-			},
-		},
-		{
-			From: accesskit_winit,
-			To:   file.NewCoordinates(accesskit_winit.coordinatePathPrepend+"src/platform_impl/windows.rs", accesskit_winit.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "6d80687a1b62767930efb8dffb4fa96452a77916",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+".github/workflows/ci.yml", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "987372cc6a27668c02b8e9a9fe68e767cd4c658c",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+".gitignore", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "556d32e5cb6dfbdbfc67e2dd06f948b76fe8b9d3",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+".ignore", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "e48305d030f8aebbe1a89fcb84f4ac19bb073975",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"COPYING", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "dd445710e6e4caccc4f8a587a130eaeebe83f6f6",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"Cargo.toml.orig", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "fe0739eacb9577f22fa4cd9c35096c2ac11ead76",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"Cargo.toml", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "395d46c2216bc3a5092b37c3dc7516566467dfd4",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"LICENSE-MIT", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "4c8990add9180fc59efa5b0d8faf643c9709501e",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"README.md", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "802d3bfea6ff17d5f082ecceb511913021390699",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"UNLICENSE", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "ff007ce11f3ff7964f1a5b04202c4e95b5c82c85",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"build.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "59fca6951275d4feba14c07109c4bb351da187d5",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"rustfmt.toml", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "558a7c72e415544f0b8790cd8c752690d0bc05c6",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/c.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c75095493e42affe48a23e7de9c77c95ec139c7c",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/fallback.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "7f13c3502f300646a24e58172d99d78033e339b2",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/iter.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "b01cc89987d9c2f61baa97f7465ca2b81ce80b52",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/lib.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "35fac0bea520bfeb99197cfd97056bed99582ce2",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/naive.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "fcb709375bf7a20ddd97388982050d5d5da5f15f",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/tests/iter.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "daaf6a0b800563deb45227b2e7fb6fdae464ae84",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/tests/memchr.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "37f44dc29c8efb1d19eea6f2924a19ba86c14b3b",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/tests/miri.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c6569d55c18255a52f5a75256f95167101d9dbeb",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/tests/mod.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "cdd9c0085ceccf76090bc327840e6a9315499acc",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/x86/avx.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "4bc56ed4faa1b026b399c169790a678b6af6a941",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/x86/mod.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "be8644c7bad1427b23436e6d5992c16e5129c216",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/x86/sse2.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "d2b640c77a0223812fa6a6f550e61ff4269320f0",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+"src/x86/sse42.rs", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "f053482427712918edf50aea0cb7e2fb95a2ccc1",
-			},
-		},
-		{
-			From: memchr,
-			To:   file.NewCoordinates(memchr.coordinatePathPrepend+".cargo_vcs_info.json", memchr.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "b1ecb8751a0d53cccb6be606ede175736d51da04",
-			},
-		},
-		{
-			From: natord,
-			To:   file.NewCoordinates(natord.coordinatePathPrepend+".gitignore", natord.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "3254b5d5538166f1fd5a0bb41f7f3d3bbd455c56",
-			},
-		},
-		{
-			From: natord,
-			To:   file.NewCoordinates(natord.coordinatePathPrepend+".travis.yml", natord.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "4eadee39324e1cc0e156d4c1632fc417f9ed8a7e",
-			},
-		},
-		{
-			From: natord,
-			To:   file.NewCoordinates(natord.coordinatePathPrepend+"Cargo.toml", natord.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "bffdbe1b6b2576ae1b17d4693545aa0145b435be",
-			},
-		},
-		{
-			From: natord,
-			To:   file.NewCoordinates(natord.coordinatePathPrepend+"lib.rs", natord.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "83320272b3d922f5bed408d04fb18954c34958b0",
-			},
-		},
-		{
-			From: natord,
-			To:   file.NewCoordinates(natord.coordinatePathPrepend+"LICENSE.txt", natord.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "bf18c5cc6c1db93eb4e2e95b11352e4660408fec",
-			},
-		},
-		{
-			From: natord,
-			To:   file.NewCoordinates(natord.coordinatePathPrepend+"README.md", natord.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c2958854fdc10329e409906292506d6e24dd78b5",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"CHANGELOG.md", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "48ba21326a9a3bdf1504a642a42cf7f84a0076e8",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"Cargo.toml.orig", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c1d374941ff23392f409b933c799e849bd948b0e",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"Cargo.toml", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "e041d8ad32b719e9ab49c3f7f187d2902ea491f9",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"LICENSE", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "e7b32657d4608cb4a57afa790801ecb9c2a037f5",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"build.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c59d60b5509a470ff9445c43ee414a029724504e",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/bits.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "419bf0a257199204fbf7e98ca2904eafd99f2264",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/branch.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "388f6ae6ce5d441dbe360bcc1be493315386e73a",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/bytes.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "483cae38a9eb9129e6a7958f1ca40be9d9bb2571",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/character.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "a7ec8cc1042501dced6c35f436342e865aac97be",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/internal.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "2ffaf19df16c691da9d250840d9fbdf56e2403bb",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/lib.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "39e4e967ce4a559fb08b3bb0d7b38f8c9429fe82",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/macros.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "39a24461edd8adc74a28c36d14699b0728e90f9d",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/methods.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "3b934d588ee14965b19d831efc7f0b63cf78e0a9",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/multi.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "098ba3b2faccdf3485491d88e521a3c9f5667ddc",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/nom.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c74454752b17c2a7fa8abe398093617f8141f6f7",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/regexp.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "2875009ce9d7df6787d794a4a807a677a5f1e600",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/sequence.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "1a496dbd1094e93f1409bad30b31867a566de089",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/simple_errors.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "585ba0d774a4d6c48229f61e051368333ba16bf9",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/str.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "2e7303a42f0f31647c68c9b45c85e815c7c9d2f4",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/traits.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "74ca43bd49a2b81799dfef4b8fbecfd1f77884e9",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/types.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "3032dba26cddcd7018c0e48295e30ae403902d7e",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/util.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "fc1a7dc1250b692c5f849f2bfb6b84241eff9d0a",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/verbose_errors.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "4d5ee906c52b72080d8a6eee5a9227ab4e76506b",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"src/whitespace.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "2d5cb62bf4c5e7107d122f120603cc6c38c747be",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/arithmetic.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "a85ef14df0e37e9455b2543ed0d43c5f7a600a7d",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/arithmetic_ast.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "1b752396f083d8ea500a04ea0ce799b78ff42098",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/blockbuf-arithmetic.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "8b41afbcc779ce0410a1295b987b4340d30798b9",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/complete_arithmetic.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "be31008788ba4ba2f901ecbf5337e55f6c20828e",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/complete_float.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c1e4b10c80c261842e808517d85f98bff6ca006a",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/css.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "a6bf483ae364c9820428c1b830e28c0e4eeddec3",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/custom_errors.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "41d94a408dfb23eed0142d7b9c982a4fdfbd293a",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/float.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "cbe19c77cd0b149198d610cbdb825a06d27c1ea4",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/inference.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "cee94e4224a72ceed0c21549ed2ef1341657fc32",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/ini.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "6c51af96426032b9f442caeab542b900b1128719",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/ini_str.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "aa971f48e78b79766deba7217dfca78a9b960855",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/issues.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "5f61b69052fad5b413d9e588ffecab8004849788",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/json.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "b45c8b0db154180350c34c2d2086fa355b1b45e5",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/mp4.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "7288433829b9b3f305761b240c8c9b60529f66a1",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/multiline.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "270c16ebaf0c3839e9ebe66cca28803fe64bbc05",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/named_args.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "f67ef99a7df44705eecf64de45f200c296ec4648",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/overflow.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "1ad7e1bdc3b070bd336680f39294f7400bf50d61",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/reborrow_fold.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "4ba89f2b42dcf803a2687b370c835e2134f11af1",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+"tests/test1.rs", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "f7c223208509242a9b66d9fbfaccc509d2a14bef",
-			},
-		},
-		{
-			From: nom,
-			To:   file.NewCoordinates(nom.coordinatePathPrepend+".cargo_vcs_info.json", nom.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "93ede0fafa3ccca217787167b2a7a9c22cdf0b88",
-			},
-		},
-		{
-			From: version_check,
-			To:   file.NewCoordinates(version_check.coordinatePathPrepend+".gitignore", version_check.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "3254b5d5538166f1fd5a0bb41f7f3d3bbd455c56",
-			},
-		},
-		{
-			From: version_check,
-			To:   file.NewCoordinates(version_check.coordinatePathPrepend+"Cargo.toml.orig", version_check.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "fcdc047676e0857485f2834eeda27d97109e2438",
-			},
-		},
-		{
-			From: version_check,
-			To:   file.NewCoordinates(version_check.coordinatePathPrepend+"Cargo.toml", version_check.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "00d6f82ce931ab8de090f799be41afa120f23da7",
-			},
-		},
-		{
-			From: version_check,
-			To:   file.NewCoordinates(version_check.coordinatePathPrepend+"LICENSE-APACHE", version_check.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "5798832c31663cedc1618d18544d445da0295229",
-			},
-		},
-		{
-			From: version_check,
-			To:   file.NewCoordinates(version_check.coordinatePathPrepend+"LICENSE-MIT", version_check.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "cfcb552ef0afbe7ccb4128891c0de00685988a4b",
-			},
-		},
-		{
-			From: version_check,
-			To:   file.NewCoordinates(version_check.coordinatePathPrepend+"README.md", version_check.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "a88c576b3dc05d78012217f34a10fd9ae5a514da",
-			},
-		},
-		{
-			From: version_check,
-			To:   file.NewCoordinates(version_check.coordinatePathPrepend+"src/lib.rs", version_check.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "0b69c0dba2824a1bfd0b3f3da71c21ec2e2795fa",
-			},
-		},
-		{
-			From: version_check,
-			To:   file.NewCoordinates(version_check.coordinatePathPrepend+".cargo_vcs_info.json", version_check.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c2cbaa20212e0f8eb1e2d1875be2a17d5ab223c2",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+".appveyor.yml", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "e6a4b71b2e461d29891f693815fb8d946a468dd5",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+".gitignore", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "49b13a4aa553694185bb35d9ba508e55545ccb5c",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+".rustfmt.toml", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "76a81d84fe870ade0d22f3e952a61d0d75eb5a87",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+".travis.yml", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "e4acfec5e6f3afef42e8461a15a02348abd5d741",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"AUTHORS", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "05bb8f0c2d2c480ab371dfbc7d58cc44b9184403",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"COPYRIGHT", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "871b9912ab96cf7d79cb8ae83ca0b08cd5d0cbfd",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"Cargo.toml.orig", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "51dcdeeaa5e96a9b02471b6ba8a1fdd08ec6aa03",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"Cargo.toml", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "f6b0f63bf80d80eb4d5df44f3c6d77947a930acb",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"LICENSE-APACHE", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "5798832c31663cedc1618d18544d445da0295229",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"LICENSE-MIT", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "60c3522081bf15d7ac1d4c5a63de425ef253e87a",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"README.md", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "78d6f25691fa623f950efdf9d2a9aae129e30e2d",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"src/char_data/mod.rs", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "7a08a46193d71df15da9d900c339a4dbce0a5f45",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"src/char_data/tables.rs", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "e495d79981929f5bb2f0457d452de8a4b52f6666",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"src/deprecated.rs", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "43ac5028a8f1d5ddba76822147fb363ef0222601",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"src/explicit.rs", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "eed6c9865990a33498339e5f0fe9ba63352d08f1",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"src/format_chars.rs", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "468f7b50f5a290b6bdbb0707381dfb5a61e90012",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"src/implicit.rs", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "1a47012f5da712a4f8d0418a54b93ac5e011cece",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"src/level.rs", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "c9fabd87fb706e9ea6aa9bbfcff00cad11efae07",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"src/lib.rs", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "7ea0fb0b66115b1ec766a9ad90b937496e6610ae",
-			},
-		},
-		{
-			From: unicode_bidi,
-			To:   file.NewCoordinates(unicode_bidi.coordinatePathPrepend+"src/prepare.rs", unicode_bidi.downloadLocation),
-			Type: artifact.ContainsRelationship,
-			Data: file.Digest{
-				Algorithm: "sha1",
-				Value:     "5030d5cbb328b1f04b79879ee8a455609b79f209",
-			},
-		},
 		{
 			From: matches.Package,
 			To:   unicode_bidi.Package,
@@ -1469,6 +432,26 @@ func TestParseCargoLock(t *testing.T) {
 			To:   nom.Package,
 			Type: artifact.DependencyOfRelationship,
 		},
+	}
+	for _, p := range []packageInfo{ansi_term, matches,
+		memchr,
+		natord,
+		nom,
+		unicode_bidi,
+		version_check,
+		accesskit_winit,
+	} {
+		for k, v := range p.RustMeta.SourceGeneratedDepInfo.PathSha1Hashes {
+			expectedRelationships = append(expectedRelationships, artifact.Relationship{
+				From: p.Package,
+				To:   file.NewCoordinates(k, p.RustMeta.SourceGeneratedDepInfo.DownloadLink),
+				Type: artifact.ContainsRelationship,
+				Data: file.Digest{
+					Algorithm: "sha1",
+					Value:     strings.ToLower(hex.EncodeToString(v[:])),
+				},
+			})
+		}
 	}
 
 	pkgtest.TestFileParser(t, fixture, newCargoModCataloger(rust.DefaultCatalogerConfig()).parseCargoLock, expectedPkgs, expectedRelationships)
