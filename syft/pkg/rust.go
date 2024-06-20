@@ -5,3 +5,6 @@ type RustBinaryAuditEntry struct {
 	Version string `toml:"version" json:"version"`
 	Source  string `toml:"source" json:"source"`
 }
+
+// RustCargoLockEntry Required for packagemeta.TestAllNames
+type RustCargoLockEntry struct{}
