@@ -2,6 +2,7 @@ package rust
 
 import (
 	"fmt"
+	"github.com/anchore/syft/internal/log"
 
 	"github.com/anchore/syft/internal/cache"
 )
@@ -10,15 +11,16 @@ type CargoInfoResolver struct {
 	catalogerName string
 	opts          CatalogerConfig
 	crateCache    cache.Resolver[SourceGeneratedDepInfo]
-	repoCache     cache.Resolver[RegistryGeneratedDepInfo]
+	repoCache     cache.Resolver[RegistryGeneratedInfo]
 }
 
-func NewCargoInfoResolver(catalogerName string, opts CatalogerConfig) CargoInfoResolver {
+func NewCargoInfoResolver(catalogerName string, inOpts CatalogerConfig) CargoInfoResolver {
+	log.Warnf("initial cataloger config: %v", inOpts.SearchRemote)
 	return CargoInfoResolver{
 		catalogerName: catalogerName,
-		opts:          opts,
+		opts:          inOpts,
 		crateCache:    cache.GetResolverCachingErrors[SourceGeneratedDepInfo]("cargo/crate", "v1"),
-		repoCache:     cache.GetResolverCachingErrors[RegistryGeneratedDepInfo]("cargo/repositoryConfig", "v1"),
+		repoCache:     cache.GetResolverCachingErrors[RegistryGeneratedInfo]("cargo/RepositoryConfig", "v1"),
 	}
 }
 
@@ -26,8 +28,12 @@ func (r *CargoInfoResolver) Resolve(entry RustCargoLockEntry) (SourceGeneratedDe
 	if entry.SourceGeneratedDepInfo != nil {
 		return *entry.SourceGeneratedDepInfo, nil
 	}
-	if !r.opts.SearchRemote || entry.RegistryGeneratedDepInfo == nil {
+	r.opts.SearchRemote = true //Todo: why is this always false?
+	if !r.opts.SearchRemote {
 		return EmptySourceGeneratedDepInfo(), fmt.Errorf("we are not allowed to search remotly for extra info")
+	}
+	if entry.RegistryGeneratedInfo == nil {
+		return EmptySourceGeneratedDepInfo(), fmt.Errorf("no Registry Information present")
 	}
 
 	return r.crateCache.Resolve(entry.Source, func() (SourceGeneratedDepInfo, error) {
@@ -35,15 +41,17 @@ func (r *CargoInfoResolver) Resolve(entry RustCargoLockEntry) (SourceGeneratedDe
 	})
 }
 
-func (r *CargoInfoResolver) ResolveRepo(entry RustCargoLockEntry) (RegistryGeneratedDepInfo, error) {
-	if entry.RegistryGeneratedDepInfo != nil {
-		return *entry.RegistryGeneratedDepInfo, nil
+func (r *CargoInfoResolver) ResolveRepo(entry RustCargoLockEntry) (RegistryGeneratedInfo, error) {
+	if entry.RegistryGeneratedInfo != nil {
+		return *entry.RegistryGeneratedInfo, nil
 	}
+
+	r.opts.SearchRemote = true //Todo: why is this always false?
 	if !r.opts.SearchRemote {
 		return EmptyRegistryGeneratedDepInfo(), fmt.Errorf("we are not allowed to search remotly for extra info")
 	}
 
-	return r.repoCache.Resolve(entry.Source, func() (RegistryGeneratedDepInfo, error) {
+	return r.repoCache.Resolve(entry.Source, func() (RegistryGeneratedInfo, error) {
 		return entry.toRegistryGeneratedDepInfo()
 	})
 }

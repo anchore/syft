@@ -30,7 +30,7 @@ type RustCargoLockEntry struct {
 	Source           string   `toml:"source" json:"source"`
 	Checksum         string   `toml:"checksum" json:"checksum"`
 	Dependencies     []string `toml:"dependencies" json:"dependencies"`
-	*RegistryGeneratedDepInfo
+	*RegistryGeneratedInfo
 	*SourceGeneratedDepInfo
 }
 
@@ -50,13 +50,13 @@ func (r *RustCargoLockEntry) GetChecksumType() spdx.ChecksumAlgorithm {
 }
 
 func (r *RustCargoLockEntry) GetDownloadLink() (url string, isLocalFile bool, err error) {
-	if r.RegistryGeneratedDepInfo == nil {
-		return "", false, fmt.Errorf("RegistryGeneratedDepInfo is nil")
+	if r.RegistryGeneratedInfo == nil {
+		return "", false, fmt.Errorf("RegistryGeneratedInfo is nil")
 	}
-	return r.getDownloadLink(r.RegistryGeneratedDepInfo.Download), r.RegistryGeneratedDepInfo.IsLocalFile, err
+	return r.getDownloadLink(r.RegistryGeneratedInfo.Download), r.RegistryGeneratedInfo.IsLocalFile, err
 }
 
-func (r *RustCargoLockEntry) toRegistryGeneratedDepInfo() (RegistryGeneratedDepInfo, error) {
+func (r *RustCargoLockEntry) toRegistryGeneratedDepInfo() (RegistryGeneratedInfo, error) {
 	sourceID, err := r.getSourceID()
 	if err != nil {
 		return EmptyRegistryGeneratedDepInfo(), err
@@ -66,9 +66,9 @@ func (r *RustCargoLockEntry) toRegistryGeneratedDepInfo() (RegistryGeneratedDepI
 	if err != nil {
 		return EmptyRegistryGeneratedDepInfo(), err
 	}
-	return RegistryGeneratedDepInfo{
+	return RegistryGeneratedInfo{
 		IsLocalFile:      isLocalFile,
-		repositoryConfig: *repoConfig,
+		RepositoryConfig: *repoConfig,
 	}, nil
 }
 

@@ -5,14 +5,14 @@ import (
 	"crypto/sha256"
 )
 
-type RegistryGeneratedDepInfo struct {
+type RegistryGeneratedInfo struct {
 	IsLocalFile bool
-	repositoryConfig
+	RepositoryConfig
 }
 
-func EmptyRegistryGeneratedDepInfo() RegistryGeneratedDepInfo {
-	return RegistryGeneratedDepInfo{
-		repositoryConfig: emptyRepositoryConfig(),
+func EmptyRegistryGeneratedDepInfo() RegistryGeneratedInfo {
+	return RegistryGeneratedInfo{
+		RepositoryConfig: emptyRepositoryConfig(),
 	}
 }
 

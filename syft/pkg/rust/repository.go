@@ -17,11 +17,11 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 )
 
-func emptyRepositoryConfig() repositoryConfig {
-	return repositoryConfig{}
+func emptyRepositoryConfig() RepositoryConfig {
+	return RepositoryConfig{}
 }
 
-type repositoryConfig struct {
+type RepositoryConfig struct {
 	Download     string `json:"dl"`
 	API          string `json:"api"`
 	AuthRequired bool   `json:"auth-required"`
@@ -77,10 +77,10 @@ var RegistryRepos = make(map[string]*memory.Storage)
 // RepositoryConfigName see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/mod.rs#L962
 const RepositoryConfigName = "config.json"
 
-func (i *sourceID) GetConfig() (*repositoryConfig, error) {
+func (i *sourceID) GetConfig() (*RepositoryConfig, error) {
 	if i.kind == SourceKindLocalRegistry {
 		// see https://github.com/rust-lang/cargo/blob/b134eff5cedcaa4879f60035d62630400e7fd543/src/cargo/sources/registry/local.rs#L14-L57
-		return &repositoryConfig{
+		return &RepositoryConfig{
 			Download:     fmt.Sprintf("%s/%s-%s.crate", i.url, Crate, Version),
 			API:          "",
 			AuthRequired: false,
@@ -90,7 +90,7 @@ func (i *sourceID) GetConfig() (*repositoryConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	var repoConfig = repositoryConfig{}
+	var repoConfig = RepositoryConfig{}
 	err = json.Unmarshal(content, &repoConfig)
 	log.Debugf("repo config for url %s and kind %s: dl: %s, from: %s", i.url, i.kind, repoConfig.Download, string(content))
 	if err != nil {
