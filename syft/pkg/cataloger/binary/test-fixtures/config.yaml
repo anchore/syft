@@ -285,6 +285,13 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/bin/arangosh
+  - name: arangodb
+    version: 3.12.0-2
+    images:
+      - ref: arangodb:3.12.0.2@sha256:6ba2e4284cd0f4835e3ef034be90fb947c3d61225d65d07e3b2d2d893e47de25
+        platform: linux/amd64
+    paths:
+      - /usr/bin/arangosh
   - version: 15.1
     images:
       - ref: postgres:15.1@sha256:b4140dd3a62f364f16a82c1bd88d28b9887ecb47f07dbe2941237d073574d428
