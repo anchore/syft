@@ -181,7 +181,11 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (SourceGeneratedD
 
 	genDepInfo.DownloadSha = sha256.Sum256(content)
 	hexHash := hex.EncodeToString(genDepInfo.DownloadSha[:])
+	hashMatchesChecksum := strings.EqualFold(hexHash, r.Checksum)
 	log.Tracef("got hash: %s (%s expected) %t", hexHash, r.Checksum, hexHash == r.Checksum)
+	if !hashMatchesChecksum {
+		log.Warnf("Downloaded Source for crate %s@%s doesn't match the stored checksum. Got %s but expected %s.", r.Name, r.Version, hexHash, r.Checksum)
+	}
 
 	gzReader, err := gzip.NewReader(bytes.NewReader(content))
 	if err != nil {
@@ -206,7 +210,9 @@ func (r *RustCargoLockEntry) getGeneratedInformationUncached() (SourceGeneratedD
 		if err != nil {
 			return genDepInfo, err
 		}
-		genDepInfo.PathSha1Hashes[next.Name] = sha1.Sum(content) //#nosec G505 G401 -- sha1 is used as a required hash function for SPDX, not a crypto function
+		if hashMatchesChecksum {
+			genDepInfo.PathSha1Hashes[next.Name] = sha1.Sum(content) //#nosec G505 G401 -- sha1 is used as a required hash function for SPDX, not a crypto function
+		}
 
 		if next.Name == r.Name+"-"+r.Version+"/Cargo.toml" {
 			log.Tracef("Got Cargo.toml for %s-%s", r.Name, r.Version)
