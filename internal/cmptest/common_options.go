@@ -25,12 +25,15 @@ func CommonOptions(licenseCmp LicenseComparer, locationCmp LocationComparer) []c
 	return []cmp.Option{
 		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
 		cmpopts.SortSlices(pkg.Less),
-		cmpopts.AcyclicTransformer("SortRelationships", func(s []artifact.Relationship) []artifact.Relationship {
+		cmp.Comparer(func(x, y []artifact.Relationship) bool {
 			//copy here, because we shouldn't mutate the input in any way!
-			cpy := make([]artifact.Relationship, len(s))
-			copy(cpy, s)
-			slices.SortStableFunc(cpy, DefaultRelationshipComparer)
-			return cpy
+			cpyX := make([]artifact.Relationship, len(x))
+			copy(cpyX, x)
+			cpyY := make([]artifact.Relationship, len(y))
+			copy(cpyY, x)
+			slices.SortStableFunc(cpyX, DefaultRelationshipComparer)
+			slices.SortStableFunc(cpyY, DefaultRelationshipComparer)
+			return slices.CompareFunc(cpyX, cpyY, DefaultRelationshipComparer) == 0
 		}),
 		cmp.Comparer(
 			func(x, y file.LocationSet) bool {
