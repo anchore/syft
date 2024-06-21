@@ -19,6 +19,7 @@ func SupportedVersions(id sbom.FormatID) []string {
 		"1.3",
 		"1.4",
 		"1.5",
+		"1.6",
 	}
 
 	if id != JSONFormatID {
@@ -43,6 +44,8 @@ func SpecVersionFromString(v string) (cyclonedx.SpecVersion, error) {
 		return cyclonedx.SpecVersion1_4, nil
 	case "1.5":
 		return cyclonedx.SpecVersion1_5, nil
+	case "1.6":
+		return cyclonedx.SpecVersion1_6, nil
 	}
 	return -1, fmt.Errorf("unsupported CycloneDX version %q", v)
 }
@@ -61,6 +64,8 @@ func VersionFromSpecVersion(spec cyclonedx.SpecVersion) string {
 		return "1.4"
 	case cyclonedx.SpecVersion1_5:
 		return "1.5"
+	case cyclonedx.SpecVersion1_6:
+		return "1.6"
 	}
 	return ""
 }
