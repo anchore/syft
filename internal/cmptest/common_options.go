@@ -27,7 +27,7 @@ func CommonOptions(licenseCmp LicenseComparer, locationCmp LocationComparer) []c
 		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
 		cmpopts.SortSlices(pkg.Less),
 		cmp.Comparer(func(x, y []artifact.Relationship) bool {
-			//copy here, because we shouldn't mutate the input in any way!
+			// copy here, because we shouldn't mutate the input in any way!
 			cpyX := make([]artifact.Relationship, len(x))
 			copy(cpyX, x)
 			cpyY := make([]artifact.Relationship, len(y))

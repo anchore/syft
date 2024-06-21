@@ -28,45 +28,11 @@ func DefaultRelationshipComparer(x, y artifact.Relationship) int {
 		return 1
 	}
 
-	{
-		xFrom := reflect.ValueOf(x.From).Type().Name()
-		yFrom := reflect.ValueOf(y.From).Type().Name()
-		if xFrom < yFrom {
-			return -1
-		}
-		if xFrom > yFrom {
-			return 1
-		}
+	if i := DefaultIdentifiableComparer(x.From, y.From); i != 0 {
+		return i
 	}
-	{
-		xFrom := x.From.ID()
-		yFrom := y.From.ID()
-		if xFrom < yFrom {
-			return -1
-		}
-		if xFrom > yFrom {
-			return 1
-		}
-	}
-	{
-		xTo := reflect.ValueOf(x.To).Type().Name()
-		yTo := reflect.ValueOf(y.To).Type().Name()
-		if xTo < yTo {
-			return -1
-		}
-		if xTo > yTo {
-			return 1
-		}
-	}
-	{
-		xTo := x.To.ID()
-		yTo := y.To.ID()
-		if xTo < yTo {
-			return -1
-		}
-		if xTo > yTo {
-			return 1
-		}
+	if i := DefaultIdentifiableComparer(x.To, y.To); i != 0 {
+		return i
 	}
 
 	if x.Data == nil && y.Data == nil {
@@ -97,6 +63,30 @@ func DefaultRelationshipComparer(x, y artifact.Relationship) int {
 	}
 	if xStr > yStr {
 		return 1
+	}
+	return 0
+}
+
+func DefaultIdentifiableComparer(x, y artifact.Identifiable) int {
+	{
+		xTo := reflect.ValueOf(x).Type().Name()
+		yTo := reflect.ValueOf(y).Type().Name()
+		if xTo < yTo {
+			return -1
+		}
+		if xTo > yTo {
+			return 1
+		}
+	}
+	{
+		xFrom := x.ID()
+		yFrom := y.ID()
+		if xFrom < yFrom {
+			return -1
+		}
+		if xFrom > yFrom {
+			return 1
+		}
 	}
 	return 0
 }
