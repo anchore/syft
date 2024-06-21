@@ -1,11 +1,12 @@
 package cmptest
 
 import (
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"slices"
 )
 
 func DefaultCommonOptions() []cmp.Option {
@@ -24,7 +25,13 @@ func CommonOptions(licenseCmp LicenseComparer, locationCmp LocationComparer) []c
 	return []cmp.Option{
 		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
 		cmpopts.SortSlices(pkg.Less),
-		cmpopts.SortSlices(DefaultRelationshipComparer),
+		cmpopts.AcyclicTransformer("SortRelationships", func(s []artifact.Relationship) []artifact.Relationship {
+			//copy here, because we shouldn't mutate the input in any way!
+			cpy := make([]artifact.Relationship, len(s))
+			copy(cpy, s)
+			slices.SortStableFunc(cpy, DefaultRelationshipComparer)
+			return cpy
+		}),
 		cmp.Comparer(
 			func(x, y file.LocationSet) bool {
 				xs := x.ToSlice()

@@ -1,9 +1,8 @@
 package cmptest
 
 import (
-	"reflect"
-
 	"github.com/sanity-io/litter"
+	"reflect"
 
 	"github.com/anchore/syft/syft/artifact"
 )
@@ -20,36 +19,83 @@ var dataStringer = litter.Options{
 	//FieldFilter: ...
 }
 
-func DefaultRelationshipComparer(x, y artifact.Relationship) bool {
-	if reflect.ValueOf(x.From).Type().Name() < reflect.ValueOf(y.From).Type().Name() {
-		return true
-	}
-	if x.From.ID() < y.From.ID() {
-		return true
-	}
-	if reflect.ValueOf(x.To).Type().Name() < reflect.ValueOf(y.To).Type().Name() {
-		return true
-	}
-	if x.To.ID() < y.To.ID() {
-		return true
-	}
+func DefaultRelationshipComparer(x, y artifact.Relationship) int {
 	if x.Type < y.Type {
-		return true
+		return -1
 	}
+	if x.Type > y.Type {
+		return 1
+	}
+
+	{
+		xFrom := reflect.ValueOf(x.From).Type().Name()
+		yFrom := reflect.ValueOf(y.From).Type().Name()
+		if xFrom < yFrom {
+			return -1
+		}
+		if xFrom > yFrom {
+			return 1
+		}
+	}
+	{
+		xFrom := x.From.ID()
+		yFrom := y.From.ID()
+		if xFrom < yFrom {
+			return -1
+		}
+		if xFrom > yFrom {
+			return 1
+		}
+	}
+	{
+		xTo := reflect.ValueOf(x.To).Type().Name()
+		yTo := reflect.ValueOf(y.To).Type().Name()
+		if xTo < yTo {
+			return -1
+		}
+		if xTo > yTo {
+			return 1
+		}
+	}
+	{
+		xTo := x.To.ID()
+		yTo := y.To.ID()
+		if xTo < yTo {
+			return -1
+		}
+		if xTo > yTo {
+			return 1
+		}
+	}
+
 	if x.Data == nil && y.Data == nil {
-		return false
+		return 0
 	}
 	if x.Data == nil {
-		return true
+		return -1
 	}
 	if y.Data == nil {
-		return true
+		return 1
 	}
-	if reflect.ValueOf(x.Data).Type().Name() < reflect.ValueOf(y.Data).Type().Name() {
-		return true
+
+	{
+		xData := reflect.ValueOf(x.Data).Type().Name()
+		yData := reflect.ValueOf(y.Data).Type().Name()
+		if xData < yData {
+			return -1
+		}
+		if xData > yData {
+			return 1
+		}
 	}
 	// we just need a stable sort, the ordering does not need to be sensible
 	xStr := dataStringer.Sdump(x.Data)
 	yStr := dataStringer.Sdump(y.Data)
-	return xStr < yStr
+	if xStr < yStr {
+		return -1
+	}
+	if xStr > yStr {
+		return 1
+	}
+	return 0
 }
