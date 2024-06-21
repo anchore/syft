@@ -1,8 +1,9 @@
 package cmptest
 
 import (
-	"github.com/sanity-io/litter"
 	"reflect"
+
+	"github.com/sanity-io/litter"
 
 	"github.com/anchore/syft/syft/artifact"
 )
