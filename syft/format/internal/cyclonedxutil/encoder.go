@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const DefaultVersion = "1.5"
+const DefaultVersion = "1.6"
 
 type Encoder struct {
 	version cyclonedx.SpecVersion
