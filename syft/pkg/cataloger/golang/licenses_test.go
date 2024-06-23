@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -244,3 +245,17 @@ func Test_findVersionPath(t *testing.T) {
 	vp := findVersionPath(f, ".")
 	require.Equal(t, "github.com/someorg/somepkg@version", vp)
 }
+
+func Test_walkDirErrors(t *testing.T) {
+	resolver := newGoLicenseResolver("", CatalogerConfig{})
+	_, err := resolver.findLicensesInFS("somewhere", badFS{})
+	require.Error(t, err)
+}
+
+type badFS struct{}
+
+func (b badFS) Open(name string) (fs.File, error) {
+	return nil, fmt.Errorf("error")
+}
+
+var _ fs.FS = (*badFS)(nil)
