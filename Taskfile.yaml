@@ -118,6 +118,9 @@ tasks:
       - "{{ .TMP_DIR }}"
     cmd: "mkdir -p {{ .TMP_DIR }}"
 
+  ci-bootstrap-go:
+    cmd: "go mod download"
+
   ## Static analysis tasks #################################
 
   format:
