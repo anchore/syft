@@ -92,10 +92,13 @@ tools:
   - name: bouncer
     version:
       want: v0.4.0
-    method: go-install
+    method: github-release
     with:
-      module: github.com/wagoodman/go-bouncer
-      entrypoint:
+      repo: wagoodman/go-bouncer
+#    method: go-install
+#    with:
+#      module: github.com/wagoodman/go-bouncer
+#      entrypoint:
 
   # used for showing benchmark testing
   - name: benchstat
