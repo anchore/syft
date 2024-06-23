@@ -254,8 +254,53 @@ func Test_walkDirErrors(t *testing.T) {
 
 type badFS struct{}
 
-func (b badFS) Open(name string) (fs.File, error) {
+func (b badFS) Open(_ string) (fs.File, error) {
 	return nil, fmt.Errorf("error")
 }
 
 var _ fs.FS = (*badFS)(nil)
+
+func Test_noLocalGoModDir(t *testing.T) {
+	emptyTmp := t.TempDir()
+
+	validTmp := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(validTmp, "mod@ver"), 0700|os.ModeDir))
+
+	tests := []struct {
+		name    string
+		dir     string
+		wantErr require.ErrorAssertionFunc
+	}{
+		{
+			name:    "empty",
+			dir:     "",
+			wantErr: require.Error,
+		},
+		{
+			name:    "invalid dir",
+			dir:     filepath.Join(emptyTmp, "invalid-dir"),
+			wantErr: require.Error,
+		},
+		{
+			name:    "missing mod dir",
+			dir:     emptyTmp,
+			wantErr: require.Error,
+		},
+		{
+			name:    "valid mod dir",
+			dir:     validTmp,
+			wantErr: require.NoError,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			resolver := newGoLicenseResolver("", CatalogerConfig{
+				SearchLocalModCacheLicenses: true,
+				LocalModCacheDir:            test.dir,
+			})
+			_, err := resolver.getLicensesFromLocal("mod", "ver")
+			test.wantErr(t, err)
+		})
+	}
+}
