@@ -8535,7 +8535,8 @@
         "cpe:2.3:a:quantumcloud:ai_chatbot:*:*:*:*:*:wordpress:*:*"
       ],
       "chaty": [
-        "cpe:2.3:a:premio:chaty:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:premio:chaty:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:premio:floating_chat_widget:*:*:*:*:*:wordpress:*:*"
       ],
       "check-email": [
         "cpe:2.3:a:check_email_project:check_email:*:*:*:*:*:wordpress:*:*",
@@ -9352,7 +9353,8 @@
         "cpe:2.3:a:arwebdesign:dashboard_to-do_list:*:*:*:*:*:wordpress:*:*"
       ],
       "dashboard-widgets-suite": [
-        "cpe:2.3:a:plugin-planet:dashboard_widget_suite:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:plugin-planet:dashboard_widget_suite:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:plugin-planet:dashboard_widgets_suite:*:*:*:*:*:wordpress:*:*"
       ],
       "dashicons-cpt": [
         "cpe:2.3:a:halgatewood:dashicons_\\+_custom_post_types:*:*:*:*:*:wordpress:*:*"
@@ -9880,6 +9882,9 @@
       ],
       "elementskit-lite": [
         "cpe:2.3:a:wpmet:elements_kit_elementor_addons:*:*:*:*:*:wordpress:*:*"
+      ],
+      "elespare": [
+        "cpe:2.3:a:elespare:elespare:*:*:*:*:*:wordpress:*:*"
       ],
       "emag-marketplace-connector": [
         "cpe:2.3:a:zitec:emag_marketplace_connector:*:*:*:*:*:wordpress:*:*"
@@ -13683,6 +13688,9 @@
       "pubsubhubbub": [
         "cpe:2.3:a:pubsubhubbub:websub:*:*:*:*:*:wordpress:*:*"
       ],
+      "pure-chat": [
+        "cpe:2.3:a:purechat:pure_chat:*:*:*:*:*:*:*:*"
+      ],
       "purple-xmls-google-product-feed-for-woocommerce": [
         "cpe:2.3:a:dpl:product_feed_on_woocommerce_for_google\\,_awin\\,_shareasale\\,_bing\\,_and_more:*:*:*:*:*:wordpress:*:*"
       ],
@@ -15479,6 +15487,9 @@
       ],
       "themesflat-addons-for-elementor": [
         "cpe:2.3:a:themesflat:themesflat_addons_for_elementor:*:*:*:*:*:wordpress:*:*"
+      ],
+      "themify-builder": [
+        "cpe:2.3:a:themify:themify_builder:*:*:*:*:*:wordpress:*:*"
       ],
       "themify-portfolio-post": [
         "cpe:2.3:a:themify:portfolio_post:*:*:*:*:*:wordpress:*:*"
