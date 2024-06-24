@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"io"
 	"net/url"
 	"os"
@@ -91,4 +92,15 @@ func Test_makeDiskKey(t *testing.T) {
 			require.Equal(t, test.in, unescaped)
 		})
 	}
+}
+
+func Test_errors(t *testing.T) {
+	tmp := t.TempDir()
+	cache := filepath.Join(tmp, "cache")
+	// make a non-writable directory
+	require.NoError(t, os.MkdirAll(cache, 0500|os.ModeDir))
+	// attempt to make cache in non-writable directory
+	dir := filepath.Join(cache, "dir")
+	_, err := NewFromDir(dir, time.Hour)
+	require.ErrorContains(t, err, fmt.Sprintf("unable to create directory at '%s':", dir))
 }

@@ -138,7 +138,15 @@ func (c *goLicenseResolver) getLicensesFromRemote(moduleName, moduleVersion stri
 
 func (c *goLicenseResolver) findLicensesInFS(urlPrefix string, fsys fs.FS) ([]goLicense, error) {
 	var out []goLicense
-	err := fs.WalkDir(fsys, ".", func(filePath string, d fs.DirEntry, _ error) error {
+	err := fs.WalkDir(fsys, ".", func(filePath string, d fs.DirEntry, err error) error {
+		if err != nil {
+			log.Debugf("error reading %s#%s: %v", urlPrefix, filePath, err)
+			return err
+		}
+		if d == nil {
+			log.Debugf("nil entry for %s#%s", urlPrefix, filePath)
+			return nil
+		}
 		if !c.lowerLicenseFileNames.Has(strings.ToLower(d.Name())) {
 			return nil
 		}
