@@ -63,6 +63,14 @@ from-images:
     paths:
       - /usr/local/lib/erlang/erts-14.2.4/lib/internal/liberts_internal.a
 
+  - name: erlang
+    version: 27.0
+    images:
+      - ref: erlang:27.0.0.0-alpine@sha256:82064a65eb1f9901a479d8ada5f622be3bfac8b474dfc876dc00c28fdef4b1b8
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/erlang/erts-15.0/bin/beam.smp
+
   - version: 1.21.3
     images:
       - ref: golang:1.21.3@sha256:3ce8313c3513515040870c55e0c041a2b94f3576a58cfd3948633604214aa811
