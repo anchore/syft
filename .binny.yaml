@@ -2,26 +2,30 @@ tools:
   # we want to use a pinned version of binny to manage the toolchain (so binny manages itself!)
   - name: binny
     version:
-      want: v0.8.0
-    method: github-release
+#      want: v0.8.0
+      want: fix-freebsd
+    method: go-install
     with:
-      repo: anchore/binny
+      module: github.com/anchore/binny
+      entrypoint: cmd/binny
 
   # used to produce SBOMs during release
   - name: syft
     version:
       want: latest
-    method: github-release
+    method: go-install
     with:
-      repo: anchore/syft
+      module: github.com/anchore/syft
+      entrypoint: cmd/syft
 
   # used to sign mac binaries at release
   - name: quill
     version:
       want: v0.4.1
-    method: github-release
+    method: go-install
     with:
-      repo: anchore/quill
+      module: github.com/anchore/quill
+      entrypoint: cmd/quill
 
   # used for linting
   - name: golangci-lint
@@ -43,41 +47,46 @@ tools:
   - name: cosign
     version:
       want: v2.2.4
-    method: github-release
+    method: go-install
     with:
-      repo: sigstore/cosign
+      module: github.com/sigstore/cosign/v2
+      entrypoint: cmd/cosign
 
   # used in integration tests to verify JSON schemas
   - name: yajsv
     version:
       want: v1.4.1
-    method: github-release
+    method: go-install
     with:
-      repo: neilpa/yajsv
+      module: github.com/neilpa/yajsv
+      entrypoint:
 
   # used to release all artifacts
   - name: goreleaser
     version:
       want: v2.0.1
-    method: github-release
+    method: go-install
     with:
-      repo: goreleaser/goreleaser
+      module: github.com/goreleaser/goreleaser/v2
+#      entrypoint: cmd
 
   # used for organizing imports during static analysis
   - name: gosimports
     version:
       want: v0.3.8
-    method: github-release
+    method: go-install
     with:
-      repo: rinchsan/gosimports
+      module: github.com/rinchsan/gosimports
+      entrypoint: cmd/gosimports
 
   # used at release to generate the changelog
   - name: chronicle
     version:
       want: v0.8.0
-    method: github-release
+    method: go-install
     with:
-      repo: anchore/chronicle
+      module: github.com/anchore/chronicle
+      entrypoint: cmd/chronicle
 
   # used during static analysis for license compliance
   - name: bouncer
@@ -86,6 +95,10 @@ tools:
     method: github-release
     with:
       repo: wagoodman/go-bouncer
+#    method: go-install
+#    with:
+#      module: github.com/wagoodman/go-bouncer
+#      entrypoint:
 
   # used for showing benchmark testing
   - name: benchstat
@@ -112,6 +125,7 @@ tools:
   - name: gh
     version:
       want: v2.51.0
-    method: github-release
+    method: go-install
     with:
-      repo: cli/cli
+      module: github.com/cli/cli/v2
+      entrypoint: cmd/gh
