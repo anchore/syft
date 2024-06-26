@@ -131,6 +131,21 @@ func Test_Join(t *testing.T) {
 			expected: "outer: err1\nerr2",
 		},
 		{
+			name:     "duplicates",
+			in:       []error{fmt.Errorf("err1"), fmt.Errorf("err1"), fmt.Errorf("err2")},
+			expected: "err1\nerr2",
+		},
+		{
+			name:     "nested duplicates",
+			in:       []error{errors.Join(fmt.Errorf("err1"), fmt.Errorf("err2")), fmt.Errorf("err1"), fmt.Errorf("err2")},
+			expected: "err1\nerr2",
+		},
+		{
+			name:     "nested duplicates coords",
+			in:       []error{New(file.NewLocation("l1"), errors.Join(fmt.Errorf("err1"), fmt.Errorf("err2"))), fmt.Errorf("err1"), fmt.Errorf("err2")},
+			expected: "l1: err1\nl1: err2\nerr1\nerr2",
+		},
+		{
 			name:     "all nil",
 			in:       []error{nil, nil, nil},
 			expected: "",

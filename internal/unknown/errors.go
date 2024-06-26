@@ -66,7 +66,13 @@ func Appendf(errs error, coords hasCoordinates, format string, args ...any) erro
 func Join(errs ...error) error {
 	var out []error
 	for _, err := range errs {
-		out = append(out, flatten(err)...)
+		// append errors, de-duplicated
+		for _, e := range flatten(err) {
+			if containsErr(out, e) {
+				continue
+			}
+			out = append(out, e)
+		}
 	}
 	if len(out) == 1 {
 		return out[0]
@@ -130,6 +136,17 @@ func flatten(errs ...error) []error {
 		}
 	}
 	return out
+}
+
+// containsErr returns true if an error with the exact same error message is present
+func containsErr(out []error, err error) bool {
+	msg := err.Error()
+	for _, e := range out {
+		if e.Error() == msg {
+			return true
+		}
+	}
+	return false
 }
 
 // visitErrors visits every wrapped error. the returned error replaces the provided error, null errors are omitted from

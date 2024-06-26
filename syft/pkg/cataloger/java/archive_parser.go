@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"slices"
 	"strings"
 
 	intFile "github.com/anchore/syft/internal/file"
@@ -126,17 +127,21 @@ func (j *archiveParser) parse(ctx context.Context) ([]pkg.Package, []artifact.Re
 	}
 	pkgs = append(pkgs, auxPkgs...)
 
+	var errs error
 	if j.detectNested {
 		// find nested java archive packages
 		nestedPkgs, nestedRelationships, err := j.discoverPkgsFromNestedArchives(ctx, parentPkg)
 		if err != nil {
-			return nil, nil, err
+			errs = unknown.Append(errs, j.location, err)
 		}
 		pkgs = append(pkgs, nestedPkgs...)
 		relationships = append(relationships, nestedRelationships...)
 	} else {
-		// TODO detect if there are nested archives before indicating they were not searched
-		err = unknown.Appendf(err, j.location, "not searched for nested archives")
+		nestedArchives := j.fileManifest.GlobMatch(false, "**/*.{jar,war}")
+		if len(nestedArchives) > 0 {
+			slices.Sort(nestedArchives)
+			errs = unknown.Appendf(errs, j.location, "nested archives not cataloged: %v", strings.Join(nestedArchives, ", "))
+		}
 	}
 
 	// lastly, add the parent package to the list (assuming the parent exists)
@@ -158,10 +163,10 @@ func (j *archiveParser) parse(ctx context.Context) ([]pkg.Package, []artifact.Re
 	}
 
 	if len(pkgs) == 0 {
-		err = unknown.Appendf(err, j.location, "no package identified in archive")
+		errs = unknown.Appendf(errs, j.location, "no package identified in archive")
 	}
 
-	return pkgs, relationships, err
+	return pkgs, relationships, errs
 }
 
 // discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.

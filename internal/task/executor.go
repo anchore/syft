@@ -56,14 +56,9 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 
 				err := runTaskSafely(ctx, tsk, resolver, s)
 				unknowns, err := unknown.ExtractCoordinateErrors(err)
-				s.(sbomsync.Accessor).WriteToSBOM(func(sb *sbom.SBOM) {
-					for _, u := range unknowns {
-						if sb.Artifacts.Unknowns == nil {
-							sb.Artifacts.Unknowns = map[file.Coordinates][]string{}
-						}
-						sb.Artifacts.Unknowns[u.Coordinates] = append(sb.Artifacts.Unknowns[u.Coordinates], u.Reason.Error())
-					}
-				})
+				if len(unknowns) > 0 {
+					appendUnknowns(s, unknowns)
+				}
 				if err != nil {
 					withLock(func() {
 						errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", err))
@@ -78,6 +73,19 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 	wg.Wait()
 
 	return errs
+}
+
+func appendUnknowns(builder sbomsync.Builder, unknowns []unknown.CoordinateError) {
+	if accessor, ok := builder.(sbomsync.Accessor); ok {
+		accessor.WriteToSBOM(func(sb *sbom.SBOM) {
+			for _, u := range unknowns {
+				if sb.Artifacts.Unknowns == nil {
+					sb.Artifacts.Unknowns = map[file.Coordinates][]string{}
+				}
+				sb.Artifacts.Unknowns[u.Coordinates] = append(sb.Artifacts.Unknowns[u.Coordinates], u.Reason.Error())
+			}
+		})
+	}
 }
 
 func runTaskSafely(ctx context.Context, t Task, resolver file.Resolver, s sbomsync.Builder) (err error) {
