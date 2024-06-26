@@ -71,6 +71,9 @@ func Join(errs ...error) error {
 	if len(out) == 1 {
 		return out[0]
 	}
+	if len(out) == 0 {
+		return nil
+	}
 	return errors.Join(out...)
 }
 

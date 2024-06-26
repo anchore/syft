@@ -130,6 +130,11 @@ func Test_Join(t *testing.T) {
 			in:       []error{errors.Join(fmt.Errorf("outer: %w", fmt.Errorf("err1")), fmt.Errorf("err2"))},
 			expected: "outer: err1\nerr2",
 		},
+		{
+			name:     "all nil",
+			in:       []error{nil, nil, nil},
+			expected: "",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
