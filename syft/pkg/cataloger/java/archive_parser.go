@@ -137,7 +137,8 @@ func (j *archiveParser) parse(ctx context.Context) ([]pkg.Package, []artifact.Re
 		pkgs = append(pkgs, nestedPkgs...)
 		relationships = append(relationships, nestedRelationships...)
 	} else {
-		nestedArchives := j.fileManifest.GlobMatch(false, "**/*.{jar,war}")
+		// .jar and .war files are present in archives, are others? or generally just consider them top-level?
+		nestedArchives := j.fileManifest.GlobMatch(true, "*.jar", "*.war")
 		if len(nestedArchives) > 0 {
 			slices.Sort(nestedArchives)
 			errs = unknown.Appendf(errs, j.location, "nested archives not cataloged: %v", strings.Join(nestedArchives, ", "))
