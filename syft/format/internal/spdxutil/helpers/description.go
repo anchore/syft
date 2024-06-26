@@ -1,6 +1,9 @@
 package helpers
 
-import "github.com/anchore/syft/syft/pkg"
+import (
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/rust"
+)
 
 func Description(p pkg.Package) string {
 	if hasMetadata(p) {
@@ -9,6 +12,10 @@ func Description(p pkg.Package) string {
 			return metadata.Description
 		case pkg.NpmPackage:
 			return metadata.Description
+		case rust.RustCargoLockEntry:
+			if sourceInfo := metadata.SourceGeneratedDepInfo; sourceInfo != nil {
+				return sourceInfo.CargoToml.Package.Description
+			}
 		}
 	}
 	return ""

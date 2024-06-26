@@ -3,12 +3,15 @@ package spdxhelpers
 
 import (
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"path"
 	"slices"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/anchore/syft/syft/pkg/rust"
 
 	"github.com/distribution/reference"
 	"github.com/spdx/tools-golang/spdx"
@@ -503,6 +506,27 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 			Algorithm: spdx.ChecksumAlgorithm(algo),
 			Value:     hexStr,
 		})
+	case rust.RustCargoLockEntry:
+		hasChecksum := len(meta.Checksum) > 0
+		checksum := spdx.Checksum{
+			Algorithm: meta.GetChecksumType(),
+			Value:     meta.Checksum,
+		}
+		if sourceInfo := meta.SourceGeneratedDepInfo; sourceInfo != nil {
+			hash := sourceInfo.DownloadSha[:]
+			hexHash := hex.EncodeToString(hash)
+			if hexHash == meta.Checksum {
+				log.Debugf("setting files analysed to true for %s-%s", meta.Name, meta.Version)
+				filesAnalyzed = true
+			} else {
+				log.Debugf("hash mismatch for %s-%s", meta.Name, meta.Version)
+				//Todo: what do we do on a hash mismatch?
+			}
+		}
+
+		if hasChecksum {
+			checksums = append(checksums, checksum)
+		}
 	}
 	return checksums, filesAnalyzed
 }
@@ -765,6 +789,14 @@ func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *spdx.PackageVeri
 			}
 		}
 		digests = append(digests, d)
+	}
+
+	for _, r := range sbom.RelationshipsForPackage(p, artifact.ContainsRelationship) {
+		if digest, exists := r.Data.(file.Digest); exists {
+			if digest.Algorithm == "sha1" {
+				digests = append(digests, digest)
+			}
+		}
 	}
 
 	if len(digests) == 0 {

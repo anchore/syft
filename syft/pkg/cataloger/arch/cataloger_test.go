@@ -275,6 +275,10 @@ func TestAlpmCataloger(t *testing.T) {
 		gmpPkg,
 	}
 
+	for _, e := range expectedPkgs {
+		e.SetID()
+	}
+
 	expectedRelationships := []artifact.Relationship{
 		{ // exact spec lookup
 			From: treeSitterPkg,

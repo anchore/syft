@@ -7,12 +7,13 @@ import (
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/rust"
 )
 
 // NewCargoLockCataloger returns a new Rust Cargo lock file cataloger object.
-func NewCargoLockCataloger() pkg.Cataloger {
+func NewCargoLockCataloger(cfg rust.CatalogerConfig) pkg.Cataloger {
 	return generic.NewCataloger("rust-cargo-lock-cataloger").
-		WithParserByGlobs(parseCargoLock, "**/Cargo.lock")
+		WithParserByGlobs(newCargoModCataloger(cfg).parseCargoLock, "**/Cargo.lock")
 }
 
 // NewAuditBinaryCataloger returns a new Rust auditable binary cataloger object that can detect dependencies

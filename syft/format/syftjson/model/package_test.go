@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/anchore/syft/syft/pkg/rust"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -355,7 +357,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 }`),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.HackagePkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.RustCargoLockEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeOf(rust.RustCargoLockEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 		{

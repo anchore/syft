@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/anchore/syft/syft/pkg/rust"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,22 +42,22 @@ func TestReflectTypeFromJSONName(t *testing.T) {
 		{
 			name:       "exact match on ID",
 			lookup:     "rust-cargo-lock-entry",
-			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeOf(rust.RustCargoLockEntry{}),
 		},
 		{
 			name:       "exact match on former name",
 			lookup:     "RustCargoPackageMetadata",
-			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeOf(rust.RustCargoLockEntry{}),
 		},
 		{
 			name:       "case insensitive on ID",
 			lookup:     "RUST-CARGO-lock-entrY",
-			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeOf(rust.RustCargoLockEntry{}),
 		},
 		{
 			name:       "case insensitive on alias",
 			lookup:     "rusTcArgopacKagEmEtadATa",
-			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeOf(rust.RustCargoLockEntry{}),
 		},
 		{
 			name: "consistent override",
@@ -245,11 +247,11 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 			expected: reflect.TypeOf(pkg.PhpComposerLockEntry{}),
 		},
 		{
-			name:  "map pkg.RustCargoLockEntry struct type",
+			name:  "map rust.RustCargoLockEntry struct type",
 			input: "RustCargoPackageMetadata",
 			// this used to be shared as a use case for both RustCargoLockEntry and RustBinaryAuditEntry
 			// neither of these is more correct over the other.
-			expected: reflect.TypeOf(pkg.RustCargoLockEntry{}),
+			expected: reflect.TypeOf(rust.RustCargoLockEntry{}),
 		},
 	}
 
@@ -481,7 +483,7 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 		},
 		{
 			name:               "CargoPackageMetadata",
-			metadata:           pkg.RustCargoLockEntry{},
+			metadata:           rust.RustCargoLockEntry{},
 			expectedJSONName:   "rust-cargo-lock-entry",
 			expectedLegacyName: "RustCargoPackageMetadata", // note: maps to multiple entries (v11-12 breaking change)
 		},
