@@ -2,7 +2,6 @@ package task
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mholt/archiver/v3"
 
@@ -50,7 +49,7 @@ func (c UnknownsConfig) processUnknowns(_ context.Context, _ file.Resolver, buil
 		if c.IncludeExecutablesWithoutPackages {
 			for coords := range s.Artifacts.Executables {
 				if !allPackageCoords.Contains(coords) {
-					s.Artifacts.Unknowns[coords] = append(s.Artifacts.Unknowns[coords], fmt.Sprintf("no package identified in executable file: %s", coords.RealPath))
+					s.Artifacts.Unknowns[coords] = append(s.Artifacts.Unknowns[coords], "no package identified in executable file")
 				}
 			}
 		}
@@ -59,7 +58,7 @@ func (c UnknownsConfig) processUnknowns(_ context.Context, _ file.Resolver, buil
 			for coords := range s.Artifacts.FileMetadata {
 				unarchiver, notArchiveErr := archiver.ByExtension(coords.RealPath)
 				if unarchiver != nil && notArchiveErr == nil && !allPackageCoords.Contains(coords) {
-					s.Artifacts.Unknowns[coords] = append(s.Artifacts.Unknowns[coords], fmt.Sprintf("archive not extracted: %s", coords.RealPath))
+					s.Artifacts.Unknowns[coords] = append(s.Artifacts.Unknowns[coords], "archive not cataloged")
 				}
 			}
 		}
