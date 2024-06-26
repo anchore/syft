@@ -28,30 +28,26 @@ func parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generi
 
 	peFile, err := pe.NewBytes(by, &pe.Options{})
 	if err != nil {
-		// TODO: known-unknown
 		log.Tracef("unable to create PE instance for file '%s': %v", f.RealPath, err)
-		return nil, nil, nil
+		return nil, nil, fmt.Errorf("unable to create PE instance for file '%s': %v", f.RealPath, err)
 	}
 
 	err = peFile.Parse()
 	if err != nil {
-		// TODO: known-unknown
 		log.Tracef("unable to parse PE file '%s': %v", f.RealPath, err)
-		return nil, nil, nil
+		return nil, nil, fmt.Errorf("unable to parse PE file '%s': %v", f.RealPath, err)
 	}
 
 	versionResources, err := peFile.ParseVersionResources()
 	if err != nil {
-		// TODO: known-unknown
 		log.Tracef("unable to parse version resources in PE file: %s: %v", f.RealPath, err)
-		return nil, nil, nil
+		return nil, nil, fmt.Errorf("unable to parse version resources in PE file: %s: %v", f.RealPath, err)
 	}
 
 	dotNetPkg, err := buildDotNetPackage(versionResources, f)
 	if err != nil {
-		// TODO: known-unknown
 		log.Tracef("unable to build dotnet package: %v", err)
-		return nil, nil, nil
+		return nil, nil, fmt.Errorf("unable to build dotnet package: %v", err)
 	}
 
 	return []pkg.Package{dotNetPkg}, nil, nil

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 // directoryEndLen, readByf, directoryEnd, and findSignatureInBlock were copied from the golang stdlib, specifically:
@@ -45,7 +47,8 @@ func OpenZip(filepath string) (*ZipReadCloser, error) {
 	// need to find the start of the archive and keep track of this offset.
 	offset, err := findArchiveStartOffset(f, fi.Size())
 	if err != nil {
-		return nil, fmt.Errorf("cannot find beginning of zip archive=%q : %w", filepath, err)
+		log.Debugf("cannot find beginning of zip archive=%q : %v", filepath, err)
+		return nil, err
 	}
 
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
@@ -56,7 +59,8 @@ func OpenZip(filepath string) (*ZipReadCloser, error) {
 
 	r, err := zip.NewReader(io.NewSectionReader(f, int64(offset), size), size)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open ZipReadCloser @ %q: %w", filepath, err)
+		log.Debugf("unable to open ZipReadCloser @ %q: %v", filepath, err)
+		return nil, err
 	}
 
 	return &ZipReadCloser{

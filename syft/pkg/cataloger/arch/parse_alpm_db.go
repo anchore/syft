@@ -17,6 +17,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -41,6 +42,8 @@ type parsedData struct {
 
 // parseAlpmDB parses the arch linux pacman database flat-files and returns the packages and relationships found within.
 func parseAlpmDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var errs error
+
 	data, err := parseAlpmDBEntry(reader)
 	if err != nil {
 		return nil, nil, err
@@ -54,8 +57,14 @@ func parseAlpmDB(_ context.Context, resolver file.Resolver, env *generic.Environ
 
 	// replace the files found the pacman database with the files from the mtree These contain more metadata and
 	// thus more useful.
-	files, fileLoc := fetchPkgFiles(base, resolver)
-	backups, backupLoc := fetchBackupFiles(base, resolver)
+	files, fileLoc, err := fetchPkgFiles(base, resolver)
+	if err != nil {
+		errs = unknown.Join(errs, err)
+	}
+	backups, backupLoc, err := fetchBackupFiles(base, resolver)
+	if err != nil {
+		errs = unknown.Join(errs, err)
+	}
 
 	var locs []file.Location
 	if fileLoc != nil {
@@ -69,7 +78,7 @@ func parseAlpmDB(_ context.Context, resolver file.Resolver, env *generic.Environ
 	}
 
 	if data.Package == "" {
-		return nil, nil, nil
+		return nil, nil, errs
 	}
 
 	return []pkg.Package{
@@ -79,63 +88,63 @@ func parseAlpmDB(_ context.Context, resolver file.Resolver, env *generic.Environ
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			locs...,
 		),
-	}, nil, nil
+	}, nil, errs
 }
 
-func fetchPkgFiles(base string, resolver file.Resolver) ([]pkg.AlpmFileRecord, *file.Location) {
+func fetchPkgFiles(base string, resolver file.Resolver) ([]pkg.AlpmFileRecord, *file.Location, error) {
 	// TODO: probably want to use MTREE and PKGINFO here
 	target := path.Join(base, "mtree")
 
 	loc, err := getLocation(target, resolver)
 	if err != nil {
 		log.WithFields("error", err, "path", target).Trace("failed to find mtree file")
-		return []pkg.AlpmFileRecord{}, nil
+		return []pkg.AlpmFileRecord{}, nil, unknown.New(loc, fmt.Errorf("failed to find mtree file: %w", err))
 	}
 	if loc == nil {
-		return []pkg.AlpmFileRecord{}, nil
+		return []pkg.AlpmFileRecord{}, nil, nil
 	}
 
 	reader, err := resolver.FileContentsByLocation(*loc)
 	if err != nil {
-		return []pkg.AlpmFileRecord{}, nil
+		return []pkg.AlpmFileRecord{}, nil, unknown.New(loc, fmt.Errorf("failed to get contents: %w", err))
 	}
 	defer internal.CloseAndLogError(reader, loc.RealPath)
 
 	pkgFiles, err := parseMtree(reader)
 	if err != nil {
 		log.WithFields("error", err, "path", target).Trace("failed to parse mtree file")
-		return []pkg.AlpmFileRecord{}, nil
+		return []pkg.AlpmFileRecord{}, nil, unknown.New(loc, fmt.Errorf("failed to parse mtree: %w", err))
 	}
-	return pkgFiles, loc
+	return pkgFiles, loc, nil
 }
 
-func fetchBackupFiles(base string, resolver file.Resolver) ([]pkg.AlpmFileRecord, *file.Location) {
+func fetchBackupFiles(base string, resolver file.Resolver) ([]pkg.AlpmFileRecord, *file.Location, error) {
 	// We only really do this to get any backup database entries from the files database
 	target := filepath.Join(base, "files")
 
 	loc, err := getLocation(target, resolver)
 	if err != nil {
 		log.WithFields("error", err, "path", target).Trace("failed to find alpm files")
-		return []pkg.AlpmFileRecord{}, nil
+		return []pkg.AlpmFileRecord{}, nil, unknown.New(loc, fmt.Errorf("failed to find alpm files: %w", err))
 	}
 	if loc == nil {
-		return []pkg.AlpmFileRecord{}, nil
+		return []pkg.AlpmFileRecord{}, nil, nil
 	}
 
 	reader, err := resolver.FileContentsByLocation(*loc)
 	if err != nil {
-		return []pkg.AlpmFileRecord{}, nil
+		return []pkg.AlpmFileRecord{}, nil, unknown.New(loc, fmt.Errorf("failed to get contents: %w", err))
 	}
 	defer internal.CloseAndLogError(reader, loc.RealPath)
 
 	filesMetadata, err := parseAlpmDBEntry(reader)
 	if err != nil {
-		return []pkg.AlpmFileRecord{}, nil
+		return []pkg.AlpmFileRecord{}, nil, unknown.New(loc, fmt.Errorf("failed to parse alpm db entry: %w", err))
 	}
 	if filesMetadata != nil {
-		return filesMetadata.Backup, loc
+		return filesMetadata.Backup, loc, nil
 	}
-	return []pkg.AlpmFileRecord{}, loc
+	return []pkg.AlpmFileRecord{}, loc, nil
 }
 
 func parseAlpmDBEntry(reader io.Reader) (*parsedData, error) {

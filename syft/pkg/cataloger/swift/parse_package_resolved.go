@@ -71,7 +71,7 @@ func parsePackageResolved(_ context.Context, _ file.Resolver, _ *generic.Environ
 
 	if packageResolvedData["version"] == nil {
 		log.Trace("no version found in Package.resolved file, skipping")
-		return nil, nil, nil
+		return nil, nil, fmt.Errorf("no version found in Package.resolved file")
 	}
 
 	version, ok := packageResolvedData["version"].(float64)

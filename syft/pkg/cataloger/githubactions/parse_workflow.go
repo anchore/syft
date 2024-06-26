@@ -7,6 +7,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -37,14 +38,14 @@ type stepDef struct {
 }
 
 func parseWorkflowForWorkflowUsage(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	contents, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read yaml workflow file: %w", err)
+	contents, errs := io.ReadAll(reader)
+	if errs != nil {
+		return nil, nil, fmt.Errorf("unable to read yaml workflow file: %w", errs)
 	}
 
 	var wf workflowDef
-	if err = yaml.Unmarshal(contents, &wf); err != nil {
-		return nil, nil, fmt.Errorf("unable to parse yaml workflow file: %w", err)
+	if errs = yaml.Unmarshal(contents, &wf); errs != nil {
+		return nil, nil, fmt.Errorf("unable to parse yaml workflow file: %w", errs)
 	}
 
 	// we use a collection to help with deduplication before raising to higher level processing
@@ -52,25 +53,28 @@ func parseWorkflowForWorkflowUsage(_ context.Context, _ file.Resolver, _ *generi
 
 	for _, job := range wf.Jobs {
 		if job.Uses != "" {
-			p := newPackageFromUsageStatement(job.Uses, reader.Location)
+			p, err := newPackageFromUsageStatement(job.Uses, reader.Location)
+			if err != nil {
+				errs = unknown.Append(errs, reader, err)
+			}
 			if p != nil {
 				pkgs.Add(*p)
 			}
 		}
 	}
 
-	return pkgs.Sorted(), nil, nil
+	return pkgs.Sorted(), nil, errs
 }
 
 func parseWorkflowForActionUsage(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	contents, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read yaml workflow file: %w", err)
+	contents, errs := io.ReadAll(reader)
+	if errs != nil {
+		return nil, nil, fmt.Errorf("unable to read yaml workflow file: %w", errs)
 	}
 
 	var wf workflowDef
-	if err = yaml.Unmarshal(contents, &wf); err != nil {
-		return nil, nil, fmt.Errorf("unable to parse yaml workflow file: %w", err)
+	if errs = yaml.Unmarshal(contents, &wf); errs != nil {
+		return nil, nil, fmt.Errorf("unable to parse yaml workflow file: %w", errs)
 	}
 
 	// we use a collection to help with deduplication before raising to higher level processing
@@ -81,12 +85,15 @@ func parseWorkflowForActionUsage(_ context.Context, _ file.Resolver, _ *generic.
 			if step.Uses == "" {
 				continue
 			}
-			p := newPackageFromUsageStatement(step.Uses, reader.Location)
+			p, err := newPackageFromUsageStatement(step.Uses, reader.Location)
+			if err != nil {
+				errs = unknown.Append(errs, reader, err)
+			}
 			if p != nil {
 				pkgs.Add(*p)
 			}
 		}
 	}
 
-	return pkgs.Sorted(), nil, nil
+	return pkgs.Sorted(), nil, errs
 }

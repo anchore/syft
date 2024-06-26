@@ -165,6 +165,7 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	// generate package and file tasks based on the configuration
 	environmentTasks := c.environmentTasks()
 	relationshipsTasks := c.relationshipTasks(src)
+	unknownTasks := c.unknownTasks()
 	fileTasks := c.fileTasks()
 	pkgTasks, selectionEvidence, err := c.packageTasks(src)
 	if err != nil {
@@ -182,6 +183,11 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	// all relationship work must be done after all nodes (files and packages) have been cataloged
 	if len(relationshipsTasks) > 0 {
 		taskGroups = append(taskGroups, relationshipsTasks)
+	}
+
+	// all unknown cleanup should happen after almost everything else
+	if len(unknownTasks) > 0 {
+		taskGroups = append(taskGroups, unknownTasks)
 	}
 
 	// identifying the environment (i.e. the linux release) must be done first as this is required for package cataloging
@@ -327,6 +333,18 @@ func (c *CreateSBOMConfig) environmentTasks() []task.Task {
 		tsks = append(tsks, t)
 	}
 	return tsks
+}
+
+// unknownTasks returns a set of tasks that perform any necessary post-processing
+// to identify SBOM elements as unknowns
+func (c *CreateSBOMConfig) unknownTasks() []task.Task {
+	var tasks []task.Task
+
+	if t := task.NewUnknownsFinalizeTask(task.DefaultUnknownsConfig()); t != nil {
+		tasks = append(tasks, t)
+	}
+
+	return tasks
 }
 
 func (c *CreateSBOMConfig) validate() error {
