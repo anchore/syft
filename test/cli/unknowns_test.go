@@ -19,9 +19,9 @@ func Test_Unknowns(t *testing.T) {
 			env:  map[string]string{"SYFT_FORMAT_PRETTY": "true"},
 			assertions: []traitAssertion{
 				assertJsonReport,
-				assertInOutput(`"unknowns":["no package identified in executable file"]`),
-				assertInOutput(`"unknowns":["unable to read files from java archive"]`),
-				assertInOutput(`"unknowns":["no package identified in archive"]`),
+				assertInOutput(`no package identified in executable file`),
+				assertInOutput(`unable to read files from java archive`),
+				assertInOutput(`no package identified in archive`),
 				assertSuccessfulReturnCode,
 			},
 		},
