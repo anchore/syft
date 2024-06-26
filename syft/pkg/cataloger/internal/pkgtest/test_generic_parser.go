@@ -225,7 +225,7 @@ func (p *CatalogTester) IgnoreUnfulfilledPathResponses(paths ...string) *Catalog
 func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 	t.Helper()
 	pkgs, relationships, err := parser(context.Background(), p.resolver, p.env, p.reader)
-	// catalogers return errors for unknowns, only test if this is explicitly requested
+	// parsers return errors for unknowns, only test if this is explicitly requested
 	if p.wantErr != nil {
 		p.wantErr(t, err)
 	}
@@ -250,7 +250,10 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	}
 
 	if p.assertResultExpectations {
-		p.wantErr(t, err)
+		// catalogers return errors for unknowns, only test if this is explicitly requested
+		if p.wantErr != nil {
+			p.wantErr(t, err)
+		}
 		p.assertPkgs(t, pkgs, relationships)
 	}
 
