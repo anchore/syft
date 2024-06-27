@@ -265,8 +265,9 @@ func fetchCopyrightContents(resolver file.Resolver, dbLocation file.Location, m 
 
 	reader, err := resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.Warnf("failed to fetch deb copyright contents (package=%s): %w", m.Package, err)
+		log.Warnf("failed to fetch deb copyright contents (package=%s): %s", m.Package, err)
 	}
+	defer internal.CloseAndLogError(reader, location.RealPath)
 
 	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
 

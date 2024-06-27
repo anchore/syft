@@ -17,74 +17,120 @@ func TestDatabaseParser(t *testing.T) {
 	tests := []struct {
 		name     string
 		fixture  string
-		expected pkg.AlpmDBEntry
+		expected *parsedData
 	}{
 		{
-			name:    "test alpm database parsing",
+			name:    "simple desc parsing",
 			fixture: "test-fixtures/files",
-			expected: pkg.AlpmDBEntry{
-				Backup: []pkg.AlpmFileRecord{
-					{
-						Path: "/etc/pacman.conf",
-						Digests: []file.Digest{{
-							Algorithm: "md5",
-							Value:     "de541390e52468165b96511c4665bff4",
-						}},
+			expected: &parsedData{
+				AlpmDBEntry: pkg.AlpmDBEntry{
+					Backup: []pkg.AlpmFileRecord{
+						{
+							Path: "/etc/pacman.conf",
+							Digests: []file.Digest{{
+								Algorithm: "md5",
+								Value:     "de541390e52468165b96511c4665bff4",
+							}},
+						},
+						{
+							Path: "/etc/makepkg.conf",
+							Digests: []file.Digest{{
+								Algorithm: "md5",
+								Value:     "79fce043df7dfc676ae5ecb903762d8b",
+							}},
+						},
 					},
-					{
-						Path: "/etc/makepkg.conf",
-						Digests: []file.Digest{{
-							Algorithm: "md5",
-							Value:     "79fce043df7dfc676ae5ecb903762d8b",
-						}},
+					Files: []pkg.AlpmFileRecord{
+						{
+							Path: "/etc/",
+						},
+						{
+							Path: "/etc/makepkg.conf",
+						},
+						{
+							Path: "/etc/pacman.conf",
+						},
+						{
+							Path: "/usr/",
+						},
+						{
+							Path: "/usr/bin/",
+						},
+						{
+							Path: "/usr/bin/makepkg",
+						},
+						{
+							Path: "/usr/bin/makepkg-template",
+						},
+						{
+							Path: "/usr/bin/pacman",
+						},
+						{
+							Path: "/usr/bin/pacman-conf",
+						},
+						{
+							Path: "/var/",
+						},
+						{
+							Path: "/var/cache/",
+						},
+						{
+							Path: "/var/cache/pacman/",
+						},
+						{
+							Path: "/var/cache/pacman/pkg/",
+						},
+						{
+							Path: "/var/lib/",
+						},
+						{
+							Path: "/var/lib/pacman/",
+						},
 					},
 				},
-				Files: []pkg.AlpmFileRecord{
-					{
-						Path: "/etc/",
-					},
-					{
-						Path: "/etc/makepkg.conf",
-					},
-					{
-						Path: "/etc/pacman.conf",
-					},
-					{
-						Path: "/usr/",
-					},
-					{
-						Path: "/usr/bin/",
-					},
-					{
-						Path: "/usr/bin/makepkg",
-					},
-					{
-						Path: "/usr/bin/makepkg-template",
-					},
-					{
-						Path: "/usr/bin/pacman",
-					},
-					{
-						Path: "/usr/bin/pacman-conf",
-					},
-					{
-						Path: "/var/",
-					},
-					{
-						Path: "/var/cache/",
-					},
-					{
-						Path: "/var/cache/pacman/",
-					},
-					{
-						Path: "/var/cache/pacman/pkg/",
-					},
-					{
-						Path: "/var/lib/",
-					},
-					{
-						Path: "/var/lib/pacman/",
-					},
+			},
+		},
+		{
+			name:    "with dependencies",
+			fixture: "test-fixtures/installed/var/lib/pacman/local/gmp-6.2.1-2/desc",
+			expected: &parsedData{
+				Licenses: "LGPL3\nGPL",
+				AlpmDBEntry: pkg.AlpmDBEntry{
+					BasePackage:  "gmp",
+					Package:      "gmp",
+					Version:      "6.2.1-2",
+					Description:  "A free library for arbitrary precision arithmetic",
+					Architecture: "x86_64",
+					Size:         1044438,
+					Packager:     "Antonio Rojas <arojas@archlinux.org>",
+					URL:          "https://gmplib.org/",
+					Validation:   "pgp",
+					Reason:       1,
+					Files:        []pkg.AlpmFileRecord{},
+					Backup:       []pkg.AlpmFileRecord{},
+					Depends:      []string{"gcc-libs", "sh", "libtree-sitter.so=1-64"},
+				},
+			},
+		},
+		{
+			name:    "with provides",
+			fixture: "test-fixtures/installed/var/lib/pacman/local/tree-sitter-0.22.6-1/desc",
+			expected: &parsedData{
+				Licenses: "MIT",
+				AlpmDBEntry: pkg.AlpmDBEntry{
+					BasePackage:  "tree-sitter",
+					Package:      "tree-sitter",
+					Version:      "0.22.6-1",
+					Description:  "Incremental parsing library",
+					Architecture: "x86_64",
+					Size:         223539,
+					Packager:     "Daniel M. Capella <polyzen@archlinux.org>",
+					URL:          "https://github.com/tree-sitter/tree-sitter",
+					Validation:   "pgp",
+					Reason:       1,
+					Files:        []pkg.AlpmFileRecord{},
+					Backup:       []pkg.AlpmFileRecord{},
+					Provides:     []string{"libtree-sitter.so=0-64"},
 				},
 			},
 		},
@@ -101,13 +147,10 @@ func TestDatabaseParser(t *testing.T) {
 			entry, err := parseAlpmDBEntry(reader)
 			require.NoError(t, err)
 
-			if diff := cmp.Diff(entry.Files, test.expected.Files); diff != "" {
-				t.Errorf("Files mismatch (-want +got):\n%s", diff)
+			if diff := cmp.Diff(test.expected, entry); diff != "" {
+				t.Errorf("parsed data mismatch (-want +got):\n%s", diff)
 			}
 
-			if diff := cmp.Diff(entry.Backup, test.expected.Backup); diff != "" {
-				t.Errorf("Backup mismatch (-want +got):\n%s", diff)
-			}
 		})
 	}
 }

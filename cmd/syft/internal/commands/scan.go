@@ -68,6 +68,7 @@ type scanOptions struct {
 	options.Output      `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 	options.Catalog     `yaml:",inline" mapstructure:",squash"`
+	Cache               options.Cache `json:"-" yaml:"cache" mapstructure:"cache"`
 }
 
 func defaultScanOptions() *scanOptions {
@@ -75,6 +76,7 @@ func defaultScanOptions() *scanOptions {
 		Output:      options.DefaultOutput(),
 		UpdateCheck: options.DefaultUpdateCheck(),
 		Catalog:     options.DefaultCatalog(),
+		Cache:       options.DefaultCache(),
 	}
 }
 

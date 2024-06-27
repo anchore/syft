@@ -146,9 +146,6 @@ func (s License) Merge(l License) (*License, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
 	if sHash != lHash {
 		return nil, fmt.Errorf("cannot merge licenses with different hash")
 	}

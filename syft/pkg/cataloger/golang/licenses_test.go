@@ -4,10 +4,12 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -36,7 +38,8 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
-				Locations:      file.NewLocationSet(loc1),
+				URLs:           []string{"file://$GOPATH/pkg/mod/" + loc1.RealPath},
+				Locations:      file.NewLocationSet(),
 			},
 		},
 		{
@@ -46,7 +49,8 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				Value:          "MIT",
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
-				Locations:      file.NewLocationSet(loc2),
+				URLs:           []string{"file://$GOPATH/pkg/mod/" + loc2.RealPath},
+				Locations:      file.NewLocationSet(),
 			},
 		},
 		{
@@ -56,7 +60,8 @@ func Test_LocalLicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
-				Locations:      file.NewLocationSet(loc3),
+				URLs:           []string{"file://$GOPATH/pkg/mod/" + loc3.RealPath},
+				Locations:      file.NewLocationSet(),
 			},
 		},
 	}
@@ -66,11 +71,11 @@ func Test_LocalLicenseSearch(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			l := newGoLicenses(
+			l := newGoLicenseResolver(
 				"",
 				CatalogerConfig{
 					SearchLocalModCacheLicenses: true,
-					LocalModCacheDir:            path.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
+					LocalModCacheDir:            filepath.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
 				},
 			)
 			licenses, err := l.getLicenses(fileresolver.Empty{}, test.name, test.version)
@@ -97,7 +102,7 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 
 		wd, err := os.Getwd()
 		require.NoError(t, err)
-		testDir := path.Join(wd, "test-fixtures", "licenses", "pkg", "mod", processCaps(modPath)+"@"+modVersion)
+		testDir := filepath.Join(wd, "test-fixtures", "licenses", "pkg", "mod", processCaps(modPath)+"@"+modVersion)
 
 		archive := zip.NewWriter(buf)
 
@@ -106,9 +111,9 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 		for _, f := range entries {
 			// the zip files downloaded contain a path to the repo that somewhat matches where it ends up on disk,
 			// so prefix entries with something similar
-			writer, err := archive.Create(path.Join("github.com/something/some@version", f.Name()))
+			writer, err := archive.Create(path.Join(moduleDir(modPath, modVersion), f.Name()))
 			require.NoError(t, err)
-			contents, err := os.ReadFile(path.Join(testDir, f.Name()))
+			contents, err := os.ReadFile(filepath.Join(testDir, f.Name()))
 			require.NoError(t, err)
 			_, err = writer.Write(contents)
 			require.NoError(t, err)
@@ -136,7 +141,8 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
-				Locations:      file.NewLocationSet(loc1),
+				URLs:           []string{server.URL + "/github.com/someorg/somename/@v/v0.3.2.zip#" + loc1.RealPath},
+				Locations:      file.NewLocationSet(),
 			},
 		},
 		{
@@ -146,21 +152,20 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 				Value:          "MIT",
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
-				Locations:      file.NewLocationSet(loc2),
+				URLs:           []string{server.URL + "/github.com/CapORG/CapProject/@v/v4.111.5.zip#" + loc2.RealPath},
+				Locations:      file.NewLocationSet(),
 			},
 		},
 	}
 
-	modDir := path.Join(t.TempDir())
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			l := newGoLicenses(
+
+			l := newGoLicenseResolver(
 				"",
 				CatalogerConfig{
 					SearchRemoteLicenses: true,
 					Proxies:              []string{server.URL},
-					LocalModCacheDir:     modDir,
 				},
 			)
 
@@ -239,4 +244,63 @@ func Test_findVersionPath(t *testing.T) {
 	f := os.DirFS("test-fixtures/zip-fs")
 	vp := findVersionPath(f, ".")
 	require.Equal(t, "github.com/someorg/somepkg@version", vp)
+}
+
+func Test_walkDirErrors(t *testing.T) {
+	resolver := newGoLicenseResolver("", CatalogerConfig{})
+	_, err := resolver.findLicensesInFS("somewhere", badFS{})
+	require.Error(t, err)
+}
+
+type badFS struct{}
+
+func (b badFS) Open(_ string) (fs.File, error) {
+	return nil, fmt.Errorf("error")
+}
+
+var _ fs.FS = (*badFS)(nil)
+
+func Test_noLocalGoModDir(t *testing.T) {
+	emptyTmp := t.TempDir()
+
+	validTmp := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(validTmp, "mod@ver"), 0700|os.ModeDir))
+
+	tests := []struct {
+		name    string
+		dir     string
+		wantErr require.ErrorAssertionFunc
+	}{
+		{
+			name:    "empty",
+			dir:     "",
+			wantErr: require.Error,
+		},
+		{
+			name:    "invalid dir",
+			dir:     filepath.Join(emptyTmp, "invalid-dir"),
+			wantErr: require.Error,
+		},
+		{
+			name:    "missing mod dir",
+			dir:     emptyTmp,
+			wantErr: require.Error,
+		},
+		{
+			name:    "valid mod dir",
+			dir:     validTmp,
+			wantErr: require.NoError,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			resolver := newGoLicenseResolver("", CatalogerConfig{
+				SearchLocalModCacheLicenses: true,
+				LocalModCacheDir:            test.dir,
+			})
+			_, err := resolver.getLicensesFromLocal("mod", "ver")
+			test.wantErr(t, err)
+		})
+	}
 }

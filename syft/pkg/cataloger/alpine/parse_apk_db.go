@@ -131,7 +131,7 @@ func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 		pkgs = append(pkgs, newPackage(apk, r, reader.Location))
 	}
 
-	return pkgs, discoverPackageDependencies(pkgs), nil
+	return pkgs, nil, nil
 }
 
 func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
@@ -156,6 +156,7 @@ func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
 		log.Tracef("unable to fetch contents for APK repositories file %q: %+v", reposLocation, err)
 		return nil
 	}
+	defer internal.CloseAndLogError(reposReader, location.RealPath)
 
 	return parseReleasesFromAPKRepository(file.LocationReadCloser{
 		Location:   location,
@@ -384,58 +385,4 @@ func processChecksum(value string) *file.Digest {
 		Algorithm: algorithm,
 		Value:     value,
 	}
-}
-
-func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.Relationship) {
-	// map["provides" string] -> packages that provide the "p" key
-	lookup := make(map[string][]pkg.Package)
-	// read "Provides" (p) and add as keys for lookup keys as well as package names
-	for _, p := range pkgs {
-		apkg, ok := p.Metadata.(pkg.ApkDBEntry)
-		if !ok {
-			log.Warnf("cataloger failed to extract apk 'provides' metadata for package %+v", p.Name)
-			continue
-		}
-		lookup[p.Name] = append(lookup[p.Name], p)
-		for _, provides := range apkg.Provides {
-			k := stripVersionSpecifier(provides)
-			lookup[k] = append(lookup[k], p)
-		}
-	}
-
-	// read "Pull Dependencies" (D) and match with keys
-	for _, p := range pkgs {
-		apkg, ok := p.Metadata.(pkg.ApkDBEntry)
-		if !ok {
-			log.Warnf("cataloger failed to extract apk dependency metadata for package %+v", p.Name)
-			continue
-		}
-
-		for _, depSpecifier := range apkg.Dependencies {
-			// use the lookup to find what pkg we depend on
-			dep := stripVersionSpecifier(depSpecifier)
-			for _, depPkg := range lookup[dep] {
-				// this is a pkg that package "p" depends on... make a relationship
-				relationships = append(relationships, artifact.Relationship{
-					From: depPkg,
-					To:   p,
-					Type: artifact.DependencyOfRelationship,
-				})
-			}
-		}
-	}
-	return relationships
-}
-
-func stripVersionSpecifier(s string) string {
-	// examples:
-	// musl>=1                 --> musl
-	// cmd:scanelf=1.3.4-r0    --> cmd:scanelf
-
-	items := internal.SplitAny(s, "<>=")
-	if len(items) == 0 {
-		return s
-	}
-
-	return items[0]
 }

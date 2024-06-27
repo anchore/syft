@@ -43,6 +43,7 @@ type attestOptions struct {
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 	options.Catalog     `yaml:",inline" mapstructure:",squash"`
 	Attest              options.Attest `yaml:"attest" mapstructure:"attest"`
+	Cache               options.Cache  `json:"-" yaml:"cache" mapstructure:"cache"`
 }
 
 func Attest(app clio.Application) *cobra.Command {
@@ -77,6 +78,7 @@ func defaultAttestOptions() attestOptions {
 		Output:      defaultAttestOutputOptions(),
 		UpdateCheck: options.DefaultUpdateCheck(),
 		Catalog:     options.DefaultCatalog(),
+		Cache:       options.DefaultCache(),
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
@@ -39,7 +40,6 @@ type pluginData struct {
 
 func parseWordpressPluginFiles(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
-	var fields = make(map[string]interface{})
 	buffer := make([]byte, contentBufferSize)
 
 	_, err := reader.Read(buffer)
@@ -47,13 +47,7 @@ func parseWordpressPluginFiles(_ context.Context, _ file.Resolver, _ *generic.En
 		return nil, nil, fmt.Errorf("failed to read %s file: %w", reader.Location.Path(), err)
 	}
 
-	fileContent := string(buffer)
-	for field, pattern := range patterns {
-		matchMap := internal.MatchNamedCaptureGroups(pattern, fileContent)
-		if value := matchMap[field]; value != "" {
-			fields[field] = value
-		}
-	}
+	fields := extractFields(string(buffer))
 
 	name, nameOk := fields["name"]
 	version, versionOk := fields["version"]
@@ -95,4 +89,16 @@ func parseWordpressPluginFiles(_ context.Context, _ file.Resolver, _ *generic.En
 	}
 
 	return pkgs, nil, nil
+}
+
+func extractFields(in string) map[string]any {
+	var fields = make(map[string]interface{})
+
+	for field, pattern := range patterns {
+		matchMap := internal.MatchNamedCaptureGroups(pattern, in)
+		if value := matchMap[field]; value != "" {
+			fields[field] = strings.TrimSpace(value)
+		}
+	}
+	return fields
 }

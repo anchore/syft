@@ -27,6 +27,8 @@ type AlpmDBEntry struct {
 	Reason       int              `mapstructure:"reason" json:"reason"`
 	Files        []AlpmFileRecord `mapstructure:"files" json:"files"`
 	Backup       []AlpmFileRecord `mapstructure:"backup" json:"backup"`
+	Provides     []string         `mapstructure:"provides" json:"provides,omitempty"`
+	Depends      []string         `mapstructure:"depends" json:"depends,omitempty"`
 }
 
 type AlpmFileRecord struct {

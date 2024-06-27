@@ -7,6 +7,7 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/clio"
 	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
@@ -20,6 +21,16 @@ type sourceConfig struct {
 
 type fileSource struct {
 	Digests []string `json:"digests" yaml:"digests" mapstructure:"digests"`
+}
+
+var _ interface {
+	clio.FieldDescriber
+} = (*sourceConfig)(nil)
+
+func (o *sourceConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
+	descriptions.Add(&o.File.Digests, `the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")`)
+	descriptions.Add(&o.Image.DefaultPullSource, `allows users to specify which image source should be used to generate the sbom
+valid values are: registry, docker, podman`)
 }
 
 type imageSource struct {

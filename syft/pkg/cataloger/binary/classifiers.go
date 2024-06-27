@@ -174,6 +174,15 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*"),
 		},
 		{
+			Class:    "util-linux-binary",
+			FileGlob: "**/getopt",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00util-linux\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
+			Package: "util-linux",
+			PURL:    mustPURL("pkg:generic/util-linux@version"),
+			CPEs:    singleCPE("cpe:2.3:a:kernel:util-linux:*:*:*:*:*:*:*:*"),
+		},
+		{
 			Class:    "haproxy-binary",
 			FileGlob: "**/haproxy",
 			EvidenceMatcher: evidenceMatchers(
@@ -246,6 +255,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)memcached\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "memcached",
 			PURL:    mustPURL("pkg:generic/memcached@version"),
+			CPEs:    singleCPE("cpe:2.3:a:memcached:memcached:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "traefik-binary",
@@ -256,6 +266,16 @@ func DefaultClassifiers() []Classifier {
 				`(?m)(\x00|\x{FFFD})v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
 			Package: "traefik",
 			PURL:    mustPURL("pkg:generic/traefik@version"),
+			CPEs:    singleCPE("cpe:2.3:a:traefik:traefik:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "arangodb-binary",
+			FileGlob: "**/arangosh",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)\x00*(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?)\s\[linux\]`),
+			Package: "arangodb",
+			PURL:    mustPURL("pkg:generic/arangodb@version"),
+			CPEs:    singleCPE("cpe:2.3:a:arangodb:arangodb:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "postgresql-binary",
@@ -268,6 +288,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)(\x00|\?)PostgreSQL (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 			Package: "postgresql",
 			PURL:    mustPURL("pkg:generic/postgresql@version"),
+			CPEs:    singleCPE("cpe:2.3:a:postgresql:postgresql:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "mysql-binary",
@@ -361,11 +382,45 @@ func DefaultClassifiers() []Classifier {
 			EvidenceMatcher: evidenceMatchers(
 				FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
-					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+\.[0-9]+)?)/erts/`,
+					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
 				),
 				FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
-					`(?m)/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+(\.[0-9]+\.[0-9]+)?)/erts/`,
+					`(?m)/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
+				),
+			),
+			Package: "erlang",
+			PURL:    mustPURL("pkg:generic/erlang@version"),
+			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "erlang-alpine-binary",
+			FileGlob: "**/beam.smp",
+			EvidenceMatcher: evidenceMatchers(
+				FileContentsVersionMatcher(
+					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
+					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
+				),
+				FileContentsVersionMatcher(
+					// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
+					`(?m)/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
+				),
+			),
+			Package: "erlang",
+			PURL:    mustPURL("pkg:generic/erlang@version"),
+			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "erlang-library",
+			FileGlob: "**/liberts_internal.a",
+			EvidenceMatcher: evidenceMatchers(
+				FileContentsVersionMatcher(
+					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
+					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
+				),
+				FileContentsVersionMatcher(
+					// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
+					`(?m)/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
 				),
 			),
 			Package: "erlang",
@@ -434,6 +489,19 @@ func DefaultClassifiers() []Classifier {
 			Package: "gcc",
 			PURL:    mustPURL("pkg:generic/gcc@version"),
 			CPEs:    singleCPE("cpe:2.3:a:gnu:gcc:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "fluent-bit-binary",
+			FileGlob: "**/fluent-bit",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				// [NUL]3.0.2[NUL]%sFluent Bit
+				// [NUL]2.2.3[NUL]Fluent Bit
+				// [NUL]2.2.1[NUL][NUL][NUL]Fluent Bit
+				`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00[^\d]*Fluent`,
+			),
+			Package: "fluent-bit",
+			PURL:    mustPURL("pkg:github/fluent/fluent-bit@version"),
+			CPEs:    singleCPE("cpe:2.3:a:treasuredata:fluent_bit:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "wordpress-cli-binary",

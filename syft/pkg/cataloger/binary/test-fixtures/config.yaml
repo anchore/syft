@@ -17,6 +17,14 @@ from-images:
     paths:
       - /bin/[
 
+  - name: util-linux
+    version: 2.37.4
+    images:
+      - ref: cirros:0.6.2@sha256:7ba1f5bc57923f65c99677e53758d386320ed699b621d9630b1f2bd7ceb3a878
+        platform: linux/amd64
+    paths:
+      - /usr/bin/getopt
+
   - version: 5.1.16
     images:
       - ref: bash:5.1.16@sha256:c7a903a541d8f5fe693cbe7f5ece18a1b6a03734c76092d2b153d7e98a964927
@@ -31,19 +39,37 @@ from-images:
     paths:
       - /usr/local/bin/gcc
 
-  - version: 25.3.2.6
+  - name: erlang
+    version: 25.3.2.6
     images:
       - ref: erlang:25.3.2.6@sha256:0d1e530ec0e8047094f0a1d841754515bad9b0554260a3147fb34df31b3064fe
         platform: linux/amd64
     paths:
       - /usr/local/lib/erlang/erts-13.2.2.3/bin/erlexec
 
-  - version: 26.2.0.0
+  - name: erlang
+    version: 26.2.0.0
     images:
       - ref: erlang:26.2.0.0@sha256:31c3aa505fbe7526ca83c57b64e56ba505e62733e7e6518f4c06219de6e7396e
         platform: linux/amd64
     paths:
       - /usr/local/lib/erlang/erts-14.2/bin/erlexec
+
+  - name: erlang
+    version: 26.2.4
+    images:
+      - ref: erlang:26.2.4.0@sha256:bdb5bac0612856ec85982171dcd4a11de2e08e7f7469c86f3eb936bdfd1ec204
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/erlang/erts-14.2.4/lib/internal/liberts_internal.a
+
+  - name: erlang
+    version: 27.0
+    images:
+      - ref: erlang:27.0.0.0-alpine@sha256:82064a65eb1f9901a479d8ada5f622be3bfac8b474dfc876dc00c28fdef4b1b8
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/erlang/erts-15.0/bin/beam.smp
 
   - version: 1.21.3
     images:
@@ -260,6 +286,20 @@ from-images:
 #    paths:
 #      - /usr/bin/perl
 
+  - name: arangodb
+    version: 3.11.8
+    images:
+      - ref: arangodb:3.11.8@sha256:16893e767f47d28e3297839637741e5c4023e815adf860dfc674e1a36c7c7db0
+        platform: linux/amd64
+    paths:
+      - /usr/bin/arangosh
+  - name: arangodb
+    version: 3.12.0-2
+    images:
+      - ref: arangodb:3.12.0.2@sha256:6ba2e4284cd0f4835e3ef034be90fb947c3d61225d65d07e3b2d2d893e47de25
+        platform: linux/amd64
+    paths:
+      - /usr/bin/arangosh
   - version: 15.1
     images:
       - ref: postgres:15.1@sha256:b4140dd3a62f364f16a82c1bd88d28b9887ecb47f07dbe2941237d073574d428
@@ -495,6 +535,20 @@ from-images:
         platform: linux/amd64
     paths:
       - /bin/consul
+
+  - version: 3.0.2
+    images:
+      - ref: fluent/fluent-bit:3.0.2-amd64@sha256:7e6fe8efd51dda0739e355f58bf5e3b1623cbf2d4a23c06c7a365d9553e2d242
+        platform: linux/amd64
+    paths:
+      - /fluent-bit/bin/fluent-bit
+
+  - version: 2.2.1
+    images:
+      - ref: fluent/fluent-bit:2.2.1-arm64@sha256:28eb03950eb0dac0ca6faead7fdd7261291d669a2b2f010113dab2c25b52b6bf
+        platform: linux/arm64
+    paths:
+      - /fluent-bit/bin/fluent-bit
 
   - name: openssl
     version: 1.1.1w

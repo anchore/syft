@@ -1,11 +1,14 @@
 package binary
 
 import (
+	"bytes"
 	"context"
 	"debug/elf"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/artifact"
@@ -57,30 +60,12 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 	// first find all ELF binaries that have notes
 	var notesByLocation = make(map[elfPackageKey][]elfBinaryPackageNotes)
 	for _, location := range locations {
-		reader, err := resolver.FileContentsByLocation(location)
+		notes, key, err := parseElfPackageNotes(resolver, location, c)
 		if err != nil {
-			return nil, nil, fmt.Errorf("unable to get binary contents %q: %w", location.Path(), err)
+			return nil, nil, err
 		}
-
-		notes, err := c.parseElfNotes(file.LocationReadCloser{
-			Location:   location,
-			ReadCloser: reader,
-		})
-		if err != nil {
-			log.WithFields("file", location.Path(), "error", err).Trace("unable to parse ELF notes")
-			continue
-		}
-
 		if notes == nil {
 			continue
-		}
-
-		notes.Location = location
-		key := elfPackageKey{
-			Name:    notes.Name,
-			Version: notes.Version,
-			PURL:    notes.PURL,
-			CPE:     notes.CPE,
 		}
 		notesByLocation[key] = append(notesByLocation[key], *notes)
 	}
@@ -96,13 +81,44 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 		}
 
 		// create a package for each unique name/version pair (based on the first note found)
-		pkgs = append(pkgs, newELFPackage(notes[0], noteLocations, nil))
+		pkgs = append(pkgs, newELFPackage(notes[0], noteLocations))
 	}
 
 	// why not return relationships? We have an executable cataloger that will note the dynamic libraries imported by
 	// each binary. After all files and packages are processed there is a final task that creates package-to-package
 	// and package-to-file relationships based on the dynamic libraries imported by each binary.
 	return pkgs, nil, nil
+}
+
+func parseElfPackageNotes(resolver file.Resolver, location file.Location, c *elfPackageCataloger) (*elfBinaryPackageNotes, elfPackageKey, error) {
+	reader, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		return nil, elfPackageKey{}, fmt.Errorf("unable to get binary contents %q: %w", location.Path(), err)
+	}
+	defer internal.CloseAndLogError(reader, location.AccessPath)
+
+	notes, err := c.parseElfNotes(file.LocationReadCloser{
+		Location:   location,
+		ReadCloser: reader,
+	})
+
+	if err != nil {
+		log.WithFields("file", location.Path(), "error", err).Trace("unable to parse ELF notes")
+		return nil, elfPackageKey{}, nil
+	}
+
+	if notes == nil {
+		return nil, elfPackageKey{}, nil
+	}
+
+	notes.Location = location
+	key := elfPackageKey{
+		Name:    notes.Name,
+		Version: notes.Version,
+		PURL:    notes.PURL,
+		CPE:     notes.CPE,
+	}
+	return notes, key, nil
 }
 
 func (c *elfPackageCataloger) parseElfNotes(reader file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
@@ -140,11 +156,42 @@ func getELFNotes(r file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
 		return nil, err
 	}
 
-	var metadata elfBinaryPackageNotes
-	if err := json.Unmarshal(notes, &metadata); err != nil {
-		log.WithFields("file", r.Location.Path(), "error", err).Trace("unable to unmarshal ELF package notes as JSON")
+	if len(notes) == 0 {
 		return nil, nil
 	}
 
-	return &metadata, err
+	{
+		var metadata elfBinaryPackageNotes
+		if err := json.Unmarshal(notes, &metadata); err == nil {
+			return &metadata, nil
+		}
+	}
+
+	{
+		var header elf64SectionHeader
+		headerSize := binary.Size(header) / 4
+		if len(notes) > headerSize {
+			var metadata elfBinaryPackageNotes
+			newPayload := bytes.TrimRight(notes[headerSize:], "\x00")
+			if err := json.Unmarshal(newPayload, &metadata); err == nil {
+				return &metadata, nil
+			}
+			log.WithFields("file", r.Location.Path(), "error", err).Trace("unable to unmarshal ELF package notes as JSON")
+		}
+	}
+
+	return nil, err
+}
+
+type elf64SectionHeader struct {
+	ShName      uint32
+	ShType      uint32
+	ShFlags     uint64
+	ShAddr      uint64
+	ShOffset    uint64
+	ShSize      uint64
+	ShLink      uint32
+	ShInfo      uint32
+	ShAddralign uint64
+	ShEntsize   uint64
 }

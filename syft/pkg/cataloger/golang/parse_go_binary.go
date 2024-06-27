@@ -38,21 +38,21 @@ var (
 	// inject the correct version into the main module of the build process
 
 	knownBuildFlagPatterns = []*regexp.Regexp{
-		regexp.MustCompile(`(?m)\.([gG]it)?([bB]uild)?[vV]er(sion)?=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
-		regexp.MustCompile(`(?m)\.([tT]ag)=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
+		regexp.MustCompile(`(?m)\.[a-zA-Z0-9]*([rR]elease)?([gG]it)?([bB]uild)?[vV]er(sion)?=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
+		regexp.MustCompile(`(?m)\.[a-zA-Z0-9]*([tT]ag)=(\S+/)*(?P<version>v?\d+.\d+.\d+[-\w]*)`),
 	}
 )
 
 const devel = "(devel)"
 
 type goBinaryCataloger struct {
-	licenses          goLicenses
+	licenseResolver   goLicenseResolver
 	mainModuleVersion MainModuleVersionConfig
 }
 
 func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 	return &goBinaryCataloger{
-		licenses:          newGoLicenses(binaryCatalogerName, opts),
+		licenseResolver:   newGoLicenseResolver(binaryCatalogerName, opts),
 		mainModuleVersion: opts.MainModuleVersion,
 	}
 }
@@ -69,17 +69,38 @@ func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resol
 	mods := scanFile(unionReader, reader.RealPath)
 	internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
+	var rels []artifact.Relationship
 	for _, mod := range mods {
-		pkgs = append(pkgs, c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch, unionReader)...)
+		var depPkgs []pkg.Package
+		mainPkg, depPkgs := c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch, unionReader)
+		if mainPkg != nil {
+			rels = createModuleRelationships(*mainPkg, depPkgs)
+			pkgs = append(pkgs, *mainPkg)
+		}
+		pkgs = append(pkgs, depPkgs...)
 	}
 
-	return pkgs, nil, nil
+	return pkgs, rels, nil
 }
 
-func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) []pkg.Package {
+func createModuleRelationships(main pkg.Package, deps []pkg.Package) []artifact.Relationship {
+	var relationships []artifact.Relationship
+
+	for _, dep := range deps {
+		relationships = append(relationships, artifact.Relationship{
+			From: dep,
+			To:   main,
+			Type: artifact.DependencyOfRelationship,
+		})
+	}
+
+	return relationships
+}
+
+func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) (*pkg.Package, []pkg.Package) {
 	var pkgs []pkg.Package
 	if mod == nil {
-		return pkgs
+		return nil, pkgs
 	}
 
 	var empty debug.Module
@@ -91,14 +112,17 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 		if dep == nil {
 			continue
 		}
+
+		gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 		p := c.newGoBinaryPackage(
 			resolver,
 			dep,
 			mod.Main.Path,
-			mod.GoVersion,
+			gover,
 			arch,
 			nil,
 			mod.cryptoSettings,
+			experiments,
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if pkg.IsValid(&p) {
@@ -107,25 +131,26 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 	}
 
 	if mod.Main == empty {
-		return pkgs
+		return nil, pkgs
 	}
 
 	main := c.makeGoMainPackage(resolver, mod, arch, location, reader)
-	pkgs = append(pkgs, main)
 
-	return pkgs
+	return &main, pkgs
 }
 
 func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
+	gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 	main := c.newGoBinaryPackage(
 		resolver,
 		&mod.Main,
 		mod.Main.Path,
-		mod.GoVersion,
+		gover,
 		arch,
 		gbs,
 		mod.cryptoSettings,
+		experiments,
 		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
@@ -314,6 +339,23 @@ func getBuildSettings(settings []debug.BuildSetting) pkg.KeyValues {
 		})
 	}
 	return m
+}
+
+func getExperimentsFromVersion(version string) (string, []string) {
+	// See: https://github.com/anchore/grype/issues/1851
+	var experiments []string
+	version, rest, ok := strings.Cut(version, " ")
+	if ok {
+		// Assume they may add more non-version chunks in the future, so only look for "X:".
+		for _, chunk := range strings.Split(rest, " ") {
+			if strings.HasPrefix(rest, "X:") {
+				csv := strings.TrimPrefix(chunk, "X:")
+				experiments = append(experiments, strings.Split(csv, ",")...)
+			}
+		}
+	}
+
+	return version, experiments
 }
 
 func createMainModuleFromPath(path string) (mod debug.Module) {

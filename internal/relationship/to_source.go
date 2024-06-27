@@ -5,7 +5,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func toSource(src artifact.Identifiable, c *pkg.Collection) []artifact.Relationship {
+func ToSource(src artifact.Identifiable, c *pkg.Collection) []artifact.Relationship {
 	relationships := make([]artifact.Relationship, 0) // Should we pre-allocate this by giving catalog a Len() method?
 	for p := range c.Enumerate() {
 		relationships = append(relationships, artifact.Relationship{

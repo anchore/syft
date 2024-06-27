@@ -2,15 +2,16 @@ package binary
 
 import (
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newELFPackage(metadata elfBinaryPackageNotes, locations file.LocationSet, licenses []pkg.License) pkg.Package {
+func newELFPackage(metadata elfBinaryPackageNotes, locations file.LocationSet) pkg.Package {
 	p := pkg.Package{
 		Name:      metadata.Name,
 		Version:   metadata.Version,
-		Licenses:  pkg.NewLicenseSet(licenses...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(metadata.License)),
 		PURL:      packageURL(metadata),
 		Type:      pkg.BinaryPkg,
 		Locations: locations,
@@ -23,13 +24,59 @@ func newELFPackage(metadata elfBinaryPackageNotes, locations file.LocationSet, l
 }
 
 func packageURL(metadata elfBinaryPackageNotes) string {
-	// TODO: what if the System value is not set?
+	var qualifiers []packageurl.Qualifier
+
+	os := metadata.OS
+	osVersion := metadata.OSVersion
+
+	atts, err := cpe.NewAttributes(metadata.OSCPE)
+	if err == nil {
+		// only "upgrade" the OS information if there is something more specific to use in it's place
+		if os == "" && osVersion == "" || os == "" && atts.Version != "" || atts.Product != "" && osVersion == "" {
+			os = atts.Product
+			osVersion = atts.Version
+		}
+	}
+
+	if os != "" {
+		osQualifier := os
+		if osVersion != "" {
+			osQualifier += "-" + osVersion
+		}
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "distro",
+			Value: osQualifier,
+		})
+	}
+
+	ty := purlDistroType(metadata.Type)
+
+	namespace := os
+
+	if ty == packageurl.TypeGeneric || os == "" {
+		namespace = metadata.System
+	}
+
 	return packageurl.NewPackageURL(
-		packageurl.TypeGeneric,
-		metadata.System,
+		ty,
+		namespace,
 		metadata.Name,
 		metadata.Version,
-		nil,
+		qualifiers,
 		"",
 	).ToString()
+}
+
+func purlDistroType(ty string) string {
+	switch ty {
+	case "rpm":
+		return packageurl.TypeRPM
+	case "deb":
+		return packageurl.TypeDebian
+	case "apk":
+		return packageurl.TypeAlpine
+	case "alpm":
+		return "alpm"
+	}
+	return packageurl.TypeGeneric
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -718,6 +719,31 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:ruby_rake:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
 			},
 		},
+		{
+			name: "wordpress plugin",
+			p: pkg.Package{
+				Name:    "WP Coder",
+				Version: "2.5.1",
+				Type:    pkg.WordpressPluginPkg,
+				Metadata: pkg.WordpressPluginEntry{
+					PluginInstallDirectory: "wp-coder",
+					Author:                 "Wow-Company",
+					AuthorURI:              "https://wow-estore.com",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:wow-company:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow-company:wp_coder:2.5.1:*:*:*:*:wordpress:*:*", // this is the correct CPE relative to CVE-2021-25053
+				"cpe:2.3:a:wow-estore:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow-estore:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_company:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_company:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_estore:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_estore:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -991,7 +1017,7 @@ func TestDictionaryFindIsWired(t *testing.T) {
 	tests := []struct {
 		name       string
 		pkg        pkg.Package
-		want       string
+		want       []cpe.CPE
 		wantExists bool
 	}{
 		{
@@ -1001,7 +1027,10 @@ func TestDictionaryFindIsWired(t *testing.T) {
 				Version: "1.0.2k",
 				Type:    pkg.GemPkg,
 			},
-			want: "cpe:2.3:a:ruby-lang:openssl:1.0.2k:*:*:*:*:*:*:*",
+			want: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:ruby-lang:openssl:1.0.2k:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:ruby-lang:openssl:1.0.2k:*:*:*:*:ruby:*:*", cpe.NVDDictionaryLookupSource),
+			},
 			// without the cpe data wired up, this would be empty (generation also creates cpe:2.3:a:openssl:openssl:1.0.2k:*:*:*:*:*:*:*)
 			wantExists: true,
 		},
@@ -1009,8 +1038,7 @@ func TestDictionaryFindIsWired(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, gotExists := FromDictionaryFind(tt.pkg)
-
-			assert.Equal(t, tt.want, got.Attributes.BindToFmtString())
+			assert.ElementsMatch(t, tt.want, got)
 			assert.Equal(t, tt.wantExists, gotExists)
 		})
 	}

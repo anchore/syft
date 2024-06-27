@@ -10,6 +10,7 @@ type ArchiveCatalogerConfig struct {
 	UseMavenLocalRepository        bool   `yaml:"use-maven-localrepository" json:"use-maven-localrepository" mapstructure:"use-maven-localrepositoryk"`
 	MavenLocalRepositoryDir        string `yaml:"maven-localrepository-dir" json:"maven-localrepository-dir" mapstructure:"maven-localrepository-dir"`
 	MavenBaseURL                   string `yaml:"maven-base-url" json:"maven-base-url" mapstructure:"maven-base-url"`
+	MaxParentRecursiveDepth        int    `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
 }
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
@@ -20,6 +21,7 @@ func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
 		UseMavenLocalRepository: true,
 		MavenLocalRepositoryDir: localRepoDir,
 		MavenBaseURL:            mavenBaseURL,
+		MaxParentRecursiveDepth: 5,
 	}
 }
 

@@ -290,18 +290,36 @@ func resolveProperty(pom gopom.Project, propertyValue *string, propertyName stri
 	}
 
 	log.WithFields("existingPropertyValue", propertyCase, "propertyName", propertyName).Trace("resolving property")
+	seenBeforePropertyNames := map[string]struct{}{
+		propertyName: {},
+	}
+	result := recursiveResolveProperty(pom, propertyCase, seenBeforePropertyNames)
+	if propertyMatcher.MatchString(result) {
+		return "" // dereferencing variable failed; fall back to empty string
+	}
+	return result
+}
+
+//nolint:gocognit
+func recursiveResolveProperty(pom gopom.Project, propertyCase string, seenPropertyNames map[string]struct{}) string {
 	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
+		propertyName := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
+		if _, seen := seenPropertyNames[propertyName]; seen {
+			return propertyCase
+		}
 		entries := pomProperties(pom)
-		value := resolveRecursiveByPropertyName(entries, match)
-		if isPropertyResolved(value) {
+		if value, ok := entries[propertyName]; ok {
+			seenPropertyNames[propertyName] = struct{}{}
+			value = recursiveResolveProperty(pom, value, seenPropertyNames) // recursively resolve in case a variable points to a variable.
+			//if isPropertyResolved(value) {
 			log.WithFields("propertyValue", value, "propertyName", match).Trace("resolved property")
 			return value
+			//}
 		}
 
 		// if we don't find anything directly in the pom properties,
 		// see if we have a project.x expression and process this based
 		// on the xml tags in gopom
-		propertyName := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
 		parts := strings.Split(propertyName, ".")
 		numParts := len(parts)
 		if numParts > 1 && strings.TrimSpace(parts[0]) == "project" {

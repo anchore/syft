@@ -1,0 +1,78 @@
+P:bash
+V:5.2.21-r0
+A:x86_64
+S:448728
+I:1396736
+T:The GNU Bourne Again shell
+U:https://www.gnu.org/software/bash/bash.html
+L:GPL-3.0-or-later
+o:bash
+m:Natanael Copa <ncopa@alpinelinux.org>
+t:1701073495
+c:6a9559d98850225ba80771901ef1abda91cb29aa
+D:/bin/sh so:libc.musl-x86_64.so.1 so:libreadline.so.8
+p:cmd:bash=5.2.21-r0
+
+P:busybox-binsh
+V:1.36.1-r15
+A:x86_64
+S:1543
+I:8192
+T:busybox ash /bin/sh
+U:https://busybox.net/
+L:GPL-2.0-only
+o:busybox
+m:Sören Tempel <soeren+alpine@soeren-tempel.net>
+t:1699383189
+c:d1b6f274f29076967826e0ecf6ebcaa5d360272f
+k:100
+D:busybox=1.36.1-r15
+p:/bin/sh cmd:sh=1.36.1-r15
+r:busybox-initscripts
+F:bin
+R:sh
+a:0:0:777
+Z:Q1pcfTfDNEbNKQc2s1tia7da05M8Q=
+
+P:musl
+V:1.2.4_git20230717-r4
+A:x86_64
+S:407278
+I:667648
+T:the musl c library (libc) implementation
+U:https://musl.libc.org/
+L:MIT
+o:musl
+m:Timo Teräs <timo.teras@iki.fi>
+t:1699271358
+c:ca7f2ab5e88794e4e654b40776f8a92256f50639
+p:so:libc.musl-x86_64.so.1=1
+F:lib
+R:ld-musl-x86_64.so.1
+a:0:0:755
+Z:Q1+zEJiG53Cxy7DkV5oZQqeWnzybY=
+R:libc.musl-x86_64.so.1
+a:0:0:777
+Z:Q17yJ3JFNypA4mxhJJr0ou6CzsJVI=
+
+P:readline
+V:8.2.1-r2
+A:x86_64
+S:119878
+I:303104
+T:GNU readline library
+U:https://tiswww.cwru.edu/php/chet/readline/rltop.html
+L:GPL-2.0-or-later
+o:readline
+m:Natanael Copa <ncopa@alpinelinux.org>
+t:1684120357
+c:33283848034c9885d984c8e8697c645c57324938
+D:so:libc.musl-x86_64.so.1 so:libncursesw.so.6
+p:so:libreadline.so.8=8.2
+F:etc
+R:inputrc
+Z:Q1ilcgkuEseXEH6iMo9UNjLn1pPfg=
+F:usr
+F:usr/lib
+R:libreadline.so.8
+a:0:0:777
