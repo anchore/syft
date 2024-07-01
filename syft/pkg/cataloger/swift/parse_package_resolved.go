@@ -45,11 +45,6 @@ type packagePinsV2 struct {
 	State    packageState `json:"state"`
 }
 
-type packageResolvedV3 struct {
-	packageResolvedV2
-	OriginHash string `json:"originHash"`
-}
-
 type packagePin struct {
 	Identity string
 	Location string
@@ -126,26 +121,8 @@ func pinsForVersion(data map[string]interface{}, version float64) ([]packagePin,
 				pin.State.Version,
 			})
 		}
-	case 2:
+	case 2, 3:
 		t := packageResolvedV2{}
-		jsonString, err := json.Marshal(data)
-		if err != nil {
-			return nil, err
-		}
-		parseErr := json.Unmarshal(jsonString, &t)
-		if parseErr != nil {
-			return nil, parseErr
-		}
-		for _, pin := range t.Pins {
-			genericPins = append(genericPins, packagePin{
-				pin.Identity,
-				pin.Location,
-				pin.State.Revision,
-				pin.State.Version,
-			})
-		}
-	case 3:
-		t := packageResolvedV3{}
 		jsonString, err := json.Marshal(data)
 		if err != nil {
 			return nil, err
