@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/mholt/archiver/v3"
-	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/file"
@@ -73,16 +72,19 @@ func coordinateReferenceLookup(s *sbom.SBOM) func(coords file.Coordinates) bool 
 		allPackageCoords.Add(p.Locations.CoordinateSet().ToSlice()...)
 	}
 
-	allMetadataFiles := strset.New()
-	for p := range s.Artifacts.Packages.Enumerate() {
-		if f, ok := p.Metadata.(pkg.FileOwner); ok {
-			for _, o := range f.OwnedFiles() {
-				allMetadataFiles.Add(o)
-			}
+	for _, r := range s.Relationships {
+		_, fromPkgOk := r.From.(pkg.Package)
+		fromFile, fromFileOk := r.From.(file.Coordinates)
+		_, toPkgOk := r.To.(pkg.Package)
+		toFile, toFileOk := r.To.(file.Coordinates)
+		if fromPkgOk && toFileOk {
+			allPackageCoords.Add(toFile)
+		} else if fromFileOk && toPkgOk {
+			allPackageCoords.Add(fromFile)
 		}
 	}
 
 	return func(coords file.Coordinates) bool {
-		return allPackageCoords.Contains(coords) || allMetadataFiles.Has(coords.RealPath)
+		return allPackageCoords.Contains(coords)
 	}
 }
