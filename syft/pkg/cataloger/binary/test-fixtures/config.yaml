@@ -78,12 +78,12 @@ from-images:
     paths:
       - /usr/local/go/bin/go
 
-  # - version: 1.5.14
-  #   images:
-  #     - ref: haproxy:1.5.14@sha256:3d57e3921cc84e860f764e863ce729dd0765e3d28d444775127bc42d68f98e10
-  #       platform: linux/amd64
-  #   paths:
-  #     - /usr/local/sbin/haproxy
+  - version: 1.5.14
+    images:
+      - ref: haproxy:1.5.14@sha256:3d57e3921cc84e860f764e863ce729dd0765e3d28d444775127bc42d68f98e10
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/haproxy
 
   - version: 1.8.22
     images:
@@ -395,12 +395,12 @@ from-images:
     paths:
       - /usr/local/bin/wp
 
-  # - version: 1.9.3p551
-  #   images:
-  #     - ref: ruby:1.9.3-p551@sha256:56b4a74e4fc2492b3b857bc94454dfa910f61e823a4bfab275d279bfa218eb05
-  #       platform: linux/amd64
-  #   paths:
-  #     - /usr/local/bin/ruby
+  - version: 1.9.3p551
+    images:
+      - ref: ruby:1.9.3-p551@sha256:56b4a74e4fc2492b3b857bc94454dfa910f61e823a4bfab275d279bfa218eb05
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
 
   - name: rust-libstd
     version: 1.50.0
