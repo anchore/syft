@@ -64,6 +64,9 @@
       "github.com/hamba/avro/v2": [
         "cpe:2.3:a:avro_project:avro:*:*:*:*:*:go:*:*"
       ],
+      "github.com/hashicorp/go-retryablehttp": [
+        "cpe:2.3:a:hashicorp:retryablehttp:*:*:*:*:*:go:*:*"
+      ],
       "github.com/jumpserver/koko/pkg/koko": [
         "cpe:2.3:a:fit2cloud:koko:*:*:*:*:*:go:*:*"
       ],
@@ -7969,7 +7972,8 @@
       ],
       "better-wp-security": [
         "cpe:2.3:a:ithemes:ithemes_security:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:ithemes:security:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:ithemes:security:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:solidwp:solid_security:*:*:*:*:*:wordpress:*:*"
       ],
       "betterlinks": [
         "cpe:2.3:a:wpdeveloper:betterlinks:*:*:*:*:*:wordpress:*:*"
@@ -9130,6 +9134,9 @@
       "crossslide-jquery-plugin-for-wordpress": [
         "cpe:2.3:a:crossslide_jquery_project:crossslide_jquery:*:*:*:*:*:wordpress:*:*"
       ],
+      "cryout-serious-slider": [
+        "cpe:2.3:a:cryoutcreations:serious_slider:*:*:*:*:*:wordpress:*:*"
+      ],
       "crypto-converter-widget": [
         "cpe:2.3:a:currencyratetoday:crypto_converter_widget:*:*:*:*:*:wordpress:*:*"
       ],
@@ -9440,10 +9447,11 @@
         "cpe:2.3:a:deny_all_firewall_project:deny_all_firewall:*:*:*:*:*:wordpress:*:*"
       ],
       "depicter": [
-        "cpe:2.3:a:averta:depicter_slider:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:averta:depicter_slider:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:depicter:depicter:*:*:*:*:*:wordpress:*:*"
       ],
       "dethemekit-for-elementor": [
-        "cpe:2.3:a:dethemekit_for_elementor_project:dethemekit_for_elementor:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:detheme:dethemekit_for_elementor:*:*:*:*:*:wordpress:*:*"
       ],
       "diary-availability-calendar": [
         "cpe:2.3:a:roosty:diary-availability-calendar:*:*:*:*:*:wordpress:*:*"
@@ -9666,6 +9674,9 @@
       ],
       "easy-accordion-free": [
         "cpe:2.3:a:techearty:easy_accordion:*:*:*:*:*:wordpress:*:*"
+      ],
+      "easy-age-verify": [
+        "cpe:2.3:a:5starplugins:easy_age_verify:*:*:*:*:*:wordpress:*:*"
       ],
       "easy-appointments": [
         "cpe:2.3:a:easy_appointments_project:easy_appointments:*:*:*:*:*:wordpress:*:*"
@@ -10543,6 +10554,9 @@
       ],
       "forms-for-campaign-monitor": [
         "cpe:2.3:a:campaignmonitor:campaign_monitor:*:*:*:*:*:wordpress:*:*"
+      ],
+      "forms-gutenberg": [
+        "cpe:2.3:a:gutenbergforms:gutenberg_forms:*:*:*:*:*:wordpress:*:*"
       ],
       "formzu-wp": [
         "cpe:2.3:a:formzu:formzu_wp:*:*:*:*:*:wordpress:*:*"
@@ -14261,6 +14275,9 @@
       "search-analytics": [
         "cpe:2.3:a:cornelraiu:wp_search_analytics:*:*:*:*:*:wordpress:*:*"
       ],
+      "search-and-replace": [
+        "cpe:2.3:a:wp-media:search_\\\u0026_replace:*:*:*:*:*:wordpress:*:*"
+      ],
       "search-everything": [
         "cpe:2.3:a:search_everything_project:search_everything:*:*:*:*:*:wordpress:*:*"
       ],
@@ -15310,6 +15327,9 @@
       "tabbed": [
         "cpe:2.3:a:rich-web:tab:*:*:*:*:*:wordpress:*:*"
       ],
+      "table-addons-for-elementor": [
+        "cpe:2.3:a:fusionplugin:table_addons_for_elementor:*:*:*:*:*:wordpress:*:*"
+      ],
       "table-of-contents-plus": [
         "cpe:2.3:a:dublue:table_of_contents_plus:*:*:*:*:*:wordpress:*:*"
       ],
@@ -15495,6 +15515,7 @@
         "cpe:2.3:a:themify:portfolio_post:*:*:*:*:*:wordpress:*:*"
       ],
       "themify-wc-product-filter": [
+        "cpe:2.3:a:themify:product_filter:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:themify:woocommerce_product_filter:*:*:*:*:*:wordpress:*:*"
       ],
       "thesography": [
@@ -15683,6 +15704,9 @@
       ],
       "typebot": [
         "cpe:2.3:a:typebot:typebot:*:*:*:*:*:wordpress:*:*"
+      ],
+      "typing-text": [
+        "cpe:2.3:a:wpdeveloper:typing_text:*:*:*:*:*:wordpress:*:*"
       ],
       "typofr": [
         "cpe:2.3:a:typofr_project:typofr:*:*:*:*:*:wordpress:*:*"
@@ -16026,6 +16050,9 @@
       ],
       "vikrentcar": [
         "cpe:2.3:a:e4jconnect:vikrentcar:*:*:*:*:*:wordpress:*:*"
+      ],
+      "vimeography": [
+        "cpe:2.3:a:davekiss:vimeography:*:*:*:*:*:wordpress:*:*"
       ],
       "vision": [
         "cpe:2.3:a:vision_interactive_project:vision_interactive:*:*:*:*:*:wordpress:*:*"
@@ -18052,6 +18079,7 @@
         "cpe:2.3:a:wpstream:wpstream:*:*:*:*:*:wordpress:*:*"
       ],
       "wptools": [
+        "cpe:2.3:a:billminozzi:wp_tools:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:wptools_project:wptools:*:*:*:*:*:wordpress:*:*"
       ],
       "wptouch": [
@@ -18367,6 +18395,9 @@
       "bonkers": [
         "cpe:2.3:a:colorlib:bonkers:*:*:*:*:*:wordpress:*:*"
       ],
+      "book-landing-page": [
+        "cpe:2.3:a:rarathemes:book_landing_page:*:*:*:*:*:wordpress:*:*"
+      ],
       "brilliance": [
         "cpe:2.3:a:cpothemes:brilliance:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:wpchill:brilliance:*:*:*:*:*:wordpress:*:*"
@@ -18389,6 +18420,9 @@
       "darcie": [
         "cpe:2.3:a:catchthemes:darcie:*:*:*:*:*:wordpress:*:*"
       ],
+      "digital-newspaper": [
+        "cpe:2.3:a:blazethemes:digital_newspaper:*:*:*:*:*:wordpress:*:*"
+      ],
       "digitally": [
         "cpe:2.3:a:omarfolgheraiter:digitally:*:*:*:*:*:wordpress:*:*"
       ],
@@ -18407,6 +18441,9 @@
       "everest-news": [
         "cpe:2.3:a:everestthemes:everest_news:*:*:*:*:*:wordpress:*:*"
       ],
+      "excellent": [
+        "cpe:2.3:a:themefreesia:excellent:*:*:*:*:*:wordpress:*:*"
+      ],
       "flashy": [
         "cpe:2.3:a:flashy_project:flashy:*:*:*:*:*:wordpress:*:*"
       ],
@@ -18423,11 +18460,17 @@
         "cpe:2.3:a:generatepress:generatepress:*:*:*:*:-:wordpress:*:*",
         "cpe:2.3:a:generatepress:generatepress:*:*:*:*:premium:wordpress:*:*"
       ],
+      "grey-opaque": [
+        "cpe:2.3:a:grey_opaque_project:grey_opaque:*:*:*:*:*:wordpress:*:*"
+      ],
       "hueman": [
         "cpe:2.3:a:presscustomizr:hueman:*:*:*:*:*:wordpress:*:*"
       ],
       "illdy": [
         "cpe:2.3:a:colorlib:illdy:*:*:*:*:*:wordpress:*:*"
+      ],
+      "interface": [
+        "cpe:2.3:a:themehorse:interface:*:*:*:*:*:wordpress:*:*"
       ],
       "kata": [
         "cpe:2.3:a:climaxthemes:kata:*:*:*:*:*:wordpress:*:*",
@@ -18448,6 +18491,9 @@
       ],
       "morning-coffee": [
         "cpe:2.3:a:adazing:morning_coffee:*:*:*:*:*:wordpress:*:*"
+      ],
+      "mosaic": [
+        "cpe:2.3:a:wildweblab:mosaic:*:*:*:*:*:wordpress:*:*"
       ],
       "newsmag": [
         "cpe:2.3:a:machothemes:newsmag:*:*:*:*:*:wordpress:*:*"
