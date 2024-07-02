@@ -35,7 +35,7 @@ func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.
 	name, version := cpvMatch[1], cpvMatch[2]
 	if name == "" || version == "" {
 		log.WithFields("path", reader.Location.RealPath).Warnf("failed to parse portage name and version")
-		return nil, nil, nil
+		return nil, nil, fmt.Errorf("failed to parse portage name and version")
 	}
 
 	p := pkg.Package{

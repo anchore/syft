@@ -234,6 +234,7 @@ func Test_toSyftFiles(t *testing.T) {
 				FileMetadata: map[file.Coordinates]file.Metadata{},
 				FileDigests:  map[file.Coordinates][]file.Digest{},
 				Executables:  map[file.Coordinates]file.Executable{},
+				Unknowns:     make(map[file.Coordinates][]string),
 			},
 		},
 		{
@@ -349,6 +350,7 @@ func Test_toSyftFiles(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.want.FileContents = make(map[file.Coordinates]string)
 			tt.want.FileLicenses = make(map[file.Coordinates][]file.License)
+			tt.want.Unknowns = make(map[file.Coordinates][]string)
 			assert.Equal(t, tt.want, toSyftFiles(tt.files))
 		})
 	}

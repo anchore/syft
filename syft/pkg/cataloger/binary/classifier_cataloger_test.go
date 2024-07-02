@@ -1387,7 +1387,7 @@ func Test_Cataloger_ResilientToErrors(t *testing.T) {
 
 	resolver := &panicyResolver{}
 	_, _, err := c.Catalog(context.Background(), resolver)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 	assert.True(t, resolver.searchCalled)
 }
 

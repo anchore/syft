@@ -101,6 +101,11 @@ func toFile(s sbom.SBOM) []model.File {
 			contents = contentsForLocation
 		}
 
+		var unknowns []string
+		if unknownsForLocation, exists := artifacts.Unknowns[coordinates]; exists {
+			unknowns = unknownsForLocation
+		}
+
 		var licenses []model.FileLicense
 		for _, l := range artifacts.FileLicenses[coordinates] {
 			var evidence *model.FileLicenseEvidence
@@ -132,6 +137,7 @@ func toFile(s sbom.SBOM) []model.File {
 			Contents:   contents,
 			Licenses:   licenses,
 			Executable: executable,
+			Unknowns:   unknowns,
 		})
 	}
 

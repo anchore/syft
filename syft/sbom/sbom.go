@@ -26,6 +26,7 @@ type Artifacts struct {
 	FileContents      map[file.Coordinates]string
 	FileLicenses      map[file.Coordinates][]file.License
 	Executables       map[file.Coordinates]file.Executable
+	Unknowns          map[file.Coordinates][]string
 	LinuxDistribution *linux.Release
 }
 
@@ -58,6 +59,9 @@ func (s SBOM) AllCoordinates() []file.Coordinates {
 		set.Add(coordinates)
 	}
 	for coordinates := range s.Artifacts.FileDigests {
+		set.Add(coordinates)
+	}
+	for coordinates := range s.Artifacts.Unknowns {
 		set.Add(coordinates)
 	}
 	for _, relationship := range s.Relationships {

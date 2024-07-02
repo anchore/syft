@@ -9,8 +9,10 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/anchore/syft/internal/sbomsync"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/sbom"
 )
 
 type Executor struct {
@@ -33,6 +35,12 @@ func NewTaskExecutor(tasks []Task, numWorkers int) *Executor {
 }
 
 func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsync.Builder, prog *monitor.CatalogerTaskProgress) error {
+	var lock sync.Mutex
+	withLock := func(fn func()) {
+		lock.Lock()
+		defer lock.Unlock()
+		fn()
+	}
 	var errs error
 	wg := &sync.WaitGroup{}
 	for i := 0; i < p.numWorkers; i++ {
@@ -46,9 +54,16 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 					return
 				}
 
-				if err := runTaskSafely(ctx, tsk, resolver, s); err != nil {
-					errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", err))
-					prog.SetError(err)
+				err := runTaskSafely(ctx, tsk, resolver, s)
+				unknowns, err := unknown.ExtractCoordinateErrors(err)
+				if len(unknowns) > 0 {
+					appendUnknowns(s, unknowns)
+				}
+				if err != nil {
+					withLock(func() {
+						errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", err))
+						prog.SetError(err)
+					})
 				}
 				prog.Increment()
 			}
@@ -58,6 +73,19 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 	wg.Wait()
 
 	return errs
+}
+
+func appendUnknowns(builder sbomsync.Builder, unknowns []unknown.CoordinateError) {
+	if accessor, ok := builder.(sbomsync.Accessor); ok {
+		accessor.WriteToSBOM(func(sb *sbom.SBOM) {
+			for _, u := range unknowns {
+				if sb.Artifacts.Unknowns == nil {
+					sb.Artifacts.Unknowns = map[file.Coordinates][]string{}
+				}
+				sb.Artifacts.Unknowns[u.Coordinates] = append(sb.Artifacts.Unknowns[u.Coordinates], u.Reason.Error())
+			}
+		})
+	}
 }
 
 func runTaskSafely(ctx context.Context, t Task, resolver file.Resolver, s sbomsync.Builder) (err error) {
