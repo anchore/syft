@@ -12,7 +12,9 @@ func TestExclude(t *testing.T) {
 	packageB := pkg.Package{Name: "package-a", Type: pkg.PythonPkg}
 	packageC := pkg.Package{Name: "package-a", Type: pkg.BinaryPkg}
 	packageD := pkg.Package{Name: "package-d", Type: pkg.BinaryPkg}
-	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD} {
+	packageE := pkg.Package{Name: "package-e", Type: pkg.RpmPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{Type: "rpm"}}
+	packageF := pkg.Package{Name: "package-f", Type: pkg.RpmPkg, Metadata: pkg.BinarySignature{}}
+	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE, &packageF} {
 		p := p
 		p.SetID()
 	}
@@ -41,6 +43,26 @@ func TestExclude(t *testing.T) {
 				To:   packageC,
 			},
 			packages:      pkg.NewCollection(packageA, packageC),
+			shouldExclude: true,
+		},
+		{
+			name: "exclusions from os -> elf binary (as RPM)",
+			relationship: artifact.Relationship{
+				Type: artifact.OwnershipByFileOverlapRelationship,
+				From: packageA,
+				To:   packageE,
+			},
+			packages:      pkg.NewCollection(packageA, packageE),
+			shouldExclude: true,
+		},
+		{
+			name: "exclusions from os -> binary (masquerading as RPM)",
+			relationship: artifact.Relationship{
+				Type: artifact.OwnershipByFileOverlapRelationship,
+				From: packageA,
+				To:   packageF,
+			},
+			packages:      pkg.NewCollection(packageA, packageF),
 			shouldExclude: true,
 		},
 		{
