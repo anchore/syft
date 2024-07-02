@@ -84,7 +84,5 @@ func coordinateReferenceLookup(s *sbom.SBOM) func(coords file.Coordinates) bool 
 		}
 	}
 
-	return func(coords file.Coordinates) bool {
-		return allPackageCoords.Contains(coords)
-	}
+	return allPackageCoords.Contains
 }
