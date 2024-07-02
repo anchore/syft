@@ -13,7 +13,7 @@ func newELFPackage(metadata elfBinaryPackageNotes, locations file.LocationSet) p
 		Version:   metadata.Version,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(metadata.License)),
 		PURL:      packageURL(metadata),
-		Type:      pkg.BinaryPkg,
+		Type:      pkgType(metadata.Type),
 		Locations: locations,
 		Metadata:  metadata.ELFBinaryPackageNoteJSONPayload,
 	}
@@ -67,6 +67,8 @@ func packageURL(metadata elfBinaryPackageNotes) string {
 	).ToString()
 }
 
+const alpmType = "alpm"
+
 func purlDistroType(ty string) string {
 	switch ty {
 	case "rpm":
@@ -75,8 +77,22 @@ func purlDistroType(ty string) string {
 		return packageurl.TypeDebian
 	case "apk":
 		return packageurl.TypeAlpine
-	case "alpm":
-		return "alpm"
+	case alpmType:
+		return alpmType
 	}
 	return packageurl.TypeGeneric
+}
+
+func pkgType(ty string) pkg.Type {
+	switch ty {
+	case "rpm":
+		return pkg.RpmPkg
+	case "deb":
+		return pkg.DebPkg
+	case "apk":
+		return pkg.ApkPkg
+	case alpmType:
+		return pkg.AlpmPkg
+	}
+	return pkg.BinaryPkg
 }
