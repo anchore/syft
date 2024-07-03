@@ -64,6 +64,28 @@ func TestBySourceThenSpecificity(t *testing.T) {
 				Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*", "some-unknown-source"),
 			},
 		},
+		{
+			name: "lexical sorting on equal sources puts escaped characters later",
+			input: []CPE{
+				Must("cpe:2.3:a:jenkins:pipeline\\\\:_supporting_apis:865.v43e78cc44e0d:*:*:*:*:jenkins:*:*", "nvd-cpe-dictionary"),
+				Must("cpe:2.3:a:jenkins:pipeline_supporting_apis:865.v43e78cc44e0d:*:*:*:*:jenkins:*:*", "nvd-cpe-dictionary"),
+			},
+			want: []CPE{
+				Must("cpe:2.3:a:jenkins:pipeline_supporting_apis:865.v43e78cc44e0d:*:*:*:*:jenkins:*:*", "nvd-cpe-dictionary"),
+				Must("cpe:2.3:a:jenkins:pipeline\\\\:_supporting_apis:865.v43e78cc44e0d:*:*:*:*:jenkins:*:*", "nvd-cpe-dictionary"),
+			},
+		},
+		{
+			name: "lexical sorting on equal sources puts more specific attributes earlier",
+			input: []CPE{
+				Must("cpe:2.3:a:jenkins:mailer:472.vf7c289a_4b_420:*:*:*:*:*:*:*", "nvd-cpe-dictionary"),
+				Must("cpe:2.3:a:jenkins:mailer:472.vf7c289a_4b_420:*:*:*:*:jenkins:*:*", "nvd-cpe-dictionary"),
+			},
+			want: []CPE{
+				Must("cpe:2.3:a:jenkins:mailer:472.vf7c289a_4b_420:*:*:*:*:jenkins:*:*", "nvd-cpe-dictionary"),
+				Must("cpe:2.3:a:jenkins:mailer:472.vf7c289a_4b_420:*:*:*:*:*:*:*", "nvd-cpe-dictionary"),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
