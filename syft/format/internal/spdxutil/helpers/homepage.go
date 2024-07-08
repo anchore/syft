@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/rust"
 )
 
 func Homepage(p pkg.Package) string {
@@ -12,13 +11,12 @@ func Homepage(p pkg.Package) string {
 			return metadata.Homepage
 		case pkg.NpmPackage:
 			return metadata.Homepage
-		case rust.RustCargoLockEntry:
-			if sourceInfo := metadata.SourceGeneratedDepInfo; sourceInfo != nil {
-				homepage := sourceInfo.CargoToml.Package.Homepage
-				if homepage == "" {
-					homepage = sourceInfo.CargoToml.Package.Repository
+		case pkg.RustCargo:
+			if cargoEntry := metadata.CargoEntry; cargoEntry != nil {
+				if cargoEntry.Homepage != "" {
+					return cargoEntry.Homepage
 				}
-				return homepage
+				return cargoEntry.Repository
 			}
 		}
 	}

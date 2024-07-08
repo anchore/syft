@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/rust"
 )
 
 func Description(p pkg.Package) string {
@@ -12,9 +11,9 @@ func Description(p pkg.Package) string {
 			return metadata.Description
 		case pkg.NpmPackage:
 			return metadata.Description
-		case rust.RustCargoLockEntry:
-			if sourceInfo := metadata.SourceGeneratedDepInfo; sourceInfo != nil {
-				return sourceInfo.CargoToml.Package.Description
+		case pkg.RustCargo:
+			if cargoEntry := metadata.CargoEntry; cargoEntry != nil {
+				return cargoEntry.Description
 			}
 		}
 	}

@@ -5,8 +5,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/anchore/syft/syft/pkg/rust"
-
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/syft/internal/file"
@@ -28,7 +26,7 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 					Type: cyclonedx.ERTypeDistribution,
 				})
 			}
-		case rust.RustCargoLockEntry:
+		case pkg.RustCargoLockEntry:
 			if metadata.Source != "" {
 				refs = append(refs, cyclonedx.ExternalReference{
 					URL:  metadata.Source,
@@ -109,7 +107,7 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
 	switch meta := metadata.(type) {
 	case *pkg.ApkDBEntry:
 		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)
-	case *rust.RustCargoLockEntry:
+	case *pkg.RustCargoLockEntry:
 		meta.Source = refURL(c, cyclonedx.ERTypeDistribution)
 	case *pkg.NpmPackage:
 		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)

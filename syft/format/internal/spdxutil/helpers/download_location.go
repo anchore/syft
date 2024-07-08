@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/rust"
 )
 
 const NONE = "NONE"
@@ -25,12 +24,13 @@ func DownloadLocation(p pkg.Package) string {
 			return NoneIfEmpty(metadata.URL)
 		case pkg.NpmPackageLockEntry:
 			return NoneIfEmpty(metadata.Resolved)
-		case rust.RustCargoLockEntry:
-			var url, isLocal, err = metadata.GetDownloadLink()
-			if isLocal || err != nil {
+		case pkg.RustCargo:
+			if lockEntry := metadata.LockEntry; lockEntry != nil {
+				url, isRemote := lockEntry.SourceRemoteURL()
+				if isRemote {
+					return NoneIfEmpty(url)
+				}
 				return NOASSERTION
-			} else {
-				return NoneIfEmpty(url)
 			}
 		}
 	}

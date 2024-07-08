@@ -1,24 +1,41 @@
 package rust
 
 import (
+	"fmt"
+
+	"github.com/microsoft/go-rustaudit"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/rust"
-	"github.com/microsoft/go-rustaudit"
+	"github.com/anchore/syft/syft/pkg/cataloger/rust/internal/cargo"
 )
 
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the Cargo.lock metadata.
-func newPackageFromCargoMetadata(m rust.RustCargoLockEntry, licenseSet pkg.LicenseSet, locations ...file.Location) pkg.Package {
+func newPackageFromCargoMetadata(m cargo.LockEntry, locations ...file.Location) pkg.Package {
+	var cargoEntry *pkg.RustCargoEntry
+	if m.CrateInfo != nil {
+		cargoEntry = &pkg.RustCargoEntry{
+			DownloadURL:    m.CrateInfo.DownloadLink,
+			DownloadDigest: fmt.Sprintf("%x", m.CrateInfo.DownloadSha),
+			Description:    m.CrateInfo.CargoToml.Package.Description,
+			Homepage:       m.CrateInfo.CargoToml.Package.Homepage,
+			Repository:     m.CrateInfo.CargoToml.Package.Repository,
+		}
+	}
+
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   m.Version,
 		Locations: file.NewLocationSet(locations...),
-		Licenses:  licenseSet,
+		Licenses:  m.Licenses,
 		PURL:      packageURL(m.Name, m.Version),
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
-		Metadata:  m,
+		Metadata: pkg.RustCargo{
+			CargoEntry: cargoEntry,
+			LockEntry:  &m.RustCargoLockEntry,
+		},
 	}
 
 	p.SetID()

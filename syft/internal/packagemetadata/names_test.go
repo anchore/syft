@@ -4,13 +4,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/anchore/syft/syft/pkg/rust"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/rust/internal/cargo"
 )
 
 func TestAllNames(t *testing.T) {
@@ -42,22 +41,22 @@ func TestReflectTypeFromJSONName(t *testing.T) {
 		{
 			name:       "exact match on ID",
 			lookup:     "rust-cargo-lock-entry",
-			wantRecord: reflect.TypeOf(rust.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeOf(cargo.RustCargoLockEntry{}),
 		},
 		{
 			name:       "exact match on former name",
 			lookup:     "RustCargoPackageMetadata",
-			wantRecord: reflect.TypeOf(rust.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeOf(cargo.RustCargoLockEntry{}),
 		},
 		{
 			name:       "case insensitive on ID",
 			lookup:     "RUST-CARGO-lock-entrY",
-			wantRecord: reflect.TypeOf(rust.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeOf(cargo.RustCargoLockEntry{}),
 		},
 		{
 			name:       "case insensitive on alias",
 			lookup:     "rusTcArgopacKagEmEtadATa",
-			wantRecord: reflect.TypeOf(rust.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeOf(cargo.RustCargoLockEntry{}),
 		},
 		{
 			name: "consistent override",
@@ -251,7 +250,7 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 			input: "RustCargoPackageMetadata",
 			// this used to be shared as a use case for both RustCargoLockEntry and RustBinaryAuditEntry
 			// neither of these is more correct over the other.
-			expected: reflect.TypeOf(rust.RustCargoLockEntry{}),
+			expected: reflect.TypeOf(cargo.RustCargoLockEntry{}),
 		},
 	}
 
@@ -483,7 +482,7 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 		},
 		{
 			name:               "CargoPackageMetadata",
-			metadata:           rust.RustCargoLockEntry{},
+			metadata:           cargo.RustCargoLockEntry{},
 			expectedJSONName:   "rust-cargo-lock-entry",
 			expectedLegacyName: "RustCargoPackageMetadata", // note: maps to multiple entries (v11-12 breaking change)
 		},
