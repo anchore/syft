@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/mholt/archiver/v3"
-	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -29,14 +29,16 @@ func NewUnknownsFinalizeTask(cfg UnknownsConfig) Task {
 }
 
 // processUnknowns removes unknown entries that have valid packages reported for the locations
-func (c UnknownsConfig) processUnknowns(_ context.Context, _ file.Resolver, builder sbomsync.Builder) error {
+func (c UnknownsConfig) processUnknowns(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 	accessor := builder.(sbomsync.Accessor)
-	accessor.WriteToSBOM(c.finalize)
+	accessor.WriteToSBOM(func(s *sbom.SBOM) {
+		c.finalize(resolver, s)
+	})
 	return nil
 }
 
-func (c UnknownsConfig) finalize(s *sbom.SBOM) {
-	hasPackageReference := coordinateReferenceLookup(s)
+func (c UnknownsConfig) finalize(resolver file.Resolver, s *sbom.SBOM) {
+	hasPackageReference := coordinateReferenceLookup(resolver, s)
 
 	for coords := range s.Artifacts.Unknowns {
 		if !hasPackageReference(coords) {
@@ -67,22 +69,44 @@ func (c UnknownsConfig) finalize(s *sbom.SBOM) {
 	}
 }
 
-func coordinateReferenceLookup(s *sbom.SBOM) func(coords file.Coordinates) bool {
+func coordinateReferenceLookup(resolver file.Resolver, s *sbom.SBOM) func(coords file.Coordinates) bool {
 	allPackageCoords := file.NewCoordinateSet()
+
+	// include all directly included locations that result in packages
 	for p := range s.Artifacts.Packages.Enumerate() {
 		allPackageCoords.Add(p.Locations.CoordinateSet().ToSlice()...)
 	}
 
-	allMetadataFiles := strset.New()
+	// include owned files, for example specified by package managers.
+	// relationships for these owned files may be disabled, but we always want to include them
 	for p := range s.Artifacts.Packages.Enumerate() {
 		if f, ok := p.Metadata.(pkg.FileOwner); ok {
-			for _, o := range f.OwnedFiles() {
-				allMetadataFiles.Add(o)
+			for _, ownedFilePath := range f.OwnedFiles() {
+				// resolve these owned files, as they may have symlinks
+				// but coordinates we will test against are always absolute paths
+				locations, err := resolver.FilesByPath(ownedFilePath)
+				if err != nil {
+					log.Debugf("unable to resolve owned file '%s': %v", ownedFilePath, err)
+				}
+				for _, loc := range locations {
+					allPackageCoords.Add(loc.Coordinates)
+				}
 			}
 		}
 	}
 
-	return func(coords file.Coordinates) bool {
-		return allPackageCoords.Contains(coords) || allMetadataFiles.Has(coords.RealPath)
+	// include relationships
+	for _, r := range s.Relationships {
+		_, fromPkgOk := r.From.(pkg.Package)
+		fromFile, fromFileOk := r.From.(file.Coordinates)
+		_, toPkgOk := r.To.(pkg.Package)
+		toFile, toFileOk := r.To.(file.Coordinates)
+		if fromPkgOk && toFileOk {
+			allPackageCoords.Add(toFile)
+		} else if fromFileOk && toPkgOk {
+			allPackageCoords.Add(fromFile)
+		}
 	}
+
+	return allPackageCoords.Contains
 }
