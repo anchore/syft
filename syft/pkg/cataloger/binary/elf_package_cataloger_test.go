@@ -77,7 +77,7 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 						file.NewLocation("/sha1sum").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Licenses: pkg.NewLicenseSet(),
-					Type:     pkg.BinaryPkg,
+					Type:     pkg.RpmPkg,
 					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 						Type:         "rpm",
 						Architecture: "x86_64",
@@ -99,7 +99,7 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 						file.NewLocation("/sha1sum").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Licenses: pkg.NewLicenseSet(),
-					Type:     pkg.BinaryPkg,
+					Type:     pkg.RpmPkg,
 					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 						Type:         "rpm",
 						Architecture: "arm",

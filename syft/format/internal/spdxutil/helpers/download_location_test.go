@@ -64,6 +64,50 @@ func Test_DownloadLocation(t *testing.T) {
 			},
 			expected: NONE,
 		},
+		{
+			name: "from php installed.json",
+			input: pkg.Package{
+				Metadata: pkg.PhpComposerInstalledEntry{
+					Dist: pkg.PhpComposerExternalReference{
+						URL: "http://package-lock.test",
+					},
+				},
+			},
+			expected: "http://package-lock.test",
+		},
+		{
+			name: "empty",
+			input: pkg.Package{
+				Metadata: pkg.PhpComposerInstalledEntry{
+					Dist: pkg.PhpComposerExternalReference{
+						URL: "",
+					},
+				},
+			},
+			expected: "NONE",
+		},
+		{
+			name: "from php composer.lock",
+			input: pkg.Package{
+				Metadata: pkg.PhpComposerLockEntry{
+					Dist: pkg.PhpComposerExternalReference{
+						URL: "http://package-lock.test",
+					},
+				},
+			},
+			expected: "http://package-lock.test",
+		},
+		{
+			name: "empty",
+			input: pkg.Package{
+				Metadata: pkg.PhpComposerLockEntry{
+					Dist: pkg.PhpComposerExternalReference{
+						URL: "",
+					},
+				},
+			},
+			expected: "NONE",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -87,7 +87,7 @@ func subFs(fsys afero.Fs, subDirs ...string) (afero.Fs, error) {
 	if errors.Is(err, afero.ErrFileNotFound) {
 		err = fsys.MkdirAll(dir, dirPermissions)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create directory at '%s/%s': %v", dir, strings.Join(subDirs, "/"), err)
+			return nil, fmt.Errorf("unable to create directory at '%s': %v", dir, err)
 		}
 		stat, err = fsys.Stat(dir)
 		if err != nil {

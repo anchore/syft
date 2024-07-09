@@ -63,6 +63,14 @@ from-images:
     paths:
       - /usr/local/lib/erlang/erts-14.2.4/lib/internal/liberts_internal.a
 
+  - name: erlang
+    version: 27.0
+    images:
+      - ref: erlang:27.0.0.0-alpine@sha256:82064a65eb1f9901a479d8ada5f622be3bfac8b474dfc876dc00c28fdef4b1b8
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/erlang/erts-15.0/bin/beam.smp
+
   - version: 1.21.3
     images:
       - ref: golang:1.21.3@sha256:3ce8313c3513515040870c55e0c041a2b94f3576a58cfd3948633604214aa811
@@ -282,6 +290,13 @@ from-images:
     version: 3.11.8
     images:
       - ref: arangodb:3.11.8@sha256:16893e767f47d28e3297839637741e5c4023e815adf860dfc674e1a36c7c7db0
+        platform: linux/amd64
+    paths:
+      - /usr/bin/arangosh
+  - name: arangodb
+    version: 3.12.0-2
+    images:
+      - ref: arangodb:3.12.0.2@sha256:6ba2e4284cd0f4835e3ef034be90fb947c3d61225d65d07e3b2d2d893e47de25
         platform: linux/amd64
     paths:
       - /usr/bin/arangosh

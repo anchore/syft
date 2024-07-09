@@ -49,6 +49,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "arangodb/3.12.0-2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "arangodb",
+				Version:   "3.12.0-2",
+				Type:      "binary",
+				PURL:      "pkg:generic/arangodb@3.12.0-2",
+				Locations: locations("arangosh"),
+				Metadata:  metadata("arangodb-binary"),
+			},
+		},
+		{
 			logicalFixture: "postgres/15beta4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",
@@ -894,6 +905,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/erlang@26.2.4",
 				Locations: locations("liberts_internal.a"),
 				Metadata:  metadata("erlang-library"),
+			},
+		},
+		{
+			logicalFixture: "erlang/27.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "erlang",
+				Version:   "27.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/erlang@27.0",
+				Locations: locations("beam.smp"),
+				Metadata:  metadata("erlang-alpine-binary"),
 			},
 		},
 		{

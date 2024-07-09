@@ -103,7 +103,7 @@ tools:
   # used for running all local and CI tasks
   - name: task
     version:
-      want: v3.37.2
+      want: v3.38.0
     method: github-release
     with:
       repo: go-task/task
@@ -111,7 +111,7 @@ tools:
   # used for triggering a release
   - name: gh
     version:
-      want: v2.51.0
+      want: v2.52.0
     method: github-release
     with:
       repo: cli/cli

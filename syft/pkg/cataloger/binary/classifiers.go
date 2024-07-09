@@ -272,7 +272,7 @@ func DefaultClassifiers() []Classifier {
 			Class:    "arangodb-binary",
 			FileGlob: "**/arangosh",
 			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)ArangoDB\s\x00*(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\s\[linux\]`),
+				`(?m)\x00*(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?)\s\[linux\]`),
 			Package: "arangodb",
 			PURL:    mustPURL("pkg:generic/arangodb@version"),
 			CPEs:    singleCPE("cpe:2.3:a:arangodb:arangodb:*:*:*:*:*:*:*:*"),
@@ -379,6 +379,23 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "erlang-binary",
 			FileGlob: "**/erlexec",
+			EvidenceMatcher: evidenceMatchers(
+				FileContentsVersionMatcher(
+					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
+					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
+				),
+				FileContentsVersionMatcher(
+					// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
+					`(?m)/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
+				),
+			),
+			Package: "erlang",
+			PURL:    mustPURL("pkg:generic/erlang@version"),
+			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "erlang-alpine-binary",
+			FileGlob: "**/beam.smp",
 			EvidenceMatcher: evidenceMatchers(
 				FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
