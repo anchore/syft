@@ -127,6 +127,7 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 		return []cpe.CPE{}, false
 	}
 
+	sort.Sort(cpe.BySourceThenSpecificity(parsedCPEs))
 	return parsedCPEs, true
 }
 
@@ -163,12 +164,12 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 	// filter out any known combinations that don't accurately represent this package
 	cpes = filter(cpes, p, cpeFilters...)
 
-	sort.Sort(cpe.BySpecificity(cpes))
 	var result []cpe.CPE
 	for _, c := range cpes {
 		result = append(result, cpe.CPE{Attributes: c, Source: cpe.GeneratedSource})
 	}
 
+	sort.Sort(cpe.BySourceThenSpecificity(result))
 	return result
 }
 
