@@ -17,7 +17,7 @@ require (
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.1.1-0.20240507183024-848e011fc24f
-	github.com/anchore/stereoscope v0.0.3-0.20240624202600-753b5576fe42
+	github.com/anchore/stereoscope v0.0.3-0.20240705165118-e46739e21796
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	// we are hinting brotli to latest due to warning when installing archiver v3:
 	// go: warning: github.com/andybalholm/brotli@v1.0.1: retracted by module author: occasional panics and data corruption
@@ -124,7 +124,7 @@ require (
 	github.com/containerd/typeurl/v2 v2.1.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/docker/cli v26.1.4+incompatible // indirect
+	github.com/docker/cli v27.0.3+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -182,7 +182,7 @@ require (
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0-rc3 // indirect
+	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opencontainers/runc v1.1.12 // indirect
 	github.com/opencontainers/runtime-spec v1.1.0-rc.1 // indirect
 	github.com/opencontainers/selinux v1.11.0 // indirect
@@ -208,7 +208,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.18.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/sylabs/sif/v2 v2.11.5 // indirect
+	github.com/sylabs/sif/v2 v2.17.1 // indirect
 	github.com/sylabs/squashfs v0.6.1 // indirect
 	github.com/therootcompany/xz v1.0.1 // indirect
 	github.com/tidwall/gjson v1.17.0 // indirect
