@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"sort"
 	"sync"
 
 	"github.com/jinzhu/copier"
@@ -9,7 +8,6 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/cpe"
 )
 
 // Collection represents a collection of Packages.
@@ -285,8 +283,6 @@ func (c *Collection) Enumerate(types ...Type) <-chan Package {
 // is specified.
 func (c *Collection) Sorted(types ...Type) (pkgs []Package) {
 	for p := range c.Enumerate(types...) {
-		// sort CPE for each package so SBOM have deterministic output
-		sort.Sort(cpe.BySourceThenSpecificity(p.CPEs))
 		pkgs = append(pkgs, p)
 	}
 
