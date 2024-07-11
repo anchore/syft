@@ -168,6 +168,10 @@ Our [wiki](https://github.com/anchore/syft/wiki) contains further details on the
   * [Adding an SBOM to an image as an attestation using Syft](https://github.com/anchore/syft/wiki/attestation#adding-an-sbom-to-an-image-as-an-attestation-using-syft)
 * [Configuration](https://github.com/anchore/syft/wiki/configuration)
 
+## Contributing
+
+Check out our [contributing](/CONTRIBUTING.md) guide and [developer](/DEVELOPING.md) docs.
+
 ## Syft Team Meetings
 
 The Syft Team hold regular community meetings online. All are welcome to join to bring topics for discussion. 
