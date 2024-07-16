@@ -68,6 +68,22 @@ func Test_stdlibPackageAndRelationships(t *testing.T) {
 			wantPkgs: 1,
 			wantRels: 1,
 		},
+		{
+			name: "go binary package with devel stdlib",
+			pkgs: []pkg.Package{
+				{
+					Name:      "github.com/something/go",
+					Version:   "1.0.0",
+					Locations: file.NewLocationSet(file.NewLocation("/bin/my-app")),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "devel",
+						MainModule:        "github.com/something/go",
+					},
+				},
+			},
+			wantPkgs: 0,
+			wantRels: 0,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
