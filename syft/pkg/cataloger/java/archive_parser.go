@@ -49,6 +49,7 @@ type archiveParser struct {
 	fileInfo     archiveFilename
 	detectNested bool
 	cfg          ArchiveCatalogerConfig
+	mavenResolver
 }
 
 type genericArchiveParserAdapter struct {
@@ -96,13 +97,14 @@ func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg
 	}
 
 	return &archiveParser{
-		fileManifest: fileManifest,
-		location:     reader.Location,
-		archivePath:  archivePath,
-		contentPath:  contentPath,
-		fileInfo:     newJavaArchiveFilename(currentFilepath),
-		detectNested: detectNested,
-		cfg:          cfg,
+		fileManifest:  fileManifest,
+		location:      reader.Location,
+		archivePath:   archivePath,
+		contentPath:   contentPath,
+		fileInfo:      newJavaArchiveFilename(currentFilepath),
+		detectNested:  detectNested,
+		cfg:           cfg,
+		mavenResolver: newMavenResolver(cfg),
 	}, cleanupFn, nil
 }
 
@@ -194,7 +196,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 		return nil, err
 	}
 
-	licenses, name, version, err := j.parseLicenses(ctx, manifest)
+	name, version, licenses, err := j.discoverNameVersionLicense(ctx, manifest)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +219,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 	}, nil
 }
 
-func (j *archiveParser) parseLicenses(ctx context.Context, manifest *pkg.JavaManifest) ([]pkg.License, string, string, error) {
+func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest *pkg.JavaManifest) (string, string, []pkg.License, error) {
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
 	licenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
@@ -228,7 +230,7 @@ func (j *archiveParser) parseLicenses(ctx context.Context, manifest *pkg.JavaMan
 		3. manifest
 		4. filename
 	*/
-	group, name, version, pomLicenses := j.guessMainPackageNameAndVersionFromPomInfo(ctx, j.cfg)
+	group, name, version, pomLicenses := j.discoverMainPackageNameAndVersionFromPomInfo(ctx)
 	if name == "" {
 		name = selectName(manifest, j.fileInfo)
 	}
@@ -245,7 +247,7 @@ func (j *archiveParser) parseLicenses(ctx context.Context, manifest *pkg.JavaMan
 	if len(licenses) == 0 {
 		fileLicenses, err := j.getLicenseFromFileInArchive()
 		if err != nil {
-			return nil, "", "", err
+			return "", "", nil, err
 		}
 		if fileLicenses != nil {
 			licenses = append(licenses, fileLicenses...)
@@ -254,13 +256,13 @@ func (j *archiveParser) parseLicenses(ctx context.Context, manifest *pkg.JavaMan
 
 	// If we didn't find any licenses in the archive so far, we'll try again in Maven Central using groupIDFromJavaMetadata
 	if len(licenses) == 0 && j.cfg.UseNetwork {
-		licenses = findLicenseFromJavaMetadata(ctx, group, name, manifest, version, j, licenses)
+		licenses = j.findLicenseFromJavaMetadata(ctx, group, name, manifest, version, licenses)
 	}
 
-	return licenses, name, version, nil
+	return name, version, licenses, nil
 }
 
-func findLicenseFromJavaMetadata(ctx context.Context, group, name string, manifest *pkg.JavaManifest, version string, j *archiveParser, licenses []pkg.License) []pkg.License {
+func (j *archiveParser) findLicenseFromJavaMetadata(ctx context.Context, group, name string, manifest *pkg.JavaManifest, version string, licenses []pkg.License) []pkg.License {
 	var groupID = group
 	if group == "" {
 		if gID := groupIDFromJavaMetadata(name, pkg.JavaArchive{Manifest: manifest}); gID != "" {
@@ -268,15 +270,13 @@ func findLicenseFromJavaMetadata(ctx context.Context, group, name string, manife
 		}
 	}
 
-	pomLicenses, foundPom := recursivelyFindLicensesFromParentPom(ctx, groupID, name, version, j.cfg)
-	log.Tracef("[REMOVE] 1 findLicenseFromJavaMetadata, coordinates %s:%s:%s", groupID, name, version)
+	pomLicenses, err := j.resolveLicenses(ctx, groupID, name, version)
 
-	if !foundPom && len(pomLicenses) == 0 {
+	if err == nil && len(pomLicenses) == 0 {
 		// Try removing the last part of the groupId, as sometimes it duplicates the artifactId
 		packages := strings.Split(groupID, ".")
 		groupID = strings.Join(packages[:len(packages)-1], ".")
-		log.Tracef("[REMOVE] 2 findLicenseFromJavaMetadata, coordinates %s:%s:%s", groupID, name, version)
-		pomLicenses, _ = recursivelyFindLicensesFromParentPom(ctx, groupID, name, version, j.cfg)
+		pomLicenses, _ = j.resolveLicenses(ctx, groupID, name, version)
 	}
 
 	if len(pomLicenses) > 0 {
@@ -294,7 +294,7 @@ type parsedPomProject struct {
 }
 
 // Try to find artifact group, id, version and license(s)
-func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo(ctx context.Context, cfg ArchiveCatalogerConfig) (group, name, version string, licenses []pkg.License) {
+func (j *archiveParser) discoverMainPackageNameAndVersionFromPomInfo(ctx context.Context) (group, name, version string, licenses []pkg.License) {
 	pomPropertyMatches := j.fileManifest.GlobMatch(false, pomPropertiesGlob)
 	pomMatches := j.fileManifest.GlobMatch(false, pomXMLGlob)
 	var pomPropertiesObject pkg.JavaPomProperties
@@ -302,7 +302,7 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo(ctx context.Co
 
 	// Find the pom.properties/pom.xml if the names seem like a plausible match
 	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, pomPropertyMatches)
-	projects, _ := pomProjectByParentPath(ctx, j.archivePath, j.location, pomMatches, cfg)
+	projects, _ := pomProjectByParentPath(ctx, j.archivePath, j.location, pomMatches, j.cfg)
 
 	for parentPath, propertiesObj := range properties {
 		if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name) {
@@ -329,14 +329,14 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo(ctx context.Co
 
 	if pomProjectObject == nil {
 		// If we have no pom.xml, check maven central using pom.properties
-		parentLicenses, _ := recursivelyFindLicensesFromParentPom(ctx, pomPropertiesObject.GroupID, pomPropertiesObject.ArtifactID, pomPropertiesObject.Version, j.cfg)
+		parentLicenses, _ := j.resolveLicenses(ctx, pomPropertiesObject.GroupID, pomPropertiesObject.ArtifactID, pomPropertiesObject.Version)
 		if len(parentLicenses) > 0 {
 			for _, licenseName := range parentLicenses {
 				licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
 			}
 		}
 	} else {
-		findPomLicenses(ctx, pomProjectObject, j.cfg)
+		findPomLicenses(ctx, pomProjectObject, &j.mavenResolver)
 	}
 
 	if pomProjectObject != nil {
@@ -353,15 +353,14 @@ func artifactIDMatchesFilename(artifactID, fileName string) bool {
 	return strings.HasPrefix(artifactID, fileName) || strings.HasSuffix(fileName, artifactID)
 }
 
-func findPomLicenses(ctx context.Context, pomProjectObject *parsedPomProject, cfg ArchiveCatalogerConfig) {
+func findPomLicenses(ctx context.Context, pomProjectObject *parsedPomProject, r *mavenResolver) {
 	// If we don't have any licenses until now, and if we have a parent Pom, then we'll check the parent pom in maven central for licenses.
 	if pomProjectObject != nil && pomProjectObject.Parent != nil && len(pomProjectObject.Licenses) == 0 {
-		parentLicenses, _ := recursivelyFindLicensesFromParentPom(
+		parentLicenses, _ := r.resolveLicenses(
 			ctx,
 			pomProjectObject.Parent.GroupID,
 			pomProjectObject.Parent.ArtifactID,
-			pomProjectObject.Parent.Version,
-			cfg)
+			pomProjectObject.Parent.Version)
 
 		if len(parentLicenses) > 0 {
 			for _, licenseName := range parentLicenses {
@@ -400,7 +399,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(ctx context.Context, paren
 			pomProject = proj
 		}
 
-		pkgFromPom := newPackageFromMavenData(ctx, propertiesObj, pomProject, parentPkg, j.location, j.cfg)
+		pkgFromPom := newPackageFromMavenData(ctx, propertiesObj, pomProject, parentPkg, j.location, &j.mavenResolver)
 		if pkgFromPom != nil {
 			pkgs = append(pkgs, *pkgFromPom)
 		}
@@ -591,7 +590,7 @@ func pomProjectByParentPath(ctx context.Context, archivePath string, location fi
 
 // newPackageFromMavenData processes a single Maven POM properties for a given parent package, returning all listed Java packages found and
 // associating each discovered package to the given parent package. Note the pom.xml is optional, the pom.properties is not.
-func newPackageFromMavenData(ctx context.Context, pomProperties pkg.JavaPomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location, cfg ArchiveCatalogerConfig) *pkg.Package {
+func newPackageFromMavenData(ctx context.Context, pomProperties pkg.JavaPomProperties, parsedPomProject *parsedPomProject, parentPkg *pkg.Package, location file.Location, r *mavenResolver) *pkg.Package {
 	// keep the artifact name within the virtual path if this package does not match the parent package
 	vPathSuffix := ""
 	groupID := ""
@@ -618,14 +617,14 @@ func newPackageFromMavenData(ctx context.Context, pomProperties pkg.JavaPomPrope
 
 	if parsedPomProject == nil {
 		// If we have no pom.xml, check maven central using pom.properties
-		parentLicenses, _ := recursivelyFindLicensesFromParentPom(ctx, pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version, cfg)
+		parentLicenses, _ := r.resolveLicenses(ctx, pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version)
 		if len(parentLicenses) > 0 {
 			for _, licenseName := range parentLicenses {
 				licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
 			}
 		}
 	} else {
-		findPomLicenses(ctx, parsedPomProject, cfg)
+		findPomLicenses(ctx, parsedPomProject, r)
 	}
 
 	if parsedPomProject != nil {

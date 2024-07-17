@@ -35,7 +35,7 @@ func NewPomCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
 	gap := newGenericArchiveParserAdapter(cfg)
 
 	return generic.NewCataloger("java-pom-cataloger").
-		WithParserByGlobs(gap.parserPomXML, "**/pom.xml")
+		WithParserByGlobs(gap.parsePomXML, "**/pom.xml")
 }
 
 // NewGradleLockfileCataloger returns a cataloger capable of parsing dependencies from a gradle.lockfile file.

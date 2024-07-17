@@ -1,8 +1,9 @@
 package options
 
-import "github.com/anchore/clio"
-
-import "github.com/anchore/syft/syft/pkg/cataloger/java"
+import (
+	"github.com/anchore/clio"
+	"github.com/anchore/syft/syft/pkg/cataloger/java"
+)
 
 type javaConfig struct {
 	UseNetwork              bool   `yaml:"use-network" json:"use-network" mapstructure:"use-network"`

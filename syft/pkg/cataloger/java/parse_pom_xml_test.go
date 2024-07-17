@@ -19,8 +19,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func Test_parserPomXML(t *testing.T) {
-	resetRepoUtils()
+func Test_parsePomXML(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected []pkg.Package
@@ -72,7 +71,7 @@ func Test_parserPomXML(t *testing.T) {
 				},
 			})
 
-			pkgtest.TestFileParser(t, test.input, gap.parserPomXML, test.expected, nil)
+			pkgtest.TestFileParser(t, test.input, gap.parsePomXML, test.expected, nil)
 		})
 	}
 }
@@ -156,21 +155,20 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 				},
 				UseMavenLocalRepository: false,
 			})
-			pkgtest.TestFileParser(t, test.input, gap.parserPomXML, test.expected, nil)
+			pkgtest.TestFileParser(t, test.input, gap.parsePomXML, test.expected, nil)
 		})
 	}
 }
 
 func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
-	resetRepoUtils()
 	// Using the local repository, the version of junit-jupiter will be resolved
 	expectedPackages := getCommonsTextExpectedPackages()
 
 	for i := 0; i < len(expectedPackages); i++ {
 		if expectedPackages[i].Name == "junit-jupiter" {
 			expPkg := &expectedPackages[i]
-			expPkg.Version = "5.9.0"
-			expPkg.PURL = "pkg:maven/org.junit.jupiter/junit-jupiter@5.9.0"
+			expPkg.Version = "5.9.1"
+			expPkg.PURL = "pkg:maven/org.junit.jupiter/junit-jupiter@5.9.1"
 			expPkg.Metadata = pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "org.junit.jupiter",
@@ -204,24 +202,24 @@ func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
 				},
 				UseMavenLocalRepository: true,
 				MavenLocalRepositoryDir: "test-fixtures/pom/maven-repo",
+				MaxParentRecursiveDepth: 5,
 			})
-			pkgtest.TestFileParser(t, test.input, gap.parserPomXML, test.expected, nil)
+			pkgtest.TestFileParser(t, test.input, gap.parsePomXML, test.expected, nil)
 		})
 	}
 }
 
 func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
-	resetRepoUtils()
-	mux, url, teardown := setup()
-	defer teardown()
+	url := testRepo(t, "test-fixtures/pom/maven-repo")
+
 	// Using the local repository, the version of junit-jupiter will be resolved
 	expectedPackages := getCommonsTextExpectedPackages()
 
 	for i := 0; i < len(expectedPackages); i++ {
 		if expectedPackages[i].Name == "junit-jupiter" {
 			expPkg := &expectedPackages[i]
-			expPkg.Version = "5.9.0"
-			expPkg.PURL = "pkg:maven/org.junit.jupiter/junit-jupiter@5.9.0"
+			expPkg.Version = "5.9.1"
+			expPkg.PURL = "pkg:maven/org.junit.jupiter/junit-jupiter@5.9.1"
 			expPkg.Metadata = pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "org.junit.jupiter",
@@ -233,33 +231,17 @@ func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
 	}
 
 	tests := []struct {
-		input           string
-		expected        []pkg.Package
-		requestHandlers []handlerPath
+		input    string
+		expected []pkg.Package
 	}{
 		{
 			input:    "test-fixtures/pom/commons-text.pom.xml",
 			expected: expectedPackages,
-			requestHandlers: []handlerPath{
-				{
-					path:    "/org/apache/commons/commons-parent/54/commons-parent-54.pom",
-					handler: generateMockMavenHandler("test-fixtures/pom/maven-repo/org/apache/commons/commons-parent/54/commons-parent-54.pom"),
-				},
-				{
-					path:    "/org/junit/junit-bom/5.9.0/junit-bom-5.9.0.pom",
-					handler: generateMockMavenHandler("test-fixtures/pom/maven-repo/org/junit/junit-bom/5.9.0/junit-bom-5.9.0.pom"),
-				},
-			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
-			// configure maven central requests
-			for _, hdlr := range test.requestHandlers {
-				mux.HandleFunc(hdlr.path, hdlr.handler)
-			}
-
 			for i := range test.expected {
 				test.expected[i].Locations.Add(file.NewLocation(test.input))
 			}
@@ -272,14 +254,14 @@ func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
 				UseNetwork:              true,
 				MavenBaseURL:            url,
 				UseMavenLocalRepository: false,
+				MaxParentRecursiveDepth: 5,
 			})
-			pkgtest.TestFileParser(t, test.input, gap.parserPomXML, test.expected, nil)
+			pkgtest.TestFileParser(t, test.input, gap.parsePomXML, test.expected, nil)
 		})
 	}
 }
 
 func Test_parsePomXMLProject(t *testing.T) {
-	resetRepoUtils()
 	// TODO: ideally we would have the path to the contained pom.xml, not the jar
 	jarLocation := file.NewLocation("path/to/archive.jar")
 	tests := []struct {
@@ -414,7 +396,8 @@ func Test_pomParent(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, pomParent(gopom.Project{}, test.input))
+			r := newMavenResolver(DefaultArchiveCatalogerConfig())
+			assert.Equal(t, test.expected, r.pomParent(context.Background(), &gopom.Project{Parent: test.input}))
 		})
 	}
 }
@@ -564,7 +547,7 @@ func Test_resolveProperty(t *testing.T) {
 			expected: "",
 		},
 		{
-			name:     "resolution  halts even if cyclic involving parent",
+			name:     "resolution halts even if cyclic involving parent",
 			property: "${cyclic.version}",
 			pom: gopom.Project{
 				Parent: &gopom.Parent{
@@ -584,7 +567,8 @@ func Test_resolveProperty(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolved := resolveProperty(test.pom, stringPointer(test.property), test.name)
+			r := newMavenResolver(DefaultArchiveCatalogerConfig())
+			resolved := r.getPropertyValue(context.Background(), &test.pom, stringPointer(test.property))
 			assert.Equal(t, test.expected, resolved)
 		})
 	}
@@ -761,11 +745,4 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			},
 		},
 	}
-}
-
-// Reset caches in maven_repo_utils for independent unit tests.
-func resetRepoUtils() {
-	parsedPomFilesCache = make(map[mavenCoordinate]*gopom.Project)
-	checkedForMavenLocalRepo = false
-	mavenLocalRepoDir = ""
 }

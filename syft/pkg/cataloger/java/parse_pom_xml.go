@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/saintfish/chardet"
@@ -23,42 +25,34 @@ import (
 
 const pomXMLGlob = "*pom.xml"
 
-var propertyMatcher = regexp.MustCompile("[$][{][^}]+[}]")
+var expressionMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
-func (gap genericArchiveParserAdapter) parserPomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (gap genericArchiveParserAdapter) parsePomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
-	if err != nil {
+	if err != nil || pom == nil {
 		return nil, nil, err
 	}
 
+	r := newMavenResolver(gap.cfg)
+
 	var pkgs []pkg.Package
 
-	// Add all properties defined in parent poms to this project for resolving properties later on.
-	if pom.Parent != nil {
-		var allProperties = make(map[string]string)
-		getPropertiesFromParentPoms(
-			ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, gap.cfg, nil)
-		addPropertiesToProject(&pom, allProperties)
-	}
-
-	for _, dep := range *getPomDependencies(&pom) {
-		log.Debugf("add dependency to SBOM : [%s, %s, %s]", *dep.GroupID, *dep.ArtifactID, safeString(dep.Version))
-		p := newPackageFromPom(
+	for _, dep := range directDependencies(pom) {
+		id := newMavenID(dep.GroupID, dep.ArtifactID, dep.Version)
+		log.Debugf("add dependency to SBOM : [%v]", id)
+		p, err := r.newPackageFromDependency(
 			ctx,
 			pom,
 			dep,
-			gap.cfg,
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
-		if p.Name == "" {
+		if err != nil {
+			log.Debugf("error adding dependency %v: %v", id, err)
+		}
+		if p == nil {
 			continue
 		}
-
-		pkgs = append(pkgs, p)
-
-		if len(p.Version) == 0 || strings.HasPrefix(p.Version, "${") {
-			log.Infof("found artifact without version: %s:%s, version: %q", *dep.GroupID, *dep.ArtifactID, p.Version)
-		}
+		pkgs = append(pkgs, *p)
 	}
 
 	return pkgs, nil, nil
@@ -70,25 +64,19 @@ func parsePomXMLProject(ctx context.Context, path string, reader io.Reader, loca
 		return nil, err
 	}
 
-	// Add all properties defined in parent poms to this project for resolving properties later on.
-	if pom.Parent != nil {
-		var allProperties = make(map[string]string)
-		getPropertiesFromParentPoms(
-			ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version, cfg, nil)
-		addPropertiesToProject(&pom, allProperties)
-	}
+	resolver := newMavenResolver(cfg)
 
-	return newPomProject(path, pom, location), nil
+	return resolver.newPomProject(ctx, path, pom, location), nil
 }
 
-func newPomProject(path string, p gopom.Project, location file.Location) *parsedPomProject {
-	artifactID := safeString(p.ArtifactID)
-	name := safeString(p.Name)
-	projectURL := safeString(p.URL)
+func (r *mavenResolver) newPomProject(ctx context.Context, path string, pom *gopom.Project, location file.Location) *parsedPomProject {
+	artifactID := deref(pom.ArtifactID)
+	name := deref(pom.Name)
+	projectURL := deref(pom.URL)
 
 	var licenses []pkg.License
-	if p.Licenses != nil {
-		for _, license := range *p.Licenses {
+	if pom.Licenses != nil {
+		for _, license := range *pom.Licenses {
 			var licenseName, licenseURL string
 			if license.Name != nil {
 				licenseName = *license.Name
@@ -109,76 +97,57 @@ func newPomProject(path string, p gopom.Project, location file.Location) *parsed
 	return &parsedPomProject{
 		JavaPomProject: &pkg.JavaPomProject{
 			Path:        path,
-			Parent:      pomParent(p, p.Parent),
-			GroupID:     resolveProperty(p, p.GroupID, "groupId"),
+			Parent:      r.pomParent(ctx, pom),
+			GroupID:     r.getPropertyValue(ctx, pom, pom.GroupID),
 			ArtifactID:  artifactID,
-			Version:     resolveProperty(p, p.Version, "version"),
+			Version:     r.getPropertyValue(ctx, pom, pom.Version),
 			Name:        name,
-			Description: cleanDescription(p.Description),
+			Description: cleanDescription(pom.Description),
 			URL:         projectURL,
 		},
 		Licenses: licenses,
 	}
 }
 
-func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Dependency, cfg ArchiveCatalogerConfig, locations ...file.Location) pkg.Package {
-	groupID := resolveProperty(pom, dep.GroupID, "groupId")
-	artifactID := resolveProperty(pom, dep.ArtifactID, "artifactId")
+func (r *mavenResolver) newPackageFromDependency(ctx context.Context, pom *gopom.Project, dep gopom.Dependency, locations ...file.Location) (*pkg.Package, error) {
+	groupID := r.getPropertyValue(ctx, pom, dep.GroupID)
+	artifactID := r.getPropertyValue(ctx, pom, dep.ArtifactID)
+	version := r.getPropertyValue(ctx, pom, dep.Version)
+
+	var err error
+	if version == "" {
+		version, err = r.findInheritedVersion(ctx, pom, pom, groupID, artifactID)
+	}
 
 	m := pkg.JavaArchive{
 		PomProperties: &pkg.JavaPomProperties{
 			GroupID:    groupID,
 			ArtifactID: artifactID,
-			Scope:      resolveProperty(pom, dep.Scope, "scope"),
+			Scope:      r.getPropertyValue(ctx, pom, dep.Scope),
 		},
 	}
 
-	name := safeString(dep.ArtifactID)
-	version := resolveProperty(pom, dep.Version, "version")
-	var allProperties = make(map[string]string)
-	addMissingPropertiesFromProject(allProperties, &pom)
-
 	licenses := make([]pkg.License, 0)
 	if version == "" {
-		// If we have no version then let's try to get it from a parent pom DependencyManagement section
-		version = recursivelyFindVersionFromManagedOrInherited(ctx, *dep.GroupID, *dep.ArtifactID, &pom, cfg, allProperties, nil)
-		version = resolveProperty(pom, &version, "version")
-	} else if strings.HasPrefix(version, "${") {
-		// If we are missing the property for this version, search the pom hierarchy for it.
-		if pom.Parent != nil {
-			getPropertiesFromParentPoms(ctx, allProperties, *pom.Parent.GroupID, *pom.Parent.ArtifactID, *pom.Parent.Version,
-				cfg, nil)
-			addPropertiesToProject(&pom, allProperties)
+		dependencyPom, depErr := r.findPom(ctx, groupID, artifactID, version)
+		if depErr != nil {
+			log.Debugf("error getting licenses for %s: %v", mavenID{groupID, artifactID, version}, err)
+			err = errors.Join(err, depErr)
 		}
-		version = resolveProperty(pom, &version, getPropertyName(version))
-	}
-	if isPropertyResolved(version) {
-		parentLicenses, _ := recursivelyFindLicensesFromParentPom(
-			ctx,
-			m.PomProperties.GroupID,
-			m.PomProperties.ArtifactID,
-			version,
-			cfg)
-
-		if len(parentLicenses) > 0 {
+		if dependencyPom != nil {
+			parentLicenses, _ := r.findLicenses(ctx, dependencyPom)
 			for _, licenseName := range parentLicenses {
 				licenses = append(licenses, pkg.NewLicenseFromFields(licenseName, "", nil))
 			}
 		}
-	} else {
-		log.Warnf("could not determine version for package: [%s, %s]", groupID, artifactID)
 	}
 
-	if strings.HasPrefix(version, "${") {
-		log.Infof("got unresolved version '%s' for artifact: %s", version, name)
-	}
-
-	p := pkg.Package{
-		Name:      name,
+	p := &pkg.Package{
+		Name:      artifactID,
 		Version:   version,
 		Locations: file.NewLocationSet(locations...),
 		Licenses:  pkg.NewLicenseSet(licenses...),
-		PURL:      packageURL(name, version, m),
+		PURL:      packageURL(artifactID, version, m),
 		Language:  pkg.Java,
 		Type:      pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
 		Metadata:  m,
@@ -186,21 +155,22 @@ func newPackageFromPom(ctx context.Context, pom gopom.Project, dep gopom.Depende
 
 	p.SetID()
 
-	return p
+	return p, err
 }
 
-func decodePomXML(content io.Reader) (project gopom.Project, err error) {
+func decodePomXML(content io.Reader) (project *gopom.Project, err error) {
 	inputReader, err := getUtf8Reader(content)
 	if err != nil {
-		return project, fmt.Errorf("unable to read pom.xml: %w", err)
+		return nil, fmt.Errorf("unable to read pom.xml: %w", err)
 	}
 
 	decoder := xml.NewDecoder(inputReader)
 	// when an xml file has a character set declaration (e.g. '<?xml version="1.0" encoding="ISO-8859-1"?>') read that and use the correct decoder
 	decoder.CharsetReader = charset.NewReaderLabel
 
-	if err := decoder.Decode(&project); err != nil {
-		return project, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
+	project = &gopom.Project{}
+	if err := decoder.Decode(project); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
 	}
 
 	// For modules groupID and version are almost always inherited from parent pom
@@ -211,8 +181,6 @@ func decodePomXML(content io.Reader) (project gopom.Project, err error) {
 		project.Version = project.Parent.Version
 	}
 
-	// Store in cache
-	parsedPomFilesCache[mavenCoordinate{*project.GroupID, *project.ArtifactID, *project.Version}] = &project
 	return project, nil
 }
 
@@ -243,22 +211,23 @@ func getUtf8Reader(content io.Reader) (io.Reader, error) {
 	return inputReader, nil
 }
 
-func pomParent(pom gopom.Project, parent *gopom.Parent) (result *pkg.JavaPomParent) {
-	if parent == nil {
+func (r *mavenResolver) pomParent(ctx context.Context, pom *gopom.Project) *pkg.JavaPomParent {
+	if pom == nil || pom.Parent == nil {
 		return nil
 	}
 
-	artifactID := safeString(parent.ArtifactID)
-	result = &pkg.JavaPomParent{
-		GroupID:    resolveProperty(pom, parent.GroupID, "groupId"),
+	groupID := deref(pom.Parent.GroupID)
+	artifactID := deref(pom.Parent.ArtifactID)
+	version := deref(pom.Parent.Version)
+	if groupID == "" && artifactID == "" && version == "" {
+		return nil
+	}
+
+	return &pkg.JavaPomParent{
+		GroupID:    r.getPropertyValue(ctx, pom, pom.Parent.GroupID),
 		ArtifactID: artifactID,
-		Version:    resolveProperty(pom, parent.Version, "version"),
+		Version:    r.getPropertyValue(ctx, pom, pom.Parent.Version),
 	}
-
-	if result.GroupID == "" && result.ArtifactID == "" && result.Version == "" {
-		return nil
-	}
-	return result
 }
 
 func cleanDescription(original *string) (cleaned string) {
@@ -276,107 +245,137 @@ func cleanDescription(original *string) (cleaned string) {
 	return strings.TrimSpace(cleaned)
 }
 
-// resolveProperty emulates some maven property resolution logic by looking in the project's variables
+// getPropertyValue gets property values by emulating maven property resolution logic, looking in the project's variables
 // as well as supporting the project expressions like ${project.parent.groupId}.
-// If no match is found, the entire expression including ${} is returned
+// Properties which are not resolved result in empty string ""
 //
 //nolint:gocognit
-func resolveProperty(pom gopom.Project, propertyValue *string, propertyName string) string {
-	propertyCase := safeString(propertyValue)
-	if !strings.Contains(propertyCase, "${") {
-		// nothing to resolve
-		// log.Tracef("resolving property: value [%s] contains no variable", propertyName)
-		return propertyCase
-	}
-
-	log.WithFields("existingPropertyValue", propertyCase, "propertyName", propertyName).Trace("resolving property")
-	seenBeforePropertyNames := map[string]struct{}{
-		propertyName: {},
-	}
-	result := recursiveResolveProperty(pom, propertyCase, seenBeforePropertyNames)
-	if propertyMatcher.MatchString(result) {
-		return "" // dereferencing variable failed; fall back to empty string
-	}
-	return result
-}
-
-//nolint:gocognit
-func recursiveResolveProperty(pom gopom.Project, propertyCase string, seenPropertyNames map[string]struct{}) string {
-	return propertyMatcher.ReplaceAllStringFunc(propertyCase, func(match string) string {
-		propertyName := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
-		if _, seen := seenPropertyNames[propertyName]; seen {
-			return propertyCase
-		}
-		entries := pomProperties(pom)
-		if value, ok := entries[propertyName]; ok {
-			seenPropertyNames[propertyName] = struct{}{}
-			value = recursiveResolveProperty(pom, value, seenPropertyNames) // recursively resolve in case a variable points to a variable.
-			//if isPropertyResolved(value) {
-			log.WithFields("propertyValue", value, "propertyName", match).Trace("resolved property")
-			return value
-			//}
-		}
-
-		// if we don't find anything directly in the pom properties,
-		// see if we have a project.x expression and process this based
-		// on the xml tags in gopom
-		parts := strings.Split(propertyName, ".")
-		numParts := len(parts)
-		if numParts > 1 && strings.TrimSpace(parts[0]) == "project" {
-			pomValue := reflect.ValueOf(pom)
-			pomValueType := pomValue.Type()
-			for partNum := 1; partNum < numParts; partNum++ {
-				if pomValueType.Kind() != reflect.Struct {
-					break
-				}
-				part := parts[partNum]
-				for fieldNum := 0; fieldNum < pomValueType.NumField(); fieldNum++ {
-					f := pomValueType.Field(fieldNum)
-					tag := f.Tag.Get("xml")
-					tag = strings.Split(tag, ",")[0]
-					// a segment of the property name matches the xml tag for the field,
-					// so we need to recurse down the nested structs or return a match
-					// if we're done.
-					if part == tag {
-						pomValue = pomValue.Field(fieldNum)
-						pomValueType = pomValue.Type()
-						if pomValueType.Kind() == reflect.Ptr {
-							// we were recursing down the nested structs, but one of the steps
-							// we need to take is a nil pointer, so give up and return the original match
-							if pomValue.IsNil() {
-								return match
-							}
-							pomValue = pomValue.Elem()
-							if !pomValue.IsZero() {
-								// we found a non-zero value whose tag matches this part of the property name
-								pomValueType = pomValue.Type()
-							}
-						}
-						// If this was the last part of the property name, return the value
-						if partNum == numParts-1 {
-							value := fmt.Sprintf("%v", pomValue.Interface())
-							log.WithFields("existingPropertyValue", value, "propertyName", propertyName).Trace("resolved property")
-							return value
-						}
-						break
-					}
-				}
-			}
-		}
-		return match
-	})
-}
-
-func pomProperties(p gopom.Project) map[string]string {
-	if p.Properties != nil {
-		return p.Properties.Entries
-	}
-	return map[string]string{}
-}
-
-func safeString(s *string) string {
-	if s == nil {
+func (r *mavenResolver) getPropertyValue(ctx context.Context, pom *gopom.Project, propertyValue *string) string {
+	if propertyValue == nil {
 		return ""
 	}
-	return *s
+	resolved, err := r.resolveExpression(ctx, pom, *propertyValue, nil)
+	if err != nil {
+		log.Debugf("error resolving maven property: %s: %v", *propertyValue, err)
+		return ""
+	}
+	return resolved
 }
+
+// resolveExpression resolves an expression, which may be a plain string or a string with ${ property.references }
+//
+//nolint:gocognit
+func (r *mavenResolver) resolveExpression(ctx context.Context, pom *gopom.Project, expression string, resolving []string) (string, error) {
+	var err error
+	return expressionMatcher.ReplaceAllStringFunc(expression, func(match string) string {
+		propertyExpression := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
+		resolved, e := r.resolveProperty(ctx, pom, propertyExpression, resolving)
+		if e != nil {
+			err = errors.Join(err, e)
+			return ""
+		}
+		return resolved
+	}), err
+}
+
+// resolveProperty resolves properties recursively from the root project
+//
+//nolint:gocognit
+func (r *mavenResolver) resolveProperty(ctx context.Context, pom *gopom.Project, propertyExpression string, resolving []string) (string, error) {
+	// prevent cycles
+	if slices.Contains(resolving, propertyExpression) {
+		return "", fmt.Errorf("cycle detected resolving: %s", propertyExpression)
+	}
+	resolving = append(resolving, propertyExpression)
+
+	value, err := r.resolveProjectProperty(ctx, pom, propertyExpression, resolving)
+	if err != nil {
+		return value, err
+	}
+	if value != "" {
+		return value, nil
+	}
+
+	current := pom
+	for current != nil {
+		if current.Properties != nil && current.Properties.Entries != nil {
+			if value, ok := current.Properties.Entries[propertyExpression]; ok {
+				return r.resolveExpression(ctx, pom, value, resolving) // property values can contain expressions
+			}
+		}
+		current, err = r.findParent(ctx, current)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return "", fmt.Errorf("unable to resolve property: %s", propertyExpression)
+}
+
+// resolveProjectProperty resolves properties on the project
+//
+//nolint:gocognit
+func (r *mavenResolver) resolveProjectProperty(ctx context.Context, pom *gopom.Project, propertyExpression string, resolving []string) (string, error) {
+	// see if we have a project.x expression and process this based
+	// on the xml tags in gopom
+	parts := strings.Split(propertyExpression, ".")
+	numParts := len(parts)
+	if numParts > 1 && strings.TrimSpace(parts[0]) == "project" {
+		pomValue := reflect.ValueOf(pom).Elem()
+		pomValueType := pomValue.Type()
+		for partNum := 1; partNum < numParts; partNum++ {
+			if pomValueType.Kind() != reflect.Struct {
+				break
+			}
+
+			part := parts[partNum]
+			for fieldNum := 0; fieldNum < pomValueType.NumField(); fieldNum++ {
+				f := pomValueType.Field(fieldNum)
+				tag := f.Tag.Get("xml")
+				tag = strings.Split(tag, ",")[0]
+				// a segment of the property name matches the xml tag for the field,
+				// so we need to recurse down the nested structs or return a match
+				// if we're done.
+				if part != tag {
+					continue
+				}
+
+				pomValue = pomValue.Field(fieldNum)
+				pomValueType = pomValue.Type()
+				if pomValueType.Kind() == reflect.Ptr {
+					// we were recursing down the nested structs, but one of the steps
+					// we need to take is a nil pointer, so give up
+					if pomValue.IsNil() {
+						return "", fmt.Errorf("property undefined: %s", propertyExpression)
+					}
+					pomValue = pomValue.Elem()
+					if !pomValue.IsZero() {
+						// we found a non-zero value whose tag matches this part of the property name
+						pomValueType = pomValue.Type()
+					}
+				}
+				// If this was the last part of the property name, return the value
+				if partNum == numParts-1 {
+					value := fmt.Sprintf("%v", pomValue.Interface())
+					return r.resolveExpression(ctx, pom, value, resolving)
+				}
+				break
+			}
+		}
+	}
+	return "", nil
+}
+
+// func pomProperties(p gopom.Project) map[string]string {
+//	if p.Properties != nil {
+//		return p.Properties.Entries
+//	}
+//	return map[string]string{}
+//}
+
+// func deref(s *string) string {
+//	if s == nil {
+//		return ""
+//	}
+//	return *s
+//}

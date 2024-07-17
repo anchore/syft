@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -68,21 +67,14 @@ func generateMockMavenHandler(responseFixture string) func(w http.ResponseWriter
 	}
 }
 
-type handlerPath struct {
-	path    string
-	handler func(w http.ResponseWriter, r *http.Request)
-}
-
 func TestSearchMavenForLicenses(t *testing.T) {
-	mux, url, teardown := setup()
-	defer teardown()
+	url := testRepo(t, "test-fixtures/pom/maven-repo")
+
 	tests := []struct {
 		name             string
 		fixture          string
 		detectNested     bool
 		config           ArchiveCatalogerConfig
-		requestPath      string
-		requestHandlers  []handlerPath
 		expectedLicenses []pkg.License
 	}{
 		{
@@ -93,16 +85,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 				UseNetwork:              true,
 				UseMavenLocalRepository: false,
 				MavenBaseURL:            url,
-			},
-			requestHandlers: []handlerPath{
-				{
-					path:    "/org/opensaml/opensaml-parent/3.4.6/opensaml-parent-3.4.6.pom",
-					handler: generateMockMavenHandler("test-fixtures/maven-xml-responses/opensaml-parent-3.4.6.pom"),
-				},
-				{
-					path:    "/net/shibboleth/parent/7.11.2/parent-7.11.2.pom",
-					handler: generateMockMavenHandler("test-fixtures/maven-xml-responses/parent-7.11.2.pom"),
-				},
+				MaxParentRecursiveDepth: 5,
 			},
 			expectedLicenses: []pkg.License{
 				{
@@ -116,11 +99,6 @@ func TestSearchMavenForLicenses(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// configure maven central requests
-			for _, hdlr := range tc.requestHandlers {
-				mux.HandleFunc(hdlr.path, hdlr.handler)
-			}
-
 			// setup metadata fixture; note:
 			// this fixture has a pomProjectObject and has a parent object
 			// it has no licenses on either which is the condition for testing
@@ -138,13 +116,13 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			defer cleanupFn()
 
 			// assert licenses are discovered from upstream
-			_, _, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo(context.Background(), tc.config)
+			_, _, _, licenses := ap.discoverMainPackageNameAndVersionFromPomInfo(context.Background())
 			assert.Equal(t, tc.expectedLicenses, licenses)
 		})
 	}
 }
 
-func TestFormatMavenURL(t *testing.T) {
+func Test_remotePomURL(t *testing.T) {
 	tests := []struct {
 		name       string
 		groupID    string
@@ -163,7 +141,7 @@ func TestFormatMavenURL(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			requestURL, err := formatMavenPomURL(tc.groupID, tc.artifactID, tc.version, mavenBaseURL)
+			requestURL, err := remotePomURL(mavenBaseURL, tc.groupID, tc.artifactID, tc.version)
 			assert.NoError(t, err, "expected no err; got %w", err)
 			assert.Equal(t, tc.expected, requestURL)
 		})
@@ -1126,7 +1104,8 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			}
 			test.expectedParent.Locations = locations
 
-			actualPackage := newPackageFromMavenData(context.Background(), test.props, test.project, test.parent, file.NewLocation(virtualPath), DefaultArchiveCatalogerConfig())
+			r := newMavenResolver(DefaultArchiveCatalogerConfig())
+			actualPackage := newPackageFromMavenData(context.Background(), test.props, test.project, test.parent, file.NewLocation(virtualPath), &r)
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {
@@ -1470,22 +1449,4 @@ func run(t testing.TB, cmd *exec.Cmd) {
 			t.Fatalf("unable to get generate fixture result: %+v", err)
 		}
 	}
-}
-
-// setup sets up a test HTTP server for mocking requests to maven central.
-// The returned url is injected into the Config so the client uses the test server.
-// Tests should register handlers on mux to simulate the expected request/response structure
-func setup() (mux *http.ServeMux, serverURL string, teardown func()) {
-	// mux is the HTTP request multiplexer used with the test server.
-	mux = http.NewServeMux()
-
-	// We want to ensure that tests catch mistakes where the endpoint URL is
-	// specified as absolute rather than relative. It only makes a difference
-	// when there's a non-empty base URL path. So, use that. See issue #752.
-	apiHandler := http.NewServeMux()
-	apiHandler.Handle("/", mux)
-	// server is a test HTTP server used to provide mock API responses.
-	server := httptest.NewServer(apiHandler)
-
-	return mux, server.URL, server.Close
 }
