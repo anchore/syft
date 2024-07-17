@@ -1,9 +1,11 @@
 package java
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -42,7 +44,7 @@ func newMavenID(groupID, artifactID, version *string) mavenID {
 type mavenResolver struct {
 	cfg ArchiveCatalogerConfig
 	// resolver             file.Resolver
-	cache                cache.Resolver[*gopom.Project]
+	cache                cache.Cache
 	resolved             map[mavenID]*gopom.Project
 	remoteRequestTimeout time.Duration
 	checkedLocalRepo     bool
@@ -51,7 +53,7 @@ type mavenResolver struct {
 func newMavenResolver(cfg ArchiveCatalogerConfig) mavenResolver {
 	return mavenResolver{
 		cfg:                  cfg,
-		cache:                cache.GetResolver[*gopom.Project]("java/maven/pom", "v1"),
+		cache:                cache.GetManager().GetCache("java/maven/repo", "v1"),
 		resolved:             map[mavenID]*gopom.Project{},
 		remoteRequestTimeout: time.Second * 10,
 	}
@@ -128,16 +130,19 @@ func (r *mavenResolver) findPomInRemoteRepo(ctx context.Context, groupID, artifa
 		return nil, fmt.Errorf("missing/incomplete maven artifact coordinates -- groupId: '%s' artifactId: '%s', version: '%s'", groupID, artifactID, version)
 	}
 
-	key := fmt.Sprintf("%s:%s:%s", groupID, artifactID, version)
+	requestURL, err := r.remotePomURL(groupID, artifactID, version)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find pom in remote due to: %w", err)
+	}
 
 	// Downloading snapshots requires additional steps to determine the latest snapshot version.
 	// See: https://maven.apache.org/ref/3-LATEST/maven-repository-metadata/
 	if strings.HasSuffix(version, "-SNAPSHOT") {
-		return nil, fmt.Errorf("downloading snapshot artifacts is not supported, got: %s", key)
+		return nil, fmt.Errorf("downloading snapshot artifacts is not supported, got: %s", requestURL)
 	}
 
-	return r.cache.Resolve(key, func() (*gopom.Project, error) {
-		requestURL, err := r.remotePomURL(groupID, artifactID, version)
+	cacheKey := strings.TrimPrefix(strings.TrimPrefix(requestURL, "http://"), "https://")
+	reader, err := r.cacheResolveReader(cacheKey, func() (io.ReadCloser, error) {
 		if err != nil {
 			return nil, err
 		}
@@ -158,17 +163,43 @@ func (r *mavenResolver) findPomInRemoteRepo(ctx context.Context, groupID, artifa
 		if err != nil {
 			return nil, fmt.Errorf("unable to get pom from Maven repository %v: %w", requestURL, err)
 		}
-		defer internal.CloseAndLogError(resp.Body, requestURL)
 		if resp.StatusCode == http.StatusNotFound {
 			return nil, fmt.Errorf("pom not found in Maven repository at: %v", requestURL)
 		}
-
-		pom, err := decodePomXML(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse pom from Maven repository url %v: %w", requestURL, err)
-		}
-		return pom, nil
+		return resp.Body, err
 	})
+	if err != nil {
+		return nil, err
+	}
+	if reader, ok := reader.(io.Closer); ok {
+		defer internal.CloseAndLogError(reader, requestURL)
+	}
+	pom, err := decodePomXML(reader)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse pom from Maven repository url %v: %w", requestURL, err)
+	}
+	return pom, nil
+}
+
+func (r *mavenResolver) cacheResolveReader(key string, resolve func() (io.ReadCloser, error)) (io.Reader, error) {
+	reader, err := r.cache.Read(key)
+	if err == nil && reader != nil {
+		return reader, err
+	}
+
+	contentReader, err := resolve()
+	if err != nil {
+		return nil, err
+	}
+	defer internal.CloseAndLogError(contentReader, key)
+
+	// store the contents to return a new reader with the same content
+	contents, err := io.ReadAll(contentReader)
+	if err != nil {
+		return nil, err
+	}
+	err = r.cache.Write(key, bytes.NewBuffer(contents))
+	return bytes.NewBuffer(contents), err
 }
 
 func (r *mavenResolver) remotePomURL(groupID, artifactID, version string) (requestURL string, err error) {
