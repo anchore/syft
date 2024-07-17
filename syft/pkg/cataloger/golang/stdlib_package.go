@@ -33,10 +33,11 @@ func stdlibPackageAndRelationships(pkgs []pkg.Package) ([]pkg.Package, []artifac
 			}
 
 			stdLibPkg := newGoStdLib(mValue.GoCompiledVersion, goPkg.Locations)
-			if stdLibPkg != nil {
-				goCompilerPkgs = append(goCompilerPkgs, *stdLibPkg)
-				totalLocations.Add(location)
+			if stdLibPkg == nil {
+				continue
 			}
+			goCompilerPkgs = append(goCompilerPkgs, *stdLibPkg)
+			totalLocations.Add(location)
 
 			relationships = append(relationships, artifact.Relationship{
 				From: *stdLibPkg,

@@ -70,14 +70,14 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:    "coreutils",
-					Version: "9.5-1.fc41",
-					PURL:    "pkg:rpm/fedora/coreutils@9.5-1.fc41?distro=fedora-40",
+					Version: "9.5-3.fc41",
+					PURL:    "pkg:rpm/fedora/coreutils@9.5-3.fc41?distro=fedora-40",
 					Locations: file.NewLocationSet(
 						file.NewLocation("/sha256sum").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 						file.NewLocation("/sha1sum").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Licenses: pkg.NewLicenseSet(),
-					Type:     pkg.BinaryPkg,
+					Type:     pkg.RpmPkg,
 					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 						Type:         "rpm",
 						Architecture: "x86_64",
@@ -99,7 +99,7 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 						file.NewLocation("/sha1sum").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
 					Licenses: pkg.NewLicenseSet(),
-					Type:     pkg.BinaryPkg,
+					Type:     pkg.RpmPkg,
 					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 						Type:         "rpm",
 						Architecture: "arm",
