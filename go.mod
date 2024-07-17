@@ -81,7 +81,7 @@ require (
 	golang.org/x/mod v0.19.0
 	golang.org/x/net v0.27.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.30.1
+	modernc.org/sqlite v1.30.2
 )
 
 require google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17 // indirect
