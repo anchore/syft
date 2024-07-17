@@ -122,32 +122,6 @@ func TestSearchMavenForLicenses(t *testing.T) {
 	}
 }
 
-func Test_remotePomURL(t *testing.T) {
-	tests := []struct {
-		name       string
-		groupID    string
-		artifactID string
-		version    string
-		expected   string
-	}{
-		{
-			name:       "formatMavenURL correctly assembles the pom URL",
-			groupID:    "org.springframework.boot",
-			artifactID: "spring-boot-starter-test",
-			version:    "3.1.5",
-			expected:   "https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-starter-test/3.1.5/spring-boot-starter-test-3.1.5.pom",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			requestURL, err := remotePomURL(mavenBaseURL, tc.groupID, tc.artifactID, tc.version)
-			assert.NoError(t, err, "expected no err; got %w", err)
-			assert.Equal(t, tc.expected, requestURL)
-		})
-	}
-}
-
 func TestParseJar(t *testing.T) {
 	tests := []struct {
 		name         string

@@ -2,9 +2,12 @@ package java
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/mitchellh/go-homedir"
 
@@ -44,4 +47,28 @@ func getSettingsXMLLocalRepository(settingsXML io.Reader) string {
 		log.Debugf("unable to read maven settings.xml: %v", err)
 	}
 	return s.LocalRepository
+}
+
+// deref dereferences ptr if not nil, or returns the type default value if ptr is nil
+func deref[T any](ptr *T) T {
+	if ptr == nil {
+		var t T
+		return t
+	}
+	return *ptr
+}
+
+// remotePomURL returns a URL to download a POM from a remote repository
+func remotePomURL(repoURL, groupID, artifactID, version string) (requestURL string, err error) {
+	// groupID needs to go from maven.org -> maven/org
+	urlPath := strings.Split(groupID, ".")
+	artifactPom := fmt.Sprintf("%s-%s.pom", artifactID, version)
+	urlPath = append(urlPath, artifactID, version, artifactPom)
+
+	// ex: https://repo1.maven.org/maven2/groupID/artifactID/artifactPom
+	requestURL, err = url.JoinPath(repoURL, urlPath...)
+	if err != nil {
+		return requestURL, fmt.Errorf("could not construct maven url: %w", err)
+	}
+	return requestURL, err
 }
