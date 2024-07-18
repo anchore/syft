@@ -195,7 +195,7 @@ func (r *mavenResolver) resolveProjectProperty(ctx context.Context, pom *gopom.P
 	return "", nil
 }
 
-// findPom gets a pom from cache, local repository, or downloads from a remote Maven repository depending on configuration
+// findPom gets a pom from cache, local repository, or from a remote Maven repository depending on configuration
 func (r *mavenResolver) findPom(ctx context.Context, groupID, artifactID, version string) (*gopom.Project, error) {
 	if groupID == "" || artifactID == "" || version == "" {
 		return nil, fmt.Errorf("invalid maven pom specification, require non-empty values for groupID: '%s', artifactID: '%s', version: '%s'", groupID, artifactID, version)
@@ -237,8 +237,7 @@ func (r *mavenResolver) findPom(ctx context.Context, groupID, artifactID, versio
 	return nil, nil
 }
 
-// Try to get the Pom from the users local repository in the users home dir.
-// Returns (nil, false) when file cannot be found or read for any reason.
+// findPomInLocalRepository attempts to get the POM from the users local maven repository
 func (r *mavenResolver) findPomInLocalRepository(groupID, artifactID, version string) (*gopom.Project, error) {
 	groupPath := filepath.Join(strings.Split(groupID, ".")...)
 	pomFilePath := filepath.Join(r.cfg.MavenLocalRepositoryDir, groupPath, artifactID, version, artifactID+"-"+version+".pom")
