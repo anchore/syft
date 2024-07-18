@@ -10,6 +10,7 @@ import (
 
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/rust/internal/cargo"
 )
 
 func Test_UnmarshalJSON(t *testing.T) {
@@ -355,7 +356,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 }`),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.HackagePkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.RustCargoLockEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeOf(cargo.RustCargoLockEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 		{

@@ -68,7 +68,7 @@ func Test_CargoLockCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewCargoLockCataloger())
+				TestCataloger(t, NewCargoLockCataloger(DefaultCargoLockCatalogerConfig()))
 		})
 	}
 }

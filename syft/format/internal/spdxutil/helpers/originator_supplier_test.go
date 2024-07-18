@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/rust/internal/cargo"
 )
 
 func Test_OriginatorSupplier(t *testing.T) {
@@ -38,7 +39,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.PythonRequirementsEntry{},
 		pkg.PythonPoetryLockEntry{},
 		pkg.RustBinaryAuditEntry{},
-		pkg.RustCargoLockEntry{},
+		cargo.RustCargoLockEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.YarnLockEntry{},
 	)

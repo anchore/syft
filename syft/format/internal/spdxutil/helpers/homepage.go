@@ -1,6 +1,8 @@
 package helpers
 
-import "github.com/anchore/syft/syft/pkg"
+import (
+	"github.com/anchore/syft/syft/pkg"
+)
 
 func Homepage(p pkg.Package) string {
 	if hasMetadata(p) {
@@ -9,6 +11,13 @@ func Homepage(p pkg.Package) string {
 			return metadata.Homepage
 		case pkg.NpmPackage:
 			return metadata.Homepage
+		case pkg.RustCargo:
+			if cargoEntry := metadata.CargoEntry; cargoEntry != nil {
+				if cargoEntry.Homepage != "" {
+					return cargoEntry.Homepage
+				}
+				return cargoEntry.Repository
+			}
 		}
 	}
 	return ""

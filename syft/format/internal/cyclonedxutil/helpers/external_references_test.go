@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/rust/internal/cargo"
 )
 
 func Test_encodeExternalReferences(t *testing.T) {
@@ -62,7 +63,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 				Language: pkg.Rust,
 				Type:     pkg.RustPkg,
 				Licenses: pkg.NewLicenseSet(),
-				Metadata: pkg.RustCargoLockEntry{
+				Metadata: cargo.RustCargoLockEntry{
 					Name:     "ansi_term",
 					Version:  "0.12.1",
 					Source:   "registry+https://github.com/rust-lang/crates.io-index",

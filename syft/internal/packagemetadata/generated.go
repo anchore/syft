@@ -2,7 +2,9 @@
 
 package packagemetadata
 
-import "github.com/anchore/syft/syft/pkg"
+import (
+	"github.com/anchore/syft/syft/pkg"
+)
 
 // AllTypes returns a list of all pkg metadata types that syft supports (that are represented in the pkg.Package.Metadata field).
 func AllTypes() []any {
