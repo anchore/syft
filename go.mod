@@ -39,7 +39,7 @@ require (
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-test/deep v1.1.1
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-containerregistry v0.20.0
+	github.com/google/go-containerregistry v0.20.1
 	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.5.4
@@ -55,7 +55,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/moby/sys/mountinfo v0.7.1
+	github.com/moby/sys/mountinfo v0.7.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/pelletier/go-toml v1.9.5
