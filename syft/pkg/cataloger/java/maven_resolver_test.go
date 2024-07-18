@@ -10,7 +10,157 @@ import (
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/stretchr/testify/require"
+	"github.com/vifraa/gopom"
 )
+
+func Test_resolveProperty(t *testing.T) {
+	tests := []struct {
+		name     string
+		property string
+		pom      gopom.Project
+		expected string
+	}{
+		{
+			name:     "property",
+			property: "${version.number}",
+			pom: gopom.Project{
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"version.number": "12.5.0",
+					},
+				},
+			},
+			expected: "12.5.0",
+		},
+		{
+			name:     "groupId",
+			property: "${project.groupId}",
+			pom: gopom.Project{
+				GroupID: ptr("org.some.group"),
+			},
+			expected: "org.some.group",
+		},
+		{
+			name:     "parent groupId",
+			property: "${project.parent.groupId}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					GroupID: ptr("org.some.parent"),
+				},
+			},
+			expected: "org.some.parent",
+		},
+		{
+			name:     "nil pointer halts search",
+			property: "${project.parent.groupId}",
+			pom: gopom.Project{
+				Parent: nil,
+			},
+			expected: "",
+		},
+		{
+			name:     "nil string pointer halts search",
+			property: "${project.parent.groupId}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					GroupID: nil,
+				},
+			},
+			expected: "",
+		},
+		{
+			name:     "double dereference",
+			property: "${springboot.version}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					Version: ptr("1.2.3"),
+				},
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"springboot.version": "${project.parent.version}",
+					},
+				},
+			},
+			expected: "1.2.3",
+		},
+		{
+			name:     "map missing stops double dereference",
+			property: "${springboot.version}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					Version: ptr("1.2.3"),
+				},
+			},
+			expected: "",
+		},
+		{
+			name:     "resolution halts even if it resolves to a variable",
+			property: "${springboot.version}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					Version: ptr("${undefined.version}"),
+				},
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"springboot.version": "${project.parent.version}",
+					},
+				},
+			},
+			expected: "",
+		},
+		{
+			name:     "resolution halts even if cyclic",
+			property: "${springboot.version}",
+			pom: gopom.Project{
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"springboot.version": "${springboot.version}",
+					},
+				},
+			},
+			expected: "",
+		},
+		{
+			name:     "resolution halts even if cyclic more steps",
+			property: "${cyclic.version}",
+			pom: gopom.Project{
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"other.version":      "${cyclic.version}",
+						"springboot.version": "${other.version}",
+						"cyclic.version":     "${springboot.version}",
+					},
+				},
+			},
+			expected: "",
+		},
+		{
+			name:     "resolution halts even if cyclic involving parent",
+			property: "${cyclic.version}",
+			pom: gopom.Project{
+				Parent: &gopom.Parent{
+					Version: ptr("${cyclic.version}"),
+				},
+				Properties: &gopom.Properties{
+					Entries: map[string]string{
+						"other.version":      "${parent.version}",
+						"springboot.version": "${other.version}",
+						"cyclic.version":     "${springboot.version}",
+					},
+				},
+			},
+			expected: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			r := newMavenResolver(DefaultArchiveCatalogerConfig())
+			resolved := r.getPropertyValue(context.Background(), &test.pom, ptr(test.property))
+			require.Equal(t, test.expected, resolved)
+		})
+	}
+}
 
 func Test_mavenResolverLocal(t *testing.T) {
 	dir, err := filepath.Abs("test-fixtures/pom/maven-repo")

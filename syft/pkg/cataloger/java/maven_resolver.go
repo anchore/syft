@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -53,6 +54,8 @@ func (m mavenID) Valid() bool {
 func (m mavenID) String() string {
 	return fmt.Sprintf("groupId: %s artifactId:%s version:%s", m.GroupID, m.ArtifactID, m.Version)
 }
+
+var expressionMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
 // mavenResolver is a short-lived utility to resolve maven poms from multiple sources, including:
 // the scanned filesystem, local maven cache directories, remote maven repositories, and the syft cache

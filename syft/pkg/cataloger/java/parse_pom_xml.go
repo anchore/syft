@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"regexp"
 	"strings"
 
 	"github.com/saintfish/chardet"
@@ -22,8 +21,6 @@ import (
 )
 
 const pomXMLGlob = "*pom.xml"
-
-var expressionMatcher = regexp.MustCompile("[$][{][^}]+[}]")
 
 func (gap genericArchiveParserAdapter) parsePomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
