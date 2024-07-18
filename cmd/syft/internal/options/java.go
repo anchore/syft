@@ -7,8 +7,8 @@ import (
 
 type javaConfig struct {
 	UseNetwork              bool   `yaml:"use-network" json:"use-network" mapstructure:"use-network"`
-	UseMavenLocalRepository bool   `yaml:"use-maven-localrepository" json:"use-maven-localrepository" mapstructure:"use-maven-localrepository"`
-	MavenLocalRepositoryDir string `yaml:"maven-localrepository-dir" json:"maven-localrepository-dir" mapstructure:"maven-localrepository-dir"`
+	UseMavenLocalRepository bool   `yaml:"use-maven-local-repository" json:"use-maven-local-repository" mapstructure:"use-maven-local-repository"`
+	MavenLocalRepositoryDir string `yaml:"maven-local-repository-dir" json:"maven-local-repository-dir" mapstructure:"maven-local-repository-dir"`
 	MavenURL                string `yaml:"maven-url" json:"maven-url" mapstructure:"maven-url"`
 	MaxParentRecursiveDepth int    `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
 }
