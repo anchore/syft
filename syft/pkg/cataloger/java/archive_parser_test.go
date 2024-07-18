@@ -19,6 +19,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/vifraa/gopom"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -89,8 +90,11 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			},
 			expectedLicenses: []pkg.License{
 				{
-					Type:           license.Declared,
-					Value:          `The Apache Software License, Version 2.0`,
+					Type:  license.Declared,
+					Value: `The Apache Software License, Version 2.0`,
+					URLs: []string{
+						"http://www.apache.org/licenses/LICENSE-2.0.txt",
+					},
 					SPDXExpression: ``,
 				},
 			},
@@ -116,8 +120,9 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			defer cleanupFn()
 
 			// assert licenses are discovered from upstream
-			_, _, _, licenses := ap.discoverMainPackageNameAndVersionFromPomInfo(context.Background())
-			assert.Equal(t, tc.expectedLicenses, licenses)
+			_, _, _, parsedPom := ap.discoverMainPackageFromPomInfo(context.Background())
+			licenses, _ := ap.maven.resolveLicenses(context.Background(), parsedPom.project)
+			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(nil, licenses))
 		})
 	}
 }
@@ -387,7 +392,7 @@ func TestParseJar(t *testing.T) {
 			defer cleanupFn()
 			require.NoError(t, err)
 
-			actual, _, err := parser.parse(context.Background(), cfg)
+			actual, _, err := parser.parse(context.Background())
 			require.NoError(t, err)
 
 			if len(actual) != len(test.expected) {
@@ -799,26 +804,23 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version:    "1.0",
 			},
 			project: &parsedPomProject{
-				JavaPomProject: &pkg.JavaPomProject{
-					Parent: &pkg.JavaPomParent{
-						GroupID:    "some-parent-group-id",
-						ArtifactID: "some-parent-artifact-id",
-						Version:    "1.0-parent",
+				project: &gopom.Project{
+					Parent: &gopom.Parent{
+						GroupID:    ptr("some-parent-group-id"),
+						ArtifactID: ptr("some-parent-artifact-id"),
+						Version:    ptr("1.0-parent"),
 					},
-					Name:        "some-name",
-					GroupID:     "some-group-id",
-					ArtifactID:  "some-artifact-id",
-					Version:     "1.0",
-					Description: "desc",
-					URL:         "aweso.me",
-				},
-				Licenses: []pkg.License{
-					{
-						Value:          "MIT",
-						SPDXExpression: "MIT",
-						Type:           license.Declared,
-						URLs:           []string{"https://opensource.org/licenses/MIT"},
-						Locations:      file.NewLocationSet(file.NewLocation("some-license-path")),
+					Name:        ptr("some-name"),
+					GroupID:     ptr("some-group-id"),
+					ArtifactID:  ptr("some-artifact-id"),
+					Version:     ptr("1.0"),
+					Description: ptr("desc"),
+					URL:         ptr("aweso.me"),
+					Licenses: &[]gopom.License{
+						{
+							Name: ptr("MIT"),
+							URL:  ptr("https://opensource.org/licenses/MIT"),
+						},
 					},
 				},
 			},
@@ -854,7 +856,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 						SPDXExpression: "MIT",
 						Type:           license.Declared,
 						URLs:           []string{"https://opensource.org/licenses/MIT"},
-						Locations:      file.NewLocationSet(file.NewLocation("some-license-path")),
+						Locations:      file.NewLocationSet(file.NewLocation("given/virtual/path")),
 					},
 				),
 				Metadata: pkg.JavaArchive{
@@ -1079,7 +1081,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			test.expectedParent.Locations = locations
 
 			r := newMavenResolver(DefaultArchiveCatalogerConfig())
-			actualPackage := newPackageFromMavenData(context.Background(), test.props, test.project, test.parent, file.NewLocation(virtualPath), &r)
+			actualPackage := newPackageFromMavenData(context.Background(), &r, test.props, test.project, test.parent, file.NewLocation(virtualPath))
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {

@@ -266,63 +266,60 @@ func Test_parsePomXMLProject(t *testing.T) {
 	jarLocation := file.NewLocation("path/to/archive.jar")
 	tests := []struct {
 		name     string
-		expected parsedPomProject
+		project  *pkg.JavaPomProject
+		licenses []pkg.License
 	}{
 		{
 			name: "go case",
-			expected: parsedPomProject{
-				JavaPomProject: &pkg.JavaPomProject{
-					Path: "test-fixtures/pom/commons-codec.pom.xml",
-					Parent: &pkg.JavaPomParent{
-						GroupID:    "org.apache.commons",
-						ArtifactID: "commons-parent",
-						Version:    "42",
-					},
-					GroupID:     "commons-codec",
-					ArtifactID:  "commons-codec",
-					Version:     "1.11",
-					Name:        "Apache Commons Codec",
-					Description: "The Apache Commons Codec package contains simple encoder and decoders for various formats such as Base64 and Hexadecimal.  In addition to these widely used encoders and decoders, the codec package also maintains a collection of phonetic encoding utilities.",
-					URL:         "http://commons.apache.org/proper/commons-codec/",
+			project: &pkg.JavaPomProject{
+				Path: "test-fixtures/pom/commons-codec.pom.xml",
+				Parent: &pkg.JavaPomParent{
+					GroupID:    "org.apache.commons",
+					ArtifactID: "commons-parent",
+					Version:    "42",
 				},
+				GroupID:     "commons-codec",
+				ArtifactID:  "commons-codec",
+				Version:     "1.11",
+				Name:        "Apache Commons Codec",
+				Description: "The Apache Commons Codec package contains simple encoder and decoders for various formats such as Base64 and Hexadecimal.  In addition to these widely used encoders and decoders, the codec package also maintains a collection of phonetic encoding utilities.",
+				URL:         "http://commons.apache.org/proper/commons-codec/",
 			},
 		},
 		{
 			name: "with license data",
-			expected: parsedPomProject{
-				JavaPomProject: &pkg.JavaPomProject{
-					Path: "test-fixtures/pom/neo4j-license-maven-plugin.pom.xml",
-					Parent: &pkg.JavaPomParent{
-						GroupID:    "org.sonatype.oss",
-						ArtifactID: "oss-parent",
-						Version:    "7",
-					},
-					GroupID:     "org.neo4j.build.plugins",
-					ArtifactID:  "license-maven-plugin",
-					Version:     "4-SNAPSHOT",
-					Name:        "${project.artifactId}", // TODO: this is not an ideal answer
-					Description: "Maven 2 plugin to check and update license headers in source files",
-					URL:         "http://components.neo4j.org/${project.artifactId}/${project.version}", // TODO: this is not an ideal answer
+			project: &pkg.JavaPomProject{
+				Path: "test-fixtures/pom/neo4j-license-maven-plugin.pom.xml",
+				Parent: &pkg.JavaPomParent{
+					GroupID:    "org.sonatype.oss",
+					ArtifactID: "oss-parent",
+					Version:    "7",
 				},
-				Licenses: []pkg.License{
-					{
-						Value:          "The Apache Software License, Version 2.0",
-						SPDXExpression: "", // TODO: ideally we would parse this title to get Apache-2.0 (created issue #2210 https://github.com/anchore/syft/issues/2210)
-						Type:           license.Declared,
-						URLs:           []string{"http://www.apache.org/licenses/LICENSE-2.0.txt"},
-						Locations:      file.NewLocationSet(jarLocation),
-					},
-					{
-						Value:          "MIT",
-						SPDXExpression: "MIT",
-						Type:           license.Declared,
-						Locations:      file.NewLocationSet(jarLocation),
-					},
-					{
-						Type:      license.Declared,
-						URLs:      []string{"https://opensource.org/license/unlicense/"},
-						Locations: file.NewLocationSet(jarLocation),
-					},
+				GroupID:     "org.neo4j.build.plugins",
+				ArtifactID:  "license-maven-plugin",
+				Version:     "4-SNAPSHOT",
+				Name:        "license-maven-plugin",
+				Description: "Maven 2 plugin to check and update license headers in source files",
+				URL:         "http://components.neo4j.org/license-maven-plugin/4-SNAPSHOT",
+			},
+			licenses: []pkg.License{
+				{
+					Value:          "The Apache Software License, Version 2.0",
+					SPDXExpression: "", // TODO: ideally we would parse this title to get Apache-2.0 (created issue #2210 https://github.com/anchore/syft/issues/2210)
+					Type:           license.Declared,
+					URLs:           []string{"http://www.apache.org/licenses/LICENSE-2.0.txt"},
+					Locations:      file.NewLocationSet(jarLocation),
+				},
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           license.Declared,
+					Locations:      file.NewLocationSet(jarLocation),
+				},
+				{
+					Type:      license.Declared,
+					URLs:      []string{"https://opensource.org/license/unlicense/"},
+					Locations: file.NewLocationSet(jarLocation),
 				},
 			},
 		},
@@ -330,14 +327,20 @@ func Test_parsePomXMLProject(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			fixture, err := os.Open(test.expected.Path)
+			fixture, err := os.Open(test.project.Path)
 			assert.NoError(t, err)
-			cfg := ArchiveCatalogerConfig{}
+			r := newMavenResolver(ArchiveCatalogerConfig{})
 
-			actual, err := parsePomXMLProject(context.Background(), fixture.Name(), fixture, jarLocation, cfg)
+			pom, err := gopom.ParseFromReader(fixture)
+			require.NoError(t, err)
+
+			actual := newPomProject(context.Background(), &r, fixture.Name(), pom)
 			assert.NoError(t, err)
+			assert.Equal(t, test.project, actual)
 
-			assert.Equal(t, &test.expected, actual)
+			licenses := r.directLicenses(context.Background(), pom)
+			assert.NoError(t, err)
+			assert.Equal(t, test.licenses, toPkgLicenses(&jarLocation, licenses))
 		})
 	}
 }
@@ -351,7 +354,7 @@ func Test_pomParent(t *testing.T) {
 		{
 			name: "only group ID",
 			input: &gopom.Parent{
-				GroupID: stringPointer("org.something"),
+				GroupID: ptr("org.something"),
 			},
 			expected: &pkg.JavaPomParent{
 				GroupID: "org.something",
@@ -360,7 +363,7 @@ func Test_pomParent(t *testing.T) {
 		{
 			name: "only artifact ID",
 			input: &gopom.Parent{
-				ArtifactID: stringPointer("something"),
+				ArtifactID: ptr("something"),
 			},
 			expected: &pkg.JavaPomParent{
 				ArtifactID: "something",
@@ -369,7 +372,7 @@ func Test_pomParent(t *testing.T) {
 		{
 			name: "only Version",
 			input: &gopom.Parent{
-				Version: stringPointer("something"),
+				Version: ptr("something"),
 			},
 			expected: &pkg.JavaPomParent{
 				Version: "something",
@@ -388,7 +391,7 @@ func Test_pomParent(t *testing.T) {
 		{
 			name: "unused field",
 			input: &gopom.Parent{
-				RelativePath: stringPointer("something"),
+				RelativePath: ptr("something"),
 			},
 			expected: nil,
 		},
@@ -397,7 +400,7 @@ func Test_pomParent(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			r := newMavenResolver(DefaultArchiveCatalogerConfig())
-			assert.Equal(t, test.expected, r.pomParent(context.Background(), &gopom.Project{Parent: test.input}))
+			assert.Equal(t, test.expected, pomParent(context.Background(), &r, &gopom.Project{Parent: test.input}))
 		})
 	}
 }
@@ -420,7 +423,7 @@ func Test_cleanDescription(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, cleanDescription(stringPointer(test.input)))
+			assert.Equal(t, test.expected, cleanDescription(test.input))
 		})
 	}
 }
@@ -448,7 +451,7 @@ func Test_resolveProperty(t *testing.T) {
 			name:     "groupId",
 			property: "${project.groupId}",
 			pom: gopom.Project{
-				GroupID: stringPointer("org.some.group"),
+				GroupID: ptr("org.some.group"),
 			},
 			expected: "org.some.group",
 		},
@@ -457,7 +460,7 @@ func Test_resolveProperty(t *testing.T) {
 			property: "${project.parent.groupId}",
 			pom: gopom.Project{
 				Parent: &gopom.Parent{
-					GroupID: stringPointer("org.some.parent"),
+					GroupID: ptr("org.some.parent"),
 				},
 			},
 			expected: "org.some.parent",
@@ -485,7 +488,7 @@ func Test_resolveProperty(t *testing.T) {
 			property: "${springboot.version}",
 			pom: gopom.Project{
 				Parent: &gopom.Parent{
-					Version: stringPointer("1.2.3"),
+					Version: ptr("1.2.3"),
 				},
 				Properties: &gopom.Properties{
 					Entries: map[string]string{
@@ -500,7 +503,7 @@ func Test_resolveProperty(t *testing.T) {
 			property: "${springboot.version}",
 			pom: gopom.Project{
 				Parent: &gopom.Parent{
-					Version: stringPointer("1.2.3"),
+					Version: ptr("1.2.3"),
 				},
 			},
 			expected: "",
@@ -510,7 +513,7 @@ func Test_resolveProperty(t *testing.T) {
 			property: "${springboot.version}",
 			pom: gopom.Project{
 				Parent: &gopom.Parent{
-					Version: stringPointer("${undefined.version}"),
+					Version: ptr("${undefined.version}"),
 				},
 				Properties: &gopom.Properties{
 					Entries: map[string]string{
@@ -551,7 +554,7 @@ func Test_resolveProperty(t *testing.T) {
 			property: "${cyclic.version}",
 			pom: gopom.Project{
 				Parent: &gopom.Parent{
-					Version: stringPointer("${cyclic.version}"),
+					Version: ptr("${cyclic.version}"),
 				},
 				Properties: &gopom.Properties{
 					Entries: map[string]string{
@@ -568,14 +571,14 @@ func Test_resolveProperty(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			r := newMavenResolver(DefaultArchiveCatalogerConfig())
-			resolved := r.getPropertyValue(context.Background(), &test.pom, stringPointer(test.property))
+			resolved := r.getPropertyValue(context.Background(), &test.pom, ptr(test.property))
 			assert.Equal(t, test.expected, resolved)
 		})
 	}
 }
 
-func stringPointer(s string) *string {
-	return &s
+func ptr[T any](value T) *T {
+	return &value
 }
 
 func Test_getUtf8Reader(t *testing.T) {
