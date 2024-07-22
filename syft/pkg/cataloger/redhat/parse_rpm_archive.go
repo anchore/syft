@@ -8,6 +8,7 @@ import (
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
 	"github.com/sassoftware/go-rpmutils"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -26,12 +27,22 @@ func parseRpmArchive(_ context.Context, _ file.Resolver, _ *generic.Environment,
 		return nil, nil, err
 	}
 
-	licenses, _ := rpm.Header.GetStrings(rpmutils.LICENSE)
-	sourceRpm, _ := rpm.Header.GetString(rpmutils.SOURCERPM)
-	vendor, _ := rpm.Header.GetString(rpmutils.VENDOR)
-	digestAlgorithm := getDigestAlgorithm(rpm.Header)
-	size, _ := rpm.Header.InstalledSize()
-	files, _ := rpm.Header.GetFiles()
+	licenses, err := rpm.Header.GetStrings(rpmutils.LICENSE)
+	logRpmArchiveErr(reader.Location, "license", err)
+
+	sourceRpm, err := rpm.Header.GetString(rpmutils.SOURCERPM)
+	logRpmArchiveErr(reader.Location, "sourcerpm", err)
+
+	vendor, err := rpm.Header.GetString(rpmutils.VENDOR)
+	logRpmArchiveErr(reader.Location, "vendor", err)
+
+	digestAlgorithm := getDigestAlgorithm(reader.Location, rpm.Header)
+
+	size, err := rpm.Header.InstalledSize()
+	logRpmArchiveErr(reader.Location, "size", err)
+
+	files, err := rpm.Header.GetFiles()
+	logRpmArchiveErr(reader.Location, "files", err)
 
 	metadata := pkg.RpmArchive{
 		Name:      nevra.Name,
@@ -48,12 +59,16 @@ func parseRpmArchive(_ context.Context, _ file.Resolver, _ *generic.Environment,
 	return []pkg.Package{newArchivePackage(reader.Location, metadata, licenses)}, nil, nil
 }
 
-func getDigestAlgorithm(header *rpmutils.RpmHeader) string {
-	digestAlgorithm, _ := header.GetString(rpmutils.FILEDIGESTALGO)
+func getDigestAlgorithm(location file.Location, header *rpmutils.RpmHeader) string {
+	digestAlgorithm, err := header.GetString(rpmutils.FILEDIGESTALGO)
+	logRpmArchiveErr(location, "file digest algo", err)
+
 	if digestAlgorithm != "" {
 		return digestAlgorithm
 	}
-	digestAlgorithms, _ := header.GetUint32s(rpmutils.FILEDIGESTALGO)
+	digestAlgorithms, err := header.GetUint32s(rpmutils.FILEDIGESTALGO)
+	logRpmArchiveErr(location, "file digest algo 32-bit", err)
+
 	if len(digestAlgorithms) > 0 {
 		digestAlgo := int(digestAlgorithms[0])
 		return rpmutils.GetFileAlgoName(digestAlgo)
@@ -90,4 +105,10 @@ func parseEpoch(epoch string) *int {
 		return nil
 	}
 	return &i
+}
+
+func logRpmArchiveErr(location file.Location, operation string, err error) {
+	if err != nil {
+		log.Debugf("ERROR in parse_rpm_archive %s file: %s: %v", operation, location.RealPath, err)
+	}
 }
