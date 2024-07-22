@@ -1156,7 +1156,7 @@ func Test_artifactIDMatchesFilename(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, artifactIDMatchesFilename(tt.artifactID, tt.fileName))
+			assert.Equal(t, tt.want, artifactIDMatchesFilename(tt.artifactID, tt.fileName, nil))
 		})
 	}
 }
