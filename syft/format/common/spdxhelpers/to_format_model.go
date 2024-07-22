@@ -16,7 +16,7 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
-	"github.com/anchore/syft/internal/relationships"
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -46,10 +46,10 @@ const (
 func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	name, namespace := helpers.DocumentNameAndNamespace(s.Source, s.Descriptor)
 
-	rels := relationships.NewIndex(s.Relationships)
+	rels := relationship.NewIndex(s.Relationships...)
 	packages := toPackages(rels, s.Artifacts.Packages, s)
 
-	allRelationships := toRelationships(s.RelationshipsSorted())
+	allRelationships := toRelationships(rels.All())
 
 	// for valid SPDX we need a document describes relationship
 	describesID := spdx.ElementID("DOCUMENT")
@@ -304,7 +304,7 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 // packages populates all Package Information from the package Collection (see https://spdx.github.io/spdx-spec/3-package-information/)
 //
 //nolint:funlen
-func toPackages(rels *relationships.Index, catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Package) {
+func toPackages(rels *relationship.Index, catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Package) {
 	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
 		id := toSPDXID(p)
@@ -746,7 +746,7 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 // f file is an "excludes" file, skip it /* exclude SPDX analysis file(s) */
 // see: https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
 // the above link contains the SPDX algorithm for a package verification code
-func newPackageVerificationCode(rels *relationships.Index, p pkg.Package, sbom sbom.SBOM) *spdx.PackageVerificationCode {
+func newPackageVerificationCode(rels *relationship.Index, p pkg.Package, sbom sbom.SBOM) *spdx.PackageVerificationCode {
 	// key off of the contains relationship;
 	// spdx validator will fail if a package claims to contain a file but no sha1 provided
 	// if a sha1 for a file is provided then the validator will fail if the package does not have

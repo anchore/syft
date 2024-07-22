@@ -1,88 +1,182 @@
 package relationship
 
 import (
-	"github.com/scylladb/go-set/strset"
+	"slices"
+	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 )
 
+// Index provides an indexed set of relationships for easy location and comparison
 type Index struct {
-	typesByFromTo map[artifact.ID]map[artifact.ID]*strset.Set
-	existing      []artifact.Relationship
-	additional    []artifact.Relationship
+	all      []*sortableRelationship
+	byFromID map[artifact.ID]*mapped
+	byToID   map[artifact.ID]*mapped
 }
 
-func NewIndex(existing ...artifact.Relationship) *Index {
-	r := &Index{
-		typesByFromTo: make(map[artifact.ID]map[artifact.ID]*strset.Set),
-	}
-	r.TrackAll(existing...)
-	return r
+// NewIndex returns a new relationship Index
+func NewIndex(relationships ...artifact.Relationship) *Index {
+	out := Index{}
+	out.Add(relationships...)
+	return &out
 }
 
-func (i *Index) track(r artifact.Relationship) bool {
-	fromID := r.From.ID()
-	if _, ok := i.typesByFromTo[fromID]; !ok {
-		i.typesByFromTo[fromID] = make(map[artifact.ID]*strset.Set)
+// Add adds all the given relationships to the index, without adding duplicates
+func (i *Index) Add(relationships ...artifact.Relationship) {
+	if i.byFromID == nil {
+		i.byFromID = map[artifact.ID]*mapped{}
+	}
+	if i.byToID == nil {
+		i.byToID = map[artifact.ID]*mapped{}
 	}
 
-	toID := r.To.ID()
-	if _, ok := i.typesByFromTo[fromID][toID]; !ok {
-		i.typesByFromTo[fromID][toID] = strset.New()
+	// store appropriate indexes for stable ordering to minimize ID() calls
+	for _, r := range relationships {
+		// prevent duplicates
+		if i.Contains(r) {
+			continue
+		}
+
+		fromID := r.From.ID()
+		toID := r.To.ID()
+
+		m := i.byFromID[fromID]
+		if m == nil {
+			m = &mapped{}
+			i.byFromID[fromID] = m
+		}
+		sortableFrom := &sortableRelationship{
+			from: fromID,
+			to:   toID,
+			rel:  r,
+		}
+
+		// add to all relationships
+		i.all = append(i.all, sortableFrom)
+
+		// add to from -> to mapping
+		m.add(toID, sortableFrom)
+
+		m = i.byToID[toID]
+		if m == nil {
+			m = &mapped{}
+			i.byToID[toID] = m
+		}
+
+		// add to the to -> from mapping
+		m.add(fromID, sortableFrom)
 	}
-
-	var exists bool
-	if i.typesByFromTo[fromID][toID].Has(string(r.Type)) {
-		exists = true
-	}
-
-	i.typesByFromTo[fromID][toID].Add(string(r.Type))
-
-	return !exists
 }
 
-// Track this relationship as "exists" in the index (this is used to prevent duplicate relationships from being added).
-// returns true if the relationship is new to the index, false otherwise.
-func (i *Index) Track(r artifact.Relationship) bool {
-	unique := i.track(r)
-	if unique {
-		i.existing = append(i.existing, r)
-	}
-	return unique
+// From returns all relationships from the given identifiable, with specified types
+func (i *Index) From(identifiable artifact.Identifiable, types ...artifact.RelationshipType) []artifact.Relationship {
+	return fromMapped(i.byFromID, identifiable, types)
 }
 
-// Add a new relationship to the index, returning true if the relationship is new to the index, false otherwise (thus is a duplicate).
-func (i *Index) Add(r artifact.Relationship) bool {
-	if i.track(r) {
-		i.additional = append(i.additional, r)
-		return true
+// To returns all relationships to the given identifiable, with specified types
+func (i *Index) To(identifiable artifact.Identifiable, types ...artifact.RelationshipType) []artifact.Relationship {
+	return fromMapped(i.byToID, identifiable, types)
+}
+
+// References returns all relationships that references to or from the given identifiable
+func (i *Index) References(identifiable artifact.Identifiable, types ...artifact.RelationshipType) []artifact.Relationship {
+	return append(i.To(identifiable, types...), i.From(identifiable, types...)...)
+}
+
+// Coordinates returns all coordinates for the provided identifiable for provided relationship types
+// If no types are provided, all relationship types are considered.
+func (i *Index) Coordinates(identifiable artifact.Identifiable, types ...artifact.RelationshipType) []file.Coordinates {
+	var coordinates []file.Coordinates
+	for _, relationship := range append(i.To(identifiable, types...), i.From(identifiable, types...)...) {
+		cords := extractCoordinates(relationship)
+		coordinates = append(coordinates, cords...)
+	}
+	return coordinates
+}
+
+// Contains indicates the relationship is present in this index
+func (i *Index) Contains(r artifact.Relationship) bool {
+	if m := i.byFromID[r.From.ID()]; m != nil {
+		if ids := m.types[(r.Type)]; ids != nil {
+			return ids[(r.To.ID())] != nil
+		}
 	}
 	return false
 }
 
-func (i *Index) TrackAll(rs ...artifact.Relationship) {
-	for _, r := range rs {
-		i.Track(r)
+// All returns a sorted set of relationships matching all types, or all relationships if no types specified
+func (i *Index) All(types ...artifact.RelationshipType) []artifact.Relationship {
+	return collect(i.all, types)
+}
+
+func fromMapped(mappedIDs map[artifact.ID]*mapped, identifiable artifact.Identifiable, types []artifact.RelationshipType) []artifact.Relationship {
+	if identifiable == nil {
+		return nil
 	}
-}
-
-func (i *Index) AddAll(rs ...artifact.Relationship) {
-	for _, r := range rs {
-		i.Add(r)
+	m := mappedIDs[identifiable.ID()]
+	if m == nil {
+		return nil
 	}
+	return collect(m.rels, types)
 }
 
-func (i *Index) NewRelationships() []artifact.Relationship {
-	return i.additional
+func collect(rels []*sortableRelationship, types []artifact.RelationshipType) []artifact.Relationship {
+	// always return sorted lists for SBOM stability; the sorting could be handled elsewhere
+	slices.SortFunc(rels, sortFunc)
+	var out []artifact.Relationship
+	for _, r := range rels {
+		if len(types) == 0 || slices.Contains(types, r.rel.Type) {
+			out = append(out, r.rel)
+		}
+	}
+	return out
 }
 
-func (i *Index) ExistingRelationships() []artifact.Relationship {
-	return i.existing
+func extractCoordinates(relationship artifact.Relationship) (results []file.Coordinates) {
+	if coordinates, exists := relationship.From.(file.Coordinates); exists {
+		results = append(results, coordinates)
+	}
+
+	if coordinates, exists := relationship.To.(file.Coordinates); exists {
+		results = append(results, coordinates)
+	}
+
+	return results
 }
 
-func (i *Index) AllUniqueRelationships() []artifact.Relationship {
-	var all []artifact.Relationship
-	all = append(all, i.existing...)
-	all = append(all, i.additional...)
-	return all
+type sortableRelationship struct {
+	from artifact.ID
+	to   artifact.ID
+	rel  artifact.Relationship
+}
+
+func sortFunc(a, b *sortableRelationship) int {
+	cmp := strings.Compare(string(a.rel.Type), string(b.rel.Type))
+	if cmp != 0 {
+		return cmp
+	}
+	cmp = strings.Compare(string(a.from), string(b.from))
+	if cmp != 0 {
+		return cmp
+	}
+	return strings.Compare(string(a.to), string(b.to))
+}
+
+type mapped struct {
+	types map[artifact.RelationshipType]map[artifact.ID]*sortableRelationship
+	rels  []*sortableRelationship
+}
+
+func (m *mapped) add(id artifact.ID, r *sortableRelationship) {
+	m.rels = append(m.rels, r)
+	if m.types == nil {
+		m.types = map[artifact.RelationshipType]map[artifact.ID]*sortableRelationship{}
+	}
+	tm := m.types[(r.rel.Type)]
+	if tm == nil {
+		tm = map[artifact.ID]*sortableRelationship{}
+		m.types[(r.rel.Type)] = tm
+	}
+	tm[id] = r
 }

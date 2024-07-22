@@ -3,223 +3,187 @@ package relationship
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
 )
 
-func Test_newRelationshipIndex(t *testing.T) {
-	from := fakeIdentifiable{id: "from"}
-	to := fakeIdentifiable{id: "to"}
-	tests := []struct {
-		name           string
-		given          []artifact.Relationship
-		track          []artifact.Relationship
-		add            []artifact.Relationship
-		wantExisting   []string
-		wantAdditional []string
-	}{
-		{
-			name: "empty",
-		},
-		{
-			name: "tracks existing relationships",
-			given: []artifact.Relationship{
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-			},
-			wantExisting: []string{"from [evident-by] to"},
-		},
-		{
-			name: "deduplicate tracked relationships",
-			given: []artifact.Relationship{
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-			},
-			track: []artifact.Relationship{
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-			},
-			wantExisting: []string{"from [evident-by] to"},
-		},
-		{
-			name: "deduplicate any input relationships",
-			given: []artifact.Relationship{
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-			},
-			track: []artifact.Relationship{
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-			},
-			add: []artifact.Relationship{
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-			},
-			wantExisting: []string{"from [evident-by] to"},
-		},
-		{
-			name: "deduplicate any added relationships",
-			add: []artifact.Relationship{
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-				{
-					From: from,
-					To:   to,
-					Type: artifact.EvidentByRelationship,
-				},
-			},
-			wantAdditional: []string{"from [evident-by] to"},
-		},
+func Test_Index(t *testing.T) {
+	p1 := pkg.Package{
+		Name: "pkg-1",
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			idx := NewIndex(tt.given...)
-			idx.TrackAll(tt.track...)
-			idx.AddAll(tt.add...)
-			diffRelationships(t, tt.wantExisting, idx.existing)
-			diffRelationships(t, tt.wantAdditional, idx.additional)
-		})
+	p2 := pkg.Package{
+		Name: "pkg-2",
 	}
+	p3 := pkg.Package{
+		Name: "pkg-3",
+	}
+	c1 := file.Coordinates{
+		RealPath: "/coords/1",
+	}
+	c2 := file.Coordinates{
+		RealPath: "/coords/2",
+	}
+
+	for _, p := range []*pkg.Package{&p1, &p2, &p3} {
+		p.SetID()
+	}
+
+	r1 := artifact.Relationship{
+		From: p1,
+		To:   p2,
+		Type: artifact.DependencyOfRelationship,
+	}
+	r2 := artifact.Relationship{
+		From: p1,
+		To:   p3,
+		Type: artifact.DependencyOfRelationship,
+	}
+	r3 := artifact.Relationship{
+		From: p1,
+		To:   c1,
+		Type: artifact.ContainsRelationship,
+	}
+	r4 := artifact.Relationship{
+		From: p2,
+		To:   c2,
+		Type: artifact.ContainsRelationship,
+	}
+	r5 := artifact.Relationship{
+		From: p3,
+		To:   c2,
+		Type: artifact.ContainsRelationship,
+	}
+
+	dup := artifact.Relationship{
+		From: p3,
+		To:   c2,
+		Type: artifact.ContainsRelationship,
+	}
+
+	idx := NewIndex(r1, r2, r3, r4, r5, dup)
+	require.ElementsMatch(t, slice(r3, r4, r5, r2, r1), idx.All())
+
+	require.ElementsMatch(t, slice(r1, r4), idx.References(p2))
+	require.ElementsMatch(t, slice(r4), idx.References(p2, artifact.ContainsRelationship))
+
+	require.ElementsMatch(t, slice(r1), idx.To(p2))
+	require.ElementsMatch(t, []artifact.Relationship(nil), idx.To(p2, artifact.ContainsRelationship))
+
+	require.ElementsMatch(t, slice(r4), idx.From(p2))
+	require.ElementsMatch(t, slice(r4), idx.From(p2, artifact.ContainsRelationship))
 }
 
-func diffRelationships(t *testing.T, expected []string, actual []artifact.Relationship) {
-	if d := cmp.Diff(expected, stringRelationships(actual)); d != "" {
-		t.Errorf("unexpected relationships (-want, +got): %s", d)
+func Test_sortOrder(t *testing.T) {
+	r1 := artifact.Relationship{
+		From: fakeIdentifiable{"1"},
+		To:   fakeIdentifiable{"2"},
+		Type: artifact.ContainsRelationship,
 	}
+	r2 := artifact.Relationship{
+		From: fakeIdentifiable{"2"},
+		To:   fakeIdentifiable{"3"},
+		Type: artifact.ContainsRelationship,
+	}
+	r3 := artifact.Relationship{
+		From: fakeIdentifiable{"3"},
+		To:   fakeIdentifiable{"4"},
+		Type: artifact.ContainsRelationship,
+	}
+	r4 := artifact.Relationship{
+		From: fakeIdentifiable{"1"},
+		To:   fakeIdentifiable{"2"},
+		Type: artifact.DependencyOfRelationship,
+	}
+	r5 := artifact.Relationship{
+		From: fakeIdentifiable{"2"},
+		To:   fakeIdentifiable{"3"},
+		Type: artifact.DependencyOfRelationship,
+	}
+	dup := artifact.Relationship{
+		From: fakeIdentifiable{"2"},
+		To:   fakeIdentifiable{"3"},
+		Type: artifact.DependencyOfRelationship,
+	}
+
+	// should have a stable sort order when retrieving elements
+	idx := NewIndex(r1, r2, r3, r4, r5, dup)
+	require.ElementsMatch(t, slice(r3, r4, r5, r2, r1), idx.All())
+
+	require.ElementsMatch(t, slice(r4, r1), idx.From(fakeIdentifiable{"1"}))
 }
 
-func stringRelationships(relationships []artifact.Relationship) []string {
-	var result []string
-	for _, r := range relationships {
-		result = append(result, string(r.From.ID())+" ["+string(r.Type)+"] "+string(r.To.ID()))
+func Test_Coordinates(t *testing.T) {
+	p1 := pkg.Package{
+		Name: "pkg-1",
 	}
-	return result
-
-}
-
-func Test_relationshipIndex_track(t *testing.T) {
-	from := fakeIdentifiable{id: "from"}
-	to := fakeIdentifiable{id: "to"}
-	relationship := artifact.Relationship{From: from, To: to, Type: artifact.EvidentByRelationship}
-	tests := []struct {
-		name     string
-		existing []artifact.Relationship
-		given    artifact.Relationship
-		want     bool
-	}{
-		{
-			name:     "track returns true for a new relationship",
-			existing: []artifact.Relationship{},
-			given:    relationship,
-			want:     true,
-		},
-		{
-			name:     "track returns false for an existing relationship",
-			existing: []artifact.Relationship{relationship},
-			given:    relationship,
-			want:     false,
-		},
+	p2 := pkg.Package{
+		Name: "pkg-2",
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			i := NewIndex(tt.existing...)
-			if got := i.Track(tt.given); got != tt.want {
-				t.Errorf("track() = %v, want %v", got, tt.want)
-			}
-		})
+	p3 := pkg.Package{
+		Name: "pkg-3",
 	}
-}
-
-func Test_relationshipIndex_add(t *testing.T) {
-	from := fakeIdentifiable{id: "from"}
-	to := fakeIdentifiable{id: "to"}
-	relationship := artifact.Relationship{From: from, To: to, Type: artifact.EvidentByRelationship}
-	tests := []struct {
-		name     string
-		existing []artifact.Relationship
-		given    artifact.Relationship
-		want     bool
-	}{
-		{
-			name:     "add returns true for a new relationship",
-			existing: []artifact.Relationship{},
-			given:    relationship,
-			want:     true,
-		},
-		{
-			name:     "add returns false for an existing relationship",
-			existing: []artifact.Relationship{relationship},
-			given:    relationship,
-			want:     false,
-		},
+	c1 := file.Coordinates{
+		RealPath: "/coords/1",
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			i := NewIndex(tt.existing...)
-			if got := i.Add(tt.given); got != tt.want {
-				t.Errorf("add() = %v, want %v", got, tt.want)
-			}
-		})
+	c2 := file.Coordinates{
+		RealPath: "/coords/2",
 	}
 
+	for _, p := range []*pkg.Package{&p1, &p2, &p3} {
+		p.SetID()
+	}
+
+	r1 := artifact.Relationship{
+		From: p1,
+		To:   p2,
+		Type: artifact.DependencyOfRelationship,
+	}
+	r2 := artifact.Relationship{
+		From: p1,
+		To:   p3,
+		Type: artifact.DependencyOfRelationship,
+	}
+	r3 := artifact.Relationship{
+		From: p1,
+		To:   c1,
+		Type: artifact.ContainsRelationship,
+	}
+	r4 := artifact.Relationship{
+		From: p2,
+		To:   c2,
+		Type: artifact.ContainsRelationship,
+	}
+	r5 := artifact.Relationship{
+		From: p3,
+		To:   c1,
+		Type: artifact.ContainsRelationship,
+	}
+	r6 := artifact.Relationship{
+		From: p3,
+		To:   c2,
+		Type: artifact.ContainsRelationship,
+	}
+
+	idx := NewIndex(r1, r2, r3, r4, r5, r6)
+
+	got := idx.Coordinates(p1)
+	require.ElementsMatch(t, slice(c1), got)
+
+	got = idx.Coordinates(p3)
+	require.ElementsMatch(t, slice(c1, c2), got)
 }
 
 type fakeIdentifiable struct {
-	id string
+	value string
 }
 
-func (f fakeIdentifiable) ID() artifact.ID {
-	return artifact.ID(f.id)
+func (i fakeIdentifiable) ID() artifact.ID {
+	return artifact.ID(i.value)
+}
+
+func slice[T any](values ...T) []T {
+	return values
 }
