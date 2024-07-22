@@ -56,7 +56,7 @@ func scanFile(reader unionreader.UnionReader, filename string) []*extendedBuildI
 			}
 		}
 
-		builds = append(builds, &extendedBuildInfo{bi, v, arch})
+		builds = append(builds, &extendedBuildInfo{BuildInfo: bi, cryptoSettings: v, arch: arch})
 	}
 	return builds
 }
