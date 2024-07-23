@@ -64,7 +64,7 @@ func Test_Index(t *testing.T) {
 	}
 
 	idx := NewIndex(r1, r2, r3, r4, r5, dup)
-	require.ElementsMatch(t, slice(r3, r4, r5, r2, r1), idx.All())
+	require.ElementsMatch(t, slice(r1, r2, r3, r4, r5), idx.All())
 
 	require.ElementsMatch(t, slice(r1, r4), idx.References(p2))
 	require.ElementsMatch(t, slice(r4), idx.References(p2, artifact.ContainsRelationship))
@@ -78,41 +78,71 @@ func Test_Index(t *testing.T) {
 
 func Test_sortOrder(t *testing.T) {
 	r1 := artifact.Relationship{
-		From: fakeIdentifiable{"1"},
-		To:   fakeIdentifiable{"2"},
-		Type: artifact.ContainsRelationship,
+		From: id("1"),
+		To:   id("2"),
+		Type: "1",
 	}
 	r2 := artifact.Relationship{
-		From: fakeIdentifiable{"2"},
-		To:   fakeIdentifiable{"3"},
-		Type: artifact.ContainsRelationship,
+		From: id("2"),
+		To:   id("3"),
+		Type: "1",
 	}
 	r3 := artifact.Relationship{
-		From: fakeIdentifiable{"3"},
-		To:   fakeIdentifiable{"4"},
-		Type: artifact.ContainsRelationship,
+		From: id("3"),
+		To:   id("4"),
+		Type: "1",
 	}
 	r4 := artifact.Relationship{
-		From: fakeIdentifiable{"1"},
-		To:   fakeIdentifiable{"2"},
-		Type: artifact.DependencyOfRelationship,
+		From: id("1"),
+		To:   id("2"),
+		Type: "2",
 	}
 	r5 := artifact.Relationship{
-		From: fakeIdentifiable{"2"},
-		To:   fakeIdentifiable{"3"},
-		Type: artifact.DependencyOfRelationship,
+		From: id("2"),
+		To:   id("3"),
+		Type: "2",
 	}
 	dup := artifact.Relationship{
-		From: fakeIdentifiable{"2"},
-		To:   fakeIdentifiable{"3"},
-		Type: artifact.DependencyOfRelationship,
+		From: id("2"),
+		To:   id("3"),
+		Type: "2",
+	}
+	r6 := artifact.Relationship{
+		From: id("2"),
+		To:   id("3"),
+		Type: "3",
 	}
 
-	// should have a stable sort order when retrieving elements
-	idx := NewIndex(r1, r2, r3, r4, r5, dup)
-	require.ElementsMatch(t, slice(r3, r4, r5, r2, r1), idx.All())
+	idx := NewIndex(r5, r2, r6, r4, r1, r3, dup)
+	require.EqualValues(t, slice(r1, r2, r3, r4, r5, r6), idx.All())
 
-	require.ElementsMatch(t, slice(r4, r1), idx.From(fakeIdentifiable{"1"}))
+	require.EqualValues(t, slice(r1, r4), idx.From(id("1")))
+
+	require.EqualValues(t, slice(r2, r5, r6), idx.To(id("3")))
+
+	rLast := artifact.Relationship{
+		From: id("0"),
+		To:   id("3"),
+		Type: "9999",
+	}
+
+	rFirst := artifact.Relationship{
+		From: id("0"),
+		To:   id("3"),
+		Type: "1",
+	}
+
+	rMid := artifact.Relationship{
+		From: id("0"),
+		To:   id("1"),
+		Type: "2",
+	}
+
+	idx.Add(rLast, rFirst, rMid)
+
+	require.EqualValues(t, slice(rFirst, r1, r2, r3, rMid, r4, r5, r6, rLast), idx.All())
+
+	require.EqualValues(t, slice(rFirst, r2, r5, r6, rLast), idx.To(id("3")))
 }
 
 func Test_Coordinates(t *testing.T) {
@@ -130,6 +160,12 @@ func Test_Coordinates(t *testing.T) {
 	}
 	c2 := file.Coordinates{
 		RealPath: "/coords/2",
+	}
+	c3 := file.Coordinates{
+		RealPath: "/coords/3",
+	}
+	c4 := file.Coordinates{
+		RealPath: "/coords/4",
 	}
 
 	for _, p := range []*pkg.Package{&p1, &p2, &p3} {
@@ -166,8 +202,18 @@ func Test_Coordinates(t *testing.T) {
 		To:   c2,
 		Type: artifact.ContainsRelationship,
 	}
+	r7 := artifact.Relationship{
+		From: c1,
+		To:   c3,
+		Type: artifact.ContainsRelationship,
+	}
+	r8 := artifact.Relationship{
+		From: c3,
+		To:   c4,
+		Type: artifact.ContainsRelationship,
+	}
 
-	idx := NewIndex(r1, r2, r3, r4, r5, r6)
+	idx := NewIndex(r1, r2, r3, r4, r5, r6, r7, r8)
 
 	got := idx.Coordinates(p1)
 	require.ElementsMatch(t, slice(c1), got)
@@ -176,12 +222,10 @@ func Test_Coordinates(t *testing.T) {
 	require.ElementsMatch(t, slice(c1, c2), got)
 }
 
-type fakeIdentifiable struct {
-	value string
-}
+type id string
 
-func (i fakeIdentifiable) ID() artifact.ID {
-	return artifact.ID(i.value)
+func (i id) ID() artifact.ID {
+	return artifact.ID(i)
 }
 
 func slice[T any](values ...T) []T {

@@ -8,11 +8,11 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-// Index provides an indexed set of relationships for easy location and comparison
+// Index indexes relationships, preventing duplicates
 type Index struct {
-	all      []*sortableRelationship
-	byFromID map[artifact.ID]*mapped
-	byToID   map[artifact.ID]*mapped
+	all    []*sortableRelationship
+	fromID map[artifact.ID]*mappedRelationships
+	toID   map[artifact.ID]*mappedRelationships
 }
 
 // NewIndex returns a new relationship Index
@@ -24,11 +24,11 @@ func NewIndex(relationships ...artifact.Relationship) *Index {
 
 // Add adds all the given relationships to the index, without adding duplicates
 func (i *Index) Add(relationships ...artifact.Relationship) {
-	if i.byFromID == nil {
-		i.byFromID = map[artifact.ID]*mapped{}
+	if i.fromID == nil {
+		i.fromID = map[artifact.ID]*mappedRelationships{}
 	}
-	if i.byToID == nil {
-		i.byToID = map[artifact.ID]*mapped{}
+	if i.toID == nil {
+		i.toID = map[artifact.ID]*mappedRelationships{}
 	}
 
 	// store appropriate indexes for stable ordering to minimize ID() calls
@@ -41,54 +41,53 @@ func (i *Index) Add(relationships ...artifact.Relationship) {
 		fromID := r.From.ID()
 		toID := r.To.ID()
 
-		m := i.byFromID[fromID]
-		if m == nil {
-			m = &mapped{}
-			i.byFromID[fromID] = m
-		}
-		sortableFrom := &sortableRelationship{
-			from: fromID,
-			to:   toID,
-			rel:  r,
+		relationship := &sortableRelationship{
+			from:         fromID,
+			to:           toID,
+			relationship: r,
 		}
 
 		// add to all relationships
-		i.all = append(i.all, sortableFrom)
+		i.all = append(i.all, relationship)
 
-		// add to from -> to mapping
-		m.add(toID, sortableFrom)
-
-		m = i.byToID[toID]
-		if m == nil {
-			m = &mapped{}
-			i.byToID[toID] = m
+		// add from -> to mapping
+		mapped := i.fromID[fromID]
+		if mapped == nil {
+			mapped = &mappedRelationships{}
+			i.fromID[fromID] = mapped
 		}
+		mapped.add(toID, relationship)
 
-		// add to the to -> from mapping
-		m.add(fromID, sortableFrom)
+		// add to -> from mapping
+		mapped = i.toID[toID]
+		if mapped == nil {
+			mapped = &mappedRelationships{}
+			i.toID[toID] = mapped
+		}
+		mapped.add(fromID, relationship)
 	}
 }
 
 // From returns all relationships from the given identifiable, with specified types
 func (i *Index) From(identifiable artifact.Identifiable, types ...artifact.RelationshipType) []artifact.Relationship {
-	return fromMapped(i.byFromID, identifiable, types)
+	return toSortedSlice(fromMapped(i.fromID, identifiable), types)
 }
 
 // To returns all relationships to the given identifiable, with specified types
 func (i *Index) To(identifiable artifact.Identifiable, types ...artifact.RelationshipType) []artifact.Relationship {
-	return fromMapped(i.byToID, identifiable, types)
+	return toSortedSlice(fromMapped(i.toID, identifiable), types)
 }
 
-// References returns all relationships that references to or from the given identifiable
+// References returns all relationships that reference to or from the given identifiable
 func (i *Index) References(identifiable artifact.Identifiable, types ...artifact.RelationshipType) []artifact.Relationship {
-	return append(i.To(identifiable, types...), i.From(identifiable, types...)...)
+	return toSortedSlice(append(fromMapped(i.fromID, identifiable), fromMapped(i.toID, identifiable)...), types)
 }
 
 // Coordinates returns all coordinates for the provided identifiable for provided relationship types
 // If no types are provided, all relationship types are considered.
 func (i *Index) Coordinates(identifiable artifact.Identifiable, types ...artifact.RelationshipType) []file.Coordinates {
 	var coordinates []file.Coordinates
-	for _, relationship := range append(i.To(identifiable, types...), i.From(identifiable, types...)...) {
+	for _, relationship := range i.References(identifiable, types...) {
 		cords := extractCoordinates(relationship)
 		coordinates = append(coordinates, cords...)
 	}
@@ -97,9 +96,9 @@ func (i *Index) Coordinates(identifiable artifact.Identifiable, types ...artifac
 
 // Contains indicates the relationship is present in this index
 func (i *Index) Contains(r artifact.Relationship) bool {
-	if m := i.byFromID[r.From.ID()]; m != nil {
-		if ids := m.types[(r.Type)]; ids != nil {
-			return ids[(r.To.ID())] != nil
+	if mapped := i.fromID[r.From.ID()]; mapped != nil {
+		if ids := mapped.typeMap[r.Type]; ids != nil {
+			return ids[r.To.ID()] != nil
 		}
 	}
 	return false
@@ -107,27 +106,27 @@ func (i *Index) Contains(r artifact.Relationship) bool {
 
 // All returns a sorted set of relationships matching all types, or all relationships if no types specified
 func (i *Index) All(types ...artifact.RelationshipType) []artifact.Relationship {
-	return collect(i.all, types)
+	return toSortedSlice(i.all, types)
 }
 
-func fromMapped(mappedIDs map[artifact.ID]*mapped, identifiable artifact.Identifiable, types []artifact.RelationshipType) []artifact.Relationship {
-	if identifiable == nil {
+func fromMapped(idMap map[artifact.ID]*mappedRelationships, identifiable artifact.Identifiable) []*sortableRelationship {
+	if identifiable == nil || idMap == nil {
 		return nil
 	}
-	m := mappedIDs[identifiable.ID()]
-	if m == nil {
+	mapped := idMap[identifiable.ID()]
+	if mapped == nil {
 		return nil
 	}
-	return collect(m.rels, types)
+	return mapped.allRelated
 }
 
-func collect(rels []*sortableRelationship, types []artifact.RelationshipType) []artifact.Relationship {
-	// always return sorted lists for SBOM stability; the sorting could be handled elsewhere
-	slices.SortFunc(rels, sortFunc)
+func toSortedSlice(relationships []*sortableRelationship, types []artifact.RelationshipType) []artifact.Relationship {
+	// always return sorted for SBOM stability
+	slices.SortFunc(relationships, sortFunc)
 	var out []artifact.Relationship
-	for _, r := range rels {
-		if len(types) == 0 || slices.Contains(types, r.rel.Type) {
-			out = append(out, r.rel)
+	for _, r := range relationships {
+		if len(types) == 0 || slices.Contains(types, r.relationship.Type) {
+			out = append(out, r.relationship)
 		}
 	}
 	return out
@@ -145,14 +144,32 @@ func extractCoordinates(relationship artifact.Relationship) (results []file.Coor
 	return results
 }
 
+type mappedRelationships struct {
+	typeMap    map[artifact.RelationshipType]map[artifact.ID]*sortableRelationship
+	allRelated []*sortableRelationship
+}
+
+func (m *mappedRelationships) add(id artifact.ID, newRelationship *sortableRelationship) {
+	m.allRelated = append(m.allRelated, newRelationship)
+	if m.typeMap == nil {
+		m.typeMap = map[artifact.RelationshipType]map[artifact.ID]*sortableRelationship{}
+	}
+	typeMap := m.typeMap[newRelationship.relationship.Type]
+	if typeMap == nil {
+		typeMap = map[artifact.ID]*sortableRelationship{}
+		m.typeMap[newRelationship.relationship.Type] = typeMap
+	}
+	typeMap[id] = newRelationship
+}
+
 type sortableRelationship struct {
-	from artifact.ID
-	to   artifact.ID
-	rel  artifact.Relationship
+	from         artifact.ID
+	to           artifact.ID
+	relationship artifact.Relationship
 }
 
 func sortFunc(a, b *sortableRelationship) int {
-	cmp := strings.Compare(string(a.rel.Type), string(b.rel.Type))
+	cmp := strings.Compare(string(a.relationship.Type), string(b.relationship.Type))
 	if cmp != 0 {
 		return cmp
 	}
@@ -161,22 +178,4 @@ func sortFunc(a, b *sortableRelationship) int {
 		return cmp
 	}
 	return strings.Compare(string(a.to), string(b.to))
-}
-
-type mapped struct {
-	types map[artifact.RelationshipType]map[artifact.ID]*sortableRelationship
-	rels  []*sortableRelationship
-}
-
-func (m *mapped) add(id artifact.ID, r *sortableRelationship) {
-	m.rels = append(m.rels, r)
-	if m.types == nil {
-		m.types = map[artifact.RelationshipType]map[artifact.ID]*sortableRelationship{}
-	}
-	tm := m.types[(r.rel.Type)]
-	if tm == nil {
-		tm = map[artifact.ID]*sortableRelationship{}
-		m.types[(r.rel.Type)] = tm
-	}
-	tm[id] = r
 }
