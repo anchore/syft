@@ -2,6 +2,7 @@ package binary
 
 import (
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -328,7 +329,20 @@ func relationshipComparer(x, y []artifact.Relationship) string {
 		artifact.Relationship{},
 		file.LocationSet{},
 		pkg.LicenseSet{},
-	))
+	), cmpopts.SortSlices(lessRelationships))
+}
+
+func lessRelationships(r1, r2 artifact.Relationship) bool {
+	c := strings.Compare(string(r1.Type), string(r2.Type))
+	if c != 0 {
+		return c < 0
+	}
+	c = strings.Compare(string(r1.From.ID()), string(r2.From.ID()))
+	if c != 0 {
+		return c < 0
+	}
+	c = strings.Compare(string(r1.To.ID()), string(r2.To.ID()))
+	return c < 0
 }
 
 func newAccessor(pkgs []pkg.Package, coordinateIndex map[file.Coordinates]file.Executable, preexistingRelationships []artifact.Relationship) sbomsync.Accessor {
