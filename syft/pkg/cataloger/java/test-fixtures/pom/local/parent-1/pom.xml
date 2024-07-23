@@ -9,7 +9,6 @@
         <relativePath>../parent-2/pom.xml</relativePath>
     </parent>
 
-    <groupId>my.org</groupId>
     <artifactId>parent-one</artifactId>
     <version>3.11.0</version>
     <packaging>pom</packaging>

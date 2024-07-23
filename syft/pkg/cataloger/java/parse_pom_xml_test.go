@@ -21,11 +21,11 @@ import (
 
 func Test_parsePomXML(t *testing.T) {
 	tests := []struct {
-		input    string
+		dir      string
 		expected []pkg.Package
 	}{
 		{
-			input: "test-fixtures/pom/pom.xml",
+			dir: "test-fixtures/pom/local/example-java-app-maven",
 			expected: []pkg.Package{
 				{
 					Name:     "joda-time",
@@ -59,19 +59,19 @@ func Test_parsePomXML(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.input, func(t *testing.T) {
+		t.Run(test.dir, func(t *testing.T) {
 			for i := range test.expected {
-				test.expected[i].Locations.Add(file.NewLocation(test.input))
+				test.expected[i].Locations.Add(file.NewLocation("pom.xml"))
 			}
 
-			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{
+			cat := NewPomCataloger(ArchiveCatalogerConfig{
 				ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
 					IncludeIndexedArchives:   true,
 					IncludeUnindexedArchives: true,
 				},
 			})
 
-			pkgtest.TestFileParser(t, test.input, gap.parsePomXML, test.expected, nil)
+			pkgtest.TestCataloger(t, test.dir, cat, test.expected, nil)
 		})
 	}
 }
@@ -132,30 +132,30 @@ func Test_decodePomXML_surviveNonUtf8Encoding(t *testing.T) {
 
 func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 	tests := []struct {
-		input    string
+		dir      string
 		expected []pkg.Package
 	}{
 		{
-			input: "test-fixtures/pom/commons-text.pom.xml",
+			dir: "test-fixtures/pom/local/commons-text-1.10.0",
 
 			expected: getCommonsTextExpectedPackages(),
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.input, func(t *testing.T) {
+		t.Run(test.dir, func(t *testing.T) {
 			for i := range test.expected {
-				test.expected[i].Locations.Add(file.NewLocation(test.input))
+				test.expected[i].Locations.Add(file.NewLocation("pom.xml"))
 			}
 
-			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{
+			cat := NewPomCataloger(ArchiveCatalogerConfig{
 				ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
 					IncludeIndexedArchives:   true,
 					IncludeUnindexedArchives: true,
 				},
 				UseMavenLocalRepository: false,
 			})
-			pkgtest.TestFileParser(t, test.input, gap.parsePomXML, test.expected, nil)
+			pkgtest.TestCataloger(t, test.dir, cat, test.expected, nil)
 		})
 	}
 }
@@ -180,22 +180,22 @@ func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
 	}
 
 	tests := []struct {
-		input    string
+		dir      string
 		expected []pkg.Package
 	}{
 		{
-			input:    "test-fixtures/pom/commons-text.pom.xml",
+			dir:      "test-fixtures/pom/local/commons-text-1.10.0",
 			expected: expectedPackages,
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.input, func(t *testing.T) {
+		t.Run(test.dir, func(t *testing.T) {
 			for i := range test.expected {
-				test.expected[i].Locations.Add(file.NewLocation(test.input))
+				test.expected[i].Locations.Add(file.NewLocation("pom.xml"))
 			}
 
-			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{
+			cat := NewPomCataloger(ArchiveCatalogerConfig{
 				ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
 					IncludeIndexedArchives:   true,
 					IncludeUnindexedArchives: true,
@@ -204,7 +204,7 @@ func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
 				MavenLocalRepositoryDir: "test-fixtures/pom/maven-repo",
 				MaxParentRecursiveDepth: 5,
 			})
-			pkgtest.TestFileParser(t, test.input, gap.parsePomXML, test.expected, nil)
+			pkgtest.TestCataloger(t, test.dir, cat, test.expected, nil)
 		})
 	}
 }
@@ -231,22 +231,22 @@ func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
 	}
 
 	tests := []struct {
-		input    string
+		dir      string
 		expected []pkg.Package
 	}{
 		{
-			input:    "test-fixtures/pom/commons-text.pom.xml",
+			dir:      "test-fixtures/pom/local/commons-text-1.10.0",
 			expected: expectedPackages,
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.input, func(t *testing.T) {
+		t.Run(test.dir, func(t *testing.T) {
 			for i := range test.expected {
-				test.expected[i].Locations.Add(file.NewLocation(test.input))
+				test.expected[i].Locations.Add(file.NewLocation("pom.xml"))
 			}
 
-			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{
+			cat := NewPomCataloger(ArchiveCatalogerConfig{
 				ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
 					IncludeIndexedArchives:   true,
 					IncludeUnindexedArchives: true,
@@ -256,7 +256,7 @@ func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
 				UseMavenLocalRepository: false,
 				MaxParentRecursiveDepth: 5,
 			})
-			pkgtest.TestFileParser(t, test.input, gap.parsePomXML, test.expected, nil)
+			pkgtest.TestCataloger(t, test.dir, cat, test.expected, nil)
 		})
 	}
 }
@@ -334,7 +334,7 @@ func Test_parsePomXMLProject(t *testing.T) {
 			pom, err := gopom.ParseFromReader(fixture)
 			require.NoError(t, err)
 
-			actual := newPomProject(context.Background(), &r, fixture.Name(), pom)
+			actual := newPomProject(context.Background(), r, fixture.Name(), pom)
 			assert.NoError(t, err)
 			assert.Equal(t, test.project, actual)
 
@@ -400,7 +400,7 @@ func Test_pomParent(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			r := newMavenResolver(nil, DefaultArchiveCatalogerConfig())
-			assert.Equal(t, test.expected, pomParent(context.Background(), &r, &gopom.Project{Parent: test.input}))
+			assert.Equal(t, test.expected, pomParent(context.Background(), r, &gopom.Project{Parent: test.input}))
 		})
 	}
 }

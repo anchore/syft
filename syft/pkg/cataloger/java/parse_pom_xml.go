@@ -13,34 +13,79 @@ import (
 	"github.com/vifraa/gopom"
 	"golang.org/x/net/html/charset"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 const pomXMLGlob = "*pom.xml"
 
-func (gap genericArchiveParserAdapter) parsePomXML(ctx context.Context, fileResolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	pom, err := decodePomXML(reader)
-	if err != nil || pom == nil {
+type pomXMLCataloger struct {
+	cfg ArchiveCatalogerConfig
+}
+
+func (p pomXMLCataloger) Name() string {
+	return "java-pom-cataloger"
+}
+
+func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+	locations, err := fileResolver.FilesByGlob("**/pom.xml")
+	if err != nil {
 		return nil, nil, err
 	}
 
-	r := newMavenResolver(fileResolver, gap.cfg)
-	r.pomLocations[pom] = reader.Location // store the location this pom was resolved in order to attempt parent pom lookups
+	r := newMavenResolver(fileResolver, p.cfg)
+
+	var poms []*gopom.Project
+	for _, pomLocation := range locations {
+		pom, err := readPomFromLocation(fileResolver, pomLocation)
+		if err != nil || pom == nil {
+			log.Debugf("error while getting contents for: %v %v", pomLocation.RealPath, err)
+			continue
+		}
+
+		poms = append(poms, pom)
+
+		// store information about this pom for future lookups
+		r.pomLocations[pom] = pomLocation
+		r.resolved[newMavenIDFromPom(pom)] = pom
+	}
 
 	var pkgs []pkg.Package
+	for _, pom := range poms {
+		pkgs = append(pkgs, processPomXML(ctx, r, pom, r.pomLocations[pom])...)
+	}
+	return pkgs, nil, nil
+}
+
+func readPomFromLocation(fileResolver file.Resolver, pomLocation file.Location) (*gopom.Project, error) {
+	contents, err := fileResolver.FileContentsByLocation(pomLocation)
+	if err != nil {
+		return nil, err
+	}
+	defer internal.CloseAndLogError(contents, pomLocation.RealPath)
+
+	pom, err := decodePomXML(contents)
+	if err != nil || pom == nil {
+		return nil, err
+	}
+	return pom, nil
+}
+
+func processPomXML(ctx context.Context, r *mavenResolver, pom *gopom.Project, loc file.Location) []pkg.Package {
+	var pkgs []pkg.Package
+
 	for _, dep := range pomDependencies(pom) {
 		id := newMavenID(dep.GroupID, dep.ArtifactID, dep.Version)
 		log.Tracef("adding dependency to SBOM: %v", id)
 		p, err := newPackageFromDependency(
 			ctx,
-			&r,
+			r,
 			pom,
 			dep,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			loc.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if err != nil {
 			log.Debugf("error adding dependency %v: %v", id, err)
@@ -51,7 +96,7 @@ func (gap genericArchiveParserAdapter) parsePomXML(ctx context.Context, fileReso
 		pkgs = append(pkgs, *p)
 	}
 
-	return pkgs, nil, nil
+	return pkgs
 }
 
 func newPomProject(ctx context.Context, r *mavenResolver, path string, pom *gopom.Project) *pkg.JavaPomProject {

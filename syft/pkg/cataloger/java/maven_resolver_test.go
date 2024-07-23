@@ -249,7 +249,7 @@ func Test_mavenResolverRemote(t *testing.T) {
 }
 
 func Test_relativePathParent(t *testing.T) {
-	resolver, err := fileresolver.NewFromDirectory("test-fixtures/pom/relative", "")
+	resolver, err := fileresolver.NewFromDirectory("test-fixtures/pom/local", "")
 	require.NoError(t, err)
 
 	r := newMavenResolver(resolver, DefaultArchiveCatalogerConfig())

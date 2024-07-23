@@ -74,8 +74,8 @@ type mavenResolver struct {
 
 // newMavenResolver constructs a new mavenResolver with the given configuration.
 // NOTE: the fileResolver is optional and if provided will be used to resolve parent poms by relative path
-func newMavenResolver(fileResolver file.Resolver, cfg ArchiveCatalogerConfig) mavenResolver {
-	return mavenResolver{
+func newMavenResolver(fileResolver file.Resolver, cfg ArchiveCatalogerConfig) *mavenResolver {
+	return &mavenResolver{
 		cfg:                  cfg,
 		cache:                cache.GetManager().GetCache("java/maven/repo", "v1"),
 		resolved:             map[mavenID]*gopom.Project{},

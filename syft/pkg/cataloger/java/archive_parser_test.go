@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vifraa/gopom"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
@@ -54,13 +55,13 @@ func generateMockMavenHandler(responseFixture string) func(w http.ResponseWriter
 		// Set the Content-Type header to indicate that the response is XML
 		w.Header().Set("Content-Type", "application/xml")
 		// Copy the file's content to the response writer
-		file, err := os.Open(responseFixture)
+		f, err := os.Open(responseFixture)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer file.Close()
-		_, err = io.Copy(w, file)
+		defer internal.CloseAndLogError(f, responseFixture)
+		_, err = io.Copy(w, f)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -1081,7 +1082,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			test.expectedParent.Locations = locations
 
 			r := newMavenResolver(nil, DefaultArchiveCatalogerConfig())
-			actualPackage := newPackageFromMavenData(context.Background(), &r, test.props, test.project, test.parent, file.NewLocation(virtualPath))
+			actualPackage := newPackageFromMavenData(context.Background(), r, test.props, test.project, test.parent, file.NewLocation(virtualPath))
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {

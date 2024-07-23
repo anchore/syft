@@ -10,6 +10,7 @@ import (
 
 	"github.com/vifraa/gopom"
 
+	"github.com/anchore/syft/internal"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
@@ -51,7 +52,7 @@ type archiveParser struct {
 	fileInfo     archiveFilename
 	detectNested bool
 	cfg          ArchiveCatalogerConfig
-	maven        mavenResolver
+	maven        *mavenResolver
 }
 
 type genericArchiveParserAdapter struct {
@@ -382,7 +383,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(ctx context.Context, paren
 			parsedPom = proj
 		}
 
-		pkgFromPom := newPackageFromMavenData(ctx, &j.maven, propertiesObj, parsedPom, parentPkg, j.location)
+		pkgFromPom := newPackageFromMavenData(ctx, j.maven, propertiesObj, parsedPom, parentPkg, j.location)
 		if pkgFromPom != nil {
 			pkgs = append(pkgs, *pkgFromPom)
 		}
@@ -396,7 +397,7 @@ func getDigestsFromArchive(archivePath string) ([]file.Digest, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to open archive path (%s): %w", archivePath, err)
 	}
-	defer archiveCloser.Close()
+	defer internal.CloseAndLogError(archiveCloser, archivePath)
 
 	// grab and assign digest for the entire archive
 	digests, err := intFile.NewDigestsFromFile(archiveCloser, javaArchiveHashes)
