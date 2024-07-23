@@ -195,7 +195,7 @@ func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuil
 		// version of the package.
 		ldflags, _ = metadata.BuildSettings.Get("-ldflags")
 
-		majorVersion, fullVersion = extractVersionFromLDFlags(ldflags)
+		majorVersion, fullVersion = extractVersionFromLDFlags(ldflags, metadata.MainModule)
 		if fullVersion != "" {
 			return fullVersion
 		}
@@ -245,13 +245,14 @@ func extractVersionFromContents(reader io.Reader) string {
 	return ""
 }
 
-func extractVersionFromLDFlags(ldflags string) (majorVersion string, fullVersion string) {
+func extractVersionFromLDFlags(ldflags string, maimModule string) (majorVersion string, fullVersion string) {
 	if ldflags == "" {
 		return "", ""
 	}
 
 	for _, pattern := range knownBuildFlagPatterns {
-		groups := internal.MatchNamedCaptureGroups(pattern, ldflags)
+		newPattern := regexp.MustCompile(fmt.Sprintf(`(main|%s\/[^\s]*)%s`, strings.ReplaceAll(maimModule, "/", "\\/"), pattern.String()))
+		groups := internal.MatchNamedCaptureGroups(newPattern, ldflags)
 		v, ok := groups["version"]
 
 		if !ok {
