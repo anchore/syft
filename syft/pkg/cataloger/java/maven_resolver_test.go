@@ -2,8 +2,6 @@ package java
 
 import (
 	"context"
-	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/syft/internal/fileresolver"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,6 +11,9 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/stretchr/testify/require"
 	"github.com/vifraa/gopom"
+
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 )
 
 func Test_resolveProperty(t *testing.T) {
