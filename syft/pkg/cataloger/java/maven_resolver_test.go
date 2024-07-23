@@ -2,6 +2,8 @@ package java
 
 import (
 	"context"
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -155,7 +157,7 @@ func Test_resolveProperty(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r := newMavenResolver(DefaultArchiveCatalogerConfig())
+			r := newMavenResolver(nil, DefaultArchiveCatalogerConfig())
 			resolved := r.getPropertyValue(context.Background(), &test.pom, ptr(test.property))
 			require.Equal(t, test.expected, resolved)
 		})
@@ -186,7 +188,7 @@ func Test_mavenResolverLocal(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.artifactID, func(t *testing.T) {
 			ctx := context.Background()
-			r := newMavenResolver(ArchiveCatalogerConfig{
+			r := newMavenResolver(nil, ArchiveCatalogerConfig{
 				UseNetwork:              false,
 				UseMavenLocalRepository: true,
 				MavenLocalRepositoryDir: dir,
@@ -227,7 +229,7 @@ func Test_mavenResolverRemote(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.artifactID, func(t *testing.T) {
 			ctx := context.Background()
-			r := newMavenResolver(ArchiveCatalogerConfig{
+			r := newMavenResolver(nil, ArchiveCatalogerConfig{
 				UseNetwork:              true,
 				UseMavenLocalRepository: false,
 				MavenBaseURL:            url,
@@ -243,6 +245,38 @@ func Test_mavenResolverRemote(t *testing.T) {
 			require.Equal(t, test.expected, got)
 		})
 	}
+}
+
+func Test_relativePathParent(t *testing.T) {
+	resolver, err := fileresolver.NewFromDirectory("test-fixtures/pom/relative", "")
+	require.NoError(t, err)
+
+	r := newMavenResolver(resolver, DefaultArchiveCatalogerConfig())
+	locs, err := resolver.FilesByPath("child-1/pom.xml")
+	require.NoError(t, err)
+	require.Len(t, locs, 1)
+
+	loc := locs[0]
+	contents, err := resolver.FileContentsByLocation(loc)
+	require.NoError(t, err)
+	defer internal.CloseAndLogError(contents, loc.RealPath)
+
+	pom, err := decodePomXML(contents)
+	require.NoError(t, err)
+
+	r.pomLocations[pom] = loc
+
+	ctx := context.Background()
+	parent, err := r.resolveParent(ctx, pom)
+	require.NoError(t, err)
+	require.Contains(t, r.pomLocations, parent)
+
+	parent, err = r.resolveParent(ctx, parent)
+	require.NoError(t, err)
+	require.Contains(t, r.pomLocations, parent)
+
+	got := r.getPropertyValue(ctx, pom, ptr("${commons-exec_subversion}"))
+	require.Equal(t, "3", got)
 }
 
 // testRepo starts a remote maven repo serving all the pom files found in the given directory

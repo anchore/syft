@@ -329,7 +329,7 @@ func Test_parsePomXMLProject(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			fixture, err := os.Open(test.project.Path)
 			assert.NoError(t, err)
-			r := newMavenResolver(ArchiveCatalogerConfig{})
+			r := newMavenResolver(nil, ArchiveCatalogerConfig{})
 
 			pom, err := gopom.ParseFromReader(fixture)
 			require.NoError(t, err)
@@ -338,7 +338,7 @@ func Test_parsePomXMLProject(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, test.project, actual)
 
-			licenses := r.directLicenses(context.Background(), pom)
+			licenses := r.pomLicenses(context.Background(), pom)
 			assert.NoError(t, err)
 			assert.Equal(t, test.licenses, toPkgLicenses(&jarLocation, licenses))
 		})
@@ -399,7 +399,7 @@ func Test_pomParent(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r := newMavenResolver(DefaultArchiveCatalogerConfig())
+			r := newMavenResolver(nil, DefaultArchiveCatalogerConfig())
 			assert.Equal(t, test.expected, pomParent(context.Background(), &r, &gopom.Project{Parent: test.input}))
 		})
 	}

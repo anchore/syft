@@ -1080,7 +1080,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			}
 			test.expectedParent.Locations = locations
 
-			r := newMavenResolver(DefaultArchiveCatalogerConfig())
+			r := newMavenResolver(nil, DefaultArchiveCatalogerConfig())
 			actualPackage := newPackageFromMavenData(context.Background(), &r, test.props, test.project, test.parent, file.NewLocation(virtualPath))
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)

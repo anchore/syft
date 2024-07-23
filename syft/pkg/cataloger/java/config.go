@@ -20,7 +20,7 @@ func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
 		UseMavenLocalRepository: false,
 		MavenLocalRepositoryDir: defaultMavenLocalRepoDir(),
 		MavenBaseURL:            mavenBaseURL,
-		MaxParentRecursiveDepth: 5,
+		MaxParentRecursiveDepth: 10,
 	}
 }
 

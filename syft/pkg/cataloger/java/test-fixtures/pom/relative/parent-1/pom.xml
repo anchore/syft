@@ -6,6 +6,7 @@
         <groupId>my.org</groupId>
         <artifactId>parent-two</artifactId>
         <version>13.7.8</version>
+        <relativePath>../parent-2/pom.xml</relativePath>
     </parent>
 
     <groupId>my.org</groupId>

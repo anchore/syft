@@ -106,7 +106,7 @@ func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg
 		fileInfo:     newJavaArchiveFilename(currentFilepath),
 		detectNested: detectNested,
 		cfg:          cfg,
-		maven:        newMavenResolver(cfg),
+		maven:        newMavenResolver(nil, cfg),
 	}, cleanupFn, nil
 }
 

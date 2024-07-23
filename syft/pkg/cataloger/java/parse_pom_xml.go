@@ -22,16 +22,17 @@ import (
 
 const pomXMLGlob = "*pom.xml"
 
-func (gap genericArchiveParserAdapter) parsePomXML(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (gap genericArchiveParserAdapter) parsePomXML(ctx context.Context, fileResolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pom, err := decodePomXML(reader)
 	if err != nil || pom == nil {
 		return nil, nil, err
 	}
 
-	r := newMavenResolver(gap.cfg)
+	r := newMavenResolver(fileResolver, gap.cfg)
+	r.pomLocations[pom] = reader.Location // store the location this pom was resolved in order to attempt parent pom lookups
 
 	var pkgs []pkg.Package
-	for _, dep := range directDependencies(pom) {
+	for _, dep := range pomDependencies(pom) {
 		id := newMavenID(dep.GroupID, dep.ArtifactID, dep.Version)
 		log.Tracef("adding dependency to SBOM: %v", id)
 		p, err := newPackageFromDependency(
