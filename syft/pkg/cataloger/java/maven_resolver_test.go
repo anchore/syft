@@ -159,7 +159,7 @@ func Test_resolveProperty(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			r := newMavenResolver(nil, DefaultArchiveCatalogerConfig())
-			resolved := r.getPropertyValue(context.Background(), &test.pom, ptr(test.property))
+			resolved := r.getPropertyValue(context.Background(), ptr(test.property), &test.pom)
 			require.Equal(t, test.expected, resolved)
 		})
 	}
@@ -201,7 +201,7 @@ func Test_mavenResolverLocal(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
-			got := r.getPropertyValue(context.Background(), pom, &test.expression)
+			got := r.getPropertyValue(context.Background(), &test.expression, pom)
 			require.Equal(t, test.expected, got)
 		})
 	}
@@ -242,7 +242,7 @@ func Test_mavenResolverRemote(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
-			got := r.getPropertyValue(context.Background(), pom, &test.expression)
+			got := r.getPropertyValue(context.Background(), &test.expression, pom)
 			require.Equal(t, test.expected, got)
 		})
 	}
@@ -276,7 +276,7 @@ func Test_relativePathParent(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, r.pomLocations, parent)
 
-	got := r.getPropertyValue(ctx, pom, ptr("${commons-exec_subversion}"))
+	got := r.getPropertyValue(ctx, ptr("${commons-exec_subversion}"), pom)
 	require.Equal(t, "3", got)
 }
 

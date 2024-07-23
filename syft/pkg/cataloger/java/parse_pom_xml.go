@@ -100,38 +100,38 @@ func processPomXML(ctx context.Context, r *mavenResolver, pom *gopom.Project, lo
 }
 
 func newPomProject(ctx context.Context, r *mavenResolver, path string, pom *gopom.Project) *pkg.JavaPomProject {
-	artifactID := r.getPropertyValue(ctx, pom, pom.ArtifactID)
-	name := r.getPropertyValue(ctx, pom, pom.Name)
-	projectURL := r.getPropertyValue(ctx, pom, pom.URL)
+	artifactID := r.getPropertyValue(ctx, pom.ArtifactID, pom)
+	name := r.getPropertyValue(ctx, pom.Name, pom)
+	projectURL := r.getPropertyValue(ctx, pom.URL, pom)
 
 	log.WithFields("path", path, "artifactID", artifactID, "name", name, "projectURL", projectURL).Trace("parsing pom.xml")
 	return &pkg.JavaPomProject{
 		Path:        path,
 		Parent:      pomParent(ctx, r, pom),
-		GroupID:     r.getPropertyValue(ctx, pom, pom.GroupID),
+		GroupID:     r.getPropertyValue(ctx, pom.GroupID, pom),
 		ArtifactID:  artifactID,
-		Version:     r.getPropertyValue(ctx, pom, pom.Version),
+		Version:     r.getPropertyValue(ctx, pom.Version, pom),
 		Name:        name,
-		Description: cleanDescription(r.getPropertyValue(ctx, pom, pom.Description)),
+		Description: cleanDescription(r.getPropertyValue(ctx, pom.Description, pom)),
 		URL:         projectURL,
 	}
 }
 
 func newPackageFromDependency(ctx context.Context, r *mavenResolver, pom *gopom.Project, dep gopom.Dependency, locations ...file.Location) (*pkg.Package, error) {
-	groupID := r.getPropertyValue(ctx, pom, dep.GroupID)
-	artifactID := r.getPropertyValue(ctx, pom, dep.ArtifactID)
-	version := r.getPropertyValue(ctx, pom, dep.Version)
+	groupID := r.getPropertyValue(ctx, dep.GroupID, pom)
+	artifactID := r.getPropertyValue(ctx, dep.ArtifactID, pom)
+	version := r.getPropertyValue(ctx, dep.Version, pom)
 
 	var err error
 	if version == "" {
-		version, err = r.findInheritedVersion(ctx, pom, pom, groupID, artifactID)
+		version, err = r.findInheritedVersion(ctx, pom, groupID, artifactID)
 	}
 
 	m := pkg.JavaArchive{
 		PomProperties: &pkg.JavaPomProperties{
 			GroupID:    groupID,
 			ArtifactID: artifactID,
-			Scope:      r.getPropertyValue(ctx, pom, dep.Scope),
+			Scope:      r.getPropertyValue(ctx, dep.Scope, pom),
 		},
 	}
 
@@ -224,9 +224,9 @@ func pomParent(ctx context.Context, r *mavenResolver, pom *gopom.Project) *pkg.J
 		return nil
 	}
 
-	groupID := r.getPropertyValue(ctx, pom, pom.Parent.GroupID)
-	artifactID := r.getPropertyValue(ctx, pom, pom.Parent.ArtifactID)
-	version := r.getPropertyValue(ctx, pom, pom.Parent.Version)
+	groupID := r.getPropertyValue(ctx, pom.Parent.GroupID, pom)
+	artifactID := r.getPropertyValue(ctx, pom.Parent.ArtifactID, pom)
+	version := r.getPropertyValue(ctx, pom.Parent.Version, pom)
 
 	if groupID == "" && artifactID == "" && version == "" {
 		return nil

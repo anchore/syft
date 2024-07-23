@@ -334,13 +334,13 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	if parsedPom != nil && parsedPom.project != nil {
 		pom := parsedPom.project
 		if group == "" {
-			group = j.maven.getPropertyValue(ctx, pom, pom.GroupID)
+			group = j.maven.getPropertyValue(ctx, pom.GroupID, pom)
 		}
 		if name == "" {
-			name = j.maven.getPropertyValue(ctx, pom, pom.ArtifactID)
+			name = j.maven.getPropertyValue(ctx, pom.ArtifactID, pom)
 		}
 		if version == "" {
-			version = j.maven.getPropertyValue(ctx, pom, pom.Version)
+			version = j.maven.getPropertyValue(ctx, pom.Version, pom)
 		}
 	}
 
