@@ -17,6 +17,8 @@ import (
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
 )
 
 func Test_parsePomXML(t *testing.T) {
@@ -33,6 +35,7 @@ func Test_parsePomXML(t *testing.T) {
 					PURL:     "pkg:maven/com.joda/joda-time@2.9.2",
 					Language: pkg.Java,
 					Type:     pkg.JavaPkg,
+					FoundBy:  pomCatalogerName,
 					Metadata: pkg.JavaArchive{
 						PomProperties: &pkg.JavaPomProperties{
 							GroupID:    "com.joda",
@@ -46,6 +49,7 @@ func Test_parsePomXML(t *testing.T) {
 					PURL:     "pkg:maven/junit/junit@4.12",
 					Language: pkg.Java,
 					Type:     pkg.JavaPkg,
+					FoundBy:  pomCatalogerName,
 					Metadata: pkg.JavaArchive{
 						PomProperties: &pkg.JavaPomProperties{
 							GroupID:    "junit",
@@ -428,8 +432,105 @@ func Test_cleanDescription(t *testing.T) {
 	}
 }
 
-func ptr[T any](value T) *T {
-	return &value
+func Test_resolveLicenses(t *testing.T) {
+	mavenURL := testRepo(t, "test-fixtures/pom/maven-repo")
+	localM2 := "test-fixtures/pom/maven-repo"
+	localDir := "test-fixtures/pom/local"
+	containingDir := "test-fixtures/pom/local/contains-child-1"
+
+	expectedLicenses := []pkg.License{
+		{
+			Value:          "Eclipse Public License v2.0",
+			SPDXExpression: "",
+			Type:           license.Declared,
+			URLs:           []string{"https://www.eclipse.org/legal/epl-v20.html"},
+		},
+	}
+
+	tests := []struct {
+		name     string
+		scanDir  string
+		cfg      ArchiveCatalogerConfig
+		expected []pkg.License
+	}{
+		{
+			name:    "local no resolution",
+			scanDir: containingDir,
+			cfg: ArchiveCatalogerConfig{
+				UseMavenLocalRepository: false,
+				UseNetwork:              false,
+				MavenLocalRepositoryDir: "",
+				MavenBaseURL:            "",
+				MaxParentRecursiveDepth: 10,
+			},
+			expected: nil,
+		},
+		{
+			name:    "local all poms",
+			scanDir: localDir,
+			cfg: ArchiveCatalogerConfig{
+				UseMavenLocalRepository: false,
+				UseNetwork:              false,
+				MaxParentRecursiveDepth: 10,
+			},
+			expected: expectedLicenses,
+		},
+		{
+			name:    "local m2 cache",
+			scanDir: containingDir,
+			cfg: ArchiveCatalogerConfig{
+				UseMavenLocalRepository: true,
+				MavenLocalRepositoryDir: localM2,
+				UseNetwork:              false,
+				MavenBaseURL:            "",
+				MaxParentRecursiveDepth: 10,
+			},
+			expected: expectedLicenses,
+		},
+		{
+			name:    "local with network",
+			scanDir: containingDir,
+			cfg: ArchiveCatalogerConfig{
+				UseMavenLocalRepository: false,
+				UseNetwork:              true,
+				MavenBaseURL:            mavenURL,
+				MaxParentRecursiveDepth: 10,
+			},
+			expected: expectedLicenses,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cat := NewPomCataloger(test.cfg)
+
+			ds, err := directorysource.NewFromPath(test.scanDir)
+			require.NoError(t, err)
+
+			fr, err := ds.FileResolver(source.AllLayersScope)
+			require.NoError(t, err)
+
+			ctx := context.TODO()
+			pkgs, _, err := cat.Catalog(ctx, fr)
+			require.NoError(t, err)
+
+			var child1 pkg.Package
+			for _, p := range pkgs {
+				if p.Name == "child-one" {
+					child1 = p
+					break
+				}
+			}
+			require.Equal(t, "child-one", child1.Name)
+
+			got := child1.Licenses.ToSlice()
+			for i := 0; i < len(got); i++ {
+				// ignore locations, just check license text
+				(&got[i]).Locations = file.LocationSet{}
+			}
+			require.ElementsMatch(t, test.expected, got)
+		})
+	}
 }
 
 func Test_getUtf8Reader(t *testing.T) {
@@ -465,6 +566,7 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			PURL:     "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
+			FoundBy:  pomCatalogerName,
 			Metadata: pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "org.apache.commons",
@@ -478,6 +580,7 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			PURL:     "pkg:maven/org.junit.jupiter/junit-jupiter",
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
+			FoundBy:  pomCatalogerName,
 			Metadata: pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "org.junit.jupiter",
@@ -492,6 +595,7 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			PURL:     "pkg:maven/org.assertj/assertj-core@3.23.1",
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
+			FoundBy:  pomCatalogerName,
 			Metadata: pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "org.assertj",
@@ -506,6 +610,7 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			PURL:     "pkg:maven/commons-io/commons-io@2.11.0",
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
+			FoundBy:  pomCatalogerName,
 			Metadata: pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "commons-io",
@@ -520,6 +625,7 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			PURL:     "pkg:maven/org.mockito/mockito-inline@4.8.0",
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
+			FoundBy:  pomCatalogerName,
 			Metadata: pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "org.mockito",
@@ -534,6 +640,7 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			PURL:     "pkg:maven/org.graalvm.js/js@22.0.0.2",
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
+			FoundBy:  pomCatalogerName,
 			Metadata: pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "org.graalvm.js",
@@ -548,6 +655,7 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			PURL:     "pkg:maven/org.graalvm.js/js-scriptengine@22.0.0.2",
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
+			FoundBy:  pomCatalogerName,
 			Metadata: pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "org.graalvm.js",
@@ -562,6 +670,7 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			PURL:     "pkg:maven/org.apache.commons/commons-rng-simple@1.4",
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
+			FoundBy:  pomCatalogerName,
 			Metadata: pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "org.apache.commons",
@@ -576,6 +685,7 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			PURL:     "pkg:maven/org.openjdk.jmh/jmh-core@1.35",
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
+			FoundBy:  pomCatalogerName,
 			Metadata: pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "org.openjdk.jmh",
@@ -590,6 +700,7 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 			PURL:     "pkg:maven/org.openjdk.jmh/jmh-generator-annprocess@1.35",
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
+			FoundBy:  pomCatalogerName,
 			Metadata: pkg.JavaArchive{
 				PomProperties: &pkg.JavaPomProperties{
 					GroupID:    "org.openjdk.jmh",

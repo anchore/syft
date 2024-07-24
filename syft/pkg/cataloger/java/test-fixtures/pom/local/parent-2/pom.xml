@@ -17,6 +17,13 @@
         <project.one>1</project.one>
     </properties>
 
+    <licenses>
+        <license>
+            <name>Eclipse Public License v2.0</name>
+            <url>https://www.eclipse.org/legal/epl-v20.html</url>
+        </license>
+    </licenses>
+
     <dependencyManagement>
         <dependencies>
             <dependency>

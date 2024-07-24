@@ -20,14 +20,17 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-const pomXMLGlob = "*pom.xml"
+const (
+	pomXMLGlob       = "*pom.xml"
+	pomCatalogerName = "java-pom-cataloger"
+)
 
 type pomXMLCataloger struct {
 	cfg ArchiveCatalogerConfig
 }
 
 func (p pomXMLCataloger) Name() string {
-	return "java-pom-cataloger"
+	return pomCatalogerName
 }
 
 func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
@@ -50,7 +53,7 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 
 		// store information about this pom for future lookups
 		r.pomLocations[pom] = pomLocation
-		r.resolved[newMavenIDFromPom(pom)] = pom
+		r.resolved[r.resolveMavenID(ctx, pom)] = pom
 	}
 
 	var pkgs []pkg.Package
@@ -66,20 +69,19 @@ func readPomFromLocation(fileResolver file.Resolver, pomLocation file.Location) 
 		return nil, err
 	}
 	defer internal.CloseAndLogError(contents, pomLocation.RealPath)
-
-	pom, err := decodePomXML(contents)
-	if err != nil || pom == nil {
-		return nil, err
-	}
-	return pom, nil
+	return decodePomXML(contents)
 }
 
 func processPomXML(ctx context.Context, r *mavenResolver, pom *gopom.Project, loc file.Location) []pkg.Package {
 	var pkgs []pkg.Package
 
 	for _, dep := range pomDependencies(pom) {
-		id := newMavenID(dep.GroupID, dep.ArtifactID, dep.Version)
-		log.Tracef("adding dependency to SBOM: %v", id)
+		id := mavenID{
+			r.getPropertyValue(ctx, dep.GroupID, pom),
+			r.getPropertyValue(ctx, dep.ArtifactID, pom),
+			r.getPropertyValue(ctx, dep.Version, pom),
+		}
+		log.Tracef("adding dependency to SBOM: %v from: %v", id, r.resolveMavenID(ctx, pom))
 		p, err := newPackageFromDependency(
 			ctx,
 			r,
@@ -100,17 +102,17 @@ func processPomXML(ctx context.Context, r *mavenResolver, pom *gopom.Project, lo
 }
 
 func newPomProject(ctx context.Context, r *mavenResolver, path string, pom *gopom.Project) *pkg.JavaPomProject {
-	artifactID := r.getPropertyValue(ctx, pom.ArtifactID, pom)
+	id := r.resolveMavenID(ctx, pom)
 	name := r.getPropertyValue(ctx, pom.Name, pom)
 	projectURL := r.getPropertyValue(ctx, pom.URL, pom)
 
-	log.WithFields("path", path, "artifactID", artifactID, "name", name, "projectURL", projectURL).Trace("parsing pom.xml")
+	log.WithFields("path", path, "artifactID", id.ArtifactID, "name", name, "projectURL", projectURL).Trace("parsing pom.xml")
 	return &pkg.JavaPomProject{
 		Path:        path,
 		Parent:      pomParent(ctx, r, pom),
-		GroupID:     r.getPropertyValue(ctx, pom.GroupID, pom),
-		ArtifactID:  artifactID,
-		Version:     r.getPropertyValue(ctx, pom.Version, pom),
+		GroupID:     id.GroupID,
+		ArtifactID:  id.ArtifactID,
+		Version:     id.Version,
 		Name:        name,
 		Description: cleanDescription(r.getPropertyValue(ctx, pom.Description, pom)),
 		URL:         projectURL,
@@ -136,17 +138,15 @@ func newPackageFromDependency(ctx context.Context, r *mavenResolver, pom *gopom.
 	}
 
 	var licenses []pkg.License
-	if version == "" {
-		dependencyPom, depErr := r.findPom(ctx, groupID, artifactID, version)
-		if depErr != nil {
-			log.Debugf("error getting licenses for %s: %v", mavenID{groupID, artifactID, version}, err)
-			err = errors.Join(err, depErr)
-		}
-		if dependencyPom != nil {
-			depLicenses, _ := r.resolveLicenses(ctx, dependencyPom)
-			for _, license := range depLicenses {
-				licenses = append(licenses, pkg.NewLicenseFromFields(deref(license.Name), deref(license.URL), nil))
-			}
+	dependencyPom, depErr := r.findPom(ctx, groupID, artifactID, version)
+	if depErr != nil {
+		log.Debugf("error getting licenses for %s: %v", mavenID{groupID, artifactID, version}, err)
+		err = errors.Join(err, depErr)
+	}
+	if dependencyPom != nil {
+		depLicenses, _ := r.resolveLicenses(ctx, dependencyPom)
+		for _, license := range depLicenses {
+			licenses = append(licenses, pkg.NewLicenseFromFields(deref(license.Name), deref(license.URL), nil))
 		}
 	}
 
@@ -158,6 +158,7 @@ func newPackageFromDependency(ctx context.Context, r *mavenResolver, pom *gopom.
 		PURL:      packageURL(artifactID, version, m),
 		Language:  pkg.Java,
 		Type:      pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
+		FoundBy:   pomCatalogerName,
 		Metadata:  m,
 	}
 
@@ -166,6 +167,7 @@ func newPackageFromDependency(ctx context.Context, r *mavenResolver, pom *gopom.
 	return p, err
 }
 
+// decodePomXML decodes a pom XML file, detecting and converting non-UTF-8 charsets. this DOES NOT perform any logic to resolve properties such as groupID, artifactID, and version
 func decodePomXML(content io.Reader) (project *gopom.Project, err error) {
 	inputReader, err := getUtf8Reader(content)
 	if err != nil {
@@ -179,14 +181,6 @@ func decodePomXML(content io.Reader) (project *gopom.Project, err error) {
 	project = &gopom.Project{}
 	if err := decoder.Decode(project); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
-	}
-
-	// For modules groupID and version are almost always inherited from parent pom
-	if project.GroupID == nil && project.Parent != nil {
-		project.GroupID = project.Parent.GroupID
-	}
-	if project.Version == nil && project.Parent != nil {
-		project.Version = project.Parent.Version
 	}
 
 	return project, nil

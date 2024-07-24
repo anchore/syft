@@ -31,21 +31,26 @@ type mavenID struct {
 	Version    string
 }
 
-// newMavenID is a convenience to construct a mavenId from string pointers, used by gopom
-func newMavenID(groupID, artifactID, version *string) mavenID {
-	return mavenID{
-		GroupID:    deref(groupID),
-		ArtifactID: deref(artifactID),
-		Version:    deref(version),
-	}
-}
-
-// newMavenIDFromPom creates a new mavenID from a pom
-func newMavenIDFromPom(pom *gopom.Project) mavenID {
+// resolveMavenID creates a new mavenID from a pom, resolving parent information as necessary
+func (r *mavenResolver) resolveMavenID(ctx context.Context, pom *gopom.Project) mavenID {
 	if pom == nil {
 		return mavenID{}
 	}
-	return newMavenID(pom.GroupID, pom.ArtifactID, pom.Version)
+	groupID := r.getPropertyValue(ctx, pom.GroupID, pom)
+	artifactID := r.getPropertyValue(ctx, pom.ArtifactID, pom)
+	version := r.getPropertyValue(ctx, pom.Version, pom)
+	if pom.Parent != nil {
+		if groupID == "" {
+			groupID = r.getPropertyValue(ctx, pom.Parent.GroupID, pom)
+		}
+		if artifactID == "" {
+			artifactID = r.getPropertyValue(ctx, pom.Parent.ArtifactID, pom)
+		}
+		if version == "" {
+			version = r.getPropertyValue(ctx, pom.Parent.Version, pom)
+		}
+	}
+	return mavenID{groupID, artifactID, version}
 }
 
 func (m mavenID) String() string {
@@ -121,17 +126,21 @@ func (r *mavenResolver) resolveProperty(ctx context.Context, resolutionContext [
 	if slices.Contains(resolving, propertyExpression) {
 		return "", fmt.Errorf("cycle detected resolving: %s", propertyExpression)
 	}
+	if len(resolutionContext) == 0 {
+		return "", fmt.Errorf("no project variable resolution context provided for expression: '%s'", propertyExpression)
+	}
 	resolving = append(resolving, propertyExpression)
 
-	for _, pom := range resolutionContext {
-		value, err := r.resolveProjectProperty(ctx, resolutionContext, pom, propertyExpression, resolving)
-		if err != nil {
-			return value, err
-		}
-		if value != "" {
-			return value, nil
-		}
+	// only resolve project. properties in the context of the current project pom
+	value, err := r.resolveProjectProperty(ctx, resolutionContext, resolutionContext[len(resolutionContext)-1], propertyExpression, resolving)
+	if err != nil {
+		return value, err
+	}
+	if value != "" {
+		return value, nil
+	}
 
+	for _, pom := range resolutionContext {
 		current := pom
 		for current != nil {
 			if current.Properties != nil && current.Properties.Entries != nil {
@@ -166,6 +175,19 @@ func (r *mavenResolver) resolveProjectProperty(ctx context.Context, resolutionCo
 			}
 
 			part := parts[partNum]
+			// these two fields are directly inherited from the pom parent values
+			if partNum == 1 && pom.Parent != nil {
+				switch part {
+				case "version":
+					if pom.Version == nil && pom.Parent.Version != nil {
+						return r.resolveExpression(ctx, resolutionContext, *pom.Parent.Version, resolving)
+					}
+				case "groupID":
+					if pom.GroupID == nil && pom.Parent.GroupID != nil {
+						return r.resolveExpression(ctx, resolutionContext, *pom.Parent.GroupID, resolving)
+					}
+				}
+			}
 			for fieldNum := 0; fieldNum < pomValueType.NumField(); fieldNum++ {
 				f := pomValueType.Field(fieldNum)
 				tag := f.Tag.Get("xml")
@@ -238,11 +260,7 @@ func (r *mavenResolver) findPom(ctx context.Context, groupID, artifactID, versio
 		errs = errors.Join(errs, err)
 	}
 
-	if errs != nil {
-		return nil, fmt.Errorf("unable to resolve pom %s %s %s: %w", groupID, artifactID, version, errs)
-	}
-
-	return nil, nil
+	return nil, fmt.Errorf("unable to resolve pom %s %s %s: %w", groupID, artifactID, version, errs)
 }
 
 // findPomInLocalRepository attempts to get the POM from the users local maven repository
@@ -375,13 +393,16 @@ func (r *mavenResolver) resolveParent(ctx context.Context, pom *gopom.Project) (
 
 // findInheritedVersion attempts to find the version of a dependency (groupID, artifactID) by searching all parent poms and imported managed dependencies
 //
-//nolint:gocognit
+//nolint:gocognit,funlen
 func (r *mavenResolver) findInheritedVersion(ctx context.Context, pom *gopom.Project, groupID, artifactID string, resolutionContext ...*gopom.Project) (string, error) {
+	if pom == nil {
+		return "", fmt.Errorf("nil pom provided to findInheritedVersion")
+	}
 	if len(resolutionContext) >= r.cfg.MaxParentRecursiveDepth {
-		return "", fmt.Errorf("maximum depth reached attempting to resolve version for: %s:%s at: %v", groupID, artifactID, newMavenIDFromPom(pom))
+		return "", fmt.Errorf("maximum depth reached attempting to resolve version for: %s:%s at: %v", groupID, artifactID, r.resolveMavenID(ctx, pom))
 	}
 	if slices.Contains(resolutionContext, pom) {
-		return "", fmt.Errorf("cycle detected attempting to resolve version for: %s:%s at: %v", groupID, artifactID, newMavenIDFromPom(pom))
+		return "", fmt.Errorf("cycle detected attempting to resolve version for: %s:%s at: %v", groupID, artifactID, r.resolveMavenID(ctx, pom))
 	}
 	resolutionContext = append(resolutionContext, pom)
 
@@ -404,12 +425,13 @@ func (r *mavenResolver) findInheritedVersion(ctx context.Context, pom *gopom.Pro
 			depVersion := r.getPropertyValue(ctx, dep.Version, resolutionContext...)
 
 			depPom, err := r.findPom(ctx, depGroupID, depArtifactID, depVersion)
-			if err != nil {
-				return "", err
+			if err != nil || depPom == nil {
+				log.Debugf("unable to find imported pom looking for managed dependencies for: %v for dependency: %v: %v", r.resolveMavenID(ctx, pom), mavenID{depGroupID, depArtifactID, depVersion}, err)
+				continue
 			}
 			version, err = r.findInheritedVersion(ctx, depPom, groupID, artifactID, resolutionContext...)
 			if err != nil {
-				return "", err
+				log.Debugf("error calling findInheritedVersion for: %v for dependency: %v: %v", r.resolveMavenID(ctx, pom), mavenID{depGroupID, depArtifactID, depVersion}, err)
 			}
 			if version != "" {
 				return version, nil
@@ -458,7 +480,7 @@ func (r *mavenResolver) findLicenses(ctx context.Context, groupID, artifactID, v
 
 // resolveLicenses searches the pom for license, traversing parent poms if needed
 func (r *mavenResolver) resolveLicenses(ctx context.Context, pom *gopom.Project, processing ...mavenID) ([]gopom.License, error) {
-	id := newMavenIDFromPom(pom)
+	id := r.resolveMavenID(ctx, pom)
 	if slices.Contains(processing, id) {
 		return nil, fmt.Errorf("cycle detected resolving licenses for: %v", id)
 	}
@@ -515,30 +537,26 @@ func (r *mavenResolver) findParentPomByRelativePath(ctx context.Context, pom *go
 	p = path.Clean(p)
 	parentLocations, err := r.fileResolver.FilesByPath(p)
 	if err != nil || len(parentLocations) == 0 {
-		log.Debugf("parent not found in by relative path for: %v looking for: %v at %v err: %v", newMavenIDFromPom(pom), parentID, relativePath, err)
+		log.Debugf("parent not found in by relative path for: %v looking for: %v at %v err: %v", r.resolveMavenID(ctx, pom), parentID, relativePath, err)
 		return nil
 	}
 	parentLocation := parentLocations[0]
 
 	parentContents, err := r.fileResolver.FileContentsByLocation(parentLocation)
 	if err != nil || parentContents == nil {
-		log.Debugf("unable to get parent by relative path for: %v parent: %v at %v err: %v", newMavenIDFromPom(pom), parentID, parentLocation, err)
+		log.Debugf("unable to get parent by relative path for: %v parent: %v at %v err: %v", r.resolveMavenID(ctx, pom), parentID, parentLocation, err)
 		return nil
 	}
 	defer internal.CloseAndLogError(parentContents, parentLocation.RealPath)
 	parentPom, err := decodePomXML(parentContents)
 	if err != nil || parentPom == nil {
-		log.Debugf("unable to parse parent by relative path for: %v parent: %v at %v err: %v", newMavenIDFromPom(pom), parentID, parentLocation, err)
+		log.Debugf("unable to parse parent by relative path for: %v parent: %v at %v err: %v", r.resolveMavenID(ctx, pom), parentID, parentLocation, err)
 		return nil
 	}
 	// ensure ids match
-	groupID := r.getPropertyValue(ctx, parentPom.GroupID, pom)
-	artifactID := r.getPropertyValue(ctx, parentPom.ArtifactID, pom)
-	version := r.getPropertyValue(ctx, parentPom.Version, pom)
-
-	newParentID := mavenID{groupID, artifactID, version}
+	newParentID := r.resolveMavenID(ctx, parentPom)
 	if newParentID != parentID {
-		log.Debugf("parent IDs do not match resolving parent by relative path for: %v parent: %v at %v, got: %v", newMavenIDFromPom(pom), parentID, parentLocation, newParentID)
+		log.Debugf("parent IDs do not match resolving parent by relative path for: %v parent: %v at %v, got: %v", r.resolveMavenID(ctx, pom), parentID, parentLocation, newParentID)
 		return nil
 	}
 

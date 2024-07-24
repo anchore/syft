@@ -1427,3 +1427,8 @@ func run(t testing.TB, cmd *exec.Cmd) {
 		}
 	}
 }
+
+// ptr returns a pointer to the given value
+func ptr[T any](value T) *T {
+	return &value
+}

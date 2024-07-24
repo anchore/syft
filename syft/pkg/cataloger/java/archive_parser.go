@@ -233,9 +233,9 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 		3. manifest
 		4. filename
 	*/
-	group, name, version, parsedPom := j.discoverMainPackageFromPomInfo(ctx)
-	if name == "" {
-		name = selectName(manifest, j.fileInfo)
+	groupID, artifactID, version, parsedPom := j.discoverMainPackageFromPomInfo(ctx)
+	if artifactID == "" {
+		artifactID = selectName(manifest, j.fileInfo)
 	}
 	if version == "" {
 		version = selectVersion(manifest, j.fileInfo)
@@ -256,10 +256,10 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 		// Today we don't have a way to distinguish between licenses from the manifest and licenses from the pom.xml
 		// until the file.Location object can support sub-paths (i.e. paths within archives, recursively; issue https://github.com/anchore/syft/issues/2211).
 		// Until then it's less confusing to use the licenses from the pom.xml only if the manifest did not list any.
-		licenses = j.findLicenseFromJavaMetadata(ctx, group, name, version, parsedPom, manifest)
+		licenses = j.findLicenseFromJavaMetadata(ctx, groupID, artifactID, version, parsedPom, manifest)
 	}
 
-	return name, version, licenses, nil
+	return artifactID, version, licenses, nil
 }
 
 // findLicenseFromJavaMetadata attempts to find license information from all available maven metadata properties and pom info
@@ -275,7 +275,7 @@ func (j *archiveParser) findLicenseFromJavaMetadata(ctx context.Context, groupID
 	if parsedPom != nil {
 		pomLicenses, err = j.maven.resolveLicenses(ctx, parsedPom.project)
 		if err != nil {
-			log.Debugf("error attempting to resolve licenses for %v: %v", newMavenIDFromPom(parsedPom.project), err)
+			log.Debugf("error attempting to resolve licenses for %v: %v", j.maven.resolveMavenID(ctx, parsedPom.project), err)
 		}
 	}
 
@@ -332,15 +332,15 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	version = pomProperties.Version
 
 	if parsedPom != nil && parsedPom.project != nil {
-		pom := parsedPom.project
+		id := j.maven.resolveMavenID(ctx, parsedPom.project)
 		if group == "" {
-			group = j.maven.getPropertyValue(ctx, pom.GroupID, pom)
+			group = id.GroupID
 		}
 		if name == "" {
-			name = j.maven.getPropertyValue(ctx, pom.ArtifactID, pom)
+			name = id.ArtifactID
 		}
 		if version == "" {
-			version = j.maven.getPropertyValue(ctx, pom.Version, pom)
+			version = id.Version
 		}
 	}
 
