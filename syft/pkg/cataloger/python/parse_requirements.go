@@ -26,7 +26,7 @@ const (
 	//      --hash=sha256:e9535b8c84dc9571a48999094fda7f33e63c3f1b74f3e5f3ac0105a58405bb65  # some comment
 
 	// namePattern matches: requests[security]
-	namePattern = `(?P<name>\w[\w\[\],\s-_]+)`
+	namePattern = `(?P<name>\w[\w\[\],\s-_\.]+)`
 
 	// versionConstraintPattern matches: == 2.8.*
 	versionConstraintPattern = `(?P<versionConstraint>([^\S\r\n]*[~=>!<]+\s*[0-9a-zA-Z.*]+[^\S\r\n]*,?)+)?(@[^\S\r\n]*(?P<url>[^;]*))?`
