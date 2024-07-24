@@ -919,6 +919,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "swipl/9.3.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "swipl",
+				Version:   "9.3.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/swipl@9.3.8",
+				Locations: locations("swipl"),
+				Metadata:  metadata("swipl-binary"),
+			},
+		},
+		{
 			logicalFixture: "nginx/1.25.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "nginx",
