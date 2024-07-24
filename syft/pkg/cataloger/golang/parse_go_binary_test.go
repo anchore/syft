@@ -210,7 +210,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name:     "buildGoPkgInfo parses a blank mod and returns no packages",
-			mod:      &extendedBuildInfo{&debug.BuildInfo{}, nil, ""},
+			mod:      &extendedBuildInfo{BuildInfo: &debug.BuildInfo{}, cryptoSettings: nil, arch: ""},
 			expected: []pkg.Package(nil),
 		},
 		{
@@ -946,6 +946,95 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			}},
 		},
+		{
+			name: "parse a mod from path (partial build of package)",
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: "go1.22.2",
+					Main:      debug.Module{Path: "command-line-arguments"},
+					Settings: []debug.BuildSetting{
+						{
+							Key:   "-ldflags",
+							Value: `build	-ldflags="-w -s     -X github.com/kuskoman/logstash-exporter/config.Version=v1.7.0     -X github.com/kuskoman/logstash-exporter/config.GitCommit=db696dbcfe5a91d288d5ad44ce8ccbea97e65978     -X github.com/kuskoman/logstash-exporter/config.BuildDate=2024-07-17T08:12:17Z"`,
+						},
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+					Deps: []*debug.Module{
+						{
+							Path:    "github.com/kuskoman/something-else",
+							Version: "v1.2.3",
+						},
+						{
+							Path:    "github.com/kuskoman/logstash-exporter",
+							Version: "(devel)",
+						},
+					},
+				},
+				arch: archDetails,
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/kuskoman/something-else",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v1.2.3",
+					PURL:     "pkg:golang/github.com/kuskoman/something-else@v1.2.3",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.22.2",
+						Architecture:      archDetails,
+						MainModule:        "github.com/kuskoman/logstash-exporter", // correctly attached the main module
+					},
+				},
+				{
+					Name:     "github.com/kuskoman/logstash-exporter",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v1.7.0",
+					PURL:     "pkg:golang/github.com/kuskoman/logstash-exporter@v1.7.0",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.22.2",
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "-ldflags",
+								Value: `build	-ldflags="-w -s     -X github.com/kuskoman/logstash-exporter/config.Version=v1.7.0     -X github.com/kuskoman/logstash-exporter/config.GitCommit=db696dbcfe5a91d288d5ad44ce8ccbea97e65978     -X github.com/kuskoman/logstash-exporter/config.BuildDate=2024-07-17T08:12:17Z"`,
+							},
+							{
+								Key:   "GOARCH",
+								Value: "amd64",
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+						},
+						Architecture: archDetails,
+						MainModule:   "github.com/kuskoman/logstash-exporter",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -1091,6 +1180,12 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 			ldflags:          `build	-ldflags="-X \"github.com/pingcap/tidb/parser/mysql.TiDBReleaseVersion=v6.1.7\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBBuildTS=2023-07-04 12:06:03\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBGitHash=613ecc5f731b2843e1d53a43915e2cd8da795936\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBGitBranch=heads/refs/tags/v6.1.7\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBEdition=Community\" "`,
 			wantMajorVersion: "6",
 			wantFullVersion:  "v6.1.7",
+		},
+		{
+			name:             "logstash-exporter",
+			ldflags:          `build	-ldflags="-w -s     -X github.com/kuskoman/logstash-exporter/config.Version=v1.7.0     -X github.com/kuskoman/logstash-exporter/config.GitCommit=db696dbcfe5a91d288d5ad44ce8ccbea97e65978     -X github.com/kuskoman/logstash-exporter/config.BuildDate=2024-07-17T08:12:17Z"`,
+			wantMajorVersion: "1",
+			wantFullVersion:  "v1.7.0",
 		},
 		//////////////////////////////////////////////////////////////////
 		// negative cases
