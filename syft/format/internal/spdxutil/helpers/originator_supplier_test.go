@@ -40,6 +40,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.RustBinaryAuditEntry{},
 		pkg.RustCargoLockEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
+		pkg.SwiplPackEntry{},
 		pkg.YarnLockEntry{},
 	)
 	tests := []struct {
@@ -335,6 +336,19 @@ func Test_OriginatorSupplier(t *testing.T) {
 			},
 			originator: "Organization: auth",
 			supplier:   "Organization: auth",
+		},
+		{
+			name: "from swipl pack",
+			input: pkg.Package{
+				Metadata: pkg.SwiplPackEntry{
+					Author:        "auth",
+					AuthorEmail:   "auth@auth.gov",
+					Packager:      "me",
+					PackagerEmail: "me@auth.com",
+				},
+			},
+			originator: "Person: auth (auth@auth.gov)",
+			supplier:   "Person: me (me@auth.com)",
 		},
 	}
 	for _, test := range tests {

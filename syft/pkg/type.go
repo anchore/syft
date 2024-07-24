@@ -42,6 +42,7 @@ const (
 	RpmPkg                  Type = "rpm"
 	RustPkg                 Type = "rust-crate"
 	SwiftPkg                Type = "swift"
+	SwiplPackPkg            Type = "swiplpack"
 	WordpressPluginPkg      Type = "wordpress-plugin"
 )
 
@@ -78,6 +79,7 @@ var AllPkgs = []Type{
 	RpmPkg,
 	RustPkg,
 	SwiftPkg,
+	SwiplPackPkg,
 	WordpressPluginPkg,
 }
 
@@ -141,6 +143,8 @@ func (t Type) PackageURLType() string {
 		return "cargo"
 	case SwiftPkg:
 		return packageurl.TypeSwift
+	case SwiplPackPkg:
+		return "swiplpack"
 	case WordpressPluginPkg:
 		return "wordpress-plugin"
 	default:
@@ -217,6 +221,8 @@ func TypeByName(name string) Type {
 		return Rpkg
 	case packageurl.TypeSwift:
 		return SwiftPkg
+	case "swiplpack":
+		return SwiplPackPkg
 	case "wordpress-plugin":
 		return WordpressPluginPkg
 	default:
