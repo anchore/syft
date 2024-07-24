@@ -16,6 +16,7 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -45,9 +46,10 @@ const (
 func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	name, namespace := helpers.DocumentNameAndNamespace(s.Source, s.Descriptor)
 
-	packages := toPackages(s.Artifacts.Packages, s)
+	rels := relationship.NewIndex(s.Relationships...)
+	packages := toPackages(rels, s.Artifacts.Packages, s)
 
-	relationships := toRelationships(s.RelationshipsSorted())
+	allRelationships := toRelationships(rels.All())
 
 	// for valid SPDX we need a document describes relationship
 	describesID := spdx.ElementID("DOCUMENT")
@@ -57,7 +59,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		describesID = rootPackage.PackageSPDXIdentifier
 
 		// add all relationships from the document root to all other packages
-		relationships = append(relationships, toRootRelationships(rootPackage, packages)...)
+		allRelationships = append(allRelationships, toRootRelationships(rootPackage, packages)...)
 
 		// append the root package
 		packages = append(packages, rootPackage)
@@ -75,7 +77,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	}
 
 	// add the root document relationship
-	relationships = append(relationships, documentDescribesRelationship)
+	allRelationships = append(allRelationships, documentDescribesRelationship)
 
 	return &spdx.Document{
 		// 6.1: SPDX Version; should be in the format "SPDX-x.x"
@@ -150,7 +152,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		},
 		Packages:      packages,
 		Files:         toFiles(s),
-		Relationships: relationships,
+		Relationships: allRelationships,
 		OtherLicenses: toOtherLicenses(s.Artifacts.Packages),
 	}
 }
@@ -302,7 +304,7 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 // packages populates all Package Information from the package Collection (see https://spdx.github.io/spdx-spec/3-package-information/)
 //
 //nolint:funlen
-func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Package) {
+func toPackages(rels *relationship.Index, catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Package) {
 	for _, p := range catalog.Sorted() {
 		// name should be guaranteed to be unique, but semantically useful and stable
 		id := toSPDXID(p)
@@ -318,7 +320,7 @@ func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Packag
 		// 2. syft has generated a sha1 digest for the package's contents
 		packageChecksums, filesAnalyzed := toPackageChecksums(p)
 
-		packageVerificationCode := newPackageVerificationCode(p, sbom)
+		packageVerificationCode := newPackageVerificationCode(rels, p, sbom)
 		if packageVerificationCode != nil {
 			filesAnalyzed = true
 		}
@@ -744,12 +746,12 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 // f file is an "excludes" file, skip it /* exclude SPDX analysis file(s) */
 // see: https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
 // the above link contains the SPDX algorithm for a package verification code
-func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *spdx.PackageVerificationCode {
+func newPackageVerificationCode(rels *relationship.Index, p pkg.Package, sbom sbom.SBOM) *spdx.PackageVerificationCode {
 	// key off of the contains relationship;
 	// spdx validator will fail if a package claims to contain a file but no sha1 provided
 	// if a sha1 for a file is provided then the validator will fail if the package does not have
 	// a package verification code
-	coordinates := sbom.CoordinatesForPackage(p, artifact.ContainsRelationship)
+	coordinates := rels.Coordinates(p, artifact.ContainsRelationship)
 	var digests []file.Digest
 	for _, c := range coordinates {
 		digest := sbom.Artifacts.FileDigests[c]
