@@ -44,3 +44,21 @@ func Test_packageURL(t *testing.T) {
 		})
 	}
 }
+
+func Test_normalization(t *testing.T) {
+	normalForm := "friendly-bard"
+	tests := []string{
+		normalForm,
+		"Friendly-Bard",
+		"FRIENDLY-BARD",
+		"friendly.bard",
+		"friendly_bard",
+		"friendly--bard",
+		"FrIeNdLy-._.-bArD",
+	}
+	for _, tt := range tests {
+		t.Run(tt, func(t *testing.T) {
+			assert.Equal(t, normalForm, normalize(tt))
+		})
+	}
+}

@@ -119,9 +119,9 @@ func Test_PackageCataloger(t *testing.T) {
 				"test-fixtures/dist-info/direct_url.json",
 			},
 			expectedPackage: pkg.Package{
-				Name:     "Pygments",
+				Name:     "pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/Pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
@@ -161,9 +161,9 @@ func Test_PackageCataloger(t *testing.T) {
 				"test-fixtures/casesensitive/DIST-INFO/direct_url.json",
 			},
 			expectedPackage: pkg.Package{
-				Name:     "Pygments",
+				Name:     "pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/Pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
@@ -199,9 +199,9 @@ func Test_PackageCataloger(t *testing.T) {
 				"test-fixtures/malformed-record/dist-info/RECORD",
 			},
 			expectedPackage: pkg.Package{
-				Name:     "Pygments",
+				Name:     "pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/Pygments@2.6.1",
+				PURL:     "pkg:pypi/pygments@2.6.1",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
@@ -231,9 +231,9 @@ func Test_PackageCataloger(t *testing.T) {
 			name:     "partial dist-info directory",
 			fixtures: []string{"test-fixtures/partial.dist-info/METADATA"},
 			expectedPackage: pkg.Package{
-				Name:     "Pygments",
+				Name:     "pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/Pygments@2.6.1",
+				PURL:     "pkg:pypi/pygments@2.6.1",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(

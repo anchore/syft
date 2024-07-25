@@ -2,6 +2,8 @@ package python
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/licenses"
@@ -10,7 +12,16 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+func normalize(name string) string {
+	// https://packaging.python.org/en/latest/specifications/name-normalization/
+	re := regexp.MustCompile(`[-_.]+`)
+	normalized := re.ReplaceAllString(name, "-")
+	return strings.ToLower(normalized)
+}
+
 func newPackageForIndex(name, version string, locations ...file.Location) pkg.Package {
+	name = normalize(name)
+
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
@@ -26,6 +37,8 @@ func newPackageForIndex(name, version string, locations ...file.Location) pkg.Pa
 }
 
 func newPackageForIndexWithMetadata(name, version string, metadata interface{}, locations ...file.Location) pkg.Package {
+	name = normalize(name)
+
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
@@ -42,6 +55,8 @@ func newPackageForIndexWithMetadata(name, version string, metadata interface{}, 
 }
 
 func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.PythonRequirementsEntry, locations ...file.Location) pkg.Package {
+	name = normalize(name)
+
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
@@ -87,10 +102,12 @@ func newPackageForPackage(resolver file.Resolver, m parsedData, sources ...file.
 		}
 	}
 
+	name := normalize(m.Name)
+
 	p := pkg.Package{
-		Name:      m.Name,
+		Name:      name,
 		Version:   m.Version,
-		PURL:      packageURL(m.Name, m.Version, &m.PythonPackage),
+		PURL:      packageURL(name, m.Version, &m.PythonPackage),
 		Locations: file.NewLocationSet(sources...),
 		Licenses:  licenseSet,
 		Language:  pkg.Python,
