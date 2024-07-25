@@ -21,7 +21,7 @@ type LicenseEvidence struct {
 func NewLicense(value string) License {
 	spdxExpression, err := license.ParseExpression(value)
 	if err != nil {
-		log.Tracef("unable to parse license expression: '%s', error: '%v'", value, err)
+		log.WithFields("error", err, "value", value).Trace("unable to parse license expression")
 	}
 
 	return License{
