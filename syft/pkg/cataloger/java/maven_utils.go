@@ -44,7 +44,7 @@ func getSettingsXMLLocalRepository(settingsXML io.Reader) string {
 	s := settings{}
 	err := xml.NewDecoder(settingsXML).Decode(&s)
 	if err != nil {
-		log.Debugf("unable to read maven settings.xml: %v", err)
+		log.WithFields("error", err).Debug("unable to read maven settings.xml")
 	}
 	return s.LocalRepository
 }

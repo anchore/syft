@@ -45,7 +45,7 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 	for _, pomLocation := range locations {
 		pom, err := readPomFromLocation(fileResolver, pomLocation)
 		if err != nil || pom == nil {
-			log.Debugf("error while getting contents for: %v %v", pomLocation.RealPath, err)
+			log.WithFields("error", err, "pomLocation", pomLocation).Debug("error while reading pom")
 			continue
 		}
 
@@ -75,13 +75,11 @@ func readPomFromLocation(fileResolver file.Resolver, pomLocation file.Location) 
 func processPomXML(ctx context.Context, r *mavenResolver, pom *gopom.Project, loc file.Location) []pkg.Package {
 	var pkgs []pkg.Package
 
+	pomID := r.resolveMavenID(ctx, pom)
 	for _, dep := range pomDependencies(pom) {
-		id := mavenID{
-			r.getPropertyValue(ctx, dep.GroupID, pom),
-			r.getPropertyValue(ctx, dep.ArtifactID, pom),
-			r.getPropertyValue(ctx, dep.Version, pom),
-		}
-		log.Tracef("adding dependency to SBOM: %v from: %v", id, r.resolveMavenID(ctx, pom))
+		depID := r.resolveDependencyID(ctx, pom, dep)
+		log.WithFields("pomLocation", loc, "mavenID", pomID, "dependencyID", depID).Trace("adding maven pom dependency")
+
 		p, err := newPackageFromDependency(
 			ctx,
 			r,
@@ -90,7 +88,7 @@ func processPomXML(ctx context.Context, r *mavenResolver, pom *gopom.Project, lo
 			loc.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if err != nil {
-			log.Debugf("error adding dependency %v: %v", id, err)
+			log.WithFields("error", err, "pomLocation", loc, "mavenID", pomID, "dependencyID", depID).Debugf("error adding dependency")
 		}
 		if p == nil {
 			continue
@@ -120,29 +118,23 @@ func newPomProject(ctx context.Context, r *mavenResolver, path string, pom *gopo
 }
 
 func newPackageFromDependency(ctx context.Context, r *mavenResolver, pom *gopom.Project, dep gopom.Dependency, locations ...file.Location) (*pkg.Package, error) {
-	groupID := r.getPropertyValue(ctx, dep.GroupID, pom)
-	artifactID := r.getPropertyValue(ctx, dep.ArtifactID, pom)
-	version := r.getPropertyValue(ctx, dep.Version, pom)
-
-	var err error
-	if version == "" {
-		version, err = r.findInheritedVersion(ctx, pom, groupID, artifactID)
-	}
+	id := r.resolveDependencyID(ctx, pom, dep)
 
 	m := pkg.JavaArchive{
 		PomProperties: &pkg.JavaPomProperties{
-			GroupID:    groupID,
-			ArtifactID: artifactID,
+			GroupID:    id.GroupID,
+			ArtifactID: id.ArtifactID,
 			Scope:      r.getPropertyValue(ctx, dep.Scope, pom),
 		},
 	}
 
+	var err error
 	var licenses []pkg.License
-	dependencyPom, depErr := r.findPom(ctx, groupID, artifactID, version)
+	dependencyPom, depErr := r.findPom(ctx, id.GroupID, id.ArtifactID, id.Version)
 	if depErr != nil {
-		log.Debugf("error getting licenses for %s: %v", mavenID{groupID, artifactID, version}, err)
 		err = errors.Join(err, depErr)
 	}
+
 	if dependencyPom != nil {
 		depLicenses, _ := r.resolveLicenses(ctx, dependencyPom)
 		for _, license := range depLicenses {
@@ -151,11 +143,11 @@ func newPackageFromDependency(ctx context.Context, r *mavenResolver, pom *gopom.
 	}
 
 	p := &pkg.Package{
-		Name:      artifactID,
-		Version:   version,
+		Name:      id.ArtifactID,
+		Version:   id.Version,
 		Locations: file.NewLocationSet(locations...),
 		Licenses:  pkg.NewLicenseSet(licenses...),
-		PURL:      packageURL(artifactID, version, m),
+		PURL:      packageURL(id.ArtifactID, id.Version, m),
 		Language:  pkg.Java,
 		Type:      pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
 		FoundBy:   pomCatalogerName,
