@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/vifraa/gopom"
+	"golang.org/x/exp/maps"
 
 	"github.com/anchore/syft/internal"
 	intFile "github.com/anchore/syft/internal/file"
@@ -317,7 +319,10 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
 	projects, _ := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
 
-	for parentPath, propertiesObj := range properties {
+	parentPaths := maps.Keys(properties)
+	slices.Sort(parentPaths)
+	for _, parentPath := range parentPaths {
+		propertiesObj := properties[parentPath]
 		if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name) {
 			pomProperties = propertiesObj
 			if proj, exists := projects[parentPath]; exists {
