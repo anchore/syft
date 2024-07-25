@@ -61,7 +61,7 @@ func scanFile(location file.Location, reader unionreader.UnionReader) ([]*extend
 			}
 		}
 
-		builds = append(builds, &extendedBuildInfo{bi, v, arch})
+		builds = append(builds, &extendedBuildInfo{BuildInfo: bi, cryptoSettings: v, arch: arch})
 	}
 	return builds, errs
 }

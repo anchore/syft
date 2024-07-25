@@ -36,6 +36,8 @@ type Descriptor struct {
 	Configuration interface{}
 }
 
+// RelationshipsSorted returns a sorted slice of all relationships
+// Deprecated -- use relationship.Index
 func (s SBOM) RelationshipsSorted() []artifact.Relationship {
 	relationships := s.Relationships
 	sort.SliceStable(relationships, func(i, j int) bool {
@@ -74,6 +76,7 @@ func (s SBOM) AllCoordinates() []file.Coordinates {
 
 // RelationshipsForPackage returns all relationships for the provided types.
 // If no types are provided, all relationships for the package are returned.
+// Deprecated -- use relationship.Index
 func (s SBOM) RelationshipsForPackage(p pkg.Package, rt ...artifact.RelationshipType) []artifact.Relationship {
 	if len(rt) == 0 {
 		rt = artifact.AllRelationshipTypes()
@@ -107,6 +110,7 @@ func (s SBOM) RelationshipsForPackage(p pkg.Package, rt ...artifact.Relationship
 
 // CoordinatesForPackage returns all coordinates for the provided package for provided relationship types
 // If no types are provided, all relationship types are considered.
+// Deprecated -- use relationship.Index
 func (s SBOM) CoordinatesForPackage(p pkg.Package, rt ...artifact.RelationshipType) []file.Coordinates {
 	var coordinates []file.Coordinates
 	for _, relationship := range s.RelationshipsForPackage(p, rt...) {

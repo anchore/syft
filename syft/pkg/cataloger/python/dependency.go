@@ -167,7 +167,7 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to resolve relationships for global site package %q: %w", globalSitePackage, err)
 		}
-		relationshipIndex.AddAll(siteRels...)
+		relationshipIndex.Add(siteRels...)
 	}
 
 	// create relationships between packages within each virtual env site package directory (that doesn't link to a global site-packages directory)
@@ -180,7 +180,7 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to resolve relationships for virtualenv site package %q: %w", venv.SitePackagesPath, err)
 		}
-		relationshipIndex.AddAll(siteRels...)
+		relationshipIndex.Add(siteRels...)
 	}
 
 	// create relationships between packages within each virtual env site package directory (that links to a global site package directory)
@@ -197,10 +197,10 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 			return nil, nil, fmt.Errorf("failed to resolve relationships for virtualenv + global site package path %q + %q: %w", venv.SitePackagesPath, globalSitePackage, err)
 		}
 
-		relationshipIndex.AddAll(siteRels...)
+		relationshipIndex.Add(siteRels...)
 	}
 
-	return pkgs, relationshipIndex.AllUniqueRelationships(), err
+	return pkgs, relationshipIndex.All(), err
 }
 
 func collectPackages(pkgsBySitePackageAndName map[string]map[string]pkg.Package, sites []string) []pkg.Package {

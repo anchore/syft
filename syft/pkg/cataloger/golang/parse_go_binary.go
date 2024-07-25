@@ -11,6 +11,7 @@ import (
 	"io"
 	"regexp"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"time"
 
@@ -97,17 +98,19 @@ func createModuleRelationships(main pkg.Package, deps []pkg.Package) []artifact.
 	return relationships
 }
 
+var emptyModule debug.Module
+var moduleFromPartialPackageBuild = debug.Module{Path: "command-line-arguments"}
+
 func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) (*pkg.Package, []pkg.Package) {
-	var pkgs []pkg.Package
 	if mod == nil {
-		return nil, pkgs
+		return nil, nil
 	}
 
-	var empty debug.Module
-	if mod.Main == empty && mod.Path != "" {
-		mod.Main = createMainModuleFromPath(mod.Path)
+	if missingMainModule(mod) {
+		mod.Main = createMainModuleFromPath(mod)
 	}
 
+	var pkgs []pkg.Package
 	for _, dep := range mod.Deps {
 		if dep == nil {
 			continue
@@ -130,13 +133,23 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 		}
 	}
 
-	if mod.Main == empty {
+	if mod.Main == emptyModule {
 		return nil, pkgs
 	}
 
 	main := c.makeGoMainPackage(resolver, mod, arch, location, reader)
 
 	return &main, pkgs
+}
+
+func missingMainModule(mod *extendedBuildInfo) bool {
+	if mod.Main == emptyModule && mod.Path != "" {
+		return true
+	}
+	// special case: when invoking go build with a source file and not a package (directory) then you will
+	// see "command-line-arguments" as the main module path... even though that's not the main module. In this
+	// circumstance, we should treat the main module as missing and search for it within the dependencies.
+	return mod.Main == moduleFromPartialPackageBuild
 }
 
 func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {
@@ -358,8 +371,29 @@ func getExperimentsFromVersion(version string) (string, []string) {
 	return version, experiments
 }
 
-func createMainModuleFromPath(path string) (mod debug.Module) {
-	mod.Path = path
-	mod.Version = devel
-	return
+func createMainModuleFromPath(existing *extendedBuildInfo) debug.Module {
+	// search for a main module candidate within the dependencies
+	var mainModuleCandidates []debug.Module
+	var usedIndex int
+	for i, dep := range existing.Deps {
+		if dep == nil {
+			continue
+		}
+
+		if dep.Version == devel {
+			usedIndex = i
+			mainModuleCandidates = append(mainModuleCandidates, *dep)
+		}
+	}
+	if len(mainModuleCandidates) == 1 {
+		// we need to prune the dependency from module list
+		existing.Deps = slices.Delete(existing.Deps, usedIndex, usedIndex+1)
+		return mainModuleCandidates[0]
+	}
+
+	// otherwise craft a main module from the path (a bit of a cop out, but allows us to have a main module)
+	return debug.Module{
+		Path:    existing.Path,
+		Version: devel,
+	}
 }
