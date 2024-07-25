@@ -54,9 +54,9 @@ func TestParseRequirementsTxt(t *testing.T) {
 			},
 		},
 		{
-			Name:      "dots-._allowed",
+			Name:      "dots-allowed",
 			Version:   "1.0.0",
-			PURL:      "pkg:pypi/dots-._allowed@1.0.0",
+			PURL:      "pkg:pypi/dots-allowed@1.0.0",
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
