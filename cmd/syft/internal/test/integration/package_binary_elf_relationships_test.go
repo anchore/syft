@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/source"
 )
@@ -44,12 +45,13 @@ func TestBinaryElfRelationships(t *testing.T) {
 		}
 	}
 
+	relationshipIndex := relationship.NewIndex(sbom.Relationships...)
 	for name, expectedDepNames := range expectedGraph {
 		pkgId := nameToId[name]
 		p := sbom.Artifacts.Packages.Package(pkgId)
 		require.NotNil(t, p, "expected package %q to be present in the SBOM", name)
 
-		rels := sbom.RelationshipsForPackage(*p, artifact.DependencyOfRelationship)
+		rels := relationshipIndex.References(*p, artifact.DependencyOfRelationship)
 		require.NotEmpty(t, rels, "expected package %q to have relationships", name)
 
 		toIds := map[artifact.ID]struct{}{}

@@ -21,27 +21,22 @@ func NewDependencyRelationships(resolver file.Resolver, accessor sbomsync.Access
 
 	// 3. craft package-to-package relationships for each binary that represent shared library dependencies
 	//note: we only care about package-to-package relationships
-	var relIndex *relationship.Index
-	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
-		relIndex = relationship.NewIndex(s.Relationships...)
-	})
-
-	return generateRelationships(resolver, accessor, index, relIndex)
+	return generateRelationships(resolver, accessor, index)
 }
 
-func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, index *sharedLibraryIndex, relIndex *relationship.Index) []artifact.Relationship {
-	// read all existing dependencyOf relationships
-	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
-		for _, r := range s.Relationships {
-			if r.Type != artifact.DependencyOfRelationship {
-				continue
-			}
-			relIndex.Track(r)
-		}
-	})
+func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, index *sharedLibraryIndex) []artifact.Relationship {
+	newRelationships := relationship.NewIndex()
 
 	// find all package-to-package relationships for shared library dependencies
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
+		relIndex := relationship.NewIndex(s.Relationships...)
+
+		addRelationship := func(r artifact.Relationship) {
+			if !relIndex.Contains(r) {
+				newRelationships.Add(r)
+			}
+		}
+
 		for _, parentPkg := range s.Artifacts.Packages.Sorted(pkg.BinaryPkg) {
 			for _, evidentLocation := range parentPkg.Locations.ToSlice() {
 				if evidentLocation.Annotations[pkg.EvidenceAnnotationKey] != pkg.PrimaryEvidenceAnnotation {
@@ -54,12 +49,12 @@ func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, i
 					continue
 				}
 
-				populateRelationships(exec, parentPkg, resolver, relIndex, index)
+				populateRelationships(exec, parentPkg, resolver, addRelationship, index)
 			}
 		}
 	})
 
-	return relIndex.NewRelationships()
+	return newRelationships.All()
 }
 
 // PackagesToRemove returns a list of binary packages (resolved by the ELF cataloger) that should be removed from the SBOM
@@ -147,7 +142,7 @@ func getBinaryPackagesToDelete(resolver file.Resolver, s *sbom.SBOM) []artifact.
 	return pkgsToDelete
 }
 
-func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver file.Resolver, relIndex *relationship.Index, index *sharedLibraryIndex) {
+func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver file.Resolver, addRelationship func(artifact.Relationship), index *sharedLibraryIndex) {
 	for _, libReference := range exec.ImportedLibraries {
 		// for each library reference, check s.Artifacts.Packages.Sorted(pkg.BinaryPkg) for a binary package that represents that library
 		// if found, create a relationship between the parent package and the library package
@@ -167,7 +162,7 @@ func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver
 			realBaseName := path.Base(loc.RealPath)
 			pkgCollection := index.owningLibraryPackage(realBaseName)
 			if pkgCollection.PackageCount() < 1 {
-				relIndex.Add(
+				addRelationship(
 					artifact.Relationship{
 						From: loc.Coordinates,
 						To:   parentPkg,
@@ -176,7 +171,7 @@ func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver
 				)
 			}
 			for _, p := range pkgCollection.Sorted() {
-				relIndex.Add(
+				addRelationship(
 					artifact.Relationship{
 						From: p,
 						To:   parentPkg,
