@@ -1386,6 +1386,44 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 	}
 }
 
+func Test_deterministicMatchingPomProperties(t *testing.T) {
+	tests := []struct {
+		fixture         string
+		expectedName    string
+		expectedVersion string
+	}{
+		{
+			fixture:         "multiple-matching-2.11.5",
+			expectedName:    "multiple-matching-1",
+			expectedVersion: "2.11.5",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.fixture, func(t *testing.T) {
+			fixturePath := generateJavaMetadataJarFixture(t, test.fixture)
+
+			for i := 0; i < 5; i++ {
+				func() {
+					fixture, err := os.Open(fixturePath)
+					require.NoError(t, err)
+
+					parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
+						Location:   file.NewLocation(fixture.Name()),
+						ReadCloser: fixture,
+					}, false, ArchiveCatalogerConfig{UseNetwork: false})
+					defer cleanupFn()
+					require.NoError(t, err)
+
+					name, version, _ := parser.guessMainPackageNameAndVersionFromPomInfo(context.TODO())
+					require.Equal(t, test.expectedName, name)
+					require.Equal(t, test.expectedVersion, version)
+				}()
+			}
+		})
+	}
+}
+
 func assignParent(parent *pkg.Package, childPackages ...pkg.Package) {
 	for i, jp := range childPackages {
 		if v, ok := jp.Metadata.(pkg.JavaArchive); ok {
