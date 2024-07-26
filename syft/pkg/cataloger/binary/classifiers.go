@@ -263,7 +263,8 @@ func DefaultClassifiers() []Classifier {
 			EvidenceMatcher: FileContentsVersionMatcher(
 				// [NUL]v1.7.34[NUL]
 				// [NUL]2.9.6[NUL]
-				`(?m)(\x00|\x{FFFD})v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
+				// 3.0.4[NUL]
+				`(?m)(\x00|\x{FFFD})?v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
 			Package: "traefik",
 			PURL:    mustPURL("pkg:generic/traefik@version"),
 			CPEs:    singleCPE("cpe:2.3:a:traefik:traefik:*:*:*:*:*:*:*:*"),
