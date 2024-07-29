@@ -2,6 +2,7 @@ package java
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -208,7 +209,7 @@ func Test_mavenResolverLocal(t *testing.T) {
 }
 
 func Test_mavenResolverRemote(t *testing.T) {
-	url := testRepo(t, "test-fixtures/pom/maven-repo")
+	url := mockMavenRepo(t)
 
 	tests := []struct {
 		groupID    string
@@ -280,8 +281,17 @@ func Test_relativePathParent(t *testing.T) {
 	require.Equal(t, "3", got)
 }
 
-// testRepo starts a remote maven repo serving all the pom files found in the given directory
-func testRepo(t *testing.T, dir string) (url string) {
+// mockMavenRepo starts a remote maven repo serving all the pom files found in test-fixtures/pom/maven-repo
+func mockMavenRepo(t *testing.T) (url string) {
+	t.Helper()
+
+	return mockMavenRepoAt(t, "test-fixtures/pom/maven-repo")
+}
+
+// mockMavenRepoAt starts a remote maven repo serving all the pom files found in the given directory
+func mockMavenRepoAt(t *testing.T, dir string) (url string) {
+	t.Helper()
+
 	// mux is the HTTP request multiplexer used with the test server.
 	mux := http.NewServeMux()
 
@@ -302,8 +312,28 @@ func testRepo(t *testing.T, dir string) (url string) {
 		fullPath, err := filepath.Abs(filepath.Join(dir, match))
 		require.NoError(t, err)
 		match = "/" + filepath.ToSlash(match)
-		mux.HandleFunc(match, generateMockMavenHandler(fullPath))
+		mux.HandleFunc(match, mockMavenHandler(fullPath))
 	}
 
 	return server.URL
+}
+
+func mockMavenHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		// Set the Content-Type header to indicate that the response is XML
+		w.Header().Set("Content-Type", "application/xml")
+		// Copy the file's content to the response writer
+		f, err := os.Open(responseFixture)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer internal.CloseAndLogError(f, responseFixture)
+		_, err = io.Copy(w, f)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
 }

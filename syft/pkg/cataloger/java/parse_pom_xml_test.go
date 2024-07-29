@@ -214,7 +214,7 @@ func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
 }
 
 func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
-	url := testRepo(t, "test-fixtures/pom/maven-repo")
+	url := mockMavenRepo(t)
 
 	// Using the local repository, the version of junit-jupiter will be resolved
 	expectedPackages := getCommonsTextExpectedPackages()
@@ -433,7 +433,7 @@ func Test_cleanDescription(t *testing.T) {
 }
 
 func Test_resolveLicenses(t *testing.T) {
-	mavenURL := testRepo(t, "test-fixtures/pom/maven-repo")
+	mavenURL := mockMavenRepo(t)
 	localM2 := "test-fixtures/pom/maven-repo"
 	localDir := "test-fixtures/pom/local"
 	containingDir := "test-fixtures/pom/local/contains-child-1"

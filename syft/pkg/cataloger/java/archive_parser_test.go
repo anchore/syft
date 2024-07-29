@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,7 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vifraa/gopom"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
@@ -29,48 +27,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func generateJavaBuildFixture(t *testing.T, fixturePath string) {
-	if _, err := os.Stat(fixturePath); !os.IsNotExist(err) {
-		// fixture already exists...
-		return
-	}
-
-	makeTask := strings.TrimPrefix(fixturePath, "test-fixtures/java-builds/")
-	t.Logf(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Errorf("unable to get cwd: %+v", err)
-	}
-
-	cmd := exec.Command("make", makeTask)
-	cmd.Dir = filepath.Join(cwd, "test-fixtures/java-builds/")
-
-	run(t, cmd)
-}
-
-func generateMockMavenHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		// Set the Content-Type header to indicate that the response is XML
-		w.Header().Set("Content-Type", "application/xml")
-		// Copy the file's content to the response writer
-		f, err := os.Open(responseFixture)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer internal.CloseAndLogError(f, responseFixture)
-		_, err = io.Copy(w, f)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-}
-
 func TestSearchMavenForLicenses(t *testing.T) {
-	url := testRepo(t, "test-fixtures/pom/maven-repo")
+	url := mockMavenRepo(t)
 
 	tests := []struct {
 		name             string
@@ -1393,6 +1351,26 @@ func assignParent(parent *pkg.Package, childPackages ...pkg.Package) {
 			childPackages[i].Metadata = v
 		}
 	}
+}
+
+func generateJavaBuildFixture(t *testing.T, fixturePath string) {
+	if _, err := os.Stat(fixturePath); !os.IsNotExist(err) {
+		// fixture already exists...
+		return
+	}
+
+	makeTask := strings.TrimPrefix(fixturePath, "test-fixtures/java-builds/")
+	t.Logf(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Errorf("unable to get cwd: %+v", err)
+	}
+
+	cmd := exec.Command("make", makeTask)
+	cmd.Dir = filepath.Join(cwd, "test-fixtures/java-builds/")
+
+	run(t, cmd)
 }
 
 func generateJavaMetadataJarFixture(t *testing.T, fixtureName string) string {
