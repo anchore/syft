@@ -448,6 +448,12 @@ from-images:
     paths:
       - /usr/local/bin/traefik
 
+  - version: 3.0.4
+    images:
+      - ref: traefik:3.0.4@sha256:12a7cc4232b5b7fe027673da8c096144525f59a8eabc87e52260aac0ec5a1219
+        platform: linux/riscv64
+    paths:
+      - /usr/local/bin/traefik
 
   # from the original dynamic fixtures...
 
