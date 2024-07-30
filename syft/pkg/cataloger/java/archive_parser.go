@@ -9,6 +9,8 @@ import (
 	"slices"
 	"strings"
 
+	"golang.org/x/exp/maps"
+
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
@@ -312,7 +314,10 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo(ctx context.Co
 	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, pomPropertyMatches)
 	projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
 
-	for parentPath, propertiesObj := range properties {
+	parentPaths := maps.Keys(properties)
+	slices.Sort(parentPaths)
+	for _, parentPath := range parentPaths {
+		propertiesObj := properties[parentPath]
 		if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name) {
 			pomPropertiesObject = propertiesObj
 			if proj, exists := projects[parentPath]; exists {
