@@ -7,8 +7,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY main.go main.go
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o run-me .
-
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-X main.Version=1.0.0" -o run-me .
 
 FROM scratch
 
