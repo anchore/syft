@@ -171,30 +171,51 @@ func Test_mavenResolverLocal(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
+		name       string
 		groupID    string
 		artifactID string
 		version    string
+		maxDepth   int
 		expression string
 		expected   string
 		wantErr    require.ErrorAssertionFunc
 	}{
 		{
+			name:       "artifact id with variable from 2nd parent",
 			groupID:    "my.org",
 			artifactID: "child-one",
 			version:    "1.3.6",
 			expression: "${project.one}",
 			expected:   "1",
 		},
+		{
+			name:       "depth limited large enough",
+			groupID:    "my.org",
+			artifactID: "child-one",
+			version:    "1.3.6",
+			expression: "${project.one}",
+			expected:   "1",
+			maxDepth:   2,
+		},
+		{
+			name:       "depth limited should not resolve",
+			groupID:    "my.org",
+			artifactID: "child-one",
+			version:    "1.3.6",
+			expression: "${project.one}",
+			expected:   "",
+			maxDepth:   1,
+		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.artifactID, func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			ctx := context.Background()
 			r := newMavenResolver(nil, ArchiveCatalogerConfig{
 				UseNetwork:              false,
 				UseMavenLocalRepository: true,
 				MavenLocalRepositoryDir: dir,
-				MaxParentRecursiveDepth: 5,
+				MaxParentRecursiveDepth: test.maxDepth,
 			})
 			pom, err := r.findPom(ctx, test.groupID, test.artifactID, test.version)
 			if test.wantErr != nil {
@@ -235,7 +256,6 @@ func Test_mavenResolverRemote(t *testing.T) {
 				UseNetwork:              true,
 				UseMavenLocalRepository: false,
 				MavenBaseURL:            url,
-				MaxParentRecursiveDepth: 5,
 			})
 			pom, err := r.findPom(ctx, test.groupID, test.artifactID, test.version)
 			if test.wantErr != nil {

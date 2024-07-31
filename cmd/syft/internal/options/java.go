@@ -34,7 +34,7 @@ func (o *javaConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 a parent or imported pom file is not found in the local maven repository.
 the pom files are downloaded from the remote Maven repository at 'maven-url'`)
 	descriptions.Add(&o.MavenURL, `maven repository to use, defaults to Maven central`)
-	descriptions.Add(&o.MaxParentRecursiveDepth, `depth to recursively resolve parent POMs`)
+	descriptions.Add(&o.MaxParentRecursiveDepth, `depth to recursively resolve parent POMs, no limit if <= 0`)
 	descriptions.Add(&o.UseMavenLocalRepository, `use the local Maven repository to retrieve pom files. When Maven is installed and was previously used
 for building the software that is being scanned, then most pom files will be available in this
 repository on the local file system. this greatly speeds up scans. when all pom files are available

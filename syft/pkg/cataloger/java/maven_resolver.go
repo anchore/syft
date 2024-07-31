@@ -114,7 +114,10 @@ func (r *mavenResolver) resolveProperty(ctx context.Context, resolutionContext [
 
 	for _, pom := range resolutionContext {
 		current := pom
-		for current != nil {
+		for parentDepth := 0; current != nil; parentDepth++ {
+			if r.cfg.MaxParentRecursiveDepth > 0 && parentDepth > r.cfg.MaxParentRecursiveDepth {
+				return "", fmt.Errorf("maximum parent recursive depth (%v) reached resolving property: %v", r.cfg.MaxParentRecursiveDepth, propertyExpression)
+			}
 			if current.Properties != nil && current.Properties.Entries != nil {
 				if value, ok := current.Properties.Entries[propertyExpression]; ok {
 					return r.resolveExpression(ctx, resolutionContext, value, resolving) // property values can contain expressions
@@ -421,7 +424,7 @@ func (r *mavenResolver) findInheritedVersion(ctx context.Context, pom *gopom.Pro
 	if pom == nil {
 		return "", fmt.Errorf("nil pom provided to findInheritedVersion")
 	}
-	if len(resolutionContext) >= r.cfg.MaxParentRecursiveDepth {
+	if r.cfg.MaxParentRecursiveDepth > 0 && len(resolutionContext) > r.cfg.MaxParentRecursiveDepth {
 		return "", fmt.Errorf("maximum depth reached attempting to resolve version for: %s:%s at: %v", groupID, artifactID, r.resolveMavenID(ctx, pom))
 	}
 	if slices.Contains(resolutionContext, pom) {
@@ -509,7 +512,7 @@ func (r *mavenResolver) resolveLicenses(ctx context.Context, pom *gopom.Project,
 	if slices.Contains(processing, id) {
 		return nil, fmt.Errorf("cycle detected resolving licenses for: %v", id)
 	}
-	if len(processing) > r.cfg.MaxParentRecursiveDepth {
+	if r.cfg.MaxParentRecursiveDepth > 0 && len(processing) > r.cfg.MaxParentRecursiveDepth {
 		return nil, fmt.Errorf("maximum parent recursive depth (%v) reached: %v", r.cfg.MaxParentRecursiveDepth, processing)
 	}
 

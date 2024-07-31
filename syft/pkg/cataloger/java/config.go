@@ -20,7 +20,7 @@ func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
 		UseMavenLocalRepository: false,
 		MavenLocalRepositoryDir: defaultMavenLocalRepoDir(),
 		MavenBaseURL:            mavenBaseURL,
-		MaxParentRecursiveDepth: 10,
+		MaxParentRecursiveDepth: 0, // unlimited
 	}
 }
 
@@ -47,9 +47,7 @@ func (j ArchiveCatalogerConfig) WithMavenBaseURL(input string) ArchiveCatalogerC
 }
 
 func (j ArchiveCatalogerConfig) WithArchiveTraversal(search cataloging.ArchiveSearchConfig, maxDepth int) ArchiveCatalogerConfig {
-	if maxDepth > 0 {
-		j.MaxParentRecursiveDepth = maxDepth
-	}
+	j.MaxParentRecursiveDepth = maxDepth
 	j.ArchiveSearchConfig = search
 	return j
 }

@@ -206,7 +206,6 @@ func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
 				},
 				UseMavenLocalRepository: true,
 				MavenLocalRepositoryDir: "test-fixtures/pom/maven-repo",
-				MaxParentRecursiveDepth: 5,
 			})
 			pkgtest.TestCataloger(t, test.dir, cat, test.expected, nil)
 		})
@@ -258,7 +257,6 @@ func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
 				UseNetwork:              true,
 				MavenBaseURL:            url,
 				UseMavenLocalRepository: false,
-				MaxParentRecursiveDepth: 5,
 			})
 			pkgtest.TestCataloger(t, test.dir, cat, test.expected, nil)
 		})
@@ -461,7 +459,6 @@ func Test_resolveLicenses(t *testing.T) {
 				UseNetwork:              false,
 				MavenLocalRepositoryDir: "",
 				MavenBaseURL:            "",
-				MaxParentRecursiveDepth: 10,
 			},
 			expected: nil,
 		},
@@ -471,7 +468,6 @@ func Test_resolveLicenses(t *testing.T) {
 			cfg: ArchiveCatalogerConfig{
 				UseMavenLocalRepository: false,
 				UseNetwork:              false,
-				MaxParentRecursiveDepth: 10,
 			},
 			expected: expectedLicenses,
 		},
@@ -483,7 +479,6 @@ func Test_resolveLicenses(t *testing.T) {
 				MavenLocalRepositoryDir: localM2,
 				UseNetwork:              false,
 				MavenBaseURL:            "",
-				MaxParentRecursiveDepth: 10,
 			},
 			expected: expectedLicenses,
 		},
@@ -494,7 +489,6 @@ func Test_resolveLicenses(t *testing.T) {
 				UseMavenLocalRepository: false,
 				UseNetwork:              true,
 				MavenBaseURL:            mavenURL,
-				MaxParentRecursiveDepth: 10,
 			},
 			expected: expectedLicenses,
 		},

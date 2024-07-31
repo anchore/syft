@@ -45,7 +45,6 @@ func TestSearchMavenForLicenses(t *testing.T) {
 				UseNetwork:              true,
 				UseMavenLocalRepository: false,
 				MavenBaseURL:            url,
-				MaxParentRecursiveDepth: 5,
 			},
 			expectedLicenses: []pkg.License{
 				{
