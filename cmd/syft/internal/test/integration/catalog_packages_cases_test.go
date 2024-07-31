@@ -389,6 +389,14 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
+		name:        "find swipl pack package manager packages",
+		pkgType:     pkg.SwiplPackPkg,
+		pkgLanguage: pkg.Swipl,
+		pkgInfo: map[string]string{
+			"hdt": "0.5.2",
+		},
+	},
+	{
 		name:    "find github action packages (from usage in workflow files and composite actions)",
 		pkgType: pkg.GithubActionPkg,
 		pkgInfo: map[string]string{

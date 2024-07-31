@@ -111,6 +111,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:swift/github.com/apple/swift-numerics/swift-numerics@1.0.2",
 			expected: SwiftPkg,
 		},
+		{
+			purl:     "pkg:swiplpack/condition@0.1.1",
+			expected: SwiplPackPkg,
+		},
 	}
 
 	var pkgTypes []string

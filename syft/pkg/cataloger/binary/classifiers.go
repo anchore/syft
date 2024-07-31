@@ -429,6 +429,16 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*"),
 		},
 		{
+			Class:    "swipl-binary",
+			FileGlob: "**/swipl",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)swipl-(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\/`,
+			),
+			Package: "swipl",
+			PURL:    mustPURL("pkg:generic/swipl@version"),
+			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*"),
+		},
+		{
 			Class:    "consul-binary",
 			FileGlob: "**/consul",
 			EvidenceMatcher: FileContentsVersionMatcher(

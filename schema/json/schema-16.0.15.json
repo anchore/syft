@@ -1615,6 +1615,9 @@
               "$ref": "#/$defs/SwiftPackageManagerLockEntry"
             },
             {
+              "$ref": "#/$defs/SwiplpackPackage"
+            },
+            {
               "$ref": "#/$defs/WordpressPluginEntry"
             }
           ]
@@ -2508,6 +2511,48 @@
       "type": "object",
       "required": [
         "revision"
+      ]
+    },
+    "SwiplpackPackage": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "authorEmail": {
+          "type": "string"
+        },
+        "packager": {
+          "type": "string"
+        },
+        "packagerEmail": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "author",
+        "authorEmail",
+        "packager",
+        "packagerEmail",
+        "homepage",
+        "dependencies"
       ]
     },
     "WordpressPluginEntry": {
