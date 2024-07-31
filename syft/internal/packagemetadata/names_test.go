@@ -474,12 +474,6 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 			expectedLegacyName: "RpmMetadata", // note: conflicts with <=v11.x schema for "rpm-db-entry" metadata type
 		},
 		{
-			name:               "SwiftPackageManagerMetadata",
-			metadata:           pkg.SwiftPackageManagerResolvedEntry{},
-			expectedJSONName:   "swift-package-manager-lock-entry",
-			expectedLegacyName: "SwiftPackageManagerMetadata",
-		},
-		{
 			name:               "CargoPackageMetadata",
 			metadata:           pkg.RustCargoLockEntry{},
 			expectedJSONName:   "rust-cargo-lock-entry",

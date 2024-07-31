@@ -265,6 +265,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.SwiplPackPkg,
+			},
+			expected: []string{
+				"acquired package info from SWI Prolo pack package file",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.GithubActionPkg,
 			},
 			expected: []string{

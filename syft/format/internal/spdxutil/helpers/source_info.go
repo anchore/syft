@@ -62,6 +62,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from Rockspec package file"
 	case pkg.SwiftPkg:
 		answer = "acquired package info from resolved Swift package manifest"
+	case pkg.SwiplPackPkg:
+		answer = "acquired package info from SWI Prolo pack package file"
 	case pkg.GithubActionPkg, pkg.GithubActionWorkflowPkg:
 		answer = "acquired package info from GitHub Actions workflow file or composite action file"
 	case pkg.WordpressPluginPkg:
