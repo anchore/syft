@@ -256,3 +256,5 @@ retract (
 )
 
 replace github.com/mholt/archiver/v3 v3.5.1 => github.com/anchore/archiver/v3 v3.5.2
+
+replace github.com/masahiro331/go-xfs-filesystem => ./pkg/xfs
