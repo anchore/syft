@@ -70,3 +70,5 @@ cosign.pub
 __pycache__/
 *.py[cod]
 *$py.class
+
+syft/syft

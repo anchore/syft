@@ -131,6 +131,12 @@ func toPath(s source.Description, p pkg.Package) string {
 				return fmt.Sprintf("%s/%s", path, packagePath)
 			}
 			return packagePath
+		case source.XFSMetadata:
+			path := trimRelative(metadata.Path)
+			if path != "" {
+				return fmt.Sprintf("%s/%s", path, packagePath)
+			}
+			return packagePath					
 		}
 	}
 	return inputPath

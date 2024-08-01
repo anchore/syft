@@ -40,6 +40,8 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	switch metadata := s.Source.Metadata.(type) {
 	case source.DirectoryMetadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
+	case source.XFSMetadata:
+		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)		
 	case source.FileMetadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
 	case source.ImageMetadata:

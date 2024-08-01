@@ -8,12 +8,16 @@ import (
 	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
+	"github.com/anchore/syft/syft/source/xfssource"
+
 )
 
 const (
 	FileTag = stereoscope.FileTag
 	DirTag  = stereoscope.DirTag
 	PullTag = stereoscope.PullTag
+	XFSTag = "xfs"
+
 )
 
 // All returns all the configured source providers known to syft
@@ -28,6 +32,8 @@ func All(userInput string, cfg *Config) []collections.TaggedValue[source.Provide
 		Join(stereoscopeProviders.Select(FileTag, DirTag)...).
 		Join(tagProvider(filesource.NewSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), FileTag)).
 		Join(tagProvider(directorysource.NewSourceProvider(userInput, cfg.Exclude, cfg.Alias, cfg.BasePath), DirTag)).
+		Join(tagProvider(xfssource.NewSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), XFSTag)).
+
 
 		// --from docker, registry, etc.
 		Join(stereoscopeProviders.Select(PullTag)...)

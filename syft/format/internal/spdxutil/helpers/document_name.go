@@ -16,6 +16,8 @@ func DocumentName(src source.Description) string {
 		return metadata.Path
 	case source.FileMetadata:
 		return metadata.Path
+	case source.XFSMetadata:
+		return metadata.Path		
 	default:
 		return "unknown"
 	}

@@ -11,6 +11,8 @@ var jsonNameFromType = map[reflect.Type][]string{
 	reflect.TypeOf(source.DirectoryMetadata{}): {"directory", "dir"},
 	reflect.TypeOf(source.FileMetadata{}):      {"file"},
 	reflect.TypeOf(source.ImageMetadata{}):     {"image"},
+	reflect.TypeOf(source.XFSMetadata{}):       {"xfs"},
+
 }
 
 func AllTypeNames() []string {
