@@ -39,11 +39,27 @@ func ToSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 }
 
 func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]interface{}) error {
-	if bom.Components == nil {
+	components := []cyclonedx.Component{}
+	components_present := false
+	if bom.Components != nil {
+		components = *bom.Components
+		components_present = true
+	}
+
+	if bom.Metadata.Component != nil {
+		components = append(components, *bom.Metadata.Component)
+		components_present = true
+		if bom.Metadata.Component.Components != nil {
+			components = append(components, *bom.Metadata.Component.Components...)
+		}
+	}
+
+	if !components_present {
 		return fmt.Errorf("no components are defined in the CycloneDX BOM")
 	}
-	for i := range *bom.Components {
-		collectPackages(&(*bom.Components)[i], s, idMap)
+
+	for i := range components {
+		collectPackages(&components[i], s, idMap)
 	}
 	return nil
 }
