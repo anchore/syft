@@ -138,8 +138,8 @@ func Test_OriginatorSupplier(t *testing.T) {
 					},
 				},
 			},
-			originator: "Person: auth-spec",
-			supplier:   "Person: auth-spec",
+			originator: "Organization: auth-spec",
+			supplier:   "Organization: auth-spec",
 		},
 		{
 			name: "from java -- fallback to impl vendor in main manifest section",
@@ -155,8 +155,8 @@ func Test_OriginatorSupplier(t *testing.T) {
 					},
 				},
 			},
-			originator: "Person: auth-impl",
-			supplier:   "Person: auth-impl",
+			originator: "Organization: auth-impl",
+			supplier:   "Organization: auth-impl",
 		},
 		{
 			name: "from java -- non-main manifest sections ignored",
