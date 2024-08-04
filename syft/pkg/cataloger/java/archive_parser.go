@@ -314,11 +314,17 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo(ctx context.Co
 	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, pomPropertyMatches)
 	projects, _ := pomProjectByParentPath(j.archivePath, j.location, pomMatches)
 
+	// map of all the artifacts in the pom properties, in order to chek exact match with the filename
+	artifactsMap := make(map[string]bool)
+	for _, propertiesObj := range properties {
+		artifactsMap[propertiesObj.ArtifactID] = true
+	}
+
 	parentPaths := maps.Keys(properties)
 	slices.Sort(parentPaths)
 	for _, parentPath := range parentPaths {
 		propertiesObj := properties[parentPath]
-		if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name) {
+		if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name, artifactsMap) {
 			pomPropertiesObject = propertiesObj
 			if proj, exists := projects[parentPath]; exists {
 				pomProjectObject = proj
@@ -356,10 +362,15 @@ func (j *archiveParser) guessMainPackageNameAndVersionFromPomInfo(ctx context.Co
 	return name, version, licenses
 }
 
-func artifactIDMatchesFilename(artifactID, fileName string) bool {
+func artifactIDMatchesFilename(artifactID, fileName string, artifactsMap map[string]bool) bool {
 	if artifactID == "" || fileName == "" {
 		return false
 	}
+	// Ensure true is returned when filename matches the artifact ID, prevent random retrieval by checking prefix and suffix
+	if _, exists := artifactsMap[fileName]; exists {
+		return artifactID == fileName
+	}
+	// Use fallback check with suffix and prefix if no POM properties file matches the exact artifact name
 	return strings.HasPrefix(artifactID, fileName) || strings.HasSuffix(fileName, artifactID)
 }
 

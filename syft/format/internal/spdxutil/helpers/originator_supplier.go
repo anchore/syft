@@ -56,6 +56,10 @@ func Originator(p pkg.Package) (typ string, author string) { // nolint: funlen
 			if author == "" {
 				author = metadata.Manifest.Main.MustGet("Implementation-Vendor")
 			}
+			// Vendor is specified, hence set 'Organization' as the PackageSupplier
+			if author != "" {
+				typ = orgType
+			}
 		}
 
 	case pkg.LinuxKernelModule:
