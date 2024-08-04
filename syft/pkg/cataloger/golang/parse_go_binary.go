@@ -180,6 +180,10 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 	version := c.findMainModuleVersion(metadata, gbs, reader)
 
 	if version != "" {
+		// make sure version is prefixed with v as some build systems parsed
+		// during `findMainModuleVersion` can include incomplete semver
+		// vx.x.x is correct
+		version = ensurePrefix(version, "v")
 		main.Version = version
 		main.PURL = packageURL(main.Name, main.Version)
 
@@ -397,4 +401,11 @@ func createMainModuleFromPath(existing *extendedBuildInfo) debug.Module {
 		Path:    existing.Path,
 		Version: devel,
 	}
+}
+
+func ensurePrefix(s, prefix string) string {
+	if !strings.HasPrefix(s, prefix) {
+		return prefix + s
+	}
+	return s
 }

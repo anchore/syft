@@ -79,6 +79,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			want: Swift,
 		},
 		{
+			purl: "pkg:swiplpack/conditon@0.1.1",
+			want: Swipl,
+		},
+		{
 			purl: "pkg:luarocks/kong@3.7.0",
 			want: Lua,
 		},
@@ -218,6 +222,10 @@ func TestLanguageByName(t *testing.T) {
 		{
 			name:     "swift",
 			language: Swift,
+		},
+		{
+			name:     "swiplpack",
+			language: Swipl,
 		},
 		{
 			name:     "pod",

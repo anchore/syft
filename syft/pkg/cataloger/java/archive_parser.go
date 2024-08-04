@@ -322,11 +322,17 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
 	projects, _ := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
 
+	// map of all the artifacts in the pom properties, in order to chek exact match with the filename
+	artifactsMap := make(map[string]bool)
+	for _, propertiesObj := range properties {
+		artifactsMap[propertiesObj.ArtifactID] = true
+	}
+
 	parentPaths := maps.Keys(properties)
 	slices.Sort(parentPaths)
 	for _, parentPath := range parentPaths {
 		propertiesObj := properties[parentPath]
-		if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name) {
+		if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name, artifactsMap) {
 			pomProperties = propertiesObj
 			if proj, exists := projects[parentPath]; exists {
 				parsedPom = proj
@@ -355,10 +361,15 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	return group, name, version, parsedPom
 }
 
-func artifactIDMatchesFilename(artifactID, fileName string) bool {
+func artifactIDMatchesFilename(artifactID, fileName string, artifactsMap map[string]bool) bool {
 	if artifactID == "" || fileName == "" {
 		return false
 	}
+	// Ensure true is returned when filename matches the artifact ID, prevent random retrieval by checking prefix and suffix
+	if _, exists := artifactsMap[fileName]; exists {
+		return artifactID == fileName
+	}
+	// Use fallback check with suffix and prefix if no POM properties file matches the exact artifact name
 	return strings.HasPrefix(artifactID, fileName) || strings.HasSuffix(fileName, artifactID)
 }
 

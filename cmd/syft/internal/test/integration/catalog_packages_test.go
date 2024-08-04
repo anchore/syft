@@ -51,6 +51,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedLanguages.Remove(pkg.Rust.String())
 	definedLanguages.Remove(pkg.Dart.String())
 	definedLanguages.Remove(pkg.Swift.String())
+	definedLanguages.Remove(pkg.Swipl.String())
 	definedLanguages.Remove(pkg.CPP.String())
 	definedLanguages.Remove(pkg.Haskell.String())
 	definedLanguages.Remove(pkg.Elixir.String())
@@ -76,6 +77,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
 	definedPkgs.Remove(string(pkg.SwiftPkg))
+	definedPkgs.Remove(string(pkg.SwiplPackPkg))
 	definedPkgs.Remove(string(pkg.GithubActionPkg))
 	definedPkgs.Remove(string(pkg.GithubActionWorkflowPkg))
 
