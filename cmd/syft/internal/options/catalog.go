@@ -64,6 +64,7 @@ func DefaultCatalog() Catalog {
 		Package:       defaultPackageConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
 		Golang:        defaultGolangConfig(),
+		Java:          defaultJavaConfig(),
 		File:          defaultFileConfig(),
 		Relationships: defaultRelationshipsConfig(),
 		Source:        defaultSourceConfig(),
@@ -150,6 +151,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
+			WithUseMavenLocalRepository(cfg.Java.UseMavenLocalRepository).
+			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
 			WithUseNetwork(cfg.Java.UseNetwork).
 			WithMavenBaseURL(cfg.Java.MavenURL).
 			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth),
