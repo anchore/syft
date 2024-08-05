@@ -46,7 +46,12 @@ func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]inter
 		componentsPresent = true
 	}
 
-	if bom.Metadata.Component != nil {
+	if bom.Metadata.Component != nil &&
+		(bom.Metadata.Component.Type == cyclonedx.ComponentTypeApplication ||
+			bom.Metadata.Component.Type == cyclonedx.ComponentTypeFramework ||
+			bom.Metadata.Component.Type == cyclonedx.ComponentTypeLibrary ||
+			bom.Metadata.Component.Type == cyclonedx.ComponentTypePlatform) {
+
 		components = append(components, *bom.Metadata.Component)
 		componentsPresent = true
 		if bom.Metadata.Component.Components != nil {
