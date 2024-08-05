@@ -5,8 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,6 +18,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/vifraa/gopom"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -28,61 +27,14 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func generateJavaBuildFixture(t *testing.T, fixturePath string) {
-	if _, err := os.Stat(fixturePath); !os.IsNotExist(err) {
-		// fixture already exists...
-		return
-	}
-
-	makeTask := strings.TrimPrefix(fixturePath, "test-fixtures/java-builds/")
-	t.Logf(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Errorf("unable to get cwd: %+v", err)
-	}
-
-	cmd := exec.Command("make", makeTask)
-	cmd.Dir = filepath.Join(cwd, "test-fixtures/java-builds/")
-
-	run(t, cmd)
-}
-
-func generateMockMavenHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		// Set the Content-Type header to indicate that the response is XML
-		w.Header().Set("Content-Type", "application/xml")
-		// Copy the file's content to the response writer
-		file, err := os.Open(responseFixture)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer file.Close()
-		_, err = io.Copy(w, file)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-}
-
-type handlerPath struct {
-	path    string
-	handler func(w http.ResponseWriter, r *http.Request)
-}
-
 func TestSearchMavenForLicenses(t *testing.T) {
-	mux, url, teardown := setup()
-	defer teardown()
+	url := mockMavenRepo(t)
+
 	tests := []struct {
 		name             string
 		fixture          string
 		detectNested     bool
 		config           ArchiveCatalogerConfig
-		requestPath      string
-		requestHandlers  []handlerPath
 		expectedLicenses []pkg.License
 	}{
 		{
@@ -91,23 +43,16 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			detectNested: false,
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              true,
+				UseMavenLocalRepository: false,
 				MavenBaseURL:            url,
-				MaxParentRecursiveDepth: 2,
-			},
-			requestHandlers: []handlerPath{
-				{
-					path:    "/org/opensaml/opensaml-parent/3.4.6/opensaml-parent-3.4.6.pom",
-					handler: generateMockMavenHandler("test-fixtures/maven-xml-responses/opensaml-parent-3.4.6.pom"),
-				},
-				{
-					path:    "/net/shibboleth/parent/7.11.2/parent-7.11.2.pom",
-					handler: generateMockMavenHandler("test-fixtures/maven-xml-responses/parent-7.11.2.pom"),
-				},
 			},
 			expectedLicenses: []pkg.License{
 				{
-					Type:           license.Declared,
-					Value:          `The Apache Software License, Version 2.0`,
+					Type:  license.Declared,
+					Value: `The Apache Software License, Version 2.0`,
+					URLs: []string{
+						"http://www.apache.org/licenses/LICENSE-2.0.txt",
+					},
 					SPDXExpression: ``,
 				},
 			},
@@ -116,11 +61,6 @@ func TestSearchMavenForLicenses(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// configure maven central requests
-			for _, hdlr := range tc.requestHandlers {
-				mux.HandleFunc(hdlr.path, hdlr.handler)
-			}
-
 			// setup metadata fixture; note:
 			// this fixture has a pomProjectObject and has a parent object
 			// it has no licenses on either which is the condition for testing
@@ -138,34 +78,9 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			defer cleanupFn()
 
 			// assert licenses are discovered from upstream
-			_, _, licenses := ap.guessMainPackageNameAndVersionFromPomInfo(context.Background())
-			assert.Equal(t, tc.expectedLicenses, licenses)
-		})
-	}
-}
-
-func TestFormatMavenURL(t *testing.T) {
-	tests := []struct {
-		name       string
-		groupID    string
-		artifactID string
-		version    string
-		expected   string
-	}{
-		{
-			name:       "formatMavenURL correctly assembles the pom URL",
-			groupID:    "org.springframework.boot",
-			artifactID: "spring-boot-starter-test",
-			version:    "3.1.5",
-			expected:   "https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-starter-test/3.1.5/spring-boot-starter-test-3.1.5.pom",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			requestURL, err := formatMavenPomURL(tc.groupID, tc.artifactID, tc.version, mavenBaseURL)
-			assert.NoError(t, err, "expected no err; got %w", err)
-			assert.Equal(t, tc.expected, requestURL)
+			_, _, _, parsedPom := ap.discoverMainPackageFromPomInfo(context.Background())
+			licenses, _ := ap.maven.resolveLicenses(context.Background(), parsedPom.project)
+			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(nil, licenses))
 		})
 	}
 }
@@ -424,10 +339,14 @@ func TestParseJar(t *testing.T) {
 				test.expected[k] = p
 			}
 
+			cfg := ArchiveCatalogerConfig{
+				UseNetwork:              false,
+				UseMavenLocalRepository: false,
+			}
 			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
-			}, false, ArchiveCatalogerConfig{UseNetwork: false})
+			}, false, cfg)
 			defer cleanupFn()
 			require.NoError(t, err)
 
@@ -843,26 +762,23 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version:    "1.0",
 			},
 			project: &parsedPomProject{
-				JavaPomProject: &pkg.JavaPomProject{
-					Parent: &pkg.JavaPomParent{
-						GroupID:    "some-parent-group-id",
-						ArtifactID: "some-parent-artifact-id",
-						Version:    "1.0-parent",
+				project: &gopom.Project{
+					Parent: &gopom.Parent{
+						GroupID:    ptr("some-parent-group-id"),
+						ArtifactID: ptr("some-parent-artifact-id"),
+						Version:    ptr("1.0-parent"),
 					},
-					Name:        "some-name",
-					GroupID:     "some-group-id",
-					ArtifactID:  "some-artifact-id",
-					Version:     "1.0",
-					Description: "desc",
-					URL:         "aweso.me",
-				},
-				Licenses: []pkg.License{
-					{
-						Value:          "MIT",
-						SPDXExpression: "MIT",
-						Type:           license.Declared,
-						URLs:           []string{"https://opensource.org/licenses/MIT"},
-						Locations:      file.NewLocationSet(file.NewLocation("some-license-path")),
+					Name:        ptr("some-name"),
+					GroupID:     ptr("some-group-id"),
+					ArtifactID:  ptr("some-artifact-id"),
+					Version:     ptr("1.0"),
+					Description: ptr("desc"),
+					URL:         ptr("aweso.me"),
+					Licenses: &[]gopom.License{
+						{
+							Name: ptr("MIT"),
+							URL:  ptr("https://opensource.org/licenses/MIT"),
+						},
 					},
 				},
 			},
@@ -898,7 +814,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 						SPDXExpression: "MIT",
 						Type:           license.Declared,
 						URLs:           []string{"https://opensource.org/licenses/MIT"},
-						Locations:      file.NewLocationSet(file.NewLocation("some-license-path")),
+						Locations:      file.NewLocationSet(file.NewLocation("given/virtual/path")),
 					},
 				),
 				Metadata: pkg.JavaArchive{
@@ -1122,7 +1038,8 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			}
 			test.expectedParent.Locations = locations
 
-			actualPackage := newPackageFromMavenData(context.Background(), test.props, test.project, test.parent, file.NewLocation(virtualPath), DefaultArchiveCatalogerConfig())
+			r := newMavenResolver(nil, DefaultArchiveCatalogerConfig())
+			actualPackage := newPackageFromMavenData(context.Background(), r, test.props, test.project, test.parent, file.NewLocation(virtualPath))
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {
@@ -1337,6 +1254,8 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 						PomProject: &pkg.JavaPomProject{
 							Path:        "META-INF/maven/org.apache.directory.api/api-asn1-api/pom.xml",
 							ArtifactID:  "api-asn1-api",
+							GroupID:     "org.apache.directory.api",
+							Version:     "2.0.0",
 							Name:        "Apache Directory API ASN.1 API",
 							Description: "ASN.1 API",
 							Parent: &pkg.JavaPomParent{
@@ -1388,14 +1307,12 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 
 func Test_deterministicMatchingPomProperties(t *testing.T) {
 	tests := []struct {
-		fixture         string
-		expectedName    string
-		expectedVersion string
+		fixture  string
+		expected mavenID
 	}{
 		{
-			fixture:         "multiple-matching-2.11.5",
-			expectedName:    "multiple-matching-1",
-			expectedVersion: "2.11.5",
+			fixture:  "multiple-matching-2.11.5",
+			expected: mavenID{"org.multiple", "multiple-matching-1", "2.11.5"},
 		},
 	}
 
@@ -1415,9 +1332,8 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 					defer cleanupFn()
 					require.NoError(t, err)
 
-					name, version, _ := parser.guessMainPackageNameAndVersionFromPomInfo(context.TODO())
-					require.Equal(t, test.expectedName, name)
-					require.Equal(t, test.expectedVersion, version)
+					groupID, artifactID, version, _ := parser.discoverMainPackageFromPomInfo(context.TODO())
+					require.Equal(t, test.expected, mavenID{groupID, artifactID, version})
 				}()
 			}
 		})
@@ -1434,6 +1350,26 @@ func assignParent(parent *pkg.Package, childPackages ...pkg.Package) {
 			childPackages[i].Metadata = v
 		}
 	}
+}
+
+func generateJavaBuildFixture(t *testing.T, fixturePath string) {
+	if _, err := os.Stat(fixturePath); !os.IsNotExist(err) {
+		// fixture already exists...
+		return
+	}
+
+	makeTask := strings.TrimPrefix(fixturePath, "test-fixtures/java-builds/")
+	t.Logf(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Errorf("unable to get cwd: %+v", err)
+	}
+
+	cmd := exec.Command("make", makeTask)
+	cmd.Dir = filepath.Join(cwd, "test-fixtures/java-builds/")
+
+	run(t, cmd)
 }
 
 func generateJavaMetadataJarFixture(t *testing.T, fixtureName string) string {
@@ -1504,20 +1440,7 @@ func run(t testing.TB, cmd *exec.Cmd) {
 	}
 }
 
-// setup sets up a test HTTP server for mocking requests to maven central.
-// The returned url is injected into the Config so the client uses the test server.
-// Tests should register handlers on mux to simulate the expected request/response structure
-func setup() (mux *http.ServeMux, serverURL string, teardown func()) {
-	// mux is the HTTP request multiplexer used with the test server.
-	mux = http.NewServeMux()
-
-	// We want to ensure that tests catch mistakes where the endpoint URL is
-	// specified as absolute rather than relative. It only makes a difference
-	// when there's a non-empty base URL path. So, use that. See issue #752.
-	apiHandler := http.NewServeMux()
-	apiHandler.Handle("/", mux)
-	// server is a test HTTP server used to provide mock API responses.
-	server := httptest.NewServer(apiHandler)
-
-	return mux, server.URL, server.Close
+// ptr returns a pointer to the given value
+func ptr[T any](value T) *T {
+	return &value
 }

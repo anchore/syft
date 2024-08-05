@@ -310,6 +310,11 @@ func TestFileParser(t *testing.T, fixturePath string, parser generic.Parser, exp
 	NewCatalogTester().FromFile(t, fixturePath).Expects(expectedPkgs, expectedRelationships).TestParser(t, parser)
 }
 
+func TestCataloger(t *testing.T, fixtureDir string, cataloger pkg.Cataloger, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
+	t.Helper()
+	NewCatalogTester().FromDirectory(t, fixtureDir).Expects(expectedPkgs, expectedRelationships).TestCataloger(t, cataloger)
+}
+
 func TestFileParserWithEnv(t *testing.T, fixturePath string, parser generic.Parser, env *generic.Environment, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
 	t.Helper()
 
