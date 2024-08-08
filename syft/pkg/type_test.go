@@ -115,6 +115,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:swiplpack/condition@0.1.1",
 			expected: SwiplPackPkg,
 		},
+		{
+			purl:     "pkg:opam/ocaml-base-compiler@5.2.0",
+			expected: OpamPkg,
+		},
 	}
 
 	var pkgTypes []string

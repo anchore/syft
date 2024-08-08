@@ -1,0 +1,93 @@
+opam-version: "2.0"
+synopsis: "Official release 4.14.0"
+maintainer: [
+  "David Allsopp <david@tarides.com>"
+  "Florian Angeletti <florian.angeletti@inria.fr>"
+]
+authors: "Xavier Leroy and many contributors"
+license: "LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception"
+homepage: "https://ocaml.org"
+bug-reports: "https://github.com/ocaml/opam-repository/issues"
+depends: [
+  "ocaml" {= "4.14.0" & post}
+  "base-unix" {post}
+  "base-bigarray" {post}
+  "base-threads" {post}
+  "host-arch-arm32" {arch = "arm32" & post}
+  "host-arch-arm64" {arch = "arm64" & post}
+  "host-arch-ppc64" {arch = "ppc64" & post}
+  "host-arch-riscv64" {arch = "riscv64" & post}
+  "host-arch-s390x" {arch = "s390x" & post}
+  "host-arch-x86_32" {os != "win32" & arch = "x86_32" & post}
+  "host-arch-x86_64" {os != "win32" & arch = "x86_64" & post}
+  "host-arch-unknown"
+    {os != "win32" & arch != "arm32" & arch != "arm64" & arch != "ppc64" &
+     arch != "riscv64" &
+     arch != "s390x" &
+     arch != "x86_32" &
+     arch != "x86_64" &
+     post}
+  (("arch-x86_64" {os = "win32" & arch = "x86_64"} &
+    (("system-mingw" & "mingw-w64-shims" {os-distribution = "cygwin" & post}) |
+     "system-msvc")) |
+   ("arch-x86_32" {os = "win32"} &
+    (("system-mingw" & "mingw-w64-shims" {os-distribution = "cygwin" & post}) |
+     "system-msvc")) |
+   "host-system-other" {os != "win32" & post})
+  "ocaml-options-vanilla" {post}
+  "flexdll" {>= "0.36" & os = "win32"}
+]
+conflict-class: "ocaml-core-compiler"
+flags: compiler
+setenv: CAML_LD_LIBRARY_PATH = "%{lib}%/stublibs"
+build: [
+  [
+    "./configure"
+    "--host=x86_64-pc-windows"
+      {system-msvc:installed & arch-x86_64:installed}
+    "--host=x86_64-w64-mingw32"
+      {os-distribution = "cygwin" & system-mingw:installed &
+       arch-x86_64:installed}
+    "--host=i686-pc-windows" {system-msvc:installed & arch-x86_32:installed}
+    "--host=i686-w64-mingw32"
+      {os-distribution = "cygwin" & system-mingw:installed &
+       arch-x86_32:installed}
+    "--prefix=%{prefix}%"
+    "--docdir=%{doc}%/ocaml"
+    "--with-flexdll=%{flexdll:share}%" {os = "win32" & flexdll:installed}
+    "-C"
+    "CC=cc" {os = "openbsd" | os = "macos"}
+    "ASPP=cc -c" {os = "openbsd" | os = "macos"}
+  ]
+  [make "-j%{jobs}%"]
+]
+install: [make "install"]
+build-env: MSYS2_ARG_CONV_EXCL = "*"
+post-messages: [
+  """\
+A failure in the middle of the build may be caused by build parallelism
+   (enabled by default).
+   Please file a bug report at https://github.com/ocaml/opam-repository/issues"""
+    {failure & jobs > "1"}
+  """\
+You can try installing again including --jobs=1
+   to force a sequential build instead."""
+    {failure & jobs > "1" & opam-version >= "2.0.5"}
+]
+dev-repo: "git+https://github.com/ocaml/ocaml#4.14"
+url {
+  src: "https://github.com/ocaml/ocaml/archive/4.14.0.tar.gz"
+  checksum:
+    "sha256=39f44260382f28d1054c5f9d8bf4753cb7ad64027da792f7938344544da155e8"
+}
+extra-source "ocaml-base-compiler.install" {
+  src:
+    "https://raw.githubusercontent.com/ocaml/opam-source-archives/main/patches/ocaml-base-compiler/ocaml-base-compiler.install"
+  checksum: [
+    "sha256=79f2a1a5044a91350a0eb6ce12e261a72a2855c094c425cddf3860e58c486678"
+    "md5=3e969b841df1f51ca448e6e6295cb451"
+  ]
+}
+x-env-path-rewrite: [
+  [CAML_LD_LIBRARY_PATH (";" {os = "win32"} ":" {os != "win32"}) "target"]
+]

@@ -273,6 +273,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.OpamPkg,
+			},
+			expected: []string{
+				"acquired package info from OCaml opam package file",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.GithubActionPkg,
 			},
 			expected: []string{
