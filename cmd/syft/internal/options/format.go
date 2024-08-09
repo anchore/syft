@@ -50,7 +50,7 @@ if false, uses the syft-json output for templating (which follows the syft JSON 
 
 Note: long term support for this option is not guaranteed (it may change or break at any time)`)
 
-	prettyDescription := `include space indention and newlines
+	prettyDescription := `include space indentation and newlines
 note: inherits default value from 'format.pretty' or 'false' if parent is unset`
 	descriptions.Add(&o.SyftJSON.Pretty, prettyDescription)
 	descriptions.Add(&o.SPDXJSON.Pretty, prettyDescription)

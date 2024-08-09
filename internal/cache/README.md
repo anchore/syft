@@ -1,6 +1,6 @@
 # Caching
 
-All caches are created from a global `manager`. By defaut this is a `bypassedCache`, which performs no caching.
+All caches are created from a global `manager`. By default this is a `bypassedCache`, which performs no caching.
 One benefit of this is that tests don't need to worry about caching causing issues unless they explicitly need
 to test the cache and can opt-in using the `cache.TestCache(t)` helper.
 
