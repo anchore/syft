@@ -212,7 +212,7 @@ Finally, here is an example of where the package construction is done within the
 - [The APK package constructor itself](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/package.go#L12-L27)
 
 Interested in building a new cataloger? Checkout the [list of issues with the `new-cataloger` label](https://github.com/anchore/syft/issues?q=is%3Aopen+is%3Aissue+label%3Anew-cataloger+no%3Aassignee)!
-If you have questions about implementing a cataloger feel free to file an issue or reach out to us [on slack](https://anchore.com/slack)!
+If you have questions about implementing a cataloger feel free to file an issue or reach out to us [on discourse](https://anchore.com/discourse)!
 
 
 #### Searching for files
