@@ -1,0 +1,32 @@
+{
+  "bomFormat" : "CycloneDX",
+  "specVersion" : "1.5",
+  "serialNumber" : "urn:uuid:dc807d4b-0415-35ab-ba61-49b5d39bc2d9",
+  "version" : 1,
+  "metadata" : {
+    "component" : {
+      "name" : "main-component",
+      "version" : "1.2.3",
+      "purl" : "pkg:maven/org.example/main-component@1.2.3",
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.example/main-component@1.2.3"
+    }
+  },
+  "components" : [
+    {
+      "name" : "first-subcomponent",
+      "version" : "2.3.4",
+      "purl" : "pkg:maven/org.example/first-subcomponent@2.3.4",
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.example/first-subcomponent@2.3.4"
+    }
+  ],
+  "dependencies" : [
+    {
+      "ref" : "pkg:maven/org.example/main-component-assembly@1.2.3",
+      "dependsOn" : [
+        "pkg:maven/org.example/first-subcomponent@2.3.4"
+      ]
+    }
+  ]
+}
