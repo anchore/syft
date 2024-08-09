@@ -109,6 +109,8 @@ func Originator(p pkg.Package) (typ string, author string) { // nolint: funlen
 		author = metadata.Author
 	case pkg.SwiplPackEntry:
 		author = formatPersonOrOrg(metadata.Author, metadata.AuthorEmail)
+	case pkg.OpamPackage:
+		author = formatPersonOrOrg(metadata.Author, metadata.AuthorEmail)
 	}
 
 	if typ == "" && author != "" {
@@ -151,6 +153,10 @@ func Supplier(p pkg.Package) (typ string, author string) {
 	}
 
 	if metadata, ok := p.Metadata.(pkg.SwiplPackEntry); ok {
+		author = formatPersonOrOrg(metadata.Packager, metadata.PackagerEmail)
+	}
+
+	if metadata, ok := p.Metadata.(pkg.OpamPackage); ok {
 		author = formatPersonOrOrg(metadata.Packager, metadata.PackagerEmail)
 	}
 

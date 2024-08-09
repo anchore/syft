@@ -41,6 +41,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.RustCargoLockEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.SwiplPackEntry{},
+		pkg.OpamPackage{},
 		pkg.YarnLockEntry{},
 	)
 	tests := []struct {
@@ -341,6 +342,19 @@ func Test_OriginatorSupplier(t *testing.T) {
 			name: "from swipl pack",
 			input: pkg.Package{
 				Metadata: pkg.SwiplPackEntry{
+					Author:        "auth",
+					AuthorEmail:   "auth@auth.gov",
+					Packager:      "me",
+					PackagerEmail: "me@auth.com",
+				},
+			},
+			originator: "Person: auth (auth@auth.gov)",
+			supplier:   "Person: me (me@auth.com)",
+		},
+		{
+			name: "from ocaml opam",
+			input: pkg.Package{
+				Metadata: pkg.OpamPackage{
 					Author:        "auth",
 					AuthorEmail:   "auth@auth.gov",
 					Packager:      "me",

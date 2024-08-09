@@ -484,4 +484,12 @@ var commonTestCases = []testCase{
 			"kong": "3.7.0-0",
 		},
 	},
+	{
+		name:        "find opam package",
+		pkgType:     pkg.OpamPkg,
+		pkgLanguage: pkg.OCaml,
+		pkgInfo: map[string]string{
+			"ocaml-base-compiler.": "4.14.0",
+		},
+	},
 }
