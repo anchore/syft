@@ -777,6 +777,12 @@
         },
         "executable": {
           "$ref": "#/$defs/Executable"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object",

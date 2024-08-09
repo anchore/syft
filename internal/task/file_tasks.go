@@ -3,7 +3,6 @@ package task
 import (
 	"context"
 	"crypto"
-	"fmt"
 
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
@@ -32,15 +31,12 @@ func NewFileDigestCatalogerTask(selection file.Selection, hashers ...crypto.Hash
 		}
 
 		result, err := digestsCataloger.Catalog(ctx, resolver, coordinates...)
-		if err != nil {
-			return fmt.Errorf("unable to catalog file digests: %w", err)
-		}
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
 			sbom.Artifacts.FileDigests = result
 		})
 
-		return nil
+		return err
 	}
 
 	return NewTask("file-digest-cataloger", fn)
@@ -62,15 +58,12 @@ func NewFileMetadataCatalogerTask(selection file.Selection) Task {
 		}
 
 		result, err := metadataCataloger.Catalog(ctx, resolver, coordinates...)
-		if err != nil {
-			return err
-		}
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
 			sbom.Artifacts.FileMetadata = result
 		})
 
-		return nil
+		return err
 	}
 
 	return NewTask("file-metadata-cataloger", fn)
@@ -87,15 +80,12 @@ func NewFileContentCatalogerTask(cfg filecontent.Config) Task {
 		accessor := builder.(sbomsync.Accessor)
 
 		result, err := cat.Catalog(ctx, resolver)
-		if err != nil {
-			return err
-		}
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
 			sbom.Artifacts.FileContents = result
 		})
 
-		return nil
+		return err
 	}
 
 	return NewTask("file-content-cataloger", fn)
@@ -112,15 +102,12 @@ func NewExecutableCatalogerTask(selection file.Selection, cfg executable.Config)
 		accessor := builder.(sbomsync.Accessor)
 
 		result, err := cat.Catalog(resolver)
-		if err != nil {
-			return err
-		}
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
 			sbom.Artifacts.Executables = result
 		})
 
-		return nil
+		return err
 	}
 
 	return NewTask("file-executable-cataloger", fn)

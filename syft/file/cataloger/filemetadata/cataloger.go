@@ -8,6 +8,7 @@ import (
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 )
@@ -20,6 +21,7 @@ func NewCataloger() *Cataloger {
 }
 
 func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates]file.Metadata, error) {
+	var errs error
 	results := make(map[file.Coordinates]file.Metadata)
 	var locations <-chan file.Location
 	ctx, cancel := context.WithCancel(ctx)
@@ -34,7 +36,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 				for _, c := range coordinates {
 					locs, err := resolver.FilesByPath(c.RealPath)
 					if err != nil {
-						log.Warn("unable to get file locations for path %q: %w", c.RealPath, err)
+						errs = unknown.Append(errs, c, err)
 						continue
 					}
 					for _, loc := range locs {
@@ -71,7 +73,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 	prog.AtomicStage.Set(fmt.Sprintf("%s locations", humanize.Comma(prog.Current())))
 	prog.SetCompleted()
 
-	return results, nil
+	return results, errs
 }
 
 func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {

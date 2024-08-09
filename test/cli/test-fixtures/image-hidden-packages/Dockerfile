@@ -1,4 +1,4 @@
-FROM centos:7.9.2009@sha256:dead07b4d8ed7e29e98de0f4504d87e8880d4347859d839686a31da35a3b532f
+FROM alpine:3.20.1@sha256:dabf91b69c191a1a0a1628fd6bdd029c0c4018041c7f052870bb13c5a222ae76
 # all-layers scope should pickup on vsftpd
-RUN yum install -y vsftpd
-RUN yum remove -y vsftpd
+RUN apk update && apk add -f vsftpd
+RUN apk del -f vsftpd

@@ -13,6 +13,7 @@ type File struct {
 	Digests    []file.Digest      `json:"digests,omitempty"`
 	Licenses   []FileLicense      `json:"licenses,omitempty"`
 	Executable *file.Executable   `json:"executable,omitempty"`
+	Unknowns   []string           `json:"unknowns,omitempty"`
 }
 
 type FileMetadataEntry struct {

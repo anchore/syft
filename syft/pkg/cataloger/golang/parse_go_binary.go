@@ -66,9 +66,9 @@ func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resol
 	if err != nil {
 		return nil, nil, err
 	}
+	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	mods := scanFile(unionReader, reader.RealPath)
-	internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
+	mods, errs := scanFile(reader.Location, unionReader)
 
 	var rels []artifact.Relationship
 	for _, mod := range mods {
@@ -81,7 +81,7 @@ func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resol
 		pkgs = append(pkgs, depPkgs...)
 	}
 
-	return pkgs, rels, nil
+	return pkgs, rels, errs
 }
 
 func createModuleRelationships(main pkg.Package, deps []pkg.Package) []artifact.Relationship {

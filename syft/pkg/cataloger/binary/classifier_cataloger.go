@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -59,12 +60,14 @@ func (c cataloger) Name() string {
 func (c cataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
+	var errs error
 
 	for _, cls := range c.classifiers {
 		log.WithFields("classifier", cls.Class).Trace("cataloging binaries")
 		newPkgs, err := catalog(resolver, cls)
 		if err != nil {
-			log.WithFields("error", err, "classifier", cls.Class).Warn("unable to catalog binary package: %w", err)
+			log.WithFields("error", err, "classifier", cls.Class).Warn("unable to catalog binary package: %v", err)
+			errs = unknown.Join(errs, err)
 			continue
 		}
 	newPackages:
@@ -82,7 +85,7 @@ func (c cataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Pac
 		}
 	}
 
-	return packages, relationships, nil
+	return packages, relationships, errs
 }
 
 // mergePackages merges information from the extra package into the target package
@@ -98,6 +101,7 @@ func mergePackages(target *pkg.Package, extra *pkg.Package) {
 }
 
 func catalog(resolver file.Resolver, cls Classifier) (packages []pkg.Package, err error) {
+	var errs error
 	locations, err := resolver.FilesByGlob(cls.FileGlob)
 	if err != nil {
 		return nil, err
@@ -105,11 +109,12 @@ func catalog(resolver file.Resolver, cls Classifier) (packages []pkg.Package, er
 	for _, location := range locations {
 		pkgs, err := cls.EvidenceMatcher(cls, matcherContext{resolver: resolver, location: location})
 		if err != nil {
-			return nil, err
+			errs = unknown.Append(errs, location, err)
+			continue
 		}
 		packages = append(packages, pkgs...)
 	}
-	return packages, nil
+	return packages, errs
 }
 
 // packagesMatch returns true if the binary packages "match" based on basic criteria

@@ -39,3 +39,7 @@ func (c Coordinates) String() string {
 	}
 	return fmt.Sprintf("Location<%s>", str)
 }
+
+func (c Coordinates) GetCoordinates() Coordinates {
+	return c
+}

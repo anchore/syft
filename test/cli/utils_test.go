@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/stereoscope/pkg/imagetest"
 )
 
@@ -267,11 +269,15 @@ func getSyftCommand(t testing.TB, args ...string) *exec.Cmd {
 }
 
 func getSyftBinaryLocation(t testing.TB) string {
-	if os.Getenv("SYFT_BINARY_LOCATION") != "" {
+	const envKey = "SYFT_BINARY_LOCATION"
+	if os.Getenv(envKey) != "" {
 		// SYFT_BINARY_LOCATION is the absolute path to the snapshot binary
-		return os.Getenv("SYFT_BINARY_LOCATION")
+		return os.Getenv(envKey)
 	}
-	return getSyftBinaryLocationByOS(t, runtime.GOOS)
+	loc := getSyftBinaryLocationByOS(t, runtime.GOOS)
+	buildBinary(t, loc)
+	_ = os.Setenv(envKey, loc)
+	return loc
 }
 
 func getSyftBinaryLocationByOS(t testing.TB, goOS string) string {
@@ -289,6 +295,21 @@ func getSyftBinaryLocationByOS(t testing.TB, goOS string) string {
 		t.Fatalf("unsupported OS: %s", runtime.GOOS)
 	}
 	return ""
+}
+
+func buildBinary(t testing.TB, loc string) {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(repoRoot(t)))
+	defer func() {
+		require.NoError(t, os.Chdir(wd))
+	}()
+	t.Log("Building syft...")
+	c := exec.Command("go", "build", "-o", loc, "./cmd/syft")
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+	c.Stdin = os.Stdin
+	require.NoError(t, c.Run())
 }
 
 func repoRoot(t testing.TB) string {

@@ -82,7 +82,7 @@ func (f PackageTaskFactories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error)
 
 // NewPackageTask creates a Task function for a generic pkg.Cataloger, honoring the common configuration options.
 //
-//nolint:funlen
+//nolint:funlen,gocognit
 func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string) Task {
 	fn := func(ctx context.Context, resolver file.Resolver, sbom sbomsync.Builder) error {
 		catalogerName := c.Name()
@@ -101,9 +101,6 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 		t := bus.StartCatalogerTask(info, -1, "")
 
 		pkgs, relationships, err := c.Catalog(ctx, resolver)
-		if err != nil {
-			return fmt.Errorf("unable to catalog packages with %q: %w", c.Name(), err)
-		}
 
 		log.WithFields("cataloger", c.Name()).Debugf("discovered %d packages", len(pkgs))
 
@@ -147,7 +144,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 		t.SetCompleted()
 		log.WithFields("name", c.Name()).Trace("package cataloger completed")
 
-		return nil
+		return err
 	}
 	tags = append(tags, pkgcataloging.PackageTag)
 
