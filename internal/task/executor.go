@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"runtime/debug"
 	"sync"
+	"time"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/anchore/syft/internal/sbomsync"
@@ -68,5 +70,8 @@ func runTaskSafely(ctx context.Context, t Task, resolver file.Resolver, s sbomsy
 		}
 	}()
 
-	return t.Execute(ctx, resolver, s)
+	start := time.Now()
+	res := t.Execute(ctx, resolver, s)
+	log.Debugf("task name: %s time to execute: %v", t.Name(), time.Since(start))
+	return res
 }
