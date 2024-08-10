@@ -14,6 +14,7 @@ import (
 )
 
 type Config struct {
+	Enabled    bool               `yaml:"enabled" json:"enabled" mapstructure:"enabled"`
 	Selection  file.Selection     `yaml:"selection" json:"selection" mapstructure:"selection"`
 	Hashers    []crypto.Hash      `yaml:"hashers" json:"hashers" mapstructure:"hashers"`
 	Content    filecontent.Config `yaml:"content" json:"content" mapstructure:"content"`

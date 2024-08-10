@@ -13,8 +13,9 @@ var _ sbom.FormatEncoder = (*encoder)(nil)
 const ID sbom.FormatID = "syft-json"
 
 type EncoderConfig struct {
-	Legacy bool // transform the output to the legacy syft-json format (pre v1.0 changes, enumerated in the README.md)
-	Pretty bool // don't include spaces and newlines; same as jq -c
+	Legacy       bool // transform the output to the legacy syft-json format (pre v1.0 changes, enumerated in the README.md)
+	Pretty       bool // don't include spaces and newlines; same as jq -c
+	IncludeFiles bool
 }
 
 type encoder struct {
@@ -37,8 +38,9 @@ func NewFormatEncoderWithConfig(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 
 func DefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{
-		Legacy: false,
-		Pretty: false,
+		Legacy:       false,
+		Pretty:       false,
+		IncludeFiles: true,
 	}
 }
 
