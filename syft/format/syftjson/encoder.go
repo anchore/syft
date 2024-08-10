@@ -38,9 +38,8 @@ func NewFormatEncoderWithConfig(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 
 func DefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{
-		Legacy:       false,
-		Pretty:       false,
-		IncludeFiles: true,
+		Legacy: false,
+		Pretty: false,
 	}
 }
 
