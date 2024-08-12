@@ -23,6 +23,7 @@ var (
 	}
 
 	PrimaryJavaManifestGroupIDFields = []string{
+		"Group-Id",
 		"Bundle-SymbolicName",
 		"Extension-Name",
 		"Specification-Vendor",

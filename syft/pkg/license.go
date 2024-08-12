@@ -70,7 +70,7 @@ func NewLicenseFromType(value string, t license.Type) License {
 		var err error
 		spdxExpression, err = license.ParseExpression(value)
 		if err != nil {
-			log.Trace("unable to parse license expression: %w", err)
+			log.WithFields("error", err, "expression", value).Trace("unable to parse license expression")
 		}
 	}
 
