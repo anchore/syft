@@ -65,7 +65,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			// this fixture has a pomProjectObject and has a parent object
 			// it has no licenses on either which is the condition for testing
 			// the searchMavenForLicenses functionality
-			jarName := generateJavaMetadataJarFixture(t, tc.fixture)
+			jarName := generateJavaMetadataJarFixture(t, tc.fixture, "jar")
 			fixture, err := os.Open(jarName)
 			require.NoError(t, err)
 
@@ -1088,6 +1088,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 	tests := []struct {
 		name                  string
 		fixtureName           string
+		fileExtension         string
 		expectedPkgs          []pkg.Package
 		expectedRelationships []artifact.Relationship
 		assignParent          bool
@@ -1280,6 +1281,45 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 			fixtureName:  "spring-instrumentation-4.3.0-1.0",
 			expectedPkgs: nil, // we expect no packages to be discovered when Weave-Classes present in the manifest
 		},
+		{
+			name:          "Jenkins plugins assigned jenkins-plugin package type",
+			fixtureName:   "gradle",
+			fileExtension: "hpi",
+			expectedPkgs: []pkg.Package{
+				{
+					Name:      "gradle",
+					Version:   "2.11",
+					Type:      pkg.JenkinsPluginPkg,
+					Language:  pkg.Java,
+					PURL:      "pkg:maven/org.jenkins-ci.plugins/gradle@2.11",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/gradle.hpi")),
+					Metadata: pkg.JavaArchive{
+						VirtualPath: "test-fixtures/jar-metadata/cache/gradle.hpi",
+						Manifest: &pkg.JavaManifest{
+							Main: pkg.KeyValues{
+								{Key: "Manifest-Version", Value: "1.0"},
+								{
+									Key:   "Plugin-Dependencies",
+									Value: "maven-plugin:3.14;resolution:=optional...snip",
+								},
+								{Key: "Group-Id", Value: "org.jenkins-ci.plugins"},
+								{Key: "Minimum-Java-Version", Value: "1.8"},
+								{Key: "Short-Name", Value: "gradle"},
+								{Key: "Extension-Name", Value: "gradle"},
+								{Key: "Long-Name", Value: "Gradle Plugin"},
+								{Key: "Jenkins-Version", Value: "2.303.3"},
+								{Key: "Url", Value: "https://github.com/jenkinsci/gradle-plugin"},
+								{Key: "Compatible-Since-Version", Value: "1.0"},
+								{Key: "Plugin-Version", Value: "2.11"},
+								{Key: "Plugin-Developers", Value: "Stefan Wolf:wolfs:"},
+							},
+						},
+						// not under test
+						//ArchiveDigests: []file.Digest{{Algorithm: "sha1", Value: "d8bc1d9c428c96fe447e2c429fc4304d141024df"}},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1291,7 +1331,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 				tt.expectedPkgs[i].SetID()
 			}
 			pkgtest.NewCatalogTester().
-				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName)).
+				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName, tt.fileExtension)).
 				Expects(tt.expectedPkgs, tt.expectedRelationships).
 				WithCompareOptions(
 					cmpopts.IgnoreFields(pkg.JavaArchive{}, "ArchiveDigests"),
@@ -1324,7 +1364,7 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			fixturePath := generateJavaMetadataJarFixture(t, test.fixture)
+			fixturePath := generateJavaMetadataJarFixture(t, test.fixture, "jar")
 
 			for i := 0; i < 5; i++ {
 				func() {
@@ -1378,14 +1418,18 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 	run(t, cmd)
 }
 
-func generateJavaMetadataJarFixture(t *testing.T, fixtureName string) string {
-	fixturePath := filepath.Join("test-fixtures/jar-metadata/cache/", fixtureName+".jar")
+func generateJavaMetadataJarFixture(t *testing.T, fixtureName string, fileExtension string) string {
+	if fileExtension == "" {
+		fileExtension = "jar"
+	}
+
+	fixturePath := filepath.Join("test-fixtures/jar-metadata/cache/", fixtureName+"."+fileExtension)
 	if _, err := os.Stat(fixturePath); !os.IsNotExist(err) {
 		// fixture already exists...
 		return fixturePath
 	}
 
-	makeTask := filepath.Join("cache", fixtureName+".jar")
+	makeTask := filepath.Join("cache", fixtureName+"."+fileExtension)
 	t.Logf(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
 
 	cwd, err := os.Getwd()
