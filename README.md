@@ -12,7 +12,7 @@
  &nbsp;<a href="https://github.com/anchore/syft/releases/latest" target="_blank"><img alt="GitHub release" src="https://img.shields.io/github/release/anchore/syft.svg"></a>&nbsp;
  &nbsp;<a href="https://github.com/anchore/syft" target="_blank"><img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/anchore/syft.svg"></a>&nbsp;
  &nbsp;<a href="" target="_blank"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"></a>&nbsp;
- &nbsp;<a href="https://anchore.com/slack" target="_blank"><img alt="Slack" src="https://img.shields.io/badge/Slack-Join-blue?logo=slack"></a>&nbsp;
+ &nbsp;<a href="https://anchore.com/discourse" target="_blank"><img alt="Join our Discourse" src="https://img.shields.io/badge/Discourse-Join-blue?logo=discourse"/></a>&nbsp;
 </p>
 
 ![syft-demo](https://user-images.githubusercontent.com/590471/90277200-2a253000-de33-11ea-893f-32c219eea11a.gif)
