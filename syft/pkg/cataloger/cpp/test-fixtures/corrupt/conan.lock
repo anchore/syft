@@ -1,0 +1,10 @@
+{
+    corrupt json
+    version": "0.5",
+    "requires": [
+        "sound32/1.0#83d4b7bf607b3b60a6546f8b58b5cdd7%1675278904.0791488",
+        "matrix/1.1#905c3f0babc520684c84127378fefdd0%1675278901.7527816"
+    ],
+    "build_requires": [],
+    "python_requires": []
+}
