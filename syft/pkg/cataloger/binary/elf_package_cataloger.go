@@ -176,7 +176,7 @@ func getELFNotes(r file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
 		if len(notes) > headerSize {
 			var metadata elfBinaryPackageNotes
 			newPayload := bytes.TrimRight(notes[headerSize:], "\x00")
-			if err := json.Unmarshal(newPayload, &metadata); err == nil {
+			if err = json.Unmarshal(newPayload, &metadata); err == nil {
 				return &metadata, nil
 			}
 			log.WithFields("file", r.Location.Path(), "error", err).Trace("unable to unmarshal ELF package notes as JSON")
