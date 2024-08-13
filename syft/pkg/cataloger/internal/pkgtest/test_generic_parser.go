@@ -17,6 +17,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/internal/cmptest"
 	"github.com/anchore/syft/internal/relationship"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -113,6 +114,13 @@ func (p *CatalogTester) WithEnv(env *generic.Environment) *CatalogTester {
 
 func (p *CatalogTester) WithError() *CatalogTester {
 	p.wantErr = require.Error
+	return p
+}
+
+func (p *CatalogTester) WithUnknownError() *CatalogTester {
+	p.wantErr = func(t require.TestingT, err error, i ...interface{}) {
+		require.ErrorIs(t, err, &unknown.CoordinateError{})
+	}
 	return p
 }
 

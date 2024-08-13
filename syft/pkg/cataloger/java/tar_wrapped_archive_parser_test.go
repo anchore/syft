@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 func Test_parseTarWrappedJavaArchive(t *testing.T) {
@@ -56,4 +57,12 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 			assert.ElementsMatch(t, test.expected, actualNames)
 		})
 	}
+}
+
+func Test_corruptTarArchive(t *testing.T) {
+	ap := newGenericTarWrappedJavaArchiveParser(DefaultArchiveCatalogerConfig())
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/example.tar").
+		WithError().
+		TestParser(t, ap.parseTarWrappedJavaArchive)
 }

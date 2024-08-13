@@ -1494,3 +1494,11 @@ func run(t testing.TB, cmd *exec.Cmd) {
 func ptr[T any](value T) *T {
 	return &value
 }
+
+func Test_corruptJarArchive(t *testing.T) {
+	ap := newGenericArchiveParserAdapter(DefaultArchiveCatalogerConfig())
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/example.jar").
+		WithError().
+		TestParser(t, ap.parseJavaArchive)
+}
