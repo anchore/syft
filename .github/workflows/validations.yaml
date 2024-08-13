@@ -54,11 +54,11 @@ jobs:
           path: syft/pkg/cataloger/java/test-fixtures/java-builds/packages
           key: ${{ runner.os }}-unit-java-cache-${{ hashFiles( 'syft/pkg/cataloger/java/test-fixtures/java-builds/cache.fingerprint' ) }}
 
-      - name: Restore RPM test-fixture cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
-        with:
-          path: syft/pkg/cataloger/redhat/test-fixtures/rpms
-          key: ${{ runner.os }}-unit-rpm-cache-${{ hashFiles( 'syft/pkg/cataloger/redhat/test-fixtures/rpms.fingerprint' ) }}
+      # - name: Restore RPM test-fixture cache
+      #   uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
+      #   with:
+      #     path: syft/pkg/cataloger/redhat/test-fixtures/rpms
+      #     key: ${{ runner.os }}-unit-rpm-cache-${{ hashFiles( 'syft/pkg/cataloger/redhat/test-fixtures/rpms.fingerprint' ) }}
 
       - name: Restore go binary test-fixture cache
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
