@@ -257,6 +257,17 @@ func Test_parseDpkgStatus(t *testing.T) {
 	}
 }
 
+func Test_corruptEntry(t *testing.T) {
+	f, err := os.Open("test-fixtures/var/lib/dpkg/status.d/corrupt")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, f.Close()) })
+
+	reader := bufio.NewReader(f)
+
+	_, err = parseDpkgStatus(reader)
+	require.Error(t, err)
+}
+
 func TestSourceVersionExtract(t *testing.T) {
 	tests := []struct {
 		name     string
