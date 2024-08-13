@@ -40,4 +40,4 @@ func Test_removeRelationshipsByID(t *testing.T) {
 	}
 
 	require.Equal(t, rel(p3), relationships)
-}
+} 
