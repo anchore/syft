@@ -94,3 +94,10 @@ func TestParseRpmFiles(t *testing.T) {
 		})
 	}
 }
+
+func Test_corruptRpmArchive(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/bad/bad.rpm").
+		WithError().
+		TestParser(t, parseRpmArchive)
+}
