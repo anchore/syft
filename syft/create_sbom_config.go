@@ -21,6 +21,7 @@ type CreateSBOMConfig struct {
 	// required configuration input to specify how cataloging should be performed
 	Search             cataloging.SearchConfig
 	Relationships      cataloging.RelationshipsConfig
+	Unknowns           cataloging.UnknownsConfig
 	DataGeneration     cataloging.DataGenerationConfig
 	Packages           pkgcataloging.Config
 	Files              filecataloging.Config
@@ -102,6 +103,12 @@ func (c *CreateSBOMConfig) WithSearchConfig(cfg cataloging.SearchConfig) *Create
 // WithRelationshipsConfig allows for defining the specific relationships that should be captured during cataloging.
 func (c *CreateSBOMConfig) WithRelationshipsConfig(cfg cataloging.RelationshipsConfig) *CreateSBOMConfig {
 	c.Relationships = cfg
+	return c
+}
+
+// WithUnknownsConfig allows for defining the specific behavior dealing with unknowns
+func (c *CreateSBOMConfig) WithUnknownsConfig(cfg cataloging.UnknownsConfig) *CreateSBOMConfig {
+	c.Unknowns = cfg
 	return c
 }
 
@@ -340,7 +347,7 @@ func (c *CreateSBOMConfig) environmentTasks() []task.Task {
 func (c *CreateSBOMConfig) unknownTasks() []task.Task {
 	var tasks []task.Task
 
-	if t := task.NewUnknownsFinalizeTask(task.DefaultUnknownsConfig()); t != nil {
+	if t := task.NewUnknownsFinalizeTask(c.Unknowns); t != nil {
 		tasks = append(tasks, t)
 	}
 

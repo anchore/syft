@@ -7,29 +7,22 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 )
 
-type UnknownsConfig struct {
-	IncludeExecutablesWithoutPackages bool
-	IncludeUnexpandedArchives         bool
+func NewUnknownsFinalizeTask(cfg cataloging.UnknownsConfig) Task {
+	return NewTask("unknowns-finalize", unknownsFinalizeTask{cfg}.processUnknowns)
 }
 
-func DefaultUnknownsConfig() UnknownsConfig {
-	return UnknownsConfig{
-		IncludeExecutablesWithoutPackages: true,
-		IncludeUnexpandedArchives:         true,
-	}
-}
-
-func NewUnknownsFinalizeTask(cfg UnknownsConfig) Task {
-	return NewTask("unknowns-finalize", cfg.processUnknowns)
+type unknownsFinalizeTask struct {
+	cataloging.UnknownsConfig
 }
 
 // processUnknowns removes unknown entries that have valid packages reported for the locations
-func (c UnknownsConfig) processUnknowns(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+func (c unknownsFinalizeTask) processUnknowns(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 	accessor := builder.(sbomsync.Accessor)
 	accessor.WriteToSBOM(func(s *sbom.SBOM) {
 		c.finalize(resolver, s)
@@ -37,7 +30,7 @@ func (c UnknownsConfig) processUnknowns(_ context.Context, resolver file.Resolve
 	return nil
 }
 
-func (c UnknownsConfig) finalize(resolver file.Resolver, s *sbom.SBOM) {
+func (c unknownsFinalizeTask) finalize(resolver file.Resolver, s *sbom.SBOM) {
 	hasPackageReference := coordinateReferenceLookup(resolver, s)
 
 	for coords := range s.Artifacts.Unknowns {
