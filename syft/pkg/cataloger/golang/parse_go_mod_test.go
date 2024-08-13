@@ -157,3 +157,11 @@ func Test_GoSumHashes(t *testing.T) {
 		})
 	}
 }
+
+func Test_corruptGoMod(t *testing.T) {
+	c := NewGoModuleFileCataloger(DefaultCatalogerConfig().WithSearchRemoteLicenses(false))
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/corrupt").
+		WithError().
+		TestCataloger(t, c)
+}
