@@ -80,3 +80,10 @@ func TestParsePipFileLock(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parsePipfileLock, expectedPkgs, expectedRelationships)
 }
+
+func Test_corruptPipfileLock(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/src/Pipfile.lock").
+		WithError().
+		TestParser(t, parsePipfileLock)
+}

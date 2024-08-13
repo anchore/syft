@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -25,7 +24,6 @@ var _ generic.Parser = parseSetup
 var pinnedDependency = regexp.MustCompile(`['"]\W?(\w+\W?==\W?[\w.]*)`)
 
 func parseSetup(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	var errs error
 	var packages []pkg.Package
 
 	scanner := bufio.NewScanner(reader)
@@ -53,7 +51,6 @@ func parseSetup(_ context.Context, _ file.Resolver, _ *generic.Environment, read
 
 			if name == "" || version == "" {
 				log.WithFields("path", reader.RealPath).Debugf("unable to parse package in setup.py line: %q", line)
-				errs = unknown.Appendf(errs, reader, "unable to parse package in setup.py line: %q", line)
 				continue
 			}
 
@@ -68,7 +65,7 @@ func parseSetup(_ context.Context, _ file.Resolver, _ *generic.Environment, read
 		}
 	}
 
-	return packages, nil, errs
+	return packages, nil, nil
 }
 
 func hasTemplateDirective(s string) bool {
