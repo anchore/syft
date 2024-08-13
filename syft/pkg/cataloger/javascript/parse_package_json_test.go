@@ -189,6 +189,13 @@ func TestParsePackageJSON(t *testing.T) {
 	}
 }
 
+func Test_corruptPackageJSON(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/package.json").
+		WithError().
+		TestParser(t, parsePackageJSON)
+}
+
 func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anchore/syft/issues/311
 	const fixtureFile = "test-fixtures/pkg-json/package-partial.json"
 

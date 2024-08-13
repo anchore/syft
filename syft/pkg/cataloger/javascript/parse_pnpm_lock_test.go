@@ -144,3 +144,10 @@ func TestParsePnpmV6Lock(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parsePnpmLock, expectedPkgs, expectedRelationships)
 }
+
+func Test_corruptPnpmLock(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/pnpm-lock.yaml").
+		WithError().
+		TestParser(t, parsePnpmLock)
+}
