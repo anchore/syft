@@ -142,3 +142,10 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 		})
 	}
 }
+
+func Test_corruptInstalledJSON(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/src/installed.json").
+		WithError().
+		TestParser(t, parseInstalledJSON)
+}
