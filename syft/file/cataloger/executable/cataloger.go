@@ -67,7 +67,6 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]file.E
 		exec, err := processExecutableLocation(loc, resolver)
 		if err != nil {
 			errs = unknown.Append(errs, loc, err)
-			continue
 		}
 
 		if exec != nil {
@@ -98,12 +97,7 @@ func processExecutableLocation(loc file.Location, resolver file.Resolver) (*file
 		return nil, fmt.Errorf("unable to get union reader: %w", err)
 	}
 
-	exec, err := processExecutable(loc, uReader)
-	if err != nil {
-		log.WithFields("error", err).Warnf("unable to process executable %q", loc.RealPath)
-		return nil, fmt.Errorf("unable to process executable %w", err)
-	}
-	return exec, nil
+	return processExecutable(loc, uReader)
 }
 
 func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
@@ -159,6 +153,7 @@ func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file
 
 	format, err := findExecutableFormat(reader)
 	if err != nil {
+		log.Debugf("unable to determine executable kind for %v: %v", loc.RealPath, err)
 		return nil, fmt.Errorf("unable to determine executable kind: %w", err)
 	}
 
@@ -172,16 +167,19 @@ func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file
 
 	switch format {
 	case file.ELF:
-		if err := findELFFeatures(&data, reader); err != nil {
-			return nil, fmt.Errorf("unable to determine ELF features: %w", err)
+		if err = findELFFeatures(&data, reader); err != nil {
+			log.WithFields("error", err).Tracef("unable to determine ELF features for %q", loc.RealPath)
+			err = fmt.Errorf("unable to determine ELF features: %w", err)
 		}
 	case file.PE:
-		if err := findPEFeatures(&data, reader); err != nil {
-			return nil, fmt.Errorf("unable to determine PE features: %w", err)
+		if err = findPEFeatures(&data, reader); err != nil {
+			log.WithFields("error", err).Tracef("unable to determine PE features for %q", loc.RealPath)
+			err = fmt.Errorf("unable to determine PE features: %w", err)
 		}
 	case file.MachO:
-		if err := findMachoFeatures(&data, reader); err != nil {
-			return nil, fmt.Errorf("unable to determine Macho features: %w", err)
+		if err = findMachoFeatures(&data, reader); err != nil {
+			log.WithFields("error", err).Tracef("unable to determine Macho features for %q", loc.RealPath)
+			err = fmt.Errorf("unable to determine Macho features: %w", err)
 		}
 	}
 
@@ -190,7 +188,7 @@ func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file
 		data.ImportedLibraries = []string{}
 	}
 
-	return &data, nil
+	return &data, err
 }
 
 func findExecutableFormat(reader unionreader.UnionReader) (file.ExecutableFormat, error) {
