@@ -4,6 +4,7 @@ import (
 	"debug/elf"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
@@ -27,6 +29,7 @@ func Test_findELFSecurityFeatures(t *testing.T) {
 		name         string
 		fixture      string
 		want         *file.ELFSecurityFeatures
+		wantErr      require.ErrorAssertionFunc
 		wantStripped bool
 	}{
 		{
@@ -149,7 +152,9 @@ func Test_findELFSecurityFeatures(t *testing.T) {
 			f, err := elf.NewFile(readerForFixture(t, tt.fixture))
 			require.NoError(t, err)
 
-			got := findELFSecurityFeatures(f)
+			var errs error
+			got := findELFSecurityFeatures(&errs, f)
+			require.NoError(t, errs)
 
 			if d := cmp.Diff(tt.want, got); d != "" {
 				t.Errorf("findELFSecurityFeatures() mismatch (-want +got):\n%s", d)
@@ -220,7 +225,46 @@ func Test_elfHasExports(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f, err := elf.NewFile(readerForFixture(t, tt.fixture))
 			require.NoError(t, err)
-			assert.Equal(t, tt.want, elfHasExports(f))
+			assert.Equal(t, tt.want, elfHasExports(&err, f))
+			require.NoError(t, err)
 		})
 	}
+}
+
+func Test_elfUnknowns(t *testing.T) {
+	tests := []struct {
+		name    string
+		fixture string
+		wantErr require.ErrorAssertionFunc
+	}{
+		{
+			name:    "unknown truncated",
+			fixture: "test-fixtures/elf/bin/with_pie_bad",
+			wantErr: func(t require.TestingT, err error, _ ...interface{}) {
+				require.ErrorContains(t, err, "unable to read dynamic symbols from elf file")
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewCataloger(DefaultConfig())
+			resolver := newFileResolver(t, tt.fixture)
+			_, err := c.Catalog(resolver)
+			tt.wantErr(t, err)
+		})
+	}
+}
+
+func newFileResolver(t *testing.T, file string) *fileresolver.Directory {
+	t.Helper()
+	dir := filepath.Dir(file)
+	filename := filepath.Base(file)
+	resolver, err := fileresolver.NewFromDirectory(dir, "", func(_ string, path string, _ os.FileInfo, _ error) error {
+		if !strings.HasSuffix(path, filename) {
+			return fileresolver.ErrSkipPath
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	return resolver
 }

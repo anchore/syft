@@ -8,6 +8,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
@@ -20,8 +21,8 @@ func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) erro
 
 	libs, err := f.ImportedLibraries()
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read imported libraries from elf file")
+		err = unknown.Joinf(err, "unable to read imported libraries from elf file: %w", err)
 		libs = nil
 	}
 
@@ -30,24 +31,24 @@ func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) erro
 	}
 
 	data.ImportedLibraries = libs
-	data.ELFSecurityFeatures = findELFSecurityFeatures(f)
+	data.ELFSecurityFeatures = findELFSecurityFeatures(&err, f)
 	data.HasEntrypoint = elfHasEntrypoint(f)
-	data.HasExports = elfHasExports(f)
+	data.HasExports = elfHasExports(&err, f)
 
-	return nil
+	return err
 }
 
-func findELFSecurityFeatures(f *elf.File) *file.ELFSecurityFeatures {
+func findELFSecurityFeatures(errs *error, f *elf.File) *file.ELFSecurityFeatures {
 	return &file.ELFSecurityFeatures{
 		SymbolTableStripped:           isElfSymbolTableStripped(f),
-		StackCanary:                   checkElfStackCanary(f),
+		StackCanary:                   checkElfStackCanary(errs, f),
 		NoExecutable:                  checkElfNXProtection(f),
-		RelocationReadOnly:            checkElfRelROProtection(f),
-		PositionIndependentExecutable: isELFPIE(f),
+		RelocationReadOnly:            checkElfRelROProtection(errs, f),
+		PositionIndependentExecutable: isELFPIE(errs, f),
 		DynamicSharedObject:           isELFDSO(f),
-		LlvmSafeStack:                 checkLLVMSafeStack(f),
-		LlvmControlFlowIntegrity:      checkLLVMControlFlowIntegrity(f),
-		ClangFortifySource:            checkClangFortifySource(f),
+		LlvmSafeStack:                 checkLLVMSafeStack(errs, f),
+		LlvmControlFlowIntegrity:      checkLLVMControlFlowIntegrity(errs, f),
+		ClangFortifySource:            checkClangFortifySource(errs, f),
 	}
 }
 
@@ -55,15 +56,15 @@ func isElfSymbolTableStripped(file *elf.File) bool {
 	return file.Section(".symtab") == nil
 }
 
-func checkElfStackCanary(file *elf.File) *bool {
-	return hasAnyDynamicSymbols(file, "__stack_chk_fail", "__stack_chk_guard")
+func checkElfStackCanary(errs *error, file *elf.File) *bool {
+	return hasAnyDynamicSymbols(errs, file, "__stack_chk_fail", "__stack_chk_guard")
 }
 
-func hasAnyDynamicSymbols(file *elf.File, symbolNames ...string) *bool {
+func hasAnyDynamicSymbols(errs *error, file *elf.File, symbolNames ...string) *bool {
 	dynSyms, err := file.DynamicSymbols()
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read dynamic symbols from elf file")
+		*errs = unknown.Joinf(*errs, "unable to read dynamic symbols from elf file: %w", err)
 		return nil
 	}
 
@@ -93,10 +94,10 @@ func checkElfNXProtection(file *elf.File) bool {
 	return false
 }
 
-func checkElfRelROProtection(f *elf.File) file.RelocationReadOnly {
+func checkElfRelROProtection(errs *error, f *elf.File) file.RelocationReadOnly {
 	// background on relro https://www.redhat.com/en/blog/hardening-elf-binaries-using-relocation-read-only-relro
 	hasRelro := false
-	hasBindNow := hasBindNowDynTagOrFlag(f)
+	hasBindNow := hasBindNowDynTagOrFlag(errs, f)
 
 	for _, prog := range f.Progs {
 		if prog.Type == elf.PT_GNU_RELRO {
@@ -115,7 +116,7 @@ func checkElfRelROProtection(f *elf.File) file.RelocationReadOnly {
 	}
 }
 
-func hasBindNowDynTagOrFlag(f *elf.File) bool {
+func hasBindNowDynTagOrFlag(errs *error, f *elf.File) bool {
 	if hasElfDynTag(f, elf.DT_BIND_NOW) {
 		// support older binaries...
 		return true
@@ -123,14 +124,14 @@ func hasBindNowDynTagOrFlag(f *elf.File) bool {
 
 	// "DT_BIND_NOW ... use has been superseded by the DF_BIND_NOW flag"
 	// source: https://refspecs.linuxbase.org/elf/gabi4+/ch5.dynamic.html
-	return hasElfDynFlag(f, elf.DF_BIND_NOW)
+	return hasElfDynFlag(errs, f, elf.DF_BIND_NOW)
 }
 
-func hasElfDynFlag(f *elf.File, flag elf.DynFlag) bool {
+func hasElfDynFlag(errs *error, f *elf.File, flag elf.DynFlag) bool {
 	vals, err := f.DynValue(elf.DT_FLAGS)
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read DT_FLAGS from elf file")
+		*errs = unknown.Joinf(*errs, "unable to read DT_FLAGS from elf file: %w", err)
 		return false
 	}
 	for _, val := range vals {
@@ -141,11 +142,11 @@ func hasElfDynFlag(f *elf.File, flag elf.DynFlag) bool {
 	return false
 }
 
-func hasElfDynFlag1(f *elf.File, flag elf.DynFlag1) bool {
+func hasElfDynFlag1(errs *error, f *elf.File, flag elf.DynFlag1) bool {
 	vals, err := f.DynValue(elf.DT_FLAGS_1)
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read DT_FLAGS_1 from elf file")
+		*errs = unknown.Joinf(*errs, "unable to read DT_FLAGS_1 from elf file: %w", err)
 		return false
 	}
 	for _, val := range vals {
@@ -185,26 +186,26 @@ func hasElfDynTag(f *elf.File, tag elf.DynTag) bool {
 	return false
 }
 
-func isELFPIE(f *elf.File) bool {
+func isELFPIE(errs *error, f *elf.File) bool {
 	// being a shared object is not sufficient to be a PIE, the explicit flag must be set also
-	return isELFDSO(f) && hasElfDynFlag1(f, elf.DF_1_PIE)
+	return isELFDSO(f) && hasElfDynFlag1(errs, f, elf.DF_1_PIE)
 }
 
 func isELFDSO(f *elf.File) bool {
 	return f.Type == elf.ET_DYN
 }
 
-func checkLLVMSafeStack(file *elf.File) *bool {
+func checkLLVMSafeStack(errs *error, file *elf.File) *bool {
 	// looking for the presence of https://github.com/microsoft/compiler-rt/blob/30b3b8cb5c9a0854f2f40f187c6f6773561a35f2/lib/safestack/safestack.cc#L207
-	return hasAnyDynamicSymbols(file, "__safestack_init")
+	return hasAnyDynamicSymbols(errs, file, "__safestack_init")
 }
 
-func checkLLVMControlFlowIntegrity(file *elf.File) *bool {
+func checkLLVMControlFlowIntegrity(errs *error, file *elf.File) *bool {
 	// look for any symbols that are functions and end with ".cfi"
 	dynSyms, err := file.Symbols()
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read symbols from elf file")
+		*errs = unknown.Joinf(*errs, "unable to read symbols from elf file: %w", err)
 		return nil
 	}
 
@@ -222,11 +223,11 @@ func isFunction(sym elf.Symbol) bool {
 
 var fortifyPattern = regexp.MustCompile(`__\w+_chk@.+`)
 
-func checkClangFortifySource(file *elf.File) *bool {
+func checkClangFortifySource(errs *error, file *elf.File) *bool {
 	dynSyms, err := file.Symbols()
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read symbols from elf file")
+		*errs = unknown.Joinf(*errs, "unable to read symbols from elf file: %w", err)
 		return nil
 	}
 
@@ -244,7 +245,7 @@ func elfHasEntrypoint(f *elf.File) bool {
 	return f.Entry > 0
 }
 
-func elfHasExports(f *elf.File) bool {
+func elfHasExports(errs *error, f *elf.File) bool {
 	// this is akin to:
 	//    nm -D --defined-only ./path/to/bin | grep ' T \| W \| B '
 	// where:
@@ -254,7 +255,7 @@ func elfHasExports(f *elf.File) bool {
 	// really anything that is not marked with 'U' (undefined) is considered an export.
 	symbols, err := f.DynamicSymbols()
 	if err != nil {
-		// TODO: known-unknowns?
+		*errs = unknown.Joinf(*errs, "unable to get ELF dynamic symbols: %w", err)
 		return false
 	}
 
