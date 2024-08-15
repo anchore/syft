@@ -192,7 +192,7 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 		taskGroups = append(taskGroups, relationshipsTasks)
 	}
 
-	// all unknown cleanup should happen after almost everything else
+	// all unknowns tasks should happen after all scanning is complete
 	if len(unknownTasks) > 0 {
 		taskGroups = append(taskGroups, unknownTasks)
 	}
