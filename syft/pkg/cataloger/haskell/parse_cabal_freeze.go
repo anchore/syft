@@ -23,7 +23,7 @@ func parseCabalFreeze(_ context.Context, _ file.Resolver, _ *generic.Environment
 	for {
 		line, err := r.ReadString('\n')
 		switch {
-		case errors.Is(io.EOF, err):
+		case errors.Is(err, io.EOF):
 			return pkgs, nil, nil
 		case err != nil:
 			return nil, nil, fmt.Errorf("failed to parse cabal.project.freeze file: %w", err)

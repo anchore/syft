@@ -161,7 +161,7 @@ func validateArgs(cmd *cobra.Command, args []string, error string) error {
 		if err := cmd.Help(); err != nil {
 			return fmt.Errorf("unable to display help: %w", err)
 		}
-		return fmt.Errorf(error)
+		return fmt.Errorf("%v", error)
 	}
 
 	return cobra.MaximumNArgs(1)(cmd, args)
