@@ -99,7 +99,7 @@ func parseConaninfo(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	for {
 		line, err := r.ReadString('\n')
 		switch {
-		case errors.Is(io.EOF, err):
+		case errors.Is(err, io.EOF):
 			mainPackage := newConaninfoPackage(
 				mainMetadata,
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
