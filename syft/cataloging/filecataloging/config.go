@@ -34,7 +34,7 @@ func DefaultConfig() Config {
 		log.WithFields("error", err).Warn("unable to create file hashers")
 	}
 	return Config{
-		Enabled:    false,
+		Enabled:    true,
 		Selection:  file.FilesOwnedByPackageSelection,
 		Hashers:    hashers,
 		Content:    filecontent.DefaultConfig(),
