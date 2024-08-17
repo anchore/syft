@@ -185,8 +185,7 @@ tasks:
       - fixtures
     vars:
       TEST_PKGS:
-        sh: "go test syft/pkg/cataloger/redhat/parse_rpm_archive_test.go"
-        # sh: "go list ./... | grep -v {{ .OWNER }}/{{ .PROJECT }}/test | grep -v {{ .OWNER }}/{{ .PROJECT }}/cmd/syft/internal/test | tr '\n' ' '"
+        sh: "go list ./... | grep -v {{ .OWNER }}/{{ .PROJECT }}/test | grep -v {{ .OWNER }}/{{ .PROJECT }}/cmd/syft/internal/test | tr '\n' ' '"
 
       # unit test coverage threshold (in % coverage)
       COVERAGE_THRESHOLD: 62
