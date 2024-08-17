@@ -62,9 +62,11 @@ func (s SBOM) AllCoordinates() []file.Coordinates {
 	for coordinates := range s.Artifacts.FileDigests {
 		set.Add(coordinates)
 	}
-	for _, relationship := range s.Relationships {
-		for _, coordinates := range extractCoordinates(relationship) {
-			set.Add(coordinates)
+	if len(set.ToSlice()) > 0 {
+		for _, relationship := range s.Relationships {
+			for _, coordinates := range extractCoordinates(relationship) {
+				set.Add(coordinates)
+			}
 		}
 	}
 	return set.ToSlice()
