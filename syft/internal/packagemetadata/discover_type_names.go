@@ -78,7 +78,8 @@ func findMetadataDefinitionNames(paths ...string) ([]string, error) {
 	// note: 35 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
 	// it is really intended to catch any major issues with the generation process that would generate, say, 0 definitions.
 	if len(strNames) < 35 {
-		return nil, fmt.Errorf("not enough metadata definitions found (discovered: " + fmt.Sprintf("%d", len(strNames)) + ")")
+		msg := fmt.Sprintf("not enough metadata definitions found (discovered %d)", len(strNames))
+		return nil, fmt.Errorf("%v", msg)
 	}
 
 	return strNames, nil

@@ -31,6 +31,7 @@ var archiveFormatGlobs = []string{
 	"**/*.nar",
 	"**/*.jpi",
 	"**/*.hpi",
+	"**/*.kar",
 	"**/*.lpkg", // Zip-compressed package used to deploy applications
 	// (aka plugins) to Liferay Portal server. Those files contains .JAR(s) and a .PROPERTIES file, the latter
 	// has information about the application and installation requirements.
@@ -154,9 +155,14 @@ func (j *archiveParser) parse(ctx context.Context) ([]pkg.Package, []artifact.Re
 		p := &pkgs[i]
 		if m, ok := p.Metadata.(pkg.JavaArchive); ok {
 			p.PURL = packageURL(p.Name, p.Version, m)
+
+			if strings.Contains(p.PURL, "io.jenkins.plugins") || strings.Contains(p.PURL, "org.jenkins-ci.plugins") {
+				p.Type = pkg.JenkinsPluginPkg
+			}
 		} else {
 			log.WithFields("package", p.String()).Warn("unable to extract java metadata to generate purl")
 		}
+
 		p.SetID()
 	}
 

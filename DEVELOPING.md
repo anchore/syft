@@ -83,7 +83,7 @@ Syft's core library is implemented in the `syft` package and subpackages, where 
 - the `syft` package contains a single function that can take a `source.Source` object and catalog it, producing an `sbom.SBOM` object
 - the `syft/format` package contains the ability to encode and decode SBOMs to and from different SBOM formats (such as SPDX and CycloneDX)
 
-The `cmd` pacakge at the highest level execution flow wires up [`spf13/cobra`](https://github.com/spf13/cobra) commands for execution in the main application:
+The `cmd` package at the highest level execution flow wires up [`spf13/cobra`](https://github.com/spf13/cobra) commands for execution in the main application:
 ```mermaid
 sequenceDiagram
     participant main as cmd/syft/main
@@ -212,7 +212,7 @@ Finally, here is an example of where the package construction is done within the
 - [The APK package constructor itself](https://github.com/anchore/syft/tree/v0.70.0/syft/pkg/cataloger/apkdb/package.go#L12-L27)
 
 Interested in building a new cataloger? Checkout the [list of issues with the `new-cataloger` label](https://github.com/anchore/syft/issues?q=is%3Aopen+is%3Aissue+label%3Anew-cataloger+no%3Aassignee)!
-If you have questions about implementing a cataloger feel free to file an issue or reach out to us [on slack](https://anchore.com/slack)!
+If you have questions about implementing a cataloger feel free to file an issue or reach out to us [on discourse](https://anchore.com/discourse)!
 
 
 #### Searching for files
