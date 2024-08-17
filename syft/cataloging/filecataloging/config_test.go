@@ -21,10 +21,11 @@ func TestConfig_MarshalJSON(t *testing.T) {
 		{
 			name: "converts hashers to strings",
 			cfg: Config{
+				Enabled:   true,
 				Selection: file.FilesOwnedByPackageSelection,
 				Hashers:   []crypto.Hash{crypto.SHA256},
 			},
-			want: []byte(`{"selection":"owned-by-package","hashers":["sha-256"],"content":{"globs":null,"skip-files-above-size":0}}`),
+			want: []byte(`{"enabled":true,"selection":"owned-by-package","hashers":["sha-256"],"content":{"globs":null,"skip-files-above-size":0}}`),
 		},
 	}
 	for _, tt := range tests {

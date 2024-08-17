@@ -12,6 +12,7 @@ import (
 )
 
 type fileConfig struct {
+	Enabled    bool           `yaml:"enabled" json:"enabled" mapstructure:"enabled"`
 	Metadata   fileMetadata   `yaml:"metadata" json:"metadata" mapstructure:"metadata"`
 	Content    fileContent    `yaml:"content" json:"content" mapstructure:"content"`
 	Executable fileExecutable `yaml:"executable" json:"executable" mapstructure:"executable"`
@@ -33,6 +34,7 @@ type fileExecutable struct {
 
 func defaultFileConfig() fileConfig {
 	return fileConfig{
+		Enabled: true,
 		Metadata: fileMetadata{
 			Selection: file.FilesOwnedByPackageSelection,
 			Digests:   []string{"sha1", "sha256"},
