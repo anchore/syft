@@ -22,6 +22,7 @@ type Config struct {
 }
 
 type configMarshaledForm struct {
+	Enabled   bool               `yaml:"enabled" json:"enabled" mapstructure:"enabled"`
 	Selection file.Selection     `yaml:"selection" json:"selection" mapstructure:"selection"`
 	Hashers   []string           `yaml:"hashers" json:"hashers" mapstructure:"hashers"`
 	Content   filecontent.Config `yaml:"content" json:"content" mapstructure:"content"`
@@ -33,6 +34,7 @@ func DefaultConfig() Config {
 		log.WithFields("error", err).Warn("unable to create file hashers")
 	}
 	return Config{
+		Enabled:    true,
 		Selection:  file.FilesOwnedByPackageSelection,
 		Hashers:    hashers,
 		Content:    filecontent.DefaultConfig(),
@@ -42,6 +44,7 @@ func DefaultConfig() Config {
 
 func (cfg Config) MarshalJSON() ([]byte, error) {
 	marshaled := configMarshaledForm{
+		Enabled:   cfg.Enabled,
 		Selection: cfg.Selection,
 		Hashers:   hashersToString(cfg.Hashers),
 	}
