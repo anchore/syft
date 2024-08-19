@@ -2080,6 +2080,9 @@
       "@braintree/sanitize-url": [
         "cpe:2.3:a:paypal:braintree\\/sanitize-url:*:*:*:*:*:node.js:*:*"
       ],
+      "@builder.io/qwik": [
+        "cpe:2.3:a:qwik:qwik:*:*:*:*:*:node.js:*:*"
+      ],
       "@chainsafe/libp2p-noise": [
         "cpe:2.3:a:chainsafe:js-libp2p-noise:*:*:*:*:*:node.js:*:*"
       ],
@@ -5273,6 +5276,9 @@
       "weather.swlyons": [
         "cpe:2.3:a:weather.swlyons_project:weather.swlyons:*:*:*:*:*:node.js:*:*"
       ],
+      "webcrack": [
+        "cpe:2.3:a:j4k0xb:webcrack:*:*:*:*:*:node.js:*:*"
+      ],
       "webdriver-launcher": [
         "cpe:2.3:a:webdriver-launcher_project:webdriver-launcher:*:*:*:*:*:node.js:*:*"
       ],
@@ -6306,6 +6312,9 @@
       ],
       "secure_headers": [
         "cpe:2.3:a:twitter:secure_headers:*:*:*:*:*:ruby:*:*"
+      ],
+      "sequenceserver": [
+        "cpe:2.3:a:wurmlab:sequenceserver:*:*:*:*:*:ruby:*:*"
       ],
       "sfpagent": [
         "cpe:2.3:a:herry:sfpagent:*:*:*:*:*:ruby:*:*"
