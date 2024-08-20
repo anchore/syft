@@ -251,6 +251,7 @@ func getModule(proxies []string, moduleName, moduleVersion string) (urlPrefix st
 		case "file":
 			p := filepath.Join(u.Path, moduleName, "@v", moduleVersion)
 			urlPrefix = path.Join("file://", p) + "/"
+			log.WithFields("path", p).Info("looking for go module in filesystem")
 			fsys = os.DirFS(p)
 		}
 		if fsys != nil {
@@ -264,6 +265,7 @@ func getModuleProxy(proxy string, moduleName string, moduleVersion string) (modu
 	u := fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion)
 
 	// get the module zip
+	log.WithFields("url", u).Info("downloading go module from proxy")
 	resp, err := http.Get(u) //nolint:gosec
 	if err != nil {
 		return "", nil, err
@@ -334,6 +336,8 @@ func getModuleRepository(moduleName string, moduleVersion string) (string, fs.FS
 	f := memfs.New()
 	buf := &bytes.Buffer{}
 	repoURL := fmt.Sprintf("https://%s", repoName)
+
+	log.WithFields("repoURL", repoURL, "ref", cloneRefName).Info("cloning go module repository")
 	r, err := git.Clone(memory.NewStorage(), f, &git.CloneOptions{
 		URL:           repoURL,
 		ReferenceName: cloneRefName,
