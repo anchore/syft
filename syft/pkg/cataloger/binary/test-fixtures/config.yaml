@@ -157,6 +157,13 @@ from-images:
     paths:
       - /usr/bin/mysql
 
+  - version: 8.0.37
+    images:
+      - ref: mysql:8.0.37-bookworm@sha256:bad55a5bb69d6710927792384b5eb55669ee15dc85dca1888874e4a7993eecd8
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mysql
+
   - name: percona-server
     version: 8.0.35
     images:

@@ -294,8 +294,12 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "mysql-binary",
 			FileGlob: "**/mysql",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m).*/mysql-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
+			EvidenceMatcher: evidenceMatchers(
+				// shutdown[NUL]8.0.37[NUL][NUL][NUL][NUL][NUL]mysql_real_esc
+				FileContentsVersionMatcher(`\x00(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)\x00+mysql`),
+				// /export/home/pb2/build/sb_0-26781090-1516292385.58/release/mysql-8.0.4-rc/mysys_ssl/my_default.cc
+				FileContentsVersionMatcher(`(?m).*/mysql-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
+			),
 			Package: "mysql",
 			PURL:    mustPURL("pkg:generic/mysql@version"),
 			CPEs:    singleCPE("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*"),
