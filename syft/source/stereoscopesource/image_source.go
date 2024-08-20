@@ -103,6 +103,8 @@ func (s stereoscopeImageSource) FileResolver(scope source.Scope) (file.Resolver,
 		res, err = fileresolver.NewFromContainerImageSquash(s.image)
 	case source.AllLayersScope:
 		res, err = fileresolver.NewFromContainerImageAllLayers(s.image)
+	case source.SquashWithAllLayersScope:
+		res, err = fileresolver.NewFromContainerImageSquashAllLayers(s.image)
 	default:
 		return nil, fmt.Errorf("bad image scope provided: %+v", scope)
 	}
