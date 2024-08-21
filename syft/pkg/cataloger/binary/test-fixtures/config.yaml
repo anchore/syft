@@ -570,3 +570,12 @@ from-images:
         platform: linux/arm64
     paths:
       - /usr/local/openresty/openssl/bin/openssl
+
+  - name: curl
+    version: 8.9.1
+    images:
+      - ref: curlimages/curl:8.9.1@sha256:8addc281f0ea517409209f76832b6ddc2cabc3264feb1ebbec2a2521ffad24e4
+        platform: linux/amd64
+    paths:
+      - /usr/bin/curl
+
