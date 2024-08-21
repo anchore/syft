@@ -34,7 +34,7 @@ func (r *errorResolver[T]) Resolve(key string, resolver resolverFunc[T]) (T, err
 		return v.Value, err
 	}
 	if v.Error != "" {
-		return v.Value, fmt.Errorf(v.Error)
+		return v.Value, fmt.Errorf("failed to resolve cache: %s", v.Error)
 	}
 	return v.Value, nil
 }

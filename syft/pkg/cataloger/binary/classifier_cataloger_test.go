@@ -117,6 +117,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "mysql/8.0.37/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql",
+				Version:   "8.0.37",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql@8.0.37",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
 			logicalFixture: "percona-server/8.0.35/linux-amd64",
 			expected: pkg.Package{
 				Name:      "percona-server",
