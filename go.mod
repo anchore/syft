@@ -23,7 +23,7 @@ require (
 	// go: warning: github.com/andybalholm/brotli@v1.0.1: retracted by module author: occasional panics and data corruption
 	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
 	github.com/bmatcuk/doublestar/v4 v4.6.1
-	github.com/charmbracelet/bubbles v0.18.0
+	github.com/charmbracelet/bubbles v0.19.0
 	github.com/charmbracelet/bubbletea v0.27.0
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/dave/jennifer v1.7.0
@@ -169,7 +169,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.2-0.20220822084749-2491eb6c1c75 // indirect
-	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -179,7 +179,6 @@ require (
 	github.com/moby/sys/signal v0.7.0 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
-	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
@@ -199,7 +198,7 @@ require (
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
-	github.com/sahilm/fuzzy v0.1.1-0.20230530133925-c48e322e2a8f // indirect
+	github.com/sahilm/fuzzy v0.1.1 // indirect
 	github.com/secDre4mer/pkcs7 v0.0.0-20240322103146-665324a4461d // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
