@@ -162,6 +162,19 @@ func toSyftLicenses(m []model.License) (p []pkg.License) {
 	return
 }
 
+func toSyftCopyrights(m []model.Copyright) (p []pkg.Copyright) {
+	for _, l := range m {
+		p = append(p, pkg.Copyright{
+			URL:       l.URL,
+			Author:    l.Author,
+			StartYear: l.StartYear,
+			EndYear:   l.EndYear,
+		})
+	}
+
+	return
+}
+
 func toSyftFileType(ty string) stereoscopeFile.Type {
 	switch ty {
 	case "SymbolicLink":
@@ -331,16 +344,17 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 	}
 
 	out := pkg.Package{
-		Name:      p.Name,
-		Version:   p.Version,
-		FoundBy:   p.FoundBy,
-		Locations: file.NewLocationSet(p.Locations...),
-		Licenses:  pkg.NewLicenseSet(toSyftLicenses(p.Licenses)...),
-		Language:  p.Language,
-		Type:      p.Type,
-		CPEs:      cpes,
-		PURL:      p.PURL,
-		Metadata:  p.Metadata,
+		Name:       p.Name,
+		Version:    p.Version,
+		FoundBy:    p.FoundBy,
+		Locations:  file.NewLocationSet(p.Locations...),
+		Licenses:   pkg.NewLicenseSet(toSyftLicenses(p.Licenses)...),
+		Copyrights: pkg.NewCopyrightSet(toSyftCopyrights(p.Copyrights)...),
+		Language:   p.Language,
+		Type:       p.Type,
+		CPEs:       cpes,
+		PURL:       p.PURL,
+		Metadata:   p.Metadata,
 	}
 
 	// we don't know if this package ID is truly unique, however, we need to trust the user input in case there are

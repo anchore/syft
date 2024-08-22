@@ -24,16 +24,17 @@ type Package struct {
 
 // PackageBasicData contains non-ambiguous values (type-wise) from pkg.Package.
 type PackageBasicData struct {
-	ID        string          `json:"id"`
-	Name      string          `json:"name"`
-	Version   string          `json:"version"`
-	Type      pkg.Type        `json:"type"`
-	FoundBy   string          `json:"foundBy"`
-	Locations []file.Location `json:"locations"`
-	Licenses  licenses        `json:"licenses"`
-	Language  pkg.Language    `json:"language"`
-	CPEs      cpes            `json:"cpes"`
-	PURL      string          `json:"purl"`
+	ID         string          `json:"id"`
+	Name       string          `json:"name"`
+	Version    string          `json:"version"`
+	Type       pkg.Type        `json:"type"`
+	FoundBy    string          `json:"foundBy"`
+	Locations  []file.Location `json:"locations"`
+	Licenses   licenses        `json:"licenses"`
+	Copyrights copyrights      `json:"copyrights"`
+	Language   pkg.Language    `json:"language"`
+	CPEs       cpes            `json:"cpes"`
+	PURL       string          `json:"purl"`
 }
 
 type cpes []CPE
@@ -51,6 +52,15 @@ type License struct {
 	Type           license.Type    `json:"type"`
 	URLs           []string        `json:"urls"`
 	Locations      []file.Location `json:"locations"`
+}
+
+type copyrights []Copyright
+
+type Copyright struct {
+	URL       string `json:"url,omitempty"`
+	Author    string `json:"author"`
+	StartYear string `json:"startYear"`
+	EndYear   string `json:"endYear"`
 }
 
 func newModelLicensesFromValues(licenses []string) (ml []License) {

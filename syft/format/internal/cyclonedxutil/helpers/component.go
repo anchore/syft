@@ -48,6 +48,7 @@ func EncodeComponent(p pkg.Package) cyclonedx.Component {
 		Version:            p.Version,
 		PackageURL:         p.PURL,
 		Licenses:           encodeLicenses(p),
+		Copyright:          encodeCopyrights(p),
 		CPE:                encodeSingleCPE(p),
 		Author:             encodeAuthor(p),
 		Publisher:          encodePublisher(p),

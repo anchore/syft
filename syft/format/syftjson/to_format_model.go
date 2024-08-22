@@ -233,6 +233,18 @@ func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
 	return
 }
 
+func toCopyrightModel(pkgCopyrights []pkg.Copyright) (modelCopyrights []model.Copyright) {
+	for _, l := range pkgCopyrights {
+		modelCopyrights = append(modelCopyrights, model.Copyright{
+			URL:       l.URL,
+			Author:    l.Author,
+			StartYear: l.StartYear,
+			EndYear:   l.EndYear,
+		})
+	}
+	return
+}
+
 // toPackageModel crates a new Package from the given pkg.Package.
 func toPackageModel(p pkg.Package, cfg EncoderConfig) model.Package {
 	var cpes = make([]model.CPE, len(p.CPEs))
@@ -251,18 +263,24 @@ func toPackageModel(p pkg.Package, cfg EncoderConfig) model.Package {
 		licenses = toLicenseModel(p.Licenses.ToSlice())
 	}
 
+	var copyrights = make([]model.Copyright, 0)
+	if !p.Copyrights.Empty() {
+		copyrights = toCopyrightModel(p.Copyrights.ToSlice())
+	}
+
 	return model.Package{
 		PackageBasicData: model.PackageBasicData{
-			ID:        string(p.ID()),
-			Name:      p.Name,
-			Version:   p.Version,
-			Type:      p.Type,
-			FoundBy:   p.FoundBy,
-			Locations: p.Locations.ToSlice(),
-			Licenses:  licenses,
-			Language:  p.Language,
-			CPEs:      cpes,
-			PURL:      p.PURL,
+			ID:         string(p.ID()),
+			Name:       p.Name,
+			Version:    p.Version,
+			Type:       p.Type,
+			FoundBy:    p.FoundBy,
+			Locations:  p.Locations.ToSlice(),
+			Licenses:   licenses,
+			Copyrights: copyrights,
+			Language:   p.Language,
+			CPEs:       cpes,
+			PURL:       p.PURL,
 		},
 		PackageCustomData: model.PackageCustomData{
 			MetadataType: metadataType(p.Metadata, cfg.Legacy),
