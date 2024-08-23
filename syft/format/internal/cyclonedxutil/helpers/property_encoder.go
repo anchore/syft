@@ -165,7 +165,7 @@ func Decode(typ reflect.Type, values map[string]string, prefix string, fn FieldN
 
 	isSlice := false
 	if typ.Kind() == reflect.Slice {
-		typ = reflect.PtrTo(typ)
+		typ = reflect.PointerTo(typ)
 		isSlice = true
 	}
 

@@ -88,12 +88,12 @@ func mapFiles(files []rpmutils.FileInfo, digestAlgorithm string) []pkg.RpmFileRe
 		}
 		out = append(out, pkg.RpmFileRecord{
 			Path:      f.Name(),
-			Mode:      pkg.RpmFileMode(f.Mode()),
+			Mode:      pkg.RpmFileMode(f.Mode()), //nolint:gosec
 			Size:      int(f.Size()),
 			Digest:    digest,
 			UserName:  f.UserName(),
 			GroupName: f.GroupName(),
-			Flags:     rpmdb.FileFlags(f.Flags()).String(),
+			Flags:     rpmdb.FileFlags(f.Flags()).String(), //nolint:gosec
 		})
 	}
 	return out

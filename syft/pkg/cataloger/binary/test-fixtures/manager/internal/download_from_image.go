@@ -157,7 +157,7 @@ func copyBinariesFromDockerImage(config config.BinaryFromImage, destination stri
 
 	defer func() {
 		cmd := exec.Command("docker", "rm", containerName)
-		cmd.Run() // nolint:errcheck
+		cmd.Run() //nolint:errcheck
 	}()
 
 	for i, destinationPath := range config.AllStorePathsForImage(image, destination) {
@@ -182,7 +182,7 @@ func copyBinaryFromContainer(containerName, containerPath, destinationPath, fing
 		return err
 	}
 
-	cmd := exec.Command("docker", "cp", fmt.Sprintf("%s:%s", containerName, containerPath), destinationPath) // nolint:gosec
+	cmd := exec.Command("docker", "cp", fmt.Sprintf("%s:%s", containerName, containerPath), destinationPath) //nolint:gosec
 	// reason for gosec exception: this is for processing test fixtures only, not used in production
 	if err := cmd.Run(); err != nil {
 		return err

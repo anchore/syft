@@ -342,7 +342,7 @@ func (r *mavenResolver) findPomInRemoteRepository(ctx context.Context, groupID, 
 			Timeout: r.remoteRequestTimeout,
 		}
 
-		resp, err := client.Do(req) //nolint:bodyclose
+		resp, err := client.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get pom from Maven repository %v: %w", requestURL, err)
 		}
