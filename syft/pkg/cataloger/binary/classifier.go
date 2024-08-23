@@ -196,7 +196,6 @@ func matchExcluding(matcher EvidenceMatcher, contentPatternsToExclude ...string)
 	}
 }
 
-//nolint:gocognit
 func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher EvidenceMatcher) EvidenceMatcher {
 	pat := regexp.MustCompile(sharedLibraryPattern)
 	return func(classifier Classifier, context matcherContext) (packages []pkg.Package, _ error) {

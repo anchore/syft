@@ -124,7 +124,7 @@ func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeN
 		if metadataType == nil {
 			return nil
 		}
-		metaPtrTyp := reflect.PtrTo(metadataType)
+		metaPtrTyp := reflect.PointerTo(metadataType)
 		metaPtr := Decode(metaPtrTyp, vals, "syft:metadata", CycloneDXFields)
 
 		// Map all explicit metadata properties

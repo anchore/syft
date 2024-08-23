@@ -34,7 +34,7 @@ const (
 //
 // Available options are: <omit>, NOASSERTION, Person: <person>, Organization: <org>
 // return values are: <type>, <value>
-func Originator(p pkg.Package) (typ string, author string) { // nolint: funlen
+func Originator(p pkg.Package) (typ string, author string) { //nolint: funlen
 	if !hasMetadata(p) {
 		return typ, author
 	}

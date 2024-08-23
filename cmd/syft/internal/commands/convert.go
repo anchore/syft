@@ -28,7 +28,6 @@ type ConvertOptions struct {
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 }
 
-//nolint:dupl
 func Convert(app clio.Application) *cobra.Command {
 	id := app.ID()
 
