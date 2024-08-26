@@ -6075,6 +6075,9 @@
       "ftpd": [
         "cpe:2.3:a:ftpd_project:ftpd:*:*:*:*:*:ruby:*:*"
       ],
+      "fugit": [
+        "cpe:2.3:a:floraison:fugit:*:*:*:*:*:ruby:*:*"
+      ],
       "geminabox": [
         "cpe:2.3:a:geminabox_project:geminabox:*:*:*:*:*:ruby:*:*"
       ],
@@ -7970,7 +7973,10 @@
         "cpe:2.3:a:bcorp_shortcodes_project:bcorp_shortcodes:*:*:*:*:*:wordpress:*:*"
       ],
       "bdthemes-element-pack-lite": [
-        "cpe:2.3:a:bdthemes:element_pack_elementor_addons:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:bdthemes:element_pack:*:*:*:*:lite:wordpress:*:*"
+      ],
+      "bdthemes-element-pack-lite#tags": [
+        "cpe:2.3:a:bdthemes:element_pack:*:*:*:*:lite:wordpress:*:*"
       ],
       "bdvs-password-reset": [
         "cpe:2.3:a:bedevious:password_reset_with_code_for_wordpress_rest_api:*:*:*:*:*:wordpress:*:*"
