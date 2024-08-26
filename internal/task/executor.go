@@ -72,6 +72,6 @@ func runTaskSafely(ctx context.Context, t Task, resolver file.Resolver, s sbomsy
 
 	start := time.Now()
 	res := t.Execute(ctx, resolver, s)
-	log.Tracef("task name: %s time to execute: %v", t.Name(), time.Since(start))
+	log.WithFields("task", t.Name(), "elapsed", time.Since(start))
 	return res
 }
