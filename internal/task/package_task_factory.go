@@ -81,8 +81,6 @@ func (f PackageTaskFactories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error)
 }
 
 // NewPackageTask creates a Task function for a generic pkg.Cataloger, honoring the common configuration options.
-//
-//nolint:funlen,gocognit
 func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string) Task {
 	fn := func(ctx context.Context, resolver file.Resolver, sbom sbomsync.Builder) error {
 		catalogerName := c.Name()

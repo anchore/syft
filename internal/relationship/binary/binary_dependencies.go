@@ -36,8 +36,7 @@ func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, i
 				newRelationships.Add(r)
 			}
 		}
-
-		for _, parentPkg := range s.Artifacts.Packages.Sorted(pkg.BinaryPkg) {
+		for _, parentPkg := range allElfPackages(s) {
 			for _, evidentLocation := range parentPkg.Locations.ToSlice() {
 				if evidentLocation.Annotations[pkg.EvidenceAnnotationKey] != pkg.PrimaryEvidenceAnnotation {
 					continue
@@ -101,7 +100,7 @@ func onlyPrimaryEvidenceLocations(p pkg.Package) []file.Location {
 
 func allElfPackages(s *sbom.SBOM) []pkg.Package {
 	var elfPkgs []pkg.Package
-	for _, p := range s.Artifacts.Packages.Sorted(pkg.BinaryPkg) {
+	for _, p := range s.Artifacts.Packages.Sorted() {
 		if !isElfPackage(p) {
 			continue
 		}

@@ -120,7 +120,8 @@ func (r *ContainerImageAllLayers) FilesByPath(paths ...string) ([]file.Location,
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
-// nolint:gocognit
+//
+//nolint:gocognit
 func (r *ContainerImageAllLayers) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]file.Location, 0)

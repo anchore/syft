@@ -176,7 +176,7 @@ func hasElfDynTag(f *elf.File, tag elf.DynTag) bool {
 			t = elf.DynTag(f.ByteOrder.Uint32(d[0:4]))
 			d = d[8:]
 		case elf.ELFCLASS64:
-			t = elf.DynTag(f.ByteOrder.Uint64(d[0:8]))
+			t = elf.DynTag(f.ByteOrder.Uint64(d[0:8])) //nolint:gosec
 			d = d[16:]
 		}
 		if t == tag {

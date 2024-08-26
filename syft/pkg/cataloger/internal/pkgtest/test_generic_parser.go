@@ -269,7 +269,6 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	}
 }
 
-// nolint:funlen
 func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 	t.Helper()
 

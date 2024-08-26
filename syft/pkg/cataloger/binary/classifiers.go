@@ -529,6 +529,16 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/wp-cli@version"),
 			CPEs:    singleCPE("cpe:2.3:a:wp-cli:wp-cli:*:*:*:*:*:*:*:*"),
 		},
+		{
+			Class:    "curl-binary",
+			FileGlob: "**/curl",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`curl/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+			),
+			Package: "curl",
+			PURL:    mustPURL("pkg:generic/curl@version"),
+			CPEs:    singleCPE("cpe:2.3:a:curl:curl:*:*:*:*:*:*:*:*"),
+		},
 	}
 }
 

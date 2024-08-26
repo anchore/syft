@@ -60,10 +60,10 @@ func readStruct(metadata any, fields ...string) string {
 	if len(fields) > 0 {
 		value, ok := metadata.(map[any]any)
 		if !ok {
-			log.Tracef("unable to read '%s' from: %v", fields[0], metadata)
+			log.Tracef("unable to read '%s' from: %v", fields[0], metadata) //nolint:gosec
 			return ""
 		}
-		return readStruct(value[fields[0]], fields[1:]...)
+		return readStruct(value[fields[0]], fields[1:]...) //nolint:gosec
 	}
 	value, ok := metadata.(string)
 	if !ok {
