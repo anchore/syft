@@ -33,11 +33,13 @@ func (c unknownsFinalizeTask) processUnknowns(_ context.Context, resolver file.R
 func (c unknownsFinalizeTask) finalize(resolver file.Resolver, s *sbom.SBOM) {
 	hasPackageReference := coordinateReferenceLookup(resolver, s)
 
-	for coords := range s.Artifacts.Unknowns {
-		if !hasPackageReference(coords) {
-			continue
+	if c.RemoveWhenPackagesDefined {
+		for coords := range s.Artifacts.Unknowns {
+			if !hasPackageReference(coords) {
+				continue
+			}
+			delete(s.Artifacts.Unknowns, coords)
 		}
-		delete(s.Artifacts.Unknowns, coords)
 	}
 
 	if s.Artifacts.Unknowns == nil {
