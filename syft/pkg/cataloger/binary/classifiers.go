@@ -537,7 +537,7 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "curl",
 			PURL:    mustPURL("pkg:generic/curl@version"),
-			CPEs:    singleCPE("cpe:2.3:a:haxx:curl:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:haxx:curl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 }
