@@ -296,14 +296,14 @@ func (j *archiveParser) findLicenseFromJavaMetadata(ctx context.Context, groupID
 	if parsedPom != nil {
 		pomLicenses, err = j.maven.resolveLicenses(ctx, parsedPom.project)
 		if err != nil {
-			log.WithFields("error", err, "mavenID", j.maven.resolveMavenID(ctx, parsedPom.project)).Debug("error attempting to resolve pom licenses")
+			log.WithFields("error", err, "mavenID", j.maven.resolveMavenID(ctx, parsedPom.project)).Trace("error attempting to resolve pom licenses")
 		}
 	}
 
 	if err == nil && len(pomLicenses) == 0 {
 		pomLicenses, err = j.maven.findLicenses(ctx, groupID, artifactID, version)
 		if err != nil {
-			log.WithFields("error", err, "mavenID", mavenID{groupID, artifactID, version}).Debug("error attempting to find licenses")
+			log.WithFields("error", err, "mavenID", mavenID{groupID, artifactID, version}).Trace("error attempting to find licenses")
 		}
 	}
 
@@ -313,7 +313,7 @@ func (j *archiveParser) findLicenseFromJavaMetadata(ctx context.Context, groupID
 		groupID = strings.Join(packages[:len(packages)-1], ".")
 		pomLicenses, err = j.maven.findLicenses(ctx, groupID, artifactID, version)
 		if err != nil {
-			log.WithFields("error", err, "mavenID", mavenID{groupID, artifactID, version}).Debug("error attempting to find sub-group licenses")
+			log.WithFields("error", err, "mavenID", mavenID{groupID, artifactID, version}).Trace("error attempting to find sub-group licenses")
 		}
 	}
 
@@ -643,7 +643,7 @@ func newPackageFromMavenData(ctx context.Context, r *mavenResolver, pomPropertie
 	}
 
 	if err != nil {
-		log.WithFields("error", err, "mavenID", mavenID{pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version}).Debug("error attempting to resolve licenses")
+		log.WithFields("error", err, "mavenID", mavenID{pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version}).Trace("error attempting to resolve licenses")
 	}
 
 	licenses := make([]pkg.License, 0)
