@@ -283,7 +283,7 @@ func (j *archiveParser) findLicenseFromJavaMetadata(ctx context.Context, groupID
 	if parsedPom != nil {
 		pomLicenses, err = j.maven.resolveLicenses(ctx, parsedPom.project)
 		if err != nil {
-			log.WithFields("error", err, "mavenID", j.maven.resolveMavenID(ctx, parsedPom.project)).Debug("error attempting to resolve pom licenses")
+			log.WithFields("error", err, "mavenID", j.maven.getMavenID(ctx, parsedPom.project)).Debug("error attempting to resolve pom licenses")
 		}
 	}
 
@@ -352,7 +352,7 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	version = pomProperties.Version
 
 	if parsedPom != nil && parsedPom.project != nil {
-		id := j.maven.resolveMavenID(ctx, parsedPom.project)
+		id := j.maven.getMavenID(ctx, parsedPom.project)
 		if group == "" {
 			group = id.GroupID
 		}
