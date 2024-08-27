@@ -81,7 +81,7 @@ func (f PackageTaskFactories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error)
 }
 
 // NewPackageTask creates a Task function for a generic pkg.Cataloger, honoring the common configuration options.
-func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string) Task {
+func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string) Task { //nolint: funlen
 	fn := func(ctx context.Context, resolver file.Resolver, sbom sbomsync.Builder) error {
 		catalogerName := c.Name()
 		log.WithFields("name", catalogerName).Trace("starting package cataloger")
@@ -100,12 +100,15 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 
 		pkgs, relationships, err := c.Catalog(ctx, resolver)
 		if err != nil {
-			return fmt.Errorf("unable to catalog packages with %q: %w", c.Name(), err)
+			return fmt.Errorf("unable to catalog packages with %q: %w", catalogerName, err)
 		}
 
-		log.WithFields("cataloger", c.Name()).Debugf("discovered %d packages", len(pkgs))
+		log.WithFields("cataloger", catalogerName).Debugf("discovered %d packages", len(pkgs))
 
 		for i, p := range pkgs {
+			if p.FoundBy == "" {
+				p.FoundBy = catalogerName
+			}
 			if cfg.DataGenerationConfig.GenerateCPEs {
 				// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
 				// we might have binary classified CPE already with the package so we want to append here
@@ -143,7 +146,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 		t.Add(int64(len(pkgs)))
 
 		t.SetCompleted()
-		log.WithFields("name", c.Name()).Trace("package cataloger completed")
+		log.WithFields("name", catalogerName).Trace("package cataloger completed")
 
 		return nil
 	}
