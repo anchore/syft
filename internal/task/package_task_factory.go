@@ -15,10 +15,11 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
+	cpeutils "github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 )
 
 type packageTaskFactory func(cfg CatalogingFactoryConfig) Task
@@ -81,7 +82,7 @@ func (f PackageTaskFactories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error)
 }
 
 // NewPackageTask creates a Task function for a generic pkg.Cataloger, honoring the common configuration options.
-func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string) Task {
+func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string) Task { //nolint: funlen
 	fn := func(ctx context.Context, resolver file.Resolver, sbom sbomsync.Builder) error {
 		catalogerName := c.Name()
 		log.WithFields("name", catalogerName).Trace("starting package cataloger")
@@ -100,21 +101,25 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 
 		pkgs, relationships, err := c.Catalog(ctx, resolver)
 		if err != nil {
-			return fmt.Errorf("unable to catalog packages with %q: %w", c.Name(), err)
+			return fmt.Errorf("unable to catalog packages with %q: %w", catalogerName, err)
 		}
 
-		log.WithFields("cataloger", c.Name()).Debugf("discovered %d packages", len(pkgs))
+		log.WithFields("cataloger", catalogerName).Debugf("discovered %d packages", len(pkgs))
 
 		for i, p := range pkgs {
-			if cfg.DataGenerationConfig.GenerateCPEs {
+			if p.FoundBy == "" {
+				p.FoundBy = catalogerName
+			}
+
+			if cfg.DataGenerationConfig.GenerateCPEs && !hasAuthoritativeCPE(p.CPEs) {
 				// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
 				// we might have binary classified CPE already with the package so we want to append here
-				dictionaryCPEs, ok := cpe.DictionaryFind(p)
+				dictionaryCPEs, ok := cpeutils.DictionaryFind(p)
 				if ok {
 					log.Tracef("used CPE dictionary to find CPEs for %s package %q: %s", p.Type, p.Name, dictionaryCPEs)
 					p.CPEs = append(p.CPEs, dictionaryCPEs...)
 				} else {
-					p.CPEs = append(p.CPEs, cpe.Generate(p)...)
+					p.CPEs = append(p.CPEs, cpeutils.Generate(p)...)
 				}
 			}
 
@@ -143,13 +148,22 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 		t.Add(int64(len(pkgs)))
 
 		t.SetCompleted()
-		log.WithFields("name", c.Name()).Trace("package cataloger completed")
+		log.WithFields("name", catalogerName).Trace("package cataloger completed")
 
 		return nil
 	}
 	tags = append(tags, pkgcataloging.PackageTag)
 
 	return NewTask(c.Name(), fn, tags...)
+}
+
+func hasAuthoritativeCPE(cpes []cpe.CPE) bool {
+	for _, c := range cpes {
+		if c.Source != cpe.GeneratedSource {
+			return true
+		}
+	}
+	return false
 }
 
 func prettyName(s string) string {

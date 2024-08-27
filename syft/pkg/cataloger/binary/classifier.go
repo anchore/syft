@@ -274,9 +274,13 @@ func getContents(context matcherContext) ([]byte, error) {
 
 // singleCPE returns a []cpe.CPE with Source: Generated based on the cpe string or panics if the
 // cpe string cannot be parsed into valid CPE Attributes
-func singleCPE(cpeString string) []cpe.CPE {
+func singleCPE(cpeString string, source ...cpe.Source) []cpe.CPE {
+	src := cpe.GeneratedSource
+	if len(source) > 0 {
+		src = source[0]
+	}
 	return []cpe.CPE{
-		cpe.Must(cpeString, cpe.GeneratedSource),
+		cpe.Must(cpeString, src),
 	}
 }
 
