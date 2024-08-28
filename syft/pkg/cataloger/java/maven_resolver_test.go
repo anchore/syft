@@ -273,32 +273,72 @@ func Test_relativePathParent(t *testing.T) {
 	resolver, err := fileresolver.NewFromDirectory("test-fixtures/pom/local", "")
 	require.NoError(t, err)
 
-	r := newMavenResolver(resolver, DefaultArchiveCatalogerConfig())
-	locs, err := resolver.FilesByPath("child-1/pom.xml")
-	require.NoError(t, err)
-	require.Len(t, locs, 1)
-
-	loc := locs[0]
-	contents, err := resolver.FileContentsByLocation(loc)
-	require.NoError(t, err)
-	defer internal.CloseAndLogError(contents, loc.RealPath)
-
-	pom, err := decodePomXML(contents)
-	require.NoError(t, err)
-
-	r.pomLocations[pom] = loc
-
 	ctx := context.Background()
-	parent, err := r.resolveParent(ctx, pom)
-	require.NoError(t, err)
-	require.Contains(t, r.pomLocations, parent)
 
-	parent, err = r.resolveParent(ctx, parent)
-	require.NoError(t, err)
-	require.Contains(t, r.pomLocations, parent)
+	tests := []struct {
+		name     string
+		pom      string
+		validate func(t *testing.T, r *mavenResolver, pom *gopom.Project)
+	}{
+		{
+			name: "basic",
+			pom:  "child-1/pom.xml",
+			validate: func(t *testing.T, r *mavenResolver, pom *gopom.Project) {
+				parent, err := r.resolveParent(ctx, pom)
+				require.NoError(t, err)
+				require.Contains(t, r.pomLocations, parent)
 
-	got := r.getPropertyValue(ctx, ptr("${commons-exec_subversion}"), pom)
-	require.Equal(t, "3", got)
+				parent, err = r.resolveParent(ctx, parent)
+				require.NoError(t, err)
+				require.Contains(t, r.pomLocations, parent)
+
+				got := r.getPropertyValue(ctx, ptr("${commons-exec_subversion}"), pom)
+				require.Equal(t, "3", got)
+
+			},
+		},
+		{
+			name: "parent property",
+			pom:  "child-2/pom.xml",
+			validate: func(t *testing.T, r *mavenResolver, pom *gopom.Project) {
+				id := r.getMavenID(ctx, pom)
+				// child.parent.version = ${revision}
+				// parent.revision = 3.3.3
+				require.Equal(t, id.Version, "3.3.3")
+			},
+		},
+		{
+			name: "invalid parent",
+			pom:  "child-3/pom.xml",
+			validate: func(t *testing.T, r *mavenResolver, pom *gopom.Project) {
+				require.NotNil(t, pom)
+				id := r.getMavenID(ctx, pom)
+				// version should not be resolved to anything
+				require.Equal(t, "", id.Version)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			r := newMavenResolver(resolver, DefaultArchiveCatalogerConfig())
+			locs, err := resolver.FilesByPath(test.pom)
+			require.NoError(t, err)
+			require.Len(t, locs, 1)
+
+			loc := locs[0]
+			contents, err := resolver.FileContentsByLocation(loc)
+			require.NoError(t, err)
+			defer internal.CloseAndLogError(contents, loc.RealPath)
+
+			pom, err := decodePomXML(contents)
+			require.NoError(t, err)
+
+			r.pomLocations[pom] = loc
+
+			test.validate(t, r, pom)
+		})
+	}
 }
 
 // mockMavenRepo starts a remote maven repo serving all the pom files found in test-fixtures/pom/maven-repo
