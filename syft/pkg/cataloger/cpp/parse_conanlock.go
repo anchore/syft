@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -72,7 +73,7 @@ func parseConanLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		}
 	}
 
-	return pkgs, relationships, nil
+	return pkgs, relationships, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
 // handleConanLockV1 handles the parsing of conan lock v1 files (aka v0.4)

@@ -102,6 +102,10 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 		allPkgs = append(allPkgs, p)
 	}
 
+	if errs == nil && len(allPkgs) == 0 {
+		errs = fmt.Errorf("unable to determine packages")
+	}
+
 	return allPkgs, nil, errs
 }
 

@@ -172,7 +172,7 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	// generate package and file tasks based on the configuration
 	environmentTasks := c.environmentTasks()
 	relationshipsTasks := c.relationshipTasks(src)
-	unknownTasks := c.unknownTasks()
+	unknownTasks := c.unknownsTasks()
 	fileTasks := c.fileTasks()
 	pkgTasks, selectionEvidence, err := c.packageTasks(src)
 	if err != nil {
@@ -342,12 +342,12 @@ func (c *CreateSBOMConfig) environmentTasks() []task.Task {
 	return tsks
 }
 
-// unknownTasks returns a set of tasks that perform any necessary post-processing
+// unknownsTasks returns a set of tasks that perform any necessary post-processing
 // to identify SBOM elements as unknowns
-func (c *CreateSBOMConfig) unknownTasks() []task.Task {
+func (c *CreateSBOMConfig) unknownsTasks() []task.Task {
 	var tasks []task.Task
 
-	if t := task.NewUnknownsFinalizeTask(c.Unknowns); t != nil {
+	if t := task.NewUnknownsLabelerTask(c.Unknowns); t != nil {
 		tasks = append(tasks, t)
 	}
 

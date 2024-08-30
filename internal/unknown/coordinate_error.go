@@ -90,6 +90,15 @@ func Joinf(errs error, format string, args ...any) error {
 	return Join(errs, fmt.Errorf(format, args...))
 }
 
+// IfEmptyf returns a new Errorf-formatted error, only when the provided slice is empty or nil when
+// the slice has entries
+func IfEmptyf[T any](emptyTest []T, format string, args ...any) error {
+	if len(emptyTest) == 0 {
+		return fmt.Errorf(format, args...)
+	}
+	return nil
+}
+
 // ExtractCoordinateErrors extracts all coordinate errors returned, and any _additional_ errors in the graph
 // are encapsulated in the second, error return parameter
 func ExtractCoordinateErrors(err error) (coordinateErrors []CoordinateError, remainingErrors error) {

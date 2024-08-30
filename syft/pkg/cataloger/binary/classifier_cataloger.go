@@ -6,6 +6,7 @@ package binary
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
@@ -66,8 +67,8 @@ func (c cataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Pac
 		log.WithFields("classifier", cls.Class).Trace("cataloging binaries")
 		newPkgs, err := catalog(resolver, cls)
 		if err != nil {
-			log.WithFields("error", err, "classifier", cls.Class).Warn("unable to catalog binary package: %v", err)
-			errs = unknown.Join(errs, err)
+			log.WithFields("error", err, "classifier", cls.Class).Debugf("unable to catalog binary package: %v", err)
+			errs = unknown.Join(errs, fmt.Errorf("%s: %w", cls.Class, err))
 			continue
 		}
 	newPackages:

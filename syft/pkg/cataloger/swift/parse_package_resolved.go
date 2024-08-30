@@ -8,6 +8,7 @@ import (
 	"io"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -97,7 +98,7 @@ func parsePackageResolved(_ context.Context, _ file.Resolver, _ *generic.Environ
 			),
 		)
 	}
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
 func pinsForVersion(data map[string]interface{}, version float64) ([]packagePin, error) {

@@ -162,7 +162,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 		return nil, nil, fmt.Errorf("failed to parse python requirements file: %w", err)
 	}
 
-	return packages, nil, errs
+	return packages, nil, unknown.Join(errs, unknown.IfEmptyf(packages, "unable to determine packages"))
 }
 
 func parseVersion(version string, guessFromConstraint bool) string {

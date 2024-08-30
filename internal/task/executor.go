@@ -57,7 +57,7 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 				err := runTaskSafely(ctx, tsk, resolver, s)
 				unknowns, err := unknown.ExtractCoordinateErrors(err)
 				if len(unknowns) > 0 {
-					appendUnknowns(s, unknowns)
+					appendUnknowns(s, tsk.Name(), unknowns)
 				}
 				if err != nil {
 					withLock(func() {
@@ -75,14 +75,14 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 	return errs
 }
 
-func appendUnknowns(builder sbomsync.Builder, unknowns []unknown.CoordinateError) {
+func appendUnknowns(builder sbomsync.Builder, taskName string, unknowns []unknown.CoordinateError) {
 	if accessor, ok := builder.(sbomsync.Accessor); ok {
 		accessor.WriteToSBOM(func(sb *sbom.SBOM) {
 			for _, u := range unknowns {
 				if sb.Artifacts.Unknowns == nil {
 					sb.Artifacts.Unknowns = map[file.Coordinates][]string{}
 				}
-				sb.Artifacts.Unknowns[u.Coordinates] = append(sb.Artifacts.Unknowns[u.Coordinates], u.Reason.Error())
+				sb.Artifacts.Unknowns[u.Coordinates] = append(sb.Artifacts.Unknowns[u.Coordinates], formatUnknown(u.Reason.Error(), taskName))
 			}
 		})
 	}

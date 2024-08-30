@@ -13,7 +13,7 @@ import (
 
 func Test_visitErrors(t *testing.T) {
 	tests := []struct {
-		name      string ``
+		name      string
 		in        error
 		transform func(error) error
 		expected  string

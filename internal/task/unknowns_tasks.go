@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"strings"
 
 	"github.com/mholt/archiver/v3"
 
@@ -13,16 +14,18 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func NewUnknownsFinalizeTask(cfg cataloging.UnknownsConfig) Task {
-	return NewTask("unknowns-finalize", unknownsFinalizeTask{cfg}.processUnknowns)
+const unknownsLabelerTaskName = "unknowns-labeler"
+
+func NewUnknownsLabelerTask(cfg cataloging.UnknownsConfig) Task {
+	return NewTask(unknownsLabelerTaskName, unknownsLabelerTask{cfg}.processUnknowns)
 }
 
-type unknownsFinalizeTask struct {
+type unknownsLabelerTask struct {
 	cataloging.UnknownsConfig
 }
 
 // processUnknowns removes unknown entries that have valid packages reported for the locations
-func (c unknownsFinalizeTask) processUnknowns(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+func (c unknownsLabelerTask) processUnknowns(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 	accessor := builder.(sbomsync.Accessor)
 	accessor.WriteToSBOM(func(s *sbom.SBOM) {
 		c.finalize(resolver, s)
@@ -30,7 +33,7 @@ func (c unknownsFinalizeTask) processUnknowns(_ context.Context, resolver file.R
 	return nil
 }
 
-func (c unknownsFinalizeTask) finalize(resolver file.Resolver, s *sbom.SBOM) {
+func (c unknownsLabelerTask) finalize(resolver file.Resolver, s *sbom.SBOM) {
 	hasPackageReference := coordinateReferenceLookup(resolver, s)
 
 	if c.RemoveWhenPackagesDefined {
@@ -49,7 +52,7 @@ func (c unknownsFinalizeTask) finalize(resolver file.Resolver, s *sbom.SBOM) {
 	if c.IncludeExecutablesWithoutPackages {
 		for coords := range s.Artifacts.Executables {
 			if !hasPackageReference(coords) {
-				s.Artifacts.Unknowns[coords] = append(s.Artifacts.Unknowns[coords], "no package identified in executable file")
+				s.Artifacts.Unknowns[coords] = append(s.Artifacts.Unknowns[coords], formatUnknown("no package identified in executable file", unknownsLabelerTaskName))
 			}
 		}
 	}
@@ -62,6 +65,10 @@ func (c unknownsFinalizeTask) finalize(resolver file.Resolver, s *sbom.SBOM) {
 			}
 		}
 	}
+}
+
+func formatUnknown(err string, task ...string) string {
+	return strings.Join(task, "/") + ": " + err
 }
 
 func coordinateReferenceLookup(resolver file.Resolver, s *sbom.SBOM) func(coords file.Coordinates) bool {

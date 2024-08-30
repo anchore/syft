@@ -33,6 +33,9 @@ func parseMixLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 		line, err := r.ReadString('\n')
 		switch {
 		case errors.Is(err, io.EOF):
+			if errs == nil {
+				errs = unknown.IfEmptyf(packages, "unable to determine packages")
+			}
 			return packages, nil, errs
 		case err != nil:
 			return nil, nil, fmt.Errorf("failed to parse mix.lock file: %w", err)
