@@ -36,6 +36,7 @@ type Catalog struct {
 	Scope             string              `yaml:"scope" json:"scope" mapstructure:"scope"`
 	Parallelism       int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
 	Relationships     relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
+	UseNetwork        *bool               `yaml:"use-network" json:"use-network" mapstructure:"use-network"`
 
 	// ecosystem-specific cataloger configuration
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
@@ -132,7 +133,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
-			WithSearchRemoteLicenses(cfg.Golang.SearchRemoteLicenses).
+			WithSearchRemoteLicenses(multilevelOption(cfg.UseNetwork, cfg.Golang.SearchRemoteLicenses)).
 			WithProxy(cfg.Golang.Proxy).
 			WithNoProxy(cfg.Golang.NoProxy).
 			WithMainModuleVersion(
@@ -142,7 +143,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			),
 		JavaScript: javascript.DefaultCatalogerConfig().
-			WithSearchRemoteLicenses(cfg.JavaScript.SearchRemoteLicenses).
+			WithSearchRemoteLicenses(multilevelOption(cfg.UseNetwork, cfg.JavaScript.SearchRemoteLicenses)).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
@@ -153,7 +154,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
 			WithUseMavenLocalRepository(cfg.Java.UseMavenLocalRepository).
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
-			WithUseNetwork(cfg.Java.UseNetwork).
+			WithUseNetwork(multilevelOption(cfg.UseNetwork, cfg.Java.UseNetwork)).
 			WithMavenBaseURL(cfg.Java.MavenURL).
 			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth),
 	}
@@ -201,6 +202,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 	flags.StringVarP(&cfg.Source.BasePath, "base-path", "",
 		"base directory for scanning, no links will be followed above this directory, and all paths will be reported relative to this directory")
+
+	flags.BoolPtrVarP(&cfg.UseNetwork, "use-network", "",
+		"use the network to resolve locally unavailable data")
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
@@ -242,4 +246,14 @@ func (cfg *Catalog) PostLoad() error {
 	}
 
 	return nil
+}
+
+func multilevelOption(options ...*bool) bool {
+	def := false
+	for _, option := range options {
+		if option != nil {
+			def = *option
+		}
+	}
+	return def
 }
