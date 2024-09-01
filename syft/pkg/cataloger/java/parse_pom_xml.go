@@ -56,7 +56,7 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 
 		// store information about this pom for future lookups
 		r.pomLocations[pom] = pomLocation
-		r.resolved[r.resolveMavenID(ctx, pom)] = pom
+		r.resolved[r.getMavenID(ctx, pom)] = pom
 	}
 
 	var pkgs []pkg.Package
@@ -78,7 +78,7 @@ func readPomFromLocation(fileResolver file.Resolver, pomLocation file.Location) 
 func processPomXML(ctx context.Context, r *mavenResolver, pom *gopom.Project, loc file.Location) []pkg.Package {
 	var pkgs []pkg.Package
 
-	pomID := r.resolveMavenID(ctx, pom)
+	pomID := r.getMavenID(ctx, pom)
 	for _, dep := range pomDependencies(pom) {
 		depID := r.resolveDependencyID(ctx, pom, dep)
 		log.WithFields("pomLocation", loc, "mavenID", pomID, "dependencyID", depID).Trace("adding maven pom dependency")
@@ -103,7 +103,7 @@ func processPomXML(ctx context.Context, r *mavenResolver, pom *gopom.Project, lo
 }
 
 func newPomProject(ctx context.Context, r *mavenResolver, path string, pom *gopom.Project) *pkg.JavaPomProject {
-	id := r.resolveMavenID(ctx, pom)
+	id := r.getMavenID(ctx, pom)
 	name := r.getPropertyValue(ctx, pom.Name, pom)
 	projectURL := r.getPropertyValue(ctx, pom.URL, pom)
 

@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"runtime/debug"
 	"sync"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/event/monitor"
@@ -96,5 +98,8 @@ func runTaskSafely(ctx context.Context, t Task, resolver file.Resolver, s sbomsy
 		}
 	}()
 
-	return t.Execute(ctx, resolver, s)
+	start := time.Now()
+	res := t.Execute(ctx, resolver, s)
+	log.WithFields("task", t.Name(), "elapsed", time.Since(start)).Info("task completed")
+	return res
 }

@@ -67,10 +67,17 @@ func newMavenResolver(fileResolver file.Resolver, cfg ArchiveCatalogerConfig) *m
 // as well as supporting the project expressions like ${project.parent.groupId}.
 // Properties which are not resolved result in empty string ""
 func (r *mavenResolver) getPropertyValue(ctx context.Context, propertyValue *string, resolutionContext ...*gopom.Project) string {
+	return r.resolvePropertyValue(ctx, propertyValue, nil, resolutionContext...)
+}
+
+// resolvePropertyValue resolves property values by emulating maven property resolution logic, looking in the project's variables
+// as well as supporting the project expressions like ${project.parent.groupId}.
+// Properties which are not resolved result in empty string ""
+func (r *mavenResolver) resolvePropertyValue(ctx context.Context, propertyValue *string, resolvingProperties []string, resolutionContext ...*gopom.Project) string {
 	if propertyValue == nil {
 		return ""
 	}
-	resolved, err := r.resolveExpression(ctx, resolutionContext, *propertyValue, nil)
+	resolved, err := r.resolveExpression(ctx, resolutionContext, *propertyValue, resolvingProperties)
 	if err != nil {
 		log.WithFields("error", err, "propertyValue", *propertyValue).Trace("error resolving maven property")
 		return ""
@@ -79,32 +86,35 @@ func (r *mavenResolver) getPropertyValue(ctx context.Context, propertyValue *str
 }
 
 // resolveExpression resolves an expression, which may be a plain string or a string with ${ property.references }
-func (r *mavenResolver) resolveExpression(ctx context.Context, resolutionContext []*gopom.Project, expression string, resolving []string) (string, error) {
-	var err error
+func (r *mavenResolver) resolveExpression(ctx context.Context, resolutionContext []*gopom.Project, expression string, resolvingProperties []string) (string, error) {
+	log.Tracef("resolving expression: '%v' in context: %v", expression, resolutionContext)
+
+	var errs error
 	return expressionMatcher.ReplaceAllStringFunc(expression, func(match string) string {
+		log.Tracef("resolving property: '%v' in context: %v", expression, resolutionContext)
 		propertyExpression := strings.TrimSpace(match[2 : len(match)-1]) // remove leading ${ and trailing }
-		resolved, e := r.resolveProperty(ctx, resolutionContext, propertyExpression, resolving)
-		if e != nil {
-			err = errors.Join(err, e)
+		resolved, err := r.resolveProperty(ctx, resolutionContext, propertyExpression, resolvingProperties)
+		if err != nil {
+			errs = errors.Join(errs, err)
 			return ""
 		}
 		return resolved
-	}), err
+	}), errs
 }
 
 // resolveProperty resolves properties recursively from the root project
-func (r *mavenResolver) resolveProperty(ctx context.Context, resolutionContext []*gopom.Project, propertyExpression string, resolving []string) (string, error) {
+func (r *mavenResolver) resolveProperty(ctx context.Context, resolutionContext []*gopom.Project, propertyExpression string, resolvingProperties []string) (string, error) {
 	// prevent cycles
-	if slices.Contains(resolving, propertyExpression) {
+	if slices.Contains(resolvingProperties, propertyExpression) {
 		return "", fmt.Errorf("cycle detected resolving: %s", propertyExpression)
 	}
 	if len(resolutionContext) == 0 {
 		return "", fmt.Errorf("no project variable resolution context provided for expression: '%s'", propertyExpression)
 	}
-	resolving = append(resolving, propertyExpression)
+	resolvingProperties = append(resolvingProperties, propertyExpression)
 
 	// only resolve project. properties in the context of the current project pom
-	value, err := r.resolveProjectProperty(ctx, resolutionContext, resolutionContext[len(resolutionContext)-1], propertyExpression, resolving)
+	value, err := r.resolveProjectProperty(ctx, resolutionContext, resolutionContext[len(resolutionContext)-1], propertyExpression, resolvingProperties)
 	if err != nil {
 		return value, err
 	}
@@ -120,10 +130,10 @@ func (r *mavenResolver) resolveProperty(ctx context.Context, resolutionContext [
 			}
 			if current.Properties != nil && current.Properties.Entries != nil {
 				if value, ok := current.Properties.Entries[propertyExpression]; ok {
-					return r.resolveExpression(ctx, resolutionContext, value, resolving) // property values can contain expressions
+					return r.resolveExpression(ctx, resolutionContext, value, resolvingProperties) // property values can contain expressions
 				}
 			}
-			current, err = r.resolveParent(ctx, current)
+			current, err = r.resolveParent(ctx, current, resolvingProperties...)
 			if err != nil {
 				return "", err
 			}
@@ -200,23 +210,33 @@ func (r *mavenResolver) resolveProjectProperty(ctx context.Context, resolutionCo
 	return "", nil
 }
 
+// getMavenID creates a new mavenID from a pom, resolving parent information as necessary
+func (r *mavenResolver) getMavenID(ctx context.Context, resolutionContext ...*gopom.Project) mavenID {
+	return r.resolveMavenID(ctx, nil, resolutionContext...)
+}
+
 // resolveMavenID creates a new mavenID from a pom, resolving parent information as necessary
-func (r *mavenResolver) resolveMavenID(ctx context.Context, pom *gopom.Project) mavenID {
+func (r *mavenResolver) resolveMavenID(ctx context.Context, resolvingProperties []string, resolutionContext ...*gopom.Project) mavenID {
+	if len(resolutionContext) == 0 || resolutionContext[0] == nil {
+		return mavenID{}
+	}
+	pom := resolutionContext[len(resolutionContext)-1] // get topmost pom
 	if pom == nil {
 		return mavenID{}
 	}
-	groupID := r.getPropertyValue(ctx, pom.GroupID, pom)
-	artifactID := r.getPropertyValue(ctx, pom.ArtifactID, pom)
-	version := r.getPropertyValue(ctx, pom.Version, pom)
+
+	groupID := r.resolvePropertyValue(ctx, pom.GroupID, resolvingProperties, resolutionContext...)
+	artifactID := r.resolvePropertyValue(ctx, pom.ArtifactID, resolvingProperties, resolutionContext...)
+	version := r.resolvePropertyValue(ctx, pom.Version, resolvingProperties, resolutionContext...)
 	if pom.Parent != nil {
 		if groupID == "" {
-			groupID = r.getPropertyValue(ctx, pom.Parent.GroupID, pom)
+			groupID = r.resolvePropertyValue(ctx, pom.Parent.GroupID, resolvingProperties, resolutionContext...)
 		}
 		if artifactID == "" {
-			artifactID = r.getPropertyValue(ctx, pom.Parent.ArtifactID, pom)
+			artifactID = r.resolvePropertyValue(ctx, pom.Parent.ArtifactID, resolvingProperties, resolutionContext...)
 		}
 		if version == "" {
-			version = r.getPropertyValue(ctx, pom.Parent.Version, pom)
+			version = r.resolvePropertyValue(ctx, pom.Parent.Version, resolvingProperties, resolutionContext...)
 		}
 	}
 	return mavenID{groupID, artifactID, version}
@@ -240,7 +260,7 @@ func (r *mavenResolver) resolveDependencyID(ctx context.Context, pom *gopom.Proj
 	depID := mavenID{groupID, artifactID, version}
 
 	if err != nil {
-		log.WithFields("error", err, "mavenID", r.resolveMavenID(ctx, pom), "dependencyID", depID)
+		log.WithFields("error", err, "mavenID", r.getMavenID(ctx, pom), "dependencyID", depID)
 	}
 
 	return depID
@@ -390,16 +410,16 @@ func (r *mavenResolver) cacheResolveReader(key string, resolve func() (io.ReadCl
 }
 
 // resolveParent attempts to resolve the parent for the given pom
-func (r *mavenResolver) resolveParent(ctx context.Context, pom *gopom.Project) (*gopom.Project, error) {
+func (r *mavenResolver) resolveParent(ctx context.Context, pom *gopom.Project, resolvingProperties ...string) (*gopom.Project, error) {
 	if pom == nil || pom.Parent == nil {
 		return nil, nil
 	}
 	parent := pom.Parent
 	pomWithoutParent := *pom
 	pomWithoutParent.Parent = nil
-	groupID := r.getPropertyValue(ctx, parent.GroupID, &pomWithoutParent)
-	artifactID := r.getPropertyValue(ctx, parent.ArtifactID, &pomWithoutParent)
-	version := r.getPropertyValue(ctx, parent.Version, &pomWithoutParent)
+	groupID := r.resolvePropertyValue(ctx, parent.GroupID, resolvingProperties, &pomWithoutParent)
+	artifactID := r.resolvePropertyValue(ctx, parent.ArtifactID, resolvingProperties, &pomWithoutParent)
+	version := r.resolvePropertyValue(ctx, parent.Version, resolvingProperties, &pomWithoutParent)
 
 	// check cache before resolving
 	parentID := mavenID{groupID, artifactID, version}
@@ -408,7 +428,7 @@ func (r *mavenResolver) resolveParent(ctx context.Context, pom *gopom.Project) (
 	}
 
 	// check if the pom exists in the fileResolver
-	parentPom := r.findParentPomByRelativePath(ctx, pom, parentID)
+	parentPom := r.findParentPomByRelativePath(ctx, pom, parentID, resolvingProperties)
 	if parentPom != nil {
 		return parentPom, nil
 	}
@@ -425,10 +445,10 @@ func (r *mavenResolver) findInheritedVersion(ctx context.Context, pom *gopom.Pro
 		return "", fmt.Errorf("nil pom provided to findInheritedVersion")
 	}
 	if r.cfg.MaxParentRecursiveDepth > 0 && len(resolutionContext) > r.cfg.MaxParentRecursiveDepth {
-		return "", fmt.Errorf("maximum depth reached attempting to resolve version for: %s:%s at: %v", groupID, artifactID, r.resolveMavenID(ctx, pom))
+		return "", fmt.Errorf("maximum depth reached attempting to resolve version for: %s:%s at: %v", groupID, artifactID, r.getMavenID(ctx, pom))
 	}
 	if slices.Contains(resolutionContext, pom) {
-		return "", fmt.Errorf("cycle detected attempting to resolve version for: %s:%s at: %v", groupID, artifactID, r.resolveMavenID(ctx, pom))
+		return "", fmt.Errorf("cycle detected attempting to resolve version for: %s:%s at: %v", groupID, artifactID, r.getMavenID(ctx, pom))
 	}
 	resolutionContext = append(resolutionContext, pom)
 
@@ -452,13 +472,13 @@ func (r *mavenResolver) findInheritedVersion(ctx context.Context, pom *gopom.Pro
 
 			depPom, err := r.findPom(ctx, depGroupID, depArtifactID, depVersion)
 			if err != nil || depPom == nil {
-				log.WithFields("error", err, "mavenID", r.resolveMavenID(ctx, pom), "dependencyID", mavenID{depGroupID, depArtifactID, depVersion}).
+				log.WithFields("error", err, "mavenID", r.getMavenID(ctx, pom), "dependencyID", mavenID{depGroupID, depArtifactID, depVersion}).
 					Debug("unable to find imported pom looking for managed dependencies")
 				continue
 			}
 			version, err = r.findInheritedVersion(ctx, depPom, groupID, artifactID, resolutionContext...)
 			if err != nil {
-				log.WithFields("error", err, "mavenID", r.resolveMavenID(ctx, pom), "dependencyID", mavenID{depGroupID, depArtifactID, depVersion}).
+				log.WithFields("error", err, "mavenID", r.getMavenID(ctx, pom), "dependencyID", mavenID{depGroupID, depArtifactID, depVersion}).
 					Debug("error during findInheritedVersion")
 			}
 			if version != "" {
@@ -508,7 +528,7 @@ func (r *mavenResolver) findLicenses(ctx context.Context, groupID, artifactID, v
 
 // resolveLicenses searches the pom for license, traversing parent poms if needed
 func (r *mavenResolver) resolveLicenses(ctx context.Context, pom *gopom.Project, processing ...mavenID) ([]gopom.License, error) {
-	id := r.resolveMavenID(ctx, pom)
+	id := r.getMavenID(ctx, pom)
 	if slices.Contains(processing, id) {
 		return nil, fmt.Errorf("cycle detected resolving licenses for: %v", id)
 	}
@@ -545,7 +565,7 @@ func (r *mavenResolver) pomLicenses(ctx context.Context, pom *gopom.Project) []g
 	return out
 }
 
-func (r *mavenResolver) findParentPomByRelativePath(ctx context.Context, pom *gopom.Project, parentID mavenID) *gopom.Project {
+func (r *mavenResolver) findParentPomByRelativePath(ctx context.Context, pom *gopom.Project, parentID mavenID, resolvingProperties []string) *gopom.Project {
 	// don't resolve if no resolver
 	if r.fileResolver == nil {
 		return nil
@@ -555,7 +575,7 @@ func (r *mavenResolver) findParentPomByRelativePath(ctx context.Context, pom *go
 	if !hasPomLocation || pom == nil || pom.Parent == nil {
 		return nil
 	}
-	relativePath := r.getPropertyValue(ctx, pom.Parent.RelativePath, pom)
+	relativePath := r.resolvePropertyValue(ctx, pom.Parent.RelativePath, resolvingProperties, pom)
 	if relativePath == "" {
 		return nil
 	}
@@ -563,9 +583,12 @@ func (r *mavenResolver) findParentPomByRelativePath(ctx context.Context, pom *go
 	p = path.Dir(p)
 	p = path.Join(p, relativePath)
 	p = path.Clean(p)
+	if !strings.HasSuffix(p, ".xml") {
+		p = path.Join(p, "pom.xml")
+	}
 	parentLocations, err := r.fileResolver.FilesByPath(p)
 	if err != nil || len(parentLocations) == 0 {
-		log.WithFields("error", err, "mavenID", r.resolveMavenID(ctx, pom), "parentID", parentID, "relativePath", relativePath).
+		log.WithFields("error", err, "mavenID", r.resolveMavenID(ctx, resolvingProperties, pom), "parentID", parentID, "relativePath", relativePath).
 			Trace("parent pom not found by relative path")
 		return nil
 	}
@@ -573,21 +596,21 @@ func (r *mavenResolver) findParentPomByRelativePath(ctx context.Context, pom *go
 
 	parentContents, err := r.fileResolver.FileContentsByLocation(parentLocation)
 	if err != nil || parentContents == nil {
-		log.WithFields("error", err, "mavenID", r.resolveMavenID(ctx, pom), "parentID", parentID, "parentLocation", parentLocation).
+		log.WithFields("error", err, "mavenID", r.resolveMavenID(ctx, resolvingProperties, pom), "parentID", parentID, "parentLocation", parentLocation).
 			Debug("unable to get contents of parent pom by relative path")
 		return nil
 	}
 	defer internal.CloseAndLogError(parentContents, parentLocation.RealPath)
 	parentPom, err := decodePomXML(parentContents)
 	if err != nil || parentPom == nil {
-		log.WithFields("error", err, "mavenID", r.resolveMavenID(ctx, pom), "parentID", parentID, "parentLocation", parentLocation).
+		log.WithFields("error", err, "mavenID", r.resolveMavenID(ctx, resolvingProperties, pom), "parentID", parentID, "parentLocation", parentLocation).
 			Debug("unable to parse parent pom")
 		return nil
 	}
 	// ensure parent matches
-	newParentID := r.resolveMavenID(ctx, parentPom)
+	newParentID := r.resolveMavenID(ctx, resolvingProperties, parentPom)
 	if newParentID.ArtifactID != parentID.ArtifactID {
-		log.WithFields("newParentID", newParentID, "mavenID", r.resolveMavenID(ctx, pom), "parentID", parentID, "parentLocation", parentLocation).
+		log.WithFields("newParentID", newParentID, "mavenID", r.resolveMavenID(ctx, resolvingProperties, pom), "parentID", parentID, "parentLocation", parentLocation).
 			Debug("parent IDs do not match resolving parent by relative path")
 		return nil
 	}
