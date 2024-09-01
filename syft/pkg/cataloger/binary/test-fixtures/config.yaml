@@ -106,6 +106,13 @@ from-images:
     paths:
       - /usr/local/sbin/haproxy
 
+  - version: 3.1-dev0
+    images:
+      - ref: haproxy:3.1-dev0@sha256:eba1aac9aa6ea84869bd2ecae79792a934563fd731eddf724eb3b12ef6a9b93f
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/haproxy
+
   - version: 2.4.54
     images:
       - ref: httpd:2.4.54@sha256:c13feaef62bdb03e65e645f47d9780adea5a080c78eb9e4b3c32e861327262b4
