@@ -65,6 +65,7 @@ tasks:
       - task: benchmark
       - task: test-utils
       - task: cli
+      - task: check-docker-cache
 
   ## Bootstrap tasks #################################
 
@@ -313,6 +314,18 @@ tasks:
       - "echo '\nTar cache:'"
       - 'find . -type f -wholename "**/test-fixtures/snapshot/*" | sort'
 
+  check-docker-cache:
+    desc: Ensure docker caches aren't using too much disk space
+    silent: true
+    cmd: |
+      total_size=$(find . | grep cache | grep tar | xargs du -c | grep total | awk '{print $1}')
+      find . | grep cache | grep tar | xargs du
+      echo "total $total_size KB"
+      
+      if [ "$total_size" -gt 1048576 ]; then
+        echo 'docker cache is larger than 1GB'
+        exit 1
+      fi
 
   ## install.sh testing targets #################################
 
@@ -493,4 +506,4 @@ tasks:
     desc: Remove all docker cache and local image tar cache
     cmds:
       - 'find . -type f -wholename "**/test-fixtures/cache/stereoscope-fixture-*.tar" -delete'
-      - "docker images --format '{{`{{.ID}}`}} {{`{{.Repository}}`}}' | grep stereoscope-fixture- | awk '{print $$1}' | uniq | xargs -r docker rmi --force"
+      - "docker images --format '{{`{{.ID}}`}} {{`{{.Repository}}`}}' | grep stereoscope-fixture- | awk '{print $1}' | uniq | xargs -r docker rmi --force"
