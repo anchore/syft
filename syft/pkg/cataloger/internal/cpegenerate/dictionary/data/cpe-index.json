@@ -6705,6 +6705,9 @@
       "multiqueue2": [
         "cpe:2.3:a:multiqueue2_project:multiqueue2:*:*:*:*:*:rust:*:*"
       ],
+      "naga": [
+        "cpe:2.3:a:gfx-rs:naga:*:*:*:*:*:rust:*:*"
+      ],
       "nalgebra": [
         "cpe:2.3:a:dimforge:nalgebra:*:*:*:*:*:rust:*:*"
       ],
@@ -8081,6 +8084,9 @@
       "block-specific-plugin-updates": [
         "cpe:2.3:a:dineshkarki:block_plugin_update:*:*:*:*:*:wordpress:*:*"
       ],
+      "blockart-blocks": [
+        "cpe:2.3:a:wpblockart:blockart_blocks:*:*:*:*:*:wordpress:*:*"
+      ],
       "blockonomics-bitcoin-payments": [
         "cpe:2.3:a:blockonomics:blockonomics:*:*:*:*:*:wordpress:*:*"
       ],
@@ -8217,6 +8223,9 @@
       ],
       "bp-social-connect": [
         "cpe:2.3:a:vibethemes:bp_social_connect:*:*:*:*:*:wordpress:*:*"
+      ],
+      "bradmax-player": [
+        "cpe:2.3:a:bradmax:bradmax_player:*:*:*:*:*:wordpress:*:*"
       ],
       "brave-popup-builder": [
         "cpe:2.3:a:getbrave:brave:*:*:*:*:*:wordpress:*:*"
@@ -12482,6 +12491,7 @@
         "cpe:2.3:a:mediavine:create:*:*:*:*:*:wordpress:*:*"
       ],
       "meeting-scheduler-by-vcita": [
+        "cpe:2.3:a:vcita:online_booking_\\\u0026_scheduling_calendar:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:vcita:online_booking_\\\u0026_scheduling_calendar_for_wordpress:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:vcita:online_booking_\\\u0026_scheduling_calendar_for_wordpress_by_vcita:*:*:*:*:*:wordpress:*:*"
       ],
@@ -13468,6 +13478,9 @@
       "photo-gallery": [
         "cpe:2.3:a:10web:photo_gallery:*:*:*:*:*:wordpress:*:*"
       ],
+      "photo-video-gallery-master": [
+        "cpe:2.3:a:webhuntinfotech:photo_video_gallery_master:*:*:*:*:*:wordpress:*:*"
+      ],
       "photoblocks-grid-gallery": [
         "cpe:2.3:a:greentreelabs:gallery_photoblocks:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:wpchill:gallery_photoblocks:*:*:*:*:*:wordpress:*:*"
@@ -14350,6 +14363,9 @@
       ],
       "review-schema": [
         "cpe:2.3:a:radiustheme:review_schema:*:*:*:*:*:wordpress:*:*"
+      ],
+      "reviews-feed": [
+        "cpe:2.3:a:smashballoon:reviews_feed:*:*:*:*:*:wordpress:*:*"
       ],
       "reviews-plus": [
         "cpe:2.3:a:implecode:reviews_plus:*:*:*:*:*:wordpress:*:*"
@@ -16076,6 +16092,9 @@
       ],
       "ultimate-blocks": [
         "cpe:2.3:a:dotcamp:ultimate_blocks:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-bootstrap-elements-for-elementor": [
+        "cpe:2.3:a:g5plus:ultimate_bootstrap_elements_for_elementor:*:*:*:*:*:wordpress:*:*"
       ],
       "ultimate-carousel-for-elementor": [
         "cpe:2.3:a:topdigitaltrends:ultimate_carousel_for_elementor:*:*:*:*:*:wordpress:*:*"
