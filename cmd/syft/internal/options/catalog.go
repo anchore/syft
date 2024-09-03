@@ -204,7 +204,7 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 		"base directory for scanning, no links will be followed above this directory, and all paths will be reported relative to this directory")
 
 	flags.BoolPtrVarP(&cfg.UseNetwork, "use-network", "",
-		"use the network to resolve locally unavailable data")
+		"use the network to fetch and augment package information")
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
