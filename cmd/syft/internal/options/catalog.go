@@ -133,7 +133,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
-			WithSearchRemoteLicenses(multilevelOption(cfg.UseNetwork, cfg.Golang.SearchRemoteLicenses)).
+			WithSearchRemoteLicenses(*multiLevelOption(false, cfg.UseNetwork, cfg.Golang.SearchRemoteLicenses)).
 			WithProxy(cfg.Golang.Proxy).
 			WithNoProxy(cfg.Golang.NoProxy).
 			WithMainModuleVersion(
@@ -143,7 +143,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			),
 		JavaScript: javascript.DefaultCatalogerConfig().
-			WithSearchRemoteLicenses(multilevelOption(cfg.UseNetwork, cfg.JavaScript.SearchRemoteLicenses)).
+			WithSearchRemoteLicenses(*multiLevelOption(false, cfg.UseNetwork, cfg.JavaScript.SearchRemoteLicenses)).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
@@ -154,7 +154,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
 			WithUseMavenLocalRepository(cfg.Java.UseMavenLocalRepository).
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
-			WithUseNetwork(multilevelOption(cfg.UseNetwork, cfg.Java.UseNetwork)).
+			WithUseNetwork(*multiLevelOption(false, cfg.UseNetwork, cfg.Java.UseNetwork)).
 			WithMavenBaseURL(cfg.Java.MavenURL).
 			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth),
 	}
@@ -246,14 +246,4 @@ func (cfg *Catalog) PostLoad() error {
 	}
 
 	return nil
-}
-
-func multilevelOption(options ...*bool) bool {
-	def := false
-	for _, option := range options {
-		if option != nil {
-			def = *option
-		}
-	}
-	return def
 }
