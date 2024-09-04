@@ -19,7 +19,7 @@ func catalogFixtureImage(t *testing.T, fixtureImageName string, scope source.Sco
 	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{
 		Name:    "syft-tester",
 		Version: "v0.99.0",
-	}).WithCatalogerSelection(
+	}, options.Network{}).WithCatalogerSelection(
 		pkgcataloging.NewSelectionRequest().
 			WithExpression(catalogerSelection...),
 	)
@@ -54,7 +54,7 @@ func catalogDirectory(t *testing.T, dir string, catalogerSelection ...string) (s
 	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{
 		Name:    "syft-tester",
 		Version: "v0.99.0",
-	}).WithCatalogerSelection(
+	}, options.Network{}).WithCatalogerSelection(
 		pkgcataloging.NewSelectionRequest().
 			WithExpression(catalogerSelection...),
 	)
