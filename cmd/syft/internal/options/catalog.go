@@ -2,8 +2,6 @@ package options
 
 import (
 	"fmt"
-	"sort"
-	"strings"
 
 	"github.com/iancoleman/strcase"
 
@@ -36,7 +34,6 @@ type Catalog struct {
 	Scope             string              `yaml:"scope" json:"scope" mapstructure:"scope"`
 	Parallelism       int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
 	Relationships     relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
-	UseNetwork        *bool               `yaml:"use-network" json:"use-network" mapstructure:"use-network"`
 
 	// ecosystem-specific cataloger configuration
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
@@ -73,13 +70,13 @@ func DefaultCatalog() Catalog {
 	}
 }
 
-func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
+func (cfg Catalog) ToSBOMConfig(id clio.Identification, net Network) *syft.CreateSBOMConfig {
 	return syft.DefaultCreateSBOMConfig().
 		WithTool(id.Name, id.Version).
 		WithParallelism(cfg.Parallelism).
 		WithRelationshipsConfig(cfg.ToRelationshipsConfig()).
 		WithSearchConfig(cfg.ToSearchConfig()).
-		WithPackagesConfig(cfg.ToPackagesConfig()).
+		WithPackagesConfig(cfg.ToPackagesConfig(net)).
 		WithFilesConfig(cfg.ToFilesConfig()).
 		WithCatalogerSelection(
 			pkgcataloging.NewSelectionRequest().
@@ -123,7 +120,7 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 	}
 }
 
-func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
+func (cfg Catalog) ToPackagesConfig(net Network) pkgcataloging.Config {
 	archiveSearch := cataloging.ArchiveSearchConfig{
 		IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
 		IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
@@ -133,7 +130,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
-			WithSearchRemoteLicenses(*multiLevelOption(false, cfg.UseNetwork, cfg.Golang.SearchRemoteLicenses)).
+			WithSearchRemoteLicenses(*multiLevelOption(false, net.Enabled("golang", "go"), cfg.Golang.SearchRemoteLicenses)).
 			WithProxy(cfg.Golang.Proxy).
 			WithNoProxy(cfg.Golang.NoProxy).
 			WithMainModuleVersion(
@@ -143,7 +140,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			),
 		JavaScript: javascript.DefaultCatalogerConfig().
-			WithSearchRemoteLicenses(*multiLevelOption(false, cfg.UseNetwork, cfg.JavaScript.SearchRemoteLicenses)).
+			WithSearchRemoteLicenses(*multiLevelOption(false, net.Enabled("javascript", "js"), cfg.JavaScript.SearchRemoteLicenses)).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
@@ -154,7 +151,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
 			WithUseMavenLocalRepository(cfg.Java.UseMavenLocalRepository).
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
-			WithUseNetwork(*multiLevelOption(false, cfg.UseNetwork, cfg.Java.UseNetwork)).
+			WithUseNetwork(*multiLevelOption(false, net.Enabled("java", "maven"), cfg.Java.UseNetwork)).
 			WithMavenBaseURL(cfg.Java.MavenURL).
 			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth),
 	}
@@ -202,9 +199,6 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 	flags.StringVarP(&cfg.Source.BasePath, "base-path", "",
 		"base directory for scanning, no links will be followed above this directory, and all paths will be reported relative to this directory")
-
-	flags.BoolPtrVarP(&cfg.UseNetwork, "use-network", "",
-		"use the network to fetch and augment package information")
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
@@ -217,18 +211,6 @@ func (cfg *Catalog) PostLoad() error {
 
 	if usingLegacyCatalogers && usingNewCatalogers {
 		return fmt.Errorf("cannot use both 'catalogers' and 'select-catalogers'/'default-catalogers' flags")
-	}
-
-	flatten := func(l []string) []string {
-		var out []string
-		for _, v := range l {
-			for _, s := range strings.Split(v, ",") {
-				out = append(out, strings.TrimSpace(s))
-			}
-		}
-		sort.Strings(out)
-
-		return out
 	}
 
 	cfg.From = flatten(cfg.From)

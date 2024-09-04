@@ -40,6 +40,7 @@ const (
 type attestOptions struct {
 	options.Config      `yaml:",inline" mapstructure:",squash"`
 	options.Output      `yaml:",inline" mapstructure:",squash"`
+	options.Network     `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 	options.Catalog     `yaml:",inline" mapstructure:",squash"`
 	Attest              options.Attest `yaml:"attest" mapstructure:"attest"`
@@ -63,7 +64,7 @@ func Attest(app clio.Application) *cobra.Command {
 			"command": "attest",
 		}),
 		Args:    validateScanArgs,
-		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
+		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck, &opts.Network),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()
@@ -113,7 +114,7 @@ func runAttest(ctx context.Context, id clio.Identification, opts *attestOptions,
 	}
 	defer os.Remove(f.Name())
 
-	s, err := generateSBOMForAttestation(ctx, id, &opts.Catalog, userInput)
+	s, err := generateSBOMForAttestation(ctx, id, &opts.Catalog, opts.Network, userInput)
 	if err != nil {
 		return fmt.Errorf("unable to build SBOM: %w", err)
 	}
@@ -247,7 +248,7 @@ func predicateType(outputName string) string {
 	}
 }
 
-func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opts *options.Catalog, userInput string) (*sbom.SBOM, error) {
+func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opts *options.Catalog, net options.Network, userInput string) (*sbom.SBOM, error) {
 	if len(opts.From) > 1 || (len(opts.From) == 1 && opts.From[0] != stereoscope.RegistryTag) {
 		return nil, fmt.Errorf("attest requires use of an OCI registry directly, one or more of the specified sources is unsupported: %v", opts.From)
 	}
@@ -266,7 +267,7 @@ func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opt
 		}
 	}()
 
-	s, err := generateSBOM(ctx, id, src, opts)
+	s, err := generateSBOM(ctx, id, src, opts, net)
 	if err != nil {
 		return nil, err
 	}

@@ -66,6 +66,7 @@ const (
 type scanOptions struct {
 	options.Config      `yaml:",inline" mapstructure:",squash"`
 	options.Output      `yaml:",inline" mapstructure:",squash"`
+	options.Network     `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 	options.Catalog     `yaml:",inline" mapstructure:",squash"`
 	Cache               options.Cache `json:"-" yaml:"cache" mapstructure:"cache"`
@@ -94,7 +95,7 @@ func Scan(app clio.Application) *cobra.Command {
 			"command": "scan",
 		}),
 		Args:    validateScanArgs,
-		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
+		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck, &opts.Network),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()
@@ -196,7 +197,7 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 		}
 	}()
 
-	s, err := generateSBOM(ctx, id, src, &opts.Catalog)
+	s, err := generateSBOM(ctx, id, src, &opts.Catalog, opts.Network)
 	if err != nil {
 		return err
 	}
@@ -253,8 +254,8 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 	return src, nil
 }
 
-func generateSBOM(ctx context.Context, id clio.Identification, src source.Source, opts *options.Catalog) (*sbom.SBOM, error) {
-	s, err := syft.CreateSBOM(ctx, src, opts.ToSBOMConfig(id))
+func generateSBOM(ctx context.Context, id clio.Identification, src source.Source, opts *options.Catalog, net options.Network) (*sbom.SBOM, error) {
+	s, err := syft.CreateSBOM(ctx, src, opts.ToSBOMConfig(id, net))
 	if err != nil {
 		expErrs := filterExpressionErrors(err)
 		notifyExpressionErrors(expErrs)
