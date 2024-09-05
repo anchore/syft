@@ -25,7 +25,7 @@ const (
 type ConvertOptions struct {
 	options.Config      `yaml:",inline" mapstructure:",squash"`
 	options.Output      `yaml:",inline" mapstructure:",squash"`
-	options.Network     `yaml:",inline" mapstructure:",squash"`
+	options.Network     `yaml:"network" mapstructure:"network"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 }
 

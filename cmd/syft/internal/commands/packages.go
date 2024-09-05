@@ -22,7 +22,7 @@ func Packages(app clio.Application, scanCmd *cobra.Command) *cobra.Command {
 			"appName": id.Name,
 			"command": "packages",
 		}),
-		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck, &opts.Network),
+		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck, &opts.Catalog.Network),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()

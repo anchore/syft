@@ -2,6 +2,8 @@ package options
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/iancoleman/strcase"
 
@@ -34,6 +36,7 @@ type Catalog struct {
 	Scope             string              `yaml:"scope" json:"scope" mapstructure:"scope"`
 	Parallelism       int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
 	Relationships     relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
+	Network           Network             `yaml:"network" json:"network" mapstructure:"network"`
 
 	// ecosystem-specific cataloger configuration
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
@@ -70,13 +73,13 @@ func DefaultCatalog() Catalog {
 	}
 }
 
-func (cfg Catalog) ToSBOMConfig(id clio.Identification, net Network) *syft.CreateSBOMConfig {
+func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 	return syft.DefaultCreateSBOMConfig().
 		WithTool(id.Name, id.Version).
 		WithParallelism(cfg.Parallelism).
 		WithRelationshipsConfig(cfg.ToRelationshipsConfig()).
 		WithSearchConfig(cfg.ToSearchConfig()).
-		WithPackagesConfig(cfg.ToPackagesConfig(net)).
+		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
 		WithCatalogerSelection(
 			pkgcataloging.NewSelectionRequest().
@@ -120,7 +123,7 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 	}
 }
 
-func (cfg Catalog) ToPackagesConfig(net Network) pkgcataloging.Config {
+func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	archiveSearch := cataloging.ArchiveSearchConfig{
 		IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
 		IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
@@ -130,7 +133,7 @@ func (cfg Catalog) ToPackagesConfig(net Network) pkgcataloging.Config {
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
-			WithSearchRemoteLicenses(*multiLevelOption(false, net.Enabled("golang", "go"), cfg.Golang.SearchRemoteLicenses)).
+			WithSearchRemoteLicenses(*multiLevelOption(false, cfg.Network.Enabled("golang", "go"), cfg.Golang.SearchRemoteLicenses)).
 			WithProxy(cfg.Golang.Proxy).
 			WithNoProxy(cfg.Golang.NoProxy).
 			WithMainModuleVersion(
@@ -140,7 +143,7 @@ func (cfg Catalog) ToPackagesConfig(net Network) pkgcataloging.Config {
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			),
 		JavaScript: javascript.DefaultCatalogerConfig().
-			WithSearchRemoteLicenses(*multiLevelOption(false, net.Enabled("javascript", "js"), cfg.JavaScript.SearchRemoteLicenses)).
+			WithSearchRemoteLicenses(*multiLevelOption(false, cfg.Network.Enabled("javascript", "js"), cfg.JavaScript.SearchRemoteLicenses)).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
@@ -151,7 +154,7 @@ func (cfg Catalog) ToPackagesConfig(net Network) pkgcataloging.Config {
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
 			WithUseMavenLocalRepository(cfg.Java.UseMavenLocalRepository).
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
-			WithUseNetwork(*multiLevelOption(false, net.Enabled("java", "maven"), cfg.Java.UseNetwork)).
+			WithUseNetwork(*multiLevelOption(false, cfg.Network.Enabled("java", "maven"), cfg.Java.UseNetwork)).
 			WithMavenBaseURL(cfg.Java.MavenURL).
 			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth),
 	}
@@ -228,4 +231,15 @@ func (cfg *Catalog) PostLoad() error {
 	}
 
 	return nil
+}
+
+func flatten(commaSeparatedEntries []string) []string {
+	var out []string
+	for _, v := range commaSeparatedEntries {
+		for _, s := range strings.Split(v, ",") {
+			out = append(out, strings.TrimSpace(s))
+		}
+	}
+	sort.Strings(out)
+	return out
 }

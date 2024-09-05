@@ -20,7 +20,7 @@ func Root(app clio.Application, packagesCmd *cobra.Command) *cobra.Command {
 		Long:    packagesCmd.Long,
 		Args:    packagesCmd.Args,
 		Example: packagesCmd.Example,
-		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck, &opts.Network),
+		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck, &opts.Catalog.Network),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()

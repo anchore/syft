@@ -47,7 +47,7 @@ func Test_networkEnabled(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.directives, func(t *testing.T) {
 			n := Network{
-				Directives: []string{test.directives},
+				Enable: []string{test.directives},
 			}
 			require.NoError(t, n.PostLoad())
 

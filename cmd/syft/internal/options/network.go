@@ -1,7 +1,6 @@
 package options
 
 import (
-	"sort"
 	"strings"
 
 	"github.com/anchore/clio"
@@ -10,27 +9,21 @@ import (
 )
 
 type Network struct {
-	Directives []string `yaml:"network" json:"network" mapstructure:"network"`
+	Enable []string `yaml:"enable" json:"enable" mapstructure:"enable"`
 }
 
 func (n *Network) PostLoad() error {
-	n.Directives = flatten(n.Directives)
+	n.Enable = flatten(n.Enable)
 	return nil
 }
 
 func (n *Network) AddFlags(flags clio.FlagSet) {
-	flags.StringArrayVarP(&n.Directives, "network", "",
-		"use the network to fetch and augment package information")
-
-	// if pfp, ok := flags.(fangs.PFlagSetProvider); ok {
-	//	flagSet := pfp.PFlagSet()
-	//	flag := flagSet.Lookup("network")
-	//	flag.NoOptDefVal = "all"
-	//}
+	flags.StringArrayVarP(&n.Enable, "network", "",
+		"enable features to use the network to fetch and augment package information")
 }
 
 func (n *Network) Enabled(features ...string) *bool {
-	return networkEnabled(n.Directives, features...)
+	return networkEnabled(n.Enable, features...)
 }
 
 var _ interface {
@@ -84,15 +77,4 @@ func networkEnabled(networkDirectives []string, features ...string) *bool {
 
 func ptr[T any](val T) *T {
 	return &val
-}
-
-func flatten(commaSeparatedEntries []string) []string {
-	var out []string
-	for _, v := range commaSeparatedEntries {
-		for _, s := range strings.Split(v, ",") {
-			out = append(out, strings.TrimSpace(s))
-		}
-	}
-	sort.Strings(out)
-	return out
 }

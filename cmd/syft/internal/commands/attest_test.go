@@ -264,7 +264,7 @@ func Test_buildSBOMForAttestation(t *testing.T) {
 			if tt.wantErr == nil {
 				tt.wantErr = require.NoError
 			}
-			_, err := generateSBOMForAttestation(context.Background(), tt.args.id, tt.args.opts, options.Network{}, tt.args.userInput)
+			_, err := generateSBOMForAttestation(context.Background(), tt.args.id, tt.args.opts, tt.args.userInput)
 			tt.wantErr(t, err)
 			if err != nil {
 				return

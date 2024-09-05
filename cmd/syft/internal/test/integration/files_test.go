@@ -20,7 +20,7 @@ import (
 )
 
 func TestFileCataloging_Default(t *testing.T) {
-	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{}, options.Network{})
+	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{})
 	cfg = cfg.WithFilesConfig(filecataloging.DefaultConfig())
 	sbom, _ := catalogDirectoryWithConfig(t, "test-fixtures/files", cfg)
 
@@ -34,7 +34,7 @@ func TestFileCataloging_Default(t *testing.T) {
 }
 
 func TestFileCataloging_AllFiles(t *testing.T) {
-	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{}, options.Network{})
+	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{})
 	cfg = cfg.WithFilesConfig(filecataloging.Config{
 		Selection: file.AllFilesSelection,
 		Hashers: []crypto.Hash{
