@@ -35,12 +35,14 @@ func parseLinuxKernelFile(_ context.Context, _ file.Resolver, _ *generic.Environ
 		return nil, nil, nil
 	}
 
-	return []pkg.Package{
-		newLinuxKernelPackage(
-			metadata,
-			reader.Location,
-		),
-	}, nil, nil
+	p := newLinuxKernelPackage(
+		metadata,
+		reader.Location,
+	)
+	if pkg.IsValid(&p) {
+		return []pkg.Package{p}, nil, nil
+	}
+	return []pkg.Package{}, nil, nil
 }
 
 func parseLinuxKernelMetadata(magicType []string) (p pkg.LinuxKernel) {

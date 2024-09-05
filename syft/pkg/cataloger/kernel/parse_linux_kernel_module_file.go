@@ -30,12 +30,14 @@ func parseLinuxKernelModuleFile(_ context.Context, _ file.Resolver, _ *generic.E
 
 	metadata.Path = reader.Location.RealPath
 
-	return []pkg.Package{
-		newLinuxKernelModulePackage(
-			*metadata,
-			reader.Location,
-		),
-	}, nil, nil
+	p := newLinuxKernelModulePackage(
+		*metadata,
+		reader.Location,
+	)
+	if pkg.IsValid(&p) {
+		return []pkg.Package{p}, nil, nil
+	}
+	return []pkg.Package{}, nil, nil
 }
 
 func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKernelModule, err error) {
