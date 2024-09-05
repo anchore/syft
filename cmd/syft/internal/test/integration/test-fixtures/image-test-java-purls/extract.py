@@ -2,7 +2,6 @@ import os
 import zipfile
 import io
 
-# define constants for file extensions and metadata files
 ARCHIVE_EXTENSIONS = ('.jar', '.war', '.ear', '.hpi', '.war', '.sar', '.nar', '.par')
 METADATA_FILES = ('pom.xml', 'pom.properties', 'MANIFEST.MF')
 
@@ -61,8 +60,10 @@ def walk_directory_and_slim_jars(base_dir, output_dir):
                 slim_archive(archive_path, output_dir, os.path.relpath(dirpath, base_dir), filename)
 
 
+# a helper script for slimming down JAR files by keeping only metadata files but still keeping the jar packaging,
+# including nested JARs! Useful for testing purposes.
 if __name__ == "__main__":
-    BASE_DIR = "."  # replace with your base directory to search
+    BASE_DIR = "."
     OUTPUT_DIR = "./slim"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     walk_directory_and_slim_jars(BASE_DIR, OUTPUT_DIR)
