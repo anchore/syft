@@ -190,8 +190,8 @@ func DefaultClassifiers() []Classifier {
 			Class:    "haproxy-binary",
 			FileGlob: "**/haproxy",
 			EvidenceMatcher: evidenceMatchers(
-				FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-				FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
+				FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)`),
+				FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
 			),
 			Package: "haproxy",
 			PURL:    mustPURL("pkg:generic/haproxy@version"),
