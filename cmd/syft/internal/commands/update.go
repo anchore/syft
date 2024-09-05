@@ -29,7 +29,7 @@ var latestAppVersionURL = struct {
 
 func applicationUpdateCheck(id clio.Identification, check *options.UpdateCheck, net *options.Network) func(cmd *cobra.Command, args []string) error {
 	return func(_ *cobra.Command, _ []string) error {
-		if check.DoCheckForAppUpdate(*net) {
+		if check.DoCheckForAppUpdate(net) {
 			checkForApplicationUpdate(id)
 		}
 		return nil

@@ -10,7 +10,7 @@ func DefaultUpdateCheck() UpdateCheck {
 	return UpdateCheck{}
 }
 
-func (cfg *UpdateCheck) DoCheckForAppUpdate(net Network) bool {
+func (cfg *UpdateCheck) DoCheckForAppUpdate(net *Network) bool {
 	return *multiLevelOption(true, net.Enabled("update-check"), cfg.CheckForAppUpdate)
 }
 

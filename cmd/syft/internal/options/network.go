@@ -23,6 +23,9 @@ func (n *Network) AddFlags(flags clio.FlagSet) {
 }
 
 func (n *Network) Enabled(features ...string) *bool {
+	if n == nil {
+		return nil
+	}
 	return networkEnabled(n.Enable, features...)
 }
 
