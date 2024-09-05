@@ -28,9 +28,29 @@ func Test_networkEnabled(t *testing.T) {
 			expected:   ptr(true),
 		},
 		{
+			directives: "all,none",
+			test:       "java",
+			expected:   ptr(false),
+		},
+		{
 			directives: "all",
 			test:       "java",
 			expected:   ptr(true),
+		},
+		{
+			directives: "golang,js",
+			test:       "java",
+			expected:   nil,
+		},
+		{
+			directives: "golang,-js,java",
+			test:       "java",
+			expected:   ptr(true),
+		},
+		{
+			directives: "golang,js,-java",
+			test:       "java",
+			expected:   ptr(false),
 		},
 		{
 			directives: "on",

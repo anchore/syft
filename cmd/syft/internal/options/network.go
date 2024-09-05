@@ -62,12 +62,11 @@ func networkEnabled(networkDirectives []string, features ...string) *bool {
 	if disableAll != nil {
 		if enableAll != nil {
 			log.Warn("you have specified to both enable and disable all network functionality, defaulting to disabled")
-		} else {
-			enableAll = ptr(!*disableAll)
 		}
+		enableAll = ptr(!*disableAll)
 	}
 
-	// check for explicit enable/disable of each particular feature, in order
+	// check for explicit enable/disable of feature names
 	for _, feat := range features {
 		enableFeature := enabled(feat)
 		if enableFeature != nil {
