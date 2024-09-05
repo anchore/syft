@@ -1,5 +1,7 @@
 NAME=syft
 
+FINGERPRINT_FILE := cache.fingerprint
+
 # for local testing (not testing within containers) use the binny-managed version of cosign.
 # this also means that the user does not need to install cosign on their system to run tests.
 COSIGN_BINARY=../../.tool/cosign
@@ -21,8 +23,6 @@ ACCEPTANCE_CMD=sh -c '../../install.sh -v -b /usr/local/bin && syft version && r
 PREVIOUS_RELEASE=v0.33.0
 ACCEPTANCE_PREVIOUS_RELEASE_CMD=sh -c "../../install.sh -b /usr/local/bin $(PREVIOUS_RELEASE) && syft version"
 
-# CI cache busting values; change these if you want CI to not use previous stored cache
-INSTALL_TEST_CACHE_BUSTER=894d8ca
 
 define title
     @printf '\n≡≡≡[ $(1) ]≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡\n'
@@ -130,7 +130,8 @@ busybox-1.36:
 
 ## For CI ########################################################
 
-.PHONY: cache.fingerprint
-cache.fingerprint:
-	$(call title,Install test fixture fingerprint)
-	@find ./environments/* -type f -exec md5sum {} + | awk '{print $1}' | sort | tee /dev/stderr | md5sum | tee cache.fingerprint && echo "$(INSTALL_TEST_CACHE_BUSTER)" >> cache.fingerprint
+# requirement 3: we always need to recalculate the fingerprint based on source regardless of any existing fingerprint
+.PHONY: $(FINGERPRINT_FILE)
+$(FINGERPRINT_FILE):
+	@find ./environments/* -type f -exec sha256sum {} \; | sort -k2 > $(FINGERPRINT_FILE)
+	@#cat $(FINGERPRINT_FILE) | sha256sum | awk '{print $$1}'

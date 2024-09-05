@@ -85,6 +85,7 @@ from-images:
     paths:
       - /usr/local/go/bin/go
 
+  # TODO: this is no longer available from dockerhub! (the snippet is vital)
   - version: 1.5.14
     images:
       - ref: haproxy:1.5.14@sha256:3d57e3921cc84e860f764e863ce729dd0765e3d28d444775127bc42d68f98e10
