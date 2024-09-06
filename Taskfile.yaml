@@ -306,6 +306,8 @@ tasks:
     aliases:
       - fixtures
     silent: true
+    deps:
+      - tools
     cmds:
       - |
         BOLD='\033[1m'
