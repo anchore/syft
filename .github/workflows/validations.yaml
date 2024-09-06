@@ -104,6 +104,13 @@ jobs:
       - name: Run integration tests
         run: make integration
 
+      - name: Upload test fixture cache artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-fixture-cache
+          path: cmd/syft/internal/test/integration/test-fixtures/cache/stereoscope-fixture-image-vertical-package-dups-*
+
 
   Build-Snapshot-Artifacts:
     name: "Build snapshot artifacts"
