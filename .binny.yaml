@@ -115,3 +115,19 @@ tools:
     method: github-release
     with:
       repo: cli/cli
+
+  # used to upload test fixture cache
+  - name: oras
+    version:
+      want: v1.2.0
+    method: github-release
+    with:
+      repo: oras-project/oras
+
+  # used to upload test fixture cache
+  - name: yq
+    version:
+      want: v4.44.3
+    method: github-release
+    with:
+      repo: mikefarah/yq
