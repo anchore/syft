@@ -199,7 +199,8 @@ func invokeParser(ctx context.Context, resolver file.Resolver, location file.Loc
 
 	discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, env, file.NewLocationReadCloser(location, contentReader))
 	if err != nil {
-		logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger returned errors")
+		// these errors are propagated up, and are likely to be coordinate errors
+		logger.WithFields("location", location.RealPath, "error", err).Trace("cataloger returned errors")
 	}
 
 	return discoveredPackages, discoveredRelationships, err
