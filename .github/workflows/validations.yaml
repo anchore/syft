@@ -202,3 +202,28 @@ jobs:
 
       - name: Run CLI Tests (Linux)
         run: make cli
+
+
+  Cleanup-Cache:
+    name: "Cleanup snapshot cache"
+    if: always()
+    runs-on: ubuntu-20.04
+    needs:
+      - Acceptance-Linux
+      - Acceptance-Mac
+      - Cli-Linux
+    steps:
+      - name: Delete snapshot cache
+        run: |
+          # Define the cache key to delete
+          CACHE_KEY="snapshot-build-${{ github.run_id }}"
+
+          # Fetch cache list and delete the cache by key using gh api
+          CACHE_ID=$(gh api repos/${{ github.repository_owner }}/${{ github.event.repository.name }}/actions/caches --jq ".actions_caches[] | select(.key == \"$CACHE_KEY\") | .id")
+
+          if [ -n "$CACHE_ID" ]; then
+            echo "Deleting cache with key $CACHE_KEY (ID: $CACHE_ID)"
+            gh api --method DELETE repos/${{ github.repository_owner }}/${{ github.event.repository.name }}/actions/caches/$CACHE_ID
+          else
+            echo "Cache with key $CACHE_KEY not found."
+          fi

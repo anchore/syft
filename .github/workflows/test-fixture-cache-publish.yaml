@@ -2,8 +2,6 @@ name: "Test fixture cache: publish"
 
 on:
   workflow_dispatch:
-  # TODO: remove me, just here for testing
-  push:
   schedule:
     # run nightly at 4AM UTC
     - cron: "0 4 * * *"
