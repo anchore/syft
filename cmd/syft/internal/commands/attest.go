@@ -63,7 +63,7 @@ func Attest(app clio.Application) *cobra.Command {
 			"command": "attest",
 		}),
 		Args:    validateScanArgs,
-		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck, &opts.Catalog.Network),
+		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()

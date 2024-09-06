@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"

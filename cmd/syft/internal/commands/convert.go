@@ -25,7 +25,6 @@ const (
 type ConvertOptions struct {
 	options.Config      `yaml:",inline" mapstructure:",squash"`
 	options.Output      `yaml:",inline" mapstructure:",squash"`
-	options.Network     `yaml:"network" mapstructure:"network"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 }
 
@@ -46,7 +45,7 @@ func Convert(app clio.Application) *cobra.Command {
 			"command": "convert",
 		}),
 		Args:    validateConvertArgs,
-		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck, &opts.Network),
+		PreRunE: applicationUpdateCheck(id, &opts.UpdateCheck),
 		RunE: func(_ *cobra.Command, args []string) error {
 			restoreStdout := ui.CaptureStdoutToTraceLog()
 			defer restoreStdout()

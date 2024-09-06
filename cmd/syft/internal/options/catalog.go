@@ -36,7 +36,7 @@ type Catalog struct {
 	Scope             string              `yaml:"scope" json:"scope" mapstructure:"scope"`
 	Parallelism       int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
 	Relationships     relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
-	Network           Network             `yaml:"network" json:"network" mapstructure:"network"`
+	Enrich            []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
 
 	// ecosystem-specific cataloger configuration
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
@@ -133,7 +133,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
-			WithSearchRemoteLicenses(*multiLevelOption(false, cfg.Network.Enabled("golang", "go"), cfg.Golang.SearchRemoteLicenses)).
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, "golang", "go"), cfg.Golang.SearchRemoteLicenses)).
 			WithProxy(cfg.Golang.Proxy).
 			WithNoProxy(cfg.Golang.NoProxy).
 			WithMainModuleVersion(
@@ -143,7 +143,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			),
 		JavaScript: javascript.DefaultCatalogerConfig().
-			WithSearchRemoteLicenses(*multiLevelOption(false, cfg.Network.Enabled("javascript", "js"), cfg.JavaScript.SearchRemoteLicenses)).
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, "javascript", "js"), cfg.JavaScript.SearchRemoteLicenses)).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
@@ -154,7 +154,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
 			WithUseMavenLocalRepository(cfg.Java.UseMavenLocalRepository).
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
-			WithUseNetwork(*multiLevelOption(false, cfg.Network.Enabled("java", "maven"), cfg.Java.UseNetwork)).
+			WithUseNetwork(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, "java", "maven"), cfg.Java.UseNetwork)).
 			WithMavenBaseURL(cfg.Java.MavenURL).
 			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth),
 	}
@@ -194,6 +194,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 	flags.StringArrayVarP(&cfg.SelectCatalogers, "select-catalogers", "",
 		"add, remove, and filter the catalogers to be used")
 
+	flags.StringArrayVarP(&cfg.Enrich, "enrich", "",
+		"enable data enrichment operations, which can utilize services such as Maven Central and NPM")
+
 	flags.StringVarP(&cfg.Source.Name, "source-name", "",
 		"set the name of the target being analyzed")
 
@@ -206,6 +209,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
 	descriptions.Add(&cfg.Parallelism, "number of cataloger workers to run in parallel")
+
+	descriptions.Add(&cfg.Enrich, `enable/disable data enrichment operations. By default all enrichment is disabled, use: all to enable everything.
+Prefixing with a minus will remove the enrichment, e.g. enrich: [all, -java] would enable all except java enrichment. `)
 }
 
 func (cfg *Catalog) PostLoad() error {
@@ -221,6 +227,7 @@ func (cfg *Catalog) PostLoad() error {
 	cfg.Catalogers = flatten(cfg.Catalogers)
 	cfg.DefaultCatalogers = flatten(cfg.DefaultCatalogers)
 	cfg.SelectCatalogers = flatten(cfg.SelectCatalogers)
+	cfg.Enrich = flatten(cfg.Enrich)
 
 	// for backwards compatibility
 	cfg.DefaultCatalogers = append(cfg.DefaultCatalogers, cfg.Catalogers...)
@@ -242,4 +249,51 @@ func flatten(commaSeparatedEntries []string) []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {
+	if len(enrichDirectives) == 0 {
+		return nil
+	}
+
+	enabled := func(features ...string) *bool {
+		for _, directive := range enrichDirectives {
+			enable := true
+			directive = strings.TrimPrefix(directive, "+") // +java and java are equivalent
+			if strings.HasPrefix(directive, "-") {
+				directive = directive[1:]
+				enable = false
+			}
+			for _, feature := range features {
+				if directive == feature {
+					return &enable
+				}
+			}
+		}
+		return nil
+	}
+
+	enableAll := enabled("all")
+	disableAll := enabled("none")
+
+	if disableAll != nil {
+		if enableAll != nil {
+			log.Warn("you have specified to both enable and disable all network functionality, defaulting to disabled")
+		}
+		enableAll = ptr(!*disableAll)
+	}
+
+	// check for explicit enable/disable of feature names
+	for _, feat := range features {
+		enableFeature := enabled(feat)
+		if enableFeature != nil {
+			return enableFeature
+		}
+	}
+
+	return enableAll
+}
+
+func ptr[T any](val T) *T {
+	return &val
 }
