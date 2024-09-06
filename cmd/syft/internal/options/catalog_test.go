@@ -118,12 +118,12 @@ func Test_enrichmentEnabled(t *testing.T) {
 			expected:   ptr(false),
 		},
 		{
-			directives: "on",
+			directives: "all",
 			test:       "java",
 			expected:   ptr(true),
 		},
 		{
-			directives: "on,-java",
+			directives: "all,-java",
 			test:       "java",
 			expected:   ptr(false),
 		},
