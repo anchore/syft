@@ -31,7 +31,7 @@ func TestPackageDeduplication(t *testing.T) {
 				"basesystem-11-13.el9":               5, // in all layers
 				"curl-minimal-7.76.1-26.el9_3.2.0.1": 2, // base + wget layer
 				"curl-minimal-7.76.1-29.el9_4.1":     3, // curl upgrade layer + all above layers
-				"wget-1.21.1-7.el9":                  4, // wget + all above layers
+				"wget-1.21.1-8.el9_4":                4, // wget + all above layers
 				"vsftpd-3.0.5-5.el9":                 2, // vsftpd + all above layers
 				"httpd-2.4.57-11.el9_4.1":            1, // last layer
 			},
@@ -49,7 +49,7 @@ func TestPackageDeduplication(t *testing.T) {
 			locationCount: map[string]int{
 				"basesystem-11-13.el9":           1,
 				"curl-minimal-7.76.1-29.el9_4.1": 1, // upgrade
-				"wget-1.21.1-7.el9":              1,
+				"wget-1.21.1-8.el9_4":            1,
 				"vsftpd-3.0.5-5.el9":             1,
 				"httpd-2.4.57-11.el9_4.1":        1,
 			},
