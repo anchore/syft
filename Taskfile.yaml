@@ -305,66 +305,68 @@ tasks:
     desc: Clear and fetch all test fixture cache
     aliases:
       - fixtures
-    deps:
-      - fingerprints
     silent: true
-    cmd: |
-      BOLD='\033[1m'
-      PURPLE='\033[0;35m'
-      RESET='\033[0m'
-      
-      # if DOWNLOAD_TEST_FIXTURE_CACHE is set to 'false', then skip the cache download and always build
-      if [ "$DOWNLOAD_TEST_FIXTURE_CACHE" = "false" ]; then
-          echo -e "${BOLD}${PURPLE}skipping cache download, rebuilding cache...${RESET}"
+    cmds:
+      - |
+        BOLD='\033[1m'
+        PURPLE='\033[0;35m'
+        RESET='\033[0m'
+        
+        # if DOWNLOAD_TEST_FIXTURE_CACHE is set to 'false', then skip the cache download and always build
+        if [ "$DOWNLOAD_TEST_FIXTURE_CACHE" = "false" ]; then
+            echo -e "${BOLD}${PURPLE}skipping cache download, rebuilding cache...${RESET}"
+            {{ .TASK }} build-fixtures
+            exit 0
+        fi
+        
+        LATEST_FINGERPRINT=$(docker manifest inspect {{ .CACHE_IMAGE }} | {{ .YQ }} -r '.annotations.fingerprint')
+
+        echo "latest cache:      $LATEST_FINGERPRINT"
+        
+        if [ -f {{ .LAST_CACHE_PULL_FILE }} ]; then
+          LAST_PULL_FINGERPRINT=$(cat {{ .LAST_CACHE_PULL_FILE }} | {{ .YQ }} -r '.digest')
+        else
+          echo -e "${BOLD}${PURPLE}empty cache, downloading cache...${RESET}"
+          {{ .TASK }} download-test-fixture-cache
+          exit 0
+        fi
+        
+        {{ .TASK }} fingerprints
+
+        WANT_FINGERPRINT=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.digest')        
+
+        echo "desired cache:     $WANT_FINGERPRINT"
+        echo "last pulled cache: $LAST_PULL_FINGERPRINT"
+  
+        # if we already have the latest cache, skip the refresh
+        if [ "$LAST_PULL_FINGERPRINT" = "$WANT_FINGERPRINT" ]; then
+            echo -e "${BOLD}${PURPLE}already have the latest cache (skipping cache download)${RESET}"
+            exit 0
+        fi
+  
+        # at this point we only refresh the cache if we want the same cache that is currently available.
+        # we don't by default refresh the cache if the cache if it is simply different from what we have,
+        # because we may be working on a code change that doesn't require a cache refresh (but could trigger one,
+        # which would be annoying to deal with in a development workflow).
+  
+        if [ "$LATEST_FINGERPRINT" = "$WANT_FINGERPRINT" ]; then
+          echo -e "${BOLD}${PURPLE}found newer cache! downloading cache...${RESET}"
+          {{ .TASK }} download-test-fixture-cache
+        else
+          echo -e "${BOLD}${PURPLE}found different cache, but isn't clear if it's newer (skipping cache download and manually building)${RESET}"
+        
+          {{ .YQ }} eval '.paths[] | "\(.digest) \(.path)"' {{ .LAST_CACHE_PULL_FILE }} > .tmp/last_cache_lines
+          {{ .YQ }} eval '.paths[] | "\(.digest) \(.path)"' {{ .CACHE_PATHS_FILE }} > .tmp/cache_lines
+          diff .tmp/last_cache_lines .tmp/cache_lines || true
+        
+          echo -e "${BOLD}${PURPLE}diff with more context...${RESET}"
+        
+          diff -U10000 {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }} || true
+        
+          echo -e "${BOLD}${PURPLE}detected changes to input material, manually building fixtures...${RESET}"
+        
           {{ .TASK }} build-fixtures
-          exit 0
-      fi
-      
-      LATEST_FINGERPRINT=$(docker manifest inspect {{ .CACHE_IMAGE }} | {{ .YQ }} -r '.annotations.fingerprint')
-      WANT_FINGERPRINT=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.digest')
-      
-      echo "latest cache:      $LATEST_FINGERPRINT"
-      echo "desired cache:     $WANT_FINGERPRINT"
-      
-      if [ -f {{ .LAST_CACHE_PULL_FILE }} ]; then
-        LAST_PULL_FINGERPRINT=$(cat {{ .LAST_CACHE_PULL_FILE }} | {{ .YQ }} -r '.digest')
-      else
-        echo -e "${BOLD}${PURPLE}empty cache, downloading cache...${RESET}"
-        {{ .TASK }} download-test-fixture-cache
-        exit 0
-      fi
-      
-      echo "last pulled cache: $LAST_PULL_FINGERPRINT"
-
-      # if we already have the latest cache, skip the refresh
-      if [ "$LAST_PULL_FINGERPRINT" = "$WANT_FINGERPRINT" ]; then
-          echo -e "${BOLD}${PURPLE}already have the latest cache (skipping cache download)${RESET}"
-          exit 0
-      fi
-
-      # at this point we only refresh the cache if we want the same cache that is currently available.
-      # we don't by default refresh the cache if the cache if it is simply different from what we have,
-      # because we may be working on a code change that doesn't require a cache refresh (but could trigger one,
-      # which would be annoying to deal with in a development workflow).
-
-      if [ "$LATEST_FINGERPRINT" = "$WANT_FINGERPRINT" ]; then
-        echo -e "${BOLD}${PURPLE}found newer cache! downloading cache...${RESET}"
-        {{ .TASK }} download-test-fixture-cache
-      else
-        echo -e "${BOLD}${PURPLE}found different cache, but isn't clear if it's newer (skipping cache download and manually building)${RESET}"
-      
-        {{ .YQ }} eval '.paths[] | "\(.digest) \(.path)"' {{ .LAST_CACHE_PULL_FILE }} > .tmp/last_cache_lines
-        {{ .YQ }} eval '.paths[] | "\(.digest) \(.path)"' {{ .CACHE_PATHS_FILE }} > .tmp/cache_lines
-        diff .tmp/last_cache_lines .tmp/cache_lines || true
-      
-        echo -e "${BOLD}${PURPLE}diff with more context...${RESET}"
-      
-        diff -U10000 {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }} || true
-      
-        echo -e "${BOLD}${PURPLE}detected changes to input material, manually building fixtures...${RESET}"
-      
-        {{ .TASK }} build-fixtures
-      fi
+        fi
 
   build-fixtures:
     desc: Generate all non-docker test fixtures
