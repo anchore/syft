@@ -206,7 +206,7 @@ jobs:
 
   Cleanup-Cache:
     name: "Cleanup snapshot cache"
-    if: always()
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-20.04
     permissions:
       actions: write
