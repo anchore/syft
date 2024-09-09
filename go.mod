@@ -26,7 +26,7 @@ require (
 	github.com/charmbracelet/bubbles v0.19.0
 	github.com/charmbracelet/bubbletea v1.0.0
 	github.com/charmbracelet/lipgloss v0.13.0
-	github.com/dave/jennifer v1.7.0
+	github.com/dave/jennifer v1.7.1
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
 	github.com/distribution/reference v0.6.0
 	github.com/docker/docker v27.2.0+incompatible
