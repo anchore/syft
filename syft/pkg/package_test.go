@@ -416,6 +416,24 @@ func TestPackage_Merge(t *testing.T) {
 						return true
 					},
 				),
+				cmp.Comparer(
+					func(x, y CopyrightsSet) bool {
+						xs := x.ToSlice()
+						ys := y.ToSlice()
+
+						if len(xs) != len(ys) {
+							return false
+						}
+						for i, xe := range xs {
+							ye := ys[i]
+							if !copyrightComparer(xe, ye) {
+								return false
+							}
+						}
+
+						return true
+					},
+				),
 				cmp.Comparer(locationComparer),
 			); diff != "" {
 				t.Errorf("unexpected result from parsing (-expected +actual)\n%s", diff)
@@ -426,6 +444,10 @@ func TestPackage_Merge(t *testing.T) {
 
 func licenseComparer(x, y License) bool {
 	return cmp.Equal(x, y, cmp.Comparer(locationComparer))
+}
+
+func copyrightComparer(x, y Copyright) bool {
+	return cmp.Equal(x, y, cmp.Comparer(copyrightComparer))
 }
 
 func locationComparer(x, y file.Location) bool {

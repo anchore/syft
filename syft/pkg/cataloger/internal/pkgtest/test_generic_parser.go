@@ -42,6 +42,7 @@ type CatalogTester struct {
 	compareOptions                 []cmp.Option
 	locationComparer               cmptest.LocationComparer
 	licenseComparer                cmptest.LicenseComparer
+	copyrightComparer              cmptest.CopyrightComparer
 	packageStringer                func(pkg.Package) string
 	customAssertions               []func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship)
 }
@@ -267,7 +268,7 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 	t.Helper()
 
-	p.compareOptions = append(p.compareOptions, cmptest.CommonOptions(p.licenseComparer, p.locationComparer)...)
+	p.compareOptions = append(p.compareOptions, cmptest.CommonOptions(p.licenseComparer, p.locationComparer, p.copyrightComparer)...)
 
 	{
 		r := cmptest.NewDiffReporter()
@@ -320,6 +321,7 @@ func TestFileParserWithEnv(t *testing.T, fixturePath string, parser generic.Pars
 	NewCatalogTester().FromFile(t, fixturePath).WithEnv(env).Expects(expectedPkgs, expectedRelationships).TestParser(t, parser)
 }
 
+//nolint:funlen
 func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
 	t.Helper()
 	opts := []cmp.Option{
@@ -361,10 +363,31 @@ func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
 			},
 		),
 		cmp.Comparer(
+			func(x, y pkg.CopyrightsSet) bool {
+				xs := x.ToSlice()
+				ys := y.ToSlice()
+
+				if len(xs) != len(ys) {
+					return false
+				}
+				for i, xe := range xs {
+					ye := ys[i]
+					if !cmptest.DefaultCopyrightComparer(xe, ye) {
+						return false
+					}
+				}
+
+				return true
+			},
+		),
+		cmp.Comparer(
 			cmptest.DefaultLocationComparer,
 		),
 		cmp.Comparer(
 			cmptest.DefaultLicenseComparer,
+		),
+		cmp.Comparer(
+			cmptest.DefaultCopyrightComparer,
 		),
 	}
 

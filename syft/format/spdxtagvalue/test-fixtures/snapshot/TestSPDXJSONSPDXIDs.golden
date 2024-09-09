@@ -22,7 +22,7 @@ PackageLicenseDeclared: NOASSERTION
 ##### Package: @at-sign
 
 PackageName: @at-sign
-SPDXID: SPDXRef-Package--at-sign-1c8c811ea5b1cd46
+SPDXID: SPDXRef-Package--at-sign-ec109f3d122ef1db
 PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
@@ -34,7 +34,7 @@ PackageCopyrightText: NOASSERTION
 ##### Package: some/slashes
 
 PackageName: some/slashes
-SPDXID: SPDXRef-Package-some-slashes-8a8e95924316c66b
+SPDXID: SPDXRef-Package-some-slashes-8a21771e3392022f
 PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
@@ -46,7 +46,7 @@ PackageCopyrightText: NOASSERTION
 ##### Package: under_scores
 
 PackageName: under_scores
-SPDXID: SPDXRef-Package-under-scores-883703d950ec00f3
+SPDXID: SPDXRef-Package-under-scores-5db453bf3f332f99
 PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
@@ -57,8 +57,8 @@ PackageCopyrightText: NOASSERTION
 
 ##### Relationships
 
-Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package--at-sign-1c8c811ea5b1cd46
-Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package-some-slashes-8a8e95924316c66b
-Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package-under-scores-883703d950ec00f3
+Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package--at-sign-ec109f3d122ef1db
+Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package-some-slashes-8a21771e3392022f
+Relationship: SPDXRef-DocumentRoot-Directory-foobar-baz CONTAINS SPDXRef-Package-under-scores-5db453bf3f332f99
 Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Directory-foobar-baz
 
