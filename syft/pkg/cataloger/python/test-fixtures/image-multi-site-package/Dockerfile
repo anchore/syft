@@ -1,9 +1,8 @@
 # digest is for linux/amd64
-FROM ubuntu:20.04@sha256:cc9cc8169c9517ae035cf293b15f06922cb8c6c864d625a72b7b18667f264b70
+FROM ubuntu:20.04@sha256:cc9cc8169c9517ae035cf293b15f06922cb8c6c864d625a72b7b18667f264b70 AS base
 
 # install Python 3.8 and Python 3.9
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y python3.8 python3.9 python3-pip python3-venv python3.9-venv python3.8-venv
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.8 python3.9 python3-pip python3-venv python3.9-venv python3.8-venv
 
 # install pip and virtualenv for both Python versions
 RUN python3.8 -m pip install --upgrade pip virtualenv
@@ -35,3 +34,17 @@ RUN /app/project2/venv/bin/pip install click==8.0.3 pyyaml==6.0
 RUN /app/project2/venv/bin/pip install inquirer==3.2.4 runs==1.2.2 xmod==1.8.1 six==1.16.0 wcwidth==0.2.13 blessed==1.20.0 editor==1.6.6 readchar==4.1.0
 
 WORKDIR /app
+
+# let's not waste disk space... we only need the above state we've setup, not all of the os-level packages
+RUN rm -rf /app/project1/venv/share
+RUN rm -rf /app/project2/venv/share
+RUN find /app/project1/venv/lib/python3.9/site-packages/* -type d ! -name '*.dist-info' -exec rm -rf {} +
+RUN find /app/project2/venv/lib/python3.8/site-packages/* -type d ! -name '*.dist-info' -exec rm -rf {} +
+RUN find /usr/local/lib/python3.8/dist-packages/* -type d ! -name '*.dist-info' -exec rm -rf {} +
+RUN find /usr/local/lib/python3.9/dist-packages/* -type d ! -name '*.dist-info' -exec rm -rf {} +
+
+FROM scratch
+
+COPY --from=base /app/ /app/
+COPY --from=base /usr/local/lib/python3.8/ /usr/local/lib/python3.8/
+COPY --from=base /usr/local/lib/python3.9/ /usr/local/lib/python3.9/

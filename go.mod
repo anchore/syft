@@ -78,7 +78,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1
 	go.uber.org/goleak v1.3.0
-	golang.org/x/mod v0.20.0
+	golang.org/x/mod v0.21.0
 	golang.org/x/net v0.28.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.32.0
@@ -88,6 +88,7 @@ require google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirec
 
 require (
 	github.com/BurntSushi/toml v1.4.0
+	github.com/OneOfOne/xxhash v1.2.8
 	github.com/adrg/xdg v0.5.0
 	github.com/magiconair/properties v1.8.7
 	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678

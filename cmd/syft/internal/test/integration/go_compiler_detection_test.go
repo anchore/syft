@@ -35,8 +35,8 @@ func TestGolangCompilerDetection(t *testing.T) {
 			for _, pkg := range packages {
 				foundCompilerVersions[pkg.Version] = struct{}{}
 				foundPURL[pkg.PURL] = struct{}{}
-				for _, cpe := range pkg.CPEs {
-					foundCPE[cpe] = struct{}{}
+				for _, c := range pkg.CPEs {
+					foundCPE[c] = struct{}{}
 				}
 			}
 
