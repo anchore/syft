@@ -206,7 +206,7 @@ jobs:
 
   Cleanup-Cache:
     name: "Cleanup snapshot cache"
-    if: always()
+    if: github.repository == 'anchore/syft'
     runs-on: ubuntu-20.04
     permissions:
       actions: write
