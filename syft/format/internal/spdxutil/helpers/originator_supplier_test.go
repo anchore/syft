@@ -179,6 +179,18 @@ func Test_OriginatorSupplier(t *testing.T) {
 			// note: empty!
 		},
 		{
+			name: "from java -- jvm installation",
+			input: pkg.Package{
+				Metadata: pkg.JavaVMInstallation{
+					Release: pkg.JavaVMRelease{
+						Implementor: "Oracle",
+					},
+				},
+			},
+			originator: "Organization: Oracle",
+			supplier:   "Organization: Oracle",
+		},
+		{
 			name: "from linux kernel module",
 			input: pkg.Package{
 				Metadata: pkg.LinuxKernelModule{

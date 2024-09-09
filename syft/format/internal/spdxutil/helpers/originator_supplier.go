@@ -62,6 +62,10 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: funlen
 			}
 		}
 
+	case pkg.JavaVMInstallation:
+		typ = orgType
+		author = metadata.Release.Implementor
+
 	case pkg.LinuxKernelModule:
 		author = metadata.Author
 
