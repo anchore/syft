@@ -19,7 +19,6 @@ jobs:
         uses: ./.github/actions/bootstrap
         with:
           bootstrap-apt-packages: ""
-          compute-fingerprints: "false"
           go-dependencies: false
 
       - name: "Update tool versions"

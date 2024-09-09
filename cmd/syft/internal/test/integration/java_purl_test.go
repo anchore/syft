@@ -1,10 +1,9 @@
 package integration
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -26,13 +25,9 @@ func TestJavaPURLs(t *testing.T) {
 			found[metadata.VirtualPath] = p.PURL
 		}
 	}
-	for key, expectedPURL := range expectedPURLs {
-		purl := found[key]
-		assert.Equal(t, expectedPURL, purl, fmt.Sprintf("found wrong or missing PURL for %s want %s, got %s", key, expectedPURL, purl))
-	}
-	for key, foundPURL := range found {
-		expectedPURL := expectedPURLs[key]
-		assert.Equal(t, expectedPURL, foundPURL, fmt.Sprintf("found extra purl for %s want %s, got %s", key, expectedPURL, foundPURL))
+
+	if d := cmp.Diff(expectedPURLs, found); d != "" {
+		t.Errorf("unexpected purl values:\n%s", d)
 	}
 }
 
