@@ -32,6 +32,7 @@ type RpmDBEntry struct {
 	Arch            string          `json:"architecture"`
 	Release         string          `json:"release" cyclonedx:"release"`
 	SourceRpm       string          `json:"sourceRpm" cyclonedx:"sourceRpm"`
+	PGP             string          `json:"pgp" cyclonedx:"pgp"`
 	Size            int             `json:"size" cyclonedx:"size"`
 	Vendor          string          `json:"vendor"`
 	ModularityLabel *string         `json:"modularityLabel,omitempty"`
