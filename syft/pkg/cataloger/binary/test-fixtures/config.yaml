@@ -594,3 +594,10 @@ from-images:
     paths:
       - /usr/bin/curl
 
+  - name: lighttpd
+    version: 1.4.76
+    images:
+      - ref: jitesoft/lighttpd:1.4.76-cgi@sha256:f5d4500bfb992a20ca39369ae1ca1d8a7a9463bb8c59ee8dd85ddb6d96fc9fc1
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/lighttpd
