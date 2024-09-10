@@ -410,6 +410,14 @@ var dirOnlyTestCases = []testCase{
 			"octo-org/this-repo/.github/workflows/workflow-1.yml": "172239021f7ba04fe7327647b213799853a9eb89",
 		},
 	},
+	{
+		name:        "find opam package",
+		pkgType:     pkg.OpamPkg,
+		pkgLanguage: pkg.OCaml,
+		pkgInfo: map[string]string{
+			"ocaml-base-compiler": "4.14.0",
+		},
+	},
 }
 
 var commonTestCases = []testCase{

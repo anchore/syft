@@ -22,6 +22,7 @@ const (
 	Java            Language = "java"
 	JavaScript      Language = "javascript"
 	Lua             Language = "lua"
+	OCaml           Language = "ocaml"
 	PHP             Language = "php"
 	Python          Language = "python"
 	R               Language = "R"
@@ -43,6 +44,7 @@ var AllLanguages = []Language{
 	Java,
 	JavaScript,
 	Lua,
+	OCaml,
 	PHP,
 	Python,
 	R,
@@ -92,6 +94,8 @@ func LanguageByName(name string) Language {
 		return Swift
 	case "swipl", string(SwiplPackPkg):
 		return Swipl
+	case "ocaml", string(OpamPkg):
+		return OCaml
 	case packageurl.TypeConan, string(CPP):
 		return CPP
 	case packageurl.TypeHackage, string(Haskell):

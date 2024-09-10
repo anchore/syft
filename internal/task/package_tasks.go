@@ -21,6 +21,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/lua"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
+	"github.com/anchore/syft/syft/pkg/cataloger/ocaml"
 	"github.com/anchore/syft/syft/pkg/cataloger/php"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
 	"github.com/anchore/syft/syft/pkg/cataloger/r"
@@ -95,6 +96,7 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 		newSimplePackageTaskFactory(swift.NewCocoapodsCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "swift", "cocoapods"),
 		newSimplePackageTaskFactory(swift.NewSwiftPackageManagerCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "swift", "spm"),
 		newSimplePackageTaskFactory(swipl.NewSwiplPackCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "swipl", "pack"),
+		newSimplePackageTaskFactory(ocaml.NewOpamPackageManagerCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "ocaml", "opam"),
 
 		// language-specific package for both image and directory scans (but not necessarily declared) ////////////////////////////////////////
 		newSimplePackageTaskFactory(dotnet.NewDotnetPortableExecutableCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "dotnet", "c#", "binary"),
