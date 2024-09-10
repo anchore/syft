@@ -554,6 +554,16 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/lighttpd@version"),
 			CPEs:    singleCPE("cpe:2.3:a:lighttpd:lighttpd:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "proftpd-binary",
+			FileGlob: "**/proftpd",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`ProFTPD Version (?P<version>[0-9]+\.[0-9]+\.[0-9]+[a-z]?)`,
+			),
+			Package: "proftpd",
+			PURL:    mustPURL("pkg:generic/proftpd@version"),
+			CPEs:    singleCPE("cpe:2.3:a:proftpd:proftpd:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 }
 

@@ -601,3 +601,11 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/sbin/lighttpd
+
+  - name: proftpd
+    version: 1.3.8b
+    images:
+      - ref: mekayelanik/proftpd-server-alpine:1.3.8b-r2@sha256:a1ef73a2de04999e53bf728b548ef9922febab8f5709037e40e0141cedcd66db
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/proftpd
