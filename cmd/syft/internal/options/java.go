@@ -7,7 +7,7 @@ import (
 
 type javaConfig struct {
 	UseNetwork              *bool  `yaml:"use-network" json:"use-network" mapstructure:"use-network"`
-	UseMavenLocalRepository bool   `yaml:"use-maven-local-repository" json:"use-maven-local-repository" mapstructure:"use-maven-local-repository"`
+	UseMavenLocalRepository *bool  `yaml:"use-maven-local-repository" json:"use-maven-local-repository" mapstructure:"use-maven-local-repository"`
 	MavenLocalRepositoryDir string `yaml:"maven-local-repository-dir" json:"maven-local-repository-dir" mapstructure:"maven-local-repository-dir"`
 	MavenURL                string `yaml:"maven-url" json:"maven-url" mapstructure:"maven-url"`
 	MaxParentRecursiveDepth int    `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
@@ -17,9 +17,9 @@ func defaultJavaConfig() javaConfig {
 	def := java.DefaultArchiveCatalogerConfig()
 
 	return javaConfig{
-		UseNetwork:              nil, // this defaults to "false", which is the API default
+		UseNetwork:              nil, // this defaults to false, which is the API default
 		MaxParentRecursiveDepth: def.MaxParentRecursiveDepth,
-		UseMavenLocalRepository: def.UseMavenLocalRepository,
+		UseMavenLocalRepository: nil, // this defaults to false, which is the API default
 		MavenLocalRepositoryDir: def.MavenLocalRepositoryDir,
 		MavenURL:                def.MavenBaseURL,
 	}

@@ -132,7 +132,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
 		Golang: golang.DefaultCatalogerConfig().
-			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
+			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchRemoteLicenses)).
 			WithProxy(cfg.Golang.Proxy).
@@ -153,7 +153,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
-			WithUseMavenLocalRepository(cfg.Java.UseMavenLocalRepository).
+			WithUseMavenLocalRepository(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseMavenLocalRepository)).
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
 			WithUseNetwork(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseNetwork)).
 			WithMavenBaseURL(cfg.Java.MavenURL).
