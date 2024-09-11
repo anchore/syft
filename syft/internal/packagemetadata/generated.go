@@ -34,6 +34,7 @@ func AllTypes() []any {
 		pkg.NixStoreEntry{},
 		pkg.NpmPackage{},
 		pkg.NpmPackageLockEntry{},
+		pkg.OpamPackage{},
 		pkg.PhpComposerInstalledEntry{},
 		pkg.PhpComposerLockEntry{},
 		pkg.PhpPeclEntry{},
