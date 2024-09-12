@@ -39,7 +39,7 @@ const (
 	Java  = "java"
 	Maven = "maven"
 
-	// Go language ecosystem labels
+	// Go ecosystem labels
 	Go     = "go"
 	Golang = "golang"
 

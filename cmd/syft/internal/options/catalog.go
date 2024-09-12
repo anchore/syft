@@ -57,7 +57,7 @@ type Catalog struct {
 var _ interface {
 	clio.FlagAdder
 	clio.PostLoader
-	fangs.FieldDescriber
+	clio.FieldDescriber
 } = (*Catalog)(nil)
 
 func DefaultCatalog() Catalog {
@@ -196,7 +196,7 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 		"add, remove, and filter the catalogers to be used")
 
 	flags.StringArrayVarP(&cfg.Enrich, "enrich", "",
-		"enable data enrichment operations, which can utilize services such as Maven Central and NPM")
+		fmt.Sprintf("enable package data enrichment from local and online sources (options: %s)", strings.Join(publicisedEnrichmentOptions, ", ")))
 
 	flags.StringVarP(&cfg.Source.Name, "source-name", "",
 		"set the name of the target being analyzed")
@@ -211,8 +211,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
 	descriptions.Add(&cfg.Parallelism, "number of cataloger workers to run in parallel")
 
-	descriptions.Add(&cfg.Enrich, `enable/disable data enrichment operations. By default all enrichment is disabled, use: all to enable everything.
-Prefixing with a minus will remove the enrichment, e.g. enrich: [all, -java] would enable all except java enrichment. `)
+	descriptions.Add(&cfg.Enrich, fmt.Sprintf(`Enable data enrichment operations, which can utilize services such as Maven Central and NPM.
+By default all enrichment is disabled, use: all to enable everything.
+Available options are: %s`, strings.Join(publicisedEnrichmentOptions, ", ")))
 }
 
 func (cfg *Catalog) PostLoad() error {
@@ -252,6 +253,13 @@ func flatten(commaSeparatedEntries []string) []string {
 	return out
 }
 
+var publicisedEnrichmentOptions = []string{
+	"all",
+	task.Golang,
+	task.Java,
+	task.JavaScript,
+}
+
 func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {
 	if len(enrichDirectives) == 0 {
 		return nil
@@ -277,11 +285,11 @@ func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {
 	enableAll := enabled("all")
 	disableAll := enabled("none")
 
-	if disableAll != nil {
+	if disableAll != nil && *disableAll {
 		if enableAll != nil {
-			log.Warn("you have specified to both enable and disable all network functionality, defaulting to disabled")
+			log.Warn("you have specified to both enable and disable all enrichment functionality, defaulting to disabled")
 		}
-		enableAll = ptr(!*disableAll)
+		enableAll = ptr(false)
 	}
 
 	// check for explicit enable/disable of feature names
