@@ -392,7 +392,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("helm"),
 			},
 		},
-
+		{
+			logicalFixture: "rakudo-star/2024.08/linux-amd64",
+			expected: pkg.Package{
+				Name:      "rakudo/star",
+				Version:   "2024.08",
+				Type:      "binary",
+				PURL:      "pkg:generic/rakudo/star@2024.08",
+				Locations: locations("rakudo-2024.08"),
+				Metadata:  metadata("rakudo-star-binary"),
+			},
+		},
 		{
 			// note: dynamic (non-snippet) test case
 			logicalFixture: "redis-server/2.8.23/linux-amd64",

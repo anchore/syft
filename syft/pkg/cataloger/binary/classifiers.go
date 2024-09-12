@@ -353,6 +353,16 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:mariadb:mariadb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:    "rakudo-star-binary",
+			FileGlob: "**/rakudo",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)Rakudo Star v(?P<version>[0-9]+\.[0-9]+)`,
+			),
+			Package: "rakudo/star",
+			PURL:    mustPURL("pkg:generic/rakudo/star@version"),
+			CPEs:    singleCPE("cpe:2.3:a:rakudo:star:*:*:*:*:*:*:*:*"),
+		},
+		{
 			Class:    "rust-standard-library-linux",
 			FileGlob: "**/libstd-????????????????.so",
 			EvidenceMatcher: FileContentsVersionMatcher(
