@@ -70,3 +70,69 @@ func TestCatalog_PostLoad(t *testing.T) {
 		})
 	}
 }
+
+func Test_enrichmentEnabled(t *testing.T) {
+	tests := []struct {
+		directives string
+		test       string
+		expected   *bool
+	}{
+		{
+			directives: "",
+			test:       "java",
+			expected:   nil,
+		},
+		{
+			directives: "none",
+			test:       "java",
+			expected:   ptr(false),
+		},
+		{
+			directives: "none,+java",
+			test:       "java",
+			expected:   ptr(true),
+		},
+		{
+			directives: "all,none",
+			test:       "java",
+			expected:   ptr(false),
+		},
+		{
+			directives: "all",
+			test:       "java",
+			expected:   ptr(true),
+		},
+		{
+			directives: "golang,js",
+			test:       "java",
+			expected:   nil,
+		},
+		{
+			directives: "golang,-js,java",
+			test:       "java",
+			expected:   ptr(true),
+		},
+		{
+			directives: "golang,js,-java",
+			test:       "java",
+			expected:   ptr(false),
+		},
+		{
+			directives: "all",
+			test:       "java",
+			expected:   ptr(true),
+		},
+		{
+			directives: "all,-java",
+			test:       "java",
+			expected:   ptr(false),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.directives, func(t *testing.T) {
+			got := enrichmentEnabled(flatten([]string{test.directives}), test.test)
+			assert.Equal(t, test.expected, got)
+		})
+	}
+}
