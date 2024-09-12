@@ -23,8 +23,8 @@ func DefaultClassifiers() []Classifier {
 			Package: "python",
 			PURL:    mustPURL("pkg:generic/python@version"),
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
-				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 			},
 		},
 		{
@@ -34,8 +34,8 @@ func DefaultClassifiers() []Classifier {
 			Package:         "python",
 			PURL:            mustPURL("pkg:generic/python@version"),
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
-				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:python:python:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 			},
 		},
 		{
@@ -53,7 +53,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
 			Package: "go",
 			PURL:    mustPURL("pkg:generic/go@version"),
-			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "julia-binary",
@@ -62,7 +62,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)__init__\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00verify`),
 			Package: "julia",
 			PURL:    mustPURL("pkg:generic/julia@version"),
-			CPEs:    singleCPE("cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "helm",
@@ -71,7 +71,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
 			Package: "helm",
 			PURL:    mustPURL("pkg:golang/helm.sh/helm@version"),
-			CPEs:    singleCPE("cpe:2.3:a:helm:helm:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:helm:helm:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "redis-binary",
@@ -82,7 +82,10 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "redis",
 			PURL:    mustPURL("pkg:generic/redis@version"),
-			CPEs:    singleCPE("cpe:2.3:a:redislabs:redis:*:*:*:*:*:*:*:*"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:redislabs:redis:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:redis:redis:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
 		},
 		{
 			Class:    "java-binary-openjdk",
@@ -103,7 +106,7 @@ func DefaultClassifiers() []Classifier {
 			Package: "java/jre",
 			PURL:    mustPURL("pkg:generic/java/jre@version"),
 			// TODO the updates might need to be part of the CPE Attributes, like: 1.8.0:update152
-			CPEs: singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*"),
+			CPEs: singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "java-binary-ibm",
@@ -113,7 +116,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)\x00java\x00(?P<release>[0-9]+[.0-9]+)\x00{4}(?P<version>[0-9]+[-._a-zA-Z0-9]+)\x00`),
 			Package: "java/jre",
 			PURL:    mustPURL("pkg:generic/java/jre@version"),
-			CPEs:    singleCPE("cpe:2.3:a:ibm:java:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:ibm:java:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "java-binary-oracle",
@@ -127,7 +130,7 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "java/jre",
 			PURL:    mustPURL("pkg:generic/java/jre@version"),
-			CPEs:    singleCPE("cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "java-binary-graalvm",
@@ -136,7 +139,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)\x00(?P<version>[0-9]+[.0-9]+[.0-9]+\+[0-9]+-jvmci-[0-9]+[.0-9]+-b[0-9]+)\x00`),
 			Package: "java/graalvm",
 			PURL:    mustPURL("pkg:generic/java/graalvm@version"),
-			CPEs:    singleCPE("cpe:2.3:a:oracle:graalvm:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:oracle:graalvm:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "java-binary-jdk",
@@ -145,7 +148,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?([-._a-zA-Z0-9]+)?)\x00`),
 			Package: "java/jdk",
 			PURL:    mustPURL("pkg:generic/java/jdk@version"),
-			CPEs:    singleCPE("cpe:2.3:a:oracle:jdk:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:oracle:jdk:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "nodejs-binary",
@@ -154,7 +157,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "node",
 			PURL:    mustPURL("pkg:generic/node@version"),
-			CPEs:    singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "go-binary-hint",
@@ -163,6 +166,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`),
 			Package: "go",
 			PURL:    mustPURL("pkg:generic/go@version"),
+			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "busybox-binary",
@@ -171,7 +175,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)BusyBox\s+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "busybox",
 			PURL:    mustPURL("pkg:generic/busybox@version"),
-			CPEs:    singleCPE("cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "util-linux-binary",
@@ -180,18 +184,18 @@ func DefaultClassifiers() []Classifier {
 				`\x00util-linux\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
 			Package: "util-linux",
 			PURL:    mustPURL("pkg:generic/util-linux@version"),
-			CPEs:    singleCPE("cpe:2.3:a:kernel:util-linux:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:kernel:util-linux:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "haproxy-binary",
 			FileGlob: "**/haproxy",
 			EvidenceMatcher: evidenceMatchers(
-				FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-				FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
+				FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)`),
+				FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
 			),
 			Package: "haproxy",
 			PURL:    mustPURL("pkg:generic/haproxy@version"),
-			CPEs:    singleCPE("cpe:2.3:a:haproxy:haproxy:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:haproxy:haproxy:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "perl-binary",
@@ -200,7 +204,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)\/usr\/local\/lib\/perl\d\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "perl",
 			PURL:    mustPURL("pkg:generic/perl@version"),
-			CPEs:    singleCPE("cpe:2.3:a:perl:perl:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:perl:perl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "php-cli-binary",
@@ -210,7 +214,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
 			Package: "php-cli",
 			PURL:    mustPURL("pkg:generic/php-cli@version"),
-			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "php-fpm-binary",
@@ -219,7 +223,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
 			Package: "php-fpm",
 			PURL:    mustPURL("pkg:generic/php-fpm@version"),
-			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "php-apache-binary",
@@ -228,7 +232,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
 			Package: "libphp",
 			PURL:    mustPURL("pkg:generic/php@version"),
-			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "php-composer-binary",
@@ -237,7 +241,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)'pretty_version'\s*=>\s*'(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)'`),
 			Package: "composer",
 			PURL:    mustPURL("pkg:generic/composer@version"),
-			CPEs:    singleCPE("cpe:2.3:a:getcomposer:composer:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:getcomposer:composer:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "httpd-binary",
@@ -246,7 +250,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)Apache\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "httpd",
 			PURL:    mustPURL("pkg:generic/httpd@version"),
-			CPEs:    singleCPE("cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "memcached-binary",
@@ -255,7 +259,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)memcached\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "memcached",
 			PURL:    mustPURL("pkg:generic/memcached@version"),
-			CPEs:    singleCPE("cpe:2.3:a:memcached:memcached:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:memcached:memcached:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "traefik-binary",
@@ -263,10 +267,11 @@ func DefaultClassifiers() []Classifier {
 			EvidenceMatcher: FileContentsVersionMatcher(
 				// [NUL]v1.7.34[NUL]
 				// [NUL]2.9.6[NUL]
-				`(?m)(\x00|\x{FFFD})v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
+				// 3.0.4[NUL]
+				`(?m)(\x00|\x{FFFD})?v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
 			Package: "traefik",
 			PURL:    mustPURL("pkg:generic/traefik@version"),
-			CPEs:    singleCPE("cpe:2.3:a:traefik:traefik:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:traefik:traefik:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "arangodb-binary",
@@ -275,7 +280,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)\x00*(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?)\s\[linux\]`),
 			Package: "arangodb",
 			PURL:    mustPURL("pkg:generic/arangodb@version"),
-			CPEs:    singleCPE("cpe:2.3:a:arangodb:arangodb:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:arangodb:arangodb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "postgresql-binary",
@@ -288,16 +293,20 @@ func DefaultClassifiers() []Classifier {
 				`(?m)(\x00|\?)PostgreSQL (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 			Package: "postgresql",
 			PURL:    mustPURL("pkg:generic/postgresql@version"),
-			CPEs:    singleCPE("cpe:2.3:a:postgresql:postgresql:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:postgresql:postgresql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "mysql-binary",
 			FileGlob: "**/mysql",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m).*/mysql-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
+			EvidenceMatcher: evidenceMatchers(
+				// shutdown[NUL]8.0.37[NUL][NUL][NUL][NUL][NUL]mysql_real_esc
+				FileContentsVersionMatcher(`\x00(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)\x00+mysql`),
+				// /export/home/pb2/build/sb_0-26781090-1516292385.58/release/mysql-8.0.4-rc/mysys_ssl/my_default.cc
+				FileContentsVersionMatcher(`(?m).*/mysql-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
+			),
 			Package: "mysql",
 			PURL:    mustPURL("pkg:generic/mysql@version"),
-			CPEs:    singleCPE("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "mysql-binary",
@@ -307,8 +316,8 @@ func DefaultClassifiers() []Classifier {
 			Package: "percona-server",
 			PURL:    mustPURL("pkg:generic/percona-server@version"),
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
-				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 			},
 		},
 		{
@@ -319,9 +328,9 @@ func DefaultClassifiers() []Classifier {
 			Package: "percona-xtradb-cluster",
 			PURL:    mustPURL("pkg:generic/percona-xtradb-cluster@version"),
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
-				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
-				cpe.Must("cpe:2.3:a:percona:xtradb_cluster:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:percona:xtradb_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 			},
 		},
 		{
@@ -331,7 +340,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m).*/percona-xtrabackup-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 			Package: "percona-xtrabackup",
 			PURL:    mustPURL("pkg:generic/percona-xtrabackup@version"),
-			CPEs:    singleCPE("cpe:2.3:a:percona:xtrabackup:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:percona:xtrabackup:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "mariadb-binary",
@@ -341,6 +350,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-MariaDB`),
 			Package: "mariadb",
 			PURL:    mustPURL("pkg:generic/mariadb@version"),
+			CPEs:    singleCPE("cpe:2.3:a:mariadb:mariadb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "rust-standard-library-linux",
@@ -350,7 +360,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)(\x00)clang LLVM \(rustc version (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
 			Package: "rust",
 			PURL:    mustPURL("pkg:generic/rust@version"),
-			CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "rust-standard-library-macos",
@@ -360,7 +370,7 @@ func DefaultClassifiers() []Classifier {
 				`(?m)c (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
 			Package: "rust",
 			PURL:    mustPURL("pkg:generic/rust@version"),
-			CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "ruby-binary",
@@ -374,7 +384,7 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "ruby",
 			PURL:    mustPURL("pkg:generic/ruby@version"),
-			CPEs:    singleCPE("cpe:2.3:a:ruby-lang:ruby:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:ruby-lang:ruby:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "erlang-binary",
@@ -391,7 +401,7 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "erlang",
 			PURL:    mustPURL("pkg:generic/erlang@version"),
-			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "erlang-alpine-binary",
@@ -408,7 +418,7 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "erlang",
 			PURL:    mustPURL("pkg:generic/erlang@version"),
-			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "erlang-library",
@@ -425,7 +435,47 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "erlang",
 			PURL:    mustPURL("pkg:generic/erlang@version"),
-			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "swipl-binary",
+			FileGlob: "**/swipl",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)swipl-(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\/`,
+			),
+			Package: "swipl",
+			PURL:    mustPURL("pkg:generic/swipl@version"),
+			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "haskell-ghc-binary",
+			FileGlob: "**/ghc*",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)\x00GHC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "haskell/ghc",
+			PURL:    mustPURL("pkg:generic/haskell/ghc@version"),
+			CPEs:    singleCPE("cpe:2.3:a:haskell:ghc:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "haskell-cabal-binary",
+			FileGlob: "**/cabal",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)\x00Cabal-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)-`,
+			),
+			Package: "haskell/cabal",
+			PURL:    mustPURL("pkg:generic/haskell/cabal@version"),
+			CPEs:    singleCPE("cpe:2.3:a:haskell:cabal:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "haskell-stack-binary",
+			FileGlob: "**/stack",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)Version\s*(?P<version>[0-9]+\.[0-9]+\.[0-9]+),\s*Git`,
+			),
+			Package: "haskell/stack",
+			PURL:    mustPURL("pkg:generic/haskell/stack@version"),
+			CPEs:    singleCPE("cpe:2.3:a:haskell:stack:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "consul-binary",
@@ -436,7 +486,7 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "consul",
 			PURL:    mustPURL("pkg:golang/github.com/hashicorp/consul@version"),
-			CPEs:    singleCPE("cpe:2.3:a:hashicorp:consul:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:hashicorp:consul:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "nginx-binary",
@@ -449,8 +499,8 @@ func DefaultClassifiers() []Classifier {
 			Package: "nginx",
 			PURL:    mustPURL("pkg:generic/nginx@version"),
 			CPEs: []cpe.CPE{
-				cpe.Must("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
-				cpe.Must("cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
+				cpe.Must("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 			},
 		},
 		{
@@ -465,7 +515,7 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "bash",
 			PURL:    mustPURL("pkg:generic/bash@version"),
-			CPEs:    singleCPE("cpe:2.3:a:gnu:bash:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:gnu:bash:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "openssl-binary",
@@ -477,7 +527,7 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "openssl",
 			PURL:    mustPURL("pkg:generic/openssl@version"),
-			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "gcc-binary",
@@ -488,7 +538,7 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "gcc",
 			PURL:    mustPURL("pkg:generic/gcc@version"),
-			CPEs:    singleCPE("cpe:2.3:a:gnu:gcc:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:gnu:gcc:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "fluent-bit-binary",
@@ -501,7 +551,7 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "fluent-bit",
 			PURL:    mustPURL("pkg:github/fluent/fluent-bit@version"),
-			CPEs:    singleCPE("cpe:2.3:a:treasuredata:fluent_bit:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:treasuredata:fluent_bit:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "wordpress-cli-binary",
@@ -512,7 +562,17 @@ func DefaultClassifiers() []Classifier {
 			),
 			Package: "wp-cli",
 			PURL:    mustPURL("pkg:generic/wp-cli@version"),
-			CPEs:    singleCPE("cpe:2.3:a:wp-cli:wp-cli:*:*:*:*:*:*:*:*"),
+			CPEs:    singleCPE("cpe:2.3:a:wp-cli:wp-cli:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "curl-binary",
+			FileGlob: "**/curl",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`curl/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+			),
+			Package: "curl",
+			PURL:    mustPURL("pkg:generic/curl@version"),
+			CPEs:    singleCPE("cpe:2.3:a:haxx:curl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 }

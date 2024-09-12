@@ -264,7 +264,6 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	}
 }
 
-// nolint:funlen
 func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 	t.Helper()
 
@@ -308,6 +307,11 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 func TestFileParser(t *testing.T, fixturePath string, parser generic.Parser, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
 	t.Helper()
 	NewCatalogTester().FromFile(t, fixturePath).Expects(expectedPkgs, expectedRelationships).TestParser(t, parser)
+}
+
+func TestCataloger(t *testing.T, fixtureDir string, cataloger pkg.Cataloger, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
+	t.Helper()
+	NewCatalogTester().FromDirectory(t, fixtureDir).Expects(expectedPkgs, expectedRelationships).TestCataloger(t, cataloger)
 }
 
 func TestFileParserWithEnv(t *testing.T, fixturePath string, parser generic.Parser, env *generic.Environment, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {

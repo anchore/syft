@@ -113,13 +113,13 @@ jobs:
         uses: ./.github/actions/bootstrap
 
       - name: Login to Docker Hub
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446  #v3.2.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567  #v3.3.0
         with:
           username: ${{ secrets.ANCHOREOSSWRITE_DH_USERNAME }}
           password: ${{ secrets.ANCHOREOSSWRITE_DH_PAT }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446  #v3.2.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567  #v3.3.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -148,7 +148,7 @@ jobs:
           # for updating brew formula in anchore/homebrew-syft
           GITHUB_BREW_TOKEN: ${{ secrets.ANCHOREOPS_GITHUB_OSS_WRITE_TOKEN }}
 
-      - uses: anchore/sbom-action@e8d2a6937ecead383dfe75190d104edd1f9c5751 #v0.16.0
+      - uses: anchore/sbom-action@61119d458adab75f756bc0b9e4bde25725f86a7a #v0.17.2
         continue-on-error: true
         with:
           artifact-name: sbom.spdx.json

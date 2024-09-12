@@ -178,13 +178,13 @@ func formatNpmRegistryURL(baseURL, packageName, version string) (requestURL stri
 	return requestURL, nil
 }
 
-func getLicenseFromNpmRegistry(basURL, packageName, version string) (string, error) {
+func getLicenseFromNpmRegistry(baseURL, packageName, version string) (string, error) {
 	// "https://registry.npmjs.org/%s/%s", packageName, version
-	requestURL, err := formatNpmRegistryURL(basURL, packageName, version)
+	requestURL, err := formatNpmRegistryURL(baseURL, packageName, version)
 	if err != nil {
 		return "", fmt.Errorf("unable to format npm request for pkg:version %s%s; %w", packageName, version, err)
 	}
-	log.Tracef("trying to fetch remote package %s", requestURL)
+	log.WithFields("url", requestURL).Info("downloading javascript package from npm")
 
 	npmRequest, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {

@@ -1,6 +1,5 @@
 classifiers/dynamic
 classifiers/bin
-cache.fingerprint
 
 # allow for lb patterns (rust, pytho, php and more)
 !lib*.so

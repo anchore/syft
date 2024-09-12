@@ -93,14 +93,13 @@ func defaultAttestOutputOptions() options.Output {
 			string(spdxtagvalue.ID),
 		},
 		Outputs: []string{syftjson.ID.String()},
-		OutputFile: options.OutputFile{ // nolint:staticcheck
+		OutputFile: options.OutputFile{ //nolint:staticcheck
 			Enabled: false, // explicitly not allowed
 		},
 		Format: options.DefaultFormat(),
 	}
 }
 
-//nolint:funlen
 func runAttest(ctx context.Context, id clio.Identification, opts *attestOptions, userInput string) error {
 	// TODO: what other validation here besides binary name?
 	if !commandExists(cosignBinName) {

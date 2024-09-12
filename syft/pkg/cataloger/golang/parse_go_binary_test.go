@@ -210,7 +210,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name:     "buildGoPkgInfo parses a blank mod and returns no packages",
-			mod:      &extendedBuildInfo{&debug.BuildInfo{}, nil, ""},
+			mod:      &extendedBuildInfo{BuildInfo: &debug.BuildInfo{}, cryptoSettings: nil, arch: ""},
 			expected: []pkg.Package(nil),
 		},
 		{
@@ -946,6 +946,95 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			}},
 		},
+		{
+			name: "parse a mod from path (partial build of package)",
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: "go1.22.2",
+					Main:      debug.Module{Path: "command-line-arguments"},
+					Settings: []debug.BuildSetting{
+						{
+							Key:   "-ldflags",
+							Value: `build	-ldflags="-w -s     -X github.com/kuskoman/logstash-exporter/config.Version=v1.7.0     -X github.com/kuskoman/logstash-exporter/config.GitCommit=db696dbcfe5a91d288d5ad44ce8ccbea97e65978     -X github.com/kuskoman/logstash-exporter/config.BuildDate=2024-07-17T08:12:17Z"`,
+						},
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+					Deps: []*debug.Module{
+						{
+							Path:    "github.com/kuskoman/something-else",
+							Version: "v1.2.3",
+						},
+						{
+							Path:    "github.com/kuskoman/logstash-exporter",
+							Version: "(devel)",
+						},
+					},
+				},
+				arch: archDetails,
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/kuskoman/something-else",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v1.2.3",
+					PURL:     "pkg:golang/github.com/kuskoman/something-else@v1.2.3",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.22.2",
+						Architecture:      archDetails,
+						MainModule:        "github.com/kuskoman/logstash-exporter", // correctly attached the main module
+					},
+				},
+				{
+					Name:     "github.com/kuskoman/logstash-exporter",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v1.7.0",
+					PURL:     "pkg:golang/github.com/kuskoman/logstash-exporter@v1.7.0",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.22.2",
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "-ldflags",
+								Value: `build	-ldflags="-w -s     -X github.com/kuskoman/logstash-exporter/config.Version=v1.7.0     -X github.com/kuskoman/logstash-exporter/config.GitCommit=db696dbcfe5a91d288d5ad44ce8ccbea97e65978     -X github.com/kuskoman/logstash-exporter/config.BuildDate=2024-07-17T08:12:17Z"`,
+							},
+							{
+								Key:   "GOARCH",
+								Value: "amd64",
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+						},
+						Architecture: archDetails,
+						MainModule:   "github.com/kuskoman/logstash-exporter",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -979,6 +1068,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 func Test_extractVersionFromLDFlags(t *testing.T) {
 	tests := []struct {
 		name             string
+		mainModule       string
 		ldflags          string
 		wantMajorVersion string
 		wantFullVersion  string
@@ -989,12 +1079,14 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 		},
 		{
 			name:             "syft ldflags",
+			mainModule:       "github.com/anchore/syft",
 			ldflags:          `	build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0 -X github.com/anchore/syft/internal/version.gitCommit=b2b332e8b2b66af0905e98b54ebd713a922be1a8 -X github.com/anchore/syft/internal/version.buildDate=2023-04-21T16:20:25Z -X github.com/anchore/syft/internal/version.gitDescription=v0.79.0 "`,
 			wantMajorVersion: "0",
 			wantFullVersion:  "v0.79.0",
 		},
 		{
-			name: "kubectl ldflags",
+			name:       "kubectl ldflags",
+			mainModule: "k8s.io/kubernetes/vendor/k8s.io/client-go",
 			ldflags: `	build	-asmflags=all=-trimpath=/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes
 	build	-compiler=gc
 	build	-gcflags="all=-trimpath=/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes "
@@ -1004,24 +1096,28 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 		},
 		{
 			name:             "nerdctl ldflags",
+			mainModule:       "github.com/containerd/nerdctl",
 			ldflags:          `	build	-ldflags="-s -w -X github.com/containerd/nerdctl/pkg/version.Version=v1.3.1 -X github.com/containerd/nerdctl/pkg/version.Revision=b224b280ff3086516763c7335fc0e0997aca617a"`,
 			wantMajorVersion: "1",
 			wantFullVersion:  "v1.3.1",
 		},
 		{
 			name:             "limactl ldflags",
+			mainModule:       "github.com/lima-vm/lima",
 			ldflags:          `	build	-ldflags="-s -w -X github.com/lima-vm/lima/pkg/version.Version=v0.15.1"`,
 			wantMajorVersion: "0",
 			wantFullVersion:  "v0.15.1",
 		},
 		{
 			name:             "terraform ldflags",
+			mainModule:       "github.com/hashicorp/terraform",
 			ldflags:          `	build	-ldflags="-w -s -X 'github.com/hashicorp/terraform/version.Version=1.4.6' -X 'github.com/hashicorp/terraform/version.Prerelease='"`,
 			wantMajorVersion: "1",
 			wantFullVersion:  "v1.4.6",
 		},
 		{
-			name: "kube-apiserver ldflags",
+			name:       "kube-apiserver ldflags",
+			mainModule: "k8s.io/kubernetes/vendor/k8s.io/client-go",
 			ldflags: `	build	-asmflags=all=-trimpath=/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes
 	build	-buildmode=exe
 	build	-compiler=gc
@@ -1031,14 +1127,16 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 			wantFullVersion:  "v1.27.1",
 		},
 		{
-			name: "prometheus ldflags",
+			name:       "prometheus ldflags",
+			mainModule: "github.com/prometheus/common",
 			ldflags: `	build	-ldflags="-X github.com/prometheus/common/version.Version=2.44.0 -X github.com/prometheus/common/version.Revision=1ac5131f698ebc60f13fe2727f89b115a41f6558 -X github.com/prometheus/common/version.Branch=HEAD -X github.com/prometheus/common/version.BuildUser=root@739e8181c5db -X github.com/prometheus/common/version.BuildDate=20230514-06:18:11  -extldflags '-static'"
 	build	-tags=netgo,builtinassets,stringlabels`,
 			wantMajorVersion: "2",
 			wantFullVersion:  "v2.44.0",
 		},
 		{
-			name: "influxdb ldflags",
+			name:       "influxdb ldflags",
+			mainModule: "github.com/influxdata/influxdb-client-go/v2",
 			ldflags: `	build	-ldflags="-s -w -X main.version=v2.7.1 -X main.commit=407fa622e9 -X main.date=2023-04-28T13:24:27Z -linkmode=external -extld=/musl/x86_64/bin/musl-gcc -extldflags '-fno-PIC -static-pie -Wl,-z,stack-size=8388608'"
 	build	-tags=assets,sqlite_foreign_keys,sqlite_json,static_build,noasm`,
 			wantMajorVersion: "2",
@@ -1046,79 +1144,105 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 		},
 		{
 			name:             "gitea ldflags",
+			mainModule:       "code.gitea.io/gitea",
 			ldflags:          `	build	-ldflags=" -X \"main.MakeVersion=GNU Make 4.1\" -X \"main.Version=1.19.3\" -X \"main.Tags=bindata sqlite sqlite_unlock_notify\" "`,
 			wantMajorVersion: "1",
 			wantFullVersion:  "v1.19.3",
 		},
 		{
 			name:             "docker sbom cli ldflags",
+			mainModule:       "github.com/docker/sbom-cli-plugin",
 			ldflags:          `	build	-ldflags="-w -s -extldflags '-static' -X github.com/docker/sbom-cli-plugin/internal/version.version=0.6.1-SNAPSHOT-02cf1c8 -X github.com/docker/sbom-cli-plugin/internal/version.gitCommit=02cf1c888ad6662109ac6e3be618392514a56316 -X github.com/docker/sbom-cli-plugin/internal/version.gitDescription=v0.6.1-dirty "`,
 			wantMajorVersion: "0",
 			wantFullVersion:  "v0.6.1-SNAPSHOT-02cf1c8",
 		},
 		{
 			name:             "docker scout ldflags",
+			mainModule:       "github.com/docker/scout-cli-plugin",
 			ldflags:          `	build	-ldflags="-w -s -extldflags '-static' -X github.com/docker/scout-cli-plugin/internal.version=0.10.0 "`,
 			wantMajorVersion: "0",
 			wantFullVersion:  "v0.10.0",
 		},
 		{
 			name:             "influx telegraf ldflags",
+			mainModule:       "github.com/influxdata/telegraf",
 			ldflags:          `	build	-ldflags="-w -s -X github.com/influxdata/telegraf/internal.Commit=a3a884a1 -X github.com/influxdata/telegraf/internal.Branch=HEAD -X github.com/influxdata/telegraf/internal.Version=1.26.2"`,
 			wantMajorVersion: "1",
 			wantFullVersion:  "v1.26.2",
 		},
 		{
 			name:             "argocd ldflags",
+			mainModule:       "github.com/argoproj/argo-cd/v2",
 			ldflags:          `	build	-ldflags="-X github.com/argoproj/argo-cd/v2/common.version=2.7.2 -X github.com/argoproj/argo-cd/v2/common.buildDate=2023-05-12T14:06:49Z -X github.com/argoproj/argo-cd/v2/common.gitCommit=cbee7e6011407ed2d1066c482db74e97e0cc6bdb -X github.com/argoproj/argo-cd/v2/common.gitTreeState=clean -X github.com/argoproj/argo-cd/v2/common.kubectlVersion=v0.24.2 -extldflags=\"-static\""`,
 			wantMajorVersion: "2",
 			wantFullVersion:  "v2.7.2",
 		},
 		{
 			name:             "kustomize ldflags",
+			mainModule:       "sigs.k8s.io/kustomize/api",
 			ldflags:          `	build	-ldflags="-s -X sigs.k8s.io/kustomize/api/provenance.version=kustomize/v4.5.7 -X sigs.k8s.io/kustomize/api/provenance.gitCommit=56d82a8378dfc8dc3b3b1085e5a6e67b82966bd7 -X sigs.k8s.io/kustomize/api/provenance.buildDate=2022-08-02T16:35:54Z "`,
 			wantMajorVersion: "4",
 			wantFullVersion:  "v4.5.7",
 		},
 		{
 			name:             "TiDB 7.5.0 ldflags",
+			mainModule:       "github.com/pingcap/tidb",
 			ldflags:          `build	-ldflags="-X \"github.com/pingcap/tidb/pkg/parser/mysql.TiDBReleaseVersion=v7.5.0\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBBuildTS=2023-11-24 08:51:04\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBGitHash=069631e2ecfedc000ffb92c67207bea81380f020\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBGitBranch=heads/refs/tags/v7.5.0\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBEdition=Community\" "`,
 			wantMajorVersion: "7",
 			wantFullVersion:  "v7.5.0",
 		},
 		{
 			name:             "TiDB 6.1.7 ldflags",
+			mainModule:       "github.com/pingcap/tidb",
 			ldflags:          `build	-ldflags="-X \"github.com/pingcap/tidb/parser/mysql.TiDBReleaseVersion=v6.1.7\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBBuildTS=2023-07-04 12:06:03\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBGitHash=613ecc5f731b2843e1d53a43915e2cd8da795936\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBGitBranch=heads/refs/tags/v6.1.7\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBEdition=Community\" "`,
 			wantMajorVersion: "6",
 			wantFullVersion:  "v6.1.7",
 		},
+		{
+			name:             "logstash-exporter",
+			ldflags:          `build	-ldflags="-w -s     -X github.com/kuskoman/logstash-exporter/config.Version=v1.7.0     -X github.com/kuskoman/logstash-exporter/config.GitCommit=db696dbcfe5a91d288d5ad44ce8ccbea97e65978     -X github.com/kuskoman/logstash-exporter/config.BuildDate=2024-07-17T08:12:17Z"`,
+			wantMajorVersion: "1",
+			wantFullVersion:  "v1.7.0",
+		},
 		//////////////////////////////////////////////////////////////////
 		// negative cases
 		{
-			name:    "hugo ldflags",
-			ldflags: `	build	-ldflags="-s -w -X github.com/gohugoio/hugo/common/hugo.vendorInfo=gohugoio"`,
+			name:       "hugo ldflags",
+			mainModule: "github.com/gohugoio/hugo",
+			ldflags:    `	build	-ldflags="-s -w -X github.com/gohugoio/hugo/common/hugo.vendorInfo=gohugoio"`,
 		},
 		{
-			name:    "ghostunnel ldflags",
-			ldflags: `	build	-ldflags="-X main.version=77d9aaa"`,
+			name:       "ghostunnel ldflags",
+			mainModule: "github.com/ghostunnel/ghostunnel",
+			ldflags:    `	build	-ldflags="-X main.version=77d9aaa"`,
 		},
 		{
-			name:    "opa ldflags",
-			ldflags: `build	-ldflags=" -X github.com/open-policy-agent/opa/version.Hostname=9549178459bc"`,
+			name:       "opa ldflags",
+			mainModule: "github.com/open-policy-agent/opa",
+			ldflags:    `build	-ldflags=" -X github.com/open-policy-agent/opa/version.Hostname=9549178459bc"`,
 		},
 		///////////////////////////////////////////////////////////////////
 		// trickier cases
 		{
 			name:             "macvlan plugin for cri-o ldflags",
+			mainModule:       "github.com/containernetworking/plugins",
 			ldflags:          `	build	-ldflags="-extldflags -static -X github.com/containernetworking/plugins/pkg/utils/buildversion.BuildVersion=v1.2.0"`,
 			wantMajorVersion: "1",
 			wantFullVersion:  "v1.2.0",
 		},
 		{
 			name:             "coder ldflags",
+			mainModule:       "github.com/coder/coder",
 			ldflags:          `	build	-ldflags="-s -w -X 'github.com/coder/coder/buildinfo.tag=0.23.4'"`,
 			wantMajorVersion: "0",
 			wantFullVersion:  "v0.23.4",
+		},
+		{
+			name:             "hypothetical multiple versions in ldflags",
+			mainModule:       "github.com/foo/baz",
+			ldflags:          `	build	-ldflags="-extldflags -static -X github.com/foo/bar/buildversion.BuildVersion=v1.2.0 -X github.com/foo/baz/buildversion.BuildVersion=v2.4.5"`,
+			wantMajorVersion: "2",
+			wantFullVersion:  "v2.4.5",
 		},
 		///////////////////////////////////////////////////////////////////
 		// don't know how to handle these... yet
@@ -1139,7 +1263,7 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotMajorVersion, gotFullVersion := extractVersionFromLDFlags(tt.ldflags)
+			gotMajorVersion, gotFullVersion := extractVersionFromLDFlags(tt.ldflags, tt.mainModule)
 			assert.Equal(t, tt.wantMajorVersion, gotMajorVersion, "unexpected major version")
 			assert.Equal(t, tt.wantFullVersion, gotFullVersion, "unexpected full version")
 		})

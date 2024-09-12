@@ -80,7 +80,6 @@ func defaultScanOptions() *scanOptions {
 	}
 }
 
-//nolint:dupl
 func Scan(app clio.Application) *cobra.Command {
 	id := app.ID()
 
@@ -161,7 +160,7 @@ func validateArgs(cmd *cobra.Command, args []string, error string) error {
 		if err := cmd.Help(); err != nil {
 			return fmt.Errorf("unable to display help: %w", err)
 		}
-		return fmt.Errorf(error)
+		return fmt.Errorf("%v", error)
 	}
 
 	return cobra.MaximumNArgs(1)(cmd, args)
@@ -396,13 +395,13 @@ func getExplanation(expErr task.ErrInvalidExpression) string {
 
 	if errors.Is(err, task.ErrNamesNotAllowed) {
 		if expErr.Operation == task.SubSelectOperation {
-			return "However, " + err.Error() + ".\nIt seems like you are intending to add a cataloger in addition to the default set." // nolint:goconst
+			return "However, " + err.Error() + ".\nIt seems like you are intending to add a cataloger in addition to the default set."
 		}
-		return "However, " + err.Error() + "." // nolint:goconst
+		return "However, " + err.Error() + "."
 	}
 
 	if errors.Is(err, task.ErrTagsNotAllowed) {
-		return "However, " + err.Error() + ".\nAdding groups of catalogers may result in surprising behavior (create inaccurate SBOMs)." // nolint:goconst
+		return "However, " + err.Error() + ".\nAdding groups of catalogers may result in surprising behavior (create inaccurate SBOMs)."
 	}
 
 	if errors.Is(err, task.ErrAllNotAllowed) {

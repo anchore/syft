@@ -79,7 +79,8 @@ func (r *ContainerImageSquash) FilesByPath(paths ...string) ([]file.Location, er
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern within the squashed representation of the image.
-// nolint:gocognit
+//
+//nolint:gocognit
 func (r *ContainerImageSquash) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]file.Location, 0)

@@ -14,35 +14,35 @@ import (
 func TestIsDownloadStale(t *testing.T) {
 
 	cases := []struct {
-		name        string
-		fingerprint string
-		expected    bool
+		name     string
+		digest   string
+		expected bool
 	}{
 		{
-			name:        "no fingerprint",
-			fingerprint: "",
-			expected:    true,
+			name:     "no digest",
+			digest:   "",
+			expected: true,
 		},
 		{
-			name: "fingerprint matches",
-			// this is the fingerprint for config in the loop body
-			fingerprint: "5177d458eaca031ea16fa707841043df2e31b89be6bae7ea41290aa32f0251a6",
-			expected:    false,
+			name: "digest matches",
+			// this is the digest for config in the loop body
+			digest:   "c9c8007f9c55c2f1",
+			expected: false,
 		},
 		{
-			name:        "fingerprint does not match",
-			fingerprint: "fingerprint",
-			expected:    true,
+			name:     "digest does not match",
+			digest:   "bogus",
+			expected: true,
 		},
 	}
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			binaryPath := filepath.Join(t.TempDir(), "binary")
-			fh, err := os.Create(binaryPath + ".fingerprint")
+			fh, err := os.Create(binaryPath + digestFileSuffix)
 			require.NoError(t, err)
 
-			fh.Write([]byte(tt.fingerprint))
+			fh.Write([]byte(tt.digest))
 			require.NoError(t, fh.Close())
 
 			cfg := config.BinaryFromImage{

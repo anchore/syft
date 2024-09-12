@@ -119,9 +119,9 @@ func Test_PackageCataloger(t *testing.T) {
 				"test-fixtures/dist-info/direct_url.json",
 			},
 			expectedPackage: pkg.Package{
-				Name:     "Pygments",
+				Name:     "pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/Pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
@@ -161,9 +161,9 @@ func Test_PackageCataloger(t *testing.T) {
 				"test-fixtures/casesensitive/DIST-INFO/direct_url.json",
 			},
 			expectedPackage: pkg.Package{
-				Name:     "Pygments",
+				Name:     "pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/Pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
@@ -199,9 +199,9 @@ func Test_PackageCataloger(t *testing.T) {
 				"test-fixtures/malformed-record/dist-info/RECORD",
 			},
 			expectedPackage: pkg.Package{
-				Name:     "Pygments",
+				Name:     "pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/Pygments@2.6.1",
+				PURL:     "pkg:pypi/pygments@2.6.1",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
@@ -231,9 +231,9 @@ func Test_PackageCataloger(t *testing.T) {
 			name:     "partial dist-info directory",
 			fixtures: []string{"test-fixtures/partial.dist-info/METADATA"},
 			expectedPackage: pkg.Package{
-				Name:     "Pygments",
+				Name:     "pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/Pygments@2.6.1",
+				PURL:     "pkg:pypi/pygments@2.6.1",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
@@ -643,7 +643,7 @@ func Test_PackageCataloger_SitePackageRelationships(t *testing.T) {
 				// Note: we'll only see new relationships, so any relationship where there is at least one new player (in FROM or TO)
 				"blessed @ 1.20.0 (/usr/local/lib/python3.9/dist-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)",      // note: depends on global site package!
 				"python-editor @ 1.0.4 (/usr/local/lib/python3.9/dist-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)", // note: depends on global site package!
-				"readchar @ 4.1.0 (/app/project1/venv/lib/python3.9/site-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)",
+				"readchar @ 4.2.0 (/app/project1/venv/lib/python3.9/site-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)",
 				"soupsieve @ 2.3 (/app/project1/venv/lib/python3.9/site-packages) [dependency-of] beautifulsoup4 @ 4.10.0 (/app/project1/venv/lib/python3.9/site-packages)",
 
 				// project 2 virtual env

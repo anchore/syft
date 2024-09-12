@@ -42,6 +42,8 @@ const (
 	RpmPkg                  Type = "rpm"
 	RustPkg                 Type = "rust-crate"
 	SwiftPkg                Type = "swift"
+	SwiplPackPkg            Type = "swiplpack"
+	OpamPkg                 Type = "opam"
 	WordpressPluginPkg      Type = "wordpress-plugin"
 )
 
@@ -78,12 +80,14 @@ var AllPkgs = []Type{
 	RpmPkg,
 	RustPkg,
 	SwiftPkg,
+	SwiplPackPkg,
+	OpamPkg,
 	WordpressPluginPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
 //
-//nolint:funlen
+//nolint:funlen, gocyclo
 func (t Type) PackageURLType() string {
 	switch t {
 	case AlpmPkg:
@@ -141,6 +145,10 @@ func (t Type) PackageURLType() string {
 		return "cargo"
 	case SwiftPkg:
 		return packageurl.TypeSwift
+	case SwiplPackPkg:
+		return "swiplpack"
+	case OpamPkg:
+		return "opam"
 	case WordpressPluginPkg:
 		return "wordpress-plugin"
 	default:
@@ -217,6 +225,10 @@ func TypeByName(name string) Type {
 		return Rpkg
 	case packageurl.TypeSwift:
 		return SwiftPkg
+	case "swiplpack":
+		return SwiplPackPkg
+	case "opam":
+		return OpamPkg
 	case "wordpress-plugin":
 		return WordpressPluginPkg
 	default:

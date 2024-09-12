@@ -79,8 +79,16 @@ func TestLanguageFromPURL(t *testing.T) {
 			want: Swift,
 		},
 		{
+			purl: "pkg:swiplpack/conditon@0.1.1",
+			want: Swipl,
+		},
+		{
 			purl: "pkg:luarocks/kong@3.7.0",
 			want: Lua,
+		},
+		{
+			purl: "pkg:opam/ocaml-base-compiler@	5.2.0",
+			want: OCaml,
 		},
 	}
 
@@ -218,6 +226,14 @@ func TestLanguageByName(t *testing.T) {
 		{
 			name:     "swift",
 			language: Swift,
+		},
+		{
+			name:     "swiplpack",
+			language: Swipl,
+		},
+		{
+			name:     "opam",
+			language: OCaml,
 		},
 		{
 			name:     "pod",

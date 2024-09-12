@@ -71,6 +71,29 @@ from-images:
     paths:
       - /usr/local/lib/erlang/erts-15.0/bin/beam.smp
 
+  - version: 9.3.8
+    images:
+      - ref: swipl:9.3.8@sha256:6a15e6a03afe943228924a5502ba763e653ff28d9b3391e2b3e1fc3e991f37d4
+        platform: linux/amd64
+    paths:
+      - /usr/lib/swipl/bin/x86_64-linux/swipl
+
+  - name: haskell-ghc
+    version: 9.6.5
+    images:
+      - ref: haskell:9.6.5-slim-buster@sha256:04a7293eb792b82335dffa7f08532657517ed9b4f01d52c1b499ad22deb3c6b1
+        platform: linux/amd64
+    paths:
+      - /opt/ghc/9.6.5/lib/ghc-9.6.5/bin/ghc-9.6.5
+
+  - name: haskell-cabal
+    version: 3.10.3.0
+    images:
+      - ref: haskell:9.6.5-slim-buster@sha256:04a7293eb792b82335dffa7f08532657517ed9b4f01d52c1b499ad22deb3c6b1
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/cabal
+
   - version: 1.21.3
     images:
       - ref: golang:1.21.3@sha256:3ce8313c3513515040870c55e0c041a2b94f3576a58cfd3948633604214aa811
@@ -78,6 +101,7 @@ from-images:
     paths:
       - /usr/local/go/bin/go
 
+  # TODO: this is no longer available from dockerhub! (the snippet is vital)
   - version: 1.5.14
     images:
       - ref: haproxy:1.5.14@sha256:3d57e3921cc84e860f764e863ce729dd0765e3d28d444775127bc42d68f98e10
@@ -95,6 +119,13 @@ from-images:
   - version: 2.7.3
     images:
       - ref: haproxy:2.7.3@sha256:17d8aa6bf16882a294bdcccc757dd4002045f34b719e9f94dfd4801614801aea
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/haproxy
+
+  - version: 3.1-dev0
+    images:
+      - ref: haproxy:3.1-dev0@sha256:eba1aac9aa6ea84869bd2ecae79792a934563fd731eddf724eb3b12ef6a9b93f
         platform: linux/amd64
     paths:
       - /usr/local/sbin/haproxy
@@ -146,6 +177,13 @@ from-images:
   - version: 8.0.34
     images:
       - ref: mysql:8.0.34@sha256:8b8835a2c32cd7357a5d2ea4b49ad870ff519c8c1d4add362803feddf4a0a973
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mysql
+
+  - version: 8.0.37
+    images:
+      - ref: mysql:8.0.37-bookworm@sha256:bad55a5bb69d6710927792384b5eb55669ee15dc85dca1888874e4a7993eecd8
         platform: linux/amd64
     paths:
       - /usr/bin/mysql
@@ -448,6 +486,12 @@ from-images:
     paths:
       - /usr/local/bin/traefik
 
+  - version: 3.0.4
+    images:
+      - ref: traefik:3.0.4@sha256:12a7cc4232b5b7fe027673da8c096144525f59a8eabc87e52260aac0ec5a1219
+        platform: linux/riscv64
+    paths:
+      - /usr/local/bin/traefik
 
   # from the original dynamic fixtures...
 
@@ -557,3 +601,12 @@ from-images:
         platform: linux/arm64
     paths:
       - /usr/local/openresty/openssl/bin/openssl
+
+  - name: curl
+    version: 8.9.1
+    images:
+      - ref: curlimages/curl:8.9.1@sha256:8addc281f0ea517409209f76832b6ddc2cabc3264feb1ebbec2a2521ffad24e4
+        platform: linux/amd64
+    paths:
+      - /usr/bin/curl
+
