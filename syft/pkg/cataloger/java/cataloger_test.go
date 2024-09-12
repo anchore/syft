@@ -151,13 +151,13 @@ func TestJvmDistributionCataloger(t *testing.T) {
 			fixture: "test-fixtures/jvm-installs/valid-post-jep223",
 			expected: pkg.Package{
 				Name:      "openjdk",
-				Version:   "21.0.4+7",
+				Version:   "21.0.4+7-LTS",
 				FoundBy:   "java-jvm-cataloger",
 				Locations: file.NewLocationSet(file.NewLocation("jvm/openjdk/release")),
 				Licenses:  pkg.NewLicenseSet(),
 				Type:      pkg.BinaryPkg,
 				CPEs:      []cpe.CPE{cpe.Must("cpe:2.3:a:oracle:openjdk:21.0.4:*:*:*:*:*:*:*", cpe.GeneratedSource)},
-				PURL:      "pkg:generic/oracle/openjdk@21.0.4%2B7?repository_url=https://github.com/adoptium/temurin-build.git",
+				PURL:      "pkg:generic/oracle/openjdk@21.0.4%2B7-LTS?repository_url=https://github.com/adoptium/jdk21u.git",
 				Metadata: pkg.JavaVMInstallation{
 					Release: pkg.JavaVMRelease{
 						Implementor:        "Eclipse Adoptium",

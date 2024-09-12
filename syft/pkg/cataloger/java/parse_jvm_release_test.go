@@ -13,7 +13,6 @@ func TestJvmCpes(t *testing.T) {
 	tests := []struct {
 		name           string
 		pkgVersion     string
-		legacyVersion  string
 		primaryVendor  string
 		primaryProduct string
 		imageType      string
@@ -23,7 +22,6 @@ func TestJvmCpes(t *testing.T) {
 		{
 			name:           "zulu release",
 			pkgVersion:     "9.0.1+20",
-			legacyVersion:  "",
 			primaryVendor:  "azul",
 			primaryProduct: "zulu",
 			imageType:      "jdk",
@@ -53,7 +51,6 @@ func TestJvmCpes(t *testing.T) {
 		{
 			name:           "sun release",
 			pkgVersion:     "1.6.0_322-b002",
-			legacyVersion:  "",
 			primaryVendor:  "sun",
 			primaryProduct: "jre",
 			imageType:      "jre",
@@ -83,43 +80,12 @@ func TestJvmCpes(t *testing.T) {
 		},
 		{
 			name:           "oracle se release",
-			pkgVersion:     "8.0.1+2",
-			legacyVersion:  "1.8.0_322-b02",
+			pkgVersion:     "1.8.0_322-b02",
 			primaryVendor:  "oracle",
 			primaryProduct: "java_se",
 			imageType:      "jdk",
 			hasJdk:         true,
 			expected: []cpe.CPE{
-				{
-					Attributes: cpe.Attributes{
-						Part:    "a",
-						Vendor:  "oracle",
-						Product: "java_se",
-						Version: "8.0.1",
-						Update:  "",
-					},
-					Source: cpe.GeneratedSource,
-				},
-				{
-					Attributes: cpe.Attributes{
-						Part:    "a",
-						Vendor:  "oracle",
-						Product: "jre",
-						Version: "8.0.1",
-						Update:  "",
-					},
-					Source: cpe.GeneratedSource,
-				},
-				{
-					Attributes: cpe.Attributes{
-						Part:    "a",
-						Vendor:  "oracle",
-						Product: "jdk",
-						Version: "8.0.1",
-						Update:  "",
-					},
-					Source: cpe.GeneratedSource,
-				},
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
@@ -155,7 +121,6 @@ func TestJvmCpes(t *testing.T) {
 		{
 			name:           "JEP 223 version with build info",
 			pkgVersion:     "9.0.1+20",
-			legacyVersion:  "",
 			primaryVendor:  "oracle",
 			primaryProduct: "openjdk",
 			imageType:      "openjdk",
@@ -175,7 +140,6 @@ func TestJvmCpes(t *testing.T) {
 		{
 			name:           "JEP 223 version without build info",
 			pkgVersion:     "11.0.9",
-			legacyVersion:  "",
 			primaryVendor:  "oracle",
 			primaryProduct: "openjdk",
 			imageType:      "openjdk",
@@ -195,7 +159,6 @@ func TestJvmCpes(t *testing.T) {
 		{
 			name:           "no plus sign in version string",
 			pkgVersion:     "1.8.0",
-			legacyVersion:  "",
 			primaryVendor:  "oracle",
 			primaryProduct: "openjdk",
 			imageType:      "openjdk",
@@ -215,7 +178,6 @@ func TestJvmCpes(t *testing.T) {
 		{
 			name:           "empty version string",
 			pkgVersion:     "",
-			legacyVersion:  "",
 			primaryVendor:  "oracle",
 			primaryProduct: "",
 			imageType:      "",
@@ -225,7 +187,7 @@ func TestJvmCpes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := jvmCpes(tt.pkgVersion, tt.legacyVersion, tt.primaryVendor, tt.primaryProduct, tt.imageType, tt.hasJdk)
+			result := jvmCpes(tt.pkgVersion, tt.primaryVendor, tt.primaryProduct, tt.imageType, tt.hasJdk)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -237,46 +199,25 @@ func TestJvmVersion(t *testing.T) {
 		input    *pkg.JavaVMRelease
 		expected string
 	}{
-		{
-			name: "SemanticVersion available",
-			input: &pkg.JavaVMRelease{
-				SemanticVersion:    "21.0.4+7",
-				FullVersion:        "bogus",
-				JavaVersion:        "bogus",
-				JavaRuntimeVersion: "bogus",
-			},
-			expected: "21.0.4+7",
-		},
-		{
-			name: "FullVersion fallback",
-			input: &pkg.JavaVMRelease{
-				FullVersion:        "21.0.4+7-LTS",
-				JavaVersion:        "bogus",
-				JavaRuntimeVersion: "bogus",
-			},
-			expected: "21.0.4+7-LTS",
-		},
+
 		{
 			name: "JavaRuntimeVersion fallback",
 			input: &pkg.JavaVMRelease{
 				JavaRuntimeVersion: "21.0.4+7-LTS",
 				JavaVersion:        "bogus",
+				FullVersion:        "bogus",
+				SemanticVersion:    "bogus",
 			},
 			expected: "21.0.4+7-LTS",
 		},
 		{
 			name: "JavaVersion fallback",
 			input: &pkg.JavaVMRelease{
-				JavaVersion: "21.0.4",
+				JavaVersion:     "21.0.4",
+				FullVersion:     "bogus",
+				SemanticVersion: "bogus",
 			},
 			expected: "21.0.4",
-		},
-		{
-			name: "non-legacy version",
-			input: &pkg.JavaVMRelease{
-				JavaVersion: "11.0.11",
-			},
-			expected: "11.0.11",
 		},
 		{
 			name:     "empty input fields",
@@ -289,53 +230,6 @@ func TestJvmVersion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := jvmPackageVersion(tt.input)
 			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestGetMajorVersion(t *testing.T) {
-	tests := []struct {
-		name          string
-		version       string
-		expectedMajor int
-	}{
-		{
-			name:          "valid version with major and minor",
-			version:       "1.8",
-			expectedMajor: 1,
-		},
-		{
-			name:          "valid version with only major",
-			version:       "11",
-			expectedMajor: 11,
-		},
-		{
-			name:          "invalid version format",
-			version:       "not-a-version",
-			expectedMajor: -1,
-		},
-		{
-			name:          "empty string",
-			version:       "",
-			expectedMajor: -1,
-		},
-		{
-			name:          "extra segments in version",
-			version:       "1.8.0",
-			expectedMajor: 1,
-		},
-		{
-			name:          "non-numeric major",
-			version:       "a.8",
-			expectedMajor: -1,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			major := getMajorVersion(tt.version)
-			assert.Equal(t, tt.expectedMajor, major)
-
 		})
 	}
 }

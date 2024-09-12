@@ -7,7 +7,6 @@ import (
 	"io"
 	"path"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -87,13 +86,11 @@ func parseJVMRelease(_ context.Context, resolver file.Resolver, _ *generic.Envir
 
 	vendor, product := jvmPrimaryVendorProduct(ri.Implementor, reader.Path(), ri.ImageType, hasJdk)
 
-	legacyVersion := jvmLegacyVersion(ri)
-
 	p := pkg.Package{
 		Name:      product,
 		Locations: locations,
 		Version:   version,
-		CPEs:      jvmCpes(version, legacyVersion, vendor, product, ri.ImageType, hasJdk),
+		CPEs:      jvmCpes(version, vendor, product, ri.ImageType, hasJdk),
 		PURL:      jvmPurl(*ri, version, vendor, product),
 		Licenses:  licenses,
 		Type:      pkg.BinaryPkg,
@@ -137,15 +134,15 @@ func findJvmFiles(resolver file.Resolver, installDir string) ([]string, bool) {
 
 func jvmPurl(ri pkg.JavaVMRelease, version, vendor, product string) string {
 	var qualifiers []packageurl.Qualifier
-	if ri.BuildSourceRepo != "" {
-		qualifiers = append(qualifiers, packageurl.Qualifier{
-			Key:   "repository_url",
-			Value: ri.BuildSourceRepo,
-		})
-	} else if ri.SourceRepo != "" {
+	if ri.SourceRepo != "" {
 		qualifiers = append(qualifiers, packageurl.Qualifier{
 			Key:   "repository_url",
 			Value: ri.SourceRepo,
+		})
+	} else if ri.BuildSourceRepo != "" {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "repository_url",
+			Value: ri.BuildSourceRepo,
 		})
 	}
 
@@ -182,19 +179,8 @@ func jvmPrimaryVendorProduct(implementor, path, imageType string, hasJdk bool) (
 	return oracleVendor, openJdkProduct
 }
 
-func jvmCpes(pkgVersion, legacyVersion, primaryVendor, primaryProduct, imageType string, hasJdk bool) []cpe.CPE {
+func jvmCpes(version, primaryVendor, primaryProduct, imageType string, hasJdk bool) []cpe.CPE {
 	// see https://github.com/anchore/syft/issues/2422 for more context
-
-	versions := []string{pkgVersion}
-
-	if legacyVersion != "" {
-		legacyMajor := getMajorVersion(legacyVersion)
-		pkgMajor := getMajorVersion(pkgVersion)
-
-		if legacyMajor != pkgMajor {
-			versions = append(versions, legacyVersion)
-		}
-	}
 
 	var candidates []jvmCpeInfo
 
@@ -213,21 +199,19 @@ func jvmCpes(pkgVersion, legacyVersion, primaryVendor, primaryProduct, imageType
 		}
 	}
 
-	for _, version := range versions {
-		switch {
-		case primaryVendor == "azul":
-			newCandidate(primaryVendor, "zulu", version)
-			newCandidate(oracleVendor, openJdkProduct, version)
+	switch {
+	case primaryVendor == "azul":
+		newCandidate(primaryVendor, "zulu", version)
+		newCandidate(oracleVendor, openJdkProduct, version)
 
-		case primaryVendor == "sun":
-			newEnterpriseCandidate(primaryVendor, version)
+	case primaryVendor == "sun":
+		newEnterpriseCandidate(primaryVendor, version)
 
-		case primaryVendor == oracleVendor && primaryProduct != openJdkProduct:
-			newCandidate(primaryVendor, "java_se", version)
-			newEnterpriseCandidate(primaryVendor, version)
-		default:
-			newCandidate(primaryVendor, primaryProduct, version)
-		}
+	case primaryVendor == oracleVendor && primaryProduct != openJdkProduct:
+		newCandidate(primaryVendor, "java_se", version)
+		newEnterpriseCandidate(primaryVendor, version)
+	default:
+		newCandidate(primaryVendor, primaryProduct, version)
 	}
 
 	var cpes []cpe.CPE
@@ -366,51 +350,15 @@ func jvmProjectByType(ty string) string {
 //	JAVA_VERSION          Most prevalent, but least specific (jep 223 sensitive)
 //	IMPLEMENTOR_VERSION   Unusable or missing in some cases
 func jvmPackageVersion(ri *pkg.JavaVMRelease) string {
-	if ri.SemanticVersion != "" {
-		return ri.SemanticVersion
-	}
-
 	var version string
-	switch {
-	case ri.FullVersion != "":
-		version = ri.FullVersion
-	case ri.JavaRuntimeVersion != "":
-		version = ri.JavaRuntimeVersion
-	case ri.JavaVersion != "":
-		version = ri.JavaVersion
-	}
-
-	return version
-}
-
-func jvmLegacyVersion(ri *pkg.JavaVMRelease) string {
 	switch {
 	case ri.JavaRuntimeVersion != "":
 		return ri.JavaRuntimeVersion
 	case ri.JavaVersion != "":
 		return ri.JavaVersion
 	}
-	return ""
-}
 
-func getMajorVersion(v string) int {
-	fields := strings.Split(v, ".")
-	if len(fields) == 0 {
-		return -1
-	}
-
-	var err error
-	var majV int
-
-	if len(fields) >= 1 {
-		majV, err = strconv.Atoi(fields[0])
-		if err != nil {
-			log.WithFields("version", v, "error", err).Trace("unable to parse JVM major version")
-			return -1
-		}
-	}
-
-	return majV
+	return version
 }
 
 func trim0sFromLeft(v string) string {
