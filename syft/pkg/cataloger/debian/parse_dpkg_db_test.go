@@ -323,7 +323,7 @@ func Test_parseDpkgStatus_negativeCases(t *testing.T) {
 		{
 			name:    "no more packages",
 			input:   `Package: apt`,
-			wantErr: require.NoError,
+			wantErr: requireAs(errors.New("unable to determine packages")),
 		},
 		{
 			name: "duplicated key",
