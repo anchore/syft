@@ -3,9 +3,9 @@ package unknown
 import (
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/internal/log"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 )
 
