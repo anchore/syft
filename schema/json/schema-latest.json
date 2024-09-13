@@ -1442,6 +1442,50 @@
         "files"
       ]
     },
+    "OpamPackage": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "licenses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "url": {
+          "type": "string"
+        },
+        "checksum": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "licenses",
+        "url",
+        "checksum",
+        "homepage",
+        "dependencies"
+      ]
+    },
     "Package": {
       "properties": {
         "id": {
@@ -1568,6 +1612,9 @@
             },
             {
               "$ref": "#/$defs/NixStoreEntry"
+            },
+            {
+              "$ref": "#/$defs/OpamPackage"
             },
             {
               "$ref": "#/$defs/PhpComposerInstalledEntry"

@@ -190,8 +190,8 @@ func DefaultClassifiers() []Classifier {
 			Class:    "haproxy-binary",
 			FileGlob: "**/haproxy",
 			EvidenceMatcher: evidenceMatchers(
-				FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-				FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
+				FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)`),
+				FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
 			),
 			Package: "haproxy",
 			PURL:    mustPURL("pkg:generic/haproxy@version"),
@@ -446,6 +446,36 @@ func DefaultClassifiers() []Classifier {
 			Package: "swipl",
 			PURL:    mustPURL("pkg:generic/swipl@version"),
 			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "haskell-ghc-binary",
+			FileGlob: "**/ghc*",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)\x00GHC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "haskell/ghc",
+			PURL:    mustPURL("pkg:generic/haskell/ghc@version"),
+			CPEs:    singleCPE("cpe:2.3:a:haskell:ghc:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "haskell-cabal-binary",
+			FileGlob: "**/cabal",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)\x00Cabal-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)-`,
+			),
+			Package: "haskell/cabal",
+			PURL:    mustPURL("pkg:generic/haskell/cabal@version"),
+			CPEs:    singleCPE("cpe:2.3:a:haskell:cabal:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "haskell-stack-binary",
+			FileGlob: "**/stack",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)Version\s*(?P<version>[0-9]+\.[0-9]+\.[0-9]+),\s*Git`,
+			),
+			Package: "haskell/stack",
+			PURL:    mustPURL("pkg:generic/haskell/stack@version"),
+			CPEs:    singleCPE("cpe:2.3:a:haskell:stack:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "consul-binary",

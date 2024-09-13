@@ -359,7 +359,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("haproxy-binary"),
 			},
 		},
-
+		{
+			logicalFixture: "haproxy/3.1-dev0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haproxy",
+				Version:   "3.1-dev0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haproxy@3.1-dev0",
+				Locations: locations("haproxy"),
+				Metadata:  metadata("haproxy-binary"),
+			},
+		},
 		{
 			logicalFixture: "helm/3.11.1/linux-amd64",
 			expected: pkg.Package{
@@ -949,6 +959,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/swipl@9.3.8",
 				Locations: locations("swipl"),
 				Metadata:  metadata("swipl-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-ghc/9.6.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/ghc",
+				Version:   "9.6.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/ghc@9.6.5",
+				Locations: locations("ghc-9.6.5"),
+				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-cabal/3.10.3.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/cabal",
+				Version:   "3.10.3.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/cabal@3.10.3.0",
+				Locations: locations("cabal"),
+				Metadata:  metadata("haskell-cabal-binary"),
 			},
 		},
 		{

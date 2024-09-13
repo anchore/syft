@@ -505,6 +505,14 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 			Algorithm: spdx.ChecksumAlgorithm(algo),
 			Value:     hexStr,
 		})
+	case pkg.OpamPackage:
+		for _, checksum := range meta.Checksums {
+			parts := strings.Split(checksum, "=")
+			checksums = append(checksums, spdx.Checksum{
+				Algorithm: spdx.ChecksumAlgorithm(strings.ToUpper(parts[0])),
+				Value:     parts[1],
+			})
+		}
 	}
 	return checksums, filesAnalyzed
 }

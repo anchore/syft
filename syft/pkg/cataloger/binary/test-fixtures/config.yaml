@@ -78,6 +78,22 @@ from-images:
     paths:
       - /usr/lib/swipl/bin/x86_64-linux/swipl
 
+  - name: haskell-ghc
+    version: 9.6.5
+    images:
+      - ref: haskell:9.6.5-slim-buster@sha256:04a7293eb792b82335dffa7f08532657517ed9b4f01d52c1b499ad22deb3c6b1
+        platform: linux/amd64
+    paths:
+      - /opt/ghc/9.6.5/lib/ghc-9.6.5/bin/ghc-9.6.5
+
+  - name: haskell-cabal
+    version: 3.10.3.0
+    images:
+      - ref: haskell:9.6.5-slim-buster@sha256:04a7293eb792b82335dffa7f08532657517ed9b4f01d52c1b499ad22deb3c6b1
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/cabal
+
   - version: 1.21.3
     images:
       - ref: golang:1.21.3@sha256:3ce8313c3513515040870c55e0c041a2b94f3576a58cfd3948633604214aa811
@@ -85,6 +101,7 @@ from-images:
     paths:
       - /usr/local/go/bin/go
 
+  # TODO: this is no longer available from dockerhub! (the snippet is vital)
   - version: 1.5.14
     images:
       - ref: haproxy:1.5.14@sha256:3d57e3921cc84e860f764e863ce729dd0765e3d28d444775127bc42d68f98e10
@@ -102,6 +119,13 @@ from-images:
   - version: 2.7.3
     images:
       - ref: haproxy:2.7.3@sha256:17d8aa6bf16882a294bdcccc757dd4002045f34b719e9f94dfd4801614801aea
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/haproxy
+
+  - version: 3.1-dev0
+    images:
+      - ref: haproxy:3.1-dev0@sha256:eba1aac9aa6ea84869bd2ecae79792a934563fd731eddf724eb3b12ef6a9b93f
         platform: linux/amd64
     paths:
       - /usr/local/sbin/haproxy
