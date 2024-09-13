@@ -3,6 +3,7 @@ package unknown
 import (
 	"errors"
 	"fmt"
+	"github.com/anchore/syft/internal/log"
 	"strings"
 
 	"github.com/anchore/syft/syft/file"
@@ -147,11 +148,15 @@ func flatten(errs ...error) []error {
 	return out
 }
 
-// containsErr returns true if an error with the exact same error message is present
+// containsErr returns true if a duplicate error is found
 func containsErr(out []error, err error) bool {
-	msg := err.Error()
+	defer func() {
+		if err := recover(); err != nil {
+			log.Tracef("error comparing errors: %v", err)
+		}
+	}()
 	for _, e := range out {
-		if e.Error() == msg {
+		if e == err {
 			return true
 		}
 	}
