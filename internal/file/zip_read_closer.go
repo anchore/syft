@@ -56,7 +56,7 @@ func OpenZip(filepath string) (*ZipReadCloser, error) {
 	if offset > math.MaxInt64 {
 		return nil, fmt.Errorf("archive start offset too large: %v", offset)
 	}
-	offset64 := int64(offset) //nolint:gosec // lint bug, checked above: https://github.com/securego/gosec/issues/1187
+	offset64 := int64(offset)
 
 	size := fi.Size() - offset64
 
@@ -183,7 +183,7 @@ func findDirectory64End(r io.ReaderAt, directoryEndOffset int64) (int64, error) 
 	if b.uint32() != 1 { // total number of disks
 		return -1, nil // the file is not a valid zip64-file
 	}
-	return int64(p), nil //nolint:gosec
+	return int64(p), nil
 }
 
 // readDirectory64End reads the zip64 directory end and updates the
