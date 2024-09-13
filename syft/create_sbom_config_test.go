@@ -90,7 +90,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				pkgCatalogerNamesWithTagOrName(t, "image"),
 				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
-				unknownsFinalizeTaskNames(),
+				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: pkgcataloging.SelectionRequest{
@@ -109,7 +109,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				pkgCatalogerNamesWithTagOrName(t, "directory"),
 				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
-				unknownsFinalizeTaskNames(),
+				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: pkgcataloging.SelectionRequest{
@@ -129,7 +129,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				pkgCatalogerNamesWithTagOrName(t, "directory"),
 				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
-				unknownsFinalizeTaskNames(),
+				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: pkgcataloging.SelectionRequest{
@@ -148,7 +148,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				pkgCatalogerNamesWithTagOrName(t, "image"),
 				fileCatalogerNames(false, true, true), // note: the digest cataloger is not included
 				relationshipCatalogerNames(),
-				unknownsFinalizeTaskNames(),
+				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: pkgcataloging.SelectionRequest{
@@ -167,7 +167,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				pkgCatalogerNamesWithTagOrName(t, "image"),
 				// note: there are no file catalogers in their own group
 				relationshipCatalogerNames(),
-				unknownsFinalizeTaskNames(),
+				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: pkgcataloging.SelectionRequest{
@@ -189,7 +189,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 					fileCatalogerNames(true, true, true)...,
 				),
 				relationshipCatalogerNames(),
-				unknownsFinalizeTaskNames(),
+				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: pkgcataloging.SelectionRequest{
@@ -210,7 +210,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "persistent"),
 				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
-				unknownsFinalizeTaskNames(),
+				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: pkgcataloging.SelectionRequest{
@@ -231,7 +231,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				addTo(pkgCatalogerNamesWithTagOrName(t, "directory"), "persistent"),
 				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
-				unknownsFinalizeTaskNames(),
+				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: pkgcataloging.SelectionRequest{
@@ -252,7 +252,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				addTo(pkgIntersect("image", "javascript"), "persistent"),
 				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
-				unknownsFinalizeTaskNames(),
+				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: pkgcataloging.SelectionRequest{
@@ -274,7 +274,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "user-provided"),
 				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
-				unknownsFinalizeTaskNames(),
+				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: pkgcataloging.SelectionRequest{
@@ -295,7 +295,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				pkgCatalogerNamesWithTagOrName(t, "image"),
 				fileCatalogerNames(true, true, true),
 				relationshipCatalogerNames(),
-				unknownsFinalizeTaskNames(),
+				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: pkgcataloging.SelectionRequest{
@@ -396,8 +396,8 @@ func relationshipCatalogerNames() []string {
 	return []string{"relationships-cataloger"}
 }
 
-func unknownsFinalizeTaskNames() []string {
-	return []string{"unknowns-finalize"}
+func unknownsTaskNames() []string {
+	return []string{"unknowns-labeler"}
 }
 
 func environmentCatalogerNames() []string {

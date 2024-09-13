@@ -110,6 +110,9 @@ func Test_visitErrors(t *testing.T) {
 }
 
 func Test_Join(t *testing.T) {
+	err1 := fmt.Errorf("err1")
+	err2 := fmt.Errorf("err2")
+
 	tests := []struct {
 		name     string ``
 		in       []error
@@ -132,12 +135,12 @@ func Test_Join(t *testing.T) {
 		},
 		{
 			name:     "duplicates",
-			in:       []error{fmt.Errorf("err1"), fmt.Errorf("err1"), fmt.Errorf("err2")},
+			in:       []error{err1, err1, err2},
 			expected: "err1\nerr2",
 		},
 		{
 			name:     "nested duplicates",
-			in:       []error{errors.Join(fmt.Errorf("err1"), fmt.Errorf("err2")), fmt.Errorf("err1"), fmt.Errorf("err2")},
+			in:       []error{errors.Join(err1, err2), err1, err2},
 			expected: "err1\nerr2",
 		},
 		{
