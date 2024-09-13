@@ -268,7 +268,7 @@ func newPE(filename string, r io.ReaderAt) (nativeImage, error) {
 	}
 	exportSymbolsOffset := uint64(exportSymbolsDataDirectory.VirtualAddress)
 	exports := make([]byte, exportSymbolsDataDirectory.Size)
-	_, err = r.ReadAt(exports, int64(exportSymbolsOffset)) //nolint:gosec
+	_, err = r.ReadAt(exports, int64(exportSymbolsOffset))
 	if err != nil {
 		return fileError(filename, fmt.Errorf("could not read the exported symbols data directory: %w", err))
 	}
@@ -412,7 +412,7 @@ func (ni nativeImagePE) fetchExportAttribute(i int) (uint32, error) {
 func (ni nativeImagePE) fetchExportFunctionPointer(functionsBase uint32, i uint32) (uint32, error) {
 	var pointer uint32
 
-	n := uint32(len(ni.exports)) //nolint:gosec
+	n := uint32(len(ni.exports))
 	sz := uint32(unsafe.Sizeof(ni.t.functionPointer))
 	j := functionsBase + i*sz
 	if j+sz >= n {
@@ -457,7 +457,7 @@ func (ni nativeImagePE) fetchSbomSymbols(content *exportContentPE) {
 	sbomBytes := []byte(nativeImageSbomSymbol + "\x00")
 	sbomLengthBytes := []byte(nativeImageSbomLengthSymbol + "\x00")
 	svmVersionInfoBytes := []byte(nativeImageSbomVersionSymbol + "\x00")
-	n := uint32(len(ni.exports)) //nolint:gosec
+	n := uint32(len(ni.exports))
 
 	// Find SBOM, SBOM Length, and SVM Version Symbol
 	for i := uint32(0); i < content.numberOfNames; i++ {
