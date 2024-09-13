@@ -24,7 +24,7 @@ require (
 	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
 	github.com/bmatcuk/doublestar/v4 v4.6.1
 	github.com/charmbracelet/bubbles v0.20.0
-	github.com/charmbracelet/bubbletea v1.1.0
+	github.com/charmbracelet/bubbletea v1.1.1
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/dave/jennifer v1.7.1
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
@@ -81,7 +81,7 @@ require (
 	golang.org/x/mod v0.21.0
 	golang.org/x/net v0.29.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.33.0
+	modernc.org/sqlite v1.33.1
 )
 
 require google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirect
