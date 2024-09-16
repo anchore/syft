@@ -274,7 +274,10 @@ func newJvmCpe(candidate jvmCpeInfo) *cpe.CPE {
 			Version: shortVer,
 			Update:  update,
 		},
-		Source: cpe.GeneratedSource,
+		// note: we must use a declared source here. Though we are not directly raising up raw CPEs from cataloged material,
+		// these are vastly more reliable and accurate than what would be generated from the cpe generator logic.
+		// We want these CPEs to override any generated CPEs (and in fact prevent the generation of CPEs for these packages altogether).
+		Source: cpe.DeclaredSource,
 	}
 }
 
@@ -354,6 +357,14 @@ func jvmPackageVersion(ri *pkg.JavaVMRelease) string {
 	switch {
 	case ri.JavaRuntimeVersion != "":
 		return ri.JavaRuntimeVersion
+	case ri.FullVersion != "":
+		// if the full version major version matches the java version major version, then use the full version
+		fullMajor := strings.Split(ri.FullVersion, ".")[0]
+		javaMajor := strings.Split(ri.JavaVersion, ".")[0]
+		if fullMajor == javaMajor {
+			return ri.FullVersion
+		}
+		fallthrough
 	case ri.JavaVersion != "":
 		return ri.JavaVersion
 	}

@@ -34,7 +34,7 @@ func TestJvmCpes(t *testing.T) {
 						Version: "9.0.1",
 						Update:  "",
 					},
-					Source: cpe.GeneratedSource,
+					Source: cpe.DeclaredSource,
 				},
 				{
 					Attributes: cpe.Attributes{
@@ -44,7 +44,7 @@ func TestJvmCpes(t *testing.T) {
 						Version: "9.0.1",
 						Update:  "",
 					},
-					Source: cpe.GeneratedSource,
+					Source: cpe.DeclaredSource,
 				},
 			},
 		},
@@ -64,7 +64,7 @@ func TestJvmCpes(t *testing.T) {
 						Version: "1.6.0",
 						Update:  "update322",
 					},
-					Source: cpe.GeneratedSource,
+					Source: cpe.DeclaredSource,
 				},
 				{
 					Attributes: cpe.Attributes{
@@ -74,7 +74,7 @@ func TestJvmCpes(t *testing.T) {
 						Version: "1.6.0",
 						Update:  "update322",
 					},
-					Source: cpe.GeneratedSource,
+					Source: cpe.DeclaredSource,
 				},
 			},
 		},
@@ -94,7 +94,7 @@ func TestJvmCpes(t *testing.T) {
 						Version: "1.8.0",
 						Update:  "update322",
 					},
-					Source: cpe.GeneratedSource,
+					Source: cpe.DeclaredSource,
 				},
 				{
 					Attributes: cpe.Attributes{
@@ -104,7 +104,7 @@ func TestJvmCpes(t *testing.T) {
 						Version: "1.8.0",
 						Update:  "update322",
 					},
-					Source: cpe.GeneratedSource,
+					Source: cpe.DeclaredSource,
 				},
 				{
 					Attributes: cpe.Attributes{
@@ -114,7 +114,7 @@ func TestJvmCpes(t *testing.T) {
 						Version: "1.8.0",
 						Update:  "update322",
 					},
-					Source: cpe.GeneratedSource,
+					Source: cpe.DeclaredSource,
 				},
 			},
 		},
@@ -133,7 +133,7 @@ func TestJvmCpes(t *testing.T) {
 						Version: "9.0.1",
 						Update:  "",
 					},
-					Source: cpe.GeneratedSource,
+					Source: cpe.DeclaredSource,
 				},
 			},
 		},
@@ -152,7 +152,7 @@ func TestJvmCpes(t *testing.T) {
 						Version: "11.0.9",
 						Update:  "",
 					},
-					Source: cpe.GeneratedSource,
+					Source: cpe.DeclaredSource,
 				},
 			},
 		},
@@ -171,7 +171,7 @@ func TestJvmCpes(t *testing.T) {
 						Version: "1.8.0",
 						Update:  "",
 					},
-					Source: cpe.GeneratedSource,
+					Source: cpe.DeclaredSource,
 				},
 			},
 		},
@@ -218,6 +218,15 @@ func TestJvmVersion(t *testing.T) {
 				SemanticVersion: "bogus",
 			},
 			expected: "21.0.4",
+		},
+		{
+			// there is an example of this in eclipse-temurin:8u312-b07-jdk
+			name: "FullVersion is more accurate",
+			input: &pkg.JavaVMRelease{
+				JavaVersion: "1.8.0_131",
+				FullVersion: "1.8.0_131+b08",
+			},
+			expected: "1.8.0_131+b08",
 		},
 		{
 			name:     "empty input fields",

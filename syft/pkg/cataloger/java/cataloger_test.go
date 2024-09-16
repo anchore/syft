@@ -124,9 +124,9 @@ func TestJvmDistributionCataloger(t *testing.T) {
 				Licenses:  pkg.NewLicenseSet(),
 				Type:      pkg.BinaryPkg,
 				CPEs: []cpe.CPE{
-					cpe.Must("cpe:2.3:a:oracle:java_se:1.8.0:update411:*:*:*:*:*:*", cpe.GeneratedSource),
-					cpe.Must("cpe:2.3:a:oracle:jre:1.8.0:update411:*:*:*:*:*:*", cpe.GeneratedSource),
-					cpe.Must("cpe:2.3:a:oracle:jdk:1.8.0:update411:*:*:*:*:*:*", cpe.GeneratedSource),
+					cpe.Must("cpe:2.3:a:oracle:java_se:1.8.0:update411:*:*:*:*:*:*", cpe.DeclaredSource),
+					cpe.Must("cpe:2.3:a:oracle:jre:1.8.0:update411:*:*:*:*:*:*", cpe.DeclaredSource),
+					cpe.Must("cpe:2.3:a:oracle:jdk:1.8.0:update411:*:*:*:*:*:*", cpe.DeclaredSource),
 				},
 				PURL: "pkg:generic/oracle/jdk@1.8.0_411-b25",
 				Metadata: pkg.JavaVMInstallation{
@@ -156,7 +156,7 @@ func TestJvmDistributionCataloger(t *testing.T) {
 				Locations: file.NewLocationSet(file.NewLocation("jvm/openjdk/release")),
 				Licenses:  pkg.NewLicenseSet(),
 				Type:      pkg.BinaryPkg,
-				CPEs:      []cpe.CPE{cpe.Must("cpe:2.3:a:oracle:openjdk:21.0.4:*:*:*:*:*:*:*", cpe.GeneratedSource)},
+				CPEs:      []cpe.CPE{cpe.Must("cpe:2.3:a:oracle:openjdk:21.0.4:*:*:*:*:*:*:*", cpe.DeclaredSource)},
 				PURL:      "pkg:generic/oracle/openjdk@21.0.4%2B7-LTS?repository_url=https://github.com/adoptium/jdk21u.git",
 				Metadata: pkg.JavaVMInstallation{
 					Release: pkg.JavaVMRelease{
