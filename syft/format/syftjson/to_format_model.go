@@ -225,6 +225,7 @@ func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
 		modelLicenses = append(modelLicenses, model.License{
 			Value:          l.Value,
 			SPDXExpression: l.SPDXExpression,
+			FullText:       l.FullText,
 			Type:           l.Type,
 			URLs:           urls,
 			Locations:      locations,

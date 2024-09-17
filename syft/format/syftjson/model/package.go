@@ -48,6 +48,7 @@ type licenses []License
 type License struct {
 	Value          string          `json:"value"`
 	SPDXExpression string          `json:"spdxExpression"`
+	FullText       string          `json:"fullText,omitempty"`
 	Type           license.Type    `json:"type"`
 	URLs           []string        `json:"urls"`
 	Locations      []file.Location `json:"locations"`

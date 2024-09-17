@@ -1,9 +1,10 @@
 package file
 
 import (
+	"strings"
+
 	"github.com/anchore/syft/internal/log"
 	licensepkg "github.com/anchore/syft/syft/license"
-	"strings"
 )
 
 type License struct {
