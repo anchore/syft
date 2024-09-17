@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -26,6 +27,7 @@ var _ sort.Interface = (*Licenses)(nil)
 type License struct {
 	Value          string
 	SPDXExpression string
+	FullText       string
 	Type           license.Type
 	URLs           []string         `hash:"ignore"`
 	Locations      file.LocationSet `hash:"ignore"`
@@ -67,10 +69,19 @@ func NewLicense(value string) License {
 func NewLicenseFromType(value string, t license.Type) License {
 	var spdxExpression string
 	if value != "" {
+		// when a metadata field contains a newline this is most likely an indicator
+		// of a full text license having made it to the constructor
+		// in this case we annotate this as the full text to not lose value and do not extract the complex case
+		if strings.Contains(value, "\n") {
+			return License{
+				FullText: value,
+			}
+		}
+
 		var err error
 		spdxExpression, err = license.ParseExpression(value)
 		if err != nil {
-			log.WithFields("error", err, "expression", value).Trace("unable to parse license expression")
+			log.WithFields("error", err, "license", value).Trace("unable to parse license expression")
 		}
 	}
 
@@ -134,7 +145,7 @@ func NewLicenseFromFields(value, url string, location *file.Location) License {
 	return l
 }
 
-// Merge two licenses into a new license object. If the merge is not possible due to unmergeable fields
+// Merge two licenses into a new license object. If the merge is not possible due to conflicting fields
 // (e.g. different values for Value, SPDXExpression, Type, or any non-collection type) an error is returned.
 // TODO: this is a bit of a hack to not infinitely recurse when hashing a license
 func (s License) Merge(l License) (*License, error) {
