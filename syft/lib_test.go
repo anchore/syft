@@ -2,9 +2,12 @@ package syft
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/go-cache"
+	"github.com/anchore/syft/internal/cachemanager"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -40,4 +43,14 @@ func Test_removeRelationshipsByID(t *testing.T) {
 	}
 
 	require.Equal(t, rel(p3), relationships)
+}
+
+func Test_SetCacheManager(t *testing.T) {
+	existing := cachemanager.Get()
+	defer cachemanager.Set(existing)
+
+	impl, err := cache.NewFromDir(nil, t.TempDir(), time.Hour)
+	require.NoError(t, err)
+	SetCacheManager(impl)
+	require.Equal(t, impl, cachemanager.Get())
 }

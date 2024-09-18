@@ -19,8 +19,10 @@ package syft
 import (
 	"github.com/wagoodman/go-partybus"
 
+	"github.com/anchore/go-cache"
 	"github.com/anchore/go-logger"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/cachemanager"
 	"github.com/anchore/syft/internal/log"
 )
 
@@ -32,4 +34,9 @@ func SetLogger(logger logger.Logger) {
 // SetBus sets the event bus for all syft library bus publish events onto (in-library subscriptions are not allowed).
 func SetBus(b *partybus.Bus) {
 	bus.Set(b)
+}
+
+// SetCacheManager sets the syft cache.Manager implementation
+func SetCacheManager(manager cache.Manager) {
+	cachemanager.Set(manager)
 }
