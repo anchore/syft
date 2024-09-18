@@ -12,6 +12,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/anchore/packageurl-go"
+	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -21,7 +22,10 @@ import (
 )
 
 const (
-	jvmReleaseGlob = "**/{java,jvm}/*/release"
+	// this is a very permissive glob that will match more than just the JVM release file.
+	// we started with "**/{java,jvm}/*/release", but this prevents scanning JVM archive contents (e.g. jdk8u402.zip).
+	// this approach lets us check more files for JVM release info, but be rather silent about errors.
+	jvmReleaseGlob = "**/release"
 	oracleVendor   = "oracle"
 	openJdkProduct = "openjdk"
 	jre            = "jre"
@@ -383,7 +387,7 @@ func parseJvmReleaseInfo(r io.ReadCloser) (*pkg.JavaVMRelease, error) {
 	defer r.Close()
 
 	data := make(map[string]any)
-	scanner := bufio.NewScanner(r)
+	scanner := bufio.NewScanner(io.LimitReader(r, 500*stereoFile.KB))
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -403,6 +407,11 @@ func parseJvmReleaseInfo(r io.ReadCloser) (*pkg.JavaVMRelease, error) {
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
+	}
+
+	// if we're missing key fields, then we don't have a JVM release file
+	if data["JAVA_VERSION"] == nil && data["JAVA_RUNTIME_VERSION"] == nil {
+		return nil, nil
 	}
 
 	var ri pkg.JavaVMRelease
