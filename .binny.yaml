@@ -103,7 +103,7 @@ tools:
   # used for running all local and CI tasks
   - name: task
     version:
-      want: v3.39.0
+      want: v3.39.1
     method: github-release
     with:
       repo: go-task/task
