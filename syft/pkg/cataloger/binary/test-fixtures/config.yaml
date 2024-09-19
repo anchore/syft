@@ -634,3 +634,11 @@ from-images:
     paths:
       - /usr/local/bin/zstd
 
+  - name: xz
+    version: 5.6.2
+    images:
+      - ref: docker:27.2.1@sha256:c51fa20028ff6590588d9ed97d3b16865d503a3d7228aa885871c5c292afa5ca
+        platform: linux/amd64
+    paths:
+      - /usr/bin/xz
+

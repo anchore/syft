@@ -604,6 +604,16 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/zstd@version"),
 			CPEs:    singleCPE("cpe:2.3:a:facebook:zstandard:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "xz",
+			FileGlob: "**/xz",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00xz \(XZ Utils\) (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "xz",
+			PURL:    mustPURL("pkg:generic/xz@version"),
+			CPEs:    singleCPE("cpe:2.3:a:tukaani:xz:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 }
 
