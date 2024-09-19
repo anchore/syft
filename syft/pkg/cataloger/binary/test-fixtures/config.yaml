@@ -626,3 +626,11 @@ from-images:
     paths:
       - /usr/sbin/proftpd
 
+  - name: zstd
+    version: 1.5.6
+    images:
+      - ref: danysk/zstd:1.5.6@sha256:5eceba085b3a399592755dd66a37b8adfb83538af3f56b51bec6e6cc955e3b5f
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/zstd
+

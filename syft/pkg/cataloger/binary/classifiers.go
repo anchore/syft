@@ -594,6 +594,16 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/proftpd@version"),
 			CPEs:    singleCPE("cpe:2.3:a:proftpd:proftpd:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "Zstandard-binary",
+			FileGlob: "**/zstd",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "zstd",
+			PURL:    mustPURL("pkg:generic/zstd@version"),
+			CPEs:    singleCPE("cpe:2.3:a:facebook:zstandard:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 }
 
