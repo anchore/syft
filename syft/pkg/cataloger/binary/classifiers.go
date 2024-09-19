@@ -595,7 +595,7 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:proftpd:proftpd:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
-			Class:    "Zstandard-binary",
+			Class:    "zstd-binary",
 			FileGlob: "**/zstd",
 			EvidenceMatcher: FileContentsVersionMatcher(
 				`\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
@@ -605,7 +605,7 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:facebook:zstandard:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
-			Class:    "xz",
+			Class:    "xz-binary",
 			FileGlob: "**/xz",
 			EvidenceMatcher: FileContentsVersionMatcher(
 				`\x00xz \(XZ Utils\) (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
@@ -615,7 +615,7 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:tukaani:xz:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
-			Class:    "gzip",
+			Class:    "gzip-binary",
 			FileGlob: "**/gzip",
 			EvidenceMatcher: FileContentsVersionMatcher(
 				`\x00(?P<version>[0-9]+\.[0-9]+)\x00`,
