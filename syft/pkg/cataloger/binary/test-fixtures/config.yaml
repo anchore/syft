@@ -650,3 +650,11 @@ from-images:
     paths:
       - /usr/bin/gzip
 
+  - name: sqlcipher
+    version: 4.5.6
+    images:
+      - ref: yspreen/sqlcipher@sha256:93189cc465661f16ad23f3ace4206179bdd19967deaf08c54da5ac1e34bb6fb7
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/sqlcipher
+

@@ -624,6 +624,16 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/gzip@version"),
 			CPEs:    singleCPE("cpe:2.3:a:gnu:gzip:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "sqlcipher-binary",
+			FileGlob: "**/sqlcipher",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`[^0-9]\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "sqlcipher",
+			PURL:    mustPURL("pkg:generic/sqlcipher@version"),
+			CPEs:    singleCPE("cpe:2.3:a:zetetic:sqlcipher:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 }
 
