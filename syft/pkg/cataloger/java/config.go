@@ -1,8 +1,11 @@
 package java
 
-import "github.com/anchore/syft/syft/cataloging"
+import (
+	"strings"
 
-const mavenBaseURL = "https://repo1.maven.org/maven2"
+	"github.com/anchore/syft/syft/cataloging"
+	"github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven"
+)
 
 type ArchiveCatalogerConfig struct {
 	cataloging.ArchiveSearchConfig `yaml:",inline" json:"" mapstructure:",squash"`
@@ -11,16 +14,19 @@ type ArchiveCatalogerConfig struct {
 	MavenLocalRepositoryDir        string `yaml:"maven-localrepository-dir" json:"maven-localrepository-dir" mapstructure:"maven-localrepository-dir"`
 	MavenBaseURL                   string `yaml:"maven-base-url" json:"maven-base-url" mapstructure:"maven-base-url"`
 	MaxParentRecursiveDepth        int    `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
+	IncludeTransitiveDependencies  bool   `yaml:"include-transitive-dependencies" json:"include-transitive-dependencies" mapstructure:"include-transitive-dependencies"`
 }
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
+	mavenCfg := maven.DefaultConfig()
 	return ArchiveCatalogerConfig{
-		ArchiveSearchConfig:     cataloging.DefaultArchiveSearchConfig(),
-		UseNetwork:              false,
-		UseMavenLocalRepository: false,
-		MavenLocalRepositoryDir: defaultMavenLocalRepoDir(),
-		MavenBaseURL:            mavenBaseURL,
-		MaxParentRecursiveDepth: 0, // unlimited
+		ArchiveSearchConfig:           cataloging.DefaultArchiveSearchConfig(),
+		UseNetwork:                    mavenCfg.UseNetwork,
+		UseMavenLocalRepository:       mavenCfg.UseLocalRepository,
+		MavenLocalRepositoryDir:       mavenCfg.LocalRepositoryDir,
+		MavenBaseURL:                  strings.Join(mavenCfg.Repositories, ","),
+		MaxParentRecursiveDepth:       mavenCfg.MaxParentRecursiveDepth,
+		IncludeTransitiveDependencies: false,
 	}
 }
 
@@ -50,4 +56,14 @@ func (j ArchiveCatalogerConfig) WithArchiveTraversal(search cataloging.ArchiveSe
 	j.MaxParentRecursiveDepth = maxDepth
 	j.ArchiveSearchConfig = search
 	return j
+}
+
+func (j ArchiveCatalogerConfig) mavenConfig() maven.Config {
+	return maven.Config{
+		UseNetwork:              j.UseNetwork,
+		UseLocalRepository:      j.UseMavenLocalRepository,
+		LocalRepositoryDir:      j.MavenLocalRepositoryDir,
+		Repositories:            strings.Split(j.MavenBaseURL, ","),
+		MaxParentRecursiveDepth: j.MaxParentRecursiveDepth,
+	}
 }

@@ -1,23 +1,16 @@
 package java
 
 import (
-	"bytes"
 	"context"
-	"encoding/xml"
 	"errors"
-	"fmt"
-	"io"
 	"strings"
-
-	"github.com/saintfish/chardet"
-	"github.com/vifraa/gopom"
-	"golang.org/x/net/html/charset"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven"
 )
 
 const (
@@ -39,9 +32,9 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 		return nil, nil, err
 	}
 
-	r := newMavenResolver(fileResolver, p.cfg)
+	r := maven.NewResolver(fileResolver, p.cfg.mavenConfig())
 
-	var poms []*gopom.Project
+	poms := map[*maven.Project]file.Location{}
 	for _, pomLocation := range locations {
 		pom, err := readPomFromLocation(fileResolver, pomLocation)
 		if err != nil || pom == nil {
@@ -49,35 +42,55 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 			continue
 		}
 
-		poms = append(poms, pom)
-
-		// store information about this pom for future lookups
-		r.pomLocations[pom] = pomLocation
-		r.resolved[r.getMavenID(ctx, pom)] = pom
+		poms[pom] = pomLocation
+		r.AddPom(pom, pomLocation)
 	}
 
 	var pkgs []pkg.Package
-	for _, pom := range poms {
-		pkgs = append(pkgs, processPomXML(ctx, r, pom, r.pomLocations[pom])...)
+	var relationships []artifact.Relationship
+	var errs []error
+
+	for pom, location := range poms {
+		mainPkg := newPackageFromMavenPom(ctx, r, pom, location)
+		mainPkg.SetID()
+
+		if mainPkg != nil {
+			pkgs = append(pkgs, *mainPkg)
+		}
+
+		newPkgs, newRelationships, newErrs := collectDependencies(ctx, r, mainPkg, pom, location, p.cfg.IncludeTransitiveDependencies)
+		pkgs = append(pkgs, newPkgs...)
+		relationships = append(relationships, newRelationships...)
+		errs = append(errs, newErrs...)
+		// add dependency-of relationships from the dependencies to the main pkg
+		for _, newPkg := range newPkgs {
+			relationships = append(relationships, artifact.Relationship{
+				From: mainPkg,
+				To:   newPkg,
+				Type: artifact.DependencyOfRelationship,
+			})
+		}
 	}
-	return pkgs, nil, nil
+	return pkgs, relationships, errors.Join(errs...)
 }
 
-func readPomFromLocation(fileResolver file.Resolver, pomLocation file.Location) (*gopom.Project, error) {
+func readPomFromLocation(fileResolver file.Resolver, pomLocation file.Location) (*maven.Project, error) {
 	contents, err := fileResolver.FileContentsByLocation(pomLocation)
 	if err != nil {
 		return nil, err
 	}
 	defer internal.CloseAndLogError(contents, pomLocation.RealPath)
-	return decodePomXML(contents)
+	return maven.ParsePomXML(contents)
 }
 
-func processPomXML(ctx context.Context, r *mavenResolver, pom *gopom.Project, loc file.Location) []pkg.Package {
+func collectDependencies(ctx context.Context, r *maven.Resolver, parentPkg *pkg.Package, pom *maven.Project, loc file.Location, includeTransitiveDependencies bool) ([]pkg.Package, []artifact.Relationship, []error) {
+	var errs []error
 	var pkgs []pkg.Package
+	var relationships []artifact.Relationship
 
-	pomID := r.getMavenID(ctx, pom)
-	for _, dep := range pomDependencies(pom) {
-		depID := r.resolveDependencyID(ctx, pom, dep)
+	pomID := r.ResolveID(ctx, pom)
+	for _, dep := range maven.DirectPomDependencies(pom) {
+		depID := r.ResolveDependencyID(ctx, pom, dep)
 		log.WithFields("pomLocation", loc, "mavenID", pomID, "dependencyID", depID).Trace("adding maven pom dependency")
 
 		p, err := newPackageFromDependency(
@@ -94,15 +107,36 @@ func processPomXML(ctx context.Context, r *mavenResolver, pom *gopom.Project, lo
 			continue
 		}
 		pkgs = append(pkgs, *p)
+		if parentPkg != nil {
+			relationships = append(relationships, artifact.Relationship{
+				From: *p,
+				To:   *parentPkg,
+				Type: artifact.DependencyOfRelationship,
+			})
+		}
+
+		if includeTransitiveDependencies {
+			depPom, err := r.FindPom(ctx, depID.GroupID, depID.ArtifactID, depID.Version)
+			if err != nil {
+				errs = append(errs, err)
+			}
+			if depPom == nil {
+				continue
+			}
+			transitivePkgs, transitiveRelationships, transitiveErrs := collectDependencies(ctx, r, p, depPom, loc, includeTransitiveDependencies)
+			pkgs = append(pkgs, transitivePkgs...)
+			relationships = append(relationships, transitiveRelationships...)
+			errs = append(errs, transitiveErrs...)
+		}
 	}
 
-	return pkgs
+	return pkgs, relationships, errs
 }
 
-func newPomProject(ctx context.Context, r *mavenResolver, path string, pom *gopom.Project) *pkg.JavaPomProject {
-	id := r.getMavenID(ctx, pom)
-	name := r.getPropertyValue(ctx, pom.Name, pom)
-	projectURL := r.getPropertyValue(ctx, pom.URL, pom)
+func newPomProject(ctx context.Context, r *maven.Resolver, path string, pom *maven.Project) *pkg.JavaPomProject {
+	id := r.ResolveID(ctx, pom)
+	name := r.ResolveProperty(ctx, pom.Name, pom)
+	projectURL := r.ResolveProperty(ctx, pom.URL, pom)
 
 	log.WithFields("path", path, "artifactID", id.ArtifactID, "name", name, "projectURL", projectURL).Trace("parsing pom.xml")
 	return &pkg.JavaPomProject{
@@ -112,34 +146,32 @@ func newPomProject(ctx context.Context, r *mavenResolver, path string, pom *gopo
 		ArtifactID:  id.ArtifactID,
 		Version:     id.Version,
 		Name:        name,
-		Description: cleanDescription(r.getPropertyValue(ctx, pom.Description, pom)),
+		Description: cleanDescription(r.ResolveProperty(ctx, pom.Description, pom)),
 		URL:         projectURL,
 	}
 }
 
-func newPackageFromDependency(ctx context.Context, r *mavenResolver, pom *gopom.Project, dep gopom.Dependency, locations ...file.Location) (*pkg.Package, error) {
-	id := r.resolveDependencyID(ctx, pom, dep)
+func newPackageFromDependency(ctx context.Context, r *maven.Resolver, pom *maven.Project, dep maven.Dependency, locations ...file.Location) (*pkg.Package, error) {
+	id := r.ResolveDependencyID(ctx, pom, dep)
 
 	m := pkg.JavaArchive{
 		PomProperties: &pkg.JavaPomProperties{
 			GroupID:    id.GroupID,
 			ArtifactID: id.ArtifactID,
-			Scope:      r.getPropertyValue(ctx, dep.Scope, pom),
+			Scope:      r.ResolveProperty(ctx, dep.Scope, pom),
 		},
 	}
 
 	var err error
 	var licenses []pkg.License
-	dependencyPom, depErr := r.findPom(ctx, id.GroupID, id.ArtifactID, id.Version)
+	dependencyPom, depErr := r.FindPom(ctx, id.GroupID, id.ArtifactID, id.Version)
 	if depErr != nil {
 		err = errors.Join(err, depErr)
 	}
 
 	if dependencyPom != nil {
-		depLicenses, _ := r.resolveLicenses(ctx, dependencyPom)
-		for _, license := range depLicenses {
-			licenses = append(licenses, pkg.NewLicenseFromFields(deref(license.Name), deref(license.URL), nil))
-		}
+		depLicenses, _ := r.ResolveLicenses(ctx, dependencyPom)
+		licenses = append(licenses, toPkgLicenses(nil, depLicenses)...)
 	}
 
 	p := &pkg.Package{
@@ -159,60 +191,14 @@ func newPackageFromDependency(ctx context.Context, r *mavenResolver, pom *gopom.
 	return p, err
 }
 
-// decodePomXML decodes a pom XML file, detecting and converting non-UTF-8 charsets. this DOES NOT perform any logic to resolve properties such as groupID, artifactID, and version
-func decodePomXML(content io.Reader) (project *gopom.Project, err error) {
-	inputReader, err := getUtf8Reader(content)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read pom.xml: %w", err)
-	}
-
-	decoder := xml.NewDecoder(inputReader)
-	// when an xml file has a character set declaration (e.g. '<?xml version="1.0" encoding="ISO-8859-1"?>') read that and use the correct decoder
-	decoder.CharsetReader = charset.NewReaderLabel
-
-	project = &gopom.Project{}
-	if err := decoder.Decode(project); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal pom.xml: %w", err)
-	}
-
-	return project, nil
-}
-
-func getUtf8Reader(content io.Reader) (io.Reader, error) {
-	pomContents, err := io.ReadAll(content)
-	if err != nil {
-		return nil, err
-	}
-
-	detector := chardet.NewTextDetector()
-	detection, err := detector.DetectBest(pomContents)
-
-	var inputReader io.Reader
-	if err == nil && detection != nil {
-		if detection.Charset == "UTF-8" {
-			inputReader = bytes.NewReader(pomContents)
-		} else {
-			inputReader, err = charset.NewReaderLabel(detection.Charset, bytes.NewReader(pomContents))
-			if err != nil {
-				return nil, fmt.Errorf("unable to get encoding: %w", err)
-			}
-		}
-	} else {
-		// we could not detect the encoding, but we want a valid file to read. Replace unreadable
-		// characters with the UTF-8 replacement character.
-		inputReader = strings.NewReader(strings.ToValidUTF8(string(pomContents), "�"))
-	}
-	return inputReader, nil
-}
-
-func pomParent(ctx context.Context, r *mavenResolver, pom *gopom.Project) *pkg.JavaPomParent {
+func pomParent(ctx context.Context, r *maven.Resolver, pom *maven.Project) *pkg.JavaPomParent {
 	if pom == nil || pom.Parent == nil {
 		return nil
 	}
 
-	groupID := r.getPropertyValue(ctx, pom.Parent.GroupID, pom)
-	artifactID := r.getPropertyValue(ctx, pom.Parent.ArtifactID, pom)
-	version := r.getPropertyValue(ctx, pom.Parent.Version, pom)
+	groupID := r.ResolveProperty(ctx, pom.Parent.GroupID, pom)
+	artifactID := r.ResolveProperty(ctx, pom.Parent.ArtifactID, pom)
+	version := r.ResolveProperty(ctx, pom.Parent.Version, pom)
 
 	if groupID == "" && artifactID == "" && version == "" {
 		return nil

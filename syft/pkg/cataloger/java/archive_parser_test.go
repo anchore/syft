@@ -18,17 +18,18 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vifraa/gopom"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven"
+	maventest "github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven/test"
 )
 
 func TestSearchMavenForLicenses(t *testing.T) {
-	url := mockMavenRepo(t)
+	url := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
 
 	tests := []struct {
 		name             string
@@ -79,7 +80,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 
 			// assert licenses are discovered from upstream
 			_, _, _, parsedPom := ap.discoverMainPackageFromPomInfo(context.Background())
-			licenses, _ := ap.maven.resolveLicenses(context.Background(), parsedPom.project)
+			licenses, _ := ap.maven.GetLicenses(context.Background(), parsedPom.project)
 			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(nil, licenses))
 		})
 	}
@@ -762,8 +763,8 @@ func Test_newPackageFromMavenData(t *testing.T) {
 				Version:    "1.0",
 			},
 			project: &parsedPomProject{
-				project: &gopom.Project{
-					Parent: &gopom.Parent{
+				project: &maven.Project{
+					Parent: &maven.Parent{
 						GroupID:    ptr("some-parent-group-id"),
 						ArtifactID: ptr("some-parent-artifact-id"),
 						Version:    ptr("1.0-parent"),
@@ -774,7 +775,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 					Version:     ptr("1.0"),
 					Description: ptr("desc"),
 					URL:         ptr("aweso.me"),
-					Licenses: &[]gopom.License{
+					Licenses: &[]maven.License{
 						{
 							Name: ptr("MIT"),
 							URL:  ptr("https://opensource.org/licenses/MIT"),
@@ -1038,7 +1039,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			}
 			test.expectedParent.Locations = locations
 
-			r := newMavenResolver(nil, DefaultArchiveCatalogerConfig())
+			r := maven.NewResolver(nil, maven.DefaultConfig())
 			actualPackage := newPackageFromMavenData(context.Background(), r, test.props, test.project, test.parent, file.NewLocation(virtualPath))
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
@@ -1348,11 +1349,11 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 func Test_deterministicMatchingPomProperties(t *testing.T) {
 	tests := []struct {
 		fixture  string
-		expected mavenID
+		expected maven.ID
 	}{
 		{
 			fixture:  "multiple-matching-2.11.5",
-			expected: mavenID{"org.multiple", "multiple-matching-1", "2.11.5"},
+			expected: maven.ID{"org.multiple", "multiple-matching-1", "2.11.5"},
 		},
 	}
 
@@ -1373,7 +1374,7 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 					require.NoError(t, err)
 
 					groupID, artifactID, version, _ := parser.discoverMainPackageFromPomInfo(context.TODO())
-					require.Equal(t, test.expected, mavenID{groupID, artifactID, version})
+					require.Equal(t, test.expected, maven.ID{groupID, artifactID, version})
 				}()
 			}
 		})

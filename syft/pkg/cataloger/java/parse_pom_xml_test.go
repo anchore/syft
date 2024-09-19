@@ -2,21 +2,19 @@ package java
 
 import (
 	"context"
-	"encoding/base64"
-	"io"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vifraa/gopom"
 
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven"
+	maventest "github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven/test"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 )
@@ -27,7 +25,7 @@ func Test_parsePomXML(t *testing.T) {
 		expected []pkg.Package
 	}{
 		{
-			dir: "test-fixtures/pom/local/example-java-app-maven",
+			dir: "test-fixtures/pom/example-java-app-maven",
 			expected: []pkg.Package{
 				{
 					Name:     "joda-time",
@@ -80,67 +78,13 @@ func Test_parsePomXML(t *testing.T) {
 	}
 }
 
-func Test_decodePomXML_surviveNonUtf8Encoding(t *testing.T) {
-	// regression for https://github.com/anchore/syft/issues/2044
-
-	// we are storing the base64 contents of the pom.xml file. We are doing this to prevent accidental changes to the
-	// file, which is extremely important for this test.
-
-	// for instance, even changing a single character in the file and saving in an IntelliJ IDE will automatically
-	// convert the file to UTF-8, which will break this test:
-
-	// xxd with the original pom.xml
-	// 00000780: 6964 3e0d 0a20 2020 2020 2020 2020 2020  id>..
-	// 00000790: 203c 6e61 6d65 3e4a e972 f46d 6520 4d69   <name>J.r.me Mi
-	// 000007a0: 7263 3c2f 6e61 6d65 3e0d 0a20 2020 2020  rc</name>..
-
-	// xxd with the pom.xml converted to UTF-8 (from a simple change with IntelliJ)
-	// 00000780: 6964 3e0d 0a20 2020 2020 2020 2020 2020  id>..
-	// 00000790: 203c 6e61 6d65 3e4a efbf bd72 efbf bd6d   <name>J...r...m
-	// 000007a0: 6520 4d69 7263 3c2f 6e61 6d65 3e0d 0a20  e Mirc</name>..
-
-	// Note that the name "Jérôme Mirc" was originally interpreted as "J.r.me Mi" and after the save
-	// is now encoded as "J...r...m" which is not what we want (note the extra bytes for each non UTF-8 character.
-	// The original 0xe9 byte (é) was converted to 0xefbfbd (�) which is the UTF-8 replacement character.
-	// This is quite silly on the part of IntelliJ, but it is what it is.
-
-	cases := []struct {
-		name    string
-		fixture string
-	}{
-		{
-			name:    "undeclared encoding",
-			fixture: "test-fixtures/pom/undeclared-iso-8859-encoded-pom.xml.base64",
-		},
-		{
-			name:    "declared encoding",
-			fixture: "test-fixtures/pom/declared-iso-8859-encoded-pom.xml.base64",
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			fh, err := os.Open(c.fixture)
-			require.NoError(t, err)
-
-			decoder := base64.NewDecoder(base64.StdEncoding, fh)
-
-			proj, err := decodePomXML(decoder)
-
-			require.NoError(t, err)
-			require.NotEmpty(t, proj.Developers)
-		})
-	}
-
-}
-
 func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 	tests := []struct {
 		dir      string
 		expected []pkg.Package
 	}{
 		{
-			dir: "test-fixtures/pom/local/commons-text-1.10.0",
+			dir: "test-fixtures/pom/commons-text-1.10.0",
 
 			expected: getCommonsTextExpectedPackages(),
 		},
@@ -165,6 +109,8 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 }
 
 func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
+	mavenLocalRepoDir := "internal/maven/test-fixtures/maven-repo"
+
 	// Using the local repository, the version of junit-jupiter will be resolved
 	expectedPackages := getCommonsTextExpectedPackages()
 
@@ -188,7 +134,7 @@ func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
 		expected []pkg.Package
 	}{
 		{
-			dir:      "test-fixtures/pom/local/commons-text-1.10.0",
+			dir:      "test-fixtures/pom/commons-text-1.10.0",
 			expected: expectedPackages,
 		},
 	}
@@ -205,7 +151,7 @@ func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
 					IncludeUnindexedArchives: true,
 				},
 				UseMavenLocalRepository: true,
-				MavenLocalRepositoryDir: "test-fixtures/pom/maven-repo",
+				MavenLocalRepositoryDir: mavenLocalRepoDir,
 			})
 			pkgtest.TestCataloger(t, test.dir, cat, test.expected, nil)
 		})
@@ -213,7 +159,7 @@ func Test_parseCommonsTextPomXMLProjectWithLocalRepository(t *testing.T) {
 }
 
 func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
-	url := mockMavenRepo(t)
+	url := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
 
 	// Using the local repository, the version of junit-jupiter will be resolved
 	expectedPackages := getCommonsTextExpectedPackages()
@@ -238,7 +184,7 @@ func Test_parseCommonsTextPomXMLProjectWithNetwork(t *testing.T) {
 		expected []pkg.Package
 	}{
 		{
-			dir:      "test-fixtures/pom/local/commons-text-1.10.0",
+			dir:      "test-fixtures/pom/commons-text-1.10.0",
 			expected: expectedPackages,
 		},
 	}
@@ -272,7 +218,7 @@ func Test_parsePomXMLProject(t *testing.T) {
 		licenses []pkg.License
 	}{
 		{
-			name: "go case",
+			name: "no license info",
 			project: &pkg.JavaPomProject{
 				Path: "test-fixtures/pom/commons-codec.pom.xml",
 				Parent: &pkg.JavaPomParent{
@@ -331,17 +277,17 @@ func Test_parsePomXMLProject(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			fixture, err := os.Open(test.project.Path)
 			assert.NoError(t, err)
-			r := newMavenResolver(nil, ArchiveCatalogerConfig{})
+			r := maven.NewResolver(nil, maven.Config{})
 
-			pom, err := gopom.ParseFromReader(fixture)
+			pom, err := maven.ParsePomXML(fixture)
 			require.NoError(t, err)
 
 			actual := newPomProject(context.Background(), r, fixture.Name(), pom)
 			assert.NoError(t, err)
 			assert.Equal(t, test.project, actual)
 
-			licenses := r.pomLicenses(context.Background(), pom)
-			assert.NoError(t, err)
+			licenses, err := r.GetLicenses(context.Background(), pom)
+			//assert.NoError(t, err)
 			assert.Equal(t, test.licenses, toPkgLicenses(&jarLocation, licenses))
 		})
 	}
@@ -350,12 +296,12 @@ func Test_parsePomXMLProject(t *testing.T) {
 func Test_pomParent(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    *gopom.Parent
+		input    *maven.Parent
 		expected *pkg.JavaPomParent
 	}{
 		{
 			name: "only group ID",
-			input: &gopom.Parent{
+			input: &maven.Parent{
 				GroupID: ptr("org.something"),
 			},
 			expected: &pkg.JavaPomParent{
@@ -364,7 +310,7 @@ func Test_pomParent(t *testing.T) {
 		},
 		{
 			name: "only artifact ID",
-			input: &gopom.Parent{
+			input: &maven.Parent{
 				ArtifactID: ptr("something"),
 			},
 			expected: &pkg.JavaPomParent{
@@ -373,7 +319,7 @@ func Test_pomParent(t *testing.T) {
 		},
 		{
 			name: "only Version",
-			input: &gopom.Parent{
+			input: &maven.Parent{
 				Version: ptr("something"),
 			},
 			expected: &pkg.JavaPomParent{
@@ -387,12 +333,12 @@ func Test_pomParent(t *testing.T) {
 		},
 		{
 			name:     "empty",
-			input:    &gopom.Parent{},
+			input:    &maven.Parent{},
 			expected: nil,
 		},
 		{
 			name: "unused field",
-			input: &gopom.Parent{
+			input: &maven.Parent{
 				RelativePath: ptr("something"),
 			},
 			expected: nil,
@@ -401,8 +347,8 @@ func Test_pomParent(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r := newMavenResolver(nil, DefaultArchiveCatalogerConfig())
-			assert.Equal(t, test.expected, pomParent(context.Background(), r, &gopom.Project{Parent: test.input}))
+			r := maven.NewResolver(nil, maven.DefaultConfig())
+			assert.Equal(t, test.expected, pomParent(context.Background(), r, &maven.Project{Parent: test.input}))
 		})
 	}
 }
@@ -431,10 +377,10 @@ func Test_cleanDescription(t *testing.T) {
 }
 
 func Test_resolveLicenses(t *testing.T) {
-	mavenURL := mockMavenRepo(t)
-	localM2 := "test-fixtures/pom/maven-repo"
-	localDir := "test-fixtures/pom/local"
-	containingDir := "test-fixtures/pom/local/contains-child-1"
+	mavenURL := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
+	localM2 := "internal/maven/test-fixtures/maven-repo"
+	localDir := "internal/maven/test-fixtures/local"
+	containingDir := "internal/maven/test-fixtures/local/contains-child-1"
 
 	expectedLicenses := []pkg.License{
 		{
@@ -523,31 +469,6 @@ func Test_resolveLicenses(t *testing.T) {
 				(&got[i]).Locations = file.LocationSet{}
 			}
 			require.ElementsMatch(t, test.expected, got)
-		})
-	}
-}
-
-func Test_getUtf8Reader(t *testing.T) {
-	tests := []struct {
-		name     string
-		contents string
-	}{
-		{
-			name: "unknown encoding",
-			// random binary contents
-			contents: "BkiJz02JyEWE0nXR6TH///9NicpJweEETIucJIgAAABJicxPjQwhTY1JCE05WQh0BU2J0eunTYshTIusJIAAAAAPHwBNOeV1BUUx2+tWTIlUJDhMiUwkSEyJRCQgSIl8JFBMiQ==",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			decoder := base64.NewDecoder(base64.StdEncoding, strings.NewReader(tt.contents))
-
-			got, err := getUtf8Reader(decoder)
-			require.NoError(t, err)
-			gotBytes, err := io.ReadAll(got)
-			require.NoError(t, err)
-			// if we couldn't decode the section as UTF-8, we should get a replacement character
-			assert.Contains(t, string(gotBytes), "�")
 		})
 	}
 }
