@@ -68,6 +68,18 @@ func (i *Index) Add(relationships ...artifact.Relationship) {
 	}
 }
 
+func (i *Index) Remove(id artifact.ID) {
+	delete(i.fromID, id)
+	delete(i.toID, id)
+	for idx := 0; idx < len(i.all); {
+		if i.all[idx].from == id || i.all[idx].to == id {
+			i.all = append(i.all[:idx], i.all[idx+1:]...)
+		} else {
+			idx++
+		}
+	}
+}
+
 // From returns all relationships from the given identifiable, with specified types
 func (i *Index) From(identifiable artifact.Identifiable, types ...artifact.RelationshipType) []artifact.Relationship {
 	return toSortedSlice(fromMapped(i.fromID, identifiable), types)

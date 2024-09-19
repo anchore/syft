@@ -3,6 +3,7 @@ package relationship
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -230,4 +231,99 @@ func (i id) ID() artifact.ID {
 
 func slice[T any](values ...T) []T {
 	return values
+}
+
+func TestRemove(t *testing.T) {
+	p1 := pkg.Package{Name: "pkg-1"}
+	p2 := pkg.Package{Name: "pkg-2"}
+	p3 := pkg.Package{Name: "pkg-3"}
+	c1 := file.Coordinates{RealPath: "/coords/1"}
+	c2 := file.Coordinates{RealPath: "/coords/2"}
+	c3 := file.Coordinates{RealPath: "/coords/3"}
+	c4 := file.Coordinates{RealPath: "/coords/4"}
+
+	for _, p := range []*pkg.Package{&p1, &p2, &p3} {
+		p.SetID()
+	}
+
+	r1 := artifact.Relationship{
+		From: p1,
+		To:   p2,
+		Type: artifact.DependencyOfRelationship,
+	}
+	r2 := artifact.Relationship{
+		From: p1,
+		To:   p3,
+		Type: artifact.DependencyOfRelationship,
+	}
+	r3 := artifact.Relationship{
+		From: p1,
+		To:   c1,
+		Type: artifact.ContainsRelationship,
+	}
+	r4 := artifact.Relationship{
+		From: p2,
+		To:   c2,
+		Type: artifact.ContainsRelationship,
+	}
+	r5 := artifact.Relationship{
+		From: p3,
+		To:   c1,
+		Type: artifact.ContainsRelationship,
+	}
+	r6 := artifact.Relationship{
+		From: p3,
+		To:   c2,
+		Type: artifact.ContainsRelationship,
+	}
+	r7 := artifact.Relationship{
+		From: c1,
+		To:   c3,
+		Type: artifact.ContainsRelationship,
+	}
+	r8 := artifact.Relationship{
+		From: c3,
+		To:   c4,
+		Type: artifact.ContainsRelationship,
+	}
+
+	index := NewIndex(r1, r2, r3, r4, r5, r6, r7, r8)
+
+	assert.Equal(t, 8, len(index.All()))
+
+	// removal of p1 should remove r1, r2, and r3
+	index.Remove(p1.ID())
+	remaining := index.All()
+
+	assert.Equal(t, 5, len(remaining))
+	assert.NotContains(t, remaining, r1)
+	assert.NotContains(t, remaining, r2)
+	assert.NotContains(t, remaining, r3)
+
+	assert.Empty(t, index.From(p1))
+	assert.Empty(t, index.To(p1))
+
+	// removal of c1 should remove r5 and r7
+	index.Remove(c1.ID())
+	remaining = index.All()
+
+	// r8 remains since c3->c4 should still exist
+	assert.Equal(t, 3, len(remaining))
+	assert.NotContains(t, remaining, r5)
+	assert.NotContains(t, remaining, r7)
+	assert.Contains(t, remaining, r8)
+
+	assert.Empty(t, index.From(c1))
+	assert.Empty(t, index.To(c1))
+
+	// removal of c3 should remove r8
+	index.Remove(c3.ID())
+	remaining = index.All()
+
+	assert.Equal(t, 2, len(remaining))
+	assert.Contains(t, remaining, r4)
+	assert.Contains(t, remaining, r6)
+
+	assert.Empty(t, index.From(c3))
+	assert.Empty(t, index.To(c3))
 }

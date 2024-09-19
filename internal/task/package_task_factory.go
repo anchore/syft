@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
@@ -27,6 +29,7 @@ type packageTaskFactory func(cfg CatalogingFactoryConfig) Task
 type PackageTaskFactories []packageTaskFactory
 
 type CatalogingFactoryConfig struct {
+	ComplianceConfig     cataloging.ComplianceConfig
 	SearchConfig         cataloging.SearchConfig
 	RelationshipsConfig  cataloging.RelationshipsConfig
 	DataGenerationConfig cataloging.DataGenerationConfig
@@ -35,6 +38,7 @@ type CatalogingFactoryConfig struct {
 
 func DefaultCatalogingFactoryConfig() CatalogingFactoryConfig {
 	return CatalogingFactoryConfig{
+		ComplianceConfig:     cataloging.DefaultComplianceConfig(),
 		SearchConfig:         cataloging.DefaultSearchConfig(),
 		RelationshipsConfig:  cataloging.DefaultRelationshipsConfig(),
 		DataGenerationConfig: cataloging.DefaultDataGenerationConfig(),
@@ -82,7 +86,7 @@ func (f PackageTaskFactories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error)
 }
 
 // NewPackageTask creates a Task function for a generic pkg.Cataloger, honoring the common configuration options.
-func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string) Task { //nolint: funlen
+func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string) Task {
 	fn := func(ctx context.Context, resolver file.Resolver, sbom sbomsync.Builder) error {
 		catalogerName := c.Name()
 		log.WithFields("name", catalogerName).Trace("starting package cataloger")
@@ -106,41 +110,11 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 
 		log.WithFields("cataloger", catalogerName).Debugf("discovered %d packages", len(pkgs))
 
-		for i, p := range pkgs {
-			if p.FoundBy == "" {
-				p.FoundBy = catalogerName
-			}
+		pkgs, relationships = finalizePkgCatalogerResults(cfg, resolver, catalogerName, pkgs, relationships)
 
-			if cfg.DataGenerationConfig.GenerateCPEs && !hasAuthoritativeCPE(p.CPEs) {
-				// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
-				// we might have binary classified CPE already with the package so we want to append here
-				dictionaryCPEs, ok := cpeutils.DictionaryFind(p)
-				if ok {
-					log.Tracef("used CPE dictionary to find CPEs for %s package %q: %s", p.Type, p.Name, dictionaryCPEs)
-					p.CPEs = append(p.CPEs, dictionaryCPEs...)
-				} else {
-					p.CPEs = append(p.CPEs, cpeutils.Generate(p)...)
-				}
-			}
-
-			// if we were not able to identify the language we have an opportunity
-			// to try and get this value from the PURL. Worst case we assert that
-			// we could not identify the language at either stage and set UnknownLanguage
-			if p.Language == "" {
-				p.Language = pkg.LanguageFromPURL(p.PURL)
-			}
-
-			if cfg.RelationshipsConfig.PackageFileOwnership {
-				// create file-to-package relationships for files owned by the package
-				owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
-				if err != nil {
-					log.Warnf("unable to create any package-file relationships for package name=%q type=%q: %w", p.Name, p.Type, err)
-				} else {
-					relationships = append(relationships, owningRelationships...)
-				}
-			}
-
-			pkgs[i] = p
+		pkgs, relationships, err = applyCompliance(cfg.ComplianceConfig, catalogerName, pkgs, relationships)
+		if err != nil {
+			return err
 		}
 
 		sbom.AddPackages(pkgs...)
@@ -155,6 +129,126 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 	tags = append(tags, pkgcataloging.PackageTag)
 
 	return NewTask(c.Name(), fn, tags...)
+}
+
+func finalizePkgCatalogerResults(cfg CatalogingFactoryConfig, resolver file.PathResolver, catalogerName string, pkgs []pkg.Package, relationships []artifact.Relationship) ([]pkg.Package, []artifact.Relationship) {
+	for i, p := range pkgs {
+		if p.FoundBy == "" {
+			p.FoundBy = catalogerName
+		}
+
+		if cfg.DataGenerationConfig.GenerateCPEs && !hasAuthoritativeCPE(p.CPEs) {
+			// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
+			// we might have binary classified CPE already with the package so we want to append here
+			dictionaryCPEs, ok := cpeutils.DictionaryFind(p)
+			if ok {
+				log.Tracef("used CPE dictionary to find CPEs for %s package %q: %s", p.Type, p.Name, dictionaryCPEs)
+				p.CPEs = append(p.CPEs, dictionaryCPEs...)
+			} else {
+				p.CPEs = append(p.CPEs, cpeutils.Generate(p)...)
+			}
+		}
+
+		// if we were not able to identify the language we have an opportunity
+		// to try and get this value from the PURL. Worst case we assert that
+		// we could not identify the language at either stage and set UnknownLanguage
+		if p.Language == "" {
+			p.Language = pkg.LanguageFromPURL(p.PURL)
+		}
+
+		if cfg.RelationshipsConfig.PackageFileOwnership {
+			// create file-to-package relationships for files owned by the package
+			owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
+			if err != nil {
+				log.Warnf("unable to create any package-file relationships for package name=%q type=%q: %v", p.Name, p.Type, err)
+			} else {
+				relationships = append(relationships, owningRelationships...)
+			}
+		}
+
+		pkgs[i] = p
+	}
+	return pkgs, relationships
+}
+
+func applyCompliance(cfg cataloging.ComplianceConfig, catalogerName string, pkgs []pkg.Package, relationships []artifact.Relationship) ([]pkg.Package, []artifact.Relationship, error) {
+	remainingPkgs, droppedPkgs, err := filterNonCompliantPackages(pkgs, cfg)
+	var nonCompliantErr cataloging.ErrNonCompliantPackages
+	if errors.As(err, &nonCompliantErr) {
+		log.WithFields("cataloger", catalogerName).Errorf(nonCompliantErr.Error())
+		return nil, nil, err
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to filter non-compliant packages: %w", err)
+	}
+
+	relIdx := relationship.NewIndex(relationships...)
+	for _, p := range droppedPkgs {
+		relIdx.Remove(p.ID())
+	}
+
+	return remainingPkgs, relIdx.All(), nil
+}
+
+func filterNonCompliantPackages(pkgs []pkg.Package, cfg cataloging.ComplianceConfig) ([]pkg.Package, []pkg.Package, error) {
+	var remainingPkgs, droppedPkgs []pkg.Package
+	errNonCompliant := cataloging.NewErrNonCompliantPackages()
+	for _, p := range pkgs {
+		if applyComplianceRules(&p, cfg, errNonCompliant) {
+			remainingPkgs = append(remainingPkgs, p)
+		} else {
+			droppedPkgs = append(droppedPkgs, p)
+		}
+	}
+
+	if len(errNonCompliant.NonCompliantPackageLocations) > 0 {
+		return nil, nil, errNonCompliant
+	}
+
+	return remainingPkgs, droppedPkgs, nil
+}
+
+func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig, errNonCompliant *cataloging.ErrNonCompliantPackages) bool {
+	var drop bool
+
+	applyComplianceRule := func(value, fieldName string, action cataloging.ComplianceAction) bool {
+		if strings.TrimSpace(value) != "" {
+			return false
+		}
+
+		loc := "unknown"
+		locs := p.Locations.ToSlice()
+		if len(locs) > 0 {
+			loc = locs[0].Path()
+		}
+		switch action {
+		case cataloging.ComplianceActionDrop:
+			log.WithFields("pkg", p.String(), "location", loc).Debugf("package with missing %s, dropping", fieldName)
+			drop = true
+		case cataloging.ComplianceActionWarn:
+			log.WithFields("pkg", p.String(), "location", loc).Warnf("package with missing %s, failing", fieldName)
+		case cataloging.ComplianceActionFail:
+			errNonCompliant.AddInfo(loc, p.String(), fmt.Sprintf("missing %s", fieldName))
+		case cataloging.ComplianceActionStub:
+			return true
+
+		case cataloging.ComplianceActionKeep:
+			log.WithFields("pkg", p.String(), "location", loc).Tracef("package with missing %s, taking no action", fieldName)
+		}
+		return false
+	}
+
+	if applyComplianceRule(p.Name, "name", cfg.MissingName) {
+		p.Name = cataloging.UnknownStubValue
+		p.SetID()
+	}
+
+	if applyComplianceRule(p.Version, "version", cfg.MissingVersion) {
+		p.Version = cataloging.UnknownStubValue
+		p.SetID()
+	}
+
+	return !drop && len(errNonCompliant.NonCompliantPackageLocations) == 0
 }
 
 func hasAuthoritativeCPE(cpes []cpe.CPE) bool {
