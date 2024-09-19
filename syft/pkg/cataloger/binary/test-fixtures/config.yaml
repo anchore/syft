@@ -658,3 +658,10 @@ from-images:
     paths:
       - /usr/local/bin/sqlcipher
 
+  - name: jq
+    version: 1.7.1
+    images:
+      - ref: efrecon/jq:1.7.1@sha256:0ad05e2e6d1dea5fe0852ecc23114eb768d60c4ce0985d729eb958809e7f31dd
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/jq

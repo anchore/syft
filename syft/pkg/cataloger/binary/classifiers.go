@@ -634,6 +634,16 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/sqlcipher@version"),
 			CPEs:    singleCPE("cpe:2.3:a:zetetic:sqlcipher:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "jq-binary",
+			FileGlob: "**/jq",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00(?P<version>[0-9]{1,3}\.[0-9]{1,3}(\.[0-9]+)?)\x00`,
+			),
+			Package: "jq",
+			PURL:    mustPURL("pkg:generic/jq@version"),
+			CPEs:    singleCPE("cpe:2.3:a:jqlang:jq:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 }
 
