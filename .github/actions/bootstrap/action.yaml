@@ -13,15 +13,14 @@ inputs:
   cache-key-prefix:
     description: "Prefix all cache keys with this value"
     required: true
-    default: "1ac8281053"
-  compute-fingerprints:
-    description: "Compute test fixture fingerprints"
+    default: "181053ac82"
+  download-test-fixture-cache:
+    description: "Download test fixture cache from OCI and github actions"
     required: true
-    default: "true"
+    default: "false"
   bootstrap-apt-packages:
     description: "Space delimited list of tools to install via apt"
     default: "libxml2-utils"
-
 
 runs:
   using: "composite"
@@ -54,8 +53,14 @@ runs:
       run: |
         DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y ${{ inputs.bootstrap-apt-packages }}
 
-    - name: Create all cache fingerprints
-      if: inputs.compute-fingerprints == 'true'
-      shell: bash
-      run: make fingerprints
+    - name: Restore ORAS cache from github actions
+      if: inputs.download-test-fixture-cache == 'true'
+      uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
+      with:
+        path: ${{ github.workspace }}/.tmp/oras-cache
+        key: ${{ inputs.cache-key-prefix }}-oras-cache
 
+    - name: Download test fixture cache
+      if: inputs.download-test-fixture-cache == 'true'
+      shell: bash
+      run: make download-test-fixture-cache

@@ -359,7 +359,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("haproxy-binary"),
 			},
 		},
-
+		{
+			logicalFixture: "haproxy/3.1-dev0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haproxy",
+				Version:   "3.1-dev0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haproxy@3.1-dev0",
+				Locations: locations("haproxy"),
+				Metadata:  metadata("haproxy-binary"),
+			},
+		},
 		{
 			logicalFixture: "helm/3.11.1/linux-amd64",
 			expected: pkg.Package{
@@ -952,6 +962,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "haskell-ghc/9.6.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/ghc",
+				Version:   "9.6.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/ghc@9.6.5",
+				Locations: locations("ghc-9.6.5"),
+				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-cabal/3.10.3.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/cabal",
+				Version:   "3.10.3.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/cabal@3.10.3.0",
+				Locations: locations("cabal"),
+				Metadata:  metadata("haskell-cabal-binary"),
+			},
+		},
+		{
 			logicalFixture: "nginx/1.25.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "nginx",
@@ -1048,6 +1080,94 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/wp-cli@2.9.0",
 				Locations: locations("wp"),
 				Metadata:  metadata("wordpress-cli-binary"),
+			},
+		},
+		{
+			logicalFixture: "lighttpd/1.4.76/linux-amd64",
+			expected: pkg.Package{
+				Name:      "lighttpd",
+				Version:   "1.4.76",
+				Type:      "binary",
+				PURL:      "pkg:generic/lighttpd@1.4.76",
+				Locations: locations("lighttpd"),
+				Metadata:  metadata("lighttpd-binary"),
+			},
+		},
+		{
+			logicalFixture: "proftpd/1.3.8b/linux-amd64",
+			expected: pkg.Package{
+				Name:      "proftpd",
+				Version:   "1.3.8b",
+				Type:      "binary",
+				PURL:      "pkg:generic/proftpd@1.3.8b",
+				Locations: locations("proftpd"),
+				Metadata:  metadata("proftpd-binary"),
+			},
+		},
+		{
+			logicalFixture: "zstd/1.5.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "zstd",
+				Version:   "1.5.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/zstd@1.5.6",
+				Locations: locations("zstd"),
+				Metadata:  metadata("zstd-binary"),
+			},
+		},
+		{
+			logicalFixture: "zstd/1.5.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "zstd",
+				Version:   "1.5.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/zstd@1.5.6",
+				Locations: locations("zstd"),
+				Metadata:  metadata("zstd-binary"),
+			},
+		},
+		{
+			logicalFixture: "xz/5.6.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "xz",
+				Version:   "5.6.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/xz@5.6.2",
+				Locations: locations("xz"),
+				Metadata:  metadata("xz-binary"),
+			},
+		},
+		{
+			logicalFixture: "gzip/1.12/linux-amd64",
+			expected: pkg.Package{
+				Name:      "gzip",
+				Version:   "1.12",
+				Type:      "binary",
+				PURL:      "pkg:generic/gzip@1.12",
+				Locations: locations("gzip"),
+				Metadata:  metadata("gzip-binary"),
+			},
+		},
+		{
+			logicalFixture: "sqlcipher/4.5.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "sqlcipher",
+				Version:   "4.5.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/sqlcipher@4.5.5",
+				Locations: locations("sqlcipher"),
+				Metadata:  metadata("sqlcipher-binary"),
+			},
+		},
+		{
+			logicalFixture: "jq/1.7.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "jq",
+				Version:   "1.7.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/jq@1.7.1",
+				Locations: locations("jq"),
+				Metadata:  metadata("jq-binary"),
 			},
 		},
 	}

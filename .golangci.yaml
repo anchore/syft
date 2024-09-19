@@ -57,6 +57,9 @@ linters-settings:
     settings:
       ruleguard:
         rules: "test/rules/rules.go"
+  gosec:
+    excludes:
+      - G115
 output:
   uniq-by-line: false
 run:
