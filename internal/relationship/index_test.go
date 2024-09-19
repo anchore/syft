@@ -327,3 +327,84 @@ func TestRemove(t *testing.T) {
 	assert.Empty(t, index.From(c3))
 	assert.Empty(t, index.To(c3))
 }
+
+func TestReplace(t *testing.T) {
+	p1 := pkg.Package{Name: "pkg-1"}
+	p2 := pkg.Package{Name: "pkg-2"}
+	p3 := pkg.Package{Name: "pkg-3"}
+	p4 := pkg.Package{Name: "pkg-4"}
+
+	for _, p := range []*pkg.Package{&p1, &p2, &p3, &p4} {
+		p.SetID()
+	}
+
+	r1 := artifact.Relationship{
+		From: p1,
+		To:   p2,
+		Type: artifact.DependencyOfRelationship,
+	}
+	r2 := artifact.Relationship{
+		From: p3,
+		To:   p1,
+		Type: artifact.DependencyOfRelationship,
+	}
+	r3 := artifact.Relationship{
+		From: p2,
+		To:   p3,
+		Type: artifact.ContainsRelationship,
+	}
+
+	index := NewIndex(r1, r2, r3)
+
+	// replace p1 with p4 in the relationships
+	index.Replace(p1.ID(), &p4)
+
+	expectedRels := []artifact.Relationship{
+		{
+			From: p4, // replaced
+			To:   p2,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: p3,
+			To:   p4, // replaced
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: p2,
+			To:   p3,
+			Type: artifact.ContainsRelationship,
+		},
+	}
+
+	compareRelationships(t, expectedRels, index.All())
+}
+
+func compareRelationships(t testing.TB, expected, actual []artifact.Relationship) {
+	assert.Equal(t, len(expected), len(actual), "number of relationships should match")
+	for _, e := range expected {
+		found := false
+		for _, a := range actual {
+			if a.From.ID() == e.From.ID() && a.To.ID() == e.To.ID() && a.Type == e.Type {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "expected relationship not found: %+v", e)
+	}
+}
+
+func TestReplace_NoExistingRelations(t *testing.T) {
+	p1 := pkg.Package{Name: "pkg-1"}
+	p2 := pkg.Package{Name: "pkg-2"}
+
+	p1.SetID()
+	p2.SetID()
+
+	index := NewIndex()
+
+	index.Replace(p1.ID(), &p2)
+
+	allRels := index.All()
+	assert.Len(t, allRels, 0)
+}

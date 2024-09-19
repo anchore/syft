@@ -84,11 +84,10 @@ func TestApplyCompliance(t *testing.T) {
 
 	cfg := cataloging.ComplianceConfig{
 		MissingName:    cataloging.ComplianceActionDrop,
-		MissingVersion: cataloging.ComplianceActionWarn,
+		MissingVersion: cataloging.ComplianceActionStub,
 	}
 
-	remainingPkgs, remainingRels, err := applyCompliance(cfg, "test-cataloger", []pkg.Package{p1, p2, p3, p4}, []artifact.Relationship{r1, r2})
-	require.NoError(t, err)
+	remainingPkgs, remainingRels := applyCompliance(cfg, []pkg.Package{p1, p2, p3, p4}, []artifact.Relationship{r1, r2})
 
 	// p2 should be dropped because it has a missing name, p3 and p4 should pass with a warning for the missing version
 	assert.Len(t, remainingPkgs, 3) // p1, p3, p4 should remain
@@ -106,11 +105,11 @@ func TestFilterNonCompliantPackages(t *testing.T) {
 
 	cfg := cataloging.ComplianceConfig{
 		MissingName:    cataloging.ComplianceActionDrop,
-		MissingVersion: cataloging.ComplianceActionWarn,
+		MissingVersion: cataloging.ComplianceActionKeep,
 	}
 
-	remainingPkgs, droppedPkgs, err := filterNonCompliantPackages([]pkg.Package{p1, p2, p3}, cfg)
-	require.NoError(t, err)
+	remainingPkgs, droppedPkgs, replacement := filterNonCompliantPackages([]pkg.Package{p1, p2, p3}, cfg)
+	require.Nil(t, replacement)
 
 	// p2 should be dropped because it has a missing name
 	assert.Len(t, remainingPkgs, 2)
@@ -121,32 +120,21 @@ func TestFilterNonCompliantPackages(t *testing.T) {
 func TestApplyComplianceRules_DropAndStub(t *testing.T) {
 	p := pkg.Package{Name: "", Version: ""}
 	p.SetID()
+	ogID := p.ID()
 
 	cfg := cataloging.ComplianceConfig{
 		MissingName:    cataloging.ComplianceActionDrop,
 		MissingVersion: cataloging.ComplianceActionStub,
 	}
 
-	errNonCompliant := cataloging.NewErrNonCompliantPackages()
-
-	isCompliant := applyComplianceRules(&p, cfg, errNonCompliant)
+	isCompliant, replacement := applyComplianceRules(&p, cfg)
+	require.NotNil(t, replacement)
+	assert.Equal(t, packageReplacement{
+		original: ogID,
+		pkg:      p,
+	}, *replacement)
 
 	// the package should be dropped due to missing name (drop action) and its version should be stubbed
 	assert.False(t, isCompliant)
 	assert.Equal(t, cataloging.UnknownStubValue, p.Version)
-}
-
-func TestApplyComplianceRules_Fail(t *testing.T) {
-	p1 := pkg.Package{Name: "", Version: "1.0"} // missing name
-	p1.SetID()
-
-	cfg := cataloging.ComplianceConfig{
-		MissingName: cataloging.ComplianceActionFail,
-	}
-
-	errNonCompliant := cataloging.NewErrNonCompliantPackages()
-	isCompliant := applyComplianceRules(&p1, cfg, errNonCompliant)
-
-	assert.False(t, isCompliant)
-	assert.Contains(t, errNonCompliant.NonCompliantPackageLocations, "unknown")
 }

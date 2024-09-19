@@ -2,7 +2,6 @@ package task
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -112,10 +111,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 
 		pkgs, relationships = finalizePkgCatalogerResults(cfg, resolver, catalogerName, pkgs, relationships)
 
-		pkgs, relationships, err = applyCompliance(cfg.ComplianceConfig, catalogerName, pkgs, relationships)
-		if err != nil {
-			return err
-		}
+		pkgs, relationships = applyCompliance(cfg.ComplianceConfig, pkgs, relationships)
 
 		sbom.AddPackages(pkgs...)
 		sbom.AddRelationships(relationships...)
@@ -171,45 +167,47 @@ func finalizePkgCatalogerResults(cfg CatalogingFactoryConfig, resolver file.Path
 	return pkgs, relationships
 }
 
-func applyCompliance(cfg cataloging.ComplianceConfig, catalogerName string, pkgs []pkg.Package, relationships []artifact.Relationship) ([]pkg.Package, []artifact.Relationship, error) {
-	remainingPkgs, droppedPkgs, err := filterNonCompliantPackages(pkgs, cfg)
-	var nonCompliantErr cataloging.ErrNonCompliantPackages
-	if errors.As(err, &nonCompliantErr) {
-		log.WithFields("cataloger", catalogerName).Errorf(nonCompliantErr.Error())
-		return nil, nil, err
-	}
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to filter non-compliant packages: %w", err)
-	}
+type packageReplacement struct {
+	original artifact.ID
+	pkg      pkg.Package
+}
+
+func applyCompliance(cfg cataloging.ComplianceConfig, pkgs []pkg.Package, relationships []artifact.Relationship) ([]pkg.Package, []artifact.Relationship) {
+	remainingPkgs, droppedPkgs, replacements := filterNonCompliantPackages(pkgs, cfg)
 
 	relIdx := relationship.NewIndex(relationships...)
 	for _, p := range droppedPkgs {
 		relIdx.Remove(p.ID())
 	}
 
-	return remainingPkgs, relIdx.All(), nil
+	for _, replacement := range replacements {
+		relIdx.Replace(replacement.original, replacement.pkg)
+	}
+
+	return remainingPkgs, relIdx.All()
 }
 
-func filterNonCompliantPackages(pkgs []pkg.Package, cfg cataloging.ComplianceConfig) ([]pkg.Package, []pkg.Package, error) {
+func filterNonCompliantPackages(pkgs []pkg.Package, cfg cataloging.ComplianceConfig) ([]pkg.Package, []pkg.Package, []packageReplacement) {
 	var remainingPkgs, droppedPkgs []pkg.Package
-	errNonCompliant := cataloging.NewErrNonCompliantPackages()
+	var replacements []packageReplacement
 	for _, p := range pkgs {
-		if applyComplianceRules(&p, cfg, errNonCompliant) {
+		keep, replacement := applyComplianceRules(&p, cfg)
+		if keep {
 			remainingPkgs = append(remainingPkgs, p)
 		} else {
 			droppedPkgs = append(droppedPkgs, p)
 		}
+		if replacement != nil {
+			replacements = append(replacements, *replacement)
+		}
 	}
 
-	if len(errNonCompliant.NonCompliantPackageLocations) > 0 {
-		return nil, nil, errNonCompliant
-	}
-
-	return remainingPkgs, droppedPkgs, nil
+	return remainingPkgs, droppedPkgs, replacements
 }
 
-func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig, errNonCompliant *cataloging.ErrNonCompliantPackages) bool {
+func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig) (bool, *packageReplacement) {
 	var drop bool
+	var replacement *packageReplacement
 
 	applyComplianceRule := func(value, fieldName string, action cataloging.ComplianceAction) bool {
 		if strings.TrimSpace(value) != "" {
@@ -225,11 +223,9 @@ func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig, errNo
 		case cataloging.ComplianceActionDrop:
 			log.WithFields("pkg", p.String(), "location", loc).Debugf("package with missing %s, dropping", fieldName)
 			drop = true
-		case cataloging.ComplianceActionWarn:
-			log.WithFields("pkg", p.String(), "location", loc).Warnf("package with missing %s, failing", fieldName)
-		case cataloging.ComplianceActionFail:
-			errNonCompliant.AddInfo(loc, p.String(), fmt.Sprintf("missing %s", fieldName))
+
 		case cataloging.ComplianceActionStub:
+			log.WithFields("pkg", p.String(), "location", loc).Debugf("package with missing %s, stubbing with default value", fieldName)
 			return true
 
 		case cataloging.ComplianceActionKeep:
@@ -237,6 +233,8 @@ func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig, errNo
 		}
 		return false
 	}
+
+	ogID := p.ID()
 
 	if applyComplianceRule(p.Name, "name", cfg.MissingName) {
 		p.Name = cataloging.UnknownStubValue
@@ -248,7 +246,15 @@ func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig, errNo
 		p.SetID()
 	}
 
-	return !drop && len(errNonCompliant.NonCompliantPackageLocations) == 0
+	newID := p.ID()
+	if newID != ogID {
+		replacement = &packageReplacement{
+			original: ogID,
+			pkg:      *p,
+		}
+	}
+
+	return !drop, replacement
 }
 
 func hasAuthoritativeCPE(cpes []cpe.CPE) bool {
