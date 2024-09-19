@@ -53,7 +53,7 @@ func DefaultComplianceConfig() ComplianceConfig {
 	// Note: name and version are required minimum SBOM elements by NTIA, thus should be the API default
 	return ComplianceConfig{
 		MissingName:    ComplianceActionDrop,
-		MissingVersion: ComplianceActionDrop,
+		MissingVersion: ComplianceActionStub,
 	}
 }
 
