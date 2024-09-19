@@ -574,6 +574,16 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/curl@version"),
 			CPEs:    singleCPE("cpe:2.3:a:haxx:curl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "lighttpd-binary",
+			FileGlob: "**/lighttpd",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00lighttpd/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "lighttpd",
+			PURL:    mustPURL("pkg:generic/lighttpd@version"),
+			CPEs:    singleCPE("cpe:2.3:a:lighttpd:lighttpd:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 }
 
