@@ -614,6 +614,16 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/xz@version"),
 			CPEs:    singleCPE("cpe:2.3:a:tukaani:xz:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "gzip",
+			FileGlob: "**/gzip",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00(?P<version>[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "gzip",
+			PURL:    mustPURL("pkg:generic/gzip@version"),
+			CPEs:    singleCPE("cpe:2.3:a:gnu:gzip:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 }
 

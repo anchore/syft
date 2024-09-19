@@ -642,3 +642,11 @@ from-images:
     paths:
       - /usr/bin/xz
 
+  - name: gzip
+    version: 1.12
+    images:
+      - ref: ubuntu:24.04@sha256:d35dfc2fe3ef66bcc085ca00d3152b482e6cafb23cdda1864154caf3b19094ba
+        platform: linux/amd64
+    paths:
+      - /usr/bin/gzip
+
