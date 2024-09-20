@@ -610,3 +610,58 @@ from-images:
     paths:
       - /usr/bin/curl
 
+  - name: lighttpd
+    version: 1.4.76
+    images:
+      - ref: jitesoft/lighttpd:1.4.76-cgi@sha256:f5d4500bfb992a20ca39369ae1ca1d8a7a9463bb8c59ee8dd85ddb6d96fc9fc1
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/lighttpd
+
+  - name: proftpd
+    version: 1.3.8b
+    images:
+      - ref: mekayelanik/proftpd-server-alpine:1.3.8b-r2@sha256:a1ef73a2de04999e53bf728b548ef9922febab8f5709037e40e0141cedcd66db
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/proftpd
+
+  - name: zstd
+    version: 1.5.6
+    images:
+      - ref: danysk/zstd:1.5.6@sha256:5eceba085b3a399592755dd66a37b8adfb83538af3f56b51bec6e6cc955e3b5f
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/zstd
+
+  - name: xz
+    version: 5.6.2
+    images:
+      - ref: docker:27.2.1@sha256:c51fa20028ff6590588d9ed97d3b16865d503a3d7228aa885871c5c292afa5ca
+        platform: linux/amd64
+    paths:
+      - /usr/bin/xz
+
+  - name: gzip
+    version: 1.12
+    images:
+      - ref: ubuntu:24.04@sha256:d35dfc2fe3ef66bcc085ca00d3152b482e6cafb23cdda1864154caf3b19094ba
+        platform: linux/amd64
+    paths:
+      - /usr/bin/gzip
+
+  - name: sqlcipher
+    version: 4.5.5
+    images:
+      - ref: yspreen/sqlcipher@sha256:93189cc465661f16ad23f3ace4206179bdd19967deaf08c54da5ac1e34bb6fb7
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/sqlcipher
+
+  - name: jq
+    version: 1.7.1
+    images:
+      - ref: efrecon/jq:1.7.1@sha256:0ad05e2e6d1dea5fe0852ecc23114eb768d60c4ce0985d729eb958809e7f31dd
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/jq

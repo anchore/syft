@@ -574,6 +574,76 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/curl@version"),
 			CPEs:    singleCPE("cpe:2.3:a:haxx:curl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "lighttpd-binary",
+			FileGlob: "**/lighttpd",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00lighttpd/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "lighttpd",
+			PURL:    mustPURL("pkg:generic/lighttpd@version"),
+			CPEs:    singleCPE("cpe:2.3:a:lighttpd:lighttpd:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "proftpd-binary",
+			FileGlob: "**/proftpd",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00ProFTPD Version (?P<version>[0-9]+\.[0-9]+\.[0-9]+[a-z]?)\x00`,
+			),
+			Package: "proftpd",
+			PURL:    mustPURL("pkg:generic/proftpd@version"),
+			CPEs:    singleCPE("cpe:2.3:a:proftpd:proftpd:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "zstd-binary",
+			FileGlob: "**/zstd",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "zstd",
+			PURL:    mustPURL("pkg:generic/zstd@version"),
+			CPEs:    singleCPE("cpe:2.3:a:facebook:zstandard:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "xz-binary",
+			FileGlob: "**/xz",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00xz \(XZ Utils\) (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "xz",
+			PURL:    mustPURL("pkg:generic/xz@version"),
+			CPEs:    singleCPE("cpe:2.3:a:tukaani:xz:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "gzip-binary",
+			FileGlob: "**/gzip",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00(?P<version>[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "gzip",
+			PURL:    mustPURL("pkg:generic/gzip@version"),
+			CPEs:    singleCPE("cpe:2.3:a:gnu:gzip:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "sqlcipher-binary",
+			FileGlob: "**/sqlcipher",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`[^0-9]\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			),
+			Package: "sqlcipher",
+			PURL:    mustPURL("pkg:generic/sqlcipher@version"),
+			CPEs:    singleCPE("cpe:2.3:a:zetetic:sqlcipher:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "jq-binary",
+			FileGlob: "**/jq",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00(?P<version>[0-9]{1,3}\.[0-9]{1,3}(\.[0-9]+)?)\x00`,
+			),
+			Package: "jq",
+			PURL:    mustPURL("pkg:generic/jq@version"),
+			CPEs:    singleCPE("cpe:2.3:a:jqlang:jq:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 }
 
