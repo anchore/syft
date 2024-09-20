@@ -153,7 +153,7 @@ func safeFileModeConvert(val int) (fs.FileMode, error) {
 	if err != nil {
 		return 0, err
 	}
-	return os.FileMode(mode), nil //nolint:gosec
+	return os.FileMode(mode), nil
 }
 
 func toSyftLicenses(m []model.License) (p []pkg.License) {

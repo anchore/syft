@@ -231,7 +231,7 @@ func handleNewKeyValue(line string) (key string, val interface{}, err error) {
 			if err != nil {
 				return "", nil, fmt.Errorf("bad installed-size value=%q: %w", val, err)
 			}
-			return key, int(s), nil //nolint:gosec
+			return key, int(s), nil
 		default:
 			return key, val, nil
 		}
