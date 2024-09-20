@@ -78,8 +78,6 @@ func (i *ContainerImageSquashAllLayers) FilesByPath(paths ...string) ([]file.Loc
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
-//
-//nolint:gocognit
 func (i *ContainerImageSquashAllLayers) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	squashedLocations, err := i.squashed.FilesByGlob(patterns...)
 	if err != nil {
