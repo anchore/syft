@@ -78,6 +78,20 @@ from-images:
     paths:
       - /usr/lib/swipl/bin/x86_64-linux/swipl
 
+  - version: 3.5.2
+    images:
+      - ref: dart:3.5.2@sha256:1fd62cb5036bdc42de89bdae747683277986639be9b0b0a0751d2c50bbd9441f
+        platform: linux/amd64
+    paths:
+      - /usr/lib/dart/bin/dart
+
+  - version: 3.6.0-216.1.beta
+    images:
+      - ref: dart:3.6.0-216.1.beta@sha256:f4211fec53f972987f5bc1dd0ffd3d3cb1fd820ac1ade4e45a7a0c7bffd71d58
+        platform: linux/amd64
+    paths:
+      - /usr/lib/dart/bin/dart
+
   - name: haskell-ghc
     version: 9.6.5
     images:
