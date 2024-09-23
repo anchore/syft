@@ -2047,6 +2047,9 @@
       "@antfu/utils": [
         "cpe:2.3:a:antfu:utils:*:*:*:*:*:node.js:*:*"
       ],
+      "@apollo/gateway": [
+        "cpe:2.3:a:apollographql:apollo_gateway:*:*:*:*:*:node.js:*:*"
+      ],
       "@apollosproject/data-connector-rock": [
         "cpe:2.3:a:apollosapp:data-connector-rock:*:*:*:*:*:node.js:*:*"
       ],
@@ -6205,6 +6208,9 @@
       ],
       "omniauth-oauth2": [
         "cpe:2.3:a:omniauth-oauth2_project:omniauth-oauth2:*:*:*:*:*:ruby:*:*"
+      ],
+      "omniauth-saml": [
+        "cpe:2.3:a:omniauth:omniauth_saml:*:*:*:*:*:ruby:*:*"
       ],
       "open-uri-cached": [
         "cpe:2.3:a:open-uri-cached_project:open-uri-cached:*:*:*:*:*:ruby:*:*"
@@ -15468,6 +15474,9 @@
       "sprout-invoices": [
         "cpe:2.3:a:webventures:client_invoicing_by_sprout_invoices:*:*:*:*:*:wordpress:*:*"
       ],
+      "squeeze": [
+        "cpe:2.3:a:squeeze_project:squeeze:*:*:*:*:*:wordpress:*:*"
+      ],
       "squirrly-seo": [
         "cpe:2.3:a:squirrly:seo_plugin_by_squirrly_seo:*:*:*:*:*:wordpress:*:*"
       ],
@@ -17726,6 +17735,9 @@
       ],
       "wp-invoice": [
         "cpe:2.3:a:usabilitydynamics:wp-invoice:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-jitsi-shortcodes": [
+        "cpe:2.3:a:andrewabarber:wordpress_jitsi_shortcode:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-job-openings": [
         "cpe:2.3:a:awsm:wp_job_openings:*:*:*:*:*:wordpress:*:*"
