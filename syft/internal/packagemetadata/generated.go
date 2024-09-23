@@ -27,6 +27,7 @@ func AllTypes() []any {
 		pkg.HackageStackYamlEntry{},
 		pkg.HackageStackYamlLockEntry{},
 		pkg.JavaArchive{},
+		pkg.JavaVMInstallation{},
 		pkg.LinuxKernel{},
 		pkg.LinuxKernelModule{},
 		pkg.LuaRocksPackage{},

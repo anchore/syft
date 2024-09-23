@@ -249,6 +249,11 @@ func (cfg *Catalog) PostLoad() error {
 		return fmt.Errorf("bad scope value %q", cfg.Scope)
 	}
 
+	// the binary package exclusion code depends on the file overlap relationships being created upstream in processing
+	if !cfg.Relationships.PackageFileOwnershipOverlap && cfg.Package.ExcludeBinaryOverlapByOwnership {
+		return fmt.Errorf("cannot enable exclude-binary-overlap-by-ownership without enabling package-file-ownership-overlap")
+	}
+
 	return nil
 }
 
