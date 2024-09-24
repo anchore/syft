@@ -1105,6 +1105,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "curl/8.9.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "curl",
+				Version:   "8.9.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/curl@8.9.1",
+				Locations: locations("curl"),
+				Metadata:  metadata("curl-binary"),
+			},
+		},
+		{
 			logicalFixture: "lighttpd/1.4.76/linux-amd64",
 			expected: pkg.Package{
 				Name:      "lighttpd",
