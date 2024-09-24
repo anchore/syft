@@ -695,3 +695,11 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/sbin/syslog-ng
+
+  - name: avahi
+    version: 0.8
+    images:
+      - ref: ydkn/avahi:latest@sha256:0df3de700d2b12f9bc3a4be6b49e04865bd0f92b992c287021c582c9ca90e535
+        platform: linux/amd64
+    paths:
+      - /usr/bin/avahi-browse

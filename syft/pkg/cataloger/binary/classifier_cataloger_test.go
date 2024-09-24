@@ -1214,6 +1214,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("syslog-ng-binary"),
 			},
 		},
+		{
+			logicalFixture: "avahi/0.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "avahi",
+				Version:   "0.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/avahi@0.8",
+				Locations: locations("avahi-browse"),
+				Metadata:  metadata("avahi-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {

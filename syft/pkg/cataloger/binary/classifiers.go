@@ -674,6 +674,16 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/syslog-ng@version"),
 			CPEs:    singleCPE("cpe:2.3:a:oneidentity:syslog-ng:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "avahi-binary",
+			FileGlob: "**/avahi-browse",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00\x25s (?P<version>[0-9]+\.[0-9]+)\x0a\x00`,
+			),
+			Package: "avahi",
+			PURL:    mustPURL("pkg:generic/avahi@version"),
+			CPEs:    singleCPE("cpe:2.3:a:avahi:avahi:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 }
 
