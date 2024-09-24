@@ -687,3 +687,11 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/bin/ssh
+
+  - name: syslog-ng
+    version: 4.7.1
+    images:
+      - ref: linuxserver/syslog-ng:4.7.1@sha256:c995ed807bafc61972c486a4a876589df214dc34f4caf2e329bb6ef6bcf12639
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/syslog-ng

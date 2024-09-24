@@ -1203,6 +1203,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("openssh-binary"),
 			},
 		},
+		{
+			logicalFixture: "syslog-ng/4.7.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "syslog-ng",
+				Version:   "4.7.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/syslog-ng@4.7.1",
+				Locations: locations("syslog-ng"),
+				Metadata:  metadata("syslog-ng-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {

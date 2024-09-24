@@ -664,6 +664,16 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/openssh@version"),
 			CPEs:    singleCPE("cpe:2.3:a:openbsd:openssh:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "syslog-ng-binary",
+			FileGlob: "**/syslog-ng",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`\x00syslog-ng [0-9] \((?P<version>[0-9]+\.[0-9]+\.[0-9]+)\)`,
+			),
+			Package: "syslog-ng",
+			PURL:    mustPURL("pkg:generic/syslog-ng@version"),
+			CPEs:    singleCPE("cpe:2.3:a:oneidentity:syslog-ng:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 }
 
