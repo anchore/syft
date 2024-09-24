@@ -448,6 +448,16 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:    "dart-binary",
+			FileGlob: "**/dart",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)Dart,GC"\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+(\.[0-9]+)?\.beta)?) `,
+			),
+			Package: "dart",
+			PURL:    mustPURL("pkg:generic/dart@version"),
+			CPEs:    singleCPE("cpe:2.3:a:dart:dart_software_development_kit:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "haskell-ghc-binary",
 			FileGlob: "**/ghc*",
 			EvidenceMatcher: FileContentsVersionMatcher(

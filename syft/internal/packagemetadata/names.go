@@ -81,6 +81,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.HackageStackYamlLockEntry{}, "haskell-hackage-stack-lock-entry", "HackageMetadataType"),
 	jsonNamesWithoutLookup(pkg.HackageStackYamlEntry{}, "haskell-hackage-stack-entry", "HackageMetadataType"), // the legacy value is split into two types, where the other is preferred
 	jsonNames(pkg.JavaArchive{}, "java-archive", "JavaMetadata"),
+	jsonNames(pkg.JavaVMInstallation{}, "java-jvm-installation"),
 	jsonNames(pkg.MicrosoftKbPatch{}, "microsoft-kb-patch", "KbPatchMetadata"),
 	jsonNames(pkg.LinuxKernel{}, "linux-kernel-archive", "LinuxKernel"),
 	jsonNames(pkg.LinuxKernelModule{}, "linux-kernel-module", "LinuxKernelModule"),

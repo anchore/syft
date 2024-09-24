@@ -140,6 +140,40 @@ func (r ChrootContext) ToNativePath(chrootPath string) (string, error) {
 	return responsePath, nil
 }
 
+func (r ChrootContext) ToNativeGlob(chrootPath string) (string, error) {
+	// split on any *
+	parts := strings.Split(chrootPath, "*")
+	if len(parts) == 0 || parts[0] == "" {
+		// either this is an empty string or a path that starts with * so there is nothing we can do
+		return chrootPath, nil
+	}
+
+	if len(parts) == 1 {
+		// this has no glob, treat it like a path
+		return r.ToNativePath(chrootPath)
+	}
+
+	responsePath := parts[0]
+
+	if filepath.IsAbs(responsePath) {
+		// don't allow input to potentially hop above root path
+		responsePath = path.Join(r.root, responsePath)
+	} else {
+		// ensure we take into account any relative difference between the root path and the CWD for relative requests
+		responsePath = path.Join(r.cwdRelativeToRoot, responsePath)
+	}
+
+	var err error
+	responsePath, err = filepath.Abs(responsePath)
+	if err != nil {
+		return "", err
+	}
+
+	parts[0] = strings.TrimRight(responsePath, "/") + "/"
+
+	return strings.Join(parts, "*"), nil
+}
+
 // ToChrootPath takes a path from the underlying fs domain and converts it to a path that is relative to the current root context.
 func (r ChrootContext) ToChrootPath(nativePath string) string {
 	responsePath := nativePath
