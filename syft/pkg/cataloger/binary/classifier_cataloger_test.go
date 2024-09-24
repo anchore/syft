@@ -1192,6 +1192,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("jq-binary"),
 			},
 		},
+		{
+			logicalFixture: "openssh/9.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "openssh",
+				Version:   "9.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/openssh@9.3",
+				Locations: locations("ssh"),
+				Metadata:  metadata("openssh-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {

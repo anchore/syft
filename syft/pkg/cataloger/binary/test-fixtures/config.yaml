@@ -679,3 +679,11 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/jq
+
+  - name: openssh
+    version: 9.3
+    images:
+      - ref: finalgene/openssh:9.1@sha256:0272f8e6ef6344eafc71c2dfb53ba8397ff47d7cf2e46c5c46c5f269e41d19e8
+        platform: linux/amd64
+    paths:
+      - /usr/bin/ssh
