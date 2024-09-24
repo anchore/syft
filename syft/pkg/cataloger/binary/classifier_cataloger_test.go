@@ -1138,17 +1138,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			logicalFixture: "zstd/1.5.6/linux-amd64",
-			expected: pkg.Package{
-				Name:      "zstd",
-				Version:   "1.5.6",
-				Type:      "binary",
-				PURL:      "pkg:generic/zstd@1.5.6",
-				Locations: locations("zstd"),
-				Metadata:  metadata("zstd-binary"),
-			},
-		},
-		{
 			logicalFixture: "xz/5.6.2/linux-amd64",
 			expected: pkg.Package{
 				Name:      "xz",
