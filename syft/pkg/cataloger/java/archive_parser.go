@@ -67,14 +67,19 @@ func newGenericArchiveParserAdapter(cfg ArchiveCatalogerConfig) genericArchivePa
 }
 
 // parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
-func (gap genericArchiveParserAdapter) parseJavaArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (gap genericArchiveParserAdapter) parseJavaArchiveMain(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	return gap.parseJavaArchive(ctx, reader, nil)
+}
+
+// parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
+func (gap genericArchiveParserAdapter) parseJavaArchive(ctx context.Context, reader file.LocationReadCloser, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	parser, cleanupFn, err := newJavaArchiveParser(reader, true, gap.cfg)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {
 		return nil, nil, err
 	}
-	return parser.parse(ctx)
+	return parser.parse(ctx, parentPkg)
 }
 
 // uniquePkgKey creates a unique string to identify the given package.
@@ -115,27 +120,40 @@ func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg
 }
 
 // parse the loaded archive and return all packages found.
-func (j *archiveParser) parse(ctx context.Context) ([]pkg.Package, []artifact.Relationship, error) {
+func (j *archiveParser) parse(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
 	// find the parent package from the java manifest
-	parentPkg, err := j.discoverMainPackage(ctx)
+	mainPkg, err := j.discoverMainPackage(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not generate package from %s: %w", j.location, err)
 	}
 
 	// find aux packages from pom.properties/pom.xml and potentially modify the existing parentPkg
 	// NOTE: we cannot generate sha1 digests from packages discovered via pom.properties/pom.xml
-	auxPkgs, err := j.discoverPkgsFromAllMavenFiles(ctx, parentPkg)
+	auxPkgs, err := j.discoverPkgsFromAllMavenFiles(ctx, mainPkg)
 	if err != nil {
 		return nil, nil, err
 	}
 	pkgs = append(pkgs, auxPkgs...)
 
+	if mainPkg != nil {
+		finalizePackage(mainPkg)
+		pkgs = append(pkgs, *mainPkg)
+
+		if parentPkg != nil {
+			relationships = append(relationships, artifact.Relationship{
+				From: *mainPkg,
+				To:   *parentPkg,
+				Type: artifact.DependencyOfRelationship,
+			})
+		}
+	}
+
 	if j.detectNested {
 		// find nested java archive packages
-		nestedPkgs, nestedRelationships, err := j.discoverPkgsFromNestedArchives(ctx, parentPkg)
+		nestedPkgs, nestedRelationships, err := j.discoverPkgsFromNestedArchives(ctx, mainPkg)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -143,30 +161,29 @@ func (j *archiveParser) parse(ctx context.Context) ([]pkg.Package, []artifact.Re
 		relationships = append(relationships, nestedRelationships...)
 	}
 
-	// lastly, add the parent package to the list (assuming the parent exists)
-	if parentPkg != nil {
-		pkgs = append([]pkg.Package{*parentPkg}, pkgs...)
-	}
-
 	// add pURLs to all packages found
 	// note: since package information may change after initial creation when parsing multiple locations within the
 	// jar, we wait until the conclusion of the parsing process before synthesizing pURLs.
 	for i := range pkgs {
-		p := &pkgs[i]
-		if m, ok := p.Metadata.(pkg.JavaArchive); ok {
-			p.PURL = packageURL(p.Name, p.Version, m)
+		finalizePackage(&pkgs[i])
+	}
+	return pkgs, relationships, nil
+}
 
-			if strings.Contains(p.PURL, "io.jenkins.plugins") || strings.Contains(p.PURL, "org.jenkins-ci.plugins") {
-				p.Type = pkg.JenkinsPluginPkg
-			}
-		} else {
-			log.WithFields("package", p.String()).Warn("unable to extract java metadata to generate purl")
+// finalizePackage sets the PURL, and performs some checks to determine if the package should be
+// classified as a Jenkins plugin, updates some information and calls p.SetID()
+func finalizePackage(p *pkg.Package) {
+	if m, ok := p.Metadata.(pkg.JavaArchive); ok {
+		p.PURL = packageURL(p.Name, p.Version, m)
+
+		if strings.Contains(p.PURL, "io.jenkins.plugins") || strings.Contains(p.PURL, "org.jenkins-ci.plugins") {
+			p.Type = pkg.JenkinsPluginPkg
 		}
-
-		p.SetID()
+	} else {
+		log.WithFields("package", p.String()).Warn("unable to extract java metadata to generate purl")
 	}
 
-	return pkgs, relationships, nil
+	p.SetID()
 }
 
 // discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.
@@ -499,7 +516,7 @@ func discoverPkgsFromOpeners(ctx context.Context, location file.Location, opener
 	var relationships []artifact.Relationship
 
 	for pathWithinArchive, archiveOpener := range openers {
-		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(ctx, location, pathWithinArchive, archiveOpener, cfg)
+		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(ctx, location, pathWithinArchive, archiveOpener, cfg, parentPkg)
 		if err != nil {
 			log.WithFields("location", location.Path()).Warnf("unable to discover java packages from opener: %+v", err)
 			continue
@@ -523,7 +540,7 @@ func discoverPkgsFromOpeners(ctx context.Context, location file.Location, opener
 }
 
 // discoverPkgsFromOpener finds Java archives within the given file.
-func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWithinArchive string, archiveOpener intFile.Opener, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWithinArchive string, archiveOpener intFile.Opener, cfg ArchiveCatalogerConfig, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	archiveReadCloser, err := archiveOpener.Open()
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to open archived file from tempdir: %w", err)
@@ -538,10 +555,10 @@ func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWit
 	nestedLocation := file.NewLocationFromCoordinates(location.Coordinates)
 	nestedLocation.AccessPath = nestedPath
 	gap := newGenericArchiveParserAdapter(cfg)
-	nestedPkgs, nestedRelationships, err := gap.parseJavaArchive(ctx, nil, nil, file.LocationReadCloser{
+	nestedPkgs, nestedRelationships, err := gap.parseJavaArchive(ctx, file.LocationReadCloser{
 		Location:   nestedLocation,
 		ReadCloser: archiveReadCloser,
-	})
+	}, parentPkg)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to process nested java archive (%s): %w", pathWithinArchive, err)
 	}

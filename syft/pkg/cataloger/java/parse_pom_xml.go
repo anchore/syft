@@ -62,14 +62,6 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 		pkgs = append(pkgs, newPkgs...)
 		relationships = append(relationships, newRelationships...)
 		errs = append(errs, newErrs...)
-		// add dependency-of relationships from the dependencies to the main pkg
-		for _, newPkg := range newPkgs {
-			relationships = append(relationships, artifact.Relationship{
-				From: mainPkg,
-				To:   newPkg,
-				Type: artifact.DependencyOfRelationship,
-			})
-		}
 	}
 	return pkgs, relationships, errors.Join(errs...)
 }
@@ -107,6 +99,7 @@ func collectDependencies(ctx context.Context, r *maven.Resolver, parentPkg *pkg.
 			continue
 		}
 		pkgs = append(pkgs, *p)
+
 		if parentPkg != nil {
 			relationships = append(relationships, artifact.Relationship{
 				From: *p,
