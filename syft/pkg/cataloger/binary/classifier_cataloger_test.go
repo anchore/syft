@@ -349,6 +349,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "haproxy/2.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haproxy",
+				Version:   "2.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haproxy@2.0.0",
+				Locations: locations("haproxy"),
+				Metadata:  metadata("haproxy-binary"),
+			},
+		},
+		{
 			logicalFixture: "haproxy/2.7.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haproxy",
