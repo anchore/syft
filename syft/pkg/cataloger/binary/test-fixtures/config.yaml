@@ -440,6 +440,13 @@ from-images:
     paths:
       - /usr/local/bin/redis-server
 
+  - version: 7.2.5
+    images:
+      - ref: redis:7.2.5@sha256:3b44455ef048b5f0a3a26d874c00c0f4ffe6a71a40834f2b038f816c6ad5ca4f
+        platform: linux/386
+    paths:
+      - /usr/local/bin/redis-server
+
   - version: 2.9.0
     images:
       - ref: wordpress:cli-2.9.0-php8.3@sha256:3a008aafccc6a8d2d7ec2b069722cb43b3569b61cd833f9f2f13d74a9284746e

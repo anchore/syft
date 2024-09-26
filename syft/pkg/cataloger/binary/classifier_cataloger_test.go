@@ -486,6 +486,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "redis-server/7.2.5/linux-386",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.2.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.2.5",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
 			logicalFixture: "python-shared-lib/3.7.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",

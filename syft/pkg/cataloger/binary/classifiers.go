@@ -78,7 +78,7 @@ func DefaultClassifiers() []Classifier {
 			FileGlob: "**/redis-server",
 			EvidenceMatcher: evidenceMatchers(
 				FileContentsVersionMatcher(`(?s)payload %5.*?(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}`),
-				FileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12}-[0-9]{19}\x00.*?payload %5`),
+				FileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}\x00.*?payload %5`),
 			),
 			Package: "redis",
 			PURL:    mustPURL("pkg:generic/redis@version"),
