@@ -14,36 +14,110 @@ import (
 func Test_packageURL(t *testing.T) {
 	tests := []struct {
 		name     string
-		notes    elfBinaryPackageNotes
-		expected string
+		metadata elfBinaryPackageNotes
+		want     string
 	}{
 		{
 			name: "elf-binary-package-cataloger",
-			notes: elfBinaryPackageNotes{
+			metadata: elfBinaryPackageNotes{
 				Name:    "github.com/anchore/syft",
 				Version: "v0.1.0",
 				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
 					System: "syftsys",
 				},
 			},
-			expected: "pkg:generic/syftsys/github.com/anchore/syft@v0.1.0",
+			want: "pkg:generic/syftsys/github.com/anchore/syft@v0.1.0",
 		},
 		{
 			name: "elf binary package short name",
-			notes: elfBinaryPackageNotes{
+			metadata: elfBinaryPackageNotes{
 				Name:    "go.opencensus.io",
 				Version: "v0.23.0",
 				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
 					System: "syftsys",
 				},
 			},
-			expected: "pkg:generic/syftsys/go.opencensus.io@v0.23.0",
+			want: "pkg:generic/syftsys/go.opencensus.io@v0.23.0",
+		},
+		{
+			name: "no info",
+			metadata: elfBinaryPackageNotes{
+				Name:    "test",
+				Version: "1.0",
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
+					Type: "rpm",
+				},
+			},
+			want: "pkg:rpm/test@1.0",
+		},
+		{
+			name: "with system",
+			metadata: elfBinaryPackageNotes{
+				Name:    "test",
+				Version: "1.0",
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
+					Type:   "rpm",
+					System: "system",
+				},
+			},
+			want: "pkg:rpm/system/test@1.0",
+		},
+		{
+			name: "with os info preferred",
+			metadata: elfBinaryPackageNotes{
+				Name:    "test",
+				Version: "1.0",
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
+					Type:      "rpm",
+					OS:        "fedora",
+					OSVersion: "2.0",
+					OSCPE:     "cpe:/o:someone:redhat:3.0",
+				},
+			},
+			want: "pkg:rpm/fedora/test@1.0?distro=fedora-2.0",
+		},
+		{
+			name: "with os info fallback to CPE parsing (missing version)",
+			metadata: elfBinaryPackageNotes{
+				Name:    "test",
+				Version: "1.0",
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
+					Type:  "rpm",
+					OS:    "fedora",
+					OSCPE: "cpe:/o:someone:redhat:3.0",
+				},
+			},
+			want: "pkg:rpm/redhat/test@1.0?distro=redhat-3.0",
+		},
+		{
+			name: "with os info preferred (missing OS)",
+			metadata: elfBinaryPackageNotes{
+				Name:    "test",
+				Version: "1.0",
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
+					Type:      "rpm",
+					OSVersion: "2.0",
+					OSCPE:     "cpe:/o:someone:redhat:3.0",
+				},
+			},
+			want: "pkg:rpm/redhat/test@1.0?distro=redhat-3.0",
+		},
+		{
+			name: "missing type",
+			metadata: elfBinaryPackageNotes{
+				Name:    "test",
+				Version: "1.0",
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
+					System: "system",
+				},
+			},
+			want: "pkg:generic/system/test@1.0",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, packageURL(test.notes))
+			assert.Equal(t, test.want, packageURL(test.metadata))
 		})
 	}
 }
@@ -82,7 +156,7 @@ func Test_newELFPackage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := newELFPackage(test.metadata, file.NewLocationSet(), nil)
+			actual := newELFPackage(test.metadata, file.NewLocationSet())
 			if diff := cmp.Diff(test.expected, actual, cmpopts.IgnoreFields(pkg.Package{}, "id"), cmpopts.IgnoreUnexported(pkg.Package{}, file.LocationSet{}, pkg.LicenseSet{})); diff != "" {
 				t.Errorf("newELFPackage() mismatch (-want +got):\n%s", diff)
 			}

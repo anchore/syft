@@ -104,8 +104,20 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: Rpkg,
 		},
 		{
+			purl:     "pkg:luarocks/kong@3.7.0",
+			expected: LuaRocksPkg,
+		},
+		{
 			purl:     "pkg:swift/github.com/apple/swift-numerics/swift-numerics@1.0.2",
 			expected: SwiftPkg,
+		},
+		{
+			purl:     "pkg:swiplpack/condition@0.1.1",
+			expected: SwiplPackPkg,
+		},
+		{
+			purl:     "pkg:opam/ocaml-base-compiler@5.2.0",
+			expected: OpamPkg,
 		},
 	}
 

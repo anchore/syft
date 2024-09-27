@@ -106,6 +106,58 @@
       "unicycle": [
         "cpe:2.3:a:unicycle_project:unicycle:*:*:*:*:*:rust:*:*"
       ]
+    },
+    "wordpress_plugins": {
+      "0mk-shortener": [
+        "cpe:2.3:a:0mk_shortener_project:0mk_shortener:*:*:*:*:*:wordpress:*:*"
+      ],
+      "jobboardwp": [
+        "cpe:2.3:a:ultimatemember:jobboardwp:*:*:*:*:*:wordpress:*:*"
+      ],
+      "nofollow": [
+        "cpe:2.3:a:ultimate_nofollow_project:ultimate_nofollow:*:*:*:*:*:wordpress:*:*"
+      ],
+      "petfinder-listings": [
+        "cpe:2.3:a:unboxinteractive:petfinder-listings:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-instagram-feed": [
+        "cpe:2.3:a:ultimate_instagram_feed_project:ultimate_instagram_feed:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-member": [
+        "cpe:2.3:a:ultimatemember:ultimate_member:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:ultimatemember:user_profile_\\\u0026_membership:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-noindex-nofollow-tool-ii": [
+        "cpe:2.3:a:ultimate_noindex_nofollow_tool_ii_project:ultimate_noindex_nofollow_tool_ii:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-sms-notifications": [
+        "cpe:2.3:a:ultimatesmsnotifications:ultimate_sms_notifications_for_woocommerce:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-weather-plugin": [
+        "cpe:2.3:a:ultimate-weather_project:ultimate-weather:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-wp-query-search-filter": [
+        "cpe:2.3:a:ultimate_wp_query_search_filter_project:ultimate_wp_query_search_filter:*:*:*:*:*:wordpress:*:*"
+      ],
+      "uncanny-automator": [
+        "cpe:2.3:a:uncannyowl:uncanny_automator:*:*:*:*:*:wordpress:*:*"
+      ],
+      "uncanny-learndash-toolkit": [
+        "cpe:2.3:a:uncannyowl:uncanny_toolkit_for_learndash:*:*:*:*:*:*:*:*",
+        "cpe:2.3:a:uncannyowl:uncanny_toolkit_for_learndash:*:*:*:*:*:wordpress:*:*"
+      ],
+      "unconfirmed": [
+        "cpe:2.3:a:unconfirmed_project:unconfirmed:*:*:*:*:*:wordpress:*:*"
+      ],
+      "underconstruction": [
+        "cpe:2.3:a:underconstruction_project:underconstruction:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-cleanfix": [
+        "cpe:2.3:a:undolog:wp_cleanfix:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-ultra-simple-paypal-shopping-cart": [
+        "cpe:2.3:a:ultra-prod:wordpress_ultra_simple_paypal_shopping_cart:*:*:*:*:*:wordpress:*:*"
+      ]
     }
   }
 }

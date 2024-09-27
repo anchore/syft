@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 )
 
@@ -52,9 +53,14 @@ func OpenZip(filepath string) (*ZipReadCloser, error) {
 		return nil, fmt.Errorf("unable to seek to beginning of archive: %w", err)
 	}
 
-	size := fi.Size() - int64(offset)
+	if offset > math.MaxInt64 {
+		return nil, fmt.Errorf("archive start offset too large: %v", offset)
+	}
+	offset64 := int64(offset)
 
-	r, err := zip.NewReader(io.NewSectionReader(f, int64(offset), size), size)
+	size := fi.Size() - offset64
+
+	r, err := zip.NewReader(io.NewSectionReader(f, offset64, size), size)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open ZipReadCloser @ %q: %w", filepath, err)
 	}
@@ -95,8 +101,6 @@ type directoryEnd struct {
 }
 
 // note: this is derived from readDirectoryEnd within the archive/zip package
-//
-//nolint:gocognit
 func findArchiveStartOffset(r io.ReaderAt, size int64) (startOfArchive uint64, err error) {
 	// look for directoryEndSignature in the last 1k, then in the last 65k
 	var buf []byte
@@ -150,7 +154,7 @@ func findArchiveStartOffset(r io.ReaderAt, size int64) (startOfArchive uint64, e
 	startOfArchive = uint64(directoryEndOffset) - d.directorySize - d.directoryOffset
 
 	// Make sure directoryOffset points to somewhere in our file.
-	if o := int64(d.directoryOffset); o < 0 || o >= size {
+	if d.directoryOffset >= uint64(size) {
 		return 0, zip.ErrFormat
 	}
 	return startOfArchive, nil

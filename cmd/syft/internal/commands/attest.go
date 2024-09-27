@@ -43,6 +43,7 @@ type attestOptions struct {
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 	options.Catalog     `yaml:",inline" mapstructure:",squash"`
 	Attest              options.Attest `yaml:"attest" mapstructure:"attest"`
+	Cache               options.Cache  `json:"-" yaml:"cache" mapstructure:"cache"`
 }
 
 func Attest(app clio.Application) *cobra.Command {
@@ -77,6 +78,7 @@ func defaultAttestOptions() attestOptions {
 		Output:      defaultAttestOutputOptions(),
 		UpdateCheck: options.DefaultUpdateCheck(),
 		Catalog:     options.DefaultCatalog(),
+		Cache:       options.DefaultCache(),
 	}
 }
 
@@ -91,14 +93,13 @@ func defaultAttestOutputOptions() options.Output {
 			string(spdxtagvalue.ID),
 		},
 		Outputs: []string{syftjson.ID.String()},
-		OutputFile: options.OutputFile{ // nolint:staticcheck
+		OutputFile: options.OutputFile{ //nolint:staticcheck
 			Enabled: false, // explicitly not allowed
 		},
 		Format: options.DefaultFormat(),
 	}
 }
 
-//nolint:funlen
 func runAttest(ctx context.Context, id clio.Identification, opts *attestOptions, userInput string) error {
 	// TODO: what other validation here besides binary name?
 	if !commandExists(cosignBinName) {

@@ -22,6 +22,12 @@ func DownloadLocation(p pkg.Package) string {
 			return NoneIfEmpty(metadata.URL)
 		case pkg.NpmPackageLockEntry:
 			return NoneIfEmpty(metadata.Resolved)
+		case pkg.PhpComposerLockEntry:
+			return NoneIfEmpty(metadata.Dist.URL)
+		case pkg.PhpComposerInstalledEntry:
+			return NoneIfEmpty(metadata.Dist.URL)
+		case pkg.OpamPackage:
+			return NoneIfEmpty(metadata.URL)
 		}
 	}
 	return NOASSERTION

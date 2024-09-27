@@ -10,12 +10,12 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings []string, locations ...file.Location) pkg.Package {
+func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings, experiments []string, locations ...file.Location) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}
 
-	licenses, err := c.licenses.getLicenses(resolver, dep.Path, dep.Version)
+	licenses, err := c.licenseResolver.getLicenses(resolver, dep.Path, dep.Version)
 	if err != nil {
 		log.Tracef("error getting licenses for golang package: %s %v", dep.Path, err)
 	}
@@ -35,6 +35,7 @@ func (c *goBinaryCataloger) newGoBinaryPackage(resolver file.Resolver, dep *debu
 			BuildSettings:     buildSettings,
 			MainModule:        mainModule,
 			GoCryptoSettings:  cryptoSettings,
+			GoExperiments:     experiments,
 		},
 	}
 

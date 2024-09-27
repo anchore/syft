@@ -159,7 +159,7 @@ func TestClosesFileOnParserPanic(t *testing.T) {
 	resolver := newSpyReturningFileResolver(&spy, "test-fixtures/another-path.txt")
 	ctx := context.TODO()
 
-	processors := []processor{
+	processors := []requester{
 		func(resolver file.Resolver, env Environment) []request {
 			return []request{
 				{
@@ -178,7 +178,7 @@ func TestClosesFileOnParserPanic(t *testing.T) {
 	}
 
 	c := Cataloger{
-		processor:         processors,
+		requesters:        processors,
 		upstreamCataloger: "unit-test-cataloger",
 	}
 

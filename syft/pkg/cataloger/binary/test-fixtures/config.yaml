@@ -17,6 +17,14 @@ from-images:
     paths:
       - /bin/[
 
+  - name: util-linux
+    version: 2.37.4
+    images:
+      - ref: cirros:0.6.2@sha256:7ba1f5bc57923f65c99677e53758d386320ed699b621d9630b1f2bd7ceb3a878
+        platform: linux/amd64
+    paths:
+      - /usr/bin/getopt
+
   - version: 5.1.16
     images:
       - ref: bash:5.1.16@sha256:c7a903a541d8f5fe693cbe7f5ece18a1b6a03734c76092d2b153d7e98a964927
@@ -55,6 +63,51 @@ from-images:
     paths:
       - /usr/local/lib/erlang/erts-14.2.4/lib/internal/liberts_internal.a
 
+  - name: erlang
+    version: 27.0
+    images:
+      - ref: erlang:27.0.0.0-alpine@sha256:82064a65eb1f9901a479d8ada5f622be3bfac8b474dfc876dc00c28fdef4b1b8
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/erlang/erts-15.0/bin/beam.smp
+
+  - version: 9.3.8
+    images:
+      - ref: swipl:9.3.8@sha256:6a15e6a03afe943228924a5502ba763e653ff28d9b3391e2b3e1fc3e991f37d4
+        platform: linux/amd64
+    paths:
+      - /usr/lib/swipl/bin/x86_64-linux/swipl
+
+  - version: 3.5.2
+    images:
+      - ref: dart:3.5.2@sha256:1fd62cb5036bdc42de89bdae747683277986639be9b0b0a0751d2c50bbd9441f
+        platform: linux/amd64
+    paths:
+      - /usr/lib/dart/bin/dart
+
+  - version: 3.6.0-216.1.beta
+    images:
+      - ref: dart:3.6.0-216.1.beta@sha256:f4211fec53f972987f5bc1dd0ffd3d3cb1fd820ac1ade4e45a7a0c7bffd71d58
+        platform: linux/amd64
+    paths:
+      - /usr/lib/dart/bin/dart
+
+  - name: haskell-ghc
+    version: 9.6.5
+    images:
+      - ref: haskell:9.6.5-slim-buster@sha256:04a7293eb792b82335dffa7f08532657517ed9b4f01d52c1b499ad22deb3c6b1
+        platform: linux/amd64
+    paths:
+      - /opt/ghc/9.6.5/lib/ghc-9.6.5/bin/ghc-9.6.5
+
+  - name: haskell-cabal
+    version: 3.10.3.0
+    images:
+      - ref: haskell:9.6.5-slim-buster@sha256:04a7293eb792b82335dffa7f08532657517ed9b4f01d52c1b499ad22deb3c6b1
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/cabal
+
   - version: 1.21.3
     images:
       - ref: golang:1.21.3@sha256:3ce8313c3513515040870c55e0c041a2b94f3576a58cfd3948633604214aa811
@@ -62,6 +115,7 @@ from-images:
     paths:
       - /usr/local/go/bin/go
 
+  # TODO: this is no longer available from dockerhub! (the snippet is vital)
   - version: 1.5.14
     images:
       - ref: haproxy:1.5.14@sha256:3d57e3921cc84e860f764e863ce729dd0765e3d28d444775127bc42d68f98e10
@@ -79,6 +133,13 @@ from-images:
   - version: 2.7.3
     images:
       - ref: haproxy:2.7.3@sha256:17d8aa6bf16882a294bdcccc757dd4002045f34b719e9f94dfd4801614801aea
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/haproxy
+
+  - version: 3.1-dev0
+    images:
+      - ref: haproxy:3.1-dev0@sha256:eba1aac9aa6ea84869bd2ecae79792a934563fd731eddf724eb3b12ef6a9b93f
         platform: linux/amd64
     paths:
       - /usr/local/sbin/haproxy
@@ -130,6 +191,13 @@ from-images:
   - version: 8.0.34
     images:
       - ref: mysql:8.0.34@sha256:8b8835a2c32cd7357a5d2ea4b49ad870ff519c8c1d4add362803feddf4a0a973
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mysql
+
+  - version: 8.0.37
+    images:
+      - ref: mysql:8.0.37-bookworm@sha256:bad55a5bb69d6710927792384b5eb55669ee15dc85dca1888874e4a7993eecd8
         platform: linux/amd64
     paths:
       - /usr/bin/mysql
@@ -187,6 +255,27 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/openresty/nginx/sbin/nginx
+
+  - version: 0.10.48
+    images:
+      - ref: node:0.10.48@sha256:c32b4d56f05c69df6e87d06bf7d5f6a5c6a0e7bcdb8e5ffab0e7a1853a90008f
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/node
+
+  - version: 0.12.18
+    images:
+      - ref: node:0.12.18@sha256:02e8e9903c8d974e8874d0144413d398a41d62f54bafec4d2cf3ac2a8501dd28
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/node
+
+  - version: 4.9.1
+    images:
+      - ref: node:4.9.1@sha256:41d0ad2557ea2a9e57e1a458c1d659e92f601586e07dcffef74c9cef542f6f6e
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/node
 
   - version: 19.2.0
     images:
@@ -274,6 +363,13 @@ from-images:
     version: 3.11.8
     images:
       - ref: arangodb:3.11.8@sha256:16893e767f47d28e3297839637741e5c4023e815adf860dfc674e1a36c7c7db0
+        platform: linux/amd64
+    paths:
+      - /usr/bin/arangosh
+  - name: arangodb
+    version: 3.12.0-2
+    images:
+      - ref: arangodb:3.12.0.2@sha256:6ba2e4284cd0f4835e3ef034be90fb947c3d61225d65d07e3b2d2d893e47de25
         platform: linux/amd64
     paths:
       - /usr/bin/arangosh
@@ -425,6 +521,12 @@ from-images:
     paths:
       - /usr/local/bin/traefik
 
+  - version: 3.0.4
+    images:
+      - ref: traefik:3.0.4@sha256:12a7cc4232b5b7fe027673da8c096144525f59a8eabc87e52260aac0ec5a1219
+        platform: linux/riscv64
+    paths:
+      - /usr/local/bin/traefik
 
   # from the original dynamic fixtures...
 
@@ -483,6 +585,36 @@ from-images:
       - /usr/local/lib/libruby.so.2.7
 
   - name: ruby-shared-libs
+    version: 3.4.0-dev
+    images:
+      - ref: rubylang/ruby:master-dev-nightly-20240804-focal@sha256:b5fe8b9ac1e9638a4b08bda6a6343082a07623d1c01926e637eb4bbbbf159409
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.3.4.0
+      - /usr/local/lib/libruby.so.3.4
+
+  - name: ruby-shared-libs
+    version: 3.4.0-preview1
+    images:
+      - ref: ruby:3.4.0-preview1@sha256:88cad31539e1a4ab987ac4b00c45b86d8346c25e3b08ac647ccccfb21cee5890
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.3.4.0
+      - /usr/local/lib/libruby.so.3.4
+
+  - name: ruby-shared-libs
+    version: 3.3.0-rc1
+    images:
+      - ref: ruby:3.3.0-rc1@sha256:453c8bbb9b4e3b04b94ba58db77b648222f3c92936dc12b5ae96df48076c106b
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.3.3.0
+      - /usr/local/lib/libruby.so.3.3
+
+  - name: ruby-shared-libs
     version: 2.6.10
     images:
       - ref: ruby:2.6.10@sha256:771a810704167e55da8a19970c5dfa6eb795dfee32547adffa29ea72703f7243
@@ -513,6 +645,20 @@ from-images:
     paths:
       - /bin/consul
 
+  - version: 3.0.2
+    images:
+      - ref: fluent/fluent-bit:3.0.2-amd64@sha256:7e6fe8efd51dda0739e355f58bf5e3b1623cbf2d4a23c06c7a365d9553e2d242
+        platform: linux/amd64
+    paths:
+      - /fluent-bit/bin/fluent-bit
+
+  - version: 2.2.1
+    images:
+      - ref: fluent/fluent-bit:2.2.1-arm64@sha256:28eb03950eb0dac0ca6faead7fdd7261291d669a2b2f010113dab2c25b52b6bf
+        platform: linux/arm64
+    paths:
+      - /fluent-bit/bin/fluent-bit
+
   - name: openssl
     version: 1.1.1w
     images:
@@ -520,3 +666,67 @@ from-images:
         platform: linux/arm64
     paths:
       - /usr/local/openresty/openssl/bin/openssl
+
+  - name: curl
+    version: 8.9.1
+    images:
+      - ref: curlimages/curl:8.9.1@sha256:8addc281f0ea517409209f76832b6ddc2cabc3264feb1ebbec2a2521ffad24e4
+        platform: linux/amd64
+    paths:
+      - /usr/bin/curl
+
+  - name: lighttpd
+    version: 1.4.76
+    images:
+      - ref: jitesoft/lighttpd:1.4.76-cgi@sha256:f5d4500bfb992a20ca39369ae1ca1d8a7a9463bb8c59ee8dd85ddb6d96fc9fc1
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/lighttpd
+
+  - name: proftpd
+    version: 1.3.8b
+    images:
+      - ref: mekayelanik/proftpd-server-alpine:1.3.8b-r2@sha256:a1ef73a2de04999e53bf728b548ef9922febab8f5709037e40e0141cedcd66db
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/proftpd
+
+  - name: zstd
+    version: 1.5.6
+    images:
+      - ref: danysk/zstd:1.5.6@sha256:5eceba085b3a399592755dd66a37b8adfb83538af3f56b51bec6e6cc955e3b5f
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/zstd
+
+  - name: xz
+    version: 5.6.2
+    images:
+      - ref: docker:27.2.1@sha256:c51fa20028ff6590588d9ed97d3b16865d503a3d7228aa885871c5c292afa5ca
+        platform: linux/amd64
+    paths:
+      - /usr/bin/xz
+
+  - name: gzip
+    version: 1.12
+    images:
+      - ref: ubuntu:24.04@sha256:d35dfc2fe3ef66bcc085ca00d3152b482e6cafb23cdda1864154caf3b19094ba
+        platform: linux/amd64
+    paths:
+      - /usr/bin/gzip
+
+  - name: sqlcipher
+    version: 4.5.5
+    images:
+      - ref: yspreen/sqlcipher@sha256:93189cc465661f16ad23f3ace4206179bdd19967deaf08c54da5ac1e34bb6fb7
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/sqlcipher
+
+  - name: jq
+    version: 1.7.1
+    images:
+      - ref: efrecon/jq:1.7.1@sha256:0ad05e2e6d1dea5fe0852ecc23114eb768d60c4ce0985d729eb958809e7f31dd
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/jq

@@ -81,6 +81,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.HackageStackYamlLockEntry{}, "haskell-hackage-stack-lock-entry", "HackageMetadataType"),
 	jsonNamesWithoutLookup(pkg.HackageStackYamlEntry{}, "haskell-hackage-stack-entry", "HackageMetadataType"), // the legacy value is split into two types, where the other is preferred
 	jsonNames(pkg.JavaArchive{}, "java-archive", "JavaMetadata"),
+	jsonNames(pkg.JavaVMInstallation{}, "java-jvm-installation"),
 	jsonNames(pkg.MicrosoftKbPatch{}, "microsoft-kb-patch", "KbPatchMetadata"),
 	jsonNames(pkg.LinuxKernel{}, "linux-kernel-archive", "LinuxKernel"),
 	jsonNames(pkg.LinuxKernelModule{}, "linux-kernel-module", "LinuxKernelModule"),
@@ -102,9 +103,12 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.RpmDBEntry{}, "rpm-db-entry", "RpmMetadata", "RpmdbMetadata"),
 	jsonNamesWithoutLookup(pkg.RpmArchive{}, "rpm-archive", "RpmMetadata"), // the legacy value is split into two types, where the other is preferred
 	jsonNames(pkg.SwiftPackageManagerResolvedEntry{}, "swift-package-manager-lock-entry", "SwiftPackageManagerMetadata"),
+	jsonNames(pkg.SwiplPackEntry{}, "swiplpack-package"),
+	jsonNames(pkg.OpamPackage{}, "opam-package"),
 	jsonNames(pkg.RustCargoLockEntry{}, "rust-cargo-lock-entry", "RustCargoPackageMetadata"),
 	jsonNamesWithoutLookup(pkg.RustBinaryAuditEntry{}, "rust-cargo-audit-entry", "RustCargoPackageMetadata"), // the legacy value is split into two types, where the other is preferred
 	jsonNames(pkg.WordpressPluginEntry{}, "wordpress-plugin-entry", "WordpressMetadata"),
+	jsonNames(pkg.LuaRocksPackage{}, "luarocks-package"),
 )
 
 func expandLegacyNameVariants(names ...string) []string {

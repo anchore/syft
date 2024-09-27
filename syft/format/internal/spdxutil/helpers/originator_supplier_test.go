@@ -27,6 +27,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.HackageStackYamlLockEntry{},
 		pkg.HackageStackYamlEntry{},
 		pkg.LinuxKernel{},
+		pkg.LuaRocksPackage{},
 		pkg.MicrosoftKbPatch{},
 		pkg.NixStoreEntry{},
 		pkg.NpmPackageLockEntry{},
@@ -39,6 +40,8 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.RustBinaryAuditEntry{},
 		pkg.RustCargoLockEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
+		pkg.SwiplPackEntry{},
+		pkg.OpamPackage{},
 		pkg.YarnLockEntry{},
 	)
 	tests := []struct {
@@ -136,8 +139,8 @@ func Test_OriginatorSupplier(t *testing.T) {
 					},
 				},
 			},
-			originator: "Person: auth-spec",
-			supplier:   "Person: auth-spec",
+			originator: "Organization: auth-spec",
+			supplier:   "Organization: auth-spec",
 		},
 		{
 			name: "from java -- fallback to impl vendor in main manifest section",
@@ -153,8 +156,8 @@ func Test_OriginatorSupplier(t *testing.T) {
 					},
 				},
 			},
-			originator: "Person: auth-impl",
-			supplier:   "Person: auth-impl",
+			originator: "Organization: auth-impl",
+			supplier:   "Organization: auth-impl",
 		},
 		{
 			name: "from java -- non-main manifest sections ignored",
@@ -176,6 +179,18 @@ func Test_OriginatorSupplier(t *testing.T) {
 			// note: empty!
 		},
 		{
+			name: "from java -- jvm installation",
+			input: pkg.Package{
+				Metadata: pkg.JavaVMInstallation{
+					Release: pkg.JavaVMRelease{
+						Implementor: "Oracle",
+					},
+				},
+			},
+			originator: "Organization: Oracle",
+			supplier:   "Organization: Oracle",
+		},
+		{
 			name: "from linux kernel module",
 			input: pkg.Package{
 				Metadata: pkg.LinuxKernelModule{
@@ -184,6 +199,14 @@ func Test_OriginatorSupplier(t *testing.T) {
 			},
 			originator: "Person: auth",
 			supplier:   "Person: auth",
+		},
+		{
+			name: "from Lua Rockspecs",
+			input: pkg.Package{
+				Metadata: pkg.LuaRocksPackage{},
+			},
+			originator: "",
+			supplier:   "",
 		},
 		{
 			name: "from npm",
@@ -326,6 +349,27 @@ func Test_OriginatorSupplier(t *testing.T) {
 			},
 			originator: "Organization: auth",
 			supplier:   "Organization: auth",
+		},
+		{
+			name: "from swipl pack",
+			input: pkg.Package{
+				Metadata: pkg.SwiplPackEntry{
+					Author:        "auth",
+					AuthorEmail:   "auth@auth.gov",
+					Packager:      "me",
+					PackagerEmail: "me@auth.com",
+				},
+			},
+			originator: "Person: auth (auth@auth.gov)",
+			supplier:   "Person: me (me@auth.com)",
+		},
+		{
+			name: "from ocaml opam",
+			input: pkg.Package{
+				Metadata: pkg.OpamPackage{},
+			},
+			originator: "",
+			supplier:   "",
 		},
 	}
 	for _, test := range tests {

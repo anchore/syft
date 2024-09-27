@@ -25,6 +25,12 @@ Classifier: Operating System :: OS Independent
 Classifier: Topic :: Text Processing :: Filters
 Classifier: Topic :: Utilities
 Requires-Python: >=3.5
+Description-Content-Type: text/markdown
+Requires-Dist: soupsieve (>1.2)
+Provides-Extra: html5lib
+Requires-Dist: html5lib ; extra == 'html5lib'
+Provides-Extra: lxml
+Requires-Dist: lxml ; extra == 'lxml'
 
 
 Pygments

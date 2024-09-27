@@ -1,8 +1,10 @@
 package binary
 
 import (
+	"bytes"
 	"context"
 	"debug/elf"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 
@@ -79,7 +81,7 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 		}
 
 		// create a package for each unique name/version pair (based on the first note found)
-		pkgs = append(pkgs, newELFPackage(notes[0], noteLocations, nil))
+		pkgs = append(pkgs, newELFPackage(notes[0], noteLocations))
 	}
 
 	// why not return relationships? We have an executable cataloger that will note the dynamic libraries imported by
@@ -154,11 +156,42 @@ func getELFNotes(r file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
 		return nil, err
 	}
 
-	var metadata elfBinaryPackageNotes
-	if err := json.Unmarshal(notes, &metadata); err != nil {
-		log.WithFields("file", r.Location.Path(), "error", err).Trace("unable to unmarshal ELF package notes as JSON")
+	if len(notes) == 0 {
 		return nil, nil
 	}
 
-	return &metadata, err
+	{
+		var metadata elfBinaryPackageNotes
+		if err := json.Unmarshal(notes, &metadata); err == nil {
+			return &metadata, nil
+		}
+	}
+
+	{
+		var header elf64SectionHeader
+		headerSize := binary.Size(header) / 4
+		if len(notes) > headerSize {
+			var metadata elfBinaryPackageNotes
+			newPayload := bytes.TrimRight(notes[headerSize:], "\x00")
+			if err := json.Unmarshal(newPayload, &metadata); err == nil {
+				return &metadata, nil
+			}
+			log.WithFields("file", r.Location.Path(), "error", err).Trace("unable to unmarshal ELF package notes as JSON")
+		}
+	}
+
+	return nil, err
+}
+
+type elf64SectionHeader struct {
+	ShName      uint32
+	ShType      uint32
+	ShFlags     uint64
+	ShAddr      uint64
+	ShOffset    uint64
+	ShSize      uint64
+	ShLink      uint32
+	ShInfo      uint32
+	ShAddralign uint64
+	ShEntsize   uint64
 }

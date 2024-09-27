@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,6 +14,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/ui"
 )
+
+const digestFileSuffix = ".xxh64"
 
 func DownloadFromImage(dest string, config config.BinaryFromImage) error {
 	t := ui.Title{Name: config.Name(), Version: config.Version}
@@ -39,22 +42,22 @@ func DownloadFromImage(dest string, config config.BinaryFromImage) error {
 }
 
 func isDownloadStale(config config.BinaryFromImage, binaryPaths []string) bool {
-	currentFingerprint := config.Fingerprint()
+	currentDigest := config.Digest()
 
 	for _, path := range binaryPaths {
-		fingerprintPath := path + ".fingerprint"
-		if _, err := os.Stat(fingerprintPath); err != nil {
+		digestPath := path + digestFileSuffix
+		if _, err := os.Stat(digestPath); err != nil {
 			// missing a fingerprint file means the download is stale
 			return true
 		}
 
-		writtenFingerprint, err := os.ReadFile(fingerprintPath)
+		writtenDigest, err := os.ReadFile(digestPath)
 		if err != nil {
 			// missing a fingerprint file means the download is stale
 			return true
 		}
 
-		if string(writtenFingerprint) != currentFingerprint {
+		if string(writtenDigest) != currentDigest {
 			// the fingerprint file does not match the current fingerprint, so the download is stale
 			return true
 		}
@@ -103,6 +106,12 @@ func pullDockerImage(imageReference, platform string) error {
 	cmd := exec.Command("docker", "pull", "--platform", platform, imageReference)
 	err := cmd.Run()
 	if err != nil {
+		// attach stderr to output message
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && len(exitErr.Stderr) > 0 {
+			err = fmt.Errorf("pull failed: %w:\n%s", err, exitErr.Stderr)
+		}
+
 		a.Done(err)
 		return err
 	}
@@ -152,17 +161,23 @@ func copyBinariesFromDockerImage(config config.BinaryFromImage, destination stri
 
 	cmd := exec.Command("docker", "create", "--name", containerName, image.Reference)
 	if err = cmd.Run(); err != nil {
+		// attach stderr to output message
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && len(exitErr.Stderr) > 0 {
+			err = fmt.Errorf("%w:\n%s", err, exitErr.Stderr)
+		}
+
 		return err
 	}
 
 	defer func() {
 		cmd := exec.Command("docker", "rm", containerName)
-		cmd.Run() // nolint:errcheck
+		cmd.Run() //nolint:errcheck
 	}()
 
 	for i, destinationPath := range config.AllStorePathsForImage(image, destination) {
 		path := config.PathsInImage[i]
-		if err := copyBinaryFromContainer(containerName, path, destinationPath, config.Fingerprint()); err != nil {
+		if err := copyBinaryFromContainer(containerName, path, destinationPath, config.Digest()); err != nil {
 			return err
 		}
 	}
@@ -170,7 +185,7 @@ func copyBinariesFromDockerImage(config config.BinaryFromImage, destination stri
 	return nil
 }
 
-func copyBinaryFromContainer(containerName, containerPath, destinationPath, fingerprint string) (err error) {
+func copyBinaryFromContainer(containerName, containerPath, destinationPath, digest string) (err error) {
 	a := ui.Action{Msg: fmt.Sprintf("extract %s", containerPath)}
 	a.Start()
 
@@ -182,16 +197,27 @@ func copyBinaryFromContainer(containerName, containerPath, destinationPath, fing
 		return err
 	}
 
-	cmd := exec.Command("docker", "cp", fmt.Sprintf("%s:%s", containerName, containerPath), destinationPath) // nolint:gosec
+	cmd := exec.Command("docker", "cp", fmt.Sprintf("%s:%s", containerName, containerPath), destinationPath) //nolint:gosec
 	// reason for gosec exception: this is for processing test fixtures only, not used in production
 	if err := cmd.Run(); err != nil {
+		// attach stderr to output message
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && len(exitErr.Stderr) > 0 {
+			err = fmt.Errorf("%w:\n%s", err, exitErr.Stderr)
+		}
+
 		return err
 	}
 
-	// capture fingerprint file
-	fingerprintPath := destinationPath + ".fingerprint"
-	if err := os.WriteFile(fingerprintPath, []byte(fingerprint), 0600); err != nil {
-		return fmt.Errorf("unable to write fingerprint file: %w", err)
+	// ensure permissions are 600 for destination
+	if err := os.Chmod(destinationPath, 0600); err != nil {
+		return fmt.Errorf("unable to set permissions on file %q: %w", destinationPath, err)
+	}
+
+	// capture digest file
+	digestPath := destinationPath + digestFileSuffix
+	if err := os.WriteFile(digestPath, []byte(digest), 0600); err != nil {
+		return fmt.Errorf("unable to write digest file: %w", err)
 	}
 
 	return nil

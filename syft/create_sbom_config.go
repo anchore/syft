@@ -19,6 +19,7 @@ import (
 // CreateSBOMConfig specifies all parameters needed for creating an SBOM.
 type CreateSBOMConfig struct {
 	// required configuration input to specify how cataloging should be performed
+	Compliance         cataloging.ComplianceConfig
 	Search             cataloging.SearchConfig
 	Relationships      cataloging.RelationshipsConfig
 	DataGeneration     cataloging.DataGenerationConfig
@@ -38,6 +39,7 @@ type CreateSBOMConfig struct {
 
 func DefaultCreateSBOMConfig() *CreateSBOMConfig {
 	return &CreateSBOMConfig{
+		Compliance:           cataloging.DefaultComplianceConfig(),
 		Search:               cataloging.DefaultSearchConfig(),
 		Relationships:        cataloging.DefaultRelationshipsConfig(),
 		DataGeneration:       cataloging.DefaultDataGenerationConfig(),
@@ -90,6 +92,12 @@ func (c *CreateSBOMConfig) WithParallelism(p int) *CreateSBOMConfig {
 		p = 1
 	}
 	c.Parallelism = p
+	return c
+}
+
+// WithComplianceConfig allows for setting the specific compliance configuration for cataloging.
+func (c *CreateSBOMConfig) WithComplianceConfig(cfg cataloging.ComplianceConfig) *CreateSBOMConfig {
+	c.Compliance = cfg
 	return c
 }
 
@@ -225,6 +233,7 @@ func (c *CreateSBOMConfig) packageTasks(src source.Description) ([]task.Task, *t
 		RelationshipsConfig:  c.Relationships,
 		DataGenerationConfig: c.DataGeneration,
 		PackagesConfig:       c.Packages,
+		ComplianceConfig:     c.Compliance,
 	}
 
 	persistentTasks, selectableTasks, err := c.allPackageTasks(cfg)

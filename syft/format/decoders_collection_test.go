@@ -2,12 +2,14 @@ package format
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/format/spdxjson"
 	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -35,6 +37,17 @@ func TestIdentify(t *testing.T) {
 
 		})
 	}
+}
+
+func TestDecodeUnseekable(t *testing.T) {
+	reader, err := os.Open("spdxjson/test-fixtures/spdx/example7-go-module.spdx.json")
+	assert.NoError(t, err)
+
+	// io.NopCloser wraps the reader in a non-seekable type
+	unseekableReader := io.NopCloser(reader)
+	_, formatID, _, err := Decode(unseekableReader)
+	assert.NoError(t, err)
+	assert.Equal(t, spdxjson.ID, formatID)
 }
 
 func TestFormats_EmptyInput(t *testing.T) {

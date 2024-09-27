@@ -123,7 +123,7 @@ func TestSplitAny(t *testing.T) {
 			name:   "empty",
 			input:  "",
 			fields: ",",
-			want:   []string{},
+			want:   []string{""},
 		},
 		{
 			name:   "multiple separators",

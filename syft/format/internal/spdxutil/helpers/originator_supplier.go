@@ -34,7 +34,7 @@ const (
 //
 // Available options are: <omit>, NOASSERTION, Person: <person>, Organization: <org>
 // return values are: <type>, <value>
-func Originator(p pkg.Package) (typ string, author string) { // nolint: funlen
+func Originator(p pkg.Package) (typ string, author string) { //nolint: funlen
 	if !hasMetadata(p) {
 		return typ, author
 	}
@@ -56,7 +56,15 @@ func Originator(p pkg.Package) (typ string, author string) { // nolint: funlen
 			if author == "" {
 				author = metadata.Manifest.Main.MustGet("Implementation-Vendor")
 			}
+			// Vendor is specified, hence set 'Organization' as the PackageSupplier
+			if author != "" {
+				typ = orgType
+			}
 		}
+
+	case pkg.JavaVMInstallation:
+		typ = orgType
+		author = metadata.Release.Implementor
 
 	case pkg.LinuxKernelModule:
 		author = metadata.Author
@@ -103,6 +111,8 @@ func Originator(p pkg.Package) (typ string, author string) { // nolint: funlen
 		// it seems that the vast majority of the time the author is an org, not a person
 		typ = orgType
 		author = metadata.Author
+	case pkg.SwiplPackEntry:
+		author = formatPersonOrOrg(metadata.Author, metadata.AuthorEmail)
 	}
 
 	if typ == "" && author != "" {
@@ -142,6 +152,10 @@ func Supplier(p pkg.Package) (typ string, author string) {
 		// case and sticks to the semantically correct interpretation of the "packager" (which says nothing about the
 		// authorship of the upstream software).
 		author = metadata.Packager
+	}
+
+	if metadata, ok := p.Metadata.(pkg.SwiplPackEntry); ok {
+		author = formatPersonOrOrg(metadata.Packager, metadata.PackagerEmail)
 	}
 
 	if author == "" {

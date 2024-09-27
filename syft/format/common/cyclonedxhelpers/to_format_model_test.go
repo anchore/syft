@@ -236,6 +236,53 @@ func Test_toBomDescriptor(t *testing.T) {
 	}
 }
 
+func Test_toBomProperties(t *testing.T) {
+	tests := []struct {
+		name        string
+		srcMetadata source.Description
+		props       *[]cyclonedx.Property
+	}{
+		{
+			name: "ImageMetadata without labels",
+			srcMetadata: source.Description{
+				Metadata: source.ImageMetadata{
+					Labels: map[string]string{},
+				},
+			},
+			props: nil,
+		},
+		{
+			name: "ImageMetadata with labels",
+			srcMetadata: source.Description{
+				Metadata: source.ImageMetadata{
+					Labels: map[string]string{
+						"label1": "value1",
+						"label2": "value2",
+					},
+				},
+			},
+			props: &[]cyclonedx.Property{
+				{Name: "syft:image:labels:label1", Value: "value1"},
+				{Name: "syft:image:labels:label2", Value: "value2"},
+			},
+		},
+		{
+			name: "not ImageMetadata",
+			srcMetadata: source.Description{
+				Metadata: source.FileMetadata{},
+			},
+			props: nil,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			props := toBomProperties(test.srcMetadata)
+			require.Equal(t, test.props, props)
+		})
+	}
+}
+
 func Test_toOsComponent(t *testing.T) {
 	tests := []struct {
 		name     string

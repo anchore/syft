@@ -121,7 +121,7 @@ func pinsForVersion(data map[string]interface{}, version float64) ([]packagePin,
 				pin.State.Version,
 			})
 		}
-	case 2:
+	case 2, 3:
 		t := packageResolvedV2{}
 		jsonString, err := json.Marshal(data)
 		if err != nil {

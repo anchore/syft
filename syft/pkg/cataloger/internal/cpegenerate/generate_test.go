@@ -203,6 +203,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:nexus:nexus:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:sonatype:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:sonatype:nexus:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.sonatype.nexus:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.sonatype.nexus:nexus:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -371,6 +373,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cloudbees:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:com.cloudbees.jenkins.plugins:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -394,6 +397,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:something:something:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:something:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:io.jenkins.plugins.name.something:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:io.jenkins.plugins.name.something:something:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -413,6 +418,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:io.jenkins.plugins:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -434,6 +440,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins-ci:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins_ci:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:io.jenkins-ci.plugins:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -455,6 +462,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins-ci:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins_ci:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.jenkins-ci.plugins:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -489,6 +497,9 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jira_client_core:jira-client-core:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jira_client_core:jira:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jira_client_core:jira_client_core:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.atlassian.jira:jira:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.atlassian.jira:jira_client_core:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.atlassian.jira:jira-client-core:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -521,6 +532,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:modules:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:modules:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:com.cloudbees.jenkins.modules:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:com.cloudbees.jenkins.modules:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -594,6 +607,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins:handlebars:3.0.8:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins_ci:handlebars:3.0.8:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ui:handlebars:3.0.8:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.jenkins-ci.ui:handlebars:3.0.8:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -631,6 +645,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins:active_directory:2.25.1:*:*:*:*:*:*:*", // important!
 				"cpe:2.3:a:jenkins_ci:active-directory:2.25.1:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins_ci:active_directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.jenkins-ci.plugins:active-directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.jenkins-ci.plugins:active_directory:2.25.1:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -717,6 +733,31 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:ruby_rake:rake:2.7.6-r0:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby_rake:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby_rake:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "wordpress plugin",
+			p: pkg.Package{
+				Name:    "WP Coder",
+				Version: "2.5.1",
+				Type:    pkg.WordpressPluginPkg,
+				Metadata: pkg.WordpressPluginEntry{
+					PluginInstallDirectory: "wp-coder",
+					Author:                 "Wow-Company",
+					AuthorURI:              "https://wow-estore.com",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:wow-company:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow-company:wp_coder:2.5.1:*:*:*:*:wordpress:*:*", // this is the correct CPE relative to CVE-2021-25053
+				"cpe:2.3:a:wow-estore:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow-estore:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_company:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_company:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_estore:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_estore:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
 			},
 		},
 	}

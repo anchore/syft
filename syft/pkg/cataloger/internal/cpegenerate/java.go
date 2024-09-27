@@ -23,6 +23,7 @@ var (
 	}
 
 	PrimaryJavaManifestGroupIDFields = []string{
+		"Group-Id",
 		"Bundle-SymbolicName",
 		"Extension-Name",
 		"Specification-Vendor",
@@ -98,6 +99,13 @@ func vendorsFromJavaManifestNames(p pkg.Package) fieldCandidateSet {
 func vendorsFromGroupIDs(groupIDs []string) fieldCandidateSet {
 	vendors := newFieldCandidateSet()
 	for _, groupID := range groupIDs {
+		// always include the groupId as a vendor -- the Grype database may include alternate matches with these
+		vendors.add(fieldCandidate{
+			value:                       groupID,
+			disallowSubSelections:       true,
+			disallowDelimiterVariations: true,
+		})
+
 		for i, field := range strings.Split(groupID, ".") {
 			field = strings.TrimSpace(field)
 

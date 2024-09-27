@@ -194,7 +194,7 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	}
 	defer internal.CloseAndLogError(metadataContents, metadataLocation.AccessPath)
 
-	pd, err := parseWheelOrEggMetadata(metadataLocation.RealPath, metadataContents)
+	pd, err := parseWheelOrEggMetadata(file.NewLocationReadCloser(metadataLocation, metadataContents))
 	if err != nil {
 		return nil, nil, err
 	}

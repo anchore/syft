@@ -110,6 +110,7 @@ func TestParseRpmDB(t *testing.T) {
 						Size:            12406784,
 						Vendor:          "",
 						ModularityLabel: strRef(""),
+						Provides:        []string{"dive"},
 						Files:           []pkg.RpmFileRecord{},
 					},
 				},
@@ -139,6 +140,7 @@ func TestParseRpmDB(t *testing.T) {
 						Size:            12406784,
 						Vendor:          "",
 						ModularityLabel: strRef(""),
+						Provides:        []string{"dive"},
 						Files: []pkg.RpmFileRecord{
 							{
 								Path: "/usr/local/bin/dive",

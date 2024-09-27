@@ -49,6 +49,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "arangodb/3.12.0-2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "arangodb",
+				Version:   "3.12.0-2",
+				Type:      "binary",
+				PURL:      "pkg:generic/arangodb@3.12.0-2",
+				Locations: locations("arangosh"),
+				Metadata:  metadata("arangodb-binary"),
+			},
+		},
+		{
 			logicalFixture: "postgres/15beta4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",
@@ -101,6 +112,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "8.0.34",
 				Type:      "binary",
 				PURL:      "pkg:generic/mysql@8.0.34",
+				Locations: locations("mysql"),
+				Metadata:  metadata("mysql-binary"),
+			},
+		},
+		{
+			logicalFixture: "mysql/8.0.37/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql",
+				Version:   "8.0.37",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql@8.0.37",
 				Locations: locations("mysql"),
 				Metadata:  metadata("mysql-binary"),
 			},
@@ -189,6 +211,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "2.10.7",
 				Type:      "binary",
 				PURL:      "pkg:generic/traefik@2.10.7",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			logicalFixture: "traefik/3.0.4/linux-riscv64",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "3.0.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@3.0.4",
 				Locations: locations("traefik"),
 				Metadata:  metadata("traefik-binary"),
 			},
@@ -326,7 +359,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("haproxy-binary"),
 			},
 		},
-
+		{
+			logicalFixture: "haproxy/3.1-dev0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haproxy",
+				Version:   "3.1-dev0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haproxy@3.1-dev0",
+				Locations: locations("haproxy"),
+				Metadata:  metadata("haproxy-binary"),
+			},
+		},
 		{
 			logicalFixture: "helm/3.11.1/linux-amd64",
 			expected: pkg.Package{
@@ -583,6 +626,36 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "node/0.10.48/linux-amd64",
+			expected: pkg.Package{
+				Name:      "node",
+				Version:   "0.10.48",
+				PURL:      "pkg:generic/node@0.10.48",
+				Locations: locations("node"),
+				Metadata:  metadata("nodejs-binary"),
+			},
+		},
+		{
+			logicalFixture: "node/0.12.18/linux-amd64",
+			expected: pkg.Package{
+				Name:      "node",
+				Version:   "0.12.18",
+				PURL:      "pkg:generic/node@0.12.18",
+				Locations: locations("node"),
+				Metadata:  metadata("nodejs-binary"),
+			},
+		},
+		{
+			logicalFixture: "node/4.9.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "node",
+				Version:   "4.9.1",
+				PURL:      "pkg:generic/node@4.9.1",
+				Locations: locations("node"),
+				Metadata:  metadata("nodejs-binary"),
+			},
+		},
+		{
 			logicalFixture: "node/19.2.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "node",
@@ -614,6 +687,16 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/busybox@1.36.1",
 				Locations: locations("["), // note: busybox is a link to [
 				Metadata:  metadata("busybox-binary", "[", "busybox"),
+			},
+		},
+		{
+			logicalFixture: `util-linux/2.37.4/linux-amd64`,
+			expected: pkg.Package{
+				Name:      "util-linux",
+				Version:   "2.37.4",
+				PURL:      "pkg:generic/util-linux@2.37.4",
+				Locations: locations("getopt"),
+				Metadata:  metadata("util-linux-binary"),
 			},
 		},
 		{
@@ -799,6 +882,60 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		},
 		{
 			// note: dynamic (non-snippet) test case
+			name:           "positive-ruby-3.4.0-dev",
+			logicalFixture: "ruby-shared-libs/3.4.0-dev/linux-amd64",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "3.4.0dev",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@3.4.0dev",
+				Locations: locations("ruby", "libruby.so.3.4.0"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.3.4.0"),
+					},
+				},
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			name:           "positive-ruby-3.4.0-preview1",
+			logicalFixture: "ruby-shared-libs/3.4.0-preview1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "3.4.0preview1",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@3.4.0preview1",
+				Locations: locations("ruby", "libruby.so.3.4.0"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.3.4.0"),
+					},
+				},
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			name:           "positive-ruby-3.3.0-rc1",
+			logicalFixture: "ruby-shared-libs/3.3.0-rc1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "3.3.0rc1",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@3.3.0rc1",
+				Locations: locations("ruby", "libruby.so.3.3.0"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.3.3.0"),
+					},
+				},
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
 			logicalFixture: "ruby-bullseye-shared-libs/2.7.7/linux-amd64",
 			expected: pkg.Package{
 				Name:      "ruby",
@@ -887,6 +1024,72 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "erlang/27.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "erlang",
+				Version:   "27.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/erlang@27.0",
+				Locations: locations("beam.smp"),
+				Metadata:  metadata("erlang-alpine-binary"),
+			},
+		},
+		{
+			logicalFixture: "swipl/9.3.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "swipl",
+				Version:   "9.3.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/swipl@9.3.8",
+				Locations: locations("swipl"),
+				Metadata:  metadata("swipl-binary"),
+			},
+		},
+		{
+			logicalFixture: "dart/3.5.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "dart",
+				Version:   "3.5.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/dart@3.5.2",
+				Locations: locations("dart"),
+				Metadata:  metadata("dart-binary"),
+			},
+		},
+		{
+			logicalFixture: "dart/3.6.0-216.1.beta/linux-amd64",
+			expected: pkg.Package{
+				Name:      "dart",
+				Version:   "3.6.0-216.1.beta",
+				Type:      "binary",
+				PURL:      "pkg:generic/dart@3.6.0-216.1.beta",
+				Locations: locations("dart"),
+				Metadata:  metadata("dart-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-ghc/9.6.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/ghc",
+				Version:   "9.6.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/ghc@9.6.5",
+				Locations: locations("ghc-9.6.5"),
+				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-cabal/3.10.3.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/cabal",
+				Version:   "3.10.3.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/cabal@3.10.3.0",
+				Locations: locations("cabal"),
+				Metadata:  metadata("haskell-cabal-binary"),
+			},
+		},
+		{
 			logicalFixture: "nginx/1.25.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "nginx",
@@ -953,6 +1156,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "fluent-bit/3.0.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "fluent-bit",
+				Version:   "3.0.2",
+				Type:      "binary",
+				PURL:      "pkg:github/fluent/fluent-bit@3.0.2",
+				Locations: locations("fluent-bit"),
+				Metadata:  metadata("fluent-bit-binary"),
+			},
+		},
+		{
+			logicalFixture: "fluent-bit/2.2.1/linux-arm64",
+			expected: pkg.Package{
+				Name:      "fluent-bit",
+				Version:   "2.2.1",
+				Type:      "binary",
+				PURL:      "pkg:github/fluent/fluent-bit@2.2.1",
+				Locations: locations("fluent-bit"),
+				Metadata:  metadata("fluent-bit-binary"),
+			},
+		},
+		{
 			logicalFixture: "wp/2.9.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "wp-cli",
@@ -961,6 +1186,94 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/wp-cli@2.9.0",
 				Locations: locations("wp"),
 				Metadata:  metadata("wordpress-cli-binary"),
+			},
+		},
+		{
+			logicalFixture: "lighttpd/1.4.76/linux-amd64",
+			expected: pkg.Package{
+				Name:      "lighttpd",
+				Version:   "1.4.76",
+				Type:      "binary",
+				PURL:      "pkg:generic/lighttpd@1.4.76",
+				Locations: locations("lighttpd"),
+				Metadata:  metadata("lighttpd-binary"),
+			},
+		},
+		{
+			logicalFixture: "proftpd/1.3.8b/linux-amd64",
+			expected: pkg.Package{
+				Name:      "proftpd",
+				Version:   "1.3.8b",
+				Type:      "binary",
+				PURL:      "pkg:generic/proftpd@1.3.8b",
+				Locations: locations("proftpd"),
+				Metadata:  metadata("proftpd-binary"),
+			},
+		},
+		{
+			logicalFixture: "zstd/1.5.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "zstd",
+				Version:   "1.5.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/zstd@1.5.6",
+				Locations: locations("zstd"),
+				Metadata:  metadata("zstd-binary"),
+			},
+		},
+		{
+			logicalFixture: "zstd/1.5.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "zstd",
+				Version:   "1.5.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/zstd@1.5.6",
+				Locations: locations("zstd"),
+				Metadata:  metadata("zstd-binary"),
+			},
+		},
+		{
+			logicalFixture: "xz/5.6.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "xz",
+				Version:   "5.6.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/xz@5.6.2",
+				Locations: locations("xz"),
+				Metadata:  metadata("xz-binary"),
+			},
+		},
+		{
+			logicalFixture: "gzip/1.12/linux-amd64",
+			expected: pkg.Package{
+				Name:      "gzip",
+				Version:   "1.12",
+				Type:      "binary",
+				PURL:      "pkg:generic/gzip@1.12",
+				Locations: locations("gzip"),
+				Metadata:  metadata("gzip-binary"),
+			},
+		},
+		{
+			logicalFixture: "sqlcipher/4.5.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "sqlcipher",
+				Version:   "4.5.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/sqlcipher@4.5.5",
+				Locations: locations("sqlcipher"),
+				Metadata:  metadata("sqlcipher-binary"),
+			},
+		},
+		{
+			logicalFixture: "jq/1.7.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "jq",
+				Version:   "1.7.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/jq@1.7.1",
+				Locations: locations("jq"),
+				Metadata:  metadata("jq-binary"),
 			},
 		},
 	}

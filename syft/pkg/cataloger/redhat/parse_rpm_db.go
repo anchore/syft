@@ -17,7 +17,8 @@ import (
 )
 
 // parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.
-// nolint:funlen
+//
+//nolint:funlen
 func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	f, err := os.CreateTemp("", "rpmdb")
 	if err != nil {
@@ -74,6 +75,8 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 			Size:            entry.Size,
 			ModularityLabel: &entry.Modularitylabel,
 			Files:           extractRpmFileRecords(resolver, *entry),
+			Provides:        entry.Provides,
+			Requires:        entry.Requires,
 		}
 
 		p := newDBPackage(

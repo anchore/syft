@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "testpkg"
+version = "0.1.0"
+description = ""
+authors = ["Alex Goodman <wagoodman@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+httpx = {extras = ["brotli", "http2", "socks"], version = "^0.27.0"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

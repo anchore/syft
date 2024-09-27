@@ -1,8 +1,19 @@
 BIN=./bin
 TOOL_IMAGE=localhost/syft-bin-build-tools:latest
 VERIFY_FILE=actual_verify
+FINGERPRINT_FILE=$(BIN).fingerprint
 
-all: build verify
+ifndef BIN
+    $(error BIN is not set)
+endif
+
+.DEFAULT_GOAL := fixtures
+
+# requirement 1: 'fixtures' goal to generate any and all test fixtures
+fixtures: build verify
+
+# requirement 2: 'fingerprint' goal to determine if the fixture input that indicates any existing cache should be busted
+fingerprint: $(FINGERPRINT_FILE)
 
 tools-check:
 	@sha256sum -c Dockerfile.sha256 || (echo "Tools Dockerfile has changed" && exit 1)
@@ -25,10 +36,14 @@ verify: tools
 debug:
 	docker run -i --rm -v $(shell pwd):/mount -w /mount/project $(TOOL_IMAGE) bash
 
-cache.fingerprint:
-	@find project Dockerfile Makefile -type f -exec md5sum {} + | awk '{print $1}' | sort | tee cache.fingerprint
+# requirement 3: we always need to recalculate the fingerprint based on source regardless of any existing fingerprint
+.PHONY: $(FINGERPRINT_FILE)
+$(FINGERPRINT_FILE):
+	@find project Dockerfile Makefile -type f -exec sha256sum {} \; | sort -k2 > $(FINGERPRINT_FILE)
+	@#cat $(FINGERPRINT_FILE) | sha256sum | awk '{print $$1}'
 
+# requirement 4: 'clean' goal to remove all generated test fixtures
 clean:
-	rm -f $(BIN)/*
+	rm -rf $(BIN) Dockerfile.sha256 $(VERIFY_FILE) $(FINGERPRINT_FILE)
 
-.PHONY: build verify debug build-image build-bins clean dockerfile-check cache.fingerprint
+.PHONY: tools tools-check build verify debug clean
