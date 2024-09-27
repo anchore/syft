@@ -626,6 +626,36 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "node/0.10.48/linux-amd64",
+			expected: pkg.Package{
+				Name:      "node",
+				Version:   "0.10.48",
+				PURL:      "pkg:generic/node@0.10.48",
+				Locations: locations("node"),
+				Metadata:  metadata("nodejs-binary"),
+			},
+		},
+		{
+			logicalFixture: "node/0.12.18/linux-amd64",
+			expected: pkg.Package{
+				Name:      "node",
+				Version:   "0.12.18",
+				PURL:      "pkg:generic/node@0.12.18",
+				Locations: locations("node"),
+				Metadata:  metadata("nodejs-binary"),
+			},
+		},
+		{
+			logicalFixture: "node/4.9.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "node",
+				Version:   "4.9.1",
+				PURL:      "pkg:generic/node@4.9.1",
+				Locations: locations("node"),
+				Metadata:  metadata("nodejs-binary"),
+			},
+		},
+		{
 			logicalFixture: "node/19.2.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "node",
