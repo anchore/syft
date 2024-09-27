@@ -256,6 +256,27 @@ from-images:
     paths:
       - /usr/local/openresty/nginx/sbin/nginx
 
+  - version: 0.10.48
+    images:
+      - ref: node:0.10.48@sha256:c32b4d56f05c69df6e87d06bf7d5f6a5c6a0e7bcdb8e5ffab0e7a1853a90008f
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/node
+
+  - version: 0.12.18
+    images:
+      - ref: node:0.12.18@sha256:02e8e9903c8d974e8874d0144413d398a41d62f54bafec4d2cf3ac2a8501dd28
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/node
+
+  - version: 4.9.1
+    images:
+      - ref: node:4.9.1@sha256:41d0ad2557ea2a9e57e1a458c1d659e92f601586e07dcffef74c9cef542f6f6e
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/node
+
   - version: 19.2.0
     images:
       - ref: node:19.2.0@sha256:9bf5846b28f63acab0ccb0a39a245fbc414e6b7ecd467282f58016537c06e159
