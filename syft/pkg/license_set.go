@@ -52,13 +52,15 @@ func (s *LicenseSet) Add(licenses ...License) {
 	for _, l := range licenses {
 		// we only want to add licenses that have a value
 		// note, this check should be moved to the license constructor in the future
-		if l.Value != "" {
-			if id, merged, err := s.addToExisting(l); err == nil && !merged {
-				// doesn't exist, add it
-				s.set[id] = l
-			} else if err != nil {
-				log.Trace("license set failed to add license %#v: %+v", l, err)
-			}
+		if l.Value != "" && l.FullText != "" {
+			continue
+		}
+
+		if id, merged, err := s.addToExisting(l); err == nil && !merged {
+			// doesn't exist, add it
+			s.set[id] = l
+		} else if err != nil {
+			log.Trace("license set failed to add license %#v: %+v", l, err)
 		}
 	}
 }

@@ -24,6 +24,7 @@ var _ sort.Interface = (*Licenses)(nil)
 // in order to distinguish if packages should be kept separate
 // this is different for licenses since we're only looking for evidence
 // of where a license was declared/concluded for a given package
+// Licenses can either be FullText, A valid SPDXExpression, or the Value passed from the cataloger if none of the above
 type License struct {
 	Value          string
 	SPDXExpression string
@@ -31,6 +32,13 @@ type License struct {
 	Type           license.Type
 	URLs           []string         `hash:"ignore"`
 	Locations      file.LocationSet `hash:"ignore"`
+}
+
+func (l License) Empty() bool {
+	if l.FullText == "" && l.SPDXExpression == "" && l.Value == "" {
+		return true
+	}
+	return false
 }
 
 type Licenses []License
@@ -68,25 +76,28 @@ func NewLicense(value string) License {
 
 func NewLicenseFromType(value string, t license.Type) License {
 	var spdxExpression string
-	if value != "" {
-		// when a metadata field contains a newline this is most likely an indicator
-		// of a full text license having made it to the constructor
-		// in this case we annotate this as the full text to not lose value and do not extract the complex case
-		if strings.Contains(value, "\n") {
-			return License{
-				FullText: value,
-			}
+	// when a metadata field contains a newline this is most likely an indicator
+	// of a full text license having made it to the constructor
+	// in this case we annotate this as the full text to not lose value and do not extract the complex case
+	if strings.Contains(value, "\n") {
+		return License{
+			FullText: value,
 		}
+	}
 
-		var err error
-		spdxExpression, err = license.ParseExpression(value)
-		if err != nil {
-			log.WithFields("error", err, "license", value).Trace("unable to parse license expression")
+	// If we can't find a valid SPDX Expression we just return the value as is
+	var err error
+	spdxExpression, err = license.ParseExpression(value)
+	if err != nil {
+		log.WithFields("error", err, "license", value).Trace("unable to parse license expression")
+		return License{
+			Value:     value,
+			Type:      t,
+			Locations: file.NewLocationSet(),
 		}
 	}
 
 	return License{
-		Value:          value,
 		SPDXExpression: spdxExpression,
 		Type:           t,
 		Locations:      file.NewLocationSet(),
@@ -148,12 +159,12 @@ func NewLicenseFromFields(value, url string, location *file.Location) License {
 // Merge two licenses into a new license object. If the merge is not possible due to conflicting fields
 // (e.g. different values for Value, SPDXExpression, Type, or any non-collection type) an error is returned.
 // TODO: this is a bit of a hack to not infinitely recurse when hashing a license
-func (s License) Merge(l License) (*License, error) {
-	sHash, err := artifact.IDByHash(s)
+func (l License) Merge(lic License) (*License, error) {
+	sHash, err := artifact.IDByHash(l)
 	if err != nil {
 		return nil, err
 	}
-	lHash, err := artifact.IDByHash(l)
+	lHash, err := artifact.IDByHash(lic)
 	if err != nil {
 		return nil, err
 	}
@@ -162,23 +173,23 @@ func (s License) Merge(l License) (*License, error) {
 	}
 
 	// try to keep s.URLs unallocated unless necessary (which is the default state from the constructor)
+	if len(lic.URLs) > 0 {
+		l.URLs = append(l.URLs, lic.URLs...)
+	}
+
 	if len(l.URLs) > 0 {
-		s.URLs = append(s.URLs, l.URLs...)
+		l.URLs = strset.New(l.URLs...).List()
+		sort.Strings(l.URLs)
 	}
 
-	if len(s.URLs) > 0 {
-		s.URLs = strset.New(s.URLs...).List()
-		sort.Strings(s.URLs)
-	}
-
-	if l.Locations.Empty() {
-		return &s, nil
+	if lic.Locations.Empty() {
+		return &l, nil
 	}
 
 	// since the set instance has a reference type (map) we must make a new instance
-	locations := file.NewLocationSet(s.Locations.ToSlice()...)
-	locations.Add(l.Locations.ToSlice()...)
-	s.Locations = locations
+	locations := file.NewLocationSet(l.Locations.ToSlice()...)
+	locations.Add(lic.Locations.ToSlice()...)
+	l.Locations = locations
 
-	return &s, nil
+	return &l, nil
 }

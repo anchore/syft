@@ -64,23 +64,16 @@ type SPDXLicense struct {
 
 func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 	for _, l := range raw {
-		if l.Value == "" {
+		if l.Empty() {
 			continue
 		}
 
 		candidate := SPDXLicense{}
+		// a pkg license can have a couple combinations of values
 		if l.SPDXExpression != "" {
 			candidate.ID = l.SPDXExpression
-		} else {
-			// we did not find a valid SPDX license ID so treat as separate license
-			if len(l.Value) <= 64 {
-				// if the license text is less than the size of the hash,
-				// just use it directly so the id is more readable
-				candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
-			} else {
-				hash := sha256.Sum256([]byte(l.Value))
-				candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
-			}
+			hash := sha256.Sum256([]byte(l.Value))
+			candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
 			candidate.Value = l.Value
 		}
 
