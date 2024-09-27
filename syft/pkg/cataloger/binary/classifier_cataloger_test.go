@@ -852,6 +852,60 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		},
 		{
 			// note: dynamic (non-snippet) test case
+			name:           "positive-ruby-3.4.0-dev",
+			logicalFixture: "ruby-shared-libs/3.4.0-dev/linux-amd64",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "3.4.0dev",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@3.4.0dev",
+				Locations: locations("ruby", "libruby.so.3.4.0"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.3.4.0"),
+					},
+				},
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			name:           "positive-ruby-3.4.0-preview1",
+			logicalFixture: "ruby-shared-libs/3.4.0-preview1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "3.4.0preview1",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@3.4.0preview1",
+				Locations: locations("ruby", "libruby.so.3.4.0"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.3.4.0"),
+					},
+				},
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			name:           "positive-ruby-3.3.0-rc1",
+			logicalFixture: "ruby-shared-libs/3.3.0-rc1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "ruby",
+				Version:   "3.3.0rc1",
+				Type:      "binary",
+				PURL:      "pkg:generic/ruby@3.3.0rc1",
+				Locations: locations("ruby", "libruby.so.3.3.0"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("ruby-binary", "ruby"),
+						match("ruby-binary", "libruby.so.3.3.0"),
+					},
+				},
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
 			logicalFixture: "ruby-bullseye-shared-libs/2.7.7/linux-amd64",
 			expected: pkg.Package{
 				Name:      "ruby",
