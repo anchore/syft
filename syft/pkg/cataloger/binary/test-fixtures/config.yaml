@@ -564,6 +564,36 @@ from-images:
       - /usr/local/lib/libruby.so.2.7
 
   - name: ruby-shared-libs
+    version: 3.4.0-dev
+    images:
+      - ref: rubylang/ruby:master-dev-nightly-20240804-focal@sha256:b5fe8b9ac1e9638a4b08bda6a6343082a07623d1c01926e637eb4bbbbf159409
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.3.4.0
+      - /usr/local/lib/libruby.so.3.4
+
+  - name: ruby-shared-libs
+    version: 3.4.0-preview1
+    images:
+      - ref: ruby:3.4.0-preview1@sha256:88cad31539e1a4ab987ac4b00c45b86d8346c25e3b08ac647ccccfb21cee5890
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.3.4.0
+      - /usr/local/lib/libruby.so.3.4
+
+  - name: ruby-shared-libs
+    version: 3.3.0-rc1
+    images:
+      - ref: ruby:3.3.0-rc1@sha256:453c8bbb9b4e3b04b94ba58db77b648222f3c92936dc12b5ae96df48076c106b
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.3.3.0
+      - /usr/local/lib/libruby.so.3.3
+
+  - name: ruby-shared-libs
     version: 2.6.10
     images:
       - ref: ruby:2.6.10@sha256:771a810704167e55da8a19970c5dfa6eb795dfee32547adffa29ea72703f7243

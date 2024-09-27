@@ -666,6 +666,9 @@ var libpythonMatcher = fileNameTemplateVersionMatcher(
 )
 
 var rubyMatcher = FileContentsVersionMatcher(
+	// ruby 3.4.0dev (2024-09-15T01:06:11Z master 532af89e3b) [x86_64-linux]
+	// ruby 3.4.0preview1 (2024-05-16 master 9d69619623) [x86_64-linux]
+	// ruby 3.3.0rc1 (2023-12-11 master a49643340e) [x86_64-linux]
 	// ruby 3.2.1 (2023-02-08 revision 31819e82c8) [x86_64-linux]
 	// ruby 2.7.7p221 (2022-11-24 revision 168ec2b1e5) [x86_64-linux]
-	`(?m)ruby (?P<version>[0-9]+\.[0-9]+\.[0-9]+(p[0-9]+)?) `)
+	`(?m)ruby (?P<version>[0-9]+\.[0-9]+\.[0-9]+((p|preview|rc|dev)[0-9]*)?) `)
