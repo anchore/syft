@@ -29,6 +29,29 @@ func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...fil
 	return p
 }
 
+func newPubspecPackage(raw pubspecPackage, locations ...file.Location) pkg.Package {
+	metadata := pkg.DartPubspecEntry{
+		Name:    raw.Name,
+		Version: raw.Version,
+		// HostedURL: raw.getHostedURL(),
+		// VcsURL:    raw.getVcsURL(),
+	}
+
+	p := pkg.Package{
+		Name:      raw.Name,
+		Version:   raw.Version,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURLFromPubspec(metadata),
+		Language:  pkg.Dart,
+		Type:      pkg.DartPubPkg,
+		Metadata:  metadata,
+	}
+
+	p.SetID()
+
+	return p
+}
+
 func packageURL(m pkg.DartPubspecLockEntry) string {
 	var qualifiers packageurl.Qualifiers
 
@@ -43,6 +66,19 @@ func packageURL(m pkg.DartPubspecLockEntry) string {
 			Value: m.VcsURL,
 		})
 	}
+
+	return packageurl.NewPackageURL(
+		packageurl.TypePub,
+		"",
+		m.Name,
+		m.Version,
+		qualifiers,
+		"",
+	).ToString()
+}
+
+func packageURLFromPubspec(m pkg.DartPubspecEntry) string {
+	var qualifiers packageurl.Qualifiers
 
 	return packageurl.NewPackageURL(
 		packageurl.TypePub,
