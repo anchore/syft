@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"runtime/debug"
-	"sync"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/event/monitor"
@@ -35,31 +35,48 @@ func NewTaskExecutor(tasks []Task, numWorkers int) *Executor {
 }
 
 func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsync.Builder, prog *monitor.CatalogerTaskProgress) error {
-	var errs error
-	wg := &sync.WaitGroup{}
-	for i := 0; i < p.numWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	exec := sync.ContextExecutor(ctx)
 
-			for {
-				tsk, ok := <-p.tasks
-				if !ok {
-					return
-				}
+	collector := sync.NewCollector[error](exec)
 
-				if err := runTaskSafely(ctx, tsk, resolver, s); err != nil {
-					errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", err))
-					prog.SetError(err)
-				}
-				prog.Increment()
+	run := func(tsk Task) sync.ProviderFunc[error] {
+		return func() error {
+			if err := runTaskSafely(ctx, tsk, resolver, s); err != nil {
+				prog.SetError(err)
+				return err
 			}
-		}()
+			prog.Increment()
+			return nil
+		}
 	}
 
-	wg.Wait()
+	for {
+		tsk, ok := <-p.tasks
+		if !ok {
+			break
+		}
 
-	return errs
+		collector.Provide(run(tsk))
+	}
+
+	errs := collector.Collect()
+
+	if len(errs) == 0 {
+		return nil
+	}
+
+	var nonNilErrs []error
+	for _, err := range errs {
+		if err != nil {
+			nonNilErrs = append(nonNilErrs, err)
+		}
+	}
+
+	if len(nonNilErrs) == 0 {
+		return nil
+	}
+
+	return multierror.Append(nil, nonNilErrs...)
 }
 
 func runTaskSafely(ctx context.Context, t Task, resolver file.Resolver, s sbomsync.Builder) (err error) {

@@ -90,6 +90,7 @@ require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/adrg/xdg v0.5.0
+	github.com/anchore/go-sync v0.0.0-20240926143818-0345bfc976f9
 	github.com/magiconair/properties v1.8.7
 	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678
 )
