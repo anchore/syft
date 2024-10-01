@@ -77,7 +77,7 @@ func Test_License(t *testing.T) {
 			expected: expected{
 				concluded: "NOASSERTION",
 				// because we separate licenses between valid SPDX and non valid, valid ID always end at the front
-				declared: "MIT AND LicenseRef-one-thing-first AND LicenseRef-two-things----second",
+				declared: "MIT AND LicenseRef-one-thing-first AND LicenseRef-two-things-second",
 			},
 		},
 		{
@@ -118,6 +118,11 @@ func Test_joinLicenses(t *testing.T) {
 		},
 		{
 			name: "multiple licenses with complex expressions",
+			args: []string{"MIT AND Apache", "GPL-3.0-only"},
+			want: "(MIT AND Apache) AND GPL-3.0-only",
+		},
+		{
+			name: "multiple licenses with license references?",
 			args: []string{"MIT AND Apache", "GPL-3.0-only"},
 			want: "(MIT AND Apache) AND GPL-3.0-only",
 		},

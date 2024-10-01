@@ -3,12 +3,15 @@ package helpers
 import (
 	"crypto/sha256"
 	"fmt"
-	"strings"
+	"regexp"
 
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
+	"strings"
 )
+
+var validSPDXValue = regexp.MustCompile("[^A-Za-z0-9\\-\\.]+")
 
 func License(p pkg.Package) (concluded, declared string) {
 	// source: https://spdx.github.io/spdx-spec/v2.3/package-information/#713-concluded-license-field
@@ -58,8 +61,9 @@ func joinLicenses(licenses []SPDXLicense) string {
 }
 
 type SPDXLicense struct {
-	ID    string
-	Value string
+	ID       string
+	Value    string
+	FullText string
 }
 
 func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
@@ -69,14 +73,25 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 		}
 
 		candidate := SPDXLicense{}
-		// a pkg license can have a couple combinations of values
-		if l.SPDXExpression != "" {
+		// extract which value was used for the license
+		switch {
+		case l.SPDXExpression != "":
 			candidate.ID = l.SPDXExpression
 			hash := sha256.Sum256([]byte(l.Value))
 			candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
 			candidate.Value = l.Value
+		case l.Value != "":
+			hash := sha256.Sum256([]byte(l.Value))
+			candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
+			validSpdxRef := validSPDXValue.ReplaceAllString(l.Value, "-")
+			candidate.Value = fmt.Sprintf("%s%s", spdxlicense.LicenseRefPrefix, validSpdxRef)
+		default:
+			hash := sha256.Sum256([]byte(l.FullText))
+			candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
+			candidate.FullText = l.FullText
 		}
 
+		// extract if concluded or declared
 		switch l.Type {
 		case license.Concluded:
 			concluded = append(concluded, candidate)

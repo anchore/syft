@@ -81,6 +81,7 @@ func NewLicenseFromType(value string, t license.Type) License {
 	// in this case we annotate this as the full text to not lose value and do not extract the complex case
 	if strings.Contains(value, "\n") {
 		return License{
+			Type:     t,
 			FullText: value,
 		}
 	}
@@ -98,6 +99,7 @@ func NewLicenseFromType(value string, t license.Type) License {
 	}
 
 	return License{
+		Value:          value,
 		SPDXExpression: spdxExpression,
 		Type:           t,
 		Locations:      file.NewLocationSet(),
