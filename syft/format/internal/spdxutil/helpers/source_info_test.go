@@ -249,10 +249,34 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.LuaRocksPkg,
+			},
+			expected: []string{
+				"acquired package info from Rockspec package file",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.SwiftPkg,
 			},
 			expected: []string{
 				"from resolved Swift package manifest",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.SwiplPackPkg,
+			},
+			expected: []string{
+				"acquired package info from SWI Prolo pack package file",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.OpamPkg,
+			},
+			expected: []string{
+				"acquired package info from OCaml opam package file",
 			},
 		},
 		{

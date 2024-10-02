@@ -414,6 +414,66 @@ func Test_toSyftRelationships(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "dependency-of relationship",
+			args: args{
+				spdxIDMap: map[string]any{
+					string(toSPDXID(pkg2)): pkg2,
+					string(toSPDXID(pkg3)): pkg3,
+				},
+				doc: &spdx.Document{
+					Relationships: []*spdx.Relationship{
+						{
+							RefA: common.DocElementID{
+								ElementRefID: toSPDXID(pkg2),
+							},
+							RefB: common.DocElementID{
+								ElementRefID: toSPDXID(pkg3),
+							},
+							Relationship:        spdx.RelationshipDependencyOf,
+							RelationshipComment: "dependency-of: indicates that the package in RefA is a dependency of the package in RefB",
+						},
+					},
+				},
+			},
+			want: []artifact.Relationship{
+				{
+					From: pkg2,
+					To:   pkg3,
+					Type: artifact.DependencyOfRelationship,
+				},
+			},
+		},
+		{
+			name: "dependends-on relationship",
+			args: args{
+				spdxIDMap: map[string]any{
+					string(toSPDXID(pkg2)): pkg2,
+					string(toSPDXID(pkg3)): pkg3,
+				},
+				doc: &spdx.Document{
+					Relationships: []*spdx.Relationship{
+						{
+							RefA: common.DocElementID{
+								ElementRefID: toSPDXID(pkg3),
+							},
+							RefB: common.DocElementID{
+								ElementRefID: toSPDXID(pkg2),
+							},
+							Relationship:        spdx.RelationshipDependsOn,
+							RelationshipComment: "dependends-on: indicates that the package in RefA depends on the package in RefB",
+						},
+					},
+				},
+			},
+			want: []artifact.Relationship{
+				{
+					From: pkg2,
+					To:   pkg3,
+					Type: artifact.DependencyOfRelationship,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "testpkg"
+version = "0.1.0"
+description = ""
+authors = ["Alex Goodman <wagoodman@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = {extras = ["all"], version = "^0.111.0"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

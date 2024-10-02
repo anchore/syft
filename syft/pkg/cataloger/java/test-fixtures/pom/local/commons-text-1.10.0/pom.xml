@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one or more
+ contributor license agreements.  See the NOTICE file distributed with
+ this work for additional information regarding copyright ownership.
+ The ASF licenses this file to You under the Apache License, Version 2.0
+ (the "License"); you may not use this file except in compliance with
+ the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-parent</artifactId>
+        <version>54</version>
+    </parent>
+    <artifactId>commons-text</artifactId>
+    <version>1.10.0</version>
+    <name>Apache Commons Text</name>
+    <description>Apache Commons Text is a library focused on algorithms working on strings.</description>
+    <url>https://commons.apache.org/proper/commons-text</url>
+
+    <properties>
+        <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <commons.componentid>text</commons.componentid>
+        <commons.module.name>org.apache.commons.text</commons.module.name>
+
+        <commons.release.version>1.10.0</commons.release.version>
+        <commons.release.desc>(Java 8+)</commons.release.desc>
+
+        <commons.jira.id>TEXT</commons.jira.id>
+        <commons.jira.pid>12318221</commons.jira.pid>
+
+        <commons.site.path>text</commons.site.path>
+        <commons.scmPubUrl>https://svn.apache.org/repos/infra/websites/production/commons/content/proper/commons-text</commons.scmPubUrl>
+        <commons.scmPubCheckoutDirectory>site-content</commons.scmPubCheckoutDirectory>
+
+        <commons.junit.version>5.9.1</commons.junit.version>
+        <checkstyle.plugin.version>3.2.0</checkstyle.plugin.version>
+        <checkstyle.version>9.3</checkstyle.version>
+
+        <commons.spotbugs.plugin.version>4.7.2.0</commons.spotbugs.plugin.version>
+        <commons.spotbugs.impl.version>4.7.2</commons.spotbugs.impl.version>
+        <commons.pmd.version>3.19.0</commons.pmd.version>
+        <commons.pmd-impl.version>6.49.0</commons.pmd-impl.version>
+
+        <commons.mockito.version>4.8.0</commons.mockito.version>
+        <commons.jacoco.version>0.8.8</commons.jacoco.version>
+
+        <!-- apache-rat-plugin 0.13 and jdepend-maven-plugin 2.0 both fail with LinkageError when generating reports
+        with maven site plugin 3.11+. However, javadoc 3.4.0+ fails with site plugin versions lower than 3.11. So, we'll
+        use slightly older site and javadoc versions here in order to be able to generate all reports. -->
+        <commons.site-plugin.version>3.10.0</commons.site-plugin.version>
+        <commons.javadoc.version>3.4.1</commons.javadoc.version>
+
+        <!-- 22.1.0 requires Java 11 -->
+        <graalvm.version>22.0.0.2</graalvm.version>
+        <commons.rng.version>1.4</commons.rng.version>
+
+        <commons.japicmp.version>0.16.0</commons.japicmp.version>
+        <japicmp.skip>false</japicmp.skip>
+
+        <jmh.version>1.35</jmh.version>
+        <commons.project-info.version>3.1.2</commons.project-info.version>
+
+        <!-- Commons Release Plugin -->
+        <commons.bc.version>1.9</commons.bc.version>
+        <commons.rc.version>RC1</commons.rc.version>
+        <commons.release.isDistModule>true</commons.release.isDistModule>
+        <commons.distSvnStagingUrl>scm:svn:https://dist.apache.org/repos/dist/dev/commons/${commons.componentid}</commons.distSvnStagingUrl>
+        <commons.releaseManagerName>Gary Gregory</commons.releaseManagerName>
+        <commons.releaseManagerKey>86fdc7e2a11262cb</commons.releaseManagerKey>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+        <!-- testing -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.23.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.11.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <!--  Use mockito-inline instead of mockito-core to mock and spy on final classes. -->
+            <artifactId>mockito-inline</artifactId>
+            <version>${commons.mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.js</groupId>
+            <artifactId>js</artifactId>
+            <version>${graalvm.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.js</groupId>
+            <artifactId>js-scriptengine</artifactId>
+            <version>${graalvm.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-rng-simple</artifactId>
+            <version>${commons.rng.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-core</artifactId>
+            <version>${jmh.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-generator-annprocess</artifactId>
+            <version>${jmh.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <inceptionYear>2014</inceptionYear>
+
+    <scm>
+        <connection>scm:git:https://gitbox.apache.org/repos/asf/commons-text</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/commons-text</developerConnection>
+        <url>https://gitbox.apache.org/repos/asf?p=commons-text.git</url>
+    </scm>
+
+    <issueManagement>
+        <system>jira</system>
+        <url>https://issues.apache.org/jira/browse/TEXT</url>
+    </issueManagement>
+
+    <distributionManagement>
+        <site>
+            <id>apache.website</id>
+            <name>Apache Commons Site</name>
+            <url>scm:svn:https://svn.apache.org/repos/infra/websites/production/commons/content/proper/commons-text/</url>
+        </site>
+    </distributionManagement>
+
+    <profiles>
+        <profile>
+            <id>setup-checkout</id>
+            <activation>
+                <file>
+                    <missing>site-content</missing>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>prepare-checkout</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>pre-site</phase>
+                                <configuration>
+                                    <target>
+                                        <exec executable="svn">
+                                            <arg line="checkout --depth immediates ${commons.scmPubUrl} ${commons.scmPubCheckoutDirectory}"/>
+                                        </exec>
+                                        <exec executable="svn">
+                                            <arg line="update --set-depth exclude ${commons.scmPubCheckoutDirectory}/javadocs"/>
+                                        </exec>
+                                        <pathconvert pathsep=" " property="dirs">
+                                            <dirset dir="${commons.scmPubCheckoutDirectory}" includes="*"/>
+                                        </pathconvert>
+                                        <exec executable="svn">
+                                            <arg line="update --set-depth infinity ${dirs}"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>java9+</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <!-- coverall version 4.3.0 does not work with java 9+, see https://github.com/trautonen/coveralls-maven-plugin/issues/112 -->
+                <coveralls.skip>true</coveralls.skip>
+            </properties>
+        </profile>
+        <profile>
+            <id>benchmark</id>
+            <properties>
+                <skipTests>true</skipTests>
+                <benchmark>org.apache</benchmark>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>benchmark</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <classpathScope>test</classpathScope>
+                                    <executable>java</executable>
+                                    <arguments>
+                                        <argument>-classpath</argument>
+                                        <classpath/>
+                                        <argument>org.openjdk.jmh.Main</argument>
+                                        <argument>-rf</argument>
+                                        <argument>json</argument>
+                                        <argument>-rff</argument>
+                                        <argument>target/jmh-result.${benchmark}.json</argument>
+                                        <argument>${benchmark}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

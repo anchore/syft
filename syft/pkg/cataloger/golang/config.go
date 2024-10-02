@@ -2,7 +2,7 @@ package golang
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
@@ -41,6 +41,7 @@ type MainModuleVersionConfig struct {
 func DefaultCatalogerConfig() CatalogerConfig {
 	g := CatalogerConfig{
 		MainModuleVersion: DefaultMainModuleVersionConfig(),
+		LocalModCacheDir:  defaultGoModDir(),
 	}
 
 	// first process the proxy settings
@@ -67,22 +68,23 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		}
 	}
 
-	if g.LocalModCacheDir == "" {
-		goPath := os.Getenv("GOPATH")
-
-		if goPath == "" {
-			homeDir, err := homedir.Dir()
-			if err != nil {
-				log.Debug("unable to determine user home dir: %v", err)
-			} else {
-				goPath = path.Join(homeDir, "go")
-			}
-		}
-		if goPath != "" {
-			g.LocalModCacheDir = path.Join(goPath, "pkg", "mod")
-		}
-	}
 	return g
+}
+
+// defaultGoModDir returns $GOPATH/pkg/mod or $HOME/go/pkg/mod based on environment variables available
+func defaultGoModDir() string {
+	goPath := os.Getenv("GOPATH")
+
+	if goPath == "" {
+		homeDir, err := homedir.Dir()
+		if err != nil {
+			log.Warnf("unable to determine GOPATH or user home dir: %w", err)
+			return ""
+		}
+		goPath = filepath.Join(homeDir, "go")
+	}
+
+	return filepath.Join(goPath, "pkg", "mod")
 }
 
 func DefaultMainModuleVersionConfig() MainModuleVersionConfig {

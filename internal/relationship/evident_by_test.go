@@ -76,7 +76,7 @@ func TestRelationshipsEvidentBy(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := evidentBy(tt.catalog)
+			actual := EvidentBy(tt.catalog)
 			require.Len(t, actual, len(tt.want))
 			for i := range actual {
 				assert.Equal(t, tt.want[i].From.ID(), actual[i].From.ID(), "from mismatch at index %d", i)

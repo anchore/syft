@@ -2,7 +2,7 @@ tools:
   # we want to use a pinned version of binny to manage the toolchain (so binny manages itself!)
   - name: binny
     version:
-      want: v0.7.0
+      want: v0.8.0
     method: github-release
     with:
       repo: anchore/binny
@@ -18,7 +18,7 @@ tools:
   # used to sign mac binaries at release
   - name: quill
     version:
-      want: v0.4.1
+      want: v0.4.2
     method: github-release
     with:
       repo: anchore/quill
@@ -26,7 +26,7 @@ tools:
   # used for linting
   - name: golangci-lint
     version:
-      want: v1.57.2
+      want: v1.61.0
     method: github-release
     with:
       repo: golangci/golangci-lint
@@ -34,7 +34,7 @@ tools:
   # used for showing the changelog at release
   - name: glow
     version:
-      want: v1.5.1
+      want: v2.0.0
     method: github-release
     with:
       repo: charmbracelet/glow
@@ -42,7 +42,7 @@ tools:
   # used for signing the checksums file at release
   - name: cosign
     version:
-      want: v2.2.3
+      want: v2.4.0
     method: github-release
     with:
       repo: sigstore/cosign
@@ -58,7 +58,7 @@ tools:
   # used to release all artifacts
   - name: goreleaser
     version:
-      want: v1.25.1
+      want: v2.3.2
     method: github-release
     with:
       repo: goreleaser/goreleaser
@@ -103,7 +103,7 @@ tools:
   # used for running all local and CI tasks
   - name: task
     version:
-      want: v3.35.1
+      want: v3.39.2
     method: github-release
     with:
       repo: go-task/task
@@ -111,7 +111,23 @@ tools:
   # used for triggering a release
   - name: gh
     version:
-      want: v2.47.0
+      want: v2.58.0
     method: github-release
     with:
       repo: cli/cli
+
+  # used to upload test fixture cache
+  - name: oras
+    version:
+      want: v1.2.0
+    method: github-release
+    with:
+      repo: oras-project/oras
+
+  # used to upload test fixture cache
+  - name: yq
+    version:
+      want: v4.44.3
+    method: github-release
+    with:
+      repo: mikefarah/yq

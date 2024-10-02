@@ -58,19 +58,19 @@ type archiveFilename struct {
 
 func getSubexp(matches []string, subexpName string, re *regexp.Regexp, raw string) string {
 	if len(matches) < 1 {
-		log.Warnf("unexpectedly empty matches for archive '%s'", raw)
+		log.Tracef("unexpectedly empty matches for Java archive '%s'", raw)
 		return ""
 	}
 
 	index := re.SubexpIndex(subexpName)
 	if index < 1 {
-		log.Warnf("unexpected index of '%s' capture group for Java archive '%s'", subexpName, raw)
+		log.Tracef("unexpected index of '%s' capture group for Java archive '%s'", subexpName, raw)
 		return ""
 	}
 
 	// Prevent out-of-range panic
 	if len(matches) < index+1 {
-		log.Warnf("no match found for '%s' in '%s'", subexpName, matches[0])
+		log.Tracef("no match found for '%s' in '%s' for Java archive", subexpName, matches[0])
 		return ""
 	}
 
@@ -108,7 +108,7 @@ func (a archiveFilename) extension() string {
 
 func (a archiveFilename) pkgType() pkg.Type {
 	switch strings.ToLower(a.extension()) {
-	case "jar", "war", "ear", "lpkg", "par", "sar", "nar":
+	case "jar", "war", "ear", "lpkg", "par", "sar", "nar", "kar":
 		return pkg.JavaPkg
 	case "jpi", "hpi":
 		return pkg.JenkinsPluginPkg

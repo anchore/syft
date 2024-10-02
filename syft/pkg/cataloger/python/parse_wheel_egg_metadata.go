@@ -3,7 +3,6 @@ package python
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"path/filepath"
 	"strings"
 
@@ -23,13 +22,44 @@ type parsedData struct {
 	pkg.PythonPackage `mapstructure:",squash"`
 }
 
+var pluralFields = map[string]bool{
+	"ProvidesExtra": true,
+	"RequiresDist":  true,
+}
+
 // parseWheelOrEggMetadata takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
-func parseWheelOrEggMetadata(path string, reader io.Reader) (parsedData, error) {
-	fields := make(map[string]string)
+func parseWheelOrEggMetadata(locationReader file.LocationReadCloser) (parsedData, error) {
+	fields, err := extractRFC5322Fields(locationReader)
+	if err != nil {
+		return parsedData{}, fmt.Errorf("unable to extract python wheel/egg metadata: %w", err)
+	}
+
+	var pd parsedData
+	if err := mapstructure.Decode(fields, &pd); err != nil {
+		return pd, fmt.Errorf("unable to translate python wheel/egg metadata: %w", err)
+	}
+
+	// add additional metadata not stored in the egg/wheel metadata file
+	path := locationReader.Path()
+
+	pd.SitePackagesRootPath = determineSitePackagesRootPath(path)
+	if pd.Licenses != "" || pd.LicenseExpression != "" {
+		pd.LicenseLocation = file.NewLocation(path)
+	} else if pd.LicenseFile != "" {
+		pd.LicenseLocation = file.NewLocation(filepath.Join(filepath.Dir(path), pd.LicenseFile))
+	}
+
+	return pd, nil
+}
+
+func extractRFC5322Fields(locationReader file.LocationReadCloser) (map[string]any, error) {
+	fields := make(map[string]any)
 	var key string
 
-	scanner := bufio.NewScanner(reader)
+	// though this spec is governed by RFC 5322 (mail message), the metadata files are not guaranteed to be compliant.
+	// We must survive parsing as much info as possible without failing and dropping the data.
+	scanner := bufio.NewScanner(locationReader)
 	for scanner.Scan() {
 		line := scanner.Text()
 		line = strings.TrimRight(line, "\n")
@@ -52,43 +82,50 @@ func parseWheelOrEggMetadata(path string, reader io.Reader) (parsedData, error) 
 			// a field-body continuation
 			updatedValue, err := handleFieldBodyContinuation(key, line, fields)
 			if err != nil {
-				return parsedData{}, err
+				return nil, err
 			}
 
 			fields[key] = updatedValue
 		default:
-			// parse a new key (note, duplicate keys are overridden)
+			// parse a new key (note, duplicate keys that are for singular fields are overridden, where as plural fields are appended)
 			if i := strings.Index(line, ":"); i > 0 {
 				// mapstruct cannot map keys with dashes, and we are expected to persist the "Author-email" field
 				key = strings.ReplaceAll(strings.TrimSpace(line[0:i]), "-", "")
-				val := strings.TrimSpace(line[i+1:])
+				val := getFieldType(key, strings.TrimSpace(line[i+1:]))
 
-				fields[key] = val
+				fields[key] = handleSingleOrMultiField(fields[key], val)
 			} else {
-				log.Warnf("cannot parse field from path: %q from line: %q", path, line)
+				log.Warnf("cannot parse field from path: %q from line: %q", locationReader.Path(), line)
 			}
 		}
 	}
+	return fields, nil
+}
 
-	if err := scanner.Err(); err != nil {
-		return parsedData{}, fmt.Errorf("failed to parse python wheel/egg: %w", err)
+func handleSingleOrMultiField(existingValue, val any) any {
+	strSlice, ok := val.([]string)
+	if !ok {
+		return val
+	}
+	if existingValue == nil {
+		return strSlice
 	}
 
-	var pd parsedData
-	if err := mapstructure.Decode(fields, &pd); err != nil {
-		return pd, fmt.Errorf("unable to parse APK metadata: %w", err)
+	switch existingValueTy := existingValue.(type) {
+	case []string:
+		return append(existingValueTy, strSlice...)
+	case string:
+		return append([]string{existingValueTy}, strSlice...)
 	}
 
-	// add additional metadata not stored in the egg/wheel metadata file
+	return append([]string{fmt.Sprintf("%s", existingValue)}, strSlice...)
+}
 
-	pd.SitePackagesRootPath = determineSitePackagesRootPath(path)
-	if pd.Licenses != "" || pd.LicenseExpression != "" {
-		pd.LicenseLocation = file.NewLocation(path)
-	} else if pd.LicenseFile != "" {
-		pd.LicenseLocation = file.NewLocation(filepath.Join(filepath.Dir(path), pd.LicenseFile))
+func getFieldType(key, in string) any {
+	if plural, ok := pluralFields[key]; ok && plural {
+		return []string{in}
 	}
-
-	return pd, nil
+	return in
 }
 
 // isEggRegularFile determines if the specified path is the regular file variant
@@ -110,7 +147,7 @@ func determineSitePackagesRootPath(path string) string {
 
 // handleFieldBodyContinuation returns the updated value for the specified field after processing the specified line.
 // If the continuation cannot be processed, it returns an error.
-func handleFieldBodyContinuation(key, line string, fields map[string]string) (string, error) {
+func handleFieldBodyContinuation(key, line string, fields map[string]any) (any, error) {
 	if len(key) == 0 {
 		return "", fmt.Errorf("no match for continuation: line: '%s'", line)
 	}
@@ -121,5 +158,16 @@ func handleFieldBodyContinuation(key, line string, fields map[string]string) (st
 	}
 
 	// concatenate onto previous value
-	return fmt.Sprintf("%s\n %s", val, strings.TrimSpace(line)), nil
+	switch s := val.(type) {
+	case string:
+		return fmt.Sprintf("%s\n %s", s, strings.TrimSpace(line)), nil
+	case []string:
+		if len(s) == 0 {
+			s = append(s, "")
+		}
+		s[len(s)-1] = fmt.Sprintf("%s\n %s", s[len(s)-1], strings.TrimSpace(line))
+		return s, nil
+	default:
+		return "", fmt.Errorf("unexpected type for continuation: %T", val)
+	}
 }

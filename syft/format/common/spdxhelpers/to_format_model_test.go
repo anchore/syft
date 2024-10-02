@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
@@ -330,6 +331,31 @@ func Test_toPackageChecksums(t *testing.T) {
 				{
 					Algorithm: "SHA256",
 					Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
+				},
+			},
+			filesAnalyzed: false,
+		},
+		{
+			name: "Opam Package",
+			pkg: pkg.Package{
+				Name:     "test",
+				Version:  "1.0.0",
+				Language: pkg.Go,
+				Metadata: pkg.OpamPackage{
+					Checksums: []string{
+						"sha256=f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
+						"sha512=05a359dc8400d4ca200ff255dbd030acd33d2c4acb5020838f772c02cdb5f243f3dbafbc43a8cd51e6b5923a140f84c9e7ea25b2c0fa277bb68b996190d36e3b",
+					},
+				},
+			},
+			expected: []spdx.Checksum{
+				{
+					Algorithm: "SHA256",
+					Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
+				},
+				{
+					Algorithm: "SHA512",
+					Value:     "05a359dc8400d4ca200ff255dbd030acd33d2c4acb5020838f772c02cdb5f243f3dbafbc43a8cd51e6b5923a140f84c9e7ea25b2c0fa277bb68b996190d36e3b",
 				},
 			},
 			filesAnalyzed: false,
@@ -665,7 +691,7 @@ func Test_H1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			catalog := pkg.NewCollection(test.pkg)
-			pkgs := toPackages(catalog, s)
+			pkgs := toPackages(relationship.NewIndex(), catalog, s)
 			require.Len(t, pkgs, 1)
 			for _, p := range pkgs {
 				if test.expectedDigest == "" {

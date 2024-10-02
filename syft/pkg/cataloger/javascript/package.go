@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -177,13 +178,13 @@ func formatNpmRegistryURL(baseURL, packageName, version string) (requestURL stri
 	return requestURL, nil
 }
 
-func getLicenseFromNpmRegistry(basURL, packageName, version string) (string, error) {
+func getLicenseFromNpmRegistry(baseURL, packageName, version string) (string, error) {
 	// "https://registry.npmjs.org/%s/%s", packageName, version
-	requestURL, err := formatNpmRegistryURL(basURL, packageName, version)
+	requestURL, err := formatNpmRegistryURL(baseURL, packageName, version)
 	if err != nil {
 		return "", fmt.Errorf("unable to format npm request for pkg:version %s%s; %w", packageName, version, err)
 	}
-	log.Tracef("trying to fetch remote package %s", requestURL)
+	log.WithFields("url", requestURL).Info("downloading javascript package from npm")
 
 	npmRequest, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
@@ -253,35 +254,43 @@ func addLicenses(name string, resolver file.Resolver, location file.Location) (a
 	}
 
 	for _, l := range locations {
-		contentReader, err := resolver.FileContentsByLocation(l)
+		licenses, err := parseLicensesFromLocation(l, resolver, pkgFile)
 		if err != nil {
-			log.Debugf("error getting file content reader for %s: %v", pkgFile, err)
 			return allLicenses
 		}
-
-		contents, err := io.ReadAll(contentReader)
-		if err != nil {
-			log.Debugf("error reading file contents for %s: %v", pkgFile, err)
-			return allLicenses
-		}
-
-		var pkgJSON packageJSON
-		err = json.Unmarshal(contents, &pkgJSON)
-		if err != nil {
-			log.Debugf("error parsing %s: %v", pkgFile, err)
-			return allLicenses
-		}
-
-		licenses, err := pkgJSON.licensesFromJSON()
-		if err != nil {
-			log.Debugf("error getting licenses from %s: %v", pkgFile, err)
-			return allLicenses
-		}
-
 		allLicenses = append(allLicenses, licenses...)
 	}
 
 	return allLicenses
+}
+
+func parseLicensesFromLocation(l file.Location, resolver file.Resolver, pkgFile string) ([]string, error) {
+	contentReader, err := resolver.FileContentsByLocation(l)
+	if err != nil {
+		log.Debugf("error getting file content reader for %s: %v", pkgFile, err)
+		return nil, err
+	}
+	defer internal.CloseAndLogError(contentReader, l.RealPath)
+
+	contents, err := io.ReadAll(contentReader)
+	if err != nil {
+		log.Debugf("error reading file contents for %s: %v", pkgFile, err)
+		return nil, err
+	}
+
+	var pkgJSON packageJSON
+	err = json.Unmarshal(contents, &pkgJSON)
+	if err != nil {
+		log.Debugf("error parsing %s: %v", pkgFile, err)
+		return nil, err
+	}
+
+	licenses, err := pkgJSON.licensesFromJSON()
+	if err != nil {
+		log.Debugf("error getting licenses from %s: %v", pkgFile, err)
+		return nil, err
+	}
+	return licenses, nil
 }
 
 // packageURL returns the PURL for the specific NPM package (see https://github.com/package-url/purl-spec)

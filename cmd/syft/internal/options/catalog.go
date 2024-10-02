@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/fangs"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
@@ -36,6 +37,8 @@ type Catalog struct {
 	Scope             string              `yaml:"scope" json:"scope" mapstructure:"scope"`
 	Parallelism       int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
 	Relationships     relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
+	Compliance        complianceConfig    `yaml:"compliance" json:"compliance" mapstructure:"compliance"`
+	Enrich            []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
 
 	// ecosystem-specific cataloger configuration
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
@@ -55,15 +58,17 @@ type Catalog struct {
 var _ interface {
 	clio.FlagAdder
 	clio.PostLoader
-	fangs.FieldDescriber
+	clio.FieldDescriber
 } = (*Catalog)(nil)
 
 func DefaultCatalog() Catalog {
 	return Catalog{
+		Compliance:    defaultComplianceConfig(),
 		Scope:         source.SquashedScope.String(),
 		Package:       defaultPackageConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
 		Golang:        defaultGolangConfig(),
+		Java:          defaultJavaConfig(),
 		File:          defaultFileConfig(),
 		Relationships: defaultRelationshipsConfig(),
 		Source:        defaultSourceConfig(),
@@ -76,6 +81,7 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithTool(id.Name, id.Version).
 		WithParallelism(cfg.Parallelism).
 		WithRelationshipsConfig(cfg.ToRelationshipsConfig()).
+		WithComplianceConfig(cfg.ToComplianceConfig()).
 		WithSearchConfig(cfg.ToSearchConfig()).
 		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
@@ -98,6 +104,13 @@ func (cfg Catalog) ToRelationshipsConfig() cataloging.RelationshipsConfig {
 		PackageFileOwnershipOverlap: cfg.Relationships.PackageFileOwnershipOverlap,
 		// note: this option was surfaced in the syft application configuration before this relationships section was added
 		ExcludeBinaryPackagesWithFileOwnershipOverlap: cfg.Package.ExcludeBinaryOverlapByOwnership,
+	}
+}
+
+func (cfg Catalog) ToComplianceConfig() cataloging.ComplianceConfig {
+	return cataloging.ComplianceConfig{
+		MissingName:    cfg.Compliance.MissingName,
+		MissingVersion: cfg.Compliance.MissingVersion,
 	}
 }
 
@@ -129,9 +142,9 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
 		Golang: golang.DefaultCatalogerConfig().
-			WithSearchLocalModCacheLicenses(cfg.Golang.SearchLocalModCacheLicenses).
+			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
-			WithSearchRemoteLicenses(cfg.Golang.SearchRemoteLicenses).
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchRemoteLicenses)).
 			WithProxy(cfg.Golang.Proxy).
 			WithNoProxy(cfg.Golang.NoProxy).
 			WithMainModuleVersion(
@@ -141,7 +154,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			),
 		JavaScript: javascript.DefaultCatalogerConfig().
-			WithSearchRemoteLicenses(cfg.JavaScript.SearchRemoteLicenses).
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
@@ -150,7 +163,9 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
-			WithUseNetwork(cfg.Java.UseNetwork).
+			WithUseMavenLocalRepository(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseMavenLocalRepository)).
+			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
+			WithUseNetwork(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseNetwork)).
 			WithMavenBaseURL(cfg.Java.MavenURL).
 			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth),
 	}
@@ -190,6 +205,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 	flags.StringArrayVarP(&cfg.SelectCatalogers, "select-catalogers", "",
 		"add, remove, and filter the catalogers to be used")
 
+	flags.StringArrayVarP(&cfg.Enrich, "enrich", "",
+		fmt.Sprintf("enable package data enrichment from local and online sources (options: %s)", strings.Join(publicisedEnrichmentOptions, ", ")))
+
 	flags.StringVarP(&cfg.Source.Name, "source-name", "",
 		"set the name of the target being analyzed")
 
@@ -202,6 +220,10 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
 	descriptions.Add(&cfg.Parallelism, "number of cataloger workers to run in parallel")
+
+	descriptions.Add(&cfg.Enrich, fmt.Sprintf(`Enable data enrichment operations, which can utilize services such as Maven Central and NPM.
+By default all enrichment is disabled, use: all to enable everything.
+Available options are: %s`, strings.Join(publicisedEnrichmentOptions, ", ")))
 }
 
 func (cfg *Catalog) PostLoad() error {
@@ -212,23 +234,12 @@ func (cfg *Catalog) PostLoad() error {
 		return fmt.Errorf("cannot use both 'catalogers' and 'select-catalogers'/'default-catalogers' flags")
 	}
 
-	flatten := func(l []string) []string {
-		var out []string
-		for _, v := range l {
-			for _, s := range strings.Split(v, ",") {
-				out = append(out, strings.TrimSpace(s))
-			}
-		}
-		sort.Strings(out)
-
-		return out
-	}
-
 	cfg.From = flatten(cfg.From)
 
 	cfg.Catalogers = flatten(cfg.Catalogers)
 	cfg.DefaultCatalogers = flatten(cfg.DefaultCatalogers)
 	cfg.SelectCatalogers = flatten(cfg.SelectCatalogers)
+	cfg.Enrich = flatten(cfg.Enrich)
 
 	// for backwards compatibility
 	cfg.DefaultCatalogers = append(cfg.DefaultCatalogers, cfg.Catalogers...)
@@ -238,5 +249,75 @@ func (cfg *Catalog) PostLoad() error {
 		return fmt.Errorf("bad scope value %q", cfg.Scope)
 	}
 
+	// the binary package exclusion code depends on the file overlap relationships being created upstream in processing
+	if !cfg.Relationships.PackageFileOwnershipOverlap && cfg.Package.ExcludeBinaryOverlapByOwnership {
+		return fmt.Errorf("cannot enable exclude-binary-overlap-by-ownership without enabling package-file-ownership-overlap")
+	}
+
 	return nil
+}
+
+func flatten(commaSeparatedEntries []string) []string {
+	var out []string
+	for _, v := range commaSeparatedEntries {
+		for _, s := range strings.Split(v, ",") {
+			out = append(out, strings.TrimSpace(s))
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+var publicisedEnrichmentOptions = []string{
+	"all",
+	task.Golang,
+	task.Java,
+	task.JavaScript,
+}
+
+func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {
+	if len(enrichDirectives) == 0 {
+		return nil
+	}
+
+	enabled := func(features ...string) *bool {
+		for _, directive := range enrichDirectives {
+			enable := true
+			directive = strings.TrimPrefix(directive, "+") // +java and java are equivalent
+			if strings.HasPrefix(directive, "-") {
+				directive = directive[1:]
+				enable = false
+			}
+			for _, feature := range features {
+				if directive == feature {
+					return &enable
+				}
+			}
+		}
+		return nil
+	}
+
+	enableAll := enabled("all")
+	disableAll := enabled("none")
+
+	if disableAll != nil && *disableAll {
+		if enableAll != nil {
+			log.Warn("you have specified to both enable and disable all enrichment functionality, defaulting to disabled")
+		}
+		enableAll = ptr(false)
+	}
+
+	// check for explicit enable/disable of feature names
+	for _, feat := range features {
+		enableFeature := enabled(feat)
+		if enableFeature != nil {
+			return enableFeature
+		}
+	}
+
+	return enableAll
+}
+
+func ptr[T any](val T) *T {
+	return &val
 }

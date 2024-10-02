@@ -158,7 +158,7 @@ func TestPlatformAsValue(t *testing.T) {
 	}
 }
 
-func TestFingerprint(t *testing.T) {
+func TestDigest(t *testing.T) {
 	tests := []struct {
 		name     string
 		binary   BinaryFromImage
@@ -179,13 +179,13 @@ func TestFingerprint(t *testing.T) {
 					"path/to/test",
 				},
 			},
-			expected: "54ed081c07e4eba031afed4c04315cf96047822196473971be98d0769a0e3645",
+			expected: "fc25c48e3d2f01e3",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, tt.binary.Fingerprint())
+			assert.Equal(t, tt.expected, tt.binary.Digest())
 		})
 	}
 }

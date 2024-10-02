@@ -1,0 +1,8 @@
+%NAME%
+madeup
+
+%VERSION%
+20.30-4
+
+%DEPENDS%
+libtree-sitter.so

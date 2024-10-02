@@ -145,13 +145,21 @@ func (r Directory) FilesByPath(userPaths ...string) ([]file.Location, error) {
 	return references, nil
 }
 
+func (r Directory) requestGlob(pattern string) (string, error) {
+	return r.chroot.ToNativeGlob(pattern)
+}
+
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
 func (r Directory) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]file.Location, 0)
 
 	for _, pattern := range patterns {
-		refVias, err := r.searchContext.SearchByGlob(pattern, filetree.FollowBasenameLinks)
+		requestGlob, err := r.requestGlob(pattern)
+		if err != nil {
+			return nil, err
+		}
+		refVias, err := r.searchContext.SearchByGlob(requestGlob, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, err
 		}

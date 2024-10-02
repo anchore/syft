@@ -1,0 +1,9 @@
+name: beam.smp
+offset: 6378906
+length: 140
+snippetSha256: 186c882decc4160bfcfbdddaee08e8364675c795d3e85697422fbd7218452ee2
+fileSha256: f84f0ffc2e397abcf5f081b865e241017b1793c2ec38f5136bff4e5e21ffdad7
+
+### byte snippet to follow ###
+ied by configure */
+#define ERTS_EMU_CMDLINE_FLAGS " -fno-strict-aliasing -fno-common -g -O2 -I/usr/src/otp_src_27.0/erts/x86_64-pc-linux-mu

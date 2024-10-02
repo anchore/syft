@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 )
 
-// We have schema validation mechanims in schema/cyclonedx/
+// We have schema validation mechanisms in schema/cyclonedx/
 // This test allows us to double check that validation against the cyclonedx-cli tool
 func TestValidCycloneDX(t *testing.T) {
 	imageFixture := func(t *testing.T) string {
@@ -33,7 +33,7 @@ func TestValidCycloneDX(t *testing.T) {
 		{
 			name:       "validate cyclonedx output",
 			subcommand: "scan",
-			args:       []string{"-o", "cyclonedx-json"},
+			args:       []string{"-o", "cyclonedx-json", "-o", "cyclonedx-json=results/sbom.cdx.json"},
 			fixture:    imageFixture,
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,

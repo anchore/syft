@@ -35,7 +35,7 @@ var imageOnlyTestCases = []testCase{
 		pkgType:     pkg.PythonPkg,
 		pkgLanguage: pkg.Python,
 		pkgInfo: map[string]string{
-			"Pygments":     "2.6.1",
+			"pygments":     "2.6.1",
 			"requests":     "2.22.0",
 			"somerequests": "3.22.0",
 			"someotherpkg": "3.19.0",
@@ -172,7 +172,7 @@ var dirOnlyTestCases = []testCase{
 			"passlib":            "1.7.2",
 			"mypy":               "v0.770",
 			// common to image and directory
-			"Pygments":     "2.6.1",
+			"pygments":     "2.6.1",
 			"requests":     "2.22.0",
 			"somerequests": "3.22.0",
 			"someotherpkg": "3.19.0",
@@ -389,6 +389,14 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
+		name:        "find swipl pack package manager packages",
+		pkgType:     pkg.SwiplPackPkg,
+		pkgLanguage: pkg.Swipl,
+		pkgInfo: map[string]string{
+			"hdt": "0.5.2",
+		},
+	},
+	{
 		name:    "find github action packages (from usage in workflow files and composite actions)",
 		pkgType: pkg.GithubActionPkg,
 		pkgInfo: map[string]string{
@@ -400,6 +408,14 @@ var dirOnlyTestCases = []testCase{
 		pkgType: pkg.GithubActionWorkflowPkg,
 		pkgInfo: map[string]string{
 			"octo-org/this-repo/.github/workflows/workflow-1.yml": "172239021f7ba04fe7327647b213799853a9eb89",
+		},
+	},
+	{
+		name:        "find opam package",
+		pkgType:     pkg.OpamPkg,
+		pkgLanguage: pkg.OCaml,
+		pkgInfo: map[string]string{
+			"ocaml-base-compiler": "4.14.0",
 		},
 	},
 }
@@ -466,6 +482,14 @@ var commonTestCases = []testCase{
 		pkgLanguage: pkg.PHP,
 		pkgInfo: map[string]string{
 			"memcached": "3.2.0",
+		},
+	},
+	{
+		name:        "find lua rock package",
+		pkgType:     pkg.LuaRocksPkg,
+		pkgLanguage: pkg.Lua,
+		pkgInfo: map[string]string{
+			"kong": "3.7.0-0",
 		},
 	},
 }

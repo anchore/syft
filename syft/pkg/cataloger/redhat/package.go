@@ -89,6 +89,9 @@ func packageURL(name, arch string, epoch *int, srpm string, version, release str
 	if distro != nil {
 		namespace = distro.ID
 	}
+	if namespace == "rhel" {
+		namespace = "redhat"
+	}
 
 	qualifiers := map[string]string{}
 

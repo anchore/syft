@@ -9,6 +9,7 @@ import (
 	"github.com/acobaugh/osrelease"
 	"github.com/google/go-cmp/cmp"
 
+	"github.com/anchore/go-logger"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
@@ -64,25 +65,7 @@ func IdentifyRelease(resolver file.Resolver) *Release {
 		}
 
 		for _, location := range locations {
-			contentReader, err := resolver.FileContentsByLocation(location)
-			if err != nil {
-				logger.WithFields("error", err, "path", location.RealPath).Trace("unable to get contents")
-				continue
-			}
-
-			content, err := io.ReadAll(contentReader)
-			internal.CloseAndLogError(contentReader, location.AccessPath)
-			if err != nil {
-				logger.WithFields("error", err, "path", location.RealPath).Trace("unable to read contents")
-				continue
-			}
-
-			release, err := entry.fn(string(content))
-			if err != nil {
-				logger.WithFields("error", err, "path", location.RealPath).Trace("unable to parse contents")
-				continue
-			}
-
+			release := tryParseReleaseInfo(resolver, location, logger, entry)
 			if release != nil {
 				return release
 			}
@@ -90,6 +73,29 @@ func IdentifyRelease(resolver file.Resolver) *Release {
 	}
 
 	return nil
+}
+
+func tryParseReleaseInfo(resolver file.Resolver, location file.Location, logger logger.Logger, entry parseEntry) *Release {
+	contentReader, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		logger.WithFields("error", err, "path", location.RealPath).Trace("unable to get contents")
+		return nil
+	}
+	defer internal.CloseAndLogError(contentReader, location.AccessPath)
+
+	content, err := io.ReadAll(contentReader)
+	if err != nil {
+		logger.WithFields("error", err, "path", location.RealPath).Trace("unable to read contents")
+		return nil
+	}
+
+	release, err := entry.fn(string(content))
+	if err != nil {
+		logger.WithFields("error", err, "path", location.RealPath).Trace("unable to parse contents")
+		return nil
+	}
+
+	return release
 }
 
 func parseOsRelease(contents string) (*Release, error) {

@@ -58,52 +58,77 @@ func GetIndexedDictionary() (_ *dictionary.Indexed, err error) {
 	return indexedCPEDictionary, err
 }
 
-func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
+func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 	dict, err := GetIndexedDictionary()
+	parsedCPEs := []cpe.CPE{}
 	if err != nil {
 		log.Debugf("CPE dictionary lookup not available: %+v", err)
-		return cpe.CPE{}, false
+		return parsedCPEs, false
 	}
 
 	var (
-		cpeString string
-		ok        bool
+		cpes *dictionary.Set
+		ok   bool
 	)
 
 	switch p.Type {
 	case pkg.NpmPkg:
-		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemNPM][p.Name]
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemNPM][p.Name]
 
 	case pkg.GemPkg:
-		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemRubyGems][p.Name]
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemRubyGems][p.Name]
 
 	case pkg.PythonPkg:
-		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemPyPI][p.Name]
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemPyPI][p.Name]
 
 	case pkg.JenkinsPluginPkg:
-		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemJenkinsPlugins][p.Name]
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemJenkinsPlugins][p.Name]
 
 	case pkg.RustPkg:
-		cpeString, ok = dict.EcosystemPackages[dictionary.EcosystemRustCrates][p.Name]
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemRustCrates][p.Name]
+
+	case pkg.PhpComposerPkg:
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemPHPComposer][p.Name]
+
+	case pkg.PhpPeclPkg:
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemPHPPecl][p.Name]
+
+	case pkg.GoModulePkg:
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemGoModules][p.Name]
+
+	case pkg.WordpressPluginPkg:
+		metadata, valid := p.Metadata.(pkg.WordpressPluginEntry)
+		if !valid {
+			return parsedCPEs, false
+		}
+		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemWordpressPlugins][metadata.PluginInstallDirectory]
 
 	default:
 		// The dictionary doesn't support this package type yet.
-		return cpe.CPE{}, false
+		return parsedCPEs, false
 	}
 
 	if !ok {
 		// The dictionary doesn't have a CPE for this package.
-		return cpe.CPE{}, false
+		return parsedCPEs, false
 	}
 
-	parsedCPE, err := cpe.New(cpeString, cpe.NVDDictionaryLookupSource)
-	if err != nil {
-		return cpe.CPE{}, false
+	for _, c := range cpes.List() {
+		parsedCPE, err := cpe.New(c, cpe.NVDDictionaryLookupSource)
+		if err != nil {
+			continue
+		}
+
+		parsedCPE.Attributes.Version = p.Version
+		parsedCPEs = append(parsedCPEs, parsedCPE)
 	}
 
-	parsedCPE.Attributes.Version = p.Version
+	if len(parsedCPEs) == 0 {
+		return []cpe.CPE{}, false
+	}
 
-	return parsedCPE, true
+	sort.Sort(cpe.BySourceThenSpecificity(parsedCPEs))
+	return parsedCPEs, true
 }
 
 // FromPackageAttributes Create a list of CPEs for a given package, trying to guess the vendor, product tuple. We should be trying to
@@ -112,23 +137,26 @@ func FromDictionaryFind(p pkg.Package) (cpe.CPE, bool) {
 func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
+	targetSWs := candidateTargetSw(p)
 	if len(products) == 0 {
 		return nil
 	}
 
 	keys := strset.New()
 	cpes := make([]cpe.Attributes, 0)
-	for _, product := range products {
-		for _, vendor := range vendors {
-			// prevent duplicate entries...
-			key := fmt.Sprintf("%s|%s|%s", product, vendor, p.Version)
-			if keys.Has(key) {
-				continue
-			}
-			keys.Add(key)
-			// add a new entry...
-			if c := newCPE(product, vendor, p.Version, cpe.Any); c != nil {
-				cpes = append(cpes, *c)
+	for _, ts := range targetSWs {
+		for _, product := range products {
+			for _, vendor := range vendors {
+				// prevent duplicate entries...
+				key := fmt.Sprintf("%s|%s|%s|%s", product, vendor, p.Version, ts)
+				if keys.Has(key) {
+					continue
+				}
+				keys.Add(key)
+				// add a new entry...
+				if c := newCPE(product, vendor, p.Version, ts); c != nil {
+					cpes = append(cpes, *c)
+				}
 			}
 		}
 	}
@@ -136,13 +164,20 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 	// filter out any known combinations that don't accurately represent this package
 	cpes = filter(cpes, p, cpeFilters...)
 
-	sort.Sort(cpe.BySpecificity(cpes))
 	var result []cpe.CPE
 	for _, c := range cpes {
 		result = append(result, cpe.CPE{Attributes: c, Source: cpe.GeneratedSource})
 	}
 
+	sort.Sort(cpe.BySourceThenSpecificity(result))
 	return result
+}
+
+func candidateTargetSw(p pkg.Package) []string {
+	if p.Type == pkg.WordpressPluginPkg {
+		return []string{"wordpress"}
+	}
+	return []string{cpe.Any}
 }
 
 //nolint:funlen

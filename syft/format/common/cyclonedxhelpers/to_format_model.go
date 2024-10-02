@@ -211,6 +211,12 @@ func toBomProperties(srcMetadata source.Description) *[]cyclonedx.Property {
 	metadata, ok := srcMetadata.Metadata.(source.ImageMetadata)
 	if ok {
 		props := helpers.EncodeProperties(metadata.Labels, "syft:image:labels")
+		// return nil if props is nil to avoid creating a pointer to a nil slice,
+		// which results in a null JSON value that does not comply with the CycloneDX schema.
+		// https://github.com/anchore/grype/issues/1759
+		if props == nil {
+			return nil
+		}
 		return &props
 	}
 	return nil

@@ -11,6 +11,7 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/dustin/go-humanize"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
@@ -60,24 +61,8 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]file.E
 	for _, loc := range locs {
 		prog.AtomicStage.Set(loc.Path())
 
-		reader, err := resolver.FileContentsByLocation(loc)
-		if err != nil {
-			// TODO: known-unknowns
-			log.WithFields("error", err).Warnf("unable to get file contents for %q", loc.RealPath)
-			continue
-		}
+		exec := processExecutableLocation(loc, resolver)
 
-		uReader, err := unionreader.GetUnionReader(reader)
-		if err != nil {
-			// TODO: known-unknowns
-			log.WithFields("error", err).Warnf("unable to get union reader for %q", loc.RealPath)
-			continue
-		}
-
-		exec, err := processExecutable(loc, uReader)
-		if err != nil {
-			log.WithFields("error", err).Warnf("unable to process executable %q", loc.RealPath)
-		}
 		if exec != nil {
 			prog.Increment()
 			results[loc.Coordinates] = *exec
@@ -90,6 +75,29 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]file.E
 	prog.SetCompleted()
 
 	return results, nil
+}
+
+func processExecutableLocation(loc file.Location, resolver file.Resolver) *file.Executable {
+	reader, err := resolver.FileContentsByLocation(loc)
+	if err != nil {
+		// TODO: known-unknowns
+		log.WithFields("error", err).Warnf("unable to get file contents for %q", loc.RealPath)
+		return nil
+	}
+	defer internal.CloseAndLogError(reader, loc.RealPath)
+
+	uReader, err := unionreader.GetUnionReader(reader)
+	if err != nil {
+		// TODO: known-unknowns
+		log.WithFields("error", err).Warnf("unable to get union reader for %q", loc.RealPath)
+		return nil
+	}
+
+	exec, err := processExecutable(loc, uReader)
+	if err != nil {
+		log.WithFields("error", err).Warnf("unable to process executable %q", loc.RealPath)
+	}
+	return exec
 }
 
 func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {

@@ -3,6 +3,7 @@ package generic
 import (
 	"context"
 
+	"github.com/anchore/go-logger"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -11,22 +12,49 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-type processor func(resolver file.Resolver, env Environment) []request
+// Processor is a function that can filter or augment existing packages and relationships based on existing material.
+type Processor func([]pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error)
+
+// ResolvingProcessor is a Processor with the additional behavior of being able to reference additional material from a file resolver.
+type ResolvingProcessor func(context.Context, file.Resolver, []pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error)
+
+type requester func(resolver file.Resolver, env Environment) []request
 
 type request struct {
 	file.Location
 	Parser
 }
 
+type processExecutor interface {
+	process(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error)
+}
+
+type processorWrapper struct {
+	Processor
+}
+
+func (p processorWrapper) process(_ context.Context, _ file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	return p.Processor(pkgs, rels, err)
+}
+
+type resolvingProcessorWrapper struct {
+	ResolvingProcessor
+}
+
+func (p resolvingProcessorWrapper) process(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	return p.ResolvingProcessor(ctx, resolver, pkgs, rels, err)
+}
+
 // Cataloger implements the Catalog interface and is responsible for dispatching the proper parser function for
 // a given path or glob pattern. This is intended to be reusable across many package cataloger types.
 type Cataloger struct {
-	processor         []processor
+	processors        []processExecutor
+	requesters        []requester
 	upstreamCataloger string
 }
 
 func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger {
-	c.processor = append(c.processor,
+	c.requesters = append(c.requesters,
 		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			for _, g := range globs {
@@ -46,7 +74,7 @@ func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger
 }
 
 func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Cataloger {
-	c.processor = append(c.processor,
+	c.requesters = append(c.requesters,
 		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			log.WithFields("mimetypes", types).Trace("searching for paths matching mimetype")
@@ -63,7 +91,7 @@ func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Catal
 }
 
 func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger {
-	c.processor = append(c.processor,
+	c.requesters = append(c.requesters,
 		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			for _, p := range paths {
@@ -79,6 +107,20 @@ func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger 
 			return requests
 		},
 	)
+	return c
+}
+
+func (c *Cataloger) WithProcessors(processors ...Processor) *Cataloger {
+	for _, p := range processors {
+		c.processors = append(c.processors, processorWrapper{Processor: p})
+	}
+	return c
+}
+
+func (c *Cataloger) WithResolvingProcessors(processors ...ResolvingProcessor) *Cataloger {
+	for _, p := range processors {
+		c.processors = append(c.processors, resolvingProcessorWrapper{ResolvingProcessor: p})
+	}
 	return c
 }
 
@@ -122,17 +164,9 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")
 
-		contentReader, err := resolver.FileContentsByLocation(location)
+		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, logger, parser, &env)
 		if err != nil {
-			logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
-			continue
-		}
-
-		discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, &env, file.NewLocationReadCloser(location, contentReader))
-		internal.CloseAndLogError(contentReader, location.AccessPath)
-		if err != nil {
-			logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
-			continue
+			continue // logging is handled within invokeParser
 		}
 
 		for _, p := range discoveredPackages {
@@ -142,13 +176,37 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 		relationships = append(relationships, discoveredRelationships...)
 	}
-	return packages, relationships, nil
+	return c.process(ctx, resolver, packages, relationships, nil)
+}
+
+func (c *Cataloger) process(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	for _, p := range c.processors {
+		pkgs, rels, err = p.process(ctx, resolver, pkgs, rels, err)
+	}
+	return pkgs, rels, err
+}
+
+func invokeParser(ctx context.Context, resolver file.Resolver, location file.Location, logger logger.Logger, parser Parser, env *Environment) ([]pkg.Package, []artifact.Relationship, error) {
+	contentReader, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
+		return nil, nil, err
+	}
+	defer internal.CloseAndLogError(contentReader, location.AccessPath)
+
+	discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, env, file.NewLocationReadCloser(location, contentReader))
+	if err != nil {
+		logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
+		return nil, nil, err
+	}
+
+	return discoveredPackages, discoveredRelationships, nil
 }
 
 // selectFiles takes a set of file trees and resolves and file references of interest for future cataloging
 func (c *Cataloger) selectFiles(resolver file.Resolver) []request {
 	var requests []request
-	for _, proc := range c.processor {
+	for _, proc := range c.requesters {
 		requests = append(requests, proc(resolver, Environment{})...)
 	}
 	return requests

@@ -9,13 +9,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/moby/sys/mountinfo"
 	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
@@ -43,7 +41,8 @@ func newDirectoryIndexer(path, base string, visitors ...PathIndexVisitor) *direc
 			[]PathIndexVisitor{
 				requireFileInfo,
 				disallowByFileType,
-				newUnixSystemMountFinder().disallowUnixSystemRuntimePath},
+				skipPathsByMountTypeAndName(path),
+			},
 			visitors...,
 		),
 		errPaths: make(map[string]error),
@@ -446,57 +445,6 @@ func (r *directoryIndexer) disallowRevisitingVisitor(_, path string, _ os.FileIn
 			return fs.SkipDir
 		}
 		return ErrSkipPath
-	}
-	return nil
-}
-
-type unixSystemMountFinder struct {
-	disallowedMountPaths []string
-}
-
-func newUnixSystemMountFinder() unixSystemMountFinder {
-	infos, err := mountinfo.GetMounts(nil)
-	if err != nil {
-		log.WithFields("error", err).Warnf("unable to get system mounts")
-		return unixSystemMountFinder{}
-	}
-
-	return unixSystemMountFinder{
-		disallowedMountPaths: keepUnixSystemMountPaths(infos),
-	}
-}
-
-func keepUnixSystemMountPaths(infos []*mountinfo.Info) []string {
-	var mountPaths []string
-	for _, info := range infos {
-		if info == nil {
-			continue
-		}
-		// we're only interested in ignoring the logical filesystems typically found at these mount points:
-		// - /proc
-		//     - procfs
-		//     - proc
-		// - /sys
-		//     - sysfs
-		// - /dev
-		//     - devfs - BSD/darwin flavored systems and old linux systems
-		//     - devtmpfs - driver core maintained /dev tmpfs
-		//     - udev - userspace implementation that replaced devfs
-		//     - tmpfs - used for /dev in special instances (within a container)
-
-		switch info.FSType {
-		case "proc", "procfs", "sysfs", "devfs", "devtmpfs", "udev", "tmpfs":
-			log.WithFields("mountpoint", info.Mountpoint).Debug("ignoring system mountpoint")
-
-			mountPaths = append(mountPaths, info.Mountpoint)
-		}
-	}
-	return mountPaths
-}
-
-func (f unixSystemMountFinder) disallowUnixSystemRuntimePath(_, path string, _ os.FileInfo, _ error) error {
-	if internal.HasAnyOfPrefixes(path, f.disallowedMountPaths...) {
-		return fs.SkipDir
 	}
 	return nil
 }

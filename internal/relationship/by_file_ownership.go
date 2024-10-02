@@ -32,7 +32,7 @@ type ownershipByFilesMetadata struct {
 	Files []string `json:"files"`
 }
 
-func byFileOwnershipOverlapWorker(accessor sbomsync.Accessor) {
+func ByFileOwnershipOverlapWorker(accessor sbomsync.Accessor) {
 	var relationships []artifact.Relationship
 
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
@@ -58,9 +58,19 @@ func byFileOwnershipOverlap(catalog *pkg.Collection) []artifact.Relationship {
 			parent := catalog.Package(parentID) // TODO: this is potentially expensive
 			child := catalog.Package(childID)   // TODO: this is potentially expensive
 
+			if parent == nil {
+				log.Tracef("parent package not found: %v", parentID)
+				continue
+			}
+
+			if child == nil {
+				log.Tracef("child package not found: %v", childID)
+				continue
+			}
+
 			edges = append(edges, artifact.Relationship{
-				From: parent,
-				To:   child,
+				From: *parent,
+				To:   *child,
 				Type: artifact.OwnershipByFileOverlapRelationship,
 				Data: ownershipByFilesMetadata{
 					Files: fs,

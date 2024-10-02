@@ -2,7 +2,9 @@ package integration
 
 import (
 	"bytes"
-	"regexp"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -12,8 +14,6 @@ import (
 
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/syft/format"
-	"github.com/anchore/syft/syft/format/cyclonedxjson"
-	"github.com/anchore/syft/syft/format/cyclonedxxml"
 	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/source"
 )
@@ -43,26 +43,27 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 			},
 			json: true,
 		},
-		{
-			name: cyclonedxjson.ID.String(),
-			redactor: func(in []byte) []byte {
-				// unstable values
-				in = regexp.MustCompile(`"(timestamp|serialNumber|bom-ref|ref)":\s*"(\n|[^"])+"`).ReplaceAll(in, []byte(`"$1": "redacted"`))
-				in = regexp.MustCompile(`"(dependsOn)":\s*\[(?:\s|[^]])+]`).ReplaceAll(in, []byte(`"$1": []`))
-				return in
-			},
-			json: true,
-		},
-		{
-			name: cyclonedxxml.ID.String(),
-			redactor: func(in []byte) []byte {
-				// unstable values
-				in = regexp.MustCompile(`(serialNumber|bom-ref|ref)="[^"]+"`).ReplaceAll(in, []byte{})
-				in = regexp.MustCompile(`<timestamp>[^<]+</timestamp>`).ReplaceAll(in, []byte{})
-
-				return in
-			},
-		},
+		// TODO: ignoring the `ref` field though does create stable results to compare, but the SBOM is fundamentally gutted and not worth comparing (find a better redaction or compare method)
+		//{
+		//	name: cyclonedxjson.ID.String(),
+		//	redactor: func(in []byte) []byte {
+		//		// unstable values
+		//		in = regexp.MustCompile(`"(timestamp|serialNumber|bom-ref|ref)":\s*"(\n|[^"])+"`).ReplaceAll(in, []byte(`"$1": "redacted"`))
+		//		in = regexp.MustCompile(`"(dependsOn)":\s*\[(?:\s|[^]])+]`).ReplaceAll(in, []byte(`"$1": []`))
+		//		return in
+		//	},
+		//	json: true,
+		//},
+		//{
+		//	name: cyclonedxxml.ID.String(),
+		//	redactor: func(in []byte) []byte {
+		//		// unstable values
+		//		in = regexp.MustCompile(`(serialNumber|bom-ref|ref)="[^"]+"`).ReplaceAll(in, []byte{})
+		//		in = regexp.MustCompile(`<timestamp>[^<]+</timestamp>`).ReplaceAll(in, []byte{})
+		//
+		//		return in
+		//	},
+		//},
 	}
 
 	opts := options.DefaultOutput()
@@ -112,6 +113,21 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 					diffs := dmp.DiffMain(string(by1), string(by2), true)
 					t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
 				}
+
+				// write raw IMAGE@NAME-start and IMAGE@NAME-finish to files within the results dir
+				// ... this is helpful for debugging
+				require.NoError(t, os.MkdirAll("results", 0700))
+
+				suffix := "sbom"
+				switch {
+				case strings.Contains(test.name, "json"):
+					suffix = "json"
+				case strings.Contains(test.name, "xml"):
+					suffix = "xml"
+				}
+
+				require.NoError(t, os.WriteFile(filepath.Join("results", image+"@"+test.name+"-start."+suffix), by1, 0600))
+				require.NoError(t, os.WriteFile(filepath.Join("results", image+"@"+test.name+"-finish."+suffix), by2, 0600))
 			}
 		})
 	}

@@ -17,7 +17,7 @@ jobs:
     name: "Static analysis"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #v4.2.0
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -31,52 +31,12 @@ jobs:
     name: "Unit tests"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #v4.2.0
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
-
-      - name: Restore file executable test-fixture cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
-          path: syft/file/cataloger/executable/test-fixtures/elf/bin
-          key: ${{ runner.os }}-unit-file-executable-elf-cache-${{ hashFiles( 'syft/file/cataloger/executable/test-fixtures/elf/cache.fingerprint' ) }}
-
-      - name: Restore file executable shared-info test-fixture cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
-        with:
-          path: syft/file/cataloger/executable/test-fixtures/shared-info/bin
-          key: ${{ runner.os }}-unit-file-executable-shared-info-cache-${{ hashFiles( 'syft/file/cataloger/executable/test-fixtures/shared-info/cache.fingerprint' ) }}
-
-      - name: Restore Java test-fixture cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
-        with:
-          path: syft/pkg/cataloger/java/test-fixtures/java-builds/packages
-          key: ${{ runner.os }}-unit-java-cache-${{ hashFiles( 'syft/pkg/cataloger/java/test-fixtures/java-builds/cache.fingerprint' ) }}
-
-      - name: Restore RPM test-fixture cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
-        with:
-          path: syft/pkg/cataloger/redhat/test-fixtures/rpms
-          key: ${{ runner.os }}-unit-rpm-cache-${{ hashFiles( 'syft/pkg/cataloger/redhat/test-fixtures/rpms.fingerprint' ) }}
-
-      - name: Restore go binary test-fixture cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
-        with:
-          path: syft/pkg/cataloger/golang/test-fixtures/archs/binaries
-          key: ${{ runner.os }}-unit-go-binaries-cache-${{ hashFiles( 'syft/pkg/cataloger/golang/test-fixtures/archs/binaries.fingerprint' ) }}
-
-      - name: Restore binary cataloger test-fixture cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
-        with:
-          path: syft/pkg/cataloger/binary/test-fixtures/classifiers/bin
-          key: ${{ runner.os }}-unit-binary-cataloger-cache-${{ hashFiles( 'syft/pkg/cataloger/binary/test-fixtures/cache.fingerprint' ) }}
-
-      - name: Restore Kernel test-fixture cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
-        with:
-          path: syft/pkg/cataloger/kernel/test-fixtures/cache
-          key: ${{ runner.os }}-unit-kernel-cache-${{ hashFiles( 'syft/pkg/cataloger/kernel/test-fixtures/cache.fingerprint' ) }}
+          download-test-fixture-cache: true
 
       - name: Run unit tests
         run: make unit
@@ -87,19 +47,15 @@ jobs:
     name: "Integration tests"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #v4.2.0
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
+        with:
+          download-test-fixture-cache: true
 
       - name: Validate syft output against the CycloneDX schema
         run: make validate-cyclonedx-schema
-
-      - name: Restore integration test cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
-        with:
-          path: ${{ github.workspace }}/cmd/syft/internal/test/integration/test-fixtures/cache
-          key: ${{ runner.os }}-integration-test-cache-${{ hashFiles('/cmd/syft/internal/test/integration/test-fixtures/cache.fingerprint') }}
 
       - name: Run integration tests
         run: make integration
@@ -109,7 +65,7 @@ jobs:
     name: "Build snapshot artifacts"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #v4.2.0
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
@@ -139,10 +95,12 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #v4.2.0
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
+        with:
+          download-test-fixture-cache: true
 
       - name: Download snapshot build
         id: snapshot-cache
@@ -162,13 +120,6 @@ jobs:
       - name: Run comparison tests (Linux)
         run: make compare-linux
 
-      - name: Restore install.sh test image cache
-        id: install-test-image-cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
-        with:
-          path: ${{ github.workspace }}/test/install/cache
-          key: ${{ runner.os }}-install-test-image-cache-${{ hashFiles('test/install/cache.fingerprint') }}
-
       - name: Load test image cache
         if: steps.install-test-image-cache.outputs.cache-hit == 'true'
         run: make install-test-cache-load
@@ -187,15 +138,17 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.6.0
+
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #v4.2.0
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
         with:
           bootstrap-apt-packages: ""
-          compute-fingerprints: "false"
           go-dependencies: false
-          go-version: ""
+          download-test-fixture-cache: true
 
       - name: Download snapshot build
         id: snapshot-cache
@@ -212,13 +165,6 @@ jobs:
         if: steps.snapshot-cache.outputs.cache-hit != 'true'
         run: echo "unable to download snapshots from previous job" && false
 
-      - name: Restore docker image cache for compare testing
-        id: mac-compare-testing-cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
-        with:
-          path: image.tar
-          key: ${{ runner.os }}-${{ hashFiles('test/compare/mac.sh') }}
-
       - name: Run comparison tests (Mac)
         run: make compare-mac
 
@@ -232,16 +178,12 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #v4.2.0
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
-
-      - name: Restore CLI test-fixture cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
         with:
-          path: ${{ github.workspace }}/test/cli/test-fixtures/cache
-          key: ${{ runner.os }}-cli-test-cache-${{ hashFiles('test/cli/test-fixtures/cache.fingerprint') }}
+          download-test-fixture-cache: true
 
       - name: Download snapshot build
         id: snapshot-cache
@@ -260,3 +202,22 @@ jobs:
 
       - name: Run CLI Tests (Linux)
         run: make cli
+
+
+  Cleanup-Cache:
+    name: "Cleanup snapshot cache"
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-20.04
+    permissions:
+      actions: write
+    needs:
+      - Acceptance-Linux
+      - Acceptance-Mac
+      - Cli-Linux
+    steps:
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #v4.2.0
+
+      - name: Delete snapshot cache
+        run: gh cache delete "snapshot-build-${{ github.run_id }}"
+        env:
+          GH_TOKEN: ${{ github.token }}

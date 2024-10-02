@@ -169,7 +169,6 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 	return files, locations
 }
 
-//nolint:dupl
 func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgDBEntry) (io.ReadCloser, *file.Location) {
 	var md5Reader io.ReadCloser
 	var err error
@@ -213,7 +212,6 @@ func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.Dp
 	return md5Reader, &l
 }
 
-//nolint:dupl
 func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgDBEntry) (io.ReadCloser, *file.Location) {
 	var reader io.ReadCloser
 	var err error
@@ -265,8 +263,9 @@ func fetchCopyrightContents(resolver file.Resolver, dbLocation file.Location, m 
 
 	reader, err := resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.Warnf("failed to fetch deb copyright contents (package=%s): %w", m.Package, err)
+		log.Warnf("failed to fetch deb copyright contents (package=%s): %s", m.Package, err)
 	}
+	defer internal.CloseAndLogError(reader, location.RealPath)
 
 	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
 
