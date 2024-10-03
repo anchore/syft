@@ -2,6 +2,7 @@ package binary
 
 import (
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -29,13 +30,15 @@ func packageURL(metadata elfBinaryPackageNotes) string {
 	os := metadata.OS
 	osVersion := metadata.OSVersion
 
+	var atts cpe.Attributes
 	atts, err := cpe.NewAttributes(metadata.OSCPE)
-	if err == nil {
-		// only "upgrade" the OS information if there is something more specific to use in it's place
-		if os == "" && osVersion == "" || os == "" && atts.Version != "" || atts.Product != "" && osVersion == "" {
-			os = atts.Product
-			osVersion = atts.Version
-		}
+	if err != nil {
+		log.WithFields("error", err).Warn("unable to parse cpe attributes for elf binary package")
+	}
+	// only "upgrade" the OS information if there is something more specific to use in it's place
+	if os == "" && osVersion == "" || os == "" && atts.Version != "" || atts.Product != "" && osVersion == "" {
+		os = atts.Product
+		osVersion = atts.Version
 	}
 
 	if os != "" {
