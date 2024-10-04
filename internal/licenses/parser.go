@@ -22,7 +22,13 @@ func Parse(reader io.Reader, l file.Location) (licenses []pkg.License, err error
 	if err != nil {
 		return nil, err
 	}
-	cov := licensecheck.Scan(contents)
+
+	scanner, err := licensecheck.NewScanner(licensecheck.BuiltinLicenses())
+	if err != nil {
+		return nil, err
+	}
+
+	cov := scanner.Scan(contents)
 	if cov.Percent < coverageThreshold {
 		// unknown or no licenses here?
 		return licenses, nil

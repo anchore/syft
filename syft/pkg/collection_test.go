@@ -381,7 +381,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					Type: RpmPkg,
 				},
 				{
-					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:b:package:1:1:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource)},
+					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:2:2:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource)},
 					Locations: file.NewLocationSet(
 						file.NewVirtualLocationFromCoordinates(
 							file.Coordinates{

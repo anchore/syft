@@ -78,6 +78,20 @@ from-images:
     paths:
       - /usr/lib/swipl/bin/x86_64-linux/swipl
 
+  - version: 3.5.2
+    images:
+      - ref: dart:3.5.2@sha256:1fd62cb5036bdc42de89bdae747683277986639be9b0b0a0751d2c50bbd9441f
+        platform: linux/amd64
+    paths:
+      - /usr/lib/dart/bin/dart
+
+  - version: 3.6.0-216.1.beta
+    images:
+      - ref: dart:3.6.0-216.1.beta@sha256:f4211fec53f972987f5bc1dd0ffd3d3cb1fd820ac1ade4e45a7a0c7bffd71d58
+        platform: linux/amd64
+    paths:
+      - /usr/lib/dart/bin/dart
+
   - name: haskell-ghc
     version: 9.6.5
     images:
@@ -112,6 +126,13 @@ from-images:
   - version: 1.8.22
     images:
       - ref: haproxy:1.8.22@sha256:166ea77f87599b8a679921de4aa847e776801f3f07b4f17ce4e2aec7fb54e3ea
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/haproxy
+
+  - version: 2.0.0
+    images:
+      - ref: haproxy:2.0.0@sha256:f88bca67a2782e7bd88af168d5c11216c32104d12fe9240fac54a1d3196e3f9c
         platform: linux/amd64
     paths:
       - /usr/local/sbin/haproxy
@@ -241,6 +262,27 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/openresty/nginx/sbin/nginx
+
+  - version: 0.10.48
+    images:
+      - ref: node:0.10.48@sha256:c32b4d56f05c69df6e87d06bf7d5f6a5c6a0e7bcdb8e5ffab0e7a1853a90008f
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/node
+
+  - version: 0.12.18
+    images:
+      - ref: node:0.12.18@sha256:02e8e9903c8d974e8874d0144413d398a41d62f54bafec4d2cf3ac2a8501dd28
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/node
+
+  - version: 4.9.1
+    images:
+      - ref: node:4.9.1@sha256:41d0ad2557ea2a9e57e1a458c1d659e92f601586e07dcffef74c9cef542f6f6e
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/node
 
   - version: 19.2.0
     images:
@@ -426,6 +468,13 @@ from-images:
     paths:
       - /usr/local/bin/redis-server
 
+  - version: 7.2.5
+    images:
+      - ref: redis:7.2.5@sha256:3b44455ef048b5f0a3a26d874c00c0f4ffe6a71a40834f2b038f816c6ad5ca4f
+        platform: linux/386
+    paths:
+      - /usr/local/bin/redis-server
+
   - version: 2.9.0
     images:
       - ref: wordpress:cli-2.9.0-php8.3@sha256:3a008aafccc6a8d2d7ec2b069722cb43b3569b61cd833f9f2f13d74a9284746e
@@ -548,6 +597,36 @@ from-images:
       - /usr/local/bin/ruby
       - /usr/local/lib/libruby.so.2.7.7
       - /usr/local/lib/libruby.so.2.7
+
+  - name: ruby-shared-libs
+    version: 3.4.0-dev
+    images:
+      - ref: rubylang/ruby:master-dev-nightly-20240804-focal@sha256:b5fe8b9ac1e9638a4b08bda6a6343082a07623d1c01926e637eb4bbbbf159409
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.3.4.0
+      - /usr/local/lib/libruby.so.3.4
+
+  - name: ruby-shared-libs
+    version: 3.4.0-preview1
+    images:
+      - ref: ruby:3.4.0-preview1@sha256:88cad31539e1a4ab987ac4b00c45b86d8346c25e3b08ac647ccccfb21cee5890
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.3.4.0
+      - /usr/local/lib/libruby.so.3.4
+
+  - name: ruby-shared-libs
+    version: 3.3.0-rc1
+    images:
+      - ref: ruby:3.3.0-rc1@sha256:453c8bbb9b4e3b04b94ba58db77b648222f3c92936dc12b5ae96df48076c106b
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/ruby
+      - /usr/local/lib/libruby.so.3.3.0
+      - /usr/local/lib/libruby.so.3.3
 
   - name: ruby-shared-libs
     version: 2.6.10

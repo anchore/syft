@@ -113,6 +113,18 @@ func Test_packageURL(t *testing.T) {
 			},
 			want: "pkg:generic/system/test@1.0",
 		},
+		{
+			name: "bad or missing OSCPE data cannot be parsed allows for correct string",
+			metadata: elfBinaryPackageNotes{
+				Name:    "test",
+				Version: "1.0",
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
+					System: "system",
+					OSCPE:  "%$#*(#*@&$(",
+				},
+			},
+			want: "pkg:generic/system/test@1.0",
+		},
 	}
 
 	for _, test := range tests {

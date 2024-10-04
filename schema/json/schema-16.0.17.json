@@ -777,12 +777,6 @@
         },
         "executable": {
           "$ref": "#/$defs/Executable"
-        },
-        "unknowns": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         }
       },
       "type": "object",
@@ -961,6 +955,24 @@
         "virtualPath"
       ]
     },
+    "JavaJvmInstallation": {
+      "properties": {
+        "release": {
+          "$ref": "#/$defs/JavaVMRelease"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "release",
+        "files"
+      ]
+    },
     "JavaManifest": {
       "properties": {
         "main": {
@@ -1067,6 +1079,77 @@
         "artifactId",
         "version"
       ]
+    },
+    "JavaVMRelease": {
+      "properties": {
+        "implementor": {
+          "type": "string"
+        },
+        "implementorVersion": {
+          "type": "string"
+        },
+        "javaRuntimeVersion": {
+          "type": "string"
+        },
+        "javaVersion": {
+          "type": "string"
+        },
+        "javaVersionDate": {
+          "type": "string"
+        },
+        "libc": {
+          "type": "string"
+        },
+        "modules": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "osArch": {
+          "type": "string"
+        },
+        "osName": {
+          "type": "string"
+        },
+        "osVersion": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "buildSource": {
+          "type": "string"
+        },
+        "buildSourceRepo": {
+          "type": "string"
+        },
+        "sourceRepo": {
+          "type": "string"
+        },
+        "fullVersion": {
+          "type": "string"
+        },
+        "semanticVersion": {
+          "type": "string"
+        },
+        "buildInfo": {
+          "type": "string"
+        },
+        "jvmVariant": {
+          "type": "string"
+        },
+        "jvmVersion": {
+          "type": "string"
+        },
+        "imageType": {
+          "type": "string"
+        },
+        "buildType": {
+          "type": "string"
+        }
+      },
+      "type": "object"
     },
     "JavascriptNpmPackage": {
       "properties": {
@@ -1588,6 +1671,9 @@
             },
             {
               "$ref": "#/$defs/JavaArchive"
+            },
+            {
+              "$ref": "#/$defs/JavaJvmInstallation"
             },
             {
               "$ref": "#/$defs/JavascriptNpmPackage"

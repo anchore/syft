@@ -43,3 +43,9 @@ func NewGradleLockfileCataloger() pkg.Cataloger {
 	return generic.NewCataloger("java-gradle-lockfile-cataloger").
 		WithParserByGlobs(parseGradleLockfile, gradleLockfileGlob)
 }
+
+// NewJvmDistributionCataloger returns packages representing JDK/JRE installations (of multiple distribution types).
+func NewJvmDistributionCataloger() pkg.Cataloger {
+	return generic.NewCataloger("java-jvm-cataloger").
+		WithParserByGlobs(parseJVMRelease, jvmReleaseGlob)
+}

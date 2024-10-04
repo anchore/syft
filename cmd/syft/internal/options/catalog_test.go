@@ -57,6 +57,14 @@ func TestCatalog_PostLoad(t *testing.T) {
 				assert.Empty(t, options.Catalogers)
 			},
 		},
+		{
+			name: "must have package overlap flag when pruning binaries by overlap",
+			options: Catalog{
+				Package:       packageConfig{ExcludeBinaryOverlapByOwnership: true},
+				Relationships: relationshipsConfig{PackageFileOwnershipOverlap: false},
+			},
+			wantErr: assert.Error,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

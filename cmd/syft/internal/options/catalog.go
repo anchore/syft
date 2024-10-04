@@ -37,6 +37,7 @@ type Catalog struct {
 	Scope             string              `yaml:"scope" json:"scope" mapstructure:"scope"`
 	Parallelism       int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
 	Relationships     relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
+	Compliance        complianceConfig    `yaml:"compliance" json:"compliance" mapstructure:"compliance"`
 	Enrich            []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
 
 	// ecosystem-specific cataloger configuration
@@ -65,6 +66,7 @@ var _ interface {
 
 func DefaultCatalog() Catalog {
 	return Catalog{
+		Compliance:    defaultComplianceConfig(),
 		Scope:         source.SquashedScope.String(),
 		Package:       defaultPackageConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
@@ -83,6 +85,7 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithTool(id.Name, id.Version).
 		WithParallelism(cfg.Parallelism).
 		WithRelationshipsConfig(cfg.ToRelationshipsConfig()).
+		WithComplianceConfig(cfg.ToComplianceConfig()).
 		WithUnknownsConfig(cfg.ToUnknownsConfig()).
 		WithSearchConfig(cfg.ToSearchConfig()).
 		WithPackagesConfig(cfg.ToPackagesConfig()).
@@ -106,6 +109,13 @@ func (cfg Catalog) ToRelationshipsConfig() cataloging.RelationshipsConfig {
 		PackageFileOwnershipOverlap: cfg.Relationships.PackageFileOwnershipOverlap,
 		// note: this option was surfaced in the syft application configuration before this relationships section was added
 		ExcludeBinaryPackagesWithFileOwnershipOverlap: cfg.Package.ExcludeBinaryOverlapByOwnership,
+	}
+}
+
+func (cfg Catalog) ToComplianceConfig() cataloging.ComplianceConfig {
+	return cataloging.ComplianceConfig{
+		MissingName:    cfg.Compliance.MissingName,
+		MissingVersion: cfg.Compliance.MissingVersion,
 	}
 }
 
@@ -249,6 +259,11 @@ func (cfg *Catalog) PostLoad() error {
 	s := source.ParseScope(cfg.Scope)
 	if s == source.UnknownScope {
 		return fmt.Errorf("bad scope value %q", cfg.Scope)
+	}
+
+	// the binary package exclusion code depends on the file overlap relationships being created upstream in processing
+	if !cfg.Relationships.PackageFileOwnershipOverlap && cfg.Package.ExcludeBinaryOverlapByOwnership {
+		return fmt.Errorf("cannot enable exclude-binary-overlap-by-ownership without enabling package-file-ownership-overlap")
 	}
 
 	return nil

@@ -121,9 +121,10 @@ func coordinatesForSelection(selection file.Selection, accessor sbomsync.Accesso
 	}
 
 	if selection == file.FilesOwnedByPackageSelection {
-		var coordinates []file.Coordinates
+		var coordinates file.CoordinateSet
 
 		accessor.ReadFromSBOM(func(sbom *sbom.SBOM) {
+			// get any file coordinates that are owned by a package
 			for _, r := range sbom.Relationships {
 				if r.Type != artifact.ContainsRelationship {
 					continue
@@ -132,16 +133,23 @@ func coordinatesForSelection(selection file.Selection, accessor sbomsync.Accesso
 					continue
 				}
 				if c, ok := r.To.(file.Coordinates); ok {
-					coordinates = append(coordinates, c)
+					coordinates.Add(c)
 				}
+			}
+
+			// get any file coordinates referenced by a package directly
+			for p := range sbom.Artifacts.Packages.Enumerate() {
+				coordinates.Add(p.Locations.CoordinateSet().ToSlice()...)
 			}
 		})
 
-		if len(coordinates) == 0 {
+		coords := coordinates.ToSlice()
+
+		if len(coords) == 0 {
 			return nil, false
 		}
 
-		return coordinates, true
+		return coords, true
 	}
 
 	return nil, false

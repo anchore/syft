@@ -78,7 +78,7 @@ func DefaultClassifiers() []Classifier {
 			FileGlob: "**/redis-server",
 			EvidenceMatcher: evidenceMatchers(
 				FileContentsVersionMatcher(`(?s)payload %5.*?(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}`),
-				FileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12}-[0-9]{19}\x00.*?payload %5`),
+				FileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}\x00.*?payload %5`),
 			),
 			Package: "redis",
 			PURL:    mustPURL("pkg:generic/redis@version"),
@@ -153,8 +153,14 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "nodejs-binary",
 			FileGlob: "**/node",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			EvidenceMatcher: evidenceMatchers(
+				// [NUL]node v0.10.48[NUL]
+				// [NUL]v0.12.18[NUL]
+				// [NUL]v4.9.1[NUL]
+				// node.js/v22.9.0
+				FileContentsVersionMatcher(`(?m)\x00(node )?v(?P<version>(0|4|5)\.[0-9]+\.[0-9]+)\x00`),
+				FileContentsVersionMatcher(`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			),
 			Package: "node",
 			PURL:    mustPURL("pkg:generic/node@version"),
 			CPEs:    singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -190,6 +196,7 @@ func DefaultClassifiers() []Classifier {
 			Class:    "haproxy-binary",
 			FileGlob: "**/haproxy",
 			EvidenceMatcher: evidenceMatchers(
+				FileContentsVersionMatcher(`(?m)version (?P<version>[0-9]+\.[0-9]+(\.|-dev|-rc)[0-9]+)(-[a-z0-9]{7})?, released 20`),
 				FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)`),
 				FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
 			),
@@ -448,6 +455,16 @@ func DefaultClassifiers() []Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:erlang:erlang\\/otp:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:    "dart-binary",
+			FileGlob: "**/dart",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				`(?m)Dart,GC"\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+(\.[0-9]+)?\.beta)?) `,
+			),
+			Package: "dart",
+			PURL:    mustPURL("pkg:generic/dart@version"),
+			CPEs:    singleCPE("cpe:2.3:a:dart:dart_software_development_kit:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "haskell-ghc-binary",
 			FileGlob: "**/ghc*",
 			EvidenceMatcher: FileContentsVersionMatcher(
@@ -656,6 +673,9 @@ var libpythonMatcher = fileNameTemplateVersionMatcher(
 )
 
 var rubyMatcher = FileContentsVersionMatcher(
+	// ruby 3.4.0dev (2024-09-15T01:06:11Z master 532af89e3b) [x86_64-linux]
+	// ruby 3.4.0preview1 (2024-05-16 master 9d69619623) [x86_64-linux]
+	// ruby 3.3.0rc1 (2023-12-11 master a49643340e) [x86_64-linux]
 	// ruby 3.2.1 (2023-02-08 revision 31819e82c8) [x86_64-linux]
 	// ruby 2.7.7p221 (2022-11-24 revision 168ec2b1e5) [x86_64-linux]
-	`(?m)ruby (?P<version>[0-9]+\.[0-9]+\.[0-9]+(p[0-9]+)?) `)
+	`(?m)ruby (?P<version>[0-9]+\.[0-9]+\.[0-9]+((p|preview|rc|dev)[0-9]*)?) `)
