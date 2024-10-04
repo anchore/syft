@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -55,7 +54,7 @@ func findDpkgInfoFiles(name string, resolver file.Resolver, dbLocation file.Loca
 	// and the md5sum information is under /var/lib/dpkg/info/; however, for distroless the installed
 	// package info is across multiple files under /var/lib/dpkg/status.d/ and the md5sums are contained in
 	// the same directory
-	searchPath := filepath.Dir(dbLocation.RealPath)
+	searchPath := path.Dir(dbLocation.RealPath)
 
 	if !strings.HasSuffix(searchPath, "status.d") {
 		searchPath = path.Join(searchPath, "info")
