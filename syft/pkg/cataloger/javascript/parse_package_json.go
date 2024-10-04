@@ -11,7 +11,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -64,11 +63,8 @@ func parsePackageJSON(_ context.Context, _ file.Resolver, _ *generic.Environment
 			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
 		}
 
-		if !p.hasNameAndVersionValues() {
-			log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", reader.Path())
-			return nil, nil, fmt.Errorf("skipping package.json with insufficient package information: name: '%s', version: '%s'", p.Name, p.Version)
-		}
-
+		// always create a package, regardless of having a valid name and/or version,
+		// a compliance filter later will remove these packages based on compliance rules
 		pkgs = append(
 			pkgs,
 			newPackageJSONPackage(p, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
@@ -201,10 +197,6 @@ func licensesFromJSON(b []byte) ([]npmPackageLicense, error) {
 	}
 
 	return nil, errors.New("unmarshal failed")
-}
-
-func (p packageJSON) hasNameAndVersionValues() bool {
-	return p.Name != "" && p.Version != ""
 }
 
 // this supports both windows and unix paths
