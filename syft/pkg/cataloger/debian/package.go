@@ -22,14 +22,18 @@ const (
 	docsPath     = "/usr/share/doc"
 )
 
-func newDpkgPackage(d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.Resolver, release *linux.Release) pkg.Package {
+func newDpkgPackage(d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.Resolver, release *linux.Release, evidence ...file.Location) pkg.Package {
 	// TODO: separate pr to license refactor, but explore extracting dpkg-specific license parsing into a separate function
 	licenses := make([]pkg.License, 0)
+
+	locations := file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+	locations.Add(evidence...)
+
 	p := pkg.Package{
 		Name:      d.Package,
 		Version:   d.Version,
 		Licenses:  pkg.NewLicenseSet(licenses...),
-		Locations: file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Locations: locations,
 		PURL:      packageURL(d, release),
 		Type:      pkg.DebPkg,
 		Metadata:  d,
@@ -88,7 +92,7 @@ func packageURL(m pkg.DpkgDBEntry, distro *linux.Release) string {
 func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	metadata, ok := p.Metadata.(pkg.DpkgDBEntry)
 	if !ok {
-		log.WithFields("package", p).Warn("unable to extract DPKG metadata to add licenses")
+		log.WithFields("package", p).Trace("unable to extract DPKG metadata to add licenses")
 		return
 	}
 
@@ -110,7 +114,7 @@ func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Packag
 func mergeFileListing(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	metadata, ok := p.Metadata.(pkg.DpkgDBEntry)
 	if !ok {
-		log.WithFields("package", p).Warn("unable to extract DPKG metadata to file listing")
+		log.WithFields("package", p).Trace("unable to extract DPKG metadata to file listing")
 		return
 	}
 
@@ -204,7 +208,7 @@ func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.Dp
 	// this is unexpected, but not a show-stopper
 	md5Reader, err = resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.Warnf("failed to fetch deb md5 contents (package=%s): %+v", m.Package, err)
+		log.Tracef("failed to fetch deb md5 contents (package=%s): %+v", m.Package, err)
 	}
 
 	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
@@ -239,7 +243,7 @@ func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m p
 	// this is unexpected, but not a show-stopper
 	reader, err = resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.Warnf("failed to fetch deb conffiles contents (package=%s): %+v", m.Package, err)
+		log.Tracef("failed to fetch deb conffiles contents (package=%s): %+v", m.Package, err)
 	}
 
 	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
@@ -263,7 +267,7 @@ func fetchCopyrightContents(resolver file.Resolver, dbLocation file.Location, m 
 
 	reader, err := resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.Warnf("failed to fetch deb copyright contents (package=%s): %s", m.Package, err)
+		log.Tracef("failed to fetch deb copyright contents (package=%s): %s", m.Package, err)
 	}
 	defer internal.CloseAndLogError(reader, location.RealPath)
 
