@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anchore/syft/internal/cache"
+	"github.com/anchore/syft/internal/cachemanager"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 )
@@ -12,7 +12,7 @@ import (
 // we do not want to cache things and then subsequently scan them, if, for example a user runs `syft /` twice
 func excludeCachePathVisitors() []fileresolver.PathIndexVisitor {
 	var out []fileresolver.PathIndexVisitor
-	for _, dir := range cache.GetManager().RootDirs() {
+	for _, dir := range cachemanager.Get().RootDirs() {
 		out = append(out, excludeCacheDirPathVisitor{
 			dir: dir,
 		}.excludeCacheDir)

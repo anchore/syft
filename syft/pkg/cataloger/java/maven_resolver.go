@@ -18,8 +18,9 @@ import (
 
 	"github.com/vifraa/gopom"
 
+	"github.com/anchore/go-cache"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/cache"
+	"github.com/anchore/syft/internal/cachemanager"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 )
@@ -55,7 +56,7 @@ type mavenResolver struct {
 func newMavenResolver(fileResolver file.Resolver, cfg ArchiveCatalogerConfig) *mavenResolver {
 	return &mavenResolver{
 		cfg:                  cfg,
-		cache:                cache.GetManager().GetCache("java/maven/repo", "v1"),
+		cache:                cachemanager.Get().GetCache("java/maven/repo", "v1"),
 		resolved:             map[mavenID]*gopom.Project{},
 		remoteRequestTimeout: time.Second * 10,
 		fileResolver:         fileResolver,

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/cache"
+	"github.com/anchore/syft/internal/cachemanager"
 )
 
 func Test_defaultDir(t *testing.T) {
@@ -109,7 +109,7 @@ func Test_cacheOptions(t *testing.T) {
 				TTL: "0",
 			},
 			test: func(t *testing.T) {
-				c := cache.GetManager().GetCache("test-disable-1", "v-disable-1")
+				c := cachemanager.Get().GetCache("test-disable-1", "v-disable-1")
 				err := c.Write("key-disable-1", strings.NewReader("some-value-disable-1"))
 				require.NoError(t, err)
 				rdr, err := c.Read("key-disable-1")
@@ -124,7 +124,7 @@ func Test_cacheOptions(t *testing.T) {
 				TTL: "0s",
 			},
 			test: func(t *testing.T) {
-				c := cache.GetManager().GetCache("test-disable-2", "v-disable-2")
+				c := cachemanager.Get().GetCache("test-disable-2", "v-disable-2")
 				err := c.Write("key-disable-2", strings.NewReader("some-value-disable-2"))
 				require.NoError(t, err)
 				rdr, err := c.Read("key-disable-2")
@@ -140,7 +140,7 @@ func Test_cacheOptions(t *testing.T) {
 				TTL: "0d",
 			},
 			test: func(t *testing.T) {
-				c := cache.GetManager().GetCache("test-disable-3", "v-disable-3")
+				c := cachemanager.Get().GetCache("test-disable-3", "v-disable-3")
 				err := c.Write("key-disable-3", strings.NewReader("some-value-disable-3"))
 				require.NoError(t, err)
 				rdr, err := c.Read("key-disable-3")
@@ -155,7 +155,7 @@ func Test_cacheOptions(t *testing.T) {
 				TTL: "10m",
 			},
 			test: func(t *testing.T) {
-				c := cache.GetManager().GetCache("test-mem", "v-mem")
+				c := cachemanager.Get().GetCache("test-mem", "v-mem")
 				err := c.Write("key-mem", strings.NewReader("some-value-mem"))
 				require.NoError(t, err)
 				rdr, err := c.Read("key-mem")
@@ -175,7 +175,7 @@ func Test_cacheOptions(t *testing.T) {
 				TTL: "10m",
 			},
 			test: func(t *testing.T) {
-				c := cache.GetManager().GetCache("test-disk", "v-disk")
+				c := cachemanager.Get().GetCache("test-disk", "v-disk")
 				err := c.Write("key-disk", strings.NewReader("some-value-disk"))
 				require.NoError(t, err)
 				rdr, err := c.Read("key-disk")
@@ -191,8 +191,8 @@ func Test_cacheOptions(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			original := cache.GetManager()
-			defer cache.SetManager(original)
+			original := cachemanager.Get()
+			defer cachemanager.Set(original)
 
 			err := test.opts.PostLoad()
 			require.NoError(t, err)

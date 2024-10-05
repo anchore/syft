@@ -13,8 +13,9 @@ import (
 	"github.com/mitchellh/go-homedir"
 
 	"github.com/anchore/clio"
-	"github.com/anchore/syft/internal/cache"
+	"github.com/anchore/go-cache"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft"
 )
 
 // Cache provides configuration for the Syft caching behavior
@@ -36,25 +37,25 @@ func (c *Cache) PostLoad() error {
 	}
 	// if TTL is <= 0, disable caching entirely
 	if ttl <= 0 {
-		cache.SetManager(nil)
+		syft.SetCacheManager(nil)
 		return nil
 	}
 	// if dir == "" but we have a TTL, use an in-memory cache
 	if c.Dir == "" {
-		cache.SetManager(cache.NewInMemory(ttl))
+		syft.SetCacheManager(cache.NewInMemory(ttl))
 		return nil
 	}
 	dir, err := homedir.Expand(c.Dir)
 	if err != nil {
 		log.Warnf("unable to expand cache directory %s: %v", c.Dir, err)
-		cache.SetManager(cache.NewInMemory(ttl))
+		syft.SetCacheManager(cache.NewInMemory(ttl))
 	} else {
-		m, err := cache.NewFromDir(dir, ttl)
+		m, err := cache.NewFromDir(log.Get(), dir, ttl)
 		if err != nil {
 			log.Warnf("unable to get filesystem cache at %s: %v", c.Dir, err)
-			cache.SetManager(cache.NewInMemory(ttl))
+			syft.SetCacheManager(cache.NewInMemory(ttl))
 		} else {
-			cache.SetManager(m)
+			syft.SetCacheManager(m)
 		}
 	}
 	return nil
