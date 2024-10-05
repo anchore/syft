@@ -15,6 +15,7 @@ func AllTypes() []any {
 		pkg.ConanV2LockEntry{},
 		pkg.ConanfileEntry{},
 		pkg.ConaninfoEntry{},
+		pkg.DartPubspecEntry{},
 		pkg.DartPubspecLockEntry{},
 		pkg.DotnetDepsEntry{},
 		pkg.DotnetPortableExecutableEntry{},

@@ -7,3 +7,11 @@ type DartPubspecLockEntry struct {
 	HostedURL string `mapstructure:"hosted_url" json:"hosted_url,omitempty"`
 	VcsURL    string `mapstructure:"vcs_url" json:"vcs_url,omitempty"`
 }
+
+// DartPubspecEntry is a struct that represents a package from a Dart pubspec.yaml file.
+type DartPubspecEntry struct {
+	Name      string `mapstructure:"name" json:"name"`
+	Version   string `mapstructure:"version" json:"version"`
+	HostedURL string `mapstructure:"hosted_url" json:"hosted_url,omitempty"`
+	VcsURL    string `mapstructure:"vcs_url" json:"vcs_url,omitempty"`
+}

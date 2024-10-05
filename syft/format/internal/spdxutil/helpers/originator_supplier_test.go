@@ -18,6 +18,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.ConanfileEntry{},
 		pkg.ConaninfoEntry{},
 		pkg.DartPubspecLockEntry{},
+		pkg.DartPubspecEntry{},
 		pkg.DotnetDepsEntry{},
 		pkg.ELFBinaryPackageNoteJSONPayload{},
 		pkg.ElixirMixLockEntry{},
