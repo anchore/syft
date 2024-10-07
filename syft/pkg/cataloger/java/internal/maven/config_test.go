@@ -1,4 +1,4 @@
-package java
+package maven
 
 import (
 	"os"
@@ -85,7 +85,7 @@ func Test_remotePomURL(t *testing.T) {
 		expected   string
 	}{
 		{
-			name:       "formatMavenURL correctly assembles the pom URL",
+			name:       "remotePomURL correctly assembles the pom URL",
 			groupID:    "org.springframework.boot",
 			artifactID: "spring-boot-starter-test",
 			version:    "3.1.5",
