@@ -91,10 +91,12 @@ func TestParseJar(t *testing.T) {
 		fixture      string
 		expected     map[string]pkg.Package
 		ignoreExtras []string
+		wantErr      require.ErrorAssertionFunc
 	}{
 		{
 			name:    "example-jenkins-plugin",
 			fixture: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
+			wantErr: require.Error, // there are nested jars, which are not scanned and result in unknown errors
 			ignoreExtras: []string{
 				"Plugin-Version", // has dynamic date
 				"Built-By",       // podman returns the real UID
@@ -153,6 +155,7 @@ func TestParseJar(t *testing.T) {
 		{
 			name:    "example-java-app-gradle",
 			fixture: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
+			wantErr: require.NoError, // no nested jars
 			expected: map[string]pkg.Package{
 				"example-java-app-gradle": {
 					Name:     "example-java-app-gradle",
@@ -226,6 +229,7 @@ func TestParseJar(t *testing.T) {
 		{
 			name:    "example-java-app-maven",
 			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+			wantErr: require.NoError, // no nested jars
 			ignoreExtras: []string{
 				"Build-Jdk", // can't guarantee the JDK used at build time
 				"Built-By",  // podman returns the real UID
@@ -351,13 +355,15 @@ func TestParseJar(t *testing.T) {
 			require.NoError(t, err)
 
 			actual, _, err := parser.parse(context.Background())
-			require.NoError(t, err)
+			if test.wantErr != nil {
+				test.wantErr(t, err)
+			}
 
 			if len(actual) != len(test.expected) {
 				for _, a := range actual {
 					t.Log("   ", a)
 				}
-				t.Fatalf("unexpected package count: %d!=%d", len(actual), len(test.expected))
+				t.Fatalf("unexpected package count; expected: %d got: %d", len(test.expected), len(actual))
 			}
 
 			var parent *pkg.Package
@@ -1487,4 +1493,12 @@ func run(t testing.TB, cmd *exec.Cmd) {
 // ptr returns a pointer to the given value
 func ptr[T any](value T) *T {
 	return &value
+}
+
+func Test_corruptJarArchive(t *testing.T) {
+	ap := newGenericArchiveParserAdapter(DefaultArchiveCatalogerConfig())
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/example.jar").
+		WithError().
+		TestParser(t, ap.parseJavaArchive)
 }

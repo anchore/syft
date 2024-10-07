@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -100,7 +101,7 @@ func (a genericPackageLockAdapter) parsePackageLock(_ context.Context, resolver 
 
 	pkg.Sort(pkgs)
 
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
 func (licenses *packageLockLicense) UnmarshalJSON(data []byte) (err error) {

@@ -705,3 +705,11 @@ func getCommonsTextExpectedPackages() []pkg.Package {
 		},
 	}
 }
+
+func Test_corruptPomXml(t *testing.T) {
+	c := NewPomCataloger(DefaultArchiveCatalogerConfig())
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/corrupt").
+		WithError().
+		TestCataloger(t, c)
+}

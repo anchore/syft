@@ -16,6 +16,7 @@ import (
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -133,14 +134,22 @@ func (j *archiveParser) parse(ctx context.Context) ([]pkg.Package, []artifact.Re
 	}
 	pkgs = append(pkgs, auxPkgs...)
 
+	var errs error
 	if j.detectNested {
 		// find nested java archive packages
 		nestedPkgs, nestedRelationships, err := j.discoverPkgsFromNestedArchives(ctx, parentPkg)
 		if err != nil {
-			return nil, nil, err
+			errs = unknown.Append(errs, j.location, err)
 		}
 		pkgs = append(pkgs, nestedPkgs...)
 		relationships = append(relationships, nestedRelationships...)
+	} else {
+		// .jar and .war files are present in archives, are others? or generally just consider them top-level?
+		nestedArchives := j.fileManifest.GlobMatch(true, "*.jar", "*.war")
+		if len(nestedArchives) > 0 {
+			slices.Sort(nestedArchives)
+			errs = unknown.Appendf(errs, j.location, "nested archives not cataloged: %v", strings.Join(nestedArchives, ", "))
+		}
 	}
 
 	// lastly, add the parent package to the list (assuming the parent exists)
@@ -166,7 +175,11 @@ func (j *archiveParser) parse(ctx context.Context) ([]pkg.Package, []artifact.Re
 		p.SetID()
 	}
 
-	return pkgs, relationships, nil
+	if len(pkgs) == 0 {
+		errs = unknown.Appendf(errs, j.location, "no package identified in archive")
+	}
+
+	return pkgs, relationships, errs
 }
 
 // discoverMainPackage parses the root Java manifest used as the parent package to all discovered nested packages.
@@ -283,14 +296,14 @@ func (j *archiveParser) findLicenseFromJavaMetadata(ctx context.Context, groupID
 	if parsedPom != nil {
 		pomLicenses, err = j.maven.resolveLicenses(ctx, parsedPom.project)
 		if err != nil {
-			log.WithFields("error", err, "mavenID", j.maven.getMavenID(ctx, parsedPom.project)).Debug("error attempting to resolve pom licenses")
+			log.WithFields("error", err, "mavenID", j.maven.getMavenID(ctx, parsedPom.project)).Trace("error attempting to resolve pom licenses")
 		}
 	}
 
 	if err == nil && len(pomLicenses) == 0 {
 		pomLicenses, err = j.maven.findLicenses(ctx, groupID, artifactID, version)
 		if err != nil {
-			log.WithFields("error", err, "mavenID", mavenID{groupID, artifactID, version}).Debug("error attempting to find licenses")
+			log.WithFields("error", err, "mavenID", mavenID{groupID, artifactID, version}).Trace("error attempting to find licenses")
 		}
 	}
 
@@ -300,7 +313,7 @@ func (j *archiveParser) findLicenseFromJavaMetadata(ctx context.Context, groupID
 		groupID = strings.Join(packages[:len(packages)-1], ".")
 		pomLicenses, err = j.maven.findLicenses(ctx, groupID, artifactID, version)
 		if err != nil {
-			log.WithFields("error", err, "mavenID", mavenID{groupID, artifactID, version}).Debug("error attempting to find sub-group licenses")
+			log.WithFields("error", err, "mavenID", mavenID{groupID, artifactID, version}).Trace("error attempting to find sub-group licenses")
 		}
 	}
 
@@ -630,7 +643,7 @@ func newPackageFromMavenData(ctx context.Context, r *mavenResolver, pomPropertie
 	}
 
 	if err != nil {
-		log.WithFields("error", err, "mavenID", mavenID{pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version}).Debug("error attempting to resolve licenses")
+		log.WithFields("error", err, "mavenID", mavenID{pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version}).Trace("error attempting to resolve licenses")
 	}
 
 	licenses := make([]pkg.License, 0)

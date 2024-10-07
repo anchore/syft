@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -53,5 +54,5 @@ func parseRpmManifest(_ context.Context, _ file.Resolver, _ *generic.Environment
 		allPkgs = append(allPkgs, p)
 	}
 
-	return allPkgs, nil, nil
+	return allPkgs, nil, unknown.IfEmptyf(allPkgs, "unable to determine packages")
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -69,5 +70,5 @@ func parseInstalledJSON(_ context.Context, _ file.Resolver, _ *generic.Environme
 		}
 	}
 
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }

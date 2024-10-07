@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -95,7 +96,7 @@ func parseRebarLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		p.SetID()
 		packages = append(packages, *p)
 	}
-	return packages, nil, nil
+	return packages, nil, unknown.IfEmptyf(packages, "unable to determine packages")
 }
 
 // integrity check

@@ -8,6 +8,7 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -112,7 +113,7 @@ func (a genericYarnLockAdapter) parseYarnLock(_ context.Context, resolver file.R
 
 	pkg.Sort(pkgs)
 
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
 func findPackageName(line string) string {

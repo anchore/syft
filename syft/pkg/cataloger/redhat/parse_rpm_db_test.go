@@ -214,6 +214,13 @@ func TestToElVersion(t *testing.T) {
 	}
 }
 
+func Test_corruptRpmDbEntry(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/usr/lib/sysimage/rpm/Packages.db").
+		WithError().
+		TestParser(t, parseRpmDB)
+}
+
 func intRef(i int) *int {
 	return &i
 }

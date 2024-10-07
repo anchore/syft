@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	intCataloger "github.com/anchore/syft/syft/file/cataloger/internal"
@@ -33,6 +34,7 @@ func NewCataloger(hashes []crypto.Hash) *Cataloger {
 func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates][]file.Digest, error) {
 	results := make(map[file.Coordinates][]file.Digest)
 	var locations []file.Location
+	var errs error
 
 	if len(coordinates) == 0 {
 		locations = intCataloger.AllRegularFiles(ctx, resolver)
@@ -58,12 +60,14 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 
 		if internal.IsErrPathPermission(err) {
 			log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
+			errs = unknown.Append(errs, location, err)
 			continue
 		}
 
 		if err != nil {
 			prog.SetError(err)
-			return nil, fmt.Errorf("failed to process file %q: %w", location.RealPath, err)
+			errs = unknown.Append(errs, location, err)
+			continue
 		}
 
 		prog.Increment()
@@ -76,7 +80,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 	prog.AtomicStage.Set(fmt.Sprintf("%s files", humanize.Comma(prog.Current())))
 	prog.SetCompleted()
 
-	return results, nil
+	return results, errs
 }
 
 func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Location) ([]file.Digest, error) {

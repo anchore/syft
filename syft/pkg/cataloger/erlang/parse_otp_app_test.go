@@ -41,3 +41,10 @@ func TestParseOTPApplication(t *testing.T) {
 		})
 	}
 }
+
+func Test_corruptOtpApp(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/rabbitmq.app").
+		WithError().
+		TestParser(t, parseOTPApp)
+}

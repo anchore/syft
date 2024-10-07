@@ -106,3 +106,10 @@ func TestParseRockspec(t *testing.T) {
 		})
 	}
 }
+
+func Test_corruptRockspec(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/bad-1.23.0-0.rockspec").
+		WithError().
+		TestParser(t, parseRockspec)
+}

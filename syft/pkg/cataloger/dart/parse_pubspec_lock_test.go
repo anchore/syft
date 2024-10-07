@@ -106,3 +106,10 @@ func TestParsePubspecLock(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parsePubspecLock, expected, expectedRelationships)
 }
+
+func Test_corruptPubspecLock(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/pubspec.lock").
+		WithError().
+		TestParser(t, parsePubspecLock)
+}

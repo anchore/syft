@@ -12,6 +12,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -38,6 +39,7 @@ type parsedData struct {
 func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
 
+	var errs error
 	var apks []parsedData
 	var currentEntry parsedData
 	entryParsingInProgress := false
@@ -81,10 +83,12 @@ func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 		field := parseApkField(line)
 		if field == nil {
 			log.Warnf("unable to parse field data from line %q", line)
+			errs = unknown.Appendf(errs, reader, "unable to parse field data from line %q", line)
 			continue
 		}
 		if len(field.name) == 0 {
 			log.Warnf("failed to parse field name from line %q", line)
+			errs = unknown.Appendf(errs, reader, "failed to parse field name from line %q", line)
 			continue
 		}
 		if len(field.value) == 0 {
@@ -131,7 +135,7 @@ func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 		pkgs = append(pkgs, newPackage(apk, r, reader.Location))
 	}
 
-	return pkgs, nil, nil
+	return pkgs, nil, errs
 }
 
 func findReleases(resolver file.Resolver, dbPath string) []linux.Release {

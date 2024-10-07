@@ -333,3 +333,11 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
 	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
 }
+
+func Test_corruptPackageLock(t *testing.T) {
+	gap := newGenericPackageLockAdapter(DefaultCatalogerConfig())
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/package-lock.json").
+		WithError().
+		TestParser(t, gap.parsePackageLock)
+}

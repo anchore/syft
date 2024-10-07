@@ -53,6 +53,9 @@ type Catalog struct {
 	Platform   string         `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Source     sourceConfig   `yaml:"source" json:"source" mapstructure:"source"`
 	Exclusions []string       `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
+
+	// configuration for inclusion of unknown information within elements
+	Unknowns unknownsConfig `yaml:"unknowns" mapstructure:"unknowns"`
 }
 
 var _ interface {
@@ -71,6 +74,7 @@ func DefaultCatalog() Catalog {
 		Java:          defaultJavaConfig(),
 		File:          defaultFileConfig(),
 		Relationships: defaultRelationshipsConfig(),
+		Unknowns:      defaultUnknowns(),
 		Source:        defaultSourceConfig(),
 		Parallelism:   1,
 	}
@@ -82,6 +86,7 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithParallelism(cfg.Parallelism).
 		WithRelationshipsConfig(cfg.ToRelationshipsConfig()).
 		WithComplianceConfig(cfg.ToComplianceConfig()).
+		WithUnknownsConfig(cfg.ToUnknownsConfig()).
 		WithSearchConfig(cfg.ToSearchConfig()).
 		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
@@ -111,6 +116,13 @@ func (cfg Catalog) ToComplianceConfig() cataloging.ComplianceConfig {
 	return cataloging.ComplianceConfig{
 		MissingName:    cfg.Compliance.MissingName,
 		MissingVersion: cfg.Compliance.MissingVersion,
+	}
+}
+
+func (cfg Catalog) ToUnknownsConfig() cataloging.UnknownsConfig {
+	return cataloging.UnknownsConfig{
+		IncludeExecutablesWithoutPackages: cfg.Unknowns.ExecutablesWithoutPackages,
+		IncludeUnexpandedArchives:         cfg.Unknowns.UnexpandedArchives,
 	}
 }
 

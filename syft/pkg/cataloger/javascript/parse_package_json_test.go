@@ -210,10 +210,28 @@ func TestParsePackageJSON(t *testing.T) {
 	}
 }
 
+func Test_corruptPackageJSON(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/package.json").
+		WithError().
+		TestParser(t, parsePackageJSON)
+}
+
 func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anchore/syft/issues/311
 	const fixtureFile = "test-fixtures/pkg-json/package-partial.json"
 
-	pkgtest.TestFileParser(t, fixtureFile, parsePackageJSON, nil, nil)
+	// raise package.json files as packages with any information we find, these will be filtered out
+	// according to compliance rules later
+	expectedPkgs := []pkg.Package{
+		{
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			PURL:      packageURL("", ""),
+			Metadata:  pkg.NpmPackage{},
+			Locations: file.NewLocationSet(file.NewLocation(fixtureFile)),
+		},
+	}
+	pkgtest.TestFileParser(t, fixtureFile, parsePackageJSON, expectedPkgs, nil)
 }
 
 func Test_pathContainsNodeModulesDirectory(t *testing.T) {

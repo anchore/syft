@@ -11,6 +11,14 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
+func TestAlpmUnknowns(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/installed").
+		WithCompareOptions(cmpopts.IgnoreFields(pkg.AlpmFileRecord{}, "Time")).
+		WithError().
+		TestCataloger(t, NewDBCataloger())
+}
+
 func TestAlpmCataloger(t *testing.T) {
 	gmpDbLocation := file.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")
 	treeSitterDbLocation := file.NewLocation("var/lib/pacman/local/tree-sitter-0.22.6-1/desc")

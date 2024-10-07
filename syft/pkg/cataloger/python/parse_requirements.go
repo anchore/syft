@@ -13,6 +13,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -94,6 +95,7 @@ func newRequirementsParser(cfg CatalogerConfig) requirementsParser {
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
 // specific version.
 func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	var errs error
 	var packages []pkg.Package
 
 	scanner := bufio.NewScanner(reader)
@@ -126,6 +128,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 		req := newRequirement(line)
 		if req == nil {
 			log.WithFields("path", reader.RealPath).Warnf("unable to parse requirements.txt line: %q", line)
+			errs = unknown.Appendf(errs, reader, "unable to parse requirements.txt line: %q", line)
 			continue
 		}
 
@@ -134,6 +137,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 
 		if version == "" {
 			log.WithFields("path", reader.RealPath).Tracef("unable to determine package version in requirements.txt line: %q", line)
+			errs = unknown.Appendf(errs, reader, "unable to determine package version in requirements.txt line: %q", line)
 			continue
 		}
 
@@ -158,7 +162,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 		return nil, nil, fmt.Errorf("failed to parse python requirements file: %w", err)
 	}
 
-	return packages, nil, nil
+	return packages, nil, unknown.Join(errs, unknown.IfEmptyf(packages, "unable to determine packages"))
 }
 
 func parseVersion(version string, guessFromConstraint bool) string {

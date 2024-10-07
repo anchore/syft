@@ -191,3 +191,10 @@ func TestParseCargoLock(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, parseCargoLock, expectedPkgs, expectedRelationships)
 
 }
+
+func Test_corruptCargoLock(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/src/Cargo.lock").
+		WithError().
+		TestParser(t, parseCargoLock)
+}

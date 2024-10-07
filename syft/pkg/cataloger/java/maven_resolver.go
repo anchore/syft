@@ -79,7 +79,7 @@ func (r *mavenResolver) resolvePropertyValue(ctx context.Context, propertyValue 
 	}
 	resolved, err := r.resolveExpression(ctx, resolutionContext, *propertyValue, resolvingProperties)
 	if err != nil {
-		log.WithFields("error", err, "propertyValue", *propertyValue).Debug("error resolving maven property")
+		log.WithFields("error", err, "propertyValue", *propertyValue).Trace("error resolving maven property")
 		return ""
 	}
 	return resolved

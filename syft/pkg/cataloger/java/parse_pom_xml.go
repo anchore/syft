@@ -15,6 +15,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -41,11 +42,13 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 
 	r := newMavenResolver(fileResolver, p.cfg)
 
+	var errs error
 	var poms []*gopom.Project
 	for _, pomLocation := range locations {
 		pom, err := readPomFromLocation(fileResolver, pomLocation)
 		if err != nil || pom == nil {
 			log.WithFields("error", err, "pomLocation", pomLocation).Debug("error while reading pom")
+			errs = unknown.Appendf(errs, pomLocation, "error reading pom.xml: %w", err)
 			continue
 		}
 
@@ -60,7 +63,7 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 	for _, pom := range poms {
 		pkgs = append(pkgs, processPomXML(ctx, r, pom, r.pomLocations[pom])...)
 	}
-	return pkgs, nil, nil
+	return pkgs, nil, errs
 }
 
 func readPomFromLocation(fileResolver file.Resolver, pomLocation file.Location) (*gopom.Project, error) {
