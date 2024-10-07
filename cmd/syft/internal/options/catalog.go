@@ -2,6 +2,7 @@ package options
 
 import (
 	"fmt"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -72,7 +73,7 @@ func DefaultCatalog() Catalog {
 		File:          defaultFileConfig(),
 		Relationships: defaultRelationshipsConfig(),
 		Source:        defaultSourceConfig(),
-		Parallelism:   1,
+		Parallelism:   runtime.NumCPU() * 3,
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/anchore/go-logger"
+	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -147,36 +148,65 @@ func (c *Cataloger) Name() string {
 	return c.upstreamCataloger
 }
 
+type parserResult struct {
+	packages      []pkg.Package
+	relationships []artifact.Relationship
+	err           error
+}
+
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
 func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
-
-	logger := log.Nested("cataloger", c.upstreamCataloger)
 
 	env := Environment{
 		// TODO: consider passing into the cataloger, this would affect the cataloger interface (and all implementations). This can be deferred until later.
 		LinuxRelease: linux.IdentifyRelease(resolver),
 	}
 
+	exec := sync.ContextExecutor(ctx)
+
+	collector := sync.NewCollector[parserResult](exec)
+
 	for _, req := range c.selectFiles(resolver) {
+		collector.Provide(c.run(ctx, resolver, req, env))
+	}
+
+	results := collector.Collect()
+
+	for _, result := range results {
+		packages = append(packages, result.packages...)
+		relationships = append(relationships, result.relationships...)
+	}
+
+	return c.process(ctx, resolver, packages, relationships, nil)
+}
+
+func (c *Cataloger) run(ctx context.Context, resolver file.Resolver, req request, env Environment) sync.ProviderFunc[parserResult] {
+	return func() parserResult {
+		lgr := log.Nested("cataloger", c.upstreamCataloger)
+
 		location, parser := req.Location, req.Parser
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")
 
-		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, logger, parser, &env)
+		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, lgr, parser, &env)
 		if err != nil {
-			continue // logging is handled within invokeParser
+			// note: logging is handled within invokeParser
+			return parserResult{
+				err: err,
+			}
 		}
 
-		for _, p := range discoveredPackages {
-			p.FoundBy = c.upstreamCataloger
-			packages = append(packages, p)
+		for i := range discoveredPackages {
+			discoveredPackages[i].FoundBy = c.upstreamCataloger
 		}
 
-		relationships = append(relationships, discoveredRelationships...)
+		return parserResult{
+			packages:      discoveredPackages,
+			relationships: discoveredRelationships,
+		}
 	}
-	return c.process(ctx, resolver, packages, relationships, nil)
 }
 
 func (c *Cataloger) process(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {

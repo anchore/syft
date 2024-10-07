@@ -14,6 +14,7 @@ import (
 
 	"github.com/anchore/clio"
 	"github.com/anchore/go-collections"
+	"github.com/anchore/go-sync"
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/internal/options"
@@ -167,6 +168,8 @@ func validateArgs(cmd *cobra.Command, args []string, error string) error {
 }
 
 func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, userInput string) error {
+	ctx = sync.SetContextExecutor(ctx, sync.NewExecutor(opts.Parallelism))
+
 	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err

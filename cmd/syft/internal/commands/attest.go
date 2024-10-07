@@ -13,6 +13,7 @@ import (
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/go-sync"
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
@@ -251,6 +252,8 @@ func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opt
 	if len(opts.From) > 1 || (len(opts.From) == 1 && opts.From[0] != stereoscope.RegistryTag) {
 		return nil, fmt.Errorf("attest requires use of an OCI registry directly, one or more of the specified sources is unsupported: %v", opts.From)
 	}
+
+	ctx = sync.SetContextExecutor(ctx, sync.NewExecutor(opts.Parallelism))
 
 	src, err := getSource(ctx, opts, userInput, stereoscope.RegistryTag)
 
