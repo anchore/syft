@@ -1,6 +1,8 @@
 package helpers
 
-import "github.com/anchore/syft/syft/pkg"
+import (
+	"github.com/anchore/syft/syft/pkg"
+)
 
 const NONE = "NONE"
 const NOASSERTION = "NOASSERTION"
@@ -22,6 +24,14 @@ func DownloadLocation(p pkg.Package) string {
 			return NoneIfEmpty(metadata.URL)
 		case pkg.NpmPackageLockEntry:
 			return NoneIfEmpty(metadata.Resolved)
+		case pkg.RustCargo:
+			if lockEntry := metadata.LockEntry; lockEntry != nil {
+				url, isRemote := lockEntry.SourceRemoteURL()
+				if isRemote {
+					return NoneIfEmpty(url)
+				}
+				return NOASSERTION
+			}
 		case pkg.PhpComposerLockEntry:
 			return NoneIfEmpty(metadata.Dist.URL)
 		case pkg.PhpComposerInstalledEntry:

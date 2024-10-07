@@ -58,7 +58,7 @@ require (
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/pelletier/go-toml v1.9.5
+	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/saferwall/pe v1.5.4
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
@@ -91,6 +91,7 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/adrg/xdg v0.5.0
 	github.com/magiconair/properties v1.8.7
+	github.com/pelletier/go-toml/v2 v2.1.0
 	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678
 )
 
