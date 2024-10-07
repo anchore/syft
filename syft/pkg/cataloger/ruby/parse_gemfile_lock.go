@@ -42,13 +42,14 @@ func parseGemFileLockEntries(_ context.Context, _ file.Resolver, _ *generic.Envi
 			if len(candidate) != 2 {
 				continue
 			}
-			pkgs = append(pkgs,
-				newGemfileLockPackage(
-					candidate[0],
-					strings.Trim(candidate[1], "()"),
-					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-				),
+			p := newGemfileLockPackage(
+				candidate[0],
+				strings.Trim(candidate[1], "()"),
+				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			)
+			if pkg.IsValid(&p) {
+				pkgs = append(pkgs, p)
+			}
 		}
 	}
 	if err := scanner.Err(); err != nil {

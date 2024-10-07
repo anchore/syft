@@ -102,13 +102,13 @@ func parseGemSpecEntries(_ context.Context, _ file.Resolver, _ *generic.Environm
 			return nil, nil, fmt.Errorf("unable to decode gem metadata: %w", err)
 		}
 
-		pkgs = append(
-			pkgs,
-			newGemspecPackage(
-				metadata,
-				reader.Location,
-			),
+		p := newGemspecPackage(
+			metadata,
+			reader.Location,
 		)
+		if pkg.IsValid(&p) {
+			pkgs = append(pkgs, p)
+		}
 	}
 
 	return pkgs, nil, nil
