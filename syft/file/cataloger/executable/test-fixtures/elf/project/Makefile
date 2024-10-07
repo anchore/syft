@@ -37,11 +37,10 @@ LIB_SRC := lib.c
 BIN := ../bin
 
 BINS :=        $(BIN)/no_protection $(BIN)/with_nx $(BIN)/pie_false_positive.so $(BIN)/with_pie $(BIN)/with_canary $(BIN)/with_relro $(BIN)/with_partial_relro $(BIN)/with_rpath $(BIN)/with_runpath $(BIN)/with_safestack $(BIN)/with_cfi $(BIN)/with_fortify $(BIN)/protected
-BADS := $(BIN)/with_pie_bad
 #.PHONY: verify $(BIN)/no_protection $(BIN)/with_nx $(BIN)/pie_false_positive.so $(BIN)/with_pie $(BIN)/with_canary $(BIN)/with_relro $(BIN)/with_partial_relro $(BIN)/with_rpath $(BIN)/with_runpath $(BIN)/with_safestack $(BIN)/with_cfi $(BIN)/with_fortify $(BIN)/protected
 .PHONY: verify clean all
 
-all: $(BINS) $(BADS)
+all: $(BINS)
 
 
 $(BIN)/no_protection : $(SRC)
@@ -56,12 +55,6 @@ $(BIN)/pie_false_positive.so: $(LIB_SRC)
 
 $(BIN)/with_pie: $(SRC)
 	gcc $< -o $@ $(GCCFLAGS) $(NO_CANARY) $(NO_NX) $(NO_RELRO) $(PIE)
-
-$(BIN)/with_pie_bad: $(BIN)/with_pie
-	# original size: 18688
-	cp $(BIN)/with_pie $(BIN)/with_pie_bad
-	dd if=/dev/zero of=$(BIN)/with_pie_bad bs=100 count=170 seek=16 conv=notrunc
-	chmod +x $(BIN)/with_pie_bad
 
 $(BIN)/with_canary: $(SRC)
 	gcc $< -o $@ $(GCCFLAGS) $(CANARY) $(NO_NX) $(NO_RELRO) $(NO_PIE) 
