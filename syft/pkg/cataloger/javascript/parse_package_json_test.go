@@ -179,6 +179,27 @@ func TestParsePackageJSON(t *testing.T) {
 				},
 			},
 		},
+		{
+			Fixture: "test-fixtures/pkg-json/package-author-non-standard.json",
+			ExpectedPkg: pkg.Package{
+				Name:    "npm",
+				Version: "6.14.6",
+				PURL:    "pkg:npm/npm@6.14.6",
+				Type:    pkg.NpmPkg,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-author-non-standard.json")),
+				),
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
+					Name:        "npm",
+					Version:     "6.14.6",
+					Author:      "npm Inc. (https://www.npmjs.com/)",
+					Homepage:    "https://docs.npmjs.com/",
+					URL:         "https://github.com/npm/cli",
+					Description: "a package manager for JavaScript",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

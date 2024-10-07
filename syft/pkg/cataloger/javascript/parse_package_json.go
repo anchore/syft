@@ -82,23 +82,23 @@ func parsePackageJSON(_ context.Context, _ file.Resolver, _ *generic.Environment
 
 func (a *author) UnmarshalJSON(b []byte) error {
 	var authorStr string
-	var fields map[string]string
 	var auth author
 
-	if err := json.Unmarshal(b, &authorStr); err != nil {
-		// string parsing did not work, assume a map was given
-		// for more information: https://docs.npmjs.com/files/package.json#people-fields-author-contributors
+	if err := json.Unmarshal(b, &authorStr); err == nil {
+		// successfully parsed as a string, now parse that string into fields
+		fields := internal.MatchNamedCaptureGroups(authorPattern, authorStr)
+		if err := mapstructure.Decode(fields, &auth); err != nil {
+			return fmt.Errorf("unable to decode package.json author: %w", err)
+		}
+	} else {
+		// it's a map that may contain fields of various data types (not just strings)
+		var fields map[string]interface{}
 		if err := json.Unmarshal(b, &fields); err != nil {
 			return fmt.Errorf("unable to parse package.json author: %w", err)
 		}
-	} else {
-		// parse out "name <email> (url)" into an author struct
-		fields = internal.MatchNamedCaptureGroups(authorPattern, authorStr)
-	}
-
-	// translate the map into a structure
-	if err := mapstructure.Decode(fields, &auth); err != nil {
-		return fmt.Errorf("unable to decode package.json author: %w", err)
+		if err := mapstructure.Decode(fields, &auth); err != nil {
+			return fmt.Errorf("unable to decode package.json author: %w", err)
+		}
 	}
 
 	*a = auth
