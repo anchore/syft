@@ -78,7 +78,7 @@ jobs:
       # why not use actions/upload-artifact? It is very slow (3 minutes to upload ~600MB of data, vs 10 seconds with this approach).
       # see https://github.com/actions/upload-artifact/issues/199 for more info
       - name: Upload snapshot artifacts
-        uses: actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
+        uses: actions/cache/save@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 #v4.1.0
         with:
           # we need to preserve the snapshot data itself as well as the task data that confirms if the
           # snapshot build is stale or not. Otherwise the downstream jobs will attempt to rebuild the snapshot
@@ -104,7 +104,7 @@ jobs:
 
       - name: Download snapshot build
         id: snapshot-cache
-        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
+        uses: actions/cache/restore@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 #v4.1.0
         with:
           path: |
             snapshot
@@ -152,7 +152,7 @@ jobs:
 
       - name: Download snapshot build
         id: snapshot-cache
-        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
+        uses: actions/cache/restore@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 #v4.1.0
         with:
           path: |
             snapshot
@@ -187,7 +187,7 @@ jobs:
 
       - name: Download snapshot build
         id: snapshot-cache
-        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
+        uses: actions/cache/restore@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 #v4.1.0
         with:
           path: |
             snapshot
