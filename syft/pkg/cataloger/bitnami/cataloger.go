@@ -23,7 +23,7 @@ const catalogerName = "bitnami-cataloger"
 func NewCataloger() pkg.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseSBOM,
-			"/opt/bitnami/**/*.spdx",
+			"/opt/bitnami/**/.spdx-*.spdx",
 		)
 }
 
