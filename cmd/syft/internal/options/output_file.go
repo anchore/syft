@@ -28,7 +28,7 @@ func (o *OutputFile) AddFlags(flags clio.FlagSet) {
 
 		if pfp, ok := flags.(fangs.PFlagSetProvider); ok {
 			flagSet := pfp.PFlagSet()
-			flagSet.Lookup("file").Deprecated = "use: output"
+			flagSet.Lookup("file").Deprecated = "use: --output FORMAT=PATH"
 		}
 	}
 }
