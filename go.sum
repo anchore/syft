@@ -115,8 +115,8 @@ github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b h1:e1bmaoJfZV
 github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b/go.mod h1:Bkc+JYWjMCF8OyZ340IMSIi2Ebf3uwByOk6ho4wne1E=
 github.com/anchore/packageurl-go v0.1.1-0.20240507183024-848e011fc24f h1:B/E9ixKNCasntpoch61NDaQyGPDXLEJlL+B9B/PbdbA=
 github.com/anchore/packageurl-go v0.1.1-0.20240507183024-848e011fc24f/go.mod h1:Blo6OgJNiYF41ufcgHKkbCKF2MDOMlrqhXv/ij6ocR4=
-github.com/anchore/stereoscope v0.0.4-0.20241009113113-5bc91bf16676 h1:o5oECsO9cYDJUAySqFP/LAwf5IjgYLWN1s9QxqK7Ong=
-github.com/anchore/stereoscope v0.0.4-0.20241009113113-5bc91bf16676/go.mod h1:qucLN/JB7xdMyRVRfdGriw6jFOo7AEnz+ei/i/2uKSs=
+github.com/anchore/stereoscope v0.0.4-0.20241010201852-c04af061af62 h1:PR/euQRQ0JVSnhYTxkD/tfW/i7rFWh8qsKuNHSbITRc=
+github.com/anchore/stereoscope v0.0.4-0.20241010201852-c04af061af62/go.mod h1:H3zzV5nO9ngEUytbRNWiVyw+/613+oFtHPeurVaAGPA=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/andybalholm/brotli v1.0.1/go.mod h1:loMXtMfwqflxFJPmdbJO0a3KNoPuLBgiu3qAvBg8x/Y=
 github.com/andybalholm/brotli v1.0.4 h1:V7DdXeJtZscaqfNuAdSRuRFzuiKlHSC/Zh3zl9qY3JY=
@@ -231,8 +231,8 @@ github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da/go.mod h1:B3tI9iGHi4i
 github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1/go.mod h1:+hnT3ywWDTAFrW5aE+u2Sa/wT555ZqwoCS+pk3p6ry4=
 github.com/distribution/reference v0.6.0 h1:0IXCQ5g4/QMHHkarYzh5l+u8T3t73zM5QvfrDyIgxBk=
 github.com/distribution/reference v0.6.0/go.mod h1:BbU0aIcezP1/5jX/8MP0YiH4SdvB5Y4f/wlDRiLyi3E=
-github.com/docker/cli v27.1.1+incompatible h1:goaZxOqs4QKxznZjjBWKONQci/MywhtRv2oNn0GkeZE=
-github.com/docker/cli v27.1.1+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
+github.com/docker/cli v27.3.1+incompatible h1:qEGdFBF3Xu6SCvCYhc7CzaQTlBmqDuzxPDpigSyeKQQ=
+github.com/docker/cli v27.3.1+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
 github.com/docker/distribution v2.8.3+incompatible h1:AtKxIZ36LoNK51+Z6RpzLpddBirtxJnzDrHLEKxTAYk=
 github.com/docker/distribution v2.8.3+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/docker v27.3.1+incompatible h1:KttF0XoteNTicmUtBO0L2tP+J7FGRFTjaEF4k6WdhfI=
@@ -698,8 +698,8 @@ github.com/sassoftware/go-rpmutils v0.4.0/go.mod h1:3goNWi7PGAT3/dlql2lv3+MSN5jN
 github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e h1:7q6NSFZDeGfvvtIRwBrU/aegEYJYmvev0cHAwo17zZQ=
 github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e/go.mod h1:DkpGd78rljTxKAnTDPFqXSGxvETQnJyuSOQwsHycqfs=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
-github.com/sebdah/goldie/v2 v2.5.3 h1:9ES/mNN+HNUbNWpVAlrzuZ7jE+Nrczbj8uFRjM7624Y=
-github.com/sebdah/goldie/v2 v2.5.3/go.mod h1:oZ9fp0+se1eapSRjfYbsV/0Hqhbuu3bJVvKI/NNtssI=
+github.com/sebdah/goldie/v2 v2.5.5 h1:rx1mwF95RxZ3/83sdS4Yp7t2C5TCokvWP4TBRbAyEWY=
+github.com/sebdah/goldie/v2 v2.5.5/go.mod h1:oZ9fp0+se1eapSRjfYbsV/0Hqhbuu3bJVvKI/NNtssI=
 github.com/secDre4mer/pkcs7 v0.0.0-20240322103146-665324a4461d h1:RQqyEogx5J6wPdoxqL132b100j8KjcVHO1c0KLRoIhc=
 github.com/secDre4mer/pkcs7 v0.0.0-20240322103146-665324a4461d/go.mod h1:PegD7EVqlN88z7TpCqH92hHP+GBpfomGCCnw1PFtNOA=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
@@ -762,8 +762,8 @@ github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/subosito/gotenv v1.6.0 h1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8=
 github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSWPKKo0FU=
-github.com/sylabs/sif/v2 v2.17.1 h1:p6Sl0LWyShXBj2SBsS1dMOMIMrZHe8pwBnBrYt6uo4M=
-github.com/sylabs/sif/v2 v2.17.1/go.mod h1:XUGB6AQUXGkms3qPOPdevctT3lBLRLWZNWHVnt5HMKE=
+github.com/sylabs/sif/v2 v2.19.1 h1:1eeMmFc8elqJe60ZiWwXgL3gMheb0IP4GmNZ4q0IEA0=
+github.com/sylabs/sif/v2 v2.19.1/go.mod h1:U1SUhvl8X1JIxAylC0DYz1fa/Xba6EMZD1dGPGBH83E=
 github.com/sylabs/squashfs v1.0.0 h1:xAyMS21ogglkuR5HaY55PCfqY3H32ma9GkasTYo28Zg=
 github.com/sylabs/squashfs v1.0.0/go.mod h1:rhWzvgefq1X+R+LZdts10hfMsTg3g74OfGunW8tvg/4=
 github.com/terminalstatic/go-xsd-validate v0.1.5 h1:RqpJnf6HGE2CB/lZB1A8BYguk8uRtcvYAPLCF15qguo=
@@ -1315,8 +1315,8 @@ google.golang.org/protobuf v1.25.0/go.mod h1:9JNX74DMeImyA3h4bdi1ymwjUzf21/xIlba
 google.golang.org/protobuf v1.26.0-rc.1/go.mod h1:jlhhOSvTdKEhbULTjvd4ARK9grFBp09yW+WbY/TyQbw=
 google.golang.org/protobuf v1.26.0/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=
 google.golang.org/protobuf v1.27.1/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=
-google.golang.org/protobuf v1.33.0 h1:uNO2rsAINq/JlFpSdYEKIZ0uKD/R9cpdv0T+yoGwGmI=
-google.golang.org/protobuf v1.33.0/go.mod h1:c6P6GXX6sHbq/GpV6MGZEdwhWPcYBgnhAHhKbcUYpos=
+google.golang.org/protobuf v1.34.2 h1:6xV6lTsCfpGD21XK49h7MhtcApnLqkfYgPcdHftf6hg=
+google.golang.org/protobuf v1.34.2/go.mod h1:qYOHts0dSfpeUzUFpOMr/WGzszTmLH+DiWniOlNbLDw=
 gopkg.in/alecthomas/kingpin.v2 v2.2.6/go.mod h1:FMv+mEhP44yOT+4EoQTLFTRgOQ1FBLkstjWtayDeSgw=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
