@@ -18,9 +18,11 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var _ generic.Parser = parseDotnetPortableExecutable
+type dotnetPortableExecutableCataloger struct {
+	licenses nugetLicenses
+}
 
-func parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generic.Environment, f file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *dotnetPortableExecutableCataloger) parseDotnetPortableExecutable(_ context.Context, resolver file.Resolver, _ *generic.Environment, f file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	by, err := io.ReadAll(f)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)
@@ -50,6 +52,11 @@ func parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generi
 		return nil, nil, err
 	}
 
+	// Try to resolve *.nupkg License
+	if licenses, err := c.licenses.getLicenses(dotNetPkg.Name, dotNetPkg.Version, resolver); err == nil && len(licenses) > 0 {
+		dotNetPkg.Licenses = pkg.NewLicenseSet(licenses...)
+	}
+
 	return []pkg.Package{dotNetPkg}, nil, nil
 }
 
@@ -77,6 +84,7 @@ func buildDotNetPackage(versionResources map[string]string, f file.LocationReadC
 	dnpkg = pkg.Package{
 		Name:      name,
 		Version:   version,
+		FoundBy:   dotnetPortableExecutableCatalogerName,
 		Locations: file.NewLocationSet(f.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:      pkg.DotnetPkg,
 		Language:  pkg.Dotnet,
