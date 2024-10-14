@@ -34,6 +34,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Active Directory Authentication Library",
 				Version: "3.14.40721.0918",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 				Metadata: pkg.DotnetPortableExecutableEntry{
 					AssemblyVersion: "3.14.2.11",
 					LegalCopyright:  "Copyright (c) Microsoft Corporation. All rights reserved.",
@@ -48,17 +49,18 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			name: "dotnet package with malformed field and extended version",
 			versionResources: map[string]string{
 				"CompanyName":      "Microsoft Corporation",
-				"FileDescription":  "äbFile\xa0\xa1Versi on",
+				"FileDescription":  "äb\x01File\xa0\xa1Versi on",
 				"FileVersion":      "4.6.25512.01 built by: dlab-DDVSOWINAGE016. Commit Hash: d0d5c7b49271cadb6d97de26d8e623e98abdc8db",
-				"InternalName":     "äbFileVersion",
+				"InternalName":     "äb\x01FileVersion",
 				"LegalCopyright":   "© Microsoft Corporation.  All rights reserved.",
-				"OriginalFilename": "TProductName",
+				"OriginalFilename": "T\x1a\x01ProductName",
 				"ProductName":      "Microsoft® .NET Framework",
 				"ProductVersion":   "4.6.25512.01 built by: dlab-DDVSOWINAGE016. Commit Hash: d0d5c7b49271cadb6d97de26d8e623e98abdc8db",
 			},
 			expectedPackage: pkg.Package{
 				Name:    "äbFileVersi on",
 				Version: "4.6.25512.01",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 				PURL:    "pkg:nuget/%C3%A4bFileVersi%20on@4.6.25512.01",
 				Metadata: pkg.DotnetPortableExecutableEntry{
 					LegalCopyright: "© Microsoft Corporation.  All rights reserved.",
@@ -84,6 +86,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "System.Data.Linq.dll",
 				Version: "4.7.3190.0",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -101,6 +104,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "The curl executable",
 				Version: "8.4.0",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -118,6 +122,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Prometheus.AspNetCore.dll",
 				Version: "8.0.1",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -134,6 +139,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Hidden Input",
 				Version: "1, 0, 0, 0",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -150,6 +156,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "SQLite",
 				Version: "3.23.2",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -167,6 +174,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Brave Browser",
 				Version: "80.1.7.92",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -179,6 +187,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Better version",
 				Version: "80.1.7.92",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -191,6 +200,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Better version",
 				Version: "80.1.7.92",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -203,6 +213,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Higher semantic version Product Version",
 				Version: "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -215,6 +226,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Higher semantic version File Version",
 				Version: "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -227,6 +239,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Invalid semantic version File Version",
 				Version: "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -239,6 +252,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Invalid semantic version File Version",
 				Version: "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -251,6 +265,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Invalid semantic version Product Version",
 				Version: "3.0.1+b86b61bf676163639795b163d8d753b20aad6207",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 		{
@@ -263,6 +278,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:    "Semantically equal falls through, chooses File Version with more components",
 				Version: "3.0.0.0",
+				FoundBy: dotnetPortableExecutableCatalogerName,
 			},
 		},
 	}
@@ -298,10 +314,13 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 }
 
 func Test_corruptDotnetPE(t *testing.T) {
+	cataloger := dotnetPortableExecutableCataloger{
+		licenses: newNugetLicenses(DefaultCatalogerConfig()),
+	}
 	pkgtest.NewCatalogTester().
 		FromFile(t, "test-fixtures/glob-paths/src/something.exe").
 		WithError().
-		TestParser(t, parseDotnetPortableExecutable)
+		TestParser(t, cataloger.parseDotnetPortableExecutable)
 }
 
 func Test_extractVersion(t *testing.T) {
