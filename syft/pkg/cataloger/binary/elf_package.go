@@ -31,9 +31,12 @@ func packageURL(metadata elfBinaryPackageNotes) string {
 	osVersion := metadata.OSVersion
 
 	var atts cpe.Attributes
-	atts, err := cpe.NewAttributes(metadata.OSCPE)
-	if err != nil {
-		log.WithFields("error", err).Warn("unable to parse cpe attributes for elf binary package")
+	if metadata.OSCPE != "" {
+		var cpeErr error
+		atts, cpeErr = cpe.NewAttributes(metadata.OSCPE)
+		if cpeErr != nil {
+			log.WithFields("error", cpeErr).Warn("unable to parse cpe attributes for elf binary package")
+		}
 	}
 	// only "upgrade" the OS information if there is something more specific to use in it's place
 	if os == "" && osVersion == "" || os == "" && atts.Version != "" || atts.Product != "" && osVersion == "" {
