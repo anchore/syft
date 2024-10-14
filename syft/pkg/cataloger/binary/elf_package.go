@@ -27,22 +27,7 @@ func newELFPackage(metadata elfBinaryPackageNotes, locations file.LocationSet) p
 func packageURL(metadata elfBinaryPackageNotes) string {
 	var qualifiers []packageurl.Qualifier
 
-	os := metadata.OS
-	osVersion := metadata.OSVersion
-
-	var atts cpe.Attributes
-	if metadata.OSCPE != "" {
-		var cpeErr error
-		atts, cpeErr = cpe.NewAttributes(metadata.OSCPE)
-		if cpeErr != nil {
-			log.WithFields("error", cpeErr).Warn("unable to parse cpe attributes for elf binary package")
-		}
-	}
-	// only "upgrade" the OS information if there is something more specific to use in it's place
-	if os == "" && osVersion == "" || os == "" && atts.Version != "" || atts.Product != "" && osVersion == "" {
-		os = atts.Product
-		osVersion = atts.Version
-	}
+	os, osVersion := osNameAndVersionFromMetadata(metadata)
 
 	if os != "" {
 		osQualifier := os
@@ -71,6 +56,26 @@ func packageURL(metadata elfBinaryPackageNotes) string {
 		qualifiers,
 		"",
 	).ToString()
+}
+
+func osNameAndVersionFromMetadata(metadata elfBinaryPackageNotes) (string, string) {
+	os := metadata.OS
+	osVersion := metadata.OSVersion
+
+	if os != "" && osVersion != "" {
+		return os, osVersion
+	}
+
+	if metadata.OSCPE == "" {
+		return "", ""
+	}
+
+	attrs, err := cpe.NewAttributes(metadata.OSCPE)
+	if err != nil {
+		log.WithFields("error", err).Trace("unable to parse cpe attributes for elf binary package")
+		return "", ""
+	}
+	return attrs.Product, attrs.Version
 }
 
 const alpmType = "alpm"
