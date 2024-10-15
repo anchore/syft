@@ -92,6 +92,7 @@ require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/adrg/xdg v0.5.0
+	github.com/anchore/go-cache v0.0.0-20240918212921-3fb02c7c559f
 	github.com/magiconair/properties v1.8.7
 	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678
 )

@@ -20,8 +20,9 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/go-cache"
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/cache"
+	"github.com/anchore/syft/internal/cachemanager"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
@@ -55,7 +56,7 @@ func newGoLicenseResolver(catalogerName string, opts CatalogerConfig) goLicenseR
 		catalogerName:         catalogerName,
 		opts:                  opts,
 		localModCacheDir:      localModCacheDir,
-		licenseCache:          cache.GetResolverCachingErrors[[]goLicense]("golang", "v1"),
+		licenseCache:          cachemanager.GetResolverCachingErrors[[]goLicense]("golang", "v1"),
 		lowerLicenseFileNames: strset.New(lowercaseLicenseFiles()...),
 	}
 }
