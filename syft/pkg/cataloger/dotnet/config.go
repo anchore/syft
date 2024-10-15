@@ -107,6 +107,11 @@ func getDefaultProviders() string {
 						packageSource := strings.TrimSpace(line[2:])
 						if strings.HasPrefix(packageSource, "https://") {
 							found := false
+							for _, knownSource := range packageSources {
+								if packageSource == knownSource {
+									found = true
+								}
+							}
 							if !found {
 								packageSources = append(packageSources, packageSource)
 							}
@@ -119,13 +124,19 @@ func getDefaultProviders() string {
 	cancel()
 	if len(packageSources) > 0 {
 		providers := []string{}
+		httpClient := &http.Client{
+			Timeout: time.Second * 5,
+		}
 		for _, packageSource := range packageSources {
-			if response, err := http.Get(packageSource); err == nil && response.StatusCode == http.StatusOK {
+			// Test the availability of the external package providers
+			if response, err := httpClient.Get(packageSource); err == nil && response.StatusCode == http.StatusOK {
 				apiData, err := io.ReadAll(response.Body)
 				response.Body.Close()
+
 				if err == nil {
 					api := sourceApi{}
 					if err = json.Unmarshal(apiData, &api); err == nil {
+						// Find all (NuGet) package resources of the API
 						for _, apiResource := range api.Resources {
 							if strings.HasSuffix(apiResource.ID, "/package") {
 								providers = append(providers, apiResource.ID)
