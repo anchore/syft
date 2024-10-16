@@ -29,9 +29,7 @@ type CatalogerConfig struct {
 }
 
 // DefaultCatalogerConfig create a CatalogerConfig with default options, which includes:
-// - setting the default remote proxy if none is provided
-// - setting the default no proxy if none is provided
-// - setting the default local module cache dir if none is provided
+// - setting the default remote package providers if none are provided
 func DefaultCatalogerConfig() CatalogerConfig {
 	g := CatalogerConfig{}
 
