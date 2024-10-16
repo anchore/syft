@@ -1,6 +1,7 @@
 package bitnami
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -22,50 +23,154 @@ func mustCPEs(s ...string) (c []cpe.CPE) {
 }
 
 func TestBitnamiCataloger(t *testing.T) {
-	var expectedPkgs = []pkg.Package{
+	mainPkg := pkg.Package{
+		Name:      "apache",
+		Version:   "2.4.62-3",
+		Type:      pkg.BitnamiPkg,
+		Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
+			pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+		),
+		FoundBy: catalogerName,
+		PURL:    "pkg:bitnami/apache@2.4.62-3?arch=arm64&distro=debian-12",
+		CPEs: mustCPEs(
+			"cpe:2.3:*:apache:http_server:2.4.62:*:*:*:*:*:*:*",
+		),
+		Metadata: &pkg.BitnamiEntry{
+			Name:         "apache",
+			Version:      "2.4.62",
+			Revision:     "3",
+			Architecture: "arm64",
+			Distro:       "debian-12",
+		},
+	}
+	secondaryPkgs := pkg.Packages{
 		{
-			Name:      "redis",
-			Version:   "7.4.1-0",
+			Name:      "apr",
+			Version:   "1.7.5",
 			Type:      pkg.BitnamiPkg,
-			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/redis/.spdx-redis.spdx")),
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("RSALv2", license.Concluded),
-				pkg.NewLicenseFromType("RSALv2", license.Declared),
+				pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
+				pkg.NewLicenseFromType("Apache-2.0", license.Declared),
 			),
 			FoundBy: catalogerName,
-			PURL:    "pkg:bitnami/redis@7.4.1-0?arch=arm64&distro=debian-12",
+			PURL:    "pkg:bitnami/apr@1.7.5?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:redis:redis:7.4.1:*:*:*:*:*:*:*",
+				"cpe:2.3:*:apache:portable_runtime:1.7.5:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiEntry{
-				Name:         "redis",
-				Version:      "7.4.1",
-				Revision:     "0",
+				Name:         "apr",
+				Version:      "1.7.5",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+			},
+		},
+		{
+			Name:      "apr-util",
+			Version:   "1.6.3",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
+				pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/apr-util@1.6.3?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:apache:apr-util:1.6.3:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "apr-util",
+				Version:      "1.6.3",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+			},
+		},
+		{
+			Name:      "modsecurity2",
+			Version:   "2.9.7",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
+				pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/modsecurity2@2.9.7?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:trustwave:modsecurity:2.9.7:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "modsecurity2",
+				Version:      "2.9.7",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+			},
+		},
+		{
+			Name:      "modsecurity",
+			Version:   "3.0.13",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
+				pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/modsecurity@3.0.13?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:trustwave:modsecurity:3.0.13:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "modsecurity",
+				Version:      "3.0.13",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+			},
+		},
+		{
+			Name:      "modsecurity-apache",
+			Version:   "0.20210819.0",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
+				pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/modsecurity-apache@0.20210819.0?arch=arm64&distro=debian-12",
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "modsecurity-apache",
+				Version:      "0.20210819.0",
 				Architecture: "arm64",
 				Distro:       "debian-12",
 			},
 		},
 	}
+
+	expectedPkgs := pkg.Packages{mainPkg}
+	expectedPkgs = append(expectedPkgs, secondaryPkgs...)
+	sort.Sort(expectedPkgs)
 	var expectedRelationships []artifact.Relationship
-	for _, p := range expectedPkgs {
+	for _, p := range secondaryPkgs {
 		expectedRelationships = append(expectedRelationships, artifact.Relationship{
-			From: p,
-			To: file.Coordinates{
-				RealPath: "opt/bitnami/redis/.spdx-redis.spdx",
-			},
-			Type: artifact.DescribedByRelationship,
+			From: mainPkg,
+			To:   p,
+			Type: artifact.ContainsRelationship,
 		})
 	}
 
 	tests := []struct {
 		name              string
 		fixture           string
-		wantPkgs          []pkg.Package
+		wantPkgs          pkg.Packages
 		wantRelationships []artifact.Relationship
 		wantErr           require.ErrorAssertionFunc
 	}{
 		{
-			name:              "parse valid Redis SBOM",
+			name:              "parse valid Apache SBOM",
 			fixture:           "test-fixtures/json",
 			wantPkgs:          expectedPkgs,
 			wantRelationships: expectedRelationships,
@@ -79,7 +184,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			wantErr:           require.NoError,
 		},
 		{
-			name:              "Invalid Redis SBOM",
+			name:              "Invalid Apache SBOM",
 			fixture:           "test-fixtures/invalid",
 			wantPkgs:          nil,
 			wantRelationships: nil,
@@ -94,7 +199,6 @@ func TestBitnamiCataloger(t *testing.T) {
 				Expects(tt.wantPkgs, tt.wantRelationships).
 				WithErrorAssertion(tt.wantErr).
 				TestCataloger(t, NewCataloger())
-
 		})
 	}
 }

@@ -42,16 +42,7 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 		return nil, nil, nil
 	}
 
-	var newPkgToFileRelationship = func(p pkg.Package) artifact.Relationship {
-		return artifact.Relationship{
-			From: p,
-			To:   reader.Location.Coordinates,
-			Type: artifact.DescribedByRelationship,
-		}
-	}
-
-	var pkgs []pkg.Package
-	relationships := s.Relationships
+	var pkgs pkg.Packages
 	for _, p := range s.Artifacts.Packages.Sorted() {
 		// replace all locations on the package with the location of the SBOM file.
 		// Why not keep the original list of locations? Since the "locations" field is meant to capture
@@ -74,9 +65,29 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 		// How do we manage duplicates if packages are reported by N (N>1) catalogers
 		// (e.g. a Golang package is both reported by Bitnami & Golang catalogers)?
 		pkgs = append(pkgs, p)
-		// TODO: should we do this for every package in the SBOM or only for the SBOM
-		// main application?
-		relationships = append(relationships, newPkgToFileRelationship(p))
+	}
+	var relationships []artifact.Relationship
+	for _, r := range s.Relationships {
+		// Packages information available in parsed relationships is incomplete
+		// Hence, when we detect a match with one of the existing packages
+		// we replace with the one with completed info
+		if value, ok := r.From.(pkg.Package); ok {
+			for _, p := range pkgs {
+				if value.PURL == p.PURL {
+					r.From = p
+					break
+				}
+			}
+		}
+		if value, ok := r.To.(pkg.Package); ok {
+			for _, p := range pkgs {
+				if value.PURL == p.PURL {
+					r.To = p
+					break
+				}
+			}
+		}
+		relationships = append(relationships, r)
 	}
 
 	return pkgs, relationships, nil

@@ -30,6 +30,18 @@ type Package struct {
 	Metadata  interface{}      // additional data found while parsing the package source
 }
 
+// New type that implements the sort.Interface interface
+type Packages []Package
+
+// Implement the Len method
+func (pkgs Packages) Len() int { return len(pkgs) }
+
+// Implement the Swap method
+func (pkgs Packages) Swap(i, j int) { pkgs[i], pkgs[j] = pkgs[j], pkgs[i] }
+
+// Implement the Less method (sort by Name)
+func (pkgs Packages) Less(i, j int) bool { return pkgs[i].Name < pkgs[j].Name }
+
 func (p *Package) OverrideID(id artifact.ID) {
 	p.id = id
 }

@@ -21,5 +21,3 @@ PackageCopyrightText: NOASSERTION
 ExternalRef: SECURITY cpe23Type cpe:2.3:*:redis:redis:7.4.1:*:*:*:*:*:*:*
 ExternalRef: PACKAGE-MANAGER purl pkg:bitnami/redis@7.4.1-0?arch=arm64&distro=debian-12
 FilesAnalyzed: false
-
-
