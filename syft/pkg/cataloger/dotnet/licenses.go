@@ -78,7 +78,7 @@ func (c *nugetLicenses) getLicenses(moduleName, moduleVersion string) ([]pkg.Lic
 		}
 
 		// if we're running against a directory on the filesystem, it may not include the
-		// user's homedir, so we defer to using the localModCacheResolver
+		// user's homedir, so we defer to using the localModCacheResolvers
 		for _, resolver := range c.localNuGetCacheResolvers {
 			if lics, err := c.findLocalLicenses(resolver, moduleSearchGlob(moduleName, moduleVersion)); err == nil {
 				licenses = appendNewLicenses(licenses, lics...)
@@ -271,6 +271,36 @@ type zipDir interface {
 	ReadDir(count int) ([]fs.DirEntry, error)
 }
 
+func (c *nugetLicenses) extractLicensesFromBinaryNuGetPackage(binary []byte) []pkg.License {
+	out := []pkg.License{}
+
+	if zr, err := zip.NewReader(bytes.NewReader(binary), int64(len(binary))); err == nil {
+		if _nugetContents, err := zr.Open("."); err == nil {
+			if nugetContents, ok := _nugetContents.(zipDir); ok {
+				if entries, err := nugetContents.ReadDir(0); err == nil {
+					for _, entry := range entries {
+						if strings.HasSuffix(strings.ToLower(entry.Name()), ".nuspec") {
+							if specFile, err := zr.Open(entry.Name()); err == nil {
+								defer specFile.Close()
+								if specFileData, err := io.ReadAll(specFile); err == nil {
+									var nuspec NuSpec
+
+									if err = xml.Unmarshal(removeBOM(specFileData), &nuspec); err == nil {
+										out = append(out, c.extractLicensesFromNuSpec(nuspec, zr)...)
+									}
+								}
+							}
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return out
+}
+
 func (c *nugetLicenses) getLicensesFromRemotePackage(providerURL, moduleName, moduleVersion string) ([]pkg.License, bool) {
 	out := []pkg.License{}
 	foundPackage := false
@@ -279,6 +309,7 @@ func (c *nugetLicenses) getLicensesFromRemotePackage(providerURL, moduleName, mo
 	response, err := httpClient.Get(url)
 	if err == nil {
 		if response.StatusCode == http.StatusUnauthorized && len(c.opts.ProviderCredentials) > 0 {
+			// Let's try, using the given credentials
 			for _, credential := range c.opts.ProviderCredentials {
 				req, _ := http.NewRequest("GET", url, nil)
 				req.SetBasicAuth(credential.Username, credential.Password)
@@ -298,29 +329,7 @@ func (c *nugetLicenses) getLicensesFromRemotePackage(providerURL, moduleName, mo
 			response.Body.Close()
 
 			if err == nil {
-				if zr, err := zip.NewReader(bytes.NewReader(moduleData), int64(len(moduleData))); err == nil {
-					if _nugetContents, err := zr.Open("."); err == nil {
-						if nugetContents, ok := _nugetContents.(zipDir); ok {
-							if entries, err := nugetContents.ReadDir(0); err == nil {
-								for _, entry := range entries {
-									if strings.HasSuffix(strings.ToLower(entry.Name()), ".nuspec") {
-										if specFile, err := zr.Open(entry.Name()); err == nil {
-											defer specFile.Close()
-											if specFileData, err := io.ReadAll(specFile); err == nil {
-												var nuspec NuSpec
-
-												if err = xml.Unmarshal(removeBOM(specFileData), &nuspec); err == nil {
-													out = append(out, c.extractLicensesFromNuSpec(nuspec, zr)...)
-												}
-											}
-										}
-										break
-									}
-								}
-							}
-						}
-					}
-				}
+				out = c.extractLicensesFromBinaryNuGetPackage(moduleData)
 			}
 		}
 	}
@@ -328,7 +337,7 @@ func (c *nugetLicenses) getLicensesFromRemotePackage(providerURL, moduleName, mo
 	return out, foundPackage
 }
 
-func findMatchingLibraries(moduleName, moduleVersion string, assets []projectAssets) (projectLibrary, error) {
+func findMatchingLibrariesInProjectAssets(moduleName, moduleVersion string, assets []projectAssets) (projectLibrary, error) {
 	errNotFound := fmt.Errorf("no library match was found")
 	if len(assets) == 0 {
 		return projectLibrary{}, errNotFound
@@ -351,7 +360,7 @@ func (c *nugetLicenses) findRemoteLicenses(moduleName, moduleVersion string, ass
 		return nil, errors.ErrUnsupported
 	}
 
-	if matchingLibrary, err := findMatchingLibraries(moduleName, moduleVersion, assets); err == nil {
+	if matchingLibrary, err := findMatchingLibrariesInProjectAssets(moduleName, moduleVersion, assets); err == nil {
 		// Search for matched library rather than using a
 		if pathParts := strings.Split(matchingLibrary.Path, "/"); len(pathParts) == 2 {
 			moduleName = pathParts[0]
@@ -400,9 +409,10 @@ func getProjectAssets(resolver file.Resolver) ([]projectAssets, error) {
 	assets := []projectAssets{}
 	var err error
 
-	// Try to determine NuGet package folders from temporary object files
+	// Try to determine NuGet package assets from temporary object files
+	// (usually located in the /obj folder)
 	var assetFiles []file.Location
-	if assetFiles, err = resolver.FilesByGlob("**/obj/project.assets.json"); err == nil && len(assetFiles) > 0 {
+	if assetFiles, err = resolver.FilesByGlob("**/project.assets.json"); err == nil && len(assetFiles) > 0 {
 		for _, assetFile := range assetFiles {
 			if contentReader, err := resolver.FileContentsByLocation(assetFile); err == nil {
 				defer internal.CloseAndLogError(contentReader, assetFile.RealPath)
