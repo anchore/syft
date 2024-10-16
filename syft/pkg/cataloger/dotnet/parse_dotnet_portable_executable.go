@@ -52,8 +52,10 @@ func (c *dotnetPortableExecutableCataloger) parseDotnetPortableExecutable(_ cont
 		return nil, nil, err
 	}
 
+	c.licenses.assetDefinitions, _ = getProjectAssets(resolver)
+
 	// Try to resolve *.nupkg License
-	if licenses, err := c.licenses.getLicenses(dotNetPkg.Name, dotNetPkg.Version, resolver); err == nil && len(licenses) > 0 {
+	if licenses, err := c.licenses.getLicenses(dotNetPkg.Name, dotNetPkg.Version); err == nil && len(licenses) > 0 {
 		dotNetPkg.Licenses = pkg.NewLicenseSet(licenses...)
 	}
 

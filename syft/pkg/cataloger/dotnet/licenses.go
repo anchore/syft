@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -28,6 +29,7 @@ type nugetLicenses struct {
 	opts                     CatalogerConfig
 	localNuGetCacheResolvers []file.Resolver
 	lowerLicenseFileNames    *strset.Set
+	assetDefinitions         []projectAssets
 }
 
 func newNugetLicenses(opts CatalogerConfig) nugetLicenses {
@@ -66,13 +68,13 @@ func appendNewLicenses(licenses []pkg.License, potentiallyNew ...pkg.License) []
 	return licenses
 }
 
-func (c *nugetLicenses) getLicenses(moduleName, moduleVersion string, resolver file.Resolver) ([]pkg.License, error) {
+func (c *nugetLicenses) getLicenses(moduleName, moduleVersion string) ([]pkg.License, error) {
 	licenses := []pkg.License{}
 
 	if c.opts.SearchLocalLicenses {
 		if c.localNuGetCacheResolvers == nil {
 			// Try to determine NuGet package folder resolvers
-			c.localNuGetCacheResolvers = getLocalNugetFolderResolvers(resolver)
+			c.localNuGetCacheResolvers = getLocalNugetFolderResolvers(c.assetDefinitions)
 		}
 
 		// if we're running against a directory on the filesystem, it may not include the
@@ -85,16 +87,21 @@ func (c *nugetLicenses) getLicenses(moduleName, moduleVersion string, resolver f
 	}
 
 	if c.opts.SearchRemoteLicenses {
-		if lics, err := c.findRemoteLicenses(moduleName, moduleVersion); err == nil {
-			licenses = appendNewLicenses(licenses, lics...)
+		if len(c.assetDefinitions) > 0 {
+			if lics, err := c.findRemoteLicenses(moduleName, moduleVersion, c.assetDefinitions...); err == nil {
+				licenses = appendNewLicenses(licenses, lics...)
+			}
+		} else {
+			if lics, err := c.findRemoteLicenses(moduleName, moduleVersion); err == nil {
+				licenses = appendNewLicenses(licenses, lics...)
+			}
 		}
 	}
 
-	var err error
 	if len(licenses) == 0 {
-		err = errors.New("no licenses found")
+		return licenses, errors.New("no licenses found")
 	}
-	return licenses, err
+	return licenses, nil
 }
 
 func (c *nugetLicenses) findLocalLicenses(resolver file.Resolver, globMatch string) (out []pkg.License, err error) {
@@ -219,7 +226,7 @@ func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec NuSpec, nugetArchive *z
 		out = append(out, pkg.NewLicenseFromFields(nuspec.Meta.License.Text, nuspec.Meta.LicenseURL, nil))
 	case "file":
 		if licenseFile, err := nugetArchive.Open(nuspec.Meta.License.Text); err == nil {
-			licenseFile.Close()
+			defer licenseFile.Close()
 			if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
 				if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.NewLocation(nuspec.Meta.License.Text)); err == nil {
 					out = append(out, foundLicenses...)
@@ -260,24 +267,57 @@ func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec NuSpec, nugetArchive *z
 	return out
 }
 
+type zipDir interface {
+	ReadDir(count int) ([]fs.DirEntry, error)
+}
+
 func (c *nugetLicenses) getLicensesFromRemotePackage(providerURL, moduleName, moduleVersion string) ([]pkg.License, bool) {
 	out := []pkg.License{}
 	foundPackage := false
 
-	if response, err := httpClient.Get(fmt.Sprintf("%s/%s/%s", strings.TrimSuffix(providerURL, "/"), moduleName, moduleVersion)); err == nil && response.StatusCode == http.StatusOK {
-		foundPackage = true
-		moduleData, err := io.ReadAll(response.Body)
-		response.Body.Close()
+	url := fmt.Sprintf("%s/%s/%s/%s.%s.nupkg", strings.TrimSuffix(providerURL, "/"), moduleName, moduleVersion, moduleName, moduleVersion)
+	response, err := httpClient.Get(url)
+	if err == nil {
+		if response.StatusCode == http.StatusUnauthorized && len(c.opts.ProviderCredentials) > 0 {
+			for _, credential := range c.opts.ProviderCredentials {
+				req, _ := http.NewRequest("GET", url, nil)
+				req.SetBasicAuth(credential.Username, credential.Password)
+				response, err = httpClient.Do(req)
+				if err != nil {
+					break
+				}
+				if response.StatusCode == http.StatusOK {
+					break
+				}
+			}
+		}
 
-		if err == nil {
-			if zr, err := zip.NewReader(bytes.NewReader(moduleData), int64(len(moduleData))); err == nil {
-				if specFile, err := zr.Open(moduleName + ".nuspec"); err == nil {
-					defer specFile.Close()
-					if specFileData, err := io.ReadAll(specFile); err == nil {
-						var nuspec NuSpec
+		if err == nil && response.StatusCode == http.StatusOK {
+			foundPackage = true
+			moduleData, err := io.ReadAll(response.Body)
+			response.Body.Close()
 
-						if err = xml.Unmarshal(removeBOM(specFileData), &nuspec); err == nil {
-							out = append(out, c.extractLicensesFromNuSpec(nuspec, zr)...)
+			if err == nil {
+				if zr, err := zip.NewReader(bytes.NewReader(moduleData), int64(len(moduleData))); err == nil {
+					if _nugetContents, err := zr.Open("."); err == nil {
+						if nugetContents, ok := _nugetContents.(zipDir); ok {
+							if entries, err := nugetContents.ReadDir(0); err == nil {
+								for _, entry := range entries {
+									if strings.HasSuffix(strings.ToLower(entry.Name()), ".nuspec") {
+										if specFile, err := zr.Open(entry.Name()); err == nil {
+											defer specFile.Close()
+											if specFileData, err := io.ReadAll(specFile); err == nil {
+												var nuspec NuSpec
+
+												if err = xml.Unmarshal(removeBOM(specFileData), &nuspec); err == nil {
+													out = append(out, c.extractLicensesFromNuSpec(nuspec, zr)...)
+												}
+											}
+										}
+										break
+									}
+								}
+							}
 						}
 					}
 				}
@@ -288,9 +328,35 @@ func (c *nugetLicenses) getLicensesFromRemotePackage(providerURL, moduleName, mo
 	return out, foundPackage
 }
 
-func (c *nugetLicenses) findRemoteLicenses(moduleName, moduleVersion string) (out []pkg.License, err error) {
+func findMatchingLibraries(moduleName, moduleVersion string, assets []projectAssets) (projectLibrary, error) {
+	errNotFound := fmt.Errorf("no library match was found")
+	if len(assets) == 0 {
+		return projectLibrary{}, errNotFound
+	}
+
+	expectedName := fmt.Sprintf("%s/%s", strings.TrimSuffix(strings.TrimSuffix(strings.ToLower(moduleName), ".dll"), ".exe"), moduleVersion)
+	for _, asset := range assets {
+		for name, library := range asset.Libraries {
+			if strings.HasPrefix(strings.ToLower(expectedName), strings.ToLower(name)) {
+				return library, nil
+			}
+		}
+	}
+
+	return projectLibrary{}, errNotFound
+}
+
+func (c *nugetLicenses) findRemoteLicenses(moduleName, moduleVersion string, assets ...projectAssets) (out []pkg.License, err error) {
 	if len(c.opts.Providers) == 0 {
 		return nil, errors.ErrUnsupported
+	}
+
+	if matchingLibrary, err := findMatchingLibraries(moduleName, moduleVersion, assets); err == nil {
+		// Search for matched library rather than using a
+		if pathParts := strings.Split(matchingLibrary.Path, "/"); len(pathParts) == 2 {
+			moduleName = pathParts[0]
+			moduleVersion = pathParts[1]
+		}
 	}
 
 	foundPackage := false
@@ -301,6 +367,9 @@ func (c *nugetLicenses) findRemoteLicenses(moduleName, moduleVersion string) (ou
 		}
 	}
 
+	if len(out) > 0 {
+		return out, nil
+	}
 	if foundPackage {
 		return nil, errors.New("no license could be found")
 	}
@@ -315,23 +384,88 @@ func moduleSearchGlob(moduleName, moduleVersion string) string {
 	return fmt.Sprintf("**/%s/*", moduleDir(moduleName, moduleVersion))
 }
 
-type nugetPackageFolders struct {
-	PackageFolders map[string]any `json:"packageFolders"`
+type projectLibrary struct {
+	SHA256 string   `json:"sha256"`
+	Type   string   `json:"type"`
+	Path   string   `json:"path"`
+	Files  []string `json:"files"`
 }
 
-func getNuGetCachesFromProjectAssets(resolver file.Resolver) []string {
-	paths := []string{}
+type projectAssets struct {
+	Libraries      map[string]projectLibrary `json:"libraries"`
+	PackageFolders map[string]any            `json:"packageFolders"`
+}
+
+func getProjectAssets(resolver file.Resolver) ([]projectAssets, error) {
+	assets := []projectAssets{}
+	var err error
 
 	// Try to determine NuGet package folders from temporary object files
-	if assetFiles, err := resolver.FilesByGlob("**/obj/project.assets.json"); err == nil && len(assetFiles) > 0 {
+	var assetFiles []file.Location
+	if assetFiles, err = resolver.FilesByGlob("**/obj/project.assets.json"); err == nil && len(assetFiles) > 0 {
 		for _, assetFile := range assetFiles {
 			if contentReader, err := resolver.FileContentsByLocation(assetFile); err == nil {
 				defer internal.CloseAndLogError(contentReader, assetFile.RealPath)
 
 				if assetFileData, err := io.ReadAll(contentReader); err == nil {
-					folders := nugetPackageFolders{}
-					if err = json.Unmarshal(assetFileData, &folders); err == nil {
-						for folder := range folders.PackageFolders {
+					assetDefinition := projectAssets{}
+					if err = json.Unmarshal(assetFileData, &assetDefinition); err == nil {
+						assets = append(assets, assetDefinition)
+					}
+				}
+			}
+		}
+
+		if len(assets) == 0 {
+			err = fmt.Errorf("could not retrieve any asset definitions")
+		}
+	}
+
+	return assets, err
+}
+
+func getNuGetCachesFromProjectAssets(assets []projectAssets) []string {
+	paths := []string{}
+
+	// Try to determine NuGet package folders from project assets
+	if len(assets) > 0 {
+		for _, assetDefinition := range assets {
+			for folder := range assetDefinition.PackageFolders {
+				found := false
+				for _, known := range paths {
+					if known == folder {
+						found = true
+						break
+					}
+				}
+				if !found {
+					paths = append(paths, folder)
+				}
+			}
+		}
+	}
+
+	return paths
+}
+
+func getNuGetCachesFromSDK() []string {
+	paths := []string{}
+
+	// Query NuGet itself for its cache locations
+	if dotnetPath, err := determineDotnetExecutablePath(); err == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		// cf. https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-nuget-locals
+		cmd := exec.CommandContext(ctx, dotnetPath, "nuget", "locals", "all", "-l", "--force-english-output")
+		if stdout, err := cmd.StdoutPipe(); err == nil {
+			if err := cmd.Start(); err == nil {
+				if data, err := io.ReadAll(stdout); err == nil {
+					lines := strings.Split(string(data), "\n")
+					for _, line := range lines {
+						line = strings.TrimSpace(line)
+						if lineParts := strings.Split(line, ": "); len(lineParts) == 2 {
+							folder := lineParts[1]
 							found := false
 							for _, known := range paths {
 								if known == folder {
@@ -352,48 +486,12 @@ func getNuGetCachesFromProjectAssets(resolver file.Resolver) []string {
 	return paths
 }
 
-func getNuGetCachesFromSDK() []string {
-	paths := []string{}
-
-	// Query NuGet itself for its cache locations
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	// cf. https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-nuget-locals
-	cmd := exec.CommandContext(ctx, "dotnet", "nuget", "locals", "all", "-l", "--force-english-output")
-	if stdout, err := cmd.StdoutPipe(); err == nil {
-		if err := cmd.Start(); err == nil {
-			if data, err := io.ReadAll(stdout); err == nil {
-				lines := strings.Split(string(data), "\n")
-				for _, line := range lines {
-					line = strings.TrimSpace(line)
-					if lineParts := strings.Split(line, ": "); len(lineParts) == 2 {
-						folder := lineParts[1]
-						found := false
-						for _, known := range paths {
-							if known == folder {
-								found = true
-								break
-							}
-						}
-						if !found {
-							paths = append(paths, folder)
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return paths
-}
-
-func getLocalNugetFolderResolvers(resolver file.Resolver) []file.Resolver {
+func getLocalNugetFolderResolvers(assetDefinitions []projectAssets) []file.Resolver {
 	nugetPackagePaths := []string{}
 	if injectedCachePath := os.Getenv("TEST_PARSE_DOTNET_DEPS_INJECT_CACHE_LOCATION"); injectedCachePath != "" {
 		nugetPackagePaths = append(nugetPackagePaths, injectedCachePath)
 	} else {
-		nugetPackagePaths = append(nugetPackagePaths, getNuGetCachesFromProjectAssets(resolver)...)
+		nugetPackagePaths = append(nugetPackagePaths, getNuGetCachesFromProjectAssets(assetDefinitions)...)
 
 		nugetPackagePaths = append(nugetPackagePaths, getNuGetCachesFromSDK()...)
 	}

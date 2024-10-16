@@ -84,6 +84,8 @@ func (c *dotnetDepsCataloger) parseDotnetDeps(_ context.Context, resolver file.R
 	// sort the names so that the order of the packages is deterministic
 	sort.Strings(names)
 
+	c.licenses.assetDefinitions, _ = getProjectAssets(resolver)
+
 	for _, nameVersion := range names {
 		// skip the root package
 		name, version := extractNameAndVersion(nameVersion)
@@ -101,7 +103,7 @@ func (c *dotnetDepsCataloger) parseDotnetDeps(_ context.Context, resolver file.R
 		dotnetPkg.FoundBy = dotnetDepsCatalogerName
 
 		// Try to resolve *.nupkg License
-		if licenses, err := c.licenses.getLicenses(name, version, resolver); err == nil && len(licenses) > 0 {
+		if licenses, err := c.licenses.getLicenses(name, version); err == nil && len(licenses) > 0 {
 			dotnetPkg.Licenses = pkg.NewLicenseSet(licenses...)
 		}
 
