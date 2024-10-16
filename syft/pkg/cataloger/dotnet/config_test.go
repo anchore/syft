@@ -44,7 +44,8 @@ func Test_Config(t *testing.T) {
 			expected: CatalogerConfig{
 				SearchLocalLicenses:  false,
 				SearchRemoteLicenses: false,
-				Providers:            []string{"https://www.nuget.org/api/v2/package"},
+				Providers:            []string{"https://api.nuget.org/v3-flatcontainer/"},
+				ProviderCredentials:  []Credential{},
 			},
 		},
 		{
@@ -59,6 +60,7 @@ func Test_Config(t *testing.T) {
 				SearchLocalLicenses:  true,
 				SearchRemoteLicenses: false,
 				Providers:            []string{"https://my.proxy"},
+				ProviderCredentials:  []Credential{},
 			},
 		},
 		{
@@ -77,6 +79,7 @@ func Test_Config(t *testing.T) {
 				SearchLocalLicenses:  false,
 				SearchRemoteLicenses: true,
 				Providers:            []string{"https://www.nuget.org/api/v2/package"},
+				ProviderCredentials:  []Credential{},
 			},
 		},
 	}
