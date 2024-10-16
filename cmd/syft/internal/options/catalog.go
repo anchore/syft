@@ -171,7 +171,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		DotNet: dotnet.DefaultCatalogerConfig().
 			WithSearchLocalLicenses(cfg.DotNet.SearchLocalLicenses).
 			WithSearchRemoteLicenses(cfg.DotNet.SearchRemoteLicenses).
-			WithProviders(cfg.DotNet.Providers),
+			WithProviders(cfg.DotNet.Providers).
+			WithCredentials(cfg.DotNet.ProviderCredentials),
 		JavaScript: javascript.DefaultCatalogerConfig().
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
