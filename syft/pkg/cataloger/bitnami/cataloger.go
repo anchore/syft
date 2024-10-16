@@ -4,10 +4,8 @@ Package bitnami provides a concrete Cataloger implementation for capturing packa
 package bitnami
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	"io"
+	"strings"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -27,15 +25,8 @@ func NewCataloger() pkg.Cataloger {
 		)
 }
 
-// TODO: this is copied from the sbom-cataloger
-// it should probably be slimmed down so as not to duplicate
-// parts of the SBOM cataloger that it doesn't need.
 func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	readSeeker, err := adaptToReadSeeker(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read SBOM file %q: %w", reader.Location.RealPath, err)
-	}
-	s, _, _, err := format.Decode(readSeeker)
+	s, sFormat, _, err := format.Decode(reader)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -43,6 +34,20 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 	if s == nil {
 		log.WithFields("path", reader.Location.RealPath).Trace("file is not an SBOM")
 		return nil, nil, nil
+	}
+
+	// Bitnami exclusively uses SPDX JSON SBOMs
+	if sFormat != "spdx-json" {
+		log.WithFields("path", reader.Location.RealPath).Trace("file is not an SPDX JSON SBOM")
+		return nil, nil, nil
+	}
+
+	var newPkgToFileRelationship = func(p pkg.Package) artifact.Relationship {
+		return artifact.Relationship{
+			From: p,
+			To:   reader.Location.Coordinates,
+			Type: artifact.DescribedByRelationship,
+		}
 	}
 
 	var pkgs []pkg.Package
@@ -56,28 +61,23 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		p.FoundBy = catalogerName
+		if strings.HasPrefix(p.PURL, "pkg:bitnami") {
+			p.Type = pkg.BitnamiPkg
+			metadata, err := parseBitnamiPURL(p.PURL)
+			if err != nil {
+				return nil, nil, err
+			}
 
+			p.Metadata = metadata
+		}
+		// TODO: what to do with non-bitnami packages included in Bitnami SBOMs?
+		// How do we manage duplicates if packages are reported by N (N>1) catalogers
+		// (e.g. a Golang package is both reported by Bitnami & Golang catalogers)?
 		pkgs = append(pkgs, p)
-		relationships = append(relationships, artifact.Relationship{
-			From: p,
-			To:   reader.Location.Coordinates,
-			Type: artifact.DescribedByRelationship,
-		})
+		// TODO: should we do this for every package in the SBOM or only for the SBOM
+		// main application?
+		relationships = append(relationships, newPkgToFileRelationship(p))
 	}
 
 	return pkgs, relationships, nil
-}
-
-func adaptToReadSeeker(reader io.Reader) (io.ReadSeeker, error) {
-	// with the stereoscope API and default file.Resolver implementation here in syft, odds are very high that
-	// the underlying reader is already a ReadSeeker, so we can just return it as-is. We still want to
-	if rs, ok := reader.(io.ReadSeeker); ok {
-		return rs, nil
-	}
-
-	log.Debug("SBOM cataloger reader is not a ReadSeeker, reading entire SBOM into memory")
-
-	var buff bytes.Buffer
-	_, err := io.Copy(&buff, reader)
-	return bytes.NewReader(buff.Bytes()), err
 }
