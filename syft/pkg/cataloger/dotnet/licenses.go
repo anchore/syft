@@ -264,7 +264,7 @@ func (c *nugetLicenses) getLicensesFromRemotePackage(providerURL, moduleName, mo
 	out := []pkg.License{}
 	foundPackage := false
 
-	if response, err := httpClient.Get(fmt.Sprintf("%s/%s/%s", providerURL, moduleName, moduleVersion)); err == nil && response.StatusCode == http.StatusOK {
+	if response, err := httpClient.Get(fmt.Sprintf("%s/%s/%s", strings.TrimSuffix(providerURL, "/"), moduleName, moduleVersion)); err == nil && response.StatusCode == http.StatusOK {
 		foundPackage = true
 		moduleData, err := io.ReadAll(response.Body)
 		response.Body.Close()
