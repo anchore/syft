@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
@@ -114,8 +115,9 @@ func (c *nugetLicenses) findLocalLicenses(resolver file.Resolver, globMatch stri
 			if err != nil {
 				return nil, err
 			}
-			defer contents.Close()
+
 			parsed, err := licenses.Parse(contents, l)
+			contents.Close()
 
 			if err != nil {
 				return nil, err
@@ -141,6 +143,8 @@ type Dependency struct {
 }
 
 // NuSpec represents a .nuspec XML file found in the root of the .nupack or .nupkg files
+//
+// cf. https://learn.microsoft.com/en-us/nuget/reference/nuspec
 type NuSpec struct {
 	XMLName xml.Name `xml:"package"`
 	Xmlns   string   `xml:"xmlns,attr,omitempty"`
@@ -176,35 +180,25 @@ type NuSpec struct {
 // removeBOM removes any ByteOrderMark at the beginning of a given file content
 func removeBOM(input []byte) []byte {
 	if len(input) >= 2 {
-		if input[0] == 254 &&
-			input[1] == 255 {
+		if input[0] == 254 && input[1] == 255 {
 			// UTF-16 (BE)
 			return input[2:]
 		}
-		if input[0] == 255 &&
-			input[1] == 254 {
+		if input[0] == 255 && input[1] == 254 {
 			// UTF-16 (LE)
 			return input[2:]
 		}
 		if len(input) >= 3 {
-			if input[0] == 239 &&
-				input[1] == 187 &&
-				input[2] == 191 {
+			if input[0] == 239 && input[1] == 187 && input[2] == 191 {
 				// UTF-8
 				return input[3:]
 			}
 			if len(input) >= 4 {
-				if input[0] == 0 &&
-					input[1] == 0 &&
-					input[2] == 254 &&
-					input[3] == 255 {
+				if input[0] == 0 && input[1] == 0 && input[2] == 254 && input[3] == 255 {
 					// UTF-32 (BE)
 					return input[4:]
 				}
-				if input[0] == 255 &&
-					input[1] == 254 &&
-					input[2] == 0 &&
-					input[3] == 0 {
+				if input[0] == 255 && input[1] == 254 && input[2] == 0 && input[3] == 0 {
 					// UTF-32 (LE)
 					return input[4:]
 				}
@@ -214,80 +208,96 @@ func removeBOM(input []byte) []byte {
 	return input
 }
 
-func (c *nugetLicenses) findRemoteLicenses(moduleName, moduleVersion string) (out []pkg.License, err error) {
-	if len(c.opts.Providers) == 0 {
-		return nil, errors.ErrUnsupported
-	}
+// extractLicensesFromNuSpec tries to evaluate the license(s) from the .nuspec file struct and its containing archive (or NuGet package)
+//
+// cf. https://learn.microsoft.com/en-us/nuget/reference/nuspec#license
+func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec NuSpec, nugetArchive *zip.Reader) []pkg.License {
+	out := []pkg.License{}
 
-	httpClient := &http.Client{
-		Timeout: time.Second * 5,
-	}
-
-	foundPackage := false
-	for _, provider := range c.opts.Providers {
-		if response, err := httpClient.Get(fmt.Sprintf("%s/%s/%s", provider, moduleName, moduleVersion)); err == nil && response.StatusCode == http.StatusOK {
-			foundPackage = true
-			moduleData, err := io.ReadAll(response.Body)
-			response.Body.Close()
-
-			if err == nil {
-				if zr, err := zip.NewReader(bytes.NewReader(moduleData), int64(len(moduleData))); err == nil {
-					if specFile, err := zr.Open(moduleName + ".nuspec"); err == nil {
-						defer specFile.Close()
-						if specFileData, err := io.ReadAll(specFile); err == nil {
-							specFileData = removeBOM(specFileData)
-							var nuspec NuSpec
-							if err = xml.Unmarshal(specFileData, &nuspec); err == nil {
-								switch nuspec.Meta.License.Type {
-								case "expression":
-									out = append(out, pkg.NewLicenseFromFields(nuspec.Meta.License.Text, nuspec.Meta.LicenseURL, nil))
-								case "file":
-									if licenseFile, err := zr.Open(nuspec.Meta.License.Text); err == nil {
-										defer licenseFile.Close()
-										if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
-											licenseFileData = removeBOM(licenseFileData)
-											if foundLicenses, err := licenses.Parse(bytes.NewBuffer(licenseFileData), file.NewLocation(nuspec.Meta.License.Text)); err == nil {
-												out = append(out, foundLicenses...)
-											}
-										}
-									}
-								default:
-									if nuspec.Meta.LicenseURL != "" { // Legacy
-										if response, err := httpClient.Get(nuspec.Meta.LicenseURL); err == nil && response.StatusCode == http.StatusOK {
-											licenseFileData, err := io.ReadAll(response.Body)
-											response.Body.Close()
-											if err == nil {
-												licenseFileData = removeBOM(licenseFileData)
-												if foundLicenses, err := licenses.Parse(bytes.NewBuffer(licenseFileData), file.Location{}); err == nil {
-													for _, foundLicense := range foundLicenses {
-														foundLicense.URLs = append(foundLicense.URLs, nuspec.Meta.LicenseURL)
-														out = append(out, foundLicense)
-													}
-												}
-											}
-										}
-									} else { // Fallback
-										for _, fileRef := range nuspec.Files.File {
-											fileName := filepath.Base(fileRef.Source)
-											if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
-												if licenseFile, err := zr.Open(fileRef.Source); err == nil {
-													defer licenseFile.Close()
-													if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
-														licenseFileData = removeBOM(licenseFileData)
-														if foundLicenses, err := licenses.Parse(bytes.NewBuffer(licenseFileData), file.NewLocation(nuspec.Meta.License.Text)); err == nil {
-															out = append(out, foundLicenses...)
-														}
-													}
-												}
-											}
-										}
-									}
-								}
+	switch nuspec.Meta.License.Type {
+	case "expression":
+		out = append(out, pkg.NewLicenseFromFields(nuspec.Meta.License.Text, nuspec.Meta.LicenseURL, nil))
+	case "file":
+		if licenseFile, err := nugetArchive.Open(nuspec.Meta.License.Text); err == nil {
+			licenseFile.Close()
+			if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
+				if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.NewLocation(nuspec.Meta.License.Text)); err == nil {
+					out = append(out, foundLicenses...)
+				}
+			}
+		}
+	default:
+		if nuspec.Meta.LicenseURL != "" { // Legacy: deprecated LicenseURL
+			if response, err := httpClient.Get(nuspec.Meta.LicenseURL); err == nil && response.StatusCode == http.StatusOK {
+				licenseFileData, err := io.ReadAll(response.Body)
+				response.Body.Close()
+				if err == nil {
+					if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.Location{}); err == nil {
+						for _, foundLicense := range foundLicenses {
+							foundLicense.URLs = append(foundLicense.URLs, nuspec.Meta.LicenseURL)
+							out = append(out, foundLicense)
+						}
+					}
+				}
+			}
+		} else { // Fallback: search for referenced license files
+			for _, fileRef := range nuspec.Files.File {
+				fileName := filepath.Base(fileRef.Source)
+				if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
+					if licenseFile, err := nugetArchive.Open(fileRef.Source); err == nil {
+						defer licenseFile.Close()
+						if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
+							if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.NewLocation(nuspec.Meta.License.Text)); err == nil {
+								out = append(out, foundLicenses...)
 							}
 						}
 					}
 				}
 			}
+		}
+	}
+
+	return out
+}
+
+func (c *nugetLicenses) getLicensesFromRemotePackage(providerURL, moduleName, moduleVersion string) ([]pkg.License, bool) {
+	out := []pkg.License{}
+	foundPackage := false
+
+	if response, err := httpClient.Get(fmt.Sprintf("%s/%s/%s", providerURL, moduleName, moduleVersion)); err == nil && response.StatusCode == http.StatusOK {
+		foundPackage = true
+		moduleData, err := io.ReadAll(response.Body)
+		response.Body.Close()
+
+		if err == nil {
+			if zr, err := zip.NewReader(bytes.NewReader(moduleData), int64(len(moduleData))); err == nil {
+				if specFile, err := zr.Open(moduleName + ".nuspec"); err == nil {
+					defer specFile.Close()
+					if specFileData, err := io.ReadAll(specFile); err == nil {
+						var nuspec NuSpec
+
+						if err = xml.Unmarshal(removeBOM(specFileData), &nuspec); err == nil {
+							out = append(out, c.extractLicensesFromNuSpec(nuspec, zr)...)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return out, foundPackage
+}
+
+func (c *nugetLicenses) findRemoteLicenses(moduleName, moduleVersion string) (out []pkg.License, err error) {
+	if len(c.opts.Providers) == 0 {
+		return nil, errors.ErrUnsupported
+	}
+
+	foundPackage := false
+	for _, provider := range c.opts.Providers {
+		out, foundPackage = c.getLicensesFromRemotePackage(provider, moduleName, moduleVersion)
+		if foundPackage {
+			break
 		}
 	}
 
@@ -309,64 +319,83 @@ type nugetPackageFolders struct {
 	PackageFolders map[string]any `json:"packageFolders"`
 }
 
-func getLocalNugetFolderResolvers(resolver file.Resolver) []file.Resolver {
-	nugetPackagePaths := []string{}
-	if injectedCachePath := os.Getenv("TEST_PARSE_DOTNET_DEPS_INJECT_CACHE_LOCATION"); injectedCachePath != "" {
-		nugetPackagePaths = append(nugetPackagePaths, injectedCachePath)
-	} else {
-		// Try to determine NuGet package folders from temporary object files
-		if assetFiles, err := resolver.FilesByGlob("**/obj/project.assets.json"); err == nil && len(assetFiles) > 0 {
-			for _, assetFile := range assetFiles {
-				if contentReader, err := resolver.FileContentsByLocation(assetFile); err == nil {
-					if assetFileData, err := io.ReadAll(contentReader); err == nil {
-						folders := nugetPackageFolders{}
-						if err = json.Unmarshal(assetFileData, &folders); err == nil {
-							for folder := range folders.PackageFolders {
-								found := false
-								for _, known := range nugetPackagePaths {
-									if known == folder {
-										found = true
-										break
-									}
-								}
-								if !found {
-									nugetPackagePaths = append(nugetPackagePaths, folder)
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+func getNuGetCachesFromProjectAssets(resolver file.Resolver) []string {
+	paths := []string{}
 
-		// Query NuGet itself for its cache locations
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		// cf. https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-nuget-locals
-		cmd := exec.CommandContext(ctx, "dotnet", "nuget", "locals", "all", "-l", "--force-english-output")
-		if stdout, err := cmd.StdoutPipe(); err == nil {
-			if err := cmd.Start(); err == nil {
-				if data, err := io.ReadAll(stdout); err == nil {
-					lines := strings.Split(string(data), "\n")
-					for _, line := range lines {
-						line = strings.TrimSpace(line)
-						if lineParts := strings.Split(line, ": "); len(lineParts) == 2 {
-							folder := lineParts[1]
+	// Try to determine NuGet package folders from temporary object files
+	if assetFiles, err := resolver.FilesByGlob("**/obj/project.assets.json"); err == nil && len(assetFiles) > 0 {
+		for _, assetFile := range assetFiles {
+			if contentReader, err := resolver.FileContentsByLocation(assetFile); err == nil {
+				defer internal.CloseAndLogError(contentReader, assetFile.RealPath)
+
+				if assetFileData, err := io.ReadAll(contentReader); err == nil {
+					folders := nugetPackageFolders{}
+					if err = json.Unmarshal(assetFileData, &folders); err == nil {
+						for folder := range folders.PackageFolders {
 							found := false
-							for _, known := range nugetPackagePaths {
+							for _, known := range paths {
 								if known == folder {
 									found = true
 									break
 								}
 							}
 							if !found {
-								nugetPackagePaths = append(nugetPackagePaths, folder)
+								paths = append(paths, folder)
 							}
 						}
 					}
 				}
 			}
 		}
-		cancel()
+	}
+
+	return paths
+}
+
+func getNuGetCachesFromSDK() []string {
+	paths := []string{}
+
+	// Query NuGet itself for its cache locations
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	// cf. https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-nuget-locals
+	cmd := exec.CommandContext(ctx, "dotnet", "nuget", "locals", "all", "-l", "--force-english-output")
+	if stdout, err := cmd.StdoutPipe(); err == nil {
+		if err := cmd.Start(); err == nil {
+			if data, err := io.ReadAll(stdout); err == nil {
+				lines := strings.Split(string(data), "\n")
+				for _, line := range lines {
+					line = strings.TrimSpace(line)
+					if lineParts := strings.Split(line, ": "); len(lineParts) == 2 {
+						folder := lineParts[1]
+						found := false
+						for _, known := range paths {
+							if known == folder {
+								found = true
+								break
+							}
+						}
+						if !found {
+							paths = append(paths, folder)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return paths
+}
+
+func getLocalNugetFolderResolvers(resolver file.Resolver) []file.Resolver {
+	nugetPackagePaths := []string{}
+	if injectedCachePath := os.Getenv("TEST_PARSE_DOTNET_DEPS_INJECT_CACHE_LOCATION"); injectedCachePath != "" {
+		nugetPackagePaths = append(nugetPackagePaths, injectedCachePath)
+	} else {
+		nugetPackagePaths = append(nugetPackagePaths, getNuGetCachesFromProjectAssets(resolver)...)
+
+		nugetPackagePaths = append(nugetPackagePaths, getNuGetCachesFromSDK()...)
 	}
 
 	resolvers := []file.Resolver{}
