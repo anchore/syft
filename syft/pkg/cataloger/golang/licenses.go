@@ -35,6 +35,7 @@ type goLicense struct {
 	Type           license.Type `json:"type,omitempty"`
 	URLs           []string     `json:"urls,omitempty"`
 	Locations      []string     `json:"locations,omitempty"`
+	Contents       string       `json:"contents,omitempty"`
 }
 
 type goLicenseResolver struct {
@@ -392,6 +393,7 @@ func toPkgLicenses(goLicenses []goLicense) []pkg.License {
 			Type:           l.Type,
 			URLs:           l.URLs,
 			Locations:      toPkgLocations(l.Locations),
+			Contents:       l.Contents,
 		})
 	}
 	return requireCollection(out)
@@ -414,6 +416,7 @@ func toGoLicenses(pkgLicenses []pkg.License) []goLicense {
 			Type:           l.Type,
 			URLs:           l.URLs,
 			Locations:      toGoLocations(l.Locations),
+			Contents:       l.Contents,
 		})
 	}
 	return out
