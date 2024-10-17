@@ -44,6 +44,13 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 
 	var pkgs pkg.Packages
 	for _, p := range s.Artifacts.Packages.Sorted() {
+		// We only want to report Bitnami packages
+		if !strings.HasPrefix(p.PURL, "pkg:bitnami") {
+			continue
+		}
+
+		p.FoundBy = catalogerName
+		p.Type = pkg.BitnamiPkg
 		// replace all locations on the package with the location of the SBOM file.
 		// Why not keep the original list of locations? Since the "locations" field is meant to capture
 		// where there is evidence of this file, and the catalogers have not run against any file other than,
@@ -51,19 +58,15 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 		p.Locations = file.NewLocationSet(
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
-		p.FoundBy = catalogerName
-		if strings.HasPrefix(p.PURL, "pkg:bitnami") {
-			p.Type = pkg.BitnamiPkg
-			metadata, err := parseBitnamiPURL(p.PURL)
-			if err != nil {
-				return nil, nil, err
-			}
 
-			p.Metadata = metadata
+		// Parse the Bitnami-specific metadata
+		metadata, err := parseBitnamiPURL(p.PURL)
+		if err != nil {
+			return nil, nil, err
 		}
-		// TODO: what to do with non-bitnami packages included in Bitnami SBOMs?
-		// How do we manage duplicates if packages are reported by N (N>1) catalogers
-		// (e.g. a Golang package is both reported by Bitnami & Golang catalogers)?
+
+		p.Metadata = metadata
+
 		pkgs = append(pkgs, p)
 	}
 	var relationships []artifact.Relationship
@@ -72,19 +75,31 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 		// Hence, when we detect a match with one of the existing packages
 		// we replace with the one with completed info
 		if value, ok := r.From.(pkg.Package); ok {
+			found := false
 			for _, p := range pkgs {
 				if value.PURL == p.PURL {
 					r.From = p
+					found = true
 					break
 				}
 			}
+			// We don't want to include relationships if they imply non-bitnami packages
+			if !found {
+				continue
+			}
 		}
 		if value, ok := r.To.(pkg.Package); ok {
+			found := false
 			for _, p := range pkgs {
 				if value.PURL == p.PURL {
 					r.To = p
+					found = true
 					break
 				}
+			}
+			// We don't want to include relationships if they imply non-bitnami packages
+			if !found {
+				continue
 			}
 		}
 		relationships = append(relationships, r)
