@@ -113,7 +113,7 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			continue
 		}
 
-		if l.SPDXExpression != "" {
+		if l.SPDXExpression != "" && !strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
 			// COMPLEX EXPRESSION CASE
 			ex = append(ex, l.SPDXExpression)
 			continue
@@ -121,14 +121,14 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 
 		// license string that are not valid spdx expressions or ids
 		// we only use license Name here since we cannot guarantee that the license is a valid SPDX expression
-		if len(l.URLs) > 0 {
+		if len(l.URLs) > 0 && !strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
 			processLicenseURLs(l, "", &otherc)
 			continue
 		}
 
 		if strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
 			cyclonedxLicense := &cyclonedx.License{
-				Name: strings.TrimPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix),
+				Name: l.SPDXExpression,
 			}
 			if len(l.Contents) > 0 {
 				cyclonedxLicense.Text = &cyclonedx.AttachedText{
