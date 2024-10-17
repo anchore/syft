@@ -23,7 +23,7 @@ func mustCPEs(s ...string) (c []cpe.CPE) {
 }
 
 func TestBitnamiCataloger(t *testing.T) {
-	mainPkg := pkg.Package{
+	apacheMainPkg := pkg.Package{
 		Name:      "apache",
 		Version:   "2.4.62-3",
 		Type:      pkg.BitnamiPkg,
@@ -45,7 +45,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			Distro:       "debian-12",
 		},
 	}
-	secondaryPkgs := pkg.Packages{
+	apacheSecondaryPkgs := pkg.Packages{
 		{
 			Name:      "apr",
 			Version:   "1.7.5",
@@ -150,16 +150,39 @@ func TestBitnamiCataloger(t *testing.T) {
 		},
 	}
 
-	expectedPkgs := pkg.Packages{mainPkg}
-	expectedPkgs = append(expectedPkgs, secondaryPkgs...)
-	sort.Sort(expectedPkgs)
-	var expectedRelationships []artifact.Relationship
-	for _, p := range secondaryPkgs {
-		expectedRelationships = append(expectedRelationships, artifact.Relationship{
-			From: mainPkg,
+	apacheExpectedPkgs := pkg.Packages{apacheMainPkg}
+	apacheExpectedPkgs = append(apacheExpectedPkgs, apacheSecondaryPkgs...)
+	sort.Sort(apacheExpectedPkgs)
+	var apacheExpectedRelationships []artifact.Relationship
+	for _, p := range apacheSecondaryPkgs {
+		apacheExpectedRelationships = append(apacheExpectedRelationships, artifact.Relationship{
+			From: apacheMainPkg,
 			To:   p,
 			Type: artifact.ContainsRelationship,
 		})
+	}
+
+	renderTemplateMainPkg := pkg.Package{
+		Name:      "render-template",
+		Version:   "1.0.7-4",
+		Type:      pkg.BitnamiPkg,
+		Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/render-template/.spdx-render-template.spdx")),
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
+			pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+		),
+		FoundBy: catalogerName,
+		PURL:    "pkg:bitnami/render-template@1.0.7-4?arch=arm64&distro=debian-12",
+		CPEs: mustCPEs(
+			"cpe:2.3:*:render-template:render-template:1.0.7:*:*:*:*:*:*:*",
+		),
+		Metadata: &pkg.BitnamiEntry{
+			Name:         "render-template",
+			Version:      "1.0.7",
+			Revision:     "4",
+			Architecture: "arm64",
+			Distro:       "debian-12",
+		},
 	}
 
 	tests := []struct {
@@ -172,8 +195,15 @@ func TestBitnamiCataloger(t *testing.T) {
 		{
 			name:              "parse valid Apache SBOM",
 			fixture:           "test-fixtures/json",
-			wantPkgs:          expectedPkgs,
-			wantRelationships: expectedRelationships,
+			wantPkgs:          apacheExpectedPkgs,
+			wantRelationships: apacheExpectedRelationships,
+			wantErr:           require.NoError,
+		},
+		{
+			name:              "parse valid SBOM that includes both Bitnami and non-Bitnami packages",
+			fixture:           "test-fixtures/mix",
+			wantPkgs:          pkg.Packages{renderTemplateMainPkg},
+			wantRelationships: nil,
 			wantErr:           require.NoError,
 		},
 		{
