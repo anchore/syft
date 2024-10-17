@@ -201,6 +201,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.BitnamiPkg,
+			},
+			expected: []string{
+				"acquired package info Bitnami SBOM",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.HexPkg,
 			},
 			expected: []string{

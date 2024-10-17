@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	version "github.com/bitnami/go-version/pkg/version"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/pkg"
-
-	version "github.com/bitnami/go-version/pkg/version"
 )
 
 func parseBitnamiPURL(p string) (*pkg.BitnamiEntry, error) {

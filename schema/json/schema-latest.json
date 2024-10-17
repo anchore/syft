@@ -218,6 +218,33 @@
         "matches"
       ]
     },
+    "BitnamiEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "arch": {
+          "type": "string"
+        },
+        "distro": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "arch",
+        "distro",
+        "revision",
+        "version"
+      ]
+    },
     "CConanFileEntry": {
       "properties": {
         "ref": {
@@ -1652,6 +1679,9 @@
             },
             {
               "$ref": "#/$defs/BinarySignature"
+            },
+            {
+              "$ref": "#/$defs/BitnamiEntry"
             },
             {
               "$ref": "#/$defs/CConanFileEntry"

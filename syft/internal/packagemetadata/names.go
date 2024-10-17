@@ -65,6 +65,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.AlpmDBEntry{}, "alpm-db-entry", "AlpmMetadata"),
 	jsonNames(pkg.ApkDBEntry{}, "apk-db-entry", "ApkMetadata"),
 	jsonNames(pkg.BinarySignature{}, "binary-signature", "BinaryMetadata"),
+	jsonNames(pkg.BitnamiEntry{}, "bitnami-entry", "BitnamiMetadata"),
 	jsonNames(pkg.CocoaPodfileLockEntry{}, "cocoa-podfile-lock-entry", "CocoapodsMetadataType"),
 	jsonNames(pkg.ConanV1LockEntry{}, "c-conan-lock-entry", "ConanLockMetadataType"),
 	jsonNames(pkg.ConanV2LockEntry{}, "c-conan-lock-v2-entry"),

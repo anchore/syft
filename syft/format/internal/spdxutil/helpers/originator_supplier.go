@@ -43,6 +43,10 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: funlen
 	case pkg.ApkDBEntry:
 		author = metadata.Maintainer
 
+	case pkg.BitnamiEntry:
+		typ = orgType
+		author = "Bitnami"
+
 	case pkg.DotnetPortableExecutableEntry:
 		typ = orgType
 		author = metadata.CompanyName

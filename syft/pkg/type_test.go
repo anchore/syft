@@ -23,6 +23,10 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: ApkPkg,
 		},
 		{
+			purl:     "pkg:bitnami/apache@2.4.62-3?arch=arm64&distro=debian-12",
+			expected: BitnamiPkg,
+		},
+		{
 			purl:     "pkg:deb/debian/curl@7.50.3-1?arch=i386&distro=jessie",
 			expected: DebPkg,
 		},
