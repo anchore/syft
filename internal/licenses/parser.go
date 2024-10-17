@@ -1,6 +1,8 @@
 package licenses
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"io"
 
 	"github.com/google/licensecheck"
@@ -11,9 +13,15 @@ import (
 )
 
 const (
-	coverageThreshold  = 75
-	unknownLicenseType = "UNKNOWN"
+	coverageThreshold    = 75
+	unknownLicenseType   = "UNKNOWN"
+	UnknownLicensePrefix = unknownLicenseType + "_"
 )
+
+func getCustomLicenseContentHash(contents []byte) string {
+	hash := sha256.Sum256(contents)
+	return fmt.Sprintf("%x", hash[:])
+}
 
 // Parse scans the contents of a license file to attempt to determine the type of license it is
 func Parse(reader io.Reader, l file.Location) (licenses []pkg.License, err error) {
@@ -31,6 +39,15 @@ func Parse(reader io.Reader, l file.Location) (licenses []pkg.License, err error
 	cov := scanner.Scan(contents)
 	if cov.Percent < coverageThreshold {
 		// unknown or no licenses here?
+		if len(contents) > 0 {
+			lic := pkg.NewLicenseFromLocations(unknownLicenseType, l)
+			lic.SPDXExpression = UnknownLicensePrefix + getCustomLicenseContentHash(contents)
+			lic.Contents = string(contents)
+			lic.Type = license.Declared
+
+			licenses = append(licenses, lic)
+		}
+
 		return licenses, nil
 	}
 

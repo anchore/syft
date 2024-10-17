@@ -1,11 +1,13 @@
 package helpers
 
 import (
+	"encoding/base64"
 	"fmt"
 	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -123,11 +125,28 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			processLicenseURLs(l, "", &otherc)
 			continue
 		}
-		otherc = append(otherc, cyclonedx.LicenseChoice{
-			License: &cyclonedx.License{
-				Name: l.Value,
-			},
-		})
+
+		if strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
+			cyclonedxLicense := &cyclonedx.License{
+				Name: strings.TrimPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix),
+			}
+			if len(l.Contents) > 0 {
+				cyclonedxLicense.Text = &cyclonedx.AttachedText{
+					Content: base64.StdEncoding.EncodeToString([]byte(l.Contents)),
+				}
+				cyclonedxLicense.Text.ContentType = "text/plain"
+				cyclonedxLicense.Text.Encoding = "base64"
+			}
+			otherc = append(otherc, cyclonedx.LicenseChoice{
+				License: cyclonedxLicense,
+			})
+		} else {
+			otherc = append(otherc, cyclonedx.LicenseChoice{
+				License: &cyclonedx.License{
+					Name: l.Value,
+				},
+			})
+		}
 	}
 	return spdxc, otherc, ex
 }

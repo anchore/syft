@@ -29,6 +29,7 @@ type License struct {
 	Type           license.Type
 	URLs           []string         `hash:"ignore"`
 	Locations      file.LocationSet `hash:"ignore"`
+	Contents       string           // The optional binary contents of the license file
 }
 
 type Licenses []License
