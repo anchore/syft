@@ -8,14 +8,25 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+const (
+	dotnetDepsCatalogerName               = "dotnet-deps-cataloger"
+	dotnetPortableExecutableCatalogerName = "dotnet-portable-executable-cataloger"
+)
+
 // NewDotnetDepsCataloger returns a new Dotnet cataloger object base on deps json files.
-func NewDotnetDepsCataloger() pkg.Cataloger {
-	return generic.NewCataloger("dotnet-deps-cataloger").
-		WithParserByGlobs(parseDotnetDeps, "**/*.deps.json")
+func NewDotnetDepsCataloger(opts CatalogerConfig) pkg.Cataloger {
+	c := dotnetDepsCataloger{
+		licenses: newNugetLicenses(opts),
+	}
+	return generic.NewCataloger(dotnetDepsCatalogerName).
+		WithParserByGlobs(c.parseDotnetDeps, "**/*.deps.json")
 }
 
 // NewDotnetPortableExecutableCataloger returns a new Dotnet cataloger object base on portable executable files.
-func NewDotnetPortableExecutableCataloger() pkg.Cataloger {
-	return generic.NewCataloger("dotnet-portable-executable-cataloger").
-		WithParserByGlobs(parseDotnetPortableExecutable, "**/*.dll", "**/*.exe")
+func NewDotnetPortableExecutableCataloger(opts CatalogerConfig) pkg.Cataloger {
+	c := dotnetPortableExecutableCataloger{
+		licenses: newNugetLicenses(opts),
+	}
+	return generic.NewCataloger(dotnetPortableExecutableCatalogerName).
+		WithParserByGlobs(c.parseDotnetPortableExecutable, "**/*.dll", "**/*.exe")
 }
