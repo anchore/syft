@@ -13,6 +13,7 @@ const (
 	AlpmPkg                 Type = "alpm"
 	ApkPkg                  Type = "apk"
 	BinaryPkg               Type = "binary"
+	BitnamiPkg              Type = "bitnami"
 	CocoapodsPkg            Type = "pod"
 	ConanPkg                Type = "conan"
 	DartPubPkg              Type = "dart-pub"
@@ -52,6 +53,7 @@ var AllPkgs = []Type{
 	AlpmPkg,
 	ApkPkg,
 	BinaryPkg,
+	BitnamiPkg,
 	CocoapodsPkg,
 	ConanPkg,
 	DartPubPkg,
@@ -94,6 +96,8 @@ func (t Type) PackageURLType() string {
 		return "alpm"
 	case ApkPkg:
 		return packageurl.TypeAlpine
+	case BinaryPkg:
+		return "binary"
 	case CocoapodsPkg:
 		return packageurl.TypeCocoapods
 	case ConanPkg:
@@ -183,6 +187,8 @@ func TypeByName(name string) Type {
 		return AlpmPkg
 	case packageurl.TypeAlpine, "alpine":
 		return ApkPkg
+	case "bitnami":
+		return BitnamiPkg
 	case packageurl.TypeMaven:
 		return JavaPkg
 	case packageurl.TypeComposer:

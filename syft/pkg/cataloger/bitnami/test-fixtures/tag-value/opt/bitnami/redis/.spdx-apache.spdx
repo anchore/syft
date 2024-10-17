@@ -1,0 +1,23 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+DocumentNamespace: redis-7.4.1
+DocumentName: SPDX document for Redis(R) 7.4.1
+SPDXID: SPDXRef-DOCUMENT
+
+## Creation Information
+Creator: Organization: VMware, Inc.
+Created: 2024-10-02T20:17:11.692Z
+## Relationships
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-redis
+
+## Package Information
+PackageName: redis
+SPDXID: SPDXRef-redis
+PackageVersion: 7.4.1-0
+PackageDownloadLocation: http://download.redis.io/releases/redis-7.4.1.tar.gz
+PackageLicenseConcluded: RSALv2
+PackageLicenseDeclared: RSALv2
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:*:redis:redis:7.4.1:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl pkg:bitnami/redis@7.4.1-0?arch=arm64&distro=debian-12
+FilesAnalyzed: false
