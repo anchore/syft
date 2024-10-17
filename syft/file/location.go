@@ -29,7 +29,9 @@ func (l LocationData) Reference() file.Reference {
 }
 
 type LocationMetadata struct {
-	Annotations map[string]string `json:"annotations,omitempty"` // Arbitrary key-value pairs that can be used to annotate a location
+	Annotations                 map[string]string `json:"annotations,omitempty"` // Arbitrary key-value pairs that can be used to annotate a location
+	IsSquashedAllLayersResolver bool              `json:"-"`
+	IsSquashedLayer             bool              `json:"-"`
 }
 
 func (m *LocationMetadata) merge(other LocationMetadata) error {
