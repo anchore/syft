@@ -130,6 +130,9 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			cyclonedxLicense := &cyclonedx.License{
 				Name: l.SPDXExpression,
 			}
+			if len(l.URLs) > 0 {
+				cyclonedxLicense.URL = l.URLs[0]
+			}
 			if len(l.Contents) > 0 {
 				cyclonedxLicense.Text = &cyclonedx.AttachedText{
 					Content: base64.StdEncoding.EncodeToString([]byte(l.Contents)),
