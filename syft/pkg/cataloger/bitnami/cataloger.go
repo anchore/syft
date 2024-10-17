@@ -42,7 +42,7 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 		return nil, nil, nil
 	}
 
-	var pkgs pkg.Packages
+	var pkgs []pkg.Package
 	for _, p := range s.Artifacts.Packages.Sorted() {
 		// We only want to report Bitnami packages
 		if !strings.HasPrefix(p.PURL, "pkg:bitnami") {
@@ -69,11 +69,16 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 
 		pkgs = append(pkgs, p)
 	}
-	var relationships []artifact.Relationship
-	for _, r := range s.Relationships {
-		// Packages information available in parsed relationships is incomplete
-		// Hence, when we detect a match with one of the existing packages
-		// we replace with the one with completed info
+	relationships := filterRelationships(s.Relationships, pkgs)
+
+	return pkgs, relationships, nil
+}
+
+// filterRelationships filters out relationships that are not related to Bitnami packages
+// and replaces the package information with the one with completed info
+func filterRelationships(relationships []artifact.Relationship, pkgs []pkg.Package) []artifact.Relationship {
+	var result []artifact.Relationship
+	for _, r := range relationships {
 		if value, ok := r.From.(pkg.Package); ok {
 			found := false
 			for _, p := range pkgs {
@@ -83,7 +88,6 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 					break
 				}
 			}
-			// We don't want to include relationships if they imply non-bitnami packages
 			if !found {
 				continue
 			}
@@ -97,13 +101,12 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 					break
 				}
 			}
-			// We don't want to include relationships if they imply non-bitnami packages
 			if !found {
 				continue
 			}
 		}
-		relationships = append(relationships, r)
+		result = append(result, r)
 	}
 
-	return pkgs, relationships, nil
+	return result
 }

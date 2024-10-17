@@ -1,8 +1,9 @@
 package bitnami
 
 import (
-	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -10,7 +11,6 @@ import (
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/stretchr/testify/require"
 )
 
 func mustCPEs(s ...string) (c []cpe.CPE) {
@@ -45,7 +45,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			Distro:       "debian-12",
 		},
 	}
-	apacheSecondaryPkgs := pkg.Packages{
+	apacheSecondaryPkgs := []pkg.Package{
 		{
 			Name:      "apr",
 			Version:   "1.7.5",
@@ -150,9 +150,9 @@ func TestBitnamiCataloger(t *testing.T) {
 		},
 	}
 
-	apacheExpectedPkgs := pkg.Packages{apacheMainPkg}
+	apacheExpectedPkgs := []pkg.Package{apacheMainPkg}
 	apacheExpectedPkgs = append(apacheExpectedPkgs, apacheSecondaryPkgs...)
-	sort.Sort(apacheExpectedPkgs)
+	//sort.Sort(apacheExpectedPkgs)
 	var apacheExpectedRelationships []artifact.Relationship
 	for _, p := range apacheSecondaryPkgs {
 		apacheExpectedRelationships = append(apacheExpectedRelationships, artifact.Relationship{
@@ -188,7 +188,7 @@ func TestBitnamiCataloger(t *testing.T) {
 	tests := []struct {
 		name              string
 		fixture           string
-		wantPkgs          pkg.Packages
+		wantPkgs          []pkg.Package
 		wantRelationships []artifact.Relationship
 		wantErr           require.ErrorAssertionFunc
 	}{
@@ -202,7 +202,7 @@ func TestBitnamiCataloger(t *testing.T) {
 		{
 			name:              "parse valid SBOM that includes both Bitnami and non-Bitnami packages",
 			fixture:           "test-fixtures/mix",
-			wantPkgs:          pkg.Packages{renderTemplateMainPkg},
+			wantPkgs:          []pkg.Package{renderTemplateMainPkg},
 			wantRelationships: nil,
 			wantErr:           require.NoError,
 		},
