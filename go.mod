@@ -19,7 +19,7 @@ require (
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.1.1-0.20240507183024-848e011fc24f
-	github.com/anchore/stereoscope v0.0.4
+	github.com/anchore/stereoscope v0.0.5-0.20241015153345-9e57bce5efeb
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	// we are hinting brotli to latest due to warning when installing archiver v3:
 	// go: warning: github.com/andybalholm/brotli@v1.0.1: retracted by module author: occasional panics and data corruption
@@ -91,7 +91,7 @@ require google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirec
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/adrg/xdg v0.5.0
+	github.com/adrg/xdg v0.5.1
 	github.com/magiconair/properties v1.8.7
 	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678
 )
