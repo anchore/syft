@@ -224,7 +224,8 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 		}).
 		WithBasePath(opts.Source.BasePath).
 		WithSources(sources...).
-		WithDefaultImagePullSource(opts.Source.Image.DefaultPullSource)
+		WithDefaultImagePullSource(opts.Source.Image.DefaultPullSource).
+		WithUnindexed(opts.Unindexed)
 
 	var err error
 	var platform *image.Platform

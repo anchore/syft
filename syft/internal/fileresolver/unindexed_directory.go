@@ -18,30 +18,32 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
 
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/file"
+	syftFile "github.com/anchore/syft/syft/file"
 )
 
-var _ file.Resolver = (*UnindexedDirectory)(nil)
-var _ file.WritableResolver = (*UnindexedDirectory)(nil)
+var _ syftFile.Resolver = (*UnindexedDirectory)(nil)
+var _ syftFile.WritableResolver = (*UnindexedDirectory)(nil)
 
 type UnindexedDirectory struct {
-	ls   afero.Lstater
-	lr   afero.LinkReader
-	base string
-	dir  string
-	fs   afero.Fs
+	ls          afero.Lstater
+	lr          afero.LinkReader
+	base        string
+	dir         string
+	fs          afero.Fs
+	pathFilters []PathIndexVisitor
 }
 
-func NewFromUnindexedDirectory(dir string) file.WritableResolver {
+func NewFromUnindexedDirectory(dir string) syftFile.WritableResolver {
 	return NewFromUnindexedDirectoryFS(afero.NewOsFs(), dir, "")
 }
 
-func NewFromRootedUnindexedDirectory(dir string, base string) file.WritableResolver {
-	return NewFromUnindexedDirectoryFS(afero.NewOsFs(), dir, base)
+func NewFromRootedUnindexedDirectory(dir string, base string, pathVisitors ...PathIndexVisitor) syftFile.WritableResolver {
+	return NewFromUnindexedDirectoryFS(afero.NewOsFs(), dir, base, pathVisitors...)
 }
 
-func NewFromUnindexedDirectoryFS(fs afero.Fs, dir string, base string) file.WritableResolver {
+func NewFromUnindexedDirectoryFS(fs afero.Fs, dir string, base string, pathVisitors ...PathIndexVisitor) syftFile.WritableResolver {
 	ls, ok := fs.(afero.Lstater)
 	if !ok {
 		panic(fmt.Sprintf("unable to get afero.Lstater interface from: %+v", fs))
@@ -70,15 +72,16 @@ func NewFromUnindexedDirectoryFS(fs afero.Fs, dir string, base string) file.Writ
 		}
 	}
 	return UnindexedDirectory{
-		base: base,
-		dir:  dir,
-		fs:   fs,
-		ls:   ls,
-		lr:   lr,
+		base:        base,
+		dir:         dir,
+		fs:          fs,
+		ls:          ls,
+		lr:          lr,
+		pathFilters: pathVisitors,
 	}
 }
 
-func (u UnindexedDirectory) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
+func (u UnindexedDirectory) FileContentsByLocation(location syftFile.Location) (io.ReadCloser, error) {
 	p := u.absPath(u.scrubInputPath(location.RealPath))
 	f, err := u.fs.Open(p)
 	if err != nil {
@@ -149,11 +152,11 @@ func (u UnindexedDirectory) absPath(p string) string {
 
 // - full symlink resolution should be performed on all requests
 // - only returns locations to files (NOT directories)
-func (u UnindexedDirectory) FilesByPath(paths ...string) (out []file.Location, _ error) {
+func (u UnindexedDirectory) FilesByPath(paths ...string) (out []syftFile.Location, _ error) {
 	return u.filesByPath(true, false, paths...)
 }
 
-func (u UnindexedDirectory) filesByPath(resolveLinks bool, includeDirs bool, paths ...string) (out []file.Location, _ error) {
+func (u UnindexedDirectory) filesByPath(resolveLinks bool, includeDirs bool, paths ...string) (out []syftFile.Location, _ error) {
 	// sort here for stable output
 	sort.Strings(paths)
 nextPath:
@@ -183,11 +186,11 @@ nextPath:
 // - full symlink resolution should be performed on all requests
 // - if multiple paths to the same file are found, the best single match should be returned
 // - only returns locations to files (NOT directories)
-func (u UnindexedDirectory) FilesByGlob(patterns ...string) (out []file.Location, _ error) {
+func (u UnindexedDirectory) FilesByGlob(patterns ...string) (out []syftFile.Location, _ error) {
 	return u.filesByGlob(true, false, patterns...)
 }
 
-func (u UnindexedDirectory) filesByGlob(resolveLinks bool, includeDirs bool, patterns ...string) (out []file.Location, _ error) {
+func (u UnindexedDirectory) filesByGlob(resolveLinks bool, includeDirs bool, patterns ...string) (out []syftFile.Location, _ error) {
 	f := unindexedDirectoryResolverFS{
 		u: u,
 	}
@@ -206,14 +209,62 @@ func (u UnindexedDirectory) filesByGlob(resolveLinks bool, includeDirs bool, pat
 	return u.filesByPath(resolveLinks, includeDirs, paths...)
 }
 
-func (u UnindexedDirectory) FilesByMIMEType(_ ...string) ([]file.Location, error) {
-	panic("FilesByMIMEType unsupported")
+// FilesByMIMEType fetches all of the files which match the provided MIME types.
+// This requires walking the filetree from u.base and checking the MIME type of each file we encounter
+// Handling of errors while walking is ignored unless a filterFn wants the directory to be skipped.
+// TODO: afero.Walk will read all files in a single directory into memory, providing the same lexical ordering
+// guarantees that golang's filepath.Walk implementation provides. However, when a single directory contains
+// many files, this could cause Syft to run OOM. We could consider using a custom walk function in future
+// which uses Readdir with a hardcoded value N >= 1 so that entire directories aren't read into memory each time.
+func (u UnindexedDirectory) FilesByMIMEType(types ...string) ([]syftFile.Location, error) {
+	uniqueLocations := make([]syftFile.Location, 0)
+	err := afero.Walk(u.fs, u.absPath(u.base), func(p string, fi fs.FileInfo, walkErr error) error {
+		// Ignore any path for which a filter function returns true
+		for _, filterFn := range u.pathFilters {
+			if filterFn == nil {
+				continue
+			}
+
+			if filterErr := filterFn(u.base, p, fi, walkErr); filterErr != nil {
+				if errors.Is(filterErr, fs.SkipDir) {
+					// signal to walk() to skip this directory entirely (even if we're processing a file)
+					return filterErr
+				}
+				// skip this path but don't affect walk() trajectory
+				return nil
+			}
+		}
+
+		// If we get here, then the MIME type of the file should be checked
+		mimeType := stereoscopeFile.NewMetadataFromPath(p, fi).MIMEType
+		for _, mType := range types {
+			if mimeType == mType {
+				// Tidy the path, same as AllLocations
+				p = strings.TrimPrefix(p, u.dir)
+				if p == "" {
+					return nil
+				}
+				p = strings.TrimPrefix(p, "/")
+				uniqueLocations = append(uniqueLocations, syftFile.NewLocation(p))
+			}
+		}
+
+		// Continue to walk()
+		return nil
+	})
+
+	if err != nil {
+		log.Debug(err)
+		return nil, err
+	}
+
+	return uniqueLocations, nil
 }
 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 // This is helpful when attempting to find a file that is in the same layer or lower as another file.
-func (u UnindexedDirectory) RelativeFileByPath(l file.Location, p string) *file.Location {
-	p = path.Clean(path.Join(l.RealPath, p))
+func (u UnindexedDirectory) RelativeFileByPath(l syftFile.Location, p string) *syftFile.Location {
+	p = path.Clean(p)
 	locs, err := u.filesByPath(true, false, p)
 	if err != nil || len(locs) == 0 {
 		return nil
@@ -228,8 +279,8 @@ func (u UnindexedDirectory) RelativeFileByPath(l file.Location, p string) *file.
 
 // - NO symlink resolution should be performed on results
 // - returns locations for any file or directory
-func (u UnindexedDirectory) AllLocations(ctx context.Context) <-chan file.Location {
-	out := make(chan file.Location)
+func (u UnindexedDirectory) AllLocations(ctx context.Context) <-chan syftFile.Location {
+	out := make(chan syftFile.Location)
 	errWalkCanceled := fmt.Errorf("walk canceled")
 	go func() {
 		defer close(out)
@@ -240,7 +291,7 @@ func (u UnindexedDirectory) AllLocations(ctx context.Context) <-chan file.Locati
 			}
 			p = strings.TrimPrefix(p, "/")
 			select {
-			case out <- file.NewLocation(p):
+			case out <- syftFile.NewLocation(p):
 				return nil
 			case <-ctx.Done():
 				return errWalkCanceled
@@ -253,11 +304,18 @@ func (u UnindexedDirectory) AllLocations(ctx context.Context) <-chan file.Locati
 	return out
 }
 
-func (u UnindexedDirectory) FileMetadataByLocation(_ file.Location) (file.Metadata, error) {
-	panic("FileMetadataByLocation unsupported")
+func (u UnindexedDirectory) FileMetadataByLocation(loc syftFile.Location) (syftFile.Metadata, error) {
+	p := u.absPath(u.scrubInputPath(loc.RealPath))
+	finfo, err := u.fs.Stat(p)
+	if err != nil {
+		return syftFile.Metadata{}, err
+	}
+
+	metadata := stereoscopeFile.NewMetadataFromPath(p, finfo)
+	return metadata, nil
 }
 
-func (u UnindexedDirectory) Write(location file.Location, reader io.Reader) error {
+func (u UnindexedDirectory) Write(location syftFile.Location, reader io.Reader) error {
 	filePath := location.RealPath
 	if path.IsAbs(filePath) {
 		filePath = filePath[1:]
@@ -266,7 +324,7 @@ func (u UnindexedDirectory) Write(location file.Location, reader io.Reader) erro
 	return afero.WriteReader(u.fs, absPath, reader)
 }
 
-func (u UnindexedDirectory) newLocation(filePath string, resolveLinks bool) *file.Location {
+func (u UnindexedDirectory) newLocation(filePath string, resolveLinks bool) *syftFile.Location {
 	filePath = path.Clean(filePath)
 
 	virtualPath := filePath
@@ -287,7 +345,7 @@ func (u UnindexedDirectory) newLocation(filePath string, resolveLinks bool) *fil
 		}
 	}
 
-	l := file.NewVirtualLocation(realPath, virtualPath)
+	l := syftFile.NewVirtualLocation(realPath, virtualPath)
 	return &l
 }
 
