@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"slices"
@@ -49,14 +50,15 @@ var javaArchiveHashes = []crypto.Hash{
 }
 
 type archiveParser struct {
-	fileManifest intFile.ZipFileManifest
-	location     file.Location
-	archivePath  string
-	contentPath  string
-	fileInfo     archiveFilename
-	detectNested bool
-	cfg          ArchiveCatalogerConfig
-	maven        *mavenResolver
+	fileManifest   intFile.ZipFileManifest
+	location       file.Location
+	archivePath    string
+	contentPath    string
+	fileInfo       archiveFilename
+	detectNested   bool
+	cfg            ArchiveCatalogerConfig
+	maven          *mavenResolver
+	licenseScanner licenses.Scanner
 }
 
 type genericArchiveParserAdapter struct {
@@ -69,7 +71,7 @@ func newGenericArchiveParserAdapter(cfg ArchiveCatalogerConfig) genericArchivePa
 
 // parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
 func (gap genericArchiveParserAdapter) parseJavaArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	parser, cleanupFn, err := newJavaArchiveParser(reader, true, gap.cfg)
+	parser, cleanupFn, err := newJavaArchiveParser(ctx, reader, true, gap.cfg)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {
@@ -88,7 +90,9 @@ func uniquePkgKey(groupID string, p *pkg.Package) string {
 
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
 // and parse nested archives or ignore them.
-func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg ArchiveCatalogerConfig) (*archiveParser, func(), error) {
+func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, detectNested bool, cfg ArchiveCatalogerConfig) (*archiveParser, func(), error) {
+	licenseScanner := licenses.ContextLicenseScanner(ctx)
+
 	// fetch the last element of the virtual path
 	virtualElements := strings.Split(reader.Path(), ":")
 	currentFilepath := virtualElements[len(virtualElements)-1]
@@ -104,14 +108,15 @@ func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg
 	}
 
 	return &archiveParser{
-		fileManifest: fileManifest,
-		location:     reader.Location,
-		archivePath:  archivePath,
-		contentPath:  contentPath,
-		fileInfo:     newJavaArchiveFilename(currentFilepath),
-		detectNested: detectNested,
-		cfg:          cfg,
-		maven:        newMavenResolver(nil, cfg),
+		fileManifest:   fileManifest,
+		location:       reader.Location,
+		archivePath:    archivePath,
+		contentPath:    contentPath,
+		fileInfo:       newJavaArchiveFilename(currentFilepath),
+		detectNested:   detectNested,
+		cfg:            cfg,
+		maven:          newMavenResolver(nil, cfg),
+		licenseScanner: licenseScanner,
 	}, cleanupFn, nil
 }
 
@@ -220,7 +225,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 		return nil, err
 	}
 
-	name, version, licenses, err := j.discoverNameVersionLicense(ctx, manifest)
+	name, version, lics, err := j.discoverNameVersionLicense(ctx, manifest)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +235,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 		Name:     name,
 		Version:  version,
 		Language: pkg.Java,
-		Licenses: pkg.NewLicenseSet(licenses...),
+		Licenses: pkg.NewLicenseSet(lics...),
 		Locations: file.NewLocationSet(
 			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
@@ -246,7 +251,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest *pkg.JavaManifest) (string, string, []pkg.License, error) {
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
-	licenses := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
+	lics := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
 	/*
 		We should name and version from, in this order:
 		1. pom.properties if we find exactly 1
@@ -262,25 +267,25 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 		version = selectVersion(manifest, j.fileInfo)
 	}
 
-	if len(licenses) == 0 {
-		fileLicenses, err := j.getLicenseFromFileInArchive()
+	if len(lics) == 0 {
+		fileLicenses, err := j.getLicenseFromFileInArchive(ctx)
 		if err != nil {
 			return "", "", nil, err
 		}
 		if fileLicenses != nil {
-			licenses = append(licenses, fileLicenses...)
+			lics = append(lics, fileLicenses...)
 		}
 	}
 
 	// If we didn't find any licenses in the archive so far, we'll try again in Maven Central using groupIDFromJavaMetadata
-	if len(licenses) == 0 {
+	if len(lics) == 0 {
 		// Today we don't have a way to distinguish between licenses from the manifest and licenses from the pom.xml
 		// until the file.Location object can support sub-paths (i.e. paths within archives, recursively; issue https://github.com/anchore/syft/issues/2211).
 		// Until then it's less confusing to use the licenses from the pom.xml only if the manifest did not list any.
-		licenses = j.findLicenseFromJavaMetadata(ctx, groupID, artifactID, version, parsedPom, manifest)
+		lics = j.findLicenseFromJavaMetadata(ctx, groupID, artifactID, version, parsedPom, manifest)
 	}
 
-	return artifactID, version, licenses, nil
+	return artifactID, version, lics, nil
 }
 
 // findLicenseFromJavaMetadata attempts to find license information from all available maven metadata properties and pom info
@@ -446,7 +451,7 @@ func getDigestsFromArchive(archivePath string) ([]file.Digest, error) {
 	return digests, nil
 }
 
-func (j *archiveParser) getLicenseFromFileInArchive() ([]pkg.License, error) {
+func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.License, error) {
 	var fileLicenses []pkg.License
 	for _, filename := range licenses.FileNames() {
 		licenseMatches := j.fileManifest.GlobMatch(true, "/META-INF/"+filename)
@@ -463,7 +468,8 @@ func (j *archiveParser) getLicenseFromFileInArchive() ([]pkg.License, error) {
 
 			for _, licenseMatch := range licenseMatches {
 				licenseContents := contents[licenseMatch]
-				parsed, err := licenses.Parse(strings.NewReader(licenseContents), j.location)
+				r := strings.NewReader(licenseContents)
+				parsed, err := licenses.Search(ctx, j.licenseScanner, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
 				if err != nil {
 					return nil, err
 				}
