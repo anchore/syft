@@ -4,11 +4,25 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 
 const linuxKernelPackageName = "linux-kernel"
+
+func createLinuxKernelCPEs(version string) []cpe.CPE {
+	c := cpe.NewWithAny()
+	c.Part = "o"
+	c.Product = "linux_kernel"
+	c.Vendor = "linux"
+	c.Version = version
+	if cpe.ValidateString(c.String()) != nil {
+		return nil
+	}
+
+	return []cpe.CPE{{Attributes: c, Source: cpe.NVDDictionaryLookupSource}}
+}
 
 func newLinuxKernelPackage(metadata pkg.LinuxKernel, archiveLocation file.Location) pkg.Package {
 	p := pkg.Package{
@@ -18,6 +32,7 @@ func newLinuxKernelPackage(metadata pkg.LinuxKernel, archiveLocation file.Locati
 		PURL:      packageURL(linuxKernelPackageName, metadata.Version),
 		Type:      pkg.LinuxKernelPkg,
 		Metadata:  metadata,
+		CPEs:      createLinuxKernelCPEs(metadata.Version),
 	}
 
 	p.SetID()

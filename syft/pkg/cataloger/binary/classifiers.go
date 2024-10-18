@@ -351,7 +351,7 @@ func DefaultClassifiers() []Classifier {
 		},
 		{
 			Class:    "mariadb-binary",
-			FileGlob: "**/mariadb",
+			FileGlob: "**/{mariadb,mysql}",
 			EvidenceMatcher: FileContentsVersionMatcher(
 				// 10.6.15-MariaDB
 				`(?m)(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-MariaDB`),
