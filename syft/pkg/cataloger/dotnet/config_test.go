@@ -9,14 +9,16 @@ import (
 
 func Test_Config(t *testing.T) {
 	type opts struct {
-		local     *bool
-		remote    *bool
-		providers *string
+		local       *bool
+		remote      *bool
+		providers   *string
+		credentials *string
 	}
 
 	trueVal := true
 	falseVal := false
 	optProvider := "https://www.nuget.org/api/v2/package"
+	optCredentials := "johnDoe:1234567890"
 
 	homedirCacheDisabled := homedir.DisableCache
 	homedir.DisableCache = true
@@ -25,10 +27,11 @@ func Test_Config(t *testing.T) {
 	})
 
 	allEnv := map[string]string{
-		"HOME":                         "/usr/home",
-		"NUGET_SEARCH_LOCAL_LICENSES":  "",
-		"NUGET_SEARCH_REMOTE_LICENSES": "",
-		"NUGET_PACKAGE_PROVIDERS":      "",
+		"HOME":                               "/usr/home",
+		"NUGET_SEARCH_LOCAL_LICENSES":        "",
+		"NUGET_SEARCH_REMOTE_LICENSES":       "",
+		"NUGET_PACKAGE_PROVIDERS":            "",
+		"NUGET_PACKAGE_PROVIDER_CREDENTIALS": "",
 	}
 
 	tests := []struct {
@@ -51,35 +54,48 @@ func Test_Config(t *testing.T) {
 		{
 			name: "set via env defaults",
 			env: map[string]string{
-				"NUGET_SEARCH_LOCAL_LICENSES":  "true",
-				"NUGET_SEARCH_REMOTE_LICENSES": "false",
-				"NUGET_PACKAGE_PROVIDERS":      "https://my.proxy",
+				"NUGET_SEARCH_LOCAL_LICENSES":        "true",
+				"NUGET_SEARCH_REMOTE_LICENSES":       "false",
+				"NUGET_PACKAGE_PROVIDERS":            "https://my.proxy",
+				"NUGET_PACKAGE_PROVIDER_CREDENTIALS": "user:password",
 			},
 			opts: opts{},
 			expected: CatalogerConfig{
 				SearchLocalLicenses:  true,
 				SearchRemoteLicenses: false,
 				Providers:            []string{"https://my.proxy"},
-				ProviderCredentials:  []nugetProviderCredential{},
+				ProviderCredentials: []nugetProviderCredential{
+					{
+						Username: "user",
+						Password: "password",
+					},
+				},
 			},
 		},
 		{
 			name: "set via configuration",
 			env: map[string]string{
-				"NUGET_SEARCH_LOCAL_LICENSES":  "true",
-				"NUGET_SEARCH_REMOTE_LICENSES": "false",
-				"NUGET_PACKAGE_PROVIDERS":      "https://my.proxy",
+				"NUGET_SEARCH_LOCAL_LICENSES":        "true",
+				"NUGET_SEARCH_REMOTE_LICENSES":       "false",
+				"NUGET_PACKAGE_PROVIDERS":            "https://my.proxy",
+				"NUGET_PACKAGE_PROVIDER_CREDENTIALS": "user:password",
 			},
 			opts: opts{
-				local:     &falseVal,
-				remote:    &trueVal,
-				providers: &optProvider,
+				local:       &falseVal,
+				remote:      &trueVal,
+				providers:   &optProvider,
+				credentials: &optCredentials,
 			},
 			expected: CatalogerConfig{
 				SearchLocalLicenses:  false,
 				SearchRemoteLicenses: true,
 				Providers:            []string{"https://www.nuget.org/api/v2/package"},
-				ProviderCredentials:  []nugetProviderCredential{},
+				ProviderCredentials: []nugetProviderCredential{
+					{
+						Username: "johnDoe",
+						Password: "1234567890",
+					},
+				},
 			},
 		},
 	}
@@ -102,6 +118,9 @@ func Test_Config(t *testing.T) {
 			}
 			if test.opts.providers != nil {
 				got = got.WithProviders(*test.opts.providers)
+			}
+			if test.opts.credentials != nil {
+				got = got.WithCredentials(*test.opts.credentials)
 			}
 
 			assert.Equal(t, test.expected, got)
