@@ -87,80 +87,6 @@ var AllPkgs = []Type{
 	WordpressPluginPkg,
 }
 
-// PackageURLType returns the PURL package type for the current package.
-//
-//nolint:funlen, gocyclo
-func (t Type) PackageURLType() string {
-	switch t {
-	case AlpmPkg:
-		return "alpm"
-	case ApkPkg:
-		return packageurl.TypeAlpine
-	case BinaryPkg:
-		return "binary"
-	case CocoapodsPkg:
-		return packageurl.TypeCocoapods
-	case ConanPkg:
-		return packageurl.TypeConan
-	case DartPubPkg:
-		return packageurl.TypePub
-	case DebPkg:
-		return "deb"
-	case DotnetPkg:
-		return "dotnet"
-	case ErlangOTPPkg:
-		return packageurl.TypeOTP
-	case GemPkg:
-		return packageurl.TypeGem
-	case HexPkg:
-		return packageurl.TypeHex
-	case GithubActionPkg, GithubActionWorkflowPkg:
-		// note: this is not a real purl type, but it is the closest thing we have for now
-		return packageurl.TypeGithub
-	case GoModulePkg:
-		return packageurl.TypeGolang
-	case HackagePkg:
-		return packageurl.TypeHackage
-	case JavaPkg, JenkinsPluginPkg:
-		return packageurl.TypeMaven
-	case LinuxKernelPkg:
-		return "generic/linux-kernel"
-	case LinuxKernelModulePkg:
-		return packageurl.TypeGeneric
-	case PhpComposerPkg:
-		return packageurl.TypeComposer
-	case PhpPeclPkg:
-		return "pecl"
-	case PythonPkg:
-		return packageurl.TypePyPi
-	case PortagePkg:
-		return "portage"
-	case NixPkg:
-		return "nix"
-	case NpmPkg:
-		return packageurl.TypeNPM
-	case Rpkg:
-		return packageurl.TypeCran
-	case LuaRocksPkg:
-		return packageurl.TypeLuaRocks
-	case RpmPkg:
-		return packageurl.TypeRPM
-	case RustPkg:
-		return "cargo"
-	case SwiftPkg:
-		return packageurl.TypeSwift
-	case SwiplPackPkg:
-		return "swiplpack"
-	case OpamPkg:
-		return "opam"
-	case WordpressPluginPkg:
-		return "wordpress-plugin"
-	default:
-		// TODO: should this be a "generic" purl type instead?
-		return ""
-	}
-}
-
 func TypeFromPURL(p string) Type {
 	purl, err := packageurl.FromString(p)
 	if err != nil {
@@ -174,70 +100,81 @@ func TypeFromPURL(p string) Type {
 	return TypeByName(ptype)
 }
 
-//nolint:funlen
-func TypeByName(name string) Type {
-	switch name {
-	case packageurl.TypeDebian:
-		return DebPkg
-	case packageurl.TypeRPM:
-		return RpmPkg
-	case packageurl.TypeLuaRocks:
-		return LuaRocksPkg
-	case "alpm":
-		return AlpmPkg
-	case packageurl.TypeAlpine, "alpine":
-		return ApkPkg
-	case "bitnami":
-		return BitnamiPkg
-	case packageurl.TypeMaven:
-		return JavaPkg
-	case packageurl.TypeComposer:
-		return PhpComposerPkg
-	case "pecl":
-		return PhpPeclPkg
-	case packageurl.TypeGolang:
-		return GoModulePkg
-	case packageurl.TypeNPM:
-		return NpmPkg
-	case packageurl.TypePyPi:
-		return PythonPkg
-	case packageurl.TypeGem:
-		return GemPkg
-	case "cargo", "crate":
-		return RustPkg
-	case packageurl.TypePub:
-		return DartPubPkg
-	case "dotnet": // here to support legacy use cases
-		return DotnetPkg
-	case packageurl.TypeCocoapods:
-		return CocoapodsPkg
-	case packageurl.TypeConan:
-		return ConanPkg
-	case packageurl.TypeHackage:
-		return HackagePkg
-	case "portage":
-		return PortagePkg
-	case packageurl.TypeHex:
-		return HexPkg
-	case packageurl.TypeOTP:
-		return ErlangOTPPkg
-	case "linux-kernel":
-		return LinuxKernelPkg
-	case "linux-kernel-module":
-		return LinuxKernelModulePkg
-	case "nix":
-		return NixPkg
-	case packageurl.TypeCran:
-		return Rpkg
-	case packageurl.TypeSwift:
-		return SwiftPkg
-	case "swiplpack":
-		return SwiplPackPkg
-	case "opam":
-		return OpamPkg
-	case "wordpress-plugin":
-		return WordpressPluginPkg
-	default:
-		return UnknownPkg
+var purlToPkgMap = map[string]Type{
+	"alpm":                   AlpmPkg,
+	packageurl.TypeAlpine:    ApkPkg,
+	"alpine":                 ApkPkg,
+	packageurl.TypeDebian:    DebPkg,
+	packageurl.TypeRPM:       RpmPkg,
+	packageurl.TypeBitnami:   BitnamiPkg,
+	packageurl.TypeCocoapods: CocoapodsPkg,
+	packageurl.TypeComposer:  PhpComposerPkg,
+	packageurl.TypeConan:     ConanPkg,
+	"cargo":                  RustPkg,
+	"crate":                  RustPkg,
+	packageurl.TypeCran:      Rpkg,
+	"dotnet":                 DotnetPkg,
+	packageurl.TypeGem:       GemPkg,
+	packageurl.TypeGolang:    GoModulePkg,
+	packageurl.TypeHackage:   HackagePkg,
+	packageurl.TypeHex:       HexPkg,
+	packageurl.TypeLuaRocks:  LuaRocksPkg,
+	packageurl.TypeMaven:     JavaPkg,
+	"nix":                    NixPkg,
+	packageurl.TypeNPM:       NpmPkg,
+	"opam":                   OpamPkg,
+	packageurl.TypeOTP:       ErlangOTPPkg,
+	"pecl":                   PhpPeclPkg,
+	"portage":                PortagePkg,
+	packageurl.TypeSwift:     SwiftPkg,
+	"swiplpack":              SwiplPackPkg,
+	packageurl.TypePub:       DartPubPkg,
+	packageurl.TypePyPi:      PythonPkg,
+	"wordpress-plugin":       WordpressPluginPkg,
+	"linux-kernel":           LinuxKernelPkg,
+	"linux-kernel-module":    LinuxKernelModulePkg,
+}
+
+// PackageURLType returns the PURL package type for the current package.
+func (t Type) PackageURLType() string {
+	// First we look for packages types associated to more than one
+	// purl type so the response in consistent, and other package types
+	// that are not in the map
+	switch t {
+	case ApkPkg:
+		return packageurl.TypeAlpine
+	case RustPkg:
+		return "cargo"
+	case BinaryPkg:
+		return "binary"
+	case GithubActionPkg, GithubActionWorkflowPkg:
+		// note: this is not a real purl type, but it is the closest thing we have for now
+		return packageurl.TypeGithub
+	case JenkinsPluginPkg:
+		return packageurl.TypeMaven
+	case LinuxKernelPkg:
+		return "generic/linux-kernel"
+	case LinuxKernelModulePkg:
+		return packageurl.TypeGeneric
 	}
+
+	// Then, we check if any element's value in the map corresponds to the
+	// given package type
+	for k, v := range purlToPkgMap {
+		if v == t {
+			return k
+		}
+	}
+
+	// TODO: should this be a "generic" purl type instead?
+	return ""
+}
+
+func TypeByName(name string) Type {
+	// Check if the package type is in the map
+	if pkgType, ok := purlToPkgMap[name]; ok {
+		return pkgType
+	}
+
+	return UnknownPkg
 }
