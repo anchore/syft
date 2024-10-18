@@ -137,22 +137,22 @@ func (c *nugetLicenses) findLocalLicenses(resolver file.Resolver, globMatch stri
 	return
 }
 
-// File is used in the NuSpec struct
-type File struct {
+// nuspecFile is used in the NuSpec struct
+type nuspecFile struct {
 	Source string `xml:"src,attr"`
 	Target string `xml:"target,attr"`
 }
 
-// Dependency is used in the NuSpec struct
-type Dependency struct {
+// nuspecDependency is used in the NuSpec struct
+type nuspecDependency struct {
 	ID      string `xml:"id,attr"`
 	Version string `xml:"version,attr"`
 }
 
-// NuSpec represents a .nuspec XML file found in the root of the .nupack or .nupkg files
+// nugetSpecification represents a .nuspec XML file found in the root of the .nupack or .nupkg files
 //
 // cf. https://learn.microsoft.com/en-us/nuget/reference/nuspec
-type NuSpec struct {
+type nugetSpecification struct {
 	XMLName xml.Name `xml:"package"`
 	Xmlns   string   `xml:"xmlns,attr,omitempty"`
 	Meta    struct { // MetaData
@@ -176,11 +176,11 @@ type NuSpec struct {
 		Language         string `xml:"language,omitempty"`
 		Tags             string `xml:"tags,omitempty"`
 		Dependencies     struct {
-			Dependency []Dependency `xml:"dependency"`
+			Dependency []nuspecDependency `xml:"dependency"`
 		} `xml:"dependencies,omitempty"`
 	} `xml:"metadata"`
 	Files struct {
-		File []File `xml:"file"`
+		File []nuspecFile `xml:"file"`
 	} `xml:"files,omitempty"`
 }
 
@@ -218,7 +218,7 @@ func removeBOM(input []byte) []byte {
 // extractLicensesFromNuSpec tries to evaluate the license(s) from the .nuspec file struct and its containing archive (or NuGet package)
 //
 // cf. https://learn.microsoft.com/en-us/nuget/reference/nuspec#license
-func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec NuSpec, nugetArchive *zip.Reader) []pkg.License {
+func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec nugetSpecification, nugetArchive *zip.Reader) []pkg.License {
 	out := []pkg.License{}
 
 	switch nuspec.Meta.License.Type {
@@ -283,7 +283,7 @@ func (c *nugetLicenses) extractLicensesFromBinaryNuGetPackage(binary []byte) []p
 							if specFile, err := zr.Open(entry.Name()); err == nil {
 								defer specFile.Close()
 								if specFileData, err := io.ReadAll(specFile); err == nil {
-									var nuspec NuSpec
+									var nuspec nugetSpecification
 
 									if err = xml.Unmarshal(removeBOM(specFileData), &nuspec); err == nil {
 										out = append(out, c.extractLicensesFromNuSpec(nuspec, zr)...)

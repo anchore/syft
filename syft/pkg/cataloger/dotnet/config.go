@@ -28,16 +28,16 @@ var (
 	defaultProviders      = ""
 )
 
-type Credential struct {
+type nugetProviderCredential struct {
 	Username string `yaml:"username" json:"username" mapstructure:"username"`
 	Password string `yaml:"password" json:"password" mapstructure:"password"`
 }
 
 type CatalogerConfig struct {
-	SearchLocalLicenses  bool         `yaml:"search-local-licenses" json:"search-local-licenses" mapstructure:"search-local-licenses"`
-	SearchRemoteLicenses bool         `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
-	Providers            []string     `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
-	ProviderCredentials  []Credential `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
+	SearchLocalLicenses  bool                      `yaml:"search-local-licenses" json:"search-local-licenses" mapstructure:"search-local-licenses"`
+	SearchRemoteLicenses bool                      `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
+	Providers            []string                  `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
+	ProviderCredentials  []nugetProviderCredential `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
 }
 
 // DefaultCatalogerConfig create a CatalogerConfig with default options, which includes:
@@ -47,7 +47,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		SearchLocalLicenses:  false,
 		SearchRemoteLicenses: false,
 		Providers:            []string{},
-		ProviderCredentials:  []Credential{},
+		ProviderCredentials:  []nugetProviderCredential{},
 	}
 
 	nuget := os.Getenv("NUGET_SEARCH_LOCAL_LICENSES")
@@ -95,11 +95,11 @@ func (g CatalogerConfig) WithCredentials(input string) CatalogerConfig {
 	if input == "" {
 		return g
 	}
-	g.ProviderCredentials = []Credential{}
+	g.ProviderCredentials = []nugetProviderCredential{}
 	credentials := strings.Split(input, ",")
 	for _, credential := range credentials {
 		if credentialParts := strings.Split(credential, ":"); len(credentialParts) == 2 {
-			g.ProviderCredentials = append(g.ProviderCredentials, Credential{
+			g.ProviderCredentials = append(g.ProviderCredentials, nugetProviderCredential{
 				Username: credentialParts[0],
 				Password: credentialParts[1],
 			})

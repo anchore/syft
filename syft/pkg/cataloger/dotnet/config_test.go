@@ -45,7 +45,7 @@ func Test_Config(t *testing.T) {
 				SearchLocalLicenses:  false,
 				SearchRemoteLicenses: false,
 				Providers:            []string{"https://api.nuget.org/v3-flatcontainer/"},
-				ProviderCredentials:  []Credential{},
+				ProviderCredentials:  []nugetProviderCredential{},
 			},
 		},
 		{
@@ -60,7 +60,7 @@ func Test_Config(t *testing.T) {
 				SearchLocalLicenses:  true,
 				SearchRemoteLicenses: false,
 				Providers:            []string{"https://my.proxy"},
-				ProviderCredentials:  []Credential{},
+				ProviderCredentials:  []nugetProviderCredential{},
 			},
 		},
 		{
@@ -79,7 +79,7 @@ func Test_Config(t *testing.T) {
 				SearchLocalLicenses:  false,
 				SearchRemoteLicenses: true,
 				Providers:            []string{"https://www.nuget.org/api/v2/package"},
-				ProviderCredentials:  []Credential{},
+				ProviderCredentials:  []nugetProviderCredential{},
 			},
 		},
 	}
