@@ -149,43 +149,66 @@ type nuspecDependency struct {
 	Version string `xml:"version,attr"`
 }
 
+type nuspecLicense struct {
+	Text string `xml:",chardata"`
+	Type string `xml:"type,attr"`
+}
+type nuspecDependencies struct {
+	Dependency []nuspecDependency `xml:"dependency"`
+}
+
+type nuspecMetaData struct { // MetaData
+	ID               string             `xml:"id"`
+	Version          string             `xml:"version"`
+	Title            string             `xml:"title,omitempty"`
+	Authors          string             `xml:"authors"`
+	Owners           string             `xml:"owners,omitempty"`
+	LicenseURL       string             `xml:"licenseUrl,omitempty"`
+	License          nuspecLicense      `xml:"license,omitempty"`
+	ProjectURL       string             `xml:"projectUrl,omitempty"`
+	IconURL          string             `xml:"iconUrl,omitempty"`
+	ReqLicenseAccept bool               `xml:"requireLicenseAcceptance"`
+	Description      string             `xml:"description"`
+	ReleaseNotes     string             `xml:"releaseNotes,omitempty"`
+	Copyright        string             `xml:"copyright,omitempty"`
+	Summary          string             `xml:"summary,omitempty"`
+	Language         string             `xml:"language,omitempty"`
+	Tags             string             `xml:"tags,omitempty"`
+	Dependencies     nuspecDependencies `xml:"dependencies,omitempty"`
+}
+
+type nuspecFiles struct {
+	File []nuspecFile `xml:"file"`
+}
+
 // nugetSpecification represents a .nuspec XML file found in the root of the .nupack or .nupkg files
 //
 // cf. https://learn.microsoft.com/en-us/nuget/reference/nuspec
 type nugetSpecification struct {
-	XMLName xml.Name `xml:"package"`
-	Xmlns   string   `xml:"xmlns,attr,omitempty"`
-	Meta    struct { // MetaData
-		ID         string `xml:"id"`
-		Version    string `xml:"version"`
-		Title      string `xml:"title,omitempty"`
-		Authors    string `xml:"authors"`
-		Owners     string `xml:"owners,omitempty"`
-		LicenseURL string `xml:"licenseUrl,omitempty"`
-		License    struct {
-			Text string `xml:",chardata"`
-			Type string `xml:"type,attr"`
-		} `xml:"license,omitempty"`
-		ProjectURL       string `xml:"projectUrl,omitempty"`
-		IconURL          string `xml:"iconUrl,omitempty"`
-		ReqLicenseAccept bool   `xml:"requireLicenseAcceptance"`
-		Description      string `xml:"description"`
-		ReleaseNotes     string `xml:"releaseNotes,omitempty"`
-		Copyright        string `xml:"copyright,omitempty"`
-		Summary          string `xml:"summary,omitempty"`
-		Language         string `xml:"language,omitempty"`
-		Tags             string `xml:"tags,omitempty"`
-		Dependencies     struct {
-			Dependency []nuspecDependency `xml:"dependency"`
-		} `xml:"dependencies,omitempty"`
-	} `xml:"metadata"`
-	Files struct {
-		File []nuspecFile `xml:"file"`
-	} `xml:"files,omitempty"`
+	XMLName xml.Name       `xml:"package"`
+	Xmlns   string         `xml:"xmlns,attr,omitempty"`
+	Meta    nuspecMetaData `xml:"metadata"`
+	Files   nuspecFiles    `xml:"files,omitempty"`
 }
 
 // removeBOM removes any ByteOrderMark at the beginning of a given file content
 func removeBOM(input []byte) []byte {
+	if len(input) >= 4 {
+		if input[0] == 0 && input[1] == 0 && input[2] == 254 && input[3] == 255 {
+			// UTF-32 (BE)
+			return input[4:]
+		}
+		if input[0] == 255 && input[1] == 254 && input[2] == 0 && input[3] == 0 {
+			// UTF-32 (LE)
+			return input[4:]
+		}
+	}
+	if len(input) >= 3 {
+		if input[0] == 239 && input[1] == 187 && input[2] == 191 {
+			// UTF-8
+			return input[3:]
+		}
+	}
 	if len(input) >= 2 {
 		if input[0] == 254 && input[1] == 255 {
 			// UTF-16 (BE)
@@ -194,22 +217,6 @@ func removeBOM(input []byte) []byte {
 		if input[0] == 255 && input[1] == 254 {
 			// UTF-16 (LE)
 			return input[2:]
-		}
-		if len(input) >= 3 {
-			if input[0] == 239 && input[1] == 187 && input[2] == 191 {
-				// UTF-8
-				return input[3:]
-			}
-			if len(input) >= 4 {
-				if input[0] == 0 && input[1] == 0 && input[2] == 254 && input[3] == 255 {
-					// UTF-32 (BE)
-					return input[4:]
-				}
-				if input[0] == 255 && input[1] == 254 && input[2] == 0 && input[3] == 0 {
-					// UTF-32 (LE)
-					return input[4:]
-				}
-			}
 		}
 	}
 	return input
@@ -225,11 +232,13 @@ func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec nugetSpecification, nug
 	case "expression":
 		out = append(out, pkg.NewLicenseFromFields(nuspec.Meta.License.Text, nuspec.Meta.LicenseURL, nil))
 	case "file":
-		if licenseFile, err := nugetArchive.Open(nuspec.Meta.License.Text); err == nil {
-			defer licenseFile.Close()
-			if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
-				if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.NewLocation(nuspec.Meta.License.Text)); err == nil {
-					out = append(out, foundLicenses...)
+		if nugetArchive != nil {
+			if licenseFile, err := nugetArchive.Open(nuspec.Meta.License.Text); err == nil {
+				defer licenseFile.Close()
+				if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
+					if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.NewLocation(nuspec.Meta.License.Text)); err == nil {
+						out = append(out, foundLicenses...)
+					}
 				}
 			}
 		}
@@ -239,7 +248,7 @@ func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec nugetSpecification, nug
 				licenseFileData, err := io.ReadAll(response.Body)
 				response.Body.Close()
 				if err == nil {
-					if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.Location{}); err == nil {
+					if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.NewLocation(nuspec.Meta.LicenseURL)); err == nil {
 						for _, foundLicense := range foundLicenses {
 							foundLicense.URLs = append(foundLicense.URLs, nuspec.Meta.LicenseURL)
 							out = append(out, foundLicense)
@@ -251,11 +260,13 @@ func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec nugetSpecification, nug
 			for _, fileRef := range nuspec.Files.File {
 				fileName := filepath.Base(fileRef.Source)
 				if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
-					if licenseFile, err := nugetArchive.Open(fileRef.Source); err == nil {
-						defer licenseFile.Close()
-						if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
-							if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.NewLocation(nuspec.Meta.License.Text)); err == nil {
-								out = append(out, foundLicenses...)
+					if nugetArchive != nil {
+						if licenseFile, err := nugetArchive.Open(fileRef.Source); err == nil {
+							defer licenseFile.Close()
+							if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
+								if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.NewLocation(nuspec.Meta.License.Text)); err == nil {
+									out = append(out, foundLicenses...)
+								}
 							}
 						}
 					}
