@@ -152,7 +152,7 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
-	logger := log.Nested("cataloger", c.upstreamCataloger)
+	lgr := log.Nested("cataloger", c.upstreamCataloger)
 
 	env := Environment{
 		// TODO: consider passing into the cataloger, this would affect the cataloger interface (and all implementations). This can be deferred until later.
@@ -164,7 +164,7 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")
 
-		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, logger, parser, &env)
+		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, lgr, parser, &env)
 		if err != nil {
 			continue // logging is handled within invokeParser
 		}

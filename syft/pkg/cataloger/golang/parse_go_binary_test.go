@@ -3,6 +3,7 @@ package golang
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -166,6 +168,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			MainModule:        "github.com/anchore/syft",
 		},
 	}
+
+	licenseScanner := licenses.StaticScanner()
 
 	tests := []struct {
 		name          string
@@ -1053,7 +1057,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			c := newGoBinaryCataloger(DefaultCatalogerConfig())
 			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
 			require.NoError(t, err)
-			mainPkg, pkgs := c.buildGoPkgInfo(fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
+			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), licenseScanner, fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
 			if mainPkg != nil {
 				pkgs = append(pkgs, *mainPkg)
 			}

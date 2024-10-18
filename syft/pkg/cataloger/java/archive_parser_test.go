@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vifraa/gopom"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
@@ -29,6 +30,8 @@ import (
 
 func TestSearchMavenForLicenses(t *testing.T) {
 	url := mockMavenRepo(t)
+
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.StaticScanner())
 
 	tests := []struct {
 		name             string
@@ -71,6 +74,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 
 			// setup parser
 			ap, cleanupFn, err := newJavaArchiveParser(
+				ctx,
 				file.LocationReadCloser{
 					Location:   file.NewLocation(fixture.Name()),
 					ReadCloser: fixture,
@@ -86,6 +90,8 @@ func TestSearchMavenForLicenses(t *testing.T) {
 }
 
 func TestParseJar(t *testing.T) {
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.StaticScanner())
+
 	tests := []struct {
 		name         string
 		fixture      string
@@ -343,10 +349,12 @@ func TestParseJar(t *testing.T) {
 				UseNetwork:              false,
 				UseMavenLocalRepository: false,
 			}
-			parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
-				Location:   file.NewLocation(fixture.Name()),
-				ReadCloser: fixture,
-			}, false, cfg)
+			parser, cleanupFn, err := newJavaArchiveParser(
+				ctx,
+				file.LocationReadCloser{
+					Location:   file.NewLocation(fixture.Name()),
+					ReadCloser: fixture,
+				}, false, cfg)
 			defer cleanupFn()
 			require.NoError(t, err)
 
@@ -1346,6 +1354,8 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 }
 
 func Test_deterministicMatchingPomProperties(t *testing.T) {
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.StaticScanner())
+
 	tests := []struct {
 		fixture  string
 		expected mavenID
@@ -1365,10 +1375,12 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 					fixture, err := os.Open(fixturePath)
 					require.NoError(t, err)
 
-					parser, cleanupFn, err := newJavaArchiveParser(file.LocationReadCloser{
-						Location:   file.NewLocation(fixture.Name()),
-						ReadCloser: fixture,
-					}, false, ArchiveCatalogerConfig{UseNetwork: false})
+					parser, cleanupFn, err := newJavaArchiveParser(
+						ctx,
+						file.LocationReadCloser{
+							Location:   file.NewLocation(fixture.Name()),
+							ReadCloser: fixture,
+						}, false, ArchiveCatalogerConfig{UseNetwork: false})
 					defer cleanupFn()
 					require.NoError(t, err)
 
