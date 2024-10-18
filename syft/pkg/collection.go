@@ -12,11 +12,12 @@ import (
 
 // Collection represents a collection of Packages.
 type Collection struct {
-	byID      map[artifact.ID]Package
-	idsByName map[string]orderedIDSet
-	idsByType map[Type]orderedIDSet
-	idsByPath map[string]orderedIDSet // note: this is real path or virtual path
-	lock      sync.RWMutex
+	byID             map[artifact.ID]Package
+	idsByName        map[string]orderedIDSet
+	idsByType        map[Type]orderedIDSet
+	idsByPath        map[string]orderedIDSet // note: this is real path or virtual path
+	isSquashAllLayer bool
+	lock             sync.RWMutex
 }
 
 // NewCollection returns a new empty Collection
@@ -114,6 +115,12 @@ func (c *Collection) add(p Package) {
 		log.Warnf("found package with empty ID while adding to the collection: %+v", p)
 		p.SetID()
 		id = p.ID()
+	}
+
+	for _, l := range p.Locations.ToSlice() {
+		if l.IsSquashedAllLayersResolver {
+			c.isSquashAllLayer = true
+		}
 	}
 
 	if existing, exists := c.byID[id]; exists {
@@ -289,6 +296,11 @@ func (c *Collection) Sorted(types ...Type) (pkgs []Package) {
 	Sort(pkgs)
 
 	return pkgs
+}
+
+// IsSquashedAllLayers return if the package collection were used with squashed all layers resolver
+func (c *Collection) IsSquashedAllLayers() bool {
+	return c.isSquashAllLayer
 }
 
 type orderedIDSet struct {
