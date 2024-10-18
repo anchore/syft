@@ -126,32 +126,38 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			continue
 		}
 
-		if strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
-			cyclonedxLicense := &cyclonedx.License{
-				Name: l.SPDXExpression,
-			}
-			if len(l.URLs) > 0 {
-				cyclonedxLicense.URL = l.URLs[0]
-			}
-			if len(l.Contents) > 0 {
-				cyclonedxLicense.Text = &cyclonedx.AttachedText{
-					Content: base64.StdEncoding.EncodeToString([]byte(l.Contents)),
-				}
-				cyclonedxLicense.Text.ContentType = "text/plain"
-				cyclonedxLicense.Text.Encoding = "base64"
-			}
-			otherc = append(otherc, cyclonedx.LicenseChoice{
-				License: cyclonedxLicense,
-			})
-		} else {
-			otherc = append(otherc, cyclonedx.LicenseChoice{
-				License: &cyclonedx.License{
-					Name: l.Value,
-				},
-			})
-		}
+		otherc = append(otherc, processCustomLicense(l)...)
 	}
 	return spdxc, otherc, ex
+}
+
+func processCustomLicense(l pkg.License) cyclonedx.Licenses {
+	result := cyclonedx.Licenses{}
+	if strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
+		cyclonedxLicense := &cyclonedx.License{
+			Name: l.SPDXExpression,
+		}
+		if len(l.URLs) > 0 {
+			cyclonedxLicense.URL = l.URLs[0]
+		}
+		if len(l.Contents) > 0 {
+			cyclonedxLicense.Text = &cyclonedx.AttachedText{
+				Content: base64.StdEncoding.EncodeToString([]byte(l.Contents)),
+			}
+			cyclonedxLicense.Text.ContentType = "text/plain"
+			cyclonedxLicense.Text.Encoding = "base64"
+		}
+		result = append(result, cyclonedx.LicenseChoice{
+			License: cyclonedxLicense,
+		})
+	} else {
+		result = append(result, cyclonedx.LicenseChoice{
+			License: &cyclonedx.License{
+				Name: l.Value,
+			},
+		})
+	}
+	return result
 }
 
 func processLicenseURLs(l pkg.License, spdxID string, populate *cyclonedx.Licenses) {
