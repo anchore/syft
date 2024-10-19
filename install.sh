@@ -17,7 +17,7 @@ VERIFY_SIGN=false
 # this is the earliest tag in the repo where cosign sign-blob was introduced in the release process (see the goreleaser config)
 VERIFY_SIGN_SUPPORTED_VERSION=v0.104.0
 # this is the earliest tag in the repo where the -v flag was introduced to this install.sh script
-VERIFY_SIGN_FLAG_VERSION=v1.6.0
+VERIFY_SIGN_FLAG_VERSION=v1.14.1
 
 # do not change the name of this parameter (this must always be backwards compatible)
 DOWNLOAD_TAG_INSTALL_SCRIPT=${DOWNLOAD_TAG_INSTALL_SCRIPT:-true}
