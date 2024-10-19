@@ -49,7 +49,7 @@ jobs:
         continue-on-error: true
         with:
           header: benchmark
-          message: |
+          message: no message 
             ### Benchmark Test Results
 
             <details>
