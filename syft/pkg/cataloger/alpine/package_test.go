@@ -112,7 +112,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:        "alpine",
 				VersionID: "3.4.6",
 			},
-			expected: "pkg:apk/alpine/p@v?arch=a&upstream=origin&distro=alpine-3.4.6",
+			expected: "pkg:apk/alpine/p@v?arch=a&distro=alpine-3.4.6&upstream=origin",
 		},
 		{
 			name: "wolfi distro",

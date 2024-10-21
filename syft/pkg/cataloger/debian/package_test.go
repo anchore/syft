@@ -81,7 +81,7 @@ func Test_packageURL(t *testing.T) {
 				Source:  "s",
 				Version: "v",
 			},
-			expected: "pkg:deb/debian/p@v?upstream=s&distro=debian-11",
+			expected: "pkg:deb/debian/p@v?distro=debian-11&upstream=s",
 		},
 		{
 			name: "with upstream qualifier with source pkg name and version info",
@@ -98,7 +98,7 @@ func Test_packageURL(t *testing.T) {
 				Version:       "v",
 				SourceVersion: "2.3",
 			},
-			expected: "pkg:deb/debian/p@v?upstream=s%402.3&distro=debian-11",
+			expected: "pkg:deb/debian/p@v?distro=debian-11&upstream=s%402.3",
 		},
 	}
 

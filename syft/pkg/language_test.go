@@ -87,7 +87,7 @@ func TestLanguageFromPURL(t *testing.T) {
 			want: Lua,
 		},
 		{
-			purl: "pkg:opam/ocaml-base-compiler@	5.2.0",
+			purl: "pkg:opam/ocaml-base-compiler@5.2.0",
 			want: OCaml,
 		},
 	}
