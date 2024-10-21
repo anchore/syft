@@ -265,7 +265,7 @@ var dirOnlyTestCases = []testCase{
 		name:        "find java packages including pom.xml", // directory scans can include packages that have yet to be installed
 		pkgType:     pkg.JavaPkg,
 		pkgLanguage: pkg.Java,
-		duplicates:  1, // joda-time is included in both pom.xml AND the .jar collection
+		duplicates:  2, // joda-time and example-java-app-maven are included in both pom.xml AND the .jar collection
 		pkgInfo: map[string]string{
 			"example-java-app-maven": "0.1.0",
 			"joda-time":              "2.9.2",

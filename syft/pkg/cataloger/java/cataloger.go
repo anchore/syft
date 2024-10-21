@@ -13,7 +13,7 @@ func NewArchiveCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
 	gap := newGenericArchiveParserAdapter(cfg)
 
 	c := generic.NewCataloger("java-archive-cataloger").
-		WithParserByGlobs(gap.parseJavaArchive, archiveFormatGlobs...)
+		WithParserByGlobs(gap.parseJavaArchiveMain, archiveFormatGlobs...)
 
 	if cfg.IncludeIndexedArchives {
 		// java archives wrapped within zip files
