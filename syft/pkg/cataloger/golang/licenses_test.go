@@ -28,7 +28,7 @@ func Test_LocalLicenseSearch(t *testing.T) {
 	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
 	loc3 := file.NewLocation("github.com/someorg/strangelicense@v1.2.3/LiCeNsE.tXt")
 
-	licenseScanner := licenses.StaticScanner()
+	licenseScanner := licenses.TestingOnlyScanner()
 
 	tests := []struct {
 		name     string
@@ -96,7 +96,7 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
 	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
 
-	licenseScanner := licenses.StaticScanner()
+	licenseScanner := licenses.TestingOnlyScanner()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		buf := &bytes.Buffer{}
@@ -254,7 +254,7 @@ func Test_findVersionPath(t *testing.T) {
 
 func Test_walkDirErrors(t *testing.T) {
 	resolver := newGoLicenseResolver("", CatalogerConfig{})
-	_, err := resolver.findLicensesInFS(context.Background(), licenses.StaticScanner(), "somewhere", badFS{})
+	_, err := resolver.findLicensesInFS(context.Background(), licenses.TestingOnlyScanner(), "somewhere", badFS{})
 	require.Error(t, err)
 }
 
@@ -272,7 +272,7 @@ func Test_noLocalGoModDir(t *testing.T) {
 	validTmp := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(validTmp, "mod@ver"), 0700|os.ModeDir))
 
-	licenseScanner := licenses.StaticScanner()
+	licenseScanner := licenses.TestingOnlyScanner()
 
 	tests := []struct {
 		name    string

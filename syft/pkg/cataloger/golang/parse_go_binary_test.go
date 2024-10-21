@@ -169,7 +169,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 	}
 
-	licenseScanner := licenses.StaticScanner()
+	licenseScanner := licenses.TestingOnlyScanner()
 
 	tests := []struct {
 		name          string
