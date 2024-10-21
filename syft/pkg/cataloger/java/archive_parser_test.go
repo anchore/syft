@@ -31,7 +31,7 @@ import (
 func TestSearchMavenForLicenses(t *testing.T) {
 	url := mockMavenRepo(t)
 
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.StaticScanner())
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.TestingOnlyScanner())
 
 	tests := []struct {
 		name             string
@@ -90,7 +90,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 }
 
 func TestParseJar(t *testing.T) {
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.StaticScanner())
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.TestingOnlyScanner())
 
 	tests := []struct {
 		name         string
@@ -1354,7 +1354,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 }
 
 func Test_deterministicMatchingPomProperties(t *testing.T) {
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.StaticScanner())
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.TestingOnlyScanner())
 
 	tests := []struct {
 		fixture  string

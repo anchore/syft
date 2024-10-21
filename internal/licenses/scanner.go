@@ -35,9 +35,9 @@ func NewDefaultScanner() Scanner {
 	}
 }
 
-// StaticScanner returns a scanner that uses the built-in license scanner from the licensecheck package.
+// TestingOnlyScanner returns a scanner that uses the built-in license scanner from the licensecheck package.
 // THIS IS ONLY MEANT FOR TEST CODE, NOT PRODUCTION CODE.
-func StaticScanner() Scanner {
+func TestingOnlyScanner() Scanner {
 	return &scanner{
 		coverageThreshold: coverageThreshold,
 		scanner:           licensecheck.Scan,
