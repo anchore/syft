@@ -17,6 +17,7 @@ vars:
   ORAS: "{{ .TOOL_DIR }}/oras"
   YQ: "{{ .TOOL_DIR }}/yq"
   TASK: "{{ .TOOL_DIR }}/task"
+  GH: "{{ .TOOL_DIR }}/gh"
 
   # used for changelog generation
   CHANGELOG: CHANGELOG.md
@@ -131,6 +132,17 @@ tasks:
     generates:
       - "{{ .TMP_DIR }}"
     cmd: "mkdir -p {{ .TMP_DIR }}"
+
+  ## Dependency tasks #################################
+
+  update-anchore-dependencies:
+    desc: Update Anchore dependencies
+    deps: [tools]
+    requires:
+      vars:
+        - FROM
+    cmd: |
+      {{ .GH }} workflow run update-anchore-dependencies.yml -f repos="github.com/anchore/stereoscope@{{ .FROM }}"
 
   ## Static analysis tasks #################################
 
