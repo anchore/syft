@@ -124,38 +124,52 @@ func Test_parsePomXML(t *testing.T) {
 func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 	mavenLocalRepoDir := "internal/maven/test-fixtures/maven-repo"
 	mavenBaseURL := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
-	scanDir := "test-fixtures/pom/commons-text-1.10.0"
 
 	tests := []struct {
 		name     string
+		dir      string
 		config   ArchiveCatalogerConfig
-		resolved bool
+		expected expected
 	}{
 		{
 			name: "no resolution",
+			dir:  "test-fixtures/pom/commons-text-1.10.0",
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              false,
 				UseMavenLocalRepository: false,
 			},
-			resolved: false,
+			expected: getCommonsTextExpectedPackages(file.NewLocation("pom.xml"), false),
 		},
 		{
 			name: "use network",
+			dir:  "test-fixtures/pom/commons-text-1.10.0",
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              true,
 				MavenBaseURL:            mavenBaseURL,
 				UseMavenLocalRepository: false,
 			},
-			resolved: true,
+			expected: getCommonsTextExpectedPackages(file.NewLocation("pom.xml"), true),
 		},
 		{
 			name: "use local repository",
+			dir:  "test-fixtures/pom/commons-text-1.10.0",
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              false,
 				UseMavenLocalRepository: true,
 				MavenLocalRepositoryDir: mavenLocalRepoDir,
 			},
-			resolved: true,
+			expected: getCommonsTextExpectedPackages(file.NewLocation("pom.xml"), true),
+		},
+		{
+			name: "transitive dependencies",
+			dir:  "test-fixtures/pom/transitive-top-level",
+			config: ArchiveCatalogerConfig{
+				UseNetwork:                    false,
+				UseMavenLocalRepository:       true,
+				MavenLocalRepositoryDir:       mavenLocalRepoDir,
+				ResolveTransitiveDependencies: true,
+			},
+			expected: expectedTransientPackageData(),
 		},
 	}
 
@@ -166,13 +180,13 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 					IncludeIndexedArchives:   true,
 					IncludeUnindexedArchives: true,
 				},
-				UseNetwork:              test.config.UseNetwork,
-				MavenBaseURL:            test.config.MavenBaseURL,
-				UseMavenLocalRepository: test.config.UseMavenLocalRepository,
-				MavenLocalRepositoryDir: test.config.MavenLocalRepositoryDir,
+				UseNetwork:                    test.config.UseNetwork,
+				MavenBaseURL:                  test.config.MavenBaseURL,
+				UseMavenLocalRepository:       test.config.UseMavenLocalRepository,
+				MavenLocalRepositoryDir:       test.config.MavenLocalRepositoryDir,
+				ResolveTransitiveDependencies: test.config.ResolveTransitiveDependencies,
 			})
-			expectedPackages, expectedRelationships := getCommonsTextExpectedPackages(file.NewLocation("pom.xml"), test.resolved)
-			pkgtest.TestCataloger(t, scanDir, cat, expectedPackages, expectedRelationships)
+			pkgtest.TestCataloger(t, test.dir, cat, test.expected.packages, test.expected.relationships)
 		})
 	}
 }
@@ -441,7 +455,20 @@ func Test_resolveLicenses(t *testing.T) {
 	}
 }
 
-func getCommonsTextExpectedPackages(loc file.Location, resolved bool) ([]pkg.Package, []artifact.Relationship) {
+func Test_corruptPomXml(t *testing.T) {
+	c := NewPomCataloger(DefaultArchiveCatalogerConfig())
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/corrupt").
+		WithError().
+		TestCataloger(t, c)
+}
+
+type expected struct {
+	packages      []pkg.Package
+	relationships []artifact.Relationship
+}
+
+func getCommonsTextExpectedPackages(loc file.Location, resolved bool) expected {
 	commonsText := pkg.Package{
 		Name:     "commons-text",
 		Version:  "1.10.0",
@@ -658,13 +685,150 @@ func getCommonsTextExpectedPackages(loc file.Location, resolved bool) ([]pkg.Pac
 		})
 	}
 
-	return pkgs, relationships
+	return expected{pkgs, relationships}
 }
 
-func Test_corruptPomXml(t *testing.T) {
-	c := NewPomCataloger(DefaultArchiveCatalogerConfig())
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/corrupt").
-		WithError().
-		TestCataloger(t, c)
+func expectedTransientPackageData() expected {
+	epl2 := pkg.NewLicenseSet(pkg.License{
+		Value: "Eclipse Public License v2.0",
+		Type:  license.Declared,
+		URLs:  []string{"https://www.eclipse.org/legal/epl-v20.html"},
+	})
+	transitiveTopLevel := pkg.Package{
+		Name:    "transitive-top-level",
+		Version: "99",
+		Metadata: pkg.JavaArchive{
+			PomProject: &pkg.JavaPomProject{
+				GroupID:    "my.other.group",
+				ArtifactID: "transitive-top-level",
+				Version:    "99",
+			},
+		},
+	}
+	childOne := pkg.Package{
+		Name:     "child-one",
+		Version:  "1.3.6",
+		Licenses: epl2,
+		Metadata: pkg.JavaArchive{
+			PomProject: &pkg.JavaPomProject{
+				GroupID:    "my.org",
+				ArtifactID: "child-one",
+				Version:    "1.3.6",
+				Parent: &pkg.JavaPomParent{
+					GroupID:    "my.org",
+					ArtifactID: "parent-one",
+					Version:    "3.11.0",
+				},
+			},
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "my.org",
+				ArtifactID: "child-one",
+			},
+		},
+	}
+	childTwo := pkg.Package{
+		Name:     "child-two",
+		Version:  "2.1.90",
+		Licenses: epl2,
+		Metadata: pkg.JavaArchive{
+			PomProject: &pkg.JavaPomProject{
+				GroupID:    "my.org",
+				ArtifactID: "child-two",
+				Version:    "2.1.90",
+				Parent: &pkg.JavaPomParent{
+					GroupID:    "my.org",
+					ArtifactID: "parent-one",
+					Version:    "3.11.0",
+				},
+			},
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "my.org",
+				ArtifactID: "child-two",
+				Scope:      "test",
+			},
+		},
+	}
+	commonsLang3_113_7_8_0 := pkg.Package{
+		Name:    "commons-lang3",
+		Version: "3.113.7.8.0",
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "org.apache.commons",
+				ArtifactID: "commons-lang3",
+			},
+		},
+	}
+	commonsLang3_12_0 := pkg.Package{
+		Name:    "commons-lang3",
+		Version: "3.12.0",
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "org.apache.commons",
+				ArtifactID: "commons-lang3",
+			},
+		},
+	}
+	commonsMath3 := pkg.Package{
+		Name:    "commons-math3.11.0",
+		Version: "3.5",
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "org.apache.commons",
+				ArtifactID: "commons-math3.11.0",
+			},
+		},
+	}
+	commonsExec := pkg.Package{
+		Name:    "commons-exec",
+		Version: "1.3",
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "org.apache.commons",
+				ArtifactID: "commons-exec",
+			},
+		},
+	}
+
+	allPackages := []*pkg.Package{
+		&transitiveTopLevel,
+		&childOne,
+		&childTwo,
+		&commonsLang3_12_0,
+		&commonsLang3_113_7_8_0,
+		&commonsMath3,
+		&commonsExec,
+	}
+
+	for _, p := range allPackages {
+		p.Language = pkg.Java
+		p.Type = pkg.JavaPkg
+		p.FoundBy = pomCatalogerName
+		p.Locations = file.NewLocationSet(file.NewLocation("pom.xml"))
+		finalizePackage(p)
+	}
+
+	pkgs := make([]pkg.Package, len(allPackages))
+	for i := 0; i < len(allPackages); i++ {
+		pkgs[i] = *allPackages[i]
+	}
+
+	depOf := func(a, b pkg.Package) artifact.Relationship {
+		return artifact.Relationship{
+			From: a,
+			To:   b,
+			Type: artifact.DependencyOfRelationship,
+		}
+	}
+
+	return expected{
+		packages: pkgs,
+		relationships: []artifact.Relationship{
+			depOf(childTwo, transitiveTopLevel),
+			depOf(childOne, transitiveTopLevel),
+			depOf(commonsLang3_12_0, childOne),
+			depOf(commonsLang3_113_7_8_0, childTwo),
+			depOf(commonsMath3, childTwo),
+			depOf(commonsExec, childTwo),
+		},
+	}
 }
