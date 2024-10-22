@@ -1382,7 +1382,7 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 	}{
 		{
 			fixture:  "multiple-matching-2.11.5",
-			expected: maven.ID{"org.multiple", "multiple-matching-1", "2.11.5"},
+			expected: maven.NewID("org.multiple", "multiple-matching-1", "2.11.5"),
 		},
 	}
 
@@ -1405,7 +1405,7 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 					require.NoError(t, err)
 
 					groupID, artifactID, version, _ := parser.discoverMainPackageFromPomInfo(context.TODO())
-					require.Equal(t, test.expected, maven.ID{groupID, artifactID, version})
+					require.Equal(t, test.expected, maven.NewID(groupID, artifactID, version))
 				}()
 			}
 		})
