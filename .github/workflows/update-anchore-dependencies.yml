@@ -1,0 +1,69 @@
+name: PR to update Anchore dependencies
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: "Where to pull dependency commits from (branch or 'release')"
+        required: false
+        type: choice
+        options:
+          - "main" # reference commits from the main branch
+          - "auto/integration" # reference commits from a pre-release PR (like from this workflow)
+          - "release" # reference commits from the latest github release
+        default: "main"
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'anchore' # only run for main repo (not forks)
+    steps:
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 #v4.2.1
+
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+        with:
+          tools: false
+          bootstrap-apt-packages: ""
+
+      - name: Update Stereoscope
+        id: stereoscope
+        uses: anchore/workflows/.github/actions/update-go-dependency@main
+        with:
+          repo: anchore/stereoscope
+          # note: even if you pass a branch or commit, go tooling will resolve this to a version tag if it exists
+          from: ${{ github.event.inputs.from }}
+
+      - name: Determine draft status
+        id: draft
+        run: |
+          if [ "${{ github.event.inputs.from }}" != "release" ]; then
+             echo "status=always-true" | tee -a $GITHUB_OUTPUT
+          else
+             echo "status=false" | tee -a $GITHUB_OUTPUT
+          fi
+
+      - uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a #v2.1.0
+        id: generate-token
+        with:
+          app_id: ${{ secrets.TOKEN_APP_ID }}
+          private_key: ${{ secrets.TOKEN_APP_PRIVATE_KEY }}
+
+      - uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f #v7.0.5
+        with:
+          signoff: true
+          delete-branch: true
+          draft: ${{ steps.draft.outputs.status }}
+          # do not change this branch, as other workflows depend on it
+          branch: auto/integration
+          labels: dependencies,pre-release
+          commit-message: "chore(deps): update anchore dependencies"
+          title: "chore(deps): update anchore dependencies"
+          body: |
+            ***Using commits from***: ${{ github.event.inputs.from }}
+
+            ## Dependencies changed
+             - Stereoscope: `${{ steps.stereoscope.outputs.original_version }}` ➔ `${{ steps.stereoscope.outputs.resolved_version }}` (**${{ steps.stereoscope.outputs.action }}** from `${{ steps.stereoscope.outputs.source }}`)
+          token: ${{ steps.generate-token.outputs.token }}
