@@ -18,6 +18,7 @@ import (
 	"golang.org/x/mod/module"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -59,8 +60,10 @@ func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 }
 
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
-func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
+
+	licenseScanner := licenses.ContextLicenseScanner(ctx)
 
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
 	if err != nil {
@@ -73,7 +76,7 @@ func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resol
 	var rels []artifact.Relationship
 	for _, mod := range mods {
 		var depPkgs []pkg.Package
-		mainPkg, depPkgs := c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch, unionReader)
+		mainPkg, depPkgs := c.buildGoPkgInfo(ctx, licenseScanner, resolver, reader.Location, mod, mod.arch, unionReader)
 		if mainPkg != nil {
 			rels = createModuleRelationships(*mainPkg, depPkgs)
 			pkgs = append(pkgs, *mainPkg)
@@ -101,7 +104,7 @@ func createModuleRelationships(main pkg.Package, deps []pkg.Package) []artifact.
 var emptyModule debug.Module
 var moduleFromPartialPackageBuild = debug.Module{Path: "command-line-arguments"}
 
-func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) (*pkg.Package, []pkg.Package) {
+func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, licenseScanner licenses.Scanner, resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) (*pkg.Package, []pkg.Package) {
 	if mod == nil {
 		return nil, nil
 	}
@@ -116,9 +119,13 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 			continue
 		}
 
+		lics, err := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, dep.Path, dep.Version)
+		if err != nil {
+			log.Tracef("error getting licenses for golang package: %s %v", dep.Path, err)
+		}
+
 		gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 		p := c.newGoBinaryPackage(
-			resolver,
 			dep,
 			mod.Main.Path,
 			gover,
@@ -126,6 +133,7 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 			nil,
 			mod.cryptoSettings,
 			experiments,
+			lics,
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if pkg.IsValid(&p) {
@@ -137,7 +145,7 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 		return nil, pkgs
 	}
 
-	main := c.makeGoMainPackage(resolver, mod, arch, location, reader)
+	main := c.makeGoMainPackage(ctx, licenseScanner, resolver, mod, arch, location, reader)
 
 	return &main, pkgs
 }
@@ -152,11 +160,16 @@ func missingMainModule(mod *extendedBuildInfo) bool {
 	return mod.Main == moduleFromPartialPackageBuild
 }
 
-func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {
+func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, licenseScanner licenses.Scanner, resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
+
+	lics, err := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, mod.Main.Path, mod.Main.Version)
+	if err != nil {
+		log.Tracef("error getting licenses for golang package: %s %v", mod.Main.Path, err)
+	}
+
 	gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 	main := c.newGoBinaryPackage(
-		resolver,
 		&mod.Main,
 		mod.Main.Path,
 		gover,
@@ -164,6 +177,7 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 		gbs,
 		mod.cryptoSettings,
 		experiments,
+		lics,
 		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
