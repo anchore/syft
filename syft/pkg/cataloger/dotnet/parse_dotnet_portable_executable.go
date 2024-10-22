@@ -11,6 +11,7 @@ import (
 
 	version "github.com/anchore/go-version"
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -19,10 +20,10 @@ import (
 )
 
 type dotnetPortableExecutableCataloger struct {
-	licenses nugetLicenses
+	licenses nugetLicenseResolver
 }
 
-func (c *dotnetPortableExecutableCataloger) parseDotnetPortableExecutable(_ context.Context, resolver file.Resolver, _ *generic.Environment, f file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *dotnetPortableExecutableCataloger) parseDotnetPortableExecutable(ctx context.Context, resolver file.Resolver, _ *generic.Environment, f file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	by, err := io.ReadAll(f)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)
@@ -55,7 +56,8 @@ func (c *dotnetPortableExecutableCataloger) parseDotnetPortableExecutable(_ cont
 	c.licenses.assetDefinitions, _ = getProjectAssets(resolver)
 
 	// Try to resolve *.nupkg License
-	if licenses, err := c.licenses.getLicenses(dotNetPkg.Name, dotNetPkg.Version); err == nil && len(licenses) > 0 {
+	licenseScanner := licenses.ContextLicenseScanner(ctx)
+	if licenses, err := c.licenses.getLicenses(ctx, licenseScanner, dotNetPkg.Name, dotNetPkg.Version); err == nil && len(licenses) > 0 {
 		dotNetPkg.Licenses = pkg.NewLicenseSet(licenses...)
 	}
 

@@ -25,15 +25,15 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-type nugetLicenses struct {
+type nugetLicenseResolver struct {
 	opts                     CatalogerConfig
 	localNuGetCacheResolvers []file.Resolver
 	lowerLicenseFileNames    *strset.Set
 	assetDefinitions         []projectAssets
 }
 
-func newNugetLicenses(opts CatalogerConfig) nugetLicenses {
-	return nugetLicenses{
+func newNugetLicenseResolver(opts CatalogerConfig) nugetLicenseResolver {
+	return nugetLicenseResolver{
 		opts:                     opts,
 		localNuGetCacheResolvers: nil,
 		lowerLicenseFileNames:    strset.New(lowercaseLicenseFiles()...),
@@ -68,7 +68,7 @@ func appendNewLicenses(licenses []pkg.License, potentiallyNew ...pkg.License) []
 	return licenses
 }
 
-func (c *nugetLicenses) getLicenses(moduleName, moduleVersion string) ([]pkg.License, error) {
+func (c *nugetLicenseResolver) getLicenses(ctx context.Context, scanner licenses.Scanner, moduleName, moduleVersion string) ([]pkg.License, error) {
 	licenses := []pkg.License{}
 
 	if c.opts.SearchLocalLicenses {
@@ -80,7 +80,7 @@ func (c *nugetLicenses) getLicenses(moduleName, moduleVersion string) ([]pkg.Lic
 		// if we're running against a directory on the filesystem, it may not include the
 		// user's homedir, so we defer to using the localModCacheResolvers
 		for _, resolver := range c.localNuGetCacheResolvers {
-			if lics, err := c.findLocalLicenses(resolver, moduleSearchGlob(moduleName, moduleVersion)); err == nil {
+			if lics, err := c.findLocalLicenses(ctx, scanner, resolver, moduleSearchGlob(moduleName, moduleVersion)); err == nil {
 				licenses = appendNewLicenses(licenses, lics...)
 			}
 		}
@@ -88,11 +88,11 @@ func (c *nugetLicenses) getLicenses(moduleName, moduleVersion string) ([]pkg.Lic
 
 	if c.opts.SearchRemoteLicenses {
 		if len(c.assetDefinitions) > 0 {
-			if lics, err := c.findRemoteLicenses(moduleName, moduleVersion, c.assetDefinitions...); err == nil {
+			if lics, err := c.findRemoteLicenses(ctx, scanner, moduleName, moduleVersion, c.assetDefinitions...); err == nil {
 				licenses = appendNewLicenses(licenses, lics...)
 			}
 		} else {
-			if lics, err := c.findRemoteLicenses(moduleName, moduleVersion); err == nil {
+			if lics, err := c.findRemoteLicenses(ctx, scanner, moduleName, moduleVersion); err == nil {
 				licenses = appendNewLicenses(licenses, lics...)
 			}
 		}
@@ -104,7 +104,7 @@ func (c *nugetLicenses) getLicenses(moduleName, moduleVersion string) ([]pkg.Lic
 	return licenses, nil
 }
 
-func (c *nugetLicenses) findLocalLicenses(resolver file.Resolver, globMatch string) (out []pkg.License, err error) {
+func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, globMatch string) (out []pkg.License, err error) {
 	out = make([]pkg.License, 0)
 	if resolver == nil {
 		return
@@ -123,7 +123,7 @@ func (c *nugetLicenses) findLocalLicenses(resolver file.Resolver, globMatch stri
 				return nil, err
 			}
 
-			parsed, err := licenses.Parse(contents, l)
+			parsed, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(l, contents))
 			contents.Close()
 
 			if err != nil {
@@ -222,10 +222,24 @@ func removeBOM(input []byte) []byte {
 	return input
 }
 
+type bytesReadCloser struct {
+	bytes.Buffer
+}
+
+func (brc *bytesReadCloser) Close() error {
+	return nil
+}
+
+func newBytesReadCloser(data []byte) *bytesReadCloser {
+	return &bytesReadCloser{
+		Buffer: *bytes.NewBuffer(data),
+	}
+}
+
 // extractLicensesFromNuSpec tries to evaluate the license(s) from the .nuspec file struct and its containing archive (or NuGet package)
 //
 // cf. https://learn.microsoft.com/en-us/nuget/reference/nuspec#license
-func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec nugetSpecification, nugetArchive *zip.Reader) []pkg.License {
+func (c *nugetLicenseResolver) extractLicensesFromNuSpec(ctx context.Context, scanner licenses.Scanner, nuspec nugetSpecification, nugetArchive *zip.Reader) []pkg.License {
 	out := []pkg.License{}
 
 	switch nuspec.Meta.License.Type {
@@ -236,7 +250,7 @@ func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec nugetSpecification, nug
 			if licenseFile, err := nugetArchive.Open(nuspec.Meta.License.Text); err == nil {
 				defer licenseFile.Close()
 				if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
-					if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.NewLocation(nuspec.Meta.License.Text)); err == nil {
+					if foundLicenses, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(file.NewLocation(nuspec.Meta.License.Text), newBytesReadCloser(removeBOM(licenseFileData)))); err == nil {
 						out = append(out, foundLicenses...)
 					}
 				}
@@ -248,7 +262,7 @@ func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec nugetSpecification, nug
 				licenseFileData, err := io.ReadAll(response.Body)
 				response.Body.Close()
 				if err == nil {
-					if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.NewLocation(nuspec.Meta.LicenseURL)); err == nil {
+					if foundLicenses, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(file.NewLocation(nuspec.Meta.LicenseURL), newBytesReadCloser(removeBOM(licenseFileData)))); err == nil {
 						for _, foundLicense := range foundLicenses {
 							foundLicense.URLs = append(foundLicense.URLs, nuspec.Meta.LicenseURL)
 							out = append(out, foundLicense)
@@ -264,7 +278,7 @@ func (c *nugetLicenses) extractLicensesFromNuSpec(nuspec nugetSpecification, nug
 						if licenseFile, err := nugetArchive.Open(fileRef.Source); err == nil {
 							defer licenseFile.Close()
 							if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
-								if foundLicenses, err := licenses.Parse(bytes.NewBuffer(removeBOM(licenseFileData)), file.NewLocation(nuspec.Meta.License.Text)); err == nil {
+								if foundLicenses, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(file.NewLocation(nuspec.Meta.License.Text), newBytesReadCloser(removeBOM(licenseFileData)))); err == nil {
 									out = append(out, foundLicenses...)
 								}
 							}
@@ -282,7 +296,7 @@ type zipDir interface {
 	ReadDir(count int) ([]fs.DirEntry, error)
 }
 
-func (c *nugetLicenses) extractLicensesFromBinaryNuGetPackage(binary []byte) []pkg.License {
+func (c *nugetLicenseResolver) extractLicensesFromBinaryNuGetPackage(ctx context.Context, scanner licenses.Scanner, binary []byte) []pkg.License {
 	out := []pkg.License{}
 
 	if zr, err := zip.NewReader(bytes.NewReader(binary), int64(len(binary))); err == nil {
@@ -297,7 +311,7 @@ func (c *nugetLicenses) extractLicensesFromBinaryNuGetPackage(binary []byte) []p
 									var nuspec nugetSpecification
 
 									if err = xml.Unmarshal(removeBOM(specFileData), &nuspec); err == nil {
-										out = append(out, c.extractLicensesFromNuSpec(nuspec, zr)...)
+										out = append(out, c.extractLicensesFromNuSpec(ctx, scanner, nuspec, zr)...)
 									}
 								}
 							}
@@ -312,7 +326,7 @@ func (c *nugetLicenses) extractLicensesFromBinaryNuGetPackage(binary []byte) []p
 	return out
 }
 
-func (c *nugetLicenses) getLicensesFromRemotePackage(providerURL, moduleName, moduleVersion string) ([]pkg.License, bool) {
+func (c *nugetLicenseResolver) getLicensesFromRemotePackage(ctx context.Context, scanner licenses.Scanner, providerURL, moduleName, moduleVersion string) ([]pkg.License, bool) {
 	out := []pkg.License{}
 	foundPackage := false
 
@@ -340,7 +354,7 @@ func (c *nugetLicenses) getLicensesFromRemotePackage(providerURL, moduleName, mo
 			response.Body.Close()
 
 			if err == nil {
-				out = c.extractLicensesFromBinaryNuGetPackage(moduleData)
+				out = c.extractLicensesFromBinaryNuGetPackage(ctx, scanner, moduleData)
 			}
 		}
 	}
@@ -366,7 +380,7 @@ func findMatchingLibrariesInProjectAssets(moduleName, moduleVersion string, asse
 	return projectLibrary{}, errNotFound
 }
 
-func (c *nugetLicenses) findRemoteLicenses(moduleName, moduleVersion string, assets ...projectAssets) (out []pkg.License, err error) {
+func (c *nugetLicenseResolver) findRemoteLicenses(ctx context.Context, scanner licenses.Scanner, moduleName, moduleVersion string, assets ...projectAssets) (out []pkg.License, err error) {
 	if len(c.opts.Providers) == 0 {
 		return nil, errors.ErrUnsupported
 	}
@@ -381,7 +395,7 @@ func (c *nugetLicenses) findRemoteLicenses(moduleName, moduleVersion string, ass
 
 	foundPackage := false
 	for _, provider := range c.opts.Providers {
-		out, foundPackage = c.getLicensesFromRemotePackage(provider, moduleName, moduleVersion)
+		out, foundPackage = c.getLicensesFromRemotePackage(ctx, scanner, provider, moduleName, moduleVersion)
 		if foundPackage {
 			break
 		}

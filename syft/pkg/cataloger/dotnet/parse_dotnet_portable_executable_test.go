@@ -315,7 +315,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 
 func Test_corruptDotnetPE(t *testing.T) {
 	cataloger := dotnetPortableExecutableCataloger{
-		licenses: newNugetLicenses(DefaultCatalogerConfig()),
+		licenses: newNugetLicenseResolver(DefaultCatalogerConfig()),
 	}
 	pkgtest.NewCatalogTester().
 		FromFile(t, "test-fixtures/glob-paths/src/something.exe").

@@ -15,7 +15,7 @@ import (
 
 func Test_corruptDotnetDeps(t *testing.T) {
 	cataloger := dotnetDepsCataloger{
-		licenses: newNugetLicenses(DefaultCatalogerConfig()),
+		licenses: newNugetLicenseResolver(DefaultCatalogerConfig()),
 	}
 	pkgtest.NewCatalogTester().
 		FromFile(t, "test-fixtures/glob-paths/src/something.deps.json").

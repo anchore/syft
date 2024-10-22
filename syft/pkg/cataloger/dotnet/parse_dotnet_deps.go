@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/unknown"
@@ -16,7 +17,7 @@ import (
 )
 
 type dotnetDepsCataloger struct {
-	licenses nugetLicenses
+	licenses nugetLicenseResolver
 }
 
 type dotnetDeps struct {
@@ -42,7 +43,7 @@ type dotnetDepsLibrary struct {
 }
 
 //nolint:funlen
-func (c *dotnetDepsCataloger) parseDotnetDeps(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *dotnetDepsCataloger) parseDotnetDeps(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var pkgMap = make(map[string]pkg.Package)
 	var relationships []artifact.Relationship
@@ -103,7 +104,8 @@ func (c *dotnetDepsCataloger) parseDotnetDeps(_ context.Context, resolver file.R
 		dotnetPkg.FoundBy = dotnetDepsCatalogerName
 
 		// Try to resolve *.nupkg License
-		if licenses, err := c.licenses.getLicenses(name, version); err == nil && len(licenses) > 0 {
+		licenseScanner := licenses.ContextLicenseScanner(ctx)
+		if licenses, err := c.licenses.getLicenses(ctx, licenseScanner, name, version); err == nil && len(licenses) > 0 {
 			dotnetPkg.Licenses = pkg.NewLicenseSet(licenses...)
 		}
 

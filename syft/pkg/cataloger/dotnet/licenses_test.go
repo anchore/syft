@@ -1,9 +1,11 @@
 package dotnet
 
 import (
+	"context"
 	"encoding/xml"
 	"testing"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/assert"
@@ -121,11 +123,12 @@ func TestExtractLicensesFromNuSpec(t *testing.T) {
 		},
 	}
 
-	licenseParser := newNugetLicenses(CatalogerConfig{})
+	licenseParser := newNugetLicenseResolver(CatalogerConfig{})
+	licenseScanner := licenses.TestingOnlyScanner()
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := licenseParser.extractLicensesFromNuSpec(test.spec, nil)
+			result := licenseParser.extractLicensesFromNuSpec(context.Background(), licenseScanner, test.spec, nil)
 			assert.Equal(t, test.expected, result)
 		})
 	}
@@ -144,10 +147,11 @@ func TestGetLicensesFromRemotePackage(t *testing.T) {
 		},
 	}
 
-	licenseParser := newNugetLicenses(CatalogerConfig{})
+	licenseParser := newNugetLicenseResolver(CatalogerConfig{})
+	licenseScanner := licenses.TestingOnlyScanner()
 
 	t.Run(fixture, func(t *testing.T) {
-		result, _ := licenseParser.getLicensesFromRemotePackage(defaultProvider, "newtonsoft.json", "13.0.1")
+		result, _ := licenseParser.getLicensesFromRemotePackage(context.Background(), licenseScanner, defaultProvider, "newtonsoft.json", "13.0.1")
 		assert.Equal(t, expected, result)
 	})
 }

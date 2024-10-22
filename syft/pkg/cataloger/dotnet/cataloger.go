@@ -16,7 +16,7 @@ const (
 // NewDotnetDepsCataloger returns a new Dotnet cataloger object base on deps json files.
 func NewDotnetDepsCataloger(opts CatalogerConfig) pkg.Cataloger {
 	c := dotnetDepsCataloger{
-		licenses: newNugetLicenses(opts),
+		licenses: newNugetLicenseResolver(opts),
 	}
 	return generic.NewCataloger(dotnetDepsCatalogerName).
 		WithParserByGlobs(c.parseDotnetDeps, "**/*.deps.json")
@@ -25,7 +25,7 @@ func NewDotnetDepsCataloger(opts CatalogerConfig) pkg.Cataloger {
 // NewDotnetPortableExecutableCataloger returns a new Dotnet cataloger object base on portable executable files.
 func NewDotnetPortableExecutableCataloger(opts CatalogerConfig) pkg.Cataloger {
 	c := dotnetPortableExecutableCataloger{
-		licenses: newNugetLicenses(opts),
+		licenses: newNugetLicenseResolver(opts),
 	}
 	return generic.NewCataloger(dotnetPortableExecutableCatalogerName).
 		WithParserByGlobs(c.parseDotnetPortableExecutable, "**/*.dll", "**/*.exe")
