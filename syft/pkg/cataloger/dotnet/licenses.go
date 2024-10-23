@@ -119,16 +119,10 @@ func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, scanner li
 	for _, l := range locations {
 		fileName := filepath.Base(l.RealPath)
 		if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
-			contents, err := resolver.FileContentsByLocation(l)
-			if err != nil {
-				return nil, err
-			}
-			defer internal.CloseAndLogError(contents, l.RealPath)
-
-			parsed, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(l, contents))
+			parsed, err := extractLicensesFromResolvedFile(ctx, scanner, resolver, l)
 
 			if err != nil {
-				return nil, err
+				continue
 			}
 
 			out = append(out, parsed...)
@@ -136,6 +130,22 @@ func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, scanner li
 	}
 
 	return out, err
+}
+
+func extractLicensesFromResolvedFile(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, l file.Location) (out []pkg.License, err error) {
+	contents, err := resolver.FileContentsByLocation(l)
+	if err != nil {
+		return nil, err
+	}
+	defer internal.CloseAndLogError(contents, l.RealPath)
+
+	out, err = licenses.Search(ctx, scanner, file.NewLocationReadCloser(l, contents))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
 // nuspecFile is used in the NuSpec struct
@@ -473,21 +483,12 @@ func getProjectAssets(resolver file.Resolver) ([]projectAssets, error) {
 	var assetFiles []file.Location
 	if assetFiles, err = resolver.FilesByGlob("**/project.assets.json"); err == nil && len(assetFiles) > 0 {
 		for _, assetFile := range assetFiles {
-			contentReader, err := resolver.FileContentsByLocation(assetFile)
-			if err != nil {
-				continue
-			}
-			defer internal.CloseAndLogError(contentReader, assetFile.RealPath)
-
-			assetFileData, err := io.ReadAll(contentReader)
+			assetDefinition, err := extractProjectAssetsFromResolvedFile(resolver, assetFile)
 			if err != nil {
 				continue
 			}
 
-			assetDefinition := projectAssets{}
-			if err = json.Unmarshal(assetFileData, &assetDefinition); err == nil {
-				assets = append(assets, assetDefinition)
-			}
+			assets = append(assets, *assetDefinition)
 		}
 
 		if len(assets) == 0 {
@@ -496,6 +497,26 @@ func getProjectAssets(resolver file.Resolver) ([]projectAssets, error) {
 	}
 
 	return assets, err
+}
+
+func extractProjectAssetsFromResolvedFile(resolver file.Resolver, l file.Location) (asset *projectAssets, err error) {
+	contentReader, err := resolver.FileContentsByLocation(l)
+	if err != nil {
+		return nil, err
+	}
+	defer internal.CloseAndLogError(contentReader, l.RealPath)
+
+	assetFileData, err := io.ReadAll(contentReader)
+	if err != nil {
+		return nil, err
+	}
+
+	asset = &projectAssets{}
+	if err = json.Unmarshal(assetFileData, asset); err != nil {
+		return nil, err
+	}
+
+	return asset, nil
 }
 
 func getNuGetCachesFromProjectAssets(assets []projectAssets) []string {
