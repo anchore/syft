@@ -123,9 +123,9 @@ func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, scanner li
 			if err != nil {
 				return nil, err
 			}
+			defer internal.CloseAndLogError(contents, l.RealPath)
 
 			parsed, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(l, contents))
-			internal.CloseAndLogError(contents, l.RealPath)
 
 			if err != nil {
 				return nil, err
@@ -477,9 +477,9 @@ func getProjectAssets(resolver file.Resolver) ([]projectAssets, error) {
 			if err != nil {
 				continue
 			}
+			defer internal.CloseAndLogError(contentReader, assetFile.RealPath)
 
 			assetFileData, err := io.ReadAll(contentReader)
-			internal.CloseAndLogError(contentReader, assetFile.RealPath)
 			if err != nil {
 				continue
 			}
