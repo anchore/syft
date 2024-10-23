@@ -18,6 +18,9 @@ inputs:
     description: "Download test fixture cache from OCI and github actions"
     required: true
     default: "false"
+  tools:
+    description: "weather to install tools"
+    default: "true"
   bootstrap-apt-packages:
     description: "Space delimited list of tools to install via apt"
     default: "libxml2-utils"
@@ -32,6 +35,7 @@ runs:
         go-version: ${{ inputs.go-version }}
 
     - name: Restore tool cache
+      if: inputs.tools == 'true'
       id: tool-cache
       uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
       with:
@@ -40,6 +44,7 @@ runs:
 
     - name: Install project tools
       shell: bash
+      if: inputs.tools == 'true'
       run: make tools
 
     - name: Install go dependencies
