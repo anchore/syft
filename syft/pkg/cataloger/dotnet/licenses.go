@@ -108,7 +108,7 @@ func (c *nugetLicenseResolver) getLicenses(ctx context.Context, scanner licenses
 func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, globMatch string) (out []pkg.License, err error) {
 	out = make([]pkg.License, 0)
 	if resolver == nil {
-		return
+		return nil, nil
 	}
 
 	locations, err := resolver.FilesByGlob(globMatch)
@@ -125,7 +125,7 @@ func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, scanner li
 			}
 
 			parsed, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(l, contents))
-			contents.Close()
+			internal.CloseAndLogError(contents, l.RealPath)
 
 			if err != nil {
 				return nil, err
@@ -135,7 +135,7 @@ func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, scanner li
 		}
 	}
 
-	return
+	return out, err
 }
 
 // nuspecFile is used in the NuSpec struct
@@ -478,9 +478,8 @@ func getProjectAssets(resolver file.Resolver) ([]projectAssets, error) {
 				continue
 			}
 
-			defer internal.CloseAndLogError(contentReader, assetFile.RealPath)
-
 			assetFileData, err := io.ReadAll(contentReader)
+			internal.CloseAndLogError(contentReader, assetFile.RealPath)
 			if err != nil {
 				continue
 			}

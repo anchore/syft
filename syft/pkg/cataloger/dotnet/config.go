@@ -150,33 +150,51 @@ func getPackageSourcesFromSDK(includeDisabledSources bool) []string {
 		defer cancel()
 
 		cmd := exec.CommandContext(ctx, dotnetPath, "nuget", "list", "source", "--format", "Short")
-		if stdout, err := cmd.StdoutPipe(); err == nil {
-			if err := cmd.Start(); err == nil {
-				if data, err := io.ReadAll(stdout); err == nil {
-					lines := strings.Split(string(data), "\n")
-					for _, line := range lines {
-						line = strings.TrimSpace(line)
-						// Expect something like
-						// E https://api.nuget.org/v3/index.json
-						// or
-						// D https://api.nuget.org/v3/index.json
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return packageSources
+		}
 
-						// Only enabled sources
-						if strings.HasPrefix(line, "E ") || (strings.HasPrefix(line, "D ") && includeDisabledSources) {
-							packageSource := strings.TrimSpace(line[2:])
-							if strings.HasPrefix(packageSource, "https://") {
-								found := false
-								for _, knownSource := range packageSources {
-									if packageSource == knownSource {
-										found = true
-									}
-								}
-								if !found {
-									packageSources = append(packageSources, packageSource)
-								}
-							}
-						}
+		err = cmd.Start()
+		if err != nil {
+			return packageSources
+		}
+
+		data, err := io.ReadAll(stdout)
+		if err != nil {
+			return packageSources
+		}
+
+		lines := strings.Split(string(data), "\n")
+
+		packageSources = append(packageSources, parseSDKPackageSourcePathsOutput(lines, includeDisabledSources)...)
+	}
+
+	return packageSources
+}
+
+func parseSDKPackageSourcePathsOutput(outputLines []string, includeDisabledSources bool) []string {
+	packageSources := []string{}
+
+	for _, line := range outputLines {
+		line = strings.TrimSpace(line)
+		// Expect something like
+		// E https://api.nuget.org/v3/index.json
+		// or
+		// D https://api.nuget.org/v3/index.json
+
+		// Only enabled sources
+		if strings.HasPrefix(line, "E ") || (strings.HasPrefix(line, "D ") && includeDisabledSources) {
+			packageSource := strings.TrimSpace(line[2:])
+			if strings.HasPrefix(packageSource, "https://") {
+				found := false
+				for _, knownSource := range packageSources {
+					if packageSource == knownSource {
+						found = true
 					}
+				}
+				if !found {
+					packageSources = append(packageSources, packageSource)
 				}
 			}
 		}
