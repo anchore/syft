@@ -6,10 +6,8 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"os"
 	"os/exec"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -43,34 +41,7 @@ type CatalogerConfig struct {
 // DefaultCatalogerConfig create a CatalogerConfig with default options, which includes:
 // - setting the default remote package providers if none are provided
 func DefaultCatalogerConfig() CatalogerConfig {
-	g := CatalogerConfig{
-		SearchLocalLicenses:  false,
-		SearchRemoteLicenses: false,
-		Providers:            []string{},
-		ProviderCredentials:  []nugetProviderCredential{},
-	}
-
-	nuget := os.Getenv("NUGET_SEARCH_LOCAL_LICENSES")
-	if value, err := strconv.ParseBool(nuget); err == nil {
-		g = g.WithSearchLocalLicenses(value)
-	}
-
-	remote := os.Getenv("NUGET_SEARCH_REMOTE_LICENSES")
-	if value, err := strconv.ParseBool(remote); err == nil {
-		g = g.WithSearchRemoteLicenses(value)
-	}
-
-	// process the Nuget package repository settings (for remote search)
-	nugetProviders := os.Getenv("NUGET_PACKAGE_PROVIDERS")
-	if nugetProviders == "" {
-		nugetProviders = getDefaultProviders()
-	}
-	g = g.WithProviders(nugetProviders)
-
-	// process the Nuget package repository credential settings (for remote search)
-	g = g.WithCredentials(os.Getenv("NUGET_PACKAGE_PROVIDER_CREDENTIALS"))
-
-	return g
+	return CatalogerConfig{}
 }
 
 func (g CatalogerConfig) WithSearchLocalLicenses(input bool) CatalogerConfig {
