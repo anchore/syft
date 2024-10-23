@@ -1265,9 +1265,6 @@
             "$ref": "#/$defs/Location"
           },
           "type": "array"
-        },
-        "contents": {
-          "type": "string"
         }
       },
       "type": "object",
