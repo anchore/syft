@@ -202,21 +202,28 @@ func getDefaultProviders() string {
 
 		for _, packageSource := range packageSources {
 			// Test the availability of the external package providers
-			if response, err := httpClient.Get(packageSource); err == nil && response.StatusCode == http.StatusOK {
-				apiData, err := io.ReadAll(response.Body)
-				response.Body.Close()
+			response, err := httpClient.Get(packageSource)
+			if err != nil || response.StatusCode != http.StatusOK {
+				continue
+			}
 
-				if err == nil {
-					api := sourceAPI{}
-					if err = json.Unmarshal(apiData, &api); err == nil {
-						// Find all (NuGet) package resources of the API
-						for _, apiResource := range api.Resources {
-							// cf. https://learn.microsoft.com/en-us/nuget/api/overview#resources-and-schema
-							if strings.HasPrefix(apiResource.Type, "PackageBaseAddress/") {
-								providers = append(providers, apiResource.ID)
-							}
-						}
-					}
+			apiData, err := io.ReadAll(response.Body)
+			response.Body.Close()
+			if err != nil {
+				continue
+			}
+
+			api := sourceAPI{}
+			err = json.Unmarshal(apiData, &api)
+			if err != nil {
+				continue
+			}
+
+			// Find all (NuGet) package resources of the API
+			for _, apiResource := range api.Resources {
+				// cf. https://learn.microsoft.com/en-us/nuget/api/overview#resources-and-schema
+				if strings.HasPrefix(apiResource.Type, "PackageBaseAddress/") {
+					providers = append(providers, apiResource.ID)
 				}
 			}
 		}

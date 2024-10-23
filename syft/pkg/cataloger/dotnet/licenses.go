@@ -82,6 +82,7 @@ func (c *nugetLicenseResolver) getLicenses(ctx context.Context, scanner licenses
 		for _, resolver := range c.localNuGetCacheResolvers {
 			if lics, err := c.findLocalLicenses(ctx, scanner, resolver, moduleSearchGlob(moduleName, moduleVersion)); err == nil {
 				licenses = appendNewLicenses(licenses, lics...)
+				break
 			}
 		}
 	}
@@ -236,6 +237,45 @@ func newBytesReadCloser(data []byte) *bytesReadCloser {
 	}
 }
 
+func extractLicensesFromNuGetContentFile(ctx context.Context, scanner licenses.Scanner, filePath string, nugetArchive *zip.Reader) []pkg.License {
+	out := []pkg.License{}
+
+	if nugetArchive != nil {
+		if licenseFile, err := nugetArchive.Open(filePath); err == nil {
+			licenseFileData, err := io.ReadAll(licenseFile)
+			licenseFile.Close()
+
+			if err == nil {
+				if foundLicenses, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(file.NewLocation(filePath), newBytesReadCloser(removeBOM(licenseFileData)))); err == nil {
+					out = append(out, foundLicenses...)
+				}
+			}
+		}
+	}
+
+	return out
+}
+
+func extractLicensesFromURLReference(ctx context.Context, scanner licenses.Scanner, url string) []pkg.License {
+	out := []pkg.License{}
+
+	if response, err := httpClient.Get(url); err == nil && response.StatusCode == http.StatusOK {
+		licenseFileData, err := io.ReadAll(response.Body)
+		response.Body.Close()
+
+		if err == nil {
+			if foundLicenses, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(file.NewLocation(url), newBytesReadCloser(removeBOM(licenseFileData)))); err == nil {
+				for _, foundLicense := range foundLicenses {
+					foundLicense.URLs = append(foundLicense.URLs, url)
+					out = append(out, foundLicense)
+				}
+			}
+		}
+	}
+
+	return out
+}
+
 // extractLicensesFromNuSpec tries to evaluate the license(s) from the .nuspec file struct and its containing archive (or NuGet package)
 //
 // cf. https://learn.microsoft.com/en-us/nuget/reference/nuspec#license
@@ -246,44 +286,15 @@ func (c *nugetLicenseResolver) extractLicensesFromNuSpec(ctx context.Context, sc
 	case "expression":
 		out = append(out, pkg.NewLicenseFromFields(nuspec.Meta.License.Text, nuspec.Meta.LicenseURL, nil))
 	case "file":
-		if nugetArchive != nil {
-			if licenseFile, err := nugetArchive.Open(nuspec.Meta.License.Text); err == nil {
-				defer licenseFile.Close()
-				if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
-					if foundLicenses, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(file.NewLocation(nuspec.Meta.License.Text), newBytesReadCloser(removeBOM(licenseFileData)))); err == nil {
-						out = append(out, foundLicenses...)
-					}
-				}
-			}
-		}
+		out = append(out, extractLicensesFromNuGetContentFile(ctx, scanner, nuspec.Meta.License.Text, nugetArchive)...)
 	default:
 		if nuspec.Meta.LicenseURL != "" { // Legacy: deprecated LicenseURL
-			if response, err := httpClient.Get(nuspec.Meta.LicenseURL); err == nil && response.StatusCode == http.StatusOK {
-				licenseFileData, err := io.ReadAll(response.Body)
-				response.Body.Close()
-				if err == nil {
-					if foundLicenses, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(file.NewLocation(nuspec.Meta.LicenseURL), newBytesReadCloser(removeBOM(licenseFileData)))); err == nil {
-						for _, foundLicense := range foundLicenses {
-							foundLicense.URLs = append(foundLicense.URLs, nuspec.Meta.LicenseURL)
-							out = append(out, foundLicense)
-						}
-					}
-				}
-			}
+			out = append(out, extractLicensesFromURLReference(ctx, scanner, nuspec.Meta.LicenseURL)...)
 		} else { // Fallback: search for referenced license files
 			for _, fileRef := range nuspec.Files.File {
 				fileName := filepath.Base(fileRef.Source)
 				if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
-					if nugetArchive != nil {
-						if licenseFile, err := nugetArchive.Open(fileRef.Source); err == nil {
-							defer licenseFile.Close()
-							if licenseFileData, err := io.ReadAll(licenseFile); err == nil {
-								if foundLicenses, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(file.NewLocation(nuspec.Meta.License.Text), newBytesReadCloser(removeBOM(licenseFileData)))); err == nil {
-									out = append(out, foundLicenses...)
-								}
-							}
-						}
-					}
+					out = append(out, extractLicensesFromNuGetContentFile(ctx, scanner, fileRef.Source, nugetArchive)...)
 				}
 			}
 		}
@@ -296,6 +307,29 @@ type zipDir interface {
 	ReadDir(count int) ([]fs.DirEntry, error)
 }
 
+func (c *nugetLicenseResolver) extractLicensesFromArchive(ctx context.Context, scanner licenses.Scanner, entries []fs.DirEntry, zr *zip.Reader) []pkg.License {
+	out := []pkg.License{}
+
+	for _, entry := range entries {
+		if strings.HasSuffix(strings.ToLower(entry.Name()), ".nuspec") {
+			if specFile, err := zr.Open(entry.Name()); err == nil {
+				specFileData, err := io.ReadAll(specFile)
+				specFile.Close()
+				if err == nil {
+					var nuspec nugetSpecification
+
+					if err = xml.Unmarshal(removeBOM(specFileData), &nuspec); err == nil {
+						out = append(out, c.extractLicensesFromNuSpec(ctx, scanner, nuspec, zr)...)
+					}
+				}
+			}
+			break
+		}
+	}
+
+	return out
+}
+
 func (c *nugetLicenseResolver) extractLicensesFromBinaryNuGetPackage(ctx context.Context, scanner licenses.Scanner, binary []byte) []pkg.License {
 	out := []pkg.License{}
 
@@ -303,21 +337,7 @@ func (c *nugetLicenseResolver) extractLicensesFromBinaryNuGetPackage(ctx context
 		if _nugetContents, err := zr.Open("."); err == nil {
 			if nugetContents, ok := _nugetContents.(zipDir); ok {
 				if entries, err := nugetContents.ReadDir(0); err == nil {
-					for _, entry := range entries {
-						if strings.HasSuffix(strings.ToLower(entry.Name()), ".nuspec") {
-							if specFile, err := zr.Open(entry.Name()); err == nil {
-								defer specFile.Close()
-								if specFileData, err := io.ReadAll(specFile); err == nil {
-									var nuspec nugetSpecification
-
-									if err = xml.Unmarshal(removeBOM(specFileData), &nuspec); err == nil {
-										out = append(out, c.extractLicensesFromNuSpec(ctx, scanner, nuspec, zr)...)
-									}
-								}
-							}
-							break
-						}
-					}
+					out = append(out, c.extractLicensesFromArchive(ctx, scanner, entries, zr)...)
 				}
 			}
 		}
@@ -326,14 +346,17 @@ func (c *nugetLicenseResolver) extractLicensesFromBinaryNuGetPackage(ctx context
 	return out
 }
 
-func (c *nugetLicenseResolver) getLicensesFromRemotePackage(ctx context.Context, scanner licenses.Scanner, providerURL, moduleName, moduleVersion string) ([]pkg.License, bool) {
-	out := []pkg.License{}
-	foundPackage := false
+func (c *nugetLicenseResolver) getResponseForRemotePackage(providerURL, moduleName, moduleVersion string) (*http.Response, error) {
+	var response *http.Response
+	var err error
 
 	url := fmt.Sprintf("%s/%s/%s/%s.%s.nupkg", strings.TrimSuffix(providerURL, "/"), moduleName, moduleVersion, moduleName, moduleVersion)
-	response, err := httpClient.Get(url)
+	response, err = httpClient.Get(url)
 	if err == nil {
 		if response.StatusCode == http.StatusUnauthorized && len(c.opts.ProviderCredentials) > 0 {
+			if response.Body != nil {
+				response.Body.Close()
+			}
 			// Let's try, using the given credentials
 			for _, credential := range c.opts.ProviderCredentials {
 				req, _ := http.NewRequest("GET", url, nil)
@@ -345,17 +368,28 @@ func (c *nugetLicenseResolver) getLicensesFromRemotePackage(ctx context.Context,
 				if response.StatusCode == http.StatusOK {
 					break
 				}
+				if response.Body != nil {
+					response.Body.Close()
+				}
 			}
 		}
+	}
 
-		if err == nil && response.StatusCode == http.StatusOK {
-			foundPackage = true
-			moduleData, err := io.ReadAll(response.Body)
-			response.Body.Close()
+	return response, err
+}
 
-			if err == nil {
-				out = c.extractLicensesFromBinaryNuGetPackage(ctx, scanner, moduleData)
-			}
+func (c *nugetLicenseResolver) getLicensesFromRemotePackage(ctx context.Context, scanner licenses.Scanner, providerURL, moduleName, moduleVersion string) ([]pkg.License, bool) {
+	out := []pkg.License{}
+	foundPackage := false
+
+	response, err := c.getResponseForRemotePackage(providerURL, moduleName, moduleVersion)
+	if err == nil && response.StatusCode == http.StatusOK {
+		foundPackage = true
+		moduleData, err := io.ReadAll(response.Body)
+		response.Body.Close()
+
+		if err == nil {
+			out = c.extractLicensesFromBinaryNuGetPackage(ctx, scanner, moduleData)
 		}
 	}
 
@@ -439,15 +473,21 @@ func getProjectAssets(resolver file.Resolver) ([]projectAssets, error) {
 	var assetFiles []file.Location
 	if assetFiles, err = resolver.FilesByGlob("**/project.assets.json"); err == nil && len(assetFiles) > 0 {
 		for _, assetFile := range assetFiles {
-			if contentReader, err := resolver.FileContentsByLocation(assetFile); err == nil {
-				defer internal.CloseAndLogError(contentReader, assetFile.RealPath)
+			contentReader, err := resolver.FileContentsByLocation(assetFile)
+			if err != nil {
+				continue
+			}
 
-				if assetFileData, err := io.ReadAll(contentReader); err == nil {
-					assetDefinition := projectAssets{}
-					if err = json.Unmarshal(assetFileData, &assetDefinition); err == nil {
-						assets = append(assets, assetDefinition)
-					}
-				}
+			defer internal.CloseAndLogError(contentReader, assetFile.RealPath)
+
+			assetFileData, err := io.ReadAll(contentReader)
+			if err != nil {
+				continue
+			}
+
+			assetDefinition := projectAssets{}
+			if err = json.Unmarshal(assetFileData, &assetDefinition); err == nil {
+				assets = append(assets, assetDefinition)
 			}
 		}
 
@@ -483,6 +523,29 @@ func getNuGetCachesFromProjectAssets(assets []projectAssets) []string {
 	return paths
 }
 
+func parseSDKLocalCachePathsOutput(outputLines []string) []string {
+	paths := []string{}
+
+	for _, line := range outputLines {
+		line = strings.TrimSpace(line)
+		if lineParts := strings.Split(line, ": "); len(lineParts) == 2 {
+			folder := lineParts[1]
+			found := false
+			for _, known := range paths {
+				if known == folder {
+					found = true
+					break
+				}
+			}
+			if !found {
+				paths = append(paths, folder)
+			}
+		}
+	}
+
+	return paths
+}
+
 func getNuGetCachesFromSDK() []string {
 	paths := []string{}
 
@@ -497,22 +560,7 @@ func getNuGetCachesFromSDK() []string {
 			if err := cmd.Start(); err == nil {
 				if data, err := io.ReadAll(stdout); err == nil {
 					lines := strings.Split(string(data), "\n")
-					for _, line := range lines {
-						line = strings.TrimSpace(line)
-						if lineParts := strings.Split(line, ": "); len(lineParts) == 2 {
-							folder := lineParts[1]
-							found := false
-							for _, known := range paths {
-								if known == folder {
-									found = true
-									break
-								}
-							}
-							if !found {
-								paths = append(paths, folder)
-							}
-						}
-					}
+					paths = parseSDKLocalCachePathsOutput(lines)
 				}
 			}
 		}
