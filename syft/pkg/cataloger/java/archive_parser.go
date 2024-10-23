@@ -69,13 +69,13 @@ func newGenericArchiveParserAdapter(cfg ArchiveCatalogerConfig) genericArchivePa
 	return genericArchiveParserAdapter{cfg: cfg}
 }
 
-// parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
-func (gap genericArchiveParserAdapter) parseJavaArchiveMain(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	return gap.parseJavaArchive(ctx, reader, nil)
+// parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives
+func (gap genericArchiveParserAdapter) parseJavaArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	return gap.processJavaArchive(ctx, reader, nil)
 }
 
-// parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives.
-func (gap genericArchiveParserAdapter) parseJavaArchive(ctx context.Context, reader file.LocationReadCloser, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
+// processJavaArchive processes an archive for java contents, returning all Java libraries and nested archives
+func (gap genericArchiveParserAdapter) processJavaArchive(ctx context.Context, reader file.LocationReadCloser, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	parser, cleanupFn, err := newJavaArchiveParser(ctx, reader, true, gap.cfg)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
@@ -583,7 +583,7 @@ func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWit
 	nestedLocation := file.NewLocationFromCoordinates(location.Coordinates)
 	nestedLocation.AccessPath = nestedPath
 	gap := newGenericArchiveParserAdapter(cfg)
-	nestedPkgs, nestedRelationships, err := gap.parseJavaArchive(ctx, file.LocationReadCloser{
+	nestedPkgs, nestedRelationships, err := gap.processJavaArchive(ctx, file.LocationReadCloser{
 		Location:   nestedLocation,
 		ReadCloser: archiveReadCloser,
 	}, parentPkg)

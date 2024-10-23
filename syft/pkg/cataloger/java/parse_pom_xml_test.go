@@ -138,7 +138,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 				UseNetwork:              false,
 				UseMavenLocalRepository: false,
 			},
-			expected: getCommonsTextExpectedPackages(file.NewLocation("pom.xml"), false),
+			expected: getCommonsTextExpectedPackages(false),
 		},
 		{
 			name: "use network",
@@ -148,7 +148,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 				MavenBaseURL:            mavenBaseURL,
 				UseMavenLocalRepository: false,
 			},
-			expected: getCommonsTextExpectedPackages(file.NewLocation("pom.xml"), true),
+			expected: getCommonsTextExpectedPackages(true),
 		},
 		{
 			name: "use local repository",
@@ -158,7 +158,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 				UseMavenLocalRepository: true,
 				MavenLocalRepositoryDir: mavenLocalRepoDir,
 			},
-			expected: getCommonsTextExpectedPackages(file.NewLocation("pom.xml"), true),
+			expected: getCommonsTextExpectedPackages(true),
 		},
 		{
 			name: "transitive dependencies",
@@ -468,7 +468,9 @@ type expected struct {
 	relationships []artifact.Relationship
 }
 
-func getCommonsTextExpectedPackages(loc file.Location, resolved bool) expected {
+func getCommonsTextExpectedPackages(resolved bool) expected {
+	pomXmlLocation := file.NewLocationSet(file.NewLocation("pom.xml"))
+
 	commonsText := pkg.Package{
 		Name:     "commons-text",
 		Version:  "1.10.0",
@@ -673,7 +675,7 @@ func getCommonsTextExpectedPackages(loc file.Location, resolved bool) expected {
 	var relationships []artifact.Relationship
 	for i := range pkgs {
 		p := &pkgs[i]
-		p.Locations = file.NewLocationSet(loc)
+		p.Locations = pomXmlLocation
 		finalizePackage(p)
 		if i == 0 {
 			continue

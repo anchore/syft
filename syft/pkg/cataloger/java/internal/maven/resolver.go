@@ -315,10 +315,10 @@ func (r *Resolver) FindPom(ctx context.Context, groupID, artifactID, version str
 	}
 
 	id := ID{groupID, artifactID, version}
-	pom := r.resolved[id]
+	existingPom := r.resolved[id]
 
-	if pom != nil {
-		return pom, nil
+	if existingPom != nil {
+		return existingPom, nil
 	}
 
 	var errs error
@@ -334,7 +334,7 @@ func (r *Resolver) FindPom(ctx context.Context, groupID, artifactID, version str
 	}
 
 	// resolve via network maven repository
-	if pom == nil && r.cfg.UseNetwork {
+	if r.cfg.UseNetwork {
 		pom, err := r.findPomInRemotes(ctx, groupID, artifactID, version)
 		if pom != nil {
 			r.resolved[id] = pom

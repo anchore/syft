@@ -638,7 +638,7 @@ func TestParseNestedJar(t *testing.T) {
 			require.NoError(t, err)
 			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{})
 
-			actual, _, err := gap.parseJavaArchive(context.Background(), file.LocationReadCloser{
+			actual, _, err := gap.processJavaArchive(context.Background(), file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			}, nil)
@@ -1368,7 +1368,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 						return true
 					}),
 				).
-				TestParser(t, gap.parseJavaArchiveMain)
+				TestParser(t, gap.parseJavaArchive)
 		})
 	}
 }
@@ -1523,5 +1523,5 @@ func Test_corruptJarArchive(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromFile(t, "test-fixtures/corrupt/example.jar").
 		WithError().
-		TestParser(t, ap.parseJavaArchiveMain)
+		TestParser(t, ap.parseJavaArchive)
 }
