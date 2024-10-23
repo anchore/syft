@@ -1,12 +1,10 @@
-package licenses_test
+package licenses
 
 import (
 	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/anchore/syft/internal/licenses"
 )
 
 func TestIdentifyLicenseIDs(t *testing.T) {
@@ -242,7 +240,7 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ids, content, err := licenses.TestingOnlyScanner().IdentifyLicenseIDs(nil, bytes.NewBuffer([]byte(test.in)))
+			ids, content, err := TestingOnlyScanner().IdentifyLicenseIDs(nil, bytes.NewBuffer([]byte(test.in)))
 			if test.expected.yieldError {
 				require.Error(t, err)
 			} else {

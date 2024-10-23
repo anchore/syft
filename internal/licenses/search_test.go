@@ -1,10 +1,9 @@
-package licenses_test
+package licenses
 
 import (
 	"bytes"
 	"testing"
 
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/require"
@@ -273,7 +272,7 @@ func TestSearch(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := licenses.Search(nil, licenses.TestingOnlyScanner(), file.NewLocationReadCloser(file.NewLocation("LICENSE"), newBytesReadCloser([]byte(test.in))))
+			result, err := Search(nil, TestingOnlyScanner(), file.NewLocationReadCloser(file.NewLocation("LICENSE"), newBytesReadCloser([]byte(test.in))))
 			if test.expected.yieldError {
 				require.Error(t, err)
 			} else {
