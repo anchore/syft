@@ -1,7 +1,6 @@
 package dotnet
 
 import (
-	"os"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -400,13 +399,12 @@ func TestParseDotnetDeps(t *testing.T) {
 	}
 
 	t.Run(fixture, func(t *testing.T) {
-		os.Setenv("TEST_PARSE_DOTNET_DEPS_INJECT_CACHE_LOCATION", "test-fixtures/NuGetCache")
-		defer os.Setenv("TEST_PARSE_DOTNET_DEPS_INJECT_CACHE_LOCATION", "")
 		pkgtest.NewCatalogTester().
 			FromDirectory(t, "test-fixtures").
 			Expects(expectedPkgs, expectedRelationships).
 			TestCataloger(t, NewDotnetDepsCataloger(CatalogerConfig{
 				SearchLocalLicenses: true,
+				LocalCachePaths:     []string{"test-fixtures/NuGetCache"},
 			}))
 	})
 }

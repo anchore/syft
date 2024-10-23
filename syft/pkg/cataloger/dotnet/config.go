@@ -33,6 +33,7 @@ type nugetProviderCredential struct {
 
 type CatalogerConfig struct {
 	SearchLocalLicenses  bool                      `yaml:"search-local-licenses" json:"search-local-licenses" mapstructure:"search-local-licenses"`
+	LocalCachePaths      []string                  `yaml:"local-cache-paths" json:"local-cache-paths" mapstructure:"local-cache-paths"`
 	SearchRemoteLicenses bool                      `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
 	Providers            []string                  `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
 	ProviderCredentials  []nugetProviderCredential `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
@@ -46,6 +47,14 @@ func DefaultCatalogerConfig() CatalogerConfig {
 
 func (g CatalogerConfig) WithSearchLocalLicenses(input bool) CatalogerConfig {
 	g.SearchLocalLicenses = input
+	return g
+}
+
+func (g CatalogerConfig) WithLocalCachePaths(input string) CatalogerConfig {
+	if input == "" {
+		return g
+	}
+	g.LocalCachePaths = strings.Split(input, ",")
 	return g
 }
 

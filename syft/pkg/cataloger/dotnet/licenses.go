@@ -11,7 +11,6 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -74,7 +73,7 @@ func (c *nugetLicenseResolver) getLicenses(ctx context.Context, scanner licenses
 	if c.opts.SearchLocalLicenses {
 		if c.localNuGetCacheResolvers == nil {
 			// Try to determine NuGet package folder resolvers
-			c.localNuGetCacheResolvers = getLocalNugetFolderResolvers(c.assetDefinitions)
+			c.localNuGetCacheResolvers = c.getLocalNugetFolderResolvers(c.assetDefinitions)
 		}
 
 		// if we're running against a directory on the filesystem, it may not include the
@@ -589,10 +588,12 @@ func getNuGetCachesFromSDK() []string {
 	return paths
 }
 
-func getLocalNugetFolderResolvers(assetDefinitions []projectAssets) []file.Resolver {
+func (c *nugetLicenseResolver) getLocalNugetFolderResolvers(assetDefinitions []projectAssets) []file.Resolver {
 	nugetPackagePaths := []string{}
-	if injectedCachePath := os.Getenv("TEST_PARSE_DOTNET_DEPS_INJECT_CACHE_LOCATION"); injectedCachePath != "" {
-		nugetPackagePaths = append(nugetPackagePaths, injectedCachePath)
+	if len(c.opts.LocalCachePaths) > 0 {
+		for _, cachePath := range c.opts.LocalCachePaths {
+			nugetPackagePaths = append(nugetPackagePaths, cachePath)
+		}
 	} else {
 		nugetPackagePaths = append(nugetPackagePaths, getNuGetCachesFromProjectAssets(assetDefinitions)...)
 

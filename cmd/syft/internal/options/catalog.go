@@ -170,6 +170,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			),
 		DotNet: dotnet.DefaultCatalogerConfig().
 			WithSearchLocalLicenses(cfg.DotNet.SearchLocalLicenses).
+			WithLocalCachePaths(cfg.DotNet.LocalCachePaths).
 			WithSearchRemoteLicenses(cfg.DotNet.SearchRemoteLicenses).
 			WithProviders(cfg.DotNet.Providers).
 			WithCredentials(cfg.DotNet.ProviderCredentials),
