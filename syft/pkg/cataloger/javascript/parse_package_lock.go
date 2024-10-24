@@ -29,6 +29,7 @@ type lockDependency struct {
 	Version   string `json:"version"`
 	Resolved  string `json:"resolved"`
 	Integrity string `json:"integrity"`
+	Dev       bool   `json:"dev"`
 }
 
 type lockPackage struct {
@@ -37,6 +38,7 @@ type lockPackage struct {
 	Resolved  string             `json:"resolved"`
 	Integrity string             `json:"integrity"`
 	License   packageLockLicense `json:"license"`
+	Dev       bool               `json:"dev"`
 }
 
 // packageLockLicense
@@ -74,6 +76,11 @@ func (a genericPackageLockAdapter) parsePackageLock(_ context.Context, resolver 
 
 	if lock.LockfileVersion == 1 {
 		for name, pkgMeta := range lock.Dependencies {
+			// skip packages that are only present as a dev dependency
+			if pkgMeta.Dev {
+				continue
+			}
+
 			pkgs = append(pkgs, newPackageLockV1Package(a.cfg, resolver, reader.Location, name, pkgMeta))
 		}
 	}
@@ -85,6 +92,11 @@ func (a genericPackageLockAdapter) parsePackageLock(_ context.Context, resolver 
 					continue
 				}
 				name = pkgMeta.Name
+			}
+
+			// skip packages that are only present as a dev dependency
+			if pkgMeta.Dev {
+				continue
 			}
 
 			// handles alias names

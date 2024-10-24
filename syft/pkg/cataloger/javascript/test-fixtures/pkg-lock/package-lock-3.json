@@ -9,6 +9,9 @@
       "version": "1.0.0",
       "dependencies": {
         "@types/react": "^18.0.9"
+      },
+      "devDependencies": {
+        "async": "^3.2.4"
       }
     },
     "node_modules/@types/prop-types": {
@@ -35,6 +38,12 @@
       "version": "3.1.1",
       "resolved": "https://registry.npmjs.org/csstype/-/csstype-3.1.1.tgz",
       "integrity": "sha512-DJR/VvkAvSZW9bTouZue2sSxDwdTN92uHjqeKVm+0dAqdfNykRzQ95tay8aXMBAAPpUiq4Qcug2L7neoRh2Egw=="
+    },
+    "node_modules/async": {
+      "version": "3.2.4",
+      "resolved": "https://registry.npmjs.org/async/-/async-3.2.4.tgz",
+      "integrity": "sha512-iAB+JbDEGXhyIUavoDl9WP/Jj106Kz9DEn1DPgYw5ruDn0e3Wgi3sKFm55sASdGBNOQB8F59d9qQ7deqrHA8wQ==",
+      "dev": true
     }
   }
 }
