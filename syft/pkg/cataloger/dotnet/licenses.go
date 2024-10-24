@@ -591,9 +591,7 @@ func getNuGetCachesFromSDK() []string {
 func (c *nugetLicenseResolver) getLocalNugetFolderResolvers(assetDefinitions []projectAssets) []file.Resolver {
 	nugetPackagePaths := []string{}
 	if len(c.opts.LocalCachePaths) > 0 {
-		for _, cachePath := range c.opts.LocalCachePaths {
-			nugetPackagePaths = append(nugetPackagePaths, cachePath)
-		}
+		nugetPackagePaths = append(nugetPackagePaths, c.opts.LocalCachePaths...)
 	} else {
 		nugetPackagePaths = append(nugetPackagePaths, getNuGetCachesFromProjectAssets(assetDefinitions)...)
 

@@ -47,6 +47,9 @@ func DefaultCatalogerConfig() CatalogerConfig {
 
 func (g CatalogerConfig) WithSearchLocalLicenses(input bool) CatalogerConfig {
 	g.SearchLocalLicenses = input
+	if input && len(g.LocalCachePaths) == 0 {
+		g.WithLocalCachePaths(getDefaultProviders())
+	}
 	return g
 }
 
