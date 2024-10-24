@@ -164,6 +164,7 @@ func toSyftLicenses(m []model.License) (p []pkg.License) {
 			Type:           l.Type,
 			URLs:           l.URLs,
 			Locations:      file.NewLocationSet(l.Locations...),
+			Contents:       l.Contents,
 		})
 	}
 	return
