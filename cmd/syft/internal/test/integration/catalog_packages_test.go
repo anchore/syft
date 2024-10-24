@@ -82,6 +82,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.OpamPkg))
 	definedPkgs.Remove(string(pkg.GithubActionPkg))
 	definedPkgs.Remove(string(pkg.GithubActionWorkflowPkg))
+	definedPkgs.Remove(string(pkg.TerraformPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
