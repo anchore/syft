@@ -174,7 +174,7 @@ func TypeFromPURL(p string) Type {
 	return TypeByName(ptype)
 }
 
-//nolint:funlen
+//nolint:funlen,gocyclo
 func TypeByName(name string) Type {
 	switch name {
 	case packageurl.TypeDebian:
