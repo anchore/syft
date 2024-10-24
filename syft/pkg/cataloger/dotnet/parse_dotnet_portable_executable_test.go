@@ -49,6 +49,32 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			name: "dotnet package with malformed field and extended version",
 			versionResources: map[string]string{
 				"CompanyName":      "Microsoft Corporation",
+				"FileDescription":  "äbFile\xa0\xa1Versi on",
+				"FileVersion":      "4.6.25512.01 built by: dlab-DDVSOWINAGE016. Commit Hash: d0d5c7b49271cadb6d97de26d8e623e98abdc8db",
+				"InternalName":     "äbFileVersion",
+				"LegalCopyright":   "© Microsoft Corporation.  All rights reserved.",
+				"OriginalFilename": "TProductName",
+				"ProductName":      "Microsoft® .NET Framework",
+				"ProductVersion":   "4.6.25512.01 built by: dlab-DDVSOWINAGE016. Commit Hash: d0d5c7b49271cadb6d97de26d8e623e98abdc8db",
+			},
+			expectedPackage: pkg.Package{
+				Name:    "äbFileVersi on",
+				Version: "4.6.25512.01",
+				FoundBy: dotnetPortableExecutableCatalogerName,
+				PURL:    "pkg:nuget/%C3%A4bFileVersi%20on@4.6.25512.01",
+				Metadata: pkg.DotnetPortableExecutableEntry{
+					LegalCopyright: "© Microsoft Corporation.  All rights reserved.",
+					InternalName:   "äbFileVersion",
+					CompanyName:    "Microsoft Corporation",
+					ProductName:    "Microsoft® .NET Framework",
+					ProductVersion: "4.6.25512.01 built by: dlab-DDVSOWINAGE016. Commit Hash: d0d5c7b49271cadb6d97de26d8e623e98abdc8db",
+				},
+			},
+		},
+		{
+			name: "dotnet package with malformed field and extended version #02",
+			versionResources: map[string]string{
+				"CompanyName":      "Microsoft Corporation",
 				"FileDescription":  "äb\x01File\xa0\xa1Versi on",
 				"FileVersion":      "4.6.25512.01 built by: dlab-DDVSOWINAGE016. Commit Hash: d0d5c7b49271cadb6d97de26d8e623e98abdc8db",
 				"InternalName":     "äb\x01FileVersion",
