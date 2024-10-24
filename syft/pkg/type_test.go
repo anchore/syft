@@ -119,6 +119,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:opam/ocaml-base-compiler@5.2.0",
 			expected: OpamPkg,
 		},
+		{
+			purl:     "pkg:terraform/registry.terraform.io/hashicorp/aws@5.72.1",
+			expected: TerraformPkg,
+		},
 	}
 
 	var pkgTypes []string
