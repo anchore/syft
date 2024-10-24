@@ -23,7 +23,7 @@ type lockFile struct {
 	} `hcl:"provider,block"`
 }
 
-func parseTerraformLock(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var lockFile lockFile
 
 	contents, err := io.ReadAll(reader)
