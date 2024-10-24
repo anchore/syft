@@ -47,6 +47,10 @@ const (
 	JavaScript = "javascript"
 	Node       = "node"
 	NPM        = "npm"
+
+	// Dotnet ecosystem labels
+	Dotnet = "dotnet"
+	CSharp = "c#"
 )
 
 //nolint:funlen
@@ -77,7 +81,7 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return dotnet.NewDotnetDepsCataloger(cfg.PackagesConfig.DotNet)
 			},
-			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#"),
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, Dotnet, CSharp),
 		newSimplePackageTaskFactory(elixir.NewMixLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "elixir"),
 		newSimplePackageTaskFactory(erlang.NewRebarLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "erlang"),
 		newSimplePackageTaskFactory(erlang.NewOTPCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "erlang", "otp"),
@@ -122,7 +126,7 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return dotnet.NewDotnetPortableExecutableCataloger(cfg.PackagesConfig.DotNet)
 			},
-			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "dotnet", "c#", "binary",
+			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, Dotnet, CSharp, "binary",
 		),
 		newSimplePackageTaskFactory(python.NewInstalledPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "python"),
 		newPackageTaskFactory(

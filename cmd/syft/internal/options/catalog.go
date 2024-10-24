@@ -169,9 +169,9 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			),
 		DotNet: dotnet.DefaultCatalogerConfig().
-			WithSearchLocalLicenses(cfg.DotNet.SearchLocalLicenses).
+			WithSearchLocalLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp), cfg.DotNet.SearchLocalLicenses)).
 			WithLocalCachePaths(cfg.DotNet.LocalCachePaths).
-			WithSearchRemoteLicenses(cfg.DotNet.SearchRemoteLicenses).
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp), cfg.DotNet.SearchRemoteLicenses)).
 			WithProviders(cfg.DotNet.Providers).
 			WithCredentials(cfg.DotNet.ProviderCredentials.String()),
 		JavaScript: javascript.DefaultCatalogerConfig().

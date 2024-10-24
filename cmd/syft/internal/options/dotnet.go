@@ -39,9 +39,9 @@ func (dnpc DotNetProviderCredential) Valid() bool {
 }
 
 type dotnetConfig struct {
-	SearchLocalLicenses  bool                      `yaml:"search-local-licenses" json:"search-local-licenses" mapstructure:"search-local-licenses"`
+	SearchLocalLicenses  *bool                     `yaml:"search-local-licenses" json:"search-local-licenses" mapstructure:"search-local-licenses"`
 	LocalCachePaths      string                    `yaml:"local-cache-paths" json:"local-cache-paths" mapstructure:"local-cache-paths"`
-	SearchRemoteLicenses bool                      `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
+	SearchRemoteLicenses *bool                     `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
 	Providers            string                    `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
 	ProviderCredentials  DotNetProviderCredentials `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
 }
