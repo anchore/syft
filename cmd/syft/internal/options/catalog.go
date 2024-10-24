@@ -173,7 +173,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithLocalCachePaths(cfg.DotNet.LocalCachePaths).
 			WithSearchRemoteLicenses(cfg.DotNet.SearchRemoteLicenses).
 			WithProviders(cfg.DotNet.Providers).
-			WithCredentials(cfg.DotNet.ProviderCredentials),
+			WithCredentials(cfg.DotNet.ProviderCredentials.String()),
 		JavaScript: javascript.DefaultCatalogerConfig().
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
