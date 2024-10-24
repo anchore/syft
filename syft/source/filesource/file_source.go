@@ -3,7 +3,6 @@ package filesource
 import (
 	"crypto"
 	"fmt"
-	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -36,7 +35,7 @@ type fileSource struct {
 	id               artifact.ID
 	digestForVersion string
 	config           Config
-	resolver         *fileresolver.Directory
+	resolver         file.Resolver
 	mutex            *sync.Mutex
 	closer           func() error
 	digests          []file.Digest
@@ -165,48 +164,22 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 		return nil, err
 	}
 
-	var res *fileresolver.Directory
 	if isArchiveAnalysis {
 		// this is an analysis of an archive file... we should scan the directory where the archive contents
-		res, err = fileresolver.NewFromDirectory(s.analysisPath, "", exclusionFunctions...)
+		res, err := fileresolver.NewFromDirectory(s.analysisPath, "", exclusionFunctions...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 		}
-	} else {
-		// this is an analysis of a single file. We want to ultimately scan the directory that the file is in, but we
-		// don't want to include any other files except this the given file.
-		exclusionFunctions = append([]fileresolver.PathIndexVisitor{
-
-			// note: we should exclude these kinds of paths first before considering any other user-provided exclusions
-			func(_, p string, _ os.FileInfo, _ error) error {
-				if p == absParentDir {
-					// this is the root directory... always include it
-					return nil
-				}
-
-				if filepath.Dir(p) != absParentDir {
-					// we are no longer in the root directory containing the single file we want to scan...
-					// we should skip the directory this path resides in entirely!
-					return fs.SkipDir
-				}
-
-				if filepath.Base(p) != filepath.Base(s.config.Path) {
-					// we're in the root directory, but this is not the file we want to scan...
-					// we should selectively skip this file (not the directory we're in).
-					return fileresolver.ErrSkipPath
-				}
-				return nil
-			},
-		}, exclusionFunctions...)
-
-		res, err = fileresolver.NewFromDirectory(absParentDir, absParentDir, exclusionFunctions...)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create directory resolver: %w", err)
-		}
+		s.resolver = res
+		return s.resolver, nil
 	}
 
+	// This is analysis of a single file. Use file indexer.
+	res, err := fileresolver.NewFromFile(absParentDir, s.analysisPath, exclusionFunctions...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create file resolver: %w", err)
+	}
 	s.resolver = res
-
 	return s.resolver, nil
 }
 
