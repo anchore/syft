@@ -146,6 +146,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 - Rust (cargo.lock)
 - Swift (cocoapods, swift-package-manager)
 - Wordpress plugins
+- Terraform providers (.terraform.lock.hcl)
 
 ## Documentation
 
