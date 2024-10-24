@@ -111,9 +111,9 @@ func defaultDotnetConfig() dotnetConfig {
 		}
 	}
 	return dotnetConfig{
-		SearchLocalLicenses:  def.SearchLocalLicenses,
+		SearchLocalLicenses:  &def.SearchLocalLicenses,
 		LocalCachePaths:      strings.Join(def.LocalCachePaths, ","),
-		SearchRemoteLicenses: def.SearchRemoteLicenses,
+		SearchRemoteLicenses: &def.SearchRemoteLicenses,
 		Providers:            strings.Join(def.Providers, ","),
 		ProviderCredentials:  providerCredentials,
 	}
