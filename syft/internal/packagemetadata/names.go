@@ -110,6 +110,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.WordpressPluginEntry{}, "wordpress-plugin-entry", "WordpressMetadata"),
 	jsonNames(pkg.LuaRocksPackage{}, "luarocks-package"),
 	jsonNames(pkg.DotnetPackagesLockEntry{}, "dotnet-packages-lock-entry"),
+	jsonNames(pkg.TerraformLockEntry{}, "terraform-lock-entry", "TerraformMetadata"),
 )
 
 func expandLegacyNameVariants(names ...string) []string {

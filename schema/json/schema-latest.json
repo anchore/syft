@@ -1783,6 +1783,9 @@
               "$ref": "#/$defs/SwiplpackPackage"
             },
             {
+              "$ref": "#/$defs/TerraformLockEntry"
+            },
+            {
               "$ref": "#/$defs/WordpressPluginEntry"
             }
           ]
@@ -2718,6 +2721,32 @@
         "packagerEmail",
         "homepage",
         "dependencies"
+      ]
+    },
+    "TerraformLockEntry": {
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "constraints": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "hashes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "url",
+        "constraints",
+        "version",
+        "hashes"
       ]
     },
     "WordpressPluginEntry": {
