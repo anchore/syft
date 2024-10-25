@@ -188,7 +188,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
 			WithUseNetwork(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseNetwork)).
 			WithMavenBaseURL(cfg.Java.MavenURL).
-			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth),
+			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth).
+			WithResolveTransitiveDependencies(cfg.Java.ResolveTransitiveDependencies),
 	}
 }
 

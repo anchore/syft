@@ -1,4 +1,4 @@
-package java
+package maven
 
 import (
 	"os"
@@ -7,6 +7,8 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal"
 )
 
 func Test_defaultMavenLocalRepoDir(t *testing.T) {
@@ -69,7 +71,7 @@ func Test_getSettingsXmlLocalRepository(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.expected, func(t *testing.T) {
 			f, _ := os.Open(test.file)
-			defer f.Close()
+			defer internal.CloseAndLogError(f, test.file)
 			got := getSettingsXMLLocalRepository(f)
 			require.Equal(t, test.expected, got)
 		})
@@ -85,7 +87,7 @@ func Test_remotePomURL(t *testing.T) {
 		expected   string
 	}{
 		{
-			name:       "formatMavenURL correctly assembles the pom URL",
+			name:       "remotePomURL correctly assembles the pom URL",
 			groupID:    "org.springframework.boot",
 			artifactID: "spring-boot-starter-test",
 			version:    "3.1.5",
