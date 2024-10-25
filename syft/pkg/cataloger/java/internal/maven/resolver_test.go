@@ -1,34 +1,30 @@
-package java
+package maven
 
 import (
 	"context"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/bmatcuk/doublestar/v4"
 	"github.com/stretchr/testify/require"
-	"github.com/vifraa/gopom"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/internal/fileresolver"
+	maventest "github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven/test"
 )
 
 func Test_resolveProperty(t *testing.T) {
 	tests := []struct {
 		name     string
 		property string
-		pom      gopom.Project
+		pom      Project
 		expected string
 	}{
 		{
 			name:     "property",
 			property: "${version.number}",
-			pom: gopom.Project{
-				Properties: &gopom.Properties{
+			pom: Project{
+				Properties: &Properties{
 					Entries: map[string]string{
 						"version.number": "12.5.0",
 					},
@@ -39,7 +35,7 @@ func Test_resolveProperty(t *testing.T) {
 		{
 			name:     "groupId",
 			property: "${project.groupId}",
-			pom: gopom.Project{
+			pom: Project{
 				GroupID: ptr("org.some.group"),
 			},
 			expected: "org.some.group",
@@ -47,8 +43,8 @@ func Test_resolveProperty(t *testing.T) {
 		{
 			name:     "parent groupId",
 			property: "${project.parent.groupId}",
-			pom: gopom.Project{
-				Parent: &gopom.Parent{
+			pom: Project{
+				Parent: &Parent{
 					GroupID: ptr("org.some.parent"),
 				},
 			},
@@ -57,7 +53,7 @@ func Test_resolveProperty(t *testing.T) {
 		{
 			name:     "nil pointer halts search",
 			property: "${project.parent.groupId}",
-			pom: gopom.Project{
+			pom: Project{
 				Parent: nil,
 			},
 			expected: "",
@@ -65,8 +61,8 @@ func Test_resolveProperty(t *testing.T) {
 		{
 			name:     "nil string pointer halts search",
 			property: "${project.parent.groupId}",
-			pom: gopom.Project{
-				Parent: &gopom.Parent{
+			pom: Project{
+				Parent: &Parent{
 					GroupID: nil,
 				},
 			},
@@ -75,11 +71,11 @@ func Test_resolveProperty(t *testing.T) {
 		{
 			name:     "double dereference",
 			property: "${springboot.version}",
-			pom: gopom.Project{
-				Parent: &gopom.Parent{
+			pom: Project{
+				Parent: &Parent{
 					Version: ptr("1.2.3"),
 				},
-				Properties: &gopom.Properties{
+				Properties: &Properties{
 					Entries: map[string]string{
 						"springboot.version": "${project.parent.version}",
 					},
@@ -90,8 +86,8 @@ func Test_resolveProperty(t *testing.T) {
 		{
 			name:     "map missing stops double dereference",
 			property: "${springboot.version}",
-			pom: gopom.Project{
-				Parent: &gopom.Parent{
+			pom: Project{
+				Parent: &Parent{
 					Version: ptr("1.2.3"),
 				},
 			},
@@ -100,11 +96,11 @@ func Test_resolveProperty(t *testing.T) {
 		{
 			name:     "resolution halts even if it resolves to a variable",
 			property: "${springboot.version}",
-			pom: gopom.Project{
-				Parent: &gopom.Parent{
+			pom: Project{
+				Parent: &Parent{
 					Version: ptr("${undefined.version}"),
 				},
-				Properties: &gopom.Properties{
+				Properties: &Properties{
 					Entries: map[string]string{
 						"springboot.version": "${project.parent.version}",
 					},
@@ -115,8 +111,8 @@ func Test_resolveProperty(t *testing.T) {
 		{
 			name:     "resolution halts even if cyclic",
 			property: "${springboot.version}",
-			pom: gopom.Project{
-				Properties: &gopom.Properties{
+			pom: Project{
+				Properties: &Properties{
 					Entries: map[string]string{
 						"springboot.version": "${springboot.version}",
 					},
@@ -127,8 +123,8 @@ func Test_resolveProperty(t *testing.T) {
 		{
 			name:     "resolution halts even if cyclic more steps",
 			property: "${cyclic.version}",
-			pom: gopom.Project{
-				Properties: &gopom.Properties{
+			pom: Project{
+				Properties: &Properties{
 					Entries: map[string]string{
 						"other.version":      "${cyclic.version}",
 						"springboot.version": "${other.version}",
@@ -141,11 +137,11 @@ func Test_resolveProperty(t *testing.T) {
 		{
 			name:     "resolution halts even if cyclic involving parent",
 			property: "${cyclic.version}",
-			pom: gopom.Project{
-				Parent: &gopom.Parent{
+			pom: Project{
+				Parent: &Parent{
 					Version: ptr("${cyclic.version}"),
 				},
-				Properties: &gopom.Properties{
+				Properties: &Properties{
 					Entries: map[string]string{
 						"other.version":      "${parent.version}",
 						"springboot.version": "${other.version}",
@@ -159,15 +155,15 @@ func Test_resolveProperty(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r := newMavenResolver(nil, DefaultArchiveCatalogerConfig())
-			resolved := r.getPropertyValue(context.Background(), ptr(test.property), &test.pom)
+			r := NewResolver(nil, DefaultConfig())
+			resolved := r.ResolveProperty(context.Background(), &test.pom, ptr(test.property))
 			require.Equal(t, test.expected, resolved)
 		})
 	}
 }
 
 func Test_mavenResolverLocal(t *testing.T) {
-	dir, err := filepath.Abs("test-fixtures/pom/maven-repo")
+	dir, err := filepath.Abs("test-fixtures/maven-repo")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -211,26 +207,26 @@ func Test_mavenResolverLocal(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := context.Background()
-			r := newMavenResolver(nil, ArchiveCatalogerConfig{
+			r := NewResolver(nil, Config{
 				UseNetwork:              false,
-				UseMavenLocalRepository: true,
-				MavenLocalRepositoryDir: dir,
+				UseLocalRepository:      true,
+				LocalRepositoryDir:      dir,
 				MaxParentRecursiveDepth: test.maxDepth,
 			})
-			pom, err := r.findPom(ctx, test.groupID, test.artifactID, test.version)
+			pom, err := r.FindPom(ctx, test.groupID, test.artifactID, test.version)
 			if test.wantErr != nil {
 				test.wantErr(t, err)
 			} else {
 				require.NoError(t, err)
 			}
-			got := r.getPropertyValue(context.Background(), &test.expression, pom)
+			got := r.ResolveProperty(context.Background(), pom, &test.expression)
 			require.Equal(t, test.expected, got)
 		})
 	}
 }
 
 func Test_mavenResolverRemote(t *testing.T) {
-	url := mockMavenRepo(t)
+	url := maventest.MockRepo(t, "test-fixtures/maven-repo")
 
 	tests := []struct {
 		groupID    string
@@ -252,25 +248,25 @@ func Test_mavenResolverRemote(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.artifactID, func(t *testing.T) {
 			ctx := context.Background()
-			r := newMavenResolver(nil, ArchiveCatalogerConfig{
-				UseNetwork:              true,
-				UseMavenLocalRepository: false,
-				MavenBaseURL:            url,
+			r := NewResolver(nil, Config{
+				UseNetwork:         true,
+				UseLocalRepository: false,
+				Repositories:       strings.Split(url, ","),
 			})
-			pom, err := r.findPom(ctx, test.groupID, test.artifactID, test.version)
+			pom, err := r.FindPom(ctx, test.groupID, test.artifactID, test.version)
 			if test.wantErr != nil {
 				test.wantErr(t, err)
 			} else {
 				require.NoError(t, err)
 			}
-			got := r.getPropertyValue(context.Background(), &test.expression, pom)
+			got := r.ResolveProperty(context.Background(), pom, &test.expression)
 			require.Equal(t, test.expected, got)
 		})
 	}
 }
 
 func Test_relativePathParent(t *testing.T) {
-	resolver, err := fileresolver.NewFromDirectory("test-fixtures/pom/local", "")
+	resolver, err := fileresolver.NewFromDirectory("test-fixtures/local", "")
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -278,12 +274,12 @@ func Test_relativePathParent(t *testing.T) {
 	tests := []struct {
 		name     string
 		pom      string
-		validate func(t *testing.T, r *mavenResolver, pom *gopom.Project)
+		validate func(t *testing.T, r *Resolver, pom *Project)
 	}{
 		{
 			name: "basic",
 			pom:  "child-1/pom.xml",
-			validate: func(t *testing.T, r *mavenResolver, pom *gopom.Project) {
+			validate: func(t *testing.T, r *Resolver, pom *Project) {
 				parent, err := r.resolveParent(ctx, pom)
 				require.NoError(t, err)
 				require.Contains(t, r.pomLocations, parent)
@@ -292,16 +288,15 @@ func Test_relativePathParent(t *testing.T) {
 				require.NoError(t, err)
 				require.Contains(t, r.pomLocations, parent)
 
-				got := r.getPropertyValue(ctx, ptr("${commons-exec_subversion}"), pom)
+				got := r.ResolveProperty(ctx, pom, ptr("${commons-exec_subversion}"))
 				require.Equal(t, "3", got)
-
 			},
 		},
 		{
 			name: "parent property",
 			pom:  "child-2/pom.xml",
-			validate: func(t *testing.T, r *mavenResolver, pom *gopom.Project) {
-				id := r.getMavenID(ctx, pom)
+			validate: func(t *testing.T, r *Resolver, pom *Project) {
+				id := r.ResolveID(ctx, pom)
 				// child.parent.version = ${revision}
 				// parent.revision = 3.3.3
 				require.Equal(t, id.Version, "3.3.3")
@@ -310,9 +305,9 @@ func Test_relativePathParent(t *testing.T) {
 		{
 			name: "invalid parent",
 			pom:  "child-3/pom.xml",
-			validate: func(t *testing.T, r *mavenResolver, pom *gopom.Project) {
+			validate: func(t *testing.T, r *Resolver, pom *Project) {
 				require.NotNil(t, pom)
-				id := r.getMavenID(ctx, pom)
+				id := r.ResolveID(ctx, pom)
 				// version should not be resolved to anything
 				require.Equal(t, "", id.Version)
 			},
@@ -321,7 +316,7 @@ func Test_relativePathParent(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r := newMavenResolver(resolver, DefaultArchiveCatalogerConfig())
+			r := NewResolver(resolver, DefaultConfig())
 			locs, err := resolver.FilesByPath(test.pom)
 			require.NoError(t, err)
 			require.Len(t, locs, 1)
@@ -331,7 +326,7 @@ func Test_relativePathParent(t *testing.T) {
 			require.NoError(t, err)
 			defer internal.CloseAndLogError(contents, loc.RealPath)
 
-			pom, err := decodePomXML(contents)
+			pom, err := ParsePomXML(contents)
 			require.NoError(t, err)
 
 			r.pomLocations[pom] = loc
@@ -341,59 +336,7 @@ func Test_relativePathParent(t *testing.T) {
 	}
 }
 
-// mockMavenRepo starts a remote maven repo serving all the pom files found in test-fixtures/pom/maven-repo
-func mockMavenRepo(t *testing.T) (url string) {
-	t.Helper()
-
-	return mockMavenRepoAt(t, "test-fixtures/pom/maven-repo")
-}
-
-// mockMavenRepoAt starts a remote maven repo serving all the pom files found in the given directory
-func mockMavenRepoAt(t *testing.T, dir string) (url string) {
-	t.Helper()
-
-	// mux is the HTTP request multiplexer used with the test server.
-	mux := http.NewServeMux()
-
-	// We want to ensure that tests catch mistakes where the endpoint URL is
-	// specified as absolute rather than relative. It only makes a difference
-	// when there's a non-empty base URL path. So, use that. See issue #752.
-	apiHandler := http.NewServeMux()
-	apiHandler.Handle("/", mux)
-	// server is a test HTTP server used to provide mock API responses.
-	server := httptest.NewServer(apiHandler)
-
-	t.Cleanup(server.Close)
-
-	matches, err := doublestar.Glob(os.DirFS(dir), filepath.Join("**", "*.pom"))
-	require.NoError(t, err)
-
-	for _, match := range matches {
-		fullPath, err := filepath.Abs(filepath.Join(dir, match))
-		require.NoError(t, err)
-		match = "/" + filepath.ToSlash(match)
-		mux.HandleFunc(match, mockMavenHandler(fullPath))
-	}
-
-	return server.URL
-}
-
-func mockMavenHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		// Set the Content-Type header to indicate that the response is XML
-		w.Header().Set("Content-Type", "application/xml")
-		// Copy the file's content to the response writer
-		f, err := os.Open(responseFixture)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer internal.CloseAndLogError(f, responseFixture)
-		_, err = io.Copy(w, f)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
+// ptr returns a pointer to the given value
+func ptr[T any](value T) *T {
+	return &value
 }
