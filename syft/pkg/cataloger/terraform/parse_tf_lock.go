@@ -14,17 +14,12 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-type lockFile struct {
-	Providers []struct {
-		URL         string   `hcl:",label"`
-		Constraints string   `hcl:"constraints"`
-		Version     string   `hcl:"version"`
-		Hashes      []string `hcl:"hashes"`
-	} `hcl:"provider,block"`
+type terraformLockFile struct {
+	Providers []pkg.TerraformLockEntry `hcl:"provider,block"`
 }
 
 func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	var lockFile lockFile
+	var lockFile terraformLockFile
 
 	contents, err := io.ReadAll(reader)
 	if err != nil {
@@ -44,17 +39,12 @@ func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environme
 			Version:   provider.Version,
 			FoundBy:   "terraform-cataloger",
 			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			//Licenses:  nil,
-			//Language:  nil,
+			Licenses:  pkg.NewLicenseSet(), // TODO: license could be found in .terraform/providers/${name}/${version}/${arch}/LICENSE.txt
+			// TODO: Language?
 			Type: pkg.TerraformPkg,
-			//CPEs: nil,
-			PURL: packageurl.NewPackageURL(packageurl.TypeTerraform, "", provider.URL, provider.Version, nil, "").String(),
-			Metadata: []pkg.KeyValue{
-				{
-					Key:   "constraints",
-					Value: provider.Constraints,
-				},
-			},
+			// TODO: CPEs?
+			PURL:     packageurl.NewPackageURL(packageurl.TypeTerraform, "", provider.URL, provider.Version, nil, "").String(),
+			Metadata: provider,
 		}
 		pkg.SetID()
 
