@@ -243,6 +243,13 @@ func Test_mavenResolverRemote(t *testing.T) {
 			expression: "${project.one}",
 			expected:   "1",
 		},
+		{
+			groupID:    "my.org", // this particular package has a circular reference
+			artifactID: "circular",
+			version:    "1.2.3",
+			expression: "${unresolved}",
+			expected:   "",
+		},
 	}
 
 	for _, test := range tests {
@@ -310,6 +317,27 @@ func Test_relativePathParent(t *testing.T) {
 				id := r.ResolveID(ctx, pom)
 				// version should not be resolved to anything
 				require.Equal(t, "", id.Version)
+			},
+		},
+		{
+			name: "circular resolving ID variables",
+			pom:  "circular-1/pom.xml",
+			validate: func(t *testing.T, r *Resolver, pom *Project) {
+				require.NotNil(t, pom)
+				id := r.ResolveID(ctx, pom)
+				// version should be resolved, but not artifactId
+				require.Equal(t, "1.2.3", id.Version)
+				require.Equal(t, "", id.ArtifactID)
+			},
+		},
+		{
+			name: "circular parent only",
+			pom:  "circular-2/pom.xml",
+			validate: func(t *testing.T, r *Resolver, pom *Project) {
+				require.NotNil(t, pom)
+				id := r.ResolveID(ctx, pom)
+				require.Equal(t, "", id.Version)
+				require.Equal(t, "something", id.ArtifactID)
 			},
 		},
 	}
