@@ -7269,6 +7269,9 @@
       "add-to-cart-direct-checkout-for-woocommerce": [
         "cpe:2.3:a:piwebsolution:add-to-cart-direct-checkout-for-woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
+      "add-widget-after-content": [
+        "cpe:2.3:a:arelthiaphillips:add_widget_after_content:*:*:*:*:*:wordpress:*:*"
+      ],
       "addon-elements-for-elementor-page-builder": [
         "cpe:2.3:a:webtechstreet:elementor_addon_elements:*:*:*:*:*:wordpress:*:*"
       ],
@@ -10226,6 +10229,9 @@
       "enable-svg-webp-ico-upload": [
         "cpe:2.3:a:ideastocode:enable_svg\\,_webp_\\\u0026_ico_upload:*:*:*:*:*:wordpress:*:*"
       ],
+      "endless-posts-navigation": [
+        "cpe:2.3:a:androidbubbles:endless_posts_navigation:*:*:*:*:*:wordpress:*:*"
+      ],
       "english-wp-admin": [
         "cpe:2.3:a:english_wordpress_admin_project:english_wordpress_admin:*:*:*:*:*:wordpress:*:*"
       ],
@@ -10443,7 +10449,7 @@
         "cpe:2.3:a:export_users_to_csv_project:export_users_to_csv:*:*:*:*:*:wordpress:*:*"
       ],
       "export-woocommerce": [
-        "cpe:2.3:a:wpfactory:products\\,_order_\\\u0026_customers_export_for_woocommerce:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:wpfactory:products\\,_order_\\\u0026_customers_export_for_woocommerce:*:*:*:*:free:wordpress:*:*"
       ],
       "export-woocommerce-customer-list": [
         "cpe:2.3:a:piwebsolution:export_customers_list_csv_for_woocommerce:*:*:*:*:*:*:*:*"
@@ -17209,6 +17215,9 @@
       "woo-related-products-refresh-on-reload": [
         "cpe:2.3:a:peachpay:related_products_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
+      "woo-save-abandoned-carts": [
+        "cpe:2.3:a:majas-lapu-izstrade:cartbounty:*:*:*:*:*:wordpress:*:*"
+      ],
       "woo-shipping-dpd-baltic": [
         "cpe:2.3:a:dpdgroup:woocommerce_shipping:*:*:*:*:*:wordpress:*:*"
       ],
@@ -19366,6 +19375,9 @@
       ],
       "nexter": [
         "cpe:2.3:a:posimyth:nexter:*:*:*:*:*:wordpress:*:*"
+      ],
+      "nioland": [
+        "cpe:2.3:a:steelthemes:nioland:*:*:*:*:*:wordpress:*:*"
       ],
       "nirvana": [
         "cpe:2.3:a:cryoutcreations:nirvana:*:*:*:*:*:wordpress:*:*"
