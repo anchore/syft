@@ -108,7 +108,7 @@ func newSpyReturningFileResolver(s *spyingIoReadCloser, paths ...string) file.Re
 }
 
 func (s *spyingIoReadCloser) Read(p []byte) (n int, err error) {
-	return s.Read(p)
+	return s.rc.Read(p)
 }
 
 func (s *spyingIoReadCloser) Close() error {
