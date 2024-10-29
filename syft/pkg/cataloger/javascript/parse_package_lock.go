@@ -77,7 +77,7 @@ func (a genericPackageLockAdapter) parsePackageLock(_ context.Context, resolver 
 	if lock.LockfileVersion == 1 {
 		for name, pkgMeta := range lock.Dependencies {
 			// skip packages that are only present as a dev dependency
-			if pkgMeta.Dev {
+			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
 				continue
 			}
 
@@ -95,7 +95,7 @@ func (a genericPackageLockAdapter) parsePackageLock(_ context.Context, resolver 
 			}
 
 			// skip packages that are only present as a dev dependency
-			if pkgMeta.Dev {
+			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
 				continue
 			}
 
