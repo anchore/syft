@@ -89,7 +89,7 @@ require google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirec
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/adrg/xdg v0.5.1
+	github.com/adrg/xdg v0.5.2
 	github.com/magiconair/properties v1.8.7
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 )
