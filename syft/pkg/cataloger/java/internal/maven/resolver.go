@@ -135,9 +135,14 @@ func (r *Resolver) resolveProperty(ctx context.Context, resolutionContext []*Pro
 		return value, nil
 	}
 
+	var resolvingParents []*Project
 	for _, pom := range resolutionContext {
 		current := pom
 		for parentDepth := 0; current != nil; parentDepth++ {
+			if slices.Contains(resolvingParents, current) {
+				log.WithFields("property", propertyExpression, "mavenID", r.resolveID(ctx, resolvingProperties, resolvingParents...)).Error("got circular reference while resolving property")
+				break // some sort of circular reference -- we've already seen this project
+			}
 			if r.cfg.MaxParentRecursiveDepth > 0 && parentDepth > r.cfg.MaxParentRecursiveDepth {
 				return "", fmt.Errorf("maximum parent recursive depth (%v) reached resolving property: %v", r.cfg.MaxParentRecursiveDepth, propertyExpression)
 			}
@@ -146,6 +151,7 @@ func (r *Resolver) resolveProperty(ctx context.Context, resolutionContext []*Pro
 					return r.resolveExpression(ctx, resolutionContext, value, resolvingProperties) // property values can contain expressions
 				}
 			}
+			resolvingParents = append(resolvingParents, current)
 			current, err = r.resolveParent(ctx, current, resolvingProperties...)
 			if err != nil {
 				return "", err
@@ -271,13 +277,12 @@ func (r *Resolver) resolveID(ctx context.Context, resolvingProperties []string, 
 	artifactID := r.resolvePropertyValue(ctx, pom.ArtifactID, resolvingProperties, resolutionContext...)
 	version := r.resolvePropertyValue(ctx, pom.Version, resolvingProperties, resolutionContext...)
 	if pom.Parent != nil {
-		if groupID == "" {
+		// groupId and version are able to be inherited from the parent, but importantly: not artifactId. see:
+		// https://maven.apache.org/guides/introduction/introduction-to-the-pom.html#the-solution
+		if groupID == "" && deref(pom.GroupID) == "" {
 			groupID = r.resolvePropertyValue(ctx, pom.Parent.GroupID, resolvingProperties, resolutionContext...)
 		}
-		if artifactID == "" {
-			artifactID = r.resolvePropertyValue(ctx, pom.Parent.ArtifactID, resolvingProperties, resolutionContext...)
-		}
-		if version == "" {
+		if version == "" && deref(pom.Version) == "" {
 			version = r.resolvePropertyValue(ctx, pom.Parent.Version, resolvingProperties, resolutionContext...)
 		}
 	}
