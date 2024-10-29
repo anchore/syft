@@ -51,7 +51,7 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 		r.AddPom(ctx, pom, pomLocation)
 	}
 
-	var pkgs []pkg.Package
+	var pkgs []*pkg.Package
 	var relationships []artifact.Relationship
 	resolved := map[maven.ID]*pkg.Package{}
 
@@ -65,7 +65,7 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 			continue
 		}
 		resolved[id] = mainPkg
-		pkgs = append(pkgs, *mainPkg)
+		pkgs = append(pkgs, mainPkg)
 	}
 
 	// catalog all dependencies
@@ -81,7 +81,27 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 		errs = unknown.Join(errs, newErrs)
 	}
 
-	return pkgs, relationships, errs
+	return finalizePackages(pkgs), finalizeRelationships(relationships), errs
+}
+
+func finalizeRelationships(relationships []artifact.Relationship) []artifact.Relationship {
+	for i := range relationships {
+		if f, ok := relationships[i].From.(*pkg.Package); ok {
+			relationships[i].From = *f
+		}
+		if t, ok := relationships[i].To.(*pkg.Package); ok {
+			relationships[i].To = *t
+		}
+	}
+	return relationships
+}
+
+func finalizePackages(pkgs []*pkg.Package) []pkg.Package {
+	var values []pkg.Package
+	for i := range pkgs {
+		values = append(values, *pkgs[i])
+	}
+	return values
 }
 
 func readPomFromLocation(fileResolver file.Resolver, pomLocation file.Location) (*maven.Project, error) {
@@ -142,7 +162,10 @@ func newPackageFromMavenPom(ctx context.Context, r *maven.Resolver, pom *maven.P
 		Type:     pkg.JavaPkg,
 		FoundBy:  pomCatalogerName,
 		PURL:     packageURL(id.ArtifactID, id.Version, m),
-		Metadata: m,
+		// later in processing we may resolve the dependencies for this package (e.g. online enrichment)
+		// but at this point there is not enough information to claim we have complete dependency information
+		Dependencies: pkg.IncompleteDependencies,
+		Metadata:     m,
 	}
 
 	finalizePackage(p)
@@ -150,9 +173,9 @@ func newPackageFromMavenPom(ctx context.Context, r *maven.Resolver, pom *maven.P
 	return p
 }
 
-func collectDependencies(ctx context.Context, r *maven.Resolver, resolved map[maven.ID]*pkg.Package, parentPkg *pkg.Package, pom *maven.Project, loc file.Location, includeTransitiveDependencies bool) ([]pkg.Package, []artifact.Relationship, error) {
+func collectDependencies(ctx context.Context, r *maven.Resolver, resolved map[maven.ID]*pkg.Package, parentPkg *pkg.Package, pom *maven.Project, loc file.Location, includeTransitiveDependencies bool) ([]*pkg.Package, []artifact.Relationship, error) {
 	var errs error
-	var pkgs []pkg.Package
+	var pkgs []*pkg.Package
 	var relationships []artifact.Relationship
 
 	pomID := r.ResolveID(ctx, pom)
@@ -196,14 +219,23 @@ func collectDependencies(ctx context.Context, r *maven.Resolver, resolved map[ma
 			}
 		}
 
-		pkgs = append(pkgs, *depPkg)
+		pkgs = append(pkgs, depPkg)
 		if parentPkg != nil {
-			relationships = append(relationships, artifact.Relationship{
-				From: *depPkg,
-				To:   *parentPkg,
+			relationships = append(relationships, artifact.Relationship{ //nolint:gocritic // we intentionally want to use the reference to the package which will still be mutated and finalized to a value later
+				// both the to and from packages may be mutated based on the resolved dependencies, so we need references to these values
+				// to ensure the nodes used are consistent with the final state of the packages.
+				// note: it is VITAL that these references are replaced with values by the caller of this function before using
+				// these relationships in the cataloger output.
+				From: depPkg,
+				To:   parentPkg,
 				Type: artifact.DependencyOfRelationship,
 			})
 		}
+	}
+
+	// as long as we have no errors, we can claim we have complete direct dependencies (even if there are none)
+	if errs == nil {
+		parentPkg.Dependencies = pkg.CompleteDependencies
 	}
 
 	return pkgs, relationships, errs
@@ -270,7 +302,10 @@ func newPackageFromDependency(ctx context.Context, r *maven.Resolver, pom *maven
 		Language:  pkg.Java,
 		Type:      pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?
 		FoundBy:   pomCatalogerName,
-		Metadata:  m,
+		// later in processing we may resolve the dependencies for this package (e.g. online enrichment) but
+		// by default we cannot claim we have complete dependency information
+		Dependencies: pkg.IncompleteDependencies,
+		Metadata:     m,
 	}
 
 	finalizePackage(p)

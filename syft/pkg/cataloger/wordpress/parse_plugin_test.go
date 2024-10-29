@@ -22,7 +22,8 @@ func TestParseWordpressPluginFiles(t *testing.T) {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocations("GPLv2"),
 		),
-		Language: pkg.PHP,
+		Language:     pkg.PHP,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.WordpressPluginEntry{
 			PluginInstallDirectory: "akismet",
 			Author:                 "Automattic - Anti-spam Team",

@@ -20,13 +20,14 @@ func newPackage(d parsedData, release *linux.Release, dbLocation file.Location) 
 	}
 
 	p := pkg.Package{
-		Name:      d.Package,
-		Version:   d.Version,
-		Locations: file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation, licenseStrings...)...),
-		PURL:      packageURL(d.ApkDBEntry, release),
-		Type:      pkg.ApkPkg,
-		Metadata:  d.ApkDBEntry,
+		Name:         d.Package,
+		Version:      d.Version,
+		Locations:    file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation, licenseStrings...)...),
+		PURL:         packageURL(d.ApkDBEntry, release),
+		Type:         pkg.ApkPkg,
+		Dependencies: pkg.CompleteDependencies,
+		Metadata:     d.ApkDBEntry,
 	}
 
 	p.SetID()

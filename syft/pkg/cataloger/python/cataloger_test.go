@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -23,11 +24,12 @@ func Test_PackageCataloger(t *testing.T) {
 			name:     "egg-file-no-version",
 			fixtures: []string{"test-fixtures/no-version-py3.8.egg-info"},
 			expectedPackage: pkg.Package{
-				Name:     "no-version",
-				PURL:     "pkg:pypi/no-version",
-				Type:     pkg.PythonPkg,
-				Language: pkg.Python,
-				FoundBy:  "python-installed-package-cataloger",
+				Name:         "no-version",
+				PURL:         "pkg:pypi/no-version",
+				Type:         pkg.PythonPkg,
+				Language:     pkg.Python,
+				FoundBy:      "python-installed-package-cataloger",
+				Dependencies: pkg.CompleteDependencies,
 				Metadata: pkg.PythonPackage{
 					Name:                 "no-version",
 					SitePackagesRootPath: "test-fixtures",
@@ -50,7 +52,8 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/egg-info/PKG-INFO")),
 				),
-				FoundBy: "python-installed-package-cataloger",
+				FoundBy:      "python-installed-package-cataloger",
+				Dependencies: pkg.CompleteDependencies,
 				Metadata: pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
@@ -88,7 +91,8 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/casesensitive/EGG-INFO/PKG-INFO")),
 				),
-				FoundBy: "python-installed-package-cataloger",
+				FoundBy:      "python-installed-package-cataloger",
+				Dependencies: pkg.CompleteDependencies,
 				Metadata: pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
@@ -127,7 +131,8 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/dist-info/METADATA")),
 				),
-				FoundBy: "python-installed-package-cataloger",
+				FoundBy:      "python-installed-package-cataloger",
+				Dependencies: pkg.CompleteDependencies,
 				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
@@ -169,7 +174,8 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/casesensitive/DIST-INFO/METADATA")),
 				),
-				FoundBy: "python-installed-package-cataloger",
+				FoundBy:      "python-installed-package-cataloger",
+				Dependencies: pkg.CompleteDependencies,
 				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
@@ -207,7 +213,8 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/malformed-record/dist-info/METADATA")),
 				),
-				FoundBy: "python-installed-package-cataloger",
+				FoundBy:      "python-installed-package-cataloger",
+				Dependencies: pkg.CompleteDependencies,
 				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
@@ -239,7 +246,8 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/partial.dist-info/METADATA")),
 				),
-				FoundBy: "python-installed-package-cataloger",
+				FoundBy:      "python-installed-package-cataloger",
+				Dependencies: pkg.CompleteDependencies,
 				Metadata: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
@@ -263,7 +271,8 @@ func Test_PackageCataloger(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/test.egg-info")),
 				),
-				FoundBy: "python-installed-package-cataloger",
+				FoundBy:      "python-installed-package-cataloger",
+				Dependencies: pkg.CompleteDependencies,
 				Metadata: pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
@@ -278,6 +287,8 @@ func Test_PackageCataloger(t *testing.T) {
 		},
 	}
 
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewDefaultScanner())
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			resolver := file.NewMockResolverForPaths(test.fixtures...)
@@ -289,6 +300,7 @@ func Test_PackageCataloger(t *testing.T) {
 
 			pkgtest.NewCatalogTester().
 				WithResolver(resolver).
+				WithContext(ctx).
 				Expects([]pkg.Package{test.expectedPackage}, nil).
 				TestCataloger(t, NewInstalledPackageCataloger())
 		})
@@ -296,6 +308,8 @@ func Test_PackageCataloger(t *testing.T) {
 }
 
 func Test_PackageCataloger_IgnorePackage(t *testing.T) {
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewDefaultScanner())
+
 	tests := []struct {
 		MetadataFixture string
 	}{
@@ -311,7 +325,7 @@ func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 		t.Run(test.MetadataFixture, func(t *testing.T) {
 			resolver := file.NewMockResolverForPaths(test.MetadataFixture)
 
-			actual, _, err := NewInstalledPackageCataloger().Catalog(context.Background(), resolver)
+			actual, _, err := NewInstalledPackageCataloger().Catalog(ctx, resolver)
 			require.NoError(t, err)
 
 			if len(actual) != 0 {
@@ -353,6 +367,7 @@ func Test_IndexCataloger_Globs(t *testing.T) {
 }
 
 func Test_PackageCataloger_Globs(t *testing.T) {
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewDefaultScanner())
 	tests := []struct {
 		name     string
 		fixture  string
@@ -375,6 +390,7 @@ func Test_PackageCataloger_Globs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
+				WithContext(ctx).
 				ExpectsResolverContentQueries(test.expected).
 				IgnoreUnfulfilledPathResponses("**/pyvenv.cfg").
 				TestCataloger(t, NewInstalledPackageCataloger())
@@ -670,10 +686,13 @@ func Test_PackageCataloger_SitePackageRelationships(t *testing.T) {
 		},
 	}
 
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewDefaultScanner())
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				WithImageResolver(t, test.fixture).
+				WithContext(ctx).
 				WithPackageStringer(stringPackage).
 				ExpectsRelationshipStrings(test.expectedRelationships).
 				TestCataloger(t, NewInstalledPackageCataloger())

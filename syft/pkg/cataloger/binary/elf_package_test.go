@@ -154,10 +154,11 @@ func Test_newELFPackage(t *testing.T) {
 			},
 
 			expected: pkg.Package{
-				Name:    "syfttestfixture",
-				Version: "0.01",
-				Type:    "binary",
-				PURL:    "pkg:generic/syftsys/syfttestfixture@0.01",
+				Name:         "syfttestfixture",
+				Version:      "0.01",
+				Type:         "binary",
+				PURL:         "pkg:generic/syftsys/syfttestfixture@0.01",
+				Dependencies: pkg.IncompleteDependencies,
 				Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 					Type:   "binary",
 					System: "syftsys",

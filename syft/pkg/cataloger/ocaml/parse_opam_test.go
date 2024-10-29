@@ -36,8 +36,9 @@ func TestParseOpamPackage(t *testing.T) {
 							"LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception",
 						)...,
 					),
-					Language: pkg.OCaml,
-					Type:     pkg.OpamPkg,
+					Language:     pkg.OCaml,
+					Type:         pkg.OpamPkg,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata: pkg.OpamPackage{
 						Name:     "ocaml-base-compiler",
 						Version:  "4.14.0",
@@ -65,8 +66,9 @@ func TestParseOpamPackage(t *testing.T) {
 							"ISC",
 						)...,
 					),
-					Language: pkg.OCaml,
-					Type:     pkg.OpamPkg,
+					Language:     pkg.OCaml,
+					Type:         pkg.OpamPkg,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata: pkg.OpamPackage{
 						Name:     "alcotest",
 						Version:  "1.5.0",

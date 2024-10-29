@@ -89,6 +89,7 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 			metadata,
 			distro,
 			[]string{entry.License},
+			pkg.CompleteDependencies,
 		)
 
 		if !pkg.IsValid(&p) {

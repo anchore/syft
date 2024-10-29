@@ -15,18 +15,20 @@ func Test_parseCompositeActionForActionUsage(t *testing.T) {
 
 	expected := []pkg.Package{
 		{
-			Name:      "actions/setup-go",
-			Version:   "v4",
-			Type:      pkg.GithubActionPkg,
-			Locations: fixtureLocationSet,
-			PURL:      "pkg:github/actions/setup-go@v4",
+			Name:         "actions/setup-go",
+			Version:      "v4",
+			Type:         pkg.GithubActionPkg,
+			Locations:    fixtureLocationSet,
+			PURL:         "pkg:github/actions/setup-go@v4",
+			Dependencies: pkg.IncompleteDependencies,
 		},
 		{
-			Name:      "actions/cache",
-			Version:   "v3",
-			Type:      pkg.GithubActionPkg,
-			Locations: fixtureLocationSet,
-			PURL:      "pkg:github/actions/cache@v3",
+			Name:         "actions/cache",
+			Version:      "v3",
+			Type:         pkg.GithubActionPkg,
+			Locations:    fixtureLocationSet,
+			PURL:         "pkg:github/actions/cache@v3",
+			Dependencies: pkg.IncompleteDependencies,
 		},
 	}
 

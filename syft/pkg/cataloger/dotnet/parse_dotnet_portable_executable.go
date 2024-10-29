@@ -9,7 +9,7 @@ import (
 
 	"github.com/saferwall/pe"
 
-	version "github.com/anchore/go-version"
+	"github.com/anchore/go-version"
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -44,7 +44,7 @@ func parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generi
 		return nil, nil, fmt.Errorf("unable to parse version resources in PE file: %w", err)
 	}
 
-	dotNetPkg, err := buildDotNetPackage(versionResources, f)
+	dotNetPkg, err := buildDotNetPEPackage(versionResources, f)
 	if err != nil {
 		log.Tracef("unable to build dotnet package for: %v %v", f.RealPath, err)
 		return nil, nil, err
@@ -53,14 +53,14 @@ func parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generi
 	return []pkg.Package{dotNetPkg}, nil, nil
 }
 
-func buildDotNetPackage(versionResources map[string]string, f file.LocationReadCloser) (dnpkg pkg.Package, err error) {
+func buildDotNetPEPackage(versionResources map[string]string, f file.LocationReadCloser) (dnpkg pkg.Package, err error) {
 	name := findName(versionResources)
 	if name == "" {
 		return dnpkg, fmt.Errorf("unable to find PE name in file")
 	}
 
-	version := findVersion(versionResources)
-	if version == "" {
+	ver := findVersion(versionResources)
+	if ver == "" {
 		return dnpkg, fmt.Errorf("unable to find PE version in file")
 	}
 
@@ -76,12 +76,14 @@ func buildDotNetPackage(versionResources map[string]string, f file.LocationReadC
 
 	dnpkg = pkg.Package{
 		Name:      name,
-		Version:   version,
+		Version:   ver,
 		Locations: file.NewLocationSet(f.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:      pkg.DotnetPkg,
 		Language:  pkg.Dotnet,
-		PURL:      portableExecutablePackageURL(name, version),
-		Metadata:  metadata,
+		PURL:      portableExecutablePackageURL(name, ver),
+		// by nature PE metadata does not have any dependency information, thus we are forced to claim incomplete
+		Dependencies: pkg.IncompleteDependencies,
+		Metadata:     metadata,
 	}
 
 	dnpkg.SetID()

@@ -15,7 +15,9 @@ func newOpamPackage(m pkg.OpamPackage, fileLocation file.Location) pkg.Package {
 		Locations: file.NewLocationSet(fileLocation),
 		Type:      pkg.OpamPkg,
 		Language:  pkg.OCaml,
-		Metadata:  m,
+		// no attempt is made by the parser function to raise up dependency relationships
+		Dependencies: pkg.IncompleteDependencies,
+		Metadata:     m,
 	}
 
 	p.SetID()

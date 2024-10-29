@@ -35,6 +35,9 @@ func newClassifierPackage(classifier Classifier, location file.Location, matchMe
 		Type:    pkg.BinaryPkg,
 		CPEs:    cpes,
 		FoundBy: catalogerName,
+		// classifiers are limited to identifying package identities, but have no information about dependencies.
+		// Furthermore, we have no understanding about the mechanisms for dependency resolution for these packages.
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.BinarySignature{
 			Matches: []pkg.ClassifierMatch{
 				{

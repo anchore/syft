@@ -1,8 +1,10 @@
 package java
 
 import (
+	"context"
 	"testing"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
@@ -11,6 +13,8 @@ import (
 )
 
 func Test_ArchiveCataloger_Globs(t *testing.T) {
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.TestingOnlyScanner())
+
 	tests := []struct {
 		name     string
 		fixture  string
@@ -59,6 +63,7 @@ func Test_ArchiveCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
+				WithContext(ctx).
 				TestCataloger(t,
 					NewArchiveCataloger(
 						ArchiveCatalogerConfig{
@@ -128,7 +133,8 @@ func TestJvmDistributionCataloger(t *testing.T) {
 					cpe.Must("cpe:2.3:a:oracle:jre:1.8.0:update411:*:*:*:*:*:*", cpe.DeclaredSource),
 					cpe.Must("cpe:2.3:a:oracle:jdk:1.8.0:update411:*:*:*:*:*:*", cpe.DeclaredSource),
 				},
-				PURL: "pkg:generic/oracle/jdk@1.8.0_411-b25",
+				PURL:         "pkg:generic/oracle/jdk@1.8.0_411-b25",
+				Dependencies: pkg.IncompleteDependencies,
 				Metadata: pkg.JavaVMInstallation{
 					Release: pkg.JavaVMRelease{
 						JavaRuntimeVersion: "1.8.0_411-b25",
@@ -150,14 +156,15 @@ func TestJvmDistributionCataloger(t *testing.T) {
 			name:    "valid post-jep223",
 			fixture: "test-fixtures/jvm-installs/valid-post-jep223",
 			expected: pkg.Package{
-				Name:      "openjdk",
-				Version:   "21.0.4+7-LTS",
-				FoundBy:   "java-jvm-cataloger",
-				Locations: file.NewLocationSet(file.NewLocation("jvm/openjdk/release")),
-				Licenses:  pkg.NewLicenseSet(),
-				Type:      pkg.BinaryPkg,
-				CPEs:      []cpe.CPE{cpe.Must("cpe:2.3:a:oracle:openjdk:21.0.4:*:*:*:*:*:*:*", cpe.DeclaredSource)},
-				PURL:      "pkg:generic/oracle/openjdk@21.0.4%2B7-LTS?repository_url=https://github.com/adoptium/jdk21u.git",
+				Name:         "openjdk",
+				Version:      "21.0.4+7-LTS",
+				FoundBy:      "java-jvm-cataloger",
+				Locations:    file.NewLocationSet(file.NewLocation("jvm/openjdk/release")),
+				Licenses:     pkg.NewLicenseSet(),
+				Type:         pkg.BinaryPkg,
+				CPEs:         []cpe.CPE{cpe.Must("cpe:2.3:a:oracle:openjdk:21.0.4:*:*:*:*:*:*:*", cpe.DeclaredSource)},
+				PURL:         "pkg:generic/oracle/openjdk@21.0.4%2B7-LTS?repository_url=https://github.com/adoptium/jdk21u.git",
+				Dependencies: pkg.IncompleteDependencies,
 				Metadata: pkg.JavaVMInstallation{
 					Release: pkg.JavaVMRelease{
 						Implementor:        "Eclipse Adoptium",

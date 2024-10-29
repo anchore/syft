@@ -349,11 +349,12 @@ Installed-Size: 10kib
 `,
 			want: []pkg.Package{
 				{
-					Name:      "apt",
-					Type:      "deb",
-					PURL:      "pkg:deb/debian/apt?distro=debian-10",
-					Licenses:  pkg.NewLicenseSet(),
-					Locations: file.NewLocationSet(file.NewLocation("place")),
+					Name:         "apt",
+					Type:         "deb",
+					PURL:         "pkg:deb/debian/apt?distro=debian-10",
+					Licenses:     pkg.NewLicenseSet(),
+					Locations:    file.NewLocationSet(file.NewLocation("place")),
+					Dependencies: pkg.CompleteDependencies,
 					Metadata: pkg.DpkgDBEntry{
 						Package:       "apt",
 						InstalledSize: 10240,

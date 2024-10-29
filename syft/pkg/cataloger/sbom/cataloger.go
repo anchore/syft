@@ -54,15 +54,21 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 
 	var pkgs []pkg.Package
 	relationships := s.Relationships
+
+	for i := range relationships {
+		if p, ok := relationships[i].To.(pkg.Package); ok {
+			finalizePkg(&p, reader.Location)
+			relationships[i].To = p
+		}
+
+		if p, ok := relationships[i].From.(pkg.Package); ok {
+			finalizePkg(&p, reader.Location)
+			relationships[i].From = p
+		}
+	}
+
 	for _, p := range s.Artifacts.Packages.Sorted() {
-		// replace all locations on the package with the location of the SBOM file.
-		// Why not keep the original list of locations? Since the "locations" field is meant to capture
-		// where there is evidence of this file, and the catalogers have not run against any file other than,
-		// the SBOM, this is the only location that is relevant for this cataloger.
-		p.Locations = file.NewLocationSet(
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-		)
-		p.FoundBy = catalogerName
+		finalizePkg(&p, reader.Location)
 
 		pkgs = append(pkgs, p)
 		relationships = append(relationships, artifact.Relationship{
@@ -73,6 +79,22 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 	}
 
 	return pkgs, relationships, nil
+}
+
+func finalizePkg(p *pkg.Package, loc file.Location) {
+	// replace all locations on the package with the location of the SBOM file.
+	// Why not keep the original list of locations? Since the "locations" field is meant to capture
+	// where there is evidence of this file, and the catalogers have not run against any file other than,
+	// the SBOM, this is the only location that is relevant for this cataloger.
+	p.Locations = file.NewLocationSet(
+		loc.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+	)
+	p.FoundBy = catalogerName
+
+	// we are entirely unaware of the quality of the SBOM being read from, the ecosystem really in use, the context
+	// where it was found, and thus are not able to reason about the dependency resolution mechanisms that
+	// are in play.
+	p.Dependencies = pkg.UnknownDependencyCompleteness
 }
 
 func adaptToReadSeeker(reader io.Reader) (io.ReadSeeker, error) {

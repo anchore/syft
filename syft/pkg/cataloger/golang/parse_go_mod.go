@@ -66,6 +66,9 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 			PURL:      packageURL(m.Mod.Path, m.Mod.Version),
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg,
+			// we don't have a way to express on a package or relationship the nature of "//indirect" markings on dependencies
+			// so though the dependencies are complete and separable with the raw data, the data in the SBOM is not separable.
+			Dependencies: pkg.MixedDependencies,
 			Metadata: pkg.GolangModuleEntry{
 				H1Digest: digests[fmt.Sprintf("%s %s", m.Mod.Path, m.Mod.Version)],
 			},
@@ -91,6 +94,9 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 			PURL:      packageURL(m.New.Path, m.New.Version),
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg,
+			// we don't have a way to express on a package or relationship the nature of "//indirect" markings on dependencies
+			// so though the dependencies are complete and separable with the raw data, the data in the SBOM is not separable.
+			Dependencies: pkg.MixedDependencies,
 			Metadata: pkg.GolangModuleEntry{
 				H1Digest: digests[fmt.Sprintf("%s %s", m.New.Path, m.New.Version)],
 			},

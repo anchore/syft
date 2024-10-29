@@ -100,6 +100,7 @@ func TestParseRpmDB(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT", packagesLocation),
 					),
+					Dependencies: pkg.CompleteDependencies,
 					Metadata: pkg.RpmDBEntry{
 						Name:            "dive",
 						Epoch:           nil,
@@ -130,6 +131,7 @@ func TestParseRpmDB(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocations("MIT", packagesLocation),
 					),
+					Dependencies: pkg.CompleteDependencies,
 					Metadata: pkg.RpmDBEntry{
 						Name:            "dive",
 						Epoch:           nil,

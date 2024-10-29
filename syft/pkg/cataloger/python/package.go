@@ -20,16 +20,17 @@ func normalize(name string) string {
 	return strings.ToLower(normalized)
 }
 
-func newPackageForIndex(name, version string, locations ...file.Location) pkg.Package {
+func newPackageForIndex(name, version string, dep pkg.DependencyCompleteness, locations ...file.Location) pkg.Package {
 	name = normalize(name)
 
 	p := pkg.Package{
-		Name:      name,
-		Version:   version,
-		Locations: file.NewLocationSet(locations...),
-		PURL:      packageURL(name, version, nil),
-		Language:  pkg.Python,
-		Type:      pkg.PythonPkg,
+		Name:         name,
+		Version:      version,
+		Locations:    file.NewLocationSet(locations...),
+		PURL:         packageURL(name, version, nil),
+		Language:     pkg.Python,
+		Type:         pkg.PythonPkg,
+		Dependencies: dep,
 	}
 
 	p.SetID()
@@ -37,17 +38,18 @@ func newPackageForIndex(name, version string, locations ...file.Location) pkg.Pa
 	return p
 }
 
-func newPackageForIndexWithMetadata(name, version string, metadata interface{}, locations ...file.Location) pkg.Package {
+func newPackageForIndexWithMetadata(name, version string, metadata interface{}, dep pkg.DependencyCompleteness, locations ...file.Location) pkg.Package {
 	name = normalize(name)
 
 	p := pkg.Package{
-		Name:      name,
-		Version:   version,
-		Locations: file.NewLocationSet(locations...),
-		PURL:      packageURL(name, version, nil),
-		Language:  pkg.Python,
-		Type:      pkg.PythonPkg,
-		Metadata:  metadata,
+		Name:         name,
+		Version:      version,
+		Locations:    file.NewLocationSet(locations...),
+		PURL:         packageURL(name, version, nil),
+		Language:     pkg.Python,
+		Type:         pkg.PythonPkg,
+		Dependencies: dep,
+		Metadata:     metadata,
 	}
 
 	p.SetID()
@@ -55,17 +57,18 @@ func newPackageForIndexWithMetadata(name, version string, metadata interface{}, 
 	return p
 }
 
-func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.PythonRequirementsEntry, locations ...file.Location) pkg.Package {
+func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.PythonRequirementsEntry, dep pkg.DependencyCompleteness, locations ...file.Location) pkg.Package {
 	name = normalize(name)
 
 	p := pkg.Package{
-		Name:      name,
-		Version:   version,
-		Locations: file.NewLocationSet(locations...),
-		PURL:      packageURL(name, version, nil),
-		Language:  pkg.Python,
-		Type:      pkg.PythonPkg,
-		Metadata:  metadata,
+		Name:         name,
+		Version:      version,
+		Locations:    file.NewLocationSet(locations...),
+		PURL:         packageURL(name, version, nil),
+		Language:     pkg.Python,
+		Type:         pkg.PythonPkg,
+		Dependencies: dep,
+		Metadata:     metadata,
 	}
 
 	p.SetID()
@@ -73,18 +76,19 @@ func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.Py
 	return p
 }
 
-func newPackageForPackage(m parsedData, licenses pkg.LicenseSet, sources ...file.Location) pkg.Package {
+func newPackageForPackage(m parsedData, licenses pkg.LicenseSet, dep pkg.DependencyCompleteness, sources ...file.Location) pkg.Package {
 	name := normalize(m.Name)
 
 	p := pkg.Package{
-		Name:      name,
-		Version:   m.Version,
-		PURL:      packageURL(name, m.Version, &m.PythonPackage),
-		Locations: file.NewLocationSet(sources...),
-		Licenses:  licenses,
-		Language:  pkg.Python,
-		Type:      pkg.PythonPkg,
-		Metadata:  m.PythonPackage,
+		Name:         name,
+		Version:      m.Version,
+		PURL:         packageURL(name, m.Version, &m.PythonPackage),
+		Locations:    file.NewLocationSet(sources...),
+		Licenses:     licenses,
+		Language:     pkg.Python,
+		Type:         pkg.PythonPkg,
+		Dependencies: dep,
+		Metadata:     m.PythonPackage,
 	}
 
 	p.SetID()

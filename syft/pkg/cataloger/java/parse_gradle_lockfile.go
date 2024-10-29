@@ -23,17 +23,17 @@ type lockfileDependency struct {
 func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
-	// Create a new scanner to read the file
+	// create a new scanner to read the file
 	scanner := bufio.NewScanner(reader)
 
-	// Create slices to hold the dependencies and plugins
+	// create slices to hold the dependencies and plugins
 	dependencies := []lockfileDependency{}
 
-	// Loop over all lines in the file
+	// loop over all lines in the file
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// Trim leading and trailing whitespace from the line
+		// trim leading and trailing whitespace from the line
 		line = strings.TrimSpace(line)
 
 		groupNameVersion := line
@@ -42,7 +42,7 @@ func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environm
 
 		// we have a version directly specified
 		if len(parts) == 3 {
-			// Create a new Dependency struct and add it to the dependencies slice
+			// create a new Dependency struct and add it to the dependencies slice
 			dep := lockfileDependency{Group: parts[0], Name: parts[1], Version: parts[2]}
 			dependencies = append(dependencies, dep)
 		}
@@ -68,7 +68,9 @@ func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environm
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
 			PURL:     packageURL(dep.Name, dep.Version, archive),
-			Metadata: archive,
+			// though we do have dependencies listed, we do not have them related to one another, thus we must answer incomplete
+			Dependencies: pkg.IncompleteDependencies,
+			Metadata:     archive,
 		}
 		mappedPkg.SetID()
 		pkgs = append(pkgs, mappedPkg)

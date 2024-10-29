@@ -22,11 +22,12 @@ func parseConanfile(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	r := bufio.NewReader(reader)
 	inRequirements := false
 	var pkgs []pkg.Package
+loop:
 	for {
 		line, err := r.ReadString('\n')
 		switch {
 		case errors.Is(err, io.EOF):
-			return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
+			break loop
 		case err != nil:
 			return nil, nil, fmt.Errorf("failed to parse conanfile.txt file: %w", err)
 		}
@@ -56,4 +57,5 @@ func parseConanfile(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 
 		pkgs = append(pkgs, *p)
 	}
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }

@@ -24,13 +24,14 @@ func Test_parsePomXML(t *testing.T) {
 	pomLocation := file.NewLocationSet(file.NewLocation("pom.xml"))
 
 	exampleJavaAppMaven := pkg.Package{
-		Name:      "example-java-app-maven",
-		Version:   "0.1.0",
-		PURL:      "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
-		Language:  pkg.Java,
-		Type:      pkg.JavaPkg,
-		FoundBy:   pomCatalogerName,
-		Locations: pomLocation,
+		Name:         "example-java-app-maven",
+		Version:      "0.1.0",
+		PURL:         "pkg:maven/org.anchore/example-java-app-maven@0.1.0",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Locations:    pomLocation,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProject: &pkg.JavaPomProject{
 				GroupID:    "org.anchore",
@@ -42,13 +43,14 @@ func Test_parsePomXML(t *testing.T) {
 	finalizePackage(&exampleJavaAppMaven)
 
 	jodaTime := pkg.Package{
-		Name:      "joda-time",
-		Version:   "2.9.2",
-		PURL:      "pkg:maven/com.joda/joda-time@2.9.2",
-		Language:  pkg.Java,
-		Type:      pkg.JavaPkg,
-		FoundBy:   pomCatalogerName,
-		Locations: pomLocation,
+		Name:         "joda-time",
+		Version:      "2.9.2",
+		PURL:         "pkg:maven/com.joda/joda-time@2.9.2",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Locations:    pomLocation,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "com.joda",
@@ -59,13 +61,14 @@ func Test_parsePomXML(t *testing.T) {
 	finalizePackage(&jodaTime)
 
 	junit := pkg.Package{
-		Name:      "junit",
-		Version:   "4.12",
-		PURL:      "pkg:maven/junit/junit@4.12",
-		Language:  pkg.Java,
-		Type:      pkg.JavaPkg,
-		FoundBy:   pomCatalogerName,
-		Locations: pomLocation,
+		Name:         "junit",
+		Version:      "4.12",
+		PURL:         "pkg:maven/junit/junit@4.12",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Locations:    pomLocation,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "junit",
@@ -472,12 +475,13 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	pomXmlLocation := file.NewLocationSet(file.NewLocation("pom.xml"))
 
 	commonsText := pkg.Package{
-		Name:     "commons-text",
-		Version:  "1.10.0",
-		PURL:     "pkg:maven/org.apache.commons/commons-text@1.10.0",
-		Language: pkg.Java,
-		Type:     pkg.JavaPkg,
-		FoundBy:  pomCatalogerName,
+		Name:         "commons-text",
+		Version:      "1.10.0",
+		PURL:         "pkg:maven/org.apache.commons/commons-text@1.10.0",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProject: &pkg.JavaPomProject{
 				Parent: &pkg.JavaPomParent{
@@ -496,12 +500,13 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	}
 
 	commonsLang3 := pkg.Package{
-		Name:     "commons-lang3",
-		Version:  "3.12.0",
-		PURL:     "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
-		Language: pkg.Java,
-		Type:     pkg.JavaPkg,
-		FoundBy:  pomCatalogerName,
+		Name:         "commons-lang3",
+		Version:      "3.12.0",
+		PURL:         "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",
@@ -511,12 +516,13 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	}
 
 	junitJupiter := pkg.Package{
-		Name:     "junit-jupiter",
-		Version:  "",
-		PURL:     "pkg:maven/org.junit.jupiter/junit-jupiter",
-		Language: pkg.Java,
-		Type:     pkg.JavaPkg,
-		FoundBy:  pomCatalogerName,
+		Name:         "junit-jupiter",
+		Version:      "",
+		PURL:         "pkg:maven/org.junit.jupiter/junit-jupiter",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.junit.jupiter",
@@ -527,12 +533,13 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	}
 
 	assertjCore := pkg.Package{
-		Name:     "assertj-core",
-		Version:  "3.23.1",
-		PURL:     "pkg:maven/org.assertj/assertj-core@3.23.1",
-		Language: pkg.Java,
-		Type:     pkg.JavaPkg,
-		FoundBy:  pomCatalogerName,
+		Name:         "assertj-core",
+		Version:      "3.23.1",
+		PURL:         "pkg:maven/org.assertj/assertj-core@3.23.1",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.assertj",
@@ -543,12 +550,13 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	}
 
 	commonsIO := pkg.Package{
-		Name:     "commons-io",
-		Version:  "2.11.0",
-		PURL:     "pkg:maven/commons-io/commons-io@2.11.0",
-		Language: pkg.Java,
-		Type:     pkg.JavaPkg,
-		FoundBy:  pomCatalogerName,
+		Name:         "commons-io",
+		Version:      "2.11.0",
+		PURL:         "pkg:maven/commons-io/commons-io@2.11.0",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "commons-io",
@@ -559,12 +567,13 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	}
 
 	mockitoInline := pkg.Package{
-		Name:     "mockito-inline",
-		Version:  "4.8.0",
-		PURL:     "pkg:maven/org.mockito/mockito-inline@4.8.0",
-		Language: pkg.Java,
-		Type:     pkg.JavaPkg,
-		FoundBy:  pomCatalogerName,
+		Name:         "mockito-inline",
+		Version:      "4.8.0",
+		PURL:         "pkg:maven/org.mockito/mockito-inline@4.8.0",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.mockito",
@@ -575,12 +584,13 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	}
 
 	js := pkg.Package{
-		Name:     "js",
-		Version:  "22.0.0.2",
-		PURL:     "pkg:maven/org.graalvm.js/js@22.0.0.2",
-		Language: pkg.Java,
-		Type:     pkg.JavaPkg,
-		FoundBy:  pomCatalogerName,
+		Name:         "js",
+		Version:      "22.0.0.2",
+		PURL:         "pkg:maven/org.graalvm.js/js@22.0.0.2",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.graalvm.js",
@@ -591,12 +601,13 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	}
 
 	jsScriptengine := pkg.Package{
-		Name:     "js-scriptengine",
-		Version:  "22.0.0.2",
-		PURL:     "pkg:maven/org.graalvm.js/js-scriptengine@22.0.0.2",
-		Language: pkg.Java,
-		Type:     pkg.JavaPkg,
-		FoundBy:  pomCatalogerName,
+		Name:         "js-scriptengine",
+		Version:      "22.0.0.2",
+		PURL:         "pkg:maven/org.graalvm.js/js-scriptengine@22.0.0.2",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.graalvm.js",
@@ -607,12 +618,13 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	}
 
 	commonsRngSimple := pkg.Package{
-		Name:     "commons-rng-simple",
-		Version:  "1.4",
-		PURL:     "pkg:maven/org.apache.commons/commons-rng-simple@1.4",
-		Language: pkg.Java,
-		Type:     pkg.JavaPkg,
-		FoundBy:  pomCatalogerName,
+		Name:         "commons-rng-simple",
+		Version:      "1.4",
+		PURL:         "pkg:maven/org.apache.commons/commons-rng-simple@1.4",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",
@@ -623,12 +635,13 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	}
 
 	jmhCore := pkg.Package{
-		Name:     "jmh-core",
-		Version:  "1.35",
-		PURL:     "pkg:maven/org.openjdk.jmh/jmh-core@1.35",
-		Language: pkg.Java,
-		Type:     pkg.JavaPkg,
-		FoundBy:  pomCatalogerName,
+		Name:         "jmh-core",
+		Version:      "1.35",
+		PURL:         "pkg:maven/org.openjdk.jmh/jmh-core@1.35",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.openjdk.jmh",
@@ -639,12 +652,13 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 	}
 
 	jmhGeneratorAnnprocess := pkg.Package{
-		Name:     "jmh-generator-annprocess",
-		Version:  "1.35",
-		PURL:     "pkg:maven/org.openjdk.jmh/jmh-generator-annprocess@1.35",
-		Language: pkg.Java,
-		Type:     pkg.JavaPkg,
-		FoundBy:  pomCatalogerName,
+		Name:         "jmh-generator-annprocess",
+		Version:      "1.35",
+		PURL:         "pkg:maven/org.openjdk.jmh/jmh-generator-annprocess@1.35",
+		Language:     pkg.Java,
+		Type:         pkg.JavaPkg,
+		FoundBy:      pomCatalogerName,
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.openjdk.jmh",
@@ -699,6 +713,8 @@ func expectedTransientPackageData() expected {
 	transitiveTopLevel := pkg.Package{
 		Name:    "transitive-top-level",
 		Version: "99",
+		// one of the children is missing a pom in the test fixtures, this is a search miss
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProject: &pkg.JavaPomProject{
 				GroupID:    "my.other.group",
@@ -708,9 +724,10 @@ func expectedTransientPackageData() expected {
 		},
 	}
 	childOne := pkg.Package{
-		Name:     "child-one",
-		Version:  "1.3.6",
-		Licenses: epl2,
+		Name:         "child-one",
+		Version:      "1.3.6",
+		Licenses:     epl2,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProject: &pkg.JavaPomProject{
 				GroupID:    "my.org",
@@ -729,9 +746,10 @@ func expectedTransientPackageData() expected {
 		},
 	}
 	childTwo := pkg.Package{
-		Name:     "child-two",
-		Version:  "2.1.90",
-		Licenses: epl2,
+		Name:         "child-two",
+		Version:      "2.1.90",
+		Licenses:     epl2,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProject: &pkg.JavaPomProject{
 				GroupID:    "my.org",
@@ -753,6 +771,8 @@ func expectedTransientPackageData() expected {
 	commonsLang3_113_7_8_0 := pkg.Package{
 		Name:    "commons-lang3",
 		Version: "3.113.7.8.0",
+		// missing pom in test fixtures, this is a search miss
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",
@@ -763,6 +783,8 @@ func expectedTransientPackageData() expected {
 	commonsLang3_12_0 := pkg.Package{
 		Name:    "commons-lang3",
 		Version: "3.12.0",
+		// missing pom in test fixtures, this is a search miss
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",
@@ -773,6 +795,8 @@ func expectedTransientPackageData() expected {
 	commonsMath3 := pkg.Package{
 		Name:    "commons-math3.11.0",
 		Version: "3.5",
+		// missing pom in test fixtures, this is a search miss
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",
@@ -783,6 +807,8 @@ func expectedTransientPackageData() expected {
 	commonsExec := pkg.Package{
 		Name:    "commons-exec",
 		Version: "1.3",
+		// missing pom in test fixtures, this is a search miss
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",

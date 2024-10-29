@@ -12,13 +12,14 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 
 	expectedPkgs := []pkg.Package{
 		{
-			Name:      "auditable",
-			Version:   "0.1.0",
-			PURL:      "pkg:cargo/auditable@0.1.0",
-			FoundBy:   "cargo-auditable-binary-cataloger",
-			Locations: file.NewLocationSet(file.NewVirtualLocation("/hello-auditable", "/hello-auditable")),
-			Language:  pkg.Rust,
-			Type:      pkg.RustPkg,
+			Name:         "auditable",
+			Version:      "0.1.0",
+			PURL:         "pkg:cargo/auditable@0.1.0",
+			FoundBy:      "cargo-auditable-binary-cataloger",
+			Locations:    file.NewLocationSet(file.NewVirtualLocation("/hello-auditable", "/hello-auditable")),
+			Language:     pkg.Rust,
+			Type:         pkg.RustPkg,
+			Dependencies: pkg.IncompleteDependencies,
 			Metadata: pkg.RustBinaryAuditEntry{
 				Name:    "auditable",
 				Version: "0.1.0",
@@ -26,13 +27,14 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 			},
 		},
 		{
-			Name:      "hello-auditable",
-			Version:   "0.1.0",
-			PURL:      "pkg:cargo/hello-auditable@0.1.0",
-			FoundBy:   "cargo-auditable-binary-cataloger",
-			Locations: file.NewLocationSet(file.NewVirtualLocation("/hello-auditable", "/hello-auditable")),
-			Language:  pkg.Rust,
-			Type:      pkg.RustPkg,
+			Name:         "hello-auditable",
+			Version:      "0.1.0",
+			PURL:         "pkg:cargo/hello-auditable@0.1.0",
+			FoundBy:      "cargo-auditable-binary-cataloger",
+			Locations:    file.NewLocationSet(file.NewVirtualLocation("/hello-auditable", "/hello-auditable")),
+			Language:     pkg.Rust,
+			Type:         pkg.RustPkg,
+			Dependencies: pkg.IncompleteDependencies,
 			Metadata: pkg.RustBinaryAuditEntry{
 				Name:    "hello-auditable",
 				Version: "0.1.0",

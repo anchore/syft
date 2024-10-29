@@ -44,6 +44,7 @@ type CatalogTester struct {
 	licenseComparer                cmptest.LicenseComparer
 	packageStringer                func(pkg.Package) string
 	customAssertions               []func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship)
+	ctx                            context.Context
 }
 
 func NewCatalogTester() *CatalogTester {
@@ -103,6 +104,11 @@ func (p *CatalogTester) WithLinuxRelease(r linux.Release) *CatalogTester {
 		p.env = &generic.Environment{}
 	}
 	p.env.LinuxRelease = &r
+	return p
+}
+
+func (p *CatalogTester) WithContext(ctx context.Context) *CatalogTester {
+	p.ctx = ctx
 	return p
 }
 
@@ -236,7 +242,14 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 
 	resolver := NewObservingResolver(p.resolver)
 
-	pkgs, relationships, err := cataloger.Catalog(context.Background(), resolver)
+	var ctx context.Context
+	if p.ctx != nil {
+		ctx = p.ctx
+	} else {
+		ctx = context.Background()
+	}
+
+	pkgs, relationships, err := cataloger.Catalog(ctx, resolver)
 
 	// this is a minimum set, the resolver may return more that just this list
 	for _, path := range p.expectedPathResponses {

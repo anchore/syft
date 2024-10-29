@@ -34,7 +34,8 @@ func TestAlpmCataloger(t *testing.T) {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocations("MIT", treeSitterDbLocation),
 		),
-		Locations: file.NewLocationSet(treeSitterDbLocation),
+		Locations:    file.NewLocationSet(treeSitterDbLocation),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.AlpmDBEntry{
 			BasePackage:  "tree-sitter",
 			Package:      "tree-sitter",
@@ -60,7 +61,8 @@ func TestAlpmCataloger(t *testing.T) {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocations("GPL3", emacsDbLocation),
 		),
-		Locations: file.NewLocationSet(emacsDbLocation),
+		Locations:    file.NewLocationSet(emacsDbLocation),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.AlpmDBEntry{
 			BasePackage:  "emacs",
 			Package:      "emacs",
@@ -86,6 +88,7 @@ func TestAlpmCataloger(t *testing.T) {
 			fuzzyDbLocation,
 			file.NewLocation("var/lib/pacman/local/fuzzy-1.2-3/files"),
 		),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.AlpmDBEntry{
 			Package: "fuzzy",
 			Version: "1.2-3",
@@ -103,11 +106,12 @@ func TestAlpmCataloger(t *testing.T) {
 	}
 
 	madeupPkg := pkg.Package{
-		Name:      "madeup",
-		Version:   "20.30-4",
-		Type:      pkg.AlpmPkg,
-		FoundBy:   "alpm-db-cataloger",
-		Locations: file.NewLocationSet(madeupDbLocation),
+		Name:         "madeup",
+		Version:      "20.30-4",
+		Type:         pkg.AlpmPkg,
+		FoundBy:      "alpm-db-cataloger",
+		Locations:    file.NewLocationSet(madeupDbLocation),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.AlpmDBEntry{
 			Package: "madeup",
 			Version: "20.30-4",
@@ -131,6 +135,7 @@ func TestAlpmCataloger(t *testing.T) {
 			file.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/files"),
 			file.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/mtree"),
 		),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.AlpmDBEntry{
 			BasePackage:  "gmp",
 			Package:      "gmp",

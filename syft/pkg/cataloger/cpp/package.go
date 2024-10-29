@@ -67,35 +67,43 @@ func splitConanRef(ref string) *conanRef {
 }
 
 func newConanfilePackage(m pkg.ConanfileEntry, locations ...file.Location) *pkg.Package {
-	return newConanPackage(m.Ref, m, locations...)
+	// though a conanfile is a listing of direct dependencies, we are not capturing these today, so are forced to answer incomplete
+	return newConanPackage(m.Ref, m, pkg.IncompleteDependencies, locations...)
 }
 
-func newConanlockPackage(m pkg.ConanV1LockEntry, locations ...file.Location) *pkg.Package {
-	return newConanPackage(m.Ref, m, locations...)
+func newConanlockV1Package(m pkg.ConanV1LockEntry, locations ...file.Location) *pkg.Package {
+	// conan.lock is primarily used to lock the dependency graph at specific versions to ensure consistent builds,
+	// and the dependency tree can be inferred from the contents (distinguishing between direct and transitive dependencies)
+	return newConanPackage(m.Ref, m, pkg.CompleteDependencies, locations...)
 }
 
-func newConanReferencePackage(m pkg.ConanV2LockEntry, locations ...file.Location) *pkg.Package {
-	return newConanPackage(m.Ref, m, locations...)
+func newConanLockv2Package(m pkg.ConanV2LockEntry, locations ...file.Location) *pkg.Package {
+	// conan.lock is primarily used to lock the dependency graph at specific versions to ensure consistent builds,
+	// and the dependency tree can be inferred from the contents (distinguishing between direct and transitive dependencies)
+	return newConanPackage(m.Ref, m, pkg.CompleteDependencies, locations...)
 }
 
 func newConaninfoPackage(m pkg.ConaninfoEntry, locations ...file.Location) *pkg.Package {
-	return newConanPackage(m.Ref, m, locations...)
+	// conaninfo.txt is generated during the build and contains detailed information about the entire dependency tree,
+	// and today the codebase does infer direct dependencies from this source
+	return newConanPackage(m.Ref, m, pkg.CompleteDependencies, locations...)
 }
 
-func newConanPackage(refStr string, metadata any, locations ...file.Location) *pkg.Package {
+func newConanPackage(refStr string, metadata any, dep pkg.DependencyCompleteness, locations ...file.Location) *pkg.Package {
 	ref := splitConanRef(refStr)
 	if ref == nil {
 		return nil
 	}
 
 	p := pkg.Package{
-		Name:      ref.Name,
-		Version:   ref.Version,
-		Locations: file.NewLocationSet(locations...),
-		PURL:      packageURL(ref),
-		Language:  pkg.CPP,
-		Type:      pkg.ConanPkg,
-		Metadata:  metadata,
+		Name:         ref.Name,
+		Version:      ref.Version,
+		Locations:    file.NewLocationSet(locations...),
+		PURL:         packageURL(ref),
+		Language:     pkg.CPP,
+		Type:         pkg.ConanPkg,
+		Dependencies: dep,
+		Metadata:     metadata,
 	}
 
 	p.SetID()

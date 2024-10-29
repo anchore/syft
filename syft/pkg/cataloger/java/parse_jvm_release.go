@@ -98,6 +98,8 @@ func parseJVMRelease(_ context.Context, resolver file.Resolver, _ *generic.Envir
 		PURL:      jvmPurl(*ri, version, vendor, product),
 		Licenses:  licenses,
 		Type:      pkg.BinaryPkg,
+		// we don't have any dependency information about the JVM package itself
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.JavaVMInstallation{
 			Release: *ri,
 			Files:   files,

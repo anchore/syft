@@ -18,7 +18,9 @@ func newWordpressPluginPackage(name, version string, m pluginData, location file
 		Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Language:  pkg.PHP,
 		Type:      pkg.WordpressPluginPkg,
-		Metadata:  meta,
+		// no attempt is made by the parser function to resolve dependencies
+		Dependencies: pkg.IncompleteDependencies,
+		Metadata:     meta,
 	}
 
 	if len(m.Licenses) > 0 {

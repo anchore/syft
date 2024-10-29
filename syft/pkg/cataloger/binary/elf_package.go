@@ -16,7 +16,10 @@ func newELFPackage(metadata elfBinaryPackageNotes, locations file.LocationSet) p
 		PURL:      packageURL(metadata),
 		Type:      pkgType(metadata.Type),
 		Locations: locations,
-		Metadata:  metadata.ELFBinaryPackageNoteJSONPayload,
+		// though we can look for shared libs, we cannot see static dependencies nor dynamic dependencies using dlopen.
+		// this means that, even in cases where the dep info is actually complete, we can't programmatically determine that.
+		Dependencies: pkg.IncompleteDependencies,
+		Metadata:     metadata.ELFBinaryPackageNoteJSONPayload,
 	}
 
 	p.SetID()

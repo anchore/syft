@@ -31,7 +31,9 @@ func newGithubActionWorkflowPackageUsage(name, version string, workflowLocation 
 		Version:   version,
 		Locations: file.NewLocationSet(workflowLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		PURL:      packageURL(name, version),
-		Type:      pkg.GithubActionWorkflowPkg,
+		// we have full visibility into the dependencies of a workflow file except for when using shared workflows
+		Dependencies: pkg.CompleteDependencies,
+		Type:         pkg.GithubActionWorkflowPkg,
 	}
 
 	p.SetID()
@@ -45,7 +47,9 @@ func newGithubActionPackageUsage(name, version string, workflowLocation file.Loc
 		Version:   version,
 		Locations: file.NewLocationSet(workflowLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		PURL:      packageURL(name, version),
-		Type:      pkg.GithubActionPkg,
+		// we cannot see what the dependencies are for a github action are locally from workflow yaml files
+		Dependencies: pkg.IncompleteDependencies,
+		Type:         pkg.GithubActionPkg,
 	}
 
 	p.SetID()

@@ -18,11 +18,12 @@ func TestParseOTPApplication(t *testing.T) {
 			fixture: "test-fixtures/rabbitmq.app",
 			expected: []pkg.Package{
 				{
-					Name:     "rabbit",
-					Version:  "3.12.10",
-					Language: pkg.Erlang,
-					Type:     pkg.ErlangOTPPkg,
-					PURL:     "pkg:otp/rabbit@3.12.10",
+					Name:         "rabbit",
+					Version:      "3.12.10",
+					Language:     pkg.Erlang,
+					Type:         pkg.ErlangOTPPkg,
+					PURL:         "pkg:otp/rabbit@3.12.10",
+					Dependencies: pkg.IncompleteDependencies,
 				},
 			},
 		},

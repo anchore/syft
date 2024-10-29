@@ -26,13 +26,14 @@ func createLinuxKernelCPEs(version string) []cpe.CPE {
 
 func newLinuxKernelPackage(metadata pkg.LinuxKernel, archiveLocation file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:      linuxKernelPackageName,
-		Version:   metadata.Version,
-		Locations: file.NewLocationSet(archiveLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		PURL:      packageURL(linuxKernelPackageName, metadata.Version),
-		Type:      pkg.LinuxKernelPkg,
-		Metadata:  metadata,
-		CPEs:      createLinuxKernelCPEs(metadata.Version),
+		Name:         linuxKernelPackageName,
+		Version:      metadata.Version,
+		Locations:    file.NewLocationSet(archiveLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		PURL:         packageURL(linuxKernelPackageName, metadata.Version),
+		Type:         pkg.LinuxKernelPkg,
+		Metadata:     metadata,
+		Dependencies: pkg.IncompleteDependencies,
+		CPEs:         createLinuxKernelCPEs(metadata.Version),
 	}
 
 	p.SetID()
@@ -42,13 +43,14 @@ func newLinuxKernelPackage(metadata pkg.LinuxKernel, archiveLocation file.Locati
 
 func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModule, kmLocation file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:      metadata.Name,
-		Version:   metadata.Version,
-		Locations: file.NewLocationSet(kmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(kmLocation, metadata.License)...),
-		PURL:      packageURL(metadata.Name, metadata.Version),
-		Type:      pkg.LinuxKernelModulePkg,
-		Metadata:  metadata,
+		Name:         metadata.Name,
+		Version:      metadata.Version,
+		Locations:    file.NewLocationSet(kmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(kmLocation, metadata.License)...),
+		PURL:         packageURL(metadata.Name, metadata.Version),
+		Type:         pkg.LinuxKernelModulePkg,
+		Dependencies: pkg.IncompleteDependencies,
+		Metadata:     metadata,
 	}
 
 	p.SetID()

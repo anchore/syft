@@ -22,8 +22,9 @@ func TestParsePeclSerialized(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocations("PHP License", file.NewLocation(fixture)),
 			),
-			Language: pkg.PHP,
-			Type:     pkg.PhpPeclPkg,
+			Language:     pkg.PHP,
+			Type:         pkg.PhpPeclPkg,
+			Dependencies: pkg.IncompleteDependencies,
 			Metadata: pkg.PhpPeclEntry{
 				Name:    "memcached",
 				Version: "3.2.0",

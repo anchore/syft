@@ -23,7 +23,8 @@ func TestApkDBCataloger(t *testing.T) {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocations("GPL-3.0-or-later", dbLocation),
 		),
-		Locations: file.NewLocationSet(dbLocation),
+		Locations:    file.NewLocationSet(dbLocation),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.ApkDBEntry{
 			Package:       "bash",
 			OriginPackage: "bash",
@@ -52,7 +53,8 @@ func TestApkDBCataloger(t *testing.T) {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocations("GPL-2.0-only", dbLocation),
 		),
-		Locations: file.NewLocationSet(dbLocation),
+		Locations:    file.NewLocationSet(dbLocation),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.ApkDBEntry{
 			Package:       "busybox-binsh",
 			OriginPackage: "busybox",
@@ -81,7 +83,8 @@ func TestApkDBCataloger(t *testing.T) {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocations("MIT", dbLocation),
 		),
-		Locations: file.NewLocationSet(dbLocation),
+		Locations:    file.NewLocationSet(dbLocation),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.ApkDBEntry{
 			Package:       "musl",
 			OriginPackage: "musl",
@@ -108,7 +111,8 @@ func TestApkDBCataloger(t *testing.T) {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocations("GPL-2.0-or-later", dbLocation),
 		),
-		Locations: file.NewLocationSet(dbLocation),
+		Locations:    file.NewLocationSet(dbLocation),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.ApkDBEntry{
 			Package:       "readline",
 			OriginPackage: "readline",

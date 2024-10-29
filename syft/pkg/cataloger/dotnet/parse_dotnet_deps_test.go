@@ -20,36 +20,39 @@ func TestParseDotnetDeps(t *testing.T) {
 	fixture := "test-fixtures/TestLibrary.deps.json"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
 	rootPkg := pkg.Package{
-		Name:      "TestLibrary",
-		Version:   "1.0.0",
-		PURL:      "pkg:nuget/TestLibrary@1.0.0",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "TestLibrary",
+		Version:      "1.0.0",
+		PURL:         "pkg:nuget/TestLibrary@1.0.0",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:    "TestLibrary",
 			Version: "1.0.0",
 		},
 	}
 	testCommon := pkg.Package{
-		Name:      "TestCommon",
-		Version:   "1.0.0",
-		PURL:      "pkg:nuget/TestCommon@1.0.0",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "TestCommon",
+		Version:      "1.0.0",
+		PURL:         "pkg:nuget/TestCommon@1.0.0",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:    "TestCommon",
 			Version: "1.0.0",
 		},
 	}
 	awssdkcore := pkg.Package{
-		Name:      "AWSSDK.Core",
-		Version:   "3.7.10.6",
-		PURL:      "pkg:nuget/AWSSDK.Core@3.7.10.6",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "AWSSDK.Core",
+		Version:      "3.7.10.6",
+		PURL:         "pkg:nuget/AWSSDK.Core@3.7.10.6",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "AWSSDK.Core",
 			Version:  "3.7.10.6",
@@ -59,12 +62,13 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 	msftDependencyInjectionAbstractions := pkg.Package{
-		Name:      "Microsoft.Extensions.DependencyInjection.Abstractions",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/Microsoft.Extensions.DependencyInjection.Abstractions@6.0.0",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "Microsoft.Extensions.DependencyInjection.Abstractions",
+		Version:      "6.0.0",
+		PURL:         "pkg:nuget/Microsoft.Extensions.DependencyInjection.Abstractions@6.0.0",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.DependencyInjection.Abstractions",
 			Version:  "6.0.0",
@@ -74,12 +78,13 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 	msftDependencyInjection := pkg.Package{
-		Name:      "Microsoft.Extensions.DependencyInjection",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/Microsoft.Extensions.DependencyInjection@6.0.0",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "Microsoft.Extensions.DependencyInjection",
+		Version:      "6.0.0",
+		PURL:         "pkg:nuget/Microsoft.Extensions.DependencyInjection@6.0.0",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.DependencyInjection",
 			Version:  "6.0.0",
@@ -89,12 +94,13 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 	msftLoggingAbstractions := pkg.Package{
-		Name:      "Microsoft.Extensions.Logging.Abstractions",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/Microsoft.Extensions.Logging.Abstractions@6.0.0",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "Microsoft.Extensions.Logging.Abstractions",
+		Version:      "6.0.0",
+		PURL:         "pkg:nuget/Microsoft.Extensions.Logging.Abstractions@6.0.0",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.Logging.Abstractions",
 			Version:  "6.0.0",
@@ -104,12 +110,13 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 	msftExtensionsLogging := pkg.Package{
-		Name:      "Microsoft.Extensions.Logging",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/Microsoft.Extensions.Logging@6.0.0",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "Microsoft.Extensions.Logging",
+		Version:      "6.0.0",
+		PURL:         "pkg:nuget/Microsoft.Extensions.Logging@6.0.0",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.Logging",
 			Version:  "6.0.0",
@@ -119,12 +126,13 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 	msftExtensionsOptions := pkg.Package{
-		Name:      "Microsoft.Extensions.Options",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/Microsoft.Extensions.Options@6.0.0",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "Microsoft.Extensions.Options",
+		Version:      "6.0.0",
+		PURL:         "pkg:nuget/Microsoft.Extensions.Options@6.0.0",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.Options",
 			Version:  "6.0.0",
@@ -134,12 +142,13 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 	msftExtensionsPrimitives := pkg.Package{
-		Name:      "Microsoft.Extensions.Primitives",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/Microsoft.Extensions.Primitives@6.0.0",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "Microsoft.Extensions.Primitives",
+		Version:      "6.0.0",
+		PURL:         "pkg:nuget/Microsoft.Extensions.Primitives@6.0.0",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Microsoft.Extensions.Primitives",
 			Version:  "6.0.0",
@@ -149,12 +158,13 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 	newtonsoftJson := pkg.Package{
-		Name:      "Newtonsoft.Json",
-		Version:   "13.0.1",
-		PURL:      "pkg:nuget/Newtonsoft.Json@13.0.1",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "Newtonsoft.Json",
+		Version:      "13.0.1",
+		PURL:         "pkg:nuget/Newtonsoft.Json@13.0.1",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Newtonsoft.Json",
 			Version:  "13.0.1",
@@ -164,12 +174,13 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 	serilogSinksConsole := pkg.Package{
-		Name:      "Serilog.Sinks.Console",
-		Version:   "4.0.1",
-		PURL:      "pkg:nuget/Serilog.Sinks.Console@4.0.1",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "Serilog.Sinks.Console",
+		Version:      "4.0.1",
+		PURL:         "pkg:nuget/Serilog.Sinks.Console@4.0.1",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Serilog.Sinks.Console",
 			Version:  "4.0.1",
@@ -179,12 +190,13 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 	serilog := pkg.Package{
-		Name:      "Serilog",
-		Version:   "2.10.0",
-		PURL:      "pkg:nuget/Serilog@2.10.0",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "Serilog",
+		Version:      "2.10.0",
+		PURL:         "pkg:nuget/Serilog@2.10.0",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "Serilog",
 			Version:  "2.10.0",
@@ -194,12 +206,13 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 	systemDiagnosticsDiagnosticsource := pkg.Package{
-		Name:      "System.Diagnostics.DiagnosticSource",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/System.Diagnostics.DiagnosticSource@6.0.0",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "System.Diagnostics.DiagnosticSource",
+		Version:      "6.0.0",
+		PURL:         "pkg:nuget/System.Diagnostics.DiagnosticSource@6.0.0",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "System.Diagnostics.DiagnosticSource",
 			Version:  "6.0.0",
@@ -209,12 +222,13 @@ func TestParseDotnetDeps(t *testing.T) {
 		},
 	}
 	systemRuntimeCompilerServicesUnsafe := pkg.Package{
-		Name:      "System.Runtime.CompilerServices.Unsafe",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0",
-		Locations: fixtureLocationSet,
-		Language:  pkg.Dotnet,
-		Type:      pkg.DotnetPkg,
+		Name:         "System.Runtime.CompilerServices.Unsafe",
+		Version:      "6.0.0",
+		PURL:         "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0",
+		Locations:    fixtureLocationSet,
+		Language:     pkg.Dotnet,
+		Type:         pkg.DotnetPkg,
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.DotnetDepsEntry{
 			Name:     "System.Runtime.CompilerServices.Unsafe",
 			Version:  "6.0.0",

@@ -14,6 +14,8 @@ func newNixStorePackage(storePath nixStorePath, locations ...file.Location) pkg.
 		Locations: file.NewLocationSet(locations...),
 		Type:      pkg.NixPkg,
 		PURL:      packageURL(storePath),
+		// no attempt is made by the parser function to raise up dependency relationships
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.NixStoreEntry{
 			OutputHash: storePath.outputHash,
 			Output:     storePath.output,

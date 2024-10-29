@@ -110,6 +110,8 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 
 		pkgs, relationships = applyCompliance(cfg.ComplianceConfig, pkgs, relationships)
 
+		finalizeDependencyCompleteness(pkgs)
+
 		sbom.AddPackages(pkgs...)
 		sbom.AddRelationships(relationships...)
 		t.Add(int64(len(pkgs)))
@@ -122,6 +124,13 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 	tags = append(tags, pkgcataloging.PackageTag)
 
 	return NewTask(c.Name(), fn, tags...)
+}
+
+func finalizeDependencyCompleteness(pkgs []pkg.Package) {
+	// ensure that all packages have a non-empty dependency list
+	for i := range pkgs {
+		pkgs[i].Dependencies = pkg.ParseDependencyCompleteness(string(pkgs[i].Dependencies))
+	}
 }
 
 func finalizePkgCatalogerResults(cfg CatalogingFactoryConfig, resolver file.PathResolver, catalogerName string, pkgs []pkg.Package, relationships []artifact.Relationship) ([]pkg.Package, []artifact.Relationship) {

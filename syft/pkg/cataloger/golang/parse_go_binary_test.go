@@ -161,6 +161,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
+		Dependencies: pkg.MixedDependencies,
 		Metadata: pkg.GolangBinaryBuildinfoEntry{
 			GoCompiledVersion: goCompiledVersion,
 			Architecture:      archDetails,
@@ -208,7 +209,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					Metadata: pkg.GolangBinaryBuildinfoEntry{},
+					Dependencies: pkg.MixedDependencies,
+					Metadata:     pkg.GolangBinaryBuildinfoEntry{},
 				},
 			},
 		},
@@ -253,6 +255,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -291,6 +294,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -365,6 +369,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -432,6 +437,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -497,6 +503,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -554,6 +561,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -611,6 +619,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -669,6 +678,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -741,6 +751,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -762,6 +773,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -819,12 +831,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:PjhxBct4MZii8FFR8+oeS7QOvxKOTZXgk63EU2XpfJE=",
 						MainModule:        "github.com/anchore/syft",
-					}},
+					},
+				},
 				{
 					Name:     "golang.org/x/term",
 					Version:  "v0.0.0-20210916214954-140adaaadfaf",
@@ -839,6 +853,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -882,6 +897,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -941,6 +957,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 						},
 					).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
+				Dependencies: pkg.MixedDependencies,
 				Metadata: pkg.GolangBinaryBuildinfoEntry{
 					GoCompiledVersion: "go1.22.2",
 					Architecture:      archDetails,
@@ -993,6 +1010,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: "go1.22.2",
 						Architecture:      archDetails,
@@ -1013,6 +1031,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
+					Dependencies: pkg.MixedDependencies,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: "go1.22.2",
 						BuildSettings: []pkg.KeyValue{

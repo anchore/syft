@@ -15,39 +15,44 @@ func Test_parseWorkflowForActionUsage(t *testing.T) {
 
 	expected := []pkg.Package{
 		{
-			Name:      "./.github/actions/bootstrap",
-			Version:   "",
-			Type:      pkg.GithubActionPkg,
-			Locations: fixtureLocationSet,
-			PURL:      "", // don't have enough context without parsing the git origin, which still may not be accurate
+			Name:         "./.github/actions/bootstrap",
+			Version:      "",
+			Type:         pkg.GithubActionPkg,
+			Locations:    fixtureLocationSet,
+			PURL:         "", // don't have enough context without parsing the git origin, which still may not be accurate
+			Dependencies: pkg.IncompleteDependencies,
 		},
 		{
-			Name:      "actions/cache",
-			Version:   "v3",
-			Type:      pkg.GithubActionPkg,
-			Locations: fixtureLocationSet,
-			PURL:      "pkg:github/actions/cache@v3",
+			Name:         "actions/cache",
+			Version:      "v3",
+			Type:         pkg.GithubActionPkg,
+			Locations:    fixtureLocationSet,
+			PURL:         "pkg:github/actions/cache@v3",
+			Dependencies: pkg.IncompleteDependencies,
 		},
 		{
-			Name:      "actions/cache/restore",
-			Version:   "v3",
-			Type:      pkg.GithubActionPkg,
-			Locations: fixtureLocationSet,
-			PURL:      "pkg:github/actions/cache@v3#restore",
+			Name:         "actions/cache/restore",
+			Version:      "v3",
+			Type:         pkg.GithubActionPkg,
+			Locations:    fixtureLocationSet,
+			PURL:         "pkg:github/actions/cache@v3#restore",
+			Dependencies: pkg.IncompleteDependencies,
 		},
 		{
-			Name:      "actions/cache/save",
-			Version:   "v3",
-			Type:      pkg.GithubActionPkg,
-			Locations: fixtureLocationSet,
-			PURL:      "pkg:github/actions/cache@v3#save",
+			Name:         "actions/cache/save",
+			Version:      "v3",
+			Type:         pkg.GithubActionPkg,
+			Locations:    fixtureLocationSet,
+			PURL:         "pkg:github/actions/cache@v3#save",
+			Dependencies: pkg.IncompleteDependencies,
 		},
 		{
-			Name:      "actions/checkout",
-			Version:   "v4",
-			Type:      pkg.GithubActionPkg,
-			Locations: fixtureLocationSet,
-			PURL:      "pkg:github/actions/checkout@v4",
+			Name:         "actions/checkout",
+			Version:      "v4",
+			Type:         pkg.GithubActionPkg,
+			Locations:    fixtureLocationSet,
+			PURL:         "pkg:github/actions/checkout@v4",
+			Dependencies: pkg.IncompleteDependencies,
 		},
 	}
 
@@ -61,25 +66,28 @@ func Test_parseWorkflowForWorkflowUsage(t *testing.T) {
 
 	expected := []pkg.Package{
 		{
-			Name:      "octo-org/this-repo/.github/workflows/workflow-1.yml",
-			Version:   "172239021f7ba04fe7327647b213799853a9eb89",
-			Type:      pkg.GithubActionWorkflowPkg,
-			Locations: fixtureLocationSet,
-			PURL:      "pkg:github/octo-org/this-repo@172239021f7ba04fe7327647b213799853a9eb89#.github/workflows/workflow-1.yml",
+			Name:         "octo-org/this-repo/.github/workflows/workflow-1.yml",
+			Version:      "172239021f7ba04fe7327647b213799853a9eb89",
+			Type:         pkg.GithubActionWorkflowPkg,
+			Locations:    fixtureLocationSet,
+			PURL:         "pkg:github/octo-org/this-repo@172239021f7ba04fe7327647b213799853a9eb89#.github/workflows/workflow-1.yml",
+			Dependencies: pkg.CompleteDependencies,
 		},
 		{
-			Name:      "./.github/workflows/workflow-2.yml",
-			Version:   "",
-			Type:      pkg.GithubActionWorkflowPkg,
-			Locations: fixtureLocationSet,
-			PURL:      "", // don't have enough context without parsing the git origin, which still may not be accurate
+			Name:         "./.github/workflows/workflow-2.yml",
+			Version:      "",
+			Type:         pkg.GithubActionWorkflowPkg,
+			Locations:    fixtureLocationSet,
+			PURL:         "", // don't have enough context without parsing the git origin, which still may not be accurate
+			Dependencies: pkg.CompleteDependencies,
 		},
 		{
-			Name:      "octo-org/another-repo/.github/workflows/workflow.yml",
-			Version:   "v1",
-			Type:      pkg.GithubActionWorkflowPkg,
-			Locations: fixtureLocationSet,
-			PURL:      "pkg:github/octo-org/another-repo@v1#.github/workflows/workflow.yml",
+			Name:         "octo-org/another-repo/.github/workflows/workflow.yml",
+			Version:      "v1",
+			Type:         pkg.GithubActionWorkflowPkg,
+			Locations:    fixtureLocationSet,
+			PURL:         "pkg:github/octo-org/another-repo@v1#.github/workflows/workflow.yml",
+			Dependencies: pkg.CompleteDependencies,
 		},
 	}
 

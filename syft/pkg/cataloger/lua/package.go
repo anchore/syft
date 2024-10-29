@@ -16,6 +16,8 @@ func newLuaRocksPackage(u luaRocksPackage, indexLocation file.Location) pkg.Pack
 		Language:  pkg.Lua,
 		Licenses:  pkg.NewLicenseSet(license...),
 		Type:      pkg.LuaRocksPkg,
+		// no attempt is made by the parser function to raise up dependency relationships
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.LuaRocksPackage{
 			Name:         u.Name,
 			Version:      u.Version,

@@ -11,13 +11,14 @@ import (
 // Pkg returns the standard `pkg.Package` representation of the package referenced within the Cargo.lock metadata.
 func newPackageFromCargoMetadata(m pkg.RustCargoLockEntry, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:      m.Name,
-		Version:   m.Version,
-		Locations: file.NewLocationSet(locations...),
-		PURL:      packageURL(m.Name, m.Version),
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Metadata:  m,
+		Name:         m.Name,
+		Version:      m.Version,
+		Locations:    file.NewLocationSet(locations...),
+		PURL:         packageURL(m.Name, m.Version),
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Dependencies: pkg.CompleteDependencies,
+		Metadata:     m,
 	}
 
 	p.SetID()
@@ -46,6 +47,8 @@ func newPackageFromAudit(dep *rustaudit.Package, locations ...file.Location) pkg
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
 		Locations: file.NewLocationSet(locations...),
+		// no attempt is made by the parser function to resolve dependencies
+		Dependencies: pkg.IncompleteDependencies,
 		Metadata: pkg.RustBinaryAuditEntry{
 			Name:    dep.Name,
 			Version: dep.Version,

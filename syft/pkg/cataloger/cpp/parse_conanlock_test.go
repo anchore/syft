@@ -13,12 +13,13 @@ func TestParseConanLock(t *testing.T) {
 	fixture := "test-fixtures/conan.lock"
 	expected := []pkg.Package{
 		{
-			Name:      "mfast",
-			Version:   "1.2.2",
-			PURL:      "pkg:conan/my_user/mfast@1.2.2?channel=my_channel",
-			Locations: file.NewLocationSet(file.NewLocation(fixture)),
-			Language:  pkg.CPP,
-			Type:      pkg.ConanPkg,
+			Name:         "mfast",
+			Version:      "1.2.2",
+			PURL:         "pkg:conan/my_user/mfast@1.2.2?channel=my_channel",
+			Locations:    file.NewLocationSet(file.NewLocation(fixture)),
+			Language:     pkg.CPP,
+			Type:         pkg.ConanPkg,
+			Dependencies: pkg.CompleteDependencies,
 			Metadata: pkg.ConanV1LockEntry{
 				Ref: "mfast/1.2.2@my_user/my_channel#c6f6387c9b99780f0ee05e25f99d0f39",
 				Options: pkg.KeyValues{
@@ -104,12 +105,13 @@ func TestParseConanLock(t *testing.T) {
 			},
 		},
 		{
-			Name:      "boost",
-			Version:   "1.75.0",
-			PURL:      "pkg:conan/boost@1.75.0",
-			Locations: file.NewLocationSet(file.NewLocation(fixture)),
-			Language:  pkg.CPP,
-			Type:      pkg.ConanPkg,
+			Name:         "boost",
+			Version:      "1.75.0",
+			PURL:         "pkg:conan/boost@1.75.0",
+			Locations:    file.NewLocationSet(file.NewLocation(fixture)),
+			Language:     pkg.CPP,
+			Type:         pkg.ConanPkg,
+			Dependencies: pkg.CompleteDependencies,
 			Metadata: pkg.ConanV1LockEntry{
 				Ref: "boost/1.75.0#a9c318f067216f900900e044e7af4ab1",
 				Options: pkg.KeyValues{
@@ -190,12 +192,13 @@ func TestParseConanLock(t *testing.T) {
 			},
 		},
 		{
-			Name:      "zlib",
-			Version:   "1.2.12",
-			PURL:      "pkg:conan/zlib@1.2.12",
-			Locations: file.NewLocationSet(file.NewLocation(fixture)),
-			Language:  pkg.CPP,
-			Type:      pkg.ConanPkg,
+			Name:         "zlib",
+			Version:      "1.2.12",
+			PURL:         "pkg:conan/zlib@1.2.12",
+			Locations:    file.NewLocationSet(file.NewLocation(fixture)),
+			Language:     pkg.CPP,
+			Type:         pkg.ConanPkg,
+			Dependencies: pkg.CompleteDependencies,
 			Metadata: pkg.ConanV1LockEntry{
 				Ref: "zlib/1.2.12#c67ce17f2e96b972d42393ce50a76a1a",
 				Options: pkg.KeyValues{
@@ -214,12 +217,13 @@ func TestParseConanLock(t *testing.T) {
 			},
 		},
 		{
-			Name:      "bzip2",
-			Version:   "1.0.8",
-			PURL:      "pkg:conan/bzip2@1.0.8",
-			Locations: file.NewLocationSet(file.NewLocation(fixture)),
-			Language:  pkg.CPP,
-			Type:      pkg.ConanPkg,
+			Name:         "bzip2",
+			Version:      "1.0.8",
+			PURL:         "pkg:conan/bzip2@1.0.8",
+			Locations:    file.NewLocationSet(file.NewLocation(fixture)),
+			Language:     pkg.CPP,
+			Type:         pkg.ConanPkg,
+			Dependencies: pkg.CompleteDependencies,
 			Metadata: pkg.ConanV1LockEntry{
 				Ref: "bzip2/1.0.8#62a8031289639043797cf53fa876d0ef",
 				Options: []pkg.KeyValue{
@@ -242,12 +246,13 @@ func TestParseConanLock(t *testing.T) {
 			},
 		},
 		{
-			Name:      "libbacktrace",
-			Version:   "cci.20210118",
-			PURL:      "pkg:conan/libbacktrace@cci.20210118",
-			Locations: file.NewLocationSet(file.NewLocation(fixture)),
-			Language:  pkg.CPP,
-			Type:      pkg.ConanPkg,
+			Name:         "libbacktrace",
+			Version:      "cci.20210118",
+			PURL:         "pkg:conan/libbacktrace@cci.20210118",
+			Locations:    file.NewLocationSet(file.NewLocation(fixture)),
+			Language:     pkg.CPP,
+			Type:         pkg.ConanPkg,
+			Dependencies: pkg.CompleteDependencies,
 			Metadata: pkg.ConanV1LockEntry{
 				Ref: "libbacktrace/cci.20210118#76e40b760e0bcd602d46db56b22820ab",
 				Options: []pkg.KeyValue{
@@ -266,12 +271,13 @@ func TestParseConanLock(t *testing.T) {
 			},
 		},
 		{
-			Name:      "tinyxml2",
-			Version:   "9.0.0",
-			PURL:      "pkg:conan/tinyxml2@9.0.0",
-			Locations: file.NewLocationSet(file.NewLocation(fixture)),
-			Language:  pkg.CPP,
-			Type:      pkg.ConanPkg,
+			Name:         "tinyxml2",
+			Version:      "9.0.0",
+			PURL:         "pkg:conan/tinyxml2@9.0.0",
+			Locations:    file.NewLocationSet(file.NewLocation(fixture)),
+			Language:     pkg.CPP,
+			Type:         pkg.ConanPkg,
+			Dependencies: pkg.CompleteDependencies,
 			Metadata: pkg.ConanV1LockEntry{
 				Ref: "tinyxml2/9.0.0#9f13a36ebfc222cd55fe531a0a8d94d1",
 				Options: []pkg.KeyValue{
@@ -337,12 +343,13 @@ func TestParseConanLockV2(t *testing.T) {
 	fixture := "test-fixtures/conanlock-v2/conan.lock"
 	expected := []pkg.Package{
 		{
-			Name:      "matrix",
-			Version:   "1.1",
-			PURL:      "pkg:conan/matrix@1.1",
-			Locations: file.NewLocationSet(file.NewLocation(fixture)),
-			Language:  pkg.CPP,
-			Type:      pkg.ConanPkg,
+			Name:         "matrix",
+			Version:      "1.1",
+			PURL:         "pkg:conan/matrix@1.1",
+			Locations:    file.NewLocationSet(file.NewLocation(fixture)),
+			Language:     pkg.CPP,
+			Type:         pkg.ConanPkg,
+			Dependencies: pkg.CompleteDependencies,
 			Metadata: pkg.ConanV2LockEntry{
 				Ref:            "matrix/1.1#905c3f0babc520684c84127378fefdd0%1675278901.7527816",
 				RecipeRevision: "905c3f0babc520684c84127378fefdd0",
@@ -350,12 +357,13 @@ func TestParseConanLockV2(t *testing.T) {
 			},
 		},
 		{
-			Name:      "sound32",
-			Version:   "1.0",
-			PURL:      "pkg:conan/sound32@1.0",
-			Locations: file.NewLocationSet(file.NewLocation(fixture)),
-			Language:  pkg.CPP,
-			Type:      pkg.ConanPkg,
+			Name:         "sound32",
+			Version:      "1.0",
+			PURL:         "pkg:conan/sound32@1.0",
+			Locations:    file.NewLocationSet(file.NewLocation(fixture)),
+			Language:     pkg.CPP,
+			Type:         pkg.ConanPkg,
+			Dependencies: pkg.CompleteDependencies,
 			Metadata: pkg.ConanV2LockEntry{
 				Ref:            "sound32/1.0#83d4b7bf607b3b60a6546f8b58b5cdd7%1675278904.0791488",
 				RecipeRevision: "83d4b7bf607b3b60a6546f8b58b5cdd7",
