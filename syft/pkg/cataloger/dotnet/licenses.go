@@ -599,10 +599,8 @@ func (c *nugetLicenseResolver) getLocalNugetFolderResolvers(assetDefinitions []p
 	}
 
 	resolvers := []file.Resolver{}
-	if len(nugetPackagePaths) > 0 {
-		for _, nugetPackagePath := range nugetPackagePaths {
-			resolvers = append(resolvers, fileresolver.NewFromUnindexedDirectory(nugetPackagePath))
-		}
+	for _, nugetPackagePath := range nugetPackagePaths {
+		resolvers = append(resolvers, fileresolver.NewFromUnindexedDirectory(nugetPackagePath))
 	}
 	return resolvers
 }
