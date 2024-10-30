@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/anchore/syft/syft/credential"
 )
 
 const (
@@ -26,21 +28,12 @@ var (
 	defaultProviders      = ""
 )
 
-type ProviderCredential struct {
-	Username string `yaml:"username" json:"username" mapstructure:"username"`
-	Password string `yaml:"password" json:"password" mapstructure:"password"`
-}
-
-func (pc ProviderCredential) Valid() bool {
-	return pc.Username != "" && pc.Password != ""
-}
-
 type CatalogerConfig struct {
-	SearchLocalLicenses  bool                 `yaml:"search-local-licenses" json:"search-local-licenses" mapstructure:"search-local-licenses"`
-	LocalCachePaths      []string             `yaml:"local-cache-paths" json:"local-cache-paths" mapstructure:"local-cache-paths"`
-	SearchRemoteLicenses bool                 `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
-	Providers            []string             `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
-	ProviderCredentials  []ProviderCredential `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
+	SearchLocalLicenses  bool                          `yaml:"search-local-licenses" json:"search-local-licenses" mapstructure:"search-local-licenses"`
+	LocalCachePaths      []string                      `yaml:"local-cache-paths" json:"local-cache-paths" mapstructure:"local-cache-paths"`
+	SearchRemoteLicenses bool                          `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
+	Providers            []string                      `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
+	ProviderCredentials  []credential.SimpleCredential `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
 }
 
 // DefaultCatalogerConfig create a CatalogerConfig with default options, which includes:
@@ -78,14 +71,16 @@ func (g CatalogerConfig) WithProviders(input string) CatalogerConfig {
 	return g
 }
 
-func (g CatalogerConfig) WithCredentials(input []ProviderCredential) CatalogerConfig {
+func (g CatalogerConfig) WithCredentials(input []credential.SimpleCredential) CatalogerConfig {
 	if len(input) == 0 {
 		return g
 	}
 
-	for _, credential := range input {
-		if credential.Valid() {
-			g.ProviderCredentials = append([]ProviderCredential{}, credential)
+	g.ProviderCredentials = []credential.SimpleCredential{}
+
+	for _, _credential := range input {
+		if _credential.Valid() {
+			g.ProviderCredentials = append(g.ProviderCredentials, _credential)
 		}
 	}
 
