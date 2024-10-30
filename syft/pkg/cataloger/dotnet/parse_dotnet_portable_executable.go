@@ -53,7 +53,9 @@ func (c *dotnetPortableExecutableCataloger) parseDotnetPortableExecutable(ctx co
 		return nil, nil, err
 	}
 
-	c.licenses.assetDefinitions, _ = getProjectAssets(resolver)
+	if c.licenses.assetDefinitions, err = getProjectAssets(resolver); err != nil {
+		log.Warnf("unable to retrieve project assets: %v", err)
+	}
 
 	// Try to resolve *.nupkg License
 	licenseScanner := licenses.ContextLicenseScanner(ctx)

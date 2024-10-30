@@ -26,17 +26,21 @@ var (
 	defaultProviders      = ""
 )
 
-type nugetProviderCredential struct {
+type ProviderCredential struct {
 	Username string `yaml:"username" json:"username" mapstructure:"username"`
 	Password string `yaml:"password" json:"password" mapstructure:"password"`
 }
 
+func (pc ProviderCredential) Valid() bool {
+	return pc.Username != "" && pc.Password != ""
+}
+
 type CatalogerConfig struct {
-	SearchLocalLicenses  bool                      `yaml:"search-local-licenses" json:"search-local-licenses" mapstructure:"search-local-licenses"`
-	LocalCachePaths      []string                  `yaml:"local-cache-paths" json:"local-cache-paths" mapstructure:"local-cache-paths"`
-	SearchRemoteLicenses bool                      `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
-	Providers            []string                  `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
-	ProviderCredentials  []nugetProviderCredential `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
+	SearchLocalLicenses  bool                 `yaml:"search-local-licenses" json:"search-local-licenses" mapstructure:"search-local-licenses"`
+	LocalCachePaths      []string             `yaml:"local-cache-paths" json:"local-cache-paths" mapstructure:"local-cache-paths"`
+	SearchRemoteLicenses bool                 `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
+	Providers            []string             `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
+	ProviderCredentials  []ProviderCredential `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
 }
 
 // DefaultCatalogerConfig create a CatalogerConfig with default options, which includes:
@@ -74,20 +78,17 @@ func (g CatalogerConfig) WithProviders(input string) CatalogerConfig {
 	return g
 }
 
-func (g CatalogerConfig) WithCredentials(input string) CatalogerConfig {
-	if input == "" {
+func (g CatalogerConfig) WithCredentials(input []ProviderCredential) CatalogerConfig {
+	if len(input) == 0 {
 		return g
 	}
-	g.ProviderCredentials = []nugetProviderCredential{}
-	credentials := strings.Split(input, ",")
-	for _, credential := range credentials {
-		if credentialParts := strings.Split(credential, ":"); len(credentialParts) == 2 {
-			g.ProviderCredentials = append(g.ProviderCredentials, nugetProviderCredential{
-				Username: credentialParts[0],
-				Password: credentialParts[1],
-			})
+
+	for _, credential := range input {
+		if credential.Valid() {
+			g.ProviderCredentials = append([]ProviderCredential{}, credential)
 		}
 	}
+
 	return g
 }
 

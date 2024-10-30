@@ -85,7 +85,10 @@ func (c *dotnetDepsCataloger) parseDotnetDeps(ctx context.Context, resolver file
 	// sort the names so that the order of the packages is deterministic
 	sort.Strings(names)
 
-	c.licenses.assetDefinitions, _ = getProjectAssets(resolver)
+	var err error
+	if c.licenses.assetDefinitions, err = getProjectAssets(resolver); err != nil {
+		log.Warnf("unable to retrieve project assets: %v", err)
+	}
 
 	for _, nameVersion := range names {
 		// skip the root package

@@ -169,11 +169,11 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			),
 		DotNet: dotnet.DefaultCatalogerConfig().
-			WithSearchLocalLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp), cfg.DotNet.SearchLocalLicenses)).
+			WithSearchLocalLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp, task.CSharpWrittenOut), cfg.DotNet.SearchLocalLicenses)).
 			WithLocalCachePaths(cfg.DotNet.LocalCachePaths).
-			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp), cfg.DotNet.SearchRemoteLicenses)).
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp, task.CSharpWrittenOut), cfg.DotNet.SearchRemoteLicenses)).
 			WithProviders(cfg.DotNet.Providers).
-			WithCredentials(cfg.DotNet.ProviderCredentials.String()),
+			WithCredentials(cfg.DotNet.ProviderCredentials.ToProviderCredentials()),
 		JavaScript: javascript.DefaultCatalogerConfig().
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),

@@ -1,7 +1,6 @@
 package options
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -9,33 +8,24 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 )
 
-type DotNetProviderCredentials []DotNetProviderCredential
+type dotNetProviderCredentials []dotNetProviderCredential
 
-func (dnpc DotNetProviderCredentials) String() string {
-	result := ""
-
-	partials := []string{}
+func (dnpc dotNetProviderCredentials) ToProviderCredentials() []dotnet.ProviderCredential {
+	result := []dotnet.ProviderCredential{}
 	for _, credential := range dnpc {
-		if credential.Valid() {
-			partials = append(partials, fmt.Sprintf("%s:%s", credential.Username, credential.Password))
-		}
-	}
-
-	if len(partials) > 0 {
-		result = strings.Join(partials, ",")
+		result = append(result, dotnet.ProviderCredential{
+			Username: credential.Username.String(),
+			Password: credential.Password.String(),
+		})
 	}
 
 	return result
 }
 
-type DotNetProviderCredential struct {
+type dotNetProviderCredential struct {
 	// IMPORTANT: do not show any credential information, use secret type to automatically redact the values
 	Username secret `yaml:"username" json:"username" mapstructure:"username"`
 	Password secret `yaml:"password" json:"password" mapstructure:"password"`
-}
-
-func (dnpc DotNetProviderCredential) Valid() bool {
-	return dnpc.Username != "" && dnpc.Password != ""
 }
 
 type dotnetConfig struct {
@@ -43,7 +33,7 @@ type dotnetConfig struct {
 	LocalCachePaths      string                    `yaml:"local-cache-paths" json:"local-cache-paths" mapstructure:"local-cache-paths"`
 	SearchRemoteLicenses *bool                     `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
 	Providers            string                    `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
-	ProviderCredentials  DotNetProviderCredentials `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
+	ProviderCredentials  dotNetProviderCredentials `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
 }
 
 var _ interface {
@@ -51,39 +41,16 @@ var _ interface {
 	clio.FieldDescriber
 } = (*dotnetConfig)(nil)
 
-func retrieveCredentialByIndexExtension(index uint) (*DotNetProviderCredential, error) {
-	username, password := "", ""
-	if index == 0 {
-		username, password =
-			os.Getenv("SYFT_DOTNET_PACKAGE_PROVIDER_CREDENTIALS_USERNAME"),
-			os.Getenv("SYFT_DOTNET_PACKAGE_PROVIDER_CREDENTIALS_PASSWORD")
-	} else {
-		username, password =
-			os.Getenv(fmt.Sprintf("SYFT_DOTNET_PACKAGE_PROVIDER_CREDENTIALS_USERNAME_%d", index)),
-			os.Getenv(fmt.Sprintf("SYFT_DOTNET_PACKAGE_PROVIDER_CREDENTIALS_PASSWORD_%d", index))
-	}
-
-	candidateCredential := &DotNetProviderCredential{
-		Username: secret(username),
-		Password: secret(password),
-	}
-
-	if candidateCredential.Valid() {
-		return candidateCredential, nil
-	}
-	return nil, fmt.Errorf("credentials not found or invalid")
-}
-
 func (o *dotnetConfig) PostLoad() error {
-	var err error
+	username, password :=
+		os.Getenv("SYFT_DOTNET_PACKAGE_PROVIDER_CREDENTIALS_USERNAME"),
+		os.Getenv("SYFT_DOTNET_PACKAGE_PROVIDER_CREDENTIALS_PASSWORD")
 
-	index := uint(0)
-	for err == nil {
-		var credential *DotNetProviderCredential
-		if credential, err = retrieveCredentialByIndexExtension(index); err == nil {
-			o.ProviderCredentials = append(o.ProviderCredentials, *credential)
-			index++
-		}
+	if username != "" && password != "" {
+		o.ProviderCredentials = append(o.ProviderCredentials, dotNetProviderCredential{
+			Username: secret(username),
+			Password: secret(password),
+		})
 	}
 	return nil
 }
@@ -101,10 +68,10 @@ if unset this defaults to the NuGet-repositories known to the DotNet environment
 
 func defaultDotnetConfig() dotnetConfig {
 	def := dotnet.DefaultCatalogerConfig()
-	providerCredentials := []DotNetProviderCredential{}
+	providerCredentials := []dotNetProviderCredential{}
 	if len(def.ProviderCredentials) > 0 {
 		for _, credential := range def.ProviderCredentials {
-			providerCredentials = append(providerCredentials, DotNetProviderCredential{
+			providerCredentials = append(providerCredentials, dotNetProviderCredential{
 				Username: secret(credential.Username),
 				Password: secret(credential.Password),
 			})
