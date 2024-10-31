@@ -121,7 +121,8 @@ func newDirectoryCatalog() *pkg.Collection {
 				},
 			},
 		},
-		PURL: "a-purl-2", // intentionally a bad pURL for test fixtures
+		PURL:         "a-purl-2", // intentionally a bad pURL for test fixtures
+		Dependencies: pkg.CompleteDependencies,
 		CPEs: []cpe.CPE{
 			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", cpe.Source("")),
 		},
@@ -138,7 +139,8 @@ func newDirectoryCatalog() *pkg.Collection {
 			Package: "package-2",
 			Version: "2.0.1",
 		},
-		PURL: "pkg:deb/debian/package-2@2.0.1",
+		PURL:         "pkg:deb/debian/package-2@2.0.1",
+		Dependencies: pkg.CompleteDependencies,
 		CPEs: []cpe.CPE{
 			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", cpe.Source("")),
 		},
@@ -163,6 +165,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicense("MIT"),
 		),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
 			Version: "1.0.1",
@@ -190,7 +193,8 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 			Package: "package-2",
 			Version: "2.0.1",
 		},
-		PURL: "pkg:deb/debian/package-2@2.0.1",
+		Dependencies: pkg.CompleteDependencies,
+		PURL:         "pkg:deb/debian/package-2@2.0.1",
 		CPEs: []cpe.CPE{
 			cpe.Must("cpe:2.3:*:some:package:2:*:*:*:*:*:*:*", "another-test-source"),
 		},

@@ -22,14 +22,14 @@ const (
 	CompleteDependencies DependencyCompleteness = "complete"
 
 	// MixedDependencies is a superset of complete. It indicates that the package has all of its direct dependencies
-	// resolved as well as one or all of indirect dependencies. What is notable about this is that direct and
+	// resolved as well as some or all of indirect dependencies. What is notable about this is that direct and
 	// indirect dependencies are linked directly to this package and are not separable (you cannot distinguish between
 	// a direct and indirect dependency from the perspective of this package).
 	MixedDependencies DependencyCompleteness = "mixed"
 
-	// IncompleteDependencies indicates that the package does not have all of its dependencies resolved. This is useful
-	// in times when there is more than one mechanism at play for resolving dependencies and the cataloger only
-	// implements a subset of them, or in cases where the mechanism for resolving dependencies is limited.
+	// IncompleteDependencies indicates that the package does not have all of its direct dependencies resolved.
+	// This is useful in times when there is more than one mechanism at play for resolving dependencies and the
+	// cataloger only implements a subset of them, or in cases where the mechanism for resolving dependencies is limited.
 	IncompleteDependencies DependencyCompleteness = "incomplete"
 )
 
