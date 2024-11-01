@@ -120,6 +120,28 @@ Where the `formats` available are:
 
 Note that flags using the @<version> can be used for earlier versions of each specification as well.
 
+## Format conversion (experimental)
+The ability to convert existing SBOMs means you can create SBOMs in different formats quickly, without the need to regenerate the SBOM from scratch, which may take significantly more time.
+
+```sh
+syft convert [SOURCE-SBOM] -o [FORMAT] [flags]
+```
+
+This feature is experimental and data might be lost when converting formats. Packages are the main SBOM component easily transferable across formats, whereas files and relationships, as well as other information Syft doesn't support, are more likely to be lost.
+We support formats with wide community usage AND good encode/decode support by Syft. The supported formats are:
+- Syft JSON (```-o syft-json```)
+- SPDX 2.2 JSON (```-o spdx-json```)
+- SPDX 2.2 tag-value (```-o spdx-tag-value```)
+- CycloneDX 1.4 JSON (```-o cyclonedx-json```)
+- CycloneDX 1.4 XML (```-o cyclonedx-xml```)
+Conversion example:
+
+```sh
+syft convert img.syft.json -o spdx-json                      # convert a syft SBOM to spdx-json, output goes to stdout
+syft convert img.syft.json -o cyclonedx-json=img.cdx.json    # convert a syft SBOM to CycloneDX, output is written to the file img.cdx.json
+syft convert - -o spdx-json                                  # convert an SBOM from STDIN to spdx-json
+```
+
 ### Supported Ecosystems
 
 - Alpine (apk)
