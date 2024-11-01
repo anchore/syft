@@ -81,7 +81,7 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 
 	wg.Wait()
 
-	return nil
+	return errs
 }
 
 func appendUnknowns(builder sbomsync.Builder, taskName string, unknowns []unknown.CoordinateError) {

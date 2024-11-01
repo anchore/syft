@@ -103,6 +103,9 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 		t := bus.StartCatalogerTask(info, -1, "")
 
 		pkgs, relationships, err := c.Catalog(ctx, resolver)
+		if err != nil {
+			return fmt.Errorf("unable to catalog packages with %q: %w", catalogerName, err)
+		}
 
 		log.WithFields("cataloger", catalogerName).Debugf("discovered %d packages", len(pkgs))
 
@@ -117,7 +120,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 		t.SetCompleted()
 		log.WithFields("name", catalogerName).Trace("package cataloger completed")
 
-		return err
+		return nil
 	}
 	tags = append(tags, pkgcataloging.PackageTag)
 
