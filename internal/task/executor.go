@@ -57,23 +57,16 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 				}
 
 				err := runTaskSafely(ctx, tsk, resolver, s)
-				if err != nil {
-					withLock(func() {
-						errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", err))
-						prog.SetError(err)
-					})
-				}
-				unknowns, ukErr := unknown.ExtractCoordinateErrors(err)
+				unknowns, remainingErrors := unknown.ExtractCoordinateErrors(err)
 				if len(unknowns) > 0 {
 					appendUnknowns(s, tsk.Name(), unknowns)
 				}
-				if ukErr != nil {
+				if remainingErrors != nil {
 					withLock(func() {
-						errs = multierror.Append(errs, fmt.Errorf("failed to extract coordinate errors: %w", ukErr))
-						prog.SetError(err)
+						errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", remainingErrors))
+						prog.SetError(remainingErrors)
 					})
 				}
-
 				prog.Increment()
 			}
 		}()
