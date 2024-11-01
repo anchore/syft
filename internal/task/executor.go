@@ -73,7 +73,7 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 						prog.SetError(err)
 					})
 				}
-			
+
 				prog.Increment()
 			}
 		}()
