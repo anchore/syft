@@ -19,7 +19,7 @@ inputs:
     required: true
     default: "false"
   tools:
-    description: "weather to install tools"
+    description: "whether to install tools"
     default: "true"
   bootstrap-apt-packages:
     description: "Space delimited list of tools to install via apt"
