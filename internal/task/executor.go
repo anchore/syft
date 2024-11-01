@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime/debug"
+	"slices"
 	"sync"
 	"time"
 
@@ -84,7 +85,13 @@ func appendUnknowns(builder sbomsync.Builder, taskName string, unknowns []unknow
 				if sb.Artifacts.Unknowns == nil {
 					sb.Artifacts.Unknowns = map[file.Coordinates][]string{}
 				}
-				sb.Artifacts.Unknowns[u.Coordinates] = append(sb.Artifacts.Unknowns[u.Coordinates], formatUnknown(u.Reason.Error(), taskName))
+				unknownText := formatUnknown(u.Reason.Error(), taskName)
+				existing := sb.Artifacts.Unknowns[u.Coordinates]
+				// don't include duplicate unknowns
+				if slices.Contains(existing, unknownText) {
+					continue
+				}
+				sb.Artifacts.Unknowns[u.Coordinates] = append(existing, unknownText)
 			}
 		})
 	}
