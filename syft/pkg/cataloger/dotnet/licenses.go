@@ -68,7 +68,7 @@ func appendNewLicenses(licenses []pkg.License, potentiallyNew ...pkg.License) []
 }
 
 func (c *nugetLicenseResolver) getLicenses(ctx context.Context, scanner licenses.Scanner, moduleName, moduleVersion string) ([]pkg.License, error) {
-	licenses := []pkg.License{}
+	var licenses []pkg.License
 
 	if c.opts.SearchLocalLicenses {
 		if c.localNuGetCacheResolvers == nil {
@@ -81,20 +81,14 @@ func (c *nugetLicenseResolver) getLicenses(ctx context.Context, scanner licenses
 		for _, resolver := range c.localNuGetCacheResolvers {
 			if lics, err := c.findLocalLicenses(ctx, scanner, resolver, moduleSearchGlob(moduleName, moduleVersion)); err == nil {
 				licenses = appendNewLicenses(licenses, lics...)
-				break
+				return licenses, nil
 			}
 		}
 	}
 
 	if c.opts.SearchRemoteLicenses {
-		if len(c.assetDefinitions) > 0 {
-			if lics, err := c.findRemoteLicenses(ctx, scanner, moduleName, moduleVersion, c.assetDefinitions...); err == nil {
-				licenses = appendNewLicenses(licenses, lics...)
-			}
-		} else {
-			if lics, err := c.findRemoteLicenses(ctx, scanner, moduleName, moduleVersion); err == nil {
-				licenses = appendNewLicenses(licenses, lics...)
-			}
+		if lics, err := c.findRemoteLicenses(ctx, scanner, moduleName, moduleVersion, c.assetDefinitions...); err == nil {
+			licenses = appendNewLicenses(licenses, lics...)
 		}
 	}
 
@@ -104,8 +98,7 @@ func (c *nugetLicenseResolver) getLicenses(ctx context.Context, scanner licenses
 	return licenses, nil
 }
 
-func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, globMatch string) (out []pkg.License, err error) {
-	out = make([]pkg.License, 0)
+func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, globMatch string) ([]pkg.License, error) {
 	if resolver == nil {
 		return nil, nil
 	}
@@ -115,6 +108,7 @@ func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, scanner li
 		return nil, err
 	}
 
+	var out []pkg.License
 	for _, l := range locations {
 		fileName := filepath.Base(l.RealPath)
 		if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
@@ -251,8 +245,8 @@ func extractLicensesFromNuGetContentFile(ctx context.Context, scanner licenses.S
 
 	if nugetArchive != nil {
 		if licenseFile, err := nugetArchive.Open(filePath); err == nil {
+			defer internal.CloseAndLogError(licenseFile, filePath)
 			licenseFileData, err := io.ReadAll(licenseFile)
-			licenseFile.Close()
 
 			if err == nil {
 				if foundLicenses, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(file.NewLocation(filePath), newBytesReadCloser(removeBOM(licenseFileData)))); err == nil {
@@ -522,19 +516,17 @@ func getNuGetCachesFromProjectAssets(assets []projectAssets) []string {
 	paths := []string{}
 
 	// Try to determine NuGet package folders from project assets
-	if len(assets) > 0 {
-		for _, assetDefinition := range assets {
-			for folder := range assetDefinition.PackageFolders {
-				found := false
-				for _, known := range paths {
-					if known == folder {
-						found = true
-						break
-					}
+	for _, assetDefinition := range assets {
+		for folder := range assetDefinition.PackageFolders {
+			found := false
+			for _, known := range paths {
+				if known == folder {
+					found = true
+					break
 				}
-				if !found {
-					paths = append(paths, folder)
-				}
+			}
+			if !found {
+				paths = append(paths, folder)
 			}
 		}
 	}
