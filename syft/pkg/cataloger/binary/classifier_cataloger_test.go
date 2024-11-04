@@ -1668,7 +1668,7 @@ func Test_Cataloger_ResilientToErrors(t *testing.T) {
 
 	resolver := &panicyResolver{}
 	_, _, err := c.Catalog(context.Background(), resolver)
-	assert.Error(t, err)
+	assert.Nil(t, err) // non-coordinate-based FindBy* errors are now logged and not returned
 	assert.True(t, resolver.searchCalled)
 }
 
