@@ -234,10 +234,12 @@ func TestCataloger_Globs(t *testing.T) {
 			name:    "obtain db status files",
 			fixture: "test-fixtures/glob-paths",
 			expected: []string{
+				"usr/lib/dpkg/status",
 				"var/lib/dpkg/status",
+				"usr/lib/dpkg/status.d/pkg-1.0",
 				"var/lib/dpkg/status.d/pkg-1.0",
-				"usr/lib/opkg/status",
 				"usr/lib/opkg/info/pkg-1.0.control",
+				"usr/lib/opkg/status",
 			},
 		},
 	}

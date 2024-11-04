@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -18,7 +19,9 @@ import (
 
 // parseWheelOrEgg takes the primary metadata file reference and returns the python package it represents. Contained
 // fields are governed by the PyPA core metadata specification (https://packaging.python.org/en/latest/specifications/core-metadata/).
-func parseWheelOrEgg(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseWheelOrEgg(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	licenseScanner := licenses.ContextLicenseScanner(ctx)
+
 	pd, sources, err := assembleEggOrWheelMetadata(resolver, reader.Location)
 	if err != nil {
 		return nil, nil, err
@@ -33,7 +36,13 @@ func parseWheelOrEgg(_ context.Context, resolver file.Resolver, _ *generic.Envir
 		return nil, nil, nil
 	}
 
-	pkgs := []pkg.Package{newPackageForPackage(resolver, *pd, sources...)}
+	pkgs := []pkg.Package{
+		newPackageForPackage(
+			*pd,
+			findLicenses(ctx, licenseScanner, resolver, *pd),
+			sources...,
+		),
+	}
 
 	return pkgs, nil, nil
 }
@@ -60,7 +69,7 @@ func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location,
 		// parse the installed-files contents
 		installedFiles, err := parseInstalledFiles(installedFilesContents, metadataLocation.RealPath, sitePackagesRootPath)
 		if err != nil {
-			log.Warnf("unable to parse installed-files.txt for python package=%+v: %w", metadataLocation.RealPath, err)
+			log.WithFields("error", err, "path", metadataLocation.RealPath).Trace("unable to parse installed-files.txt for python package")
 			return files, sources, nil
 		}
 

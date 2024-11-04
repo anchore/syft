@@ -9,6 +9,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/artifact"
@@ -59,6 +60,9 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 			Packages: pkg.NewCollection(),
 		},
 	}
+
+	// inject a single license scanner for all package cataloging tasks into context
+	ctx = licenses.SetContextLicenseScanner(ctx, licenses.NewDefaultScanner())
 
 	catalogingProgress := monitorCatalogingTask(src.ID(), taskGroups)
 	packageCatalogingProgress := monitorPackageCatalogingTask()

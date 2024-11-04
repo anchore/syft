@@ -14,6 +14,6 @@ func NewDBCataloger() pkg.Cataloger {
 	return generic.NewCataloger("dpkg-db-cataloger").
 		// note: these globs have been intentionally split up in order to improve search performance,
 		// please do NOT combine into: "**/var/lib/dpkg/{status,status.d/*}"
-		WithParserByGlobs(parseDpkgDB, "**/var/lib/dpkg/status", "**/var/lib/dpkg/status.d/*", "**/lib/opkg/info/*.control", "**/lib/opkg/status").
+		WithParserByGlobs(parseDpkgDB, "**/lib/dpkg/status", "**/lib/dpkg/status.d/*", "**/lib/opkg/info/*.control", "**/lib/opkg/status").
 		WithProcessors(dependency.Processor(dbEntryDependencySpecifier))
 }
