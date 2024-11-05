@@ -28,15 +28,17 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 	// /
 	//   somewhere/
 	//     outside.txt
+	//     abs-to-path -> /path
 	//   root-link -> ./
 	//   path/
 	//     to/
 	//       abs-inside.txt -> /path/to/the/file.txt               # absolute link to somewhere inside of the root
 	//       rel-inside.txt -> ./the/file.txt                      # relative link to somewhere inside of the root
 	//       the/
-	//		   file.txt
+	//         file.txt
 	//         abs-outside.txt -> /somewhere/outside.txt           # absolute link to outside of the root
 	//         rel-outside -> ../../../somewhere/outside.txt       # relative link to outside of the root
+	//       chroot-abs-symlink-to-dir -> /to/the                  # absolute link to dir inside "path" chroot
 	//
 
 	testDir, err := os.Getwd()
@@ -53,9 +55,17 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 	relativeViaDoubleLink := filepath.Join(relative, "root-link", "root-link")
 	absoluteViaDoubleLink := filepath.Join(absolute, "root-link", "root-link")
 
+	absChrootBase := filepath.Join(absolute, "path")
+	relChrootBase := filepath.Join(relative, "path")
+	chrootAbsSymlinkToDir := filepath.Join(absolute, "path", "to", "chroot-abs-symlink-to-dir")
+	absAbsToPathFromSomewhere := filepath.Join(absolute, "somewhere", "abs-to-path")
+	relAbsToPathFromSomewhere := filepath.Join(relative, "somewhere", "abs-to-path")
+
 	cleanup := func() {
 		_ = os.Remove(absInsidePath)
 		_ = os.Remove(absOutsidePath)
+		_ = os.Remove(chrootAbsSymlinkToDir)
+		_ = os.Remove(absAbsToPathFromSomewhere)
 	}
 
 	// ensure the absolute symlinks are cleaned up from any previous runs
@@ -63,6 +73,8 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 
 	require.NoError(t, os.Symlink(filepath.Join(absolute, "path", "to", "the", "file.txt"), absInsidePath))
 	require.NoError(t, os.Symlink(filepath.Join(absolute, "somewhere", "outside.txt"), absOutsidePath))
+	require.NoError(t, os.Symlink("/to/the", chrootAbsSymlinkToDir))
+	require.NoError(t, os.Symlink(filepath.Join(absolute, "path"), absAbsToPathFromSomewhere))
 
 	t.Cleanup(cleanup)
 
@@ -487,6 +499,46 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input:              "/to/the/rel-outside.txt",
 			expectedRealPath:   filepath.Join(absolute, "/somewhere/outside.txt"),
 			expectedAccessPath: "to/the/rel-outside.txt",
+		},
+		{
+			name:               "absolute symlink to directory relative to the chroot",
+			root:               chrootAbsSymlinkToDir,
+			base:               absChrootBase,
+			input:              "file.txt",
+			expectedRealPath:   "/to/the/file.txt",
+			expectedAccessPath: "/to/the/file.txt",
+		},
+		{
+			name:               "absolute symlink to directory relative to the chroot, relative root",
+			root:               filepath.Join(relative, "path", "to", "chroot-abs-symlink-to-dir"),
+			base:               relChrootBase,
+			input:              "file.txt",
+			expectedRealPath:   "/to/the/file.txt",
+			expectedAccessPath: "/to/the/file.txt",
+		},
+		{
+			name:               "absolute symlink to directory relative to the chroot, relative root via link",
+			root:               filepath.Join(relativeViaLink, "path", "to", "chroot-abs-symlink-to-dir"),
+			base:               relChrootBase,
+			input:              "file.txt",
+			expectedRealPath:   "/to/the/file.txt",
+			expectedAccessPath: "/to/the/file.txt",
+		},
+		{
+			name:               "absolute symlink to directory relative to the chroot, with extra symlink to chroot",
+			root:               filepath.Join(absAbsToPathFromSomewhere, "to", "chroot-abs-symlink-to-dir"),
+			base:               absChrootBase,
+			input:              "file.txt",
+			expectedRealPath:   "/to/the/file.txt",
+			expectedAccessPath: "/to/the/file.txt",
+		},
+		{
+			name:               "absolute symlink to directory relative to the chroot, with extra symlink to chroot, relative root",
+			root:               filepath.Join(relAbsToPathFromSomewhere, "to", "chroot-abs-symlink-to-dir"),
+			base:               relChrootBase,
+			input:              "file.txt",
+			expectedRealPath:   "/to/the/file.txt",
+			expectedAccessPath: "/to/the/file.txt",
 		},
 	}
 	for _, c := range cases {

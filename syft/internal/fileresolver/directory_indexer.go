@@ -126,13 +126,13 @@ func (r *directoryIndexer) indexTree(root string, stager *progress.Stage) ([]str
 		return roots, nil
 	}
 
-	shouldIndexFullTree, err := isRealPath(root)
+	shouldIndexFullTree, err := isRealPath(root, r.base)
 	if err != nil {
 		return nil, err
 	}
 
 	if !shouldIndexFullTree {
-		newRoots, err := r.indexBranch(root, stager)
+		newRoots, err := r.indexBranch(root, r.base, stager)
 		if err != nil {
 			return nil, fmt.Errorf("unable to index branch=%q: %w", root, err)
 		}
@@ -166,21 +166,23 @@ func (r *directoryIndexer) indexTree(root string, stager *progress.Stage) ([]str
 	return roots, nil
 }
 
-func isRealPath(root string) (bool, error) {
+func isRealPath(root string, base string) (bool, error) {
 	rootParent := filepath.Clean(filepath.Dir(root))
 
-	realRootParent, err := filepath.EvalSymlinks(rootParent)
+	realRootParent, err := EvalSymlinksRelativeToBase(rootParent, base)
 	if err != nil {
 		return false, err
 	}
 
 	realRootParent = filepath.Clean(realRootParent)
 
+	log.Tracef("rootParent %q, realRootParent %q", rootParent, realRootParent)
+
 	return rootParent == realRootParent, nil
 }
 
-func (r *directoryIndexer) indexBranch(root string, stager *progress.Stage) ([]string, error) {
-	rootRealPath, err := filepath.EvalSymlinks(root)
+func (r *directoryIndexer) indexBranch(root string, base string, stager *progress.Stage) ([]string, error) {
+	rootRealPath, err := EvalSymlinksRelativeToBase(root, base)
 	if err != nil {
 		var pathErr *os.PathError
 		if errors.As(err, &pathErr) {
@@ -204,7 +206,7 @@ func (r *directoryIndexer) indexBranch(root string, stager *progress.Stage) ([]s
 		var targetPath string
 		if idx != 0 {
 			parent := path.Dir(p)
-			cleanParent, err := filepath.EvalSymlinks(parent)
+			cleanParent, err := EvalSymlinksRelativeToBase(parent, base)
 			if err != nil {
 				return nil, fmt.Errorf("unable to evaluate symlink for contained path parent=%q: %w", parent, err)
 			}

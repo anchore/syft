@@ -84,8 +84,8 @@ func cleanDirPath(path, base string) string {
 	}
 
 	if base != "" {
-		cleanRoot, rootErr := fileresolver.NormalizeRootDirectory(path)
 		cleanBase, baseErr := fileresolver.NormalizeBaseDirectory(base)
+		cleanRoot, rootErr := fileresolver.NormalizeRootDirectory(path, cleanBase)
 
 		if rootErr == nil && baseErr == nil {
 			// allows for normalizing inputs:

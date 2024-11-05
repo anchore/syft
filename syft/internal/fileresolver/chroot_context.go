@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/thediveo/procfsroot"
+
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/internal/windows"
 )
 
@@ -30,12 +33,12 @@ func NewChrootContextFromCWD(root, base string) (*ChrootContext, error) {
 }
 
 func NewChrootContext(root, base, cwd string) (*ChrootContext, error) {
-	cleanRoot, err := NormalizeRootDirectory(root)
+	cleanBase, err := NormalizeBaseDirectory(base)
 	if err != nil {
 		return nil, err
 	}
 
-	cleanBase, err := NormalizeBaseDirectory(base)
+	cleanRoot, err := NormalizeRootDirectory(root, cleanBase)
 	if err != nil {
 		return nil, err
 	}
@@ -49,11 +52,91 @@ func NewChrootContext(root, base, cwd string) (*ChrootContext, error) {
 	return chroot, chroot.ChangeDirectory(cwd)
 }
 
-func NormalizeRootDirectory(root string) (string, error) {
-	cleanRoot, err := filepath.EvalSymlinks(root)
+// Evaluate all the symlinks from source until we find the base path, which we
+// assume it's a new root filesystem (it can be used as a chroot target). From
+// there, all the absolute symbolic links are resolved relative to the base
+// path. We return the path (either relative or absolute) that can be used by
+// the host to access the directory/file inside the chroot.
+//
+// If the base is empty or we are running on Windows, this function returns
+// filepath.Evalsymlinks(source)
+//
+// If the source doesn't contain the base path, we do regular symlink
+// resolution.
+func EvalSymlinksRelativeToBase(source string, base string) (string, error) {
+	var err error
+	var index int
+	var absPath string
+	var path string
+	var resolvedPath string
+
+	if base == "" {
+		return filepath.EvalSymlinks(source)
+	}
+
+	// For windows we don't support resolving absolute symlinks inside a
+	// chroot, so we preserve the existing behavior
+	if windows.HostRunningOnWindows() {
+		return filepath.EvalSymlinks(source)
+	}
+
+	absBase, err := filepath.Abs(base)
+	if err != nil {
+		return "", err
+	}
+
+	log.Tracef("solving source %q relative to base %q", source, base)
+	source = filepath.Clean(source)
+
+	containedPaths := allContainedPaths(source)
+	for index, path = range containedPaths {
+		resolvedPath, err = filepath.EvalSymlinks(path)
+		if err != nil {
+			return "", err
+		}
+		absPath, err = filepath.Abs(resolvedPath)
+		if err != nil {
+			return "", err
+		}
+		log.Tracef("path %q absPath %q resolvedPath %q\n", path, absPath, resolvedPath)
+		if strings.HasPrefix(absPath, absBase) {
+			break
+		}
+	}
+
+	// if we don't encounter base, return the resolved path (which could be relative)
+	// note, the absolutePath is absolute, so we don't want to return that one
+	if !strings.HasPrefix(absPath, absBase) {
+		log.Tracef("resolved path = %s", resolvedPath)
+		return resolvedPath, nil
+	}
+
+	chrootPath := strings.TrimPrefix(source, path)
+	if chrootPath == "" {
+		log.Tracef("resolved path = %s", resolvedPath)
+		return resolvedPath, nil
+	}
+
+	log.Tracef("found chroot symlink, chrootPath %q, absPath: %q, base %q, absBase %q, index %d, path %q", chrootPath, absPath, base, absBase, index, path)
+
+	normalizedPath, err := procfsroot.EvalSymlinks(chrootPath, absBase, procfsroot.EvalFullPath)
+	if err != nil {
+		return "", fmt.Errorf("could not evaluate source=%q, base=%q absBase=%q symlinks: %w", source, base, absBase, err)
+	}
+
+	log.Tracef("resolved path = %s", base+normalizedPath)
+
+	// we use base instead of absBase, since base could be relative
+	// it's the same argument as returning resolvedPath instead of absResolvedPath
+	return base + normalizedPath, nil
+}
+
+func NormalizeRootDirectory(root string, base string) (string, error) {
+	cleanRoot, err := EvalSymlinksRelativeToBase(root, base)
 	if err != nil {
 		return "", fmt.Errorf("could not evaluate root=%q symlinks: %w", root, err)
 	}
+
 	return cleanRoot, nil
 }
 
