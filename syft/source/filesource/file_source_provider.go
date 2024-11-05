@@ -6,14 +6,14 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/spf13/afero"
 
 	"github.com/anchore/syft/syft/source"
 )
 
-func NewSourceProvider(path string, exclude source.ExcludeConfig, digestAlgorithms []crypto.Hash, alias source.Alias) source.Provider {
+func NewSourceProvider(path string, exclude source.ExcludeConfig, digestAlgorithms []crypto.Hash, alias source.Alias, basePath string) source.Provider {
 	return &fileSourceProvider{
 		path:             path,
+		basePath:         basePath,
 		exclude:          exclude,
 		digestAlgorithms: digestAlgorithms,
 		alias:            alias,
@@ -22,6 +22,7 @@ func NewSourceProvider(path string, exclude source.ExcludeConfig, digestAlgorith
 
 type fileSourceProvider struct {
 	path             string
+	basePath         string
 	exclude          source.ExcludeConfig
 	digestAlgorithms []crypto.Hash
 	alias            source.Alias
@@ -37,19 +38,10 @@ func (p fileSourceProvider) Provide(_ context.Context) (source.Source, error) {
 		return nil, fmt.Errorf("unable to expand potential directory path: %w", err)
 	}
 
-	fs := afero.NewOsFs()
-	fileMeta, err := fs.Stat(location)
-	if err != nil {
-		return nil, fmt.Errorf("unable to stat location: %w", err)
-	}
-
-	if fileMeta.IsDir() {
-		return nil, fmt.Errorf("not a file source: %s", p.path)
-	}
-
 	return New(
 		Config{
 			Path:             location,
+			Base:             p.basePath,
 			Exclude:          p.exclude,
 			DigestAlgorithms: p.digestAlgorithms,
 			Alias:            p.alias,

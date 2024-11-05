@@ -27,6 +27,7 @@ var _ source.Source = (*fileSource)(nil)
 
 type Config struct {
 	Path             string
+	Base             string
 	Exclude          source.ExcludeConfig
 	DigestAlgorithms []crypto.Hash
 	Alias            source.Alias
@@ -49,7 +50,7 @@ func NewFromPath(path string) (source.Source, error) {
 }
 
 func New(cfg Config) (source.Source, error) {
-	fileMeta, err := os.Stat(cfg.Path)
+	fileMeta, err := os.Lstat(cfg.Path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to stat path=%q: %w", cfg.Path, err)
 	}
@@ -58,11 +59,26 @@ func New(cfg Config) (source.Source, error) {
 		return nil, fmt.Errorf("given path is a directory: %q", cfg.Path)
 	}
 
-	analysisPath, cleanupFn := fileAnalysisPath(cfg.Path)
+	base, err := fileresolver.NormalizeBaseDirectory(cfg.Base)
+	if err != nil {
+		return nil, fmt.Errorf("unable to normalize base=%q: %w", cfg.Base, err)
+	}
+
+	configPath, err := filepath.Abs(cfg.Path)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get absolute path for analysis path=%q: %w", cfg.Path, err)
+	}
+
+	configPath, err = fileresolver.EvalSymlinksRelativeToBase(configPath, base)
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve symlinks for %q, base [%q]", cfg.Path, base)
+	}
+
+	analysisPath, cleanupFn := fileAnalysisPath(configPath)
 
 	var digests []file.Digest
 	if len(cfg.DigestAlgorithms) > 0 {
-		fh, err := os.Open(cfg.Path)
+		fh, err := os.Open(configPath)
 		if err != nil {
 			return nil, fmt.Errorf("unable to open file=%q: %w", cfg.Path, err)
 		}
@@ -71,13 +87,13 @@ func New(cfg Config) (source.Source, error) {
 
 		digests, err = intFile.NewDigestsFromFile(fh, cfg.DigestAlgorithms)
 		if err != nil {
-			return nil, fmt.Errorf("unable to calculate digests for file=%q: %w", cfg.Path, err)
+			return nil, fmt.Errorf("unable to calculate digests for file=%q: %w", configPath, err)
 		}
 	}
 
-	fh, err := os.Open(cfg.Path)
+	fh, err := os.Open(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open file=%q: %w", cfg.Path, err)
+		return nil, fmt.Errorf("unable to open file=%q: %w", configPath, err)
 	}
 
 	defer fh.Close()
@@ -160,10 +176,7 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	}
 	isArchiveAnalysis := fi.IsDir()
 
-	absParentDir, err := absoluteSymlinkFreePathToParent(s.analysisPath)
-	if err != nil {
-		return nil, err
-	}
+	absParentDir := filepath.Dir(s.analysisPath)
 
 	var res *fileresolver.Directory
 	if isArchiveAnalysis {
@@ -190,7 +203,7 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 					return fs.SkipDir
 				}
 
-				if filepath.Base(p) != filepath.Base(s.config.Path) {
+				if filepath.Base(p) != filepath.Base(s.analysisPath) {
 					// we're in the root directory, but this is not the file we want to scan...
 					// we should selectively skip this file (not the directory we're in).
 					return fileresolver.ErrSkipPath
@@ -208,18 +221,6 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	s.resolver = res
 
 	return s.resolver, nil
-}
-
-func absoluteSymlinkFreePathToParent(path string) (string, error) {
-	absAnalysisPath, err := filepath.Abs(path)
-	if err != nil {
-		return "", fmt.Errorf("unable to get absolute path for analysis path=%q: %w", path, err)
-	}
-	dereferencedAbsAnalysisPath, err := filepath.EvalSymlinks(absAnalysisPath)
-	if err != nil {
-		return "", fmt.Errorf("unable to get absolute path for analysis path=%q: %w", path, err)
-	}
-	return filepath.Dir(dereferencedAbsAnalysisPath), nil
 }
 
 func (s *fileSource) Close() error {

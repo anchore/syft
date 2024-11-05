@@ -21,9 +21,26 @@ import (
 func TestNewFromFile(t *testing.T) {
 	testutil.Chdir(t, "..") // run with source/test-fixtures
 
+	testDir, err := os.Getwd()
+	require.NoError(t, err)
+
+	absoluteSymlinkInsideChroot := filepath.Join(testDir, "test-fixtures", "absolute-symlink")
+
+	cleanup := func() {
+		_ = os.Remove(absoluteSymlinkInsideChroot)
+	}
+
+	// ensure the absolute symlinks are cleaned up from any previous runs
+	cleanup()
+
+	require.NoError(t, os.Symlink("/file-index-filter/.vimrc", absoluteSymlinkInsideChroot))
+
+	t.Cleanup(cleanup)
+
 	testCases := []struct {
 		desc       string
 		input      string
+		base       string
 		expString  string
 		testPathFn func(file.Resolver) ([]file.Location, error)
 		expRefs    int
@@ -68,11 +85,21 @@ func TestNewFromFile(t *testing.T) {
 			},
 			expRefs: 1,
 		},
+		{
+			desc:  "absolute symlink inside chroot",
+			input: absoluteSymlinkInsideChroot,
+			base:  filepath.Join(testDir, "test-fixtures"),
+			testPathFn: func(resolver file.Resolver) ([]file.Location, error) {
+				return resolver.FilesByPath(".vimrc")
+			},
+			expRefs: 1,
+		},
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			src, err := New(Config{
 				Path: test.input,
+				Base: test.base,
 			})
 			require.NoError(t, err)
 			t.Cleanup(func() {
@@ -88,7 +115,12 @@ func TestNewFromFile(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, refs, test.expRefs)
 			if test.expRefs == 1 {
-				assert.Equal(t, path.Base(test.input), path.Base(refs[0].RealPath))
+				fileMeta, err := os.Lstat(test.input)
+				require.NoError(t, err)
+				// if it's not a symlink we expect the base names to match
+				if fileMeta.Mode()&os.ModeSymlink == 0 {
+					assert.Equal(t, path.Base(test.input), path.Base(refs[0].RealPath))
+				}
 			}
 
 		})
