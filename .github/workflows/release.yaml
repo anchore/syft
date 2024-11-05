@@ -151,6 +151,7 @@ jobs:
       - uses: anchore/sbom-action@251a468eed47e5082b105c3ba6ee500c0e65a764 #v0.17.6
         continue-on-error: true
         with:
+          file: go.mod
           artifact-name: sbom.spdx.json
 
       - uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 #v3.16.2
