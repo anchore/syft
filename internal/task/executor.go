@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime/debug"
+	"slices"
 	"sync"
 	"time"
 
@@ -57,14 +58,14 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 				}
 
 				err := runTaskSafely(ctx, tsk, resolver, s)
-				unknowns, err := unknown.ExtractCoordinateErrors(err)
+				unknowns, remainingErrors := unknown.ExtractCoordinateErrors(err)
 				if len(unknowns) > 0 {
 					appendUnknowns(s, tsk.Name(), unknowns)
 				}
-				if err != nil {
+				if remainingErrors != nil {
 					withLock(func() {
-						errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", err))
-						prog.SetError(err)
+						errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", remainingErrors))
+						prog.SetError(remainingErrors)
 					})
 				}
 				prog.Increment()
@@ -84,7 +85,13 @@ func appendUnknowns(builder sbomsync.Builder, taskName string, unknowns []unknow
 				if sb.Artifacts.Unknowns == nil {
 					sb.Artifacts.Unknowns = map[file.Coordinates][]string{}
 				}
-				sb.Artifacts.Unknowns[u.Coordinates] = append(sb.Artifacts.Unknowns[u.Coordinates], formatUnknown(u.Reason.Error(), taskName))
+				unknownText := formatUnknown(u.Reason.Error(), taskName)
+				existing := sb.Artifacts.Unknowns[u.Coordinates]
+				// don't include duplicate unknowns
+				if slices.Contains(existing, unknownText) {
+					continue
+				}
+				sb.Artifacts.Unknowns[u.Coordinates] = append(existing, unknownText)
 			}
 		})
 	}

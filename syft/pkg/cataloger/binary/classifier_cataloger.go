@@ -105,6 +105,7 @@ func catalog(resolver file.Resolver, cls Classifier) (packages []pkg.Package, er
 	var errs error
 	locations, err := resolver.FilesByGlob(cls.FileGlob)
 	if err != nil {
+		err = unknown.ProcessPathErrors(err) // convert any file.Resolver path errors to unknowns with locations
 		return nil, err
 	}
 	for _, location := range locations {
