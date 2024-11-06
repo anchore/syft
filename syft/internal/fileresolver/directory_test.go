@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"go.uber.org/goleak"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -60,6 +62,12 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 	chrootAbsSymlinkToDir := filepath.Join(absolute, "path", "to", "chroot-abs-symlink-to-dir")
 	absAbsToPathFromSomewhere := filepath.Join(absolute, "somewhere", "abs-to-path")
 	relAbsToPathFromSomewhere := filepath.Join(relative, "somewhere", "abs-to-path")
+
+	thisPid := os.Getpid()
+	processProcfsRoot := filepath.Join("/proc", strconv.Itoa(thisPid), "root")
+	processProcfsCwd, err := getProcfsCwd(processProcfsRoot)
+	assert.NoError(t, err)
+	log.Tracef("cwd: %q", processProcfsCwd)
 
 	cleanup := func() {
 		_ = os.Remove(absInsidePath)
@@ -501,44 +509,54 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		{
-			name:               "absolute symlink to directory relative to the chroot",
-			root:               chrootAbsSymlinkToDir,
-			base:               absChrootBase,
-			input:              "file.txt",
-			expectedRealPath:   "/to/the/file.txt",
-			expectedAccessPath: "/to/the/file.txt",
+			name:             "absolute symlink to directory relative to the chroot",
+			root:             chrootAbsSymlinkToDir,
+			base:             absChrootBase,
+			input:            "file.txt",
+			expectedRealPath: "/to/the/file.txt",
 		},
 		{
-			name:               "absolute symlink to directory relative to the chroot, relative root",
-			root:               filepath.Join(relative, "path", "to", "chroot-abs-symlink-to-dir"),
-			base:               relChrootBase,
-			input:              "file.txt",
-			expectedRealPath:   "/to/the/file.txt",
-			expectedAccessPath: "/to/the/file.txt",
+			name:             "absolute symlink to directory relative to the chroot, relative root",
+			root:             filepath.Join(relative, "path", "to", "chroot-abs-symlink-to-dir"),
+			base:             relChrootBase,
+			input:            "file.txt",
+			expectedRealPath: "/to/the/file.txt",
 		},
 		{
-			name:               "absolute symlink to directory relative to the chroot, relative root via link",
-			root:               filepath.Join(relativeViaLink, "path", "to", "chroot-abs-symlink-to-dir"),
-			base:               relChrootBase,
-			input:              "file.txt",
-			expectedRealPath:   "/to/the/file.txt",
-			expectedAccessPath: "/to/the/file.txt",
+			name:             "absolute symlink to directory relative to the chroot, relative root via link",
+			root:             filepath.Join(relativeViaLink, "path", "to", "chroot-abs-symlink-to-dir"),
+			base:             relChrootBase,
+			input:            "file.txt",
+			expectedRealPath: "/to/the/file.txt",
 		},
 		{
-			name:               "absolute symlink to directory relative to the chroot, with extra symlink to chroot",
-			root:               filepath.Join(absAbsToPathFromSomewhere, "to", "chroot-abs-symlink-to-dir"),
-			base:               absChrootBase,
-			input:              "file.txt",
-			expectedRealPath:   "/to/the/file.txt",
-			expectedAccessPath: "/to/the/file.txt",
+			name:             "absolute symlink to directory relative to the chroot, with extra symlink to chroot",
+			root:             filepath.Join(absAbsToPathFromSomewhere, "to", "chroot-abs-symlink-to-dir"),
+			base:             absChrootBase,
+			input:            "file.txt",
+			expectedRealPath: "/to/the/file.txt",
 		},
 		{
-			name:               "absolute symlink to directory relative to the chroot, with extra symlink to chroot, relative root",
-			root:               filepath.Join(relAbsToPathFromSomewhere, "to", "chroot-abs-symlink-to-dir"),
-			base:               relChrootBase,
-			input:              "file.txt",
-			expectedRealPath:   "/to/the/file.txt",
-			expectedAccessPath: "/to/the/file.txt",
+			name:             "absolute symlink to directory relative to the chroot, with extra symlink to chroot, relative root",
+			root:             filepath.Join(relAbsToPathFromSomewhere, "to", "chroot-abs-symlink-to-dir"),
+			base:             relChrootBase,
+			input:            "file.txt",
+			expectedRealPath: "/to/the/file.txt",
+		},
+		{
+			name:             "_procfs_, abs root, relative request, direct",
+			cwd:              processProcfsCwd,
+			root:             filepath.Join(processProcfsRoot, absolute),
+			base:             processProcfsRoot,
+			input:            "path/to/the/file.txt",
+			expectedRealPath: filepath.Join(absolute, "path/to/the/file.txt"),
+		},
+		{
+			name:             "_procfs_, abs root, abs request, direct",
+			root:             filepath.Join(processProcfsRoot, absolute),
+			base:             processProcfsRoot,
+			input:            "/path/to/the/file.txt",
+			expectedRealPath: filepath.Join(absolute, "path/to/the/file.txt"),
 		},
 	}
 	for _, c := range cases {
@@ -547,8 +565,13 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 				c.expectedAccessPath = c.expectedRealPath
 			}
 
+			var targetPath string
+			if filepath.IsAbs(c.cwd) {
+				targetPath = c.cwd
+			} else {
+				targetPath = filepath.Join(testDir, c.cwd)
+			}
 			// we need to mimic a shell, otherwise we won't get a path within a symlink
-			targetPath := filepath.Join(testDir, c.cwd)
 			t.Setenv("PWD", filepath.Clean(targetPath))
 
 			require.NoError(t, err)

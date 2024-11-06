@@ -67,6 +67,13 @@ func newPathSkipperFromMounts(root string, infos []*mountinfo.Info) pathSkipper 
 		"tmpfs": {"/run", "/dev", "/var/run", "/var/lock", "/sys"},
 	}
 
+	inProcfs, err := isPathInProcfsPid(root)
+	if err == nil && inProcfs {
+		log.Debugf("Including procfs mount types because root %q is in procfs", root)
+		delete(ignorableMountTypes, "proc")
+		delete(ignorableMountTypes, "procfs")
+	}
+
 	// The longest path is the most specific path, e.g.
 	// if / is mounted as tmpfs, but /home/syft/permanent is mounted as ext4,
 	// then the mount type for /home/syft/permanent/foo is ext4, and the mount info

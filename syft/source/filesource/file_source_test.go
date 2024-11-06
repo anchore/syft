@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"testing"
 
@@ -25,6 +26,9 @@ func TestNewFromFile(t *testing.T) {
 	require.NoError(t, err)
 
 	absoluteSymlinkInsideChroot := filepath.Join(testDir, "test-fixtures", "absolute-symlink")
+
+	thisPid := os.Getpid()
+	processProcfsRoot := filepath.Join("/proc", strconv.Itoa(thisPid), "root")
 
 	cleanup := func() {
 		_ = os.Remove(absoluteSymlinkInsideChroot)
@@ -89,6 +93,15 @@ func TestNewFromFile(t *testing.T) {
 			desc:  "absolute symlink inside chroot",
 			input: absoluteSymlinkInsideChroot,
 			base:  filepath.Join(testDir, "test-fixtures"),
+			testPathFn: func(resolver file.Resolver) ([]file.Location, error) {
+				return resolver.FilesByPath(".vimrc")
+			},
+			expRefs: 1,
+		},
+		{
+			desc:  "file in procfs",
+			input: filepath.Join(testDir, "test-fixtures", "file-index-filter", ".vimrc"),
+			base:  filepath.Join(processProcfsRoot),
 			testPathFn: func(resolver file.Resolver) ([]file.Location, error) {
 				return resolver.FilesByPath(".vimrc")
 			},

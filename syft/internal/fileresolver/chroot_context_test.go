@@ -3,6 +3,7 @@ package fileresolver
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,6 +57,11 @@ func Test_ChrootContext_RequestResponse(t *testing.T) {
 	chrootAbsSymlinkToDir := filepath.Join(absolute, "path", "to", "chroot-abs-symlink-to-dir")
 	absAbsToPathFromSomewhere := filepath.Join(absolute, "somewhere", "abs-to-path")
 	relAbsToPathFromSomewhere := filepath.Join(relative, "somewhere", "abs-to-path")
+
+	thisPid := os.Getpid()
+	processProcfsRoot := filepath.Join("/proc", strconv.Itoa(thisPid), "root")
+	processProcfsCwd, err := getProcfsCwd(processProcfsRoot)
+	assert.NoError(t, err)
 
 	cleanup := func() {
 		_ = os.Remove(absAbsInsidePath)
@@ -502,12 +508,34 @@ func Test_ChrootContext_RequestResponse(t *testing.T) {
 			expectedNativePath: filepath.Join(absolute, "path", "to", "the", "file.txt"),
 			expectedChrootPath: "/to/the/file.txt",
 		},
+		{
+			name:               "_procfs_, abs root, relative request, direct",
+			cwd:                processProcfsCwd,
+			root:               filepath.Join(processProcfsRoot, absolute),
+			base:               processProcfsRoot,
+			input:              "path/to/the/file.txt",
+			expectedNativePath: filepath.Join(processProcfsRoot, absolute, "path/to/the/file.txt"),
+			expectedChrootPath: filepath.Join(absolute, "path/to/the/file.txt"),
+		},
+		{
+			name:               "_procfs_, abs root, abs request, direct",
+			root:               filepath.Join(processProcfsRoot, absolute),
+			base:               processProcfsRoot,
+			input:              "/path/to/the/file.txt",
+			expectedNativePath: filepath.Join(processProcfsRoot, absolute, "path/to/the/file.txt"),
+			expectedChrootPath: filepath.Join(absolute, "path/to/the/file.txt"),
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
+			var targetPath string
+			if filepath.IsAbs(c.cwd) {
+				targetPath = c.cwd
+			} else {
+				targetPath = filepath.Join(testDir, c.cwd)
+			}
 			// we need to mimic a shell, otherwise we won't get a path within a symlink
-			targetPath := filepath.Join(testDir, c.cwd)
 			t.Setenv("PWD", filepath.Clean(targetPath))
 
 			require.NoError(t, err)
