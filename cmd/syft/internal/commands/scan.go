@@ -156,13 +156,13 @@ func validateScanArgs(cmd *cobra.Command, args []string) error {
 	return validateArgs(cmd, args, "an image/directory argument is required")
 }
 
-func validateArgs(cmd *cobra.Command, args []string, error string) error {
+func validateArgs(cmd *cobra.Command, args []string, err string) error {
 	if len(args) == 0 {
 		// in the case that no arguments are given we want to show the help text and return with a non-0 return code.
 		if err := cmd.Help(); err != nil {
 			return fmt.Errorf("unable to display help: %w", err)
 		}
-		return fmt.Errorf("%v", error)
+		return fmt.Errorf("%v", err)
 	}
 
 	return cobra.MaximumNArgs(1)(cmd, args)
