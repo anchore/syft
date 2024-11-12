@@ -158,7 +158,7 @@ func DefaultClassifiers() []Classifier {
 				// [NUL]v0.12.18[NUL]
 				// [NUL]v4.9.1[NUL]
 				// node.js/v22.9.0
-				FileContentsVersionMatcher(`(?m)\x00(node )?v(?P<version>(0|4|5)\.[0-9]+\.[0-9]+)\x00`),
+				FileContentsVersionMatcher(`(?m)\x00(node )?v(?P<version>(0|4|5|6)\.[0-9]+\.[0-9]+)\x00`),
 				FileContentsVersionMatcher(`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			),
 			Package: "node",
