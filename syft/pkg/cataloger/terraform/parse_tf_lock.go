@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/anchore/packageurl-go"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -34,10 +34,9 @@ func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environme
 	pkgs := make([]pkg.Package, 0, len(lockFile.Providers))
 
 	for _, provider := range lockFile.Providers {
-		pkg := pkg.Package{
+		p := pkg.Package{
 			Name:      provider.URL,
 			Version:   provider.Version,
-			FoundBy:   "terraform-cataloger",
 			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			Licenses:  pkg.NewLicenseSet(), // TODO: license could be found in .terraform/providers/${name}/${version}/${arch}/LICENSE.txt
 			// TODO: Language?
@@ -46,9 +45,9 @@ func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environme
 			PURL:     packageurl.NewPackageURL(packageurl.TypeTerraform, "", provider.URL, provider.Version, nil, "").String(),
 			Metadata: provider,
 		}
-		pkg.SetID()
+		p.SetID()
 
-		pkgs = append(pkgs, pkg)
+		pkgs = append(pkgs, p)
 	}
 
 	return pkgs, nil, nil
