@@ -11,7 +11,7 @@ import (
 )
 
 func TestTerraformCataloger(t *testing.T) {
-	c := NewTerraformCataloger()
+	c := NewLockCataloger()
 
 	fileLoc := file.NewLocation(".terraform.lock.hcl")
 	location := fileLoc.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
@@ -19,7 +19,7 @@ func TestTerraformCataloger(t *testing.T) {
 	awsProviderPkg := pkg.Package{
 		Name:      "registry.terraform.io/hashicorp/aws",
 		Version:   "5.72.1",
-		FoundBy:   "terraform-cataloger",
+		FoundBy:   "terraform-lock-cataloger",
 		Locations: file.NewLocationSet(location),
 		Type:      pkg.TerraformPkg,
 		PURL:      "pkg:terraform/registry.terraform.io/hashicorp/aws@5.72.1",
@@ -52,7 +52,7 @@ func TestTerraformCataloger(t *testing.T) {
 	gcpProviderPkg := pkg.Package{
 		Name:      "registry.terraform.io/hashicorp/google",
 		Version:   "6.8.0",
-		FoundBy:   "terraform-cataloger",
+		FoundBy:   "terraform-lock-cataloger",
 		Locations: file.NewLocationSet(location),
 		Type:      pkg.TerraformPkg,
 		PURL:      "pkg:terraform/registry.terraform.io/hashicorp/google@6.8.0",
