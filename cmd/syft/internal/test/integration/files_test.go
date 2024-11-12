@@ -36,6 +36,7 @@ func TestFileCataloging_Default(t *testing.T) {
 func TestFileCataloging_AllFiles(t *testing.T) {
 	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{})
 	cfg = cfg.WithFilesConfig(filecataloging.Config{
+		Enabled:   true,
 		Selection: file.AllFilesSelection,
 		Hashers: []crypto.Hash{
 			crypto.SHA256,
