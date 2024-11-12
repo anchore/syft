@@ -66,11 +66,12 @@ func (c *fileConfig) PostLoad() error {
 }
 
 func (c *fileConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
+	descriptions.Add(&c.Enabled, `enable or disable file cataloging entirely`)
 	descriptions.Add(&c.Metadata.Selection, `select which files should be captured by the file-metadata cataloger and included in the SBOM. 
 Options include:
- - "all": capture all files from the search space
- - "owned-by-package": capture only files owned by packages
- - "none", "": do not capture any files`)
+ - "all": capture metadata for all files from the search space
+ - "owned-by-package": capture metadata only for files owned by packages
+ - "none", "": do not capture metadata for any files`)
 	descriptions.Add(&c.Metadata.Digests, `the file digest algorithms to use when cataloging files (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")`)
 
 	descriptions.Add(&c.Content.SkipFilesAboveSize, `skip searching a file entirely if it is above the given size (default = 1MB; unit = bytes)`)
