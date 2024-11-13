@@ -419,8 +419,9 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
-		name:    "find terraform packages",
-		pkgType: pkg.TerraformPkg,
+		name:        "find terraform packages",
+		pkgType:     pkg.TerraformPkg,
+		pkgLanguage: pkg.Go,
 		pkgInfo: map[string]string{
 			"registry.terraform.io/hashicorp/aws": "5.72.1",
 		},

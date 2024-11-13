@@ -22,6 +22,7 @@ func TestTerraformCataloger(t *testing.T) {
 		FoundBy:   "terraform-lock-cataloger",
 		Locations: file.NewLocationSet(location),
 		Type:      pkg.TerraformPkg,
+		Language:  pkg.Go,
 		PURL:      "pkg:terraform/registry.terraform.io/hashicorp/aws@5.72.1",
 		Metadata: pkg.TerraformLockEntry{
 			URL:         "registry.terraform.io/hashicorp/aws",
@@ -55,6 +56,7 @@ func TestTerraformCataloger(t *testing.T) {
 		FoundBy:   "terraform-lock-cataloger",
 		Locations: file.NewLocationSet(location),
 		Type:      pkg.TerraformPkg,
+		Language:  pkg.Go,
 		PURL:      "pkg:terraform/registry.terraform.io/hashicorp/google@6.8.0",
 		Metadata: pkg.TerraformLockEntry{
 			URL:         "registry.terraform.io/hashicorp/google",
