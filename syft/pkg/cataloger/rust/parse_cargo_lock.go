@@ -48,11 +48,15 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 			newPkg,
 		)
 		newIx := len(pkgs) - 1
+		// Cargo.lock dependencies are strings that are the name of a package, if that
+		// is unambiguous, or a string like "name version" if the name alone is not
+		// ambiguous. Set both keys in the map, since we don't know which key is
+		// going to be used until we're trying to resolve dependencies. If the
+		// first key is overwritten, that means the package name was an ambiguous dependency
+		// and "name version" will be used as the key anyway.
 		keys := []string{
 			newPkg.Name,
 			fmt.Sprintf("%s %s", newPkg.Name, newPkg.Version),
-			fmt.Sprintf("%s %s", newPkg.Name, newPkg.Metadata.(pkg.RustCargoLockEntry).Source),
-			fmt.Sprintf("%s %s %s", newPkg.Name, newPkg.Version, newPkg.Metadata.(pkg.RustCargoLockEntry).Source),
 		}
 		for _, k := range keys {
 			pkgIndex[k] = newIx
