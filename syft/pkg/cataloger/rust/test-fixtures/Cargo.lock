@@ -62,6 +62,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49f2bd0c6468a8230e1db229cff8029217cf623c767ea5d60bfbd42729ea54d5"
 dependencies = [
  "matches",
+  "bogus", # not present in cargo.lock; test error handling
 ]
 
 [[package]]

@@ -151,6 +151,7 @@ func TestParseCargoLock(t *testing.T) {
 			Checksum: "49f2bd0c6468a8230e1db229cff8029217cf623c767ea5d60bfbd42729ea54d5",
 			Dependencies: []string{
 				"matches",
+				"bogus", // a bad dependency to test error handling
 			},
 		},
 	}

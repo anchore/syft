@@ -66,9 +66,13 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	for _, p := range pkgs {
 		meta := p.Metadata.(pkg.RustCargoLockEntry)
 		for _, d := range meta.Dependencies {
+			i, ok := pkgIndex[d]
+			if !ok {
+				continue
+			}
 			relationships = append(relationships, artifact.Relationship{
 				From: p,
-				To:   pkgs[pkgIndex[d]],
+				To:   pkgs[i],
 				Type: artifact.DependencyOfRelationship,
 			})
 		}
