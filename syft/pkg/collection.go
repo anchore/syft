@@ -117,12 +117,6 @@ func (c *Collection) add(p Package) {
 		id = p.ID()
 	}
 
-	for _, l := range p.Locations.ToSlice() {
-		if l.IsSquashedAllLayersResolver {
-			c.isSquashAllLayer = true
-		}
-	}
-
 	if existing, exists := c.byID[id]; exists {
 		// there is already a package with this fingerprint merge the existing record with the new one
 		if err := existing.merge(p); err != nil {
@@ -292,7 +286,6 @@ func (c *Collection) Sorted(types ...Type) (pkgs []Package) {
 	for p := range c.Enumerate(types...) {
 		pkgs = append(pkgs, p)
 	}
-
 	Sort(pkgs)
 
 	return pkgs

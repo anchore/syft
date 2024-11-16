@@ -164,6 +164,7 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 
 	// generate package and file tasks based on the configuration
 	environmentTasks := c.environmentTasks()
+	scopeTasks := c.scopeTasks()
 	relationshipsTasks := c.relationshipTasks(src)
 	fileTasks := c.fileTasks()
 	pkgTasks, selectionEvidence, err := c.packageTasks(src)
@@ -177,6 +178,11 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 		taskGroups = append(taskGroups, pkgTasks, fileTasks)
 	} else {
 		taskGroups = append(taskGroups, append(pkgTasks, fileTasks...))
+	}
+
+	// all scope work must be done after all nodes (files and packages) have been cataloged and before the relationship
+	if source.ParseScope(c.Search.Scope.String()) == source.SquashWithAllLayersScope {
+		taskGroups = append(taskGroups, scopeTasks)
 	}
 
 	// all relationship work must be done after all nodes (files and packages) have been cataloged
@@ -304,6 +310,16 @@ func (c *CreateSBOMConfig) userPackageTasks(cfg task.CatalogingFactoryConfig) ([
 	}
 
 	return persistentPackageTasks, selectablePackageTasks, nil
+}
+
+// scopeTasks returns the set of tasks that should be run to generate additional scope information
+func (c *CreateSBOMConfig) scopeTasks() []task.Task {
+	var tsks []task.Task
+
+	if t := task.NewScopesTask(); t != nil {
+		tsks = append(tsks, t)
+	}
+	return tsks
 }
 
 // relationshipTasks returns the set of tasks that should be run to generate additional relationships as well as

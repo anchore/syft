@@ -203,17 +203,6 @@ func toPackageModels(catalog *pkg.Collection, cfg EncoderConfig) []model.Package
 		return artifacts
 	}
 	for _, p := range catalog.Sorted() {
-		if catalog.IsSquashedAllLayers() {
-			toDelete := true
-			for _, l := range p.Locations.ToSlice() {
-				if l.IsSquashedLayer && l.IsSquashedAllLayersResolver {
-					toDelete = false
-				}
-			}
-			if toDelete {
-				continue
-			}
-		}
 		artifacts = append(artifacts, toPackageModel(p, cfg))
 	}
 

@@ -56,9 +56,8 @@ func (i *ContainerImageSquashAllLayers) FilesByPath(paths ...string) ([]file.Loc
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:                 l.Annotations,
-				IsSquashedAllLayersResolver: true,
-				IsSquashedLayer:             true,
+				Annotations:     l.Annotations,
+				IsSquashedLayer: true,
 			},
 		})
 	}
@@ -67,9 +66,8 @@ func (i *ContainerImageSquashAllLayers) FilesByPath(paths ...string) ([]file.Loc
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:                 l.Annotations,
-				IsSquashedAllLayersResolver: true,
-				IsSquashedLayer:             false,
+				Annotations:     l.Annotations,
+				IsSquashedLayer: false,
 			},
 		})
 	}
@@ -94,9 +92,8 @@ func (i *ContainerImageSquashAllLayers) FilesByGlob(patterns ...string) ([]file.
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:                 l.Annotations,
-				IsSquashedAllLayersResolver: true,
-				IsSquashedLayer:             true,
+				Annotations:     l.Annotations,
+				IsSquashedLayer: true,
 			},
 		})
 	}
@@ -105,9 +102,8 @@ func (i *ContainerImageSquashAllLayers) FilesByGlob(patterns ...string) ([]file.
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:                 l.Annotations,
-				IsSquashedAllLayersResolver: true,
-				IsSquashedLayer:             false,
+				Annotations:     l.Annotations,
+				IsSquashedLayer: false,
 			},
 		})
 	}
@@ -143,9 +139,8 @@ func (i *ContainerImageSquashAllLayers) FilesByMIMEType(types ...string) ([]file
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:                 l.Annotations,
-				IsSquashedAllLayersResolver: true,
-				IsSquashedLayer:             true,
+				Annotations:     l.Annotations,
+				IsSquashedLayer: true,
 			},
 		})
 	}
@@ -154,9 +149,8 @@ func (i *ContainerImageSquashAllLayers) FilesByMIMEType(types ...string) ([]file
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:                 l.Annotations,
-				IsSquashedAllLayersResolver: true,
-				IsSquashedLayer:             false,
+				Annotations:     l.Annotations,
+				IsSquashedLayer: false,
 			},
 		})
 	}
