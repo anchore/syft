@@ -10,7 +10,7 @@ import (
 )
 
 func NewScopesTask() Task {
-	fn := func(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+	fn := func(_ context.Context, _ file.Resolver, builder sbomsync.Builder) error {
 		finalizeScope(builder)
 		return nil
 	}
