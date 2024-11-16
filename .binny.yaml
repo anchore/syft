@@ -127,7 +127,7 @@ tools:
   # used to upload test fixture cache
   - name: yq
     version:
-      want: v4.44.3
+      want: v4.44.5
     method: github-release
     with:
       repo: mikefarah/yq
