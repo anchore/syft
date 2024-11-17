@@ -16,7 +16,7 @@ import (
 // FullTextValue is a placeholder value when license metadata is discovered to be fullText
 // A license with "FullText" in its value refers the consumer to look at the FullText field
 // This is so that we can keep Value as a required field up until syft 2.0
-var FullTextValue string = "FullText"
+var FullTextValue = "FullText"
 
 var _ sort.Interface = (*Licenses)(nil)
 
