@@ -58,8 +58,9 @@ func joinLicenses(licenses []SPDXLicense) string {
 }
 
 type SPDXLicense struct {
-	ID    string
-	Value string
+	ID       string
+	Value    string
+	FullText string
 }
 
 func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
@@ -73,15 +74,22 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 			candidate.ID = l.SPDXExpression
 		} else {
 			// we did not find a valid SPDX license ID so treat as separate license
-			if len(l.Value) <= 64 {
-				// if the license text is less than the size of the hash,
-				// just use it directly so the id is more readable
-				candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
+			// check if license is full text
+			if l.Value == pkg.FullTextValue {
+				if len(l.FullText) <= 64 {
+					// if the license text is less than the size of the hash,
+					// just use it directly so the id is more readable
+					candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.FullText)
+				} else {
+					hash := sha256.Sum256([]byte(l.FullText))
+					candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
+				}
+				candidate.Value = l.Value
+				candidate.FullText = l.FullText
 			} else {
-				hash := sha256.Sum256([]byte(l.Value))
-				candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
+				candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
+				candidate.Value = l.Value
 			}
-			candidate.Value = l.Value
 		}
 
 		switch l.Type {

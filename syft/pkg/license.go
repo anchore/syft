@@ -80,10 +80,8 @@ func NewLicenseFromType(value string, t license.Type) License {
 		spdxExpression string
 		fullText       string
 	)
-	// The licenseId with the maximum length in the current spdx list: BSD-3-Clause-No-Nuclear-License-2014
-	// Length: 36
-	// We use this as an upperbound to check if a value provided is a declared license or it's contents
-	if strings.Contains(value, "\n") || len(value) > 36 {
+	// Check parsed value for newline character to see if it's the full license text
+	if strings.Contains(value, "\n") {
 		fullText = value
 	} else {
 		var err error
