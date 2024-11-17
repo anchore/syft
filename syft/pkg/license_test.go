@@ -226,3 +226,39 @@ func TestLicense_Merge(t *testing.T) {
 		})
 	}
 }
+
+func TestLicenseConstructors(t *testing.T) {
+	type input struct {
+		value string
+		urls  []string
+	}
+	tests := []struct {
+		name     string
+		input    input
+		expected License
+	}{
+		{
+			name: "License URLs are stripped of newlines and tabs",
+			input: input{
+				value: "New BSD License",
+				urls: []string{
+					`
+						http://user-agent-utils.googlecode.com/svn/trunk/UserAgentUtils/LICENSE.txt
+									
+					`},
+			},
+			expected: License{
+				Value: "New BSD License",
+				Type:  license.Declared,
+				URLs:  []string{"http://user-agent-utils.googlecode.com/svn/trunk/UserAgentUtils/LICENSE.txt"},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := NewLicenseFromURLs(test.input.value, test.input.urls...)
+			assert.Equal(t, test.expected, got)
+		})
+	}
+}

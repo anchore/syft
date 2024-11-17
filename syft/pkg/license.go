@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -113,7 +114,11 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 	s := strset.New()
 	for _, url := range urls {
 		if url != "" {
-			sanitizedURL := stripUnwantedCharacters(url)
+			sanitizedURL, err := stripUnwantedCharacters(url)
+			if err != nil {
+				log.Tracef("unable to sanitize url=%q: %s", url, err)
+				continue
+			}
 			s.Add(sanitizedURL)
 		}
 	}
@@ -124,12 +129,21 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 	return l
 }
 
-func stripUnwantedCharacters(input string) string {
-	// Remove newline, tab, and other unwanted whitespace characters
-	input = strings.ReplaceAll(input, "\n", "")
-	input = strings.ReplaceAll(input, "\t", "")
-	input = strings.TrimSpace(input) // also trim leading/trailing whitespace
-	return input
+func stripUnwantedCharacters(rawURL string) (string, error) {
+	// Step 1: Remove newline and tab characters
+	cleanedURL := strings.ReplaceAll(rawURL, "\n", "")
+	cleanedURL = strings.ReplaceAll(cleanedURL, "\t", "")
+
+	// Step 2: Trim leading/trailing spaces
+	cleanedURL = strings.TrimSpace(cleanedURL)
+
+	// Step 3: Validate the cleaned URL
+	_, err := url.ParseRequestURI(cleanedURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL: %w", err)
+	}
+
+	return cleanedURL, nil
 }
 
 func NewLicenseFromFields(value, url string, location *file.Location) License {
@@ -138,7 +152,12 @@ func NewLicenseFromFields(value, url string, location *file.Location) License {
 		l.Locations.Add(*location)
 	}
 	if url != "" {
-		l.URLs = append(l.URLs, url)
+		sanitizedURL, err := stripUnwantedCharacters(url)
+		if err != nil {
+			log.Tracef("unable to sanitize url=%q: %s", url, err)
+		} else {
+			l.URLs = append(l.URLs, sanitizedURL)
+		}
 	}
 
 	return l
