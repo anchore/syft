@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -112,7 +113,8 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 	s := strset.New()
 	for _, url := range urls {
 		if url != "" {
-			s.Add(url)
+			sanitizedURL := stripUnwantedCharacters(url)
+			s.Add(sanitizedURL)
 		}
 	}
 
@@ -120,6 +122,14 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 	sort.Strings(l.URLs)
 
 	return l
+}
+
+func stripUnwantedCharacters(input string) string {
+	// Remove newline, tab, and other unwanted whitespace characters
+	input = strings.ReplaceAll(input, "\n", "")
+	input = strings.ReplaceAll(input, "\t", "")
+	input = strings.TrimSpace(input) // also trim leading/trailing whitespace
+	return input
 }
 
 func NewLicenseFromFields(value, url string, location *file.Location) License {
