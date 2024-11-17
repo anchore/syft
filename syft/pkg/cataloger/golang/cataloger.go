@@ -14,8 +14,9 @@ import (
 var versionCandidateGroups = regexp.MustCompile(`(?P<version>\d+(\.\d+)?(\.\d+)?)(?P<candidate>\w*)`)
 
 const (
-	modFileCatalogerName = "go-module-file-cataloger"
-	binaryCatalogerName  = "go-module-binary-cataloger"
+	modFileCatalogerName    = "go-module-file-cataloger"
+	binaryCatalogerName     = "go-module-binary-cataloger"
+	sourceFileCatalogerName = "go-module-source-file-cataloger"
 )
 
 // NewGoModuleFileCataloger returns a new cataloger object that searches within go.mod files.
@@ -32,4 +33,12 @@ func NewGoModuleBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
 			mimetype.ExecutableMIMETypeSet.List()...,
 		).
 		WithProcessors(stdlibProcessor)
+}
+
+// NewGoModuleSourceFileCataloger returns a new cataloger object that uses the go.mod file
+// to extract the module name and then searches all direct and transitive dependencies
+// for the given module source tree
+func NewGoModuleSourceFileCataloger(opts CatalogerConfig) pkg.Cataloger {
+	return generic.NewCataloger(modFileCatalogerName).
+		WithParserByGlobs(newGoModSourceCataloger(opts).parseGoModFile, "**/go.mod")
 }

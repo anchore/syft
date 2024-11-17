@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"golang.org/x/tools/go/packages"
 	"io"
 	"sort"
 	"strings"
@@ -19,14 +20,57 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+var searchSuffix = "/..."
+
 type goModCataloger struct {
 	licenseResolver goLicenseResolver
 }
+
+type goModSourceCataloger struct{}
 
 func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 	return &goModCataloger{
 		licenseResolver: newGoLicenseResolver(modFileCatalogerName, opts),
 	}
+}
+
+func newGoModSourceCataloger(opts CatalogerConfig) *goModSourceCataloger {
+	return &goModSourceCataloger{}
+}
+
+func (c *goModSourceCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read module file: %w", err)
+	}
+
+	file, err := modfile.Parse("go.mod", contents, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse module file: %w", err)
+	}
+
+	// extract the module name and add the search suffix
+	mainModuleName := file.Module.Mod.Path
+	mainModuleName = fmt.Sprintf("%s/%s", mainModuleName, searchSuffix)
+
+	cfg := &packages.Config{
+		Context: ctx,
+		Mode:    packages.NeedImports | packages.NeedDeps | packages.NeedFiles | packages.NeedName | packages.NeedModule,
+		Tests:   true,
+	}
+
+	rootPkgs, err := packages.Load(cfg, mainModuleName)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load packages for %s: %w", mainModuleName, err)
+	}
+
+	discovered := make([]pkg.Package, 0)
+	for _, rootPkg := range rootPkgs {
+		discovered = append(discovered, pkg.Package{
+			Name: rootPkg.Name,
+		})
+	}
+	return discovered, nil, nil
 }
 
 // parseGoModFile takes a go.mod and lists all packages discovered.
