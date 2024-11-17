@@ -12,6 +12,8 @@ import (
 	"github.com/anchore/syft/syft/license"
 )
 
+var FullTextValue string = "FullText"
+
 var _ sort.Interface = (*Licenses)(nil)
 
 // License represents an SPDX Expression or license value extracted from a packages metadata
@@ -23,10 +25,13 @@ var _ sort.Interface = (*Licenses)(nil)
 // in order to distinguish if packages should be kept separate
 // this is different for licenses since we're only looking for evidence
 // of where a license was declared/concluded for a given package
+// If a license is given as it's full text in the metadata rather than it's value or SPDX expression
+// The FullText field is used to represent this data
 type License struct {
 	Value          string
 	SPDXExpression string
 	Type           license.Type
+	FullText       string
 	URLs           []string         `hash:"ignore"`
 	Locations      file.LocationSet `hash:"ignore"`
 }
@@ -65,12 +70,28 @@ func NewLicense(value string) License {
 }
 
 func NewLicenseFromType(value string, t license.Type) License {
-	var spdxExpression string
-	if value != "" {
+	var (
+		spdxExpression string
+		fullText       string
+	)
+	// The licenseId with the maximum length in the current spdx list: BSD-3-Clause-No-Nuclear-License-2014
+	// Length: 36
+	if value != "" && len(value) < 38 {
 		var err error
 		spdxExpression, err = license.ParseExpression(value)
 		if err != nil {
 			log.WithFields("error", err, "expression", value).Trace("unable to parse license expression")
+		}
+	} else {
+		fullText = value
+	}
+
+	if fullText != "" {
+		return License{
+			Value:     FullTextValue,
+			FullText:  fullText,
+			Type:      t,
+			Locations: file.NewLocationSet(),
 		}
 	}
 
@@ -96,7 +117,7 @@ func NewLicensesFromLocation(location file.Location, values ...string) (licenses
 		}
 		licenses = append(licenses, NewLicenseFromLocations(v, location))
 	}
-	return
+	return licenses
 }
 
 func NewLicenseFromLocations(value string, locations ...file.Location) License {
