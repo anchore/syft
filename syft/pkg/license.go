@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -12,6 +13,9 @@ import (
 	"github.com/anchore/syft/syft/license"
 )
 
+// FullTextValue is a placeholder value when license metadata is discovered to be fullText
+// A license with "FullText" in its value refers the consumer to look at the FullText field
+// This is so that we can keep Value as a required field up until syft 2.0
 var FullTextValue string = "FullText"
 
 var _ sort.Interface = (*Licenses)(nil)
@@ -27,6 +31,8 @@ var _ sort.Interface = (*Licenses)(nil)
 // of where a license was declared/concluded for a given package
 // If a license is given as it's full text in the metadata rather than it's value or SPDX expression
 // The FullText field is used to represent this data
+// A Concluded License type is the license the SBOM creator believes governs the package (human crafted or altered SBOM)
+// The Declared License is what the authors of a project believe govern the package. This is the default type syft declares.
 type License struct {
 	Value          string
 	SPDXExpression string
@@ -76,14 +82,15 @@ func NewLicenseFromType(value string, t license.Type) License {
 	)
 	// The licenseId with the maximum length in the current spdx list: BSD-3-Clause-No-Nuclear-License-2014
 	// Length: 36
-	if value != "" && len(value) < 38 {
+	// We use this as an upperbound to check if a value provided is a declared license or it's contents
+	if strings.Contains(value, "\n") || len(value) > 36 {
+		fullText = value
+	} else {
 		var err error
 		spdxExpression, err = license.ParseExpression(value)
 		if err != nil {
 			log.WithFields("error", err, "expression", value).Trace("unable to parse license expression")
 		}
-	} else {
-		fullText = value
 	}
 
 	if fullText != "" {

@@ -13,7 +13,6 @@ import (
 )
 
 func Test_Hash(t *testing.T) {
-
 	loc1 := file.NewLocation("place!")
 	loc1.FileSystemID = "fs1"
 	loc2 := file.NewLocation("place!")
@@ -223,6 +222,33 @@ func TestLicense_Merge(t *testing.T) {
 			// prove we don't modify the subject
 			assert.Equal(t, subjectLocationLen, len(tt.subject.Locations.ToSlice()))
 			assert.Equal(t, subjectURLLen, len(tt.subject.URLs))
+		})
+	}
+}
+
+func TestFullText(t *testing.T) {
+	fullText := `I am a license with full text
+	my authors put new line characters in metadata for labeling a license`
+	tests := []struct {
+		name  string
+		value string
+		want  License
+	}{
+		{
+			name:  "Full Text field is appropriated with the correct keyword as value",
+			value: fullText,
+			want: License{
+				Value:    "FullText",
+				Type:     license.Declared,
+				FullText: fullText,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NewLicense(tt.value)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
