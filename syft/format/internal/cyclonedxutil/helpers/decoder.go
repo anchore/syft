@@ -42,13 +42,13 @@ func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]inter
 	componentsPresent := false
 	if bom.Components != nil {
 		for i := range *bom.Components {
-			collectPackages(&(*bom.Components)[i], s, idMap)
+			collectPackages(&(*bom.Components)[i], s, bom, idMap)
 		}
 		componentsPresent = true
 	}
 
 	if bom.Metadata != nil && bom.Metadata.Component != nil {
-		collectPackages(bom.Metadata.Component, s, idMap)
+		collectPackages(bom.Metadata.Component, s, bom, idMap)
 		componentsPresent = true
 	}
 
@@ -59,7 +59,7 @@ func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]inter
 	return nil
 }
 
-func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[string]interface{}) {
+func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, bom *cyclonedx.BOM, idMap map[string]interface{}) {
 	switch component.Type {
 	case cyclonedx.ComponentTypeOS:
 	case cyclonedx.ComponentTypeContainer:
@@ -71,13 +71,16 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 			idMap[syftID] = p
 		}
 		// TODO there must be a better way than needing to call this manually:
+		var oldName = p.Name
+		p.Name = bom.SerialNumber + p.Name
 		p.SetID()
+		p.Name = oldName
 		s.Artifacts.Packages.Add(*p)
 	}
 
 	if component.Components != nil {
 		for i := range *component.Components {
-			collectPackages(&(*component.Components)[i], s, idMap)
+			collectPackages(&(*component.Components)[i], s, bom, idMap)
 		}
 	}
 }
