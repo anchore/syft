@@ -70,17 +70,34 @@
    "licenseConcluded": "NOASSERTION",
    "licenseDeclared": "NOASSERTION",
    "primaryPackagePurpose": "FILE"
+  },
+  {
+    "name": "debian",
+    "description": "debian",
+    "versionInfo": "1.2.3",
+    "SPDXID": "SPDXRef-OperatingSystem-debian",
+    "downloadLocation": "NOASSERTION",
+    "filesAnalyzed": false,
+    "licenseConcluded": "NOASSERTION",
+    "licenseDeclared": "NOASSERTION",
+    "supplier": "NOASSERTION",
+    "primaryPackagePurpose": "OPERATING-SYSTEM"
   }
  ],
  "relationships": [
   {
-   "spdxElementId": "SPDXRef-DocumentRoot-Directory-some-path",
+   "spdxElementId": "SPDXRef-OperatingSystem-debian",
    "relatedSpdxElement": "SPDXRef-Package-python-package-1-5a2b1ae000fcb51e",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-DocumentRoot-Directory-some-path",
+   "spdxElementId": "SPDXRef-OperatingSystem-debian",
    "relatedSpdxElement": "SPDXRef-Package-deb-package-2-39392bb5e270f669",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DocumentRoot-Directory-some-path",
+   "relatedSpdxElement": "SPDXRef-OperatingSystem-debian",
    "relationshipType": "CONTAINS"
   },
   {
