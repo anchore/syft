@@ -39,6 +39,6 @@ func NewGoModuleBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
 // to extract the module name and then searches all direct and transitive dependencies
 // for the given module source tree
 func NewGoModuleSourceFileCataloger(opts CatalogerConfig) pkg.Cataloger {
-	return generic.NewCataloger(modFileCatalogerName).
+	return generic.NewCataloger(sourceFileCatalogerName).
 		WithParserByGlobs(newGoModSourceCataloger(opts).parseGoModFile, "**/go.mod")
 }

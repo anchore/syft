@@ -92,6 +92,7 @@ require (
 	github.com/adrg/xdg v0.5.3
 	github.com/magiconair/properties v1.8.7
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
+	golang.org/x/tools v0.23.0
 )
 
 require (

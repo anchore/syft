@@ -51,7 +51,7 @@ func (c *goModSourceCataloger) parseGoModFile(ctx context.Context, resolver file
 
 	// extract the module name and add the search suffix
 	mainModuleName := file.Module.Mod.Path
-	mainModuleName = fmt.Sprintf("%s/%s", mainModuleName, searchSuffix)
+	mainModuleName = fmt.Sprintf("%s%s", mainModuleName, searchSuffix)
 
 	cfg := &packages.Config{
 		Context: ctx,
@@ -64,13 +64,62 @@ func (c *goModSourceCataloger) parseGoModFile(ctx context.Context, resolver file
 		return nil, nil, fmt.Errorf("failed to load packages for %s: %w", mainModuleName, err)
 	}
 
-	discovered := make([]pkg.Package, 0)
-	for _, rootPkg := range rootPkgs {
-		discovered = append(discovered, pkg.Package{
-			Name: rootPkg.Name,
+	syftPackages := make([]pkg.Package, 0)
+	pkgErrorOccurred := false
+	otherErrorOccurred := false
+	packages.Visit(rootPkgs, func(p *packages.Package) bool {
+		if len(p.Errors) > 0 {
+			pkgErrorOccurred = true
+			return false
+		}
+		if p.Module == nil {
+			otherErrorOccurred = true
+			return false
+		}
+
+		if !isValid(p) {
+			return false
+		}
+
+		syftPackages = append(syftPackages, pkg.Package{
+			Name:    p.Name,
+			Version: p.Module.Version,
+			// Licenses (TODO)
+			// Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:     packageURL(p.PkgPath, p.Module.Version),
+			Language: pkg.Go,
+			Type:     pkg.GoModulePkg,
+			Metadata: pkg.GolangModuleEntryMetadata{
+				Path:      p.Module.Path,
+				Version:   p.Module.Version,
+				Replace:   p.Module.Replace,
+				Time:      p.Module.Time,
+				Main:      p.Module.Main,
+				Indirect:  p.Module.Indirect,
+				Dir:       p.Module.Dir,
+				GoMod:     p.Module.GoMod,
+				GoVersion: p.Module.GoVersion,
+			},
 		})
+		return true
+	}, nil)
+	if pkgErrorOccurred {
+		// TODO: log error as warning for packages that could not be analyzed
 	}
-	return discovered, nil, nil
+	if otherErrorOccurred {
+		// TODO: log errors for direct/transitive dependency loading
+	}
+	return syftPackages, nil, nil
+}
+
+func isValid(p *packages.Package) bool {
+	if p.Name == "" {
+		return false
+	}
+	if p.Module.Version == "" {
+		return false
+	}
+	return true
 }
 
 // parseGoModFile takes a go.mod and lists all packages discovered.
