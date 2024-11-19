@@ -189,8 +189,8 @@ func toOSPackage(s sbom.SBOM) *spdx.Package {
 		return nil
 	}
 	return &spdx.Package{
-		PackageName:           distro.Name,
-		PackageDescription:    distro.PrettyName,
+		PackageName:           distro.ID,
+		PackageDescription:    distro.String(),
 		PackageSPDXIdentifier: spdx.ElementID(helpers.SanitizeElementID(fmt.Sprintf("%s-%s", prefixOS, strings.ToLower(distro.ID)))),
 		PackageVersion:        distro.VersionID,
 		PrimaryPackagePurpose: spdxPrimaryPurposeOS,
