@@ -725,7 +725,7 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 			if l.Value != "" {
 				licenses[l.ID] = l
 			}
-			if l.ID != "" && isSingularLicenseRef(l.ID) {
+			if l.ID != "" && isLicenseRef(l.ID) {
 				licenses[l.ID] = l
 			}
 		}
@@ -733,7 +733,7 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 			if l.Value != "" {
 				licenses[l.ID] = l
 			}
-			if l.ID != "" && isSingularLicenseRef(l.ID) {
+			if l.ID != "" && isLicenseRef(l.ID) {
 				licenses[l.ID] = l
 			}
 		}
@@ -762,13 +762,12 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	return result
 }
 
-// isSingularLicenseRef checks if the string is a singular LicenseRef-* identifier
-func isSingularLicenseRef(s string) bool {
-	// Regular expression to match LicenseRef-* format (case-sensitive)
-	re := regexp.MustCompile(`^LicenseRef-[A-Za-z0-9_-]+$`)
+var LicenseRefRegEx = regexp.MustCompile(`^LicenseRef-[A-Za-z0-9_-]+$`)
 
+// isSingularLicenseRef checks if the string is a singular LicenseRef-* identifier
+func isLicenseRef(s string) bool {
 	// Match the input string against the regex
-	return re.MatchString(s)
+	return LicenseRefRegEx.MatchString(s)
 }
 
 // TODO: handle SPDX excludes file case
