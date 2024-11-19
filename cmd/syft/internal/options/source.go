@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/dustin/go-humanize"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/clio"
@@ -20,7 +22,8 @@ type sourceConfig struct {
 }
 
 type fileSource struct {
-	Digests []string `json:"digests" yaml:"digests" mapstructure:"digests"`
+	Digests      []string `json:"digests" yaml:"digests" mapstructure:"digests"`
+	MaxLayerSize string   `json:"max-layer-size" yaml:"max-layer-size" mapstructure:"max-layer-size"`
 }
 
 var _ interface {
@@ -53,6 +56,13 @@ func (c *fileSource) PostLoad() error {
 	digests := strset.New(c.Digests...).List()
 	sort.Strings(digests)
 	c.Digests = digests
+	if c.MaxLayerSize != "" {
+		perFileReadLimit, err := humanize.ParseBytes(c.MaxLayerSize)
+		if err != nil {
+			return err
+		}
+		stereoscopeFile.SetPerFileReadLimit(int64(perFileReadLimit))
+	}
 	return nil
 }
 
