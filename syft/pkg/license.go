@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -11,6 +12,11 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 )
+
+// FullTextValue is a placeholder value when license metadata is discovered to be fullText
+// A license with "FullText" in its value refers the consumer to look at the FullText field
+// This is so that we can keep Value as a required field up until syft 2.0
+var FullTextValue = "FullText"
 
 var _ sort.Interface = (*Licenses)(nil)
 
@@ -23,10 +29,15 @@ var _ sort.Interface = (*Licenses)(nil)
 // in order to distinguish if packages should be kept separate
 // this is different for licenses since we're only looking for evidence
 // of where a license was declared/concluded for a given package
+// If a license is given as it's full text in the metadata rather than it's value or SPDX expression
+// The FullText field is used to represent this data
+// A Concluded License type is the license the SBOM creator believes governs the package (human crafted or altered SBOM)
+// The Declared License is what the authors of a project believe govern the package. This is the default type syft declares.
 type License struct {
 	Value          string
 	SPDXExpression string
 	Type           license.Type
+	FullText       string
 	URLs           []string         `hash:"ignore"`
 	Locations      file.LocationSet `hash:"ignore"`
 }
@@ -65,12 +76,27 @@ func NewLicense(value string) License {
 }
 
 func NewLicenseFromType(value string, t license.Type) License {
-	var spdxExpression string
-	if value != "" {
+	var (
+		spdxExpression string
+		fullText       string
+	)
+	// Check parsed value for newline character to see if it's the full license text
+	if strings.Contains(value, "\n") {
+		fullText = value
+	} else {
 		var err error
 		spdxExpression, err = license.ParseExpression(value)
 		if err != nil {
 			log.WithFields("error", err, "expression", value).Trace("unable to parse license expression")
+		}
+	}
+
+	if fullText != "" {
+		return License{
+			Value:     FullTextValue,
+			FullText:  fullText,
+			Type:      t,
+			Locations: file.NewLocationSet(),
 		}
 	}
 
@@ -96,7 +122,7 @@ func NewLicensesFromLocation(location file.Location, values ...string) (licenses
 		}
 		licenses = append(licenses, NewLicenseFromLocations(v, location))
 	}
-	return
+	return licenses
 }
 
 func NewLicenseFromLocations(value string, locations ...file.Location) License {

@@ -742,9 +742,13 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	slices.Sort(ids)
 	for _, id := range ids {
 		license := licenses[id]
+		et := license.Value
+		if license.FullText != "" {
+			et = license.FullText
+		}
 		result = append(result, &spdx.OtherLicense{
 			LicenseIdentifier: license.ID,
-			ExtractedText:     license.Value,
+			ExtractedText:     et,
 		})
 	}
 	return result
