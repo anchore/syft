@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"path"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -713,8 +714,8 @@ func toFileTypes(metadata *file.Metadata) (ty []string) {
 	return ty
 }
 
-// other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
-// field. The spdxexpression field is only filled given a validated Value field.
+// other licenses are for licenses from the pkg.Package that do not have a valid SPDX Expression
+// OR are an expression that is a single `License-Ref-*`
 func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	licenses := map[string]helpers.SPDXLicense{}
 
@@ -724,9 +725,15 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 			if l.Value != "" {
 				licenses[l.ID] = l
 			}
+			if l.ID != "" && isLicenseRef(l.ID) {
+				licenses[l.ID] = l
+			}
 		}
 		for _, l := range concludedLicenses {
 			if l.Value != "" {
+				licenses[l.ID] = l
+			}
+			if l.ID != "" && isLicenseRef(l.ID) {
 				licenses[l.ID] = l
 			}
 		}
@@ -742,12 +749,25 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	slices.Sort(ids)
 	for _, id := range ids {
 		license := licenses[id]
+		value := license.Value
+		// handle cases where LicenseRef needs to be included in hasExtractedLicensingInfos
+		if license.Value == "" {
+			value, _ = strings.CutPrefix(license.ID, "LicenseRef-")
+		}
 		result = append(result, &spdx.OtherLicense{
 			LicenseIdentifier: license.ID,
-			ExtractedText:     license.Value,
+			ExtractedText:     value,
 		})
 	}
 	return result
+}
+
+var licenseRefRegEx = regexp.MustCompile(`^LicenseRef-[A-Za-z0-9_-]+$`)
+
+// isSingularLicenseRef checks if the string is a singular LicenseRef-* identifier
+func isLicenseRef(s string) bool {
+	// Match the input string against the regex
+	return licenseRefRegEx.MatchString(s)
 }
 
 // TODO: handle SPDX excludes file case

@@ -753,6 +753,29 @@ func Test_OtherLicenses(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "LicenseRef as a valid spdx expression",
+			pkg: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("LicenseRef-Fedora-Public-Domain"),
+				),
+			},
+			expected: []*spdx.OtherLicense{
+				{
+					LicenseIdentifier: "LicenseRef-Fedora-Public-Domain",
+					ExtractedText:     "Fedora-Public-Domain",
+				},
+			},
+		},
+		{
+			name: "LicenseRef as a valid spdx expression does not otherize compound spdx expressions",
+			pkg: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("(MIT AND LicenseRef-Fedora-Public-Domain)"),
+				),
+			},
+			expected: nil,
+		},
 	}
 
 	for _, test := range tests {
