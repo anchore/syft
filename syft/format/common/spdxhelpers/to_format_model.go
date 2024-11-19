@@ -762,12 +762,12 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	return result
 }
 
-var LicenseRefRegEx = regexp.MustCompile(`^LicenseRef-[A-Za-z0-9_-]+$`)
+var licenseRefRegEx = regexp.MustCompile(`^LicenseRef-[A-Za-z0-9_-]+$`)
 
 // isSingularLicenseRef checks if the string is a singular LicenseRef-* identifier
 func isLicenseRef(s string) bool {
 	// Match the input string against the regex
-	return LicenseRefRegEx.MatchString(s)
+	return licenseRefRegEx.MatchString(s)
 }
 
 // TODO: handle SPDX excludes file case
