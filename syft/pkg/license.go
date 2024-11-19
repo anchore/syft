@@ -131,8 +131,6 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 
 func stripUnwantedCharacters(rawURL string) (string, error) {
 	cleanedURL := strings.TrimSpace(rawURL)
-
-	// Step 3: Validate the cleaned URL
 	_, err := url.ParseRequestURI(cleanedURL)
 	if err != nil {
 		return "", fmt.Errorf("invalid URL: %w", err)
