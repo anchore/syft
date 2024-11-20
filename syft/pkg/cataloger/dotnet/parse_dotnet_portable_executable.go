@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/saferwall/pe"
+	"github.com/scylladb/go-set/strset"
 
 	version "github.com/anchore/go-version"
 	"github.com/anchore/packageurl-go"
@@ -19,6 +20,19 @@ import (
 )
 
 var _ generic.Parser = parseDotnetPortableExecutable
+
+// let's check for entrypoint indications that are unique to the .NET framework (but are old)
+// - https://learn.microsoft.com/en-us/dotnet/framework/unmanaged-api/hosting/cordllmain-function
+// - https://learn.microsoft.com/en-us/dotnet/framework/unmanaged-api/hosting/corexemain-function
+// - https://learn.microsoft.com/en-us/dotnet/framework/unmanaged-api/hosting/corexemain2-function
+var deprecatedDotnetSymbols = strset.New("_CorExeMain", "_CorExeMain2", "_CorDllMain")
+
+// TODO: looking for more authoritative sources on this https://stackoverflow.com/questions/9545603/is-mscorlib-dll-mscoree-dll-loaded-when-net-application-runs and https://www.red-gate.com/simple-talk/blogs/anatomy-of-a-net-assembly-the-clr-loader-stub/
+var dotnetRuntimeLibraries = strset.New(
+	"mscoree.dll", // bootstrapper for the default CLR (common runtime language) host
+	"coreclr.dll",
+	"clr.dll",
+)
 
 func parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generic.Environment, f file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	by, err := io.ReadAll(f)
@@ -38,6 +52,10 @@ func parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generi
 		return nil, nil, err
 	}
 
+	if !isDotnetBinary(peFile) {
+		return nil, nil, nil
+	}
+
 	versionResources, err := peFile.ParseVersionResources()
 	if err != nil {
 		log.Tracef("unable to parse version resources in PE file: %s: %v", f.RealPath, err)
@@ -51,6 +69,22 @@ func parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generi
 	}
 
 	return []pkg.Package{dotNetPkg}, nil, nil
+}
+
+func isDotnetBinary(peFile *pe.File) bool {
+	for _, symbol := range peFile.Export.Functions {
+		if deprecatedDotnetSymbols.Has(symbol.Name) {
+			return true
+		}
+	}
+
+	for _, lib := range peFile.Imports {
+		if dotnetRuntimeLibraries.Has(lib.Name) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func buildDotNetPackage(versionResources map[string]string, f file.LocationReadCloser) (dnpkg pkg.Package, err error) {
