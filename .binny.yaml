@@ -58,7 +58,7 @@ tools:
   # used to release all artifacts
   - name: goreleaser
     version:
-      want: v2.4.5
+      want: v2.4.7
     method: github-release
     with:
       repo: goreleaser/goreleaser
@@ -127,7 +127,7 @@ tools:
   # used to upload test fixture cache
   - name: yq
     version:
-      want: v4.44.3
+      want: v4.44.5
     method: github-release
     with:
       repo: mikefarah/yq

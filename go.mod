@@ -46,7 +46,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/iancoleman/strcase v0.3.0
 	github.com/invopop/jsonschema v0.7.0
-	github.com/jedib0t/go-pretty/v6 v6.6.1
+	github.com/jedib0t/go-pretty/v6 v6.6.2
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
 	github.com/knqyf263/go-rpmdb v0.1.1
@@ -81,7 +81,7 @@ require (
 	golang.org/x/mod v0.22.0
 	golang.org/x/net v0.31.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.33.1
+	modernc.org/sqlite v1.34.1
 )
 
 require google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirect
