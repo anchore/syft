@@ -3,6 +3,7 @@ package fileresolver
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,15 +14,17 @@ func Test_ChrootContext_RequestResponse(t *testing.T) {
 	// /
 	//   somewhere/
 	//     outside.txt
+	//     abs-to-path -> /path
 	//   root-link -> ./
 	//   path/
 	//     to/
 	//       abs-inside.txt -> /path/to/the/file.txt               # absolute link to somewhere inside of the root
 	//       rel-inside.txt -> ./the/file.txt                      # relative link to somewhere inside of the root
 	//       the/
-	//		   file.txt
+	//         file.txt
 	//         abs-outside.txt -> /somewhere/outside.txt           # absolute link to outside of the root
 	//         rel-outside -> ../../../somewhere/outside.txt       # relative link to outside of the root
+	//       chroot-abs-symlink-to-dir -> /to/the                  # absolute link to dir inside "path" chroot
 	//
 
 	testDir, err := os.Getwd()
@@ -49,9 +52,22 @@ func Test_ChrootContext_RequestResponse(t *testing.T) {
 	absViaDoubleLinkPathToTheFile := filepath.Join(absViaDoubleLink, "path", "to", "the", "file.txt")
 	absViaDoubleLinkRelOutsidePath := filepath.Join(absViaDoubleLink, "path", "to", "the", "rel-outside.txt")
 
+	absChrootBase := filepath.Join(absolute, "path")
+	relChrootBase := filepath.Join(relative, "path")
+	chrootAbsSymlinkToDir := filepath.Join(absolute, "path", "to", "chroot-abs-symlink-to-dir")
+	absAbsToPathFromSomewhere := filepath.Join(absolute, "somewhere", "abs-to-path")
+	relAbsToPathFromSomewhere := filepath.Join(relative, "somewhere", "abs-to-path")
+
+	thisPid := os.Getpid()
+	processProcfsRoot := filepath.Join("/proc", strconv.Itoa(thisPid), "root")
+	processProcfsCwd, err := getProcfsCwd(processProcfsRoot)
+	assert.NoError(t, err)
+
 	cleanup := func() {
 		_ = os.Remove(absAbsInsidePath)
 		_ = os.Remove(absAbsOutsidePath)
+		_ = os.Remove(chrootAbsSymlinkToDir)
+		_ = os.Remove(absAbsToPathFromSomewhere)
 	}
 
 	// ensure the absolute symlinks are cleaned up from any previous runs
@@ -59,8 +75,16 @@ func Test_ChrootContext_RequestResponse(t *testing.T) {
 
 	require.NoError(t, os.Symlink(filepath.Join(absolute, "path", "to", "the", "file.txt"), absAbsInsidePath))
 	require.NoError(t, os.Symlink(filepath.Join(absolute, "somewhere", "outside.txt"), absAbsOutsidePath))
+	require.NoError(t, os.Symlink("/to/the", chrootAbsSymlinkToDir))
+	require.NoError(t, os.Symlink(filepath.Join(absolute, "path"), absAbsToPathFromSomewhere))
 
 	t.Cleanup(cleanup)
+
+	// To enable logging uncomment the following:
+	// cfg := &clio.LoggingConfig{Level: "trace"}
+	// l, err := clio.DefaultLogger(clio.Config{Log: cfg}, nil)
+	// l.(logger.Controller).SetOutput(os.Stdout)
+	// log.Set(l)
 
 	cases := []struct {
 		name               string
@@ -452,12 +476,66 @@ func Test_ChrootContext_RequestResponse(t *testing.T) {
 			expectedNativePath: absRelOutsidePath,
 			expectedChrootPath: "to/the/rel-outside.txt",
 		},
+		{
+			name:               "absolute symlink to directory relative to the chroot",
+			root:               chrootAbsSymlinkToDir,
+			base:               absChrootBase,
+			input:              "file.txt",
+			expectedNativePath: filepath.Join(absolute, "path", "to", "the", "file.txt"),
+			expectedChrootPath: "/to/the/file.txt",
+		},
+		{
+			name:               "absolute symlink to directory relative to the chroot, relative root",
+			root:               filepath.Join(relative, "path", "to", "chroot-abs-symlink-to-dir"),
+			base:               relChrootBase,
+			input:              "file.txt",
+			expectedNativePath: filepath.Join(absolute, "path", "to", "the", "file.txt"),
+			expectedChrootPath: "/to/the/file.txt",
+		},
+		{
+			name:               "absolute symlink to directory relative to the chroot, with extra symlink to chroot",
+			root:               filepath.Join(absAbsToPathFromSomewhere, "to", "chroot-abs-symlink-to-dir"),
+			base:               absChrootBase,
+			input:              "file.txt",
+			expectedNativePath: filepath.Join(absolute, "path", "to", "the", "file.txt"),
+			expectedChrootPath: "/to/the/file.txt",
+		},
+		{
+			name:               "absolute symlink to directory relative to the chroot, with extra symlink to chroot, relative root",
+			root:               filepath.Join(relAbsToPathFromSomewhere, "to", "chroot-abs-symlink-to-dir"),
+			base:               relChrootBase,
+			input:              "file.txt",
+			expectedNativePath: filepath.Join(absolute, "path", "to", "the", "file.txt"),
+			expectedChrootPath: "/to/the/file.txt",
+		},
+		{
+			name:               "_procfs_, abs root, relative request, direct",
+			cwd:                processProcfsCwd,
+			root:               filepath.Join(processProcfsRoot, absolute),
+			base:               processProcfsRoot,
+			input:              "path/to/the/file.txt",
+			expectedNativePath: filepath.Join(processProcfsRoot, absolute, "path/to/the/file.txt"),
+			expectedChrootPath: filepath.Join(absolute, "path/to/the/file.txt"),
+		},
+		{
+			name:               "_procfs_, abs root, abs request, direct",
+			root:               filepath.Join(processProcfsRoot, absolute),
+			base:               processProcfsRoot,
+			input:              "/path/to/the/file.txt",
+			expectedNativePath: filepath.Join(processProcfsRoot, absolute, "path/to/the/file.txt"),
+			expectedChrootPath: filepath.Join(absolute, "path/to/the/file.txt"),
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
+			var targetPath string
+			if filepath.IsAbs(c.cwd) {
+				targetPath = c.cwd
+			} else {
+				targetPath = filepath.Join(testDir, c.cwd)
+			}
 			// we need to mimic a shell, otherwise we won't get a path within a symlink
-			targetPath := filepath.Join(testDir, c.cwd)
 			t.Setenv("PWD", filepath.Clean(targetPath))
 
 			require.NoError(t, err)
