@@ -632,6 +632,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 			FileComment:        comment,
 			// required, no attempt made to determine license information
 			LicenseConcluded: noAssertion,
+			FileCopyrightText: noAssertion,
 			Checksums:        toFileChecksums(digests),
 			FileName:         coordinates.RealPath,
 			FileTypes:        toFileTypes(metadata),
