@@ -78,6 +78,21 @@ from-images:
     paths:
       - /usr/lib/swipl/bin/x86_64-linux/swipl
 
+  - version: 2.12.4
+    images:
+      - ref: dart:2.12.4-sdk@sha256:0da5d8c9727f5b90e585bcc55a078d981029f4e13044f206299e00f23993a4a8
+        platform: linux/amd64
+
+    paths:
+      - /usr/lib/dart/bin/dart
+
+  - version: 3.0.0
+    images:
+      - ref: dart:3.0.0-sdk@sha256:67708c6011199d59336bf6cd0f9e618e55dd3632c79a43375f5a082795f0b724
+        platform: linux/arm
+    paths:
+      - /usr/lib/dart/bin/dart
+
   - version: 3.5.2
     images:
       - ref: dart:3.5.2@sha256:1fd62cb5036bdc42de89bdae747683277986639be9b0b0a0751d2c50bbd9441f

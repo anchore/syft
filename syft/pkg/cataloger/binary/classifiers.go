@@ -458,7 +458,11 @@ func DefaultClassifiers() []Classifier {
 			Class:    "dart-binary",
 			FileGlob: "**/dart",
 			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)Dart,GC"\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+(\.[0-9]+)?\.beta)?) `,
+				// MathAtan[NUL]2.12.4 (stable)
+				// "%s"[NUL]3.0.0 (stable)
+				// Dart,GC"[NUL]3.5.2 (stable)
+				// Dart,GC"[NUL]3.6.0-216.1.beta (beta)
+				`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+(\.[0-9]+)?\.beta)?) `,
 			),
 			Package: "dart",
 			PURL:    mustPURL("pkg:generic/dart@version"),
