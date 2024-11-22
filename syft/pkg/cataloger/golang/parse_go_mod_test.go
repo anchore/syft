@@ -24,7 +24,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/one-package")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
-					Dependencies: pkg.MixedDependencies,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata:     pkg.GolangModuleEntry{},
 				},
 			},
@@ -40,7 +40,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
-					Dependencies: pkg.MixedDependencies,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata:     pkg.GolangModuleEntry{},
 				},
 				{
@@ -50,7 +50,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
-					Dependencies: pkg.MixedDependencies,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata:     pkg.GolangModuleEntry{},
 				},
 				{
@@ -60,7 +60,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
-					Dependencies: pkg.MixedDependencies,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata:     pkg.GolangModuleEntry{},
 				},
 				{
@@ -70,7 +70,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
-					Dependencies: pkg.MixedDependencies,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata:     pkg.GolangModuleEntry{},
 				},
 				{
@@ -80,7 +80,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
-					Dependencies: pkg.MixedDependencies,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata:     pkg.GolangModuleEntry{},
 				},
 				{
@@ -90,7 +90,7 @@ func TestParseGoMod(t *testing.T) {
 					Locations:    file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
-					Dependencies: pkg.MixedDependencies,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata:     pkg.GolangModuleEntry{},
 				},
 			},
@@ -125,7 +125,7 @@ func Test_GoSumHashes(t *testing.T) {
 					FoundBy:      "go-module-file-cataloger",
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
-					Dependencies: pkg.MixedDependencies,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata:     pkg.GolangModuleEntry{},
 				},
 				{
@@ -136,7 +136,7 @@ func Test_GoSumHashes(t *testing.T) {
 					FoundBy:      "go-module-file-cataloger",
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
-					Dependencies: pkg.MixedDependencies,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata: pkg.GolangModuleEntry{
 						H1Digest: "h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=",
 					},
@@ -149,7 +149,7 @@ func Test_GoSumHashes(t *testing.T) {
 					FoundBy:      "go-module-file-cataloger",
 					Language:     pkg.Go,
 					Type:         pkg.GoModulePkg,
-					Dependencies: pkg.MixedDependencies,
+					Dependencies: pkg.IncompleteDependencies,
 					Metadata: pkg.GolangModuleEntry{
 						H1Digest: "h1:5PJl274Y63IEHC+7izoQE9x6ikvDFZS2mDVS3drnohI=",
 					},

@@ -59,16 +59,14 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		}
 
 		packages[m.Mod.Path] = pkg.Package{
-			Name:      m.Mod.Path,
-			Version:   m.Mod.Version,
-			Licenses:  pkg.NewLicenseSet(lics...),
-			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			PURL:      packageURL(m.Mod.Path, m.Mod.Version),
-			Language:  pkg.Go,
-			Type:      pkg.GoModulePkg,
-			// we don't have a way to express on a package or relationship the nature of "//indirect" markings on dependencies
-			// so though the dependencies are complete and separable with the raw data, the data in the SBOM is not separable.
-			Dependencies: pkg.MixedDependencies,
+			Name:         m.Mod.Path,
+			Version:      m.Mod.Version,
+			Licenses:     pkg.NewLicenseSet(lics...),
+			Locations:    file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:         packageURL(m.Mod.Path, m.Mod.Version),
+			Language:     pkg.Go,
+			Type:         pkg.GoModulePkg,
+			Dependencies: pkg.IncompleteDependencies,
 			Metadata: pkg.GolangModuleEntry{
 				H1Digest: digests[fmt.Sprintf("%s %s", m.Mod.Path, m.Mod.Version)],
 			},
@@ -87,16 +85,14 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		delete(packages, m.Old.Path)
 
 		packages[m.New.Path] = pkg.Package{
-			Name:      m.New.Path,
-			Version:   m.New.Version,
-			Licenses:  pkg.NewLicenseSet(lics...),
-			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			PURL:      packageURL(m.New.Path, m.New.Version),
-			Language:  pkg.Go,
-			Type:      pkg.GoModulePkg,
-			// we don't have a way to express on a package or relationship the nature of "//indirect" markings on dependencies
-			// so though the dependencies are complete and separable with the raw data, the data in the SBOM is not separable.
-			Dependencies: pkg.MixedDependencies,
+			Name:         m.New.Path,
+			Version:      m.New.Version,
+			Licenses:     pkg.NewLicenseSet(lics...),
+			Locations:    file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:         packageURL(m.New.Path, m.New.Version),
+			Language:     pkg.Go,
+			Type:         pkg.GoModulePkg,
+			Dependencies: pkg.IncompleteDependencies,
 			Metadata: pkg.GolangModuleEntry{
 				H1Digest: digests[fmt.Sprintf("%s %s", m.New.Path, m.New.Version)],
 			},

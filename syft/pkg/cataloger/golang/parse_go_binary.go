@@ -134,6 +134,10 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, licenseScanner l
 			mod.cryptoSettings,
 			experiments,
 			lics,
+			// the buildinfo section is a flat list of dependencies missing all edge information. So all direct and indirect
+			// dependencies are related directly to the main module. This means that we don't have any way to discover
+			// the completeness of the dependency's dependencies, thus they are incomplete.
+			pkg.IncompleteDependencies,
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if pkg.IsValid(&p) {
@@ -178,6 +182,9 @@ func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, licenseScanne
 		mod.cryptoSettings,
 		experiments,
 		lics,
+		// the buildinfo section is a flat list of dependencies missing all edge information. So all direct and indirect
+		// dependencies are related directly to the main module.
+		pkg.CompleteWithIndirectDependencies,
 		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 

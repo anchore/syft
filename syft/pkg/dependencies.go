@@ -21,11 +21,11 @@ const (
 	// this package. Note that any indirect (transitive) dependencies must not be directly linked to this package.
 	CompleteDependencies DependencyCompleteness = "complete"
 
-	// MixedDependencies is a superset of complete. It indicates that the package has all of its direct dependencies
+	// CompleteWithIndirectDependencies is a superset of complete. It indicates that the package has all of its direct dependencies
 	// resolved as well as some or all of indirect dependencies. What is notable about this is that direct and
 	// indirect dependencies are linked directly to this package and are not separable (you cannot distinguish between
 	// a direct and indirect dependency from the perspective of this package).
-	MixedDependencies DependencyCompleteness = "mixed"
+	CompleteWithIndirectDependencies DependencyCompleteness = "complete-with-indirect"
 
 	// IncompleteDependencies indicates that the package does not have all of its direct dependencies resolved.
 	// This is useful in times when there is more than one mechanism at play for resolving dependencies and the
@@ -37,8 +37,8 @@ func ParseDependencyCompleteness(value string) DependencyCompleteness {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case string(CompleteDependencies):
 		return CompleteDependencies
-	case string(MixedDependencies):
-		return MixedDependencies
+	case string(CompleteWithIndirectDependencies):
+		return CompleteWithIndirectDependencies
 	case string(IncompleteDependencies):
 		return IncompleteDependencies
 	default:

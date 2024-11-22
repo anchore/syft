@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings, experiments []string, licenses []pkg.License, locations ...file.Location) pkg.Package {
+func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings, experiments []string, licenses []pkg.License, dependencies pkg.DependencyCompleteness, locations ...file.Location) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}
@@ -24,7 +24,7 @@ func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, mainModule, go
 		Locations: file.NewLocationSet(locations...),
 		// we don't have a way to express on a package or relationship the nature of "//indirect" markings on dependencies
 		// so though the dependencies are complete and separable with the raw data, the data in the SBOM is not separable.
-		Dependencies: pkg.MixedDependencies,
+		Dependencies: dependencies,
 		Metadata: pkg.GolangBinaryBuildinfoEntry{
 			GoCompiledVersion: goVersion,
 			H1Digest:          dep.Sum,
