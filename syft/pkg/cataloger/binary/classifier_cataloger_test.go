@@ -1068,6 +1068,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "dart/2.12.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "dart",
+				Version:   "2.12.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/dart@2.12.4",
+				Locations: locations("dart"),
+				Metadata:  metadata("dart-binary"),
+			},
+		},
+		{
+			logicalFixture: "dart/3.0.0/linux-arm",
+			expected: pkg.Package{
+				Name:      "dart",
+				Version:   "3.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/dart@3.0.0",
+				Locations: locations("dart"),
+				Metadata:  metadata("dart-binary"),
+			},
+		},
+		{
 			logicalFixture: "dart/3.5.2/linux-amd64",
 			expected: pkg.Package{
 				Name:      "dart",
