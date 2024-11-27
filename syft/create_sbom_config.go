@@ -22,6 +22,7 @@ type CreateSBOMConfig struct {
 	Compliance         cataloging.ComplianceConfig
 	Search             cataloging.SearchConfig
 	Relationships      cataloging.RelationshipsConfig
+	Unknowns           cataloging.UnknownsConfig
 	DataGeneration     cataloging.DataGenerationConfig
 	Packages           pkgcataloging.Config
 	Files              filecataloging.Config
@@ -113,6 +114,12 @@ func (c *CreateSBOMConfig) WithRelationshipsConfig(cfg cataloging.RelationshipsC
 	return c
 }
 
+// WithUnknownsConfig allows for defining the specific behavior dealing with unknowns
+func (c *CreateSBOMConfig) WithUnknownsConfig(cfg cataloging.UnknownsConfig) *CreateSBOMConfig {
+	c.Unknowns = cfg
+	return c
+}
+
 // WithDataGenerationConfig allows for defining what data elements that cannot be discovered from the underlying
 // target being scanned that should be generated after package creation.
 func (c *CreateSBOMConfig) WithDataGenerationConfig(cfg cataloging.DataGenerationConfig) *CreateSBOMConfig {
@@ -173,6 +180,7 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	// generate package and file tasks based on the configuration
 	environmentTasks := c.environmentTasks()
 	relationshipsTasks := c.relationshipTasks(src)
+	unknownTasks := c.unknownsTasks()
 	fileTasks := c.fileTasks()
 	pkgTasks, selectionEvidence, err := c.packageTasks(src)
 	if err != nil {
@@ -190,6 +198,11 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	// all relationship work must be done after all nodes (files and packages) have been cataloged
 	if len(relationshipsTasks) > 0 {
 		taskGroups = append(taskGroups, relationshipsTasks)
+	}
+
+	// all unknowns tasks should happen after all scanning is complete
+	if len(unknownTasks) > 0 {
+		taskGroups = append(taskGroups, unknownTasks)
 	}
 
 	// identifying the environment (i.e. the linux release) must be done first as this is required for package cataloging
@@ -336,6 +349,18 @@ func (c *CreateSBOMConfig) environmentTasks() []task.Task {
 		tsks = append(tsks, t)
 	}
 	return tsks
+}
+
+// unknownsTasks returns a set of tasks that perform any necessary post-processing
+// to identify SBOM elements as unknowns
+func (c *CreateSBOMConfig) unknownsTasks() []task.Task {
+	var tasks []task.Task
+
+	if t := task.NewUnknownsLabelerTask(c.Unknowns); t != nil {
+		tasks = append(tasks, t)
+	}
+
+	return tasks
 }
 
 func (c *CreateSBOMConfig) validate() error {

@@ -273,3 +273,10 @@ func TestParsePodfileLock(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parsePodfileLock, expectedPkgs, expectedRelationships)
 }
+
+func Test_corruptPodfile(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/src/Podfile.lock").
+		WithError().
+		TestParser(t, parsePodfileLock)
+}

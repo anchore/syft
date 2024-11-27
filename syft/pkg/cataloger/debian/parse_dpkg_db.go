@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"regexp"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -34,10 +36,39 @@ func parseDpkgDB(_ context.Context, resolver file.Resolver, env *generic.Environ
 
 	var pkgs []pkg.Package
 	for _, m := range metadata {
-		pkgs = append(pkgs, newDpkgPackage(m, reader.Location, resolver, env.LinuxRelease))
+		p := newDpkgPackage(m, reader.Location, resolver, env.LinuxRelease, findDpkgInfoFiles(m.Package, resolver, reader.Location)...)
+		pkgs = append(pkgs, p)
 	}
 
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
+}
+
+func findDpkgInfoFiles(name string, resolver file.Resolver, dbLocation file.Location) []file.Location {
+	if resolver == nil {
+		return nil
+	}
+	if strings.TrimSpace(name) == "" {
+		return nil
+	}
+
+	// for typical debian-base distributions, the installed package info is at /var/lib/dpkg/status
+	// and the md5sum information is under /var/lib/dpkg/info/; however, for distroless the installed
+	// package info is across multiple files under /var/lib/dpkg/status.d/ and the md5sums are contained in
+	// the same directory
+	searchPath := path.Dir(dbLocation.RealPath)
+
+	if !strings.HasSuffix(searchPath, "status.d") {
+		searchPath = path.Join(searchPath, "info")
+	}
+
+	// look for /var/lib/dpkg/info/NAME.*
+	locations, err := resolver.FilesByGlob(path.Join(searchPath, name+".*"))
+	if err != nil {
+		log.WithFields("error", err, "pkg", name).Trace("failed to fetch related dpkg info files")
+		return nil
+	}
+
+	return locations
 }
 
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.

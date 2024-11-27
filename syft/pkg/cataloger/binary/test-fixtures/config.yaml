@@ -78,6 +78,21 @@ from-images:
     paths:
       - /usr/lib/swipl/bin/x86_64-linux/swipl
 
+  - version: 2.12.4
+    images:
+      - ref: dart:2.12.4-sdk@sha256:0da5d8c9727f5b90e585bcc55a078d981029f4e13044f206299e00f23993a4a8
+        platform: linux/amd64
+
+    paths:
+      - /usr/lib/dart/bin/dart
+
+  - version: 3.0.0
+    images:
+      - ref: dart:3.0.0-sdk@sha256:67708c6011199d59336bf6cd0f9e618e55dd3632c79a43375f5a082795f0b724
+        platform: linux/arm
+    paths:
+      - /usr/lib/dart/bin/dart
+
   - version: 3.5.2
     images:
       - ref: dart:3.5.2@sha256:1fd62cb5036bdc42de89bdae747683277986639be9b0b0a0751d2c50bbd9441f
@@ -126,6 +141,13 @@ from-images:
   - version: 1.8.22
     images:
       - ref: haproxy:1.8.22@sha256:166ea77f87599b8a679921de4aa847e776801f3f07b4f17ce4e2aec7fb54e3ea
+        platform: linux/amd64
+    paths:
+      - /usr/local/sbin/haproxy
+
+  - version: 2.0.0
+    images:
+      - ref: haproxy:2.0.0@sha256:f88bca67a2782e7bd88af168d5c11216c32104d12fe9240fac54a1d3196e3f9c
         platform: linux/amd64
     paths:
       - /usr/local/sbin/haproxy
@@ -458,6 +480,13 @@ from-images:
         platform: linux/amd64
       - ref: redis:7.2.3@sha256:a0a0c38b31011b813cddf78d997f8ccba13019c27efd386984b0cfc1e4b618ff
         platform: linux/arm64
+    paths:
+      - /usr/local/bin/redis-server
+
+  - version: 7.2.5
+    images:
+      - ref: redis:7.2.5@sha256:3b44455ef048b5f0a3a26d874c00c0f4ffe6a71a40834f2b038f816c6ad5ca4f
+        platform: linux/386
     paths:
       - /usr/local/bin/redis-server
 

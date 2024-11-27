@@ -97,3 +97,10 @@ func Test_AuditBinaryCataloger_Globs(t *testing.T) {
 		})
 	}
 }
+
+func Test_corruptAuditBinary(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/partial-binary").
+		WithError().
+		TestParser(t, parseAuditBinary)
+}

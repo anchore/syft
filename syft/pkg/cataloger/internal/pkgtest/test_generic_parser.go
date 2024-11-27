@@ -48,7 +48,6 @@ type CatalogTester struct {
 
 func NewCatalogTester() *CatalogTester {
 	return &CatalogTester{
-		wantErr:          require.NoError,
 		locationComparer: cmptest.DefaultLocationComparer,
 		licenseComparer:  cmptest.DefaultLicenseComparer,
 		packageStringer:  stringPackage,
@@ -113,7 +112,6 @@ func (p *CatalogTester) WithEnv(env *generic.Environment) *CatalogTester {
 }
 
 func (p *CatalogTester) WithError() *CatalogTester {
-	p.assertResultExpectations = true
 	p.wantErr = require.Error
 	return p
 }
@@ -226,7 +224,10 @@ func (p *CatalogTester) IgnoreUnfulfilledPathResponses(paths ...string) *Catalog
 func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 	t.Helper()
 	pkgs, relationships, err := parser(context.Background(), p.resolver, p.env, p.reader)
-	p.wantErr(t, err)
+	// only test for errors if explicitly requested
+	if p.wantErr != nil {
+		p.wantErr(t, err)
+	}
 	p.assertPkgs(t, pkgs, relationships)
 }
 
@@ -247,8 +248,12 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 		assert.ElementsMatchf(t, p.expectedContentQueries, resolver.AllContentQueries(), "unexpected content queries observed: diff %s", cmp.Diff(p.expectedContentQueries, resolver.AllContentQueries()))
 	}
 
-	if p.assertResultExpectations {
+	// only test for errors if explicitly requested
+	if p.wantErr != nil {
 		p.wantErr(t, err)
+	}
+
+	if p.assertResultExpectations {
 		p.assertPkgs(t, pkgs, relationships)
 	}
 
@@ -256,7 +261,7 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 		a(t, pkgs, relationships)
 	}
 
-	if !p.assertResultExpectations && len(p.customAssertions) == 0 {
+	if !p.assertResultExpectations && len(p.customAssertions) == 0 && p.wantErr == nil {
 		resolver.PruneUnfulfilledPathResponses(p.ignoreUnfulfilledPathResponses, p.ignoreAnyUnfulfilledPaths...)
 
 		// if we aren't testing the results, we should focus on what was searched for (for glob-centric tests)

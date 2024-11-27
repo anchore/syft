@@ -6,6 +6,7 @@ import (
 	"github.com/anchore/go-logger"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -151,8 +152,9 @@ func (c *Cataloger) Name() string {
 func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
+	var errs error
 
-	logger := log.Nested("cataloger", c.upstreamCataloger)
+	lgr := log.Nested("cataloger", c.upstreamCataloger)
 
 	env := Environment{
 		// TODO: consider passing into the cataloger, this would affect the cataloger interface (and all implementations). This can be deferred until later.
@@ -164,9 +166,10 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")
 
-		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, logger, parser, &env)
+		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, lgr, parser, &env)
 		if err != nil {
-			continue // logging is handled within invokeParser
+			// parsers may return errors and valid packages / relationships
+			errs = unknown.Append(errs, location, err)
 		}
 
 		for _, p := range discoveredPackages {
@@ -176,7 +179,7 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 		relationships = append(relationships, discoveredRelationships...)
 	}
-	return c.process(ctx, resolver, packages, relationships, nil)
+	return c.process(ctx, resolver, packages, relationships, errs)
 }
 
 func (c *Cataloger) process(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
@@ -196,11 +199,11 @@ func invokeParser(ctx context.Context, resolver file.Resolver, location file.Loc
 
 	discoveredPackages, discoveredRelationships, err := parser(ctx, resolver, env, file.NewLocationReadCloser(location, contentReader))
 	if err != nil {
-		logger.WithFields("location", location.RealPath, "error", err).Warnf("cataloger failed")
-		return nil, nil, err
+		// these errors are propagated up, and are likely to be coordinate errors
+		logger.WithFields("location", location.RealPath, "error", err).Trace("cataloger returned errors")
 	}
 
-	return discoveredPackages, discoveredRelationships, nil
+	return discoveredPackages, discoveredRelationships, err
 }
 
 // selectFiles takes a set of file trees and resolves and file references of interest for future cataloging

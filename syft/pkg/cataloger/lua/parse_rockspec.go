@@ -2,6 +2,7 @@ package lua
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -30,7 +31,7 @@ func parseRockspec(_ context.Context, _ file.Resolver, _ *generic.Environment, r
 	doc, err := parseRockspecData(reader)
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to parse Rockspec app")
-		return nil, nil, nil
+		return nil, nil, fmt.Errorf("unable to parse Rockspec app: %w", err)
 	}
 
 	var name, version, license, homepage, description, url string

@@ -349,6 +349,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "haproxy/2.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haproxy",
+				Version:   "2.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haproxy@2.0.0",
+				Locations: locations("haproxy"),
+				Metadata:  metadata("haproxy-binary"),
+			},
+		},
+		{
 			logicalFixture: "haproxy/2.7.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haproxy",
@@ -481,6 +492,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "7.2.3",
 				Type:      "binary",
 				PURL:      "pkg:generic/redis@7.2.3",
+				Locations: locations("redis-server"),
+				Metadata:  metadata("redis-binary"),
+			},
+		},
+		{
+			logicalFixture: "redis-server/7.2.5/linux-386",
+			expected: pkg.Package{
+				Name:      "redis",
+				Version:   "7.2.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/redis@7.2.5",
 				Locations: locations("redis-server"),
 				Metadata:  metadata("redis-binary"),
 			},
@@ -1043,6 +1065,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/swipl@9.3.8",
 				Locations: locations("swipl"),
 				Metadata:  metadata("swipl-binary"),
+			},
+		},
+		{
+			logicalFixture: "dart/2.12.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "dart",
+				Version:   "2.12.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/dart@2.12.4",
+				Locations: locations("dart"),
+				Metadata:  metadata("dart-binary"),
+			},
+		},
+		{
+			logicalFixture: "dart/3.0.0/linux-arm",
+			expected: pkg.Package{
+				Name:      "dart",
+				Version:   "3.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/dart@3.0.0",
+				Locations: locations("dart"),
+				Metadata:  metadata("dart-binary"),
 			},
 		},
 		{
@@ -1646,7 +1690,7 @@ func Test_Cataloger_ResilientToErrors(t *testing.T) {
 
 	resolver := &panicyResolver{}
 	_, _, err := c.Catalog(context.Background(), resolver)
-	assert.NoError(t, err)
+	assert.Nil(t, err) // non-coordinate-based FindBy* errors are now logged and not returned
 	assert.True(t, resolver.searchCalled)
 }
 

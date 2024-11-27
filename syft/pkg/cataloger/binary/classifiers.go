@@ -78,7 +78,7 @@ func DefaultClassifiers() []Classifier {
 			FileGlob: "**/redis-server",
 			EvidenceMatcher: evidenceMatchers(
 				FileContentsVersionMatcher(`(?s)payload %5.*?(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}`),
-				FileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12}-[0-9]{19}\x00.*?payload %5`),
+				FileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}\x00.*?payload %5`),
 			),
 			Package: "redis",
 			PURL:    mustPURL("pkg:generic/redis@version"),
@@ -158,7 +158,7 @@ func DefaultClassifiers() []Classifier {
 				// [NUL]v0.12.18[NUL]
 				// [NUL]v4.9.1[NUL]
 				// node.js/v22.9.0
-				FileContentsVersionMatcher(`(?m)\x00(node )?v(?P<version>(0|4|5)\.[0-9]+\.[0-9]+)\x00`),
+				FileContentsVersionMatcher(`(?m)\x00(node )?v(?P<version>(0|4|5|6)\.[0-9]+\.[0-9]+)\x00`),
 				FileContentsVersionMatcher(`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			),
 			Package: "node",
@@ -196,6 +196,7 @@ func DefaultClassifiers() []Classifier {
 			Class:    "haproxy-binary",
 			FileGlob: "**/haproxy",
 			EvidenceMatcher: evidenceMatchers(
+				FileContentsVersionMatcher(`(?m)version (?P<version>[0-9]+\.[0-9]+(\.|-dev|-rc)[0-9]+)(-[a-z0-9]{7})?, released 20`),
 				FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)`),
 				FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
 			),
@@ -350,7 +351,7 @@ func DefaultClassifiers() []Classifier {
 		},
 		{
 			Class:    "mariadb-binary",
-			FileGlob: "**/mariadb",
+			FileGlob: "**/{mariadb,mysql}",
 			EvidenceMatcher: FileContentsVersionMatcher(
 				// 10.6.15-MariaDB
 				`(?m)(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-MariaDB`),
@@ -457,7 +458,11 @@ func DefaultClassifiers() []Classifier {
 			Class:    "dart-binary",
 			FileGlob: "**/dart",
 			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)Dart,GC"\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+(\.[0-9]+)?\.beta)?) `,
+				// MathAtan[NUL]2.12.4 (stable)
+				// "%s"[NUL]3.0.0 (stable)
+				// Dart,GC"[NUL]3.5.2 (stable)
+				// Dart,GC"[NUL]3.6.0-216.1.beta (beta)
+				`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+(\.[0-9]+)?\.beta)?) `,
 			),
 			Package: "dart",
 			PURL:    mustPURL("pkg:generic/dart@version"),

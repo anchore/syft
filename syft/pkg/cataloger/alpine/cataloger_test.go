@@ -190,6 +190,14 @@ func TestApkDBCataloger(t *testing.T) {
 
 }
 
+func Test_corruptDb(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/corrupt").
+		WithCompareOptions(cmpopts.IgnoreFields(pkg.ApkDBEntry{}, "Files", "GitCommit", "Checksum")).
+		WithError().
+		TestCataloger(t, NewDBCataloger())
+}
+
 func TestCatalogerDependencyTree(t *testing.T) {
 	assertion := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 		expected := map[string][]string{

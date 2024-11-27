@@ -7,6 +7,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -24,14 +25,14 @@ type compositeActionRunsDef struct {
 }
 
 func parseCompositeActionForActionUsage(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	contents, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read yaml composite action file: %w", err)
+	contents, errs := io.ReadAll(reader)
+	if errs != nil {
+		return nil, nil, fmt.Errorf("unable to read yaml composite action file: %w", errs)
 	}
 
 	var ca compositeActionDef
-	if err = yaml.Unmarshal(contents, &ca); err != nil {
-		return nil, nil, fmt.Errorf("unable to parse yaml composite action file: %w", err)
+	if errs = yaml.Unmarshal(contents, &ca); errs != nil {
+		return nil, nil, fmt.Errorf("unable to parse yaml composite action file: %w", errs)
 	}
 
 	// we use a collection to help with deduplication before raising to higher level processing
@@ -42,11 +43,14 @@ func parseCompositeActionForActionUsage(_ context.Context, _ file.Resolver, _ *g
 			continue
 		}
 
-		p := newPackageFromUsageStatement(step.Uses, reader.Location)
+		p, err := newPackageFromUsageStatement(step.Uses, reader.Location)
+		if err != nil {
+			errs = unknown.Append(errs, reader, err)
+		}
 		if p != nil {
 			pkgs.Add(*p)
 		}
 	}
 
-	return pkgs.Sorted(), nil, nil
+	return pkgs.Sorted(), nil, errs
 }

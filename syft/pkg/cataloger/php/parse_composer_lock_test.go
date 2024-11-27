@@ -113,3 +113,10 @@ func TestParseComposerFileLock(t *testing.T) {
 	}
 	pkgtest.TestFileParser(t, fixture, parseComposerLock, expectedPkgs, expectedRelationships)
 }
+
+func Test_corruptComposerLock(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/src/composer.lock").
+		WithError().
+		TestParser(t, parseComposerLock)
+}

@@ -1,0 +1,16 @@
+name: "Validations"
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jbs
+
+  Statnapshot
+          key: snapshot-build-${{ github.run_id }}
+
+      - name: Run CLI Tests (Linux)
+        run: make cli
