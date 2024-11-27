@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
@@ -97,10 +98,11 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 }
 
 func newDotnetPackagesLockPackage(name string, dep dotnetPackagesLockDep, locations ...file.Location) *pkg.Package {
-	metadata := pkg.DotnetDepsEntry{
-		Name:    name,
-		Version: dep.Resolved,
-		Sha512:  dep.ContentHash,
+	metadata := pkg.DotnetPackagesLockEntry{
+		Name:        name,
+		Version:     dep.Resolved,
+		ContentHash: dep.ContentHash,
+		Type:        dep.Type,
 	}
 
 	return &pkg.Package{
@@ -110,6 +112,19 @@ func newDotnetPackagesLockPackage(name string, dep dotnetPackagesLockDep, locati
 		Metadata:  metadata,
 		Locations: file.NewLocationSet(locations...),
 		Language:  pkg.Dotnet,
-		PURL:      packageURL(metadata),
+		PURL:      packagesLockPackageURL(name, dep.Resolved),
 	}
+}
+
+func packagesLockPackageURL(name, version string) string {
+	var qualifiers packageurl.Qualifiers
+
+	return packageurl.NewPackageURL(
+		packageurl.TypeNuget, // See explanation in syft/pkg/cataloger/dotnet/package.go as to why this was chosen.
+		"",
+		name,
+		version,
+		qualifiers,
+		"",
+	).ToString()
 }
