@@ -9,6 +9,13 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
+func Test_corruptDotnetPackagesLock(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/src/packages.lock.json").
+		WithError().
+		TestParser(t, parseDotnetDeps)
+}
+
 func TestParseDotnetPackagesLock(t *testing.T) {
 	fixture := "test-fixtures/packages.lock.json"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
