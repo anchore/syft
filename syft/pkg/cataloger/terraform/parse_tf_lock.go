@@ -15,7 +15,7 @@ import (
 )
 
 type terraformLockFile struct {
-	Providers []pkg.TerraformLockEntry `hcl:"provider,block"`
+	Providers []pkg.TerraformLockProviderEntry `hcl:"provider,block"`
 }
 
 func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {

@@ -1757,7 +1757,7 @@
               "$ref": "#/$defs/SwiplpackPackage"
             },
             {
-              "$ref": "#/$defs/TerraformLockEntry"
+              "$ref": "#/$defs/TerraformLockProviderEntry"
             },
             {
               "$ref": "#/$defs/WordpressPluginEntry"
@@ -2697,7 +2697,7 @@
         "dependencies"
       ]
     },
-    "TerraformLockEntry": {
+    "TerraformLockProviderEntry": {
       "properties": {
         "url": {
           "type": "string"
