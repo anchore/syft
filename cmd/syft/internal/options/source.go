@@ -22,13 +22,14 @@ type sourceConfig struct {
 }
 
 type fileSource struct {
-	Digests      []string `json:"digests" yaml:"digests" mapstructure:"digests"`
-	MaxLayerSize string   `json:"max-layer-size" yaml:"max-layer-size" mapstructure:"max-layer-size"`
+	Digests []string `json:"digests" yaml:"digests" mapstructure:"digests"`
 }
 
 var _ interface {
 	clio.FieldDescriber
 } = (*sourceConfig)(nil)
+
+var _ clio.PostLoader = (*imageSource)(nil)
 
 func (o *sourceConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.File.Digests, `the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")`)
@@ -38,6 +39,7 @@ valid values are: registry, docker, podman`)
 
 type imageSource struct {
 	DefaultPullSource string `json:"default-pull-source" yaml:"default-pull-source" mapstructure:"default-pull-source"`
+	MaxLayerSize      string `json:"max-layer-size" yaml:"max-layer-size" mapstructure:"max-layer-size"`
 }
 
 func defaultSourceConfig() sourceConfig {
@@ -56,6 +58,10 @@ func (c *fileSource) PostLoad() error {
 	digests := strset.New(c.Digests...).List()
 	sort.Strings(digests)
 	c.Digests = digests
+	return nil
+}
+
+func (c *imageSource) PostLoad() error {
 	if c.MaxLayerSize != "" {
 		perFileReadLimit, err := humanize.ParseBytes(c.MaxLayerSize)
 		if err != nil {
@@ -63,10 +69,6 @@ func (c *fileSource) PostLoad() error {
 		}
 		stereoscopeFile.SetPerFileReadLimit(int64(perFileReadLimit))
 	}
-	return nil
-}
-
-func (c imageSource) PostLoad() error {
 	return checkDefaultSourceValues(c.DefaultPullSource)
 }
 
