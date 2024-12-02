@@ -7430,6 +7430,9 @@
       "advanced-uploader": [
         "cpe:2.3:a:advanced_uploader_project:advanced_uploader:*:*:*:*:*:wordpress:*:*"
       ],
+      "advanced-woo-labels": [
+        "cpe:2.3:a:advanced-woo-labels:advanced_woo_labels:*:*:*:*:*:wordpress:*:*"
+      ],
       "advanced-woo-search": [
         "cpe:2.3:a:advanced-woo-search:advanced_woo_search:*:*:*:*:*:wordpress:*:*"
       ],
@@ -7672,6 +7675,9 @@
       ],
       "animated-number-counters": [
         "cpe:2.3:a:wpmart:animated_number_counters:*:*:*:*:*:wordpress:*:*"
+      ],
+      "announcer": [
+        "cpe:2.3:a:aakashweb:announcer:*:*:*:*:*:wordpress:*:*"
       ],
       "anonymous-restricted-content": [
         "cpe:2.3:a:tarassych:anonymous_restricted_content:*:*:*:*:*:wordpress:*:*"
@@ -9949,6 +9955,9 @@
       "duracelltomi-google-tag-manager": [
         "cpe:2.3:a:gtm4wp:google_tag_manager:*:*:*:*:*:wordpress:*:*"
       ],
+      "dvk-social-sharing": [
+        "cpe:2.3:a:ibericode:social_sharing:*:*:*:*:*:wordpress:*:*"
+      ],
       "dw-promobar": [
         "cpe:2.3:a:designwall:dw_promobar:*:*:*:*:*:wordpress:*:*"
       ],
@@ -9965,7 +9974,7 @@
         "cpe:2.3:a:devrix:dx_share_selection:*:*:*:*:*:wordpress:*:*"
       ],
       "dynamic-widgets": [
-        "cpe:2.3:a:qurl:dynamic_widgets:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:vivwebsolutions:dynamic_widgets:*:*:*:*:*:wordpress:*:*"
       ],
       "e-unlocked-student-result": [
         "cpe:2.3:a:e_unlocked_-_student_result_project:e_unlocked_-_student_result:*:*:*:*:*:wordpress:*:*"
@@ -10574,6 +10583,9 @@
       "ezpz-one-click-backup": [
         "cpe:2.3:a:ezpz-one-click-backup_project:ezpz-one-click-backup:*:*:*:*:*:wordpress:*:*"
       ],
+      "f4-improvements": [
+        "cpe:2.3:a:f4dev:f4_improvements:*:*:*:*:*:wordpress:*:*"
+      ],
       "facebook-button-plugin": [
         "cpe:2.3:a:bestwebsoft:facebook_button:*:*:*:*:*:wordpress:*:*"
       ],
@@ -10931,7 +10943,8 @@
         "cpe:2.3:a:formilla:live_chat:*:*:*:*:*:wordpress:*:*"
       ],
       "forminator": [
-        "cpe:2.3:a:incsub:forminator:*:*:*:*:free:wordpress:*:*"
+        "cpe:2.3:a:incsub:forminator:*:*:*:*:free:wordpress:*:*",
+        "cpe:2.3:a:wpmudev:forminator_forms:*:*:*:*:free:wordpress:*:*"
       ],
       "formlift": [
         "cpe:2.3:a:formlift:formlift_for_infusionsoft_web_forms:*:*:*:*:*:wordpress:*:*"
@@ -11171,7 +11184,7 @@
         "cpe:2.3:a:gettext_override_translations_project:gettext_override_translations:*:*:*:*:*:wordpress:*:*"
       ],
       "getwid": [
-        "cpe:2.3:a:motopress:getwid_-_gutenberg_blocks:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:motopress:getwid:*:*:*:*:*:wordpress:*:*"
       ],
       "getyourguide-ticketing": [
         "cpe:2.3:a:getyourguide_ticketing_project:getyourguide_ticketing:*:*:*:*:*:wordpress:*:*"
@@ -11732,6 +11745,9 @@
       ],
       "image-export": [
         "cpe:2.3:a:image-export_project:image-export:*:*:*:*:*:wordpress:*:*"
+      ],
+      "image-gallery": [
+        "cpe:2.3:a:getbutterfly:imagepress:*:*:*:*:*:wordpress:*:*"
       ],
       "image-gallery-with-slideshow": [
         "cpe:2.3:a:anblik:image-gallery-with-slideshow:*:*:*:*:*:wordpress:*:*"
@@ -13791,6 +13807,9 @@
       ],
       "pdq-csv": [
         "cpe:2.3:a:ransomchristofferson:pdq_csv:*:*:*:*:*:wordpress:*:*"
+      ],
+      "pedalo-connector": [
+        "cpe:2.3:a:pedalo:pedalo_connector:*:*:*:*:*:wordpress:*:*"
       ],
       "peepso-core": [
         "cpe:2.3:a:peepso:peepso:*:*:*:*:*:wordpress:*:*"
@@ -16464,6 +16483,9 @@
       "totop-link": [
         "cpe:2.3:a:nocean:totop_link:*:*:*:*:*:wordpress:*:*"
       ],
+      "tour-operator": [
+        "cpe:2.3:a:lightspeedwp:lsx_tour_operator:*:*:*:*:*:wordpress:*:*"
+      ],
       "tp-education": [
         "cpe:2.3:a:themepalace:tp_education:*:*:*:*:*:wordpress:*:*"
       ],
@@ -17979,6 +18001,9 @@
       ],
       "wp-display-users": [
         "cpe:2.3:a:display_users_project:display_users:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-docs": [
+        "cpe:2.3:a:androidbubble:wp_docs:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-domain-redirect": [
         "cpe:2.3:a:wp_domain_redirect_project:wp_domain_redirect:*:*:*:*:*:wordpress:*:*"
