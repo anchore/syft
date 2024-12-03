@@ -16,6 +16,7 @@ FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
 FileName: /d1/f3
 SPDXID: SPDXRef-File-d1-f3-c6f5b29dca12661f
@@ -23,6 +24,7 @@ FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
 FileName: /d2/f4
 SPDXID: SPDXRef-File-d2-f4-c641caa71518099f
@@ -30,6 +32,7 @@ FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
 FileName: /f1
 SPDXID: SPDXRef-File-f1-5265a4dde3edbf7c
@@ -37,6 +40,7 @@ FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
 FileName: /f2
 SPDXID: SPDXRef-File-f2-f9e49132a4b96ccd
@@ -44,6 +48,7 @@ FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
 FileName: /z1/f5
 SPDXID: SPDXRef-File-z1-f5-839d99ee67d9d174
@@ -51,6 +56,7 @@ FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
 ##### Package: user-image-input
 

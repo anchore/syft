@@ -631,11 +631,11 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 			FileSPDXIdentifier: toSPDXID(coordinates),
 			FileComment:        comment,
 			// required, no attempt made to determine license information
-			LicenseConcluded: noAssertion,
+			LicenseConcluded:  noAssertion,
 			FileCopyrightText: noAssertion,
-			Checksums:        toFileChecksums(digests),
-			FileName:         coordinates.RealPath,
-			FileTypes:        toFileTypes(metadata),
+			Checksums:         toFileChecksums(digests),
+			FileName:          coordinates.RealPath,
+			FileTypes:         toFileTypes(metadata),
 			LicenseInfoInFiles: []string{ // required in SPDX 2.2
 				helpers.NOASSERTION,
 			},
