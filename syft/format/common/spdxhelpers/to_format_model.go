@@ -247,6 +247,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 		PackageSupplier: &spdx.Supplier{
 			Supplier: helpers.NOASSERTION,
 		},
+		PackageCopyrightText:    helpers.NOASSERTION,
 		PackageDownloadLocation: helpers.NOASSERTION,
 		PackageLicenseConcluded: helpers.NOASSERTION,
 		PackageLicenseDeclared:  helpers.NOASSERTION,
