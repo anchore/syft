@@ -371,7 +371,7 @@ compares that SBOM with what is generated from the latest presenter code. The fo
 update the golden files for the various snapshot tests:
 
 ```bash
-make update-golden-files
+make update-format-golden-files
 ```
 
 These flags are defined at the top of the test files that have tests that use the snapshot files.
