@@ -191,6 +191,14 @@ tasks:
 
 
   ## Testing tasks #################################
+  update-format-golden-files:
+    desc: "Update golden (i.e. snapshot) files used by unit tests"
+    cmds:
+      - go test ./syft/format/spdxjson -update-spdx-json
+      - go test ./syft/format/spdxtagvalue -update-spdx-tv
+      - go test ./syft/format/cyclonedxxml -update-cyclonedx-xml
+      - go test ./syft/format/cyclonedxjson -update-cyclonedx-json
+      - go test ./syft/format/syftjson -update-json
 
   unit:
     desc: Run unit tests
