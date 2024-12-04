@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.0.19/document",
+  "$id": "anchore.io/schema/syft/json/16.0.18/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
