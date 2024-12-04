@@ -418,6 +418,14 @@ var dirOnlyTestCases = []testCase{
 			"ocaml-base-compiler": "4.14.0",
 		},
 	},
+	{
+		name:        "find terraform packages",
+		pkgType:     pkg.TerraformPkg,
+		pkgLanguage: pkg.Go,
+		pkgInfo: map[string]string{
+			"registry.terraform.io/hashicorp/aws": "5.72.1",
+		},
+	},
 }
 
 var commonTestCases = []testCase{
