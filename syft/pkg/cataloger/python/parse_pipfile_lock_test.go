@@ -21,7 +21,7 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonPipfileLockEntry{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{
@@ -36,7 +36,7 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonPipfileLockEntry{
 				Index: "https://test.pypi.org/simple",
 				Hashes: []string{
@@ -52,7 +52,7 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonPipfileLockEntry{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{
@@ -68,7 +68,7 @@ func TestParsePipFileLock(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonPipfileLockEntry{
 				Index: "https://pypi.org/simple",
 				Hashes: []string{

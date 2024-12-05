@@ -18,7 +18,7 @@ func newELFPackage(metadata elfBinaryPackageNotes, locations file.LocationSet) p
 		Locations: locations,
 		// though we can look for shared libs, we cannot see static dependencies nor dynamic dependencies using dlopen.
 		// this means that, even in cases where the dep info is actually complete, we can't programmatically determine that.
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     metadata.ELFBinaryPackageNoteJSONPayload,
 	}
 

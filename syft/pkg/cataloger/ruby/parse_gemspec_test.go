@@ -23,7 +23,7 @@ func TestParseGemspec(t *testing.T) {
 			pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 		),
 		Language:     pkg.Ruby,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.RubyGemspec{
 			Name:     "bundler",
 			Version:  "2.1.4",

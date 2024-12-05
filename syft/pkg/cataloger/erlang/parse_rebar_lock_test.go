@@ -23,7 +23,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/certifi@2.9.0",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "certifi",
 						Version:    "2.9.0",
@@ -37,7 +37,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/idna@6.1.1",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "idna",
 						Version:    "6.1.1",
@@ -51,7 +51,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/metrics@1.0.1",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "metrics",
 						Version:    "1.0.1",
@@ -65,7 +65,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/mimerl@1.2.0",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "mimerl",
 						Version:    "1.2.0",
@@ -79,7 +79,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/parse_trans@3.3.1",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "parse_trans",
 						Version:    "3.3.1",
@@ -93,7 +93,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/ssl_verify_fun@1.1.6",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "ssl_verify_fun",
 						Version:    "1.1.6",
@@ -107,7 +107,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/unicode_util_compat@0.7.0",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "unicode_util_compat",
 						Version:    "0.7.0",
@@ -129,7 +129,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/bcrypt@1.1.5",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "bcrypt",
 						Version:    "1.1.5",
@@ -147,7 +147,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/bson@14308ab927cfa69324742c3de720578094e0bb19",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:    "bson",
 						Version: "14308ab927cfa69324742c3de720578094e0bb19",
@@ -162,7 +162,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/certifi@2.9.0",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "certifi",
 						Version:    "2.9.0",
@@ -179,7 +179,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/stdout_formatter@0.2.3",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "stdout_formatter",
 						Version:    "0.2.3",
@@ -197,7 +197,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/swc@4835239dca5a5f4ac7202dd94d7effcaa617d575",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:    "swc",
 						Version: "4835239dca5a5f4ac7202dd94d7effcaa617d575",
@@ -212,7 +212,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/syslog@1.1.0",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "syslog",
 						Version:    "1.1.0",
@@ -229,7 +229,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/unicode_util_compat@0.7.0",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:       "unicode_util_compat",
 						Version:    "0.7.0",
@@ -247,7 +247,7 @@ func TestParseRebarLock(t *testing.T) {
 					Language:     pkg.Erlang,
 					Type:         pkg.HexPkg,
 					PURL:         "pkg:hex/vernemq_dev@6d622aa8c901ae7777433aef2bd049e380c474a6",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ErlangRebarLockEntry{
 						Name:    "vernemq_dev",
 						Version: "6d622aa8c901ae7777433aef2bd049e380c474a6",

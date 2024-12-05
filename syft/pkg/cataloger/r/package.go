@@ -25,7 +25,7 @@ func newPackage(pd parseData, locations ...file.Location) pkg.Package {
 		Type:      pkg.Rpkg,
 		PURL:      packageURL(pd),
 		// no attempt is made by the parser function to resolve dependencies
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     pd.RDescription,
 	}
 

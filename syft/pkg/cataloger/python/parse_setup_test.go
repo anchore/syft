@@ -25,7 +25,7 @@ func TestParseSetup(t *testing.T) {
 					PURL:         "pkg:pypi/pathlib3@2.2.0",
 					Language:     pkg.Python,
 					Type:         pkg.PythonPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 				},
 				{
 					Name:         "mypy",
@@ -33,7 +33,7 @@ func TestParseSetup(t *testing.T) {
 					PURL:         "pkg:pypi/mypy@v0.770",
 					Language:     pkg.Python,
 					Type:         pkg.PythonPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 				},
 				{
 					Name:         "mypy1",
@@ -41,7 +41,7 @@ func TestParseSetup(t *testing.T) {
 					PURL:         "pkg:pypi/mypy1@v0.770",
 					Language:     pkg.Python,
 					Type:         pkg.PythonPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 				},
 				{
 					Name:         "mypy2",
@@ -49,7 +49,7 @@ func TestParseSetup(t *testing.T) {
 					PURL:         "pkg:pypi/mypy2@v0.770",
 					Language:     pkg.Python,
 					Type:         pkg.PythonPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 				},
 				{
 					Name:         "mypy3",
@@ -57,7 +57,7 @@ func TestParseSetup(t *testing.T) {
 					PURL:         "pkg:pypi/mypy3@v0.770",
 					Language:     pkg.Python,
 					Type:         pkg.PythonPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 				},
 			},
 		},

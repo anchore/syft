@@ -15,15 +15,13 @@ func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, mainModule, go
 	}
 
 	p := pkg.Package{
-		Name:      dep.Path,
-		Version:   dep.Version,
-		Licenses:  pkg.NewLicenseSet(licenses...),
-		PURL:      packageURL(dep.Path, dep.Version),
-		Language:  pkg.Go,
-		Type:      pkg.GoModulePkg,
-		Locations: file.NewLocationSet(locations...),
-		// we don't have a way to express on a package or relationship the nature of "//indirect" markings on dependencies
-		// so though the dependencies are complete and separable with the raw data, the data in the SBOM is not separable.
+		Name:         dep.Path,
+		Version:      dep.Version,
+		Licenses:     pkg.NewLicenseSet(licenses...),
+		PURL:         packageURL(dep.Path, dep.Version),
+		Language:     pkg.Go,
+		Type:         pkg.GoModulePkg,
+		Locations:    file.NewLocationSet(locations...),
 		Dependencies: dependencies,
 		Metadata: pkg.GolangBinaryBuildinfoEntry{
 			GoCompiledVersion: goVersion,

@@ -47,7 +47,7 @@ func parseRpmManifest(_ context.Context, _ file.Resolver, _ *generic.Environment
 		// Create a new package representing the RPM manifest entry
 		// note: we don't know the quality of the manifest dependency information, so even though there are multiple
 		// packages, we can't discern the connectivity of completeness of the data.
-		p := newDBPackage(reader.Location, *metadata, nil, nil, pkg.IncompleteDependencies)
+		p := newDBPackage(reader.Location, *metadata, nil, nil, pkg.UnknownDependencyCompleteness)
 
 		if !pkg.IsValid(&p) {
 			continue

@@ -15,7 +15,7 @@ func newSwiplPackPackage(m pkg.SwiplPackEntry, locations ...file.Location) pkg.P
 		Type:      pkg.SwiplPackPkg,
 		Language:  pkg.Swipl,
 		// no attempt is made by the parser function to resolve dependencies
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     m,
 	}
 

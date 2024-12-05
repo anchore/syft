@@ -24,7 +24,7 @@ func TestParsePeclSerialized(t *testing.T) {
 			),
 			Language:     pkg.PHP,
 			Type:         pkg.PhpPeclPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PhpPeclEntry{
 				Name:    "memcached",
 				Version: "3.2.0",

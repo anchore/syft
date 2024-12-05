@@ -36,7 +36,7 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 					),
 
 					Type:         pkg.BinaryPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 						Type:       "testfixture",
 						Vendor:     "syft",
@@ -58,7 +58,7 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 						pkg.License{Value: "MIT", SPDXExpression: "MIT", Type: "declared"},
 					),
 					Type:         pkg.BinaryPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 						Type:       "testfixture",
 						Vendor:     "syft",
@@ -84,7 +84,7 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 					),
 					Licenses:     pkg.NewLicenseSet(),
 					Type:         pkg.RpmPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 						Type:         "rpm",
 						Architecture: "x86_64",
@@ -107,7 +107,7 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 					),
 					Licenses:     pkg.NewLicenseSet(),
 					Type:         pkg.RpmPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 						Type:         "rpm",
 						Architecture: "arm",

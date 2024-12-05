@@ -136,8 +136,8 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, licenseScanner l
 			lics,
 			// the buildinfo section is a flat list of dependencies missing all edge information. So all direct and indirect
 			// dependencies are related directly to the main module. This means that we don't have any way to discover
-			// the completeness of the dependency's dependencies, thus they are incomplete.
-			pkg.IncompleteDependencies,
+			// the completeness of the dependency's dependencies, thus they are unknown.
+			pkg.UnknownDependencyCompleteness,
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if pkg.IsValid(&p) {
@@ -183,7 +183,9 @@ func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, licenseScanne
 		experiments,
 		lics,
 		// the buildinfo section is a flat list of dependencies missing all edge information. So all direct and indirect
-		// dependencies are related directly to the main module.
+		// dependencies are related directly to the main module. Also, we don't have a way to express on a package or
+		// relationship the nature of "//indirect" markings on dependencies so though the dependencies are complete
+		// and separable with the raw data, the data in the SBOM is not separable.
 		pkg.CompleteWithIndirectDependencies,
 		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)

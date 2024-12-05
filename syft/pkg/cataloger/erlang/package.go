@@ -15,7 +15,7 @@ func newPackageFromRebar(d pkg.ErlangRebarLockEntry, locations ...file.Location)
 		PURL:      packageURLFromRebar(d),
 		Type:      pkg.HexPkg,
 		// we do not attempt to parse dependencies from the rebar.lock file
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     d,
 	}
 
@@ -45,7 +45,7 @@ func newPackageFromOTP(name, version string, locations ...file.Location) pkg.Pac
 		Locations: file.NewLocationSet(locations...),
 		PURL:      packageURLFromOTP(name, version),
 		// we do not attempt to parse dependencies from app files
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Type:         pkg.ErlangOTPPkg,
 	}
 

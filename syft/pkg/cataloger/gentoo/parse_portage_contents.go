@@ -45,7 +45,7 @@ func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.
 		Locations: file.NewLocationSet(
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Type:         pkg.PortagePkg,
 		Metadata: pkg.PortageEntry{
 			// ensure the default value for a collection is never nil since this may be shown as JSON

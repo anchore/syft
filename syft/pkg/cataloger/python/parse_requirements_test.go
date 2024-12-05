@@ -23,7 +23,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "flask",
 				VersionConstraint: "== 4.0.0",
@@ -36,7 +36,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "foo",
 				VersionConstraint: "== 1.0.0",
@@ -49,7 +49,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "SomeProject",
 				VersionConstraint: "==5.4",
@@ -63,7 +63,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "dots-._allowed",
 				VersionConstraint: "== 1.0.0",
@@ -76,7 +76,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "argh",
 				VersionConstraint: "==0.26.2",
@@ -89,7 +89,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "argh",
 				VersionConstraint: "==0.26.3",
@@ -102,7 +102,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "celery",
 				Extras:            []string{"redis", "pytest"},
@@ -116,7 +116,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "GithubSampleProject",
 				VersionConstraint: "== 3.7.1",
@@ -130,7 +130,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Python,
 			Type:         pkg.PythonPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "FrIeNdLy-_-bArD",
 				VersionConstraint: "== 1.0.0",
@@ -167,7 +167,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 					Locations:    locations,
 					Language:     pkg.Python,
 					Type:         pkg.PythonPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.PythonRequirementsEntry{
 						Name:              "Mopidy-Dirble",
 						VersionConstraint: "~= 1.1",
@@ -180,7 +180,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 					Locations:    locations,
 					Language:     pkg.Python,
 					Type:         pkg.PythonPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.PythonRequirementsEntry{
 						Name:              "sqlalchemy",
 						VersionConstraint: ">= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0",
@@ -193,7 +193,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 					Locations:    locations,
 					Language:     pkg.Python,
 					Type:         pkg.PythonPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.PythonRequirementsEntry{
 						Name:              "bar",
 						VersionConstraint: ">= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0",
@@ -206,7 +206,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 					Locations:    locations,
 					Language:     pkg.Python,
 					Type:         pkg.PythonPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.PythonRequirementsEntry{
 						Name:              "numpy",
 						VersionConstraint: ">= 3.4.1",
@@ -220,7 +220,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 					Locations:    locations,
 					Language:     pkg.Python,
 					Type:         pkg.PythonPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.PythonRequirementsEntry{
 						Name:              "requests",
 						Extras:            []string{"security"},

@@ -22,7 +22,7 @@ func Test_parserGradleLockfile(t *testing.T) {
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					PURL:         "pkg:maven/org.apache.commons/commons-text@1.8",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.JavaArchive{
 						PomProject: &pkg.JavaPomProject{GroupID: "org.apache.commons", ArtifactID: "commons-text", Version: "1.8", Name: "commons-text"},
 					},
@@ -33,7 +33,7 @@ func Test_parserGradleLockfile(t *testing.T) {
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					PURL:         "pkg:maven/org.hamcrest/hamcrest-core@1.3",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.JavaArchive{
 						PomProject: &pkg.JavaPomProject{GroupID: "org.hamcrest", ArtifactID: "hamcrest-core", Version: "1.3", Name: "hamcrest-core"},
 					},
@@ -44,7 +44,7 @@ func Test_parserGradleLockfile(t *testing.T) {
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					PURL:         "pkg:maven/joda-time/joda-time@2.2",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.JavaArchive{
 						PomProject: &pkg.JavaPomProject{GroupID: "joda-time", ArtifactID: "joda-time", Version: "2.2", Name: "joda-time"},
 					},
@@ -55,7 +55,7 @@ func Test_parserGradleLockfile(t *testing.T) {
 					Language:     pkg.Java,
 					Type:         pkg.JavaPkg,
 					PURL:         "pkg:maven/junit/junit@4.12",
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.JavaArchive{
 						PomProject: &pkg.JavaPomProject{GroupID: "junit", ArtifactID: "junit", Version: "4.12", Name: "junit"},
 					},

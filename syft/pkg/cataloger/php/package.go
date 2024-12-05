@@ -18,7 +18,7 @@ func newComposerLockPackage(pd parsedLockData, indexLocation file.Location) pkg.
 		Language:  pkg.PHP,
 		Type:      pkg.PhpComposerPkg,
 		// no attempt is made by the parser function to raise up dependency relationships
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     pd.PhpComposerLockEntry,
 	}
 
@@ -36,7 +36,7 @@ func newComposerInstalledPackage(pd parsedInstalledData, indexLocation file.Loca
 		Language:  pkg.PHP,
 		Type:      pkg.PhpComposerPkg,
 		// no attempt is made by the parser function to raise up dependency relationships
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     pd.PhpComposerInstalledEntry,
 	}
 
@@ -54,7 +54,7 @@ func newPeclPackage(pd pkg.PhpPeclEntry, indexLocation file.Location) pkg.Packag
 		Language:  pkg.PHP,
 		Type:      pkg.PhpPeclPkg,
 		// no attempt is made by the parser function to raise up dependency relationships
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     pd,
 	}
 

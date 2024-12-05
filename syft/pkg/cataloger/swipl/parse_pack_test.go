@@ -20,7 +20,7 @@ func xTestParsePackPackage(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Swipl,
 			Type:         pkg.SwiplPackPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.SwiplPackEntry{
 				Name:          "hdt",
 				Version:       "0.5.2",

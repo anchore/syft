@@ -164,7 +164,7 @@ func newPackageFromMavenPom(ctx context.Context, r *maven.Resolver, pom *maven.P
 		PURL:     packageURL(id.ArtifactID, id.Version, m),
 		// later in processing we may resolve the dependencies for this package (e.g. online enrichment)
 		// but at this point there is not enough information to claim we have complete dependency information
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     m,
 	}
 
@@ -304,7 +304,7 @@ func newPackageFromDependency(ctx context.Context, r *maven.Resolver, pom *maven
 		FoundBy:   pomCatalogerName,
 		// later in processing we may resolve the dependencies for this package (e.g. online enrichment) but
 		// by default we cannot claim we have complete dependency information
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     m,
 	}
 

@@ -67,8 +67,8 @@ func splitConanRef(ref string) *conanRef {
 }
 
 func newConanfilePackage(m pkg.ConanfileEntry, locations ...file.Location) *pkg.Package {
-	// though a conanfile is a listing of direct dependencies, we are not capturing these today, so are forced to answer incomplete
-	return newConanPackage(m.Ref, m, pkg.IncompleteDependencies, locations...)
+	// though a conanfile is a listing of direct dependencies, we are not capturing these today, so are forced to answer unknown
+	return newConanPackage(m.Ref, m, pkg.UnknownDependencyCompleteness, locations...)
 }
 
 func newConanlockV1Package(m pkg.ConanV1LockEntry, locations ...file.Location) *pkg.Package {

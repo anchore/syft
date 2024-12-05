@@ -70,7 +70,7 @@ func parsePipfileLock(_ context.Context, _ file.Resolver, _ *generic.Environment
 				name,
 				version,
 				pkg.PythonPipfileLockEntry{Index: index, Hashes: pkgMeta.Hashes},
-				pkg.IncompleteDependencies, // no attempt is made to resolve dependencies from the lock file
+				pkg.UnknownDependencyCompleteness, // no attempt is made to resolve dependencies from the lock file
 				reader.Location,
 			))
 		}

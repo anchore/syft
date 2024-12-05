@@ -17,7 +17,7 @@ func newSwiftPackageManagerPackage(name, version, sourceURL, revision string, lo
 		Type:      pkg.SwiftPkg,
 		Language:  pkg.Swift,
 		// no attempt is made by the parser function to resolve dependencies
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.SwiftPackageManagerResolvedEntry{
 			Revision: revision,
 		},
@@ -37,7 +37,7 @@ func newCocoaPodsPackage(name, version, hash string, locations ...file.Location)
 		Type:      pkg.CocoapodsPkg,
 		Language:  pkg.Swift,
 		// no attempt is made by the parser function to resolve dependencies
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.CocoaPodfileLockEntry{
 			Checksum: hash,
 		},

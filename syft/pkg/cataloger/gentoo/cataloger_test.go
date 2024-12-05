@@ -24,7 +24,7 @@ func TestPortageCataloger(t *testing.T) {
 			),
 			Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(expectedLicenseLocation, "Apache-2.0", "BSD", "BSD-2", "CC-BY-SA-4.0", "ISC", "MIT")...),
 			Type:         pkg.PortagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PortageEntry{
 				InstalledSize: 27937835,
 				Files: []pkg.PortageFileRecord{

@@ -23,7 +23,7 @@ func TestParsePnpmLock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "picocolors",
@@ -32,7 +32,7 @@ func TestParsePnpmLock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "source-map-js",
@@ -41,7 +41,7 @@ func TestParsePnpmLock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "@bcoe/v8-coverage",
@@ -50,7 +50,7 @@ func TestParsePnpmLock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 	}
 
@@ -71,7 +71,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "@testing-library/react",
@@ -80,7 +80,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "@testing-library/user-event",
@@ -89,7 +89,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "react",
@@ -98,7 +98,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "react-dom",
@@ -107,7 +107,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "web-vitals",
@@ -116,7 +116,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "@babel/core",
@@ -125,7 +125,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "@types/eslint",
@@ -134,7 +134,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "read-cache",
@@ -143,7 +143,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "schema-utils",
@@ -152,7 +152,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 	}
 

@@ -19,7 +19,7 @@ func newWordpressPluginPackage(name, version string, m pluginData, location file
 		Language:  pkg.PHP,
 		Type:      pkg.WordpressPluginPkg,
 		// no attempt is made by the parser function to resolve dependencies
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     meta,
 	}
 

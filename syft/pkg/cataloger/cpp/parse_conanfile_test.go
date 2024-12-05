@@ -20,7 +20,7 @@ func TestParseConanfile(t *testing.T) {
 			Locations:    fixtureLocationSet,
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ConanfileEntry{
 				Ref: "catch2/2.13.8",
 			},
@@ -32,7 +32,7 @@ func TestParseConanfile(t *testing.T) {
 			Locations:    fixtureLocationSet,
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ConanfileEntry{
 				Ref: "docopt.cpp/0.6.3",
 			},
@@ -44,7 +44,7 @@ func TestParseConanfile(t *testing.T) {
 			Locations:    fixtureLocationSet,
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ConanfileEntry{
 				Ref: "fmt/8.1.1",
 			},
@@ -56,7 +56,7 @@ func TestParseConanfile(t *testing.T) {
 			Locations:    fixtureLocationSet,
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ConanfileEntry{
 				Ref: "spdlog/1.9.2@my_user/my_channel#1234567%%987654",
 			},
@@ -68,7 +68,7 @@ func TestParseConanfile(t *testing.T) {
 			Locations:    fixtureLocationSet,
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ConanfileEntry{
 				Ref: "sdl/2.0.20#1234567%%987654",
 			},
@@ -80,7 +80,7 @@ func TestParseConanfile(t *testing.T) {
 			Locations:    fixtureLocationSet,
 			Language:     pkg.CPP,
 			Type:         pkg.ConanPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ConanfileEntry{
 				Ref: "fltk/1.3.8@my_user/my_channel",
 			},

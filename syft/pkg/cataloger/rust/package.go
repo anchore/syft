@@ -48,7 +48,7 @@ func newPackageFromAudit(dep *rustaudit.Package, locations ...file.Location) pkg
 		Type:      pkg.RustPkg,
 		Locations: file.NewLocationSet(locations...),
 		// no attempt is made by the parser function to resolve dependencies
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.RustBinaryAuditEntry{
 			Name:    dep.Name,
 			Version: dep.Version,

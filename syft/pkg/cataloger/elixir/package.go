@@ -15,7 +15,7 @@ func newPackage(d pkg.ElixirMixLockEntry, locations ...file.Location) pkg.Packag
 		PURL:      packageURL(d),
 		Type:      pkg.HexPkg,
 		// we do not attempt to parse dependencies from the mix.lock file
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     d,
 	}
 

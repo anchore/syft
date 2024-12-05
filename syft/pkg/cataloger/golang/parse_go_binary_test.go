@@ -209,7 +209,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata:     pkg.GolangBinaryBuildinfoEntry{},
 				},
 			},
@@ -255,7 +255,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -751,7 +751,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -773,7 +773,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -831,7 +831,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -853,7 +853,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
@@ -1010,7 +1010,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 							},
 						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 					),
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: "go1.22.2",
 						Architecture:      archDetails,

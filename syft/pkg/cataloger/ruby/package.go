@@ -15,7 +15,7 @@ func newGemfileLockPackage(name, version string, locations ...file.Location) pkg
 		Language:  pkg.Ruby,
 		Type:      pkg.GemPkg,
 		// no attempt is made by the parser function to resolve dependencies
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 	}
 
 	p.SetID()
@@ -33,7 +33,7 @@ func newGemspecPackage(m gemData, gemSpecLocation file.Location) pkg.Package {
 		Language:  pkg.Ruby,
 		Type:      pkg.GemPkg,
 		// no attempt is made by the parser function to resolve dependencies
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     m.RubyGemspec,
 	}
 

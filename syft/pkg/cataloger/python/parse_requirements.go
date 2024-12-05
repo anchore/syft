@@ -153,7 +153,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 					URL:               parseURL(req.URL),
 					Markers:           req.Markers,
 				},
-				pkg.IncompleteDependencies, // not attempt is made by the parser function to resolve dependencies
+				pkg.UnknownDependencyCompleteness, // not attempt is made by the parser function to resolve dependencies
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)

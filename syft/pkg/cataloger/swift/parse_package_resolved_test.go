@@ -26,7 +26,7 @@ func TestParsePackageResolved(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Swift,
 			Type:         pkg.SwiftPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.SwiftPackageManagerResolvedEntry{
 				Revision: "b14b7f4c528c942f121c8b860b9410b2bf57825e",
 			},
@@ -38,7 +38,7 @@ func TestParsePackageResolved(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Swift,
 			Type:         pkg.SwiftPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.SwiftPackageManagerResolvedEntry{
 				Revision: "9cfed92b026c524674ed869a4ff2dcfdeedf8a2a",
 			},
@@ -50,7 +50,7 @@ func TestParsePackageResolved(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Swift,
 			Type:         pkg.SwiftPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.SwiftPackageManagerResolvedEntry{
 				Revision: "6c89474e62719ddcc1e9614989fff2f68208fe10",
 			},
@@ -62,7 +62,7 @@ func TestParsePackageResolved(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Swift,
 			Type:         pkg.SwiftPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.SwiftPackageManagerResolvedEntry{
 				Revision: "937e904258d22af6e447a0b72c0bc67583ef64a2",
 			},
@@ -74,7 +74,7 @@ func TestParsePackageResolved(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Swift,
 			Type:         pkg.SwiftPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.SwiftPackageManagerResolvedEntry{
 				Revision: "0a5bc04095a675662cf24757cc0640aa2204253b",
 			},
@@ -98,7 +98,7 @@ func TestParsePackageResolvedV3(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Swift,
 			Type:         pkg.SwiftPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.SwiftPackageManagerResolvedEntry{
 				Revision: "80c109b87511041338a4d8d88064088c8dfc079b",
 			},
@@ -110,7 +110,7 @@ func TestParsePackageResolvedV3(t *testing.T) {
 			Locations:    locations,
 			Language:     pkg.Swift,
 			Type:         pkg.SwiftPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.SwiftPackageManagerResolvedEntry{
 				Revision: "64889f0c732f210a935a0ad7cda38f77f876262d",
 			},

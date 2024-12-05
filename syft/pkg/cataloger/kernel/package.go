@@ -32,7 +32,7 @@ func newLinuxKernelPackage(metadata pkg.LinuxKernel, archiveLocation file.Locati
 		PURL:         packageURL(linuxKernelPackageName, metadata.Version),
 		Type:         pkg.LinuxKernelPkg,
 		Metadata:     metadata,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		CPEs:         createLinuxKernelCPEs(metadata.Version),
 	}
 
@@ -49,7 +49,7 @@ func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModule, kmLocation file
 		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(kmLocation, metadata.License)...),
 		PURL:         packageURL(metadata.Name, metadata.Version),
 		Type:         pkg.LinuxKernelModulePkg,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     metadata,
 	}
 

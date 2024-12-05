@@ -33,8 +33,8 @@ func newPackageJSONPackage(u packageJSON, indexLocation file.Location) pkg.Packa
 		Licenses:  pkg.NewLicenseSet(license...),
 		Type:      pkg.NpmPkg,
 		// though we could glean dependency information from the package.json and surrounding packages found in a node_modules directory,
-		// we do not do so today, so we mark knowledge of dependencies as incomplete.
-		Dependencies: pkg.IncompleteDependencies,
+		// we do not do so today, so we record "unknown" for this package's dependency completeness field.
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.NpmPackage{
 			Name:        u.Name,
 			Version:     u.Version,
@@ -92,8 +92,8 @@ func newPackageLockV1Package(cfg CatalogerConfig, resolver file.Resolver, locati
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			// though we could glean dependency information from the package-lock.json,
-			// we do not do so today, so we mark knowledge of dependencies as incomplete.
-			Dependencies: pkg.IncompleteDependencies,
+			// we do not do so today, so we record "unknown" for this package's dependency completeness field.
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata:     pkg.NpmPackageLockEntry{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
 	)
@@ -127,8 +127,8 @@ func newPackageLockV2Package(cfg CatalogerConfig, resolver file.Resolver, locati
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			// though we could glean dependency information from the package-lock.json,
-			// we do not do so today, so we mark knowledge of dependencies as incomplete.
-			Dependencies: pkg.IncompleteDependencies,
+			// we do not do so today, so we record "unknown" for this package's dependency completeness field.
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata:     pkg.NpmPackageLockEntry{Resolved: u.Resolved, Integrity: u.Integrity},
 		},
 	)
@@ -146,8 +146,8 @@ func newPnpmPackage(resolver file.Resolver, location file.Location, name, versio
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			// though we could glean dependency information from the pnpm files,
-			// we do not do so today, so we mark knowledge of dependencies as incomplete.
-			Dependencies: pkg.IncompleteDependencies,
+			// we do not do so today, so we record "unknown" for this package's dependency completeness field.
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 	)
 }
@@ -177,8 +177,8 @@ func newYarnLockPackage(cfg CatalogerConfig, resolver file.Resolver, location fi
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			// though we could glean dependency information from the yarn.lock,
-			// we do not do so today, so we mark knowledge of dependencies as incomplete.
-			Dependencies: pkg.IncompleteDependencies,
+			// we do not do so today, so we record "unknown" for this package's dependency completeness field.
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata:     pkg.YarnLockEntry{Resolved: resolved, Integrity: integrity},
 		},
 	)

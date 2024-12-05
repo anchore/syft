@@ -24,7 +24,7 @@ func TestParseComposerFileLock(t *testing.T) {
 			),
 			Language:     pkg.PHP,
 			Type:         pkg.PhpComposerPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PhpComposerLockEntry{
 				Name:    "adoy/fastcgi-client",
 				Version: "1.0.2",
@@ -64,7 +64,7 @@ func TestParseComposerFileLock(t *testing.T) {
 				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
 			),
 			Type:         pkg.PhpComposerPkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.PhpComposerLockEntry{
 				Name:    "alcaeus/mongo-php-adapter",
 				Version: "1.1.11",

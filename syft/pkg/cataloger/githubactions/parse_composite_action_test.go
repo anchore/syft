@@ -20,7 +20,7 @@ func Test_parseCompositeActionForActionUsage(t *testing.T) {
 			Type:         pkg.GithubActionPkg,
 			Locations:    fixtureLocationSet,
 			PURL:         "pkg:github/actions/setup-go@v4",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "actions/cache",
@@ -28,7 +28,7 @@ func Test_parseCompositeActionForActionUsage(t *testing.T) {
 			Type:         pkg.GithubActionPkg,
 			Locations:    fixtureLocationSet,
 			PURL:         "pkg:github/actions/cache@v3",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 	}
 

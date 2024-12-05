@@ -13,8 +13,10 @@ import "strings"
 type DependencyCompleteness string
 
 const (
-	// UnknownDependencyCompleteness indicates that the completeness of the dependencies is unknown. This should be used
-	// when the dependency resolution mechanism is not well understood.
+	// UnknownDependencyCompleteness indicates that the completeness of the dependencies cannot be considered
+	// positively complete or incomplete. This should be used when the dependency resolution mechanism is not
+	// well understood, the set of dependencies is unknowable, or no attempt has been made to resolve
+	// dependencies (no assertion).
 	UnknownDependencyCompleteness DependencyCompleteness = "unknown"
 
 	// CompleteDependencies indicates that the package has all of its direct dependencies resolved and related to
@@ -27,9 +29,9 @@ const (
 	// a direct and indirect dependency from the perspective of this package).
 	CompleteWithIndirectDependencies DependencyCompleteness = "complete-with-indirect"
 
-	// IncompleteDependencies indicates that the package does not have all of its direct dependencies resolved.
-	// This is useful in times when there is more than one mechanism at play for resolving dependencies and the
-	// cataloger only implements a subset of them, or in cases where the mechanism for resolving dependencies is limited.
+	// IncompleteDependencies indicates that the package is known to not have all of its direct dependencies listed.
+	// This is reserved for cases where we know there are a non-zero number of dependencies for a package, but we
+	// are not listing them intentionally or because we are unable to resolve them.
 	IncompleteDependencies DependencyCompleteness = "incomplete"
 )
 

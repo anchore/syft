@@ -59,7 +59,7 @@ func parseSetup(_ context.Context, _ file.Resolver, _ *generic.Environment, read
 				newPackageForIndex(
 					name,
 					version,
-					pkg.IncompleteDependencies, // no attempt is made by the parser function to resolve dependencies
+					pkg.UnknownDependencyCompleteness, // no attempt is made by the parser function to resolve dependencies
 					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
 			)

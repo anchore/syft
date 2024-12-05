@@ -19,7 +19,7 @@ func TestRPackageCataloger(t *testing.T) {
 			Licenses:     pkg.NewLicenseSet([]pkg.License{pkg.NewLicense("Part of R 4.3.0")}...),
 			Language:     pkg.R,
 			Type:         pkg.Rpkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			PURL:         "pkg:cran/base@4.3.0",
 			Metadata: pkg.RDescription{
 				Title:       "The R Base Package",
@@ -38,7 +38,7 @@ func TestRPackageCataloger(t *testing.T) {
 			Licenses:     pkg.NewLicenseSet([]pkg.License{pkg.NewLicense("MIT")}...),
 			Language:     pkg.R,
 			Type:         pkg.Rpkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			PURL:         "pkg:cran/stringr@1.5.0.9000",
 			Metadata: pkg.RDescription{
 				Title:       "Simple, Consistent Wrappers for Common String Operations",

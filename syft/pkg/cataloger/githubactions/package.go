@@ -48,7 +48,7 @@ func newGithubActionPackageUsage(name, version string, workflowLocation file.Loc
 		Locations: file.NewLocationSet(workflowLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		PURL:      packageURL(name, version),
 		// we cannot see what the dependencies are for a github action are locally from workflow yaml files
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Type:         pkg.GithubActionPkg,
 	}
 

@@ -20,7 +20,7 @@ func Test_parseWorkflowForActionUsage(t *testing.T) {
 			Type:         pkg.GithubActionPkg,
 			Locations:    fixtureLocationSet,
 			PURL:         "", // don't have enough context without parsing the git origin, which still may not be accurate
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "actions/cache",
@@ -28,7 +28,7 @@ func Test_parseWorkflowForActionUsage(t *testing.T) {
 			Type:         pkg.GithubActionPkg,
 			Locations:    fixtureLocationSet,
 			PURL:         "pkg:github/actions/cache@v3",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "actions/cache/restore",
@@ -36,7 +36,7 @@ func Test_parseWorkflowForActionUsage(t *testing.T) {
 			Type:         pkg.GithubActionPkg,
 			Locations:    fixtureLocationSet,
 			PURL:         "pkg:github/actions/cache@v3#restore",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "actions/cache/save",
@@ -44,7 +44,7 @@ func Test_parseWorkflowForActionUsage(t *testing.T) {
 			Type:         pkg.GithubActionPkg,
 			Locations:    fixtureLocationSet,
 			PURL:         "pkg:github/actions/cache@v3#save",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "actions/checkout",
@@ -52,7 +52,7 @@ func Test_parseWorkflowForActionUsage(t *testing.T) {
 			Type:         pkg.GithubActionPkg,
 			Locations:    fixtureLocationSet,
 			PURL:         "pkg:github/actions/checkout@v4",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 	}
 

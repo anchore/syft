@@ -68,8 +68,8 @@ func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environm
 			Language: pkg.Java,
 			Type:     pkg.JavaPkg,
 			PURL:     packageURL(dep.Name, dep.Version, archive),
-			// though we do have dependencies listed, we do not have them related to one another, thus we must answer incomplete
-			Dependencies: pkg.IncompleteDependencies,
+			// though we do have dependencies listed, we do not have them related to one another, thus we must answer unknown
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata:     archive,
 		}
 		mappedPkg.SetID()

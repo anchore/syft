@@ -24,7 +24,7 @@ func Test_KernelCataloger(t *testing.T) {
 		Type:         pkg.LinuxKernelPkg,
 		PURL:         "pkg:generic/linux-kernel@6.0.7-301.fc37.x86_64",
 		CPEs:         []cpe.CPE{cpe.Must("cpe:2.3:o:linux:linux_kernel:6.0.7-301.fc37.x86_64:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource)},
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.LinuxKernel{
 			Name:            "",
 			Architecture:    "x86",
@@ -59,7 +59,7 @@ func Test_KernelCataloger(t *testing.T) {
 		),
 		Type:         pkg.LinuxKernelModulePkg,
 		PURL:         "pkg:generic/ttynull",
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.LinuxKernelModule{
 			Name:          "ttynull",
 			Version:       "",

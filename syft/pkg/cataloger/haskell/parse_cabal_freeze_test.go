@@ -21,7 +21,7 @@ func TestParseCabalFreeze(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "Diff",
@@ -30,7 +30,7 @@ func TestParseCabalFreeze(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "HTTP",
@@ -39,7 +39,7 @@ func TestParseCabalFreeze(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "HUnit",
@@ -48,7 +48,7 @@ func TestParseCabalFreeze(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "OneTuple",
@@ -57,7 +57,7 @@ func TestParseCabalFreeze(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "Only",
@@ -66,7 +66,7 @@ func TestParseCabalFreeze(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "PyF",
@@ -75,7 +75,7 @@ func TestParseCabalFreeze(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "QuickCheck",
@@ -84,7 +84,7 @@ func TestParseCabalFreeze(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "RSA",
@@ -93,7 +93,7 @@ func TestParseCabalFreeze(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "SHA",
@@ -102,7 +102,7 @@ func TestParseCabalFreeze(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 		{
 			Name:         "Spock",
@@ -111,7 +111,7 @@ func TestParseCabalFreeze(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 		},
 	}
 

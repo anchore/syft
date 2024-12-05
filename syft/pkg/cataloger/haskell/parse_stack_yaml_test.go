@@ -21,7 +21,7 @@ func TestParseStackYaml(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.HackageStackYamlEntry{
 				PkgHash: "353c9322847b661e4c6f7c83c2acf8e5c08b682fbe516c7d46c29605937543df",
 			},
@@ -33,7 +33,7 @@ func TestParseStackYaml(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.HackageStackYamlEntry{
 				PkgHash: "98353ee0e2f5d97d2148513f084c1cd37dfda03e48aa9dd7a017c9d9c0ba710e",
 			},
@@ -45,7 +45,7 @@ func TestParseStackYaml(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.HackageStackYamlEntry{
 				PkgHash: "3406ff0c1d592490f53ead8cf2cd22bdf3d79fd125ccaf3add683f6d71c24d55",
 			},
@@ -57,7 +57,7 @@ func TestParseStackYaml(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.HackageStackYamlEntry{
 				PkgHash: "7dfac9b454ff2da0abb7560f0ffbe00ae442dd5cb76e8be469f77e6988a70fed",
 			},
@@ -69,7 +69,7 @@ func TestParseStackYaml(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.HackageStackYamlEntry{
 				PkgHash: "658a6a74d5a70c040edd6df2a12228c6d9e63082adaad1ed4d0438ad082a0ef3",
 			},
@@ -81,7 +81,7 @@ func TestParseStackYaml(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.HackageStackYamlEntry{
 				PkgHash: "a126e9087409fef8dcafcd2f8656456527ac7bb163ed4d9cb3a57589042a5fe8",
 			},
@@ -93,7 +93,7 @@ func TestParseStackYaml(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.HackageStackYamlEntry{
 				PkgHash: "fbcf49ecfc3d4da53e797fd0275264cba776ffa324ee223e2a3f4ec2d2c9c4a6",
 			},
@@ -105,7 +105,7 @@ func TestParseStackYaml(t *testing.T) {
 			Locations:    locationSet,
 			Language:     pkg.Haskell,
 			Type:         pkg.HackagePkg,
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.HackageStackYamlEntry{
 				PkgHash: "e4dc6473faaa75fbd7eccab4e3ee1d651d75bb0e49946ef0b8b751ccde771a55",
 			},

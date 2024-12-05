@@ -38,7 +38,7 @@ func TestParseOpamPackage(t *testing.T) {
 					),
 					Language:     pkg.OCaml,
 					Type:         pkg.OpamPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.OpamPackage{
 						Name:     "ocaml-base-compiler",
 						Version:  "4.14.0",
@@ -68,7 +68,7 @@ func TestParseOpamPackage(t *testing.T) {
 					),
 					Language:     pkg.OCaml,
 					Type:         pkg.OpamPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.OpamPackage{
 						Name:     "alcotest",
 						Version:  "1.5.0",

@@ -15,7 +15,7 @@ func newPackage(name, version string, m any, location file.Location) pkg.Package
 		Language:  pkg.Haskell,
 		Type:      pkg.HackagePkg,
 		// in all cases (cabal, stack, etc.) we do not attempt to glean dependency information
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     m,
 	}
 

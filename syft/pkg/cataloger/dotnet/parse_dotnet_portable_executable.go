@@ -81,8 +81,8 @@ func buildDotNetPEPackage(versionResources map[string]string, f file.LocationRea
 		Type:      pkg.DotnetPkg,
 		Language:  pkg.Dotnet,
 		PURL:      portableExecutablePackageURL(name, ver),
-		// by nature PE metadata does not have any dependency information, thus we are forced to claim incomplete
-		Dependencies: pkg.IncompleteDependencies,
+		// by nature PE file metadata does not have any dependency information, thus we are forced to claim unknown completeness
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata:     metadata,
 	}
 

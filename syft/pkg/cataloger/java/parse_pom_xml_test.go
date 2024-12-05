@@ -50,7 +50,7 @@ func Test_parsePomXML(t *testing.T) {
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
 		Locations:    pomLocation,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "com.joda",
@@ -68,7 +68,7 @@ func Test_parsePomXML(t *testing.T) {
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
 		Locations:    pomLocation,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "junit",
@@ -506,7 +506,7 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",
@@ -522,7 +522,7 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.junit.jupiter",
@@ -539,7 +539,7 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.assertj",
@@ -556,7 +556,7 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "commons-io",
@@ -573,7 +573,7 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.mockito",
@@ -590,7 +590,7 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.graalvm.js",
@@ -607,7 +607,7 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.graalvm.js",
@@ -624,7 +624,7 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",
@@ -641,7 +641,7 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.openjdk.jmh",
@@ -658,7 +658,7 @@ func getCommonsTextExpectedPackages(resolved bool) expected {
 		Language:     pkg.Java,
 		Type:         pkg.JavaPkg,
 		FoundBy:      pomCatalogerName,
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.openjdk.jmh",
@@ -772,7 +772,7 @@ func expectedTransientPackageData() expected {
 		Name:    "commons-lang3",
 		Version: "3.113.7.8.0",
 		// missing pom in test fixtures, this is a search miss
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",
@@ -784,7 +784,7 @@ func expectedTransientPackageData() expected {
 		Name:    "commons-lang3",
 		Version: "3.12.0",
 		// missing pom in test fixtures, this is a search miss
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",
@@ -796,7 +796,7 @@ func expectedTransientPackageData() expected {
 		Name:    "commons-math3.11.0",
 		Version: "3.5",
 		// missing pom in test fixtures, this is a search miss
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",
@@ -808,7 +808,7 @@ func expectedTransientPackageData() expected {
 		Name:    "commons-exec",
 		Version: "1.3",
 		// missing pom in test fixtures, this is a search miss
-		Dependencies: pkg.IncompleteDependencies,
+		Dependencies: pkg.UnknownDependencyCompleteness,
 		Metadata: pkg.JavaArchive{
 			PomProperties: &pkg.JavaPomProperties{
 				GroupID:    "org.apache.commons",

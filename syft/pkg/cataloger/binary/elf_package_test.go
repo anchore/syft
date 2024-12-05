@@ -158,7 +158,7 @@ func Test_newELFPackage(t *testing.T) {
 				Version:      "0.01",
 				Type:         "binary",
 				PURL:         "pkg:generic/syftsys/syfttestfixture@0.01",
-				Dependencies: pkg.IncompleteDependencies,
+				Dependencies: pkg.UnknownDependencyCompleteness,
 				Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 					Type:   "binary",
 					System: "syftsys",

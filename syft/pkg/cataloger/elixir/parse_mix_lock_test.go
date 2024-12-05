@@ -19,7 +19,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/castore@0.1.17",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "castore",
 				Version:    "0.1.17",
@@ -34,7 +34,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/connection@1.1.0",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "connection",
 				Version:    "1.1.0",
@@ -49,7 +49,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/cowboy@2.9.0",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "cowboy",
 				Version:    "2.9.0",
@@ -64,7 +64,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/cowboy_telemetry@0.4.0",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "cowboy_telemetry",
 				Version:    "0.4.0",
@@ -79,7 +79,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/cowlib@2.11.0",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "cowlib",
 				Version:    "2.11.0",
@@ -94,7 +94,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/db_connection@2.4.2",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "db_connection",
 				Version:    "2.4.2",
@@ -109,7 +109,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/decimal@2.0.0",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "decimal",
 				Version:    "2.0.0",
@@ -124,7 +124,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/earmark_parser@1.4.25",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "earmark_parser",
 				Version:    "1.4.25",
@@ -139,7 +139,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/ecto@3.8.1",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "ecto",
 				Version:    "3.8.1",
@@ -154,7 +154,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/ecto_sql@3.8.1",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "ecto_sql",
 				Version:    "3.8.1",
@@ -169,7 +169,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/esbuild@0.5.0",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "esbuild",
 				Version:    "0.5.0",
@@ -184,7 +184,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/ex_doc@0.28.4",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "ex_doc",
 				Version:    "0.28.4",
@@ -199,7 +199,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/gettext@0.19.1",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "gettext",
 				Version:    "0.19.1",
@@ -214,7 +214,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/hpax@0.1.1",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "hpax",
 				Version:    "0.1.1",
@@ -229,7 +229,7 @@ func TestParseMixLock(t *testing.T) {
 			Type:         pkg.HexPkg,
 			Locations:    locations,
 			PURL:         "pkg:hex/jason@1.3.0",
-			Dependencies: pkg.IncompleteDependencies,
+			Dependencies: pkg.UnknownDependencyCompleteness,
 			Metadata: pkg.ElixirMixLockEntry{
 				Name:       "jason",
 				Version:    "1.3.0",

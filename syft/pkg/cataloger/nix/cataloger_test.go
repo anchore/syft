@@ -26,7 +26,7 @@ func TestCataloger_Catalog(t *testing.T) {
 					Locations:    file.NewLocationSet(file.NewLocation("nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin")),
 					FoundBy:      catalogerName,
 					Type:         pkg.NixPkg,
-					Dependencies: pkg.IncompleteDependencies,
+					Dependencies: pkg.UnknownDependencyCompleteness,
 					Metadata: pkg.NixStoreEntry{
 						OutputHash: "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 						Output:     "bin",
