@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/anchore/syft/internal/relationship"
+
 	"github.com/microsoft/go-rustaudit"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -95,7 +96,6 @@ func processAuditVersionInfo(location file.Location, versionInfo rustaudit.Versi
 	// we need to be careful to not create relationships for packages that were not created.
 	var rels []artifact.Relationship
 	for _, parentPair := range pairsByOgIndex {
-
 		// the rust-audit report lists dependencies by index from the original version info object. We need to find
 		// the syft packages created for each listed dependency from that original object.
 		for _, ogPkgIndex := range parentPair.rustPkg.Dependencies {

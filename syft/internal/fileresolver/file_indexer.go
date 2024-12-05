@@ -5,11 +5,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/wagoodman/go-progress"
+
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/internal/windows"
-	"github.com/wagoodman/go-progress"
 )
 
 type fileIndexer struct {

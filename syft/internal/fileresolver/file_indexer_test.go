@@ -1,13 +1,15 @@
 package fileresolver
 
 import (
-	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/fs"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/stereoscope/pkg/file"
 )
 
 // - Verify that both the parent and the path are indexed
