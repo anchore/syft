@@ -279,43 +279,43 @@ func TestParseCargoLock(t *testing.T) {
 
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: ansiTerm,
+			To:   ansiTerm,
+			From: winapi,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			To:   errno,
+			From: windowsSys52,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			To:   nom,
+			From: memchr,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			To:   nom,
+			From: versionCheck,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			To:   schannel,
+			From: windowsSys59,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			To:   unicodeBidi,
+			From: matches,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
 			To:   winapi,
+			From: winAPIi686PCWindowsGNU,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: errno,
-			To:   windowsSys52,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: nom,
-			To:   memchr,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: nom,
-			To:   versionCheck,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: schannel,
-			To:   windowsSys59,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: unicodeBidi,
-			To:   matches,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: winapi,
-			To:   winAPIi686PCWindowsGNU,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: winapi,
-			To:   winAPIx8664PCWindowsGNU,
+			To:   winapi,
+			From: winAPIx8664PCWindowsGNU,
 			Type: artifact.DependencyOfRelationship,
 		},
 	}
