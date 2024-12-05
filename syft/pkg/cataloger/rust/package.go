@@ -25,19 +25,6 @@ func newPackageFromCargoMetadata(m pkg.RustCargoLockEntry, locations ...file.Loc
 	return p
 }
 
-func newPackagesFromAudit(location file.Location, versionInfo rustaudit.VersionInfo) []pkg.Package {
-	var pkgs []pkg.Package
-
-	for _, dep := range versionInfo.Packages {
-		p := newPackageFromAudit(&dep, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
-		if pkg.IsValid(&p) && dep.Kind == rustaudit.Runtime {
-			pkgs = append(pkgs, p)
-		}
-	}
-
-	return pkgs
-}
-
 func newPackageFromAudit(dep *rustaudit.Package, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      dep.Name,
@@ -46,6 +33,7 @@ func newPackageFromAudit(dep *rustaudit.Package, locations ...file.Location) pkg
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
 		Locations: file.NewLocationSet(locations...),
+		FoundBy:   cargoAuditBinaryCatalogerName,
 		Metadata: pkg.RustBinaryAuditEntry{
 			Name:    dep.Name,
 			Version: dep.Version,
