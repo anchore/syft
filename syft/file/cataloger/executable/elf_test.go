@@ -27,6 +27,7 @@ func Test_findELFSecurityFeatures(t *testing.T) {
 		name         string
 		fixture      string
 		want         *file.ELFSecurityFeatures
+		wantErr      require.ErrorAssertionFunc
 		wantStripped bool
 	}{
 		{
@@ -221,6 +222,7 @@ func Test_elfHasExports(t *testing.T) {
 			f, err := elf.NewFile(readerForFixture(t, tt.fixture))
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, elfHasExports(f))
+			require.NoError(t, err)
 		})
 	}
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/relationship"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -126,5 +127,5 @@ func parseDotnetDeps(_ context.Context, _ file.Resolver, _ *generic.Environment,
 	// this will only consider package-to-package relationships.
 	relationship.Sort(relationships)
 
-	return pkgs, relationships, nil
+	return pkgs, relationships, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }

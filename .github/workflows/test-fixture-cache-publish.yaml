@@ -1,0 +1,39 @@
+name: "Test fixture cache: publish"
+
+on:
+  workflow_dispatch:
+  schedule:
+    # run nightly at 4AM UTC
+    - cron: "0 4 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+
+  Publish:
+    name: "Publish test fixture image cache"
+    # we use this runner to get enough storage space for docker images and fixture cache
+    runs-on: ubuntu-22.04-4core-16gb
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+        with:
+          # we want to rebuild the cache with no previous state
+          download-test-fixture-cache: false
+
+      - name: Run all tests
+        run: make test
+        env:
+          # we want to rebuild the cache with no previous state
+          DOWNLOAD_TEST_FIXTURE_CACHE: "false"
+
+      - name: Login to GitHub Container Registry (ORAS)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | .tool/oras login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Publish test fixture cache
+        run: make upload-test-fixture-cache

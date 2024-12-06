@@ -25,8 +25,8 @@ ci-bootstrap-go:
 
 # this is a bootstrapping catch-all, where if the target doesn't exist, we'll ensure the tools are installed and then try again
 %:
-	make $(TASK)
-	$(TASK) $@
+	@make --silent $(TASK)
+	@$(TASK) $@
 
 ## Shim targets #################################
 

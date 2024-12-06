@@ -12,10 +12,10 @@ linters:
   enable:
     - asciicheck
     - bodyclose
+    - copyloopvar
     - dogsled
     - dupl
     - errcheck
-    - exportloopref
     - funlen
     - gocognit
     - goconst
@@ -30,6 +30,7 @@ linters:
     - ineffassign
     - misspell
     - nakedret
+    - nolintlint
     - revive
     - staticcheck
     - stylecheck
@@ -56,6 +57,9 @@ linters-settings:
     settings:
       ruleguard:
         rules: "test/rules/rules.go"
+  gosec:
+    excludes:
+      - G115
 output:
   uniq-by-line: false
 run:
@@ -80,7 +84,6 @@ run:
 #    - lll         # without a way to specify per-line exception cases, this is not usable
 #    - maligned    # this is an excellent linter, but tricky to optimize and we are not sensitive to memory layout optimizations
 #    - nestif
-#    - nolintlint   # as of go1.19 this conflicts with the behavior of gofmt, which is a deal-breaker (lint-fix will still fail when running lint)
 #    - prealloc     # following this rule isn't consistently a good idea, as it sometimes forces unnecessary allocations that result in less idiomatic code
 #    - rowserrcheck # not in a repo with sql, so this is not useful
 #    - scopelint    # deprecated

@@ -108,7 +108,7 @@ func Test_PackageURL(t *testing.T) {
 				ID:      "arch",
 				BuildID: "rolling",
 			},
-			expected: "pkg:alpm/arch/p@v?arch=a&upstream=origin&distro=arch-rolling",
+			expected: "pkg:alpm/arch/p@v?arch=a&distro=arch-rolling&upstream=origin",
 		},
 	}
 

@@ -41,6 +41,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.RustCargoLockEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.SwiplPackEntry{},
+		pkg.OpamPackage{},
 		pkg.YarnLockEntry{},
 	)
 	tests := []struct {
@@ -176,6 +177,18 @@ func Test_OriginatorSupplier(t *testing.T) {
 				},
 			},
 			// note: empty!
+		},
+		{
+			name: "from java -- jvm installation",
+			input: pkg.Package{
+				Metadata: pkg.JavaVMInstallation{
+					Release: pkg.JavaVMRelease{
+						Implementor: "Oracle",
+					},
+				},
+			},
+			originator: "Organization: Oracle",
+			supplier:   "Organization: Oracle",
 		},
 		{
 			name: "from linux kernel module",
@@ -349,6 +362,14 @@ func Test_OriginatorSupplier(t *testing.T) {
 			},
 			originator: "Person: auth (auth@auth.gov)",
 			supplier:   "Person: me (me@auth.com)",
+		},
+		{
+			name: "from ocaml opam",
+			input: pkg.Package{
+				Metadata: pkg.OpamPackage{},
+			},
+			originator: "",
+			supplier:   "",
 		},
 	}
 	for _, test := range tests {

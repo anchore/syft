@@ -18,6 +18,80 @@ var jenkinsPluginPomPropertiesGroupIDs = []string{
 	"com.cloudbees.jenkins.plugins",
 }
 
+type JavaVMInstallation struct {
+	Release JavaVMRelease `json:"release"`
+	Files   []string      `json:"files"`
+}
+
+func (m JavaVMInstallation) OwnedFiles() []string {
+	return m.Files
+}
+
+type JavaVMRelease struct {
+	// Implementor is extracted with the `java.vendor` JVM property
+	Implementor string `mapstructure:"IMPLEMENTOR,omitempty" json:"implementor,omitempty"`
+
+	// ImplementorVersion is extracted with the `java.vendor.version` JVM property
+	ImplementorVersion string `mapstructure:"IMPLEMENTOR_VERSION,omitempty" json:"implementorVersion,omitempty"`
+
+	// JavaRuntimeVersion is extracted from the 'java.runtime.version' JVM property
+	JavaRuntimeVersion string `mapstructure:"JAVA_RUNTIME_VERSION,omitempty" json:"javaRuntimeVersion,omitempty"`
+
+	// JavaVersion matches that from `java -version` command output
+	JavaVersion string `mapstructure:"JAVA_VERSION,omitempty" json:"javaVersion,omitempty"`
+
+	// JavaVersionDate is extracted from the 'java.version.date' JVM property
+	JavaVersionDate string `mapstructure:"JAVA_VERSION_DATE,omitempty" json:"javaVersionDate,omitempty"`
+
+	// Libc can either be 'glibc' or 'musl'
+	Libc string `mapstructure:"LIBC,omitempty" json:"libc,omitempty"`
+
+	// Modules is a list of JVM modules that are packaged
+	Modules []string `mapstructure:"MODULES,omitempty" json:"modules,omitempty"`
+
+	// OsArch is the target CPU architecture
+	OsArch string `mapstructure:"OS_ARCH,omitempty" json:"osArch,omitempty"`
+
+	// OsName is the name of the target runtime operating system environment
+	OsName string `mapstructure:"OS_NAME,omitempty" json:"osName,omitempty"`
+
+	// OsVersion is the version of the target runtime operating system environment
+	OsVersion string `mapstructure:"OS_VERSION,omitempty" json:"osVersion,omitempty"`
+
+	// Source refers to the origin repository of OpenJDK source
+	Source string `mapstructure:"SOURCE,omitempty" json:"source,omitempty"`
+
+	// BuildSource Git SHA of the build repository
+	BuildSource string `mapstructure:"BUILD_SOURCE,omitempty" json:"buildSource,omitempty"`
+
+	// BuildSourceRepo refers to rhe repository URL for the build source
+	BuildSourceRepo string `mapstructure:"BUILD_SOURCE_REPO,omitempty" json:"buildSourceRepo,omitempty"`
+
+	// SourceRepo refers to the OpenJDK repository URL
+	SourceRepo string `mapstructure:"SOURCE_REPO,omitempty" json:"sourceRepo,omitempty"`
+
+	// FullVersion is extracted from the 'java.runtime.version' JVM property
+	FullVersion string `mapstructure:"FULL_VERSION,omitempty" json:"fullVersion,omitempty"`
+
+	// SemanticVersion is derived from the OpenJDK version
+	SemanticVersion string `mapstructure:"SEMANTIC_VERSION,omitempty" json:"semanticVersion,omitempty"`
+
+	// BuildInfo contains additional build information
+	BuildInfo string `mapstructure:"BUILD_INFO,omitempty" json:"buildInfo,omitempty"`
+
+	// JvmVariant specifies the JVM variant (e.g., Hotspot or OpenJ9)
+	JvmVariant string `mapstructure:"JVM_VARIANT,omitempty" json:"jvmVariant,omitempty"`
+
+	// JvmVersion is extracted from the 'java.vm.version' JVM property
+	JvmVersion string `mapstructure:"JVM_VERSION,omitempty" json:"jvmVersion,omitempty"`
+
+	// ImageType can be 'JDK' or 'JRE'
+	ImageType string `mapstructure:"IMAGE_TYPE,omitempty" json:"imageType,omitempty"`
+
+	// BuildType can be 'commercial' (used in some older oracle JDK distributions)
+	BuildType string `mapstructure:"BUILD_TYPE,omitempty" json:"buildType,omitempty"`
+}
+
 // JavaArchive encapsulates all Java ecosystem metadata for a package as well as an (optional) parent relationship.
 type JavaArchive struct {
 	VirtualPath    string             `json:"virtualPath" cyclonedx:"virtualPath"` // we need to include the virtual path in cyclonedx documents to prevent deduplication of jars within jars

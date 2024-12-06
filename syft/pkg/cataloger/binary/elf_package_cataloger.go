@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -52,6 +53,7 @@ func (c *elfPackageCataloger) Name() string {
 }
 
 func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+	var errs error
 	locations, err := resolver.FilesByMIMEType(mimetype.ExecutableMIMETypeSet.List()...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get binary files by mime type: %w", err)
@@ -62,7 +64,8 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 	for _, location := range locations {
 		notes, key, err := parseElfPackageNotes(resolver, location, c)
 		if err != nil {
-			return nil, nil, err
+			errs = unknown.Append(errs, location, err)
+			continue
 		}
 		if notes == nil {
 			continue
@@ -87,7 +90,7 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 	// why not return relationships? We have an executable cataloger that will note the dynamic libraries imported by
 	// each binary. After all files and packages are processed there is a final task that creates package-to-package
 	// and package-to-file relationships based on the dynamic libraries imported by each binary.
-	return pkgs, nil, nil
+	return pkgs, nil, errs
 }
 
 func parseElfPackageNotes(resolver file.Resolver, location file.Location, c *elfPackageCataloger) (*elfBinaryPackageNotes, elfPackageKey, error) {
@@ -104,7 +107,7 @@ func parseElfPackageNotes(resolver file.Resolver, location file.Location, c *elf
 
 	if err != nil {
 		log.WithFields("file", location.Path(), "error", err).Trace("unable to parse ELF notes")
-		return nil, elfPackageKey{}, nil
+		return nil, elfPackageKey{}, err
 	}
 
 	if notes == nil {
@@ -173,7 +176,7 @@ func getELFNotes(r file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
 		if len(notes) > headerSize {
 			var metadata elfBinaryPackageNotes
 			newPayload := bytes.TrimRight(notes[headerSize:], "\x00")
-			if err := json.Unmarshal(newPayload, &metadata); err == nil {
+			if err = json.Unmarshal(newPayload, &metadata); err == nil {
 				return &metadata, nil
 			}
 			log.WithFields("file", r.Location.Path(), "error", err).Trace("unable to unmarshal ELF package notes as JSON")

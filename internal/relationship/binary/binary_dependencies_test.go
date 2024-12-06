@@ -50,6 +50,22 @@ func TestPackagesToRemove(t *testing.T) {
 	}
 	glibCBinaryELFPackage.SetID()
 
+	glibCBinaryELFPackageAsRPM := pkg.Package{
+		Name: "glibc",
+		Locations: file.NewLocationSet(
+			file.NewLocation(glibcCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		),
+		Type: pkg.RpmPkg, // note: the elf package claims it is a RPM, not binary
+		Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
+			Type:       "rpm",
+			Vendor:     "syft",
+			System:     "syftsys",
+			SourceRepo: "https://github.com/someone/somewhere.git",
+			Commit:     "5534c38d0ffef9a3f83154f0b7a7fb6ab0ab6dbb",
+		},
+	}
+	glibCBinaryELFPackageAsRPM.SetID()
+
 	glibCBinaryClassifierPackage := pkg.Package{
 		Name: "glibc",
 		Locations: file.NewLocationSet(
@@ -83,9 +99,15 @@ func TestPackagesToRemove(t *testing.T) {
 			want:     []artifact.ID{glibCBinaryELFPackage.ID()},
 		},
 		{
-			name:     "remove no packages when there is a single binary package",
+			name:     "keep packages that are overlapping rpm --> binary when the binary self identifies as an RPM",
 			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
-			accessor: newAccessor([]pkg.Package{glibCBinaryELFPackage}, map[file.Coordinates]file.Executable{}, nil),
+			accessor: newAccessor([]pkg.Package{glibCPackage, glibCBinaryELFPackageAsRPM}, map[file.Coordinates]file.Executable{}, nil),
+			want:     []artifact.ID{},
+		},
+		{
+			name:     "remove no packages when there is a single binary package (or self identifying RPM)",
+			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
+			accessor: newAccessor([]pkg.Package{glibCBinaryELFPackage, glibCBinaryELFPackageAsRPM}, map[file.Coordinates]file.Executable{}, nil),
 			want:     []artifact.ID{},
 		},
 		{
@@ -173,9 +195,9 @@ func TestNewDependencyRelationships(t *testing.T) {
 			file.NewLocation(parallelLibCoordinate.RealPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
 		),
 		Language: "",
-		Type:     pkg.BinaryPkg,
+		Type:     pkg.RpmPkg,
 		Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
-			Type:       "testfixture",
+			Type:       "rpm",
 			Vendor:     "syft",
 			System:     "syftsys",
 			SourceRepo: "https://github.com/someone/somewhere.git",

@@ -265,7 +265,7 @@ var dirOnlyTestCases = []testCase{
 		name:        "find java packages including pom.xml", // directory scans can include packages that have yet to be installed
 		pkgType:     pkg.JavaPkg,
 		pkgLanguage: pkg.Java,
-		duplicates:  1, // joda-time is included in both pom.xml AND the .jar collection
+		duplicates:  2, // joda-time and example-java-app-maven are included in both pom.xml AND the .jar collection
 		pkgInfo: map[string]string{
 			"example-java-app-maven": "0.1.0",
 			"joda-time":              "2.9.2",
@@ -408,6 +408,14 @@ var dirOnlyTestCases = []testCase{
 		pkgType: pkg.GithubActionWorkflowPkg,
 		pkgInfo: map[string]string{
 			"octo-org/this-repo/.github/workflows/workflow-1.yml": "172239021f7ba04fe7327647b213799853a9eb89",
+		},
+	},
+	{
+		name:        "find opam package",
+		pkgType:     pkg.OpamPkg,
+		pkgLanguage: pkg.OCaml,
+		pkgInfo: map[string]string{
+			"ocaml-base-compiler": "4.14.0",
 		},
 	},
 }

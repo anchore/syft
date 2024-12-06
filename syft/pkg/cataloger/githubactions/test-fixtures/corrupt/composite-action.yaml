@@ -1,0 +1,13 @@
+name: "Bootstrap"
+description: "Bootstrap all tools and dependencies"
+ints:
+  go-version:
+    descrapt-packages:
+    description: "Space delimited list of tools to install via apt"
+    default: "libxml2-utils"
+
+rns:
+  us all cache fingerprints
+      shell: bash
+      run: make fingerprints
+

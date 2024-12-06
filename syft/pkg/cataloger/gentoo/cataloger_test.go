@@ -64,7 +64,7 @@ func TestPortageCataloger(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/image-portage").
+		FromDirectory(t, "test-fixtures/layout").
 		Expects(expectedPkgs, expectedRelationships).
 		TestCataloger(t, NewPortageCataloger())
 

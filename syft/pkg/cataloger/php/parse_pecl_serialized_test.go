@@ -33,3 +33,10 @@ func TestParsePeclSerialized(t *testing.T) {
 	}
 	pkgtest.TestFileParser(t, fixture, parsePeclSerialized, expectedPkgs, expectedRelationships)
 }
+
+func Test_corruptPecl(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/php/.registry/.channel.pecl.php.net/memcached.reg").
+		WithError().
+		TestParser(t, parseComposerLock)
+}

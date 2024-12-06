@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/fangs"
 	"github.com/anchore/go-collections"
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -80,7 +81,6 @@ func defaultScanOptions() *scanOptions {
 	}
 }
 
-//nolint:dupl
 func Scan(app clio.Application) *cobra.Command {
 	id := app.ID()
 
@@ -110,7 +110,7 @@ func (o *scanOptions) PostLoad() error {
 }
 
 func (o *scanOptions) validateLegacyOptionsNotUsed() error {
-	if o.Config.ConfigFile == "" {
+	if len(fangs.Flatten(o.Config.ConfigFile)) == 0 {
 		return nil
 	}
 
@@ -122,32 +122,33 @@ func (o *scanOptions) validateLegacyOptionsNotUsed() error {
 		File                            any     `yaml:"file" json:"file" mapstructure:"file"`
 	}
 
-	by, err := os.ReadFile(o.Config.ConfigFile)
-	if err != nil {
-		return fmt.Errorf("unable to read config file during validations %q: %w", o.Config.ConfigFile, err)
-	}
+	for _, f := range fangs.Flatten(o.Config.ConfigFile) {
+		by, err := os.ReadFile(f)
+		if err != nil {
+			return fmt.Errorf("unable to read config file during validations %q: %w", f, err)
+		}
 
-	var legacy legacyConfig
-	if err := yaml.Unmarshal(by, &legacy); err != nil {
-		return fmt.Errorf("unable to parse config file during validations %q: %w", o.Config.ConfigFile, err)
-	}
+		var legacy legacyConfig
+		if err := yaml.Unmarshal(by, &legacy); err != nil {
+			return fmt.Errorf("unable to parse config file during validations %q: %w", f, err)
+		}
 
-	if legacy.DefaultImagePullSource != nil {
-		return fmt.Errorf("the config file option 'default-image-pull-source' has been removed, please use 'source.image.default-pull-source' instead")
-	}
+		if legacy.DefaultImagePullSource != nil {
+			return fmt.Errorf("the config file option 'default-image-pull-source' has been removed, please use 'source.image.default-pull-source' instead")
+		}
 
-	if legacy.ExcludeBinaryOverlapByOwnership != nil {
-		return fmt.Errorf("the config file option 'exclude-binary-overlap-by-ownership' has been removed, please use 'package.exclude-binary-overlap-by-ownership' instead")
-	}
+		if legacy.ExcludeBinaryOverlapByOwnership != nil {
+			return fmt.Errorf("the config file option 'exclude-binary-overlap-by-ownership' has been removed, please use 'package.exclude-binary-overlap-by-ownership' instead")
+		}
 
-	if legacy.BasePath != nil {
-		return fmt.Errorf("the config file option 'base-path' has been removed, please use 'source.base-path' instead")
-	}
+		if legacy.BasePath != nil {
+			return fmt.Errorf("the config file option 'base-path' has been removed, please use 'source.base-path' instead")
+		}
 
-	if legacy.File != nil && reflect.TypeOf(legacy.File).Kind() == reflect.String {
-		return fmt.Errorf("the config file option 'file' has been removed, please use 'outputs' instead")
+		if legacy.File != nil && reflect.TypeOf(legacy.File).Kind() == reflect.String {
+			return fmt.Errorf("the config file option 'file' has been removed, please use 'outputs' instead")
+		}
 	}
-
 	return nil
 }
 
@@ -155,13 +156,13 @@ func validateScanArgs(cmd *cobra.Command, args []string) error {
 	return validateArgs(cmd, args, "an image/directory argument is required")
 }
 
-func validateArgs(cmd *cobra.Command, args []string, error string) error {
+func validateArgs(cmd *cobra.Command, args []string, err string) error {
 	if len(args) == 0 {
 		// in the case that no arguments are given we want to show the help text and return with a non-0 return code.
 		if err := cmd.Help(); err != nil {
 			return fmt.Errorf("unable to display help: %w", err)
 		}
-		return fmt.Errorf("%v", error)
+		return fmt.Errorf("%v", err)
 	}
 
 	return cobra.MaximumNArgs(1)(cmd, args)
@@ -396,13 +397,13 @@ func getExplanation(expErr task.ErrInvalidExpression) string {
 
 	if errors.Is(err, task.ErrNamesNotAllowed) {
 		if expErr.Operation == task.SubSelectOperation {
-			return "However, " + err.Error() + ".\nIt seems like you are intending to add a cataloger in addition to the default set." // nolint:goconst
+			return "However, " + err.Error() + ".\nIt seems like you are intending to add a cataloger in addition to the default set."
 		}
-		return "However, " + err.Error() + "." // nolint:goconst
+		return "However, " + err.Error() + "."
 	}
 
 	if errors.Is(err, task.ErrTagsNotAllowed) {
-		return "However, " + err.Error() + ".\nAdding groups of catalogers may result in surprising behavior (create inaccurate SBOMs)." // nolint:goconst
+		return "However, " + err.Error() + ".\nAdding groups of catalogers may result in surprising behavior (create inaccurate SBOMs)."
 	}
 
 	if errors.Is(err, task.ErrAllNotAllowed) {

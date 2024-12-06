@@ -95,7 +95,7 @@ func NewAttributes(cpeStr string) (Attributes, error) {
 	}
 
 	// ensure that this Attributes can be validated after being fully sanitized
-	if ValidateString(c.String()) != nil {
+	if err = ValidateString(c.String()); err != nil {
 		return Attributes{}, err
 	}
 

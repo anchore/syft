@@ -1,6 +1,7 @@
 package githubactions
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -9,19 +10,19 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackageFromUsageStatement(use string, location file.Location) *pkg.Package {
+func newPackageFromUsageStatement(use string, location file.Location) (*pkg.Package, error) {
 	name, version := parseStepUsageStatement(use)
 
 	if name == "" {
 		log.WithFields("file", location.RealPath, "statement", use).Trace("unable to parse github action usage statement")
-		return nil
+		return nil, fmt.Errorf("unable to parse github action usage statement")
 	}
 
 	if strings.Contains(name, ".github/workflows/") {
-		return newGithubActionWorkflowPackageUsage(name, version, location)
+		return newGithubActionWorkflowPackageUsage(name, version, location), nil
 	}
 
-	return newGithubActionPackageUsage(name, version, location)
+	return newGithubActionPackageUsage(name, version, location), nil
 }
 
 func newGithubActionWorkflowPackageUsage(name, version string, workflowLocation file.Location) *pkg.Package {

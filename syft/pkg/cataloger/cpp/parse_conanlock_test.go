@@ -373,3 +373,10 @@ func TestParseConanLockV2(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parseConanLock, expected, expectedRelationships)
 }
+
+func Test_corruptConanlock(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/conan.lock").
+		WithError().
+		TestParser(t, parseConanLock)
+}

@@ -1,17 +1,18 @@
 PKGSDIR=packages
+FINGERPRINT_FILE=$(PKGSDIR).fingerprint
 
 ifndef PKGSDIR
     $(error PKGSDIR is not set)
 endif
 
-all: jars archives native-image
 
-clean: clean-examples
-	rm -f $(PKGSDIR)/*
+.DEFAULT_GOAL := fixtures
 
-clean-examples: clean-gradle clean-maven clean-jenkins clean-nestedjar
+# requirement 1: 'fixtures' goal to generate any and all test fixtures
+fixtures: jars archives native-image
 
-.PHONY: maven gradle clean clean-gradle clean-maven clean-jenkins clean-examples clean-nestedjar jars archives
+# requirement 2: 'fingerprint' goal to determine if the fixture input that indicates any existing cache should be busted
+fingerprint: $(FINGERPRINT_FILE)
 
 jars: $(PKGSDIR)/example-java-app-maven-0.1.0.jar $(PKGSDIR)/example-java-app-gradle-0.1.0.jar $(PKGSDIR)/example-jenkins-plugin.hpi $(PKGSDIR)/spring-boot-0.0.1-SNAPSHOT.jar
 
@@ -71,8 +72,16 @@ $(PKGSDIR)/example-java-app: $(PKGSDIR)/example-java-app-maven-0.1.0.jar
 $(PKGSDIR)/gcc-amd64-darwin-exec-debug:
 	./build-example-macho-binary.sh $(PKGSDIR)
 
-# we need a way to determine if CI should bust the test cache based on the source material
-.PHONY: cache.fingerprint
-cache.fingerprint:
-	find example* build* gradle* Makefile -type f -exec sha256sum {} \; | sort | tee /dev/stderr | tee cache.fingerprint
-	sha256sum cache.fingerprint
+# requirement 3: we always need to recalculate the fingerprint based on source regardless of any existing fingerprint
+.PHONY: $(FINGERPRINT_FILE)
+$(FINGERPRINT_FILE):
+	@find example-* build-* Makefile -type f -exec sha256sum {} \; | sort -k2 > $(FINGERPRINT_FILE)
+	@#cat $(FINGERPRINT_FILE) | sha256sum | awk '{print $$1}'
+
+# requirement 4: 'clean' goal to remove all generated test fixtures
+clean: clean-examples
+	rm -rf $(PKGSDIR) $(FINGERPRINT_FILE)
+
+clean-examples: clean-gradle clean-maven clean-jenkins clean-nestedjar
+
+.PHONY: maven gradle clean clean-gradle clean-maven clean-jenkins clean-examples clean-nestedjar jars archives

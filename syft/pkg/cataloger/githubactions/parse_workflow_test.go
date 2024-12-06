@@ -86,3 +86,17 @@ func Test_parseWorkflowForWorkflowUsage(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	pkgtest.TestFileParser(t, fixture, parseWorkflowForWorkflowUsage, expected, expectedRelationships)
 }
+
+func Test_corruptActionWorkflow(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/workflow-multi-job.yaml").
+		WithError().
+		TestParser(t, parseWorkflowForActionUsage)
+}
+
+func Test_corruptWorkflowWorkflow(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/workflow-multi-job.yaml").
+		WithError().
+		TestParser(t, parseWorkflowForWorkflowUsage)
+}

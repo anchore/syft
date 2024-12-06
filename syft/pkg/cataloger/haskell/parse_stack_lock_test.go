@@ -130,3 +130,10 @@ func TestParseStackLock(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parseStackLock, expectedPkgs, expectedRelationships)
 }
+
+func Test_corruptStackLock(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/stack.yaml.lock").
+		WithError().
+		TestParser(t, parseStackLock)
+}

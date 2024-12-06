@@ -358,6 +358,43 @@ func Test_newPathSkipper(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "buildkit github ubuntu 22.04",
+			root: "/run/src/core/sbom",
+			mounts: []*mountinfo.Info{
+				{Mountpoint: "/", FSType: "overlay"},
+				{Mountpoint: "/proc", FSType: "proc"},
+				{Mountpoint: "/dev", FSType: "tmpfs"},
+				{Mountpoint: "/dev/pts", FSType: "devpts"},
+				{Mountpoint: "/dev/shm", FSType: "tmpfs"},
+				{Mountpoint: "/dev/mqueue", FSType: "mqueue"},
+				{Mountpoint: "/sys", FSType: "sysfs"},
+				{Mountpoint: "/etc/resolv.conf", FSType: "ext4"},
+				{Mountpoint: "/etc/hosts", FSType: "ext4"},
+				{Mountpoint: "/sys/fs/cgroup", FSType: "cgroup2"},
+				{Mountpoint: "/run/out", FSType: "ext4"},
+				{Mountpoint: "/run/src/core/sbom", FSType: "overlay"},
+				{Mountpoint: "/tmp", FSType: "tmpfs"},
+				{Mountpoint: "/dev/otel-grpc.sock", FSType: "overlay"},
+				{Mountpoint: "/proc/bus", FSType: "proc"},
+				{Mountpoint: "/proc/fs", FSType: "proc"},
+				{Mountpoint: "/proc/irq", FSType: "proc"},
+				{Mountpoint: "/proc/sys", FSType: "proc"},
+				{Mountpoint: "/proc/sysrq-trigger", FSType: "proc"},
+				{Mountpoint: "/proc/acpi", FSType: "tmpfs"},
+				{Mountpoint: "/proc/kcore", FSType: "tmpfs"},
+				{Mountpoint: "/proc/keys", FSType: "tmpfs"},
+				{Mountpoint: "/proc/latency_stats", FSType: "tmpfs"},
+				{Mountpoint: "/proc/timer_list", FSType: "tmpfs"},
+				{Mountpoint: "/sys/firmware", FSType: "tmpfs"},
+				{Mountpoint: "/proc/scsi", FSType: "tmpfs"},
+			},
+			want: []expect{
+				{
+					path: "/run/src/core/sbom",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

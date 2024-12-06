@@ -54,17 +54,14 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 	}
 
 	for _, l := range *c.Licenses {
-		if l.License == nil {
-			continue
-		}
 		// these fields are mutually exclusive in the spec
 		switch {
-		case l.License.ID != "":
+		case l.License != nil && l.License.ID != "":
 			licenses = append(licenses, pkg.NewLicenseFromURLs(l.License.ID, l.License.URL))
-		case l.License.Name != "":
+		case l.License != nil && l.License.Name != "":
 			licenses = append(licenses, pkg.NewLicenseFromURLs(l.License.Name, l.License.URL))
 		case l.Expression != "":
-			licenses = append(licenses, pkg.NewLicenseFromURLs(l.Expression, l.License.URL))
+			licenses = append(licenses, pkg.NewLicense(l.Expression))
 		default:
 		}
 	}
@@ -72,7 +69,6 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 	return licenses
 }
 
-// nolint:funlen
 func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expressions []string) {
 	ex := make([]string, 0)
 	spdxc := cyclonedx.Licenses{}
