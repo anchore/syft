@@ -52,26 +52,7 @@ func (i *ContainerImageSquashAllLayers) FilesByPath(paths ...string) ([]file.Loc
 		return nil, err
 	}
 
-	var mergedLocations []file.Location
-	for _, l := range squashedLocations {
-		l.Annotations[pkg.ScopeAnnotationKey] = pkg.SquashedScopeAnnotation
-		mergedLocations = append(mergedLocations, file.Location{
-			LocationData: l.LocationData,
-			LocationMetadata: file.LocationMetadata{
-				Annotations: l.Annotations,
-			},
-		})
-	}
-
-	for _, l := range allLayersLocations {
-		l.Annotations[pkg.ScopeAnnotationKey] = pkg.AllLayersScopeAnnotation
-		mergedLocations = append(mergedLocations, file.Location{
-			LocationData: l.LocationData,
-			LocationMetadata: file.LocationMetadata{
-				Annotations: l.Annotations,
-			},
-		})
-	}
+	mergedLocations := i.mergeLocations(squashedLocations, allLayersLocations)
 
 	return mergedLocations, nil
 }
@@ -88,26 +69,7 @@ func (i *ContainerImageSquashAllLayers) FilesByGlob(patterns ...string) ([]file.
 		return nil, err
 	}
 
-	var mergedLocations []file.Location
-	for _, l := range squashedLocations {
-		l.Annotations[pkg.ScopeAnnotationKey] = pkg.SquashedScopeAnnotation
-		mergedLocations = append(mergedLocations, file.Location{
-			LocationData: l.LocationData,
-			LocationMetadata: file.LocationMetadata{
-				Annotations: l.Annotations,
-			},
-		})
-	}
-
-	for _, l := range allLayersLocations {
-		l.Annotations[pkg.ScopeAnnotationKey] = pkg.AllLayersScopeAnnotation
-		mergedLocations = append(mergedLocations, file.Location{
-			LocationData: l.LocationData,
-			LocationMetadata: file.LocationMetadata{
-				Annotations: l.Annotations,
-			},
-		})
-	}
+	mergedLocations := i.mergeLocations(squashedLocations, allLayersLocations)
 
 	return mergedLocations, nil
 }
@@ -135,6 +97,20 @@ func (i *ContainerImageSquashAllLayers) FilesByMIMEType(types ...string) ([]file
 		return nil, err
 	}
 
+	mergedLocations := i.mergeLocations(squashedLocations, allLayersLocations)
+
+	return mergedLocations, nil
+}
+
+func (i *ContainerImageSquashAllLayers) AllLocations(ctx context.Context) <-chan file.Location {
+	return i.squashed.AllLocations(ctx)
+}
+
+func (i *ContainerImageSquashAllLayers) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
+	return i.squashed.FileMetadataByLocation(location)
+}
+
+func (i *ContainerImageSquashAllLayers) mergeLocations(squashedLocations, allLayersLocations []file.Location) []file.Location {
 	var mergedLocations []file.Location
 	for _, l := range squashedLocations {
 		l.Annotations[pkg.ScopeAnnotationKey] = pkg.SquashedScopeAnnotation
@@ -156,13 +132,5 @@ func (i *ContainerImageSquashAllLayers) FilesByMIMEType(types ...string) ([]file
 		})
 	}
 
-	return mergedLocations, nil
-}
-
-func (i *ContainerImageSquashAllLayers) AllLocations(ctx context.Context) <-chan file.Location {
-	return i.squashed.AllLocations(ctx)
-}
-
-func (i *ContainerImageSquashAllLayers) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
-	return i.squashed.FileMetadataByLocation(location)
+	return mergedLocations
 }
