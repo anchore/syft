@@ -6,6 +6,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
 )
 
 var _ file.Resolver = (*ContainerImageSquashAllLayers)(nil)
@@ -53,21 +54,21 @@ func (i *ContainerImageSquashAllLayers) FilesByPath(paths ...string) ([]file.Loc
 
 	var mergedLocations []file.Location
 	for _, l := range squashedLocations {
+		l.Annotations[pkg.ScopeAnnotationKey] = pkg.SquashedScopeAnnotation
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:     l.Annotations,
-				IsSquashedLayer: true,
+				Annotations: l.Annotations,
 			},
 		})
 	}
 
 	for _, l := range allLayersLocations {
+		l.Annotations[pkg.ScopeAnnotationKey] = pkg.AllLayersScopeAnnotation
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:     l.Annotations,
-				IsSquashedLayer: false,
+				Annotations: l.Annotations,
 			},
 		})
 	}
@@ -89,21 +90,21 @@ func (i *ContainerImageSquashAllLayers) FilesByGlob(patterns ...string) ([]file.
 
 	var mergedLocations []file.Location
 	for _, l := range squashedLocations {
+		l.Annotations[pkg.ScopeAnnotationKey] = pkg.SquashedScopeAnnotation
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:     l.Annotations,
-				IsSquashedLayer: true,
+				Annotations: l.Annotations,
 			},
 		})
 	}
 
 	for _, l := range allLayersLocations {
+		l.Annotations[pkg.ScopeAnnotationKey] = pkg.AllLayersScopeAnnotation
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:     l.Annotations,
-				IsSquashedLayer: false,
+				Annotations: l.Annotations,
 			},
 		})
 	}
@@ -136,21 +137,21 @@ func (i *ContainerImageSquashAllLayers) FilesByMIMEType(types ...string) ([]file
 
 	var mergedLocations []file.Location
 	for _, l := range squashedLocations {
+		l.Annotations[pkg.ScopeAnnotationKey] = pkg.SquashedScopeAnnotation
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:     l.Annotations,
-				IsSquashedLayer: true,
+				Annotations: l.Annotations,
 			},
 		})
 	}
 
 	for _, l := range allLayersLocations {
+		l.Annotations[pkg.ScopeAnnotationKey] = pkg.AllLayersScopeAnnotation
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
-				Annotations:     l.Annotations,
-				IsSquashedLayer: false,
+				Annotations: l.Annotations,
 			},
 		})
 	}
