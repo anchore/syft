@@ -26,6 +26,11 @@ func (c *GetSourceConfig) WithAlias(alias source.Alias) *GetSourceConfig {
 	return c
 }
 
+func (c *GetSourceConfig) WithUnindexed(unindexed bool) *GetSourceConfig {
+	c.SourceProviderConfig = c.SourceProviderConfig.WithUnindexed(unindexed)
+	return c
+}
+
 func (c *GetSourceConfig) WithRegistryOptions(registryOptions *image.RegistryOptions) *GetSourceConfig {
 	c.SourceProviderConfig = c.SourceProviderConfig.WithRegistryOptions(registryOptions)
 	return c
