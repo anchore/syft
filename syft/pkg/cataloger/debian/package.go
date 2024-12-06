@@ -30,13 +30,14 @@ func newDpkgPackage(d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.R
 	locations.Add(evidence...)
 
 	p := pkg.Package{
-		Name:      d.Package,
-		Version:   d.Version,
-		Licenses:  pkg.NewLicenseSet(licenses...),
-		Locations: locations,
-		PURL:      packageURL(d, release),
-		Type:      pkg.DebPkg,
-		Metadata:  d,
+		Name:         d.Package,
+		Version:      d.Version,
+		Licenses:     pkg.NewLicenseSet(licenses...),
+		Locations:    locations,
+		PURL:         packageURL(d, release),
+		Type:         pkg.DebPkg,
+		Dependencies: pkg.CompleteDependencies,
+		Metadata:     d,
 	}
 
 	if resolver != nil {

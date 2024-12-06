@@ -40,6 +40,7 @@ func parseWheelOrEgg(ctx context.Context, resolver file.Resolver, _ *generic.Env
 		newPackageForPackage(
 			*pd,
 			findLicenses(ctx, licenseScanner, resolver, *pd),
+			pkg.CompleteDependencies,
 			sources...,
 		),
 	}

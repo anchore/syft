@@ -89,7 +89,7 @@ func handleConanLockV1(cl conanLock, reader file.LocationReadCloser, parsedPkgRe
 			Prev:      node.Prev,
 		}
 
-		p := newConanlockPackage(
+		p := newConanlockV1Package(
 			metadata,
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
@@ -113,7 +113,7 @@ func handleConanLockV2(cl conanLock, reader file.LocationReadCloser, indexToPkgM
 			continue
 		}
 
-		p := newConanReferencePackage(
+		p := newConanLockv2Package(
 			reference,
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)

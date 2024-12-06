@@ -20,13 +20,14 @@ func Test_DBCataloger(t *testing.T) {
 	locations := file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
 	basePkg := pkg.Package{
-		Name:      "basesystem",
-		Version:   "11-13.el9",
-		Type:      pkg.RpmPkg,
-		Locations: locations,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocations("Public Domain", dbLocation)),
-		FoundBy:   "rpm-db-cataloger",
-		PURL:      "pkg:rpm/basesystem@11-13.el9?arch=noarch&upstream=basesystem-11-13.el9.src.rpm",
+		Name:         "basesystem",
+		Version:      "11-13.el9",
+		Type:         pkg.RpmPkg,
+		Locations:    locations,
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicenseFromLocations("Public Domain", dbLocation)),
+		FoundBy:      "rpm-db-cataloger",
+		PURL:         "pkg:rpm/basesystem@11-13.el9?arch=noarch&upstream=basesystem-11-13.el9.src.rpm",
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RpmDBEntry{
 			Name:      "basesystem",
 			Version:   "11",
@@ -50,13 +51,14 @@ func Test_DBCataloger(t *testing.T) {
 	basePkg.SetID()
 
 	bashPkg := pkg.Package{
-		Name:      "bash",
-		Version:   "5.1.8-6.el9_1",
-		Type:      pkg.RpmPkg,
-		Locations: locations,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocations("GPLv3+", dbLocation)),
-		FoundBy:   "rpm-db-cataloger",
-		PURL:      "pkg:rpm/bash@5.1.8-6.el9_1?arch=x86_64&upstream=bash-5.1.8-6.el9_1.src.rpm",
+		Name:         "bash",
+		Version:      "5.1.8-6.el9_1",
+		Type:         pkg.RpmPkg,
+		Locations:    locations,
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicenseFromLocations("GPLv3+", dbLocation)),
+		FoundBy:      "rpm-db-cataloger",
+		PURL:         "pkg:rpm/bash@5.1.8-6.el9_1?arch=x86_64&upstream=bash-5.1.8-6.el9_1.src.rpm",
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RpmDBEntry{
 			Name:            "bash",
 			Version:         "5.1.8",
@@ -102,13 +104,14 @@ func Test_DBCataloger(t *testing.T) {
 	bashPkg.SetID()
 
 	filesystemPkg := pkg.Package{
-		Name:      "filesystem",
-		Version:   "3.16-2.el9",
-		Type:      pkg.RpmPkg,
-		Locations: locations,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocations("Public Domain", dbLocation)),
-		FoundBy:   "rpm-db-cataloger",
-		PURL:      "pkg:rpm/filesystem@3.16-2.el9?arch=x86_64&upstream=filesystem-3.16-2.el9.src.rpm",
+		Name:         "filesystem",
+		Version:      "3.16-2.el9",
+		Type:         pkg.RpmPkg,
+		Locations:    locations,
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicenseFromLocations("Public Domain", dbLocation)),
+		FoundBy:      "rpm-db-cataloger",
+		PURL:         "pkg:rpm/filesystem@3.16-2.el9?arch=x86_64&upstream=filesystem-3.16-2.el9.src.rpm",
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RpmDBEntry{
 			Name:            "filesystem",
 			Version:         "3.16",

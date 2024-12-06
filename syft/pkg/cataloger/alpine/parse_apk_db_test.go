@@ -90,7 +90,8 @@ func TestSinglePackageDetails(t *testing.T) {
 					pkg.NewLicense("BSD"),
 					pkg.NewLicense("GPL2+"),
 				),
-				Type: pkg.ApkPkg,
+				Type:         pkg.ApkPkg,
+				Dependencies: pkg.CompleteDependencies,
 				Metadata: pkg.ApkDBEntry{
 					Package:       "musl-utils",
 					OriginPackage: "musl",
@@ -177,7 +178,8 @@ func TestSinglePackageDetails(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("GPL-2.0-only"),
 				),
-				Type: pkg.ApkPkg,
+				Type:         pkg.ApkPkg,
+				Dependencies: pkg.CompleteDependencies,
 				Metadata: pkg.ApkDBEntry{
 					Package:       "alpine-baselayout-data",
 					OriginPackage: "alpine-baselayout",
@@ -221,8 +223,8 @@ func TestSinglePackageDetails(t *testing.T) {
 				Licenses: pkg.NewLicenseSet(
 					pkg.NewLicense("GPL-2.0-only"),
 				),
-				Type: pkg.ApkPkg,
-				PURL: "",
+				Type:         pkg.ApkPkg,
+				Dependencies: pkg.CompleteDependencies,
 				Metadata: pkg.ApkDBEntry{
 					Package:       "alpine-baselayout",
 					OriginPackage: "alpine-baselayout",

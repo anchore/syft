@@ -29,6 +29,7 @@
     }
    ],
    "purl": "a-purl-1",
+   "dependencies": "complete",
    "metadataType": "python-package",
    "metadata": {
     "name": "package-1",
@@ -60,6 +61,7 @@
     }
    ],
    "purl": "a-purl-2",
+   "dependencies": "complete",
    "metadataType": "dpkg-db-entry",
    "metadata": {
     "package": "package-2",

@@ -21,7 +21,9 @@ func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...fil
 		PURL:      packageURL(metadata),
 		Language:  pkg.Dart,
 		Type:      pkg.DartPubPkg,
-		Metadata:  metadata,
+		// since we capture no dependencies today we know that the dep info is unknown
+		Dependencies: pkg.UnknownDependencyCompleteness,
+		Metadata:     metadata,
 	}
 
 	p.SetID()

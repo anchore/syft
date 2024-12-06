@@ -99,6 +99,7 @@ func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 				p.Name,
 				p.Version,
 				newPythonPoetryLockEntry(p),
+				pkg.CompleteDependencies,
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)

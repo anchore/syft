@@ -11,15 +11,16 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newDBPackage(dbOrRpmLocation file.Location, m pkg.RpmDBEntry, distro *linux.Release, licenses []string) pkg.Package {
+func newDBPackage(dbOrRpmLocation file.Location, m pkg.RpmDBEntry, distro *linux.Release, licenses []string, deps pkg.DependencyCompleteness) pkg.Package {
 	p := pkg.Package{
-		Name:      m.Name,
-		Version:   toELVersion(m.Epoch, m.Version, m.Release),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbOrRpmLocation, licenses...)...),
-		PURL:      packageURL(m.Name, m.Arch, m.Epoch, m.SourceRpm, m.Version, m.Release, distro),
-		Locations: file.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Type:      pkg.RpmPkg,
-		Metadata:  m,
+		Name:         m.Name,
+		Version:      toELVersion(m.Epoch, m.Version, m.Release),
+		Licenses:     pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbOrRpmLocation, licenses...)...),
+		PURL:         packageURL(m.Name, m.Arch, m.Epoch, m.SourceRpm, m.Version, m.Release, distro),
+		Locations:    file.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Type:         pkg.RpmPkg,
+		Dependencies: deps,
+		Metadata:     m,
 	}
 
 	p.SetID()

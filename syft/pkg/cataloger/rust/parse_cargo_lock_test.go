@@ -15,13 +15,14 @@ func TestParseCargoLock(t *testing.T) {
 	fixture := "test-fixtures/Cargo.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	ansiTerm := pkg.Package{
-		Name:      "ansi_term",
-		Version:   "0.12.1",
-		PURL:      "pkg:cargo/ansi_term@0.12.1",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "ansi_term",
+		Version:      "0.12.1",
+		PURL:         "pkg:cargo/ansi_term@0.12.1",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "ansi_term",
 			Version:  "0.12.1",
@@ -33,13 +34,14 @@ func TestParseCargoLock(t *testing.T) {
 		},
 	}
 	errno := pkg.Package{
-		Name:      "errno",
-		Version:   "0.3.9",
-		PURL:      "pkg:cargo/errno@0.3.9",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "errno",
+		Version:      "0.3.9",
+		PURL:         "pkg:cargo/errno@0.3.9",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "errno",
 			Version:  "0.3.9",
@@ -51,13 +53,14 @@ func TestParseCargoLock(t *testing.T) {
 		},
 	}
 	matches := pkg.Package{
-		Name:      "matches",
-		Version:   "0.1.8",
-		PURL:      "pkg:cargo/matches@0.1.8",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "matches",
+		Version:      "0.1.8",
+		PURL:         "pkg:cargo/matches@0.1.8",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "matches",
 			Version:      "0.1.8",
@@ -67,13 +70,14 @@ func TestParseCargoLock(t *testing.T) {
 		},
 	}
 	memchr := pkg.Package{
-		Name:      "memchr",
-		Version:   "2.3.3",
-		PURL:      "pkg:cargo/memchr@2.3.3",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "memchr",
+		Version:      "2.3.3",
+		PURL:         "pkg:cargo/memchr@2.3.3",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "memchr",
 			Version:      "2.3.3",
@@ -84,13 +88,14 @@ func TestParseCargoLock(t *testing.T) {
 	}
 
 	natord := pkg.Package{
-		Name:      "natord",
-		Version:   "1.0.9",
-		PURL:      "pkg:cargo/natord@1.0.9",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "natord",
+		Version:      "1.0.9",
+		PURL:         "pkg:cargo/natord@1.0.9",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "natord",
 			Version:      "1.0.9",
@@ -101,13 +106,14 @@ func TestParseCargoLock(t *testing.T) {
 	}
 
 	nom := pkg.Package{
-		Name:      "nom",
-		Version:   "4.2.3",
-		PURL:      "pkg:cargo/nom@4.2.3",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "nom",
+		Version:      "4.2.3",
+		PURL:         "pkg:cargo/nom@4.2.3",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "nom",
 			Version:  "4.2.3",
@@ -120,13 +126,14 @@ func TestParseCargoLock(t *testing.T) {
 		},
 	}
 	schannel := pkg.Package{
-		Name:      "schannel",
-		Version:   "0.1.26",
-		PURL:      "pkg:cargo/schannel@0.1.26",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "schannel",
+		Version:      "0.1.26",
+		PURL:         "pkg:cargo/schannel@0.1.26",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "schannel",
 			Version:  "0.1.26",
@@ -139,13 +146,14 @@ func TestParseCargoLock(t *testing.T) {
 	}
 
 	unicodeBidi := pkg.Package{
-		Name:      "unicode-bidi",
-		Version:   "0.3.4",
-		PURL:      "pkg:cargo/unicode-bidi@0.3.4",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "unicode-bidi",
+		Version:      "0.3.4",
+		PURL:         "pkg:cargo/unicode-bidi@0.3.4",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "unicode-bidi",
 			Version:  "0.3.4",
@@ -159,13 +167,14 @@ func TestParseCargoLock(t *testing.T) {
 	}
 
 	versionCheck := pkg.Package{
-		Name:      "version_check",
-		Version:   "0.1.5",
-		PURL:      "pkg:cargo/version_check@0.1.5",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "version_check",
+		Version:      "0.1.5",
+		PURL:         "pkg:cargo/version_check@0.1.5",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "version_check",
 			Version:      "0.1.5",
@@ -176,13 +185,14 @@ func TestParseCargoLock(t *testing.T) {
 	}
 
 	winapi := pkg.Package{
-		Name:      "winapi",
-		Version:   "0.3.9",
-		PURL:      "pkg:cargo/winapi@0.3.9",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "winapi",
+		Version:      "0.3.9",
+		PURL:         "pkg:cargo/winapi@0.3.9",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "winapi",
 			Version:  "0.3.9",
@@ -196,13 +206,14 @@ func TestParseCargoLock(t *testing.T) {
 	}
 
 	winAPIi686PCWindowsGNU := pkg.Package{
-		Name:      "winapi-i686-pc-windows-gnu",
-		Version:   "0.4.0",
-		PURL:      "pkg:cargo/winapi-i686-pc-windows-gnu@0.4.0",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "winapi-i686-pc-windows-gnu",
+		Version:      "0.4.0",
+		PURL:         "pkg:cargo/winapi-i686-pc-windows-gnu@0.4.0",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "winapi-i686-pc-windows-gnu",
 			Version:      "0.4.0",
@@ -213,13 +224,14 @@ func TestParseCargoLock(t *testing.T) {
 	}
 
 	winAPIx8664PCWindowsGNU := pkg.Package{
-		Name:      "winapi-x86_64-pc-windows-gnu",
-		Version:   "0.4.0",
-		PURL:      "pkg:cargo/winapi-x86_64-pc-windows-gnu@0.4.0",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "winapi-x86_64-pc-windows-gnu",
+		Version:      "0.4.0",
+		PURL:         "pkg:cargo/winapi-x86_64-pc-windows-gnu@0.4.0",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "winapi-x86_64-pc-windows-gnu",
 			Version:      "0.4.0",
@@ -230,13 +242,14 @@ func TestParseCargoLock(t *testing.T) {
 	}
 
 	windowsSys52 := pkg.Package{
-		Name:      "windows-sys",
-		Version:   "0.52.0",
-		PURL:      "pkg:cargo/windows-sys@0.52.0",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "windows-sys",
+		Version:      "0.52.0",
+		PURL:         "pkg:cargo/windows-sys@0.52.0",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "windows-sys",
 			Version:      "0.52.0",
@@ -247,13 +260,14 @@ func TestParseCargoLock(t *testing.T) {
 	}
 
 	windowsSys59 := pkg.Package{
-		Name:      "windows-sys",
-		Version:   "0.59.0",
-		PURL:      "pkg:cargo/windows-sys@0.59.0",
-		Locations: locations,
-		Language:  pkg.Rust,
-		Type:      pkg.RustPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Name:         "windows-sys",
+		Version:      "0.59.0",
+		PURL:         "pkg:cargo/windows-sys@0.59.0",
+		Locations:    locations,
+		Language:     pkg.Rust,
+		Type:         pkg.RustPkg,
+		Licenses:     pkg.NewLicenseSet(),
+		Dependencies: pkg.CompleteDependencies,
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "windows-sys",
 			Version:      "0.59.0",

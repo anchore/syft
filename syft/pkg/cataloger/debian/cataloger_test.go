@@ -36,7 +36,8 @@ func TestDpkgCataloger(t *testing.T) {
 						file.NewLocation("/var/lib/dpkg/info/libpam-runtime.conffiles"),
 						file.NewLocation("/usr/share/doc/libpam-runtime/copyright"),
 					),
-					Type: pkg.DebPkg,
+					Type:         pkg.DebPkg,
+					Dependencies: pkg.CompleteDependencies,
 					Metadata: pkg.DpkgDBEntry{
 						Package:       "libpam-runtime",
 						Source:        "pam",
@@ -109,7 +110,8 @@ func TestDpkgCataloger(t *testing.T) {
 						file.NewLocation("/var/lib/dpkg/status.d/libsqlite3-0.preinst"),
 						file.NewLocation("/usr/share/doc/libsqlite3-0/copyright"),
 					),
-					Type: pkg.DebPkg,
+					Type:         pkg.DebPkg,
+					Dependencies: pkg.CompleteDependencies,
 					Metadata: pkg.DpkgDBEntry{
 						Package:       "libsqlite3-0",
 						Source:        "sqlite3",

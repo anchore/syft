@@ -9,19 +9,20 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings, experiments []string, licenses []pkg.License, locations ...file.Location) pkg.Package {
+func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings, experiments []string, licenses []pkg.License, dependencies pkg.DependencyCompleteness, locations ...file.Location) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}
 
 	p := pkg.Package{
-		Name:      dep.Path,
-		Version:   dep.Version,
-		Licenses:  pkg.NewLicenseSet(licenses...),
-		PURL:      packageURL(dep.Path, dep.Version),
-		Language:  pkg.Go,
-		Type:      pkg.GoModulePkg,
-		Locations: file.NewLocationSet(locations...),
+		Name:         dep.Path,
+		Version:      dep.Version,
+		Licenses:     pkg.NewLicenseSet(licenses...),
+		PURL:         packageURL(dep.Path, dep.Version),
+		Language:     pkg.Go,
+		Type:         pkg.GoModulePkg,
+		Locations:    file.NewLocationSet(locations...),
+		Dependencies: dependencies,
 		Metadata: pkg.GolangBinaryBuildinfoEntry{
 			GoCompiledVersion: goVersion,
 			H1Digest:          dep.Sum,

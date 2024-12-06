@@ -14,7 +14,9 @@ func newPackage(name, version string, m any, location file.Location) pkg.Package
 		PURL:      packageURL(name, version),
 		Language:  pkg.Haskell,
 		Type:      pkg.HackagePkg,
-		Metadata:  m,
+		// in all cases (cabal, stack, etc.) we do not attempt to glean dependency information
+		Dependencies: pkg.UnknownDependencyCompleteness,
+		Metadata:     m,
 	}
 
 	p.SetID()

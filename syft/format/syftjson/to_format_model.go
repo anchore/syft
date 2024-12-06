@@ -259,16 +259,17 @@ func toPackageModel(p pkg.Package, cfg EncoderConfig) model.Package {
 
 	return model.Package{
 		PackageBasicData: model.PackageBasicData{
-			ID:        string(p.ID()),
-			Name:      p.Name,
-			Version:   p.Version,
-			Type:      p.Type,
-			FoundBy:   p.FoundBy,
-			Locations: p.Locations.ToSlice(),
-			Licenses:  licenses,
-			Language:  p.Language,
-			CPEs:      cpes,
-			PURL:      p.PURL,
+			ID:           string(p.ID()),
+			Name:         p.Name,
+			Version:      p.Version,
+			Type:         p.Type,
+			FoundBy:      p.FoundBy,
+			Locations:    p.Locations.ToSlice(),
+			Licenses:     licenses,
+			Language:     p.Language,
+			CPEs:         cpes,
+			PURL:         p.PURL,
+			Dependencies: p.Dependencies,
 		},
 		PackageCustomData: model.PackageCustomData{
 			MetadataType: metadataType(p.Metadata, cfg.Legacy),
