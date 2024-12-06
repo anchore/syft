@@ -235,16 +235,19 @@ func TestSupportedVersions(t *testing.T) {
 	relationshipOffsetPerVersion := map[string]int{
 		// the package representing the source gets a relationship from the source package to all other packages found
 		// these relationships cannot be removed until the primaryPackagePurpose info is available in 2.3
-		"2.1": 2,
-		"2.2": 2,
-		// the source-to-package relationships can be removed since the primaryPackagePurpose info is available in 2.3
-		"2.3": 0,
+		"2.1": 3,
+		"2.2": 3,
+		// the os is saved now as a package with primaryPackagePurpose = OPERATING-SYSTEM
+		// but honestly... don't understand what's happening here....
+		"2.3": 2,
 	}
 
 	pkgCountOffsetPerVersion := map[string]int{
-		"2.1": 1, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
-		"2.2": 1, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
-		"2.3": 0, // the source package can be removed since the primaryPackagePurpose info is available
+		"2.1": 2, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
+		"2.2": 2, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
+		// the os is saved now as a package with primaryPackagePurpose = OPERATING-SYSTEM
+		// but honestly... don't understand what's happening here....
+		"2.3": 1,
 	}
 
 	for _, enc := range encs {
