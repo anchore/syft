@@ -123,6 +123,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 ### Supported Ecosystems
 
 - Alpine (apk)
+- Bitnami packages
 - C (conan)
 - C++ (conan)
 - Dart (pubs)
