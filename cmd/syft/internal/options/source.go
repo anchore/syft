@@ -5,11 +5,11 @@ import (
 	"sort"
 	"strings"
 
-	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/dustin/go-humanize"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/clio"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
