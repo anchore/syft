@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"golang.org/x/tools/go/packages"
 	"io"
 	"sort"
 	"strings"
@@ -19,14 +20,106 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+var searchSuffix = "/..."
+
 type goModCataloger struct {
 	licenseResolver goLicenseResolver
 }
+
+type goModSourceCataloger struct{}
 
 func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 	return &goModCataloger{
 		licenseResolver: newGoLicenseResolver(modFileCatalogerName, opts),
 	}
+}
+
+func newGoModSourceCataloger(opts CatalogerConfig) *goModSourceCataloger {
+	return &goModSourceCataloger{}
+}
+
+func (c *goModSourceCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read module file: %w", err)
+	}
+
+	file, err := modfile.Parse("go.mod", contents, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse module file: %w", err)
+	}
+
+	// extract the module name and add the search suffix
+	mainModuleName := file.Module.Mod.Path
+	mainModuleName = fmt.Sprintf("%s%s", mainModuleName, searchSuffix)
+
+	cfg := &packages.Config{
+		Context: ctx,
+		Mode:    packages.NeedImports | packages.NeedDeps | packages.NeedFiles | packages.NeedName | packages.NeedModule,
+		Tests:   true,
+	}
+
+	rootPkgs, err := packages.Load(cfg, mainModuleName)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load packages for %s: %w", mainModuleName, err)
+	}
+
+	syftPackages := make([]pkg.Package, 0)
+	pkgErrorOccurred := false
+	otherErrorOccurred := false
+	packages.Visit(rootPkgs, func(p *packages.Package) bool {
+		if len(p.Errors) > 0 {
+			pkgErrorOccurred = true
+			return false
+		}
+		if p.Module == nil {
+			otherErrorOccurred = true
+			return false
+		}
+
+		if !isValid(p) {
+			return false
+		}
+
+		syftPackages = append(syftPackages, pkg.Package{
+			Name:    p.Name,
+			Version: p.Module.Version,
+			// Licenses (TODO)
+			// Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:     packageURL(p.PkgPath, p.Module.Version),
+			Language: pkg.Go,
+			Type:     pkg.GoModulePkg,
+			Metadata: pkg.GolangModuleEntryMetadata{
+				Path:      p.Module.Path,
+				Version:   p.Module.Version,
+				Replace:   p.Module.Replace,
+				Time:      p.Module.Time,
+				Main:      p.Module.Main,
+				Indirect:  p.Module.Indirect,
+				Dir:       p.Module.Dir,
+				GoMod:     p.Module.GoMod,
+				GoVersion: p.Module.GoVersion,
+			},
+		})
+		return true
+	}, nil)
+	if pkgErrorOccurred {
+		// TODO: log error as warning for packages that could not be analyzed
+	}
+	if otherErrorOccurred {
+		// TODO: log errors for direct/transitive dependency loading
+	}
+	return syftPackages, nil, nil
+}
+
+func isValid(p *packages.Package) bool {
+	if p.Name == "" {
+		return false
+	}
+	if p.Module.Version == "" {
+		return false
+	}
+	return true
 }
 
 // parseGoModFile takes a go.mod and lists all packages discovered.
