@@ -6,7 +6,6 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/pkg"
 )
 
 var _ file.Resolver = (*ContainerImageSquashAllLayers)(nil)
@@ -113,7 +112,7 @@ func (i *ContainerImageSquashAllLayers) FileMetadataByLocation(location file.Loc
 func (i *ContainerImageSquashAllLayers) mergeLocations(squashedLocations, allLayersLocations []file.Location) []file.Location {
 	var mergedLocations []file.Location
 	for _, l := range squashedLocations {
-		l.Annotations[pkg.ScopeAnnotationKey] = pkg.SquashedScopeAnnotation
+		l.Annotations[file.ScopeAnnotationKey] = file.SquashedScopeAnnotation
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{
@@ -123,7 +122,7 @@ func (i *ContainerImageSquashAllLayers) mergeLocations(squashedLocations, allLay
 	}
 
 	for _, l := range allLayersLocations {
-		l.Annotations[pkg.ScopeAnnotationKey] = pkg.AllLayersScopeAnnotation
+		l.Annotations[file.ScopeAnnotationKey] = file.AllLayersScopeAnnotation
 		mergedLocations = append(mergedLocations, file.Location{
 			LocationData: l.LocationData,
 			LocationMetadata: file.LocationMetadata{

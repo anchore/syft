@@ -1,4 +1,4 @@
-package pkg
+package file
 
 const (
 	ScopeAnnotationKey       = "scope"
