@@ -103,7 +103,7 @@ tools:
   # used for running all local and CI tasks
   - name: task
     version:
-      want: v3.40.0
+      want: v3.40.1
     method: github-release
     with:
       repo: go-task/task
@@ -127,7 +127,7 @@ tools:
   # used to upload test fixture cache
   - name: yq
     version:
-      want: v4.44.5
+      want: v4.44.6
     method: github-release
     with:
       repo: mikefarah/yq
