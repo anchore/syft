@@ -248,6 +248,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 		PackageSupplier: &spdx.Supplier{
 			Supplier: helpers.NOASSERTION,
 		},
+		PackageCopyrightText:    helpers.NOASSERTION,
 		PackageDownloadLocation: helpers.NOASSERTION,
 		PackageLicenseConcluded: helpers.NOASSERTION,
 		PackageLicenseDeclared:  helpers.NOASSERTION,
@@ -637,10 +638,11 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 			FileSPDXIdentifier: toSPDXID(coordinates),
 			FileComment:        comment,
 			// required, no attempt made to determine license information
-			LicenseConcluded: noAssertion,
-			Checksums:        toFileChecksums(digests),
-			FileName:         relativePath,
-			FileTypes:        toFileTypes(metadata),
+			LicenseConcluded:  noAssertion,
+			FileCopyrightText: noAssertion,
+			Checksums:         toFileChecksums(digests),
+			FileName:          relativePath,
+			FileTypes:         toFileTypes(metadata),
 			LicenseInfoInFiles: []string{ // required in SPDX 2.2
 				helpers.NOASSERTION,
 			},
