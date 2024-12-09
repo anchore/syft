@@ -103,7 +103,7 @@ tools:
   # used for running all local and CI tasks
   - name: task
     version:
-      want: v3.40.0
+      want: v3.40.1
     method: github-release
     with:
       repo: go-task/task
@@ -111,7 +111,7 @@ tools:
   # used for triggering a release
   - name: gh
     version:
-      want: v2.63.1
+      want: v2.63.2
     method: github-release
     with:
       repo: cli/cli
@@ -119,7 +119,7 @@ tools:
   # used to upload test fixture cache
   - name: oras
     version:
-      want: v1.2.0
+      want: v1.2.1
     method: github-release
     with:
       repo: oras-project/oras
@@ -127,7 +127,7 @@ tools:
   # used to upload test fixture cache
   - name: yq
     version:
-      want: v4.44.5
+      want: v4.44.6
     method: github-release
     with:
       repo: mikefarah/yq

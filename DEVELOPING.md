@@ -367,11 +367,11 @@ package under test and should always be updated by invoking `go test` on the spe
 update flag provided.
 
 Many of the `Format` tests make use of this approach, where the raw SBOM report is saved in the repo and the test 
-compares that SBOM with what is generated from the latest presenter code. For instance, at the time of this writing 
-the CycloneDX presenter snapshots can be updated by running:
+compares that SBOM with what is generated from the latest presenter code. The following command can be used to
+update the golden files for the various snapshot tests:
 
 ```bash
-go test ./internal/formats -update-cyclonedx
+make update-format-golden-files
 ```
 
 These flags are defined at the top of the test files that have tests that use the snapshot files.
