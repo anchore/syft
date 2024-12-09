@@ -630,7 +630,8 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 
 		relativePath, err := convertAbsoluteToRelative(coordinates.RealPath)
 		if err != nil {
-			// TODO:
+			log.Debugf("unable to convert relative path '%s' to absolute path: %s", coordinates.RealPath, err)
+			relativePath = coordinates.RealPath
 		}
 
 		results = append(results, &spdx.File{

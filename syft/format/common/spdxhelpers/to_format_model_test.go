@@ -405,10 +405,10 @@ func Test_toFiles(t *testing.T) {
 						Version: "version-1",
 					}),
 					FileMetadata: map[file.Coordinates]file.Metadata{
-						file.Coordinates{
+						{
 							RealPath:     "/some/path",
 							FileSystemID: "",
-						}: file.Metadata{
+						}: {
 							Path: "/some/path",
 						},
 					},
