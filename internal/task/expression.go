@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/scylladb/go-set/strset"
 
-	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
+	"github.com/anchore/syft/syft/cataloging"
 )
 
 var expressionNodePattern = regexp.MustCompile(`^([a-zA-Z0-9][a-zA-Z0-9-+]*)+$`)
@@ -142,7 +142,7 @@ func (ec expressionContext) newExpression(exp string, operation Operation, token
 	}
 }
 
-func newExpressionsFromSelectionRequest(nc *expressionContext, selectionRequest pkgcataloging.SelectionRequest) Expressions {
+func newExpressionsFromSelectionRequest(nc *expressionContext, selectionRequest cataloging.SelectionRequest) Expressions {
 	var all Expressions
 
 	for _, exp := range selectionRequest.DefaultNamesOrTags {
