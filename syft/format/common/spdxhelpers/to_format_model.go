@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"path"
-	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
@@ -845,15 +844,16 @@ func trimPatchVersion(semver string) string {
 // with the root of the package archive or directory
 func convertAbsoluteToRelative(absPath string) (string, error) {
 	// Ensure the absolute path is absolute (although it should already be)
-	absPath, err := filepath.Abs(absPath)
-	if err != nil {
-		return "", fmt.Errorf("error converting absPath to absolute path: %v", err)
+	if !path.IsAbs(absPath) {
+		// already relative
+		log.Debugf("%s is already relative", absPath)
+		return absPath, nil
 	}
 
 	// we use "/" here given that we're converting absolute paths from root to relative
-	relPath, err := filepath.Rel("/", absPath)
-	if err != nil {
-		return "", fmt.Errorf("error calculating relative path: %v", err)
+	relPath, found := strings.CutPrefix(absPath, "/")
+	if !found {
+		return "", fmt.Errorf("error calculating relative path: %s", absPath)
 	}
 
 	return relPath, nil
