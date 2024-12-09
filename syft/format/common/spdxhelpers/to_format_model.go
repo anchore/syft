@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"path"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
@@ -627,13 +628,18 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 			comment = fmt.Sprintf("layerID: %s", coordinates.FileSystemID)
 		}
 
+		relativePath, err := convertAbsoluteToRelative(coordinates.RealPath)
+		if err != nil {
+			// TODO:
+		}
+
 		results = append(results, &spdx.File{
 			FileSPDXIdentifier: toSPDXID(coordinates),
 			FileComment:        comment,
 			// required, no attempt made to determine license information
 			LicenseConcluded: noAssertion,
 			Checksums:        toFileChecksums(digests),
-			FileName:         coordinates.RealPath,
+			FileName:         relativePath,
 			FileTypes:        toFileTypes(metadata),
 			LicenseInfoInFiles: []string{ // required in SPDX 2.2
 				helpers.NOASSERTION,
@@ -830,4 +836,22 @@ func trimPatchVersion(semver string) string {
 		return strings.Join(parts[:2], ".")
 	}
 	return semver
+}
+
+// spdx requires that the file name field is a relative filename
+// with the root of the package archive or directory
+func convertAbsoluteToRelative(absPath string) (string, error) {
+	// Ensure the absolute path is absolute (although it should already be)
+	absPath, err := filepath.Abs(absPath)
+	if err != nil {
+		return "", fmt.Errorf("error converting absPath to absolute path: %v", err)
+	}
+
+	// we use "/" here given that we're converting absolute paths from root to relative
+	relPath, err := filepath.Rel("/", absPath)
+	if err != nil {
+		return "", fmt.Errorf("error calculating relative path: %v", err)
+	}
+
+	return relPath, nil
 }
