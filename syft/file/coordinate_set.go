@@ -78,6 +78,10 @@ func (s CoordinateSet) ToSlice() []Coordinates {
 	return coordinates
 }
 
+func (s CoordinateSet) Size() int {
+	return len(s.set)
+}
+
 func (s CoordinateSet) Hash() (uint64, error) {
 	return hashstructure.Hash(s.ToSlice(), hashstructure.FormatV2, &hashstructure.HashOptions{
 		ZeroNil:      true,
