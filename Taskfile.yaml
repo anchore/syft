@@ -133,17 +133,6 @@ tasks:
       - "{{ .TMP_DIR }}"
     cmd: "mkdir -p {{ .TMP_DIR }}"
 
-  ## Dependency tasks #################################
-
-  update-anchore-dependencies:
-    desc: Update Anchore dependencies
-    deps: [tools]
-    requires:
-      vars:
-        - FROM
-    cmd: |
-      {{ .GH }} workflow run update-anchore-dependencies.yml -f repos="github.com/anchore/stereoscope@{{ .FROM }}"
-
   ## Static analysis tasks #################################
 
   format:
