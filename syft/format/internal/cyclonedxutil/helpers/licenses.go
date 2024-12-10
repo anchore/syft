@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -158,40 +157,42 @@ func mergeSPDX(ex []string) string {
 		// if the expression does not have balanced parens add them
 		if !strings.HasPrefix(e, "(") && !strings.HasSuffix(e, ")") {
 			e = "(" + e + ")"
-			candidate = append(candidate, e)
 		}
+		candidate = append(candidate, e)
 	}
 
 	if len(candidate) == 1 {
-		return reduceOuter(strings.Join(candidate, " AND "))
+		return reduceOuter(candidate[0])
 	}
 
-	return strings.Join(candidate, " AND ")
+	return reduceOuter(strings.Join(candidate, " AND "))
 }
 
 func reduceOuter(expression string) string {
-	var (
-		sb        strings.Builder
-		openCount int
-	)
+	expression = strings.TrimSpace(expression)
 
-	for _, c := range expression {
-		if string(c) == "(" && openCount > 0 {
-			_, _ = fmt.Fprintf(&sb, "%c", c)
+	// If the entire expression is wrapped in parentheses, check if they are redundant.
+	if strings.HasPrefix(expression, "(") && strings.HasSuffix(expression, ")") {
+		trimmed := expression[1 : len(expression)-1]
+		if isBalanced(trimmed) {
+			return reduceOuter(trimmed) // Recursively reduce the trimmed expression.
 		}
-		if string(c) == "(" {
-			openCount++
-			continue
-		}
-		if string(c) == ")" && openCount > 1 {
-			_, _ = fmt.Fprintf(&sb, "%c", c)
-		}
-		if string(c) == ")" {
-			openCount--
-			continue
-		}
-		_, _ = fmt.Fprintf(&sb, "%c", c)
 	}
 
-	return sb.String()
+	return expression
+}
+
+func isBalanced(expression string) bool {
+	count := 0
+	for _, c := range expression {
+		if c == '(' {
+			count++
+		} else if c == ')' {
+			count--
+			if count < 0 {
+				return false
+			}
+		}
+	}
+	return count == 0
 }
