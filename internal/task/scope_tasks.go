@@ -41,8 +41,8 @@ func getPackagesToDelete(s *sbom.SBOM) []artifact.ID {
 	for p := range s.Artifacts.Packages.Enumerate() {
 		toDelete := true
 		for _, l := range p.Locations.ToSlice() {
-			scope, _ := l.LocationMetadata.Annotations[file.ScopeAnnotationKey]
-			evidence, _ := l.LocationMetadata.Annotations[pkg.EvidenceAnnotationKey]
+			scope := l.LocationMetadata.Annotations[file.ScopeAnnotationKey]
+			evidence := l.LocationMetadata.Annotations[pkg.EvidenceAnnotationKey]
 			if scope == file.SquashedScopeAnnotation && evidence == pkg.PrimaryEvidenceAnnotation {
 				toDelete = false
 				break
