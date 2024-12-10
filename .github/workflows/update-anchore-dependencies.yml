@@ -25,7 +25,7 @@ jobs:
 
       - name: Update dependencies
         id: update
-        uses: anchore/workflows/.github/actions/update-go-dependency@add-dep-update
+        uses: anchore/workflows/.github/actions/update-go-dependency@main
         with:
           repos: ${{ github.event.inputs.repos }}
 
