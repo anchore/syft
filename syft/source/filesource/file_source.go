@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/mholt/archiver/v3"
 	"github.com/opencontainers/go-digest"
 
+	"github.com/anchore/archiver/v3"
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
