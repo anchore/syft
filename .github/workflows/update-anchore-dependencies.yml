@@ -25,7 +25,7 @@ jobs:
 
       - name: Update dependencies
         id: update
-        uses: anchore/workflows/.github/actions/update-go-dependency@main
+        uses: anchore/workflows/.github/actions/update-go-dependencies@main
         with:
           repos: ${{ github.event.inputs.repos }}
 
@@ -45,5 +45,5 @@ jobs:
           labels: dependencies,pre-release
           commit-message: "chore(deps): update anchore dependencies"
           title: "chore(deps): update anchore dependencies"
-          body: ${{ steps.update.outputs.changelog }}
+          body: ${{ steps.update.outputs.summary }}
           token: ${{ steps.generate-token.outputs.token }}
