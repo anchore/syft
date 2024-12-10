@@ -65,6 +65,21 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 		},
 	}
 
+	log4net1Pkg := pkg.Package{
+		Name:      "log4net",
+		Version:   "1.2.15",
+		PURL:      "pkg:nuget/log4net@1.2.15",
+		Locations: fixtureLocationSet,
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata: pkg.DotnetPackagesLockEntry{
+			Name:        "log4net",
+			Version:     "1.2.15",
+			ContentHash: "KPajjkU1rbF6uY2rnakbh36LB9z9FVcYlciyOi6C5SJ3AMNywxjCGxBTN/Hl5nQEinRLuWvHWPF8W7YHh9sONw==",
+			Type:        "Direct",
+		},
+	}
+
 	dependencyInjectionAbstractionsPkg := pkg.Package{
 		Name:      "Microsoft.Extensions.DependencyInjection.Abstractions",
 		Version:   "6.0.0",
@@ -127,12 +142,13 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 
 	expectedPkgs := []pkg.Package{
 		autoMapperPkg,
-		bootstrapPkg,
-		log4netPkg,
+		compilerServicesUnsafePkg,
 		dependencyInjectionAbstractionsPkg,
 		extensionOptionsPkg,
 		extensionPrimitivesPkg,
-		compilerServicesUnsafePkg,
+		bootstrapPkg,
+		log4net1Pkg,
+		log4netPkg,
 	}
 
 	expectedRelationships := []artifact.Relationship{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 
 	"github.com/anchore/packageurl-go"
@@ -49,8 +50,14 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 	var names []string
 	for _, dependencies := range lockFile.Dependencies {
 		for name, dep := range dependencies {
-			names = append(names, name)
-			allDependencies[name] = dep
+			depNameVersion := createNameAndVersion(name, dep.Resolved)
+
+			if slices.Contains(names, depNameVersion) {
+				continue
+			}
+
+			names = append(names, depNameVersion)
+			allDependencies[depNameVersion] = dep
 		}
 	}
 
@@ -58,27 +65,31 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 	sort.Strings(names)
 
 	// create artifact for each pkg
-	for _, name := range names {
-		dep := allDependencies[name]
+	for _, nameVersion := range names {
+		name, _ := extractNameAndVersion(nameVersion)
+
+		dep := allDependencies[nameVersion]
 		dotnetPkg := newDotnetPackagesLockPackage(name, dep, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		if dotnetPkg != nil {
 			pkgs = append(pkgs, *dotnetPkg)
-			pkgMap[name] = *dotnetPkg
+			pkgMap[nameVersion] = *dotnetPkg
 		}
 	}
 
 	// fill up relationships
-	for name, dep := range allDependencies {
-		parentPkg, ok := pkgMap[name]
+	for pkgNameVersion, dep := range allDependencies {
+		parentPkg, ok := pkgMap[pkgNameVersion]
 		if !ok {
-			log.Debugf("unable to find package in map: %s", name)
+			log.Debug("package \"%s\" not found in map of all pacakges", pkgNameVersion)
 			continue
 		}
 
-		for childName := range dep.Dependencies {
-			childPkg, ok := pkgMap[childName]
+		for childName, childVersion := range dep.Dependencies {
+			childNameVersion := createNameAndVersion(childName, childVersion)
+
+			childPkg, ok := pkgMap[childNameVersion]
 			if !ok {
-				log.Debugf("unable to find dependency package in map: %s", childName)
+				log.Debug("dependency \"%s\" of package \"%s\" not found in map of all packages, it might be required in a different version", childNameVersion, pkgNameVersion)
 				continue
 			}
 
