@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
@@ -69,19 +70,26 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 		}
 
 		candidate := SPDXLicense{}
-		if l.SPDXExpression != "" {
+		if l.SPDXExpression != "" && !strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
 			candidate.ID = l.SPDXExpression
 		} else {
-			// we did not find a valid SPDX license ID so treat as separate license
-			if len(l.Value) <= 64 {
-				// if the license text is less than the size of the hash,
-				// just use it directly so the id is more readable
-				candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
-			} else {
-				hash := sha256.Sum256([]byte(l.Value))
-				candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
-			}
 			candidate.Value = l.Value
+			// we did not find a valid SPDX license ID so treat as separate license
+			if strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
+				candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.SPDXExpression)
+				if len(l.Contents) > 0 {
+					candidate.Value = l.Contents
+				}
+			} else {
+				if len(l.Value) <= 64 {
+					// if the license text is less than the size of the hash,
+					// just use it directly so the id is more readable
+					candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
+				} else {
+					hash := sha256.Sum256([]byte(l.Value))
+					candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
+				}
+			}
 		}
 
 		switch l.Type {

@@ -312,3 +312,30 @@ func Test_noLocalGoModDir(t *testing.T) {
 		})
 	}
 }
+
+func TestLicenseConversion(t *testing.T) {
+	inputLicenses := []pkg.License{
+		{
+			Value:          "Apache-2.0",
+			SPDXExpression: "Apache-2.0",
+			Type:           "concluded",
+			URLs:           nil,
+			Locations:      file.NewLocationSet(file.NewLocation("LICENSE")),
+			Contents:       "",
+		},
+		{
+			Value:          "UNKNOWN",
+			SPDXExpression: "UNKNOWN_4d1cffe420916f2b706300ab63fcafaf35226a0ad3725cb9f95b26036cefae32",
+			Type:           "declared",
+			URLs:           nil,
+			Locations:      file.NewLocationSet(file.NewLocation("LICENSE2")),
+			Contents:       "NVIDIA Software License Agreement and CUDA Supplement to Software License Agreement",
+		},
+	}
+
+	goLicenses := toGoLicenses(inputLicenses)
+
+	result := toPkgLicenses(goLicenses)
+
+	require.Equal(t, inputLicenses, result)
+}
