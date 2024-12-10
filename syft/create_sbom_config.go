@@ -337,9 +337,10 @@ func (c *CreateSBOMConfig) userPackageTasks(cfg task.CatalogingFactoryConfig) ([
 // scopeTasks returns the set of tasks that should be run to generate additional scope information
 func (c *CreateSBOMConfig) scopeTasks() []task.Task {
 	var tsks []task.Task
-
-	if t := task.NewScopesTask(); t != nil {
-		tsks = append(tsks, t)
+	if c.Search.Scope == source.SquashWithAllLayersScope {
+		if t := task.NewScopesTask(); t != nil {
+			tsks = append(tsks, t)
+		}
 	}
 	return tsks
 }

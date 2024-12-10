@@ -6,6 +6,7 @@ import (
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -40,9 +41,9 @@ func getPackagesToDelete(s *sbom.SBOM) []artifact.ID {
 	for p := range s.Artifacts.Packages.Enumerate() {
 		toDelete := true
 		for _, l := range p.Locations.ToSlice() {
-			scope, exists := l.LocationMetadata.Annotations[file.ScopeAnnotationKey]
-			if !exists || scope == file.SquashedScopeAnnotation {
-				println(l.LocationMetadata.Annotations[file.ScopeAnnotationKey])
+			scope, _ := l.LocationMetadata.Annotations[file.ScopeAnnotationKey]
+			evidence, _ := l.LocationMetadata.Annotations[pkg.EvidenceAnnotationKey]
+			if scope == file.SquashedScopeAnnotation && evidence == pkg.PrimaryEvidenceAnnotation {
 				toDelete = false
 				break
 			}
