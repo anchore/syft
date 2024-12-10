@@ -17,7 +17,6 @@ vars:
   ORAS: "{{ .TOOL_DIR }}/oras"
   YQ: "{{ .TOOL_DIR }}/yq"
   TASK: "{{ .TOOL_DIR }}/task"
-  GH: "{{ .TOOL_DIR }}/gh"
 
   # used for changelog generation
   CHANGELOG: CHANGELOG.md
