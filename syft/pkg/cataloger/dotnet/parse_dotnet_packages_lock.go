@@ -77,20 +77,27 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 	}
 
 	// fill up relationships
-	for pkgNameVersion, dep := range allDependencies {
-		parentPkg, ok := pkgMap[pkgNameVersion]
+	for depNameVersion, dep := range allDependencies {
+		parentPkg, ok := pkgMap[depNameVersion]
 		if !ok {
-			log.Debug("package \"%s\" not found in map of all pacakges", pkgNameVersion)
+			log.Debug("package \"%s\" not found in map of all pacakges", depNameVersion)
 			continue
 		}
 
-		for childName, childVersion := range dep.Dependencies {
-			childNameVersion := createNameAndVersion(childName, childVersion)
+		for childDepName, childDepVersion := range dep.Dependencies {
+			childDepNameVersion := createNameAndVersion(childDepName, childDepVersion)
 
-			childPkg, ok := pkgMap[childNameVersion]
+			// try and find pkg for dependency with exact name and version
+			childPkg, ok := pkgMap[childDepNameVersion]
 			if !ok {
-				log.Debug("dependency \"%s\" of package \"%s\" not found in map of all packages, it might be required in a different version", childNameVersion, pkgNameVersion)
-				continue
+				// no exact match found, lets match on name only, lockfile will contain other version of pkg
+				cpkg, ok := findPkgByName(childDepName, pkgMap)
+				if !ok {
+					log.Debug("dependency \"%s\" of package \"%s\" not found in map of all packages", childDepNameVersion, depNameVersion)
+					continue
+				}
+
+				childPkg = *cpkg
 			}
 
 			rel := artifact.Relationship{
@@ -138,4 +145,15 @@ func packagesLockPackageURL(name, version string) string {
 		qualifiers,
 		"",
 	).ToString()
+}
+
+func findPkgByName(pkgName string, pkgMap map[string]pkg.Package) (*pkg.Package, bool) {
+	for pkgNameVersion, pkg := range pkgMap {
+		name, _ := extractNameAndVersion(pkgNameVersion)
+		if name == pkgName {
+			return &pkg, true
+		}
+	}
+
+	return nil, false
 }

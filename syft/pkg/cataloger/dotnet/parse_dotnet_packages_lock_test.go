@@ -82,14 +82,14 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 
 	dependencyInjectionAbstractionsPkg := pkg.Package{
 		Name:      "Microsoft.Extensions.DependencyInjection.Abstractions",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/Microsoft.Extensions.DependencyInjection.Abstractions@6.0.0",
+		Version:   "9.0.0",
+		PURL:      "pkg:nuget/Microsoft.Extensions.DependencyInjection.Abstractions@9.0.0",
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
 		Metadata: pkg.DotnetPackagesLockEntry{
 			Name:        "Microsoft.Extensions.DependencyInjection.Abstractions",
-			Version:     "6.0.0",
+			Version:     "9.0.0",
 			ContentHash: "xlzi2IYREJH3/m6+lUrQlujzX8wDitm4QGnUu6kUXTQAWPuZY8i+ticFJbzfqaetLA6KR/rO6Ew/HuYD+bxifg==",
 			Type:        "Transitive",
 		},
@@ -97,14 +97,14 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 
 	extensionOptionsPkg := pkg.Package{
 		Name:      "Microsoft.Extensions.Options",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/Microsoft.Extensions.Options@6.0.0",
+		Version:   "9.0.0",
+		PURL:      "pkg:nuget/Microsoft.Extensions.Options@9.0.0",
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
 		Metadata: pkg.DotnetPackagesLockEntry{
 			Name:        "Microsoft.Extensions.Options",
-			Version:     "6.0.0",
+			Version:     "9.0.0",
 			ContentHash: "dzXN0+V1AyjOe2xcJ86Qbo233KHuLEY0njf/P2Kw8SfJU+d45HNS2ctJdnEnrWbM9Ye2eFgaC5Mj9otRMU6IsQ==",
 			Type:        "Transitive",
 		},
@@ -112,14 +112,14 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 
 	extensionPrimitivesPkg := pkg.Package{
 		Name:      "Microsoft.Extensions.Primitives",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/Microsoft.Extensions.Primitives@6.0.0",
+		Version:   "9.0.0",
+		PURL:      "pkg:nuget/Microsoft.Extensions.Primitives@9.0.0",
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
 		Metadata: pkg.DotnetPackagesLockEntry{
 			Name:        "Microsoft.Extensions.Primitives",
-			Version:     "6.0.0",
+			Version:     "9.0.0",
 			ContentHash: "9+PnzmQFfEFNR9J2aDTfJGGupShHjOuGw4VUv+JB044biSHrnmCIMD+mJHmb2H7YryrfBEXDurxQ47gJZdCKNQ==",
 			Type:        "Transitive",
 		},
@@ -127,16 +127,31 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 
 	compilerServicesUnsafePkg := pkg.Package{
 		Name:      "System.Runtime.CompilerServices.Unsafe",
-		Version:   "6.0.0",
-		PURL:      "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0",
+		Version:   "9.0.0",
+		PURL:      "pkg:nuget/System.Runtime.CompilerServices.Unsafe@9.0.0",
 		Locations: fixtureLocationSet,
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
 		Metadata: pkg.DotnetPackagesLockEntry{
 			Name:        "System.Runtime.CompilerServices.Unsafe",
-			Version:     "6.0.0",
+			Version:     "9.0.0",
 			ContentHash: "/iUeP3tq1S0XdNNoMz5C9twLSrM/TH+qElHkXWaPvuNOt+99G75NrV0OS2EqHx5wMN7popYjpc8oTjC1y16DLg==",
 			Type:        "Transitive",
+		},
+	}
+
+	microsoftLoggingPkg := pkg.Package{
+		Name:      "Microsoft.Extensions.Logging",
+		Version:   "9.0.0",
+		PURL:      "pkg:nuget/Microsoft.Extensions.Logging@9.0.0",
+		Locations: fixtureLocationSet,
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata: pkg.DotnetPackagesLockEntry{
+			Name:        "Microsoft.Extensions.Logging",
+			Version:     "9.0.0",
+			ContentHash: "crjWyORoug0kK7RSNJBTeSE6VX8IQgLf3nUpTB9m62bPXp/tzbnOsnbe8TXEG0AASNaKZddnpHKw7fET8E++Pg==",
+			Type:        "Direct",
 		},
 	}
 
@@ -144,6 +159,7 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 		autoMapperPkg,
 		compilerServicesUnsafePkg,
 		dependencyInjectionAbstractionsPkg,
+		microsoftLoggingPkg,
 		extensionOptionsPkg,
 		extensionPrimitivesPkg,
 		bootstrapPkg,
@@ -170,6 +186,11 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 		{
 			From: extensionPrimitivesPkg,
 			To:   compilerServicesUnsafePkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: microsoftLoggingPkg,
+			To:   extensionOptionsPkg,
 			Type: artifact.DependencyOfRelationship,
 		},
 	}
