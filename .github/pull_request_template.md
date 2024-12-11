@@ -5,7 +5,7 @@ or link to an issue where this is explained.
 
 <!-- If this completes an issue, please include: -->
 
-- Fixes #
+- Fixes
 
 ## Type of change
 
