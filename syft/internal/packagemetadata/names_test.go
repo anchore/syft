@@ -318,6 +318,12 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 			expectedLegacyName: "DotnetDepsMetadata",
 		},
 		{
+			name:               "DotnetPackagesLockEntry",
+			metadata:           pkg.DotnetPackagesLockEntry{},
+			expectedJSONName:   "dotnet-packages-lock-entry",
+			expectedLegacyName: "DotnetPackagesLockEntry",
+		},
+		{
 			name:               "DotnetPortableExecutableMetadata",
 			metadata:           pkg.DotnetPortableExecutableEntry{},
 			expectedJSONName:   "dotnet-portable-executable-entry",
