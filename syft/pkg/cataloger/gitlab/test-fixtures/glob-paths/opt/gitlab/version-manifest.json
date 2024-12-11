@@ -1,0 +1,19 @@
+{
+    "manifest_format": 2,
+    "software": {
+        "openssl": {
+            "locked_version": "29708a562a1887a91de0fa6ca668c71871accde9",
+            "locked_source": {
+                "git": "git@dev.gitlab.org:omnibus-mirror/openssl.git"
+            },
+            "source_type": "git",
+            "described_version": "OpenSSL_1_1_1q",
+            "display_version": "1.1.1q",
+            "vendor": "openssl",
+            "license": "OpenSSL"
+        }
+    },
+    "build_version": "15.6.1",
+    "build_git_revision": "e3d1cd74ef1abe2b9514d8aa64c065b434becd3a",
+    "license": "MIT"
+}
