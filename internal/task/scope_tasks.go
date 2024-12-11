@@ -39,16 +39,20 @@ func packagesToRemove(accessor sbomsync.Accessor) []artifact.ID {
 func getPackagesToDelete(s *sbom.SBOM) []artifact.ID {
 	pkgsToDelete := make([]artifact.ID, 0)
 	for p := range s.Artifacts.Packages.Enumerate() {
-		toDelete := true
+		noSquashed := true
+		noPrimary := true
 		for _, l := range p.Locations.ToSlice() {
 			scope := l.LocationMetadata.Annotations[file.ScopeAnnotationKey]
 			evidence := l.LocationMetadata.Annotations[pkg.EvidenceAnnotationKey]
 			if scope == file.SquashedScopeAnnotation && evidence == pkg.PrimaryEvidenceAnnotation {
-				toDelete = false
+				noSquashed = false
 				break
 			}
+			if scope == "" && evidence == pkg.PrimaryEvidenceAnnotation {
+				noPrimary = false
+			}
 		}
-		if toDelete {
+		if noSquashed && noPrimary {
 			pkgsToDelete = append(pkgsToDelete, p.ID())
 		}
 	}
