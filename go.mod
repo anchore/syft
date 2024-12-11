@@ -92,6 +92,7 @@ require (
 	github.com/anchore/archiver/v3 v3.5.3-0.20241210171143-5b1d8d1c7c51
 	github.com/magiconair/properties v1.8.9
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
+	golang.org/x/tools v0.23.0
 )
 
 require (
