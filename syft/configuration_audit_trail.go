@@ -21,8 +21,8 @@ type configurationAuditTrail struct {
 }
 
 type catalogerManifest struct {
-	Requested pkgcataloging.SelectionRequest `json:"requested" yaml:"requested" mapstructure:"requested"`
-	Used      []string                       `json:"used" yaml:"used" mapstructure:"used"`
+	Requested cataloging.SelectionRequest `json:"requested" yaml:"requested" mapstructure:"requested"`
+	Used      []string                    `json:"used" yaml:"used" mapstructure:"used"`
 }
 
 type marshalAPIConfiguration configurationAuditTrail

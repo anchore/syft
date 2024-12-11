@@ -88,13 +88,13 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "image"),
-				fileCatalogerNames(true, true, true),
+				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: pkgcataloging.SelectionRequest{
-					DefaultNamesOrTags: []string{"image"},
+				Requested: cataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image", "file"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
 			},
@@ -107,13 +107,13 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "directory"),
-				fileCatalogerNames(true, true, true),
+				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: pkgcataloging.SelectionRequest{
-					DefaultNamesOrTags: []string{"directory"},
+				Requested: cataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"directory", "file"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "directory"),
 			},
@@ -127,13 +127,13 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "directory"),
-				fileCatalogerNames(true, true, true),
+				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: pkgcataloging.SelectionRequest{
-					DefaultNamesOrTags: []string{"directory"},
+				Requested: cataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"directory", "file"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "directory"),
 			},
@@ -142,17 +142,18 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 		{
 			name: "no file digest cataloger",
 			src:  imgSrc,
-			cfg:  DefaultCreateSBOMConfig().WithFilesConfig(filecataloging.DefaultConfig().WithHashers()),
+			cfg:  DefaultCreateSBOMConfig().WithCatalogerSelection(cataloging.NewSelectionRequest().WithRemovals("digest")),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "image"),
-				fileCatalogerNames(false, true, true), // note: the digest cataloger is not included
+				fileCatalogerNames("file-metadata", "content", "binary-metadata"),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: pkgcataloging.SelectionRequest{
-					DefaultNamesOrTags: []string{"image"},
+				Requested: cataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image", "file"},
+					RemoveNamesOrTags:  []string{"digest"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
 			},
@@ -161,17 +162,18 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 		{
 			name: "select no file catalogers",
 			src:  imgSrc,
-			cfg:  DefaultCreateSBOMConfig().WithFilesConfig(filecataloging.DefaultConfig().WithSelection(file.NoFilesSelection)),
+			cfg:  DefaultCreateSBOMConfig().WithCatalogerSelection(cataloging.NewSelectionRequest().WithRemovals("file")),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "image"),
-				// note: there are no file catalogers in their own group
+				nil, // note: there is a file cataloging group, with no items in it
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: pkgcataloging.SelectionRequest{
-					DefaultNamesOrTags: []string{"image"},
+				Requested: cataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image", "file"},
+					RemoveNamesOrTags:  []string{"file"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
 			},
@@ -186,14 +188,14 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				// note: there is a single group of catalogers for pkgs and files
 				append(
 					pkgCatalogerNamesWithTagOrName(t, "image"),
-					fileCatalogerNames(true, true, true)...,
+					fileCatalogerNames()...,
 				),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: pkgcataloging.SelectionRequest{
-					DefaultNamesOrTags: []string{"image"},
+				Requested: cataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image", "file"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
 			},
@@ -208,13 +210,13 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "persistent"),
-				fileCatalogerNames(true, true, true),
+				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: pkgcataloging.SelectionRequest{
-					DefaultNamesOrTags: []string{"image"},
+				Requested: cataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image", "file"},
 				},
 				Used: addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "persistent"),
 			},
@@ -229,13 +231,13 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgCatalogerNamesWithTagOrName(t, "directory"), "persistent"),
-				fileCatalogerNames(true, true, true),
+				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: pkgcataloging.SelectionRequest{
-					DefaultNamesOrTags: []string{"directory"},
+				Requested: cataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"directory", "file"},
 				},
 				Used: addTo(pkgCatalogerNamesWithTagOrName(t, "directory"), "persistent"),
 			},
@@ -246,17 +248,17 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			src:  imgSrc,
 			cfg: DefaultCreateSBOMConfig().WithCatalogers(
 				pkgcataloging.NewAlwaysEnabledCatalogerReference(newDummyCataloger("persistent")),
-			).WithCatalogerSelection(pkgcataloging.NewSelectionRequest().WithSubSelections("javascript")),
+			).WithCatalogerSelection(cataloging.NewSelectionRequest().WithSubSelections("javascript")),
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgIntersect("image", "javascript"), "persistent"),
-				fileCatalogerNames(true, true, true),
+				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: pkgcataloging.SelectionRequest{
-					DefaultNamesOrTags: []string{"image"},
+				Requested: cataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image", "file"},
 					SubSelectTags:      []string{"javascript"},
 				},
 				Used: addTo(pkgIntersect("image", "javascript"), "persistent"),
@@ -272,13 +274,13 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "user-provided"),
-				fileCatalogerNames(true, true, true),
+				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: pkgcataloging.SelectionRequest{
-					DefaultNamesOrTags: []string{"image"},
+				Requested: cataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image", "file"},
 				},
 				Used: addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "user-provided"),
 			},
@@ -293,13 +295,13 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			wantTaskNames: [][]string{
 				environmentCatalogerNames(),
 				pkgCatalogerNamesWithTagOrName(t, "image"),
-				fileCatalogerNames(true, true, true),
+				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
-				Requested: pkgcataloging.SelectionRequest{
-					DefaultNamesOrTags: []string{"image"},
+				Requested: cataloging.SelectionRequest{
+					DefaultNamesOrTags: []string{"image", "file"},
 				},
 				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
 			},
@@ -314,9 +316,6 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 
 			// sanity check
 			require.NotEmpty(t, tt.wantTaskNames)
-			for _, group := range tt.wantTaskNames {
-				require.NotEmpty(t, group)
-			}
 
 			// test the subject
 			gotTasks, gotManifest, err := tt.cfg.makeTaskGroups(tt.src)
@@ -378,17 +377,39 @@ func pkgCatalogerNamesWithTagOrName(t *testing.T, token string) []string {
 	return names
 }
 
-func fileCatalogerNames(digest, metadata, executable bool) []string {
+func fileCatalogerNames(tokens ...string) []string {
 	var names []string
-	if digest {
-		names = append(names, "file-digest-cataloger")
+	cfg := task.DefaultCatalogingFactoryConfig()
+topLoop:
+	for _, factory := range task.DefaultFileTaskFactories() {
+		cat := factory(cfg)
+
+		if cat == nil {
+			continue
+		}
+
+		name := cat.Name()
+
+		if len(tokens) == 0 {
+			names = append(names, name)
+			continue
+		}
+
+		for _, token := range tokens {
+			if selector, ok := cat.(task.Selector); ok {
+				if selector.HasAllSelectors(token) {
+					names = append(names, name)
+					continue topLoop
+				}
+
+			}
+			if name == token {
+				names = append(names, name)
+			}
+		}
 	}
-	if executable {
-		names = append(names, "file-executable-cataloger")
-	}
-	if metadata {
-		names = append(names, "file-metadata-cataloger")
-	}
+
+	sort.Strings(names)
 	return names
 }
 
@@ -436,7 +457,7 @@ func Test_replaceDefaultTagReferences(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, replaceDefaultTagReferences("replacement", tt.lst))
+			assert.Equal(t, tt.want, replaceDefaultTagReferences([]string{"replacement"}, tt.lst))
 		})
 	}
 }
@@ -446,7 +467,7 @@ func Test_findDefaultTag(t *testing.T) {
 	tests := []struct {
 		name    string
 		src     source.Description
-		want    string
+		want    []string
 		wantErr require.ErrorAssertionFunc
 	}{
 		{
@@ -454,21 +475,21 @@ func Test_findDefaultTag(t *testing.T) {
 			src: source.Description{
 				Metadata: source.ImageMetadata{},
 			},
-			want: pkgcataloging.ImageTag,
+			want: []string{pkgcataloging.ImageTag, filecataloging.FileTag},
 		},
 		{
 			name: "directory",
 			src: source.Description{
 				Metadata: source.DirectoryMetadata{},
 			},
-			want: pkgcataloging.DirectoryTag,
+			want: []string{pkgcataloging.DirectoryTag, filecataloging.FileTag},
 		},
 		{
 			name: "file",
 			src: source.Description{
 				Metadata: source.FileMetadata{},
 			},
-			want: pkgcataloging.DirectoryTag, // not a mistake...
+			want: []string{pkgcataloging.DirectoryTag, filecataloging.FileTag}, // not a mistake...
 		},
 		{
 			name: "unknown",
@@ -483,7 +504,7 @@ func Test_findDefaultTag(t *testing.T) {
 			if tt.wantErr == nil {
 				tt.wantErr = require.NoError
 			}
-			got, err := findDefaultTag(tt.src)
+			got, err := findDefaultTags(tt.src)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
