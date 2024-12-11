@@ -19,6 +19,7 @@ import (
 	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
+	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
@@ -42,6 +43,7 @@ type Catalog struct {
 
 	// ecosystem-specific cataloger configuration
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
+	DotNet      dotnetConfig      `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
 	JavaScript  javaScriptConfig  `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
 	LinuxKernel linuxKernelConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
@@ -71,6 +73,7 @@ func DefaultCatalog() Catalog {
 		Package:       defaultPackageConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
 		Golang:        defaultGolangConfig(),
+		DotNet:        defaultDotnetConfig(),
 		Java:          defaultJavaConfig(),
 		File:          defaultFileConfig(),
 		Relationships: defaultRelationshipsConfig(),
@@ -165,6 +168,12 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromBuildSettings(cfg.Golang.MainModuleVersion.FromBuildSettings).
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			),
+		DotNet: dotnet.DefaultCatalogerConfig().
+			WithSearchLocalLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp, task.CSharpWrittenOut), cfg.DotNet.SearchLocalLicenses)).
+			WithLocalCachePaths(cfg.DotNet.LocalCachePaths).
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp, task.CSharpWrittenOut), cfg.DotNet.SearchRemoteLicenses)).
+			WithProviders(cfg.DotNet.Providers).
+			WithCredentials(cfg.DotNet.ProviderCredentials.ToProviderCredentials()),
 		JavaScript: javascript.DefaultCatalogerConfig().
 			WithIncludeDevDependencies(*multiLevelOption(false, cfg.JavaScript.IncludeDevDependencies)).
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).
