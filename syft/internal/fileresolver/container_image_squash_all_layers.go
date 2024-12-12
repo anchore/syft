@@ -2,6 +2,7 @@ package fileresolver
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/anchore/stereoscope/pkg/image"
@@ -131,5 +132,18 @@ func (i *ContainerImageSquashAllLayers) mergeLocations(squashedLocations, allLay
 		})
 	}
 
-	return mergedLocations
+	filteredMap := make(map[string]bool)
+	var filteredMergedLocations []file.Location
+	for _, l := range mergedLocations {
+		if _, exists := filteredMap[getKey(l)]; !exists {
+			filteredMap[getKey(l)] = true
+			filteredMergedLocations = append(filteredMergedLocations, l)
+		}
+	}
+
+	return filteredMergedLocations
+}
+
+func getKey(l file.Location) string {
+	return fmt.Sprintf("%s-%s-%s", l.RealPath, l.AccessPath, l.FileSystemID)
 }

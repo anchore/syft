@@ -197,7 +197,7 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	}
 
 	// all scope work must be done after all nodes (files and packages) have been cataloged and before the relationship
-	if source.ParseScope(c.Search.Scope.String()) == source.SquashWithAllLayersScope {
+	if len(scopeTasks) > 0 {
 		taskGroups = append(taskGroups, scopeTasks)
 	}
 

@@ -23,8 +23,7 @@ func finalizeScope(builder sbomsync.Builder) {
 	accessor := builder.(sbomsync.Accessor)
 
 	// remove all packages that doesn't exist in the final state of the image
-	packagesToDelete := packagesToRemove(accessor)
-	builder.DeletePackages(packagesToDelete...)
+	builder.DeletePackages(packagesToRemove(accessor)...)
 }
 
 func packagesToRemove(accessor sbomsync.Accessor) []artifact.ID {
