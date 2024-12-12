@@ -43,10 +43,6 @@ func getPackagesToDelete(s *sbom.SBOM) []artifact.ID {
 		noSquashed := true
 		noPrimary := true
 		for _, l := range p.Locations.ToSlice() {
-			if exists := filterDuplicates[getKey(p, l)]; exists {
-				break
-			}
-			filterDuplicates[getKey(p, l)] = true
 			scope := l.LocationMetadata.Annotations[file.ScopeAnnotationKey]
 			evidence := l.LocationMetadata.Annotations[pkg.EvidenceAnnotationKey]
 			if scope == file.SquashedScopeAnnotation && evidence == pkg.PrimaryEvidenceAnnotation {
@@ -54,6 +50,11 @@ func getPackagesToDelete(s *sbom.SBOM) []artifact.ID {
 				break
 			}
 			if scope == "" && evidence == pkg.PrimaryEvidenceAnnotation {
+				if exists := filterDuplicates[getKey(p, l)]; exists {
+					println(getKey(p, l))
+					break
+				}
+				filterDuplicates[getKey(p, l)] = true
 				noPrimary = false
 				break
 			}
