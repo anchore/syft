@@ -29,28 +29,28 @@ func TestImageSquashAllLayersResolver_FilesByPath(t *testing.T) {
 			linkPath:     "/link-1",
 			resolveLayer: 1,
 			resolvePath:  "/file-1.txt",
-			expectedRefs: 2,
+			expectedRefs: 1,
 		},
 		{
 			name:         "link with in layer data",
 			linkPath:     "/link-within",
 			resolveLayer: 5,
 			resolvePath:  "/file-3.txt",
-			expectedRefs: 2,
+			expectedRefs: 1,
 		},
 		{
 			name:         "link with overridden data",
 			linkPath:     "/link-2",
 			resolveLayer: 7,
 			resolvePath:  "/file-2.txt",
-			expectedRefs: 3,
+			expectedRefs: 2,
 		},
 		{
 			name:         "indirect link (with overridden data)",
 			linkPath:     "/link-indirect",
 			resolveLayer: 7,
 			resolvePath:  "/file-2.txt",
-			expectedRefs: 3,
+			expectedRefs: 2,
 		},
 		{
 			name:         "dead link",
@@ -142,28 +142,28 @@ func TestImageSquashAllLayersResolver_FilesByGlob(t *testing.T) {
 			glob:         "**/link-1",
 			resolveLayer: 1,
 			resolvePath:  "/file-1.txt",
-			expectedRefs: 2,
+			expectedRefs: 1,
 		},
 		{
 			name:         "link with in layer data",
 			glob:         "**/link-within",
 			resolveLayer: 5,
 			resolvePath:  "/file-3.txt",
-			expectedRefs: 2,
+			expectedRefs: 1,
 		},
 		{
 			name:         "link with overridden data",
 			glob:         "**/link-2",
 			resolveLayer: 7,
 			resolvePath:  "/file-2.txt",
-			expectedRefs: 3,
+			expectedRefs: 2,
 		},
 		{
 			name:         "indirect link (with overridden data)",
 			glob:         "**/link-indirect",
 			resolveLayer: 7,
 			resolvePath:  "/file-2.txt",
-			expectedRefs: 3,
+			expectedRefs: 2,
 		},
 		{
 			name: "dead link",
@@ -181,14 +181,14 @@ func TestImageSquashAllLayersResolver_FilesByGlob(t *testing.T) {
 			glob:         "**/parent/*.txt",
 			resolveLayer: 11,
 			resolvePath:  "/parent/file-4.txt",
-			expectedRefs: 3,
+			expectedRefs: 2,
 		},
 		{
 			name:         "parent is a link (override)",
 			glob:         "**/parent-link/file-4.txt",
 			resolveLayer: 11,
 			resolvePath:  "/parent/file-4.txt",
-			expectedRefs: 3,
+			expectedRefs: 2,
 		},
 	}
 	for _, c := range cases {
@@ -258,7 +258,7 @@ func Test_ImageSquashAllLayersResolver_FilesByMIMEType(t *testing.T) {
 			locations, err := resolver.FilesByMIMEType(test.mimeType)
 			assert.NoError(t, err)
 
-			assert.Len(t, locations, test.expectedPaths.Size()*2)
+			assert.Len(t, locations, test.expectedPaths.Size())
 			for _, l := range locations {
 				assert.True(t, test.expectedPaths.Has(l.RealPath), "does not have path %q", l.RealPath)
 			}
@@ -308,7 +308,6 @@ func TestSquashWithAllLayersImageResolver_FilesContents(t *testing.T) {
 			contents: []string{
 				"NEW file override!",
 				"file 2!",
-				"NEW file override!",
 			},
 		},
 		{
@@ -317,7 +316,6 @@ func TestSquashWithAllLayersImageResolver_FilesContents(t *testing.T) {
 			contents: []string{
 				"NEW file override!",
 				"file 2!",
-				"NEW file override!",
 			},
 		},
 		{
@@ -400,13 +398,6 @@ func Test_ImageSquashAllLayersResolver_resolvesLinks(t *testing.T) {
 				file.NewVirtualLocation("/file-3.txt", "/file-3.txt"),
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
-				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
-				file.NewVirtualLocation("/etc/group", "/etc/group"),
-				file.NewVirtualLocation("/etc/passwd", "/etc/passwd"),
-				file.NewVirtualLocation("/etc/shadow", "/etc/shadow"),
-				file.NewVirtualLocation("/file-1.txt", "/file-1.txt"),
-				file.NewVirtualLocation("/file-3.txt", "/file-3.txt"),
-				file.NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 				file.NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 				file.NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 			},
@@ -421,8 +412,6 @@ func Test_ImageSquashAllLayersResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []file.Location{
 				file.NewVirtualLocation("/file-1.txt", "/link-1"),
-				file.NewVirtualLocation("/file-1.txt", "/link-1"),
-				file.NewVirtualLocation("/file-2.txt", "/link-2"),
 				file.NewVirtualLocation("/file-2.txt", "/link-2"),
 				file.NewVirtualLocation("/file-2.txt", "/link-2"),
 
@@ -430,7 +419,6 @@ func Test_ImageSquashAllLayersResolver_resolvesLinks(t *testing.T) {
 				// by the real path, so it is not included in the results
 				//file.NewVirtualLocation("/file-2.txt", "/link-indirect"),
 
-				file.NewVirtualLocation("/file-3.txt", "/link-within"),
 				file.NewVirtualLocation("/file-3.txt", "/link-within"),
 			},
 		},
@@ -446,7 +434,6 @@ func Test_ImageSquashAllLayersResolver_resolvesLinks(t *testing.T) {
 				// this has two copies in the base image, which overwrites the same location
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
-				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
 			},
 		},
 		{
@@ -459,13 +446,9 @@ func Test_ImageSquashAllLayersResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []file.Location{
 				file.NewVirtualLocation("/file-1.txt", "/file-1.txt"),
-				file.NewVirtualLocation("/file-1.txt", "/file-1.txt"),
-				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
 				file.NewVirtualLocation("/file-3.txt", "/file-3.txt"),
-				file.NewVirtualLocation("/file-3.txt", "/file-3.txt"),
-				file.NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 				file.NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 				file.NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 			},
@@ -479,15 +462,12 @@ func Test_ImageSquashAllLayersResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []file.Location{
 				file.NewVirtualLocation("/file-1.txt", "/link-1"),
-				file.NewVirtualLocation("/file-1.txt", "/link-1"),
-				file.NewVirtualLocation("/file-2.txt", "/link-2"),
 				file.NewVirtualLocation("/file-2.txt", "/link-2"),
 				file.NewVirtualLocation("/file-2.txt", "/link-2"),
 
 				// we already have this real file path via another link, so only one is returned
 				// file.NewVirtualLocation("/file-2.txt", "/link-indirect"),
 
-				file.NewVirtualLocation("/file-3.txt", "/link-within"),
 				file.NewVirtualLocation("/file-3.txt", "/link-within"),
 			},
 		},
@@ -501,13 +481,9 @@ func Test_ImageSquashAllLayersResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []file.Location{
 				file.NewVirtualLocation("/file-1.txt", "/file-1.txt"),
-				file.NewVirtualLocation("/file-1.txt", "/file-1.txt"),
-				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
 				file.NewVirtualLocation("/file-2.txt", "/file-2.txt"),
 				file.NewVirtualLocation("/file-3.txt", "/file-3.txt"),
-				file.NewVirtualLocation("/file-3.txt", "/file-3.txt"),
-				file.NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 				file.NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 				file.NewVirtualLocation("/parent/file-4.txt", "/parent/file-4.txt"),
 			},
@@ -524,7 +500,6 @@ func Test_ImageSquashAllLayersResolver_resolvesLinks(t *testing.T) {
 				// we have multiple copies across layers
 				file.NewVirtualLocation("/file-2.txt", "/link-2"),
 				file.NewVirtualLocation("/file-2.txt", "/link-2"),
-				file.NewVirtualLocation("/file-2.txt", "/link-2"),
 			},
 		},
 		{
@@ -537,7 +512,6 @@ func Test_ImageSquashAllLayersResolver_resolvesLinks(t *testing.T) {
 			},
 			expected: []file.Location{
 				// we have multiple copies across layers
-				file.NewVirtualLocation("/file-2.txt", "/link-indirect"),
 				file.NewVirtualLocation("/file-2.txt", "/link-indirect"),
 				file.NewVirtualLocation("/file-2.txt", "/link-indirect"),
 			},
