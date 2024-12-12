@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
@@ -37,10 +38,16 @@ func packagesToRemove(accessor sbomsync.Accessor) []artifact.ID {
 
 func getPackagesToDelete(s *sbom.SBOM) []artifact.ID {
 	pkgsToDelete := make([]artifact.ID, 0)
+	filterDuplicates := make(map[string]bool)
 	for p := range s.Artifacts.Packages.Enumerate() {
 		noSquashed := true
 		noPrimary := true
 		for _, l := range p.Locations.ToSlice() {
+			if exists := filterDuplicates[getKey(p, l)]; exists {
+				break
+			} else {
+				filterDuplicates[getKey(p, l)] = true
+			}
 			scope := l.LocationMetadata.Annotations[file.ScopeAnnotationKey]
 			evidence := l.LocationMetadata.Annotations[pkg.EvidenceAnnotationKey]
 			if scope == file.SquashedScopeAnnotation && evidence == pkg.PrimaryEvidenceAnnotation {
@@ -49,11 +56,17 @@ func getPackagesToDelete(s *sbom.SBOM) []artifact.ID {
 			}
 			if scope == "" && evidence == pkg.PrimaryEvidenceAnnotation {
 				noPrimary = false
+				break
 			}
 		}
+
 		if noSquashed && noPrimary {
 			pkgsToDelete = append(pkgsToDelete, p.ID())
 		}
 	}
 	return pkgsToDelete
+}
+
+func getKey(pkg pkg.Package, loc file.Location) string {
+	return fmt.Sprintf("%s-%s-%s-%s", pkg.Name, pkg.Version, loc.RealPath, loc.AccessPath)
 }
