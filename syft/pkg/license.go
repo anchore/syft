@@ -16,7 +16,7 @@ import (
 // FullTextValue is a placeholder value when license metadata is discovered to be fullText
 // A license with "FullText" in its value refers the consumer to look at the FullText field
 // This is so that we can keep Value as a required field up until syft 2.0
-var FullTextValue = "FullText"
+var FullTextValue = "SeeFullText"
 
 var _ sort.Interface = (*Licenses)(nil)
 
@@ -30,6 +30,7 @@ var _ sort.Interface = (*Licenses)(nil)
 // this is different for licenses since we're only looking for evidence
 // of where a license was declared/concluded for a given package
 // If a license is given as it's full text in the metadata rather than it's value or SPDX expression
+
 // The FullText field is used to represent this data
 // A Concluded License type is the license the SBOM creator believes governs the package (human crafted or altered SBOM)
 // The Declared License is what the authors of a project believe govern the package. This is the default type syft declares.
@@ -81,6 +82,8 @@ func NewLicenseFromType(value string, t license.Type) License {
 		fullText       string
 	)
 	// Check parsed value for newline character to see if it's the full license text
+	// License: <HERE IS THE FULL TEXT> <Expressions>
+	// DO we want to also submit file name when determining fulltext
 	if strings.Contains(value, "\n") {
 		fullText = value
 	} else {
@@ -93,7 +96,6 @@ func NewLicenseFromType(value string, t license.Type) License {
 
 	if fullText != "" {
 		return License{
-			Value:     FullTextValue,
 			FullText:  fullText,
 			Type:      t,
 			Locations: file.NewLocationSet(),
