@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/unknown"
@@ -15,7 +16,9 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var _ generic.Parser = parseDotnetDeps
+type dotnetDepsCataloger struct {
+	licenses nugetLicenseResolver
+}
 
 type dotnetDeps struct {
 	RuntimeTarget dotnetRuntimeTarget                    `json:"runtimeTarget"`
@@ -40,7 +43,7 @@ type dotnetDepsLibrary struct {
 }
 
 //nolint:funlen
-func parseDotnetDeps(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *dotnetDepsCataloger) parseDotnetDeps(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var pkgMap = make(map[string]pkg.Package)
 	var relationships []artifact.Relationship
@@ -65,6 +68,8 @@ func parseDotnetDeps(_ context.Context, _ file.Resolver, _ *generic.Environment,
 				lib,
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			)
+			rootPkg.FoundBy = dotnetDepsCatalogerName
+			break
 		}
 	}
 	if rootPkg == nil {
@@ -80,6 +85,11 @@ func parseDotnetDeps(_ context.Context, _ file.Resolver, _ *generic.Environment,
 	// sort the names so that the order of the packages is deterministic
 	sort.Strings(names)
 
+	var err error
+	if c.licenses.assetDefinitions, err = getProjectAssets(resolver); err != nil {
+		log.Warnf("unable to retrieve project assets: %v", err)
+	}
+
 	for _, nameVersion := range names {
 		// skip the root package
 		name, version := extractNameAndVersion(nameVersion)
@@ -94,10 +104,16 @@ func parseDotnetDeps(_ context.Context, _ file.Resolver, _ *generic.Environment,
 			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 
-		if dotnetPkg != nil {
-			pkgs = append(pkgs, *dotnetPkg)
-			pkgMap[nameVersion] = *dotnetPkg
+		dotnetPkg.FoundBy = dotnetDepsCatalogerName
+
+		// Try to resolve *.nupkg License
+		licenseScanner := licenses.ContextLicenseScanner(ctx)
+		if licenses, err := c.licenses.getLicenses(ctx, licenseScanner, name, version); err == nil && len(licenses) > 0 {
+			dotnetPkg.Licenses = pkg.NewLicenseSet(licenses...)
 		}
+
+		pkgs = append(pkgs, *dotnetPkg)
+		pkgMap[nameVersion] = *dotnetPkg
 	}
 
 	for pkgNameVersion, target := range depsDoc.Targets[depsDoc.RuntimeTarget.Name] {

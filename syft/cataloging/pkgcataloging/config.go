@@ -2,6 +2,7 @@ package pkgcataloging
 
 import (
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
+	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
@@ -12,6 +13,7 @@ import (
 type Config struct {
 	Binary      binary.ClassifierCatalogerConfig  `yaml:"binary" json:"binary" mapstructure:"binary"`
 	Golang      golang.CatalogerConfig            `yaml:"golang" json:"golang" mapstructure:"golang"`
+	DotNet      dotnet.CatalogerConfig            `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	JavaArchive java.ArchiveCatalogerConfig       `yaml:"java-archive" json:"java-archive" mapstructure:"java-archive"`
 	JavaScript  javascript.CatalogerConfig        `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
 	LinuxKernel kernel.LinuxKernelCatalogerConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
@@ -22,6 +24,7 @@ func DefaultConfig() Config {
 	return Config{
 		Binary:      binary.DefaultClassifierCatalogerConfig(),
 		Golang:      golang.DefaultCatalogerConfig(),
+		DotNet:      dotnet.DefaultCatalogerConfig(),
 		LinuxKernel: kernel.DefaultLinuxKernelCatalogerConfig(),
 		Python:      python.DefaultCatalogerConfig(),
 		JavaArchive: java.DefaultArchiveCatalogerConfig(),
@@ -35,6 +38,11 @@ func (c Config) WithBinaryConfig(cfg binary.ClassifierCatalogerConfig) Config {
 
 func (c Config) WithGolangConfig(cfg golang.CatalogerConfig) Config {
 	c.Golang = cfg
+	return c
+}
+
+func (c Config) WithDotNetConfig(cfg dotnet.CatalogerConfig) Config {
+	c.DotNet = cfg
 	return c
 }
 
