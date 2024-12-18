@@ -23,7 +23,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func Test_LocalLicenseSearch(t *testing.T) {
+func Test_LocalModCacheLicenseSearch(t *testing.T) {
 	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
 	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
 	loc3 := file.NewLocation("github.com/someorg/strangelicense@v1.2.3/LiCeNsE.tXt")
@@ -92,6 +92,75 @@ func Test_LocalLicenseSearch(t *testing.T) {
 	}
 }
 
+func Test_LocalVendorLicenseSearch(t *testing.T) {
+	loc1 := file.NewLocation("github.com/someorg/somename/LICENSE")
+	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project/LICENSE.txt")
+	loc3 := file.NewLocation("github.com/someorg/strangelicense/LiCeNsE.tXt")
+
+	licenseScanner := licenses.TestingOnlyScanner()
+
+	tests := []struct {
+		name     string
+		version  string
+		expected pkg.License
+	}{
+		{
+			name:    "github.com/someorg/somename",
+			version: "v0.3.2",
+			expected: pkg.License{
+				Value:          "Apache-2.0",
+				SPDXExpression: "Apache-2.0",
+				Type:           license.Concluded,
+				URLs:           []string{"file://$GOPATH/pkg/mod/" + loc1.RealPath},
+				Locations:      file.NewLocationSet(),
+			},
+		},
+		{
+			name:    "github.com/CapORG/CapProject",
+			version: "v4.111.5",
+			expected: pkg.License{
+				Value:          "MIT",
+				SPDXExpression: "MIT",
+				Type:           license.Concluded,
+				URLs:           []string{"file://$GOPATH/pkg/mod/" + loc2.RealPath},
+				Locations:      file.NewLocationSet(),
+			},
+		},
+		{
+			name:    "github.com/someorg/strangelicense",
+			version: "v1.2.3",
+			expected: pkg.License{
+				Value:          "Apache-2.0",
+				SPDXExpression: "Apache-2.0",
+				Type:           license.Concluded,
+				URLs:           []string{"file://$GOPATH/pkg/mod/" + loc3.RealPath},
+				Locations:      file.NewLocationSet(),
+			},
+		},
+	}
+
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			l := newGoLicenseResolver(
+				"",
+				CatalogerConfig{
+					SearchLocalVendorLicenses: true,
+					LocalVendorDir:            filepath.Join(wd, "test-fixtures", "licenses-vendor"),
+				},
+			)
+			lics, err := l.getLicenses(context.Background(), licenseScanner, fileresolver.Empty{}, test.name, test.version)
+			require.NoError(t, err)
+
+			require.Len(t, lics, 1)
+
+			require.Equal(t, test.expected, lics[0])
+		})
+	}
+}
+
 func Test_RemoteProxyLicenseSearch(t *testing.T) {
 	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
 	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
@@ -117,7 +186,7 @@ func Test_RemoteProxyLicenseSearch(t *testing.T) {
 		for _, f := range entries {
 			// the zip files downloaded contain a path to the repo that somewhat matches where it ends up on disk,
 			// so prefix entries with something similar
-			writer, err := archive.Create(path.Join(moduleDir(modPath, modVersion), f.Name()))
+			writer, err := archive.Create(path.Join(moduleDirCache(modPath, modVersion), f.Name()))
 			require.NoError(t, err)
 			contents, err := os.ReadFile(filepath.Join(testDir, f.Name()))
 			require.NoError(t, err)
@@ -307,7 +376,7 @@ func Test_noLocalGoModDir(t *testing.T) {
 				SearchLocalModCacheLicenses: true,
 				LocalModCacheDir:            test.dir,
 			})
-			_, err := resolver.getLicensesFromLocal(context.Background(), licenseScanner, "mod", "ver")
+			_, err := resolver.getLicensesFromLocal(context.Background(), licenseScanner, resolver.localModCacheDir, moduleDirCache("mod", "ver"))
 			test.wantErr(t, err)
 		})
 	}
