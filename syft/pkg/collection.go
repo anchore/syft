@@ -285,6 +285,7 @@ func (c *Collection) Sorted(types ...Type) (pkgs []Package) {
 	for p := range c.Enumerate(types...) {
 		pkgs = append(pkgs, p)
 	}
+
 	Sort(pkgs)
 
 	return pkgs

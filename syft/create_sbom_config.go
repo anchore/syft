@@ -338,7 +338,7 @@ func (c *CreateSBOMConfig) userPackageTasks(cfg task.CatalogingFactoryConfig) ([
 func (c *CreateSBOMConfig) scopeTasks() []task.Task {
 	var tsks []task.Task
 	if c.Search.Scope == source.SquashWithAllLayersScope {
-		if t := task.NewScopesTask(); t != nil {
+		if t := task.NewScopeTask(); t != nil {
 			tsks = append(tsks, t)
 		}
 	}

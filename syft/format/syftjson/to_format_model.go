@@ -211,7 +211,6 @@ func toPackageModels(catalog *pkg.Collection, cfg EncoderConfig) []model.Package
 	for _, p := range catalog.Sorted() {
 		artifacts = append(artifacts, toPackageModel(p, cfg))
 	}
-
 	return artifacts
 }
 
