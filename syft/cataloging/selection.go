@@ -1,8 +1,6 @@
-package pkgcataloging
+package cataloging
 
-import (
-	"strings"
-)
+import "strings"
 
 type SelectionRequest struct {
 	DefaultNamesOrTags []string `json:"default,omitempty"`
