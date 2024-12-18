@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil/helpers"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -139,6 +140,52 @@ func Test_relationships(t *testing.T) {
 			cdx := ToFormatModel(test.sbom)
 			got := cdx.Dependencies
 			require.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func Test_fileComponents(t *testing.T) {
+	tests := []struct {
+		name string
+		sbom sbom.SBOM
+		want []cyclonedx.Component
+	}{
+		{
+			name: "sbom coordinates with file metadata are serialized to cdx",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					FileMetadata: map[file.Coordinates]file.Metadata{
+						{RealPath: "/test"}: {Path: "/test"},
+					},
+					FileDigests: map[file.Coordinates][]file.Digest{
+						{RealPath: "/test"}: {
+							{
+								Algorithm: "sha256",
+								Value:     "xyz12345",
+							},
+						},
+					},
+				},
+			},
+			want: []cyclonedx.Component{
+				{
+					BOMRef: "3f31cb2d98be6c1e",
+					Name:   "/test",
+					Type:   cyclonedx.ComponentTypeFile,
+					Hashes: &[]cyclonedx.Hash{
+						{Algorithm: "SHA-256", Value: "xyz12345"},
+					},
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cdx := ToFormatModel(test.sbom)
+			got := *cdx.Components
+			if diff := cmp.Diff(test.want, got); diff != "" {
+				t.Errorf("cdx file components mismatch (-want +got):\n%s", diff)
+			}
 		})
 	}
 }
