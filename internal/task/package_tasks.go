@@ -50,8 +50,8 @@ const (
 )
 
 //nolint:funlen
-func DefaultPackageTaskFactories() PackageTaskFactories {
-	return []packageTaskFactory{
+func DefaultPackageTaskFactories() Factories {
+	return []factory{
 		// OS package installed catalogers ///////////////////////////////////////////////////////////////////////////
 		newSimplePackageTaskFactory(arch.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "alpm", "archlinux"),
 		newSimplePackageTaskFactory(alpine.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "apk", "alpine"),

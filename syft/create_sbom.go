@@ -125,6 +125,9 @@ func monitorCatalogingTask(srcID artifact.ID, tasks [][]task.Task) *monitor.Cata
 func formatTaskNames(tasks []task.Task) []string {
 	set := strset.New()
 	for _, td := range tasks {
+		if td == nil {
+			continue
+		}
 		set.Add(td.Name())
 	}
 	list := set.List()
