@@ -85,6 +85,25 @@ func TestNewFromDirectory(t *testing.T) {
 	}
 }
 
+func Test_NewFromDirectory_Unindexed(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
+	cfg := Config{
+		Path:      "test-fixtures",
+		Unindexed: true,
+	}
+
+	src, err := New(cfg)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, src.Close())
+	})
+
+	resolver, err := src.FileResolver("")
+	require.NoError(t, err)
+	require.IsType(t, fileresolver.UnindexedDirectory{}, resolver)
+}
+
 func Test_DirectorySource_FilesByGlob(t *testing.T) {
 	testutil.Chdir(t, "..") // run with source/test-fixtures
 
