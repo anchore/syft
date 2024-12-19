@@ -222,18 +222,19 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 // fileTasks returns the set of tasks that should be run to catalog files.
 func (c *CreateSBOMConfig) fileTasks() []task.Task {
 	var tsks []task.Task
-
-	if t := task.NewFileDigestCatalogerTask(c.Files.Selection, c.Files.Hashers...); t != nil {
-		tsks = append(tsks, t)
-	}
-	if t := task.NewFileMetadataCatalogerTask(c.Files.Selection); t != nil {
-		tsks = append(tsks, t)
-	}
-	if t := task.NewFileContentCatalogerTask(c.Files.Content); t != nil {
-		tsks = append(tsks, t)
-	}
-	if t := task.NewExecutableCatalogerTask(c.Files.Selection, c.Files.Executable); t != nil {
-		tsks = append(tsks, t)
+	if c.Files.Enabled {
+		if t := task.NewFileDigestCatalogerTask(c.Files.Selection, c.Files.Hashers...); t != nil {
+			tsks = append(tsks, t)
+		}
+		if t := task.NewFileMetadataCatalogerTask(c.Files.Selection); t != nil {
+			tsks = append(tsks, t)
+		}
+		if t := task.NewFileContentCatalogerTask(c.Files.Content); t != nil {
+			tsks = append(tsks, t)
+		}
+		if t := task.NewExecutableCatalogerTask(c.Files.Selection, c.Files.Executable); t != nil {
+			tsks = append(tsks, t)
+		}
 	}
 
 	return tsks
