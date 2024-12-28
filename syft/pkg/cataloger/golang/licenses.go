@@ -80,29 +80,38 @@ func remotesForModule(proxies []string, noProxy []string, module string) []strin
 	return proxies
 }
 
-func (c *goLicenseResolver) getLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, moduleName, moduleVersion string) ([]pkg.License, error) {
+func (c *goLicenseResolver) getLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, moduleName, moduleVersion string) []pkg.License {
 	// search the scan target first, ignoring local and remote sources
 	goLicenses, err := c.findLicensesInSource(ctx, scanner, resolver,
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
-	if err != nil || len(goLicenses) > 0 {
-		return toPkgLicenses(goLicenses), err
+	if err != nil {
+		log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Trace("unable to read golang licenses from source")
+	}
+	if len(goLicenses) > 0 {
+		return toPkgLicenses(goLicenses)
 	}
 
 	// look in the local host mod directory...
 	if c.opts.SearchLocalModCacheLicenses {
 		goLicenses, err = c.getLicensesFromLocal(ctx, scanner, moduleName, moduleVersion)
-		if err != nil || len(goLicenses) > 0 {
-			return toPkgLicenses(goLicenses), err
+		if err != nil {
+			log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Trace("unable to read golang licenses local")
+		}
+		if len(goLicenses) > 0 {
+			return toPkgLicenses(goLicenses)
 		}
 	}
 
 	// download from remote sources
 	if c.opts.SearchRemoteLicenses {
 		goLicenses, err = c.getLicensesFromRemote(ctx, scanner, moduleName, moduleVersion)
+		if err != nil {
+			log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Debug("unable to read golang licenses remote")
+		}
 	}
 
-	return toPkgLicenses(goLicenses), err
+	return toPkgLicenses(goLicenses)
 }
 
 func (c *goLicenseResolver) getLicensesFromLocal(ctx context.Context, scanner licenses.Scanner, moduleName, moduleVersion string) ([]goLicense, error) {
