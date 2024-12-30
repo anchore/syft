@@ -267,7 +267,10 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		WithImageResolver(t, "image-audit").
 		IgnoreLocationLayer(). // this fixture can be rebuilt, thus the layer ID will change
 		Expects(expectedPkgs, expectedRelationships).
-		TestCataloger(t, NewAuditBinaryCataloger())
+		TestCataloger(t, NewAuditBinaryCataloger(CatalogerConfig{
+			SearchRemoteLicenses: false,
+			Proxy:                "",
+		}))
 }
 
 func Test_CargoLockCataloger_Globs(t *testing.T) {
@@ -290,7 +293,10 @@ func Test_CargoLockCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewCargoLockCataloger())
+				TestCataloger(t, NewCargoLockCataloger(CatalogerConfig{
+					SearchRemoteLicenses: false,
+					Proxy:                "",
+				}))
 		})
 	}
 }
@@ -315,7 +321,10 @@ func Test_AuditBinaryCataloger_Globs(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewAuditBinaryCataloger())
+				TestCataloger(t, NewAuditBinaryCataloger(CatalogerConfig{
+					SearchRemoteLicenses: false,
+					Proxy:                "",
+				}))
 		})
 	}
 }
@@ -324,5 +333,5 @@ func Test_corruptAuditBinary(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromFile(t, "test-fixtures/glob-paths/partial-binary").
 		WithError().
-		TestParser(t, parseAuditBinary)
+		TestParser(t, newCargoAuditBinaryCataloger(CatalogerConfig{}).parseAuditBinary)
 }

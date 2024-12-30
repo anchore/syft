@@ -15,14 +15,14 @@ const (
 )
 
 // NewCargoLockCataloger returns a new Rust Cargo lock file cataloger object.
-func NewCargoLockCataloger() pkg.Cataloger {
+func NewCargoLockCataloger(opts CatalogerConfig) pkg.Cataloger {
 	return generic.NewCataloger(cargoLockCatalogerName).
 		WithParserByGlobs(parseCargoLock, "**/Cargo.lock")
 }
 
 // NewAuditBinaryCataloger returns a new Rust auditable binary cataloger object that can detect dependencies
 // in binaries produced with https://github.com/Shnatsel/rust-audit
-func NewAuditBinaryCataloger() pkg.Cataloger {
+func NewAuditBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
 	return generic.NewCataloger(cargoAuditBinaryCatalogerName).
-		WithParserByMimeTypes(parseAuditBinary, mimetype.ExecutableMIMETypeSet.List()...)
+		WithParserByMimeTypes(newCargoAuditBinaryCataloger(opts).parseAuditBinary, mimetype.ExecutableMIMETypeSet.List()...)
 }
