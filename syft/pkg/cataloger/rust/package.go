@@ -13,10 +13,11 @@ func newPackageFromCargoMetadata(m pkg.RustCargoLockEntry, locations ...file.Loc
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   m.Version,
-		Locations: file.NewLocationSet(locations...),
 		PURL:      packageURL(m.Name, m.Version),
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		Locations: file.NewLocationSet(locations...),
+		FoundBy:   cargoLockCatalogerName,
 		Metadata:  m,
 	}
 
