@@ -9,11 +9,14 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-const cargoAuditBinaryCatalogerName = "cargo-auditable-binary-cataloger"
+const (
+	cargoAuditBinaryCatalogerName = "rust-cargo-auditable-binary-cataloger"
+	cargoLockCatalogerName        = "rust-cargo-lock-cataloger"
+)
 
 // NewCargoLockCataloger returns a new Rust Cargo lock file cataloger object.
 func NewCargoLockCataloger() pkg.Cataloger {
-	return generic.NewCataloger("rust-cargo-lock-cataloger").
+	return generic.NewCataloger(cargoLockCatalogerName).
 		WithParserByGlobs(parseCargoLock, "**/Cargo.lock")
 }
 
