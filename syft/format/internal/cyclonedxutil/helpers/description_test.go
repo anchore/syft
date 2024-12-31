@@ -41,7 +41,7 @@ func Test_encodeDescription(t *testing.T) {
 		{
 			name: "from crates",
 			input: pkg.Package{
-				Metadata: pkg.RustCratesEnrichment{
+				Metadata: pkg.RustCratesEnrichedEntry{
 					Description: "a description!",
 				},
 			},

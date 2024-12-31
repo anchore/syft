@@ -100,7 +100,7 @@ func Test_DownloadLocation(t *testing.T) {
 		{
 			name: "from rust crates enrichment",
 			input: pkg.Package{
-				Metadata: pkg.RustCratesEnrichment{
+				Metadata: pkg.RustCratesEnrichedEntry{
 					DownloadLocation: "http://package-lock.test",
 				},
 			},

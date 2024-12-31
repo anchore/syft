@@ -72,7 +72,7 @@ func Test_encodeAuthor(t *testing.T) {
 		{
 			name: "from crates - name only",
 			input: pkg.Package{
-				Metadata: pkg.RustCratesEnrichment{
+				Metadata: pkg.RustCratesEnrichedEntry{
 					CreatedBy: "User Name",
 				},
 			},
