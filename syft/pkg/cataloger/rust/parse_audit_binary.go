@@ -99,9 +99,10 @@ func (c *rustAuditBinaryCataloger) processAuditVersionInfo(location file.Locatio
 			defer cancel()
 			cratesEnrichment, err := c.cratesResolver.ResolveCrate(ctx, dep.Name, dep.Version)
 			if err != nil {
-				log.Tracef("rust cataloger: failed to resolve crate %s/%s: %v", dep.Name, dep.Version, err)
+				log.Tracef("rust cataloger: failed to resolve crate %s/%s using crates.io: %v", dep.Name, dep.Version, err)
 				// fallback to not using the crates enriched package information.
 				p = newPackageFromAudit(&dep, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+				continue
 			}
 			p = newPackageWithEnrichment(&dep, cratesEnrichment, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		case false:

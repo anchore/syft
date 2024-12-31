@@ -47,9 +47,6 @@ const (
 	JavaScript = "javascript"
 	Node       = "node"
 	NPM        = "npm"
-
-	// Rust ecosystem labels
-	Rust = "rust"
 )
 
 //nolint:funlen
@@ -107,13 +104,6 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 			},
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "python",
 		),
-		newPackageTaskFactory(
-			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
-				return rust.NewAuditBinaryCataloger(cfg.PackagesConfig.Rust)
-			},
-			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "rust", "binary",
-		),
-
 		newSimplePackageTaskFactory(ruby.NewGemFileLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "ruby", "gem"),
 		newSimplePackageTaskFactory(ruby.NewGemSpecCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "ruby", "gem", "gemspec"),
 		newPackageTaskFactory(
@@ -121,6 +111,12 @@ func DefaultPackageTaskFactories() PackageTaskFactories {
 				return rust.NewCargoLockCataloger(cfg.PackagesConfig.Rust)
 			},
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "rust", "cargo",
+		),
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return rust.NewAuditBinaryCataloger(cfg.PackagesConfig.Rust)
+			},
+			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "rust", "binary",
 		),
 		newSimplePackageTaskFactory(swift.NewCocoapodsCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "swift", "cocoapods"),
 		newSimplePackageTaskFactory(swift.NewSwiftPackageManagerCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "swift", "spm"),

@@ -187,6 +187,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithResolveTransitiveDependencies(cfg.Java.ResolveTransitiveDependencies),
 		Rust: rust.DefaultCatalogerConfig().
 			WithProxy(cfg.Rust.Proxy).
+			WithCratesBaseURL(cfg.Rust.CratesBaseURL).
 			WithCratesTimeout(cfg.Rust.CratesTimeout).
 			WithUseCratesEnrichment(cfg.Rust.UseCratesEnrichment).
 			WithInsecureSkipTLSVerify(cfg.Rust.InsecureSkipTLSVerify),
