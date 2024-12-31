@@ -1,0 +1,123 @@
+{
+    "version": {
+        "id": 1365181,
+        "crate": "clap",
+        "num": "4.5.23",
+        "dl_path": "/api/v1/crates/clap/4.5.23/download",
+        "readme_path": "/api/v1/crates/clap/4.5.23/readme",
+        "updated_at": "2024-12-05T21:16:57.892342+00:00",
+        "created_at": "2024-12-05T21:16:57.892342+00:00",
+        "downloads": 1886039,
+        "features": {
+            "cargo": [
+                "clap_builder/cargo"
+            ],
+            "color": [
+                "clap_builder/color"
+            ],
+            "debug": [
+                "clap_builder/debug",
+                "clap_derive?/debug"
+            ],
+            "default": [
+                "std",
+                "color",
+                "help",
+                "usage",
+                "error-context",
+                "suggestions"
+            ],
+            "deprecated": [
+                "clap_builder/deprecated",
+                "clap_derive?/deprecated"
+            ],
+            "derive": [
+                "dep:clap_derive"
+            ],
+            "env": [
+                "clap_builder/env"
+            ],
+            "error-context": [
+                "clap_builder/error-context"
+            ],
+            "help": [
+                "clap_builder/help"
+            ],
+            "std": [
+                "clap_builder/std"
+            ],
+            "string": [
+                "clap_builder/string"
+            ],
+            "suggestions": [
+                "clap_builder/suggestions"
+            ],
+            "unicode": [
+                "clap_builder/unicode"
+            ],
+            "unstable-derive-ui-tests": [],
+            "unstable-doc": [
+                "clap_builder/unstable-doc",
+                "derive"
+            ],
+            "unstable-ext": [
+                "clap_builder/unstable-ext"
+            ],
+            "unstable-styles": [
+                "clap_builder/unstable-styles"
+            ],
+            "unstable-v5": [
+                "clap_builder/unstable-v5",
+                "clap_derive?/unstable-v5",
+                "deprecated"
+            ],
+            "usage": [
+                "clap_builder/usage"
+            ],
+            "wrap_help": [
+                "clap_builder/wrap_help"
+            ]
+        },
+        "yanked": false,
+        "yank_message": null,
+        "lib_links": null,
+        "license": "MIT OR Apache-2.0",
+        "links": {
+            "dependencies": "/api/v1/crates/clap/4.5.23/dependencies",
+            "version_downloads": "/api/v1/crates/clap/4.5.23/downloads",
+            "authors": "/api/v1/crates/clap/4.5.23/authors"
+        },
+        "crate_size": 56460,
+        "published_by": {
+            "id": 6743,
+            "login": "epage",
+            "name": "Ed Page",
+            "avatar": "https://avatars.githubusercontent.com/u/60961?v=4",
+            "url": "https://github.com/epage"
+        },
+        "audit_actions": [
+            {
+                "action": "publish",
+                "user": {
+                    "id": 6743,
+                    "login": "epage",
+                    "name": "Ed Page",
+                    "avatar": "https://avatars.githubusercontent.com/u/60961?v=4",
+                    "url": "https://github.com/epage"
+                },
+                "time": "2024-12-05T21:16:57.892342+00:00"
+            }
+        ],
+        "checksum": "3135e7ec2ef7b10c6ed8950f0f792ed96ee093fa088608f1c76e569722700c84",
+        "rust_version": "1.74",
+        "has_lib": true,
+        "bin_names": [
+            "stdio-fixture"
+        ],
+        "edition": "2021",
+        "description": "A simple to use, efficient, and full-featured Command Line Argument Parser",
+        "homepage": null,
+        "documentation": null,
+        "repository": "https://github.com/clap-rs/clap"
+    }
+}

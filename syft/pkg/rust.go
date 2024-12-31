@@ -13,3 +13,18 @@ type RustBinaryAuditEntry struct {
 	Version string `toml:"version" json:"version"`
 	Source  string `toml:"source" json:"source"`
 }
+
+type RustCratesEnrichment struct {
+	Name             string `toml:"name" json:"name"`
+	Version          string `toml:"version" json:"version"`
+	Source           string `toml:"source" json:"source"`
+	Description      string `json:"description"`
+	Homepage         string `json:"homepage"`
+	Supplier         string `json:"supplier"`
+	DownloadLocation string `json:"downloadLocation"`
+	Repository       string `json:"repository"`
+	LicenseInfo      string `json:"licenseInfo"`
+	ReleaseTime      string `json:"releaseTime"`
+	Summary          string `json:"summary"`
+	CreatedBy        string `json:"createdBy"`
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/microsoft/go-rustaudit"
 
@@ -17,12 +18,14 @@ import (
 )
 
 type rustAuditBinaryCataloger struct {
-	licenseResolver *rustCratesLicenseResolver
+	cratesResolver *rustCratesResolver
+	opts           CatalogerConfig
 }
 
 func newCargoAuditBinaryCataloger(opts CatalogerConfig) *rustAuditBinaryCataloger {
 	return &rustAuditBinaryCataloger{
-		licenseResolver: newCratesLicenseResolver(cargoAuditBinaryCatalogerName, opts),
+		cratesResolver: newCratesResolver(cargoAuditBinaryCatalogerName, opts),
+		opts:           opts,
 	}
 }
 
@@ -89,7 +92,21 @@ func (c *rustAuditBinaryCataloger) processAuditVersionInfo(location file.Locatio
 	// first pass: create packages for all runtime dependencies (skip dev and invalid dependencies)
 	pairsByOgIndex := make(map[int]auditPkgPair)
 	for idx, dep := range versionInfo.Packages {
-		p := newPackageFromAudit(&dep, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+		var p pkg.Package
+		switch c.opts.UseCratesEnrichment {
+		case true:
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.opts.CratesTimeout))
+			defer cancel()
+			cratesEnrichment, err := c.cratesResolver.ResolveCrate(ctx, dep.Name, dep.Version)
+			if err != nil {
+				log.Tracef("rust cataloger: failed to resolve crate %s/%s: %v", dep.Name, dep.Version, err)
+				// fallback to not using the crates enriched package information.
+				p = newPackageFromAudit(&dep, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+			}
+			p = newPackageWithEnrichment(&dep, cratesEnrichment, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+		case false:
+			p = newPackageFromAudit(&dep, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+		}
 		pair := auditPkgPair{
 			rustPkg: dep,
 			index:   idx,

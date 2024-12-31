@@ -21,6 +21,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "ansi_term",
@@ -39,6 +40,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "errno",
@@ -57,6 +59,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "matches",
@@ -73,6 +76,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "memchr",
@@ -90,6 +94,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "natord",
@@ -107,6 +112,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "nom",
@@ -126,6 +132,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "schannel",
@@ -145,6 +152,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "unicode-bidi",
@@ -165,6 +173,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "version_check",
@@ -182,6 +191,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "winapi",
@@ -202,6 +212,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "winapi-i686-pc-windows-gnu",
@@ -219,6 +230,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "winapi-x86_64-pc-windows-gnu",
@@ -236,6 +248,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "windows-sys",
@@ -253,6 +266,7 @@ func TestParseCargoLock(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "windows-sys",
@@ -336,6 +350,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "aho-corasick",
@@ -355,6 +370,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:    "hello_world",
@@ -373,6 +389,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "memchr",
@@ -390,6 +407,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "minimal-lexical",
@@ -407,6 +425,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "nom",
@@ -427,6 +446,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "nom-regex",
@@ -447,6 +467,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "regex",
@@ -469,6 +490,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:    "regex",
@@ -490,6 +512,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:     "regex-automata",
@@ -511,6 +534,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:    "regex-automata",
@@ -531,6 +555,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "regex-syntax",
@@ -548,6 +573,7 @@ func TestCargoLockWithGitDependencies(t *testing.T) {
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
+		FoundBy:   cargoLockCatalogerName,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata: pkg.RustCargoLockEntry{
 			Name:         "regex-syntax",
@@ -689,6 +715,7 @@ func TestCargoLockDependencySpecification(t *testing.T) {
 				Locations: file.NewLocationSet(),
 				Language:  pkg.Rust,
 				Type:      pkg.RustPkg,
+				FoundBy:   cargoLockCatalogerName,
 				Licenses:  pkg.NewLicenseSet(),
 				Metadata: pkg.RustCargoLockEntry{
 					Name:    "hello_world",
@@ -717,6 +744,7 @@ func TestCargoLockDependencySpecification(t *testing.T) {
 				Locations: file.NewLocationSet(),
 				Language:  pkg.Rust,
 				Type:      pkg.RustPkg,
+				FoundBy:   cargoLockCatalogerName,
 				Licenses:  pkg.NewLicenseSet(),
 				Metadata: pkg.RustCargoLockEntry{
 					Name:    "regex-automata",
@@ -749,6 +777,7 @@ func TestCargoLockDependencySpecification(t *testing.T) {
 				Locations: file.NewLocationSet(),
 				Language:  pkg.Rust,
 				Type:      pkg.RustPkg,
+				FoundBy:   cargoLockCatalogerName,
 				Licenses:  pkg.NewLicenseSet(),
 				Metadata: pkg.RustCargoLockEntry{
 					Name:    "regex-automata",
@@ -781,6 +810,7 @@ func TestCargoLockDependencySpecification(t *testing.T) {
 				Locations: file.NewLocationSet(),
 				Language:  pkg.Rust,
 				Type:      pkg.RustPkg,
+				FoundBy:   cargoLockCatalogerName,
 				Licenses:  pkg.NewLicenseSet(),
 				Metadata: pkg.RustCargoLockEntry{
 					Name:         "regex-syntax",
@@ -805,6 +835,7 @@ func TestCargoLockDependencySpecification(t *testing.T) {
 				Locations: file.NewLocationSet(),
 				Language:  pkg.Rust,
 				Type:      pkg.RustPkg,
+				FoundBy:   cargoLockCatalogerName,
 				Licenses:  pkg.NewLicenseSet(),
 				Metadata: pkg.RustCargoLockEntry{
 					Name:         "regex-syntax",

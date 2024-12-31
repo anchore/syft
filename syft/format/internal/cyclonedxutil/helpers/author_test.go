@@ -70,6 +70,15 @@ func Test_encodeAuthor(t *testing.T) {
 			expected: "auth <auth@auth.gov>",
 		},
 		{
+			name: "from crates - name only",
+			input: pkg.Package{
+				Metadata: pkg.RustCratesEnrichment{
+					CreatedBy: "User Name",
+				},
+			},
+			expected: "User Name",
+		},
+		{
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION
 			name: "empty",
 			input: pkg.Package{
