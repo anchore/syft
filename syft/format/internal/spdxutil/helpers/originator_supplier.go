@@ -115,7 +115,7 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: funlen
 	case pkg.SwiplPackEntry:
 		author = formatPersonOrOrg(metadata.Author, metadata.AuthorEmail)
 
-	case pkg.RustCratesEnrichment:
+	case pkg.RustCratesEnrichedEntry:
 		author = metadata.Supplier
 		typ = personType
 	}

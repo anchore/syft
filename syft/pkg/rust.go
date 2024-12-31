@@ -14,7 +14,7 @@ type RustBinaryAuditEntry struct {
 	Source  string `toml:"source" json:"source"`
 }
 
-type RustCratesEnrichment struct {
+type RustCratesEnrichedEntry struct {
 	Name             string `toml:"name" json:"name"`
 	Version          string `toml:"version" json:"version"`
 	Source           string `toml:"source" json:"source"`

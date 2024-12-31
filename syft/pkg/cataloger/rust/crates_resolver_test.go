@@ -15,7 +15,7 @@ func Test_parseCratesResponse(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    pkg.RustCratesEnrichment
+		want    pkg.RustCratesEnrichedEntry
 		wantErr bool
 	}{
 		{
@@ -24,7 +24,7 @@ func Test_parseCratesResponse(t *testing.T) {
 				filename: "test-fixtures/glob-paths/crates_io-clap-crate.json",
 			},
 			wantErr: false,
-			want: pkg.RustCratesEnrichment{
+			want: pkg.RustCratesEnrichedEntry{
 				Name:             "clap",
 				Version:          "4.5.23",
 				Description:      "A simple to use, efficient, and full-featured Command Line Argument Parser",

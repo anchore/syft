@@ -48,7 +48,7 @@ func newPackageFromAudit(dep *rustaudit.Package, locations ...file.Location) pkg
 	return p
 }
 
-func newPackageWithEnrichment(dep *rustaudit.Package, enrichment pkg.RustCratesEnrichment, locations ...file.Location) pkg.Package {
+func newPackageWithEnrichment(dep *rustaudit.Package, enrichment pkg.RustCratesEnrichedEntry, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      dep.Name,
 		Version:   dep.Version,
@@ -63,7 +63,7 @@ func newPackageWithEnrichment(dep *rustaudit.Package, enrichment pkg.RustCratesE
 		// Such information can be included, as needed, in the hasConcludedLicense field.
 		// Source: https://spdx.github.io/spdx-spec/v2.3/package-information/#713-concluded-license-field
 		Licenses: pkg.NewLicenseSet(pkg.NewLicenseFromType(enrichment.LicenseInfo, license.Concluded)),
-		Metadata: pkg.RustCratesEnrichment{
+		Metadata: pkg.RustCratesEnrichedEntry{
 			Name:             dep.Name,
 			Version:          dep.Version,
 			Source:           dep.Source,

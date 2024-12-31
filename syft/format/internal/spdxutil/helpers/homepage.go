@@ -9,7 +9,7 @@ func Homepage(p pkg.Package) string {
 			return metadata.Homepage
 		case pkg.NpmPackage:
 			return metadata.Homepage
-		case pkg.RustCratesEnrichment:
+		case pkg.RustCratesEnrichedEntry:
 			return NoneIfEmpty(metadata.Homepage)
 		}
 	}

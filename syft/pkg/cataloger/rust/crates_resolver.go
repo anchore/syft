@@ -17,7 +17,7 @@ import (
 type rustCratesResolver struct {
 	catalogerName string
 	client        *http.Client
-	cratesCache   cache.Resolver[pkg.RustCratesEnrichment]
+	cratesCache   cache.Resolver[pkg.RustCratesEnrichedEntry]
 	mirror        string
 }
 
@@ -26,7 +26,7 @@ func newCratesResolver(name string, opts CatalogerConfig) *rustCratesResolver {
 	return &rustCratesResolver{
 		mirror:        "https://crates.io",
 		catalogerName: name,
-		cratesCache:   cache.GetResolverCachingErrors[pkg.RustCratesEnrichment]("crates.io", "v1"),
+		cratesCache:   cache.GetResolverCachingErrors[pkg.RustCratesEnrichedEntry]("crates.io", "v1"),
 		client:        newCratesLookupClient(opts),
 	}
 }
@@ -34,8 +34,8 @@ func newCratesResolver(name string, opts CatalogerConfig) *rustCratesResolver {
 // ResolveCrate returns the enrichment information for a given crate name and version. It
 // first checks the cache for the enrichment information, and if not found, it will fetch
 // the information from crates.io.
-func (cr *rustCratesResolver) ResolveCrate(ctx context.Context, crateName, crateVersion string) (pkg.RustCratesEnrichment, error) {
-	return cr.cratesCache.Resolve(fmt.Sprintf("%s/%s", crateName, crateVersion), func() (pkg.RustCratesEnrichment, error) {
+func (cr *rustCratesResolver) ResolveCrate(ctx context.Context, crateName, crateVersion string) (pkg.RustCratesEnrichedEntry, error) {
+	return cr.cratesCache.Resolve(fmt.Sprintf("%s/%s", crateName, crateVersion), func() (pkg.RustCratesEnrichedEntry, error) {
 		return cr.fetchRemoteCratesInfo(ctx, crateName, crateVersion)
 	})
 }
@@ -43,7 +43,7 @@ func (cr *rustCratesResolver) ResolveCrate(ctx context.Context, crateName, crate
 // fetchRemoteCratesInfo fetches the enrichment information for a given crate name and version.
 // It sets the user agent to the cataloger name and makes a GET request to crates.io.
 // It then parses the response and returns the enrichment information.
-func (cr *rustCratesResolver) fetchRemoteCratesInfo(ctx context.Context, crateName, crateVersion string) (pkg.RustCratesEnrichment, error) {
+func (cr *rustCratesResolver) fetchRemoteCratesInfo(ctx context.Context, crateName, crateVersion string) (pkg.RustCratesEnrichedEntry, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Fprintf(os.Stderr, "recovered from panic while resolving license at: \n%s", string(debug.Stack()))
@@ -53,12 +53,12 @@ func (cr *rustCratesResolver) fetchRemoteCratesInfo(ctx context.Context, crateNa
 	crateURL := fmt.Sprintf("%s/api/v1/crates/%s/%s", cr.mirror, crateName, crateVersion)
 	req, err := http.NewRequest("GET", crateURL, nil)
 	if err != nil {
-		return pkg.RustCratesEnrichment{}, err
+		return pkg.RustCratesEnrichedEntry{}, err
 	}
 	req = setHeaders(req)
 	resp, err := cr.client.Do(req.WithContext(ctx))
 	if err != nil {
-		return pkg.RustCratesEnrichment{}, err
+		return pkg.RustCratesEnrichedEntry{}, err
 	}
 	return cr.parseCratesResponse(resp.Body)
 }
@@ -85,17 +85,17 @@ type cratesRemoteMetadata struct {
 	} `json:"version"`
 }
 
-// parseCratesResponse parses the response body from crates.io into a RustCratesEnrichment that contains
+// parseCratesResponse parses the response body from crates.io into a RustCratesEnrichedEntry that contains
 // the summary, homepage, license, and other information about the crate.
-func (cr *rustCratesResolver) parseCratesResponse(body io.Reader) (pkg.RustCratesEnrichment, error) {
+func (cr *rustCratesResolver) parseCratesResponse(body io.Reader) (pkg.RustCratesEnrichedEntry, error) {
 	var crateInfo cratesRemoteMetadata
 
 	err := json.NewDecoder(body).Decode(&crateInfo)
 	if err != nil {
-		return pkg.RustCratesEnrichment{}, err
+		return pkg.RustCratesEnrichedEntry{}, err
 	}
 
-	return pkg.RustCratesEnrichment{
+	return pkg.RustCratesEnrichedEntry{
 		Name:             crateInfo.Version.Crate,
 		Description:      crateInfo.Version.Description,
 		Version:          crateInfo.Version.Num,

@@ -41,7 +41,7 @@ func Test_Homepage(t *testing.T) {
 		{
 			name: "from crates",
 			input: pkg.Package{
-				Metadata: pkg.RustCratesEnrichment{
+				Metadata: pkg.RustCratesEnrichedEntry{
 					Homepage: "http://a-place.gov",
 				},
 			},
@@ -50,7 +50,7 @@ func Test_Homepage(t *testing.T) {
 		{
 			name: "from crates empty",
 			input: pkg.Package{
-				Metadata: pkg.RustCratesEnrichment{
+				Metadata: pkg.RustCratesEnrichedEntry{
 					Homepage: "",
 				},
 			},
