@@ -14,6 +14,7 @@ type CatalogerConfig struct {
 	InsecureSkipTLSVerify bool          `yaml:"insecure-skip-tls-verify" json:"insecure-skip-tls-verify" mapstructure:"insecure-skip-tls-verify"`
 	UseCratesEnrichment   bool          `json:"use-crates-enrichment" yaml:"use-crates-enrichment" mapstructure:"use-crates-enrichment"`
 	Proxy                 string        `yaml:"proxy,omitempty" json:"proxy,omitempty" mapstructure:"proxy"`
+	CratesBaseURL         string        `yaml:"crates-base-url" json:"crates-base-url" mapstructure:"crates-base-url"`
 	CratesTimeout         time.Duration `yaml:"crates-timeout" json:"crates-timeout" mapstructure:"crates-timeout"`
 	proxyURL              *url.URL
 }
@@ -26,6 +27,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		InsecureSkipTLSVerify: false,
 		UseCratesEnrichment:   false,
 		Proxy:                 "",
+		CratesBaseURL:         "https://crates.io",
 		CratesTimeout:         10 * time.Second,
 	}
 }
@@ -78,6 +80,11 @@ func (c CatalogerConfig) WithProxy(input string) CatalogerConfig {
 		panic(err)
 	}
 	c.proxyURL = proxy
+	return c
+}
+
+func (c CatalogerConfig) WithCratesBaseURL(input string) CatalogerConfig {
+	c.CratesBaseURL = input
 	return c
 }
 

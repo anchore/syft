@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime/debug"
 
@@ -17,14 +18,20 @@ import (
 type rustCratesResolver struct {
 	catalogerName string
 	client        *http.Client
+	cratesAPI     string
+	cratesBaseURL string
 	cratesCache   cache.Resolver[pkg.RustCratesEnrichedEntry]
-	mirror        string
 }
 
 func newCratesResolver(name string, opts CatalogerConfig) *rustCratesResolver {
-
+	base, err := url.Parse(opts.CratesBaseURL)
+	if err != nil {
+		panic(err)
+	}
+	baseURL := base.JoinPath("api", "v1", "crates")
 	return &rustCratesResolver{
-		mirror:        "https://crates.io",
+		cratesBaseURL: opts.CratesBaseURL,
+		cratesAPI:     baseURL.String(),
 		catalogerName: name,
 		cratesCache:   cache.GetResolverCachingErrors[pkg.RustCratesEnrichedEntry]("crates.io", "v1"),
 		client:        newCratesLookupClient(opts),
@@ -50,7 +57,7 @@ func (cr *rustCratesResolver) fetchRemoteCratesInfo(ctx context.Context, crateNa
 		}
 	}()
 
-	crateURL := fmt.Sprintf("%s/api/v1/crates/%s/%s", cr.mirror, crateName, crateVersion)
+	crateURL := fmt.Sprintf("%s/%s/%s", cr.cratesAPI, crateName, crateVersion)
 	req, err := http.NewRequest("GET", crateURL, nil)
 	if err != nil {
 		return pkg.RustCratesEnrichedEntry{}, err
@@ -100,7 +107,7 @@ func (cr *rustCratesResolver) parseCratesResponse(body io.Reader) (pkg.RustCrate
 		Description:      crateInfo.Version.Description,
 		Version:          crateInfo.Version.Num,
 		Supplier:         crateInfo.Version.PublishedBy.Name,
-		DownloadLocation: fmt.Sprintf("%s%s", cr.mirror, crateInfo.Version.DownloadPath),
+		DownloadLocation: fmt.Sprintf("%s%s", cr.cratesBaseURL, crateInfo.Version.DownloadPath),
 		Repository:       crateInfo.Version.Repository,
 		LicenseInfo:      crateInfo.Version.License,
 		ReleaseTime:      crateInfo.Version.CreatedAt,
