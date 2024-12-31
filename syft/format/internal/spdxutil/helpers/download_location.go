@@ -28,6 +28,8 @@ func DownloadLocation(p pkg.Package) string {
 			return NoneIfEmpty(metadata.Dist.URL)
 		case pkg.OpamPackage:
 			return NoneIfEmpty(metadata.URL)
+		case pkg.RustCratesEnrichment:
+			return NoneIfEmpty(metadata.DownloadLocation)
 		}
 	}
 	return NOASSERTION

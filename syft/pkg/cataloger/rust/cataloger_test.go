@@ -16,7 +16,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		Name:      "argh",
 		Version:   "0.1.12",
 		PURL:      "pkg:cargo/argh@0.1.12",
-		FoundBy:   "cargo-auditable-binary-cataloger",
+		FoundBy:   "rust-cargo-auditable-binary-cataloger",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
@@ -31,7 +31,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		Name:      "argh_derive",
 		Version:   "0.1.12",
 		PURL:      "pkg:cargo/argh_derive@0.1.12",
-		FoundBy:   "cargo-auditable-binary-cataloger",
+		FoundBy:   "rust-cargo-auditable-binary-cataloger",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
@@ -46,7 +46,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		Name:      "argh_shared",
 		Version:   "0.1.12",
 		PURL:      "pkg:cargo/argh_shared@0.1.12",
-		FoundBy:   "cargo-auditable-binary-cataloger",
+		FoundBy:   "rust-cargo-auditable-binary-cataloger",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
@@ -61,7 +61,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		Name:      "hello_world",
 		Version:   "0.1.0",
 		PURL:      "pkg:cargo/hello_world@0.1.0",
-		FoundBy:   "cargo-auditable-binary-cataloger",
+		FoundBy:   "rust-cargo-auditable-binary-cataloger",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
@@ -76,7 +76,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		Name:      "proc-macro2",
 		Version:   "1.0.92",
 		PURL:      "pkg:cargo/proc-macro2@1.0.92",
-		FoundBy:   "cargo-auditable-binary-cataloger",
+		FoundBy:   "rust-cargo-auditable-binary-cataloger",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
@@ -91,7 +91,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		Name:      "quote",
 		Version:   "1.0.37",
 		PURL:      "pkg:cargo/quote@1.0.37",
-		FoundBy:   "cargo-auditable-binary-cataloger",
+		FoundBy:   "rust-cargo-auditable-binary-cataloger",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
@@ -106,7 +106,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		Name:      "serde",
 		Version:   "1.0.215",
 		PURL:      "pkg:cargo/serde@1.0.215",
-		FoundBy:   "cargo-auditable-binary-cataloger",
+		FoundBy:   "rust-cargo-auditable-binary-cataloger",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
@@ -121,7 +121,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		Name:      "serde_derive",
 		Version:   "1.0.215",
 		PURL:      "pkg:cargo/serde_derive@1.0.215",
-		FoundBy:   "cargo-auditable-binary-cataloger",
+		FoundBy:   "rust-cargo-auditable-binary-cataloger",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
@@ -136,7 +136,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		Name:      "syn",
 		Version:   "2.0.90",
 		PURL:      "pkg:cargo/syn@2.0.90",
-		FoundBy:   "cargo-auditable-binary-cataloger",
+		FoundBy:   "rust-cargo-auditable-binary-cataloger",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
@@ -151,7 +151,7 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		Name:      "unicode-ident",
 		Version:   "1.0.14",
 		PURL:      "pkg:cargo/unicode-ident@1.0.14",
-		FoundBy:   "cargo-auditable-binary-cataloger",
+		FoundBy:   "rust-cargo-auditable-binary-cataloger",
 		Locations: locations,
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
@@ -268,8 +268,8 @@ func TestNewAuditBinaryCataloger(t *testing.T) {
 		IgnoreLocationLayer(). // this fixture can be rebuilt, thus the layer ID will change
 		Expects(expectedPkgs, expectedRelationships).
 		TestCataloger(t, NewAuditBinaryCataloger(CatalogerConfig{
-			SearchRemoteLicenses: false,
-			Proxy:                "",
+			UseCratesEnrichment: false,
+			Proxy:               "",
 		}))
 }
 
@@ -294,8 +294,8 @@ func Test_CargoLockCataloger_Globs(t *testing.T) {
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
 				TestCataloger(t, NewCargoLockCataloger(CatalogerConfig{
-					SearchRemoteLicenses: false,
-					Proxy:                "",
+					UseCratesEnrichment: false,
+					Proxy:               "",
 				}))
 		})
 	}
@@ -322,8 +322,8 @@ func Test_AuditBinaryCataloger_Globs(t *testing.T) {
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected).
 				TestCataloger(t, NewAuditBinaryCataloger(CatalogerConfig{
-					SearchRemoteLicenses: false,
-					Proxy:                "",
+					UseCratesEnrichment: false,
+					Proxy:               "",
 				}))
 		})
 	}
