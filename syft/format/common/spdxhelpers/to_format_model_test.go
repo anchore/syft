@@ -382,6 +382,51 @@ func Test_toPackageChecksums(t *testing.T) {
 	}
 }
 
+func Test_toFiles(t *testing.T) {
+	tests := []struct {
+		name string
+		in   sbom.SBOM
+		want spdx.File
+	}{
+		{
+			name: "File paths are converted to relative in final SPDX collection",
+			in: sbom.SBOM{
+				Source: source.Description{
+					Name:    "alpine",
+					Version: "sha256:d34db33f",
+					Metadata: source.ImageMetadata{
+						UserInput:      "alpine:latest",
+						ManifestDigest: "sha256:d34db33f",
+					},
+				},
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name:    "pkg-1",
+						Version: "version-1",
+					}),
+					FileMetadata: map[file.Coordinates]file.Metadata{
+						{
+							RealPath:     "/some/path",
+							FileSystemID: "",
+						}: {
+							Path: "/some/path",
+						},
+					},
+				},
+			},
+			want: spdx.File{
+				FileName: "some/path",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		files := toFiles(test.in)
+		got := files[0]
+		assert.Equal(t, test.want.FileName, got.FileName)
+	}
+}
+
 func Test_toFileTypes(t *testing.T) {
 
 	tests := []struct {
@@ -752,6 +797,29 @@ func Test_OtherLicenses(t *testing.T) {
 					ExtractedText:     "new apple license 2.0",
 				},
 			},
+		},
+		{
+			name: "LicenseRef as a valid spdx expression",
+			pkg: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("LicenseRef-Fedora-Public-Domain"),
+				),
+			},
+			expected: []*spdx.OtherLicense{
+				{
+					LicenseIdentifier: "LicenseRef-Fedora-Public-Domain",
+					ExtractedText:     "Fedora-Public-Domain",
+				},
+			},
+		},
+		{
+			name: "LicenseRef as a valid spdx expression does not otherize compound spdx expressions",
+			pkg: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("(MIT AND LicenseRef-Fedora-Public-Domain)"),
+				),
+			},
+			expected: nil,
 		},
 	}
 

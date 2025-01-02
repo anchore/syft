@@ -3,6 +3,8 @@ package rust
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -279,48 +281,555 @@ func TestParseCargoLock(t *testing.T) {
 
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: ansiTerm,
+			To:   ansiTerm,
+			From: winapi,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			To:   errno,
+			From: windowsSys52,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			To:   nom,
+			From: memchr,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			To:   nom,
+			From: versionCheck,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			To:   schannel,
+			From: windowsSys59,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			To:   unicodeBidi,
+			From: matches,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
 			To:   winapi,
+			From: winAPIi686PCWindowsGNU,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: errno,
-			To:   windowsSys52,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: nom,
-			To:   memchr,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: nom,
-			To:   versionCheck,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: schannel,
-			To:   windowsSys59,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: unicodeBidi,
-			To:   matches,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: winapi,
-			To:   winAPIi686PCWindowsGNU,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: winapi,
-			To:   winAPIx8664PCWindowsGNU,
+			To:   winapi,
+			From: winAPIx8664PCWindowsGNU,
 			Type: artifact.DependencyOfRelationship,
 		},
 	}
 
 	pkgtest.TestFileParser(t, fixture, parseCargoLock, expectedPkgs, expectedRelationships)
+}
+
+func TestCargoLockWithGitDependencies(t *testing.T) {
+	fixture := "test-fixtures/Cargo.lock-with-git-deps"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+
+	ahoCorasick := pkg.Package{
+		Name:      "aho-corasick",
+		Version:   "1.1.3",
+		PURL:      "pkg:cargo/aho-corasick@1.1.3",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:     "aho-corasick",
+			Version:  "1.1.3",
+			Source:   "registry+https://github.com/rust-lang/crates.io-index",
+			Checksum: "8e60d3430d3a69478ad0993f19238d2df97c507009a52b3c10addcd7f6bcb916",
+			Dependencies: []string{
+				"memchr",
+			},
+		},
+	}
+
+	helloWorld := pkg.Package{
+		Name:      "hello_world",
+		Version:   "0.1.0",
+		PURL:      "pkg:cargo/hello_world@0.1.0",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:    "hello_world",
+			Version: "0.1.0",
+			Dependencies: []string{
+				"nom-regex",
+				"regex 1.11.1 (git+https://github.com/rust-lang/regex.git)",
+			},
+		},
+	}
+
+	memchr := pkg.Package{
+		Name:      "memchr",
+		Version:   "2.7.4",
+		PURL:      "pkg:cargo/memchr@2.7.4",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:         "memchr",
+			Version:      "2.7.4",
+			Source:       "registry+https://github.com/rust-lang/crates.io-index",
+			Checksum:     "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3",
+			Dependencies: []string{},
+		},
+	}
+
+	minimalLexical := pkg.Package{
+		Name:      "minimal-lexical",
+		Version:   "0.2.1",
+		PURL:      "pkg:cargo/minimal-lexical@0.2.1",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:         "minimal-lexical",
+			Version:      "0.2.1",
+			Source:       "registry+https://github.com/rust-lang/crates.io-index",
+			Checksum:     "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a",
+			Dependencies: []string{},
+		},
+	}
+
+	nom := pkg.Package{
+		Name:      "nom",
+		Version:   "7.1.3",
+		PURL:      "pkg:cargo/nom@7.1.3",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:     "nom",
+			Version:  "7.1.3",
+			Source:   "registry+https://github.com/rust-lang/crates.io-index",
+			Checksum: "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a",
+			Dependencies: []string{
+				"memchr",
+				"minimal-lexical",
+			},
+		},
+	}
+
+	nomRegex := pkg.Package{
+		Name:      "nom-regex",
+		Version:   "0.2.0",
+		PURL:      "pkg:cargo/nom-regex@0.2.0",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:     "nom-regex",
+			Version:  "0.2.0",
+			Source:   "registry+https://github.com/rust-lang/crates.io-index",
+			Checksum: "72e5c7731c4c1370b61604ed52a2475e861aac9e08dec9f23903d4ddfdc91c18",
+			Dependencies: []string{
+				"nom",
+				"regex 1.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+			},
+		},
+	}
+
+	regexCrates := pkg.Package{
+		Name:      "regex",
+		Version:   "1.11.1",
+		PURL:      "pkg:cargo/regex@1.11.1",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:     "regex",
+			Version:  "1.11.1",
+			Source:   "registry+https://github.com/rust-lang/crates.io-index",
+			Checksum: "b544ef1b4eac5dc2db33ea63606ae9ffcfac26c1416a2806ae0bf5f56b201191",
+			Dependencies: []string{
+				"aho-corasick",
+				"memchr",
+				"regex-automata 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
+				"regex-syntax 0.8.5 (registry+https://github.com/rust-lang/crates.io-index)",
+			},
+		},
+	}
+
+	regexGit := pkg.Package{
+		Name:      "regex",
+		Version:   "1.11.1",
+		PURL:      "pkg:cargo/regex@1.11.1",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:    "regex",
+			Version: "1.11.1",
+			Source:  "git+https://github.com/rust-lang/regex.git#1a069b9232c607b34c4937122361aa075ef573fa",
+			Dependencies: []string{
+				"aho-corasick",
+				"memchr",
+				"regex-automata 0.4.9 (git+https://github.com/rust-lang/regex.git)",
+				"regex-syntax 0.8.5 (git+https://github.com/rust-lang/regex.git)",
+			},
+		},
+	}
+
+	regexAutomataCrates := pkg.Package{
+		Name:      "regex-automata",
+		Version:   "0.4.9",
+		PURL:      "pkg:cargo/regex-automata@0.4.9",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:     "regex-automata",
+			Version:  "0.4.9",
+			Source:   "registry+https://github.com/rust-lang/crates.io-index",
+			Checksum: "809e8dc61f6de73b46c85f4c96486310fe304c434cfa43669d7b40f711150908",
+			Dependencies: []string{
+				"aho-corasick",
+				"memchr",
+				"regex-syntax 0.8.5 (registry+https://github.com/rust-lang/crates.io-index)",
+			},
+		},
+	}
+
+	regexAutomataGit := pkg.Package{
+		Name:      "regex-automata",
+		Version:   "0.4.9",
+		PURL:      "pkg:cargo/regex-automata@0.4.9",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:    "regex-automata",
+			Version: "0.4.9",
+			Source:  "git+https://github.com/rust-lang/regex.git#1a069b9232c607b34c4937122361aa075ef573fa",
+			Dependencies: []string{
+				"aho-corasick",
+				"memchr",
+				"regex-syntax 0.8.5 (git+https://github.com/rust-lang/regex.git)",
+			},
+		},
+	}
+
+	regexSyntaxCrates := pkg.Package{
+		Name:      "regex-syntax",
+		Version:   "0.8.5",
+		PURL:      "pkg:cargo/regex-syntax@0.8.5",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:         "regex-syntax",
+			Version:      "0.8.5",
+			Source:       "registry+https://github.com/rust-lang/crates.io-index",
+			Checksum:     "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c",
+			Dependencies: []string{},
+		},
+	}
+
+	regexSyntaxGit := pkg.Package{
+		Name:      "regex-syntax",
+		Version:   "0.8.5",
+		PURL:      "pkg:cargo/regex-syntax@0.8.5",
+		Locations: locations,
+		Language:  pkg.Rust,
+		Type:      pkg.RustPkg,
+		Licenses:  pkg.NewLicenseSet(),
+		Metadata: pkg.RustCargoLockEntry{
+			Name:         "regex-syntax",
+			Version:      "0.8.5",
+			Source:       "git+https://github.com/rust-lang/regex.git#1a069b9232c607b34c4937122361aa075ef573fa",
+			Dependencies: []string{},
+		},
+	}
+
+	expectedPkgs := []pkg.Package{
+		ahoCorasick, helloWorld, memchr, minimalLexical, nom, nomRegex, regexCrates, regexGit,
+		regexAutomataCrates, regexAutomataGit, regexSyntaxCrates, regexSyntaxGit,
+	}
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: memchr,
+			To:   ahoCorasick,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: nomRegex,
+			To:   helloWorld,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: regexGit,
+			To:   helloWorld,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: memchr,
+			To:   nom,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: minimalLexical,
+			To:   nom,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: nom,
+			To:   nomRegex,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: regexCrates,
+			To:   nomRegex,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: ahoCorasick,
+			To:   regexCrates,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: memchr,
+			To:   regexCrates,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: regexAutomataCrates,
+			To:   regexCrates,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: regexSyntaxCrates,
+			To:   regexCrates,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: regexSyntaxCrates,
+			To:   regexAutomataCrates,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: ahoCorasick,
+			To:   regexGit,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: memchr,
+			To:   regexGit,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: regexAutomataGit,
+			To:   regexGit,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: regexSyntaxGit,
+			To:   regexAutomataGit,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: regexSyntaxGit,
+			To:   regexGit,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: ahoCorasick,
+			To:   regexAutomataCrates,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: memchr,
+			To:   regexAutomataCrates,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: ahoCorasick,
+			To:   regexAutomataGit,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: memchr,
+			To:   regexAutomataGit,
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+	// what I know so far - it's not sorting, it's not
+
+	pkgtest.TestFileParser(t, fixture, parseCargoLock, expectedPkgs, expectedRelationships)
+}
+
+func TestCargoLockDependencySpecification(t *testing.T) {
+	tests := []struct {
+		name     string
+		p        pkg.Package
+		provides []string
+		requires []string
+	}{
+		{
+			name: "requires git source",
+			p: pkg.Package{
+				Name:      "hello_world",
+				Version:   "0.1.0",
+				PURL:      "pkg:cargo/hello_world@0.1.0",
+				Locations: file.NewLocationSet(),
+				Language:  pkg.Rust,
+				Type:      pkg.RustPkg,
+				Licenses:  pkg.NewLicenseSet(),
+				Metadata: pkg.RustCargoLockEntry{
+					Name:    "hello_world",
+					Version: "0.1.0",
+					Dependencies: []string{
+						"nom-regex",
+						"regex 1.11.1 (git+https://github.com/rust-lang/regex.git)",
+					},
+				},
+			},
+			provides: []string{
+				"hello_world",
+				"hello_world 0.1.0",
+			},
+			requires: []string{
+				"nom-regex",
+				"regex 1.11.1 (git+https://github.com/rust-lang/regex.git)",
+			},
+		},
+		{
+			name: "provides git source",
+			p: pkg.Package{
+				Name:      "regex-automata",
+				Version:   "0.4.9",
+				PURL:      "pkg:cargo/regex-automata@0.4.9",
+				Locations: file.NewLocationSet(),
+				Language:  pkg.Rust,
+				Type:      pkg.RustPkg,
+				Licenses:  pkg.NewLicenseSet(),
+				Metadata: pkg.RustCargoLockEntry{
+					Name:    "regex-automata",
+					Version: "0.4.9",
+					Source:  "git+https://github.com/rust-lang/regex.git#1a069b9232c607b34c4937122361aa075ef573fa",
+					Dependencies: []string{
+						"aho-corasick",
+						"memchr",
+						"regex-syntax 0.8.5 (git+https://github.com/rust-lang/regex.git)",
+					},
+				},
+			},
+			provides: []string{
+				"regex-automata",
+				"regex-automata 0.4.9",
+				"regex-automata 0.4.9 (git+https://github.com/rust-lang/regex.git)",
+			},
+			requires: []string{
+				"aho-corasick",
+				"memchr",
+				"regex-syntax 0.8.5 (git+https://github.com/rust-lang/regex.git)",
+			},
+		},
+		{
+			name: "regex-automata git",
+			p: pkg.Package{
+				Name:      "regex-automata",
+				Version:   "0.4.9",
+				PURL:      "pkg:cargo/regex-automata@0.4.9",
+				Locations: file.NewLocationSet(),
+				Language:  pkg.Rust,
+				Type:      pkg.RustPkg,
+				Licenses:  pkg.NewLicenseSet(),
+				Metadata: pkg.RustCargoLockEntry{
+					Name:    "regex-automata",
+					Version: "0.4.9",
+					Source:  "git+https://github.com/rust-lang/regex.git#1a069b9232c607b34c4937122361aa075ef573fa",
+					Dependencies: []string{
+						"aho-corasick",
+						"memchr",
+						"regex-syntax 0.8.5 (git+https://github.com/rust-lang/regex.git)",
+					},
+				},
+			},
+			provides: []string{
+				"regex-automata",
+				"regex-automata 0.4.9",
+				"regex-automata 0.4.9 (git+https://github.com/rust-lang/regex.git)",
+			},
+			requires: []string{
+				"aho-corasick",
+				"memchr",
+				"regex-syntax 0.8.5 (git+https://github.com/rust-lang/regex.git)",
+			},
+		},
+		{
+			name: "regex-syntax git",
+			p: pkg.Package{
+				Name:      "regex-syntax",
+				Version:   "0.8.5",
+				PURL:      "pkg:cargo/regex-syntax@0.8.5",
+				Locations: file.NewLocationSet(),
+				Language:  pkg.Rust,
+				Type:      pkg.RustPkg,
+				Licenses:  pkg.NewLicenseSet(),
+				Metadata: pkg.RustCargoLockEntry{
+					Name:         "regex-syntax",
+					Version:      "0.8.5",
+					Source:       "git+https://github.com/rust-lang/regex.git#1a069b9232c607b34c4937122361aa075ef573fa",
+					Dependencies: []string{},
+				},
+			},
+			provides: []string{
+				"regex-syntax",
+				"regex-syntax 0.8.5",
+				"regex-syntax 0.8.5 (git+https://github.com/rust-lang/regex.git)",
+			},
+			requires: []string{},
+		},
+		{
+			name: "regex-syntax crates",
+			p: pkg.Package{
+				Name:      "regex-syntax",
+				Version:   "0.8.5",
+				PURL:      "pkg:cargo/regex-syntax@0.8.5",
+				Locations: file.NewLocationSet(),
+				Language:  pkg.Rust,
+				Type:      pkg.RustPkg,
+				Licenses:  pkg.NewLicenseSet(),
+				Metadata: pkg.RustCargoLockEntry{
+					Name:         "regex-syntax",
+					Version:      "0.8.5",
+					Source:       "registry+https://github.com/rust-lang/crates.io-index",
+					Checksum:     "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c",
+					Dependencies: []string{},
+				},
+			},
+			provides: []string{
+				"regex-syntax",
+				"regex-syntax 0.8.5",
+				"regex-syntax 0.8.5 (registry+https://github.com/rust-lang/crates.io-index)",
+			},
+			requires: []string{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			spec := dependencySpecification(test.p)
+			assert.Equal(t, test.provides, spec.Provides)
+			assert.Equal(t, test.requires, spec.Requires)
+		})
+	}
 }
 
 func Test_corruptCargoLock(t *testing.T) {
