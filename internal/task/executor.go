@@ -98,7 +98,7 @@ func appendUnknowns(builder sbomsync.Builder, taskName string, unknowns []unknow
 }
 
 func runTaskSafely(ctx context.Context, t Task, resolver file.Resolver, s sbomsync.Builder) (err error) {
-	// handle individual cataloger panics
+	handle individual cataloger panics
 	defer func() {
 		if e := recover(); e != nil {
 			err = fmt.Errorf("%v at:\n%s", e, string(debug.Stack()))

@@ -1,6 +1,12 @@
 package internal
 
-import "regexp"
+import (
+	"bufio"
+	"io"
+	"regexp"
+)
+
+const readerChunkSize = 16 * 1024
 
 // MatchNamedCaptureGroups takes a regular expression and string and returns all of the named capture group results in a map.
 // This is only for the first match in the regex. Callers shouldn't be providing regexes with multiple capture groups with the same name.
@@ -30,6 +36,94 @@ func MatchNamedCaptureGroups(regEx *regexp.Regexp, content string) map[string]st
 		}
 	}
 	return results
+}
+
+// MatchNamedCaptureGroupsFromReader matches named capture groups from a reader, assuming the pattern fits within
+// 2x the reader chunk size (16KB * 2).
+func MatchNamedCaptureGroupsFromReader(re *regexp.Regexp, r io.Reader) (map[string]string, error) {
+	results := make(map[string]string)
+	_, err := processReaderInChunks(r, readerChunkSize, matchNamedCaptureGroupsHandler(re, results))
+	if err != nil {
+		return nil, err
+	}
+	if len(results) == 0 {
+		return nil, nil
+	}
+	return results, nil
+}
+
+// MatchAnyFromReader matches any of the provided regular expressions from a reader, assuming the pattern fits within
+// 2x the reader chunk size (16KB * 2).
+func MatchAnyFromReader(r io.Reader, res ...*regexp.Regexp) (bool, error) {
+	return processReaderInChunks(r, readerChunkSize, matchAnyHandler(res))
+}
+
+func matchNamedCaptureGroupsHandler(re *regexp.Regexp, results map[string]string) func(data []byte) (bool, error) {
+	return func(data []byte) (bool, error) {
+		if match := re.FindSubmatch(data); match != nil {
+			groupNames := re.SubexpNames()
+			for i, name := range groupNames {
+				if i > 0 && name != "" {
+					results[name] = string(match[i])
+				}
+			}
+			return true, nil
+		}
+		return false, nil
+	}
+}
+
+func matchAnyHandler(res []*regexp.Regexp) func(data []byte) (bool, error) {
+	return func(data []byte) (bool, error) {
+		for _, re := range res {
+			if re.Match(data) {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+}
+
+// processReaderInChunks reads from the provided reader in chunks and calls the provided handler with each chunk and neighboring chunks.
+func processReaderInChunks(r io.Reader, chunkSize int, handler func(data []byte) (bool, error)) (bool, error) {
+	buf := bufio.NewReader(r)
+	prevChunk := make([]byte, 0, chunkSize)
+	currentChunk := make([]byte, chunkSize)
+
+	for {
+		// read the next chunk...
+		n, err := buf.Read(currentChunk)
+		if n > 0 {
+			// combine previous chunk and current chunk
+			combined := make([]byte, len(prevChunk)+n)
+			copy(combined, prevChunk)
+			copy(combined[len(prevChunk):], currentChunk[:n])
+
+			matched, handlerErr := handler(combined)
+			if handlerErr != nil {
+				return false, handlerErr
+			}
+			if matched {
+				return true, nil
+			}
+
+			// save the overlapping part of the current chunk for the next iteration
+			if len(combined) > chunkSize {
+				prevChunk = combined[len(combined)-chunkSize:]
+			} else {
+				prevChunk = combined
+			}
+		}
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return false, nil
 }
 
 func isEmptyMap(m map[string]string) bool {
