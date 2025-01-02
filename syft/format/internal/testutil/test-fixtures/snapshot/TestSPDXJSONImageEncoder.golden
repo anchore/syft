@@ -1,0 +1,106 @@
+{
+ "spdxVersion": "SPDX-2.3",
+ "dataLicense": "CC0-1.0",
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "user-image-input",
+ "documentNamespace":"redacted",
+ "creationInfo": {
+  "licenseListVersion":"redacted",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: syft-v0.42.0-bogus"
+  ],
+  "created":"redacted"
+ },
+ "packages": [
+  {
+   "name": "package-1",
+   "SPDXID": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
+   "versionInfo": "1.0.1",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "MIT",
+   "copyrightText": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*"
+    },
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "a-purl-1"
+    }
+   ]
+  },
+  {
+   "name": "package-2",
+   "SPDXID": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "versionInfo": "2.0.1",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "copyrightText": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*"
+    },
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:deb/debian/package-2@2.0.1"
+    }
+   ]
+  },
+  {
+   "name": "user-image-input",
+   "SPDXID": "SPDXRef-DocumentRoot-Image-user-image-input",
+   "versionInfo": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "checksums": [
+    {
+     "algorithm": "SHA256",
+     "checksumValue": "2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
+    }
+   ],
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:oci/user-image-input@sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch="
+    }
+   ],
+   "primaryPackagePurpose": "CONTAINER"
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
+   "relatedSpdxElement": "SPDXRef-Package-python-package-1-c5cf7ac34cbca450",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
+   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DOCUMENT",
+   "relatedSpdxElement": "SPDXRef-DocumentRoot-Image-user-image-input",
+   "relationshipType": "DESCRIBES"
+  }
+ ]
+}

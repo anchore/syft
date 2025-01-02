@@ -5,8 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mholt/archiver/v3"
-
+	"github.com/anchore/archiver/v3"
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
