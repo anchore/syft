@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"bufio"
 	"io"
 	"regexp"
 )
@@ -86,46 +85,36 @@ func matchAnyHandler(res []*regexp.Regexp) func(data []byte) (bool, error) {
 
 // processReaderInChunks reads from the provided reader in chunks and calls the provided handler with each chunk + portion of the previous neighboring chunk.
 // Note that we only overlap the last half of the previous chunk with the current chunk to avoid missing matches that span chunk boundaries.
-func processReaderInChunks(r io.Reader, chunkSize int, handler func(data []byte) (bool, error)) (bool, error) {
-	buf := bufio.NewReader(r)
-	halfChunkSize := chunkSize / 2
-	prevChunk := make([]byte, 0, halfChunkSize)
-	currentChunk := make([]byte, chunkSize)
+func processReaderInChunks(rdr io.Reader, chunkSize int, handler func(data []byte) (bool, error)) (bool, error) {
+	half := chunkSize / 2
+	bufSize := chunkSize + half
+	buf := make([]byte, bufSize)
+	lastRead := 0
 
 	for {
-		// read the next chunk
-		n, err := buf.Read(currentChunk)
-		if n > 0 {
-			// combine the last half of the previous chunk with the current chunk
-			combined := make([]byte, len(prevChunk)+n)
-			copy(combined, prevChunk)
-			copy(combined[len(prevChunk):], currentChunk[:n])
-
-			// process the combined data with the handler
-			matched, handlerErr := handler(combined)
-			if handlerErr != nil {
-				return false, handlerErr
-			}
-			if matched {
-				return true, nil
-			}
-
-			// save the last half of the current chunk for the next iteration
-			if n > halfChunkSize {
-				prevChunk = make([]byte, halfChunkSize)
-				copy(prevChunk, currentChunk[n-halfChunkSize:n])
-			} else {
-				prevChunk = make([]byte, n)
-				copy(prevChunk, currentChunk[:n])
-			}
+		offset := half
+		if lastRead < half {
+			offset = lastRead
 		}
-
-		if err == io.EOF {
+		start := half - offset
+		if lastRead > 0 {
+			copy(buf[start:], buf[half+offset:half+lastRead])
+		}
+		n, err := rdr.Read(buf[half:])
+		if err != nil {
 			break
 		}
-		if err != nil {
-			return false, err
+
+		// process the combined data with the handler
+		matched, handlerErr := handler(buf[start : half+n])
+		if handlerErr != nil {
+			return false, handlerErr
 		}
+		if matched {
+			return true, nil
+		}
+
+		lastRead = n
 	}
 
 	return false, nil
