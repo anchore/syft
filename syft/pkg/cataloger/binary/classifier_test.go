@@ -1,6 +1,8 @@
 package binary
 
 import (
+	"bytes"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +11,7 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
 func Test_ClassifierCPEs(t *testing.T) {
@@ -162,12 +165,12 @@ func TestFileContentsVersionMatcher(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockGetContent := func(context matcherContext) ([]byte, error) {
-				return []byte(tt.data), nil
+			mockGetContent := func(context matcherContext) (unionreader.UnionReader, error) {
+				return unionreader.GetUnionReader(io.NopCloser(bytes.NewBufferString(tt.data)))
 			}
 			fn := FileContentsVersionMatcher(tt.pattern)
 			p, err := fn(Classifier{}, matcherContext{
-				getContents: mockGetContent,
+				getReader: mockGetContent,
 			})
 
 			if err != nil {
