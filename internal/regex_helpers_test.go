@@ -180,7 +180,7 @@ func TestProcessReaderInChunks_ChunkBoundaries(t *testing.T) {
 			input:         "123456789012345",
 			chunkSize:     4,
 			returnOnChunk: 2,
-			expectedCalls: []string{"1234", "12345678", "56789012"},
+			expectedCalls: []string{"1234", "345678", "789012"},
 			wantErr:       require.NoError,
 		},
 		{
@@ -188,7 +188,7 @@ func TestProcessReaderInChunks_ChunkBoundaries(t *testing.T) {
 			input:         "123456789012345",
 			chunkSize:     4,
 			returnOnChunk: -1,
-			expectedCalls: []string{"1234", "12345678", "56789012", "9012345"},
+			expectedCalls: []string{"1234", "345678", "789012", "12345"},
 			wantErr:       require.NoError,
 		},
 	}

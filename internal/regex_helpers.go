@@ -6,7 +6,7 @@ import (
 	"regexp"
 )
 
-const readerChunkSize = 16 * 1024
+const readerChunkSize = 1024 * 1024
 
 // MatchNamedCaptureGroups takes a regular expression and string and returns all of the named capture group results in a map.
 // This is only for the first match in the regex. Callers shouldn't be providing regexes with multiple capture groups with the same name.
@@ -39,7 +39,7 @@ func MatchNamedCaptureGroups(regEx *regexp.Regexp, content string) map[string]st
 }
 
 // MatchNamedCaptureGroupsFromReader matches named capture groups from a reader, assuming the pattern fits within
-// 2x the reader chunk size (16KB * 2).
+// 1.5x the reader chunk size (1MB * 1.5).
 func MatchNamedCaptureGroupsFromReader(re *regexp.Regexp, r io.Reader) (map[string]string, error) {
 	results := make(map[string]string)
 	_, err := processReaderInChunks(r, readerChunkSize, matchNamedCaptureGroupsHandler(re, results))
@@ -53,7 +53,7 @@ func MatchNamedCaptureGroupsFromReader(re *regexp.Regexp, r io.Reader) (map[stri
 }
 
 // MatchAnyFromReader matches any of the provided regular expressions from a reader, assuming the pattern fits within
-// 2x the reader chunk size (16KB * 2).
+// 1.5x the reader chunk size (1MB * 1.5).
 func MatchAnyFromReader(r io.Reader, res ...*regexp.Regexp) (bool, error) {
 	return processReaderInChunks(r, readerChunkSize, matchAnyHandler(res))
 }
@@ -84,21 +84,24 @@ func matchAnyHandler(res []*regexp.Regexp) func(data []byte) (bool, error) {
 	}
 }
 
-// processReaderInChunks reads from the provided reader in chunks and calls the provided handler with each chunk and neighboring chunks.
+// processReaderInChunks reads from the provided reader in chunks and calls the provided handler with each chunk + portion of the previous neighboring chunk.
+// Note that we only overlap the last half of the previous chunk with the current chunk to avoid missing matches that span chunk boundaries.
 func processReaderInChunks(r io.Reader, chunkSize int, handler func(data []byte) (bool, error)) (bool, error) {
 	buf := bufio.NewReader(r)
-	prevChunk := make([]byte, 0, chunkSize)
+	halfChunkSize := chunkSize / 2
+	prevChunk := make([]byte, 0, halfChunkSize)
 	currentChunk := make([]byte, chunkSize)
 
 	for {
-		// read the next chunk...
+		// read the next chunk
 		n, err := buf.Read(currentChunk)
 		if n > 0 {
-			// combine previous chunk and current chunk
+			// combine the last half of the previous chunk with the current chunk
 			combined := make([]byte, len(prevChunk)+n)
 			copy(combined, prevChunk)
 			copy(combined[len(prevChunk):], currentChunk[:n])
 
+			// process the combined data with the handler
 			matched, handlerErr := handler(combined)
 			if handlerErr != nil {
 				return false, handlerErr
@@ -107,11 +110,13 @@ func processReaderInChunks(r io.Reader, chunkSize int, handler func(data []byte)
 				return true, nil
 			}
 
-			// save the overlapping part of the current chunk for the next iteration
-			if len(combined) > chunkSize {
-				prevChunk = combined[len(combined)-chunkSize:]
+			// save the last half of the current chunk for the next iteration
+			if n > halfChunkSize {
+				prevChunk = make([]byte, halfChunkSize)
+				copy(prevChunk, currentChunk[n-halfChunkSize:n])
 			} else {
-				prevChunk = combined
+				prevChunk = make([]byte, n)
+				copy(prevChunk, currentChunk[:n])
 			}
 		}
 

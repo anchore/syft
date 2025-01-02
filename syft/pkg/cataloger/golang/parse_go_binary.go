@@ -264,7 +264,7 @@ func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuil
 func extractVersionFromContents(reader io.Reader) string {
 	matchMetadata, err := internal.MatchNamedCaptureGroupsFromReader(semverPattern, reader)
 	if err != nil {
-		log.WithFields("error", err).Error("unable to extract version from go binary reader")
+		log.WithFields("error", err).Trace("unable to extract version from go binary reader")
 		return ""
 	}
 
