@@ -4,22 +4,32 @@ Package rust provides a concrete Cataloger implementation relating to packages w
 package rust
 
 import (
+	"fmt"
+
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-const cargoAuditBinaryCatalogerName = "cargo-auditable-binary-cataloger"
+const (
+	toolName                      = "syft" // used for the user-agent string.
+	cargoAuditBinaryCatalogerName = "rust-cargo-auditable-binary-cataloger"
+	cargoLockCatalogerName        = "rust-cargo-lock-cataloger"
+)
+
+var (
+	userAgent = fmt.Sprintf("%s/%s", toolName, syftVersion())
+)
 
 // NewCargoLockCataloger returns a new Rust Cargo lock file cataloger object.
-func NewCargoLockCataloger() pkg.Cataloger {
-	return generic.NewCataloger("rust-cargo-lock-cataloger").
+func NewCargoLockCataloger(opts CatalogerConfig) pkg.Cataloger {
+	return generic.NewCataloger(cargoLockCatalogerName).
 		WithParserByGlobs(parseCargoLock, "**/Cargo.lock")
 }
 
 // NewAuditBinaryCataloger returns a new Rust auditable binary cataloger object that can detect dependencies
 // in binaries produced with https://github.com/Shnatsel/rust-audit
-func NewAuditBinaryCataloger() pkg.Cataloger {
+func NewAuditBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
 	return generic.NewCataloger(cargoAuditBinaryCatalogerName).
-		WithParserByMimeTypes(parseAuditBinary, mimetype.ExecutableMIMETypeSet.List()...)
+		WithParserByMimeTypes(newCargoAuditBinaryCataloger(opts).parseAuditBinary, mimetype.ExecutableMIMETypeSet.List()...)
 }

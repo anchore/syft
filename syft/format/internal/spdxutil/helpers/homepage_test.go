@@ -39,6 +39,24 @@ func Test_Homepage(t *testing.T) {
 			expected: "http://a-place.gov",
 		},
 		{
+			name: "from crates",
+			input: pkg.Package{
+				Metadata: pkg.RustCratesEnrichedEntry{
+					Homepage: "http://a-place.gov",
+				},
+			},
+			expected: "http://a-place.gov",
+		},
+		{
+			name: "from crates empty",
+			input: pkg.Package{
+				Metadata: pkg.RustCratesEnrichedEntry{
+					Homepage: "",
+				},
+			},
+			expected: "NONE",
+		},
+		{
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION
 			name: "empty",
 			input: pkg.Package{

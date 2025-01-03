@@ -26,6 +26,8 @@ func encodeAuthor(p pkg.Package) string {
 				return strings.Join(metadata.Authors, ",")
 			}
 			return ""
+		case pkg.RustCratesEnrichedEntry:
+			return metadata.CreatedBy
 		}
 	}
 	return ""

@@ -98,6 +98,15 @@ func Test_DownloadLocation(t *testing.T) {
 			expected: "http://package-lock.test",
 		},
 		{
+			name: "from rust crates enrichment",
+			input: pkg.Package{
+				Metadata: pkg.RustCratesEnrichedEntry{
+					DownloadLocation: "http://package-lock.test",
+				},
+			},
+			expected: "http://package-lock.test",
+		},
+		{
 			name: "empty",
 			input: pkg.Package{
 				Metadata: pkg.PhpComposerLockEntry{

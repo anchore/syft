@@ -364,6 +364,17 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Person: me (me@auth.com)",
 		},
 		{
+			name: "from rust crates - just name",
+			input: pkg.Package{
+				Metadata: pkg.RustCratesEnrichedEntry{
+					Supplier:  "auth",
+					CreatedBy: "me",
+				},
+			},
+			originator: "Person: me",
+			supplier:   "Person: auth",
+		},
+		{
 			name: "from ocaml opam",
 			input: pkg.Package{
 				Metadata: pkg.OpamPackage{},
