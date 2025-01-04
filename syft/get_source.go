@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -26,14 +28,25 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 
 	// call each source provider until we find a valid source
 	for _, p := range providers {
+		log.WithFields("provider", p.Name(), "ref", userInput).Trace("attempting to resolve source")
 		src, err := p.Provide(ctx)
 		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
+			var stopErr *image.ErrFetchingImage
+			switch {
+			case errors.As(err, &stopErr):
+				log.WithFields("provider", p.Name(), "ref", userInput).Trace("resolved but failed to fetch source")
+				return nil, sourceError(userInput, err)
+
+			case errors.Is(err, os.ErrNotExist):
+				log.WithFields("provider", p.Name(), "ref", userInput).Trace("does not exist")
 				fileNotFoundProviders = append(fileNotFoundProviders, p.Name())
-			} else {
+
+			default:
+				log.WithFields("provider", p.Name(), "ref", userInput).Trace("failure")
 				errs = append(errs, fmt.Errorf("%s: %w", p.Name(), err))
 			}
 		}
+		log.WithFields("provider", p.Name(), "ref", userInput).Debug("resolved source")
 		if src != nil {
 			// if we have a non-image type and platform is specified, it's an error
 			if cfg.SourceProviderConfig.Platform != nil {
