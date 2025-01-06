@@ -273,7 +273,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 			f := file.LocationReadCloser{
 				Location: location,
 			}
-			got, err := buildDotNetPackage(tc.versionResources, f)
+			got, err := newDotnetBinaryPackage(tc.versionResources, f)
 			assert.NoErrorf(t, err, "failed to build package from version resources: %+v", tc.versionResources)
 
 			// ignore certain metadata
@@ -288,7 +288,7 @@ func TestParseDotnetPortableExecutable(t *testing.T) {
 				tc.expectedPackage.Language = pkg.Dotnet
 			}
 			if tc.expectedPackage.PURL == "" {
-				tc.expectedPackage.PURL = portableExecutablePackageURL(tc.expectedPackage.Name, tc.expectedPackage.Version)
+				tc.expectedPackage.PURL = binaryPackageURL(tc.expectedPackage.Name, tc.expectedPackage.Version)
 			}
 			tc.expectedPackage.Locations = file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
@@ -325,7 +325,7 @@ func Test_extractVersion(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
-			got := extractVersion(test.input)
+			got := extractVersionFromResourcesValue(test.input)
 			assert.Equal(t, test.expected, got)
 		})
 	}
