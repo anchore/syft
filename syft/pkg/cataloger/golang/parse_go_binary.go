@@ -119,11 +119,7 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, licenseScanner l
 			continue
 		}
 
-		lics, err := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, dep.Path, dep.Version)
-		if err != nil {
-			log.Tracef("error getting licenses for golang package: %s %v", dep.Path, err)
-		}
-
+		lics := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, dep.Path, dep.Version)
 		gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 		p := c.newGoBinaryPackage(
 			dep,
@@ -162,12 +158,7 @@ func missingMainModule(mod *extendedBuildInfo) bool {
 
 func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, licenseScanner licenses.Scanner, resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
-
-	lics, err := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, mod.Main.Path, mod.Main.Version)
-	if err != nil {
-		log.Tracef("error getting licenses for golang package: %s %v", mod.Main.Path, err)
-	}
-
+	lics := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, mod.Main.Path, mod.Main.Version)
 	gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 	main := c.newGoBinaryPackage(
 		&mod.Main,
