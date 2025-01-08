@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/sbomsync"
-	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -21,7 +21,7 @@ func dummyTask(name string, tags ...string) Task {
 }
 
 // note: this test fixture does not need to be kept up to date here, but makes a great test subject
-func createDummyTasks() tasks {
+func createDummyPackageTasks() tasks {
 	return []Task{
 		// OS package installed catalogers
 		dummyTask("alpm-db-cataloger", "directory", "installed", "image", "os", "alpm", "archlinux"),
@@ -63,6 +63,15 @@ func createDummyTasks() tasks {
 	}
 }
 
+func createDummyFileTasks() tasks {
+	return []Task{
+		dummyTask("file-content-cataloger", "file", "content"),
+		dummyTask("file-metadata-cataloger", "file", "metadata"),
+		dummyTask("file-digest-cataloger", "file", "digest"),
+		dummyTask("file-executable-cataloger", "file", "binary-metadata"),
+	}
+}
+
 func TestSelect(t *testing.T) {
 
 	tests := []struct {
@@ -72,7 +81,7 @@ func TestSelect(t *testing.T) {
 		expressions []string
 		wantNames   []string
 		wantTokens  map[string]TokenSelection
-		wantRequest pkgcataloging.SelectionRequest
+		wantRequest cataloging.SelectionRequest
 		wantErr     assert.ErrorAssertionFunc
 	}{
 		{
@@ -82,11 +91,11 @@ func TestSelect(t *testing.T) {
 			expressions: []string{},
 			wantNames:   []string{},
 			wantTokens:  map[string]TokenSelection{},
-			wantRequest: pkgcataloging.SelectionRequest{},
+			wantRequest: cataloging.SelectionRequest{},
 		},
 		{
 			name:     "use default tasks",
-			allTasks: createDummyTasks(),
+			allTasks: createDummyPackageTasks(),
 			basis: []string{
 				"image",
 			},
@@ -129,13 +138,13 @@ func TestSelect(t *testing.T) {
 				"binary-cataloger":                     newTokenSelection([]string{"image"}, nil),
 				"sbom-cataloger":                       newTokenSelection([]string{"image"}, nil),
 			},
-			wantRequest: pkgcataloging.SelectionRequest{
+			wantRequest: cataloging.SelectionRequest{
 				DefaultNamesOrTags: []string{"image"},
 			},
 		},
 		{
 			name:     "select, add, and remove tasks",
-			allTasks: createDummyTasks(),
+			allTasks: createDummyPackageTasks(),
 			basis: []string{
 				"image",
 			},
@@ -175,7 +184,7 @@ func TestSelect(t *testing.T) {
 				"binary-cataloger":                     newTokenSelection([]string{"image"}, nil),
 				"sbom-cataloger":                       newTokenSelection([]string{"image"}, nil),
 			},
-			wantRequest: pkgcataloging.SelectionRequest{
+			wantRequest: cataloging.SelectionRequest{
 				DefaultNamesOrTags: []string{"image"},
 				SubSelectTags:      []string{"os"},
 				RemoveNamesOrTags:  []string{"dpkg"},
@@ -184,7 +193,7 @@ func TestSelect(t *testing.T) {
 		},
 		{
 			name:     "allow for partial selections",
-			allTasks: createDummyTasks(),
+			allTasks: createDummyPackageTasks(),
 			basis: []string{
 				"image",
 			},
@@ -228,7 +237,7 @@ func TestSelect(t *testing.T) {
 				"binary-cataloger":                     newTokenSelection([]string{"image"}, nil),
 				"sbom-cataloger":                       newTokenSelection([]string{"image"}, nil),
 			},
-			wantRequest: pkgcataloging.SelectionRequest{
+			wantRequest: cataloging.SelectionRequest{
 				DefaultNamesOrTags: []string{"image"},
 				SubSelectTags:      []string{"os", "rust-cargo-lock-cataloger"},
 				RemoveNamesOrTags:  []string{"dpkg"},
@@ -238,7 +247,7 @@ func TestSelect(t *testing.T) {
 		},
 		{
 			name:     "select all tasks",
-			allTasks: createDummyTasks(),
+			allTasks: createDummyPackageTasks(),
 			basis: []string{
 				"all",
 			},
@@ -299,13 +308,13 @@ func TestSelect(t *testing.T) {
 				"github-action-workflow-usage-cataloger": newTokenSelection([]string{"all"}, nil),
 				"sbom-cataloger":                         newTokenSelection([]string{"all"}, nil),
 			},
-			wantRequest: pkgcataloging.SelectionRequest{
+			wantRequest: cataloging.SelectionRequest{
 				DefaultNamesOrTags: []string{"all"},
 			},
 		},
 		{
 			name:     "set default with multiple tags",
-			allTasks: createDummyTasks(),
+			allTasks: createDummyPackageTasks(),
 			basis: []string{
 				"gemspec",
 				"python",
@@ -319,8 +328,29 @@ func TestSelect(t *testing.T) {
 				"ruby-installed-gemspec-cataloger":   newTokenSelection([]string{"gemspec"}, nil),
 				"python-installed-package-cataloger": newTokenSelection([]string{"python"}, nil),
 			},
-			wantRequest: pkgcataloging.SelectionRequest{
+			wantRequest: cataloging.SelectionRequest{
 				DefaultNamesOrTags: []string{"gemspec", "python"},
+			},
+		},
+		{
+			name:        "automatically add file to default tags",
+			allTasks:    createDummyFileTasks(),
+			basis:       []string{},
+			expressions: []string{},
+			wantNames: []string{
+				"file-content-cataloger",
+				"file-metadata-cataloger",
+				"file-digest-cataloger",
+				"file-executable-cataloger",
+			},
+			wantTokens: map[string]TokenSelection{
+				"file-content-cataloger":    newTokenSelection([]string{"file"}, nil),
+				"file-metadata-cataloger":   newTokenSelection([]string{"file"}, nil),
+				"file-digest-cataloger":     newTokenSelection([]string{"file"}, nil),
+				"file-executable-cataloger": newTokenSelection([]string{"file"}, nil),
+			},
+			wantRequest: cataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"file"},
 			},
 		},
 	}
@@ -330,7 +360,7 @@ func TestSelect(t *testing.T) {
 				tt.wantErr = assert.NoError
 			}
 
-			req := pkgcataloging.NewSelectionRequest().WithDefaults(tt.basis...).WithExpression(tt.expressions...)
+			req := cataloging.NewSelectionRequest().WithDefaults(tt.basis...).WithExpression(tt.expressions...)
 
 			got, gotEvidence, err := Select(tt.allTasks, req)
 			tt.wantErr(t, err)
@@ -364,6 +394,306 @@ func TestSelect(t *testing.T) {
 			}
 			assert.Equal(t, tt.wantRequest, gotEvidence.Request)
 
+		})
+	}
+}
+
+func TestSelectInGroups(t *testing.T) {
+	tests := []struct {
+		name         string
+		taskGroups   [][]Task
+		selectionReq cataloging.SelectionRequest
+		wantGroups   [][]string
+		wantTokens   map[string]TokenSelection
+		wantRequest  cataloging.SelectionRequest
+		wantErr      assert.ErrorAssertionFunc
+	}{
+		{
+			name: "select only within the file tasks (leave package tasks alone)",
+			taskGroups: [][]Task{
+				createDummyPackageTasks(),
+				createDummyFileTasks(),
+			},
+			selectionReq: cataloging.NewSelectionRequest().
+				WithDefaults("image"). // note: file missing
+				WithSubSelections("content", "digest"),
+			wantGroups: [][]string{
+				{
+					// this is the original, untouched package task list
+					"alpm-db-cataloger",
+					"apk-db-cataloger",
+					"dpkg-db-cataloger",
+					"portage-cataloger",
+					"rpm-db-cataloger",
+					"conan-info-cataloger",
+					"javascript-package-cataloger",
+					"php-composer-installed-cataloger",
+					"ruby-installed-gemspec-cataloger",
+					"rust-cargo-lock-cataloger",
+					"dotnet-portable-executable-cataloger",
+					"python-installed-package-cataloger",
+					"go-module-binary-cataloger",
+					"java-archive-cataloger",
+					"graalvm-native-image-cataloger",
+					"binary-cataloger",
+					"sbom-cataloger",
+				},
+				{
+					// this has been filtered based on the request
+					"file-content-cataloger",
+					"file-digest-cataloger",
+				},
+			},
+			wantTokens: map[string]TokenSelection{
+				// packages
+				"alpm-db-cataloger":                    newTokenSelection([]string{"image"}, nil),
+				"apk-db-cataloger":                     newTokenSelection([]string{"image"}, nil),
+				"binary-cataloger":                     newTokenSelection([]string{"image"}, nil),
+				"conan-info-cataloger":                 newTokenSelection([]string{"image"}, nil),
+				"dotnet-portable-executable-cataloger": newTokenSelection([]string{"image"}, nil),
+				"dpkg-db-cataloger":                    newTokenSelection([]string{"image"}, nil),
+				"go-module-binary-cataloger":           newTokenSelection([]string{"image"}, nil),
+				"graalvm-native-image-cataloger":       newTokenSelection([]string{"image"}, nil),
+				"java-archive-cataloger":               newTokenSelection([]string{"image"}, nil),
+				"javascript-package-cataloger":         newTokenSelection([]string{"image"}, nil),
+				"php-composer-installed-cataloger":     newTokenSelection([]string{"image"}, nil),
+				"portage-cataloger":                    newTokenSelection([]string{"image"}, nil),
+				"python-installed-package-cataloger":   newTokenSelection([]string{"image"}, nil),
+				"rpm-db-cataloger":                     newTokenSelection([]string{"image"}, nil),
+				"ruby-installed-gemspec-cataloger":     newTokenSelection([]string{"image"}, nil),
+				"rust-cargo-lock-cataloger":            newTokenSelection([]string{"image"}, nil),
+				"sbom-cataloger":                       newTokenSelection([]string{"image"}, nil),
+				// files
+				"file-content-cataloger":    newTokenSelection([]string{"content", "file"}, nil),
+				"file-digest-cataloger":     newTokenSelection([]string{"digest", "file"}, nil),
+				"file-executable-cataloger": newTokenSelection([]string{"file"}, nil),
+				"file-metadata-cataloger":   newTokenSelection([]string{"file"}, nil),
+			},
+			wantRequest: cataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"image", "file"}, // note: file automatically added
+				SubSelectTags:      []string{"content", "digest"},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "select package tasks (leave file tasks alone)",
+			taskGroups: [][]Task{
+				createDummyPackageTasks(),
+				createDummyFileTasks(),
+			},
+			selectionReq: cataloging.NewSelectionRequest().WithDefaults("image").WithSubSelections("os"),
+			wantGroups: [][]string{
+				{
+					// filtered based on the request
+					"alpm-db-cataloger",
+					"apk-db-cataloger",
+					"dpkg-db-cataloger",
+					"portage-cataloger",
+					"rpm-db-cataloger",
+				},
+				{
+					// this is the original, untouched file task list
+					"file-content-cataloger",
+					"file-metadata-cataloger",
+					"file-digest-cataloger",
+					"file-executable-cataloger",
+				},
+			},
+			wantTokens: map[string]TokenSelection{
+				// packages - os
+				"alpm-db-cataloger":     newTokenSelection([]string{"os", "image"}, nil),
+				"apk-db-cataloger":      newTokenSelection([]string{"os", "image"}, nil),
+				"rpm-archive-cataloger": newTokenSelection([]string{"os"}, nil),
+				"rpm-db-cataloger":      newTokenSelection([]string{"os", "image"}, nil),
+				"portage-cataloger":     newTokenSelection([]string{"os", "image"}, nil),
+				"dpkg-db-cataloger":     newTokenSelection([]string{"os", "image"}, nil),
+				// packages - remaining
+				"binary-cataloger":                     newTokenSelection([]string{"image"}, nil),
+				"conan-info-cataloger":                 newTokenSelection([]string{"image"}, nil),
+				"dotnet-portable-executable-cataloger": newTokenSelection([]string{"image"}, nil),
+				"go-module-binary-cataloger":           newTokenSelection([]string{"image"}, nil),
+				"graalvm-native-image-cataloger":       newTokenSelection([]string{"image"}, nil),
+				"java-archive-cataloger":               newTokenSelection([]string{"image"}, nil),
+				"javascript-package-cataloger":         newTokenSelection([]string{"image"}, nil),
+				"php-composer-installed-cataloger":     newTokenSelection([]string{"image"}, nil),
+				"python-installed-package-cataloger":   newTokenSelection([]string{"image"}, nil),
+				"ruby-installed-gemspec-cataloger":     newTokenSelection([]string{"image"}, nil),
+				"rust-cargo-lock-cataloger":            newTokenSelection([]string{"image"}, nil),
+				"sbom-cataloger":                       newTokenSelection([]string{"image"}, nil),
+				// files
+				"file-content-cataloger":    newTokenSelection([]string{"file"}, nil),
+				"file-digest-cataloger":     newTokenSelection([]string{"file"}, nil),
+				"file-executable-cataloger": newTokenSelection([]string{"file"}, nil),
+				"file-metadata-cataloger":   newTokenSelection([]string{"file"}, nil),
+			},
+			wantRequest: cataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"image", "file"},
+				SubSelectTags:      []string{"os"},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "select file and package tasks",
+			taskGroups: [][]Task{
+				createDummyPackageTasks(),
+				createDummyFileTasks(),
+			},
+			selectionReq: cataloging.NewSelectionRequest().
+				WithDefaults("image").
+				WithSubSelections("os", "content", "digest"),
+			wantGroups: [][]string{
+				{
+					// filtered based on the request
+					"alpm-db-cataloger",
+					"apk-db-cataloger",
+					"dpkg-db-cataloger",
+					"portage-cataloger",
+					"rpm-db-cataloger",
+				},
+				{
+					// filtered based on the request
+					"file-content-cataloger",
+					"file-digest-cataloger",
+				},
+			},
+			wantTokens: map[string]TokenSelection{
+				// packages - os
+				"alpm-db-cataloger":     newTokenSelection([]string{"os", "image"}, nil),
+				"apk-db-cataloger":      newTokenSelection([]string{"os", "image"}, nil),
+				"rpm-archive-cataloger": newTokenSelection([]string{"os"}, nil),
+				"rpm-db-cataloger":      newTokenSelection([]string{"os", "image"}, nil),
+				"portage-cataloger":     newTokenSelection([]string{"os", "image"}, nil),
+				"dpkg-db-cataloger":     newTokenSelection([]string{"os", "image"}, nil),
+				// packages - remaining
+				"binary-cataloger":                     newTokenSelection([]string{"image"}, nil),
+				"conan-info-cataloger":                 newTokenSelection([]string{"image"}, nil),
+				"dotnet-portable-executable-cataloger": newTokenSelection([]string{"image"}, nil),
+				"go-module-binary-cataloger":           newTokenSelection([]string{"image"}, nil),
+				"graalvm-native-image-cataloger":       newTokenSelection([]string{"image"}, nil),
+				"java-archive-cataloger":               newTokenSelection([]string{"image"}, nil),
+				"javascript-package-cataloger":         newTokenSelection([]string{"image"}, nil),
+				"php-composer-installed-cataloger":     newTokenSelection([]string{"image"}, nil),
+				"python-installed-package-cataloger":   newTokenSelection([]string{"image"}, nil),
+				"ruby-installed-gemspec-cataloger":     newTokenSelection([]string{"image"}, nil),
+				"rust-cargo-lock-cataloger":            newTokenSelection([]string{"image"}, nil),
+				"sbom-cataloger":                       newTokenSelection([]string{"image"}, nil),
+				// files
+				"file-content-cataloger":    newTokenSelection([]string{"file", "content"}, nil), // note extra tags
+				"file-digest-cataloger":     newTokenSelection([]string{"file", "digest"}, nil),  // note extra tags
+				"file-executable-cataloger": newTokenSelection([]string{"file"}, nil),
+				"file-metadata-cataloger":   newTokenSelection([]string{"file"}, nil),
+			},
+			wantRequest: cataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"image", "file"},
+				SubSelectTags:      []string{"os", "content", "digest"},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "complex selection with multiple operators across groups",
+			taskGroups: [][]Task{
+				createDummyPackageTasks(),
+				createDummyFileTasks(),
+			},
+			selectionReq: cataloging.NewSelectionRequest().
+				WithDefaults("os"). // note: no file tag present
+				WithExpression("+github-actions-usage-cataloger", "-dpkg", "-digest", "content", "+file-metadata-cataloger", "-declared"),
+			wantGroups: [][]string{
+				{
+					"alpm-db-cataloger",
+					"apk-db-cataloger",
+					"portage-cataloger",
+					"rpm-db-cataloger",
+					"github-actions-usage-cataloger",
+				},
+				{
+					"file-content-cataloger",
+					"file-metadata-cataloger",
+				},
+			},
+			wantTokens: map[string]TokenSelection{
+				// selected package tasks
+				"alpm-db-cataloger":              newTokenSelection([]string{"os"}, nil),
+				"apk-db-cataloger":               newTokenSelection([]string{"os"}, nil),
+				"dpkg-db-cataloger":              newTokenSelection([]string{"os"}, []string{"dpkg"}),
+				"portage-cataloger":              newTokenSelection([]string{"os"}, nil),
+				"rpm-archive-cataloger":          newTokenSelection([]string{"os"}, []string{"declared"}),
+				"rpm-db-cataloger":               newTokenSelection([]string{"os"}, nil),
+				"github-actions-usage-cataloger": newTokenSelection([]string{"github-actions-usage-cataloger"}, []string{"declared"}),
+
+				// selected file tasks
+				"file-content-cataloger":  newTokenSelection([]string{"content", "file"}, nil),
+				"file-metadata-cataloger": newTokenSelection([]string{"file-metadata-cataloger", "file"}, nil),
+
+				// removed package tasks
+				"binary-cataloger":                       newTokenSelection(nil, []string{"declared"}),
+				"conan-cataloger":                        newTokenSelection(nil, []string{"declared"}),
+				"dart-pubspec-lock-cataloger":            newTokenSelection(nil, []string{"declared"}),
+				"dotnet-deps-cataloger":                  newTokenSelection(nil, []string{"declared"}),
+				"elixir-mix-lock-cataloger":              newTokenSelection(nil, []string{"declared"}),
+				"erlang-rebar-lock-cataloger":            newTokenSelection(nil, []string{"declared"}),
+				"github-action-workflow-usage-cataloger": newTokenSelection(nil, []string{"declared"}),
+				"javascript-lock-cataloger":              newTokenSelection(nil, []string{"declared"}),
+				"sbom-cataloger":                         newTokenSelection(nil, []string{"declared"}),
+
+				// removed file tasks
+				"file-executable-cataloger": newTokenSelection([]string{"file"}, nil),
+				"file-digest-cataloger":     newTokenSelection([]string{"file"}, []string{"digest"}),
+			},
+			wantRequest: cataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"os", "file"}, // note: file added automatically
+				SubSelectTags:      []string{"content"},
+				RemoveNamesOrTags:  []string{"dpkg", "digest", "declared"},
+				AddNames:           []string{"github-actions-usage-cataloger", "file-metadata-cataloger"},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "invalid tag",
+			taskGroups: [][]Task{
+				createDummyPackageTasks(),
+				createDummyFileTasks(),
+			},
+			selectionReq: cataloging.NewSelectionRequest().WithDefaults("invalid"),
+			wantGroups:   nil,
+			wantTokens:   nil,
+			wantRequest: cataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"invalid", "file"},
+			},
+			wantErr: assert.Error,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = assert.NoError
+			}
+
+			gotGroups, gotSelection, err := SelectInGroups(tt.taskGroups, tt.selectionReq)
+			tt.wantErr(t, err)
+			if err != nil {
+				// dev note: this is useful for debugging when needed...
+				//for _, e := range gotEvidence.Request.Expressions {
+				//	t.Logf("expression (errors %q): %#v", e.Errors, e)
+				//}
+
+				// note: we DON'T bail early in validations... this is because we should always return the full set of
+				// of selected tasks and surrounding evidence.
+			}
+
+			var gotGroupNames [][]string
+			for _, group := range gotGroups {
+				var names []string
+				for _, task := range group {
+					names = append(names, task.Name())
+				}
+				gotGroupNames = append(gotGroupNames, names)
+			}
+
+			assert.Equal(t, tt.wantGroups, gotGroupNames)
+			assert.Equal(t, tt.wantTokens, gotSelection.TokensByTask)
+			assert.Equal(t, tt.wantRequest, gotSelection.Request)
 		})
 	}
 }

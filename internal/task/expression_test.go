@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
+	"github.com/anchore/syft/syft/cataloging"
 )
 
 func Test_newExpressionsFromSelectionRequest(t *testing.T) {
@@ -135,7 +135,7 @@ func Test_newExpressionsFromSelectionRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			req := pkgcataloging.NewSelectionRequest().WithDefaults(tt.basis...).WithExpression(tt.expressions...)
+			req := cataloging.NewSelectionRequest().WithDefaults(tt.basis...).WithExpression(tt.expressions...)
 
 			result := newExpressionsFromSelectionRequest(nc, req)
 			if tt.expectedErrors != nil {
