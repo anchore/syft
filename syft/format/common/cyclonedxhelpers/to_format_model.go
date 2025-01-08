@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil/helpers"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -28,12 +29,42 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	cdxBOM.SerialNumber = uuid.New().URN()
 	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source)
 
+	// Packages
 	packages := s.Artifacts.Packages.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
 	for i, p := range packages {
 		components[i] = helpers.EncodeComponent(p)
 	}
 	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
+
+	// Files
+	artifacts := s.Artifacts
+	coordinates := s.AllCoordinates()
+	fileComponents := make([]cyclonedx.Component, len(coordinates))
+	for i, coordinate := range coordinates {
+		var metadata *file.Metadata
+		// File Info
+		fileMetadata, exists := artifacts.FileMetadata[coordinate]
+		// no file metadata then don't include in SBOM
+		if !exists {
+			continue
+		}
+		metadata = &fileMetadata
+
+		// Digests
+		var digests []file.Digest
+		if digestsForLocation, exists := artifacts.FileDigests[coordinate]; exists {
+			digests = digestsForLocation
+		}
+
+		fileComponents[i] = cyclonedx.Component{
+			BOMRef: string(coordinate.ID()),
+			Type:   cyclonedx.ComponentTypeFile,
+			Name:   metadata.Path,
+			Hashes: digestsToHashes(digests),
+		}
+	}
+	components = append(components, fileComponents...)
 	cdxBOM.Components = &components
 
 	dependencies := toDependencies(s.Relationships)
@@ -42,6 +73,33 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	}
 
 	return cdxBOM
+}
+
+func digestsToHashes(digests []file.Digest) *[]cyclonedx.Hash {
+	hashes := make([]cyclonedx.Hash, len(digests))
+	for i, digest := range digests {
+		cdxAlgo := toCycloneDXAlgorithm(digest.Algorithm)
+		hashes[i] = cyclonedx.Hash{
+			Algorithm: cdxAlgo,
+			Value:     digest.Value,
+		}
+	}
+	return &hashes
+}
+
+// supported algorithm in cycloneDX as of 1.4
+// "MD5", "SHA-1", "SHA-256", "SHA-384", "SHA-512",
+// "SHA3-256", "SHA3-384", "SHA3-512", "BLAKE2b-256", "BLAKE2b-384", "BLAKE2b-512", "BLAKE3"
+// syft supported digests: cmd/syft/cli/eventloop/tasks.go
+// MD5, SHA1, SHA256
+func toCycloneDXAlgorithm(algorithm string) cyclonedx.HashAlgorithm {
+	validMap := map[string]cyclonedx.HashAlgorithm{
+		"sha1":   cyclonedx.HashAlgoSHA1,
+		"md5":    cyclonedx.HashAlgoMD5,
+		"sha256": cyclonedx.HashAlgoSHA256,
+	}
+
+	return validMap[strings.ToLower(algorithm)]
 }
 
 func toOSComponent(distro *linux.Release) []cyclonedx.Component {
