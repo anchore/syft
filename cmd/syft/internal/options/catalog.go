@@ -189,8 +189,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithProxy(cfg.Rust.Proxy).
 			WithCratesBaseURL(cfg.Rust.CratesBaseURL).
 			WithCratesTimeout(cfg.Rust.CratesTimeout).
-			WithUseCratesEnrichment(cfg.Rust.UseCratesEnrichment).
-			WithInsecureSkipTLSVerify(cfg.Rust.InsecureSkipTLSVerify),
+			WithUseCratesEnrichment(*cfg.Rust.UseCratesEnrichment).
+			WithInsecureSkipTLSVerify(*cfg.Rust.InsecureSkipTLSVerify),
 	}
 }
 
