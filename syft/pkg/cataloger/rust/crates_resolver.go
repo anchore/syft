@@ -143,6 +143,5 @@ func newCratesLookupClient(opts CatalogerConfig) *http.Client {
 // to the values used when querying crates.io.
 func setHeaders(request *http.Request) *http.Request {
 	request.Header.Set("Accept", "application/json; charset=utf8")
-	request.Header.Set("User-Agent", userAgent)
 	return request
 }

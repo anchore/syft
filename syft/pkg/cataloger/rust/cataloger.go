@@ -4,21 +4,14 @@ Package rust provides a concrete Cataloger implementation relating to packages w
 package rust
 
 import (
-	"fmt"
-
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 const (
-	toolName                      = "syft" // used for the user-agent string.
 	cargoAuditBinaryCatalogerName = "rust-cargo-auditable-binary-cataloger"
 	cargoLockCatalogerName        = "rust-cargo-lock-cataloger"
-)
-
-var (
-	userAgent = fmt.Sprintf("%s/%s", toolName, syftVersion())
 )
 
 // NewCargoLockCataloger returns a new Rust Cargo lock file cataloger object.

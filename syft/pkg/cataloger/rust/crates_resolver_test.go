@@ -1,6 +1,7 @@
 package rust
 
 import (
+	"net/http"
 	"os"
 	"testing"
 
@@ -49,6 +50,30 @@ func Test_parseCratesResponse(t *testing.T) {
 				return
 			}
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_setHeaders(t *testing.T) {
+	req, _ := http.NewRequest("GET", "http://foo/bar", nil)
+	type args struct {
+		request *http.Request
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "set header",
+			args: args{
+				request: req,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := setHeaders(tt.args.request)
+			assert.Contains(t, got.Header, "Accept")
 		})
 	}
 }
