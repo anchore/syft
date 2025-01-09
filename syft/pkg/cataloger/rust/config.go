@@ -76,7 +76,7 @@ func (c CatalogerConfig) WithProxy(input string) CatalogerConfig {
 	proxy, err := url.Parse(input)
 	fmt.Println(proxy, err)
 	if err != nil {
-		log.Errorf("rust cataloger configuration includes invalid proxy url: %s", input)
+		log.Errorf("rust cataloger configuration includes invalid proxy url: %s with error: %s", input, err)
 		panic(err)
 	}
 	c.proxyURL = proxy
