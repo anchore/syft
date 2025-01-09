@@ -23,6 +23,28 @@ type rustCratesResolver struct {
 	cratesCache   cache.Resolver[pkg.RustCratesEnrichedEntry]
 }
 
+// cratesRemoteMetadata represents the remote metadata for a crate
+// as fetched from crates.io via an API request.
+// This is used for deserialization of the response from crates.io
+type cratesRemoteMetadata struct {
+	Version struct {
+		Checksum      string `json:"checksum"`
+		Crate         string `json:"crate"`
+		CreatedAt     string `json:"created_at"`
+		Description   string `json:"description"`
+		DownloadPath  string `json:"dl_path"`
+		Documentation string `json:"documentation"`
+		Homepage      string `json:"homepage"`
+		License       string `json:"license"`
+		Num           string `json:"num"`
+		PublishedBy   struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"published_by"`
+		Repository string `json:"repository"`
+	} `json:"version"`
+}
+
 func newCratesResolver(name string, opts CatalogerConfig) *rustCratesResolver {
 	base, err := url.Parse(opts.CratesBaseURL)
 	if err != nil {
@@ -68,28 +90,6 @@ func (cr *rustCratesResolver) fetchRemoteCratesInfo(ctx context.Context, crateNa
 		return pkg.RustCratesEnrichedEntry{}, err
 	}
 	return cr.parseCratesResponse(resp.Body)
-}
-
-// cratesRemoteMetadata represents the remote metadata for a crate
-// as fetched from crates.io via an API request.
-// This is used for deserialization of the response from crates.io
-type cratesRemoteMetadata struct {
-	Version struct {
-		Checksum      string `json:"checksum"`
-		Crate         string `json:"crate"`
-		CreatedAt     string `json:"created_at"`
-		Description   string `json:"description"`
-		DownloadPath  string `json:"dl_path"`
-		Documentation string `json:"documentation"`
-		Homepage      string `json:"homepage"`
-		License       string `json:"license"`
-		Num           string `json:"num"`
-		PublishedBy   struct {
-			Name string `json:"name"`
-			URL  string `json:"url"`
-		} `json:"published_by"`
-		Repository string `json:"repository"`
-	} `json:"version"`
 }
 
 // parseCratesResponse parses the response body from crates.io into a RustCratesEnrichedEntry that contains
