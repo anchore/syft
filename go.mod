@@ -67,7 +67,7 @@ require (
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3
 	github.com/spdx/tools-golang v0.5.5
-	github.com/spf13/afero v1.11.0
+	github.com/spf13/afero v1.12.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
 	github.com/vbatts/go-mtree v0.5.4
@@ -83,7 +83,7 @@ require (
 	modernc.org/sqlite v1.34.4
 )
 
-require google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirect
+require google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
 
 require (
 	github.com/BurntSushi/toml v1.4.0
@@ -144,13 +144,12 @@ require (
 	github.com/gkampitakis/ciinfo v0.3.1 // indirect
 	github.com/gkampitakis/go-diff v1.3.2 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
-	github.com/go-logr/logr v1.4.1 // indirect
+	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-restruct/restruct v1.2.0-alpha // indirect
 	github.com/goccy/go-yaml v1.15.13 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/pprof v0.0.0-20240409012703-83162a5b38cd // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -226,10 +225,10 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
-	go.opentelemetry.io/otel v1.24.0 // indirect
-	go.opentelemetry.io/otel/metric v1.24.0 // indirect
-	go.opentelemetry.io/otel/trace v1.24.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0 // indirect
+	go.opentelemetry.io/otel v1.29.0 // indirect
+	go.opentelemetry.io/otel/metric v1.29.0 // indirect
+	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
@@ -238,9 +237,9 @@ require (
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240314234333-6e1732d8331c // indirect
-	google.golang.org/grpc v1.62.1 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241223144023-3abc09e42ca8 // indirect
+	google.golang.org/grpc v1.67.3 // indirect
+	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
