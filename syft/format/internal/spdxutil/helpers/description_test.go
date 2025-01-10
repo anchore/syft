@@ -39,6 +39,15 @@ func Test_Description(t *testing.T) {
 			expected: "a description!",
 		},
 		{
+			name: "from crates",
+			input: pkg.Package{
+				Metadata: pkg.RustCratesEnrichedEntry{
+					Description: "a description!",
+				},
+			},
+			expected: "a description!",
+		},
+		{
 			// note: since this is an optional field, no value is preferred over NONE or NOASSERTION
 			name: "empty",
 			input: pkg.Package{

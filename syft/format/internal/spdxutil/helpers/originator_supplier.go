@@ -111,8 +111,13 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: funlen
 		// it seems that the vast majority of the time the author is an org, not a person
 		typ = orgType
 		author = metadata.Author
+
 	case pkg.SwiplPackEntry:
 		author = formatPersonOrOrg(metadata.Author, metadata.AuthorEmail)
+
+	case pkg.RustCratesEnrichedEntry:
+		author = metadata.CreatedBy
+		typ = personType
 	}
 
 	if typ == "" && author != "" {
@@ -156,6 +161,10 @@ func Supplier(p pkg.Package) (typ string, author string) {
 
 	if metadata, ok := p.Metadata.(pkg.SwiplPackEntry); ok {
 		author = formatPersonOrOrg(metadata.Packager, metadata.PackagerEmail)
+	}
+
+	if metadata, ok := p.Metadata.(pkg.RustCratesEnrichedEntry); ok {
+		author = metadata.Supplier
 	}
 
 	if author == "" {

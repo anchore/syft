@@ -24,6 +24,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
+	"github.com/anchore/syft/syft/pkg/cataloger/rust"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -46,6 +47,7 @@ type Catalog struct {
 	JavaScript  javaScriptConfig  `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
 	LinuxKernel linuxKernelConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Python      pythonConfig      `yaml:"python" json:"python" mapstructure:"python"`
+	Rust        rustConfig        `yaml:"rust" json:"rust" mapstructure:"rust"`
 
 	// configuration for the source (the subject being analyzed)
 	Registry   registryConfig `yaml:"registry" json:"registry" mapstructure:"registry"`
@@ -74,6 +76,7 @@ func DefaultCatalog() Catalog {
 		Java:          defaultJavaConfig(),
 		File:          defaultFileConfig(),
 		Relationships: defaultRelationshipsConfig(),
+		Rust:          defaultRustConfig(),
 		Unknowns:      defaultUnknowns(),
 		Source:        defaultSourceConfig(),
 		Parallelism:   1,
@@ -182,6 +185,12 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithMavenBaseURL(cfg.Java.MavenURL).
 			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth).
 			WithResolveTransitiveDependencies(cfg.Java.ResolveTransitiveDependencies),
+		Rust: rust.DefaultCatalogerConfig().
+			WithProxy(cfg.Rust.Proxy).
+			WithCratesBaseURL(cfg.Rust.CratesBaseURL).
+			WithCratesTimeout(cfg.Rust.CratesTimeout).
+			WithUseCratesEnrichment(*cfg.Rust.UseCratesEnrichment).
+			WithInsecureSkipTLSVerify(*cfg.Rust.InsecureSkipTLSVerify),
 	}
 }
 
