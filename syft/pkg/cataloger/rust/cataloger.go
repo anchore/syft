@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	cargoAuditBinaryCatalogerName = "rust-cargo-auditable-binary-cataloger"
+	cargoAuditBinaryCatalogerName = "cargo-auditable-binary-cataloger"
 	cargoLockCatalogerName        = "rust-cargo-lock-cataloger"
 )
 
