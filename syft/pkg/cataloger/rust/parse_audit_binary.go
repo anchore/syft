@@ -93,8 +93,7 @@ func (c *rustAuditBinaryCataloger) processAuditVersionInfo(location file.Locatio
 	pairsByOgIndex := make(map[int]auditPkgPair)
 	for idx, dep := range versionInfo.Packages {
 		var p pkg.Package
-		switch c.opts.UseCratesEnrichment {
-		case true:
+		if c.opts.UseCratesEnrichment {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.opts.CratesTimeout))
 			defer cancel()
 			cratesEnrichment, err := c.cratesResolver.ResolveCrate(ctx, dep.Name, dep.Version)
@@ -105,9 +104,10 @@ func (c *rustAuditBinaryCataloger) processAuditVersionInfo(location file.Locatio
 				continue
 			}
 			p = newPackageWithEnrichment(&dep, cratesEnrichment, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
-		case false:
+		} else {
 			p = newPackageFromAudit(&dep, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		}
+
 		pair := auditPkgPair{
 			rustPkg: dep,
 			index:   idx,
