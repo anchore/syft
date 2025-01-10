@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"runtime/debug"
 	"time"
 
 	"github.com/anchore/syft/internal/log"
@@ -91,22 +90,4 @@ func (c CatalogerConfig) WithCratesBaseURL(input string) CatalogerConfig {
 func (c CatalogerConfig) WithCratesTimeout(input time.Duration) CatalogerConfig {
 	c.CratesTimeout = input
 	return c
-}
-
-// syftVersion returns the version of the syft codebase if it is a release build.
-// If syft is built from source, it returns "(devel)".
-func syftVersion() string {
-	// logic copied from syft/syft/create_sbom_config.go
-	buildInfo, ok := debug.ReadBuildInfo()
-	if !ok {
-		return ""
-	}
-
-	for _, d := range buildInfo.Deps {
-		if d.Path == "github.com/anchore/syft" && d.Version != "(devel)" {
-			return d.Version
-		}
-	}
-
-	return "(devel)"
 }

@@ -8,18 +8,19 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"runtime/debug"
 
 	"github.com/anchore/syft/internal/cache"
 	"github.com/anchore/syft/syft/pkg"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 type rustCratesResolver struct {
-	catalogerName string
-	client        *http.Client
-	cratesAPI     string
-	cratesBaseURL string
+	catalogerName string       // the name of the cataloger that is using the crates resolver.
+	client        *http.Client // when instantiating the resolver a http client is created.
+	cratesAPI     string       // The full path to the API endpoint for crates.io excluding the package name and version.
+	cratesBaseURL string       // the baseURL for crates.io, if the site is mirrored via a different hostname override the default.
 	cratesCache   cache.Resolver[pkg.RustCratesEnrichedEntry]
 }
 
@@ -48,7 +49,8 @@ type cratesRemoteMetadata struct {
 func newCratesResolver(name string, opts CatalogerConfig) *rustCratesResolver {
 	base, err := url.Parse(opts.CratesBaseURL)
 	if err != nil {
-		panic(err)
+		log.Errorf("%s failed to parse crates base url: %s with error: %s", name, opts.CratesBaseURL, err)
+		return &rustCratesResolver{}
 	}
 	baseURL := base.JoinPath("api", "v1", "crates")
 	return &rustCratesResolver{
@@ -75,7 +77,7 @@ func (cr *rustCratesResolver) ResolveCrate(ctx context.Context, crateName, crate
 func (cr *rustCratesResolver) fetchRemoteCratesInfo(ctx context.Context, crateName, crateVersion string) (pkg.RustCratesEnrichedEntry, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Fprintf(os.Stderr, "recovered from panic while resolving license at: \n%s", string(debug.Stack()))
+			log.Errorf("%s recovered from panic while resolving crates at: %s with error: %s", cr.catalogerName, string(debug.Stack()), r.(error))
 		}
 	}()
 
@@ -88,6 +90,9 @@ func (cr *rustCratesResolver) fetchRemoteCratesInfo(ctx context.Context, crateNa
 	resp, err := cr.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return pkg.RustCratesEnrichedEntry{}, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return pkg.RustCratesEnrichedEntry{}, fmt.Errorf("unexpected response from %s: %s", cr.cratesBaseURL, resp.Status)
 	}
 	return cr.parseCratesResponse(resp.Body)
 }
