@@ -7968,6 +7968,9 @@
       "auto-post-thumbnail": [
         "cpe:2.3:a:cm-wp:auto_featured_image:*:*:*:*:*:wordpress:*:*"
       ],
+      "auto-refresh-single-page": [
+        "cpe:2.3:a:rymera:auto_refresh_single_page:*:*:*:*:*:wordpress:*:*"
+      ],
       "auto-rename-media-on-upload": [
         "cpe:2.3:a:auto_rename_media_on_upload_project:auto_rename_media_on_upload:*:*:*:*:*:wordpress:*:*"
       ],
@@ -8793,6 +8796,9 @@
       ],
       "catch-web-tools": [
         "cpe:2.3:a:catchplugins:catch_web_tools:*:*:*:*:*:wordpress:*:*"
+      ],
+      "categorify": [
+        "cpe:2.3:a:frenify:categorify:*:*:*:*:*:wordpress:*:*"
       ],
       "category-post-list-widget": [
         "cpe:2.3:a:starkdigital:category_post_list_widget:*:*:*:*:*:wordpress:*:*"
@@ -11778,6 +11784,9 @@
       "hk-filter-and-search": [
         "cpe:2.3:a:jonashjalmarsson:html_filter_and_csv-file_search:*:*:*:*:*:wordpress:*:*"
       ],
+      "hkdev-maintenance-mode": [
+        "cpe:2.3:a:helderk:maintenance_mode:*:*:*:*:*:wordpress:*:*"
+      ],
       "hms-testimonials": [
         "cpe:2.3:a:hitmyserver:hms_testimonials:*:*:*:*:*:wordpress:*:*"
       ],
@@ -14051,6 +14060,9 @@
       ],
       "pdf-generator-for-wp": [
         "cpe:2.3:a:wpswings:pdf_generator_for_wordpress:*:*:*:*:*:wordpress:*:*"
+      ],
+      "pdf-image-generator": [
+        "cpe:2.3:a:contempo:pdf_image_generator:*:*:*:*:*:wordpress:*:*"
       ],
       "pdf-light-viewer": [
         "cpe:2.3:a:teamlead:pdf-light-viewer:*:*:*:*:*:wordpress:*:*"
