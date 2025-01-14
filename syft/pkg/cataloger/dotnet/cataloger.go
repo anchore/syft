@@ -19,3 +19,7 @@ func NewDotnetPortableExecutableCataloger() pkg.Cataloger {
 	return generic.NewCataloger("dotnet-portable-executable-cataloger").
 		WithParserByGlobs(parseDotnetPortableExecutable, "**/*.dll", "**/*.exe")
 }
+
+func NewDotnetPackagesLockCataloger() pkg.Cataloger {
+	return generic.NewCataloger("dotnet-packages-lock-cataloger").WithParserByGlobs(parseDotnetPackagesLock, "**/packages.lock.json")
+}
