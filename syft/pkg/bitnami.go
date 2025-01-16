@@ -8,4 +8,11 @@ type BitnamiEntry struct {
 	Distro       string `mapstructure:"distro" json:"distro"`
 	Revision     string `mapstructure:"revision" json:"revision"`
 	Version      string `mapstructure:"version" json:"version"`
+	Path         string `mapstructure:"path" json:"path"`
+}
+
+func (b BitnamiEntry) OwnedFiles() (result []string) {
+	return []string{
+		b.Path,
+	}
 }

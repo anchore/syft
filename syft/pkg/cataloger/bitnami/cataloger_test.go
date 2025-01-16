@@ -43,6 +43,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			Revision:     "3",
 			Architecture: "arm64",
 			Distro:       "debian-12",
+			Path:         "opt/bitnami/apache",
 		},
 	}
 	apacheSecondaryPkgs := []pkg.Package{
@@ -65,6 +66,7 @@ func TestBitnamiCataloger(t *testing.T) {
 				Version:      "1.7.5",
 				Architecture: "arm64",
 				Distro:       "debian-12",
+				Path:         "opt/bitnami/apache",
 			},
 		},
 		{
@@ -86,6 +88,7 @@ func TestBitnamiCataloger(t *testing.T) {
 				Version:      "1.6.3",
 				Architecture: "arm64",
 				Distro:       "debian-12",
+				Path:         "opt/bitnami/apache",
 			},
 		},
 		{
@@ -107,6 +110,7 @@ func TestBitnamiCataloger(t *testing.T) {
 				Version:      "2.9.7",
 				Architecture: "arm64",
 				Distro:       "debian-12",
+				Path:         "opt/bitnami/apache",
 			},
 		},
 		{
@@ -128,6 +132,7 @@ func TestBitnamiCataloger(t *testing.T) {
 				Version:      "3.0.13",
 				Architecture: "arm64",
 				Distro:       "debian-12",
+				Path:         "opt/bitnami/apache",
 			},
 		},
 		{
@@ -146,6 +151,7 @@ func TestBitnamiCataloger(t *testing.T) {
 				Version:      "0.20210819.0",
 				Architecture: "arm64",
 				Distro:       "debian-12",
+				Path:         "opt/bitnami/apache",
 			},
 		},
 	}
@@ -182,6 +188,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			Revision:     "4",
 			Architecture: "arm64",
 			Distro:       "debian-12",
+			Path:         "opt/bitnami/render-template",
 		},
 	}
 
