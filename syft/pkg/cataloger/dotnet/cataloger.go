@@ -17,5 +17,6 @@ func NewDotnetDepsCataloger() pkg.Cataloger {
 // NewDotnetPortableExecutableCataloger returns a new Dotnet cataloger object base on portable executable files.
 func NewDotnetPortableExecutableCataloger() pkg.Cataloger {
 	return generic.NewCataloger("dotnet-portable-executable-cataloger").
-		WithParserByGlobs(parseDotnetPortableExecutable, "**/*.dll", "**/*.exe")
+		WithParserByGlobs(parseDotnetPortableExecutable, "**/*.dll", "**/*.exe").
+		WithProcessors(mergeDotnetPEs)
 }

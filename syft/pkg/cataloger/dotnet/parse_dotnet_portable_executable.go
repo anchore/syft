@@ -7,14 +7,14 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"io"
-
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"io"
 )
 
 const peMaxAllowedDirectoryEntries = 0x1000
@@ -563,4 +563,45 @@ func readUTF16(reader *bytes.Reader, offsets ...*int) string {
 		*offsets[i] += len(result)*2 + 2 // utf-16 characters + null terminator
 	}
 	return string(result)
+}
+
+func mergeDotnetPEs(pkgs []pkg.Package, rels []artifact.Relationship, givenErr error) ([]pkg.Package, []artifact.Relationship, error) {
+	// merge packages by package.ID, if they are the same ID then merge the package
+	pkgsByID := make(map[artifact.ID]*pkg.Package)
+	var extra []pkg.Package
+	for i := range pkgs {
+		p := &pkgs[i]
+		mId, err := artifact.IDByHash(p.Metadata)
+		if err != nil {
+			log.WithFields("error", err).Trace("unable to hash dotnet package metadata")
+			extra = append(extra, *p)
+			continue
+		}
+		if existingPkg, ok := pkgsByID[mId]; ok {
+			merge(existingPkg, p)
+			continue
+		}
+		pkgsByID[mId] = p
+	}
+	var finalPkgs []pkg.Package
+	for _, p := range pkgsByID {
+		finalPkgs = append(finalPkgs, *p)
+	}
+	finalPkgs = append(finalPkgs, extra...)
+
+	pkg.Sort(finalPkgs)
+
+	// TODO: once relationships are supported, then merge those as well
+	return finalPkgs, rels, givenErr
+}
+
+func merge(p, other *pkg.Package) {
+	p.Locations.Add(other.Locations.ToSlice()...)
+	p.Licenses.Add(other.Licenses.ToSlice()...)
+
+	p.CPEs = cpe.Merge(p.CPEs, other.CPEs)
+
+	if p.PURL == "" {
+		p.PURL = other.PURL
+	}
 }

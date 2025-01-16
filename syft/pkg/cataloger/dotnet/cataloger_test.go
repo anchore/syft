@@ -1,6 +1,7 @@
 package dotnet
 
 import (
+	"github.com/anchore/syft/syft/file"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -41,4 +42,100 @@ func TestCataloger_Globs(t *testing.T) {
 				TestCataloger(t, test.cataloger)
 		})
 	}
+}
+
+func Test_ELF_Package_Cataloger(t *testing.T) {
+
+	cases := []struct {
+		name     string
+		fixture  string
+		expected []pkg.Package
+	}{
+		{
+			name:    "go case",
+			fixture: "image-net8-app",
+			expected: []pkg.Package{
+				{
+					Name:    "Humanizer (net6.0)",
+					Version: "2.14.1.48190",
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/app/lib.dll", "/app/lib.dll"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{Value: "MIT", SPDXExpression: "MIT", Type: "declared"},
+					),
+
+					Type:     pkg.DotnetPkg,
+					Metadata: pkg.DotnetPortableExecutableEntry{},
+				},
+				{
+					Name:    "Humanizer (net6.0)",
+					Version: "2.14.1.48190",
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/app/lib.dll", "/app/lib.dll"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{Value: "MIT", SPDXExpression: "MIT", Type: "declared"},
+					),
+
+					Type:     pkg.DotnetPkg,
+					Metadata: pkg.DotnetPortableExecutableEntry{},
+				},
+				{
+					Name:    "Humanizer (netstandard2.0)",
+					Version: "2.14.1.48190",
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/app/lib.dll", "/app/lib.dll"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{Value: "MIT", SPDXExpression: "MIT", Type: "declared"},
+					),
+
+					Type:     pkg.DotnetPkg,
+					Metadata: pkg.DotnetPortableExecutableEntry{},
+				},
+				{
+					Name:    "Json.NET .NET 6.0",
+					Version: "13.0.3.27908",
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/app/lib.dll", "/app/lib.dll"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{Value: "MIT", SPDXExpression: "MIT", Type: "declared"},
+					),
+
+					Type:     pkg.DotnetPkg,
+					Metadata: pkg.DotnetPortableExecutableEntry{},
+				},
+				{
+					Name:    "dotnetapp",
+					Version: "1.0.0.0",
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/app/lib.dll", "/app/lib.dll"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{Value: "MIT", SPDXExpression: "MIT", Type: "declared"},
+					),
+
+					Type:     pkg.DotnetPkg,
+					Metadata: pkg.DotnetPortableExecutableEntry{},
+				},
+			},
+		},
+	}
+
+	for _, v := range cases {
+		t.Run(v.name, func(t *testing.T) {
+			//for i := range v.expected {
+			//	p := &v.expected[i]
+			//	p.SetID()
+			//}
+			pkgtest.NewCatalogTester().
+				WithImageResolver(t, v.fixture).
+				IgnoreLocationLayer(). // this fixture can be rebuilt, thus the layer ID will change
+				Expects(v.expected, nil).
+				TestCataloger(t, NewDotnetPortableExecutableCataloger())
+		})
+	}
+
 }
