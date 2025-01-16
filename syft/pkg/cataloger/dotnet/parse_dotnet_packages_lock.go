@@ -31,7 +31,7 @@ type dotnetPackagesLockDep struct {
 	Dependencies map[string]string `json:"dependencies,omitempty"`
 }
 
-func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) { //nolint:funlen
 	var pkgs []pkg.Package
 	var pkgMap = make(map[string]pkg.Package)
 	var relationships []artifact.Relationship
