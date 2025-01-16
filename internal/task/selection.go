@@ -71,7 +71,7 @@ func _select(allTasks []Task, selectionRequest cataloging.SelectionRequest) ([]T
 }
 
 // ensureDefaultSelectionHasFiles ensures that the default selection request has the "file" tag, as this is a required
-// for backwards compatibility (when catalogers we only for packages and not for separate groups of tasks).
+// for backwards compatibility (when catalogers were only for packages and not for separate groups of tasks).
 func ensureDefaultSelectionHasFiles(selectionRequest *cataloging.SelectionRequest, allTasks ...[]Task) {
 	for _, ts := range allTasks {
 		_, leftOver := tagsOrNamesThatTaskGroupRespondsTo(ts, strset.New(filecataloging.FileTag))
@@ -91,7 +91,7 @@ func ensureDefaultSelectionHasFiles(selectionRequest *cataloging.SelectionReques
 }
 
 // SelectInGroups is a convenience function that allows for selecting tasks from multiple groups of tasks. The original
-// request is splut into sub-requests, where only tokens that are relevant to the given group of tasks are considered.
+// request is split into sub-requests, where only tokens that are relevant to the given group of tasks are considered.
 // If tokens are passed that are not relevant to any group of tasks, an error is returned.
 func SelectInGroups(taskGroups [][]Task, selectionRequest cataloging.SelectionRequest) ([][]Task, Selection, error) {
 	ensureDefaultSelectionHasFiles(&selectionRequest, taskGroups...)
