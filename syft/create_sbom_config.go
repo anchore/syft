@@ -287,7 +287,11 @@ func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []t
 	}
 
 	if len(finalFileTasks) == 0 {
-		log.Debug("no file catalogers selected")
+		if c.Files.Selection != file.NoFilesSelection {
+			log.Warnf("no file catalogers selected but file selection is configured as %q. This may be unintentional.", c.Files.Selection)
+		} else {
+			log.Debug("no file catalogers selected")
+		}
 	}
 
 	return finalPkgTasks, finalFileTasks, &selection, nil
