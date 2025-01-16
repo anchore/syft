@@ -501,7 +501,7 @@ func (r *Resolver) resolveParent(ctx context.Context, pom *Project, resolvingPro
 
 // resolveInheritedVersion attempts to find the version of a dependency (groupID, artifactID) by searching all parent poms and imported managed dependencies
 //
-//nolint:gocognit,funlen
+//nolint:gocognit
 func (r *Resolver) resolveInheritedVersion(ctx context.Context, pom *Project, groupID, artifactID string, resolutionContext ...*Project) (string, error) {
 	if pom == nil {
 		return "", fmt.Errorf("nil pom provided to findInheritedVersion")

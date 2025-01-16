@@ -282,6 +282,14 @@ func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []t
 	logTaskNames(finalPkgTasks, "package cataloger")
 	logTaskNames(finalFileTasks, "file cataloger")
 
+	if len(finalPkgTasks) == 0 {
+		log.Debug("no package catalogers selected")
+	}
+
+	if len(finalFileTasks) == 0 {
+		log.Debug("no file catalogers selected")
+	}
+
 	return finalPkgTasks, finalFileTasks, &selection, nil
 }
 

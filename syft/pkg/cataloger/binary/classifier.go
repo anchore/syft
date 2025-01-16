@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -74,9 +75,9 @@ func (cfg Classifier) MarshalJSON() ([]byte, error) {
 type EvidenceMatcher func(classifier Classifier, context matcherContext) ([]pkg.Package, error)
 
 type matcherContext struct {
-	resolver    file.Resolver
-	location    file.Location
-	getContents func(resolver matcherContext) ([]byte, error)
+	resolver  file.Resolver
+	location  file.Location
+	getReader func(resolver matcherContext) (unionreader.UnionReader, error)
 }
 
 func evidenceMatchers(matchers ...EvidenceMatcher) EvidenceMatcher {
@@ -124,12 +125,15 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 			return nil, fmt.Errorf("unable to compile rendered regex=%q: %w", patternBuf.String(), err)
 		}
 
-		contents, err := getContents(context)
+		contents, err := getReader(context)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
 		}
 
-		matchMetadata := internal.MatchNamedCaptureGroups(tmplPattern, string(contents))
+		matchMetadata, err := internal.MatchNamedCaptureGroupsFromReader(tmplPattern, contents)
+		if err != nil {
+			return nil, fmt.Errorf("unable to match version: %w", err)
+		}
 
 		p := newClassifierPackage(classifier, context.location, matchMetadata)
 		if p == nil {
@@ -143,12 +147,15 @@ func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 func FileContentsVersionMatcher(pattern string) EvidenceMatcher {
 	pat := regexp.MustCompile(pattern)
 	return func(classifier Classifier, context matcherContext) ([]pkg.Package, error) {
-		contents, err := getContents(context)
+		contents, err := getReader(context)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
 		}
 
-		matchMetadata := internal.MatchNamedCaptureGroups(pat, string(contents))
+		matchMetadata, err := internal.MatchNamedCaptureGroupsFromReader(pat, contents)
+		if err != nil {
+			return nil, fmt.Errorf("unable to match version: %w", err)
+		}
 
 		// Convert {major: 1, minor: 2, patch: 3} to "1.2.3"
 		_, versionOk := matchMetadata["version"]
@@ -183,14 +190,16 @@ func matchExcluding(matcher EvidenceMatcher, contentPatternsToExclude ...string)
 		nonMatchPatterns = append(nonMatchPatterns, regexp.MustCompile(p))
 	}
 	return func(classifier Classifier, context matcherContext) ([]pkg.Package, error) {
-		contents, err := getContents(context)
+		contents, err := getReader(context)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
 		}
-		for _, nonMatch := range nonMatchPatterns {
-			if nonMatch.Match(contents) {
-				return nil, nil
-			}
+		matches, err := internal.MatchAnyFromReader(contents, nonMatchPatterns...)
+		if err != nil {
+			return nil, fmt.Errorf("unable to match content: %w", err)
+		}
+		if matches {
+			return nil, nil
 		}
 		return matcher(classifier, context)
 	}
@@ -214,9 +223,9 @@ func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher Evide
 			}
 			for _, libraryLocation := range locations {
 				newResolver := matcherContext{
-					resolver:    context.resolver,
-					location:    libraryLocation,
-					getContents: context.getContents,
+					resolver:  context.resolver,
+					location:  libraryLocation,
+					getReader: context.getReader,
 				}
 				newResolver.location = libraryLocation
 				pkgs, err := sharedLibraryMatcher(classifier, newResolver)
@@ -253,23 +262,16 @@ func mustPURL(purl string) packageurl.PackageURL {
 	return p
 }
 
-func getContents(context matcherContext) ([]byte, error) {
-	if context.getContents != nil {
-		return context.getContents(context)
+func getReader(context matcherContext) (unionreader.UnionReader, error) {
+	if context.getReader != nil {
+		return context.getReader(context)
 	}
-	reader, err := context.resolver.FileContentsByLocation(context.location)
+	reader, err := context.resolver.FileContentsByLocation(context.location) //nolint:gocritic
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(reader, context.location.AccessPath)
 
-	// TODO: there may be room for improvement here, as this may use an excessive amount of memory. Alternate approach is to leverage a RuneReader.
-	contents, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get contents for file: %w", err)
-	}
-
-	return contents, nil
+	return unionreader.GetUnionReader(reader)
 }
 
 // singleCPE returns a []cpe.CPE with Source: Generated based on the cpe string or panics if the
@@ -287,14 +289,13 @@ func singleCPE(cpeString string, source ...cpe.Source) []cpe.CPE {
 // sharedLibraries returns a list of all shared libraries found within a binary, currently
 // supporting: elf, macho, and windows pe
 func sharedLibraries(context matcherContext) ([]string, error) {
-	contents, err := getContents(context)
+	contents, err := getReader(context)
 	if err != nil {
 		return nil, err
 	}
+	defer internal.CloseAndLogError(contents, context.location.RealPath)
 
-	r := bytes.NewReader(contents)
-
-	e, _ := elf.NewFile(r)
+	e, _ := elf.NewFile(contents)
 	if e != nil {
 		symbols, err := e.ImportedLibraries()
 		if err != nil {
@@ -302,8 +303,11 @@ func sharedLibraries(context matcherContext) ([]string, error) {
 		}
 		return symbols, nil
 	}
+	if _, err := contents.Seek(0, io.SeekStart); err != nil {
+		return nil, fmt.Errorf("unable to seek to beginning of file: %w", err)
+	}
 
-	m, _ := macho.NewFile(r)
+	m, _ := macho.NewFile(contents)
 	if m != nil {
 		symbols, err := m.ImportedLibraries()
 		if err != nil {
@@ -311,14 +315,20 @@ func sharedLibraries(context matcherContext) ([]string, error) {
 		}
 		return symbols, nil
 	}
+	if _, err := contents.Seek(0, io.SeekStart); err != nil {
+		return nil, fmt.Errorf("unable to seek to beginning of file: %w", err)
+	}
 
-	p, _ := pe.NewFile(r)
+	p, _ := pe.NewFile(contents)
 	if p != nil {
 		symbols, err := p.ImportedLibraries()
 		if err != nil {
 			log.Debugf("unable to read pe binary at: %s -- %s", context.location.RealPath, err)
 		}
 		return symbols, nil
+	}
+	if _, err := contents.Seek(0, io.SeekStart); err != nil {
+		return nil, fmt.Errorf("unable to seek to beginning of file: %w", err)
 	}
 
 	return nil, nil

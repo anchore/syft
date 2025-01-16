@@ -4,8 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/mholt/archiver/v3"
-
+	"github.com/anchore/archiver/v3"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/cataloging"
