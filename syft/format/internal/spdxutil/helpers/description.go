@@ -9,6 +9,8 @@ func Description(p pkg.Package) string {
 			return metadata.Description
 		case pkg.NpmPackage:
 			return metadata.Description
+		case pkg.RustCratesEnrichedEntry:
+			return metadata.Description
 		}
 	}
 	return ""

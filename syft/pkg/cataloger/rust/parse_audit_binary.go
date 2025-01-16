@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/microsoft/go-rustaudit"
 
@@ -16,8 +17,20 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+type rustAuditBinaryCataloger struct {
+	cratesResolver *rustCratesResolver
+	opts           CatalogerConfig
+}
+
+func newCargoAuditBinaryCataloger(opts CatalogerConfig) *rustAuditBinaryCataloger {
+	return &rustAuditBinaryCataloger{
+		cratesResolver: newCratesResolver(cargoAuditBinaryCatalogerName, opts),
+		opts:           opts,
+	}
+}
+
 // Catalog identifies executables then attempts to read Rust dependency information from them
-func parseAuditBinary(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *rustAuditBinaryCataloger) parseAuditBinary(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -26,9 +39,9 @@ func parseAuditBinary(_ context.Context, _ file.Resolver, _ *generic.Environment
 		return nil, nil, err
 	}
 
-	infos, err := parseAuditBinaryEntry(unionReader, reader.RealPath)
+	infos, err := c.parseAuditBinaryEntry(unionReader, reader.RealPath)
 	for _, versionInfo := range infos {
-		auditPkgs, auditRelationships := processAuditVersionInfo(reader.Location, versionInfo)
+		auditPkgs, auditRelationships := c.processAuditVersionInfo(reader.Location, versionInfo)
 		pkgs = append(pkgs, auditPkgs...)
 		relationships = append(relationships, auditRelationships...)
 	}
@@ -37,7 +50,7 @@ func parseAuditBinary(_ context.Context, _ file.Resolver, _ *generic.Environment
 }
 
 // scanFile scans file to try to report the Rust crate dependencies
-func parseAuditBinaryEntry(reader unionreader.UnionReader, filename string) ([]rustaudit.VersionInfo, error) {
+func (c *rustAuditBinaryCataloger) parseAuditBinaryEntry(reader unionreader.UnionReader, filename string) ([]rustaudit.VersionInfo, error) {
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
 	readers, err := unionreader.GetReaders(reader)
@@ -73,13 +86,28 @@ type auditPkgPair struct {
 	index   int
 }
 
-func processAuditVersionInfo(location file.Location, versionInfo rustaudit.VersionInfo) ([]pkg.Package, []artifact.Relationship) {
+func (c *rustAuditBinaryCataloger) processAuditVersionInfo(location file.Location, versionInfo rustaudit.VersionInfo) ([]pkg.Package, []artifact.Relationship) {
 	var pkgs []pkg.Package
 
 	// first pass: create packages for all runtime dependencies (skip dev and invalid dependencies)
 	pairsByOgIndex := make(map[int]auditPkgPair)
 	for idx, dep := range versionInfo.Packages {
-		p := newPackageFromAudit(&dep, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+		var p pkg.Package
+		if c.opts.UseCratesEnrichment {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.opts.CratesTimeout))
+			defer cancel()
+			cratesEnrichment, err := c.cratesResolver.ResolveCrate(ctx, dep.Name, dep.Version)
+			if err != nil {
+				log.Tracef("rust cataloger: failed to resolve crate %s/%s using crates.io: %v", dep.Name, dep.Version, err)
+				// fallback to not using the crates enriched package information.
+				p = newPackageFromAudit(&dep, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+				continue
+			}
+			p = newPackageWithEnrichment(&dep, cratesEnrichment, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+		} else {
+			p = newPackageFromAudit(&dep, location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+		}
+
 		pair := auditPkgPair{
 			rustPkg: dep,
 			index:   idx,
