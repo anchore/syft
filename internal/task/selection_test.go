@@ -24,42 +24,42 @@ func dummyTask(name string, tags ...string) Task {
 func createDummyPackageTasks() tasks {
 	return []Task{
 		// OS package installed catalogers
-		dummyTask("alpm-db-cataloger", "directory", "installed", "image", "os", "alpm", "archlinux"),
-		dummyTask("apk-db-cataloger", "directory", "installed", "image", "os", "apk", "alpine"),
-		dummyTask("dpkg-db-cataloger", "directory", "installed", "image", "os", "dpkg", "debian"),
-		dummyTask("portage-cataloger", "directory", "installed", "image", "os", "portage", "gentoo"),
-		dummyTask("rpm-db-cataloger", "directory", "installed", "image", "os", "rpm", "redhat"),
+		dummyTask("alpm-db-cataloger", "package", "directory", "installed", "image", "os", "alpm", "archlinux"),
+		dummyTask("apk-db-cataloger", "package", "directory", "installed", "image", "os", "apk", "alpine"),
+		dummyTask("dpkg-db-cataloger", "package", "directory", "installed", "image", "os", "dpkg", "debian"),
+		dummyTask("portage-cataloger", "package", "directory", "installed", "image", "os", "portage", "gentoo"),
+		dummyTask("rpm-db-cataloger", "package", "directory", "installed", "image", "os", "rpm", "redhat"),
 
 		// OS package declared catalogers
-		dummyTask("rpm-archive-cataloger", "declared", "directory", "os", "rpm", "redhat"),
+		dummyTask("rpm-archive-cataloger", "package", "declared", "directory", "os", "rpm", "redhat"),
 
 		// language-specific package installed catalogers
-		dummyTask("conan-info-cataloger", "installed", "image", "language", "cpp", "conan"),
-		dummyTask("javascript-package-cataloger", "installed", "image", "language", "javascript", "node"),
-		dummyTask("php-composer-installed-cataloger", "installed", "image", "language", "php", "composer"),
-		dummyTask("ruby-installed-gemspec-cataloger", "installed", "image", "language", "ruby", "gem", "gemspec"),
-		dummyTask("rust-cargo-lock-cataloger", "installed", "image", "language", "rust", "binary"),
+		dummyTask("conan-info-cataloger", "package", "installed", "image", "language", "cpp", "conan"),
+		dummyTask("javascript-package-cataloger", "package", "installed", "image", "language", "javascript", "node"),
+		dummyTask("php-composer-installed-cataloger", "package", "installed", "image", "language", "php", "composer"),
+		dummyTask("ruby-installed-gemspec-cataloger", "package", "installed", "image", "language", "ruby", "gem", "gemspec"),
+		dummyTask("rust-cargo-lock-cataloger", "package", "installed", "image", "language", "rust", "binary"),
 
 		// language-specific package declared catalogers
-		dummyTask("conan-cataloger", "declared", "directory", "language", "cpp", "conan"),
-		dummyTask("dart-pubspec-lock-cataloger", "declared", "directory", "language", "dart"),
-		dummyTask("dotnet-deps-cataloger", "declared", "directory", "language", "dotnet", "c#"),
-		dummyTask("elixir-mix-lock-cataloger", "declared", "directory", "language", "elixir"),
-		dummyTask("erlang-rebar-lock-cataloger", "declared", "directory", "language", "erlang"),
-		dummyTask("javascript-lock-cataloger", "declared", "directory", "language", "javascript", "node", "npm"),
+		dummyTask("conan-cataloger", "package", "declared", "directory", "language", "cpp", "conan"),
+		dummyTask("dart-pubspec-lock-cataloger", "package", "declared", "directory", "language", "dart"),
+		dummyTask("dotnet-deps-cataloger", "package", "declared", "directory", "language", "dotnet", "c#"),
+		dummyTask("elixir-mix-lock-cataloger", "package", "declared", "directory", "language", "elixir"),
+		dummyTask("erlang-rebar-lock-cataloger", "package", "declared", "directory", "language", "erlang"),
+		dummyTask("javascript-lock-cataloger", "package", "declared", "directory", "language", "javascript", "node", "npm"),
 
 		// language-specific package for both image and directory scans (but not necessarily declared)
-		dummyTask("dotnet-portable-executable-cataloger", "directory", "installed", "image", "language", "dotnet", "c#"),
-		dummyTask("python-installed-package-cataloger", "directory", "installed", "image", "language", "python"),
-		dummyTask("go-module-binary-cataloger", "directory", "installed", "image", "language", "go", "golang", "gomod", "binary"),
-		dummyTask("java-archive-cataloger", "directory", "installed", "image", "language", "java", "maven"),
-		dummyTask("graalvm-native-image-cataloger", "directory", "installed", "image", "language", "java"),
+		dummyTask("dotnet-portable-executable-cataloger", "package", "directory", "installed", "image", "language", "dotnet", "c#"),
+		dummyTask("python-installed-package-cataloger", "package", "directory", "installed", "image", "language", "python"),
+		dummyTask("go-module-binary-cataloger", "package", "directory", "installed", "image", "language", "go", "golang", "gomod", "binary"),
+		dummyTask("java-archive-cataloger", "package", "directory", "installed", "image", "language", "java", "maven"),
+		dummyTask("graalvm-native-image-cataloger", "package", "directory", "installed", "image", "language", "java"),
 
 		// other package catalogers
-		dummyTask("binary-cataloger", "declared", "directory", "image", "binary"),
-		dummyTask("github-actions-usage-cataloger", "declared", "directory", "github", "github-actions"),
-		dummyTask("github-action-workflow-usage-cataloger", "declared", "directory", "github", "github-actions"),
-		dummyTask("sbom-cataloger", "declared", "directory", "image", "sbom"),
+		dummyTask("binary-cataloger", "package", "declared", "directory", "image", "binary"),
+		dummyTask("github-actions-usage-cataloger", "package", "declared", "directory", "github", "github-actions"),
+		dummyTask("github-action-workflow-usage-cataloger", "package", "declared", "directory", "github", "github-actions"),
+		dummyTask("sbom-cataloger", "package", "declared", "directory", "image", "sbom"),
 	}
 }
 
@@ -529,6 +529,94 @@ func TestSelectInGroups(t *testing.T) {
 			wantRequest: cataloging.SelectionRequest{
 				DefaultNamesOrTags: []string{"image", "file"},
 				SubSelectTags:      []string{"os"},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "select only file tasks (default)",
+			taskGroups: [][]Task{
+				createDummyPackageTasks(),
+				createDummyFileTasks(),
+			},
+			selectionReq: cataloging.NewSelectionRequest().WithDefaults("file"),
+			wantGroups: [][]string{
+				// filtered based on the request
+				nil,
+				{
+					// this is the original, untouched file task list
+					"file-content-cataloger",
+					"file-metadata-cataloger",
+					"file-digest-cataloger",
+					"file-executable-cataloger",
+				},
+			},
+			wantTokens: map[string]TokenSelection{
+				// files
+				"file-content-cataloger":    newTokenSelection([]string{"file"}, nil),
+				"file-digest-cataloger":     newTokenSelection([]string{"file"}, nil),
+				"file-executable-cataloger": newTokenSelection([]string{"file"}, nil),
+				"file-metadata-cataloger":   newTokenSelection([]string{"file"}, nil),
+			},
+			wantRequest: cataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"file"},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "select only file tasks (via removal of package)",
+			taskGroups: [][]Task{
+				createDummyPackageTasks(),
+				createDummyFileTasks(),
+			},
+			selectionReq: cataloging.NewSelectionRequest().WithDefaults("file", "image").WithRemovals("package"),
+			wantGroups: [][]string{
+				// filtered based on the request
+				nil,
+				{
+					// this is the original, untouched file task list
+					"file-content-cataloger",
+					"file-metadata-cataloger",
+					"file-digest-cataloger",
+					"file-executable-cataloger",
+				},
+			},
+			wantTokens: map[string]TokenSelection{
+				// packages
+				"alpm-db-cataloger":                      newTokenSelection([]string{"image"}, []string{"package"}),
+				"apk-db-cataloger":                       newTokenSelection([]string{"image"}, []string{"package"}),
+				"binary-cataloger":                       newTokenSelection([]string{"image"}, []string{"package"}),
+				"conan-info-cataloger":                   newTokenSelection([]string{"image"}, []string{"package"}),
+				"dotnet-portable-executable-cataloger":   newTokenSelection([]string{"image"}, []string{"package"}),
+				"dpkg-db-cataloger":                      newTokenSelection([]string{"image"}, []string{"package"}),
+				"go-module-binary-cataloger":             newTokenSelection([]string{"image"}, []string{"package"}),
+				"graalvm-native-image-cataloger":         newTokenSelection([]string{"image"}, []string{"package"}),
+				"java-archive-cataloger":                 newTokenSelection([]string{"image"}, []string{"package"}),
+				"javascript-package-cataloger":           newTokenSelection([]string{"image"}, []string{"package"}),
+				"php-composer-installed-cataloger":       newTokenSelection([]string{"image"}, []string{"package"}),
+				"portage-cataloger":                      newTokenSelection([]string{"image"}, []string{"package"}),
+				"python-installed-package-cataloger":     newTokenSelection([]string{"image"}, []string{"package"}),
+				"rpm-db-cataloger":                       newTokenSelection([]string{"image"}, []string{"package"}),
+				"ruby-installed-gemspec-cataloger":       newTokenSelection([]string{"image"}, []string{"package"}),
+				"rust-cargo-lock-cataloger":              newTokenSelection([]string{"image"}, []string{"package"}),
+				"sbom-cataloger":                         newTokenSelection([]string{"image"}, []string{"package"}),
+				"rpm-archive-cataloger":                  newTokenSelection(nil, []string{"package"}),
+				"conan-cataloger":                        newTokenSelection(nil, []string{"package"}),
+				"dart-pubspec-lock-cataloger":            newTokenSelection(nil, []string{"package"}),
+				"dotnet-deps-cataloger":                  newTokenSelection(nil, []string{"package"}),
+				"elixir-mix-lock-cataloger":              newTokenSelection(nil, []string{"package"}),
+				"erlang-rebar-lock-cataloger":            newTokenSelection(nil, []string{"package"}),
+				"javascript-lock-cataloger":              newTokenSelection(nil, []string{"package"}),
+				"github-actions-usage-cataloger":         newTokenSelection(nil, []string{"package"}),
+				"github-action-workflow-usage-cataloger": newTokenSelection(nil, []string{"package"}),
+				// files
+				"file-content-cataloger":    newTokenSelection([]string{"file"}, nil),
+				"file-digest-cataloger":     newTokenSelection([]string{"file"}, nil),
+				"file-executable-cataloger": newTokenSelection([]string{"file"}, nil),
+				"file-metadata-cataloger":   newTokenSelection([]string{"file"}, nil),
+			},
+			wantRequest: cataloging.SelectionRequest{
+				DefaultNamesOrTags: []string{"file", "image"},
+				RemoveNamesOrTags:  []string{"package"},
 			},
 			wantErr: assert.NoError,
 		},

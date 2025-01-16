@@ -61,6 +61,11 @@ func Select(allTasks []Task, selectionRequest cataloging.SelectionRequest) ([]Ta
 }
 
 func _select(allTasks []Task, selectionRequest cataloging.SelectionRequest) ([]Task, Selection, error) {
+	if selectionRequest.IsEmpty() {
+		selection := newSelection()
+		selection.Request = selectionRequest
+		return nil, selection, nil
+	}
 	nodes := newExpressionsFromSelectionRequest(newExpressionContext(allTasks), selectionRequest)
 
 	finalTasks, selection := selectByExpressions(allTasks, nodes)

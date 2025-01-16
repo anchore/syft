@@ -96,7 +96,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				Requested: cataloging.SelectionRequest{
 					DefaultNamesOrTags: []string{"image", "file"},
 				},
-				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
+				Used: flatten(pkgCatalogerNamesWithTagOrName(t, "image"), fileCatalogerNames()),
 			},
 			wantErr: require.NoError,
 		},
@@ -115,7 +115,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				Requested: cataloging.SelectionRequest{
 					DefaultNamesOrTags: []string{"directory", "file"},
 				},
-				Used: pkgCatalogerNamesWithTagOrName(t, "directory"),
+				Used: flatten(pkgCatalogerNamesWithTagOrName(t, "directory"), fileCatalogerNames()),
 			},
 			wantErr: require.NoError,
 		},
@@ -135,7 +135,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				Requested: cataloging.SelectionRequest{
 					DefaultNamesOrTags: []string{"directory", "file"},
 				},
-				Used: pkgCatalogerNamesWithTagOrName(t, "directory"),
+				Used: flatten(pkgCatalogerNamesWithTagOrName(t, "directory"), fileCatalogerNames()),
 			},
 			wantErr: require.NoError,
 		},
@@ -155,7 +155,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 					DefaultNamesOrTags: []string{"image", "file"},
 					RemoveNamesOrTags:  []string{"digest"},
 				},
-				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
+				Used: flatten(pkgCatalogerNamesWithTagOrName(t, "image"), fileCatalogerNames("file-metadata", "content", "binary-metadata")),
 			},
 			wantErr: require.NoError,
 		},
@@ -197,7 +197,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				Requested: cataloging.SelectionRequest{
 					DefaultNamesOrTags: []string{"image", "file"},
 				},
-				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
+				Used: flatten(pkgCatalogerNamesWithTagOrName(t, "image"), fileCatalogerNames()),
 			},
 			wantErr: require.NoError,
 		},
@@ -218,7 +218,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				Requested: cataloging.SelectionRequest{
 					DefaultNamesOrTags: []string{"image", "file"},
 				},
-				Used: addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "persistent"),
+				Used: flatten(addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "persistent"), fileCatalogerNames()),
 			},
 			wantErr: require.NoError,
 		},
@@ -239,7 +239,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				Requested: cataloging.SelectionRequest{
 					DefaultNamesOrTags: []string{"directory", "file"},
 				},
-				Used: addTo(pkgCatalogerNamesWithTagOrName(t, "directory"), "persistent"),
+				Used: flatten(addTo(pkgCatalogerNamesWithTagOrName(t, "directory"), "persistent"), fileCatalogerNames()),
 			},
 			wantErr: require.NoError,
 		},
@@ -261,7 +261,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 					DefaultNamesOrTags: []string{"image", "file"},
 					SubSelectTags:      []string{"javascript"},
 				},
-				Used: addTo(pkgIntersect("image", "javascript"), "persistent"),
+				Used: flatten(addTo(pkgIntersect("image", "javascript"), "persistent"), fileCatalogerNames()),
 			},
 			wantErr: require.NoError,
 		},
@@ -282,7 +282,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				Requested: cataloging.SelectionRequest{
 					DefaultNamesOrTags: []string{"image", "file"},
 				},
-				Used: addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "user-provided"),
+				Used: flatten(addTo(pkgCatalogerNamesWithTagOrName(t, "image"), "user-provided"), fileCatalogerNames()),
 			},
 			wantErr: require.NoError,
 		},
@@ -303,7 +303,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				Requested: cataloging.SelectionRequest{
 					DefaultNamesOrTags: []string{"image", "file"},
 				},
-				Used: pkgCatalogerNamesWithTagOrName(t, "image"),
+				Used: flatten(pkgCatalogerNamesWithTagOrName(t, "image"), fileCatalogerNames()),
 			},
 			wantErr: require.NoError,
 		},
@@ -411,6 +411,15 @@ topLoop:
 
 	sort.Strings(names)
 	return names
+}
+
+func flatten(lists ...[]string) []string {
+	var final []string
+	for _, lst := range lists {
+		final = append(final, lst...)
+	}
+	sort.Strings(final)
+	return final
 }
 
 func relationshipCatalogerNames() []string {

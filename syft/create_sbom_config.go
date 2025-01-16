@@ -218,9 +218,13 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 		taskGroups...,
 	)
 
+	var allTasks []task.Task
+	allTasks = append(allTasks, pkgTasks...)
+	allTasks = append(allTasks, fileTasks...)
+
 	return taskGroups, &catalogerManifest{
 		Requested: selectionEvidence.Request,
-		Used:      formatTaskNames(pkgTasks),
+		Used:      formatTaskNames(allTasks),
 	}, nil
 }
 
@@ -282,13 +286,17 @@ func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []t
 	logTaskNames(finalPkgTasks, "package cataloger")
 	logTaskNames(finalFileTasks, "file cataloger")
 
+	if len(finalPkgTasks) == 0 && len(finalFileTasks) == 0 {
+		return nil, nil, nil, fmt.Errorf("no catalogers selected")
+	}
+
 	if len(finalPkgTasks) == 0 {
 		log.Debug("no package catalogers selected")
 	}
 
 	if len(finalFileTasks) == 0 {
 		if c.Files.Selection != file.NoFilesSelection {
-			log.Warnf("no file catalogers selected but file selection is configured as %q. This may be unintentional.", c.Files.Selection)
+			log.Warnf("no file catalogers selected but file selection is configured as %q (this may be unintentional)", c.Files.Selection)
 		} else {
 			log.Debug("no file catalogers selected")
 		}

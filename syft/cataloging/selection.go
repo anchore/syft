@@ -48,6 +48,10 @@ func (s SelectionRequest) WithRemovals(nameOrTags ...string) SelectionRequest {
 	return s
 }
 
+func (s SelectionRequest) IsEmpty() bool {
+	return len(s.AddNames) == 0 && len(s.RemoveNamesOrTags) == 0 && len(s.SubSelectTags) == 0 && len(s.DefaultNamesOrTags) == 0
+}
+
 func cleanSelection(tags []string) []string {
 	var cleaned []string
 	for _, tag := range tags {

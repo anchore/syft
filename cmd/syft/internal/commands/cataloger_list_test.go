@@ -180,9 +180,8 @@ Selection expressions: 0
 				return c
 			}(),
 			want: `
-Default selections: 2
+Default selections: 1
   • 'image'
-  • 'file'
 Selection expressions: 6
   • 'b' (intersect)
   • '-directory' (remove)
