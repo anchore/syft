@@ -89,7 +89,7 @@ func TestParsePubspecLock(t *testing.T) {
 		{
 			Name:      "key_binder",
 			Version:   "1.11.20",
-			PURL:      "pkg:pub/key_binder@1.11.20?vcs_url=git%40github.com:Workiva/key_binder.git%403f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
+			PURL:      "pkg:pub/key_binder@1.11.20?vcs_url=git%40github.com%3AWorkiva%2Fkey_binder.git%403f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
 			Locations: fixtureLocationSet,
 			Language:  pkg.Dart,
 			Type:      pkg.DartPubPkg,

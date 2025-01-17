@@ -7,7 +7,7 @@
     "version": "v0.42.0-bogus"
   },
   "metadata": {
-    "syft:distro": "pkg:generic/debian@1.2.3?like=like!"
+    "syft:distro": "pkg:generic/debian@1.2.3?like=like%21"
   },
   "manifests": {
     "user-image-input:/somefile-1.txt": {
