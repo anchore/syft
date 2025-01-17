@@ -71,8 +71,6 @@ func parsePubspecLock(_ context.Context, _ file.Resolver, _ *generic.Environment
 
 	var names []string
 	for name, pkg := range p.Packages {
-		names = append(names, name)
-
 		if pkg.Source == "sdk" && pkg.Version == "0.0.0" {
 			// Packages that are delivered as part of an SDK (e.g. Flutter) have their
 			// version set to "0.0.0" in the package definition. The actual version
@@ -85,13 +83,17 @@ func parsePubspecLock(_ context.Context, _ file.Resolver, _ *generic.Environment
 			sdkVersion, err := p.getSdkVersion(sdkName)
 
 			if err != nil {
-				log.Infof("Failed to resolve %s SDK version for package %s: %v", sdkName, name, err)
+				log.Tracef("failed to resolve %s SDK version for package %s: %v", sdkName, name, err)
+				continue
+
 			} else {
-				log.Debugf("Resolved %s SDK version for package %s to %s", sdkName, name, sdkVersion)
+				log.Tracef("resolved %s SDK version for package %s to %s", sdkName, name, sdkVersion)
 				pkg.Version = sdkVersion
 				p.Packages[name] = pkg
 			}
 		}
+
+		names = append(names, name)
 	}
 
 	// always ensure there is a stable ordering of packages

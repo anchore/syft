@@ -118,17 +118,20 @@ func Test_corruptPubspecLock(t *testing.T) {
 func Test_missingSdkEntryPubspecLock(t *testing.T) {
 	fixture := "test-fixtures/missing-sdk/pubspec.lock"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	// SDK version is missing, so flutter version cannot be determined and
+	// is ignored, expecting args as only package in the list as a result.
 	expected := []pkg.Package{
 		{
-			Name:      "flutter",
-			Version:   "0.0.0",
-			PURL:      "pkg:pub/flutter@0.0.0",
+			Name:      "args",
+			Version:   "1.6.0",
+			PURL:      "pkg:pub/args@1.6.0",
 			Locations: fixtureLocationSet,
 			Language:  pkg.Dart,
 			Type:      pkg.DartPubPkg,
 			Metadata: pkg.DartPubspecLockEntry{
-				Name:    "flutter",
-				Version: "0.0.0",
+				Name:    "args",
+				Version: "1.6.0",
 			},
 		},
 	}
@@ -142,17 +145,20 @@ func Test_missingSdkEntryPubspecLock(t *testing.T) {
 func Test_invalidSdkEntryPubspecLock(t *testing.T) {
 	fixture := "test-fixtures/invalid-sdk/pubspec.lock"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	// SDK version is invalid, so flutter version cannot be determined and
+	// is ignored, expecting args as only package in the list as a result.
 	expected := []pkg.Package{
 		{
-			Name:      "flutter",
-			Version:   "0.0.0",
-			PURL:      "pkg:pub/flutter@0.0.0",
+			Name:      "args",
+			Version:   "1.6.0",
+			PURL:      "pkg:pub/args@1.6.0",
 			Locations: fixtureLocationSet,
 			Language:  pkg.Dart,
 			Type:      pkg.DartPubPkg,
 			Metadata: pkg.DartPubspecLockEntry{
-				Name:    "flutter",
-				Version: "0.0.0",
+				Name:    "args",
+				Version: "1.6.0",
 			},
 		},
 	}
