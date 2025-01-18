@@ -68,6 +68,8 @@ func Test_LicenseSearch(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 
+	localVendorDir := filepath.Join(wd, "test-fixtures", "licenses-vendor")
+
 	licenseScanner := licenses.TestingOnlyScanner()
 
 	tests := []struct {
@@ -165,6 +167,51 @@ func Test_LicenseSearch(t *testing.T) {
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
 				URLs:           []string{server.URL + "/github.com/CapORG/CapProject/@v/v4.111.5.zip#" + loc2.RealPath},
+				Locations:      file.NewLocationSet(),
+			}},
+		},
+		{
+			name:    "github.com/someorg/somename",
+			version: "v0.3.2",
+			config: CatalogerConfig{
+				SearchLocalVendorLicenses: true,
+				LocalVendorDir:            localVendorDir,
+			},
+			expected: []pkg.License{{
+				Value:          "Apache-2.0",
+				SPDXExpression: "Apache-2.0",
+				Type:           license.Concluded,
+				URLs:           []string{"file://$GO_VENDOR/github.com/someorg/somename/LICENSE"},
+				Locations:      file.NewLocationSet(),
+			}},
+		},
+		{
+			name:    "github.com/CapORG/CapProject",
+			version: "v4.111.5",
+			config: CatalogerConfig{
+				SearchLocalVendorLicenses: true,
+				LocalVendorDir:            localVendorDir,
+			},
+			expected: []pkg.License{{
+				Value:          "MIT",
+				SPDXExpression: "MIT",
+				Type:           license.Concluded,
+				URLs:           []string{"file://$GO_VENDOR/github.com/!cap!o!r!g/!cap!project/LICENSE.txt"},
+				Locations:      file.NewLocationSet(),
+			}},
+		},
+		{
+			name:    "github.com/someorg/strangelicense",
+			version: "v1.2.3",
+			config: CatalogerConfig{
+				SearchLocalVendorLicenses: true,
+				LocalVendorDir:            localVendorDir,
+			},
+			expected: []pkg.License{{
+				Value:          "Apache-2.0",
+				SPDXExpression: "Apache-2.0",
+				Type:           license.Concluded,
+				URLs:           []string{"file://$GO_VENDOR/github.com/someorg/strangelicense/LiCeNsE.tXt"},
 				Locations:      file.NewLocationSet(),
 			}},
 		},
