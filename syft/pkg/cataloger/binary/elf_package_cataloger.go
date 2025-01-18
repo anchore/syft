@@ -28,20 +28,22 @@ type elfPackageCataloger struct {
 // For example, fedora includes an ELF section header as a prefix to the JSON payload: https://github.com/anchore/syft/issues/2713
 
 type elfBinaryPackageNotes struct {
-	Name                                string `json:"name"`
-	Version                             string `json:"version"`
-	PURL                                string `json:"purl"`
-	CPE                                 string `json:"cpe"`
+	elfPackageCore `json:",inline"`
+	Dependencies   []elfPackageCore `json:"dependencies"`
+}
+
+type elfPackageCore struct {
+	elfPackageKey                       `json:",inline"`
 	License                             string `json:"license"`
 	pkg.ELFBinaryPackageNoteJSONPayload `json:",inline"`
 	Location                            file.Location `json:"-"`
 }
 
 type elfPackageKey struct {
-	Name    string
-	Version string
-	PURL    string
-	CPE     string
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	PURL    string `json:"purl"`
+	CPE     string `json:"cpe"`
 }
 
 func NewELFPackageCataloger() pkg.Cataloger {
@@ -77,6 +79,7 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 	// we do this in a second pass since it is possible that we have multiple ELF binaries with the same name and version
 	// which means the set of binaries collectively represent a single logical package.
 	var pkgs []pkg.Package
+	var relationships []artifact.Relationship
 	for _, notes := range notesByLocation {
 		noteLocations := file.NewLocationSet()
 		for _, note := range notes {
@@ -84,13 +87,15 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 		}
 
 		// create a package for each unique name/version pair (based on the first note found)
-		pkgs = append(pkgs, newELFPackage(notes[0], noteLocations))
+		ps, rs := newELFPackages(notes[0], noteLocations)
+		pkgs = append(pkgs, ps...)
+		relationships = append(relationships, rs...)
 	}
 
 	// why not return relationships? We have an executable cataloger that will note the dynamic libraries imported by
 	// each binary. After all files and packages are processed there is a final task that creates package-to-package
 	// and package-to-file relationships based on the dynamic libraries imported by each binary.
-	return pkgs, nil, errs
+	return pkgs, relationships, errs
 }
 
 func parseElfPackageNotes(resolver file.Resolver, location file.Location, c *elfPackageCataloger) (*elfBinaryPackageNotes, elfPackageKey, error) {
@@ -115,13 +120,7 @@ func parseElfPackageNotes(resolver file.Resolver, location file.Location, c *elf
 	}
 
 	notes.Location = location
-	key := elfPackageKey{
-		Name:    notes.Name,
-		Version: notes.Version,
-		PURL:    notes.PURL,
-		CPE:     notes.CPE,
-	}
-	return notes, key, nil
+	return notes, notes.elfPackageKey, nil
 }
 
 func (c *elfPackageCataloger) parseElfNotes(reader file.LocationReadCloser) (*elfBinaryPackageNotes, error) {

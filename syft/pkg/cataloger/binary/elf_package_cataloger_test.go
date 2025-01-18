@@ -5,13 +5,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 func Test_ELF_Package_Cataloger(t *testing.T) {
-
 	cases := []struct {
 		name     string
 		fixture  string
@@ -34,7 +34,7 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.License{Value: "MIT", SPDXExpression: "MIT", Type: "declared"},
 					),
-
+					CPEs: []cpe.CPE{cpe.Must("cpe:/o:syft:syftsys_testfixture_syfttestfixture:0.01", cpe.DeclaredSource)},
 					Type: pkg.BinaryPkg,
 					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 						Type:       "testfixture",
@@ -56,6 +56,7 @@ func Test_ELF_Package_Cataloger(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.License{Value: "MIT", SPDXExpression: "MIT", Type: "declared"},
 					),
+					CPEs: []cpe.CPE{cpe.Must("cpe:/o:syft:syftsys_testfixture_syfttestfixture:0.01", cpe.DeclaredSource)},
 					Type: pkg.BinaryPkg,
 					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
 						Type:       "testfixture",

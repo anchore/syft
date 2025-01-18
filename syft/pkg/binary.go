@@ -23,7 +23,7 @@ type ELFBinaryPackageNoteJSONPayload struct {
 	// Architecture of the binary package (e.g. "amd64", "arm", etc.)
 	Architecture string `json:"architecture,omitempty"`
 
-	// OS CPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)
+	// OS CPE is the common platform enumeration for the OS environment for the package, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)
 	OSCPE string `json:"osCPE,omitempty"`
 
 	// OS is the OS name, typically corresponding to ID in os-release (e.g. "fedora")
