@@ -55,7 +55,16 @@ func newGoLicenseResolver(catalogerName string, opts CatalogerConfig) goLicenseR
 
 	var localVendorDir fs.FS
 	if opts.SearchLocalVendorLicenses {
-		localVendorDir = os.DirFS(opts.LocalVendorDir)
+		vendorDir := opts.LocalVendorDir
+		if vendorDir == "" {
+			wd, err := os.Getwd()
+			if err != nil {
+				log.Warn("unable to get CWD while resolving the local go vendor dir: %v", err)
+			} else {
+				vendorDir = filepath.Join(wd, "vendor")
+			}
+		}
+		localVendorDir = os.DirFS(vendorDir)
 	}
 
 	return goLicenseResolver{

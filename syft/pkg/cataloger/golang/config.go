@@ -44,7 +44,6 @@ func DefaultCatalogerConfig() CatalogerConfig {
 	g := CatalogerConfig{
 		MainModuleVersion: DefaultMainModuleVersionConfig(),
 		LocalModCacheDir:  defaultGoModDir(),
-		LocalVendorDir:    defaultGoVendorDir(),
 	}
 
 	// first process the proxy settings
@@ -88,10 +87,6 @@ func defaultGoModDir() string {
 	}
 
 	return filepath.Join(goPath, "pkg", "mod")
-}
-
-func defaultGoVendorDir() string {
-	return "./vendor"
 }
 
 func DefaultMainModuleVersionConfig() MainModuleVersionConfig {
