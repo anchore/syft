@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
@@ -267,7 +268,8 @@ func (c *CreateSBOMConfig) packageTasks(src source.Description) ([]task.Task, *t
 	finalTasks = append(finalTasks, persistentTasks...)
 
 	if len(finalTasks) == 0 {
-		return nil, nil, fmt.Errorf("no catalogers selected")
+		log.Warn("no catalogers selected")
+		return finalTasks, &selection, nil
 	}
 
 	return finalTasks, &selection, nil

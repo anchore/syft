@@ -26,7 +26,7 @@ tools:
   # used for linting
   - name: golangci-lint
     version:
-      want: v1.62.2
+      want: v1.63.4
     method: github-release
     with:
       repo: golangci/golangci-lint
@@ -58,7 +58,7 @@ tools:
   # used to release all artifacts
   - name: goreleaser
     version:
-      want: v2.4.8
+      want: v2.5.1
     method: github-release
     with:
       repo: goreleaser/goreleaser
@@ -111,7 +111,7 @@ tools:
   # used for triggering a release
   - name: gh
     version:
-      want: v2.63.2
+      want: v2.65.0
     method: github-release
     with:
       repo: cli/cli
@@ -119,7 +119,7 @@ tools:
   # used to upload test fixture cache
   - name: oras
     version:
-      want: v1.2.1
+      want: v1.2.2
     method: github-release
     with:
       repo: oras-project/oras
@@ -127,7 +127,7 @@ tools:
   # used to upload test fixture cache
   - name: yq
     version:
-      want: v4.44.6
+      want: v4.45.1
     method: github-release
     with:
       repo: mikefarah/yq

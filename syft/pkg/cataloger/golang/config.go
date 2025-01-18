@@ -74,15 +74,6 @@ func DefaultCatalogerConfig() CatalogerConfig {
 	return g
 }
 
-func defaultGoVendorDir() string {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return ""
-	}
-
-	return filepath.Join(cwd, "vendor")
-}
-
 // defaultGoModDir returns $GOPATH/pkg/mod or $HOME/go/pkg/mod based on environment variables available
 func defaultGoModDir() string {
 	goPath := os.Getenv("GOPATH")
@@ -97,6 +88,10 @@ func defaultGoModDir() string {
 	}
 
 	return filepath.Join(goPath, "pkg", "mod")
+}
+
+func defaultGoVendorDir() string {
+	return "./vendor"
 }
 
 func DefaultMainModuleVersionConfig() MainModuleVersionConfig {

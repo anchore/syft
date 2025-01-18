@@ -54,7 +54,7 @@ func newGoLicenseResolver(catalogerName string, opts CatalogerConfig) goLicenseR
 	}
 
 	var localVendorDir fs.FS
-	if opts.SearchLocalVendorLicenses && opts.LocalVendorDir != "" {
+	if opts.SearchLocalVendorLicenses {
 		localVendorDir = os.DirFS(opts.LocalVendorDir)
 	}
 
@@ -87,46 +87,60 @@ func remotesForModule(proxies []string, noProxy []string, module string) []strin
 	return proxies
 }
 
-func (c *goLicenseResolver) getLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, moduleName, moduleVersion string) ([]pkg.License, error) {
+func (c *goLicenseResolver) getLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, moduleName, moduleVersion string) []pkg.License {
 	// search the scan target first, ignoring local and remote sources
 	goLicenses, err := c.findLicensesInSource(ctx, scanner, resolver,
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
-	if err != nil || len(goLicenses) > 0 {
-		return toPkgLicenses(goLicenses), err
+	if err != nil {
+		log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Trace("unable to read golang licenses from source")
+	}
+	if len(goLicenses) > 0 {
+		return toPkgLicenses(goLicenses)
 	}
 
 	// look in the local host mod directory...
 	if c.opts.SearchLocalModCacheLicenses {
-		goLicenses, err = c.getLicensesFromLocal(ctx, scanner, c.localModCacheDir, moduleDirCache(moduleName, moduleVersion))
-		if err != nil || len(goLicenses) > 0 {
-			return toPkgLicenses(goLicenses), err
+		goLicenses, err = c.getLicensesFromLocal(ctx, scanner, moduleName, moduleVersion)
+		if err != nil {
+			log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Trace("unable to read golang licenses local")
+		}
+		if len(goLicenses) > 0 {
+			return toPkgLicenses(goLicenses)
 		}
 	}
 
 	// look in the local vendor directory...
 	if c.opts.SearchLocalVendorLicenses {
-		goLicenses, err = c.getLicensesFromLocal(ctx, scanner, c.localVendorDir, moduleDirVendor(moduleName))
-		if err != nil || len(goLicenses) > 0 {
-			return toPkgLicenses(goLicenses), err
+		goLicenses, err = c.getLicensesFromLocalVendor(ctx, scanner, moduleName)
+		if err != nil {
+			log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Trace("unable to read golang licenses vendor")
+		}
+		if len(goLicenses) > 0 {
+			return toPkgLicenses(goLicenses)
 		}
 	}
 
 	// download from remote sources
 	if c.opts.SearchRemoteLicenses {
 		goLicenses, err = c.getLicensesFromRemote(ctx, scanner, moduleName, moduleVersion)
+		if err != nil {
+			log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Debug("unable to read golang licenses remote")
+		}
 	}
 
-	return toPkgLicenses(goLicenses), err
+	return toPkgLicenses(goLicenses)
 }
 
-func (c *goLicenseResolver) getLicensesFromLocal(ctx context.Context, scanner licenses.Scanner, moduleDir fs.FS, moduleSubdir string) ([]goLicense, error) {
-	if moduleDir == nil {
+func (c *goLicenseResolver) getLicensesFromLocal(ctx context.Context, scanner licenses.Scanner, moduleName, moduleVersion string) ([]goLicense, error) {
+	if c.localModCacheDir == nil {
 		return nil, nil
 	}
 
+	subdir := moduleDir(moduleName, moduleVersion)
+
 	// get the local subdirectory containing the specific go module
-	dir, err := fs.Sub(moduleDir, moduleSubdir)
+	dir, err := fs.Sub(c.localModCacheDir, subdir)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +148,26 @@ func (c *goLicenseResolver) getLicensesFromLocal(ctx context.Context, scanner li
 	// if we're running against a directory on the filesystem, it may not include the
 	// user's homedir / GOPATH, so we defer to using the localModCacheResolver
 	// we use $GOPATH/pkg/mod to avoid leaking information about the user's system
-	return c.findLicensesInFS(ctx, scanner, "file://$GOPATH/pkg/mod/"+moduleSubdir+"/", dir)
+	return c.findLicensesInFS(ctx, scanner, "file://$GOPATH/pkg/mod/"+subdir+"/", dir)
+}
+
+func (c *goLicenseResolver) getLicensesFromLocalVendor(ctx context.Context, scanner licenses.Scanner, moduleName string) ([]goLicense, error) {
+	if c.localVendorDir == nil {
+		return nil, nil
+	}
+
+	subdir := processCaps(moduleName)
+
+	// get the local subdirectory containing the specific go module
+	dir, err := fs.Sub(c.localVendorDir, subdir)
+	if err != nil {
+		return nil, err
+	}
+
+	// if we're running against a directory on the filesystem, it may not include the
+	// user's homedir / GOPATH, so we defer to using the localModCacheResolver
+	// we use $GOPATH/pkg/mod to avoid leaking information about the user's system
+	return c.findLicensesInFS(ctx, scanner, "file://$GO_VENDOR/"+subdir+"/", dir)
 }
 
 func (c *goLicenseResolver) getLicensesFromRemote(ctx context.Context, scanner licenses.Scanner, moduleName, moduleVersion string) ([]goLicense, error) {
@@ -234,12 +267,8 @@ func (c *goLicenseResolver) parseLicenseFromLocation(ctx context.Context, scanne
 	return out, nil
 }
 
-func moduleDirCache(moduleName, moduleVersion string) string {
+func moduleDir(moduleName, moduleVersion string) string {
 	return fmt.Sprintf("%s@%s", processCaps(moduleName), moduleVersion)
-}
-
-func moduleDirVendor(moduleName string) string {
-	return processCaps(moduleName)
 }
 
 func requireCollection[T any](licenses []T) []T {
