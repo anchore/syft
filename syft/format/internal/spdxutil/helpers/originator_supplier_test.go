@@ -372,6 +372,14 @@ func Test_OriginatorSupplier(t *testing.T) {
 			originator: "",
 			supplier:   "",
 		},
+		{
+			name: "from terraform lock",
+			input: pkg.Package{
+				Metadata: pkg.TerraformLockProviderEntry{},
+			},
+			originator: "",
+			supplier:   "",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

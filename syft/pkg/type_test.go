@@ -128,7 +128,7 @@ func TestTypeFromPURL(t *testing.T) {
 	}
 
 	// testing microsoft packages and jenkins-plugins and custom binary type
-	// is not valid for purl at this time
+	// and terraform types is not valid for purl at this time
 	expectedTypes.Remove(string(KbPkg))
 	expectedTypes.Remove(string(JenkinsPluginPkg))
 	expectedTypes.Remove(string(PortagePkg))
@@ -136,6 +136,7 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(LinuxKernelModulePkg))
 	expectedTypes.Remove(string(GithubActionPkg), string(GithubActionWorkflowPkg))
 	expectedTypes.Remove(string(WordpressPluginPkg))
+	expectedTypes.Remove(string(TerraformPkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {
