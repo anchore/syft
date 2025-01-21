@@ -234,6 +234,9 @@
         },
         "version": {
           "type": "string"
+        },
+        "path": {
+          "type": "string"
         }
       },
       "type": "object",
@@ -242,7 +245,8 @@
         "arch",
         "distro",
         "revision",
-        "version"
+        "version",
+        "path"
       ]
     },
     "CConanFileEntry": {
