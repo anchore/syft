@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 
-	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -41,8 +40,9 @@ func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environme
 			Licenses:  pkg.NewLicenseSet(), // TODO: license could be found in .terraform/providers/${name}/${version}/${arch}/LICENSE.txt
 			Language:  pkg.Go,
 			Type:      pkg.TerraformPkg,
-			PURL:      packageurl.NewPackageURL(packageurl.TypeTerraform, "", provider.URL, provider.Version, nil, "").String(),
 			Metadata:  provider,
+			// TODO: PURL omitted from package creation until the following issue resolved
+			// https://github.com/package-url/purl-spec/issues/369
 		}
 		p.SetID()
 
