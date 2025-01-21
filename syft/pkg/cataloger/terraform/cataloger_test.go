@@ -23,7 +23,6 @@ func TestTerraformCataloger(t *testing.T) {
 		Locations: file.NewLocationSet(location),
 		Type:      pkg.TerraformPkg,
 		Language:  pkg.Go,
-		PURL:      "pkg:terraform/registry.terraform.io/hashicorp/aws@5.72.1",
 		Metadata: pkg.TerraformLockProviderEntry{
 			URL:         "registry.terraform.io/hashicorp/aws",
 			Version:     "5.72.1",
@@ -57,7 +56,6 @@ func TestTerraformCataloger(t *testing.T) {
 		Locations: file.NewLocationSet(location),
 		Type:      pkg.TerraformPkg,
 		Language:  pkg.Go,
-		PURL:      "pkg:terraform/registry.terraform.io/hashicorp/google@6.8.0",
 		Metadata: pkg.TerraformLockProviderEntry{
 			URL:         "registry.terraform.io/hashicorp/google",
 			Version:     "6.8.0",
