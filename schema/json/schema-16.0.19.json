@@ -492,6 +492,29 @@
         "hashPath"
       ]
     },
+    "DotnetPackagesLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "contentHash": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "contentHash",
+        "type"
+      ]
+    },
     "DotnetPortableExecutableEntry": {
       "properties": {
         "assemblyVersion": {
@@ -1649,6 +1672,9 @@
               "$ref": "#/$defs/DotnetDepsEntry"
             },
             {
+              "$ref": "#/$defs/DotnetPackagesLockEntry"
+            },
+            {
               "$ref": "#/$defs/DotnetPortableExecutableEntry"
             },
             {
@@ -1755,9 +1781,6 @@
             },
             {
               "$ref": "#/$defs/SwiplpackPackage"
-            },
-            {
-              "$ref": "#/$defs/TerraformLockProviderEntry"
             },
             {
               "$ref": "#/$defs/WordpressPluginEntry"
@@ -2695,32 +2718,6 @@
         "packagerEmail",
         "homepage",
         "dependencies"
-      ]
-    },
-    "TerraformLockProviderEntry": {
-      "properties": {
-        "url": {
-          "type": "string"
-        },
-        "constraints": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "hashes": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object",
-      "required": [
-        "url",
-        "constraints",
-        "version",
-        "hashes"
       ]
     },
     "WordpressPluginEntry": {

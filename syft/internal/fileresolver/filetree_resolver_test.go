@@ -14,13 +14,14 @@ import (
 	"testing"
 	"time"
 
-	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/syft/syft/file"
 	"github.com/google/go-cmp/cmp"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
+
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/file"
 )
 
 // Tests for filetree resolver when directory is used for index

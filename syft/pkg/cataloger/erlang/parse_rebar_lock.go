@@ -13,7 +13,7 @@ import (
 
 // parseRebarLock parses a rebar.lock and returns the discovered Elixir packages.
 //
-//nolint:funlen
+
 func parseRebarLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	doc, err := parseErlang(reader)
 	if err != nil {

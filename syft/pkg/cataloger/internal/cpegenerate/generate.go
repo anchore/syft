@@ -180,7 +180,6 @@ func candidateTargetSw(p pkg.Package) []string {
 	return []string{cpe.Any}
 }
 
-//nolint:funlen
 func candidateVendors(p pkg.Package) []string {
 	// in ecosystems where the packaging metadata does not have a clear field to indicate a vendor (or a field that
 	// could be interpreted indirectly as such) the project name tends to be a common stand in. Examples of this
