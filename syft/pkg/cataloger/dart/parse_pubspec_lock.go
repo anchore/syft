@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"sort"
 
+	"github.com/Masterminds/semver"
 	"gopkg.in/yaml.v3"
 
-	"github.com/Masterminds/semver"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
@@ -85,12 +85,9 @@ func parsePubspecLock(_ context.Context, _ file.Resolver, _ *generic.Environment
 			if err != nil {
 				log.Tracef("failed to resolve %s SDK version for package %s: %v", sdkName, name, err)
 				continue
-
-			} else {
-				log.Tracef("resolved %s SDK version for package %s to %s", sdkName, name, sdkVersion)
-				pkg.Version = sdkVersion
-				p.Packages[name] = pkg
 			}
+			pkg.Version = sdkVersion
+			p.Packages[name] = pkg
 		}
 
 		names = append(names, name)
@@ -168,7 +165,7 @@ func parseMinimumSdkVersion(constraint string) (string, error) {
 	}
 
 	// Read "version" subexpression (see 2. above) into version variable
-	version := []byte{}
+	var version []byte
 	matchIndex := re.FindStringSubmatchIndex(constraint)
 	version = re.ExpandString(version, "$version", constraint, matchIndex)
 
