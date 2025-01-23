@@ -42,3 +42,10 @@ func TestCataloger_Globs(t *testing.T) {
 		})
 	}
 }
+
+func TestBinaryCataloger_SkipsNonDotNetExecutables(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		WithImageResolver(t, "image-jruby").
+		Expects(nil, nil). // expect no packages!
+		TestCataloger(t, NewDotnetPortableExecutableCataloger())
+}
