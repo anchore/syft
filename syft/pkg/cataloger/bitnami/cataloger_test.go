@@ -44,6 +44,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			Architecture: "arm64",
 			Distro:       "debian-12",
 			Path:         "opt/bitnami/apache",
+			Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
 		},
 	}
 	apacheSecondaryPkgs := []pkg.Package{
@@ -67,6 +68,7 @@ func TestBitnamiCataloger(t *testing.T) {
 				Architecture: "arm64",
 				Distro:       "debian-12",
 				Path:         "opt/bitnami/apache",
+				Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
 			},
 		},
 		{
@@ -89,6 +91,7 @@ func TestBitnamiCataloger(t *testing.T) {
 				Architecture: "arm64",
 				Distro:       "debian-12",
 				Path:         "opt/bitnami/apache",
+				Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
 			},
 		},
 		{
@@ -111,6 +114,7 @@ func TestBitnamiCataloger(t *testing.T) {
 				Architecture: "arm64",
 				Distro:       "debian-12",
 				Path:         "opt/bitnami/apache",
+				Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
 			},
 		},
 		{
@@ -133,6 +137,7 @@ func TestBitnamiCataloger(t *testing.T) {
 				Architecture: "arm64",
 				Distro:       "debian-12",
 				Path:         "opt/bitnami/apache",
+				Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
 			},
 		},
 		{
@@ -152,13 +157,14 @@ func TestBitnamiCataloger(t *testing.T) {
 				Architecture: "arm64",
 				Distro:       "debian-12",
 				Path:         "opt/bitnami/apache",
+				Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
 			},
 		},
 	}
 
 	apacheExpectedPkgs := []pkg.Package{apacheMainPkg}
 	apacheExpectedPkgs = append(apacheExpectedPkgs, apacheSecondaryPkgs...)
-	//sort.Sort(apacheExpectedPkgs)
+	pkg.Sort(apacheExpectedPkgs)
 	var apacheExpectedRelationships []artifact.Relationship
 	for _, p := range apacheSecondaryPkgs {
 		apacheExpectedRelationships = append(apacheExpectedRelationships, artifact.Relationship{
@@ -189,6 +195,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			Architecture: "arm64",
 			Distro:       "debian-12",
 			Path:         "opt/bitnami/render-template",
+			Files:        []string{"opt/bitnami/render-template/.spdx-render-template.spdx"},
 		},
 	}
 

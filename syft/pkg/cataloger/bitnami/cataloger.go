@@ -5,6 +5,7 @@ package bitnami
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -26,7 +27,7 @@ func NewCataloger() pkg.Cataloger {
 		)
 }
 
-func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	s, sFormat, _, err := format.Decode(reader)
 	if err != nil {
 		return nil, nil, err
@@ -69,6 +70,16 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 		// Bitnami packages reported in a SPDX file are shipped under the same directory
 		// as the SPDX file itself.
 		metadata.Path = filepath.Dir(reader.Location.RealPath)
+
+		ownedPathGlob := fmt.Sprintf("%s/**", metadata.Path)
+		ownedLocations, err := resolver.FilesByGlob(ownedPathGlob)
+		if err != nil {
+			log.WithFields("glob", ownedPathGlob, "error", err).Trace("unable to resolve owned path glob in bitnami cataloger")
+			continue
+		}
+		ownedLocationSet := file.NewLocationSet(ownedLocations...)
+		metadata.Files = ownedLocationSet.CoordinateSet().Paths()
+
 		p.Metadata = metadata
 
 		pkgs = append(pkgs, p)

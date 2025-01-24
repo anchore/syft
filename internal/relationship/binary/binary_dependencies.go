@@ -58,11 +58,10 @@ func generateRelationships(resolver file.Resolver, accessor sbomsync.Accessor, i
 
 // PackagesToRemove returns a list of binary packages (resolved by the ELF cataloger) that should be removed from the SBOM
 // These packages are removed because they are already represented by a higher order packages in the SBOM.
-func PackagesToRemove(resolver file.Resolver, accessor sbomsync.Accessor) []artifact.ID {
+func PackagesToRemove(accessor sbomsync.Accessor) []artifact.ID {
 	pkgsToDelete := make([]artifact.ID, 0)
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
-		// OTHER package type > ELF package type > Binary package type
-		pkgsToDelete = append(pkgsToDelete, getBinaryPackagesToDelete(resolver, s)...)
+		// ELF package type > Binary package type
 		pkgsToDelete = append(pkgsToDelete, compareElfBinaryPackages(s)...)
 	})
 	return pkgsToDelete
@@ -112,33 +111,6 @@ func allElfPackages(s *sbom.SBOM) []pkg.Package {
 func isElfPackage(p pkg.Package) bool {
 	_, ok := p.Metadata.(pkg.ELFBinaryPackageNoteJSONPayload)
 	return ok
-}
-
-func getBinaryPackagesToDelete(resolver file.Resolver, s *sbom.SBOM) []artifact.ID {
-	pkgsToDelete := make([]artifact.ID, 0)
-	for p := range s.Artifacts.Packages.Enumerate() {
-		if p.Type == pkg.BinaryPkg {
-			continue
-		}
-		fileOwner, ok := p.Metadata.(pkg.FileOwner)
-		if !ok {
-			continue
-		}
-		ownedFiles := fileOwner.OwnedFiles()
-		locations, err := resolver.FilesByPath(ownedFiles...)
-		if err != nil {
-			log.WithFields("error", err).Trace("unable to find path for owned file")
-			continue
-		}
-		for _, loc := range locations {
-			for _, pathPkg := range s.Artifacts.Packages.PackagesByPath(loc.RealPath) {
-				if pathPkg.Type == pkg.BinaryPkg {
-					pkgsToDelete = append(pkgsToDelete, pathPkg.ID())
-				}
-			}
-		}
-	}
-	return pkgsToDelete
 }
 
 func populateRelationships(exec file.Executable, parentPkg pkg.Package, resolver file.Resolver, addRelationship func(artifact.Relationship), index *sharedLibraryIndex) {
