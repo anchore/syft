@@ -10738,7 +10738,7 @@
       ],
       "exclusive-addons-for-elementor": [
         "cpe:2.3:a:devscred:exclusive_addons_for_elementor:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:exclusiveaddons:exclusive_addons_for_elementor:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:exclusiveaddons:exclusive_addons_for_elementor:*:*:*:*:free:wordpress:*:*"
       ],
       "exit-intent-popups-by-optimonk": [
         "cpe:2.3:a:optimonk:optimonk\\:popups\\,_personalization_\\\u0026_a\\/b_testing:*:*:*:*:*:wordpress:*:*"
@@ -12569,6 +12569,9 @@
       ],
       "lana-text-to-image": [
         "cpe:2.3:a:lanacodes:lana_text_to_image:*:*:*:*:*:wordpress:*:*"
+      ],
+      "landing-page-cat": [
+        "cpe:2.3:a:fatcatapps:landing_page_cat:*:*:*:*:free:wordpress:*:*"
       ],
       "landing-pages": [
         "cpe:2.3:a:inboundnow:landing-pages:*:*:*:*:*:wordpress:*:*",
@@ -14572,6 +14575,9 @@
       "premium-addons-for-elementor": [
         "cpe:2.3:a:leap13:premium_addons_for_elementor:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:leap13:premium_addons_for_elementor:*:*:*:*:pro:wordpress:*:*"
+      ],
+      "premium-blocks-for-gutenberg": [
+        "cpe:2.3:a:leap13:premium_blocks_for_gutenburg:*:*:*:*:*:wordpress:*:*"
       ],
       "premium-seo-pack": [
         "cpe:2.3:a:squirrly:premium_seo_pack:*:*:*:*:*:wordpress:*:*"
@@ -16732,7 +16738,9 @@
         "cpe:2.3:a:posimyth:nexter_blocks:*:*:*:*:*:wordpress:*:*"
       ],
       "the-plus-addons-for-elementor-page-builder": [
+        "cpe:2.3:a:posimyth:the_plus_addons_for_elementor:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:posimyth:the_plus_addons_for_elementor:*:*:*:*:free:wordpress:*:*",
+        "cpe:2.3:a:posimyth:the_plus_addons_for_elementor:*:*:*:*:pro:wordpress:*:*",
         "cpe:2.3:a:posimyth:the_plus_addons_for_elementor_page_builder_lite:*:*:*:*:*:wordpress:*:*"
       ],
       "the-post-grid": [
@@ -16989,7 +16997,7 @@
         "cpe:2.3:a:turn_off_all_comments_project:turn_off_all_comments:*:*:*:*:*:*:*:*"
       ],
       "tutor": [
-        "cpe:2.3:a:themeum:tutor_lms:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:themeum:tutor_lms:*:*:*:*:free:wordpress:*:*"
       ],
       "tutor-lms-elementor-addons": [
         "cpe:2.3:a:themeum:tutor_lms_elementor_addons:*:*:*:*:*:wordpress:*:*"
