@@ -205,7 +205,7 @@ func reduceOuter(expression string) string {
 		if isBalanced(trimmed) {
 			return reduceOuter(trimmed) // Recursively reduce the trimmed expression.
 		}
-		}
+	}
 
 	return expression
 }
@@ -219,7 +219,7 @@ func isBalanced(expression string) bool {
 			count--
 			if count < 0 {
 				return false
-		}
+			}
 		}
 	}
 	return count == 0
