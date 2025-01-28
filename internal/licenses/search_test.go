@@ -78,7 +78,7 @@ func TestSearch(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			content, err := os.ReadFile(test.in)
 			require.NoError(t, err)
-			result, err := Search(context.TODO(), TestingOnlyScanner(), file.NewLocationReadCloser(file.NewLocation("LICENSE"), io.NopCloser(bytes.NewReader(content))))
+			result, err := Search(context.TODO(), testScanner(), file.NewLocationReadCloser(file.NewLocation("LICENSE"), io.NopCloser(bytes.NewReader(content))))
 			if test.expected.yieldError {
 				require.Error(t, err)
 			} else {

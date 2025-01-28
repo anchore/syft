@@ -45,7 +45,7 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			content, err := os.ReadFile(test.in)
 			require.NoError(t, err)
-			ids, content, err := TestingOnlyScanner().IdentifyLicenseIDs(context.TODO(), bytes.NewReader(content))
+			ids, content, err := testScanner().IdentifyLicenseIDs(context.TODO(), bytes.NewReader(content))
 			if test.expected.yieldError {
 				require.Error(t, err)
 			} else {
@@ -66,9 +66,7 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 	}
 }
 
-// TestingOnlyScanner returns a scanner that uses the built-in license scanner from the licensecheck package.
-// THIS IS ONLY MEANT FOR TEST CODE, NOT PRODUCTION CODE.
-func TestingOnlyScanner() Scanner {
+func testScanner() Scanner {
 	return &scanner{
 		coverageThreshold: coverageThreshold,
 		scanner:           licensecheck.Scan,

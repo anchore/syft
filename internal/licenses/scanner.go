@@ -35,6 +35,13 @@ func NewDefaultScanner() Scanner {
 	}
 }
 
+func NewScanner(scan func([]byte) licensecheck.Coverage, coverage float64) Scanner {
+	return scanner{
+		coverageThreshold: coverage,
+		scanner:           scan,
+	}
+}
+
 func (s scanner) IdentifyLicenseIDs(_ context.Context, reader io.Reader) ([]string, []byte, error) {
 	if s.scanner == nil {
 		return nil, nil, nil

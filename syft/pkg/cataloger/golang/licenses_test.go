@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/licenses"
@@ -70,7 +71,7 @@ func Test_LicenseSearch(t *testing.T) {
 
 	localVendorDir := filepath.Join(wd, "test-fixtures", "licenses-vendor")
 
-	licenseScanner := licenses.TestingOnlyScanner()
+	licenseScanner := licenses.NewScanner(licensecheck.Scan, float64(75))
 
 	tests := []struct {
 		name     string
@@ -295,7 +296,7 @@ func Test_findVersionPath(t *testing.T) {
 
 func Test_walkDirErrors(t *testing.T) {
 	resolver := newGoLicenseResolver("", CatalogerConfig{})
-	_, err := resolver.findLicensesInFS(context.Background(), licenses.TestingOnlyScanner(), "somewhere", badFS{})
+	_, err := resolver.findLicensesInFS(context.Background(), licenses.NewScanner(licensecheck.Scan, float64(75)), "somewhere", badFS{})
 	require.Error(t, err)
 }
 
@@ -313,8 +314,7 @@ func Test_noLocalGoModDir(t *testing.T) {
 	validTmp := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(validTmp, "mod@ver"), 0700|os.ModeDir))
 
-	licenseScanner := licenses.TestingOnlyScanner()
-
+	licenseScanner := licenses.NewScanner(licensecheck.Scan, float64(75))
 	tests := []struct {
 		name    string
 		dir     string
