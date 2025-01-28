@@ -12,7 +12,7 @@ import (
 const coverageThreshold = 75 // determined by experimentation
 
 type Scanner interface {
-	IdentifyLicenseIDs(context.Context, io.Reader) ([]string, error)
+	IdentifyLicenseIDs(context.Context, io.Reader) ([]string, []byte, error)
 }
 
 var _ Scanner = (*scanner)(nil)
@@ -35,34 +35,33 @@ func NewDefaultScanner() Scanner {
 	}
 }
 
-// TestingOnlyScanner returns a scanner that uses the built-in license scanner from the licensecheck package.
-// THIS IS ONLY MEANT FOR TEST CODE, NOT PRODUCTION CODE.
-func TestingOnlyScanner() Scanner {
-	return &scanner{
-		coverageThreshold: coverageThreshold,
-		scanner:           licensecheck.Scan,
+func NewScanner(scan func([]byte) licensecheck.Coverage, coverage float64) Scanner {
+	return scanner{
+		coverageThreshold: coverage,
+		scanner:           scan,
 	}
 }
 
-func (s scanner) IdentifyLicenseIDs(_ context.Context, reader io.Reader) ([]string, error) {
+func (s scanner) IdentifyLicenseIDs(_ context.Context, reader io.Reader) ([]string, []byte, error) {
 	if s.scanner == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	content, err := io.ReadAll(reader)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	cov := s.scanner(content)
 	if cov.Percent < s.coverageThreshold {
 		// unknown or no licenses here?
-		return nil, nil
+		// => return binary content
+		return nil, content, nil
 	}
 
 	var ids []string
 	for _, m := range cov.Match {
 		ids = append(ids, m.ID)
 	}
-	return ids, nil
+	return ids, nil, nil
 }

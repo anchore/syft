@@ -234,6 +234,7 @@ func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
 			Type:           l.Type,
 			URLs:           urls,
 			Locations:      locations,
+			Contents:       l.Contents,
 		})
 	}
 	return

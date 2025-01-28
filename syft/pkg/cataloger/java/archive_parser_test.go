@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/google/licensecheck"
 	"github.com/gookit/color"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
@@ -32,7 +33,7 @@ import (
 func TestSearchMavenForLicenses(t *testing.T) {
 	url := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
 
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.TestingOnlyScanner())
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewScanner(licensecheck.Scan, float64(75)))
 
 	tests := []struct {
 		name             string
@@ -91,7 +92,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 }
 
 func TestParseJar(t *testing.T) {
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.TestingOnlyScanner())
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewScanner(licensecheck.Scan, float64(75)))
 
 	tests := []struct {
 		name         string
@@ -1374,7 +1375,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 }
 
 func Test_deterministicMatchingPomProperties(t *testing.T) {
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.TestingOnlyScanner())
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewScanner(licensecheck.Scan, float64(75)))
 
 	tests := []struct {
 		fixture  string
