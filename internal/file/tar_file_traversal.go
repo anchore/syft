@@ -6,7 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/mholt/archiver/v3"
+
+	"github.com/anchore/archiver/v3"
 )
 
 // ExtractGlobsFromTarToUniqueTempFile extracts paths matching the given globs within the given archive to a temporary directory, returning file openers for each file extracted.

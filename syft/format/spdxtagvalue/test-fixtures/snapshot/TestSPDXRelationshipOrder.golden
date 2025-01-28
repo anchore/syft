@@ -10,47 +10,53 @@ Created: redacted
 
 ##### Unpackaged files
 
-FileName: /a1/f6
+FileName: a1/f6
 SPDXID: SPDXRef-File-a1-f6-9c2f7510199b17f6
 FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
-FileName: /d1/f3
+FileName: d1/f3
 SPDXID: SPDXRef-File-d1-f3-c6f5b29dca12661f
 FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
-FileName: /d2/f4
+FileName: d2/f4
 SPDXID: SPDXRef-File-d2-f4-c641caa71518099f
 FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
-FileName: /f1
+FileName: f1
 SPDXID: SPDXRef-File-f1-5265a4dde3edbf7c
 FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
-FileName: /f2
+FileName: f2
 SPDXID: SPDXRef-File-f2-f9e49132a4b96ccd
 FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
-FileName: /z1/f5
+FileName: z1/f5
 SPDXID: SPDXRef-File-z1-f5-839d99ee67d9d174
 FileType: OTHER
 FileChecksum: SHA1: 0000000000000000000000000000000000000000
 LicenseConcluded: NOASSERTION
 LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
 
 ##### Package: user-image-input
 
@@ -64,7 +70,8 @@ FilesAnalyzed: false
 PackageChecksum: SHA256: 2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368
 PackageLicenseConcluded: NOASSERTION
 PackageLicenseDeclared: NOASSERTION
-ExternalRef: PACKAGE-MANAGER purl pkg:oci/user-image-input@sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch=
+PackageCopyrightText: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:oci/user-image-input@sha256%3A2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch=
 
 ##### Package: package-2
 

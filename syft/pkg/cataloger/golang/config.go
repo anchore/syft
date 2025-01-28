@@ -22,6 +22,8 @@ var (
 type CatalogerConfig struct {
 	SearchLocalModCacheLicenses bool                    `yaml:"search-local-mod-cache-licenses" json:"search-local-mod-cache-licenses" mapstructure:"search-local-mod-cache-licenses"`
 	LocalModCacheDir            string                  `yaml:"local-mod-cache-dir" json:"local-mod-cache-dir" mapstructure:"local-mod-cache-dir"`
+	SearchLocalVendorLicenses   bool                    `yaml:"search-local-vendor-licenses" json:"search-local-vendor-licenses" mapstructure:"search-local-vendor-licenses"`
+	LocalVendorDir              string                  `yaml:"local-vendor-dir" json:"local-vendor-dir" mapstructure:"local-vendor-dir"`
 	SearchRemoteLicenses        bool                    `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
 	Proxies                     []string                `yaml:"proxies,omitempty" json:"proxies,omitempty" mapstructure:"proxies"`
 	NoProxy                     []string                `yaml:"no-proxy,omitempty" json:"no-proxy,omitempty" mapstructure:"no-proxy"`
@@ -105,6 +107,19 @@ func (g CatalogerConfig) WithLocalModCacheDir(input string) CatalogerConfig {
 		return g
 	}
 	g.LocalModCacheDir = input
+	return g
+}
+
+func (g CatalogerConfig) WithSearchLocalVendorLicenses(input bool) CatalogerConfig {
+	g.SearchLocalVendorLicenses = input
+	return g
+}
+
+func (g CatalogerConfig) WithLocalVendorDir(input string) CatalogerConfig {
+	if input == "" {
+		return g
+	}
+	g.LocalVendorDir = input
 	return g
 }
 

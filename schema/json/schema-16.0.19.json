@@ -492,6 +492,29 @@
         "hashPath"
       ]
     },
+    "DotnetPackagesLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "contentHash": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "contentHash",
+        "type"
+      ]
+    },
     "DotnetPortableExecutableEntry": {
       "properties": {
         "assemblyVersion": {
@@ -1248,9 +1271,6 @@
         "value": {
           "type": "string"
         },
-        "fullText": {
-          "type": "string"
-        },
         "spdxExpression": {
           "type": "string"
         },
@@ -1273,7 +1293,6 @@
       "type": "object",
       "required": [
         "value",
-        "fullText",
         "spdxExpression",
         "type",
         "urls",
@@ -1651,6 +1670,9 @@
             },
             {
               "$ref": "#/$defs/DotnetDepsEntry"
+            },
+            {
+              "$ref": "#/$defs/DotnetPackagesLockEntry"
             },
             {
               "$ref": "#/$defs/DotnetPortableExecutableEntry"

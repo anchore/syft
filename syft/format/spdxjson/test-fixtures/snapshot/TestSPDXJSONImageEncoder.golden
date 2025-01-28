@@ -76,11 +76,12 @@
    ],
    "licenseConcluded": "NOASSERTION",
    "licenseDeclared": "NOASSERTION",
+   "copyrightText": "NOASSERTION",
    "externalRefs": [
     {
      "referenceCategory": "PACKAGE-MANAGER",
      "referenceType": "purl",
-     "referenceLocator": "pkg:oci/user-image-input@sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch="
+     "referenceLocator": "pkg:oci/user-image-input@sha256%3A2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch="
     }
    ],
    "primaryPackagePurpose": "CONTAINER"

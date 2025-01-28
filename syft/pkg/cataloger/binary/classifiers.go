@@ -77,8 +77,12 @@ func DefaultClassifiers() []Classifier {
 			Class:    "redis-binary",
 			FileGlob: "**/redis-server",
 			EvidenceMatcher: evidenceMatchers(
-				FileContentsVersionMatcher(`(?s)payload %5.*?(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}`),
-				FileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}\x00.*?payload %5`),
+				// matches most recent versions of redis (~v7), e.g. "7.0.14buildkitsandbox-1702957741000000000"
+				FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
+				// matches against older versions of redis (~v3 - v6), e.g. "4.0.11841ce7054bd9-1542359302000000000"
+				FileContentsVersionMatcher(`[^\d](?P<version>[0-9]+\.[0-9]+\.[0-9]+)\w{12}-\d+`),
+				// matches against older versions of redis (~v2), e.g. "Server started, Redis version 2.8.23"
+				FileContentsVersionMatcher(`Redis version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			),
 			Package: "redis",
 			PURL:    mustPURL("pkg:generic/redis@version"),
@@ -458,7 +462,11 @@ func DefaultClassifiers() []Classifier {
 			Class:    "dart-binary",
 			FileGlob: "**/dart",
 			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)Dart,GC"\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+(\.[0-9]+)?\.beta)?) `,
+				// MathAtan[NUL]2.12.4 (stable)
+				// "%s"[NUL]3.0.0 (stable)
+				// Dart,GC"[NUL]3.5.2 (stable)
+				// Dart,GC"[NUL]3.6.0-216.1.beta (beta)
+				`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+(\.[0-9]+)?\.beta)?) `,
 			),
 			Package: "dart",
 			PURL:    mustPURL("pkg:generic/dart@version"),
