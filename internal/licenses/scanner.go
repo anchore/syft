@@ -35,15 +35,6 @@ func NewDefaultScanner() Scanner {
 	}
 }
 
-// TestingOnlyScanner returns a scanner that uses the built-in license scanner from the licensecheck package.
-// THIS IS ONLY MEANT FOR TEST CODE, NOT PRODUCTION CODE.
-func TestingOnlyScanner() Scanner {
-	return &scanner{
-		coverageThreshold: coverageThreshold,
-		scanner:           licensecheck.Scan,
-	}
-}
-
 func (s scanner) IdentifyLicenseIDs(_ context.Context, reader io.Reader) ([]string, []byte, error) {
 	if s.scanner == nil {
 		return nil, nil, nil

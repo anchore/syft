@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/require"
 )
 
@@ -62,6 +63,15 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestingOnlyScanner returns a scanner that uses the built-in license scanner from the licensecheck package.
+// THIS IS ONLY MEANT FOR TEST CODE, NOT PRODUCTION CODE.
+func TestingOnlyScanner() Scanner {
+	return &scanner{
+		coverageThreshold: coverageThreshold,
+		scanner:           licensecheck.Scan,
 	}
 }
 

@@ -30,6 +30,9 @@ func Search(ctx context.Context, scanner Scanner, reader file.LocationReadCloser
 		return nil, err
 	}
 
+	// IdentifyLicenseIDs can only return a list of ID or content
+	// These return values are mutually exclusive.
+	// If the scanner threshold for matching scores < 75% then we return the license full content
 	if len(ids) > 0 {
 		for _, id := range ids {
 			lic := pkg.NewLicenseFromLocations(id, reader.Location)
