@@ -5,8 +5,8 @@ import (
 )
 
 type licenseConfig struct {
-	IncludeUnknownLicenseContent bool    `yaml:"include-unknown-license-content" json:"include-unknown-license-content" mapstruct:"include-unknown-license-content"`
-	LicenseCoverage              float64 `yaml:"license-coverage" json:"license-coverage" mapstruct:"license-coverage"`
+	IncludeUnknownLicenseContent bool    `yaml:"include-unknown-license-content" json:"include-unknown-license-content" mapstructure:"include-unknown-license-content"`
+	LicenseCoverage              float64 `yaml:"license-coverage" json:"license-coverage" mapstructure:"license-coverage"`
 }
 
 var _ interface {
