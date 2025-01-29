@@ -33,6 +33,7 @@ type Catalog struct {
 	DefaultCatalogers []string            `yaml:"default-catalogers" json:"default-catalogers" mapstructure:"default-catalogers"`
 	SelectCatalogers  []string            `yaml:"select-catalogers" json:"select-catalogers" mapstructure:"select-catalogers"`
 	Package           packageConfig       `yaml:"package" json:"package" mapstructure:"package"`
+	License           licenseConfig       `yaml:"license" json:"license" mapstructure:"license"`
 	File              fileConfig          `yaml:"file" json:"file" mapstructure:"file"`
 	Scope             string              `yaml:"scope" json:"scope" mapstructure:"scope"`
 	Parallelism       int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
@@ -69,6 +70,7 @@ func DefaultCatalog() Catalog {
 		Compliance:    defaultComplianceConfig(),
 		Scope:         source.SquashedScope.String(),
 		Package:       defaultPackageConfig(),
+		License:       defaultLicenseConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
 		Golang:        defaultGolangConfig(),
 		Java:          defaultJavaConfig(),
@@ -143,6 +145,12 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 			MIMETypes: executable.DefaultConfig().MIMETypes,
 			Globs:     cfg.File.Executable.Globs,
 		},
+	}
+}
+
+func (cfg Catalog) ToLicenseConfig() cataloging.LicenseConfig {
+	return cataloging.LicenseConfig{
+		IncludeUnkownLicenseContent: cfg.License.IncludeUnknownLicenseContent,
 	}
 }
 
