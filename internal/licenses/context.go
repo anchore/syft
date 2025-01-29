@@ -16,3 +16,7 @@ func ContextLicenseScanner(ctx context.Context) Scanner {
 	}
 	return NewDefaultScanner()
 }
+
+func SetContextLicenseContent(ctx context.Context, includeUnknowContent bool) context.Context {
+	return context.WithValue(ctx, CtxKeyIncludeUnknownLicenseContent, includeUnknowContent)
+}

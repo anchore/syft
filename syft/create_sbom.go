@@ -61,8 +61,9 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 		},
 	}
 
-	// inject a single license scanner for all package cataloging tasks into context
+	// inject a single license scanner and content config for all package cataloging tasks into context
 	ctx = licenses.SetContextLicenseScanner(ctx, licenses.NewDefaultScanner())
+	ctx = licenses.SetContextLicenseContent(ctx, cfg.Licenses.IncludeUnkownLicenseContent)
 
 	catalogingProgress := monitorCatalogingTask(src.ID(), taskGroups)
 	packageCatalogingProgress := monitorPackageCatalogingTask()
