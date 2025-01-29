@@ -32,8 +32,8 @@ import (
 
 func TestSearchMavenForLicenses(t *testing.T) {
 	url := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
-
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewScanner(licensecheck.Scan, float64(75)))
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewScanner(sc))
 
 	tests := []struct {
 		name             string
@@ -92,7 +92,8 @@ func TestSearchMavenForLicenses(t *testing.T) {
 }
 
 func TestParseJar(t *testing.T) {
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewScanner(licensecheck.Scan, float64(75)))
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewScanner(sc))
 
 	tests := []struct {
 		name         string
@@ -1375,7 +1376,8 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 }
 
 func Test_deterministicMatchingPomProperties(t *testing.T) {
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewScanner(licensecheck.Scan, float64(75)))
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.NewScanner(sc))
 
 	tests := []struct {
 		fixture  string

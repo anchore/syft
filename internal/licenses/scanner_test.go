@@ -68,7 +68,7 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 
 func testScanner() Scanner {
 	return &scanner{
-		coverageThreshold: defaultCoverageThreshold,
+		coverageThreshold: DefaultCoverageThreshold,
 		scanner:           licensecheck.Scan,
 	}
 }

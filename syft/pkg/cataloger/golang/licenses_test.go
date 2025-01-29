@@ -71,7 +71,11 @@ func Test_LicenseSearch(t *testing.T) {
 
 	localVendorDir := filepath.Join(wd, "test-fixtures", "licenses-vendor")
 
-	licenseScanner := licenses.NewScanner(licensecheck.Scan, float64(75))
+	sc := &licenses.ScannerConfig{
+		CoverageThreshold: 75,
+		Scanner:           licensecheck.Scan,
+	}
+	licenseScanner := licenses.NewScanner(sc)
 
 	tests := []struct {
 		name     string
@@ -296,7 +300,8 @@ func Test_findVersionPath(t *testing.T) {
 
 func Test_walkDirErrors(t *testing.T) {
 	resolver := newGoLicenseResolver("", CatalogerConfig{})
-	_, err := resolver.findLicensesInFS(context.Background(), licenses.NewScanner(licensecheck.Scan, float64(75)), "somewhere", badFS{})
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	_, err := resolver.findLicensesInFS(context.Background(), licenses.NewScanner(sc), "somewhere", badFS{})
 	require.Error(t, err)
 }
 
@@ -314,7 +319,8 @@ func Test_noLocalGoModDir(t *testing.T) {
 	validTmp := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(validTmp, "mod@ver"), 0700|os.ModeDir))
 
-	licenseScanner := licenses.NewScanner(licensecheck.Scan, float64(75))
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	licenseScanner := licenses.NewScanner(sc)
 	tests := []struct {
 		name    string
 		dir     string
