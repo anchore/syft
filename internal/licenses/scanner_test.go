@@ -27,11 +27,11 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 			expected: expectation{
 				yieldError: false,
 				ids:        []string{"Apache-2.0"},
-				content:    []byte{},
+				content:    nil,
 			},
 		},
 		{
-			name: "custom license",
+			name: "custom license includes content",
 			in:   "test-fixtures/nvidia-software-and-cuda-supplement",
 			expected: expectation{
 				yieldError: false,
@@ -68,7 +68,7 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 
 func testScanner() Scanner {
 	return &scanner{
-		coverageThreshold: coverageThreshold,
+		coverageThreshold: defaultCoverageThreshold,
 		scanner:           licensecheck.Scan,
 	}
 }

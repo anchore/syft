@@ -34,9 +34,10 @@ func TestSearch(t *testing.T) {
 	}
 	testLocation := file.NewLocation("LICENSE")
 	tests := []struct {
-		name     string
-		in       string
-		expected expectation
+		name                        string
+		in                          string
+		includeUnkownLicenseContent bool
+		expected                    expectation
 	}{
 		{
 			name: "apache license 2.0",
@@ -56,8 +57,26 @@ func TestSearch(t *testing.T) {
 			},
 		},
 		{
-			name: "custom license",
+			name: "custom license no content by default",
 			in:   "test-fixtures/nvidia-software-and-cuda-supplement",
+			expected: expectation{
+				yieldError: false,
+				licenses: []pkg.License{
+					{
+						Value:          "UNKNOWN",
+						SPDXExpression: "UNKNOWN_eebcea3ab1d1a28e671de90119ffcfb35fe86951e4af1b17af52b7a82fcf7d0a",
+						Type:           "declared",
+						URLs:           nil,
+						Locations:      file.NewLocationSet(testLocation),
+						Contents:       "",
+					},
+				},
+			},
+		},
+		{
+			name:                        "custom license with content when context",
+			in:                          "test-fixtures/nvidia-software-and-cuda-supplement",
+			includeUnkownLicenseContent: true,
 			expected: expectation{
 				yieldError: false,
 				licenses: []pkg.License{
@@ -78,7 +97,9 @@ func TestSearch(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			content, err := os.ReadFile(test.in)
 			require.NoError(t, err)
-			result, err := Search(context.TODO(), testScanner(), file.NewLocationReadCloser(file.NewLocation("LICENSE"), io.NopCloser(bytes.NewReader(content))))
+			ctx := context.Background()
+			ctx = context.WithValue(ctx, CtxKeyIncludeUnknownLicenseContent, test.includeUnkownLicenseContent)
+			result, err := Search(ctx, testScanner(), file.NewLocationReadCloser(file.NewLocation("LICENSE"), io.NopCloser(bytes.NewReader(content))))
 			if test.expected.yieldError {
 				require.Error(t, err)
 			} else {

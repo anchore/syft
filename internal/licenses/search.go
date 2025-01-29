@@ -21,8 +21,20 @@ func getCustomLicenseContentHash(contents []byte) string {
 	return fmt.Sprintf("%x", hash[:])
 }
 
+// Context keys
+type contextKey string
+
+const (
+	CtxKeyIncludeUnknownLicenseContent contextKey = "includeUnknownLicenseContent"
+)
+
 // Search scans the contents of a license file to attempt to determine the type of license it is
 func Search(ctx context.Context, scanner Scanner, reader file.LocationReadCloser) (licenses []pkg.License, err error) {
+	includeUnknownLicenseContent := false
+	if v, ok := ctx.Value(CtxKeyIncludeUnknownLicenseContent).(bool); ok {
+		includeUnknownLicenseContent = v
+	}
+
 	licenses = make([]pkg.License, 0)
 
 	ids, content, err := scanner.IdentifyLicenseIDs(ctx, reader)
@@ -48,7 +60,9 @@ func Search(ctx context.Context, scanner Scanner, reader file.LocationReadCloser
 
 		lic := pkg.NewLicenseFromLocations(unknownLicenseType, reader.Location)
 		lic.SPDXExpression = UnknownLicensePrefix + getCustomLicenseContentHash(content)
-		lic.Contents = string(content)
+		if includeUnknownLicenseContent {
+			lic.Contents = string(content)
+		}
 		lic.Type = license.Declared
 
 		licenses = append(licenses, lic)

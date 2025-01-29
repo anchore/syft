@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
-const coverageThreshold = 75 // determined by experimentation
+const defaultCoverageThreshold = 75 // determined by experimentation
 
 type Scanner interface {
 	IdentifyLicenseIDs(context.Context, io.Reader) ([]string, []byte, error)
@@ -22,6 +22,11 @@ type scanner struct {
 	scanner           func([]byte) licensecheck.Coverage
 }
 
+type ScannerConfig struct {
+	CoverageThreshold float64
+	Scanner           func([]byte) licensecheck.Coverage
+}
+
 // NewDefaultScanner returns a scanner that uses a new instance of the default licensecheck package scanner.
 func NewDefaultScanner() Scanner {
 	s, err := licensecheck.NewScanner(licensecheck.BuiltinLicenses())
@@ -30,19 +35,25 @@ func NewDefaultScanner() Scanner {
 		s = nil
 	}
 	return &scanner{
-		coverageThreshold: coverageThreshold,
+		coverageThreshold: defaultCoverageThreshold,
 		scanner:           s.Scan,
 	}
 }
 
-func NewScanner(scan func([]byte) licensecheck.Coverage, coverage float64) Scanner {
-	return scanner{
-		coverageThreshold: coverage,
-		scanner:           scan,
+// NewScanner generates a license Scanner with the given ScannerConfig
+// if config is nil NewDefaultScanner is used
+func NewScanner(c *ScannerConfig) Scanner {
+	if c == nil {
+		return NewDefaultScanner()
+	}
+
+	return &scanner{
+		coverageThreshold: c.CoverageThreshold,
+		scanner:           c.Scanner,
 	}
 }
 
-func (s scanner) IdentifyLicenseIDs(_ context.Context, reader io.Reader) ([]string, []byte, error) {
+func (s *scanner) IdentifyLicenseIDs(_ context.Context, reader io.Reader) ([]string, []byte, error) {
 	if s.scanner == nil {
 		return nil, nil, nil
 	}
@@ -54,8 +65,8 @@ func (s scanner) IdentifyLicenseIDs(_ context.Context, reader io.Reader) ([]stri
 
 	cov := s.scanner(content)
 	if cov.Percent < s.coverageThreshold {
-		// unknown or no licenses here?
-		// => return binary content
+		// unknown or no licenses here
+		// => check return content to Search to process
 		return nil, content, nil
 	}
 
