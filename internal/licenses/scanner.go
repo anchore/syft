@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
-const defaultCoverageThreshold = 75 // determined by experimentation
+const DefaultCoverageThreshold = 75 // determined by experimentation
 
 type Scanner interface {
 	IdentifyLicenseIDs(context.Context, io.Reader) ([]string, []byte, error)
@@ -27,17 +27,29 @@ type ScannerConfig struct {
 	Scanner           func([]byte) licensecheck.Coverage
 }
 
+type Option func(*scanner)
+
+func WithCoverage(coverage float64) Option {
+	return func(s *scanner) {
+		s.coverageThreshold = coverage
+	}
+}
+
 // NewDefaultScanner returns a scanner that uses a new instance of the default licensecheck package scanner.
-func NewDefaultScanner() Scanner {
+func NewDefaultScanner(o ...Option) Scanner {
 	s, err := licensecheck.NewScanner(licensecheck.BuiltinLicenses())
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to create default license scanner")
 		s = nil
 	}
-	return &scanner{
-		coverageThreshold: defaultCoverageThreshold,
+	newScanner := &scanner{
+		coverageThreshold: DefaultCoverageThreshold,
 		scanner:           s.Scan,
 	}
+	for _, opt := range o {
+		opt(newScanner)
+	}
+	return newScanner
 }
 
 // NewScanner generates a license Scanner with the given ScannerConfig
