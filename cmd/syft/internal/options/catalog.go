@@ -91,6 +91,7 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithUnknownsConfig(cfg.ToUnknownsConfig()).
 		WithSearchConfig(cfg.ToSearchConfig()).
 		WithPackagesConfig(cfg.ToPackagesConfig()).
+		WithLicenseConfig(cfg.ToLicenseConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
 		WithCatalogerSelection(
 			pkgcataloging.NewSelectionRequest().
