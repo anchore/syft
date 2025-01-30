@@ -2,7 +2,9 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/google/go-cmp/cmp"
@@ -144,18 +146,116 @@ func Test_relationships(t *testing.T) {
 	}
 }
 
-func Test_fileComponents(t *testing.T) {
+func Test_FileComponents(t *testing.T) {
+	p1 := pkg.Package{
+		Name: "p1",
+	}
 	tests := []struct {
 		name string
 		sbom sbom.SBOM
 		want []cyclonedx.Component
 	}{
 		{
-			name: "sbom coordinates with file metadata are serialized to cdx",
+			name: "sbom coordinates with file metadata are serialized to cdx along with packages",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(p1),
+					FileMetadata: map[file.Coordinates]file.Metadata{
+						{RealPath: "/test"}: {Path: "/test", FileInfo: newMockFileInfo(false, false)}, // Embed the mock that always returns IsDir() = true
+					},
+					FileDigests: map[file.Coordinates][]file.Digest{
+						{RealPath: "/test"}: {
+							{
+								Algorithm: "sha256",
+								Value:     "xyz12345",
+							},
+						},
+					},
+				},
+			},
+			want: []cyclonedx.Component{
+				{
+					BOMRef: "2a1fc74ade23e357",
+					Type:   cyclonedx.ComponentTypeLibrary,
+					Name:   "p1",
+				},
+				{
+					BOMRef: "3f31cb2d98be6c1e",
+					Name:   "/test",
+					Type:   cyclonedx.ComponentTypeFile,
+					Hashes: &[]cyclonedx.Hash{
+						{Algorithm: "SHA-256", Value: "xyz12345"},
+					},
+				},
+			},
+		},
+		{
+			name: "sbom coordinates that don't contain metadata are not added to the final output",
 			sbom: sbom.SBOM{
 				Artifacts: sbom.Artifacts{
 					FileMetadata: map[file.Coordinates]file.Metadata{
-						{RealPath: "/test"}: {Path: "/test"},
+						{RealPath: "/test"}: {Path: "/test", FileInfo: newMockFileInfo(false, false)},
+					},
+					FileDigests: map[file.Coordinates][]file.Digest{
+						{RealPath: "/test"}: {
+							{
+								Algorithm: "sha256",
+								Value:     "xyz12345",
+							},
+						},
+						{RealPath: "/test-2"}: {
+							{
+								Algorithm: "sha256",
+								Value:     "xyz678910",
+							},
+						},
+					},
+				},
+			},
+			want: []cyclonedx.Component{
+				{
+					BOMRef: "3f31cb2d98be6c1e",
+					Name:   "/test",
+					Type:   cyclonedx.ComponentTypeFile,
+					Hashes: &[]cyclonedx.Hash{
+						{Algorithm: "SHA-256", Value: "xyz12345"},
+					},
+				},
+			},
+		},
+		{
+			name: "sbom coordinates that return hashes not covered by cdx are not added to the final output",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					FileMetadata: map[file.Coordinates]file.Metadata{
+						{RealPath: "/test"}: {Path: "/test", FileInfo: newMockFileInfo(false, false)},
+					},
+					FileDigests: map[file.Coordinates][]file.Digest{
+						{RealPath: "/test"}: {
+							{
+								Algorithm: "xxh64",
+								Value:     "xyz12345",
+							},
+						},
+					},
+				},
+			},
+			want: []cyclonedx.Component{},
+		},
+		{
+			name: "sbom coordinates who's metadata is directory or symlink are skipped",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					FileMetadata: map[file.Coordinates]file.Metadata{
+						{RealPath: "/testdir"}: {
+							Path:     "/testdir",
+							FileInfo: newMockFileInfo(true, false),
+						},
+						{RealPath: "/testsym"}: {
+							Path:     "/testsym",
+							FileInfo: newMockFileInfo(false, true),
+						},
+						{RealPath: "/test"}: {Path: "/test", FileInfo: newMockFileInfo(false, false)},
 					},
 					FileDigests: map[file.Coordinates][]file.Digest{
 						{RealPath: "/test"}: {
@@ -178,6 +278,21 @@ func Test_fileComponents(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "sbom with no files serialized correctly",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(p1),
+				},
+			},
+			want: []cyclonedx.Component{
+				{
+					BOMRef: "2a1fc74ade23e357",
+					Type:   cyclonedx.ComponentTypeLibrary,
+					Name:   "p1",
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -189,6 +304,35 @@ func Test_fileComponents(t *testing.T) {
 		})
 	}
 }
+
+// mockFileInfo is a test struct that simulates fs.FileInfo
+type mockFileInfo struct {
+	isDir     bool
+	isSymlink bool
+}
+
+func newMockFileInfo(isDir, isSym bool) mockFileInfo {
+	return mockFileInfo{
+		isDir,
+		isSym,
+	}
+}
+
+// Implement os.FileInfo interface methods
+func (m mockFileInfo) Name() string { return "mockDir" }
+func (m mockFileInfo) Size() int64  { return 0 }
+func (m mockFileInfo) Mode() os.FileMode {
+	if m.isSymlink {
+		return os.ModeSymlink
+	}
+	if m.isDir {
+		return os.ModeDir
+	}
+	return os.ModeType
+}                                         // Mark as directory
+func (m mockFileInfo) ModTime() time.Time { return time.Now() }
+func (m mockFileInfo) IsDir() bool        { return m.isDir }
+func (m mockFileInfo) Sys() any           { return nil }
 
 func Test_toBomDescriptor(t *testing.T) {
 	type args struct {
