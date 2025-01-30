@@ -72,7 +72,7 @@ func Test_toFormatModel(t *testing.T) {
 							{
 								Category: "PACKAGE-MANAGER",
 								RefType:  "purl",
-								Locator:  "pkg:oci/alpine@sha256:d34db33f?arch=&tag=latest",
+								Locator:  "pkg:oci/alpine@sha256%3Ad34db33f?arch=&tag=latest",
 							},
 						},
 						PackageSupplier: &spdx.Supplier{

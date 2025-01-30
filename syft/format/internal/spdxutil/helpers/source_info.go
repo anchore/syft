@@ -70,6 +70,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from GitHub Actions workflow file or composite action file"
 	case pkg.WordpressPluginPkg:
 		answer = "acquired package info from found wordpress plugin PHP source files"
+	case pkg.TerraformPkg:
+		answer = "acquired package info from Terraform dependency lock file"
 	default:
 		answer = "acquired package info from the following paths"
 	}

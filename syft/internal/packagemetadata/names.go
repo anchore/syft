@@ -109,6 +109,8 @@ var jsonTypes = makeJSONTypes(
 	jsonNamesWithoutLookup(pkg.RustBinaryAuditEntry{}, "rust-cargo-audit-entry", "RustCargoPackageMetadata"), // the legacy value is split into two types, where the other is preferred
 	jsonNames(pkg.WordpressPluginEntry{}, "wordpress-plugin-entry", "WordpressMetadata"),
 	jsonNames(pkg.LuaRocksPackage{}, "luarocks-package"),
+	jsonNames(pkg.TerraformLockProviderEntry{}, "terraform-lock-provider-entry"),
+	jsonNames(pkg.DotnetPackagesLockEntry{}, "dotnet-packages-lock-entry"),
 )
 
 func expandLegacyNameVariants(names ...string) []string {

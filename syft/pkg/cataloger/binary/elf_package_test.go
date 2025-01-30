@@ -26,7 +26,7 @@ func Test_packageURL(t *testing.T) {
 					System: "syftsys",
 				},
 			},
-			want: "pkg:generic/syftsys/github.com/anchore/syft@v0.1.0",
+			want: "pkg:generic/syftsys/github.com%2Fanchore%2Fsyft@v0.1.0",
 		},
 		{
 			name: "elf binary package short name",

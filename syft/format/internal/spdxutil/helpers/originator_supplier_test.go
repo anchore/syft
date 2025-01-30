@@ -19,6 +19,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.ConaninfoEntry{},
 		pkg.DartPubspecLockEntry{},
 		pkg.DotnetDepsEntry{},
+		pkg.DotnetPackagesLockEntry{},
 		pkg.ELFBinaryPackageNoteJSONPayload{},
 		pkg.ElixirMixLockEntry{},
 		pkg.ErlangRebarLockEntry{},
@@ -367,6 +368,14 @@ func Test_OriginatorSupplier(t *testing.T) {
 			name: "from ocaml opam",
 			input: pkg.Package{
 				Metadata: pkg.OpamPackage{},
+			},
+			originator: "",
+			supplier:   "",
+		},
+		{
+			name: "from terraform lock",
+			input: pkg.Package{
+				Metadata: pkg.TerraformLockProviderEntry{},
 			},
 			originator: "",
 			supplier:   "",

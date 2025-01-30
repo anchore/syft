@@ -15,6 +15,7 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"
+	internallicenses "github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/internal/relationship"
@@ -762,10 +763,16 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 		if license.Value == "" {
 			value, _ = strings.CutPrefix(license.ID, "LicenseRef-")
 		}
-		result = append(result, &spdx.OtherLicense{
+		other := &spdx.OtherLicense{
 			LicenseIdentifier: license.ID,
 			ExtractedText:     value,
-		})
+		}
+		customPrefix := spdxlicense.LicenseRefPrefix + helpers.SanitizeElementID(internallicenses.UnknownLicensePrefix)
+		if strings.HasPrefix(license.ID, customPrefix) {
+			other.LicenseName = strings.TrimPrefix(license.ID, customPrefix)
+			other.LicenseComment = strings.Trim(internallicenses.UnknownLicensePrefix, "-_")
+		}
+		result = append(result, other)
 	}
 	return result
 }
