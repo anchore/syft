@@ -2,15 +2,14 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
-	"os"
 	"testing"
-	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	stfile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil/helpers"
@@ -161,7 +160,7 @@ func Test_FileComponents(t *testing.T) {
 				Artifacts: sbom.Artifacts{
 					Packages: pkg.NewCollection(p1),
 					FileMetadata: map[file.Coordinates]file.Metadata{
-						{RealPath: "/test"}: {Path: "/test", FileInfo: newMockFileInfo(false, false)}, // Embed the mock that always returns IsDir() = true
+						{RealPath: "/test"}: {Path: "/test", Type: stfile.TypeRegular},
 					},
 					FileDigests: map[file.Coordinates][]file.Digest{
 						{RealPath: "/test"}: {
@@ -194,7 +193,7 @@ func Test_FileComponents(t *testing.T) {
 			sbom: sbom.SBOM{
 				Artifacts: sbom.Artifacts{
 					FileMetadata: map[file.Coordinates]file.Metadata{
-						{RealPath: "/test"}: {Path: "/test", FileInfo: newMockFileInfo(false, false)},
+						{RealPath: "/test"}: {Path: "/test", Type: stfile.TypeRegular},
 					},
 					FileDigests: map[file.Coordinates][]file.Digest{
 						{RealPath: "/test"}: {
@@ -228,7 +227,7 @@ func Test_FileComponents(t *testing.T) {
 			sbom: sbom.SBOM{
 				Artifacts: sbom.Artifacts{
 					FileMetadata: map[file.Coordinates]file.Metadata{
-						{RealPath: "/test"}: {Path: "/test", FileInfo: newMockFileInfo(false, false)},
+						{RealPath: "/test"}: {Path: "/test", Type: stfile.TypeRegular},
 					},
 					FileDigests: map[file.Coordinates][]file.Digest{
 						{RealPath: "/test"}: {
@@ -248,14 +247,14 @@ func Test_FileComponents(t *testing.T) {
 				Artifacts: sbom.Artifacts{
 					FileMetadata: map[file.Coordinates]file.Metadata{
 						{RealPath: "/testdir"}: {
-							Path:     "/testdir",
-							FileInfo: newMockFileInfo(true, false),
+							Path: "/testdir",
+							Type: stfile.TypeDirectory,
 						},
 						{RealPath: "/testsym"}: {
-							Path:     "/testsym",
-							FileInfo: newMockFileInfo(false, true),
+							Path: "/testsym",
+							Type: stfile.TypeSymLink,
 						},
-						{RealPath: "/test"}: {Path: "/test", FileInfo: newMockFileInfo(false, false)},
+						{RealPath: "/test"}: {Path: "/test", Type: stfile.TypeRegular},
 					},
 					FileDigests: map[file.Coordinates][]file.Digest{
 						{RealPath: "/test"}: {
@@ -310,29 +309,6 @@ type mockFileInfo struct {
 	isDir     bool
 	isSymlink bool
 }
-
-func newMockFileInfo(isDir, isSym bool) mockFileInfo {
-	return mockFileInfo{
-		isDir,
-		isSym,
-	}
-}
-
-// Implement os.FileInfo interface methods
-func (m mockFileInfo) Name() string { return "mockDir" }
-func (m mockFileInfo) Size() int64  { return 0 }
-func (m mockFileInfo) Mode() os.FileMode {
-	if m.isSymlink {
-		return os.ModeSymlink
-	}
-	if m.isDir {
-		return os.ModeDir
-	}
-	return os.ModeType
-}                                         // Mark as directory
-func (m mockFileInfo) ModTime() time.Time { return time.Now() }
-func (m mockFileInfo) IsDir() bool        { return m.isDir }
-func (m mockFileInfo) Sys() any           { return nil }
 
 func Test_toBomDescriptor(t *testing.T) {
 	type args struct {

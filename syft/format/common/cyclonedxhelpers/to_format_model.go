@@ -2,7 +2,6 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/google/uuid"
 
+	stfile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -52,9 +52,9 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 		if !exists {
 			continue
 		}
-		if fileMetadata.IsDir() ||
-			fileMetadata.Mode() == os.ModeSymlink ||
-			fileMetadata.Mode() == os.ModeSocket {
+		if fileMetadata.Type == stfile.TypeDirectory ||
+			fileMetadata.Type == stfile.TypeSocket ||
+			fileMetadata.Type == stfile.TypeSymLink {
 			// skip dir, symlinks and sockets for the final bom
 			continue
 		}
