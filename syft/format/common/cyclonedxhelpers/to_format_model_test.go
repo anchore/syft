@@ -223,7 +223,7 @@ func Test_FileComponents(t *testing.T) {
 			},
 		},
 		{
-			name: "sbom coordinates that return hashes not covered by cdx are not added to the final output",
+			name: "sbom coordinates that return hashes not covered by cdx only include valid digests",
 			sbom: sbom.SBOM{
 				Artifacts: sbom.Artifacts{
 					FileMetadata: map[file.Coordinates]file.Metadata{
@@ -235,11 +235,24 @@ func Test_FileComponents(t *testing.T) {
 								Algorithm: "xxh64",
 								Value:     "xyz12345",
 							},
+							{
+								Algorithm: "sha256",
+								Value:     "xyz678910",
+							},
 						},
 					},
 				},
 			},
-			want: []cyclonedx.Component{},
+			want: []cyclonedx.Component{
+				{
+					BOMRef: "3f31cb2d98be6c1e",
+					Name:   "/test",
+					Type:   cyclonedx.ComponentTypeFile,
+					Hashes: &[]cyclonedx.Hash{
+						{Algorithm: "SHA-256", Value: "xyz678910"},
+					},
+				},
+			},
 		},
 		{
 			name: "sbom coordinates who's metadata is directory or symlink are skipped",
