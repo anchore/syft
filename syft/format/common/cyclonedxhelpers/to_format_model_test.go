@@ -317,12 +317,6 @@ func Test_FileComponents(t *testing.T) {
 	}
 }
 
-// mockFileInfo is a test struct that simulates fs.FileInfo
-type mockFileInfo struct {
-	isDir     bool
-	isSymlink bool
-}
-
 func Test_toBomDescriptor(t *testing.T) {
 	type args struct {
 		name        string
