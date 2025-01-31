@@ -16,7 +16,7 @@ type PythonPackage struct {
 	Name                 string                     `json:"name" mapstructure:"Name"`
 	Version              string                     `json:"version" mapstructure:"Version"`
 	Author               string                     `json:"author" mapstructure:"Author"`
-	AuthorEmail          string                     `json:"authorEmail" mapstructure:"Authoremail"`
+	AuthorEmail          string                     `json:"authorEmail" mapstructure:"AuthorEmail"`
 	Platform             string                     `json:"platform" mapstructure:"Platform"`
 	Files                []PythonFileRecord         `json:"files,omitempty"`
 	SitePackagesRootPath string                     `json:"sitePackagesRootPath"`
