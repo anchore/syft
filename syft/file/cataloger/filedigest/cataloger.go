@@ -50,7 +50,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 
 	prog := catalogingProgress(int64(len(locations)))
 	for _, location := range locations {
-		result, err := i.catalogLocation(resolver, location)
+		result, err := i.catalogLocation(ctx, resolver, location)
 
 		if errors.Is(err, ErrUndigestableFile) {
 			continue
@@ -83,7 +83,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 	return results, errs
 }
 
-func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Location) ([]file.Digest, error) {
+func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver, location file.Location) ([]file.Digest, error) {
 	meta, err := resolver.FileMetadataByLocation(location)
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	}
 	defer internal.CloseAndLogError(contentReader, location.AccessPath)
 
-	digests, err := intFile.NewDigestsFromFile(contentReader, i.hashes)
+	digests, err := intFile.NewDigestsFromFile(ctx, contentReader, i.hashes)
 	if err != nil {
 		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.RealPath, Err: err}
 	}

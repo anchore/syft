@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/clio"
 	"github.com/anchore/fangs"
 	"github.com/anchore/go-collections"
+	"github.com/anchore/go-sync"
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/internal/options"
@@ -183,6 +184,8 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 			userInput = newUserInput
 		}
 	}
+
+	ctx = sync.SetContextExecutor(ctx, sync.NewExecutor(opts.Parallelism))
 
 	src, err := getSource(ctx, &opts.Catalog, userInput, sources...)
 
