@@ -77,8 +77,6 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 			digests = digestsForLocation
 		}
 
-		// if cdx doesn't have an algorithm for the SBOM we need to drop the components
-		// since an empty hash field is not allowed: https://cyclonedx.org/docs/1.6/json/#components_items_hashes_items_alg
 		cdxHashes := digestsToHashes(digests)
 		components = append(components, cyclonedx.Component{
 			BOMRef: string(coordinate.ID()),
@@ -112,13 +110,6 @@ func digestsToHashes(digests []file.Digest) []cyclonedx.Hash {
 	}
 	return hashes
 }
-
-// Not pulling it's weight, let's just do strings to lower on the map
-// supported algorithm in cycloneDX as of 1.4
-// "MD5", "SHA-1", "SHA-256", "SHA-384", "SHA-512",
-// "SHA3-256", "SHA3-384", "SHA3-512", "BLAKE2b-256", "BLAKE2b-384", "BLAKE2b-512", "BLAKE3"
-// syft supported digests: cmd/syft/cli/eventloop/tasks.go
-// MD5, SHA1, SHA256
 
 func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 	if distro == nil {
