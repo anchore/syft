@@ -8,6 +8,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 
+	"github.com/anchore/go-sync"
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
@@ -48,31 +49,48 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 		}
 	}
 
+	type res struct {
+		location file.Location
+		digests  []file.Digest
+		err      error
+	}
+	executor := sync.ContextExecutor(ctx)
+	collector := sync.NewCollector[res](executor)
+
 	prog := catalogingProgress(int64(len(locations)))
 	for _, location := range locations {
-		result, err := i.catalogLocation(ctx, resolver, location)
+		collector.Provide(func() res {
+			result, err := i.catalogLocation(ctx, resolver, location)
 
-		if errors.Is(err, ErrUndigestableFile) {
-			continue
+			if errors.Is(err, ErrUndigestableFile) {
+				return res{location: location}
+			}
+
+			prog.AtomicStage.Set(location.Path())
+
+			if internal.IsErrPathPermission(err) {
+				log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
+				return res{location: location, err: err}
+			}
+
+			if err != nil {
+				prog.SetError(err)
+				return res{location: location, err: err}
+			}
+
+			prog.Increment()
+
+			return res{location: location, digests: result}
+		})
+	}
+
+	for _, r := range collector.Collect() {
+		if r.err != nil {
+			errs = unknown.Append(errs, r.location, r.err)
 		}
-
-		prog.AtomicStage.Set(location.Path())
-
-		if internal.IsErrPathPermission(err) {
-			log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
-			errs = unknown.Append(errs, location, err)
-			continue
+		if len(r.digests) > 0 {
+			results[r.location.Coordinates] = r.digests
 		}
-
-		if err != nil {
-			prog.SetError(err)
-			errs = unknown.Append(errs, location, err)
-			continue
-		}
-
-		prog.Increment()
-
-		results[location.Coordinates] = result
 	}
 
 	log.Debugf("file digests cataloger processed %d files", prog.Current())
