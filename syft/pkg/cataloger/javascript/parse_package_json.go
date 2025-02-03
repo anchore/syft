@@ -36,9 +36,9 @@ type packageJSON struct {
 }
 
 type author struct {
-	Name  string `json:"name" mapstruct:"name"`
-	Email string `json:"email" mapstruct:"email"`
-	URL   string `json:"url" mapstruct:"url"`
+	Name  string `json:"name" mapstructure:"name"`
+	Email string `json:"email" mapstructure:"email"`
+	URL   string `json:"url" mapstructure:"url"`
 }
 
 type repository struct {
