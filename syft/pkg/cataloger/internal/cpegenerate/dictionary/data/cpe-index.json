@@ -1306,7 +1306,6 @@
         "cpe:2.3:a:jenkins:octoperf_load_testing:*:*:*:*:*:jenkins:*:*"
       ],
       "oic-auth": [
-        "cpe:2.3:a:jenkins:openid:*:*:*:*:*:jenkins:*:*",
         "cpe:2.3:a:jenkins:openid_connect_authentication:*:*:*:*:*:jenkins:*:*"
       ],
       "ontrack": [
@@ -1316,7 +1315,8 @@
         "cpe:2.3:a:jenkins:open_stf:*:*:*:*:*:jenkins:*:*"
       ],
       "openid": [
-        "cpe:2.3:a:jenkins:openid:*:*:*:*:*:jenkins:*:*"
+        "cpe:2.3:a:jenkins:openid:*:*:*:*:*:jenkins:*:*",
+        "cpe:2.3:a:jenkins:openid_connect_authentication:*:*:*:*:*:jenkins:*:*"
       ],
       "openshift-deployer": [
         "cpe:2.3:a:jenkins:openshift_deployer:*:*:*:*:*:jenkins:*:*"
@@ -7529,6 +7529,9 @@
       "agenteasy-properties": [
         "cpe:2.3:a:agenteasy_properties_project:agenteasy_properties:*:*:*:*:*:wordpress:*:*"
       ],
+      "aggregator-advanced-settings": [
+        "cpe:2.3:a:miguelmello:aggregator_advanced_settings:*:*:*:*:*:wordpress:*:*"
+      ],
       "agile-store-locator": [
         "cpe:2.3:a:agilelogix:store_locator:*:*:*:*:*:wordpress:*:*"
       ],
@@ -8309,6 +8312,9 @@
       "bj-lazy-load": [
         "cpe:2.3:a:angrycreative:bj_lazy_load:*:*:*:*:*:wordpress:*:*"
       ],
+      "black-widgets": [
+        "cpe:2.3:a:modernaweb:black_widgets_for_elementor:*:*:*:*:*:wordpress:*:*"
+      ],
       "blackhole-bad-bots": [
         "cpe:2.3:a:plugin-planet:blackhole_for_bad_bots:*:*:*:*:*:wordpress:*:*"
       ],
@@ -8840,6 +8846,9 @@
       ],
       "cds-simple-seo": [
         "cpe:2.3:a:coleds:simple_seo:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ce21-suite": [
+        "cpe:2.3:a:ce21:ce21_suite:*:*:*:*:*:wordpress:*:*"
       ],
       "cf7-constant-contact": [
         "cpe:2.3:a:crmperks:integration_for_constant_contact_and_contact_form_7\\,_wpforms\\,_elementor\\,_ninja:*:*:*:*:*:wordpress:*:*"
@@ -10573,7 +10582,8 @@
         "cpe:2.3:a:envothemes:envo\\'s_elementor_templates_\\\u0026_widgets_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "envo-extra": [
-        "cpe:2.3:a:envothemes:envo_extra:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:envothemes:envo_extra:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:envothemes:envo_extra:*:*:*:*:wordpress:*:*:*"
       ],
       "eonet-manual-user-approve": [
         "cpe:2.3:a:xtendify:eonet_manual_user_approve:*:*:*:*:*:wordpress:*:*"
@@ -10588,7 +10598,7 @@
         "cpe:2.3:a:erident_custom_login_and_dashboard_project:erident_custom_login_and_dashboard:*:*:*:*:*:wordpress:*:*"
       ],
       "erp": [
-        "cpe:2.3:a:wedevs:wp_erp:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:wedevs:wp_erp:*:*:*:*:free:wordpress:*:*"
       ],
       "error-log-viewer": [
         "cpe:2.3:a:bestwebsoft:error_log_viewer:*:*:*:*:*:wordpress:*:*"
@@ -11417,6 +11427,9 @@
       ],
       "geodirectory": [
         "cpe:2.3:a:ayecode:geodirectory:*:*:*:*:*:wordpress:*:*"
+      ],
+      "gerryworks-post-by-mail": [
+        "cpe:2.3:a:gerryntabuhashe:gerryworks_post_by_mail:*:*:*:*:*:wordpress:*:*"
       ],
       "get-custom-field-values": [
         "cpe:2.3:a:get_custom_field_values_project:get_custom_field_values:*:*:*:*:*:wordpress:*:*"
@@ -13276,6 +13289,9 @@
       "microsoft-clarity": [
         "cpe:2.3:a:microsoft:clarity:*:*:*:*:*:wordpress:*:*"
       ],
+      "mighty-builder": [
+        "cpe:2.3:a:mightyplugins:mighty_builder:*:*:*:*:*:wordpress:*:*"
+      ],
       "mihdan-index-now": [
         "cpe:2.3:a:kobzarev:index_now:*:*:*:*:*:wordpress:*:*"
       ],
@@ -13287,6 +13303,9 @@
       ],
       "miniorange-2-factor-authentication": [
         "cpe:2.3:a:miniorange:google_authenticator:*:*:*:*:*:wordpress:*:*"
+      ],
+      "miniorange-firebase-sms-otp-verification": [
+        "cpe:2.3:a:miniorange:otp_verification_with_firebase:*:*:*:*:*:wordpress:*:*"
       ],
       "miniorange-login-openid": [
         "cpe:2.3:a:miniorange:wordpress_social_login_and_register_\\(discord\\,_google\\,_twitter\\,_linkedin\\):*:*:*:*:*:wordpress:*:*"
@@ -14042,7 +14061,8 @@
         "cpe:2.3:a:bestwebsoft:pagination:*:*:*:*:*:wordpress:*:*"
       ],
       "paid-member-subscriptions": [
-        "cpe:2.3:a:cozmoslabs:membership_\\\u0026_content_restriction_-_paid_member_subscriptions:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:cozmoslabs:membership_\\\u0026_content_restriction_-_paid_member_subscriptions:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:cozmoslabs:paid_membership_subscriptions:*:*:*:*:*:wordpress:*:*"
       ],
       "paid-membership": [
         "cpe:2.3:a:videowhisper:micropayments:*:*:*:*:*:wordpress:*:*"
@@ -15206,6 +15226,9 @@
       "revolut-gateway-for-woocommerce": [
         "cpe:2.3:a:revolut:revolut_gateway_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
+      "rewp": [
+        "cpe:2.3:a:remilia:re\\:wp:*:*:*:*:*:wordpress:*:*"
+      ],
       "rezgo": [
         "cpe:2.3:a:rezgo:rezgo_online_booking:*:*:*:*:*:wordpress:*:*"
       ],
@@ -16357,6 +16380,9 @@
       ],
       "st-daily-tip": [
         "cpe:2.3:a:sanskruti:st-daily-tip:*:*:*:*:*:wordpress:*:*"
+      ],
+      "stackable-ultimate-gutenberg-blocks": [
+        "cpe:2.3:a:gambit:stackable:*:*:*:*:*:wordpress:*:*"
       ],
       "staff-directory-pro": [
         "cpe:2.3:a:goldplugins:staff_directory_plugin:*:*:*:*:*:wordpress:*:*"
@@ -20059,6 +20085,9 @@
       ],
       "boot-store": [
         "cpe:2.3:a:thecartpress:boot_store:*:*:*:*:*:wordpress:*:*"
+      ],
+      "bootstrap-ultimate": [
+        "cpe:2.3:a:g5plus:ultimate_bootstrap_elements_for_elementor:*:*:*:*:*:wordpress:*:*"
       ],
       "brilliance": [
         "cpe:2.3:a:cpothemes:brilliance:*:*:*:*:*:wordpress:*:*",
