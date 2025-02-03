@@ -28,14 +28,14 @@ type CreateSBOMConfig struct {
 	Packages           pkgcataloging.Config
 	Files              filecataloging.Config
 	Parallelism        int
-	CatalogerSelection pkgcataloging.SelectionRequest
+	CatalogerSelection cataloging.SelectionRequest
 
 	// audit what tool is being used to generate the SBOM
 	ToolName          string
 	ToolVersion       string
 	ToolConfiguration interface{}
 
-	packageTaskFactories       task.PackageTaskFactories
+	packageTaskFactories       task.Factories
 	packageCatalogerReferences []pkgcataloging.CatalogerReference
 }
 
@@ -150,7 +150,7 @@ func (c *CreateSBOMConfig) WithoutFiles() *CreateSBOMConfig {
 }
 
 // WithCatalogerSelection allows for adding to, removing from, or sub-selecting the final set of catalogers by name or tag.
-func (c *CreateSBOMConfig) WithCatalogerSelection(selection pkgcataloging.SelectionRequest) *CreateSBOMConfig {
+func (c *CreateSBOMConfig) WithCatalogerSelection(selection cataloging.SelectionRequest) *CreateSBOMConfig {
 	c.CatalogerSelection = selection
 	return c
 }
@@ -166,6 +166,10 @@ func (c *CreateSBOMConfig) WithoutCatalogers() *CreateSBOMConfig {
 // WithCatalogers allows for adding user-provided catalogers to the final set of catalogers that will always be run
 // regardless of the source type or any cataloger selections provided.
 func (c *CreateSBOMConfig) WithCatalogers(catalogerRefs ...pkgcataloging.CatalogerReference) *CreateSBOMConfig {
+	for i := range catalogerRefs {
+		// ensure that all package catalogers have the package tag
+		catalogerRefs[i].Tags = append(catalogerRefs[i].Tags, pkgcataloging.PackageTag)
+	}
 	c.packageCatalogerReferences = append(c.packageCatalogerReferences, catalogerRefs...)
 
 	return c
@@ -182,8 +186,8 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	environmentTasks := c.environmentTasks()
 	relationshipsTasks := c.relationshipTasks(src)
 	unknownTasks := c.unknownsTasks()
-	fileTasks := c.fileTasks()
-	pkgTasks, selectionEvidence, err := c.packageTasks(src)
+
+	pkgTasks, fileTasks, selectionEvidence, err := c.selectTasks(src)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -214,80 +218,117 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 		taskGroups...,
 	)
 
+	var allTasks []task.Task
+	allTasks = append(allTasks, pkgTasks...)
+	allTasks = append(allTasks, fileTasks...)
+
 	return taskGroups, &catalogerManifest{
 		Requested: selectionEvidence.Request,
-		Used:      formatTaskNames(pkgTasks),
+		Used:      formatTaskNames(allTasks),
 	}, nil
 }
 
 // fileTasks returns the set of tasks that should be run to catalog files.
-func (c *CreateSBOMConfig) fileTasks() []task.Task {
-	var tsks []task.Task
-
-	if t := task.NewFileDigestCatalogerTask(c.Files.Selection, c.Files.Hashers...); t != nil {
-		tsks = append(tsks, t)
-	}
-	if t := task.NewFileMetadataCatalogerTask(c.Files.Selection); t != nil {
-		tsks = append(tsks, t)
-	}
-	if t := task.NewFileContentCatalogerTask(c.Files.Content); t != nil {
-		tsks = append(tsks, t)
-	}
-	if t := task.NewExecutableCatalogerTask(c.Files.Selection, c.Files.Executable); t != nil {
-		tsks = append(tsks, t)
+func (c *CreateSBOMConfig) fileTasks(cfg task.CatalogingFactoryConfig) ([]task.Task, error) {
+	tsks, err := task.DefaultFileTaskFactories().Tasks(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create file cataloger tasks: %w", err)
 	}
 
-	return tsks
+	return tsks, nil
 }
 
-// packageTasks returns the set of tasks that should be run to catalog packages.
-func (c *CreateSBOMConfig) packageTasks(src source.Description) ([]task.Task, *task.Selection, error) {
+// selectTasks returns the set of tasks that should be run to catalog packages and files.
+func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []task.Task, *task.Selection, error) {
 	cfg := task.CatalogingFactoryConfig{
 		SearchConfig:         c.Search,
 		RelationshipsConfig:  c.Relationships,
 		DataGenerationConfig: c.DataGeneration,
 		PackagesConfig:       c.Packages,
 		ComplianceConfig:     c.Compliance,
+		FilesConfig:          c.Files,
 	}
 
-	persistentTasks, selectableTasks, err := c.allPackageTasks(cfg)
+	persistentPkgTasks, selectablePkgTasks, err := c.allPackageTasks(cfg)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to create package cataloger tasks: %w", err)
+		return nil, nil, nil, fmt.Errorf("unable to create package cataloger tasks: %w", err)
 	}
 
-	req, err := finalSelectionRequest(c.CatalogerSelection, src)
+	req, err := finalTaskSelectionRequest(c.CatalogerSelection, src)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	finalTasks, selection, err := task.Select(selectableTasks, *req)
+	selectableFileTasks, err := c.fileTasks(cfg)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	finalTasks = append(finalTasks, persistentTasks...)
-
-	if len(finalTasks) == 0 {
-		log.Warn("no catalogers selected")
-		return finalTasks, &selection, nil
+	taskGroups := [][]task.Task{
+		selectablePkgTasks,
+		selectableFileTasks,
 	}
 
-	return finalTasks, &selection, nil
+	finalTaskGroups, selection, err := task.SelectInGroups(taskGroups, *req)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	finalPkgTasks := finalTaskGroups[0]
+	finalFileTasks := finalTaskGroups[1]
+
+	finalPkgTasks = append(finalPkgTasks, persistentPkgTasks...)
+
+	if len(finalPkgTasks) == 0 && len(finalFileTasks) == 0 {
+		return nil, nil, nil, fmt.Errorf("no catalogers selected")
+	}
+
+	logTaskNames(finalPkgTasks, "package cataloger")
+	logTaskNames(finalFileTasks, "file cataloger")
+
+	if len(finalPkgTasks) == 0 && len(finalFileTasks) == 0 {
+		return nil, nil, nil, fmt.Errorf("no catalogers selected")
+	}
+
+	if len(finalPkgTasks) == 0 {
+		log.Debug("no package catalogers selected")
+	}
+
+	if len(finalFileTasks) == 0 {
+		if c.Files.Selection != file.NoFilesSelection {
+			log.Warnf("no file catalogers selected but file selection is configured as %q (this may be unintentional)", c.Files.Selection)
+		} else {
+			log.Debug("no file catalogers selected")
+		}
+	}
+
+	return finalPkgTasks, finalFileTasks, &selection, nil
 }
 
-func finalSelectionRequest(req pkgcataloging.SelectionRequest, src source.Description) (*pkgcataloging.SelectionRequest, error) {
+func logTaskNames(tasks []task.Task, kind string) {
+	// log as tree output (like tree command)
+	log.Debugf("selected %d %s tasks", len(tasks), kind)
+	names := formatTaskNames(tasks)
+	for idx, t := range names {
+		if idx == len(tasks)-1 {
+			log.Tracef("└── %s", t)
+		} else {
+			log.Tracef("├── %s", t)
+		}
+	}
+}
+
+func finalTaskSelectionRequest(req cataloging.SelectionRequest, src source.Description) (*cataloging.SelectionRequest, error) {
 	if len(req.DefaultNamesOrTags) == 0 {
-		defaultTag, err := findDefaultTag(src)
+		defaultTags, err := findDefaultTags(src)
 		if err != nil {
 			return nil, fmt.Errorf("unable to determine default cataloger tag: %w", err)
 		}
 
-		if defaultTag != "" {
-			req.DefaultNamesOrTags = append(req.DefaultNamesOrTags, defaultTag)
-		}
+		req.DefaultNamesOrTags = append(req.DefaultNamesOrTags, defaultTags...)
 
-		req.RemoveNamesOrTags = replaceDefaultTagReferences(defaultTag, req.RemoveNamesOrTags)
-		req.SubSelectTags = replaceDefaultTagReferences(defaultTag, req.SubSelectTags)
+		req.RemoveNamesOrTags = replaceDefaultTagReferences(defaultTags, req.RemoveNamesOrTags)
+		req.SubSelectTags = replaceDefaultTagReferences(defaultTags, req.SubSelectTags)
 	}
 
 	return &req, nil
@@ -379,21 +420,29 @@ func (c *CreateSBOMConfig) Create(ctx context.Context, src source.Source) (*sbom
 	return CreateSBOM(ctx, src, c)
 }
 
-func findDefaultTag(src source.Description) (string, error) {
+func findDefaultTags(src source.Description) ([]string, error) {
 	switch m := src.Metadata.(type) {
 	case source.ImageMetadata:
-		return pkgcataloging.ImageTag, nil
+		return []string{pkgcataloging.ImageTag, filecataloging.FileTag}, nil
 	case source.FileMetadata, source.DirectoryMetadata:
-		return pkgcataloging.DirectoryTag, nil
+		return []string{pkgcataloging.DirectoryTag, filecataloging.FileTag}, nil
 	default:
-		return "", fmt.Errorf("unable to determine default cataloger tag for source type=%T", m)
+		return nil, fmt.Errorf("unable to determine default cataloger tag for source type=%T", m)
 	}
 }
 
-func replaceDefaultTagReferences(defaultTag string, lst []string) []string {
+func replaceDefaultTagReferences(defaultTags []string, lst []string) []string {
 	for i, tag := range lst {
 		if strings.ToLower(tag) == "default" {
-			lst[i] = defaultTag
+			switch len(defaultTags) {
+			case 0:
+				lst[i] = ""
+			case 1:
+				lst[i] = defaultTags[0]
+			default:
+				// remove the default tag and add the individual tags
+				lst = append(lst[:i], append(defaultTags, lst[i+1:]...)...)
+			}
 		}
 	}
 	return lst
