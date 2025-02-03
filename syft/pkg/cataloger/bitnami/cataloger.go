@@ -5,7 +5,6 @@ package bitnami
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -45,6 +44,8 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 	}
 
 	var pkgs []pkg.Package
+	var secondaryPkgsFiles []string
+	mainPkgID := findMainPkgID(s.Relationships)
 	for _, p := range s.Artifacts.Packages.Sorted() {
 		// We only want to report Bitnami packages
 		if !strings.HasPrefix(p.PURL, "pkg:bitnami") {
@@ -70,23 +71,35 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 		// Bitnami packages reported in a SPDX file are shipped under the same directory
 		// as the SPDX file itself.
 		metadata.Path = filepath.Dir(reader.Location.RealPath)
-
-		ownedPathGlob := fmt.Sprintf("%s/**", metadata.Path)
-		ownedLocations, err := resolver.FilesByGlob(ownedPathGlob)
-		if err != nil {
-			log.WithFields("glob", ownedPathGlob, "error", err).Trace("unable to resolve owned path glob in bitnami cataloger")
-			continue
+		if p.ID() != mainPkgID {
+			metadata.Files = packageFiles(s.Relationships, p, metadata.Path)
+			secondaryPkgsFiles = append(secondaryPkgsFiles, metadata.Files...)
 		}
-		ownedLocationSet := file.NewLocationSet(ownedLocations...)
-		metadata.Files = ownedLocationSet.CoordinateSet().Paths()
 
 		p.Metadata = metadata
 
 		pkgs = append(pkgs, p)
 	}
-	relationships := filterRelationships(s.Relationships, pkgs)
 
-	return pkgs, relationships, nil
+	// Resolve all files owned by the main package in the SBOM and update the metadata
+	if mainPkgFiles, err := mainPkgFiles(resolver, reader.Location.RealPath, secondaryPkgsFiles); err == nil {
+		for i, p := range pkgs {
+			if p.ID() == mainPkgID {
+				metadata, ok := p.Metadata.(*pkg.BitnamiEntry)
+				if !ok {
+					log.WithFields("spdx-filepath", reader.Location.RealPath).Warn("main package in SBOM does not have Bitnami metadata")
+					continue
+				}
+
+				metadata.Files = mainPkgFiles
+				pkgs[i].Metadata = metadata
+			}
+		}
+	} else {
+		log.WithFields("spdx-filepath", reader.Location.RealPath, "error", err).Trace("unable to resolve owned files for main package in SBOM")
+	}
+
+	return pkgs, filterRelationships(s.Relationships, pkgs), nil
 }
 
 // filterRelationships filters out relationships that are not related to Bitnami packages
@@ -124,4 +137,34 @@ func filterRelationships(relationships []artifact.Relationship, pkgs []pkg.Packa
 	}
 
 	return result
+}
+
+// findMainPkgID goes through the list of relationships and finds the main package ID
+// which is the one that contains other packages but is not contained by any other package
+func findMainPkgID(relationships []artifact.Relationship) artifact.ID {
+	containedByAnother := func(candidateID artifact.ID) bool {
+		for _, r := range relationships {
+			if r.Type != artifact.ContainsRelationship {
+				continue
+			}
+
+			if to, ok := r.To.(pkg.Package); ok {
+				if to.ID() == candidateID {
+					return true
+				}
+			}
+		}
+
+		return false
+	}
+
+	for _, r := range relationships {
+		if from, ok := r.From.(pkg.Package); ok {
+			if !containedByAnother(from.ID()) {
+				return from.ID()
+			}
+		}
+	}
+
+	return ""
 }

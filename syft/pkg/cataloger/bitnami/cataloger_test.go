@@ -23,152 +23,374 @@ func mustCPEs(s ...string) (c []cpe.CPE) {
 }
 
 func TestBitnamiCataloger(t *testing.T) {
-	apacheMainPkg := pkg.Package{
-		Name:      "apache",
-		Version:   "2.4.62-3",
+	postgresqlMainPkg := pkg.Package{
+		Name:      "postgresql",
+		Version:   "17.2.0-8",
 		Type:      pkg.BitnamiPkg,
-		Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
+		Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
-			pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+			pkg.NewLicenseFromType("PostgreSQL", license.Concluded),
+			pkg.NewLicenseFromType("PostgreSQL", license.Declared),
 		),
 		FoundBy: catalogerName,
-		PURL:    "pkg:bitnami/apache@2.4.62-3?arch=arm64&distro=debian-12",
+		PURL:    "pkg:bitnami/postgresql@17.2.0-8?arch=arm64&distro=debian-12",
 		CPEs: mustCPEs(
-			"cpe:2.3:*:apache:http_server:2.4.62:*:*:*:*:*:*:*",
+			"cpe:2.3:*:postgresql:postgresql:17.2.0:*:*:*:*:*:*:*",
 		),
 		Metadata: &pkg.BitnamiEntry{
-			Name:         "apache",
-			Version:      "2.4.62",
-			Revision:     "3",
+			Name:         "postgresql",
+			Version:      "17.2.0",
+			Revision:     "8",
 			Architecture: "arm64",
 			Distro:       "debian-12",
-			Path:         "opt/bitnami/apache",
-			Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
+			Path:         "opt/bitnami/postgresql",
+			Files: []string{
+				"opt/bitnami/postgresql/readme.txt",
+			},
 		},
 	}
-	apacheSecondaryPkgs := []pkg.Package{
+	postgresqlSecondaryPkgs := []pkg.Package{
 		{
-			Name:      "apr",
-			Version:   "1.7.5",
+			Name:      "geos",
+			Version:   "3.13.0",
 			Type:      pkg.BitnamiPkg,
-			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
-				pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+				pkg.NewLicenseFromType("LGPL-2.1-only", license.Concluded),
+				pkg.NewLicenseFromType("LGPL-2.1-only", license.Declared),
 			),
 			FoundBy: catalogerName,
-			PURL:    "pkg:bitnami/apr@1.7.5?arch=arm64&distro=debian-12",
+			PURL:    "pkg:bitnami/geos@3.13.0?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:apache:portable_runtime:1.7.5:*:*:*:*:*:*:*",
+				"cpe:2.3:*:libgeos:geos:3.13.0:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiEntry{
-				Name:         "apr",
-				Version:      "1.7.5",
+				Name:         "geos",
+				Version:      "3.13.0",
 				Architecture: "arm64",
 				Distro:       "debian-12",
-				Path:         "opt/bitnami/apache",
-				Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
+				Path:         "opt/bitnami/postgresql",
 			},
 		},
 		{
-			Name:      "apr-util",
-			Version:   "1.6.3",
+			Name:      "proj",
+			Version:   "6.3.2",
 			Type:      pkg.BitnamiPkg,
-			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
-				pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+				pkg.NewLicenseFromType("MIT", license.Concluded),
+				pkg.NewLicenseFromType("MIT", license.Declared),
 			),
 			FoundBy: catalogerName,
-			PURL:    "pkg:bitnami/apr-util@1.6.3?arch=arm64&distro=debian-12",
+			PURL:    "pkg:bitnami/proj@6.3.2?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:apache:apr-util:1.6.3:*:*:*:*:*:*:*",
+				"cpe:2.3:*:proj:proj:6.3.2:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiEntry{
-				Name:         "apr-util",
-				Version:      "1.6.3",
+				Name:         "proj",
+				Version:      "6.3.2",
 				Architecture: "arm64",
 				Distro:       "debian-12",
-				Path:         "opt/bitnami/apache",
-				Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
+				Path:         "opt/bitnami/postgresql",
 			},
 		},
 		{
-			Name:      "modsecurity2",
-			Version:   "2.9.7",
+			Name:      "gdal",
+			Version:   "3.10.1",
 			Type:      pkg.BitnamiPkg,
-			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
-				pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+				pkg.NewLicenseFromType("MIT", license.Concluded),
+				pkg.NewLicenseFromType("MIT", license.Declared),
 			),
 			FoundBy: catalogerName,
-			PURL:    "pkg:bitnami/modsecurity2@2.9.7?arch=arm64&distro=debian-12",
+			PURL:    "pkg:bitnami/gdal@3.10.1?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:trustwave:modsecurity:2.9.7:*:*:*:*:*:*:*",
+				"cpe:2.3:*:osgeo:gdal:3.10.1:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiEntry{
-				Name:         "modsecurity2",
-				Version:      "2.9.7",
+				Name:         "gdal",
+				Version:      "3.10.1",
 				Architecture: "arm64",
 				Distro:       "debian-12",
-				Path:         "opt/bitnami/apache",
-				Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
+				Path:         "opt/bitnami/postgresql",
 			},
 		},
 		{
-			Name:      "modsecurity",
-			Version:   "3.0.13",
+			Name:      "json-c",
+			Version:   "0.16.20220414",
 			Type:      pkg.BitnamiPkg,
-			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
-				pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+				pkg.NewLicenseFromType("MIT", license.Concluded),
+				pkg.NewLicenseFromType("MIT", license.Declared),
 			),
 			FoundBy: catalogerName,
-			PURL:    "pkg:bitnami/modsecurity@3.0.13?arch=arm64&distro=debian-12",
+			PURL:    "pkg:bitnami/json-c@0.16.20220414?arch=arm64&distro=debian-12",
 			CPEs: mustCPEs(
-				"cpe:2.3:*:trustwave:modsecurity:3.0.13:*:*:*:*:*:*:*",
+				"cpe:2.3:*:json-c_project:json-c:0.16.20220414:*:*:*:*:*:*:*",
 			),
 			Metadata: &pkg.BitnamiEntry{
-				Name:         "modsecurity",
-				Version:      "3.0.13",
+				Name:         "json-c",
+				Version:      "0.16.20220414",
 				Architecture: "arm64",
 				Distro:       "debian-12",
-				Path:         "opt/bitnami/apache",
-				Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
+				Path:         "opt/bitnami/postgresql",
 			},
 		},
 		{
-			Name:      "modsecurity-apache",
-			Version:   "0.20210819.0",
+			Name:      "orafce",
+			Version:   "4.14.1",
 			Type:      pkg.BitnamiPkg,
-			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/apache/.spdx-apache.spdx")),
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
-				pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+				pkg.NewLicenseFromType("0BSD", license.Concluded),
+				pkg.NewLicenseFromType("0BSD", license.Declared),
 			),
 			FoundBy: catalogerName,
-			PURL:    "pkg:bitnami/modsecurity-apache@0.20210819.0?arch=arm64&distro=debian-12",
+			PURL:    "pkg:bitnami/orafce@4.14.1?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:orafce:orafce:4.14.1:*:*:*:*:*:*:*",
+			),
 			Metadata: &pkg.BitnamiEntry{
-				Name:         "modsecurity-apache",
-				Version:      "0.20210819.0",
+				Name:         "orafce",
+				Version:      "4.14.1",
 				Architecture: "arm64",
 				Distro:       "debian-12",
-				Path:         "opt/bitnami/apache",
-				Files:        []string{"opt/bitnami/apache/.spdx-apache.spdx"},
+				Path:         "opt/bitnami/postgresql",
+			},
+		},
+		{
+			Name:      "pljava",
+			Version:   "1.6.8",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("BSD-3-Clause", license.Concluded),
+				pkg.NewLicenseFromType("BSD-3-Clause", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/pljava@1.6.8?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:pl/java_project:pl/java:1.6.8:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "pljava",
+				Version:      "1.6.8",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+				Path:         "opt/bitnami/postgresql",
+				Files: []string{
+					"opt/bitnami/postgresql/share/pljava/pljava-api-1.6.8.jar",
+					"opt/bitnami/postgresql/share/pljava/pljava-1.6.8.jar",
+					"opt/bitnami/postgresql/share/pljava/pljava-examples-1.6.8.jar",
+				},
+			},
+		},
+		{
+			Name:      "unixodbc",
+			Version:   "2.3.12",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("LGPL-2.1-only", license.Concluded),
+				pkg.NewLicenseFromType("LGPL-2.1-only", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/unixodbc@2.3.12?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:unixodbc:unixodbc:2.3.12:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "unixodbc",
+				Version:      "2.3.12",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+				Path:         "opt/bitnami/postgresql",
+			},
+		},
+		{
+			Name:      "psqlodbc",
+			Version:   "16.0.0",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("LGPL-3.0-only", license.Concluded),
+				pkg.NewLicenseFromType("LGPL-3.0-only", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/psqlodbc@16.0.0?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:postgresql:psqlodbc:16.0.0:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "psqlodbc",
+				Version:      "16.0.0",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+				Path:         "opt/bitnami/postgresql",
+			},
+		},
+		{
+			Name:      "protobuf",
+			Version:   "3.21.12",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("BSD-3-Clause", license.Concluded),
+				pkg.NewLicenseFromType("BSD-3-Clause", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/protobuf@3.21.12?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:golang:protobuf:3.21.12:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "protobuf",
+				Version:      "3.21.12",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+				Path:         "opt/bitnami/postgresql",
+			},
+		},
+		{
+			Name:      "protobuf-c",
+			Version:   "1.5.1",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("BSD-2-Clause", license.Concluded),
+				pkg.NewLicenseFromType("BSD-2-Clause", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/protobuf-c@1.5.1?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:protobuf-c:protobuf-c:1.5.1:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "protobuf-c",
+				Version:      "1.5.1",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+				Path:         "opt/bitnami/postgresql",
+			},
+		},
+		{
+			Name:      "postgis",
+			Version:   "3.4.4",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("GPL-2.0-or-later", license.Concluded),
+				pkg.NewLicenseFromType("GPL-2.0-or-later", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/postgis@3.4.4?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:postgis:postgis:3.4.4:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "postgis",
+				Version:      "3.4.4",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+				Path:         "opt/bitnami/postgresql",
+			},
+		},
+		{
+			Name:      "pgaudit",
+			Version:   "17.0.0",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("PostgreSQL", license.Concluded),
+				pkg.NewLicenseFromType("PostgreSQL", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/pgaudit@17.0.0?arch=arm64&distro=debian-12",
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "pgaudit",
+				Version:      "17.0.0",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+				Path:         "opt/bitnami/postgresql",
+			},
+		},
+		{
+			Name:      "pgbackrest",
+			Version:   "2.54.2",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("MIT", license.Concluded),
+				pkg.NewLicenseFromType("MIT", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/pgbackrest@2.54.2?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:pgbackrest:pgbackrest:2.54.2:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "pgbackrest",
+				Version:      "2.54.2",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+				Path:         "opt/bitnami/postgresql",
+			},
+		},
+		{
+			Name:      "wal2json",
+			Version:   "2.6.0",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("BSD-3-Clause", license.Concluded),
+				pkg.NewLicenseFromType("BSD-3-Clause", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/wal2json@2.6.0?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:wal2json:wal2json:2.6.0:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "wal2json",
+				Version:      "2.6.0",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+				Path:         "opt/bitnami/postgresql",
+			},
+		},
+		{
+			Name:      "nss-wrapper",
+			Version:   "1.1.16",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
+			Licenses: pkg.NewLicenseSet(
+				pkg.NewLicenseFromType("BSD-3-Clause", license.Concluded),
+				pkg.NewLicenseFromType("BSD-3-Clause", license.Declared),
+			),
+			FoundBy: catalogerName,
+			PURL:    "pkg:bitnami/nss_wrapper@1.1.16?arch=arm64&distro=debian-12",
+			CPEs: mustCPEs(
+				"cpe:2.3:*:nss_wrapper:nss_wrapper:1.1.16:*:*:*:*:*:*:*",
+			),
+			Metadata: &pkg.BitnamiEntry{
+				Name:         "nss_wrapper",
+				Version:      "1.1.16",
+				Architecture: "arm64",
+				Distro:       "debian-12",
+				Path:         "opt/bitnami/postgresql",
 			},
 		},
 	}
 
-	apacheExpectedPkgs := []pkg.Package{apacheMainPkg}
-	apacheExpectedPkgs = append(apacheExpectedPkgs, apacheSecondaryPkgs...)
-	pkg.Sort(apacheExpectedPkgs)
-	var apacheExpectedRelationships []artifact.Relationship
-	for _, p := range apacheSecondaryPkgs {
-		apacheExpectedRelationships = append(apacheExpectedRelationships, artifact.Relationship{
-			From: apacheMainPkg,
+	postgresqlExpectedPkgs := []pkg.Package{postgresqlMainPkg}
+	postgresqlExpectedPkgs = append(postgresqlExpectedPkgs, postgresqlSecondaryPkgs...)
+	pkg.Sort(postgresqlExpectedPkgs)
+	var postgresqlExpectedRelationships []artifact.Relationship
+	for _, p := range postgresqlSecondaryPkgs {
+		postgresqlExpectedRelationships = append(postgresqlExpectedRelationships, artifact.Relationship{
+			From: postgresqlMainPkg,
 			To:   p,
 			Type: artifact.ContainsRelationship,
 		})
@@ -195,7 +417,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			Architecture: "arm64",
 			Distro:       "debian-12",
 			Path:         "opt/bitnami/render-template",
-			Files:        []string{"opt/bitnami/render-template/.spdx-render-template.spdx"},
+			Files:        []string{},
 		},
 	}
 
@@ -207,10 +429,10 @@ func TestBitnamiCataloger(t *testing.T) {
 		wantErr           require.ErrorAssertionFunc
 	}{
 		{
-			name:              "parse valid Apache SBOM",
+			name:              "parse valid PostgreSQL SBOM",
 			fixture:           "test-fixtures/json",
-			wantPkgs:          apacheExpectedPkgs,
-			wantRelationships: apacheExpectedRelationships,
+			wantPkgs:          postgresqlExpectedPkgs,
+			wantRelationships: postgresqlExpectedRelationships,
 			wantErr:           require.NoError,
 		},
 		{
@@ -228,7 +450,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			wantErr:           require.NoError,
 		},
 		{
-			name:              "Invalid Apache SBOM",
+			name:              "Invalid SBOM",
 			fixture:           "test-fixtures/invalid",
 			wantPkgs:          nil,
 			wantRelationships: nil,
