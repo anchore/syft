@@ -133,6 +133,7 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 	}
 
 	return filecataloging.Config{
+		Enabled:   cfg.File.Enabled,
 		Selection: cfg.File.Metadata.Selection,
 		Hashers:   hashers,
 		Content: filecontent.Config{
