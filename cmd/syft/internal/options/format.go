@@ -43,9 +43,9 @@ over to the final syft 1.0 json output this option can be used to ease the trans
 
 Note: long term support for this option is not guaranteed (it may change or break at any time)`)
 
-	descriptions.Add(&o.Template.Path, `path to the template file to use when rendering the output with the template output format. 
+	descriptions.Add(&o.Template.Path, `path to the template file to use when rendering the output with the template output format.
 Note that all template paths are based on the current syft-json schema`)
-	descriptions.Add(&o.Template.Legacy, `if true, uses the go structs for the syft-json format for templating. 
+	descriptions.Add(&o.Template.Legacy, `if true, uses the go structs for the syft-json format for templating.
 if false, uses the syft-json output for templating (which follows the syft JSON schema exactly).
 
 Note: long term support for this option is not guaranteed (it may change or break at any time)`)

@@ -17,6 +17,7 @@ type sourceConfig struct {
 	Name     string      `json:"name" yaml:"name" mapstructure:"name"`
 	Version  string      `json:"version" yaml:"version" mapstructure:"version"`
 	BasePath string      `yaml:"base-path" json:"base-path" mapstructure:"base-path"` // specify base path for all file paths
+	Supplier string      `json:"supplier" yaml:"supplier" mapstructure:"supplier"`    // optional field for NTIA supplier
 	File     fileSource  `json:"file" yaml:"file" mapstructure:"file"`
 	Image    imageSource `json:"image" yaml:"image" mapstructure:"image"`
 }
@@ -32,6 +33,10 @@ var _ interface {
 var _ clio.PostLoader = (*imageSource)(nil)
 
 func (o *sourceConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
+	descriptions.Add(&o.Supplier, `optional field for syft user to configure the supplier of the software component being analyzed
+for more information see the NTIA minimum elements guide:
+
+https://www.ntia.gov/sites/default/files/publications/sbom_minimum_elements_report_0.pdf`)
 	descriptions.Add(&o.File.Digests, `the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")`)
 	descriptions.Add(&o.Image.DefaultPullSource, `allows users to specify which image source should be used to generate the sbom
 valid values are: registry, docker, podman`)
