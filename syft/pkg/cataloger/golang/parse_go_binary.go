@@ -63,7 +63,10 @@ func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
-	licenseScanner := licenses.ContextLicenseScanner(ctx)
+	licenseScanner, err := licenses.ContextLicenseScanner(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
 	if err != nil {

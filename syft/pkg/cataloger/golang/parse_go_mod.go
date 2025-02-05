@@ -35,7 +35,10 @@ func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make(map[string]pkg.Package)
 
-	licenseScanner := licenses.ContextLicenseScanner(ctx)
+	licenseScanner, err := licenses.ContextLicenseScanner(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to create default license scanner: %w", err)
+	}
 
 	contents, err := io.ReadAll(reader)
 	if err != nil {
