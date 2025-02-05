@@ -11,6 +11,7 @@ type CatalogingFactoryConfig struct {
 	SearchConfig         cataloging.SearchConfig
 	RelationshipsConfig  cataloging.RelationshipsConfig
 	DataGenerationConfig cataloging.DataGenerationConfig
+	LicenseConfig        cataloging.LicenseConfig
 	PackagesConfig       pkgcataloging.Config
 	FilesConfig          filecataloging.Config
 }
@@ -21,6 +22,7 @@ func DefaultCatalogingFactoryConfig() CatalogingFactoryConfig {
 		SearchConfig:         cataloging.DefaultSearchConfig(),
 		RelationshipsConfig:  cataloging.DefaultRelationshipsConfig(),
 		DataGenerationConfig: cataloging.DefaultDataGenerationConfig(),
+		LicenseConfig:        cataloging.DefaultLicenseConfig(),
 		PackagesConfig:       pkgcataloging.DefaultConfig(),
 		FilesConfig:          filecataloging.DefaultConfig(),
 	}
