@@ -72,12 +72,12 @@ func parseRebarLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 
 			sourcePkg := pkgMap[name]
 			if sourcePkg == nil {
-				log.WithFields("package", name).Warn("unable find source package")
+				log.WithFields("package", name).Debug("unable find source package")
 				continue
 			}
 			metadata, ok := sourcePkg.Metadata.(pkg.ErlangRebarLockEntry)
 			if !ok {
-				log.WithFields("package", name).Warn("unable to extract rebar.lock metadata to add hash metadata")
+				log.WithFields("package", name).Debug("unable to extract rebar.lock metadata to add hash metadata")
 				continue
 			}
 

@@ -136,7 +136,7 @@ func encode(out map[string]string, value reflect.Value, prefix string, fn FieldN
 			encode(out, value.MapIndex(key), fmt.Sprintf("%s:%v", prefix, key.Interface()), fn)
 		}
 	default:
-		log.Warnf("skipping encoding of unsupported property: %s", prefix)
+		log.Debugf("skipping encoding of unsupported property: %s", prefix)
 	}
 }
 
@@ -213,7 +213,7 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 		}
 		if decode(vals, v.Elem(), prefix, fn) && value.CanSet() {
 			o := v.Interface()
-			log.Infof("%v", o)
+			log.Tracef("%v", o)
 			value.Set(v)
 		} else {
 			return false
@@ -355,7 +355,7 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 		}
 		return values
 	default:
-		log.Warnf("unable to set field: %s", prefix)
+		log.Debugf("unable to set field: %s", prefix)
 		return false
 	}
 	return true

@@ -160,7 +160,7 @@ func toFileMetadataEntry(coordinates file.Coordinates, metadata *file.Metadata) 
 
 		mode, err = strconv.Atoi(fmt.Sprintf("%o", metadata.Mode()))
 		if err != nil {
-			log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coordinates, metadata.Mode, err)
+			log.Debugf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coordinates, metadata.Mode, err)
 			mode = 0
 		}
 

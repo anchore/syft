@@ -34,7 +34,7 @@ type pathSkipper struct {
 func skipPathsByMountTypeAndName(root string) PathIndexVisitor {
 	infos, err := mountinfo.GetMounts(nil)
 	if err != nil {
-		log.WithFields("error", err).Warnf("unable to get system mounts")
+		log.WithFields("error", err).Debug("unable to get system mounts")
 		return func(_ string, _ string, _ os.FileInfo, _ error) error {
 			return nil
 		}

@@ -43,7 +43,7 @@ type containerdPullStatusFormatter struct {
 func (m *Handler) handlePullContainerdImage(e partybus.Event) []tea.Model {
 	_, pullStatus, err := stereoscopeParsers.ParsePullContainerdImage(e)
 	if err != nil {
-		log.WithFields("error", err).Warn("unable to parse event")
+		log.WithFields("error", err).Debug("unable to parse event")
 		return nil
 	}
 
