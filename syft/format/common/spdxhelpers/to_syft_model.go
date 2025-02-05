@@ -142,10 +142,16 @@ func containerSource(p *spdx.Package) source.Description {
 		c := p.PackageChecksums[0]
 		digest = fmt.Sprintf("%s:%s", fromChecksumAlgorithm(c.Algorithm), c.Value)
 	}
+
+	supplier := ""
+	if p.PackageSupplier != nil {
+		supplier = p.PackageSupplier.Supplier
+	}
 	return source.Description{
-		ID:      id,
-		Name:    p.PackageName,
-		Version: p.PackageVersion,
+		ID:       id,
+		Name:     p.PackageName,
+		Version:  p.PackageVersion,
+		Supplier: supplier,
 		Metadata: source.ImageMetadata{
 			UserInput:      container,
 			ID:             id,
@@ -361,10 +367,11 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 		from, fromOk := a.(pkg.Package)
 		toPackage, toPackageOk := b.(pkg.Package)
 		toLocation, toLocationOk := b.(file.Location)
-		if !fromOk || !(toPackageOk || toLocationOk) {
+		if !fromOk || (!toPackageOk && !toLocationOk) {
 			log.Debugf("unable to find valid relationship mapping from SPDX, ignoring: (from: %+v) (to: %+v)", a, b)
 			continue
 		}
+
 		var to artifact.Identifiable
 		var typ artifact.RelationshipType
 		if toLocationOk {
