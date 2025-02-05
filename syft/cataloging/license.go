@@ -9,7 +9,7 @@ type LicenseConfig struct {
 
 func DefaultLicenseConfig() LicenseConfig {
 	return LicenseConfig{
-		IncludeUnkownLicenseContent: false,
+		IncludeUnkownLicenseContent: licenses.DefaultIncludeLicenseContent,
 		Coverage:                    licenses.DefaultCoverageThreshold,
 	}
 }
