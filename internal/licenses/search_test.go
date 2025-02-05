@@ -79,8 +79,8 @@ func TestSearchFileLicenses(t *testing.T) {
 
 func TestSearchPkgLicenses(t *testing.T) {
 	type expectation struct {
-		yieldError bool
-		licenses   []pkg.License
+		wantErr  require.ErrorAssertionFunc
+		licenses []pkg.License
 	}
 
 	testLocation := file.NewLocation("LICENSE")
@@ -94,7 +94,6 @@ func TestSearchPkgLicenses(t *testing.T) {
 			name: "apache license 2.0",
 			in:   "test-fixtures/apache-license-2.0",
 			expected: expectation{
-				yieldError: false,
 				licenses: []pkg.License{
 					{
 						Value:          "Apache-2.0",
@@ -105,13 +104,13 @@ func TestSearchPkgLicenses(t *testing.T) {
 						Contents:       "",
 					},
 				},
+				wantErr: nil,
 			},
 		},
 		{
 			name: "custom license no content by default",
 			in:   "test-fixtures/nvidia-software-and-cuda-supplement",
 			expected: expectation{
-				yieldError: false,
 				licenses: []pkg.License{
 					{
 						Value:          "UNKNOWN",
@@ -122,6 +121,7 @@ func TestSearchPkgLicenses(t *testing.T) {
 						Contents:       "",
 					},
 				},
+				wantErr: nil,
 			},
 		},
 		{
@@ -129,7 +129,6 @@ func TestSearchPkgLicenses(t *testing.T) {
 			in:                          "test-fixtures/nvidia-software-and-cuda-supplement",
 			includeUnkownLicenseContent: true,
 			expected: expectation{
-				yieldError: false,
 				licenses: []pkg.License{
 					{
 						Value:          "UNKNOWN",
@@ -140,6 +139,7 @@ func TestSearchPkgLicenses(t *testing.T) {
 						Contents:       string(mustOpen("test-fixtures/nvidia-software-and-cuda-supplement")),
 					},
 				},
+				wantErr: nil,
 			},
 		},
 	}
@@ -151,16 +151,15 @@ func TestSearchPkgLicenses(t *testing.T) {
 			require.NoError(t, err)
 			s := testScanner(test.includeUnkownLicenseContent)
 			result, err := s.PkgSearch(ctx, file.NewLocationReadCloser(file.NewLocation("LICENSE"), io.NopCloser(bytes.NewReader(content))))
-			if test.expected.yieldError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+			if test.expected.wantErr != nil {
+				test.expected.wantErr(t, err)
+			}
+			require.NoError(t, err)
 
-				require.Len(t, result, len(test.expected.licenses))
+			require.Len(t, result, len(test.expected.licenses))
 
-				if len(test.expected.licenses) > 0 {
-					require.Equal(t, test.expected.licenses, result)
-				}
+			if len(test.expected.licenses) > 0 {
+				require.Equal(t, test.expected.licenses, result)
 			}
 		})
 	}
