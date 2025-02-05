@@ -305,6 +305,7 @@ func toSyftDescriptor(d model.Descriptor) sbom.Descriptor {
 	return sbom.Descriptor{
 		Name:          d.Name,
 		Version:       d.Version,
+		Supplier:      d.Supplier,
 		Configuration: d.Configuration,
 	}
 }

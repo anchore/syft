@@ -77,6 +77,7 @@ func toDescriptor(d sbom.Descriptor) model.Descriptor {
 	return model.Descriptor{
 		Name:          d.Name,
 		Version:       d.Version,
+		Supplier:      d.Supplier,
 		Configuration: d.Configuration,
 	}
 }

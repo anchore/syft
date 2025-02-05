@@ -94,7 +94,8 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 			cataloging.NewSelectionRequest().
 				WithDefaults(cfg.DefaultCatalogers...).
 				WithExpression(cfg.SelectCatalogers...),
-		)
+		).
+		WithSupplier(cfg.Source.Supplier)
 }
 
 func (cfg Catalog) ToSearchConfig() cataloging.SearchConfig {
