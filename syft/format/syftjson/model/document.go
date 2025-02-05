@@ -12,9 +12,14 @@ type Document struct {
 }
 
 // Descriptor describes what created the document as well as surrounding metadata
+// Note: syft currently makes no claims or runs any logic to determine the Supplier field below
+// The Supplier can be determined by the user of syft and passed as a config or flag to help fulfill
+// the NTIA minimum elements. For mor information see the NTIA framing document below
+// https://www.ntia.gov/files/ntia/publications/framingsbom_20191112.pdf
 type Descriptor struct {
 	Name          string      `json:"name"`
 	Version       string      `json:"version"`
+	Supplier      string      `json:"supplier"`
 	Configuration interface{} `json:"configuration,omitempty"`
 }
 
