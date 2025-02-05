@@ -214,7 +214,7 @@ func (c *goLicenseResolver) findLicensesInFS(ctx context.Context, scanner licens
 		}
 		defer internal.CloseAndLogError(rdr, filePath)
 
-		parsed, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(file.NewLocation(filePath), rdr))
+		parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(file.NewLocation(filePath), rdr))
 		if err != nil {
 			log.Debugf("error parsing license file %s: %v", filePath, err)
 			return nil
@@ -267,7 +267,7 @@ func (c *goLicenseResolver) parseLicenseFromLocation(ctx context.Context, scanne
 			return nil, err
 		}
 		defer internal.CloseAndLogError(contents, l.RealPath)
-		parsed, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(l, contents))
+		parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(l, contents))
 		if err != nil {
 			return nil, err
 		}

@@ -10,13 +10,9 @@ func SetContextLicenseScanner(ctx context.Context, s Scanner) context.Context {
 	return context.WithValue(ctx, licenseScannerKey{}, s)
 }
 
-func ContextLicenseScanner(ctx context.Context) Scanner {
+func ContextLicenseScanner(ctx context.Context) (Scanner, error) {
 	if s, ok := ctx.Value(licenseScannerKey{}).(Scanner); ok {
-		return s
+		return s, nil
 	}
 	return NewDefaultScanner()
-}
-
-func SetContextLicenseContent(ctx context.Context, includeUnknowContent bool) context.Context {
-	return context.WithValue(ctx, CtxKeyIncludeUnknownLicenseContent, includeUnknowContent)
 }

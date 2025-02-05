@@ -10,9 +10,10 @@ import (
 	"testing"
 
 	"github.com/acarl005/stripansi"
-	"github.com/anchore/syft/syft/format/syftjson/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/format/syftjson/model"
 )
 
 type traitAssertion func(tb testing.TB, stdout, stderr string, rc int)

@@ -171,7 +171,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	}
 
 	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	licenseScanner := licenses.NewScanner(sc)
+	licenseScanner, err := licenses.NewScanner(sc)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name          string

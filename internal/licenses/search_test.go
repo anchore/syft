@@ -27,11 +27,62 @@ func newBytesReadCloser(data []byte) *bytesReadCloser {
 	}
 }
 
-func TestSearch(t *testing.T) {
+func TestSearchFileLicenses(t *testing.T) {
+	type expectation struct {
+		yieldError bool
+		licenses   []file.License
+	}
+
+	tests := []struct {
+		name                        string
+		in                          string
+		includeUnkownLicenseContent bool
+		expected                    expectation
+	}{
+		{
+			name: "apache license 2.0",
+			in:   "test-fixtures/apache-license-2.0",
+			expected: expectation{
+				yieldError: false,
+				licenses: []file.License{
+					{
+						Value:          "Apache-2.0",
+						SPDXExpression: "Apache-2.0",
+						Type:           "concluded",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.TODO()
+			content, err := os.ReadFile(test.in)
+			require.NoError(t, err)
+			s := testScanner(false)
+			result, err := s.FileSearch(ctx, file.NewLocationReadCloser(file.NewLocation("LICENSE"), io.NopCloser(bytes.NewReader(content))))
+			if test.expected.yieldError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+
+				require.Len(t, result, len(test.expected.licenses))
+
+				if len(test.expected.licenses) > 0 {
+					require.Equal(t, test.expected.licenses, result)
+				}
+			}
+		})
+	}
+}
+
+func TestSearchPkgLicenses(t *testing.T) {
 	type expectation struct {
 		yieldError bool
 		licenses   []pkg.License
 	}
+
 	testLocation := file.NewLocation("LICENSE")
 	tests := []struct {
 		name                        string
@@ -74,7 +125,7 @@ func TestSearch(t *testing.T) {
 			},
 		},
 		{
-			name:                        "custom license with content when context",
+			name:                        "custom license with content when scanner has content config",
 			in:                          "test-fixtures/nvidia-software-and-cuda-supplement",
 			includeUnkownLicenseContent: true,
 			expected: expectation{
@@ -95,11 +146,11 @@ func TestSearch(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			ctx := context.TODO()
 			content, err := os.ReadFile(test.in)
 			require.NoError(t, err)
-			ctx := context.Background()
-			ctx = context.WithValue(ctx, CtxKeyIncludeUnknownLicenseContent, test.includeUnkownLicenseContent)
-			result, err := Search(ctx, testScanner(), file.NewLocationReadCloser(file.NewLocation("LICENSE"), io.NopCloser(bytes.NewReader(content))))
+			s := testScanner(test.includeUnkownLicenseContent)
+			result, err := s.PkgSearch(ctx, file.NewLocationReadCloser(file.NewLocation("LICENSE"), io.NopCloser(bytes.NewReader(content))))
 			if test.expected.yieldError {
 				require.Error(t, err)
 			} else {
