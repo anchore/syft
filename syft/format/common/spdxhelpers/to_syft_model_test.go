@@ -525,8 +525,9 @@ func Test_convertToAndFromFormat(t *testing.T) {
 					UserInput:      "some-image:some-tag",
 					ManifestDigest: "sha256:ab8b83234bc28f28d8e",
 				},
-				Name:    "some-image",
-				Version: "some-tag",
+				Name:     "some-image",
+				Version:  "some-tag",
+				Supplier: "", //no supplier
 			},
 			packages:      packages,
 			relationships: relationships,

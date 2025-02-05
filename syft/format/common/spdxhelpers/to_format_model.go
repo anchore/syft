@@ -237,8 +237,9 @@ func toRootPackage(s source.Description, d sbom.Descriptor) *spdx.Package {
 			name = s.ID
 		}
 	}
+
 	supplier := helpers.NOASSERTION
-	if d.Supplier != "" {
+	if d.Supplier != "" { // TODO: question do we use d.Supplier or source Supplier here?
 		supplier = d.Supplier
 	}
 
