@@ -19,7 +19,7 @@ type Document struct {
 type Descriptor struct {
 	Name          string      `json:"name"`
 	Version       string      `json:"version"`
-	Supplier      string      `json:"supplier"`
+	Supplier      string      `json:"supplier",omitempty`
 	Configuration interface{} `json:"configuration,omitempty"`
 }
 

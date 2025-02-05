@@ -72,7 +72,8 @@ func Test_writeSBOMToFormattedFile(t *testing.T) {
  "distro": {},
  "descriptor": {
   "name": "syft-test",
-  "version": "non-version"
+  "version": "non-version",
+  "supplier": ""
  },
  "schema": {}
 }`,

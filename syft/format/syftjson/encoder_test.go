@@ -287,8 +287,9 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 			},
 		},
 		Descriptor: sbom.Descriptor{
-			Name:    "syft",
-			Version: "v0.42.0-bogus",
+			Name:     "syft",
+			Version:  "v0.42.0-bogus",
+			Supplier: "",
 			// the application configuration should be persisted here, however, we do not want to import
 			// the application configuration in this package (it's reserved only for ingestion by the cmd package)
 			Configuration: map[string]string{
