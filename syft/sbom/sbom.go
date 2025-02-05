@@ -33,6 +33,7 @@ type Artifacts struct {
 type Descriptor struct {
 	Name          string
 	Version       string
+	Supplier      string
 	Configuration interface{}
 }
 
