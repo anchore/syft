@@ -407,8 +407,7 @@
       "type": "object",
       "required": [
         "name",
-        "version",
-        "supplier"
+        "version"
       ]
     },
     "Digest": {

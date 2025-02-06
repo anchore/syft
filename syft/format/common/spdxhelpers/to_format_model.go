@@ -251,7 +251,8 @@ func toRootPackage(s source.Description, d sbom.Descriptor) *spdx.Package {
 		PackageExternalReferences: nil,
 		PrimaryPackagePurpose:     purpose,
 		PackageSupplier: &spdx.Supplier{
-			Supplier: supplier,
+			Supplier:     supplier,
+			SupplierType: helpers.SUPPLIERORG,
 		},
 		PackageCopyrightText:    helpers.NOASSERTION,
 		PackageDownloadLocation: helpers.NOASSERTION,
