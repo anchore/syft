@@ -3,11 +3,8 @@ package task
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strings"
 	"unicode"
-
-	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -23,65 +20,16 @@ import (
 	cpeutils "github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 )
 
-type packageTaskFactory func(cfg CatalogingFactoryConfig) Task
-
-type PackageTaskFactories []packageTaskFactory
-
-type CatalogingFactoryConfig struct {
-	ComplianceConfig     cataloging.ComplianceConfig
-	SearchConfig         cataloging.SearchConfig
-	RelationshipsConfig  cataloging.RelationshipsConfig
-	DataGenerationConfig cataloging.DataGenerationConfig
-	PackagesConfig       pkgcataloging.Config
-}
-
-func DefaultCatalogingFactoryConfig() CatalogingFactoryConfig {
-	return CatalogingFactoryConfig{
-		ComplianceConfig:     cataloging.DefaultComplianceConfig(),
-		SearchConfig:         cataloging.DefaultSearchConfig(),
-		RelationshipsConfig:  cataloging.DefaultRelationshipsConfig(),
-		DataGenerationConfig: cataloging.DefaultDataGenerationConfig(),
-		PackagesConfig:       pkgcataloging.DefaultConfig(),
-	}
-}
-
-func newPackageTaskFactory(catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger, tags ...string) packageTaskFactory {
+func newPackageTaskFactory(catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger, tags ...string) factory {
 	return func(cfg CatalogingFactoryConfig) Task {
 		return NewPackageTask(cfg, catalogerFactory(cfg), tags...)
 	}
 }
 
-func newSimplePackageTaskFactory(catalogerFactory func() pkg.Cataloger, tags ...string) packageTaskFactory {
+func newSimplePackageTaskFactory(catalogerFactory func() pkg.Cataloger, tags ...string) factory {
 	return func(cfg CatalogingFactoryConfig) Task {
 		return NewPackageTask(cfg, catalogerFactory(), tags...)
 	}
-}
-
-func (f PackageTaskFactories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error) {
-	var allTasks []Task
-	taskNames := strset.New()
-	duplicateTaskNames := strset.New()
-	var err error
-	for _, factory := range f {
-		tsk := factory(cfg)
-		if tsk == nil {
-			continue
-		}
-		tskName := tsk.Name()
-		if taskNames.Has(tskName) {
-			duplicateTaskNames.Add(tskName)
-		}
-
-		allTasks = append(allTasks, tsk)
-		taskNames.Add(tskName)
-	}
-	if duplicateTaskNames.Size() > 0 {
-		names := duplicateTaskNames.List()
-		sort.Strings(names)
-		err = fmt.Errorf("duplicate cataloger task names: %v", strings.Join(names, ", "))
-	}
-
-	return allTasks, err
 }
 
 // NewPackageTask creates a Task function for a generic pkg.Cataloger, honoring the common configuration options.

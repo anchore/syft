@@ -109,7 +109,7 @@ func findLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.R
 		if len(found) > 0 {
 			metadataContents, err := resolver.FileContentsByLocation(found[0])
 			if err == nil {
-				parsed, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(m.LicenseLocation, metadataContents))
+				parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(m.LicenseLocation, metadataContents))
 				if err != nil {
 					log.WithFields("error", err).Tracef("unable to parse a license from the file in %s", m.LicenseLocation.Path())
 				}

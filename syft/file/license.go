@@ -10,6 +10,7 @@ type License struct {
 	SPDXExpression  string
 	Type            license.Type
 	LicenseEvidence *LicenseEvidence // evidence from license classifier
+	Contents        string           `hash:"ignore"`
 }
 
 type LicenseEvidence struct {

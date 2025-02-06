@@ -96,7 +96,10 @@ func uniquePkgKey(groupID string, p *pkg.Package) string {
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
 // and parse nested archives or ignore them.
 func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, detectNested bool, cfg ArchiveCatalogerConfig) (*archiveParser, func(), error) {
-	licenseScanner := licenses.ContextLicenseScanner(ctx)
+	licenseScanner, err := licenses.ContextLicenseScanner(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not build license scanner for java archive parser: %w", err)
+	}
 
 	// fetch the last element of the virtual path
 	virtualElements := strings.Split(reader.Path(), ":")
@@ -506,7 +509,7 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.
 			for _, licenseMatch := range licenseMatches {
 				licenseContents := contents[licenseMatch]
 				r := strings.NewReader(licenseContents)
-				parsed, err := licenses.Search(ctx, j.licenseScanner, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
+				parsed, err := j.licenseScanner.PkgSearch(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
 				if err != nil {
 					return nil, err
 				}
