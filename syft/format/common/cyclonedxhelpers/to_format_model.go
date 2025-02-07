@@ -190,6 +190,16 @@ func formatCPE(cpeString string) string {
 	return c.String()
 }
 
+func toBomSupplier(srcMetadata source.Description) *cyclonedx.OrganizationalEntity {
+	if srcMetadata.Supplier != "" {
+		return &cyclonedx.OrganizationalEntity{
+			Name: srcMetadata.Supplier,
+		}
+	}
+
+	return nil
+}
+
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
 func toBomDescriptor(name, version string, srcMetadata source.Description) *cyclonedx.Metadata {
 	return &cyclonedx.Metadata{
@@ -204,6 +214,7 @@ func toBomDescriptor(name, version string, srcMetadata source.Description) *cycl
 				},
 			},
 		},
+		Supplier:   toBomSupplier(srcMetadata),
 		Properties: toBomProperties(srcMetadata),
 		Component:  toBomDescriptorComponent(srcMetadata),
 	}
@@ -305,10 +316,11 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 			log.Warnf("unable to get fingerprint of source image metadata=%s: %+v", metadata.ID, err)
 		}
 		return &cyclonedx.Component{
-			BOMRef:  string(bomRef),
-			Type:    cyclonedx.ComponentTypeContainer,
-			Name:    name,
-			Version: version,
+			BOMRef:   string(bomRef),
+			Type:     cyclonedx.ComponentTypeContainer,
+			Name:     name,
+			Version:  version,
+			Supplier: toBomSupplier(srcMetadata),
 		}
 	case source.DirectoryMetadata:
 		if name == "" {
@@ -321,9 +333,10 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 		return &cyclonedx.Component{
 			BOMRef: string(bomRef),
 			// TODO: this is lossy... we can't know if this is a file or a directory
-			Type:    cyclonedx.ComponentTypeFile,
-			Name:    name,
-			Version: version,
+			Type:     cyclonedx.ComponentTypeFile,
+			Name:     name,
+			Version:  version,
+			Supplier: toBomSupplier(srcMetadata),
 		}
 	case source.FileMetadata:
 		if name == "" {
@@ -336,9 +349,10 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 		return &cyclonedx.Component{
 			BOMRef: string(bomRef),
 			// TODO: this is lossy... we can't know if this is a file or a directory
-			Type:    cyclonedx.ComponentTypeFile,
-			Name:    name,
-			Version: version,
+			Type:     cyclonedx.ComponentTypeFile,
+			Name:     name,
+			Version:  version,
+			Supplier: toBomSupplier(srcMetadata),
 		}
 	}
 
