@@ -110,7 +110,6 @@ func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descript
 	}
 
 	p := rootPackages[0]
-
 	switch p.PrimaryPackagePurpose {
 	case spdxPrimaryPurposeContainer:
 		src = containerSource(p)
@@ -186,10 +185,16 @@ func fileSource(p *spdx.Package) source.Description {
 		metadata, version = fileSourceMetadata(p)
 	}
 
+	supplier := ""
+	if p.PackageSupplier.Supplier != helpers.NOASSERTION {
+		supplier = p.PackageSupplier.Supplier
+	}
+
 	return source.Description{
 		ID:       string(p.PackageSPDXIdentifier),
 		Name:     p.PackageName,
 		Version:  version,
+		Supplier: supplier,
 		Metadata: metadata,
 	}
 }

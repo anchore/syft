@@ -45,9 +45,8 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 	s := sbom.SBOM{
 		Source: srcMetadata,
 		Descriptor: sbom.Descriptor{
-			Name:     cfg.ToolName,
-			Version:  cfg.ToolVersion,
-			Supplier: cfg.Supplier,
+			Name:    cfg.ToolName,
+			Version: cfg.ToolVersion,
 			Configuration: configurationAuditTrail{
 				Search:         cfg.Search,
 				Relationships:  cfg.Relationships,

@@ -56,7 +56,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	// for valid SPDX we need a document describes relationship
 	describesID := spdx.ElementID("DOCUMENT")
 
-	rootPackage := toRootPackage(s.Source, s.Descriptor)
+	rootPackage := toRootPackage(s.Source)
 	if rootPackage != nil {
 		describesID = rootPackage.PackageSPDXIdentifier
 
@@ -175,7 +175,7 @@ func toRootRelationships(rootPackage *spdx.Package, packages []*spdx.Package) (o
 }
 
 //nolint:funlen
-func toRootPackage(s source.Description, d sbom.Descriptor) *spdx.Package {
+func toRootPackage(s source.Description) *spdx.Package {
 	var prefix string
 
 	name := s.Name
@@ -239,8 +239,8 @@ func toRootPackage(s source.Description, d sbom.Descriptor) *spdx.Package {
 	}
 
 	supplier := helpers.NOASSERTION
-	if d.Supplier != "" { // TODO: question do we use d.Supplier or source Supplier here?
-		supplier = d.Supplier
+	if s.Supplier != "" {
+		supplier = s.Supplier
 	}
 
 	p := &spdx.Package{
@@ -251,8 +251,7 @@ func toRootPackage(s source.Description, d sbom.Descriptor) *spdx.Package {
 		PackageExternalReferences: nil,
 		PrimaryPackagePurpose:     purpose,
 		PackageSupplier: &spdx.Supplier{
-			Supplier:     supplier,
-			SupplierType: helpers.SUPPLIERORG,
+			Supplier: supplier,
 		},
 		PackageCopyrightText:    helpers.NOASSERTION,
 		PackageDownloadLocation: helpers.NOASSERTION,

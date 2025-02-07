@@ -527,16 +527,17 @@ func Test_convertToAndFromFormat(t *testing.T) {
 				},
 				Name:     "some-image",
 				Version:  "some-tag",
-				Supplier: "", //no supplier
+				Supplier: "Some Image Supplier", // supplier support
 			},
 			packages:      packages,
 			relationships: relationships,
 		},
 		{
-			name: ". directory source",
+			name: ". directory source with supplier",
 			source: source.Description{
-				ID:   "DocumentRoot-Directory-.",
-				Name: ".",
+				ID:       "DocumentRoot-Directory-.",
+				Name:     ".",
+				Supplier: "Some External Team", // supplier support
 				Metadata: source.DirectoryMetadata{
 					Path: ".",
 				},
@@ -545,7 +546,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			relationships: relationships,
 		},
 		{
-			name: "directory source",
+			name: "named directory source without supplier",
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-my-app",
 				Name: "my-app",

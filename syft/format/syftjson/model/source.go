@@ -12,10 +12,15 @@ import (
 )
 
 // Source object represents the thing that was cataloged
+// Note: syft currently makes no claims or runs any logic to determine the Supplier field below
+// The Supplier can be determined by the user of syft and passed as a config or flag to help fulfill
+// the NTIA minimum elements. For mor information see the NTIA framing document below
+// https://www.ntia.gov/files/ntia/publications/framingsbom_20191112.pdf
 type Source struct {
 	ID       string      `json:"id"`
 	Name     string      `json:"name"`
 	Version  string      `json:"version"`
+	Supplier string      `json:"supplier,omitempty"`
 	Type     string      `json:"type"`
 	Metadata interface{} `json:"metadata"`
 }

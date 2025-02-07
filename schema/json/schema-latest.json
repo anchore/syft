@@ -399,9 +399,6 @@
         "version": {
           "type": "string"
         },
-        "supplier": {
-          "type": "string"
-        },
         "configuration": true
       },
       "type": "object",
@@ -2660,6 +2657,9 @@
           "type": "string"
         },
         "version": {
+          "type": "string"
+        },
+        "supplier": {
           "type": "string"
         },
         "type": {
