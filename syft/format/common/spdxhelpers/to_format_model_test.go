@@ -76,7 +76,8 @@ func Test_toFormatModel(t *testing.T) {
 							},
 						},
 						PackageSupplier: &spdx.Supplier{
-							Supplier: "Alpine Linux",
+							Supplier:     "Alpine Linux",
+							SupplierType: "Organization",
 						},
 					},
 				},
