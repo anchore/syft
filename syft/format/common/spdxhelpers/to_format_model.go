@@ -383,7 +383,7 @@ func toPackages(rels *relationship.Index, catalog *pkg.Collection, sbom sbom.SBO
 			// 7.6: Package Originator: may have single result for either Person or Organization,
 			//                          or NOASSERTION
 			// Cardinality: optional, one
-			PackageSupplier: toPackageSupplier(p),
+			PackageSupplier: toPackageSupplier(p, sbom.Source.Supplier),
 
 			PackageOriginator: toPackageOriginator(p),
 
@@ -548,11 +548,18 @@ func toPackageOriginator(p pkg.Package) *spdx.Originator {
 	}
 }
 
-func toPackageSupplier(p pkg.Package) *spdx.Supplier {
+func toPackageSupplier(p pkg.Package, sbomSupplier string) *spdx.Supplier {
 	kind, supplier := helpers.Supplier(p)
 	if kind == "" || supplier == "" {
+		supplier := helpers.NOASSERTION
+		supplierType := ""
+		if sbomSupplier != "" {
+			supplier = sbomSupplier
+			supplierType = helpers.SUPPLIERORG
+		}
 		return &spdx.Supplier{
-			Supplier: helpers.NOASSERTION,
+			Supplier:     supplier,
+			SupplierType: supplierType,
 		}
 	}
 	return &spdx.Supplier{

@@ -59,7 +59,8 @@ func Test_toFormatModel(t *testing.T) {
 						PackageName:           "pkg-1",
 						PackageVersion:        "version-1",
 						PackageSupplier: &spdx.Supplier{
-							Supplier: "NOASSERTION",
+							Supplier:     "Alpine Linux",
+							SupplierType: "Organization",
 						},
 					},
 					{

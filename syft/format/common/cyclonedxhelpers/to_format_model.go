@@ -46,7 +46,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	packages := s.Artifacts.Packages.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
 	for i, p := range packages {
-		components[i] = helpers.EncodeComponent(p)
+		components[i] = helpers.EncodeComponent(p, s.Source.Supplier)
 	}
 	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 
