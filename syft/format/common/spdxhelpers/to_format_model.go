@@ -238,10 +238,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 		}
 	}
 
-	supplier := helpers.NOASSERTION
-	if s.Supplier != "" {
-		supplier = s.Supplier
-	}
+	supplier := toSPDXSupplier(s)
 
 	p := &spdx.Package{
 		PackageName:               name,
@@ -250,13 +247,11 @@ func toRootPackage(s source.Description) *spdx.Package {
 		PackageChecksums:          checksums,
 		PackageExternalReferences: nil,
 		PrimaryPackagePurpose:     purpose,
-		PackageSupplier: &spdx.Supplier{
-			Supplier: supplier,
-		},
-		PackageCopyrightText:    helpers.NOASSERTION,
-		PackageDownloadLocation: helpers.NOASSERTION,
-		PackageLicenseConcluded: helpers.NOASSERTION,
-		PackageLicenseDeclared:  helpers.NOASSERTION,
+		PackageSupplier:           supplier,
+		PackageCopyrightText:      helpers.NOASSERTION,
+		PackageDownloadLocation:   helpers.NOASSERTION,
+		PackageLicenseConcluded:   helpers.NOASSERTION,
+		PackageLicenseDeclared:    helpers.NOASSERTION,
 	}
 
 	if purl != nil {
@@ -270,6 +265,23 @@ func toRootPackage(s source.Description) *spdx.Package {
 	}
 
 	return p
+}
+
+func toSPDXSupplier(s source.Description) *spdx.Supplier {
+	supplier := helpers.NOASSERTION
+	if s.Supplier != "" {
+		supplier = s.Supplier
+	}
+
+	supplierType := ""
+	if supplier != helpers.NOASSERTION {
+		supplierType = helpers.SUPPLIERORG
+	}
+
+	return &spdx.Supplier{
+		Supplier:     supplier,
+		SupplierType: supplierType,
+	}
 }
 
 func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
