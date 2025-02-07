@@ -26,6 +26,7 @@ type CreateSBOMConfig struct {
 	Unknowns           cataloging.UnknownsConfig
 	DataGeneration     cataloging.DataGenerationConfig
 	Packages           pkgcataloging.Config
+	Licenses           cataloging.LicenseConfig
 	Files              filecataloging.Config
 	Parallelism        int
 	CatalogerSelection cataloging.SelectionRequest
@@ -47,6 +48,7 @@ func DefaultCreateSBOMConfig() *CreateSBOMConfig {
 		Relationships:        cataloging.DefaultRelationshipsConfig(),
 		DataGeneration:       cataloging.DefaultDataGenerationConfig(),
 		Packages:             pkgcataloging.DefaultConfig(),
+		Licenses:             cataloging.DefaultLicenseConfig(),
 		Files:                filecataloging.DefaultConfig(),
 		Parallelism:          1,
 		packageTaskFactories: task.DefaultPackageTaskFactories(),
@@ -137,6 +139,12 @@ func (c *CreateSBOMConfig) WithDataGenerationConfig(cfg cataloging.DataGeneratio
 // WithPackagesConfig allows for defining any specific behavior for syft-implemented catalogers.
 func (c *CreateSBOMConfig) WithPackagesConfig(cfg pkgcataloging.Config) *CreateSBOMConfig {
 	c.Packages = cfg
+	return c
+}
+
+// WithPackagesConfig allows for defining any specific behavior for syft-implemented catalogers.
+func (c *CreateSBOMConfig) WithLicenseConfig(cfg cataloging.LicenseConfig) *CreateSBOMConfig {
+	c.Licenses = cfg
 	return c
 }
 

@@ -27,11 +27,11 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 			expected: expectation{
 				yieldError: false,
 				ids:        []string{"Apache-2.0"},
-				content:    []byte{},
+				content:    nil,
 			},
 		},
 		{
-			name: "custom license",
+			name: "custom license includes content for IdentifyLicenseIDs",
 			in:   "test-fixtures/nvidia-software-and-cuda-supplement",
 			expected: expectation{
 				yieldError: false,
@@ -45,7 +45,7 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			content, err := os.ReadFile(test.in)
 			require.NoError(t, err)
-			ids, content, err := testScanner().IdentifyLicenseIDs(context.TODO(), bytes.NewReader(content))
+			ids, content, err := testScanner(false).IdentifyLicenseIDs(context.TODO(), bytes.NewReader(content))
 			if test.expected.yieldError {
 				require.Error(t, err)
 			} else {
@@ -66,10 +66,11 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 	}
 }
 
-func testScanner() Scanner {
+func testScanner(includeLicenseContent bool) Scanner {
 	return &scanner{
-		coverageThreshold: coverageThreshold,
-		scanner:           licensecheck.Scan,
+		coverageThreshold:     DefaultCoverageThreshold,
+		includeLicenseContent: includeLicenseContent,
+		scanner:               licensecheck.Scan,
 	}
 }
 
