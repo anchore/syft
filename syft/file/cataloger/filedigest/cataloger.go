@@ -35,7 +35,6 @@ func NewCataloger(hashes []crypto.Hash) *Cataloger {
 func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates][]file.Digest, error) {
 	results := make(map[file.Coordinates][]file.Digest)
 	var locations []file.Location
-	var errs error
 
 	if len(coordinates) == 0 {
 		locations = intCataloger.AllRegularFiles(ctx, resolver)
@@ -49,56 +48,42 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 		}
 	}
 
-	type res struct {
-		location file.Location
-		digests  []file.Digest
-		err      error
-	}
-	executor := sync.ContextExecutor(ctx)
-	collector := sync.NewCollector[res](executor)
-
 	prog := catalogingProgress(int64(len(locations)))
-	for _, location := range locations {
-		collector.Provide(func() res {
-			result, err := i.catalogLocation(ctx, resolver, location)
 
-			if errors.Is(err, ErrUndigestableFile) {
-				return res{location: location}
-			}
-
-			prog.AtomicStage.Set(location.Path())
-
-			if internal.IsErrPathPermission(err) {
-				log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
-				return res{location: location, err: err}
-			}
-
-			if err != nil {
-				prog.SetError(err)
-				return res{location: location, err: err}
-			}
-
-			prog.Increment()
-
-			return res{location: location, digests: result}
-		})
-	}
-
-	for _, r := range collector.Collect() {
-		if r.err != nil {
-			errs = unknown.Append(errs, r.location, r.err)
+	err := sync.Reduce(sync.ContextExecutor(ctx), sync.ToSeq(locations), func(location file.Location, digests []file.Digest) {
+		if len(digests) > 0 {
+			results[location.Coordinates] = digests
 		}
-		if len(r.digests) > 0 {
-			results[r.location.Coordinates] = r.digests
+	}, func(location file.Location) ([]file.Digest, error) {
+		result, err := i.catalogLocation(ctx, resolver, location)
+
+		if errors.Is(err, ErrUndigestableFile) {
+			return nil, nil
 		}
-	}
+
+		prog.AtomicStage.Set(location.Path())
+
+		if internal.IsErrPathPermission(err) {
+			log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
+			return nil, unknown.New(location, err)
+		}
+
+		if err != nil {
+			prog.SetError(err)
+			return nil, unknown.New(location, err)
+		}
+
+		prog.Increment()
+
+		return result, nil
+	})
 
 	log.Debugf("file digests cataloger processed %d files", prog.Current())
 
 	prog.AtomicStage.Set(fmt.Sprintf("%s files", humanize.Comma(prog.Current())))
 	prog.SetCompleted()
 
-	return results, errs
+	return results, err
 }
 
 func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver, location file.Location) ([]file.Digest, error) {
