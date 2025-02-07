@@ -80,7 +80,7 @@ func defaultGoModDir() string {
 	if goPath == "" {
 		homeDir, err := homedir.Dir()
 		if err != nil {
-			log.Warnf("unable to determine GOPATH or user home dir: %w", err)
+			log.Debugf("unable to determine GOPATH or user home dir: %w", err)
 			return ""
 		}
 		goPath = filepath.Join(homeDir, "go")

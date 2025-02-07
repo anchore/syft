@@ -104,20 +104,20 @@ func findLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.R
 		// If we have a license file then resolve and parse it
 		found, err := resolver.FilesByPath(m.LicenseLocation.Path())
 		if err != nil {
-			log.WithFields("error", err).Tracef("unable to resolve python license path %s", m.LicenseLocation.Path())
+			log.WithFields("error", err, "path", m.LicenseLocation.Path()).Trace("unable to resolve python license")
 		}
 		if len(found) > 0 {
 			metadataContents, err := resolver.FileContentsByLocation(found[0])
 			if err == nil {
 				parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(m.LicenseLocation, metadataContents))
 				if err != nil {
-					log.WithFields("error", err).Tracef("unable to parse a license from the file in %s", m.LicenseLocation.Path())
+					log.WithFields("error", err, "path", m.LicenseLocation.Path()).Trace("unable to parse a license from the file")
 				}
 				if len(parsed) > 0 {
 					licenseSet = pkg.NewLicenseSet(parsed...)
 				}
 			} else {
-				log.WithFields("error", err).Tracef("unable to read file contents at %s", m.LicenseLocation.Path())
+				log.WithFields("error", err, "path", m.LicenseLocation.Path()).Trace("unable to read file contents")
 			}
 		}
 	}

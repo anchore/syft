@@ -127,7 +127,7 @@ func extractRpmFileRecords(resolver file.PathResolver, entry rpmdb.PackageInfo) 
 
 	files, err := entry.InstalledFiles()
 	if err != nil {
-		log.Warnf("unable to parse listing of installed files for RPM DB entry: %s", err.Error())
+		log.Debugf("unable to parse listing of installed files for RPM DB entry: %s", err.Error())
 		return records, fmt.Errorf("unable to parse listing of installed files for RPM DB entry: %w", err)
 	}
 

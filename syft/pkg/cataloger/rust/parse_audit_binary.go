@@ -42,7 +42,7 @@ func parseAuditBinaryEntry(reader unionreader.UnionReader, filename string) ([]r
 	// with more than one binary
 	readers, err := unionreader.GetReaders(reader)
 	if err != nil {
-		log.Warnf("rust cataloger: failed to open a binary: %v", err)
+		log.Debugf("rust cataloger: failed to open a binary: %v", err)
 		return nil, fmt.Errorf("rust cataloger: failed to open a binary: %w", err)
 	}
 

@@ -34,7 +34,7 @@ func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.
 
 	name, version := cpvMatch[1], cpvMatch[2]
 	if name == "" || version == "" {
-		log.WithFields("path", reader.Location.RealPath).Warnf("failed to parse portage name and version")
+		log.WithFields("path", reader.Location.RealPath).Debug("failed to parse portage name and version")
 		return nil, nil, fmt.Errorf("failed to parse portage name and version")
 	}
 
@@ -63,7 +63,7 @@ func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.
 func addFiles(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	contentsReader, err := resolver.FileContentsByLocation(dbLocation)
 	if err != nil {
-		log.WithFields("path", dbLocation.RealPath).Warnf("failed to fetch portage contents (package=%s): %+v", p.Name, err)
+		log.WithFields("path", dbLocation.RealPath, "package", p.Name, "error", err).Debug("failed to fetch portage contents")
 		return
 	}
 	defer internal.CloseAndLogError(contentsReader, dbLocation.RealPath)
@@ -105,7 +105,7 @@ func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Packag
 
 	licenseReader, err := resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.WithFields("path", dbLocation.RealPath).Warnf("failed to fetch portage LICENSE: %+v", err)
+		log.WithFields("path", dbLocation.RealPath, "error", err).Debug("failed to fetch portage LICENSE")
 		return
 	}
 	defer internal.CloseAndLogError(licenseReader, location.RealPath)
@@ -141,7 +141,7 @@ func addSize(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 
 	sizeReader, err := resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.WithFields("name", p.Name).Warnf("failed to fetch portage SIZE: %+v", err)
+		log.WithFields("name", p.Name, "error", err).Debug("failed to fetch portage SIZE")
 		return
 	}
 	defer internal.CloseAndLogError(sizeReader, location.RealPath)

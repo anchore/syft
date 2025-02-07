@@ -101,7 +101,7 @@ func finalizePkgCatalogerResults(cfg CatalogingFactoryConfig, resolver file.Path
 			// create file-to-package relationships for files owned by the package
 			owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
 			if err != nil {
-				log.Warnf("unable to create any package-file relationships for package name=%q type=%q: %v", p.Name, p.Type, err)
+				log.Debugf("unable to create any package-file relationships for package name=%q type=%q: %v", p.Name, p.Type, err)
 			} else {
 				relationships = append(relationships, owningRelationships...)
 			}
@@ -174,7 +174,7 @@ func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig) (bool
 			return true
 
 		case cataloging.ComplianceActionKeep:
-			log.WithFields("pkg", p.String(), "location", loc).Tracef("package with missing %s, taking no action", fieldName)
+			log.WithFields("pkg", p.String(), "location", loc, "field", fieldName).Trace("package with missing field, taking no action")
 		}
 		return false
 	}

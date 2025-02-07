@@ -68,13 +68,13 @@ func (c *storeCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([
 		p := &pkgs[i]
 		locations := p.Locations.ToSlice()
 		if len(locations) == 0 {
-			log.WithFields("package", p.Name).Warn("nix package has no evidence locations associated")
+			log.WithFields("package", p.Name).Debug("nix package has no evidence locations associated")
 			continue
 		}
 		parentStorePath := locations[0].RealPath
 		files, ok := filesByPath[parentStorePath]
 		if !ok {
-			log.WithFields("path", parentStorePath, "nix-store-path", parentStorePath).Warn("found a nix store file for a non-existent package")
+			log.WithFields("path", parentStorePath, "nix-store-path", parentStorePath).Debug("found a nix store file for a non-existent package")
 			continue
 		}
 		appendFiles(p, files.ToSlice()...)
@@ -86,7 +86,7 @@ func (c *storeCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([
 func appendFiles(p *pkg.Package, location ...file.Location) {
 	metadata, ok := p.Metadata.(pkg.NixStoreEntry)
 	if !ok {
-		log.WithFields("package", p.Name).Warn("nix package metadata missing")
+		log.WithFields("package", p.Name).Debug("nix package metadata missing")
 		return
 	}
 

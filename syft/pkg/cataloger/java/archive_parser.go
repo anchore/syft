@@ -210,7 +210,7 @@ func finalizePackage(p *pkg.Package) {
 			p.Type = pkg.JenkinsPluginPkg
 		}
 	} else {
-		log.WithFields("package", p.String()).Warn("unable to extract java metadata to generate purl")
+		log.WithFields("package", p.String()).Debug("unable to extract java metadata to generate purl")
 	}
 
 	p.SetID()
@@ -237,7 +237,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 	manifestContents := contents[manifestMatches[0]]
 	manifest, err := parseJavaManifest(j.archivePath, strings.NewReader(manifestContents))
 	if err != nil {
-		log.Warnf("failed to parse java manifest (%s): %+v", j.location, err)
+		log.Debugf("failed to parse java manifest (%s): %+v", j.location, err)
 		return nil, nil
 	}
 
@@ -485,7 +485,7 @@ func getDigestsFromArchive(archivePath string) ([]file.Digest, error) {
 	// grab and assign digest for the entire archive
 	digests, err := intFile.NewDigestsFromFile(archiveCloser, javaArchiveHashes)
 	if err != nil {
-		log.Warnf("failed to create digest for file=%q: %+v", archivePath, err)
+		log.Debugf("failed to create digest for file=%q: %+v", archivePath, err)
 	}
 
 	return digests, nil
@@ -549,7 +549,7 @@ func discoverPkgsFromOpeners(ctx context.Context, location file.Location, opener
 	for pathWithinArchive, archiveOpener := range openers {
 		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(ctx, location, pathWithinArchive, archiveOpener, cfg, parentPkg)
 		if err != nil {
-			log.WithFields("location", location.Path()).Warnf("unable to discover java packages from opener: %+v", err)
+			log.WithFields("location", location.Path(), "error", err).Debug("unable to discover java packages from opener")
 			continue
 		}
 
@@ -578,7 +578,7 @@ func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWit
 	}
 	defer func() {
 		if closeErr := archiveReadCloser.Close(); closeErr != nil {
-			log.Warnf("unable to close archived file from tempdir: %+v", closeErr)
+			log.Debugf("unable to close archived file from tempdir: %+v", closeErr)
 		}
 	}()
 
@@ -607,7 +607,7 @@ func pomPropertiesByParentPath(archivePath string, location file.Location, extra
 	for filePath, fileContents := range contentsOfMavenPropertiesFiles {
 		pomProperties, err := parsePomProperties(filePath, strings.NewReader(fileContents))
 		if err != nil {
-			log.WithFields("contents-path", filePath, "location", location.Path()).Warnf("failed to parse pom.properties: %+v", err)
+			log.WithFields("contents-path", filePath, "location", location.Path(), "error", err).Debug("failed to parse pom.properties")
 			continue
 		}
 
@@ -637,7 +637,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 		// TODO: when we support locations of paths within archives we should start passing the specific pom.xml location object instead of the top jar
 		pom, err := maven.ParsePomXML(strings.NewReader(fileContents))
 		if err != nil {
-			log.WithFields("contents-path", filePath, "location", location.Path()).Warnf("failed to parse pom.xml: %+v", err)
+			log.WithFields("contents-path", filePath, "location", location.Path(), "error", err).Debug("failed to parse pom.xml")
 			continue
 		}
 		if pom == nil {
