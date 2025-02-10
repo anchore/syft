@@ -210,6 +210,21 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 		},
 		{
+			name: "source flags override bom metadata",
+			args: []string{
+				"scan",
+				"--source-name", "custom-name",
+				"--source-version", "custom-version",
+				"--source-supplier", "custom-supplier",
+				"-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				assertInOutput("custom-name"),
+				assertInOutput("custom-version"),
+				assertInOutput("custom-supplier"),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
 			// we want to make certain that syft can catalog a single go binary and get a SBOM report that is not empty
 			name: "catalog-single-go-binary",
 			args: []string{"scan", "-o", "json", getSyftBinaryLocation(t)},

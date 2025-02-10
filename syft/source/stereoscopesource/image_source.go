@@ -51,6 +51,7 @@ func (s stereoscopeImageSource) Describe() source.Description {
 	a := s.config.Alias
 
 	name := a.Name
+	supplier := a.Supplier
 	nameIfUnset := func(n string) {
 		if name != "" {
 			return
@@ -90,6 +91,7 @@ func (s stereoscopeImageSource) Describe() source.Description {
 		ID:       string(s.id),
 		Name:     name,
 		Version:  version,
+		Supplier: supplier,
 		Metadata: s.metadata,
 	}
 }

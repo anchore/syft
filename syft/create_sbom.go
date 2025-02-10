@@ -30,8 +30,6 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 	}
 
 	srcMetadata := src.Describe()
-	srcMetadata.Supplier = cfg.Supplier
-
 	taskGroups, audit, err := cfg.makeTaskGroups(srcMetadata)
 	if err != nil {
 		return nil, err

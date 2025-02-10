@@ -206,8 +206,9 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		{
 			name: "always consider alias (first)",
 			alias: source.Alias{
-				Name:    "alias",
-				Version: "version",
+				Name:     "alias",
+				Version:  "version",
+				Supplier: "I supply user-input",
 			},
 			metadata: source.ImageMetadata{
 				UserInput: "user-input",
@@ -236,8 +237,9 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 		{
 			name: "always consider alias (last)",
 			alias: source.Alias{
-				Name:    "alias",
-				Version: "version",
+				Name:     "alias",
+				Version:  "version",
+				Supplier: "I supply user-input",
 			},
 			metadata: source.ImageMetadata{
 				UserInput: "user-input",

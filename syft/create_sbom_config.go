@@ -34,7 +34,6 @@ type CreateSBOMConfig struct {
 	// audit what tool is being used to generate the SBOM
 	ToolName          string
 	ToolVersion       string
-	Supplier          string
 	ToolConfiguration interface{}
 
 	packageTaskFactories       task.Factories
@@ -87,11 +86,6 @@ func (c *CreateSBOMConfig) WithTool(name, version string, cfg ...any) *CreateSBO
 	c.ToolName = name
 	c.ToolVersion = version
 	c.ToolConfiguration = cfg
-	return c
-}
-
-func (c *CreateSBOMConfig) WithSupplier(supplier string) *CreateSBOMConfig {
-	c.Supplier = supplier
 	return c
 }
 
