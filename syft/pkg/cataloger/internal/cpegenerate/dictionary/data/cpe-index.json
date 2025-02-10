@@ -76,6 +76,9 @@
       "github.com/libp2p/go-libp2p": [
         "cpe:2.3:a:protocol:libp2p:*:*:*:*:*:go:*:*"
       ],
+      "github.com/mindersec/minder": [
+        "cpe:2.3:a:lfprojects:minder:*:*:*:*:*:go:*:*"
+      ],
       "github.com/mojocn/base64Captcha": [
         "cpe:2.3:a:mojotv:base64captcha:*:*:*:*:*:go:*:*"
       ],
@@ -108,6 +111,9 @@
       ],
       "github.com/square/squalor": [
         "cpe:2.3:a:square:squalor:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/stacklok/minder": [
+        "cpe:2.3:a:lfprojects:minder:*:*:*:*:*:go:*:*"
       ],
       "github.com/valyala/fasthttp": [
         "cpe:2.3:a:fasthttp_project:fasthttp:*:*:*:*:*:*:*:*"
@@ -1770,6 +1776,9 @@
       "synopsys-coverity": [
         "cpe:2.3:a:jenkins:synopsys_coverity:*:*:*:*:*:jenkins:*:*"
       ],
+      "tag-profiler": [
+        "cpe:2.3:a:jenkins:tag_profiler:*:*:*:*:*:jenkins:*:*"
+      ],
       "tap": [
         "cpe:2.3:a:jenkins:tap:*:*:*:*:*:jenkins:*:*"
       ],
@@ -1885,6 +1894,7 @@
         "cpe:2.3:a:jenkins:violation_comments_to_gitlab:*:*:*:*:*:jenkins:*:*"
       ],
       "visualexpert": [
+        "cpe:2.3:a:jenkins:visual_expert:*:*:*:*:*:jenkins:*:*",
         "cpe:2.3:a:jenkins:visualexpert:*:*:*:*:*:jenkins:*:*"
       ],
       "visualworks-store": [
@@ -2962,6 +2972,9 @@
       ],
       "enserver": [
         "cpe:2.3:a:enserver_project:enserver:*:*:*:*:*:node.js:*:*"
+      ],
+      "es5-ext": [
+        "cpe:2.3:a:medikoo:es5-ext:*:*:*:*:*:node.js:*:*"
       ],
       "es6-crawler-detect": [
         "cpe:2.3:a:crawlerdetect_project:crawlerdetect:*:*:*:*:*:node.js:*:*"
@@ -5845,7 +5858,7 @@
         "cpe:2.3:a:pyload-ng_project:pyload-ng:*:*:*:*:*:python:*:*"
       ],
       "pymatgen": [
-        "cpe:2.3:a:pymatgen:pymatgen:*:*:*:*:*:*:*:*"
+        "cpe:2.3:a:materialsvirtuallab:pymatgen:*:*:*:*:*:*:*:*"
       ],
       "pyo": [
         "cpe:2.3:a:pyo_project:pyo:*:*:*:*:*:*:*:*"
@@ -8567,6 +8580,9 @@
       "bug-library": [
         "cpe:2.3:a:bug_library_project:bug_library:*:*:*:*:*:wordpress:*:*"
       ],
+      "build-app-online": [
+        "cpe:2.3:a:buildapp:build_app_online:*:*:*:*:*:wordpress:*:*"
+      ],
       "bulk-comment-remove": [
         "cpe:2.3:a:supremo:bulk_comment_remove:*:*:*:*:*:wordpress:*:*"
       ],
@@ -10204,7 +10220,7 @@
         "cpe:2.3:a:5starplugins:easy_age_verify:*:*:*:*:*:wordpress:*:*"
       ],
       "easy-appointments": [
-        "cpe:2.3:a:easy_appointments_project:easy_appointments:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:easy-appointments:easy_appointments:*:*:*:*:*:wordpress:*:*"
       ],
       "easy-bootstrap-shortcodes": [
         "cpe:2.3:a:easy_bootstrap_shortcode_project:easy_bootstrap_shortcode:*:*:*:*:*:wordpress:*:*"
@@ -10231,6 +10247,7 @@
         "cpe:2.3:a:sigmadevs:easy_demo_importer:*:*:*:*:*:wordpress:*:*"
       ],
       "easy-digital-downloads": [
+        "cpe:2.3:a:awesomemotive:easy_digital_downloads:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:sandhillsdev:easy_digital_downloads:*:*:*:*:*:wordpress:*:*"
       ],
       "easy-event-calendar": [
@@ -10383,6 +10400,9 @@
       "ecommerce-product-catalog": [
         "cpe:2.3:a:implecode:ecommerce_product_catalog:*:*:*:*:*:*:*:*",
         "cpe:2.3:a:implecode:ecommerce_product_catalog:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ecpay-ecommerce-for-woocommerce": [
+        "cpe:2.3:a:ecpay:ecpay_ecommerce_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "ecwid-shopping-cart": [
         "cpe:2.3:a:lightspeedhq:ecwid_ecommerce_shopping_cart:*:*:*:*:*:wordpress:*:*"
@@ -10676,7 +10696,7 @@
         "cpe:2.3:a:vcita:event_registration_calendar_by_vcita:*:*:*:*:*:wordpress:*:*"
       ],
       "event-tickets": [
-        "cpe:2.3:a:tri:event_tickets:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:liquidweb:event_tickets:*:*:*:*:free:wordpress:*:*"
       ],
       "event-tickets-with-ticket-scanner": [
         "cpe:2.3:a:vollstart:event_tickets_with_ticket_scanner:*:*:*:*:*:wordpress:*:*"
@@ -11701,6 +11721,9 @@
       "gsheetconnector-caldera-forms": [
         "cpe:2.3:a:gsheetconnector:caldera_forms_google_sheets_connector:*:*:*:*:*:wordpress:*:*"
       ],
+      "gsheetconnector-forminator": [
+        "cpe:2.3:a:gsheetconnector:gsheetconnector_for_forminator_forms:*:*:*:*:*:wordpress:*:*"
+      ],
       "gsheetconnector-gravity-forms": [
         "cpe:2.3:a:gsheetconnector:gravity_forms_google_sheets_connector:*:*:*:*:*:wordpress:*:*"
       ],
@@ -12552,6 +12575,9 @@
       ],
       "koko-analytics": [
         "cpe:2.3:a:ibericode:koko_analytics:*:*:*:*:*:wordpress:*:*"
+      ],
+      "kona-instagram-feed-for-gutenberg": [
+        "cpe:2.3:a:gubbigubbi:kona_gallery_block:*:*:*:*:*:wordpress:*:*"
       ],
       "konnichiwa": [
         "cpe:2.3:a:calendarscripts:konnichiwa:*:*:*:*:*:wordpress:*:*"
@@ -14148,6 +14174,9 @@
       ],
       "pdf-image-generator": [
         "cpe:2.3:a:contempo:pdf_image_generator:*:*:*:*:*:wordpress:*:*"
+      ],
+      "pdf-invoices-and-packing-slips-for-woocommerce": [
+        "cpe:2.3:a:acowebs:pdf_invoices_and_packing_slips_for_woocommerce:*:*:*:*:free:wordpress:*:*"
       ],
       "pdf-light-viewer": [
         "cpe:2.3:a:teamlead:pdf-light-viewer:*:*:*:*:*:wordpress:*:*"
@@ -15903,6 +15932,9 @@
       "simple-social-buttons": [
         "cpe:2.3:a:wpbrigade:simple_social_buttons:*:*:*:*:*:wordpress:*:*"
       ],
+      "simple-social-share": [
+        "cpe:2.3:a:perials:simple_social_share:*:*:*:*:*:wordpress:*:*"
+      ],
       "simple-sortsearch": [
         "cpe:2.3:a:yukimichi:simple_sort\\\u0026search:*:*:*:*:*:wordpress:*:*"
       ],
@@ -16766,6 +16798,7 @@
       "the-plus-addons-for-elementor-page-builder": [
         "cpe:2.3:a:posimyth:the_plus_addons_for_elementor:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:posimyth:the_plus_addons_for_elementor:*:*:*:*:free:wordpress:*:*",
+        "cpe:2.3:a:posimyth:the_plus_addons_for_elementor:*:*:*:*:lite:wordpress:*:*",
         "cpe:2.3:a:posimyth:the_plus_addons_for_elementor:*:*:*:*:pro:wordpress:*:*",
         "cpe:2.3:a:posimyth:the_plus_addons_for_elementor_page_builder_lite:*:*:*:*:*:wordpress:*:*"
       ],
@@ -17030,6 +17063,9 @@
       ],
       "tutor-lms-migration-tool": [
         "cpe:2.3:a:themeum:tutor_lms_-_migration_tool:*:*:*:*:*:wordpress:*:*"
+      ],
+      "tutor-pro": [
+        "cpe:2.3:a:themeum:tutor_lms:*:*:*:*:pro:wordpress:*:*"
       ],
       "tuxedo-big-file-uploads": [
         "cpe:2.3:a:infiniteuploads:big_file_uploads:*:*:*:*:*:wordpress:*:*"
@@ -17350,7 +17386,7 @@
         "cpe:2.3:a:userback:userback:*:*:*:*:*:wordpress:*:*"
       ],
       "userfeedback-lite": [
-        "cpe:2.3:a:monsterinsights:user_feedback:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:monsterinsights:userfeedback:*:*:*:*:lite:wordpress:*:*"
       ],
       "userheat": [
         "cpe:2.3:a:userlocal:userheat_plugin:*:*:*:*:*:wordpress:*:*"
@@ -19348,6 +19384,9 @@
       "wp-support-plus-responsive-ticket-system": [
         "cpe:2.3:a:wpsupportplus:wp_support_plus_responsive_ticket_system:*:*:*:*:*:wordpress:*:*"
       ],
+      "wp-survey-and-poll": [
+        "cpe:2.3:a:modalsurvey:wordpress_survey_and_poll:*:*:*:*:*:wordpress:*:*"
+      ],
       "wp-survey-plus": [
         "cpe:2.3:a:wp_survey_plus_project:wp_survey_plus:*:*:*:*:*:wordpress:*:*"
       ],
@@ -20095,6 +20134,9 @@
       ],
       "cakifo": [
         "cpe:2.3:a:jayj:cakifo:*:*:*:*:*:wordpress:*:*"
+      ],
+      "colibri-wp": [
+        "cpe:2.3:a:colibriwp:colibri:*:*:*:*:*:wordpress:*:*"
       ],
       "colormag": [
         "cpe:2.3:a:themegrill:colormag:*:*:*:*:*:wordpress:*:*"
