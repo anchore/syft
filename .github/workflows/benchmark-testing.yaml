@@ -11,7 +11,7 @@ jobs:
 
   Benchmark-Test:
     name: "Benchmark tests"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     # note: we want benchmarks to run on pull_request events in order to publish results to a sticky comment, and
     # we also want to run on push such that merges to main are recorded to the cache. For this reason we don't filter
     # the job by event.
