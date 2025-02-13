@@ -1437,7 +1437,7 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 	}
 
 	makeTask := strings.TrimPrefix(fixturePath, "test-fixtures/java-builds/")
-	t.Logf(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
+	t.Log(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -1462,7 +1462,7 @@ func generateJavaMetadataJarFixture(t *testing.T, fixtureName string, fileExtens
 	}
 
 	makeTask := filepath.Join("cache", fixtureName+"."+fileExtension)
-	t.Logf(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
+	t.Log(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
 
 	cwd, err := os.Getwd()
 	if err != nil {
