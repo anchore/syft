@@ -12,7 +12,7 @@ import (
 func Test_OriginatorSupplier(t *testing.T) {
 	completionTester := packagemetadata.NewCompletionTester(t,
 		pkg.BinarySignature{},
-		pkg.BitnamiEntry{},
+		pkg.BitnamiSBOMEntry{},
 		pkg.CocoaPodfileLockEntry{},
 		pkg.ConanV1LockEntry{},
 		pkg.ConanV2LockEntry{}, // the field Username might be the username of either the package originator or the supplier (unclear currently)
@@ -93,7 +93,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		{
 			name: "from bitnami",
 			input: pkg.Package{
-				Metadata: pkg.BitnamiEntry{},
+				Metadata: pkg.BitnamiSBOMEntry{},
 			},
 			originator: "Organization: Bitnami",
 			supplier:   "Organization: Bitnami",

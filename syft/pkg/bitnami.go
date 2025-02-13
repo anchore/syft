@@ -1,8 +1,8 @@
 package pkg
 
-// BitnamiEntry represents all captured data from Bitnami packages
+// BitnamiSBOMEntry represents all captured data from Bitnami packages
 // described in Bitnami' SPDX files.
-type BitnamiEntry struct {
+type BitnamiSBOMEntry struct {
 	Name         string   `mapstructure:"name" json:"name"`
 	Architecture string   `mapstructure:"arch" json:"arch"`
 	Distro       string   `mapstructure:"distro" json:"distro"`
@@ -12,6 +12,6 @@ type BitnamiEntry struct {
 	Files        []string `mapstructure:"files" json:"files"`
 }
 
-func (b BitnamiEntry) OwnedFiles() (result []string) {
+func (b BitnamiSBOMEntry) OwnedFiles() (result []string) {
 	return b.Files
 }

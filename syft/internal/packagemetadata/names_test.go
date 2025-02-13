@@ -96,11 +96,6 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 			expected: reflect.TypeOf(pkg.BinarySignature{}),
 		},
 		{
-			name:     "map pkg.BitnamiEntry struct type",
-			input:    "BitnamiMetadata",
-			expected: reflect.TypeOf(pkg.BitnamiEntry{}),
-		},
-		{
 			name:     "map pkg.CocoaPodfileLockEntry struct type",
 			input:    "CocoapodsMetadataType",
 			expected: reflect.TypeOf(pkg.CocoaPodfileLockEntry{}),
@@ -294,7 +289,7 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 		},
 		{
 			name:               "BitnamiMetadata",
-			metadata:           pkg.BitnamiEntry{},
+			metadata:           pkg.BitnamiSBOMEntry{},
 			expectedJSONName:   "bitnami-entry",
 			expectedLegacyName: "BitnamiMetadata",
 		},

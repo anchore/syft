@@ -204,7 +204,7 @@ func Test_SourceInfo(t *testing.T) {
 				Type: pkg.BitnamiPkg,
 			},
 			expected: []string{
-				"acquired package info Bitnami SBOM",
+				"acquired package info from a Bitnami SBOM",
 			},
 		},
 		{

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.0.21/document",
+  "$id": "anchore.io/schema/syft/json/16.0.22/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -237,6 +237,12 @@
         },
         "path": {
           "type": "string"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object",
@@ -246,7 +252,8 @@
         "distro",
         "revision",
         "version",
-        "path"
+        "path",
+        "files"
       ]
     },
     "CConanFileEntry": {

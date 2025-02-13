@@ -17,7 +17,7 @@ func SourceInfo(p pkg.Package) string {
 	case pkg.ApkPkg:
 		answer = "acquired package info from APK DB"
 	case pkg.BitnamiPkg:
-		answer = "acquired package info Bitnami SBOM"
+		answer = "acquired package info from a Bitnami SBOM"
 	case pkg.DartPubPkg:
 		answer = "acquired package info from pubspec manifest"
 	case pkg.DebPkg:
