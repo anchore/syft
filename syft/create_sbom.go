@@ -3,11 +3,13 @@ package syft
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"sort"
 
 	"github.com/dustin/go-humanize"
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/sbomsync"
@@ -62,6 +64,9 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 		},
 	}
 
+	// configure parallel executors
+	ctx = setContextExecutors(ctx, cfg)
+
 	// inject a single license scanner and content config for all package cataloging tasks into context
 	licenseScanner, err := licenses.NewDefaultScanner(
 		licenses.WithIncludeLicenseContent(cfg.Licenses.IncludeUnkownLicenseContent),
@@ -77,7 +82,9 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 
 	builder := sbomsync.NewBuilder(&s, monitorPackageCount(packageCatalogingProgress))
 	for i := range taskGroups {
-		err := task.NewTaskExecutor(taskGroups[i], cfg.Parallelism).Execute(ctx, resolver, builder, catalogingProgress)
+		err = sync.Collect(sync.ContextExecutor(ctx, "catalog"), sync.ToSeq(taskGroups[i]), nil, func(t task.Task) (any, error) {
+			return nil, task.RunTask(ctx, t, resolver, builder, catalogingProgress)
+		})
 		if err != nil {
 			// TODO: tie this to the open progress monitors...
 			return nil, fmt.Errorf("failed to run tasks: %w", err)
@@ -88,6 +95,28 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 	catalogingProgress.SetCompleted()
 
 	return &s, nil
+}
+
+func setContextExecutors(ctx context.Context, cfg *CreateSBOMConfig) context.Context {
+	parallelism := 0
+	if cfg != nil {
+		parallelism = cfg.Parallelism
+	}
+	// executor parallelism is: 0 == serial, no goroutines, 1 == max 1 goroutine
+	// so if they set 1, we just run in serial to avoid overhead, and treat 0 as default, reasonable max for the system
+	// negative is unbounded, so no need for any other special handling
+	switch parallelism {
+	case 0:
+		parallelism = runtime.NumCPU() * 4
+	case 1:
+		parallelism = 0 // run in serial, don't spawn goroutines
+	}
+	// set up executors for each dimension we want to coordinate bounds for
+	ctx = sync.SetContextExecutor(ctx, "catalog", sync.NewExecutor(parallelism))
+	ctx = sync.SetContextExecutor(ctx, "cpu", sync.NewExecutor(parallelism))
+	ctx = sync.SetContextExecutor(ctx, "io", sync.NewExecutor(parallelism))
+	ctx = sync.SetContextExecutor(ctx, "net", sync.NewExecutor(parallelism))
+	return ctx
 }
 
 func monitorPackageCount(prog *monitor.CatalogerTaskProgress) func(s *sbom.SBOM) {

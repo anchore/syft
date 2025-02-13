@@ -50,7 +50,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 
 	prog := catalogingProgress(int64(len(locations)))
 
-	err := sync.Reduce(sync.ContextExecutor(ctx), sync.ToSeq(locations), func(location file.Location, digests []file.Digest) {
+	err := sync.Collect(sync.ContextExecutor(ctx, "io"), sync.ToSeq(locations), func(location file.Location, digests []file.Digest) {
 		if len(digests) > 0 {
 			results[location.Coordinates] = digests
 		}

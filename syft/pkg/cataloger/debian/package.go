@@ -26,7 +26,7 @@ func newDpkgPackage(d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.R
 	// TODO: separate pr to license refactor, but explore extracting dpkg-specific license parsing into a separate function
 	licenses := make([]pkg.License, 0)
 
-	locations := file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+	locations := file.NewLocationSet(dbLocation)
 	locations.Add(evidence...)
 
 	p := pkg.Package{

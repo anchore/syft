@@ -13,6 +13,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
@@ -28,17 +29,17 @@ var (
 )
 
 // parseDpkgDB reads a dpkg database "status" file (and surrounding data files) and returns the packages and relationships found.
-func parseDpkgDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDpkgDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	metadata, err := parseDpkgStatus(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to catalog dpkg DB=%q: %w", reader.RealPath, err)
 	}
 
+	dbLoc := reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
 	var pkgs []pkg.Package
-	for _, m := range metadata {
-		p := newDpkgPackage(m, reader.Location, resolver, env.LinuxRelease, findDpkgInfoFiles(m.Package, resolver, reader.Location)...)
-		pkgs = append(pkgs, p)
-	}
+	_ = sync.CollectSlice(sync.ContextExecutor(ctx, "io"), sync.ToSeq(metadata), &pkgs, func(m pkg.DpkgDBEntry) (pkg.Package, error) {
+		return newDpkgPackage(m, dbLoc, resolver, env.LinuxRelease, findDpkgInfoFiles(m.Package, resolver, reader.Location)...), nil
+	})
 
 	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }

@@ -23,7 +23,7 @@ func supportedHashAlgorithms() []crypto.Hash {
 	}
 }
 
-func NewDigestsFromFile(_ context.Context, closer io.ReadCloser, hashes []crypto.Hash) ([]file.Digest, error) {
+func NewDigestsFromFile(ctx context.Context, closer io.ReadCloser, hashes []crypto.Hash) ([]file.Digest, error) {
 	hashes = NormalizeHashes(hashes)
 	// create a set of hasher objects tied together with a single writer to feed content into
 	hashers := make([]hash.Hash, len(hashes))
@@ -33,7 +33,8 @@ func NewDigestsFromFile(_ context.Context, closer io.ReadCloser, hashes []crypto
 		writers[idx] = hashers[idx]
 	}
 
-	size, err := io.Copy(sync.ParallelWriter(sync.NewExecutor(len(writers)), writers...), closer)
+	size, err := io.Copy(sync.ParallelWriter(sync.ContextExecutor(ctx, "cpu"), writers...), closer)
+	// size, err := io.Copy(io.MultiWriter(writers...), closer)
 	if err != nil {
 		return nil, err
 	}

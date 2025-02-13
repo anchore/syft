@@ -120,14 +120,14 @@ func newExecutableCatalogerTaskFactory(tags ...string) factory {
 }
 
 func newExecutableCatalogerTask(selection file.Selection, cfg executable.Config, tags ...string) Task {
-	fn := func(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		if selection == file.NoFilesSelection {
 			return nil
 		}
 
 		accessor := builder.(sbomsync.Accessor)
 
-		result, err := executable.NewCataloger(cfg).Catalog(resolver)
+		result, err := executable.NewCataloger(cfg).CatalogCtx(ctx, resolver)
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
 			sbom.Artifacts.Executables = result
