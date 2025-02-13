@@ -85,9 +85,9 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 	if mainPkgFiles, err := mainPkgFiles(resolver, reader.Location.RealPath, secondaryPkgsFiles); err == nil {
 		for i, p := range pkgs {
 			if p.ID() == mainPkgID {
-				metadata, ok := p.Metadata.(*pkg.BitnamiEntry)
+				metadata, ok := p.Metadata.(*pkg.BitnamiSBOMEntry)
 				if !ok {
-					log.WithFields("spdx-filepath", reader.Location.RealPath).Warn("main package in SBOM does not have Bitnami metadata")
+					log.WithFields("spdx-filepath", reader.Location.RealPath).Trace("main package in SBOM does not have Bitnami metadata")
 					continue
 				}
 
@@ -160,6 +160,9 @@ func findMainPkgID(relationships []artifact.Relationship) artifact.ID {
 
 	for _, r := range relationships {
 		if from, ok := r.From.(pkg.Package); ok {
+			if !strings.HasPrefix(from.PURL, "pkg:bitnami") {
+				continue
+			}
 			if !containedByAnother(from.ID()) {
 				return from.ID()
 			}

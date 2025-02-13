@@ -37,7 +37,7 @@ func TestBitnamiCataloger(t *testing.T) {
 		CPEs: mustCPEs(
 			"cpe:2.3:*:postgresql:postgresql:17.2.0:*:*:*:*:*:*:*",
 		),
-		Metadata: &pkg.BitnamiEntry{
+		Metadata: &pkg.BitnamiSBOMEntry{
 			Name:         "postgresql",
 			Version:      "17.2.0",
 			Revision:     "8",
@@ -64,7 +64,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:libgeos:geos:3.13.0:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "geos",
 				Version:      "3.13.0",
 				Architecture: "arm64",
@@ -86,7 +86,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:proj:proj:6.3.2:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "proj",
 				Version:      "6.3.2",
 				Architecture: "arm64",
@@ -108,7 +108,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:osgeo:gdal:3.10.1:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "gdal",
 				Version:      "3.10.1",
 				Architecture: "arm64",
@@ -130,7 +130,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:json-c_project:json-c:0.16.20220414:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "json-c",
 				Version:      "0.16.20220414",
 				Architecture: "arm64",
@@ -152,7 +152,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:orafce:orafce:4.14.1:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "orafce",
 				Version:      "4.14.1",
 				Architecture: "arm64",
@@ -174,7 +174,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:pl/java_project:pl/java:1.6.8:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "pljava",
 				Version:      "1.6.8",
 				Architecture: "arm64",
@@ -201,7 +201,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:unixodbc:unixodbc:2.3.12:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "unixodbc",
 				Version:      "2.3.12",
 				Architecture: "arm64",
@@ -223,7 +223,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:postgresql:psqlodbc:16.0.0:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "psqlodbc",
 				Version:      "16.0.0",
 				Architecture: "arm64",
@@ -245,7 +245,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:golang:protobuf:3.21.12:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "protobuf",
 				Version:      "3.21.12",
 				Architecture: "arm64",
@@ -267,7 +267,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:protobuf-c:protobuf-c:1.5.1:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "protobuf-c",
 				Version:      "1.5.1",
 				Architecture: "arm64",
@@ -289,7 +289,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:postgis:postgis:3.4.4:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "postgis",
 				Version:      "3.4.4",
 				Architecture: "arm64",
@@ -308,7 +308,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/pgaudit@17.0.0?arch=arm64&distro=debian-12",
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "pgaudit",
 				Version:      "17.0.0",
 				Architecture: "arm64",
@@ -330,7 +330,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:pgbackrest:pgbackrest:2.54.2:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "pgbackrest",
 				Version:      "2.54.2",
 				Architecture: "arm64",
@@ -352,7 +352,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:wal2json:wal2json:2.6.0:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "wal2json",
 				Version:      "2.6.0",
 				Architecture: "arm64",
@@ -374,7 +374,7 @@ func TestBitnamiCataloger(t *testing.T) {
 			CPEs: mustCPEs(
 				"cpe:2.3:*:nss_wrapper:nss_wrapper:1.1.16:*:*:*:*:*:*:*",
 			),
-			Metadata: &pkg.BitnamiEntry{
+			Metadata: &pkg.BitnamiSBOMEntry{
 				Name:         "nss_wrapper",
 				Version:      "1.1.16",
 				Architecture: "arm64",
@@ -410,7 +410,7 @@ func TestBitnamiCataloger(t *testing.T) {
 		CPEs: mustCPEs(
 			"cpe:2.3:*:render-template:render-template:1.0.7:*:*:*:*:*:*:*",
 		),
-		Metadata: &pkg.BitnamiEntry{
+		Metadata: &pkg.BitnamiSBOMEntry{
 			Name:         "render-template",
 			Version:      "1.0.7",
 			Revision:     "4",

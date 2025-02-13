@@ -2,6 +2,7 @@ package bitnami
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -14,7 +15,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func parseBitnamiPURL(p string) (*pkg.BitnamiEntry, error) {
+func parseBitnamiPURL(p string) (*pkg.BitnamiSBOMEntry, error) {
 	purl, err := packageurl.FromString(p)
 	if err != nil {
 		return nil, err
@@ -25,7 +26,7 @@ func parseBitnamiPURL(p string) (*pkg.BitnamiEntry, error) {
 		return nil, err
 	}
 
-	entry := pkg.BitnamiEntry{
+	entry := pkg.BitnamiSBOMEntry{
 		Name:     purl.Name,
 		Version:  strings.TrimSuffix(v.String(), fmt.Sprintf("-%s", v.Revision().String())),
 		Revision: v.Revision().String(),
@@ -58,7 +59,10 @@ func packageFiles(relationships []artifact.Relationship, p pkg.Package, baseDire
 					result = append(result, packageFiles(relationships, to, baseDirectory)...)
 				}
 				if value, ok := r.To.(file.Location); ok {
-					result = append(result, filepath.Join(baseDirectory, value.RealPath))
+					// note: the file.Location is from the SBOM, and all files within the Bitnami SBOM by convention
+					// are relative to the /opt/bitnami/PRODUCT directory, so we need to prepend the base directory
+					// so that it's relative to the path found within the container image.
+					result = append(result, path.Join(baseDirectory, value.RealPath))
 				}
 			}
 		}

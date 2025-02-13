@@ -288,12 +288,6 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 			expectedLegacyName: "BinaryMetadata",
 		},
 		{
-			name:               "BitnamiMetadata",
-			metadata:           pkg.BitnamiSBOMEntry{},
-			expectedJSONName:   "bitnami-entry",
-			expectedLegacyName: "BitnamiMetadata",
-		},
-		{
 			name:               "CocoapodsMetadata",
 			metadata:           pkg.CocoaPodfileLockEntry{},
 			expectedJSONName:   "cocoa-podfile-lock-entry",
