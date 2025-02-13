@@ -64,6 +64,7 @@ var AllPkgs = []Type{
 	GemPkg,
 	GithubActionPkg,
 	GithubActionWorkflowPkg,
+	GraalVMNativeImagePkg,
 	GoModulePkg,
 	HackagePkg,
 	HexPkg,
