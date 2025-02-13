@@ -113,6 +113,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.GraalVMNativeImagePkg,
+			},
+			expected: []string{
+				"from GraalVM native image",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.RustPkg,
 			},
 			expected: []string{
