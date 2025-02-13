@@ -86,14 +86,14 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]file.E
 func processExecutableLocation(loc file.Location, resolver file.Resolver) (*file.Executable, error) {
 	reader, err := resolver.FileContentsByLocation(loc)
 	if err != nil {
-		log.WithFields("error", err).Warnf("unable to get file contents for %q", loc.RealPath)
+		log.WithFields("error", err, "path", loc.RealPath).Debug("unable to get file contents")
 		return nil, fmt.Errorf("unable to get file contents: %w", err)
 	}
 	defer internal.CloseAndLogError(reader, loc.RealPath)
 
 	uReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
-		log.WithFields("error", err).Warnf("unable to get union reader for %q", loc.RealPath)
+		log.WithFields("error", err, "path", loc.RealPath).Debug("unable to get union reader")
 		return nil, fmt.Errorf("unable to get union reader: %w", err)
 	}
 
@@ -168,17 +168,17 @@ func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file
 	switch format {
 	case file.ELF:
 		if err = findELFFeatures(&data, reader); err != nil {
-			log.WithFields("error", err).Tracef("unable to determine ELF features for %q", loc.RealPath)
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine ELF features")
 			err = fmt.Errorf("unable to determine ELF features: %w", err)
 		}
 	case file.PE:
 		if err = findPEFeatures(&data, reader); err != nil {
-			log.WithFields("error", err).Tracef("unable to determine PE features for %q", loc.RealPath)
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine PE features")
 			err = fmt.Errorf("unable to determine PE features: %w", err)
 		}
 	case file.MachO:
 		if err = findMachoFeatures(&data, reader); err != nil {
-			log.WithFields("error", err).Tracef("unable to determine Macho features for %q", loc.RealPath)
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine Macho features")
 			err = fmt.Errorf("unable to determine Macho features: %w", err)
 		}
 	}

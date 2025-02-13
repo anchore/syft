@@ -12,7 +12,7 @@ import (
 func (m *Handler) handleReadImage(e partybus.Event) []tea.Model {
 	imgMetadata, prog, err := stereoEventParsers.ParseReadImage(e)
 	if err != nil {
-		log.WithFields("error", err).Warn("unable to parse event")
+		log.WithFields("error", err).Debug("unable to parse event")
 		return nil
 	}
 

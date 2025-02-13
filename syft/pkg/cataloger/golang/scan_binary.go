@@ -26,7 +26,7 @@ func scanFile(location file.Location, reader unionreader.UnionReader) ([]*extend
 	// with more than one binary
 	readers, errs := unionreader.GetReaders(reader)
 	if errs != nil {
-		log.WithFields("error", errs).Warnf("failed to open a golang binary")
+		log.WithFields("error", errs).Debug("failed to open a golang binary")
 		return nil, fmt.Errorf("failed to open a golang binary: %w", errs)
 	}
 

@@ -25,12 +25,12 @@ func parseWheelOrEggRecord(reader io.Reader) []pkg.PythonFileRecord {
 			break
 		}
 		if err != nil {
-			log.Warnf("unable to read python record file: %w", err)
+			log.Debugf("unable to read python record file: %w", err)
 			continue
 		}
 
 		if len(recordList) != 3 {
-			log.Warnf("python record an unexpected length=%d: %q", len(recordList), recordList)
+			log.Debugf("python record an unexpected length=%d: %q", len(recordList), recordList)
 			continue
 		}
 
@@ -46,7 +46,7 @@ func parseWheelOrEggRecord(reader io.Reader) []pkg.PythonFileRecord {
 				}
 				fields := strings.SplitN(item, "=", 2)
 				if len(fields) != 2 {
-					log.Warnf("unexpected python record digest: %q", item)
+					log.Debugf("unexpected python record digest: %q", item)
 					continue
 				}
 

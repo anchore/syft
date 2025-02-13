@@ -127,7 +127,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 
 		req := newRequirement(line)
 		if req == nil {
-			log.WithFields("path", reader.RealPath).Warnf("unable to parse requirements.txt line: %q", line)
+			log.WithFields("path", reader.RealPath, "line", line).Debug("unable to parse requirements.txt line")
 			errs = unknown.Appendf(errs, reader, "unable to parse requirements.txt line: %q", line)
 			continue
 		}
@@ -136,7 +136,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 		version := parseVersion(req.VersionConstraint, rp.guessUnpinnedRequirements)
 
 		if version == "" {
-			log.WithFields("path", reader.RealPath).Tracef("unable to determine package version in requirements.txt line: %q", line)
+			log.WithFields("path", reader.RealPath, "line", line).Trace("unable to determine package version in requirements.txt line")
 			errs = unknown.Appendf(errs, reader, "unable to determine package version in requirements.txt line: %q", line)
 			continue
 		}

@@ -12,7 +12,7 @@ import (
 func (m *Handler) handleFileIndexingStarted(e partybus.Event) []tea.Model {
 	path, prog, err := syftEventParsers.ParseFileIndexingStarted(e)
 	if err != nil {
-		log.WithFields("error", err).Warn("unable to parse event")
+		log.WithFields("error", err).Debug("unable to parse event")
 		return nil
 	}
 

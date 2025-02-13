@@ -95,7 +95,7 @@ func extractRFC5322Fields(locationReader file.LocationReadCloser) (map[string]an
 
 				fields[key] = handleSingleOrMultiField(fields[key], val)
 			} else {
-				log.Warnf("cannot parse field from path: %q from line: %q", locationReader.Path(), line)
+				log.Debugf("cannot parse field from path: %q from line: %q", locationReader.Path(), line)
 			}
 		}
 	}

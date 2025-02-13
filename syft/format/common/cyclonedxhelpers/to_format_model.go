@@ -302,7 +302,7 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 		}
 		bomRef, err := artifact.IDByHash(metadata.ID)
 		if err != nil {
-			log.Warnf("unable to get fingerprint of source image metadata=%s: %+v", metadata.ID, err)
+			log.Debugf("unable to get fingerprint of source image metadata=%s: %+v", metadata.ID, err)
 		}
 		return &cyclonedx.Component{
 			BOMRef:  string(bomRef),
@@ -316,7 +316,7 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 		}
 		bomRef, err := artifact.IDByHash(metadata.Path)
 		if err != nil {
-			log.Warnf("unable to get fingerprint of source directory metadata path=%s: %+v", metadata.Path, err)
+			log.Debugf("unable to get fingerprint of source directory metadata path=%s: %+v", metadata.Path, err)
 		}
 		return &cyclonedx.Component{
 			BOMRef: string(bomRef),
@@ -331,7 +331,7 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 		}
 		bomRef, err := artifact.IDByHash(metadata.Path)
 		if err != nil {
-			log.Warnf("unable to get fingerprint of source file metadata path=%s: %+v", metadata.Path, err)
+			log.Debugf("unable to get fingerprint of source file metadata path=%s: %+v", metadata.Path, err)
 		}
 		return &cyclonedx.Component{
 			BOMRef: string(bomRef),

@@ -20,7 +20,7 @@ import (
 func newPackageJSONPackage(u packageJSON, indexLocation file.Location) pkg.Package {
 	licenseCandidates, err := u.licensesFromJSON()
 	if err != nil {
-		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
+		log.Debugf("unable to extract licenses from javascript package.json: %+v", err)
 	}
 
 	license := pkg.NewLicensesFromLocation(indexLocation, licenseCandidates...)
@@ -73,7 +73,7 @@ func newPackageLockV1Package(cfg CatalogerConfig, resolver file.Resolver, locati
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
-			log.Warnf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
+			log.Debugf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
 		}
 	}
 
@@ -105,7 +105,7 @@ func newPackageLockV2Package(cfg CatalogerConfig, resolver file.Resolver, locati
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
-			log.Warnf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, u.Version, err)
+			log.Debugf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, u.Version, err)
 		}
 	}
 
@@ -150,7 +150,7 @@ func newYarnLockPackage(cfg CatalogerConfig, resolver file.Resolver, location fi
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
-			log.Warnf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
+			log.Debugf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
 		}
 	}
 	return finalizeLockPkg(
