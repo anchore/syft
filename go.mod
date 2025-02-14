@@ -90,6 +90,7 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/adrg/xdg v0.5.3
 	github.com/anchore/archiver/v3 v3.5.3-0.20241210171143-5b1d8d1c7c51
+	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
 	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/magiconair/properties v1.8.9
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
