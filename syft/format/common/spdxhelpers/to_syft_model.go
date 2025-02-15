@@ -110,7 +110,6 @@ func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descript
 	}
 
 	p := rootPackages[0]
-
 	switch p.PrimaryPackagePurpose {
 	case spdxPrimaryPurposeContainer:
 		src = containerSource(p)
@@ -142,10 +141,20 @@ func containerSource(p *spdx.Package) source.Description {
 		c := p.PackageChecksums[0]
 		digest = fmt.Sprintf("%s:%s", fromChecksumAlgorithm(c.Algorithm), c.Value)
 	}
+
+	supplier := ""
+	if p.PackageSupplier != nil {
+		// we also don't want NOASSERTION transferred to the syft format
+		// NOASSERTION == ""
+		if p.PackageSupplier.Supplier != helpers.NOASSERTION {
+			supplier = p.PackageSupplier.Supplier
+		}
+	}
 	return source.Description{
-		ID:      id,
-		Name:    p.PackageName,
-		Version: p.PackageVersion,
+		ID:       id,
+		Name:     p.PackageName,
+		Version:  p.PackageVersion,
+		Supplier: supplier,
 		Metadata: source.ImageMetadata{
 			UserInput:      container,
 			ID:             id,
@@ -176,10 +185,16 @@ func fileSource(p *spdx.Package) source.Description {
 		metadata, version = fileSourceMetadata(p)
 	}
 
+	supplier := ""
+	if p.PackageSupplier.Supplier != helpers.NOASSERTION {
+		supplier = p.PackageSupplier.Supplier
+	}
+
 	return source.Description{
 		ID:       string(p.PackageSPDXIdentifier),
 		Name:     p.PackageName,
 		Version:  version,
+		Supplier: supplier,
 		Metadata: metadata,
 	}
 }
@@ -361,10 +376,11 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 		from, fromOk := a.(pkg.Package)
 		toPackage, toPackageOk := b.(pkg.Package)
 		toLocation, toLocationOk := b.(file.Location)
-		if !fromOk || !(toPackageOk || toLocationOk) {
+		if !fromOk || (!toPackageOk && !toLocationOk) {
 			log.Debugf("unable to find valid relationship mapping from SPDX, ignoring: (from: %+v) (to: %+v)", a, b)
 			continue
 		}
+
 		var to artifact.Identifiable
 		var typ artifact.RelationshipType
 		if toLocationOk {

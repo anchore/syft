@@ -152,7 +152,8 @@ func Test_encodeComponentProperties(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := EncodeComponent(test.input)
+			sbomSupplier := ""
+			c := EncodeComponent(test.input, sbomSupplier)
 			if test.expected == nil {
 				if c.Properties != nil {
 					t.Fatalf("expected no properties, got: %+v", *c.Properties)
@@ -212,7 +213,8 @@ func Test_encodeCompomentType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.pkg.ID()
-			p := EncodeComponent(tt.pkg)
+			sbomSupplier := ""
+			p := EncodeComponent(tt.pkg, sbomSupplier)
 			assert.Equal(t, tt.want, p)
 		})
 	}

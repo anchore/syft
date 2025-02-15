@@ -238,6 +238,8 @@ func toRootPackage(s source.Description) *spdx.Package {
 		}
 	}
 
+	supplier := toSPDXSupplier(s)
+
 	p := &spdx.Package{
 		PackageName:               name,
 		PackageSPDXIdentifier:     spdx.ElementID(helpers.SanitizeElementID(fmt.Sprintf("DocumentRoot-%s-%s", prefix, name))),
@@ -245,13 +247,11 @@ func toRootPackage(s source.Description) *spdx.Package {
 		PackageChecksums:          checksums,
 		PackageExternalReferences: nil,
 		PrimaryPackagePurpose:     purpose,
-		PackageSupplier: &spdx.Supplier{
-			Supplier: helpers.NOASSERTION,
-		},
-		PackageCopyrightText:    helpers.NOASSERTION,
-		PackageDownloadLocation: helpers.NOASSERTION,
-		PackageLicenseConcluded: helpers.NOASSERTION,
-		PackageLicenseDeclared:  helpers.NOASSERTION,
+		PackageSupplier:           supplier,
+		PackageCopyrightText:      helpers.NOASSERTION,
+		PackageDownloadLocation:   helpers.NOASSERTION,
+		PackageLicenseConcluded:   helpers.NOASSERTION,
+		PackageLicenseDeclared:    helpers.NOASSERTION,
 	}
 
 	if purl != nil {
@@ -265,6 +265,23 @@ func toRootPackage(s source.Description) *spdx.Package {
 	}
 
 	return p
+}
+
+func toSPDXSupplier(s source.Description) *spdx.Supplier {
+	supplier := helpers.NOASSERTION
+	if s.Supplier != "" {
+		supplier = s.Supplier
+	}
+
+	supplierType := ""
+	if supplier != helpers.NOASSERTION {
+		supplierType = helpers.SUPPLIERORG
+	}
+
+	return &spdx.Supplier{
+		Supplier:     supplier,
+		SupplierType: supplierType,
+	}
 }
 
 func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
@@ -366,7 +383,7 @@ func toPackages(rels *relationship.Index, catalog *pkg.Collection, sbom sbom.SBO
 			// 7.6: Package Originator: may have single result for either Person or Organization,
 			//                          or NOASSERTION
 			// Cardinality: optional, one
-			PackageSupplier: toPackageSupplier(p),
+			PackageSupplier: toPackageSupplier(p, sbom.Source.Supplier),
 
 			PackageOriginator: toPackageOriginator(p),
 
@@ -531,11 +548,18 @@ func toPackageOriginator(p pkg.Package) *spdx.Originator {
 	}
 }
 
-func toPackageSupplier(p pkg.Package) *spdx.Supplier {
+func toPackageSupplier(p pkg.Package, sbomSupplier string) *spdx.Supplier {
 	kind, supplier := helpers.Supplier(p)
 	if kind == "" || supplier == "" {
+		supplier := helpers.NOASSERTION
+		supplierType := ""
+		if sbomSupplier != "" {
+			supplier = sbomSupplier
+			supplierType = helpers.SUPPLIERORG
+		}
 		return &spdx.Supplier{
-			Supplier: helpers.NOASSERTION,
+			Supplier:     supplier,
+			SupplierType: supplierType,
 		}
 	}
 	return &spdx.Supplier{

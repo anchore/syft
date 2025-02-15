@@ -56,19 +56,21 @@ func Test_toSourceModel(t *testing.T) {
 		{
 			name: "directory",
 			src: source.Description{
-				ID:      "test-id",
-				Name:    "some-name",
-				Version: "some-version",
+				ID:       "test-id",
+				Name:     "some-name",
+				Version:  "some-version",
+				Supplier: "optional-supplier",
 				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
 			},
 			expected: model.Source{
-				ID:      "test-id",
-				Name:    "some-name",
-				Version: "some-version",
-				Type:    "directory",
+				ID:       "test-id",
+				Name:     "some-name",
+				Version:  "some-version",
+				Supplier: "optional-supplier",
+				Type:     "directory",
 				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
@@ -102,9 +104,10 @@ func Test_toSourceModel(t *testing.T) {
 		{
 			name: "image",
 			src: source.Description{
-				ID:      "test-id",
-				Name:    "some-name",
-				Version: "some-version",
+				ID:       "test-id",
+				Name:     "some-name",
+				Version:  "some-version",
+				Supplier: "optional-supplier",
 				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
@@ -113,10 +116,11 @@ func Test_toSourceModel(t *testing.T) {
 				},
 			},
 			expected: model.Source{
-				ID:      "test-id",
-				Name:    "some-name",
-				Version: "some-version",
-				Type:    "image",
+				ID:       "test-id",
+				Name:     "some-name",
+				Version:  "some-version",
+				Supplier: "optional-supplier",
+				Type:     "image",
 				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
@@ -130,7 +134,7 @@ func Test_toSourceModel(t *testing.T) {
 		// below are regression tests for when the name/version are not provided
 		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
 		{
-			name: "directory - no name/version",
+			name: "directory - no name/version/supplier",
 			src: source.Description{
 				ID: "test-id",
 				Metadata: source.DirectoryMetadata{
@@ -148,7 +152,7 @@ func Test_toSourceModel(t *testing.T) {
 			},
 		},
 		{
-			name: "file - no name/version",
+			name: "file - no name/version/supplier",
 			src: source.Description{
 				ID: "test-id",
 				Metadata: source.FileMetadata{
@@ -168,7 +172,7 @@ func Test_toSourceModel(t *testing.T) {
 			},
 		},
 		{
-			name: "image - no name/version",
+			name: "image - no name/version/supplier",
 			src: source.Description{
 				ID: "test-id",
 				Metadata: source.ImageMetadata{

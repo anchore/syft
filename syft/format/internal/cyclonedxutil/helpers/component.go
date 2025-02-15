@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func EncodeComponent(p pkg.Package) cyclonedx.Component {
+func EncodeComponent(p pkg.Package, sbomSupplier string) cyclonedx.Component {
 	props := EncodeProperties(p, "syft:package")
 
 	if p.Metadata != nil {
@@ -43,6 +43,7 @@ func EncodeComponent(p pkg.Package) cyclonedx.Component {
 
 	return cyclonedx.Component{
 		Type:               componentType,
+		Supplier:           encodeSupplier(p, sbomSupplier),
 		Name:               p.Name,
 		Group:              encodeGroup(p),
 		Version:            p.Version,
@@ -56,6 +57,16 @@ func EncodeComponent(p pkg.Package) cyclonedx.Component {
 		Properties:         properties,
 		BOMRef:             DeriveBomRef(p),
 	}
+}
+
+// TODO: we eventually want to update this so that we can read "supplier" from different syft metadata
+func encodeSupplier(_ pkg.Package, sbomSupplier string) *cyclonedx.OrganizationalEntity {
+	if sbomSupplier != "" {
+		return &cyclonedx.OrganizationalEntity{
+			Name: sbomSupplier,
+		}
+	}
+	return nil
 }
 
 func DeriveBomRef(p pkg.Package) string {
