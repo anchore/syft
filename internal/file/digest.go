@@ -33,7 +33,7 @@ func NewDigestsFromFile(ctx context.Context, closer io.ReadCloser, hashes []cryp
 		writers[idx] = hashers[idx]
 	}
 
-	size, err := io.Copy(sync.ParallelWriter(sync.ContextExecutor(ctx, "cpu"), writers...), closer)
+	size, err := io.Copy(sync.ParallelWriter(sync.GetExecutor(ctx, "cpu"), writers...), closer)
 	// size, err := io.Copy(io.MultiWriter(writers...), closer)
 	if err != nil {
 		return nil, err

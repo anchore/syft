@@ -65,7 +65,7 @@ func (i *Cataloger) CatalogCtx(ctx context.Context, resolver file.Resolver) (map
 	prog := catalogingProgress(int64(len(locs)))
 
 	results := make(map[file.Coordinates]file.Executable)
-	errs := sync.Collect(sync.ContextExecutor(ctx, "io"), sync.ToSeq(locs), func(loc file.Location, exec *file.Executable) {
+	errs := sync.Collect(sync.GetExecutor(ctx, "io"), sync.ToSeq(locs), func(loc file.Location, exec *file.Executable) {
 		if exec != nil {
 			prog.Increment()
 			results[loc.Coordinates] = *exec

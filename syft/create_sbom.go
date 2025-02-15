@@ -64,25 +64,18 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 		},
 	}
 
-	// configure parallel executors
-	ctx = setContextExecutors(ctx, cfg)
-
-	// inject a single license scanner and content config for all package cataloging tasks into context
-	licenseScanner, err := licenses.NewDefaultScanner(
-		licenses.WithIncludeLicenseContent(cfg.Licenses.IncludeUnkownLicenseContent),
-		licenses.WithCoverage(cfg.Licenses.Coverage),
-	)
+	// setup everything we need in context: license scanner, executors, etc.
+	ctx, err = setupContext(ctx, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("could not build licenseScanner for cataloging: %w", err)
+		return nil, err
 	}
-	ctx = licenses.SetContextLicenseScanner(ctx, licenseScanner)
 
 	catalogingProgress := monitorCatalogingTask(src.ID(), taskGroups)
 	packageCatalogingProgress := monitorPackageCatalogingTask()
 
 	builder := sbomsync.NewBuilder(&s, monitorPackageCount(packageCatalogingProgress))
 	for i := range taskGroups {
-		err = sync.Collect(sync.ContextExecutor(ctx, "catalog"), sync.ToSeq(taskGroups[i]), nil, func(t task.Task) (any, error) {
+		err = sync.Collect(sync.GetExecutor(ctx, "catalog"), sync.ToSeq(taskGroups[i]), nil, func(t task.Task) (any, error) {
 			return nil, task.RunTask(ctx, t, resolver, builder, catalogingProgress)
 		})
 		if err != nil {
@@ -95,6 +88,27 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 	catalogingProgress.SetCompleted()
 
 	return &s, nil
+}
+
+func setupContext(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, error) {
+	// configure parallel executors
+	ctx = setContextExecutors(ctx, cfg)
+
+	// configure license scanner
+	return setContextLicenseScanner(ctx, cfg)
+}
+
+func setContextLicenseScanner(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, error) {
+	// inject a single license scanner and content config for all package cataloging tasks into context
+	licenseScanner, err := licenses.NewDefaultScanner(
+		licenses.WithIncludeLicenseContent(cfg.Licenses.IncludeUnkownLicenseContent),
+		licenses.WithCoverage(cfg.Licenses.Coverage),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not build licenseScanner for cataloging: %w", err)
+	}
+	ctx = licenses.SetContextLicenseScanner(ctx, licenseScanner)
+	return ctx, nil
 }
 
 func setContextExecutors(ctx context.Context, cfg *CreateSBOMConfig) context.Context {

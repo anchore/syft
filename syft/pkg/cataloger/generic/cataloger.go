@@ -166,7 +166,8 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 		pkgs []pkg.Package
 		rels []artifact.Relationship
 	}
-	errs = sync.Collect(sync.ContextExecutor(ctx, "io"), sync.ToSeq(c.selectFiles(resolver)), func(_ request, res result) {
+	ctx, executor := sync.ContextExecutor(ctx, "io")
+	errs = sync.Collect(executor, sync.ToSeq(c.selectFiles(resolver)), func(_ request, res result) {
 		for _, p := range res.pkgs {
 			p.FoundBy = c.upstreamCataloger
 			packages = append(packages, p)
