@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"crypto"
 	"os"
 	"testing"
@@ -81,7 +82,7 @@ func TestNewDigestsFromFile(t *testing.T) {
 			fh, err := os.Open(tt.fixture)
 			require.NoError(t, err)
 
-			got, err := NewDigestsFromFile(fh, tt.hashes)
+			got, err := NewDigestsFromFile(context.TODO(), fh, tt.hashes)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
