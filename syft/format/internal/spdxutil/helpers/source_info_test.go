@@ -113,6 +113,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.GraalVMNativeImagePkg,
+			},
+			expected: []string{
+				"from GraalVM native image",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.RustPkg,
 			},
 			expected: []string{
@@ -197,6 +205,14 @@ func Test_SourceInfo(t *testing.T) {
 			},
 			expected: []string{
 				"acquired package info from the following paths",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.BitnamiPkg,
+			},
+			expected: []string{
+				"acquired package info from a Bitnami SBOM",
 			},
 		},
 		{

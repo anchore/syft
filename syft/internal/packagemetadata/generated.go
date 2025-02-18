@@ -10,6 +10,7 @@ func AllTypes() []any {
 		pkg.AlpmDBEntry{},
 		pkg.ApkDBEntry{},
 		pkg.BinarySignature{},
+		pkg.BitnamiSBOMEntry{},
 		pkg.CocoaPodfileLockEntry{},
 		pkg.ConanV1LockEntry{},
 		pkg.ConanV2LockEntry{},
