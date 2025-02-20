@@ -39,7 +39,7 @@ func parseConanfile(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		}
 
 		m := pkg.ConanfileEntry{
-			Ref: strings.Trim(line, "\n"),
+			Ref: strings.TrimSpace(line),
 		}
 
 		if !inRequirements {
