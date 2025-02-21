@@ -80,6 +80,10 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 
 		pkgs = append(pkgs, p)
 	}
+	// If there is exactly one package, assume it is the main package
+	if len(pkgs) == 1 && mainPkgID == "" {
+		mainPkgID = pkgs[0].ID()
+	}
 
 	// Resolve all files owned by the main package in the SBOM and update the metadata
 	if mainPkgFiles, err := mainPkgFiles(resolver, reader.Location.RealPath, secondaryPkgsFiles); err == nil {
