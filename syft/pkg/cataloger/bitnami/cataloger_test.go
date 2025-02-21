@@ -421,6 +421,31 @@ func TestBitnamiCataloger(t *testing.T) {
 		},
 	}
 
+	redisMainPkg := pkg.Package{
+		Name:      "redis",
+		Version:   "7.4.0-0",
+		Type:      pkg.BitnamiPkg,
+		Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/redis/.spdx-redis.spdx")),
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromType("RSALv2", license.Concluded),
+			pkg.NewLicenseFromType("RSALv2", license.Declared),
+		),
+		FoundBy: catalogerName,
+		PURL:    "pkg:bitnami/redis@7.4.0-0?arch=arm64&distro=debian-12",
+		CPEs: mustCPEs(
+			"cpe:2.3:*:redis:redis:7.4.0:*:*:*:*:*:*:*",
+		),
+		Metadata: &pkg.BitnamiSBOMEntry{
+			Name:         "redis",
+			Version:      "7.4.0",
+			Revision:     "0",
+			Architecture: "arm64",
+			Distro:       "debian-12",
+			Path:         "opt/bitnami/redis",
+			Files:        []string{"opt/bitnami/redis/bin/redis-server"},
+		},
+	}
+
 	tests := []struct {
 		name              string
 		fixture           string
@@ -455,6 +480,12 @@ func TestBitnamiCataloger(t *testing.T) {
 			wantPkgs:          nil,
 			wantRelationships: nil,
 			wantErr:           require.Error,
+		},
+		{
+			name:              "SBOM with no relationships",
+			fixture:           "test-fixtures/no-rel",
+			wantPkgs:          []pkg.Package{redisMainPkg},
+			wantRelationships: nil,
 		},
 	}
 
