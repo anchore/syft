@@ -18,15 +18,17 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var _ generic.Parser = parseDotnetPortableExecutable
+type dotnetPortableExecutableParser struct {
+	cfg CatalogerConfig
+}
 
-func parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generic.Environment, f file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (p dotnetPortableExecutableParser) parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generic.Environment, f file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	by, err := io.ReadAll(f)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)
 	}
 
-	peFile, err := pe.NewBytes(by, &pe.Options{})
+	peFile, err := pe.NewBytes(by, &pe.Options{DisableCertValidation: !p.cfg.EnableCertificateValidation})
 	if err != nil {
 		log.Tracef("unable to create PE instance for file '%s': %v", f.RealPath, err)
 		return nil, nil, err
