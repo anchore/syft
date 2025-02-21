@@ -26,7 +26,7 @@ func parseDotnetPortableExecutable(_ context.Context, _ file.Resolver, _ *generi
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)
 	}
 
-	peFile, err := pe.NewBytes(by, &pe.Options{})
+	peFile, err := pe.NewBytes(by, &pe.Options{DisableCertValidation: true})
 	if err != nil {
 		log.Tracef("unable to create PE instance for file '%s': %v", f.RealPath, err)
 		return nil, nil, err
