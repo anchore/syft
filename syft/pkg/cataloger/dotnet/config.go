@@ -1,7 +1,7 @@
 package dotnet
 
 type CatalogerConfig struct {
-	EnableCertificateValidation bool
+	EnableCertificateValidation bool `json:"enable-certificate-validation" yaml:"enable-certificate-validation" mapstructure:"enable-certificate-validation"`
 }
 
 func (c CatalogerConfig) WithCertificateValidation(enable bool) CatalogerConfig {
