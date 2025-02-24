@@ -378,6 +378,12 @@
       "build-metrics": [
         "cpe:2.3:a:jenkins:build-metrics:*:*:*:*:*:jenkins:*:*"
       ],
+      "build-monitor": [
+        "cpe:2.3:a:jenkins:build_monitor_view:*:*:*:*:*:jenkins:*:*"
+      ],
+      "build-monitor-plugin": [
+        "cpe:2.3:a:jenkins:build_monitor_view:*:*:*:*:*:jenkins:*:*"
+      ],
       "build-notifications": [
         "cpe:2.3:a:jenkins:build_notifications:*:*:*:*:*:jenkins:*:*"
       ],
@@ -7874,6 +7880,9 @@
       "aprils-super-functions-pack": [
         "cpe:2.3:a:april\\'s_super_functions_pack_project:april\\'s_super_functions_pack:*:*:*:*:*:wordpress:*:*"
       ],
+      "apus-framework": [
+        "cpe:2.3:a:apusthemes:superio:*:*:*:*:*:wordpress:*:*"
+      ],
       "ar-for-wordpress": [
         "cpe:2.3:a:webandprint:ar:*:*:*:*:*:wordpress:*:*"
       ],
@@ -11846,6 +11855,9 @@
       ],
       "happyforms": [
         "cpe:2.3:a:happyforms:happyforms:*:*:*:*:*:wordpress:*:*"
+      ],
+      "hash-form": [
+        "cpe:2.3:a:hashthemes:hash_form:*:*:*:*:*:wordpress:*:*"
       ],
       "hashbar-wp-notification-bar": [
         "cpe:2.3:a:hasthemes:hashbar:*:*:*:*:*:wordpress:*:*"
@@ -16581,6 +16593,9 @@
       "strategery-migrations": [
         "cpe:2.3:a:strategery_migrations_project:strategery_migrations:*:*:*:*:*:wordpress:*:*"
       ],
+      "stray-quotes": [
+        "cpe:2.3:a:unalignedcode:stray_random_quotes:*:*:*:*:*:wordpress:*:*"
+      ],
       "stream": [
         "cpe:2.3:a:xwp:stream:*:*:*:*:*:wordpress:*:*"
       ],
@@ -16860,6 +16875,9 @@
       ],
       "the-moneytizer": [
         "cpe:2.3:a:themoneytizer:the_moneytizer:*:*:*:*:*:wordpress:*:*"
+      ],
+      "the-pack-addon": [
+        "cpe:2.3:a:webangon:the_pack_elementor_addons:*:*:*:*:*:wordpress:*:*"
       ],
       "the-plus-addons-for-block-editor": [
         "cpe:2.3:a:posimyth:nexter_blocks:*:*:*:*:*:wordpress:*:*"
@@ -17381,8 +17399,8 @@
         "cpe:2.3:a:kaizencoders:url_shortify:*:*:*:*:*:wordpress:*:*"
       ],
       "usc-e-shop": [
-        "cpe:2.3:a:collne:welcart:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:collne:welcart_e-commerce:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:collne:welcart_e-commerce:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:welcart:welcart_e-commerce:*:*:*:*:*:wordpress:*:*"
       ],
       "use-any-font": [
         "cpe:2.3:a:anyfont_plugin_project:anyfont:*:*:*:*:*:wordpress:*:*",
@@ -19666,6 +19684,9 @@
       "wpb-advanced-faq": [
         "cpe:2.3:a:wpbean:wpb_advanced_faq:*:*:*:*:*:wordpress:*:*"
       ],
+      "wpb-elementor-addons": [
+        "cpe:2.3:a:wpbean:wpb_elementor_addons:*:*:*:*:*:wordpress:*:*"
+      ],
       "wpb-show-core": [
         "cpe:2.3:a:wpb_show_core_project:wpb_show_core:*:*:*:*:*:wordpress:*:*"
       ],
@@ -19751,7 +19772,7 @@
         "cpe:2.3:a:wpfront:wpfront_user_role_editor:*:*:*:*:*:wordpress:*:*"
       ],
       "wpfunnels": [
-        "cpe:2.3:a:coderex:wpfunnels:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:getwpfunnels:wpfunnels:*:*:*:*:*:wordpress:*:*"
       ],
       "wpgenious-job-listing": [
         "cpe:2.3:a:wpgenious:wpgenius_job_listing:*:*:*:*:*:wordpress:*:*"
