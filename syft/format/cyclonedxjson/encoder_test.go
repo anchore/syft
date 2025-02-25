@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil"
 	"github.com/anchore/syft/syft/format/internal/testutil"
 	"github.com/anchore/syft/syft/pkg"
@@ -25,6 +26,31 @@ func getEncoder(t testing.TB) sbom.FormatEncoder {
 	enc, err := NewFormatEncoderWithConfig(cfg)
 	require.NoError(t, err)
 	return enc
+}
+
+func Test_noTypedNils(t *testing.T) {
+	s := sbom.SBOM{
+		Artifacts: sbom.Artifacts{
+			FileMetadata: map[file.Coordinates]file.Metadata{},
+			FileDigests:  map[file.Coordinates][]file.Digest{},
+		},
+	}
+	c := file.NewCoordinates("/dev/null", "123")
+	s.Artifacts.FileMetadata[c] = file.Metadata{
+		Path: "/dev/null",
+	}
+	s.Artifacts.FileDigests[c] = []file.Digest{}
+
+	enc, err := NewFormatEncoderWithConfig(EncoderConfig{
+		Version: "1.6",
+		Pretty:  true,
+	})
+	require.NoError(t, err)
+
+	contents := bytes.Buffer{}
+	err = enc.Encode(&contents, s)
+	require.NoError(t, err)
+	require.NotContains(t, contents.String(), `"hashes": null`)
 }
 
 func TestPrettyOutput(t *testing.T) {
