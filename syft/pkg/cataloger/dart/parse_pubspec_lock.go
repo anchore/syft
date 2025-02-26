@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"regexp"
 	"sort"
 
+	"github.com/Masterminds/semver"
 	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/syft/internal/log"
@@ -68,7 +70,26 @@ func parsePubspecLock(_ context.Context, _ file.Resolver, _ *generic.Environment
 	}
 
 	var names []string
-	for name := range p.Packages {
+	for name, pkg := range p.Packages {
+		if pkg.Source == "sdk" && pkg.Version == "0.0.0" {
+			// Packages that are delivered as part of an SDK (e.g. Flutter) have their
+			// version set to "0.0.0" in the package definition. The actual version
+			// should refer to the SDK version, which is defined in a dedicated section
+			// in the pubspec.lock file and uses a version range constraint.
+			//
+			// If such a package is detected, look up the version range constraint of
+			// its matching SDK, and set the minimum supported version as its new version.
+			sdkName := pkg.Description.Name
+			sdkVersion, err := p.getSdkVersion(sdkName)
+
+			if err != nil {
+				log.Tracef("failed to resolve %s SDK version for package %s: %v", sdkName, name, err)
+				continue
+			}
+			pkg.Version = sdkVersion
+			p.Packages[name] = pkg
+		}
+
 		names = append(names, name)
 	}
 
@@ -87,6 +108,68 @@ func parsePubspecLock(_ context.Context, _ file.Resolver, _ *generic.Environment
 	}
 
 	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
+}
+
+// Look up the version range constraint for a given sdk name, if found,
+// and return its lowest supported version matching that constraint.
+//
+// The sdks and their constraints are defined in the pubspec.lock file, e.g.
+//
+//	sdks:
+//		dart: ">=2.12.0 <3.0.0"
+//		flutter: ">=3.24.5"
+//
+// and stored in the pubspecLock.Sdks map during parsing.
+//
+// Example based on the data above:
+//
+//	getSdkVersion("dart") -> "2.12.0"
+//	getSdkVersion("flutter") -> "3.24.5"
+//	getSdkVersion("undefined") -> error
+func (psl *pubspecLock) getSdkVersion(sdk string) (string, error) {
+	constraint, found := psl.Sdks[sdk]
+
+	if !found {
+		return "", fmt.Errorf("cannot find %s SDK", sdk)
+	}
+
+	return parseMinimumSdkVersion(constraint)
+}
+
+// Parse a given version range constraint and return its lowest supported version.
+//
+// This is intended for packages that are part of an SDK (e.g. Flutter) and don't
+// have an explicit version string set. This will take the given constraint
+// parameter, ensure it's a valid constraint string, and return the lowest version
+// within that constraint range.
+//
+// Examples:
+//
+//	parseMinimumSdkVersion("^1.2.3") -> "1.2.3"
+//	parseMinimumSdkVersion(">=1.2.3") -> "1.2.3"
+//	parseMinimumSdkVersion(">=1.2.3 <2.0.0") -> "1.2.3"
+//	parseMinimumSdkVersion("1.2.3") -> error
+//
+// see https://dart.dev/tools/pub/dependencies#version-constraints for the
+// constraint format used in Dart SDK defintions.
+func parseMinimumSdkVersion(constraint string) (string, error) {
+	// Match strings that
+	//  1. start with either "^" or ">=" (Dart SDK constraints only use those two)
+	//  2. followed by a valid semantic version, matched as "version" named subexpression
+	//  3. followed by a space (if there's a range) or end of string (if there's only a lower boundary)
+	//                        |---1--||------------------2------------------||-3-|
+	re := regexp.MustCompile(`^(\^|>=)(?P<version>` + semver.SemVerRegex + `)( |$)`)
+
+	if !re.MatchString(constraint) {
+		return "", fmt.Errorf("unsupported or invalid constraint '%s'", constraint)
+	}
+
+	// Read "version" subexpression (see 2. above) into version variable
+	var version []byte
+	matchIndex := re.FindStringSubmatchIndex(constraint)
+	version = re.ExpandString(version, "$version", constraint, matchIndex)
+
+	return string(version), nil
 }
 
 func (p *pubspecLockPackage) getVcsURL() string {
