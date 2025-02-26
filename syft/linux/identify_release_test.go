@@ -517,8 +517,8 @@ func TestParseRedhatRelease(t *testing.T) {
 			fixture: "test-fixtures/os/centos5/etc/redhat-release",
 			name:    "Centos 5",
 			release: &Release{
-				PrettyName: "CentOS",
-				Name:       "centos",
+				PrettyName: "CentOS release 5.7 (Final)",
+				Name:       "CentOS",
 				ID:         "centos",
 				IDLike:     []string{"centos"},
 				Version:    "5.7",
