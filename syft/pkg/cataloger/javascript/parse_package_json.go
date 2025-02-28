@@ -55,21 +55,17 @@ func parsePackageJSON(_ context.Context, _ file.Resolver, _ *generic.Environment
 	var pkgs []pkg.Package
 	dec := json.NewDecoder(reader)
 
-	for {
-		var p packageJSON
-		if err := dec.Decode(&p); errors.Is(err, io.EOF) {
-			break
-		} else if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
-		}
-
-		// always create a package, regardless of having a valid name and/or version,
-		// a compliance filter later will remove these packages based on compliance rules
-		pkgs = append(
-			pkgs,
-			newPackageJSONPackage(p, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		)
+	var p packageJSON
+	if err := dec.Decode(&p); err != nil && !errors.Is(err, io.EOF) {
+		return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
 	}
+
+	// always create a package, regardless of having a valid name and/or version,
+	// a compliance filter later will remove these packages based on compliance rules
+	pkgs = append(
+		pkgs,
+		newPackageJSONPackage(p, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+	)
 
 	pkg.Sort(pkgs)
 
