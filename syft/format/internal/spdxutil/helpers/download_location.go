@@ -1,9 +1,28 @@
 package helpers
 
-import "github.com/anchore/syft/syft/pkg"
+import (
+	"github.com/anchore/syft/syft/pkg"
+	urilib "github.com/spdx/gordf/uri"
+)
 
 const NONE = "NONE"
 const NOASSERTION = "NOASSERTION"
+
+func isUriValid(uri string) bool {
+	_, err := urilib.NewURIRef(uri)
+	return err == nil
+}
+
+func checkUri(uri string) string {
+	if NoneIfEmpty(uri) != NONE {
+		if isUriValid(uri) {
+			return uri
+		} else {
+			return NOASSERTION
+		}
+	}
+	return NONE
+}
 
 func DownloadLocation(p pkg.Package) string {
 	// 3.7: Package Download Location
@@ -17,17 +36,17 @@ func DownloadLocation(p pkg.Package) string {
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkDBEntry:
-			return NoneIfEmpty(metadata.URL)
+			return checkUri(metadata.URL)
 		case pkg.NpmPackage:
-			return NoneIfEmpty(metadata.URL)
+			return checkUri(metadata.URL)
 		case pkg.NpmPackageLockEntry:
-			return NoneIfEmpty(metadata.Resolved)
+			return checkUri(metadata.Resolved)
 		case pkg.PhpComposerLockEntry:
-			return NoneIfEmpty(metadata.Dist.URL)
+			return checkUri(metadata.Dist.URL)
 		case pkg.PhpComposerInstalledEntry:
-			return NoneIfEmpty(metadata.Dist.URL)
+			return checkUri(metadata.Dist.URL)
 		case pkg.OpamPackage:
-			return NoneIfEmpty(metadata.URL)
+			return checkUri(metadata.URL)
 		}
 	}
 	return NOASSERTION

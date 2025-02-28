@@ -93,6 +93,7 @@ require (
 	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
 	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/magiconair/properties v1.8.9
+	github.com/spdx/gordf v0.0.0-20201111095634-7098f93598fb
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 )
 
