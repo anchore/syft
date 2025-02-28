@@ -66,12 +66,8 @@ func (a genericPackageLockAdapter) parsePackageLock(_ context.Context, resolver 
 	dec := json.NewDecoder(reader)
 
 	var lock packageLock
-	for {
-		if err := dec.Decode(&lock); errors.Is(err, io.EOF) {
-			break
-		} else if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse package-lock.json file: %w", err)
-		}
+	if err := dec.Decode(&lock); err != nil && !errors.Is(err, io.EOF) {
+		return nil, nil, fmt.Errorf("failed to parse package-lock.json file: %w", err)
 	}
 
 	if lock.LockfileVersion == 1 {
