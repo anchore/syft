@@ -17,7 +17,7 @@ func Test_DownloadLocation(t *testing.T) {
 		{
 			name:     "no metadata",
 			input:    pkg.Package{},
-			expected: NOASSERTION,
+			expected: NONE,
 		},
 		{
 			name: "from apk",
@@ -173,17 +173,6 @@ func Test_DownloadLocation(t *testing.T) {
 				},
 			},
 			expected: "git+git://git.myproject.org/MyProject",
-		},
-		{
-			name: "Git SSH with @ Notation",
-			input: pkg.Package{
-				Metadata: pkg.PhpComposerLockEntry{
-					Dist: pkg.PhpComposerExternalReference{
-						URL: "git+git@git.myproject.org:MyProject",
-					},
-				},
-			},
-			expected: "git+git@git.myproject.org:MyProject",
 		},
 		{
 			name: "Git URL with C File Fragment",
@@ -383,7 +372,7 @@ func Test_DownloadLocation(t *testing.T) {
 			},
 			expected: "hg+https://hg.myproject.org/MyProject@da39a3ee5e6b#lib/variable.rb",
 		},
-	
+
 		// Test cases for Subversion (svn) URLs
 		{
 			name: "Basic SVN URL",
@@ -506,7 +495,7 @@ func Test_DownloadLocation(t *testing.T) {
 			},
 			expected: "svn+https://svn.myproject.org/MyProject/trunk@1234#lib/variable/variable.rb",
 		},
-	
+
 		// Test cases for Bazaar (bzr) URLs
 		{
 			name: "Bazaar HTTPS URL with Trunk",

@@ -8,22 +8,6 @@ import (
 const NONE = "NONE"
 const NOASSERTION = "NOASSERTION"
 
-func isUriValid(uri string) bool {
-	_, err := urilib.NewURIRef(uri)
-	return err == nil
-}
-
-func checkUri(uri string) string {
-	if NoneIfEmpty(uri) != NONE {
-		if isUriValid(uri) {
-			return uri
-		} else {
-			return NOASSERTION
-		}
-	}
-	return NONE
-}
-
 func DownloadLocation(p pkg.Package) string {
 	// 3.7: Package Download Location
 	// Cardinality: mandatory, one
@@ -33,21 +17,38 @@ func DownloadLocation(p pkg.Package) string {
 	//   (ii) the SPDX file creator has made no attempt to determine this field; or
 	//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
 
+	var location string
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkDBEntry:
-			return checkUri(metadata.URL)
+			location = metadata.URL
 		case pkg.NpmPackage:
-			return checkUri(metadata.URL)
+			location = metadata.URL
 		case pkg.NpmPackageLockEntry:
-			return checkUri(metadata.Resolved)
+			location = metadata.Resolved
 		case pkg.PhpComposerLockEntry:
-			return checkUri(metadata.Dist.URL)
+			location = metadata.Dist.URL
 		case pkg.PhpComposerInstalledEntry:
-			return checkUri(metadata.Dist.URL)
+			location = metadata.Dist.URL
 		case pkg.OpamPackage:
-			return checkUri(metadata.URL)
+			location = metadata.URL
 		}
 	}
-	return NOASSERTION
+	return UriValue(location)
+}
+
+func isUriValid(uri string) bool {
+	_, err := urilib.NewURIRef(uri)
+	return err == nil
+}
+
+func UriValue(uri string) string {
+	if NoneIfEmpty(uri) != NONE {
+		if isUriValid(uri) {
+			return uri
+		} else {
+			return NOASSERTION
+		}
+	}
+	return NONE
 }
