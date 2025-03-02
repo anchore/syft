@@ -572,7 +572,8 @@ func DefaultClassifiers() []Classifier {
 				// [NUL]3.0.2[NUL]%sFluent Bit
 				// [NUL]2.2.3[NUL]Fluent Bit
 				// [NUL]2.2.1[NUL][NUL][NUL]Fluent Bit
-				`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00[^\d]*Fluent`,
+				// [NUL]1.7.0[NUL]\x1b[1m[NUL]%sFluent Bit (versions 1.7.0-dev-3 through 1.7.0-dev-9 and 1.7.0-rc4 through 1.7.0-rc8)
+				`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00(\x1b\[1m\x00|\x00\x00)?(%s)?Fluent`,
 			),
 			Package: "fluent-bit",
 			PURL:    mustPURL("pkg:github/fluent/fluent-bit@version"),
