@@ -83,10 +83,7 @@ require (
 	modernc.org/sqlite v1.35.0
 )
 
-require (
-	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb // indirect
-	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
-)
+require google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
 
 require (
 	github.com/BurntSushi/toml v1.4.0
@@ -94,6 +91,7 @@ require (
 	github.com/adrg/xdg v0.5.3
 	github.com/anchore/archiver/v3 v3.5.3-0.20241210171143-5b1d8d1c7c51
 	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
+	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
 	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/magiconair/properties v1.8.9
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
@@ -167,7 +165,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.17.11 // indirect
+	github.com/klauspost/compress v1.17.11
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
@@ -225,7 +223,7 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
-	github.com/ulikunitz/xz v0.5.12 // indirect
+	github.com/ulikunitz/xz v0.5.12
 	github.com/vbatts/tar-split v0.11.6 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
