@@ -83,7 +83,10 @@ require (
 	modernc.org/sqlite v1.35.0
 )
 
-require google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
+require (
+	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb // indirect
+	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
+)
 
 require (
 	github.com/BurntSushi/toml v1.4.0
