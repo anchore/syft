@@ -50,7 +50,6 @@ require (
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
 	github.com/knqyf263/go-rpmdb v0.1.1
-	github.com/microsoft/go-rustaudit v0.0.0-20220730194248-4b17361d90a5
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/mitchellh/mapstructure v1.5.0
@@ -93,6 +92,7 @@ require (
 	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
 	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/magiconair/properties v1.8.9
+	github.com/rust-secure-code/go-rustaudit v0.0.0-20250226111315-e20ec32e963c
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 )
 

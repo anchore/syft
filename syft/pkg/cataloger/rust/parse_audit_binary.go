@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/microsoft/go-rustaudit"
+	"github.com/rust-secure-code/go-rustaudit"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/relationship"
