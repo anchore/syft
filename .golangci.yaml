@@ -62,11 +62,6 @@ linters-settings:
     excludes:
       - G115
 
-  staticcheck:
-    checks:
-      - all
-      - -SA4023
-
 run:
   timeout: 10m
   tests: false

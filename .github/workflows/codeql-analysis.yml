@@ -21,7 +21,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-22.04-4core-16gb
-
+    if: github.repository == 'anchore/syft' # only run for main repo
     permissions:
       security-events: write
 
