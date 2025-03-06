@@ -1,6 +1,12 @@
 package helpers
 
-import "github.com/anchore/syft/syft/pkg"
+import (
+	"strings"
+
+	urilib "github.com/spdx/gordf/uri"
+
+	"github.com/anchore/syft/syft/pkg"
+)
 
 const NONE = "NONE"
 const NOASSERTION = "NOASSERTION"
@@ -14,21 +20,37 @@ func DownloadLocation(p pkg.Package) string {
 	//   (ii) the SPDX file creator has made no attempt to determine this field; or
 	//   (iii) the SPDX file creator has intentionally provided no information (no meaning should be implied by doing so).
 
+	var location string
 	if hasMetadata(p) {
 		switch metadata := p.Metadata.(type) {
 		case pkg.ApkDBEntry:
-			return NoneIfEmpty(metadata.URL)
+			location = metadata.URL
 		case pkg.NpmPackage:
-			return NoneIfEmpty(metadata.URL)
+			location = metadata.URL
 		case pkg.NpmPackageLockEntry:
-			return NoneIfEmpty(metadata.Resolved)
+			location = metadata.Resolved
 		case pkg.PhpComposerLockEntry:
-			return NoneIfEmpty(metadata.Dist.URL)
+			location = metadata.Dist.URL
 		case pkg.PhpComposerInstalledEntry:
-			return NoneIfEmpty(metadata.Dist.URL)
+			location = metadata.Dist.URL
 		case pkg.OpamPackage:
-			return NoneIfEmpty(metadata.URL)
+			location = metadata.URL
 		}
 	}
-	return NOASSERTION
+	return URIValue(location)
+}
+
+func isURIValid(uri string) bool {
+	_, err := urilib.NewURIRef(uri)
+	return err == nil
+}
+
+func URIValue(uri string) string {
+	if strings.ToLower(uri) != "none" {
+		if isURIValid(uri) {
+			return uri
+		}
+		return NOASSERTION
+	}
+	return NONE
 }
