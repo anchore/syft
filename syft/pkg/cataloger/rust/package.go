@@ -1,7 +1,7 @@
 package rust
 
 import (
-	"github.com/microsoft/go-rustaudit"
+	"github.com/rust-secure-code/go-rustaudit"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
