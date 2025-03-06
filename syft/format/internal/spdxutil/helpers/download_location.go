@@ -1,8 +1,11 @@
 package helpers
 
 import (
-	"github.com/anchore/syft/syft/pkg"
+	"strings"
+
 	urilib "github.com/spdx/gordf/uri"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 const NONE = "NONE"
@@ -34,21 +37,20 @@ func DownloadLocation(p pkg.Package) string {
 			location = metadata.URL
 		}
 	}
-	return UriValue(location)
+	return URIValue(location)
 }
 
-func isUriValid(uri string) bool {
+func isURIValid(uri string) bool {
 	_, err := urilib.NewURIRef(uri)
 	return err == nil
 }
 
-func UriValue(uri string) string {
-	if NoneIfEmpty(uri) != NONE {
-		if isUriValid(uri) {
+func URIValue(uri string) string {
+	if strings.ToLower(uri) != "none" {
+		if isURIValid(uri) {
 			return uri
-		} else {
-			return NOASSERTION
 		}
+		return NOASSERTION
 	}
 	return NONE
 }

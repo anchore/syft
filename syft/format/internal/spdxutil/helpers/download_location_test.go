@@ -17,7 +17,7 @@ func Test_DownloadLocation(t *testing.T) {
 		{
 			name:     "no metadata",
 			input:    pkg.Package{},
-			expected: NONE,
+			expected: NOASSERTION,
 		},
 		{
 			name: "from apk",
@@ -44,7 +44,7 @@ func Test_DownloadLocation(t *testing.T) {
 					URL: "",
 				},
 			},
-			expected: NONE,
+			expected: NOASSERTION,
 		},
 		{
 			name: "from npm package-lock should include resolved",
@@ -62,7 +62,7 @@ func Test_DownloadLocation(t *testing.T) {
 					Resolved: "",
 				},
 			},
-			expected: NONE,
+			expected: NOASSERTION,
 		},
 		{
 			name: "from php installed.json",
@@ -84,7 +84,7 @@ func Test_DownloadLocation(t *testing.T) {
 					},
 				},
 			},
-			expected: "NONE",
+			expected: NOASSERTION,
 		},
 		{
 			name: "from php composer.lock",
@@ -106,7 +106,29 @@ func Test_DownloadLocation(t *testing.T) {
 					},
 				},
 			},
-			expected: "NONE",
+			expected: NOASSERTION,
+		},
+		{
+			name: "none",
+			input: pkg.Package{
+				Metadata: pkg.PhpComposerLockEntry{
+					Dist: pkg.PhpComposerExternalReference{
+						URL: "none",
+					},
+				},
+			},
+			expected: NONE,
+		},
+		{
+			name: "none uppercase",
+			input: pkg.Package{
+				Metadata: pkg.PhpComposerLockEntry{
+					Dist: pkg.PhpComposerExternalReference{
+						URL: "NONE",
+					},
+				},
+			},
+			expected: NONE,
 		},
 		{
 			name: "invalid uri",
