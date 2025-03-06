@@ -86,7 +86,7 @@ func Sorted(values map[string]string) (out []NameValue) {
 }
 
 func encode(out map[string]string, value reflect.Value, prefix string, fn FieldName) {
-	if !value.IsValid() || value.Type() == nil {
+	if !value.IsValid() {
 		return
 	}
 
@@ -197,7 +197,7 @@ func DecodeInto(obj interface{}, values map[string]string, prefix string, fn Fie
 
 //nolint:funlen,gocognit,gocyclo
 func decode(vals map[string]string, value reflect.Value, prefix string, fn FieldName) bool {
-	if !value.IsValid() || value.Type() == nil {
+	if !value.IsValid() {
 		return false
 	}
 
@@ -371,6 +371,10 @@ func PtrToStruct(ptr interface{}) interface{} {
 		return PtrToStruct(v.Elem().Interface())
 	case reflect.Interface:
 		return PtrToStruct(v.Elem().Interface())
+	default:
+		if v.CanInterface() {
+			return v.Interface()
+		}
 	}
-	return v.Interface()
+	return nil
 }
