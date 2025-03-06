@@ -17,3 +17,9 @@ func NewDBCataloger() pkg.Cataloger {
 		WithParserByGlobs(parseDpkgDB, "**/lib/dpkg/status", "**/lib/dpkg/status.d/*", "**/lib/opkg/info/*.control", "**/lib/opkg/status").
 		WithProcessors(dependency.Processor(dbEntryDependencySpecifier))
 }
+
+// NewArchiveCataloger returns a new Debian package cataloger object capable of parsing .deb archive files
+func NewArchiveCataloger() pkg.Cataloger {
+	return generic.NewCataloger("deb-archive-cataloger").
+		WithParserByGlobs(parseDebArchive, "**/*.deb")
+}
