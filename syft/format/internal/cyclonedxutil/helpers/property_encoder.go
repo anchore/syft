@@ -54,7 +54,7 @@ func lowerFirst(s string) string {
 }
 
 // Encode recursively encodes the object's properties as an ordered set of NameValue pairs
-func Encode(obj interface{}, prefix string, fn FieldName) map[string]string {
+func Encode(obj any, prefix string, fn FieldName) map[string]string {
 	if obj == nil {
 		return nil
 	}
@@ -156,7 +156,7 @@ func fieldName(f reflect.StructField, prefix string, fn FieldName) (string, bool
 }
 
 // Decode based on the given type, applies all values to hydrate a new instance
-func Decode(typ reflect.Type, values map[string]string, prefix string, fn FieldName) interface{} {
+func Decode(typ reflect.Type, values map[string]string, prefix string, fn FieldName) any {
 	isPtr := false
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
@@ -185,7 +185,7 @@ func Decode(typ reflect.Type, values map[string]string, prefix string, fn FieldN
 }
 
 // DecodeInto decodes all values to hydrate the given object instance
-func DecodeInto(obj interface{}, values map[string]string, prefix string, fn FieldName) {
+func DecodeInto(obj any, values map[string]string, prefix string, fn FieldName) {
 	value := reflect.ValueOf(obj)
 
 	for value.Type().Kind() == reflect.Ptr {
@@ -361,7 +361,7 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 	return true
 }
 
-func PtrToStruct(ptr interface{}) interface{} {
+func PtrToStruct(ptr any) any {
 	v := reflect.ValueOf(ptr)
 	if v.IsZero() && v.Type().Kind() != reflect.Struct {
 		return nil
