@@ -128,8 +128,10 @@ jobs:
             const ls = d => readdirSync(d, { withFileTypes: true })
             const baseDir = "./snapshot"
             const dirs = ls(baseDir).filter(f => f.isDirectory()).map(f => f.name)
+            const uploads = []
             for (const dir of dirs) {
-              const {id, size} = await artifact.uploadArtifact(
+              // uploadArtifact returns Promise<{id, size}>
+              uploads.push(artifact.uploadArtifact(
                 // name of the archive:
                 `${dir}`,
                 // array of all files to include:
@@ -137,8 +139,10 @@ jobs:
                 // base directory to trim from entries:
                 `${baseDir}/${dir}`,
                 { retentionDays: 30 }
-              )
+              ))
             }
+            // wait for all uploads to finish
+            Promise.all(uploads)
 
   Acceptance-Linux:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
