@@ -146,29 +146,8 @@ func (p *CatalogTester) ExpectsAssertion(a func(t *testing.T, pkgs []pkg.Package
 }
 
 func (p *CatalogTester) IgnoreLocationLayer() *CatalogTester {
-	p.locationComparer = func(x, y file.Location) bool {
-		return cmp.Equal(x.Coordinates.RealPath, y.Coordinates.RealPath) && cmp.Equal(x.AccessPath, y.AccessPath)
-	}
-
-	// we need to update the license comparer to use the ignored location layer
-	p.licenseComparer = func(x, y pkg.License) bool {
-		return cmp.Equal(x, y, cmp.Comparer(p.locationComparer), cmp.Comparer(
-			func(x, y file.LocationSet) bool {
-				xs := x.ToSlice()
-				ys := y.ToSlice()
-				if len(xs) != len(ys) {
-					return false
-				}
-				for i, xe := range xs {
-					ye := ys[i]
-					if !p.locationComparer(xe, ye) {
-						return false
-					}
-				}
-
-				return true
-			}))
-	}
+	p.locationComparer = cmptest.LocationComparerWithoutLayer
+	p.licenseComparer = cmptest.LicenseComparerWithoutLocationLayer
 	return p
 }
 
@@ -272,7 +251,7 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 	t.Helper()
 
-	p.compareOptions = append(p.compareOptions, cmptest.CommonOptions(p.licenseComparer, p.locationComparer)...)
+	p.compareOptions = append(p.compareOptions, cmptest.BuildOptions(p.licenseComparer, p.locationComparer)...)
 
 	{
 		r := cmptest.NewDiffReporter()
@@ -325,53 +304,20 @@ func TestFileParserWithEnv(t *testing.T, fixturePath string, parser generic.Pars
 	NewCatalogTester().FromFile(t, fixturePath).WithEnv(env).Expects(expectedPkgs, expectedRelationships).TestParser(t, parser)
 }
 
-func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
+func AssertPackagesEqual(t *testing.T, a, b pkg.Package, userOpts ...cmp.Option) {
 	t.Helper()
-	opts := []cmp.Option{
-		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
-		cmp.Comparer(
-			func(x, y file.LocationSet) bool {
-				xs := x.ToSlice()
-				ys := y.ToSlice()
+	opts := cmptest.DefaultOptions()
+	opts = append(opts, userOpts...)
 
-				if len(xs) != len(ys) {
-					return false
-				}
-				for i, xe := range xs {
-					ye := ys[i]
-					if !cmptest.DefaultLocationComparer(xe, ye) {
-						return false
-					}
-				}
-
-				return true
-			},
-		),
-		cmp.Comparer(
-			func(x, y pkg.LicenseSet) bool {
-				xs := x.ToSlice()
-				ys := y.ToSlice()
-
-				if len(xs) != len(ys) {
-					return false
-				}
-				for i, xe := range xs {
-					ye := ys[i]
-					if !cmptest.DefaultLicenseComparer(xe, ye) {
-						return false
-					}
-				}
-
-				return true
-			},
-		),
-		cmp.Comparer(
-			cmptest.DefaultLocationComparer,
-		),
-		cmp.Comparer(
-			cmptest.DefaultLicenseComparer,
-		),
+	if diff := cmp.Diff(a, b, opts...); diff != "" {
+		t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
 	}
+}
+
+func AssertPackagesEqualIgnoreLayers(t *testing.T, a, b pkg.Package, userOpts ...cmp.Option) {
+	t.Helper()
+	opts := cmptest.DefaultIgnoreLocationLayerOptions()
+	opts = append(opts, userOpts...)
 
 	if diff := cmp.Diff(a, b, opts...); diff != "" {
 		t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
