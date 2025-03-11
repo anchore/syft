@@ -1271,6 +1271,55 @@ func Test_WritableUnindexedDirectoryResolver(t *testing.T) {
 	require.Equal(t, c, string(bytes))
 }
 
+func Test_UnindexedDirectoryResolver_FilesByMIMEType(t *testing.T) {
+	tests := []struct {
+		fixturePath   string
+		mimeType      string
+		expectedPaths *strset.Set
+	}{
+		{
+			fixturePath:   "./test-fixtures/image-simple",
+			mimeType:      "text/plain",
+			expectedPaths: strset.New("file-1.txt", "file-2.txt", "target/really/nested/file-3.txt", "Dockerfile"),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.fixturePath, func(t *testing.T) {
+			resolver := NewFromUnindexedDirectory(test.fixturePath)
+			locations, err := resolver.FilesByMIMEType(test.mimeType)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedPaths.Size(), len(locations))
+			for _, l := range locations {
+				assert.True(t, test.expectedPaths.Has(l.RealPath), "does not have path %q", l.RealPath)
+			}
+		})
+	}
+}
+
+func Test_UnindexedDirectoryResolver_RelativeFileByPath(t *testing.T) {
+	cases := []struct {
+		name       string
+		root       string
+		searchFile string
+		expected   *strset.Set
+	}{
+		{
+			name:       "should find nested file from root",
+			root:       "./test-fixtures/image-simple",
+			searchFile: "target/really/nested/file-3.txt",
+			expected:   strset.New("target/really/nested/file-3.txt"),
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			resolver := NewFromUnindexedDirectory(c.root)
+			rootLoc := file.NewLocation(c.root)
+			loc := resolver.RelativeFileByPath(rootLoc, c.searchFile)
+			assert.True(t, c.expected.Has(loc.Coordinates.RealPath), "does not have path %q", loc.RealPath)
+		})
+	}
+}
+
 func testWithTimeout(t *testing.T, timeout time.Duration, test func(*testing.T)) {
 	done := make(chan bool)
 	go func() {

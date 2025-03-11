@@ -21,16 +21,17 @@ import (
 var _ source.Source = (*directorySource)(nil)
 
 type Config struct {
-	Path    string
-	Base    string
-	Exclude source.ExcludeConfig
-	Alias   source.Alias
+	Path      string
+	Base      string
+	Exclude   source.ExcludeConfig
+	Alias     source.Alias
+	Unindexed bool
 }
 
 type directorySource struct {
 	id       artifact.ID
 	config   Config
-	resolver *fileresolver.Directory
+	resolver file.Resolver
 	mutex    *sync.Mutex
 }
 
@@ -145,12 +146,15 @@ func (s *directorySource) FileResolver(_ source.Scope) (file.Resolver, error) {
 		// this should be the only file resolver that might have overlap with where files are cached
 		exclusionFunctions = append(exclusionFunctions, excludeCachePathVisitors()...)
 
-		res, err := fileresolver.NewFromDirectory(s.config.Path, s.config.Base, exclusionFunctions...)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create directory resolver: %w", err)
+		if s.config.Unindexed {
+			s.resolver = fileresolver.NewFromRootedUnindexedDirectory(s.config.Path, s.config.Base)
+		} else {
+			res, err := fileresolver.NewFromDirectory(s.config.Path, s.config.Base, exclusionFunctions...)
+			if err != nil {
+				return nil, fmt.Errorf("unable to create directory resolver: %w", err)
+			}
+			s.resolver = res
 		}
-
-		s.resolver = res
 	}
 
 	return s.resolver, nil

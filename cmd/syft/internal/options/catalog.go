@@ -56,6 +56,7 @@ type Catalog struct {
 	Platform   string         `yaml:"platform" json:"platform" mapstructure:"platform"`
 	Source     sourceConfig   `yaml:"source" json:"source" mapstructure:"source"`
 	Exclusions []string       `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
+	Unindexed  bool           `yaml:"unindexed" json:"unindexed" mapstructure:"unindexed"`
 
 	// configuration for inclusion of unknown information within elements
 	Unknowns unknownsConfig `yaml:"unknowns" mapstructure:"unknowns"`
@@ -247,6 +248,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 	flags.StringVarP(&cfg.Source.BasePath, "base-path", "",
 		"base directory for scanning, no links will be followed above this directory, and all paths will be reported relative to this directory")
+
+	flags.BoolVarP(&cfg.Unindexed, "unindexed", "",
+		"whether to index the file system or not, indexing can improve scan times but incurs a memory overhead, default false.")
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {

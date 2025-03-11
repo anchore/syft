@@ -27,7 +27,7 @@ func All(userInput string, cfg *Config) []collections.TaggedValue[source.Provide
 		// --from file, dir, oci-archive, etc.
 		Join(stereoscopeProviders.Select(FileTag, DirTag)...).
 		Join(tagProvider(filesource.NewSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), FileTag)).
-		Join(tagProvider(directorysource.NewSourceProvider(userInput, cfg.Exclude, cfg.Alias, cfg.BasePath), DirTag)).
+		Join(tagProvider(directorysource.NewSourceProvider(userInput, cfg.Exclude, cfg.Alias, cfg.BasePath, cfg.Unindexed), DirTag)).
 
 		// --from docker, registry, etc.
 		Join(stereoscopeProviders.Select(PullTag)...)
