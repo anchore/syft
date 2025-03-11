@@ -115,6 +115,11 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: funlen
 		// it seems that the vast majority of the time the author is an org, not a person
 		typ = orgType
 		author = metadata.Author
+
+	case pkg.HomebrewMetadata:
+		typ = orgType
+		author = "auth"
+
 	case pkg.SwiplPackEntry:
 		author = formatPersonOrOrg(metadata.Author, metadata.AuthorEmail)
 	}

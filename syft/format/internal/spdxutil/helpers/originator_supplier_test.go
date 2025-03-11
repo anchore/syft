@@ -351,6 +351,16 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Organization: auth",
 		},
 		{
+			name: "from homebrew",
+			input: pkg.Package{
+				Metadata: pkg.HomebrewMetadata{
+					Homepage: "https://github.com/sshock/AFFLIBv3",
+				},
+			},
+			originator: "Organization: auth",
+			supplier:   "Organization: auth",
+		},
+		{
 			name: "from wordpress plugin",
 			input: pkg.Package{
 				Metadata: pkg.WordpressPluginEntry{
