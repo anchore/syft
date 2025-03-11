@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -166,14 +167,13 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 		pkgs []pkg.Package
 		rels []artifact.Relationship
 	}
-	ctx, executor := sync.ContextExecutor(ctx, "io")
-	errs = sync.Collect(executor, sync.ToSeq(c.selectFiles(resolver)), func(_ request, res result) {
+	errs = sync.Collect(ctx, cataloging.ExecutorFile, sync.ToSeq(c.selectFiles(resolver)), func(_ context.Context, _ request, res result) {
 		for _, p := range res.pkgs {
 			p.FoundBy = c.upstreamCataloger
 			packages = append(packages, p)
 		}
 		relationships = append(relationships, res.rels...)
-	}, func(req request) (result, error) {
+	}, func(ctx context.Context, req request) (result, error) {
 		location, parser := req.Location, req.Parser
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")

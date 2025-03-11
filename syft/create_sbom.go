@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -75,7 +76,7 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 
 	builder := sbomsync.NewBuilder(&s, monitorPackageCount(packageCatalogingProgress))
 	for i := range taskGroups {
-		err = sync.Collect(sync.GetExecutor(ctx, "catalog"), sync.ToSeq(taskGroups[i]), nil, func(t task.Task) (any, error) {
+		err = sync.Collect(ctx, "catalog", sync.ToSeq(taskGroups[i]), nil, func(ctx context.Context, t task.Task) (any, error) {
 			return nil, task.RunTask(ctx, t, resolver, builder, catalogingProgress)
 		})
 		if err != nil {
@@ -126,10 +127,8 @@ func setContextExecutors(ctx context.Context, cfg *CreateSBOMConfig) context.Con
 		parallelism = 0 // run in serial, don't spawn goroutines
 	}
 	// set up executors for each dimension we want to coordinate bounds for
-	ctx = sync.SetContextExecutor(ctx, "catalog", sync.NewExecutor(parallelism))
-	ctx = sync.SetContextExecutor(ctx, "cpu", sync.NewExecutor(parallelism))
-	ctx = sync.SetContextExecutor(ctx, "io", sync.NewExecutor(parallelism))
-	ctx = sync.SetContextExecutor(ctx, "net", sync.NewExecutor(parallelism))
+	ctx = sync.SetContextExecutor(ctx, sync.NewExecutor(cataloging.ExecutorCPU, parallelism*4))
+	ctx = sync.SetContextExecutor(ctx, sync.NewExecutor(cataloging.ExecutorFile, parallelism))
 	return ctx
 }
 

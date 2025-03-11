@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -37,7 +38,7 @@ func parseDpkgDB(ctx context.Context, resolver file.Resolver, env *generic.Envir
 
 	dbLoc := reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
 	var pkgs []pkg.Package
-	_ = sync.CollectSlice(sync.GetExecutor(ctx, "io"), sync.ToSeq(metadata), &pkgs, func(m pkg.DpkgDBEntry) (pkg.Package, error) {
+	_ = sync.CollectSlice(ctx, cataloging.ExecutorFile, sync.ToSeq(metadata), &pkgs, func(_ context.Context, m pkg.DpkgDBEntry) (pkg.Package, error) {
 		return newDpkgPackage(m, dbLoc, resolver, env.LinuxRelease, findDpkgInfoFiles(m.Package, resolver, reader.Location)...), nil
 	})
 

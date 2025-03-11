@@ -15,6 +15,7 @@ import (
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	intCataloger "github.com/anchore/syft/syft/file/cataloger/internal"
@@ -50,11 +51,11 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 
 	prog := catalogingProgress(int64(len(locations)))
 
-	err := sync.Collect(sync.GetExecutor(ctx, "io"), sync.ToSeq(locations), func(location file.Location, digests []file.Digest) {
+	err := sync.Collect(ctx, cataloging.ExecutorFile, sync.ToSeq(locations), func(_ context.Context, location file.Location, digests []file.Digest) {
 		if len(digests) > 0 {
 			results[location.Coordinates] = digests
 		}
-	}, func(location file.Location) ([]file.Digest, error) {
+	}, func(_ context.Context, location file.Location) ([]file.Digest, error) {
 		result, err := i.catalogLocation(ctx, resolver, location)
 
 		if errors.Is(err, ErrUndigestableFile) {

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/anchore/go-sync"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -33,7 +34,7 @@ func NewDigestsFromFile(ctx context.Context, closer io.ReadCloser, hashes []cryp
 		writers[idx] = hashers[idx]
 	}
 
-	size, err := io.Copy(sync.ParallelWriter(sync.GetExecutor(ctx, "cpu"), writers...), closer)
+	size, err := io.Copy(sync.ParallelWriter(ctx, cataloging.ExecutorCPU, writers...), closer)
 	// size, err := io.Copy(io.MultiWriter(writers...), closer)
 	if err != nil {
 		return nil, err
