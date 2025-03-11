@@ -6,6 +6,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/alpine"
 	"github.com/anchore/syft/syft/pkg/cataloger/arch"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
+	bitnamiSbomCataloger "github.com/anchore/syft/syft/pkg/cataloger/bitnami"
 	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/debian"
@@ -116,7 +117,10 @@ func DefaultPackageTaskFactories() Factories {
 
 		// language-specific package for both image and directory scans (but not necessarily declared) ////////////////////////////////////////
 		newSimplePackageTaskFactory(dotnet.NewDotnetPackagesLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#"),
-		newSimplePackageTaskFactory(dotnet.NewDotnetPortableExecutableCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "dotnet", "c#", "binary"),
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return dotnet.NewDotnetPortableExecutableCataloger(cfg.PackagesConfig.Dotnet)
+			}, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "dotnet", "c#", "binary"),
 		newSimplePackageTaskFactory(python.NewInstalledPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "python"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
@@ -152,6 +156,7 @@ func DefaultPackageTaskFactories() Factories {
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "linux", "kernel",
 		),
 		newSimplePackageTaskFactory(sbomCataloger.NewCataloger, "sbom"), // note: not evidence of installed packages
+		newSimplePackageTaskFactory(bitnamiSbomCataloger.NewCataloger, "bitnami", pkgcataloging.InstalledTag, pkgcataloging.ImageTag),
 		newSimplePackageTaskFactory(wordpress.NewWordpressPluginCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "wordpress"),
 		newSimplePackageTaskFactory(terraform.NewLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "terraform"),
 	}

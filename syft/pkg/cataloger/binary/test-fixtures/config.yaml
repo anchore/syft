@@ -688,6 +688,13 @@ from-images:
     paths:
       - /fluent-bit/bin/fluent-bit
 
+  - version: 1.7.0-dev-3
+    images:
+      - ref: fluent/fluent-bit:1.7.0-dev-3@sha256:d8105ebefa27ca7d8ad2233ab0a4364ff43a9b31c484bde27f0d3d18988b34a0
+        platform: linux/amd64
+    paths:
+      - /fluent-bit/bin/fluent-bit
+
   - name: openssl
     version: 1.1.1w
     images:

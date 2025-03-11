@@ -61,6 +61,7 @@ linters-settings:
   gosec:
     excludes:
       - G115
+
 run:
   timeout: 10m
   tests: false

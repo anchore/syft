@@ -1,0 +1,573 @@
+{
+    "SPDXID": "SPDXRef-postgresql",
+    "spdxVersion": "SPDX-2.3",
+    "creationInfo": {
+        "created": "2025-02-02T05:18:41.934Z",
+        "creators": [
+            "Organization: Broadcom Inc. and/or its subsidiaries."
+        ]
+    },
+    "name": "SPDX document for PostgreSQL 17.2.0",
+    "dataLicense": "CC0-1.0",
+    "documentDescribes": [
+        "SPDXRef-postgresql"
+    ],
+    "documentNamespace": "postgresql-17.2.0",
+    "packages": [
+        {
+            "SPDXID": "SPDXRef-postgresql",
+            "name": "postgresql",
+            "versionInfo": "17.2.0-8",
+            "downloadLocation": "https://ftp.postgresql.org/pub/source/v17.2/postgresql-17.2.tar.gz",
+            "licenseConcluded": "PostgreSQL",
+            "licenseDeclared": "PostgreSQL",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:postgresql:postgresql:17.2.0:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/postgresql@17.2.0-8?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-geos",
+            "name": "geos",
+            "versionInfo": "3.13.0",
+            "downloadLocation": "https://github.com/libgeos/geos/archive/3.13.0.tar.gz",
+            "licenseConcluded": "LGPL-2.1-only",
+            "licenseDeclared": "LGPL-2.1-only",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:libgeos:geos:3.13.0:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/geos@3.13.0?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-proj",
+            "name": "proj",
+            "versionInfo": "6.3.2",
+            "downloadLocation": "https://github.com/OSGeo/PROJ/archive/6.3.2.tar.gz",
+            "licenseConcluded": "MIT",
+            "licenseDeclared": "MIT",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:proj:proj:6.3.2:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/proj@6.3.2?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-gdal",
+            "name": "gdal",
+            "versionInfo": "3.10.1",
+            "downloadLocation": "https://github.com/OSGeo/gdal/releases/download/v3.10.1/gdal-3.10.1.tar.gz",
+            "licenseConcluded": "MIT",
+            "licenseDeclared": "MIT",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:osgeo:gdal:3.10.1:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/gdal@3.10.1?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-json-c",
+            "name": "json-c",
+            "versionInfo": "0.16.20220414",
+            "downloadLocation": "https://github.com/json-c/json-c/archive/refs/tags/json-c-0.16-20220414.tar.gz",
+            "licenseConcluded": "MIT",
+            "licenseDeclared": "MIT",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:json-c_project:json-c:0.16.20220414:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/json-c@0.16.20220414?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-orafce",
+            "name": "orafce",
+            "versionInfo": "4.14.1",
+            "downloadLocation": "https://github.com/orafce/orafce/archive/refs/tags/VERSION_4_14_1.tar.gz",
+            "licenseConcluded": "0BSD",
+            "licenseDeclared": "0BSD",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:orafce:orafce:4.14.1:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/orafce@4.14.1?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-pljava",
+            "name": "pljava",
+            "versionInfo": "1.6.8",
+            "downloadLocation": "https://github.com/tada/pljava/archive/V1_6_8.tar.gz",
+            "licenseConcluded": "BSD-3-Clause",
+            "licenseDeclared": "BSD-3-Clause",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:pl/java_project:pl/java:1.6.8:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/pljava@1.6.8?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "name": "org.postgresql:pljava",
+            "SPDXID": "SPDXRef-Package-551f76fc50fc5735",
+            "versionInfo": "1.6.8",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NONE",
+            "filesAnalyzed": true,
+            "packageVerificationCode": {
+                "packageVerificationCodeValue": "8b35292054790088fc1f41fb696a993d584d17cd"
+            },
+            "licenseConcluded": "NONE",
+            "licenseDeclared": "NONE",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:maven/org.postgresql/pljava@1.6.8"
+                }
+            ],
+            "primaryPackagePurpose": "LIBRARY",
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "name": "org.postgresql:pljava-api",
+            "SPDXID": "SPDXRef-Package-2dde48fd49927020",
+            "versionInfo": "1.6.8",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NONE",
+            "filesAnalyzed": true,
+            "packageVerificationCode": {
+                "packageVerificationCodeValue": "3aaf93e288e125481a250d50ab629d890f72e7b8"
+            },
+            "licenseConcluded": "NONE",
+            "licenseDeclared": "NONE",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:maven/org.postgresql/pljava-api@1.6.8"
+                }
+            ],
+            "primaryPackagePurpose": "LIBRARY",
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "name": "org.postgresql:pljava-examples",
+            "SPDXID": "SPDXRef-Package-f13571c8a05828cc",
+            "versionInfo": "1.6.8",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NONE",
+            "filesAnalyzed": true,
+            "packageVerificationCode": {
+                "packageVerificationCodeValue": "6f126f1237ddd2be6196726130c014770864bcc9"
+            },
+            "licenseConcluded": "NONE",
+            "licenseDeclared": "NONE",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:maven/org.postgresql/pljava-examples@1.6.8"
+                }
+            ],
+            "primaryPackagePurpose": "LIBRARY",
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-unixodbc",
+            "name": "unixodbc",
+            "versionInfo": "2.3.12",
+            "downloadLocation": "http://www.unixodbc.org/unixODBC-2.3.12.tar.gz",
+            "licenseConcluded": "LGPL-2.1-only",
+            "licenseDeclared": "LGPL-2.1-only",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:unixodbc:unixodbc:2.3.12:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/unixodbc@2.3.12?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-psqlodbc",
+            "name": "psqlodbc",
+            "versionInfo": "16.0.0",
+            "downloadLocation": "https://ftp.postgresql.org/pub/odbc/versions/src/psqlodbc-16.00.0000.tar.gz",
+            "licenseConcluded": "LGPL-3.0-only",
+            "licenseDeclared": "LGPL-3.0-only",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:postgresql:psqlodbc:16.0.0:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/psqlodbc@16.0.0?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-protobuf",
+            "name": "protobuf",
+            "versionInfo": "3.21.12",
+            "downloadLocation": "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v3.21.12.tar.gz",
+            "licenseConcluded": "BSD-3-Clause",
+            "licenseDeclared": "BSD-3-Clause",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:golang:protobuf:3.21.12:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/protobuf@3.21.12?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-protobuf-c",
+            "name": "protobuf-c",
+            "versionInfo": "1.5.1",
+            "downloadLocation": "https://github.com/protobuf-c/protobuf-c/releases/download/v1.5.1/protobuf-c-1.5.1.tar.gz",
+            "licenseConcluded": "BSD-2-Clause",
+            "licenseDeclared": "BSD-2-Clause",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:protobuf-c:protobuf-c:1.5.1:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/protobuf-c@1.5.1?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-postgis",
+            "name": "postgis",
+            "versionInfo": "3.4.4",
+            "downloadLocation": "http://download.osgeo.org/postgis/source/postgis-3.4.4.tar.gz",
+            "licenseConcluded": "GPL-2.0-or-later",
+            "licenseDeclared": "GPL-2.0-or-later",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:postgis:postgis:3.4.4:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/postgis@3.4.4?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-pgaudit",
+            "name": "pgaudit",
+            "versionInfo": "17.0.0",
+            "downloadLocation": "https://github.com/pgaudit/pgaudit/archive/17.0.tar.gz",
+            "licenseConcluded": "PostgreSQL",
+            "licenseDeclared": "PostgreSQL",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/pgaudit@17.0.0?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-pgbackrest",
+            "name": "pgbackrest",
+            "versionInfo": "2.54.2",
+            "downloadLocation": "https://github.com/pgbackrest/pgbackrest/archive/release/2.54.2.tar.gz",
+            "licenseConcluded": "MIT",
+            "licenseDeclared": "MIT",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:pgbackrest:pgbackrest:2.54.2:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/pgbackrest@2.54.2?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-wal2json",
+            "name": "wal2json",
+            "versionInfo": "2.6.0",
+            "downloadLocation": "https://github.com/eulerto/wal2json/archive/refs/tags/wal2json_2_6.tar.gz",
+            "licenseConcluded": "BSD-3-Clause",
+            "licenseDeclared": "BSD-3-Clause",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:wal2json:wal2json:2.6.0:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/wal2json@2.6.0?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "SPDXID": "SPDXRef-nss-wrapper",
+            "name": "nss-wrapper",
+            "versionInfo": "1.1.16",
+            "downloadLocation": "https://ftp.samba.org/pub/cwrap/nss_wrapper-1.1.16.tar.gz",
+            "licenseConcluded": "BSD-3-Clause",
+            "licenseDeclared": "BSD-3-Clause",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:nss_wrapper:nss_wrapper:1.1.16:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/nss_wrapper@1.1.16?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        }
+    ],
+    "files": [
+        {
+            "fileName": "share/pljava/pljava-1.6.8.jar",
+            "SPDXID": "SPDXRef-File-28d7473df5d8af04-pljava",
+            "checksums": [
+                {
+                    "algorithm": "SHA1",
+                    "checksumValue": "b0b8f544ddefbc9ba47ed72ddce13627df919cc9"
+                }
+            ],
+            "copyrightText": ""
+        },
+        {
+            "fileName": "share/pljava/pljava-api-1.6.8.jar",
+            "SPDXID": "SPDXRef-File-3531f2e94fdf52e3-pljava",
+            "checksums": [
+                {
+                    "algorithm": "SHA1",
+                    "checksumValue": "a2013f3202afc8dc15a21ef7a796730df08d1a00"
+                }
+            ],
+            "copyrightText": ""
+        },
+        {
+            "fileName": "share/pljava/pljava-examples-1.6.8.jar",
+            "SPDXID": "SPDXRef-File-8f3dee04908d7a5a-pljava",
+            "checksums": [
+                {
+                    "algorithm": "SHA1",
+                    "checksumValue": "1c61bddc63ce4aaaa803d9c39f0740a15c19d300"
+                }
+            ],
+            "copyrightText": ""
+        }
+    ],
+    "relationships": [
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-geos"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-proj"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-gdal"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-json-c"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-orafce"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-pljava"
+        },
+        {
+            "spdxElementId": "SPDXRef-pljava",
+            "relatedSpdxElement": "SPDXRef-Package-2dde48fd49927020",
+            "relationshipType": "CONTAINS"
+        },
+        {
+            "spdxElementId": "SPDXRef-pljava",
+            "relatedSpdxElement": "SPDXRef-Package-551f76fc50fc5735",
+            "relationshipType": "CONTAINS"
+        },
+        {
+            "spdxElementId": "SPDXRef-pljava",
+            "relatedSpdxElement": "SPDXRef-Package-f13571c8a05828cc",
+            "relationshipType": "CONTAINS"
+        },
+        {
+            "spdxElementId": "SPDXRef-Package-2dde48fd49927020",
+            "relatedSpdxElement": "SPDXRef-File-3531f2e94fdf52e3-pljava",
+            "relationshipType": "CONTAINS"
+        },
+        {
+            "spdxElementId": "SPDXRef-Package-551f76fc50fc5735",
+            "relatedSpdxElement": "SPDXRef-File-28d7473df5d8af04-pljava",
+            "relationshipType": "CONTAINS"
+        },
+        {
+            "spdxElementId": "SPDXRef-Package-f13571c8a05828cc",
+            "relatedSpdxElement": "SPDXRef-File-8f3dee04908d7a5a-pljava",
+            "relationshipType": "CONTAINS"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-unixodbc"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-psqlodbc"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-protobuf"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-protobuf-c"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-postgis"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-pgaudit"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-pgbackrest"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-wal2json"
+        },
+        {
+            "spdxElementId": "SPDXRef-postgresql",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-nss-wrapper"
+        }
+    ]
+}

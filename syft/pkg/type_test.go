@@ -23,6 +23,10 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: ApkPkg,
 		},
 		{
+			purl:     "pkg:bitnami/apache@2.4.62-3?arch=arm64&distro=debian-12",
+			expected: BitnamiPkg,
+		},
+		{
 			purl:     "pkg:deb/debian/curl@7.50.3-1?arch=i386&distro=jessie",
 			expected: DebPkg,
 		},
@@ -50,7 +54,6 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:pub/util@1.2.34?hosted_url=pub.hosted.org",
 			expected: DartPubPkg,
 		},
-
 		{
 			purl:     "pkg:dotnet/Microsoft.CodeAnalysis.Razor@2.2.0",
 			expected: DotnetPkg,
@@ -137,6 +140,7 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(GithubActionPkg), string(GithubActionWorkflowPkg))
 	expectedTypes.Remove(string(WordpressPluginPkg))
 	expectedTypes.Remove(string(TerraformPkg))
+	expectedTypes.Remove(string(GraalVMNativeImagePkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {

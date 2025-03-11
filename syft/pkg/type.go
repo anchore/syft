@@ -13,6 +13,7 @@ const (
 	AlpmPkg                 Type = "alpm"
 	ApkPkg                  Type = "apk"
 	BinaryPkg               Type = "binary"
+	BitnamiPkg              Type = "bitnami"
 	CocoapodsPkg            Type = "pod"
 	ConanPkg                Type = "conan"
 	DartPubPkg              Type = "dart-pub"
@@ -53,6 +54,7 @@ var AllPkgs = []Type{
 	AlpmPkg,
 	ApkPkg,
 	BinaryPkg,
+	BitnamiPkg,
 	CocoapodsPkg,
 	ConanPkg,
 	DartPubPkg,
@@ -62,6 +64,7 @@ var AllPkgs = []Type{
 	GemPkg,
 	GithubActionPkg,
 	GithubActionWorkflowPkg,
+	GraalVMNativeImagePkg,
 	GoModulePkg,
 	HackagePkg,
 	HexPkg,
@@ -96,6 +99,8 @@ func (t Type) PackageURLType() string {
 		return "alpm"
 	case ApkPkg:
 		return packageurl.TypeAlpine
+	case BitnamiPkg:
+		return packageurl.TypeBitnami
 	case CocoapodsPkg:
 		return packageurl.TypeCocoapods
 	case ConanPkg:
@@ -177,28 +182,20 @@ func TypeFromPURL(p string) Type {
 //nolint:funlen,gocyclo
 func TypeByName(name string) Type {
 	switch name {
-	case packageurl.TypeDebian:
-		return DebPkg
-	case packageurl.TypeRPM:
-		return RpmPkg
-	case packageurl.TypeLuaRocks:
-		return LuaRocksPkg
 	case "alpm":
 		return AlpmPkg
 	case packageurl.TypeAlpine, "alpine":
 		return ApkPkg
-	case packageurl.TypeMaven:
-		return JavaPkg
+	case packageurl.TypeBitnami:
+		return BitnamiPkg
+	case packageurl.TypeDebian:
+		return DebPkg
 	case packageurl.TypeComposer:
 		return PhpComposerPkg
 	case "pecl":
 		return PhpPeclPkg
 	case packageurl.TypeGolang:
 		return GoModulePkg
-	case packageurl.TypeNPM:
-		return NpmPkg
-	case packageurl.TypePyPi:
-		return PythonPkg
 	case packageurl.TypeGem:
 		return GemPkg
 	case "cargo", "crate":
@@ -213,10 +210,18 @@ func TypeByName(name string) Type {
 		return ConanPkg
 	case packageurl.TypeHackage:
 		return HackagePkg
-	case "portage":
-		return PortagePkg
 	case packageurl.TypeHex:
 		return HexPkg
+	case packageurl.TypeLuaRocks:
+		return LuaRocksPkg
+	case packageurl.TypeMaven:
+		return JavaPkg
+	case packageurl.TypeNPM:
+		return NpmPkg
+	case packageurl.TypePyPi:
+		return PythonPkg
+	case "portage":
+		return PortagePkg
 	case packageurl.TypeOTP:
 		return ErlangOTPPkg
 	case "linux-kernel":
@@ -229,6 +234,8 @@ func TypeByName(name string) Type {
 		return OpamPkg
 	case packageurl.TypeCran:
 		return Rpkg
+	case packageurl.TypeRPM:
+		return RpmPkg
 	case packageurl.TypeSwift:
 		return SwiftPkg
 	case "swiplpack":
