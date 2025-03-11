@@ -123,7 +123,7 @@ func newDotnetPackagesLockPackage(name string, dep dotnetPackagesLockDep, locati
 		Type:        dep.Type,
 	}
 
-	return &pkg.Package{
+	p := &pkg.Package{
 		Name:      name,
 		Version:   dep.Resolved,
 		Type:      pkg.DotnetPkg,
@@ -132,6 +132,10 @@ func newDotnetPackagesLockPackage(name string, dep dotnetPackagesLockDep, locati
 		Language:  pkg.Dotnet,
 		PURL:      packagesLockPackageURL(name, dep.Resolved),
 	}
+
+	p.SetID()
+
+	return p
 }
 
 func packagesLockPackageURL(name, version string) string {
