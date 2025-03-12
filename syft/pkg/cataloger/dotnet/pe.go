@@ -10,6 +10,7 @@ import (
 	"unicode/utf16"
 
 	"github.com/scylladb/go-set/strset"
+	"github.com/scylladb/go-set/u32set"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
@@ -23,21 +24,40 @@ var imageDirectoryEntryIndexes = []int{
 	pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, // where info about the CLR is stored
 }
 
+// logicalDotnetPE does not directly represent a binary shape to be parsed, instead it represents the
+// information of interest extracted from a PE file.
 type logicalDotnetPE struct {
-	Location         file.Location
-	TargetPath       string
-	CLR              *peClrComDescriptor
+	// Location is where the PE file was found
+	Location file.Location
+
+	// TargetPath is the path is the deps.json target entry. This is not present in the PE file
+	// but instead is used in downstream processing to track associations between the PE file and the deps.json file.
+	TargetPath string
+
+	// CLR is the information about the CLR (common language runtime) version found in the PE file which helps
+	// understand if this executable is even a .NET application.
+	CLR *clrEvidence
+
+	// VersionResources is a map of version resource keys to their values found in the VERSIONINFO resource directory.
 	VersionResources map[string]string
 }
 
-// peClrComDescriptor is basic info about the CLR (common language runtime) version from the COM descriptor
-type peClrComDescriptor struct {
+// clrEvidence is basic info about the CLR (common language runtime) version from the COM descriptor.
+// This is not a complete representation of the CLR version, but rather a subset of the information that is
+// useful to us.
+type clrEvidence struct {
+	// HasClrResourceNames is true if there are CLR resource names found in the PE file (e.g. "CLRDEBUGINFO").
 	HasClrResourceNames bool
-	MajorVersion        uint16
-	MinorVersion        uint16
+
+	// MajorVersion is the minimum supported major version of the CLR.
+	MajorVersion uint16
+
+	// MinorVersion is the minimum supported minor version of the CLR.
+	MinorVersion uint16
 }
 
-func (c *peClrComDescriptor) hasEvidenceOfCLR() bool {
+// hasEvidenceOfCLR returns true if the PE file has evidence of a CLR (common language runtime) version.
+func (c *clrEvidence) hasEvidenceOfCLR() bool {
 	return c != nil && (c.MajorVersion != 0 && c.MinorVersion != 0 || c.HasClrResourceNames)
 }
 
@@ -142,9 +162,9 @@ func getLogicalDotnetPE(f file.LocationReadCloser) (*logicalDotnetPE, error) {
 		return nil, fmt.Errorf("unable to parse PE sections: %w", err)
 	}
 
-	var dirs []uint32
-	versionResources := make(map[string]string)
-	resourceNames := strset.New()
+	dirs := u32set.New()                        // keep track of the RVAs we have already parsed (prevent infinite recursion edge cases)
+	versionResources := make(map[string]string) // map of version resource keys to their values
+	resourceNames := strset.New()               // set of resource names found in the PE file
 	err = parseResourceDirectory(sections[pe.IMAGE_DIRECTORY_ENTRY_RESOURCE], dirs, versionResources, resourceNames)
 	if err != nil {
 		return nil, err
@@ -162,6 +182,7 @@ func getLogicalDotnetPE(f file.LocationReadCloser) (*logicalDotnetPE, error) {
 	}, nil
 }
 
+// parsePEFile creates readers for targeted sections of the binary used by downstream processing.
 func parsePEFile(file unionreader.UnionReader) (map[int]*extractedSection, []pe.SectionHeader32, error) {
 	fileHeader, magic, err := parsePEHeader(file)
 	if err != nil {
@@ -187,6 +208,8 @@ func parsePEFile(file unionreader.UnionReader) (map[int]*extractedSection, []pe.
 	return soi, headers, nil
 }
 
+// parsePEHeader reads the beginning of a PE formatted file, returning the file header and "magic" indicator
+// for downstream logic to determine 32/64 bit parsing.
 func parsePEHeader(file unionreader.UnionReader) (*pe.FileHeader, uint16, error) {
 	var dosHeader peDosHeader
 	if err := binary.Read(file, binary.LittleEndian, &dosHeader); err != nil {
@@ -227,6 +250,8 @@ func parsePEHeader(file unionreader.UnionReader) (*pe.FileHeader, uint16, error)
 	return &fileHeader, magic, nil
 }
 
+// parseSectionHeaders reads the section headers from the PE file and extracts the virtual addresses + section size
+// information for the sections of interest. Additionally, all section headers are returned to aid in downstream processing.
 func parseSectionHeaders(file unionreader.UnionReader, magic uint16, numberOfSections uint16) (map[int]*extractedSection, []pe.SectionHeader32, error) {
 	soi := make(map[int]*extractedSection)
 	switch magic {
@@ -277,10 +302,12 @@ func parseSectionHeaders(file unionreader.UnionReader, magic uint16, numberOfSec
 	return soi, headers, nil
 }
 
-func parseCLR(sec *extractedSection, resourceNames *strset.Set) (*peClrComDescriptor, error) {
+// parseCLR extracts the CLR (common language runtime) version information from the COM descriptor and makes
+// present/not-present determination based on the presence of CLR resource names.
+func parseCLR(sec *extractedSection, resourceNames *strset.Set) (*clrEvidence, error) {
 	hasCLRDebugResourceNames := resourceNames.HasAny("CLRDEBUGINFO")
 	if sec == nil || sec.Reader == nil {
-		return &peClrComDescriptor{
+		return &clrEvidence{
 			HasClrResourceNames: hasCLRDebugResourceNames,
 		}, nil
 	}
@@ -291,7 +318,7 @@ func parseCLR(sec *extractedSection, resourceNames *strset.Set) (*peClrComDescri
 		return nil, fmt.Errorf("error reading CLR header: %w", err)
 	}
 
-	return &peClrComDescriptor{
+	return &clrEvidence{
 		HasClrResourceNames: hasCLRDebugResourceNames,
 		MajorVersion:        c.MajorRuntimeVersion,
 		MinorVersion:        c.MinorRuntimeVersion,
@@ -355,7 +382,7 @@ func readDataFromRVA(file io.ReadSeeker, rva, size uint32, sections []pe.Section
 // sources:
 // - https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#the-rsrc-section
 // - https://learn.microsoft.com/en-us/previous-versions/ms809762(v=msdn.10)#pe-file-resources
-func parseResourceDirectory(sec *extractedSection, dirs []uint32, fields map[string]string, names *strset.Set) error {
+func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[string]string, names *strset.Set) error {
 	if sec == nil || sec.Size <= 0 {
 		return nil
 	}
@@ -411,7 +438,7 @@ func parseResourceDirectory(sec *extractedSection, dirs []uint32, fields map[str
 	return nil
 }
 
-func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, sec *extractedSection, dirs []uint32, fields map[string]string, names *strset.Set) error {
+func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, sec *extractedSection, dirs *u32set.Set, fields map[string]string, names *strset.Set) error {
 	// if the high bit is set, this is a directory entry, otherwise it is a data entry
 	isDirectory := entry.OffsetToData&0x80000000 != 0
 
@@ -444,12 +471,12 @@ func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, s
 
 	if isDirectory {
 		subRVA := baseRVA + entryOffsetToData
-		if intInSlice(subRVA, dirs) {
+		if dirs.Has(subRVA) {
 			// some malware uses recursive PE references to evade analysis
 			return fmt.Errorf("recursive PE reference detected; skipping directory at baseRVA=0x%x subRVA=0x%x", baseRVA, subRVA)
 		}
 
-		dirs = append(dirs, subRVA)
+		dirs.Add(subRVA)
 		err := parseResourceDirectory(
 			&extractedSection{
 				RVA:     subRVA,
@@ -464,16 +491,6 @@ func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, s
 		return nil
 	}
 	return parseResourceDataEntry(sec.Reader, baseRVA, baseRVA+entryOffsetToData, sec.Size, fields)
-}
-
-// intInSlice checks weather a uint32 exists in a slice of uint32.
-func intInSlice(a uint32, list []uint32) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
 }
 
 func parseResourceDataEntry(reader *bytes.Reader, baseRVA, rva, remainingSize uint32, fields map[string]string) error {
@@ -634,6 +651,8 @@ func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string)
 	return nil
 }
 
+// readIntoStructAndSzKey reads a struct from the reader and updates the offsets if provided, returning the szKey value.
+// This is only useful in the context of the resource directory parsing in narrow cases (this is invalid to use outside of that context).
 func readIntoStructAndSzKey[T any](reader *bytes.Reader, data *T, offsets ...*int) (string, error) {
 	if err := readIntoStruct(reader, data, offsets...); err != nil {
 		return "", err
@@ -641,6 +660,7 @@ func readIntoStructAndSzKey[T any](reader *bytes.Reader, data *T, offsets ...*in
 	return readUTF16(reader, offsets...), nil
 }
 
+// readIntoStruct reads a struct from the reader and updates the offsets if provided.
 func readIntoStruct[T any](reader io.Reader, data *T, offsets ...*int) error {
 	if err := binary.Read(reader, binary.LittleEndian, data); err != nil {
 		if errors.Is(err, io.EOF) {
@@ -655,6 +675,7 @@ func readIntoStruct[T any](reader io.Reader, data *T, offsets ...*int) error {
 	return nil
 }
 
+// alignAndSeek aligns the reader to the next DWORD boundary and seeks to the new offset (updating any provided trackOffsets).
 func alignAndSeek(reader io.Seeker, offset *int, trackOffsets ...*int) error {
 	ogOffset := *offset
 	*offset = alignToDWORD(*offset)
@@ -666,6 +687,7 @@ func alignAndSeek(reader io.Seeker, offset *int, trackOffsets ...*int) error {
 	return err
 }
 
+// alignToDWORD aligns the offset to the next DWORD boundary (4 byte boundary)
 func alignToDWORD(offset int) int {
 	return (offset + 3) & ^3
 }

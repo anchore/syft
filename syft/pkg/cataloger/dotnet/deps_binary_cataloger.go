@@ -190,6 +190,9 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([]pkg.Package, []artifact
 	return pkgs, relationshipsFromLogicalDepsJSON(doc, pkgMap)
 }
 
+// relationshipsFromLogicalDepsJSON creates relationships from a logicalDepsJSON document for only the given syft packages.
+// It is possible that the document describes more packages than that is provided as syft packages, in which cases
+// those relationships will not be created.
 func relationshipsFromLogicalDepsJSON(doc logicalDepsJSON, pkgMap map[string]pkg.Package) []artifact.Relationship {
 	var relationships []artifact.Relationship
 	for _, lp := range doc.PackagesByNameVersion {
@@ -241,6 +244,7 @@ func findDepsJSON(resolver file.Resolver) ([]logicalDepsJSON, error, error) {
 	return depsJSONs, unknownErr, nil
 }
 
+// readDepsJSON reads and parses a single deps.json file.
 func readDepsJSON(resolver file.Resolver, loc file.Location) (*depsJSON, error) {
 	reader, err := resolver.FileContentsByLocation(loc)
 	if err != nil {
@@ -284,6 +288,7 @@ func findPEFiles(resolver file.Resolver) ([]logicalDotnetPE, error, error) {
 	return peFiles, unknownErr, nil
 }
 
+// readPEFile reads and parses a single PE file.
 func readPEFile(resolver file.Resolver, loc file.Location) (*logicalDotnetPE, error) {
 	reader, err := resolver.FileContentsByLocation(loc)
 	if err != nil {

@@ -36,11 +36,18 @@ type depsLibrary struct {
 // logicalDepsJSONPackage merges target and library information for a given package from all dep.json entries.
 // Note: this is not a real construct of the deps.json, just a useful reorganization of the data for downstream processing.
 type logicalDepsJSONPackage struct {
-	NameVersion                              string
-	Targets                                  *depsTarget
-	Library                                  *depsLibrary
+	NameVersion string
+	Targets     *depsTarget
+	Library     *depsLibrary
+
+	// RuntimeAndResourcePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
+	// to the target path as described in the deps.json target entry (either as a runtime or resource).
 	RuntimeAndResourcePathsByRelativeDLLPath map[string]string
-	Executables                              []logicalDotnetPE
+
+	// Executables is a list of all the executables that are part of this package. This is populated by the PE cataloger
+	// and not something that is found in the deps.json file. This allows us to associate the PE files with this package
+	// based on the relative path to the DLL.
+	Executables []logicalDotnetPE
 }
 
 type logicalDepsJSON struct {
