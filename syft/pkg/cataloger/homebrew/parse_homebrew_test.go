@@ -31,7 +31,7 @@ func TestParseHomebrewPackage(t *testing.T) {
 			Name:        "foo",
 			FullName:    "foo",
 			Tap:         "homebrew/core",
-			Homepage:    "https://www.example.com/foo",
+			Homepage:    "https://example.com/foo",
 			Description: "A test Homebrew formula for Foo",
 		},
 	}
