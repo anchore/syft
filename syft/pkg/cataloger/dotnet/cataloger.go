@@ -5,20 +5,21 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// NewDotnetDepsCataloger returns a cataloger based on deps.json files.
-func NewDotnetDepsCataloger() pkg.Cataloger {
-	return &depsBinaryCataloger{
-		name:            "dotnet-deps-cataloger",
-		considerPEFiles: false,
-	}
+// NewDotnetDepsBinaryCataloger returns a cataloger based on PE and deps.json file contents.
+func NewDotnetDepsBinaryCataloger() pkg.Cataloger {
+	return &depsBinaryCataloger{}
 }
 
-// NewDotnetPortableExecutableCataloger returns a cataloger based on PE files and optionally deps.json files.
+// NewDotnetDepsCataloger returns a cataloger based on deps.json file contents.
+// Deprecated: use NewDotnetDepsBinaryCataloger instead which combines the PE and deps.json data which yields more accurate results (will be removed in syft v2.0).
+func NewDotnetDepsCataloger() pkg.Cataloger {
+	return &depsCataloger{}
+}
+
+// NewDotnetPortableExecutableCataloger returns a cataloger based on PE file contents.
+// Deprecated: use NewDotnetDepsBinaryCataloger instead which combines the PE and deps.json data which yields more accurate results (will be removed in syft v2.0).
 func NewDotnetPortableExecutableCataloger() pkg.Cataloger {
-	return &depsBinaryCataloger{
-		name:            "dotnet-portable-executable-cataloger",
-		considerPEFiles: true,
-	}
+	return &binaryCataloger{}
 }
 
 // NewDotnetPackagesLockCataloger returns a cataloger based on packages.lock.json files.

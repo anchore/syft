@@ -22,7 +22,7 @@ var (
 // newDotnetDepsPackage creates a new Dotnet dependency package from a logicalDepsJSONPackage.
 // Note that the new logicalDepsJSONPackage now directly holds library and executable information.
 func newDotnetDepsPackage(lp logicalDepsJSONPackage, depsLocation file.Location) *pkg.Package {
-	name, version := extractNameAndVersion(lp.NameVersion)
+	name, ver := extractNameAndVersion(lp.NameVersion)
 	locs := file.NewLocationSet(depsLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
 	for _, pe := range lp.Executables {
@@ -33,7 +33,7 @@ func newDotnetDepsPackage(lp logicalDepsJSONPackage, depsLocation file.Location)
 
 	p := &pkg.Package{
 		Name:      name,
-		Version:   version,
+		Version:   ver,
 		Locations: locs,
 		PURL:      packageURL(m),
 		Language:  pkg.Dotnet,
@@ -48,7 +48,7 @@ func newDotnetDepsPackage(lp logicalDepsJSONPackage, depsLocation file.Location)
 
 // newDotnetDepsEntry creates a Dotnet dependency entry using the new logicalDepsJSONPackage.
 func newDotnetDepsEntry(lp logicalDepsJSONPackage) pkg.DotnetDepsEntry {
-	name, version := extractNameAndVersion(lp.NameVersion)
+	name, ver := extractNameAndVersion(lp.NameVersion)
 	lib := lp.Library
 
 	// since this is a metadata type, we should not allocate this collection unless there are entries; otherwise
@@ -63,7 +63,7 @@ func newDotnetDepsEntry(lp logicalDepsJSONPackage) pkg.DotnetDepsEntry {
 
 	return pkg.DotnetDepsEntry{
 		Name:        name,
-		Version:     version,
+		Version:     ver,
 		Path:        lib.Path,
 		Sha512:      lib.Sha512,
 		HashPath:    lib.HashPath,
@@ -137,35 +137,31 @@ func packageURL(m pkg.DotnetDepsEntry) string {
 	).ToString()
 }
 
-func newDotnetBinaryPackage(versionResources map[string]string, f file.Location) (dnpkg pkg.Package, err error) {
+func newDotnetBinaryPackage(versionResources map[string]string, f file.Location) pkg.Package {
 	name := findNameFromVersionResources(versionResources)
-	if name == "" {
-		return dnpkg, fmt.Errorf("unable to find PE name in file")
-	}
-
-	version := findVersionFromVersionResources(versionResources)
-	if version == "" {
-		return dnpkg, fmt.Errorf("unable to find PE version in file")
-	}
+	ver := findVersionFromVersionResources(versionResources)
 
 	metadata := newDotnetPortableExecutableEntryFromMap(versionResources)
 
-	dnpkg = pkg.Package{
+	p := pkg.Package{
 		Name:      name,
-		Version:   version,
+		Version:   ver,
 		Locations: file.NewLocationSet(f.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:      pkg.DotnetPkg,
 		Language:  pkg.Dotnet,
-		PURL:      binaryPackageURL(name, version),
+		PURL:      binaryPackageURL(name, ver),
 		Metadata:  metadata,
 	}
 
-	dnpkg.SetID()
+	p.SetID()
 
-	return dnpkg, nil
+	return p
 }
 
 func binaryPackageURL(name, version string) string {
+	if name == "" {
+		return ""
+	}
 	return packageurl.NewPackageURL(
 		packageurl.TypeNuget,
 		"",

@@ -31,6 +31,15 @@ func TestCataloger_Globs(t *testing.T) {
 			fixture:   "test-fixtures/glob-paths",
 			cataloger: NewDotnetPortableExecutableCataloger(),
 			expected: []string{
+				"src/something.dll",
+				"src/something.exe",
+			},
+		},
+		{
+			name:      "obtain combined files",
+			fixture:   "test-fixtures/glob-paths",
+			cataloger: NewDotnetDepsBinaryCataloger(),
+			expected: []string{
 				"src/something.deps.json",
 				"src/something.dll",
 				"src/something.exe",
@@ -49,8 +58,10 @@ func TestCataloger_Globs(t *testing.T) {
 }
 
 func TestCataloger(t *testing.T) {
-	net8AppExpectedDepPkgs := []string{
+	net8AppDepOnlyPkgs := []string{
 		"Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
+	}
+	net8AppPairedPkgs := []string{
 		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.af @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.ar @ 2.14.1 (/app/dotnetapp.deps.json)",
@@ -104,56 +115,66 @@ func TestCataloger(t *testing.T) {
 		"dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
 	}
 
-	net8AppExpectedDepRelationships := []string{
+	var net8AppExpectedDepPkgs []string
+	net8AppExpectedDepPkgs = append(net8AppExpectedDepPkgs, net8AppDepOnlyPkgs...)
+	net8AppExpectedDepPkgs = append(net8AppExpectedDepPkgs, net8AppPairedPkgs...)
+
+	net8AppBinaryOnlyPkgs := []string{
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/Humanizer.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/af/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/ar/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/az/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/bg/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/bn-BD/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/cs/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/da/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/de/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/el/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/es/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/fa/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/fi-FI/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/fr-BE/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/fr/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/he/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/hr/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/hu/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/hy/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/id/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/is/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/it/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/ja/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/ku/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/lv/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/nb-NO/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/nb/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/nl/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/pl/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/pt/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/ro/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/ru/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/sk/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/sl/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/sr-Latn/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/sr/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/sv/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/tr/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/uk/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/uz-Cyrl-UZ/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/uz-Latn-UZ/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/vi/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/zh-CN/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/zh-Hans/Humanizer.resources.dll)",
+		"Humanizer (net6.0) @ 2.14.1.48190 (/app/zh-Hant/Humanizer.resources.dll)",
+		"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/ko-KR/Humanizer.resources.dll)",
+		"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/ms-MY/Humanizer.resources.dll)",
+		"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/mt/Humanizer.resources.dll)",
+		"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/th-TH/Humanizer.resources.dll)",
+		"Json.NET @ 13.0.3.27908 (/app/Newtonsoft.Json.dll)",
+		"dotnetapp @ 1.0.0.0 (/app/dotnetapp.dll)",
+	}
+
+	net8AppDepOnlyRelationships := []string{
 		"Humanizer @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.af @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ar @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.az @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.bg @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.bn-BD @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.cs @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.da @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.de @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.el @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.es @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.fa @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.fi-FI @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.fr @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.fr-BE @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.he @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.hr @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.hu @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.hy @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.id @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.is @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.it @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ja @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ko-KR @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ku @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.lv @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ms-MY @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.mt @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.nb @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.nb-NO @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.nl @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.pl @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.pt @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ro @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ru @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.sk @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.sl @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.sr @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.sr-Latn @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.sv @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.th-TH @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.tr @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.uk @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.uz-Cyrl-UZ @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.uz-Latn-UZ @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.vi @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.zh-CN @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.zh-Hans @ 2.14.1 (/app/dotnetapp.deps.json)",
-		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.zh-Hant @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.af @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.ar @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.az @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
@@ -202,7 +223,206 @@ func TestCataloger(t *testing.T) {
 		"Humanizer.Core.zh-CN @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.zh-Hans @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.zh-Hant @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
+	}
+
+	net8AppPairedRelationships := []string{
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.af @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ar @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.az @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.bg @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.bn-BD @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.cs @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.da @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.de @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.el @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.es @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.fa @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.fi-FI @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.fr @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.fr-BE @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.he @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.hr @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.hu @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.hy @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.id @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.is @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.it @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ja @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ko-KR @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ku @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.lv @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ms-MY @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.mt @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.nb @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.nb-NO @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.nl @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.pl @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.pt @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ro @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ru @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.sk @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.sl @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.sr @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.sr-Latn @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.sv @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.th-TH @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.tr @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.uk @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.uz-Cyrl-UZ @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.uz-Latn-UZ @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.vi @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.zh-CN @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.zh-Hans @ 2.14.1 (/app/dotnetapp.deps.json)",
+		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.zh-Hant @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Newtonsoft.Json @ 13.0.3 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
+	}
+
+	var net8AppExpectedDepRelationships []string
+	net8AppExpectedDepRelationships = append(net8AppExpectedDepRelationships, net8AppDepOnlyRelationships...)
+	net8AppExpectedDepRelationships = append(net8AppExpectedDepRelationships, net8AppPairedRelationships...)
+
+	assertAllDepEntriesWithoutExecutables := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+		t.Helper()
+		for _, p := range pkgs {
+			// assert that all packages DO NOT have an executable associated with it
+			m, ok := p.Metadata.(pkg.DotnetDepsEntry)
+			if !ok {
+				t.Fatalf("expected metadata to be of type DotnetDepsEntry")
+			}
+			if len(m.Executables) != 0 {
+				t.Errorf("expected no executables for package %s, found %d", p.Name, len(m.Executables))
+			}
+		}
+
+		actual := extractMatchingPackage(t, "Newtonsoft.Json", pkgs)
+		expected := pkg.Package{
+			Name:      "Newtonsoft.Json",
+			Version:   "13.0.3",
+			Locations: file.NewLocationSet(file.NewLocation("/app/dotnetapp.deps.json")),
+			Language:  pkg.Dotnet,
+			Type:      pkg.DotnetPkg,
+			PURL:      "pkg:nuget/Newtonsoft.Json@13.0.3",
+			Metadata: pkg.DotnetDepsEntry{
+				Name:        "Newtonsoft.Json",
+				Version:     "13.0.3",
+				Path:        "newtonsoft.json/13.0.3",
+				Sha512:      "sha512-HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ==",
+				HashPath:    "newtonsoft.json.13.0.3.nupkg.sha512",
+				Executables: nil, // important!
+			},
+		}
+
+		pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
+	}
+
+	assertAllDepEntriesWithExecutables := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+		t.Helper()
+		for _, p := range pkgs {
+			// assert that all packages have an executable associated with it
+			m, ok := p.Metadata.(pkg.DotnetDepsEntry)
+			if !ok {
+				t.Fatalf("expected metadata to be of type DotnetDepsEntry")
+			}
+			if len(m.Executables) != 1 {
+				if m.Name == "Humanizer" {
+					// there is only one "virtual" package that doesn't have an actual DLL associated
+					assert.Empty(t, m.Executables)
+					continue
+				}
+				t.Errorf("expected exactly one executable for package %s, found %d", p.Name, len(m.Executables))
+			}
+		}
+
+		actual := extractMatchingPackage(t, "dotnetapp", pkgs)
+
+		expected := pkg.Package{
+			Name:    "dotnetapp",
+			Version: "1.0.0",
+			FoundBy: "",
+			Locations: file.NewLocationSet(
+				file.NewLocation("/app/dotnetapp.deps.json"),
+				file.NewLocation("/app/dotnetapp.dll"),
+			),
+			Language: pkg.Dotnet,
+			Type:     pkg.DotnetPkg,
+			PURL:     "pkg:nuget/dotnetapp@1.0.0",
+			Metadata: pkg.DotnetDepsEntry{
+				Name:    "dotnetapp",
+				Version: "1.0.0",
+				// note: the main package does not have a hash/path/etc
+				Executables: map[string]pkg.DotnetPortableExecutableEntry{
+					"dotnetapp.dll": {
+						AssemblyVersion: "1.0.0.0",
+						InternalName:    "dotnetapp.dll",
+						CompanyName:     "dotnetapp",
+						ProductName:     "dotnetapp",
+						ProductVersion:  "1.0.0",
+					},
+				},
+			},
+		}
+
+		pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
+	}
+
+	assertAllBinaryEntries := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+		t.Helper()
+		for _, p := range pkgs {
+			// assert that all packages have an executable associated with it
+			m, ok := p.Metadata.(pkg.DotnetPortableExecutableEntry)
+			if !ok {
+				t.Fatalf("expected metadata to be of type DotnetPortableExecutableEntry")
+			}
+
+			assert.NotNil(t, m, "expected metadata to be a non-nil DotnetPortableExecutableEntry")
+		}
+
+		actual := extractMatchingPackage(t, "dotnetapp", pkgs)
+
+		expected := pkg.Package{
+			Name:    "dotnetapp",
+			Version: "1.0.0.0", // important: in the dep.json this is 1.0.0, now the assembly version is used
+			FoundBy: "",
+			Locations: file.NewLocationSet(
+				// important: we only have the dll as evidence
+				file.NewLocation("/app/dotnetapp.dll"),
+			),
+			Language: pkg.Dotnet,
+			Type:     pkg.DotnetPkg,
+			PURL:     "pkg:nuget/dotnetapp@1.0.0.0", // important: in the dep.json this is 1.0.0, now the assembly version is used
+			Metadata: pkg.DotnetPortableExecutableEntry{
+				AssemblyVersion: "1.0.0.0",
+				InternalName:    "dotnetapp.dll",
+				CompanyName:     "dotnetapp",
+				ProductName:     "dotnetapp",
+				ProductVersion:  "1.0.0",
+			},
+		}
+
+		pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
+
+		actual = extractMatchingPackage(t, "Json.NET", pkgs)
+
+		expected = pkg.Package{
+			Name:      "Json.NET",     // TODO: could we have done this better? We expected Newtonsoft.Json
+			Version:   "13.0.3.27908", // TODO: should we use the product version here?
+			Locations: file.NewLocationSet(file.NewLocation("/app/Newtonsoft.Json.dll")),
+			Language:  pkg.Dotnet,
+			Type:      pkg.DotnetPkg,
+			PURL:      "pkg:nuget/Json.NET@13.0.3.27908", // TODO: should we use the product version here?
+			Metadata: pkg.DotnetPortableExecutableEntry{
+				AssemblyVersion: "13.0.0.0",
+				LegalCopyright:  "Copyright © James Newton-King 2008",
+				Comments:        "Json.NET is a popular high-performance JSON framework for .NET",
+				InternalName:    "Newtonsoft.Json.dll",
+				CompanyName:     "Newtonsoft",
+				ProductName:     "Json.NET",
+				ProductVersion:  "13.0.3+0a2e291c0d9c0c7675d445703e51750363a549ef",
+			},
+		}
+
+		pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
+
 	}
 
 	cases := []struct {
@@ -219,94 +439,23 @@ func TestCataloger(t *testing.T) {
 			cataloger:    NewDotnetDepsCataloger(),
 			expectedPkgs: net8AppExpectedDepPkgs,
 			expectedRels: net8AppExpectedDepRelationships,
-			assertion: func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
-				for _, p := range pkgs {
-					// assert that all packages DO NOT have an executable associated with it
-					m, ok := p.Metadata.(pkg.DotnetDepsEntry)
-					if !ok {
-						t.Fatalf("expected metadata to be of type DotnetDepsEntry")
-					}
-					if len(m.Executables) != 0 {
-						t.Errorf("expected no executables for package %s, found %d", p.Name, len(m.Executables))
-					}
-				}
-
-				actual := extractMatchingPackage(t, "Newtonsoft.Json", pkgs)
-				expected := pkg.Package{
-					Name:      "Newtonsoft.Json",
-					Version:   "13.0.3",
-					Locations: file.NewLocationSet(file.NewLocation("/app/dotnetapp.deps.json")),
-					Language:  pkg.Dotnet,
-					Type:      pkg.DotnetPkg,
-					PURL:      "pkg:nuget/Newtonsoft.Json@13.0.3",
-					Metadata: pkg.DotnetDepsEntry{
-						Name:        "Newtonsoft.Json",
-						Version:     "13.0.3",
-						Path:        "newtonsoft.json/13.0.3",
-						Sha512:      "sha512-HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ==",
-						HashPath:    "newtonsoft.json.13.0.3.nupkg.sha512",
-						Executables: nil, // important!
-					},
-				}
-
-				pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
-			},
+			assertion:    assertAllDepEntriesWithoutExecutables,
+		},
+		{
+			name:         "net8-app combined cataloger",
+			fixture:      "image-net8-app",
+			cataloger:    NewDotnetDepsBinaryCataloger(),
+			expectedPkgs: net8AppExpectedDepPkgs,
+			expectedRels: net8AppExpectedDepRelationships,
+			assertion:    assertAllDepEntriesWithExecutables, // important! this is what makes this case different from the previous one... dep entries have attached executables
 		},
 		{
 			name:         "net8-app PE cataloger",
 			fixture:      "image-net8-app",
 			cataloger:    NewDotnetPortableExecutableCataloger(),
-			expectedPkgs: net8AppExpectedDepPkgs,
-			expectedRels: net8AppExpectedDepRelationships,
-			assertion: func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
-
-				for _, p := range pkgs {
-					// assert that all packages have an executable associated with it
-					m, ok := p.Metadata.(pkg.DotnetDepsEntry)
-					if !ok {
-						t.Fatalf("expected metadata to be of type DotnetDepsEntry")
-					}
-					if len(m.Executables) != 1 {
-						if m.Name == "Humanizer" {
-							// there is only one "virtual" package that doesn't have an actual DLL associated
-							assert.Empty(t, m.Executables)
-							continue
-						}
-						t.Errorf("expected exactly one executable for package %s, found %d", p.Name, len(m.Executables))
-					}
-				}
-
-				actual := extractMatchingPackage(t, "dotnetapp", pkgs)
-
-				expected := pkg.Package{
-					Name:    "dotnetapp",
-					Version: "1.0.0",
-					FoundBy: "",
-					Locations: file.NewLocationSet(
-						file.NewLocation("/app/dotnetapp.deps.json"),
-						file.NewLocation("/app/dotnetapp.dll"),
-					),
-					Language: pkg.Dotnet,
-					Type:     pkg.DotnetPkg,
-					PURL:     "pkg:nuget/dotnetapp@1.0.0",
-					Metadata: pkg.DotnetDepsEntry{
-						Name:    "dotnetapp",
-						Version: "1.0.0",
-						// note: the main package does not have a hash/path/etc
-						Executables: map[string]pkg.DotnetPortableExecutableEntry{
-							"dotnetapp.dll": {
-								AssemblyVersion: "1.0.0.0",
-								InternalName:    "dotnetapp.dll",
-								CompanyName:     "dotnetapp",
-								ProductName:     "dotnetapp",
-								ProductVersion:  "1.0.0",
-							},
-						},
-					},
-				}
-
-				pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
-			},
+			expectedPkgs: net8AppBinaryOnlyPkgs,
+			// important: no relationships should be found
+			assertion: assertAllBinaryEntries,
 		},
 		{
 			name:      "net8-app deps cataloger (no deps.json)",
@@ -315,94 +464,20 @@ func TestCataloger(t *testing.T) {
 			// there should be no packages found!
 		},
 		{
-			name:      "net8-app pe cataloger (no deps.json)",
-			fixture:   "image-net8-app-no-depjson",
-			cataloger: NewDotnetPortableExecutableCataloger(),
-			expectedPkgs: []string{
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/Humanizer.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/af/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/ar/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/az/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/bg/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/bn-BD/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/cs/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/da/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/de/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/el/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/es/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/fa/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/fi-FI/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/fr-BE/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/fr/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/he/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/hr/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/hu/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/hy/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/id/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/is/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/it/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/ja/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/ku/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/lv/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/nb-NO/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/nb/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/nl/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/pl/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/pt/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/ro/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/ru/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/sk/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/sl/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/sr-Latn/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/sr/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/sv/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/tr/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/uk/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/uz-Cyrl-UZ/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/uz-Latn-UZ/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/vi/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/zh-CN/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/zh-Hans/Humanizer.resources.dll)",
-				"Humanizer (net6.0) @ 2.14.1.48190 (/app/zh-Hant/Humanizer.resources.dll)",
-				"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/ko-KR/Humanizer.resources.dll)",
-				"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/ms-MY/Humanizer.resources.dll)",
-				"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/mt/Humanizer.resources.dll)",
-				"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/th-TH/Humanizer.resources.dll)",
-				"Json.NET @ 13.0.3.27908 (/app/Newtonsoft.Json.dll)",
-				"dotnetapp @ 1.0.0.0 (/app/dotnetapp.dll)",
-			},
-			assertion: func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
-				for _, p := range pkgs {
-					// assert that all packages DO NOT have an executable associated with it
-					m, ok := p.Metadata.(pkg.DotnetPortableExecutableEntry)
-					if !ok {
-						t.Fatalf("expected metadata to be of type DotnetPortableExecutableEntry")
-					}
-					assert.NotNil(t, m, "expected metadata to be a non-nil DotnetPortableExecutableEntry")
-				}
-
-				actual := extractMatchingPackage(t, "Json.NET", pkgs)
-
-				expected := pkg.Package{
-					Name:      "Json.NET",     // TODO: could we have done this better? We expected Newtonsoft.Json
-					Version:   "13.0.3.27908", // TODO: should we use the product version here?
-					Locations: file.NewLocationSet(file.NewLocation("/app/Newtonsoft.Json.dll")),
-					Language:  pkg.Dotnet,
-					Type:      pkg.DotnetPkg,
-					PURL:      "pkg:nuget/Json.NET@13.0.3.27908", // TODO: should we use the product version here?
-					Metadata: pkg.DotnetPortableExecutableEntry{
-						AssemblyVersion: "13.0.0.0",
-						LegalCopyright:  "Copyright © James Newton-King 2008",
-						Comments:        "Json.NET is a popular high-performance JSON framework for .NET",
-						InternalName:    "Newtonsoft.Json.dll",
-						CompanyName:     "Newtonsoft",
-						ProductName:     "Json.NET",
-						ProductVersion:  "13.0.3+0a2e291c0d9c0c7675d445703e51750363a549ef",
-					},
-				}
-
-				pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
-			},
+			name:         "net8-app combined cataloger (no deps.json)",
+			fixture:      "image-net8-app-no-depjson",
+			cataloger:    NewDotnetDepsBinaryCataloger(),
+			expectedPkgs: net8AppBinaryOnlyPkgs,
+			// important: no relationships should be found
+			assertion: assertAllBinaryEntries,
+		},
+		{
+			name:         "net8-app pe cataloger (no deps.json)",
+			fixture:      "image-net8-app-no-depjson",
+			cataloger:    NewDotnetPortableExecutableCataloger(),
+			expectedPkgs: net8AppBinaryOnlyPkgs,
+			// important: no relationships should be found
+			assertion: assertAllBinaryEntries,
 		},
 	}
 

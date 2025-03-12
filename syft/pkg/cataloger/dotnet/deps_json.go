@@ -34,10 +34,11 @@ type depsLibrary struct {
 // logicalDepsJSONPackage merges target and library information for a given package from all dep.json entries.
 // Note: this is not a real construct of the deps.json, just a useful reorganization of the data for downstream processing.
 type logicalDepsJSONPackage struct {
-	NameVersion string
-	Targets     *depsTarget
-	Library     *depsLibrary
-	Executables []logicalDotnetPE
+	NameVersion                              string
+	Targets                                  *depsTarget
+	Library                                  *depsLibrary
+	RuntimeAndResourcePathsByRelativeDLLPath map[string]string
+	Executables                              []logicalDotnetPE
 }
 
 type logicalDepsJSON struct {
@@ -68,10 +69,23 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 				if ok {
 					lib = &l
 				}
+				paths := make(map[string]string)
+				for path := range target.Runtime {
+					paths[trimLibPrefix(path)] = path
+				}
+				for path := range target.Resources {
+					trimmedPath := trimLibPrefix(path)
+					if _, exists := paths[trimmedPath]; exists {
+						continue
+					}
+					paths[trimmedPath] = path
+				}
+
 				p := &logicalDepsJSONPackage{
-					NameVersion: libName,
-					Library:     lib,
-					Targets:     &target,
+					NameVersion:                              libName,
+					Library:                                  lib,
+					Targets:                                  &target,
+					RuntimeAndResourcePathsByRelativeDLLPath: paths,
 				}
 				packageMap[libName] = p
 			}

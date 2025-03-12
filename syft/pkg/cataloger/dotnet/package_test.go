@@ -305,8 +305,7 @@ func Test_NewDotnetBinaryPackage(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			location := file.NewLocation("")
-			got, err := newDotnetBinaryPackage(tc.versionResources, location)
-			assert.NoErrorf(t, err, "failed to build package from version resources: %+v", tc.versionResources)
+			got := newDotnetBinaryPackage(tc.versionResources, location)
 
 			// ignore certain metadata
 			if tc.expectedPackage.Metadata == nil {

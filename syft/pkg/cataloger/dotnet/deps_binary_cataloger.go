@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
@@ -23,26 +22,23 @@ const (
 	exeGlob      = "**/*.exe"
 )
 
+// depsBinaryCataloger will search for both deps.json evidence and PE file evidence to create packages. All packages
+// from both sources are raised up, but with one merge operation applied; If a deps.json package reference can be
+// correlated with a PE file, the PE file is attached to the package as supporting evidence.
 type depsBinaryCataloger struct {
-	name            string
-	considerPEFiles bool
 }
 
 func (c depsBinaryCataloger) Name() string {
-	return c.name
+	return "dotnet-deps-binary-cataloger"
 }
 
 func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
-	depJSONDocs, unknowns, err := c.findDepsJSON(resolver)
+	depJSONDocs, unknowns, err := findDepsJSON(resolver)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if !c.considerPEFiles {
-		return c.packagesFromDepsJSON(depJSONDocs)
-	}
-
-	peFiles, ldpeUnknownErr, err := c.findPEFiles(resolver)
+	peFiles, ldpeUnknownErr, err := findPEFiles(resolver)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -51,39 +47,34 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 	}
 
 	// partition the logical PE files by location and pair them with the logicalDepsJSON
-	pairedDepsJSON, remainingPeFiles, remainingDepsJSON := c.partitionPEs(depJSONDocs, peFiles)
+	pairedDepsJSON, remainingPeFiles, remainingDepsJSON := partitionPEs(depJSONDocs, peFiles)
 
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
+	var errs error
 	for _, docs := range [][]logicalDepsJSON{pairedDepsJSON, remainingDepsJSON} {
 		for _, doc := range docs {
-			p, r, err := c.packagesFromLogicalDepsJSON(doc)
+			ps, rs, err := packagesFromLogicalDepsJSON(doc)
+			// even if there are errors we still want to capture what partial information we can
+			pkgs = append(pkgs, ps...)
+			relationships = append(relationships, rs...)
+
 			if err != nil {
-				return nil, nil, err
+				errs = unknown.Append(errs, doc.Location, err)
 			}
-			pkgs = append(pkgs, p...)
-			relationships = append(relationships, r...)
 		}
 	}
 
 	for _, pe := range remainingPeFiles {
-		p, err := newDotnetBinaryPackage(pe.VersionResources, pe.Location)
-		if err != nil {
-			log.WithFields(
-				"error", err,
-				"file", pe.Location.RealPath,
-			).Trace("unable to create package from PE file")
-			continue
-		}
-		pkgs = append(pkgs, p)
+		pkgs = append(pkgs, newDotnetBinaryPackage(pe.VersionResources, pe.Location))
 	}
 
 	return pkgs, relationships, unknowns
 }
 
 // partitionPEs pairs PE files with the deps.json based on directory containment.
-func (c depsBinaryCataloger) partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalDotnetPE) ([]logicalDepsJSON, []logicalDotnetPE, []logicalDepsJSON) {
+func partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalDotnetPE) ([]logicalDepsJSON, []logicalDotnetPE, []logicalDepsJSON) {
 	// sort deps.json paths from longest to shortest. This is so we are processing the most specific match first.
 	sort.Slice(depJsons, func(i, j int) bool {
 		return len(depJsons[i].Location.RealPath) > len(depJsons[j].Location.RealPath)
@@ -98,7 +89,8 @@ func (c depsBinaryCataloger) partitionPEs(depJsons []logicalDepsJSON, peFiles []
 			if isParentOf(dep.Location.RealPath, pe.Location.RealPath) && attachAssociatedExecutables(dep, pe) {
 				peFilesByPath[dep.Location.Coordinates] = append(peFilesByPath[dep.Location.Coordinates], pe)
 				found = true
-				break
+				// note: we cannot break from the dep JSON search since the same binary could be associated with multiple packages
+				// across multiple deps.json files.
 			}
 		}
 		if !found {
@@ -126,29 +118,16 @@ func attachAssociatedExecutables(dep *logicalDepsJSON, pe logicalDotnetPE) bool 
 	appDir := path.Dir(dep.Location.RealPath)
 	relativeDllPath := strings.TrimPrefix(strings.TrimPrefix(pe.Location.RealPath, appDir), "/")
 
+	var found bool
 	for key, p := range dep.Packages {
-		if p.Targets != nil {
-			for targetPath := range p.Targets.Runtime {
-				trimmed := trimLibPrefix(targetPath)
-				if trimmed == relativeDllPath {
-					pe.TargetPath = targetPath
-					p.Executables = append(p.Executables, pe)
-					dep.Packages[key] = p // update the map with the modified package
-					return true
-				}
-			}
-			for targetPath := range p.Targets.Resources {
-				trimmed := trimLibPrefix(targetPath)
-				if trimmed == relativeDllPath {
-					pe.TargetPath = targetPath
-					p.Executables = append(p.Executables, pe)
-					dep.Packages[key] = p
-					return true
-				}
-			}
+		if targetPath, ok := p.RuntimeAndResourcePathsByRelativeDLLPath[relativeDllPath]; ok {
+			pe.TargetPath = targetPath
+			p.Executables = append(p.Executables, pe)
+			dep.Packages[key] = p // update the map with the modified package
+			found = true
 		}
 	}
-	return false
+	return found
 }
 
 var libPrefixPattern = regexp.MustCompile(`^lib/net[^/]+/`)
@@ -172,22 +151,24 @@ func isParentOf(parentFile, childFile string) bool {
 }
 
 // packagesFromDepsJSON creates packages from a list of logicalDepsJSON documents.
-func (c depsBinaryCataloger) packagesFromDepsJSON(docs []logicalDepsJSON) ([]pkg.Package, []artifact.Relationship, error) {
+func packagesFromDepsJSON(docs []logicalDepsJSON) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
+	var errs error
 	for _, ldj := range docs {
-		p, r, err := c.packagesFromLogicalDepsJSON(ldj)
+		ps, rs, err := packagesFromLogicalDepsJSON(ldj)
+		// even if there are errors we still want to capture what partial information we can
+		pkgs = append(pkgs, ps...)
+		relationships = append(relationships, rs...)
 		if err != nil {
-			return nil, nil, err
+			errs = unknown.Append(errs, ldj.Location, err)
 		}
-		pkgs = append(pkgs, p...)
-		relationships = append(relationships, r...)
 	}
-	return pkgs, relationships, nil
+	return pkgs, relationships, errs
 }
 
 // packagesFromLogicalDepsJSON converts a logicalDepsJSON (using the new map type) into catalog packages.
-func (c depsBinaryCataloger) packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([]pkg.Package, []artifact.Relationship, error) {
+func packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([]pkg.Package, []artifact.Relationship, error) {
 	depsPath := doc.Location.Path()
 	rootName := getDepsJSONFilePrefix(depsPath)
 	if rootName == "" {
@@ -237,26 +218,25 @@ func (c depsBinaryCataloger) packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([
 	// build dependency relationships between packages
 	var relationships []artifact.Relationship
 	for _, lp := range doc.Packages {
-		if lp.Targets != nil {
-			for depName, depVersion := range lp.Targets.Dependencies {
-				depNameVersion := createNameAndVersion(depName, depVersion)
-				depPkg, ok := pkgMap[depNameVersion]
-				if !ok {
-					log.Debug("unable to find package in map", depNameVersion)
-					continue
-				}
-				thisPkg, ok := pkgMap[lp.NameVersion]
-				if !ok {
-					log.Debug("unable to find package in map", lp.NameVersion)
-					continue
-				}
-				rel := artifact.Relationship{
-					From: depPkg,
-					To:   thisPkg,
-					Type: artifact.DependencyOfRelationship,
-				}
-				relationships = append(relationships, rel)
+		if lp.Targets == nil {
+			continue
+		}
+		for depName, depVersion := range lp.Targets.Dependencies {
+			depNameVersion := createNameAndVersion(depName, depVersion)
+			depPkg, ok := pkgMap[depNameVersion]
+			if !ok {
+				continue
 			}
+			thisPkg, ok := pkgMap[lp.NameVersion]
+			if !ok {
+				continue
+			}
+			rel := artifact.Relationship{
+				From: depPkg,
+				To:   thisPkg,
+				Type: artifact.DependencyOfRelationship,
+			}
+			relationships = append(relationships, rel)
 		}
 	}
 
@@ -265,7 +245,7 @@ func (c depsBinaryCataloger) packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([
 }
 
 // findDepsJSON locates and parses all deps.json files.
-func (c depsBinaryCataloger) findDepsJSON(resolver file.Resolver) ([]logicalDepsJSON, error, error) {
+func findDepsJSON(resolver file.Resolver) ([]logicalDepsJSON, error, error) {
 	locs, err := resolver.FilesByGlob(depsJSONGlob)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to find deps.json files: %w", err)
@@ -306,7 +286,7 @@ func readDepsJSON(resolver file.Resolver, loc file.Location) (*depsJSON, error) 
 }
 
 // findPEFiles locates and parses all PE files (dll/exe).
-func (c depsBinaryCataloger) findPEFiles(resolver file.Resolver) ([]logicalDotnetPE, error, error) {
+func findPEFiles(resolver file.Resolver) ([]logicalDotnetPE, error, error) {
 	peLocs, err := resolver.FilesByGlob(dllGlob, exeGlob)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to find PE files: %w", err)

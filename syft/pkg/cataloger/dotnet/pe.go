@@ -23,8 +23,6 @@ var imageDirectoryEntryIndexes = []int{
 type logicalDotnetPE struct {
 	Location         file.Location
 	TargetPath       string
-	Imports          []string
-	Exports          []string
 	CLR              *peClrComDescriptor
 	VersionResources map[string]string
 }

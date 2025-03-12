@@ -130,13 +130,13 @@ func (c *CreateSBOMConfig) WithDataGenerationConfig(cfg cataloging.DataGeneratio
 	return c
 }
 
-// WithPackagesConfig allows for defining any specific behavior for syft-implemented catalogers.
+// WithPackagesConfig allows for defining any specific package cataloging behavior for syft-implemented catalogers.
 func (c *CreateSBOMConfig) WithPackagesConfig(cfg pkgcataloging.Config) *CreateSBOMConfig {
 	c.Packages = cfg
 	return c
 }
 
-// WithPackagesConfig allows for defining any specific behavior for syft-implemented catalogers.
+// WithLicenseConfig allows for defining any specific license cataloging behavior for syft-implemented catalogers.
 func (c *CreateSBOMConfig) WithLicenseConfig(cfg cataloging.LicenseConfig) *CreateSBOMConfig {
 	c.Licenses = cfg
 	return c
@@ -282,6 +282,10 @@ func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []t
 		return nil, nil, nil, err
 	}
 
+	if deprecatedNames := deprecatedTasks(finalTaskGroups); len(deprecatedNames) > 0 {
+		log.WithFields("catalogers", strings.Join(deprecatedNames, ", ")).Warn("deprecated catalogers are being used (please remove them from your configuration)")
+	}
+
 	finalPkgTasks := finalTaskGroups[0]
 	finalFileTasks := finalTaskGroups[1]
 
@@ -311,6 +315,18 @@ func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []t
 	}
 
 	return finalPkgTasks, finalFileTasks, &selection, nil
+}
+
+func deprecatedTasks(taskGroups [][]task.Task) []string {
+	// we want to identify any deprecated catalogers that are being used but default selections will always additionally select `file`
+	// catalogers. For this reason, we must explicitly remove `file` catalogers in the selection request. This means if we
+	// deprecate a file cataloger we will need special processing.
+	_, selection, err := task.SelectInGroups(taskGroups, cataloging.SelectionRequest{DefaultNamesOrTags: []string{pkgcataloging.DeprecatedTag}, RemoveNamesOrTags: []string{filecataloging.FileTag}})
+	if err != nil {
+		// ignore the error, as it is not critical
+		return nil
+	}
+	return selection.Result.List()
 }
 
 func logTaskNames(tasks []task.Task, kind string) {
