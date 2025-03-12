@@ -49,7 +49,6 @@ func newDotnetDepsPackage(lp logicalDepsJSONPackage, depsLocation file.Location)
 // newDotnetDepsEntry creates a Dotnet dependency entry using the new logicalDepsJSONPackage.
 func newDotnetDepsEntry(lp logicalDepsJSONPackage) pkg.DotnetDepsEntry {
 	name, ver := extractNameAndVersion(lp.NameVersion)
-	lib := lp.Library
 
 	// since this is a metadata type, we should not allocate this collection unless there are entries; otherwise
 	// the JSON serialization will produce an empty object instead of omitting the field.
@@ -61,12 +60,20 @@ func newDotnetDepsEntry(lp logicalDepsJSONPackage) pkg.DotnetDepsEntry {
 		}
 	}
 
+	var path, sha, hashPath string
+	lib := lp.Library
+	if lib != nil {
+		path = lib.Path
+		sha = lib.Sha512
+		hashPath = lib.HashPath
+	}
+
 	return pkg.DotnetDepsEntry{
 		Name:        name,
 		Version:     ver,
-		Path:        lib.Path,
-		Sha512:      lib.Sha512,
-		HashPath:    lib.HashPath,
+		Path:        path,
+		Sha512:      sha,
+		HashPath:    hashPath,
 		Executables: pes,
 	}
 }

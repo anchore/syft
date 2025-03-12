@@ -96,6 +96,26 @@ func Test_getLogicalDotnetPE(t *testing.T) {
 			},
 			wantErr: require.NoError,
 		},
+		{
+			name:    "single file deployment",
+			path:    "/app/dotnetapp.exe",
+			fixture: "image-net8-app-single-file",
+			// single file deployment does not have CLR metadata embedded in the COM descriptor. Instead we need
+			// to look for evidence of the CLR in other resources directory names, specifically for "CLRDEBUGINFO".
+			wantCLR: true,
+			wantVR: map[string]string{
+				"CompanyName":      "dotnetapp",
+				"FileDescription":  "dotnetapp",
+				"FileVersion":      "1.0.0.0",
+				"InternalName":     "dotnetapp.dll",
+				"LegalCopyright":   " ",
+				"OriginalFilename": "dotnetapp.dll",
+				"ProductName":      "dotnetapp",
+				"ProductVersion":   "1.0.0",
+				"Assembly Version": "1.0.0.0",
+			},
+			wantErr: require.NoError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -115,8 +135,8 @@ func Test_getLogicalDotnetPE(t *testing.T) {
 			if d := cmp.Diff(tt.wantVR, got.VersionResources); d != "" {
 				t.Errorf("unexpected version resources (-want +got): %s", d)
 			}
-			hasCLR := got.CLR != nil && got.CLR.MajorVersion != 0 && got.CLR.MinorVersion != 0
-			assert.Equal(t, tt.wantCLR, hasCLR)
+
+			assert.Equal(t, tt.wantCLR, got.CLR.hasEvidenceOfCLR())
 		})
 	}
 }

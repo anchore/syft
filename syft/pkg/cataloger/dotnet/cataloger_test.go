@@ -58,10 +58,10 @@ func TestCataloger_Globs(t *testing.T) {
 }
 
 func TestCataloger(t *testing.T) {
-	net8AppDepOnlyPkgs := []string{
+
+	// app packages (from deps.json)
+	net8AppExpectedDepPkgs := []string{
 		"Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
-	}
-	net8AppPairedPkgs := []string{
 		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.af @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.ar @ 2.14.1 (/app/dotnetapp.deps.json)",
@@ -115,10 +115,7 @@ func TestCataloger(t *testing.T) {
 		"dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
 	}
 
-	var net8AppExpectedDepPkgs []string
-	net8AppExpectedDepPkgs = append(net8AppExpectedDepPkgs, net8AppDepOnlyPkgs...)
-	net8AppExpectedDepPkgs = append(net8AppExpectedDepPkgs, net8AppPairedPkgs...)
-
+	// app binaries (always dlls)
 	net8AppBinaryOnlyPkgs := []string{
 		"Humanizer (net6.0) @ 2.14.1.48190 (/app/Humanizer.dll)",
 		"Humanizer (net6.0) @ 2.14.1.48190 (/app/af/Humanizer.resources.dll)",
@@ -173,6 +170,7 @@ func TestCataloger(t *testing.T) {
 		"dotnetapp @ 1.0.0.0 (/app/dotnetapp.dll)",
 	}
 
+	// app relationships (from deps.json)
 	net8AppDepOnlyRelationships := []string{
 		"Humanizer @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.af @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
@@ -223,9 +221,6 @@ func TestCataloger(t *testing.T) {
 		"Humanizer.Core.zh-CN @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.zh-Hans @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.zh-Hant @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
-	}
-
-	net8AppPairedRelationships := []string{
 		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.af @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.ar @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer.Core.az @ 2.14.1 (/app/dotnetapp.deps.json)",
@@ -279,7 +274,378 @@ func TestCataloger(t *testing.T) {
 
 	var net8AppExpectedDepRelationships []string
 	net8AppExpectedDepRelationships = append(net8AppExpectedDepRelationships, net8AppDepOnlyRelationships...)
-	net8AppExpectedDepRelationships = append(net8AppExpectedDepRelationships, net8AppPairedRelationships...)
+
+	var net8AppExpectedDepSelfContainedPkgs []string
+	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs, net8AppExpectedDepPkgs...)
+	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs,
+		// add the CLR runtime packages...
+		".NET Runtime @ 8,0,1425,11118 (/app/coreclr.dll)",
+		"runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.deps.json)",
+	)
+
+	var net8AppExpectedDepsSelfContainedPkgs []string
+	net8AppExpectedDepsSelfContainedPkgs = append(net8AppExpectedDepsSelfContainedPkgs, net8AppExpectedDepPkgs...)
+	net8AppExpectedDepsSelfContainedPkgs = append(net8AppExpectedDepsSelfContainedPkgs,
+		// add the CLR runtime packages...
+		"runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.deps.json)",
+	)
+
+	var net8AppExpectedDepSelfContainedRelationships []string
+	net8AppExpectedDepSelfContainedRelationships = append(net8AppExpectedDepSelfContainedRelationships, net8AppExpectedDepRelationships...)
+	net8AppExpectedDepSelfContainedRelationships = append(net8AppExpectedDepSelfContainedRelationships,
+		// add the CLR runtime relationships...
+		"runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
+	)
+
+	var net8AppExpectedBinarySelfContainedRelationships []string
+	net8AppExpectedBinarySelfContainedRelationships = append(net8AppExpectedBinarySelfContainedRelationships, net8AppBinaryOnlyPkgs...)
+	net8AppExpectedBinarySelfContainedRelationships = append(net8AppExpectedBinarySelfContainedRelationships,
+		// include the runtime libs...
+		"Microsoft.CSharp @ 8.0.1425.11118 (/app/Microsoft.CSharp.dll)",
+		"Microsoft.VisualBasic @ 8.0.1425.11118 (/app/Microsoft.VisualBasic.dll)",
+		"Microsoft.VisualBasic.Core @ 13.0.1425.11118 (/app/Microsoft.VisualBasic.Core.dll)",
+		"Microsoft.Win32.Primitives @ 8.0.1425.11118 (/app/Microsoft.Win32.Primitives.dll)",
+		"Microsoft.Win32.Registry @ 8.0.1425.11118 (/app/Microsoft.Win32.Registry.dll)",
+		"System @ 8.0.1425.11118 (/app/System.dll)",
+		"System.AppContext @ 8.0.1425.11118 (/app/System.AppContext.dll)",
+		"System.Buffers @ 8.0.1425.11118 (/app/System.Buffers.dll)",
+		"System.Collections @ 8.0.1425.11118 (/app/System.Collections.dll)",
+		"System.Collections.Concurrent @ 8.0.1425.11118 (/app/System.Collections.Concurrent.dll)",
+		"System.Collections.Immutable @ 8.0.1425.11118 (/app/System.Collections.Immutable.dll)",
+		"System.Collections.NonGeneric @ 8.0.1425.11118 (/app/System.Collections.NonGeneric.dll)",
+		"System.Collections.Specialized @ 8.0.1425.11118 (/app/System.Collections.Specialized.dll)",
+		"System.ComponentModel @ 8.0.1425.11118 (/app/System.ComponentModel.dll)",
+		"System.ComponentModel.Annotations @ 8.0.1425.11118 (/app/System.ComponentModel.Annotations.dll)",
+		"System.ComponentModel.DataAnnotations @ 8.0.1425.11118 (/app/System.ComponentModel.DataAnnotations.dll)",
+		"System.ComponentModel.EventBasedAsync @ 8.0.1425.11118 (/app/System.ComponentModel.EventBasedAsync.dll)",
+		"System.ComponentModel.Primitives @ 8.0.1425.11118 (/app/System.ComponentModel.Primitives.dll)",
+		"System.ComponentModel.TypeConverter @ 8.0.1425.11118 (/app/System.ComponentModel.TypeConverter.dll)",
+		"System.Configuration @ 8.0.1425.11118 (/app/System.Configuration.dll)",
+		"System.Console @ 8.0.1425.11118 (/app/System.Console.dll)",
+		"System.Core @ 8.0.1425.11118 (/app/System.Core.dll)",
+		"System.Data @ 8.0.1425.11118 (/app/System.Data.dll)",
+		"System.Data.Common @ 8.0.1425.11118 (/app/System.Data.Common.dll)",
+		"System.Data.DataSetExtensions @ 8.0.1425.11118 (/app/System.Data.DataSetExtensions.dll)",
+		"System.Diagnostics.Contracts @ 8.0.1425.11118 (/app/System.Diagnostics.Contracts.dll)",
+		"System.Diagnostics.Debug @ 8.0.1425.11118 (/app/System.Diagnostics.Debug.dll)",
+		"System.Diagnostics.DiagnosticSource @ 8.0.1425.11118 (/app/System.Diagnostics.DiagnosticSource.dll)",
+		"System.Diagnostics.FileVersionInfo @ 8.0.1425.11118 (/app/System.Diagnostics.FileVersionInfo.dll)",
+		"System.Diagnostics.Process @ 8.0.1425.11118 (/app/System.Diagnostics.Process.dll)",
+		"System.Diagnostics.StackTrace @ 8.0.1425.11118 (/app/System.Diagnostics.StackTrace.dll)",
+		"System.Diagnostics.TextWriterTraceListener @ 8.0.1425.11118 (/app/System.Diagnostics.TextWriterTraceListener.dll)",
+		"System.Diagnostics.Tools @ 8.0.1425.11118 (/app/System.Diagnostics.Tools.dll)",
+		"System.Diagnostics.TraceSource @ 8.0.1425.11118 (/app/System.Diagnostics.TraceSource.dll)",
+		"System.Diagnostics.Tracing @ 8.0.1425.11118 (/app/System.Diagnostics.Tracing.dll)",
+		"System.Drawing @ 8.0.1425.11118 (/app/System.Drawing.dll)",
+		"System.Drawing.Primitives @ 8.0.1425.11118 (/app/System.Drawing.Primitives.dll)",
+		"System.Dynamic.Runtime @ 8.0.1425.11118 (/app/System.Dynamic.Runtime.dll)",
+		"System.Formats.Asn1 @ 8.0.1425.11118 (/app/System.Formats.Asn1.dll)",
+		"System.Formats.Tar @ 8.0.1425.11118 (/app/System.Formats.Tar.dll)",
+		"System.Globalization @ 8.0.1425.11118 (/app/System.Globalization.dll)",
+		"System.Globalization.Calendars @ 8.0.1425.11118 (/app/System.Globalization.Calendars.dll)",
+		"System.Globalization.Extensions @ 8.0.1425.11118 (/app/System.Globalization.Extensions.dll)",
+		"System.IO @ 8.0.1425.11118 (/app/System.IO.dll)",
+		"System.IO.Compression @ 8.0.1425.11118 (/app/System.IO.Compression.dll)",
+		"System.IO.Compression.Brotli @ 8.0.1425.11118 (/app/System.IO.Compression.Brotli.dll)",
+		"System.IO.Compression.FileSystem @ 8.0.1425.11118 (/app/System.IO.Compression.FileSystem.dll)",
+		"System.IO.Compression.ZipFile @ 8.0.1425.11118 (/app/System.IO.Compression.ZipFile.dll)",
+		"System.IO.FileSystem @ 8.0.1425.11118 (/app/System.IO.FileSystem.dll)",
+		"System.IO.FileSystem.AccessControl @ 8.0.1425.11118 (/app/System.IO.FileSystem.AccessControl.dll)",
+		"System.IO.FileSystem.DriveInfo @ 8.0.1425.11118 (/app/System.IO.FileSystem.DriveInfo.dll)",
+		"System.IO.FileSystem.Primitives @ 8.0.1425.11118 (/app/System.IO.FileSystem.Primitives.dll)",
+		"System.IO.FileSystem.Watcher @ 8.0.1425.11118 (/app/System.IO.FileSystem.Watcher.dll)",
+		"System.IO.IsolatedStorage @ 8.0.1425.11118 (/app/System.IO.IsolatedStorage.dll)",
+		"System.IO.MemoryMappedFiles @ 8.0.1425.11118 (/app/System.IO.MemoryMappedFiles.dll)",
+		"System.IO.Pipes @ 8.0.1425.11118 (/app/System.IO.Pipes.dll)",
+		"System.IO.Pipes.AccessControl @ 8.0.1425.11118 (/app/System.IO.Pipes.AccessControl.dll)",
+		"System.IO.UnmanagedMemoryStream @ 8.0.1425.11118 (/app/System.IO.UnmanagedMemoryStream.dll)",
+		"System.Linq @ 8.0.1425.11118 (/app/System.Linq.dll)",
+		"System.Linq.Expressions @ 8.0.1425.11118 (/app/System.Linq.Expressions.dll)",
+		"System.Linq.Parallel @ 8.0.1425.11118 (/app/System.Linq.Parallel.dll)",
+		"System.Linq.Queryable @ 8.0.1425.11118 (/app/System.Linq.Queryable.dll)",
+		"System.Memory @ 8.0.1425.11118 (/app/System.Memory.dll)",
+		"System.Net @ 8.0.1425.11118 (/app/System.Net.dll)",
+		"System.Net.Http @ 8.0.1425.11118 (/app/System.Net.Http.dll)",
+		"System.Net.Http.Json @ 8.0.1425.11118 (/app/System.Net.Http.Json.dll)",
+		"System.Net.HttpListener @ 8.0.1425.11118 (/app/System.Net.HttpListener.dll)",
+		"System.Net.Mail @ 8.0.1425.11118 (/app/System.Net.Mail.dll)",
+		"System.Net.NameResolution @ 8.0.1425.11118 (/app/System.Net.NameResolution.dll)",
+		"System.Net.NetworkInformation @ 8.0.1425.11118 (/app/System.Net.NetworkInformation.dll)",
+		"System.Net.Ping @ 8.0.1425.11118 (/app/System.Net.Ping.dll)",
+		"System.Net.Primitives @ 8.0.1425.11118 (/app/System.Net.Primitives.dll)",
+		"System.Net.Quic @ 8.0.1425.11118 (/app/System.Net.Quic.dll)",
+		"System.Net.Requests @ 8.0.1425.11118 (/app/System.Net.Requests.dll)",
+		"System.Net.Security @ 8.0.1425.11118 (/app/System.Net.Security.dll)",
+		"System.Net.ServicePoint @ 8.0.1425.11118 (/app/System.Net.ServicePoint.dll)",
+		"System.Net.Sockets @ 8.0.1425.11118 (/app/System.Net.Sockets.dll)",
+		"System.Net.WebClient @ 8.0.1425.11118 (/app/System.Net.WebClient.dll)",
+		"System.Net.WebHeaderCollection @ 8.0.1425.11118 (/app/System.Net.WebHeaderCollection.dll)",
+		"System.Net.WebProxy @ 8.0.1425.11118 (/app/System.Net.WebProxy.dll)",
+		"System.Net.WebSockets @ 8.0.1425.11118 (/app/System.Net.WebSockets.dll)",
+		"System.Net.WebSockets.Client @ 8.0.1425.11118 (/app/System.Net.WebSockets.Client.dll)",
+		"System.Numerics @ 8.0.1425.11118 (/app/System.Numerics.dll)",
+		"System.Numerics.Vectors @ 8.0.1425.11118 (/app/System.Numerics.Vectors.dll)",
+		"System.ObjectModel @ 8.0.1425.11118 (/app/System.ObjectModel.dll)",
+		"System.Private.CoreLib @ 8.0.1425.11118 (/app/System.Private.CoreLib.dll)",
+		"System.Private.DataContractSerialization @ 8.0.1425.11118 (/app/System.Private.DataContractSerialization.dll)",
+		"System.Private.Uri @ 8.0.1425.11118 (/app/System.Private.Uri.dll)",
+		"System.Private.Xml @ 8.0.1425.11118 (/app/System.Private.Xml.dll)",
+		"System.Private.Xml.Linq @ 8.0.1425.11118 (/app/System.Private.Xml.Linq.dll)",
+		"System.Reflection @ 8.0.1425.11118 (/app/System.Reflection.dll)",
+		"System.Reflection.DispatchProxy @ 8.0.1425.11118 (/app/System.Reflection.DispatchProxy.dll)",
+		"System.Reflection.Emit @ 8.0.1425.11118 (/app/System.Reflection.Emit.dll)",
+		"System.Reflection.Emit.ILGeneration @ 8.0.1425.11118 (/app/System.Reflection.Emit.ILGeneration.dll)",
+		"System.Reflection.Emit.Lightweight @ 8.0.1425.11118 (/app/System.Reflection.Emit.Lightweight.dll)",
+		"System.Reflection.Extensions @ 8.0.1425.11118 (/app/System.Reflection.Extensions.dll)",
+		"System.Reflection.Metadata @ 8.0.1425.11118 (/app/System.Reflection.Metadata.dll)",
+		"System.Reflection.Primitives @ 8.0.1425.11118 (/app/System.Reflection.Primitives.dll)",
+		"System.Reflection.TypeExtensions @ 8.0.1425.11118 (/app/System.Reflection.TypeExtensions.dll)",
+		"System.Resources.Reader @ 8.0.1425.11118 (/app/System.Resources.Reader.dll)",
+		"System.Resources.ResourceManager @ 8.0.1425.11118 (/app/System.Resources.ResourceManager.dll)",
+		"System.Resources.Writer @ 8.0.1425.11118 (/app/System.Resources.Writer.dll)",
+		"System.Runtime @ 8.0.1425.11118 (/app/System.Runtime.dll)",
+		"System.Runtime.CompilerServices.Unsafe @ 8.0.1425.11118 (/app/System.Runtime.CompilerServices.Unsafe.dll)",
+		"System.Runtime.CompilerServices.VisualC @ 8.0.1425.11118 (/app/System.Runtime.CompilerServices.VisualC.dll)",
+		"System.Runtime.Extensions @ 8.0.1425.11118 (/app/System.Runtime.Extensions.dll)",
+		"System.Runtime.Handles @ 8.0.1425.11118 (/app/System.Runtime.Handles.dll)",
+		"System.Runtime.InteropServices @ 8.0.1425.11118 (/app/System.Runtime.InteropServices.dll)",
+		"System.Runtime.InteropServices.JavaScript @ 8.0.1425.11118 (/app/System.Runtime.InteropServices.JavaScript.dll)",
+		"System.Runtime.InteropServices.RuntimeInformation @ 8.0.1425.11118 (/app/System.Runtime.InteropServices.RuntimeInformation.dll)",
+		"System.Runtime.Intrinsics @ 8.0.1425.11118 (/app/System.Runtime.Intrinsics.dll)",
+		"System.Runtime.Loader @ 8.0.1425.11118 (/app/System.Runtime.Loader.dll)",
+		"System.Runtime.Numerics @ 8.0.1425.11118 (/app/System.Runtime.Numerics.dll)",
+		"System.Runtime.Serialization @ 8.0.1425.11118 (/app/System.Runtime.Serialization.dll)",
+		"System.Runtime.Serialization.Formatters @ 8.0.1425.11118 (/app/System.Runtime.Serialization.Formatters.dll)",
+		"System.Runtime.Serialization.Json @ 8.0.1425.11118 (/app/System.Runtime.Serialization.Json.dll)",
+		"System.Runtime.Serialization.Primitives @ 8.0.1425.11118 (/app/System.Runtime.Serialization.Primitives.dll)",
+		"System.Runtime.Serialization.Xml @ 8.0.1425.11118 (/app/System.Runtime.Serialization.Xml.dll)",
+		"System.Security @ 8.0.1425.11118 (/app/System.Security.dll)",
+		"System.Security.AccessControl @ 8.0.1425.11118 (/app/System.Security.AccessControl.dll)",
+		"System.Security.Claims @ 8.0.1425.11118 (/app/System.Security.Claims.dll)",
+		"System.Security.Cryptography @ 8.0.1425.11118 (/app/System.Security.Cryptography.dll)",
+		"System.Security.Cryptography.Algorithms @ 8.0.1425.11118 (/app/System.Security.Cryptography.Algorithms.dll)",
+		"System.Security.Cryptography.Cng @ 8.0.1425.11118 (/app/System.Security.Cryptography.Cng.dll)",
+		"System.Security.Cryptography.Csp @ 8.0.1425.11118 (/app/System.Security.Cryptography.Csp.dll)",
+		"System.Security.Cryptography.Encoding @ 8.0.1425.11118 (/app/System.Security.Cryptography.Encoding.dll)",
+		"System.Security.Cryptography.OpenSsl @ 8.0.1425.11118 (/app/System.Security.Cryptography.OpenSsl.dll)",
+		"System.Security.Cryptography.Primitives @ 8.0.1425.11118 (/app/System.Security.Cryptography.Primitives.dll)",
+		"System.Security.Cryptography.X509Certificates @ 8.0.1425.11118 (/app/System.Security.Cryptography.X509Certificates.dll)",
+		"System.Security.Principal @ 8.0.1425.11118 (/app/System.Security.Principal.dll)",
+		"System.Security.Principal.Windows @ 8.0.1425.11118 (/app/System.Security.Principal.Windows.dll)",
+		"System.Security.SecureString @ 8.0.1425.11118 (/app/System.Security.SecureString.dll)",
+		"System.ServiceModel.Web @ 8.0.1425.11118 (/app/System.ServiceModel.Web.dll)",
+		"System.ServiceProcess @ 8.0.1425.11118 (/app/System.ServiceProcess.dll)",
+		"System.Text.Encoding @ 8.0.1425.11118 (/app/System.Text.Encoding.dll)",
+		"System.Text.Encoding.CodePages @ 8.0.1425.11118 (/app/System.Text.Encoding.CodePages.dll)",
+		"System.Text.Encoding.Extensions @ 8.0.1425.11118 (/app/System.Text.Encoding.Extensions.dll)",
+		"System.Text.Encodings.Web @ 8.0.1425.11118 (/app/System.Text.Encodings.Web.dll)",
+		"System.Text.Json @ 8.0.1425.11118 (/app/System.Text.Json.dll)",
+		"System.Text.RegularExpressions @ 8.0.1425.11118 (/app/System.Text.RegularExpressions.dll)",
+		"System.Threading @ 8.0.1425.11118 (/app/System.Threading.dll)",
+		"System.Threading.Channels @ 8.0.1425.11118 (/app/System.Threading.Channels.dll)",
+		"System.Threading.Overlapped @ 8.0.1425.11118 (/app/System.Threading.Overlapped.dll)",
+		"System.Threading.Tasks @ 8.0.1425.11118 (/app/System.Threading.Tasks.dll)",
+		"System.Threading.Tasks.Dataflow @ 8.0.1425.11118 (/app/System.Threading.Tasks.Dataflow.dll)",
+		"System.Threading.Tasks.Extensions @ 8.0.1425.11118 (/app/System.Threading.Tasks.Extensions.dll)",
+		"System.Threading.Tasks.Parallel @ 8.0.1425.11118 (/app/System.Threading.Tasks.Parallel.dll)",
+		"System.Threading.Thread @ 8.0.1425.11118 (/app/System.Threading.Thread.dll)",
+		"System.Threading.ThreadPool @ 8.0.1425.11118 (/app/System.Threading.ThreadPool.dll)",
+		"System.Threading.Timer @ 8.0.1425.11118 (/app/System.Threading.Timer.dll)",
+		"System.Transactions @ 8.0.1425.11118 (/app/System.Transactions.dll)",
+		"System.Transactions.Local @ 8.0.1425.11118 (/app/System.Transactions.Local.dll)",
+		"System.ValueTuple @ 8.0.1425.11118 (/app/System.ValueTuple.dll)",
+		"System.Web @ 8.0.1425.11118 (/app/System.Web.dll)",
+		"System.Web.HttpUtility @ 8.0.1425.11118 (/app/System.Web.HttpUtility.dll)",
+		"System.Windows @ 8.0.1425.11118 (/app/System.Windows.dll)",
+		"System.Xml @ 8.0.1425.11118 (/app/System.Xml.dll)",
+		"System.Xml.Linq @ 8.0.1425.11118 (/app/System.Xml.Linq.dll)",
+		"System.Xml.ReaderWriter @ 8.0.1425.11118 (/app/System.Xml.ReaderWriter.dll)",
+		"System.Xml.Serialization @ 8.0.1425.11118 (/app/System.Xml.Serialization.dll)",
+		"System.Xml.XDocument @ 8.0.1425.11118 (/app/System.Xml.XDocument.dll)",
+		"System.Xml.XPath @ 8.0.1425.11118 (/app/System.Xml.XPath.dll)",
+		"System.Xml.XPath.XDocument @ 8.0.1425.11118 (/app/System.Xml.XPath.XDocument.dll)",
+		"System.Xml.XmlDocument @ 8.0.1425.11118 (/app/System.Xml.XmlDocument.dll)",
+		"System.Xml.XmlSerializer @ 8.0.1425.11118 (/app/System.Xml.XmlSerializer.dll)",
+		"WindowsBase @ 8.0.1425.11118 (/app/WindowsBase.dll)",
+		"dotnetapp @ 1.0.0.0 (/app/dotnetapp.dll)",
+		"mscorlib @ 8.0.1425.11118 (/app/mscorlib.dll)",
+		"netstandard @ 8.0.1425.11118 (/app/netstandard.dll)",
+	)
+
+	var net8AppExpectedBinarySelfContainedPkgs []string
+	net8AppExpectedBinarySelfContainedPkgs = append(net8AppExpectedBinarySelfContainedPkgs, net8AppBinaryOnlyPkgs...)
+	net8AppExpectedBinarySelfContainedPkgs = append(net8AppExpectedBinarySelfContainedPkgs,
+		// include the runtime...
+		".NET Runtime @ 8,0,1425,11118 (/app/coreclr.dll)",
+		"Microsoft.CSharp @ 8.0.1425.11118 (/app/Microsoft.CSharp.dll)",
+		"Microsoft.VisualBasic @ 8.0.1425.11118 (/app/Microsoft.VisualBasic.dll)",
+		"Microsoft.VisualBasic.Core @ 13.0.1425.11118 (/app/Microsoft.VisualBasic.Core.dll)",
+		"Microsoft.Win32.Primitives @ 8.0.1425.11118 (/app/Microsoft.Win32.Primitives.dll)",
+		"Microsoft.Win32.Registry @ 8.0.1425.11118 (/app/Microsoft.Win32.Registry.dll)",
+		"System @ 8.0.1425.11118 (/app/System.dll)",
+		"System.AppContext @ 8.0.1425.11118 (/app/System.AppContext.dll)",
+		"System.Buffers @ 8.0.1425.11118 (/app/System.Buffers.dll)",
+		"System.Collections @ 8.0.1425.11118 (/app/System.Collections.dll)",
+		"System.Collections.Concurrent @ 8.0.1425.11118 (/app/System.Collections.Concurrent.dll)",
+		"System.Collections.Immutable @ 8.0.1425.11118 (/app/System.Collections.Immutable.dll)",
+		"System.Collections.NonGeneric @ 8.0.1425.11118 (/app/System.Collections.NonGeneric.dll)",
+		"System.Collections.Specialized @ 8.0.1425.11118 (/app/System.Collections.Specialized.dll)",
+		"System.ComponentModel @ 8.0.1425.11118 (/app/System.ComponentModel.dll)",
+		"System.ComponentModel.Annotations @ 8.0.1425.11118 (/app/System.ComponentModel.Annotations.dll)",
+		"System.ComponentModel.DataAnnotations @ 8.0.1425.11118 (/app/System.ComponentModel.DataAnnotations.dll)",
+		"System.ComponentModel.EventBasedAsync @ 8.0.1425.11118 (/app/System.ComponentModel.EventBasedAsync.dll)",
+		"System.ComponentModel.Primitives @ 8.0.1425.11118 (/app/System.ComponentModel.Primitives.dll)",
+		"System.ComponentModel.TypeConverter @ 8.0.1425.11118 (/app/System.ComponentModel.TypeConverter.dll)",
+		"System.Configuration @ 8.0.1425.11118 (/app/System.Configuration.dll)",
+		"System.Console @ 8.0.1425.11118 (/app/System.Console.dll)",
+		"System.Core @ 8.0.1425.11118 (/app/System.Core.dll)",
+		"System.Data @ 8.0.1425.11118 (/app/System.Data.dll)",
+		"System.Data.Common @ 8.0.1425.11118 (/app/System.Data.Common.dll)",
+		"System.Data.DataSetExtensions @ 8.0.1425.11118 (/app/System.Data.DataSetExtensions.dll)",
+		"System.Diagnostics.Contracts @ 8.0.1425.11118 (/app/System.Diagnostics.Contracts.dll)",
+		"System.Diagnostics.Debug @ 8.0.1425.11118 (/app/System.Diagnostics.Debug.dll)",
+		"System.Diagnostics.DiagnosticSource @ 8.0.1425.11118 (/app/System.Diagnostics.DiagnosticSource.dll)",
+		"System.Diagnostics.FileVersionInfo @ 8.0.1425.11118 (/app/System.Diagnostics.FileVersionInfo.dll)",
+		"System.Diagnostics.Process @ 8.0.1425.11118 (/app/System.Diagnostics.Process.dll)",
+		"System.Diagnostics.StackTrace @ 8.0.1425.11118 (/app/System.Diagnostics.StackTrace.dll)",
+		"System.Diagnostics.TextWriterTraceListener @ 8.0.1425.11118 (/app/System.Diagnostics.TextWriterTraceListener.dll)",
+		"System.Diagnostics.Tools @ 8.0.1425.11118 (/app/System.Diagnostics.Tools.dll)",
+		"System.Diagnostics.TraceSource @ 8.0.1425.11118 (/app/System.Diagnostics.TraceSource.dll)",
+		"System.Diagnostics.Tracing @ 8.0.1425.11118 (/app/System.Diagnostics.Tracing.dll)",
+		"System.Drawing @ 8.0.1425.11118 (/app/System.Drawing.dll)",
+		"System.Drawing.Primitives @ 8.0.1425.11118 (/app/System.Drawing.Primitives.dll)",
+		"System.Dynamic.Runtime @ 8.0.1425.11118 (/app/System.Dynamic.Runtime.dll)",
+		"System.Formats.Asn1 @ 8.0.1425.11118 (/app/System.Formats.Asn1.dll)",
+		"System.Formats.Tar @ 8.0.1425.11118 (/app/System.Formats.Tar.dll)",
+		"System.Globalization @ 8.0.1425.11118 (/app/System.Globalization.dll)",
+		"System.Globalization.Calendars @ 8.0.1425.11118 (/app/System.Globalization.Calendars.dll)",
+		"System.Globalization.Extensions @ 8.0.1425.11118 (/app/System.Globalization.Extensions.dll)",
+		"System.IO @ 8.0.1425.11118 (/app/System.IO.dll)",
+		"System.IO.Compression @ 8.0.1425.11118 (/app/System.IO.Compression.dll)",
+		"System.IO.Compression.Brotli @ 8.0.1425.11118 (/app/System.IO.Compression.Brotli.dll)",
+		"System.IO.Compression.FileSystem @ 8.0.1425.11118 (/app/System.IO.Compression.FileSystem.dll)",
+		"System.IO.Compression.ZipFile @ 8.0.1425.11118 (/app/System.IO.Compression.ZipFile.dll)",
+		"System.IO.FileSystem @ 8.0.1425.11118 (/app/System.IO.FileSystem.dll)",
+		"System.IO.FileSystem.AccessControl @ 8.0.1425.11118 (/app/System.IO.FileSystem.AccessControl.dll)",
+		"System.IO.FileSystem.DriveInfo @ 8.0.1425.11118 (/app/System.IO.FileSystem.DriveInfo.dll)",
+		"System.IO.FileSystem.Primitives @ 8.0.1425.11118 (/app/System.IO.FileSystem.Primitives.dll)",
+		"System.IO.FileSystem.Watcher @ 8.0.1425.11118 (/app/System.IO.FileSystem.Watcher.dll)",
+		"System.IO.IsolatedStorage @ 8.0.1425.11118 (/app/System.IO.IsolatedStorage.dll)",
+		"System.IO.MemoryMappedFiles @ 8.0.1425.11118 (/app/System.IO.MemoryMappedFiles.dll)",
+		"System.IO.Pipes @ 8.0.1425.11118 (/app/System.IO.Pipes.dll)",
+		"System.IO.Pipes.AccessControl @ 8.0.1425.11118 (/app/System.IO.Pipes.AccessControl.dll)",
+		"System.IO.UnmanagedMemoryStream @ 8.0.1425.11118 (/app/System.IO.UnmanagedMemoryStream.dll)",
+		"System.Linq @ 8.0.1425.11118 (/app/System.Linq.dll)",
+		"System.Linq.Expressions @ 8.0.1425.11118 (/app/System.Linq.Expressions.dll)",
+		"System.Linq.Parallel @ 8.0.1425.11118 (/app/System.Linq.Parallel.dll)",
+		"System.Linq.Queryable @ 8.0.1425.11118 (/app/System.Linq.Queryable.dll)",
+		"System.Memory @ 8.0.1425.11118 (/app/System.Memory.dll)",
+		"System.Net @ 8.0.1425.11118 (/app/System.Net.dll)",
+		"System.Net.Http @ 8.0.1425.11118 (/app/System.Net.Http.dll)",
+		"System.Net.Http.Json @ 8.0.1425.11118 (/app/System.Net.Http.Json.dll)",
+		"System.Net.HttpListener @ 8.0.1425.11118 (/app/System.Net.HttpListener.dll)",
+		"System.Net.Mail @ 8.0.1425.11118 (/app/System.Net.Mail.dll)",
+		"System.Net.NameResolution @ 8.0.1425.11118 (/app/System.Net.NameResolution.dll)",
+		"System.Net.NetworkInformation @ 8.0.1425.11118 (/app/System.Net.NetworkInformation.dll)",
+		"System.Net.Ping @ 8.0.1425.11118 (/app/System.Net.Ping.dll)",
+		"System.Net.Primitives @ 8.0.1425.11118 (/app/System.Net.Primitives.dll)",
+		"System.Net.Quic @ 8.0.1425.11118 (/app/System.Net.Quic.dll)",
+		"System.Net.Requests @ 8.0.1425.11118 (/app/System.Net.Requests.dll)",
+		"System.Net.Security @ 8.0.1425.11118 (/app/System.Net.Security.dll)",
+		"System.Net.ServicePoint @ 8.0.1425.11118 (/app/System.Net.ServicePoint.dll)",
+		"System.Net.Sockets @ 8.0.1425.11118 (/app/System.Net.Sockets.dll)",
+		"System.Net.WebClient @ 8.0.1425.11118 (/app/System.Net.WebClient.dll)",
+		"System.Net.WebHeaderCollection @ 8.0.1425.11118 (/app/System.Net.WebHeaderCollection.dll)",
+		"System.Net.WebProxy @ 8.0.1425.11118 (/app/System.Net.WebProxy.dll)",
+		"System.Net.WebSockets @ 8.0.1425.11118 (/app/System.Net.WebSockets.dll)",
+		"System.Net.WebSockets.Client @ 8.0.1425.11118 (/app/System.Net.WebSockets.Client.dll)",
+		"System.Numerics @ 8.0.1425.11118 (/app/System.Numerics.dll)",
+		"System.Numerics.Vectors @ 8.0.1425.11118 (/app/System.Numerics.Vectors.dll)",
+		"System.ObjectModel @ 8.0.1425.11118 (/app/System.ObjectModel.dll)",
+		"System.Private.CoreLib @ 8.0.1425.11118 (/app/System.Private.CoreLib.dll)",
+		"System.Private.DataContractSerialization @ 8.0.1425.11118 (/app/System.Private.DataContractSerialization.dll)",
+		"System.Private.Uri @ 8.0.1425.11118 (/app/System.Private.Uri.dll)",
+		"System.Private.Xml @ 8.0.1425.11118 (/app/System.Private.Xml.dll)",
+		"System.Private.Xml.Linq @ 8.0.1425.11118 (/app/System.Private.Xml.Linq.dll)",
+		"System.Reflection @ 8.0.1425.11118 (/app/System.Reflection.dll)",
+		"System.Reflection.DispatchProxy @ 8.0.1425.11118 (/app/System.Reflection.DispatchProxy.dll)",
+		"System.Reflection.Emit @ 8.0.1425.11118 (/app/System.Reflection.Emit.dll)",
+		"System.Reflection.Emit.ILGeneration @ 8.0.1425.11118 (/app/System.Reflection.Emit.ILGeneration.dll)",
+		"System.Reflection.Emit.Lightweight @ 8.0.1425.11118 (/app/System.Reflection.Emit.Lightweight.dll)",
+		"System.Reflection.Extensions @ 8.0.1425.11118 (/app/System.Reflection.Extensions.dll)",
+		"System.Reflection.Metadata @ 8.0.1425.11118 (/app/System.Reflection.Metadata.dll)",
+		"System.Reflection.Primitives @ 8.0.1425.11118 (/app/System.Reflection.Primitives.dll)",
+		"System.Reflection.TypeExtensions @ 8.0.1425.11118 (/app/System.Reflection.TypeExtensions.dll)",
+		"System.Resources.Reader @ 8.0.1425.11118 (/app/System.Resources.Reader.dll)",
+		"System.Resources.ResourceManager @ 8.0.1425.11118 (/app/System.Resources.ResourceManager.dll)",
+		"System.Resources.Writer @ 8.0.1425.11118 (/app/System.Resources.Writer.dll)",
+		"System.Runtime @ 8.0.1425.11118 (/app/System.Runtime.dll)",
+		"System.Runtime.CompilerServices.Unsafe @ 8.0.1425.11118 (/app/System.Runtime.CompilerServices.Unsafe.dll)",
+		"System.Runtime.CompilerServices.VisualC @ 8.0.1425.11118 (/app/System.Runtime.CompilerServices.VisualC.dll)",
+		"System.Runtime.Extensions @ 8.0.1425.11118 (/app/System.Runtime.Extensions.dll)",
+		"System.Runtime.Handles @ 8.0.1425.11118 (/app/System.Runtime.Handles.dll)",
+		"System.Runtime.InteropServices @ 8.0.1425.11118 (/app/System.Runtime.InteropServices.dll)",
+		"System.Runtime.InteropServices.JavaScript @ 8.0.1425.11118 (/app/System.Runtime.InteropServices.JavaScript.dll)",
+		"System.Runtime.InteropServices.RuntimeInformation @ 8.0.1425.11118 (/app/System.Runtime.InteropServices.RuntimeInformation.dll)",
+		"System.Runtime.Intrinsics @ 8.0.1425.11118 (/app/System.Runtime.Intrinsics.dll)",
+		"System.Runtime.Loader @ 8.0.1425.11118 (/app/System.Runtime.Loader.dll)",
+		"System.Runtime.Numerics @ 8.0.1425.11118 (/app/System.Runtime.Numerics.dll)",
+		"System.Runtime.Serialization @ 8.0.1425.11118 (/app/System.Runtime.Serialization.dll)",
+		"System.Runtime.Serialization.Formatters @ 8.0.1425.11118 (/app/System.Runtime.Serialization.Formatters.dll)",
+		"System.Runtime.Serialization.Json @ 8.0.1425.11118 (/app/System.Runtime.Serialization.Json.dll)",
+		"System.Runtime.Serialization.Primitives @ 8.0.1425.11118 (/app/System.Runtime.Serialization.Primitives.dll)",
+		"System.Runtime.Serialization.Xml @ 8.0.1425.11118 (/app/System.Runtime.Serialization.Xml.dll)",
+		"System.Security @ 8.0.1425.11118 (/app/System.Security.dll)",
+		"System.Security.AccessControl @ 8.0.1425.11118 (/app/System.Security.AccessControl.dll)",
+		"System.Security.Claims @ 8.0.1425.11118 (/app/System.Security.Claims.dll)",
+		"System.Security.Cryptography @ 8.0.1425.11118 (/app/System.Security.Cryptography.dll)",
+		"System.Security.Cryptography.Algorithms @ 8.0.1425.11118 (/app/System.Security.Cryptography.Algorithms.dll)",
+		"System.Security.Cryptography.Cng @ 8.0.1425.11118 (/app/System.Security.Cryptography.Cng.dll)",
+		"System.Security.Cryptography.Csp @ 8.0.1425.11118 (/app/System.Security.Cryptography.Csp.dll)",
+		"System.Security.Cryptography.Encoding @ 8.0.1425.11118 (/app/System.Security.Cryptography.Encoding.dll)",
+		"System.Security.Cryptography.OpenSsl @ 8.0.1425.11118 (/app/System.Security.Cryptography.OpenSsl.dll)",
+		"System.Security.Cryptography.Primitives @ 8.0.1425.11118 (/app/System.Security.Cryptography.Primitives.dll)",
+		"System.Security.Cryptography.X509Certificates @ 8.0.1425.11118 (/app/System.Security.Cryptography.X509Certificates.dll)",
+		"System.Security.Principal @ 8.0.1425.11118 (/app/System.Security.Principal.dll)",
+		"System.Security.Principal.Windows @ 8.0.1425.11118 (/app/System.Security.Principal.Windows.dll)",
+		"System.Security.SecureString @ 8.0.1425.11118 (/app/System.Security.SecureString.dll)",
+		"System.ServiceModel.Web @ 8.0.1425.11118 (/app/System.ServiceModel.Web.dll)",
+		"System.ServiceProcess @ 8.0.1425.11118 (/app/System.ServiceProcess.dll)",
+		"System.Text.Encoding @ 8.0.1425.11118 (/app/System.Text.Encoding.dll)",
+		"System.Text.Encoding.CodePages @ 8.0.1425.11118 (/app/System.Text.Encoding.CodePages.dll)",
+		"System.Text.Encoding.Extensions @ 8.0.1425.11118 (/app/System.Text.Encoding.Extensions.dll)",
+		"System.Text.Encodings.Web @ 8.0.1425.11118 (/app/System.Text.Encodings.Web.dll)",
+		"System.Text.Json @ 8.0.1425.11118 (/app/System.Text.Json.dll)",
+		"System.Text.RegularExpressions @ 8.0.1425.11118 (/app/System.Text.RegularExpressions.dll)",
+		"System.Threading @ 8.0.1425.11118 (/app/System.Threading.dll)",
+		"System.Threading.Channels @ 8.0.1425.11118 (/app/System.Threading.Channels.dll)",
+		"System.Threading.Overlapped @ 8.0.1425.11118 (/app/System.Threading.Overlapped.dll)",
+		"System.Threading.Tasks @ 8.0.1425.11118 (/app/System.Threading.Tasks.dll)",
+		"System.Threading.Tasks.Dataflow @ 8.0.1425.11118 (/app/System.Threading.Tasks.Dataflow.dll)",
+		"System.Threading.Tasks.Extensions @ 8.0.1425.11118 (/app/System.Threading.Tasks.Extensions.dll)",
+		"System.Threading.Tasks.Parallel @ 8.0.1425.11118 (/app/System.Threading.Tasks.Parallel.dll)",
+		"System.Threading.Thread @ 8.0.1425.11118 (/app/System.Threading.Thread.dll)",
+		"System.Threading.ThreadPool @ 8.0.1425.11118 (/app/System.Threading.ThreadPool.dll)",
+		"System.Threading.Timer @ 8.0.1425.11118 (/app/System.Threading.Timer.dll)",
+		"System.Transactions @ 8.0.1425.11118 (/app/System.Transactions.dll)",
+		"System.Transactions.Local @ 8.0.1425.11118 (/app/System.Transactions.Local.dll)",
+		"System.ValueTuple @ 8.0.1425.11118 (/app/System.ValueTuple.dll)",
+		"System.Web @ 8.0.1425.11118 (/app/System.Web.dll)",
+		"System.Web.HttpUtility @ 8.0.1425.11118 (/app/System.Web.HttpUtility.dll)",
+		"System.Windows @ 8.0.1425.11118 (/app/System.Windows.dll)",
+		"System.Xml @ 8.0.1425.11118 (/app/System.Xml.dll)",
+		"System.Xml.Linq @ 8.0.1425.11118 (/app/System.Xml.Linq.dll)",
+		"System.Xml.ReaderWriter @ 8.0.1425.11118 (/app/System.Xml.ReaderWriter.dll)",
+		"System.Xml.Serialization @ 8.0.1425.11118 (/app/System.Xml.Serialization.dll)",
+		"System.Xml.XDocument @ 8.0.1425.11118 (/app/System.Xml.XDocument.dll)",
+		"System.Xml.XPath @ 8.0.1425.11118 (/app/System.Xml.XPath.dll)",
+		"System.Xml.XPath.XDocument @ 8.0.1425.11118 (/app/System.Xml.XPath.XDocument.dll)",
+		"System.Xml.XmlDocument @ 8.0.1425.11118 (/app/System.Xml.XmlDocument.dll)",
+		"System.Xml.XmlSerializer @ 8.0.1425.11118 (/app/System.Xml.XmlSerializer.dll)",
+		"WindowsBase @ 8.0.1425.11118 (/app/WindowsBase.dll)",
+		"mscorlib @ 8.0.1425.11118 (/app/mscorlib.dll)",
+		"netstandard @ 8.0.1425.11118 (/app/netstandard.dll)",
+	)
 
 	assertAllDepEntriesWithoutExecutables := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 		t.Helper()
@@ -425,6 +791,42 @@ func TestCataloger(t *testing.T) {
 
 	}
 
+	assertSingleFileDeployment := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+		t.Helper()
+		for _, p := range pkgs {
+			// assert that all packages have an executable associated with it
+			m, ok := p.Metadata.(pkg.DotnetPortableExecutableEntry)
+			if !ok {
+				t.Fatalf("expected metadata to be of type DotnetPortableExecutableEntry")
+			}
+
+			assert.NotNil(t, m, "expected metadata to be a non-nil DotnetPortableExecutableEntry")
+		}
+
+		actual := extractMatchingPackage(t, "dotnetapp", pkgs)
+
+		expected := pkg.Package{
+			Name:    "dotnetapp",
+			Version: "1.0.0.0", // important: in the dep.json this is 1.0.0, now the assembly version is used
+			FoundBy: "",
+			Locations: file.NewLocationSet(
+				// important: we only have the exe as evidence
+				file.NewLocation("/app/dotnetapp.exe"),
+			),
+			Language: pkg.Dotnet,
+			Type:     pkg.DotnetPkg,
+			PURL:     "pkg:nuget/dotnetapp@1.0.0.0", // important: in the dep.json this is 1.0.0, now the assembly version is used
+			Metadata: pkg.DotnetPortableExecutableEntry{
+				AssemblyVersion: "1.0.0.0",
+				InternalName:    "dotnetapp.dll",
+				CompanyName:     "dotnetapp",
+				ProductName:     "dotnetapp",
+				ProductVersion:  "1.0.0",
+			},
+		}
+		pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
+	}
+
 	cases := []struct {
 		name         string
 		fixture      string
@@ -478,6 +880,54 @@ func TestCataloger(t *testing.T) {
 			expectedPkgs: net8AppBinaryOnlyPkgs,
 			// important: no relationships should be found
 			assertion: assertAllBinaryEntries,
+		},
+		{
+			name:      "net8-app deps cataloger (single file)",
+			fixture:   "image-net8-app-single-file",
+			cataloger: NewDotnetDepsCataloger(),
+			// there should be no packages found!
+		},
+		{
+			name:      "net8-app combined cataloger (single file)",
+			fixture:   "image-net8-app-single-file",
+			cataloger: NewDotnetDepsBinaryCataloger(),
+
+			// important: no relationships should be found
+			expectedPkgs: []string{
+				"dotnetapp @ 1.0.0.0 (/app/dotnetapp.exe)",
+			},
+			assertion: assertSingleFileDeployment,
+		},
+		{
+			name:      "net8-app pe cataloger (single file)",
+			fixture:   "image-net8-app-single-file",
+			cataloger: NewDotnetPortableExecutableCataloger(),
+			// important: no relationships should be found
+			expectedPkgs: []string{
+				"dotnetapp @ 1.0.0.0 (/app/dotnetapp.exe)",
+			},
+			assertion: assertSingleFileDeployment,
+		},
+		{
+			name:         "net8-app deps cataloger (self-contained)",
+			fixture:      "image-net8-app-self-contained",
+			cataloger:    NewDotnetDepsCataloger(),
+			expectedPkgs: net8AppExpectedDepsSelfContainedPkgs,
+			expectedRels: net8AppExpectedDepSelfContainedRelationships,
+		},
+		{
+			name:         "net8-app combined cataloger (self-contained)",
+			fixture:      "image-net8-app-self-contained",
+			cataloger:    NewDotnetDepsBinaryCataloger(),
+			expectedPkgs: net8AppExpectedDepSelfContainedPkgs,
+			expectedRels: net8AppExpectedDepSelfContainedRelationships,
+		},
+		{
+			name:      "net8-app pe cataloger (self-contained)",
+			fixture:   "image-net8-app-self-contained",
+			cataloger: NewDotnetPortableExecutableCataloger(),
+			// important: no relationships should be found
+			expectedPkgs: net8AppExpectedBinarySelfContainedPkgs,
 		},
 	}
 

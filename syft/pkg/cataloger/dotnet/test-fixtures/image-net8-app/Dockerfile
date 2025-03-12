@@ -1,14 +1,18 @@
-FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
-ARG TARGETARCH=x64
+# This represents a basic .NET project build where the project dependencies are downloaded and the project is built.
+# The output is a directory tree of DLLs, a project.lock.json (not used in these tests), a .deps.json file, and
+# a .runtimeconfig.json file (not used in these tests). With this deployment strategy there is no bundled runtime.
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:8.0-alpine@sha256:7d3a75ca5c8ac4679908ef7a2591b9bc257c62bd530167de32bba105148bb7be AS build
+ARG RUNTIME=win-x64
 WORKDIR /src
 
 # copy csproj and restore as distinct layers
 COPY src/*.csproj .
-RUN dotnet restore --arch $TARGETARCH --verbosity normal
+COPY src/packages.lock.json .
+RUN dotnet restore -r $RUNTIME --verbosity normal --locked-mode
 
 # copy and publish app and libraries
 COPY src/ .
-RUN dotnet publish --arch $TARGETARCH --no-restore -o /app
+RUN dotnet publish -r $RUNTIME --no-restore -o /app
 
 # $ dotnet list package --include-transitive
 # Project 'dotnetapp' has the following package references
@@ -74,3 +78,5 @@ RUN wget -O /app/jruby_windows_9_3_15_0.exe https://s3.amazonaws.com/jruby.org/d
 FROM busybox
 WORKDIR /app
 COPY --from=build /app .
+# just a nice to have for later...
+#COPY --from=build /src/packages.lock.json .

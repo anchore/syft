@@ -52,17 +52,11 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
-	var errs error
 	for _, docs := range [][]logicalDepsJSON{pairedDepsJSON, remainingDepsJSON} {
 		for _, doc := range docs {
-			ps, rs, err := packagesFromLogicalDepsJSON(doc)
-			// even if there are errors we still want to capture what partial information we can
+			ps, rs := packagesFromLogicalDepsJSON(doc)
 			pkgs = append(pkgs, ps...)
 			relationships = append(relationships, rs...)
-
-			if err != nil {
-				errs = unknown.Append(errs, doc.Location, err)
-			}
 		}
 	}
 
@@ -119,11 +113,11 @@ func attachAssociatedExecutables(dep *logicalDepsJSON, pe logicalDotnetPE) bool 
 	relativeDllPath := strings.TrimPrefix(strings.TrimPrefix(pe.Location.RealPath, appDir), "/")
 
 	var found bool
-	for key, p := range dep.Packages {
+	for key, p := range dep.PackagesByNameVersion {
 		if targetPath, ok := p.RuntimeAndResourcePathsByRelativeDLLPath[relativeDllPath]; ok {
 			pe.TargetPath = targetPath
 			p.Executables = append(p.Executables, pe)
-			dep.Packages[key] = p // update the map with the modified package
+			dep.PackagesByNameVersion[key] = p // update the map with the modified package
 			found = true
 		}
 	}
@@ -151,63 +145,41 @@ func isParentOf(parentFile, childFile string) bool {
 }
 
 // packagesFromDepsJSON creates packages from a list of logicalDepsJSON documents.
-func packagesFromDepsJSON(docs []logicalDepsJSON) ([]pkg.Package, []artifact.Relationship, error) {
+func packagesFromDepsJSON(docs []logicalDepsJSON) ([]pkg.Package, []artifact.Relationship) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
-	var errs error
 	for _, ldj := range docs {
-		ps, rs, err := packagesFromLogicalDepsJSON(ldj)
-		// even if there are errors we still want to capture what partial information we can
+		ps, rs := packagesFromLogicalDepsJSON(ldj)
 		pkgs = append(pkgs, ps...)
 		relationships = append(relationships, rs...)
-		if err != nil {
-			errs = unknown.Append(errs, ldj.Location, err)
-		}
 	}
-	return pkgs, relationships, errs
+	return pkgs, relationships
 }
 
 // packagesFromLogicalDepsJSON converts a logicalDepsJSON (using the new map type) into catalog packages.
-func packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([]pkg.Package, []artifact.Relationship, error) {
-	depsPath := doc.Location.Path()
-	rootName := getDepsJSONFilePrefix(depsPath)
-	if rootName == "" {
-		return nil, nil, fmt.Errorf("unable to determine root package name from deps.json file: %s", depsPath)
-	}
-
+func packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([]pkg.Package, []artifact.Relationship) {
 	var rootPkg *pkg.Package
-	// iterate over the map to find the root package
-	for _, p := range doc.Packages {
-		name, _ := extractNameAndVersion(p.NameVersion)
-		if p.Library != nil && p.Library.Type == "project" && name == rootName {
-			rootPkg = newDotnetDepsPackage(p, doc.Location)
-			break
-		}
-	}
-	if rootPkg == nil {
-		return nil, nil, fmt.Errorf("unable to determine root package from deps.json file: %s", depsPath)
+	if rootLpkg, hasRoot := doc.RootPackage(); !hasRoot {
+		rootPkg = newDotnetDepsPackage(rootLpkg, doc.Location)
 	}
 
-	pkgs := []pkg.Package{*rootPkg}
+	var pkgs []pkg.Package
 	pkgMap := make(map[string]pkg.Package)
-	pkgMap[createNameAndVersion(rootPkg.Name, rootPkg.Version)] = *rootPkg
-
-	// gather all package keys (NameVersion) and sort for deterministic order
-	var fullNames []string
-	lPkgsByFullName := make(map[string]logicalDepsJSONPackage)
-	for _, p := range doc.Packages {
-		lPkgsByFullName[p.NameVersion] = p
-		fullNames = append(fullNames, p.NameVersion)
+	if rootPkg != nil {
+		pkgs = append(pkgs, *rootPkg)
+		pkgMap[createNameAndVersion(rootPkg.Name, rootPkg.Version)] = *rootPkg
 	}
-	sort.Strings(fullNames)
+
+	nameVersions := doc.PackageNameVersions.List()
+	sort.Strings(nameVersions)
 
 	// process each non-root package
-	for _, nameVersion := range fullNames {
+	for _, nameVersion := range nameVersions {
 		name, version := extractNameAndVersion(nameVersion)
-		if name == rootPkg.Name && version == rootPkg.Version {
+		if rootPkg != nil && name == rootPkg.Name && version == rootPkg.Version {
 			continue
 		}
-		lp := lPkgsByFullName[nameVersion]
+		lp := doc.PackagesByNameVersion[nameVersion]
 		dotnetPkg := newDotnetDepsPackage(lp, doc.Location)
 		if dotnetPkg != nil {
 			pkgs = append(pkgs, *dotnetPkg)
@@ -215,9 +187,12 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([]pkg.Package, []artifact
 		}
 	}
 
-	// build dependency relationships between packages
+	return pkgs, relationshipsFromLogicalDepsJSON(doc, pkgMap)
+}
+
+func relationshipsFromLogicalDepsJSON(doc logicalDepsJSON, pkgMap map[string]pkg.Package) []artifact.Relationship {
 	var relationships []artifact.Relationship
-	for _, lp := range doc.Packages {
+	for _, lp := range doc.PackagesByNameVersion {
 		if lp.Targets == nil {
 			continue
 		}
@@ -241,7 +216,7 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([]pkg.Package, []artifact
 	}
 
 	relationship.Sort(relationships)
-	return pkgs, relationships, nil
+	return relationships
 }
 
 // findDepsJSON locates and parses all deps.json files.
@@ -325,7 +300,7 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalDotnetPE, er
 		return nil, nil
 	}
 
-	if !ldpe.CLR.isSpecified() {
+	if !ldpe.CLR.hasEvidenceOfCLR() {
 		// this is not a .NET binary
 		return nil, nil
 	}

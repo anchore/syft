@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -42,9 +44,29 @@ type logicalDepsJSONPackage struct {
 }
 
 type logicalDepsJSON struct {
-	Location      file.Location
-	RuntimeTarget runtimeTarget
-	Packages      map[string]logicalDepsJSONPackage
+	Location              file.Location
+	RuntimeTarget         runtimeTarget
+	PackagesByNameVersion map[string]logicalDepsJSONPackage
+	PackageNameVersions   *strset.Set
+}
+
+func (l logicalDepsJSON) RootPackage() (logicalDepsJSONPackage, bool) {
+	rootName := getDepsJSONFilePrefix(l.Location.RealPath)
+	if rootName == "" {
+		return logicalDepsJSONPackage{}, false
+	}
+
+	// iterate over the map to find the root package. If we don't find the root package, that's ok! We still want to
+	// get all of the packages that are defined in this deps.json file.
+	for _, p := range l.PackagesByNameVersion {
+		name, _ := extractNameAndVersion(p.NameVersion)
+		// there can be multiple projects defined in a deps.json and only by convention is the root project the same name as the deps.json file
+		// however there are other configurations that can lead to differences (e.g. "tool_fsc" vs "fsc.deps.json").
+		if p.Library != nil && p.Library.Type == "project" && name == rootName {
+			return p, true
+		}
+	}
+	return logicalDepsJSONPackage{}, false
 }
 
 func newDepsJSON(reader file.LocationReadCloser) (*depsJSON, error) {
@@ -59,6 +81,7 @@ func newDepsJSON(reader file.LocationReadCloser) (*depsJSON, error) {
 
 func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 	packageMap := make(map[string]*logicalDepsJSONPackage)
+	nameVersions := strset.New()
 
 	for _, targets := range deps.Targets {
 		for libName, target := range targets {
@@ -88,6 +111,7 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 					RuntimeAndResourcePathsByRelativeDLLPath: paths,
 				}
 				packageMap[libName] = p
+				nameVersions.Add(libName)
 			}
 		}
 	}
@@ -97,8 +121,9 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 	}
 
 	return logicalDepsJSON{
-		Location:      deps.Location,
-		RuntimeTarget: deps.RuntimeTarget,
-		Packages:      packages,
+		Location:              deps.Location,
+		RuntimeTarget:         deps.RuntimeTarget,
+		PackagesByNameVersion: packages,
+		PackageNameVersions:   nameVersions,
 	}
 }

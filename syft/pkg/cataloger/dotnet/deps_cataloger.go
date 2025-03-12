@@ -3,7 +3,6 @@ package dotnet
 import (
 	"context"
 
-	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -19,14 +18,11 @@ func (c depsCataloger) Name() string {
 }
 
 func (c depsCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
-	depJSONDocs, unknowns, pkgUnknowns := findDepsJSON(resolver)
-	if pkgUnknowns != nil {
-		return nil, nil, pkgUnknowns
+	depJSONDocs, unknowns, err := findDepsJSON(resolver)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	pkgs, rels, pkgUnknowns := packagesFromDepsJSON(depJSONDocs)
-	if pkgUnknowns != nil {
-		return pkgs, rels, unknown.Join(unknowns, pkgUnknowns)
-	}
-	return pkgs, rels, nil
+	pkgs, rels := packagesFromDepsJSON(depJSONDocs)
+	return pkgs, rels, unknowns
 }

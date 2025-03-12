@@ -7,6 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"unicode/utf16"
+
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
@@ -29,12 +32,13 @@ type logicalDotnetPE struct {
 
 // peClrComDescriptor is basic info about the CLR (common language runtime) version from the COM descriptor
 type peClrComDescriptor struct {
-	MajorVersion uint16
-	MinorVersion uint16
+	HasClrResourceNames bool
+	MajorVersion        uint16
+	MinorVersion        uint16
 }
 
-func (c *peClrComDescriptor) isSpecified() bool {
-	return c != nil && c.MajorVersion != 0 && c.MinorVersion != 0
+func (c *peClrComDescriptor) hasEvidenceOfCLR() bool {
+	return c != nil && (c.MajorVersion != 0 && c.MinorVersion != 0 || c.HasClrResourceNames)
 }
 
 type peDosHeader struct {
@@ -119,10 +123,6 @@ func (s extractedSection) exists() bool {
 
 func directoryName(i int) string {
 	switch i {
-	case pe.IMAGE_DIRECTORY_ENTRY_EXPORT:
-		return "Export"
-	case pe.IMAGE_DIRECTORY_ENTRY_IMPORT:
-		return "Import"
 	case pe.IMAGE_DIRECTORY_ENTRY_RESOURCE:
 		return "Resource"
 	case pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR:
@@ -142,16 +142,17 @@ func getLogicalDotnetPE(f file.LocationReadCloser) (*logicalDotnetPE, error) {
 		return nil, fmt.Errorf("unable to parse PE sections: %w", err)
 	}
 
-	c, err := parseCLR(sections[pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR])
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse PE CLR directory: %w", err)
-	}
-
 	var dirs []uint32
 	versionResources := make(map[string]string)
-	err = parseResourceDirectory(sections[pe.IMAGE_DIRECTORY_ENTRY_RESOURCE], dirs, versionResources)
+	resourceNames := strset.New()
+	err = parseResourceDirectory(sections[pe.IMAGE_DIRECTORY_ENTRY_RESOURCE], dirs, versionResources, resourceNames)
 	if err != nil {
 		return nil, err
+	}
+
+	c, err := parseCLR(sections[pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR], resourceNames)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse PE CLR directory: %w", err)
 	}
 
 	return &logicalDotnetPE{
@@ -276,23 +277,24 @@ func parseSectionHeaders(file unionreader.UnionReader, magic uint16, numberOfSec
 	return soi, headers, nil
 }
 
-func parseCLR(sec *extractedSection) (*peClrComDescriptor, error) {
+func parseCLR(sec *extractedSection, resourceNames *strset.Set) (*peClrComDescriptor, error) {
+	hasCLRDebugResourceNames := resourceNames.HasAny("CLRDEBUGINFO")
 	if sec == nil || sec.Reader == nil {
-		return nil, nil
+		return &peClrComDescriptor{
+			HasClrResourceNames: hasCLRDebugResourceNames,
+		}, nil
 	}
+
 	reader := sec.Reader
 	var c peImageCore20
 	if err := binary.Read(reader, binary.LittleEndian, &c); err != nil {
 		return nil, fmt.Errorf("error reading CLR header: %w", err)
 	}
 
-	if c.Cb == 0 || c.MajorRuntimeVersion == 0 || c.MinorRuntimeVersion == 0 {
-		return nil, nil
-	}
-
 	return &peClrComDescriptor{
-		MajorVersion: c.MajorRuntimeVersion,
-		MinorVersion: c.MinorRuntimeVersion,
+		HasClrResourceNames: hasCLRDebugResourceNames,
+		MajorVersion:        c.MajorRuntimeVersion,
+		MinorVersion:        c.MinorRuntimeVersion,
 	}, nil
 }
 
@@ -353,7 +355,7 @@ func readDataFromRVA(file io.ReadSeeker, rva, size uint32, sections []pe.Section
 // sources:
 // - https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#the-rsrc-section
 // - https://learn.microsoft.com/en-us/previous-versions/ms809762(v=msdn.10)#pe-file-resources
-func parseResourceDirectory(sec *extractedSection, dirs []uint32, fields map[string]string) error {
+func parseResourceDirectory(sec *extractedSection, dirs []uint32, fields map[string]string, names *strset.Set) error {
 	if sec == nil || sec.Size <= 0 {
 		return nil
 	}
@@ -400,7 +402,7 @@ func parseResourceDirectory(sec *extractedSection, dirs []uint32, fields map[str
 			continue
 		}
 
-		if err := processResourceEntry(entry, baseRVA, sec, dirs, fields); err != nil {
+		if err := processResourceEntry(entry, baseRVA, sec, dirs, fields, names); err != nil {
 			log.Tracef("error processing resource entry: %v", err)
 			continue
 		}
@@ -409,12 +411,36 @@ func parseResourceDirectory(sec *extractedSection, dirs []uint32, fields map[str
 	return nil
 }
 
-func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, sec *extractedSection, dirs []uint32, fields map[string]string) error {
+func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, sec *extractedSection, dirs []uint32, fields map[string]string, names *strset.Set) error {
 	// if the high bit is set, this is a directory entry, otherwise it is a data entry
 	isDirectory := entry.OffsetToData&0x80000000 != 0
 
 	// note: the offset is relative to the beginning of the resource section, not an RVA
 	entryOffsetToData := entry.OffsetToData & 0x7FFFFFFF
+
+	nameIsString := entry.Name&0x80000000 != 0
+	nameOffset := entry.Name & 0x7FFFFFFF
+
+	// read the string name of the resource directory
+	if nameIsString {
+		currentPos, err := sec.Reader.Seek(0, io.SeekCurrent)
+		if err != nil {
+			return fmt.Errorf("error getting current reader position: %w", err)
+		}
+
+		if _, err := sec.Reader.Seek(int64(nameOffset), io.SeekStart); err != nil {
+			return fmt.Errorf("error restoring reader position: %w", err)
+		}
+
+		name, err := readUTF16WithLength(sec.Reader)
+		if err == nil {
+			names.Add(name)
+		}
+
+		if _, err := sec.Reader.Seek(currentPos, io.SeekStart); err != nil {
+			return fmt.Errorf("error restoring reader position: %w", err)
+		}
+	}
 
 	if isDirectory {
 		subRVA := baseRVA + entryOffsetToData
@@ -431,7 +457,7 @@ func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, s
 				Size:    sec.Size - (sec.RVA - baseRVA),
 				Reader:  sec.Reader,
 			},
-			dirs, fields)
+			dirs, fields, names)
 		if err != nil {
 			return err
 		}
@@ -670,4 +696,23 @@ func readUTF16(reader *bytes.Reader, offsets ...*int) string {
 	}
 
 	return string(result)
+}
+
+// readUTF16WithLength reads a length-prefixed UTF-16 string from reader.
+// The first 2 bytes represent the number of UTF-16 code units.
+func readUTF16WithLength(reader *bytes.Reader) (string, error) {
+	var length uint16
+	if err := binary.Read(reader, binary.LittleEndian, &length); err != nil {
+		return "", err
+	}
+	if length == 0 {
+		return "", nil
+	}
+
+	// read length UTF-16 code units.
+	codes := make([]uint16, length)
+	if err := binary.Read(reader, binary.LittleEndian, &codes); err != nil {
+		return "", err
+	}
+	return string(utf16.Decode(codes)), nil
 }
