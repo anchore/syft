@@ -14,9 +14,13 @@ func TestParseHomebrewPackage(t *testing.T) {
 
 	fixture := "test-fixtures/glob-paths/Cellar/foo/1.2.3/.brew/foo.rb"
 	fixtureLocation := file.NewLocation(fixture)
+	fixtureLocation = fixtureLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
+
 	locations := file.NewLocationSet(fixtureLocation)
 
 	cellarPath := "test-fixtures/glob-paths/Cellar/foo/1.2.3"
+	cellarLocation := file.NewLocation(cellarPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
+	
 	locations.Add(file.NewLocation(cellarPath))
 
 	expected := pkg.Package{
