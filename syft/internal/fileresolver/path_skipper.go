@@ -143,7 +143,11 @@ func containsPath(p1, p2 string) bool {
 	if p1Clean == p2Clean {
 		return true
 	}
-	return strings.HasPrefix(p1Clean, p2Clean+"/")
+	if !strings.HasPrefix(p1Clean, p2Clean) {
+		return false
+	}
+	// This is done to avoid allocation of a new string
+	return len(p1Clean) > len(p2Clean) && p1Clean[len(p2Clean)] == '/'
 }
 
 func simpleClean(p string) string {
