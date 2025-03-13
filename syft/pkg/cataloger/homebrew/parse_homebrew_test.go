@@ -20,7 +20,7 @@ func TestParseHomebrewPackage(t *testing.T) {
 
 	cellarPath := "test-fixtures/glob-paths/Cellar/foo/1.2.3"
 	cellarLocation := file.NewLocation(cellarPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
-	
+
 	locations.Add(file.NewLocation(cellarPath))
 
 	expected := pkg.Package{
