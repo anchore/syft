@@ -57,18 +57,11 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 					return
 				}
 
-				err := runTaskSafely(ctx, tsk, resolver, s)
-				unknowns, remainingErrors := unknown.ExtractCoordinateErrors(err)
-				if len(unknowns) > 0 {
-					appendUnknowns(s, tsk.Name(), unknowns)
-				}
-				if remainingErrors != nil {
-					withLock(func() {
-						errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", remainingErrors))
-						prog.SetError(remainingErrors)
-					})
-				}
-				prog.Increment()
+				err := RunTask(ctx, tsk, resolver, s, prog)
+				withLock(func() {
+					err = multierror.Append(err, fmt.Errorf("failed to run task: %w", err))
+					errs = multierror.Append(errs, err)
+				})
 			}
 		}()
 	}
@@ -76,6 +69,19 @@ func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsy
 	wg.Wait()
 
 	return errs
+}
+
+func RunTask(ctx context.Context, tsk Task, resolver file.Resolver, s sbomsync.Builder, prog *monitor.CatalogerTaskProgress) error {
+	err := runTaskSafely(ctx, tsk, resolver, s)
+	unknowns, remainingErrors := unknown.ExtractCoordinateErrors(err)
+	if len(unknowns) > 0 {
+		appendUnknowns(s, tsk.Name(), unknowns)
+	}
+	if remainingErrors != nil {
+		prog.SetError(remainingErrors)
+	}
+	prog.Increment()
+	return remainingErrors
 }
 
 func appendUnknowns(builder sbomsync.Builder, taskName string, unknowns []unknown.CoordinateError) {
