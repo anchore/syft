@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/format/syftjson"
@@ -47,7 +48,15 @@ func getSource(input string) source.Source {
 }
 
 func getSBOM(src source.Source) sbom.SBOM {
-	s, err := syft.CreateSBOM(context.Background(), src, nil)
+	ctx := context.Background()
+
+	licenseScanner, err := licenses.NewDefaultScanner(
+		licenses.WithIncludeLicenseContent(licenses.DefaultIncludeLicenseContent),
+		licenses.WithCoverage(licenses.DefaultCoverageThreshold),
+	)
+	scanCtx := licenses.SetContextLicenseScanner(ctx, licenseScanner)
+
+	s, err := syft.CreateSBOM(scanCtx, src, nil)
 	if err != nil {
 		panic(err)
 	}

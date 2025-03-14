@@ -16,3 +16,8 @@ func ContextLicenseScanner(ctx context.Context) (Scanner, error) {
 	}
 	return NewDefaultScanner()
 }
+
+func ContextHasLicenseScanner(ctx context.Context) bool {
+	_, ok := ctx.Value(licenseScannerKey{}).(Scanner)
+	return ok
+}

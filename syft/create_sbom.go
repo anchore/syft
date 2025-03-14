@@ -62,15 +62,17 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 		},
 	}
 
-	// inject a single license scanner and content config for all package cataloging tasks into context
-	licenseScanner, err := licenses.NewDefaultScanner(
-		licenses.WithIncludeLicenseContent(cfg.Licenses.IncludeUnkownLicenseContent),
-		licenses.WithCoverage(cfg.Licenses.Coverage),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not build licenseScanner for cataloging: %w", err)
+	if !licenses.ContextHasLicenseScanner(ctx) {
+		// inject a single license scanner and content config for all package cataloging tasks into context
+		licenseScanner, err := licenses.NewDefaultScanner(
+			licenses.WithIncludeLicenseContent(cfg.Licenses.IncludeUnkownLicenseContent),
+			licenses.WithCoverage(cfg.Licenses.Coverage),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("could not build licenseScanner for cataloging: %w", err)
+		}
+		ctx = licenses.SetContextLicenseScanner(ctx, licenseScanner)
 	}
-	ctx = licenses.SetContextLicenseScanner(ctx, licenseScanner)
 
 	catalogingProgress := monitorCatalogingTask(src.ID(), taskGroups)
 	packageCatalogingProgress := monitorPackageCatalogingTask()
