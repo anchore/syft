@@ -19,7 +19,6 @@ import (
 	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
-	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
@@ -43,7 +42,6 @@ type Catalog struct {
 	Enrich            []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
 
 	// ecosystem-specific cataloger configuration
-	Dotnet      dotnetConfig      `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
 	JavaScript  javaScriptConfig  `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
@@ -74,7 +72,6 @@ func DefaultCatalog() Catalog {
 		Package:       defaultPackageConfig(),
 		License:       defaultLicenseConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
-		Dotnet:        defaultDotnetConfig(),
 		Golang:        defaultGolangConfig(),
 		Java:          defaultJavaConfig(),
 		File:          defaultFileConfig(),
@@ -166,8 +163,6 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	}
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
-		Dotnet: dotnet.DefaultCatalogerConfig().
-			WithCertificateValidation(cfg.Dotnet.EnableCertificateValidation),
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).

@@ -23,6 +23,7 @@ func main() {
 		panic(fmt.Errorf("unable to get all metadata type names: %w", err))
 	}
 
+	// useful for debugging...
 	// for _, typeName := range typeNames {
 	//	fmt.Printf(" - %s\n", typeName)
 	//}
