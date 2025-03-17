@@ -299,6 +299,15 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 		},
 		{
+			name: "select-no-package-catalogers",
+			args: []string{"scan", "-o", "json", "--select-catalogers", "-package", coverageImage},
+			assertions: []traitAssertion{
+				assertPackageCount(0),
+				assertInOutput(`"used":["file-content-cataloger","file-digest-cataloger","file-executable-cataloger","file-metadata-cataloger"]`),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
 			name: "override-default-catalogers-option",
 			// This will detect enable:
 			// - python-installed-package-cataloger
@@ -308,6 +317,15 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", "-o", "json", "--override-default-catalogers", "python,gemspec", coverageImage},
 			assertions: []traitAssertion{
 				assertPackageCount(13),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "override-default-catalogers-with-files",
+			args: []string{"packages", "-o", "json", "--override-default-catalogers", "file", coverageImage},
+			assertions: []traitAssertion{
+				assertPackageCount(0),
+				assertInOutput(`"used":["file-content-cataloger","file-digest-cataloger","file-executable-cataloger","file-metadata-cataloger"]`),
 				assertSuccessfulReturnCode,
 			},
 		},

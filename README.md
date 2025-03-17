@@ -67,7 +67,7 @@ choco install syft -y
 
 ### Nix
 
-**Note**: Nix packaging of Syft is [community maintained](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/admin/syft/default.nix). Syft is available in the [stable channel](https://wiki.nixos.org/wiki/Nix_channels#The_official_channels) since NixOS `22.05`.
+**Note**: Nix packaging of Syft is [community maintained](https://github.com/NixOS/nixpkgs/blob/master/pkgs/by-name/sy/syft/package.nix). Syft is available in the [stable channel](https://wiki.nixos.org/wiki/Nix_channels#The_official_channels) since NixOS `22.05`.
 
 ```bash
 nix-env -i syft
@@ -123,6 +123,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 ### Supported Ecosystems
 
 - Alpine (apk)
+- Bitnami packages
 - C (conan)
 - C++ (conan)
 - Dart (pubs)
@@ -146,6 +147,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 - Rust (cargo.lock)
 - Swift (cocoapods, swift-package-manager)
 - Wordpress plugins
+- Terraform providers (.terraform.lock.hcl)
 
 ## Documentation
 

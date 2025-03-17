@@ -18,6 +18,7 @@ PrimaryPackagePurpose: FILE
 FilesAnalyzed: false
 PackageLicenseConcluded: NOASSERTION
 PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
 
 ##### Package: @at-sign
 

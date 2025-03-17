@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/google/licensecheck"
 	"github.com/gookit/color"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
@@ -31,8 +32,10 @@ import (
 
 func TestSearchMavenForLicenses(t *testing.T) {
 	url := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
-
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.TestingOnlyScanner())
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	scanner, err := licenses.NewScanner(sc)
+	require.NoError(t, err)
+	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
 
 	tests := []struct {
 		name             string
@@ -91,7 +94,10 @@ func TestSearchMavenForLicenses(t *testing.T) {
 }
 
 func TestParseJar(t *testing.T) {
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.TestingOnlyScanner())
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	scanner, err := licenses.NewScanner(sc)
+	require.NoError(t, err)
+	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
 
 	tests := []struct {
 		name         string
@@ -1374,7 +1380,10 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 }
 
 func Test_deterministicMatchingPomProperties(t *testing.T) {
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenses.TestingOnlyScanner())
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	scanner, err := licenses.NewScanner(sc)
+	require.NoError(t, err)
+	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
 
 	tests := []struct {
 		fixture  string
@@ -1428,7 +1437,7 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 	}
 
 	makeTask := strings.TrimPrefix(fixturePath, "test-fixtures/java-builds/")
-	t.Logf(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
+	t.Log(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -1453,7 +1462,7 @@ func generateJavaMetadataJarFixture(t *testing.T, fixtureName string, fileExtens
 	}
 
 	makeTask := filepath.Join("cache", fixtureName+"."+fileExtension)
-	t.Logf(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
+	t.Log(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
 
 	cwd, err := os.Getwd()
 	if err != nil {

@@ -16,13 +16,14 @@ type configurationAuditTrail struct {
 	DataGeneration cataloging.DataGenerationConfig `json:"data-generation" yaml:"data-generation" mapstructure:"data-generation"`
 	Packages       pkgcataloging.Config            `json:"packages" yaml:"packages" mapstructure:"packages"`
 	Files          filecataloging.Config           `json:"files" yaml:"files" mapstructure:"files"`
+	Licenses       cataloging.LicenseConfig        `json:"licenses" yaml:"licenses" mapstructure:"licenses"`
 	Catalogers     catalogerManifest               `json:"catalogers" yaml:"catalogers" mapstructure:"catalogers"`
 	ExtraConfigs   any                             `json:"extra,omitempty" yaml:"extra" mapstructure:"extra"`
 }
 
 type catalogerManifest struct {
-	Requested pkgcataloging.SelectionRequest `json:"requested" yaml:"requested" mapstructure:"requested"`
-	Used      []string                       `json:"used" yaml:"used" mapstructure:"used"`
+	Requested cataloging.SelectionRequest `json:"requested" yaml:"requested" mapstructure:"requested"`
+	Used      []string                    `json:"used" yaml:"used" mapstructure:"used"`
 }
 
 type marshalAPIConfiguration configurationAuditTrail

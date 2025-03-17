@@ -201,10 +201,9 @@ func parseRockspecNode(data []byte, i *int, locals map[string]string) (*rockspec
 		if c == '{' && c2 == '}' {
 			*i = offset + 1
 			return &rockspecNode{}, nil
-		} else {
-			*i = offset
 		}
 
+		*i = offset
 		parsing.SkipWhitespace(data, i)
 
 		obj, err := parseRockspecBlock(data, i, locals)

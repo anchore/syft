@@ -107,7 +107,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/redhat",
+			fixture: "test-fixtures/os/redhat/from-os-release",
 			release: &Release{
 				PrettyName:   "Red Hat Enterprise Linux Server 7.3 (Maipo)",
 				Name:         "Red Hat Enterprise Linux Server",
@@ -118,6 +118,17 @@ func TestIdentifyRelease(t *testing.T) {
 				HomeURL:      "https://www.redhat.com/",
 				BugReportURL: "https://bugzilla.redhat.com/",
 				CPEName:      "cpe:/o:redhat:enterprise_linux:7.3:GA:server",
+			},
+		},
+		{
+			fixture: "test-fixtures/os/redhat/from-redhat-release",
+			release: &Release{
+				PrettyName: "Red Hat Enterprise Linux release 8.10 (Ootpa)",
+				Name:       "Red Hat Enterprise Linux",
+				ID:         "rhel",
+				IDLike:     []string{"rhel"},
+				Version:    "8.10 (Ootpa)",
+				VersionID:  "8.10",
 			},
 		},
 		{
@@ -266,8 +277,8 @@ func TestIdentifyRelease(t *testing.T) {
 		{
 			fixture: "test-fixtures/os/centos5",
 			release: &Release{
-				PrettyName: "CentOS",
-				Name:       "centos",
+				PrettyName: "CentOS release 5.7 (Final)",
+				Name:       "CentOS",
 				ID:         "centos",
 				IDLike:     []string{"centos"},
 				Version:    "5.7",
@@ -506,8 +517,8 @@ func TestParseRedhatRelease(t *testing.T) {
 			fixture: "test-fixtures/os/centos5/etc/redhat-release",
 			name:    "Centos 5",
 			release: &Release{
-				PrettyName: "CentOS",
-				Name:       "centos",
+				PrettyName: "CentOS release 5.7 (Final)",
+				Name:       "CentOS",
 				ID:         "centos",
 				IDLike:     []string{"centos"},
 				Version:    "5.7",

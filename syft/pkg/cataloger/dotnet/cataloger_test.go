@@ -25,7 +25,7 @@ func TestCataloger_Globs(t *testing.T) {
 		{
 			name:      "obtain portable executable files",
 			fixture:   "test-fixtures/glob-paths",
-			cataloger: NewDotnetPortableExecutableCataloger(),
+			cataloger: NewDotnetPortableExecutableCataloger(DefaultCatalogerConfig()),
 			expected: []string{
 				"src/something.dll",
 				"src/something.exe",

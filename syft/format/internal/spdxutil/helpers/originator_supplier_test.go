@@ -12,6 +12,7 @@ import (
 func Test_OriginatorSupplier(t *testing.T) {
 	completionTester := packagemetadata.NewCompletionTester(t,
 		pkg.BinarySignature{},
+		pkg.BitnamiSBOMEntry{},
 		pkg.CocoaPodfileLockEntry{},
 		pkg.ConanV1LockEntry{},
 		pkg.ConanV2LockEntry{}, // the field Username might be the username of either the package originator or the supplier (unclear currently)
@@ -19,6 +20,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.ConaninfoEntry{},
 		pkg.DartPubspecLockEntry{},
 		pkg.DotnetDepsEntry{},
+		pkg.DotnetPackagesLockEntry{},
 		pkg.ELFBinaryPackageNoteJSONPayload{},
 		pkg.ElixirMixLockEntry{},
 		pkg.ErlangRebarLockEntry{},
@@ -87,6 +89,14 @@ func Test_OriginatorSupplier(t *testing.T) {
 			},
 			originator: "",
 			supplier:   "Person: someone",
+		},
+		{
+			name: "from bitnami",
+			input: pkg.Package{
+				Metadata: pkg.BitnamiSBOMEntry{},
+			},
+			originator: "Organization: Bitnami",
+			supplier:   "Organization: Bitnami",
 		},
 		{
 			name: "from dotnet -- PE binary",
@@ -367,6 +377,14 @@ func Test_OriginatorSupplier(t *testing.T) {
 			name: "from ocaml opam",
 			input: pkg.Package{
 				Metadata: pkg.OpamPackage{},
+			},
+			originator: "",
+			supplier:   "",
+		},
+		{
+			name: "from terraform lock",
+			input: pkg.Package{
+				Metadata: pkg.TerraformLockProviderEntry{},
 			},
 			originator: "",
 			supplier:   "",

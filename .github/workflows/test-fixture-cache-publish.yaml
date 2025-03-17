@@ -15,6 +15,7 @@ jobs:
     name: "Publish test fixture image cache"
     # we use this runner to get enough storage space for docker images and fixture cache
     runs-on: ubuntu-22.04-4core-16gb
+    if: github.repository == 'anchore/syft' # only run for main repo
     permissions:
       packages: write
     steps:

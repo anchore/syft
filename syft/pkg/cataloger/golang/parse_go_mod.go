@@ -35,7 +35,10 @@ func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make(map[string]pkg.Package)
 
-	licenseScanner := licenses.ContextLicenseScanner(ctx)
+	licenseScanner, err := licenses.ContextLicenseScanner(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to create default license scanner: %w", err)
+	}
 
 	contents, err := io.ReadAll(reader)
 	if err != nil {
@@ -53,11 +56,7 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 	}
 
 	for _, m := range f.Require {
-		lics, err := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, m.Mod.Path, m.Mod.Version)
-		if err != nil {
-			log.Tracef("error getting licenses for package: %s %v", m.Mod.Path, err)
-		}
-
+		lics := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, m.Mod.Path, m.Mod.Version)
 		packages[m.Mod.Path] = pkg.Package{
 			Name:      m.Mod.Path,
 			Version:   m.Mod.Version,
@@ -74,10 +73,7 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 
 	// remove any old packages and replace with new ones...
 	for _, m := range f.Replace {
-		lics, err := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, m.New.Path, m.New.Version)
-		if err != nil {
-			log.Tracef("error getting licenses for package: %s %v", m.New.Path, err)
-		}
+		lics := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, m.New.Path, m.New.Version)
 
 		// the old path and new path may be the same, in which case this is a noop,
 		// but if they're different we need to remove the old package.

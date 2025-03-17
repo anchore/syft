@@ -77,8 +77,12 @@ func DefaultClassifiers() []Classifier {
 			Class:    "redis-binary",
 			FileGlob: "**/redis-server",
 			EvidenceMatcher: evidenceMatchers(
-				FileContentsVersionMatcher(`(?s)payload %5.*?(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}`),
-				FileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}\x00.*?payload %5`),
+				// matches most recent versions of redis (~v7), e.g. "7.0.14buildkitsandbox-1702957741000000000"
+				FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
+				// matches against older versions of redis (~v3 - v6), e.g. "4.0.11841ce7054bd9-1542359302000000000"
+				FileContentsVersionMatcher(`[^\d](?P<version>[0-9]+\.[0-9]+\.[0-9]+)\w{12}-\d+`),
+				// matches against older versions of redis (~v2), e.g. "Server started, Redis version 2.8.23"
+				FileContentsVersionMatcher(`Redis version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			),
 			Package: "redis",
 			PURL:    mustPURL("pkg:generic/redis@version"),
@@ -568,7 +572,8 @@ func DefaultClassifiers() []Classifier {
 				// [NUL]3.0.2[NUL]%sFluent Bit
 				// [NUL]2.2.3[NUL]Fluent Bit
 				// [NUL]2.2.1[NUL][NUL][NUL]Fluent Bit
-				`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00[^\d]*Fluent`,
+				// [NUL]1.7.0[NUL]\x1b[1m[NUL]%sFluent Bit (versions 1.7.0-dev-3 through 1.7.0-dev-9 and 1.7.0-rc4 through 1.7.0-rc8)
+				`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00(\x1b\[1m\x00|\x00\x00)?(%s)?Fluent`,
 			),
 			Package: "fluent-bit",
 			PURL:    mustPURL("pkg:github/fluent/fluent-bit@version"),

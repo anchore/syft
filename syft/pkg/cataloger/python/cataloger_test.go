@@ -121,7 +121,7 @@ func Test_PackageCataloger(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:     "pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fpython-test%2Ftest.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(
@@ -163,7 +163,7 @@ func Test_PackageCataloger(t *testing.T) {
 			expectedPackage: pkg.Package{
 				Name:     "pygments",
 				Version:  "2.6.1",
-				PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fpython-test%2Ftest.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				Type:     pkg.PythonPkg,
 				Language: pkg.Python,
 				Licenses: pkg.NewLicenseSet(

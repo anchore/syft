@@ -89,7 +89,7 @@ func (cts catalogerTaskModel) View() string {
 func (m *Handler) handleCatalogerTaskStarted(e partybus.Event) ([]tea.Model, tea.Cmd) {
 	mon, info, err := syftEventParsers.ParseCatalogerTaskStarted(e)
 	if err != nil {
-		log.WithFields("error", err).Warn("unable to parse event")
+		log.WithFields("error", err).Debug("unable to parse event")
 		return nil, nil
 	}
 

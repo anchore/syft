@@ -1,8 +1,6 @@
-package pkgcataloging
+package cataloging
 
-import (
-	"strings"
-)
+import "strings"
 
 type SelectionRequest struct {
 	DefaultNamesOrTags []string `json:"default,omitempty"`
@@ -48,6 +46,10 @@ func (s SelectionRequest) WithAdditions(names ...string) SelectionRequest {
 func (s SelectionRequest) WithRemovals(nameOrTags ...string) SelectionRequest {
 	s.RemoveNamesOrTags = append(s.RemoveNamesOrTags, nameOrTags...)
 	return s
+}
+
+func (s SelectionRequest) IsEmpty() bool {
+	return len(s.AddNames) == 0 && len(s.RemoveNamesOrTags) == 0 && len(s.SubSelectTags) == 0 && len(s.DefaultNamesOrTags) == 0
 }
 
 func cleanSelection(tags []string) []string {

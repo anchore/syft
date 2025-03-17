@@ -10,6 +10,7 @@ func AllTypes() []any {
 		pkg.AlpmDBEntry{},
 		pkg.ApkDBEntry{},
 		pkg.BinarySignature{},
+		pkg.BitnamiSBOMEntry{},
 		pkg.CocoaPodfileLockEntry{},
 		pkg.ConanV1LockEntry{},
 		pkg.ConanV2LockEntry{},
@@ -17,6 +18,7 @@ func AllTypes() []any {
 		pkg.ConaninfoEntry{},
 		pkg.DartPubspecLockEntry{},
 		pkg.DotnetDepsEntry{},
+		pkg.DotnetPackagesLockEntry{},
 		pkg.DotnetPortableExecutableEntry{},
 		pkg.DpkgDBEntry{},
 		pkg.ELFBinaryPackageNoteJSONPayload{},
@@ -52,6 +54,7 @@ func AllTypes() []any {
 		pkg.RustCargoLockEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.SwiplPackEntry{},
+		pkg.TerraformLockProviderEntry{},
 		pkg.WordpressPluginEntry{},
 		pkg.YarnLockEntry{},
 	}

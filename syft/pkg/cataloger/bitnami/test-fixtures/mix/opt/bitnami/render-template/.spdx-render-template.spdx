@@ -1,0 +1,212 @@
+{
+    "SPDXID": "SPDXRef-render-template",
+    "spdxVersion": "SPDX-2.3",
+    "creationInfo": {
+        "created": "2024-09-05T18:51:42.225Z",
+        "creators": [
+            "Organization: VMware, Inc."
+        ]
+    },
+    "name": "SPDX document for render-template 1.0.7",
+    "dataLicense": "CC0-1.0",
+    "documentDescribes": [
+        "SPDXRef-render-template"
+    ],
+    "documentNamespace": "render-template-1.0.7",
+    "packages": [
+        {
+            "SPDXID": "SPDXRef-render-template",
+            "name": "render-template",
+            "versionInfo": "1.0.7-4",
+            "downloadLocation": "https://github.com/bitnami/render-template/archive/refs/tags/v1.0.7.tar.gz",
+            "licenseConcluded": "Apache-2.0",
+            "licenseDeclared": "Apache-2.0",
+            "filesAnalyzed": false,
+            "externalRefs": [
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceType": "cpe23Type",
+                    "referenceLocator": "cpe:2.3:*:render-template:render-template:1.0.7:*:*:*:*:*:*:*"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:bitnami/render-template@1.0.7-4?arch=arm64&distro=debian-12"
+                }
+            ],
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "name": "opt/bitnami/common/bin/render-template",
+            "SPDXID": "SPDXRef-Application-4b412cf3f25d2574-render-template",
+            "downloadLocation": "NONE",
+            "filesAnalyzed": false,
+            "primaryPackagePurpose": "APPLICATION",
+            "copyrightText": "NOASSERTION",
+            "licenseConcluded": "NOASSERTION",
+            "licenseDeclared": "NOASSERTION"
+        },
+        {
+            "name": "github.com/aymerick/raymond",
+            "SPDXID": "SPDXRef-Package-c77f44f540ae92a0",
+            "versionInfo": "v2.0.2+incompatible",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NONE",
+            "filesAnalyzed": false,
+            "sourceInfo": "opt/bitnami/common/package found in: opt/bitnami/common/bin/render-template",
+            "licenseConcluded": "NONE",
+            "licenseDeclared": "NONE",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:golang/github.com/aymerick/raymond@v2.0.2%2Bincompatible"
+                }
+            ],
+            "primaryPackagePurpose": "LIBRARY",
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "name": "github.com/bitnami/render-template",
+            "SPDXID": "SPDXRef-Package-8213648cad51225d",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NONE",
+            "filesAnalyzed": false,
+            "sourceInfo": "opt/bitnami/common/package found in: opt/bitnami/common/bin/render-template",
+            "licenseConcluded": "NONE",
+            "licenseDeclared": "NONE",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:golang/github.com/bitnami/render-template"
+                }
+            ],
+            "primaryPackagePurpose": "LIBRARY",
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "name": "github.com/jessevdk/go-flags",
+            "SPDXID": "SPDXRef-Package-be6fde8a3edd7caf",
+            "versionInfo": "v1.6.1",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NONE",
+            "filesAnalyzed": false,
+            "sourceInfo": "opt/bitnami/common/package found in: opt/bitnami/common/bin/render-template",
+            "licenseConcluded": "NONE",
+            "licenseDeclared": "NONE",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:golang/github.com/jessevdk/go-flags@v1.6.1"
+                }
+            ],
+            "primaryPackagePurpose": "LIBRARY",
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "name": "github.com/mmikulicic/multierror",
+            "SPDXID": "SPDXRef-Package-b08d834237b92fed",
+            "versionInfo": "v0.0.0-20170428094957-c1ad6b5ecd26",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NONE",
+            "filesAnalyzed": false,
+            "sourceInfo": "opt/bitnami/common/package found in: opt/bitnami/common/bin/render-template",
+            "licenseConcluded": "NONE",
+            "licenseDeclared": "NONE",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:golang/github.com/mmikulicic/multierror@v0.0.0-20170428094957-c1ad6b5ecd26"
+                }
+            ],
+            "primaryPackagePurpose": "LIBRARY",
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "name": "golang.org/x/sys",
+            "SPDXID": "SPDXRef-Package-644a66965f04af7f",
+            "versionInfo": "v0.21.0",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NONE",
+            "filesAnalyzed": false,
+            "sourceInfo": "opt/bitnami/common/package found in: opt/bitnami/common/bin/render-template",
+            "licenseConcluded": "NONE",
+            "licenseDeclared": "NONE",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:golang/golang.org/x/sys@v0.21.0"
+                }
+            ],
+            "primaryPackagePurpose": "LIBRARY",
+            "copyrightText": "NOASSERTION"
+        },
+        {
+            "name": "stdlib",
+            "SPDXID": "SPDXRef-Package-7d9b78ebb84f1578",
+            "versionInfo": "1.22.7",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NONE",
+            "filesAnalyzed": false,
+            "sourceInfo": "opt/bitnami/common/package found in: opt/bitnami/common/bin/render-template",
+            "licenseConcluded": "NONE",
+            "licenseDeclared": "NONE",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:golang/stdlib@1.22.7"
+                }
+            ],
+            "primaryPackagePurpose": "LIBRARY",
+            "copyrightText": "NOASSERTION"
+        }
+    ],
+    "files": [],
+    "relationships": [
+        {
+            "spdxElementId": "SPDXRef-render-template",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-Application-4b412cf3f25d2574-render-template"
+        },
+        {
+            "spdxElementId": "SPDXRef-Application-4b412cf3f25d2574-render-template",
+            "relatedSpdxElement": "SPDXRef-Package-8213648cad51225d",
+            "relationshipType": "CONTAINS"
+        },
+        {
+            "spdxElementId": "SPDXRef-render-template",
+            "relatedSpdxElement": "SPDXRef-Application-4b412cf3f25d2574-render-template",
+            "relationshipType": "CONTAINS"
+        },
+        {
+            "spdxElementId": "SPDXRef-Package-8213648cad51225d",
+            "relatedSpdxElement": "SPDXRef-Package-644a66965f04af7f",
+            "relationshipType": "DEPENDS_ON"
+        },
+        {
+            "spdxElementId": "SPDXRef-Package-8213648cad51225d",
+            "relatedSpdxElement": "SPDXRef-Package-7d9b78ebb84f1578",
+            "relationshipType": "DEPENDS_ON"
+        },
+        {
+            "spdxElementId": "SPDXRef-Package-8213648cad51225d",
+            "relatedSpdxElement": "SPDXRef-Package-b08d834237b92fed",
+            "relationshipType": "DEPENDS_ON"
+        },
+        {
+            "spdxElementId": "SPDXRef-Package-8213648cad51225d",
+            "relatedSpdxElement": "SPDXRef-Package-be6fde8a3edd7caf",
+            "relationshipType": "DEPENDS_ON"
+        },
+        {
+            "spdxElementId": "SPDXRef-Package-8213648cad51225d",
+            "relatedSpdxElement": "SPDXRef-Package-c77f44f540ae92a0",
+            "relationshipType": "DEPENDS_ON"
+        }
+    ]
+}
