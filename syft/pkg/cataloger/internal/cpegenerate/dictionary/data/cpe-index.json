@@ -5582,6 +5582,9 @@
       "XML2Dict": [
         "cpe:2.3:a:xml2dict_project:xml2dict:*:*:*:*:*:python:*:*"
       ],
+      "aiohttp-session": [
+        "cpe:2.3:a:aio-libs:aiohttp_session:*:*:*:*:*:*:*:*"
+      ],
       "aniso8601": [
         "cpe:2.3:a:aniso8601_project:aniso8601:*:*:*:*:*:*:*:*"
       ],
@@ -7899,6 +7902,9 @@
         "cpe:2.3:a:archivist_-_custom_archive_templates_project:archivist_-_custom_archive_templates:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:ericteubert:archivist_-_custom_archive_templates:*:*:*:*:*:wordpress:*:*"
       ],
+      "arconix-faq": [
+        "cpe:2.3:a:tychesoftwares:arconix_faq:*:*:*:*:*:wordpress:*:*"
+      ],
       "arconix-shortcodes": [
         "cpe:2.3:a:tychesoftwares:arconix_shortcodes:*:*:*:*:*:wordpress:*:*"
       ],
@@ -8926,6 +8932,9 @@
       "ce21-suite": [
         "cpe:2.3:a:ce21:ce21_suite:*:*:*:*:*:wordpress:*:*"
       ],
+      "cf-geoplugin": [
+        "cpe:2.3:a:infinitumform:geo_controller:*:*:*:*:*:wordpress:*:*"
+      ],
       "cf7-constant-contact": [
         "cpe:2.3:a:crmperks:integration_for_constant_contact_and_contact_form_7\\,_wpforms\\,_elementor\\,_ninja:*:*:*:*:*:wordpress:*:*"
       ],
@@ -9147,6 +9156,9 @@
       "code-snippets-extended": [
         "cpe:2.3:a:code_snippets_extended_project:code_snippets_extended:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:codesnippets:code_snippets:*:*:*:*:*:wordpress:*:*"
+      ],
+      "codebard-help-desk": [
+        "cpe:2.3:a:codebard:codebard_help_desk:*:*:*:*:*:wordpress:*:*"
       ],
       "codecolorer": [
         "cpe:2.3:a:codecolorer_project:codecolorer:*:*:*:*:*:wordpress:*:*"
@@ -10529,7 +10541,7 @@
         "cpe:2.3:a:wpai:elegant_themes_icons:*:*:*:*:*:wordpress:*:*"
       ],
       "element-ready-lite": [
-        "cpe:2.3:a:quomodosoft:elementsready:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:quomodosoft:elementsready:*:*:*:*:free:wordpress:*:*"
       ],
       "elementary-addons": [
         "cpe:2.3:a:camilluskillus:elementary_addons:*:*:*:*:*:wordpress:*:*"
@@ -10655,8 +10667,8 @@
         "cpe:2.3:a:english_wordpress_admin_project:english_wordpress_admin:*:*:*:*:*:wordpress:*:*"
       ],
       "enhanced-e-commerce-for-woocommerce-store": [
-        "cpe:2.3:a:conversios:google_analytics_integration_for_woocommerce:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:tatvic:conversios.io:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:conversios:conversios:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:conversios:google_analytics_integration_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "enhanced-plugin-admin": [
         "cpe:2.3:a:infolific:enhanced_plugin_admin:*:*:*:*:*:wordpress:*:*"
@@ -16250,6 +16262,9 @@
       "slider-blocks": [
         "cpe:2.3:a:makegutenblock:gutslider:*:*:*:*:*:wordpress:*:*"
       ],
+      "slider-by-supsystic": [
+        "cpe:2.3:a:supsystic:slider:*:*:*:*:*:wordpress:*:*"
+      ],
       "slider-comparison-image-before-and-after": [
         "cpe:2.3:a:artembovkun:slider_comparison_image_before_and_after:*:*:*:*:*:wordpress:*:*"
       ],
@@ -17022,6 +17037,9 @@
       ],
       "themify-portfolio-post": [
         "cpe:2.3:a:themify:portfolio_post:*:*:*:*:*:wordpress:*:*"
+      ],
+      "themify-shortcodes": [
+        "cpe:2.3:a:themify:themify_shortcodes:*:*:*:*:*:wordpress:*:*"
       ],
       "themify-wc-product-filter": [
         "cpe:2.3:a:themify:product_filter:*:*:*:*:*:wordpress:*:*",
@@ -19156,6 +19174,9 @@
       ],
       "wp-mpdf": [
         "cpe:2.3:a:wp-mpdf_project:wp-mpdf:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-multi-store-locator": [
+        "cpe:2.3:a:wpexperts:wp_multi_store_locator:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-nested-pages": [
         "cpe:2.3:a:kylephillips:nested_pages:*:*:*:*:*:wordpress:*:*"
