@@ -37,7 +37,7 @@ docker run --rm \
     -v ${WORK_DIR}:${WORK_DIR} \
     -e SYFT_CHECK_FOR_APP_UPDATE=0 \
     -w /src \
-    centos:latest \
+    rockylinux:9 \
         /bin/bash -x -c "\
             rpm -ivh ${DISTDIR}/syft_*_linux_amd64.rpm && \
             syft version && \
