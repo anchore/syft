@@ -6,8 +6,10 @@ import (
 )
 
 // NewDotnetDepsBinaryCataloger returns a cataloger based on PE and deps.json file contents.
-func NewDotnetDepsBinaryCataloger() pkg.Cataloger {
-	return &depsBinaryCataloger{}
+func NewDotnetDepsBinaryCataloger(config CatalogerConfig) pkg.Cataloger {
+	return &depsBinaryCataloger{
+		config: config,
+	}
 }
 
 // NewDotnetDepsCataloger returns a cataloger based on deps.json file contents.

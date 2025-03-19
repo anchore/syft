@@ -23,6 +23,6 @@ func (c depsCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg
 		return nil, nil, err
 	}
 
-	pkgs, rels := packagesFromDepsJSON(depJSONDocs)
+	pkgs, rels := packagesFromDepsJSON(depJSONDocs, false)
 	return pkgs, rels, unknowns
 }

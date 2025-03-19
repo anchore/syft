@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/unknown"
@@ -26,6 +28,7 @@ const (
 // from both sources are raised up, but with one merge operation applied; If a deps.json package reference can be
 // correlated with a PE file, the PE file is attached to the package as supporting evidence.
 type depsBinaryCataloger struct {
+	config CatalogerConfig
 }
 
 func (c depsBinaryCataloger) Name() string {
@@ -47,14 +50,20 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 	}
 
 	// partition the logical PE files by location and pair them with the logicalDepsJSON
-	pairedDepsJSON, remainingPeFiles, remainingDepsJSON := partitionPEs(depJSONDocs, peFiles)
+	pairedDepsJSONs, remainingPeFiles, remainingDepsJSONs := partitionPEs(depJSONDocs, peFiles)
 
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
-	for _, docs := range [][]logicalDepsJSON{pairedDepsJSON, remainingDepsJSON} {
+	depDocGroups := [][]logicalDepsJSON{pairedDepsJSONs}
+
+	if !c.config.DepPackagesMustHaveDLLs {
+		depDocGroups = append(depDocGroups, remainingDepsJSONs)
+	}
+
+	for _, docs := range depDocGroups {
 		for _, doc := range docs {
-			ps, rs := packagesFromLogicalDepsJSON(doc)
+			ps, rs := packagesFromLogicalDepsJSON(doc, c.config.DepPackagesMustHaveDLLs)
 			pkgs = append(pkgs, ps...)
 			relationships = append(relationships, rs...)
 		}
@@ -145,11 +154,11 @@ func isParentOf(parentFile, childFile string) bool {
 }
 
 // packagesFromDepsJSON creates packages from a list of logicalDepsJSON documents.
-func packagesFromDepsJSON(docs []logicalDepsJSON) ([]pkg.Package, []artifact.Relationship) {
+func packagesFromDepsJSON(docs []logicalDepsJSON, mustHaveDll bool) ([]pkg.Package, []artifact.Relationship) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 	for _, ldj := range docs {
-		ps, rs := packagesFromLogicalDepsJSON(ldj)
+		ps, rs := packagesFromLogicalDepsJSON(ldj, mustHaveDll)
 		pkgs = append(pkgs, ps...)
 		relationships = append(relationships, rs...)
 	}
@@ -157,7 +166,7 @@ func packagesFromDepsJSON(docs []logicalDepsJSON) ([]pkg.Package, []artifact.Rel
 }
 
 // packagesFromLogicalDepsJSON converts a logicalDepsJSON (using the new map type) into catalog packages.
-func packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([]pkg.Package, []artifact.Relationship) {
+func packagesFromLogicalDepsJSON(doc logicalDepsJSON, mustHaveDll bool) ([]pkg.Package, []artifact.Relationship) {
 	var rootPkg *pkg.Package
 	if rootLpkg, hasRoot := doc.RootPackage(); !hasRoot {
 		rootPkg = newDotnetDepsPackage(rootLpkg, doc.Location)
@@ -174,12 +183,17 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([]pkg.Package, []artifact
 	sort.Strings(nameVersions)
 
 	// process each non-root package
+	skippedDepPkgs := make(map[string]logicalDepsJSONPackage)
 	for _, nameVersion := range nameVersions {
 		name, version := extractNameAndVersion(nameVersion)
 		if rootPkg != nil && name == rootPkg.Name && version == rootPkg.Version {
 			continue
 		}
 		lp := doc.PackagesByNameVersion[nameVersion]
+		if mustHaveDll && len(lp.Executables) == 0 {
+			skippedDepPkgs[nameVersion] = lp
+			continue
+		}
 		dotnetPkg := newDotnetDepsPackage(lp, doc.Location)
 		if dotnetPkg != nil {
 			pkgs = append(pkgs, *dotnetPkg)
@@ -187,13 +201,14 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON) ([]pkg.Package, []artifact
 		}
 	}
 
-	return pkgs, relationshipsFromLogicalDepsJSON(doc, pkgMap)
+	return pkgs, relationshipsFromLogicalDepsJSON(doc, pkgMap, skippedDepPkgs)
 }
 
 // relationshipsFromLogicalDepsJSON creates relationships from a logicalDepsJSON document for only the given syft packages.
 // It is possible that the document describes more packages than that is provided as syft packages, in which cases
-// those relationships will not be created.
-func relationshipsFromLogicalDepsJSON(doc logicalDepsJSON, pkgMap map[string]pkg.Package) []artifact.Relationship {
+// those relationships will not be created. If there are any skipped packages, we still want to logically represent
+// dependency relationships, jumping over the skipped packages.
+func relationshipsFromLogicalDepsJSON(doc logicalDepsJSON, pkgMap map[string]pkg.Package, skipped map[string]logicalDepsJSONPackage) []artifact.Relationship {
 	var relationships []artifact.Relationship
 	for _, lp := range doc.PackagesByNameVersion {
 		if lp.Targets == nil {
@@ -201,25 +216,71 @@ func relationshipsFromLogicalDepsJSON(doc logicalDepsJSON, pkgMap map[string]pkg
 		}
 		for depName, depVersion := range lp.Targets.Dependencies {
 			depNameVersion := createNameAndVersion(depName, depVersion)
-			depPkg, ok := pkgMap[depNameVersion]
-			if !ok {
-				continue
-			}
 			thisPkg, ok := pkgMap[lp.NameVersion]
 			if !ok {
 				continue
 			}
-			rel := artifact.Relationship{
-				From: depPkg,
-				To:   thisPkg,
-				Type: artifact.DependencyOfRelationship,
+
+			var depPkgs []pkg.Package
+			depPkg, ok := pkgMap[depNameVersion]
+			if !ok {
+				skippedDepPkg, ok := skipped[depNameVersion]
+				if !ok {
+					// this package wasn't explicitly skipped, so it could be a malformed deps.json file
+					// ignore this case and do not create a relationships
+					continue
+				}
+				// we have a skipped package, so we need to create a relationship but looking a the nearest
+				// package with an associated PE file for even dependency listed on the skipped package.
+				// Take note that the skipped depedency's dependency could also be skipped, so we need to
+				// do this recursively.
+				depPkgs = findNearestDependencyPackages(skippedDepPkg, pkgMap, skipped, strset.New())
+			} else {
+				depPkgs = append(depPkgs, depPkg)
 			}
-			relationships = append(relationships, rel)
+
+			for _, d := range depPkgs {
+				rel := artifact.Relationship{
+					From: d,
+					To:   thisPkg,
+					Type: artifact.DependencyOfRelationship,
+				}
+				relationships = append(relationships, rel)
+			}
 		}
 	}
 
 	relationship.Sort(relationships)
 	return relationships
+}
+
+func findNearestDependencyPackages(skippedDep logicalDepsJSONPackage, pkgMap map[string]pkg.Package, skipped map[string]logicalDepsJSONPackage, processed *strset.Set) []pkg.Package {
+	var nearestPkgs []pkg.Package
+
+	// if we have already processed this package, skip it to avoid infinite recursion
+	if processed.Has(skippedDep.NameVersion) {
+		return nearestPkgs
+	}
+
+	processed.Add(skippedDep.NameVersion)
+
+	for depName, depVersion := range skippedDep.Targets.Dependencies {
+		depNameVersion := createNameAndVersion(depName, depVersion)
+		depPkg, ok := pkgMap[depNameVersion]
+		if !ok {
+			skippedDepPkg, ok := skipped[depNameVersion]
+			if !ok {
+				// this package wasn't explicitly skipped, so it could be a malformed deps.json file
+				// ignore this case and do not create a relationships
+				continue
+			}
+
+			nearestPkgs = append(nearestPkgs, findNearestDependencyPackages(skippedDepPkg, pkgMap, skipped, processed)...)
+		} else {
+			nearestPkgs = append(nearestPkgs, depPkg)
+		}
+	}
+	return nearestPkgs
 }
 
 // findDepsJSON locates and parses all deps.json files.
