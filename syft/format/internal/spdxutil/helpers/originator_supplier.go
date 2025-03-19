@@ -54,6 +54,9 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: funlen
 	case pkg.DpkgDBEntry:
 		author = metadata.Maintainer
 
+	case pkg.DpkgArchiveEntry:
+		author = metadata.Maintainer
+
 	case pkg.JavaArchive:
 		if metadata.Manifest != nil {
 			author = metadata.Manifest.Main.MustGet("Specification-Vendor")

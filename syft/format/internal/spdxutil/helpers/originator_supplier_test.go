@@ -109,9 +109,19 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Organization: Microsoft Corporation",
 		},
 		{
-			name: "from dpkg",
+			name: "from dpkg DB",
 			input: pkg.Package{
 				Metadata: pkg.DpkgDBEntry{
+					Maintainer: "auth",
+				},
+			},
+			originator: "Person: auth",
+			supplier:   "Person: auth",
+		},
+		{
+			name: "from dpkg archive",
+			input: pkg.Package{
+				Metadata: pkg.DpkgArchiveEntry{
 					Maintainer: "auth",
 				},
 			},
