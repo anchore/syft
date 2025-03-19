@@ -20,6 +20,7 @@ func AllTypes() []any {
 		pkg.DotnetDepsEntry{},
 		pkg.DotnetPackagesLockEntry{},
 		pkg.DotnetPortableExecutableEntry{},
+		pkg.DpkgArchiveEntry{},
 		pkg.DpkgDBEntry{},
 		pkg.ELFBinaryPackageNoteJSONPayload{},
 		pkg.ElixirMixLockEntry{},

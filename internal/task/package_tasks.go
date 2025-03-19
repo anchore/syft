@@ -63,6 +63,7 @@ func DefaultPackageTaskFactories() Factories {
 
 		// OS package declared catalogers ///////////////////////////////////////////////////////////////////////////
 		newSimplePackageTaskFactory(redhat.NewArchiveCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.OSTag, "linux", "rpm", "redhat"),
+		newSimplePackageTaskFactory(debian.NewArchiveCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.OSTag, "linux", "deb", "debian"),
 
 		// language-specific package installed catalogers ///////////////////////////////////////////////////////////////////////////
 		newSimplePackageTaskFactory(cpp.NewConanInfoCataloger, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "cpp", "conan"),
