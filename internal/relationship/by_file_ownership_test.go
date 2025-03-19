@@ -145,7 +145,7 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			assert.Len(t, relationships, len(expectedRelations))
 			for idx, expectedRelationship := range expectedRelations {
 				actualRelationship := relationships[idx]
-				if d := cmp.Diff(expectedRelationship, actualRelationship, cmptest.DefaultCommonOptions()...); d != "" {
+				if d := cmp.Diff(expectedRelationship, actualRelationship, cmptest.DefaultOptions()...); d != "" {
 					t.Errorf("unexpected relationship (-want, +got): %s", d)
 				}
 			}

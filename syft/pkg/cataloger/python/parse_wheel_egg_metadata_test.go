@@ -76,7 +76,7 @@ func TestParseWheelEggMetadata(t *testing.T) {
 				t.Fatalf("failed to parse: %+v", err)
 			}
 
-			if d := cmp.Diff(test.ExpectedMetadata, actual, cmptest.DefaultCommonOptions()...); d != "" {
+			if d := cmp.Diff(test.ExpectedMetadata, actual, cmptest.DefaultOptions()...); d != "" {
 				t.Errorf("metadata mismatch (-want +got):\n%s", d)
 			}
 		})

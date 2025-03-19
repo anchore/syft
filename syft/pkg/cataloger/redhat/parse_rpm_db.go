@@ -17,7 +17,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.
+// parseRpmDB parses an "Packages" RPM DB and returns the Packages listed within it.
 //
 //nolint:funlen
 func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
