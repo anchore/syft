@@ -74,6 +74,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.DartPubspecLockEntry{}, "dart-pubspec-lock-entry", "DartPubMetadata"),
 	jsonNames(pkg.DotnetDepsEntry{}, "dotnet-deps-entry", "DotnetDepsMetadata"),
 	jsonNames(pkg.DotnetPortableExecutableEntry{}, "dotnet-portable-executable-entry"),
+	jsonNames(pkg.DpkgArchiveEntry{}, "dpkg-archive-entry"),
 	jsonNames(pkg.DpkgDBEntry{}, "dpkg-db-entry", "DpkgMetadata"),
 	jsonNames(pkg.ELFBinaryPackageNoteJSONPayload{}, "elf-binary-package-note-json-payload"),
 	jsonNames(pkg.RubyGemspec{}, "ruby-gemspec", "GemMetadata"),
