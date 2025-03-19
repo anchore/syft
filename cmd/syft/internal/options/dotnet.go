@@ -14,7 +14,7 @@ var _ interface {
 } = (*dotnetConfig)(nil)
 
 func (o *dotnetConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
-	descriptions.Add(&o.DepPackagesMustHaveDLLs, `drop any dep.json packages if there is no DLL file associated with it`)
+	descriptions.Add(&o.DepPackagesMustHaveDLLs, `only keep dep.json packages that have a DLL/EXE file associated with it`)
 }
 
 func defaultDotnetConfig() dotnetConfig {
