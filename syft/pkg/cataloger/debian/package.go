@@ -56,11 +56,15 @@ func newDpkgPackage(d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.R
 
 func newDebArchivePackage(location file.Location, metadata pkg.DpkgArchiveEntry, licenseStrings []string) pkg.Package {
 	p := pkg.Package{
-		Name:      metadata.Package,
-		Version:   metadata.Version,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromValues(licenseStrings...)...),
-		Type:      pkg.DebPkg,
-		PURL:      packageURL(pkg.DpkgDBEntry(metadata), &linux.Release{IDLike: []string{"debian"}}),
+		Name:     metadata.Package,
+		Version:  metadata.Version,
+		Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues(licenseStrings...)...),
+		Type:     pkg.DebPkg,
+		PURL: packageURL(
+			pkg.DpkgDBEntry(metadata),
+			// we don't know the distro information, but since this is a deb file then we can reasonably assume it is a debian-based distro
+			&linux.Release{IDLike: []string{"debian"}},
+		),
 		Metadata:  metadata,
 		Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 	}

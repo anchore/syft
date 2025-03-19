@@ -31,7 +31,6 @@ import (
 func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	arReader := ar.NewReader(reader)
 
-	// Extract the control.tar.* file from the .deb archive
 	var metadata *pkg.DpkgArchiveEntry
 	var licenses []string
 	var unknownErr error
