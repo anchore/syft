@@ -3,7 +3,7 @@ package file
 import (
 	"sort"
 
-	"github.com/mitchellh/hashstructure/v2"
+	"github.com/gohugoio/hashstructure"
 	"github.com/scylladb/go-set/strset"
 )
 
@@ -79,7 +79,7 @@ func (s CoordinateSet) ToSlice() []Coordinates {
 }
 
 func (s CoordinateSet) Hash() (uint64, error) {
-	return hashstructure.Hash(s.ToSlice(), hashstructure.FormatV2, &hashstructure.HashOptions{
+	return hashstructure.Hash(s.ToSlice(), &hashstructure.HashOptions{
 		ZeroNil:      true,
 		SlicesAsSets: true,
 	})

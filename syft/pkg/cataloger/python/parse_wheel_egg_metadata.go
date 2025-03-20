@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"

@@ -3,7 +3,7 @@ package file
 import (
 	"sort"
 
-	"github.com/mitchellh/hashstructure/v2"
+	"github.com/gohugoio/hashstructure"
 
 	"github.com/anchore/syft/internal/log"
 )
@@ -91,7 +91,7 @@ func (s *LocationSet) Empty() bool {
 
 func (s LocationSet) Hash() (uint64, error) {
 	// access paths and filesystem IDs are not considered when hashing a location set, only the real paths
-	return hashstructure.Hash(s.CoordinateSet().Paths(), hashstructure.FormatV2, &hashstructure.HashOptions{
+	return hashstructure.Hash(s.CoordinateSet().Paths(), &hashstructure.HashOptions{
 		ZeroNil:      true,
 		SlicesAsSets: true,
 	})

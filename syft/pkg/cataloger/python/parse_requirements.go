@@ -9,7 +9,7 @@ import (
 	"unicode"
 
 	pep440 "github.com/aquasecurity/go-pep440-version"
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
