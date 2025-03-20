@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/anchore/go-homedir"
 	"github.com/hashicorp/go-multierror"
-	"github.com/mitchellh/go-homedir"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/bus"

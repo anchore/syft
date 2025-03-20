@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/anchore/packageurl-go"
 	stereoFile "github.com/anchore/stereoscope/pkg/file"

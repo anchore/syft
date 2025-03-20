@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/dustin/go-humanize"
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal"

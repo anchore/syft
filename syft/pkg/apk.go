@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/syft/file"

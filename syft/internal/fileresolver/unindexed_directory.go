@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/anchore/go-homedir"
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
 
 	"github.com/anchore/syft/internal/log"

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/vbatts/go-mtree"
 
 	"github.com/anchore/syft/internal"
