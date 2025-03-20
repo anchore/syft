@@ -167,13 +167,13 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 		pkgs []pkg.Package
 		rels []artifact.Relationship
 	}
-	errs = sync.Collect(ctx, cataloging.ExecutorFile, sync.ToSeq(c.selectFiles(resolver)), func(_ context.Context, _ request, res result) {
+	errs = sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(c.selectFiles(resolver)), func(_ request, res result) {
 		for _, p := range res.pkgs {
 			p.FoundBy = c.upstreamCataloger
 			packages = append(packages, p)
 		}
 		relationships = append(relationships, res.rels...)
-	}, func(ctx context.Context, req request) (result, error) {
+	}, func(req request) (result, error) {
 		location, parser := req.Location, req.Parser
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")

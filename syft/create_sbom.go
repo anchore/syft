@@ -76,7 +76,7 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 
 	builder := sbomsync.NewBuilder(&s, monitorPackageCount(packageCatalogingProgress))
 	for i := range taskGroups {
-		err = sync.Collect(ctx, "catalog", sync.ToSeq(taskGroups[i]), nil, func(ctx context.Context, t task.Task) (any, error) {
+		err = sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(taskGroups[i]), nil, func(t task.Task) (any, error) {
 			return nil, task.RunTask(ctx, t, resolver, builder, catalogingProgress)
 		})
 		if err != nil {
@@ -125,10 +125,12 @@ func setContextExecutors(ctx context.Context, cfg *CreateSBOMConfig) context.Con
 		parallelism = runtime.NumCPU() * 4
 	case 1:
 		parallelism = 0 // run in serial, don't spawn goroutines
+	case -99:
+		parallelism = 1 // special case to catch incorrect executor usage during testing
 	}
 	// set up executors for each dimension we want to coordinate bounds for
-	ctx = sync.SetContextExecutor(ctx, sync.NewExecutor(cataloging.ExecutorCPU, parallelism*4))
-	ctx = sync.SetContextExecutor(ctx, sync.NewExecutor(cataloging.ExecutorFile, parallelism))
+	ctx = sync.SetContextExecutor(ctx, cataloging.ExecutorCPU, sync.NewExecutor(parallelism))
+	ctx = sync.SetContextExecutor(ctx, cataloging.ExecutorFile, sync.NewExecutor(parallelism))
 	return ctx
 }
 

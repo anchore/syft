@@ -14,10 +14,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anchore/go-homedir"
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/spf13/afero"
 
+	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 )

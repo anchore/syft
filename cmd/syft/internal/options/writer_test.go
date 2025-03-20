@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/go-homedir"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/syft/sbom"
 )
 

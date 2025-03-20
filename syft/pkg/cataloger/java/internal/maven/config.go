@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/anchore/go-homedir"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 )

@@ -260,7 +260,7 @@ require (
 	modernc.org/memory v1.8.2 // indirect
 )
 
-require github.com/anchore/go-sync v0.0.0-20250311221736-aaa3789b25af
+require github.com/anchore/go-sync v0.0.0-20250320205230-106d97e49d60
 
 retract (
 	v0.53.2

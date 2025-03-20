@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/adrg/xdg"
-	"github.com/anchore/go-homedir"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/cache"
 )
