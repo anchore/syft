@@ -21,4 +21,7 @@ const (
 
 	// LanguageTag should be used to identify catalogers that cataloging language-specific packages.
 	LanguageTag = "language"
+
+	// DeprecatedTag should be used to identify catalogers that are deprecated.
+	DeprecatedTag = "deprecated"
 )

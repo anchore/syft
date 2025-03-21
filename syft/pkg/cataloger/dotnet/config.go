@@ -1,14 +1,16 @@
 package dotnet
 
 type CatalogerConfig struct {
-	EnableCertificateValidation bool `json:"enable-certificate-validation" yaml:"enable-certificate-validation" mapstructure:"enable-certificate-validation"`
+	DepPackagesMustHaveDLLs bool `mapstructure:"dep-packages-must-have-dlls" json:"dep-packages-must-have-dlls" yaml:"dep-packages-must-have-dlls"`
 }
 
-func (c CatalogerConfig) WithCertificateValidation(enable bool) CatalogerConfig {
-	c.EnableCertificateValidation = enable
+func (c CatalogerConfig) WithDepPackagesMustHaveDLLs(requireDlls bool) CatalogerConfig {
+	c.DepPackagesMustHaveDLLs = requireDlls
 	return c
 }
 
 func DefaultCatalogerConfig() CatalogerConfig {
-	return CatalogerConfig{}
+	return CatalogerConfig{
+		DepPackagesMustHaveDLLs: false,
+	}
 }

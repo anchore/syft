@@ -6,7 +6,7 @@ import (
 )
 
 type dotnetConfig struct {
-	EnableCertificateValidation bool `json:"enable-certificate-validation" yaml:"enable-certificate-validation" mapstructure:"enable-certificate-validation"`
+	DepPackagesMustHaveDLLs bool `mapstructure:"dep-packages-must-have-dlls" json:"dep-packages-must-have-dlls" yaml:"dep-packages-must-have-dlls"`
 }
 
 var _ interface {
@@ -14,12 +14,12 @@ var _ interface {
 } = (*dotnetConfig)(nil)
 
 func (o *dotnetConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
-	descriptions.Add(&o.EnableCertificateValidation, `enable certificate validation -- this requires an active internet connection to download certificates and CRLs`)
+	descriptions.Add(&o.DepPackagesMustHaveDLLs, `only keep dep.json packages that have a DLL/EXE file associated with it`)
 }
 
 func defaultDotnetConfig() dotnetConfig {
 	def := dotnet.DefaultCatalogerConfig()
 	return dotnetConfig{
-		EnableCertificateValidation: def.EnableCertificateValidation,
+		DepPackagesMustHaveDLLs: def.DepPackagesMustHaveDLLs,
 	}
 }
