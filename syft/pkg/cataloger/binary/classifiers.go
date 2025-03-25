@@ -171,18 +171,9 @@ func DefaultClassifiers() []Classifier {
 		},
 		{
 			Class:    "go-binary-hint",
-			FileGlob: "**/VERSION",
+			FileGlob: "**/VERSION*",
 			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)(-[0-9a-f]{7})?`),
-			Package: "go",
-			PURL:    mustPURL("pkg:generic/go@version"),
-			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "go-binary-hint-dev",
-			FileGlob: "**/go",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)(3?devel\s)?go(?P<version>[0-9]+\.[0-9]+(-[0-9a-f]{7}))`),
+				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?(-[0-9a-f]{7})?)`),
 			Package: "go",
 			PURL:    mustPURL("pkg:generic/go@version"),
 			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),

@@ -700,14 +700,14 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			// note: this is for compatability with dev version
-			logicalFixture: "go-version-hint-dev/1.25/any",
+			// note: this is for compatability with dev version of golang tip image, which resolves the issue #3681
+			logicalFixture: "go-version-hint/1.25/any",
 			expected: pkg.Package{
 				Name:      "go",
 				Version:   "1.25-d524e1e",
 				PURL:      "pkg:generic/go@1.25-d524e1e",
-				Locations: locations("go"),
-				Metadata:  metadata("go-binary-hint-dev"),
+				Locations: locations("VERSION.cache"),
+				Metadata:  metadata("go-binary-hint"),
 			},
 		},
 		{
