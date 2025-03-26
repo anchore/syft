@@ -27,7 +27,8 @@ func NewPackageCataloger(cfg CatalogerConfig) pkg.Cataloger {
 		WithParserByGlobs(rqp.parseRequirementsTxt, "**/*requirements*.txt").
 		WithParserByGlobs(parsePoetryLock, "**/poetry.lock").
 		WithParserByGlobs(parsePipfileLock, "**/Pipfile.lock").
-		WithParserByGlobs(parseSetup, "**/setup.py")
+		WithParserByGlobs(parseSetup, "**/setup.py").
+		WithParserByGlobs(parseUvLock, "**/uv.lock")
 }
 
 // NewInstalledPackageCataloger returns a new cataloger for python packages within egg or wheel installation directories.
