@@ -18,6 +18,6 @@ func (c CatalogerConfig) WithDepPackagesMustClaimDLL(requireDlls bool) Cataloger
 func DefaultCatalogerConfig() CatalogerConfig {
 	return CatalogerConfig{
 		DepPackagesMustHaveDLL:  false,
-		DepPackagesMustClaimDLL: false,
+		DepPackagesMustClaimDLL: true,
 	}
 }

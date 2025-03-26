@@ -1,6 +1,7 @@
 package dotnet
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -174,8 +175,7 @@ func TestCataloger(t *testing.T) {
 	}
 
 	// app relationships (from deps.json)
-	net8AppDepOnlyRelationships := []string{
-		"Humanizer @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
+	net8AppDepOnlyRelationshipsWithoutHumanizer := []string{
 		"Humanizer.Core.af @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.ar @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
 		"Humanizer.Core.az @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
@@ -275,11 +275,16 @@ func TestCataloger(t *testing.T) {
 		"Newtonsoft.Json @ 13.0.3 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
 	}
 
+	var net8AppDepOnlyRelationships []string
+	humanizerToAppDepsRelationship := "Humanizer @ 2.14.1 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)"
+	net8AppDepOnlyRelationships = append(net8AppDepOnlyRelationships, net8AppDepOnlyRelationshipsWithoutHumanizer...)
+	net8AppDepOnlyRelationships = append(net8AppDepOnlyRelationships, humanizerToAppDepsRelationship)
+
 	var net8AppExpectedDepRelationships []string
 	net8AppExpectedDepRelationships = append(net8AppExpectedDepRelationships, net8AppDepOnlyRelationships...)
 
 	var net8AppExpectedDepSelfContainedPkgs []string
-	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs, net8AppExpectedDepPkgs...)
+	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs, net8AppExpectedDepPkgsWithoutUnpairedDlls...)
 	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs,
 		// add the CLR runtime packages...
 		".NET Runtime @ 8,0,1425,11118 (/app/coreclr.dll)",
@@ -294,7 +299,7 @@ func TestCataloger(t *testing.T) {
 	)
 
 	var net8AppExpectedDepSelfContainedRelationships []string
-	net8AppExpectedDepSelfContainedRelationships = append(net8AppExpectedDepSelfContainedRelationships, net8AppExpectedDepRelationships...)
+	net8AppExpectedDepSelfContainedRelationships = append(net8AppExpectedDepSelfContainedRelationships, net8AppDepOnlyRelationshipsWithoutHumanizer...)
 	net8AppExpectedDepSelfContainedRelationships = append(net8AppExpectedDepSelfContainedRelationships,
 		// add the CLR runtime relationships...
 		"runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
@@ -861,12 +866,19 @@ func TestCataloger(t *testing.T) {
 			assertion:    assertAllDepEntriesWithoutExecutables,
 		},
 		{
-			name:         "net8-app combined cataloger",
-			fixture:      "image-net8-app",
-			cataloger:    NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
-			expectedPkgs: net8AppExpectedDepPkgs,
-			expectedRels: net8AppExpectedDepRelationships,
-			assertion:    assertAlmostAllDepEntriesWithExecutables, // important! this is what makes this case different from the previous one... dep entries have attached executables
+			name:      "net8-app combined cataloger",
+			fixture:   "image-net8-app",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+
+			// if we don't care about DLL claims in the deps.json, then this is right
+			//expectedPkgs: net8AppExpectedDepPkgs,
+			//expectedRels: net8AppExpectedDepRelationships,
+
+			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humarizer
+			expectedPkgs: net8AppExpectedDepPkgsWithoutUnpairedDlls,
+			expectedRels: replaceAll(net8AppDepOnlyRelationshipsWithoutHumanizer, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
+
+			assertion: assertAlmostAllDepEntriesWithExecutables, // important! this is what makes this case different from the previous one... dep entries have attached executables
 		},
 		{
 			name:         "net8-app combined cataloger (require dll pairings)",
@@ -1038,14 +1050,19 @@ func TestCataloger(t *testing.T) {
 			fixture:      "image-net8-app-self-contained",
 			cataloger:    NewDotnetDepsCataloger(),
 			expectedPkgs: net8AppExpectedDepsSelfContainedPkgs,
-			expectedRels: net8AppExpectedDepSelfContainedRelationships,
+			expectedRels: func() []string {
+				x := net8AppExpectedDepSelfContainedRelationships
+				x = append(x, humanizerToAppDepsRelationship)
+				return x
+			}(),
 		},
 		{
-			name:         "net8-app combined cataloger (self-contained)",
-			fixture:      "image-net8-app-self-contained",
-			cataloger:    NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			name:      "net8-app combined cataloger (self-contained)",
+			fixture:   "image-net8-app-self-contained",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humarizer
 			expectedPkgs: net8AppExpectedDepSelfContainedPkgs,
-			expectedRels: net8AppExpectedDepSelfContainedRelationships,
+			expectedRels: replaceAll(net8AppExpectedDepSelfContainedRelationships, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
 		},
 		{
 			name:      "net8-app pe cataloger (self-contained)",
@@ -1079,6 +1096,9 @@ func TestCataloger(t *testing.T) {
 			},
 		},
 		{
+			// TODO: this is to help us out in the future... we can use TypeDef info from the Metadata table to determine
+			// if package names are any "namespace" values of the assembly. Today we don't do this so we miss any
+			// embedded assemblies.
 			name:      "net8-app combined cataloger (ilrepack)",
 			fixture:   "image-net8-ilrepack",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
@@ -1577,4 +1597,12 @@ func extractMatchingPackage(t *testing.T, name string, pkgs []pkg.Package) pkg.P
 	}
 	t.Fatalf("expected to find package %s", name)
 	return pkg.Package{}
+}
+
+func replaceAll(ss []string, find, replace string) []string {
+	var results []string
+	for _, s := range ss {
+		results = append(results, strings.ReplaceAll(s, find, replace))
+	}
+	return results
 }
