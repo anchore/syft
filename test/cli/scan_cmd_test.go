@@ -354,7 +354,17 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"scan", "-vvv", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				// the application config in the log matches that of what we expect to have been configured.
-				assertInOutput(`parallelism: 1`),
+				assertInOutput(`parallelism: 0`),
+				assertPackageCount(coverageImageSquashedPackageCount),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "parallelism-flag",
+			args: []string{"scan", "-vvv", "--parallelism", "2", "-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				// the application config in the log matches that of what we expect to have been configured.
+				assertInOutput(`parallelism: 2`),
 				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},

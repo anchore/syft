@@ -260,6 +260,8 @@ require (
 	modernc.org/memory v1.8.2 // indirect
 )
 
+require github.com/anchore/go-sync v0.0.0-20250326131806-4eda43a485b6
+
 retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies

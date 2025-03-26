@@ -4,10 +4,12 @@ import (
 	"context"
 
 	"github.com/anchore/go-logger"
+	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -161,7 +163,11 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 		LinuxRelease: linux.IdentifyRelease(resolver),
 	}
 
-	for _, req := range c.selectFiles(resolver) {
+	type result struct {
+		pkgs []pkg.Package
+		rels []artifact.Relationship
+	}
+	errs = sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(c.selectFiles(resolver)), func(req request) (result, error) {
 		location, parser := req.Location, req.Parser
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")
@@ -171,14 +177,14 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 			// parsers may return errors and valid packages / relationships
 			errs = unknown.Append(errs, location, err)
 		}
-
-		for _, p := range discoveredPackages {
+		return result{discoveredPackages, discoveredRelationships}, errs
+	}, func(_ request, res result) {
+		for _, p := range res.pkgs {
 			p.FoundBy = c.upstreamCataloger
 			packages = append(packages, p)
 		}
-
-		relationships = append(relationships, discoveredRelationships...)
-	}
+		relationships = append(relationships, res.rels...)
+	})
 	return c.process(ctx, resolver, packages, relationships, errs)
 }
 

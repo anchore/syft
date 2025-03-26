@@ -49,7 +49,7 @@ func DefaultCreateSBOMConfig() *CreateSBOMConfig {
 		Packages:             pkgcataloging.DefaultConfig(),
 		Licenses:             cataloging.DefaultLicenseConfig(),
 		Files:                filecataloging.DefaultConfig(),
-		Parallelism:          1,
+		Parallelism:          0, // use default: run in parallel based on number of CPUs
 		packageTaskFactories: task.DefaultPackageTaskFactories(),
 
 		// library consumers are free to override the tool values to fit their needs, however, we have some sane defaults
@@ -91,10 +91,6 @@ func (c *CreateSBOMConfig) WithTool(name, version string, cfg ...any) *CreateSBO
 
 // WithParallelism allows for setting the number of concurrent cataloging tasks that can be performed at once
 func (c *CreateSBOMConfig) WithParallelism(p int) *CreateSBOMConfig {
-	if p < 1 {
-		// TODO: warn?
-		p = 1
-	}
 	c.Parallelism = p
 	return c
 }
