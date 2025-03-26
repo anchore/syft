@@ -26,13 +26,13 @@ func TestDecoder_Decode(t *testing.T) {
 			name:     "dir-scan",
 			file:     "snapshot/TestSPDXTagValueDirectoryEncoder.golden",
 			distro:   "debian:1.2.3",
-			packages: []string{"package-1:1.0.1", "package-2:2.0.1"},
+			packages: []string{"package-1:1.0.1", "package-2:2.0.1", "debian:1.2.3"},
 		},
 		{
 			name:     "image-scan",
 			file:     "snapshot/TestSPDXTagValueImageEncoder.golden",
 			distro:   "debian:1.2.3",
-			packages: []string{"package-1:1.0.1", "package-2:2.0.1"},
+			packages: []string{"package-1:1.0.1", "package-2:2.0.1", "debian:1.2.3"},
 		},
 		{
 			name: "not-an-sbom",
