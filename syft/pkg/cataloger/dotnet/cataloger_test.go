@@ -871,7 +871,7 @@ func TestCataloger(t *testing.T) {
 		{
 			name:         "net8-app combined cataloger (require dll pairings)",
 			fixture:      "image-net8-app",
-			cataloger:    NewDotnetDepsBinaryCataloger(CatalogerConfig{DepPackagesMustHaveDLLs: true}),
+			cataloger:    NewDotnetDepsBinaryCataloger(CatalogerConfig{DepPackagesMustHaveDLL: true}),
 			expectedPkgs: net8AppExpectedDepPkgsWithoutUnpairedDlls,
 			expectedRels: []string{
 				// the odd thing (but expected) is that the Humanizer.Core entries have a dependency to each Humanizer.Core.* locale entry
@@ -1053,6 +1053,38 @@ func TestCataloger(t *testing.T) {
 			cataloger: NewDotnetPortableExecutableCataloger(),
 			// important: no relationships should be found
 			expectedPkgs: net8AppExpectedBinarySelfContainedPkgs,
+		},
+		{
+			name:      "net8-app combined cataloger (private assets + require dlls)",
+			fixture:   "image-net8-privateassets",
+			cataloger: NewDotnetDepsBinaryCataloger(CatalogerConfig{DepPackagesMustHaveDLL: true}),
+			expectedPkgs: []string{
+				"example @ 1.0.0 (/app/example.deps.json)",
+			},
+		},
+		{
+			name:      "net8-app combined cataloger (private assets)",
+			fixture:   "image-net8-privateassets",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			expectedPkgs: []string{
+				"example @ 1.0.0 (/app/example.deps.json)",
+			},
+		},
+		{
+			name:      "net8-app combined cataloger (ilrepack + require dlls)",
+			fixture:   "image-net8-ilrepack",
+			cataloger: NewDotnetDepsBinaryCataloger(CatalogerConfig{DepPackagesMustHaveDLL: true}),
+			expectedPkgs: []string{
+				"example @ 1.0.0 (/app/example.deps.json)",
+			},
+		},
+		{
+			name:      "net8-app combined cataloger (ilrepack)",
+			fixture:   "image-net8-ilrepack",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			expectedPkgs: []string{
+				"example @ 1.0.0 (/app/example.deps.json)",
+			},
 		},
 	}
 

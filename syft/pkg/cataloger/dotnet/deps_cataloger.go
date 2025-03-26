@@ -23,6 +23,9 @@ func (c depsCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg
 		return nil, nil, err
 	}
 
-	pkgs, rels := packagesFromDepsJSON(depJSONDocs, false)
+	pkgs, rels := packagesFromDepsJSON(depJSONDocs, CatalogerConfig{
+		DepPackagesMustHaveDLL:  false,
+		DepPackagesMustClaimDLL: false,
+	})
 	return pkgs, rels, unknowns
 }

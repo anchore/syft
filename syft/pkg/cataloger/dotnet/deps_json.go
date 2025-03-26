@@ -40,9 +40,13 @@ type logicalDepsJSONPackage struct {
 	Targets     *depsTarget
 	Library     *depsLibrary
 
-	// RuntimeAndResourcePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
-	// to the target path as described in the deps.json target entry (either as a runtime or resource).
-	RuntimeAndResourcePathsByRelativeDLLPath map[string]string
+	// RuntimePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
+	// to the target path as described in the deps.json target entry under "runtime".
+	RuntimePathsByRelativeDLLPath map[string]string
+
+	// ResourcePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
+	// to the target path as described in the deps.json target entry under "resource".
+	ResourcePathsByRelativeDLLPath map[string]string
 
 	// Executables is a list of all the executables that are part of this package. This is populated by the PE cataloger
 	// and not something that is found in the deps.json file. This allows us to associate the PE files with this package
@@ -99,23 +103,25 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 				if ok {
 					lib = &l
 				}
-				paths := make(map[string]string)
+				runtimePaths := make(map[string]string)
 				for path := range target.Runtime {
-					paths[trimLibPrefix(path)] = path
+					runtimePaths[trimLibPrefix(path)] = path
 				}
+				resourcePaths := make(map[string]string)
 				for path := range target.Resources {
 					trimmedPath := trimLibPrefix(path)
-					if _, exists := paths[trimmedPath]; exists {
+					if _, exists := resourcePaths[trimmedPath]; exists {
 						continue
 					}
-					paths[trimmedPath] = path
+					resourcePaths[trimmedPath] = path
 				}
 
 				p := &logicalDepsJSONPackage{
-					NameVersion:                              libName,
-					Library:                                  lib,
-					Targets:                                  &target,
-					RuntimeAndResourcePathsByRelativeDLLPath: paths,
+					NameVersion:                    libName,
+					Library:                        lib,
+					Targets:                        &target,
+					RuntimePathsByRelativeDLLPath:  runtimePaths,
+					ResourcePathsByRelativeDLLPath: resourcePaths,
 				}
 				packageMap[libName] = p
 				nameVersions.Add(libName)

@@ -57,13 +57,13 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 
 	depDocGroups := [][]logicalDepsJSON{pairedDepsJSONs}
 
-	if !c.config.DepPackagesMustHaveDLLs {
+	if !c.config.DepPackagesMustHaveDLL {
 		depDocGroups = append(depDocGroups, remainingDepsJSONs)
 	}
 
 	for _, docs := range depDocGroups {
 		for _, doc := range docs {
-			ps, rs := packagesFromLogicalDepsJSON(doc, c.config.DepPackagesMustHaveDLLs)
+			ps, rs := packagesFromLogicalDepsJSON(doc, c.config)
 			pkgs = append(pkgs, ps...)
 			relationships = append(relationships, rs...)
 		}
@@ -123,7 +123,15 @@ func attachAssociatedExecutables(dep *logicalDepsJSON, pe logicalDotnetPE) bool 
 
 	var found bool
 	for key, p := range dep.PackagesByNameVersion {
-		if targetPath, ok := p.RuntimeAndResourcePathsByRelativeDLLPath[relativeDllPath]; ok {
+		if targetPath, ok := p.RuntimePathsByRelativeDLLPath[relativeDllPath]; ok {
+			pe.TargetPath = targetPath
+			p.Executables = append(p.Executables, pe)
+			dep.PackagesByNameVersion[key] = p // update the map with the modified package
+			found = true
+			continue
+		}
+
+		if targetPath, ok := p.ResourcePathsByRelativeDLLPath[relativeDllPath]; ok {
 			pe.TargetPath = targetPath
 			p.Executables = append(p.Executables, pe)
 			dep.PackagesByNameVersion[key] = p // update the map with the modified package
@@ -154,11 +162,11 @@ func isParentOf(parentFile, childFile string) bool {
 }
 
 // packagesFromDepsJSON creates packages from a list of logicalDepsJSON documents.
-func packagesFromDepsJSON(docs []logicalDepsJSON, mustHaveDll bool) ([]pkg.Package, []artifact.Relationship) {
+func packagesFromDepsJSON(docs []logicalDepsJSON, config CatalogerConfig) ([]pkg.Package, []artifact.Relationship) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 	for _, ldj := range docs {
-		ps, rs := packagesFromLogicalDepsJSON(ldj, mustHaveDll)
+		ps, rs := packagesFromLogicalDepsJSON(ldj, config)
 		pkgs = append(pkgs, ps...)
 		relationships = append(relationships, rs...)
 	}
@@ -166,7 +174,7 @@ func packagesFromDepsJSON(docs []logicalDepsJSON, mustHaveDll bool) ([]pkg.Packa
 }
 
 // packagesFromLogicalDepsJSON converts a logicalDepsJSON (using the new map type) into catalog packages.
-func packagesFromLogicalDepsJSON(doc logicalDepsJSON, mustHaveDll bool) ([]pkg.Package, []artifact.Relationship) {
+func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) ([]pkg.Package, []artifact.Relationship) {
 	var rootPkg *pkg.Package
 	if rootLpkg, hasRoot := doc.RootPackage(); !hasRoot {
 		rootPkg = newDotnetDepsPackage(rootLpkg, doc.Location)
@@ -190,10 +198,18 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON, mustHaveDll bool) ([]pkg.P
 			continue
 		}
 		lp := doc.PackagesByNameVersion[nameVersion]
-		if mustHaveDll && len(lp.Executables) == 0 {
+		if config.DepPackagesMustHaveDLL && len(lp.Executables) == 0 {
+			// could not find a paired DLL and the user required this...
 			skippedDepPkgs[nameVersion] = lp
 			continue
 		}
+
+		if config.DepPackagesMustClaimDLL && len(lp.RuntimePathsByRelativeDLLPath) == 0 && len(lp.ResourcePathsByRelativeDLLPath) == 0 {
+			// could not find a runtime or resource path and the user required this...
+			skippedDepPkgs[nameVersion] = lp
+			continue
+		}
+
 		dotnetPkg := newDotnetDepsPackage(lp, doc.Location)
 		if dotnetPkg != nil {
 			pkgs = append(pkgs, *dotnetPkg)

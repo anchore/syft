@@ -1,16 +1,23 @@
 package dotnet
 
 type CatalogerConfig struct {
-	DepPackagesMustHaveDLLs bool `mapstructure:"dep-packages-must-have-dlls" json:"dep-packages-must-have-dlls" yaml:"dep-packages-must-have-dlls"`
+	DepPackagesMustHaveDLL  bool `mapstructure:"dep-packages-must-have-dll" json:"dep-packages-must-have-dll" yaml:"dep-packages-must-have-dll"`
+	DepPackagesMustClaimDLL bool `mapstructure:"dep-packages-must-claim-dll" json:"dep-packages-must-claim-dll" yaml:"dep-packages-must-claim-dll"`
 }
 
-func (c CatalogerConfig) WithDepPackagesMustHaveDLLs(requireDlls bool) CatalogerConfig {
-	c.DepPackagesMustHaveDLLs = requireDlls
+func (c CatalogerConfig) WithDepPackagesMustHaveDLL(requireDlls bool) CatalogerConfig {
+	c.DepPackagesMustHaveDLL = requireDlls
+	return c
+}
+
+func (c CatalogerConfig) WithDepPackagesMustClaimDLL(requireDlls bool) CatalogerConfig {
+	c.DepPackagesMustClaimDLL = requireDlls
 	return c
 }
 
 func DefaultCatalogerConfig() CatalogerConfig {
 	return CatalogerConfig{
-		DepPackagesMustHaveDLLs: false,
+		DepPackagesMustHaveDLL:  false,
+		DepPackagesMustClaimDLL: false,
 	}
 }

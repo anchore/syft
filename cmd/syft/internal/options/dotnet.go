@@ -6,7 +6,7 @@ import (
 )
 
 type dotnetConfig struct {
-	DepPackagesMustHaveDLLs bool `mapstructure:"dep-packages-must-have-dlls" json:"dep-packages-must-have-dlls" yaml:"dep-packages-must-have-dlls"`
+	DepPackagesMustHaveDLL bool `mapstructure:"dep-packages-must-have-dll" json:"dep-packages-must-have-dll" yaml:"dep-packages-must-have-dll"`
 }
 
 var _ interface {
@@ -14,12 +14,12 @@ var _ interface {
 } = (*dotnetConfig)(nil)
 
 func (o *dotnetConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
-	descriptions.Add(&o.DepPackagesMustHaveDLLs, `only keep dep.json packages that have a DLL/EXE file associated with it`)
+	descriptions.Add(&o.DepPackagesMustHaveDLL, `only keep dep.json packages which an executable on disk can be found for`)
 }
 
 func defaultDotnetConfig() dotnetConfig {
 	def := dotnet.DefaultCatalogerConfig()
 	return dotnetConfig{
-		DepPackagesMustHaveDLLs: def.DepPackagesMustHaveDLLs,
+		DepPackagesMustHaveDLL: def.DepPackagesMustHaveDLL,
 	}
 }
