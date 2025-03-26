@@ -66,12 +66,7 @@ func (i *Cataloger) CatalogCtx(ctx context.Context, resolver file.Resolver) (map
 	prog := catalogingProgress(int64(len(locs)))
 
 	results := make(map[file.Coordinates]file.Executable)
-	errs := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(locs), func(loc file.Location, exec *file.Executable) {
-		if exec != nil {
-			prog.Increment()
-			results[loc.Coordinates] = *exec
-		}
-	}, func(loc file.Location) (*file.Executable, error) {
+	errs := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(locs), func(loc file.Location) (*file.Executable, error) {
 		prog.AtomicStage.Set(loc.Path())
 
 		exec, err := processExecutableLocation(loc, resolver)
@@ -79,6 +74,11 @@ func (i *Cataloger) CatalogCtx(ctx context.Context, resolver file.Resolver) (map
 			err = unknown.New(loc, err)
 		}
 		return exec, err
+	}, func(loc file.Location, exec *file.Executable) {
+		if exec != nil {
+			prog.Increment()
+			results[loc.Coordinates] = *exec
+		}
 	})
 
 	log.Debugf("executable cataloger processed %d files", len(results))

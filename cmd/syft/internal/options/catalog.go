@@ -68,6 +68,7 @@ var _ interface {
 } = (*Catalog)(nil)
 
 func DefaultCatalog() Catalog {
+	cfg := syft.DefaultCreateSBOMConfig()
 	return Catalog{
 		Compliance:    defaultComplianceConfig(),
 		Scope:         source.SquashedScope.String(),
@@ -81,7 +82,7 @@ func DefaultCatalog() Catalog {
 		Relationships: defaultRelationshipsConfig(),
 		Unknowns:      defaultUnknowns(),
 		Source:        defaultSourceConfig(),
-		Parallelism:   1,
+		Parallelism:   cfg.Parallelism,
 	}
 }
 

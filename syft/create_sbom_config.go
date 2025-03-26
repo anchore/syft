@@ -49,7 +49,7 @@ func DefaultCreateSBOMConfig() *CreateSBOMConfig {
 		Packages:             pkgcataloging.DefaultConfig(),
 		Licenses:             cataloging.DefaultLicenseConfig(),
 		Files:                filecataloging.DefaultConfig(),
-		Parallelism:          0, // use default, based on number of CPUs
+		Parallelism:          0, // use default: run in parallel based on number of CPUs
 		packageTaskFactories: task.DefaultPackageTaskFactories(),
 
 		// library consumers are free to override the tool values to fit their needs, however, we have some sane defaults
