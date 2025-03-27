@@ -858,7 +858,7 @@ func TestCataloger(t *testing.T) {
 		cataloger    pkg.Cataloger
 	}{
 		{
-			name:         "net8-app deps cataloger",
+			name:         "deps cataloger",
 			fixture:      "image-net8-app",
 			cataloger:    NewDotnetDepsCataloger(),
 			expectedPkgs: net8AppExpectedDepPkgs,
@@ -866,7 +866,7 @@ func TestCataloger(t *testing.T) {
 			assertion:    assertAllDepEntriesWithoutExecutables,
 		},
 		{
-			name:      "net8-app combined cataloger",
+			name:      "combined cataloger",
 			fixture:   "image-net8-app",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
 
@@ -881,7 +881,7 @@ func TestCataloger(t *testing.T) {
 			assertion: assertAlmostAllDepEntriesWithExecutables, // important! this is what makes this case different from the previous one... dep entries have attached executables
 		},
 		{
-			name:         "net8-app combined cataloger (require dll pairings)",
+			name:         "combined cataloger (require dll pairings)",
 			fixture:      "image-net8-app",
 			cataloger:    NewDotnetDepsBinaryCataloger(CatalogerConfig{DepPackagesMustHaveDLL: true}),
 			expectedPkgs: net8AppExpectedDepPkgsWithoutUnpairedDlls,
@@ -989,7 +989,7 @@ func TestCataloger(t *testing.T) {
 			assertion: assertAllDepEntriesWithExecutables, // important! we want the Humanizer package without a DLL to be ignored
 		},
 		{
-			name:         "net8-app PE cataloger",
+			name:         "PE cataloger",
 			fixture:      "image-net8-app",
 			cataloger:    NewDotnetPortableExecutableCataloger(),
 			expectedPkgs: net8AppBinaryOnlyPkgs,
@@ -997,13 +997,13 @@ func TestCataloger(t *testing.T) {
 			assertion: assertAllBinaryEntries,
 		},
 		{
-			name:      "net8-app deps cataloger (no deps.json)",
+			name:      "deps cataloger (no deps.json)",
 			fixture:   "image-net8-app-no-depjson",
 			cataloger: NewDotnetDepsCataloger(),
 			// there should be no packages found!
 		},
 		{
-			name:         "net8-app combined cataloger (no deps.json)",
+			name:         "combined cataloger (no deps.json)",
 			fixture:      "image-net8-app-no-depjson",
 			cataloger:    NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
 			expectedPkgs: net8AppBinaryOnlyPkgs,
@@ -1011,7 +1011,7 @@ func TestCataloger(t *testing.T) {
 			assertion: assertAllBinaryEntries,
 		},
 		{
-			name:         "net8-app pe cataloger (no deps.json)",
+			name:         "pe cataloger (no deps.json)",
 			fixture:      "image-net8-app-no-depjson",
 			cataloger:    NewDotnetPortableExecutableCataloger(),
 			expectedPkgs: net8AppBinaryOnlyPkgs,
@@ -1019,13 +1019,13 @@ func TestCataloger(t *testing.T) {
 			assertion: assertAllBinaryEntries,
 		},
 		{
-			name:      "net8-app deps cataloger (single file)",
+			name:      "deps cataloger (single file)",
 			fixture:   "image-net8-app-single-file",
 			cataloger: NewDotnetDepsCataloger(),
 			// there should be no packages found!
 		},
 		{
-			name:      "net8-app combined cataloger (single file)",
+			name:      "combined cataloger (single file)",
 			fixture:   "image-net8-app-single-file",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
 
@@ -1036,7 +1036,7 @@ func TestCataloger(t *testing.T) {
 			assertion: assertSingleFileDeployment,
 		},
 		{
-			name:      "net8-app pe cataloger (single file)",
+			name:      "pe cataloger (single file)",
 			fixture:   "image-net8-app-single-file",
 			cataloger: NewDotnetPortableExecutableCataloger(),
 			// important: no relationships should be found
@@ -1046,7 +1046,7 @@ func TestCataloger(t *testing.T) {
 			assertion: assertSingleFileDeployment,
 		},
 		{
-			name:         "net8-app deps cataloger (self-contained)",
+			name:         "deps cataloger (self-contained)",
 			fixture:      "image-net8-app-self-contained",
 			cataloger:    NewDotnetDepsCataloger(),
 			expectedPkgs: net8AppExpectedDepsSelfContainedPkgs,
@@ -1057,7 +1057,7 @@ func TestCataloger(t *testing.T) {
 			}(),
 		},
 		{
-			name:      "net8-app combined cataloger (self-contained)",
+			name:      "combined cataloger (self-contained)",
 			fixture:   "image-net8-app-self-contained",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
 			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humarizer
@@ -1065,46 +1065,60 @@ func TestCataloger(t *testing.T) {
 			expectedRels: replaceAll(net8AppExpectedDepSelfContainedRelationships, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
 		},
 		{
-			name:      "net8-app pe cataloger (self-contained)",
+			name:      "pe cataloger (self-contained)",
 			fixture:   "image-net8-app-self-contained",
 			cataloger: NewDotnetPortableExecutableCataloger(),
 			// important: no relationships should be found
 			expectedPkgs: net8AppExpectedBinarySelfContainedPkgs,
 		},
 		{
-			name:      "net8-app combined cataloger (private assets + require dlls)",
+			name:      "combined cataloger (private assets + require dlls)",
 			fixture:   "image-net8-privateassets",
 			cataloger: NewDotnetDepsBinaryCataloger(CatalogerConfig{DepPackagesMustHaveDLL: true}),
 			expectedPkgs: []string{
-				"example @ 1.0.0 (/app/example.deps.json)",
+				"dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
 			},
 		},
 		{
-			name:      "net8-app combined cataloger (private assets)",
+			name:      "combined cataloger (private assets)",
 			fixture:   "image-net8-privateassets",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
 			expectedPkgs: []string{
-				"example @ 1.0.0 (/app/example.deps.json)",
+				"dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
 			},
 		},
 		{
-			name:      "net8-app combined cataloger (ilrepack + require dlls)",
+			name:      "combined cataloger (ilrepack + require dlls)",
 			fixture:   "image-net8-ilrepack",
 			cataloger: NewDotnetDepsBinaryCataloger(CatalogerConfig{DepPackagesMustHaveDLL: true}),
 			expectedPkgs: []string{
-				"example @ 1.0.0 (/app/example.deps.json)",
+				"dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
 			},
 		},
 		{
 			// TODO: this is to help us out in the future... we can use TypeDef info from the Metadata table to determine
-			// if package names are any "namespace" values of the assembly. Today we don't do this so we miss any
-			// embedded assemblies.
-			name:      "net8-app combined cataloger (ilrepack)",
+			// if package names are any "namespace" values of the assembly. Today we don't do this so we relax claims
+			// when bundling is detected instead of attempting to check for namespace values in TypeDef entries
+			// and correlate against deps.json entries (which is not a sure thing!).
+			name:      "combined cataloger (ilrepack)",
 			fixture:   "image-net8-ilrepack",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
-			expectedPkgs: []string{
-				"example @ 1.0.0 (/app/example.deps.json)",
-			},
+			expectedPkgs: func() []string {
+				x := net8AppExpectedDepPkgs
+				x = append(x,
+					"ILRepack @ 2.0.33 (/app/dotnetapp.deps.json)",
+					"ILRepack.FullAuto @ 1.6.0 (/app/dotnetapp.deps.json)",
+				)
+				return x
+			}(),
+			expectedRels: func() []string {
+				x := net8AppExpectedDepRelationships
+				x = append(x,
+					"ILRepack @ 2.0.33 (/app/dotnetapp.deps.json) [dependency-of] ILRepack.FullAuto @ 1.6.0 (/app/dotnetapp.deps.json)",
+					"ILRepack.FullAuto @ 1.6.0 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
+				)
+				return x
+			}(),
 		},
 	}
 

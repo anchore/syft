@@ -77,14 +77,14 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 }
 
 // partitionPEs pairs PE files with the deps.json based on directory containment.
-func partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalDotnetPE) ([]logicalDepsJSON, []logicalDotnetPE, []logicalDepsJSON) {
+func partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalPE) ([]logicalDepsJSON, []logicalPE, []logicalDepsJSON) {
 	// sort deps.json paths from longest to shortest. This is so we are processing the most specific match first.
 	sort.Slice(depJsons, func(i, j int) bool {
 		return len(depJsons[i].Location.RealPath) > len(depJsons[j].Location.RealPath)
 	})
 
-	peFilesByPath := make(map[file.Coordinates][]logicalDotnetPE)
-	var remainingPeFiles []logicalDotnetPE
+	peFilesByPath := make(map[file.Coordinates][]logicalPE)
+	var remainingPeFiles []logicalPE
 	for _, pe := range peFiles {
 		var found bool
 		for i := range depJsons {
@@ -117,7 +117,7 @@ func partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalDotnetPE) ([]logi
 
 // attachAssociatedExecutables looks for PE files matching runtime or resource entries
 // and attaches them to the appropriate package.
-func attachAssociatedExecutables(dep *logicalDepsJSON, pe logicalDotnetPE) bool {
+func attachAssociatedExecutables(dep *logicalDepsJSON, pe logicalPE) bool {
 	appDir := path.Dir(dep.Location.RealPath)
 	relativeDllPath := strings.TrimPrefix(strings.TrimPrefix(pe.Location.RealPath, appDir), "/")
 
@@ -204,10 +204,15 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) ([
 			continue
 		}
 
-		if config.DepPackagesMustClaimDLL && len(lp.RuntimePathsByRelativeDLLPath) == 0 && len(lp.ResourcePathsByRelativeDLLPath) == 0 {
-			// could not find a runtime or resource path and the user required this...
-			skippedDepPkgs[nameVersion] = lp
-			continue
+		claimsDLLs := len(lp.RuntimePathsByRelativeDLLPath) > 0 || len(lp.ResourcePathsByRelativeDLLPath) > 0
+
+		if config.DepPackagesMustClaimDLL && !claimsDLLs {
+			if config.RelaxDLLClaimsWhenBundlingDetected && !doc.BundlingDetected || !config.RelaxDLLClaimsWhenBundlingDetected {
+				// could not find a runtime or resource path and the user required this...
+				// and there is no evidence of a bundler in the dependencies (e.g. ILRepack)
+				skippedDepPkgs[nameVersion] = lp
+				continue
+			}
 		}
 
 		dotnetPkg := newDotnetDepsPackage(lp, doc.Location)
@@ -342,13 +347,13 @@ func readDepsJSON(resolver file.Resolver, loc file.Location) (*depsJSON, error) 
 }
 
 // findPEFiles locates and parses all PE files (dll/exe).
-func findPEFiles(resolver file.Resolver) ([]logicalDotnetPE, error, error) {
+func findPEFiles(resolver file.Resolver) ([]logicalPE, error, error) {
 	peLocs, err := resolver.FilesByGlob(dllGlob, exeGlob)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to find PE files: %w", err)
 	}
 
-	var peFiles []logicalDotnetPE
+	var peFiles []logicalPE
 	var unknownErr error
 	for _, loc := range peLocs {
 		ldpe, err := readPEFile(resolver, loc)
@@ -366,7 +371,7 @@ func findPEFiles(resolver file.Resolver) ([]logicalDotnetPE, error, error) {
 }
 
 // readPEFile reads and parses a single PE file.
-func readPEFile(resolver file.Resolver, loc file.Location) (*logicalDotnetPE, error) {
+func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 	reader, err := resolver.FileContentsByLocation(loc)
 	if err != nil {
 		return nil, unknown.New(loc, fmt.Errorf("unable to read PE file: %w", err))

@@ -24,9 +24,9 @@ var imageDirectoryEntryIndexes = []int{
 	pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, // where info about the CLR is stored
 }
 
-// logicalDotnetPE does not directly represent a binary shape to be parsed, instead it represents the
+// logicalPE does not directly represent a binary shape to be parsed, instead it represents the
 // information of interest extracted from a PE file.
-type logicalDotnetPE struct {
+type logicalPE struct {
 	// Location is where the PE file was found
 	Location file.Location
 
@@ -151,7 +151,7 @@ func directoryName(i int) string {
 	return fmt.Sprintf("Unknown (%d)", i)
 }
 
-func getLogicalDotnetPE(f file.LocationReadCloser) (*logicalDotnetPE, error) {
+func getLogicalDotnetPE(f file.LocationReadCloser) (*logicalPE, error) {
 	r, err := unionreader.GetUnionReader(f)
 	if err != nil {
 		return nil, err
@@ -175,7 +175,7 @@ func getLogicalDotnetPE(f file.LocationReadCloser) (*logicalDotnetPE, error) {
 		return nil, fmt.Errorf("unable to parse PE CLR directory: %w", err)
 	}
 
-	return &logicalDotnetPE{
+	return &logicalPE{
 		Location:         f.Location,
 		CLR:              c,
 		VersionResources: versionResources,

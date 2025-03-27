@@ -3,6 +3,7 @@ package dotnet
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -51,7 +52,7 @@ type logicalDepsJSONPackage struct {
 	// Executables is a list of all the executables that are part of this package. This is populated by the PE cataloger
 	// and not something that is found in the deps.json file. This allows us to associate the PE files with this package
 	// based on the relative path to the DLL.
-	Executables []logicalDotnetPE
+	Executables []logicalPE
 }
 
 type logicalDepsJSON struct {
@@ -59,6 +60,7 @@ type logicalDepsJSON struct {
 	RuntimeTarget         runtimeTarget
 	PackagesByNameVersion map[string]logicalDepsJSONPackage
 	PackageNameVersions   *strset.Set
+	BundlingDetected      bool
 }
 
 func (l logicalDepsJSON) RootPackage() (logicalDepsJSONPackage, bool) {
@@ -89,6 +91,24 @@ func newDepsJSON(reader file.LocationReadCloser) (*depsJSON, error) {
 	doc.Location = reader.Location
 	return &doc, nil
 }
+
+var knownBundlers = strset.New(
+	"ILRepack.Lib.MSBuild.Task", // The most official use of ILRepack https://github.com/gluck/il-repack
+	"ILRepack.Lib",              // library interface for ILRepack
+	"ILRepack.Lib.MSBuild",      // uses Cecil 0.10
+	"ILRepack.Lib.NET",          // uses ModuleDefinitions instead of filenames
+	"ILRepack.NETStandard",      // .NET Standard compatible version
+	"ILRepack.FullAuto",         // https://github.com/kekyo/ILRepack.FullAuto
+	"ILMerge",                   // deprecated, but still used in some projects https://github.com/dotnet/ILMerge
+	"JetBrains.Build.ILRepack",  // generally from https://www.nuget.org/packages?q=ilrepack&sortBy=relevance
+
+	// other bundling/modification tools found in results
+	"PostSharp.Community.Packer", // Embeds dependencies as resources
+	"Brokenevent.ILStrip",        // assembly cleaner (removes unused parts)
+	"Brokenevent.ILStrip.CLI",    // command-line/MSBuild variant
+	"Costura.Fody",               // referenced in MSBuildRazorCompiler.Lib
+	"Fody",                       // IL weaving framework
+)
 
 func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 	packageMap := make(map[string]*logicalDepsJSONPackage)
@@ -129,7 +149,12 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 		}
 	}
 	packages := make(map[string]logicalDepsJSONPackage)
+	var bundlingDetected bool
 	for _, p := range packageMap {
+		name := strings.Split(p.NameVersion, "/")[0]
+		if !bundlingDetected && knownBundlers.Has(name) {
+			bundlingDetected = true
+		}
 		packages[p.NameVersion] = *p
 	}
 
@@ -138,5 +163,6 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 		RuntimeTarget:         deps.RuntimeTarget,
 		PackagesByNameVersion: packages,
 		PackageNameVersions:   nameVersions,
+		BundlingDetected:      bundlingDetected,
 	}
 }

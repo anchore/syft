@@ -78,8 +78,8 @@ func newDotnetDepsEntry(lp logicalDepsJSONPackage) pkg.DotnetDepsEntry {
 	}
 }
 
-// newDotnetPortableExecutableEntry creates a portable executable entry from a logicalDotnetPE.
-func newDotnetPortableExecutableEntry(pe logicalDotnetPE) pkg.DotnetPortableExecutableEntry {
+// newDotnetPortableExecutableEntry creates a portable executable entry from a logicalPE.
+func newDotnetPortableExecutableEntry(pe logicalPE) pkg.DotnetPortableExecutableEntry {
 	return newDotnetPortableExecutableEntryFromMap(pe.VersionResources)
 }
 
