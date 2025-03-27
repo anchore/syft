@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/BurntSushi/toml"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -33,7 +34,8 @@ type Package struct {
 }
 
 type Dependencies []struct {
-	Name string `toml:"name"`
+	Name   string   `toml:"name"`
+	Extras []string `toml:"extra"`
 }
 
 type Distribution struct {
@@ -78,19 +80,63 @@ func uvLockPackages(reader file.LocationReadCloser) ([]pkg.Package, []artifact.R
 		return nil, nil, fmt.Errorf("Could not parse UV Lock file version %d:", parsedLockFile.Version)
 	}
 
-	// something something need deps done...
-
 	var pkgs []pkg.Package
 	for _, p := range parsedLockFile.Packages {
 		pkgs = append(
 			pkgs,
-			newPackageForIndex(
+			newPackageForIndexWithMetadata(
 				p.Name,
 				p.Version,
+				p,
 				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}
 
-	return pkgs, dependency.Resolve(poetryLockDependencySpecifier, pkgs), unknown.IfEmptyf(pkgs, "unable to determine packages")
+	return pkgs, dependency.Resolve(uvLockDependencySpecifier, pkgs), unknown.IfEmptyf(pkgs, "unable to determine packages")
+}
+
+func uvLockDependencySpecifier(p pkg.Package) dependency.Specification {
+	meta, ok := p.Metadata.(Package)
+	if !ok {
+		log.Tracef("cataloger failed to extract UV lock metadata for package %+v", p.Name)
+		return dependency.Specification{}
+	}
+
+	provides := []string{packageRef(p.Name, "")}
+
+	var requires []string
+	//add required deps (not extras)
+	for _, dep := range meta.Dependencies {
+		requires = append(requires, packageRef(dep.Name, ""))
+		for _, extra := range dep.Extras {
+			requires = append(requires, packageRef(dep.Name, extra))
+		}
+
+	}
+
+	var variants []dependency.ProvidesRequires
+	for extra_key, extra_dep := range meta.OptionalDependencies {
+		var extra_deps []string
+
+		for _, x := range extra_dep {
+			extra_deps = append(extra_deps, x.Name)
+		}
+
+		variants = append(variants,
+			dependency.ProvidesRequires{
+				Provides: []string{packageRef(p.Name, extra_key)},
+				Requires: extractPackageNames(extra_deps),
+			},
+		)
+	}
+
+	return dependency.Specification{
+		ProvidesRequires: dependency.ProvidesRequires{
+			Provides: provides,
+			Requires: requires,
+		},
+		Variants: variants,
+	}
+
 }
