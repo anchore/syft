@@ -95,10 +95,10 @@ var imageOnlyTestCases = []testCase{
 			"Newtonsoft.Json":                                       "13.0.1",
 			"Serilog":                                               "2.10.0",
 			"Serilog.Sinks.Console":                                 "4.0.1",
-			"System.Diagnostics.DiagnosticSource":                   "6.0.0",
-			"System.Runtime.CompilerServices.Unsafe":                "6.0.0",
-			"TestCommon":                                            "1.0.0",
-			"TestLibrary":                                           "1.0.0",
+			//"System.Diagnostics.DiagnosticSource":                   "6.0.0", // no dll claims in deps.json targets section
+			//"System.Runtime.CompilerServices.Unsafe":                "6.0.0", // no dll claims in deps.json targets section
+			"TestCommon":  "1.0.0",
+			"TestLibrary": "1.0.0",
 		},
 	},
 }
@@ -272,10 +272,10 @@ var dirOnlyTestCases = []testCase{
 			"Newtonsoft.Json":                                       "13.0.1",
 			"Serilog":                                               "2.10.0",
 			"Serilog.Sinks.Console":                                 "4.0.1",
-			"System.Diagnostics.DiagnosticSource":                   "6.0.0",
-			"System.Runtime.CompilerServices.Unsafe":                "6.0.0",
-			"TestCommon":                                            "1.0.0",
-			"TestLibrary":                                           "1.0.0",
+			//"System.Diagnostics.DiagnosticSource":                   "6.0.0", // no dll claims in deps.json targets section
+			//"System.Runtime.CompilerServices.Unsafe":                "6.0.0", // no dll claims in deps.json targets section
+			"TestCommon":  "1.0.0",
+			"TestLibrary": "1.0.0",
 		},
 	},
 	{
