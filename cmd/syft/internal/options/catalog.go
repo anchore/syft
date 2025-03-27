@@ -168,7 +168,9 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
 		Dotnet: dotnet.DefaultCatalogerConfig().
-			WithCertificateValidation(cfg.Dotnet.EnableCertificateValidation),
+			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
+			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).
+			WithRelaxDLLClaimsWhenBundlingDetected(cfg.Dotnet.RelaxDLLClaimsWhenBundlingDetected),
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).

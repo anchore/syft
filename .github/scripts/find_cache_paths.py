@@ -86,8 +86,10 @@ def main(file_path: str | None):
         show("The following paths are missing or have no content, but have corresponding .fingerprint files:")
         for path in sorted(missing_content):
             show(f"- {path}")
-        show("Please ensure these paths exist and have content if they are directories.")
-        exit(1)
+        # when adding new cache directories there is a time where it is not possible to have this directory without
+        # running the tests first... but this step is a prerequisite for running the tests. We should not block on this.
+        # show("Please ensure these paths exist and have content if they are directories.")
+        # exit(1)
 
     sha256_hash = calculate_sha256(fingerprint_contents)
 
