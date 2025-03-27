@@ -13,7 +13,7 @@ func Test_corruptDotnetPackagesLock(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromFile(t, "test-fixtures/glob-paths/src/packages.lock.json").
 		WithError().
-		TestParser(t, parseDotnetDeps)
+		TestParser(t, parseDotnetPackagesLock)
 }
 
 func TestParseDotnetPackagesLock(t *testing.T) {
