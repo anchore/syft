@@ -2,12 +2,15 @@ package dotnet
 
 import (
 	"fmt"
+	"path"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/anchore/go-version"
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -31,6 +34,11 @@ func newDotnetDepsPackage(lp logicalDepsJSONPackage, depsLocation file.Location)
 
 	m := newDotnetDepsEntry(lp)
 
+	var cpes []cpe.CPE
+	if isRuntime(name) {
+		cpes = runtimeCPEs(ver)
+	}
+
 	p := &pkg.Package{
 		Name:      name,
 		Version:   ver,
@@ -38,12 +46,76 @@ func newDotnetDepsPackage(lp logicalDepsJSONPackage, depsLocation file.Location)
 		PURL:      packageURL(m),
 		Language:  pkg.Dotnet,
 		Type:      pkg.DotnetPkg,
+		CPEs:      cpes,
 		Metadata:  m,
 	}
 
 	p.SetID()
 
 	return p
+}
+
+func isRuntime(name string) bool {
+	// found in a self-contained net8 app in the deps.json for the application
+	selfContainedRuntimeDependency := strings.HasPrefix(name, "runtimepack.Microsoft.NETCore.App.Runtime")
+	// found in net8 apps in the deps.json for the runtime
+	explicitRuntimeDependency := strings.HasPrefix(name, "Microsoft.NETCore.App.Runtime")
+	// found in net2 apps in the deps.json for the runtime
+	producesARuntime := strings.HasPrefix(name, "runtime") && strings.HasSuffix(name, "Microsoft.NETCore.App")
+	return selfContainedRuntimeDependency || explicitRuntimeDependency || producesARuntime
+}
+
+func runtimeCPEs(ver string) []cpe.CPE {
+	// .NET Core Versions
+	// 2016: .NET Core 1.0, cpe:2.3:a:microsoft:dotnet_core:1.0:*:*:*:*:*:*:*
+	// 2016: .NET Core 1.1, cpe:2.3:a:microsoft:dotnet_core:1.1:*:*:*:*:*:*:*
+	// 2017: .NET Core 2.0, cpe:2.3:a:microsoft:dotnet_core:2.0:*:*:*:*:*:*:*
+	// 2018: .NET Core 2.1, cpe:2.3:a:microsoft:dotnet_core:2.1:*:*:*:*:*:*:*
+	// 2018: .NET Core 2.2, cpe:2.3:a:microsoft:dotnet_core:2.2:*:*:*:*:*:*:*
+	// 2019: .NET Core 3.0, cpe:2.3:a:microsoft:dotnet_core:3.0:*:*:*:*:*:*:*
+	// 2019: .NET Core 3.1, cpe:2.3:a:microsoft:dotnet_core:3.1:*:*:*:*:*:*:*
+
+	// Unified .NET Versions
+	// 2020: .NET 5.0, cpe:2.3:a:microsoft:dotnet:5.0:*:*:*:*:*:*:*
+	// 2021: .NET 6.0, cpe:2.3:a:microsoft:dotnet:6.0:*:*:*:*:*:*:*
+	// 2022: .NET 7.0, cpe:2.3:a:microsoft:dotnet:7.0:*:*:*:*:*:*:*
+	// 2023: .NET 8.0, cpe:2.3:a:microsoft:dotnet:8.0:*:*:*:*:*:*:*
+	// 2024: .NET 9.0, cpe:2.3:a:microsoft:dotnet:9.0:*:*:*:*:*:*:*
+	// 2025 ...?
+
+	fields := strings.Split(ver, ".")
+	majorVersion, err := strconv.Atoi(fields[0])
+	if err != nil {
+		log.WithFields("error", err).Tracef("failed to parse .NET major version from %q", ver)
+		return nil
+	}
+
+	var minorVersion int
+	if len(fields) > 1 {
+		minorVersion, err = strconv.Atoi(fields[1])
+		if err != nil {
+			log.WithFields("error", err).Tracef("failed to parse .NET minor version from %q", ver)
+			return nil
+		}
+	}
+
+	productName := "dotnet"
+	if majorVersion < 5 {
+		productName = "dotnet_core"
+	}
+
+	return []cpe.CPE{
+		{
+			Attributes: cpe.Attributes{
+				Part:    "a",
+				Vendor:  "microsoft",
+				Product: productName,
+				Version: fmt.Sprintf("%d.%d", majorVersion, minorVersion),
+			},
+			// we didn't find this in the underlying material, but this is the convention in NVD and we are certain this is a runtime package
+			Source: cpe.DeclaredSource,
+		},
+	}
 }
 
 // newDotnetDepsEntry creates a Dotnet dependency entry using the new logicalDepsJSONPackage.
@@ -145,7 +217,14 @@ func packageURL(m pkg.DotnetDepsEntry) string {
 }
 
 func newDotnetBinaryPackage(versionResources map[string]string, f file.Location) pkg.Package {
-	name := findNameFromVersionResources(versionResources)
+	// TODO: we may decide to use the runtime information in the metadata, but that is not captured today
+	name, _ := findNameAndRuntimeFromVersionResources(versionResources)
+
+	if name == "" {
+		// older .NET runtime dlls may not have any version resources
+		name = strings.TrimSuffix(strings.TrimSuffix(path.Base(f.RealPath), ".exe"), ".dll")
+	}
+
 	ver := findVersionFromVersionResources(versionResources)
 
 	metadata := newDotnetPortableExecutableEntryFromMap(versionResources)
@@ -179,26 +258,37 @@ func binaryPackageURL(name, version string) string {
 	).ToString()
 }
 
-func findNameFromVersionResources(versionResources map[string]string) string {
+var binRuntimeSuffixPattern = regexp.MustCompile(`\s*\((?P<runtime>net[^)]*[0-9]+(\.[0-9]+)?)\)$`)
+
+func findNameAndRuntimeFromVersionResources(versionResources map[string]string) (string, string) {
 	// PE files not authored by Microsoft tend to use ProductName as an identifier.
 	nameFields := []string{"ProductName", "FileDescription", "InternalName", "OriginalFilename"}
 
 	if isMicrosoftVersionResource(versionResources) {
-		// For Microsoft files, prioritize FileDescription.
+		// for Microsoft files, prioritize FileDescription.
 		nameFields = []string{"FileDescription", "InternalName", "OriginalFilename", "ProductName"}
 	}
 
+	var name string
 	for _, field := range nameFields {
 		value := spaceNormalize(versionResources[field])
 		if value == "" {
 			continue
 		}
-		return value
+		name = value
+		break
 	}
 
-	return ""
-}
+	var runtime string
+	// look for indications of the runtime, such as "(net8.0)" or "(netstandard2.2)" suffixes
+	runtimes := binRuntimeSuffixPattern.FindStringSubmatch(name)
+	if len(runtimes) > 1 {
+		runtime = strings.TrimSpace(runtimes[1])
+		name = strings.TrimSpace(strings.TrimSuffix(name, runtimes[0]))
+	}
 
+	return name, runtime
+}
 func isMicrosoftVersionResource(versionResources map[string]string) bool {
 	return strings.Contains(strings.ToLower(versionResources["CompanyName"]), "microsoft") ||
 		strings.Contains(strings.ToLower(versionResources["ProductName"]), "microsoft")
