@@ -327,3 +327,53 @@ func Test_NewDotnetBinaryPackage(t *testing.T) {
 		})
 	}
 }
+
+func Test_extractVersion(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			input:    "1, 0, 0, 0",
+			expected: "1, 0, 0, 0",
+		},
+		{
+			input:    "Release 73",
+			expected: "Release 73",
+		},
+		{
+			input:    "4.7.4076.0 built by: NET472REL1LAST_B",
+			expected: "4.7.4076.0",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			got := extractVersionFromResourcesValue(test.input)
+			assert.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func Test_spaceNormalize(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			expected: "some spaces apart",
+			input:    " some 	spaces\n\t\t \n\rapart\n",
+		},
+		{
+			expected: "söme ¡nvalid characters",
+			input:    "\rsöme \u0001¡nvalid\t characters\n",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.expected, func(t *testing.T) {
+			got := spaceNormalize(test.input)
+			assert.Equal(t, test.expected, got)
+		})
+	}
+}
