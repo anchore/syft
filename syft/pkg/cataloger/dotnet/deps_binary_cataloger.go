@@ -35,7 +35,7 @@ func (c depsBinaryCataloger) Name() string {
 	return "dotnet-deps-binary-cataloger"
 }
 
-func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) { //nolint:funlen
 	depJSONDocs, unknowns, err := findDepsJSON(resolver)
 	if err != nil {
 		return nil, nil, err
@@ -61,19 +61,26 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 		depDocGroups = append(depDocGroups, remainingDepsJSONs)
 	}
 
+	var roots []*pkg.Package
 	for _, docs := range depDocGroups {
 		for _, doc := range docs {
-			ps, rs := packagesFromLogicalDepsJSON(doc, c.config)
+			rts, ps, rs := packagesFromLogicalDepsJSON(doc, c.config)
+			if rts != nil {
+				roots = append(roots, rts)
+			}
 			pkgs = append(pkgs, ps...)
 			relationships = append(relationships, rs...)
 		}
 	}
 
 	// track existing runtime packages so we don't create duplicates
-	existingRuntimes := strset.New()
-	for _, p := range pkgs {
+	existingRuntimeVersions := strset.New()
+	var runtimePkgs []*pkg.Package
+	for i := range pkgs {
+		p := &pkgs[i]
 		if isRuntime(p.Name) {
-			existingRuntimes.Add(p.Version)
+			existingRuntimeVersions.Add(p.Version)
+			runtimePkgs = append(runtimePkgs, p)
 		}
 	}
 
@@ -90,16 +97,29 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 
 	// if we found any runtime DLLs we ignored, then make packages for each version found
 	for version, locs := range runtimes {
-		if len(locs) == 0 || existingRuntimes.Has(version) {
+		if len(locs) == 0 || existingRuntimeVersions.Has(version) {
 			continue
 		}
-		pkgs = append(pkgs, pkg.Package{
+		rtp := pkg.Package{
 			Name:      "Microsoft.NETCore.App",
 			Version:   version,
 			Type:      pkg.DotnetPkg,
 			CPEs:      runtimeCPEs(version),
 			Locations: file.NewLocationSet(locs...),
-		})
+		}
+		pkgs = append(pkgs, rtp)
+		runtimePkgs = append(runtimePkgs, &rtp)
+	}
+
+	// create a relationship from every runtime package to every root package
+	for _, root := range roots {
+		for _, runtimePkg := range runtimePkgs {
+			relationships = append(relationships, artifact.Relationship{
+				From: *runtimePkg,
+				To:   *root,
+				Type: artifact.DependencyOfRelationship,
+			})
+		}
 	}
 
 	return pkgs, relationships, unknowns
@@ -207,7 +227,7 @@ func packagesFromDepsJSON(docs []logicalDepsJSON, config CatalogerConfig) ([]pkg
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 	for _, ldj := range docs {
-		ps, rs := packagesFromLogicalDepsJSON(ldj, config)
+		_, ps, rs := packagesFromLogicalDepsJSON(ldj, config)
 		pkgs = append(pkgs, ps...)
 		relationships = append(relationships, rs...)
 	}
@@ -215,7 +235,7 @@ func packagesFromDepsJSON(docs []logicalDepsJSON, config CatalogerConfig) ([]pkg
 }
 
 // packagesFromLogicalDepsJSON converts a logicalDepsJSON (using the new map type) into catalog packages.
-func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) ([]pkg.Package, []artifact.Relationship) {
+func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) (*pkg.Package, []pkg.Package, []artifact.Relationship) {
 	var rootPkg *pkg.Package
 	if rootLpkg, hasRoot := doc.RootPackage(); hasRoot {
 		rootPkg = newDotnetDepsPackage(rootLpkg, doc.Location)
@@ -263,7 +283,7 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) ([
 		}
 	}
 
-	return pkgs, relationshipsFromLogicalDepsJSON(doc, pkgMap, skippedDepPkgs)
+	return rootPkg, pkgs, relationshipsFromLogicalDepsJSON(doc, pkgMap, skippedDepPkgs)
 }
 
 // relationshipsFromLogicalDepsJSON creates relationships from a logicalDepsJSON document for only the given syft packages.
@@ -294,7 +314,7 @@ func relationshipsFromLogicalDepsJSON(doc logicalDepsJSON, pkgMap map[string]pkg
 				}
 				// we have a skipped package, so we need to create a relationship but looking a the nearest
 				// package with an associated PE file for even dependency listed on the skipped package.
-				// Take note that the skipped depedency's dependency could also be skipped, so we need to
+				// Take note that the skipped dependency's dependency could also be skipped, so we need to
 				// do this recursively.
 				depPkgs = findNearestDependencyPackages(skippedDepPkg, pkgMap, skipped, strset.New())
 			} else {

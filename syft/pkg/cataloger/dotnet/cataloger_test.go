@@ -714,7 +714,7 @@ func TestCataloger(t *testing.T) {
 			//expectedPkgs: net8AppExpectedDepPkgs,
 			//expectedRels: net8AppExpectedDepRelationships,
 
-			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humarizer
+			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humanizer
 			expectedPkgs: net8AppExpectedDepPkgsWithoutUnpairedDlls,
 			expectedRels: replaceAll(net8AppDepOnlyRelationshipsWithoutHumanizer, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
 
@@ -729,8 +729,13 @@ func TestCataloger(t *testing.T) {
 				pkgs = append(pkgs, "Microsoft.NETCore.App.Runtime.linux-x64 @ 8.0.14 (/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.14/Microsoft.NETCore.App.deps.json)")
 				return pkgs
 			}(),
-			expectedRels: replaceAll(net8AppDepOnlyRelationshipsWithoutHumanizer, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
-			assertion:    assertAccurateNetRuntimePackage,
+			expectedRels: func() []string {
+				x := replaceAll(net8AppDepOnlyRelationshipsWithoutHumanizer, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0")
+				// the main application should also have a relationship to the runtime package
+				x = append(x, "Microsoft.NETCore.App.Runtime.linux-x64 @ 8.0.14 (/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.14/Microsoft.NETCore.App.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)")
+				return x
+			}(),
+			assertion: assertAccurateNetRuntimePackage,
 		},
 		{
 			name:      "combined cataloger (with runtime, no deps.json anywhere)",
@@ -930,8 +935,13 @@ func TestCataloger(t *testing.T) {
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
 			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humarizer
 			expectedPkgs: net8AppExpectedDepSelfContainedPkgs,
-			expectedRels: replaceAll(net8AppExpectedDepSelfContainedRelationships, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
-			assertion:    assertAccurateNetRuntimePackage,
+			expectedRels: func() []string {
+				x := replaceAll(net8AppExpectedDepSelfContainedRelationships, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0")
+				// the main application also has a dependency on the runtime package
+				x = append(x, "runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)")
+				return x
+			}(),
+			assertion: assertAccurateNetRuntimePackage,
 		},
 		{
 			name:      "pe cataloger (self-contained)",
@@ -997,12 +1007,13 @@ func TestCataloger(t *testing.T) {
 				"Serilog @ 2.10.0 (/app/helloworld.deps.json)",
 				"Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
 				"helloworld @ 1.0.0 (/app/helloworld.deps.json)",
-				"runtime.linux-arm.Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
+				"runtime.linux-x64.Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
 			},
 			expectedRels: []string{
 				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
 				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
 				"Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
+				"runtime.linux-x64.Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
 			},
 			assertion: assertAccurateNetRuntimePackage,
 		},
