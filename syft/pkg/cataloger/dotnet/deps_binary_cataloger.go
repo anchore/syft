@@ -69,11 +69,56 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 		}
 	}
 
+	// track existing runtime packages so we don't create duplicates
+	existingRuntimes := strset.New()
+	for _, p := range pkgs {
+		if isRuntime(p.Name) {
+			existingRuntimes.Add(p.Version)
+		}
+	}
+
+	runtimes := make(map[string][]file.Location)
 	for _, pe := range remainingPeFiles {
+		runtimeVer, isRuntimePkg := isRuntimePackageLocation(pe.Location)
+		if isRuntimePkg {
+			runtimes[runtimeVer] = append(runtimes[runtimeVer], pe.Location)
+			// we should never catalog runtime DLLs as packages themselves, instead there should be a single logical package
+			continue
+		}
 		pkgs = append(pkgs, newDotnetBinaryPackage(pe.VersionResources, pe.Location))
 	}
 
+	// if we found any runtime DLLs we ignored, then make packages for each version found
+	for version, locs := range runtimes {
+		if len(locs) == 0 || existingRuntimes.Has(version) {
+			continue
+		}
+		pkgs = append(pkgs, pkg.Package{
+			Name:      "Microsoft.NETCore.App",
+			Version:   version,
+			Type:      pkg.DotnetPkg,
+			CPEs:      runtimeCPEs(version),
+			Locations: file.NewLocationSet(locs...),
+		})
+	}
+
 	return pkgs, relationships, unknowns
+}
+
+var runtimeDLLPathPattern = regexp.MustCompile(`/Microsoft\.NETCore\.App/(?P<version>\d+\.\d+\.\d+)/[^/]+\.dll`)
+
+func isRuntimePackageLocation(loc file.Location) (string, bool) {
+	// we should look at the realpath to see if it is a "**/Microsoft.NETCore.App/\d+.\d+.\d+/*.dll"
+	// and if so treat it as a runtime package
+	if match := runtimeDLLPathPattern.FindStringSubmatch(loc.RealPath); match != nil {
+		versionIndex := runtimeDLLPathPattern.SubexpIndex("version")
+		if versionIndex != -1 {
+			version := match[versionIndex]
+			return version, true
+		}
+	}
+
+	return "", false
 }
 
 // partitionPEs pairs PE files with the deps.json based on directory containment.
@@ -136,22 +181,18 @@ func attachAssociatedExecutables(dep *logicalDepsJSON, pe logicalPE) bool {
 			p.Executables = append(p.Executables, pe)
 			dep.PackagesByNameVersion[key] = p // update the map with the modified package
 			found = true
+			continue
+		}
+
+		if p.NativePaths.Has(relativeDllPath) {
+			pe.TargetPath = relativeDllPath
+			p.Executables = append(p.Executables, pe)
+			dep.PackagesByNameVersion[key] = p // update the map with the modified package
+			found = true
+			continue
 		}
 	}
 	return found
-}
-
-var libPrefixPattern = regexp.MustCompile(`^lib/net[^/]+/`)
-
-// trimLibPrefix removes prefixes like "lib/net6.0/" from a path.
-func trimLibPrefix(s string) string {
-	if match := libPrefixPattern.FindString(s); match != "" {
-		parts := strings.Split(s, "/")
-		if len(parts) > 2 {
-			return strings.Join(parts[2:], "/")
-		}
-	}
-	return s
 }
 
 // isParentOf checks if parentFile's directory is a prefix of childFile's directory.
@@ -176,7 +217,7 @@ func packagesFromDepsJSON(docs []logicalDepsJSON, config CatalogerConfig) ([]pkg
 // packagesFromLogicalDepsJSON converts a logicalDepsJSON (using the new map type) into catalog packages.
 func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) ([]pkg.Package, []artifact.Relationship) {
 	var rootPkg *pkg.Package
-	if rootLpkg, hasRoot := doc.RootPackage(); !hasRoot {
+	if rootLpkg, hasRoot := doc.RootPackage(); hasRoot {
 		rootPkg = newDotnetDepsPackage(rootLpkg, doc.Location)
 	}
 

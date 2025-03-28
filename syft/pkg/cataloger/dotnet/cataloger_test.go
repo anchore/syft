@@ -287,7 +287,6 @@ func TestCataloger(t *testing.T) {
 	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs, net8AppExpectedDepPkgsWithoutUnpairedDlls...)
 	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs,
 		// add the CLR runtime packages...
-		".NET Runtime @ 8,0,1425,11118 (/app/coreclr.dll)",
 		"runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.deps.json)",
 	)
 
@@ -581,6 +580,10 @@ func TestCataloger(t *testing.T) {
 	assertAllBinaryEntries := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 		t.Helper()
 		for _, p := range pkgs {
+			if p.Name == "Microsoft.NETCore.App" {
+				// for the runtime app we created ourselves there is no metadata for
+				continue
+			}
 			// assert that all packages have an executable associated with it
 			m, ok := p.Metadata.(pkg.DotnetPortableExecutableEntry)
 			if !ok {
@@ -674,6 +677,18 @@ func TestCataloger(t *testing.T) {
 		pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
 	}
 
+	assertAccurateNetRuntimePackage := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+		// the package with the CPE is the runtime package
+		for _, p := range pkgs {
+			if len(p.CPEs) == 0 {
+				continue
+			}
+			assert.Contains(t, p.Name, "Microsoft.NETCore.App")
+			return
+		}
+		t.Error("expected at least one runtime package with a CPE")
+	}
+
 	cases := []struct {
 		name         string
 		fixture      string
@@ -704,6 +719,34 @@ func TestCataloger(t *testing.T) {
 			expectedRels: replaceAll(net8AppDepOnlyRelationshipsWithoutHumanizer, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
 
 			assertion: assertAlmostAllDepEntriesWithExecutables, // important! this is what makes this case different from the previous one... dep entries have attached executables
+		},
+		{
+			name:      "combined cataloger (with runtime)",
+			fixture:   "image-net8-app-with-runtime",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			expectedPkgs: func() []string {
+				pkgs := net8AppExpectedDepPkgsWithoutUnpairedDlls
+				pkgs = append(pkgs, "Microsoft.NETCore.App.Runtime.linux-x64 @ 8.0.14 (/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.14/Microsoft.NETCore.App.deps.json)")
+				return pkgs
+			}(),
+			expectedRels: replaceAll(net8AppDepOnlyRelationshipsWithoutHumanizer, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
+			assertion:    assertAccurateNetRuntimePackage,
+		},
+		{
+			name:      "combined cataloger (with runtime, no deps.json anywhere)",
+			fixture:   "image-net8-app-with-runtime-nodepsjson",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			expectedPkgs: func() []string {
+				// all the same packages we found in "image-net8-app-with-runtime", however we create a runtime package out of all of the DLLs we found instead
+				x := net8AppBinaryOnlyPkgs
+				x = append(x, "Microsoft.NETCore.App @ 8.0.14 (/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.14/Microsoft.CSharp.dll)")
+				return x
+			}(),
+			// important: no relationships should be found
+			assertion: func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+				assertAllBinaryEntries(t, pkgs, relationships)
+				assertAccurateNetRuntimePackage(t, pkgs, relationships)
+			},
 		},
 		{
 			name:         "combined cataloger (require dll pairings)",
@@ -888,6 +931,7 @@ func TestCataloger(t *testing.T) {
 			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humarizer
 			expectedPkgs: net8AppExpectedDepSelfContainedPkgs,
 			expectedRels: replaceAll(net8AppExpectedDepSelfContainedRelationships, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
+			assertion:    assertAccurateNetRuntimePackage,
 		},
 		{
 			name:      "pe cataloger (self-contained)",
@@ -944,6 +988,23 @@ func TestCataloger(t *testing.T) {
 				)
 				return x
 			}(),
+		},
+		{
+			name:      "net2 app, combined cataloger (private assets)",
+			fixture:   "image-net2-app",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			expectedPkgs: []string{
+				"Serilog @ 2.10.0 (/app/helloworld.deps.json)",
+				"Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
+				"helloworld @ 1.0.0 (/app/helloworld.deps.json)",
+				"runtime.linux-arm.Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
+			},
+			expectedRels: []string{
+				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
+				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
+				"Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
+			},
+			assertion: assertAccurateNetRuntimePackage,
 		},
 	}
 
