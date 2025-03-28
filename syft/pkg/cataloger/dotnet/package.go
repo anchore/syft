@@ -217,7 +217,8 @@ func packageURL(m pkg.DotnetDepsEntry) string {
 }
 
 func newDotnetBinaryPackage(versionResources map[string]string, f file.Location) pkg.Package {
-	name := findNameFromVersionResources(versionResources)
+	// TODO: we may decide to use the runtime information in the metadata, but that is not captured today
+	name, _ := findNameAndRuntimeFromVersionResources(versionResources)
 
 	if name == "" {
 		// older .NET runtime dlls may not have any version resources
@@ -257,26 +258,37 @@ func binaryPackageURL(name, version string) string {
 	).ToString()
 }
 
-func findNameFromVersionResources(versionResources map[string]string) string {
+var binRuntimeSuffixPattern = regexp.MustCompile(`\s*\((?P<runtime>net[^)]*[0-9]+(\.[0-9]+)?)\)$`)
+
+func findNameAndRuntimeFromVersionResources(versionResources map[string]string) (string, string) {
 	// PE files not authored by Microsoft tend to use ProductName as an identifier.
 	nameFields := []string{"ProductName", "FileDescription", "InternalName", "OriginalFilename"}
 
 	if isMicrosoftVersionResource(versionResources) {
-		// For Microsoft files, prioritize FileDescription.
+		// for Microsoft files, prioritize FileDescription.
 		nameFields = []string{"FileDescription", "InternalName", "OriginalFilename", "ProductName"}
 	}
 
+	var name string
 	for _, field := range nameFields {
 		value := spaceNormalize(versionResources[field])
 		if value == "" {
 			continue
 		}
-		return value
+		name = value
+		break
 	}
 
-	return ""
-}
+	var runtime string
+	// look for indications of the runtime, such as "(net8.0)" or "(netstandard2.2)" suffixes
+	runtimes := binRuntimeSuffixPattern.FindStringSubmatch(name)
+	if len(runtimes) > 1 {
+		runtime = strings.TrimSpace(runtimes[1])
+		name = strings.TrimSpace(strings.TrimSuffix(name, runtimes[0]))
+	}
 
+	return name, runtime
+}
 func isMicrosoftVersionResource(versionResources map[string]string) bool {
 	return strings.Contains(strings.ToLower(versionResources["CompanyName"]), "microsoft") ||
 		strings.Contains(strings.ToLower(versionResources["ProductName"]), "microsoft")
