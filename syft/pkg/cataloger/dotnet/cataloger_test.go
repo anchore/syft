@@ -121,55 +121,55 @@ func TestCataloger(t *testing.T) {
 
 	// app binaries (always dlls)
 	net8AppBinaryOnlyPkgs := []string{
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/Humanizer.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/af/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/ar/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/az/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/bg/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/bn-BD/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/cs/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/da/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/de/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/el/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/es/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/fa/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/fi-FI/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/fr-BE/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/fr/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/he/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/hr/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/hu/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/hy/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/id/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/is/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/it/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/ja/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/ku/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/lv/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/nb-NO/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/nb/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/nl/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/pl/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/pt/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/ro/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/ru/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/sk/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/sl/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/sr-Latn/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/sr/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/sv/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/tr/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/uk/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/uz-Cyrl-UZ/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/uz-Latn-UZ/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/vi/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/zh-CN/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/zh-Hans/Humanizer.resources.dll)",
-		"Humanizer (net6.0) @ 2.14.1.48190 (/app/zh-Hant/Humanizer.resources.dll)",
-		"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/ko-KR/Humanizer.resources.dll)",
-		"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/ms-MY/Humanizer.resources.dll)",
-		"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/mt/Humanizer.resources.dll)",
-		"Humanizer (netstandard2.0) @ 2.14.1.48190 (/app/th-TH/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/Humanizer.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/af/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/ar/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/az/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/bg/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/bn-BD/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/cs/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/da/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/de/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/el/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/es/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/fa/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/fi-FI/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/fr-BE/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/fr/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/he/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/hr/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/hu/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/hy/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/id/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/is/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/it/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/ja/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/ku/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/lv/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/nb-NO/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/nb/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/nl/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/pl/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/pt/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/ro/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/ru/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/sk/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/sl/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/sr-Latn/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/sr/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/sv/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/tr/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/uk/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/uz-Cyrl-UZ/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/uz-Latn-UZ/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/vi/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/zh-CN/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/zh-Hans/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/zh-Hant/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/ko-KR/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/ms-MY/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/mt/Humanizer.resources.dll)",
+		"Humanizer @ 2.14.1.48190 (/app/th-TH/Humanizer.resources.dll)",
 		"Json.NET @ 13.0.3.27908 (/app/Newtonsoft.Json.dll)",
 		"dotnetapp @ 1.0.0.0 (/app/dotnetapp.dll)",
 	}
@@ -287,7 +287,6 @@ func TestCataloger(t *testing.T) {
 	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs, net8AppExpectedDepPkgsWithoutUnpairedDlls...)
 	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs,
 		// add the CLR runtime packages...
-		".NET Runtime @ 8,0,1425,11118 (/app/coreclr.dll)",
 		"runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.deps.json)",
 	)
 
@@ -581,6 +580,10 @@ func TestCataloger(t *testing.T) {
 	assertAllBinaryEntries := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 		t.Helper()
 		for _, p := range pkgs {
+			if p.Name == "Microsoft.NETCore.App" {
+				// for the runtime app we created ourselves there is no metadata for
+				continue
+			}
 			// assert that all packages have an executable associated with it
 			m, ok := p.Metadata.(pkg.DotnetPortableExecutableEntry)
 			if !ok {
@@ -674,6 +677,18 @@ func TestCataloger(t *testing.T) {
 		pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
 	}
 
+	assertAccurateNetRuntimePackage := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+		// the package with the CPE is the runtime package
+		for _, p := range pkgs {
+			if len(p.CPEs) == 0 {
+				continue
+			}
+			assert.Contains(t, p.Name, "Microsoft.NETCore.App")
+			return
+		}
+		t.Error("expected at least one runtime package with a CPE")
+	}
+
 	cases := []struct {
 		name         string
 		fixture      string
@@ -699,11 +714,44 @@ func TestCataloger(t *testing.T) {
 			//expectedPkgs: net8AppExpectedDepPkgs,
 			//expectedRels: net8AppExpectedDepRelationships,
 
-			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humarizer
+			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humanizer
 			expectedPkgs: net8AppExpectedDepPkgsWithoutUnpairedDlls,
 			expectedRels: replaceAll(net8AppDepOnlyRelationshipsWithoutHumanizer, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
 
 			assertion: assertAlmostAllDepEntriesWithExecutables, // important! this is what makes this case different from the previous one... dep entries have attached executables
+		},
+		{
+			name:      "combined cataloger (with runtime)",
+			fixture:   "image-net8-app-with-runtime",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			expectedPkgs: func() []string {
+				pkgs := net8AppExpectedDepPkgsWithoutUnpairedDlls
+				pkgs = append(pkgs, "Microsoft.NETCore.App.Runtime.linux-x64 @ 8.0.14 (/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.14/Microsoft.NETCore.App.deps.json)")
+				return pkgs
+			}(),
+			expectedRels: func() []string {
+				x := replaceAll(net8AppDepOnlyRelationshipsWithoutHumanizer, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0")
+				// the main application should also have a relationship to the runtime package
+				x = append(x, "Microsoft.NETCore.App.Runtime.linux-x64 @ 8.0.14 (/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.14/Microsoft.NETCore.App.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)")
+				return x
+			}(),
+			assertion: assertAccurateNetRuntimePackage,
+		},
+		{
+			name:      "combined cataloger (with runtime, no deps.json anywhere)",
+			fixture:   "image-net8-app-with-runtime-nodepsjson",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			expectedPkgs: func() []string {
+				// all the same packages we found in "image-net8-app-with-runtime", however we create a runtime package out of all of the DLLs we found instead
+				x := net8AppBinaryOnlyPkgs
+				x = append(x, "Microsoft.NETCore.App @ 8.0.14 (/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.14/Microsoft.CSharp.dll)")
+				return x
+			}(),
+			// important: no relationships should be found
+			assertion: func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+				assertAllBinaryEntries(t, pkgs, relationships)
+				assertAccurateNetRuntimePackage(t, pkgs, relationships)
+			},
 		},
 		{
 			name:         "combined cataloger (require dll pairings)",
@@ -887,7 +935,13 @@ func TestCataloger(t *testing.T) {
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
 			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humarizer
 			expectedPkgs: net8AppExpectedDepSelfContainedPkgs,
-			expectedRels: replaceAll(net8AppExpectedDepSelfContainedRelationships, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
+			expectedRels: func() []string {
+				x := replaceAll(net8AppExpectedDepSelfContainedRelationships, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0")
+				// the main application also has a dependency on the runtime package
+				x = append(x, "runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)")
+				return x
+			}(),
+			assertion: assertAccurateNetRuntimePackage,
 		},
 		{
 			name:      "pe cataloger (self-contained)",
@@ -944,6 +998,24 @@ func TestCataloger(t *testing.T) {
 				)
 				return x
 			}(),
+		},
+		{
+			name:      "net2 app, combined cataloger (private assets)",
+			fixture:   "image-net2-app",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			expectedPkgs: []string{
+				"Serilog @ 2.10.0 (/app/helloworld.deps.json)",
+				"Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
+				"helloworld @ 1.0.0 (/app/helloworld.deps.json)",
+				"runtime.linux-x64.Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
+			},
+			expectedRels: []string{
+				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
+				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
+				"Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
+				"runtime.linux-x64.Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
+			},
+			assertion: assertAccurateNetRuntimePackage,
 		},
 	}
 

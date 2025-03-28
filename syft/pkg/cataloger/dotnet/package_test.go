@@ -1,10 +1,12 @@
 package dotnet
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -374,6 +376,186 @@ func Test_spaceNormalize(t *testing.T) {
 		t.Run(test.expected, func(t *testing.T) {
 			got := spaceNormalize(test.input)
 			assert.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func TestRuntimeCPEs(t *testing.T) {
+	tests := []struct {
+		name     string
+		version  string
+		expected []cpe.CPE
+	}{
+		{
+			name:    ".NET Core 1.0",
+			version: "1.0",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "dotnet_core",
+						Version: "1.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:    ".NET Core 2.1",
+			version: "2.1",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "dotnet_core",
+						Version: "2.1",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:    ".NET Core 3.1",
+			version: "3.1",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "dotnet_core",
+						Version: "3.1",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:    ".NET Core 4.9 (hypothetical)",
+			version: "4.9",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "dotnet_core",
+						Version: "4.9",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:    ".NET 5.0",
+			version: "5.0",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "dotnet",
+						Version: "5.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:    ".NET 6.0",
+			version: "6.0",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "dotnet",
+						Version: "6.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:    ".NET 8.0",
+			version: "8.0",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "dotnet",
+						Version: "8.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:    ".NET 10.0 (future version)",
+			version: "10.0",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "dotnet",
+						Version: "10.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:    "Patch version should not be included",
+			version: "6.0.21",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "dotnet",
+						Version: "6.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:    "Assumed minor version",
+			version: "6",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "dotnet",
+						Version: "6.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:     "Invalid version format",
+			version:  "invalid",
+			expected: nil,
+		},
+		{
+			name:     "Empty version",
+			version:  "",
+			expected: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := runtimeCPEs(tc.version)
+
+			if !reflect.DeepEqual(result, tc.expected) {
+				t.Errorf("runtimeCPEs(%q) = %+v; want %+v",
+					tc.version, result, tc.expected)
+			}
 		})
 	}
 }

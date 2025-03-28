@@ -3,6 +3,7 @@ package dotnet
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
@@ -25,6 +26,7 @@ type depsTarget struct {
 	Dependencies map[string]string            `json:"dependencies"`
 	Runtime      map[string]map[string]string `json:"runtime"`
 	Resources    map[string]map[string]string `json:"resources"`
+	Native       map[string]map[string]string `json:"native"`
 }
 
 type depsLibrary struct {
@@ -48,6 +50,11 @@ type logicalDepsJSONPackage struct {
 	// ResourcePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
 	// to the target path as described in the deps.json target entry under "resource".
 	ResourcePathsByRelativeDLLPath map[string]string
+
+	// NativePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
+	// to the target path as described in the deps.json target entry under "native". These should not have
+	// any runtime references to trim from the front of the path.
+	NativePaths *strset.Set
 
 	// Executables is a list of all the executables that are part of this package. This is populated by the PE cataloger
 	// and not something that is found in the deps.json file. This allows us to associate the PE files with this package
@@ -117,35 +124,43 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 	for _, targets := range deps.Targets {
 		for libName, target := range targets {
 			_, exists := packageMap[libName]
-			if !exists {
-				var lib *depsLibrary
-				l, ok := deps.Libraries[libName]
-				if ok {
-					lib = &l
-				}
-				runtimePaths := make(map[string]string)
-				for path := range target.Runtime {
-					runtimePaths[trimLibPrefix(path)] = path
-				}
-				resourcePaths := make(map[string]string)
-				for path := range target.Resources {
-					trimmedPath := trimLibPrefix(path)
-					if _, exists := resourcePaths[trimmedPath]; exists {
-						continue
-					}
-					resourcePaths[trimmedPath] = path
-				}
-
-				p := &logicalDepsJSONPackage{
-					NameVersion:                    libName,
-					Library:                        lib,
-					Targets:                        &target,
-					RuntimePathsByRelativeDLLPath:  runtimePaths,
-					ResourcePathsByRelativeDLLPath: resourcePaths,
-				}
-				packageMap[libName] = p
-				nameVersions.Add(libName)
+			if exists {
+				continue
 			}
+
+			var lib *depsLibrary
+			l, ok := deps.Libraries[libName]
+			if ok {
+				lib = &l
+			}
+			runtimePaths := make(map[string]string)
+			for path := range target.Runtime {
+				runtimePaths[trimLibPrefix(path)] = path
+			}
+			resourcePaths := make(map[string]string)
+			for path := range target.Resources {
+				trimmedPath := trimLibPrefix(path)
+				if _, exists := resourcePaths[trimmedPath]; exists {
+					continue
+				}
+				resourcePaths[trimmedPath] = path
+			}
+
+			nativePaths := strset.New()
+			for path := range target.Native {
+				nativePaths.Add(path)
+			}
+
+			p := &logicalDepsJSONPackage{
+				NameVersion:                    libName,
+				Library:                        lib,
+				Targets:                        &target,
+				RuntimePathsByRelativeDLLPath:  runtimePaths,
+				ResourcePathsByRelativeDLLPath: resourcePaths,
+				NativePaths:                    nativePaths,
+			}
+			packageMap[libName] = p
+			nameVersions.Add(libName)
 		}
 	}
 	packages := make(map[string]logicalDepsJSONPackage)
@@ -165,4 +180,19 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 		PackageNameVersions:   nameVersions,
 		BundlingDetected:      bundlingDetected,
 	}
+}
+
+var libPathPattern = regexp.MustCompile(`^(?:runtimes/[^/]+/)?lib/net[^/]+/(?P<targetPath>.+)`)
+
+// trimLibPrefix removes prefixes like "lib/net6.0/" or "runtimes/linux-arm/lib/netcoreapp2.2/" from a path.
+// It captures and returns everything after the framework version section using a named capture group.
+func trimLibPrefix(s string) string {
+	if match := libPathPattern.FindStringSubmatch(s); len(match) > 1 {
+		// Get the index of the named capture group
+		targetPathIndex := libPathPattern.SubexpIndex("targetPath")
+		if targetPathIndex != -1 {
+			return match[targetPathIndex]
+		}
+	}
+	return s
 }
