@@ -76,7 +76,6 @@ func DefaultPackageTaskFactories() Factories {
 		// language-specific package declared catalogers ///////////////////////////////////////////////////////////////////////////
 		newSimplePackageTaskFactory(cpp.NewConanCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "cpp", "conan"),
 		newSimplePackageTaskFactory(dart.NewPubspecLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dart"),
-		newSimplePackageTaskFactory(dotnet.NewDotnetDepsCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#"),
 		newSimplePackageTaskFactory(elixir.NewMixLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "elixir"),
 		newSimplePackageTaskFactory(erlang.NewRebarLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "erlang"),
 		newSimplePackageTaskFactory(erlang.NewOTPCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "erlang", "otp"),
@@ -117,11 +116,13 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(ocaml.NewOpamPackageManagerCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "ocaml", "opam"),
 
 		// language-specific package for both image and directory scans (but not necessarily declared) ////////////////////////////////////////
-		newSimplePackageTaskFactory(dotnet.NewDotnetPackagesLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
-				return dotnet.NewDotnetPortableExecutableCataloger(cfg.PackagesConfig.Dotnet)
-			}, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "dotnet", "c#", "binary"),
+				return dotnet.NewDotnetDepsBinaryCataloger(cfg.PackagesConfig.Dotnet)
+			},
+			pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#",
+		),
+		newSimplePackageTaskFactory(dotnet.NewDotnetPackagesLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#"),
 		newSimplePackageTaskFactory(python.NewInstalledPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "python"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
@@ -160,5 +161,10 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(bitnamiSbomCataloger.NewCataloger, "bitnami", pkgcataloging.InstalledTag, pkgcataloging.ImageTag),
 		newSimplePackageTaskFactory(wordpress.NewWordpressPluginCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "wordpress"),
 		newSimplePackageTaskFactory(terraform.NewLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "terraform"),
+
+		// deprecated catalogers ////////////////////////////////////////
+		// these are catalogers that should not be selectable other than specific inclusion via name or "deprecated" tag (to remain backwards compatible)
+		newSimplePackageTaskFactory(dotnet.NewDotnetDepsCataloger, pkgcataloging.DeprecatedTag),               // TODO: remove in syft v2.0
+		newSimplePackageTaskFactory(dotnet.NewDotnetPortableExecutableCataloger, pkgcataloging.DeprecatedTag), // TODO: remove in syft v2.0
 	}
 }

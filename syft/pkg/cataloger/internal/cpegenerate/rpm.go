@@ -3,18 +3,23 @@ package cpegenerate
 import "github.com/anchore/syft/syft/pkg"
 
 func candidateVendorsForRPM(p pkg.Package) fieldCandidateSet {
-	metadata, ok := p.Metadata.(pkg.RpmDBEntry)
-	if !ok {
-		return nil
-	}
-
 	vendors := newFieldCandidateSet()
 
-	if metadata.Vendor != "" {
-		vendors.add(fieldCandidate{
-			value:                 normalizeName(metadata.Vendor),
-			disallowSubSelections: true,
-		})
+	switch m := p.Metadata.(type) {
+	case pkg.RpmDBEntry:
+		if m.Vendor != "" {
+			vendors.add(fieldCandidate{
+				value:                 normalizeName(m.Vendor),
+				disallowSubSelections: true,
+			})
+		}
+	case pkg.RpmArchive:
+		if m.Vendor != "" {
+			vendors.add(fieldCandidate{
+				value:                 normalizeName(m.Vendor),
+				disallowSubSelections: true,
+			})
+		}
 	}
 
 	return vendors
