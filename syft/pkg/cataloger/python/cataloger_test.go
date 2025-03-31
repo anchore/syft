@@ -338,6 +338,7 @@ func Test_IndexCataloger_Globs(t *testing.T) {
 				"src/setup.py",
 				"src/poetry.lock",
 				"src/Pipfile.lock",
+				"src/uv.lock",
 			},
 		},
 	}
