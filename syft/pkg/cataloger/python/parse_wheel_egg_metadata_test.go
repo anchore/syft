@@ -22,13 +22,14 @@ func TestParseWheelEggMetadata(t *testing.T) {
 		ExpectedMetadata parsedData
 	}{
 		{
-			Fixture: "test-fixtures/egg-info/PKG-INFO",
+			Fixture: "test-fixtures/site-packages/nested/egg-name/egg-info/PKG-INFO",
 			ExpectedMetadata: parsedData{
-				"Apache 2.0",
-				"",
-				"",
-				file.NewLocation("test-fixtures/egg-info/PKG-INFO"),
-				pkg.PythonPackage{
+				DistInfoLocation:  file.NewLocation("test-fixtures/site-packages/nested/egg-name/egg-info/PKG-INFO"),
+				Licenses:          "Apache 2.0",
+				LicenseFile:       "",
+				LicenseExpression: "",
+				LicenseFilePath:   "test-fixtures/site-packages/nested/egg-name/egg-info/PKG-INFO",
+				PythonPackage: pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
 					Platform:             "UNKNOWN",
@@ -41,13 +42,14 @@ func TestParseWheelEggMetadata(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/dist-info/METADATA",
+			Fixture: "test-fixtures/site-packages/nested/dist-name/dist-info/METADATA",
 			ExpectedMetadata: parsedData{
-				"BSD License",
-				"",
-				"",
-				file.NewLocation("test-fixtures/dist-info/METADATA"),
-				pkg.PythonPackage{
+				DistInfoLocation:  file.NewLocation("test-fixtures/site-packages/nested/dist-name/dist-info/METADATA"),
+				Licenses:          "BSD License",
+				LicenseFile:       "",
+				LicenseExpression: "",
+				LicenseFilePath:   "test-fixtures/site-packages/nested/dist-name/dist-info/METADATA",
+				PythonPackage: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
 					Platform:             "any",
@@ -149,13 +151,14 @@ func TestParseWheelEggMetadataInvalid(t *testing.T) {
 		ExpectedMetadata parsedData
 	}{
 		{
-			Fixture: "test-fixtures/egg-info/PKG-INFO-INVALID",
+			Fixture: "test-fixtures/site-packages/nested/egg-name/egg-info/PKG-INFO-INVALID",
 			ExpectedMetadata: parsedData{
-				"",
-				"",
-				"",
-				file.Location{},
-				pkg.PythonPackage{
+				DistInfoLocation:  file.NewLocation("test-fixtures/site-packages/nested/egg-name/egg-info/PKG-INFO-INVALID"),
+				Licenses:          "",
+				LicenseExpression: "",
+				LicenseFile:       "",
+				LicenseFilePath:   "",
+				PythonPackage: pkg.PythonPackage{
 					Name:                 "mxnet",
 					Version:              "1.8.0",
 					SitePackagesRootPath: "test-fixtures",
