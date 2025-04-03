@@ -45,6 +45,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.SwiplPackEntry{},
 		pkg.OpamPackage{},
 		pkg.YarnLockEntry{},
+		pkg.TerraformLockProviderEntry{},
 	)
 	tests := []struct {
 		name       string
@@ -384,20 +385,24 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Person: me (me@auth.com)",
 		},
 		{
-			name: "from ocaml opam",
+			name: "from github actions workflow/action",
 			input: pkg.Package{
-				Metadata: pkg.OpamPackage{},
+				Metadata: pkg.GitHubActionsUseStatement{
+					Value: "actions/checkout@v4",
+				},
 			},
-			originator: "",
-			supplier:   "",
+			originator: "Organization: GitHub",
+			supplier:   "Organization: GitHub",
 		},
 		{
-			name: "from terraform lock",
+			name: "from github actions workflow/action",
 			input: pkg.Package{
-				Metadata: pkg.TerraformLockProviderEntry{},
+				Metadata: pkg.GitHubActionsUseStatement{
+					Value: "google/something@v6",
+				},
 			},
-			originator: "",
-			supplier:   "",
+			originator: "Organization: google",
+			supplier:   "Organization: google",
 		},
 	}
 	for _, test := range tests {

@@ -194,7 +194,7 @@ func processUsesNode(node *yaml.Node, wf *workflowDef, currentJob *string, curre
 	}
 
 	if comment != "" {
-		versionRegex := regexp.MustCompile(`v\d+\.\d+\.\d+`)
+		versionRegex := regexp.MustCompile(`v?\d+(\.\d+)*`)
 		versionMatch := versionRegex.FindString(comment)
 
 		if versionMatch != "" {
