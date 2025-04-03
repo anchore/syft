@@ -173,7 +173,7 @@ func parseReleasesFromAPKRepository(reader file.LocationReadCloser) []linux.Rele
 
 	reposB, err := io.ReadAll(reader)
 	if err != nil {
-		log.Tracef("unable to read APK repositories file %q: %+v", reader.Location.RealPath, err)
+		log.Tracef("unable to read APK repositories file %q: %+v", reader.RealPath, err)
 		return nil
 	}
 

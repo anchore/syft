@@ -61,7 +61,7 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 			Name:      m.Mod.Path,
 			Version:   m.Mod.Version,
 			Licenses:  pkg.NewLicenseSet(lics...),
-			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(m.Mod.Path, m.Mod.Version),
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg,
@@ -83,7 +83,7 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 			Name:      m.New.Path,
 			Version:   m.New.Version,
 			Licenses:  pkg.NewLicenseSet(lics...),
-			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(m.New.Path, m.New.Version),
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg,
@@ -120,7 +120,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 		return out, fmt.Errorf("no resolver provided")
 	}
 
-	goSumPath := strings.TrimSuffix(reader.Location.RealPath, ".mod") + ".sum"
+	goSumPath := strings.TrimSuffix(reader.RealPath, ".mod") + ".sum"
 	goSumLocation := resolver.RelativeFileByPath(reader.Location, goSumPath)
 	if goSumLocation == nil {
 		return nil, fmt.Errorf("unable to resolve: %s", goSumPath)

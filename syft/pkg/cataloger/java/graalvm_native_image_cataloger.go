@@ -275,7 +275,7 @@ func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, relationships []artifa
 	if dataSection == nil {
 		return nil, nil, fmt.Errorf("no .data section found in binary: %w", err)
 	}
-	dataSectionBase := dataSection.SectionHeader.Addr
+	dataSectionBase := dataSection.Addr
 	data, err := dataSection.Data()
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot read the .data section: %w", err)

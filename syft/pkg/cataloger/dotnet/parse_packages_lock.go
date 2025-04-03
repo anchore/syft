@@ -69,7 +69,7 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 		name, _ := extractNameAndVersion(nameVersion)
 
 		dep := allDependencies[nameVersion]
-		dotnetPkg := newDotnetPackagesLockPackage(name, dep, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+		dotnetPkg := newDotnetPackagesLockPackage(name, dep, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		if dotnetPkg != nil {
 			pkgs = append(pkgs, *dotnetPkg)
 			pkgMap[nameVersion] = *dotnetPkg
