@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/scylladb/go-set/strset"
 	"io"
 	"path"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/licenses"
@@ -302,7 +303,6 @@ func findLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.R
 		}
 
 		licenseSet = getLicenseSetFromFiles(ctx, scanner, resolver, locationSet.ToSlice()...)
-
 	}
 	return licenseSet
 }
@@ -326,17 +326,23 @@ func getLicenseSetFromValues(locations []file.Location, licenseValues ...string)
 func getLicenseSetFromFiles(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, locations ...file.Location) pkg.LicenseSet {
 	licenseSet := pkg.NewLicenseSet()
 	for _, loc := range locations {
-		metadataContents, err := resolver.FileContentsByLocation(loc)
-		if err != nil {
-			log.WithFields("error", err, "path", loc.Path()).Trace("unable to read file contents")
-			continue
-		}
-		parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(loc, metadataContents))
-		if err != nil {
-			log.WithFields("error", err, "path", loc).Trace("unable to parse a license from the file")
-			continue
-		}
-		licenseSet.Add(parsed...)
+		licenseSet.Add(getLicenseSetFromFile(ctx, scanner, resolver, loc)...)
 	}
 	return licenseSet
+}
+
+func getLicenseSetFromFile(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, location file.Location) []pkg.License {
+	metadataContents, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		log.WithFields("error", err, "path", location.Path()).Trace("unable to read file contents")
+		return nil
+	}
+	defer internal.CloseAndLogError(metadataContents, location.Path())
+	parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(location, metadataContents))
+	if err != nil {
+		log.WithFields("error", err, "path", location.Path()).Trace("unable to parse a license from the file")
+		return nil
+	}
+
+	return parsed
 }
