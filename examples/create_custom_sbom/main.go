@@ -124,5 +124,4 @@ func showAlpineConfiguration(s sbom.SBOM) {
 		panic(err)
 	}
 	fmt.Println(string(meta))
-
 }

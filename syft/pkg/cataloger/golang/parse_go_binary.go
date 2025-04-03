@@ -343,7 +343,7 @@ func getGOARCHFromBin(r io.ReaderAt) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("unrecognized file format: %w", err)
 		}
-		arch = fmt.Sprintf("%d", f.FileHeader.TargetMachine)
+		arch = fmt.Sprintf("%d", f.TargetMachine)
 	default:
 		return "", errUnrecognizedFormat
 	}

@@ -36,7 +36,7 @@ func parseDpkgDB(ctx context.Context, resolver file.Resolver, env *generic.Envir
 		return nil, nil, fmt.Errorf("unable to catalog dpkg DB=%q: %w", reader.RealPath, err)
 	}
 
-	dbLoc := reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
+	dbLoc := reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
 	var pkgs []pkg.Package
 	_ = sync.CollectSlice(&ctx, cataloging.ExecutorFile, sync.ToSeq(metadata), func(m pkg.DpkgDBEntry) (pkg.Package, error) {
 		return newDpkgPackage(m, dbLoc, resolver, env.LinuxRelease, findDpkgInfoFiles(m.Package, resolver, reader.Location)...), nil

@@ -33,13 +33,13 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 	}
 
 	if s == nil {
-		log.WithFields("path", reader.Location.RealPath).Trace("file is not an SBOM")
+		log.WithFields("path", reader.RealPath).Trace("file is not an SBOM")
 		return nil, nil, nil
 	}
 
 	// Bitnami exclusively uses SPDX JSON SBOMs
 	if sFormat != "spdx-json" {
-		log.WithFields("path", reader.Location.RealPath).Trace("file is not an SPDX JSON SBOM")
+		log.WithFields("path", reader.RealPath).Trace("file is not an SPDX JSON SBOM")
 		return nil, nil, nil
 	}
 
@@ -59,7 +59,7 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 		// where there is evidence of this file, and the catalogers have not run against any file other than,
 		// the SBOM, this is the only location that is relevant for this cataloger.
 		p.Locations = file.NewLocationSet(
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 
 		// Parse the Bitnami-specific metadata
@@ -70,7 +70,7 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 
 		// Bitnami packages reported in a SPDX file are shipped under the same directory
 		// as the SPDX file itself.
-		metadata.Path = filepath.Dir(reader.Location.RealPath)
+		metadata.Path = filepath.Dir(reader.RealPath)
 		if p.ID() != mainPkgID {
 			metadata.Files = packageFiles(s.Relationships, p, metadata.Path)
 			secondaryPkgsFiles = append(secondaryPkgsFiles, metadata.Files...)
@@ -86,12 +86,12 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 	}
 
 	// Resolve all files owned by the main package in the SBOM and update the metadata
-	if mainPkgFiles, err := mainPkgFiles(resolver, reader.Location.RealPath, secondaryPkgsFiles); err == nil {
+	if mainPkgFiles, err := mainPkgFiles(resolver, reader.RealPath, secondaryPkgsFiles); err == nil {
 		for i, p := range pkgs {
 			if p.ID() == mainPkgID {
 				metadata, ok := p.Metadata.(*pkg.BitnamiSBOMEntry)
 				if !ok {
-					log.WithFields("spdx-filepath", reader.Location.RealPath).Trace("main package in SBOM does not have Bitnami metadata")
+					log.WithFields("spdx-filepath", reader.RealPath).Trace("main package in SBOM does not have Bitnami metadata")
 					continue
 				}
 
@@ -100,7 +100,7 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 			}
 		}
 	} else {
-		log.WithFields("spdx-filepath", reader.Location.RealPath, "error", err).Trace("unable to resolve owned files for main package in SBOM")
+		log.WithFields("spdx-filepath", reader.RealPath, "error", err).Trace("unable to resolve owned files for main package in SBOM")
 	}
 
 	return pkgs, filterRelationships(s.Relationships, pkgs), nil

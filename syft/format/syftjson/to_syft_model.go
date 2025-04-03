@@ -228,7 +228,7 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relations
 		idMap[string(p.ID())] = p
 		locations := p.Locations.ToSlice()
 		for _, l := range locations {
-			idMap[string(l.Coordinates.ID())] = l.Coordinates
+			idMap[string(l.ID())] = l.Coordinates
 		}
 	}
 
