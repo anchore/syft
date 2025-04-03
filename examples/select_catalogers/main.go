@@ -30,7 +30,6 @@ func main() {
 	if err := enc.Encode(sbom.Descriptor.Configuration); err != nil {
 		panic(err)
 	}
-
 }
 
 func imageReference() string {
