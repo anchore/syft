@@ -396,6 +396,10 @@ func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string,
 				if lastSlash != -1 {
 					r.base = r.base[:lastSlash]
 				}
+				// In case of the root directory
+				if r.base == "" {
+					r.base = "/"
+				}
 			}
 			if err != nil {
 				return "", fmt.Errorf("unable to resolve relative path for path=%q: %w", p, err)
