@@ -388,9 +388,9 @@ func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string,
 			// the parent directory of linkTarget should be "/root"
 			for strings.HasPrefix(dir, "..") {
 				if strings.HasPrefix(dir, "../") {
-					strings.TrimPrefix(dir, "../")
+					dir = strings.TrimPrefix(dir, "../")
 				} else {
-					strings.TrimPrefix(dir, "..")
+					dir = strings.TrimPrefix(dir, "..")
 				}
 				lastSlash := strings.LastIndex(r.base, "/")
 				if lastSlash != -1 {
