@@ -130,6 +130,12 @@ from-images:
     paths:
       - /usr/local/go/bin/go
 
+  - version: 1.25
+    images:
+      - ref: golang:tip@sha256:319b219d4df413ef30123a7f69bdf00032d9841af58d7b0ef6971542b29875d5
+        platform: linux/amd64
+    paths:
+      - /usr/local/go/bin/go
   # TODO: this is no longer available from dockerhub! (the snippet is vital)
   - version: 1.5.14
     images:
