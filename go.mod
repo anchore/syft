@@ -57,7 +57,7 @@ require (
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
 	github.com/knqyf263/go-rpmdb v0.1.1
-	github.com/magiconair/properties v1.8.9
+	github.com/magiconair/properties v1.8.10
 	github.com/mholt/archives v0.1.0
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/olekukonko/tablewriter v0.0.5
