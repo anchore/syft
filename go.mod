@@ -58,7 +58,7 @@ require (
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
 	github.com/knqyf263/go-rpmdb v0.1.1
 	github.com/magiconair/properties v1.8.10
-	github.com/mholt/archives v0.1.0
+	github.com/mholt/archives v0.1.1
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0
@@ -191,7 +191,7 @@ require (
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/nwaples/rardecode v1.1.3 // indirect
-	github.com/nwaples/rardecode/v2 v2.0.0-beta.4.0.20241112120701-034e449c6e78 // indirect
+	github.com/nwaples/rardecode/v2 v2.1.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runtime-spec v1.1.0 // indirect
 	github.com/opencontainers/selinux v1.11.0 // indirect
@@ -258,6 +258,8 @@ require (
 )
 
 require github.com/anchore/go-sync v0.0.0-20250326131806-4eda43a485b6
+
+require github.com/minio/minlz v1.0.0 // indirect
 
 retract (
 	v0.53.2
