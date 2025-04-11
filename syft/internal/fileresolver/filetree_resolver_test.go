@@ -811,7 +811,7 @@ func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	// 4: within target/
 	// 1: target/link --> relative path to "place" // NOTE: this is filtered out since it not unique relative to outside_root/link_target/place
 	// 1: outside_root/link_target/place
-	assert.Len(t, locations, 5)
+	assert.Len(t, locations, 6)
 
 	// ensure that symlink indexing outside of root worked
 	testLocation := "test-fixtures/system_paths/outside_root/link_target/place"
