@@ -40,7 +40,7 @@ require (
 	github.com/github/go-spdx/v2 v2.3.2
 	github.com/gkampitakis/go-snaps v0.5.11
 	github.com/go-git/go-billy/v5 v5.6.2
-	github.com/go-git/go-git/v5 v5.14.0
+	github.com/go-git/go-git/v5 v5.15.0
 	github.com/go-test/deep v1.1.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/gohugoio/hashstructure v0.5.0
@@ -118,7 +118,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.8.0 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13-0.20250311204145-2c3ea96c31dd // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
-	github.com/cloudflare/circl v1.6.0 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/containerd/containerd v1.7.27 // indirect
 	github.com/containerd/containerd/api v1.8.0 // indirect
