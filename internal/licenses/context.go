@@ -4,14 +4,16 @@ import (
 	"context"
 )
 
-type licenseScannerKey struct{}
+type LicenseScannerKey struct{}
+
+var CtxKey = LicenseScannerKey{}
 
 func SetContextLicenseScanner(ctx context.Context, s Scanner) context.Context {
-	return context.WithValue(ctx, licenseScannerKey{}, s)
+	return context.WithValue(ctx, CtxKey, s)
 }
 
 func ContextLicenseScanner(ctx context.Context) (Scanner, error) {
-	if s, ok := ctx.Value(licenseScannerKey{}).(Scanner); ok {
+	if s, ok := ctx.Value(CtxKey).(Scanner); ok {
 		return s, nil
 	}
 	return NewDefaultScanner()
