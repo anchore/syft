@@ -13,3 +13,15 @@ func DefaultLicenseConfig() LicenseConfig {
 		Coverage:                    licenses.DefaultCoverageThreshold,
 	}
 }
+
+// GetContextKey allows callers to access the key used by
+// syft to store the license scanner in the context
+func GetContextKey() licenses.LicenseScannerKey {
+	return licenses.CtxKey
+}
+
+// NewDefaultLicenseScanner creates a default license scanner and exists
+// to export NewDefaultScanner to those who use Syft as a library.
+func NewDefaultLicenseScanner(o ...licenses.Option) (licenses.Scanner, error) {
+	return licenses.NewDefaultScanner(o...)
+}
