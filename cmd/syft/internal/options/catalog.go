@@ -272,12 +272,12 @@ func (cfg *Catalog) PostLoad() error {
 		return fmt.Errorf("cannot use both 'catalogers' and 'select-catalogers'/'default-catalogers' flags")
 	}
 
-	cfg.From = flatten(cfg.From)
+	cfg.From = Flatten(cfg.From)
 
-	cfg.Catalogers = flatten(cfg.Catalogers)
-	cfg.DefaultCatalogers = flatten(cfg.DefaultCatalogers)
-	cfg.SelectCatalogers = flatten(cfg.SelectCatalogers)
-	cfg.Enrich = flatten(cfg.Enrich)
+	cfg.Catalogers = Flatten(cfg.Catalogers)
+	cfg.DefaultCatalogers = Flatten(cfg.DefaultCatalogers)
+	cfg.SelectCatalogers = Flatten(cfg.SelectCatalogers)
+	cfg.Enrich = Flatten(cfg.Enrich)
 
 	// for backwards compatibility
 	cfg.DefaultCatalogers = append(cfg.DefaultCatalogers, cfg.Catalogers...)
@@ -295,7 +295,7 @@ func (cfg *Catalog) PostLoad() error {
 	return nil
 }
 
-func flatten(commaSeparatedEntries []string) []string {
+func Flatten(commaSeparatedEntries []string) []string {
 	var out []string
 	for _, v := range commaSeparatedEntries {
 		for _, s := range strings.Split(v, ",") {
