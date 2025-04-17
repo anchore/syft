@@ -379,6 +379,28 @@ func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string,
 			// if the base is set, then we first need to resolve the link,
 			// before finding it's location in the base
 			dir, err := filepath.Rel(r.base, filepath.Dir(p))
+			// if the relative path to the base contains "..",i.e. p is the parent or ancestor of the base
+			// For example:
+			// dir: "/root/asymlink" -> "/root/realdir" (linkTarget:"realdir")
+			// base: "/root/asymlink"
+			// so the relative path of /root to the "/root/asymlink" is ".."
+			// we cannot directly concatenate ".." to "/root/symlink",however,
+			// the parent directory of linkTarget should be "/root"
+			for strings.HasPrefix(dir, "..") {
+				if strings.HasPrefix(dir, "../") {
+					dir = strings.TrimPrefix(dir, "../")
+				} else {
+					dir = strings.TrimPrefix(dir, "..")
+				}
+				lastSlash := strings.LastIndex(r.base, "/")
+				if lastSlash != -1 {
+					r.base = r.base[:lastSlash]
+				}
+				// In case of the root directory
+				if r.base == "" {
+					r.base = "/"
+				}
+			}
 			if err != nil {
 				return "", fmt.Errorf("unable to resolve relative path for path=%q: %w", p, err)
 			}
