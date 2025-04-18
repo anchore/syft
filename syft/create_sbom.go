@@ -100,6 +100,11 @@ func setupContext(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, 
 }
 
 func setContextLicenseScanner(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, error) {
+	// skip injecting a license scanner if one already set on context
+	if _, ok := ctx.Value(licenses.CtxKey).(licenses.Scanner); ok {
+		return ctx, nil
+	}
+
 	// inject a single license scanner and content config for all package cataloging tasks into context
 	licenseScanner, err := licenses.NewDefaultScanner(
 		licenses.WithIncludeLicenseContent(cfg.Licenses.IncludeUnkownLicenseContent),
