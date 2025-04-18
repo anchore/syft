@@ -670,6 +670,17 @@ func DefaultClassifiers() []Classifier {
 			PURL:    mustPURL("pkg:generic/jq@version"),
 			CPEs:    singleCPE("cpe:2.3:a:jqlang:jq:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "chrome-binary",
+			FileGlob: "**/chrome",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				// [NUL]127.0.6533.119[NUL]Default
+				`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\x00Default`,
+			),
+			Package: "chrome",
+			PURL:    mustPURL("pkg:generic/chrome@version"),
+			CPEs:    singleCPE("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*"),
+		},
 	}
 }
 
