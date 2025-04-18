@@ -17,7 +17,7 @@ import (
 
 const (
 	convertExample = `  {{.appName}} {{.command}} img.syft.json -o spdx-json                      convert a syft SBOM to spdx-json, output goes to stdout
-  {{.appName}} {{.command}} img.syft.json -o cyclonedx-json=img.cdx.json    convert a syft SBOM to CycloneDX, output is written to the file "img.cdx.json""
+  {{.appName}} {{.command}} img.syft.json -o cyclonedx-json=img.cdx.json    convert a syft SBOM to CycloneDX, output is written to the file "img.cdx.json"
   {{.appName}} {{.command}} - -o spdx-json                                  convert an SBOM from STDIN to spdx-json
 `
 )
@@ -28,7 +28,6 @@ type ConvertOptions struct {
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 }
 
-//nolint:dupl
 func Convert(app clio.Application) *cobra.Command {
 	id := app.ID()
 
@@ -40,7 +39,7 @@ func Convert(app clio.Application) *cobra.Command {
 	return app.SetupCommand(&cobra.Command{
 		Use:   "convert [SOURCE-SBOM] -o [FORMAT]",
 		Short: "Convert between SBOM formats",
-		Long:  "[Experimental] Convert SBOM files to, and from, SPDX, CycloneDX and Syft's format. For more info about data loss between formats see https://github.com/anchore/syft#format-conversion-experimental",
+		Long:  "[Experimental] Convert SBOM files to, and from, SPDX, CycloneDX and Syft's format. For more info about data loss between formats see https://github.com/anchore/syft/wiki/format-conversion",
 		Example: internal.Tprintf(convertExample, map[string]interface{}{
 			"appName": id.Name,
 			"command": "convert",

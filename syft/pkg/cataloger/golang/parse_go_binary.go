@@ -18,6 +18,7 @@ import (
 	"golang.org/x/mod/module"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -59,21 +60,26 @@ func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 }
 
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
-func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
+
+	licenseScanner, err := licenses.ContextLicenseScanner(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	unionReader, err := unionreader.GetUnionReader(reader.ReadCloser)
 	if err != nil {
 		return nil, nil, err
 	}
+	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	mods := scanFile(unionReader, reader.RealPath)
-	internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
+	mods, errs := scanFile(reader.Location, unionReader)
 
 	var rels []artifact.Relationship
 	for _, mod := range mods {
 		var depPkgs []pkg.Package
-		mainPkg, depPkgs := c.buildGoPkgInfo(resolver, reader.Location, mod, mod.arch, unionReader)
+		mainPkg, depPkgs := c.buildGoPkgInfo(ctx, licenseScanner, resolver, reader.Location, mod, mod.arch, unionReader)
 		if mainPkg != nil {
 			rels = createModuleRelationships(*mainPkg, depPkgs)
 			pkgs = append(pkgs, *mainPkg)
@@ -81,7 +87,7 @@ func (c *goBinaryCataloger) parseGoBinary(_ context.Context, resolver file.Resol
 		pkgs = append(pkgs, depPkgs...)
 	}
 
-	return pkgs, rels, nil
+	return pkgs, rels, errs
 }
 
 func createModuleRelationships(main pkg.Package, deps []pkg.Package) []artifact.Relationship {
@@ -101,7 +107,7 @@ func createModuleRelationships(main pkg.Package, deps []pkg.Package) []artifact.
 var emptyModule debug.Module
 var moduleFromPartialPackageBuild = debug.Module{Path: "command-line-arguments"}
 
-func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) (*pkg.Package, []pkg.Package) {
+func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, licenseScanner licenses.Scanner, resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) (*pkg.Package, []pkg.Package) {
 	if mod == nil {
 		return nil, nil
 	}
@@ -116,9 +122,9 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 			continue
 		}
 
+		lics := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, dep.Path, dep.Version)
 		gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 		p := c.newGoBinaryPackage(
-			resolver,
 			dep,
 			mod.Main.Path,
 			gover,
@@ -126,6 +132,7 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 			nil,
 			mod.cryptoSettings,
 			experiments,
+			lics,
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if pkg.IsValid(&p) {
@@ -137,7 +144,7 @@ func (c *goBinaryCataloger) buildGoPkgInfo(resolver file.Resolver, location file
 		return nil, pkgs
 	}
 
-	main := c.makeGoMainPackage(resolver, mod, arch, location, reader)
+	main := c.makeGoMainPackage(ctx, licenseScanner, resolver, mod, arch, location, reader)
 
 	return &main, pkgs
 }
@@ -152,11 +159,11 @@ func missingMainModule(mod *extendedBuildInfo) bool {
 	return mod.Main == moduleFromPartialPackageBuild
 }
 
-func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {
+func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, licenseScanner licenses.Scanner, resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
+	lics := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, mod.Main.Path, mod.Main.Version)
 	gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 	main := c.newGoBinaryPackage(
-		resolver,
 		&mod.Main,
 		mod.Main.Path,
 		gover,
@@ -164,6 +171,7 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 		gbs,
 		mod.cryptoSettings,
 		experiments,
+		lics,
 		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
@@ -196,7 +204,7 @@ func (c *goBinaryCataloger) makeGoMainPackage(resolver file.Resolver, mod *exten
 // this is checking for (.L)? because at least one binary seems to have \xA0L preceding the version string, but for some reason
 // this is unable to be matched by the regex here as \x00\xA0L;
 // the only thing that seems to work is to just look for version strings following both \x00 and \x00.L for now
-var semverPattern = regexp.MustCompile(`\x00(.L)?(?P<version>v?(\d+\.\d+\.\d+[-\w]*[+\w]*))\x00`)
+var semverPattern = regexp.MustCompile(`(\x00|\x{FFFD})(.L)?(?P<version>v?(\d+\.\d+\.\d+[-\w]*[+\w]*))\x00`)
 
 func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuildinfoEntry, gbs pkg.KeyValues, reader io.ReadSeekCloser) string {
 	vcsVersion, hasVersion := gbs.Get("vcs.revision")
@@ -248,12 +256,11 @@ func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuil
 }
 
 func extractVersionFromContents(reader io.Reader) string {
-	contents, err := io.ReadAll(reader)
+	matchMetadata, err := internal.MatchNamedCaptureGroupsFromReader(semverPattern, reader)
 	if err != nil {
-		log.WithFields("error", err).Trace("unable to read from go binary reader")
+		log.WithFields("error", err).Trace("unable to extract version from go binary reader")
 		return ""
 	}
-	matchMetadata := internal.MatchNamedCaptureGroups(semverPattern, string(contents))
 
 	version, ok := matchMetadata["version"]
 	if ok {
@@ -336,7 +343,7 @@ func getGOARCHFromBin(r io.ReaderAt) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("unrecognized file format: %w", err)
 		}
-		arch = fmt.Sprintf("%d", f.FileHeader.TargetMachine)
+		arch = fmt.Sprintf("%d", f.TargetMachine)
 	default:
 		return "", errUnrecognizedFormat
 	}

@@ -72,7 +72,7 @@ func Test_toFormatModel(t *testing.T) {
 							{
 								Category: "PACKAGE-MANAGER",
 								RefType:  "purl",
-								Locator:  "pkg:oci/alpine@sha256:d34db33f?arch=&tag=latest",
+								Locator:  "pkg:oci/alpine@sha256%3Ad34db33f?arch=&tag=latest",
 							},
 						},
 						PackageSupplier: &spdx.Supplier{
@@ -336,6 +336,31 @@ func Test_toPackageChecksums(t *testing.T) {
 			filesAnalyzed: false,
 		},
 		{
+			name: "Opam Package",
+			pkg: pkg.Package{
+				Name:     "test",
+				Version:  "1.0.0",
+				Language: pkg.Go,
+				Metadata: pkg.OpamPackage{
+					Checksums: []string{
+						"sha256=f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
+						"sha512=05a359dc8400d4ca200ff255dbd030acd33d2c4acb5020838f772c02cdb5f243f3dbafbc43a8cd51e6b5923a140f84c9e7ea25b2c0fa277bb68b996190d36e3b",
+					},
+				},
+			},
+			expected: []spdx.Checksum{
+				{
+					Algorithm: "SHA256",
+					Value:     "f5f1c0b4ad2e0dfa6f79eaaaa3586411925c16f61702208ddd4bad2fc17dc47c",
+				},
+				{
+					Algorithm: "SHA512",
+					Value:     "05a359dc8400d4ca200ff255dbd030acd33d2c4acb5020838f772c02cdb5f243f3dbafbc43a8cd51e6b5923a140f84c9e7ea25b2c0fa277bb68b996190d36e3b",
+				},
+			},
+			filesAnalyzed: false,
+		},
+		{
 			name: "Package with no metadata type",
 			pkg: pkg.Package{
 				Name:     "test",
@@ -354,6 +379,51 @@ func Test_toPackageChecksums(t *testing.T) {
 			assert.ElementsMatch(t, test.expected, commonSum)
 			assert.Equal(t, test.filesAnalyzed, filesAnalyzed)
 		})
+	}
+}
+
+func Test_toFiles(t *testing.T) {
+	tests := []struct {
+		name string
+		in   sbom.SBOM
+		want spdx.File
+	}{
+		{
+			name: "File paths are converted to relative in final SPDX collection",
+			in: sbom.SBOM{
+				Source: source.Description{
+					Name:    "alpine",
+					Version: "sha256:d34db33f",
+					Metadata: source.ImageMetadata{
+						UserInput:      "alpine:latest",
+						ManifestDigest: "sha256:d34db33f",
+					},
+				},
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name:    "pkg-1",
+						Version: "version-1",
+					}),
+					FileMetadata: map[file.Coordinates]file.Metadata{
+						{
+							RealPath:     "/some/path",
+							FileSystemID: "",
+						}: {
+							Path: "/some/path",
+						},
+					},
+				},
+			},
+			want: spdx.File{
+				FileName: "some/path",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		files := toFiles(test.in)
+		got := files[0]
+		assert.Equal(t, test.want.FileName, got.FileName)
 	}
 }
 
@@ -727,6 +797,29 @@ func Test_OtherLicenses(t *testing.T) {
 					ExtractedText:     "new apple license 2.0",
 				},
 			},
+		},
+		{
+			name: "LicenseRef as a valid spdx expression",
+			pkg: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("LicenseRef-Fedora-Public-Domain"),
+				),
+			},
+			expected: []*spdx.OtherLicense{
+				{
+					LicenseIdentifier: "LicenseRef-Fedora-Public-Domain",
+					ExtractedText:     "Fedora-Public-Domain",
+				},
+			},
+		},
+		{
+			name: "LicenseRef as a valid spdx expression does not otherize compound spdx expressions",
+			pkg: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicense("(MIT AND LicenseRef-Fedora-Public-Domain)"),
+				),
+			},
+			expected: nil,
 		},
 	}
 

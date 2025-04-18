@@ -69,6 +69,7 @@
    "filesAnalyzed": false,
    "licenseConcluded": "NOASSERTION",
    "licenseDeclared": "NOASSERTION",
+   "copyrightText": "NOASSERTION",
    "primaryPackagePurpose": "FILE"
   }
  ],

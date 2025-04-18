@@ -7,6 +7,7 @@ import (
 
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -46,7 +47,7 @@ func parseGemFileLockEntries(_ context.Context, _ file.Resolver, _ *generic.Envi
 				newGemfileLockPackage(
 					candidate[0],
 					strings.Trim(candidate[1], "()"),
-					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
 			)
 		}
@@ -54,7 +55,7 @@ func parseGemFileLockEntries(_ context.Context, _ file.Resolver, _ *generic.Envi
 	if err := scanner.Err(); err != nil {
 		return nil, nil, err
 	}
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
 func isDependencyLine(line string) bool {

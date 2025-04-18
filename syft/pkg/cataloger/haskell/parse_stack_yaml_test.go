@@ -110,3 +110,10 @@ func TestParseStackYaml(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, parseStackYaml, expectedPkgs, expectedRelationships)
 
 }
+
+func Test_corruptStackYaml(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/stack.yaml").
+		WithError().
+		TestParser(t, parseStackYaml)
+}

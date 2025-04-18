@@ -164,6 +164,29 @@ func Test_encodeLicense(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "single parenthesized SPDX expression",
+			input: pkg.Package{
+				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues("(MIT OR Apache-2.0)")...),
+			},
+			expected: &cyclonedx.Licenses{
+				{
+					Expression: "MIT OR Apache-2.0",
+				},
+			},
+		},
+		{
+			name: "single license AND to parenthesized SPDX expression",
+			// (LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later
+			input: pkg.Package{
+				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues("(LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later")...),
+			},
+			expected: &cyclonedx.Licenses{
+				{
+					Expression: "(LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later",
+				},
+			},
+		},
 		// TODO: do we drop the non SPDX ID license and do a single expression
 		// OR do we keep the non SPDX ID license and do multiple licenses where the complex
 		// expressions are set as the NAME field?
@@ -254,7 +277,8 @@ func TestDecodeLicenses(t *testing.T) {
 			input: &cyclonedx.Component{
 				Licenses: &cyclonedx.Licenses{
 					{
-						License:    &cyclonedx.License{},
+						// CycloneDX specification doesn't allow to provide License if Expression is provided
+						License:    nil,
 						Expression: "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					},
 				},
@@ -264,7 +288,6 @@ func TestDecodeLicenses(t *testing.T) {
 					Value:          "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					SPDXExpression: "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					Type:           license.Declared,
-					URLs:           []string{},
 				},
 			},
 		},

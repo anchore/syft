@@ -48,7 +48,7 @@
   },
   {
    "SPDXID": "SPDXRef-DocumentRoot-Unknown-",
-   "copyrightText": "",
+   "copyrightText": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
    "filesAnalyzed": false,
    "licenseConcluded": "NOASSERTION",
@@ -59,7 +59,7 @@
  ],
  "files": [
   {
-   "fileName": "/some/file",
+   "fileName": "some/file",
    "SPDXID": "SPDXRef-File-some-file-2c5bc344430decac",
    "checksums": [
     {
@@ -71,7 +71,7 @@
    "licenseInfoInFiles": [
     "NOASSERTION"
    ],
-   "copyrightText": "",
+   "copyrightText": "NOASSERTION",
    "comment": "layerID: ac897d978b6c38749a1"
   }
  ],

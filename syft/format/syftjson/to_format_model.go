@@ -101,6 +101,11 @@ func toFile(s sbom.SBOM) []model.File {
 			contents = contentsForLocation
 		}
 
+		var unknowns []string
+		if unknownsForLocation, exists := artifacts.Unknowns[coordinates]; exists {
+			unknowns = unknownsForLocation
+		}
+
 		var licenses []model.FileLicense
 		for _, l := range artifacts.FileLicenses[coordinates] {
 			var evidence *model.FileLicenseEvidence
@@ -132,6 +137,7 @@ func toFile(s sbom.SBOM) []model.File {
 			Contents:   contents,
 			Licenses:   licenses,
 			Executable: executable,
+			Unknowns:   unknowns,
 		})
 	}
 
@@ -154,7 +160,7 @@ func toFileMetadataEntry(coordinates file.Coordinates, metadata *file.Metadata) 
 
 		mode, err = strconv.Atoi(fmt.Sprintf("%o", metadata.Mode()))
 		if err != nil {
-			log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coordinates, metadata.Mode, err)
+			log.Debugf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coordinates, metadata.Mode, err)
 			mode = 0
 		}
 
@@ -228,6 +234,7 @@ func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
 			Type:           l.Type,
 			URLs:           urls,
 			Locations:      locations,
+			Contents:       l.Contents,
 		})
 	}
 	return

@@ -4,9 +4,19 @@ vars:
   OWNER: anchore
   PROJECT: syft
 
+  CACHE_IMAGE: ghcr.io/{{ .OWNER }}/{{ .PROJECT }}/test-fixture-cache:latest
+
   # static file dirs
   TOOL_DIR: .tool
   TMP_DIR: .tmp
+  ORAS_CACHE: "{{ .TMP_DIR }}/oras-cache"
+  CACHE_PATHS_FILE: "{{ .TMP_DIR }}/cache_paths.json"
+  LAST_CACHE_PULL_FILE: "{{ .TMP_DIR }}/last_cache_paths.json"
+
+  # TOOLS
+  ORAS: "{{ .TOOL_DIR }}/oras"
+  YQ: "{{ .TOOL_DIR }}/yq"
+  TASK: "{{ .TOOL_DIR }}/task"
 
   # used for changelog generation
   CHANGELOG: CHANGELOG.md
@@ -17,7 +27,7 @@ vars:
     sh: uname -s | tr '[:upper:]' '[:lower:]'
   ARCH:
     sh: |
-      [ "$(uname -m)" = "x86_64" ] && echo "amd64_v1" || echo $(uname -m)
+      [ "$(uname -m)" = "x86_64" ] && echo "amd64_v1" || { [ "$(uname -m)" = "aarch64" ] && echo "arm64_v8.0" || echo $(uname -m); }
   PROJECT_ROOT:
     sh: echo $PWD
   # note: the snapshot dir must be a relative path starting with ./
@@ -32,6 +42,9 @@ vars:
   # used for install and acceptance testing
   COMPARE_DIR: ./test/compare
   COMPARE_TEST_IMAGE: centos:8.2.2004
+
+env:
+  GNUMAKEFLAGS: '--no-print-directory'
 
 tasks:
 
@@ -65,6 +78,7 @@ tasks:
       - task: benchmark
       - task: test-utils
       - task: cli
+      - task: check-docker-cache
 
   ## Bootstrap tasks #################################
 
@@ -177,6 +191,14 @@ tasks:
 
 
   ## Testing tasks #################################
+  update-format-golden-files:
+    desc: "Update golden (i.e. snapshot) files used by unit tests"
+    cmds:
+      - go test ./syft/format/spdxjson -update-spdx-json
+      - go test ./syft/format/spdxtagvalue -update-spdx-tv
+      - go test ./syft/format/cyclonedxxml -update-cyclonedx-xml
+      - go test ./syft/format/cyclonedxjson -update-cyclonedx-json
+      - go test ./syft/format/syftjson -update-json
 
   unit:
     desc: Run unit tests
@@ -212,15 +234,10 @@ tasks:
     # that the cache being restored with the correct binary will be rebuilt since the timestamps
     # and local checksums will not line up.
     deps: [tools, snapshot]
-    sources:
-      - "{{ .SNAPSHOT_BIN }}"
-      - ./test/cli/**
-      - ./**/*.go
     cmds:
       - cmd: "echo 'testing binary: {{ .SNAPSHOT_BIN }}'"
         silent: true
-
-      - cmd: "test -f {{ .SNAPSHOT_BIN }} || (find {{ .SNAPSHOT_DIR }} && echo '\nno snapshot found' && false)"
+      - cmd: "test -f {{ .SNAPSHOT_BIN }} || (find {{ .SNAPSHOT_DIR }} && echo '\nno snapshot found for {{ .SNAPSHOT_BIN }}' && false)"
         silent: true
 
       - "go test -count=1 -timeout=15m -v ./test/cli"
@@ -229,18 +246,14 @@ tasks:
 
   test-utils:
     desc: Run tests for pipeline utils
-    sources:
-      - .github/scripts/labeler*.py
     cmds:
-      - cmd: python .github/scripts/labeler_test.py
+      - cmd: .github/scripts/labeler_test.py
 
 
   ## Benchmark test targets #################################
 
   benchmark:
     deps: [tmpdir]
-    sources:
-      - ./**/*.go
     generates:
       - "{{ .TMP_DIR }}/benchmark-main.txt"
     cmds:
@@ -253,8 +266,6 @@ tasks:
 
   show-benchstat:
     deps: [benchmark, tmpdir]
-    sources:
-      - "{{ .TMP_DIR }}/benchstat.txt"
     cmds:
       - cmd: "cat {{ .TMP_DIR }}/benchstat.txt"
         silent: true
@@ -263,56 +274,188 @@ tasks:
   ## Test-fixture-related targets #################################
 
   fingerprints:
-    desc: Generate test fixture fingerprints
+    desc: Generate fingerprints for all non-docker test fixture
+    silent: true
+    # this will look for `test-fixtures/Makefile` and invoke the `fingerprint` target to calculate all cache input fingerprint files
     generates:
-      - cmd/syft/internal/test/integration/test-fixtures/cache.fingerprint
-      - syft/file/cataloger/executable/test-fixtures/elf/cache.fingerprint
-      - syft/file/cataloger/executable/test-fixtures/shared-info/cache.fingerprint
-      - syft/pkg/cataloger/binary/test-fixtures/cache.fingerprint
-      - syft/pkg/cataloger/java/test-fixtures/java-builds/cache.fingerprint
-      - syft/pkg/cataloger/golang/test-fixtures/archs/binaries.fingerprint
-      - syft/pkg/cataloger/redhat/test-fixtures/rpms.fingerprint
-      - syft/pkg/cataloger/kernel/test-fixtures/cache.fingerprint
+      - '**/test-fixtures/**/*.fingerprint'
       - test/install/cache.fingerprint
-      - test/cli/test-fixtures/cache.fingerprint
     cmds:
-      # for EXECUTABLE unit test fixtures
-      - "cd syft/file/cataloger/executable/test-fixtures/elf && make cache.fingerprint"
-      - "cd syft/file/cataloger/executable/test-fixtures/shared-info && make cache.fingerprint"
-      # for IMAGE integration test fixtures
-      - "cd cmd/syft/internal/test/integration/test-fixtures && make cache.fingerprint"
-      # for BINARY unit test fixtures
-      - "cd syft/pkg/cataloger/binary/test-fixtures && make cache.fingerprint"
-      # for JAVA BUILD unit test fixtures
-      - "cd syft/pkg/cataloger/java/test-fixtures/java-builds && make cache.fingerprint"
-      # for GO BINARY unit test fixtures
-      - "cd syft/pkg/cataloger/golang/test-fixtures/archs && make binaries.fingerprint"
-      # for RPM unit test fixtures
-      - "cd syft/pkg/cataloger/redhat/test-fixtures && make rpms.fingerprint"
-      # for Kernel unit test fixtures
-      - "cd syft/pkg/cataloger/kernel/test-fixtures && make cache.fingerprint"
-      # for INSTALL test fixtures
-      - "cd test/install && make cache.fingerprint"
-      # for CLI test fixtures
-      - "cd test/cli/test-fixtures && make cache.fingerprint"
+      - |
+        BOLD='\033[1m'
+        YELLOW='\033[0;33m'
+        RESET='\033[0m'
 
-  fixtures:
-    desc: Generate test fixtures
+        echo -e "${YELLOW}creating fingerprint files for non-docker fixtures...${RESET}"        
+        for dir in $(find . -type d -name 'test-fixtures'); do
+          if [ -f "$dir/Makefile" ]; then
+            # for debugging...
+            #echo -e "${YELLOW}• calculating fingerprints in $dir... ${RESET}"
+            
+            (make -C "$dir" fingerprint)
+          fi
+        done
+
+        # for debugging...
+        # echo -e "generated all fixture fingerprints"
+
+      - .github/scripts/fingerprint_docker_fixtures.py
+      - |
+        # if DOWNLOAD_TEST_FIXTURE_CACHE is set to 'false', then we don't need to calculate the fingerprint for the cache
+        if [ "$DOWNLOAD_TEST_FIXTURE_CACHE" = "false" ]; then
+          exit 0
+        fi
+        .github/scripts/find_cache_paths.py {{ .CACHE_PATHS_FILE }} > /dev/null
+
+
+  refresh-fixtures:
+    desc: Clear and fetch all test fixture cache
+    aliases:
+      - fixtures
+    silent: true
+    deps:
+      - tools
     cmds:
-      - "cd syft/file/cataloger/executable/test-fixtures/elf && make"
-      - "cd syft/file/cataloger/executable/test-fixtures/shared-info && make"
-      - "cd syft/pkg/cataloger/java/test-fixtures/java-builds && make"
-      - "cd syft/pkg/cataloger/redhat/test-fixtures && make"
-      - "cd syft/pkg/cataloger/binary/test-fixtures && make"
+      - |
+        BOLD='\033[1m'
+        PURPLE='\033[0;35m'
+        RESET='\033[0m'
+        
+        # if DOWNLOAD_TEST_FIXTURE_CACHE is set to 'false', then skip the cache download and always build
+        if [ "$DOWNLOAD_TEST_FIXTURE_CACHE" = "false" ]; then
+            echo -e "${BOLD}${PURPLE}skipping cache download, rebuilding cache...${RESET}"
+            {{ .TASK }} build-fixtures
+            exit 0
+        fi
+        
+        LATEST_FINGERPRINT=$(docker manifest inspect {{ .CACHE_IMAGE }} | {{ .YQ }} -r '.annotations.fingerprint')
+
+        echo "latest cache:      $LATEST_FINGERPRINT"
+        
+        if [ -f {{ .LAST_CACHE_PULL_FILE }} ]; then
+          LAST_PULL_FINGERPRINT=$(cat {{ .LAST_CACHE_PULL_FILE }} | {{ .YQ }} -r '.digest')
+        else
+          echo -e "${BOLD}${PURPLE}empty cache, downloading cache...${RESET}"
+          {{ .TASK }} download-test-fixture-cache
+          exit 0
+        fi
+        
+        {{ .TASK }} fingerprints
+
+        WANT_FINGERPRINT=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.digest')        
+
+        echo "desired cache:     $WANT_FINGERPRINT"
+        echo "last pulled cache: $LAST_PULL_FINGERPRINT"
+  
+        # if we already have the latest cache, skip the refresh
+        if [ "$LAST_PULL_FINGERPRINT" = "$WANT_FINGERPRINT" ]; then
+            echo -e "${BOLD}${PURPLE}already have the latest cache (skipping cache download)${RESET}"
+            exit 0
+        fi
+  
+        # at this point we only refresh the cache if we want the same cache that is currently available.
+        # we don't by default refresh the cache if the cache if it is simply different from what we have,
+        # because we may be working on a code change that doesn't require a cache refresh (but could trigger one,
+        # which would be annoying to deal with in a development workflow).
+  
+        if [ "$LATEST_FINGERPRINT" = "$WANT_FINGERPRINT" ]; then
+          echo -e "${BOLD}${PURPLE}found newer cache! downloading cache...${RESET}"
+          {{ .TASK }} download-test-fixture-cache
+        else
+          echo -e "${BOLD}${PURPLE}found different cache, but isn't clear if it's newer (skipping cache download and manually building)${RESET}"
+        
+          {{ .YQ }} eval '.paths[] | "\(.digest) \(.path)"' {{ .LAST_CACHE_PULL_FILE }} > .tmp/last_cache_lines
+          {{ .YQ }} eval '.paths[] | "\(.digest) \(.path)"' {{ .CACHE_PATHS_FILE }} > .tmp/cache_lines
+          diff .tmp/last_cache_lines .tmp/cache_lines || true
+        
+          echo -e "${BOLD}${PURPLE}diff with more context...${RESET}"
+        
+          diff -U10000 {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }} || true
+        
+          echo -e "${BOLD}${PURPLE}detected changes to input material, manually building fixtures...${RESET}"
+        
+          {{ .TASK }} build-fixtures
+        fi
+
+  build-fixtures:
+    desc: Generate all non-docker test fixtures
+    silent: true
+    # this will look for `test-fixtures/Makefile` and invoke the `fixtures` target to generate any and all test fixtures
+    cmds:
+      - |
+        BOLD='\033[1m'
+        YELLOW='\033[0;33m'
+        RESET='\033[0m'
+        
+        # Use a for loop with command substitution to avoid subshell issues
+        for dir in $(find . -type d -name 'test-fixtures'); do
+          if [ -f "$dir/Makefile" ]; then
+            echo -e "${YELLOW}${BOLD}generating fixtures in $dir${RESET}"
+            (make -C "$dir" fixtures)
+          fi
+        done
+        echo -e "${BOLD}generated all fixtures${RESET}"
+
+  download-test-fixture-cache:
+    desc: Download test fixture cache from ghcr.io
+    deps: [tools, clean-cache]
+    vars:
+      CACHE_DIGEST:
+        sh: docker manifest inspect {{ .CACHE_IMAGE }} | {{ .YQ }} -r '.annotations.fingerprint'
+    cmds:
+      - silent: true
+        cmd: |
+          # if oras cache is > 4 GB, delete it
+          if [ -d {{ .ORAS_CACHE }} ]; then
+            total_size=$(du -c {{ .ORAS_CACHE }} | grep total | awk '{print $1}')
+            if [ "$total_size" -gt 4194304 ]; then
+              echo 'deleting oras cache'
+              rm -rf {{ .ORAS_CACHE }}
+            fi
+          fi
+      - "ORAS_CACHE={{ .ORAS_CACHE }} {{ .ORAS }} pull {{ .CACHE_IMAGE }}"
+      - "cp {{ .CACHE_PATHS_FILE }} {{ .LAST_CACHE_PULL_FILE }}"
+
+  upload-test-fixture-cache:
+    desc: Upload the test fixture cache to ghcr.io
+    deps: [tools, fingerprints]
+    silent: true
+    cmd: |
+      set -eu
+      oras_command="{{ .ORAS }} push {{ .CACHE_IMAGE }}"
+
+      paths=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.paths[].path')      
+      for path in $paths; do
+        oras_command+=" $path"
+      done
+      oras_command+=" {{ .CACHE_PATHS_FILE }}"
+      
+      oras_command+=" --annotation org.opencontainers.image.source=https://github.com/{{ .OWNER }}/{{ .PROJECT }}"
+      oras_command+=" --annotation fingerprint=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.digest')"
+    
+      echo "Executing: $oras_command"
+      eval $oras_command
 
   show-test-image-cache:
     silent: true
     cmds:
-      - "echo '\nDocker daemon cache:'"
+      - "echo 'Docker daemon cache:'"
       - "docker images --format '{{`{{.ID}}`}} {{`{{.Repository}}`}}:{{`{{.Tag}}`}}' | grep stereoscope-fixture- | sort"
       - "echo '\nTar cache:'"
-      - 'find . -type f -wholename "**/test-fixtures/snapshot/*" | sort'
+      - 'find . -type f -wholename "**/test-fixtures/cache/stereoscope-fixture-*.tar" | sort'
 
+  check-docker-cache:
+    desc: Ensure docker caches aren't using too much disk space
+    silent: true
+    cmd: |
+      total_size=$(find . | grep cache | grep tar | xargs du -c | grep total | awk '{print $1}')
+      find . | grep cache | grep tar | xargs du
+      echo "total $total_size KB"
+
+      if [ "$total_size" -gt 1048576 ]; then
+        echo 'docker cache is larger than 1GB'
+        exit 1
+      fi
 
   ## install.sh testing targets #################################
 
@@ -438,7 +581,7 @@ tasks:
       - "{{ .NEXT_VERSION }}"
     cmds:
       - "{{ .TOOL_DIR }}/chronicle -vv -n --version-file {{ .NEXT_VERSION }} > {{ .CHANGELOG }}"
-      - "{{ .TOOL_DIR }}/glow {{ .CHANGELOG }}"
+      - "{{ .TOOL_DIR }}/glow -w 0 {{ .CHANGELOG }}"
 
 
   ## Release targets #################################
@@ -489,8 +632,31 @@ tasks:
       - "rm -rf {{ .SNAPSHOT_DIR }}"
       - "rm -rf {{ .TMP_DIR }}/goreleaser.yaml"
 
-  clean-cache:
-    desc: Remove all docker cache and local image tar cache
+  clean-docker-cache:
+    desc: Remove all docker cache tars and images from the daemon
     cmds:
-      - 'find . -type f -wholename "**/test-fixtures/cache/stereoscope-fixture-*.tar" -delete'
-      - "docker images --format '{{`{{.ID}}`}} {{`{{.Repository}}`}}' | grep stereoscope-fixture- | awk '{print $$1}' | uniq | xargs -r docker rmi --force"
+      - find . -type d -wholename "**/test-fixtures/cache" | xargs rm -rf
+      - docker images --format '{{`{{.ID}}`}} {{`{{.Repository}}`}}' | grep stereoscope-fixture- | awk '{print $1}' | uniq | xargs -r docker rmi --force
+
+  clean-oras-cache:
+    desc: Remove all cache for oras commands
+    cmd: rm -rf {{ .ORAS_CACHE }}
+
+  clean-cache:
+    desc: Remove all image docker tar cache, images from the docker daemon, and ephemeral test fixtures
+    cmds:
+      - task: clean-docker-cache
+      - |
+        BOLD='\033[1m'
+        YELLOW='\033[0;33m'
+        RESET='\033[0m'
+        
+        # Use a for loop with command substitution to avoid subshell issues
+        for dir in $(find . -type d -name 'test-fixtures'); do
+        if [ -f "$dir/Makefile" ]; then
+          echo -e "${YELLOW}${BOLD}deleting ephemeral test fixtures in $dir${RESET}"
+          (make -C "$dir" clean)
+        fi
+        done
+        echo -e "${BOLD}Deleted all ephemeral test fixtures${RESET}"
+      - rm -f {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }}

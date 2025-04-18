@@ -11,6 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -94,7 +95,7 @@ func parsePnpmLock(_ context.Context, resolver file.Resolver, _ *generic.Environ
 
 	pkg.Sort(pkgs)
 
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
 func hasPkg(pkgs []pkg.Package, name, version string) bool {

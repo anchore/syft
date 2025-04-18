@@ -13,6 +13,7 @@ const (
 	AlpmPkg                 Type = "alpm"
 	ApkPkg                  Type = "apk"
 	BinaryPkg               Type = "binary"
+	BitnamiPkg              Type = "bitnami"
 	CocoapodsPkg            Type = "pod"
 	ConanPkg                Type = "conan"
 	DartPubPkg              Type = "dart-pub"
@@ -33,6 +34,7 @@ const (
 	LinuxKernelModulePkg    Type = "linux-kernel-module"
 	NixPkg                  Type = "nix"
 	NpmPkg                  Type = "npm"
+	OpamPkg                 Type = "opam"
 	PhpComposerPkg          Type = "php-composer"
 	PhpPeclPkg              Type = "php-pecl"
 	PortagePkg              Type = "portage"
@@ -43,6 +45,7 @@ const (
 	RustPkg                 Type = "rust-crate"
 	SwiftPkg                Type = "swift"
 	SwiplPackPkg            Type = "swiplpack"
+	TerraformPkg            Type = "terraform"
 	WordpressPluginPkg      Type = "wordpress-plugin"
 )
 
@@ -51,6 +54,7 @@ var AllPkgs = []Type{
 	AlpmPkg,
 	ApkPkg,
 	BinaryPkg,
+	BitnamiPkg,
 	CocoapodsPkg,
 	ConanPkg,
 	DartPubPkg,
@@ -60,6 +64,7 @@ var AllPkgs = []Type{
 	GemPkg,
 	GithubActionPkg,
 	GithubActionWorkflowPkg,
+	GraalVMNativeImagePkg,
 	GoModulePkg,
 	HackagePkg,
 	HexPkg,
@@ -70,6 +75,7 @@ var AllPkgs = []Type{
 	LinuxKernelModulePkg,
 	NixPkg,
 	NpmPkg,
+	OpamPkg,
 	PhpComposerPkg,
 	PhpPeclPkg,
 	PortagePkg,
@@ -80,18 +86,21 @@ var AllPkgs = []Type{
 	RustPkg,
 	SwiftPkg,
 	SwiplPackPkg,
+	TerraformPkg,
 	WordpressPluginPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
 //
-//nolint:funlen
+//nolint:funlen, gocyclo
 func (t Type) PackageURLType() string {
 	switch t {
 	case AlpmPkg:
 		return "alpm"
 	case ApkPkg:
 		return packageurl.TypeAlpine
+	case BitnamiPkg:
+		return packageurl.TypeBitnami
 	case CocoapodsPkg:
 		return packageurl.TypeCocoapods
 	case ConanPkg:
@@ -129,14 +138,16 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypePyPi
 	case PortagePkg:
 		return "portage"
+	case LuaRocksPkg:
+		return packageurl.TypeLuaRocks
 	case NixPkg:
 		return "nix"
 	case NpmPkg:
 		return packageurl.TypeNPM
+	case OpamPkg:
+		return "opam"
 	case Rpkg:
 		return packageurl.TypeCran
-	case LuaRocksPkg:
-		return packageurl.TypeLuaRocks
 	case RpmPkg:
 		return packageurl.TypeRPM
 	case RustPkg:
@@ -145,6 +156,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeSwift
 	case SwiplPackPkg:
 		return "swiplpack"
+	case TerraformPkg:
+		return "terraform"
 	case WordpressPluginPkg:
 		return "wordpress-plugin"
 	default:
@@ -166,31 +179,23 @@ func TypeFromPURL(p string) Type {
 	return TypeByName(ptype)
 }
 
-//nolint:funlen
+//nolint:funlen,gocyclo
 func TypeByName(name string) Type {
 	switch name {
-	case packageurl.TypeDebian:
-		return DebPkg
-	case packageurl.TypeRPM:
-		return RpmPkg
-	case packageurl.TypeLuaRocks:
-		return LuaRocksPkg
 	case "alpm":
 		return AlpmPkg
 	case packageurl.TypeAlpine, "alpine":
 		return ApkPkg
-	case packageurl.TypeMaven:
-		return JavaPkg
+	case packageurl.TypeBitnami:
+		return BitnamiPkg
+	case packageurl.TypeDebian:
+		return DebPkg
 	case packageurl.TypeComposer:
 		return PhpComposerPkg
 	case "pecl":
 		return PhpPeclPkg
 	case packageurl.TypeGolang:
 		return GoModulePkg
-	case packageurl.TypeNPM:
-		return NpmPkg
-	case packageurl.TypePyPi:
-		return PythonPkg
 	case packageurl.TypeGem:
 		return GemPkg
 	case "cargo", "crate":
@@ -205,10 +210,18 @@ func TypeByName(name string) Type {
 		return ConanPkg
 	case packageurl.TypeHackage:
 		return HackagePkg
-	case "portage":
-		return PortagePkg
 	case packageurl.TypeHex:
 		return HexPkg
+	case packageurl.TypeLuaRocks:
+		return LuaRocksPkg
+	case packageurl.TypeMaven:
+		return JavaPkg
+	case packageurl.TypeNPM:
+		return NpmPkg
+	case packageurl.TypePyPi:
+		return PythonPkg
+	case "portage":
+		return PortagePkg
 	case packageurl.TypeOTP:
 		return ErlangOTPPkg
 	case "linux-kernel":
@@ -217,12 +230,18 @@ func TypeByName(name string) Type {
 		return LinuxKernelModulePkg
 	case "nix":
 		return NixPkg
+	case "opam":
+		return OpamPkg
 	case packageurl.TypeCran:
 		return Rpkg
+	case packageurl.TypeRPM:
+		return RpmPkg
 	case packageurl.TypeSwift:
 		return SwiftPkg
 	case "swiplpack":
 		return SwiplPackPkg
+	case "terraform":
+		return TerraformPkg
 	case "wordpress-plugin":
 		return WordpressPluginPkg
 	default:

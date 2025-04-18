@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"path"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"
+	internallicenses "github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/internal/relationship"
@@ -246,6 +248,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 		PackageSupplier: &spdx.Supplier{
 			Supplier: helpers.NOASSERTION,
 		},
+		PackageCopyrightText:    helpers.NOASSERTION,
 		PackageDownloadLocation: helpers.NOASSERTION,
 		PackageLicenseConcluded: helpers.NOASSERTION,
 		PackageLicenseDeclared:  helpers.NOASSERTION,
@@ -505,6 +508,14 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 			Algorithm: spdx.ChecksumAlgorithm(algo),
 			Value:     hexStr,
 		})
+	case pkg.OpamPackage:
+		for _, checksum := range meta.Checksums {
+			parts := strings.Split(checksum, "=")
+			checksums = append(checksums, spdx.Checksum{
+				Algorithm: spdx.ChecksumAlgorithm(strings.ToUpper(parts[0])),
+				Value:     parts[1],
+			})
+		}
 	}
 	return checksums, filesAnalyzed
 }
@@ -618,14 +629,21 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 			comment = fmt.Sprintf("layerID: %s", coordinates.FileSystemID)
 		}
 
+		relativePath, err := convertAbsoluteToRelative(coordinates.RealPath)
+		if err != nil {
+			log.Debugf("unable to convert relative path '%s' to absolute path: %s", coordinates.RealPath, err)
+			relativePath = coordinates.RealPath
+		}
+
 		results = append(results, &spdx.File{
 			FileSPDXIdentifier: toSPDXID(coordinates),
 			FileComment:        comment,
 			// required, no attempt made to determine license information
-			LicenseConcluded: noAssertion,
-			Checksums:        toFileChecksums(digests),
-			FileName:         coordinates.RealPath,
-			FileTypes:        toFileTypes(metadata),
+			LicenseConcluded:  noAssertion,
+			FileCopyrightText: noAssertion,
+			Checksums:         toFileChecksums(digests),
+			FileName:          relativePath,
+			FileTypes:         toFileTypes(metadata),
 			LicenseInfoInFiles: []string{ // required in SPDX 2.2
 				helpers.NOASSERTION,
 			},
@@ -705,8 +723,8 @@ func toFileTypes(metadata *file.Metadata) (ty []string) {
 	return ty
 }
 
-// other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
-// field. The spdxexpression field is only filled given a validated Value field.
+// other licenses are for licenses from the pkg.Package that do not have a valid SPDX Expression
+// OR are an expression that is a single `License-Ref-*`
 func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	licenses := map[string]helpers.SPDXLicense{}
 
@@ -716,9 +734,15 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 			if l.Value != "" {
 				licenses[l.ID] = l
 			}
+			if l.ID != "" && isLicenseRef(l.ID) {
+				licenses[l.ID] = l
+			}
 		}
 		for _, l := range concludedLicenses {
 			if l.Value != "" {
+				licenses[l.ID] = l
+			}
+			if l.ID != "" && isLicenseRef(l.ID) {
 				licenses[l.ID] = l
 			}
 		}
@@ -734,12 +758,31 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	slices.Sort(ids)
 	for _, id := range ids {
 		license := licenses[id]
-		result = append(result, &spdx.OtherLicense{
+		value := license.Value
+		// handle cases where LicenseRef needs to be included in hasExtractedLicensingInfos
+		if license.Value == "" {
+			value, _ = strings.CutPrefix(license.ID, "LicenseRef-")
+		}
+		other := &spdx.OtherLicense{
 			LicenseIdentifier: license.ID,
-			ExtractedText:     license.Value,
-		})
+			ExtractedText:     value,
+		}
+		customPrefix := spdxlicense.LicenseRefPrefix + helpers.SanitizeElementID(internallicenses.UnknownLicensePrefix)
+		if strings.HasPrefix(license.ID, customPrefix) {
+			other.LicenseName = strings.TrimPrefix(license.ID, customPrefix)
+			other.LicenseComment = strings.Trim(internallicenses.UnknownLicensePrefix, "-_")
+		}
+		result = append(result, other)
 	}
 	return result
+}
+
+var licenseRefRegEx = regexp.MustCompile(`^LicenseRef-[A-Za-z0-9_-]+$`)
+
+// isSingularLicenseRef checks if the string is a singular LicenseRef-* identifier
+func isLicenseRef(s string) bool {
+	// Match the input string against the regex
+	return licenseRefRegEx.MatchString(s)
 }
 
 // TODO: handle SPDX excludes file case
@@ -802,4 +845,23 @@ func trimPatchVersion(semver string) string {
 		return strings.Join(parts[:2], ".")
 	}
 	return semver
+}
+
+// spdx requires that the file name field is a relative filename
+// with the root of the package archive or directory
+func convertAbsoluteToRelative(absPath string) (string, error) {
+	// Ensure the absolute path is absolute (although it should already be)
+	if !path.IsAbs(absPath) {
+		// already relative
+		log.Debugf("%s is already relative", absPath)
+		return absPath, nil
+	}
+
+	// we use "/" here given that we're converting absolute paths from root to relative
+	relPath, found := strings.CutPrefix(absPath, "/")
+	if !found {
+		return "", fmt.Errorf("error calculating relative path: %s", absPath)
+	}
+
+	return relPath, nil
 }

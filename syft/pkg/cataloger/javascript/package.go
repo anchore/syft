@@ -20,7 +20,7 @@ import (
 func newPackageJSONPackage(u packageJSON, indexLocation file.Location) pkg.Package {
 	licenseCandidates, err := u.licensesFromJSON()
 	if err != nil {
-		log.Warnf("unable to extract licenses from javascript package.json: %+v", err)
+		log.Debugf("unable to extract licenses from javascript package.json: %+v", err)
 	}
 
 	license := pkg.NewLicensesFromLocation(indexLocation, licenseCandidates...)
@@ -73,7 +73,7 @@ func newPackageLockV1Package(cfg CatalogerConfig, resolver file.Resolver, locati
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
-			log.Warnf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
+			log.Debugf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
 		}
 	}
 
@@ -105,7 +105,7 @@ func newPackageLockV2Package(cfg CatalogerConfig, resolver file.Resolver, locati
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
-			log.Warnf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, u.Version, err)
+			log.Debugf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, u.Version, err)
 		}
 	}
 
@@ -150,7 +150,7 @@ func newYarnLockPackage(cfg CatalogerConfig, resolver file.Resolver, location fi
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
-			log.Warnf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
+			log.Debugf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
 		}
 	}
 	return finalizeLockPkg(
@@ -178,13 +178,13 @@ func formatNpmRegistryURL(baseURL, packageName, version string) (requestURL stri
 	return requestURL, nil
 }
 
-func getLicenseFromNpmRegistry(basURL, packageName, version string) (string, error) {
+func getLicenseFromNpmRegistry(baseURL, packageName, version string) (string, error) {
 	// "https://registry.npmjs.org/%s/%s", packageName, version
-	requestURL, err := formatNpmRegistryURL(basURL, packageName, version)
+	requestURL, err := formatNpmRegistryURL(baseURL, packageName, version)
 	if err != nil {
 		return "", fmt.Errorf("unable to format npm request for pkg:version %s%s; %w", packageName, version, err)
 	}
-	log.Tracef("trying to fetch remote package %s", requestURL)
+	log.WithFields("url", requestURL).Info("downloading javascript package from npm")
 
 	npmRequest, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {

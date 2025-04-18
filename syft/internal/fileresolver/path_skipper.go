@@ -34,7 +34,7 @@ type pathSkipper struct {
 func skipPathsByMountTypeAndName(root string) PathIndexVisitor {
 	infos, err := mountinfo.GetMounts(nil)
 	if err != nil {
-		log.WithFields("error", err).Warnf("unable to get system mounts")
+		log.WithFields("error", err).Debug("unable to get system mounts")
 		return func(_ string, _ string, _ os.FileInfo, _ error) error {
 			return nil
 		}
@@ -93,12 +93,13 @@ func (ps pathSkipper) pathIndexVisitor(_ string, givenPath string, _ os.FileInfo
 	for _, mi := range ps.mounts {
 		conditionalPaths, ignorable := ps.ignorableMountTypes[mi.FSType]
 
-		if len(conditionalPaths) == 0 {
-			// Rule 1: ignore any path within a mount point that is of the given filesystem type unconditionally
-			if !containsPath(givenPath, mi.Mountpoint) {
-				continue
-			}
+		// Rule 0: Make sure the given path is within the mount point; if not let the scan continue
+		if !containsPath(givenPath, mi.Mountpoint) {
+			continue
+		}
 
+		// Rule 1: ignore any path within a mount point that is of the given filesystem type unconditionally
+		if len(conditionalPaths) == 0 {
 			if !ignorable {
 				// we've matched on the most specific path at this point, which means we should stop searching
 				// mount points for this path
@@ -142,7 +143,11 @@ func containsPath(p1, p2 string) bool {
 	if p1Clean == p2Clean {
 		return true
 	}
-	return strings.HasPrefix(p1Clean, p2Clean+"/")
+	if !strings.HasPrefix(p1Clean, p2Clean) {
+		return false
+	}
+	// This is done to avoid allocation of a new string
+	return len(p1Clean) > len(p2Clean) && p1Clean[len(p2Clean)] == '/'
 }
 
 func simpleClean(p string) string {
@@ -151,7 +156,7 @@ func simpleClean(p string) string {
 		return "."
 	}
 	if p == "/" {
-		return "/"
+		return ""
 	}
 	return strings.TrimSuffix(p, "/")
 }

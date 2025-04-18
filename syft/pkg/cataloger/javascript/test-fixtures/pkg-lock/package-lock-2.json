@@ -9,6 +9,9 @@
             "version": "6.14.6",
             "dependencies": {
                 "@types/react": "^18.0.9"
+            },
+            "devDependencies": {
+                "async": "^3.2.4"
             }
         },
         "node_modules/@types/prop-types": {
@@ -39,6 +42,12 @@
             "resolved": "https://registry.npmjs.org/csstype/-/csstype-3.1.0.tgz",
             "integrity": "sha1-TdysNxjXh8+d8NG30VAzklyPKfI=",
             "license": "MIT"
+        },
+        "node_modules/async": {
+            "version": "3.2.4",
+            "resolved": "https://registry.npmjs.org/async/-/async-3.2.4.tgz",
+            "integrity": "sha512-iAB+JbDEGXhyIUavoDl9WP/Jj106Kz9DEn1DPgYw5ruDn0e3Wgi3sKFm55sASdGBNOQB8F59d9qQ7deqrHA8wQ==",
+            "dev": true
         }
     },
     "dependencies": {
@@ -66,6 +75,12 @@
             "version": "3.1.0",
             "resolved": "https://registry.npmjs.org/csstype/-/csstype-3.1.0.tgz",
             "integrity": "sha1-TdysNxjXh8+d8NG30VAzklyPKfI="
+        },
+        "async": {
+            "version": "3.2.4",
+            "resolved": "https://registry.npmjs.org/async/-/async-3.2.4.tgz",
+            "integrity": "sha512-iAB+JbDEGXhyIUavoDl9WP/Jj106Kz9DEn1DPgYw5ruDn0e3Wgi3sKFm55sASdGBNOQB8F59d9qQ7deqrHA8wQ==",
+            "dev": true
         }
     }
 }

@@ -179,6 +179,27 @@ func TestParsePackageJSON(t *testing.T) {
 				},
 			},
 		},
+		{
+			Fixture: "test-fixtures/pkg-json/package-author-non-standard.json",
+			ExpectedPkg: pkg.Package{
+				Name:    "npm",
+				Version: "6.14.6",
+				PURL:    "pkg:npm/npm@6.14.6",
+				Type:    pkg.NpmPkg,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-author-non-standard.json")),
+				),
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
+					Name:        "npm",
+					Version:     "6.14.6",
+					Author:      "npm Inc. (https://www.npmjs.com/)",
+					Homepage:    "https://docs.npmjs.com/",
+					URL:         "https://github.com/npm/cli",
+					Description: "a package manager for JavaScript",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -189,10 +210,28 @@ func TestParsePackageJSON(t *testing.T) {
 	}
 }
 
+func Test_corruptPackageJSON(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/package.json").
+		WithError().
+		TestParser(t, parsePackageJSON)
+}
+
 func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anchore/syft/issues/311
 	const fixtureFile = "test-fixtures/pkg-json/package-partial.json"
 
-	pkgtest.TestFileParser(t, fixtureFile, parsePackageJSON, nil, nil)
+	// raise package.json files as packages with any information we find, these will be filtered out
+	// according to compliance rules later
+	expectedPkgs := []pkg.Package{
+		{
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			PURL:      packageURL("", ""),
+			Metadata:  pkg.NpmPackage{},
+			Locations: file.NewLocationSet(file.NewLocation(fixtureFile)),
+		},
+	}
+	pkgtest.TestFileParser(t, fixtureFile, parsePackageJSON, expectedPkgs, nil)
 }
 
 func Test_pathContainsNodeModulesDirectory(t *testing.T) {

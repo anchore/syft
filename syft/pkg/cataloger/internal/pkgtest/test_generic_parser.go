@@ -7,15 +7,18 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/internal/cmptest"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -25,6 +28,11 @@ import (
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
+)
+
+var (
+	once           sync.Once
+	licenseScanner *licenses.Scanner
 )
 
 type CatalogTester struct {
@@ -44,11 +52,26 @@ type CatalogTester struct {
 	licenseComparer                cmptest.LicenseComparer
 	packageStringer                func(pkg.Package) string
 	customAssertions               []func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship)
+	context                        context.Context
+}
+
+func Context() context.Context {
+	once.Do(func() {
+		// most of the time in testing is initializing the scanner. Let's do that just once
+		sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+		scanner, err := licenses.NewScanner(sc)
+		if err != nil {
+			panic("unable to setup licences scanner for testing")
+		}
+		licenseScanner = &scanner
+	})
+
+	return licenses.SetContextLicenseScanner(context.Background(), *licenseScanner)
 }
 
 func NewCatalogTester() *CatalogTester {
 	return &CatalogTester{
-		wantErr:          require.NoError,
+		context:          Context(),
 		locationComparer: cmptest.DefaultLocationComparer,
 		licenseComparer:  cmptest.DefaultLicenseComparer,
 		packageStringer:  stringPackage,
@@ -63,6 +86,11 @@ func NewCatalogTester() *CatalogTester {
 			},
 		},
 	}
+}
+
+func (p *CatalogTester) WithContext(ctx context.Context) *CatalogTester {
+	p.context = ctx
+	return p
 }
 
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
@@ -113,7 +141,6 @@ func (p *CatalogTester) WithEnv(env *generic.Environment) *CatalogTester {
 }
 
 func (p *CatalogTester) WithError() *CatalogTester {
-	p.assertResultExpectations = true
 	p.wantErr = require.Error
 	return p
 }
@@ -148,29 +175,8 @@ func (p *CatalogTester) ExpectsAssertion(a func(t *testing.T, pkgs []pkg.Package
 }
 
 func (p *CatalogTester) IgnoreLocationLayer() *CatalogTester {
-	p.locationComparer = func(x, y file.Location) bool {
-		return cmp.Equal(x.Coordinates.RealPath, y.Coordinates.RealPath) && cmp.Equal(x.AccessPath, y.AccessPath)
-	}
-
-	// we need to update the license comparer to use the ignored location layer
-	p.licenseComparer = func(x, y pkg.License) bool {
-		return cmp.Equal(x, y, cmp.Comparer(p.locationComparer), cmp.Comparer(
-			func(x, y file.LocationSet) bool {
-				xs := x.ToSlice()
-				ys := y.ToSlice()
-				if len(xs) != len(ys) {
-					return false
-				}
-				for i, xe := range xs {
-					ye := ys[i]
-					if !p.locationComparer(xe, ye) {
-						return false
-					}
-				}
-
-				return true
-			}))
-	}
+	p.locationComparer = cmptest.LocationComparerWithoutLayer
+	p.licenseComparer = cmptest.LicenseComparerWithoutLocationLayer
 	return p
 }
 
@@ -225,8 +231,11 @@ func (p *CatalogTester) IgnoreUnfulfilledPathResponses(paths ...string) *Catalog
 
 func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 	t.Helper()
-	pkgs, relationships, err := parser(context.Background(), p.resolver, p.env, p.reader)
-	p.wantErr(t, err)
+	pkgs, relationships, err := parser(p.context, p.resolver, p.env, p.reader)
+	// only test for errors if explicitly requested
+	if p.wantErr != nil {
+		p.wantErr(t, err)
+	}
 	p.assertPkgs(t, pkgs, relationships)
 }
 
@@ -235,7 +244,7 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 
 	resolver := NewObservingResolver(p.resolver)
 
-	pkgs, relationships, err := cataloger.Catalog(context.Background(), resolver)
+	pkgs, relationships, err := cataloger.Catalog(p.context, resolver)
 
 	// this is a minimum set, the resolver may return more that just this list
 	for _, path := range p.expectedPathResponses {
@@ -247,8 +256,12 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 		assert.ElementsMatchf(t, p.expectedContentQueries, resolver.AllContentQueries(), "unexpected content queries observed: diff %s", cmp.Diff(p.expectedContentQueries, resolver.AllContentQueries()))
 	}
 
-	if p.assertResultExpectations {
+	// only test for errors if explicitly requested
+	if p.wantErr != nil {
 		p.wantErr(t, err)
+	}
+
+	if p.assertResultExpectations {
 		p.assertPkgs(t, pkgs, relationships)
 	}
 
@@ -256,7 +269,7 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 		a(t, pkgs, relationships)
 	}
 
-	if !p.assertResultExpectations && len(p.customAssertions) == 0 {
+	if !p.assertResultExpectations && len(p.customAssertions) == 0 && p.wantErr == nil {
 		resolver.PruneUnfulfilledPathResponses(p.ignoreUnfulfilledPathResponses, p.ignoreAnyUnfulfilledPaths...)
 
 		// if we aren't testing the results, we should focus on what was searched for (for glob-centric tests)
@@ -264,11 +277,10 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	}
 }
 
-// nolint:funlen
 func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 	t.Helper()
 
-	p.compareOptions = append(p.compareOptions, cmptest.CommonOptions(p.licenseComparer, p.locationComparer)...)
+	p.compareOptions = append(p.compareOptions, cmptest.BuildOptions(p.licenseComparer, p.locationComparer)...)
 
 	{
 		r := cmptest.NewDiffReporter()
@@ -321,53 +333,20 @@ func TestFileParserWithEnv(t *testing.T, fixturePath string, parser generic.Pars
 	NewCatalogTester().FromFile(t, fixturePath).WithEnv(env).Expects(expectedPkgs, expectedRelationships).TestParser(t, parser)
 }
 
-func AssertPackagesEqual(t *testing.T, a, b pkg.Package) {
+func AssertPackagesEqual(t *testing.T, a, b pkg.Package, userOpts ...cmp.Option) {
 	t.Helper()
-	opts := []cmp.Option{
-		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
-		cmp.Comparer(
-			func(x, y file.LocationSet) bool {
-				xs := x.ToSlice()
-				ys := y.ToSlice()
+	opts := cmptest.DefaultOptions()
+	opts = append(opts, userOpts...)
 
-				if len(xs) != len(ys) {
-					return false
-				}
-				for i, xe := range xs {
-					ye := ys[i]
-					if !cmptest.DefaultLocationComparer(xe, ye) {
-						return false
-					}
-				}
-
-				return true
-			},
-		),
-		cmp.Comparer(
-			func(x, y pkg.LicenseSet) bool {
-				xs := x.ToSlice()
-				ys := y.ToSlice()
-
-				if len(xs) != len(ys) {
-					return false
-				}
-				for i, xe := range xs {
-					ye := ys[i]
-					if !cmptest.DefaultLicenseComparer(xe, ye) {
-						return false
-					}
-				}
-
-				return true
-			},
-		),
-		cmp.Comparer(
-			cmptest.DefaultLocationComparer,
-		),
-		cmp.Comparer(
-			cmptest.DefaultLicenseComparer,
-		),
+	if diff := cmp.Diff(a, b, opts...); diff != "" {
+		t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)
 	}
+}
+
+func AssertPackagesEqualIgnoreLayers(t *testing.T, a, b pkg.Package, userOpts ...cmp.Option) {
+	t.Helper()
+	opts := cmptest.DefaultIgnoreLocationLayerOptions()
+	opts = append(opts, userOpts...)
 
 	if diff := cmp.Diff(a, b, opts...); diff != "" {
 		t.Errorf("unexpected packages from parsing (-expected +actual)\n%s", diff)

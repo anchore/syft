@@ -1,5 +1,7 @@
 package file
 
+import "github.com/anchore/syft/internal/evidence"
+
 type Locations []Location
 
 func (l Locations) Len() int {
@@ -7,13 +9,25 @@ func (l Locations) Len() int {
 }
 
 func (l Locations) Less(i, j int) bool {
-	if l[i].RealPath == l[j].RealPath {
-		if l[i].AccessPath == l[j].AccessPath {
-			return l[i].FileSystemID < l[j].FileSystemID
+	liEvidence := l[i].Annotations[evidence.AnnotationKey]
+	ljEvidence := l[j].Annotations[evidence.AnnotationKey]
+	if liEvidence == ljEvidence {
+		if l[i].RealPath == l[j].RealPath {
+			if l[i].AccessPath == l[j].AccessPath {
+				return l[i].FileSystemID < l[j].FileSystemID
+			}
+			return l[i].AccessPath < l[j].AccessPath
 		}
-		return l[i].AccessPath < l[j].AccessPath
+		return l[i].RealPath < l[j].RealPath
 	}
-	return l[i].RealPath < l[j].RealPath
+	if liEvidence == evidence.PrimaryAnnotation {
+		return true
+	}
+	if ljEvidence == evidence.PrimaryAnnotation {
+		return false
+	}
+
+	return liEvidence > ljEvidence
 }
 
 func (l Locations) Swap(i, j int) {

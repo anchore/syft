@@ -58,7 +58,8 @@ func (s *Source) UnmarshalJSON(b []byte) error {
 func unpackSrcMetadata(s *Source, unpacker sourceUnpacker) error {
 	rt := sourcemetadata.ReflectTypeFromJSONName(s.Type)
 	if rt == nil {
-		return fmt.Errorf("unable to find source metadata type=%q", s.Type)
+		// in cases where we are converting from an SBOM without any source information, we don't want this to be fatal
+		return nil
 	}
 
 	val := reflect.New(rt).Interface()

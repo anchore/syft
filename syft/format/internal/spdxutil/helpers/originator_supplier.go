@@ -34,7 +34,7 @@ const (
 //
 // Available options are: <omit>, NOASSERTION, Person: <person>, Organization: <org>
 // return values are: <type>, <value>
-func Originator(p pkg.Package) (typ string, author string) { // nolint: funlen
+func Originator(p pkg.Package) (typ string, author string) { //nolint: gocyclo,funlen
 	if !hasMetadata(p) {
 		return typ, author
 	}
@@ -43,12 +43,28 @@ func Originator(p pkg.Package) (typ string, author string) { // nolint: funlen
 	case pkg.ApkDBEntry:
 		author = metadata.Maintainer
 
+	case pkg.BitnamiSBOMEntry:
+		typ = orgType
+		author = "Bitnami"
+
 	case pkg.DotnetPortableExecutableEntry:
 		typ = orgType
 		author = metadata.CompanyName
 
 	case pkg.DpkgDBEntry:
 		author = metadata.Maintainer
+
+	case pkg.DpkgArchiveEntry:
+		author = metadata.Maintainer
+
+	case pkg.GitHubActionsUseStatement:
+		typ = orgType
+		org := strings.Split(metadata.Value, "/")[0]
+		if org == "actions" {
+			// this is a GitHub action, so the org is GitHub
+			org = "GitHub"
+		}
+		author = org
 
 	case pkg.JavaArchive:
 		if metadata.Manifest != nil {
@@ -61,6 +77,10 @@ func Originator(p pkg.Package) (typ string, author string) { // nolint: funlen
 				typ = orgType
 			}
 		}
+
+	case pkg.JavaVMInstallation:
+		typ = orgType
+		author = metadata.Release.Implementor
 
 	case pkg.LinuxKernelModule:
 		author = metadata.Author

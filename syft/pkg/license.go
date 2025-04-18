@@ -2,7 +2,9 @@ package pkg
 
 import (
 	"fmt"
+	"net/url"
 	"sort"
+	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -29,6 +31,7 @@ type License struct {
 	Type           license.Type
 	URLs           []string         `hash:"ignore"`
 	Locations      file.LocationSet `hash:"ignore"`
+	Contents       string           `hash:"ignore"` // The optional binary contents of the license file
 }
 
 type Licenses []License
@@ -112,7 +115,12 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 	s := strset.New()
 	for _, url := range urls {
 		if url != "" {
-			s.Add(url)
+			sanitizedURL, err := stripUnwantedCharacters(url)
+			if err != nil {
+				log.Tracef("unable to sanitize url=%q: %s", url, err)
+				continue
+			}
+			s.Add(sanitizedURL)
 		}
 	}
 
@@ -122,13 +130,28 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 	return l
 }
 
+func stripUnwantedCharacters(rawURL string) (string, error) {
+	cleanedURL := strings.TrimSpace(rawURL)
+	_, err := url.ParseRequestURI(cleanedURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL: %w", err)
+	}
+
+	return cleanedURL, nil
+}
+
 func NewLicenseFromFields(value, url string, location *file.Location) License {
 	l := NewLicense(value)
 	if location != nil {
 		l.Locations.Add(*location)
 	}
 	if url != "" {
-		l.URLs = append(l.URLs, url)
+		sanitizedURL, err := stripUnwantedCharacters(url)
+		if err != nil {
+			log.Tracef("unable to sanitize url=%q: %s", url, err)
+		} else {
+			l.URLs = append(l.URLs, sanitizedURL)
+		}
 	}
 
 	return l

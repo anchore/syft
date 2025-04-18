@@ -353,3 +353,11 @@ func Test_parseVersion(t *testing.T) {
 		})
 	}
 }
+
+func Test_corruptRequirementsTxt(t *testing.T) {
+	rp := newRequirementsParser(DefaultCatalogerConfig())
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/src/requirements.txt").
+		WithError().
+		TestParser(t, rp.parseRequirementsTxt)
+}

@@ -13,6 +13,7 @@
  &nbsp;<a href="https://github.com/anchore/syft" target="_blank"><img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/anchore/syft.svg"></a>&nbsp;
  &nbsp;<a href="" target="_blank"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"></a>&nbsp;
  &nbsp;<a href="https://anchore.com/discourse" target="_blank"><img alt="Join our Discourse" src="https://img.shields.io/badge/Discourse-Join-blue?logo=discourse"/></a>&nbsp;
+ &nbsp;<a rel="me" href="https://fosstodon.org/@syft"><img alt="Follow on Mastodon" src="https://img.shields.io/badge/Mastodon-Follow-blue?logoColor=white&logo=mastodon"/></a>&nbsp;
 </p>
 
 ![syft-demo](https://user-images.githubusercontent.com/590471/90277200-2a253000-de33-11ea-893f-32c219eea11a.gif)
@@ -66,7 +67,7 @@ choco install syft -y
 
 ### Nix
 
-**Note**: Nix packaging of Syft is [community maintained](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/admin/syft/default.nix). Syft is available in the [stable channel](https://wiki.nixos.org/wiki/Nix_channels#The_official_channels) since NixOS `22.05`.
+**Note**: Nix packaging of Syft is [community maintained](https://github.com/NixOS/nixpkgs/blob/master/pkgs/by-name/sy/syft/package.nix). Syft is available in the [stable channel](https://wiki.nixos.org/wiki/Nix_channels#The_official_channels) since NixOS `22.05`.
 
 ```bash
 nix-env -i syft
@@ -122,6 +123,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 ### Supported Ecosystems
 
 - Alpine (apk)
+- Bitnami packages
 - C (conan)
 - C++ (conan)
 - Dart (pubs)
@@ -145,6 +147,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 - Rust (cargo.lock)
 - Swift (cocoapods, swift-package-manager)
 - Wordpress plugins
+- Terraform providers (.terraform.lock.hcl)
 
 ## Documentation
 
@@ -178,3 +181,7 @@ The Syft Team hold regular community meetings online. All are welcome to join to
 - Check the [calendar](https://calendar.google.com/calendar/u/0/r?cid=Y182OTM4dGt0MjRtajI0NnNzOThiaGtnM29qNEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t) for the next meeting date. 
 - Add items to the [agenda](https://docs.google.com/document/d/1ZtSAa6fj2a6KRWviTn3WoJm09edvrNUp4Iz_dOjjyY8/edit?usp=sharing) (join [this group](https://groups.google.com/g/anchore-oss-community) for write access to the [agenda](https://docs.google.com/document/d/1ZtSAa6fj2a6KRWviTn3WoJm09edvrNUp4Iz_dOjjyY8/edit?usp=sharing))
 - See you there!
+
+## Syft Logo
+
+<p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://anchore.com/wp-content/uploads/2024/11/syft-logo.svg">Syft Logo</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://anchore.com/">Anchore</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt=""></a></p>

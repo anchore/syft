@@ -113,6 +113,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.GraalVMNativeImagePkg,
+			},
+			expected: []string{
+				"from GraalVM native image",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.RustPkg,
 			},
 			expected: []string{
@@ -201,6 +209,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.BitnamiPkg,
+			},
+			expected: []string{
+				"acquired package info from a Bitnami SBOM",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.HexPkg,
 			},
 			expected: []string{
@@ -273,6 +289,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.OpamPkg,
+			},
+			expected: []string{
+				"acquired package info from OCaml opam package file",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.GithubActionPkg,
 			},
 			expected: []string{
@@ -293,6 +317,14 @@ func Test_SourceInfo(t *testing.T) {
 			},
 			expected: []string{
 				"acquired package info from found wordpress plugin PHP source files",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.TerraformPkg,
+			},
+			expected: []string{
+				"acquired package info from Terraform dependency lock file",
 			},
 		},
 	}

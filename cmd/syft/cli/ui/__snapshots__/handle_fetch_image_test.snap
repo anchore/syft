@@ -1,8 +1,8 @@
 
 [TestHandler_handleFetchImage/fetch_image_in_progress - 1]
- ⠋ Loading image                   ━━━━━━━━━━━━━━━━━━━━  [current]                       the-image
+ ⠋ Loading image                   ━━━━━━━━━━━━━━━━━━━━  [current]                      the-image 
 ---
 
 [TestHandler_handleFetchImage/fetch_image_complete - 1]
- ✔ Loaded image                                                                          the-image
+ ✔ Loaded image                                                                         the-image 
 ---

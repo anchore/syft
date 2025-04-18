@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -48,5 +49,5 @@ func parseComposerLock(_ context.Context, _ file.Resolver, _ *generic.Environmen
 		}
 	}
 
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }

@@ -8,9 +8,11 @@ import (
 )
 
 type golangConfig struct {
-	SearchLocalModCacheLicenses bool                          `json:"search-local-mod-cache-licenses" yaml:"search-local-mod-cache-licenses" mapstructure:"search-local-mod-cache-licenses"`
+	SearchLocalModCacheLicenses *bool                         `json:"search-local-mod-cache-licenses" yaml:"search-local-mod-cache-licenses" mapstructure:"search-local-mod-cache-licenses"`
 	LocalModCacheDir            string                        `json:"local-mod-cache-dir" yaml:"local-mod-cache-dir" mapstructure:"local-mod-cache-dir"`
-	SearchRemoteLicenses        bool                          `json:"search-remote-licenses" yaml:"search-remote-licenses" mapstructure:"search-remote-licenses"`
+	SearchLocalVendorLicenses   *bool                         `json:"search-local-vendor-licenses" yaml:"search-local-vendor-licenses" mapstructure:"search-local-vendor-licenses"`
+	LocalVendorDir              string                        `json:"local-vendor-dir" yaml:"local-vendor-dir" mapstructure:"local-vendor-dir"`
+	SearchRemoteLicenses        *bool                         `json:"search-remote-licenses" yaml:"search-remote-licenses" mapstructure:"search-remote-licenses"`
 	Proxy                       string                        `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
 	NoProxy                     string                        `json:"no-proxy" yaml:"no-proxy" mapstructure:"no-proxy"`
 	MainModuleVersion           golangMainModuleVersionConfig `json:"main-module-version" yaml:"main-module-version" mapstructure:"main-module-version"`
@@ -24,6 +26,9 @@ func (o *golangConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.SearchLocalModCacheLicenses, `search for go package licences in the GOPATH of the system running Syft, note that this is outside the
 container filesystem and potentially outside the root of a local directory scan`)
 	descriptions.Add(&o.LocalModCacheDir, `specify an explicit go mod cache directory, if unset this defaults to $GOPATH/pkg/mod or $HOME/go/pkg/mod`)
+	descriptions.Add(&o.SearchLocalVendorLicenses, `search for go package licences in the vendor folder on the system running Syft, note that this is outside the
+container filesystem and potentially outside the root of a local directory scan`)
+	descriptions.Add(&o.LocalVendorDir, `specify an explicit go vendor directory, if unset this defaults to ./vendor`)
 	descriptions.Add(&o.SearchRemoteLicenses, `search for go package licences by retrieving the package from a network proxy`)
 	descriptions.Add(&o.Proxy, `remote proxy to use when retrieving go packages from the network,
 if unset this defaults to $GOPROXY followed by https://proxy.golang.org`)
@@ -47,9 +52,11 @@ type golangMainModuleVersionConfig struct {
 func defaultGolangConfig() golangConfig {
 	def := golang.DefaultCatalogerConfig()
 	return golangConfig{
-		SearchLocalModCacheLicenses: def.SearchLocalModCacheLicenses,
+		SearchLocalModCacheLicenses: nil, // this defaults to false, which is the API default
 		LocalModCacheDir:            def.LocalModCacheDir,
-		SearchRemoteLicenses:        def.SearchRemoteLicenses,
+		SearchLocalVendorLicenses:   nil, // this defaults to false, which is the API default
+		LocalVendorDir:              def.LocalVendorDir,
+		SearchRemoteLicenses:        nil, // this defaults to false, which is the API default
 		Proxy:                       strings.Join(def.Proxies, ","),
 		NoProxy:                     strings.Join(def.NoProxy, ","),
 		MainModuleVersion: golangMainModuleVersionConfig{

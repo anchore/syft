@@ -4,60 +4,47 @@ import (
 	"context"
 	"fmt"
 	"runtime/debug"
-	"sync"
+	"slices"
+	"time"
 
-	"github.com/hashicorp/go-multierror"
-
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/sbom"
 )
 
-type Executor struct {
-	numWorkers int
-	tasks      chan Task
+func RunTask(ctx context.Context, tsk Task, resolver file.Resolver, s sbomsync.Builder, prog *monitor.CatalogerTaskProgress) error {
+	err := runTaskSafely(ctx, tsk, resolver, s)
+	unknowns, remainingErrors := unknown.ExtractCoordinateErrors(err)
+	if len(unknowns) > 0 {
+		appendUnknowns(s, tsk.Name(), unknowns)
+	}
+	if remainingErrors != nil {
+		prog.SetError(remainingErrors)
+	}
+	prog.Increment()
+	return remainingErrors
 }
 
-func NewTaskExecutor(tasks []Task, numWorkers int) *Executor {
-	p := &Executor{
-		numWorkers: numWorkers,
-		tasks:      make(chan Task, len(tasks)),
-	}
-
-	for i := range tasks {
-		p.tasks <- tasks[i]
-	}
-	close(p.tasks)
-
-	return p
-}
-
-func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsync.Builder, prog *monitor.CatalogerTaskProgress) error {
-	var errs error
-	wg := &sync.WaitGroup{}
-	for i := 0; i < p.numWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			for {
-				tsk, ok := <-p.tasks
-				if !ok {
-					return
+func appendUnknowns(builder sbomsync.Builder, taskName string, unknowns []unknown.CoordinateError) {
+	if accessor, ok := builder.(sbomsync.Accessor); ok {
+		accessor.WriteToSBOM(func(sb *sbom.SBOM) {
+			for _, u := range unknowns {
+				if sb.Artifacts.Unknowns == nil {
+					sb.Artifacts.Unknowns = map[file.Coordinates][]string{}
 				}
-
-				if err := runTaskSafely(ctx, tsk, resolver, s); err != nil {
-					errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", err))
-					prog.SetError(err)
+				unknownText := formatUnknown(u.Reason.Error(), taskName)
+				existing := sb.Artifacts.Unknowns[u.Coordinates]
+				// don't include duplicate unknowns
+				if slices.Contains(existing, unknownText) {
+					continue
 				}
-				prog.Increment()
+				sb.Artifacts.Unknowns[u.Coordinates] = append(existing, unknownText)
 			}
-		}()
+		})
 	}
-
-	wg.Wait()
-
-	return errs
 }
 
 func runTaskSafely(ctx context.Context, t Task, resolver file.Resolver, s sbomsync.Builder) (err error) {
@@ -68,5 +55,8 @@ func runTaskSafely(ctx context.Context, t Task, resolver file.Resolver, s sbomsy
 		}
 	}()
 
-	return t.Execute(ctx, resolver, s)
+	start := time.Now()
+	res := t.Execute(ctx, resolver, s)
+	log.WithFields("task", t.Name(), "elapsed", time.Since(start)).Info("task completed")
+	return res
 }

@@ -38,7 +38,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "PINCache/Arc-exception-safe",
 			Version:   "3.0.3",
-			PURL:      "pkg:cocoapods/PINCache/Arc-exception-safe@3.0.3",
+			PURL:      "pkg:cocoapods/PINCache%2FArc-exception-safe@3.0.3",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -49,7 +49,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "PINCache/Core",
 			Version:   "3.0.3",
-			PURL:      "pkg:cocoapods/PINCache/Core@3.0.3",
+			PURL:      "pkg:cocoapods/PINCache%2FCore@3.0.3",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -71,7 +71,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "PINRemoteImage/Core",
 			Version:   "3.0.3",
-			PURL:      "pkg:cocoapods/PINRemoteImage/Core@3.0.3",
+			PURL:      "pkg:cocoapods/PINRemoteImage%2FCore@3.0.3",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -82,7 +82,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "PINRemoteImage/iOS",
 			Version:   "3.0.3",
-			PURL:      "pkg:cocoapods/PINRemoteImage/iOS@3.0.3",
+			PURL:      "pkg:cocoapods/PINRemoteImage%2FiOS@3.0.3",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -93,7 +93,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "PINRemoteImage/PINCache",
 			Version:   "3.0.3",
-			PURL:      "pkg:cocoapods/PINRemoteImage/PINCache@3.0.3",
+			PURL:      "pkg:cocoapods/PINRemoteImage%2FPINCache@3.0.3",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -137,7 +137,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "Texture/AssetsLibrary",
 			Version:   "3.1.0",
-			PURL:      "pkg:cocoapods/Texture/AssetsLibrary@3.1.0",
+			PURL:      "pkg:cocoapods/Texture%2FAssetsLibrary@3.1.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -148,7 +148,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "Texture/Core",
 			Version:   "3.1.0",
-			PURL:      "pkg:cocoapods/Texture/Core@3.1.0",
+			PURL:      "pkg:cocoapods/Texture%2FCore@3.1.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -159,7 +159,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "Texture/MapKit",
 			Version:   "3.1.0",
-			PURL:      "pkg:cocoapods/Texture/MapKit@3.1.0",
+			PURL:      "pkg:cocoapods/Texture%2FMapKit@3.1.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -170,7 +170,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "Texture/Photos",
 			Version:   "3.1.0",
-			PURL:      "pkg:cocoapods/Texture/Photos@3.1.0",
+			PURL:      "pkg:cocoapods/Texture%2FPhotos@3.1.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -181,7 +181,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "Texture/PINRemoteImage",
 			Version:   "3.1.0",
-			PURL:      "pkg:cocoapods/Texture/PINRemoteImage@3.1.0",
+			PURL:      "pkg:cocoapods/Texture%2FPINRemoteImage@3.1.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -192,7 +192,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "Texture/Video",
 			Version:   "3.1.0",
-			PURL:      "pkg:cocoapods/Texture/Video@3.1.0",
+			PURL:      "pkg:cocoapods/Texture%2FVideo@3.1.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -214,7 +214,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "TextureSwiftSupport/Components",
 			Version:   "3.13.0",
-			PURL:      "pkg:cocoapods/TextureSwiftSupport/Components@3.13.0",
+			PURL:      "pkg:cocoapods/TextureSwiftSupport%2FComponents@3.13.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -225,7 +225,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "TextureSwiftSupport/Experiments",
 			Version:   "3.13.0",
-			PURL:      "pkg:cocoapods/TextureSwiftSupport/Experiments@3.13.0",
+			PURL:      "pkg:cocoapods/TextureSwiftSupport%2FExperiments@3.13.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -236,7 +236,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "TextureSwiftSupport/Extensions",
 			Version:   "3.13.0",
-			PURL:      "pkg:cocoapods/TextureSwiftSupport/Extensions@3.13.0",
+			PURL:      "pkg:cocoapods/TextureSwiftSupport%2FExtensions@3.13.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -247,7 +247,7 @@ func TestParsePodfileLock(t *testing.T) {
 		{
 			Name:      "TextureSwiftSupport/LayoutSpecBuilders",
 			Version:   "3.13.0",
-			PURL:      "pkg:cocoapods/TextureSwiftSupport/LayoutSpecBuilders@3.13.0",
+			PURL:      "pkg:cocoapods/TextureSwiftSupport%2FLayoutSpecBuilders@3.13.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.CocoapodsPkg,
@@ -272,4 +272,11 @@ func TestParsePodfileLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 
 	pkgtest.TestFileParser(t, fixture, parsePodfileLock, expectedPkgs, expectedRelationships)
+}
+
+func Test_corruptPodfile(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/src/Podfile.lock").
+		WithError().
+		TestParser(t, parsePodfileLock)
 }

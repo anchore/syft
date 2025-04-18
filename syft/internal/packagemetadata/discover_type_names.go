@@ -22,6 +22,12 @@ var knownNonMetadataTypeNames = strset.New(
 	"LicenseSet",
 )
 
+// these are names that would be removed due to common convention (e.g. used within another metadata type) but are
+// known to be metadata types themselves. Adding to this list will prevent the removal of the type from the schema.
+var knownMetadaTypeNames = strset.New(
+	"DotnetPortableExecutableEntry",
+)
+
 func DiscoverTypeNames() ([]string, error) {
 	root, err := RepoRoot()
 	if err != nil {
@@ -66,7 +72,8 @@ func findMetadataDefinitionNames(paths ...string) ([]string, error) {
 	}
 
 	// any definition that is used within another struct should not be considered a top-level metadata definition
-	names.Remove(usedNames.List()...)
+	removeNames := strset.Difference(usedNames, knownMetadaTypeNames)
+	names.Remove(removeNames.List()...)
 
 	// remove known exceptions, that is, types exported in the pkg Package that are not used
 	// in a metadata type but are not metadata types themselves.
@@ -78,7 +85,8 @@ func findMetadataDefinitionNames(paths ...string) ([]string, error) {
 	// note: 35 is a point-in-time gut check. This number could be updated if new metadata definitions are added, but is not required.
 	// it is really intended to catch any major issues with the generation process that would generate, say, 0 definitions.
 	if len(strNames) < 35 {
-		return nil, fmt.Errorf("not enough metadata definitions found (discovered: " + fmt.Sprintf("%d", len(strNames)) + ")")
+		msg := fmt.Sprintf("not enough metadata definitions found (discovered %d)", len(strNames))
+		return nil, fmt.Errorf("%v", msg)
 	}
 
 	return strNames, nil

@@ -7,6 +7,16 @@ type DotnetDepsEntry struct {
 	Path     string `mapstructure:"path" json:"path"`
 	Sha512   string `mapstructure:"sha512" json:"sha512"`
 	HashPath string `mapstructure:"hashPath" json:"hashPath"`
+
+	Executables map[string]DotnetPortableExecutableEntry `json:"executables,omitempty"`
+}
+
+// DotnetPackagesLockEntry is a struct that represents a single entry found in the "dependencies" section in a .NET packages.lock.json file.
+type DotnetPackagesLockEntry struct {
+	Name        string `mapstructure:"name" json:"name"`
+	Version     string `mapstructure:"version" json:"version"`
+	ContentHash string `mapstructure:"contentHash" json:"contentHash"`
+	Type        string `mapstructure:"type" json:"type"`
 }
 
 // DotnetPortableExecutableEntry is a struct that represents a single entry found within "VersionResources" section of a .NET Portable Executable binary file.

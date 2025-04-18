@@ -16,7 +16,7 @@ func TestPortageCataloger(t *testing.T) {
 			Name:    "app-containers/skopeo",
 			Version: "1.5.1",
 			FoundBy: "portage-cataloger",
-			PURL:    "pkg:ebuild/app-containers/skopeo@1.5.1",
+			PURL:    "pkg:ebuild/app-containers%2Fskopeo@1.5.1",
 			Locations: file.NewLocationSet(
 				file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/CONTENTS"),
 				file.NewLocation("var/db/pkg/app-containers/skopeo-1.5.1/SIZE"),
@@ -64,7 +64,7 @@ func TestPortageCataloger(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/image-portage").
+		FromDirectory(t, "test-fixtures/layout").
 		Expects(expectedPkgs, expectedRelationships).
 		TestCataloger(t, NewPortageCataloger())
 

@@ -1,0 +1,11 @@
+{"1.2.0",
+[{<<"certifi{pkg,<<"certifi">>,<<"2.9.0">>},0},
+ {<<"idna">>,{pkg,<<"idpkg,<<"parse_trans">>,<<"3.3.1">>},0},
+ {<<"ssl_verify_fun">>,{pkg,<<"ssl_verify_fun">>,<<"1.1.6">>},0},
+ {<<"unicode_util_compat">>,{pkg,<<"unicode_util_compat">>,<<"0.7.0">>},0}]}.
+[
+{pkg_hash,[
+ {<<"certifi">>, <<"6F2A475689DD47F19FB74334859D460A2DC4E3252A3324BD2111B8F0429E7E21">>},
+ {<<"idna">>, <<"8A63070E9F7D0C62EB9D9FCB360A7DE382448200FBBD1B106CC96D3D8099DF8D">>},
+ {<<"metrics">>, <<"25F094DEA2CDA98213CECC3AEFF09E940299D950904393B2A29D191C346A8486">>},
+ {<<"mimerl

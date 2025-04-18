@@ -8,6 +8,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
@@ -20,8 +21,8 @@ func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) erro
 
 	libs, err := f.ImportedLibraries()
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read imported libraries from elf file")
+		err = unknown.Joinf(err, "unable to read imported libraries from elf file: %w", err)
 		libs = nil
 	}
 
@@ -34,7 +35,7 @@ func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) erro
 	data.HasEntrypoint = elfHasEntrypoint(f)
 	data.HasExports = elfHasExports(f)
 
-	return nil
+	return err
 }
 
 func findELFSecurityFeatures(f *elf.File) *file.ELFSecurityFeatures {
@@ -62,7 +63,6 @@ func checkElfStackCanary(file *elf.File) *bool {
 func hasAnyDynamicSymbols(file *elf.File, symbolNames ...string) *bool {
 	dynSyms, err := file.DynamicSymbols()
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read dynamic symbols from elf file")
 		return nil
 	}
@@ -129,7 +129,6 @@ func hasBindNowDynTagOrFlag(f *elf.File) bool {
 func hasElfDynFlag(f *elf.File, flag elf.DynFlag) bool {
 	vals, err := f.DynValue(elf.DT_FLAGS)
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read DT_FLAGS from elf file")
 		return false
 	}
@@ -144,7 +143,6 @@ func hasElfDynFlag(f *elf.File, flag elf.DynFlag) bool {
 func hasElfDynFlag1(f *elf.File, flag elf.DynFlag1) bool {
 	vals, err := f.DynValue(elf.DT_FLAGS_1)
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read DT_FLAGS_1 from elf file")
 		return false
 	}
@@ -203,7 +201,6 @@ func checkLLVMControlFlowIntegrity(file *elf.File) *bool {
 	// look for any symbols that are functions and end with ".cfi"
 	dynSyms, err := file.Symbols()
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read symbols from elf file")
 		return nil
 	}
@@ -225,7 +222,6 @@ var fortifyPattern = regexp.MustCompile(`__\w+_chk@.+`)
 func checkClangFortifySource(file *elf.File) *bool {
 	dynSyms, err := file.Symbols()
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read symbols from elf file")
 		return nil
 	}
@@ -254,7 +250,7 @@ func elfHasExports(f *elf.File) bool {
 	// really anything that is not marked with 'U' (undefined) is considered an export.
 	symbols, err := f.DynamicSymbols()
 	if err != nil {
-		// TODO: known-unknowns?
+		log.WithFields("error", err).Trace("unable to get ELF dynamic symbols")
 		return false
 	}
 

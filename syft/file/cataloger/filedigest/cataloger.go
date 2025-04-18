@@ -8,11 +8,14 @@ import (
 
 	"github.com/dustin/go-humanize"
 
+	"github.com/anchore/go-sync"
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	intCataloger "github.com/anchore/syft/syft/file/cataloger/internal"
@@ -47,39 +50,44 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 	}
 
 	prog := catalogingProgress(int64(len(locations)))
-	for _, location := range locations {
-		result, err := i.catalogLocation(resolver, location)
+
+	err := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(locations), func(location file.Location) ([]file.Digest, error) {
+		result, err := i.catalogLocation(ctx, resolver, location)
 
 		if errors.Is(err, ErrUndigestableFile) {
-			continue
+			return nil, nil
 		}
 
 		prog.AtomicStage.Set(location.Path())
 
 		if internal.IsErrPathPermission(err) {
 			log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
-			continue
+			return nil, unknown.New(location, err)
 		}
 
 		if err != nil {
 			prog.SetError(err)
-			return nil, fmt.Errorf("failed to process file %q: %w", location.RealPath, err)
+			return nil, unknown.New(location, err)
 		}
 
 		prog.Increment()
 
-		results[location.Coordinates] = result
-	}
+		return result, nil
+	}, func(location file.Location, digests []file.Digest) {
+		if len(digests) > 0 {
+			results[location.Coordinates] = digests
+		}
+	})
 
 	log.Debugf("file digests cataloger processed %d files", prog.Current())
 
 	prog.AtomicStage.Set(fmt.Sprintf("%s files", humanize.Comma(prog.Current())))
 	prog.SetCompleted()
 
-	return results, nil
+	return results, err
 }
 
-func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Location) ([]file.Digest, error) {
+func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver, location file.Location) ([]file.Digest, error) {
 	meta, err := resolver.FileMetadataByLocation(location)
 	if err != nil {
 		return nil, err
@@ -96,7 +104,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	}
 	defer internal.CloseAndLogError(contentReader, location.AccessPath)
 
-	digests, err := intFile.NewDigestsFromFile(contentReader, i.hashes)
+	digests, err := intFile.NewDigestsFromFile(ctx, contentReader, i.hashes)
 	if err != nil {
 		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.RealPath, Err: err}
 	}

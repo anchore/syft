@@ -16,6 +16,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from RPM DB"
 	case pkg.ApkPkg:
 		answer = "acquired package info from APK DB"
+	case pkg.BitnamiPkg:
+		answer = "acquired package info from a Bitnami SBOM"
 	case pkg.DartPubPkg:
 		answer = "acquired package info from pubspec manifest"
 	case pkg.DebPkg:
@@ -32,6 +34,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from installed gem metadata file"
 	case pkg.GoModulePkg:
 		answer = "acquired package info from go module information"
+	case pkg.GraalVMNativeImagePkg:
+		answer = "acquired package info from GraalVM native image"
 	case pkg.RustPkg:
 		answer = "acquired package info from rust cargo manifest"
 	case pkg.PhpComposerPkg:
@@ -64,10 +68,14 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from resolved Swift package manifest"
 	case pkg.SwiplPackPkg:
 		answer = "acquired package info from SWI Prolo pack package file"
+	case pkg.OpamPkg:
+		answer = "acquired package info from OCaml opam package file"
 	case pkg.GithubActionPkg, pkg.GithubActionWorkflowPkg:
 		answer = "acquired package info from GitHub Actions workflow file or composite action file"
 	case pkg.WordpressPluginPkg:
 		answer = "acquired package info from found wordpress plugin PHP source files"
+	case pkg.TerraformPkg:
+		answer = "acquired package info from Terraform dependency lock file"
 	default:
 		answer = "acquired package info from the following paths"
 	}
