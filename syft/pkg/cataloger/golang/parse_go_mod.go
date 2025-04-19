@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/url"
 	"sort"
 	"strings"
 
@@ -79,9 +78,8 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		// the old path and new path may be the same, in which case this is a noop,
 		// but if they're different we need to remove the old package.
 		delete(packages, m.Old.Path)
-		u, _ := url.Parse(m.New.Path)
-		switch u.Scheme {
-		case "https", "http":
+		if !(strings.HasPrefix(m.New.Path, ".") ||
+			strings.HasPrefix(m.New.Path, "..") || strings.HasPrefix(m.New.Path, "/")) {
 			packages[m.New.Path] = pkg.Package{
 				Name:      m.New.Path,
 				Version:   m.New.Version,
