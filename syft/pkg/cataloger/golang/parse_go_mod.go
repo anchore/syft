@@ -97,7 +97,6 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 				H1Digest: digests[fmt.Sprintf("%s %s", m.New.Path, m.New.Version)],
 			},
 		}
-
 	}
 
 	// remove any packages from the exclude fields
