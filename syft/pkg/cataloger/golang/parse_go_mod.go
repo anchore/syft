@@ -77,21 +77,25 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 
 		// the old path and new path may be the same, in which case this is a noop,
 		// but if they're different we need to remove the old package.
-		delete(packages, m.Old.Path)
+		var finalPath string
 		if !(strings.HasPrefix(m.New.Path, ".") ||
 			strings.HasPrefix(m.New.Path, "..") || strings.HasPrefix(m.New.Path, "/")) {
-			packages[m.New.Path] = pkg.Package{
-				Name:      m.New.Path,
-				Version:   m.New.Version,
-				Licenses:  pkg.NewLicenseSet(lics...),
-				Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-				PURL:      packageURL(m.New.Path, m.New.Version),
-				Language:  pkg.Go,
-				Type:      pkg.GoModulePkg,
-				Metadata: pkg.GolangModuleEntry{
-					H1Digest: digests[fmt.Sprintf("%s %s", m.New.Path, m.New.Version)],
-				},
-			}
+			finalPath = m.New.Path
+			delete(packages, m.Old.Path)
+		} else {
+			finalPath = m.Old.Path
+		}
+		packages[finalPath] = pkg.Package{
+			Name:      finalPath,
+			Version:   m.New.Version,
+			Licenses:  pkg.NewLicenseSet(lics...),
+			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:      packageURL(m.New.Path, m.New.Version),
+			Language:  pkg.Go,
+			Type:      pkg.GoModulePkg,
+			Metadata: pkg.GolangModuleEntry{
+				H1Digest: digests[fmt.Sprintf("%s %s", m.New.Path, m.New.Version)],
+			},
 		}
 
 	}
