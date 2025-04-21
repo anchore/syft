@@ -1342,6 +1342,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("jq-binary"),
 			},
 		},
+		{
+			logicalFixture: "chrome/126.0.6478.182/linux-amd64",
+			expected: pkg.Package{
+				Name:      "chrome",
+				Version:   "126.0.6478.182",
+				Type:      "binary",
+				PURL:      "pkg:generic/chrome@126.0.6478.182",
+				Locations: locations("chrome"),
+				Metadata:  metadata("chrome-binary"),
+			},
+		},
+		{
+			logicalFixture: "chrome/127.0.6533.119/linux-amd64",
+			expected: pkg.Package{
+				Name:      "chrome",
+				Version:   "127.0.6533.119",
+				Type:      "binary",
+				PURL:      "pkg:generic/chrome@127.0.6533.119",
+				Locations: locations("chrome"),
+				Metadata:  metadata("chrome-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
