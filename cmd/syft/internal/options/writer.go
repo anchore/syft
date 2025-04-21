@@ -9,10 +9,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/anchore/go-homedir"
 	"github.com/hashicorp/go-multierror"
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/format"

@@ -25,6 +25,7 @@ func AllTypes() []any {
 		pkg.ELFBinaryPackageNoteJSONPayload{},
 		pkg.ElixirMixLockEntry{},
 		pkg.ErlangRebarLockEntry{},
+		pkg.GitHubActionsUseStatement{},
 		pkg.GolangBinaryBuildinfoEntry{},
 		pkg.GolangModuleEntry{},
 		pkg.HackageStackYamlEntry{},

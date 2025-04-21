@@ -51,7 +51,7 @@ func (r *File) buildIndex() error {
 
 	r.tree = tree
 	r.index = index
-	r.filetreeResolver.searchContext = filetree.NewSearchContext(tree, index)
+	r.searchContext = filetree.NewSearchContext(tree, index)
 
 	return nil
 }

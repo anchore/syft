@@ -23,7 +23,7 @@ func ExtractGlobsFromTarToUniqueTempFile(archivePath, dir string, globs ...strin
 		defer file.Close()
 
 		// ignore directories
-		if file.FileInfo.IsDir() {
+		if file.IsDir() {
 			return nil
 		}
 

@@ -213,13 +213,15 @@ func reduceOuter(expression string) string {
 func isBalanced(expression string) bool {
 	count := 0
 	for _, c := range expression {
-		if c == '(' {
+		switch c {
+		case '(':
 			count++
-		} else if c == ')' {
+		case ')':
 			count--
 			if count < 0 {
 				return false
 			}
+		default:
 		}
 	}
 	return count == 0

@@ -4,8 +4,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anchore/go-homedir"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/go-homedir"
 )
 
 func Test_Config(t *testing.T) {
