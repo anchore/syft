@@ -201,7 +201,11 @@ func (c *Collection) deleteNameFromIndex(p Package) {
 
 	nameIndex := c.idsByName[p.Name]
 	nameIndex.delete(p.id)
-	c.idsByName[p.Name] = nameIndex
+	if len(nameIndex.slice) == 0 {
+		delete(c.idsByName, p.Name)
+	} else {
+		c.idsByName[p.Name] = nameIndex
+	}
 }
 
 func (c *Collection) deleteTypeFromIndex(p Package) {
@@ -209,7 +213,11 @@ func (c *Collection) deleteTypeFromIndex(p Package) {
 
 	typeIndex := c.idsByType[p.Type]
 	typeIndex.delete(p.id)
-	c.idsByType[p.Type] = typeIndex
+	if len(typeIndex.slice) == 0 {
+		delete(c.idsByType, p.Type)
+	} else {
+		c.idsByType[p.Type] = typeIndex
+	}
 }
 
 func (c *Collection) deletePathsFromIndex(p Package) {
