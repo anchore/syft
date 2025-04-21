@@ -78,8 +78,8 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		// the old path and new path may be the same, in which case this is a noop,
 		// but if they're different we need to remove the old package.
 		var finalPath string
-		if !(strings.HasPrefix(m.New.Path, ".") ||
-			strings.HasPrefix(m.New.Path, "..") || strings.HasPrefix(m.New.Path, "/")) {
+		if !strings.HasPrefix(m.New.Path, ".") &&
+			!strings.HasPrefix(m.New.Path, "..") && !strings.HasPrefix(m.New.Path, "/") {
 			finalPath = m.New.Path
 			delete(packages, m.Old.Path)
 		} else {
