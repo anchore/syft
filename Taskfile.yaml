@@ -224,7 +224,7 @@ tasks:
       - "go run -race cmd/syft/main.go alpine:latest"
 
   validate-cyclonedx-schema:
-    desc: Run integration tests
+    desc: Validate that Syft produces valid CycloneDX documents
     cmds:
       - "cd schema/cyclonedx && make"
 
