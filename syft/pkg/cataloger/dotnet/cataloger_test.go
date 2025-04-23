@@ -1008,6 +1008,7 @@ func TestCataloger(t *testing.T) {
 				"Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
 				"helloworld @ 1.0.0 (/app/helloworld.deps.json)",
 				"runtime.linux-x64.Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
+				"runtime.linux-x64.Microsoft.NETCore.DotNetHostPolicy @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)", // a compile target reference
 			},
 			expectedRels: []string{
 				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
