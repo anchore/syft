@@ -26,7 +26,48 @@ type depsTarget struct {
 	Dependencies map[string]string            `json:"dependencies"`
 	Runtime      map[string]map[string]string `json:"runtime"`
 	Resources    map[string]map[string]string `json:"resources"`
+	Compile      map[string]map[string]string `json:"compile"`
 	Native       map[string]map[string]string `json:"native"`
+}
+
+func (t depsTarget) nativePaths() *strset.Set {
+	results := strset.New()
+	for path := range t.Native {
+		results.Add(path)
+	}
+	return results
+}
+
+func (t depsTarget) compilePaths() map[string]string {
+	result := make(map[string]string)
+	for path := range t.Compile {
+		trimmedPath := trimLibPrefix(path)
+		if _, exists := result[trimmedPath]; exists {
+			continue
+		}
+		result[trimmedPath] = path
+	}
+	return result
+}
+
+func (t depsTarget) resourcePaths() map[string]string {
+	result := make(map[string]string)
+	for path := range t.Resources {
+		trimmedPath := trimLibPrefix(path)
+		if _, exists := result[trimmedPath]; exists {
+			continue
+		}
+		result[trimmedPath] = path
+	}
+	return result
+}
+
+func (t depsTarget) runtimePaths() map[string]string {
+	result := make(map[string]string)
+	for path := range t.Runtime {
+		result[trimLibPrefix(path)] = path
+	}
+	return result
 }
 
 type depsLibrary struct {
@@ -50,6 +91,10 @@ type logicalDepsJSONPackage struct {
 	// ResourcePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
 	// to the target path as described in the deps.json target entry under "resource".
 	ResourcePathsByRelativeDLLPath map[string]string
+
+	// CompilePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
+	// to the target path as described in the deps.json target entry under "compile".
+	CompilePathsByRelativeDLLPath map[string]string
 
 	// NativePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
 	// to the target path as described in the deps.json target entry under "native". These should not have
@@ -133,31 +178,15 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 			if ok {
 				lib = &l
 			}
-			runtimePaths := make(map[string]string)
-			for path := range target.Runtime {
-				runtimePaths[trimLibPrefix(path)] = path
-			}
-			resourcePaths := make(map[string]string)
-			for path := range target.Resources {
-				trimmedPath := trimLibPrefix(path)
-				if _, exists := resourcePaths[trimmedPath]; exists {
-					continue
-				}
-				resourcePaths[trimmedPath] = path
-			}
-
-			nativePaths := strset.New()
-			for path := range target.Native {
-				nativePaths.Add(path)
-			}
 
 			p := &logicalDepsJSONPackage{
 				NameVersion:                    libName,
 				Library:                        lib,
 				Targets:                        &target,
-				RuntimePathsByRelativeDLLPath:  runtimePaths,
-				ResourcePathsByRelativeDLLPath: resourcePaths,
-				NativePaths:                    nativePaths,
+				RuntimePathsByRelativeDLLPath:  target.runtimePaths(),
+				ResourcePathsByRelativeDLLPath: target.resourcePaths(),
+				CompilePathsByRelativeDLLPath:  target.compilePaths(),
+				NativePaths:                    target.nativePaths(),
 			}
 			packageMap[libName] = p
 			nameVersions.Add(libName)

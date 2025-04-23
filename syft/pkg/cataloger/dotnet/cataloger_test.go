@@ -1035,7 +1035,7 @@ func TestCataloger(t *testing.T) {
 	}
 }
 
-func TestDotnetDepsCataloger_problemCases(t *testing.T) {
+func TestDotnetDepsCataloger_regressions(t *testing.T) {
 	cases := []struct {
 		name      string
 		fixture   string
@@ -1070,6 +1070,20 @@ func TestDotnetDepsCataloger_problemCases(t *testing.T) {
 				}
 
 				pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
+			},
+		},
+		{
+			name:      "compile target reference",
+			fixture:   "image-net8-compile-target",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			assertion: func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+				// ensure we find the DotNetNuke.Core package (which is using the compile target reference)
+				for _, p := range pkgs {
+					if p.Name == "DotNetNuke.Core" {
+						return
+					}
+				}
+				t.Error("expected to find DotNetNuke.Core package")
 			},
 		},
 	}
