@@ -18,8 +18,8 @@ var _ interface {
 } = (*dotnetConfig)(nil)
 
 func (o *dotnetConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
-	descriptions.Add(&o.DepPackagesMustHaveDLL, `only keep dep.json packages which an executable on disk can be found for`)
-	descriptions.Add(&o.DepPackagesMustClaimDLL, `only keep dep.json packages which have a runtime/resource DLL claimed in the deps.json targets section (but not necessarily found on disk)`)
+	descriptions.Add(&o.DepPackagesMustHaveDLL, `only keep dep.json packages which an executable on disk is found. The package is also included if a DLL is found for any child package, even if the package itself does not have a DLL.`)
+	descriptions.Add(&o.DepPackagesMustClaimDLL, `only keep dep.json packages which have a runtime/resource DLL claimed in the deps.json targets section (but not necessarily found on disk). The package is also included if any child package claims a DLL, even if the package itself does not claim a DLL.`)
 	descriptions.Add(&o.RelaxDLLClaimsWhenBundlingDetected, `show all packages from the deps.json if bundling tooling is present as a dependency (e.g. ILRepack)`)
 }
 
