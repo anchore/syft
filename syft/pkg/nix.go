@@ -7,6 +7,9 @@ import (
 )
 
 type NixStoreEntry struct {
+	// Derivation is the name of the nix derivation file within the store (not the full store path)
+	Derivation string `mapstructure:"derivation" json:"derivation"`
+
 	// OutputHash is the prefix of the nix store basename path
 	OutputHash string `mapstructure:"outputHash" json:"outputHash"`
 
@@ -15,7 +18,10 @@ type NixStoreEntry struct {
 	Output string `mapstructure:"output" json:"output,omitempty"`
 
 	// Files is a listing a files that are under the nix/store path for this package
-	Files []string `mapstructure:"files" json:"files"`
+	Files []string `mapstructure:"files" json:"files,omitempty"`
+
+	// Patches are the store names (not full store paths) of patches that are applied to this package
+	Patches []string `mapstructure:"patches" json:"patches,omitempty"`
 }
 
 func (m NixStoreEntry) OwnedFiles() (result []string) {

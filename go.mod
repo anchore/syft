@@ -257,7 +257,10 @@ require (
 	modernc.org/memory v1.9.1 // indirect
 )
 
-require github.com/anchore/go-sync v0.0.0-20250326131806-4eda43a485b6
+require (
+	github.com/anchore/go-sync v0.0.0-20250326131806-4eda43a485b6
+	github.com/nix-community/go-nix v0.0.0-20250101154619-4bdde671e0a1
+)
 
 require github.com/minio/minlz v1.0.0 // indirect
 

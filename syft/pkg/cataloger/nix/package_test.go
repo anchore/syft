@@ -16,27 +16,27 @@ func Test_packageURL(t *testing.T) {
 		{
 			name: "name + version",
 			storePath: nixStorePath{
-				name:    "glibc",
-				version: "2.34",
+				Name:    "glibc",
+				Version: "2.34",
 			},
 			want: "pkg:nix/glibc@2.34",
 		},
 		{
 			name: "hash qualifier",
 			storePath: nixStorePath{
-				name:       "glibc",
-				version:    "2.34",
-				outputHash: "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
+				Name:       "glibc",
+				Version:    "2.34",
+				OutputHash: "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 			},
 			want: "pkg:nix/glibc@2.34?outputhash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 		},
 		{
 			name: "output qualifier",
 			storePath: nixStorePath{
-				name:       "glibc",
-				version:    "2.34",
-				outputHash: "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
-				output:     "bin",
+				Name:       "glibc",
+				Version:    "2.34",
+				OutputHash: "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
+				Output:     "bin",
 			},
 			want: "pkg:nix/glibc@2.34?output=bin&outputhash=h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 		},
