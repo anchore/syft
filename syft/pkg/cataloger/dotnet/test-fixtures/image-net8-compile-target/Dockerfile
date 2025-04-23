@@ -9,7 +9,8 @@ COPY src/*.cs .
 
 RUN dotnet publish -c Release --no-restore -o /app
 
-# note: we're not using a runtime here to make testing easier... but this functionally will not work if this was a produciton app
+# note: we're not using a runtime here to make testing easier... so you cannot run this container and expect it to work
+# we do this to keep the test assertions small since the don't want to include the several other runtime packages
 FROM busybox:latest
 
 WORKDIR /app
