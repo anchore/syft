@@ -20,6 +20,19 @@ PackageLicenseConcluded: NOASSERTION
 PackageLicenseDeclared: NOASSERTION
 PackageCopyrightText: NOASSERTION
 
+##### Package: debian
+
+PackageName: debian
+SPDXID: SPDXRef-OperatingSystem-debian
+PackageVersion: 1.2.3
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+PrimaryPackagePurpose: OPERATING-SYSTEM
+FilesAnalyzed: false
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageDescription: debian
+
 ##### Package: package-2
 
 PackageName: package-2
@@ -52,7 +65,8 @@ ExternalRef: PACKAGE-MANAGER purl a-purl-2
 
 ##### Relationships
 
-Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-python-package-1-5a2b1ae000fcb51e
-Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-deb-package-2-39392bb5e270f669
+Relationship: SPDXRef-OperatingSystem-debian CONTAINS SPDXRef-Package-python-package-1-5a2b1ae000fcb51e
+Relationship: SPDXRef-OperatingSystem-debian CONTAINS SPDXRef-Package-deb-package-2-39392bb5e270f669
+Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-OperatingSystem-debian
 Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Directory-some-path
 

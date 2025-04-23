@@ -34,11 +34,13 @@ const (
 	spdxPrimaryPurposeContainer = "CONTAINER"
 	spdxPrimaryPurposeFile      = "FILE"
 	spdxPrimaryPurposeOther     = "OTHER"
+	spdxPrimaryPurposeOS        = "OPERATING-SYSTEM"
 
 	prefixImage     = "Image"
 	prefixDirectory = "Directory"
 	prefixFile      = "File"
 	prefixUnknown   = "Unknown"
+	prefixOS        = "OperatingSystem"
 )
 
 // ToFormatModel creates and populates a new SPDX document struct that follows the SPDX 2.3
@@ -54,32 +56,56 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	allRelationships := toRelationships(rels.All())
 
 	// for valid SPDX we need a document describes relationship
-	describesID := spdx.ElementID("DOCUMENT")
-
 	rootPackage := toRootPackage(s.Source)
-	if rootPackage != nil {
-		describesID = rootPackage.PackageSPDXIdentifier
+	osPackage := toOSPackage(s)
+
+	if rootPackage != nil && osPackage != nil {
+		// When both exist, rootPackage describes an OS
+
+		// add all relationships from the os root to all other packages
+		allRelationships = append(allRelationships, toRootRelationships(osPackage, packages)...)
+
+		packages = append(packages, rootPackage)
+		packages = append(packages, osPackage)
+
+		allRelationships = append(allRelationships, &spdx.Relationship{
+			RefA: spdx.DocElementID{
+				ElementRefID: rootPackage.PackageSPDXIdentifier,
+			},
+			Relationship: string(helpers.ContainsRelationship),
+			RefB: spdx.DocElementID{
+				ElementRefID: osPackage.PackageSPDXIdentifier,
+			},
+		})
+
+		allRelationships = append(allRelationships, &spdx.Relationship{
+			RefA: spdx.DocElementID{
+				ElementRefID: "DOCUMENT",
+			},
+			Relationship: string(helpers.DescribesRelationship),
+			RefB: spdx.DocElementID{
+				ElementRefID: rootPackage.PackageSPDXIdentifier,
+			},
+		})
+	} else if rootPackage != nil {
+		// When root exists, then document describes a rootfs
 
 		// add all relationships from the document root to all other packages
 		allRelationships = append(allRelationships, toRootRelationships(rootPackage, packages)...)
 
 		// append the root package
 		packages = append(packages, rootPackage)
+		// add a relationship for the package the document describes
+		allRelationships = append(allRelationships, &spdx.Relationship{
+			RefA: spdx.DocElementID{
+				ElementRefID: "DOCUMENT",
+			},
+			Relationship: string(helpers.DescribesRelationship),
+			RefB: spdx.DocElementID{
+				ElementRefID: rootPackage.PackageSPDXIdentifier,
+			},
+		})
 	}
-
-	// add a relationship for the package the document describes
-	documentDescribesRelationship := &spdx.Relationship{
-		RefA: spdx.DocElementID{
-			ElementRefID: "DOCUMENT",
-		},
-		Relationship: string(helpers.DescribesRelationship),
-		RefB: spdx.DocElementID{
-			ElementRefID: describesID,
-		},
-	}
-
-	// add the root document relationship
-	allRelationships = append(allRelationships, documentDescribesRelationship)
 
 	return &spdx.Document{
 		// 6.1: SPDX Version; should be in the format "SPDX-x.x"
@@ -156,6 +182,26 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		Files:         toFiles(s),
 		Relationships: allRelationships,
 		OtherLicenses: toOtherLicenses(s.Artifacts.Packages),
+	}
+}
+
+func toOSPackage(s sbom.SBOM) *spdx.Package {
+	distro := s.Artifacts.LinuxDistribution
+	if distro == nil {
+		return nil
+	}
+	return &spdx.Package{
+		PackageName:           distro.ID,
+		PackageDescription:    distro.String(),
+		PackageSPDXIdentifier: spdx.ElementID(helpers.SanitizeElementID(fmt.Sprintf("%s-%s", prefixOS, strings.ToLower(distro.ID)))),
+		PackageVersion:        distro.VersionID,
+		PrimaryPackagePurpose: spdxPrimaryPurposeOS,
+		PackageSupplier: &spdx.Supplier{
+			Supplier: helpers.NOASSERTION,
+		},
+		PackageDownloadLocation: helpers.NOASSERTION,
+		PackageLicenseConcluded: helpers.NOASSERTION,
+		PackageLicenseDeclared:  helpers.NOASSERTION,
 	}
 }
 
