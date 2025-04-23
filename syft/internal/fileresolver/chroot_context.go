@@ -168,8 +168,10 @@ func (r ChrootContext) ToNativeGlob(chrootPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	parts[0] = strings.TrimRight(responsePath, "/") + "/"
+	parts[0] = responsePath
+	if strings.HasSuffix(parts[0], "/") {
+		parts[0] = strings.TrimRight(parts[0], "/") + "/"
+	}
 
 	return strings.Join(parts, "*"), nil
 }
