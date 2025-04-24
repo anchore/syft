@@ -1027,6 +1027,25 @@ func TestCataloger(t *testing.T) {
 }
 
 func TestDotnetDepsCataloger_regressions(t *testing.T) {
+
+	assertPackages := func(mustHave []string, mustNotHave []string) func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+		expected := strset.New(mustHave...)
+		notExpected := strset.New(mustNotHave...)
+		return func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+
+			for _, p := range pkgs {
+				expected.Remove(p.Name)
+				if notExpected.Has(p.Name) {
+					t.Errorf("unexpected package: %s", p.Name)
+				}
+			}
+			if expected.IsEmpty() {
+				return
+			}
+			t.Errorf("missing packages: %s", expected.List())
+		}
+	}
+
 	cases := []struct {
 		name      string
 		fixture   string
@@ -1067,27 +1086,53 @@ func TestDotnetDepsCataloger_regressions(t *testing.T) {
 			name:      "indirect packages references",
 			fixture:   "image-net8-compile-target",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
-			assertion: func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
-
-				expected := strset.New(
+			assertion: assertPackages(
+				[]string{
 					"DotNetNuke.Core", // uses a compile target reference in the deps.json
 					"Umbraco.Cms",     // this is the parent of other packages which do have DLLs included (even though it does not have any DLLs)
-				)
-				notExpected := strset.New(
+				},
+				[]string{
 					"StyleCop.Analyzers",     // this is a development tool
 					"Microsoft.NET.Test.Sdk", // this is a development tool
-				)
-				for _, p := range pkgs {
-					expected.Remove(p.Name)
-					if notExpected.Has(p.Name) {
-						t.Errorf("unexpected package: %s", p.Name)
-					}
-				}
-				if expected.IsEmpty() {
-					return
-				}
-				t.Errorf("missing packages: %s", expected.List())
-			},
+					"jQuery",                 // has no DLLs but has javascript assets
+				},
+			),
+		},
+		{
+			name:      "not propagating claims",
+			fixture:   "image-net8-compile-target",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig().WithDLLClaimsPropagateToParents(false)),
+			assertion: assertPackages(
+				[]string{
+					"DotNetNuke.Core", // uses a compile target reference in the deps.json
+
+				},
+				[]string{
+					"Umbraco.Cms",            // this is the parent of other packages which do have DLLs included (even though it does not have any DLLs)
+					"StyleCop.Analyzers",     // this is a development tool
+					"Microsoft.NET.Test.Sdk", // this is a development tool under the debug configuration (we build the release configuration)
+					"jQuery",                 // has no DLLs but has javascript assets -- this is bad behavior (as we want to detect this)
+				},
+			),
+		},
+		{
+			name:    "not requiring claims finds jquery",
+			fixture: "image-net8-compile-target",
+			cataloger: NewDotnetDepsBinaryCataloger(CatalogerConfig{
+				DepPackagesMustHaveDLL:             false,
+				DepPackagesMustClaimDLL:            false,
+				DLLClaimsPropagateToParents:        false,
+				RelaxDLLClaimsWhenBundlingDetected: false,
+			}),
+			assertion: assertPackages(
+				[]string{
+					"jQuery",             // has no DLLs but has javascript assets
+					"StyleCop.Analyzers", // this is a development tool -- this is bad behavior (since we should not detect this), but cannot be helped
+				},
+				[]string{
+					"Microsoft.NET.Test.Sdk", // this is a development tool under the debug configuration (we build the release configuration)
+				},
+			),
 		},
 	}
 	for _, tt := range cases {

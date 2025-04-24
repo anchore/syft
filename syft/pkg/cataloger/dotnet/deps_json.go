@@ -125,13 +125,20 @@ func (l *logicalDepsJSONPackage) dependencyNameVersions() []string {
 }
 
 // ClaimsDLLs indicates if this package has any DLLs associated with it (directly or indirectly with a dependency).
-func (l *logicalDepsJSONPackage) ClaimsDLLs() bool {
+func (l *logicalDepsJSONPackage) ClaimsDLLs(includeChildren bool) bool {
 	selfClaim := len(l.RuntimePathsByRelativeDLLPath) > 0 || len(l.ResourcePathsByRelativeDLLPath) > 0 || len(l.CompilePathsByRelativeDLLPath) > 0 || len(l.NativePaths.List()) > 0
+	if !includeChildren {
+		return selfClaim
+	}
 	return selfClaim || l.anyChildClaimsDLLs
 }
 
-func (l *logicalDepsJSONPackage) FoundDLLs() bool {
-	return len(l.Executables) > 0 || l.anyChildHasDLLs
+func (l *logicalDepsJSONPackage) FoundDLLs(includeChildren bool) bool {
+	selfClaim := len(l.Executables) > 0
+	if !includeChildren {
+		return selfClaim
+	}
+	return selfClaim || l.anyChildHasDLLs
 }
 
 type logicalDepsJSON struct {
@@ -245,14 +252,14 @@ type visitorFunc func(p *logicalDepsJSONPackage) bool
 // searchForDLLEvidence recursively searches for executables found for any of the given nameVersions and children recursively.
 func searchForDLLEvidence(packageMap map[string]*logicalDepsJSONPackage, nameVersions ...string) bool {
 	return traverseDependencies(packageMap, func(p *logicalDepsJSONPackage) bool {
-		return p.FoundDLLs()
+		return p.FoundDLLs(true)
 	}, nameVersions...)
 }
 
 // searchForDLLClaims recursively searches for DLL claims in the deps.json for any of the given nameVersions and children recursively.
 func searchForDLLClaims(packageMap map[string]*logicalDepsJSONPackage, nameVersions ...string) bool {
 	return traverseDependencies(packageMap, func(p *logicalDepsJSONPackage) bool {
-		return p.ClaimsDLLs()
+		return p.ClaimsDLLs(true)
 	}, nameVersions...)
 }
 
