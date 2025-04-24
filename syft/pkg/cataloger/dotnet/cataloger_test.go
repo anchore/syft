@@ -1,9 +1,9 @@
 package dotnet
 
 import (
-	"strings"
 	"testing"
 
+	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -118,6 +118,10 @@ func TestCataloger(t *testing.T) {
 		"Humanizer @ 2.14.1 (/app/dotnetapp.deps.json)",
 	}
 	net8AppExpectedDepPkgs = append(net8AppExpectedDepPkgs, net8AppExpectedDepPkgsWithoutUnpairedDlls...)
+
+	var net8AppExpectedDepPkgsWithRuntime []string
+	net8AppExpectedDepPkgsWithRuntime = append(net8AppExpectedDepPkgsWithRuntime, net8AppExpectedDepPkgs...)
+	net8AppExpectedDepPkgsWithRuntime = append(net8AppExpectedDepPkgsWithRuntime, "Microsoft.NETCore.App.Runtime.linux-x64 @ 8.0.14 (/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.14/Microsoft.NETCore.App.deps.json)")
 
 	// app binaries (always dlls)
 	net8AppBinaryOnlyPkgs := []string{
@@ -280,11 +284,17 @@ func TestCataloger(t *testing.T) {
 	net8AppDepOnlyRelationships = append(net8AppDepOnlyRelationships, net8AppDepOnlyRelationshipsWithoutHumanizer...)
 	net8AppDepOnlyRelationships = append(net8AppDepOnlyRelationships, humanizerToAppDepsRelationship)
 
+	var net8AppDepOnlyRelationshipsWithRuntime []string
+	net8AppDepOnlyRelationshipsWithRuntime = append(net8AppDepOnlyRelationshipsWithRuntime, net8AppDepOnlyRelationships...)
+	net8AppDepOnlyRelationshipsWithRuntime = append(net8AppDepOnlyRelationshipsWithRuntime,
+		"Microsoft.NETCore.App.Runtime.linux-x64 @ 8.0.14 (/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.14/Microsoft.NETCore.App.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
+	)
+
 	var net8AppExpectedDepRelationships []string
 	net8AppExpectedDepRelationships = append(net8AppExpectedDepRelationships, net8AppDepOnlyRelationships...)
 
 	var net8AppExpectedDepSelfContainedPkgs []string
-	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs, net8AppExpectedDepPkgsWithoutUnpairedDlls...)
+	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs, net8AppExpectedDepPkgs...)
 	net8AppExpectedDepSelfContainedPkgs = append(net8AppExpectedDepSelfContainedPkgs,
 		// add the CLR runtime packages...
 		"runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.deps.json)",
@@ -298,7 +308,7 @@ func TestCataloger(t *testing.T) {
 	)
 
 	var net8AppExpectedDepSelfContainedRelationships []string
-	net8AppExpectedDepSelfContainedRelationships = append(net8AppExpectedDepSelfContainedRelationships, net8AppDepOnlyRelationshipsWithoutHumanizer...)
+	net8AppExpectedDepSelfContainedRelationships = append(net8AppExpectedDepSelfContainedRelationships, net8AppDepOnlyRelationships...)
 	net8AppExpectedDepSelfContainedRelationships = append(net8AppExpectedDepSelfContainedRelationships,
 		// add the CLR runtime relationships...
 		"runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)",
@@ -706,36 +716,20 @@ func TestCataloger(t *testing.T) {
 			assertion:    assertAllDepEntriesWithoutExecutables,
 		},
 		{
-			name:      "combined cataloger",
-			fixture:   "image-net8-app",
-			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
-
-			// if we don't care about DLL claims in the deps.json, then this is right
-			//expectedPkgs: net8AppExpectedDepPkgs,
-			//expectedRels: net8AppExpectedDepRelationships,
-
-			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humanizer
-			expectedPkgs: net8AppExpectedDepPkgsWithoutUnpairedDlls,
-			expectedRels: replaceAll(net8AppDepOnlyRelationshipsWithoutHumanizer, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0"),
-
-			assertion: assertAlmostAllDepEntriesWithExecutables, // important! this is what makes this case different from the previous one... dep entries have attached executables
+			name:         "combined cataloger",
+			fixture:      "image-net8-app",
+			cataloger:    NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			expectedPkgs: net8AppExpectedDepPkgs,
+			expectedRels: net8AppDepOnlyRelationships,
+			assertion:    assertAlmostAllDepEntriesWithExecutables, // important! this is what makes this case different from the previous one... dep entries have attached executables
 		},
 		{
-			name:      "combined cataloger (with runtime)",
-			fixture:   "image-net8-app-with-runtime",
-			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
-			expectedPkgs: func() []string {
-				pkgs := net8AppExpectedDepPkgsWithoutUnpairedDlls
-				pkgs = append(pkgs, "Microsoft.NETCore.App.Runtime.linux-x64 @ 8.0.14 (/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.14/Microsoft.NETCore.App.deps.json)")
-				return pkgs
-			}(),
-			expectedRels: func() []string {
-				x := replaceAll(net8AppDepOnlyRelationshipsWithoutHumanizer, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0")
-				// the main application should also have a relationship to the runtime package
-				x = append(x, "Microsoft.NETCore.App.Runtime.linux-x64 @ 8.0.14 (/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.14/Microsoft.NETCore.App.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)")
-				return x
-			}(),
-			assertion: assertAccurateNetRuntimePackage,
+			name:         "combined cataloger (with runtime)",
+			fixture:      "image-net8-app-with-runtime",
+			cataloger:    NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			expectedPkgs: net8AppExpectedDepPkgsWithRuntime,
+			expectedRels: net8AppDepOnlyRelationshipsWithRuntime,
+			assertion:    assertAccurateNetRuntimePackage,
 		},
 		{
 			name:      "combined cataloger (with runtime, no deps.json anywhere)",
@@ -923,11 +917,7 @@ func TestCataloger(t *testing.T) {
 			fixture:      "image-net8-app-self-contained",
 			cataloger:    NewDotnetDepsCataloger(),
 			expectedPkgs: net8AppExpectedDepsSelfContainedPkgs,
-			expectedRels: func() []string {
-				x := net8AppExpectedDepSelfContainedRelationships
-				x = append(x, humanizerToAppDepsRelationship)
-				return x
-			}(),
+			expectedRels: net8AppExpectedDepSelfContainedRelationships,
 		},
 		{
 			name:      "combined cataloger (self-contained)",
@@ -935,13 +925,8 @@ func TestCataloger(t *testing.T) {
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
 			// we care about DLL claims in the deps.json, so the main application inherits all relationships to/from humarizer
 			expectedPkgs: net8AppExpectedDepSelfContainedPkgs,
-			expectedRels: func() []string {
-				x := replaceAll(net8AppExpectedDepSelfContainedRelationships, "Humanizer @ 2.14.1", "dotnetapp @ 1.0.0")
-				// the main application also has a dependency on the runtime package
-				x = append(x, "runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.deps.json) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.deps.json)")
-				return x
-			}(),
-			assertion: assertAccurateNetRuntimePackage,
+			expectedRels: net8AppExpectedDepSelfContainedRelationships,
+			assertion:    assertAccurateNetRuntimePackage,
 		},
 		{
 			name:      "pe cataloger (self-contained)",
@@ -1004,6 +989,8 @@ func TestCataloger(t *testing.T) {
 			fixture:   "image-net2-app",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
 			expectedPkgs: []string{
+				"Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
+				"Microsoft.NETCore.DotNetHostPolicy @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
 				"Serilog @ 2.10.0 (/app/helloworld.deps.json)",
 				"Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
 				"helloworld @ 1.0.0 (/app/helloworld.deps.json)",
@@ -1011,10 +998,13 @@ func TestCataloger(t *testing.T) {
 				"runtime.linux-x64.Microsoft.NETCore.DotNetHostPolicy @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)", // a compile target reference
 			},
 			expectedRels: []string{
+				"Microsoft.NETCore.DotNetHostPolicy @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json) [dependency-of] Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
 				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
 				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
 				"Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
+				"runtime.linux-x64.Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json) [dependency-of] Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
 				"runtime.linux-x64.Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
+				"runtime.linux-x64.Microsoft.NETCore.DotNetHostPolicy @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json) [dependency-of] Microsoft.NETCore.DotNetHostPolicy @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
 			},
 			assertion: assertAccurateNetRuntimePackage,
 		},
@@ -1037,6 +1027,25 @@ func TestCataloger(t *testing.T) {
 }
 
 func TestDotnetDepsCataloger_regressions(t *testing.T) {
+
+	assertPackages := func(mustHave []string, mustNotHave []string) func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+		expected := strset.New(mustHave...)
+		notExpected := strset.New(mustNotHave...)
+		return func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+
+			for _, p := range pkgs {
+				expected.Remove(p.Name)
+				if notExpected.Has(p.Name) {
+					t.Errorf("unexpected package: %s", p.Name)
+				}
+			}
+			if expected.IsEmpty() {
+				return
+			}
+			t.Errorf("missing packages: %s", expected.List())
+		}
+	}
+
 	cases := []struct {
 		name      string
 		fixture   string
@@ -1074,18 +1083,56 @@ func TestDotnetDepsCataloger_regressions(t *testing.T) {
 			},
 		},
 		{
-			name:      "compile target reference",
+			name:      "indirect packages references",
 			fixture:   "image-net8-compile-target",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
-			assertion: func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
-				// ensure we find the DotNetNuke.Core package (which is using the compile target reference)
-				for _, p := range pkgs {
-					if p.Name == "DotNetNuke.Core" {
-						return
-					}
-				}
-				t.Error("expected to find DotNetNuke.Core package")
-			},
+			assertion: assertPackages(
+				[]string{
+					"DotNetNuke.Core", // uses a compile target reference in the deps.json
+					"Umbraco.Cms",     // this is the parent of other packages which do have DLLs included (even though it does not have any DLLs)
+				},
+				[]string{
+					"StyleCop.Analyzers",     // this is a development tool
+					"Microsoft.NET.Test.Sdk", // this is a development tool
+					"jQuery",                 // has no DLLs but has javascript assets
+				},
+			),
+		},
+		{
+			name:      "not propagating claims",
+			fixture:   "image-net8-compile-target",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig().WithPropagateDLLClaimsToParents(false)),
+			assertion: assertPackages(
+				[]string{
+					"DotNetNuke.Core", // uses a compile target reference in the deps.json
+
+				},
+				[]string{
+					"Umbraco.Cms",            // this is the parent of other packages which do have DLLs included (even though it does not have any DLLs)
+					"StyleCop.Analyzers",     // this is a development tool
+					"Microsoft.NET.Test.Sdk", // this is a development tool under the debug configuration (we build the release configuration)
+					"jQuery",                 // has no DLLs but has javascript assets -- this is bad behavior (as we want to detect this)
+				},
+			),
+		},
+		{
+			name:    "not requiring claims finds jquery",
+			fixture: "image-net8-compile-target",
+			cataloger: NewDotnetDepsBinaryCataloger(CatalogerConfig{
+				DepPackagesMustHaveDLL:             false,
+				DepPackagesMustClaimDLL:            false,
+				PropagateDLLClaimsToParents:        false,
+				RelaxDLLClaimsWhenBundlingDetected: false,
+			}),
+			assertion: assertPackages(
+				[]string{
+					"jQuery",             // has no DLLs but has javascript assets
+					"StyleCop.Analyzers", // this is a development tool -- this is bad behavior (since we should not detect this), but cannot be helped
+				},
+				[]string{
+					"Microsoft.NET.Test.Sdk", // this is a development tool under the debug configuration (we build the release configuration)
+				},
+			),
 		},
 	}
 	for _, tt := range cases {
@@ -1474,12 +1521,4 @@ func extractMatchingPackage(t *testing.T, name string, pkgs []pkg.Package) pkg.P
 	}
 	t.Fatalf("expected to find package %s", name)
 	return pkg.Package{}
-}
-
-func replaceAll(ss []string, find, replace string) []string {
-	var results []string
-	for _, s := range ss {
-		results = append(results, strings.ReplaceAll(s, find, replace))
-	}
-	return results
 }

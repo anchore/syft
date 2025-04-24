@@ -111,7 +111,7 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 		runtimePkgs = append(runtimePkgs, &rtp)
 	}
 
-	// create a relationship from every runtime package to every root package
+	// create a relationship from every runtime package to every root package...
 	for _, root := range roots {
 		for _, runtimePkg := range runtimePkgs {
 			relationships = append(relationships, artifact.Relationship{
@@ -122,7 +122,8 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 		}
 	}
 
-	return pkgs, relationships, unknowns
+	// in the process of creating root-to-runtime relationships, we may have created duplicate relationships. Use the relationship index to deduplicate.
+	return pkgs, relationship.NewIndex(relationships...).All(), unknowns
 }
 
 var runtimeDLLPathPattern = regexp.MustCompile(`/Microsoft\.NETCore\.App/(?P<version>\d+\.\d+\.\d+)/[^/]+\.dll`)
@@ -267,15 +268,14 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) (*
 			continue
 		}
 		lp := doc.PackagesByNameVersion[nameVersion]
-		if config.DepPackagesMustHaveDLL && len(lp.Executables) == 0 {
+		if config.DepPackagesMustHaveDLL && !lp.FoundDLLs(config.PropagateDLLClaimsToParents) {
 			// could not find a paired DLL and the user required this...
 			skippedDepPkgs[nameVersion] = lp
 			continue
 		}
 
-		claimsDLLs := len(lp.RuntimePathsByRelativeDLLPath) > 0 || len(lp.ResourcePathsByRelativeDLLPath) > 0 || len(lp.CompilePathsByRelativeDLLPath) > 0 || len(lp.NativePaths.List()) > 0
-
-		if config.DepPackagesMustClaimDLL && !claimsDLLs {
+		// check to see if we should skip this package because it does not claim a DLL (or has not dependency that claims a DLL)
+		if config.DepPackagesMustClaimDLL && !lp.ClaimsDLLs(config.PropagateDLLClaimsToParents) {
 			if config.RelaxDLLClaimsWhenBundlingDetected && !doc.BundlingDetected || !config.RelaxDLLClaimsWhenBundlingDetected {
 				// could not find a runtime or resource path and the user required this...
 				// and there is no evidence of a bundler in the dependencies (e.g. ILRepack)
