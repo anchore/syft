@@ -23,7 +23,11 @@ type libmanJSON struct {
 	} `json:"libraries"`
 }
 
-func (l libmanJSON) packages() []pkg.Package {
+func (l *libmanJSON) packages() []pkg.Package {
+	if l == nil {
+		return nil
+	}
+
 	var pkgs []pkg.Package
 	for _, lib := range l.Libraries {
 		if lib.Provider == "filesystem" {
