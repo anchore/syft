@@ -151,7 +151,6 @@ func allPaths(ownedFilePath string, resolver file.Resolver) []string {
 	for _, loc := range locs {
 		ownedFilePaths.Add(loc.RealPath)
 	}
-	ownedFilePaths.Remove("")
 	return ownedFilePaths.List()
 }
 
