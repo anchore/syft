@@ -1101,7 +1101,7 @@ func TestDotnetDepsCataloger_regressions(t *testing.T) {
 		{
 			name:      "not propagating claims",
 			fixture:   "image-net8-compile-target",
-			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig().WithDLLClaimsPropagateToParents(false)),
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig().WithPropagateDLLClaimsToParents(false)),
 			assertion: assertPackages(
 				[]string{
 					"DotNetNuke.Core", // uses a compile target reference in the deps.json
@@ -1121,7 +1121,7 @@ func TestDotnetDepsCataloger_regressions(t *testing.T) {
 			cataloger: NewDotnetDepsBinaryCataloger(CatalogerConfig{
 				DepPackagesMustHaveDLL:             false,
 				DepPackagesMustClaimDLL:            false,
-				DLLClaimsPropagateToParents:        false,
+				PropagateDLLClaimsToParents:        false,
 				RelaxDLLClaimsWhenBundlingDetected: false,
 			}),
 			assertion: assertPackages(

@@ -268,14 +268,14 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) (*
 			continue
 		}
 		lp := doc.PackagesByNameVersion[nameVersion]
-		if config.DepPackagesMustHaveDLL && !lp.FoundDLLs(config.DLLClaimsPropagateToParents) {
+		if config.DepPackagesMustHaveDLL && !lp.FoundDLLs(config.PropagateDLLClaimsToParents) {
 			// could not find a paired DLL and the user required this...
 			skippedDepPkgs[nameVersion] = lp
 			continue
 		}
 
 		// check to see if we should skip this package because it does not claim a DLL (or has not dependency that claims a DLL)
-		if config.DepPackagesMustClaimDLL && !lp.ClaimsDLLs(config.DLLClaimsPropagateToParents) {
+		if config.DepPackagesMustClaimDLL && !lp.ClaimsDLLs(config.PropagateDLLClaimsToParents) {
 			if config.RelaxDLLClaimsWhenBundlingDetected && !doc.BundlingDetected || !config.RelaxDLLClaimsWhenBundlingDetected {
 				// could not find a runtime or resource path and the user required this...
 				// and there is no evidence of a bundler in the dependencies (e.g. ILRepack)
