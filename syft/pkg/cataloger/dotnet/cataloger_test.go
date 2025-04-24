@@ -1008,6 +1008,18 @@ func TestCataloger(t *testing.T) {
 			},
 			assertion: assertAccurateNetRuntimePackage,
 		},
+		{
+			name:      "libman support",
+			fixture:   "image-net6-asp-libman",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			expectedPkgs: []string{
+				"LibManSample @ 1.0.0 (/app/LibManSample.deps.json)",
+				"jquery @ 3.3.1 (/app/libman.json)",
+			},
+			expectedRels: []string{
+				"jquery @ 3.3.1 (/app/libman.json) [dependency-of] LibManSample @ 1.0.0 (/app/LibManSample.deps.json)",
+			},
+		},
 	}
 
 	for _, tt := range cases {
@@ -1131,6 +1143,20 @@ func TestDotnetDepsCataloger_regressions(t *testing.T) {
 				},
 				[]string{
 					"Microsoft.NET.Test.Sdk", // this is a development tool under the debug configuration (we build the release configuration)
+				},
+			),
+		},
+		{
+			name:      "libman support",
+			fixture:   "image-net6-asp-libman",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			assertion: assertPackages(
+				[]string{
+					"jquery", // a javascript package, not the nuget package
+				},
+				[]string{
+					"vendor", // this is the string reference for a filesystem provider
+					"lodash", // this is from a filesystem provider, which is not supported
 				},
 			),
 		},
