@@ -11,6 +11,8 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+// libmanJSON represents the libman.json file format in ASP.NET projects for describing javascript assets to be downloaded and bundled
+// see https://github.com/aspnet/LibraryManager/wiki/libman.json-reference
 type libmanJSON struct {
 	Location        file.Location `json:"-"`
 	Version         string        `json:"version"`
