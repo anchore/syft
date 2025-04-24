@@ -204,6 +204,14 @@ func attachAssociatedExecutables(dep *logicalDepsJSON, pe logicalPE) bool {
 			continue
 		}
 
+		if targetPath, ok := p.CompilePathsByRelativeDLLPath[relativeDllPath]; ok {
+			pe.TargetPath = targetPath
+			p.Executables = append(p.Executables, pe)
+			dep.PackagesByNameVersion[key] = p // update the map with the modified package
+			found = true
+			continue
+		}
+
 		if p.NativePaths.Has(relativeDllPath) {
 			pe.TargetPath = relativeDllPath
 			p.Executables = append(p.Executables, pe)
@@ -265,7 +273,7 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) (*
 			continue
 		}
 
-		claimsDLLs := len(lp.RuntimePathsByRelativeDLLPath) > 0 || len(lp.ResourcePathsByRelativeDLLPath) > 0
+		claimsDLLs := len(lp.RuntimePathsByRelativeDLLPath) > 0 || len(lp.ResourcePathsByRelativeDLLPath) > 0 || len(lp.CompilePathsByRelativeDLLPath) > 0 || len(lp.NativePaths.List()) > 0
 
 		if config.DepPackagesMustClaimDLL && !claimsDLLs {
 			if config.RelaxDLLClaimsWhenBundlingDetected && !doc.BundlingDetected || !config.RelaxDLLClaimsWhenBundlingDetected {

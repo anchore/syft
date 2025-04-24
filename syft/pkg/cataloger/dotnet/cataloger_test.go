@@ -1008,6 +1008,7 @@ func TestCataloger(t *testing.T) {
 				"Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
 				"helloworld @ 1.0.0 (/app/helloworld.deps.json)",
 				"runtime.linux-x64.Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
+				"runtime.linux-x64.Microsoft.NETCore.DotNetHostPolicy @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)", // a compile target reference
 			},
 			expectedRels: []string{
 				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
@@ -1035,7 +1036,7 @@ func TestCataloger(t *testing.T) {
 	}
 }
 
-func TestDotnetDepsCataloger_problemCases(t *testing.T) {
+func TestDotnetDepsCataloger_regressions(t *testing.T) {
 	cases := []struct {
 		name      string
 		fixture   string
@@ -1070,6 +1071,20 @@ func TestDotnetDepsCataloger_problemCases(t *testing.T) {
 				}
 
 				pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
+			},
+		},
+		{
+			name:      "compile target reference",
+			fixture:   "image-net8-compile-target",
+			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
+			assertion: func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+				// ensure we find the DotNetNuke.Core package (which is using the compile target reference)
+				for _, p := range pkgs {
+					if p.Name == "DotNetNuke.Core" {
+						return
+					}
+				}
+				t.Error("expected to find DotNetNuke.Core package")
 			},
 		},
 	}
