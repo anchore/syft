@@ -9,6 +9,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
 )
 
 type depsJSON struct {
@@ -147,6 +148,7 @@ type logicalDepsJSON struct {
 	PackagesByNameVersion map[string]logicalDepsJSONPackage
 	PackageNameVersions   *strset.Set
 	BundlingDetected      bool
+	LibmanPackages        []pkg.Package
 }
 
 func (l logicalDepsJSON) RootPackage() (logicalDepsJSONPackage, bool) {
@@ -196,7 +198,7 @@ var knownBundlers = strset.New(
 	"Fody",                       // IL weaving framework
 )
 
-func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
+func getLogicalDepsJSON(deps depsJSON, lm *libmanJSON) logicalDepsJSON {
 	packageMap := make(map[string]*logicalDepsJSONPackage)
 	nameVersions := strset.New()
 
@@ -244,6 +246,7 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 		PackagesByNameVersion: packages,
 		PackageNameVersions:   nameVersions,
 		BundlingDetected:      bundlingDetected,
+		LibmanPackages:        lm.packages(),
 	}
 }
 

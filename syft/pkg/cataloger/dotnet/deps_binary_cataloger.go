@@ -78,6 +78,9 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 	var runtimePkgs []*pkg.Package
 	for i := range pkgs {
 		p := &pkgs[i]
+		if p.Type != pkg.DotnetPkg {
+			continue
+		}
 		if isRuntime(p.Name) {
 			existingRuntimeVersions.Add(p.Version)
 			runtimePkgs = append(runtimePkgs, p)
@@ -290,8 +293,22 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) (*
 			pkgMap[nameVersion] = *dotnetPkg
 		}
 	}
+	rels := relationshipsFromLogicalDepsJSON(doc, pkgMap, skippedDepPkgs)
 
-	return rootPkg, pkgs, relationshipsFromLogicalDepsJSON(doc, pkgMap, skippedDepPkgs)
+	// ensure that any libman packages are associated with the all root packages
+	for _, libmanPkg := range doc.LibmanPackages {
+		pkgs = append(pkgs, libmanPkg)
+		if rootPkg == nil {
+			continue
+		}
+		rels = append(rels, artifact.Relationship{
+			From: libmanPkg,
+			To:   *rootPkg,
+			Type: artifact.DependencyOfRelationship,
+		})
+	}
+
+	return rootPkg, pkgs, rels
 }
 
 // relationshipsFromLogicalDepsJSON creates relationships from a logicalDepsJSON document for only the given syft packages.
@@ -389,7 +406,13 @@ func findDepsJSON(resolver file.Resolver) ([]logicalDepsJSON, error, error) {
 			continue
 		}
 
-		depsJSONs = append(depsJSONs, getLogicalDepsJSON(*dj))
+		libman, err := findLibmanJSON(resolver, loc)
+		if err != nil {
+			unknownErr = unknown.Append(unknownErr, loc, err)
+			libman = nil
+		}
+
+		depsJSONs = append(depsJSONs, getLogicalDepsJSON(*dj, libman))
 	}
 
 	return depsJSONs, unknownErr, nil
