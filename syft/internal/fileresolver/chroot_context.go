@@ -152,7 +152,7 @@ func (r ChrootContext) ToNativeGlob(chrootPath string) (string, error) {
 		// this has no glob, treat it like a path
 		return r.ToNativePath(chrootPath)
 	}
-	hasSlash := strings.HasSuffix(parts[0], "/")
+
 	responsePath := parts[0]
 
 	if filepath.IsAbs(responsePath) {
@@ -168,6 +168,8 @@ func (r ChrootContext) ToNativeGlob(chrootPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	hasSlash := strings.HasSuffix(parts[0], "/")
 	parts[0] = responsePath
 	if hasSlash {
 		parts[0] = strings.TrimRight(parts[0], "/") + "/"
