@@ -8,8 +8,10 @@ RUN dotnet restore -r $RUNTIME
 COPY src/*.cs .
 RUN dotnet publish -c Release -r $RUNTIME --self-contained false -o /app
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS runtime
-WORKDIR /app
-COPY --from=build /app .
+# note: we're not using a runtime here to make testing easier... so you cannot run this container and expect it to work
+# we do this to keep the test assertions small since the don't want to include the several other runtime packages
+FROM busybox:latest
 
-ENTRYPOINT ["dotnet", "HelloWorld.dll"]
+WORKDIR /app
+
+COPY --from=build /app .
