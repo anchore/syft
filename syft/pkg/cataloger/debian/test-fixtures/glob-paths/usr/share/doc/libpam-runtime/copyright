@@ -1,0 +1,43 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: auditd
+Source: https://people.redhat.com/sgrubb/audit/
+
+Files: *
+Copyright: 2012-2016 Steve Grubb <sgrubb@redhat.com>
+           2006-2012 Rik Faith
+License: GPL-2
+
+Files: src/libev/*
+Copyright: 2007-2009 Marc Alexamder Lehmann
+License: GPL-2
+
+Files: lib/*
+Copyright: 2005-2008 Steve Grubb <sgrubb@redhat.com>
+License: LGPL-2.1
+  The audit daemon's library libaudit.* is released under LGPL
+  so that it may be linked with 3rd party software.
+  .
+  On Debian systems, refer to /usr/share/common-licenses/LGPL-2.1
+  for the complete text of the GNU Lesser General Public License.
+
+Files: debian/*
+Copyright: 2007-2011 Philipp Matthias Hahn <pmhahn@debian.org>
+           2012-2016 Laurent Bigonville <bigon@debian.org>
+License: GPL-2
+
+License: GPL-2
+ This package is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License version 2,
+ as published by the Free Software Foundation.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this package; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+ .
+ On Debian systems, the complete text of the GNU General
+ Public License can be found in `/usr/share/common-licenses/GPL-1'.
