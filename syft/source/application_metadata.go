@@ -12,8 +12,3 @@ type ApplicationMetadata struct {
 	PackageURL  string                         `json:"purl" yaml:"purl"`
 	ExternalRef *[]cyclonedx.ExternalReference `json:"externalRef,omitempty" yaml:"externalRef,omitempty"`
 }
-
-type ExternalReferencesMetadata struct {
-	Type string `json:"type" yaml:"type"`
-	URL  string `json:"url" yaml:"url"`
-}
