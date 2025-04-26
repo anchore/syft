@@ -248,38 +248,18 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 			ID:       "",
 			Metadata: source.FileMetadata{Path: c.Name},
 		}
-	case cyclonedx.ComponentTypeApplication:
-		return source.Description{
-			ID: "",
-			Metadata: source.ApplicationMetadata{
-				UserInput:   c.Name,
-				ID:          c.BOMRef,
-				Version:     c.Version,
-				Group:       c.Group,
-				Description: c.Description,
-				PackageURL:  c.PackageURL,
-				ExternalRef: c.ExternalReferences,
-			},
-		}
-	case cyclonedx.ComponentTypeLibrary:
-		return source.Description{
-			ID: "",
-			Metadata: source.LibraryMetadata{
-				UserInput:   c.Name,
-				ID:          c.BOMRef,
-				Version:     c.Version,
-				Group:       c.Group,
-				Description: c.Description,
-				PackageURL:  c.PackageURL,
-				ExternalRef: c.ExternalReferences,
-			},
-		}
 	}
 	return source.Description{
 		Metadata: source.UnknownMetadata{
-			UserInput: c.Name,
-			ID:        c.BOMRef,
-			Version:   c.Version,
+			UserInput:   c.Name,
+			ID:          c.BOMRef,
+			Version:     c.Version,
+			Group:       c.Group,
+			Authors:     c.Authors,
+			Description: c.Description,
+			PackageURL:  c.PackageURL,
+			Licenses:    c.Licenses,
+			ExternalRef: c.ExternalReferences,
 		},
 	}
 }

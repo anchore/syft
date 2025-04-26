@@ -2,7 +2,6 @@ package spdxhelpers
 
 import (
 	"fmt"
-	"github.com/CycloneDX/cyclonedx-go"
 	"regexp"
 	"testing"
 
@@ -242,7 +241,7 @@ func Test_toFormatModel(t *testing.T) {
 				Source: source.Description{
 					Name:    "bcprov-jdk15on",
 					Version: "1.62",
-					Metadata: source.ApplicationMetadata{
+					Metadata: source.UnknownMetadata{
 						UserInput: "bcprov-jdk15on",
 						Version:   "1.62",
 						ID:        "pkg:maven/org.bouncycastle/bcprov-jdk15on@1.62?type=jar",
@@ -301,98 +300,6 @@ func Test_toFormatModel(t *testing.T) {
 						},
 						RefB: spdx.DocElementID{
 							ElementRefID: "DocumentRoot-Unknown-bcprov-jdk15on",
-						},
-						Relationship: spdx.RelationshipDescribes,
-					},
-				},
-			},
-		},
-		{
-			name: "library",
-			in: sbom.SBOM{
-				Source: source.Description{
-					Name:    "juice-shop",
-					Version: "11.1.2",
-					Metadata: source.LibraryMetadata{
-						UserInput:   "juice-shop",
-						Version:     "11.1.2",
-						ID:          "pkg:maven/org.bouncycastle/bcprov-jdk15on@1.62?type=jar",
-						Description: "Probably the most modern and sophisticated insecure web application",
-						PackageURL:  "pkg:npm/juice-shop@11.1.2",
-						ExternalRef: &[]cyclonedx.ExternalReference{
-							{
-								Type: "website",
-								URL:  "https://owasp-juice.shop",
-							},
-						},
-					},
-				},
-			},
-			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "juice-shop",
-				Packages: []*spdx.Package{
-					{
-						PackageSPDXIdentifier: "DocumentRoot-Unknown-juice-shop",
-						PackageName:           "juice-shop",
-						PackageVersion:        "11.1.2",
-						PrimaryPackagePurpose: "OTHER",
-						PackageSupplier: &spdx.Supplier{
-							Supplier: "NOASSERTION",
-						},
-					},
-				},
-				Relationships: []*spdx.Relationship{
-					{
-						RefA: spdx.DocElementID{
-							ElementRefID: "DOCUMENT",
-						},
-						RefB: spdx.DocElementID{
-							ElementRefID: "DocumentRoot-Unknown-juice-shop",
-						},
-						Relationship: spdx.RelationshipDescribes,
-					},
-				},
-			},
-		},
-		{
-			name: "pcie-sata-adaptor-board",
-			in: sbom.SBOM{
-				Source: source.Description{
-					Name:    "pcie-sata-adaptor-board",
-					Version: "rev-1",
-					Metadata: source.UnknownMetadata{
-						UserInput: "pcie-sata-adaptor-board",
-						Version:   "rev-1",
-						ID:        "pcie-sata-adaptor-board",
-					},
-				},
-			},
-			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "pcie-sata-adaptor-board",
-				Packages: []*spdx.Package{
-					{
-						PackageSPDXIdentifier: "DocumentRoot-Unknown-pcie-sata-adaptor-board",
-						PackageName:           "pcie-sata-adaptor-board",
-						PackageVersion:        "rev-1",
-						PrimaryPackagePurpose: "OTHER",
-						PackageSupplier: &spdx.Supplier{
-							Supplier: "NOASSERTION",
-						},
-					},
-				},
-				Relationships: []*spdx.Relationship{
-					{
-						RefA: spdx.DocElementID{
-							ElementRefID: "DOCUMENT",
-						},
-						RefB: spdx.DocElementID{
-							ElementRefID: "DocumentRoot-Unknown-pcie-sata-adaptor-board",
 						},
 						Relationship: spdx.RelationshipDescribes,
 					},
