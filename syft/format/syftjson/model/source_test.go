@@ -149,6 +149,24 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			},
 			wantErr: require.Error,
 		},
+		{
+			name: "unknown source type-II",
+			input: []byte(`{
+				"id": "foobar",
+				"type": "unknown",
+				"metadata": {
+					"propertyA":"bla bla bla",
+					"group":"org.anchore"
+				}
+			}`),
+			expected: &Source{
+				ID:   "foobar",
+				Type: "unknown",
+				Metadata: source.UnknownMetadata{
+					Group: "org.anchore",
+				},
+			},
+		},
 	}
 
 	for _, tt := range cases {

@@ -127,6 +127,36 @@ func Test_toSourceModel(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "unknown",
+			src: source.Description{
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.UnknownMetadata{
+					UserInput:   "user-input",
+					ID:          "id...",
+					Version:     "version..",
+					Group:       "group..",
+					Description: "desc..",
+					PackageURL:  "purl",
+				},
+			},
+			expected: model.Source{
+				ID:      "test-id",
+				Type:    "unknown",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.UnknownMetadata{
+					UserInput:   "user-input",
+					ID:          "id...",
+					Version:     "version..",
+					Group:       "group..",
+					Description: "desc..",
+					PackageURL:  "purl",
+				},
+			},
+		},
 		// below are regression tests for when the name/version are not provided
 		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
 		{
@@ -188,6 +218,32 @@ func Test_toSourceModel(t *testing.T) {
 					MediaType:      "type...",
 					RepoDigests:    []string{},
 					Tags:           []string{},
+				},
+			},
+		},
+		{
+			name: "unknown - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.UnknownMetadata{
+					UserInput:   "user-input",
+					ID:          "id..",
+					Version:     "version..",
+					Group:       "group..",
+					Description: "desc..",
+					PackageURL:  "purl",
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "unknown",
+				Metadata: source.UnknownMetadata{
+					UserInput:   "user-input",
+					ID:          "id..",
+					Version:     "version..",
+					Group:       "group..",
+					Description: "desc..",
+					PackageURL:  "purl",
 				},
 			},
 		},
