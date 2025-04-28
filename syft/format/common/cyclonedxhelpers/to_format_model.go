@@ -40,7 +40,6 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	// https://github.com/CycloneDX/specification/blob/master/schema/bom-1.3-strict.schema.json#L36
 	// "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 	cdxBOM.SerialNumber = uuid.New().URN()
-	log.Warn("descriptor name:" + s.Descriptor.Name + ";source:" + s.Source.ID)
 	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source)
 
 	// Packages
@@ -290,6 +289,32 @@ func toBomProperties(srcMetadata source.Description) *[]cyclonedx.Property {
 	return nil
 }
 
+func toBomUnknownComponent(name string, version string, metadata source.UnknownMetadata) *cyclonedx.Component {
+	if name == "" {
+		name = metadata.UserInput
+	}
+	if version == "" {
+		version = metadata.Version
+	}
+	bomRef, err := artifact.IDByHash(metadata.ID)
+	if err != nil {
+		log.Debugf("unable to get fingerprint of unknown source metadata=%s: %+v", metadata.ID, err)
+	}
+
+	return &cyclonedx.Component{
+		BOMRef:             string(bomRef),
+		Type:               "unknown",
+		Name:               name,
+		Version:            version,
+		Licenses:           metadata.Licenses,
+		Group:              metadata.Group,
+		PackageURL:         metadata.PackageURL,
+		ExternalReferences: metadata.ExternalRef,
+		Authors:            metadata.Authors,
+		Description:        metadata.Description,
+	}
+}
+
 func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Component {
 	name := srcMetadata.Name
 	version := srcMetadata.Version
@@ -342,29 +367,7 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 			Version: version,
 		}
 	case source.UnknownMetadata:
-		if name == "" {
-			name = metadata.UserInput
-		}
-		if version == "" {
-			version = metadata.Version
-		}
-		bomRef, err := artifact.IDByHash(metadata.ID)
-		if err != nil {
-			log.Debugf("unable to get fingerprint of unknown source metadata=%s: %+v", metadata.ID, err)
-		}
-
-		return &cyclonedx.Component{
-			BOMRef:             string(bomRef),
-			Type:               "unknown",
-			Name:               name,
-			Version:            version,
-			Licenses:           metadata.Licenses,
-			Group:              metadata.Group,
-			PackageURL:         metadata.PackageURL,
-			ExternalReferences: metadata.ExternalRef,
-			Authors:            metadata.Authors,
-			Description:        metadata.Description,
-		}
+		return toBomUnknownComponent(name, version, metadata)
 	}
 
 	return nil
