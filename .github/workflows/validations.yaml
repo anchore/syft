@@ -29,7 +29,8 @@ jobs:
   Unit-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Unit tests"
-    runs-on: ubuntu-24.04
+    # we need more storage than what's on the default runner
+    runs-on: ubuntu-22.04-4core-16gb
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
 
