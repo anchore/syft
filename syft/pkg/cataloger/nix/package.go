@@ -1,6 +1,9 @@
 package nix
 
 import (
+	"path"
+	"sort"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -9,19 +12,29 @@ import (
 type nixStorePackage struct {
 	Location *file.Location
 	Files    []string
+	*derivationFile
 	nixStorePath
 }
 
-func newNixStorePackage(pp nixStorePackage, derivationPath string, catalogerName string) pkg.Package {
+func newNixStorePackage(pp nixStorePackage, catalogerName string) pkg.Package {
+	locations := file.NewLocationSet(pp.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+
+	var derivationPath string
+	if pp.derivationFile != nil {
+		derivationPath = pp.derivationFile.Location.RealPath
+		locations.Add(pp.derivationFile.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
+	}
+
 	p := pkg.Package{
 		Name:      pp.Name,
 		Version:   pp.Version,
 		FoundBy:   catalogerName,
-		Locations: file.NewLocationSet(*pp.Location),
+		Locations: locations,
 		Type:      pkg.NixPkg,
-		PURL:      packageURL(pp.nixStorePath),
+		PURL:      packageURL(pp.nixStorePath, derivationPath),
 		Metadata: pkg.NixStoreEntry{
-			Derivation: derivationPath,
+			Path:       pp.StorePath,
+			Derivation: newDerivation(pp.derivationFile),
 			OutputHash: pp.OutputHash,
 			Output:     pp.Output,
 			Files:      pp.Files,
@@ -34,20 +47,24 @@ func newNixStorePackage(pp nixStorePackage, derivationPath string, catalogerName
 }
 
 func newDBPackage(entry *dbPackageEntry, catalogerName string) pkg.Package {
-	sp := parseNixStorePath(entry.StorePath)
-	var purl string
-	if sp != nil {
-		purl = packageURL(*sp)
+	locations := file.NewLocationSet(
+		entry.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		file.NewLocation(entry.StorePath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+	)
+	if entry.derivationFile != nil {
+		locations.Add(entry.derivationFile.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 	}
+
 	p := pkg.Package{
 		Name:      entry.Name,
 		Version:   entry.Version,
 		FoundBy:   catalogerName,
-		Locations: file.NewLocationSet(*entry.Location),
+		Locations: locations,
 		Type:      pkg.NixPkg,
-		PURL:      purl,
+		PURL:      packageURL(entry.nixStorePath, entry.DeriverPath),
 		Metadata: pkg.NixStoreEntry{
-			Derivation: entry.DeriverPath,
+			Path:       entry.StorePath,
+			Derivation: newDerivation(entry.derivationFile),
 			OutputHash: entry.OutputHash,
 			Output:     entry.Output,
 			Files:      entry.Files,
@@ -59,7 +76,35 @@ func newDBPackage(entry *dbPackageEntry, catalogerName string) pkg.Package {
 	return p
 }
 
-func packageURL(storePath nixStorePath) string {
+func newDerivation(df *derivationFile) pkg.NixDerivation {
+	if df == nil {
+		return pkg.NixDerivation{}
+	}
+
+	var inputDerivations []pkg.NixDerivationReference
+	for drvPath, names := range df.InputDerivations {
+		sort.Strings(names)
+		inputDerivations = append(inputDerivations, pkg.NixDerivationReference{
+			Path:    drvPath,
+			Outputs: names,
+		})
+	}
+	sort.Slice(inputDerivations, func(i, j int) bool {
+		return inputDerivations[i].Path < inputDerivations[j].Path
+	})
+
+	sources := df.InputSources
+	sort.Strings(sources)
+
+	return pkg.NixDerivation{
+		Path:             df.Location.RealPath,
+		System:           df.Platform,
+		InputDerivations: inputDerivations,
+		InputSources:     sources,
+	}
+}
+
+func packageURL(storePath nixStorePath, drvPath string) string {
 	var qualifiers packageurl.Qualifiers
 	if storePath.Output != "" {
 		// since there is no nix pURL type yet, this is a guess, however, it is reasonable to assume that
@@ -72,11 +117,19 @@ func packageURL(storePath nixStorePath) string {
 		)
 	}
 	if storePath.OutputHash != "" {
-		// it's not immediately clear if the hash found in the store path should be encoded in the pURL
 		qualifiers = append(qualifiers,
 			packageurl.Qualifier{
 				Key:   "outputhash",
 				Value: storePath.OutputHash,
+			},
+		)
+	}
+
+	if drvPath != "" {
+		qualifiers = append(qualifiers,
+			packageurl.Qualifier{
+				Key:   "drvpath",
+				Value: path.Base(drvPath),
 			},
 		)
 	}

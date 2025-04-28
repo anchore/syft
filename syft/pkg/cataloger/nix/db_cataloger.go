@@ -17,15 +17,17 @@ import (
 
 const defaultSchema = 10
 
-type dbProcessor func(dbLocation file.Location, resolver file.Resolver, catalogerName string) ([]pkg.Package, []artifact.Relationship, error)
+type dbProcessor func(config Config, dbLocation file.Location, resolver file.Resolver, catalogerName string) ([]pkg.Package, []artifact.Relationship, error)
 
-type dbParser struct {
+type dbCataloger struct {
+	config          Config
 	schemaProcessor map[int]dbProcessor
 	catalogerName   string
 }
 
-func newDBParser(catalogerName string) dbParser {
-	return dbParser{
+func newDBCataloger(cfg Config, catalogerName string) dbCataloger {
+	return dbCataloger{
+		config:        cfg,
 		catalogerName: catalogerName,
 		schemaProcessor: map[int]dbProcessor{
 			10: processV10DB,
@@ -38,11 +40,12 @@ type dbPackageEntry struct {
 	DrvID int
 	nixStorePath
 	DeriverPath string
-	Location    *file.Location
-	Files       []string
+	*derivationFile
+	Location *file.Location
+	Files    []string
 }
 
-func (c dbParser) parseNixDBs(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c dbCataloger) catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	dbLocs, err := resolver.FilesByGlob("**/nix/var/nix/db/db.sqlite")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to find Nix database: %w", err)
@@ -62,7 +65,7 @@ func (c dbParser) parseNixDBs(resolver file.Resolver) ([]pkg.Package, []artifact
 			continue
 		}
 
-		newPkgs, newRelationships, err := parser(dbLoc, resolver, c.catalogerName)
+		newPkgs, newRelationships, err := parser(c.config, dbLoc, resolver, c.catalogerName)
 		if err != nil {
 			errs = unknown.Append(errs, dbLoc.Coordinates, err)
 			continue
@@ -75,7 +78,7 @@ func (c dbParser) parseNixDBs(resolver file.Resolver) ([]pkg.Package, []artifact
 	return pkgs, relationships, errs
 }
 
-func (c dbParser) selectDBParser(dbLocation file.Location, resolver file.Resolver) (dbProcessor, int) {
+func (c dbCataloger) selectDBParser(dbLocation file.Location, resolver file.Resolver) (dbProcessor, int) {
 	loc := resolver.RelativeFileByPath(dbLocation, path.Join(path.Dir(dbLocation.RealPath), "schema"))
 	if loc == nil {
 		log.WithFields("path", dbLocation.RealPath).Tracef("failed to detect Nix database schema, assuming %d", defaultSchema)
@@ -115,7 +118,7 @@ func (c dbParser) selectDBParser(dbLocation file.Location, resolver file.Resolve
 	return processor, schema
 }
 
-func (c dbParser) findClosestSchema(got int) int {
+func (c dbCataloger) findClosestSchema(got int) int {
 	var closest int
 	var closestDiff int
 	for schema := range c.schemaProcessor {

@@ -1656,24 +1656,58 @@
         "kb"
       ]
     },
-    "NixStoreEntry": {
+    "NixDerivation": {
       "properties": {
-        "derivation": {
+        "path": {
           "type": "string"
         },
-        "outputHash": {
+        "system": {
+          "type": "string"
+        },
+        "inputDerivations": {
+          "items": {
+            "$ref": "#/$defs/NixDerivationReference"
+          },
+          "type": "array"
+        },
+        "inputSources": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "NixDerivationReference": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "outputs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "NixStoreEntry": {
+      "properties": {
+        "path": {
           "type": "string"
         },
         "output": {
           "type": "string"
         },
-        "files": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+        "outputHash": {
+          "type": "string"
         },
-        "patches": {
+        "derivation": {
+          "$ref": "#/$defs/NixDerivation"
+        },
+        "files": {
           "items": {
             "type": "string"
           },

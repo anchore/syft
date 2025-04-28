@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -14,7 +15,7 @@ import (
 
 var _ dbProcessor = processV10DB
 
-func processV10DB(dbLocation file.Location, resolver file.Resolver, catalogerName string) ([]pkg.Package, []artifact.Relationship, error) {
+func processV10DB(config Config, dbLocation file.Location, resolver file.Resolver, catalogerName string) ([]pkg.Package, []artifact.Relationship, error) {
 	dbContents, err := resolver.FileContentsByLocation(dbLocation)
 	defer internal.CloseAndLogError(dbContents, dbLocation.RealPath)
 	if err != nil {
@@ -35,7 +36,7 @@ func processV10DB(dbLocation file.Location, resolver file.Resolver, catalogerNam
 	db.SetConnMaxLifetime(0)
 	defer db.Close()
 
-	packageEntries, err := extractV10DBPackages(db, dbLocation)
+	packageEntries, err := extractV10DBPackages(config, db, dbLocation, resolver)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -48,8 +49,8 @@ func processV10DB(dbLocation file.Location, resolver file.Resolver, catalogerNam
 	return pkgs, relationships, nil
 }
 
-func extractV10DBPackages(db *sql.DB, dbLocation file.Location) (map[int]*dbPackageEntry, error) {
-	pkgs, err := extractV10DBValidPaths(db, dbLocation)
+func extractV10DBPackages(config Config, db *sql.DB, dbLocation file.Location, resolver file.Resolver) (map[int]*dbPackageEntry, error) {
+	pkgs, err := extractV10DBValidPaths(config, db, dbLocation, resolver)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func extractV10DBPackages(db *sql.DB, dbLocation file.Location) (map[int]*dbPack
 	return pkgs, nil
 }
 
-func extractV10DBValidPaths(db *sql.DB, dbLocation file.Location) (map[int]*dbPackageEntry, error) {
+func extractV10DBValidPaths(config Config, db *sql.DB, dbLocation file.Location, resolver file.Resolver) (map[int]*dbPackageEntry, error) {
 	packages := make(map[int]*dbPackageEntry)
 
 	rows, err := db.Query("SELECT id, path, hash, deriver FROM ValidPaths")
@@ -91,15 +92,42 @@ func extractV10DBValidPaths(db *sql.DB, dbLocation file.Location) (map[int]*dbPa
 		nsp.OutputHash = hash.String
 		nsp.StorePath = path.String
 
+		var files []string
+		if config.CaptureOwnedFiles {
+			files = listOutputPaths(path.String, resolver)
+		}
+
+		df, err := newDerivationFromPath(deriver.String, resolver)
+		if err != nil {
+			log.WithFields("path", deriver.String, "error", err).Trace("unable to find derivation")
+			df = nil
+		}
+
 		packages[id] = &dbPackageEntry{
-			ID:           id,
-			nixStorePath: *nsp,
-			DeriverPath:  deriver.String,
-			Location:     &dbLocation,
+			ID:             id,
+			nixStorePath:   *nsp,
+			derivationFile: df,
+			DeriverPath:    deriver.String,
+			Location:       &dbLocation,
+			Files:          files,
 		}
 	}
 
 	return packages, nil
+}
+
+func listOutputPaths(storePath string, resolver file.Resolver) []string {
+	if storePath == "" {
+		return nil
+	}
+	searchGlob := storePath + "/**/*"
+	locations, err := resolver.FilesByGlob(searchGlob)
+	if err != nil {
+		log.WithFields("path", storePath, "error", err).Trace("unable to find output paths")
+		return nil
+	}
+
+	return filePaths(locations)
 }
 
 func extractV10DBDerivationOutputs(db *sql.DB, packages map[int]*dbPackageEntry) error {
@@ -133,7 +161,7 @@ func extractV10DBDerivationOutputs(db *sql.DB, packages map[int]*dbPackageEntry)
 }
 
 func finalizeV10DBResults(db *sql.DB, packageEntries map[int]*dbPackageEntry, catalogerName string) ([]pkg.Package, []artifact.Relationship, error) {
-	// First, ensure we have Syft packages for each package entry
+	// make Syft packages for each package entry
 	syftPackages := make(map[int]pkg.Package)
 	for id, entry := range packageEntries {
 		syftPackages[id] = newDBPackage(entry, catalogerName)
@@ -141,10 +169,8 @@ func finalizeV10DBResults(db *sql.DB, packageEntries map[int]*dbPackageEntry, ca
 
 	var relationships []artifact.Relationship
 
-	// Use a JOIN query similar to the example provided
-	// This gets all relationships between packages in our map
 	query := `
-	   SELECT r.referrer, r.reference, v1.path AS referrer_path, v2.path AS reference_path
+	   SELECT r.referrer, r.reference
 	   FROM Refs r
 	   JOIN ValidPaths v1 ON r.referrer = v1.id
 	   JOIN ValidPaths v2 ON r.reference = v2.id
@@ -160,9 +186,8 @@ func finalizeV10DBResults(db *sql.DB, packageEntries map[int]*dbPackageEntry, ca
 
 	for refRows.Next() {
 		var referrerID, referenceID int
-		var referrerPath, referencePath string
 
-		if err := refRows.Scan(&referrerID, &referenceID, &referrerPath, &referencePath); err != nil {
+		if err := refRows.Scan(&referrerID, &referenceID); err != nil {
 			return nil, nil, fmt.Errorf("failed to scan Refs row: %w", err)
 		}
 

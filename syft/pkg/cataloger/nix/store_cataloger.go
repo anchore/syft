@@ -9,9 +9,7 @@ import (
 	"fmt"
 
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/nix-community/go-nix/pkg/derivation"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
@@ -19,48 +17,52 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-const storeCatalogerName = "nix-store-cataloger"
-
 // storeCataloger finds package outputs installed in the Nix store location (/nix/store/*).
 type storeCataloger struct {
-	name string
+	config Config
+	name   string
 }
 
 // NewStoreCataloger returns a new cataloger object initialized for Nix store files.
 // Deprecated: please use NewCataloger instead
 func NewStoreCataloger() pkg.Cataloger {
-	return &storeCataloger{
-		name: storeCatalogerName,
+	return newStoreCataloger(Config{CaptureOwnedFiles: true}, "nix-store-cataloger")
+}
+
+func newStoreCataloger(cfg Config, name string) storeCataloger {
+	return storeCataloger{
+		config: cfg,
+		name:   name,
 	}
 }
 
-func (c *storeCataloger) Name() string {
+func (c storeCataloger) Name() string {
 	return c.name
 }
 
-func (c *storeCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c storeCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	prototypes, err := c.findPackagesFromStore(ctx, resolver)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to find nix packages: %w", err)
 	}
 
-	derivations, err := c.findDerivationsFromStore(resolver)
+	drvs, err := c.findDerivationsFromStore(resolver, prototypes)
 	if err != nil {
 		// preserve unknown errors, but suppress would-be fatal errors
 		var cErr *unknown.CoordinateError
 		if !errors.As(err, &cErr) {
 			// let's ignore fatal errors from this path, since it only enriches packages
-			derivations = newDerivationCollection()
+			drvs = newDerivations()
 			err = nil
 			log.WithFields("error", err).Trace("failed to find nix derivations")
 		}
 	}
 
-	pkgs, rels := c.finalizeStorePackages(prototypes, derivations)
+	pkgs, rels := c.finalizeStorePackages(prototypes, drvs)
 	return pkgs, rels, err
 }
 
-func (c *storeCataloger) finalizeStorePackages(pkgPrototypes []nixStorePackage, derivations *derivationCollection) ([]pkg.Package, []artifact.Relationship) {
+func (c storeCataloger) finalizeStorePackages(pkgPrototypes []nixStorePackage, drvs *derivations) ([]pkg.Package, []artifact.Relationship) {
 	var pkgs []pkg.Package
 	var pkgByStorePath = make(map[string]pkg.Package)
 	for _, pp := range pkgPrototypes {
@@ -68,14 +70,14 @@ func (c *storeCataloger) finalizeStorePackages(pkgPrototypes []nixStorePackage, 
 			continue
 		}
 
-		p := newNixStorePackage(pp, derivations.findDerivationForOutput(pp.StorePath), c.name)
+		p := newNixStorePackage(pp, c.name)
 		pkgs = append(pkgs, p)
 		pkgByStorePath[pp.Location.RealPath] = p
 	}
 
 	var relationships []artifact.Relationship
 	for storePath, p := range pkgByStorePath {
-		deps := derivations.findDependencies(storePath)
+		deps := drvs.findDependencies(storePath)
 		for _, dep := range deps {
 			if depPkg, ok := pkgByStorePath[dep]; ok {
 				relationships = append(relationships, artifact.Relationship{
@@ -89,15 +91,15 @@ func (c *storeCataloger) finalizeStorePackages(pkgPrototypes []nixStorePackage, 
 	return pkgs, relationships
 }
 
-func (c *storeCataloger) findDerivationsFromStore(resolver file.Resolver) (*derivationCollection, error) {
+func (c storeCataloger) findDerivationsFromStore(resolver file.Resolver, pkgPrototypes []nixStorePackage) (*derivations, error) {
 	locs, err := resolver.FilesByGlob("**/nix/store/*.drv")
 	if err != nil {
 		return nil, fmt.Errorf("failed to find derivations: %w", err)
 	}
 	var errs error
-	derivations := newDerivationCollection()
+	dvs := newDerivations()
 	for _, loc := range locs {
-		d, err := c.getDerivation(loc, resolver)
+		d, err := newDerivationFromLocation(loc, resolver)
 		if err != nil {
 			errs = unknown.Append(errs, loc.Coordinates, err)
 			continue
@@ -106,28 +108,19 @@ func (c *storeCataloger) findDerivationsFromStore(resolver file.Resolver) (*deri
 			continue
 		}
 
-		derivations.add(loc.RealPath, d)
+		dvs.add(*d)
 	}
-	return derivations, errs
+
+	// attach derivations to the packages they belong to
+	for i := range pkgPrototypes {
+		p := &pkgPrototypes[i]
+		p.derivationFile = dvs.findDerivationForOutputPath(p.Location.RealPath)
+	}
+
+	return dvs, errs
 }
 
-func (c *storeCataloger) getDerivation(loc file.Location, resolver file.Resolver) (*derivation.Derivation, error) {
-	r, err := resolver.FileContentsByLocation(loc)
-	defer internal.CloseAndLogError(r, loc.RealPath)
-	if err != nil {
-		log.WithFields("path", loc.RealPath).Trace("failed to read nix derivation")
-		return nil, unknown.Newf(loc.Coordinates, "failed to read nix derivation: %w", err)
-	}
-
-	d, err := derivation.ReadDerivation(r)
-	if err != nil {
-		log.WithFields("path", loc.RealPath).Debug("failed to parse nix derivation")
-		return nil, unknown.Newf(loc.Coordinates, "failed to parse nix derivation: %w", err)
-	}
-	return d, nil
-}
-
-func (c *storeCataloger) findPackagesFromStore(ctx context.Context, resolver file.Resolver) ([]nixStorePackage, error) {
+func (c storeCataloger) findPackagesFromStore(ctx context.Context, resolver file.Resolver) ([]nixStorePackage, error) {
 	// we want to search for only directories, which isn't possible via the stereoscope API, so we need to apply the glob manually on all returned paths
 	var prototypes []nixStorePackage
 	var filesByStorePath = make(map[string]*file.LocationSet)
@@ -140,7 +133,18 @@ func (c *storeCataloger) findPackagesFromStore(ctx context.Context, resolver fil
 		}
 
 		parentStorePath := findParentNixStorePath(location.RealPath)
-		if parentStorePath != "" {
+		if c.config.CaptureOwnedFiles && parentStorePath != "" {
+			fileInfo, err := resolver.FileMetadataByLocation(location)
+			if err != nil {
+				log.WithFields("path", location.RealPath).Trace("failed to get file metadata")
+				continue
+			}
+
+			if fileInfo.IsDir() {
+				// we should only add non-directories to the file set
+				continue
+			}
+
 			if _, ok := filesByStorePath[parentStorePath]; !ok {
 				s := file.NewLocationSet()
 				filesByStorePath[parentStorePath] = &s
@@ -158,10 +162,8 @@ func (c *storeCataloger) findPackagesFromStore(ctx context.Context, resolver fil
 			continue
 		}
 
-		loc := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
-
 		prototypes = append(prototypes, nixStorePackage{
-			Location:     &loc,
+			Location:     &location,
 			nixStorePath: *storePath,
 		})
 	}
@@ -179,10 +181,16 @@ func (c *storeCataloger) findPackagesFromStore(ctx context.Context, resolver fil
 			log.WithFields("path", parentStorePath, "nix-store-path", parentStorePath).Debug("found a nix store file for a non-existent package")
 			continue
 		}
-		for _, l := range files.ToSlice() {
-			p.Files = append(p.Files, l.RealPath)
-		}
+		p.Files = filePaths(files.ToSlice())
 	}
 
 	return prototypes, nil
+}
+
+func filePaths(files []file.Location) []string {
+	var relativePaths []string
+	for _, f := range files {
+		relativePaths = append(relativePaths, f.RealPath)
+	}
+	return relativePaths
 }

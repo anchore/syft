@@ -21,6 +21,17 @@ RUN sqlite3 /nix/var/nix/db/db.sqlite "CREATE TEMP TABLE IF NOT EXISTS RequiredP
 RUN sqlite3 /nix/var/nix/db/db.sqlite ".mode list" ".import /tmp/required_paths.txt RequiredPaths"
 RUN sqlite3 /nix/var/nix/db/db.sqlite < /tmp/clean_db.sql
 
+# create a directory with only the required dependencies + any derivations
+RUN mkdir -p /nix-minimal && \
+    for dep in $(nix-store -q --requisites $(which jq)); do \
+        mkdir -p /nix-minimal$(dirname $dep) && \
+        cp -a $dep /nix-minimal$dep; \
+    done
+
 FROM scratch
 
+# get packages + relationships from here
 COPY --from=builder /nix/var/nix/db/db.sqlite /nix/var/nix/db/db.sqlite
+
+# get files owned by each package here
+COPY --from=builder /nix-minimal/nix/store /nix/store
