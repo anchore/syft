@@ -8,7 +8,7 @@ import (
 
 type NixStoreEntry struct {
 	// Derivation is the name of the nix derivation file within the store (not the full store path)
-	Derivation string `mapstructure:"derivation" json:"derivation"`
+	Derivation string `mapstructure:"derivation" json:"derivation,omitempty"`
 
 	// OutputHash is the prefix of the nix store basename path
 	OutputHash string `mapstructure:"outputHash" json:"outputHash"`

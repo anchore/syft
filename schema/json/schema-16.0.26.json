@@ -1682,7 +1682,6 @@
       },
       "type": "object",
       "required": [
-        "derivation",
         "outputHash"
       ]
     },
