@@ -361,6 +361,7 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 		from, fromOk := a.(pkg.Package)
 		toPackage, toPackageOk := b.(pkg.Package)
 		toLocation, toLocationOk := b.(file.Location)
+		//nolint:staticcheck
 		if !fromOk || !(toPackageOk || toLocationOk) {
 			log.Debugf("unable to find valid relationship mapping from SPDX, ignoring: (from: %+v) (to: %+v)", a, b)
 			continue

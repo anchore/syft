@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/licenses"
@@ -70,7 +71,12 @@ func Test_LicenseSearch(t *testing.T) {
 
 	localVendorDir := filepath.Join(wd, "test-fixtures", "licenses-vendor")
 
-	licenseScanner := licenses.TestingOnlyScanner()
+	sc := &licenses.ScannerConfig{
+		CoverageThreshold: 75,
+		Scanner:           licensecheck.Scan,
+	}
+	licenseScanner, err := licenses.NewScanner(sc)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name     string
@@ -295,7 +301,10 @@ func Test_findVersionPath(t *testing.T) {
 
 func Test_walkDirErrors(t *testing.T) {
 	resolver := newGoLicenseResolver("", CatalogerConfig{})
-	_, err := resolver.findLicensesInFS(context.Background(), licenses.TestingOnlyScanner(), "somewhere", badFS{})
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	scanner, err := licenses.NewScanner(sc)
+	require.NoError(t, err)
+	_, err = resolver.findLicensesInFS(context.Background(), scanner, "somewhere", badFS{})
 	require.Error(t, err)
 }
 
@@ -313,8 +322,9 @@ func Test_noLocalGoModDir(t *testing.T) {
 	validTmp := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(validTmp, "mod@ver"), 0700|os.ModeDir))
 
-	licenseScanner := licenses.TestingOnlyScanner()
-
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	licenseScanner, err := licenses.NewScanner(sc)
+	require.NoError(t, err)
 	tests := []struct {
 		name    string
 		dir     string
@@ -352,4 +362,31 @@ func Test_noLocalGoModDir(t *testing.T) {
 			test.wantErr(t, err)
 		})
 	}
+}
+
+func TestLicenseConversion(t *testing.T) {
+	inputLicenses := []pkg.License{
+		{
+			Value:          "Apache-2.0",
+			SPDXExpression: "Apache-2.0",
+			Type:           "concluded",
+			URLs:           nil,
+			Locations:      file.NewLocationSet(file.NewLocation("LICENSE")),
+			Contents:       "",
+		},
+		{
+			Value:          "UNKNOWN",
+			SPDXExpression: "UNKNOWN_4d1cffe420916f2b706300ab63fcafaf35226a0ad3725cb9f95b26036cefae32",
+			Type:           "declared",
+			URLs:           nil,
+			Locations:      file.NewLocationSet(file.NewLocation("LICENSE2")),
+			Contents:       "NVIDIA Software License Agreement and CUDA Supplement to Software License Agreement",
+		},
+	}
+
+	goLicenses := toGoLicenses(inputLicenses)
+
+	result := toPkgLicenses(goLicenses)
+
+	require.Equal(t, inputLicenses, result)
 }

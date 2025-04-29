@@ -10,7 +10,10 @@ import (
 	"testing"
 
 	"github.com/acarl005/stripansi"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/format/syftjson/model"
 )
 
 type traitAssertion func(tb testing.TB, stdout, stderr string, rc int)
@@ -144,6 +147,34 @@ func assertPackageCount(length uint) traitAssertion {
 				tb.Errorf("package %d: %s", i+1, a)
 			}
 
+		}
+	}
+}
+
+func assertUnknownLicenseContent(required bool) traitAssertion {
+	return func(tb testing.TB, stdout, _ string, _ int) {
+		tb.Helper()
+		type NameAndLicense struct {
+			Name     string          `json:"name"`
+			Licenses []model.License `json:"Licenses"`
+		}
+		type partial struct {
+			Artifacts []NameAndLicense `json:"artifacts"`
+		}
+
+		var data partial
+		if err := json.Unmarshal([]byte(stdout), &data); err != nil {
+			tb.Errorf("expected to find a JSON report, but was unmarshalable: %+v", err)
+		}
+
+		for _, pkg := range data.Artifacts {
+			for _, lic := range pkg.Licenses {
+				if strings.Contains(lic.SPDXExpression, "UNKNOWN") && required {
+					assert.NotZero(tb, len(lic.Contents))
+				} else {
+					assert.Empty(tb, lic.Contents)
+				}
+			}
 		}
 	}
 }

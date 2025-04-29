@@ -48,15 +48,15 @@ func (m *LocationMetadata) merge(other LocationMetadata) error {
 }
 
 func (l Location) WithAnnotation(key, value string) Location {
-	if l.LocationMetadata.Annotations == nil {
-		l.LocationMetadata.Annotations = map[string]string{}
+	if l.Annotations == nil {
+		l.Annotations = map[string]string{}
 	}
-	l.LocationMetadata.Annotations[key] = value
+	l.Annotations[key] = value
 	return l
 }
 
 func (l Location) WithoutAnnotations() Location {
-	l.LocationMetadata.Annotations = map[string]string{}
+	l.Annotations = map[string]string{}
 
 	return l
 }

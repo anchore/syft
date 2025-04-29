@@ -23,7 +23,7 @@ func ProcessPathErrors(err error) error {
 		}
 	}
 	unknowns, remainingErrors := ExtractCoordinateErrors(err)
-	log.Warn(remainingErrors)
+	log.Debug(remainingErrors)
 
 	var out []error
 	for _, u := range unknowns {

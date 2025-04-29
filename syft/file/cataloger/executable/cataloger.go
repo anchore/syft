@@ -2,6 +2,7 @@ package executable
 
 import (
 	"bytes"
+	"context"
 	"debug/elf"
 	"debug/macho"
 	"encoding/binary"
@@ -11,11 +12,13 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/dustin/go-humanize"
 
+	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/internal/unknown"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -46,8 +49,10 @@ func NewCataloger(cfg Config) *Cataloger {
 }
 
 func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]file.Executable, error) {
-	var errs error
+	return i.CatalogCtx(context.Background(), resolver)
+}
 
+func (i *Cataloger) CatalogCtx(ctx context.Context, resolver file.Resolver) (map[file.Coordinates]file.Executable, error) {
 	locs, err := resolver.FilesByMIMEType(i.config.MIMETypes...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get file locations for binaries: %w", err)
@@ -61,19 +66,20 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]file.E
 	prog := catalogingProgress(int64(len(locs)))
 
 	results := make(map[file.Coordinates]file.Executable)
-	for _, loc := range locs {
+	errs := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(locs), func(loc file.Location) (*file.Executable, error) {
 		prog.AtomicStage.Set(loc.Path())
 
 		exec, err := processExecutableLocation(loc, resolver)
 		if err != nil {
-			errs = unknown.Append(errs, loc, err)
+			err = unknown.New(loc, err)
 		}
-
+		return exec, err
+	}, func(loc file.Location, exec *file.Executable) {
 		if exec != nil {
 			prog.Increment()
 			results[loc.Coordinates] = *exec
 		}
-	}
+	})
 
 	log.Debugf("executable cataloger processed %d files", len(results))
 
@@ -86,14 +92,14 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]file.E
 func processExecutableLocation(loc file.Location, resolver file.Resolver) (*file.Executable, error) {
 	reader, err := resolver.FileContentsByLocation(loc)
 	if err != nil {
-		log.WithFields("error", err).Warnf("unable to get file contents for %q", loc.RealPath)
+		log.WithFields("error", err, "path", loc.RealPath).Debug("unable to get file contents")
 		return nil, fmt.Errorf("unable to get file contents: %w", err)
 	}
 	defer internal.CloseAndLogError(reader, loc.RealPath)
 
 	uReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
-		log.WithFields("error", err).Warnf("unable to get union reader for %q", loc.RealPath)
+		log.WithFields("error", err, "path", loc.RealPath).Debug("unable to get union reader")
 		return nil, fmt.Errorf("unable to get union reader: %w", err)
 	}
 
@@ -168,17 +174,17 @@ func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file
 	switch format {
 	case file.ELF:
 		if err = findELFFeatures(&data, reader); err != nil {
-			log.WithFields("error", err).Tracef("unable to determine ELF features for %q", loc.RealPath)
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine ELF features")
 			err = fmt.Errorf("unable to determine ELF features: %w", err)
 		}
 	case file.PE:
 		if err = findPEFeatures(&data, reader); err != nil {
-			log.WithFields("error", err).Tracef("unable to determine PE features for %q", loc.RealPath)
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine PE features")
 			err = fmt.Errorf("unable to determine PE features: %w", err)
 		}
 	case file.MachO:
 		if err = findMachoFeatures(&data, reader); err != nil {
-			log.WithFields("error", err).Tracef("unable to determine Macho features for %q", loc.RealPath)
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine Macho features")
 			err = fmt.Errorf("unable to determine Macho features: %w", err)
 		}
 	}

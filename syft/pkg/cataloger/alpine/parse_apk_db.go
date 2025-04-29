@@ -82,12 +82,12 @@ func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 
 		field := parseApkField(line)
 		if field == nil {
-			log.Warnf("unable to parse field data from line %q", line)
+			log.Debugf("unable to parse field data from line %q", line)
 			errs = unknown.Appendf(errs, reader, "unable to parse field data from line %q", line)
 			continue
 		}
 		if len(field.name) == 0 {
-			log.Warnf("failed to parse field name from line %q", line)
+			log.Debugf("failed to parse field name from line %q", line)
 			errs = unknown.Appendf(errs, reader, "failed to parse field name from line %q", line)
 			continue
 		}
@@ -123,7 +123,7 @@ func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 	// This should get fixed with https://gitlab.alpinelinux.org/alpine/apk-tools/-/issues/10875
 	if r == nil {
 		// find the repositories file from the relative directory of the DB file
-		releases := findReleases(resolver, reader.Location.RealPath)
+		releases := findReleases(resolver, reader.RealPath)
 
 		if len(releases) > 0 {
 			r = &releases[0]
@@ -173,7 +173,7 @@ func parseReleasesFromAPKRepository(reader file.LocationReadCloser) []linux.Rele
 
 	reposB, err := io.ReadAll(reader)
 	if err != nil {
-		log.Tracef("unable to read APK repositories file %q: %+v", reader.Location.RealPath, err)
+		log.Tracef("unable to read APK repositories file %q: %+v", reader.RealPath, err)
 		return nil
 	}
 
@@ -234,7 +234,7 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 	case "S":
 		i, err := strconv.Atoi(f.value)
 		if err != nil {
-			log.Warnf("unable to parse value %q for field %q: %w", f.value, f.name, err)
+			log.Debugf("unable to parse value %q for field %q: %w", f.value, f.name, err)
 			return
 		}
 
@@ -242,7 +242,7 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 	case "I":
 		i, err := strconv.Atoi(f.value)
 		if err != nil {
-			log.Warnf("unable to parse value %q for field %q: %w", f.value, f.name, err)
+			log.Debugf("unable to parse value %q for field %q: %w", f.value, f.name, err)
 			return
 		}
 
@@ -272,7 +272,7 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		var ok bool
 		latest.OwnerUID, latest.OwnerGID, latest.Permissions, ok = processFileInfo(f.value)
 		if !ok {
-			log.Warnf("unexpected value for APK ACL field %q: %q", f.name, f.value)
+			log.Debugf("unexpected value for APK ACL field %q: %q", f.name, f.value)
 			return
 		}
 
@@ -298,7 +298,7 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		var ok bool
 		latest.OwnerUID, latest.OwnerGID, latest.Permissions, ok = processFileInfo(f.value)
 		if !ok {
-			log.Warnf("unexpected value for APK ACL field %q: %q", f.name, f.value)
+			log.Debugf("unexpected value for APK ACL field %q: %q", f.name, f.value)
 			return
 		}
 

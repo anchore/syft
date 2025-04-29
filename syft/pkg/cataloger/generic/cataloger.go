@@ -4,10 +4,12 @@ import (
 	"context"
 
 	"github.com/anchore/go-logger"
+	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -63,7 +65,7 @@ func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger
 
 				matches, err := resolver.FilesByGlob(g)
 				if err != nil {
-					log.Warnf("unable to process glob=%q: %+v", g, err)
+					log.Debugf("unable to process glob=%q: %+v", g, err)
 					continue
 				}
 				requests = append(requests, makeRequests(parser, matches)...)
@@ -81,7 +83,7 @@ func (c *Cataloger) WithParserByMimeTypes(parser Parser, types ...string) *Catal
 			log.WithFields("mimetypes", types).Trace("searching for paths matching mimetype")
 			matches, err := resolver.FilesByMIMEType(types...)
 			if err != nil {
-				log.Warnf("unable to process mimetypes=%+v: %+v", types, err)
+				log.Debugf("unable to process mimetypes=%+v: %+v", types, err)
 				return nil
 			}
 			requests = append(requests, makeRequests(parser, matches)...)
@@ -100,7 +102,7 @@ func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger 
 
 				matches, err := resolver.FilesByPath(p)
 				if err != nil {
-					log.Warnf("unable to process path=%q: %+v", p, err)
+					log.Debugf("unable to process path=%q: %+v", p, err)
 					continue
 				}
 				requests = append(requests, makeRequests(parser, matches)...)
@@ -161,7 +163,11 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 		LinuxRelease: linux.IdentifyRelease(resolver),
 	}
 
-	for _, req := range c.selectFiles(resolver) {
+	type result struct {
+		pkgs []pkg.Package
+		rels []artifact.Relationship
+	}
+	errs = sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(c.selectFiles(resolver)), func(req request) (result, error) {
 		location, parser := req.Location, req.Parser
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")
@@ -171,14 +177,14 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 			// parsers may return errors and valid packages / relationships
 			errs = unknown.Append(errs, location, err)
 		}
-
-		for _, p := range discoveredPackages {
+		return result{discoveredPackages, discoveredRelationships}, errs
+	}, func(_ request, res result) {
+		for _, p := range res.pkgs {
 			p.FoundBy = c.upstreamCataloger
 			packages = append(packages, p)
 		}
-
-		relationships = append(relationships, discoveredRelationships...)
-	}
+		relationships = append(relationships, res.rels...)
+	})
 	return c.process(ctx, resolver, packages, relationships, errs)
 }
 
@@ -192,7 +198,7 @@ func (c *Cataloger) process(ctx context.Context, resolver file.Resolver, pkgs []
 func invokeParser(ctx context.Context, resolver file.Resolver, location file.Location, logger logger.Logger, parser Parser, env *Environment) ([]pkg.Package, []artifact.Relationship, error) {
 	contentReader, err := resolver.FileContentsByLocation(location)
 	if err != nil {
-		logger.WithFields("location", location.RealPath, "error", err).Warn("unable to fetch contents")
+		logger.WithFields("location", location.RealPath, "error", err).Debug("unable to fetch contents")
 		return nil, nil, err
 	}
 	defer internal.CloseAndLogError(contentReader, location.AccessPath)

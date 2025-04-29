@@ -16,6 +16,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from RPM DB"
 	case pkg.ApkPkg:
 		answer = "acquired package info from APK DB"
+	case pkg.BitnamiPkg:
+		answer = "acquired package info from a Bitnami SBOM"
 	case pkg.DartPubPkg:
 		answer = "acquired package info from pubspec manifest"
 	case pkg.DebPkg:
@@ -32,6 +34,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from installed gem metadata file"
 	case pkg.GoModulePkg:
 		answer = "acquired package info from go module information"
+	case pkg.GraalVMNativeImagePkg:
+		answer = "acquired package info from GraalVM native image"
 	case pkg.RustPkg:
 		answer = "acquired package info from rust cargo manifest"
 	case pkg.PhpComposerPkg:

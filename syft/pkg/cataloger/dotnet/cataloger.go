@@ -1,6 +1,3 @@
-/*
-Package dotnet provides a concrete Cataloger implementation relating to packages within the C#/.NET language/runtime ecosystem.
-*/
 package dotnet
 
 import (
@@ -8,18 +5,27 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// NewDotnetDepsCataloger returns a new Dotnet cataloger object base on deps json files.
+// NewDotnetDepsBinaryCataloger returns a cataloger based on PE and deps.json file contents.
+func NewDotnetDepsBinaryCataloger(config CatalogerConfig) pkg.Cataloger {
+	return &depsBinaryCataloger{
+		config: config,
+	}
+}
+
+// NewDotnetDepsCataloger returns a cataloger based on deps.json file contents.
+// Deprecated: use NewDotnetDepsBinaryCataloger instead which combines the PE and deps.json data which yields more accurate results (will be removed in syft v2.0).
 func NewDotnetDepsCataloger() pkg.Cataloger {
-	return generic.NewCataloger("dotnet-deps-cataloger").
-		WithParserByGlobs(parseDotnetDeps, "**/*.deps.json")
+	return &depsCataloger{}
 }
 
-// NewDotnetPortableExecutableCataloger returns a new Dotnet cataloger object base on portable executable files.
+// NewDotnetPortableExecutableCataloger returns a cataloger based on PE file contents.
+// Deprecated: use NewDotnetDepsBinaryCataloger instead which combines the PE and deps.json data which yields more accurate results (will be removed in syft v2.0).
 func NewDotnetPortableExecutableCataloger() pkg.Cataloger {
-	return generic.NewCataloger("dotnet-portable-executable-cataloger").
-		WithParserByGlobs(parseDotnetPortableExecutable, "**/*.dll", "**/*.exe")
+	return &binaryCataloger{}
 }
 
+// NewDotnetPackagesLockCataloger returns a cataloger based on packages.lock.json files.
 func NewDotnetPackagesLockCataloger() pkg.Cataloger {
-	return generic.NewCataloger("dotnet-packages-lock-cataloger").WithParserByGlobs(parseDotnetPackagesLock, "**/packages.lock.json")
+	return generic.NewCataloger("dotnet-packages-lock-cataloger").
+		WithParserByGlobs(parseDotnetPackagesLock, "**/packages.lock.json")
 }

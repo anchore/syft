@@ -36,6 +36,7 @@ type goLicense struct {
 	Type           license.Type `json:"type,omitempty"`
 	URLs           []string     `json:"urls,omitempty"`
 	Locations      []string     `json:"locations,omitempty"`
+	Contents       string       `json:"contents,omitempty"`
 }
 
 type goLicenseResolver struct {
@@ -59,7 +60,7 @@ func newGoLicenseResolver(catalogerName string, opts CatalogerConfig) goLicenseR
 		if vendorDir == "" {
 			wd, err := os.Getwd()
 			if err != nil {
-				log.Warn("unable to get CWD while resolving the local go vendor dir: %v", err)
+				log.Debug("unable to get CWD while resolving the local go vendor dir: %v", err)
 			} else {
 				vendorDir = filepath.Join(wd, "vendor")
 			}
@@ -213,7 +214,7 @@ func (c *goLicenseResolver) findLicensesInFS(ctx context.Context, scanner licens
 		}
 		defer internal.CloseAndLogError(rdr, filePath)
 
-		parsed, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(file.NewLocation(filePath), rdr))
+		parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(file.NewLocation(filePath), rdr))
 		if err != nil {
 			log.Debugf("error parsing license file %s: %v", filePath, err)
 			return nil
@@ -266,7 +267,7 @@ func (c *goLicenseResolver) parseLicenseFromLocation(ctx context.Context, scanne
 			return nil, err
 		}
 		defer internal.CloseAndLogError(contents, l.RealPath)
-		parsed, err := licenses.Search(ctx, scanner, file.NewLocationReadCloser(l, contents))
+		parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(l, contents))
 		if err != nil {
 			return nil, err
 		}
@@ -449,6 +450,7 @@ func toPkgLicenses(goLicenses []goLicense) []pkg.License {
 			Type:           l.Type,
 			URLs:           l.URLs,
 			Locations:      toPkgLocations(l.Locations),
+			Contents:       l.Contents,
 		})
 	}
 	return requireCollection(out)
@@ -471,6 +473,7 @@ func toGoLicenses(pkgLicenses []pkg.License) []goLicense {
 			Type:           l.Type,
 			URLs:           l.URLs,
 			Locations:      toGoLocations(l.Locations),
+			Contents:       l.Contents,
 		})
 	}
 	return out

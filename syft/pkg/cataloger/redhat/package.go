@@ -92,6 +92,9 @@ func packageURL(name, arch string, epoch *int, srpm string, version, release str
 	if namespace == "rhel" {
 		namespace = "redhat"
 	}
+	if strings.HasPrefix(namespace, "opensuse") {
+		namespace = "opensuse"
+	}
 
 	qualifiers := map[string]string{}
 

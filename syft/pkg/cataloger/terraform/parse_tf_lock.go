@@ -36,7 +36,7 @@ func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environme
 		p := pkg.Package{
 			Name:      provider.URL,
 			Version:   provider.Version,
-			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			Licenses:  pkg.NewLicenseSet(), // TODO: license could be found in .terraform/providers/${name}/${version}/${arch}/LICENSE.txt
 			Language:  pkg.Go,
 			Type:      pkg.TerraformPkg,

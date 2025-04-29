@@ -164,6 +164,7 @@ func toSyftLicenses(m []model.License) (p []pkg.License) {
 			Type:           l.Type,
 			URLs:           l.URLs,
 			Locations:      file.NewLocationSet(l.Locations...),
+			Contents:       l.Contents,
 		})
 	}
 	return
@@ -227,7 +228,7 @@ func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relations
 		idMap[string(p.ID())] = p
 		locations := p.Locations.ToSlice()
 		for _, l := range locations {
-			idMap[string(l.Coordinates.ID())] = l.Coordinates
+			idMap[string(l.ID())] = l.Coordinates
 		}
 	}
 

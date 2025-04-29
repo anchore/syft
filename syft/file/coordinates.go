@@ -24,7 +24,7 @@ func (c Coordinates) ID() artifact.ID {
 	f, err := artifact.IDByHash(c)
 	if err != nil {
 		// TODO: what to do in this case?
-		log.Warnf("unable to get fingerprint of location coordinate=%+v: %+v", c, err)
+		log.Debugf("unable to get fingerprint of location coordinate=%+v: %+v", c, err)
 		return ""
 	}
 

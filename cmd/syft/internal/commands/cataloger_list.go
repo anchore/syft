@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -12,9 +13,18 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/task"
-	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
+	"github.com/anchore/syft/syft/cataloging"
+)
+
+var (
+	activelyAddedStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("10")) // hi green
+	deselectedStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("8"))  // dark grey
+	activelyRemovedStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))  // high red
+	defaultStyle           = lipgloss.NewStyle().Underline(true)
+	deselectedDefaultStyle = lipgloss.NewStyle().Inherit(deselectedStyle).Underline(true)
 )
 
 type catalogerListOptions struct {
@@ -44,8 +54,9 @@ func CatalogerList(app clio.Application) *cobra.Command {
 	opts := defaultCatalogerListOptions()
 
 	return app.SetupCommand(&cobra.Command{
-		Use:   "list [OPTIONS]",
-		Short: "List available catalogers",
+		Use:     "list [OPTIONS]",
+		Short:   "List available catalogers",
+		PreRunE: disableUI(app, os.Stdout),
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runCatalogerList(opts)
 		},
@@ -53,13 +64,19 @@ func CatalogerList(app clio.Application) *cobra.Command {
 }
 
 func runCatalogerList(opts *catalogerListOptions) error {
-	factories := task.DefaultPackageTaskFactories()
-	allTasks, err := factories.Tasks(task.DefaultCatalogingFactoryConfig())
+	pkgTaskFactories := task.DefaultPackageTaskFactories()
+	fileTaskFactories := task.DefaultFileTaskFactories()
+	allPkgTasks, err := pkgTaskFactories.Tasks(task.DefaultCatalogingFactoryConfig())
 	if err != nil {
-		return fmt.Errorf("unable to create cataloger tasks: %w", err)
+		return fmt.Errorf("unable to create pkg cataloger tasks: %w", err)
 	}
 
-	report, err := catalogerListReport(opts, allTasks)
+	allFileTasks, err := fileTaskFactories.Tasks(task.DefaultCatalogingFactoryConfig())
+	if err != nil {
+		return fmt.Errorf("unable to create file cataloger tasks: %w", err)
+	}
+
+	report, err := catalogerListReport(opts, [][]task.Task{allPkgTasks, allFileTasks})
 	if err != nil {
 		return fmt.Errorf("unable to generate cataloger list report: %w", err)
 	}
@@ -69,11 +86,14 @@ func runCatalogerList(opts *catalogerListOptions) error {
 	return nil
 }
 
-func catalogerListReport(opts *catalogerListOptions, allTasks []task.Task) (string, error) {
-	selectedTasks, selectionEvidence, err := task.Select(allTasks,
-		pkgcataloging.NewSelectionRequest().
-			WithDefaults(opts.DefaultCatalogers...).
-			WithExpression(opts.SelectCatalogers...),
+func catalogerListReport(opts *catalogerListOptions, allTaskGroups [][]task.Task) (string, error) {
+	defaultCatalogers := options.Flatten(opts.DefaultCatalogers)
+	selectCatalogers := options.Flatten(opts.SelectCatalogers)
+	selectedTaskGroups, selectionEvidence, err := task.SelectInGroups(
+		allTaskGroups,
+		cataloging.NewSelectionRequest().
+			WithDefaults(defaultCatalogers...).
+			WithExpression(selectCatalogers...),
 	)
 	if err != nil {
 		return "", fmt.Errorf("unable to select catalogers: %w", err)
@@ -82,12 +102,12 @@ func catalogerListReport(opts *catalogerListOptions, allTasks []task.Task) (stri
 
 	switch opts.Output {
 	case "json":
-		report, err = renderCatalogerListJSON(selectedTasks, selectionEvidence, opts.DefaultCatalogers, opts.SelectCatalogers)
+		report, err = renderCatalogerListJSON(flattenTaskGroups(selectedTaskGroups), selectionEvidence, defaultCatalogers, selectCatalogers)
 	case "table", "":
 		if opts.ShowHidden {
-			report = renderCatalogerListTable(allTasks, selectionEvidence, opts.DefaultCatalogers, opts.SelectCatalogers)
+			report = renderCatalogerListTables(allTaskGroups, selectionEvidence)
 		} else {
-			report = renderCatalogerListTable(selectedTasks, selectionEvidence, opts.DefaultCatalogers, opts.SelectCatalogers)
+			report = renderCatalogerListTables(selectedTaskGroups, selectionEvidence)
 		}
 	}
 
@@ -96,6 +116,14 @@ func catalogerListReport(opts *catalogerListOptions, allTasks []task.Task) (stri
 	}
 
 	return report, nil
+}
+
+func flattenTaskGroups(taskGroups [][]task.Task) []task.Task {
+	var allTasks []task.Task
+	for _, tasks := range taskGroups {
+		allTasks = append(allTasks, tasks...)
+	}
+	return allTasks
 }
 
 func renderCatalogerListJSON(tasks []task.Task, selection task.Selection, defaultSelections, selections []string) (string, error) {
@@ -109,7 +137,12 @@ func renderCatalogerListJSON(tasks []task.Task, selection task.Selection, defaul
 	nodesByName := make(map[string]node)
 
 	for name := range tagsByName {
-		tagsSelected := selection.TokensByTask[name].SelectedOn.List()
+		tokensByTask, ok := selection.TokensByTask[name]
+
+		var tagsSelected []string
+		if ok {
+			tagsSelected = tokensByTask.SelectedOn.List()
+		}
 
 		if len(tagsSelected) == 1 && tagsSelected[0] == "all" {
 			tagsSelected = tagsByName[name]
@@ -153,10 +186,56 @@ func renderCatalogerListJSON(tasks []task.Task, selection task.Selection, defaul
 	return string(by), err
 }
 
-func renderCatalogerListTable(tasks []task.Task, selection task.Selection, defaultSelections, selections []string) string {
+func renderCatalogerListTables(taskGroups [][]task.Task, selection task.Selection) string {
+	pkgCatalogerTable := renderCatalogerListTable(taskGroups[0], selection, "Package Cataloger")
+	fileCatalogerTable := renderCatalogerListTable(taskGroups[1], selection, "File Cataloger")
+
+	report := fileCatalogerTable + "\n" + pkgCatalogerTable + "\n"
+
+	hasAdditions := len(selection.Request.AddNames) > 0
+	hasDefaults := len(selection.Request.DefaultNamesOrTags) > 0
+	hasRemovals := len(selection.Request.RemoveNamesOrTags) > 0
+	hasSubSelections := len(selection.Request.SubSelectTags) > 0
+	expressions := len(selection.Request.SubSelectTags) + len(selection.Request.AddNames) + len(selection.Request.RemoveNamesOrTags)
+
+	var header string
+
+	header += fmt.Sprintf("Default selections: %d\n", len(selection.Request.DefaultNamesOrTags))
+	if hasDefaults {
+		for _, expr := range selection.Request.DefaultNamesOrTags {
+			header += fmt.Sprintf("  • '%s'\n", expr)
+		}
+	}
+
+	header += fmt.Sprintf("Selection expressions: %d\n", expressions)
+
+	if hasSubSelections {
+		for _, n := range selection.Request.SubSelectTags {
+			header += fmt.Sprintf("  • '%s' (intersect)\n", n)
+		}
+	}
+	if hasRemovals {
+		for _, n := range selection.Request.RemoveNamesOrTags {
+			header += fmt.Sprintf("  • '-%s' (remove)\n", n)
+		}
+	}
+	if hasAdditions {
+		for _, n := range selection.Request.AddNames {
+			header += fmt.Sprintf("  • '+%s' (add)\n", n)
+		}
+	}
+
+	return header + report
+}
+
+func renderCatalogerListTable(tasks []task.Task, selection task.Selection, kindTitle string) string {
+	if len(tasks) == 0 {
+		return activelyRemovedStyle.Render(fmt.Sprintf("No %ss selected", strings.ToLower(kindTitle)))
+	}
+
 	t := table.NewWriter()
 	t.SetStyle(table.StyleLight)
-	t.AppendHeader(table.Row{"Cataloger", "Tags"})
+	t.AppendHeader(table.Row{kindTitle, "Tags"})
 
 	names, tagsByName := extractTaskInfo(tasks)
 
@@ -172,27 +251,12 @@ func renderCatalogerListTable(tasks []task.Task, selection task.Selection, defau
 
 	report := t.Render()
 
-	if len(selections) > 0 {
-		header := "Selected by expressions:\n"
-		for _, expr := range selections {
-			header += fmt.Sprintf("  - %q\n", expr)
-		}
-		report = header + report
-	}
-
-	if len(defaultSelections) > 0 {
-		header := "Default selections:\n"
-		for _, expr := range defaultSelections {
-			header += fmt.Sprintf("  - %q\n", expr)
-		}
-		report = header + report
-	}
-
 	return report
 }
 
 func formatRow(name string, tags []string, selection task.Selection) table.Row {
 	isIncluded := selection.Result.Has(name)
+	defaults := strset.New(selection.Request.DefaultNamesOrTags...)
 	var selections *task.TokenSelection
 	if s, exists := selection.TokensByTask[name]; exists {
 		selections = &s
@@ -200,35 +264,32 @@ func formatRow(name string, tags []string, selection task.Selection) table.Row {
 
 	var formattedTags []string
 	for _, tag := range tags {
-		formattedTags = append(formattedTags, formatToken(tag, selections, isIncluded))
+		formattedTags = append(formattedTags, formatToken(tag, selections, isIncluded, defaults))
 	}
 
 	var tagStr string
 	if isIncluded {
 		tagStr = strings.Join(formattedTags, ", ")
 	} else {
-		tagStr = strings.Join(formattedTags, grey.Render(", "))
+		tagStr = strings.Join(formattedTags, deselectedStyle.Render(", "))
 	}
 
 	// TODO: selection should keep warnings (non-selections) in struct
 
 	return table.Row{
-		formatToken(name, selections, isIncluded),
+		formatToken(name, selections, isIncluded, defaults),
 		tagStr,
 	}
 }
 
-var (
-	green = lipgloss.NewStyle().Foreground(lipgloss.Color("10")) // hi green
-	grey  = lipgloss.NewStyle().Foreground(lipgloss.Color("8"))  // dark grey
-	red   = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))  // high red
-)
-
-func formatToken(token string, selection *task.TokenSelection, included bool) string {
+func formatToken(token string, selection *task.TokenSelection, included bool, defaults *strset.Set) string {
 	if included && selection != nil {
 		// format all tokens in selection in green
 		if selection.SelectedOn.Has(token) {
-			return green.Render(token)
+			if defaults.Has(token) {
+				return defaultStyle.Render(token)
+			}
+			return activelyAddedStyle.Render(token)
 		}
 
 		return token
@@ -236,10 +297,12 @@ func formatToken(token string, selection *task.TokenSelection, included bool) st
 
 	// format all tokens in selection in red, all others in grey
 	if selection != nil && selection.DeselectedOn.Has(token) {
-		return red.Render(token)
+		return activelyRemovedStyle.Render(token)
 	}
-
-	return grey.Render(token)
+	if defaults.Has(token) {
+		return deselectedDefaultStyle.Render(token)
+	}
+	return deselectedStyle.Render(token)
 }
 
 func extractTaskInfo(tasks []task.Task) ([]string, map[string][]string) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
@@ -69,29 +70,7 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 			continue
 		}
 
-		candidate := SPDXLicense{}
-		if l.SPDXExpression != "" {
-			candidate.ID = l.SPDXExpression
-		} else {
-			// we did not find a valid SPDX license ID so treat as separate license
-			// check if license is full text
-			if l.Value == pkg.FullTextValue {
-				if len(l.FullText) <= 64 {
-					// if the license text is less than the size of the hash,
-					// just use it directly so the id is more readable
-					candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.FullText)
-				} else {
-					hash := sha256.Sum256([]byte(l.FullText))
-					candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
-				}
-				candidate.Value = l.Value
-				candidate.FullText = l.FullText
-			} else {
-				candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
-				candidate.Value = l.Value
-			}
-		}
-
+		candidate := createSPDXLicense(l)
 		switch l.Type {
 		case license.Concluded:
 			concluded = append(concluded, candidate)
@@ -101,4 +80,39 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 	}
 
 	return concluded, declared
+}
+
+func createSPDXLicense(l pkg.License) SPDXLicense {
+	candidate := SPDXLicense{Value: l.Value}
+	if isValidSPDXExpression(l.SPDXExpression) {
+		candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.SPDXExpression)
+		candidate.FullText = getFullText(l)
+	} else {
+		candidate.ID = generateLicenseID(l)
+		candidate.FullText = getFullText(l)
+	}
+
+	return candidate
+}
+
+func isValidSPDXExpression(expr string) bool {
+	return expr != "" && !strings.HasPrefix(expr, licenses.UnknownLicensePrefix)
+}
+
+func getFullText(l pkg.License) string {
+	if len(l.Contents) > 0 {
+		return l.Contents
+	}
+	return l.FullText
+}
+
+func generateLicenseID(l pkg.License) string {
+	if l.Value == pkg.FullTextValue {
+		if len(l.FullText) <= 64 {
+			return spdxlicense.LicenseRefPrefix + SanitizeElementID(l.FullText)
+		}
+		hash := sha256.Sum256([]byte(l.FullText))
+		return fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
+	}
+	return spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
 }

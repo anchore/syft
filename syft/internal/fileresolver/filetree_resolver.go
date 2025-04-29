@@ -68,7 +68,7 @@ func (r filetreeResolver) FilesByPath(userPaths ...string) ([]file.Location, err
 		}
 
 		// don't consider directories
-		if entry.Metadata.IsDir() {
+		if entry.IsDir() {
 			continue
 		}
 
@@ -114,17 +114,17 @@ func (r filetreeResolver) FilesByGlob(patterns ...string) ([]file.Location, erro
 			}
 			entry, err := r.index.Get(*refVia.Reference)
 			if err != nil {
-				return nil, fmt.Errorf("unable to get file metadata for reference %s: %w", refVia.Reference.RealPath, err)
+				return nil, fmt.Errorf("unable to get file metadata for reference %s: %w", refVia.RealPath, err)
 			}
 
 			// don't consider directories
-			if entry.Metadata.IsDir() {
+			if entry.IsDir() {
 				continue
 			}
 
 			loc := file.NewVirtualLocationFromDirectory(
-				r.responsePath(string(refVia.Reference.RealPath)), // the actual path relative to the resolver root
-				r.responsePath(string(refVia.RequestPath)),        // the path used to access this file, relative to the resolver root
+				r.responsePath(string(refVia.RealPath)),    // the actual path relative to the resolver root
+				r.responsePath(string(refVia.RequestPath)), // the path used to access this file, relative to the resolver root
 				*refVia.Reference,
 			)
 			uniqueFileIDs.Add(*refVia.Reference)
@@ -217,7 +217,7 @@ func (r *filetreeResolver) FilesByMIMEType(types ...string) ([]file.Location, er
 			continue
 		}
 		location := file.NewVirtualLocationFromDirectory(
-			r.responsePath(string(refVia.Reference.RealPath)),
+			r.responsePath(string(refVia.RealPath)),
 			r.responsePath(string(refVia.RequestPath)),
 			*refVia.Reference,
 		)

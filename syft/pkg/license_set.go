@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/mitchellh/hashstructure/v2"
+	"github.com/gohugoio/hashstructure"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -77,7 +77,7 @@ func (s LicenseSet) ToSlice() []License {
 
 func (s LicenseSet) Hash() (uint64, error) {
 	// access paths and filesystem IDs are not considered when hashing a license set, only the real paths
-	return hashstructure.Hash(s.ToSlice(), hashstructure.FormatV2, &hashstructure.HashOptions{
+	return hashstructure.Hash(s.ToSlice(), &hashstructure.HashOptions{
 		ZeroNil:      true,
 		SlicesAsSets: true,
 	})

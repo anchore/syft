@@ -28,7 +28,7 @@ func parseLinuxKernelModuleFile(_ context.Context, _ file.Resolver, _ *generic.E
 		return nil, nil, nil
 	}
 
-	metadata.Path = reader.Location.RealPath
+	metadata.Path = reader.RealPath
 
 	return []pkg.Package{
 		newLinuxKernelModulePackage(

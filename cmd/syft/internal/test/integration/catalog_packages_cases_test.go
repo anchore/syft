@@ -78,11 +78,27 @@ var imageOnlyTestCases = []testCase{
 		},
 	},
 	{
-		name:        "find dot net executable",
+		name:        "find .NET packages (deps.json + .dlls)",
 		pkgType:     pkg.DotnetPkg,
 		pkgLanguage: pkg.Dotnet,
 		pkgInfo: map[string]string{
+			// executable
 			"DocuSign.eSign": "6.8.0.0",
+			// deps.json
+			"AWSSDK.Core": "3.7.10.6",
+			"Microsoft.Extensions.DependencyInjection":              "6.0.0",
+			"Microsoft.Extensions.DependencyInjection.Abstractions": "6.0.0",
+			"Microsoft.Extensions.Logging":                          "6.0.0",
+			"Microsoft.Extensions.Logging.Abstractions":             "6.0.0",
+			"Microsoft.Extensions.Options":                          "6.0.0",
+			"Microsoft.Extensions.Primitives":                       "6.0.0",
+			"Newtonsoft.Json":                                       "13.0.1",
+			"Serilog":                                               "2.10.0",
+			"Serilog.Sinks.Console":                                 "4.0.1",
+			//"System.Diagnostics.DiagnosticSource":                   "6.0.0", // no dll claims in deps.json targets section
+			//"System.Runtime.CompilerServices.Unsafe":                "6.0.0", // no dll claims in deps.json targets section
+			"TestCommon":  "1.0.0",
+			"TestLibrary": "1.0.0",
 		},
 	},
 }
@@ -241,10 +257,11 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
-		name:        "find dotnet packages",
+		name:        "find dotnet packages (.deps.json)",
 		pkgType:     pkg.DotnetPkg,
 		pkgLanguage: pkg.Dotnet,
 		pkgInfo: map[string]string{
+			// all from deps.json
 			"AWSSDK.Core": "3.7.10.6",
 			"Microsoft.Extensions.DependencyInjection":              "6.0.0",
 			"Microsoft.Extensions.DependencyInjection.Abstractions": "6.0.0",
@@ -255,10 +272,10 @@ var dirOnlyTestCases = []testCase{
 			"Newtonsoft.Json":                                       "13.0.1",
 			"Serilog":                                               "2.10.0",
 			"Serilog.Sinks.Console":                                 "4.0.1",
-			"System.Diagnostics.DiagnosticSource":                   "6.0.0",
-			"System.Runtime.CompilerServices.Unsafe":                "6.0.0",
-			"TestCommon":                                            "1.0.0",
-			"TestLibrary":                                           "1.0.0",
+			//"System.Diagnostics.DiagnosticSource":                   "6.0.0", // no dll claims in deps.json targets section
+			//"System.Runtime.CompilerServices.Unsafe":                "6.0.0", // no dll claims in deps.json targets section
+			"TestCommon":  "1.0.0",
+			"TestLibrary": "1.0.0",
 		},
 	},
 	{

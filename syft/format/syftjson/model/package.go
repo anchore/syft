@@ -52,6 +52,7 @@ type License struct {
 	Type           license.Type    `json:"type"`
 	URLs           []string        `json:"urls"`
 	Locations      []file.Location `json:"locations"`
+	Contents       string          `json:"contents,omitempty"`
 }
 
 func newModelLicensesFromValues(licenses []string) (ml []License) {

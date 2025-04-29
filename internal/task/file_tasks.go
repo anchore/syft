@@ -6,6 +6,7 @@ import (
 
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cataloging/filecataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
@@ -15,14 +16,27 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func NewFileDigestCatalogerTask(selection file.Selection, hashers ...crypto.Hash) Task {
-	if selection == file.NoFilesSelection || len(hashers) == 0 {
-		return nil
+func DefaultFileTaskFactories() Factories {
+	return Factories{
+		newFileDigestCatalogerTaskFactory("digest"),
+		newFileMetadataCatalogerTaskFactory("file-metadata"),
+		newFileContentCatalogerTaskFactory("content"),
+		newExecutableCatalogerTaskFactory("binary-metadata"),
 	}
+}
 
-	digestsCataloger := filedigest.NewCataloger(hashers)
+func newFileDigestCatalogerTaskFactory(tags ...string) factory {
+	return func(cfg CatalogingFactoryConfig) Task {
+		return newFileDigestCatalogerTask(cfg.FilesConfig.Selection, cfg.FilesConfig.Hashers, tags...)
+	}
+}
 
+func newFileDigestCatalogerTask(selection file.Selection, hashers []crypto.Hash, tags ...string) Task {
 	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+		if selection == file.NoFilesSelection || len(hashers) == 0 {
+			return nil
+		}
+
 		accessor := builder.(sbomsync.Accessor)
 
 		coordinates, ok := coordinatesForSelection(selection, builder.(sbomsync.Accessor))
@@ -30,7 +44,7 @@ func NewFileDigestCatalogerTask(selection file.Selection, hashers ...crypto.Hash
 			return nil
 		}
 
-		result, err := digestsCataloger.Catalog(ctx, resolver, coordinates...)
+		result, err := filedigest.NewCataloger(hashers).Catalog(ctx, resolver, coordinates...)
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
 			sbom.Artifacts.FileDigests = result
@@ -39,17 +53,21 @@ func NewFileDigestCatalogerTask(selection file.Selection, hashers ...crypto.Hash
 		return err
 	}
 
-	return NewTask("file-digest-cataloger", fn)
+	return NewTask("file-digest-cataloger", fn, commonFileTags(tags)...)
 }
 
-func NewFileMetadataCatalogerTask(selection file.Selection) Task {
-	if selection == file.NoFilesSelection {
-		return nil
+func newFileMetadataCatalogerTaskFactory(tags ...string) factory {
+	return func(cfg CatalogingFactoryConfig) Task {
+		return newFileMetadataCatalogerTask(cfg.FilesConfig.Selection, tags...)
 	}
+}
 
-	metadataCataloger := filemetadata.NewCataloger()
-
+func newFileMetadataCatalogerTask(selection file.Selection, tags ...string) Task {
 	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+		if selection == file.NoFilesSelection {
+			return nil
+		}
+
 		accessor := builder.(sbomsync.Accessor)
 
 		coordinates, ok := coordinatesForSelection(selection, builder.(sbomsync.Accessor))
@@ -57,7 +75,7 @@ func NewFileMetadataCatalogerTask(selection file.Selection) Task {
 			return nil
 		}
 
-		result, err := metadataCataloger.Catalog(ctx, resolver, coordinates...)
+		result, err := filemetadata.NewCataloger().Catalog(ctx, resolver, coordinates...)
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
 			sbom.Artifacts.FileMetadata = result
@@ -66,20 +84,24 @@ func NewFileMetadataCatalogerTask(selection file.Selection) Task {
 		return err
 	}
 
-	return NewTask("file-metadata-cataloger", fn)
+	return NewTask("file-metadata-cataloger", fn, commonFileTags(tags)...)
 }
 
-func NewFileContentCatalogerTask(cfg filecontent.Config) Task {
-	if len(cfg.Globs) == 0 {
-		return nil
+func newFileContentCatalogerTaskFactory(tags ...string) factory {
+	return func(cfg CatalogingFactoryConfig) Task {
+		return newFileContentCatalogerTask(cfg.FilesConfig.Content, tags...)
 	}
+}
 
-	cat := filecontent.NewCataloger(cfg)
-
+func newFileContentCatalogerTask(cfg filecontent.Config, tags ...string) Task {
 	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+		if len(cfg.Globs) == 0 {
+			return nil
+		}
+
 		accessor := builder.(sbomsync.Accessor)
 
-		result, err := cat.Catalog(ctx, resolver)
+		result, err := filecontent.NewCataloger(cfg).Catalog(ctx, resolver)
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
 			sbom.Artifacts.FileContents = result
@@ -88,20 +110,24 @@ func NewFileContentCatalogerTask(cfg filecontent.Config) Task {
 		return err
 	}
 
-	return NewTask("file-content-cataloger", fn)
+	return NewTask("file-content-cataloger", fn, commonFileTags(tags)...)
 }
 
-func NewExecutableCatalogerTask(selection file.Selection, cfg executable.Config) Task {
-	if selection == file.NoFilesSelection {
-		return nil
+func newExecutableCatalogerTaskFactory(tags ...string) factory {
+	return func(cfg CatalogingFactoryConfig) Task {
+		return newExecutableCatalogerTask(cfg.FilesConfig.Selection, cfg.FilesConfig.Executable, tags...)
 	}
+}
 
-	cat := executable.NewCataloger(cfg)
+func newExecutableCatalogerTask(selection file.Selection, cfg executable.Config, tags ...string) Task {
+	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+		if selection == file.NoFilesSelection {
+			return nil
+		}
 
-	fn := func(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		accessor := builder.(sbomsync.Accessor)
 
-		result, err := cat.Catalog(resolver)
+		result, err := executable.NewCataloger(cfg).CatalogCtx(ctx, resolver)
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
 			sbom.Artifacts.Executables = result
@@ -110,7 +136,7 @@ func NewExecutableCatalogerTask(selection file.Selection, cfg executable.Config)
 		return err
 	}
 
-	return NewTask("file-executable-cataloger", fn)
+	return NewTask("file-executable-cataloger", fn, commonFileTags(tags)...)
 }
 
 // TODO: this should be replaced with a fix that allows passing a coordinate or location iterator to the cataloger
@@ -153,4 +179,9 @@ func coordinatesForSelection(selection file.Selection, accessor sbomsync.Accesso
 	}
 
 	return nil, false
+}
+
+func commonFileTags(tags []string) []string {
+	tags = append(tags, filecataloging.FileTag)
+	return tags
 }

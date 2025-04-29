@@ -19,6 +19,7 @@ import (
 	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
+	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
@@ -33,6 +34,7 @@ type Catalog struct {
 	DefaultCatalogers []string            `yaml:"default-catalogers" json:"default-catalogers" mapstructure:"default-catalogers"`
 	SelectCatalogers  []string            `yaml:"select-catalogers" json:"select-catalogers" mapstructure:"select-catalogers"`
 	Package           packageConfig       `yaml:"package" json:"package" mapstructure:"package"`
+	License           licenseConfig       `yaml:"license" json:"license" mapstructure:"license"`
 	File              fileConfig          `yaml:"file" json:"file" mapstructure:"file"`
 	Scope             string              `yaml:"scope" json:"scope" mapstructure:"scope"`
 	Parallelism       int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
@@ -41,6 +43,7 @@ type Catalog struct {
 	Enrich            []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
 
 	// ecosystem-specific cataloger configuration
+	Dotnet      dotnetConfig      `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
 	JavaScript  javaScriptConfig  `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
@@ -65,18 +68,21 @@ var _ interface {
 } = (*Catalog)(nil)
 
 func DefaultCatalog() Catalog {
+	cfg := syft.DefaultCreateSBOMConfig()
 	return Catalog{
 		Compliance:    defaultComplianceConfig(),
 		Scope:         source.SquashedScope.String(),
 		Package:       defaultPackageConfig(),
+		License:       defaultLicenseConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
+		Dotnet:        defaultDotnetConfig(),
 		Golang:        defaultGolangConfig(),
 		Java:          defaultJavaConfig(),
 		File:          defaultFileConfig(),
 		Relationships: defaultRelationshipsConfig(),
 		Unknowns:      defaultUnknowns(),
 		Source:        defaultSourceConfig(),
-		Parallelism:   1,
+		Parallelism:   cfg.Parallelism,
 	}
 }
 
@@ -89,9 +95,10 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithUnknownsConfig(cfg.ToUnknownsConfig()).
 		WithSearchConfig(cfg.ToSearchConfig()).
 		WithPackagesConfig(cfg.ToPackagesConfig()).
+		WithLicenseConfig(cfg.ToLicenseConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
 		WithCatalogerSelection(
-			pkgcataloging.NewSelectionRequest().
+			cataloging.NewSelectionRequest().
 				WithDefaults(cfg.DefaultCatalogers...).
 				WithExpression(cfg.SelectCatalogers...),
 		)
@@ -146,6 +153,13 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 	}
 }
 
+func (cfg Catalog) ToLicenseConfig() cataloging.LicenseConfig {
+	return cataloging.LicenseConfig{
+		IncludeUnkownLicenseContent: cfg.License.IncludeUnknownLicenseContent,
+		Coverage:                    cfg.License.LicenseCoverage,
+	}
+}
+
 func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	archiveSearch := cataloging.ArchiveSearchConfig{
 		IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
@@ -153,6 +167,11 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	}
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
+		Dotnet: dotnet.DefaultCatalogerConfig().
+			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
+			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).
+			WithPropagateDLLClaimsToParents(cfg.Dotnet.PropagateDLLClaimsToParents).
+			WithRelaxDLLClaimsWhenBundlingDetected(cfg.Dotnet.RelaxDLLClaimsWhenBundlingDetected),
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
@@ -207,6 +226,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 	flags.StringArrayVarP(&cfg.Catalogers, "catalogers", "",
 		"enable one or more package catalogers")
 
+	flags.IntVarP(&cfg.Parallelism, "parallelism", "",
+		"number of cataloger workers to run in parallel")
+
 	if pfp, ok := flags.(fangs.PFlagSetProvider); ok {
 		if err := pfp.PFlagSet().MarkDeprecated("catalogers", "use: override-default-catalogers and select-catalogers"); err != nil {
 			panic(err)
@@ -235,7 +257,8 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
-	descriptions.Add(&cfg.Parallelism, "number of cataloger workers to run in parallel")
+	descriptions.Add(&cfg.Parallelism, `number of cataloger workers to run in parallel
+by default, when set to 0: this will be based on runtime.NumCPU * 4, if set to less than 0 it will be unbounded`)
 
 	descriptions.Add(&cfg.Enrich, fmt.Sprintf(`Enable data enrichment operations, which can utilize services such as Maven Central and NPM.
 By default all enrichment is disabled, use: all to enable everything.
@@ -250,12 +273,12 @@ func (cfg *Catalog) PostLoad() error {
 		return fmt.Errorf("cannot use both 'catalogers' and 'select-catalogers'/'default-catalogers' flags")
 	}
 
-	cfg.From = flatten(cfg.From)
+	cfg.From = Flatten(cfg.From)
 
-	cfg.Catalogers = flatten(cfg.Catalogers)
-	cfg.DefaultCatalogers = flatten(cfg.DefaultCatalogers)
-	cfg.SelectCatalogers = flatten(cfg.SelectCatalogers)
-	cfg.Enrich = flatten(cfg.Enrich)
+	cfg.Catalogers = Flatten(cfg.Catalogers)
+	cfg.DefaultCatalogers = Flatten(cfg.DefaultCatalogers)
+	cfg.SelectCatalogers = Flatten(cfg.SelectCatalogers)
+	cfg.Enrich = Flatten(cfg.Enrich)
 
 	// for backwards compatibility
 	cfg.DefaultCatalogers = append(cfg.DefaultCatalogers, cfg.Catalogers...)
@@ -273,7 +296,7 @@ func (cfg *Catalog) PostLoad() error {
 	return nil
 }
 
-func flatten(commaSeparatedEntries []string) []string {
+func Flatten(commaSeparatedEntries []string) []string {
 	var out []string
 	for _, v := range commaSeparatedEntries {
 		for _, s := range strings.Split(v, ",") {

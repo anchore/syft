@@ -9,7 +9,7 @@ import (
 	"unicode"
 
 	pep440 "github.com/aquasecurity/go-pep440-version"
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -127,7 +127,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 
 		req := newRequirement(line)
 		if req == nil {
-			log.WithFields("path", reader.RealPath).Warnf("unable to parse requirements.txt line: %q", line)
+			log.WithFields("path", reader.RealPath, "line", line).Debug("unable to parse requirements.txt line")
 			errs = unknown.Appendf(errs, reader, "unable to parse requirements.txt line: %q", line)
 			continue
 		}
@@ -136,7 +136,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 		version := parseVersion(req.VersionConstraint, rp.guessUnpinnedRequirements)
 
 		if version == "" {
-			log.WithFields("path", reader.RealPath).Tracef("unable to determine package version in requirements.txt line: %q", line)
+			log.WithFields("path", reader.RealPath, "line", line).Trace("unable to determine package version in requirements.txt line")
 			errs = unknown.Appendf(errs, reader, "unable to determine package version in requirements.txt line: %q", line)
 			continue
 		}
@@ -153,7 +153,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 					URL:               parseURL(req.URL),
 					Markers:           req.Markers,
 				},
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}

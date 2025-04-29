@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -169,7 +170,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 	}
 
-	licenseScanner := licenses.TestingOnlyScanner()
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	licenseScanner, err := licenses.NewScanner(sc)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name          string
