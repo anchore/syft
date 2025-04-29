@@ -28,6 +28,12 @@ RUN mkdir -p /nix-minimal && \
         cp -a $dep /nix-minimal$dep; \
     done
 
+# now add all the drv files from the store
+RUN for drv in $(find /nix/store -name "*.drv"); do \
+        mkdir -p /nix-minimal$(dirname $drv) && \
+        cp -a $drv /nix-minimal$drv; \
+    done
+
 FROM scratch
 
 # get packages + relationships from here
