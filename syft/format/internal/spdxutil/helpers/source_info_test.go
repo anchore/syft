@@ -140,7 +140,7 @@ func Test_SourceInfo(t *testing.T) {
 				Type: pkg.PhpPeclPkg,
 			},
 			expected: []string{
-				"from PHP PECL manifest",
+				"from PHP Pecl manifest",
 			},
 		},
 		{

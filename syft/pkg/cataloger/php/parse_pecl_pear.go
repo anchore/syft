@@ -8,16 +8,40 @@ import (
 	"github.com/elliotchance/phpserialize"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+type peclPearData struct {
+	Name    string
+	Channel string
+	Version string
+	License []string
+}
+
+func (p *peclPearData) ToPear() pkg.PhpPearEntry {
+	return pkg.PhpPearEntry{
+		Name:    p.Name,
+		Channel: p.Channel,
+		Version: p.Version,
+		License: p.License,
+	}
+}
+
+func (p *peclPearData) ToPecl() pkg.PhpPeclEntry {
+	return pkg.PhpPeclEntry(p.ToPear())
+}
+
 func parsePecl(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	m, err := parsePeclPearSerialized(reader)
 	if err != nil {
 		return nil, nil, err
+	}
+	if m == nil {
+		return nil, nil, unknown.New(reader.Location, fmt.Errorf("no pecl package found"))
 	}
 	return []pkg.Package{newPeclPackage(*m, reader.Location)}, nil, nil
 }
@@ -27,11 +51,14 @@ func parsePear(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 	if err != nil {
 		return nil, nil, err
 	}
+	if m == nil {
+		return nil, nil, unknown.New(reader.Location, fmt.Errorf("no pear package found"))
+	}
 	return []pkg.Package{newPearPackage(*m, reader.Location)}, nil, nil
 }
 
 // parsePeclPearSerialized is a parser function for Pear metadata contents, returning "Default" php packages discovered.
-func parsePeclPearSerialized(reader file.LocationReadCloser) (*pkg.PhpPearEntry, error) {
+func parsePeclPearSerialized(reader file.LocationReadCloser) (*peclPearData, error) {
 	data, err := io.ReadAll(reader)
 
 	if err != nil {
@@ -53,13 +80,14 @@ func parsePeclPearSerialized(reader file.LocationReadCloser) (*pkg.PhpPearEntry,
 
 	channel, ok := metadata["channel"].(string)
 	if !ok {
-		return nil, fmt.Errorf("failed to parse pear package channel: %w", err)
+		// this could be the v5 format
+		channel = ""
 	}
 
 	version := readStruct(metadata, "version", "release")
 	license := readStruct(metadata, "license", "_content")
 
-	return &pkg.PhpPearEntry{
+	return &peclPearData{
 		Name:    name,
 		Channel: channel,
 		Version: version,

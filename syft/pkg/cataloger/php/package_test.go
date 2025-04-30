@@ -50,28 +50,25 @@ func Test_packageURLFromPear(t *testing.T) {
 		name     string
 		channel  string
 		version  string
-		fallback string
 		expected string
 	}{
 		{
 			name:     "memcached",
-			channel:  "pecl.php.net",
+			channel:  "pear.php.net",
 			version:  "3.2.0",
-			fallback: "FALLBACK.php.net",
-			expected: "pkg:pear/pecl.php.net/memcached@3.2.0",
+			expected: "pkg:pear/pear.php.net/memcached@3.2.0",
 		},
 		{
-			name:     "memcached-fallback",
-			channel:  "",
+			name:     "memcached",
+			channel:  "", // important!
 			version:  "3.2.0",
-			fallback: "FALLBACK.php.net",
-			expected: "pkg:pear/FALLBACK.php.net/memcached-fallback@3.2.0",
+			expected: "pkg:pear/pecl.php.net/memcached@3.2.0",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := packageURLFromPear(test.name, test.channel, test.version, test.fallback)
+			actual := packageURLFromPear(test.name, test.channel, test.version)
 			if actual != test.expected {
 				dmp := diffmatchpatch.New()
 				diffs := dmp.DiffMain(test.expected, actual, true)

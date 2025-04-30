@@ -44,7 +44,7 @@ type PhpPeclEntry PhpPearEntry
 // PhpPearEntry represents a single package entry found from a pear.php.net package.xml file.
 type PhpPearEntry struct {
 	Name    string   `json:"name"`
-	Channel string   `json:"channel"`
+	Channel string   `json:"channel,omitempty"`
 	Version string   `json:"version"`
 	License []string `json:"license,omitempty"`
 }

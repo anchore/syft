@@ -10,55 +10,125 @@ import (
 )
 
 func TestParsePear(t *testing.T) {
-	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/memcached.reg"
-	locations := file.NewLocationSet(file.NewLocation(fixture))
-	expectedPkgs := []pkg.Package{
+	tests := []struct {
+		name                  string
+		fixture               string
+		expectedPkgs          []pkg.Package
+		expectedRelationships []artifact.Relationship
+	}{
 		{
-			Name:      "memcached",
-			Version:   "3.2.0",
-			PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
-			Locations: locations,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("PHP License", file.NewLocation(fixture)),
-			),
-			Language: pkg.PHP,
-			Type:     pkg.PhpPearPkg,
-			Metadata: pkg.PhpPearEntry{
-				Name:    "memcached",
-				Channel: "pecl.php.net",
-				Version: "3.2.0",
-				License: []string{"PHP License"},
+			name:    "v6 format",
+			fixture: "test-fixtures/memcached-v6-format.reg",
+			expectedPkgs: []pkg.Package{
+				{
+					Name:      "memcached",
+					Version:   "3.2.0",
+					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v6-format.reg")),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocations("PHP License", file.NewLocation("test-fixtures/memcached-v6-format.reg")),
+					),
+					Language: pkg.PHP,
+					Type:     pkg.PhpPearPkg,
+					Metadata: pkg.PhpPearEntry{
+						Name:    "memcached",
+						Channel: "pecl.php.net",
+						Version: "3.2.0",
+						License: []string{"PHP License"},
+					},
+				},
+			},
+		},
+		{
+			name:    "v5 format",
+			fixture: "test-fixtures/memcached-v5-format.reg",
+			expectedPkgs: []pkg.Package{
+				{
+					Name:      "memcached",
+					Version:   "3.2.0",
+					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v5-format.reg")),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocations("PHP License", file.NewLocation("test-fixtures/memcached-v5-format.reg")),
+					),
+					Language: pkg.PHP,
+					Type:     pkg.PhpPearPkg,
+					Metadata: pkg.PhpPearEntry{ // important: missing channel
+						Name:    "memcached",
+						Version: "3.2.0",
+						License: []string{"PHP License"},
+					},
+				},
 			},
 		},
 	}
-	pkgtest.TestFileParser(t, fixture, parsePear, expectedPkgs, expectedRelationships)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgtest.TestFileParser(t, tt.fixture, parsePear, tt.expectedPkgs, tt.expectedRelationships)
+		})
+	}
 }
 
 func TestParsePecl(t *testing.T) {
-	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/memcached.reg"
-	locations := file.NewLocationSet(file.NewLocation(fixture))
-	expectedPkgs := []pkg.Package{
+	tests := []struct {
+		name                  string
+		fixture               string
+		expectedPkgs          []pkg.Package
+		expectedRelationships []artifact.Relationship
+	}{
 		{
-			Name:      "memcached",
-			Version:   "3.2.0",
-			PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
-			Locations: locations,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("PHP License", file.NewLocation(fixture)),
-			),
-			Language: pkg.PHP,
-			Type:     pkg.PhpPeclPkg, // important!
-			Metadata: pkg.PhpPeclEntry{ // important!
-				Name:    "memcached",
-				Channel: "pecl.php.net",
-				Version: "3.2.0",
-				License: []string{"PHP License"},
+			name:    "v6 format",
+			fixture: "test-fixtures/memcached-v6-format.reg",
+			expectedPkgs: []pkg.Package{
+				{
+					Name:      "memcached",
+					Version:   "3.2.0",
+					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v6-format.reg")),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocations("PHP License", file.NewLocation("test-fixtures/memcached-v6-format.reg")),
+					),
+					Language: pkg.PHP,
+					Type:     pkg.PhpPeclPkg, // important!
+					Metadata: pkg.PhpPeclEntry{ // important!
+						Name:    "memcached",
+						Channel: "pecl.php.net",
+						Version: "3.2.0",
+						License: []string{"PHP License"},
+					},
+				},
+			},
+		},
+		{
+			name:    "v5 format",
+			fixture: "test-fixtures/memcached-v5-format.reg",
+			expectedPkgs: []pkg.Package{
+				{
+					Name:      "memcached",
+					Version:   "3.2.0",
+					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v5-format.reg")),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocations("PHP License", file.NewLocation("test-fixtures/memcached-v5-format.reg")),
+					),
+					Language: pkg.PHP,
+					Type:     pkg.PhpPeclPkg, // important!
+					Metadata: pkg.PhpPeclEntry{ // important!
+						Name:    "memcached",
+						Version: "3.2.0",
+						License: []string{"PHP License"},
+					},
+				},
 			},
 		},
 	}
-	pkgtest.TestFileParser(t, fixture, parsePecl, expectedPkgs, expectedRelationships)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgtest.TestFileParser(t, tt.fixture, parsePecl, tt.expectedPkgs, tt.expectedRelationships)
+		})
+	}
 }
 
 func Test_corruptPecl(t *testing.T) {

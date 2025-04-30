@@ -40,32 +40,32 @@ func newComposerInstalledPackage(pd parsedInstalledData, indexLocation file.Loca
 	return p
 }
 
-func newPearPackage(pd pkg.PhpPearEntry, indexLocation file.Location) pkg.Package {
+func newPearPackage(pd peclPearData, indexLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      pd.Name,
 		Version:   pd.Version,
 		Locations: file.NewLocationSet(indexLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, pd.License...)...),
-		PURL:      packageURLFromPear(pd.Name, pd.Channel, pd.Version, "pear.php.net"),
+		PURL:      packageURLFromPear(pd.Name, pd.Channel, pd.Version),
 		Language:  pkg.PHP,
 		Type:      pkg.PhpPearPkg,
-		Metadata:  pd,
+		Metadata:  pd.ToPear(),
 	}
 
 	p.SetID()
 	return p
 }
 
-func newPeclPackage(pd pkg.PhpPearEntry, indexLocation file.Location) pkg.Package {
+func newPeclPackage(pd peclPearData, indexLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      pd.Name,
 		Version:   pd.Version,
 		Locations: file.NewLocationSet(indexLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, pd.License...)...),
-		PURL:      packageURLFromPear(pd.Name, pd.Channel, pd.Version, "pecl.php.net"), // even though this is a PECL package the purl is still for Pear
+		PURL:      packageURLFromPear(pd.Name, pd.Channel, pd.Version),
 		Language:  pkg.PHP,
 		Type:      pkg.PhpPeclPkg,
-		Metadata:  pkg.PhpPeclEntry(pd),
+		Metadata:  pd.ToPecl(),
 	}
 
 	p.SetID()
@@ -98,10 +98,10 @@ func packageURLFromComposer(name, version string) string {
 	return pURL.ToString()
 }
 
-func packageURLFromPear(pkgName, channel, version, fallbackNamespace string) string {
+func packageURLFromPear(pkgName, channel, version string) string {
 	namespace := channel
 	if namespace == "" {
-		namespace = fallbackNamespace
+		namespace = "pecl.php.net"
 	}
 
 	pURL := packageurl.NewPackageURL(

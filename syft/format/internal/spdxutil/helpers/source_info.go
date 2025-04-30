@@ -43,7 +43,7 @@ func SourceInfo(p pkg.Package) string {
 	case pkg.PhpPearPkg:
 		answer = "acquired package info from PHP Pear manifest"
 	case pkg.PhpPeclPkg:
-		answer = "acquired package info from PHP PECL manifest"
+		answer = "acquired package info from PHP Pecl manifest"
 	case pkg.CocoapodsPkg:
 		answer = "acquired package info from installed cocoapods manifest file"
 	case pkg.ConanPkg:
