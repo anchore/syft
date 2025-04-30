@@ -57,6 +57,7 @@ func TestAllPackageCatalogersReachableInTasks(t *testing.T) {
 		"dotnet-portable-executable-cataloger",
 		"dotnet-deps-cataloger",
 		"nix-store-cataloger",
+		"php-pecl-serialized-cataloger",
 		// not reachable by design
 		"sbom-cataloger",
 	)

@@ -1656,56 +1656,13 @@
         "kb"
       ]
     },
-    "NixDerivation": {
-      "properties": {
-        "path": {
-          "type": "string"
-        },
-        "system": {
-          "type": "string"
-        },
-        "inputDerivations": {
-          "items": {
-            "$ref": "#/$defs/NixDerivationReference"
-          },
-          "type": "array"
-        },
-        "inputSources": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "NixDerivationReference": {
-      "properties": {
-        "path": {
-          "type": "string"
-        },
-        "outputs": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
     "NixStoreEntry": {
       "properties": {
-        "path": {
+        "outputHash": {
           "type": "string"
         },
         "output": {
           "type": "string"
-        },
-        "outputHash": {
-          "type": "string"
-        },
-        "derivation": {
-          "$ref": "#/$defs/NixDerivation"
         },
         "files": {
           "items": {
@@ -1716,7 +1673,8 @@
       },
       "type": "object",
       "required": [
-        "outputHash"
+        "outputHash",
+        "files"
       ]
     },
     "OpamPackage": {
@@ -1913,6 +1871,9 @@
             },
             {
               "$ref": "#/$defs/PhpComposerLockEntry"
+            },
+            {
+              "$ref": "#/$defs/PhpPearEntry"
             },
             {
               "$ref": "#/$defs/PhpPeclEntry"
@@ -2206,9 +2167,36 @@
         "dist"
       ]
     },
+    "PhpPearEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
+    },
     "PhpPeclEntry": {
       "properties": {
         "name": {
+          "type": "string"
+        },
+        "channel": {
           "type": "string"
         },
         "version": {

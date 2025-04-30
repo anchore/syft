@@ -85,6 +85,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.GithubActionPkg))
 	definedPkgs.Remove(string(pkg.GithubActionWorkflowPkg))
 	definedPkgs.Remove(string(pkg.TerraformPkg))
+	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // we have coverage for pear instead
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -227,6 +228,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
 	definedPkgs.Remove(string(pkg.Rpkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
+	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // this is covered as pear packages
 
 	// for directory scans we should not expect to see any of the following package types
 	definedPkgs.Remove(string(pkg.KbPkg))

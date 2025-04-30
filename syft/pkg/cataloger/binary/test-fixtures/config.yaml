@@ -71,6 +71,14 @@ from-images:
     paths:
       - /usr/local/lib/erlang/erts-15.0/bin/beam.smp
 
+  - name: erlang
+    version: 26.1.2
+    images:
+      - ref: hexpm/elixir:1.15.6-erlang-26.1.2-alpine-3.18.4@sha256:e84f6667f4e3d2fe00fcdb9d1c2cdd614733296c39b20b28b092743f1161bc11
+        platform: linux/arm64
+    paths:
+      - /usr/local/lib/erlang/erts-14.1.1/bin/beam.smp
+
   - version: 9.3.8
     images:
       - ref: swipl:9.3.8@sha256:6a15e6a03afe943228924a5502ba763e653ff28d9b3391e2b3e1fc3e991f37d4
