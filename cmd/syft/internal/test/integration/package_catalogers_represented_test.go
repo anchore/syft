@@ -56,6 +56,7 @@ func TestAllPackageCatalogersReachableInTasks(t *testing.T) {
 		// not reachable since they are deprecated
 		"dotnet-portable-executable-cataloger",
 		"dotnet-deps-cataloger",
+		"php-pecl-serialized-cataloger",
 		// not reachable by design
 		"sbom-cataloger",
 	)

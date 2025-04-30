@@ -2188,7 +2188,6 @@
       "type": "object",
       "required": [
         "name",
-        "channel",
         "version"
       ]
     },
@@ -2213,7 +2212,6 @@
       "type": "object",
       "required": [
         "name",
-        "channel",
         "version"
       ]
     },
