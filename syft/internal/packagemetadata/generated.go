@@ -42,6 +42,7 @@ func AllTypes() []any {
 		pkg.OpamPackage{},
 		pkg.PhpComposerInstalledEntry{},
 		pkg.PhpComposerLockEntry{},
+		pkg.PhpPearEntry{},
 		pkg.PhpPeclEntry{},
 		pkg.PortageEntry{},
 		pkg.PythonPackage{},
