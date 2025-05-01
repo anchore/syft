@@ -759,13 +759,18 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	for _, id := range ids {
 		license := licenses[id]
 		value := license.Value
+		fullText := license.FullText
 		// handle cases where LicenseRef needs to be included in hasExtractedLicensingInfos
 		if license.Value == "" {
 			value, _ = strings.CutPrefix(license.ID, "LicenseRef-")
 		}
 		other := &spdx.OtherLicense{
 			LicenseIdentifier: license.ID,
-			ExtractedText:     value,
+		}
+		if fullText != "" {
+			other.ExtractedText = fullText
+		} else {
+			other.ExtractedText = value
 		}
 		customPrefix := spdxlicense.LicenseRefPrefix + helpers.SanitizeElementID(internallicenses.UnknownLicensePrefix)
 		if strings.HasPrefix(license.ID, customPrefix) {
