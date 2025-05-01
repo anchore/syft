@@ -59,7 +59,7 @@ func (s *LicenseSet) Add(licenses ...License) {
 			// doesn't exist, add it
 			s.set[id] = l
 		} else if err != nil {
-			log.Trace("license set failed to add license %#v: %+v", l, err)
+			log.WithFields("error", err, "license", l).Trace("failed to add license to license set")
 		}
 	}
 }

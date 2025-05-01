@@ -81,7 +81,7 @@ func NewLicenseFromType(value string, t license.Type) License {
 	// Check parsed value for newline character to see if it's the full license text
 	// License: <HERE IS THE FULL TEXT> <Expressions>
 	// DO we want to also submit file name when determining fulltext
-	if strings.Contains(value, "\n") {
+	if strings.Contains(strings.TrimSpace(value), "\n") {
 		fullText = value
 	} else {
 		var err error
