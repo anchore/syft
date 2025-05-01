@@ -235,9 +235,11 @@ func Test_sdkVersionParser_valid(t *testing.T) {
 	}
 
 	for constraint, expected := range patterns {
-		version, err = parseMinimumSdkVersion(constraint)
-		assert.NoError(t, err)
-		assert.Equalf(t, expected, version, "constraint '%s", constraint)
+		t.Run(constraint, func(t *testing.T) {
+			version, err = parseMinimumSdkVersion(constraint)
+			assert.NoError(t, err)
+			assert.Equal(t, expected, version)
+		})
 	}
 }
 

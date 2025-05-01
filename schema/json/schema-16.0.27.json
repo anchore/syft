@@ -1877,6 +1877,9 @@
               "$ref": "#/$defs/PhpComposerLockEntry"
             },
             {
+              "$ref": "#/$defs/PhpPearEntry"
+            },
+            {
               "$ref": "#/$defs/PhpPeclEntry"
             },
             {
@@ -2168,9 +2171,36 @@
         "dist"
       ]
     },
+    "PhpPearEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
+    },
     "PhpPeclEntry": {
       "properties": {
         "name": {
+          "type": "string"
+        },
+        "channel": {
           "type": "string"
         },
         "version": {

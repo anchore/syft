@@ -34,6 +34,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.NixStoreEntry{},
 		pkg.NpmPackageLockEntry{},
 		pkg.PhpComposerInstalledEntry{},
+		pkg.PhpPearEntry{},
 		pkg.PhpPeclEntry{},
 		pkg.PortageEntry{},
 		pkg.PythonPipfileLockEntry{},
