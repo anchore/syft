@@ -1391,9 +1391,6 @@
         "value": {
           "type": "string"
         },
-        "fullText": {
-          "type": "string"
-        },
         "spdxExpression": {
           "type": "string"
         },
@@ -1419,7 +1416,6 @@
       "type": "object",
       "required": [
         "value",
-        "fullText",
         "spdxExpression",
         "type",
         "urls",
@@ -1877,6 +1873,9 @@
               "$ref": "#/$defs/PhpComposerLockEntry"
             },
             {
+              "$ref": "#/$defs/PhpPearEntry"
+            },
+            {
               "$ref": "#/$defs/PhpPeclEntry"
             },
             {
@@ -2168,9 +2167,36 @@
         "dist"
       ]
     },
+    "PhpPearEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
+    },
     "PhpPeclEntry": {
       "properties": {
         "name": {
+          "type": "string"
+        },
+        "channel": {
           "type": "string"
         },
         "version": {
