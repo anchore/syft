@@ -94,7 +94,7 @@ func generateLicenseID(l pkg.License) string {
 		return l.SPDXExpression
 	}
 	if l.Value != "" {
-		return licenseSum(l.Value)
+		return spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
 	}
 	return licenseSum(l.FullText)
 }
