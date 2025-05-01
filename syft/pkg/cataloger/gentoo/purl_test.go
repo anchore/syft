@@ -17,7 +17,7 @@ func Test_packageURL(t *testing.T) {
 		{
 			"app-admin/eselect",
 			"1.4.15",
-			"pkg:ebuild/app-admin/eselect@1.4.15",
+			"pkg:ebuild/app-admin%2Feselect@1.4.15",
 		},
 	}
 	for _, tt := range tests {

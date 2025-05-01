@@ -5,8 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mholt/archiver/v3"
-
+	"github.com/anchore/archiver/v3"
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
@@ -165,7 +164,7 @@ func toDependencies(s *sbom.SBOM, p pkg.Package) (out []string) {
 func dependencyName(p pkg.Package) string {
 	purl, err := packageurl.FromString(p.PURL)
 	if err != nil {
-		log.Warnf("Invalid PURL for package: '%s' PURL: '%s' (%w)", p.Name, p.PURL, err)
+		log.Debugf("Invalid PURL for package: '%s' PURL: '%s' (%w)", p.Name, p.PURL, err)
 		return ""
 	}
 	// don't use qualifiers for this

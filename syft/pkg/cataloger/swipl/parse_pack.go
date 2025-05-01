@@ -62,7 +62,7 @@ func parsePackPackage(_ context.Context, _ file.Resolver, _ *generic.Environment
 		pkgs,
 		newSwiplPackPackage(
 			entry,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 	)
 

@@ -150,7 +150,7 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case partybus.Event:
-		log.WithFields("component", "ui").Tracef("event: %q", msg.Type)
+		log.WithFields("component", "ui", "event", msg.Type).Trace("event")
 
 		switch msg.Type {
 		case event.CLIReport, event.CLINotification, event.CLIAppUpdateAvailable:

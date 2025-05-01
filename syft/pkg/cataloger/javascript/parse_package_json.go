@@ -8,7 +8,7 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
@@ -36,9 +36,9 @@ type packageJSON struct {
 }
 
 type author struct {
-	Name  string `json:"name" mapstruct:"name"`
-	Email string `json:"email" mapstruct:"email"`
-	URL   string `json:"url" mapstruct:"url"`
+	Name  string `json:"name" mapstructure:"name"`
+	Email string `json:"email" mapstructure:"email"`
+	URL   string `json:"url" mapstructure:"url"`
 }
 
 type repository struct {
@@ -67,7 +67,7 @@ func parsePackageJSON(_ context.Context, _ file.Resolver, _ *generic.Environment
 		// a compliance filter later will remove these packages based on compliance rules
 		pkgs = append(
 			pkgs,
-			newPackageJSONPackage(p, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			newPackageJSONPackage(p, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		)
 	}
 

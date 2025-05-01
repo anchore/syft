@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -152,7 +153,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
 		Version:  "(devel)",
-		PURL:     "pkg:golang/github.com/anchore/syft@(devel)",
+		PURL:     "pkg:golang/github.com/anchore/syft@%28devel%29",
 		Locations: file.NewLocationSet(
 			file.NewLocationFromCoordinates(
 				file.Coordinates{
@@ -169,7 +170,9 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 	}
 
-	licenseScanner := licenses.TestingOnlyScanner()
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	licenseScanner, err := licenses.NewScanner(sc)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name          string
@@ -280,7 +283,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				{
 					Name:     "github.com/a/b/c",
 					Version:  "(devel)",
-					PURL:     "pkg:golang/github.com/a/b@(devel)#c",
+					PURL:     "pkg:golang/github.com/a/b@%28devel%29#c",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
@@ -932,7 +935,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				Language: pkg.Go,
 				Type:     pkg.GoModulePkg,
 				Version:  "(devel)",
-				PURL:     "pkg:golang/github.com/anchore/syft@(devel)",
+				PURL:     "pkg:golang/github.com/anchore/syft@%28devel%29",
 				Locations: file.NewLocationSet(
 					file.NewLocationFromCoordinates(
 						file.Coordinates{

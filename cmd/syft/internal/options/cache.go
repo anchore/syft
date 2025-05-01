@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/adrg/xdg"
-	"github.com/mitchellh/go-homedir"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/internal/cache"
 	"github.com/anchore/syft/internal/log"
 )

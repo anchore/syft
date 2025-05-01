@@ -157,7 +157,7 @@ func TestJvmDistributionCataloger(t *testing.T) {
 				Licenses:  pkg.NewLicenseSet(),
 				Type:      pkg.BinaryPkg,
 				CPEs:      []cpe.CPE{cpe.Must("cpe:2.3:a:oracle:openjdk:21.0.4:*:*:*:*:*:*:*", cpe.DeclaredSource)},
-				PURL:      "pkg:generic/oracle/openjdk@21.0.4%2B7-LTS?repository_url=https://github.com/adoptium/jdk21u.git",
+				PURL:      "pkg:generic/oracle/openjdk@21.0.4%2B7-LTS?repository_url=https%3A%2F%2Fgithub.com%2Fadoptium%2Fjdk21u.git",
 				Metadata: pkg.JavaVMInstallation{
 					Release: pkg.JavaVMRelease{
 						Implementor:        "Eclipse Adoptium",

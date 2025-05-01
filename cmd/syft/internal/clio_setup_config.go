@@ -6,7 +6,7 @@ import (
 
 	"github.com/anchore/clio"
 	"github.com/anchore/stereoscope"
-	ui2 "github.com/anchore/syft/cmd/syft/cli/ui"
+	handler "github.com/anchore/syft/cmd/syft/cli/ui"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -28,7 +28,7 @@ func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig
 
 				return clio.NewUICollection(
 					ui.New(out, cfg.Log.Quiet,
-						ui2.New(ui2.DefaultHandlerConfig()),
+						handler.New(handler.DefaultHandlerConfig()),
 					),
 					noUI,
 				), nil

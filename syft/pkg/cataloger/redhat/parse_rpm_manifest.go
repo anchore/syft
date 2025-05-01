@@ -35,12 +35,12 @@ func parseRpmManifest(_ context.Context, _ file.Resolver, _ *generic.Environment
 
 		metadata, err := newMetadataFromManifestLine(strings.TrimSuffix(line, "\n"))
 		if err != nil {
-			log.Warnf("unable to parse RPM manifest entry: %+v", err)
+			log.Debugf("unable to parse RPM manifest entry: %+v", err)
 			continue
 		}
 
 		if metadata == nil {
-			log.Warn("unable to parse RPM manifest entry: no metadata found")
+			log.Debug("unable to parse RPM manifest entry: no metadata found")
 			continue
 		}
 

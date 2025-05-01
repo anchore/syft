@@ -16,9 +16,9 @@ var _ interface {
 } = (*packageConfig)(nil)
 
 func (o *packageConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
-	descriptions.Add(&o.SearchUnindexedArchives, `search within archives that do contain a file index to search against (zip)
+	descriptions.Add(&o.SearchIndexedArchives, `search within archives that do contain a file index to search against (zip)
 note: for now this only applies to the java package cataloger`)
-	descriptions.Add(&o.SearchIndexedArchives, `search within archives that do not contain a file index to search against (tar, tar.gz, tar.bz2, etc)
+	descriptions.Add(&o.SearchUnindexedArchives, `search within archives that do not contain a file index to search against (tar, tar.gz, tar.bz2, etc)
 note: enabling this may result in a performance impact since all discovered compressed tars will be decompressed
 note: for now this only applies to the java package cataloger`)
 	descriptions.Add(&o.ExcludeBinaryOverlapByOwnership, `allows users to exclude synthetic binary packages from the sbom

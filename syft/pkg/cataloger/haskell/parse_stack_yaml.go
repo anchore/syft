@@ -31,7 +31,7 @@ func parseStackYaml(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	var stackFile stackYaml
 
 	if err := yaml.Unmarshal(bytes, &stackFile); err != nil {
-		log.WithFields("error", err).Tracef("failed to parse stack.yaml file %q", reader.RealPath)
+		log.WithFields("error", err, "path", reader.RealPath).Trace("failed to parse stack.yaml")
 		return nil, nil, fmt.Errorf("failed to parse stack.yaml file")
 	}
 

@@ -9,7 +9,7 @@ import (
 const (
 	// this is the number of packages that should be found in the image-pkg-coverage fixture image
 	// when analyzed with the squashed scope.
-	coverageImageSquashedPackageCount = 30
+	coverageImageSquashedPackageCount = 42
 )
 
 func TestPackagesCmdFlags(t *testing.T) {
@@ -299,6 +299,15 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 		},
 		{
+			name: "select-no-package-catalogers",
+			args: []string{"scan", "-o", "json", "--select-catalogers", "-package", coverageImage},
+			assertions: []traitAssertion{
+				assertPackageCount(0),
+				assertInOutput(`"used":["file-content-cataloger","file-digest-cataloger","file-executable-cataloger","file-metadata-cataloger"]`),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
 			name: "override-default-catalogers-option",
 			// This will detect enable:
 			// - python-installed-package-cataloger
@@ -308,6 +317,15 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", "-o", "json", "--override-default-catalogers", "python,gemspec", coverageImage},
 			assertions: []traitAssertion{
 				assertPackageCount(13),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "override-default-catalogers-with-files",
+			args: []string{"packages", "-o", "json", "--override-default-catalogers", "file", coverageImage},
+			assertions: []traitAssertion{
+				assertPackageCount(0),
+				assertInOutput(`"used":["file-content-cataloger","file-digest-cataloger","file-executable-cataloger","file-metadata-cataloger"]`),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -336,7 +354,17 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"scan", "-vvv", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				// the application config in the log matches that of what we expect to have been configured.
-				assertInOutput(`parallelism: 1`),
+				assertInOutput(`parallelism: 0`),
+				assertPackageCount(coverageImageSquashedPackageCount),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "parallelism-flag",
+			args: []string{"scan", "-vvv", "--parallelism", "2", "-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				// the application config in the log matches that of what we expect to have been configured.
+				assertInOutput(`parallelism: 2`),
 				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},

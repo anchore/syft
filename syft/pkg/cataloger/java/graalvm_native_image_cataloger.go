@@ -251,11 +251,11 @@ func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, relationships []artifa
 	var sbomLength elf.Symbol
 	var svmVersion elf.Symbol
 
-	si, err := bi.Symbols()
+	si, err := ni.getSymbols()
 	if err != nil {
-		return nil, nil, fmt.Errorf("no symbols found in binary: %w", err)
+		return nil, nil, err
 	}
-	if si == nil {
+	if len(si) == 0 {
 		return nil, nil, errors.New(nativeImageMissingSymbolsError)
 	}
 	for _, s := range si {
@@ -275,7 +275,7 @@ func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, relationships []artifa
 	if dataSection == nil {
 		return nil, nil, fmt.Errorf("no .data section found in binary: %w", err)
 	}
-	dataSectionBase := dataSection.SectionHeader.Addr
+	dataSectionBase := dataSection.Addr
 	data, err := dataSection.Data()
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot read the .data section: %w", err)
@@ -284,6 +284,31 @@ func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, relationships []artifa
 	lengthLocation := sbomLength.Value - dataSectionBase
 
 	return decompressSbom(data, sbomLocation, lengthLocation)
+}
+
+// getSymbols obtains the union of the symbols in the .symtab and .dynsym sections of the ELF file
+func (ni nativeImageElf) getSymbols() ([]elf.Symbol, error) {
+	var symbols []elf.Symbol
+	symsErr := error(nil)
+	dynErr := error(nil)
+
+	if syms, err := ni.file.Symbols(); err == nil {
+		symbols = append(symbols, syms...)
+	} else {
+		symsErr = err
+	}
+
+	if dynSyms, err := ni.file.DynamicSymbols(); err == nil {
+		symbols = append(symbols, dynSyms...)
+	} else {
+		dynErr = err
+	}
+
+	if symsErr != nil && dynErr != nil {
+		return nil, fmt.Errorf("could not retrieve symbols from binary: SHT_SYMTAB error: %v, SHT_DYNSYM error: %v", symsErr, dynErr)
+	}
+
+	return symbols, nil
 }
 
 // fetchPkgs obtains the packages from a Native Image given as a Mach O file.

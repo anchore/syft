@@ -74,6 +74,8 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.ConanPkg))
 	definedPkgs.Remove(string(pkg.HackagePkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
+	definedPkgs.Remove(string(pkg.BitnamiPkg))
+	definedPkgs.Remove(string(pkg.GraalVMNativeImagePkg))
 	definedPkgs.Remove(string(pkg.HexPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
@@ -82,6 +84,8 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.OpamPkg))
 	definedPkgs.Remove(string(pkg.GithubActionPkg))
 	definedPkgs.Remove(string(pkg.GithubActionWorkflowPkg))
+	definedPkgs.Remove(string(pkg.TerraformPkg))
+	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // we have coverage for pear instead
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -218,10 +222,13 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	definedLanguages.Remove(pkg.R.String())
 	observedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
+	definedPkgs.Remove(string(pkg.BitnamiPkg))
+	definedPkgs.Remove(string(pkg.GraalVMNativeImagePkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
 	definedPkgs.Remove(string(pkg.Rpkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
+	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // this is covered as pear packages
 
 	// for directory scans we should not expect to see any of the following package types
 	definedPkgs.Remove(string(pkg.KbPkg))

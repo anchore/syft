@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/adrg/xdg"
-	"github.com/mitchellh/go-homedir"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/cache"
 )
@@ -57,35 +57,13 @@ func Test_defaultDir(t *testing.T) {
 		env[k] = os.Getenv(k)
 	}
 
-	unsetEnv := func(t *testing.T) {
-		for k := range env {
-			t.Setenv(k, "")
-		}
-	}
-
-	resetEnv := func() {
-		for k, v := range env {
-			if v == "" {
-				_ = os.Unsetenv(k)
-			} else {
-				_ = os.Setenv(k, v)
-			}
-		}
-		homedir.Reset()
-		xdg.Reload()
-	}
-
-	t.Cleanup(resetEnv)
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			defer resetEnv()
+			restoreCache(t)
 
-			unsetEnv(t)
 			for k, v := range test.env {
-				t.Setenv(k, v)
+				patchEnv(t, k, v)
 			}
-			homedir.Reset()
 			xdg.Reload()
 
 			got := defaultDir()
@@ -310,4 +288,36 @@ func Test_durationToString(t *testing.T) {
 			require.Equal(t, test.expect, got)
 		})
 	}
+}
+
+// restoreCache ensures cache settings are restored after test
+func restoreCache(t testing.TB) {
+	t.Helper()
+	origEnabled := homedir.CacheEnabled()
+
+	t.Cleanup(func() {
+		homedir.SetCacheEnable(origEnabled)
+		homedir.Reset()
+	})
+}
+
+// patchEnv modifies an environment variable for the duration of the test
+func patchEnv(t testing.TB, key, value string) {
+	t.Helper()
+	original := os.Getenv(key)
+
+	if value != "" {
+		os.Setenv(key, value)
+	} else {
+		os.Unsetenv(key)
+	}
+
+	t.Cleanup(func() {
+		if original != "" {
+			os.Setenv(key, original)
+		} else {
+			os.Unsetenv(key)
+		}
+		xdg.Reload()
+	})
 }

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
@@ -15,11 +15,18 @@ import (
 )
 
 type parsedData struct {
+	// core info
+
+	// DistInfoLocation is the location of the METADATA file within the .dist-info directory where we obtained the python package information
+	DistInfoLocation  file.Location
+	pkg.PythonPackage `mapstructure:",squash"`
+
+	// license info
+
 	Licenses          string `mapstructure:"License"`
 	LicenseFile       string `mapstructure:"LicenseFile"`
 	LicenseExpression string `mapstructure:"LicenseExpression"`
-	LicenseLocation   file.Location
-	pkg.PythonPackage `mapstructure:",squash"`
+	LicenseFilePath   string
 }
 
 var pluralFields = map[string]bool{
@@ -45,10 +52,12 @@ func parseWheelOrEggMetadata(locationReader file.LocationReadCloser) (parsedData
 
 	pd.SitePackagesRootPath = determineSitePackagesRootPath(path)
 	if pd.Licenses != "" || pd.LicenseExpression != "" {
-		pd.LicenseLocation = file.NewLocation(path)
+		pd.LicenseFilePath = path
 	} else if pd.LicenseFile != "" {
-		pd.LicenseLocation = file.NewLocation(filepath.Join(filepath.Dir(path), pd.LicenseFile))
+		pd.LicenseFilePath = filepath.Join(filepath.Dir(path), pd.LicenseFile)
 	}
+
+	pd.DistInfoLocation = locationReader.Location
 
 	return pd, nil
 }
@@ -95,7 +104,7 @@ func extractRFC5322Fields(locationReader file.LocationReadCloser) (map[string]an
 
 				fields[key] = handleSingleOrMultiField(fields[key], val)
 			} else {
-				log.Warnf("cannot parse field from path: %q from line: %q", locationReader.Path(), line)
+				log.Debugf("cannot parse field from path: %q from line: %q", locationReader.Path(), line)
 			}
 		}
 	}

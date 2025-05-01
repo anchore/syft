@@ -74,7 +74,7 @@ func parseRockspec(_ context.Context, _ file.Resolver, _ *generic.Environment, r
 			Homepage:    homepage,
 			Description: description,
 		},
-		reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
 	return []pkg.Package{p}, nil, nil

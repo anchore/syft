@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/mitchellh/hashstructure/v2"
+	"github.com/gohugoio/hashstructure"
 )
 
 // hashType returns a stable hash based on the structure of the type
@@ -12,7 +12,7 @@ func hashType[T any]() string {
 	// get the base type and hash an empty instance
 	var t T
 	empty := emptyValue(reflect.TypeOf(t)).Interface()
-	hash, err := hashstructure.Hash(empty, hashstructure.FormatV2, &hashstructure.HashOptions{
+	hash, err := hashstructure.Hash(empty, &hashstructure.HashOptions{
 		ZeroNil:         false,
 		IgnoreZeroValue: false,
 		SlicesAsSets:    false,

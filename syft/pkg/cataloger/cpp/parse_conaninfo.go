@@ -60,7 +60,7 @@ func parseFullRequiresLine(line string, reader file.LocationReadCloser, pkgs *[]
 
 	p := newConaninfoPackage(
 		meta,
-		reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 	if p != nil {
 		*pkgs = append(*pkgs, *p)
@@ -83,7 +83,7 @@ func parseConaninfo(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	// First set the base package info by checking the relative path
 	fullFilePath := string(reader.Location.LocationData.Reference().RealPath)
 	if len(fullFilePath) == 0 {
-		fullFilePath = reader.Location.LocationData.RealPath
+		fullFilePath = reader.RealPath
 	}
 
 	mainMetadata, err := parseConanMetadataFromFilePath(fullFilePath)
@@ -102,7 +102,7 @@ func parseConaninfo(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		case errors.Is(err, io.EOF):
 			mainPackage := newConaninfoPackage(
 				mainMetadata,
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			)
 
 			mainPackageRef := *mainPackage
