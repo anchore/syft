@@ -235,10 +235,10 @@ func TestFullText(t *testing.T) {
 		want  License
 	}{
 		{
-			name:  "Full Text field is appropriated with the correct keyword as value",
+			name:  "Full Text field is populated with the correct full text",
 			value: fullText,
 			want: License{
-				Value:    "FullText",
+				Value:    "",
 				Type:     license.Declared,
 				FullText: fullText,
 			},

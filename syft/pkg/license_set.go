@@ -50,15 +50,16 @@ func (s *LicenseSet) Add(licenses ...License) {
 		s.set = make(map[artifact.ID]License)
 	}
 	for _, l := range licenses {
-		// we only want to add licenses that have a value
+		// we only want to add licenses that are not empty
+		if l.Empty() {
+			continue
+		}
 		// note, this check should be moved to the license constructor in the future
-		if l.Value != "" {
-			if id, merged, err := s.addToExisting(l); err == nil && !merged {
-				// doesn't exist, add it
-				s.set[id] = l
-			} else if err != nil {
-				log.Trace("license set failed to add license %#v: %+v", l, err)
-			}
+		if id, merged, err := s.addToExisting(l); err == nil && !merged {
+			// doesn't exist, add it
+			s.set[id] = l
+		} else if err != nil {
+			log.Trace("license set failed to add license %#v: %+v", l, err)
 		}
 	}
 }

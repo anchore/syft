@@ -14,11 +14,6 @@ import (
 	"github.com/anchore/syft/syft/license"
 )
 
-// FullTextValue is a placeholder value when license metadata is discovered to be fullText
-// A license with "FullText" in its value refers the consumer to look at the FullText field
-// This is so that we can keep Value as a required field up until syft 2.0
-var FullTextValue = "SeeFullText"
-
 var _ sort.Interface = (*Licenses)(nil)
 
 // License represents an SPDX Expression or license value extracted from a packages metadata
@@ -36,10 +31,10 @@ var _ sort.Interface = (*Licenses)(nil)
 // A Concluded License type is the license the SBOM creator believes governs the package (human crafted or altered SBOM)
 // The Declared License is what the authors of a project believe govern the package. This is the default type syft declares.
 type License struct {
-	Value          string
 	SPDXExpression string
-	Type           license.Type
+	Value          string
 	FullText       string
+	Type           license.Type
 	URLs           []string         `hash:"ignore"`
 	Locations      file.LocationSet `hash:"ignore"`
 	Contents       string           `hash:"ignore"` // The optional binary contents of the license file
@@ -182,6 +177,10 @@ func NewLicenseFromFields(value, url string, location *file.Location) License {
 	}
 
 	return l
+}
+
+func (s License) Empty() bool {
+	return s.Value == "" && s.SPDXExpression == "" && s.FullText == ""
 }
 
 // Merge two licenses into a new license object. If the merge is not possible due to unmergeable fields

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
@@ -66,10 +65,6 @@ type SPDXLicense struct {
 
 func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 	for _, l := range raw {
-		if l.Value == "" {
-			continue
-		}
-
 		candidate := createSPDXLicense(l)
 		switch l.Type {
 		case license.Concluded:
@@ -83,36 +78,31 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 }
 
 func createSPDXLicense(l pkg.License) SPDXLicense {
-	candidate := SPDXLicense{Value: l.Value}
-	if isValidSPDXExpression(l.SPDXExpression) {
-		candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.SPDXExpression)
-		candidate.FullText = getFullText(l)
-	} else {
-		candidate.ID = generateLicenseID(l)
-		candidate.FullText = getFullText(l)
+	candidate := SPDXLicense{
+		ID:       generateLicenseID(l),
+		FullText: l.FullText,
 	}
 
+	if l.SPDXExpression == "" {
+		candidate.Value = l.Value
+	}
 	return candidate
 }
 
-func isValidSPDXExpression(expr string) bool {
-	return expr != "" && !strings.HasPrefix(expr, licenses.UnknownLicensePrefix)
-}
-
-func getFullText(l pkg.License) string {
-	if len(l.Contents) > 0 {
-		return l.Contents
-	}
-	return l.FullText
-}
-
 func generateLicenseID(l pkg.License) string {
-	if l.Value == pkg.FullTextValue {
-		if len(l.FullText) <= 64 {
-			return spdxlicense.LicenseRefPrefix + SanitizeElementID(l.FullText)
-		}
-		hash := sha256.Sum256([]byte(l.FullText))
-		return fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
+	if l.SPDXExpression != "" {
+		return l.SPDXExpression
 	}
-	return spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
+	if l.Value != "" {
+		return licenseSum(l.Value)
+	}
+	return licenseSum(l.FullText)
+}
+
+func licenseSum(s string) string {
+	if len(s) <= 64 {
+		return spdxlicense.LicenseRefPrefix + SanitizeElementID(s)
+	}
+	hash := sha256.Sum256([]byte(s))
+	return fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
 }
