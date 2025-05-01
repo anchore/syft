@@ -22,6 +22,9 @@ var (
 	binaryCatalogerTypes = []pkg.Type{
 		pkg.BinaryPkg,
 	}
+	bitnamiCatalogerTypes = []pkg.Type{
+		pkg.BitnamiPkg,
+	}
 	binaryMetadataTypes = []string{
 		reflect.TypeOf(pkg.ELFBinaryPackageNoteJSONPayload{}).Name(),
 		reflect.TypeOf(pkg.BinarySignature{}).Name(),
@@ -62,6 +65,10 @@ func excludeByFileOwnershipOverlap(r artifact.Relationship, c *pkg.Collection) a
 	}
 
 	if idToRemove := identifyOverlappingJVMRelationship(parent, child); idToRemove != "" {
+		return idToRemove
+	}
+
+	if idToRemove := identifyOverlappingBitnamiRelationship(parent, child); idToRemove != "" {
 		return idToRemove
 	}
 
@@ -107,6 +114,27 @@ func identifyOverlappingJVMRelationship(parent *pkg.Package, child *pkg.Package)
 // This was implemented as a way to help resolve: https://github.com/anchore/syft/issues/931
 func identifyOverlappingOSRelationship(parent *pkg.Package, child *pkg.Package) artifact.ID {
 	if !slices.Contains(osCatalogerTypes, parent.Type) {
+		return ""
+	}
+
+	if slices.Contains(binaryCatalogerTypes, child.Type) {
+		return child.ID()
+	}
+
+	if child.Metadata == nil {
+		return ""
+	}
+
+	if !slices.Contains(binaryMetadataTypes, reflect.TypeOf(child.Metadata).Name()) {
+		return ""
+	}
+
+	return child.ID()
+}
+
+// identifyOverlappingBitnamiRelationship indicates the package ID to remove if this is a Bitnami pkg -> bin pkg relationship.
+func identifyOverlappingBitnamiRelationship(parent *pkg.Package, child *pkg.Package) artifact.ID {
+	if !slices.Contains(bitnamiCatalogerTypes, parent.Type) {
 		return ""
 	}
 

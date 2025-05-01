@@ -17,7 +17,7 @@ import (
 func NewDBCataloger() pkg.Cataloger {
 	// check if a sqlite driver is available
 	if !isSqliteDriverAvailable() {
-		log.Warnf("sqlite driver is not available, newer RPM databases might not be cataloged")
+		log.Debugf("sqlite driver is not available, newer RPM databases might not be cataloged")
 	}
 
 	return generic.NewCataloger("rpm-db-cataloger").

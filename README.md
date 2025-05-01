@@ -123,6 +123,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 ### Supported Ecosystems
 
 - Alpine (apk)
+- Bitnami packages
 - C (conan)
 - C++ (conan)
 - Dart (pubs)
@@ -139,11 +140,11 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 - Linux kernel archives (vmlinz)
 - Linux kernel modules (ko)
 - Nix (outputs in /nix/store)
-- PHP (composer)
+- PHP (composer, PECL, Pear)
 - Python (wheel, egg, poetry, requirements.txt)
 - Red Hat (rpm)
 - Ruby (gem)
-- Rust (cargo.lock)
+- Rust (cargo.lock, auditable binary)
 - Swift (cocoapods, swift-package-manager)
 - Wordpress plugins
 - Terraform providers (.terraform.lock.hcl)

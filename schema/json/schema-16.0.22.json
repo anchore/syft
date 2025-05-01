@@ -218,6 +218,44 @@
         "matches"
       ]
     },
+    "BitnamiSbomEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "arch": {
+          "type": "string"
+        },
+        "distro": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "arch",
+        "distro",
+        "revision",
+        "version",
+        "path",
+        "files"
+      ]
+    },
     "CConanFileEntry": {
       "properties": {
         "ref": {
@@ -1654,6 +1692,9 @@
               "$ref": "#/$defs/BinarySignature"
             },
             {
+              "$ref": "#/$defs/BitnamiSbomEntry"
+            },
+            {
               "$ref": "#/$defs/CConanFileEntry"
             },
             {
@@ -2657,9 +2698,6 @@
           "type": "string"
         },
         "version": {
-          "type": "string"
-        },
-        "supplier": {
           "type": "string"
         },
         "type": {

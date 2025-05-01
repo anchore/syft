@@ -139,14 +139,14 @@ func Test_stdlibPackageAndRelationships_values(t *testing.T) {
 	require.Len(t, gotPkgs, 1)
 
 	gotPkg := gotPkgs[0]
-	if d := cmp.Diff(expectedPkg, gotPkg, cmptest.DefaultCommonOptions()...); d != "" {
+	if d := cmp.Diff(expectedPkg, gotPkg, cmptest.DefaultOptions()...); d != "" {
 		t.Errorf("unexpected package (-want +got): %s", d)
 	}
 
 	require.Len(t, gotRels, 1)
 	gotRel := gotRels[0]
 
-	if d := cmp.Diff(expectedRel, gotRel, cmptest.DefaultCommonOptions()...); d != "" {
+	if d := cmp.Diff(expectedRel, gotRel, cmptest.DefaultOptions()...); d != "" {
 		t.Errorf("unexpected relationship (-want +got): %s", d)
 	}
 

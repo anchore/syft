@@ -13,7 +13,8 @@ func TestExcludeByFileOwnershipOverlap(t *testing.T) {
 	packageA := pkg.Package{Name: "package-a", Type: pkg.ApkPkg}
 	packageB := pkg.Package{Name: "package-b", Type: pkg.BinaryPkg, Metadata: pkg.JavaVMInstallation{}}
 	packageC := pkg.Package{Name: "package-c", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{Type: "rpm"}}
-	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC} {
+	packageD := pkg.Package{Name: "package-d", Type: pkg.BitnamiPkg}
+	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD} {
 		p := p
 		p.SetID()
 	}
@@ -44,6 +45,17 @@ func TestExcludeByFileOwnershipOverlap(t *testing.T) {
 				To:   packageC, // binary
 			},
 			packages:      pkg.NewCollection(packageC, packageB),
+			shouldExclude: true,
+		},
+		{
+			// prove that Bitnami -> bin exclusions are wired
+			name: "exclusions from bitnami -> binary",
+			relationship: artifact.Relationship{
+				Type: artifact.OwnershipByFileOverlapRelationship,
+				From: packageD, // Bitnami
+				To:   packageC, // ELF binary
+			},
+			packages:      pkg.NewCollection(packageD, packageC),
 			shouldExclude: true,
 		},
 	}
@@ -112,6 +124,63 @@ func TestIdentifyOverlappingOSRelationship(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			resultID := identifyOverlappingOSRelationship(tt.parent, tt.child)
+			assert.Equal(t, tt.expectedID, resultID)
+		})
+	}
+}
+
+func TestIdentifyOverlappingBitnamiRelationship(t *testing.T) {
+	packageA := pkg.Package{Name: "package-a", Type: pkg.BitnamiPkg} // Bitnami package
+	packageB := pkg.Package{Name: "package-b", Type: pkg.BinaryPkg}
+	packageC := pkg.Package{Name: "package-c", Type: pkg.BinaryPkg, Metadata: pkg.BinarySignature{}}
+	packageD := pkg.Package{Name: "package-d", Type: pkg.PythonPkg} // Language package
+	packageE := pkg.Package{Name: "package-e", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{}}
+
+	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE} {
+		p.SetID()
+	}
+
+	tests := []struct {
+		name       string
+		parent     *pkg.Package
+		child      *pkg.Package
+		expectedID artifact.ID
+	}{
+		{
+			name:       "Bitnami -> binary without metadata",
+			parent:     &packageA,
+			child:      &packageB,
+			expectedID: packageB.ID(), // Bitnami package to binary package, should return child ID
+		},
+		{
+			name:       "Bitnami -> binary with binary metadata",
+			parent:     &packageA,
+			child:      &packageC,
+			expectedID: packageC.ID(), // Bitnami package to binary package with binary metadata, should return child ID
+		},
+		{
+			name:       "Bitnami -> non-binary package",
+			parent:     &packageA,
+			child:      &packageD,
+			expectedID: "", // Bitnami package to non-binary package, no exclusion
+		},
+		{
+			name:       "Bitnami -> binary with ELF metadata",
+			parent:     &packageA,
+			child:      &packageE,
+			expectedID: packageE.ID(), // Bitnami package to binary package with ELF metadata, should return child ID
+		},
+		{
+			name:       "non-Bitnami parent",
+			parent:     &packageD, // non-Bitnami package
+			child:      &packageC,
+			expectedID: "", // non-Bitnami parent, no exclusion
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resultID := identifyOverlappingBitnamiRelationship(tt.parent, tt.child)
 			assert.Equal(t, tt.expectedID, resultID)
 		})
 	}

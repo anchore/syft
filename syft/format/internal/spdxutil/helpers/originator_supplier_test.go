@@ -12,6 +12,7 @@ import (
 func Test_OriginatorSupplier(t *testing.T) {
 	completionTester := packagemetadata.NewCompletionTester(t,
 		pkg.BinarySignature{},
+		pkg.BitnamiSBOMEntry{},
 		pkg.CocoaPodfileLockEntry{},
 		pkg.ConanV1LockEntry{},
 		pkg.ConanV2LockEntry{}, // the field Username might be the username of either the package originator or the supplier (unclear currently)
@@ -33,6 +34,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.NixStoreEntry{},
 		pkg.NpmPackageLockEntry{},
 		pkg.PhpComposerInstalledEntry{},
+		pkg.PhpPearEntry{},
 		pkg.PhpPeclEntry{},
 		pkg.PortageEntry{},
 		pkg.PythonPipfileLockEntry{},
@@ -44,6 +46,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.SwiplPackEntry{},
 		pkg.OpamPackage{},
 		pkg.YarnLockEntry{},
+		pkg.TerraformLockProviderEntry{},
 	)
 	tests := []struct {
 		name       string
@@ -90,6 +93,14 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Person: someone",
 		},
 		{
+			name: "from bitnami",
+			input: pkg.Package{
+				Metadata: pkg.BitnamiSBOMEntry{},
+			},
+			originator: "Organization: Bitnami",
+			supplier:   "Organization: Bitnami",
+		},
+		{
 			name: "from dotnet -- PE binary",
 			input: pkg.Package{
 				Metadata: pkg.DotnetPortableExecutableEntry{
@@ -100,9 +111,19 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Organization: Microsoft Corporation",
 		},
 		{
-			name: "from dpkg",
+			name: "from dpkg DB",
 			input: pkg.Package{
 				Metadata: pkg.DpkgDBEntry{
+					Maintainer: "auth",
+				},
+			},
+			originator: "Person: auth",
+			supplier:   "Person: auth",
+		},
+		{
+			name: "from dpkg archive",
+			input: pkg.Package{
+				Metadata: pkg.DpkgArchiveEntry{
 					Maintainer: "auth",
 				},
 			},
@@ -365,20 +386,24 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Person: me (me@auth.com)",
 		},
 		{
-			name: "from ocaml opam",
+			name: "from github actions workflow/action",
 			input: pkg.Package{
-				Metadata: pkg.OpamPackage{},
+				Metadata: pkg.GitHubActionsUseStatement{
+					Value: "actions/checkout@v4",
+				},
 			},
-			originator: "",
-			supplier:   "",
+			originator: "Organization: GitHub",
+			supplier:   "Organization: GitHub",
 		},
 		{
-			name: "from terraform lock",
+			name: "from github actions workflow/action",
 			input: pkg.Package{
-				Metadata: pkg.TerraformLockProviderEntry{},
+				Metadata: pkg.GitHubActionsUseStatement{
+					Value: "google/something@v6",
+				},
 			},
-			originator: "",
-			supplier:   "",
+			originator: "Organization: google",
+			supplier:   "Organization: google",
 		},
 	}
 	for _, test := range tests {

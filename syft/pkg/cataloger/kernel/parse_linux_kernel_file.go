@@ -73,7 +73,7 @@ func parseLinuxKernelMetadata(magicType []string) (p pkg.LinuxKernel) {
 			swapDevStr := strings.TrimPrefix(t, "swap_dev ")
 			swapDev, err := strconv.ParseInt(swapDevStr, 16, 32)
 			if err != nil {
-				log.Warnf("unable to parse swap device: %s", err)
+				log.Debugf("unable to parse swap device: %s", err)
 				continue
 			}
 			p.SwapDevice = int(swapDev)
@@ -81,7 +81,7 @@ func parseLinuxKernelMetadata(magicType []string) (p pkg.LinuxKernel) {
 			rootDevStr := strings.TrimPrefix(t, "root_dev ")
 			rootDev, err := strconv.ParseInt(rootDevStr, 16, 32)
 			if err != nil {
-				log.Warnf("unable to parse root device: %s", err)
+				log.Debugf("unable to parse root device: %s", err)
 				continue
 			}
 			p.SwapDevice = int(rootDev)

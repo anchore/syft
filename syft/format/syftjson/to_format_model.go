@@ -160,7 +160,7 @@ func toFileMetadataEntry(coordinates file.Coordinates, metadata *file.Metadata) 
 
 		mode, err = strconv.Atoi(fmt.Sprintf("%o", metadata.Mode()))
 		if err != nil {
-			log.Warnf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coordinates, metadata.Mode, err)
+			log.Debugf("invalid mode found in file catalog @ location=%+v mode=%q: %+v", coordinates, metadata.Mode, err)
 			mode = 0
 		}
 
@@ -230,6 +230,7 @@ func toLicenseModel(pkgLicenses []pkg.License) (modelLicenses []model.License) {
 
 		modelLicenses = append(modelLicenses, model.License{
 			Value:          l.Value,
+			FullText:       l.FullText,
 			SPDXExpression: l.SPDXExpression,
 			Type:           l.Type,
 			URLs:           urls,

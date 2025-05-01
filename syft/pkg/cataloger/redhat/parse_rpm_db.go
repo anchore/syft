@@ -17,7 +17,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.
+// parseRpmDB parses an "Packages" RPM DB and returns the Packages listed within it.
 //
 //nolint:funlen
 func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -127,7 +127,7 @@ func extractRpmFileRecords(resolver file.PathResolver, entry rpmdb.PackageInfo) 
 
 	files, err := entry.InstalledFiles()
 	if err != nil {
-		log.Warnf("unable to parse listing of installed files for RPM DB entry: %s", err.Error())
+		log.Debugf("unable to parse listing of installed files for RPM DB entry: %s", err.Error())
 		return records, fmt.Errorf("unable to parse listing of installed files for RPM DB entry: %w", err)
 	}
 

@@ -9,3 +9,7 @@ A cataloger contributed by Oracle Corporation that extracts packages given withi
 ## Swift Package Manager
 
 A cataloger contributed by Axis Communications that catalogs packages resolved by Swift Package Manager.
+
+## Bitnami Packages
+
+A cataloger contributed by Bitnami developer that catalogs packages described in Bitnami SBOMs.

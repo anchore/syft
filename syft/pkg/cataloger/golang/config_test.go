@@ -4,8 +4,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/go-homedir"
 )
 
 func Test_Config(t *testing.T) {
@@ -18,11 +19,8 @@ func Test_Config(t *testing.T) {
 		noProxy   string
 	}
 
-	homedirCacheDisabled := homedir.DisableCache
-	homedir.DisableCache = true
-	t.Cleanup(func() {
-		homedir.DisableCache = homedirCacheDisabled
-	})
+	restoreCache(t)
+	homedir.SetCacheEnable(false)
 
 	allEnv := map[string]string{
 		"HOME":      "/usr/home",
@@ -110,4 +108,15 @@ func Test_Config(t *testing.T) {
 			assert.Equal(t, test.expected, got)
 		})
 	}
+}
+
+// restoreCache ensures cache settings are restored after test
+func restoreCache(t testing.TB) {
+	t.Helper()
+	origEnabled := homedir.CacheEnabled()
+
+	t.Cleanup(func() {
+		homedir.SetCacheEnable(origEnabled)
+		homedir.Reset()
+	})
 }

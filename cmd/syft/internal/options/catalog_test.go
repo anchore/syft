@@ -139,7 +139,7 @@ func Test_enrichmentEnabled(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.directives, func(t *testing.T) {
-			got := enrichmentEnabled(flatten([]string{test.directives}), test.test)
+			got := enrichmentEnabled(Flatten([]string{test.directives}), test.test)
 			assert.Equal(t, test.expected, got)
 		})
 	}

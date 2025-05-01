@@ -8,7 +8,7 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
@@ -67,7 +67,7 @@ func parsePackageJSON(_ context.Context, _ file.Resolver, _ *generic.Environment
 		// a compliance filter later will remove these packages based on compliance rules
 		pkgs = append(
 			pkgs,
-			newPackageJSONPackage(p, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			newPackageJSONPackage(p, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		)
 	}
 

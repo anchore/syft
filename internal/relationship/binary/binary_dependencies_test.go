@@ -21,7 +21,7 @@ func TestPackagesToRemove(t *testing.T) {
 		Name:    "glibc",
 		Version: "2.28-236.el8_9.12",
 		Locations: file.NewLocationSet(
-			file.NewLocation(glibcCoordinate.RealPath),
+			file.NewLocation("path/to/rpmdb"),
 		),
 		Type: pkg.RpmPkg,
 		Metadata: pkg.RpmDBEntry{
@@ -88,50 +88,45 @@ func TestPackagesToRemove(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		resolver file.Resolver
 		accessor sbomsync.Accessor
 		want     []artifact.ID
 	}{
 		{
 			name:     "remove packages that are overlapping rpm --> binary",
-			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
 			accessor: newAccessor([]pkg.Package{glibCPackage, glibCBinaryELFPackage}, map[file.Coordinates]file.Executable{}, nil),
-			want:     []artifact.ID{glibCBinaryELFPackage.ID()},
+			// this is surprising, right? the calling function reasons about if any generic binary package (regardless of it being an ELF package or not)
+			// should be deleted or kept based on the user configuration to do so.
+			want: []artifact.ID{},
 		},
 		{
 			name:     "keep packages that are overlapping rpm --> binary when the binary self identifies as an RPM",
-			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
 			accessor: newAccessor([]pkg.Package{glibCPackage, glibCBinaryELFPackageAsRPM}, map[file.Coordinates]file.Executable{}, nil),
 			want:     []artifact.ID{},
 		},
 		{
 			name:     "remove no packages when there is a single binary package (or self identifying RPM)",
-			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
 			accessor: newAccessor([]pkg.Package{glibCBinaryELFPackage, glibCBinaryELFPackageAsRPM}, map[file.Coordinates]file.Executable{}, nil),
 			want:     []artifact.ID{},
 		},
 		{
 			name:     "remove packages when there is a single binary package and a classifier package",
-			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
 			accessor: newAccessor([]pkg.Package{glibCBinaryELFPackage, glibCBinaryClassifierPackage}, map[file.Coordinates]file.Executable{}, nil),
 			want:     []artifact.ID{glibCBinaryClassifierPackage.ID()},
 		},
 		{
 			name:     "ensure we're considering ELF packages, not just binary packages (supporting evidence)",
-			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
 			accessor: newAccessor([]pkg.Package{glibCBinaryClassifierPackage}, map[file.Coordinates]file.Executable{}, nil),
 			want:     []artifact.ID{},
 		},
 		{
 			name:     "ensure we're considering ELF packages, not just binary packages (primary evidence)",
-			resolver: file.NewMockResolverForPaths(glibcCoordinate.RealPath),
 			accessor: newAccessor([]pkg.Package{libCBinaryClassifierPackage}, map[file.Coordinates]file.Executable{}, nil),
 			want:     []artifact.ID{},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pkgsToDelete := PackagesToRemove(tt.resolver, tt.accessor)
+			pkgsToDelete := PackagesToRemove(tt.accessor)
 			if diff := cmp.Diff(tt.want, pkgsToDelete); diff != "" {
 				t.Errorf("unexpected packages to delete (-want, +got): %s", diff)
 			}

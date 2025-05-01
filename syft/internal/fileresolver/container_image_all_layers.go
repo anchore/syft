@@ -57,7 +57,7 @@ func (r *ContainerImageAllLayers) fileByRef(ref stereoscopeFile.Reference, uniqu
 		return nil, fmt.Errorf("unable to fetch metadata (ref=%+v): %w", ref, err)
 	}
 
-	if entry.Metadata.Type == stereoscopeFile.TypeHardLink || entry.Metadata.Type == stereoscopeFile.TypeSymLink {
+	if entry.Type == stereoscopeFile.TypeHardLink || entry.Type == stereoscopeFile.TypeSymLink {
 		// a link may resolve in this layer or higher, assuming a squashed tree is used to search
 		// we should search all possible resolutions within the valid source
 		for _, subLayerIdx := range r.layers[layerIdx:] {
@@ -102,7 +102,7 @@ func (r *ContainerImageAllLayers) FilesByPath(paths ...string) ([]file.Location,
 				if err != nil {
 					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.RealPath, err)
 				}
-				if metadata.Metadata.IsDir() {
+				if metadata.IsDir() {
 					continue
 				}
 			}
@@ -146,7 +146,7 @@ func (r *ContainerImageAllLayers) FilesByGlob(patterns ...string) ([]file.Locati
 						return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.RequestPath, err)
 					}
 					// don't consider directories
-					if metadata.Metadata.IsDir() {
+					if metadata.IsDir() {
 						continue
 					}
 				}
@@ -192,7 +192,7 @@ func (r *ContainerImageAllLayers) FileContentsByLocation(location file.Location)
 		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.RealPath, err)
 	}
 
-	switch entry.Metadata.Type {
+	switch entry.Type {
 	case stereoscopeFile.TypeSymLink, stereoscopeFile.TypeHardLink:
 		// the location we are searching may be a symlink, we should always work with the resolved file
 		newLocation := r.RelativeFileByPath(location, location.AccessPath)

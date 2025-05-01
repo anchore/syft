@@ -13,7 +13,6 @@ import (
 )
 
 func Test_Hash(t *testing.T) {
-
 	loc1 := file.NewLocation("place!")
 	loc1.FileSystemID = "fs1"
 	loc2 := file.NewLocation("place!")
@@ -227,6 +226,33 @@ func TestLicense_Merge(t *testing.T) {
 	}
 }
 
+func TestFullText(t *testing.T) {
+	fullText := `I am a license with full text
+	my authors put new line characters in metadata for labeling a license`
+	tests := []struct {
+		name  string
+		value string
+		want  License
+	}{
+		{
+			name:  "Full Text field is populated with the correct full text",
+			value: fullText,
+			want: License{
+				Value:    "",
+				Type:     license.Declared,
+				FullText: fullText,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NewLicense(tt.value)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestLicenseConstructors(t *testing.T) {
 	type input struct {
 		value string
@@ -244,7 +270,6 @@ func TestLicenseConstructors(t *testing.T) {
 				urls: []string{
 					`
 						http://user-agent-utils.googlecode.com/svn/trunk/UserAgentUtils/LICENSE.txt
-									
 					`},
 			},
 			expected: License{
