@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.0.28/document",
+  "$id": "anchore.io/schema/syft/json/16.0.27/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -1660,56 +1660,13 @@
         "kb"
       ]
     },
-    "NixDerivation": {
-      "properties": {
-        "path": {
-          "type": "string"
-        },
-        "system": {
-          "type": "string"
-        },
-        "inputDerivations": {
-          "items": {
-            "$ref": "#/$defs/NixDerivationReference"
-          },
-          "type": "array"
-        },
-        "inputSources": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "NixDerivationReference": {
-      "properties": {
-        "path": {
-          "type": "string"
-        },
-        "outputs": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
     "NixStoreEntry": {
       "properties": {
-        "path": {
+        "outputHash": {
           "type": "string"
         },
         "output": {
           "type": "string"
-        },
-        "outputHash": {
-          "type": "string"
-        },
-        "derivation": {
-          "$ref": "#/$defs/NixDerivation"
         },
         "files": {
           "items": {
@@ -1720,7 +1677,8 @@
       },
       "type": "object",
       "required": [
-        "outputHash"
+        "outputHash",
+        "files"
       ]
     },
     "OpamPackage": {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
@@ -59,39 +58,14 @@ func joinLicenses(licenses []SPDXLicense) string {
 }
 
 type SPDXLicense struct {
-	ID    string
-	Value string
+	ID       string
+	Value    string
+	FullText string
 }
 
 func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 	for _, l := range raw {
-		if l.Value == "" {
-			continue
-		}
-
-		candidate := SPDXLicense{}
-		if l.SPDXExpression != "" && !strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
-			candidate.ID = l.SPDXExpression
-		} else {
-			candidate.Value = l.Value
-			// we did not find a valid SPDX license ID so treat as separate license
-			if strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
-				candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.SPDXExpression)
-				if len(l.Contents) > 0 {
-					candidate.Value = l.Contents
-				}
-			} else {
-				if len(l.Value) <= 64 {
-					// if the license text is less than the size of the hash,
-					// just use it directly so the id is more readable
-					candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
-				} else {
-					hash := sha256.Sum256([]byte(l.Value))
-					candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
-				}
-			}
-		}
-
+		candidate := createSPDXLicense(l)
 		switch l.Type {
 		case license.Concluded:
 			concluded = append(concluded, candidate)
@@ -101,4 +75,34 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 	}
 
 	return concluded, declared
+}
+
+func createSPDXLicense(l pkg.License) SPDXLicense {
+	candidate := SPDXLicense{
+		ID:       generateLicenseID(l),
+		FullText: l.FullText,
+	}
+
+	if l.SPDXExpression == "" {
+		candidate.Value = l.Value
+	}
+	return candidate
+}
+
+func generateLicenseID(l pkg.License) string {
+	if l.SPDXExpression != "" {
+		return l.SPDXExpression
+	}
+	if l.Value != "" {
+		return spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
+	}
+	return licenseSum(l.FullText)
+}
+
+func licenseSum(s string) string {
+	if len(s) <= 64 {
+		return spdxlicense.LicenseRefPrefix + SanitizeElementID(s)
+	}
+	hash := sha256.Sum256([]byte(s))
+	return fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
 }

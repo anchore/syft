@@ -1391,6 +1391,9 @@
         "value": {
           "type": "string"
         },
+        "fullText": {
+          "type": "string"
+        },
         "spdxExpression": {
           "type": "string"
         },
@@ -1416,6 +1419,7 @@
       "type": "object",
       "required": [
         "value",
+        "fullText",
         "spdxExpression",
         "type",
         "urls",
