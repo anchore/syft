@@ -112,6 +112,7 @@ func (s directorySource) ID() artifact.ID {
 func (s directorySource) Describe() source.Description {
 	name := cleanDirPath(s.config.Path, s.config.Base)
 	version := ""
+	supplier := ""
 	if !s.config.Alias.IsEmpty() {
 		a := s.config.Alias
 		if a.Name != "" {
@@ -120,11 +121,15 @@ func (s directorySource) Describe() source.Description {
 		if a.Version != "" {
 			version = a.Version
 		}
+		if a.Supplier != "" {
+			supplier = a.Supplier
+		}
 	}
 	return source.Description{
-		ID:      string(s.id),
-		Name:    name,
-		Version: version,
+		ID:       string(s.id),
+		Name:     name,
+		Version:  version,
+		Supplier: supplier,
 		Metadata: source.DirectoryMetadata{
 			Path: s.config.Path,
 			Base: s.config.Base,
