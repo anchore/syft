@@ -187,7 +187,7 @@ func TestDerivationCollection_FindDependencies(t *testing.T) {
 	// - foo depends on bar and baz
 	// - bar depends on qux
 
-	// Create "qux" derivation
+	// create "qux" derivation
 	quxDrv := derivationFile{
 		Location: file.NewLocation("/nix/store/qux.drv"),
 		Derivation: derivation.Derivation{
@@ -250,6 +250,41 @@ func TestDerivationCollection_FindDependencies(t *testing.T) {
 	}
 	c.add(fooDrv)
 
+	// add a test case for empty input names
+	emptyNamesDrv := derivationFile{
+		Location: file.NewLocation("/nix/store/empty-names.drv"),
+		Derivation: derivation.Derivation{
+			Outputs: map[string]*derivation.Output{
+				"out": {
+					Path: "/nix/store/empty-names-path",
+				},
+			},
+			InputDerivations: map[string][]string{
+				"/nix/store/bar.drv": {},
+			},
+		},
+	}
+	c.add(emptyNamesDrv)
+
+	// add a test case for empty input sources
+	emptySourcesDrv := derivationFile{
+		Location: file.NewLocation("/nix/store/empty-sources.drv"),
+		Derivation: derivation.Derivation{
+			Outputs: map[string]*derivation.Output{
+				"out": {
+					Path: "/nix/store/empty-sources-path",
+				},
+			},
+			InputDerivations: map[string][]string{
+				"/nix/store/bar.drv": {"out"},
+			},
+			InputSources: []string{
+				"",
+			},
+		},
+	}
+	c.add(emptySourcesDrv)
+
 	tests := []struct {
 		name     string
 		path     string
@@ -298,41 +333,6 @@ func TestDerivationCollection_FindDependencies(t *testing.T) {
 			},
 		},
 	}
-
-	// Add a test case for empty input names
-	emptyNamesDrv := derivationFile{
-		Location: file.NewLocation("/nix/store/empty-names.drv"),
-		Derivation: derivation.Derivation{
-			Outputs: map[string]*derivation.Output{
-				"out": {
-					Path: "/nix/store/empty-names-path",
-				},
-			},
-			InputDerivations: map[string][]string{
-				"/nix/store/bar.drv": {},
-			},
-		},
-	}
-	c.add(emptyNamesDrv)
-
-	// Add a test case for empty input sources
-	emptySourcesDrv := derivationFile{
-		Location: file.NewLocation("/nix/store/empty-sources.drv"),
-		Derivation: derivation.Derivation{
-			Outputs: map[string]*derivation.Output{
-				"out": {
-					Path: "/nix/store/empty-sources-path",
-				},
-			},
-			InputDerivations: map[string][]string{
-				"/nix/store/bar.drv": {"out"},
-			},
-			InputSources: []string{
-				"",
-			},
-		},
-	}
-	c.add(emptySourcesDrv)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
