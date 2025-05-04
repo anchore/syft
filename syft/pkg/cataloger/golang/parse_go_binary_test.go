@@ -1072,6 +1072,192 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	}
 }
 
+/*func TestTestGoPkgSymbols(t *testing.T) {
+	const (
+		goCompiledVersion = "1.18"
+		archDetails       = "amd64"
+	)
+	locationSet := file.NewLocationSet(
+		file.NewLocationFromCoordinates(
+			file.Coordinates{
+				RealPath:     "/a-path",
+				FileSystemID: "layer-id",
+			},
+		).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+	)
+
+	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+	licenseScanner, err := licenses.NewScanner(sc)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name          string
+		symbols       []elf.Symbol
+		mod           *extendedBuildInfo
+		expected      []pkg.Package
+		binaryContent string
+	}{
+		{
+			name: "a test binary",
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Path:      "command-line-arguments.test",
+					Main:      debug.Module{},
+					Settings: []debug.BuildSetting{
+						{Key: "-buildmode", Value: "exe"},
+						{Key: "-compiler", Value: "gc"},
+						{Key: "CGO_ENABLED", Value: "1"},
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+					Deps: []*debug.Module{},
+				},
+				arch: archDetails,
+			},
+			symbols: []elf.Symbol{
+				{
+					Name:       "github.com/davecgh/go-spew..gobytes.1",
+					HasVersion: false,
+				},
+				{
+					Name:       "github.com/google/go-cmp/cmp/internal/diff..typeAsserts.0",
+					HasVersion: false,
+				},
+				{
+					Name:       "crypto/internal/fips140/hmac..typeAssert.0",
+					HasVersion: false,
+				},
+				{
+					Name:       "$f32.6258d727",
+					HasVersion: false,
+				},
+				{
+					Name:       "github.com/sirupsen/logrus.isTerminal",
+					HasVersion: false,
+				},
+				{
+					Name:       "vendor/golang.org/x/net/http/httpproxy.cidrMatch.match",
+					HasVersion: false,
+				},
+				{
+					Name:       "testing.mutexProfileFraction",
+					HasVersion: false,
+				},
+				{
+					Name:       "mime.typeFiles",
+					HasVersion: false,
+				},
+			},
+			binaryContent: "",
+			expected: []pkg.Package{
+				{
+					Name:      "command-line-arguments.test",
+					Version:   "(devel)",
+					PURL:      "pkg:golang/command-line-arguments.test@%28devel%29",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						BuildSettings: pkg.KeyValues{
+							{Key: "-buildmode", Value: "exe"},
+							{Key: "-compiler", Value: "gc"},
+							{Key: "CGO_ENABLED", Value: "1"},
+							{Key: "GOARCH", Value: "amd64"},
+							{Key: "GOOS", Value: "darwin"},
+							{Key: "GOAMD64", Value: "v1"},
+						},
+						Architecture: archDetails,
+						H1Digest:     "",
+						MainModule:   "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "github.com/davecgh/go-spew",
+					Version:   "v1.1.1",
+					PURL:      "pkg:golang/github.com/davecgh/go-spew@v1.1.1",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "github.com/google/go-cmp",
+					Version:   "v0.7.0",
+					PURL:      "pkg:golang/github.com/google/go-cmp@v0.7.0",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "github.com/sirupsen/logrus",
+					Version:   "v1.9.3",
+					PURL:      "pkg:golang/github.com/sirupsen/logrus@v1.9.3",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			for i := range test.expected {
+				p := &test.expected[i]
+				p.SetID()
+			}
+			location := file.NewLocationFromCoordinates(
+				file.Coordinates{
+					RealPath:     "/a-path",
+					FileSystemID: "layer-id",
+				},
+			)
+			wd, ferr := os.Getwd()
+			require.NoError(t, ferr)
+			c := newGoBinaryCataloger(CatalogerConfig{
+				MainModuleVersion:           DefaultMainModuleVersionConfig(),
+				LocalModCacheDir:            filepath.Join(wd, "test-fixtures", "mod-cache", "pkg", "mod"),
+				SearchLocalModCacheLicenses: true,
+			})
+
+			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
+			require.NoError(t, err)
+
+			mainPkg, pkgs := c.buildGoTestPkgInfo(context.Background(), licenseScanner, fileresolver.Empty{}, location, test.mod, test.symbols, test.mod.arch, reader)
+			if mainPkg != nil {
+				pkgs = append(pkgs, *mainPkg)
+			}
+			require.Len(t, pkgs, len(test.expected))
+			sort.Slice(pkgs, func(i, j int) bool {
+				return pkgs[i].Name < pkgs[j].Name
+			})
+			for i, p := range pkgs {
+				pkgtest.AssertPackagesEqual(t, test.expected[i], p)
+			}
+		})
+	}
+}*/
+
 func Test_extractVersionFromLDFlags(t *testing.T) {
 	tests := []struct {
 		name             string

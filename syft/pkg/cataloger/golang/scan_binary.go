@@ -5,11 +5,11 @@ import (
 	"debug/elf"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
+	"io/fs"
 	"runtime/debug"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
@@ -19,6 +19,7 @@ import (
 
 type extendedBuildInfo struct {
 	*debug.BuildInfo
+	sym            []elf.Symbol
 	cryptoSettings []string
 	arch           string
 }
@@ -39,19 +40,31 @@ func (c *goBinaryCataloger) scanFile(location file.Location, reader unionreader.
 		log.WithFields("error", errs).Debug("failed to open a golang binary")
 		return nil, devBinaryType, fmt.Errorf("failed to open a golang binary: %w", errs)
 	}
-	var btype binaryType
+
 	var builds []*extendedBuildInfo
+	btyp := devBinaryType
 	for _, r := range readers {
-		bi, mode, err := c.getBuildInfo(r)
-		btype = mode
+		bi, err := getBuildInfo(r)
 		if err != nil {
 			log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang buildinfo")
 
 			continue
 		}
+
 		// it's possible the reader just isn't a go binary, in which case just skip it
 		if bi == nil {
 			continue
+		}
+		var sym []elf.Symbol
+		if bi.Deps == nil {
+			sym, err = getSymbolsInfo(r)
+			if err != nil {
+				log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang symtab")
+				continue
+			}
+			if sym != nil {
+				btyp = testBinaryType
+			}
 		}
 
 		v, err := getCryptoInformation(r)
@@ -72,9 +85,9 @@ func (c *goBinaryCataloger) scanFile(location file.Location, reader unionreader.
 			}
 		}
 
-		builds = append(builds, &extendedBuildInfo{BuildInfo: bi, cryptoSettings: v, arch: arch})
+		builds = append(builds, &extendedBuildInfo{BuildInfo: bi, sym: sym, cryptoSettings: v, arch: arch})
 	}
-	return builds, btype, errs
+	return builds, btyp, errs
 }
 
 func getCryptoInformation(reader io.ReaderAt) ([]string, error) {
@@ -101,82 +114,102 @@ func getCryptoSettingsFromVersion(v version.Version) []string {
 }
 
 // getCachedChecksum just as the function name, it gets the checksum from the path with the pattern like
-// GOPATH/pkg/mod/cache/download/example.com/module/@v/v1.2.3.ziphash
-func getCachedChecksum(pkgDir string, name string, version string) (content string, err error) {
-	checksumPath := fmt.Sprintf("%s/cache/download/%s/@v/%s.ziphash", pkgDir, name, version)
-	bytes, err := os.ReadFile(checksumPath)
-	content = string(bytes)
-	return
+// $GOPATH/pkg/mod/cache/download/example.com/module/@v/v1.2.3.ziphash
+func getCachedChecksum(pkgDir fs.FS, name string, version string) (content string, err error) {
+	var res string
+	err = fs.WalkDir(pkgDir, ".", func(filePath string, _ fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("error when walking down the dir to find %s", name)
+		}
+		if strings.HasPrefix(filePath, version+".ziphash") {
+			rdr, err0 := pkgDir.Open(filePath)
+			if err0 != nil {
+				log.Debugf("error opening ziphash file %s: %v", filePath, err)
+				return err0
+			}
+			defer internal.CloseAndLogError(rdr, filePath)
+			var bytes []byte
+			reader := file.NewLocationReadCloser(file.NewLocation(filePath), rdr)
+			bytes, _ = io.ReadAll(reader)
+			if len(bytes) != 0 {
+				res = string(bytes)
+			}
+		}
+		return nil
+	})
+	if res == "" {
+		return "", fmt.Errorf("no checksum for %s@%s", name, version)
+	}
+	return res, err
 }
 
-func trimmedAsURL(name string) (url string) {
+func trimmedAsURL(name string) (urlDir string, urlName string) {
 	parts := strings.Split(name, "/")
 	if len(parts) >= 3 {
 		versionWithFunc := parts[2]
 		if idx := strings.Index(versionWithFunc, "."); idx != -1 {
 			parts[2] = versionWithFunc[:idx]
 		}
-		url = strings.Join(parts[:3], "/")
+		urlDir = strings.Join(parts[:2], "/")
+		urlName = parts[2]
 	}
 	return
 }
 
-func findVersion(basePath string) (string, error) {
-	dir := filepath.Dir(basePath)
-	baseName := filepath.Base(basePath)
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		return "", err
-	}
+func findVersion(basePath fs.FS, baseName string) (string, error) {
+	var res string
+	err := fs.WalkDir(basePath, ".", func(filePath string, _ fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("error when walking down the dir to find %s", baseName)
+		}
 
-	for _, fil := range files {
-		if strings.HasPrefix(fil.Name(), baseName+"@") {
-			parts := strings.Split(fil.Name(), "@")
+		if strings.HasPrefix(filePath, baseName) {
+			parts := strings.Split(filePath, "@")
 			if len(parts) == 2 {
-				return parts[1], nil
+				res = parts[1]
+				return nil
 			}
 		}
+		return nil
+	})
+	if res == "" {
+		return "", fmt.Errorf("%s doesn't exist in the Go Modules,hence no versioned path found for it", baseName)
 	}
-
-	return "", fmt.Errorf("%s doesn't exist in the GO MODULES,hence no versioned path found for it", basePath)
+	return res, err
 }
 
-// getSymbolsInfo is used to parse the dependencies in a test binary with the help of Go Module cache
-func (c *goBinaryCataloger) getSymbolsInfo(r io.ReaderAt) (result []*debug.Module) {
-	f, err := elf.NewFile(r)
-	if err != nil {
-		err = fmt.Errorf("malformed test binary file")
-	}
-	defer func(f *elf.File) {
-		err = f.Close()
-	}(f)
-
-	syms, err := f.Symbols()
-	if err != nil {
-		err = fmt.Errorf("error when parsing the symbols of the binary")
-	}
-
+// getModulesFromSymbols is used to parse the dependencies given the symbols of a test binary with the help of Go Module cache
+func (c *goBinaryCataloger) getModulesFromSymbols(syms []elf.Symbol) (result []*debug.Module) {
 	uniqueModules := make(map[string]*debug.Module)
-	// FIXME using the configured not default go mod dir
-	goPath := c.licenseResolver.opts.LocalModCacheDir
-
+	goPath := c.licenseResolver.localModCacheDir
+	if goPath == nil {
+		return nil
+	}
 	for _, sym := range syms {
-		url := trimmedAsURL(sym.Name)
+		urlDir, nameWithoutVersion := trimmedAsURL(sym.Name)
 		// the sym is not a mark of third-party function
-		if len(url) == 0 {
-			continue
-		}
-		pathWithoutVersion := fmt.Sprintf("%s/%s", goPath, url)
-		Version, err := findVersion(pathWithoutVersion)
-		// No such module
-		if len(Version) == 0 || err != nil {
+		if len(urlDir) == 0 {
 			continue
 		}
 
-		key := fmt.Sprintf("%s %s", url, Version)
-		checksum, _ := getCachedChecksum(goPath, url, Version)
+		dir, err := fs.Sub(goPath, urlDir)
+		if err != nil {
+			continue
+		}
+		Version, err := findVersion(dir, nameWithoutVersion)
+		// No such module
+		if err != nil {
+			continue
+		}
+		modPair := fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
+		key := fmt.Sprintf("%s %s", modPair, Version)
+		cachedir, err2 := fs.Sub(goPath, "cache/download/"+modPair+"/@v")
+		if err2 != nil {
+			continue
+		}
+		checksum, _ := getCachedChecksum(cachedir, modPair, Version)
 		uniqueModules[key] = &debug.Module{
-			Path:    url,
+			Path:    fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion),
 			Version: Version,
 			Sum:     checksum,
 			Replace: nil,
@@ -189,7 +222,24 @@ func (c *goBinaryCataloger) getSymbolsInfo(r io.ReaderAt) (result []*debug.Modul
 	return result
 }
 
-func (c *goBinaryCataloger) getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, btype binaryType, err error) {
+func getSymbolsInfo(r io.ReaderAt) (result []elf.Symbol, err error) {
+	f, err := elf.NewFile(r)
+	if err != nil {
+		err = fmt.Errorf("malformed test binary file")
+	}
+	defer func(f *elf.File) {
+		err = f.Close()
+	}(f)
+
+	result, err = f.Symbols()
+	if err != nil {
+		err = fmt.Errorf("error when parsing the symbols of the binary")
+	}
+
+	return
+}
+
+func getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// this can happen in cases where a malformed binary is passed in can be initially parsed, but not
@@ -199,12 +249,6 @@ func (c *goBinaryCataloger) getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, bt
 		}
 	}()
 	bi, err = buildinfo.Read(r)
-	if bi.Deps == nil {
-		btype = testBinaryType
-		bi.Deps = c.getSymbolsInfo(r)
-	} else {
-		btype = devBinaryType
-	}
 
 	// note: the stdlib does not export the error we need to check for
 	if err != nil {
