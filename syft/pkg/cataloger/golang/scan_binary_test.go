@@ -29,9 +29,10 @@ func Test_getBuildInfo(t *testing.T) {
 			wantErr: assert.Error,
 		},
 	}
+	c := newGoBinaryCataloger(DefaultCatalogerConfig())
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotBi, _, err := getBuildInfo(tt.args.r)
+			gotBi, _, err := c.getBuildInfo(tt.args.r)
 			if !tt.wantErr(t, err, fmt.Sprintf("getBuildInfo(%v)", tt.args.r)) {
 				return
 			}
