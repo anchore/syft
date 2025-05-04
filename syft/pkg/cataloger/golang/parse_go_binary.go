@@ -60,6 +60,7 @@ func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 }
 
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
+// Note that the "buildinfo" section of a test binary may be empty,so we also resort to the "symtab" section by Symbols method
 func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
@@ -74,19 +75,24 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	}
 	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	mods, btype, errs := c.scanFile(reader.Location, unionReader)
+	mods, btyp, errs := c.scanFile(reader.Location, unionReader)
 
 	var rels []artifact.Relationship
 	for _, mod := range mods {
 		var depPkgs []pkg.Package
-		mainPkg, depPkgs := c.buildGoPkgInfo(ctx, licenseScanner, resolver, reader.Location, mod, mod.arch, unionReader)
-		if mainPkg != nil {
-			if btype == devBinaryType {
+		var mainPkg *pkg.Package
+		if btyp == devBinaryType {
+			mainPkg, depPkgs = c.buildGoPkgInfo(ctx, licenseScanner, resolver, reader.Location, mod, mod.arch, unionReader)
+			if mainPkg != nil {
+				pkgs = append(pkgs, *mainPkg)
 				rels = createModuleRelationships(*mainPkg, depPkgs)
-			} else {
+			}
+		} else {
+			mainPkg, depPkgs = c.buildGoTestPkgInfo(ctx, licenseScanner, resolver, reader.Location, mod, mod.sym, mod.arch, unionReader)
+			if mainPkg != nil {
+				pkgs = append(pkgs, *mainPkg)
 				rels = createModuleTestRelationships(*mainPkg, depPkgs)
 			}
-			pkgs = append(pkgs, *mainPkg)
 		}
 		pkgs = append(pkgs, depPkgs...)
 	}
@@ -124,6 +130,11 @@ func createModuleTestRelationships(main pkg.Package, deps []pkg.Package) []artif
 
 var emptyModule debug.Module
 var moduleFromPartialPackageBuild = debug.Module{Path: "command-line-arguments"}
+
+func (c *goBinaryCataloger) buildGoTestPkgInfo(ctx context.Context, licenseScanner licenses.Scanner, resolver file.Resolver, location file.Location, mod *extendedBuildInfo, sym []elf.Symbol, arch string, reader io.ReadSeekCloser) (*pkg.Package, []pkg.Package) {
+	mod.Deps = c.getModulesFromSymbols(sym)
+	return c.buildGoPkgInfo(ctx, licenseScanner, resolver, location, mod, arch, reader)
+}
 
 func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, licenseScanner licenses.Scanner, resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) (*pkg.Package, []pkg.Package) {
 	if mod == nil {

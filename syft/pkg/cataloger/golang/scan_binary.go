@@ -19,6 +19,7 @@ import (
 
 type extendedBuildInfo struct {
 	*debug.BuildInfo
+	sym            []elf.Symbol
 	cryptoSettings []string
 	arch           string
 }
@@ -39,19 +40,27 @@ func (c *goBinaryCataloger) scanFile(location file.Location, reader unionreader.
 		log.WithFields("error", errs).Debug("failed to open a golang binary")
 		return nil, devBinaryType, fmt.Errorf("failed to open a golang binary: %w", errs)
 	}
-	var btype binaryType
+
 	var builds []*extendedBuildInfo
+	btyp := devBinaryType
 	for _, r := range readers {
-		bi, mode, err := c.getBuildInfo(r)
-		btype = mode
+		bi, err := getBuildInfo(r)
 		if err != nil {
 			log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang buildinfo")
 
 			continue
 		}
+
 		// it's possible the reader just isn't a go binary, in which case just skip it
 		if bi == nil {
 			continue
+		}
+		var sym []elf.Symbol
+		if bi.Deps == nil {
+			sym, _ = getSymbolsInfo(r)
+			if sym != nil {
+				btyp = testBinaryType
+			}
 		}
 
 		v, err := getCryptoInformation(r)
@@ -72,9 +81,9 @@ func (c *goBinaryCataloger) scanFile(location file.Location, reader unionreader.
 			}
 		}
 
-		builds = append(builds, &extendedBuildInfo{BuildInfo: bi, cryptoSettings: v, arch: arch})
+		builds = append(builds, &extendedBuildInfo{BuildInfo: bi, sym: sym, cryptoSettings: v, arch: arch})
 	}
-	return builds, btype, errs
+	return builds, btyp, errs
 }
 
 func getCryptoInformation(reader io.ReaderAt) ([]string, error) {
@@ -141,21 +150,8 @@ func findVersion(basePath string) (string, error) {
 	return "", fmt.Errorf("%s doesn't exist in the GO MODULES,hence no versioned path found for it", basePath)
 }
 
-// getSymbolsInfo is used to parse the dependencies in a test binary with the help of Go Module cache
-func (c *goBinaryCataloger) getSymbolsInfo(r io.ReaderAt) (result []*debug.Module) {
-	f, err := elf.NewFile(r)
-	if err != nil {
-		err = fmt.Errorf("malformed test binary file")
-	}
-	defer func(f *elf.File) {
-		err = f.Close()
-	}(f)
-
-	syms, err := f.Symbols()
-	if err != nil {
-		err = fmt.Errorf("error when parsing the symbols of the binary")
-	}
-
+// getModulesFromSymbols
+func (c *goBinaryCataloger) getModulesFromSymbols(syms []elf.Symbol) (result []*debug.Module) {
 	uniqueModules := make(map[string]*debug.Module)
 	// FIXME using the configured not default go mod dir
 	goPath := c.licenseResolver.opts.LocalModCacheDir
@@ -189,7 +185,26 @@ func (c *goBinaryCataloger) getSymbolsInfo(r io.ReaderAt) (result []*debug.Modul
 	return result
 }
 
-func (c *goBinaryCataloger) getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, btype binaryType, err error) {
+// getSymbolsInfo is used to parse the dependencies in a test binary with the help of Go Module cache
+func getSymbolsInfo(r io.ReaderAt) (result []elf.Symbol, err error) {
+	f, err := elf.NewFile(r)
+	if err != nil {
+		err = fmt.Errorf("malformed test binary file")
+	}
+	defer func(f *elf.File) {
+		err = f.Close()
+	}(f)
+
+	result, err = f.Symbols()
+	if err != nil {
+		err = fmt.Errorf("error when parsing the symbols of the binary")
+	}
+
+	/**/
+	return
+}
+
+func getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// this can happen in cases where a malformed binary is passed in can be initially parsed, but not
@@ -199,12 +214,6 @@ func (c *goBinaryCataloger) getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, bt
 		}
 	}()
 	bi, err = buildinfo.Read(r)
-	if bi.Deps == nil {
-		btype = testBinaryType
-		bi.Deps = c.getSymbolsInfo(r)
-	} else {
-		btype = devBinaryType
-	}
 
 	// note: the stdlib does not export the error we need to check for
 	if err != nil {
