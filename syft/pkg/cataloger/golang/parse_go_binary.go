@@ -74,7 +74,7 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	}
 	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	mods, btype, errs := c.scanFile(reader.Location, unionReader)
+	mods, btype, errs := scanFile(reader.Location, unionReader)
 
 	var rels []artifact.Relationship
 	for _, mod := range mods {
