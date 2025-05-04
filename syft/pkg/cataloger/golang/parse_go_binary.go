@@ -74,14 +74,14 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	}
 	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	mods, btype, errs := scanFile(reader.Location, unionReader)
+	mods, btype, errs := c.scanFile(reader.Location, unionReader)
 
 	var rels []artifact.Relationship
 	for _, mod := range mods {
 		var depPkgs []pkg.Package
 		mainPkg, depPkgs := c.buildGoPkgInfo(ctx, licenseScanner, resolver, reader.Location, mod, mod.arch, unionReader)
 		if mainPkg != nil {
-			if btype == DevBinaryType {
+			if btype == devBinaryType {
 				rels = createModuleRelationships(*mainPkg, depPkgs)
 			} else {
 				rels = createModuleTestRelationships(*mainPkg, depPkgs)
