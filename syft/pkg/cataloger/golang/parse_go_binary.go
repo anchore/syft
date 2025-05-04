@@ -74,14 +74,18 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	}
 	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	mods, errs := scanFile(reader.Location, unionReader)
+	mods, btype, errs := c.scanFile(reader.Location, unionReader)
 
 	var rels []artifact.Relationship
 	for _, mod := range mods {
 		var depPkgs []pkg.Package
 		mainPkg, depPkgs := c.buildGoPkgInfo(ctx, licenseScanner, resolver, reader.Location, mod, mod.arch, unionReader)
 		if mainPkg != nil {
-			rels = createModuleRelationships(*mainPkg, depPkgs)
+			if btype == DevBinaryType {
+				rels = createModuleRelationships(*mainPkg, depPkgs)
+			} else {
+				rels = createModuleTestRelationships(*mainPkg, depPkgs)
+			}
 			pkgs = append(pkgs, *mainPkg)
 		}
 		pkgs = append(pkgs, depPkgs...)
@@ -98,6 +102,20 @@ func createModuleRelationships(main pkg.Package, deps []pkg.Package) []artifact.
 			From: dep,
 			To:   main,
 			Type: artifact.DependencyOfRelationship,
+		})
+	}
+
+	return relationships
+}
+
+func createModuleTestRelationships(main pkg.Package, deps []pkg.Package) []artifact.Relationship {
+	var relationships []artifact.Relationship
+
+	for _, dep := range deps {
+		relationships = append(relationships, artifact.Relationship{
+			From: dep,
+			To:   main,
+			Type: artifact.TestDependencyOfRelationship,
 		})
 	}
 
