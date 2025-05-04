@@ -391,6 +391,10 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 			case helpers.ContainsRelationship:
 				typ = artifact.ContainsRelationship
 				to = toPackage
+			case helpers.GeneratedFromRelationship:
+				typ = artifact.GeneratedFromRelationship
+				to = from
+				from = toPackage
 			case helpers.OtherRelationship:
 				// Encoding uses a specifically formatted comment...
 				if strings.Index(r.RelationshipComment, string(artifact.OwnershipByFileOverlapRelationship)) == 0 {
