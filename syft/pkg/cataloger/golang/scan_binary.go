@@ -31,7 +31,7 @@ const (
 type BinaryType string
 
 // scanFile scans file to try to report the Go and module versions.
-func (c *goBinaryCataloger) scanFile(location file.Location, reader unionreader.UnionReader) ([]*extendedBuildInfo, BinaryType, error) {
+func scanFile(location file.Location, reader unionreader.UnionReader) ([]*extendedBuildInfo, BinaryType, error) {
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
 	readers, errs := unionreader.GetReaders(reader)
@@ -42,7 +42,7 @@ func (c *goBinaryCataloger) scanFile(location file.Location, reader unionreader.
 	var btype BinaryType
 	var builds []*extendedBuildInfo
 	for _, r := range readers {
-		bi, mode, err := c.getBuildInfo(r)
+		bi, mode, err := getBuildInfo(r)
 		btype = mode
 		if err != nil {
 			log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang buildinfo")
@@ -142,7 +142,7 @@ func findVersion(basePath string) (string, error) {
 }
 
 // getSymbolsInfo is used to parse the dependencies in a test binary with the help of Go Module cache
-func (c *goBinaryCataloger) getSymbolsInfo(r io.ReaderAt) (result []*debug.Module) {
+func getSymbolsInfo(r io.ReaderAt) (result []*debug.Module) {
 	f, err := elf.NewFile(r)
 	if err != nil {
 		err = fmt.Errorf("malformed test binary file")
@@ -157,7 +157,8 @@ func (c *goBinaryCataloger) getSymbolsInfo(r io.ReaderAt) (result []*debug.Modul
 	}
 
 	uniqueModules := make(map[string]*debug.Module)
-	goPath := c.licenseResolver.opts.LocalModCacheDir
+	// FIXME using the configured not default go mod dir
+	goPath := defaultGoModDir()
 
 	for _, sym := range syms {
 		url := TrimmedAsURL(sym.Name)
@@ -188,7 +189,7 @@ func (c *goBinaryCataloger) getSymbolsInfo(r io.ReaderAt) (result []*debug.Modul
 	return result
 }
 
-func (c *goBinaryCataloger) getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, btype BinaryType, err error) {
+func getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, btype BinaryType, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// this can happen in cases where a malformed binary is passed in can be initially parsed, but not
@@ -200,7 +201,7 @@ func (c *goBinaryCataloger) getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, bt
 	bi, err = buildinfo.Read(r)
 	if bi.Deps == nil {
 		btype = TestBinaryType
-		bi.Deps = c.getSymbolsInfo(r)
+		bi.Deps = getSymbolsInfo(r)
 	} else {
 		btype = DevBinaryType
 	}
