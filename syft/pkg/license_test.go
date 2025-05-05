@@ -240,7 +240,7 @@ func TestFullText(t *testing.T) {
 			want: License{
 				Value:    "",
 				Type:     license.Declared,
-				FullText: fullText,
+				Contents: fullText,
 			},
 		},
 	}
