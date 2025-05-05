@@ -12,15 +12,15 @@ const (
 	SquashedScope Scope = "squashed"
 	// AllLayersScope indicates to catalog content on all layers, regardless if it is visible from the container at runtime.
 	AllLayersScope Scope = "all-layers"
-	// SquashWithAllLayersScope indicates to catalog content on all layers, but only include content visible from the squashed filesystem representation.
-	SquashWithAllLayersScope Scope = "squash-with-all-layers"
+	// DeepSquashedScope indicates to catalog content on all layers, but only include content visible from the squashed filesystem representation.
+	DeepSquashedScope Scope = "deep-squashed"
 )
 
 // AllScopes is a slice containing all possible scope options
 var AllScopes = []Scope{
 	SquashedScope,
 	AllLayersScope,
-	SquashWithAllLayersScope,
+	DeepSquashedScope,
 }
 
 // ParseScope returns a scope as indicated from the given string.
@@ -28,10 +28,10 @@ func ParseScope(userStr string) Scope {
 	switch strings.ToLower(userStr) {
 	case SquashedScope.String():
 		return SquashedScope
-	case "alllayers", AllLayersScope.String():
+	case "all", "alllayers", AllLayersScope.String():
 		return AllLayersScope
-	case "squash-with-all-layers", strings.ToLower(SquashWithAllLayersScope.String()):
-		return SquashWithAllLayersScope
+	case "deepsquashed", "squasheddeep", "squashed-deep", "deep-squash", "deepsquash", strings.ToLower(DeepSquashedScope.String()):
+		return DeepSquashedScope
 	}
 	return UnknownScope
 }

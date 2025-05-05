@@ -400,8 +400,8 @@ func (c *CreateSBOMConfig) userPackageTasks(cfg task.CatalogingFactoryConfig) ([
 // scopeTasks returns the set of tasks that should be run to generate additional scope information
 func (c *CreateSBOMConfig) scopeTasks() []task.Task {
 	var tsks []task.Task
-	if c.Search.Scope == source.SquashWithAllLayersScope {
-		if t := task.NewScopeTask(); t != nil {
+	if c.Search.Scope == source.DeepSquashedScope {
+		if t := task.NewDeepSquashedScopeCleanupTask(); t != nil {
 			tsks = append(tsks, t)
 		}
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func NewScopeTask() Task {
+func NewDeepSquashedScopeCleanupTask() Task {
 	fn := func(_ context.Context, _ file.Resolver, builder sbomsync.Builder) error {
 		accessor := builder.(sbomsync.Accessor)
 
@@ -20,7 +20,7 @@ func NewScopeTask() Task {
 		return nil
 	}
 
-	return NewTask("squashed-with-all-layers-cleaner", fn)
+	return NewTask("deep-squashed-cleaner", fn)
 }
 
 func packagesToRemove(accessor sbomsync.Accessor) []artifact.ID {
@@ -31,19 +31,22 @@ func packagesToRemove(accessor sbomsync.Accessor) []artifact.ID {
 			noSquashed := true
 			noPrimary := true
 			for _, l := range p.Locations.ToSlice() {
-				scope := l.LocationMetadata.Annotations[file.ScopeAnnotationKey]
-				evidence := l.LocationMetadata.Annotations[pkg.EvidenceAnnotationKey]
-				if scope == file.SquashedScopeAnnotation && evidence == pkg.PrimaryEvidenceAnnotation || scope == file.SquashedScopeAnnotation && p.Type == pkg.BinaryPkg {
-					noSquashed = false
-					break
-				}
-				if scope == "" && evidence == pkg.PrimaryEvidenceAnnotation {
-					if exists := filterDuplicates[getKey(p, l)]; exists {
+				isPrimaryEvidence := l.Annotations[pkg.EvidenceAnnotationKey] == pkg.PrimaryEvidenceAnnotation
+				switch l.Annotations[file.VisibleAnnotationKey] {
+				case file.VisibleAnnotation:
+					if isPrimaryEvidence || p.Type == pkg.BinaryPkg {
+						noSquashed = false
 						break
 					}
-					filterDuplicates[getKey(p, l)] = true
-					noPrimary = false
-					break
+				case "":
+					if isPrimaryEvidence {
+						if exists := filterDuplicates[getKey(p, l)]; exists {
+							break
+						}
+						filterDuplicates[getKey(p, l)] = true
+						noPrimary = false
+						break
+					}
 				}
 			}
 
