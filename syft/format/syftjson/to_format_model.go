@@ -245,12 +245,11 @@ func toLicenseModel(pkgLicenses []pkg.License, layerOrderByDigest map[string]int
 
 		modelLicenses = append(modelLicenses, model.License{
 			Value:          l.Value,
-			FullText:       l.FullText,
 			SPDXExpression: l.SPDXExpression,
+			Contents:       l.Contents,
 			Type:           l.Type,
 			URLs:           urls,
 			Locations:      toLocationModel(l.Locations, layerOrderByDigest),
-			Contents:       l.Contents,
 		})
 	}
 	return
