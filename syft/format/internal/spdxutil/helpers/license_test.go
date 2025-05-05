@@ -116,7 +116,7 @@ func TestGenerateLicenseID(t *testing.T) {
 			license: pkg.License{
 				SPDXExpression: "Apache-2.0",
 				Value:          "SomeValue",
-				FullText:       "Some text",
+				Contents:       "Some text",
 			},
 			expected: "Apache-2.0",
 		},
