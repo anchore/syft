@@ -20,7 +20,7 @@
      "spdxExpression": "MIT",
      "type": "declared",
      "urls": [],
-     "locations": []
+     "locations": null
     }
    ],
    "language": "python",

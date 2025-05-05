@@ -55,6 +55,12 @@ func (s LocationSet) Contains(l Location) bool {
 }
 
 func (s LocationSet) ToSlice() []Location {
+	locations := s.ToUnorderedSlice()
+	sort.Sort(Locations(locations))
+	return locations
+}
+
+func (s LocationSet) ToUnorderedSlice() []Location {
 	if s.set == nil {
 		return nil
 	}
@@ -67,7 +73,6 @@ func (s LocationSet) ToSlice() []Location {
 		}
 		idx++
 	}
-	sort.Sort(Locations(locations))
 	return locations
 }
 
