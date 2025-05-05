@@ -34,7 +34,7 @@ type License struct {
 	SPDXExpression string
 	Value          string
 	Type           license.Type
-	Contents       string           `hash:"ignore"` // The optional binary contents of the license file
+	Contents       string
 	URLs           []string         `hash:"ignore"`
 	Locations      file.LocationSet `hash:"ignore"`
 }

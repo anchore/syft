@@ -136,9 +136,9 @@ func TestGenerateLicenseID(t *testing.T) {
 				"LGPLv2--and-LGPLv2--with-exceptions-and-GPLv2--and-GPLv2--with-exceptions-and-BSD-and-Inner-Net-and-ISC-and-Public-Domain-and-GFDL",
 		},
 		{
-			name: "Uses hash of fullText when nothing else is provided",
+			name: "Uses hash of contents when nothing else is provided",
 			license: pkg.License{
-				FullText: "This is a very long custom license text that should be hashed because it's more than 64 characters long.",
+				Contents: "This is a very long custom license text that should be hashed because it's more than 64 characters long.",
 			},
 			expected: "", // We'll verify it starts with the correct prefix
 		},
