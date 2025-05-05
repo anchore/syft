@@ -180,7 +180,7 @@ func defaultLicenseComparer(x, y License) bool {
 }
 
 func readFileAsString(filepath string) string {
-	data, err := os.ReadFile(filepath) // Alternatively, ioutil.ReadFile in older Go versions
+	data, err := os.ReadFile(filepath)
 	if err != nil {
 		panic(err)
 	}
