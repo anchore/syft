@@ -15,6 +15,7 @@ import (
 const (
 	DefaultCoverageThreshold     = 75 // determined by experimentation
 	DefaultIncludeLicenseContent = false
+	DefaultIncludeFullText       = false
 )
 
 type Scanner interface {
