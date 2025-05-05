@@ -137,7 +137,12 @@ func DefaultPackageTaskFactories() Factories {
 			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, Java, Maven,
 		),
 		newSimplePackageTaskFactory(java.NewNativeImageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, Java),
-		newSimplePackageTaskFactory(nix.NewStoreCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "nix"),
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return nix.NewCataloger(cfg.PackagesConfig.Nix)
+			},
+			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "nix",
+		),
 		newSimplePackageTaskFactory(lua.NewPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "lua"),
 
 		// other package catalogers ///////////////////////////////////////////////////////////////////////////
@@ -167,5 +172,7 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(dotnet.NewDotnetDepsCataloger, pkgcataloging.DeprecatedTag),               // TODO: remove in syft v2.0
 		newSimplePackageTaskFactory(dotnet.NewDotnetPortableExecutableCataloger, pkgcataloging.DeprecatedTag), // TODO: remove in syft v2.0
 		newSimplePackageTaskFactory(php.NewPeclCataloger, pkgcataloging.DeprecatedTag),                        // TODO: remove in syft v2.0
+		newSimplePackageTaskFactory(nix.NewStoreCataloger, pkgcataloging.DeprecatedTag),                       // TODO: remove in syft v2.0
+
 	}
 }

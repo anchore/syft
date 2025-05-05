@@ -1,7 +1,6 @@
 package nix
 
 import (
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -125,13 +124,21 @@ func Test_findVersionIsh(t *testing.T) {
 			wantVersion:    "unstable-2021-08-16",
 			wantPreRelease: "",
 		},
+		{
+
+			name:           "version with release suffix and no output name",
+			input:          "/nix/store/02mqs1by2vab9yzw0qc4j7463w78p3ps-glibc-2.37-8",
+			wantIdx:        50,
+			wantVersion:    "2.37-8",
+			wantPreRelease: "8",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotIdx, gotVersion, gotPreRelease := findVersionIsh(tt.input)
-			assert.Equal(t, tt.wantIdx, gotIdx)
-			assert.Equal(t, tt.wantVersion, gotVersion)
-			assert.Equal(t, tt.wantPreRelease, gotPreRelease)
+			assert.Equal(t, tt.wantIdx, gotIdx, "bad index")
+			assert.Equal(t, tt.wantVersion, gotVersion, "bad version")
+			assert.Equal(t, tt.wantPreRelease, gotPreRelease, "bad pre-release")
 		})
 	}
 }
@@ -139,121 +146,132 @@ func Test_findVersionIsh(t *testing.T) {
 func Test_parseNixStorePath(t *testing.T) {
 
 	tests := []struct {
-		source string
-		want   *nixStorePath
+		name string
+		want *nixStorePath
 	}{
 		{
-			source: "/nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin",
+			name: "/nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin",
 			want: &nixStorePath{
-				outputHash: "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
-				name:       "glibc",
-				version:    "2.34-210",
-				output:     "bin",
+				OutputHash: "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
+				Name:       "glibc",
+				Version:    "2.34-210",
+				Output:     "bin",
 			},
 		},
 		{
-			source: "/nix/store/0296qxvn30z9b2ah1g5p97k5wr9k8y78-busybox-static-x86_64-unknown-linux-musl-1.35.0",
+			name: "/nix/store/02mqs1by2vab9yzw0qc4j7463w78p3ps-glibc-2.37-8",
 			want: &nixStorePath{
-				outputHash: "0296qxvn30z9b2ah1g5p97k5wr9k8y78",
-				name:       "busybox-static-x86_64-unknown-linux-musl",
-				version:    "1.35.0",
+				OutputHash: "02mqs1by2vab9yzw0qc4j7463w78p3ps",
+				Name:       "glibc",
+				Version:    "2.37-8",
 			},
 		},
 		{
-			source: "/nix/store/5zzrvdmlkc5rh3k5862krd3wfb3pqhyf-perl5.34.1-TimeDate-2.33",
+			name: "/nix/store/0296qxvn30z9b2ah1g5p97k5wr9k8y78-busybox-static-x86_64-unknown-linux-musl-1.35.0",
 			want: &nixStorePath{
-				outputHash: "5zzrvdmlkc5rh3k5862krd3wfb3pqhyf",
-				name:       "perl5.34.1-TimeDate",
-				version:    "2.33",
+				OutputHash: "0296qxvn30z9b2ah1g5p97k5wr9k8y78",
+				Name:       "busybox-static-x86_64-unknown-linux-musl",
+				Version:    "1.35.0",
 			},
 		},
 		{
-			source: "/nix/store/q38q8ng57zwjg1h15ry5zx0lb0xyax4b-libcap-2.63-lib",
+			name: "/nix/store/5zzrvdmlkc5rh3k5862krd3wfb3pqhyf-perl5.34.1-TimeDate-2.33",
 			want: &nixStorePath{
-				outputHash: "q38q8ng57zwjg1h15ry5zx0lb0xyax4b",
-				name:       "libcap",
-				version:    "2.63",
-				output:     "lib",
+				OutputHash: "5zzrvdmlkc5rh3k5862krd3wfb3pqhyf",
+				Name:       "perl5.34.1-TimeDate",
+				Version:    "2.33",
 			},
 		},
 		{
-			source: "/nix/store/p0y8fbpbqr2jm5zfrdll0rgyg2lvp5g2-util-linux-minimal-2.37.4-bin",
+			name: "/nix/store/q38q8ng57zwjg1h15ry5zx0lb0xyax4b-libcap-2.63-lib",
 			want: &nixStorePath{
-				outputHash: "p0y8fbpbqr2jm5zfrdll0rgyg2lvp5g2",
-				name:       "util-linux-minimal",
-				version:    "2.37.4",
-				output:     "bin",
+				OutputHash: "q38q8ng57zwjg1h15ry5zx0lb0xyax4b",
+				Name:       "libcap",
+				Version:    "2.63",
+				Output:     "lib",
 			},
 		},
 		{
-			source: "/nix/store/z24qs6f5d1mmwdp73n1jfc3swj4v2c5s-krb5-1.19.3.9.10",
+			name: "/nix/store/p0y8fbpbqr2jm5zfrdll0rgyg2lvp5g2-util-linux-minimal-2.37.4-bin",
 			want: &nixStorePath{
-				outputHash: "z24qs6f5d1mmwdp73n1jfc3swj4v2c5s",
-				name:       "krb5",
-				version:    "1.19.3.9.10",
+				OutputHash: "p0y8fbpbqr2jm5zfrdll0rgyg2lvp5g2",
+				Name:       "util-linux-minimal",
+				Version:    "2.37.4",
+				Output:     "bin",
 			},
 		},
 		{
-			source: "/nix/store/zkgyp2vra0bgqm0dv1qi514l5fd0aksx-bash-interactive-5.1-p16-man",
+			name: "/nix/store/z24qs6f5d1mmwdp73n1jfc3swj4v2c5s-krb5-1.19.3.9.10",
 			want: &nixStorePath{
-				outputHash: "zkgyp2vra0bgqm0dv1qi514l5fd0aksx",
-				name:       "bash-interactive",
-				version:    "5.1-p16",
-				output:     "man",
+				OutputHash: "z24qs6f5d1mmwdp73n1jfc3swj4v2c5s",
+				Name:       "krb5",
+				Version:    "1.19.3.9.10",
 			},
 		},
 		{
-			source: "/nix/store/nwf2y0nc48ybim56308cr5ccvwkabcqc-openssl-1.1.1q",
+			name: "/nix/store/zkgyp2vra0bgqm0dv1qi514l5fd0aksx-bash-interactive-5.1-p16-man",
 			want: &nixStorePath{
-				outputHash: "nwf2y0nc48ybim56308cr5ccvwkabcqc",
-				name:       "openssl",
-				version:    "1.1.1q",
+				OutputHash: "zkgyp2vra0bgqm0dv1qi514l5fd0aksx",
+				Name:       "bash-interactive",
+				Version:    "5.1-p16",
+				Output:     "man",
 			},
 		},
 		{
-			source: "/nix/store/nwv742f1bxv6g78hy9yc6slxdbxlmqhb-kmod-29",
+			name: "/nix/store/nwf2y0nc48ybim56308cr5ccvwkabcqc-openssl-1.1.1q",
 			want: &nixStorePath{
-				outputHash: "nwv742f1bxv6g78hy9yc6slxdbxlmqhb",
-				name:       "kmod",
-				version:    "29",
+				OutputHash: "nwf2y0nc48ybim56308cr5ccvwkabcqc",
+				Name:       "openssl",
+				Version:    "1.1.1q",
 			},
 		},
 		{
-			source: "/nix/store/n83qx7m848kg51lcjchwbkmlgdaxfckf-tzdata-2022a",
+			name: "/nix/store/nwv742f1bxv6g78hy9yc6slxdbxlmqhb-kmod-29",
 			want: &nixStorePath{
-				outputHash: "n83qx7m848kg51lcjchwbkmlgdaxfckf",
-				name:       "tzdata",
-				version:    "2022a",
+				OutputHash: "nwv742f1bxv6g78hy9yc6slxdbxlmqhb",
+				Name:       "kmod",
+				Version:    "29",
 			},
 		},
 		{
-			source: "'/nix/store/q5dhwzcn82by5ndc7g0q83wsnn13qkqw-webdav-server-rs-unstable-2021-08-16",
+			name: "/nix/store/n83qx7m848kg51lcjchwbkmlgdaxfckf-tzdata-2022a",
 			want: &nixStorePath{
-				outputHash: "q5dhwzcn82by5ndc7g0q83wsnn13qkqw",
-				name:       "webdav-server-rs",
-				version:    "unstable-2021-08-16",
+				OutputHash: "n83qx7m848kg51lcjchwbkmlgdaxfckf",
+				Name:       "tzdata",
+				Version:    "2022a",
+			},
+		},
+		{
+			name: "/nix/store/q5dhwzcn82by5ndc7g0q83wsnn13qkqw-webdav-server-rs-unstable-2021-08-16",
+			want: &nixStorePath{
+				OutputHash: "q5dhwzcn82by5ndc7g0q83wsnn13qkqw",
+				Name:       "webdav-server-rs",
+				Version:    "unstable-2021-08-16",
 			},
 		},
 		// negative cases...
 		{
-			source: "'z33yk02rsr6b4rb56lgb80bnvxx6yw39-?id=21ee35dde73aec5eba35290587d479218c6dd824.drv'",
+			name: "'z33yk02rsr6b4rb56lgb80bnvxx6yw39-?id=21ee35dde73aec5eba35290587d479218c6dd824.drv'",
 		},
 		{
-			source: "/nix/store/yzahni8aig6mdrvcsccgwm2515lcpi5q-git-minimal-2.36.0.drv",
+			name: "/nix/store/yzahni8aig6mdrvcsccgwm2515lcpi5q-git-minimal-2.36.0.drv",
 		},
 		{
-			source: "/nix/store/z9yvxs0s3xdkp5jgmzis4g50bfq3dgvm-0018-pkg-config-derive-prefix-from-prefix.patch",
+			name: "/nix/store/z9yvxs0s3xdkp5jgmzis4g50bfq3dgvm-0018-pkg-config-derive-prefix-from-prefix.patch",
 		},
 		{
-			source: "/nix/store/w3hl7zrmc9qvzadc0k7cp9ysxiyz88j6-base-system",
+			name: "/nix/store/w3hl7zrmc9qvzadc0k7cp9ysxiyz88j6-base-system",
 		},
 		{
-			source: "/nix/store/zz1lc28x25fcx6al6xwk3dk8kp7wx47y-Test-RequiresInternet-0.05.tar.gz.drv",
+			name: "/nix/store/zz1lc28x25fcx6al6xwk3dk8kp7wx47y-Test-RequiresInternet-0.05.tar.gz.drv",
 		},
 	}
 	for _, tt := range tests {
-		t.Run(path.Base(tt.source), func(t *testing.T) {
-			assert.Equal(t, tt.want, parseNixStorePath(tt.source))
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.want != nil {
+				tt.want.StorePath = tt.name
+			}
+			assert.Equal(t, tt.want, parseNixStorePath(tt.name))
 		})
 	}
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
+	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
 	"github.com/anchore/syft/syft/source"
 )
@@ -48,6 +49,7 @@ type Catalog struct {
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
 	JavaScript  javaScriptConfig  `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
 	LinuxKernel linuxKernelConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
+	Nix         nixConfig         `yaml:"nix" json:"nix" mapstructure:"nix"`
 	Python      pythonConfig      `yaml:"python" json:"python" mapstructure:"python"`
 
 	// configuration for the source (the subject being analyzed)
@@ -75,6 +77,7 @@ func DefaultCatalog() Catalog {
 		Package:       defaultPackageConfig(),
 		License:       defaultLicenseConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
+		Nix:           defaultNixConfig(),
 		Dotnet:        defaultDotnetConfig(),
 		Golang:        defaultGolangConfig(),
 		Java:          defaultJavaConfig(),
@@ -193,6 +196,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},
+		Nix: nix.DefaultConfig().
+			WithCaptureOwnedFiles(cfg.Nix.CaptureOwnedFiles),
 		Python: python.CatalogerConfig{
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},
