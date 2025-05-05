@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
@@ -509,6 +510,10 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 		Metadata: extractMetadata(p, info),
 	}
 
+	err := internal.Backfill(sP)
+	if err != nil {
+		log.WithFields("package", sP, "error", err).Debug("unable to backfill package")
+	}
 	sP.SetID()
 
 	return *sP

@@ -53,24 +53,14 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 }
 
 func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
-	reader, err := stream.SeekableReader(r)
-	if err != nil {
-		return "", ""
-	}
-
-	if _, err := reader.Seek(0, io.SeekStart); err != nil {
-		log.Debugf("unable to seek to start of Syft JSON SBOM: %+v", err)
-		return "", ""
-	}
-
 	type Document struct {
 		Schema model.Schema `json:"schema"`
 	}
 
-	dec := json.NewDecoder(reader)
+	dec := json.NewDecoder(r)
 
 	var doc Document
-	if err = dec.Decode(&doc); err != nil {
+	if err := dec.Decode(&doc); err != nil {
 		// maybe not json? maybe not valid? doesn't matter, we won't process it.
 		return "", ""
 	}

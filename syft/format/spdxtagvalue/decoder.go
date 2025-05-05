@@ -8,7 +8,6 @@ import (
 
 	"github.com/spdx/tools-golang/tagvalue"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/format/common/spdxhelpers"
 	"github.com/anchore/syft/syft/format/internal/stream"
 	"github.com/anchore/syft/syft/sbom"
@@ -57,22 +56,12 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 }
 
 func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
-	reader, err := stream.SeekableReader(r)
-	if err != nil {
-		return "", ""
-	}
-
-	if _, err := reader.Seek(0, io.SeekStart); err != nil {
-		log.Debugf("unable to seek to start of SPDX Tag-Value SBOM: %+v", err)
-		return "", ""
-	}
-
 	// Example document
 	// SPDXVersion: SPDX-2.3
 	// DataLicense: CC0-1.0
 	// SPDXID: SPDXRef-DOCUMENT
 
-	scanner := bufio.NewScanner(reader)
+	scanner := bufio.NewScanner(r)
 	scanner.Split(bufio.ScanLines)
 
 	var id sbom.FormatID
