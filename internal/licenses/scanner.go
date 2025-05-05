@@ -18,8 +18,17 @@ const (
 	DefaultIncludeFullText              = false
 )
 
+type ID struct {
+	LicenseID string
+	Offset    Offset
+}
+
+type Offset struct {
+	Start, End int
+}
+
 type Scanner interface {
-	IdentifyLicenseIDs(context.Context, io.Reader) ([]string, []byte, error)
+	IdentifyLicenseIDs(context.Context, io.Reader) ([]ID, []byte, error)
 	FileSearch(context.Context, file.LocationReadCloser) ([]file.License, error)
 	PkgSearch(context.Context, file.LocationReadCloser) ([]pkg.License, error)
 }

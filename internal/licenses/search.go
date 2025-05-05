@@ -22,7 +22,7 @@ func getCustomLicenseContentHash(contents []byte) string {
 	return fmt.Sprintf("%x", hash[:])
 }
 
-func (s *scanner) IdentifyLicenseIDs(_ context.Context, reader io.Reader) ([]string, []byte, error) {
+func (s *scanner) IdentifyLicenseIDs(_ context.Context, reader io.Reader) ([]ID, []byte, error) {
 	if s.scanner == nil {
 		return nil, nil, nil
 	}
@@ -39,10 +39,9 @@ func (s *scanner) IdentifyLicenseIDs(_ context.Context, reader io.Reader) ([]str
 		return nil, content, nil
 	}
 
-	// we found some kind of license match
-	var ids []string
+	var ids []ID
 	for _, m := range cov.Match {
-		ids = append(ids, m.ID)
+		ids = append(ids, ID{LicenseID: m.ID, Offset: Offset{Start: m.Start, End: m.End}})
 	}
 
 	// sometimes users want the full license even if they got an SPDX ID from searching the content
@@ -61,18 +60,14 @@ func (s *scanner) PkgSearch(ctx context.Context, reader file.LocationReadCloser)
 		return nil, err
 	}
 
-	// harmonize line endings to unix compatible first:
-	// 1. \r\n => \n   (Windows   => UNIX)
-	// 2. \r   => \n   (Macintosh => UNIX)
-	licContent := strings.ReplaceAll(strings.ReplaceAll(string(content), "\r\n", "\n"), "\r", "\n")
-
 	// known licenses found
 	if len(ids) > 0 {
 		for _, id := range ids {
 			if s.includeFullText {
-				licenses = append(licenses, pkg.NewLicenseFromFullText(id, licContent, reader.Location, license.Concluded))
+				extracted := string(content[id.Offset.Start:id.Offset.End])
+				licenses = append(licenses, pkg.NewLicenseFromFullText(id.LicenseID, fixLineEndings(extracted), reader.Location, license.Concluded))
 			} else {
-				li := pkg.NewLicenseFromType(id, license.Concluded)
+				li := pkg.NewLicenseFromType(id.LicenseID, license.Concluded)
 				li.Locations.Add(reader.Location)
 				licenses = append(licenses, li)
 			}
@@ -85,7 +80,7 @@ func (s *scanner) PkgSearch(ctx context.Context, reader file.LocationReadCloser)
 	lic.SPDXExpression = UnknownLicensePrefix + getCustomLicenseContentHash(content)
 	lic.Type = license.Declared
 	if s.includeUnknownLicenseContent {
-		lic.FullText = licContent
+		lic.FullText = fixLineEndings(string(content))
 	}
 	licenses = append(licenses, lic)
 
@@ -101,16 +96,13 @@ func (s *scanner) FileSearch(ctx context.Context, reader file.LocationReadCloser
 		return nil, err
 	}
 
-	// harmonize line endings to unix compatible first:
-	// 1. \r\n => \n   (Windows   => UNIX)
-	// 2. \r   => \n   (Macintosh => UNIX)
-	licContent := strings.ReplaceAll(strings.ReplaceAll(string(content), "\r\n", "\n"), "\r", "\n")
 	if len(ids) > 0 {
 		for _, id := range ids {
-			lic := file.NewLicense(id)
+			lic := file.NewLicense(id.LicenseID)
 			lic.Type = license.Concluded
 			if s.includeFullText {
-				lic.Contents = licContent
+				extracted := string(content[id.Offset.Start:id.Offset.End])
+				lic.Contents = fixLineEndings(extracted)
 			}
 			licenses = append(licenses, lic)
 		}
@@ -120,11 +112,18 @@ func (s *scanner) FileSearch(ctx context.Context, reader file.LocationReadCloser
 	lic := file.NewLicense(unknownLicenseType)
 	lic.SPDXExpression = UnknownLicensePrefix + getCustomLicenseContentHash(content)
 	if s.includeUnknownLicenseContent {
-		lic.Contents = licContent
+		lic.Contents = fixLineEndings(string(content))
 	}
 
 	lic.Type = license.Declared
 	licenses = append(licenses, lic)
 
 	return licenses, nil
+}
+
+func fixLineEndings(content string) string {
+	// harmonize line endings to unix compatible first:
+	// 1. \r\n => \n   (Windows   => UNIX)
+	// 2. \r   => \n   (Macintosh => UNIX)
+	return strings.ReplaceAll(strings.ReplaceAll(content, "\r\n", "\n"), "\r", "\n")
 }

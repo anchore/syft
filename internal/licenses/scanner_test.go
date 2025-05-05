@@ -39,6 +39,19 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 				content:    mustOpen("test-fixtures/nvidia-software-and-cuda-supplement"),
 			},
 		},
+		{
+			name: "Identify mutliple license IDs",
+			in:   `test-fixtures/multi-license`,
+			expected: expectation{
+				yieldError: false,
+				ids: []string{
+					"Apache-2.0",
+					"BSD-2-Clause",
+					"BSD-3-Clause",
+				},
+				content: mustOpen("test-fixtures/multi-license"),
+			},
+		},
 	}
 
 	for _, test := range tests {
