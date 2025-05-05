@@ -166,7 +166,7 @@ func findVersion(basePath fs.FS, baseName string) (string, error) {
 		if strings.HasPrefix(filePath, baseName) {
 			parts := strings.Split(filePath, "@")
 			if len(parts) == 2 {
-				res = parts[1]
+				res = strings.Split(parts[1], "/")[0]
 				return nil
 			}
 		}

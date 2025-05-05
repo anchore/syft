@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"debug/elf"
 	"errors"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime/debug"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -1072,7 +1074,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	}
 }
 
-/*func TestTestGoPkgSymbols(t *testing.T) {
+func TestTestGoPkgSymbols(t *testing.T) {
 	const (
 		goCompiledVersion = "1.18"
 		archDetails       = "amd64"
@@ -1256,7 +1258,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			}
 		})
 	}
-}*/
+}
 
 func Test_extractVersionFromLDFlags(t *testing.T) {
 	tests := []struct {
