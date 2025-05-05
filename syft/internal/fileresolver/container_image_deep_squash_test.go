@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 
@@ -17,6 +18,40 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/file"
 )
+
+type mockSimpleResolver struct {
+	file.Resolver // embed to fulfill the interface, panics for stuff not implemented
+	paths         *strset.Set
+	locations     map[string][]file.Location
+}
+
+func newMockSimpleResolver(locations []file.Location) *mockSimpleResolver {
+	paths := strset.New()
+	locationMap := make(map[string][]file.Location)
+	for _, loc := range locations {
+		paths.Add(loc.RealPath)
+		paths.Add(loc.AccessPath)
+		locationMap[loc.RealPath] = append(locationMap[loc.RealPath], loc)
+	}
+	return &mockSimpleResolver{
+		paths:     paths,
+		locations: locationMap,
+	}
+}
+
+func (m *mockSimpleResolver) HasPath(p string) bool {
+	return m.paths.Has(p)
+}
+
+func (m *mockSimpleResolver) FilesByPath(paths ...string) ([]file.Location, error) {
+	var results []file.Location
+	for _, path := range paths {
+		if locs, exists := m.locations[path]; exists {
+			results = append(results, locs...)
+		}
+	}
+	return results, nil
+}
 
 func Test_ContainerImageDeepSquash_FilesByPath(t *testing.T) {
 	cases := []struct {
@@ -362,11 +397,11 @@ func Test_ContainerImageDeepSquash_FilesContents_errorOnDirRequest(t *testing.T)
 	var dirLoc *file.Location
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	for loc := range resolver.AllLocations(ctx) {
 		// this is known to be a directory in the test fixture
-		if loc.RealPath == "/parent" {
+		if dirLoc == nil && loc.RealPath == "/parent" {
 			dirLoc = &loc
-			break
 		}
 	}
 
@@ -563,40 +598,6 @@ func Test_ContainerImageDeepSquash_AllLocations(t *testing.T) {
 	sort.Strings(pathsList)
 
 	assert.ElementsMatchf(t, expected, pathsList, "expected all paths to be indexed, but found different paths: \n%s", cmp.Diff(expected, paths.List()))
-}
-
-type mockSimpleResolver struct {
-	file.Resolver // embed to fulfill the interface, panics for stuff not implemented
-	paths         *strset.Set
-	locations     map[string][]file.Location
-}
-
-func newMockSimpleResolver(locations []file.Location) *mockSimpleResolver {
-	paths := strset.New()
-	locationMap := make(map[string][]file.Location)
-	for _, loc := range locations {
-		paths.Add(loc.RealPath)
-		paths.Add(loc.AccessPath)
-		locationMap[loc.RealPath] = append(locationMap[loc.RealPath], loc)
-	}
-	return &mockSimpleResolver{
-		paths:     paths,
-		locations: locationMap,
-	}
-}
-
-func (m *mockSimpleResolver) HasPath(p string) bool {
-	return m.paths.Has(p)
-}
-
-func (m *mockSimpleResolver) FilesByPath(paths ...string) ([]file.Location, error) {
-	var results []file.Location
-	for _, path := range paths {
-		if locs, exists := m.locations[path]; exists {
-			results = append(results, locs...)
-		}
-	}
-	return results, nil
 }
 
 func TestContainerImageDeepSquash_MergeLocations(t *testing.T) {
@@ -840,25 +841,22 @@ func TestContainerImageDeepSquash_MergeLocationStreams(t *testing.T) {
 			squashedChan := make(chan file.Location)
 			allLayersChan := make(chan file.Location)
 
+			wg := &sync.WaitGroup{}
+			wg.Add(2)
+
 			go func() {
+				defer wg.Done()
 				defer close(squashedChan)
 				for _, loc := range tt.squashedLocations {
-					select {
-					case <-ctx.Done():
-						return
-					case squashedChan <- loc:
-					}
+					squashedChan <- loc
 				}
 			}()
 
 			go func() {
+				defer wg.Done()
 				defer close(allLayersChan)
 				for _, loc := range tt.allLayersLocations {
-					select {
-					case <-ctx.Done():
-						return
-					case allLayersChan <- loc:
-					}
+					allLayersChan <- loc
 				}
 			}()
 
@@ -912,6 +910,8 @@ func TestContainerImageDeepSquash_MergeLocationStreams(t *testing.T) {
 					"expected some visible locations but found none")
 			}
 
+			wg.Wait()
+
 			goleak.VerifyNone(t)
 		})
 	}
@@ -920,6 +920,8 @@ func TestContainerImageDeepSquash_MergeLocationStreams(t *testing.T) {
 func TestContainerImageDeepSquash_MergeLocationStreams_FunCases(t *testing.T) {
 
 	t.Run("concurrent context cancellation", func(t *testing.T) {
+		upstreamCtx, upstreamCancel := context.WithCancel(context.Background())
+
 		ctx, cancel := context.WithCancel(context.Background())
 
 		resolver := &ContainerImageDeepSquash{
@@ -929,14 +931,19 @@ func TestContainerImageDeepSquash_MergeLocationStreams_FunCases(t *testing.T) {
 		squashedChan := make(chan file.Location)
 		allLayersChan := make(chan file.Location)
 
+		wg := &sync.WaitGroup{}
+		wg.Add(2)
+
 		go func() {
-			count := 0
+			defer wg.Done()
 			defer close(squashedChan)
+
+			count := 0
 			for {
 				count++
 				loc := makeLocation(fmt.Sprintf("/path/%d", count), 2)
 				select {
-				case <-ctx.Done():
+				case <-upstreamCtx.Done():
 					return
 				case squashedChan <- loc:
 				}
@@ -944,13 +951,15 @@ func TestContainerImageDeepSquash_MergeLocationStreams_FunCases(t *testing.T) {
 		}()
 
 		go func() {
-			count := 0
+			defer wg.Done()
 			defer close(allLayersChan)
+
+			count := 0
 			for {
 				count++
 				loc := makeLocation(fmt.Sprintf("/path/%d", count), 2)
 				select {
-				case <-ctx.Done():
+				case <-upstreamCtx.Done():
 					return
 				case allLayersChan <- loc:
 				}
@@ -962,11 +971,15 @@ func TestContainerImageDeepSquash_MergeLocationStreams_FunCases(t *testing.T) {
 		go func() {
 			<-time.After(5 * time.Millisecond)
 			cancel()
+			time.Sleep(10 * time.Millisecond)
+			upstreamCancel()
 		}()
 
 		for range mergedChan {
 			// drain
 		}
+		wg.Wait()
+
 		goleak.VerifyNone(t)
 	})
 
@@ -1005,8 +1018,13 @@ func TestContainerImageDeepSquash_MergeLocationStreams_FunCases(t *testing.T) {
 		allLayersChan := make(chan file.Location)
 		close(squashedChan)
 
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+
 		go func() {
 			defer close(allLayersChan)
+			defer wg.Done()
+
 			allLayersChan <- makeLocation("/path/one", 1)
 		}()
 
@@ -1017,6 +1035,9 @@ func TestContainerImageDeepSquash_MergeLocationStreams_FunCases(t *testing.T) {
 		for range mergedChan {
 			count++
 		}
+
+		wg.Wait()
+
 		assert.Equal(t, 0, count, "expected no results when squashed is empty")
 	})
 }
