@@ -172,6 +172,13 @@ func (i *ContainerImageDeepSquash) mergeLocations(squashedLocations, allLayersLo
 			continue
 		}
 
+		// not only should the real path to the file exist, but the way we took to get there should also exist
+		// (e.g. if we are looking for /etc/passwd, but the real path is /etc/passwd -> /etc/passwd-1, then we should
+		// make certain that /etc/passwd-1 exists)
+		if l.AccessPath != "" && !i.squashed.HasPath(l.AccessPath) {
+			continue
+		}
+
 		result = append(result, l.WithAnnotation(file.VisibleAnnotationKey, file.HiddenAnnotation))
 	}
 
@@ -222,6 +229,13 @@ func (i *ContainerImageDeepSquash) mergeLocationStreams(ctx context.Context, squ
 
 			if !i.squashed.HasPath(l.RealPath) {
 				// if we find a location for a path that matches the query (e.g. **/node_modules) but is not present in the squashed tree, skip it
+				continue
+			}
+
+			// not only should the real path to the file exist, but the way we took to get there should also exist
+			// (e.g. if we are looking for /etc/passwd, but the real path is /etc/passwd -> /etc/passwd-1, then we should
+			// make certain that /etc/passwd-1 exists)
+			if l.AccessPath != "" && !i.squashed.HasPath(l.AccessPath) {
 				continue
 			}
 

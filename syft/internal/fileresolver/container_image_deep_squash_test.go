@@ -681,6 +681,32 @@ func TestContainerImageDeepSquash_MergeLocations(t *testing.T) {
 			expectedLocations:   6, // 3 from squashed + 3 hidden from all layers
 			expectedVisibleOnly: false,
 		},
+		{
+			name: "include virtual locations",
+			squashedLocations: file.NewLocationSet(
+				makeLocation("/path/one", 1),
+				makeLocation("/path/two", 2),
+				makeLocation("/path/to-one", 2), // a symlink
+			),
+			allLayersLocations: file.NewLocationSet(
+				makeLocation("/path/one", 1), // will be deduped
+				makeVirtualLocation("/path/one", "/path/to-one", 2),
+			),
+			expectedLocations:   4,
+			expectedVisibleOnly: false,
+		},
+		{
+			name: "don't include hidden virtual locations",
+			squashedLocations: file.NewLocationSet(
+				makeLocation("/path/one", 1),
+			),
+			allLayersLocations: file.NewLocationSet(
+				makeLocation("/path/one", 1),                        // will be deduped
+				makeVirtualLocation("/path/one", "/path/to-one", 2), // would have been included if /path/to-one was in the squash tree
+			),
+			expectedLocations:   1,
+			expectedVisibleOnly: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -696,7 +722,7 @@ func TestContainerImageDeepSquash_MergeLocations(t *testing.T) {
 
 			mergedLocations := resolver.mergeLocations(squashedLocations, allLayersLocations)
 
-			require.Len(t, mergedLocations, tt.expectedLocations, "incorrect number of merged locations")
+			require.Len(t, mergedLocations, tt.expectedLocations, "incorrect number of merged locations (expected %d, found %d)", tt.expectedLocations, len(mergedLocations))
 
 			if tt.expectedLocations > 0 {
 				onlyVisible := true
@@ -826,6 +852,32 @@ func TestContainerImageDeepSquash_MergeLocationStreams(t *testing.T) {
 			},
 			expectedLocations:   10, // 3 from squashed + 7 from all layers (3 excluded due to dedup/path)
 			expectedVisibleOnly: false,
+		},
+		{
+			name: "include virtual locations",
+			squashedLocations: []file.Location{
+				makeLocation("/path/one", 1),
+				makeLocation("/path/two", 2),
+				makeLocation("/path/to-one", 2), // a symlink
+			},
+			allLayersLocations: []file.Location{
+				makeLocation("/path/one", 1), // will be deduped
+				makeVirtualLocation("/path/one", "/path/to-one", 2),
+			},
+			expectedLocations:   4,
+			expectedVisibleOnly: false,
+		},
+		{
+			name: "don't include hidden virtual locations",
+			squashedLocations: []file.Location{
+				makeLocation("/path/one", 1),
+			},
+			allLayersLocations: []file.Location{
+				makeLocation("/path/one", 1),                        // will be deduped
+				makeVirtualLocation("/path/one", "/path/to-one", 2), // would have been included if /path/to-one was in the squash tree
+			},
+			expectedLocations:   1,
+			expectedVisibleOnly: true,
 		},
 	}
 
@@ -1047,4 +1099,11 @@ func makeLocation(path string, layer int) file.Location {
 		RealPath:     path,
 		FileSystemID: fmt.Sprintf("layer-%d", layer),
 	})
+}
+
+func makeVirtualLocation(path, access string, layer int) file.Location {
+	return file.NewVirtualLocationFromCoordinates(file.Coordinates{
+		RealPath:     path,
+		FileSystemID: fmt.Sprintf("layer-%d", layer),
+	}, access)
 }
