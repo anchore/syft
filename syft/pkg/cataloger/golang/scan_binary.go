@@ -57,7 +57,11 @@ func (c *goBinaryCataloger) scanFile(location file.Location, reader unionreader.
 		}
 		var sym []elf.Symbol
 		if bi.Deps == nil {
-			sym, _ = getSymbolsInfo(r)
+			sym, err = getSymbolsInfo(r)
+			if err != nil {
+				log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang symtab")
+				continue
+			}
 			if sym != nil {
 				btyp = testBinaryType
 			}
@@ -110,11 +114,13 @@ func getCryptoSettingsFromVersion(v version.Version) []string {
 }
 
 // getCachedChecksum just as the function name, it gets the checksum from the path with the pattern like
-// GOPATH/pkg/mod/cache/download/example.com/module/@v/v1.2.3.ziphash
+// $GOPATH/pkg/mod/cache/download/example.com/module/@v/v1.2.3.ziphash
 func getCachedChecksum(pkgDir string, name string, version string) (content string, err error) {
 	checksumPath := fmt.Sprintf("%s/cache/download/%s/@v/%s.ziphash", pkgDir, name, version)
 	bytes, err := os.ReadFile(checksumPath)
-	content = string(bytes)
+	if len(bytes) != 0 {
+		content = string(bytes)
+	}
 	return
 }
 
@@ -147,13 +153,12 @@ func findVersion(basePath string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("%s doesn't exist in the GO MODULES,hence no versioned path found for it", basePath)
+	return "", fmt.Errorf("%s doesn't exist in the Go Modules,hence no versioned path found for it", basePath)
 }
 
-// getModulesFromSymbols
+// getModulesFromSymbols is used to parse the dependencies given the symbols of a test binary with the help of Go Module cache
 func (c *goBinaryCataloger) getModulesFromSymbols(syms []elf.Symbol) (result []*debug.Module) {
 	uniqueModules := make(map[string]*debug.Module)
-	// FIXME using the configured not default go mod dir
 	goPath := c.licenseResolver.opts.LocalModCacheDir
 
 	for _, sym := range syms {
@@ -185,7 +190,6 @@ func (c *goBinaryCataloger) getModulesFromSymbols(syms []elf.Symbol) (result []*
 	return result
 }
 
-// getSymbolsInfo is used to parse the dependencies in a test binary with the help of Go Module cache
 func getSymbolsInfo(r io.ReaderAt) (result []elf.Symbol, err error) {
 	f, err := elf.NewFile(r)
 	if err != nil {
@@ -200,7 +204,6 @@ func getSymbolsInfo(r io.ReaderAt) (result []elf.Symbol, err error) {
 		err = fmt.Errorf("error when parsing the symbols of the binary")
 	}
 
-	/**/
 	return
 }
 

@@ -84,14 +84,14 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 		if btyp == devBinaryType {
 			mainPkg, depPkgs = c.buildGoPkgInfo(ctx, licenseScanner, resolver, reader.Location, mod, mod.arch, unionReader)
 			if mainPkg != nil {
-				pkgs = append(pkgs, *mainPkg)
 				rels = createModuleRelationships(*mainPkg, depPkgs)
+				pkgs = append(pkgs, *mainPkg)
 			}
 		} else {
 			mainPkg, depPkgs = c.buildGoTestPkgInfo(ctx, licenseScanner, resolver, reader.Location, mod, mod.sym, mod.arch, unionReader)
 			if mainPkg != nil {
-				pkgs = append(pkgs, *mainPkg)
 				rels = createModuleTestRelationships(*mainPkg, depPkgs)
+				pkgs = append(pkgs, *mainPkg)
 			}
 		}
 		pkgs = append(pkgs, depPkgs...)
