@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	DefaultCoverageThreshold     = 75 // determined by experimentation
-	DefaultIncludeLicenseContent = false
-	DefaultIncludeFullText       = false
+	DefaultCoverageThreshold            = 75 // determined by experimentation
+	DefaultIncludeUnknownLicenseContent = false
+	DefaultIncludeFullText              = false
 )
 
 type Scanner interface {
@@ -27,15 +27,17 @@ type Scanner interface {
 var _ Scanner = (*scanner)(nil)
 
 type scanner struct {
-	coverageThreshold     float64 // between 0 and 100
-	includeLicenseContent bool
-	scanner               func([]byte) licensecheck.Coverage
+	coverageThreshold            float64 // between 0 and 100
+	includeUnknownLicenseContent bool
+	includeFullText              bool
+	scanner                      func([]byte) licensecheck.Coverage
 }
 
 type ScannerConfig struct {
-	CoverageThreshold     float64
-	IncludeLicenseContent bool
-	Scanner               func([]byte) licensecheck.Coverage
+	CoverageThreshold            float64
+	IncludeUnknownLicenseContent bool
+	IncludeFullText              bool
+	Scanner                      func([]byte) licensecheck.Coverage
 }
 
 type Option func(*scanner)
@@ -46,9 +48,15 @@ func WithCoverage(coverage float64) Option {
 	}
 }
 
-func WithIncludeLicenseContent(includeLicenseContent bool) Option {
+func WithIncludeUnknownLicenseContent(includeUnknownLicenseContent bool) Option {
 	return func(s *scanner) {
-		s.includeLicenseContent = includeLicenseContent
+		s.includeUnknownLicenseContent = includeUnknownLicenseContent
+	}
+}
+
+func WithIncludeFullText(includeFullText bool) Option {
+	return func(s *scanner) {
+		s.includeFullText = includeFullText
 	}
 }
 
@@ -60,9 +68,10 @@ func NewDefaultScanner(o ...Option) (Scanner, error) {
 		return nil, fmt.Errorf("unable to create default license scanner: %w", err)
 	}
 	newScanner := &scanner{
-		coverageThreshold:     DefaultCoverageThreshold,
-		includeLicenseContent: DefaultIncludeLicenseContent,
-		scanner:               s.Scan,
+		coverageThreshold:            DefaultCoverageThreshold,
+		includeUnknownLicenseContent: DefaultIncludeUnknownLicenseContent,
+		includeFullText:              DefaultIncludeFullText,
+		scanner:                      s.Scan,
 	}
 
 	for _, opt := range o {
@@ -79,8 +88,9 @@ func NewScanner(c *ScannerConfig) (Scanner, error) {
 	}
 
 	return &scanner{
-		coverageThreshold:     c.CoverageThreshold,
-		includeLicenseContent: c.IncludeLicenseContent,
-		scanner:               c.Scanner,
+		coverageThreshold:            c.CoverageThreshold,
+		includeFullText:              c.IncludeFullText,
+		includeUnknownLicenseContent: c.IncludeUnknownLicenseContent,
+		scanner:                      c.Scanner,
 	}, nil
 }

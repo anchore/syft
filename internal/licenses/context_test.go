@@ -8,7 +8,7 @@ import (
 )
 
 func TestSetContextLicenseScanner(t *testing.T) {
-	scanner := testScanner(true)
+	scanner := testScanner(true, false)
 	ctx := context.Background()
 	ctx = SetContextLicenseScanner(ctx, scanner)
 
@@ -20,7 +20,7 @@ func TestSetContextLicenseScanner(t *testing.T) {
 }
 
 func TestIsContextLicenseScannerSet(t *testing.T) {
-	scanner := testScanner(true)
+	scanner := testScanner(true, false)
 	ctx := context.Background()
 	require.False(t, IsContextLicenseScannerSet(ctx))
 
@@ -30,7 +30,7 @@ func TestIsContextLicenseScannerSet(t *testing.T) {
 
 func TestContextLicenseScanner(t *testing.T) {
 	t.Run("with scanner", func(t *testing.T) {
-		scanner := testScanner(true)
+		scanner := testScanner(true, false)
 		ctx := SetContextLicenseScanner(context.Background(), scanner)
 		s, err := ContextLicenseScanner(ctx)
 		if err != nil || s != scanner {

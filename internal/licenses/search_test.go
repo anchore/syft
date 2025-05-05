@@ -60,7 +60,7 @@ func TestSearchFileLicenses(t *testing.T) {
 			ctx := context.TODO()
 			content, err := os.ReadFile(test.in)
 			require.NoError(t, err)
-			s := testScanner(false)
+			s := testScanner(false, false)
 			result, err := s.FileSearch(ctx, file.NewLocationReadCloser(file.NewLocation("LICENSE"), io.NopCloser(bytes.NewReader(content))))
 			if test.expected.yieldError {
 				require.Error(t, err)
@@ -77,6 +77,11 @@ func TestSearchFileLicenses(t *testing.T) {
 	}
 }
 
+type scannerOptions struct {
+	includeUnknownLicenseContent bool
+	includeFullText              bool
+}
+
 func TestSearchPkgLicenses(t *testing.T) {
 	type expectation struct {
 		wantErr  require.ErrorAssertionFunc
@@ -85,14 +90,15 @@ func TestSearchPkgLicenses(t *testing.T) {
 
 	testLocation := file.NewLocation("LICENSE")
 	tests := []struct {
-		name                        string
-		in                          string
-		includeUnkownLicenseContent bool
-		expected                    expectation
+		name          string
+		in            string
+		scannerConfig scannerOptions
+		expected      expectation
 	}{
 		{
-			name: "apache license 2.0",
-			in:   "test-fixtures/apache-license-2.0",
+			name:          "apache license 2.0 all text options off",
+			in:            "test-fixtures/apache-license-2.0",
+			scannerConfig: scannerOptions{},
 			expected: expectation{
 				licenses: []pkg.License{
 					{
@@ -108,8 +114,9 @@ func TestSearchPkgLicenses(t *testing.T) {
 			},
 		},
 		{
-			name: "custom license no content by default",
-			in:   "test-fixtures/nvidia-software-and-cuda-supplement",
+			name:          "custom license no content by default",
+			in:            "test-fixtures/nvidia-software-and-cuda-supplement",
+			scannerConfig: scannerOptions{},
 			expected: expectation{
 				licenses: []pkg.License{
 					{
@@ -125,9 +132,11 @@ func TestSearchPkgLicenses(t *testing.T) {
 			},
 		},
 		{
-			name:                        "custom license with content when scanner has content config",
-			in:                          "test-fixtures/nvidia-software-and-cuda-supplement",
-			includeUnkownLicenseContent: true,
+			name: "custom license with content when scanner has content config",
+			in:   "test-fixtures/nvidia-software-and-cuda-supplement",
+			scannerConfig: scannerOptions{
+				includeUnknownLicenseContent: true,
+			},
 			expected: expectation{
 				licenses: []pkg.License{
 					{
@@ -136,7 +145,27 @@ func TestSearchPkgLicenses(t *testing.T) {
 						Type:           "declared",
 						URLs:           nil,
 						Locations:      file.NewLocationSet(testLocation),
-						Contents:       string(mustOpen("test-fixtures/nvidia-software-and-cuda-supplement")),
+						FullText:       string(mustOpen("test-fixtures/nvidia-software-and-cuda-supplement")),
+					},
+				},
+				wantErr: nil,
+			},
+		},
+		{
+			name: "apache license 2.0 with full text when scanner has content config",
+			in:   "test-fixtures/apache-license-2.0",
+			scannerConfig: scannerOptions{
+				includeFullText: true,
+			},
+			expected: expectation{
+				licenses: []pkg.License{
+					{
+						Value:          "Apache-2.0",
+						SPDXExpression: "Apache-2.0",
+						Type:           "concluded",
+						URLs:           nil,
+						Locations:      file.NewLocationSet(testLocation),
+						FullText:       string(mustOpen("test-fixtures/apache-license-2.0")),
 					},
 				},
 				wantErr: nil,
@@ -149,7 +178,7 @@ func TestSearchPkgLicenses(t *testing.T) {
 			ctx := context.TODO()
 			content, err := os.ReadFile(test.in)
 			require.NoError(t, err)
-			s := testScanner(test.includeUnkownLicenseContent)
+			s := testScanner(test.scannerConfig.includeUnknownLicenseContent, test.scannerConfig.includeFullText)
 			result, err := s.PkgSearch(ctx, file.NewLocationReadCloser(file.NewLocation("LICENSE"), io.NopCloser(bytes.NewReader(content))))
 			if test.expected.wantErr != nil {
 				test.expected.wantErr(t, err)

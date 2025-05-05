@@ -45,7 +45,7 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			content, err := os.ReadFile(test.in)
 			require.NoError(t, err)
-			ids, content, err := testScanner(false).IdentifyLicenseIDs(context.TODO(), bytes.NewReader(content))
+			ids, content, err := testScanner(false, false).IdentifyLicenseIDs(context.TODO(), bytes.NewReader(content))
 			if test.expected.yieldError {
 				require.Error(t, err)
 			} else {
@@ -66,11 +66,12 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 	}
 }
 
-func testScanner(includeLicenseContent bool) Scanner {
+func testScanner(includeUnknownLicenseContent, includeFullText bool) Scanner {
 	return &scanner{
-		coverageThreshold:     DefaultCoverageThreshold,
-		includeLicenseContent: includeLicenseContent,
-		scanner:               licensecheck.Scan,
+		coverageThreshold:            DefaultCoverageThreshold,
+		includeUnknownLicenseContent: includeUnknownLicenseContent,
+		includeFullText:              includeFullText,
+		scanner:                      licensecheck.Scan,
 	}
 }
 

@@ -39,9 +39,15 @@ func (s *scanner) IdentifyLicenseIDs(_ context.Context, reader io.Reader) ([]str
 		return nil, content, nil
 	}
 
+	// we found some kind of license match
 	var ids []string
 	for _, m := range cov.Match {
 		ids = append(ids, m.ID)
+	}
+
+	// sometimes users want the full license even if they got an SPDX ID from searching the content
+	if s.includeFullText {
+		return ids, content, nil
 	}
 	return ids, nil, nil
 }
@@ -55,31 +61,33 @@ func (s *scanner) PkgSearch(ctx context.Context, reader file.LocationReadCloser)
 		return nil, err
 	}
 
-	// IdentifyLicenseIDs can only return a list of ID or content
-	// These return values are mutually exclusive.
-	// If the scanner threshold for matching scores < 75% then we return the license full content
+	// harmonize line endings to unix compatible first:
+	// 1. \r\n => \n   (Windows   => UNIX)
+	// 2. \r   => \n   (Macintosh => UNIX)
+	licContent := strings.ReplaceAll(strings.ReplaceAll(string(content), "\r\n", "\n"), "\r", "\n")
+
+	// known licenses found
 	if len(ids) > 0 {
 		for _, id := range ids {
-			lic := pkg.NewLicenseFromLocations(id, reader.Location)
-			lic.Type = license.Concluded
-
-			licenses = append(licenses, lic)
+			if s.includeFullText {
+				licenses = append(licenses, pkg.NewLicenseFromFullText(id, licContent, reader.Location, license.Concluded))
+			} else {
+				li := pkg.NewLicenseFromType(id, license.Concluded)
+				li.Locations.Add(reader.Location)
+				licenses = append(licenses, li)
+			}
 		}
-	} else if len(content) > 0 {
-		// harmonize line endings to unix compatible first:
-		// 1. \r\n => \n   (Windows   => UNIX)
-		// 2. \r   => \n   (Macintosh => UNIX)
-		content = []byte(strings.ReplaceAll(strings.ReplaceAll(string(content), "\r\n", "\n"), "\r", "\n"))
-
-		lic := pkg.NewLicenseFromLocations(unknownLicenseType, reader.Location)
-		lic.SPDXExpression = UnknownLicensePrefix + getCustomLicenseContentHash(content)
-		if s.includeLicenseContent {
-			lic.Contents = string(content)
-		}
-		lic.Type = license.Declared
-
-		licenses = append(licenses, lic)
+		return licenses, nil
 	}
+
+	// scanner could not find SPDX ID associated with content
+	lic := pkg.NewLicenseFromLocations(unknownLicenseType, reader.Location)
+	lic.SPDXExpression = UnknownLicensePrefix + getCustomLicenseContentHash(content)
+	lic.Type = license.Declared
+	if s.includeUnknownLicenseContent {
+		lic.FullText = licContent
+	}
+	licenses = append(licenses, lic)
 
 	return licenses, nil
 }
@@ -93,31 +101,30 @@ func (s *scanner) FileSearch(ctx context.Context, reader file.LocationReadCloser
 		return nil, err
 	}
 
-	// IdentifyLicenseIDs can only return a list of ID or content
-	// These return values are mutually exclusive.
-	// If the scanner threshold for matching scores < 75% then we return the license full content
+	// harmonize line endings to unix compatible first:
+	// 1. \r\n => \n   (Windows   => UNIX)
+	// 2. \r   => \n   (Macintosh => UNIX)
+	licContent := strings.ReplaceAll(strings.ReplaceAll(string(content), "\r\n", "\n"), "\r", "\n")
 	if len(ids) > 0 {
 		for _, id := range ids {
 			lic := file.NewLicense(id)
 			lic.Type = license.Concluded
-
+			if s.includeFullText {
+				lic.Contents = licContent
+			}
 			licenses = append(licenses, lic)
 		}
-	} else if len(content) > 0 {
-		// harmonize line endings to unix compatible first:
-		// 1. \r\n => \n   (Windows   => UNIX)
-		// 2. \r   => \n   (Macintosh => UNIX)
-		content = []byte(strings.ReplaceAll(strings.ReplaceAll(string(content), "\r\n", "\n"), "\r", "\n"))
-
-		lic := file.NewLicense(unknownLicenseType)
-		lic.SPDXExpression = UnknownLicensePrefix + getCustomLicenseContentHash(content)
-		if s.includeLicenseContent {
-			lic.Contents = string(content)
-		}
-		lic.Type = license.Declared
-
-		licenses = append(licenses, lic)
+		return licenses, nil
 	}
+
+	lic := file.NewLicense(unknownLicenseType)
+	lic.SPDXExpression = UnknownLicensePrefix + getCustomLicenseContentHash(content)
+	if s.includeUnknownLicenseContent {
+		lic.Contents = licContent
+	}
+
+	lic.Type = license.Declared
+	licenses = append(licenses, lic)
 
 	return licenses, nil
 }

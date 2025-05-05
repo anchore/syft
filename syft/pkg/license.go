@@ -69,8 +69,25 @@ func (l Licenses) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
+// NewLicense returns a license for the provided value with a declared type
 func NewLicense(value string) License {
 	return NewLicenseFromType(value, license.Declared)
+}
+
+func NewLicenseFromFullText(id string, fullText string, location file.Location, t license.Type) License {
+	spdxExpression, err := license.ParseExpression(id)
+	if err != nil {
+		log.WithFields("error", err, "expression", id).Trace("unable to parse license expression")
+	}
+
+	l := License{
+		SPDXExpression: spdxExpression,
+		Value:          id,
+		FullText:       fullText,
+		Type:           t,
+	}
+	l.Locations.Add(location)
+	return l
 }
 
 func NewLicenseFromType(value string, t license.Type) License {
