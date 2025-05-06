@@ -80,7 +80,7 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 func createSPDXLicense(l pkg.License) SPDXLicense {
 	candidate := SPDXLicense{
 		ID:       generateLicenseID(l),
-		FullText: l.FullText,
+		FullText: l.Contents,
 	}
 
 	if l.SPDXExpression == "" {
@@ -96,7 +96,7 @@ func generateLicenseID(l pkg.License) string {
 	if l.Value != "" {
 		return spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
 	}
-	return licenseSum(l.FullText)
+	return licenseSum(l.Contents)
 }
 
 func licenseSum(s string) string {

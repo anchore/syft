@@ -27,17 +27,16 @@ var _ sort.Interface = (*Licenses)(nil)
 // of where a license was declared/concluded for a given package
 // If a license is given as it's full text in the metadata rather than it's value or SPDX expression
 
-// The FullText field is used to represent this data
+// The Contents field is used to represent this data
 // A Concluded License type is the license the SBOM creator believes governs the package (human crafted or altered SBOM)
 // The Declared License is what the authors of a project believe govern the package. This is the default type syft declares.
 type License struct {
 	SPDXExpression string
 	Value          string
-	FullText       string
 	Type           license.Type
+	Contents       string
 	URLs           []string         `hash:"ignore"`
 	Locations      file.LocationSet `hash:"ignore"`
-	Contents       string           `hash:"ignore"` // The optional binary contents of the license file
 }
 
 type Licenses []License
@@ -50,13 +49,16 @@ func (l Licenses) Less(i, j int) bool {
 	if l[i].Value == l[j].Value {
 		if l[i].SPDXExpression == l[j].SPDXExpression {
 			if l[i].Type == l[j].Type {
-				// While URLs and location are not exclusive fields
-				// returning true here reduces the number of swaps
-				// while keeping a consistent sort order of
-				// the order that they appear in the list initially
-				// If users in the future have preference to sorting based
-				// on the slice representation of either field we can update this code
-				return true
+				if l[i].Contents == l[j].Contents {
+					// While URLs and location are not exclusive fields
+					// returning true here reduces the number of swaps
+					// while keeping a consistent sort order of
+					// the order that they appear in the list initially
+					// If users in the future have preference to sorting based
+					// on the slice representation of either field we can update this code
+					return true
+				}
+				return l[i].Contents < l[j].Contents
 			}
 			return l[i].Type < l[j].Type
 		}
@@ -93,7 +95,7 @@ func NewLicenseFromType(value string, t license.Type) License {
 
 	if fullText != "" {
 		return License{
-			FullText:  fullText,
+			Contents:  fullText,
 			Type:      t,
 			Locations: file.NewLocationSet(),
 		}
@@ -180,7 +182,7 @@ func NewLicenseFromFields(value, url string, location *file.Location) License {
 }
 
 func (s License) Empty() bool {
-	return s.Value == "" && s.SPDXExpression == "" && s.FullText == ""
+	return s.Value == "" && s.SPDXExpression == "" && s.Contents == ""
 }
 
 // Merge two licenses into a new license object. If the merge is not possible due to unmergeable fields
