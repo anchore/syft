@@ -94,7 +94,7 @@ func Test_Sort(t *testing.T) {
 			expected: Licenses{
 				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
 				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
-				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/KNUTH-CTAN")),
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
 			},
 		},
 	}
