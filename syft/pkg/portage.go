@@ -12,7 +12,8 @@ var _ FileOwner = (*PortageEntry)(nil)
 
 // PortageEntry represents a single package entry in the portage DB flat-file store.
 type PortageEntry struct {
-	InstalledSize int                 `mapstructure:"InstalledSize" json:"installedSize" cyclonedx:"installedSize"`
+	InstalledSize int                 `json:"installedSize" cyclonedx:"installedSize"`
+	Licenses      string              `json:"licenses,omitempty"`
 	Files         []PortageFileRecord `json:"files"`
 }
 

@@ -36,40 +36,40 @@ func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.
 		return nil, nil, fmt.Errorf("failed to parse portage name and version")
 	}
 
-	p := pkg.Package{
-		Name:    name,
-		Version: version,
-		PURL:    packageURL(name, version),
-		Locations: file.NewLocationSet(
-			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-		),
-		Type: pkg.PortagePkg,
-		Metadata: pkg.PortageEntry{
-			// ensure the default value for a collection is never nil since this may be shown as JSON
-			Files: make([]pkg.PortageFileRecord, 0),
-		},
+	m := pkg.PortageEntry{
+		// ensure the default value for a collection is never nil since this may be shown as JSON
+		Files: make([]pkg.PortageFileRecord, 0),
 	}
-	addLicenses(resolver, reader.Location, &p)
-	addSize(resolver, reader.Location, &p)
-	addFiles(resolver, reader.Location, &p)
+
+	locations := file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+
+	licenses, licenseLocations := addLicenses(resolver, reader.Location, &m)
+	locations.Add(licenseLocations...)
+	locations.Add(addSize(resolver, reader.Location, &m)...)
+	locations.Add(addFiles(resolver, reader.Location, &m)...)
+
+	p := pkg.Package{
+		Name:      name,
+		Version:   version,
+		PURL:      packageURL(name, version),
+		Locations: locations,
+		Licenses:  licenses,
+		Type:      pkg.PortagePkg,
+		Metadata:  m,
+	}
 
 	p.SetID()
 
 	return []pkg.Package{p}, nil, nil
 }
 
-func addFiles(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
+func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) []file.Location {
 	contentsReader, err := resolver.FileContentsByLocation(dbLocation)
 	if err != nil {
-		log.WithFields("path", dbLocation.RealPath, "package", p.Name, "error", err).Debug("failed to fetch portage contents")
-		return
+		log.WithFields("path", dbLocation.RealPath, "error", err).Debug("failed to fetch portage contents")
+		return nil
 	}
 	defer internal.CloseAndLogError(contentsReader, dbLocation.RealPath)
-
-	entry, ok := p.Metadata.(pkg.PortageEntry)
-	if !ok {
-		return
-	}
 
 	scanner := bufio.NewScanner(contentsReader)
 	for scanner.Scan() {
@@ -88,48 +88,49 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) 
 		}
 	}
 
-	p.Metadata = entry
-	p.Locations.Add(dbLocation)
+	return []file.Location{dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)}
 }
 
-func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
+func addLicenses(resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) (pkg.LicenseSet, []file.Location) {
 	parentPath := filepath.Dir(dbLocation.RealPath)
 
 	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "LICENSE"))
 
 	if location == nil {
-		return
+		return pkg.NewLicenseSet(), nil
 	}
 
 	licenseReader, err := resolver.FileContentsByLocation(*location)
 	if err != nil {
 		log.WithFields("path", dbLocation.RealPath, "error", err).Debug("failed to fetch portage LICENSE")
-		return
+		return pkg.NewLicenseSet(), nil
 	}
 	defer internal.CloseAndLogError(licenseReader, location.RealPath)
 
-	p.Licenses = pkg.NewLicenseSet(pkg.NewLicense(extractLicenses(licenseReader)))
-	p.Locations.Add(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
+	og, spdxExpression := extractLicenses(resolver, location, licenseReader)
+	entry.Licenses = og
+
+	return pkg.NewLicenseSet(
+			pkg.NewLicenseFromLocations(spdxExpression, *location),
+		),
+		[]file.Location{
+			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+		}
 }
 
-func addSize(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
+func addSize(resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) []file.Location {
 	parentPath := filepath.Dir(dbLocation.RealPath)
 
 	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "SIZE"))
 
 	if location == nil {
-		return
-	}
-
-	entry, ok := p.Metadata.(pkg.PortageEntry)
-	if !ok {
-		return
+		return nil
 	}
 
 	sizeReader, err := resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.WithFields("name", p.Name, "error", err).Debug("failed to fetch portage SIZE")
-		return
+		log.WithFields("path", dbLocation.RealPath, "error", err).Debug("failed to fetch portage SIZE")
+		return nil
 	}
 	defer internal.CloseAndLogError(sizeReader, location.RealPath)
 
@@ -142,6 +143,5 @@ func addSize(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 		}
 	}
 
-	p.Metadata = entry
-	p.Locations.Add(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
+	return []file.Location{location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)}
 }
