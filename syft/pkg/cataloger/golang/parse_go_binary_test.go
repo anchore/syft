@@ -1234,27 +1234,47 @@ func TestTestGoPkgSymbols(t *testing.T) {
 					FileSystemID: "layer-id",
 				},
 			)
+
 			wd, ferr := os.Getwd()
 			require.NoError(t, ferr)
-			c := newGoBinaryCataloger(CatalogerConfig{
+			var cs []*goBinaryCataloger
+			cs = append(cs, newGoBinaryCataloger(CatalogerConfig{
 				MainModuleVersion:           DefaultMainModuleVersionConfig(),
 				LocalModCacheDir:            filepath.Join(wd, "test-fixtures", "mod-cache", "pkg", "mod"),
 				SearchLocalModCacheLicenses: true,
-			})
+			}))
+			cs = append(cs, newGoBinaryCataloger(CatalogerConfig{
+				MainModuleVersion:         DefaultMainModuleVersionConfig(),
+				LocalVendorDir:            filepath.Join(wd, "test-fixtures", "local-vendor"),
+				SearchLocalVendorLicenses: true,
+			}))
 
-			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
-			require.NoError(t, err)
+			for _, c := range cs {
+				reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
+				require.NoError(t, err)
 
-			mainPkg, pkgs := c.buildGoTestPkgInfo(context.Background(), licenseScanner, fileresolver.Empty{}, location, test.mod, test.symbols, test.mod.arch, reader)
-			if mainPkg != nil {
-				pkgs = append(pkgs, *mainPkg)
-			}
-			require.Len(t, pkgs, len(test.expected))
-			sort.Slice(pkgs, func(i, j int) bool {
-				return pkgs[i].Name < pkgs[j].Name
-			})
-			for i, p := range pkgs {
-				pkgtest.AssertPackagesEqual(t, test.expected[i], p)
+				mainPkg, pkgs := c.buildGoTestPkgInfo(context.Background(), licenseScanner, fileresolver.Empty{}, location, test.mod, test.symbols, test.mod.arch, reader)
+				if mainPkg != nil {
+					pkgs = append(pkgs, *mainPkg)
+				}
+				require.Len(t, pkgs, len(test.expected))
+				sort.Slice(pkgs, func(i, j int) bool {
+					return pkgs[i].Name < pkgs[j].Name
+				})
+				for i, p := range pkgs {
+					restored_metadata := test.expected[i].Metadata
+					// we can't find h1-digest in vendor/, so a tiny adjustment appears
+					if c.licenseResolver.opts.SearchLocalVendorLicenses && i != 0 {
+						test.expected[i].Metadata = pkg.GolangBinaryBuildinfoEntry{
+							GoCompiledVersion: goCompiledVersion,
+							Architecture:      archDetails,
+							H1Digest:          "",
+							MainModule:        "command-line-arguments.test",
+						}
+					}
+					pkgtest.AssertPackagesEqual(t, test.expected[i], p)
+					test.expected[i].Metadata = restored_metadata
+				}
 			}
 		})
 	}

@@ -56,6 +56,7 @@ func (c *goBinaryCataloger) scanFile(location file.Location, reader unionreader.
 			continue
 		}
 		var sym []elf.Symbol
+		// a test binary has no dependencies in "buildinfo", so we resort to the .symtab section (i.e. Symbols() )
 		if bi.Deps == nil {
 			sym, err = getSymbolsInfo(r)
 			if err != nil {
@@ -122,17 +123,9 @@ func getCachedChecksum(pkgDir fs.FS, name string, version string) (content strin
 			return fmt.Errorf("error when walking down the dir to find %s", name)
 		}
 		if strings.HasPrefix(filePath, version+".ziphash") {
-			rdr, err0 := pkgDir.Open(filePath)
-			if err0 != nil {
-				log.Debugf("error opening ziphash file %s: %v", filePath, err)
-				return err0
-			}
-			defer internal.CloseAndLogError(rdr, filePath)
-			var bytes []byte
-			reader := file.NewLocationReadCloser(file.NewLocation(filePath), rdr)
-			bytes, _ = io.ReadAll(reader)
-			if len(bytes) != 0 {
-				res = string(bytes)
+			res, err = fetchFileContents(pkgDir, filePath)
+			if err != nil {
+				return err
 			}
 		}
 		return nil
@@ -156,7 +149,7 @@ func trimmedAsURL(name string) (urlDir string, urlName string) {
 	return
 }
 
-func findVersion(basePath fs.FS, baseName string) (string, error) {
+func findVersionInCache(basePath fs.FS, baseName string) (string, error) {
 	var res string
 	err := fs.WalkDir(basePath, ".", func(filePath string, _ fs.DirEntry, err error) error {
 		if err != nil {
@@ -178,13 +171,57 @@ func findVersion(basePath fs.FS, baseName string) (string, error) {
 	return res, err
 }
 
-// getModulesFromSymbols is used to parse the dependencies given the symbols of a test binary with the help of Go Module cache
-func (c *goBinaryCataloger) getModulesFromSymbols(syms []elf.Symbol) (result []*debug.Module) {
-	uniqueModules := make(map[string]*debug.Module)
-	goPath := c.licenseResolver.localModCacheDir
-	if goPath == nil {
-		return nil
+func fetchFileContents(basePath fs.FS, fileName string) (res string, err error) {
+	rdr, err0 := basePath.Open(fileName)
+	if err0 != nil {
+		log.Debugf("error opening file %s: %v", fileName, err)
+		return
 	}
+	defer internal.CloseAndLogError(rdr, fileName)
+	var bytes []byte
+	reader := file.NewLocationReadCloser(file.NewLocation(fileName), rdr)
+	bytes, _ = io.ReadAll(reader)
+	if len(bytes) != 0 {
+		res = string(bytes)
+	}
+	return
+}
+
+func findVersionsInVendor(basePath fs.FS) (map[string]string, error) {
+	res := make(map[string]string)
+	err := fs.WalkDir(basePath, ".", func(filePath string, _ fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("error when walking down the dir to find modules.txt")
+		}
+
+		if strings.EqualFold(filePath, "modules.txt") {
+			var contents string
+			contents, err = fetchFileContents(basePath, filePath)
+			if err == nil && len(contents) != 0 {
+				lines := strings.Split(contents, "\n")
+				for _, line := range lines {
+					// the target line is like this
+					// # github.com/google/go-cmp v0.7.0
+					if strings.HasPrefix(line, "# ") {
+						tuple := strings.Split(line, " ")
+						name := tuple[1]
+						ver := tuple[2]
+						res[name] = ver
+					}
+				}
+			}
+			return nil
+		}
+		return nil
+	})
+	if len(res) == 0 {
+		return nil, fmt.Errorf("modules.txt doesn't exist in the Go Vendors,hence no versioned path found for it")
+	}
+	return res, err
+}
+
+func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.FS) map[string]*debug.Module {
+	uniqueModules := make(map[string]*debug.Module)
 	for _, sym := range syms {
 		urlDir, nameWithoutVersion := trimmedAsURL(sym.Name)
 		// the sym is not a mark of third-party function
@@ -196,7 +233,7 @@ func (c *goBinaryCataloger) getModulesFromSymbols(syms []elf.Symbol) (result []*
 		if err != nil {
 			continue
 		}
-		Version, err := findVersion(dir, nameWithoutVersion)
+		Version, err := findVersionInCache(dir, nameWithoutVersion)
 		// No such module
 		if err != nil {
 			continue
@@ -213,6 +250,57 @@ func (c *goBinaryCataloger) getModulesFromSymbols(syms []elf.Symbol) (result []*
 			Version: Version,
 			Sum:     checksum,
 			Replace: nil,
+		}
+	}
+	return uniqueModules
+}
+
+func (c *goBinaryCataloger) getModulesInfoInVendor(syms []elf.Symbol, goPath fs.FS) map[string]*debug.Module {
+	uniqueModules := make(map[string]*debug.Module)
+	lines, err := findVersionsInVendor(goPath)
+	if err != nil {
+		return uniqueModules
+	}
+
+	for _, sym := range syms {
+		urlDir, nameWithoutVersion := trimmedAsURL(sym.Name)
+		// the sym is not a mark of third-party function
+		if len(urlDir) == 0 {
+			continue
+		}
+		modPair := fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
+		var Version string
+		if _, exists := lines[modPair]; exists {
+			Version = lines[modPair]
+		} else { // there's no corresponding entry in vendor/modules.txt
+			continue
+		}
+		// h1-digest/checksum is unavailable in the vendor/
+		key := fmt.Sprintf("%s %s", modPair, Version)
+		uniqueModules[key] = &debug.Module{
+			Path:    fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion),
+			Version: Version,
+			Sum:     "",
+			Replace: nil,
+		}
+	}
+	return uniqueModules
+}
+
+// getModulesFromSymbols is used to parse the dependencies given the symbols of a test binary with the help of Go Module cache
+func (c *goBinaryCataloger) getModulesFromSymbols(syms []elf.Symbol) (result []*debug.Module) {
+	uniqueModules := make(map[string]*debug.Module)
+	// even though both of two options are available, we still prefer the local mod one
+	// because it will find checksums
+	if c.licenseResolver.opts.SearchLocalModCacheLicenses {
+		goPath := c.licenseResolver.localModCacheDir
+		if goPath != nil {
+			uniqueModules = c.getModulesInfoInCache(syms, goPath)
+		}
+	} else if c.licenseResolver.opts.SearchLocalVendorLicenses {
+		goPath := c.licenseResolver.localVendorDir
+		if goPath != nil {
+			uniqueModules = c.getModulesInfoInVendor(syms, goPath)
 		}
 	}
 
