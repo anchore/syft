@@ -223,12 +223,21 @@ func findVersionsInVendor(basePath fs.FS) (map[string]string, error) {
 func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.FS) map[string]*debug.Module {
 	uniqueModules := make(map[string]*debug.Module)
 	for _, sym := range syms {
+		// sym.Info is a common type in Linux, the low 4 bits represents type and the high 4 indicates binding
+		// the type for 0x12 is FUNC(0x02) and the binding is GLOBAL(0x01)
+		// since we seek for external dependencies, only global type symbols are needed
+		if sym.Info != 0x12 {
+			continue
+		}
 		urlDir, nameWithoutVersion := trimmedAsURL(sym.Name)
 		// the sym is not a mark of third-party function
 		if len(urlDir) == 0 {
 			continue
 		}
-
+		modPair := fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
+		if _, exists := uniqueModules[modPair]; exists {
+			continue
+		}
 		dir, err := fs.Sub(goPath, urlDir)
 		if err != nil {
 			continue
@@ -238,17 +247,13 @@ func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.F
 		if err != nil || len(Version) == 0 {
 			continue
 		}
-		modPair := fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
-		key := fmt.Sprintf("%s %s", modPair, Version)
-		if _, exists := uniqueModules[key]; exists {
-			continue
-		}
+
 		cachedir, err2 := fs.Sub(goPath, "cache/download/"+modPair+"/@v")
 		if err2 != nil {
 			continue
 		}
 		checksum, _ := getCachedChecksum(cachedir, modPair, Version)
-		uniqueModules[key] = &debug.Module{
+		uniqueModules[modPair] = &debug.Module{
 			Path:    fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion),
 			Version: Version,
 			Sum:     checksum,
@@ -266,12 +271,18 @@ func (c *goBinaryCataloger) getModulesInfoInVendor(syms []elf.Symbol, goPath fs.
 	}
 
 	for _, sym := range syms {
+		if sym.Info != 0x12 {
+			continue
+		}
 		urlDir, nameWithoutVersion := trimmedAsURL(sym.Name)
 		// the sym is not a mark of third-party function
 		if len(urlDir) == 0 {
 			continue
 		}
 		modPair := fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
+		if _, exists := uniqueModules[modPair]; exists {
+			continue
+		}
 		var Version string
 		if _, exists := lines[modPair]; exists {
 			Version = lines[modPair]
@@ -279,8 +290,7 @@ func (c *goBinaryCataloger) getModulesInfoInVendor(syms []elf.Symbol, goPath fs.
 			continue
 		}
 		// h1-digest/checksum is unavailable in the vendor/
-		key := fmt.Sprintf("%s %s", modPair, Version)
-		uniqueModules[key] = &debug.Module{
+		uniqueModules[modPair] = &debug.Module{
 			Path:    fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion),
 			Version: Version,
 			Sum:     "",

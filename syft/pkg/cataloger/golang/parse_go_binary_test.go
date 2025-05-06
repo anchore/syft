@@ -1121,34 +1121,42 @@ func TestTestGoPkgSymbols(t *testing.T) {
 			symbols: []elf.Symbol{
 				{
 					Name:       "github.com/davecgh/go-spew..gobytes.1",
+					Info:       0x12,
 					HasVersion: false,
 				},
 				{
 					Name:       "github.com/google/go-cmp/cmp/internal/diff..typeAsserts.0",
+					Info:       0x12,
 					HasVersion: false,
 				},
 				{
 					Name:       "crypto/internal/fips140/hmac..typeAssert.0",
+					Info:       0x01,
 					HasVersion: false,
 				},
 				{
 					Name:       "$f32.6258d727",
+					Info:       0x01,
 					HasVersion: false,
 				},
 				{
 					Name:       "github.com/sirupsen/logrus.isTerminal",
+					Info:       0x12,
 					HasVersion: false,
 				},
 				{
 					Name:       "vendor/golang.org/x/net/http/httpproxy.cidrMatch.match",
+					Info:       0x12,
 					HasVersion: false,
 				},
 				{
 					Name:       "testing.mutexProfileFraction",
+					Info:       0x11,
 					HasVersion: false,
 				},
 				{
 					Name:       "mime.typeFiles",
+					Info:       0x11,
 					HasVersion: false,
 				},
 			},
