@@ -26,7 +26,7 @@
     </PackageReference>
 
     <!-- Umbraco.Cms has dependencies with software, but itself has no DLLs -->
-    <PackageReference Include="Umbraco.Cms" Version="11.3.0" />
+    <PackageReference Include="Umbraco.Cms" Version="13.8.1" />
 
     <!-- For code analysis/style checking, only needed during development -->
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435" PrivateAssets="All" />
