@@ -18,7 +18,7 @@ var (
 	//  minor: "34"
 	//  patch: "210"
 	// (there are other capture groups, but they can be ignored)
-	rightMostVersionIshPattern = regexp.MustCompile(`-(?P<version>(?P<major>[0-9][a-zA-Z0-9]*)(\.(?P<minor>[0-9][a-zA-Z0-9]*))?(\.(?P<patch>0|[1-9][a-zA-Z0-9]*)){0,3}(?:-(?P<prerelease>\d*[.a-zA-Z-][.0-9a-zA-Z-]*)*)?(?:\+(?P<metadata>[.0-9a-zA-Z-]+(?:\.[.0-9a-zA-Z-]+)*))?)`)
+	rightMostVersionIshPattern = regexp.MustCompile(`-(?P<version>(?P<major>[0-9][a-zA-Z0-9]*)(\.(?P<minor>[0-9][a-zA-Z0-9]*))?(\.(?P<patch>0|[1-9][a-zA-Z0-9]*)){0,3}(?:-(?P<prerelease>\d*[.0-9a-zA-Z-]*)*)?(?:\+(?P<metadata>[.0-9a-zA-Z-]+(?:\.[.0-9a-zA-Z-]+)*))?)`)
 
 	unstableVersion = regexp.MustCompile(`-(?P<version>unstable-\d{4}-\d{2}-\d{2})$`)
 )
@@ -26,14 +26,15 @@ var (
 // checkout the package naming conventions here: https://nixos.org/manual/nixpkgs/stable/#sec-package-naming
 
 type nixStorePath struct {
-	outputHash string
-	name       string
-	version    string
-	output     string
+	StorePath  string
+	OutputHash string
+	Name       string
+	Version    string
+	Output     string
 }
 
 func (p nixStorePath) isValidPackage() bool {
-	return p.name != "" && p.version != ""
+	return p.Name != "" && p.Version != ""
 }
 
 func findParentNixStorePath(source string) string {
@@ -54,13 +55,13 @@ func findParentNixStorePath(source string) string {
 	return source[0:startOfSubPath]
 }
 
-func parseNixStorePath(source string) *nixStorePath {
-	if strings.HasSuffix(source, ".drv") {
+func parseNixStorePath(og string) *nixStorePath {
+	if strings.HasSuffix(og, ".drv") {
 		// ignore derivations
 		return nil
 	}
 
-	source = path.Base(source)
+	source := path.Base(og)
 
 	versionStartIdx, versionIsh, prerelease := findVersionIsh(source)
 	if versionStartIdx == -1 {
@@ -85,11 +86,16 @@ func parseNixStorePath(source string) *nixStorePath {
 		output = lastPrereleaseField
 	}
 
+	if og != "" && !strings.HasPrefix(og, "/") {
+		og = fmt.Sprintf("/%s", og)
+	}
+
 	return &nixStorePath{
-		outputHash: hash,
-		name:       name,
-		version:    version,
-		output:     output,
+		StorePath:  og,
+		OutputHash: hash,
+		Name:       name,
+		Version:    version,
+		Output:     output,
 	}
 }
 
@@ -102,33 +108,25 @@ func findVersionIsh(input string) (int, string, string) {
 	// note that the match indices are in the form of [start, end, start, end, ...]. Also note that the
 	// capture group for version in both regexes are the same index, but if the regexes are changed
 	// this code will start to fail.
-	versionGroup := 1
 
-	match := unstableVersion.FindAllStringSubmatchIndex(input, -1)
-	if len(match) > 0 && len(match[0]) > 0 {
-		return match[0][versionGroup*2], input[match[0][versionGroup*2]:match[0][(versionGroup*2)+1]], ""
+	// check for unstable version pattern first
+	if match := unstableVersion.FindStringSubmatch(input); match != nil {
+		indices := unstableVersion.FindStringSubmatchIndex(input)
+		versionStart := indices[2] // index of first capture group's start
+		version := match[1]        // first capture group is the version
+		return versionStart, version, ""
 	}
 
-	match = rightMostVersionIshPattern.FindAllStringSubmatchIndex(input, -1)
-	if len(match) == 0 || len(match[0]) == 0 {
+	// try the regular version pattern
+	match := rightMostVersionIshPattern.FindStringSubmatch(input)
+	if match == nil {
 		return -1, "", ""
 	}
 
-	var version string
-	versionStart, versionStop := match[0][versionGroup*2], match[0][(versionGroup*2)+1]
-	if versionStart != -1 || versionStop != -1 {
-		version = input[versionStart:versionStop]
-	}
+	version := match[1] // capture group 1 is the version
+	indices := rightMostVersionIshPattern.FindStringSubmatchIndex(input)
+	versionStart := indices[2] // index of first capture group's start
+	prerelease := match[7]     // capture group 7 is the prerelease version
 
-	prereleaseGroup := 7
-
-	var prerelease string
-	prereleaseStart, prereleaseStop := match[0][prereleaseGroup*2], match[0][(prereleaseGroup*2)+1]
-	if prereleaseStart != -1 && prereleaseStop != -1 {
-		prerelease = input[prereleaseStart:prereleaseStop]
-	}
-
-	return versionStart,
-		version,
-		prerelease
+	return versionStart, version, prerelease
 }

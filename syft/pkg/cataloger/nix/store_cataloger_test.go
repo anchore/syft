@@ -3,19 +3,13 @@ package nix
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/scylladb/go-set/strset"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	_ "modernc.org/sqlite"
-
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func TestCataloger_Image(t *testing.T) {
+func TestStoreCataloger_Image(t *testing.T) {
 	tests := []struct {
 		fixture  string
 		wantPkgs []string
@@ -39,110 +33,37 @@ func TestCataloger_Image(t *testing.T) {
 			//     ├───/nix/store/02mqs1by2vab9yzw0qc4j7463w78p3ps-glibc-2.37-8 [...]
 			//     ├───/nix/store/mzj90j6m3c3a1vv8j9pl920f98i2yz9q-oniguruma-6.9.8-lib [...]
 			//     └───/nix/store/1x3s2v9wc9m302cspfqcn2iwar0b5w99-jq-1.6-lib [...]
-			fixture: "image-nixos-jq-pkg-db",
+			fixture: "image-nixos-jq-pkg-store",
 			wantPkgs: []string{
-				"glibc @ 2.37-8 (/nix/var/nix/db/db.sqlite)",
-				"jq @ 1.6 (/nix/var/nix/db/db.sqlite)", // lib output
-				"jq @ 1.6 (/nix/var/nix/db/db.sqlite)", // bin output
-				"libidn2 @ 2.3.4 (/nix/var/nix/db/db.sqlite)",
-				"libunistring @ 1.1 (/nix/var/nix/db/db.sqlite)",
-				"oniguruma @ 6.9.8 (/nix/var/nix/db/db.sqlite)",
-				"xgcc @ 12.3.0 (/nix/var/nix/db/db.sqlite)",
+				"glibc @ 2.37-8 (/nix/store/aw2fw9ag10wr9pf0qk4nk5sxi0q0bn56-glibc-2.37-8)",
+				"jq @ 1.6 (/nix/store/3xpzpmcqmzsdblkzqa9d9s6l302pnk4g-jq-1.6-lib)", // jq lib output
+				"jq @ 1.6 (/nix/store/aj8lqifsyynq8iknivvxkrsqnblj7qzs-jq-1.6-bin)", // jq bin output
+				"libidn2 @ 2.3.4 (/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4)",
+				"libunistring @ 1.1 (/nix/store/s2gi8pfjszy6rq3ydx0z1vwbbskw994i-libunistring-1.1)",
+				"oniguruma @ 6.9.8 (/nix/store/dpcyirvyblnflf7cp14dnr1420va93zx-oniguruma-6.9.8-lib)",
+				"xgcc @ 12.3.0 (/nix/store/jbwb8d8l28lg9z0xzl784wyb9vlbwss6-xgcc-12.3.0-libgcc)",
 			},
 			wantRel: []string{
-				// used the DB cataloger, thus has a complete dependency graph
-				"glibc @ 2.37-8 (/nix/var/nix/db/db.sqlite) [dependency-of] jq @ 1.6 (/nix/var/nix/db/db.sqlite)", // jq bin output
-				"glibc @ 2.37-8 (/nix/var/nix/db/db.sqlite) [dependency-of] jq @ 1.6 (/nix/var/nix/db/db.sqlite)", // jq lib output
-				"glibc @ 2.37-8 (/nix/var/nix/db/db.sqlite) [dependency-of] oniguruma @ 6.9.8 (/nix/var/nix/db/db.sqlite)",
-				"jq @ 1.6 (/nix/var/nix/db/db.sqlite) [dependency-of] jq @ 1.6 (/nix/var/nix/db/db.sqlite)", // jq bin to lib output dependency
-				"libidn2 @ 2.3.4 (/nix/var/nix/db/db.sqlite) [dependency-of] glibc @ 2.37-8 (/nix/var/nix/db/db.sqlite)",
-				"libunistring @ 1.1 (/nix/var/nix/db/db.sqlite) [dependency-of] libidn2 @ 2.3.4 (/nix/var/nix/db/db.sqlite)",
-				"oniguruma @ 6.9.8 (/nix/var/nix/db/db.sqlite) [dependency-of] jq @ 1.6 (/nix/var/nix/db/db.sqlite)", // jq bin output
-				"oniguruma @ 6.9.8 (/nix/var/nix/db/db.sqlite) [dependency-of] jq @ 1.6 (/nix/var/nix/db/db.sqlite)", // jq lib output
-				"xgcc @ 12.3.0 (/nix/var/nix/db/db.sqlite) [dependency-of] glibc @ 2.37-8 (/nix/var/nix/db/db.sqlite)",
+				// note: parsing all relationships from only derivations results in partial results! (this is why the DB cataloger exists)
+				"libidn2 @ 2.3.4 (/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4) [dependency-of] glibc @ 2.37-8 (/nix/store/aw2fw9ag10wr9pf0qk4nk5sxi0q0bn56-glibc-2.37-8)",
+				"libunistring @ 1.1 (/nix/store/s2gi8pfjszy6rq3ydx0z1vwbbskw994i-libunistring-1.1) [dependency-of] libidn2 @ 2.3.4 (/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4)",
+				"xgcc @ 12.3.0 (/nix/store/jbwb8d8l28lg9z0xzl784wyb9vlbwss6-xgcc-12.3.0-libgcc) [dependency-of] glibc @ 2.37-8 (/nix/store/aw2fw9ag10wr9pf0qk4nk5sxi0q0bn56-glibc-2.37-8)",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.fixture, func(t *testing.T) {
+			c := NewStoreCataloger()
 			pkgtest.NewCatalogTester().
 				WithImageResolver(t, tt.fixture).
 				ExpectsPackageStrings(tt.wantPkgs).
 				ExpectsRelationshipStrings(tt.wantRel).
-				TestCataloger(t, NewCataloger(DefaultConfig()))
+				TestCataloger(t, c)
 		})
 	}
 }
 
-func TestCataloger_Image_FilesListing(t *testing.T) {
-	tests := []struct {
-		fixture      string
-		wantPkgFiles map[string][]string
-	}{
-		{
-			fixture: "image-nixos-jq-pkg-db",
-			wantPkgFiles: map[string][]string{
-				"libidn2": {
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/lib/libidn2.la",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/lib/libidn2.so.0.3.8",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/cs/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/da/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/de/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/eo/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/es/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/fi/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/fr/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/fur/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/hr/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/hu/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/id/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/it/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/ja/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/ka/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/ko/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/nl/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/pl/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/pt_BR/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/ro/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/ru/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/sr/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/sv/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/uk/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/vi/LC_MESSAGES/libidn2.mo",
-					"/nix/store/k8ivghpggjrq1n49xp8sj116i4sh8lia-libidn2-2.3.4/share/locale/zh_CN/LC_MESSAGES/libidn2.mo",
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.fixture, func(t *testing.T) {
-			pkgtest.NewCatalogTester().
-				WithImageResolver(t, tt.fixture).
-				ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
-					found := strset.New()
-					for _, p := range pkgs {
-						if files, ok := tt.wantPkgFiles[p.Name]; ok {
-							m, ok := p.Metadata.(pkg.NixStoreEntry)
-							require.True(t, ok)
-							if d := cmp.Diff(files, m.Files); d != "" {
-								t.Errorf("unexpected files for package %q: %s", p.Name, d)
-							}
-							found.Add(p.Name)
-						}
-					}
-					expected := strset.New()
-					for n := range tt.wantPkgFiles {
-						expected.Add(n)
-					}
-					assert.ElementsMatch(t, expected.List(), found.List())
-				}).
-				TestCataloger(t, NewCataloger(Config{CaptureOwnedFiles: true}))
-		})
-	}
-}
-
-func TestCataloger_Directory(t *testing.T) {
-
+func TestStoreCataloger_Directory(t *testing.T) {
 	tests := []struct {
 		fixture  string
 		wantPkgs []pkg.Package
@@ -159,7 +80,7 @@ func TestCataloger_Directory(t *testing.T) {
 						file.NewLocation("nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 						file.NewLocation("nix/store/5av396z8xa13jg89g9jws145c0k26k2x-glibc-2.34-210.drv").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
 					),
-					FoundBy: "nix-cataloger",
+					FoundBy: "nix-store-cataloger",
 					Type:    pkg.NixPkg,
 					Metadata: pkg.NixStoreEntry{
 						Path: "/nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin",
@@ -240,7 +161,11 @@ func TestCataloger_Directory(t *testing.T) {
 						},
 						OutputHash: "h0cnbmfcn93xm5dg2x27ixhag1cwndga",
 						Output:     "bin",
-						Files:      nil, // default cataloger configure does not capture owned files
+						Files: []string{
+							// the legacy cataloger captures files by default
+							"nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin/lib/glibc.so",
+							"nix/store/h0cnbmfcn93xm5dg2x27ixhag1cwndga-glibc-2.34-210-bin/share/man/glibc.1",
+						},
 					},
 				},
 			},
@@ -248,10 +173,11 @@ func TestCataloger_Directory(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.fixture, func(t *testing.T) {
+			c := NewStoreCataloger()
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, tt.fixture).
 				Expects(tt.wantPkgs, tt.wantRel).
-				TestCataloger(t, NewCataloger(DefaultConfig()))
+				TestCataloger(t, c)
 		})
 	}
 }

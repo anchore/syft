@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
+	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
 )
 
@@ -17,6 +18,7 @@ type Config struct {
 	JavaArchive java.ArchiveCatalogerConfig       `yaml:"java-archive" json:"java-archive" mapstructure:"java-archive"`
 	JavaScript  javascript.CatalogerConfig        `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
 	LinuxKernel kernel.LinuxKernelCatalogerConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
+	Nix         nix.Config                        `yaml:"nix" json:"nix" mapstructure:"nix"`
 	Python      python.CatalogerConfig            `yaml:"python" json:"python" mapstructure:"python"`
 }
 
@@ -25,10 +27,16 @@ func DefaultConfig() Config {
 		Binary:      binary.DefaultClassifierCatalogerConfig(),
 		Dotnet:      dotnet.DefaultCatalogerConfig(),
 		Golang:      golang.DefaultCatalogerConfig(),
-		LinuxKernel: kernel.DefaultLinuxKernelCatalogerConfig(),
-		Python:      python.DefaultCatalogerConfig(),
 		JavaArchive: java.DefaultArchiveCatalogerConfig(),
+		LinuxKernel: kernel.DefaultLinuxKernelCatalogerConfig(),
+		Nix:         nix.DefaultConfig(),
+		Python:      python.DefaultCatalogerConfig(),
 	}
+}
+
+func (c Config) WithNixConfig(cfg nix.Config) Config {
+	c.Nix = cfg
+	return c
 }
 
 func (c Config) WithBinaryConfig(cfg binary.ClassifierCatalogerConfig) Config {
