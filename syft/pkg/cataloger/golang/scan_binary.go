@@ -235,11 +235,14 @@ func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.F
 		}
 		Version, err := findVersionInCache(dir, nameWithoutVersion)
 		// No such module
-		if err != nil {
+		if err != nil || len(Version) == 0 {
 			continue
 		}
 		modPair := fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
 		key := fmt.Sprintf("%s %s", modPair, Version)
+		if _, exists := uniqueModules[key]; exists {
+			continue
+		}
 		cachedir, err2 := fs.Sub(goPath, "cache/download/"+modPair+"/@v")
 		if err2 != nil {
 			continue
