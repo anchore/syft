@@ -46,7 +46,7 @@ func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.
 	licenses, licenseLocations := addLicenses(resolver, reader.Location, &m)
 	locations.Add(licenseLocations...)
 	locations.Add(addSize(resolver, reader.Location, &m)...)
-	locations.Add(addFiles(resolver, reader.Location, &m)...)
+	addFiles(resolver, reader.Location, &m)
 
 	p := pkg.Package{
 		Name:      name,
@@ -63,11 +63,11 @@ func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.
 	return []pkg.Package{p}, nil, nil
 }
 
-func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) []file.Location {
+func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) {
 	contentsReader, err := resolver.FileContentsByLocation(dbLocation)
 	if err != nil {
 		log.WithFields("path", dbLocation.RealPath, "error", err).Debug("failed to fetch portage contents")
-		return nil
+		return
 	}
 	defer internal.CloseAndLogError(contentsReader, dbLocation.RealPath)
 
@@ -87,8 +87,6 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.Porta
 			entry.Files = append(entry.Files, record)
 		}
 	}
-
-	return []file.Location{dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)}
 }
 
 func addLicenses(resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) (pkg.LicenseSet, []file.Location) {
