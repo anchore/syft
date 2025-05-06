@@ -17,22 +17,26 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 		content    []byte
 	}
 	tests := []struct {
-		name     string
-		in       string
-		expected expectation
+		name                         string
+		in                           string
+		includeUnknownLicenseContent bool
+		includeFullText              bool
+		expected                     expectation
 	}{
 		{
-			name: "apache license 2.0 with content offset",
-			in:   `test-fixtures/apache-license-2.0`,
+			name:            "apache license 2.0 with content offset and correct content",
+			in:              `test-fixtures/apache-license-2.0`,
+			includeFullText: true,
 			expected: expectation{
 				yieldError: false,
 				ids:        []ID{{LicenseID: "Apache-2.0", Offset: Offset{Start: 0, End: 11324}}},
-				content:    nil,
+				content:    mustOpen("test-fixtures/apache-license-2.0"),
 			},
 		},
 		{
-			name: "custom license returns content for IdentifyLicenseIDs",
-			in:   "test-fixtures/nvidia-software-and-cuda-supplement",
+			name:                         "custom license returns content for IdentifyLicenseIDs",
+			in:                           "test-fixtures/nvidia-software-and-cuda-supplement",
+			includeUnknownLicenseContent: true,
 			expected: expectation{
 				yieldError: false,
 				ids:        []ID{},
@@ -40,8 +44,9 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 			},
 		},
 		{
-			name: "Identify multiple license IDs. They should be deduplicated and contain content evidence.",
-			in:   `test-fixtures/multi-license`,
+			name:            "Identify multiple license IDs. They should be deduplicated and contain content evidence.",
+			in:              `test-fixtures/multi-license`,
+			includeFullText: true,
 			expected: expectation{
 				yieldError: false,
 				ids: []ID{
@@ -64,7 +69,7 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			content, err := os.ReadFile(test.in)
 			require.NoError(t, err)
-			ids, content, err := testScanner(true, true).IdentifyLicenseIDs(context.TODO(), bytes.NewReader(content))
+			ids, content, err := testScanner(test.includeUnknownLicenseContent, test.includeFullText).IdentifyLicenseIDs(context.TODO(), bytes.NewReader(content))
 			if test.expected.yieldError {
 				require.Error(t, err)
 				return

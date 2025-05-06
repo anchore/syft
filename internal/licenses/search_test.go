@@ -89,6 +89,7 @@ func TestSearchPkgLicenses(t *testing.T) {
 	}
 
 	testLocation := file.NewLocation("LICENSE")
+	multiLicense := "test-fixtures/multi-license"
 	tests := []struct {
 		name          string
 		in            string
@@ -171,6 +172,90 @@ func TestSearchPkgLicenses(t *testing.T) {
 				wantErr: nil,
 			},
 		},
+		{
+			name: "multiple licenses are returned from a single text with their full text when scanner has full text configured. duplicates with different contents are allowed",
+			in:   multiLicense,
+			scannerConfig: scannerOptions{
+				includeFullText: true,
+			},
+			expected: expectation{
+				licenses: []pkg.License{
+					{
+						SPDXExpression: "MIT",
+						Value:          "MIT",
+						Type:           "concluded",
+						Contents:       mustReadOffsetContent(t, multiLicense, 758, 1844),
+						URLs:           nil,
+						Locations:      file.NewLocationSet(testLocation),
+					},
+					{
+						SPDXExpression: "NCSA",
+						Value:          "NCSA",
+						Type:           "concluded",
+						Contents:       mustReadOffsetContent(t, multiLicense, 1925, 3463),
+						URLs:           nil,
+						Locations:      file.NewLocationSet(testLocation),
+					},
+					{
+						SPDXExpression: "MIT",
+						Value:          "MIT",
+						Type:           "concluded",
+						Contents:       mustReadOffsetContent(t, multiLicense, 3708, 4932),
+						URLs:           nil,
+						Locations:      file.NewLocationSet(testLocation),
+					},
+					{
+						SPDXExpression: "Apache-2.0",
+						Value:          "Apache-2.0",
+						Type:           "concluded",
+						Contents:       mustReadOffsetContent(t, multiLicense, 5021, 16378),
+						URLs:           nil,
+						Locations:      file.NewLocationSet(testLocation),
+					},
+					{
+						SPDXExpression: "Zlib",
+						Value:          "Zlib",
+						Type:           "concluded",
+						Contents:       mustReadOffsetContent(t, multiLicense, 16484, 17390),
+						URLs:           nil,
+						Locations:      file.NewLocationSet(testLocation),
+					},
+					{
+						SPDXExpression: "Unlicense",
+						Value:          "Unlicense",
+						Type:           "concluded",
+						Contents:       mustReadOffsetContent(t, multiLicense, 17497, 18707),
+						URLs:           nil,
+						Locations:      file.NewLocationSet(testLocation),
+					},
+					{
+						SPDXExpression: "BSD-2-Clause",
+						Value:          "BSD-2-Clause",
+						Type:           "concluded",
+						Contents:       mustReadOffsetContent(t, multiLicense, 18908, 20298),
+						URLs:           nil,
+						Locations:      file.NewLocationSet(testLocation),
+					},
+					{
+						SPDXExpression: "BSD-3-Clause",
+						Value:          "BSD-3-Clause",
+						Type:           "concluded",
+						Contents:       mustReadOffsetContent(t, multiLicense, 20440, 21952),
+						URLs:           nil,
+						Locations:      file.NewLocationSet(testLocation),
+					},
+					{
+						SPDXExpression: "BSD-2-Clause",
+						Value:          "BSD-2-Clause",
+						Type:           "concluded",
+						Contents:       mustReadOffsetContent(t, multiLicense, 22033, 23335),
+						URLs:           nil,
+						Locations:      file.NewLocationSet(testLocation),
+					},
+				},
+				wantErr: nil,
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -192,4 +277,33 @@ func TestSearchPkgLicenses(t *testing.T) {
 			}
 		})
 	}
+}
+
+func mustReadOffsetContent(t *testing.T, path string, start, end int64) string {
+	t.Helper()
+
+	if start < 0 || end < start {
+		t.Fatalf("invalid offsets: start=%d, end=%d", start, end)
+	}
+
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fatalf("failed to open file %q: %v", path, err)
+	}
+	defer file.Close()
+
+	length := end - start
+	buffer := make([]byte, length)
+
+	_, err = file.Seek(start, io.SeekStart)
+	if err != nil {
+		t.Fatalf("failed to seek to offset %d: %v", start, err)
+	}
+
+	n, err := io.ReadFull(file, buffer)
+	if err != nil {
+		t.Fatalf("failed to read content: %v", err)
+	}
+
+	return string(buffer[:n])
 }

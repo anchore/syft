@@ -63,14 +63,15 @@ func (s *scanner) PkgSearch(ctx context.Context, reader file.LocationReadCloser)
 	// known licenses found
 	if len(ids) > 0 {
 		for _, id := range ids {
-			if s.includeFullText {
+			// make sure we can always slice content when asked for fullText
+			if s.includeFullText && id.Offset.Start >= 0 && id.Offset.End <= len(content) && id.Offset.Start <= id.Offset.End {
 				extracted := string(content[id.Offset.Start:id.Offset.End])
 				licenses = append(licenses, pkg.NewLicenseFromContent(id.LicenseID, fixLineEndings(extracted), reader.Location, license.Concluded))
-			} else {
-				li := pkg.NewLicenseFromType(id.LicenseID, license.Concluded)
-				li.Locations.Add(reader.Location)
-				licenses = append(licenses, li)
+				continue
 			}
+			li := pkg.NewLicenseFromType(id.LicenseID, license.Concluded)
+			li.Locations.Add(reader.Location)
+			licenses = append(licenses, li)
 		}
 		return licenses, nil
 	}
