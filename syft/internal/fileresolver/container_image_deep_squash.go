@@ -31,6 +31,9 @@ func NewFromContainerImageDeepSquash(img *image.Image) (*ContainerImageDeepSquas
 		return nil, err
 	}
 
+	// we will do the work here to mark visibility with results from two resolvers (don't do the work twice!)
+	allLayers.markVisibility = false
+
 	return &ContainerImageDeepSquash{
 		squashed:  squashed,
 		allLayers: allLayers,
