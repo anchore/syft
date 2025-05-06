@@ -84,6 +84,19 @@ func Test_Sort(t *testing.T) {
 				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
 			},
 		},
+		{
+			name: "multiple licenses with only contents",
+			licenses: []License{
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+			},
+			expected: Licenses{
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
+			},
+		},
 	}
 
 	for _, test := range tests {
