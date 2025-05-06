@@ -13,7 +13,6 @@ func Test_Backfill(t *testing.T) {
 		name     string
 		in       pkg.Package
 		expected pkg.Package
-		wantErr  require.ErrorAssertionFunc
 	}{
 		{
 			name: "npm type",
@@ -51,11 +50,7 @@ func Test_Backfill(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := Backfill(&tt.in)
-			if tt.wantErr == nil {
-				tt.wantErr = require.NoError
-			}
-			tt.wantErr(t, err)
+			Backfill(&tt.in)
 			tt.in.OverrideID("")
 			require.Equal(t, tt.expected, tt.in)
 		})

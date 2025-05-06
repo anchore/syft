@@ -21,6 +21,13 @@ func Test_Encoder(t *testing.T) {
 			PURL:     "pkg:npm/npmtest@1.0.0",
 		},
 		{
+			Name:     "npmtest",
+			Version:  "1.5.1",
+			Type:     pkg.NpmPkg,
+			Language: pkg.JavaScript,
+			PURL:     "pkg:npm/npmtest@1.0.0", // duplicate should not be included
+		},
+		{
 			Name:     "javatest",
 			Version:  "0.30.1",
 			Type:     pkg.JavaPkg,

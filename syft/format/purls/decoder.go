@@ -53,15 +53,20 @@ func toSyftModel(r io.Reader) (*sbom.SBOM, error) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		purl, err := packageurl.FromString(line)
+
+		if line == "" {
+			continue
+		}
+
+		// skip invalid PURLs
+		_, err := packageurl.FromString(line)
 		if err != nil {
 			log.WithFields("error", err, "line", line).Debug("unable to parse purl")
 			continue
 		}
 		p := pkg.Package{
-			Name:    purl.Name,
-			Version: purl.Version,
-			PURL:    line,
+			// name, version and other properties set during Backfill
+			PURL: line,
 		}
 
 		internal.Backfill(&p)

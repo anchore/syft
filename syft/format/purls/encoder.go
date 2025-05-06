@@ -49,6 +49,7 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 			log.Debugf("invalid purl: %q", purl)
 			continue
 		}
+		output.Add(purl)
 		_, err = writer.Write([]byte(purl))
 		if err != nil {
 			return err

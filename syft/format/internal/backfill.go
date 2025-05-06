@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"fmt"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
@@ -48,11 +50,11 @@ func setLanguageFromPurl(p *pkg.Package) {
 	}
 }
 
-func setJavaMetadataFromPurl(p *pkg.Package, pu packageurl.PackageURL) {
+func setJavaMetadataFromPurl(p *pkg.Package, purl packageurl.PackageURL) {
 	if p.Type != pkg.JavaPkg {
 		return
 	}
-	if pu.Namespace != "" {
+	if purl.Namespace != "" {
 		javaMetadata := &pkg.JavaArchive{}
 		if p.Metadata != nil {
 			javaMetadata, _ = p.Metadata.(*pkg.JavaArchive)
@@ -67,26 +69,32 @@ func setJavaMetadataFromPurl(p *pkg.Package, pu packageurl.PackageURL) {
 			}
 			// capture the group id from the purl if it is not already set
 			if props.ArtifactID == "" {
-				props.ArtifactID = pu.Name
+				props.ArtifactID = purl.Name
 			}
 			if props.GroupID == "" {
-				props.GroupID = pu.Namespace
+				props.GroupID = purl.Namespace
 			}
 			if props.Version == "" {
-				props.Version = pu.Version
+				props.Version = purl.Version
 			}
 		}
 	}
 }
 
-func setVersionFromPurl(p *pkg.Package, pu packageurl.PackageURL) {
+func setVersionFromPurl(p *pkg.Package, purl packageurl.PackageURL) {
 	if p.Version == "" {
-		p.Version = pu.Version
+		p.Version = purl.Version
 	}
 }
 
-func setNameFromPurl(p *pkg.Package, pu packageurl.PackageURL) {
+func setNameFromPurl(p *pkg.Package, purl packageurl.PackageURL) {
 	if p.Name == "" {
-		p.Name = pu.Name
+		switch {
+		// Java packages
+		case p.Type != pkg.JavaPkg && purl.Namespace != "":
+			p.Name = fmt.Sprintf("%s/%s", purl.Namespace, purl.Name)
+		default:
+			p.Name = purl.Name
+		}
 	}
 }
