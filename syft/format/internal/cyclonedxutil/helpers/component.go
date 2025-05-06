@@ -6,7 +6,6 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/internal/packagemetadata"
@@ -100,10 +99,7 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 
 	p.Metadata = decodePackageMetadata(values, c, metadataType)
 
-	err := internal.Backfill(p)
-	if err != nil {
-		log.WithFields("package", p, "error", err).Debug("unable to backfill package")
-	}
+	internal.Backfill(p)
 	p.SetID()
 
 	return p

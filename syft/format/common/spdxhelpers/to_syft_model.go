@@ -510,10 +510,7 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 		Metadata: extractMetadata(p, info),
 	}
 
-	err := internal.Backfill(sP)
-	if err != nil {
-		log.WithFields("package", sP, "error", err).Debug("unable to backfill package")
-	}
+	internal.Backfill(sP)
 	sP.SetID()
 
 	return *sP

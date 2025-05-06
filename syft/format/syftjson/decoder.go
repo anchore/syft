@@ -53,6 +53,10 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 }
 
 func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
+	if r == nil {
+		return "", ""
+	}
+
 	type Document struct {
 		Schema model.Schema `json:"schema"`
 	}

@@ -39,8 +39,8 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 		return nil, "", "", fmt.Errorf("unsupported spdx tag-value document version")
 	}
 
-	if _, err := reader.Seek(0, io.SeekStart); err != nil {
-		return nil, "", "", fmt.Errorf("unable to seek to start of SPDX Tag-Value SBOM: %+v", err)
+	if _, err = reader.Seek(0, io.SeekStart); err != nil {
+		return nil, "", "", fmt.Errorf("unable to seek to start of SPDX Tag-Value SBOM: %w", err)
 	}
 
 	doc, err := tagvalue.Read(reader)
@@ -56,6 +56,10 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 }
 
 func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
+	if r == nil {
+		return "", ""
+	}
+
 	// Example document
 	// SPDXVersion: SPDX-2.3
 	// DataLicense: CC0-1.0

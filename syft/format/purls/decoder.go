@@ -3,6 +3,7 @@ package purls
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
@@ -24,18 +25,24 @@ func NewFormatDecoder() sbom.FormatDecoder {
 }
 
 func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) {
+	if r == nil {
+		return nil, "", "", fmt.Errorf("no reader provided")
+	}
 	s, err := toSyftModel(r)
 	return s, ID, version, err
 }
 
 func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
+	if r == nil {
+		return "", ""
+	}
+
 	buf := [4]byte{}
 	bufs := buf[:]
 	_, _ = r.Read(bufs)
 	if string(bufs) == "pkg:" {
 		return ID, version
 	}
-	log.Warnf("unable to identify purls format: %s", string(bufs))
 	return "", ""
 }
 
@@ -57,12 +64,7 @@ func toSyftModel(r io.Reader) (*sbom.SBOM, error) {
 			PURL:    line,
 		}
 
-		err = internal.Backfill(&p)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-
+		internal.Backfill(&p)
 		p.SetID()
 		pkgs.Add(p)
 	}
