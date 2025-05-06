@@ -49,9 +49,7 @@ func (l Licenses) Less(i, j int) bool {
 	if l[i].Value == l[j].Value {
 		if l[i].SPDXExpression == l[j].SPDXExpression {
 			if l[i].Type == l[j].Type {
-				leftContents := firstTenNonEmpty(l[i].Contents)
-				rightContents := firstTenNonEmpty(l[j].Contents)
-				if leftContents == rightContents {
+				if l[i].Contents == l[j].Contents {
 					// While URLs and location are not exclusive fields
 					// returning true here reduces the number of swaps
 					// while keeping a consistent sort order of
@@ -60,7 +58,7 @@ func (l Licenses) Less(i, j int) bool {
 					// on the slice representation of either field we can update this code
 					return true
 				}
-				return leftContents < rightContents
+				return l[i].Contents < l[j].Contents
 			}
 			return l[i].Type < l[j].Type
 		}
@@ -223,17 +221,4 @@ func (s License) Merge(l License) (*License, error) {
 	s.Locations = locations
 
 	return &s, nil
-}
-
-func firstTenNonEmpty(s string) string {
-	var result []rune
-	for _, r := range s {
-		if r != ' ' {
-			result = append(result, r)
-		}
-		if len(result) == 10 {
-			break
-		}
-	}
-	return string(result)
 }
