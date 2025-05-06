@@ -65,7 +65,7 @@ func (s *scanner) PkgSearch(ctx context.Context, reader file.LocationReadCloser)
 		for _, id := range ids {
 			if s.includeFullText {
 				extracted := string(content[id.Offset.Start:id.Offset.End])
-				licenses = append(licenses, pkg.NewLicenseFromFullText(id.LicenseID, fixLineEndings(extracted), reader.Location, license.Concluded))
+				licenses = append(licenses, pkg.NewLicenseFromContent(id.LicenseID, fixLineEndings(extracted), reader.Location, license.Concluded))
 			} else {
 				li := pkg.NewLicenseFromType(id.LicenseID, license.Concluded)
 				li.Locations.Add(reader.Location)
@@ -75,12 +75,12 @@ func (s *scanner) PkgSearch(ctx context.Context, reader file.LocationReadCloser)
 		return licenses, nil
 	}
 
-	// scanner could not find SPDX ID associated with content
+	// scanner could not find any SPDX IDs associated with provided content
 	lic := pkg.NewLicenseFromLocations(unknownLicenseType, reader.Location)
 	lic.SPDXExpression = UnknownLicensePrefix + getCustomLicenseContentHash(content)
 	lic.Type = license.Declared
 	if s.includeUnknownLicenseContent {
-		lic.FullText = fixLineEndings(string(content))
+		lic.Contents = fixLineEndings(string(content))
 	}
 	licenses = append(licenses, lic)
 

@@ -13,7 +13,7 @@ import (
 func TestIdentifyLicenseIDs(t *testing.T) {
 	type expectation struct {
 		yieldError bool
-		ids        []string
+		ids        []ID
 		content    []byte
 	}
 	tests := []struct {
@@ -22,32 +22,38 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 		expected expectation
 	}{
 		{
-			name: "apache license 2.0",
+			name: "apache license 2.0 with content offset",
 			in:   `test-fixtures/apache-license-2.0`,
 			expected: expectation{
 				yieldError: false,
-				ids:        []string{"Apache-2.0"},
+				ids:        []ID{{LicenseID: "Apache-2.0", Offset: Offset{Start: 0, End: 11324}}},
 				content:    nil,
 			},
 		},
 		{
-			name: "custom license includes content for IdentifyLicenseIDs",
+			name: "custom license returns content for IdentifyLicenseIDs",
 			in:   "test-fixtures/nvidia-software-and-cuda-supplement",
 			expected: expectation{
 				yieldError: false,
-				ids:        []string{},
+				ids:        []ID{},
 				content:    mustOpen("test-fixtures/nvidia-software-and-cuda-supplement"),
 			},
 		},
 		{
-			name: "Identify mutliple license IDs",
+			name: "Identify multiple license IDs. They should be deduplicated and contain content evidence.",
 			in:   `test-fixtures/multi-license`,
 			expected: expectation{
 				yieldError: false,
-				ids: []string{
-					"Apache-2.0",
-					"BSD-2-Clause",
-					"BSD-3-Clause",
+				ids: []ID{
+					{LicenseID: "MIT", Offset: Offset{Start: 758, End: 1844}},
+					{LicenseID: "NCSA", Offset: Offset{Start: 1925, End: 3463}},
+					{LicenseID: "MIT", Offset: Offset{Start: 3708, End: 4932}},
+					{LicenseID: "Apache-2.0", Offset: Offset{Start: 5021, End: 16378}},
+					{LicenseID: "Zlib", Offset: Offset{Start: 16484, End: 17390}},
+					{LicenseID: "Unlicense", Offset: Offset{Start: 17497, End: 18707}},
+					{LicenseID: "BSD-2-Clause", Offset: Offset{Start: 18908, End: 20298}},
+					{LicenseID: "BSD-3-Clause", Offset: Offset{Start: 20440, End: 21952}},
+					{LicenseID: "BSD-2-Clause", Offset: Offset{Start: 22033, End: 23335}},
 				},
 				content: mustOpen("test-fixtures/multi-license"),
 			},
@@ -58,22 +64,22 @@ func TestIdentifyLicenseIDs(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			content, err := os.ReadFile(test.in)
 			require.NoError(t, err)
-			ids, content, err := testScanner(false, false).IdentifyLicenseIDs(context.TODO(), bytes.NewReader(content))
+			ids, content, err := testScanner(true, true).IdentifyLicenseIDs(context.TODO(), bytes.NewReader(content))
 			if test.expected.yieldError {
 				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+				return
+			}
+			require.NoError(t, err)
 
-				require.Len(t, ids, len(test.expected.ids))
-				require.Len(t, content, len(test.expected.content))
+			require.Len(t, ids, len(test.expected.ids))
+			require.Len(t, content, len(test.expected.content))
 
-				if len(test.expected.ids) > 0 {
-					require.Equal(t, ids, test.expected.ids)
-				}
+			if len(test.expected.ids) > 0 {
+				require.Equal(t, ids, test.expected.ids)
+			}
 
-				if len(test.expected.content) > 0 {
-					require.Equal(t, content, test.expected.content)
-				}
+			if len(test.expected.content) > 0 {
+				require.Equal(t, content, test.expected.content)
 			}
 		})
 	}

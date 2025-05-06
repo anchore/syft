@@ -73,7 +73,7 @@ func NewLicense(value string) License {
 	return NewLicenseFromType(value, license.Declared)
 }
 
-func NewLicenseFromFullText(id string, fullText string, location file.Location, t license.Type) License {
+func NewLicenseFromContent(id string, content string, location file.Location, t license.Type) License {
 	spdxExpression, err := license.ParseExpression(id)
 	if err != nil {
 		log.WithFields("error", err, "expression", id).Trace("unable to parse license expression")
@@ -82,7 +82,7 @@ func NewLicenseFromFullText(id string, fullText string, location file.Location, 
 	l := License{
 		SPDXExpression: spdxExpression,
 		Value:          id,
-		FullText:       fullText,
+		Contents:       content,
 		Type:           t,
 	}
 	l.Locations.Add(location)
