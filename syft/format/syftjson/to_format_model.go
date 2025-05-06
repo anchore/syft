@@ -249,7 +249,7 @@ func toLicenseModel(pkgLicenses []pkg.License, layerOrderByDigest map[string]int
 			Contents:       l.Contents,
 			Type:           l.Type,
 			URLs:           urls,
-			Locations:      toLocationModel(l.Locations, layerOrderByDigest),
+			Locations:      toLocationsModel(l.Locations, layerOrderByDigest),
 		})
 	}
 	return
@@ -280,7 +280,7 @@ func toPackageModel(p pkg.Package, layerOrderByDigest map[string]int, cfg Encode
 			Version:   p.Version,
 			Type:      p.Type,
 			FoundBy:   p.FoundBy,
-			Locations: toLocationModel(p.Locations, layerOrderByDigest),
+			Locations: toLocationsModel(p.Locations, layerOrderByDigest),
 			Licenses:  licenses,
 			Language:  p.Language,
 			CPEs:      cpes,
@@ -293,9 +293,9 @@ func toPackageModel(p pkg.Package, layerOrderByDigest map[string]int, cfg Encode
 	}
 }
 
-func toLocationModel(locations file.LocationSet, layerOrderByDigest map[string]int) []file.Location {
+func toLocationsModel(locations file.LocationSet, layerOrderByDigest map[string]int) []file.Location {
 	if locations.Empty() {
-		return nil
+		return []file.Location{}
 	}
 
 	if layerOrderByDigest == nil {

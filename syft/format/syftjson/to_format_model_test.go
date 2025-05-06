@@ -519,7 +519,7 @@ func Test_toLocationModel(t *testing.T) {
 			name:               "empty location set",
 			locations:          file.NewLocationSet(),
 			layerOrderByDigest: map[string]int{"fsid-1": 1},
-			want:               nil,
+			want:               []file.Location{},
 		},
 		{
 			name: "nil layer order map",
@@ -543,6 +543,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/a",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
@@ -552,6 +553,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/b",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 			},
 		},
@@ -585,6 +587,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/b",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
@@ -594,6 +597,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/c",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
@@ -603,6 +607,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/a",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 			},
 		},
@@ -634,6 +639,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/a",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
@@ -643,6 +649,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/b",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
@@ -652,6 +659,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/c",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 			},
 		},
@@ -689,6 +697,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/b",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
@@ -698,6 +707,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/a",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
@@ -707,6 +717,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/c",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 				{
 					LocationData: file.LocationData{
@@ -716,6 +727,7 @@ func Test_toLocationModel(t *testing.T) {
 						},
 						AccessPath: "/z",
 					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
 				},
 			},
 		},
@@ -723,9 +735,9 @@ func Test_toLocationModel(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := toLocationModel(tt.locations, tt.layerOrderByDigest)
-			if d := cmp.Diff(tt.want, got, cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(file.LocationData{})); d != "" {
-				t.Errorf("toLocationModel() mismatch (-want +got):\n%s", d)
+			got := toLocationsModel(tt.locations, tt.layerOrderByDigest)
+			if d := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(file.LocationData{})); d != "" {
+				t.Errorf("toLocationsModel() mismatch (-want +got):\n%s", d)
 			}
 		})
 	}
