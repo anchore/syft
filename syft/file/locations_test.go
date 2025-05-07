@@ -137,9 +137,9 @@ func TestLocationAndCoordinatesSorters(t *testing.T) {
 				},
 			},
 			wantLocs: []string{
-				"/c (/c) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
-				"/b (/b) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.SupportingAnnotation + "]",
-				"/a (/a) @ fsid-1 map[" + evidence.AnnotationKey + ":]",
+				"/c (/c) @ fsid-1 map[evidence:primary]",
+				"/b (/b) @ fsid-1 map[evidence:supporting]",
+				"/a (/a) @ fsid-1 map[evidence:]",
 			},
 			wantCoords: []string{
 				"/a @ fsid-1",
@@ -209,9 +209,9 @@ func TestLocationAndCoordinatesSorters(t *testing.T) {
 				},
 			},
 			wantLocs: []string{
-				"/b (/b) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
-				"/c (/c) @ fsid-2 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
-				"/a (/a) @ fsid-3 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
+				"/b (/b) @ fsid-1 map[evidence:primary]",
+				"/c (/c) @ fsid-2 map[evidence:primary]",
+				"/a (/a) @ fsid-3 map[evidence:primary]",
 			},
 			wantCoords: []string{
 				"/b @ fsid-1",
@@ -281,9 +281,9 @@ func TestLocationAndCoordinatesSorters(t *testing.T) {
 				},
 			},
 			wantLocs: []string{
-				"/y (/a) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
-				"/z (/b) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
-				"/x (/c) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
+				"/y (/a) @ fsid-1 map[evidence:primary]",
+				"/z (/b) @ fsid-1 map[evidence:primary]",
+				"/x (/c) @ fsid-1 map[evidence:primary]",
 			},
 			wantCoords: []string{
 				"/x @ fsid-1",
@@ -353,9 +353,9 @@ func TestLocationAndCoordinatesSorters(t *testing.T) {
 				},
 			},
 			wantLocs: []string{
-				"/a (/same) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
-				"/b (/same) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
-				"/c (/same) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
+				"/a (/same) @ fsid-1 map[evidence:primary]",
+				"/b (/same) @ fsid-1 map[evidence:primary]",
+				"/c (/same) @ fsid-1 map[evidence:primary]",
 			},
 			wantCoords: []string{
 				"/a @ fsid-1",
@@ -503,7 +503,7 @@ func TestLocationAndCoordinatesSorters(t *testing.T) {
 				},
 			},
 			wantLocs: []string{
-				"/b (/b) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
+				"/b (/b) @ fsid-1 map[evidence:primary]",
 				"/a (/a) @ fsid-1 map[]",
 			},
 			wantCoords: []string{
