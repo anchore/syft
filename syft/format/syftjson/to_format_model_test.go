@@ -309,11 +309,10 @@ func Test_toFileMetadataEntry(t *testing.T) {
 
 func Test_toPackageModel_metadataType(t *testing.T) {
 	tests := []struct {
-		name       string
-		p          pkg.Package
-		layerOrder map[string]int
-		cfg        EncoderConfig
-		want       model.Package
+		name string
+		p    pkg.Package
+		cfg  EncoderConfig
+		want model.Package
 	}{
 		{
 			name: "empty config",
@@ -346,7 +345,7 @@ func Test_toPackageModel_metadataType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if d := cmp.Diff(tt.want, toPackageModel(tt.p, tt.layerOrder, tt.cfg), cmpopts.EquateEmpty()); d != "" {
+			if d := cmp.Diff(tt.want, toPackageModel(tt.p, file.LocationSorter(nil), tt.cfg), cmpopts.EquateEmpty()); d != "" {
 				t.Errorf("unexpected package (-want +got):\n%s", d)
 			}
 		})
@@ -357,7 +356,7 @@ func Test_toPackageModel_layerOrdering(t *testing.T) {
 	tests := []struct {
 		name       string
 		p          pkg.Package
-		layerOrder map[string]int
+		layerOrder []string
 		cfg        EncoderConfig
 		want       model.Package
 	}{
@@ -405,11 +404,11 @@ func Test_toPackageModel_layerOrdering(t *testing.T) {
 					}),
 				),
 			},
-			layerOrder: map[string]int{
-				"fsid-0": 0,
-				"fsid-1": 1,
-				"fsid-2": 2,
-				"fsid-3": 3,
+			layerOrder: []string{
+				"fsid-0",
+				"fsid-1",
+				"fsid-2",
+				"fsid-3",
 			},
 			want: model.Package{
 				PackageBasicData: model.PackageBasicData{
@@ -501,7 +500,7 @@ func Test_toPackageModel_layerOrdering(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if d := cmp.Diff(tt.want, toPackageModel(tt.p, tt.layerOrder, tt.cfg), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(file.LocationData{})); d != "" {
+			if d := cmp.Diff(tt.want, toPackageModel(tt.p, file.LocationSorter(tt.layerOrder), tt.cfg), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(file.LocationData{})); d != "" {
 				t.Errorf("unexpected package (-want +got):\n%s", d)
 			}
 		})
@@ -510,16 +509,16 @@ func Test_toPackageModel_layerOrdering(t *testing.T) {
 
 func Test_toLocationModel(t *testing.T) {
 	tests := []struct {
-		name               string
-		locations          file.LocationSet
-		layerOrderByDigest map[string]int
-		want               []file.Location
+		name      string
+		locations file.LocationSet
+		layers    []string
+		want      []file.Location
 	}{
 		{
-			name:               "empty location set",
-			locations:          file.NewLocationSet(),
-			layerOrderByDigest: map[string]int{"fsid-1": 1},
-			want:               []file.Location{},
+			name:      "empty location set",
+			locations: file.NewLocationSet(),
+			layers:    []string{"fsid-1"},
+			want:      []file.Location{},
 		},
 		{
 			name: "nil layer order map",
@@ -533,7 +532,7 @@ func Test_toLocationModel(t *testing.T) {
 					FileSystemID: "fsid-2",
 				}),
 			),
-			layerOrderByDigest: nil, // please don't panic!
+			layers: nil, // please don't panic!
 			want: []file.Location{
 				{
 					LocationData: file.LocationData{
@@ -573,10 +572,10 @@ func Test_toLocationModel(t *testing.T) {
 					FileSystemID: "fsid-2",
 				}),
 			),
-			layerOrderByDigest: map[string]int{
-				"fsid-1": 1,
-				"fsid-2": 2,
-				"fsid-3": 3,
+			layers: []string{
+				"fsid-1",
+				"fsid-2",
+				"fsid-3",
 			},
 			want: []file.Location{
 				{
@@ -627,8 +626,8 @@ func Test_toLocationModel(t *testing.T) {
 					FileSystemID: "fsid-1",
 				}),
 			),
-			layerOrderByDigest: map[string]int{
-				"fsid-1": 1,
+			layers: []string{
+				"fsid-1",
 			},
 			want: []file.Location{
 				{
@@ -683,10 +682,10 @@ func Test_toLocationModel(t *testing.T) {
 					FileSystemID: "fsid-2",
 				}),
 			),
-			layerOrderByDigest: map[string]int{
-				"fsid-1": 1,
-				"fsid-2": 2,
-				"fsid-3": 3,
+			layers: []string{
+				"fsid-1",
+				"fsid-2",
+				"fsid-3",
 			},
 			want: []file.Location{
 				{
@@ -735,7 +734,7 @@ func Test_toLocationModel(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := toLocationsModel(tt.locations, tt.layerOrderByDigest)
+			got := toLocationsModel(tt.locations, file.LocationSorter(tt.layers))
 			if d := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(file.LocationData{})); d != "" {
 				t.Errorf("toLocationsModel() mismatch (-want +got):\n%s", d)
 			}
@@ -745,16 +744,16 @@ func Test_toLocationModel(t *testing.T) {
 
 func Test_sortFiles(t *testing.T) {
 	tests := []struct {
-		name               string
-		files              []model.File
-		layerOrderByDigest map[string]int
-		want               []model.File
+		name   string
+		files  []model.File
+		layers []string
+		want   []model.File
 	}{
 		{
-			name:               "empty files slice",
-			files:              []model.File{},
-			layerOrderByDigest: map[string]int{"fsid-1": 1},
-			want:               []model.File{},
+			name:   "empty files slice",
+			files:  []model.File{},
+			layers: []string{"fsid-1"},
+			want:   []model.File{},
 		},
 		{
 			name: "nil layer order map",
@@ -774,7 +773,7 @@ func Test_sortFiles(t *testing.T) {
 					},
 				},
 			},
-			layerOrderByDigest: nil,
+			layers: nil,
 			want: []model.File{
 				{
 					ID: "file-1",
@@ -817,10 +816,10 @@ func Test_sortFiles(t *testing.T) {
 					},
 				},
 			},
-			layerOrderByDigest: map[string]int{
-				"fsid-1": 1,
-				"fsid-2": 2,
-				"fsid-3": 3,
+			layers: []string{
+				"fsid-1",
+				"fsid-2",
+				"fsid-3",
 			},
 			want: []model.File{
 				{
@@ -871,8 +870,8 @@ func Test_sortFiles(t *testing.T) {
 					},
 				},
 			},
-			layerOrderByDigest: map[string]int{
-				"fsid-1": 1,
+			layers: []string{
+				"fsid-1",
 			},
 			want: []model.File{
 				{
@@ -923,8 +922,8 @@ func Test_sortFiles(t *testing.T) {
 					},
 				},
 			},
-			layerOrderByDigest: map[string]int{
-				"fsid-1": 1,
+			layers: []string{
+				"fsid-1",
 			},
 			want: []model.File{
 				{
@@ -991,9 +990,9 @@ func Test_sortFiles(t *testing.T) {
 					},
 				},
 			},
-			layerOrderByDigest: map[string]int{
-				"fsid-1": 1,
-				"fsid-2": 2,
+			layers: []string{
+				"fsid-1",
+				"fsid-2",
 			},
 			want: []model.File{
 				{
@@ -1042,7 +1041,7 @@ func Test_sortFiles(t *testing.T) {
 			files := make([]model.File, len(tt.files))
 			copy(files, tt.files)
 
-			sortFiles(files, tt.layerOrderByDigest)
+			sortFiles(files, file.CoordinatesSorter(tt.layers))
 
 			if d := cmp.Diff(tt.want, files); d != "" {
 				t.Errorf("sortFiles() mismatch (-want +got):\n%s", d)

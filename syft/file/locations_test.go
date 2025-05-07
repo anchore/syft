@@ -2,7 +2,7 @@ package file
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -10,22 +10,27 @@ import (
 	"github.com/anchore/syft/internal/evidence"
 )
 
-func TestLocationsByContainerOrder(t *testing.T) {
+func TestLocationAndCoordinatesSorters(t *testing.T) {
 	tests := []struct {
-		name               string
-		locations          []Location
-		layerOrderByDigest map[string]int
-		want               []string
+		name       string
+		layers     []string
+		locs       []Location
+		coords     []Coordinates
+		wantLocs   []string
+		wantCoords []string
 	}{
 		{
-			name:               "empty location slice",
-			locations:          []Location{},
-			layerOrderByDigest: map[string]int{"fsid-1": 1},
-			want:               []string{},
+			name:       "empty location slice",
+			layers:     []string{"fsid-1"},
+			locs:       []Location{},
+			coords:     []Coordinates{},
+			wantLocs:   []string{},
+			wantCoords: []string{},
 		},
 		{
-			name: "nil layer order map",
-			locations: []Location{
+			name:   "nil layer list",
+			layers: nil,
+			locs: []Location{
 				{
 					LocationData: LocationData{
 						Coordinates: Coordinates{
@@ -51,15 +56,29 @@ func TestLocationsByContainerOrder(t *testing.T) {
 					},
 				},
 			},
-			layerOrderByDigest: nil,
-			want: []string{
+			coords: []Coordinates{
+				{
+					RealPath:     "/a",
+					FileSystemID: "fsid-1",
+				},
+				{
+					RealPath:     "/b",
+					FileSystemID: "fsid-2",
+				},
+			},
+			wantLocs: []string{
 				"/a (/a) @ fsid-1 map[]",
 				"/b (/b) @ fsid-2 map[]",
 			},
+			wantCoords: []string{
+				"/a @ fsid-1",
+				"/b @ fsid-2",
+			},
 		},
 		{
-			name: "sort by evidence type only",
-			locations: []Location{
+			name:   "sort by evidence type only",
+			layers: []string{"fsid-1"},
+			locs: []Location{
 				{
 					LocationData: LocationData{
 						Coordinates: Coordinates{
@@ -103,16 +122,35 @@ func TestLocationsByContainerOrder(t *testing.T) {
 					},
 				},
 			},
-			layerOrderByDigest: map[string]int{"fsid-1": 1},
-			want: []string{
+			coords: []Coordinates{
+				{
+					RealPath:     "/a",
+					FileSystemID: "fsid-1",
+				},
+				{
+					RealPath:     "/b",
+					FileSystemID: "fsid-1",
+				},
+				{
+					RealPath:     "/c",
+					FileSystemID: "fsid-1",
+				},
+			},
+			wantLocs: []string{
 				"/c (/c) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
 				"/b (/b) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.SupportingAnnotation + "]",
 				"/a (/a) @ fsid-1 map[" + evidence.AnnotationKey + ":]",
 			},
+			wantCoords: []string{
+				"/a @ fsid-1",
+				"/b @ fsid-1",
+				"/c @ fsid-1",
+			},
 		},
 		{
-			name: "same evidence type, sort by layer",
-			locations: []Location{
+			name:   "same evidence type, sort by layer",
+			layers: []string{"fsid-1", "fsid-2", "fsid-3"},
+			locs: []Location{
 				{
 					LocationData: LocationData{
 						Coordinates: Coordinates{
@@ -156,20 +194,35 @@ func TestLocationsByContainerOrder(t *testing.T) {
 					},
 				},
 			},
-			layerOrderByDigest: map[string]int{
-				"fsid-1": 1,
-				"fsid-2": 2,
-				"fsid-3": 3,
+			coords: []Coordinates{
+				{
+					RealPath:     "/a",
+					FileSystemID: "fsid-3",
+				},
+				{
+					RealPath:     "/b",
+					FileSystemID: "fsid-1",
+				},
+				{
+					RealPath:     "/c",
+					FileSystemID: "fsid-2",
+				},
 			},
-			want: []string{
+			wantLocs: []string{
 				"/b (/b) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
 				"/c (/c) @ fsid-2 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
 				"/a (/a) @ fsid-3 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
 			},
+			wantCoords: []string{
+				"/b @ fsid-1",
+				"/c @ fsid-2",
+				"/a @ fsid-3",
+			},
 		},
 		{
-			name: "same evidence and layer, sort by access path",
-			locations: []Location{
+			name:   "same evidence and layer, sort by access path",
+			layers: []string{"fsid-1"},
+			locs: []Location{
 				{
 					LocationData: LocationData{
 						Coordinates: Coordinates{
@@ -213,16 +266,35 @@ func TestLocationsByContainerOrder(t *testing.T) {
 					},
 				},
 			},
-			layerOrderByDigest: map[string]int{"fsid-1": 1},
-			want: []string{
+			coords: []Coordinates{
+				{
+					RealPath:     "/x",
+					FileSystemID: "fsid-1",
+				},
+				{
+					RealPath:     "/y",
+					FileSystemID: "fsid-1",
+				},
+				{
+					RealPath:     "/z",
+					FileSystemID: "fsid-1",
+				},
+			},
+			wantLocs: []string{
 				"/y (/a) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
 				"/z (/b) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
 				"/x (/c) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
 			},
+			wantCoords: []string{
+				"/x @ fsid-1",
+				"/y @ fsid-1",
+				"/z @ fsid-1",
+			},
 		},
 		{
-			name: "same evidence, layer, and access path - sort by real path",
-			locations: []Location{
+			name:   "same evidence, layer, and access path - sort by real path",
+			layers: []string{"fsid-1"},
+			locs: []Location{
 				{
 					LocationData: LocationData{
 						Coordinates: Coordinates{
@@ -266,16 +338,83 @@ func TestLocationsByContainerOrder(t *testing.T) {
 					},
 				},
 			},
-			layerOrderByDigest: map[string]int{"fsid-1": 1},
-			want: []string{
+			coords: []Coordinates{
+				{
+					RealPath:     "/c",
+					FileSystemID: "fsid-1",
+				},
+				{
+					RealPath:     "/a",
+					FileSystemID: "fsid-1",
+				},
+				{
+					RealPath:     "/b",
+					FileSystemID: "fsid-1",
+				},
+			},
+			wantLocs: []string{
 				"/a (/same) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
 				"/b (/same) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
 				"/c (/same) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
 			},
+			wantCoords: []string{
+				"/a @ fsid-1",
+				"/b @ fsid-1",
+				"/c @ fsid-1",
+			},
 		},
 		{
-			name: "mixed evidence and layers",
-			locations: []Location{
+			name:   "unknown layers",
+			layers: []string{"fsid-1", "fsid-2"},
+			locs: []Location{
+				{
+					LocationData: LocationData{
+						Coordinates: Coordinates{
+							RealPath:     "/a",
+							FileSystemID: "unknown-1",
+						},
+						AccessPath: "/a",
+					},
+					LocationMetadata: LocationMetadata{
+						Annotations: map[string]string{},
+					},
+				},
+				{
+					LocationData: LocationData{
+						Coordinates: Coordinates{
+							RealPath:     "/b",
+							FileSystemID: "unknown-2",
+						},
+						AccessPath: "/b",
+					},
+					LocationMetadata: LocationMetadata{
+						Annotations: map[string]string{},
+					},
+				},
+			},
+			coords: []Coordinates{
+				{
+					RealPath:     "/a",
+					FileSystemID: "unknown-1",
+				},
+				{
+					RealPath:     "/b",
+					FileSystemID: "unknown-2",
+				},
+			},
+			wantLocs: []string{
+				"/a (/a) @ unknown-1 map[]",
+				"/b (/b) @ unknown-2 map[]",
+			},
+			wantCoords: []string{
+				"/a @ unknown-1",
+				"/b @ unknown-2",
+			},
+		},
+		{
+			name:   "mixed known and unknown layers",
+			layers: []string{"fsid-1", "fsid-2"},
+			locs: []Location{
 				{
 					LocationData: LocationData{
 						Coordinates: Coordinates{
@@ -285,69 +424,45 @@ func TestLocationsByContainerOrder(t *testing.T) {
 						AccessPath: "/a",
 					},
 					LocationMetadata: LocationMetadata{
-						Annotations: map[string]string{
-							evidence.AnnotationKey: "",
-						},
+						Annotations: map[string]string{},
 					},
 				},
 				{
 					LocationData: LocationData{
 						Coordinates: Coordinates{
 							RealPath:     "/b",
-							FileSystemID: "fsid-2",
+							FileSystemID: "unknown",
 						},
 						AccessPath: "/b",
 					},
 					LocationMetadata: LocationMetadata{
-						Annotations: map[string]string{
-							evidence.AnnotationKey: evidence.PrimaryAnnotation,
-						},
-					},
-				},
-				{
-					LocationData: LocationData{
-						Coordinates: Coordinates{
-							RealPath:     "/c",
-							FileSystemID: "fsid-3",
-						},
-						AccessPath: "/c",
-					},
-					LocationMetadata: LocationMetadata{
-						Annotations: map[string]string{
-							evidence.AnnotationKey: evidence.SupportingAnnotation,
-						},
-					},
-				},
-				{
-					LocationData: LocationData{
-						Coordinates: Coordinates{
-							RealPath:     "/d",
-							FileSystemID: "fsid-1",
-						},
-						AccessPath: "/d",
-					},
-					LocationMetadata: LocationMetadata{
-						Annotations: map[string]string{
-							evidence.AnnotationKey: evidence.PrimaryAnnotation,
-						},
+						Annotations: map[string]string{},
 					},
 				},
 			},
-			layerOrderByDigest: map[string]int{
-				"fsid-1": 1,
-				"fsid-2": 2,
-				"fsid-3": 3,
+			coords: []Coordinates{
+				{
+					RealPath:     "/a",
+					FileSystemID: "fsid-1",
+				},
+				{
+					RealPath:     "/b",
+					FileSystemID: "unknown",
+				},
 			},
-			want: []string{
-				"/d (/d) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
-				"/b (/b) @ fsid-2 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
-				"/c (/c) @ fsid-3 map[" + evidence.AnnotationKey + ":" + evidence.SupportingAnnotation + "]",
-				"/a (/a) @ fsid-1 map[" + evidence.AnnotationKey + ":]",
+			wantLocs: []string{
+				"/a (/a) @ fsid-1 map[]",
+				"/b (/b) @ unknown map[]",
+			},
+			wantCoords: []string{
+				"/a @ fsid-1",
+				"/b @ unknown",
 			},
 		},
 		{
-			name: "evidence comparison when one has none",
-			locations: []Location{
+			name:   "evidence comparison when one has none",
+			layers: []string{"fsid-1"},
+			locs: []Location{
 				{
 					LocationData: LocationData{
 						Coordinates: Coordinates{
@@ -377,71 +492,66 @@ func TestLocationsByContainerOrder(t *testing.T) {
 					},
 				},
 			},
-			layerOrderByDigest: map[string]int{"fsid-1": 1},
-			want: []string{
+			coords: []Coordinates{
+				{
+					RealPath:     "/a",
+					FileSystemID: "fsid-1",
+				},
+				{
+					RealPath:     "/b",
+					FileSystemID: "fsid-1",
+				},
+			},
+			wantLocs: []string{
 				"/b (/b) @ fsid-1 map[" + evidence.AnnotationKey + ":" + evidence.PrimaryAnnotation + "]",
 				"/a (/a) @ fsid-1 map[]",
 			},
-		},
-		{
-			name: "evidence value comparison",
-			locations: []Location{
-				{
-					LocationData: LocationData{
-						Coordinates: Coordinates{
-							RealPath:     "/a",
-							FileSystemID: "fsid-1",
-						},
-						AccessPath: "/a",
-					},
-					LocationMetadata: LocationMetadata{
-						Annotations: map[string]string{
-							evidence.AnnotationKey: "xyz", // some arbitrary value
-						},
-					},
-				},
-				{
-					LocationData: LocationData{
-						Coordinates: Coordinates{
-							RealPath:     "/b",
-							FileSystemID: "fsid-1",
-						},
-						AccessPath: "/b",
-					},
-					LocationMetadata: LocationMetadata{
-						Annotations: map[string]string{
-							evidence.AnnotationKey: "abc", // some arbitrary value less than xyz
-						},
-					},
-				},
-			},
-			layerOrderByDigest: map[string]int{"fsid-1": 1},
-			want: []string{
-				"/a (/a) @ fsid-1 map[" + evidence.AnnotationKey + ":xyz]",
-				"/b (/b) @ fsid-1 map[" + evidence.AnnotationKey + ":abc]",
+			wantCoords: []string{
+				"/a @ fsid-1",
+				"/b @ fsid-1",
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			locations := make([]Location, len(tt.locations))
-			copy(locations, tt.locations)
+			t.Run("Location", func(t *testing.T) {
+				locs := make([]Location, len(tt.locs))
+				copy(locs, tt.locs)
 
-			sort.Sort(LocationsByContainerOrder(locations, tt.layerOrderByDigest))
+				slices.SortFunc(locs, LocationSorter(tt.layers))
 
-			got := make([]string, len(locations))
-			for i, loc := range locations {
-				got[i] = fmt.Sprintf("%s (%s) @ %s %s",
-					loc.RealPath,
-					loc.AccessPath,
-					loc.FileSystemID,
-					loc.LocationMetadata.Annotations)
-			}
+				got := make([]string, len(locs))
+				for i, loc := range locs {
+					got[i] = fmt.Sprintf("%s (%s) @ %s %s",
+						loc.RealPath,
+						loc.AccessPath,
+						loc.FileSystemID,
+						loc.LocationMetadata.Annotations)
+				}
 
-			if d := cmp.Diff(tt.want, got); d != "" {
-				t.Errorf("LocationsByContainerOrder() mismatch (-want +got):\n%s", d)
-			}
+				if d := cmp.Diff(tt.wantLocs, got); d != "" {
+					t.Errorf("LocationSorter() mismatch (-want +got):\n%s", d)
+				}
+			})
+
+			t.Run("Coordinates", func(t *testing.T) {
+				coords := make([]Coordinates, len(tt.coords))
+				copy(coords, tt.coords)
+
+				slices.SortFunc(coords, CoordinatesSorter(tt.layers))
+
+				got := make([]string, len(coords))
+				for i, coord := range coords {
+					got[i] = fmt.Sprintf("%s @ %s",
+						coord.RealPath,
+						coord.FileSystemID)
+				}
+
+				if d := cmp.Diff(tt.wantCoords, got); d != "" {
+					t.Errorf("CoordinatesSorter() mismatch (-want +got):\n%s", d)
+				}
+			})
 		})
 	}
 }

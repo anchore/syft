@@ -1,6 +1,7 @@
 package file
 
 import (
+	"slices"
 	"sort"
 
 	"github.com/gohugoio/hashstructure"
@@ -54,9 +55,24 @@ func (s LocationSet) Contains(l Location) bool {
 	return ok
 }
 
-func (s LocationSet) ToSlice() []Location {
+func (s LocationSet) ToSlice(sorters ...func(a, b Location) int) []Location {
 	locations := s.ToUnorderedSlice()
-	sort.Sort(Locations(locations))
+
+	var sorted bool
+	for _, sorter := range sorters {
+		if sorter == nil {
+			continue
+		}
+		slices.SortFunc(locations, sorter)
+		sorted = true
+		break
+	}
+
+	if !sorted {
+		// though no sorter was passed, we need to guarantee a stable ordering between calls
+		sort.Sort(Locations(locations))
+	}
+
 	return locations
 }
 

@@ -1,10 +1,12 @@
 package file
 
 import (
-	"sort"
+	"strings"
 
 	"github.com/anchore/syft/internal/evidence"
 )
+
+var locationSorterWithoutLayers = LocationSorter(nil)
 
 type Locations []Location
 
@@ -13,76 +15,108 @@ func (l Locations) Len() int {
 }
 
 func (l Locations) Less(i, j int) bool {
-	liEvidence := l[i].Annotations[evidence.AnnotationKey]
-	ljEvidence := l[j].Annotations[evidence.AnnotationKey]
-	if liEvidence == ljEvidence {
-		if l[i].RealPath == l[j].RealPath {
-			if l[i].AccessPath == l[j].AccessPath {
-				return l[i].FileSystemID < l[j].FileSystemID
-			}
-			return l[i].AccessPath < l[j].AccessPath
-		}
-		return l[i].RealPath < l[j].RealPath
-	}
-	if liEvidence == evidence.PrimaryAnnotation {
-		return true
-	}
-	if ljEvidence == evidence.PrimaryAnnotation {
-		return false
-	}
-
-	return liEvidence > ljEvidence
+	return locationSorterWithoutLayers(l[i], l[j]) < 0
 }
 
 func (l Locations) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
-type locationsByContainerOrder struct {
-	locations          []Location
-	layerOrderByDigest map[string]int
-}
-
-func LocationsByContainerOrder(locations []Location, layerOrderByDigest map[string]int) sort.Interface {
-	if layerOrderByDigest == nil {
-		return Locations{}
-	}
-	return locationsByContainerOrder{
-		locations:          locations,
-		layerOrderByDigest: layerOrderByDigest,
-	}
-}
-
-func (l locationsByContainerOrder) Len() int {
-	return len(l.locations)
-}
-
-func (l locationsByContainerOrder) Less(i, j int) bool {
-	// sort by primary evidence first, supporting evidence second, then no evidence third
-	// with each evidence group sorted by layer order, then by access path, then by real path
-	liEvidence := l.locations[i].Annotations[evidence.AnnotationKey]
-	ljEvidence := l.locations[j].Annotations[evidence.AnnotationKey]
-	if liEvidence == ljEvidence {
-		iLayer, jLayer := l.layerOrderByDigest[l.locations[i].FileSystemID], l.layerOrderByDigest[l.locations[j].FileSystemID]
-
-		if iLayer == jLayer {
-			if l.locations[i].AccessPath == l.locations[j].AccessPath {
-				return l.locations[i].RealPath < l.locations[j].RealPath
-			}
-			return l.locations[i].AccessPath < l.locations[j].AccessPath
+// LocationSorter creates a comparison function (slices.SortFunc) for Location objects based on layer order
+func LocationSorter(layers []string) func(a, b Location) int { //nolint:gocognit
+	var layerOrderByDigest map[string]int
+	if len(layers) > 0 {
+		layerOrderByDigest = make(map[string]int)
+		for i, digest := range layers {
+			layerOrderByDigest[digest] = i
 		}
-		return iLayer < jLayer
-	}
-	if liEvidence == evidence.PrimaryAnnotation {
-		return true
-	}
-	if ljEvidence == evidence.PrimaryAnnotation {
-		return false
 	}
 
-	return liEvidence > ljEvidence
+	return func(a, b Location) int {
+		// compare by evidence annotations first...
+		aEvidence := a.Annotations[evidence.AnnotationKey]
+		bEvidence := b.Annotations[evidence.AnnotationKey]
+
+		if aEvidence != bEvidence {
+			if aEvidence == evidence.PrimaryAnnotation {
+				return -1
+			}
+			if bEvidence == evidence.PrimaryAnnotation {
+				return 1
+			}
+
+			if aEvidence > bEvidence {
+				return -1
+			}
+			if bEvidence > aEvidence {
+				return 1
+			}
+		}
+
+		// ...then by layer order
+		if layerOrderByDigest != nil {
+			// we're given layer order details
+			aLayerIdx, aExists := layerOrderByDigest[a.FileSystemID]
+			bLayerIdx, bExists := layerOrderByDigest[b.FileSystemID]
+
+			if aLayerIdx != bLayerIdx {
+				if !aExists && !bExists {
+					return strings.Compare(a.FileSystemID, b.FileSystemID)
+				}
+				if !aExists {
+					return 1
+				}
+				if !bExists {
+					return -1
+				}
+
+				return aLayerIdx - bLayerIdx
+			}
+		} else if a.FileSystemID != b.FileSystemID {
+			// no layer info given, legacy behavior is to sort lexicographically
+			return strings.Compare(a.FileSystemID, b.FileSystemID)
+		}
+
+		// ...then by paths
+		if a.AccessPath != b.AccessPath {
+			return strings.Compare(a.AccessPath, b.AccessPath)
+		}
+
+		return strings.Compare(a.RealPath, b.RealPath)
+	}
 }
 
-func (l locationsByContainerOrder) Swap(i, j int) {
-	l.locations[i], l.locations[j] = l.locations[j], l.locations[i]
+// CoordinatesSorter creates a comparison function (slices.SortFunc) for Coordinate objects based on layer order
+func CoordinatesSorter(layers []string) func(a, b Coordinates) int {
+	var layerOrderByDigest map[string]int
+	if len(layers) > 0 {
+		layerOrderByDigest = make(map[string]int)
+		for i, digest := range layers {
+			layerOrderByDigest[digest] = i
+		}
+	}
+
+	return func(a, b Coordinates) int {
+		// ...then by layer order
+		if layerOrderByDigest != nil {
+			aLayerIdx, aExists := layerOrderByDigest[a.FileSystemID]
+			bLayerIdx, bExists := layerOrderByDigest[b.FileSystemID]
+
+			if aLayerIdx != bLayerIdx {
+				if !aExists && !bExists {
+					return strings.Compare(a.FileSystemID, b.FileSystemID)
+				}
+				if !aExists {
+					return 1
+				}
+				if !bExists {
+					return -1
+				}
+
+				return aLayerIdx - bLayerIdx
+			}
+		}
+
+		return strings.Compare(a.RealPath, b.RealPath)
+	}
 }

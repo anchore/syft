@@ -3,7 +3,9 @@ package fileresolver
 import (
 	"context"
 	"io"
+	"slices"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -515,8 +517,8 @@ func compareLocations(t *testing.T, expected, actual []file.Location) {
 	ignoreMetadata := cmpopts.IgnoreFields(file.LocationMetadata{}, "Annotations")
 	ignoreFS := cmpopts.IgnoreFields(file.Coordinates{}, "FileSystemID")
 
-	sort.Sort(file.Locations(expected))
-	sort.Sort(file.Locations(actual))
+	slices.SortFunc(expected, locationSorter)
+	slices.SortFunc(actual, locationSorter)
 
 	if d := cmp.Diff(expected, actual,
 		ignoreUnexported,
@@ -527,6 +529,16 @@ func compareLocations(t *testing.T, expected, actual []file.Location) {
 		t.Errorf("unexpected locations (-want +got):\n%s", d)
 	}
 
+}
+
+// locationSorter always sorts only by path information since test fixtures here only have filesystem IDs
+// for one side of the comparison (expected) and not the other (actual).
+func locationSorter(a, b file.Location) int {
+	if a.AccessPath != b.AccessPath {
+		return strings.Compare(a.AccessPath, b.AccessPath)
+	}
+
+	return strings.Compare(a.RealPath, b.RealPath)
 }
 
 func TestSquashResolver_AllLocations(t *testing.T) {

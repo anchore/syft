@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	formatInternal "github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/syftjson/model"
 	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/internal/sourcemetadata"
@@ -33,12 +34,12 @@ func metadataType(metadata interface{}, legacy bool) string {
 
 // ToFormatModel transforms the sbom import a format-specific model.
 func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
-	layerOrder := getLayerOrderMap(s)
+	locationSorter, coordinateSorter := formatInternal.GetLocationSorters(s)
 
 	return model.Document{
-		Artifacts:             toPackageModels(s.Artifacts.Packages, layerOrder, cfg),
+		Artifacts:             toPackageModels(s.Artifacts.Packages, locationSorter, cfg),
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
-		Files:                 toFile(s, layerOrder),
+		Files:                 toFile(s, coordinateSorter),
 		Source:                toSourceModel(s.Source),
 		Distro:                toLinuxReleaser(s.Artifacts.LinuxDistribution),
 		Descriptor:            toDescriptor(s.Descriptor),
@@ -47,16 +48,6 @@ func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
 			URL:     fmt.Sprintf("https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-%s.json", internal.JSONSchemaVersion),
 		},
 	}
-}
-
-func getLayerOrderMap(s sbom.SBOM) map[string]int {
-	layerOrderByDigest := make(map[string]int)
-	if metadata, ok := s.Source.Metadata.(source.ImageMetadata); ok {
-		for idx, l := range metadata.Layers {
-			layerOrderByDigest[l.Digest] = idx
-		}
-	}
-	return layerOrderByDigest
 }
 
 func toLinuxReleaser(d *linux.Release) model.LinuxRelease {
@@ -93,7 +84,7 @@ func toDescriptor(d sbom.Descriptor) model.Descriptor {
 	}
 }
 
-func toFile(s sbom.SBOM, layerOrderByDigest map[string]int) []model.File {
+func toFile(s sbom.SBOM, coordinateSorter func(a, b file.Coordinates) int) []model.File {
 	results := make([]model.File, 0)
 	artifacts := s.Artifacts
 
@@ -155,17 +146,16 @@ func toFile(s sbom.SBOM, layerOrderByDigest map[string]int) []model.File {
 
 	// sort to ensure we're stable across multiple runs
 	// should order by the layer order from the container image then by real path
-	sortFiles(results, layerOrderByDigest)
+	sortFiles(results, coordinateSorter)
 	return results
 }
 
-func sortFiles(files []model.File, layerOrderByDigest map[string]int) {
+func sortFiles(files []model.File, coordinateSorter func(a, b file.Coordinates) int) {
+	fileSorter := func(a, b model.File) int {
+		return coordinateSorter(a.Location, b.Location)
+	}
 	sort.SliceStable(files, func(i, j int) bool {
-		iLayer, jLayer := layerOrderByDigest[files[i].Location.FileSystemID], layerOrderByDigest[files[j].Location.FileSystemID]
-		if iLayer != jLayer {
-			return iLayer < jLayer
-		}
-		return files[i].Location.RealPath < files[j].Location.RealPath
+		return fileSorter(files[i], files[j]) < 0
 	})
 }
 
@@ -224,18 +214,18 @@ func toFileType(ty stereoscopeFile.Type) string {
 	}
 }
 
-func toPackageModels(catalog *pkg.Collection, layerOrderByDigest map[string]int, cfg EncoderConfig) []model.Package {
+func toPackageModels(catalog *pkg.Collection, locationSorter func(a, b file.Location) int, cfg EncoderConfig) []model.Package {
 	artifacts := make([]model.Package, 0)
 	if catalog == nil {
 		return artifacts
 	}
 	for _, p := range catalog.Sorted() {
-		artifacts = append(artifacts, toPackageModel(p, layerOrderByDigest, cfg))
+		artifacts = append(artifacts, toPackageModel(p, locationSorter, cfg))
 	}
 	return artifacts
 }
 
-func toLicenseModel(pkgLicenses []pkg.License, layerOrderByDigest map[string]int) (modelLicenses []model.License) {
+func toLicenseModel(pkgLicenses []pkg.License, locationSorter func(a, b file.Location) int) (modelLicenses []model.License) {
 	for _, l := range pkgLicenses {
 		// format model must have allocated collections
 		urls := l.URLs
@@ -249,14 +239,14 @@ func toLicenseModel(pkgLicenses []pkg.License, layerOrderByDigest map[string]int
 			Contents:       l.Contents,
 			Type:           l.Type,
 			URLs:           urls,
-			Locations:      toLocationsModel(l.Locations, layerOrderByDigest),
+			Locations:      toLocationsModel(l.Locations, locationSorter),
 		})
 	}
 	return
 }
 
 // toPackageModel crates a new Package from the given pkg.Package.
-func toPackageModel(p pkg.Package, layerOrderByDigest map[string]int, cfg EncoderConfig) model.Package {
+func toPackageModel(p pkg.Package, locationSorter func(a, b file.Location) int, cfg EncoderConfig) model.Package {
 	var cpes = make([]model.CPE, len(p.CPEs))
 	for i, c := range p.CPEs {
 		convertedCPE := model.CPE{
@@ -270,7 +260,7 @@ func toPackageModel(p pkg.Package, layerOrderByDigest map[string]int, cfg Encode
 	// initializing the array; this is a good choke point for this check
 	var licenses = make([]model.License, 0)
 	if !p.Licenses.Empty() {
-		licenses = toLicenseModel(p.Licenses.ToSlice(), layerOrderByDigest)
+		licenses = toLicenseModel(p.Licenses.ToSlice(), locationSorter)
 	}
 
 	return model.Package{
@@ -280,7 +270,7 @@ func toPackageModel(p pkg.Package, layerOrderByDigest map[string]int, cfg Encode
 			Version:   p.Version,
 			Type:      p.Type,
 			FoundBy:   p.FoundBy,
-			Locations: toLocationsModel(p.Locations, layerOrderByDigest),
+			Locations: toLocationsModel(p.Locations, locationSorter),
 			Licenses:  licenses,
 			Language:  p.Language,
 			CPEs:      cpes,
@@ -293,18 +283,12 @@ func toPackageModel(p pkg.Package, layerOrderByDigest map[string]int, cfg Encode
 	}
 }
 
-func toLocationsModel(locations file.LocationSet, layerOrderByDigest map[string]int) []file.Location {
+func toLocationsModel(locations file.LocationSet, locationSorter func(a, b file.Location) int) []file.Location {
 	if locations.Empty() {
 		return []file.Location{}
 	}
 
-	if layerOrderByDigest == nil {
-		return locations.ToSlice()
-	}
-
-	locs := locations.ToUnorderedSlice()
-	sort.Sort(file.LocationsByContainerOrder(locs, layerOrderByDigest))
-	return locs
+	return locations.ToSlice(locationSorter)
 }
 
 func toRelationshipModel(relationships []artifact.Relationship) []model.Relationship {
