@@ -99,6 +99,10 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 
 	p.Metadata = decodePackageMetadata(values, c, metadataType)
 
+	if p.Type == "" {
+		p.Type = pkg.TypeFromPURL(p.PURL)
+	}
+
 	setPackageName(p, c)
 
 	internal.Backfill(p)
