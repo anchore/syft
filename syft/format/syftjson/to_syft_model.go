@@ -2,6 +2,7 @@ package syftjson
 
 import (
 	"fmt"
+	"github.com/anchore/syft/syft/format/internal"
 	"io/fs"
 	"math"
 	"os"
@@ -350,6 +351,8 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		PURL:      p.PURL,
 		Metadata:  p.Metadata,
 	}
+
+	internal.Backfill(&out)
 
 	// we don't know if this package ID is truly unique, however, we need to trust the user input in case there are
 	// external references to it. That is, we can't derive our own ID (using pkg.SetID()) since consumers won't
