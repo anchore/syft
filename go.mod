@@ -38,7 +38,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/elliotchance/phpserialize v1.4.0
 	github.com/facebookincubator/nvdtools v0.1.5
-	github.com/github/go-spdx/v2 v2.3.2
+	github.com/github/go-spdx/v2 v2.3.3
 	github.com/gkampitakis/go-snaps v0.5.11
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.16.0
