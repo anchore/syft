@@ -9,24 +9,14 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 var _ sbom.FormatDecoder = (*decoder)(nil)
 
 type decoder struct{}
-
-type PURLLiteralMetadata struct {
-	PURL string
-}
-
-type PURLFileMetadata struct {
-	Path string
-}
 
 func NewFormatDecoder() sbom.FormatDecoder {
 	return decoder{}
@@ -84,14 +74,7 @@ func toSyftModel(r io.Reader) (*sbom.SBOM, error) {
 
 	return &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
-			Packages:     pkgs,
-			FileMetadata: map[file.Coordinates]file.Metadata{},
-			FileDigests:  map[file.Coordinates][]file.Digest{},
-			FileContents: map[file.Coordinates]string{},
-			FileLicenses: map[file.Coordinates][]file.License{},
-			Executables:  map[file.Coordinates]file.Executable{},
+			Packages: pkgs,
 		},
-		Source:     source.Description{},
-		Descriptor: sbom.Descriptor{},
 	}, errors.Join(errs...)
 }
