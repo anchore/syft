@@ -255,6 +255,64 @@ func Test_parseSBOM(t *testing.T) {
 		},
 	}
 
+	curlYaml := pkg.Package{
+		Name:      "curl.yaml",
+		Version:   "eca16600635a2ab921dbbe6998712c68fc8b6460",
+		Type:      "UnknownPackage",
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("Apache-2.0")),
+		Locations: file.NewLocationSet(file.NewLocation("curl-8.12.1-r3.spdx.json")),
+		FoundBy:   "sbom-cataloger",
+		PURL:      "pkg:github/wolfi-dev/os@eca16600635a2ab921dbbe6998712c68fc8b6460#curl.yaml",
+		CPEs:      nil,
+	}
+
+	curlApk := pkg.Package{
+		Name:     "curl",
+		Version:  "8.12.1-r3",
+		Type:     "apk",
+		Licenses: pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+		FoundBy:  "",
+		PURL:     "pkg:apk/wolfi/curl@8.12.1-r3?arch=x86_64",
+		CPEs:     nil,
+	}
+
+	curlApk2 := pkg.Package{
+		Name:      "curl",
+		Version:   "8.12.1-r3",
+		Type:      "apk",
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+		Locations: file.NewLocationSet(file.NewLocation("curl-8.12.1-r3.spdx.json")),
+		FoundBy:   "sbom-cataloger",
+		PURL:      "pkg:apk/wolfi/curl@8.12.1-r3?arch=x86_64",
+		CPEs:      nil,
+	}
+
+	curl := pkg.Package{
+		Name:      "curl",
+		Version:   "8.12.1",
+		Type:      "UnknownPackage",
+		Locations: file.NewLocationSet(file.NewLocation("curl-8.12.1-r3.spdx.json")),
+		Licenses:  pkg.NewLicenseSet(),
+		FoundBy:   "sbom-cataloger",
+		PURL:      "pkg:generic/curl@8.12.1?checksum=sha256%3A0341f1ed97a26c811abaebd37d62b833956792b7607ea3f15d001613c76de202&download_url=https%3A%2F%2Fcurl.se%2Fdownload%2Fcurl-8.12.1.tar.xz",
+		CPEs:      nil,
+	}
+
+	curl2 := pkg.Package{
+		Name:     "curl",
+		Version:  "8.12.1",
+		Type:     "UnknownPackage",
+		Licenses: pkg.NewLicenseSet(),
+		FoundBy:  "",
+		PURL:     "pkg:generic/curl@8.12.1?checksum=sha256%3A0341f1ed97a26c811abaebd37d62b833956792b7607ea3f15d001613c76de202&download_url=https%3A%2F%2Fcurl.se%2Fdownload%2Fcurl-8.12.1.tar.xz",
+		CPEs:     nil,
+	}
+
+	expectedPkgs2 := []pkg.Package{
+		curl,
+		curlApk2,
+		curlYaml,
+	}
 	apkgdbLocation := file.NewLocationSet(file.Location{
 		LocationData: file.LocationData{
 			Coordinates: file.Coordinates{
@@ -381,6 +439,29 @@ func Test_parseSBOM(t *testing.T) {
 		},
 	}
 
+	expectedRelationships2 := []artifact.Relationship{
+		{
+			From: curl,
+			To:   file.Coordinates{RealPath: "curl-8.12.1-r3.spdx.json"},
+			Type: artifact.DescribedByRelationship,
+		},
+		{
+			From: curl2,
+			To:   curlApk,
+			Type: artifact.GeneratedFromRelationship,
+		},
+		{
+			From: curlApk2,
+			To:   file.Coordinates{RealPath: "curl-8.12.1-r3.spdx.json"},
+			Type: artifact.DescribedByRelationship,
+		},
+		{
+			From: curlYaml,
+			To:   file.Coordinates{RealPath: "curl-8.12.1-r3.spdx.json"},
+			Type: artifact.DescribedByRelationship,
+		},
+	}
+
 	for _, p := range expectedPkgs {
 		expectedRelationships = append(expectedRelationships, artifact.Relationship{
 			From: p,
@@ -403,6 +484,12 @@ func Test_parseSBOM(t *testing.T) {
 			fixture:           "test-fixtures/alpine/syft-json",
 			wantPkgs:          expectedPkgs,
 			wantRelationships: expectedRelationships,
+		},
+		{
+			name:              "parse syft JSON with 'generated_from' packages",
+			fixture:           "test-fixtures/chainguard-curl/syft-json",
+			wantPkgs:          expectedPkgs2,
+			wantRelationships: expectedRelationships2,
 		},
 	}
 	for _, tt := range tests {
