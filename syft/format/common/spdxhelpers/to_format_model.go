@@ -22,6 +22,7 @@ import (
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	formatInternal "github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -602,14 +603,19 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, helpers.Relationshi
 func toFiles(s sbom.SBOM) (results []*spdx.File) {
 	artifacts := s.Artifacts
 
-	for _, coordinates := range s.AllCoordinates() {
+	_, coordinateSorter := formatInternal.GetLocationSorters(s)
+
+	coordinates := s.AllCoordinates()
+	slices.SortFunc(coordinates, coordinateSorter)
+
+	for _, c := range coordinates {
 		var metadata *file.Metadata
-		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
+		if metadataForLocation, exists := artifacts.FileMetadata[c]; exists {
 			metadata = &metadataForLocation
 		}
 
 		var digests []file.Digest
-		if digestsForLocation, exists := artifacts.FileDigests[coordinates]; exists {
+		if digestsForLocation, exists := artifacts.FileDigests[c]; exists {
 			digests = digestsForLocation
 		}
 
@@ -625,18 +631,18 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 		// TODO: add file classifications (?) and content as a snippet
 
 		var comment string
-		if coordinates.FileSystemID != "" {
-			comment = fmt.Sprintf("layerID: %s", coordinates.FileSystemID)
+		if c.FileSystemID != "" {
+			comment = fmt.Sprintf("layerID: %s", c.FileSystemID)
 		}
 
-		relativePath, err := convertAbsoluteToRelative(coordinates.RealPath)
+		relativePath, err := convertAbsoluteToRelative(c.RealPath)
 		if err != nil {
-			log.Debugf("unable to convert relative path '%s' to absolute path: %s", coordinates.RealPath, err)
-			relativePath = coordinates.RealPath
+			log.Debugf("unable to convert relative path '%s' to absolute path: %s", c.RealPath, err)
+			relativePath = c.RealPath
 		}
 
 		results = append(results, &spdx.File{
-			FileSPDXIdentifier: toSPDXID(coordinates),
+			FileSPDXIdentifier: toSPDXID(c),
 			FileComment:        comment,
 			// required, no attempt made to determine license information
 			LicenseConcluded:  noAssertion,

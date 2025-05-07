@@ -64,15 +64,38 @@ func (s *LicenseSet) Add(licenses ...License) {
 	}
 }
 
-func (s LicenseSet) ToSlice() []License {
+func (s LicenseSet) ToSlice(sorters ...func(a, b License) int) []License {
+	licenses := s.ToUnorderedSlice()
+
+	var sorted bool
+	for _, sorter := range sorters {
+		if sorter == nil {
+			continue
+		}
+		sort.Slice(licenses, func(i, j int) bool {
+			return sorter(licenses[i], licenses[j]) < 0
+		})
+		sorted = true
+		break
+	}
+
+	if !sorted {
+		sort.Sort(Licenses(licenses))
+	}
+
+	return licenses
+}
+
+func (s LicenseSet) ToUnorderedSlice() []License {
 	if s.set == nil {
 		return nil
 	}
-	var licenses []License
+	licenses := make([]License, len(s.set))
+	idx := 0
 	for _, v := range s.set {
-		licenses = append(licenses, v)
+		licenses[idx] = v
+		idx++
 	}
-	sort.Sort(Licenses(licenses))
 	return licenses
 }
 

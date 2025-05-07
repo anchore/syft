@@ -345,8 +345,706 @@ func Test_toPackageModel_metadataType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if d := cmp.Diff(tt.want, toPackageModel(tt.p, tt.cfg), cmpopts.EquateEmpty()); d != "" {
+			if d := cmp.Diff(tt.want, toPackageModel(tt.p, file.LocationSorter(nil), tt.cfg), cmpopts.EquateEmpty()); d != "" {
 				t.Errorf("unexpected package (-want +got):\n%s", d)
+			}
+		})
+	}
+}
+
+func Test_toPackageModel_layerOrdering(t *testing.T) {
+	tests := []struct {
+		name       string
+		p          pkg.Package
+		layerOrder []string
+		cfg        EncoderConfig
+		want       model.Package
+	}{
+		{
+			name: "with layer ordering",
+			p: pkg.Package{
+				Name: "pkg-1",
+				Licenses: pkg.NewLicenseSet(pkg.License{
+					Value: "MIT",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(file.Coordinates{
+							RealPath:     "/lic-a",
+							FileSystemID: "fsid-3",
+						}),
+						file.NewLocationFromCoordinates(file.Coordinates{
+							RealPath:     "/lic-a",
+							FileSystemID: "fsid-1",
+						}),
+						file.NewLocationFromCoordinates(file.Coordinates{
+							RealPath:     "/lic-b",
+							FileSystemID: "fsid-0",
+						}),
+						file.NewLocationFromCoordinates(file.Coordinates{
+							RealPath:     "/lic-a",
+							FileSystemID: "fsid-2",
+						}),
+					),
+				}),
+				Locations: file.NewLocationSet(
+					file.NewLocationFromCoordinates(file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-3",
+					}),
+					file.NewLocationFromCoordinates(file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-1",
+					}),
+					file.NewLocationFromCoordinates(file.Coordinates{
+						RealPath:     "/b",
+						FileSystemID: "fsid-0",
+					}),
+					file.NewLocationFromCoordinates(file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-2",
+					}),
+				),
+			},
+			layerOrder: []string{
+				"fsid-0",
+				"fsid-1",
+				"fsid-2",
+				"fsid-3",
+			},
+			want: model.Package{
+				PackageBasicData: model.PackageBasicData{
+					Name: "pkg-1",
+					Licenses: []model.License{
+						{
+							Value: "MIT",
+							Locations: []file.Location{
+								{
+									LocationData: file.LocationData{
+										Coordinates: file.Coordinates{
+											RealPath:     "/lic-b",
+											FileSystemID: "fsid-0", // important!
+										},
+										AccessPath: "/lic-b",
+									},
+								},
+								{
+									LocationData: file.LocationData{
+										Coordinates: file.Coordinates{
+											RealPath:     "/lic-a",
+											FileSystemID: "fsid-1", // important!
+										},
+										AccessPath: "/lic-a",
+									},
+								},
+								{
+									LocationData: file.LocationData{
+										Coordinates: file.Coordinates{
+											RealPath:     "/lic-a",
+											FileSystemID: "fsid-2", // important!
+										},
+										AccessPath: "/lic-a",
+									},
+								},
+								{
+									LocationData: file.LocationData{
+										Coordinates: file.Coordinates{
+											RealPath:     "/lic-a",
+											FileSystemID: "fsid-3", // important!
+										},
+										AccessPath: "/lic-a",
+									},
+								},
+							},
+						},
+					},
+					Locations: []file.Location{
+						{
+							LocationData: file.LocationData{
+								Coordinates: file.Coordinates{
+									RealPath:     "/b",
+									FileSystemID: "fsid-0", // important!
+								},
+								AccessPath: "/b",
+							},
+						},
+						{
+							LocationData: file.LocationData{
+								Coordinates: file.Coordinates{
+									RealPath:     "/a",
+									FileSystemID: "fsid-1", // important!
+								},
+								AccessPath: "/a",
+							},
+						},
+						{
+							LocationData: file.LocationData{
+								Coordinates: file.Coordinates{
+									RealPath:     "/a",
+									FileSystemID: "fsid-2", // important!
+								},
+								AccessPath: "/a",
+							},
+						},
+						{
+							LocationData: file.LocationData{
+								Coordinates: file.Coordinates{
+									RealPath:     "/a",
+									FileSystemID: "fsid-3", // important!
+								},
+								AccessPath: "/a",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if d := cmp.Diff(tt.want, toPackageModel(tt.p, file.LocationSorter(tt.layerOrder), tt.cfg), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(file.LocationData{})); d != "" {
+				t.Errorf("unexpected package (-want +got):\n%s", d)
+			}
+		})
+	}
+}
+
+func Test_toLocationModel(t *testing.T) {
+	tests := []struct {
+		name      string
+		locations file.LocationSet
+		layers    []string
+		want      []file.Location
+	}{
+		{
+			name:      "empty location set",
+			locations: file.NewLocationSet(),
+			layers:    []string{"fsid-1"},
+			want:      []file.Location{},
+		},
+		{
+			name: "nil layer order map",
+			locations: file.NewLocationSet(
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/a",
+					FileSystemID: "fsid-1",
+				}),
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/b",
+					FileSystemID: "fsid-2",
+				}),
+			),
+			layers: nil, // please don't panic!
+			want: []file.Location{
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/a",
+							FileSystemID: "fsid-1",
+						},
+						AccessPath: "/a",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/b",
+							FileSystemID: "fsid-2",
+						},
+						AccessPath: "/b",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+			},
+		},
+		{
+			name: "go case",
+			locations: file.NewLocationSet(
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/a",
+					FileSystemID: "fsid-3",
+				}),
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/b",
+					FileSystemID: "fsid-1",
+				}),
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/c",
+					FileSystemID: "fsid-2",
+				}),
+			),
+			layers: []string{
+				"fsid-1",
+				"fsid-2",
+				"fsid-3",
+			},
+			want: []file.Location{
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/b",
+							FileSystemID: "fsid-1",
+						},
+						AccessPath: "/b",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/c",
+							FileSystemID: "fsid-2",
+						},
+						AccessPath: "/c",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/a",
+							FileSystemID: "fsid-3",
+						},
+						AccessPath: "/a",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+			},
+		},
+		{
+			name: "same layer different paths", // prove we can sort by path irrespective of layer
+			locations: file.NewLocationSet(
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/c",
+					FileSystemID: "fsid-1",
+				}),
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/a",
+					FileSystemID: "fsid-1",
+				}),
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/b",
+					FileSystemID: "fsid-1",
+				}),
+			),
+			layers: []string{
+				"fsid-1",
+			},
+			want: []file.Location{
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/a",
+							FileSystemID: "fsid-1",
+						},
+						AccessPath: "/a",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/b",
+							FileSystemID: "fsid-1",
+						},
+						AccessPath: "/b",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/c",
+							FileSystemID: "fsid-1",
+						},
+						AccessPath: "/c",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+			},
+		},
+		{
+			name: "mixed layers and paths",
+			locations: file.NewLocationSet(
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/z",
+					FileSystemID: "fsid-3",
+				}),
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/a",
+					FileSystemID: "fsid-2",
+				}),
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/b",
+					FileSystemID: "fsid-1",
+				}),
+				file.NewLocationFromCoordinates(file.Coordinates{
+					RealPath:     "/c",
+					FileSystemID: "fsid-2",
+				}),
+			),
+			layers: []string{
+				"fsid-1",
+				"fsid-2",
+				"fsid-3",
+			},
+			want: []file.Location{
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/b",
+							FileSystemID: "fsid-1",
+						},
+						AccessPath: "/b",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/a",
+							FileSystemID: "fsid-2",
+						},
+						AccessPath: "/a",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/c",
+							FileSystemID: "fsid-2",
+						},
+						AccessPath: "/c",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+				{
+					LocationData: file.LocationData{
+						Coordinates: file.Coordinates{
+							RealPath:     "/z",
+							FileSystemID: "fsid-3",
+						},
+						AccessPath: "/z",
+					},
+					LocationMetadata: file.LocationMetadata{Annotations: map[string]string{}},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := toLocationsModel(tt.locations, file.LocationSorter(tt.layers))
+			if d := cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(file.LocationData{})); d != "" {
+				t.Errorf("toLocationsModel() mismatch (-want +got):\n%s", d)
+			}
+		})
+	}
+}
+
+func Test_sortFiles(t *testing.T) {
+	tests := []struct {
+		name   string
+		files  []model.File
+		layers []string
+		want   []model.File
+	}{
+		{
+			name:   "empty files slice",
+			files:  []model.File{},
+			layers: []string{"fsid-1"},
+			want:   []model.File{},
+		},
+		{
+			name: "nil layer order map",
+			files: []model.File{
+				{
+					ID: "file-1",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-2",
+					Location: file.Coordinates{
+						RealPath:     "/b",
+						FileSystemID: "fsid-2",
+					},
+				},
+			},
+			layers: nil,
+			want: []model.File{
+				{
+					ID: "file-1",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-2",
+					Location: file.Coordinates{
+						RealPath:     "/b",
+						FileSystemID: "fsid-2",
+					},
+				},
+			},
+		},
+		{
+			name: "layer ordering",
+			files: []model.File{
+				{
+					ID: "file-1",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-3",
+					},
+				},
+				{
+					ID: "file-2",
+					Location: file.Coordinates{
+						RealPath:     "/b",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-3",
+					Location: file.Coordinates{
+						RealPath:     "/c",
+						FileSystemID: "fsid-2",
+					},
+				},
+			},
+			layers: []string{
+				"fsid-1",
+				"fsid-2",
+				"fsid-3",
+			},
+			want: []model.File{
+				{
+					ID: "file-2",
+					Location: file.Coordinates{
+						RealPath:     "/b",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-3",
+					Location: file.Coordinates{
+						RealPath:     "/c",
+						FileSystemID: "fsid-2",
+					},
+				},
+				{
+					ID: "file-1",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-3",
+					},
+				},
+			},
+		},
+		{
+			name: "same layer different paths",
+			files: []model.File{
+				{
+					ID: "file-1",
+					Location: file.Coordinates{
+						RealPath:     "/c",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-2",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-3",
+					Location: file.Coordinates{
+						RealPath:     "/b",
+						FileSystemID: "fsid-1",
+					},
+				},
+			},
+			layers: []string{
+				"fsid-1",
+			},
+			want: []model.File{
+				{
+					ID: "file-2",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-3",
+					Location: file.Coordinates{
+						RealPath:     "/b",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-1",
+					Location: file.Coordinates{
+						RealPath:     "/c",
+						FileSystemID: "fsid-1",
+					},
+				},
+			},
+		},
+		{
+			name: "stability test - preserve original order for equivalent items",
+			files: []model.File{
+				{
+					ID: "file-1",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-2",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-3",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-1",
+					},
+				},
+			},
+			layers: []string{
+				"fsid-1",
+			},
+			want: []model.File{
+				{
+					ID: "file-1",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-2",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-1",
+					},
+				},
+				{
+					ID: "file-3",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-1",
+					},
+				},
+			},
+		},
+		{
+			name: "complex file metadata doesn't affect sorting",
+			files: []model.File{
+				{
+					ID: "file-1",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-2",
+					},
+					Metadata: &model.FileMetadataEntry{
+						Mode:     0644,
+						Type:     "file",
+						UserID:   1000,
+						GroupID:  1000,
+						MIMEType: "text/plain",
+						Size:     100,
+					},
+					Contents: "content1",
+					Digests: []file.Digest{
+						{
+							Algorithm: "sha256",
+							Value:     "abc123",
+						},
+					},
+				},
+				{
+					ID: "file-2",
+					Location: file.Coordinates{
+						RealPath:     "/b",
+						FileSystemID: "fsid-1",
+					},
+					Metadata: &model.FileMetadataEntry{
+						Mode:     0755,
+						Type:     "directory",
+						UserID:   0,
+						GroupID:  0,
+						MIMEType: "application/directory",
+						Size:     4096,
+					},
+				},
+			},
+			layers: []string{
+				"fsid-1",
+				"fsid-2",
+			},
+			want: []model.File{
+				{
+					ID: "file-2",
+					Location: file.Coordinates{
+						RealPath:     "/b",
+						FileSystemID: "fsid-1",
+					},
+					Metadata: &model.FileMetadataEntry{
+						Mode:     0755,
+						Type:     "directory",
+						UserID:   0,
+						GroupID:  0,
+						MIMEType: "application/directory",
+						Size:     4096,
+					},
+				},
+				{
+					ID: "file-1",
+					Location: file.Coordinates{
+						RealPath:     "/a",
+						FileSystemID: "fsid-2",
+					},
+					Metadata: &model.FileMetadataEntry{
+						Mode:     0644,
+						Type:     "file",
+						UserID:   1000,
+						GroupID:  1000,
+						MIMEType: "text/plain",
+						Size:     100,
+					},
+					Contents: "content1",
+					Digests: []file.Digest{
+						{
+							Algorithm: "sha256",
+							Value:     "abc123",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			files := make([]model.File, len(tt.files))
+			copy(files, tt.files)
+
+			sortFiles(files, file.CoordinatesSorter(tt.layers))
+
+			if d := cmp.Diff(tt.want, files); d != "" {
+				t.Errorf("sortFiles() mismatch (-want +got):\n%s", d)
 			}
 		})
 	}

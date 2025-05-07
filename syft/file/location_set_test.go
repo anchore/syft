@@ -89,8 +89,8 @@ func TestLocationSet_SortPaths(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			set := NewLocationSet(test.input...)
-			assert.Equal(t, test.expected, set.ToSlice())
+			actual := NewLocationSet(test.input...).ToSlice()
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }

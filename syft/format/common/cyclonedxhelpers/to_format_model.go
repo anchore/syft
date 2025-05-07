@@ -42,17 +42,18 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	cdxBOM.SerialNumber = uuid.New().URN()
 	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source)
 
+	coordinates, locationSorter := getCoordinates(s)
+
 	// Packages
 	packages := s.Artifacts.Packages.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
 	for i, p := range packages {
-		components[i] = helpers.EncodeComponent(p)
+		components[i] = helpers.EncodeComponent(p, locationSorter)
 	}
 	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 
-	// Files
 	artifacts := s.Artifacts
-	coordinates := s.AllCoordinates()
+
 	for _, coordinate := range coordinates {
 		var metadata *file.Metadata
 		// File Info
@@ -93,6 +94,21 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	}
 
 	return cdxBOM
+}
+
+func getCoordinates(s sbom.SBOM) ([]file.Coordinates, func(a, b file.Location) int) {
+	var layers []string
+	if m, ok := s.Source.Metadata.(source.ImageMetadata); ok {
+		for _, l := range m.Layers {
+			layers = append(layers, l.Digest)
+		}
+	}
+
+	coordSorter := file.CoordinatesSorter(layers)
+	coordinates := s.AllCoordinates()
+
+	slices.SortFunc(coordinates, coordSorter)
+	return coordinates, file.LocationSorter(layers)
 }
 
 func digestsToHashes(digests []file.Digest) []cyclonedx.Hash {

@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func EncodeComponent(p pkg.Package) cyclonedx.Component {
+func EncodeComponent(p pkg.Package, locationSorter func(a, b file.Location) int) cyclonedx.Component {
 	props := EncodeProperties(p, "syft:package")
 
 	if p.Metadata != nil {
@@ -23,7 +23,7 @@ func EncodeComponent(p pkg.Package) cyclonedx.Component {
 	}
 
 	props = append(props, encodeCPEs(p)...)
-	locations := p.Locations.ToSlice()
+	locations := p.Locations.ToSlice(locationSorter)
 	if len(locations) > 0 {
 		props = append(props, EncodeProperties(locations, "syft:location")...)
 	}
