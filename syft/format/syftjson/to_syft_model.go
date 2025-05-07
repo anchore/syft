@@ -2,7 +2,6 @@ package syftjson
 
 import (
 	"fmt"
-	"github.com/anchore/syft/syft/format/internal"
 	"io/fs"
 	"math"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/syftjson/model"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"

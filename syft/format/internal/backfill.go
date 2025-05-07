@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -26,7 +27,7 @@ func Backfill(p *pkg.Package) {
 	}
 
 	var cpes []cpe.CPE
-	epoch := "0"
+	epoch := ""
 
 	for _, qualifier := range purl.Qualifiers {
 		switch qualifier.Key {
@@ -116,10 +117,8 @@ func setVersionFromPurl(p *pkg.Package, purl packageurl.PackageURL, epoch string
 		p.Version = purl.Version
 	}
 
-	if epoch != "" {
-		if p.Type == pkg.RpmPkg && !strings.HasPrefix(p.Version, fmt.Sprintf("%s:", epoch)) {
-			p.Version = fmt.Sprintf("%s:%s", epoch, p.Version)
-		}
+	if epoch != "" && p.Type == pkg.RpmPkg && !epochPrefix.MatchString(p.Version) {
+		p.Version = fmt.Sprintf("%s:%s", epoch, p.Version)
 	}
 }
 
@@ -134,3 +133,5 @@ func setNameFromPurl(p *pkg.Package, purl packageurl.PackageURL) {
 		}
 	}
 }
+
+var epochPrefix = regexp.MustCompile(`^\d+:`)
